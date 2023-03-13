@@ -117,6 +117,7 @@ type ReduxProps = {
   setActiveNamespaces: (namespaces: Namespace[]) => void;
   setEdgeMode: (edgeMode: EdgeMode) => void;
   setGraphDefinition: (graphDefinition: GraphDefinition) => void;
+  setLayout: (layout: Layout) => void;
   setRankResult: (result: RankResult) => void;
   setNode: (node?: NodeParamsType) => void;
   setTraceId: (traceId?: string) => void;
@@ -899,6 +900,7 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setActiveNamespaces: (namespaces: Namespace[]) => dispatch(NamespaceActions.setActiveNamespaces(namespaces)),
   setEdgeMode: bindActionCreators(GraphActions.setEdgeMode, dispatch),
   setGraphDefinition: bindActionCreators(GraphActions.setGraphDefinition, dispatch),
+  setLayout: bindActionCreators(GraphActions.setLayout, dispatch),
   setNode: bindActionCreators(GraphActions.setNode, dispatch),
   setRankResult: bindActionCreators(GraphActions.setRankResult, dispatch),
   setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.setTraceId(traceId)),

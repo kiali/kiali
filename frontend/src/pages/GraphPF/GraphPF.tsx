@@ -1,5 +1,5 @@
 import { Bullseye, Spinner } from '@patternfly/react-core';
-import { LongArrowAltRightIcon } from '@patternfly/react-icons';
+import { LongArrowAltRightIcon, TopologyIcon } from '@patternfly/react-icons';
 import {
   Controller,
   createTopologyControlButtons,
@@ -9,7 +9,6 @@ import {
   GraphElement,
   GraphModel,
   GRAPH_LAYOUT_END_EVENT,
-  // GRAPH_POSITION_CHANGE_EVENT,
   Model,
   ModelKind,
   Node,
@@ -25,7 +24,7 @@ import {
 } from '@patternfly/react-topology';
 import { GraphData } from 'pages/Graph/GraphPage';
 import * as React from 'react';
-import { EdgeLabelMode, EdgeMode, GraphEvent } from 'types/Graph';
+import { EdgeLabelMode, EdgeMode, GraphEvent, Layout } from 'types/Graph';
 import { JaegerTrace } from 'types/JaegerInfo';
 import stylesComponentFactory from './components/stylesComponentFactory';
 import elementFactory from './elements/elementFactory';
@@ -43,7 +42,13 @@ import layoutFactory from './layouts/layoutFactory';
 import { hideTrace, showTrace } from './TracePF';
 import { GraphHighlighterPF } from './GraphHighlighterPF';
 import { TimeInMilliseconds } from 'types/Common';
+import { KialiConcentricGraph } from 'components/CytoscapeGraph/graphs/KialiConcentricGraph';
+import { KialiDagreGraph } from 'components/CytoscapeGraph/graphs/KialiDagreGraph';
+import { KialiGridGraph } from 'components/CytoscapeGraph/graphs/KialiGridGraph';
+import { KialiBreadthFirstGraph } from 'components/CytoscapeGraph/graphs/KialiBreadthFirstGraph';
+import { HistoryManager, URLParam } from 'app/History';
 
+let initialLayout = false;
 let requestFit = false;
 
 const DEFAULT_NODE_SIZE = 75;
@@ -53,26 +58,16 @@ const ZOOM_OUT = 3 / 4;
 export const FIT_PADDING = 80;
 
 export enum LayoutName {
-  Cola = 'Cola',
-  ColaNoForce = 'ColaNoForce',
+  BreadthFirst = 'BreadthFirst',
   Concentric = 'Concentric',
   Dagre = 'Dagre',
-  Force = 'Force',
   Grid = 'Grid'
-}
-
-export interface TopologyOptions {
-  layout: LayoutName;
 }
 
 export interface FocusNode {
   id: string;
   isSelected?: boolean;
 }
-
-export const DefaultOptions: TopologyOptions = {
-  layout: LayoutName.Dagre
-};
 
 export const TopologyContent: React.FC<{
   controller: Controller;
@@ -83,8 +78,9 @@ export const TopologyContent: React.FC<{
   setEdgeMode: (edgeMode: EdgeMode) => void;
   highlighter: GraphHighlighterPF;
   homeCluster: string;
+  layoutName: LayoutName;
   onReady: (controller: any) => void;
-  options: TopologyOptions;
+  setLayout: (val: LayoutName) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
   showMissingSidecars: boolean;
   showSecurity: boolean;
@@ -98,9 +94,10 @@ export const TopologyContent: React.FC<{
   graphData,
   highlighter,
   homeCluster,
+  layoutName,
   onReady,
-  options,
   setEdgeMode,
+  setLayout: setLayoutName,
   setUpdateTime,
   showMissingSidecars,
   showSecurity,
@@ -183,16 +180,9 @@ export const TopologyContent: React.FC<{
     //fit view to new loaded elements
     if (requestFit) {
       requestFit = false;
-      if ([LayoutName.Concentric, LayoutName.Dagre, LayoutName.Grid].includes(options.layout)) {
-        fitView();
-      } else {
-        //TODO: find a smoother way to fit while elements are still moving
-        setTimeout(fitView, 100);
-        setTimeout(fitView, 250);
-        setTimeout(fitView, 500);
-      }
+      fitView();
     }
-  }, [fitView, options.layout]);
+  }, [fitView]);
 
   //
   // TODO: Maybe add this back if we have popovers that behave badly
@@ -235,12 +225,11 @@ export const TopologyContent: React.FC<{
           graph: {
             id: 'graphPF',
             type: 'graph',
-            layout: options.layout
+            layout: layoutName
           }
         };
         controller.fromModel(defaultModel, false);
         setDetailsLevel();
-        requestFit = true;
       }
     };
 
@@ -352,6 +341,7 @@ export const TopologyContent: React.FC<{
       if (!controller) {
         return;
       }
+
       if (!controller.hasGraph()) {
         resetGraph();
       }
@@ -395,7 +385,7 @@ export const TopologyContent: React.FC<{
 
     // notify that the graph has been updated
     setUpdateTime(Date.now());
-  }, [controller, graphData, graphSettings, highlighter, onReady, options.layout, setDetailsLevel, setUpdateTime]);
+  }, [controller, graphData, graphSettings, highlighter, layoutName, onReady, setDetailsLevel, setUpdateTime]);
 
   //TODO REMOVE THESE DEBUGGING MESSAGES...
   React.useEffect(() => {
@@ -415,12 +405,35 @@ export const TopologyContent: React.FC<{
   }, [highlighter]);
 
   React.useEffect(() => {
-    console.log(`options changed`);
-  }, [options.layout]);
+    console.log(`onReady changed`);
+    initialLayout = true;
+  }, [onReady]);
 
   React.useEffect(() => {
-    console.log(`other changed`);
-  }, [onReady, setDetailsLevel]);
+    console.log(`setDetails changed`);
+  }, [setDetailsLevel]);
+
+  React.useEffect(() => {
+    console.log(`layout changed`);
+    if (!controller.hasGraph()) {
+      return;
+    }
+
+    requestFit = true;
+
+    // When the initial layoutName property is set it is premature to perform a layout
+    if (initialLayout) {
+      initialLayout = false;
+      return;
+    }
+
+    controller.getGraph().setLayout(layoutName);
+    controller.getGraph().layout();
+    if (requestFit) {
+      requestFit = false;
+      fitView();
+    }
+  }, [controller, fitView, layoutName]);
 
   //
   // Set back to graph summary at unmount-time (not every post-render)
@@ -434,9 +447,8 @@ export const TopologyContent: React.FC<{
   }, [updateSummary]);
 
   useEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
-  // useEventListener(GRAPH_POSITION_CHANGE_EVENT, onLayoutPositionChange);
 
-  console.log('Render graph');
+  console.log(`Render Topology hasGraph=${controller.hasGraph()}`);
   return (
     <TopologyView
       data-test="topology-view"
@@ -483,11 +495,53 @@ export const TopologyContent: React.FC<{
                   //setEdgeMode(EdgeMode.NONE === edgeMode ? EdgeMode.ALL : EdgeMode.NONE);
                   setEdgeMode(EdgeMode.NONE);
                 }
+              },
+              {
+                ariaLabel: 'Layout - Dagre',
+                id: 'toolbar_layout_dagre',
+                disabled: LayoutName.Dagre === layoutName,
+                icon: <TopologyIcon />,
+                tooltip: 'Layout - dagre',
+                callback: () => {
+                  setLayoutName(LayoutName.Dagre);
+                }
+              },
+              {
+                ariaLabel: 'Layout - Grid',
+                id: 'toolbar_layout_grid',
+                disabled: LayoutName.Grid === layoutName,
+                icon: <TopologyIcon />,
+                tooltip: 'Layout - grid',
+                callback: () => {
+                  setLayoutName(LayoutName.Grid);
+                }
+              },
+              {
+                ariaLabel: 'Layout - Concentric',
+                id: 'toolbar_layout_concentric',
+                disabled: LayoutName.Concentric === layoutName,
+                icon: <TopologyIcon />,
+                tooltip: 'Layout - concentric',
+                callback: () => {
+                  setLayoutName(LayoutName.Concentric);
+                }
+              },
+              {
+                ariaLabel: 'Layout - Breadth First',
+                id: 'toolbar_layout_breadth_first',
+                disabled: LayoutName.BreadthFirst === layoutName,
+                icon: <TopologyIcon />,
+                tooltip: 'Layout - breadth first',
+                callback: () => {
+                  setLayoutName(LayoutName.BreadthFirst);
+                }
               }
             ],
+            // currently unused
             zoomInCallback: () => {
               controller && controller.getGraph().scaleBy(ZOOM_IN);
             },
+            // currently unused
             zoomOutCallback: () => {
               controller && controller.getGraph().scaleBy(ZOOM_OUT);
             },
@@ -515,8 +569,10 @@ export const GraphPF: React.FC<{
   focusNode?: FocusNode;
   graphData: GraphData;
   homeCluster: string;
+  layout: Layout;
   onReady: (controller: any) => void;
   setEdgeMode: (edgeMode: EdgeMode) => void;
+  setLayout: (layout: Layout) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
   showMissingSidecars: boolean;
   showSecurity: boolean;
@@ -529,8 +585,10 @@ export const GraphPF: React.FC<{
   focusNode,
   graphData,
   homeCluster,
+  layout,
   onReady,
   setEdgeMode,
+  setLayout,
   setUpdateTime,
   showMissingSidecars,
   showSecurity,
@@ -553,6 +611,41 @@ export const GraphPF: React.FC<{
     setHighlighter(new GraphHighlighterPF(c));
   }, []);
 
+  const getLayoutName = (layout: Layout): LayoutName => {
+    switch (layout.name) {
+      case 'kiali-breadthfirst':
+        return LayoutName.BreadthFirst;
+      case 'kiali-concentric':
+        return LayoutName.Concentric;
+      case 'kiali-grid':
+        return LayoutName.Grid;
+      default:
+        return LayoutName.Dagre;
+    }
+  };
+
+  const setLayoutByName = (layoutName: LayoutName) => {
+    let layout: Layout;
+    // TODO, handle namespaceLayout
+    switch (layoutName) {
+      case LayoutName.BreadthFirst:
+        layout = KialiBreadthFirstGraph.getLayout();
+        break;
+      case LayoutName.Concentric:
+        layout = KialiConcentricGraph.getLayout();
+        break;
+      case LayoutName.Grid:
+        layout = KialiGridGraph.getLayout();
+        break;
+      default:
+        layout = KialiDagreGraph.getLayout();
+    }
+
+    HistoryManager.setParam(URLParam.GRAPH_LAYOUT, layout.name);
+    HistoryManager.setParam(URLParam.GRAPH_NAMESPACE_LAYOUT, KialiDagreGraph.getLayout().name);
+    setLayout(layout);
+  };
+
   if (!controller || !graphData || graphData.isLoading) {
     return (
       <Bullseye data-test="loading-contents">
@@ -572,9 +665,10 @@ export const GraphPF: React.FC<{
         graphData={graphData}
         highlighter={highlighter!}
         homeCluster={homeCluster}
+        layoutName={getLayoutName(layout)}
         onReady={onReady}
-        options={DefaultOptions}
         setEdgeMode={setEdgeMode}
+        setLayout={setLayoutByName}
         setUpdateTime={setUpdateTime}
         showMissingSidecars={showMissingSidecars}
         showSecurity={showSecurity}

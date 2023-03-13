@@ -1,23 +1,23 @@
 import {
   Graph,
   Layout,
-  ForceLayout,
-  ColaLayout,
   DagreLayout,
   GridLayout,
   ConcentricLayout,
-  LayoutFactory
+  LayoutFactory,
+  BreadthFirstLayout
 } from '@patternfly/react-topology';
+import { LayoutName } from '../GraphPF';
 
 const layoutFactory: LayoutFactory = (type: string, graph: Graph): Layout | undefined => {
   switch (type) {
-    case 'Cola':
-      return new ColaLayout(graph);
-    case 'ColaNoForce':
-      return new ColaLayout(graph, { layoutOnDrag: false, maxTicks: 1 }); // maxTicks=1 removes animation
-    case 'Concentric':
+    case LayoutName.BreadthFirst:
+      return new BreadthFirstLayout(graph);
+    case LayoutName.Concentric:
       return new ConcentricLayout(graph);
-    case 'Dagre':
+    case LayoutName.Grid:
+      return new GridLayout(graph);
+    default:
       return new DagreLayout(graph, {
         //allowDrag: true,
         //layoutOnDrag: true,
@@ -28,13 +28,6 @@ const layoutFactory: LayoutFactory = (type: string, graph: Graph): Layout | unde
         ranker: 'network-simplex',
         rankdir: 'LR'
       });
-
-    case 'Force':
-      return new ForceLayout(graph);
-    case 'Grid':
-      return new GridLayout(graph);
-    default:
-      return new ColaLayout(graph, { layoutOnDrag: false });
   }
 };
 
