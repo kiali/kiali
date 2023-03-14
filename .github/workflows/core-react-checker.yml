@@ -1,4 +1,4 @@
-name: Core Libraries Checker Version
+name: Core Library Checker Version
 
 on:
   # Run on master and release branches

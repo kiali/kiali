@@ -9,6 +9,5 @@ Yuo can follow the Kiali setup instructions [here](./kiali-ui/README.adoc#develo
 
 # Core Setup
 
-If you want to contribute in the core package you can follow
-
+If you want to contribute in the core package you can follow these instructions [here](./core/README.md#development-setup)
 

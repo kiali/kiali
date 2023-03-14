@@ -6,6 +6,7 @@ tsc_out
 .changelog
 .DS_Store
 coverage
+.coverage
 .cache
 .tmp
 .eslintcache

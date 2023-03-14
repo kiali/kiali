@@ -1,0 +1,42 @@
+name: Core Library Test
+env:
+    NODE_COVERALLS_DEBUG: 1
+    CI: true
+on:
+  # Run on master and release branches
+  push:
+    branches: [master, "^v\\d+\\.\\d+$"]
+    paths:
+      - 'frontend/core/src/**'
+  pull_request:
+    branches: [master, "^v\\d+\\.\\d+$"]
+    paths:
+      - 'frontend/core/src/**'
+jobs:
+  core_test:
+    name: Core Test
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v2
+
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "14"
+          cache: yarn
+          cache-dependency-path: frontend/kiali-ui/yarn.lock
+
+      - name: Install yarn dependencies
+        run: |
+          cd frontend/core
+          yarn install
+
+      - name: Run tests
+        run: |
+          cd frontend/core
+          yarn test
+      - name: Coveralls Finished
+        uses: coverallsapp/github-action@master
+        with:
+          path-to-lcov: frontend/core/.coverage/lcov.info    

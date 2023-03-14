@@ -7,9 +7,8 @@
   "types": "lib/index.d.ts",
   "type": "module",
   "scripts": {
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "coverage": "jest --coverage",
-    "build": "rollup -c"
+    "build": "rollup -c",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest --coverage"
   },
   "license": "Apache-2.0",
   "author": "Red Hat",
@@ -21,10 +20,14 @@
     "@testing-library/react": "^12.1.2",
     "@testing-library/react-hooks": "^8.0.1",
     "@testing-library/user-event": "14.4.3",
+    "@types/enzyme": "3.10.5",
     "@types/jest": "27.0.2",
     "@types/react": "16.9.34",
     "@types/react-dom": "16.9.7",
+    "@wojtekmaj/enzyme-adapter-react-17": "^0.8.0",
     "babel-loader": "^8.3.0",
+    "enzyme": "3.11.0",
+    "enzyme-to-json": "3.4.4",
     "jest": "^27.2.5",
     "jest-cli": "27.2.5",
     "postcss": "^8.4.21",
