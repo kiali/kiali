@@ -36,7 +36,7 @@ jobs:
         run: |
           cd frontend/core
           yarn test
-      - name: Coveralls Finished
-        uses: coverallsapp/github-action@v1.2.4
-        with:
-          path-to-lcov: frontend/core/.coverage/lcov.info    
+      #- name: Coveralls Finished
+      #  uses: coverallsapp/github-action@v1.2.4
+      #  with:
+      #    path-to-lcov: frontend/core/.coverage/lcov.info    
