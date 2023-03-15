@@ -30,7 +30,9 @@ func TestServiceListParsing(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 	setupGlobalMeshConfig()
-	svc := SvcService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = k8s
+	svc := SvcService{k8s: k8s, businessLayer: NewWithBackends(k8sclients, nil, nil)}
 
 	criteria := ServiceCriteria{Namespace: "Namespace", IncludeIstioResources: false, Health: false}
 	serviceList, _ := svc.GetServiceList(context.TODO(), criteria)
@@ -54,7 +56,9 @@ func TestParseRegistryServices(t *testing.T) {
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 	setupGlobalMeshConfig()
-	svc := SvcService{k8s: nil, businessLayer: NewWithBackends(k8s, nil, nil)}
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = k8s
+	svc := SvcService{k8s: nil, businessLayer: NewWithBackends(k8sclients, nil, nil)}
 
 	servicesz := "../tests/data/registry/services-registryz.json"
 	bServicesz, err := os.ReadFile(servicesz)

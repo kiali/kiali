@@ -767,5 +767,6 @@ func updateService(layer *Layer, namespace string, service string, jsonPatch str
 		return err
 	}
 
-	return layer.k8s.UpdateService(namespace, service, jsonPatch, patchType)
+	// TODO: Multicluster
+	return layer.k8s[kubernetes.HomeClusterName].UpdateService(namespace, service, jsonPatch, patchType)
 }

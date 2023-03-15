@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/kiali/kiali/kubernetes"
 	"io"
 	"net/http"
 	"strings"
@@ -99,7 +100,13 @@ func NamespaceUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	jsonPatch := string(body)
 
-	ns, err := business.Namespace.UpdateNamespace(r.Context(), namespace, jsonPatch)
+	// TODO: Multicluster: Add query parameter
+	cluster := params["cluster"]
+	if cluster == "" {
+		cluster = kubernetes.HomeClusterName
+	}
+	
+	ns, err := business.Namespace.UpdateNamespace(r.Context(), namespace, jsonPatch, cluster)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return

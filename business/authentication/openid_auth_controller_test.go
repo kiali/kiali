@@ -19,6 +19,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/util"
 )
@@ -66,7 +67,9 @@ func TestOpenIdAuthControllerRejectsImplicitFlow(t *testing.T) {
 		if authInfo.Token != openIdTestToken {
 			return nil, errors.New("unexpected token")
 		}
-		return business.NewWithBackends(k8s, nil, nil), nil
+		k8sclients := make(map[string]kubernetes.ClientInterface)
+		k8sclients[kubernetes.HomeClusterName] = k8s
+		return business.NewWithBackends(k8sclients, nil, nil), nil
 	})
 
 	rr := httptest.NewRecorder()
@@ -149,7 +152,9 @@ func TestOpenIdAuthControllerAuthenticatesCorrectlyWithAuthorizationCodeFlow(t *
 		if authInfo.Token != openIdTestToken {
 			return nil, errors.New("unexpected token")
 		}
-		return business.NewWithBackends(k8s, nil, nil), nil
+		k8sclients := make(map[string]kubernetes.ClientInterface)
+		k8sclients[kubernetes.HomeClusterName] = k8s
+		return business.NewWithBackends(k8sclients, nil, nil), nil
 	})
 
 	rr := httptest.NewRecorder()

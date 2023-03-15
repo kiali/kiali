@@ -20,9 +20,11 @@ import (
 
 func setupAppService(k8s *kubetest.FakeK8sClient) *AppService {
 	prom := new(prometheustest.PromClientMock)
-	layer := NewWithBackends(k8s, prom, nil)
+	clients := make(map[string]kubernetes.ClientInterface)
+	clients[kubernetes.HomeClusterName] = k8s
+	layer := NewWithBackends(clients, prom, nil)
 	setupGlobalMeshConfig()
-	return &AppService{k8s: k8s, prom: prom, businessLayer: layer}
+	return &AppService{k8s: clients, prom: prom, businessLayer: layer}
 }
 
 func setupTestingKialiCache(k8s *kubetest.FakeK8sClient, conf *config.Config, require *require.Assertions) func() {

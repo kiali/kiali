@@ -24,7 +24,7 @@ type Layer struct {
 	IstioStatus    IstioStatusService
 	IstioCerts     IstioCertsService
 	Jaeger         JaegerService
-	k8s            kubernetes.ClientInterface
+	k8s            map[string]kubernetes.ClientInterface // Key is the cluster name
 	Mesh           MeshService
 	Namespace      NamespaceService
 	OpenshiftOAuth OpenshiftOAuthService
@@ -73,6 +73,12 @@ func initKialiCache() {
 		// TODO: This is leaking cluster-scoped vs. namespace-scoped in a way.
 		var namespaceSeedList []string
 		if !config.Get().AllNamespacesAccessible() {
+
+			var clients map[string]kubernetes.ClientInterface
+			// TODO: Multicluster
+			//for _, c := range clientFactory.GetClusterNames() {
+			//	kubernetes.
+			//}
 			cfg, err := kubernetes.GetConfigForLocalCluster()
 			if err != nil {
 				log.Errorf("Failed to initialize Kiali Cache. Unable to create Kube rest config. Err: %s", err)
@@ -84,8 +90,9 @@ func initKialiCache() {
 				log.Errorf("Failed to initialize Kiali Cache. Unable to create Kube client. Err: %s", err)
 				return
 			}
+			clients[kubernetes.HomeClusterName] = kubeClient
 
-			initNamespaceService := NewNamespaceService(kubeClient)
+			initNamespaceService := NewNamespaceService(clients)
 			nss, err := initNamespaceService.GetNamespaces(context.Background())
 			if err != nil {
 				log.Errorf("Error fetching initial namespaces for populating the Kiali Cache. Details: %s", err)
@@ -128,7 +135,7 @@ func Start() {
 // Get the business.Layer
 func Get(authInfo *api.AuthInfo) (*Layer, error) {
 	// Creates a new k8s client based on the current users token
-	k8s, err := clientFactory.GetClient(authInfo)
+	k8s, err := clientFactory.GetClients(authInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -168,26 +175,26 @@ func SetWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterfac
 // NewWithBackends creates the business layer using the passed k8s and prom clients.
 // Note that the client passed here should *not* be the Kiali ServiceAccount client.
 // It should be the user client based on the logged in user's token.
-func NewWithBackends(k8s kubernetes.ClientInterface, prom prometheus.ClientInterface, jaegerClient JaegerLoader) *Layer {
+func NewWithBackends(k8s map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, jaegerClient JaegerLoader) *Layer {
 	temporaryLayer := &Layer{}
 	temporaryLayer.App = AppService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.Health = HealthService{prom: prom, businessLayer: temporaryLayer}
-	temporaryLayer.IstioConfig = IstioConfigService{k8s: k8s, businessLayer: temporaryLayer}
-	temporaryLayer.IstioStatus = IstioStatusService{k8s: k8s, businessLayer: temporaryLayer}
-	temporaryLayer.IstioCerts = IstioCertsService{k8s: k8s, businessLayer: temporaryLayer}
+	temporaryLayer.IstioConfig = IstioConfigService{k8s: k8s[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
+	temporaryLayer.IstioStatus = IstioStatusService{k8s: k8s[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
+	temporaryLayer.IstioCerts = IstioCertsService{k8s: k8s[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
 	temporaryLayer.Jaeger = JaegerService{loader: jaegerClient, businessLayer: temporaryLayer}
 	temporaryLayer.k8s = k8s
-	temporaryLayer.Mesh = NewMeshService(k8s, temporaryLayer, nil)
+	temporaryLayer.Mesh = NewMeshService(k8s[kubernetes.HomeClusterName], temporaryLayer, nil) // TODO: Multicluster
 	temporaryLayer.Namespace = NewNamespaceService(k8s)
-	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: k8s}
-	temporaryLayer.ProxyStatus = ProxyStatusService{k8s: k8s, businessLayer: temporaryLayer}
+	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: k8s[kubernetes.HomeClusterName]}
+	temporaryLayer.ProxyStatus = ProxyStatusService{k8s: k8s[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
 	// Out of order because it relies on ProxyStatus
-	temporaryLayer.ProxyLogging = ProxyLoggingService{k8s: k8s, proxyStatus: &temporaryLayer.ProxyStatus}
-	temporaryLayer.RegistryStatus = RegistryStatusService{k8s: k8s, businessLayer: temporaryLayer}
-	temporaryLayer.Svc = SvcService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
-	temporaryLayer.TLS = TLSService{k8s: k8s, businessLayer: temporaryLayer}
-	temporaryLayer.TokenReview = NewTokenReview(k8s)
-	temporaryLayer.Validations = IstioValidationsService{k8s: k8s, businessLayer: temporaryLayer}
+	temporaryLayer.ProxyLogging = ProxyLoggingService{k8s: k8s[kubernetes.HomeClusterName], proxyStatus: &temporaryLayer.ProxyStatus}
+	temporaryLayer.RegistryStatus = RegistryStatusService{k8s: k8s[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
+	temporaryLayer.Svc = SvcService{prom: prom, k8s: k8s[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
+	temporaryLayer.TLS = TLSService{k8s: k8s[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
+	temporaryLayer.TokenReview = NewTokenReview(k8s[kubernetes.HomeClusterName])
+	temporaryLayer.Validations = IstioValidationsService{k8s: k8s[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
 
 	// TODO: Remove conditional once cache is fully mandatory.
 	if config.Get().KubernetesConfig.CacheEnabled {
@@ -196,10 +203,11 @@ func NewWithBackends(k8s kubernetes.ClientInterface, prom prometheus.ClientInter
 		// read-only. Methods that are not cached and methods that modify objects
 		// use the user's token through the normal client.
 		// TODO: Always pass caching client once caching is mandatory.
-		cachingClient := cache.NewCachingClient(kialiCache, k8s)
+		// TODO: Multicluster
+		cachingClient := cache.NewCachingClient(kialiCache, k8s[kubernetes.HomeClusterName])
 		temporaryLayer.Workload = *NewWorkloadService(cachingClient, prom, kialiCache, temporaryLayer, config.Get())
 	} else {
-		temporaryLayer.Workload = *NewWorkloadService(k8s, prom, kialiCache, temporaryLayer, config.Get())
+		temporaryLayer.Workload = *NewWorkloadService(k8s[kubernetes.HomeClusterName], prom, kialiCache, temporaryLayer, config.Get())
 	}
 
 	return temporaryLayer

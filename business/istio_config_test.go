@@ -232,7 +232,9 @@ func mockGetIstioConfigList() IstioConfigService {
 		fakeIstioObjects = append(fakeIstioObjects, s.DeepCopyObject())
 	}
 	k8s.MockIstio(fakeIstioObjects...)
-	return IstioConfigService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = k8s
+	return IstioConfigService{k8s: k8s, businessLayer: NewWithBackends(k8sclients, nil, nil)}
 }
 
 func fakeGetGateways() []*networking_v1beta1.Gateway {
@@ -404,7 +406,9 @@ func mockGetIstioConfigDetails() IstioConfigService {
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetSelfSubjectAccessReview", mock.Anything, "test", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]string")).Return(fakeGetSelfSubjectAccessReview(), nil)
 
-	return IstioConfigService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = k8s
+	return IstioConfigService{k8s: k8s, businessLayer: NewWithBackends(k8sclients, nil, nil)}
 }
 
 func TestIsValidHost(t *testing.T) {

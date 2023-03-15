@@ -21,7 +21,7 @@ import (
 
 // NamespaceService deals with fetching k8s namespaces / OpenShift projects and convert to kiali model
 type NamespaceService struct {
-	k8s                    kubernetes.ClientInterface
+	k8s                    map[string]kubernetes.ClientInterface
 	hasProjects            bool
 	isAccessibleNamespaces map[string]bool
 }
@@ -39,10 +39,10 @@ func IsAccessibleError(err error) bool {
 	return isAccessibleError
 }
 
-func NewNamespaceService(k8s kubernetes.ClientInterface) NamespaceService {
+func NewNamespaceService(k8s map[string]kubernetes.ClientInterface) NamespaceService {
 	var hasProjects bool
 
-	if k8s != nil && k8s.IsOpenShift() {
+	if k8s != nil && k8s[kubernetes.HomeClusterName].IsOpenShift() {
 		hasProjects = true
 	} else {
 		hasProjects = false
@@ -70,7 +70,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	defer end()
 
 	if kialiCache != nil {
-		if ns := kialiCache.GetNamespaces(in.k8s.GetToken()); ns != nil {
+		if ns := kialiCache.GetNamespaces(in.k8s[kubernetes.HomeClusterName].GetToken()); ns != nil {
 			return ns, nil
 		}
 	}
@@ -210,7 +210,8 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	}
 
 	if kialiCache != nil {
-		kialiCache.SetNamespaces(in.k8s.GetToken(), resultns)
+		// Saved per user token
+		kialiCache.SetNamespaces(in.k8s[kubernetes.HomeClusterName].GetToken(), resultns)
 	}
 
 	return resultns, nil
@@ -226,7 +227,7 @@ func (in *NamespaceService) GetNamespacesByClient(client kubernetes.ClientInterf
 
 	// If we are running in OpenShift, we will use the project names since these are the list of accessible namespaces
 	if in.hasProjects {
-		projects, err2 := client.GetProjects(labelSelectorInclude)
+		projects, err2 := in.k8s[cluster].GetProjects(labelSelectorInclude)
 		if err2 == nil {
 			// Everything is good, return the projects we got from OpenShift
 			if queryAllNamespaces {
@@ -271,7 +272,7 @@ func (in *NamespaceService) GetNamespacesByClient(client kubernetes.ClientInterf
 		accessibleNamespaces := configObject.Deployment.AccessibleNamespaces
 
 		if queryAllNamespaces {
-			nss, err := client.GetNamespaces(labelSelectorInclude)
+			nss, err := in.k8s[cluster].GetNamespaces(labelSelectorInclude)
 			if err != nil {
 				// Fallback to using the Kiali service account, if needed
 				if errors.IsForbidden(err) {
@@ -298,7 +299,7 @@ func (in *NamespaceService) GetNamespacesByClient(client kubernetes.ClientInterf
 				} else {
 					// we have already got those namespaces that match the LabelSelectorInclude - that is our seed list.
 					// but we need ALL namespaces so we can look for more that match the Include list.
-					allK8sNamespaces, err := client.GetNamespaces("")
+					allK8sNamespaces, err := in.k8s[cluster].GetNamespaces("")
 					if err != nil {
 						// Fallback to using the Kiali service account, if needed
 						if errors.IsForbidden(err) {
@@ -317,7 +318,7 @@ func (in *NamespaceService) GetNamespacesByClient(client kubernetes.ClientInterf
 		} else {
 			k8sNamespaces := make([]core_v1.Namespace, 0)
 			for _, ans := range accessibleNamespaces {
-				k8sNs, err := client.GetNamespace(ans)
+				k8sNs, err := in.k8s[cluster].GetNamespace(ans)
 				if err != nil {
 					if errors.IsNotFound(err) {
 						// If a namespace is not found, then we skip it from the list of namespaces
@@ -333,14 +334,14 @@ func (in *NamespaceService) GetNamespacesByClient(client kubernetes.ClientInterf
 					k8sNamespaces = append(k8sNamespaces, *k8sNs)
 				}
 			}
-			namespaces = models.CastNamespaceCollection(k8sNamespaces, "")
+			namespaces = models.CastNamespaceCollection(k8sNamespaces, cluster)
 		}
 	}
 
 	result := namespaces
 
 	if kialiCache != nil {
-		kialiCache.SetNamespaces(in.k8s.GetToken(), result)
+		kialiCache.SetNamespaces(in.k8s[kubernetes.HomeClusterName].GetToken(), result)
 	}
 
 	return result, nil
@@ -457,7 +458,7 @@ func (in *NamespaceService) GetNamespace(ctx context.Context, namespace string) 
 
 	// Cache already has included/excluded namespaces applied
 	if kialiCache != nil {
-		if ns := kialiCache.GetNamespace(in.k8s.GetToken(), namespace); ns != nil {
+		if ns := kialiCache.GetNamespace(in.k8s[kubernetes.HomeClusterName].GetToken(), namespace); ns != nil {
 			return ns, nil
 		}
 	}
@@ -477,7 +478,8 @@ func (in *NamespaceService) GetNamespace(ctx context.Context, namespace string) 
 	var result models.Namespace
 	if in.hasProjects {
 		var project *osproject_v1.Project
-		project, err = in.k8s.GetProject(namespace)
+		// TOOD: Multicluster iterate by cluster
+		project, err = in.k8s[kubernetes.HomeClusterName].GetProject(namespace)
 		if err != nil {
 			return nil, err
 		}
@@ -516,7 +518,7 @@ func (in *NamespaceService) GetNamespace(ctx context.Context, namespace string) 
 	return &result, nil
 }
 
-func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace string, jsonPatch string) (*models.Namespace, error) {
+func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace string, jsonPatch string, cluster string) (*models.Namespace, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "UpdateNamespace",
 		observability.Attribute("package", "business"),
@@ -531,7 +533,7 @@ func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace strin
 		return nil, err
 	}
 
-	_, err = in.k8s.UpdateNamespace(namespace, jsonPatch)
+	_, err = in.k8s[cluster].UpdateNamespace(namespace, jsonPatch)
 	if err != nil {
 		return nil, err
 	}

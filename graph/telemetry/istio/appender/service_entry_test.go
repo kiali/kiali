@@ -14,6 +14,7 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
@@ -28,7 +29,9 @@ func setupBusinessLayer(istioObjects ...runtime.Object) *business.Layer {
 
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 
-	businessLayer := business.NewWithBackends(k8s, nil, nil)
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = k8s
+	businessLayer := business.NewWithBackends(k8sclients, nil, nil)
 	return businessLayer
 }
 
@@ -688,7 +691,9 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 
 	k8s.MockIstio(remoteSE)
 
-	businessLayer := business.NewWithBackends(k8s, nil, nil)
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = k8s
+	businessLayer := business.NewWithBackends(k8sclients, nil, nil)
 
 	// Create a VersionedApp traffic map where a workload is calling a remote service entry and also an internal one
 	trafficMap := make(map[string]*graph.Node)
@@ -768,7 +773,9 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	config.Set(config.NewConfig())
 
-	businessLayer := business.NewWithBackends(k8s, nil, nil)
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = k8s
+	businessLayer := business.NewWithBackends(k8sclients, nil, nil)
 
 	assert := assert.New(t)
 
@@ -892,7 +899,9 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	config.Set(config.NewConfig())
 
-	businessLayer := business.NewWithBackends(k8s, nil, nil)
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = k8s
+	businessLayer := business.NewWithBackends(k8sclients, nil, nil)
 
 	assert := assert.New(t)
 

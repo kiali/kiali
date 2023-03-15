@@ -107,7 +107,10 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	SetWithBackends(mockClientFactory, nil)
 
-	layer := NewWithBackends(k8s, nil, nil)
+	clients := make(map[string]kubernetes.ClientInterface)
+	clients[kubernetes.HomeClusterName] = k8s
+	clients["KialiCluster"] = k8s
+	layer := NewWithBackends(clients, nil, nil)
 	meshSvc := layer.Mesh
 
 	r := httptest.NewRequest("GET", "http://kiali.url.local/", nil)
@@ -213,7 +216,9 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 		return remoteClient, nil
 	}
 
-	layer := NewWithBackends(k8s, nil, nil)
+	clients := make(map[string]kubernetes.ClientInterface)
+	clients[kubernetes.HomeClusterName] = k8s
+	layer := NewWithBackends(clients, nil, nil)
 	meshSvc := layer.Mesh
 	meshSvc.newRemoteClient = newRemoteClient
 
@@ -281,8 +286,10 @@ func TestIsMeshConfiguredIsCached(t *testing.T) {
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetConfigMap", "foo", "bar").Return(&istioConfigMapMock, nil)
 
+	clients := make(map[string]kubernetes.ClientInterface)
+	clients[kubernetes.HomeClusterName] = k8s
 	// Create a MeshService and invoke IsMeshConfigured
-	layer := NewWithBackends(k8s, nil, nil)
+	layer := NewWithBackends(clients, nil, nil)
 	meshSvc := layer.Mesh
 	result, err := meshSvc.IsMeshConfigured()
 	check.Nil(err, "IsMeshConfigured failed: %s", err)
@@ -294,7 +301,9 @@ func TestIsMeshConfiguredIsCached(t *testing.T) {
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 
-	layer = NewWithBackends(k8s, nil, nil)
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = k8s
+	layer = NewWithBackends(k8sclients, nil, nil)
 	meshSvc = layer.Mesh
 	result, err = meshSvc.IsMeshConfigured()
 	check.Nil(err, "IsMeshConfigured failed: %s", err)
@@ -380,7 +389,10 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 	k8s.On("GetServicesByLabels", "foo", "app.kubernetes.io/part-of=kiali").Return(kialiSvc, nil)
 
 	// Create a MeshService and invoke IsMeshConfigured
-	layer := NewWithBackends(k8s, nil, nil)
+	clients := make(map[string]kubernetes.ClientInterface)
+	clients[kubernetes.HomeClusterName] = k8s
+	clients["KialiCluster"] = k8s
+	layer := NewWithBackends(clients, nil, nil)
 	meshSvc := layer.Mesh
 	result, err := meshSvc.ResolveKialiControlPlaneCluster(nil)
 	check.Nil(err, "ResolveKialiControlPlaneCluster failed: %s", err)
@@ -394,7 +406,9 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 
-	layer = NewWithBackends(k8s, nil, nil)
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = k8s
+	layer = NewWithBackends(k8sclients, nil, nil)
 	meshSvc = layer.Mesh
 	result, err = meshSvc.ResolveKialiControlPlaneCluster(nil)
 	check.Nil(err, "ResolveKialiControlPlaneCluster failed: %s", err)
@@ -420,7 +434,9 @@ func TestCanaryUpgradeNotConfigured(t *testing.T) {
 	k8s.On("GetNamespaces", "istio.io/rev=canary").Return([]core_v1.Namespace{}, nil)
 
 	// Create a MeshService and invoke IsMeshConfigured
-	layer := NewWithBackends(k8s, nil, nil)
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = k8s
+	layer := NewWithBackends(k8sclients, nil, nil)
 	meshSvc := layer.Mesh
 
 	canaryUpgradeStatus, err := meshSvc.CanaryUpgradeStatus()
@@ -458,7 +474,9 @@ func TestCanaryUpgradeConfigured(t *testing.T) {
 	k8s.On("GetNamespaces", "istio.io/rev=canary").Return(migratedNamespaces, nil)
 
 	// Create a MeshService and invoke IsMeshConfigured
-	layer := NewWithBackends(k8s, nil, nil)
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = k8s
+	layer := NewWithBackends(k8sclients, nil, nil)
 	meshSvc := layer.Mesh
 
 	canaryUpgradeStatus, err := meshSvc.CanaryUpgradeStatus()

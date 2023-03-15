@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"crypto/md5"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -25,7 +26,8 @@ const HomeClusterName = "_kiali_home"
 
 // ClientFactory interface for the clientFactory object
 type ClientFactory interface {
-	GetClient(authInfo *api.AuthInfo) (ClientInterface, error)
+	GetClient(authInfo *api.AuthInfo) (ClientInterface, error) // TODO: Make private
+	GetClients(authInfo *api.AuthInfo) (map[string]ClientInterface, error)
 	GetSAClient(cluster string) ClientInterface
 	GetSAHomeClusterClient() ClientInterface
 	GetClusterNames() []string
@@ -40,7 +42,7 @@ type clientFactory struct {
 	baseRestConfig *rest.Config
 	// clientEntries contain user clients that are used to authenticate as logged in users.
 	// Keyed by hash code generated from auth data.
-	clientEntries map[string]ClientInterface
+	clientEntries map[string]map[string]ClientInterface // By token by cluster
 	// mutex for when accessing the stored clients
 	mutex sync.RWMutex
 	// when a client is expired, a signal with its tokenHash will be sent to recycleChan
@@ -82,7 +84,7 @@ func GetClientFactory() (ClientFactory, error) {
 func newClientFactory(restConfig *rest.Config) (*clientFactory, error) {
 	f := &clientFactory{
 		baseRestConfig:  restConfig,
-		clientEntries:   make(map[string]ClientInterface),
+		clientEntries:   make(map[string]map[string]ClientInterface),
 		recycleChan:     make(chan string),
 		saClientEntries: make(map[string]ClientInterface),
 	}
@@ -122,7 +124,7 @@ func newClientFactory(restConfig *rest.Config) (*clientFactory, error) {
 
 // newClient creates a new ClientInterface based on a users k8s token
 // TODO: this probably needs a clusterName parameter and the server-side API info needs to be obtained from a remoteClusterInfo
-func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.Duration) (ClientInterface, error) {
+func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.Duration, cluster string) (ClientInterface, error) {
 	config := *cf.baseRestConfig
 
 	config.BearerToken = authInfo.Token
@@ -141,7 +143,17 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 	// the token is the one of the Kiali SA, the proxy can be bypassed.
 	cfg := kialiConfig.Get()
 	if cfg.Auth.Strategy == kialiConfig.AuthStrategyOpenId && cfg.Auth.OpenId.ApiProxy != "" && cfg.Auth.OpenId.ApiProxyCAData != "" {
-		kialiToken, err := GetKialiTokenForHomeCluster()
+
+		var kialiToken string
+		var err error
+
+		if cluster == HomeClusterName {
+			kialiToken, err = GetKialiTokenForHomeCluster()
+		} else {
+			// TODO: Check for errors
+			kialiToken, err = cf.GetSAClient(cluster).GetToken(), nil
+		}
+
 		if err != nil {
 			return nil, err
 		}
@@ -212,24 +224,46 @@ func (cf *clientFactory) newSAClient(clusterInfo *RemoteClusterInfo) (*K8SClient
 
 // getClient returns a client for the specified token. Creating one if necessary.
 func (cf *clientFactory) GetClient(authInfo *api.AuthInfo) (ClientInterface, error) {
-	return cf.getRecycleClient(authInfo, defaultExpirationTime)
+	return cf.getRecycleClient(authInfo, defaultExpirationTime, HomeClusterName)
+}
+
+// getClient returns a client for the specified token. Creating one if necessary.
+func (cf *clientFactory) GetClients(authInfo *api.AuthInfo) (map[string]ClientInterface, error) {
+	clients := make(map[string]ClientInterface)
+	for _, cluster := range cf.GetClusterNames() {
+		ci, err := cf.getRecycleClient(authInfo, defaultExpirationTime, cluster)
+		if err == nil {
+			clients[cluster] = ci
+		} else {
+			log.Errorf("Error returning client %s", err)
+		}
+	}
+	if len(clients) > 0 {
+		return clients, nil
+	} else {
+		return nil, errors.New("Error getting clients")
+	}
+
 }
 
 // getRecycleClient returns a client for the specified token with expirationTime. Creating one if necessary.
-func (cf *clientFactory) getRecycleClient(authInfo *api.AuthInfo, expirationTime time.Duration) (ClientInterface, error) {
+func (cf *clientFactory) getRecycleClient(authInfo *api.AuthInfo, expirationTime time.Duration, cluster string) (ClientInterface, error) {
 	cf.mutex.Lock()
 	defer cf.mutex.Unlock()
 	tokenHash := getTokenHash(authInfo)
-	if cEntry, ok := cf.clientEntries[tokenHash]; ok {
+	if cEntry, ok := cf.clientEntries[tokenHash][cluster]; ok {
 		return cEntry, nil
 	} else {
-		client, err := cf.newClient(authInfo, expirationTime)
+		client, err := cf.newClient(authInfo, expirationTime, cluster)
 		if err != nil {
 			log.Errorf("Error fetching the Kubernetes client: %v", err)
 			return nil, err
 		}
 
-		cf.clientEntries[getTokenHash(authInfo)] = client
+		if cf.clientEntries[getTokenHash(authInfo)] == nil {
+			cf.clientEntries[getTokenHash(authInfo)] = make(map[string]ClientInterface)
+		}
+		cf.clientEntries[getTokenHash(authInfo)][cluster] = client
 		internalmetrics.SetKubernetesClients(len(cf.clientEntries))
 		return client, nil
 	}
@@ -238,7 +272,7 @@ func (cf *clientFactory) getRecycleClient(authInfo *api.AuthInfo, expirationTime
 // hasClient check if clientFactory has a client, return the client if clientFactory has it
 // This is a helper function for testing.
 // It uses the shared lock so beware of nested locking with other methods.
-func (cf *clientFactory) hasClient(authInfo *api.AuthInfo) (ClientInterface, bool) {
+func (cf *clientFactory) hasClient(authInfo *api.AuthInfo) (map[string]ClientInterface, bool) {
 	tokenHash := getTokenHash(authInfo)
 	cf.mutex.RLock()
 	cEntry, ok := cf.clientEntries[tokenHash]
@@ -273,7 +307,7 @@ func (cf *clientFactory) deleteClient(token string) {
 	cf.mutex.Lock()
 	defer cf.mutex.Unlock()
 	delete(cf.clientEntries, token)
-	internalmetrics.SetKubernetesClients(len(cf.clientEntries))
+	internalmetrics.SetKubernetesClients(len(cf.clientEntries)) // TODO: + 2 dimmension map?
 }
 
 // getTokenHash get the token hash of a client

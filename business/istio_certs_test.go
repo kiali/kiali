@@ -24,7 +24,10 @@ func TestCertificatesInformationIndicatorsDisabled(t *testing.T) {
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 
-	layer := NewWithBackends(k8s, nil, nil)
+	clients := make(map[string]kubernetes.ClientInterface)
+	clients[kubernetes.HomeClusterName] = k8s
+
+	layer := NewWithBackends(clients, nil, nil)
 	ics := layer.IstioCerts
 
 	certs, _ := ics.GetCertsInfo()
@@ -70,7 +73,9 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 	k8s.On("GetSecret", conf.IstioNamespace, "cacerts").Return(&core_v1.Secret{}, kubernetes.NewNotFound("cacerts", "v1", "Secret"))
 	k8s.On("GetSecret", conf.IstioNamespace, "istio-ca-secret").Return(&secret, nil)
 
-	layer := NewWithBackends(k8s, nil, nil)
+	clients := make(map[string]kubernetes.ClientInterface)
+	clients[kubernetes.HomeClusterName] = k8s
+	layer := NewWithBackends(clients, nil, nil)
 	ics := layer.IstioCerts
 
 	certs, _ := ics.GetCertsInfo()
@@ -126,7 +131,9 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 	forbiddenError := errors.NewForbidden(schema.GroupResource{Group: "", Resource: "Secret"}, "istio-ca-secret", nil)
 	k8s.On("GetSecret", conf.IstioNamespace, "istio-ca-secret").Return(&secret, forbiddenError)
 
-	layer := NewWithBackends(k8s, nil, nil)
+	clients := make(map[string]kubernetes.ClientInterface)
+	clients[kubernetes.HomeClusterName] = k8s
+	layer := NewWithBackends(clients, nil, nil)
 	ics := layer.IstioCerts
 
 	certs, _ := ics.GetCertsInfo()
@@ -186,7 +193,9 @@ cdLzuNyDoeWOHU7mx52TuTwj3eObtQM+hlI=
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetSecret", conf.IstioNamespace, "cacerts").Return(&secret, nil)
 
-	layer := NewWithBackends(k8s, nil, nil)
+	clients := make(map[string]kubernetes.ClientInterface)
+	clients[kubernetes.HomeClusterName] = k8s
+	layer := NewWithBackends(clients, nil, nil)
 	ics := layer.IstioCerts
 
 	certs, _ := ics.GetCertsInfo()
@@ -324,7 +333,9 @@ iMXzPzS/OeYyKQ==
 	k8s.On("GetSecret", conf.IstioNamespace, "dns.example1-service-account").Return(&example1secret, nil)
 	k8s.On("GetSecret", conf.IstioNamespace, "dns.example2-service-account").Return(&example2secret, nil)
 
-	layer := NewWithBackends(k8s, nil, nil)
+	clients := make(map[string]kubernetes.ClientInterface)
+	clients[kubernetes.HomeClusterName] = k8s
+	layer := NewWithBackends(clients, nil, nil)
 	ics := layer.IstioCerts
 
 	certs, _ := ics.GetCertsInfo()
@@ -409,7 +420,9 @@ iMXzPzS/OeYyKQ==
 	k8s.On("GetSecret", conf.IstioNamespace, "dns.example1-service-account").Return(&example1secret, nil)
 	k8s.On("GetSecret", conf.IstioNamespace, "dns.example2-service-account").Return(&core_v1.Secret{}, kubernetes.NewNotFound("cacerts", "v1", "Secret"))
 
-	layer := NewWithBackends(k8s, nil, nil)
+	clients := make(map[string]kubernetes.ClientInterface)
+	clients[kubernetes.HomeClusterName] = k8s
+	layer := NewWithBackends(clients, nil, nil)
 	ics := layer.IstioCerts
 
 	_, err := ics.GetCertsInfo()

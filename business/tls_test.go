@@ -313,7 +313,9 @@ func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
 
 	autoMtls := false
 	kialiCache = cache.FakeTlsKialiCache("token", nss, ps, drs)
-	TLSService := TLSService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil), enabledAutoMtls: &autoMtls}
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = k8s
+	TLSService := TLSService{k8s: k8s, businessLayer: NewWithBackends(k8sclients, nil, nil), enabledAutoMtls: &autoMtls}
 	status, err := TLSService.NamespaceWidemTLSStatus(context.TODO(), "bookinfo")
 
 	cleanTestGlobals()
@@ -347,7 +349,9 @@ func testNamespaceScenario(exStatus string, drs []*networking_v1beta1.Destinatio
 	config.Set(conf)
 
 	kialiCache = cache.FakeTlsKialiCache("token", nss, ps, drs)
-	TLSService := &TLSService{k8s: k8s, enabledAutoMtls: &autoMtls, businessLayer: NewWithBackends(k8s, nil, nil)}
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = k8s
+	TLSService := &TLSService{k8s: k8s, enabledAutoMtls: &autoMtls, businessLayer: NewWithBackends(k8sclients, nil, nil)}
 	status, err := TLSService.NamespaceWidemTLSStatus(context.TODO(), "bookinfo")
 
 	cleanTestGlobals()
@@ -393,7 +397,9 @@ func fakePeerAuthn(name, namespace string, peers *api_security_v1beta1.PeerAuthe
 
 func getTLSService(k8s kubernetes.ClientInterface, autoMtls bool, namespaces []string, pa []*security_v1beta1.PeerAuthentication, dr []*networking_v1beta1.DestinationRule) *TLSService {
 	kialiCache = cache.FakeTlsKialiCache("token", namespaces, pa, dr)
-	return &TLSService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil), enabledAutoMtls: &autoMtls}
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = k8s
+	return &TLSService{k8s: k8s, businessLayer: NewWithBackends(k8sclients, nil, nil), enabledAutoMtls: &autoMtls}
 }
 
 func fakeStrictMeshPeerAuthentication(name string) []*security_v1beta1.PeerAuthentication {
