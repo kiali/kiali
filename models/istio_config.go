@@ -36,6 +36,8 @@ type IstioConfigList struct {
 	PeerAuthentications    []*security_v1beta.PeerAuthentication    `json:"peerAuthentications"`
 	RequestAuthentications []*security_v1beta.RequestAuthentication `json:"requestAuthentications"`
 	IstioValidations       IstioValidations                         `json:"validations"`
+
+	Cluster string `json:"cluster"`
 }
 
 type IstioConfigDetails struct {
@@ -63,6 +65,8 @@ type IstioConfigDetails struct {
 	IstioValidation       *IstioValidation    `json:"validation"`
 	IstioReferences       *IstioReferences    `json:"references"`
 	IstioConfigHelpFields []IstioConfigHelp   `json:"help"`
+
+	Cluster string `json:"cluster"`
 }
 
 // IstioConfigHelp represents a help message for a given Istio object type and field
