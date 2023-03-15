@@ -52,6 +52,9 @@ type ServiceOverview struct {
 
 	// Health
 	Health ServiceHealth `json:"health,omitempty"`
+
+	// Cluster
+	Cluster string `json:"cluster"`
 }
 
 type ServiceList struct {
@@ -97,6 +100,7 @@ type Service struct {
 	Annotations       map[string]string `json:"annotations"`
 	HealthAnnotations map[string]string `json:"healthAnnotations"`
 	AdditionalDetails []AdditionalItem  `json:"additionalDetails"`
+	Cluster           string            `json:"cluster"`
 }
 
 func (so *ServiceOverview) ParseToService() *Service {

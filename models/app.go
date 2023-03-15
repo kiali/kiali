@@ -53,6 +53,9 @@ type WorkloadItem struct {
 }
 
 type App struct {
+	// Cluster where the app lives in
+	Cluster string
+
 	// Namespace where the app lives in
 	// required: true
 	// example: bookinfo

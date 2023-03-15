@@ -103,6 +103,8 @@ type WorkloadListItem struct {
 
 	// Health
 	Health WorkloadHealth `json:"health,omitempty"`
+
+	Cluster string `json:"cluster"`
 }
 
 type WorkloadOverviews []*WorkloadListItem
@@ -142,6 +144,8 @@ type Workload struct {
 
 	// Health
 	Health WorkloadHealth `json:"health"`
+
+	Cluster string `json:"cluster"`
 }
 
 type Workloads []*Workload
@@ -164,6 +168,7 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	}
 	workload.HealthAnnotations = w.HealthAnnotations
 	workload.IstioReferences = []*IstioValidationKey{}
+	workload.Cluster = w.Cluster
 
 	/** Check the labels app and version required by Istio in template Pods*/
 	_, workload.AppLabel = w.Labels[conf.IstioLabels.AppLabelName]
