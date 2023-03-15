@@ -175,9 +175,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 			// TODO: Return error if one failure?
 			return nil, result.err
 		}
-		for _, clusterNamespace := range result.ns {
-			namespaces = append(namespaces, clusterNamespace)
-		}
+		namespaces = append(namespaces, result.ns...)
 	}
 
 	resultns := namespaces

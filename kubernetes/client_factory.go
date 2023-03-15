@@ -184,7 +184,25 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 		config.Impersonate.Extra = authInfo.ImpersonateUserExtra
 	}
 
-	newClient, err := NewClientFromConfig(&config)
+	var newClient ClientInterface
+	var err error
+
+	if cluster == HomeClusterName {
+		newClient, err = NewClientFromConfig(&config)
+	} else {
+		// Remote clusters
+		clusterInfo, err := GetRemoteClusterInfos()
+		if err == nil {
+			remoteConfig, err2 := GetConfigForRemoteClusterInfo(clusterInfo[cluster])
+			if err2 == nil {
+				log.Errorf("Error getting remote cluster [%s] info: %c", cluster, err2)
+			}
+			newClient, err = NewClientFromConfig(remoteConfig)
+		} else {
+			log.Errorf("Error getting remote cluster infos: %c", err)
+		}
+
+	}
 
 	// check if client is created correctly
 	// if it is true, run to recycle client
