@@ -91,6 +91,9 @@ func TestGetAppFromDeployments(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
 
+	t.Setenv("KUBERNETES_SERVICE_HOST", "127.0.0.2")
+	t.Setenv("KUBERNETES_SERVICE_PORT", "9443")
+
 	conf := config.NewConfig()
 	conf.ExternalServices.CustomDashboards.Enabled = false
 	config.Set(conf)
@@ -134,6 +137,9 @@ func TestGetAppListFromReplicaSets(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
 
+	t.Setenv("KUBERNETES_SERVICE_HOST", "127.0.0.2")
+	t.Setenv("KUBERNETES_SERVICE_PORT", "9443")
+
 	// Setup mocks
 	// Auxiliar fake* tests defined in workload_test.go
 	objects := []runtime.Object{
@@ -164,6 +170,9 @@ func TestGetAppListFromReplicaSets(t *testing.T) {
 func TestGetAppFromReplicaSets(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
+
+	t.Setenv("KUBERNETES_SERVICE_HOST", "127.0.0.2")
+	t.Setenv("KUBERNETES_SERVICE_PORT", "9443")
 
 	// Setup mocks
 	objects := []runtime.Object{
@@ -206,6 +215,9 @@ func TestJoinMap(t *testing.T) {
 		"key1": "val1",
 		"key2": "val2",
 	}
+
+	t.Setenv("KUBERNETES_SERVICE_HOST", "127.0.0.2")
+	t.Setenv("KUBERNETES_SERVICE_PORT", "9443")
 
 	joinMap(tempLabels, labelsA)
 	assert.Len(tempLabels, 2)
