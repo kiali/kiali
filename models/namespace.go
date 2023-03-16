@@ -32,6 +32,8 @@ type Namespace struct {
 
 	// Specific annotations used in Kiali
 	Annotations map[string]string `json:"annotations"`
+
+	Cluster string `json:"cluster"`
 }
 
 type Namespaces []Namespace
