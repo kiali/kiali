@@ -244,7 +244,7 @@ func (in *NamespaceService) GetNamespacesByClient(client kubernetes.ClientInterf
 					} else {
 						// we have already got those namespaces that match the LabelSelectorInclude - that is our seed list.
 						// but we need ALL namespaces so we can look for more that match the Include list.
-						if allProjects, err := client.GetProjects(""); err != nil {
+						if allProjects, err := in.k8s[cluster].GetProjects(""); err != nil {
 							return nil, err
 						} else {
 							allNamespaces = models.CastProjectCollection(allProjects)
@@ -444,6 +444,7 @@ func (in *NamespaceService) isIncludedNamespace(namespace string) bool {
 }
 
 // GetNamespace returns the definition of the specified namespace.
+// TODO: Multicluster: We are going to need something else to identify the namespace, the cluster
 func (in *NamespaceService) GetNamespace(ctx context.Context, namespace string) (*models.Namespace, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetNamespace",
@@ -476,7 +477,7 @@ func (in *NamespaceService) GetNamespace(ctx context.Context, namespace string) 
 	var result models.Namespace
 	if in.hasProjects {
 		var project *osproject_v1.Project
-		// TOOD: Multicluster iterate by cluster
+		// TODO: Multicluster Use the cluster
 		project, err = in.k8s[kubernetes.HomeClusterName].GetProject(namespace)
 		if err != nil {
 			return nil, err
@@ -494,9 +495,9 @@ func (in *NamespaceService) GetNamespace(ctx context.Context, namespace string) 
 				return nil, fmt.Errorf("Error getting client factory")
 			}
 		}
+		// TODO: Use the cluster
 		for _, cluster := range clientFactory.GetClusterNames() {
-			kialiClient := clientFactory.GetSAClient(cluster)
-			ns, err = kialiClient.GetNamespace(namespace)
+			ns, err = in.k8s[cluster].GetNamespace(namespace)
 			if ns != nil {
 				cl = cluster
 				break
