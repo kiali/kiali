@@ -54,9 +54,6 @@ func TestGetAppListFromDeployments(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
-	t.Setenv("KUBERNETES_SERVICE_HOST", "127.0.0.2")
-	t.Setenv("KUBERNETES_SERVICE_PORT", "9443")
-
 	// Auxiliar fake* tests defined in workload_test.go
 	objects := []runtime.Object{
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
@@ -71,6 +68,8 @@ func TestGetAppListFromDeployments(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	k8s.OpenShift = true
 	k8s.Token = "token" // Not needed a result, just to not send an error to test this usecase
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
 
 	stopCache := setupTestingKialiCache(k8s, nil, require)
 	defer stopCache()
@@ -91,9 +90,6 @@ func TestGetAppFromDeployments(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
 
-	t.Setenv("KUBERNETES_SERVICE_HOST", "127.0.0.2")
-	t.Setenv("KUBERNETES_SERVICE_PORT", "9443")
-
 	conf := config.NewConfig()
 	conf.ExternalServices.CustomDashboards.Enabled = false
 	config.Set(conf)
@@ -113,6 +109,8 @@ func TestGetAppFromDeployments(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	k8s.OpenShift = true
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
 
 	stopCache := setupTestingKialiCache(k8s, conf, require)
 	defer stopCache()
@@ -137,9 +135,6 @@ func TestGetAppListFromReplicaSets(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
 
-	t.Setenv("KUBERNETES_SERVICE_HOST", "127.0.0.2")
-	t.Setenv("KUBERNETES_SERVICE_PORT", "9443")
-
 	// Setup mocks
 	// Auxiliar fake* tests defined in workload_test.go
 	objects := []runtime.Object{
@@ -152,6 +147,8 @@ func TestGetAppListFromReplicaSets(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	k8s.OpenShift = true
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
 
 	stopCache := setupTestingKialiCache(k8s, nil, require)
 	defer stopCache()
@@ -171,9 +168,6 @@ func TestGetAppFromReplicaSets(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
 
-	t.Setenv("KUBERNETES_SERVICE_HOST", "127.0.0.2")
-	t.Setenv("KUBERNETES_SERVICE_PORT", "9443")
-
 	// Setup mocks
 	objects := []runtime.Object{
 		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
@@ -189,6 +183,8 @@ func TestGetAppFromReplicaSets(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	k8s.OpenShift = true
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
 
 	stopCache := setupTestingKialiCache(k8s, nil, require)
 	defer stopCache()
@@ -215,9 +211,6 @@ func TestJoinMap(t *testing.T) {
 		"key1": "val1",
 		"key2": "val2",
 	}
-
-	t.Setenv("KUBERNETES_SERVICE_HOST", "127.0.0.2")
-	t.Setenv("KUBERNETES_SERVICE_PORT", "9443")
 
 	joinMap(tempLabels, labelsA)
 	assert.Len(tempLabels, 2)
