@@ -191,17 +191,16 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 		newClient, err = NewClientFromConfig(&config)
 	} else {
 		// Remote clusters
-		clusterInfo, err := GetRemoteClusterInfos()
-		if err == nil {
+		clusterInfo, errClusterInfo := GetRemoteClusterInfos()
+		if errClusterInfo == nil {
 			remoteConfig, err2 := GetConfigForRemoteClusterInfo(clusterInfo[cluster])
 			if err2 == nil {
 				log.Errorf("Error getting remote cluster [%s] info: %c", cluster, err2)
 			}
 			newClient, err = NewClientFromConfig(remoteConfig)
 		} else {
-			log.Errorf("Error getting remote cluster infos: %c", err)
+			log.Errorf("Error getting remote cluster infos: %c", errClusterInfo)
 		}
-
 	}
 
 	// check if client is created correctly

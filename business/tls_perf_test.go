@@ -3,7 +3,6 @@ package business
 import (
 	"context"
 	"fmt"
-	"github.com/kiali/kiali/kubernetes"
 	"os"
 	"strconv"
 	"testing"
@@ -15,6 +14,7 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/tests/data"

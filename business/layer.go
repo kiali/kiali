@@ -90,20 +90,24 @@ func initKialiCache() {
 			clients[kubernetes.HomeClusterName] = kubeClient
 
 			// Remote clusters
-			clusterInfo, err := kubernetes.GetRemoteClusterInfos()
-			for _, c := range clientFactory.GetClusterNames() {
-				remoteConfig, err2 := kubernetes.GetConfigForRemoteClusterInfo(clusterInfo[c])
-				if err2 == nil {
-					kubeClient, errClient := kubernetes.NewClientFromConfig(remoteConfig)
-					if errClient != nil {
-						clients[kubernetes.HomeClusterName] = kubeClient
-					} else {
-						log.Errorf("Error getting client for cluster %s: %s", c, errClient)
-					}
+			clusterInfo, errClusterInfo := kubernetes.GetRemoteClusterInfos()
+			if errClusterInfo == nil {
+				for _, c := range clientFactory.GetClusterNames() {
+					remoteConfig, err2 := kubernetes.GetConfigForRemoteClusterInfo(clusterInfo[c])
+					if err2 == nil {
+						kubeClient, errClient := kubernetes.NewClientFromConfig(remoteConfig)
+						if errClient != nil {
+							clients[kubernetes.HomeClusterName] = kubeClient
+						} else {
+							log.Errorf("Error getting client for cluster %s: %s", c, errClient)
+						}
 
-				} else {
-					log.Errorf("Error getting config for remote cluster info: %s", err2)
+					} else {
+						log.Errorf("Error getting config for remote cluster info: %s", err2)
+					}
 				}
+			} else {
+				log.Errorf("Error getting cluster remote info: %s", errClusterInfo)
 			}
 
 			initNamespaceService := NewNamespaceService(clients)

@@ -149,10 +149,10 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	}
 	resultsCh := make(chan result)
 
-	go func(ctx context.Context) {
+	go func() {
 		for _, cluster := range clusterNames {
 			wg.Add(1)
-			go func(ctx context.Context, c string) {
+			go func(c string) {
 				defer wg.Done()
 				kialiClient := clientFactory.GetSAClient(c)
 				list, error := in.GetNamespacesByClient(kialiClient, c)
@@ -162,11 +162,11 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 				} else {
 					resultsCh <- result{cluster: c, ns: list, err: nil}
 				}
-			}(ctx, cluster)
+			}(cluster)
 		}
 		wg.Wait()
 		close(resultsCh)
-	}(ctx)
+	}()
 
 	// Combine namespace data
 	for result := range resultsCh {
