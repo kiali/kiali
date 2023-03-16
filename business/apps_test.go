@@ -54,6 +54,9 @@ func TestGetAppListFromDeployments(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
+	t.Setenv("KUBERNETES_SERVICE_HOST", "127.0.0.2")
+	t.Setenv("KUBERNETES_SERVICE_PORT", "9443")
+
 	// Auxiliar fake* tests defined in workload_test.go
 	objects := []runtime.Object{
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
