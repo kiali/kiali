@@ -10,7 +10,6 @@ import (
 	osproject_v1 "github.com/openshift/api/project/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -154,8 +153,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 			wg.Add(1)
 			go func(c string) {
 				defer wg.Done()
-				kialiClient := clientFactory.GetSAClient(c)
-				list, error := in.GetNamespacesByClient(kialiClient, c)
+				list, error := in.GetNamespacesByCluster(c)
 				if error != nil {
 					log.Errorf("Error fetching Namespaces per cluster %s: %s", c, error)
 					resultsCh <- result{cluster: c, ns: nil, err: error}
@@ -215,7 +213,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	return resultns, nil
 }
 
-func (in *NamespaceService) GetNamespacesByClient(client kubernetes.ClientInterface, cluster string) ([]models.Namespace, error) {
+func (in *NamespaceService) GetNamespacesByCluster(cluster string) ([]models.Namespace, error) {
 	configObject := config.Get()
 
 	labelSelectorInclude := configObject.API.Namespaces.LabelSelectorInclude
@@ -274,7 +272,7 @@ func (in *NamespaceService) GetNamespacesByClient(client kubernetes.ClientInterf
 			if err != nil {
 				// Fallback to using the Kiali service account, if needed
 				if errors.IsForbidden(err) {
-					if nss, err = in.getNamespacesUsingKialiSA(cluster, client, labelSelectorInclude, err); err != nil {
+					if nss, err = in.getNamespacesUsingKialiSA(cluster, labelSelectorInclude, err); err != nil {
 						return nil, err
 					}
 				} else {
@@ -301,7 +299,7 @@ func (in *NamespaceService) GetNamespacesByClient(client kubernetes.ClientInterf
 					if err != nil {
 						// Fallback to using the Kiali service account, if needed
 						if errors.IsForbidden(err) {
-							if allK8sNamespaces, err = in.getNamespacesUsingKialiSA(cluster, client, "", err); err != nil {
+							if allK8sNamespaces, err = in.getNamespacesUsingKialiSA(cluster, "", err); err != nil {
 								return nil, err
 							}
 						} else {
@@ -339,6 +337,7 @@ func (in *NamespaceService) GetNamespacesByClient(client kubernetes.ClientInterf
 	result := namespaces
 
 	if kialiCache != nil {
+		// Set namespace by user token
 		kialiCache.SetNamespaces(in.k8s[kubernetes.HomeClusterName].GetToken(), result)
 	}
 
@@ -444,7 +443,7 @@ func (in *NamespaceService) isIncludedNamespace(namespace string) bool {
 }
 
 // GetNamespace returns the definition of the specified namespace.
-// TODO: Multicluster: We are going to need something else to identify the namespace, the cluster
+// TODO: Multicluster: We are going to need something else to identify the namespace, the cluster (OR Return a list/array/map)
 func (in *NamespaceService) GetNamespace(ctx context.Context, namespace string) (*models.Namespace, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetNamespace",
@@ -546,24 +545,21 @@ func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace strin
 	return in.GetNamespace(ctx, namespace)
 }
 
-func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, failedClient kubernetes.ClientInterface, labelSelector string, forwardedError error) ([]core_v1.Namespace, error) {
+func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, labelSelector string, forwardedError error) ([]core_v1.Namespace, error) {
 	// Check if we already are using the Kiali ServiceAccount token. If we are, no need to do further processing, since
 	// this would just circle back to the same results.
+	var kialiToken string
 	if cluster == kubernetes.HomeClusterName || cluster == "" {
-		// Check if we already are using the Kiali ServiceAccount token. If we are, no need to do further processing, since
-		// this would just circle back to the same results.
-		if kialiToken, err := kubernetes.GetKialiTokenForHomeCluster(); err != nil {
+		var err error
+		if kialiToken, err = kubernetes.GetKialiTokenForHomeCluster(); err != nil {
 			return nil, err
-		} else if failedClient.GetToken() == kialiToken {
-			return nil, forwardedError
 		}
 	} else {
-		for _, cluster := range clientFactory.GetClusterNames() {
-			token := clientFactory.GetSAClient(cluster).GetToken()
-			if failedClient.GetToken() == token {
-				return nil, forwardedError
-			}
-		}
+		kialiToken = clientFactory.GetSAClient(cluster).GetToken()
+	}
+
+	if in.k8s[cluster].GetToken() == kialiToken {
+		return nil, forwardedError
 	}
 
 	// Let's get the namespaces list using the Kiali Service Account
@@ -575,7 +571,7 @@ func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, failedClie
 	// Only take namespaces where the user has privileges
 	var namespaces []core_v1.Namespace
 	for _, item := range nss {
-		if _, getNsErr := failedClient.GetNamespace(item.Name); getNsErr == nil {
+		if _, getNsErr := in.k8s[cluster].GetNamespace(item.Name); getNsErr == nil {
 			// Namespace is accessible
 			namespaces = append(namespaces, item)
 		} else if !errors.IsForbidden(getNsErr) {
@@ -599,38 +595,12 @@ func (in *NamespaceService) getNamespacesForKialiSA(cluster string, labelSelecto
 		}
 	}
 
-	if cluster == kubernetes.HomeClusterName || cluster == "" {
-
-		kialiToken, err := kubernetes.GetKialiTokenForHomeCluster()
-		if err != nil {
-			return nil, err
-		}
-
-		k8s, err := clientFactory.GetClient(&api.AuthInfo{Token: kialiToken})
-		if err != nil {
-			return nil, err
-		}
-
-		nss, err := k8s.GetNamespaces(labelSelector)
-		if err != nil {
-			return nil, err
-		}
-
-		return nss, nil
-	} else {
-		client := clientFactory.GetSAClient(cluster)
-
-		k8s, err := clientFactory.GetClient(&api.AuthInfo{Token: client.GetToken()})
-		if err != nil {
-			return nil, err
-		}
-
-		nss, err := k8s.GetNamespaces(labelSelector)
-		if err != nil {
-			return nil, err
-		}
-
-		return nss, nil
+	client := clientFactory.GetSAClient(cluster)
+	nss, err := client.GetNamespaces(labelSelector)
+	if err != nil {
+		return nil, err
 	}
+
+	return nss, nil
 
 }
