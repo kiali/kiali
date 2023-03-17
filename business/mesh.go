@@ -100,7 +100,7 @@ type meshTrafficPolicyConfig struct {
 	} `yaml:"outboundTrafficPolicy,omitempty"`
 }
 
-// NewMeshService initializes a new MeshService structure with the given k8s client and
+// NewMeshService initializes a new MeshService structure with the given k8sClients client and
 // newRemoteClientFunc arguments (see the MeshService struct for details). The newRemoteClientFunc
 // can be passed a nil value and a default function will be used.
 func NewMeshService(k8s kubernetes.ClientInterface, layer *Layer, newRemoteClientFunc func(config *rest.Config) (kubernetes.ClientInterface, error)) MeshService {
@@ -334,7 +334,7 @@ func findKialiInNamespace(ctx context.Context, namespace string, clusterName str
 				services = kubernetes.FilterServicesByLabels(selector, tmpSvc)
 			}
 		} else {
-			services, getSvcErr = layer.k8s[clusterName].GetServicesByLabels(kialiNs.Name, "app.kubernetes.io/part-of=kiali")
+			services, getSvcErr = layer.k8sClients[clusterName].GetServicesByLabels(kialiNs.Name, "app.kubernetes.io/part-of=kiali")
 		}
 		if getSvcErr != nil && !errors.IsNotFound(getSvcErr) {
 			log.Warningf("Discovery for Kiali instances in cluster [%s] failed when finding the service in [%s] namespace: %s", clusterName, namespace, getSvcErr.Error())

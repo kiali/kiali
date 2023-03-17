@@ -232,7 +232,7 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 	services := make([]models.ServiceOverview, len(svcs))
 	conf := config.Get()
 
-	// Convert each k8s service into our model
+	// Convert each k8sClients service into our model
 	for i, item := range svcs {
 		sPods := kubernetes.FilterPodsByService(&item, pods)
 		/** Check if Service has istioSidecar deployed */
@@ -593,7 +593,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 	}
 
 	serviceOverviews := make([]*models.ServiceOverview, 0)
-	// Convert filtered k8s services into ServiceOverview, only several attributes are needed
+	// Convert filtered k8sClients services into ServiceOverview, only several attributes are needed
 	for _, item := range rSvcs {
 		// app label selector of services should match, loading all versions
 		if selector, err3 := labels.ConvertSelectorToLabelsMap(labelsSelector); err3 == nil {
@@ -768,5 +768,5 @@ func updateService(layer *Layer, namespace string, service string, jsonPatch str
 	}
 
 	// TODO: Multicluster
-	return layer.k8s[kubernetes.HomeClusterName].UpdateService(namespace, service, jsonPatch, patchType)
+	return layer.k8sClients[kubernetes.HomeClusterName].UpdateService(namespace, service, jsonPatch, patchType)
 }

@@ -24,7 +24,7 @@ type Layer struct {
 	IstioStatus    IstioStatusService
 	IstioCerts     IstioCertsService
 	Jaeger         JaegerService
-	k8s            map[string]kubernetes.ClientInterface // Key is the cluster name
+	k8sClients     map[string]kubernetes.ClientInterface // Key is the cluster name
 	Mesh           MeshService
 	Namespace      NamespaceService
 	OpenshiftOAuth OpenshiftOAuthService
@@ -152,7 +152,7 @@ func Start() {
 
 // Get the business.Layer
 func Get(authInfo *api.AuthInfo) (*Layer, error) {
-	// Creates a new k8s client based on the current users token
+	// Creates new k8s clients based on the current users token
 	k8s, err := clientFactory.GetClients(authInfo)
 	if err != nil {
 		return nil, err
@@ -190,7 +190,7 @@ func SetWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterfac
 	prometheusClient = prom
 }
 
-// NewWithBackends creates the business layer using the passed k8s and prom clients.
+// NewWithBackends creates the business layer using the passed k8sClients and prom clients.
 // Note that the client passed here should *not* be the Kiali ServiceAccount client.
 // It should be the user client based on the logged in user's token.
 func NewWithBackends(k8s map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, jaegerClient JaegerLoader) *Layer {
@@ -201,7 +201,7 @@ func NewWithBackends(k8s map[string]kubernetes.ClientInterface, prom prometheus.
 	temporaryLayer.IstioStatus = IstioStatusService{k8s: k8s[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
 	temporaryLayer.IstioCerts = IstioCertsService{k8s: k8s[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
 	temporaryLayer.Jaeger = JaegerService{loader: jaegerClient, businessLayer: temporaryLayer}
-	temporaryLayer.k8s = k8s
+	temporaryLayer.k8sClients = k8s
 	temporaryLayer.Mesh = NewMeshService(k8s[kubernetes.HomeClusterName], temporaryLayer, nil)
 	temporaryLayer.Namespace = NewNamespaceService(k8s)
 	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: k8s[kubernetes.HomeClusterName]}

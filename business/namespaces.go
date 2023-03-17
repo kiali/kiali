@@ -18,7 +18,7 @@ import (
 	"github.com/kiali/kiali/observability"
 )
 
-// NamespaceService deals with fetching k8s namespaces / OpenShift projects and convert to kiali model
+// NamespaceService deals with fetching k8sClients namespaces / OpenShift projects and convert to kiali model
 type NamespaceService struct {
 	k8s                    map[string]kubernetes.ClientInterface
 	hasProjects            bool
@@ -263,7 +263,7 @@ func (in *NamespaceService) GetNamespacesByCluster(cluster string) ([]models.Nam
 		}
 	} else {
 		// if the accessible namespaces define a distinct list of namespaces, use only those.
-		// If accessible namespaces include the special "**" (meaning all namespaces) ask k8s for them.
+		// If accessible namespaces include the special "**" (meaning all namespaces) ask k8sClients for them.
 		// Note that "**" requires cluster role permission to list all namespaces.
 		accessibleNamespaces := configObject.Deployment.AccessibleNamespaces
 
