@@ -20,12 +20,11 @@ type Namespace struct {
 	// required: true
 	Name string `json:"name"`
 
-	// The name of the cluster.
-	// Empty when local
+	// The name of the cluster
 	//
 	// example:  east
 	// required: true
-	Clusters []string `json:"clusters"`
+	Cluster string `json:"cluster"`
 
 	// Creation date of the namespace.
 	// There is no need to export this through the API. So, this is
@@ -56,7 +55,7 @@ func CastNamespaceCollection(ns []core_v1.Namespace, cluster string) []Namespace
 func CastNamespace(ns core_v1.Namespace, cluster string) Namespace {
 	namespace := Namespace{}
 	namespace.Name = ns.Name
-	namespace.Clusters = append(namespace.Clusters, cluster)
+	namespace.Cluster = cluster
 	namespace.CreationTimestamp = ns.CreationTimestamp.Time
 	namespace.Labels = ns.Labels
 	namespace.Annotations = make(map[string]string)

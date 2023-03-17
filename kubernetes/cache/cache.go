@@ -35,10 +35,10 @@ type KialiCache interface {
 
 // namespaceCache caches namespaces according to their token.
 type namespaceCache struct {
-	created time.Time
-	// TODO: Decide if this is the best option
-	namespaces    []models.Namespace                     // Merge namespaces with the same name and cluster
-	nameNamespace map[string]map[string]models.Namespace // By namespace name and cluster to keep uniqueness
+	created          time.Time
+	namespaces       []models.Namespace                     // Merge namespaces with the same name and cluster
+	nameNamespace    map[string]map[string]models.Namespace // By namespace name, by cluster
+	clusterNamespace map[string]map[string]models.Namespace // By cluster, by namespace name
 }
 
 type podProxyStatus struct {

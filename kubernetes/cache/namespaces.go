@@ -19,19 +19,24 @@ func (c *kialiCacheImpl) SetNamespaces(token string, namespaces []models.Namespa
 	defer c.tokenLock.Unlock()
 	c.tokenLock.Lock()
 	nameNamespace := make(map[string]map[string]models.Namespace)
+	clusterNamespace := make(map[string]map[string]models.Namespace)
 	for _, ns := range namespaces {
-		for _, cluster := range ns.Clusters {
-			if nameNamespace[ns.Name] == nil {
-				nameNamespace[ns.Name] = make(map[string]models.Namespace)
-			}
-			nameNamespace[ns.Name][cluster] = ns
+		if nameNamespace[ns.Name] == nil {
+			nameNamespace[ns.Name] = make(map[string]models.Namespace)
 		}
+		nameNamespace[ns.Name][ns.Cluster] = ns
+
+		if clusterNamespace[ns.Cluster] == nil {
+			clusterNamespace[ns.Cluster] = make(map[string]models.Namespace)
+		}
+		clusterNamespace[ns.Cluster][ns.Name] = ns
 	}
 
 	c.tokenNamespaces[token] = namespaceCache{
-		created:       time.Now(),
-		namespaces:    namespaces,
-		nameNamespace: nameNamespace,
+		created:          time.Now(),
+		namespaces:       namespaces,
+		nameNamespace:    nameNamespace,
+		clusterNamespace: clusterNamespace,
 	}
 }
 
@@ -56,17 +61,21 @@ func (c *kialiCacheImpl) GetNamespace(token string, namespace string) *models.Na
 		return nil
 	} else {
 		if time.Since(nsToken.created) <= c.tokenNamespaceDuration {
-			for cluster := range nsToken.nameNamespace[namespace] {
-				if ns, existsNamespace := nsToken.nameNamespace[namespace][cluster]; existsNamespace {
+			// TODO: When cluster is used as a parameter
+			/*			if cluster != "" {
+						if nsFound, ok := nsToken.nameNamespace[cluster][namespace]; ok {
+							return &nsFound
+						} else {
+							return nil
+						}
+					}*/
+			for cl := range nsToken.clusterNamespace {
+				if ns, existsNamespace := nsToken.clusterNamespace[cl][namespace]; existsNamespace {
 					// TODO: Return N (Or include the cluster)
 					return &ns
-				} else {
-					return nil
 				}
 			}
-
 		}
-
 		return nil
 	}
 }
