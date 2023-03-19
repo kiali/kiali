@@ -31,6 +31,9 @@ type AppListItem struct {
 
 	// Health
 	Health AppHealth `json:"health,omitempty"`
+
+	// Cluster where the app lives in
+	Cluster string `json:"cluster"`
 }
 
 type WorkloadItem struct {
@@ -50,11 +53,14 @@ type WorkloadItem struct {
 	// List of service accounts involved in this application
 	// required: true
 	ServiceAccountNames []string `json:"serviceAccountNames"`
+
+	// Cluster where the app lives in
+	Cluster string `json:"cluster"`
 }
 
 type App struct {
 	// Cluster where the app lives in
-	Cluster string
+	Cluster string `json:"cluster"`
 
 	// Namespace where the app lives in
 	// required: true
