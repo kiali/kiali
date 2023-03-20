@@ -31,7 +31,7 @@ func setupWorkloadService(k8s kubernetes.ClientInterface, conf *config.Config) W
 	prom := new(prometheustest.PromClientMock)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
-	return *NewWorkloadService(k8s, prom, nil, NewWithBackends(k8sclients, prom, nil), conf)
+	return *NewWorkloadService(k8s, prom, nil, NewWithBackends(k8sclients, k8sclients, prom, nil), conf)
 }
 
 func callStreamPodLogs(svc WorkloadService, namespace, podName string, opts *LogOptions) PodLog {

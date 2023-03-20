@@ -91,7 +91,7 @@ func testPerfScenario(exStatus string, nss []core_v1.Namespace, drs []*networkin
 	kialiCache = cache.FakeTlsKialiCache("token", nsNames, ps, drs)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
-	TLSService := TLSService{k8s: k8s, enabledAutoMtls: &autoMtls, businessLayer: NewWithBackends(k8sclients, nil, nil)}
+	TLSService := TLSService{k8s: k8s, enabledAutoMtls: &autoMtls, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 	for _, ns := range nss {
 		status, err := (TLSService).NamespaceWidemTLSStatus(context.TODO(), ns.Name)
 		assert.NoError(err)

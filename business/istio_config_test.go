@@ -234,7 +234,7 @@ func mockGetIstioConfigList() IstioConfigService {
 	k8s.MockIstio(fakeIstioObjects...)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
-	return IstioConfigService{k8s: k8s, businessLayer: NewWithBackends(k8sclients, nil, nil)}
+	return IstioConfigService{k8s: k8s, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 }
 
 func fakeGetGateways() []*networking_v1beta1.Gateway {
@@ -408,7 +408,7 @@ func mockGetIstioConfigDetails() IstioConfigService {
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
-	return IstioConfigService{k8s: k8s, businessLayer: NewWithBackends(k8sclients, nil, nil)}
+	return IstioConfigService{k8s: k8s, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 }
 
 func TestIsValidHost(t *testing.T) {

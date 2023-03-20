@@ -63,7 +63,7 @@ func TestTokenAuthControllerRejectsUserWithoutPrivilegesInAnyNamespace(t *testin
 	controller := NewTokenAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
 		k8sclients := make(map[string]kubernetes.ClientInterface)
 		k8sclients[kubernetes.HomeClusterName] = k8s
-		return business.NewWithBackends(k8sclients, nil, nil), nil
+		return business.NewWithBackends(k8sclients, k8sclients, nil, nil), nil
 	})
 
 	rr := httptest.NewRecorder()
@@ -107,7 +107,7 @@ func TestTokenAuthControllerRejectsInvalidToken(t *testing.T) {
 	controller := NewTokenAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
 		k8sclients := make(map[string]kubernetes.ClientInterface)
 		k8sclients[kubernetes.HomeClusterName] = k8s
-		return business.NewWithBackends(k8sclients, nil, nil), nil
+		return business.NewWithBackends(k8sclients, k8sclients, nil, nil), nil
 	})
 
 	rr := httptest.NewRecorder()
@@ -130,7 +130,7 @@ func TestTokenAuthControllerRejectsEmptyToken(t *testing.T) {
 	controller := NewTokenAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
 		k8sclients := make(map[string]kubernetes.ClientInterface)
 		k8sclients[kubernetes.HomeClusterName] = new(kubetest.K8SClientMock)
-		return business.NewWithBackends(k8sclients, nil, nil), nil
+		return business.NewWithBackends(k8sclients, k8sclients, nil, nil), nil
 	})
 
 	rr := httptest.NewRecorder()
@@ -162,7 +162,7 @@ func TestTokenAuthControllerValidatesSessionCorrectly(t *testing.T) {
 	controller := NewTokenAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
 		k8sclients := make(map[string]kubernetes.ClientInterface)
 		k8sclients[kubernetes.HomeClusterName] = k8s
-		return business.NewWithBackends(k8sclients, nil, nil), nil
+		return business.NewWithBackends(k8sclients, k8sclients, nil, nil), nil
 	})
 
 	rr = httptest.NewRecorder()
@@ -182,7 +182,7 @@ func TestTokenAuthControllerValidatesSessionWithoutActiveSession(t *testing.T) {
 	controller := NewTokenAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
 		k8sclients := make(map[string]kubernetes.ClientInterface)
 		k8sclients[kubernetes.HomeClusterName] = k8s
-		return business.NewWithBackends(k8sclients, nil, nil), nil
+		return business.NewWithBackends(k8sclients, k8sclients, nil, nil), nil
 	})
 
 	rr := httptest.NewRecorder()
@@ -214,7 +214,7 @@ func TestTokenAuthControllerValidatesSessionForUserWithMissingPrivileges(t *test
 	controller := NewTokenAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
 		k8sclients := make(map[string]kubernetes.ClientInterface)
 		k8sclients[kubernetes.HomeClusterName] = k8s
-		return business.NewWithBackends(k8sclients, nil, nil), nil
+		return business.NewWithBackends(k8sclients, k8sclients, nil, nil), nil
 	})
 
 	rr = httptest.NewRecorder()
@@ -247,7 +247,7 @@ func createValidSession() (*httptest.ResponseRecorder, *UserSessionData, error) 
 	controller := NewTokenAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
 		k8sclients := make(map[string]kubernetes.ClientInterface)
 		k8sclients[kubernetes.HomeClusterName] = k8s
-		return business.NewWithBackends(k8sclients, nil, nil), nil
+		return business.NewWithBackends(k8sclients, k8sclients, nil, nil), nil
 	})
 
 	rr := httptest.NewRecorder()

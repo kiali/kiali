@@ -70,7 +70,7 @@ func TestCBAll(t *testing.T) {
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
-	businessLayer := business.NewWithBackends(k8sclients, nil, nil)
+	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _ := setupTrafficMap()
 
 	assert.Equal(6, len(trafficMap))
@@ -137,7 +137,7 @@ func TestCBSubset(t *testing.T) {
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
-	businessLayer := business.NewWithBackends(k8sclients, nil, nil)
+	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _ := setupTrafficMap()
 
 	assert.Equal(6, len(trafficMap))
@@ -310,7 +310,7 @@ func TestSEInAppBox(t *testing.T) {
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
-	businessLayer := business.NewWithBackends(k8sclients, nil, nil)
+	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 
 	trafficMap := graph.NewTrafficMap()
 	serviceEntryNode, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "ratings", "", "", "", "", graph.GraphTypeVersionedApp)

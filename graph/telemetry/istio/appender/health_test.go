@@ -488,7 +488,7 @@ func TestErrorCausesPanic(t *testing.T) {
 	prom.MockAllRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
-	businessLayer := business.NewWithBackends(k8sclients, prom, nil)
+	businessLayer := business.NewWithBackends(k8sclients, k8sclients, prom, nil)
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
@@ -556,6 +556,6 @@ func setupHealthConfig(services []core_v1.Service, deployments []apps_v1.Deploym
 	prom.MockAllRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
-	businessLayer := business.NewWithBackends(k8sclients, prom, nil)
+	businessLayer := business.NewWithBackends(k8sclients, k8sclients, prom, nil)
 	return businessLayer
 }

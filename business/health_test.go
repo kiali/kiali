@@ -40,7 +40,7 @@ func TestGetServiceHealth(t *testing.T) {
 	prom.MockServiceRequestRates("ns", "httpbin", serviceRates)
 
 	setupGlobalMeshConfig()
-	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, prom, nil)}
+	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, clients, prom, nil)}
 
 	mockSvc := models.Service{}
 	mockSvc.Name = "httpbin"
@@ -84,7 +84,7 @@ func TestGetAppHealth(t *testing.T) {
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
 
-	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, prom, nil)}
+	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, clients, prom, nil)}
 
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockAppRequestRates("ns", "reviews", otherRatesIn, otherRatesOut)
@@ -140,7 +140,7 @@ func TestGetWorkloadHealth(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
-	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, prom, nil)}
+	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, clients, prom, nil)}
 
 	mockWorkload := models.Workload{}
 	mockWorkload.Name = "reviews-v1"
@@ -191,7 +191,7 @@ func TestGetAppHealthWithoutIstio(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
-	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, prom, nil)}
+	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, clients, prom, nil)}
 
 	mockApp := appDetails{}
 
@@ -223,7 +223,7 @@ func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
-	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, prom, nil)}
+	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, clients, prom, nil)}
 
 	mockWorkload := models.Workload{}
 	mockWorkload.Name = "reviews-v1"
@@ -258,7 +258,7 @@ func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
-	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, prom, nil)}
+	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, clients, prom, nil)}
 	criteria := NamespaceHealthCriteria{Namespace: "ns", RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
 	_, _ = hs.GetNamespaceAppHealth(context.TODO(), criteria)
 
@@ -285,7 +285,7 @@ func TestGetNamespaceServiceHealthWithNA(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
-	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, prom, nil)}
+	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, clients, prom, nil)}
 
 	criteria := NamespaceHealthCriteria{Namespace: "tutorial", RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
 	health, err := hs.GetNamespaceServiceHealth(context.TODO(), criteria)

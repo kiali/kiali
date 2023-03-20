@@ -37,7 +37,7 @@ func setupBusinessLayerWithKube(k8s *kubetest.K8SClientMock, istioObjects ...run
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
-	businessLayer := business.NewWithBackends(k8sclients, nil, nil)
+	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 	return businessLayer
 }
 

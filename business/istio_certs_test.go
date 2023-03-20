@@ -27,7 +27,7 @@ func TestCertificatesInformationIndicatorsDisabled(t *testing.T) {
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
 
-	layer := NewWithBackends(clients, nil, nil)
+	layer := NewWithBackends(clients, clients, nil, nil)
 	ics := layer.IstioCerts
 
 	certs, _ := ics.GetCertsInfo()
@@ -75,7 +75,7 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
-	layer := NewWithBackends(clients, nil, nil)
+	layer := NewWithBackends(clients, clients, nil, nil)
 	ics := layer.IstioCerts
 
 	certs, _ := ics.GetCertsInfo()
@@ -133,7 +133,7 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
-	layer := NewWithBackends(clients, nil, nil)
+	layer := NewWithBackends(clients, clients, nil, nil)
 	ics := layer.IstioCerts
 
 	certs, _ := ics.GetCertsInfo()
@@ -195,7 +195,7 @@ cdLzuNyDoeWOHU7mx52TuTwj3eObtQM+hlI=
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
-	layer := NewWithBackends(clients, nil, nil)
+	layer := NewWithBackends(clients, clients, nil, nil)
 	ics := layer.IstioCerts
 
 	certs, _ := ics.GetCertsInfo()
@@ -335,7 +335,7 @@ iMXzPzS/OeYyKQ==
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
-	layer := NewWithBackends(clients, nil, nil)
+	layer := NewWithBackends(clients, clients, nil, nil)
 	ics := layer.IstioCerts
 
 	certs, _ := ics.GetCertsInfo()
@@ -422,7 +422,7 @@ iMXzPzS/OeYyKQ==
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
-	layer := NewWithBackends(clients, nil, nil)
+	layer := NewWithBackends(clients, clients, nil, nil)
 	ics := layer.IstioCerts
 
 	_, err := ics.GetCertsInfo()

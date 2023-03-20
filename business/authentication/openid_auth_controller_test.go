@@ -69,7 +69,7 @@ func TestOpenIdAuthControllerRejectsImplicitFlow(t *testing.T) {
 		}
 		k8sclients := make(map[string]kubernetes.ClientInterface)
 		k8sclients[kubernetes.HomeClusterName] = k8s
-		return business.NewWithBackends(k8sclients, nil, nil), nil
+		return business.NewWithBackends(k8sclients, k8sclients, nil, nil), nil
 	})
 
 	rr := httptest.NewRecorder()
@@ -154,7 +154,7 @@ func TestOpenIdAuthControllerAuthenticatesCorrectlyWithAuthorizationCodeFlow(t *
 		}
 		k8sclients := make(map[string]kubernetes.ClientInterface)
 		k8sclients[kubernetes.HomeClusterName] = k8s
-		return business.NewWithBackends(k8sclients, nil, nil), nil
+		return business.NewWithBackends(k8sclients, k8sclients, nil, nil), nil
 	})
 
 	rr := httptest.NewRecorder()

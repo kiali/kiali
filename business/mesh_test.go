@@ -110,7 +110,7 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
 	clients["KialiCluster"] = k8s
-	layer := NewWithBackends(clients, nil, nil)
+	layer := NewWithBackends(clients, clients, nil, nil)
 	meshSvc := layer.Mesh
 
 	r := httptest.NewRequest("GET", "http://kiali.url.local/", nil)
@@ -218,7 +218,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
-	layer := NewWithBackends(clients, nil, nil)
+	layer := NewWithBackends(clients, clients, nil, nil)
 	meshSvc := layer.Mesh
 	meshSvc.newRemoteClient = newRemoteClient
 
@@ -289,7 +289,7 @@ func TestIsMeshConfiguredIsCached(t *testing.T) {
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
 	// Create a MeshService and invoke IsMeshConfigured
-	layer := NewWithBackends(clients, nil, nil)
+	layer := NewWithBackends(clients, clients, nil, nil)
 	meshSvc := layer.Mesh
 	result, err := meshSvc.IsMeshConfigured()
 	check.Nil(err, "IsMeshConfigured failed: %s", err)
@@ -303,7 +303,7 @@ func TestIsMeshConfiguredIsCached(t *testing.T) {
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
-	layer = NewWithBackends(k8sclients, nil, nil)
+	layer = NewWithBackends(k8sclients, k8sclients, nil, nil)
 	meshSvc = layer.Mesh
 	result, err = meshSvc.IsMeshConfigured()
 	check.Nil(err, "IsMeshConfigured failed: %s", err)
@@ -392,7 +392,7 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
 	clients["KialiCluster"] = k8s
-	layer := NewWithBackends(clients, nil, nil)
+	layer := NewWithBackends(clients, clients, nil, nil)
 	meshSvc := layer.Mesh
 	result, err := meshSvc.ResolveKialiControlPlaneCluster(nil)
 	check.Nil(err, "ResolveKialiControlPlaneCluster failed: %s", err)
@@ -408,7 +408,7 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
-	layer = NewWithBackends(k8sclients, nil, nil)
+	layer = NewWithBackends(k8sclients, k8sclients, nil, nil)
 	meshSvc = layer.Mesh
 	result, err = meshSvc.ResolveKialiControlPlaneCluster(nil)
 	check.Nil(err, "ResolveKialiControlPlaneCluster failed: %s", err)
@@ -436,7 +436,7 @@ func TestCanaryUpgradeNotConfigured(t *testing.T) {
 	// Create a MeshService and invoke IsMeshConfigured
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
-	layer := NewWithBackends(k8sclients, nil, nil)
+	layer := NewWithBackends(k8sclients, k8sclients, nil, nil)
 	meshSvc := layer.Mesh
 
 	canaryUpgradeStatus, err := meshSvc.CanaryUpgradeStatus()
@@ -476,7 +476,7 @@ func TestCanaryUpgradeConfigured(t *testing.T) {
 	// Create a MeshService and invoke IsMeshConfigured
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
-	layer := NewWithBackends(k8sclients, nil, nil)
+	layer := NewWithBackends(k8sclients, k8sclients, nil, nil)
 	meshSvc := layer.Mesh
 
 	canaryUpgradeStatus, err := meshSvc.CanaryUpgradeStatus()
