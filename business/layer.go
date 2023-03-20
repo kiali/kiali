@@ -73,44 +73,9 @@ func initKialiCache() {
 		// TODO: This is leaking cluster-scoped vs. namespace-scoped in a way.
 		var namespaceSeedList []string
 		if !config.Get().AllNamespacesAccessible() {
-
-			clients := make(map[string]kubernetes.ClientInterface)
-			// Home cluster
-			cfg, err := kubernetes.GetConfigForLocalCluster()
-			if err != nil {
-				log.Errorf("Failed to initialize Kiali Cache. Unable to create Kube rest config. Err: %s", err)
-				return
-			}
-
-			kubeClient, err := kubernetes.NewClientFromConfig(cfg)
-			if err != nil {
-				log.Errorf("Failed to initialize Kiali Cache. Unable to create Kube client. Err: %s", err)
-				return
-			}
-			clients[kubernetes.HomeClusterName] = kubeClient
-
-			// Remote clusters
-			clusterInfo, errClusterInfo := kubernetes.GetRemoteClusterInfos()
-			if errClusterInfo == nil {
-				for _, c := range clientFactory.GetClusterNames() {
-					remoteConfig, err2 := kubernetes.GetConfigForRemoteClusterInfo(clusterInfo[c])
-					if err2 == nil {
-						kubeClient, errClient := kubernetes.NewClientFromConfig(remoteConfig)
-						if errClient != nil {
-							clients[kubernetes.HomeClusterName] = kubeClient
-						} else {
-							log.Errorf("Error getting client for cluster %s: %s", c, errClient)
-						}
-
-					} else {
-						log.Errorf("Error getting config for remote cluster info: %s", err2)
-					}
-				}
-			} else {
-				log.Errorf("Error getting cluster remote info: %s", errClusterInfo)
-			}
-
-			initNamespaceService := NewNamespaceService(clients)
+			SAClients := clientFactory.GetSAClients()
+			// Special case when using the SA as the user, to fetch all the namespaces initially
+			initNamespaceService := NewNamespaceService(SAClients, SAClients)
 			nss, err := initNamespaceService.GetNamespaces(context.Background())
 			if err != nil {
 				log.Errorf("Error fetching initial namespaces for populating the Kiali Cache. Details: %s", err)
@@ -180,7 +145,8 @@ func Get(authInfo *api.AuthInfo) (*Layer, error) {
 		return jaegerClient, err
 	}
 
-	return NewWithBackends(k8s, prometheusClient, jaegerLoader), nil
+	kialiSAClient := clientFactory.GetSAClients()
+	return NewWithBackends(k8s, kialiSAClient, prometheusClient, jaegerLoader), nil
 }
 
 // SetWithBackends allows for specifying the ClientFactory and Prometheus clients to be used.
@@ -193,9 +159,9 @@ func SetWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterfac
 // NewWithBackends creates the business layer using the passed k8sClients and prom clients.
 // Note that the client passed here should *not* be the Kiali ServiceAccount client.
 // It should be the user client based on the logged in user's token.
-func NewWithBackends(k8s map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, jaegerClient JaegerLoader) *Layer {
+func NewWithBackends(k8s map[string]kubernetes.ClientInterface, kialiSAClients map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, jaegerClient JaegerLoader) *Layer {
 	temporaryLayer := &Layer{}
-	temporaryLayer.App = AppService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
+	temporaryLayer.App = AppService{prom: prom, k8s: k8s[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
 	temporaryLayer.Health = HealthService{prom: prom, businessLayer: temporaryLayer}
 	temporaryLayer.IstioConfig = IstioConfigService{k8s: k8s[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
 	temporaryLayer.IstioStatus = IstioStatusService{k8s: k8s[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
@@ -203,7 +169,7 @@ func NewWithBackends(k8s map[string]kubernetes.ClientInterface, prom prometheus.
 	temporaryLayer.Jaeger = JaegerService{loader: jaegerClient, businessLayer: temporaryLayer}
 	temporaryLayer.k8sClients = k8s
 	temporaryLayer.Mesh = NewMeshService(k8s[kubernetes.HomeClusterName], temporaryLayer, nil)
-	temporaryLayer.Namespace = NewNamespaceService(k8s)
+	temporaryLayer.Namespace = NewNamespaceService(k8s, kialiSAClients)
 	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: k8s[kubernetes.HomeClusterName]}
 	temporaryLayer.ProxyStatus = ProxyStatusService{k8s: k8s[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
 	// Out of order because it relies on ProxyStatus

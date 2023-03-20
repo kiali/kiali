@@ -61,6 +61,12 @@ func (o *K8SClientFactoryMock) GetSAClient(cluster string) kubernetes.ClientInte
 	return o.Clients[cluster]
 }
 
+func (o *K8SClientFactoryMock) GetSAClients() map[string]kubernetes.ClientInterface {
+	o.lock.RLock()
+	defer o.lock.RUnlock()
+	return o.Clients
+}
+
 func (o *K8SClientFactoryMock) GetSAHomeClusterClient() kubernetes.ClientInterface {
 	o.lock.RLock()
 	defer o.lock.RUnlock()

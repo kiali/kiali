@@ -29,6 +29,7 @@ type ClientFactory interface {
 	GetClient(authInfo *api.AuthInfo) (ClientInterface, error) // TODO: Make private
 	GetClients(authInfo *api.AuthInfo) (map[string]ClientInterface, error)
 	GetSAClient(cluster string) ClientInterface
+	GetSAClients() map[string]ClientInterface
 	GetSAHomeClusterClient() ClientInterface
 	GetClusterNames() []string
 }
@@ -237,6 +238,11 @@ func (cf *clientFactory) newSAClient(clusterInfo *RemoteClusterInfo) (*K8SClient
 	} else {
 		return NewClientFromConfig(config)
 	}
+}
+
+// getClient returns a client for the specified token. Creating one if necessary.
+func (cf *clientFactory) GetSAClients() map[string]ClientInterface {
+	return cf.saClientEntries
 }
 
 // getClient returns a client for the specified token. Creating one if necessary.
