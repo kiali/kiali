@@ -43,6 +43,12 @@ ${CLIENT_EXE} apply --context=${CLUSTER1_CONTEXT} -n ${ISTIO_NAMESPACE} -f $EXPO
 EXPOSE_SERVICES_YAML="${ISTIO_DIR}/samples/multicluster/expose-services.yaml"
 ${CLIENT_EXE} apply --context=${CLUSTER1_CONTEXT} -n ${ISTIO_NAMESPACE} -f $EXPOSE_SERVICES_YAML
 
+# Create Kiali remote secrets
+#source ${SCRIPT_DIR}/kiali-create-remote-cluster-secret.sh
+
+# Install Kiali in both clusters if enabled
+source ${SCRIPT_DIR}/deploy-kiali.sh
+
 # Cluster West
 switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
 
@@ -78,11 +84,6 @@ sed -i "s/WEST_PROMETHEUS_ADDRESS/$WEST_PROMETHEUS_ADDRESS/g" ${SCRIPT_DIR}/prom
 ${CLIENT_EXE} apply -f ${SCRIPT_DIR}/prometheus.yaml -n ${ISTIO_NAMESPACE} --context ${CLUSTER1_CONTEXT} 
 sed -i "s/$WEST_PROMETHEUS_ADDRESS/WEST_PROMETHEUS_ADDRESS/g" ${SCRIPT_DIR}/prometheus.yaml
 
-# Create Kiali remote secrets
-source ${SCRIPT_DIR}/kiali-create-remote-cluster-secret.sh
-
 # Install bookinfo across cluster if enabled
 source ${SCRIPT_DIR}/split-bookinfo.sh
 
-# Install Kiali in both clusters if enabled
-source ${SCRIPT_DIR}/deploy-kiali.sh
