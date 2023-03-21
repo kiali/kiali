@@ -151,7 +151,6 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 				defer wg.Done()
 				list, error := in.GetNamespacesByCluster(c)
 				if error != nil {
-					log.Errorf("Error fetching Namespaces per cluster %s: %s", c, error)
 					resultsCh <- result{cluster: c, ns: nil, err: error}
 				} else {
 					resultsCh <- result{cluster: c, ns: list, err: nil}
@@ -163,14 +162,17 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	}()
 
 	// Combine namespace data
-	for result := range resultsCh {
-		if result.err != nil {
-			log.Errorf("Error fetching Namespaces per cluster %s: %s", result.cluster, result.err)
-			if result.cluster == kubernetes.HomeClusterName {
-				return nil, result.err
+	for resultCh := range resultsCh {
+		if resultCh.err != nil {
+
+			if resultCh.cluster == kubernetes.HomeClusterName {
+				log.Errorf("Error fetching Namespaces for local cluster %s: %s", resultCh.cluster, resultCh.err)
+				return nil, resultCh.err
+			} else {
+				log.Infof("Error fetching Namespaces for cluster %s: %s", resultCh.cluster, resultCh.err)
 			}
 		}
-		namespaces = append(namespaces, result.ns...)
+		namespaces = append(namespaces, resultCh.ns...)
 	}
 
 	resultns := namespaces

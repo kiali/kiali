@@ -242,6 +242,8 @@ func (cf *clientFactory) newSAClient(clusterInfo *RemoteClusterInfo) (*K8SClient
 
 // getClient returns a client for the specified token. Creating one if necessary.
 func (cf *clientFactory) GetSAClients() map[string]ClientInterface {
+	cf.mutex.RLock()
+	defer cf.mutex.RUnlock()
 	return cf.saClientEntries
 }
 

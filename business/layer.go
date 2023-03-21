@@ -161,6 +161,7 @@ func SetWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterfac
 // It should be the user client based on the logged in user's token.
 func NewWithBackends(k8s map[string]kubernetes.ClientInterface, kialiSAClients map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, jaegerClient JaegerLoader) *Layer {
 	temporaryLayer := &Layer{}
+	// TODO: Modify the k8s argument to other services to pass the whole k8s map if needed
 	temporaryLayer.App = AppService{prom: prom, k8s: k8s[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
 	temporaryLayer.Health = HealthService{prom: prom, businessLayer: temporaryLayer}
 	temporaryLayer.IstioConfig = IstioConfigService{k8s: k8s[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
