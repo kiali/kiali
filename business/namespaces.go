@@ -205,7 +205,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	}
 
 	if kialiCache != nil {
-		// Saved per user token
+		// just get the home cluster token because it is assumed tokens are identical across all clusters
 		kialiCache.SetNamespaces(in.userClients[kubernetes.HomeClusterName].GetToken(), resultns)
 	}
 
