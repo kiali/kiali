@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ##############################################################################
-# uninstall-everything.sh
+# uninstall-primary-remote.sh
 #
 # Attempts to purge Kiali, bookinfo, and Istio from both clusters.
 # If minikube is managed by us, the entire minikube instances are deleted.
@@ -10,26 +10,6 @@
 
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 source ${SCRIPT_DIR}/env.sh $*
-
-uninstall_everything() {
-  local clustername="${1}"
-  local context="${2}"
-  local user="${3}"
-  local pass="${4}"
-
-  switch_cluster "${context}" "${user}" "${pass}"
-  ${PURGE_KIALI_SCRIPT} -c ${CLIENT_EXE} && ${CLIENT_EXE} delete namespace kiali-operator
-  ${INSTALL_BOOKINFO_SCRIPT} -c ${CLIENT_EXE} --delete-bookinfo true
-  ${ISTIO_INSTALL_SCRIPT} -c ${CLIENT_EXE} --delete-istio true
-
-  if [ "${MANAGE_MINIKUBE}" == "true" ]; then
-    ${K8S_MINIKUBE_SCRIPT} --minikube-profile ${context} delete
-  fi
-
-  if [ "${MANAGE_KIND}" == "true" ]; then
-    ${KIND_EXE} delete cluster --name ${clustername}
-  fi
-}
 
 # Find the hack scripts to do the uninstalls
 ISTIO_INSTALL_SCRIPT="${SCRIPT_DIR}/../install-istio-via-istioctl.sh"
@@ -64,17 +44,16 @@ if [ "${MANAGE_MINIKUBE}" == "true" ]; then
     exit 1
   fi
 fi
-if [ "${MANAGE_KIND}" == "true" ]; then
-  if [ -x "${KIND_EXE}" ]; then
-    echo "kind executable: ${KIND_EXE}"
-  else
-    echo "Cannot find the kind executable."
-    exit 1
-  fi
-fi
 
-echo "==== PURGE CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
-uninstall_everything "${CLUSTER1_NAME}" "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
+switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
 
-echo "==== PURGE CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
-uninstall_everything "${CLUSTER2_NAME}" "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
+${PURGE_KIALI_SCRIPT} -c ${CLIENT_EXE} && ${CLIENT_EXE} delete namespace kiali-operator
+${INSTALL_BOOKINFO_SCRIPT} -c ${CLIENT_EXE} --delete-bookinfo true
+${ISTIO_INSTALL_SCRIPT} -c ${CLIENT_EXE} --delete-istio true
+${K8S_MINIKUBE_SCRIPT} --minikube-profile ${CLUSTER1_CONTEXT} delete
+
+switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
+
+${INSTALL_BOOKINFO_SCRIPT} -c ${CLIENT_EXE} --delete-bookinfo true
+${ISTIO_INSTALL_SCRIPT} -c ${CLIENT_EXE} --delete-istio true
+${K8S_MINIKUBE_SCRIPT} --minikube-profile ${CLUSTER2_CONTEXT} delete

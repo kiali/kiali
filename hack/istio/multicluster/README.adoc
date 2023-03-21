@@ -1,23 +1,28 @@
-= MultiCluster Install Hack Scripts
+= Multicluster Hack Scripts
 
-These hack scripts can be used to install a 2-cluster multi-primary Istio installation.
+These hack scripts can be used to install the following link:https://istio.io/latest/docs/setup/install/multicluster/[multicluster configurations]:
+
+* Multi-Primary 
+* Primary-Remote
 
 It utilizes the hack scripts located in link:..[the hack/istio directory].
 
 These should work on either OpenShift or Kubernetes environments. If you have both `kubectl` and `oc` in your PATH, you can specify which one to use (and hence which environment you want to use) via the `-c` option to the scripts.
 
-== Install
+Note: This scripts are tested on Kubernetes clusters using Minikube.
 
-Use the link:./install-everything.sh[install-everything.sh script]. See `--help` for options.
+== Multi-Primary
 
-== Uninstall
+Use the link:./install-multi-primary.sh[install-multi-primary.sh script]. See `--help` for options.
 
-You can uninstall everything from both clusters using the link:./uninstall-everything.sh[uninstall-everything.sh script]. Or you can individually uninstall things - see below.
+=== Uninstall
 
-=== Istio
+You can uninstall everything from both clusters using the link:./uninstall-multi-primary.sh[uninstall-multi-primary.sh script].
 
-To uninstall Istio, you can use link:../install-istio-via-istioctl.sh[install-istio-via-istioctl.sh]. Simply connect to your cluster and run that script with the `-di true` option to uninstall Istio from that cluster. Switch to the second cluster and do the same to uninstall Istio from there.
+== Primary-Remote
 
-=== Bookinfo
+Use the link:./install-primary-remote.sh[install-primary-remote.sh script]. See `--help` for options.
 
-If you used these scripts to install bookinfo, you can use link:../install-bookinfo-demo.sh[install-bookinfo-demo.sh] to uninstall it. Simply connect to your cluster and run that script with the `-db true` option to uninstall the bookinfo from that cluster. Switch to the second cluster and do the same to uninstall bookinfo from there.
+=== Uninstall
+
+You can uninstall everything from both clusters using the link:./uninstall-primary-remote.sh[uninstall-primary-remote.sh script].
