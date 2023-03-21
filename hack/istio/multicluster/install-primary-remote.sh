@@ -52,6 +52,7 @@ ${CLIENT_EXE} --context=${CLUSTER2_CONTEXT} label namespace istio-system topolog
 DISCOVERY_ADDRESS=$(${CLIENT_EXE} --context=${CLUSTER1_CONTEXT} -n ${ISTIO_NAMESPACE} get svc istio-eastwestgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
 ${ISTIOCTL} install -y --force=true --set profile=remote --set values.istiodRemote.injectionPath=/inject/cluster/${CLUSTER2_NAME}/net/${NETWORK2_ID} --set values.global.remotePilotAddress=${DISCOVERY_ADDRESS}
+${CLIENT_EXE} apply -f ${ISTIO_DIR}/samples/addons/prometheus.yaml -n ${ISTIO_NAMESPACE}
 
 CA_BUNDLE=$(${CLIENT_EXE} get secret cacerts -n ${ISTIO_NAMESPACE} --context ${CLUSTER1_CONTEXT} -o jsonpath={.data."ca-cert\.pem"})
 
@@ -68,3 +69,6 @@ ${CLIENT_EXE} patch mutatingwebhookconfigurations.admissionregistration.k8s.io -
 ${ISTIOCTL} x create-remote-secret --context=${CLUSTER2_CONTEXT} --name=${CLUSTER2_NAME} | ${CLIENT_EXE} apply -f - --context="${CLUSTER1_CONTEXT}"
 
 ${GEN_GATEWAY_SCRIPT} --mesh ${MESH_ID} --cluster ${CLUSTER2_NAME} --network ${NETWORK2_ID} | ${ISTIOCTL} --context=${CLUSTER2_CONTEXT} install -y -f -
+
+# Install bookinfo across cluster if enabled
+source ${SCRIPT_DIR}/split-bookinfo.sh
