@@ -39,10 +39,10 @@ func IsAccessibleError(err error) bool {
 	return isAccessibleError
 }
 
-func NewNamespaceService(k8s map[string]kubernetes.ClientInterface, kialiSAClients map[string]kubernetes.ClientInterface) NamespaceService {
+func NewNamespaceService(userClients map[string]kubernetes.ClientInterface, kialiSAClients map[string]kubernetes.ClientInterface) NamespaceService {
 	var hasProjects bool
 
-	if k8s != nil && k8s[kubernetes.HomeClusterName].IsOpenShift() {
+	if kialiSAClients != nil && kialiSAClients[kubernetes.HomeClusterName].IsOpenShift() {
 		hasProjects = true
 	} else {
 		hasProjects = false
@@ -55,7 +55,7 @@ func NewNamespaceService(k8s map[string]kubernetes.ClientInterface, kialiSAClien
 	}
 
 	return NamespaceService{
-		userClients:            k8s,
+		userClients:            userClients,
 		kialiSAClients:         kialiSAClients,
 		hasProjects:            hasProjects,
 		isAccessibleNamespaces: isAccessibleNamespaces,
