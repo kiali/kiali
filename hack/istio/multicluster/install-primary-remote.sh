@@ -70,6 +70,14 @@ ${ISTIOCTL} x create-remote-secret --context=${CLUSTER2_CONTEXT} --name=${CLUSTE
 
 ${GEN_GATEWAY_SCRIPT} --mesh ${MESH_ID} --cluster ${CLUSTER2_NAME} --network ${NETWORK2_ID} | ${ISTIOCTL} --context=${CLUSTER2_CONTEXT} install -y -f -
 
+${CLIENT_EXE} patch svc prometheus -n ${ISTIO_NAMESPACE} --context ${CLUSTER2_CONTEXT} -p "{\"spec\": {\"type\": \"LoadBalancer\"}}"
+
+# Configure Prometheus federation
+WEST_PROMETHEUS_ADDRESS=$(${CLIENT_EXE} --context=${CLUSTER2_CONTEXT} -n ${ISTIO_NAMESPACE} get svc prometheus -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+sed -i "s/WEST_PROMETHEUS_ADDRESS/$WEST_PROMETHEUS_ADDRESS/g" ${SCRIPT_DIR}/prometheus.yaml
+${CLIENT_EXE} apply -f ${SCRIPT_DIR}/prometheus.yaml -n ${ISTIO_NAMESPACE} --context ${CLUSTER1_CONTEXT} 
+sed -i "s/$WEST_PROMETHEUS_ADDRESS/WEST_PROMETHEUS_ADDRESS/g" ${SCRIPT_DIR}/prometheus.yaml
+
 # Create Kiali remote secrets
 source ${SCRIPT_DIR}/kiali-create-remote-cluster-secret.sh
 
