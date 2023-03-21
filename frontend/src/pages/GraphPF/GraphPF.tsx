@@ -4,6 +4,7 @@ import {
   Controller,
   createTopologyControlButtons,
   defaultControlButtonsOptions,
+  EdgeAnimationSpeed,
   EdgeModel,
   EdgeStyle,
   GraphElement,
@@ -24,7 +25,7 @@ import {
 } from '@patternfly/react-topology';
 import { GraphData } from 'pages/Graph/GraphPage';
 import * as React from 'react';
-import { EdgeLabelMode, EdgeMode, GraphEvent, Layout } from 'types/Graph';
+import { EdgeLabelMode, EdgeMode, GraphEvent, Layout, Protocol } from 'types/Graph';
 import { JaegerTrace } from 'types/JaegerInfo';
 import stylesComponentFactory from './components/stylesComponentFactory';
 import elementFactory from './elements/elementFactory';
@@ -47,6 +48,7 @@ import { KialiDagreGraph } from 'components/CytoscapeGraph/graphs/KialiDagreGrap
 import { KialiGridGraph } from 'components/CytoscapeGraph/graphs/KialiGridGraph';
 import { KialiBreadthFirstGraph } from 'components/CytoscapeGraph/graphs/KialiBreadthFirstGraph';
 import { HistoryManager, URLParam } from 'app/History';
+import { tcpTimerConfig, timerConfig } from 'components/CytoscapeGraph/TrafficAnimation/AnimationTimerConfig';
 
 let initialLayout = false;
 let requestFit = false;
@@ -84,6 +86,7 @@ export const TopologyContent: React.FC<{
   setUpdateTime: (val: TimeInMilliseconds) => void;
   showMissingSidecars: boolean;
   showSecurity: boolean;
+  showTrafficAnimation: boolean;
   showVirtualServices: boolean;
   trace?: JaegerTrace;
   updateSummary: (graphEvent: GraphEvent) => void;
@@ -101,10 +104,13 @@ export const TopologyContent: React.FC<{
   setUpdateTime,
   showMissingSidecars,
   showSecurity,
+  showTrafficAnimation,
   showVirtualServices,
   trace,
   updateSummary
 }) => {
+  const [updateModelTime, setUpdateModelTime] = React.useState(0);
+
   const graphSettings: GraphPFSettings = React.useMemo(() => {
     return {
       activeNamespaces: graphData.fetchParams.namespaces,
@@ -285,13 +291,13 @@ export const TopologyContent: React.FC<{
       function addEdge(data: EdgeData): EdgeModel {
         data.onHover = onHover;
         const edge: EdgeModel = {
+          animationSpeed: EdgeAnimationSpeed.none,
           data: data,
           edgeStyle: EdgeStyle.solid,
           id: data.id,
           source: data.source,
           target: data.target,
           type: 'edge'
-          //animationSpeed: getAnimationSpeed(count, options.maxEdgeValue),
         };
         setEdgeOptions(edge, nodeMap, graphSettings);
         edges.push(edge);
@@ -384,7 +390,9 @@ export const TopologyContent: React.FC<{
     }
 
     // notify that the graph has been updated
-    setUpdateTime(Date.now());
+    const updateModelTime = Date.now();
+    setUpdateModelTime(updateModelTime);
+    setUpdateTime(updateModelTime);
   }, [controller, graphData, graphSettings, highlighter, layoutName, onReady, setDetailsLevel, setUpdateTime]);
 
   //TODO REMOVE THESE DEBUGGING MESSAGES...
@@ -412,6 +420,55 @@ export const TopologyContent: React.FC<{
   React.useEffect(() => {
     console.log(`setDetails changed`);
   }, [setDetailsLevel]);
+
+  React.useEffect(() => {
+    const edges = controller.getGraph().getEdges();
+    console.log(`showTrafficAnimation changed to ${showTrafficAnimation}`);
+    if (!showTrafficAnimation) {
+      edges
+        .filter(e => e.getEdgeAnimationSpeed() !== EdgeAnimationSpeed.none)
+        .forEach(e => {
+          e.setEdgeAnimationSpeed(EdgeAnimationSpeed.none);
+          e.setEdgeStyle(EdgeStyle.solid);
+        });
+      return;
+    }
+
+    timerConfig.resetCalibration();
+    tcpTimerConfig.resetCalibration();
+    // Calibrate animation amplitude
+    edges.forEach(e => {
+      const edgeData = e.getData() as EdgeData;
+      switch (edgeData.protocol) {
+        case Protocol.GRPC:
+          timerConfig.calibrate(edgeData.grpc);
+          break;
+        case Protocol.HTTP:
+          timerConfig.calibrate(edgeData.http);
+          break;
+        case Protocol.TCP:
+          tcpTimerConfig.calibrate(edgeData.tcp);
+          break;
+      }
+    });
+    edges.forEach(e => {
+      const edgeData = e.getData() as EdgeData;
+      switch (edgeData.protocol) {
+        case Protocol.GRPC:
+          e.setEdgeAnimationSpeed(timerConfig.computeAnimationSpeedPF(edgeData.grpc));
+          break;
+        case Protocol.HTTP:
+          e.setEdgeAnimationSpeed(timerConfig.computeAnimationSpeedPF(edgeData.http));
+          break;
+        case Protocol.TCP:
+          e.setEdgeAnimationSpeed(tcpTimerConfig.computeAnimationSpeedPF(edgeData.tcp));
+          break;
+      }
+      if (e.getEdgeAnimationSpeed() !== EdgeAnimationSpeed.none) {
+        e.setEdgeStyle(EdgeStyle.dashedMd);
+      }
+    });
+  }, [controller, showTrafficAnimation, updateModelTime]);
 
   React.useEffect(() => {
     console.log(`layout changed`);
@@ -576,6 +633,7 @@ export const GraphPF: React.FC<{
   setUpdateTime: (val: TimeInMilliseconds) => void;
   showMissingSidecars: boolean;
   showSecurity: boolean;
+  showTrafficAnimation: boolean;
   showVirtualServices: boolean;
   trace?: JaegerTrace;
   updateSummary: (graphEvent: GraphEvent) => void;
@@ -592,6 +650,7 @@ export const GraphPF: React.FC<{
   setUpdateTime,
   showMissingSidecars,
   showSecurity,
+  showTrafficAnimation,
   showVirtualServices,
   trace,
   updateSummary
@@ -672,6 +731,7 @@ export const GraphPF: React.FC<{
         setUpdateTime={setUpdateTime}
         showMissingSidecars={showMissingSidecars}
         showSecurity={showSecurity}
+        showTrafficAnimation={showTrafficAnimation}
         showVirtualServices={showVirtualServices}
         trace={trace}
         updateSummary={updateSummary}

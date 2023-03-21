@@ -1,3 +1,4 @@
+import { EdgeAnimationSpeed } from '@patternfly/react-topology';
 import { clamp } from 'utils/MathUtils';
 
 // Some information about the mathematical problem here:
@@ -16,6 +17,8 @@ import { clamp } from 'utils/MathUtils';
 //    relationships. But thinking in absolute, 0.1 rps is small, it shouldn't be crowded.
 
 const initialThreshold = 50;
+const maxDelay = 5000;
+const minDelay = 40;
 
 export class AnimationTimerConfig {
   private threshold: number;
@@ -48,7 +51,7 @@ export class AnimationTimerConfig {
     // TIMER DELAY is inversely proportional to RATE. Scale factor is used to keep as much as possible TIMER DELAY in bounds
     const d = (1000 * this.baseDelay * this.scaleFactor) / rate;
     // In case it's out of bounds, clamp to bounds. Only case where proportionality is broken. Should only happen for very low values.
-    return clamp(d, 40, 5000);
+    return clamp(d, minDelay, maxDelay);
   }
 
   private computeScaleFactor() {
@@ -61,6 +64,26 @@ export class AnimationTimerConfig {
       return Math.pow(this.threshold / initialThreshold, 0.95);
     }
     return this.threshold / initialThreshold;
+  }
+
+  computeAnimationSpeedPF(rate: number): EdgeAnimationSpeed {
+    const range = maxDelay - minDelay;
+    const chunk = range / 5; // there are 5 animation speeds for PFT
+    const delay = this.computeDelay(rate);
+    switch (true) {
+      case !delay:
+        return EdgeAnimationSpeed.none;
+      case delay < chunk:
+        return EdgeAnimationSpeed.fast;
+      case delay < 2 * chunk:
+        return EdgeAnimationSpeed.mediumFast;
+      case delay < 3 * chunk:
+        return EdgeAnimationSpeed.medium;
+      case delay < 4 * chunk:
+        return EdgeAnimationSpeed.mediumSlow;
+      default:
+        return EdgeAnimationSpeed.slow;
+    }
   }
 }
 
