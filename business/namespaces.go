@@ -144,6 +144,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	}
 	resultsCh := make(chan result)
 
+	// TODO: Use a context to define a timeout. The context should be passed to the k8s client
 	go func() {
 		for _, cluster := range clusterNames {
 			wg.Add(1)
