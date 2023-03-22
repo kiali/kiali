@@ -513,16 +513,17 @@ func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace
 					cluster = cl
 					break
 				}
+				if errC != nil {
+					return nil, errC
+				}
 			}
 		} else {
 			ns, errC = in.userClients[cluster].GetNamespace(namespace)
 			if errC != nil {
-				return nil, err
+				return nil, errC
 			}
 		}
-		if err != nil {
-			return nil, err
-		}
+
 		result = models.CastNamespace(*ns, cluster)
 	}
 	// Refresh cache in case of cache expiration
