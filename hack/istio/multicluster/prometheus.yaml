@@ -27,7 +27,7 @@ data:
 
       static_configs:
         - targets:
-          - ':9090'
+          - 'WEST_PROMETHEUS_ADDRESS:9090'
           labels:
             cluster: 'west'
     - job_name: prometheus
