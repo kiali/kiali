@@ -76,7 +76,7 @@ const (
 
 var (
 	portNameMatcher = regexp.MustCompile(`^[\-].*`)
-	portProtocols   = [...]string{"grpc", "http", "http2", "https", "mongo", "redis", "tcp", "tls", "udp", "mysql"}
+	portProtocols   = [...]string{"grpc", "grpc-web", "http", "http2", "https", "mongo", "redis", "tcp", "tls", "udp", "mysql"}
 )
 
 type IstioClientInterface interface {
