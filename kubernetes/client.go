@@ -42,6 +42,7 @@ type ClientInterface interface {
 	GetAuthInfo() *api.AuthInfo
 	IsOpenShift() bool
 	IsGatewayAPI() bool
+	IsIstioAPI() bool
 	GetClusterNames() []string
 	K8SClientInterface
 	IstioClientInterface
@@ -64,6 +65,7 @@ type K8SClient struct {
 	// isGatewayAPI private variable will check if K8s Gateway API CRD exists on cluster or not
 	isGatewayAPI *bool
 	gatewayapi   gatewayapiclient.Interface
+	isIstioAPI   *bool
 
 	// Separated out for testing purposes
 	getPodPortForwarderFunc func(namespace, name, portMap string) (httputil.PortForwarder, error)

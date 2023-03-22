@@ -84,6 +84,7 @@ func NewK8SClientMock() *K8SClientMock {
 	k8s := new(K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("IsGatewayAPI").Return(false)
+	k8s.On("IsIstioAPI").Return(true)
 	k8s.On("GetKialiTokenForHomeCluster").Return("")
 	k8s.On("GetClusterNames").Return(kubernetes.HomeClusterName)
 	return k8s
@@ -126,6 +127,11 @@ func (o *K8SClientMock) IsOpenShift() bool {
 }
 
 func (o *K8SClientMock) IsGatewayAPI() bool {
+	args := o.Called()
+	return args.Get(0).(bool)
+}
+
+func (o *K8SClientMock) IsIstioAPI() bool {
 	args := o.Called()
 	return args.Get(0).(bool)
 }
