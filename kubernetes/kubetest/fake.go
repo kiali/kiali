@@ -3,7 +3,6 @@ package kubetest
 import (
 	"context"
 	"errors"
-	v1 "k8s.io/api/core/v1"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
@@ -11,6 +10,7 @@ import (
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	istiofake "istio.io/client-go/pkg/clientset/versioned/fake"
 	istioscheme "istio.io/client-go/pkg/clientset/versioned/scheme"
+	v1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
