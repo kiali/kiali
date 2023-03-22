@@ -17,12 +17,6 @@ source ${SCRIPT_DIR}/env.sh $*
 echo "Starting minikube instances"
 source ${SCRIPT_DIR}/start-minikube.sh
 
-# Temporary fix due to https://github.com/kubernetes/minikube/issues/16053
-${CLIENT_EXE} set image --context ${CLUSTER1_CONTEXT} -n metallb-system deployment/controller controller=quay.io/metallb/controller:v0.9.6@sha256:6932cf255dd7f06f550c7f106b9a206be95f847ab8cb77aafac7acd27def0b00
-${CLIENT_EXE} set image --context ${CLUSTER1_CONTEXT} -n metallb-system daemonset/speaker speaker=quay.io/metallb/speaker:v0.9.6@sha256:7a400205b4986acd3d2ff32c29929682b8ff8d830837aff74f787c757176fa9f
-${CLIENT_EXE} set image --context ${CLUSTER2_CONTEXT} -n metallb-system deployment/controller controller=quay.io/metallb/controller:v0.9.6@sha256:6932cf255dd7f06f550c7f106b9a206be95f847ab8cb77aafac7acd27def0b00
-${CLIENT_EXE} set image --context ${CLUSTER2_CONTEXT} -n metallb-system daemonset/speaker speaker=quay.io/metallb/speaker:v0.9.6@sha256:7a400205b4986acd3d2ff32c29929682b8ff8d830837aff74f787c757176fa9f
-
 # Setup the certificates
 source ${SCRIPT_DIR}/setup-ca.sh
 
