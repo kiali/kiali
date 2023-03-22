@@ -40,6 +40,9 @@ EOM
 : ${NAMESPACE_ALPHA:=alpha}
 : ${NAMESPACE_BETA:=beta}
 : ${SOURCE:="https://raw.githubusercontent.com/kiali/demos/master"}
+: ${DISTRIBUTE_DEMO:=false}
+: ${CLUSTER1_CONTEXT=east}
+: ${CLUSTER2_CONTEXT=west}
 
 while [ $# -gt 0 ]; do
   key="$1"
@@ -64,6 +67,10 @@ while [ $# -gt 0 ]; do
       ISTIO_NAMESPACE="$2"
       shift;shift
       ;;
+    -dd|--distribute-demo)
+      DISTRIBUTE_DEMO="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -72,6 +79,7 @@ Valid command line arguments:
   -d|--delete: either 'true' or 'false'. If 'true' the demo will be deleted, not installed.
   -ei|--enable-injection: either 'true' or 'false' (default is true). If 'true' auto-inject proxies for the workloads.
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
+  -dd|--distribute-demo 'true' or 'false'. If 'true' alpha namespace will be created on east cluster and beta namespace on west cluster.
   -h|--help: this text
   -s|--source: demo file source. For example: file:///home/me/demos Default: https://raw.githubusercontent.com/kiali/demos/master
 HELPMSG
@@ -111,6 +119,11 @@ if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   IS_MAISTRA=$([ "$(oc get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
 fi
 
+if [ "${IS_OPENSHIFT}" == "true" ] && [ "${DISTRIBUTE_DEMO}" == "true" ]; then
+  echo "Distribute demo is not supported on OpenShift. Exiting."
+  exit 1
+fi
+
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
 echo "IS_MAISTRA=${IS_MAISTRA}"
 
@@ -127,8 +140,15 @@ if [ "${DELETE_DEMO}" == "true" ]; then
     fi
     $CLIENT_EXE delete scc error-rates-scc
   fi
-  ${CLIENT_EXE} delete namespace ${NAMESPACE_ALPHA}
-  ${CLIENT_EXE} delete namespace ${NAMESPACE_BETA}
+  
+  if [ "${DISTRIBUTE_DEMO}" == "true" ]; then
+    ${CLIENT_EXE} delete namespace ${NAMESPACE_ALPHA} --context ${CLUSTER1_CONTEXT}
+    ${CLIENT_EXE} delete namespace ${NAMESPACE_BETA}  --context ${CLUSTER2_CONTEXT}
+  else
+    ${CLIENT_EXE} delete namespace ${NAMESPACE_ALPHA}
+    ${CLIENT_EXE} delete namespace ${NAMESPACE_BETA}
+  fi
+  
   exit 0
 fi
 
@@ -138,13 +158,23 @@ if [ "${IS_OPENSHIFT}" == "true" ]; then
   $CLIENT_EXE new-project ${NAMESPACE_ALPHA}
   $CLIENT_EXE new-project ${NAMESPACE_BETA}
 else
-  $CLIENT_EXE create namespace ${NAMESPACE_ALPHA}
-  $CLIENT_EXE create namespace ${NAMESPACE_BETA}
+  if [ "${DISTRIBUTE_DEMO}" == "true" ]; then
+    $CLIENT_EXE create namespace ${NAMESPACE_ALPHA} --context ${CLUSTER1_CONTEXT}
+    $CLIENT_EXE create namespace ${NAMESPACE_BETA} --context ${CLUSTER2_CONTEXT}
+  else
+    $CLIENT_EXE create namespace ${NAMESPACE_ALPHA}
+    $CLIENT_EXE create namespace ${NAMESPACE_BETA}
+  fi
 fi
 
 if [ "${ENABLE_INJECTION}" == "true" ]; then
-  ${CLIENT_EXE} label namespace ${NAMESPACE_ALPHA} istio-injection=enabled
-  ${CLIENT_EXE} label namespace ${NAMESPACE_BETA} istio-injection=enabled
+ if [ "${DISTRIBUTE_DEMO}" == "true" ]; then
+    ${CLIENT_EXE} label namespace ${NAMESPACE_ALPHA} istio-injection=enabled --context ${CLUSTER1_CONTEXT}
+    ${CLIENT_EXE} label namespace ${NAMESPACE_BETA} istio-injection=enabled  --context ${CLUSTER2_CONTEXT}
+  else
+    ${CLIENT_EXE} label namespace ${NAMESPACE_ALPHA} istio-injection=enabled
+    ${CLIENT_EXE} label namespace ${NAMESPACE_BETA} istio-injection=enabled
+  fi
 fi
 
 # For OpenShift 4.11, adds default service account in the current ns to use as a user
@@ -152,8 +182,6 @@ if [ "${IS_OPENSHIFT}" == "true" ]; then
   $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${NAMESPACE_ALPHA}
   $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${NAMESPACE_BETA}
 fi
-
-
 
 if [ "${IS_OPENSHIFT}" == "true" ]; then
   if [ "${IS_MAISTRA}" != "true" ]; then
@@ -194,15 +222,29 @@ sed_client_p="s;kiali/demo_error_rates_client;maistra/demo_error_rates_client-p;
 sed_server_p="s;kiali/demo_error_rates_server;maistra/demo_error_rates_server-p;g"
 sed_client_z="s;kiali/demo_error_rates_client;maistra/demo_error_rates_client-z;g"
 sed_server_z="s;kiali/demo_error_rates_server;maistra/demo_error_rates_server-z;g"
-if [ "${ARCH}" == "ppc64le" ]; then
-  ${CLIENT_EXE} apply -f <(curl -L ${url_alpha} | sed "${sed_client_p}" | sed "${sed_server_p}") -n ${NAMESPACE_ALPHA}
-  ${CLIENT_EXE} apply -f <(curl -L "${url_beta}" | sed "${sed_client_p}" | sed "${sed_server_p}") -n ${NAMESPACE_BETA}
-elif [ "${ARCH}" == "s390x" ]; then
-  ${CLIENT_EXE} apply -f <(curl -L ${url_alpha} | sed "${sed_client_z}" | sed "${sed_server_z}") -n ${NAMESPACE_ALPHA}
-  ${CLIENT_EXE} apply -f <(curl -L "${url_beta}" | sed "${sed_client_z}" | sed "${sed_server_z}") -n ${NAMESPACE_BETA}
+
+if [ "${DISTRIBUTE_DEMO}" == "true" ]; then
+  if [ "${ARCH}" == "ppc64le" ]; then
+    ${CLIENT_EXE} apply -f <(curl -L ${url_alpha} | sed "${sed_client_p}" | sed "${sed_server_p}") -n ${NAMESPACE_ALPHA} --context ${CLUSTER1_CONTEXT}
+    ${CLIENT_EXE} apply -f <(curl -L "${url_beta}" | sed "${sed_client_p}" | sed "${sed_server_p}") -n ${NAMESPACE_BETA} --context ${CLUSTER2_CONTEXT}
+  elif [ "${ARCH}" == "s390x" ]; then
+    ${CLIENT_EXE} apply -f <(curl -L ${url_alpha} | sed "${sed_client_z}" | sed "${sed_server_z}") -n ${NAMESPACE_ALPHA} --context ${CLUSTER1_CONTEXT}
+    ${CLIENT_EXE} apply -f <(curl -L "${url_beta}" | sed "${sed_client_z}" | sed "${sed_server_z}") -n ${NAMESPACE_BETA} --context ${CLUSTER2_CONTEXT}
+  else
+    ${CLIENT_EXE} apply -f <(curl -L ${url_alpha}) -n ${NAMESPACE_ALPHA} --context ${CLUSTER1_CONTEXT}
+    ${CLIENT_EXE} apply -f <(curl -L "${url_beta}") -n ${NAMESPACE_BETA} --context ${CLUSTER2_CONTEXT}
+  fi
 else
-  ${CLIENT_EXE} apply -f <(curl -L ${url_alpha}) -n ${NAMESPACE_ALPHA}
-  ${CLIENT_EXE} apply -f <(curl -L "${url_beta}") -n ${NAMESPACE_BETA}
+  if [ "${ARCH}" == "ppc64le" ]; then
+    ${CLIENT_EXE} apply -f <(curl -L ${url_alpha} | sed "${sed_client_p}" | sed "${sed_server_p}") -n ${NAMESPACE_ALPHA}
+    ${CLIENT_EXE} apply -f <(curl -L "${url_beta}" | sed "${sed_client_p}" | sed "${sed_server_p}") -n ${NAMESPACE_BETA}
+  elif [ "${ARCH}" == "s390x" ]; then
+    ${CLIENT_EXE} apply -f <(curl -L ${url_alpha} | sed "${sed_client_z}" | sed "${sed_server_z}") -n ${NAMESPACE_ALPHA}
+    ${CLIENT_EXE} apply -f <(curl -L "${url_beta}" | sed "${sed_client_z}" | sed "${sed_server_z}") -n ${NAMESPACE_BETA}
+  else
+    ${CLIENT_EXE} apply -f <(curl -L ${url_alpha}) -n ${NAMESPACE_ALPHA}
+    ${CLIENT_EXE} apply -f <(curl -L "${url_beta}") -n ${NAMESPACE_BETA}
+  fi
 fi
 
 # we need to update deployment annotations after we create it
