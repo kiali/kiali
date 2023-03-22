@@ -73,7 +73,7 @@ SINGLE_KIALI="true"
 
 # If a gateway is required to cross the networks, set this to true and one will be created
 # See: https://istio.io/latest/docs/setup/install/multicluster/multi-primary_multi-network/
-CROSSNETWORK_GATEWAY_REQUIRED="false"
+CROSSNETWORK_GATEWAY_REQUIRED="true"
 
 # Under some conditions, manually configuring the mesh network will be required.
 MANUAL_MESH_NETWORK_CONFIG=""
