@@ -483,12 +483,11 @@ func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace
 		var project *osproject_v1.Project
 		// TODO: MC
 		if cluster == "" {
-			var ns *core_v1.Namespace
 			var err2 error
 			for cl := range in.userClients {
-				ns, err2 = in.userClients[cl].GetNamespace(namespace)
-				if ns != nil {
-					cluster = cl
+				project, err2 = in.userClients[cl].GetProject(namespace)
+				if err2 == nil {
+					result = models.CastProject(*project)
 					break
 				}
 			}
@@ -497,11 +496,6 @@ func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace
 			}
 		}
 
-		project, err = in.userClients[cluster].GetProject(namespace)
-		if err != nil {
-			return nil, err
-		}
-		result = models.CastProject(*project)
 	} else {
 		// TODO: MC
 		var ns *core_v1.Namespace
@@ -509,12 +503,10 @@ func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace
 		if cluster == "" {
 			for cl := range in.userClients {
 				ns, errC = in.userClients[cl].GetNamespace(namespace)
-				if ns != nil {
-					cluster = cl
-					break
-				}
 				if errC != nil {
 					return nil, errC
+				} else {
+					break
 				}
 			}
 		} else {
