@@ -220,7 +220,6 @@ func (in *NamespaceService) GetNamespacesByCluster(cluster string) ([]models.Nam
 
 	namespaces := []models.Namespace{}
 	_, queryAllNamespaces := in.isAccessibleNamespaces["**"]
-
 	// If we are running in OpenShift, we will use the project names since these are the list of accessible namespaces
 	if in.hasProjects {
 		projects, err2 := in.userClients[cluster].GetProjects(labelSelectorInclude)
@@ -266,7 +265,6 @@ func (in *NamespaceService) GetNamespacesByCluster(cluster string) ([]models.Nam
 		// If accessible namespaces include the special "**" (meaning all namespaces) ask k8sClients for them.
 		// Note that "**" requires cluster role permission to list all namespaces.
 		accessibleNamespaces := configObject.Deployment.AccessibleNamespaces
-
 		if queryAllNamespaces {
 			nss, err := in.userClients[cluster].GetNamespaces(labelSelectorInclude)
 			if err != nil {
@@ -445,6 +443,13 @@ func (in *NamespaceService) isIncludedNamespace(namespace string) bool {
 // GetNamespace returns the definition of the specified namespace.
 // TODO: Multicluster: We are going to need something else to identify the namespace, the cluster (OR Return a list/array/map)
 func (in *NamespaceService) GetNamespace(ctx context.Context, namespace string) (*models.Namespace, error) {
+	// TODO: Wrapper for MC while other services are not updated to propagate the cluster
+	return in.GetNamespaceByCluster(ctx, namespace, "")
+}
+
+// GetNamespace returns the definition of the specified namespace.
+// TODO: Multicluster: We are going to need something else to identify the namespace, the cluster (OR Return a list/array/map)
+func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace string, cluster string) (*models.Namespace, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetNamespace",
 		observability.Attribute("package", "business"),
@@ -476,27 +481,49 @@ func (in *NamespaceService) GetNamespace(ctx context.Context, namespace string) 
 	var result models.Namespace
 	if in.hasProjects {
 		var project *osproject_v1.Project
-		// TODO: Multicluster Use the cluster
-		project, err = in.userClients[kubernetes.HomeClusterName].GetProject(namespace)
+		// TODO: MC
+		if cluster == "" {
+			var ns *core_v1.Namespace
+			var err2 error
+			for cl := range in.userClients {
+				ns, err2 = in.userClients[cl].GetNamespace(namespace)
+				if ns != nil {
+					cluster = cl
+					break
+				}
+			}
+			if err2 != nil {
+				return nil, err2
+			}
+		}
+
+		project, err = in.userClients[cluster].GetProject(namespace)
 		if err != nil {
 			return nil, err
 		}
 		result = models.CastProject(*project)
 	} else {
+		// TODO: MC
 		var ns *core_v1.Namespace
-		var cl string
-		var err error
-		for cluster := range in.userClients {
-			ns, err = in.userClients[cluster].GetNamespace(namespace)
-			if ns != nil {
-				cl = cluster
-				break
+		var errC error
+		if cluster == "" {
+			for cl := range in.userClients {
+				ns, errC = in.userClients[cl].GetNamespace(namespace)
+				if ns != nil {
+					cluster = cl
+					break
+				}
+			}
+		} else {
+			ns, errC = in.userClients[cluster].GetNamespace(namespace)
+			if errC != nil {
+				return nil, err
 			}
 		}
 		if err != nil {
 			return nil, err
 		}
-		result = models.CastNamespace(*ns, cl)
+		result = models.CastNamespace(*ns, cluster)
 	}
 	// Refresh cache in case of cache expiration
 	if kialiCache != nil {
@@ -517,7 +544,7 @@ func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace strin
 	defer end()
 
 	// A first check to run the accessible/excluded logic and not run the Update operation on filtered namespaces
-	_, err := in.GetNamespace(ctx, namespace)
+	_, err := in.GetNamespaceByCluster(ctx, namespace, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -533,14 +560,13 @@ func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace strin
 		kialiCache.RefreshTokenNamespaces()
 	}
 	// Call GetNamespace to update the caching
-	return in.GetNamespace(ctx, namespace)
+	return in.GetNamespaceByCluster(ctx, namespace, cluster)
 }
 
 func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, labelSelector string, forwardedError error) ([]core_v1.Namespace, error) {
 	// Check if we already are using the Kiali ServiceAccount token. If we are, no need to do further processing, since
 	// this would just circle back to the same results.
 	kialiToken := in.kialiSAClients[cluster].GetToken()
-
 	if in.userClients[cluster].GetToken() == kialiToken {
 		return nil, forwardedError
 	}
