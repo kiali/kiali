@@ -131,11 +131,10 @@ type FakeK8sClient struct {
 	Token string
 }
 
-func (c *FakeK8sClient) IsOpenShift() bool                { return c.OpenShift }
-func (c *FakeK8sClient) IsGatewayAPI() bool               { return c.GatewayAPIEnabled }
-func (c *FakeK8sClient) IsIstioAPI() bool                 { return c.IstioAPIEnabled }
-func (c *FakeK8sClient) GetToken() string                 { return c.Token }
-func (c *FakeK8sClient) SetIstioAPI(istioAPIEnabled bool) { c.IstioAPIEnabled = istioAPIEnabled }
+func (c *FakeK8sClient) IsOpenShift() bool  { return c.OpenShift }
+func (c *FakeK8sClient) IsGatewayAPI() bool { return c.GatewayAPIEnabled }
+func (c *FakeK8sClient) IsIstioAPI() bool   { return c.IstioAPIEnabled }
+func (c *FakeK8sClient) GetToken() string   { return c.Token }
 
 // The openshift resources are stubbed out because Kiali talks directly to the
 // kube api for these instead of using the openshift client-go.
