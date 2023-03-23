@@ -16,6 +16,7 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
@@ -250,6 +251,8 @@ func setupSidecarsCheckWorkloads(deployments []apps_v1.Deployment, pods []core_v
 	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
 
-	businessLayer := business.NewWithBackends(k8s, nil, nil)
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = k8s
+	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 	return businessLayer
 }

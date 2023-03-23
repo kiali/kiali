@@ -30,7 +30,7 @@ func TestClientExpiration(t *testing.T) {
 	// Create a single initial test clients
 	authInfo := api.NewAuthInfo()
 	authInfo.Token = "foo-token"
-	_, err = clientFactory.getRecycleClient(authInfo, 100*time.Millisecond)
+	_, err = clientFactory.getRecycleClient(authInfo, 100*time.Millisecond, HomeClusterName)
 	require.NoError(err)
 
 	// Verify we have the client
@@ -42,7 +42,7 @@ func TestClientExpiration(t *testing.T) {
 	time.Sleep(time.Millisecond * 60)
 	authInfo1 := api.NewAuthInfo()
 	authInfo1.Token = "bar-token"
-	_, err = clientFactory.getRecycleClient(authInfo1, 100*time.Millisecond)
+	_, err = clientFactory.getRecycleClient(authInfo1, 100*time.Millisecond, HomeClusterName)
 	require.NoError(err)
 
 	// Verify we have both the foo and bar clients
@@ -84,7 +84,7 @@ func TestConcurrentClientExpiration(t *testing.T) {
 			defer wg.Done()
 			authInfo := api.NewAuthInfo()
 			authInfo.Token = fmt.Sprintf("%d", rand.Intn(10000000000))
-			_, innerErr := clientFactory.getRecycleClient(authInfo, 10*time.Millisecond)
+			_, innerErr := clientFactory.getRecycleClient(authInfo, 10*time.Millisecond, HomeClusterName)
 			assert.NoError(innerErr)
 		}()
 	}

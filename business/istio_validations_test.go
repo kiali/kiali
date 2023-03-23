@@ -186,11 +186,15 @@ func mockMultiNamespaceGatewaysValidationService() IstioValidationsService {
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDepSyncedWithRS(), nil)
 	k8s.On("GetMeshPolicies", mock.AnythingOfType("string")).Return(fakeMeshPolicies(), nil)
 
-	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = k8s
+	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 }
 
 func mockCombinedValidationService(istioConfigList *models.IstioConfigList, services []string, namespace string, podList *core_v1.PodList) IstioValidationsService {
 	k8s := new(kubetest.K8SClientMock)
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
 
 	fakeIstioObjects := []runtime.Object{}
 	for _, p := range fakeMeshPolicies() {
@@ -223,7 +227,9 @@ func mockCombinedValidationService(istioConfigList *models.IstioConfigList, serv
 
 	setupGlobalMeshConfig()
 
-	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = k8s
+	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 }
 
 func mockEmptyValidationService() IstioValidationsService {
@@ -232,7 +238,9 @@ func mockEmptyValidationService() IstioValidationsService {
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("IsMaistraApi").Return(false)
-	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = k8s
+	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 }
 
 func fakeEmptyIstioConfigList() *models.IstioConfigList {

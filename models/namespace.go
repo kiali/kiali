@@ -20,6 +20,12 @@ type Namespace struct {
 	// required: true
 	Name string `json:"name"`
 
+	// The name of the cluster
+	//
+	// example:  east
+	// required: true
+	Cluster string `json:"cluster"`
+
 	// Creation date of the namespace.
 	// There is no need to export this through the API. So, this is
 	// set to be ignored by JSON package.
@@ -37,18 +43,19 @@ type Namespace struct {
 type Namespaces []Namespace
 type NamespaceNames []string
 
-func CastNamespaceCollection(ns []core_v1.Namespace) []Namespace {
+func CastNamespaceCollection(ns []core_v1.Namespace, cluster string) []Namespace {
 	namespaces := make([]Namespace, len(ns))
 	for i, item := range ns {
-		namespaces[i] = CastNamespace(item)
+		namespaces[i] = CastNamespace(item, cluster)
 	}
 
 	return namespaces
 }
 
-func CastNamespace(ns core_v1.Namespace) Namespace {
+func CastNamespace(ns core_v1.Namespace, cluster string) Namespace {
 	namespace := Namespace{}
 	namespace.Name = ns.Name
+	namespace.Cluster = cluster
 	namespace.CreationTimestamp = ns.CreationTimestamp.Time
 	namespace.Labels = ns.Labels
 	namespace.Annotations = make(map[string]string)

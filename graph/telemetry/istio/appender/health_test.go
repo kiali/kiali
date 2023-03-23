@@ -18,6 +18,7 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -485,7 +486,9 @@ func TestErrorCausesPanic(t *testing.T) {
 	prom := new(prometheustest.PromClientMock)
 	prom.MockNamespaceServicesRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
 	prom.MockAllRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
-	businessLayer := business.NewWithBackends(k8s, prom, nil)
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = k8s
+	businessLayer := business.NewWithBackends(k8sclients, k8sclients, prom, nil)
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
@@ -551,6 +554,8 @@ func setupHealthConfig(services []core_v1.Service, deployments []apps_v1.Deploym
 	prom := new(prometheustest.PromClientMock)
 	prom.MockNamespaceServicesRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
 	prom.MockAllRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
-	businessLayer := business.NewWithBackends(k8s, prom, nil)
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = k8s
+	businessLayer := business.NewWithBackends(k8sclients, k8sclients, prom, nil)
 	return businessLayer
 }

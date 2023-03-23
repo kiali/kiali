@@ -15,6 +15,7 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
@@ -105,7 +106,9 @@ func setupWorkloads() *business.Layer {
 	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
 	k8s.On("GetDaemonSets", mock.AnythingOfType("string")).Return([]apps_v1.DaemonSet{}, nil)
 
-	businessLayer := business.NewWithBackends(k8s, nil, nil)
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = k8s
+	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 	return businessLayer
 }
 

@@ -148,6 +148,10 @@ func GetConfigForLocalCluster() (*rest.Config, error) {
 			incluster, err = GetConfigForRemoteCluster(remoteSecret.Clusters[0])
 		} else {
 			incluster, err = rest.InClusterConfig()
+			if err != nil {
+				log.Errorf("Error '%v' getting config for local cluster", err.Error())
+				return nil, err
+			}
 			incluster.QPS = c.KubernetesConfig.QPS
 			incluster.Burst = c.KubernetesConfig.Burst
 		}

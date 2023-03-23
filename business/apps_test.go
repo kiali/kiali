@@ -20,7 +20,9 @@ import (
 
 func setupAppService(k8s *kubetest.FakeK8sClient) *AppService {
 	prom := new(prometheustest.PromClientMock)
-	layer := NewWithBackends(k8s, prom, nil)
+	clients := make(map[string]kubernetes.ClientInterface)
+	clients[kubernetes.HomeClusterName] = k8s
+	layer := NewWithBackends(clients, clients, prom, nil)
 	setupGlobalMeshConfig()
 	return &AppService{k8s: k8s, prom: prom, businessLayer: layer}
 }
@@ -66,6 +68,8 @@ func TestGetAppListFromDeployments(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	k8s.OpenShift = true
 	k8s.Token = "token" // Not needed a result, just to not send an error to test this usecase
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
 
 	stopCache := setupTestingKialiCache(k8s, nil, require)
 	defer stopCache()
@@ -105,6 +109,8 @@ func TestGetAppFromDeployments(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	k8s.OpenShift = true
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
 
 	stopCache := setupTestingKialiCache(k8s, conf, require)
 	defer stopCache()
@@ -141,6 +147,8 @@ func TestGetAppListFromReplicaSets(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	k8s.OpenShift = true
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
 
 	stopCache := setupTestingKialiCache(k8s, nil, require)
 	defer stopCache()
@@ -175,6 +183,8 @@ func TestGetAppFromReplicaSets(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	k8s.OpenShift = true
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
 
 	stopCache := setupTestingKialiCache(k8s, nil, require)
 	defer stopCache()

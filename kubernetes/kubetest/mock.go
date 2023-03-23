@@ -48,10 +48,23 @@ func (o *K8SClientFactoryMock) GetClient(authInfo *api.AuthInfo) (kubernetes.Cli
 	return o.Clients[kubernetes.HomeClusterName], nil
 }
 
+// Business Methods
+func (o *K8SClientFactoryMock) GetClients(authInfo *api.AuthInfo) (map[string]kubernetes.ClientInterface, error) {
+	o.lock.RLock()
+	defer o.lock.RUnlock()
+	return o.Clients, nil
+}
+
 func (o *K8SClientFactoryMock) GetSAClient(cluster string) kubernetes.ClientInterface {
 	o.lock.RLock()
 	defer o.lock.RUnlock()
 	return o.Clients[cluster]
+}
+
+func (o *K8SClientFactoryMock) GetSAClients() map[string]kubernetes.ClientInterface {
+	o.lock.RLock()
+	defer o.lock.RUnlock()
+	return o.Clients
 }
 
 func (o *K8SClientFactoryMock) GetSAHomeClusterClient() kubernetes.ClientInterface {

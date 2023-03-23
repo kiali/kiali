@@ -14,6 +14,7 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/tests/data"
@@ -80,13 +81,17 @@ func testPerfScenario(exStatus string, nss []core_v1.Namespace, drs []*networkin
 		k8s.On("GetNamespace", ns.Name).Return(&ns, nil)
 		nsNames = append(nsNames, ns.Name)
 	}
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
 
 	conf = config.NewConfig()
 	conf.Deployment.AccessibleNamespaces = []string{"**"}
 	config.Set(conf)
 
 	kialiCache = cache.FakeTlsKialiCache("token", nsNames, ps, drs)
-	TLSService := TLSService{k8s: k8s, enabledAutoMtls: &autoMtls, businessLayer: NewWithBackends(k8s, nil, nil)}
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = k8s
+	TLSService := TLSService{k8s: k8s, enabledAutoMtls: &autoMtls, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 	for _, ns := range nss {
 		status, err := (TLSService).NamespaceWidemTLSStatus(context.TODO(), ns.Name)
 		assert.NoError(err)
