@@ -1,5 +1,6 @@
 import * as React from 'react';
 import {
+  Checkbox,
   FormSelect,
   FormSelectOption,
   Select,
@@ -21,7 +22,9 @@ import {
   FILTER_ACTION_UPDATE,
   FilterType,
   AllFilterTypes,
-  LabelOperation
+  LabelOperation,
+  ToggleType,
+  ActiveTogglesInfo
 } from '../../types/Filters';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
@@ -47,14 +50,17 @@ const bottomPadding = style({
 });
 
 export interface StatefulFiltersProps {
-  onFilterChange: (active: ActiveFiltersInfo) => void;
-  initialFilters: FilterType[];
-  ref?: React.RefObject<StatefulFilters>;
   childrenFirst?: boolean;
+  initialFilters: FilterType[];
+  initialToggles?: ToggleType[];
+  onFilterChange: (active: ActiveFiltersInfo) => void;
+  onToggleChange?: (active: ActiveTogglesInfo) => void;
+  ref?: React.RefObject<StatefulFilters>;
 }
 
 interface StatefulFiltersState {
   activeFilters: ActiveFiltersInfo;
+  activeToggles: ActiveTogglesInfo;
   filterTypes: FilterType[];
   currentFilterType: FilterType;
   currentValue: string;
@@ -95,6 +101,24 @@ export class FilterSelected {
   };
 }
 
+export class ToggleSelected {
+  static checkedToggles: ActiveTogglesInfo = new Map<string, boolean>();
+
+  static init = (toggles: ToggleType[]): ActiveTogglesInfo => {
+    ToggleSelected.checkedToggles.clear();
+    toggles.forEach(t => ToggleSelected.checkedToggles.set(t.name, t.value));
+    return ToggleSelected.checkedToggles;
+  };
+
+  static setToggle = (name: string, value: boolean) => {
+    ToggleSelected.checkedToggles.set(name, value);
+  };
+
+  static getToggles = (): ActiveTogglesInfo => {
+    return new Map<string, boolean>(ToggleSelected.checkedToggles);
+  };
+}
+
 const dividerStyle = style({ borderRight: '1px solid #d1d1d1;', padding: '10px', display: 'inherit' });
 const paddingStyle = style({ padding: '10px' });
 
@@ -104,9 +128,10 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
   constructor(props: StatefulFiltersProps) {
     super(props);
     this.state = {
+      activeFilters: FilterSelected.init(this.props.initialFilters),
+      activeToggles: ToggleSelected.init(this.props.initialToggles || []),
       currentFilterType: this.props.initialFilters[0],
       filterTypes: this.props.initialFilters,
-      activeFilters: FilterSelected.init(this.props.initialFilters),
       isOpen: false,
       currentValue: ''
     };
@@ -359,7 +384,14 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     });
   };
 
+  handleCheckboxChange(checked: boolean, event: React.FormEvent<HTMLInputElement>) {
+    console.log(`${event.currentTarget.name}=${checked}!`);
+    ToggleSelected.setToggle(event.currentTarget.name, checked);
+    this.setState({ activeToggles: ToggleSelected.getToggles() });
+  }
+
   render() {
+    console.log('render');
     const { currentFilterType, activeFilters } = this.state;
     const filterOptions = this.state.filterTypes.map(option => (
       <FormSelectOption key={option.category} value={option.category} label={option.category} />
@@ -367,7 +399,6 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     const hasActiveFilters =
       this.state.activeFilters.filters.some(f => f.category === labelFilter.category) ||
       this.state.currentFilterType.filterType === AllFilterTypes.label;
-
     return (
       <>
         <Toolbar id="filter-selection" className={toolbarStyle} clearAllFilters={this.clearFilters}>
@@ -396,6 +427,22 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                   </ToolbarFilter>
                 );
               })}
+            </ToolbarGroup>
+            <ToolbarGroup>
+              {this.props.initialToggles &&
+                this.props.initialToggles.map(t => {
+                  return (
+                    <ToolbarItem>
+                      <Checkbox
+                        id={t.name}
+                        name={t.name}
+                        label={t.label}
+                        isChecked={this.state.activeToggles.get(t.name)}
+                        onChange={this.handleCheckboxChange}
+                      />
+                    </ToolbarItem>
+                  );
+                })}
             </ToolbarGroup>
             {!this.props.childrenFirst && this.renderChildren()}
             {hasActiveFilters && (

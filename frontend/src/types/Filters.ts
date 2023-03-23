@@ -48,3 +48,11 @@ export interface ActiveFiltersInfo {
   filters: ActiveFilter[];
   op: LabelOperation;
 }
+
+export interface ToggleType {
+  label: string;
+  name: string;
+  value: boolean;
+}
+
+export type ActiveTogglesInfo = Map<string, boolean>;

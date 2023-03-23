@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 
@@ -19,7 +20,8 @@ type appParams struct {
 	Namespace string `json:"namespace"`
 	AppName   string `json:"app"`
 	// Optional
-	IncludeHealth bool `json:"health"`
+	IncludeHealth         bool `json:"health"`
+	IncludeIstioResources bool `json:"istioResources"`
 }
 
 func (p *appParams) extract(r *http.Request) {
@@ -28,7 +30,15 @@ func (p *appParams) extract(r *http.Request) {
 	p.baseExtract(r, vars)
 	p.Namespace = vars["namespace"]
 	p.AppName = vars["app"]
-	p.IncludeHealth = query.Get("health") != ""
+	var err error
+	p.IncludeHealth, err = strconv.ParseBool(query.Get("health"))
+	if err != nil {
+		p.IncludeHealth = false
+	}
+	p.IncludeIstioResources, err = strconv.ParseBool(query.Get("istioResources"))
+	if err != nil {
+		p.IncludeIstioResources = false
+	}
 }
 
 // AppList is the API handler to fetch all the apps to be displayed, related to a single namespace
@@ -36,7 +46,7 @@ func AppList(w http.ResponseWriter, r *http.Request) {
 	p := appParams{}
 	p.extract(r)
 
-	criteria := business.AppCriteria{Namespace: p.Namespace, IncludeIstioResources: true, IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
+	criteria := business.AppCriteria{Namespace: p.Namespace, IncludeHealth: p.IncludeHealth, IncludeIstioResources: p.IncludeIstioResources, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
 
 	// Get business layer
 	business, err := getBusiness(r)

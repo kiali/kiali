@@ -88,7 +88,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
 
   fetchApps(namespaces: string[], filters: ActiveFiltersInfo, rateInterval: number) {
     const appsPromises = namespaces.map(namespace =>
-      API.getApps(namespace, { health: 'true', rateInterval: String(rateInterval) + 's' })
+      API.getApps(namespace, { health: 'false', rateInterval: String(rateInterval) + 's' })
     );
     this.promises
       .registerAll('apps', appsPromises)
@@ -124,7 +124,12 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
         </div>
         <RenderContent>
           <VirtualList rows={this.state.listItems}>
-            <StatefulFilters initialFilters={AppListFilters.availableFilters} onFilterChange={this.onFilterChange} />
+            <StatefulFilters
+              initialFilters={AppListFilters.availableFilters}
+              initialToggles={AppListFilters.availableToggles}
+              onFilterChange={this.onFilterChange}
+              onToggleChange={this.onFilterChange}
+            />
           </VirtualList>
         </RenderContent>
       </>

@@ -3,6 +3,7 @@ package handlers
 import (
 	"io"
 	"net/http"
+	"strconv"
 	"sync"
 
 	"github.com/gorilla/mux"
@@ -40,8 +41,15 @@ func (p *workloadParams) extract(r *http.Request) {
 	if query.Has("cluster") && query.Get("cluster") != "null" {
 		p.Cluster = query.Get("cluster")
 	}
-	p.IncludeHealth = query.Get("health") != ""
-	p.Validate = query.Get("validate") != ""
+	var err error
+	p.IncludeHealth, err = strconv.ParseBool(query.Get("health"))
+	if err != nil {
+		p.IncludeHealth = false
+	}
+	p.Validate, err = strconv.ParseBool(query.Get("validate"))
+	if err != nil {
+		p.Validate = false
+	}
 }
 
 // WorkloadList is the API handler to fetch all the workloads to be displayed, related to a single namespace

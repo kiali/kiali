@@ -1,4 +1,4 @@
-import { ActiveFiltersInfo, FILTER_ACTION_APPEND, FilterType } from '../../types/Filters';
+import { ActiveFiltersInfo, FILTER_ACTION_APPEND, FilterType, ToggleType } from '../../types/Filters';
 import { calculateErrorRate } from '../../types/ErrorRate';
 import { AppListItem } from '../../types/AppList';
 import { SortField } from '../../types/SortFilters';
@@ -105,6 +105,20 @@ export const availableFilters: FilterType[] = [
   healthFilter,
   labelFilter
 ];
+
+const healthToggle: ToggleType = {
+  label: 'Health',
+  name: 'health',
+  value: true
+};
+
+const istioConfigToggle: ToggleType = {
+  label: 'Istio Config Detail',
+  name: 'istioConfig',
+  value: true
+};
+
+export const availableToggles: ToggleType[] = [healthToggle, istioConfigToggle];
 
 /** Filter Method */
 
