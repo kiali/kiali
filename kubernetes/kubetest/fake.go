@@ -2,7 +2,7 @@ package kubetest
 
 import (
 	"context"
-	
+
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -62,7 +62,6 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 		istioGateways     []*networking_v1beta1.Gateway
 		deploymentConfigs = make(map[string][]osapps_v1.DeploymentConfig)
 		projects          = []osproject_v1.Project{}
-		//namespaces        = []v1.Namespace{}
 	)
 
 	for _, obj := range objects {
@@ -88,7 +87,6 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 				projects = append(projects, *proj)
 			}
 		}
-
 	}
 
 	kubeClient := kubefake.NewSimpleClientset(kubeObjects...)
@@ -108,7 +106,6 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 		projects:          projects,
 		KubeClientset:     kubeClient,
 		IstioClientset:    istioClient,
-		//namespaces:        namespaces,
 	}
 }
 
