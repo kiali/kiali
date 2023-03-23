@@ -59,7 +59,7 @@ func TestGetNamespaces(t *testing.T) {
 
 	assert.NotNil(t, ns)
 	assert.Equal(t, len(ns), 5)
-	assert.Equal(t, ns[0].Name, "bookinfo")
+	assert.Equal(t, ns[0].Name, "alpha")
 }
 
 // Get namespace
@@ -111,7 +111,7 @@ func TestUpdateNamespaces(t *testing.T) {
 
 	nsservice := setupNamespaceService(k8s, conf)
 
-	ns, err := nsservice.UpdateNamespace(context.TODO(), "bookinfo", "new", kubernetes.HomeClusterName)
+	ns, err := nsservice.UpdateNamespace(context.TODO(), "bookinfo", `{"metadata": {"labels": {"new": "label"}}}`, kubernetes.HomeClusterName)
 
 	assert.Nil(t, err)
 	assert.NotNil(t, ns)

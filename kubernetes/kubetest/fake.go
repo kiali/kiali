@@ -2,15 +2,12 @@ package kubetest
 
 import (
 	"context"
-	"errors"
-
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	istiofake "istio.io/client-go/pkg/clientset/versioned/fake"
 	istioscheme "istio.io/client-go/pkg/clientset/versioned/scheme"
-	v1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -51,15 +48,6 @@ func isOpenShiftResource(obj runtime.Object) bool {
 	return false
 }
 
-func isNamespace(obj runtime.Object) bool {
-	switch obj.(type) {
-	case *v1.Namespace:
-		return true
-	}
-
-	return false
-}
-
 func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 	// NOTE: The kube fake client object tracker guesses the resource name based on the Kind.
 	// For a plural resource, it will convert the kind to lowercase and add an "ies" to the end.
@@ -73,18 +61,13 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 		istioGateways     []*networking_v1beta1.Gateway
 		deploymentConfigs = make(map[string][]osapps_v1.DeploymentConfig)
 		projects          = []osproject_v1.Project{}
-		namespaces        = []v1.Namespace{}
+		//namespaces        = []v1.Namespace{}
 	)
 
 	for _, obj := range objects {
 		o := obj
 		switch {
 		case isKubeResource(o):
-			if isNamespace(o) {
-				if ns, ok := o.(*v1.Namespace); ok {
-					namespaces = append(namespaces, *ns)
-				}
-			}
 			kubeObjects = append(kubeObjects, o)
 		case isIstioResource(o):
 			if gw, ok := o.(*networking_v1beta1.Gateway); ok {
@@ -124,7 +107,7 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 		projects:          projects,
 		KubeClientset:     kubeClient,
 		IstioClientset:    istioClient,
-		namespaces:        namespaces,
+		//namespaces:        namespaces,
 	}
 }
 
@@ -146,8 +129,6 @@ type FakeK8sClient struct {
 	GatewayAPIClientset gatewayapi.Interface
 	// Token is the kiali token this client uses.
 	Token string
-	// Namespaces List
-	namespaces []v1.Namespace
 }
 
 func (c *FakeK8sClient) IsOpenShift() bool  { return c.OpenShift }
@@ -169,19 +150,6 @@ func (c *FakeK8sClient) GetProject(name string) (*osproject_v1.Project, error) {
 // kube api for these instead of using the openshift client-go.
 func (c *FakeK8sClient) GetProjects(labelSelector string) ([]osproject_v1.Project, error) {
 	return c.projects, nil
-}
-
-func (c *FakeK8sClient) GetNamespaces(labelSelector string) ([]v1.Namespace, error) {
-	return c.namespaces, nil
-}
-
-func (c *FakeK8sClient) UpdateNamespace(namespace string, jsonpatch string) (*v1.Namespace, error) {
-	for _, n := range c.namespaces {
-		if n.Name == namespace {
-			return &n, nil
-		}
-	}
-	return &v1.Namespace{}, errors.New("Namespace not found")
 }
 
 func (c *FakeK8sClient) GetDeploymentConfig(namespace string, name string) (*osapps_v1.DeploymentConfig, error) {
