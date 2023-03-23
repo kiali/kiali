@@ -151,7 +151,6 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 		if cluster == HomeClusterName {
 			kialiToken, err = GetKialiTokenForHomeCluster()
 		} else {
-			// TODO: Check for errors
 			kialiToken, err = cf.GetSAClient(cluster).GetToken(), nil
 		}
 
@@ -190,15 +189,33 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 
 	if cluster == HomeClusterName {
 		newClient, err = NewClientFromConfig(&config)
+		if err != nil {
+			log.Errorf("Error creating client for cluster %s: %s", cluster, err.Error())
+			return nil, err
+		}
+
 	} else {
 		// Remote clusters
 		clusterInfo, errClusterInfo := GetRemoteClusterInfos()
 		if errClusterInfo == nil {
-			remoteConfig, err2 := GetConfigForRemoteClusterInfo(clusterInfo[cluster])
-			if err2 == nil {
-				log.Errorf("Error getting remote cluster [%s] info: %c", cluster, err2)
+			var remoteConfig *rest.Config
+			var err2 error
+			// In auth strategy should we use SA token
+			if cfg.Auth.Strategy == kialiConfig.AuthStrategyAnonymous {
+				remoteConfig, err2 = GetConfigForRemoteClusterInfo(clusterInfo[cluster])
+			} else {
+				remoteConfig, err2 = GetConfigWithTokenForRemoteCluster(clusterInfo[cluster].Cluster,
+					RemoteSecretUser{
+						Name: authInfo.Username, User: RemoteSecretUserToken{Token: authInfo.Token}})
+			}
+
+			if err2 != nil {
+				log.Errorf("Error getting remote cluster [%s] info: %s", cluster, err2)
 			}
 			newClient, err = NewClientFromConfig(remoteConfig)
+			if err != nil {
+				log.Errorf("Error getting remote client for cluster %s, %s", cluster, err.Error())
+			}
 		} else {
 			log.Errorf("Error getting remote cluster infos: %c", errClusterInfo)
 		}
@@ -285,10 +302,10 @@ func (cf *clientFactory) getRecycleClient(authInfo *api.AuthInfo, expirationTime
 			return nil, err
 		}
 
-		if cf.clientEntries[getTokenHash(authInfo)] == nil {
-			cf.clientEntries[getTokenHash(authInfo)] = make(map[string]ClientInterface)
+		if cf.clientEntries[tokenHash] == nil {
+			cf.clientEntries[tokenHash] = make(map[string]ClientInterface)
 		}
-		cf.clientEntries[getTokenHash(authInfo)][cluster] = client
+		cf.clientEntries[tokenHash][cluster] = client
 		internalmetrics.SetKubernetesClients(len(cf.clientEntries))
 		return client, nil
 	}

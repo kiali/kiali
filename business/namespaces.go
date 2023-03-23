@@ -227,7 +227,6 @@ func (in *NamespaceService) GetNamespacesByCluster(cluster string) ([]models.Nam
 			// Everything is good, return the projects we got from OpenShift
 			if queryAllNamespaces {
 				namespaces = models.CastProjectCollection(projects)
-
 				// add the namespaces explicitly included in the include list.
 				includes := configObject.API.Namespaces.Include
 				if len(includes) > 0 {
@@ -266,6 +265,7 @@ func (in *NamespaceService) GetNamespacesByCluster(cluster string) ([]models.Nam
 		// Note that "**" requires cluster role permission to list all namespaces.
 		accessibleNamespaces := configObject.Deployment.AccessibleNamespaces
 		if queryAllNamespaces {
+
 			nss, err := in.userClients[cluster].GetNamespaces(labelSelectorInclude)
 			if err != nil {
 				// Fallback to using the Kiali service account, if needed
@@ -293,15 +293,15 @@ func (in *NamespaceService) GetNamespacesByCluster(cluster string) ([]models.Nam
 				} else {
 					// we have already got those namespaces that match the LabelSelectorInclude - that is our seed list.
 					// but we need ALL namespaces so we can look for more that match the Include list.
-					allK8sNamespaces, err := in.userClients[cluster].GetNamespaces("")
-					if err != nil {
+					allK8sNamespaces, errGetNs := in.userClients[cluster].GetNamespaces("")
+					if errGetNs != nil {
 						// Fallback to using the Kiali service account, if needed
-						if errors.IsForbidden(err) {
-							if allK8sNamespaces, err = in.getNamespacesUsingKialiSA(cluster, "", err); err != nil {
-								return nil, err
+						if errors.IsForbidden(errGetNs) {
+							if allK8sNamespaces, errGetNs = in.getNamespacesUsingKialiSA(cluster, "", errGetNs); errGetNs != nil {
+								return nil, errGetNs
 							}
 						} else {
-							return nil, err
+							return nil, errGetNs
 						}
 					}
 					allNamespaces = models.CastNamespaceCollection(allK8sNamespaces, cluster)
@@ -503,11 +503,14 @@ func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace
 		if cluster == "" {
 			for cl := range in.userClients {
 				ns, errC = in.userClients[cl].GetNamespace(namespace)
-				if errC != nil {
-					return nil, errC
-				} else {
+				if errC == nil {
+					// Namespace found, assign that cluster
+					cluster = cl
 					break
 				}
+			}
+			if errC != nil {
+				return nil, errC
 			}
 		} else {
 			ns, errC = in.userClients[cluster].GetNamespace(namespace)
