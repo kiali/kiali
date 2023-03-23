@@ -315,7 +315,7 @@ func (c *kubeCache) refresh(namespace string) error {
 
 func (c *kubeCache) CheckIstioResource(resourceType string) bool {
 	_, exist := c.cacheIstioTypes[kubernetes.PluralType[resourceType]]
-	return exist
+	return exist && c.client.IsIstioAPI()
 }
 
 // starter is a small interface around the different informer factories that
@@ -1066,11 +1066,6 @@ func (c *kubeCache) GetVirtualServices(namespace, labelSelector string) ([]*netw
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	// Check if informers are started for this type
-	if c.getCacheLister(namespace).virtualServiceLister == nil {
-		// If disabled, return an empty list
-		return []*networking_v1beta1.VirtualService{}, nil
-	}
 	vs, err := c.getCacheLister(namespace).virtualServiceLister.VirtualServices(namespace).List(selector)
 	if err != nil {
 		return nil, err
