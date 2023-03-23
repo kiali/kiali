@@ -35,7 +35,6 @@ func (c *kialiCacheImpl) SetNamespaces(token string, namespaces []models.Namespa
 	c.tokenNamespaces[token] = namespaceCache{
 		created:          time.Now(),
 		namespaces:       namespaces,
-		nameNamespace:    nameNamespace,
 		clusterNamespace: clusterNamespace,
 	}
 }

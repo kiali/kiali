@@ -37,7 +37,6 @@ type KialiCache interface {
 type namespaceCache struct {
 	created          time.Time
 	namespaces       []models.Namespace                     // Merge namespaces with the same name and cluster
-	nameNamespace    map[string]map[string]models.Namespace // By namespace name, by cluster
 	clusterNamespace map[string]map[string]models.Namespace // By cluster, by namespace name
 }
 
