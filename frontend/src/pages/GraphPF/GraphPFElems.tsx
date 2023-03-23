@@ -434,7 +434,7 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettin
         // But if open CB is responsible for removing possible destinations the "UH" code seems preferred.
         if (responses[code]['UO'] || responses[code]['UH']) {
           label = lockIcon
-            ? `$icons.istio.circuitBreaker.className} ${label}`
+            ? `${icons.istio.circuitBreaker.className} ${label}`
             : `${icons.istio.circuitBreaker.className}\n${label}`;
           break;
         }
