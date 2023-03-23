@@ -1066,6 +1066,11 @@ func (c *kubeCache) GetVirtualServices(namespace, labelSelector string) ([]*netw
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
+	// Check if informers are started for this type
+	if c.getCacheLister(namespace).virtualServiceLister == nil {
+		// If disabled, return an empty list
+		return []*networking_v1beta1.VirtualService{}, nil
+	}
 	vs, err := c.getCacheLister(namespace).virtualServiceLister.VirtualServices(namespace).List(selector)
 	if err != nil {
 		return nil, err
