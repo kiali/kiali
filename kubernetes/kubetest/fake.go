@@ -106,6 +106,7 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 		projects:          projects,
 		KubeClientset:     kubeClient,
 		IstioClientset:    istioClient,
+		IstioAPIEnabled:   true,
 	}
 }
 
@@ -113,6 +114,7 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 type FakeK8sClient struct {
 	OpenShift         bool
 	GatewayAPIEnabled bool
+	IstioAPIEnabled   bool
 	kialikube.ClientInterface
 	// Keeping track of the openshift objects separately since we don't use the openshift client-go
 	// and there's no underlying fake clientset.
@@ -131,6 +133,7 @@ type FakeK8sClient struct {
 
 func (c *FakeK8sClient) IsOpenShift() bool  { return c.OpenShift }
 func (c *FakeK8sClient) IsGatewayAPI() bool { return c.GatewayAPIEnabled }
+func (c *FakeK8sClient) IsIstioAPI() bool   { return c.IstioAPIEnabled }
 func (c *FakeK8sClient) GetToken() string   { return c.Token }
 
 // The openshift resources are stubbed out because Kiali talks directly to the

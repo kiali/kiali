@@ -228,6 +228,24 @@ func (in *K8SClient) IsGatewayAPI() bool {
 	return *in.isGatewayAPI
 }
 
+// Is IstioAPI checks whether Istio API is installed or not
+func (in *K8SClient) IsIstioAPI() bool {
+	if in.Istio() == nil {
+		return false
+	}
+	if in.isIstioAPI == nil {
+		isIstioAPI := false
+		_, err := in.k8s.Discovery().RESTClient().Get().AbsPath("/apis/networking.istio.io").Do(in.ctx).Raw()
+		if err == nil {
+			isIstioAPI = true
+		} else if !errors.IsNotFound(err) {
+			log.Warningf("Error checking Istio API configuration: %v", err)
+		}
+		in.isIstioAPI = &isIstioAPI
+	}
+	return *in.isIstioAPI
+}
+
 // GetServices returns a list of services for a given namespace.
 // If selectorLabels is defined the list of services is filtered for those that matches Services selector labels.
 // It returns an error on any problem.

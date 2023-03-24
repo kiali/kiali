@@ -315,7 +315,7 @@ func (c *kubeCache) refresh(namespace string) error {
 
 func (c *kubeCache) CheckIstioResource(resourceType string) bool {
 	_, exist := c.cacheIstioTypes[kubernetes.PluralType[resourceType]]
-	return exist
+	return exist && c.client.IsIstioAPI()
 }
 
 // starter is a small interface around the different informer factories that
@@ -365,70 +365,72 @@ func (c *kubeCache) createIstioInformers(namespace string) istio.SharedInformerF
 	sharedInformers := istio.NewSharedInformerFactoryWithOptions(c.client.Istio(), c.refreshDuration, opts...)
 	lister := c.getCacheLister(namespace)
 
-	if c.CheckIstioResource(kubernetes.AuthorizationPolicies) {
-		lister.authzLister = sharedInformers.Security().V1beta1().AuthorizationPolicies().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Security().V1beta1().AuthorizationPolicies().Informer().HasSynced)
-		sharedInformers.Security().V1beta1().AuthorizationPolicies().Informer().AddEventHandler(c.registryRefreshHandler)
-	}
-	if c.CheckIstioResource(kubernetes.DestinationRules) {
-		lister.destinationRuleLister = sharedInformers.Networking().V1beta1().DestinationRules().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().DestinationRules().Informer().HasSynced)
-		sharedInformers.Networking().V1beta1().DestinationRules().Informer().AddEventHandler(c.registryRefreshHandler)
-	}
-	if c.CheckIstioResource(kubernetes.EnvoyFilters) {
-		lister.envoyFilterLister = sharedInformers.Networking().V1alpha3().EnvoyFilters().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1alpha3().EnvoyFilters().Informer().HasSynced)
-		sharedInformers.Networking().V1alpha3().EnvoyFilters().Informer().AddEventHandler(c.registryRefreshHandler)
-	}
-	if c.CheckIstioResource(kubernetes.Gateways) {
-		lister.gatewayLister = sharedInformers.Networking().V1beta1().Gateways().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().Gateways().Informer().HasSynced)
-		sharedInformers.Networking().V1beta1().Gateways().Informer().AddEventHandler(c.registryRefreshHandler)
-	}
-	if c.CheckIstioResource(kubernetes.PeerAuthentications) {
-		lister.peerAuthnLister = sharedInformers.Security().V1beta1().PeerAuthentications().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Security().V1beta1().PeerAuthentications().Informer().HasSynced)
-		sharedInformers.Security().V1beta1().PeerAuthentications().Informer().AddEventHandler(c.registryRefreshHandler)
-	}
-	if c.CheckIstioResource(kubernetes.RequestAuthentications) {
-		lister.requestAuthnLister = sharedInformers.Security().V1beta1().RequestAuthentications().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Security().V1beta1().RequestAuthentications().Informer().HasSynced)
-		sharedInformers.Security().V1beta1().RequestAuthentications().Informer().AddEventHandler(c.registryRefreshHandler)
-	}
-	if c.CheckIstioResource(kubernetes.ServiceEntries) {
-		lister.serviceEntryLister = sharedInformers.Networking().V1beta1().ServiceEntries().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().ServiceEntries().Informer().HasSynced)
-		sharedInformers.Networking().V1beta1().ServiceEntries().Informer().AddEventHandler(c.registryRefreshHandler)
-	}
-	if c.CheckIstioResource(kubernetes.Sidecars) {
-		lister.sidecarLister = sharedInformers.Networking().V1beta1().Sidecars().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().Sidecars().Informer().HasSynced)
-		sharedInformers.Networking().V1beta1().Sidecars().Informer().AddEventHandler(c.registryRefreshHandler)
-	}
-	if c.CheckIstioResource(kubernetes.Telemetries) {
-		lister.telemetryLister = sharedInformers.Telemetry().V1alpha1().Telemetries().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Telemetry().V1alpha1().Telemetries().Informer().HasSynced)
-		sharedInformers.Telemetry().V1alpha1().Telemetries().Informer().AddEventHandler(c.registryRefreshHandler)
-	}
-	if c.CheckIstioResource(kubernetes.VirtualServices) {
-		lister.virtualServiceLister = sharedInformers.Networking().V1beta1().VirtualServices().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().VirtualServices().Informer().HasSynced)
-		sharedInformers.Networking().V1beta1().VirtualServices().Informer().AddEventHandler(c.registryRefreshHandler)
-	}
-	if c.CheckIstioResource(kubernetes.WasmPlugins) {
-		lister.wasmPluginLister = sharedInformers.Extensions().V1alpha1().WasmPlugins().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Extensions().V1alpha1().WasmPlugins().Informer().HasSynced)
-		sharedInformers.Extensions().V1alpha1().WasmPlugins().Informer().AddEventHandler(c.registryRefreshHandler)
-	}
-	if c.CheckIstioResource(kubernetes.WorkloadEntries) {
-		lister.workloadEntryLister = sharedInformers.Networking().V1beta1().WorkloadEntries().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().WorkloadEntries().Informer().HasSynced)
-		sharedInformers.Networking().V1beta1().WorkloadEntries().Informer().AddEventHandler(c.registryRefreshHandler)
-	}
-	if c.CheckIstioResource(kubernetes.WorkloadGroups) {
-		lister.workloadGroupLister = sharedInformers.Networking().V1beta1().WorkloadGroups().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().WorkloadGroups().Informer().HasSynced)
-		sharedInformers.Networking().V1beta1().WorkloadGroups().Informer().AddEventHandler(c.registryRefreshHandler)
+	if c.client.IsIstioAPI() {
+		if c.CheckIstioResource(kubernetes.AuthorizationPolicies) {
+			lister.authzLister = sharedInformers.Security().V1beta1().AuthorizationPolicies().Lister()
+			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Security().V1beta1().AuthorizationPolicies().Informer().HasSynced)
+			sharedInformers.Security().V1beta1().AuthorizationPolicies().Informer().AddEventHandler(c.registryRefreshHandler)
+		}
+		if c.CheckIstioResource(kubernetes.DestinationRules) {
+			lister.destinationRuleLister = sharedInformers.Networking().V1beta1().DestinationRules().Lister()
+			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().DestinationRules().Informer().HasSynced)
+			sharedInformers.Networking().V1beta1().DestinationRules().Informer().AddEventHandler(c.registryRefreshHandler)
+		}
+		if c.CheckIstioResource(kubernetes.EnvoyFilters) {
+			lister.envoyFilterLister = sharedInformers.Networking().V1alpha3().EnvoyFilters().Lister()
+			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1alpha3().EnvoyFilters().Informer().HasSynced)
+			sharedInformers.Networking().V1alpha3().EnvoyFilters().Informer().AddEventHandler(c.registryRefreshHandler)
+		}
+		if c.CheckIstioResource(kubernetes.Gateways) {
+			lister.gatewayLister = sharedInformers.Networking().V1beta1().Gateways().Lister()
+			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().Gateways().Informer().HasSynced)
+			sharedInformers.Networking().V1beta1().Gateways().Informer().AddEventHandler(c.registryRefreshHandler)
+		}
+		if c.CheckIstioResource(kubernetes.PeerAuthentications) {
+			lister.peerAuthnLister = sharedInformers.Security().V1beta1().PeerAuthentications().Lister()
+			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Security().V1beta1().PeerAuthentications().Informer().HasSynced)
+			sharedInformers.Security().V1beta1().PeerAuthentications().Informer().AddEventHandler(c.registryRefreshHandler)
+		}
+		if c.CheckIstioResource(kubernetes.RequestAuthentications) {
+			lister.requestAuthnLister = sharedInformers.Security().V1beta1().RequestAuthentications().Lister()
+			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Security().V1beta1().RequestAuthentications().Informer().HasSynced)
+			sharedInformers.Security().V1beta1().RequestAuthentications().Informer().AddEventHandler(c.registryRefreshHandler)
+		}
+		if c.CheckIstioResource(kubernetes.ServiceEntries) {
+			lister.serviceEntryLister = sharedInformers.Networking().V1beta1().ServiceEntries().Lister()
+			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().ServiceEntries().Informer().HasSynced)
+			sharedInformers.Networking().V1beta1().ServiceEntries().Informer().AddEventHandler(c.registryRefreshHandler)
+		}
+		if c.CheckIstioResource(kubernetes.Sidecars) {
+			lister.sidecarLister = sharedInformers.Networking().V1beta1().Sidecars().Lister()
+			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().Sidecars().Informer().HasSynced)
+			sharedInformers.Networking().V1beta1().Sidecars().Informer().AddEventHandler(c.registryRefreshHandler)
+		}
+		if c.CheckIstioResource(kubernetes.Telemetries) {
+			lister.telemetryLister = sharedInformers.Telemetry().V1alpha1().Telemetries().Lister()
+			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Telemetry().V1alpha1().Telemetries().Informer().HasSynced)
+			sharedInformers.Telemetry().V1alpha1().Telemetries().Informer().AddEventHandler(c.registryRefreshHandler)
+		}
+		if c.CheckIstioResource(kubernetes.VirtualServices) {
+			lister.virtualServiceLister = sharedInformers.Networking().V1beta1().VirtualServices().Lister()
+			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().VirtualServices().Informer().HasSynced)
+			sharedInformers.Networking().V1beta1().VirtualServices().Informer().AddEventHandler(c.registryRefreshHandler)
+		}
+		if c.CheckIstioResource(kubernetes.WasmPlugins) {
+			lister.wasmPluginLister = sharedInformers.Extensions().V1alpha1().WasmPlugins().Lister()
+			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Extensions().V1alpha1().WasmPlugins().Informer().HasSynced)
+			sharedInformers.Extensions().V1alpha1().WasmPlugins().Informer().AddEventHandler(c.registryRefreshHandler)
+		}
+		if c.CheckIstioResource(kubernetes.WorkloadEntries) {
+			lister.workloadEntryLister = sharedInformers.Networking().V1beta1().WorkloadEntries().Lister()
+			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().WorkloadEntries().Informer().HasSynced)
+			sharedInformers.Networking().V1beta1().WorkloadEntries().Informer().AddEventHandler(c.registryRefreshHandler)
+		}
+		if c.CheckIstioResource(kubernetes.WorkloadGroups) {
+			lister.workloadGroupLister = sharedInformers.Networking().V1beta1().WorkloadGroups().Lister()
+			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().WorkloadGroups().Informer().HasSynced)
+			sharedInformers.Networking().V1beta1().WorkloadGroups().Informer().AddEventHandler(c.registryRefreshHandler)
+		}
 	}
 
 	return sharedInformers

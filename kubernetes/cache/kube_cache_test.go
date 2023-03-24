@@ -19,6 +19,8 @@ import (
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
+const IstioAPIEnabled = true
+
 func newTestingKubeCache(t *testing.T, cfg *config.Config, objects ...runtime.Object) *kubeCache {
 	t.Helper()
 
@@ -339,4 +341,22 @@ func TestUpdatingClientRefreshesCache(t *testing.T) {
 	pods, err := kialiCache.GetPods("test", "")
 	require.NoError(err)
 	require.Len(pods, 1)
+}
+
+func TestIstioAPIDisabled(t *testing.T) {
+	assert := assert.New(t)
+	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
+
+	cfg := config.NewConfig()
+	emptyRefreshHandler := NewRegistryHandler(func() {})
+	fakeClient := kubetest.NewFakeK8sClient(ns)
+	fakeClient.IstioAPIEnabled = false
+	kubeCache, err := NewKubeCache(fakeClient, *cfg, emptyRefreshHandler, cfg.Deployment.AccessibleNamespaces...)
+	if err != nil {
+		t.Fatalf("Unable to create kube cache for testing. Err: %s", err)
+	}
+
+	_, err = kubeCache.GetVirtualServices("test", "app=bookinfo")
+
+	assert.Error(err)
 }
