@@ -467,6 +467,10 @@ func (s *servicesError) GetServices(namespace string, selectorLabels map[string]
 	return nil, fmt.Errorf(s.errorMsg)
 }
 
+func (s *servicesError) GetKubeCache(cluster string) (cache.KubeCache, error) {
+	return s, nil
+}
+
 func TestErrorCausesPanic(t *testing.T) {
 	assert := assert.New(t)
 

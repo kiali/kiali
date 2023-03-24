@@ -103,6 +103,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
         name: service.name,
         istioSidecar: service.istioSidecar,
         namespace: data.namespace.name,
+        cluster: service.cluster,
         health: ServiceHealth.fromJson(data.namespace.name, service.name, service.health, {
           rateInterval: rateInterval,
           hasSidecar: service.istioSidecar

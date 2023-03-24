@@ -12,6 +12,7 @@ import { useState } from 'react';
 export function useServiceDetail(
   namespace: string,
   serviceName: string,
+  cluster?: string | undefined,
   duration?: DurationInSeconds,
   updateTime?: TimeInMilliseconds
 ) {
@@ -28,7 +29,7 @@ export function useServiceDetail(
     }
 
     setIsLoading(true); // Mark as loading
-    let getDetailPromise = API.getServiceDetail(namespace, serviceName, false, duration);
+    let getDetailPromise = API.getServiceDetail(namespace, serviceName, false, cluster, duration);
     let getGwPromise = API.getAllIstioConfigs([], ['gateways'], false, '', '');
     let getPeerAuthsPromise = API.getIstioConfig(namespace, ['peerauthentications'], false, '', '');
 
@@ -65,7 +66,7 @@ export function useServiceDetail(
       setGateways(null);
       setPeerAuthentications(null);
     };
-  }, [namespace, serviceName, duration, updateTime]);
+  }, [namespace, serviceName, cluster, duration, updateTime]);
 
   return [serviceDetails, gateways, peerAuthentications, isLoading, fetchError] as const;
 }
@@ -94,7 +95,7 @@ export function useServiceDetailForGraphNode(
     setUsedUpdateTime(updateTime);
   }, [loadFlag, node, duration, updateTime]);
 
-  const result = useServiceDetail(nodeNamespace, nodeSvcName, usedDuration, usedUpdateTime);
+  const result = useServiceDetail(nodeNamespace, nodeSvcName, node.cluster, usedDuration, usedUpdateTime);
 
   const fetchError = result[4];
   React.useEffect(() => {

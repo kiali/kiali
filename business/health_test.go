@@ -38,7 +38,7 @@ func TestGetServiceHealth(t *testing.T) {
 	prom := new(prometheustest.PromClientMock)
 
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
-	prom.MockServiceRequestRates("ns", "httpbin", serviceRates)
+	prom.MockServiceRequestRates("home_cluster", "ns", "httpbin", serviceRates)
 
 	setupGlobalMeshConfig()
 	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, clients, prom, nil)}
@@ -46,7 +46,7 @@ func TestGetServiceHealth(t *testing.T) {
 	mockSvc := models.Service{}
 	mockSvc.Name = "httpbin"
 
-	health, _ := hs.GetServiceHealth(context.TODO(), "ns", "httpbin", "1m", queryTime, &mockSvc)
+	health, _ := hs.GetServiceHealth(context.TODO(), "home_cluster", "ns", "httpbin", "1m", queryTime, &mockSvc)
 
 	prom.AssertNumberOfCalls(t, "GetServiceRequestRates", 1)
 	result := map[string]map[string]float64{

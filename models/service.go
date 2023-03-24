@@ -21,6 +21,8 @@ type ServiceOverview struct {
 	// required: true
 	// example: true
 	IstioSidecar bool `json:"istioSidecar"`
+	// The kube cluster where this service is located.
+	Cluster string `json:"cluster"`
 	// Has label app
 	// required: true
 	// example: true
@@ -82,22 +84,24 @@ type ServiceDetails struct {
 	NamespaceMTLS MTLSStatus         `json:"namespaceMTLS"`
 }
 
-type Services []*Service
-type Service struct {
-	Name              string            `json:"name"`
-	CreatedAt         string            `json:"createdAt"`
-	ResourceVersion   string            `json:"resourceVersion"`
-	Namespace         Namespace         `json:"namespace"`
-	Labels            map[string]string `json:"labels"`
-	Selectors         map[string]string `json:"selectors"`
-	Type              string            `json:"type"`
-	Ip                string            `json:"ip"`
-	Ports             Ports             `json:"ports"`
-	ExternalName      string            `json:"externalName"`
-	Annotations       map[string]string `json:"annotations"`
-	HealthAnnotations map[string]string `json:"healthAnnotations"`
-	AdditionalDetails []AdditionalItem  `json:"additionalDetails"`
-}
+type (
+	Services []*Service
+	Service  struct {
+		Name              string            `json:"name"`
+		CreatedAt         string            `json:"createdAt"`
+		ResourceVersion   string            `json:"resourceVersion"`
+		Namespace         Namespace         `json:"namespace"`
+		Labels            map[string]string `json:"labels"`
+		Selectors         map[string]string `json:"selectors"`
+		Type              string            `json:"type"`
+		Ip                string            `json:"ip"`
+		Ports             Ports             `json:"ports"`
+		ExternalName      string            `json:"externalName"`
+		Annotations       map[string]string `json:"annotations"`
+		HealthAnnotations map[string]string `json:"healthAnnotations"`
+		AdditionalDetails []AdditionalItem  `json:"additionalDetails"`
+	}
+)
 
 func (so *ServiceOverview) ParseToService() *Service {
 	svc := Service{
@@ -172,6 +176,7 @@ func (s *ServiceDetails) SetRegistryEndpoints(rEps []*kubernetes.RegistryEndpoin
 		}
 	}
 }
+
 func (s *ServiceDetails) SetPods(pods []core_v1.Pod) {
 	mPods := Pods{}
 	mPods.Parse(pods)

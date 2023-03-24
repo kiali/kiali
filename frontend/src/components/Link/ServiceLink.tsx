@@ -10,10 +10,14 @@ type Props = {
   query?: string;
 };
 
-export const getServiceURL = (name: string, namespace: string, query?: string): string => {
+export const getServiceURL = (name: string, namespace: string, cluster?: string, query?: string): string => {
   let to = '/namespaces/' + namespace + '/' + Paths.SERVICES;
 
   to = to + '/' + name;
+
+  if (cluster) {
+    to = to + '?cluster=' + cluster;
+  }
 
   if (!!query) {
     to = to + '?' + query;

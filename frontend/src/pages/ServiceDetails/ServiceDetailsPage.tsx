@@ -33,6 +33,7 @@ import ErrorSection from '../../components/ErrorSection/ErrorSection';
 import connectRefresh from '../../components/Refresh/connectRefresh';
 
 type ServiceDetailsState = {
+  cluster?: string;
   currentTab: string;
   gateways: Gateway[];
   k8sGateways: K8sGateway[];
@@ -64,7 +65,11 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 
   constructor(props: ServiceDetailsProps) {
     super(props);
+    const urlParams = new URLSearchParams(this.props.location.search);
+    const cluster = urlParams.get('cluster');
     this.state = {
+      // Because null is not the same as undefined and urlParams.get(...) returns null.
+      cluster: cluster ?? undefined,
       currentTab: activeTab(tabName, defaultTab),
       gateways: [],
       k8sGateways: [],
@@ -112,7 +117,14 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         AlertUtils.addError('Could not fetch Gateways list.', gwError);
       });
 
-    API.getServiceDetail(this.props.match.params.namespace, this.props.match.params.service, true, this.props.duration)
+    // this.props.
+    API.getServiceDetail(
+      this.props.match.params.namespace,
+      this.props.match.params.service,
+      true,
+      this.state.cluster,
+      this.props.duration
+    )
       .then(results => {
         this.setState({
           serviceDetails: results,

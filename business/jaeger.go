@@ -8,13 +8,16 @@ import (
 
 	"github.com/kiali/kiali/jaeger"
 	jaegerModels "github.com/kiali/kiali/jaeger/model/json"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 )
 
-type JaegerLoader = func() (jaeger.ClientInterface, error)
-type SpanFilter = func(span *jaegerModels.Span) bool
+type (
+	JaegerLoader = func() (jaeger.ClientInterface, error)
+	SpanFilter   = func(span *jaegerModels.Span) bool
+)
 
 type JaegerService struct {
 	loader        JaegerLoader
@@ -70,7 +73,9 @@ func (in *JaegerService) GetServiceSpans(ctx context.Context, ns, service string
 	)
 	defer end()
 
-	app, err := in.businessLayer.Svc.GetServiceAppName(ctx, ns, service)
+	// TODO: Need to include cluster here. This will require custom jaeger labeling of traces to add the cluster name
+	// since it is not standard. Hardcoding to the home cluster for now.
+	app, err := in.businessLayer.Svc.GetServiceAppName(ctx, kubernetes.HomeClusterName, ns, service)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +157,9 @@ func (in *JaegerService) GetServiceTraces(ctx context.Context, ns, service strin
 	)
 	defer end()
 
-	app, err := in.businessLayer.Svc.GetServiceAppName(ctx, ns, service)
+	// TODO: Need to include cluster here. This will require custom jaeger labeling of traces to add the cluster name
+	// since it is not standard. Hardcoding to the home cluster for now.
+	app, err := in.businessLayer.Svc.GetServiceAppName(ctx, kubernetes.HomeClusterName, ns, service)
 	if err != nil {
 		return nil, err
 	}
