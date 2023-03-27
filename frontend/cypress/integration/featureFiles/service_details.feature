@@ -55,7 +55,7 @@ Feature: Kiali Service Details page
     Then user sees trace details
 
   @service-details-page
-  Scenario: See span info after selecting a span
+  Scenario: See span info after selecting service span
     And user sees trace information
     When user selects a trace
     Then user sees span details

@@ -37,7 +37,7 @@ Feature: Kiali App Details page
     Then user sees trace details
 
   @app-details-page
-  Scenario: See trace info after selecting a span
+  Scenario: See span info after selecting app span
     And user sees trace information
     When user selects a trace
     Then user sees span details
