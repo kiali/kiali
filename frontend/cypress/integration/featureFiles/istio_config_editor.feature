@@ -8,7 +8,7 @@ Feature: Kiali Istio Config editor page
     And user is at the "istio" page
     And user selects the "bookinfo" namespace
 
-  Scenario: Filter Istio Config objects by Valid configuration
+  Scenario: Verify editor loads correctly
     When the user filters by "Config" for "Valid"
     And user sees "bookinfo-gateway"
     And user sees "bookinfo"
