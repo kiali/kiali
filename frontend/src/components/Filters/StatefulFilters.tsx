@@ -60,7 +60,7 @@ export interface StatefulFiltersProps {
 
 interface StatefulFiltersState {
   activeFilters: ActiveFiltersInfo;
-  activeToggles: ActiveTogglesInfo;
+  activeToggles: number;
   filterTypes: FilterType[];
   currentFilterType: FilterType;
   currentValue: string;
@@ -101,21 +101,26 @@ export class FilterSelected {
   };
 }
 
-export class ToggleSelected {
-  static checkedToggles: ActiveTogglesInfo = new Map<string, boolean>();
+export class Toggles {
+  static checked: Map<string, boolean> = new Map<string, boolean>();
+  static numChecked = 0;
 
-  static init = (toggles: ToggleType[]): ActiveTogglesInfo => {
-    ToggleSelected.checkedToggles.clear();
-    toggles.forEach(t => ToggleSelected.checkedToggles.set(t.name, t.value));
-    return ToggleSelected.checkedToggles;
+  static init = (toggles: ToggleType[]): number => {
+    Toggles.checked.clear();
+    Toggles.numChecked = 0;
+    toggles.forEach(t => {
+      Toggles.checked.set(t.name, t.value);
+      if (t.value) {
+        Toggles.numChecked++;
+      }
+    });
+    return Toggles.numChecked;
   };
 
-  static setToggle = (name: string, value: boolean) => {
-    ToggleSelected.checkedToggles.set(name, value);
-  };
-
-  static getToggles = (): ActiveTogglesInfo => {
-    return new Map<string, boolean>(ToggleSelected.checkedToggles);
+  static setToggle = (name: string, value: boolean): number => {
+    Toggles.checked.set(name, value);
+    Toggles.numChecked = value ? Toggles.numChecked++ : Toggles.numChecked--;
+    return Toggles.numChecked;
   };
 }
 
@@ -129,7 +134,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     super(props);
     this.state = {
       activeFilters: FilterSelected.init(this.props.initialFilters),
-      activeToggles: ToggleSelected.init(this.props.initialToggles || []),
+      activeToggles: Toggles.init(this.props.initialToggles || []),
       currentFilterType: this.props.initialFilters[0],
       filterTypes: this.props.initialFilters,
       isOpen: false,
@@ -384,14 +389,11 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     });
   };
 
-  handleCheckboxChange(checked: boolean, event: React.FormEvent<HTMLInputElement>) {
-    console.log(`${event.currentTarget.name}=${checked}!`);
-    ToggleSelected.setToggle(event.currentTarget.name, checked);
-    this.setState({ activeToggles: ToggleSelected.getToggles() });
-  }
+  onCheckboxChange = (checked: boolean, event: React.FormEvent<HTMLInputElement>) => {
+    this.setState({ activeToggles: Toggles.setToggle(event.currentTarget.name, checked) });
+  };
 
   render() {
-    console.log('render');
     const { currentFilterType, activeFilters } = this.state;
     const filterOptions = this.state.filterTypes.map(option => (
       <FormSelectOption key={option.category} value={option.category} label={option.category} />
@@ -430,15 +432,15 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
             </ToolbarGroup>
             <ToolbarGroup>
               {this.props.initialToggles &&
-                this.props.initialToggles.map(t => {
+                this.props.initialToggles.map((t, i) => {
                   return (
-                    <ToolbarItem>
+                    <ToolbarItem key={`toggle-${i}`}>
                       <Checkbox
                         id={t.name}
                         name={t.name}
                         label={t.label}
-                        isChecked={this.state.activeToggles.get(t.name)}
-                        onChange={this.handleCheckboxChange}
+                        isChecked={Toggles.checked.get(t.name)}
+                        onChange={this.onCheckboxChange}
                       />
                     </ToolbarItem>
                   );
