@@ -633,6 +633,27 @@ func TestIstiodResourceThresholds(t *testing.T) {
 			},
 			expectedErr: fmt.Errorf("istiod deployment not found"),
 		},
+		"Missing limits": {
+			istiodMeta: v1.ObjectMeta{
+				Name:      "istiod",
+				Namespace: "istio-system",
+			},
+			istiodConatiner: core_v1.Container{
+				Name:      "istiod",
+				Resources: core_v1.ResourceRequirements{},
+			},
+			expected: &models.IstiodThresholds{},
+		},
+		"Missing resources": {
+			istiodMeta: v1.ObjectMeta{
+				Name:      "istiod",
+				Namespace: "istio-system",
+			},
+			istiodConatiner: core_v1.Container{
+				Name: "istiod",
+			},
+			expected: &models.IstiodThresholds{},
+		},
 	}
 
 	for name, testCase := range testCases {
