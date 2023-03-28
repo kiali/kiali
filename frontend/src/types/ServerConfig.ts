@@ -41,8 +41,14 @@ interface GraphUIDefaults {
   traffic: GraphTraffic;
 }
 
+interface ListUIDefaults {
+  includeHealth: boolean;
+  includeIstioResources: boolean;
+}
+
 interface UIDefaults {
   graph: GraphUIDefaults;
+  list: ListUIDefaults;
   metricsPerRefresh?: string;
   namespaces?: string[];
   refreshInterval?: string;

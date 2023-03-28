@@ -33,11 +33,11 @@ func (p *appParams) extract(r *http.Request) {
 	var err error
 	p.IncludeHealth, err = strconv.ParseBool(query.Get("health"))
 	if err != nil {
-		p.IncludeHealth = false
+		p.IncludeHealth = true
 	}
 	p.IncludeIstioResources, err = strconv.ParseBool(query.Get("istioResources"))
 	if err != nil {
-		p.IncludeIstioResources = false
+		p.IncludeIstioResources = true
 	}
 }
 

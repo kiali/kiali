@@ -395,6 +395,12 @@ type GraphUIDefaults struct {
 	Traffic     GraphTraffic      `yaml:"traffic,omitempty" json:"traffic,omitempty"`
 }
 
+// ListUIDefaults defines UI Defaults specific to the UI List pages
+type ListUIDefaults struct {
+	IncludeHealth         bool `yaml:"include_health,omitempty" json:"includeHealth"`
+	IncludeIstioResources bool `yaml:"include_istio_resources,omitempty" json:"includeIstioResources"`
+}
+
 // Aggregation represents label's allowed aggregations, transformed from aggregation in MonitoringDashboard config resource
 type Aggregation struct {
 	Label           string `yaml:"label,omitempty" json:"label"`
@@ -409,6 +415,7 @@ type MetricsDefaults struct {
 // UIDefaults defines default settings configured for the UI
 type UIDefaults struct {
 	Graph             GraphUIDefaults `yaml:"graph,omitempty" json:"graph,omitempty"`
+	List              ListUIDefaults  `yaml:"list,omitempty" json:"list,omitempty"`
 	MetricsPerRefresh string          `yaml:"metrics_per_refresh,omitempty" json:"metricsPerRefresh,omitempty"`
 	MetricsInbound    MetricsDefaults `yaml:"metrics_inbound,omitempty" json:"metricsInbound,omitempty"`
 	MetricsOutbound   MetricsDefaults `yaml:"metrics_outbound,omitempty" json:"metricsOutbound,omitempty"`

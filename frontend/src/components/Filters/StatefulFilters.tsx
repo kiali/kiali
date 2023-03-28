@@ -101,16 +101,17 @@ export class FilterSelected {
   };
 }
 
+// Column toggles
 export class Toggles {
-  static checked: Map<string, boolean> = new Map<string, boolean>();
+  static checked: ActiveTogglesInfo = new Map<string, boolean>();
   static numChecked = 0;
 
   static init = (toggles: ToggleType[]): number => {
     Toggles.checked.clear();
     Toggles.numChecked = 0;
     toggles.forEach(t => {
-      Toggles.checked.set(t.name, t.value);
-      if (t.value) {
+      Toggles.checked.set(t.name, t.isChecked);
+      if (t.isChecked) {
         Toggles.numChecked++;
       }
     });
@@ -121,6 +122,10 @@ export class Toggles {
     Toggles.checked.set(name, value);
     Toggles.numChecked = value ? Toggles.numChecked++ : Toggles.numChecked--;
     return Toggles.numChecked;
+  };
+
+  static getToggles = (): ActiveTogglesInfo => {
+    return new Map<string, boolean>(Toggles.checked);
   };
 }
 
@@ -391,6 +396,9 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
 
   onCheckboxChange = (checked: boolean, event: React.FormEvent<HTMLInputElement>) => {
     this.setState({ activeToggles: Toggles.setToggle(event.currentTarget.name, checked) });
+    if (this.props.onToggleChange) {
+      this.props.onToggleChange(Toggles.getToggles());
+    }
   };
 
   render() {

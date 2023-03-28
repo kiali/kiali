@@ -132,6 +132,8 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetWorkloadList",
 		observability.Attribute("package", "business"),
+		observability.Attribute("includeHealth", criteria.IncludeHealth),
+		observability.Attribute("includeIstioResources", criteria.IncludeIstioResources),
 		observability.Attribute("namespace", criteria.Namespace),
 		observability.Attribute("rateInterval", criteria.RateInterval),
 		observability.Attribute("queryTime", criteria.QueryTime),

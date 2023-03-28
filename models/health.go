@@ -54,7 +54,8 @@ func EmptyServiceHealth() ServiceHealth {
 // EmptyWorkloadHealth create an empty WorkloadHealth
 func EmptyWorkloadHealth() *WorkloadHealth {
 	return &WorkloadHealth{
-		Requests: NewEmptyRequestHealth(),
+		Requests:       NewEmptyRequestHealth(),
+		WorkloadStatus: nil,
 	}
 }
 

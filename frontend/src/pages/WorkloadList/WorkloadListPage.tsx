@@ -9,8 +9,8 @@ import Namespace from '../../types/Namespace';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { namespaceEquals } from '../../utils/Common';
 import { SortField } from '../../types/SortFilters';
-import { ActiveFiltersInfo } from '../../types/Filters';
-import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
+import { ActiveFiltersInfo, ActiveTogglesInfo } from '../../types/Filters';
+import { FilterSelected, StatefulFilters, Toggles } from '../../components/Filters/StatefulFilters';
 import * as API from '../../services/Api';
 import VirtualList from '../../components/VirtualList/VirtualList';
 import { KialiAppState } from '../../store/Store';
@@ -38,6 +38,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
   WorkloadListItem
 > {
   private promises = new PromisesRegistry();
+  private initialToggles = WorkloadListFilters.getAvailableToggles();
 
   constructor(props: WorkloadListPageProps) {
     super(props);
@@ -84,9 +85,10 @@ class WorkloadListPageComponent extends FilterComponent.Component<
   updateListItems() {
     this.promises.cancelAll();
     const activeFilters: ActiveFiltersInfo = FilterSelected.getSelected();
+    const activeToggles: ActiveTogglesInfo = Toggles.getToggles();
     const namespacesSelected = this.props.activeNamespaces.map(item => item.name);
     if (namespacesSelected.length !== 0) {
-      this.fetchWorkloads(namespacesSelected, activeFilters, this.props.duration);
+      this.fetchWorkloads(namespacesSelected, activeFilters, activeToggles, this.props.duration);
     } else {
       this.setState({ listItems: [] });
     }
@@ -115,10 +117,16 @@ class WorkloadListPageComponent extends FilterComponent.Component<
     return [];
   };
 
-  fetchWorkloads(namespaces: string[], filters: ActiveFiltersInfo, rateInterval: number) {
-    const workloadsConfigPromises = namespaces.map(namespace =>
-      API.getWorkloads(namespace, { health: 'true', rateInterval: String(rateInterval) + 's' })
-    );
+  fetchWorkloads(namespaces: string[], filters: ActiveFiltersInfo, toggles: ActiveTogglesInfo, rateInterval: number) {
+    const workloadsConfigPromises = namespaces.map(namespace => {
+      const health = toggles.get('health') ? 'true' : 'false';
+      const istioResources = toggles.get('istioResources') ? 'true' : 'false';
+      return API.getWorkloads(namespace, {
+        health: health,
+        istioResources: istioResources,
+        rateInterval: String(rateInterval) + 's'
+      });
+    });
     this.promises
       .registerAll('workloads', workloadsConfigPromises)
       .then(responses => {
@@ -136,6 +144,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
       })
       .catch(err => {
         if (!err.isCanceled) {
+          console.log(`error: ${err}`);
           this.handleAxiosError('Could not fetch workloads list', err);
         }
       });
@@ -156,7 +165,9 @@ class WorkloadListPageComponent extends FilterComponent.Component<
           <VirtualList rows={this.state.listItems}>
             <StatefulFilters
               initialFilters={WorkloadListFilters.availableFilters}
+              initialToggles={this.initialToggles}
               onFilterChange={this.onFilterChange}
+              onToggleChange={this.onFilterChange}
             />
           </VirtualList>
         </RenderContent>

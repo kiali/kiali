@@ -52,7 +52,7 @@ export interface ActiveFiltersInfo {
 export interface ToggleType {
   label: string;
   name: string;
-  value: boolean;
+  isChecked: boolean;
 }
 
 export type ActiveTogglesInfo = Map<string, boolean>;
