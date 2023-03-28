@@ -51,11 +51,13 @@ func TestGetWorkloadListFromDeployments(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
+	conf := config.NewConfig()
+
 	// Setup mocks
 	kubeObjs := []runtime.Object{
 		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
-	for _, obj := range FakeDeployments() {
+	for _, obj := range FakeDeployments(*conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
@@ -88,11 +90,14 @@ func TestGetWorkloadListFromReplicaSets(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
+	conf := config.NewConfig()
+	config.Set(conf)
+
 	// Setup mocks
 	kubeObjs := []runtime.Object{
 		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
-	for _, obj := range FakeReplicaSets() {
+	for _, obj := range FakeReplicaSets(*conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}

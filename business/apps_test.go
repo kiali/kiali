@@ -54,12 +54,13 @@ func TestGetAppListFromDeployments(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
+	conf := config.NewConfig()
 	// Auxiliar fake* tests defined in workload_test.go
 	objects := []runtime.Object{
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
-	for _, obj := range FakeDeployments() {
+	for _, obj := range FakeDeployments(*conf) {
 		o := obj
 		objects = append(objects, &o)
 	}
@@ -98,7 +99,7 @@ func TestGetAppFromDeployments(t *testing.T) {
 	objects := []runtime.Object{
 		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
-	for _, obj := range FakeDeployments() {
+	for _, obj := range FakeDeployments(*conf) {
 		o := obj
 		objects = append(objects, &o)
 	}
@@ -134,13 +135,14 @@ func TestGetAppFromDeployments(t *testing.T) {
 func TestGetAppListFromReplicaSets(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
+	conf := config.NewConfig()
 
 	// Setup mocks
 	// Auxiliar fake* tests defined in workload_test.go
 	objects := []runtime.Object{
 		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
-	for _, obj := range FakeReplicaSets() {
+	for _, obj := range FakeReplicaSets(*conf) {
 		o := obj
 		objects = append(objects, &o)
 	}
@@ -167,12 +169,13 @@ func TestGetAppListFromReplicaSets(t *testing.T) {
 func TestGetAppFromReplicaSets(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
+	conf := config.NewConfig()
 
 	// Setup mocks
 	objects := []runtime.Object{
 		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
-	for _, obj := range FakeReplicaSets() {
+	for _, obj := range FakeReplicaSets(*conf) {
 		o := obj
 		objects = append(objects, &o)
 	}

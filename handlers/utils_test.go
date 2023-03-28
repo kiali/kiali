@@ -9,44 +9,62 @@ import (
 	"github.com/stretchr/testify/assert"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
+type nsForbidden struct {
+	kubernetes.ClientInterface
+	forbiddenNamespace string
+}
+
+func (n *nsForbidden) GetNamespace(name string) (*core_v1.Namespace, error) {
+	if name == n.forbiddenNamespace {
+		return nil, errors.New("no privileges")
+	}
+	return n.ClientInterface.GetNamespace(name)
+}
+
 // Setup mock
-func utilSetupMocks(t *testing.T) (promClientSupplier, *prometheustest.PromAPIMock, *kubetest.K8SClientMock) {
+func utilSetupMocks(t *testing.T, additionalObjs ...runtime.Object) promClientSupplier {
+	t.Helper()
 	conf := config.NewConfig()
-	conf.KubernetesConfig.CacheEnabled = false
+	// TODO: Find a way to mock out the istio endpoints so that the most used case can be tested by default.
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
-	k8s := new(kubetest.K8SClientMock)
-	k8s.On("IsOpenShift").Return(false)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("GetNamespace", "ns1").Return(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns1"}}, nil)
-	k8s.On("GetNamespace", "ns2").Return(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns2"}}, nil)
-	k8s.On("GetNamespace", "nsNil").Return((*core_v1.Namespace)(nil), errors.New("no privileges"))
+	objs := []runtime.Object{
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns1"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns2"}},
+	}
+	objs = append(objs, additionalObjs...)
+	k := kubetest.NewFakeK8sClient(objs...)
+	k8s := &nsForbidden{k, "nsNil"}
 
 	promAPI := new(prometheustest.PromAPIMock)
 	prom, err := prometheus.NewClient()
 	if err != nil {
 		t.Fatal(err)
-		return nil, nil, nil
+		return nil
 	}
 	prom.Inject(promAPI)
+	business.WithProm(prom)
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	business.SetWithBackends(mockClientFactory, nil)
-	return func() (*prometheus.Client, error) { return prom, nil }, promAPI, k8s
+	return func() (*prometheus.Client, error) { return prom, nil }
 }
 
 func TestCreateMetricsServiceForNamespace(t *testing.T) {
 	assert := assert.New(t)
-	prom, _, _ := utilSetupMocks(t)
+	prom := utilSetupMocks(t)
 
 	req := httptest.NewRequest("GET", "/foo", nil)
 	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), &api.AuthInfo{Token: "test"}))
@@ -62,7 +80,7 @@ func TestCreateMetricsServiceForNamespace(t *testing.T) {
 
 func TestCreateMetricsServiceForNamespaceForbidden(t *testing.T) {
 	assert := assert.New(t)
-	prom, _, _ := utilSetupMocks(t)
+	prom := utilSetupMocks(t)
 
 	req := httptest.NewRequest("GET", "/foo", nil)
 	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), &api.AuthInfo{Token: "test"}))
@@ -77,7 +95,7 @@ func TestCreateMetricsServiceForNamespaceForbidden(t *testing.T) {
 
 func TestCreateMetricsServiceForSeveralNamespaces(t *testing.T) {
 	assert := assert.New(t)
-	prom, _, _ := utilSetupMocks(t)
+	prom := utilSetupMocks(t)
 
 	req := httptest.NewRequest("GET", "/foo", nil)
 	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), &api.AuthInfo{Token: "test"}))

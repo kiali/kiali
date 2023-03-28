@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -236,8 +237,8 @@ func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
 }
 
 func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
+	require := require.New(t)
 	conf := config.NewConfig()
-	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
 
 	objects := []runtime.Object{
@@ -255,12 +256,14 @@ func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	k8s.OpenShift = true
 	prom := new(prometheustest.PromClientMock)
+	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
 	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, clients, prom, nil)}
 	criteria := NamespaceHealthCriteria{Namespace: "ns", RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
-	_, _ = hs.GetNamespaceAppHealth(context.TODO(), criteria)
+	_, err := hs.GetNamespaceAppHealth(context.TODO(), criteria)
+	require.NoError(err)
 
 	// Make sure unnecessary call isn't performed
 	prom.AssertNumberOfCalls(t, "GetAllRequestRates", 0)
@@ -280,6 +283,7 @@ func TestGetNamespaceServiceHealthWithNA(t *testing.T) {
 	)
 	k8s.OpenShift = true
 	prom := new(prometheustest.PromClientMock)
+	SetupBusinessLayer(t, k8s, *config.NewConfig())
 
 	prom.On("GetNamespaceServicesRequestRates", "tutorial", mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
 

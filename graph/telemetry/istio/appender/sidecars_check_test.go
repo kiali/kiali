@@ -4,14 +4,11 @@ import (
 	"testing"
 	"time"
 
-	osapps_v1 "github.com/openshift/api/apps/v1"
-	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	apps_v1 "k8s.io/api/apps/v1"
-	batch_v1 "k8s.io/api/batch/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -22,7 +19,7 @@ import (
 
 func TestWorkloadSidecarsPasses(t *testing.T) {
 	trafficMap := buildWorkloadTrafficMap()
-	businessLayer := setupSidecarsCheckWorkloads(buildFakeWorkloadDeployments(), buildFakeWorkloadPods())
+	businessLayer := setupSidecarsCheckWorkloads(t, buildFakeWorkloadDeployments(), buildFakeWorkloadPods())
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
@@ -41,7 +38,7 @@ func TestWorkloadSidecarsPasses(t *testing.T) {
 
 func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 	trafficMap := buildWorkloadTrafficMap()
-	businessLayer := setupSidecarsCheckWorkloads(buildFakeWorkloadDeployments(), buildFakeWorkloadPodsNoSidecar())
+	businessLayer := setupSidecarsCheckWorkloads(t, buildFakeWorkloadDeployments(), buildFakeWorkloadPodsNoSidecar())
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
@@ -61,7 +58,7 @@ func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 
 func TestInaccessibleWorkload(t *testing.T) {
 	trafficMap := buildInaccessibleWorkloadTrafficMap()
-	businessLayer := setupSidecarsCheckWorkloads(buildFakeWorkloadDeployments(), buildFakeWorkloadPodsNoSidecar())
+	businessLayer := setupSidecarsCheckWorkloads(t, buildFakeWorkloadDeployments(), buildFakeWorkloadPodsNoSidecar())
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
@@ -80,7 +77,7 @@ func TestInaccessibleWorkload(t *testing.T) {
 
 func TestAppNoPodsPasses(t *testing.T) {
 	trafficMap := buildAppTrafficMap()
-	businessLayer := setupSidecarsCheckWorkloads([]apps_v1.Deployment{}, []core_v1.Pod{})
+	businessLayer := setupSidecarsCheckWorkloads(t, []apps_v1.Deployment{}, []core_v1.Pod{})
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
@@ -99,7 +96,7 @@ func TestAppNoPodsPasses(t *testing.T) {
 
 func TestAppSidecarsPasses(t *testing.T) {
 	trafficMap := buildAppTrafficMap()
-	businessLayer := setupSidecarsCheckWorkloads([]apps_v1.Deployment{}, buildFakeWorkloadPods())
+	businessLayer := setupSidecarsCheckWorkloads(t, []apps_v1.Deployment{}, buildFakeWorkloadPods())
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
@@ -118,7 +115,7 @@ func TestAppSidecarsPasses(t *testing.T) {
 
 func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
 	trafficMap := buildAppTrafficMap()
-	businessLayer := setupSidecarsCheckWorkloads([]apps_v1.Deployment{}, buildFakeWorkloadPodsNoSidecar())
+	businessLayer := setupSidecarsCheckWorkloads(t, []apps_v1.Deployment{}, buildFakeWorkloadPodsNoSidecar())
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
@@ -138,7 +135,7 @@ func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
 
 func TestServicesAreAlwaysValid(t *testing.T) {
 	trafficMap := buildServiceTrafficMap()
-	businessLayer := setupSidecarsCheckWorkloads([]apps_v1.Deployment{}, []core_v1.Pod{})
+	businessLayer := setupSidecarsCheckWorkloads(t, []apps_v1.Deployment{}, []core_v1.Pod{})
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
@@ -195,7 +192,8 @@ func buildFakeWorkloadDeployments() []apps_v1.Deployment {
 	return []apps_v1.Deployment{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "workload-1",
+				Name:      "workload-1",
+				Namespace: "testNamespace",
 			},
 			Spec: apps_v1.DeploymentSpec{
 				Template: core_v1.PodTemplateSpec{
@@ -215,6 +213,7 @@ func buildFakeWorkloadPods() []core_v1.Pod {
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "wk-1-asdf",
+				Namespace:         "testNamespace",
 				Labels:            map[string]string{"app": "myTest", "wk": "wk-1"},
 				CreationTimestamp: meta_v1.NewTime(time.Date(2018, 8, 24, 14, 0, 0, 0, time.UTC)),
 				Annotations: map[string]string{
@@ -234,23 +233,23 @@ func buildFakeWorkloadPodsNoSidecar() []core_v1.Pod {
 	return podList
 }
 
-func setupSidecarsCheckWorkloads(deployments []apps_v1.Deployment, pods []core_v1.Pod) *business.Layer {
-	k8s := kubetest.NewK8SClientMock()
+func setupSidecarsCheckWorkloads(t *testing.T, deployments []apps_v1.Deployment, pods []core_v1.Pod) *business.Layer {
+	objects := []runtime.Object{&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}}}
+	for _, obj := range deployments {
+		o := obj
+		objects = append(objects, &o)
+	}
+	for _, obj := range pods {
+		o := obj
+		objects = append(objects, &o)
+	}
+	k8s := kubetest.NewFakeK8sClient(objects...)
 
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetCronJobs", mock.AnythingOfType("string")).Return([]batch_v1.CronJob{}, nil)
-	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return(deployments, nil)
-	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
-	k8s.On("GetJobs", mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(pods, nil)
-	k8s.On("GetReplicationControllers", mock.AnythingOfType("string")).Return([]core_v1.ReplicationController{}, nil)
-	k8s.On("GetReplicaSets", mock.AnythingOfType("string")).Return([]apps_v1.ReplicaSet{}, nil)
-	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
-	k8s.On("GetDaemonSets", mock.AnythingOfType("string")).Return([]apps_v1.DaemonSet{}, nil)
 	conf := config.NewConfig()
-	conf.KubernetesConfig.CacheEnabled = false
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
+	business.SetupBusinessLayer(t, k8s, *conf)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)

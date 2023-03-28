@@ -7,10 +7,10 @@ import (
 	"github.com/golang/protobuf/ptypes/wrappers"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	api_networking_v1beta1 "istio.io/api/networking/v1beta1"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	auth_v1 "k8s.io/api/authorization/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/config"
@@ -126,7 +126,7 @@ func TestGetIstioConfigList(t *testing.T) {
 		IncludeServiceEntries:   false,
 	}
 
-	configService := mockGetIstioConfigList()
+	configService := mockGetIstioConfigList(t)
 
 	istioconfigList, err := configService.GetIstioConfigList(context.TODO(), criteria)
 
@@ -179,10 +179,8 @@ func TestGetIstioConfigList(t *testing.T) {
 
 func TestGetIstioConfigDetails(t *testing.T) {
 	assert := assert.New(t)
-	conf := config.NewConfig()
-	config.Set(conf)
 
-	configService := mockGetIstioConfigDetails()
+	configService := mockGetIstioConfigDetails(t)
 
 	istioConfigDetails, err := configService.GetIstioConfigDetails(context.TODO(), "test", "gateways", "gw-1")
 	assert.Equal("gw-1", istioConfigDetails.Gateway.Name)
@@ -212,13 +210,8 @@ func TestGetIstioConfigDetails(t *testing.T) {
 	assert.Error(err)
 }
 
-func mockGetIstioConfigList() IstioConfigService {
-	k8s := new(kubetest.K8SClientMock)
-	k8s.On("IsOpenShift").Return(true)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-
-	fakeIstioObjects := []runtime.Object{}
+func mockGetIstioConfigList(t *testing.T) IstioConfigService {
+	fakeIstioObjects := []runtime.Object{&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}}}
 	for _, g := range fakeGetGateways() {
 		fakeIstioObjects = append(fakeIstioObjects, g.DeepCopyObject())
 	}
@@ -231,10 +224,16 @@ func mockGetIstioConfigList() IstioConfigService {
 	for _, s := range fakeGetServiceEntries() {
 		fakeIstioObjects = append(fakeIstioObjects, s.DeepCopyObject())
 	}
-	k8s.MockIstio(fakeIstioObjects...)
+	k8s := kubetest.NewFakeK8sClient(
+		fakeIstioObjects...,
+	)
+	k8s.OpenShift = true
+
+	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
+
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
-	return IstioConfigService{k8s: k8s, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
+	return IstioConfigService{k8s: k8s, cache: cache, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 }
 
 func fakeGetGateways() []*networking_v1beta1.Gateway {
@@ -392,23 +391,31 @@ func fakeGetSelfSubjectAccessReview() []*auth_v1.SelfSubjectAccessReview {
 	return []*auth_v1.SelfSubjectAccessReview{&create, &update, &delete}
 }
 
-func mockGetIstioConfigDetails() IstioConfigService {
-	k8s := new(kubetest.K8SClientMock)
-	fakeIstioObjects := []runtime.Object{}
-	fakeIstioObjects = append(fakeIstioObjects, fakeGetGateways()[0])
-	fakeIstioObjects = append(fakeIstioObjects, fakeGetVirtualServices()[0])
-	fakeIstioObjects = append(fakeIstioObjects, fakeGetDestinationRules()[0])
-	fakeIstioObjects = append(fakeIstioObjects, fakeGetServiceEntries()[0])
-	k8s.MockIstio(fakeIstioObjects...)
+// Need to mock out the SelfSubjectAccessReview.
+type fakeAccessReview struct{ kubernetes.ClientInterface }
 
-	k8s.On("IsOpenShift").Return(true)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetSelfSubjectAccessReview", mock.Anything, "test", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]string")).Return(fakeGetSelfSubjectAccessReview(), nil)
+func (a *fakeAccessReview) GetSelfSubjectAccessReview(ctx context.Context, namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
+	return fakeGetSelfSubjectAccessReview(), nil
+}
+
+func mockGetIstioConfigDetails(t *testing.T) IstioConfigService {
+	conf := config.NewConfig()
+	config.Set(conf)
+	fakeIstioObjects := []runtime.Object{
+		fakeGetGateways()[0],
+		fakeGetVirtualServices()[0],
+		fakeGetDestinationRules()[0],
+		fakeGetServiceEntries()[0],
+		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
+	}
+	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
+	k8s.OpenShift = true
+
+	SetupBusinessLayer(t, k8s, *conf)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
-	return IstioConfigService{k8s: k8s, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
+	return IstioConfigService{k8s: &fakeAccessReview{k8s}, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 }
 
 func TestIsValidHost(t *testing.T) {
@@ -473,21 +480,19 @@ func TestHasCircuitBreaker(t *testing.T) {
 
 func TestDeleteIstioConfigDetails(t *testing.T) {
 	assert := assert.New(t)
-	configService := mockDeleteIstioConfigDetails()
+	k8s := kubetest.NewFakeK8sClient(data.CreateEmptyVirtualService("reviews-to-delete", "test", []string{"reviews"}))
+	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
+	configService := IstioConfigService{k8s: k8s, cache: cache}
 
 	err := configService.DeleteIstioConfigDetail("test", "virtualservices", "reviews-to-delete")
 	assert.Nil(err)
 }
 
-func mockDeleteIstioConfigDetails() IstioConfigService {
-	k8s := new(kubetest.K8SClientMock)
-	k8s.MockIstio(data.CreateEmptyVirtualService("reviews-to-delete", "test", []string{"reviews"}))
-	return IstioConfigService{k8s: k8s}
-}
-
 func TestUpdateIstioConfigDetails(t *testing.T) {
 	assert := assert.New(t)
-	configService := mockUpdateIstioConfigDetails()
+	k8s := kubetest.NewFakeK8sClient(data.CreateEmptyVirtualService("reviews-to-update", "test", []string{"reviews"}))
+	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
+	configService := IstioConfigService{k8s: k8s, cache: cache}
 
 	updatedVirtualService, err := configService.UpdateIstioConfigDetail("test", "virtualservices", "reviews-to-update", "{}")
 	assert.Equal("test", updatedVirtualService.Namespace.Name)
@@ -496,22 +501,11 @@ func TestUpdateIstioConfigDetails(t *testing.T) {
 	assert.Nil(err)
 }
 
-func mockUpdateIstioConfigDetails() IstioConfigService {
-	k8s := new(kubetest.K8SClientMock)
-	k8s.MockIstio(data.CreateEmptyVirtualService("reviews-to-update", "test", []string{"reviews"}))
-	return IstioConfigService{k8s: k8s}
-}
-
-// mockCreateIstioConfigDetails to verify the behavior of API calls is the same for create and update
-func mockCreateIstioConfigDetails() IstioConfigService {
-	k8s := new(kubetest.K8SClientMock)
-	k8s.MockIstio()
-	return IstioConfigService{k8s: k8s}
-}
-
 func TestCreateIstioConfigDetails(t *testing.T) {
 	assert := assert.New(t)
-	configService := mockCreateIstioConfigDetails()
+	k8s := kubetest.NewFakeK8sClient()
+	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
+	configService := IstioConfigService{k8s: k8s, cache: cache}
 
 	createVirtualService, err := configService.CreateIstioConfigDetail("test", "virtualservices", []byte("{}"))
 	assert.Equal("test", createVirtualService.Namespace.Name)
@@ -527,7 +521,6 @@ func TestFilterIstioObjectsForWorkloadSelector(t *testing.T) {
 	path := "../tests/data/filters/workload-selector-filter.yaml"
 	loader := &validations.YamlFixtureLoader{Filename: path}
 	err := loader.Load()
-
 	if err != nil {
 		t.Error("Error loading test data.")
 	}

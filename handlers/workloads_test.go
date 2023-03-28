@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -11,14 +10,12 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	osapps_v1 "github.com/openshift/api/apps/v1"
-	osproject_v1 "github.com/openshift/api/project/v1"
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	apps_v1 "k8s.io/api/apps/v1"
-	batch_v1 "k8s.io/api/batch/v1"
 	core_v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
@@ -29,12 +26,10 @@ import (
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
-func setupWorkloadList() (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
-	k8s := kubetest.NewK8SClientMock()
+func setupWorkloadList(t *testing.T, k8s *kubetest.FakeK8sClient) (*httptest.Server, *prometheustest.PromClientMock) {
 	prom := new(prometheustest.PromClientMock)
 
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	business.SetWithBackends(mockClientFactory, prom)
+	business.SetupBusinessLayer(t, k8s, *config.Get())
 
 	mr := mux.NewRouter()
 
@@ -45,27 +40,31 @@ func setupWorkloadList() (*httptest.Server, *kubetest.K8SClientMock, *prometheus
 		}))
 
 	ts := httptest.NewServer(mr)
-	return ts, k8s, prom
+	t.Cleanup(ts.Close)
+	return ts, prom
 }
 
 func TestWorkloadsEndpoint(t *testing.T) {
 	conf := config.NewConfig()
 	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
-	ts, k8s, _ := setupWorkloadList()
-	k8s.MockIstio()
-	defer ts.Close()
+	mockClock()
 
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(business.FakeDepSyncedWithRS(), nil)
-	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(business.FakeRSSyncedWithPods(), nil)
-	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
-	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.ReplicationController{}, nil)
-	k8s.On("GetStatefulSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
-	k8s.On("GetDaemonSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.DaemonSet{}, nil)
-	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
-	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.CronJob{}, nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(business.FakePodsSyncedWithDeployments(), nil)
+	kubeObjects := []runtime.Object{&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}}}
+	for _, obj := range business.FakeDepSyncedWithRS() {
+		o := obj
+		kubeObjects = append(kubeObjects, &o)
+	}
+	for _, obj := range business.FakeRSSyncedWithPods() {
+		o := obj
+		kubeObjects = append(kubeObjects, &o)
+	}
+	for _, obj := range business.FakePodsSyncedWithDeployments() {
+		o := obj
+		kubeObjects = append(kubeObjects, &o)
+	}
+	k8s := kubetest.NewFakeK8sClient(kubeObjects...)
+	ts, _ := setupWorkloadList(t, k8s)
 
 	url := ts.URL + "/api/namespaces/ns/workloads"
 
@@ -77,12 +76,10 @@ func TestWorkloadsEndpoint(t *testing.T) {
 
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
-	k8s.AssertNumberOfCalls(t, "GetDeployments", 1)
 }
 
 func TestWorkloadMetricsDefault(t *testing.T) {
-	ts, api, _ := setupWorkloadMetricsEndpoint(t)
-	defer ts.Close()
+	ts, api := setupWorkloadMetricsEndpoint(t)
 
 	url := ts.URL + "/api/namespaces/ns/workloads/my_workload/metrics"
 	now := time.Now()
@@ -117,8 +114,7 @@ func TestWorkloadMetricsDefault(t *testing.T) {
 }
 
 func TestWorkloadMetricsWithParams(t *testing.T) {
-	ts, api, _ := setupWorkloadMetricsEndpoint(t)
-	defer ts.Close()
+	ts, api := setupWorkloadMetricsEndpoint(t)
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/workloads/my-workload/metrics", nil)
 	if err != nil {
@@ -176,8 +172,7 @@ func TestWorkloadMetricsWithParams(t *testing.T) {
 }
 
 func TestWorkloadMetricsBadQueryTime(t *testing.T) {
-	ts, api, _ := setupWorkloadMetricsEndpoint(t)
-	defer ts.Close()
+	ts, api := setupWorkloadMetricsEndpoint(t)
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/workloads/my-workload/metrics", nil)
 	if err != nil {
@@ -207,8 +202,7 @@ func TestWorkloadMetricsBadQueryTime(t *testing.T) {
 }
 
 func TestWorkloadMetricsBadDuration(t *testing.T) {
-	ts, api, _ := setupWorkloadMetricsEndpoint(t)
-	defer ts.Close()
+	ts, api := setupWorkloadMetricsEndpoint(t)
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/workloads/my-workload/metrics", nil)
 	if err != nil {
@@ -237,8 +231,7 @@ func TestWorkloadMetricsBadDuration(t *testing.T) {
 }
 
 func TestWorkloadMetricsBadStep(t *testing.T) {
-	ts, api, _ := setupWorkloadMetricsEndpoint(t)
-	defer ts.Close()
+	ts, api := setupWorkloadMetricsEndpoint(t)
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/workloads/my-workload/metrics", nil)
 	if err != nil {
@@ -267,8 +260,7 @@ func TestWorkloadMetricsBadStep(t *testing.T) {
 }
 
 func TestWorkloadMetricsBadRateFunc(t *testing.T) {
-	ts, api, _ := setupWorkloadMetricsEndpoint(t)
-	defer ts.Close()
+	ts, api := setupWorkloadMetricsEndpoint(t)
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/workloads/my-workload/metrics", nil)
 	if err != nil {
@@ -296,33 +288,29 @@ func TestWorkloadMetricsBadRateFunc(t *testing.T) {
 }
 
 func TestWorkloadMetricsInaccessibleNamespace(t *testing.T) {
-	ts, _, k8s := setupWorkloadMetricsEndpoint(t)
-	defer ts.Close()
+	ts, _ := setupWorkloadMetricsEndpoint(t)
+	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})
+	business.SetupBusinessLayer(t, &nsForbidden{k8s, "my_namespace"}, *config.Get())
 
 	url := ts.URL + "/api/namespaces/my_namespace/workloads/my_workload/metrics"
-
-	var nsNil *osproject_v1.Project
-	k8s.On("GetProject", "my_namespace").Return(nsNil, errors.New("no privileges"))
-
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
-	k8s.AssertCalled(t, "GetProject", "my_namespace")
 }
 
-func setupWorkloadMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock, *kubetest.K8SClientMock) {
-	config.Set(config.NewConfig())
+func setupWorkloadMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock) {
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(conf)
 	xapi := new(prometheustest.PromAPIMock)
-	k8s := kubetest.NewK8SClientMock()
 	prom, err := prometheus.NewClient()
 	if err != nil {
 		t.Fatal(err)
 	}
 	prom.Inject(xapi)
-	k8s.On("GetProject", "ns").Return(&osproject_v1.Project{}, nil)
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/workloads/{workload}/metrics", http.HandlerFunc(
@@ -334,9 +322,11 @@ func setupWorkloadMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheuste
 		}))
 
 	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
 
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	business.SetWithBackends(mockClientFactory, prom)
+	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})
 
-	return ts, xapi, k8s
+	business.SetupBusinessLayer(t, k8s, *conf)
+
+	return ts, xapi
 }

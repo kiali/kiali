@@ -5,20 +5,19 @@ import (
 	"testing"
 	"time"
 
-	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	apps_v1 "k8s.io/api/apps/v1"
-	batch_v1 "k8s.io/api/batch/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -32,7 +31,7 @@ const (
 func TestServicesHealthConfigPasses(t *testing.T) {
 	config.Set(config.NewConfig())
 	trafficMap := buildServiceTrafficMap()
-	businessLayer := setupHealthConfig(buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
+	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
@@ -53,7 +52,7 @@ func TestServicesHealthNoConfigPasses(t *testing.T) {
 	cfg.KubernetesConfig.CacheEnabled = false
 	config.Set(cfg)
 	trafficMap := buildServiceTrafficMap()
-	businessLayer := setupHealthConfig(buildFakeServicesHealth(""), buildFakeWorkloadDeploymentsHealth(""), buildFakePodsHealth(""))
+	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(""), buildFakeWorkloadDeploymentsHealth(""), buildFakePodsHealth(""))
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
@@ -74,7 +73,7 @@ func TestWorkloadHealthConfigPasses(t *testing.T) {
 	cfg.KubernetesConfig.CacheEnabled = false
 	config.Set(cfg)
 	trafficMap := buildWorkloadTrafficMap()
-	businessLayer := setupHealthConfig(buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
+	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
@@ -95,7 +94,7 @@ func TestWorkloadHealthNoConfigPasses(t *testing.T) {
 	cfg.KubernetesConfig.CacheEnabled = false
 	config.Set(cfg)
 	trafficMap := buildWorkloadTrafficMap()
-	businessLayer := setupHealthConfig(buildFakeServicesHealth(""), buildFakeWorkloadDeploymentsHealth(""), buildFakePodsHealth(""))
+	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(""), buildFakeWorkloadDeploymentsHealth(""), buildFakePodsHealth(""))
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
@@ -130,7 +129,7 @@ func TestHealthDataPresent(t *testing.T) {
 	for k, v := range wkNodes {
 		trafficMap[k] = v
 	}
-	businessLayer := setupHealthConfig(buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
+	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
@@ -195,7 +194,7 @@ func TestHealthDataPresent200SvcWk(t *testing.T) {
 			Hosts: map[string]float64{"v-server.beta.svc.cluster.local": 100.0},
 		},
 	}
-	businessLayer := setupHealthConfig(buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
+	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
@@ -251,7 +250,7 @@ func TestHealthDataPresent200500WkSvc(t *testing.T) {
 			Hosts: map[string]float64{"v-server.beta.svc.cluster.local": 10.0},
 		},
 	}
-	businessLayer := setupHealthConfig(buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
+	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
@@ -305,7 +304,7 @@ func TestHealthDataPresentToApp(t *testing.T) {
 			Hosts: map[string]float64{"v-server.beta.svc.cluster.local": 100.0},
 		},
 	}
-	businessLayer := setupHealthConfig(buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
+	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
@@ -358,7 +357,7 @@ func TestHealthDataPresentFromApp(t *testing.T) {
 			Hosts: map[string]float64{"v-server.beta.svc.cluster.local": 100.0},
 		},
 	}
-	businessLayer := setupHealthConfig(buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
+	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
@@ -417,7 +416,7 @@ func TestHealthDataBadResponses(t *testing.T) {
 	}
 	edge2 := wk.AddEdge(svc)
 	edge2.Metadata[graph.ProtocolKey] = 20000
-	businessLayer := setupHealthConfig(buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
+	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
@@ -447,7 +446,7 @@ func TestIdleNodesHaveHealthData(t *testing.T) {
 	trafficMap[idleNode.ID] = idleNode
 	idleNode.Metadata[graph.IsIdle] = true
 	idleNode.Metadata[graph.IsInaccessible] = true
-	businessLayer := setupHealthConfig(buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
+	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
@@ -459,26 +458,41 @@ func TestIdleNodesHaveHealthData(t *testing.T) {
 	assert.NotNil(trafficMap[idleNode.ID].Metadata[graph.HealthData])
 }
 
+type servicesError struct {
+	cache.KialiCache
+	errorMsg string
+}
+
+func (s *servicesError) GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error) {
+	return nil, fmt.Errorf(s.errorMsg)
+}
+
 func TestErrorCausesPanic(t *testing.T) {
 	assert := assert.New(t)
 
-	conf := config.NewConfig()
-	conf.KubernetesConfig.CacheEnabled = false
-	config.Set(conf)
 	trafficMap := buildAppTrafficMap()
-	k8s := kubetest.NewK8SClientMock()
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetCronJobs", mock.AnythingOfType("string")).Return([]batch_v1.CronJob{}, nil)
-	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return(buildFakeWorkloadDeploymentsHealth(rateDefinition), nil)
-	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
-	k8s.On("GetJobs", mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(buildFakePodsHealth(rateDefinition), nil)
-	k8s.On("GetReplicationControllers", mock.AnythingOfType("string")).Return([]core_v1.ReplicationController{}, nil)
-	k8s.On("GetReplicaSets", mock.AnythingOfType("string")).Return([]apps_v1.ReplicaSet{}, nil)
-	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
-	k8s.On("GetDaemonSets", mock.AnythingOfType("string")).Return([]apps_v1.DaemonSet{}, nil)
+	objects := []runtime.Object{
+		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
+	}
+	for _, obj := range buildFakeWorkloadDeploymentsHealth(rateDefinition) {
+		o := obj
+		objects = append(objects, &o)
+	}
+	for _, obj := range buildFakePodsHealth(rateDefinition) {
+		o := obj
+		objects = append(objects, &o)
+	}
+	var k8s kubernetes.ClientInterface = kubetest.NewFakeK8sClient(objects...)
+
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(conf)
+	cache := business.NewTestingCache(t, k8s, *conf)
 	const panicErrMsg = "test error! This should cause a panic"
-	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{}, fmt.Errorf(panicErrMsg))
+	cache = &servicesError{cache, panicErrMsg}
+	business.WithKialiCache(cache)
+
 	business.SetKialiControlPlaneCluster(&business.Cluster{
 		Name: business.DefaultClusterID,
 	})
@@ -508,6 +522,7 @@ func buildFakeServicesHealth(rate string) []core_v1.Service {
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:        "svc",
+				Namespace:   "testNamespace",
 				Annotations: annotationMap,
 			},
 		},
@@ -530,23 +545,29 @@ func buildFakePodsHealth(rate string) []core_v1.Pod {
 	return pods
 }
 
-func setupHealthConfig(services []core_v1.Service, deployments []apps_v1.Deployment, pods []core_v1.Pod) *business.Layer {
-	k8s := kubetest.NewK8SClientMock()
+func setupHealthConfig(t *testing.T, services []core_v1.Service, deployments []apps_v1.Deployment, pods []core_v1.Pod) *business.Layer {
+	objects := []runtime.Object{
+		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
+	}
+	for _, obj := range services {
+		o := obj
+		objects = append(objects, &o)
+	}
+	for _, obj := range deployments {
+		o := obj
+		objects = append(objects, &o)
+	}
+	for _, obj := range pods {
+		o := obj
+		objects = append(objects, &o)
+	}
+	k8s := kubetest.NewFakeK8sClient(objects...)
 
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetCronJobs", mock.AnythingOfType("string")).Return([]batch_v1.CronJob{}, nil)
-	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return(deployments, nil)
-	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
-	k8s.On("GetJobs", mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(pods, nil)
-	k8s.On("GetReplicationControllers", mock.AnythingOfType("string")).Return([]core_v1.ReplicationController{}, nil)
-	k8s.On("GetReplicaSets", mock.AnythingOfType("string")).Return([]apps_v1.ReplicaSet{}, nil)
-	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
-	k8s.On("GetDaemonSets", mock.AnythingOfType("string")).Return([]apps_v1.DaemonSet{}, nil)
-	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return(services, nil)
-	cfg := config.Get()
-	cfg.KubernetesConfig.CacheEnabled = false
-	config.Set(cfg)
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(conf)
+	business.SetupBusinessLayer(t, k8s, *conf)
 	business.SetKialiControlPlaneCluster(&business.Cluster{
 		Name: business.DefaultClusterID,
 	})
