@@ -465,7 +465,7 @@ export const getNodeGraphElements = (node: NodeParamsType, params: any) => {
       // @TODO add cluster
       return newRequest<GraphDefinition>(
         HTTP_VERBS.GET,
-        urls.workloadGraphElements('_kiali_home', node.namespace.name, node.workload),
+        urls.workloadGraphElements(node.namespace.name, node.workload),
         params,
         {}
       );

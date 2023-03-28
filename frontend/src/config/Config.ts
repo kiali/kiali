@@ -175,8 +175,8 @@ const conf = {
       workloads: (namespace: string) => `api/namespaces/${namespace}/workloads`,
       workload: (cluster: string, namespace: string, workload: string) =>
         `api/namespaces/${namespace}/workloads/${workload}?cluster=${cluster}`,
-      workloadGraphElements: (cluster: string, namespace: string, workload: string) =>
-        `api/namespaces/${namespace}/workloads/${workload}/graph?cluster=${cluster}`,
+      workloadGraphElements: (namespace: string, workload: string) =>
+        `api/namespaces/${namespace}/workloads/${workload}/graph`,
       workloadHealth: (cluster: string, namespace: string, workload: string) =>
         `api/namespaces/${namespace}/workloads/${workload}/health?cluster=${cluster}`,
       workloadMetrics: (cluster: string, namespace: string, workload: string) =>
