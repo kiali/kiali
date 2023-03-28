@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { PFBadge } from '../Pf/PfBadges';
+import { Label, Tooltip, TooltipPosition } from '@patternfly/react-core';
 
 type AmbientLabelProps = {
   tooltip: boolean;
@@ -15,7 +14,7 @@ class AmbientLabel extends React.Component<AmbientLabelProps, {}> {
       <div style={{ textAlign: 'left' }}>
         <>
           <div>
-            <PFBadge badge={{ badge: 'IstioAmbient' }} isRead={true} style={{ marginRight: '0px' }} /> {msg}
+            {msg}
             <br />
           </div>
         </>
@@ -23,12 +22,16 @@ class AmbientLabel extends React.Component<AmbientLabelProps, {}> {
     );
     const iconComponent = (
       <span style={this.props.style}>
-        <PFBadge badge={{ badge: 'ztunnel' }} isRead={true} style={{ marginRight: '0px', marginLeft: '5px' }} />
+        <Label style={{ marginLeft: 5 }} color="green" isCompact>
+          ztunnel
+        </Label>
         {!this.props.tooltip && (
           <span style={{ marginLeft: '8px' }}>
             {msg}
             <Tooltip key={`tooltip_ambient_label`} position={TooltipPosition.top} content={tooltipContent}>
-              <PFBadge badge={{ badge: 'ztunnel' }} isRead={true} style={{ marginRight: '0px' }} />
+              <Label style={{ marginLeft: 5 }} color="green" isCompact>
+                ztunnel
+              </Label>
             </Tooltip>
           </span>
         )}
