@@ -228,6 +228,7 @@ describe('LabelFilter', () => {
         health: emptyAppHealth,
         name: 'details',
         istioSidecar: false,
+        istioAmbient: false,
         labels: { app: 'details', service: 'details', version: 'v1' },
         istioReferences: []
       }
@@ -243,6 +244,7 @@ describe('LabelFilter', () => {
         health: emptyAppHealth,
         name: 'reviews',
         istioSidecar: false,
+        istioAmbient: false,
         labels: { app: 'reviews', service: 'reviews', version: 'v1,v2,v3' },
         istioReferences: []
       }
@@ -264,6 +266,7 @@ describe('LabelFilter', () => {
         name: 'reviews-v1',
         type: 'Deployment',
         istioSidecar: false,
+        istioAmbient: false,
         labels: { app: 'reviews', version: 'v1' },
         appLabel: true,
         versionLabel: true,
@@ -277,6 +280,7 @@ describe('LabelFilter', () => {
         name: 'reviews-v2',
         type: 'Deployment',
         istioSidecar: false,
+        istioAmbient: false,
         labels: { app: 'reviews', version: 'v2' },
         appLabel: true,
         versionLabel: true,
@@ -290,6 +294,7 @@ describe('LabelFilter', () => {
         name: 'reviews-v3',
         type: 'Deployment',
         istioSidecar: false,
+        istioAmbient: false,
         labels: { app: 'reviews', version: 'v3' },
         appLabel: true,
         versionLabel: true,
@@ -312,6 +317,7 @@ describe('LabelFilter', () => {
         health: emptySvcHealth,
         name: 'details',
         istioSidecar: false,
+        istioAmbient: false,
         labels: { app: 'details', service: 'details' },
         ports: { http: 9080 },
         validation: { name: 'details', objectType: 'service', valid: true, checks: [] },
