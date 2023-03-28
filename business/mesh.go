@@ -12,6 +12,7 @@ import (
 	v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
 
@@ -211,7 +212,7 @@ func (in *MeshService) ResolveKialiControlPlaneCluster(r *http.Request) (*Cluste
 	// The "cluster_id" is set in an environment variable of
 	// the "istiod" deployment. Let's try to fetch it.
 	var istioDeployment *v1.Deployment
-	var istioDeploymentConfig = conf.ExternalServices.Istio.IstiodDeploymentName
+	istioDeploymentConfig := conf.ExternalServices.Istio.IstiodDeploymentName
 	var err error
 
 	if IsNamespaceCached(conf.IstioNamespace) {
@@ -581,7 +582,7 @@ func (in *MeshService) IstiodResourceThresholds() (*models.IstiodThresholds, err
 	conf := config.Get()
 
 	var istioDeployment *v1.Deployment
-	var istioDeploymentConfig = conf.ExternalServices.Istio.IstiodDeploymentName
+	istioDeploymentConfig := conf.ExternalServices.Istio.IstiodDeploymentName
 	var err error
 
 	if IsNamespaceCached(conf.IstioNamespace) {
@@ -589,14 +590,24 @@ func (in *MeshService) IstiodResourceThresholds() (*models.IstiodThresholds, err
 	} else {
 		istioDeployment, err = in.k8s.GetDeployment(conf.IstioNamespace, istioDeploymentConfig)
 	}
-	if err != nil && !errors.IsNotFound(err) {
+	if err != nil {
+		if errors.IsNotFound(err) {
+			log.Debugf("Istiod deployment [%s] not found in namespace [%s]", istioDeploymentConfig, conf.IstioNamespace)
+		}
 		return nil, err
 	}
 
-	memoryLimit := istioDeployment.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().AsApproximateFloat64() / 1000000 // in Mb
-	cpuLimit := istioDeployment.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().AsApproximateFloat64()
-
-	thresholds := models.IstiodThresholds{Memory: memoryLimit, CPU: cpuLimit}
+	thresholds := models.IstiodThresholds{}
+	deploymentContainers := istioDeployment.Spec.Template.Spec.Containers
+	// Assuming that the first container is the istiod container.
+	if len(deploymentContainers) > 0 {
+		if memoryLimit := deploymentContainers[0].Resources.Limits.Memory(); memoryLimit != nil {
+			thresholds.Memory = float64(memoryLimit.ScaledValue(resource.Mega))
+		}
+		if cpuLimit := deploymentContainers[0].Resources.Limits.Cpu(); cpuLimit != nil {
+			thresholds.CPU = cpuLimit.AsApproximateFloat64()
+		}
+	}
 
 	return &thresholds, nil
 }
