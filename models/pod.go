@@ -145,10 +145,7 @@ func isIstioProxy(pod *core_v1.Pod, container *core_v1.Container, conf *config.C
 }
 
 func isIstioAmbient(pod *core_v1.Pod) bool {
-	if pod.ObjectMeta.Annotations[ambientAnnotation] == "enabled" {
-		return true
-	}
-	return false
+	return pod.ObjectMeta.Annotations[ambientAnnotation] == "enabled"
 }
 
 func lookupImage(containerName string, containers []core_v1.Container) string {
@@ -212,10 +209,7 @@ func (pods Pods) HasAnyAmbient() bool {
 
 // HasAmbient returns true if the pod is labeled as ambient-type
 func (pod *Pod) HasAmbient() bool {
-	if pod.Annotations[ambientAnnotation] == "enabled" {
-		return true
-	}
-	return false
+	return pod.Annotations[ambientAnnotation] == "enabled"
 }
 
 // SyncedPodsCount returns the number of Pods with its proxy synced

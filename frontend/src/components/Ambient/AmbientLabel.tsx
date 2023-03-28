@@ -6,6 +6,8 @@ type AmbientLabelProps = {
   style?: React.CSSProperties;
 };
 
+const AmbientComponent = 'ztunnel';
+
 class AmbientLabel extends React.Component<AmbientLabelProps, {}> {
   render() {
     const msg = 'Component is labeled as part of the Istio Ambient Mesh';
@@ -23,14 +25,14 @@ class AmbientLabel extends React.Component<AmbientLabelProps, {}> {
     const iconComponent = (
       <span style={this.props.style}>
         <Label style={{ marginLeft: 5 }} color="green" isCompact>
-          ztunnel
+          {AmbientComponent}
         </Label>
         {!this.props.tooltip && (
           <span style={{ marginLeft: '8px' }}>
             {msg}
             <Tooltip key={`tooltip_ambient_label`} position={TooltipPosition.top} content={tooltipContent}>
               <Label style={{ marginLeft: 5 }} color="green" isCompact>
-                ztunnel
+                {AmbientComponent}
               </Label>
             </Tooltip>
           </span>
