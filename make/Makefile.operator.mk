@@ -257,6 +257,8 @@ run-operator: get-ansible-operator crd-create .wait-for-kiali-crd
 	ALLOW_ALL_ACCESSIBLE_NAMESPACES="true" \
 	ANSIBLE_VERBOSITY_KIALI_KIALI_IO="1" \
 	ANSIBLE_DEBUG_LOGS="True" \
+	ANSIBLE_CALLBACK_WHITELIST="profile_tasks" \
+	ANSIBLE_CALLBACKS_ENABLED="profile_tasks" \
 	PROFILE_TASKS_TASK_OUTPUT_LIMIT="100" \
 	POD_NAMESPACE="does-not-exist" \
 	WATCH_NAMESPACE="" \
