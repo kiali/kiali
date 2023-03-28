@@ -34,6 +34,10 @@ export const hasMissingSidecar = (r: SortResource): boolean => {
   return !isIstioNamespace(r.namespace) && !r.istioSidecar && !isGateway(r.labels);
 };
 
+export const hasMissingAmbient = (r: SortResource): boolean => {
+  return !isIstioNamespace(r.namespace) && !r.istioAmbient;
+};
+
 type ResourceType<R extends RenderResource> = {
   name: string;
   column: string;

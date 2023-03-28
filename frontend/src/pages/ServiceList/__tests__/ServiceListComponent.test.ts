@@ -19,7 +19,11 @@ const makeService = (
   outbound: { [key: string]: { [key: string]: number } }
 ): WithServiceHealth<ServiceListItem> => {
   const reqErrs: RequestHealth = { inbound: inbound, outbound: outbound, healthAnnotations: {} };
-  const health = new ServiceHealth('bookinfo', 'reviews', reqErrs, { rateInterval: 60, hasSidecar: true });
+  const health = new ServiceHealth('bookinfo', 'reviews', reqErrs, {
+    rateInterval: 60,
+    hasSidecar: true,
+    hasAmbient: false
+  });
 
   return {
     name: name,

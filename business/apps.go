@@ -206,6 +206,11 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 					break
 				}
 			}
+			for _, w := range valueApp.Workloads {
+				if appItem.IstioAmbient = w.HasIstioAmbient(); !appItem.IstioAmbient {
+					break
+				}
+			}
 			if criteria.IncludeHealth {
 				appItem.Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, appItem.Name, criteria.RateInterval, criteria.QueryTime, valueApp)
 				if err != nil {
@@ -260,6 +265,7 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 	(*appInstance).Workloads = make([]models.WorkloadItem, len(appDetails.Workloads))
 	for i, wkd := range appDetails.Workloads {
 		(*appInstance).Workloads[i] = models.WorkloadItem{WorkloadName: wkd.Name, IstioSidecar: wkd.IstioSidecar, Labels: wkd.Labels, ServiceAccountNames: wkd.Pods.ServiceAccounts()}
+		(*appInstance).Workloads[i] = models.WorkloadItem{WorkloadName: wkd.Name, IstioSidecar: wkd.IstioSidecar, IstioAmbient: wkd.IstioAmbient, ServiceAccountNames: wkd.Pods.ServiceAccounts()}
 	}
 
 	(*appInstance).ServiceNames = make([]string, len(appDetails.Services))

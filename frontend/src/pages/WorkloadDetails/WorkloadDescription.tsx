@@ -17,6 +17,7 @@ import MissingAuthPolicy from 'components/MissingAuthPolicy/MissingAuthPolicy';
 import { hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
 import DetailDescriptionContainer from '../../components/Details/DetailDescription';
 import { isGateway } from '../../helpers/LabelFilterHelper';
+import AmbientLabel from '../../components/Ambient/AmbientLabel';
 
 type WorkloadDescriptionProps = {
   workload?: Workload;
@@ -140,7 +141,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
             <span className={healthIconStyle}>
               <HealthIndicator id={workload.name} health={this.props.health} />
             </span>
-            {this.props.workload && !this.props.workload.istioSidecar && (
+            {this.props.workload && !this.props.workload.istioSidecar && !this.props.workload.istioAmbient && (
               <MissingSidecar
                 data-test={`missing-sidecar-badge-for-${workload.name}-workload-in-${this.props.namespace}-namespace`}
                 namespace={this.props.namespace}
@@ -150,6 +151,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
                 isGateway={isGateway(workload.labels)}
               />
             )}
+            {this.props.workload && this.props.workload.istioAmbient && <AmbientLabel tooltip={true} />}
             {this.props.workload && hasMissingAuthPolicy(this.props.workload.name, this.props.workload.validations) && (
               <MissingAuthPolicy
                 namespace={this.props.namespace}

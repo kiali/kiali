@@ -51,6 +51,7 @@ const computeValidDurations = (cfg: ComputedServerConfig) => {
 // than may not be providedby/set on the server.
 const defaultServerConfig: ComputedServerConfig = {
   accessibleNamespaces: [],
+  ambientProfile: false,
   authStrategy: '',
   clusters: {},
   durations: {},

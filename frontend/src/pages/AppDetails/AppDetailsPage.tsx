@@ -98,7 +98,11 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
             this.props.match.params.namespace,
             this.props.match.params.app,
             details.data.health,
-            { rateInterval: this.props.duration, hasSidecar: details.data.workloads.some(w => w.istioSidecar) }
+            {
+              rateInterval: this.props.duration,
+              hasSidecar: details.data.workloads.some(w => w.istioSidecar),
+              hasAmbient: details.data.workloads.some(w => w.istioAmbient)
+            }
           )
         });
       })

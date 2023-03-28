@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"strings"
 	"sync"
 
@@ -1127,6 +1128,24 @@ func (in *IstioConfigService) CreateIstioConfigDetail(namespace, resourceType st
 
 func (in *IstioConfigService) IsGatewayAPI() bool {
 	return in.k8s.IsGatewayAPI()
+}
+
+func (in *IstioConfigService) IsAmbientProfile() bool {
+
+	var cniNetwork map[string]any
+	istioConfigMap, err := in.k8s.GetConfigMap(config.Get().IstioNamespace, "istio-cni-config")
+	if err != nil {
+		log.Errorf("Error getting istio-cni-config configmap: %s ", err.Error())
+	} else {
+		err = yaml.Unmarshal([]byte(istioConfigMap.Data["cni_network_config"]), &cniNetwork)
+		if err != nil {
+			log.Errorf("Error reading istio-cni-config configmap: %s ", err.Error())
+		}
+		if cniNetwork["ambient_enabled"] == true {
+			return true
+		}
+	}
+	return false
 }
 
 func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, namespaces []string) models.IstioConfigPermissions {

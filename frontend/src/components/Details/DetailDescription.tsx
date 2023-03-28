@@ -14,6 +14,8 @@ import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { isGateway } from '../../helpers/LabelFilterHelper';
+import { serverConfig } from '../../config';
+import AmbientLabel from '../Ambient/AmbientLabel';
 
 type ReduxProps = {
   kiosk: string;
@@ -147,7 +149,8 @@ class DetailDescription extends React.Component<Props> {
         <Tooltip position={TooltipPosition.right} content={this.renderServiceAccounts(workload)}>
           <KialiIcon.Info className={infoStyle} />
         </Tooltip>
-        {!workload.istioSidecar && (
+        {((!workload.istioSidecar && !workload.istioAmbient && serverConfig.ambientProfile) ||
+          (!workload.istioSidecar && !serverConfig.ambientProfile)) && (
           <MissingSidecar
             namespace={this.props.namespace}
             isGateway={isGateway(workload.labels)}
@@ -156,6 +159,7 @@ class DetailDescription extends React.Component<Props> {
             text={''}
           />
         )}
+        {workload.istioAmbient && <AmbientLabel tooltip={true} />}
       </span>
     );
   }
@@ -202,7 +206,8 @@ class DetailDescription extends React.Component<Props> {
           >
             <span style={{ marginLeft: '10px' }}>{createIcon(sub.status)}</span>
           </Tooltip>
-          {!workload.istioSidecar && (
+          {((!workload.istioSidecar && !workload.istioAmbient && serverConfig.ambientProfile) ||
+            (!workload.istioSidecar && !serverConfig.ambientProfile)) && (
             <MissingSidecar
               namespace={this.props.namespace}
               isGateway={isGateway(workload.labels)}
@@ -211,6 +216,7 @@ class DetailDescription extends React.Component<Props> {
               text={''}
             />
           )}
+          {workload.istioAmbient && <AmbientLabel tooltip={true} />}
         </span>
       );
     } else {

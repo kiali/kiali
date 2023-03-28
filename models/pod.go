@@ -12,6 +12,8 @@ import (
 // Pods alias for list of Pod structs
 type Pods []*Pod
 
+const ambientAnnotation = "ambient.istio.io/redirection"
+
 // Pod holds a subset of v1.Pod data that is meaningful in Kiali
 type Pod struct {
 	Name                string            `json:"name"`
@@ -39,10 +41,11 @@ type Reference struct {
 
 // ContainerInfo holds container name and image
 type ContainerInfo struct {
-	Name    string `json:"name"`
-	Image   string `json:"image"`
-	IsProxy bool   `json:"isProxy"`
-	IsReady bool   `json:"isReady"`
+	Name      string `json:"name"`
+	Image     string `json:"image"`
+	IsProxy   bool   `json:"isProxy"`
+	IsReady   bool   `json:"isReady"`
+	IsAmbient bool   `json:"isAmbient"`
 }
 
 // Parse extracts desired information from k8s []Pod info
@@ -110,10 +113,11 @@ func (pod *Pod) Parse(p *core_v1.Pod) {
 			continue
 		}
 		container := ContainerInfo{
-			Name:    c.Name,
-			Image:   c.Image,
-			IsProxy: isIstioProxy(p, &c, conf),
-			IsReady: lookupReady(c.Name, p.Status.ContainerStatuses),
+			Name:      c.Name,
+			Image:     c.Image,
+			IsProxy:   isIstioProxy(p, &c, conf),
+			IsReady:   lookupReady(c.Name, p.Status.ContainerStatuses),
+			IsAmbient: isIstioAmbient(p),
 		}
 		pod.Containers = append(pod.Containers, &container)
 	}
@@ -136,6 +140,13 @@ func isIstioProxy(pod *core_v1.Pod, container *core_v1.Container, conf *config.C
 		if c.IsProxy && strings.HasPrefix(pod.Name, c.AppLabel) {
 			return true
 		}
+	}
+	return false
+}
+
+func isIstioAmbient(pod *core_v1.Pod) bool {
+	if pod.ObjectMeta.Annotations[ambientAnnotation] == "enabled" {
+		return true
 	}
 	return false
 }
@@ -185,6 +196,26 @@ func (pods Pods) HasAnyIstioSidecar() bool {
 // HasIstioSidecar returns true if the pod has an Istio proxy sidecar
 func (pod Pod) HasIstioSidecar() bool {
 	return len(pod.IstioContainers) > 0
+}
+
+// HasAnyAmbient returns true if any pod is labeled as ambient
+func (pods Pods) HasAnyAmbient() bool {
+	if len(pods) > 0 {
+		for _, p := range pods {
+			if p.HasAmbient() {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// HasAmbient returns true if the pod is labeled as ambient-type
+func (pod *Pod) HasAmbient() bool {
+	if pod.Annotations[ambientAnnotation] == "enabled" {
+		return true
+	}
+	return false
 }
 
 // SyncedPodsCount returns the number of Pods with its proxy synced

@@ -160,7 +160,8 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	go func(ctx context.Context) {
 		defer wg.Done()
 		var err2 error
-		ws, err2 = fetchWorkloads(ctx, in.businessLayer, criteria.Namespace, "")
+		// Exclude waypoint proxies
+		ws, err2 = fetchWorkloads(ctx, in.businessLayer, criteria.Namespace, "gateway.istio.io/managed notin (istio.io-mesh-controller)")
 		if err2 != nil {
 			log.Errorf("Error fetching Workloads per namespace %s: %s", criteria.Namespace, err2)
 			errChan <- err2
@@ -1719,11 +1720,40 @@ func fetchWorkloadFromCluster(ctx context.Context, layer *Layer, client kubernet
 			}
 		}
 
+		// Check if there are any waypoint proxy binded to this service account
+		if w.IstioAmbient {
+			w.Waypoint = listWaypoint(ctx, layer, criteria.Namespace, w)
+		}
+
 		if cnFound {
 			return &w, nil
 		}
 	}
 	return wl, kubernetes.NewNotFound(criteria.WorkloadName, "Kiali", "Workload")
+}
+
+// Return the list of waypoint proxy binded to a workload service account
+func listWaypoint(ctx context.Context, layer *Layer, namespace string, w models.Workload) []string {
+	// Get List of waypoint proxies from the namespace and compare the
+	wlist, err := fetchWorkloads(ctx, layer, namespace, "gateway.istio.io/managed=istio.io-mesh-controller")
+	if err != nil {
+		log.Errorf("Error fetching workloads")
+	}
+
+	var waypointlist []string
+	// Get service Account name for each pod from the workload
+	if len(w.Pods) > 0 {
+		for _, wc := range w.Pods {
+			for _, waypoint := range wlist {
+				for _, wp := range waypoint.Pods {
+					if wp.ServiceAccountName == wc.ServiceAccountName {
+						waypointlist = append(waypointlist, waypoint.Name)
+					}
+				}
+			}
+		}
+	}
+	return waypointlist
 }
 
 func (in *WorkloadService) updateWorkload(namespace string, workloadName string, workloadType string, jsonPatch string, patchType string) error {

@@ -14,6 +14,7 @@ export interface Workload {
   resourceVersion: string;
   istioInjectionAnnotation?: boolean;
   istioSidecar: boolean;
+  istioAmbient: boolean;
   labels: { [key: string]: string };
   appLabel: boolean;
   versionLabel: boolean;
@@ -26,6 +27,7 @@ export interface Workload {
   runtimes: Runtime[];
   additionalDetails: AdditionalItem[];
   validations?: Validations;
+  waypoint: string[];
 }
 
 export const emptyWorkload: Workload = {
@@ -34,6 +36,7 @@ export const emptyWorkload: Workload = {
   createdAt: '',
   resourceVersion: '',
   istioSidecar: true, // true until proven otherwise
+  istioAmbient: false,
   labels: {},
   appLabel: false,
   versionLabel: false,
@@ -43,7 +46,8 @@ export const emptyWorkload: Workload = {
   annotations: {},
   services: [],
   runtimes: [],
-  additionalDetails: []
+  additionalDetails: [],
+  waypoint: []
 };
 
 export const WorkloadType = {
@@ -63,6 +67,7 @@ export interface WorkloadOverview {
   cluster: string;
   type: string;
   istioSidecar: boolean;
+  istioAmbient: boolean;
   additionalDetailSample?: AdditionalItem;
   appLabel: boolean;
   versionLabel: boolean;
