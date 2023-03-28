@@ -166,7 +166,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.app}
           objectType={MetricsObjectTypes.APP}
-          cluster={'@TODO'}
+          cluster={'_kiali_home'}
           direction={'inbound'}
         />
       </Tab>
@@ -180,7 +180,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.app}
           objectType={MetricsObjectTypes.APP}
-          cluster={'@TODO'}
+          cluster={'_kiali_home'}
           direction={'outbound'}
         />
       </Tab>
@@ -197,7 +197,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
             <TracesComponent
               lastRefreshAt={this.props.lastRefreshAt}
               namespace={this.props.match.params.namespace}
-              cluster={'@TODO'}
+              cluster={'_kiali_home'}
               target={this.props.match.params.app}
               targetKind={'app'}
             />
