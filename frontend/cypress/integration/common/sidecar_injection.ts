@@ -70,7 +70,7 @@ Given('a workload without a sidecar', function () {
     });
 
     // Make sure that the workload does not have override configuration
-    cy.request('PATCH', `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`, {
+    cy.request('PATCH', `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?cluster=_kiali_home&type=Deployment`, {
         spec: {
             template: {
                 metadata: {
@@ -117,7 +117,7 @@ Given('a workload with a sidecar', function () {
     // Need some kind of tag to exclude certain tests based on the
     // platform or environment. The sidecar label really shouldn't be
     // present here for istio.
-    cy.request('PATCH', `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`, {
+    cy.request('PATCH', `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?cluster=_kiali_home&type=Deployment`, {
         spec: {
             template: {
                 metadata: {
@@ -168,7 +168,7 @@ Given('the workload does not have override configuration for automatic sidecar i
 
         // Now, we can remove the override config at deployment level
         this.workloadHasAutoInjectionOverride = false;
-        cy.request('PATCH', `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`, {
+        cy.request('PATCH', `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?cluster=_kiali_home&type=Deployment`, {
             spec: {
                 template: {
                     metadata: {
@@ -194,7 +194,7 @@ Given('the workload has override configuration for automatic sidecar injection',
     if (!this.workloadHasAutoInjectionOverride) {
         // Add override configuration, matching sidecar state
         this.workloadHasAutoInjectionOverride = true;
-        cy.request('PATCH', `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`, {
+        cy.request('PATCH', `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?cluster=_kiali_home&type=Deployment`, {
             spec: {
                 template: {
                     metadata: {
@@ -217,7 +217,7 @@ Given('a workload with override configuration for automatic sidecar injection', 
 
     // At the moment, it does not matter if the sidecar is being injected or not. The goal is to have
     // the override annotation on it.
-    cy.request('PATCH', `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`, {
+    cy.request('PATCH', `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?cluster=_kiali_home&type=Deployment`, {
         spec: {
             template: {
                 metadata: {
@@ -263,7 +263,7 @@ When('I remove override configuration for sidecar injection in the namespace', f
 });
 
 function switchWorkloadSidecarInjection(enableOrDisable) {
-    cy.visit(`/console/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?refresh=0`);
+    cy.visit(`/console/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?cluster=_kiali_home&refresh=0`);
     cy.get('[data-test="workload-actions-dropdown"] button').click();
     cy.get(`button[data-test=${enableOrDisable}_auto_injection]`).click();
     ensureKialiFinishedLoading();
