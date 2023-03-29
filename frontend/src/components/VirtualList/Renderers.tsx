@@ -219,7 +219,7 @@ export const item: Renderer<TResource> = (item: TResource, config: Resource, bad
 
 // @TODO SortResource
 export const cluster: Renderer<TResource> = (item: TResource) => {
-  if (Object.keys(serverConfig.clusters || {}).length === 0) {
+  if (Object.keys(serverConfig.clusters || {}).length <= 1) {
     return;
   }
   return (

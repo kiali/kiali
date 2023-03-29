@@ -108,7 +108,7 @@ class VirtualListC<R extends RenderResource> extends React.Component<VirtualList
     const { rows } = this.props;
     const { sortBy, columns, conf } = this.state;
     const filteredColumns = columns.filter(
-      column => !(column.title === 'Cluster' && Object.keys(serverConfig.clusters || {}).length === 0)
+      column => !(column.title === 'Cluster' && Object.keys(serverConfig.clusters || {}).length <= 1)
     );
     const tableProps = {
       cells: filteredColumns,
