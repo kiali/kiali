@@ -219,6 +219,9 @@ export const item: Renderer<TResource> = (item: TResource, config: Resource, bad
 
 // @TODO SortResource
 export const cluster: Renderer<TResource> = (item: TResource) => {
+  if (Object.keys(serverConfig.clusters || {}).length === 0) {
+    return;
+  }
   return (
     <td role="gridcell" key={'VirtuaItem_Cluster_' + item.cluster} style={{ verticalAlign: 'middle' }}>
       <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.top} />
