@@ -610,7 +610,14 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 	for c := range layer.k8sClients {
 		ws, err := fetchWorkloadsFromCluster(ctx, layer, c, namespace, labelSelector)
 		if err != nil {
-			return nil, err
+			if errors.IsNotFound(err) || errors.IsForbidden(err) {
+				// If a cluster is not found or not accessible, then we skip it
+				// @TODO with loging a warning, because it is not a namespace but the whole cluster
+				// log.Warningf("Cluster [%s] is not accessible", c)
+			} else {
+				// On any other error, abort and return the error.
+				return nil, err
+			}
 		} else {
 			allWls = append(allWls, ws...)
 		}
