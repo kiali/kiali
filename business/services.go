@@ -41,6 +41,7 @@ type ServiceCriteria struct {
 }
 
 // GetServiceList returns a list of all services for a given criteria
+// Test commit
 func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriteria) (*models.ServiceList, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetServiceList",
