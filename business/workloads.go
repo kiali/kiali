@@ -362,8 +362,8 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 		criteria := ServiceCriteria{
 			Namespace:              criteria.Namespace,
 			ServiceSelector:        labels.Set(workload.Labels).String(),
+			IncludeHealth:          false,
 			IncludeOnlyDefinitions: true,
-			Health:                 false,
 		}
 		services, err = in.businessLayer.Svc.GetServiceList(ctx, criteria)
 		if err != nil {

@@ -28,7 +28,7 @@ type workloadParams struct {
 	// Optional
 	Cluster               string `json:"cluster,omitempty"`
 	IncludeHealth         bool   `json:"health"`
-	IncludeIstioResources bool   `json:"validate"`
+	IncludeIstioResources bool   `json:"istioResources"`
 }
 
 func (p *workloadParams) extract(r *http.Request) {

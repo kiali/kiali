@@ -399,6 +399,7 @@ type GraphUIDefaults struct {
 type ListUIDefaults struct {
 	IncludeHealth         bool `yaml:"include_health,omitempty" json:"includeHealth"`
 	IncludeIstioResources bool `yaml:"include_istio_resources,omitempty" json:"includeIstioResources"`
+	IncludeValidations    bool `yaml:"include_validations,omitempty" json:"includeValidations"`
 }
 
 // Aggregation represents label's allowed aggregations, transformed from aggregation in MonitoringDashboard config resource

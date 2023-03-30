@@ -38,7 +38,7 @@ func TestServiceListParsing(t *testing.T) {
 	k8sclients[kubernetes.HomeClusterName] = k8s
 	svc := NewWithBackends(k8sclients, k8sclients, nil, nil).Svc
 
-	criteria := ServiceCriteria{Namespace: "Namespace", IncludeIstioResources: false, Health: false}
+	criteria := ServiceCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	serviceList, err := svc.GetServiceList(context.TODO(), criteria)
 	require.NoError(err)
 

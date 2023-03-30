@@ -3,6 +3,7 @@ package handlers
 import (
 	"io"
 	"net/http"
+	"strconv"
 	"sync"
 
 	"github.com/gorilla/mux"
@@ -22,7 +23,9 @@ type serviceListParams struct {
 	// in: path
 	Namespace string `json:"namespace"`
 	// Optional
-	Health bool `json:"health"`
+	IncludeHealth          bool `json:"health"`
+	IncludeIstioResources  bool `json:"istioResources"`
+	IncludeOnlyDefinitions bool `json:"onlyDefinitions"`
 }
 
 func (p *serviceListParams) extract(r *http.Request) {
@@ -30,7 +33,19 @@ func (p *serviceListParams) extract(r *http.Request) {
 	query := r.URL.Query()
 	p.baseExtract(r, vars)
 	p.Namespace = vars["namespace"]
-	p.Health = query.Get("health") != ""
+	var err error
+	p.IncludeHealth, err = strconv.ParseBool(query.Get("health"))
+	if err != nil {
+		p.IncludeHealth = true
+	}
+	p.IncludeIstioResources, err = strconv.ParseBool(query.Get("istioResources"))
+	if err != nil {
+		p.IncludeIstioResources = true
+	}
+	p.IncludeOnlyDefinitions, err = strconv.ParseBool(query.Get("onlyDefinitions"))
+	if err != nil {
+		p.IncludeOnlyDefinitions = true
+	}
 }
 
 // ServiceList is the API handler to fetch the list of services in a given namespace
@@ -38,7 +53,7 @@ func ServiceList(w http.ResponseWriter, r *http.Request) {
 	p := serviceListParams{}
 	p.extract(r)
 
-	criteria := business.ServiceCriteria{Namespace: p.Namespace, IncludeIstioResources: true, Health: p.Health, RateInterval: "", QueryTime: p.QueryTime}
+	criteria := business.ServiceCriteria{Namespace: p.Namespace, IncludeHealth: p.IncludeHealth, IncludeIstioResources: p.IncludeIstioResources, IncludeOnlyDefinitions: p.IncludeOnlyDefinitions, RateInterval: "", QueryTime: p.QueryTime}
 
 	// Get business layer
 	business, err := getBusiness(r)
@@ -47,7 +62,7 @@ func ServiceList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if criteria.Health {
+	if criteria.IncludeHealth {
 		rateInterval, err := adjustRateInterval(r.Context(), business, p.Namespace, p.RateInterval, p.QueryTime)
 		if err != nil {
 			handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())

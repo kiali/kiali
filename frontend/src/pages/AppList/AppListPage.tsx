@@ -120,6 +120,13 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
   }
 
   render() {
+    const uncheckedToggles = [] as string[];
+    Toggles.getToggles().forEach((v, k) => {
+      if (!v) {
+        uncheckedToggles.push(k);
+      }
+    });
+
     return (
       <>
         <RefreshNotifier onTick={this.updateListItems} />
@@ -131,7 +138,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
           />
         </div>
         <RenderContent>
-          <VirtualList rows={this.state.listItems}>
+          <VirtualList rows={this.state.listItems} filteredColumns={uncheckedToggles}>
             <StatefulFilters
               initialFilters={AppListFilters.availableFilters}
               initialToggles={this.initialToggles}

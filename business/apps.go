@@ -312,10 +312,10 @@ func fetchNamespaceApps(ctx context.Context, layer *Layer, namespace string, app
 		// Check if namespace is cached
 		criteria := ServiceCriteria{
 			Namespace:              namespace,
+			IncludeHealth:          false,
 			IncludeIstioResources:  false,
 			IncludeOnlyDefinitions: true,
 			ServiceSelector:        labels.Set(w.Labels).String(),
-			Health:                 false,
 		}
 		ss, err = layer.Svc.GetServiceList(ctx, criteria)
 		if err != nil {

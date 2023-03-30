@@ -353,7 +353,7 @@ const healthToggle: ToggleType = {
 const istioResourcesToggle: ToggleType = {
   label: 'Istio Resources Detail',
   name: 'istioResources',
-  isChecked: serverConfig.kialiFeatureFlags.uiDefaults.list.includeIstioResources
+  isChecked: true
 };
 
 export const getAvailableToggles = (): ToggleType[] => {

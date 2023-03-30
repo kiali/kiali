@@ -151,6 +151,13 @@ class WorkloadListPageComponent extends FilterComponent.Component<
   }
 
   render() {
+    const uncheckedToggles = [] as string[];
+    Toggles.getToggles().forEach((v, k) => {
+      if (!v) {
+        uncheckedToggles.push(k);
+      }
+    });
+
     return (
       <>
         <RefreshNotifier onTick={this.updateListItems} />
@@ -162,7 +169,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
           />
         </div>
         <RenderContent>
-          <VirtualList rows={this.state.listItems}>
+          <VirtualList rows={this.state.listItems} filteredColumns={uncheckedToggles}>
             <StatefulFilters
               initialFilters={WorkloadListFilters.availableFilters}
               initialToggles={this.initialToggles}

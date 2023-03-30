@@ -1,4 +1,4 @@
-import { ActiveFiltersInfo, FilterType, FILTER_ACTION_APPEND, AllFilterTypes } from '../../types/Filters';
+import { ActiveFiltersInfo, FilterType, FILTER_ACTION_APPEND, AllFilterTypes, ToggleType } from '../../types/Filters';
 import { hasHealth } from '../../types/Health';
 import { ServiceListItem } from '../../types/ServiceList';
 import { SortField } from '../../types/SortFilters';
@@ -16,6 +16,7 @@ import { filterByLabel } from '../../helpers/LabelFilterHelper';
 import { calculateErrorRate } from '../../types/ErrorRate';
 import { istioTypeFilter } from '../IstioConfigList/FiltersAndSorts';
 import { compareObjectReferences } from '../AppList/FiltersAndSorts';
+import { serverConfig } from 'config';
 
 export const sortFields: SortField<ServiceListItem>[] = [
   {
@@ -243,6 +244,33 @@ export const filterBy = (items: ServiceListItem[], filters: ActiveFiltersInfo): 
     return filterByIstioType(ret, istioTypeSelected);
   }
   return ret;
+};
+
+/** Column Toggle Method */
+
+const configurationToggle: ToggleType = {
+  label: 'Configuration Validation',
+  name: 'configuration',
+  isChecked: true
+};
+
+const healthToggle: ToggleType = {
+  label: 'Health',
+  name: 'health',
+  isChecked: true
+};
+
+const istioResourcesToggle: ToggleType = {
+  label: 'Istio Resources Detail',
+  name: 'istioResources',
+  isChecked: true
+};
+
+export const getAvailableToggles = (): ToggleType[] => {
+  healthToggle.isChecked = serverConfig.kialiFeatureFlags.uiDefaults.list.includeHealth;
+  istioResourcesToggle.isChecked = serverConfig.kialiFeatureFlags.uiDefaults.list.includeIstioResources;
+  configurationToggle.isChecked = serverConfig.kialiFeatureFlags.uiDefaults.list.includeValidations;
+  return [healthToggle, istioResourcesToggle, configurationToggle];
 };
 
 // Exported for test

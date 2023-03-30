@@ -27,12 +27,13 @@ import { serverConfig } from '../../config';
 type Direction = 'asc' | 'desc' | undefined;
 
 type VirtualListProps<R> = {
+  actions?: JSX.Element[];
   activeNamespaces: Namespace[];
   children?: React.ReactNode;
+  filteredColumns?: string[];
   rows: R[];
   sort?: (sortField: SortField<NamespaceInfo>, isAscending: boolean) => void;
   statefulProps?: React.RefObject<StatefulFilters>;
-  actions?: JSX.Element[];
 };
 
 type VirtualListState = {
@@ -56,24 +57,7 @@ class VirtualListC<R extends RenderResource> extends React.Component<VirtualList
     const match = history.location.pathname.match(listRegex) || [];
     const type = match[1] || '';
     const conf = config[type] as Resource;
-    const columns =
-      conf.columns && config.headerTable
-        ? conf.columns.map(info => {
-            let config = { title: info.column };
-            if (info.transforms) {
-              config['transforms'] = info.transforms;
-            }
-            if (info.cellTransforms) {
-              config['cellTransforms'] = info.cellTransforms;
-            }
-            return config;
-          })
-        : [];
-    if (this.props.actions) {
-      columns.push({
-        title: ''
-      });
-    }
+    const columns = this.getColumns(type);
     let index = -1;
     const sortParam = HistoryManager.getParam(URLParam.SORT);
     if (sortParam) {
@@ -102,6 +86,39 @@ class VirtualListC<R extends RenderResource> extends React.Component<VirtualList
     }
     HistoryManager.setParam(URLParam.SORT, String(this.state.conf.columns[index].param));
     this.props.sort && this.props.sort(FilterHelper.currentSortField(Sorts.sortFields), direction === 'asc');
+  };
+
+  componentDidUpdate() {
+    const columns = this.getColumns(this.state.type);
+    if (columns.length !== this.state.columns.length) {
+      this.setState({ columns: columns });
+    }
+  }
+
+  private getColumns = (type): any[] => {
+    let columns = [] as any[];
+    const conf = config[type] as Resource;
+    if (conf.columns && config.headerTable) {
+      const filteredColumns = conf.columns.filter(
+        info => !this.props.filteredColumns || !this.props.filteredColumns.includes(info.column.toLowerCase())
+      );
+      columns = filteredColumns.map(info => {
+        let config = { title: info.column, renderer: info.renderer };
+        if (info.transforms) {
+          config['transforms'] = info.transforms;
+        }
+        if (info.cellTransforms) {
+          config['cellTransforms'] = info.cellTransforms;
+        }
+        return config;
+      });
+    }
+    if (this.props.actions) {
+      columns.push({
+        title: ''
+      });
+    }
+    return columns;
   };
 
   render() {
@@ -134,6 +151,7 @@ class VirtualListC<R extends RenderResource> extends React.Component<VirtualList
           key={'vItem' + i}
           item={r}
           index={i}
+          columns={this.state.columns}
           config={conf}
           statefulFilterProps={this.props.statefulProps ? this.props.statefulProps : this.statefulFilters}
           action={this.props.actions && this.props.actions[i] ? this.props.actions[i] : undefined}

@@ -44,6 +44,7 @@ interface GraphUIDefaults {
 interface ListUIDefaults {
   includeHealth: boolean;
   includeIstioResources: boolean;
+  includeValidations: boolean;
 }
 
 interface UIDefaults {
