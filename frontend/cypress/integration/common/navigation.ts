@@ -1,12 +1,13 @@
 import { And, Given } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
-import { HomeClusterName } from "../../../src/types/Common";
 
 enum detailType {
   App = 'app',
   Workload = 'workload',
   Service = 'service'
 }
+
+export const KIALI_HOME_CLUSTER = '_kiali_home';
 
 Given('user is at the {string} page', (page: string) => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
@@ -36,6 +37,6 @@ And('user is at the details page for the {string} {string}', (detail: detailType
       pageDetail = 'workloads';
       break;
   }
-  cy.visit(Cypress.config('baseUrl') + `/console/namespaces/${namespace}/${pageDetail}/${name}?cluster=${HomeClusterName}&refresh=0`);
+  cy.visit(Cypress.config('baseUrl') + `/console/namespaces/${namespace}/${pageDetail}/${name}?cluster=${KIALI_HOME_CLUSTER}&refresh=0`);
   ensureKialiFinishedLoading();
 });
