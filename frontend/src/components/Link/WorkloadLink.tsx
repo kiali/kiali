@@ -43,7 +43,8 @@ class WorkloadLinkItem extends React.Component<Props> {
     return (
       <KioskLink
         linkName={namespace + '/' + name}
-        dataTest={'workload-' + cluster + '-' + namespace + '-' + name}
+        // @TODO put cluster in link when all objects have multicluster support
+        dataTest={'workload-' + namespace + '-' + name}
         href={href}
       ></KioskLink>
     );
