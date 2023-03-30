@@ -612,8 +612,7 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 		if err != nil {
 			if errors.IsNotFound(err) || errors.IsForbidden(err) {
 				// If a cluster is not found or not accessible, then we skip it
-				// @TODO with loging a warning, because it is not a namespace but the whole cluster
-				// log.Warningf("Cluster [%s] is not accessible", c)
+				log.Debugf("Error while accessing to cluster [%s]: %s", c, err.Error())
 			} else {
 				// On any other error, abort and return the error.
 				return nil, err
