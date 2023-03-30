@@ -2,7 +2,8 @@
 
 # This deploys the fraud-detection demo
 
-source functions.sh
+HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+source ${HACK_SCRIPT_DIR}/functions.sh
 
 : ${CLIENT_EXE:=oc}
 : ${DELETE_DEMO:=false}

@@ -11,7 +11,8 @@
 #
 ##############################################################################
 
-source functions.sh
+HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+source ${HACK_SCRIPT_DIR}/functions.sh
 
 # ISTIO_DIR is where the Istio download is installed and thus where the bookinfo demo files are found.
 # CLIENT_EXE_NAME is going to either be "oc" or "kubectl"

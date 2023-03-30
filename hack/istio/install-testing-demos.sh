@@ -8,8 +8,8 @@
 ##############################################################################
 
 set -eu
-source functions.sh
-
+HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+source ${HACK_SCRIPT_DIR}/functions.sh
 
 install_sleep_app() {
 
