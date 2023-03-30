@@ -24,10 +24,10 @@ type workloadParams struct {
 	WorkloadName string `json:"workload"`
 	// in: query
 	WorkloadType string `json:"type"`
-	Cluster      string `json:"cluster"`
 	// Optional
-	IncludeHealth bool `json:"health"`
-	Validate      bool `json:"validate"`
+	IncludeHealth bool   `json:"health"`
+	Validate      bool   `json:"validate"`
+	Cluster       string `json:"cluster,omitempty"`
 }
 
 func (p *workloadParams) extract(r *http.Request) {
@@ -37,7 +37,9 @@ func (p *workloadParams) extract(r *http.Request) {
 	p.Namespace = vars["namespace"]
 	p.WorkloadName = vars["workload"]
 	p.WorkloadType = query.Get("type")
-	p.Cluster = query.Get("cluster")
+	if query.Has("cluster") && query.Get("cluster") != "null" {
+		p.Cluster = query.Get("cluster")
+	}
 	p.IncludeHealth = query.Get("health") != ""
 	p.Validate = query.Get("validate") != ""
 }

@@ -18,7 +18,7 @@ import { serverConfig } from '../../config/ServerConfig';
 import history, { URLParam } from '../../app/History';
 import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
-import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange } from '../../types/Common';
+import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange, HomeClusterName } from '../../types/Common';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import * as MetricsHelper from './Helper';
@@ -107,7 +107,7 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
     const urlParams = new URLSearchParams(history.location.search);
-    const cluster = String(urlParams.get('cluster'));
+    const cluster = urlParams.get('cluster') || HomeClusterName;
     this.state = {
       cluster: cluster,
       isTimeOptionsOpen: false,

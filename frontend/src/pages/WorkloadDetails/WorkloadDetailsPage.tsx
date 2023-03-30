@@ -11,7 +11,7 @@ import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
 import { serverConfig } from '../../config/ServerConfig';
 import WorkloadPodLogs from './WorkloadPodLogs';
-import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
+import { DurationInSeconds, HomeClusterName, TimeInMilliseconds } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector } from '../../store/Selectors';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
@@ -64,7 +64,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
   constructor(props: WorkloadDetailsPageProps) {
     super(props);
     const urlParams = new URLSearchParams(this.props.location.search);
-    const cluster = String(urlParams.get('cluster'));
+    const cluster = urlParams.get('cluster') || HomeClusterName;
     this.state = { currentTab: activeTab(tabName, defaultTab), cluster: cluster };
   }
 

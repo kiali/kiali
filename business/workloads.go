@@ -333,6 +333,9 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 		cluster = kubernetes.HomeClusterName
 	}
 	client := in.businessLayer.k8sClients[cluster]
+	if client == nil {
+		return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
+	}
 
 	workload, err2 := fetchWorkloadFromCluster(ctx, in.businessLayer, client, criteria)
 	if err2 != nil {
@@ -640,6 +643,9 @@ func fetchWorkloadsFromCluster(ctx context.Context, layer *Layer, cluster string
 	}
 
 	kialiClient := layer.k8sClients[cluster]
+	if kialiClient == nil {
+		return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
+	}
 
 	wg := sync.WaitGroup{}
 	wg.Add(9)

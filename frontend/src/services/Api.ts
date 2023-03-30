@@ -4,7 +4,7 @@ import { LoginSession } from '../store/Store';
 import { App } from '../types/App';
 import { AppList } from '../types/AppList';
 import { AuthInfo } from '../types/Auth';
-import { DurationInSeconds, HTTP_VERBS, Password, TimeInSeconds, UserName } from '../types/Common';
+import { DurationInSeconds, HomeClusterName, HTTP_VERBS, Password, TimeInSeconds, UserName } from '../types/Common';
 import { DashboardModel } from 'types/Dashboards';
 import { GrafanaInfo } from '../types/GrafanaInfo';
 import { GraphDefinition, NodeParamsType, NodeType } from '../types/Graph';
@@ -526,7 +526,7 @@ export const updateWorkload = (
     params.patchType = patchType;
   }
   // @TODO cluster name
-  return newRequest(HTTP_VERBS.PATCH, urls.workload('_kiali_home', namespace, name), params, jsonPatch);
+  return newRequest(HTTP_VERBS.PATCH, urls.workload(HomeClusterName, namespace, name), params, jsonPatch);
 };
 
 export const updateService = (

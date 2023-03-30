@@ -7,7 +7,7 @@ import ServiceId from '../../types/ServiceId';
 import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { KialiAppState } from '../../store/Store';
-import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
+import { DurationInSeconds, HomeClusterName, TimeInMilliseconds } from '../../types/Common';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import ServiceInfo from './ServiceInfo';
 import TracesComponent from 'components/JaegerIntegration/TracesComponent';
@@ -171,7 +171,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.service}
           objectType={MetricsObjectTypes.SERVICE}
-          cluster={'_kiali_home'}
+          cluster={HomeClusterName}
           direction={'inbound'}
         />
       </Tab>
@@ -185,7 +185,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           <TracesComponent
             lastRefreshAt={this.props.lastRefreshAt}
             namespace={this.props.match.params.namespace}
-            cluster={'_kiali_home'}
+            cluster={HomeClusterName}
             target={this.props.match.params.service}
             targetKind={'service'}
           />

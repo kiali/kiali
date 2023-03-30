@@ -11,7 +11,7 @@ import * as AlertUtils from '../../utils/AlertUtils';
 import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
-import { DurationInSeconds, TimeInMilliseconds, TimeRange } from '../../types/Common';
+import { DurationInSeconds, HomeClusterName, TimeInMilliseconds, TimeRange } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector } from '../../store/Selectors';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
@@ -166,7 +166,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.app}
           objectType={MetricsObjectTypes.APP}
-          cluster={'_kiali_home'}
+          cluster={HomeClusterName}
           direction={'inbound'}
         />
       </Tab>
@@ -180,7 +180,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.app}
           objectType={MetricsObjectTypes.APP}
-          cluster={'_kiali_home'}
+          cluster={HomeClusterName}
           direction={'outbound'}
         />
       </Tab>
@@ -197,7 +197,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
             <TracesComponent
               lastRefreshAt={this.props.lastRefreshAt}
               namespace={this.props.match.params.namespace}
-              cluster={'_kiali_home'}
+              cluster={HomeClusterName}
               target={this.props.match.params.app}
               targetKind={'app'}
             />

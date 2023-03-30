@@ -8,6 +8,9 @@ export type RawDate = string;
 
 export type KioskMode = string;
 
+// cluster name to denote the cluster where Kiali is deployed
+export const HomeClusterName = '_kiali_home';
+
 export enum HTTP_VERBS {
   DELETE = 'DELETE',
   GET = 'get',
