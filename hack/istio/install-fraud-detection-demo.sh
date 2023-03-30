@@ -2,35 +2,7 @@
 
 # This deploys the fraud-detection demo
 
-# Given a namepace, prepare it for inclusion in Maistra's control plane
-# This means:
-# 1. Create a SMM
-# 2. Annotate all of the namespace's Deployments with the sidecar injection annotation if enabled
-prepare_maistra() {
-  local ns="${1}"
-
-  cat <<EOM | ${CLIENT_EXE} apply -f -
-apiVersion: maistra.io/v1
-kind: ServiceMeshMember
-metadata:
-  name: default
-  namespace: ${ns}
-spec:
-  controlPlaneRef:
-    namespace: ${ISTIO_NAMESPACE}
-    name: "$(${CLIENT_EXE} get smcp -n ${ISTIO_NAMESPACE} -o jsonpath='{.items[0].metadata.name}' )"
-EOM
-
-  if [ "${ENABLE_INJECTION}" == "true" ]; then
-    # let's wait for smmr to be Ready before enabling sidecar injection
-    ${CLIENT_EXE} wait --for condition=Ready -n ${ISTIO_NAMESPACE} smmr/default --timeout 300s
-    for d in $(${CLIENT_EXE} get deployments -n ${ns} -o name)
-    do
-      echo "Enabling sidecar injection for deployment: ${d}"
-      ${CLIENT_EXE} patch ${d} -n ${ns} -p '{"spec":{"template":{"metadata":{"annotations":{"sidecar.istio.io/inject": "true"}}}}}' --type=merge
-    done
-  fi
-}
+source functions.sh
 
 : ${CLIENT_EXE:=oc}
 : ${DELETE_DEMO:=false}

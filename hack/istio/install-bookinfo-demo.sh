@@ -1,5 +1,4 @@
 #!/bin/bash
-
 ##############################################################################
 # install-bookinfo-demo.sh
 #
@@ -12,35 +11,7 @@
 #
 ##############################################################################
 
-# Given a namepace, prepare it for inclusion in Maistra's control plane
-# This means:
-# 1. Create a SMM
-# 2. Annotate all of the namespace's Deployments with the sidecar injection annotation if enabled
-prepare_maistra() {
-  local ns="${1}"
-
-  cat <<EOM | ${CLIENT_EXE} apply -f -
-apiVersion: maistra.io/v1
-kind: ServiceMeshMember
-metadata:
-  name: default
-  namespace: ${ns}
-spec:
-  controlPlaneRef:
-    namespace: ${ISTIO_NAMESPACE}
-    name: "$(${CLIENT_EXE} get smcp -n ${ISTIO_NAMESPACE} -o jsonpath='{.items[0].metadata.name}' )"
-EOM
-
-  if [ "${AUTO_INJECTION}" == "true" ]; then
-    # let's wait for smmr to be Ready before enabling sidecar injection
-    ${CLIENT_EXE} wait --for condition=Ready -n ${ISTIO_NAMESPACE} smmr/default --timeout 300s
-    for d in $(${CLIENT_EXE} get deployments -n ${ns} -o name)
-    do
-      echo "Enabling sidecar injection for deployment: ${d}"
-      ${CLIENT_EXE} patch ${d} -n ${ns} -p '{"spec":{"template":{"metadata":{"annotations":{"sidecar.istio.io/inject": "true"}}}}}' --type=merge
-    done
-  fi
-}
+source functions.sh
 
 # ISTIO_DIR is where the Istio download is installed and thus where the bookinfo demo files are found.
 # CLIENT_EXE_NAME is going to either be "oc" or "kubectl"
@@ -49,7 +20,7 @@ CLIENT_EXE_NAME="oc"
 NAMESPACE="bookinfo"
 ISTIO_NAMESPACE="istio-system"
 RATE=1
-AUTO_INJECTION="true"
+ENABLE_INJECTION="true"
 DELETE_BOOKINFO="false"
 MINIKUBE_PROFILE="minikube"
 ARCH="amd64"
@@ -63,7 +34,7 @@ while [[ $# -gt 0 ]]; do
       shift;shift
       ;;
     -ai|--auto-injection)
-      AUTO_INJECTION="$2"
+      ENABLE_INJECTION="$2"
       shift;shift
       ;;
     -db|--delete-bookinfo)
@@ -269,7 +240,7 @@ users:
 SCC
 fi
 
-if [ "${AUTO_INJECTION}" == "true" ]; then
+if [ "${ENABLE_INJECTION}" == "true" ]; then
   $CLIENT_EXE label namespace ${NAMESPACE} "istio-injection=enabled"
   $CLIENT_EXE apply -n ${NAMESPACE} -f ${BOOKINFO_YAML}
 else
@@ -297,7 +268,7 @@ if [ "${MONGO_ENABLED}" == "true" ]; then
     MONGO_SERVICE_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ratings-v2-s390x.yaml"
   fi
 
-  if [ "${AUTO_INJECTION}" == "true" ]; then
+  if [ "${ENABLE_INJECTION}" == "true" ]; then
     $CLIENT_EXE apply -n ${NAMESPACE} -f ${MONGO_DB_YAML}
     $CLIENT_EXE apply -n ${NAMESPACE} -f ${MONGO_SERVICE_YAML}
   else
@@ -324,7 +295,7 @@ if [ "${MYSQL_ENABLED}" == "true" ]; then
     MYSQL_SERVICE_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql-s390x.yaml"
   fi
 
-  if [ "${AUTO_INJECTION}" == "true" ]; then
+  if [ "${ENABLE_INJECTION}" == "true" ]; then
     $CLIENT_EXE apply -n ${NAMESPACE} -f ${MYSQL_DB_YAML}
     $CLIENT_EXE apply -n ${NAMESPACE} -f ${MYSQL_SERVICE_YAML}
   else
