@@ -35,6 +35,6 @@ And('user is at the details page for the {string} {string}', (detail: detailType
       pageDetail = 'workloads';
       break;
   }
-  cy.visit(Cypress.config('baseUrl') + `/console/namespaces/${namespace}/${pageDetail}/${name}?&refresh=0`);
+  cy.visit(Cypress.config('baseUrl') + `/console/namespaces/${namespace}/${pageDetail}/${name}?refresh=0`);
   ensureKialiFinishedLoading();
 });
