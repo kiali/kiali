@@ -25,8 +25,9 @@ type workloadParams struct {
 	// in: query
 	WorkloadType string `json:"type"`
 	// Optional
-	IncludeHealth bool `json:"health"`
-	Validate      bool `json:"validate"`
+	IncludeHealth bool   `json:"health"`
+	Validate      bool   `json:"validate"`
+	Cluster       string `json:"cluster,omitempty"`
 }
 
 func (p *workloadParams) extract(r *http.Request) {
@@ -36,6 +37,9 @@ func (p *workloadParams) extract(r *http.Request) {
 	p.Namespace = vars["namespace"]
 	p.WorkloadName = vars["workload"]
 	p.WorkloadType = query.Get("type")
+	if query.Has("cluster") && query.Get("cluster") != "null" {
+		p.Cluster = query.Get("cluster")
+	}
 	p.IncludeHealth = query.Get("health") != ""
 	p.Validate = query.Get("validate") != ""
 }
@@ -79,7 +83,7 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 	p := workloadParams{}
 	p.extract(r)
 
-	criteria := business.WorkloadCriteria{Namespace: p.Namespace, WorkloadName: p.WorkloadName, WorkloadType: p.WorkloadType, IncludeIstioResources: true, IncludeServices: true, IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
+	criteria := business.WorkloadCriteria{Namespace: p.Namespace, WorkloadName: p.WorkloadName, WorkloadType: p.WorkloadType, IncludeIstioResources: true, IncludeServices: true, IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime, Cluster: p.Cluster}
 
 	// Get business layer
 	business, err := getBusiness(r)

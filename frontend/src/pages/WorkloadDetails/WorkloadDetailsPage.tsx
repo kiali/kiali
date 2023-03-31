@@ -11,7 +11,7 @@ import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
 import { serverConfig } from '../../config/ServerConfig';
 import WorkloadPodLogs from './WorkloadPodLogs';
-import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
+import { DurationInSeconds, HomeClusterName, TimeInMilliseconds } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector } from '../../store/Selectors';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
@@ -30,6 +30,7 @@ import connectRefresh from '../../components/Refresh/connectRefresh';
 
 type WorkloadDetailsState = {
   workload?: Workload;
+  cluster: string;
   health?: WorkloadHealth;
   currentTab: string;
   error?: ErrorMsg;
@@ -62,7 +63,9 @@ var nextTabIndex = 6;
 class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, WorkloadDetailsState> {
   constructor(props: WorkloadDetailsPageProps) {
     super(props);
-    this.state = { currentTab: activeTab(tabName, defaultTab) };
+    const urlParams = new URLSearchParams(this.props.location.search);
+    const cluster = urlParams.get('cluster') || HomeClusterName;
+    this.state = { currentTab: activeTab(tabName, defaultTab), cluster: cluster };
   }
 
   componentDidMount(): void {
@@ -81,15 +84,17 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       if (currentTab === 'info' || currentTab === 'logs' || currentTab === 'envoy') {
         this.fetchWorkload().then(() => {
           if (currentTab !== this.state.currentTab) {
-            this.setState({ currentTab: currentTab });
+            this.setState({ currentTab: currentTab, cluster: this.state.cluster });
           }
         });
       } else {
         if (currentTab !== this.state.currentTab) {
-          this.setState({ currentTab: currentTab });
+          this.setState({ currentTab: currentTab, cluster: this.state.cluster });
         }
       }
     }
+    // @TODO set the cluster in tab url
+    //HistoryManager.setParam(URLParam.CLUSTER, this.state.cluster);
   }
 
   private fetchWorkload = async () => {
@@ -98,7 +103,12 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       rateInterval: String(this.props.duration) + 's',
       health: 'true'
     };
-    await API.getWorkload(this.props.match.params.namespace, this.props.match.params.workload, params)
+    await API.getWorkload(
+      this.state.cluster,
+      this.props.match.params.namespace,
+      this.props.match.params.workload,
+      params
+    )
       .then(details => {
         this.setState({
           workload: details.data,
@@ -179,6 +189,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
           lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.workload}
+          cluster={this.state.cluster}
           objectType={MetricsObjectTypes.WORKLOAD}
           direction={'inbound'}
         />
@@ -193,6 +204,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
           lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.workload}
+          cluster={this.state.cluster}
           objectType={MetricsObjectTypes.WORKLOAD}
           direction={'outbound'}
         />
@@ -206,6 +218,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
           <TracesComponent
             lastRefreshAt={this.props.lastRefreshAt}
             namespace={this.props.match.params.namespace}
+            cluster={this.state.cluster}
             target={this.props.match.params.workload}
             targetKind={'workload'}
           />
@@ -329,7 +342,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
           <ParameterizedTabs
             id="basic-tabs"
             onSelect={tabValue => {
-              this.setState({ currentTab: tabValue });
+              this.setState({ currentTab: tabValue, cluster: this.state.cluster });
             }}
             tabMap={paramToTab}
             tabName={tabName}

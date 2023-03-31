@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Breadcrumb, BreadcrumbItem } from '@patternfly/react-core';
 import { FilterSelected } from '../Filters/StatefulFilters';
 import { dicIstioType } from '../../types/IstioConfigList';
+import { HomeClusterName } from '../../types/Common';
 
 interface BreadCumbViewProps {
   location: {
@@ -14,6 +15,7 @@ interface BreadCumbViewProps {
 
 interface BreadCumbViewState {
   namespace: string;
+  cluster: string;
   itemName: string;
   item: string;
   pathItem: string;
@@ -52,9 +54,11 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadCum
     const ns = match[1];
     const page = Paths[match[2].toUpperCase()];
     const istioType = match[3];
+    const urlParams = new URLSearchParams(this.props.location.search);
     let itemName = page !== 'istio' ? match[3] : match[5];
     return {
       namespace: ns,
+      cluster: urlParams.get('cluster') || HomeClusterName,
       pathItem: page,
       item: itemName,
       itemName: ItemNames[page],
@@ -82,7 +86,7 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadCum
   };
 
   getItemPage = () => {
-    let path = `/namespaces/${this.state.namespace}/${this.state.pathItem}/${this.state.item}`;
+    let path = `/namespaces/${this.state.namespace}/${this.state.pathItem}/${this.state.item}?cluster=${this.state.cluster}`;
     return path;
   };
 

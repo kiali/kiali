@@ -11,6 +11,7 @@ export interface ServiceList {
 
 export interface ServiceOverview {
   name: string;
+  cluster?: string;
   istioSidecar: boolean;
   additionalDetailSample?: AdditionalItem;
   labels: { [key: string]: string };

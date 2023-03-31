@@ -34,6 +34,11 @@ type WorkloadListItem struct {
 	// example: reviews-v1
 	Name string `json:"name"`
 
+	// Cluster name where the workload is located
+	// required: true
+	// example: west-cluster-01
+	Cluster string `json:"cluster"`
+
 	// Type of the workload
 	// required: true
 	// example: deployment
@@ -149,6 +154,7 @@ type Workloads []*Workload
 func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	conf := config.Get()
 	workload.Name = w.Name
+	workload.Cluster = w.Cluster
 	workload.Type = w.Type
 	workload.CreatedAt = w.CreatedAt
 	workload.ResourceVersion = w.ResourceVersion

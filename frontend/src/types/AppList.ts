@@ -9,6 +9,7 @@ export interface AppList {
 
 export interface AppOverview {
   name: string;
+  cluster?: string;
   istioSidecar: boolean;
   labels: { [key: string]: string };
   istioReferences: ObjectReference[];

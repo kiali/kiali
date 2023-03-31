@@ -18,7 +18,7 @@ import { serverConfig } from '../../config/ServerConfig';
 import history, { URLParam } from '../../app/History';
 import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
-import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange } from '../../types/Common';
+import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange, HomeClusterName } from '../../types/Common';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import * as MetricsHelper from './Helper';
@@ -42,6 +42,7 @@ import { timeRangeSelector } from '../../store/Selectors';
 import TimeDurationIndicatorContainer from '../Time/TimeDurationIndicatorComponent';
 
 type MetricsState = {
+  cluster: string;
   dashboard?: DashboardModel;
   isTimeOptionsOpen: boolean;
   labelsSettings: LabelsSettings;
@@ -105,7 +106,10 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
     const settings = MetricsHelper.retrieveMetricsSettings();
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
+    const urlParams = new URLSearchParams(history.location.search);
+    const cluster = urlParams.get('cluster') || HomeClusterName;
     this.state = {
+      cluster: cluster,
       isTimeOptionsOpen: false,
       labelsSettings: settings.labelsSettings,
       grafanaLinks: [],
@@ -155,6 +159,7 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
     if (this.props.jaegerIntegration) {
       this.spanOverlay.fetch({
         namespace: this.props.namespace,
+        cluster: this.state.cluster,
         target: this.props.workload || this.props.app,
         targetKind: this.props.workload ? MetricsObjectTypes.WORKLOAD : MetricsObjectTypes.APP,
         range: this.props.timeRange

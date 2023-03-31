@@ -40,7 +40,17 @@ import { isGateway } from '../../helpers/LabelFilterHelper';
 
 const getLink = (item: TResource, config: Resource, query?: string) => {
   let url = config.name === 'istio' ? getIstioLink(item) : `/namespaces/${item.namespace}/${config.name}/${item.name}`;
-  return query ? url + '?' + query : url;
+  if (query) {
+    url = url + '?' + query;
+  }
+  if (item.cluster) {
+    if (url.endsWith('?')) {
+      url = url + '&cluster=' + item.cluster;
+    } else {
+      url = url + '?cluster=' + item.cluster;
+    }
+  }
+  return url;
 };
 
 const getIstioLink = (item: TResource) => {
@@ -203,6 +213,19 @@ export const item: Renderer<TResource> = (item: TResource, config: Resource, bad
       <Link key={key} to={getLink(item, config)} className={'virtualitem_definition_link'}>
         {item.name}
       </Link>
+    </td>
+  );
+};
+
+// @TODO SortResource
+export const cluster: Renderer<TResource> = (item: TResource) => {
+  if (Object.keys(serverConfig.clusters || {}).length <= 1) {
+    return;
+  }
+  return (
+    <td role="gridcell" key={'VirtuaItem_Cluster_' + item.cluster} style={{ verticalAlign: 'middle' }}>
+      <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.top} />
+      {item.cluster}
     </td>
   );
 };
