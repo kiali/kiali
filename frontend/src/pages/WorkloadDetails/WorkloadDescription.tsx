@@ -16,7 +16,7 @@ import MissingLabel from '../../components/MissingLabel/MissingLabel';
 import MissingAuthPolicy from 'components/MissingAuthPolicy/MissingAuthPolicy';
 import { hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
 import DetailDescriptionContainer from '../../components/Details/DetailDescription';
-import { isGateway } from '../../helpers/LabelFilterHelper';
+import { isGateway, isWaypoint } from '../../helpers/LabelFilterHelper';
 import AmbientLabel from '../../components/Ambient/AmbientLabel';
 
 type WorkloadDescriptionProps = {
@@ -141,16 +141,19 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
             <span className={healthIconStyle}>
               <HealthIndicator id={workload.name} health={this.props.health} />
             </span>
-            {this.props.workload && !this.props.workload.istioSidecar && !this.props.workload.istioAmbient && (
-              <MissingSidecar
-                data-test={`missing-sidecar-badge-for-${workload.name}-workload-in-${this.props.namespace}-namespace`}
-                namespace={this.props.namespace}
-                tooltip={true}
-                style={{ marginLeft: '10px' }}
-                text={''}
-                isGateway={isGateway(workload.labels)}
-              />
-            )}
+            {this.props.workload &&
+              !this.props.workload.istioSidecar &&
+              !this.props.workload.istioAmbient &&
+              !isWaypoint(this.props.workload.labels) && (
+                <MissingSidecar
+                  data-test={`missing-sidecar-badge-for-${workload.name}-workload-in-${this.props.namespace}-namespace`}
+                  namespace={this.props.namespace}
+                  tooltip={true}
+                  style={{ marginLeft: '10px' }}
+                  text={''}
+                  isGateway={isGateway(workload.labels)}
+                />
+              )}
             {this.props.workload && this.props.workload.istioAmbient && <AmbientLabel tooltip={true} />}
             {this.props.workload && hasMissingAuthPolicy(this.props.workload.name, this.props.workload.validations) && (
               <MissingAuthPolicy
@@ -160,14 +163,16 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
                 text={''}
               />
             )}
-            {this.props.workload && (!this.props.workload.appLabel || !this.props.workload.versionLabel) && (
-              <MissingLabel
-                missingApp={!this.props.workload.appLabel}
-                missingVersion={!this.props.workload.versionLabel}
-                style={{ marginLeft: '10px' }}
-                tooltip={true}
-              />
-            )}
+            {this.props.workload &&
+              (!this.props.workload.appLabel || !this.props.workload.versionLabel) &&
+              !isWaypoint(this.props.workload.labels) && (
+                <MissingLabel
+                  missingApp={!this.props.workload.appLabel}
+                  missingVersion={!this.props.workload.versionLabel}
+                  style={{ marginLeft: '10px' }}
+                  tooltip={true}
+                />
+              )}
           </Title>
         </CardHeader>
         <CardBody>

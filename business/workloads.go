@@ -161,7 +161,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		defer wg.Done()
 		var err2 error
 		// Exclude waypoint proxies
-		ws, err2 = fetchWorkloads(ctx, in.businessLayer, criteria.Namespace, "gateway.istio.io/managed notin (istio.io-mesh-controller)")
+		ws, err2 = fetchWorkloads(ctx, in.businessLayer, criteria.Namespace, "")
 		if err2 != nil {
 			log.Errorf("Error fetching Workloads per namespace %s: %s", criteria.Namespace, err2)
 			errChan <- err2

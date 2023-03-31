@@ -27,7 +27,7 @@ import RenderHeaderContainer from '../../components/Nav/Page/RenderHeader';
 import ErrorSection from '../../components/ErrorSection/ErrorSection';
 import { ErrorMsg } from '../../types/ErrorMsg';
 import connectRefresh from '../../components/Refresh/connectRefresh';
-import WaypointDetailsContainer from '../../components/Ambient/WaypointDetails';
+import { isWaypoint } from '../../helpers/LabelFilterHelper';
 
 type WorkloadDetailsState = {
   workload?: Workload;
@@ -231,7 +231,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
         </Tab>
       );
     }
-    if (this.state.workload && this.hasIstioSidecars(this.state.workload)) {
+    if (this.state.workload && this.hasIstioSidecars(this.state.workload) && !isWaypoint(this.state.workload.labels)) {
       const envoyTab = (
         <Tab title="Envoy" eventKey={10} key={'Envoy'}>
           {this.state.workload && (
@@ -245,23 +245,6 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       );
       tabsArray.push(envoyTab);
       paramToTab['envoy'] = 10;
-    }
-
-    if (this.state.workload && this.state.workload.waypoint && this.state.workload.waypoint.length > 0) {
-      const waypointTab = (
-        <Tab title="Waypoint" eventKey={10} key={'Waypoint'}>
-          {this.state.workload && (
-            <WaypointDetailsContainer
-              lastRefreshAt={this.props.lastRefreshAt}
-              namespace={this.props.match.params.namespace}
-              workloadName={this.state.workload.waypoint[0]}
-              duration={this.props.duration}
-            />
-          )}
-        </Tab>
-      );
-      tabsArray.push(waypointTab);
-      paramToTab['waypoint'] = 10;
     }
 
     // Used by the runtimes tabs
