@@ -1,6 +1,7 @@
 package appender_test
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -290,9 +291,13 @@ func TestMultipleWorkloadEntryForSameWorkload(t *testing.T) {
 	workloadV1ID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
 	workloadV1Node, found := trafficMap[workloadV1ID]
 	assert.True(found)
+	res := workloadV1Node.Metadata[graph.HasWorkloadEntry].([]graph.WEInfo)
+	sort.Slice(res, func(i, j int) bool {
+		return res[i].Name < res[j].Name
+	})
 	assert.Equal(
 		[]graph.WEInfo{{Name: "workloadV1A"}, {Name: "workloadV1B"}},
-		workloadV1Node.Metadata[graph.HasWorkloadEntry],
+		res,
 	)
 
 	workloadV2ID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v2", appName, "v2", graph.GraphTypeVersionedApp)
