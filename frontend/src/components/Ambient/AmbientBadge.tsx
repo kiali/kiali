@@ -8,7 +8,7 @@ type AmbientLabelProps = {
 
 class AmbientBadge extends React.Component<AmbientLabelProps, {}> {
   render() {
-    const msg = 'Istio Ambient is detected. This is a experimental Istio branch and Kiali can have unexpected behavior';
+    const msg = 'Istio Ambient Mesh mode is detected.';
 
     const tooltipContent = (
       <div style={{ textAlign: 'left' }}>
