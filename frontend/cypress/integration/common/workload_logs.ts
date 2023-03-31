@@ -1,12 +1,11 @@
 import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { KIALI_HOME_CLUSTER } from './navigation'
 
 Given('I am on the {string} workload detail page of the {string} namespace', (workload, namespace) => {
-  cy.visit(`/console/namespaces/${namespace}/workloads/${workload}?cluster=${KIALI_HOME_CLUSTER}&refresh=0`);
+  cy.visit(`/console/namespaces/${namespace}/workloads/${workload}?refresh=0`);
 });
 
 Given('I am on the logs tab of the {string} workload detail page of the {string} namespace', (workload, namespace) => {
-  cy.visit(`/console/namespaces/${namespace}/workloads/${workload}?cluster=${KIALI_HOME_CLUSTER}&tab=logs&refresh=0`);
+  cy.visit(`/console/namespaces/${namespace}/workloads/${workload}?tab=logs&refresh=0`);
 });
 
 When('I go to the Logs tab of the workload detail page', () => {

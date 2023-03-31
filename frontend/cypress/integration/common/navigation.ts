@@ -7,8 +7,6 @@ enum detailType {
   Service = 'service'
 }
 
-export const KIALI_HOME_CLUSTER = '_kiali_home';
-
 Given('user is at the {string} page', (page: string) => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
   cy.visit(Cypress.config('baseUrl') + `/console/${page}?refresh=0`);
@@ -37,6 +35,6 @@ And('user is at the details page for the {string} {string}', (detail: detailType
       pageDetail = 'workloads';
       break;
   }
-  cy.visit(Cypress.config('baseUrl') + `/console/namespaces/${namespace}/${pageDetail}/${name}?cluster=${KIALI_HOME_CLUSTER}&refresh=0`);
+  cy.visit(Cypress.config('baseUrl') + `/console/namespaces/${namespace}/${pageDetail}/${name}?&refresh=0`);
   ensureKialiFinishedLoading();
 });
