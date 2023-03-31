@@ -132,9 +132,9 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
 
     const validations: Validations = {};
     const isWaypoint =
-      serverConfig.ambientProfile == true &&
+      serverConfig.ambientProfile === true &&
       workload.labels &&
-      workload.labels['gateway.istio.io/managed'] == 'istio.io-mesh-controller';
+      workload.labels['gateway.istio.io/managed'] === 'istio.io-mesh-controller';
 
     if (workload.pods.length > 0) {
       validations.pod = {};
@@ -150,8 +150,8 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
             if (!pod.istioContainers || pod.istioContainers.length === 0) {
               if (
                 !(
-                  serverConfig.ambientProfile == true &&
-                  (pod.annotations ? pod.annotations['ambient.istio.io/redirection'] == 'enabled' : false)
+                  serverConfig.ambientProfile === true &&
+                  (pod.annotations ? pod.annotations['ambient.istio.io/redirection'] === 'enabled' : false)
                 )
               ) {
                 validations.pod[pod.name].checks.push(noIstiosidecar);
