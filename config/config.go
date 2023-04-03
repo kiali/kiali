@@ -686,6 +686,11 @@ func NewConfig() (c *Config) {
 						Tcp:  "sent",
 					},
 				},
+				List: ListUIDefaults{
+					IncludeHealth:         true,
+					IncludeIstioResources: true,
+					IncludeValidations:    true,
+				},
 				MetricsInbound:    MetricsDefaults{},
 				MetricsOutbound:   MetricsDefaults{},
 				MetricsPerRefresh: "1m",
