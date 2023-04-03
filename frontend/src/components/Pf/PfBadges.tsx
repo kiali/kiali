@@ -16,7 +16,7 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   Adapter: { badge: 'A', tt: 'Adapter' } as PFBadgeType,
   AttributeManifest: { badge: 'AM', tt: 'Attribute Manifest' } as PFBadgeType,
   AuthorizationPolicy: { badge: 'AP', tt: 'Authorization Policy' } as PFBadgeType,
-  Cluster: { badge: 'C', tt: 'Cluster', style: { backgroundColor: PFColors.Blue400 } } as PFBadgeType,
+  Cluster: { badge: 'C', tt: 'Cluster', style: { backgroundColor: PFColors.Blue300 } } as PFBadgeType,
   ClusterRBACConfig: { badge: 'CRC', tt: 'Cluster RBAC Configuration' } as PFBadgeType,
   Container: { badge: 'C', tt: 'Container', style: { backgroundColor: PFColors.Blue300 } } as PFBadgeType,
   DestinationRule: { badge: 'DR', tt: 'Destination Rule' } as PFBadgeType,
