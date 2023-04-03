@@ -89,7 +89,7 @@ if [ ! -d "./istio-${VERSION_WE_WANT}" ]; then
   echo "Cannot find Istio ${VERSION_WE_WANT} - will download it now..."
   if [ -z "${DEV_ISTIO_VERSION}" ]; then
     export ISTIO_VERSION
-    curl -L --retry 4 --retry-delay 5 https://git.io/getLatestIstio | sh -
+    curl -L --retry 4 --retry-delay 5 https://istio.io/downloadIstio | sh -
   else
     # See https://github.com/istio/istio/wiki/Dev%20Builds
     curl -L https://gcsweb.istio.io/gcs/istio-build/dev/${VERSION_WE_WANT}/istio-${VERSION_WE_WANT}-linux-amd64.tar.gz | tar xvfz -
