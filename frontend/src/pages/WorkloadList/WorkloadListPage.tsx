@@ -22,6 +22,7 @@ import { sortIstioReferences } from '../AppList/FiltersAndSorts';
 import { hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
 import { WorkloadHealth } from '../../types/Health';
 import RefreshNotifier from '../../components/Refresh/RefreshNotifier';
+import { serverConfig } from 'config';
 
 type WorkloadListPageState = FilterComponent.State<WorkloadListItem>;
 
@@ -151,10 +152,11 @@ class WorkloadListPageComponent extends FilterComponent.Component<
   }
 
   render() {
-    const uncheckedToggles = [] as string[];
+    const isMultiCluster = Object.keys(serverConfig.clusters || {}).length > 1;
+    const hiddenColumns = isMultiCluster ? ([] as string[]) : ['cluster'];
     Toggles.getToggles().forEach((v, k) => {
       if (!v) {
-        uncheckedToggles.push(k);
+        hiddenColumns.push(k);
       }
     });
 
@@ -169,7 +171,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
           />
         </div>
         <RenderContent>
-          <VirtualList rows={this.state.listItems} filteredColumns={uncheckedToggles}>
+          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns}>
             <StatefulFilters
               initialFilters={WorkloadListFilters.availableFilters}
               initialToggles={this.initialToggles}

@@ -163,10 +163,10 @@ class ServiceListPageComponent extends FilterComponent.Component<
   }
 
   render() {
-    const uncheckedToggles = [] as string[];
+    const hiddenColumns = [] as string[];
     Toggles.getToggles().forEach((v, k) => {
       if (!v) {
-        uncheckedToggles.push(k);
+        hiddenColumns.push(k);
       }
     });
 
@@ -181,7 +181,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
           />
         </div>
         <RenderContent>
-          <VirtualList rows={this.state.listItems} filteredColumns={uncheckedToggles}>
+          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns}>
             <StatefulFilters
               initialFilters={ServiceListFilters.availableFilters}
               initialToggles={this.initialToggles}

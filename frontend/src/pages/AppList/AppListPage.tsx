@@ -120,10 +120,10 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
   }
 
   render() {
-    const uncheckedToggles = [] as string[];
+    const hiddenColumns = [] as string[];
     Toggles.getToggles().forEach((v, k) => {
       if (!v) {
-        uncheckedToggles.push(k);
+        hiddenColumns.push(k);
       }
     });
 
@@ -138,7 +138,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
           />
         </div>
         <RenderContent>
-          <VirtualList rows={this.state.listItems} filteredColumns={uncheckedToggles}>
+          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns}>
             <StatefulFilters
               initialFilters={AppListFilters.availableFilters}
               initialToggles={this.initialToggles}

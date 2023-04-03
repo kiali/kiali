@@ -1,6 +1,7 @@
 import { SortField } from '../../types/SortFilters';
 import { IstioConfigItem } from '../../types/IstioConfigList';
-import { FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '../../types/Filters';
+import { FILTER_ACTION_APPEND, FilterType, AllFilterTypes, ToggleType } from '../../types/Filters';
+import { serverConfig } from 'config';
 
 export const sortFields: SortField<IstioConfigItem>[] = [
   {
@@ -166,6 +167,17 @@ export const configValidationFilter: FilterType = {
 };
 
 export const availableFilters: FilterType[] = [istioTypeFilter, istioNameFilter, configValidationFilter];
+
+const configurationToggle: ToggleType = {
+  label: 'Configuration Validation',
+  name: 'configuration',
+  isChecked: true
+};
+
+export const getAvailableToggles = (): ToggleType[] => {
+  configurationToggle.isChecked = serverConfig.kialiFeatureFlags.uiDefaults.list.includeValidations;
+  return [configurationToggle];
+};
 
 export const sortIstioItems = (
   unsorted: IstioConfigItem[],

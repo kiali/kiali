@@ -13,7 +13,6 @@ import NamespaceInfo from '../../pages/Overview/NamespaceInfo';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import * as Sorts from '../../pages/Overview/Sorts';
 import { StatefulFilters } from '../Filters/StatefulFilters';
-import { serverConfig } from '../../config';
 
 // ******************************
 // VirtualList and its associated classes are intended to be used for main list pages: Applications,
@@ -30,7 +29,7 @@ type VirtualListProps<R> = {
   actions?: JSX.Element[];
   activeNamespaces: Namespace[];
   children?: React.ReactNode;
-  filteredColumns?: string[];
+  hiddenColumns?: string[];
   rows: R[];
   sort?: (sortField: SortField<NamespaceInfo>, isAscending: boolean) => void;
   statefulProps?: React.RefObject<StatefulFilters>;
@@ -100,7 +99,7 @@ class VirtualListC<R extends RenderResource> extends React.Component<VirtualList
     const conf = config[type] as Resource;
     if (conf.columns && config.headerTable) {
       const filteredColumns = conf.columns.filter(
-        info => !this.props.filteredColumns || !this.props.filteredColumns.includes(info.column.toLowerCase())
+        info => !this.props.hiddenColumns || !this.props.hiddenColumns.includes(info.column.toLowerCase())
       );
       columns = filteredColumns.map(info => {
         let config = { title: info.column, renderer: info.renderer };
@@ -124,11 +123,8 @@ class VirtualListC<R extends RenderResource> extends React.Component<VirtualList
   render() {
     const { rows } = this.props;
     const { sortBy, columns, conf } = this.state;
-    const filteredColumns = columns.filter(
-      column => !(column.title === 'Cluster' && Object.keys(serverConfig.clusters || {}).length <= 1)
-    );
     const tableProps = {
-      cells: filteredColumns,
+      cells: columns,
       rows: [],
       gridBreakPoint: TableGridBreakpoint.none,
       role: 'presentation',
