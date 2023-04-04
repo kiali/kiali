@@ -27,10 +27,10 @@ const infoStyle = style({
 
 class MissingSidecar extends React.Component<MissingSidecarProps, {}> {
   static defaultProps = {
-    textmesh: 'Not in the Mesh',
+    textmesh: 'Outside the Mesh',
     text: 'Missing Sidecar',
     meshtooltip:
-      'Not in the Mesh. Istio sidecar container or Ambient labels not found in Pod(s). Check if the istio-injection label/annotation is correctly set on the namespace/workload.',
+      'Outside the Mesh. Istio sidecar container or Ambient labels not found in Pod(s). Check if the istio-injection label/annotation is correctly set on the namespace/workload.',
     texttooltip:
       'Istio sidecar container not found in Pod(s). Check if the istio-injection label/annotation is correctly set on the namespace/workload.',
     tooltip: false,
