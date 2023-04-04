@@ -41,6 +41,7 @@ type IstioConfigCriteria struct {
 	// penalty
 	AllNamespaces                 bool
 	Namespace                     string
+	Cluster                       string
 	IncludeGateways               bool
 	IncludeK8sGateways            bool
 	IncludeK8sHTTPRoutes          bool
