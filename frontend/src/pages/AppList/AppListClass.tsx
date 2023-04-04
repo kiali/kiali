@@ -13,7 +13,8 @@ export const getAppItems = (data: AppList, rateInterval: number): AppListItem[] 
         hasSidecar: app.istioSidecar
       }),
       labels: app.labels,
-      istioReferences: sortIstioReferences(app.istioReferences, true)
+      istioReferences: sortIstioReferences(app.istioReferences, true),
+      cluster: app.cluster
     }));
   }
   return [];

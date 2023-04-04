@@ -161,7 +161,6 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 		for keyApp, valueApp := range clusterApps {
 			appItem := &models.AppListItem{
 				Name:         keyApp,
-				Cluster:      valueApp.cluster,
 				IstioSidecar: true,
 				Health:       models.EmptyAppHealth(),
 			}
@@ -212,6 +211,7 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 					log.Errorf("Error fetching Health in namespace %s for app %s: %s", criteria.Namespace, appItem.Name, err)
 				}
 			}
+			appItem.Cluster = valueApp.cluster
 			(*appList).Apps = append((*appList).Apps, *appItem)
 		}
 	}

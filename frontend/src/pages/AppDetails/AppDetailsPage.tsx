@@ -87,7 +87,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
   private fetchApp = () => {
     const params: { [key: string]: string } = { rateInterval: String(this.props.duration) + 's', health: 'true' };
-    API.getApp(this.props.match.params.namespace, this.props.match.params.app, params)
+    API.getApp(this.props.match.params.cluster, this.props.match.params.namespace, this.props.match.params.app, params)
       .then(details => {
         this.setState({
           app: details.data,
