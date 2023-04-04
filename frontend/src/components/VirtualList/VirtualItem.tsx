@@ -46,9 +46,9 @@ export default class VirtualItem extends React.Component<VirtualItemProps, Virtu
   }
 
   renderDetails = (item: RenderResource, health?: Health) => {
-    return this.props.columns.map(object =>
-      object.renderer(item, this.props.config, this.getBadge(), health, this.props.statefulFilterProps)
-    );
+    return this.props.columns
+      .filter(object => !!object.renderer)
+      .map(object => object.renderer(item, this.props.config, this.getBadge(), health, this.props.statefulFilterProps));
   };
 
   getBadge = () => {
