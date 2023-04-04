@@ -103,6 +103,6 @@ Scenario: graph type versioned app
   Then user sees a "versionedApp" graph
 
 @graph-page-toolbar
-Scenario: graph type service
+Scenario: graph type workload
   When user selects "WORKLOAD" graph type
   Then user sees a "workload" graph

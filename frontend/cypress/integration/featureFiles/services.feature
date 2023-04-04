@@ -7,7 +7,7 @@ Feature: Kiali Services page
     And user is at the "services" page
 
   @services-page
-  Scenario: See a table with correct info
+  Scenario: See services table with correct info
     When user selects the "bookinfo" namespace
     Then user sees a table with headings
       | Health | Name | Namespace | Labels | Configuration | Details |

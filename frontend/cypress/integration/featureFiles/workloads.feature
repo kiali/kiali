@@ -7,7 +7,7 @@ Feature: Kiali Workloads page
     And user is at the "workloads" page
 
   @workloads-page
-  Scenario: See a table with correct info
+  Scenario: See workloads table with correct info
     When user selects the "bookinfo" namespace
     Then user sees a table with headings
       | Health | Name | Namespace | Type | Labels | Details |
