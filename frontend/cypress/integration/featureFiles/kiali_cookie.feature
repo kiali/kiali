@@ -7,13 +7,8 @@ Feature: Kiali login cookie
     Given user is at administrator perspective
   
   @smoke  
-  Scenario: Open Kaili home page
+  Scenario: Console is visible after login
     And user visits base url
     Then user see console in URL
   
-  @smoke
-  Scenario: Open Kaili home page2
-    And user visits base url
-    Then user see console in URL
-
   

@@ -15,11 +15,11 @@ Feature: Kiali App Details page
     Then user sees details information for app
 
   @app-details-page
-  Scenario: See minigraph for details app.
+  Scenario: See app minigraph for details app.
     Then user sees a minigraph
 
   @app-details-page
-  Scenario: See Traffic information
+  Scenario: See app Traffic information
     Then user sees inbound and outbound traffic information
 
   @app-details-page
@@ -37,7 +37,7 @@ Feature: Kiali App Details page
     Then user sees trace details
 
   @app-details-page
-  Scenario: See span info after selecting a span
+  Scenario: See span info after selecting app span
     And user sees trace information
     When user selects a trace
     Then user sees span details

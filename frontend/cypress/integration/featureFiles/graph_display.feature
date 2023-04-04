@@ -103,7 +103,7 @@ Scenario: Enable Traffic Rate edge labels
 
 # edge label variable must match edge data name
 @graph-page-display
-Scenario: Disable Traffic Distribution edge labels
+Scenario: Disable Traffic Rate edge labels
   When user "disables" "trafficRate" edge labels
   Then user sees "trafficRate" edge label option is closed
 
@@ -183,7 +183,7 @@ Scenario: User disables animation
   Then "traffic animation" option "does not appear" in the graph
 
 @graph-page-display
-Scenario: User resets to factory default
+Scenario: User resets to factory default setting
   When user resets to factory default
   And user opens display menu
   Then the display menu opens
