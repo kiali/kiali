@@ -22,6 +22,17 @@ Feature: Kiali Services page
     And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/gateways/bookinfo-gateway"
 
   @services-page
+  Scenario: See all Services toggles
+    Then user sees all the Services toggles
+
+  @services-page
+  Scenario: Toggle Services configuration toggle
+    When the user "unchecks" toggle "configuration"
+    Then the "Configuration" column "disappears"
+    When the user "checks" toggle "configuration"
+    Then the "Configuration" column "appears"
+
+  @services-page
   Scenario: Filter services table by Service Name
     When user selects the "bookinfo" namespace
     And user selects filter "Service Name"

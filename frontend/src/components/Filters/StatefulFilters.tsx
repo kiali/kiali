@@ -444,10 +444,11 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                   return (
                     <ToolbarItem key={`toggle-${i}`}>
                       <Checkbox
+                        data-test={`toggle-${t.name}`}
                         id={t.name}
-                        name={t.name}
-                        label={t.label}
                         isChecked={Toggles.checked.get(t.name)}
+                        label={t.label}
+                        name={t.name}
                         onChange={this.onCheckboxChange}
                       />
                     </ToolbarItem>

@@ -17,6 +17,15 @@ Feature: Kiali Istio Config page
     And user sees Type information for Istio objects
     And user sees Configuration information for Istio objects
 
+  Scenario: See all Istio Config toggles
+    Then user sees all the Istio Config toggles
+
+  Scenario: Toggle Istio Config configuration toggle
+    When the user "unchecks" toggle "configuration"
+    Then the "Configuration" column "disappears"
+    When the user "checks" toggle "configuration"
+    Then the "Configuration" column "appears"
+
   Scenario: Filter Istio Config objects by Istio Name
     When the user filters by "Istio Name" for "bookinfo-gateway"
     Then user only sees "bookinfo-gateway"
