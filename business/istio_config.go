@@ -41,6 +41,7 @@ type IstioConfigCriteria struct {
 	// This usecase should be reserved for validations use cases only where cross-namespace validation may create a
 	// penalty
 	AllNamespaces                 bool
+	Cluster                       string
 	Namespace                     string
 	Cluster                       string
 	IncludeGateways               bool
@@ -159,7 +160,8 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		registryCriteria := RegistryCriteria{
 			AllNamespaces: true,
 		}
-		registryConfiguration, err := in.businessLayer.RegistryStatus.GetRegistryConfiguration(registryCriteria)
+		registryStatus := in.businessLayer.RegistryStatuses[criteria.Cluster]
+		registryConfiguration, err := registryStatus.GetRegistryConfiguration(registryCriteria)
 		if err != nil {
 			return istioConfigList, err
 		}
@@ -1298,7 +1300,7 @@ func checkType(types []string, name string) bool {
 	return false
 }
 
-func ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelector string, allNamespaces bool) IstioConfigCriteria {
+func ParseIstioConfigCriteria(cluster, namespace, objects, labelSelector, workloadSelector string, allNamespaces bool) IstioConfigCriteria {
 	defaultInclude := objects == ""
 	criteria := IstioConfigCriteria{}
 	criteria.IncludeGateways = defaultInclude
@@ -1323,6 +1325,12 @@ func ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelecto
 		criteria.AllNamespaces = true
 	} else {
 		criteria.Namespace = namespace
+	}
+
+	if cluster != "" {
+		criteria.Cluster = cluster
+	} else {
+		cluster = kubernetes.HomeClusterName
 	}
 
 	if defaultInclude {

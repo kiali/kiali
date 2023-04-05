@@ -18,24 +18,25 @@ import (
 // A business layer is created per token/user. Any data that
 // needs to be saved across layers is saved in the Kiali Cache.
 type Layer struct {
-	App            AppService
-	Health         HealthService
-	IstioConfig    IstioConfigService
-	IstioStatus    IstioStatusService
-	IstioCerts     IstioCertsService
-	Jaeger         JaegerService
-	k8sClients     map[string]kubernetes.ClientInterface // Key is the cluster name
-	Mesh           MeshService
-	Namespace      NamespaceService
-	OpenshiftOAuth OpenshiftOAuthService
-	ProxyLogging   ProxyLoggingService
-	ProxyStatus    ProxyStatusService
-	RegistryStatus RegistryStatusService
-	Svc            SvcService
-	TLS            TLSService
-	TokenReview    TokenReviewService
-	Validations    IstioValidationsService
-	Workload       WorkloadService
+	App              AppService
+	Health           HealthService
+	IstioConfig      IstioConfigService
+	IstioStatus      IstioStatusService
+	IstioCerts       IstioCertsService
+	Jaeger           JaegerService
+	k8sClients       map[string]kubernetes.ClientInterface // Key is the cluster name
+	Mesh             MeshService
+	Namespace        NamespaceService
+	OpenshiftOAuth   OpenshiftOAuthService
+	ProxyLogging     ProxyLoggingService
+	ProxyStatus      ProxyStatusService
+	RegistryStatus   RegistryStatusService
+	RegistryStatuses map[string]RegistryStatusService // Key is the cluster name
+	Svc              SvcService
+	TLS              TLSService
+	TokenReview      TokenReviewService
+	Validations      IstioValidationsService
+	Workload         WorkloadService
 }
 
 // Global clientfactory and prometheus clients.
@@ -182,6 +183,11 @@ func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAC
 	temporaryLayer.TokenReview = NewTokenReview(userClients[homeClusterName])
 	temporaryLayer.Validations = IstioValidationsService{k8s: userClients[homeClusterName], businessLayer: temporaryLayer}
 	temporaryLayer.Workload = *NewWorkloadService(userClients, prom, kialiCache, temporaryLayer, config.Get())
+
+	registryStatuses := make(map[string]RegistryStatusService)
+	for name, client := range userClients {
+		registryStatuses[name] = RegistryStatusService{k8s: client, businessLayer: temporaryLayer}
+	}
 
 	return temporaryLayer
 }
