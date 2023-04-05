@@ -225,6 +225,7 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 	ctx, end = observability.StartSpan(ctx, "GetApp",
 		observability.Attribute("package", "business"),
 		observability.Attribute("namespace", criteria.Namespace),
+		observability.Attribute("cluster", criteria.Cluster),
 		observability.Attribute("appName", criteria.AppName),
 		observability.Attribute("rateInterval", criteria.RateInterval),
 		observability.Attribute("queryTime", criteria.QueryTime),

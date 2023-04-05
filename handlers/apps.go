@@ -84,7 +84,8 @@ func AppDetails(w http.ResponseWriter, r *http.Request) {
 	p := appParams{}
 	p.extract(r)
 
-	criteria := business.AppCriteria{Namespace: p.Namespace, AppName: p.AppName, IncludeIstioResources: true, IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
+	criteria := business.AppCriteria{Namespace: p.Namespace, AppName: p.AppName, IncludeIstioResources: true, IncludeHealth: p.IncludeHealth,
+		RateInterval: p.RateInterval, QueryTime: p.QueryTime, Cluster: p.Cluster}
 
 	// Get business layer
 	business, err := getBusiness(r)

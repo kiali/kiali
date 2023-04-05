@@ -27,6 +27,7 @@ import connectRefresh from '../../components/Refresh/connectRefresh';
 
 type AppDetailsState = {
   app?: App;
+  cluster: string;
   health?: AppHealth;
   // currentTab is needed to (un)mount tab components
   // when the tab is not rendered.
@@ -60,7 +61,9 @@ const nextTabIndex = 5;
 class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   constructor(props: AppDetailsProps) {
     super(props);
-    this.state = { currentTab: activeTab(tabName, defaultTab) };
+    const urlParams = new URLSearchParams(this.props.location.search);
+    const cluster = urlParams.get('cluster') || HomeClusterName;
+    this.state = { currentTab: activeTab(tabName, defaultTab), cluster: cluster };
   }
 
   componentDidMount(): void {
@@ -87,7 +90,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
   private fetchApp = () => {
     const params: { [key: string]: string } = { rateInterval: String(this.props.duration) + 's', health: 'true' };
-    API.getApp(this.props.match.params.cluster, this.props.match.params.namespace, this.props.match.params.app, params)
+    API.getApp(this.state.cluster, this.props.match.params.namespace, this.props.match.params.app, params)
       .then(details => {
         this.setState({
           app: details.data,
@@ -255,7 +258,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           <ParameterizedTabs
             id="basic-tabs"
             onSelect={tabValue => {
-              this.setState({ currentTab: tabValue });
+              this.setState({ currentTab: tabValue, cluster: this.state.cluster });
             }}
             tabMap={paramToTab}
             tabName={tabName}
