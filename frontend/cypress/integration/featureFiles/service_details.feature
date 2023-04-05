@@ -22,11 +22,11 @@ Feature: Kiali Service Details page
     Then sd::user sees Istio Config
 
   @service-details-page
-  Scenario: See minigraph for details app.
+  Scenario: See service minigraph for details app.
     Then sd::user sees a minigraph
 
   @service-details-page
-  Scenario: See Traffic information
+  Scenario: See service Traffic information
     Then sd::user sees inbound and outbound traffic information
 
   @service-details-page
@@ -55,7 +55,7 @@ Feature: Kiali Service Details page
     Then user sees trace details
 
   @service-details-page
-  Scenario: See span info after selecting a span
+  Scenario: See span info after selecting service span
     And user sees trace information
     When user selects a trace
     Then user sees span details

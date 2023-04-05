@@ -28,12 +28,12 @@ Feature: Kiali Istio Config page
     When multiple filters are chosen
     Then multiple filters are active
 
-  Scenario: Filter should be deletable 
+  Scenario: Filter AuthorizationPolicy should be deletable 
     When a type filter "AuthorizationPolicy" is applied  
     And user clicks the cross next to the "AuthorizationPolicy" 
     Then the filter is no longer active 
 
-  Scenario: Deleting all filters at once
+  Scenario: Deleting all filters at once in config
     When a type filter "AuthorizationPolicy" is applied
     And user clicks on "Clear all filters"
     Then the filter is no longer active 
@@ -42,7 +42,7 @@ Feature: Kiali Istio Config page
     When user chooses 4 type filters
     Then he can only see 3 right away
     
-  Scenario: Show the view of all chosen filters
+  Scenario: Show the view of all type filters
     When user chooses 4 type filters
     And clicks on the button next to them
     Then he can see the remaining filter
