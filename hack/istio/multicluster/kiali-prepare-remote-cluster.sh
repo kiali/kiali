@@ -4,7 +4,7 @@ set -e
 set -u
 
 ##############################################################################
-# kiali-create-remote-cluster-secret.sh
+# kiali-prepare-remote-cluster.sh
 #
 # This creates/deletes the required resources on a remote cluster and then
 # creates/deletes a secret on the Kiali home cluster (where Kiali is or
