@@ -90,7 +90,7 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 
 	// TODO: Use a context to define a timeout. The context should be passed to the k8s client
 	go func() {
-		for cluster, _ := range in.userClients {
+		for cluster := range in.userClients {
 			wg.Add(1)
 			go func(c string) {
 				defer wg.Done()
