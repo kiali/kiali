@@ -270,7 +270,7 @@ metadata:
   annotations:
     ${KIALI_SECRET_ANNOTATION_NAME_CLUSTER}: ${REMOTE_CLUSTER_NAME}
 stringData:
-  ${REMOTE_CLUSTER_NAME}: |
+  $(echo "${REMOTE_CLUSTER_NAME}" | sed -e 's/[^-a-zA-Z0-9]/-/g' -e 's/[A-Z]/\L&/g'): |
     apiVersion: v1
     kind: Config
     preferences: {}
