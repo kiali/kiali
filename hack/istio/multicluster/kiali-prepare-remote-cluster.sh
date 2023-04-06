@@ -46,6 +46,7 @@ KIALI_SECRET_LABEL_NAME_MULTICLUSTER="kiali.io/multiCluster"
 KIALI_SECRET_ANNOTATION_NAME_CLUSTER="kiali.io/cluster"
 KIALI_SECRET_NAME_PREFIX="kiali-remote-cluster-secret-"
 
+DEFAULT_ALLOW_SKIP_TLS_VERIFY="false"
 DEFAULT_CLIENT_EXE="kubectl"
 DEFAULT_DELETE="false"
 DEFAULT_DRY_RUN="false"
@@ -59,6 +60,7 @@ DEFAULT_REMOTE_CLUSTER_CONTEXT="west"
 DEFAULT_REMOTE_CLUSTER_NAMESPACE="kiali-access-ns"
 DEFAULT_VIEW_ONLY="true"
 
+: ${ALLOW_SKIP_TLS_VERIFY:=${DEFAULT_ALLOW_SKIP_TLS_VERIFY}}
 : ${CLIENT_EXE:=${DEFAULT_CLIENT_EXE}}
 : ${DELETE:=${DEFAULT_DELETE}}
 : ${DRY_RUN:=${DEFAULT_DRY_RUN}}
@@ -112,32 +114,32 @@ create_resources_in_remote_cluster() {
 
   info "Create the remote cluster resources with the appropriate permissions for Kiali (view_only=${VIEW_ONLY})"
   if [ "${VIEW_ONLY}" == "true" ]; then
-    ROLE_TEMPLATE_NAME="role-viewer"
+    local role_template_name="role-viewer"
   else
-    ROLE_TEMPLATE_NAME="role"
+    local role_template_name="role"
   fi
 
   if [ "${KIALI_VERSION}" != "latest" ]; then
-    HELM_VERSION_ARG="--version ${KIALI_VERSION}"
+    local helm_version_arg="--version ${KIALI_VERSION}"
   fi
 
-  HELM_TEMPLATE_OUTPUT="$(${HELM} template                  \
-      ${HELM_VERSION_ARG:-}                                 \
+  local helm_template_output="$(${HELM} template                  \
+      ${helm_version_arg:-}                                 \
       --namespace ${REMOTE_CLUSTER_NAMESPACE}               \
       --set deployment.instance_name=${KIALI_RESOURCE_NAME} \
       --set deployment.view_only_mode=${VIEW_ONLY}          \
       --set auth.strategy=anonymous                         \
       --show-only templates/serviceaccount.yaml             \
-      --show-only templates/${ROLE_TEMPLATE_NAME}.yaml      \
+      --show-only templates/${role_template_name}.yaml      \
       --show-only templates/rolebinding.yaml                \
       --repo https://kiali.org/helm-charts                  \
       kiali-server                                          \
       kiali-server)"
 
   if [ "${DRY_RUN}" == "true" ]; then
-    echo "${HELM_TEMPLATE_OUTPUT}"
+    echo "${helm_template_output}"
   else
-    echo "${HELM_TEMPLATE_OUTPUT}" | ${CLIENT_EXE_REMOTE_CLUSTER} apply ${DRY_RUN_ARG} -f -
+    echo "${helm_template_output}" | ${CLIENT_EXE_REMOTE_CLUSTER} apply ${DRY_RUN_ARG} -f -
   fi
 
   # Create the SA token secret manually.
@@ -145,7 +147,7 @@ create_resources_in_remote_cluster() {
   # This may generate another token secret with an auto-generated suffix.
   # This secret (and the auto-generated one) will automatically be deleted when the SA is deleted.
   # TODO ephemeral time-based tokens are actually preferred; should we figure out how to use those instead?
-  REMOTE_SA_SECRET_YAML=$(cat <<EOF
+  local remote_sa_secret_yaml=$(cat <<EOF
 ---
 apiVersion: v1
 kind: Secret
@@ -160,9 +162,9 @@ EOF
 )
 
   if [ "${DRY_RUN}" == "true" ]; then
-    echo "${REMOTE_SA_SECRET_YAML}"
+    echo "${remote_sa_secret_yaml}"
   else
-    echo "${REMOTE_SA_SECRET_YAML}" | ${CLIENT_EXE_REMOTE_CLUSTER} apply ${DRY_RUN_ARG} -f -
+    echo "${remote_sa_secret_yaml}" | ${CLIENT_EXE_REMOTE_CLUSTER} apply ${DRY_RUN_ARG} -f -
   fi
 } # END create_resources_in_remote_cluster
 
@@ -185,27 +187,27 @@ get_remote_cluster_token() {
     # See: https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/#manual-secret-management-for-serviceaccounts
     # This commented code is how you can access that auto-generated secret.
     #for i in 1 2 3 4 5 6; do
-    #  tokenSecret="$(${CLIENT_EXE_REMOTE_CLUSTER} get sa -n ${REMOTE_CLUSTER_NAMESPACE} ${KIALI_RESOURCE_NAME} -o jsonpath='{.secrets[0].name}' 2>/dev/null)" \
-    #    && [ "${tokenSecret}" != "" ] \
+    #  token_secret="$(${CLIENT_EXE_REMOTE_CLUSTER} get sa -n ${REMOTE_CLUSTER_NAMESPACE} ${KIALI_RESOURCE_NAME} -o jsonpath='{.secrets[0].name}' 2>/dev/null)" \
+    #    && [ "${token_secret}" != "" ] \
     #    && break \
     #    || (info "Waiting for the SA secret to be created..." && sleep 5)
     #done
-    #if [ "${tokenSecret}" == "" ]; then
+    #if [ "${token_secret}" == "" ]; then
     #  exit "There is no secret assigned yet to the remote cluster SA [${REMOTE_CLUSTER_NAMESPACE}/${KIALI_RESOURCE_NAME}]. Aborting."
     #fi
-    tokenSecret="${KIALI_RESOURCE_NAME}"
+    local token_secret="${KIALI_RESOURCE_NAME}"
 
     for i in 1 2 3 4 5 6; do
-      encodedToken="$(${CLIENT_EXE_REMOTE_CLUSTER} get secrets -n ${REMOTE_CLUSTER_NAMESPACE} ${tokenSecret} -o jsonpath='{.data.token}' 2>/dev/null)" \
-        && [ "${encodedToken}" != "" ] \
+      local encoded_token="$(${CLIENT_EXE_REMOTE_CLUSTER} get secrets -n ${REMOTE_CLUSTER_NAMESPACE} ${token_secret} -o jsonpath='{.data.token}' 2>/dev/null)" \
+        && [ "${encoded_token}" != "" ] \
         && break \
         || (info "Waiting for the SA secret token to be created..." && sleep 5)
     done
-    if [ "${encodedToken}" == "" ]; then
-      exit "There is no token assigned yet to the remote cluster SA secret [${REMOTE_CLUSTER_NAMESPACE}/${tokenSecret}]. Exiting."
+    if [ "${encoded_token}" == "" ]; then
+      exit "There is no token assigned yet to the remote cluster SA secret [${REMOTE_CLUSTER_NAMESPACE}/${token_secret}]. Exiting."
     fi
 
-    TOKEN="$(echo ${encodedToken} | base64 -d)"
+    TOKEN="$(echo ${encoded_token} | base64 -d)"
   fi
 }
 
@@ -217,31 +219,44 @@ create_kiali_remote_cluster_secret() {
   info "Create the remote cluster secret in the Kiali cluster"
 
   # Examine the local kubeconfig and extract the rest of the necessary data we need in order to create the Kiali remote cluster secret.
-  REMOTE_CLUSTER_SERVER_URL="$(${CLIENT_EXE} config view -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME}'")].cluster.server}' 2>/dev/null)"
-  if [ "${REMOTE_CLUSTER_SERVER_URL}" == "" ]; then
+  local remote_cluster_server_url="$(${CLIENT_EXE} config view -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME}'")].cluster.server}' 2>/dev/null)"
+  if [ "${remote_cluster_server_url}" == "" ]; then
     error "Unable to determine the remote cluster server URL from the kubeconfig remote cluster named [${REMOTE_CLUSTER_NAME}]. Check that the kubeconfig is correct."
   else
-    info REMOTE_CLUSTER_SERVER_URL=${REMOTE_CLUSTER_SERVER_URL}
+    info remote_cluster_server_url=${remote_cluster_server_url}
   fi
 
-  # The CA data can either be specified directly in the config or a CA file is defined that we then have to read
-  REMOTE_CLUSTER_CA_BYTES="$(${CLIENT_EXE} config view --raw=true -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME}'")].cluster.certificate-authority-data}' 2>/dev/null)"
-  if [ "${REMOTE_CLUSTER_CA_BYTES}" == "" ]; then
-    REMOTE_CLUSTER_CA_FILE="$(${CLIENT_EXE} config view --raw=true -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME}'")].cluster.certificate-authority}' 2>/dev/null)"
-    if [ ! -r "${REMOTE_CLUSTER_CA_FILE}" ]; then
-      error "Unable to read the remote cluster CA bytes or file specified in the kubeconfig remote cluster named [${REMOTE_CLUSTER_NAME}]. Check that the kubeconfig is correct."
+  # The CA data can either be specified directly in the config or a CA file is defined that we then have to read. Either way, get the CA bytes.
+  # If we cannot find the CA bytes, it could be because it is configured with "insecure-skip-tls-verify: true". If so, use that unless we were told not to.
+  # It is an error otherwise because we need the CA or we need to be allowed to skip the TLS verification.
+  local remote_cluster_ca_bytes="$(${CLIENT_EXE} config view --raw=true -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME}'")].cluster.certificate-authority-data}' 2>/dev/null)"
+  if [ "${remote_cluster_ca_bytes}" == "" ]; then
+    local ca_file="$(${CLIENT_EXE} config view --raw=true -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME}'")].cluster.certificate-authority}' 2>/dev/null)"
+    if [ ! -r "${ca_file}" ]; then
+      local existing_skip_tls_verify="$(${CLIENT_EXE} config view --raw=true -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME}'")].cluster.insecure-skip-tls-verify}' 2>/dev/null)"
+      if [ "${existing_skip_tls_verify}" != "true" ]; then
+        error "Unable to read the remote cluster CA bytes or file specified in the kubeconfig remote cluster named [${REMOTE_CLUSTER_NAME}]. Check that the kubeconfig is correct."
+      elif [ "${ALLOW_SKIP_TLS_VERIFY}" != "true" ]; then
+        error "The remote cluster named [${REMOTE_CLUSTER_NAME}] is configured with insecure-skip-tls-verify. If you agree to use that, pass in '--allow-skip-tls-verify true'. Aborting."
+      fi
     else
-      info REMOTE_CLUSTER_CA_FILE=${REMOTE_CLUSTER_CA_FILE}
-    fi
-
-    REMOTE_CLUSTER_CA_BYTES="$(cat ${REMOTE_CLUSTER_CA_FILE} 2>/dev/null | base64 --wrap=0 2>/dev/null)"
-    if [ "${REMOTE_CLUSTER_CA_BYTES}" == "" ]; then
-      error "Unable to get the remote cluster CA cert data from the CA file [${REMOTE_CLUSTER_CA_FILE}] specified in the kubeconfig remote cluster named [${REMOTE_CLUSTER_NAME}]. Check that the kubeconfig is correct."
+      info ca_file=${ca_file}
+      remote_cluster_ca_bytes="$(cat ${ca_file} 2>/dev/null | base64 --wrap=0 2>/dev/null)"
+      if [ "${remote_cluster_ca_bytes}" == "" ]; then
+        error "Unable to get the remote cluster CA cert data from the CA file [${ca_file}] specified in the kubeconfig remote cluster named [${REMOTE_CLUSTER_NAME}]. Check that the kubeconfig is correct."
+      fi
     fi
   fi
 
   # Get the token that is needed to access the remote cluster
   get_remote_cluster_token
+
+  if [ "${remote_cluster_ca_bytes}" == "" -a "${ALLOW_SKIP_TLS_VERIFY}" == "true" ]; then
+    info "Kiali will be allowed to insecurely skip TLS verification when connecting to the remote cluster named [${REMOTE_CLUSTER_NAME}]."
+    local cert_auth_yaml="insecure-skip-tls-verify: true"
+  else
+    local cert_auth_yaml="certificate-authority-data: ${remote_cluster_ca_bytes}"
+  fi
 
   KIALI_SECRET_YAML=$(cat <<EOF
 ---
@@ -272,8 +287,8 @@ stringData:
     clusters:
     - name: ${REMOTE_CLUSTER_NAME}
       cluster:
-        server: ${REMOTE_CLUSTER_SERVER_URL}
-        certificate-authority-data: ${REMOTE_CLUSTER_CA_BYTES}
+        server: ${remote_cluster_server_url}
+        ${cert_auth_yaml}
 ...
 EOF
 )
@@ -294,6 +309,11 @@ EOF
 while [ $# -gt 0 ]; do
   key="$1"
   case $key in
+    -astv|--allow-skip-tls-verify)
+      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && error "--allow-skip-tls-verify must be 'true' or 'false'"
+      ALLOW_SKIP_TLS_VERIFY="$2"
+      shift;shift
+      ;;
     -c|--client)
       CLIENT_EXE="$2"
       shift;shift
@@ -365,6 +385,12 @@ This remote cluster secret will enable Kiali to observe multiple clusters.
 This tool can also be used to delete those resources and the secret (see --delete).
 
 Valid command line arguments:
+  -astv|--allow-skip-tls-verify: either 'true' or 'false'. If the cluster connection
+                                 skips TLS verification (i.e. the context has
+                                 insecure-skip-tls-verify set to true), and you agree
+                                 with Kiali connecting to the remote cluster with the
+                                 same insecure setting, you must set this to 'true'.
+                                 Default: "${DEFAULT_ALLOW_SKIP_TLS_VERIFY}"
   -c|--client: either 'oc' or 'kubectl'. Default: "${DEFAULT_CLIENT_EXE}"
   -d|--delete: either 'true' or 'false'. If 'true' the resources and/or secret
                will be deleted. Default: "${DEFAULT_DELETE}"
@@ -474,9 +500,10 @@ REMOTE_CLUSTER_NAME="$(${CLIENT_EXE} config view -o jsonpath='{.contexts[?(@.nam
 if [ "${REMOTE_CLUSTER_NAME}" == "" ]; then
   error "Unable to determine the remote cluster name from the given remote cluster context [${REMOTE_CLUSTER_CONTEXT}]. Check that the context name you provided is correct."
 fi
-
 info REMOTE_CLUSTER_NAME=${REMOTE_CLUSTER_NAME}
-KIALI_SECRET_FULL_NAME="${KIALI_SECRET_NAME_PREFIX}${REMOTE_CLUSTER_NAME}"
+
+# the secret full name must be a valid k8s resource name - change special characters to dash and uppercase to lowercase to conform
+KIALI_SECRET_FULL_NAME="${KIALI_SECRET_NAME_PREFIX}$(echo "${REMOTE_CLUSTER_NAME}" | sed -e 's/[^-a-zA-Z0-9]/-/g' -e 's/[A-Z]/\L&/g')"
 
 # Create or delete the resources based on what the user wants to do
 if [ "${DELETE}" == "true" ]; then
