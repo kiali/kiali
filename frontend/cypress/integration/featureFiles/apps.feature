@@ -5,7 +5,7 @@ Feature: Kiali Apps List page
 
   Background:
     Given user is at administrator perspective
-    And user is at the "applications" page
+    And user is at the "applications" list page
     And user selects the "bookinfo" namespace
 
   @apps-page
@@ -23,19 +23,19 @@ Feature: Kiali Apps List page
 
   @apps-page
   Scenario: Toggle Apps health toggle
-    When the user "unchecks" toggle "health"
+    When user "unchecks" toggle "health"
     Then the "Health" column "disappears"
-    When the user "checks" toggle "health"
+    When user "checks" toggle "health"
     Then the "Health" column "appears"
 
   @apps-page
   Scenario: Filter Apps by Istio Name
-    When the user filters by "App Name" for "productpage"
+    When user filters by "App Name" for "productpage"
     Then user only sees "productpage"
 
   @apps-page
   Scenario: Filter Apps by Istio Sidecar
-    When the user filters by "Istio Sidecar" for "Present"
+    When user filters by "Istio Sidecar" for "Present"
     Then user sees "productpage"
     And user sees "details"
     And user sees "reviews"

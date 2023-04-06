@@ -98,7 +98,8 @@ export const serverRateConfig = {
       list: {
         includeHealth: true,
         includeIstioResources: true,
-        includeValidations: true
+        includeValidations: true,
+        showIncludeToggles: false
       },
       metricsPerRefresh: '1m',
       namespaces: [],

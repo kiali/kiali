@@ -32,6 +32,8 @@ import { style } from 'typestyle';
 import { LabelFilters } from './LabelFilter';
 import { arrayEquals } from 'utils/Common';
 import { labelFilter } from './CommonFilters';
+import history, { HistoryManager } from 'app/History';
+import { serverConfig } from 'config';
 
 var classNames = require('classnames');
 
@@ -109,9 +111,14 @@ export class Toggles {
   static init = (toggles: ToggleType[]): number => {
     Toggles.checked.clear();
     Toggles.numChecked = 0;
+
+    // Prefer URL settings
+    const urlParams = new URLSearchParams(history.location.search);
     toggles.forEach(t => {
-      Toggles.checked.set(t.name, t.isChecked);
-      if (t.isChecked) {
+      const urlIsChecked = HistoryManager.getBooleanParam(`${t.name}Toggle`, urlParams);
+      const isChecked = urlIsChecked === undefined ? t.isChecked : urlIsChecked;
+      Toggles.checked.set(t.name, isChecked);
+      if (isChecked) {
         Toggles.numChecked++;
       }
     });
@@ -119,6 +126,7 @@ export class Toggles {
   };
 
   static setToggle = (name: string, value: boolean): number => {
+    HistoryManager.setParam(`${name}Toggle`, `${value}`);
     Toggles.checked.set(name, value);
     Toggles.numChecked = value ? Toggles.numChecked++ : Toggles.numChecked--;
     return Toggles.numChecked;
@@ -402,6 +410,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
   };
 
   render() {
+    const showIncludeToggles = serverConfig.kialiFeatureFlags.uiDefaults.list.showIncludeToggles;
     const { currentFilterType, activeFilters } = this.state;
     const filterOptions = this.state.filterTypes.map(option => (
       <FormSelectOption key={option.category} value={option.category} label={option.category} />
@@ -439,7 +448,8 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
               })}
             </ToolbarGroup>
             <ToolbarGroup>
-              {this.props.initialToggles &&
+              {showIncludeToggles &&
+                this.props.initialToggles &&
                 this.props.initialToggles.map((t, i) => {
                   return (
                     <ToolbarItem key={`toggle-${i}`}>

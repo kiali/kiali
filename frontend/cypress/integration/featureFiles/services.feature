@@ -4,7 +4,7 @@ Feature: Kiali Services page
 
   Background:
     Given user is at administrator perspective
-    And user is at the "services" page
+    And user is at the "services" list page
 
   @services-page
   Scenario: See a table with correct info
@@ -27,9 +27,9 @@ Feature: Kiali Services page
 
   @services-page
   Scenario: Toggle Services configuration toggle
-    When the user "unchecks" toggle "configuration"
+    When user "unchecks" toggle "configuration"
     Then the "Configuration" column "disappears"
-    When the user "checks" toggle "configuration"
+    When user "checks" toggle "configuration"
     Then the "Configuration" column "appears"
 
   @services-page

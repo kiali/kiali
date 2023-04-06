@@ -104,7 +104,8 @@ const defaultServerConfig: ComputedServerConfig = {
       list: {
         includeHealth: true,
         includeIstioResources: true,
-        includeValidations: true
+        includeValidations: true,
+        showIncludeToggles: false
       }
     }
   },

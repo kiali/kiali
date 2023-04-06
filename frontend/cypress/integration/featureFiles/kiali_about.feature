@@ -1,10 +1,10 @@
 Feature: Kiali help about verify
 
   User wants to verify the Kiali help about information
-  
-  Background: 
+
+  Background:
     Given user is at administrator perspective
-    And user is at the "overivew" page
+    And user is at the "overview" page
 
   @smoke
   Scenario: Open Kiali about page

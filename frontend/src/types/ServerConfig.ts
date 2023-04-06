@@ -45,6 +45,7 @@ interface ListUIDefaults {
   includeHealth: boolean;
   includeIstioResources: boolean;
   includeValidations: boolean;
+  showIncludeToggles: boolean;
 }
 
 interface UIDefaults {

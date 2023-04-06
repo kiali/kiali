@@ -400,6 +400,7 @@ type ListUIDefaults struct {
 	IncludeHealth         bool `yaml:"include_health,omitempty" json:"includeHealth"`
 	IncludeIstioResources bool `yaml:"include_istio_resources,omitempty" json:"includeIstioResources"`
 	IncludeValidations    bool `yaml:"include_validations,omitempty" json:"includeValidations"`
+	ShowIncludeToggles    bool `yaml:"show_include_toggles,omitempty" json:"showIncludeToggles"`
 }
 
 // Aggregation represents label's allowed aggregations, transformed from aggregation in MonitoringDashboard config resource
@@ -690,6 +691,7 @@ func NewConfig() (c *Config) {
 					IncludeHealth:         true,
 					IncludeIstioResources: true,
 					IncludeValidations:    true,
+					ShowIncludeToggles:    false,
 				},
 				MetricsInbound:    MetricsDefaults{},
 				MetricsOutbound:   MetricsDefaults{},

@@ -124,7 +124,7 @@ Then('user sees all the Apps toggles', () => {
   colExists('Details', true);
 });
 
-When('the user {string} toggle {string}', function (action: 'checks' | 'unchecks', toggle: string) {
+When('user {string} toggle {string}', function (action: 'checks' | 'unchecks', toggle: string) {
   if (action === 'checks') {
     cy.get(`[data-test="toggle-${toggle}"]`).check();
   } else {

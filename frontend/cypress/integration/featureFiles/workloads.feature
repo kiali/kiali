@@ -4,7 +4,7 @@ Feature: Kiali Workloads page
 
   Background:
     Given user is at administrator perspective
-    And user is at the "workloads" page
+    And user is at the "workloads" list page
 
   @workloads-page
   Scenario: See a table with correct info
@@ -26,9 +26,9 @@ Feature: Kiali Workloads page
 
   @workloads-page
   Scenario: Toggle Workloads health toggle
-    When the user "unchecks" toggle "health"
+    When user "unchecks" toggle "health"
     Then the "Health" column "disappears"
-    When the user "checks" toggle "health"
+    When user "checks" toggle "health"
     Then the "Health" column "appears"
 
   @workloads-page
