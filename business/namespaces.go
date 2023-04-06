@@ -150,7 +150,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 			wg.Add(1)
 			go func(c string) {
 				defer wg.Done()
-				list, error := in.GetNamespacesByCluster(c)
+				list, error := in.getNamespacesByCluster(c)
 				if error != nil {
 					resultsCh <- result{cluster: c, ns: nil, err: error}
 				} else {
@@ -165,12 +165,12 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	// Combine namespace data
 	for resultCh := range resultsCh {
 		if resultCh.err != nil {
-
 			if resultCh.cluster == kubernetes.HomeClusterName {
 				log.Errorf("Error fetching Namespaces for local cluster %s: %s", resultCh.cluster, resultCh.err)
 				return nil, resultCh.err
 			} else {
 				log.Infof("Error fetching Namespaces for cluster %s: %s", resultCh.cluster, resultCh.err)
+				continue
 			}
 		}
 		namespaces = append(namespaces, resultCh.ns...)
@@ -213,7 +213,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	return resultns, nil
 }
 
-func (in *NamespaceService) GetNamespacesByCluster(cluster string) ([]models.Namespace, error) {
+func (in *NamespaceService) getNamespacesByCluster(cluster string) ([]models.Namespace, error) {
 	configObject := config.Get()
 
 	labelSelectorInclude := configObject.API.Namespaces.LabelSelectorInclude
@@ -340,7 +340,6 @@ func (in *NamespaceService) GetNamespacesByCluster(cluster string) ([]models.Nam
 	}
 
 	return result, nil
-
 }
 
 // addIncludedNamespaces will look at all the namespaces and return all of them that match the Include list.
@@ -461,7 +460,7 @@ func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace
 
 	// Cache already has included/excluded namespaces applied
 	if kialiCache != nil {
-		if ns := kialiCache.GetNamespace(in.userClients[kubernetes.HomeClusterName].GetToken(), namespace); ns != nil {
+		if ns := kialiCache.GetNamespace(in.userClients[kubernetes.HomeClusterName].GetToken(), namespace, cluster); ns != nil {
 			return ns, nil
 		}
 	}

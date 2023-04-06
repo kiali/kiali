@@ -10,7 +10,7 @@ type (
 	NamespacesCache interface {
 		SetNamespaces(token string, namespaces []models.Namespace)
 		GetNamespaces(token string) []models.Namespace
-		GetNamespace(token string, namespace string) *models.Namespace
+		GetNamespace(token string, namespace string, cluster string) *models.Namespace
 		RefreshTokenNamespaces()
 	}
 )
@@ -18,14 +18,8 @@ type (
 func (c *kialiCacheImpl) SetNamespaces(token string, namespaces []models.Namespace) {
 	defer c.tokenLock.Unlock()
 	c.tokenLock.Lock()
-	nameNamespace := make(map[string]map[string]models.Namespace)
 	clusterNamespace := make(map[string]map[string]models.Namespace)
 	for _, ns := range namespaces {
-		if nameNamespace[ns.Name] == nil {
-			nameNamespace[ns.Name] = make(map[string]models.Namespace)
-		}
-		nameNamespace[ns.Name][ns.Cluster] = ns
-
 		if clusterNamespace[ns.Cluster] == nil {
 			clusterNamespace[ns.Cluster] = make(map[string]models.Namespace)
 		}
@@ -53,30 +47,19 @@ func (c *kialiCacheImpl) GetNamespaces(token string) []models.Namespace {
 	}
 }
 
-func (c *kialiCacheImpl) GetNamespace(token string, namespace string) *models.Namespace {
+func (c *kialiCacheImpl) GetNamespace(token string, namespace string, cluster string) *models.Namespace {
 	defer c.tokenLock.RUnlock()
 	c.tokenLock.RLock()
-	if nsToken, existToken := c.tokenNamespaces[token]; !existToken {
-		return nil
-	} else {
+	if nsToken, existToken := c.tokenNamespaces[token]; existToken {
+		// Token hasn't expired yet.
 		if time.Since(nsToken.created) <= c.tokenNamespaceDuration {
-			// TODO: When cluster is used as a parameter
-			/*			if cluster != "" {
-						if nsFound, ok := nsToken.nameNamespace[cluster][namespace]; ok {
-							return &nsFound
-						} else {
-							return nil
-						}
-					}*/
-			for cl := range nsToken.clusterNamespace {
-				if ns, existsNamespace := nsToken.clusterNamespace[cl][namespace]; existsNamespace {
-					// TODO: Return N (Or include the cluster)
-					return &ns
-				}
+			// And there's a namespace for the given cluster.
+			if nsFound, ok := nsToken.clusterNamespace[cluster][namespace]; ok {
+				return &nsFound
 			}
 		}
-		return nil
 	}
+	return nil
 }
 
 func (c *kialiCacheImpl) RefreshTokenNamespaces() {

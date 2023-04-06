@@ -323,7 +323,7 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 	)
 	defer end()
 
-	ns, err := in.businessLayer.Namespace.GetNamespace(ctx, criteria.Namespace)
+	ns, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, criteria.Namespace, criteria.Cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -616,7 +616,7 @@ func fetchWorkloadsFromCluster(ctx context.Context, layer *Layer, cluster string
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := layer.Namespace.GetNamespace(ctx, namespace); err != nil {
+	if _, err := layer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
 		return nil, err
 	}
 
