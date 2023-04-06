@@ -204,7 +204,7 @@ get_remote_cluster_token() {
         || (info "Waiting for the SA secret token to be created..." && sleep 5)
     done
     if [ "${encoded_token}" == "" ]; then
-      exit "There is no token assigned yet to the remote cluster SA secret [${REMOTE_CLUSTER_NAMESPACE}/${token_secret}]. Exiting."
+      error "There is no token assigned yet to the remote cluster SA secret [${REMOTE_CLUSTER_NAMESPACE}/${token_secret}]. Exiting."
     fi
 
     TOKEN="$(echo ${encoded_token} | base64 -d)"
