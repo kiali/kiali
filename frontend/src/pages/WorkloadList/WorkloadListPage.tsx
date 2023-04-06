@@ -97,7 +97,6 @@ class WorkloadListPageComponent extends FilterComponent.Component<
       return data.workloads.map(deployment => ({
         namespace: data.namespace.name,
         name: deployment.name,
-        cluster: deployment.cluster,
         type: deployment.type,
         appLabel: deployment.appLabel,
         versionLabel: deployment.versionLabel,

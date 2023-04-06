@@ -7,17 +7,16 @@ import { KioskLink } from './KioskLink';
 type Props = {
   name: string;
   namespace: string;
-  cluster: string;
   query?: string;
 };
 
-export const getWorkloadLink = (name: string, namespace: string, cluster: string, query?: string): string => {
+export const getWorkloadLink = (name: string, namespace: string, query?: string): string => {
   let to = '/namespaces/' + namespace + '/' + Paths.WORKLOADS;
 
-  to = to + '/' + name + '?cluster=' + cluster;
+  to = to + '/' + name;
 
   if (!!query) {
-    to = to + '&' + query;
+    to = to + '?' + query;
   }
 
   return to;
@@ -25,12 +24,12 @@ export const getWorkloadLink = (name: string, namespace: string, cluster: string
 
 export class WorkloadLink extends React.Component<Props> {
   render() {
-    const { name, namespace, cluster, query } = this.props;
+    const { name, namespace, query } = this.props;
 
     return (
       <>
         <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
-        <WorkloadLinkItem namespace={namespace} name={name} cluster={cluster} query={query} />
+        <WorkloadLinkItem namespace={namespace} name={name} query={query} />
       </>
     );
   }
@@ -38,12 +37,11 @@ export class WorkloadLink extends React.Component<Props> {
 
 class WorkloadLinkItem extends React.Component<Props> {
   render() {
-    const { name, namespace, cluster, query } = this.props;
-    const href = getWorkloadLink(name, namespace, cluster, query);
+    const { name, namespace, query } = this.props;
+    const href = getWorkloadLink(name, namespace, query);
     return (
       <KioskLink
         linkName={namespace + '/' + name}
-        // @TODO put cluster in link when all objects have multicluster support
         dataTest={'workload-' + namespace + '-' + name}
         href={href}
       ></KioskLink>

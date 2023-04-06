@@ -102,14 +102,6 @@ const istioItem: ResourceType<IstioConfigItem> = {
   renderer: Renderers.item
 };
 
-const cluster: ResourceType<TResource> = {
-  name: 'Cluster',
-  param: 'cl',
-  column: 'Cluster',
-  transforms: [sortable, cellWidth(15)],
-  renderer: Renderers.cluster
-};
-
 const namespace: ResourceType<TResource> = {
   name: 'Namespace',
   param: 'ns',
@@ -254,7 +246,7 @@ const namespaces: Resource = {
 
 const workloads: Resource = {
   name: 'workloads',
-  columns: [health, item, namespace, cluster, workloadType, labels, details],
+  columns: [health, item, namespace, workloadType, labels, details],
   badge: PFBadges.Workload
 };
 

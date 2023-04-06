@@ -4,7 +4,7 @@ import { LoginSession } from '../store/Store';
 import { App } from '../types/App';
 import { AppList } from '../types/AppList';
 import { AuthInfo } from '../types/Auth';
-import { DurationInSeconds, HomeClusterName, HTTP_VERBS, Password, TimeInSeconds, UserName } from '../types/Common';
+import { DurationInSeconds, HTTP_VERBS, Password, TimeInSeconds, UserName } from '../types/Common';
 import { DashboardModel } from 'types/Dashboards';
 import { GrafanaInfo } from '../types/GrafanaInfo';
 import { GraphDefinition, NodeParamsType, NodeType } from '../types/Graph';
@@ -292,22 +292,12 @@ export const getAppDashboard = (namespace: string, app: string, params: IstioMet
   return newRequest<DashboardModel>(HTTP_VERBS.GET, urls.appDashboard(namespace, app), params, {});
 };
 
-export const getWorkloadMetrics = (
-  cluster: string,
-  namespace: string,
-  workload: string,
-  params: IstioMetricsOptions
-) => {
-  return newRequest<IstioMetricsMap>(HTTP_VERBS.GET, urls.workloadMetrics(cluster, namespace, workload), params, {});
+export const getWorkloadMetrics = (namespace: string, workload: string, params: IstioMetricsOptions) => {
+  return newRequest<IstioMetricsMap>(HTTP_VERBS.GET, urls.workloadMetrics(namespace, workload), params, {});
 };
 
-export const getWorkloadDashboard = (
-  cluster: string,
-  namespace: string,
-  workload: string,
-  params: IstioMetricsOptions
-) => {
-  return newRequest<DashboardModel>(HTTP_VERBS.GET, urls.workloadDashboard(cluster, namespace, workload), params, {});
+export const getWorkloadDashboard = (namespace: string, workload: string, params: IstioMetricsOptions) => {
+  return newRequest<DashboardModel>(HTTP_VERBS.GET, urls.workloadDashboard(namespace, workload), params, {});
 };
 
 export const getCustomDashboard = (ns: string, tpl: string, params: DashboardQuery) => {
@@ -401,16 +391,16 @@ export const getJaegerInfo = () => {
   return newRequest<JaegerInfo>(HTTP_VERBS.GET, urls.jaeger, {}, {});
 };
 
-export const getAppTraces = (cluster: string, namespace: string, app: string, params: TracingQuery) => {
-  return newRequest<JaegerResponse>(HTTP_VERBS.GET, urls.appTraces(cluster, namespace, app), params, {});
+export const getAppTraces = (namespace: string, app: string, params: TracingQuery) => {
+  return newRequest<JaegerResponse>(HTTP_VERBS.GET, urls.appTraces(namespace, app), params, {});
 };
 
-export const getServiceTraces = (cluster: string, namespace: string, service: string, params: TracingQuery) => {
-  return newRequest<JaegerResponse>(HTTP_VERBS.GET, urls.serviceTraces(cluster, namespace, service), params, {});
+export const getServiceTraces = (namespace: string, service: string, params: TracingQuery) => {
+  return newRequest<JaegerResponse>(HTTP_VERBS.GET, urls.serviceTraces(namespace, service), params, {});
 };
 
-export const getWorkloadTraces = (cluster: string, namespace: string, workload: string, params: TracingQuery) => {
-  return newRequest<JaegerResponse>(HTTP_VERBS.GET, urls.workloadTraces(cluster, namespace, workload), params, {});
+export const getWorkloadTraces = (namespace: string, workload: string, params: TracingQuery) => {
+  return newRequest<JaegerResponse>(HTTP_VERBS.GET, urls.workloadTraces(namespace, workload), params, {});
 };
 
 export const getJaegerErrorTraces = (namespace: string, service: string, duration: DurationInSeconds) => {
@@ -462,7 +452,6 @@ export const getNodeGraphElements = (node: NodeParamsType, params: any) => {
         {}
       );
     case NodeType.WORKLOAD:
-      // @TODO add cluster
       return newRequest<GraphDefinition>(
         HTTP_VERBS.GET,
         urls.workloadGraphElements(node.namespace.name, node.workload),
@@ -509,8 +498,8 @@ export const getWorkloads = (namespace: string, params: { [key: string]: string 
   return newRequest<WorkloadNamespaceResponse>(HTTP_VERBS.GET, urls.workloads(namespace), params, {});
 };
 
-export const getWorkload = (cluster: string, namespace: string, name: string, params?: { [key: string]: string }) => {
-  return newRequest<Workload>(HTTP_VERBS.GET, urls.workload(cluster, namespace, name), params, {});
+export const getWorkload = (namespace: string, name: string, params?: { [key: string]: string }) => {
+  return newRequest<Workload>(HTTP_VERBS.GET, urls.workload(namespace, name), params, {});
 };
 
 export const updateWorkload = (
@@ -521,12 +510,11 @@ export const updateWorkload = (
   patchType?: string
 ): Promise<Response<string>> => {
   const params: any = {};
-  params.type = type;
+  params.type = type
   if (patchType) {
-    params.patchType = patchType;
+    params.patchType = patchType
   }
-  // @TODO cluster name
-  return newRequest(HTTP_VERBS.PATCH, urls.workload(HomeClusterName, namespace, name), params, jsonPatch);
+  return newRequest(HTTP_VERBS.PATCH, urls.workload(namespace, name), params, jsonPatch);
 };
 
 export const updateService = (
@@ -537,7 +525,7 @@ export const updateService = (
 ): Promise<Response<string>> => {
   const params: any = {};
   if (patchType) {
-    params.patchType = patchType;
+    params.patchType = patchType
   }
   return newRequest(HTTP_VERBS.PATCH, urls.service(namespace, name), params, jsonPatch);
 };
@@ -618,16 +606,16 @@ export const getErrorDetail = (error: AxiosError): string => {
   return '';
 };
 
-export const getAppSpans = (cluster: string, namespace: string, app: string, params: TracingQuery) => {
-  return newRequest<Span[]>(HTTP_VERBS.GET, urls.appSpans(cluster, namespace, app), params, {});
+export const getAppSpans = (namespace: string, app: string, params: TracingQuery) => {
+  return newRequest<Span[]>(HTTP_VERBS.GET, urls.appSpans(namespace, app), params, {});
 };
 
-export const getServiceSpans = (cluster: string, namespace: string, service: string, params: TracingQuery) => {
-  return newRequest<Span[]>(HTTP_VERBS.GET, urls.serviceSpans(cluster, namespace, service), params, {});
+export const getServiceSpans = (namespace: string, service: string, params: TracingQuery) => {
+  return newRequest<Span[]>(HTTP_VERBS.GET, urls.serviceSpans(namespace, service), params, {});
 };
 
-export const getWorkloadSpans = (cluster: string, namespace: string, workload: string, params: TracingQuery) => {
-  return newRequest<Span[]>(HTTP_VERBS.GET, urls.workloadSpans(cluster, namespace, workload), params, {});
+export const getWorkloadSpans = (namespace: string, workload: string, params: TracingQuery) => {
+  return newRequest<Span[]>(HTTP_VERBS.GET, urls.workloadSpans(namespace, workload), params, {});
 };
 
 export const getIstioPermissions = (namespaces: string[]) => {

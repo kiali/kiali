@@ -22,7 +22,6 @@ import { ResourcePermissions } from './Permissions';
 
 export interface IstioConfigItem {
   namespace: string;
-  cluster?: string;
   type: string;
   name: string;
   creationTimestamp?: string;

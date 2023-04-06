@@ -13,7 +13,6 @@ import NamespaceInfo from '../../pages/Overview/NamespaceInfo';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import * as Sorts from '../../pages/Overview/Sorts';
 import { StatefulFilters } from '../Filters/StatefulFilters';
-import { serverConfig } from '../../config';
 
 // ******************************
 // VirtualList and its associated classes are intended to be used for main list pages: Applications,
@@ -107,11 +106,8 @@ class VirtualListC<R extends RenderResource> extends React.Component<VirtualList
   render() {
     const { rows } = this.props;
     const { sortBy, columns, conf } = this.state;
-    const filteredColumns = columns.filter(
-      column => !(column.title === 'Cluster' && Object.keys(serverConfig.clusters || {}).length <= 1)
-    );
     const tableProps = {
-      cells: filteredColumns,
+      cells: columns,
       rows: [],
       gridBreakPoint: TableGridBreakpoint.none,
       role: 'presentation',

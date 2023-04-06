@@ -4,7 +4,6 @@ import { ServiceLink } from 'components/Link/ServiceLink';
 import { WorkloadLink } from 'components/Link/WorkloadLink';
 import * as React from 'react';
 import { ObjectReference, ServiceReference, WorkloadReference } from 'types/IstioObjects';
-import { HomeClusterName } from '../../../types/Common';
 
 interface IstioConfigReferencesProps {
   objectReferences: ObjectReference[];
@@ -58,7 +57,7 @@ class IstioConfigReferences extends React.Component<IstioConfigReferencesProps> 
           this.props.workloadReferences.map(reference => {
             return (
               <StackItem>
-                <WorkloadLink name={reference.name} namespace={reference.namespace} cluster={HomeClusterName} />
+                <WorkloadLink name={reference.name} namespace={reference.namespace} />
               </StackItem>
             );
           })}

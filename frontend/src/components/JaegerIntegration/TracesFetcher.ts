@@ -8,7 +8,6 @@ import transformTraceData from 'utils/tracing/TraceTransform';
 
 export type FetchOptions = {
   namespace: string;
-  cluster: string;
   target: string;
   targetKind: TargetKind;
   spanLimit: number;
@@ -46,7 +45,7 @@ export class TracesFetcher {
         : o.targetKind === 'service'
         ? API.getServiceTraces
         : API.getWorkloadTraces;
-    apiCall(o.cluster, o.namespace, o.target, q)
+    apiCall(o.namespace, o.target, q)
       .then(response => {
         const newTraces = response.data.data
           ? (response.data.data

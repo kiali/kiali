@@ -30,14 +30,7 @@ import { Pod, LogEntry, AccessLog, PodLogs } from '../../types/IstioObjects';
 import { getPodLogs, getWorkloadSpans, setPodEnvoyProxyLogLevel } from '../../services/Api';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { ToolbarDropdown } from '../../components/ToolbarDropdown/ToolbarDropdown';
-import {
-  TimeRange,
-  evalTimeRange,
-  TimeInMilliseconds,
-  isEqualTimeRange,
-  TimeInSeconds,
-  HomeClusterName
-} from '../../types/Common';
+import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange, TimeInSeconds } from '../../types/Common';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { KialiIcon, defaultIconStyle } from '../../config/KialiIcon';
@@ -94,7 +87,6 @@ type Entry = {
 
 interface WorkloadPodLogsState {
   accessLogModals: Map<string, AccessLog>;
-  cluster: string;
   containerOptions?: ContainerOption[];
   entries: Entry[];
   fullscreen: boolean;
@@ -206,11 +198,9 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
 
     const urlParams = new URLSearchParams(history.location.search);
     const showSpans = urlParams.get(URLParam.SHOW_SPANS);
-    const cluster = urlParams.get('cluster') || HomeClusterName;
 
     const defaultState = {
       accessLogModals: new Map<string, AccessLog>(),
-      cluster: cluster,
       entries: [],
       fullscreen: false,
       hideLogValue: '',
@@ -972,7 +962,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
         endMicros: endTime * 1000,
         startMicros: sinceTime * 1000000
       };
-      promises.unshift(getWorkloadSpans(this.state.cluster, namespace, this.props.workload, params));
+      promises.unshift(getWorkloadSpans(namespace, this.props.workload, params));
     }
 
     this.promises
