@@ -5,7 +5,6 @@ import { WorkloadListItem } from '../../types/Workload';
 import { ServiceListItem } from '../../types/ServiceList';
 import { setServerConfig } from '../../config/ServerConfig';
 import { serverRateConfig } from '../../types/ErrorRate/__testData__/ErrorRateConfig';
-import { HomeClusterName } from '../../types/Common';
 
 setServerConfig(serverRateConfig);
 const emptyAppHealth = new AppHealth(
@@ -65,7 +64,6 @@ const appList: AppListItem[] = [
 
 const workloadList: WorkloadListItem[] = [
   {
-    cluster: HomeClusterName,
     namespace: 'bookinfo',
     health: emptyWorkHealth,
     name: 'details-v1',
@@ -78,7 +76,6 @@ const workloadList: WorkloadListItem[] = [
     notCoveredAuthPolicy: false
   },
   {
-    cluster: HomeClusterName,
     namespace: 'bookinfo',
     health: emptyWorkHealth,
     name: 'productpage-v1',
@@ -91,7 +88,6 @@ const workloadList: WorkloadListItem[] = [
     notCoveredAuthPolicy: false
   },
   {
-    cluster: HomeClusterName,
     namespace: 'bookinfo',
     health: emptyWorkHealth,
     name: 'ratings-v1',
@@ -104,7 +100,6 @@ const workloadList: WorkloadListItem[] = [
     notCoveredAuthPolicy: false
   },
   {
-    cluster: HomeClusterName,
     namespace: 'bookinfo',
     health: emptyWorkHealth,
     name: 'reviews-v1',
@@ -117,7 +112,6 @@ const workloadList: WorkloadListItem[] = [
     notCoveredAuthPolicy: false
   },
   {
-    cluster: HomeClusterName,
     namespace: 'bookinfo',
     health: emptyWorkHealth,
     name: 'reviews-v2',
@@ -130,7 +124,6 @@ const workloadList: WorkloadListItem[] = [
     notCoveredAuthPolicy: false
   },
   {
-    cluster: HomeClusterName,
     namespace: 'bookinfo',
     health: emptyWorkHealth,
     name: 'reviews-v3',
@@ -239,7 +232,6 @@ describe('LabelFilter', () => {
     expect(result).toEqual([
       {
         namespace: 'bookinfo',
-        cluster: HomeClusterName,
         health: emptyWorkHealth,
         name: 'reviews-v1',
         type: 'Deployment',
@@ -252,7 +244,6 @@ describe('LabelFilter', () => {
       },
       {
         namespace: 'bookinfo',
-        cluster: HomeClusterName,
         health: emptyWorkHealth,
         name: 'reviews-v2',
         type: 'Deployment',
@@ -265,7 +256,6 @@ describe('LabelFilter', () => {
       },
       {
         namespace: 'bookinfo',
-        cluster: HomeClusterName,
         health: emptyWorkHealth,
         name: 'reviews-v3',
         type: 'Deployment',
