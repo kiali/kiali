@@ -64,7 +64,7 @@ deploy_kiali() {
 
   if [ "${SINGLE_KIALI}" == "true" ]; then
     echo "Preparing remote cluster secret for single Kiali install in multicluster mode."
-    ${SCRIPT_DIR}/kiali-create-remote-cluster-secret.sh -c ${CLIENT_EXE} -kcc ${CLUSTER1_CONTEXT} -rcc ${CLUSTER2_CONTEXT} -vo false
+    ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh -c ${CLIENT_EXE} -kcc ${CLUSTER1_CONTEXT} -rcc ${CLUSTER2_CONTEXT} -vo false
   fi
 
   # use the latest published server helm chart (if using dev images, it is up to the user to make sure this chart works with the dev image)

@@ -38,7 +38,7 @@ EXPOSE_SERVICES_YAML="${ISTIO_DIR}/samples/multicluster/expose-services.yaml"
 ${CLIENT_EXE} apply --context=${CLUSTER1_CONTEXT} -n ${ISTIO_NAMESPACE} -f $EXPOSE_SERVICES_YAML
 
 # Create Kiali remote secrets
-#source ${SCRIPT_DIR}/kiali-create-remote-cluster-secret.sh
+#source ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh
 
 # Install Kiali in both clusters if enabled
 source ${SCRIPT_DIR}/deploy-kiali.sh
