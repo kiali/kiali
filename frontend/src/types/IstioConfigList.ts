@@ -49,6 +49,7 @@ export declare type IstioConfigsMap = { [key: string]: IstioConfigList };
 
 export interface IstioConfigList {
   namespace: Namespace;
+  cluster: string;
   gateways: Gateway[];
   k8sGateways: K8sGateway[];
   k8sHTTPRoutes: K8sHTTPRoute[];
@@ -141,6 +142,7 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
   }
   return {
     namespace: unfiltered.namespace,
+    cluster: unfiltered.cluster,
     gateways: unfiltered.gateways.filter(gw => includeName(gw.metadata.name, names)),
     k8sGateways: unfiltered.k8sGateways.filter(gw => includeName(gw.metadata.name, names)),
     k8sHTTPRoutes: unfiltered.k8sHTTPRoutes.filter(route => includeName(route.metadata.name, names)),
@@ -198,7 +200,7 @@ export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[
   const hasValidations = (type: string, name: string, namespace: string) =>
     istioConfigList.validations[type] && istioConfigList.validations[type][validationKey(name, namespace)];
 
-  const nonItems = ['validations', 'permissions', 'namespace'];
+  const nonItems = ['validations', 'permissions', 'namespace', 'cluster'];
 
   Object.keys(istioConfigList).forEach(field => {
     if (nonItems.indexOf(field) > -1) {
