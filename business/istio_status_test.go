@@ -189,8 +189,10 @@ func TestGrafanaWorking(t *testing.T) {
 	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objs, b1, b2)
 
 	conf := config.Get()
-	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
+
+	// Set global cache var
+	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
@@ -222,12 +224,13 @@ func TestGrafanaDisabled(t *testing.T) {
 			}),
 	}
 	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objects, true, false)
-
 	// Disable Grafana
 	conf := config.Get()
 	conf.ExternalServices.Grafana.Enabled = false
-	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
+
+	// Set global cache var
+	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
@@ -276,8 +279,10 @@ func TestGrafanaNotWorking(t *testing.T) {
 
 	// Adapt the AddOns URLs to the mock Server
 	conf := addonAddMockUrls(httpServer.URL, config.NewConfig(), false)
-	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
+
+	// Set global cache var
+	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
@@ -305,8 +310,10 @@ func TestFailingTracingService(t *testing.T) {
 	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objs, b1, b2)
 
 	conf := config.Get()
-	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
+
+	// Set global cache var
+	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
@@ -329,6 +336,10 @@ func TestOverriddenUrls(t *testing.T) {
 
 	objects, idReachable, _ := sampleIstioComponent()
 	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objects, idReachable, true)
+
+	conf := config.NewConfig()
+	// Set global cache var
+	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
@@ -357,6 +368,9 @@ func TestCustomDashboardsMainPrometheus(t *testing.T) {
 	conf.ExternalServices.CustomDashboards.Prometheus.URL = ""
 	config.Set(conf)
 
+	// Set global cache var
+	SetupBusinessLayer(t, k8s, *conf)
+
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
@@ -377,6 +391,10 @@ func TestNoIstioComponentFoundError(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s, _, _ := mockAddOnsCalls(t, []runtime.Object{}, true, false)
+
+	conf := config.NewConfig()
+	// Set global cache var
+	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
@@ -400,6 +418,10 @@ func TestDefaults(t *testing.T) {
 	}
 
 	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objects, true, false)
+
+	conf := config.NewConfig()
+	// Set global cache var
+	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
@@ -447,6 +469,9 @@ func TestNonDefaults(t *testing.T) {
 	}
 	config.Set(c)
 
+	// Set global cache var
+	SetupBusinessLayer(t, k8s, *c)
+
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
@@ -490,6 +515,9 @@ func TestIstiodNotReady(t *testing.T) {
 		},
 	}
 	config.Set(c)
+
+	// Set global cache var
+	SetupBusinessLayer(t, k8s, *c)
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
@@ -550,6 +578,9 @@ func TestIstiodUnreachable(t *testing.T) {
 	}
 	config.Set(c)
 
+	// Set global cache var
+	SetupBusinessLayer(t, k8s, *c)
+
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
@@ -602,6 +633,9 @@ func TestCustomizedAppLabel(t *testing.T) {
 	}
 	config.Set(c)
 
+	// Set global cache var
+	SetupBusinessLayer(t, k8s, *c)
+
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
@@ -650,6 +684,9 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 	}
 	config.Set(c)
 
+	// Set global cache var
+	SetupBusinessLayer(t, k8s, *c)
+
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
@@ -693,6 +730,9 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 		},
 	}
 	config.Set(c)
+
+	// Set global cache var
+	SetupBusinessLayer(t, k8s, *c)
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s

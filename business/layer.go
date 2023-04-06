@@ -180,20 +180,7 @@ func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAC
 	temporaryLayer.TLS = TLSService{k8s: userClients[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
 	temporaryLayer.TokenReview = NewTokenReview(userClients[kubernetes.HomeClusterName])
 	temporaryLayer.Validations = IstioValidationsService{k8s: userClients[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
-
-	// TODO: Remove conditional once cache is fully mandatory.
-	if config.Get().KubernetesConfig.CacheEnabled {
-		// The caching client effectively uses two different SA account tokens.
-		// The kiali SA token is used for all cache methods. The cache methods are
-		// read-only. Methods that are not cached and methods that modify objects
-		// use the user's token through the normal client.
-		// TODO: Always pass caching client once caching is mandatory.
-		// TODO: Multicluster
-		cachingClient := cache.NewCachingClient(kialiCache, userClients[kubernetes.HomeClusterName])
-		temporaryLayer.Workload = *NewWorkloadService(cachingClient, prom, kialiCache, temporaryLayer, config.Get())
-	} else {
-		temporaryLayer.Workload = *NewWorkloadService(userClients[kubernetes.HomeClusterName], prom, kialiCache, temporaryLayer, config.Get())
-	}
+	temporaryLayer.Workload = *NewWorkloadService(userClients[kubernetes.HomeClusterName], prom, kialiCache, temporaryLayer, config.Get())
 
 	return temporaryLayer
 }
