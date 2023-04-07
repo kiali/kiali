@@ -57,6 +57,7 @@ DEFAULT_KIALI_VERSION="latest"
 DEFAULT_PROCESS_KIALI_SECRET="true"
 DEFAULT_PROCESS_REMOTE_RESOURCES="true"
 DEFAULT_REMOTE_CLUSTER_CONTEXT="west"
+DEFAULT_REMOTE_CLUSTER_NAME=""
 DEFAULT_REMOTE_CLUSTER_NAMESPACE="kiali-access-ns"
 DEFAULT_VIEW_ONLY="true"
 
@@ -72,6 +73,7 @@ DEFAULT_VIEW_ONLY="true"
 : ${PROCESS_REMOTE_RESOURCES:=${DEFAULT_PROCESS_REMOTE_RESOURCES}}
 : ${REMOTE_CLUSTER_CONTEXT:=${DEFAULT_REMOTE_CLUSTER_CONTEXT}}
 : ${REMOTE_CLUSTER_NAMESPACE:=${DEFAULT_REMOTE_CLUSTER_NAMESPACE}}
+: ${REMOTE_CLUSTER_NAME:=${DEFAULT_REMOTE_CLUSTER_NAME}}
 : ${VIEW_ONLY:=${DEFAULT_VIEW_ONLY}}
 
 DRY_RUN_ARG="--dry-run=none"
@@ -219,9 +221,9 @@ create_kiali_remote_cluster_secret() {
   info "Create the remote cluster secret in the Kiali cluster"
 
   # Examine the local kubeconfig and extract the rest of the necessary data we need in order to create the Kiali remote cluster secret.
-  local remote_cluster_server_url="$(${CLIENT_EXE} config view -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME}'")].cluster.server}' 2>/dev/null)"
+  local remote_cluster_server_url="$(${CLIENT_EXE} config view -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME_FROM_CONTEXT}'")].cluster.server}' 2>/dev/null)"
   if [ "${remote_cluster_server_url}" == "" ]; then
-    error "Unable to determine the remote cluster server URL from the kubeconfig remote cluster named [${REMOTE_CLUSTER_NAME}]. Check that the kubeconfig is correct."
+    error "Unable to determine the remote cluster server URL from the kubeconfig remote cluster named [${REMOTE_CLUSTER_NAME_FROM_CONTEXT}]. Check that the kubeconfig is correct."
   else
     info remote_cluster_server_url=${remote_cluster_server_url}
   fi
@@ -229,21 +231,21 @@ create_kiali_remote_cluster_secret() {
   # The CA data can either be specified directly in the config or a CA file is defined that we then have to read. Either way, get the CA bytes.
   # If we cannot find the CA bytes, it could be because it is configured with "insecure-skip-tls-verify: true". If so, use that unless we were told not to.
   # It is an error otherwise because we need the CA or we need to be allowed to skip the TLS verification.
-  local remote_cluster_ca_bytes="$(${CLIENT_EXE} config view --raw=true -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME}'")].cluster.certificate-authority-data}' 2>/dev/null)"
+  local remote_cluster_ca_bytes="$(${CLIENT_EXE} config view --raw=true -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME_FROM_CONTEXT}'")].cluster.certificate-authority-data}' 2>/dev/null)"
   if [ "${remote_cluster_ca_bytes}" == "" ]; then
-    local ca_file="$(${CLIENT_EXE} config view --raw=true -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME}'")].cluster.certificate-authority}' 2>/dev/null)"
+    local ca_file="$(${CLIENT_EXE} config view --raw=true -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME_FROM_CONTEXT}'")].cluster.certificate-authority}' 2>/dev/null)"
     if [ ! -r "${ca_file}" ]; then
-      local existing_skip_tls_verify="$(${CLIENT_EXE} config view --raw=true -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME}'")].cluster.insecure-skip-tls-verify}' 2>/dev/null)"
+      local existing_skip_tls_verify="$(${CLIENT_EXE} config view --raw=true -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME_FROM_CONTEXT}'")].cluster.insecure-skip-tls-verify}' 2>/dev/null)"
       if [ "${existing_skip_tls_verify}" != "true" ]; then
-        error "Unable to read the remote cluster CA bytes or file specified in the kubeconfig remote cluster named [${REMOTE_CLUSTER_NAME}]. Check that the kubeconfig is correct."
+        error "Unable to read the remote cluster CA bytes or file specified in the kubeconfig remote cluster named [${REMOTE_CLUSTER_NAME_FROM_CONTEXT}]. Check that the kubeconfig is correct."
       elif [ "${ALLOW_SKIP_TLS_VERIFY}" != "true" ]; then
-        error "The remote cluster named [${REMOTE_CLUSTER_NAME}] is configured with insecure-skip-tls-verify. If you agree to use that, pass in '--allow-skip-tls-verify true'. Aborting."
+        error "The remote cluster named [${REMOTE_CLUSTER_NAME_FROM_CONTEXT}] in the remote context is configured with insecure-skip-tls-verify. If you agree to use that, pass in '--allow-skip-tls-verify true'. Aborting."
       fi
     else
       info ca_file=${ca_file}
       remote_cluster_ca_bytes="$(cat ${ca_file} 2>/dev/null | base64 --wrap=0 2>/dev/null)"
       if [ "${remote_cluster_ca_bytes}" == "" ]; then
-        error "Unable to get the remote cluster CA cert data from the CA file [${ca_file}] specified in the kubeconfig remote cluster named [${REMOTE_CLUSTER_NAME}]. Check that the kubeconfig is correct."
+        error "Unable to get the remote cluster CA cert data from the CA file [${ca_file}] specified in the kubeconfig remote cluster named [${REMOTE_CLUSTER_NAME_FROM_CONTEXT}]. Check that the kubeconfig is correct."
       fi
     fi
   fi
@@ -258,6 +260,14 @@ create_kiali_remote_cluster_secret() {
     local cert_auth_yaml="certificate-authority-data: ${remote_cluster_ca_bytes}"
   fi
 
+  # a Secret stringData key must conform to Kubernetes naming rules. Othewise, this kind of error will result:
+  #    a valid config key must consist of alphanumeric characters, '-', '_' or '.'
+  #    (e.g. 'key.name',  or 'KEY_NAME',  or 'key-name', regex used for validation is '[-._a-zA-Z0-9]+')
+  # Make sure the remote cluster name conforms to this syntax because it will be used as the key to the secret data.
+  if ! echo "${REMOTE_CLUSTER_NAME}" | grep -Eq '^[-._a-zA-Z0-9]+$'; then
+    error "The remote cluster name [${REMOTE_CLUSTER_NAME}] does not conform to Kubernetes rules for secret key data. Use --remote-cluster-name to specify a name that matches the regex '^[-._a-zA-Z0-9]+$'"
+  fi
+
   KIALI_SECRET_YAML=$(cat <<EOF
 ---
 apiVersion: v1
@@ -270,7 +280,7 @@ metadata:
   annotations:
     ${KIALI_SECRET_ANNOTATION_NAME_CLUSTER}: ${REMOTE_CLUSTER_NAME}
 stringData:
-  $(echo "${REMOTE_CLUSTER_NAME}" | sed -e 's/[^-a-zA-Z0-9]/-/g' -e 's/[A-Z]/\L&/g'): |
+  ${REMOTE_CLUSTER_NAME}: |
     apiVersion: v1
     kind: Config
     preferences: {}
@@ -299,7 +309,7 @@ EOF
     echo "${KIALI_SECRET_YAML}" | ${CLIENT_EXE_KIALI_CLUSTER} apply ${DRY_RUN_ARG} -f -
   fi
 
-  info "A remote cluster secret named [${KIALI_CLUSTER_NAMESPACE}/${KIALI_SECRET_FULL_NAME}] has been created and can be used by Kiali to access the remote cluster."
+  info "A remote cluster secret named [${KIALI_SECRET_FULL_NAME}] has been created in the Kiali cluster namespace [${KIALI_CLUSTER_NAMESPACE}]. It can be used by Kiali to access the remote cluster."
 } # END create_kiali_remote_cluster_secret
 
 #
@@ -363,7 +373,11 @@ while [ $# -gt 0 ]; do
       REMOTE_CLUSTER_CONTEXT="$2"
       shift;shift
       ;;
-    -rcn|--remote-cluster-namespace)
+    -rcn|--remote-cluster-name)
+      REMOTE_CLUSTER_NAME="$2"
+      shift;shift
+      ;;
+    -rcns|--remote-cluster-namespace)
       REMOTE_CLUSTER_NAMESPACE="$2"
       shift;shift
       ;;
@@ -430,9 +444,15 @@ Valid command line arguments:
                                  will be used. You cannot set both this
                                  and --kiali-cluster-context to the same value.
                                  Default: "${DEFAULT_REMOTE_CLUSTER_CONTEXT}"
-  -rcn|--remote-cluster-namespace: the namespace where the resources will be
-                                   created on the remote cluster.
-                                   Default: "${DEFAULT_REMOTE_CLUSTER_NAMESPACE}"
+  -rcn|--remote-cluster-name: the name to be assigned to the remote cluster.
+                              Kiali will associate the remote cluster with this name.
+                              Make sure it is the same name that Istio uses.
+                              This must follow Kubernetes naming rules. Use
+                              only alphanumeric and dash ('-') characters.
+                              Default: the cluster name as specified in the remote cluster context
+  -rcns|--remote-cluster-namespace: the namespace where the resources will be
+                                    created on the remote cluster.
+                                    Default: "${DEFAULT_REMOTE_CLUSTER_NAMESPACE}"
   -vo|--view-only: if 'true' then the created service account/remote secret
                    will only provide a read-only view of the remote cluster.
                    Default: "${DEFAULT_VIEW_ONLY}"
@@ -461,6 +481,7 @@ info KIALI_CLUSTER_CONTEXT=${KIALI_CLUSTER_CONTEXT}
 info KIALI_CLUSTER_NAMESPACE=${KIALI_CLUSTER_NAMESPACE}
 info KIALI_VERSION=${KIALI_VERSION}
 info REMOTE_CLUSTER_CONTEXT=${REMOTE_CLUSTER_CONTEXT}
+info REMOTE_CLUSTER_NAME=${REMOTE_CLUSTER_NAME}
 info REMOTE_CLUSTER_NAMESPACE=${REMOTE_CLUSTER_NAMESPACE}
 info VIEW_ONLY=${VIEW_ONLY}
 
@@ -495,14 +516,19 @@ else
   CLIENT_EXE_KIALI_CLUSTER="${CLIENT_EXE} --context=${KIALI_CLUSTER_CONTEXT}"
 fi
 
-# Examine the local kubeconfig and extract the cluster name which is necessary data we need in order to create and delete the remote resources and Kiali secret.
-REMOTE_CLUSTER_NAME="$(${CLIENT_EXE} config view -o jsonpath='{.contexts[?(@.name == "'${REMOTE_CLUSTER_CONTEXT}'")].context.cluster}' 2>/dev/null)"
+# Find out the name of the cluster that is associated with the remote cluster's kube context
+REMOTE_CLUSTER_NAME_FROM_CONTEXT="$(${CLIENT_EXE} config view -o jsonpath='{.contexts[?(@.name == "'${REMOTE_CLUSTER_CONTEXT}'")].context.cluster}' 2>/dev/null)"
+if [ "${REMOTE_CLUSTER_NAME_FROM_CONTEXT}" == "" ]; then
+  error "Unable to determine the remote cluster associated with the given remote cluster context [${REMOTE_CLUSTER_CONTEXT}]. Check that the context name you provided is correct."
+fi
+
 if [ "${REMOTE_CLUSTER_NAME}" == "" ]; then
-  error "Unable to determine the remote cluster name from the given remote cluster context [${REMOTE_CLUSTER_CONTEXT}]. Check that the context name you provided is correct."
+  # The default cluster name will be the cluster name as found in the kube context.
+  REMOTE_CLUSTER_NAME="${REMOTE_CLUSTER_NAME_FROM_CONTEXT}"
 fi
 info REMOTE_CLUSTER_NAME=${REMOTE_CLUSTER_NAME}
 
-# the secret full name must be a valid k8s resource name - change special characters to dash and uppercase to lowercase to conform
+# the secret full name must be a valid k8s resource name - this isn't foolproof but change special characters to dash and uppercase to lowercase
 KIALI_SECRET_FULL_NAME="${KIALI_SECRET_NAME_PREFIX}$(echo "${REMOTE_CLUSTER_NAME}" | sed -e 's/[^-a-zA-Z0-9]/-/g' -e 's/[A-Z]/\L&/g')"
 
 # Create or delete the resources based on what the user wants to do
