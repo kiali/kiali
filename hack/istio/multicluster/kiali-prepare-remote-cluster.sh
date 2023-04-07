@@ -8,33 +8,9 @@ set -u
 #
 # This creates/deletes the required resources on a remote cluster and then
 # creates/deletes a secret on the Kiali home cluster (where Kiali
-# is or will be installed). This remote cluster secret will enable Kiali to
-# observe multiple clusters. You can optionally skip the creation of the
-# remote resources or the Kiali secret.
+# is or will be installed).
 #
-# You must have 'helm' installed and you must have connectivity to the
-# public Kiali helm repository in order for this script to be able to
-# access the Kiali Helm charts.
-#
-# Use "--dry-run true" to see what resources this script would create
-# without having this script create anything to any cluster. The YAML
-# for the resources to be created will be printed to stdout, with
-# informational messages printed to stderr.
-# If you use "--dry-run true" you can see just the resource YAML by piping
-# stderr to /dev/null or some output file in order to isolate stdout.
-# (e.g. kiali-prepare-remote-cluster.sh --dry-run true 2>/dev/null)
-#
-# With respect to the dry-run option provided by this script, please note
-# that you must be aware that if you ask the script to produce
-# the secret in addition to the remote cluster resources, the resulting
-# YAML of a dry run represent the new resources this script would have
-# created in two different clusters (the remote cluster and the kiali
-# cluster). In this case, do not apply the resulting YAML to a single'
-# cluster because that will not do what you want. In order for Kiali
-# to work properly, the final secret that is output must be applied to the
-# Kiali cluster; the other resources must be applied to the remote cluster.
-#
-# See --help for options.
+# See --help for more details and valid options.
 ##############################################################################
 
 # Used to name all the resources on the remote cluster.
@@ -391,19 +367,39 @@ while [ $# -gt 0 ]; do
 
 Use this tool to help prepare Kiali for accessing multiple clusters.
 
-This tool will create the required resources on a remote cluster. It can
-then (optionally) create a secret on the Kiali home cluster (where Kiali
-is or will be installed).
+This tool can create/delete the required resources on a remote cluster, and then
+it can create/delete a "remote cluster secret" on the Kiali home cluster (where
+Kiali is or will be installed). These remote cluster secrets will enable Kiali to
+observe multiple clusters.
 
-This remote cluster secret will enable Kiali to observe multiple clusters.
-This tool can also be used to delete those resources and the secret (see --delete).
+You must be logged into and have Kubernetes contexts configured for the clusters
+this script needs to access (--remote-cluster-context and --kiali-cluster-context).
+Your configured contexts can be found via "kubectl config get-contexts".
+
+You must have 'helm' installed and you must have connectivity to the public Kiali
+helm repository in order for this script to be able to access the Kiali Helm charts.
+
+Use "--dry-run true" to review the resources this script would create without having
+it actually create anything in any cluster. The YAML for the resources to
+be created will be printed to stdout, with informational messages printed to stderr.
+You can isolate the resource YAML by piping stderr to /dev/null or some output file
+(e.g. kiali-prepare-remote-cluster.sh --dry-run true 2>/dev/null). Note that if you
+ask the script to produce the remote cluster secret YAML (--process-kiali-secret)
+in addition to the remote cluster resources YAML (--process-remote-resources),
+the resulting output of a dry run represent all the resources that this script
+would have created in two different clusters (the Kiali cluster and remote cluster).
+In this case, do not manually apply the resulting YAML to a single cluster because
+that will not do what you want. In order for Kiali to work properly, the final
+remote cluster secret resource that is output by the dry run must be applied to the
+Kiali cluster; the other resources must be applied to the remote cluster.
 
 Valid command line arguments:
   -astv|--allow-skip-tls-verify: either 'true' or 'false'. If the cluster connection
                                  skips TLS verification (i.e. the context has
-                                 insecure-skip-tls-verify set to true), and you agree
-                                 with Kiali connecting to the remote cluster with the
-                                 same insecure setting, you must set this to 'true'.
+                                 insecure-skip-tls-verify set to true), and you
+                                 agree with Kiali connecting to the remote cluster
+                                 with the same insecure setting, you must set this
+                                 to 'true' or else the script will abort.
                                  Default: "${DEFAULT_ALLOW_SKIP_TLS_VERIFY}"
   -c|--client: either 'oc' or 'kubectl'. Default: "${DEFAULT_CLIENT_EXE}"
   -d|--delete: either 'true' or 'false'. If 'true' the resources and/or secret
@@ -428,28 +424,32 @@ Valid command line arguments:
                        "latest" to specify the latest version of Kiali.
                        Default: "${DEFAULT_KIALI_VERSION}"
   -pks|--process-kiali-secret: If 'true' the Kiali secret will be created in
-                               (or deleted from, see --delete)
-                               the namespace where Kiali is or will be
-                               (see --kiali-cluster-namespace).
+                               (or deleted from, see --delete) the namespace where
+                               Kiali is or will be (--kiali-cluster-namespace).
+                               The remote cluster must have its resources
+                               created (specifically, the Service Account
+                               must be accessible) in order for the Kiali
+                               secret to be created.
                                Default: "${DEFAULT_PROCESS_KIALI_SECRET}"
   -prr|--process-remote-resources: If 'true' the remote resources such as the
-                                  roles/bindings/service account will be created in
-                                  (or deleted from, see --delete)
-                                  the remote cluster in the namespace defined
-                                  via --remote-cluster-namespace.
-                                  Default: "${DEFAULT_PROCESS_REMOTE_RESOURCES}"
+                                   roles/bindings/service account will be created
+                                   in (or deleted from, see --delete) the remote
+                                   cluster in the namespace defined via the
+                                   --remote-cluster-namespace option.
+                                   Default: "${DEFAULT_PROCESS_REMOTE_RESOURCES}"
   -rcc|--remote-cluster-context: the .kube context that is used to communicate
                                  with the remote cluster.
                                  If 'current' then the current kube context
                                  will be used. You cannot set both this
                                  and --kiali-cluster-context to the same value.
                                  Default: "${DEFAULT_REMOTE_CLUSTER_CONTEXT}"
-  -rcn|--remote-cluster-name: the name to be assigned to the remote cluster.
-                              Kiali will associate the remote cluster with this name.
+  -rcn|--remote-cluster-name: the name to be assigned to the remote cluster. Kiali
+                              will associate the remote cluster with this name.
                               Make sure it is the same name that Istio uses.
                               This must follow Kubernetes naming rules. Use
                               only alphanumeric and dash ('-') characters.
-                              Default: the cluster name as specified in the remote cluster context
+                              Default: the cluster name found in the remote
+                                       cluster context
   -rcns|--remote-cluster-namespace: the namespace where the resources will be
                                     created on the remote cluster.
                                     Default: "${DEFAULT_REMOTE_CLUSTER_NAMESPACE}"
