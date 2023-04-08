@@ -106,10 +106,6 @@ minikube stop -p "${CLUSTER1_NAME}"
 echo "==== START MINIKUBE FOR CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
 start_minikube "${CLUSTER1_NAME}" "70-84" "--extra-config=apiserver.oidc-issuer-url=https://${KUBE_HOSTNAME}/realms/kube --extra-config=apiserver.oidc-ca-file=${MINIKUBE_KEYCLOAK_CERTS_DIR}/root-ca.pem --extra-config=apiserver.oidc-client-id=kube --extra-config=apiserver.oidc-groups-claim=groups --extra-config=apiserver.oidc-username-prefix=oidc: --extra-config=apiserver.oidc-groups-prefix=oidc: --extra-config=apiserver.oidc-username-claim=preferred_username"
 
-# Temporary fix due to https://github.com/kubernetes/minikube/issues/16053
-${CLIENT_EXE} set image --context ${CLUSTER1_NAME} -n metallb-system deployment/controller controller=quay.io/metallb/controller:v0.9.6@sha256:6932cf255dd7f06f550c7f106b9a206be95f847ab8cb77aafac7acd27def0b00
-${CLIENT_EXE} set image --context ${CLUSTER1_NAME} -n metallb-system daemonset/speaker speaker=quay.io/metallb/speaker:v0.9.6@sha256:7a400205b4986acd3d2ff32c29929682b8ff8d830837aff74f787c757176fa9f
-
 # Wait for ingress to become ready before deploying keycloak since keycloak relies on it.
 ${CLIENT_EXE} rollout status deployment/ingress-nginx-controller -n ingress-nginx
 
@@ -180,7 +176,3 @@ done
 minikube stop -p "${CLUSTER2_NAME}"
 echo "==== START MINIKUBE FOR CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
 start_minikube "${CLUSTER2_NAME}" "85-98" "--network=mk-${CLUSTER1_NAME} --extra-config=apiserver.oidc-issuer-url=https://${KUBE_HOSTNAME}/realms/kube --extra-config=apiserver.oidc-ca-file=${MINIKUBE_KEYCLOAK_CERTS_DIR}/root-ca.pem --extra-config=apiserver.oidc-client-id=kube --extra-config=apiserver.oidc-groups-claim=groups --extra-config=apiserver.oidc-username-prefix=oidc: --extra-config=apiserver.oidc-groups-prefix=oidc: --extra-config=apiserver.oidc-username-claim=preferred_username"
-
-# Temporary fix due to https://github.com/kubernetes/minikube/issues/16053
-${CLIENT_EXE} set image --context ${CLUSTER2_NAME} -n metallb-system deployment/controller controller=quay.io/metallb/controller:v0.9.6@sha256:6932cf255dd7f06f550c7f106b9a206be95f847ab8cb77aafac7acd27def0b00
-${CLIENT_EXE} set image --context ${CLUSTER2_NAME} -n metallb-system daemonset/speaker speaker=quay.io/metallb/speaker:v0.9.6@sha256:7a400205b4986acd3d2ff32c29929682b8ff8d830837aff74f787c757176fa9f
