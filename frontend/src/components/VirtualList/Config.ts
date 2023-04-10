@@ -34,7 +34,7 @@ export const hasMissingSidecar = (r: SortResource): boolean => {
   return !isIstioNamespace(r.namespace) && !r.istioSidecar && !isGateway(r.labels) && !isWaypoint(r.labels);
 };
 
-export const ambientEnabled = (r: SortResource): boolean => {
+export const noAmbientLabels = (r: SortResource): boolean => {
   return !isIstioNamespace(r.namespace) && !r.istioAmbient;
 };
 

@@ -4,7 +4,7 @@ import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import { appLabelFilter, versionLabelFilter } from '../../pages/WorkloadList/FiltersAndSorts';
 import MissingSidecar from '../MissingSidecar/MissingSidecar';
-import { ambientEnabled, hasMissingSidecar, IstioTypes, Renderer, Resource, SortResource, TResource } from './Config';
+import { noAmbientLabels, hasMissingSidecar, IstioTypes, Renderer, Resource, SortResource, TResource } from './Config';
 import { HealthIndicator } from '../Health/HealthIndicator';
 import { ValidationObjectSummary } from '../Validations/ValidationObjectSummary';
 import { ValidationServiceSummary } from '../Validations/ValidationServiceSummary';
@@ -74,7 +74,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
   item: AppListItem | WorkloadListItem | ServiceListItem
 ) => {
   const hasMissingSC = hasMissingSidecar(item);
-  const hasMissingA = ambientEnabled(item);
+  const hasMissingA = noAmbientLabels(item);
   const isWorkload = 'appLabel' in item;
   const isAmbientWaypoint = isWaypoint(item.labels);
   const hasMissingApp = isWorkload && !item['appLabel'] && !isWaypoint(item.labels);
