@@ -30,12 +30,12 @@ Feature: Kiali Apps List page
 
   @apps-page
   Scenario: Filter Apps by Istio Name
-    When user filters by "App Name" for "productpage"
+    When the user filters by "App Name" for "productpage"
     Then user only sees "productpage"
 
   @apps-page
   Scenario: Filter Apps by Istio Sidecar
-    When user filters by "Istio Sidecar" for "Present"
+    When the user filters by "Istio Sidecar" for "Present"
     Then user sees "productpage"
     And user sees "details"
     And user sees "reviews"
