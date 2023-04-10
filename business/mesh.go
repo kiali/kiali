@@ -97,7 +97,6 @@ type MeshConfig struct {
 	DefaultConfig  struct {
 		MeshId string `yaml:"meshId,omitempty"`
 	} `yaml:"defaultConfig,omitempty"`
-	Certificates []certConfig `yaml:"certificates"`
 }
 
 // NewMeshService initializes a new MeshService structure with the given k8sClients client and
