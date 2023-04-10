@@ -1130,7 +1130,7 @@ func (in *IstioConfigService) IsGatewayAPI() bool {
 	return in.k8s.IsGatewayAPI()
 }
 
-func (in *IstioConfigService) IsAmbientProfile() bool {
+func (in *IstioConfigService) IsAmbientEnabled() bool {
 
 	var cniNetwork map[string]any
 	istioConfigMap, err := in.k8s.GetConfigMap(config.Get().IstioNamespace, "istio-cni-config")

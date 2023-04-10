@@ -153,8 +153,8 @@ type Workload struct {
 
 	Validations IstioValidations `json:"validations"`
 
-	// Ambient waypoint
-	Waypoint []string `json:"waypoint"`
+	// Ambient waypoint workloads
+	WaypointWorkloads []string `json:"waypointWorkloads"`
 
 	// Health
 	Health WorkloadHealth `json:"health"`

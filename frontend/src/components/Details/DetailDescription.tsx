@@ -27,6 +27,7 @@ type Props = ReduxProps & {
   workloads?: AppWorkload[];
   services?: string[];
   health?: H.Health;
+  waypointWorkloads?: string[];
 };
 
 const iconStyle = style({
@@ -149,8 +150,8 @@ class DetailDescription extends React.Component<Props> {
         <Tooltip position={TooltipPosition.right} content={this.renderServiceAccounts(workload)}>
           <KialiIcon.Info className={infoStyle} />
         </Tooltip>
-        {((!workload.istioSidecar && !workload.istioAmbient && serverConfig.ambientProfile) ||
-          (!workload.istioSidecar && !serverConfig.ambientProfile)) && (
+        {((!workload.istioSidecar && !workload.istioAmbient && serverConfig.ambientEnabled) ||
+          (!workload.istioSidecar && !serverConfig.ambientEnabled)) && (
           <MissingSidecar
             namespace={this.props.namespace}
             isGateway={isGateway(workload.labels)}
@@ -206,8 +207,8 @@ class DetailDescription extends React.Component<Props> {
           >
             <span style={{ marginLeft: '10px' }}>{createIcon(sub.status)}</span>
           </Tooltip>
-          {((!workload.istioSidecar && !workload.istioAmbient && serverConfig.ambientProfile) ||
-            (!workload.istioSidecar && !serverConfig.ambientProfile)) && (
+          {((!workload.istioSidecar && !workload.istioAmbient && serverConfig.ambientEnabled) ||
+            (!workload.istioSidecar && !serverConfig.ambientEnabled)) && (
             <MissingSidecar
               namespace={this.props.namespace}
               isGateway={isGateway(workload.labels)}
@@ -304,6 +305,47 @@ class DetailDescription extends React.Component<Props> {
     ];
   }
 
+  private renderWaypoint() {
+    const waypointWorkloads = this.props.waypointWorkloads
+      ? this.props.waypointWorkloads.map(workload => {
+          const href = '/namespaces/' + this.props.namespace + '/workloads/' + workload;
+          const link = isParentKiosk(this.props.kiosk) ? (
+            <Link
+              to={''}
+              onClick={() => {
+                kioskContextMenuAction(href);
+              }}
+            >
+              {workload}
+            </Link>
+          ) : (
+            <Link to={href}>{workload}</Link>
+          );
+          return <span key={'WorkloadWaypointItem_' + workload}>{link}</span>;
+        })
+      : 'No workload items found';
+
+    return [
+      <>
+        <div key="waypoint-workloads-title">
+          <PFBadge badge={PFBadges.Waypoint} position={TooltipPosition.top} />
+          Waypoint proxy workloads list
+          <Tooltip
+            position={TooltipPosition.right}
+            content="List of workloads attached to the Waypoint proxy by the same Service account"
+          >
+            <KialiIcon.Info className={infoStyle} />
+          </Tooltip>
+        </div>
+        <div key="waypoint-workloads" className={resourceListStyle}>
+          <ul id="waypoint-workloads" style={{ listStyleType: 'none', paddingLeft: '25px' }}>
+            {waypointWorkloads}
+          </ul>
+        </div>
+      </>
+    ];
+  }
+
   render() {
     return (
       <>
@@ -312,6 +354,7 @@ class DetailDescription extends React.Component<Props> {
         {this.props.workloads !== undefined && this.workloadSummary()}
         {this.props.services !== undefined && this.serviceList()}
         {this.props.health && renderTrafficStatus(this.props.health)}
+        {this.props.waypointWorkloads && this.renderWaypoint()}
       </>
     );
   }

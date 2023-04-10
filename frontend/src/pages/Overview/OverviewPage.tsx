@@ -930,7 +930,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                     Istio API disabled
                                   </Label>
                                 )}
-                                {serverConfig.ambientProfile &&
+                                {serverConfig.ambientEnabled &&
                                   ns.name !== serverConfig.istioNamespace &&
                                   ns.labels &&
                                   ns.labels['istio.io/dataplane-mode'] === 'ambient' && (

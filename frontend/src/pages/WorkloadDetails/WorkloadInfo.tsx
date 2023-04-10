@@ -132,7 +132,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
 
     const validations: Validations = {};
     const isWaypoint =
-      serverConfig.ambientProfile === true &&
+      serverConfig.ambientEnabled === true &&
       workload.labels &&
       workload.labels['gateway.istio.io/managed'] === 'istio.io-mesh-controller';
 
@@ -150,7 +150,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
             if (!pod.istioContainers || pod.istioContainers.length === 0) {
               if (
                 !(
-                  serverConfig.ambientProfile === true &&
+                  serverConfig.ambientEnabled === true &&
                   (pod.annotations ? pod.annotations['ambient.istio.io/redirection'] === 'enabled' : false)
                 )
               ) {
@@ -238,8 +238,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
       { field: 'envoyFilters', validation: 'envoyfilter' },
       { field: 'requestAuthentications', validation: 'requestauthentication' },
       { field: 'authorizationPolicies', validation: 'authorizationpolicy' },
-      { field: 'peerAuthentications', validation: 'peerauthentication' },
-      { field: 'waypoint', validation: 'waypoint' }
+      { field: 'peerAuthentications', validation: 'peerauthentication' }
     ];
     if (this.state.workloadIstioConfig?.validations) {
       const typeNames: { [key: string]: string[] } = {};

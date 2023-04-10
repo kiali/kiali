@@ -11,7 +11,7 @@ class ControlPlaneBadge extends React.Component<{}> {
         <Label style={{ marginLeft: 5 }} color="green" isCompact>
           Control plane
         </Label>
-        {serverConfig.ambientProfile && <AmbientBadge tooltip={true}></AmbientBadge>} <IstioStatusInline />
+        {serverConfig.ambientEnabled && <AmbientBadge tooltip={true}></AmbientBadge>} <IstioStatusInline />
       </>
     );
   }

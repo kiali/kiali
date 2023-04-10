@@ -13,6 +13,7 @@ import (
 type Pods []*Pod
 
 const ambientAnnotation = "ambient.istio.io/redirection"
+const waypointLabel = "gateway.istio.io/managed"
 
 // Pod holds a subset of v1.Pod data that is meaningful in Kiali
 type Pod struct {
@@ -210,6 +211,11 @@ func (pods Pods) HasAnyAmbient() bool {
 // HasAmbient returns true if the pod is labeled as ambient-type
 func (pod *Pod) HasAmbient() bool {
 	return pod.Annotations[ambientAnnotation] == "enabled"
+}
+
+// IsWaypoint returns true if the pod is labeled as ambient-type
+func (pod *Pod) IsWaypoint() bool {
+	return pod.Labels[waypointLabel] == "istio.io-mesh-controller"
 }
 
 // SyncedPodsCount returns the number of Pods with its proxy synced

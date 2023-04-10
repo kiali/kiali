@@ -33,7 +33,7 @@ type AppListItem struct {
 	// example: true
 	IstioSidecar bool `json:"istioSidecar"`
 
-	// Define if belongs to a namespace labeled as ambient
+	// Define if any pod has the Ambient annotation
 	// required: true
 	// example: true
 	IstioAmbient bool `json:"istioAmbient"`

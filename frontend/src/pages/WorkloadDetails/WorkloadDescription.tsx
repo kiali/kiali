@@ -187,6 +187,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
             apps={apps}
             services={services}
             health={this.props.health}
+            waypointWorkloads={this.props.workload?.waypointWorkloads}
           />
         </CardBody>
       </Card>

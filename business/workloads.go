@@ -1718,11 +1718,10 @@ func fetchWorkloadFromCluster(ctx context.Context, layer *Layer, client kubernet
 					pod.ProxyStatus = layer.ProxyStatus.GetPodProxyStatus(criteria.Namespace, pod.Name)
 				}
 			}
-		}
-
-		// Check if there are any waypoint proxy binded to this service account
-		if w.IstioAmbient {
-			w.Waypoint = listWaypoint(ctx, layer, criteria.Namespace, w)
+			if pod.IsWaypoint() {
+				sa := pod.Annotations["istio.io/for-service-account"]
+				w.WaypointWorkloads = append(w.WaypointWorkloads, listWaypointWorkloads(ctx, layer, criteria.Namespace, sa)...)
+			}
 		}
 
 		if cnFound {
@@ -1732,28 +1731,24 @@ func fetchWorkloadFromCluster(ctx context.Context, layer *Layer, client kubernet
 	return wl, kubernetes.NewNotFound(criteria.WorkloadName, "Kiali", "Workload")
 }
 
-// Return the list of waypoint proxy binded to a workload service account
-func listWaypoint(ctx context.Context, layer *Layer, namespace string, w models.Workload) []string {
-	// Get List of waypoint proxies from the namespace and compare the
-	wlist, err := fetchWorkloads(ctx, layer, namespace, "gateway.istio.io/managed=istio.io-mesh-controller")
+// Return the list of workloads binded to a service account (From waypoint)
+func listWaypointWorkloads(ctx context.Context, layer *Layer, namespace string, sa string) []string {
+	// Get List of waypoint proxies from the namespace and check which workloads are using the same service account
+	wlist, err := fetchWorkloads(ctx, layer, namespace, "")
 	if err != nil {
 		log.Errorf("Error fetching workloads")
 	}
 
-	var waypointlist []string
+	var workloadslist []string
 	// Get service Account name for each pod from the workload
-	if len(w.Pods) > 0 {
-		for _, wc := range w.Pods {
-			for _, waypoint := range wlist {
-				for _, wp := range waypoint.Pods {
-					if wp.ServiceAccountName == wc.ServiceAccountName {
-						waypointlist = append(waypointlist, waypoint.Name)
-					}
-				}
+	for _, waypoint := range wlist {
+		for _, wp := range waypoint.Pods {
+			if wp.ServiceAccountName == sa {
+				workloadslist = append(workloadslist, waypoint.Name)
 			}
 		}
 	}
-	return waypointlist
+	return workloadslist
 }
 
 func (in *WorkloadService) updateWorkload(namespace string, workloadName string, workloadType string, jsonPatch string, patchType string) error {

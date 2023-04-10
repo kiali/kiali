@@ -27,10 +27,10 @@ const infoStyle = style({
 
 class MissingSidecar extends React.Component<MissingSidecarProps, {}> {
   static defaultProps = {
-    textmesh: 'Outside the Mesh',
+    textmesh: 'Out of the Mesh',
     text: 'Missing Sidecar',
     meshtooltip:
-      'Outside the Mesh. Istio sidecar container or Ambient labels not found in Pod(s). Check if the istio-injection label/annotation is correctly set on the namespace/workload.',
+      'Out of the Mesh. Istio sidecar container or Ambient labels not found in Pod(s). Check if the istio-injection label/annotation is correctly set on the namespace/workload.',
     texttooltip:
       'Istio sidecar container not found in Pod(s). Check if the istio-injection label/annotation is correctly set on the namespace/workload.',
     tooltip: false,
@@ -45,13 +45,13 @@ class MissingSidecar extends React.Component<MissingSidecarProps, {}> {
         {React.createElement(icon, { style: { color: color, verticalAlign: '-2px' } })}
         {!tooltip && (
           <span style={{ marginLeft: '8px' }}>
-            {serverConfig.ambientProfile ? this.props.textmesh : this.props.text}
+            {serverConfig.ambientEnabled ? this.props.textmesh : this.props.text}
             <Tooltip
               key={`tooltip_missing_sidecar`}
               position={TooltipPosition.top}
               content={
                 <div style={{ textAlign: 'left' }}>
-                  {serverConfig.ambientProfile ? this.props.meshtooltip : this.props.texttooltip}
+                  {serverConfig.ambientEnabled ? this.props.meshtooltip : this.props.texttooltip}
                 </div>
               }
             >
@@ -70,7 +70,7 @@ class MissingSidecar extends React.Component<MissingSidecarProps, {}> {
       <Tooltip
         content={
           <div style={{ textAlign: 'left' }}>
-            {serverConfig.ambientProfile ? this.props.meshtooltip : this.props.texttooltip}
+            {serverConfig.ambientEnabled ? this.props.meshtooltip : this.props.texttooltip}
           </div>
         }
         position={TooltipPosition.right}
