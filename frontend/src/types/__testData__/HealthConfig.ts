@@ -3,7 +3,7 @@ import { getExpr } from '../../config/HealthConfig';
 export const healthConfig = {
   accessibleNamespaces: [],
   authStrategy: '',
-  ambientProfile: false,
+  ambientEnabled: false,
   clusters: {},
   gatewayAPIEnabled: false,
   logLevel: '',
