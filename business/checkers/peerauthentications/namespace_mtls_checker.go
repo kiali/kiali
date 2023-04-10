@@ -8,8 +8,9 @@ import (
 )
 
 type NamespaceMtlsChecker struct {
-	PeerAuthn   *security_v1beta.PeerAuthentication
-	MTLSDetails kubernetes.MTLSDetails
+	PeerAuthn       *security_v1beta.PeerAuthentication
+	MTLSDetails     kubernetes.MTLSDetails
+	AutoMTLSEnabled bool
 }
 
 // Checks if a PeerAuthn enabling namespace-wide has a Destination Rule enabling mTLS too
@@ -18,6 +19,11 @@ func (t NamespaceMtlsChecker) Check() ([]*models.IstioCheck, bool) {
 
 	// if PeerAuthn doesn't enables mTLS, stop validation with any check.
 	if strictMode := kubernetes.PeerAuthnHasStrictMTLS(t.PeerAuthn); !strictMode {
+		return validations, true
+	}
+
+	// if EnableAutoMtls is true, then we don't need to check for DestinationRules
+	if t.AutoMTLSEnabled {
 		return validations, true
 	}
 

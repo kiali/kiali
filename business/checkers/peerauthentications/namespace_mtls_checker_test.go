@@ -107,3 +107,22 @@ func assertNoValidations(t *testing.T, peerAuth *security_v1beta.PeerAuthenticat
 	assert.Empty(vals)
 	assert.True(valid)
 }
+
+func TestNoNamespaceWideValidationsAddedWhenStrictAndAutoMtlsEnabled(t *testing.T) {
+	assert := assert.New(t)
+
+	meshPolicy := data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT"))
+	mTLSDetails := kubernetes.MTLSDetails{
+		DestinationRules: []*networking_v1beta1.DestinationRule{},
+	}
+
+	vals, valid := MeshMtlsChecker{
+		MeshPolicy:      meshPolicy,
+		MTLSDetails:     mTLSDetails,
+		AutoMTLSEnabled: true,
+	}.Check()
+
+	assert.Empty(vals)
+	assert.True(valid)
+
+}

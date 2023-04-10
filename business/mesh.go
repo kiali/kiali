@@ -89,16 +89,15 @@ type KialiInstance struct {
 	Version string `json:"version"`
 }
 
-type meshIdConfig struct {
-	DefaultConfig struct {
-		MeshId string `yaml:"meshId,omitempty"`
-	} `yaml:"defaultConfig,omitempty"`
-}
-
-type meshTrafficPolicyConfig struct {
+type MeshConfig struct {
 	OutboundTrafficPolicy struct {
 		Mode string `yaml:"mode,omitempty"`
 	} `yaml:"outboundTrafficPolicy,omitempty"`
+	EnableAutoMtls bool `yaml:"enableAutoMtls,omitempty"`
+	DefaultConfig  struct {
+		MeshId string `yaml:"meshId,omitempty"`
+	} `yaml:"defaultConfig,omitempty"`
+	Certificates []certConfig `yaml:"certificates"`
 }
 
 // NewMeshService initializes a new MeshService structure with the given k8sClients client and
@@ -155,24 +154,7 @@ func (in *MeshService) IsMeshConfigured() (bool, error) {
 		return isMeshConfigured, nil
 	}
 
-	cfg := config.Get()
-
-	istioConfig, err := in.k8s.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			err = fmt.Errorf("%w in namespace [%s]", err, cfg.IstioNamespace)
-		}
-		return false, err
-	}
-
-	meshConfigYaml, ok := istioConfig.Data["mesh"]
-	if !ok {
-		log.Warning("Istio config not found when resolving if mesh-id is set. Falling back to mesh-id not configured.")
-		return false, nil
-	}
-
-	meshConfig := meshIdConfig{}
-	err = yaml.Unmarshal([]byte(meshConfigYaml), &meshConfig)
+	meshConfig, err := in.GetIstioConfig()
 	if err != nil {
 		return false, err
 	}
@@ -543,30 +525,10 @@ func (in *MeshService) resolveNetwork(clusterName string, cluster kubernetes.Rem
 }
 
 func (in *MeshService) OutboundTrafficPolicy() (*models.OutboundPolicy, error) {
-	cfg := config.Get()
 	otp := models.OutboundPolicy{Mode: "ALLOW_ANY"}
-	var istioConfig *core_v1.ConfigMap
 	var err error
-	if IsNamespaceCached(cfg.IstioNamespace) {
-		istioConfig, err = kialiCache.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
-	} else {
-		istioConfig, err = in.k8s.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
-	}
-	if err != nil {
-		if errors.IsNotFound(err) {
-			err = fmt.Errorf("%w in namespace [%s]", err, cfg.IstioNamespace)
-		}
-		return nil, err
-	}
 
-	meshConfigYaml, ok := istioConfig.Data["mesh"]
-	if !ok {
-		log.Warning("Istio config not found when resolving if mesh-id is set. Falling back to mesh-id not configured.")
-		return &otp, nil
-	}
-
-	meshConfig := meshTrafficPolicyConfig{}
-	err = yaml.Unmarshal([]byte(meshConfigYaml), &meshConfig)
+	meshConfig, err := in.GetIstioConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -657,4 +619,32 @@ func (in *MeshService) CanaryUpgradeStatus() (*models.CanaryUpgradeStatus, error
 	}
 
 	return status, nil
+}
+
+func (in *MeshService) GetIstioConfig() (*MeshConfig, error) {
+	conf := config.Get()
+
+	// Get the Istio ConfigMap
+	var istioConfigMap *core_v1.ConfigMap
+	var err error
+	if IsNamespaceCached(conf.IstioNamespace) {
+		istioConfigMap, err = kialiCache.GetConfigMap(conf.IstioNamespace, conf.ExternalServices.Istio.ConfigMapName)
+	} else {
+		istioConfigMap, err = in.k8s.GetConfigMap(conf.IstioNamespace, conf.ExternalServices.Istio.ConfigMapName)
+	}
+
+	if err != nil {
+		if errors.IsNotFound(err) {
+			err = fmt.Errorf("%w in namespace [%s]", err, conf.IstioNamespace)
+		}
+		return nil, err
+	}
+
+	meshConfig := MeshConfig{}
+	err = yaml.Unmarshal([]byte(istioConfigMap.Data["mesh"]), &meshConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return &meshConfig, nil
 }

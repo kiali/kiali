@@ -16,6 +16,7 @@ type PeerAuthenticationChecker struct {
 	PeerAuthentications   []*security_v1beta.PeerAuthentication
 	MTLSDetails           kubernetes.MTLSDetails
 	WorkloadsPerNamespace map[string]models.WorkloadList
+	AutoMTLSEnabled       bool
 }
 
 func (m PeerAuthenticationChecker) Check() models.IstioValidations {
@@ -51,10 +52,10 @@ func (m PeerAuthenticationChecker) runChecks(peerAuthn *security_v1beta.PeerAuth
 	// PeerAuthentications into  the root namespace namespace are considered Mesh-wide objects
 	if config.IsRootNamespace(peerAuthn.Namespace) {
 		enabledCheckers = append(enabledCheckers,
-			peerauthentications.MeshMtlsChecker{MeshPolicy: peerAuthn, MTLSDetails: m.MTLSDetails, IsServiceMesh: false})
+			peerauthentications.MeshMtlsChecker{MeshPolicy: peerAuthn, MTLSDetails: m.MTLSDetails, IsServiceMesh: false, AutoMTLSEnabled: m.AutoMTLSEnabled})
 	} else {
 		enabledCheckers = append(enabledCheckers,
-			peerauthentications.NamespaceMtlsChecker{PeerAuthn: peerAuthn, MTLSDetails: m.MTLSDetails})
+			peerauthentications.NamespaceMtlsChecker{PeerAuthn: peerAuthn, MTLSDetails: m.MTLSDetails, AutoMTLSEnabled: m.AutoMTLSEnabled})
 	}
 
 	for _, checker := range enabledCheckers {

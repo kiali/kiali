@@ -9,9 +9,10 @@ import (
 
 // Note that MeshMtlsChecker will work with MeshPolicy resources
 type MeshMtlsChecker struct {
-	MeshPolicy    *security_v1beta.PeerAuthentication
-	MTLSDetails   kubernetes.MTLSDetails
-	IsServiceMesh bool
+	MeshPolicy      *security_v1beta.PeerAuthentication
+	MTLSDetails     kubernetes.MTLSDetails
+	IsServiceMesh   bool
+	AutoMTLSEnabled bool
 }
 
 func (t MeshMtlsChecker) Check() ([]*models.IstioCheck, bool) {
@@ -19,6 +20,11 @@ func (t MeshMtlsChecker) Check() ([]*models.IstioCheck, bool) {
 
 	// if MeshPolicy doesn't have mtls in strict mode, stop validation with any check.
 	if strictMode := kubernetes.PeerAuthnHasStrictMTLS(t.MeshPolicy); !strictMode {
+		return validations, true
+	}
+
+	// if EnableAutoMtls is true, then we don't need to check for DestinationRules
+	if t.AutoMTLSEnabled {
 		return validations, true
 	}
 
