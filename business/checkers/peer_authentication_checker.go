@@ -16,7 +16,6 @@ type PeerAuthenticationChecker struct {
 	PeerAuthentications   []*security_v1beta.PeerAuthentication
 	MTLSDetails           kubernetes.MTLSDetails
 	WorkloadsPerNamespace map[string]models.WorkloadList
-	AutoMTLSEnabled       bool
 }
 
 func (m PeerAuthenticationChecker) Check() models.IstioValidations {
