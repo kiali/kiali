@@ -114,12 +114,12 @@ func TestNoNamespaceWideValidationsAddedWhenStrictAndAutoMtlsEnabled(t *testing.
 	meshPolicy := data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT"))
 	mTLSDetails := kubernetes.MTLSDetails{
 		DestinationRules: []*networking_v1beta1.DestinationRule{},
+		EnabledAutoMtls:  true,
 	}
 
 	vals, valid := MeshMtlsChecker{
-		MeshPolicy:      meshPolicy,
-		MTLSDetails:     mTLSDetails,
-		AutoMTLSEnabled: true,
+		MeshPolicy:  meshPolicy,
+		MTLSDetails: mTLSDetails,
 	}.Check()
 
 	assert.Empty(vals)

@@ -165,13 +165,13 @@ func TestNoValidationsAddedWhenStrictAndAutoMtlsEnabled(t *testing.T) {
 	meshPolicy := data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT"))
 	mTLSDetails := kubernetes.MTLSDetails{
 		DestinationRules: []*networking_v1beta1.DestinationRule{},
+		EnabledAutoMtls:  true,
 	}
 
 	vals, valid := MeshMtlsChecker{
-		MeshPolicy:      meshPolicy,
-		MTLSDetails:     mTLSDetails,
-		AutoMTLSEnabled: true,
-		IsServiceMesh:   true,
+		MeshPolicy:    meshPolicy,
+		MTLSDetails:   mTLSDetails,
+		IsServiceMesh: true,
 	}.Check()
 
 	assert.Empty(vals)
