@@ -22,6 +22,11 @@ func (t MeshMtlsChecker) Check() ([]*models.IstioCheck, bool) {
 		return validations, true
 	}
 
+	// if EnableAutoMtls is true, then we don't need to check for DestinationRules
+	if t.MTLSDetails.EnabledAutoMtls {
+		return validations, true
+	}
+
 	// otherwise, check among Destination Rules for a rule enabling mTLS mesh-wide.
 	for _, dr := range t.MTLSDetails.DestinationRules {
 		if enabled, _ := kubernetes.DestinationRuleHasMeshWideMTLSEnabled(dr); enabled {
