@@ -124,13 +124,14 @@ func TestMultiClusterGetNamespace(t *testing.T) {
 	// assert := assert.New(t)
 
 	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
 	config.Set(conf)
 
 	k8s := setupNamespaceServiceWithNs()
 
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.ClientInterface{
-		kubernetes.HomeClusterName: kubetest.NewFakeK8sClient(
+		"east": kubetest.NewFakeK8sClient(
 			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
 		),
 		"west": kubetest.NewFakeK8sClient(
@@ -159,13 +160,14 @@ func TestMultiClusterGetNamespaces(t *testing.T) {
 	assert := assert.New(t)
 
 	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
 	config.Set(conf)
 
 	k8s := setupNamespaceServiceWithNs()
 
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.ClientInterface{
-		kubernetes.HomeClusterName: kubetest.NewFakeK8sClient(
+		"east": kubetest.NewFakeK8sClient(
 			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
 		),
 		"west": kubetest.NewFakeK8sClient(
@@ -188,7 +190,7 @@ func TestMultiClusterGetNamespaces(t *testing.T) {
 		clusterNames = append(clusterNames, ns.Cluster)
 	}
 
-	assert.Contains(clusterNames, kubernetes.HomeClusterName)
+	assert.Contains(clusterNames, "east")
 	assert.Contains(clusterNames, "west")
 }
 
@@ -197,13 +199,14 @@ func TestGetNamespacesCached(t *testing.T) {
 	assert := assert.New(t)
 
 	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
 	config.Set(conf)
 
 	k8s := setupNamespaceServiceWithNs()
 
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.ClientInterface{
-		kubernetes.HomeClusterName: k8s,
+		"east": k8s,
 	}
 	clientFactory.SetClients(clients)
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
@@ -212,7 +215,7 @@ func TestGetNamespacesCached(t *testing.T) {
 	cache.SetNamespaces(
 		k8s.GetToken(),
 		// gamma is only cached.
-		[]models.Namespace{{Name: "bookinfo"}, {Name: "alpha"}, {Name: "beta"}, {Name: "gamma", Cluster: kubernetes.HomeClusterName}},
+		[]models.Namespace{{Name: "bookinfo"}, {Name: "alpha"}, {Name: "beta"}, {Name: "gamma", Cluster: "west"}},
 	)
 	kialiCache = cache
 
@@ -222,10 +225,10 @@ func TestGetNamespacesCached(t *testing.T) {
 
 	require.Len(namespaces, 4)
 
-	namespace, err := nsservice.GetNamespaceByCluster(context.TODO(), "gamma", kubernetes.HomeClusterName)
+	namespace, err := nsservice.GetNamespaceByCluster(context.TODO(), "gamma", "west")
 	require.NoError(err)
 
-	assert.Equal(kubernetes.HomeClusterName, namespace.Cluster)
+	assert.Equal("west", namespace.Cluster)
 }
 
 type forbiddenFake struct{ kubernetes.ClientInterface }
@@ -240,6 +243,7 @@ func TestGetNamespacesForbiddenCached(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
 	config.Set(conf)
 
 	k8s := setupNamespaceServiceWithNs()
@@ -247,8 +251,8 @@ func TestGetNamespacesForbiddenCached(t *testing.T) {
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	// Two clusters: one the user has access to, one they don't.
 	clients := map[string]kubernetes.ClientInterface{
-		kubernetes.HomeClusterName: &forbiddenFake{k8s},
-		"west":                     k8s,
+		"east": &forbiddenFake{k8s},
+		"west": k8s,
 	}
 	clientFactory.SetClients(clients)
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
@@ -257,14 +261,14 @@ func TestGetNamespacesForbiddenCached(t *testing.T) {
 	cache.SetNamespaces(
 		k8s.GetToken(),
 		// Bookinfo is cached for the west cluster that the user has access to
-		// but NOT for the home cluster that the user doesn't have access to.
+		// but NOT for the east cluster that the user doesn't have access to.
 		[]models.Namespace{{Name: "bookinfo", Cluster: "west"}},
 	)
 	kialiCache = cache
 
 	nsservice := NewNamespaceService(clients, clients)
 	// Try to get the bookinfo namespace from the home cluster.
-	_, err := nsservice.GetNamespaceByCluster(context.TODO(), "bookinfo", kubernetes.HomeClusterName)
+	_, err := nsservice.GetNamespaceByCluster(context.TODO(), "bookinfo", "east")
 	require.Error(err)
 }
 

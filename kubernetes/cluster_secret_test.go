@@ -57,7 +57,10 @@ func TestReloadRemoteClusterSecret(t *testing.T) {
 	check.Nil(err)
 	check.NotNil(clientFactory)
 
-	clusterNames := clientFactory.GetClusterNames()
+	var clusterNames []string
+	for cluster := range clientFactory.saClientEntries {
+		clusterNames = append(clusterNames, cluster)
+	}
 	check.Equal(2, len(clusterNames), "Should have seen the remote cluster secret")
 	check.Contains(clusterNames, HomeClusterName)
 	check.Contains(clusterNames, testClusterName)
@@ -80,7 +83,7 @@ func TestReloadRemoteClusterSecret(t *testing.T) {
 func createTestRemoteClusterSecretFile(t *testing.T, parentDir string, name string, content string) {
 	childDir := fmt.Sprintf("%s/%s", parentDir, name)
 	filename := fmt.Sprintf("%s/%s", childDir, name)
-	if err := os.MkdirAll(childDir, 0777); err != nil {
+	if err := os.MkdirAll(childDir, 0o777); err != nil {
 		t.Fatalf("Failed to create tmp remote cluster secret dir [%v]: %v", childDir, err)
 	}
 	f, err := os.Create(filename)

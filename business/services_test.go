@@ -34,13 +34,13 @@ func TestServiceListParsing(t *testing.T) {
 		&s1,
 		&s2,
 	}
-	k8s := kubetest.NewFakeK8sClient(objects...)
 	conf := config.NewConfig()
 	config.Set(conf)
+	k8s := kubetest.NewFakeK8sClient(objects...)
 	setupGlobalMeshConfig()
 	SetupBusinessLayer(t, k8s, *conf)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = k8s
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	svc := NewWithBackends(k8sclients, k8sclients, nil, nil).Svc
 
 	criteria := ServiceCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}

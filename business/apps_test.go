@@ -13,41 +13,15 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
-func setupAppService(k8s *kubetest.FakeK8sClient) *AppService {
+func setupAppService(clients map[string]kubernetes.ClientInterface) *AppService {
 	prom := new(prometheustest.PromClientMock)
-	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
 	layer := NewWithBackends(clients, clients, prom, nil)
 	setupGlobalMeshConfig()
-	return &AppService{userClients: clients, prom: prom, businessLayer: layer}
-}
-
-func setupTestingKialiCache(k8s *kubetest.FakeK8sClient, conf *config.Config, require *require.Assertions) func() {
-	if conf == nil {
-		conf = config.NewConfig()
-		config.Set(conf)
-	}
-
-	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
-	clientFactory.SetClients(map[string]kubernetes.ClientInterface{
-		kubernetes.HomeClusterName: k8s,
-	})
-
-	kialiCache, _ = cache.NewKialiCache(clientFactory, *conf)
-	require.NotNil(kialiCache)
-
-	kialiCache.CheckNamespace("Namespace")
-	kialiCache.SetRegistryStatus(&kubernetes.RegistryStatus{})
-
-	return func() {
-		kialiCache.Stop()
-		kialiCache = nil
-	}
+	return &layer.App
 }
 
 func TestGetAppListFromDeployments(t *testing.T) {
@@ -55,6 +29,7 @@ func TestGetAppListFromDeployments(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
+	config.Set(conf)
 	// Auxiliar fake* tests defined in workload_test.go
 	objects := []runtime.Object{
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
@@ -72,10 +47,9 @@ func TestGetAppListFromDeployments(t *testing.T) {
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	SetWithBackends(mockClientFactory, nil)
 
-	stopCache := setupTestingKialiCache(k8s, nil, require)
-	defer stopCache()
+	SetupBusinessLayer(t, k8s, *conf)
 
-	svc := setupAppService(k8s)
+	svc := setupAppService(mockClientFactory.Clients)
 
 	criteria := AppCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	appList, err := svc.GetAppList(context.TODO(), criteria)
@@ -88,7 +62,6 @@ func TestGetAppListFromDeployments(t *testing.T) {
 }
 
 func TestGetAppFromDeployments(t *testing.T) {
-	require := require.New(t)
 	assert := assert.New(t)
 
 	conf := config.NewConfig()
@@ -113,10 +86,9 @@ func TestGetAppFromDeployments(t *testing.T) {
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	SetWithBackends(mockClientFactory, nil)
 
-	stopCache := setupTestingKialiCache(k8s, conf, require)
-	defer stopCache()
+	SetupBusinessLayer(t, k8s, *conf)
 
-	svc := setupAppService(k8s)
+	svc := setupAppService(mockClientFactory.Clients)
 
 	criteria := AppCriteria{Namespace: "Namespace", AppName: "httpbin"}
 	appDetails, appDetailsErr := svc.GetAppDetails(context.TODO(), criteria)
@@ -133,7 +105,6 @@ func TestGetAppFromDeployments(t *testing.T) {
 }
 
 func TestGetAppListFromReplicaSets(t *testing.T) {
-	require := require.New(t)
 	assert := assert.New(t)
 	conf := config.NewConfig()
 
@@ -152,10 +123,9 @@ func TestGetAppListFromReplicaSets(t *testing.T) {
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	SetWithBackends(mockClientFactory, nil)
 
-	stopCache := setupTestingKialiCache(k8s, nil, require)
-	defer stopCache()
+	SetupBusinessLayer(t, k8s, *conf)
 
-	svc := setupAppService(k8s)
+	svc := setupAppService(mockClientFactory.Clients)
 
 	criteria := AppCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	appList, _ := svc.GetAppList(context.TODO(), criteria)
@@ -167,9 +137,9 @@ func TestGetAppListFromReplicaSets(t *testing.T) {
 }
 
 func TestGetAppFromReplicaSets(t *testing.T) {
-	require := require.New(t)
 	assert := assert.New(t)
 	conf := config.NewConfig()
+	config.Set(conf)
 
 	// Setup mocks
 	objects := []runtime.Object{
@@ -189,10 +159,9 @@ func TestGetAppFromReplicaSets(t *testing.T) {
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	SetWithBackends(mockClientFactory, nil)
 
-	stopCache := setupTestingKialiCache(k8s, nil, require)
-	defer stopCache()
+	SetupBusinessLayer(t, k8s, *conf)
 
-	svc := setupAppService(k8s)
+	svc := setupAppService(mockClientFactory.Clients)
 
 	criteria := AppCriteria{Namespace: "Namespace", AppName: "httpbin"}
 	appDetails, _ := svc.GetAppDetails(context.TODO(), criteria)

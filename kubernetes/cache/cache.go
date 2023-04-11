@@ -83,22 +83,25 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config, na
 		tokenNamespaceDuration:     time.Duration(cfg.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second,
 	}
 
-	for _, cluster := range clientFactory.GetClusterNames() {
-		kialiClient := clientFactory.GetSAClient(cluster)
-		cache, err := NewKubeCache(kialiClient, cfg, NewRegistryHandler(kialiCacheImpl.RefreshRegistryStatus), namespaceSeedList...)
+	for cluster, client := range clientFactory.GetSAClients() {
+		cache, err := NewKubeCache(client, cfg, NewRegistryHandler(kialiCacheImpl.RefreshRegistryStatus), namespaceSeedList...)
 		if err != nil {
 			log.Errorf("[Kiali Cache] Error creating kube cache for cluster: %s. Err: %v", cluster, err)
 			return nil, err
 		}
 		kialiCacheImpl.kubeCache[cluster] = cache
+
+		// TODO: Treat all clusters the same way.
+		if homeClient := clientFactory.GetSAHomeClusterClient(); homeClient != nil && homeClient.GetClusterInfo().Name == cluster {
+			kialiCacheImpl.KubeCache = cache
+		}
 	}
 
 	// TODO: Treat all clusters the same way.
-	homeClient, ok := kialiCacheImpl.kubeCache[kubernetes.HomeClusterName]
-	if !ok {
+	// Ensure home client got set.
+	if kialiCacheImpl.KubeCache == nil {
 		return nil, errors.New("home cluster not configured in kiali cache")
 	}
-	kialiCacheImpl.KubeCache = homeClient
 
 	// Starting background goroutines to:
 	// 1. Refresh the cache's service account token

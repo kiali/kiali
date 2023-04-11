@@ -22,6 +22,7 @@ import (
 type NamespaceService struct {
 	userClients            map[string]kubernetes.ClientInterface
 	kialiSAClients         map[string]kubernetes.ClientInterface
+	homeClusterUserClient  kubernetes.ClientInterface
 	hasProjects            bool
 	isAccessibleNamespaces map[string]bool
 }
@@ -42,7 +43,8 @@ func IsAccessibleError(err error) bool {
 func NewNamespaceService(userClients map[string]kubernetes.ClientInterface, kialiSAClients map[string]kubernetes.ClientInterface) NamespaceService {
 	var hasProjects bool
 
-	if kialiSAClients != nil && kialiSAClients[kubernetes.HomeClusterName].IsOpenShift() {
+	homeClusterName := config.Get().KubernetesConfig.ClusterName
+	if saClient, ok := kialiSAClients[homeClusterName]; ok && saClient.IsOpenShift() {
 		hasProjects = true
 	} else {
 		hasProjects = false
@@ -58,6 +60,7 @@ func NewNamespaceService(userClients map[string]kubernetes.ClientInterface, kial
 		userClients:            userClients,
 		kialiSAClients:         kialiSAClients,
 		hasProjects:            hasProjects,
+		homeClusterUserClient:  userClients[homeClusterName],
 		isAccessibleNamespaces: isAccessibleNamespaces,
 	}
 }
@@ -70,8 +73,8 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	)
 	defer end()
 
-	if kialiCache != nil {
-		if ns := kialiCache.GetNamespaces(in.userClients[kubernetes.HomeClusterName].GetToken()); ns != nil {
+	if kialiCache != nil && in.homeClusterUserClient != nil {
+		if ns := kialiCache.GetNamespaces(in.homeClusterUserClient.GetToken()); ns != nil {
 			return ns, nil
 		}
 	}
@@ -205,9 +208,9 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 		}
 	}
 
-	if kialiCache != nil {
+	if kialiCache != nil && in.homeClusterUserClient != nil {
 		// just get the home cluster token because it is assumed tokens are identical across all clusters
-		kialiCache.SetNamespaces(in.userClients[kubernetes.HomeClusterName].GetToken(), resultns)
+		kialiCache.SetNamespaces(in.homeClusterUserClient.GetToken(), resultns)
 	}
 
 	return resultns, nil
@@ -334,9 +337,9 @@ func (in *NamespaceService) getNamespacesByCluster(cluster string) ([]models.Nam
 
 	result := namespaces
 
-	if kialiCache != nil {
+	if kialiCache != nil && in.homeClusterUserClient != nil {
 		// Set namespace by user token
-		kialiCache.SetNamespaces(in.userClients[kubernetes.HomeClusterName].GetToken(), result)
+		kialiCache.SetNamespaces(in.homeClusterUserClient.GetToken(), result)
 	}
 
 	return result, nil
@@ -459,8 +462,8 @@ func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace
 	var err error
 
 	// Cache already has included/excluded namespaces applied
-	if kialiCache != nil {
-		if ns := kialiCache.GetNamespace(in.userClients[kubernetes.HomeClusterName].GetToken(), namespace, cluster); ns != nil {
+	if kialiCache != nil && in.homeClusterUserClient != nil {
+		if ns := kialiCache.GetNamespace(in.homeClusterUserClient.GetToken(), namespace, cluster); ns != nil {
 			return ns, nil
 		}
 	}
