@@ -3,12 +3,8 @@ package appender
 import (
 	"testing"
 
-	osapps_v1 "github.com/openshift/api/apps/v1"
-	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	apps_v1 "k8s.io/api/apps/v1"
-	batch_v1 "k8s.io/api/batch/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -19,19 +15,16 @@ import (
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
-func setupWorkloads() *business.Layer {
-	k8s := kubetest.NewK8SClientMock()
+func setupWorkloads(t *testing.T) *business.Layer {
 	conf := config.NewConfig()
-	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
 
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetCronJobs", mock.AnythingOfType("string")).Return([]batch_v1.CronJob{}, nil)
-	k8s.On("GetDeployment", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return((*apps_v1.Deployment)(nil), nil)
-	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return([]apps_v1.Deployment{
-		{
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
+		&apps_v1.Deployment{
 			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "testPodsWithTraffic-v1",
+				Name:      "testPodsWithTraffic-v1",
+				Namespace: "testNamespace",
 			},
 			Spec: apps_v1.DeploymentSpec{
 				Template: core_v1.PodTemplateSpec{
@@ -41,9 +34,10 @@ func setupWorkloads() *business.Layer {
 				},
 			},
 		},
-		{
+		&apps_v1.Deployment{
 			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "testPodsNoTraffic-v1",
+				Name:      "testPodsNoTraffic-v1",
+				Namespace: "testNamespace",
 			},
 			Spec: apps_v1.DeploymentSpec{
 				Template: core_v1.PodTemplateSpec{
@@ -53,9 +47,10 @@ func setupWorkloads() *business.Layer {
 				},
 			},
 		},
-		{
+		&apps_v1.Deployment{
 			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "testNoPodsWithTraffic-v1",
+				Name:      "testNoPodsWithTraffic-v1",
+				Namespace: "testNamespace",
 			},
 			Spec: apps_v1.DeploymentSpec{
 				Template: core_v1.PodTemplateSpec{
@@ -65,9 +60,10 @@ func setupWorkloads() *business.Layer {
 				},
 			},
 		},
-		{
+		&apps_v1.Deployment{
 			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "testNoPodsNoTraffic-v1",
+				Name:      "testNoPodsNoTraffic-v1",
+				Namespace: "testNamespace",
 			},
 			Spec: apps_v1.DeploymentSpec{
 				Template: core_v1.PodTemplateSpec{
@@ -77,34 +73,29 @@ func setupWorkloads() *business.Layer {
 				},
 			},
 		},
-	}, nil)
-	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
-	k8s.On("GetJobs", mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(
-		[]core_v1.Pod{
-			{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Name:   "testPodsWithTraffic-v1-1234",
-					Labels: map[string]string{"app": "testPodsWithTraffic", "version": "v1"},
-				},
-				Status: core_v1.PodStatus{
-					Message: "foo",
-				},
+		&core_v1.Pod{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "testPodsWithTraffic-v1-1234",
+				Namespace: "testNamespace",
+				Labels:    map[string]string{"app": "testPodsWithTraffic", "version": "v1"},
 			},
-			{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Name:   "testPodsNoTraffic-v1-1234",
-					Labels: map[string]string{"app": "testPodsNoTraffic", "version": "v1"},
-				},
-				Status: core_v1.PodStatus{
-					Message: "foo",
-				},
+			Status: core_v1.PodStatus{
+				Message: "foo",
 			},
-		}, nil)
-	k8s.On("GetReplicationControllers", mock.AnythingOfType("string")).Return([]core_v1.ReplicationController{}, nil)
-	k8s.On("GetReplicaSets", mock.AnythingOfType("string")).Return([]apps_v1.ReplicaSet{}, nil)
-	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
-	k8s.On("GetDaemonSets", mock.AnythingOfType("string")).Return([]apps_v1.DaemonSet{}, nil)
+		},
+		&core_v1.Pod{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "testPodsNoTraffic-v1-1234",
+				Namespace: "testNamespace",
+				Labels:    map[string]string{"app": "testPodsNoTraffic", "version": "v1"},
+			},
+			Status: core_v1.PodStatus{
+				Message: "foo",
+			},
+		},
+	)
+
+	business.SetupBusinessLayer(t, k8s, *conf)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
@@ -115,7 +106,7 @@ func setupWorkloads() *business.Layer {
 func TestDeadNode(t *testing.T) {
 	assert := assert.New(t)
 
-	businessLayer := setupWorkloads()
+	businessLayer := setupWorkloads(t)
 	trafficMap := testTrafficMap()
 
 	assert.Equal(12, len(trafficMap))
@@ -265,7 +256,7 @@ func testTrafficMap() map[string]*graph.Node {
 func TestDeadNodeIssue2783(t *testing.T) {
 	assert := assert.New(t)
 
-	businessLayer := setupWorkloads()
+	businessLayer := setupWorkloads(t)
 	trafficMap := testTrafficMapIssue2783()
 
 	assert.Equal(3, len(trafficMap))
@@ -317,7 +308,7 @@ func testTrafficMapIssue2783() map[string]*graph.Node {
 func TestDeadNodeIssue2982(t *testing.T) {
 	assert := assert.New(t)
 
-	businessLayer := setupWorkloads()
+	businessLayer := setupWorkloads(t)
 	trafficMap := testTrafficMapIssue2982()
 
 	assert.Equal(3, len(trafficMap))

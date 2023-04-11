@@ -5,20 +5,16 @@ import (
 	"fmt"
 	"testing"
 
-	osapps_v1 "github.com/openshift/api/apps/v1"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
-	apps_v1 "k8s.io/api/apps/v1"
-	batch_v1 "k8s.io/api/batch/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
@@ -27,13 +23,15 @@ import (
 
 func TestGetNamespaceValidations(t *testing.T) {
 	assert := assert.New(t)
+	require := require.New(t)
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	vs := mockCombinedValidationService(fakeIstioConfigList(),
+	vs := mockCombinedValidationService(t, fakeIstioConfigList(),
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
 
-	validations, _ := vs.GetValidations(context.TODO(), "test", "", "")
+	validations, err := vs.GetValidations(context.TODO(), "test", "", "")
+	require.NoError(err)
 	assert.NotEmpty(validations)
 	assert.True(validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
 }
@@ -43,7 +41,7 @@ func TestGetAllValidations(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	vs := mockCombinedValidationService(fakeIstioConfigList(),
+	vs := mockCombinedValidationService(t, fakeIstioConfigList(),
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
 
 	validations, _ := vs.GetValidations(context.TODO(), "", "", "")
@@ -56,7 +54,7 @@ func TestGetIstioObjectValidations(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	vs := mockCombinedValidationService(fakeIstioConfigList(),
+	vs := mockCombinedValidationService(t, fakeIstioConfigList(),
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
 
 	validations, _, _ := vs.GetIstioObjectValidations(context.TODO(), "test", "virtualservices", "product-vs")
@@ -69,7 +67,7 @@ func TestGatewayValidation(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	v := mockMultiNamespaceGatewaysValidationService()
+	v := mockMultiNamespaceGatewaysValidationService(t)
 	validations, _, _ := v.GetIstioObjectValidations(context.TODO(), "test", "gateways", "first")
 	assert.NotEmpty(validations)
 }
@@ -114,7 +112,7 @@ func TestGetVSReferences(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	vs := mockCombinedValidationService(fakeIstioConfigList(), []string{}, "test", fakePods())
+	vs := mockCombinedValidationService(t, fakeIstioConfigList(), []string{}, "test", fakePods())
 
 	_, referencesMap, err := vs.GetIstioObjectValidations(context.TODO(), "test", kubernetes.VirtualServices, "product-vs")
 	references := referencesMap[models.IstioReferenceKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}]
@@ -135,7 +133,7 @@ func TestGetVSReferencesNotExisting(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	vs := mockCombinedValidationService(fakeEmptyIstioConfigList(), []string{}, "test", fakePods())
+	vs := mockCombinedValidationService(t, fakeEmptyIstioConfigList(), []string{}, "test", fakePods())
 
 	_, referencesMap, err := vs.GetIstioObjectValidations(context.TODO(), "wrong", "virtualservices", "wrong")
 	references := referencesMap[models.IstioReferenceKey{ObjectType: "wrong", Namespace: "wrong", Name: "product-vs"}]
@@ -144,88 +142,86 @@ func TestGetVSReferencesNotExisting(t *testing.T) {
 	assert.Nil(references)
 }
 
-func mockWorkLoadService(k8s *kubetest.K8SClientMock) WorkloadService {
-	// Setup mocks
-	k8s.On("IsOpenShift").Return(true)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDepSyncedWithRS(), nil)
-	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
-	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeRSSyncedWithPods(), nil)
-	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.ReplicationController{}, nil)
-	k8s.On("GetStatefulSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
-	k8s.On("GetDaemonSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.DaemonSet{}, nil)
-	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
-	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.CronJob{}, nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakePods().Items, nil)
-	k8s.On("GetConfigMap", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.ConfigMap{}, nil)
-
-	svc := setupWorkloadService(k8s, config.Get())
-	return svc
-}
-
-func mockMultiNamespaceGatewaysValidationService() IstioValidationsService {
-	k8s := new(kubetest.K8SClientMock)
-	k8s.On("IsOpenShift").Return(false)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
-	k8s.On("IsMaistraApi").Return(false)
-	k8s.On("GetNamespaces", mock.AnythingOfType("string")).Return(fakeNamespaces(), nil)
-	k8s.On("GetToken").Return("token")
-
-	fakeIstioObjects := []runtime.Object{}
+func mockMultiNamespaceGatewaysValidationService(t *testing.T) IstioValidationsService {
+	fakeIstioObjects := []runtime.Object{
+		&core_v1.ConfigMap{ObjectMeta: meta_v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+	}
+	for _, p := range fakeNamespaces() {
+		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
+	}
 	for _, p := range fakePolicies() {
 		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
 	}
-	k8s.MockIstio(fakeIstioObjects...)
-	mockWorkLoadService(k8s)
+	for _, p := range FakeDepSyncedWithRS() {
+		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
+	}
+	for _, p := range FakeRSSyncedWithPods() {
+		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
+	}
+	for _, p := range fakePods().Items {
+		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
+	}
+	for _, p := range fakeMeshPolicies() {
+		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
+	}
 
-	kialiCache = cache.FakeGatewaysKialiCache(append(getGateway("first", "test"), getGateway("second", "test2")...))
-
-	k8s.On("GetToken").Return("token")
-	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(fakeCombinedServices([]string{""}, ""), nil)
-	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDepSyncedWithRS(), nil)
-	k8s.On("GetMeshPolicies", mock.AnythingOfType("string")).Return(fakeMeshPolicies(), nil)
+	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
+	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
+	cache.SetRegistryStatus(&kubernetes.RegistryStatus{
+		Configuration: &kubernetes.RegistryConfiguration{
+			Gateways: append(getGateway("first", "test"), getGateway("second", "test2")...),
+		},
+	})
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
 	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 }
 
-func mockCombinedValidationService(istioConfigList *models.IstioConfigList, services []string, namespace string, podList *core_v1.PodList) IstioValidationsService {
-	k8s := new(kubetest.K8SClientMock)
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	SetWithBackends(mockClientFactory, nil)
-
-	fakeIstioObjects := []runtime.Object{}
+func mockCombinedValidationService(t *testing.T, istioConfigList *models.IstioConfigList, services []string, namespace string, podList *core_v1.PodList) IstioValidationsService {
+	fakeIstioObjects := []runtime.Object{
+		&core_v1.ConfigMap{ObjectMeta: meta_v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "wrong"}},
+	}
 	for _, p := range fakeMeshPolicies() {
 		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
 	}
 	for _, p := range fakePolicies() {
 		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
 	}
-	k8s.MockIstio(fakeIstioObjects...)
-
-	kialiCache = cache.FakeServicesKialiCache(data.CreateFakeMultiRegistryServices(services, "test", "*"),
-		istioConfigList.Gateways,
-		istioConfigList.VirtualServices,
-		istioConfigList.DestinationRules,
-		istioConfigList.ServiceEntries,
-		istioConfigList.Sidecars,
-		istioConfigList.RequestAuthentications,
-		istioConfigList.WorkloadEntries)
-
-	k8s.On("GetToken").Return("token")
-	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(fakeCombinedServices(services, "test"), nil)
-	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDepSyncedWithRS(), nil)
-	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(kubetest.FakeNamespace("test"), nil)
-	k8s.On("IsOpenShift").Return(false)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("IsMaistraApi").Return(false)
-	k8s.On("GetNamespaces", mock.AnythingOfType("string")).Return(fakeNamespaces(), nil)
-
-	mockWorkLoadService(k8s)
+	for _, p := range fakeCombinedServices(services, "test") {
+		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
+	}
+	for _, p := range FakeDepSyncedWithRS() {
+		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
+	}
+	for _, p := range fakeNamespaces() {
+		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
+	}
+	for _, p := range FakeRSSyncedWithPods() {
+		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
+	}
+	for _, p := range fakePods().Items {
+		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
+	}
 
 	setupGlobalMeshConfig()
+
+	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
+
+	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
+	cache.SetRegistryStatus(&kubernetes.RegistryStatus{
+		Services: data.CreateFakeMultiRegistryServices(services, "test", "*"),
+		Configuration: &kubernetes.RegistryConfiguration{
+			Gateways:               istioConfigList.Gateways,
+			DestinationRules:       istioConfigList.DestinationRules,
+			VirtualServices:        istioConfigList.VirtualServices,
+			ServiceEntries:         istioConfigList.ServiceEntries,
+			Sidecars:               istioConfigList.Sidecars,
+			WorkloadEntries:        istioConfigList.WorkloadEntries,
+			RequestAuthentications: istioConfigList.RequestAuthentications,
+		},
+	})
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s

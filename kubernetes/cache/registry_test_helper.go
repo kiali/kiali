@@ -58,16 +58,10 @@ func FakeServicesKialiCache(rss []*kubernetes.RegistryService,
 	cfg := config.Get()
 	cfg.Deployment.AccessibleNamespaces = []string{"bookinfo"}
 	cfg.KubernetesConfig.CacheNamespaces = []string{"test"}
-	cache, err := NewKubeCache(kubetest.NewFakeK8sClient(), *cfg, emptyHandler)
-	if err != nil {
-		panic(fmt.Sprintf("Error creating KialiCache in testing. Err: %v", err))
-	}
-	kialiCacheImpl := kialiCacheImpl{
-		tokenNamespaces: make(map[string]namespaceCache),
-		// ~ long duration for unit testing
-		refreshDuration: time.Hour,
-		KubeCache:       cache,
-	}
+	cfg.KubernetesConfig.CacheDuration = 3600 // 1 hr for tests
+
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(kubetest.NewFakeK8sClient())
+	kialiCacheImpl, _ := NewKialiCache(mockClientFactory, *cfg)
 
 	// Populate all DestinationRules using the Registry
 	registryStatus := kubernetes.RegistryStatus{
@@ -85,5 +79,5 @@ func FakeServicesKialiCache(rss []*kubernetes.RegistryService,
 
 	kialiCacheImpl.SetRegistryStatus(&registryStatus)
 
-	return &kialiCacheImpl
+	return kialiCacheImpl
 }
