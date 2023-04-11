@@ -9,8 +9,8 @@ import Namespace from '../../types/Namespace';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { namespaceEquals } from '../../utils/Common';
 import { SortField } from '../../types/SortFilters';
-import { ActiveFiltersInfo } from '../../types/Filters';
-import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
+import { ActiveFiltersInfo, ActiveTogglesInfo } from '../../types/Filters';
+import { FilterSelected, StatefulFilters, Toggles } from '../../components/Filters/StatefulFilters';
 import * as API from '../../services/Api';
 import { ObjectValidation, Validations } from '../../types/IstioObjects';
 import VirtualList from '../../components/VirtualList/VirtualList';
@@ -39,6 +39,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
   ServiceListItem
 > {
   private promises = new PromisesRegistry();
+  private initialToggles = ServiceListFilters.getAvailableToggles();
 
   constructor(props: ServiceListPageProps) {
     super(props);
@@ -86,10 +87,11 @@ class ServiceListPageComponent extends FilterComponent.Component<
     this.promises.cancelAll();
 
     const activeFilters: ActiveFiltersInfo = FilterSelected.getSelected();
+    const activeToggles: ActiveTogglesInfo = Toggles.getToggles();
     const namespacesSelected = this.props.activeNamespaces.map(item => item.name);
 
     if (namespacesSelected.length !== 0) {
-      this.fetchServices(namespacesSelected, activeFilters, this.props.duration);
+      this.fetchServices(namespacesSelected, activeFilters, activeToggles, this.props.duration);
     } else {
       this.setState({ listItems: [] });
     }
@@ -117,9 +119,17 @@ class ServiceListPageComponent extends FilterComponent.Component<
     return [];
   }
 
-  fetchServices(namespaces: string[], filters: ActiveFiltersInfo, rateInterval: number) {
+  fetchServices(namespaces: string[], filters: ActiveFiltersInfo, toggles: ActiveTogglesInfo, rateInterval: number) {
+    const health = toggles.get('health') ? 'true' : 'false';
+    const istioResources = toggles.get('istioResources') ? 'true' : 'false';
+    const onlyDefinitions = toggles.get('configuration') ? 'false' : 'true'; // !configuration => onlyDefinitions
     const servicesPromises = namespaces.map(ns =>
-      API.getServices(ns, { health: 'true', rateInterval: String(rateInterval) + 's' })
+      API.getServices(ns, {
+        health: health,
+        istioResources: istioResources,
+        rateInterval: String(rateInterval) + 's',
+        onlyDefinitions: onlyDefinitions
+      })
     );
 
     this.promises
@@ -153,6 +163,13 @@ class ServiceListPageComponent extends FilterComponent.Component<
   }
 
   render() {
+    const hiddenColumns = [] as string[];
+    Toggles.getToggles().forEach((v, k) => {
+      if (!v) {
+        hiddenColumns.push(k);
+      }
+    });
+
     return (
       <>
         <RefreshNotifier onTick={this.updateListItems} />
@@ -164,10 +181,12 @@ class ServiceListPageComponent extends FilterComponent.Component<
           />
         </div>
         <RenderContent>
-          <VirtualList rows={this.state.listItems}>
+          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns}>
             <StatefulFilters
               initialFilters={ServiceListFilters.availableFilters}
+              initialToggles={this.initialToggles}
               onFilterChange={this.onFilterChange}
+              onToggleChange={this.onFilterChange}
             />
           </VirtualList>
         </RenderContent>

@@ -74,6 +74,16 @@ And('user filters for istio type {string}', (istioType: string) => {
   cy.get('input[placeholder="Filter by Istio Type"]').type(`${istioType}{enter}`);
 });
 
+// checkCol
+// This func assumes:
+//
+// 1. There is only 1 table on the screen.
+//
+// Be aware of these assumptions when using this func.
+export function colExists(colName: string, exists: boolean) {
+  return cy.get(`th[data-label="${colName}"]`).should(exists ? 'exist' : 'not.exist');
+}
+
 // getColWithRowText will find the column matching the unique row text and column header name.
 // This func makes a couple assumptions:
 //
@@ -163,16 +173,27 @@ export function ensureObjectsInTable(...names: string[]) {
   });
 }
 
-export function checkHealthIndicatorInTable(targetNamespace: string, targetType: string | null, targetRowItemName: string, healthStatus: string) {
-  const selector = targetType ? `${targetNamespace}_${targetType}_${targetRowItemName}` : `${targetNamespace}_${targetRowItemName}`;
-  cy.get(`[data-test=VirtualItem_Ns${selector}] svg[class=icon-${healthStatus}]`)
-      .should('exist');
+export function checkHealthIndicatorInTable(
+  targetNamespace: string,
+  targetType: string | null,
+  targetRowItemName: string,
+  healthStatus: string
+) {
+  const selector = targetType
+    ? `${targetNamespace}_${targetType}_${targetRowItemName}`
+    : `${targetNamespace}_${targetRowItemName}`;
+  cy.get(`[data-test=VirtualItem_Ns${selector}] svg[class=icon-${healthStatus}]`).should('exist');
 }
 
-export function checkHealthStatusInTable(targetNamespace: string, targetType: string | null, targetRowItemName: string, healthStatus: string) {
-  const selector = targetType ? `${targetNamespace}_${targetType}_${targetRowItemName}` : `${targetNamespace}_${targetRowItemName}`;
-  cy.get(`[data-test=VirtualItem_Ns${selector}] td:first-child span`)
-      .trigger('mouseenter');
-  cy.get(`[aria-label='Health indicator'] strong`)
-      .should('contain.text', healthStatus);
+export function checkHealthStatusInTable(
+  targetNamespace: string,
+  targetType: string | null,
+  targetRowItemName: string,
+  healthStatus: string
+) {
+  const selector = targetType
+    ? `${targetNamespace}_${targetType}_${targetRowItemName}`
+    : `${targetNamespace}_${targetRowItemName}`;
+  cy.get(`[data-test=VirtualItem_Ns${selector}] td:first-child span`).trigger('mouseenter');
+  cy.get(`[aria-label='Health indicator'] strong`).should('contain.text', healthStatus);
 }

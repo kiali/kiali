@@ -14,8 +14,8 @@ import Namespace from '../../types/Namespace';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { namespaceEquals } from '../../utils/Common';
 import { SortField } from '../../types/SortFilters';
-import { ActiveFiltersInfo } from '../../types/Filters';
-import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
+import { ActiveFiltersInfo, ActiveTogglesInfo } from '../../types/Filters';
+import { FilterSelected, StatefulFilters, Toggles } from '../../components/Filters/StatefulFilters';
 import { getFilterSelectedValues } from '../../components/Filters/CommonFilters';
 import * as API from '../../services/Api';
 import { ObjectValidation } from '../../types/IstioObjects';
@@ -40,6 +40,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
   IstioConfigItem
 > {
   private promises = new PromisesRegistry();
+  private initialToggles = IstioConfigListFilters.getAvailableToggles();
 
   constructor(props: IstioConfigListPageProps) {
     super(props);
@@ -86,6 +87,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     this.promises.cancelAll();
 
     const activeFilters: ActiveFiltersInfo = FilterSelected.getSelected();
+    const activeToggles: ActiveTogglesInfo = Toggles.getToggles();
     const namespacesSelected = this.props.activeNamespaces!.map(item => item.name);
     const istioTypeFilters = getFilterSelectedValues(IstioConfigListFilters.istioTypeFilter, activeFilters).map(
       value => dicIstioType[value]
@@ -97,7 +99,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     );
 
     if (namespacesSelected.length !== 0) {
-      this.fetchConfigs(namespacesSelected, istioTypeFilters, istioNameFilters, configValidationFilters);
+      this.fetchConfigs(namespacesSelected, istioTypeFilters, istioNameFilters, configValidationFilters, activeToggles);
     } else {
       this.setState({ listItems: [] });
     }
@@ -107,9 +109,10 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     namespaces: string[],
     istioTypeFilters: string[],
     istioNameFilters: string[],
-    configValidationFilters: string[]
+    configValidationFilters: string[],
+    toggles: ActiveTogglesInfo
   ) {
-    const configsPromises = this.fetchIstioConfigs(namespaces, istioTypeFilters, istioNameFilters);
+    const configsPromises = this.fetchIstioConfigs(namespaces, istioTypeFilters, istioNameFilters, toggles);
 
     configsPromises
       .then(items =>
@@ -139,8 +142,16 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
   }
 
   // Fetch the Istio configs, apply filters and map them into flattened list items
-  fetchIstioConfigs(namespaces: string[], typeFilters: string[], istioNameFilters: string[]) {
-    const validate = this.props.istioAPIEnabled ? true : false;
+  fetchIstioConfigs(
+    namespaces: string[],
+    typeFilters: string[],
+    istioNameFilters: string[],
+    toggles: ActiveTogglesInfo
+  ) {
+    let validate = false;
+    if (this.props.istioAPIEnabled) {
+      validate = !!toggles.get('configuration');
+    }
     // Request all configs from all namespaces, as in backend all configs are always loaded from registry
     return this.promises
       .register('configs', API.getAllIstioConfigs([], typeFilters, validate, '', ''))
@@ -155,6 +166,17 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
   }
 
   render() {
+    const hiddenColumns = [] as string[];
+    if (this.props.istioAPIEnabled) {
+      Toggles.getToggles().forEach((v, k) => {
+        if (!v) {
+          hiddenColumns.push(k);
+        }
+      });
+    } else {
+      hiddenColumns.push('configuration');
+    }
+
     return (
       <>
         <div style={{ backgroundColor: '#fff' }}>
@@ -164,10 +186,12 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
           />
         </div>
         <RenderContent>
-          <VirtualList rows={this.state.listItems}>
+          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns}>
             <StatefulFilters
               initialFilters={IstioConfigListFilters.availableFilters}
+              initialToggles={this.props.istioAPIEnabled ? this.initialToggles : undefined}
               onFilterChange={this.onFilterChange}
+              onToggleChange={this.props.istioAPIEnabled ? this.onFilterChange : undefined}
             />
           </VirtualList>
         </RenderContent>

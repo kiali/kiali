@@ -1,10 +1,10 @@
 Feature: Kiali Workloads page
-  
+
   User opens the Workloads page and sees the bookinfo workloads.
 
   Background:
     Given user is at administrator perspective
-    And user is at the "workloads" page
+    And user is at the "workloads" list page
 
   @workloads-page
   Scenario: See workloads table with correct info
@@ -21,6 +21,17 @@ Feature: Kiali Workloads page
     And the "Details" column on the "details-v1" row is empty
 
   @workloads-page
+  Scenario: See all Workloads toggles
+    Then user sees all the Apps toggles
+
+  @workloads-page
+  Scenario: Toggle Workloads health toggle
+    When user "unchecks" toggle "health"
+    Then the "Health" column "disappears"
+    When user "checks" toggle "health"
+    Then the "Health" column "appears"
+
+  @workloads-page
   Scenario: Filter workloads table by Workloads Name
     When user selects the "bookinfo" namespace
     And user selects filter "Workload Name"
@@ -33,7 +44,7 @@ Feature: Kiali Workloads page
     When user selects the "bookinfo" namespace
     And user selects filter "Workload Type"
     And user filters for workload type "StatefulSet"
-    Then user sees "no workloads" in workloads table    
+    Then user sees "no workloads" in workloads table
 
   @workloads-page
   Scenario: Filter workloads table by sidecar
@@ -42,13 +53,13 @@ Feature: Kiali Workloads page
     And user filters for sidecar "Present"
     Then user sees "workloads" in workloads table
 
- @workloads-page
+  @workloads-page
   Scenario: Filter workloads table by Istio Type
     When user selects the "bookinfo" namespace
     And user selects filter "Istio Type"
-    And user filters for istio type "VirtualService"    
+    And user filters for istio type "VirtualService"
     Then user sees "no workloads" in workloads table
-  
+
   @workloads-page
   Scenario: Filter workloads table by health
     When user selects the "bookinfo" namespace
@@ -63,7 +74,7 @@ Feature: Kiali Workloads page
     And user selects filter "App Label"
     And user filters for app label "Present"
     Then user sees "workloads" in workloads table
-    And user should only see workloads with the "app" label 
+    And user should only see workloads with the "app" label
 
   @workloads-page
   Scenario: Filter workloads table by Version Label

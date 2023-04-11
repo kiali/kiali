@@ -100,6 +100,12 @@ const defaultServerConfig: ComputedServerConfig = {
           http: 'requests',
           tcp: 'sent'
         }
+      },
+      list: {
+        includeHealth: true,
+        includeIstioResources: true,
+        includeValidations: true,
+        showIncludeToggles: false
       }
     }
   },

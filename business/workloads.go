@@ -132,6 +132,8 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetWorkloadList",
 		observability.Attribute("package", "business"),
+		observability.Attribute("includeHealth", criteria.IncludeHealth),
+		observability.Attribute("includeIstioResources", criteria.IncludeIstioResources),
 		observability.Attribute("namespace", criteria.Namespace),
 		observability.Attribute("rateInterval", criteria.RateInterval),
 		observability.Attribute("queryTime", criteria.QueryTime),
@@ -360,8 +362,8 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 		criteria := ServiceCriteria{
 			Namespace:              criteria.Namespace,
 			ServiceSelector:        labels.Set(workload.Labels).String(),
+			IncludeHealth:          false,
 			IncludeOnlyDefinitions: true,
-			Health:                 false,
 		}
 		services, err = in.businessLayer.Svc.GetServiceList(ctx, criteria)
 		if err != nil {

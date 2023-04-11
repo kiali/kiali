@@ -3,6 +3,7 @@ package handlers
 import (
 	"io"
 	"net/http"
+	"strconv"
 	"sync"
 
 	"github.com/gorilla/mux"
@@ -25,9 +26,9 @@ type workloadParams struct {
 	// in: query
 	WorkloadType string `json:"type"`
 	// Optional
-	IncludeHealth bool   `json:"health"`
-	Validate      bool   `json:"validate"`
-	Cluster       string `json:"cluster,omitempty"`
+	Cluster               string `json:"cluster,omitempty"`
+	IncludeHealth         bool   `json:"health"`
+	IncludeIstioResources bool   `json:"istioResources"`
 }
 
 func (p *workloadParams) extract(r *http.Request) {
@@ -40,8 +41,15 @@ func (p *workloadParams) extract(r *http.Request) {
 	if query.Has("cluster") && query.Get("cluster") != "null" {
 		p.Cluster = query.Get("cluster")
 	}
-	p.IncludeHealth = query.Get("health") != ""
-	p.Validate = query.Get("validate") != ""
+	var err error
+	p.IncludeHealth, err = strconv.ParseBool(query.Get("health"))
+	if err != nil {
+		p.IncludeHealth = true
+	}
+	p.IncludeIstioResources, err = strconv.ParseBool(query.Get("istioResources"))
+	if err != nil {
+		p.IncludeIstioResources = true
+	}
 }
 
 // WorkloadList is the API handler to fetch all the workloads to be displayed, related to a single namespace
@@ -49,7 +57,7 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 	p := workloadParams{}
 	p.extract(r)
 
-	criteria := business.WorkloadCriteria{Namespace: p.Namespace, IncludeIstioResources: true, IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
+	criteria := business.WorkloadCriteria{Namespace: p.Namespace, IncludeHealth: p.IncludeHealth, IncludeIstioResources: p.IncludeIstioResources, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
 
 	// Get business layer
 	businessLayer, err := getBusiness(r)
@@ -93,7 +101,7 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	includeValidations := false
-	if p.Validate {
+	if p.IncludeIstioResources {
 		includeValidations = true
 	}
 

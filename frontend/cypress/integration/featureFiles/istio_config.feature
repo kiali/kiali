@@ -7,7 +7,7 @@ Feature: Kiali Istio Config page
 
   Background:
     Given user is at administrator perspective
-    And user is at the "istio" page
+    And user is at the "istio" list page
     And user selects the "bookinfo" namespace
 
   Scenario: See all Istio Config objects in the bookinfo namespace.
@@ -16,6 +16,15 @@ Feature: Kiali Istio Config page
     And user sees Namespace information for Istio objects
     And user sees Type information for Istio objects
     And user sees Configuration information for Istio objects
+
+  Scenario: See all Istio Config toggles
+    Then user sees all the Istio Config toggles
+
+  Scenario: Toggle Istio Config configuration toggle
+    When user "unchecks" toggle "configuration"
+    Then the "Configuration" column "disappears"
+    When user "checks" toggle "configuration"
+    Then the "Configuration" column "appears"
 
   Scenario: Filter Istio Config objects by Istio Name
     When the user filters by "Istio Name" for "bookinfo-gateway"

@@ -1,13 +1,13 @@
 Feature: Kiali help dropdown verify
 
   User wants to verify the Kiali help about information
-  
-  Background: 
+
+  Background:
     Given user is at administrator perspective
-    And user is at the "overivew" page
+    And user is at the "overview" page
     When user clicks on Help Button
 
-  @smoke    
+  @smoke
   Scenario: Open Kiali help dropdown
     Then user can see all of the Help dropdown options
       | Documentation | View Debug Info | View Certificates Info | About |

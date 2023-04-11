@@ -95,6 +95,12 @@ export const serverRateConfig = {
           tcp: 'sent'
         }
       },
+      list: {
+        includeHealth: true,
+        includeIstioResources: true,
+        includeValidations: true,
+        showIncludeToggles: false
+      },
       metricsPerRefresh: '1m',
       namespaces: [],
       refreshInterval: '15s'

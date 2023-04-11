@@ -4,7 +4,7 @@ Feature: Kiali Services page
 
   Background:
     Given user is at administrator perspective
-    And user is at the "services" page
+    And user is at the "services" list page
 
   @services-page
   Scenario: See services table with correct info
@@ -20,6 +20,17 @@ Feature: Kiali Services page
     And the "Configuration" column on the "productpage" row has a link ending in "/namespaces/bookinfo/services/productpage"
     And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/virtualservices/bookinfo"
     And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/gateways/bookinfo-gateway"
+
+  @services-page
+  Scenario: See all Services toggles
+    Then user sees all the Services toggles
+
+  @services-page
+  Scenario: Toggle Services configuration toggle
+    When user "unchecks" toggle "configuration"
+    Then the "Configuration" column "disappears"
+    When user "checks" toggle "configuration"
+    Then the "Configuration" column "appears"
 
   @services-page
   Scenario: Filter services table by Service Name

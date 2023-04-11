@@ -7,6 +7,19 @@ enum detailType {
   Service = 'service'
 }
 
+Given('user is at the {string} list page', (page: string) => {
+  // enable toggles on the list pages so that they can be tested
+  cy.intercept(Cypress.config('baseUrl') + '/api/config', request => {
+    request.reply(response => {
+      response.body['kialiFeatureFlags']['uiDefaults']['list']['showIncludeToggles'] = true;
+      return response;
+    });
+  }).as('config');
+  // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
+  cy.visit(Cypress.config('baseUrl') + `/console/${page}?refresh=0`);
+  cy.wait('@config');
+});
+
 Given('user is at the {string} page', (page: string) => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
   cy.visit(Cypress.config('baseUrl') + `/console/${page}?refresh=0`);

@@ -78,13 +78,13 @@ export enum ParamAction {
 }
 
 export class HistoryManager {
-  static setParam = (name: URLParam, value: string) => {
+  static setParam = (name: URLParam | string, value: string) => {
     const urlParams = new URLSearchParams(history.location.search);
     urlParams.set(name, value);
     history.replace(history.location.pathname + '?' + urlParams.toString());
   };
 
-  static getParam = (name: URLParam, urlParams?: URLSearchParams): string | undefined => {
+  static getParam = (name: URLParam | string, urlParams?: URLSearchParams): string | undefined => {
     if (!urlParams) {
       urlParams = new URLSearchParams(history.location.search);
     }
@@ -97,7 +97,7 @@ export class HistoryManager {
     return p !== undefined ? Number(p) : undefined;
   };
 
-  static getBooleanParam = (name: URLParam, urlParams?: URLSearchParams): boolean | undefined => {
+  static getBooleanParam = (name: URLParam | string, urlParams?: URLSearchParams): boolean | undefined => {
     const p = HistoryManager.getParam(name, urlParams);
     return p !== undefined ? p === 'true' : undefined;
   };

@@ -1,5 +1,5 @@
 import { And, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { checkHealthIndicatorInTable, checkHealthStatusInTable, getColWithRowText } from './table';
+import { checkHealthIndicatorInTable, checkHealthStatusInTable, colExists, getColWithRowText } from './table';
 import { ensureKialiFinishedLoading } from './transition';
 
 Given('a service in the cluster with a healthy amount of traffic', function () {
@@ -73,4 +73,13 @@ And('user clicks {string} label', (label: string) => {
     cy.get('span').contains(label).click();
   });
   ensureKialiFinishedLoading();
+});
+
+Then('user sees all the Services toggles', () => {
+  cy.get('[data-test="toggle-configuration"]').should('be.checked');
+  cy.get('[data-test="toggle-health"]').should('be.checked');
+  cy.get('[data-test="toggle-istioResources"]').should('be.checked');
+  colExists('Configuration', true);
+  colExists('Health', true);
+  colExists('Details', true);
 });

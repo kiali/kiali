@@ -3,7 +3,8 @@ import {
   FILTER_ACTION_APPEND,
   FILTER_ACTION_UPDATE,
   FilterType,
-  AllFilterTypes
+  AllFilterTypes,
+  ToggleType
 } from '../../types/Filters';
 import { WorkloadListItem, WorkloadType } from '../../types/Workload';
 import { SortField } from '../../types/SortFilters';
@@ -23,6 +24,7 @@ import { filterByLabel } from '../../helpers/LabelFilterHelper';
 import { calculateErrorRate } from '../../types/ErrorRate';
 import { istioTypeFilter } from '../IstioConfigList/FiltersAndSorts';
 import { compareObjectReferences } from '../AppList/FiltersAndSorts';
+import { serverConfig } from 'config';
 
 const missingLabels = (r: WorkloadListItem): number => {
   return r.appLabel && r.versionLabel ? 0 : r.appLabel || r.versionLabel ? 1 : 2;
@@ -338,6 +340,26 @@ export const filterBy = (items: WorkloadListItem[], filters: ActiveFiltersInfo):
     return filterByIstioType(ret, istioTypeSelected);
   }
   return ret;
+};
+
+/** Column Toggle Method */
+
+const healthToggle: ToggleType = {
+  label: 'Health',
+  name: 'health',
+  isChecked: true
+};
+
+const istioResourcesToggle: ToggleType = {
+  label: 'Istio Resources Detail',
+  name: 'istioResources',
+  isChecked: true
+};
+
+export const getAvailableToggles = (): ToggleType[] => {
+  healthToggle.isChecked = serverConfig.kialiFeatureFlags.uiDefaults.list.includeHealth;
+  istioResourcesToggle.isChecked = serverConfig.kialiFeatureFlags.uiDefaults.list.includeIstioResources;
+  return [healthToggle, istioResourcesToggle];
 };
 
 /** Sort Method */

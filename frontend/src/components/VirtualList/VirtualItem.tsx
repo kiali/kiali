@@ -11,6 +11,7 @@ type VirtualItemProps = {
   style?: CSSProperties;
   className?: string;
   index: number;
+  columns: any[];
   config: Resource;
   statefulFilterProps?: React.RefObject<StatefulFilters>;
   action?: JSX.Element;
@@ -45,9 +46,9 @@ export default class VirtualItem extends React.Component<VirtualItemProps, Virtu
   }
 
   renderDetails = (item: RenderResource, health?: Health) => {
-    return this.props.config.columns.map(object =>
-      object.renderer(item, this.props.config, this.getBadge(), health, this.props.statefulFilterProps)
-    );
+    return this.props.columns
+      .filter(object => !!object.renderer)
+      .map(object => object.renderer(item, this.props.config, this.getBadge(), health, this.props.statefulFilterProps));
   };
 
   getBadge = () => {

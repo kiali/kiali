@@ -1,5 +1,6 @@
 import * as React from 'react';
 import {
+  Checkbox,
   FormSelect,
   FormSelectOption,
   Select,
@@ -21,7 +22,9 @@ import {
   FILTER_ACTION_UPDATE,
   FilterType,
   AllFilterTypes,
-  LabelOperation
+  LabelOperation,
+  ToggleType,
+  ActiveTogglesInfo
 } from '../../types/Filters';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
@@ -29,6 +32,8 @@ import { style } from 'typestyle';
 import { LabelFilters } from './LabelFilter';
 import { arrayEquals } from 'utils/Common';
 import { labelFilter } from './CommonFilters';
+import history, { HistoryManager } from 'app/History';
+import { serverConfig } from 'config';
 
 var classNames = require('classnames');
 
@@ -47,14 +52,17 @@ const bottomPadding = style({
 });
 
 export interface StatefulFiltersProps {
-  onFilterChange: (active: ActiveFiltersInfo) => void;
-  initialFilters: FilterType[];
-  ref?: React.RefObject<StatefulFilters>;
   childrenFirst?: boolean;
+  initialFilters: FilterType[];
+  initialToggles?: ToggleType[];
+  onFilterChange: (active: ActiveFiltersInfo) => void;
+  onToggleChange?: (active: ActiveTogglesInfo) => void;
+  ref?: React.RefObject<StatefulFilters>;
 }
 
 interface StatefulFiltersState {
   activeFilters: ActiveFiltersInfo;
+  activeToggles: number;
   filterTypes: FilterType[];
   currentFilterType: FilterType;
   currentValue: string;
@@ -95,6 +103,40 @@ export class FilterSelected {
   };
 }
 
+// Column toggles
+export class Toggles {
+  static checked: ActiveTogglesInfo = new Map<string, boolean>();
+  static numChecked = 0;
+
+  static init = (toggles: ToggleType[]): number => {
+    Toggles.checked.clear();
+    Toggles.numChecked = 0;
+
+    // Prefer URL settings
+    const urlParams = new URLSearchParams(history.location.search);
+    toggles.forEach(t => {
+      const urlIsChecked = HistoryManager.getBooleanParam(`${t.name}Toggle`, urlParams);
+      const isChecked = urlIsChecked === undefined ? t.isChecked : urlIsChecked;
+      Toggles.checked.set(t.name, isChecked);
+      if (isChecked) {
+        Toggles.numChecked++;
+      }
+    });
+    return Toggles.numChecked;
+  };
+
+  static setToggle = (name: string, value: boolean): number => {
+    HistoryManager.setParam(`${name}Toggle`, `${value}`);
+    Toggles.checked.set(name, value);
+    Toggles.numChecked = value ? Toggles.numChecked++ : Toggles.numChecked--;
+    return Toggles.numChecked;
+  };
+
+  static getToggles = (): ActiveTogglesInfo => {
+    return new Map<string, boolean>(Toggles.checked);
+  };
+}
+
 const dividerStyle = style({ borderRight: '1px solid #d1d1d1;', padding: '10px', display: 'inherit' });
 const paddingStyle = style({ padding: '10px' });
 
@@ -104,9 +146,10 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
   constructor(props: StatefulFiltersProps) {
     super(props);
     this.state = {
+      activeFilters: FilterSelected.init(this.props.initialFilters),
+      activeToggles: Toggles.init(this.props.initialToggles || []),
       currentFilterType: this.props.initialFilters[0],
       filterTypes: this.props.initialFilters,
-      activeFilters: FilterSelected.init(this.props.initialFilters),
       isOpen: false,
       currentValue: ''
     };
@@ -359,7 +402,15 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     });
   };
 
+  onCheckboxChange = (checked: boolean, event: React.FormEvent<HTMLInputElement>) => {
+    this.setState({ activeToggles: Toggles.setToggle(event.currentTarget.name, checked) });
+    if (this.props.onToggleChange) {
+      this.props.onToggleChange(Toggles.getToggles());
+    }
+  };
+
   render() {
+    const showIncludeToggles = serverConfig.kialiFeatureFlags.uiDefaults.list.showIncludeToggles;
     const { currentFilterType, activeFilters } = this.state;
     const filterOptions = this.state.filterTypes.map(option => (
       <FormSelectOption key={option.category} value={option.category} label={option.category} />
@@ -367,7 +418,6 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     const hasActiveFilters =
       this.state.activeFilters.filters.some(f => f.category === labelFilter.category) ||
       this.state.currentFilterType.filterType === AllFilterTypes.label;
-
     return (
       <>
         <Toolbar id="filter-selection" className={toolbarStyle} clearAllFilters={this.clearFilters}>
@@ -396,6 +446,24 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                   </ToolbarFilter>
                 );
               })}
+            </ToolbarGroup>
+            <ToolbarGroup>
+              {showIncludeToggles &&
+                this.props.initialToggles &&
+                this.props.initialToggles.map((t, i) => {
+                  return (
+                    <ToolbarItem key={`toggle-${i}`}>
+                      <Checkbox
+                        data-test={`toggle-${t.name}`}
+                        id={t.name}
+                        isChecked={Toggles.checked.get(t.name)}
+                        label={t.label}
+                        name={t.name}
+                        onChange={this.onCheckboxChange}
+                      />
+                    </ToolbarItem>
+                  );
+                })}
             </ToolbarGroup>
             {!this.props.childrenFirst && this.renderChildren()}
             {hasActiveFilters && (

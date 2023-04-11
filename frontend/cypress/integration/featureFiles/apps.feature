@@ -5,7 +5,7 @@ Feature: Kiali Apps List page
 
   Background:
     Given user is at administrator perspective
-    And user is at the "applications" page
+    And user is at the "applications" list page
     And user selects the "bookinfo" namespace
 
   @apps-page
@@ -16,12 +16,23 @@ Feature: Kiali Apps List page
     And user sees Namespace information for Apps
     And user sees Labels information for Apps
     And user sees Details information for Apps
-  
+
+  @apps-page
+  Scenario: See all Apps toggles
+    Then user sees all the Apps toggles
+
+  @apps-page
+  Scenario: Toggle Apps health toggle
+    When user "unchecks" toggle "health"
+    Then the "Health" column "disappears"
+    When user "checks" toggle "health"
+    Then the "Health" column "appears"
+
   @apps-page
   Scenario: Filter Apps by Istio Name
     When the user filters by "App Name" for "productpage"
     Then user only sees "productpage"
-  
+
   @apps-page
   Scenario: Filter Apps by Istio Sidecar
     When the user filters by "Istio Sidecar" for "Present"
@@ -46,7 +57,7 @@ Feature: Kiali Apps List page
     When the user filters by "Health" for "Healthy"
     Then user only sees healthy apps
 
-  @apps-page 
+  @apps-page
   Scenario: Filter Applications table by Label
     When the user filters by "Label" for "app=reviews"
     Then user sees "reviews"

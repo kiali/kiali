@@ -323,8 +323,8 @@ func (in *IstioValidationsService) fetchServices(ctx context.Context, rValue *mo
 		var services *models.ServiceList
 		var err error
 		criteria := ServiceCriteria{
-			Namespace: namespace,
-			Health:    false,
+			IncludeHealth: false,
+			Namespace:     namespace,
 		}
 		services, err = in.businessLayer.Svc.GetServiceList(ctx, criteria)
 		if err != nil {

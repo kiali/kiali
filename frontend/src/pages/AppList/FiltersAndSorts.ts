@@ -1,4 +1,4 @@
-import { ActiveFiltersInfo, FILTER_ACTION_APPEND, FilterType } from '../../types/Filters';
+import { ActiveFiltersInfo, FILTER_ACTION_APPEND, FilterType, ToggleType } from '../../types/Filters';
 import { calculateErrorRate } from '../../types/ErrorRate';
 import { AppListItem } from '../../types/AppList';
 import { SortField } from '../../types/SortFilters';
@@ -16,6 +16,7 @@ import { TextInputTypes } from '@patternfly/react-core';
 import { filterByLabel } from '../../helpers/LabelFilterHelper';
 import { istioTypeFilter } from '../IstioConfigList/FiltersAndSorts';
 import { ObjectReference } from '../../types/IstioObjects';
+import { serverConfig } from 'config';
 
 export const sortFields: SortField<AppListItem>[] = [
   {
@@ -164,6 +165,26 @@ export const filterBy = (
     return filterByIstioType(ret, istioTypeSelected);
   }
   return ret;
+};
+
+/** Column Toggle Method */
+
+const healthToggle: ToggleType = {
+  label: 'Health',
+  name: 'health',
+  isChecked: true
+};
+
+const istioResourcesToggle: ToggleType = {
+  label: 'Istio Resources Detail',
+  name: 'istioResources',
+  isChecked: true
+};
+
+export const getAvailableToggles = (): ToggleType[] => {
+  healthToggle.isChecked = serverConfig.kialiFeatureFlags.uiDefaults.list.includeHealth;
+  istioResourcesToggle.isChecked = serverConfig.kialiFeatureFlags.uiDefaults.list.includeIstioResources;
+  return [healthToggle, istioResourcesToggle];
 };
 
 /** Sort Method */

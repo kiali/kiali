@@ -269,8 +269,8 @@ func getServiceList(namespace string, gi *graph.AppenderGlobalInfo) *models.Serv
 
 	criteria := business.ServiceCriteria{
 		Namespace:              namespace,
+		IncludeHealth:          false,
 		IncludeOnlyDefinitions: true,
-		Health:                 false,
 	}
 	serviceList, err := gi.Business.Svc.GetServiceList(context.TODO(), criteria)
 	graph.CheckError(err)

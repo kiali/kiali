@@ -13,8 +13,8 @@ import { activeNamespacesSelector, durationSelector } from '../../store/Selector
 import { connect } from 'react-redux';
 import { namespaceEquals } from '../../utils/Common';
 import { SortField } from '../../types/SortFilters';
-import { ActiveFiltersInfo } from '../../types/Filters';
-import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
+import { ActiveFiltersInfo, ActiveTogglesInfo } from '../../types/Filters';
+import { FilterSelected, StatefulFilters, Toggles } from '../../components/Filters/StatefulFilters';
 import * as API from '../../services/Api';
 import * as AppListClass from './AppListClass';
 import VirtualList from '../../components/VirtualList/VirtualList';
@@ -32,6 +32,7 @@ type AppListPageProps = ReduxProps & FilterComponent.Props<AppListItem>;
 
 class AppListPageComponent extends FilterComponent.Component<AppListPageProps, AppListPageState, AppListItem> {
   private promises = new PromisesRegistry();
+  private initialToggles = AppListFilters.getAvailableToggles();
 
   constructor(props: AppListPageProps) {
     super(props);
@@ -78,18 +79,25 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
   updateListItems() {
     this.promises.cancelAll();
     const activeFilters: ActiveFiltersInfo = FilterSelected.getSelected();
+    const activeToggles: ActiveTogglesInfo = Toggles.getToggles();
     const namespacesSelected = this.props.activeNamespaces.map(item => item.name);
     if (namespacesSelected.length !== 0) {
-      this.fetchApps(namespacesSelected, activeFilters, this.props.duration);
+      this.fetchApps(namespacesSelected, activeFilters, activeToggles, this.props.duration);
     } else {
       this.setState({ listItems: [] });
     }
   }
 
-  fetchApps(namespaces: string[], filters: ActiveFiltersInfo, rateInterval: number) {
-    const appsPromises = namespaces.map(namespace =>
-      API.getApps(namespace, { health: 'true', rateInterval: String(rateInterval) + 's' })
-    );
+  fetchApps(namespaces: string[], filters: ActiveFiltersInfo, toggles: ActiveTogglesInfo, rateInterval: number) {
+    const appsPromises = namespaces.map(namespace => {
+      const health = toggles.get('health') ? 'true' : 'false';
+      const istioResources = toggles.get('istioResources') ? 'true' : 'false';
+      return API.getApps(namespace, {
+        health: health,
+        istioResources: istioResources,
+        rateInterval: String(rateInterval) + 's'
+      });
+    });
     this.promises
       .registerAll('apps', appsPromises)
       .then(responses => {
@@ -112,6 +120,13 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
   }
 
   render() {
+    const hiddenColumns = [] as string[];
+    Toggles.getToggles().forEach((v, k) => {
+      if (!v) {
+        hiddenColumns.push(k);
+      }
+    });
+
     return (
       <>
         <RefreshNotifier onTick={this.updateListItems} />
@@ -123,8 +138,13 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
           />
         </div>
         <RenderContent>
-          <VirtualList rows={this.state.listItems}>
-            <StatefulFilters initialFilters={AppListFilters.availableFilters} onFilterChange={this.onFilterChange} />
+          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns}>
+            <StatefulFilters
+              initialFilters={AppListFilters.availableFilters}
+              initialToggles={this.initialToggles}
+              onFilterChange={this.onFilterChange}
+              onToggleChange={this.onFilterChange}
+            />
           </VirtualList>
         </RenderContent>
       </>

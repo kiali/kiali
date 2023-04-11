@@ -453,7 +453,7 @@ export class WorkloadHealth extends Health {
   ): HealthConfig {
     const items: HealthItem[] = [];
     let statusConfig: HealthItemConfig | undefined = undefined;
-    {
+    if (workloadStatus) {
       // Pods
       const podsStatus = ratioCheck(
         workloadStatus.availableReplicas,
