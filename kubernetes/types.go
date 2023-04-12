@@ -8,10 +8,10 @@ import (
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 	"istio.io/client-go/pkg/apis/telemetry/v1alpha1"
-	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
-
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 )
 
 const (
@@ -174,8 +174,9 @@ var (
 )
 
 type IstioMeshConfig struct {
-	DisableMixerHttpReports bool  `yaml:"disableMixerHttpReports,omitempty"`
-	EnableAutoMtls          *bool `yaml:"enableAutoMtls,omitempty"`
+	DisableMixerHttpReports bool                    `yaml:"disableMixerHttpReports,omitempty"`
+	DiscoverySelectors      []*metav1.LabelSelector `yaml:"discoverySelectors,omitempty"`
+	EnableAutoMtls          *bool                   `yaml:"enableAutoMtls,omitempty"`
 }
 
 // MTLSDetails is a wrapper to group all Istio objects related to non-local mTLS configurations

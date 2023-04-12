@@ -10,6 +10,8 @@ import (
 	osproject_v1 "github.com/openshift/api/project/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -80,6 +82,26 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	}
 
 	configObject := config.Get()
+
+	// determine what the discoverySelectors are by examining the Istio ConfigMap
+	var discoverySelectors []*meta_v1.LabelSelector
+	if kialiCache != nil {
+		if icm, err := kialiCache.GetConfigMap(configObject.IstioNamespace, configObject.ExternalServices.Istio.ConfigMapName); err == nil {
+			if ic, err2 := kubernetes.GetIstioConfigMap(icm); err2 == nil {
+				discoverySelectors = ic.DiscoverySelectors
+			} else {
+				log.Errorf("Will not process discoverySelectors due to a failure to get the Istio ConfigMap: %v", err2)
+			}
+		} else {
+			log.Errorf("Will not process discoverySelectors due to a failure to parse the Istio ConfigMap: %v", err)
+		}
+	}
+
+	if len(discoverySelectors) > 0 {
+		log.Tracef("Istio discovery selectors: %+v", discoverySelectors)
+	} else {
+		log.Tracef("No Istio discovery selectors defined.")
+	}
 
 	// Let's explain the four different filters along with accessible namespaces (aka AN).
 	//
@@ -169,10 +191,10 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	for resultCh := range resultsCh {
 		if resultCh.err != nil {
 			if resultCh.cluster == kubernetes.HomeClusterName {
-				log.Errorf("Error fetching Namespaces for local cluster %s: %s", resultCh.cluster, resultCh.err)
+				log.Errorf("Error fetching Namespaces for local cluster [%s]: %s", resultCh.cluster, resultCh.err)
 				return nil, resultCh.err
 			} else {
-				log.Infof("Error fetching Namespaces for cluster %s: %s", resultCh.cluster, resultCh.err)
+				log.Infof("Error fetching Namespaces for cluster [%s]: %s", resultCh.cluster, resultCh.err)
 				continue
 			}
 		}
@@ -180,6 +202,40 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	}
 
 	resultns := namespaces
+
+	// Filter out those namespaces that do not match discoverySelectors.
+	// Follow the semantics that Istio follows, which is:
+	//   If there is no discoverySelectors section in the config, skip this entirely.
+	//   If there is an empty discoverySelectors section, that means all namespaces are to be used.
+	//   If there are one or more discoverySelectors specified, the filter namespaces based on what they select.
+	if len(discoverySelectors) > 0 {
+		// 1. convert LabelSelectors to Selectors
+		selectors := make([]labels.Selector, 0)
+		for _, selector := range discoverySelectors {
+			ls, err := meta_v1.LabelSelectorAsSelector(selector)
+			if err != nil {
+				return nil, fmt.Errorf("error initializing discovery selectors filter, invalid discovery selector: %v", err)
+			}
+			selectors = append(selectors, ls)
+		}
+
+		// 2. range over all namespaces to get discovery namespaces, notice each selector result is ORed (as per Istio convention)
+		selectedNamespaces := make([]models.Namespace, 0)
+		for _, ns := range resultns {
+			if ns.Name == configObject.IstioNamespace {
+				selectedNamespaces = append(selectedNamespaces, ns) // we always want to return the control plane namespace
+			} else {
+				for _, selector := range selectors {
+					if selector.Matches(labels.Set(ns.Labels)) {
+						selectedNamespaces = append(selectedNamespaces, ns)
+						break
+					}
+				}
+			}
+		}
+		namespaces = selectedNamespaces
+		resultns = namespaces
+	}
 
 	// exclude namespaces that are:
 	// 1. to be filtered out via the exclude list
