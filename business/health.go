@@ -29,11 +29,10 @@ type NamespaceHealthCriteria struct {
 var HealthAnnotation = []models.AnnotationKey{models.RateHealthAnnotation}
 
 // GetServiceHealth returns a service health (service request error rate)
-func (in *HealthService) GetServiceHealth(ctx context.Context, cluster, namespace, service, rateInterval string, queryTime time.Time, svc *models.Service) (models.ServiceHealth, error) {
+func (in *HealthService) GetServiceHealth(ctx context.Context, namespace, service, rateInterval string, queryTime time.Time, svc *models.Service) (models.ServiceHealth, error) {
 	var end observability.EndFunc
 	_, end = observability.StartSpan(ctx, "GetServiceHealth",
 		observability.Attribute("package", "business"),
-		observability.Attribute("cluster", cluster),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("service", service),
 		observability.Attribute("rateInterval", rateInterval),
@@ -41,7 +40,7 @@ func (in *HealthService) GetServiceHealth(ctx context.Context, cluster, namespac
 	)
 	defer end()
 
-	rqHealth, err := in.getServiceRequestsHealth(cluster, namespace, service, rateInterval, queryTime, svc)
+	rqHealth, err := in.getServiceRequestsHealth(namespace, service, rateInterval, queryTime, svc)
 	return models.ServiceHealth{Requests: rqHealth}, err
 }
 
@@ -331,14 +330,14 @@ func fillWorkloadRequestRates(allHealth models.NamespaceWorkloadHealth, rates mo
 	}
 }
 
-func (in *HealthService) getServiceRequestsHealth(cluster, namespace, service, rateInterval string, queryTime time.Time, svc *models.Service) (models.RequestHealth, error) {
+func (in *HealthService) getServiceRequestsHealth(namespace, service, rateInterval string, queryTime time.Time, svc *models.Service) (models.RequestHealth, error) {
 	rqHealth := models.NewEmptyRequestHealth()
 	if svc.Type == "External" {
 		// ServiceEntry from Istio Registry
 		// Telemetry doesn't collect a namespace
 		namespace = "unknown"
 	}
-	inbound, err := in.prom.GetServiceRequestRates(cluster, namespace, service, rateInterval, queryTime)
+	inbound, err := in.prom.GetServiceRequestRates(namespace, service, rateInterval, queryTime)
 	if err != nil {
 		return rqHealth, errors.NewServiceUnavailable(err.Error())
 	}

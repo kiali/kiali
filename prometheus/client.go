@@ -34,7 +34,7 @@ type ClientInterface interface {
 	GetConfiguration() (prom_v1.ConfigResult, error)
 	GetFlags() (prom_v1.FlagsResult, error)
 	GetNamespaceServicesRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error)
-	GetServiceRequestRates(cluster, namespace, service, ratesInterval string, queryTime time.Time) (model.Vector, error)
+	GetServiceRequestRates(namespace, service, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetWorkloadRequestRates(namespace, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
 	GetMetricsForLabels(metricNames []string, labels string) ([]string, error)
 }
@@ -169,19 +169,19 @@ func (in *Client) GetNamespaceServicesRequestRates(namespace string, ratesInterv
 // be inflated due to duplication, and therefore should be used mainly for calculating ratios
 // (e.g total rates / error rates).
 // Returns (in, error)
-func (in *Client) GetServiceRequestRates(cluster, namespace, service, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+func (in *Client) GetServiceRequestRates(namespace, service, ratesInterval string, queryTime time.Time) (model.Vector, error) {
 	log.Tracef("GetServiceRequestRates [namespace: %s] [service: %s] [ratesInterval: %s] [queryTime: %s]", namespace, service, ratesInterval, queryTime.String())
 	if promCache != nil {
-		if isCached, result := promCache.GetServiceRequestRates(cluster, namespace, service, ratesInterval, queryTime); isCached {
+		if isCached, result := promCache.GetServiceRequestRates(namespace, service, ratesInterval, queryTime); isCached {
 			return result, nil
 		}
 	}
-	result, err := getServiceRequestRates(in.ctx, in.api, cluster, namespace, service, queryTime, ratesInterval)
+	result, err := getServiceRequestRates(in.ctx, in.api, namespace, service, queryTime, ratesInterval)
 	if err != nil {
 		return result, err
 	}
 	if promCache != nil {
-		promCache.SetServiceRequestRates(cluster, namespace, service, ratesInterval, queryTime, result)
+		promCache.SetServiceRequestRates(namespace, service, ratesInterval, queryTime, result)
 	}
 	return result, nil
 }

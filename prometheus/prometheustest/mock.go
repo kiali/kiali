@@ -285,8 +285,8 @@ func (o *PromClientMock) MockNamespaceServicesRequestRates(namespace, ratesInter
 }
 
 // MockServiceRequestRates mocks GetServiceRequestRates for given namespace and service, returning in vector
-func (o *PromClientMock) MockServiceRequestRates(cluster, namespace, service string, in model.Vector) {
-	o.On("GetServiceRequestRates", cluster, namespace, service, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(in, nil)
+func (o *PromClientMock) MockServiceRequestRates(namespace, service string, in model.Vector) {
+	o.On("GetServiceRequestRates", namespace, service, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(in, nil)
 }
 
 // MockWorkloadRequestRates mocks GetWorkloadRequestRates for given namespace and workload, returning in & out vectors
@@ -324,8 +324,8 @@ func (o *PromClientMock) GetAppRequestRates(namespace, app, ratesInterval string
 	return args.Get(0).(model.Vector), args.Get(1).(model.Vector), args.Error(2)
 }
 
-func (o *PromClientMock) GetServiceRequestRates(cluster, namespace, service, ratesInterval string, queryTime time.Time) (model.Vector, error) {
-	args := o.Called(cluster, namespace, service, ratesInterval, queryTime)
+func (o *PromClientMock) GetServiceRequestRates(namespace, service, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+	args := o.Called(namespace, service, ratesInterval, queryTime)
 	return args.Get(0).(model.Vector), args.Error(1)
 }
 
