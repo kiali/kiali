@@ -414,7 +414,7 @@ func mockGetIstioConfigDetails(t *testing.T) IstioConfigService {
 	cache := SetupBusinessLayer(t, k8s, *conf)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = k8s
+	k8sclients[kubernetes.HomeClusterName] = &fakeAccessReview{k8s}
 	return IstioConfigService{userClients: k8sclients, kialiCache: cache, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 }
 
