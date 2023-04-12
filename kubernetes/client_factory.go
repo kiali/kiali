@@ -28,7 +28,10 @@ const defaultExpirationTime = time.Minute * 15
 // If you need an SA client connected to the home cluster, use GetSAHomeClusterClient()
 // instead of this. This gets set when newClientFactory() is called.
 // TODO: Deprecated - remove this.
-var HomeClusterName = "Kubernetes"
+var (
+	HomeClusterName     = "Kubernetes"
+	homeClusterNameLock = sync.RWMutex{}
+)
 
 // ClientFactory interface for the clientFactory object
 type ClientFactory interface {
@@ -95,7 +98,9 @@ func GetClientFactory() (ClientFactory, error) {
 // Mock friendly for testing purposes
 func newClientFactory(restConfig *rest.Config) (*clientFactory, error) {
 	homeCluster := kialiConfig.Get().KubernetesConfig.ClusterName
+	homeClusterNameLock.Lock()
 	HomeClusterName = homeCluster
+	homeClusterNameLock.Unlock()
 	f := &clientFactory{
 		baseRestConfig:  restConfig,
 		clientEntries:   make(map[string]map[string]ClientInterface),
