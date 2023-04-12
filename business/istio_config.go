@@ -125,10 +125,10 @@ var newSecurityConfigTypes = []string{
 // per a given Namespace.
 // @TODO hardcoded home cluster
 func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria IstioConfigCriteria) (models.IstioConfigList, error) {
-	return in.getIstioConfigList(ctx, criteria, kubernetes.HomeClusterName)
+	return in.GetIstioConfigListPerCluster(ctx, criteria, kubernetes.HomeClusterName)
 }
 
-func (in *IstioConfigService) getIstioConfigList(ctx context.Context, criteria IstioConfigCriteria, cluster string) (models.IstioConfigList, error) {
+func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, criteria IstioConfigCriteria, cluster string) (models.IstioConfigList, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetIstioConfigList",
 		observability.Attribute("package", "business"),
@@ -241,7 +241,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, criteria I
 	}
 
 	kubeCache := in.kialiCache.GetKubeCaches()[cluster]
-	if kubeCache != nil {
+	if kubeCache == nil {
 		return istioConfigList, fmt.Errorf("K8s Cache [%s] is not found or is not accessible for Kiali", cluster)
 	}
 

@@ -1,12 +1,14 @@
 import { filterByName, IstioConfigItem, IstioConfigList, toIstioItems } from '../../../types/IstioConfigList';
 import * as IstioConfigListFilters from '../FiltersAndSorts';
 import { SortField } from '../../../types/SortFilters';
+import { HomeClusterName } from '../../../types/Common';
 
 const mockIstioConfigList = (names: string[]): IstioConfigList => {
   const testData: IstioConfigList = {
     namespace: {
       name: 'test'
     },
+    cluster: HomeClusterName,
     gateways: [],
     k8sGateways: [],
     k8sHTTPRoutes: [],

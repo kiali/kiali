@@ -27,6 +27,8 @@ import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import DefaultSecondaryMasthead from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
+import { serverConfig } from '../../config';
+import { HomeClusterName } from '../../types/Common';
 
 interface IstioConfigListPageState extends FilterComponent.State<IstioConfigItem> {}
 interface IstioConfigListPageProps extends FilterComponent.Props<IstioConfigItem> {
@@ -154,7 +156,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     }
     // Request all configs from all namespaces, as in backend all configs are always loaded from registry
     return this.promises
-      .register('configs', API.getAllIstioConfigs([], typeFilters, validate, '', ''))
+      .register('configs', API.getAllIstioConfigs(HomeClusterName, [], typeFilters, validate, '', ''))
       .then(response => {
         let istioItems: IstioConfigItem[] = [];
         // filter by selected namespaces
@@ -166,7 +168,8 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
   }
 
   render() {
-    const hiddenColumns = [] as string[];
+    const isMultiCluster = Object.keys(serverConfig.clusters || {}).length > 1;
+    const hiddenColumns = isMultiCluster ? ([] as string[]) : ['cluster'];
     if (this.props.istioAPIEnabled) {
       Toggles.getToggles().forEach((v, k) => {
         if (!v) {

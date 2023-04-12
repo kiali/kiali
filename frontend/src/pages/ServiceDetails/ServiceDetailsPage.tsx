@@ -100,9 +100,10 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   }
 
   private fetchService = () => {
+    // @TODO add cluster
     this.promises.cancelAll();
     this.promises
-      .register('gateways', API.getAllIstioConfigs([], ['gateways', 'k8sgateways'], false, '', ''))
+      .register('gateways', API.getAllIstioConfigs('', [], ['gateways', 'k8sgateways'], false, '', ''))
       .then(response => {
         const gws: Gateway[] = [];
         const k8sGws: K8sGateway[] = [];

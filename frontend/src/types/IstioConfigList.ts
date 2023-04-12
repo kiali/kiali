@@ -225,6 +225,7 @@ export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[
     entries.forEach(entry => {
       const item = {
         namespace: istioConfigList.namespace.name,
+        cluster: istioConfigList.cluster,
         type: typeName,
         name: entry.metadata.name,
         creationTimestamp: entry.metadata.creationTimestamp,

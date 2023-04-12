@@ -189,6 +189,7 @@ export const getIstioConfig = (
 };
 
 export const getAllIstioConfigs = (
+  cluster: string,
   namespaces: string[],
   objects: string[],
   validate: boolean,
@@ -207,6 +208,9 @@ export const getAllIstioConfigs = (
   }
   if (workloadSelector) {
     params.workloadSelector = workloadSelector;
+  }
+  if (cluster) {
+    params.cluster = cluster;
   }
   return newRequest<IstioConfigsMap>(HTTP_VERBS.GET, urls.allIstioConfigs(), params, {});
 };

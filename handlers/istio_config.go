@@ -54,6 +54,17 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		workloadSelector = query.Get("workloadSelector")
 	}
 
+	cluster := ""
+	if _, found := query["cluster"]; found {
+		workloadSelector = query.Get("cluster")
+	} else {
+		cluster = kubernetes.HomeClusterName
+	}
+	if cluster == kubernetes.HomeClusterName {
+		// @TODO do not include validations from other clusters yet
+		includeValidations = false
+	}
+
 	criteria := business.ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelector, allNamespaces)
 
 	// Get business layer
@@ -90,7 +101,7 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		}(namespace, &istioConfigValidations, &err)
 	}
 
-	istioConfig, err := business.IstioConfig.GetIstioConfigList(r.Context(), criteria)
+	istioConfig, err := business.IstioConfig.GetIstioConfigListPerCluster(r.Context(), criteria, cluster)
 	if includeValidations {
 		// Add validation results to the IstioConfigList once they're available (previously done in the UI layer)
 		wg.Wait()
@@ -221,7 +232,7 @@ func IstioConfigDelete(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
 	}
-	err = business.IstioConfig.DeleteIstioConfigDetail(cluster, namespace, objectType, object, )
+	err = business.IstioConfig.DeleteIstioConfigDetail(cluster, namespace, objectType, object)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return

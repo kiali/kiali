@@ -276,7 +276,7 @@ const services: Resource = {
 
 const istio: Resource = {
   name: 'istio',
-  columns: [istioItem, namespace, istioType, istioObjectConfiguration]
+  columns: [istioItem, namespace, cluster, istioType, istioObjectConfiguration]
 };
 
 const conf = {
