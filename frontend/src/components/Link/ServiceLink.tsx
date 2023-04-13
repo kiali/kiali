@@ -3,6 +3,7 @@ import { Paths } from '../../config';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { TooltipPosition } from '@patternfly/react-core';
 import { KioskLink } from './KioskLink';
+import { isMultiCluster } from '../../config';
 
 type Props = {
   name: string;
@@ -15,7 +16,7 @@ export const getServiceURL = (name: string, namespace: string, cluster?: string,
 
   to = to + '/' + name;
 
-  if (cluster) {
+  if (cluster && isMultiCluster()) {
     to = to + '?cluster=' + cluster;
   }
 

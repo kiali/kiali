@@ -151,3 +151,7 @@ export const isIstioNamespace = (namespace: string): boolean => {
   }
   return false;
 };
+
+export function isMultiCluster(): boolean {
+  return Object.keys(serverConfig.clusters).length > 1;
+}
