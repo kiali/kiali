@@ -3,6 +3,13 @@ import { updateState } from '../utils/Reducer';
 import { NamespaceState } from '../store/Store';
 import { KialiAppAction } from '../actions/KialiAppAction';
 import { NamespaceActions } from '../actions/NamespaceAction';
+import Namespace from '../types/Namespace';
+
+function filterDuplicateNamespaces(namespaces: Namespace[]): Namespace[] {
+  const nsMap = new Map<string, Namespace>();
+  namespaces.forEach(ns => nsMap.set(ns.name, ns));
+  return Array.from(nsMap.values());
+}
 
 export const INITIAL_NAMESPACE_STATE: NamespaceState = {
   activeNamespaces: [],
@@ -27,7 +34,7 @@ const namespaces = (state: NamespaceState = INITIAL_NAMESPACE_STATE, action: Kia
       }
 
     case getType(NamespaceActions.setActiveNamespaces):
-      return updateState(state, { activeNamespaces: action.payload });
+      return updateState(state, { activeNamespaces: filterDuplicateNamespaces(action.payload) });
 
     case getType(NamespaceActions.setFilter):
       return updateState(state, { filter: action.payload });
@@ -46,7 +53,7 @@ const namespaces = (state: NamespaceState = INITIAL_NAMESPACE_STATE, action: Kia
       }
       return updateState(state, {
         isFetching: false,
-        items: action.payload.list,
+        items: filterDuplicateNamespaces(action.payload.list),
         lastUpdated: action.payload.receivedAt,
         ...updatedActive
       });
