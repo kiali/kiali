@@ -255,7 +255,6 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
 
   onDelete = () => {
     API.deleteIstioConfigDetail(
-      this.state.cluster,
       this.props.match.params.namespace,
       this.props.match.params.objectType,
       this.props.match.params.object
@@ -272,7 +271,6 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
         mergeJsonPatch(objectModified, getIstioObject(this.state.istioObjectDetails))
       ).replace(new RegExp('"(,null)+]', 'g'), '"]');
       API.updateIstioConfigDetail(
-        this.state.cluster,
         this.props.match.params.namespace,
         this.props.match.params.objectType,
         this.props.match.params.object,

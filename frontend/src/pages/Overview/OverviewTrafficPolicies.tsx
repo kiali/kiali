@@ -4,7 +4,7 @@ import NamespaceInfo from './NamespaceInfo';
 import { AuthorizationPolicy, Sidecar } from 'types/IstioObjects';
 import { MessageType } from 'types/MessageCenter';
 import { PromisesRegistry } from 'utils/CancelablePromises';
-import { DurationInSeconds, HomeClusterName } from 'types/Common';
+import { DurationInSeconds } from 'types/Common';
 import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 import * as AlertUtils from 'utils/AlertUtils';
 import * as API from 'services/Api';
@@ -171,8 +171,8 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
         .registerAll(
           'trafficPoliciesDelete',
           apsP
-            .map(ap => API.deleteIstioConfigDetail(HomeClusterName, ns, 'authorizationpolicies', ap.metadata.name))
-            .concat(sdsP.map(sc => API.deleteIstioConfigDetail(HomeClusterName, ns, 'sidecars', sc.metadata.name)))
+            .map(ap => API.deleteIstioConfigDetail(ns, 'authorizationpolicies', ap.metadata.name))
+            .concat(sdsP.map(sc => API.deleteIstioConfigDetail(ns, 'sidecars', sc.metadata.name)))
         )
         .then(_ => {
           //Error here
@@ -206,8 +206,8 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
         .registerAll(
           'trafficPoliciesCreate',
           aps
-            .map(ap => API.createIstioConfigDetail(HomeClusterName, ns, 'authorizationpolicies', JSON.stringify(ap)))
-            .concat(sds.map(sc => API.createIstioConfigDetail(HomeClusterName, ns, 'sidecars', JSON.stringify(sc))))
+            .map(ap => API.createIstioConfigDetail(ns, 'authorizationpolicies', JSON.stringify(ap)))
+            .concat(sds.map(sc => API.createIstioConfigDetail(ns, 'sidecars', JSON.stringify(sc))))
         )
         .then(results => {
           if (results.length > 0) {

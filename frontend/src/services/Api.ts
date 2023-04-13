@@ -230,37 +230,25 @@ export const getIstioConfigDetail = (
   );
 };
 
-export const deleteIstioConfigDetail = (cluster: string, namespace: string, objectType: string, object: string) => {
-  return newRequest<string>(
-    HTTP_VERBS.DELETE,
-    urls.istioConfigDelete(namespace, objectType, object),
-    { cluster: cluster },
-    {}
-  );
+export const deleteIstioConfigDetail = (namespace: string, objectType: string, object: string) => {
+  return newRequest<string>(HTTP_VERBS.DELETE, urls.istioConfigDelete(namespace, objectType, object), {}, {});
 };
 
 export const updateIstioConfigDetail = (
-  cluster: string,
   namespace: string,
   objectType: string,
   object: string,
   jsonPatch: string
 ): Promise<Response<string>> => {
-  return newRequest(
-    HTTP_VERBS.PATCH,
-    urls.istioConfigUpdate(namespace, objectType, object),
-    { cluster: cluster },
-    jsonPatch
-  );
+  return newRequest(HTTP_VERBS.PATCH, urls.istioConfigUpdate(namespace, objectType, object), {}, jsonPatch);
 };
 
 export const createIstioConfigDetail = (
-  cluster: string,
   namespace: string,
   objectType: string,
   json: string
 ): Promise<Response<string>> => {
-  return newRequest(HTTP_VERBS.POST, urls.istioConfigCreate(namespace, objectType), { cluster: cluster }, json);
+  return newRequest(HTTP_VERBS.POST, urls.istioConfigCreate(namespace, objectType), {}, json);
 };
 
 export const getConfigValidations = (namespaces: string[]) => {
@@ -771,27 +759,19 @@ export function deleteServiceTrafficRouting(
   }
 
   vsList.forEach(vs => {
-    deletePromises.push(
-      deleteIstioConfigDetail(HomeClusterName, vs.metadata.namespace || '', 'virtualservices', vs.metadata.name)
-    );
+    deletePromises.push(deleteIstioConfigDetail(vs.metadata.namespace || '', 'virtualservices', vs.metadata.name));
   });
 
   routeList.forEach(k8sr => {
-    deletePromises.push(
-      deleteIstioConfigDetail(HomeClusterName, k8sr.metadata.namespace || '', 'k8shttproutes', k8sr.metadata.name)
-    );
+    deletePromises.push(deleteIstioConfigDetail(k8sr.metadata.namespace || '', 'k8shttproutes', k8sr.metadata.name));
   });
 
   drList.forEach(dr => {
-    deletePromises.push(
-      deleteIstioConfigDetail(HomeClusterName, dr.metadata.namespace || '', 'destinationrules', dr.metadata.name)
-    );
+    deletePromises.push(deleteIstioConfigDetail(dr.metadata.namespace || '', 'destinationrules', dr.metadata.name));
 
     const paName = dr.hasPeerAuthentication();
     if (!!paName) {
-      deletePromises.push(
-        deleteIstioConfigDetail(HomeClusterName, dr.metadata.namespace || '', 'peerauthentications', paName)
-      );
+      deletePromises.push(deleteIstioConfigDetail(dr.metadata.namespace || '', 'peerauthentications', paName));
     }
   });
 
