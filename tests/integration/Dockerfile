@@ -2,6 +2,8 @@ FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
 ENV GOPATH=/go
 ENV PATH=/usr/local/go/bin:$GOPATH/bin:$PATH
+# we need to set HOME when running on OCP with random UID, otherwise the home is set to / and any writing there will fail with permission denied
+ENV HOME=$GOPATH/src/kiali
 
 # install required packages and prepare go dirs
 WORKDIR /bin
