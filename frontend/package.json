@@ -15,6 +15,7 @@
     "Instead update 'web_root' in Kaili config map in OpenShift console."
   ],
   "homepage": "./",
+  "proxy": "http://localhost:8000",
   "bugs": {
     "url": "https://github.com/kiali/kiali/issues"
   },

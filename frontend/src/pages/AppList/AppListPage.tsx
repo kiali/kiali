@@ -20,6 +20,7 @@ import * as AppListClass from './AppListClass';
 import VirtualList from '../../components/VirtualList/VirtualList';
 import TimeDurationContainer from '../../components/Time/TimeDurationComponent';
 import RefreshNotifier from '../../components/Refresh/RefreshNotifier';
+import { serverConfig } from '../../config';
 
 type AppListPageState = FilterComponent.State<AppListItem>;
 
@@ -120,7 +121,8 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
   }
 
   render() {
-    const hiddenColumns = [] as string[];
+    const isMultiCluster = Object.keys(serverConfig.clusters || {}).length > 1;
+    const hiddenColumns = isMultiCluster ? ([] as string[]) : ['cluster'];
     Toggles.getToggles().forEach((v, k) => {
       if (!v) {
         hiddenColumns.push(k);
