@@ -55,7 +55,9 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 	)
 	defer end()
 
-	serviceList := models.ServiceList{}
+	serviceList := models.ServiceList{
+		Validations: models.IstioValidations{},
+	}
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 	for cluster := range in.userClients {
@@ -88,8 +90,8 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 		}
 
 		serviceList.Services = append(serviceList.Services, singleClusterSVCList.Services...)
-		// TODO: Do we need to aggregate namespaces?
 		serviceList.Namespace = singleClusterSVCList.Namespace
+		serviceList.Validations = serviceList.Validations.MergeValidations(singleClusterSVCList.Validations)
 	}
 
 	return &serviceList, nil
