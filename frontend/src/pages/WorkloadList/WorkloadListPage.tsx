@@ -22,7 +22,7 @@ import { sortIstioReferences } from '../AppList/FiltersAndSorts';
 import { hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
 import { WorkloadHealth } from '../../types/Health';
 import RefreshNotifier from '../../components/Refresh/RefreshNotifier';
-import { serverConfig } from 'config';
+import { isMultiCluster } from 'config';
 
 type WorkloadListPageState = FilterComponent.State<WorkloadListItem>;
 
@@ -152,8 +152,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
   }
 
   render() {
-    const isMultiCluster = Object.keys(serverConfig.clusters || {}).length > 1;
-    const hiddenColumns = isMultiCluster ? ([] as string[]) : ['cluster'];
+    const hiddenColumns = isMultiCluster() ? ([] as string[]) : ['cluster'];
     Toggles.getToggles().forEach((v, k) => {
       if (!v) {
         hiddenColumns.push(k);
