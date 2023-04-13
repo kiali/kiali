@@ -50,7 +50,7 @@ func AppList(w http.ResponseWriter, r *http.Request) {
 	p := appParams{}
 	p.extract(r)
 
-	criteria := business.AppCriteria{Namespace: p.Namespace, IncludeIstioResources: true,
+	criteria := business.AppCriteria{Namespace: p.Namespace, IncludeIstioResources: p.IncludeIstioResources,
 		IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime, Cluster: p.Cluster}
 
 	// Get business layer

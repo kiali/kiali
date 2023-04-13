@@ -65,7 +65,8 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 		observability.Attribute("package", "business"),
 		observability.Attribute("namespace", criteria.Namespace),
 		observability.Attribute("cluster", criteria.Cluster),
-		observability.Attribute("linkIstioResources", criteria.IncludeIstioResources),
+		observability.Attribute("includeHealth", criteria.IncludeHealth),
+		observability.Attribute("includeIstioResources", criteria.IncludeIstioResources),
 		observability.Attribute("rateInterval", criteria.RateInterval),
 		observability.Attribute("queryTime", criteria.QueryTime),
 	)
