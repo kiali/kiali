@@ -231,7 +231,12 @@ export const getIstioConfigDetail = (
 };
 
 export const deleteIstioConfigDetail = (cluster: string, namespace: string, objectType: string, object: string) => {
-  return newRequest<string>(HTTP_VERBS.DELETE, urls.istioConfigDetail(cluster, namespace, objectType, object), {}, {});
+  return newRequest<string>(
+    HTTP_VERBS.DELETE,
+    urls.istioConfigDelete(namespace, objectType, object),
+    { cluster: cluster },
+    {}
+  );
 };
 
 export const updateIstioConfigDetail = (
@@ -241,7 +246,12 @@ export const updateIstioConfigDetail = (
   object: string,
   jsonPatch: string
 ): Promise<Response<string>> => {
-  return newRequest(HTTP_VERBS.PATCH, urls.istioConfigDetail(cluster, namespace, objectType, object), {}, jsonPatch);
+  return newRequest(
+    HTTP_VERBS.PATCH,
+    urls.istioConfigUpdate(namespace, objectType, object),
+    { cluster: cluster },
+    jsonPatch
+  );
 };
 
 export const createIstioConfigDetail = (
@@ -250,7 +260,7 @@ export const createIstioConfigDetail = (
   objectType: string,
   json: string
 ): Promise<Response<string>> => {
-  return newRequest(HTTP_VERBS.POST, urls.istioConfigCreate(cluster, namespace, objectType), {}, json);
+  return newRequest(HTTP_VERBS.POST, urls.istioConfigCreate(namespace, objectType), { cluster: cluster }, json);
 };
 
 export const getConfigValidations = (namespaces: string[]) => {
