@@ -7,7 +7,14 @@ import (
 )
 
 // NamespaceAppHealth is an alias of map of app name x health
-type NamespaceAppHealth map[string]*AppHealth
+type NamespaceAppsHealth []*NamespaceAppHealth
+
+type NamespaceAppHealth struct {
+	Name      string    `json:"name"`
+	Namespace string    `json:"namespace"`
+	Cluster   string    `json:"cluster"`
+	Health    AppHealth `json:"health,omitempty"`
+}
 
 // NamespaceServiceHealth is an alias of map of service name x health
 type NamespaceServiceHealth map[string]*ServiceHealth
@@ -41,6 +48,18 @@ func EmptyAppHealth() AppHealth {
 	return AppHealth{
 		WorkloadStatuses: []*WorkloadStatus{},
 		Requests:         NewEmptyRequestHealth(),
+	}
+}
+
+// EmptyAppHealth create an empty AppHealth
+func EmptyNamespaceAppHealth(name, namespace string) NamespaceAppHealth {
+	return NamespaceAppHealth{
+		Name:      name,
+		Namespace: namespace,
+		Health: AppHealth{
+			WorkloadStatuses: []*WorkloadStatus{},
+			Requests:         NewEmptyRequestHealth(),
+		},
 	}
 }
 

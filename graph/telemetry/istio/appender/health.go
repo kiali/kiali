@@ -220,7 +220,7 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 
 	type result struct {
 		namespace        string
-		appNSHealth      models.NamespaceAppHealth
+		appNSHealth      models.NamespaceAppsHealth
 		serviceNSHealth  models.NamespaceServiceHealth
 		workloadNSHealth models.NamespaceWorkloadHealth
 		err              error
@@ -277,8 +277,8 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 		}
 
 		if result.appNSHealth != nil {
-			for name, health := range result.appNSHealth {
-				appHealth[name+result.namespace] = health
+			for _, health := range result.appNSHealth {
+				appHealth[health.Name+result.namespace] = &health.Health
 			}
 		} else if result.workloadNSHealth != nil {
 			for name, health := range result.workloadNSHealth {

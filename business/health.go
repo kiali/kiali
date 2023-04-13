@@ -7,6 +7,7 @@ import (
 	"github.com/prometheus/common/model"
 	"k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
@@ -16,6 +17,7 @@ import (
 type HealthService struct {
 	prom          prometheus.ClientInterface
 	businessLayer *Layer
+	userClients   map[string]kubernetes.ClientInterface
 }
 
 type NamespaceHealthCriteria struct {
@@ -114,7 +116,7 @@ func (in *HealthService) GetWorkloadHealth(ctx context.Context, namespace, workl
 }
 
 // GetNamespaceAppHealth returns a health for all apps in given Namespace (thus, it fetches data from K8S and Prometheus)
-func (in *HealthService) GetNamespaceAppHealth(ctx context.Context, criteria NamespaceHealthCriteria) (models.NamespaceAppHealth, error) {
+func (in *HealthService) GetNamespaceAppHealth(ctx context.Context, criteria NamespaceHealthCriteria) (models.NamespaceAppsHealth, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetNamespaceAppHealth",
 		observability.Attribute("package", "business"),
@@ -134,11 +136,11 @@ func (in *HealthService) GetNamespaceAppHealth(ctx context.Context, criteria Nam
 	return in.getNamespaceAppHealth(appEntities, criteria)
 }
 
-func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criteria NamespaceHealthCriteria) (models.NamespaceAppHealth, error) {
+func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criteria NamespaceHealthCriteria) (models.NamespaceAppsHealth, error) {
 	namespace := criteria.Namespace
 	queryTime := criteria.QueryTime
 	rateInterval := criteria.RateInterval
-	allHealth := make(models.NamespaceAppHealth)
+	allHealth := models.NamespaceAppsHealth{}
 
 	// Perf: do not bother fetching request rate if no workloads or no workload has sidecar
 	sidecarPresent := false
@@ -146,10 +148,10 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 	// Prepare all data
 	for app, entities := range appEntities {
 		if app != "" {
-			h := models.EmptyAppHealth()
-			allHealth[app] = &h
+			h := models.EmptyNamespaceAppHealth(app, namespace)
+			allHealth = append(allHealth, &h)
 			if entities != nil {
-				h.WorkloadStatuses = entities.Workloads.CastWorkloadStatuses()
+				h.Health.WorkloadStatuses = entities.Workloads.CastWorkloadStatuses()
 				for _, w := range entities.Workloads {
 					if w.IstioSidecar {
 						sidecarPresent = true
@@ -294,22 +296,25 @@ func (in *HealthService) getNamespaceWorkloadHealth(ws models.Workloads, criteri
 }
 
 // fillAppRequestRates aggregates requests rates from metrics fetched from Prometheus, and stores the result in the health map.
-func fillAppRequestRates(allHealth models.NamespaceAppHealth, rates model.Vector) {
+func fillAppRequestRates(allHealth models.NamespaceAppsHealth, rates model.Vector) {
 	lblDest := model.LabelName("destination_canonical_service")
 	lblSrc := model.LabelName("source_canonical_service")
 
-	for _, sample := range rates {
-		name := string(sample.Metric[lblDest])
-		if health, ok := allHealth[name]; ok {
-			health.Requests.AggregateInbound(sample)
-		}
-		name = string(sample.Metric[lblSrc])
-		if health, ok := allHealth[name]; ok {
-			health.Requests.AggregateOutbound(sample)
+	for _, appHealth := range allHealth {
+		for _, sample := range rates {
+			name := string(sample.Metric[lblDest])
+			if name == appHealth.Name {
+				appHealth.Health.Requests.AggregateInbound(sample)
+			}
+			name = string(sample.Metric[lblSrc])
+			if name == appHealth.Name {
+				appHealth.Health.Requests.AggregateOutbound(sample)
+			}
 		}
 	}
-	for _, health := range allHealth {
-		health.Requests.CombineReporters()
+
+	for _, appHealth := range allHealth {
+		appHealth.Health.Requests.CombineReporters()
 	}
 }
 
