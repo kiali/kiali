@@ -6,6 +6,11 @@ type AppList struct {
 	// example: bookinfo
 	Namespace Namespace `json:"namespace"`
 
+	// Cluster where the apps live in
+	// required: true
+	// example: east
+	Cluster string `json:"cluster"`
+
 	// Applications for a given namespace
 	// required: true
 	Apps []AppListItem `json:"applications"`
@@ -17,6 +22,11 @@ type AppListItem struct {
 	// required: true
 	// example: reviews
 	Name string `json:"name"`
+
+	// Cluster of the application
+	// required: true
+	// example: reviews
+	Cluster string `json:"cluster"`
 
 	// Define if all Pods related to the Workloads of this app has an IstioSidecar deployed
 	// required: true

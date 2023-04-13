@@ -260,7 +260,7 @@ const workloads: Resource = {
 
 const applications: Resource = {
   name: 'applications',
-  columns: [health, item, namespace, labels, details],
+  columns: [health, item, namespace, cluster, labels, details],
   badge: PFBadges.App
 };
 

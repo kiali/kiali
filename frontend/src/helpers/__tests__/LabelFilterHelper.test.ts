@@ -31,6 +31,7 @@ const emptySvcHealth = new ServiceHealth(
 const appList: AppListItem[] = [
   {
     namespace: 'bookinfo',
+    cluster: HomeClusterName,
     health: emptyAppHealth,
     name: 'ratings',
     istioSidecar: false,
@@ -40,6 +41,7 @@ const appList: AppListItem[] = [
   {
     namespace: 'bookinfo',
     health: emptyAppHealth,
+    cluster: HomeClusterName,
     name: 'productpage',
     istioSidecar: false,
     labels: { app: 'productpage', service: 'productpage', version: 'v1' },
@@ -48,6 +50,7 @@ const appList: AppListItem[] = [
   {
     namespace: 'bookinfo',
     health: emptyAppHealth,
+    cluster: HomeClusterName,
     name: 'details',
     istioSidecar: false,
     labels: { app: 'details', service: 'details', version: 'v1' },
@@ -56,6 +59,7 @@ const appList: AppListItem[] = [
   {
     namespace: 'bookinfo',
     health: emptyAppHealth,
+    cluster: HomeClusterName,
     name: 'reviews',
     istioSidecar: false,
     labels: { app: 'reviews', service: 'reviews', version: 'v1,v2,v3' },
@@ -206,6 +210,7 @@ describe('LabelFilter', () => {
     expect(result).toEqual([
       {
         namespace: 'bookinfo',
+        cluster: HomeClusterName,
         health: emptyAppHealth,
         name: 'details',
         istioSidecar: false,
@@ -220,6 +225,7 @@ describe('LabelFilter', () => {
     expect(result).toEqual([
       {
         namespace: 'bookinfo',
+        cluster: HomeClusterName,
         health: emptyAppHealth,
         name: 'reviews',
         istioSidecar: false,

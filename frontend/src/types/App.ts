@@ -3,6 +3,7 @@ import { Runtime } from './Workload';
 import { AppHealthResponse } from '../types/Health';
 
 export interface AppId {
+  cluster: string;
   namespace: string;
   app: string;
 }

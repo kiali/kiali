@@ -124,7 +124,9 @@ func (in *HealthService) GetNamespaceAppHealth(ctx context.Context, criteria Nam
 	)
 	defer end()
 
-	appEntities, err := fetchNamespaceApps(ctx, in.businessLayer, criteria.Namespace, "")
+	// TODO: Use cluster
+
+	appEntities, err := fetchNamespaceApps(ctx, in.businessLayer, criteria.Namespace, "", "")
 	if err != nil {
 		return nil, err
 	}
