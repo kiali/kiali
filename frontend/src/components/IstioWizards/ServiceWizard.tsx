@@ -66,6 +66,7 @@ import CircuitBreaker, { CircuitBreakerState } from './CircuitBreaker';
 import _ from 'lodash';
 import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 import { KialiIcon } from '../../config/KialiIcon';
+import { HomeClusterName } from '../../types/Common';
 
 const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState => {
   return {
@@ -335,16 +336,26 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
         const pa = this.state.previews!.pa;
         // Gateway is only created when user has explicit selected this option
         if (gw) {
-          promises.push(API.createIstioConfigDetail(this.props.namespace, 'gateways', JSON.stringify(gw)));
+          promises.push(
+            API.createIstioConfigDetail(HomeClusterName, this.props.namespace, 'gateways', JSON.stringify(gw))
+          );
         }
         if (k8sgateway) {
-          promises.push(API.createIstioConfigDetail(this.props.namespace, 'k8sgateways', JSON.stringify(k8sgateway)));
+          promises.push(
+            API.createIstioConfigDetail(
+              HomeClusterName,
+              this.props.namespace,
+              'k8sgateways',
+              JSON.stringify(k8sgateway)
+            )
+          );
         }
 
         if (this.props.update) {
           if (dr) {
             promises.push(
               API.updateIstioConfigDetail(
+                HomeClusterName,
                 this.props.namespace,
                 'destinationrules',
                 dr.metadata.name,
@@ -354,12 +365,19 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           }
           if (vs) {
             promises.push(
-              API.updateIstioConfigDetail(this.props.namespace, 'virtualservices', vs.metadata.name, JSON.stringify(vs))
+              API.updateIstioConfigDetail(
+                HomeClusterName,
+                this.props.namespace,
+                'virtualservices',
+                vs.metadata.name,
+                JSON.stringify(vs)
+              )
             );
           }
           if (k8shttproute) {
             promises.push(
               API.updateIstioConfigDetail(
+                HomeClusterName,
                 this.props.namespace,
                 'k8shttproutes',
                 k8shttproute.metadata.name,
@@ -374,19 +392,35 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           // Note that Gateways are not updated from the Wizard, only the VS hosts/gateways sections are updated
         } else {
           if (dr) {
-            promises.push(API.createIstioConfigDetail(this.props.namespace, 'destinationrules', JSON.stringify(dr)));
+            promises.push(
+              API.createIstioConfigDetail(HomeClusterName, this.props.namespace, 'destinationrules', JSON.stringify(dr))
+            );
           }
           if (vs) {
-            promises.push(API.createIstioConfigDetail(this.props.namespace, 'virtualservices', JSON.stringify(vs)));
+            promises.push(
+              API.createIstioConfigDetail(HomeClusterName, this.props.namespace, 'virtualservices', JSON.stringify(vs))
+            );
           }
           if (k8shttproute) {
             promises.push(
-              API.createIstioConfigDetail(this.props.namespace, 'k8shttproutes', JSON.stringify(k8shttproute))
+              API.createIstioConfigDetail(
+                HomeClusterName,
+                this.props.namespace,
+                'k8shttproutes',
+                JSON.stringify(k8shttproute)
+              )
             );
           }
 
           if (pa) {
-            promises.push(API.createIstioConfigDetail(this.props.namespace, 'peerauthentications', JSON.stringify(pa)));
+            promises.push(
+              API.createIstioConfigDetail(
+                HomeClusterName,
+                this.props.namespace,
+                'peerauthentications',
+                JSON.stringify(pa)
+              )
+            );
           }
         }
         break;
@@ -427,14 +461,24 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
   ): void => {
     if (pa) {
       if (this.state.trafficPolicy.peerAuthnSelector.addPeerAuthnModified) {
-        promises.push(API.createIstioConfigDetail(this.props.namespace, 'peerauthentications', JSON.stringify(pa)));
+        promises.push(
+          API.createIstioConfigDetail(HomeClusterName, this.props.namespace, 'peerauthentications', JSON.stringify(pa))
+        );
       } else {
         promises.push(
-          API.updateIstioConfigDetail(this.props.namespace, 'peerauthentications', dr.metadata.name, JSON.stringify(pa))
+          API.updateIstioConfigDetail(
+            HomeClusterName,
+            this.props.namespace,
+            'peerauthentications',
+            dr.metadata.name,
+            JSON.stringify(pa)
+          )
         );
       }
     } else if (this.state.trafficPolicy.peerAuthnSelector.addPeerAuthnModified) {
-      promises.push(API.deleteIstioConfigDetail(this.props.namespace, 'peerauthentications', dr.metadata.name));
+      promises.push(
+        API.deleteIstioConfigDetail(HomeClusterName, this.props.namespace, 'peerauthentications', dr.metadata.name)
+      );
     }
   };
 

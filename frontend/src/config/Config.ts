@@ -126,9 +126,10 @@ const conf = {
       grafana: 'api/grafana',
       istioConfig: (namespace: string) => `api/namespaces/${namespace}/istio`,
       allIstioConfigs: () => `api/istio/config`,
-      istioConfigCreate: (namespace: string, objectType: string) => `api/namespaces/${namespace}/istio/${objectType}`,
-      istioConfigDetail: (namespace: string, objectType: string, object: string) =>
-        `api/namespaces/${namespace}/istio/${objectType}/${object}`,
+      istioConfigCreate: (cluster: string, namespace: string, objectType: string) =>
+        `api/namespaces/${namespace}/istio/${objectType}?cluster=${cluster}`,
+      istioConfigDetail: (cluster: string, namespace: string, objectType: string, object: string) =>
+        `api/namespaces/${namespace}/istio/${objectType}/${object}?cluster=${cluster}`,
       istioPermissions: 'api/istio/permissions',
       jaeger: 'api/jaeger',
       appTraces: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/traces`,

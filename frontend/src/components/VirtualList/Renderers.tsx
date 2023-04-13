@@ -31,24 +31,30 @@ import MissingLabel from '../MissingLabel/MissingLabel';
 import MissingAuthPolicy from 'components/MissingAuthPolicy/MissingAuthPolicy';
 import { getReconciliationCondition } from 'utils/IstioConfigUtils';
 import Label from 'components/Label/Label';
-import { isMultiCluster, serverConfig } from 'config/ServerConfig';
+import { serverConfig } from 'config/ServerConfig';
 import ControlPlaneBadge from 'pages/Overview/ControlPlaneBadge';
 import NamespaceStatuses from 'pages/Overview/NamespaceStatuses';
 import { isGateway, isWaypoint } from '../../helpers/LabelFilterHelper';
 import { KialiIcon } from '../../config/KialiIcon';
+import { HomeClusterName } from '../../types/Common';
 
 // Links
 
 const getLink = (item: TResource, config: Resource, query?: string) => {
   let url = config.name === 'istio' ? getIstioLink(item) : `/namespaces/${item.namespace}/${config.name}/${item.name}`;
-  if (query) {
-    url = url + '?' + query;
-  }
-  if (item.cluster && isMultiCluster()) {
-    if (url.endsWith('?')) {
+
+  if (item.cluster && !url.includes('cluster')) {
+    if (url.includes('?')) {
       url = url + '&cluster=' + item.cluster;
     } else {
       url = url + '?cluster=' + item.cluster;
+    }
+  }
+  if (query) {
+    if (url.includes('?')) {
+      url = url + '&' + query;
+    } else {
+      url = url + '?' + query;
     }
   }
   return url;
@@ -57,7 +63,7 @@ const getLink = (item: TResource, config: Resource, query?: string) => {
 const getIstioLink = (item: TResource) => {
   const type = item['type'];
 
-  return GetIstioObjectUrl(item.name, item.namespace, type);
+  return GetIstioObjectUrl(item.name, item.namespace, item.cluster ? item.cluster : HomeClusterName, type);
 };
 
 // Cells
@@ -114,7 +120,12 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
           item.istioReferences.map(ir => (
             <li key={ir.namespace ? `${ir.objectType}_${ir.name}_${ir.namespace}` : ir.name}>
               <PFBadge badge={PFBadges[ir.objectType]} position={TooltipPosition.top} />
-              <IstioObjectLink name={ir.name} namespace={ir.namespace || ''} type={ir.objectType.toLowerCase()}>
+              <IstioObjectLink
+                name={ir.name}
+                namespace={ir.namespace || ''}
+                cluster={item.cluster ? item.cluster : HomeClusterName}
+                type={ir.objectType.toLowerCase()}
+              >
                 {ir.name}
               </IstioObjectLink>
             </li>

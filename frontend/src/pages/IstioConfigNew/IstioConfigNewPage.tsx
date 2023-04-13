@@ -65,6 +65,7 @@ import ServiceEntryForm, {
 } from './ServiceEntryForm';
 import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 import { isValid } from 'utils/Common';
+import { HomeClusterName } from '../../types/Common';
 
 export interface IstioConfigNewPageId {
   objectType: string;
@@ -210,7 +211,7 @@ class IstioConfigNewPage extends React.Component<Props, State> {
       .registerAll(
         'Create ' + DIC[this.props.match.params.objectType],
         jsonIstioObjects.map(o =>
-          API.createIstioConfigDetail(o.namespace, DIC[this.props.match.params.objectType], o.json)
+          API.createIstioConfigDetail(HomeClusterName, o.namespace, DIC[this.props.match.params.objectType], o.json)
         )
       )
       .then(results => {

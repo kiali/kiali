@@ -55,12 +55,12 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cluster := ""
-	if _, found := query["cluster"]; found {
-		workloadSelector = query.Get("cluster")
+	if query.Has("cluster") && query.Get("cluster") != "null" {
+		cluster = query.Get("cluster")
 	} else {
 		cluster = kubernetes.HomeClusterName
 	}
-	if cluster == kubernetes.HomeClusterName {
+	if cluster != kubernetes.HomeClusterName {
 		// @TODO do not include validations from other clusters yet
 		includeValidations = false
 	}
@@ -139,10 +139,14 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cluster := ""
-	if _, found := query["cluster"]; found {
+	if query.Has("cluster") && query.Get("cluster") != "null" {
 		cluster = query.Get("cluster")
 	} else {
 		cluster = kubernetes.HomeClusterName
+	}
+	if cluster != kubernetes.HomeClusterName {
+		// @TODO do not include validations from other clusters yet
+		includeValidations = false
 	}
 
 	if !checkObjectType(objectType) {
@@ -216,8 +220,11 @@ func IstioConfigDelete(w http.ResponseWriter, r *http.Request) {
 	objectType := params["object_type"]
 	object := params["object"]
 
-	cluster := params["cluster"]
-	if cluster == "" {
+	query := r.URL.Query()
+	cluster := ""
+	if query.Has("cluster") && query.Get("cluster") != "null" {
+		cluster = query.Get("cluster")
+	} else {
 		cluster = kubernetes.HomeClusterName
 	}
 
@@ -248,8 +255,11 @@ func IstioConfigUpdate(w http.ResponseWriter, r *http.Request) {
 	objectType := params["object_type"]
 	object := params["object"]
 
-	cluster := params["cluster"]
-	if cluster == "" {
+	query := r.URL.Query()
+	cluster := ""
+	if query.Has("cluster") && query.Get("cluster") != "null" {
+		cluster = query.Get("cluster")
+	} else {
 		cluster = kubernetes.HomeClusterName
 	}
 
@@ -287,8 +297,11 @@ func IstioConfigCreate(w http.ResponseWriter, r *http.Request) {
 	namespace := params["namespace"]
 	objectType := params["object_type"]
 
-	cluster := params["cluster"]
-	if cluster == "" {
+	query := r.URL.Query()
+	cluster := ""
+	if query.Has("cluster") && query.Get("cluster") != "null" {
+		cluster = query.Get("cluster")
+	} else {
 		cluster = kubernetes.HomeClusterName
 	}
 

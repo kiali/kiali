@@ -55,6 +55,7 @@ import RefreshNotifier from '../../components/Refresh/RefreshNotifier';
 import { isParentKiosk } from '../../components/Kiosk/KioskActions';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
+import { HomeClusterName } from '../../types/Common';
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
@@ -69,6 +70,7 @@ const editorDrawer = style({
 
 interface IstioConfigDetailsState {
   istioObjectDetails?: IstioConfigDetails;
+  cluster: string;
   istioValidations?: ObjectValidation;
   originalIstioObjectDetails?: IstioConfigDetails;
   originalIstioValidations?: ObjectValidation;
@@ -100,7 +102,10 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
 
   constructor(props: IstioConfigDetailsProps) {
     super(props);
+    const urlParams = new URLSearchParams(this.props.location.search);
+    const cluster = urlParams.get('cluster') || HomeClusterName;
     this.state = {
+      cluster: cluster,
       isModified: false,
       isRemoved: false,
       currentTab: activeTab(tabName, this.defaultTab()),
@@ -134,7 +139,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   };
 
   newIstioObjectPromise = (props: IstioConfigId, validate: boolean) => {
-    return API.getIstioConfigDetail(props.namespace, props.objectType, props.object, validate);
+    return API.getIstioConfigDetail(this.state.cluster, props.namespace, props.objectType, props.object, validate);
   };
 
   fetchIstioObjectDetailsFromProps = (props: IstioConfigId) => {
@@ -146,6 +151,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
       .then(resultConfigDetails => {
         this.setState(
           {
+            cluster: this.state.cluster,
             istioObjectDetails: resultConfigDetails.data,
             originalIstioObjectDetails: resultConfigDetails.data,
             istioValidations: resultConfigDetails.data.validation,
@@ -249,6 +255,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
 
   onDelete = () => {
     API.deleteIstioConfigDetail(
+      this.state.cluster,
       this.props.match.params.namespace,
       this.props.match.params.objectType,
       this.props.match.params.object
@@ -265,6 +272,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
         mergeJsonPatch(objectModified, getIstioObject(this.state.istioObjectDetails))
       ).replace(new RegExp('"(,null)+]', 'g'), '"]');
       API.updateIstioConfigDetail(
+        this.state.cluster,
         this.props.match.params.namespace,
         this.props.match.params.objectType,
         this.props.match.params.object,
@@ -476,6 +484,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
                     istioObjectDetails={this.state.istioObjectDetails}
                     istioValidations={this.state.istioValidations}
                     namespace={this.state.istioObjectDetails.namespace.name}
+                    cluster={this.state.cluster}
                     statusMessages={istioStatusMsgs}
                     objectReferences={objectReferences}
                     serviceReferences={serviceReferences}

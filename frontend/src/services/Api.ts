@@ -215,34 +215,42 @@ export const getAllIstioConfigs = (
   return newRequest<IstioConfigsMap>(HTTP_VERBS.GET, urls.allIstioConfigs(), params, {});
 };
 
-export const getIstioConfigDetail = (namespace: string, objectType: string, object: string, validate: boolean) => {
+export const getIstioConfigDetail = (
+  cluster: string,
+  namespace: string,
+  objectType: string,
+  object: string,
+  validate: boolean
+) => {
   return newRequest<IstioConfigDetails>(
     HTTP_VERBS.GET,
-    urls.istioConfigDetail(namespace, objectType, object),
+    urls.istioConfigDetail(cluster, namespace, objectType, object),
     validate ? { validate: true, help: true } : {},
     {}
   );
 };
 
-export const deleteIstioConfigDetail = (namespace: string, objectType: string, object: string) => {
-  return newRequest<string>(HTTP_VERBS.DELETE, urls.istioConfigDetail(namespace, objectType, object), {}, {});
+export const deleteIstioConfigDetail = (cluster: string, namespace: string, objectType: string, object: string) => {
+  return newRequest<string>(HTTP_VERBS.DELETE, urls.istioConfigDetail(cluster, namespace, objectType, object), {}, {});
 };
 
 export const updateIstioConfigDetail = (
+  cluster: string,
   namespace: string,
   objectType: string,
   object: string,
   jsonPatch: string
 ): Promise<Response<string>> => {
-  return newRequest(HTTP_VERBS.PATCH, urls.istioConfigDetail(namespace, objectType, object), {}, jsonPatch);
+  return newRequest(HTTP_VERBS.PATCH, urls.istioConfigDetail(cluster, namespace, objectType, object), {}, jsonPatch);
 };
 
 export const createIstioConfigDetail = (
+  cluster: string,
   namespace: string,
   objectType: string,
   json: string
 ): Promise<Response<string>> => {
-  return newRequest(HTTP_VERBS.POST, urls.istioConfigCreate(namespace, objectType), {}, json);
+  return newRequest(HTTP_VERBS.POST, urls.istioConfigCreate(cluster, namespace, objectType), {}, json);
 };
 
 export const getConfigValidations = (namespaces: string[]) => {
@@ -753,19 +761,27 @@ export function deleteServiceTrafficRouting(
   }
 
   vsList.forEach(vs => {
-    deletePromises.push(deleteIstioConfigDetail(vs.metadata.namespace || '', 'virtualservices', vs.metadata.name));
+    deletePromises.push(
+      deleteIstioConfigDetail(HomeClusterName, vs.metadata.namespace || '', 'virtualservices', vs.metadata.name)
+    );
   });
 
   routeList.forEach(k8sr => {
-    deletePromises.push(deleteIstioConfigDetail(k8sr.metadata.namespace || '', 'k8shttproutes', k8sr.metadata.name));
+    deletePromises.push(
+      deleteIstioConfigDetail(HomeClusterName, k8sr.metadata.namespace || '', 'k8shttproutes', k8sr.metadata.name)
+    );
   });
 
   drList.forEach(dr => {
-    deletePromises.push(deleteIstioConfigDetail(dr.metadata.namespace || '', 'destinationrules', dr.metadata.name));
+    deletePromises.push(
+      deleteIstioConfigDetail(HomeClusterName, dr.metadata.namespace || '', 'destinationrules', dr.metadata.name)
+    );
 
     const paName = dr.hasPeerAuthentication();
     if (!!paName) {
-      deletePromises.push(deleteIstioConfigDetail(dr.metadata.namespace || '', 'peerauthentications', paName));
+      deletePromises.push(
+        deleteIstioConfigDetail(HomeClusterName, dr.metadata.namespace || '', 'peerauthentications', paName)
+      );
     }
   });
 
