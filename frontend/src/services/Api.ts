@@ -330,19 +330,15 @@ export const getNamespaceAppHealth = (
     params.queryTime = String(queryTime);
   }
   return newRequest<NamespaceAppsHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(response => {
-    console.log(response.data);
     var ret: NamespaceAppsHealth = [];
     for (var i = 0; i < response.data.length; i++) {
-      var appHealth: NamespaceAppHealth = {} as NamespaceAppHealth;
+      var appHealth: NamespaceAppHealth = response.data[i] as NamespaceAppHealth;
 
-      appHealth.name = response.data[i].name;
       appHealth.health = AppHealth.fromJson(namespace, appHealth.name, response.data[i].health, {
         rateInterval: duration,
         hasSidecar: true,
         hasAmbient: false
       });
-      appHealth.namespace = response.data[i].namespace;
-      appHealth.cluster = response.data[i].cluster;
 
       ret.push(appHealth);
     }
