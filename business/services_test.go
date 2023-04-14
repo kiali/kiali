@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 	"os"
+	"sort"
 	"testing"
 	"time"
 
@@ -148,6 +149,9 @@ func TestGetServiceListFromMultipleClusters(t *testing.T) {
 	require.NoError(err)
 	require.Len(svcs.Services, 2)
 
+	sort.Slice(svcs.Services, func(i, j int) bool {
+		return svcs.Services[i].Name < svcs.Services[j].Name
+	})
 	assert.Equal(svcs.Services[0].Cluster, kubernetes.HomeClusterName)
 	assert.Equal(svcs.Services[1].Cluster, "west")
 }
