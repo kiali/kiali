@@ -33,7 +33,7 @@ import ErrorSection from '../../components/ErrorSection/ErrorSection';
 import connectRefresh from '../../components/Refresh/connectRefresh';
 
 type ServiceDetailsState = {
-  cluster?: string;
+  cluster: string;
   currentTab: string;
   gateways: Gateway[];
   k8sGateways: K8sGateway[];
@@ -66,10 +66,10 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   constructor(props: ServiceDetailsProps) {
     super(props);
     const urlParams = new URLSearchParams(this.props.location.search);
-    const cluster = urlParams.get('cluster');
+    const cluster = urlParams.get('cluster') || HomeClusterName;
     this.state = {
       // Because null is not the same as undefined and urlParams.get(...) returns null.
-      cluster: cluster ?? undefined,
+      cluster: cluster,
       currentTab: activeTab(tabName, defaultTab),
       gateways: [],
       k8sGateways: [],
@@ -103,7 +103,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     // @TODO add cluster
     this.promises.cancelAll();
     this.promises
-      .register('gateways', API.getAllIstioConfigs('', [], ['gateways', 'k8sgateways'], false, '', ''))
+      .register('gateways', API.getAllIstioConfigs(this.state.cluster, [], ['gateways', 'k8sgateways'], false, '', ''))
       .then(response => {
         const gws: Gateway[] = [];
         const k8sGws: K8sGateway[] = [];
@@ -156,6 +156,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     const overTab = (
       <Tab eventKey={0} title="Overview" key="Overview">
         <ServiceInfo
+          cluster={this.state.cluster}
           namespace={this.props.match.params.namespace}
           service={this.props.match.params.service}
           serviceDetails={this.state.serviceDetails}
@@ -184,7 +185,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.service}
           objectType={MetricsObjectTypes.SERVICE}
-          cluster={HomeClusterName}
+          cluster={this.state.cluster}
           direction={'inbound'}
         />
       </Tab>
@@ -198,7 +199,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           <TracesComponent
             lastRefreshAt={this.props.lastRefreshAt}
             namespace={this.props.match.params.namespace}
-            cluster={HomeClusterName}
+            cluster={this.state.cluster}
             target={this.props.match.params.service}
             targetKind={'service'}
           />

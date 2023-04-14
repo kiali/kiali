@@ -17,7 +17,6 @@ import { IstioTypes } from '../VirtualList/Config';
 import { style } from 'typestyle';
 import { PFBadge } from '../Pf/PfBadges';
 import IstioObjectLinkContainer from '../Link/IstioObjectLink';
-import { HomeClusterName } from '../../types/Common';
 
 type Props = {
   name: string;
@@ -58,7 +57,7 @@ export default class IstioConfigCard extends React.Component<Props> {
       <IstioObjectLinkContainer
         name={item.name}
         namespace={item.namespace || ''}
-        cluster={HomeClusterName}
+        cluster={item.cluster}
         type={item.type}
       >
         {item.name}

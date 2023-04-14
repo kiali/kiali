@@ -166,6 +166,9 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 		registryCriteria := RegistryCriteria{
 			AllNamespaces: true,
 		}
+		if _, ok := in.businessLayer.RegistryStatuses[cluster]; !ok {
+			return istioConfigList, fmt.Errorf("Registry Cache for Cluster [%s] is not found or is not accessible for Kiali", cluster)
+		}
 		registryStatus := in.businessLayer.RegistryStatuses[cluster]
 		registryConfiguration, err := registryStatus.GetRegistryConfiguration(registryCriteria)
 		if err != nil {
@@ -226,6 +229,10 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 
 		return istioConfigList, nil
 	}
+	kubeCache := in.kialiCache.GetKubeCaches()[cluster]
+	if kubeCache == nil {
+		return istioConfigList, fmt.Errorf("K8s Cache [%s] is not found or is not accessible for Kiali", cluster)
+	}
 	if !criteria.AllNamespaces {
 		// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 		// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
@@ -238,11 +245,6 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 	workloadSelector := ""
 	if isWorkloadSelector {
 		workloadSelector = criteria.WorkloadSelector
-	}
-
-	kubeCache := in.kialiCache.GetKubeCaches()[cluster]
-	if kubeCache == nil {
-		return istioConfigList, fmt.Errorf("K8s Cache [%s] is not found or is not accessible for Kiali", cluster)
 	}
 
 	errChan := make(chan error, 15)
@@ -580,6 +582,9 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
 	istioConfigDetail.ObjectType = objectType
 
+	if _, ok := in.userClients[cluster]; !ok {
+		return istioConfigDetail, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
+	}
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 	if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
@@ -723,7 +728,11 @@ func (in *IstioConfigService) GetIstioConfigDetailsFromRegistry(ctx context.Cont
 	registryCriteria := RegistryCriteria{
 		AllNamespaces: true,
 	}
-	registryConfiguration, err := in.businessLayer.RegistryStatus.GetRegistryConfiguration(registryCriteria)
+	if _, ok := in.businessLayer.RegistryStatuses[cluster]; !ok {
+		return istioConfigDetail, fmt.Errorf("Registry Cache for Cluster [%s] is not found or is not accessible for Kiali", cluster)
+	}
+	registryStatus := in.businessLayer.RegistryStatuses[cluster]
+	registryConfiguration, err := registryStatus.GetRegistryConfiguration(registryCriteria)
 	if err != nil {
 		return istioConfigDetail, err
 	}

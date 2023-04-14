@@ -50,7 +50,7 @@ class IstioConfigReferences extends React.Component<IstioConfigReferencesProps> 
           this.props.serviceReferences.map(reference => {
             return (
               <StackItem>
-                <ServiceLink name={reference.name} namespace={reference.namespace} />
+                <ServiceLink name={reference.name} namespace={reference.namespace} cluster={this.props.cluster} />
               </StackItem>
             );
           })}

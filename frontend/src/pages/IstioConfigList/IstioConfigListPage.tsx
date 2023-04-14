@@ -101,20 +101,35 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     );
 
     if (namespacesSelected.length !== 0) {
-      this.fetchConfigs(namespacesSelected, istioTypeFilters, istioNameFilters, configValidationFilters, activeToggles);
+      this.setState({ listItems: [] });
+      for (let cluster in serverConfig.clusters) {
+        if (serverConfig.clusters[cluster].isKialiHome) {
+          // @TODO the cluster name is different for HomeClusterName
+          cluster = HomeClusterName;
+        }
+        this.fetchConfigs(
+          cluster,
+          namespacesSelected,
+          istioTypeFilters,
+          istioNameFilters,
+          configValidationFilters,
+          activeToggles
+        );
+      }
     } else {
       this.setState({ listItems: [] });
     }
   }
 
   fetchConfigs(
+    cluster: string,
     namespaces: string[],
     istioTypeFilters: string[],
     istioNameFilters: string[],
     configValidationFilters: string[],
     toggles: ActiveTogglesInfo
   ) {
-    const configsPromises = this.fetchIstioConfigs(namespaces, istioTypeFilters, istioNameFilters, toggles);
+    const configsPromises = this.fetchIstioConfigs(cluster, namespaces, istioTypeFilters, istioNameFilters, toggles);
 
     configsPromises
       .then(items =>
@@ -132,7 +147,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
       .then(sorted => {
         // Update the view when data is fetched
         this.setState({
-          listItems: sorted
+          listItems: this.state.listItems.concat(sorted)
         });
       })
       .catch(istioError => {
@@ -145,6 +160,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
 
   // Fetch the Istio configs, apply filters and map them into flattened list items
   fetchIstioConfigs(
+    cluster: string,
     namespaces: string[],
     typeFilters: string[],
     istioNameFilters: string[],
@@ -154,14 +170,9 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     if (this.props.istioAPIEnabled) {
       validate = !!toggles.get('configuration');
     }
-    for (let key in serverConfig.clusters) {
-      let value = serverConfig.clusters[key];
-      console.log(value);
-      // @TODO Move the below code under this loop to call getAllIstioConfigs per cluster
-    }
     // Request all configs from all namespaces, as in backend all configs are always loaded from registry
     return this.promises
-      .register('configs', API.getAllIstioConfigs(HomeClusterName, [], typeFilters, validate, '', ''))
+      .register('configs' + cluster, API.getAllIstioConfigs(cluster, [], typeFilters, validate, '', ''))
       .then(response => {
         let istioItems: IstioConfigItem[] = [];
         // filter by selected namespaces

@@ -17,7 +17,7 @@ import {
 } from '../../types/IstioObjects';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { PromisesRegistry } from 'utils/CancelablePromises';
-import { DurationInSeconds, HomeClusterName } from 'types/Common';
+import { DurationInSeconds } from 'types/Common';
 import GraphDataSource from 'services/GraphDataSource';
 import {
   drToIstioItems,
@@ -44,6 +44,7 @@ import * as AlertUtils from '../../utils/AlertUtils';
 import { triggerRefresh } from '../../hooks/refresh';
 
 interface Props extends ServiceId {
+  cluster: string;
   duration: DurationInSeconds;
   mtlsEnabled: boolean;
   serviceDetails?: ServiceDetailsInfo;
@@ -161,14 +162,14 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
   render() {
     const vsIstioConfigItems = this.props.serviceDetails?.virtualServices
       ? vsToIstioItems(
-          HomeClusterName,
+          this.props.cluster,
           this.props.serviceDetails.virtualServices,
           this.props.serviceDetails.validations
         )
       : [];
     const drIstioConfigItems = this.props.serviceDetails?.destinationRules
       ? drToIstioItems(
-          HomeClusterName,
+          this.props.cluster,
           this.props.serviceDetails.destinationRules,
           this.props.serviceDetails.validations
         )
@@ -176,7 +177,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
     const gwIstioConfigItems =
       this.props?.gateways && this.props.serviceDetails?.virtualServices
         ? gwToIstioItems(
-            HomeClusterName,
+            this.props.cluster,
             this.props?.gateways,
             this.props.serviceDetails.virtualServices,
             this.props.serviceDetails.validations
@@ -185,18 +186,22 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
     const k8sGwIstioConfigItems =
       this.props?.k8sGateways && this.props.serviceDetails?.k8sHTTPRoutes
         ? k8sGwToIstioItems(
-            HomeClusterName,
+            this.props.cluster,
             this.props?.k8sGateways,
             this.props.serviceDetails.k8sHTTPRoutes,
             this.props.serviceDetails.validations
           )
         : [];
     const seIstioConfigItems = this.props.serviceDetails?.serviceEntries
-      ? seToIstioItems(HomeClusterName, this.props.serviceDetails.serviceEntries, this.props.serviceDetails.validations)
+      ? seToIstioItems(
+          this.props.cluster,
+          this.props.serviceDetails.serviceEntries,
+          this.props.serviceDetails.validations
+        )
       : [];
     const k8sHTTPRouteIstioConfigItems = this.props.serviceDetails?.k8sHTTPRoutes
       ? k8sHTTPRouteToIstioItems(
-          HomeClusterName,
+          this.props.cluster,
           this.props.serviceDetails.k8sHTTPRoutes,
           this.props.serviceDetails.validations
         )
