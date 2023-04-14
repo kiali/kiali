@@ -554,7 +554,7 @@ export type NamespaceAppHealth = {
   name: string;
   namespace: string;
   cluster: string;
-  health: AppHealth[];
+  health: AppHealth;
 };
 
 export type NamespaceAppsHealth = NamespaceAppHealth[];

@@ -244,6 +244,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             const previous = this.state.namespaces.find(prev => prev.name === ns.name);
             return {
               name: ns.name,
+              cluster: ns.cluster,
               status: previous ? previous.status : undefined,
               tlsStatus: previous ? previous.tlsStatus : undefined,
               metrics: previous ? previous.metrics : undefined,
@@ -375,17 +376,20 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
 
           for (const item in result.health) {
             const health: Health = result.health[item].health;
+            const name: string = result.health[item].name;
             const status = health.getGlobalStatus();
-            if (status === FAILURE) {
-              nsStatus.inError.push(item);
-            } else if (status === DEGRADED) {
-              nsStatus.inWarning.push(item);
-            } else if (status === HEALTHY) {
-              nsStatus.inSuccess.push(item);
-            } else if (status === NOT_READY) {
-              nsStatus.inNotReady.push(item);
-            } else {
-              nsStatus.notAvailable.push(item);
+            if (result.nsInfo.cluster === result.health[item].cluster) {
+              if (status === FAILURE) {
+                nsStatus.inError.push(name);
+              } else if (status === DEGRADED) {
+                nsStatus.inWarning.push(name);
+              } else if (status === HEALTHY) {
+                nsStatus.inSuccess.push(name);
+              } else if (status === NOT_READY) {
+                nsStatus.inNotReady.push(name);
+              } else {
+                nsStatus.notAvailable.push(name);
+              }
             }
           }
           result.nsInfo.status = nsStatus;

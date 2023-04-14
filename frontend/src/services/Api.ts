@@ -9,6 +9,8 @@ import { DashboardModel } from 'types/Dashboards';
 import { GrafanaInfo } from '../types/GrafanaInfo';
 import { GraphDefinition, NodeParamsType, NodeType } from '../types/Graph';
 import {
+  AppHealth,
+  NamespaceAppHealth,
   NamespaceAppsHealth,
   NamespaceServiceHealth,
   NamespaceWorkloadHealth,
@@ -327,15 +329,24 @@ export const getNamespaceAppHealth = (
   if (queryTime) {
     params.queryTime = String(queryTime);
   }
-  return newRequest<NamespaceAppHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(response => {
-    const ret: NamespaceAppHealth = {};
-    Object.keys(response.data).forEach(k => {
-      ret[k] = AppHealth.fromJson(namespace, k, response.data[k], {
+  return newRequest<NamespaceAppsHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(response => {
+    console.log(response.data);
+    var ret: NamespaceAppsHealth = [];
+    for (var i = 0; i < response.data.length; i++) {
+      var appHealth: NamespaceAppHealth = {} as NamespaceAppHealth;
+
+      appHealth.name = response.data[i].name;
+      appHealth.health = AppHealth.fromJson(namespace, appHealth.name, response.data[i].health, {
         rateInterval: duration,
         hasSidecar: true,
         hasAmbient: false
       });
-    });
+      appHealth.namespace = response.data[i].namespace;
+      appHealth.cluster = response.data[i].cluster;
+
+      ret.push(appHealth);
+    }
+
     return ret;
   });
 };

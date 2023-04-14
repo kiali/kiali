@@ -1,5 +1,6 @@
 export default interface Namespace {
   name: string;
+  cluster?: string;
   labels?: { [key: string]: string };
 }
 
