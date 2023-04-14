@@ -127,16 +127,25 @@ func (in *HealthService) GetNamespaceAppHealth(ctx context.Context, criteria Nam
 	defer end()
 
 	// TODO: Use cluster
+	namespaceApps := models.NamespaceAppsHealth{}
+	for cluster := range in.userClients {
+		appEntities, err := fetchNamespaceApps(ctx, in.businessLayer, criteria.Namespace, cluster, "")
+		if err != nil {
+			return nil, err
+		}
 
-	appEntities, err := fetchNamespaceApps(ctx, in.businessLayer, criteria.Namespace, "", "")
-	if err != nil {
-		return nil, err
+		namespaceAppsCluster, err := in.getNamespaceAppHealth(appEntities, criteria, cluster)
+		if err != nil {
+			return nil, err
+		}
+
+		namespaceApps = append(namespaceApps, namespaceAppsCluster...)
 	}
 
-	return in.getNamespaceAppHealth(appEntities, criteria)
+	return namespaceApps, nil
 }
 
-func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criteria NamespaceHealthCriteria) (models.NamespaceAppsHealth, error) {
+func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criteria NamespaceHealthCriteria, cluster string) (models.NamespaceAppsHealth, error) {
 	namespace := criteria.Namespace
 	queryTime := criteria.QueryTime
 	rateInterval := criteria.RateInterval
@@ -148,7 +157,7 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 	// Prepare all data
 	for app, entities := range appEntities {
 		if app != "" {
-			h := models.EmptyNamespaceAppHealth(app, namespace)
+			h := models.EmptyNamespaceAppHealth(app, namespace, cluster)
 			allHealth = append(allHealth, &h)
 			if entities != nil {
 				h.Health.WorkloadStatuses = entities.Workloads.CastWorkloadStatuses()

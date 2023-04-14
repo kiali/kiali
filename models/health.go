@@ -6,7 +6,7 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
-// NamespaceAppHealth is an alias of map of app name x health
+// NamespaceAppHealth is a list of app name x health for a given namespace
 type NamespaceAppsHealth []*NamespaceAppHealth
 
 type NamespaceAppHealth struct {
@@ -52,10 +52,11 @@ func EmptyAppHealth() AppHealth {
 }
 
 // EmptyAppHealth create an empty AppHealth
-func EmptyNamespaceAppHealth(name, namespace string) NamespaceAppHealth {
+func EmptyNamespaceAppHealth(name, namespace, cluster string) NamespaceAppHealth {
 	return NamespaceAppHealth{
 		Name:      name,
 		Namespace: namespace,
+		Cluster:   cluster,
 		Health: AppHealth{
 			WorkloadStatuses: []*WorkloadStatus{},
 			Requests:         NewEmptyRequestHealth(),
