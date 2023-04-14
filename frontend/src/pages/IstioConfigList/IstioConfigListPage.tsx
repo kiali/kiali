@@ -154,6 +154,11 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     if (this.props.istioAPIEnabled) {
       validate = !!toggles.get('configuration');
     }
+    for (let key in serverConfig.clusters) {
+      let value = serverConfig.clusters[key];
+      console.log(value);
+      // @TODO Move the below code under this loop to call getAllIstioConfigs per cluster
+    }
     // Request all configs from all namespaces, as in backend all configs are always loaded from registry
     return this.promises
       .register('configs', API.getAllIstioConfigs(HomeClusterName, [], typeFilters, validate, '', ''))
