@@ -44,25 +44,24 @@ func TestInvalidNamespaceHealth(t *testing.T) {
 }
 
 func TestNamespaceHealthApp(t *testing.T) {
-	name := "details"
 	assert := assert.New(t)
 	params := map[string]string{"rateInterval": "60s"}
 
-	health, code, err := utils.NamespaceAppHealth(utils.BOOKINFO, params)
+	health, code, err := utils.NamespaceAppsHealth(utils.BOOKINFO, params)
 
 	assert.Nil(err)
 	assert.Equal(200, code)
 	assert.NotNil(health)
-	assert.NotNil((*health)[name])
-	assert.NotEmpty((*health)[name].WorkloadStatuses)
-	assert.NotNil((*health)[name].Requests)
+	assert.NotNil((*health)[0])
+	assert.NotEmpty((*health)[0].Health.WorkloadStatuses)
+	assert.NotNil((*health)[0].Health.Requests)
 }
 
 func TestNamespaceHealthInvalidRate(t *testing.T) {
 	assert := assert.New(t)
 	params := map[string]string{"rateInterval": "invalid"}
 
-	_, code, err := utils.NamespaceAppHealth(utils.BOOKINFO, params)
+	_, code, err := utils.NamespaceAppsHealth(utils.BOOKINFO, params)
 
 	assert.NotNil(err)
 	assert.NotEqual(200, code)

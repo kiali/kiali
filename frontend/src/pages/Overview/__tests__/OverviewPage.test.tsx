@@ -7,13 +7,14 @@ import { OverviewPage } from '../OverviewPage';
 import OverviewPageContainer from '../OverviewPage';
 import { FilterSelected } from '../../../components/Filters/StatefulFilters';
 import * as API from '../../../services/Api';
-import { AppHealth, NamespaceAppHealth, HEALTHY, FAILURE, DEGRADED } from '../../../types/Health';
+import { AppHealth, HEALTHY, FAILURE, DEGRADED, NamespaceAppsHealth } from '../../../types/Health';
 import { store } from '../../../store/ConfigStore';
 import { MTLSStatuses } from '../../../types/TLSStatus';
 import { FilterType, ActiveFiltersInfo } from 'types/Filters';
 import { healthFilter } from 'components/Filters/CommonFilters';
 import { nameFilter } from '../Filters';
 import { DEFAULT_LABEL_OPERATION } from '../../../types/Filters';
+import Namespace from 'types/Namespace';
 
 const mockAPIToPromise = (func: keyof typeof API, obj: any, encapsData: boolean): Promise<void> => {
   return new Promise((resolve, reject) => {
@@ -36,15 +37,11 @@ const mockAPIToPromise = (func: keyof typeof API, obj: any, encapsData: boolean)
   });
 };
 
-const mockNamespaces = (names: string[]): Promise<void> => {
-  return mockAPIToPromise(
-    'getNamespaces',
-    names.map(n => ({ name: n })),
-    true
-  );
+const mockNamespaces = (namespaces: Namespace[]): Promise<void> => {
+  return mockAPIToPromise('getNamespaces', namespaces, true);
 };
 
-const mockNamespaceHealth = (obj: NamespaceAppHealth): Promise<void> => {
+const mockNamespaceHealth = (obj: NamespaceAppsHealth): Promise<void> => {
   return mockAPIToPromise('getNamespaceAppHealth', obj, false);
 };
 
@@ -118,15 +115,29 @@ describe('Overview page', () => {
   it('renders all without filters', done => {
     FilterSelected.setSelected({ filters: [], op: DEFAULT_LABEL_OPERATION });
     Promise.all([
-      mockNamespaces(['a', 'b', 'c']),
-      mockNamespaceHealth({
-        app1: {
-          getGlobalStatus: () => HEALTHY
-        } as AppHealth,
-        app2: {
-          getGlobalStatus: () => FAILURE
-        } as AppHealth
-      })
+      mockNamespaces([
+        { name: 'a', cluster: 'cluster1' },
+        { name: 'b', cluster: 'cluster1' },
+        { name: 'c', cluster: 'cluster1' }
+      ]),
+      mockNamespaceHealth([
+        {
+          name: 'app1',
+          namespace: 'a',
+          cluster: 'cluster1',
+          health: {
+            getGlobalStatus: () => HEALTHY
+          } as AppHealth
+        },
+        {
+          name: 'app1',
+          namespace: 'b',
+          cluster: 'cluster2',
+          health: {
+            getGlobalStatus: () => FAILURE
+          } as AppHealth
+        }
+      ])
     ]).then(() => {
       mounted!.update();
       // All 3 namespaces rendered
@@ -139,18 +150,33 @@ describe('Overview page', () => {
   it('filters failures match', done => {
     FilterSelected.setSelected(genActiveFilters(healthFilter, ['Failure']));
     Promise.all([
-      mockNamespaces(['a']),
-      mockNamespaceHealth({
-        app1: {
-          getGlobalStatus: () => DEGRADED
-        } as AppHealth,
-        app2: {
-          getGlobalStatus: () => FAILURE
-        } as AppHealth,
-        app3: {
-          getGlobalStatus: () => HEALTHY
-        } as AppHealth
-      })
+      mockNamespaces([{ name: 'a', cluster: 'cluster1' }]),
+      mockNamespaceHealth([
+        {
+          name: 'app1',
+          namespace: 'a',
+          cluster: 'cluster1',
+          health: {
+            getGlobalStatus: () => DEGRADED
+          } as AppHealth
+        },
+        {
+          name: 'app2',
+          namespace: 'a',
+          cluster: 'cluster1',
+          health: {
+            getGlobalStatus: () => FAILURE
+          } as AppHealth
+        },
+        {
+          name: 'app3',
+          namespace: 'a',
+          cluster: 'cluster1',
+          health: {
+            getGlobalStatus: () => HEALTHY
+          } as AppHealth
+        }
+      ])
     ]).then(() => {
       mounted!.update();
       expect(mounted!.find('Card')).toHaveLength(1);
@@ -162,18 +188,33 @@ describe('Overview page', () => {
   it('filters failures no match', done => {
     FilterSelected.setSelected(genActiveFilters(healthFilter, ['Failure']));
     Promise.all([
-      mockNamespaces(['a']),
-      mockNamespaceHealth({
-        app1: {
-          getGlobalStatus: () => DEGRADED
-        } as AppHealth,
-        app2: {
-          getGlobalStatus: () => HEALTHY
-        } as AppHealth,
-        app3: {
-          getGlobalStatus: () => HEALTHY
-        } as AppHealth
-      })
+      mockNamespaces([{ name: 'a', cluster: 'cluster1' }]),
+      mockNamespaceHealth([
+        {
+          name: 'app1',
+          namespace: 'a',
+          cluster: 'cluster1',
+          health: {
+            getGlobalStatus: () => DEGRADED
+          } as AppHealth
+        },
+        {
+          name: 'app2',
+          namespace: 'a',
+          cluster: 'cluster1',
+          health: {
+            getGlobalStatus: () => HEALTHY
+          } as AppHealth
+        },
+        {
+          name: 'app3',
+          namespace: 'a',
+          cluster: 'cluster1',
+          health: {
+            getGlobalStatus: () => HEALTHY
+          } as AppHealth
+        }
+      ])
     ]).then(() => {
       mounted!.update();
       expect(mounted!.find('Card')).toHaveLength(0);
@@ -185,15 +226,25 @@ describe('Overview page', () => {
   it('multi-filters health match', done => {
     FilterSelected.setSelected(genActiveFilters(healthFilter, ['Failure', 'Degraded']));
     Promise.all([
-      mockNamespaces(['a']),
-      mockNamespaceHealth({
-        app1: {
-          getGlobalStatus: () => DEGRADED
-        } as AppHealth,
-        app2: {
-          getGlobalStatus: () => HEALTHY
-        } as AppHealth
-      })
+      mockNamespaces([{ name: 'a', cluster: 'cluster1' }]),
+      mockNamespaceHealth([
+        {
+          name: 'app1',
+          namespace: 'a',
+          cluster: 'cluster1',
+          health: {
+            getGlobalStatus: () => DEGRADED
+          } as AppHealth
+        },
+        {
+          name: 'app2',
+          namespace: 'a',
+          cluster: 'cluster1',
+          health: {
+            getGlobalStatus: () => HEALTHY
+          } as AppHealth
+        }
+      ])
     ]).then(() => {
       mounted!.update();
       expect(mounted!.find('Card')).toHaveLength(1);
@@ -205,15 +256,25 @@ describe('Overview page', () => {
   it('multi-filters health no match', done => {
     FilterSelected.setSelected(genActiveFilters(healthFilter, ['Failure', 'Degraded']));
     Promise.all([
-      mockNamespaces(['a']),
-      mockNamespaceHealth({
-        app1: {
-          getGlobalStatus: () => HEALTHY
-        } as AppHealth,
-        app2: {
-          getGlobalStatus: () => HEALTHY
-        } as AppHealth
-      })
+      mockNamespaces([{ name: 'a', cluster: 'cluster1' }]),
+      mockNamespaceHealth([
+        {
+          name: 'app1',
+          namespace: 'a',
+          cluster: 'cluster1',
+          health: {
+            getGlobalStatus: () => HEALTHY
+          } as AppHealth
+        },
+        {
+          name: 'app2',
+          namespace: 'a',
+          cluster: 'cluster1',
+          health: {
+            getGlobalStatus: () => HEALTHY
+          } as AppHealth
+        }
+      ])
     ]).then(() => {
       mounted!.update();
       expect(mounted!.find('Card')).toHaveLength(0);
@@ -225,12 +286,21 @@ describe('Overview page', () => {
   it('filters namespaces info name match', done => {
     FilterSelected.setSelected(genActiveFilters(nameFilter, ['bc']));
     Promise.all([
-      mockNamespaces(['abc', 'bce', 'ced']),
-      mockNamespaceHealth({
-        app1: {
-          getGlobalStatus: () => HEALTHY
-        } as AppHealth
-      })
+      mockNamespaces([
+        { name: 'abc', cluster: 'cluster1' },
+        { name: 'bce', cluster: 'cluster1' },
+        { name: 'ced', cluster: 'cluster1' }
+      ]),
+      mockNamespaceHealth([
+        {
+          name: 'app1',
+          namespace: 'a',
+          cluster: 'cluster1',
+          health: {
+            getGlobalStatus: () => HEALTHY
+          } as AppHealth
+        }
+      ])
     ]).then(() => {
       mounted!.update();
       expect(mounted!.find('Card')).toHaveLength(2);
@@ -241,7 +311,11 @@ describe('Overview page', () => {
 
   it('filters namespaces info name no match', done => {
     FilterSelected.setSelected(genActiveFilters(nameFilter, ['yz']));
-    mockNamespaces(['abc', 'bce', 'ced']).then(() => {
+    mockNamespaces([
+      { name: 'abc', cluster: 'cluster1' },
+      { name: 'bce', cluster: 'cluster1' },
+      { name: 'ced', cluster: 'cluster1' }
+    ]).then(() => {
       mounted!.update();
       expect(mounted!.find('Card')).toHaveLength(0);
       done();
@@ -254,12 +328,21 @@ describe('Overview page', () => {
       concat(genActiveFilters(nameFilter, ['bc']), genActiveFilters(healthFilter, ['Healthy']))
     );
     Promise.all([
-      mockNamespaces(['abc', 'bce', 'ced']),
-      mockNamespaceHealth({
-        app1: {
-          getGlobalStatus: () => HEALTHY
-        } as AppHealth
-      })
+      mockNamespaces([
+        { name: 'abc', cluster: 'cluster1' },
+        { name: 'bce', cluster: 'cluster1' },
+        { name: 'ced', cluster: 'cluster1' }
+      ]),
+      mockNamespaceHealth([
+        {
+          name: 'app1',
+          namespace: 'a',
+          cluster: 'cluster1',
+          health: {
+            getGlobalStatus: () => HEALTHY
+          } as AppHealth
+        }
+      ])
     ]).then(() => {
       mounted!.update();
       expect(mounted!.find('Card')).toHaveLength(2);
@@ -273,12 +356,21 @@ describe('Overview page', () => {
       concat(genActiveFilters(nameFilter, ['bc']), genActiveFilters(healthFilter, ['Healthy']))
     );
     Promise.all([
-      mockNamespaces(['abc', 'bce', 'ced']),
-      mockNamespaceHealth({
-        app1: {
-          getGlobalStatus: () => DEGRADED
-        } as AppHealth
-      })
+      mockNamespaces([
+        { name: 'abc', cluster: 'cluster1' },
+        { name: 'bce', cluster: 'cluster1' },
+        { name: 'ced', cluster: 'cluster1' }
+      ]),
+      mockNamespaceHealth([
+        {
+          name: 'app1',
+          namespace: 'a',
+          cluster: 'cluster1',
+          health: {
+            getGlobalStatus: () => DEGRADED
+          } as AppHealth
+        }
+      ])
     ]).then(() => {
       mounted!.update();
       expect(mounted!.find('Card')).toHaveLength(0);
