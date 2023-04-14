@@ -29,8 +29,7 @@ const defaultExpirationTime = time.Minute * 15
 // instead of this. This gets set when newClientFactory() is called.
 // TODO: Deprecated - remove this.
 var (
-	HomeClusterName     = "Kubernetes"
-	homeClusterNameLock = sync.RWMutex{}
+	HomeClusterName = ""
 )
 
 // ClientFactory interface for the clientFactory object
@@ -74,6 +73,7 @@ type clientFactory struct {
 func GetClientFactory() (ClientFactory, error) {
 	var err error
 	once.Do(func() {
+		HomeClusterName = kialiConfig.Get().KubernetesConfig.ClusterName
 		// Get the normal configuration
 		var config *rest.Config
 		config, err = GetConfigForLocalCluster()
@@ -97,16 +97,12 @@ func GetClientFactory() (ClientFactory, error) {
 // newClientFactory allows for specifying the config and expiry duration
 // Mock friendly for testing purposes
 func newClientFactory(restConfig *rest.Config) (*clientFactory, error) {
-	homeCluster := kialiConfig.Get().KubernetesConfig.ClusterName
-	homeClusterNameLock.Lock()
-	HomeClusterName = homeCluster
-	homeClusterNameLock.Unlock()
 	f := &clientFactory{
 		baseRestConfig:  restConfig,
 		clientEntries:   make(map[string]map[string]ClientInterface),
 		recycleChan:     make(chan string),
 		saClientEntries: make(map[string]ClientInterface),
-		homeCluster:     homeCluster,
+		homeCluster:     kialiConfig.Get().KubernetesConfig.ClusterName,
 	}
 	// after creating a client factory
 	// background goroutines will be watching the clients` expiration
@@ -124,12 +120,13 @@ func newClientFactory(restConfig *rest.Config) (*clientFactory, error) {
 	// Note that this means each remote cluster secret token must be given the proper permissions
 	// in that remote cluster for Kiali to do its work. i.e. logging into a remote cluster with the
 	// remote cluster secret token must be given the same permissions as the local cluster Kiali SA.
+	// TODO: Support remote secret.
 	homeClient, err := f.newSAClient(nil)
 	if err != nil {
 		return nil, err
 	}
-	homeClient.cluster.Name = f.homeCluster
 
+	homeClient.cluster.Name = f.homeCluster
 	f.saClientEntries[f.homeCluster] = homeClient
 
 	for _, clusterInfo := range remoteClusterInfos {

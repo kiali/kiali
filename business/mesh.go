@@ -335,7 +335,12 @@ func findKialiInNamespace(ctx context.Context, namespace string, clusterName str
 				services = kubernetes.FilterServicesByLabels(selector, tmpSvc)
 			}
 		} else {
-			services, getSvcErr = layer.k8sClients[clusterName].GetServicesByLabels(kialiNs.Name, "app.kubernetes.io/part-of=kiali")
+			k8s, ok := layer.k8sClients[clusterName]
+			if !ok {
+				log.Warningf("Discovery for Kiali instances in cluster [%s] failed: k8s client not found", clusterName)
+				return
+			}
+			services, getSvcErr = k8s.GetServicesByLabels(kialiNs.Name, "app.kubernetes.io/part-of=kiali")
 		}
 		if getSvcErr != nil && !errors.IsNotFound(getSvcErr) {
 			log.Warningf("Discovery for Kiali instances in cluster [%s] failed when finding the service in [%s] namespace: %s", clusterName, namespace, getSvcErr.Error())

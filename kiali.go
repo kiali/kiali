@@ -39,6 +39,7 @@ import (
 
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/server"
@@ -61,11 +62,9 @@ var (
 func init() {
 	// log everything to stderr so that it can be easily gathered by logs, separate log files are problematic with containers
 	_ = flag.Set("logtostderr", "true")
-
 }
 
 func main() {
-
 	log.InitializeLogger()
 	util.Clock = util.RealClock{}
 
@@ -88,6 +87,8 @@ func main() {
 		log.Infof("No configuration file specified. Will rely on environment for configuration.")
 		config.Set(config.NewConfig())
 	}
+
+	updateConfigWithIstioInfo()
 
 	cfg := config.Get()
 	log.Tracef("Kiali Configuration:\n%s", cfg)
@@ -120,7 +121,7 @@ func main() {
 func waitForTermination() {
 	// Channel that is notified when we are done and should exit
 	// TODO: may want to make this a package variable - other things might want to tell us to exit
-	var doneChan = make(chan bool)
+	doneChan := make(chan bool)
 
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt)
@@ -215,4 +216,73 @@ func determineContainerVersion(defaultVersion string) string {
 		return defaultVersion
 	}
 	return v
+}
+
+// TODO: Combine this with the mesh service's cluster fetching functionality.
+func updateConfigWithIstioInfo() {
+	conf := *config.Get()
+	homeCluster := conf.KubernetesConfig.ClusterName
+	if homeCluster != "" {
+		// If the cluster name is already set, we don't need to do anything
+		return
+	}
+
+	err := func() error {
+		restConf, err := kubernetes.GetConfigForLocalCluster()
+		if err != nil {
+			return err
+		}
+
+		k8s, err := kubernetes.NewClientFromConfig(restConf)
+		if err != nil {
+			return err
+		}
+
+		// Try to auto-detect the cluster name
+		homeCluster, err = getClusterInfoFromIstiod(conf, k8s)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}()
+	if err != nil {
+		log.Warningf("Cannot resolve local cluster name. Err: %s. Falling back to 'Kubernetes'", err)
+		homeCluster = "Kubernetes"
+	}
+
+	conf.KubernetesConfig.ClusterName = homeCluster
+	config.Set(&conf)
+}
+
+// getClusterInfoFromIstiod tttempts to resolve the cluster name of the "home" cluster where kiali is running from the Istio deployment.
+// Assumes that the istiod deployment is in the same cluster as the kiali pod.
+func getClusterInfoFromIstiod(conf config.Config, k8s kubernetes.ClientInterface) (string, error) {
+	// The "cluster_id" is set in an environment variable of
+	// the "istiod" deployment. Let's try to fetch it.
+	istioDeploymentConfig := conf.ExternalServices.Istio.IstiodDeploymentName
+	istiodDeployment, err := k8s.GetDeployment(conf.IstioNamespace, istioDeploymentConfig)
+	if err != nil {
+		return "", err
+	}
+
+	istiodContainers := istiodDeployment.Spec.Template.Spec.Containers
+	if len(istiodContainers) == 0 {
+		return "", fmt.Errorf("istiod deployment [%s] has no containers", istioDeploymentConfig)
+	}
+
+	myClusterName := ""
+	for _, v := range istiodContainers[0].Env {
+		if v.Name == "CLUSTER_ID" {
+			myClusterName = v.Value
+			break
+		}
+	}
+
+	if myClusterName == "" {
+		// We didn't find it. This may mean that Istio is not setup with multi-cluster enabled.
+		return "", fmt.Errorf("istiod deployment [%s] does not have the CLUSTER_ID environment variable set", istioDeploymentConfig)
+	}
+
+	return myClusterName, nil
 }

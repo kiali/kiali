@@ -715,7 +715,7 @@ func NewConfig() (c *Config) {
 			CacheIstioTypes:             []string{"AuthorizationPolicy", "DestinationRule", "EnvoyFilter", "Gateway", "PeerAuthentication", "RequestAuthentication", "ServiceEntry", "Sidecar", "VirtualService", "WorkloadEntry", "WorkloadGroup", "WasmPlugin", "Telemetry", "K8sGateway", "K8sHTTPRoute"},
 			CacheNamespaces:             []string{".*"},
 			CacheTokenNamespaceDuration: 10,
-			ClusterName:                 "Kubernetes",
+			ClusterName:                 "",
 			ExcludeWorkloads:            []string{"CronJob", "DeploymentConfig", "Job", "ReplicationController"},
 			QPS:                         175,
 		},

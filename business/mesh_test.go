@@ -36,6 +36,7 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	conf := config.NewConfig()
 	conf.InCluster = false
 	conf.KubernetesConfig.CacheEnabled = false
+	conf.KubernetesConfig.ClusterName = "KialiCluster"
 	kialiCache = nil
 	config.Set(conf)
 
@@ -45,6 +46,14 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	kialiControlPlaneCluster = nil
 	isMeshConfiguredCached = false
 	isMeshConfigured = false
+
+	// If this folder is present in your local environment, it will cause the test to fail.
+	// Setting this to a tmp folder to avoid that.
+	remoteSecretsDir := kubernetes.RemoteClusterSecretsDir
+	t.Cleanup(func() {
+		kubernetes.RemoteClusterSecretsDir = remoteSecretsDir
+	})
+	kubernetes.RemoteClusterSecretsDir = t.TempDir()
 
 	istioDeploymentMock := apps_v1.Deployment{
 		Spec: apps_v1.DeploymentSpec{
@@ -110,10 +119,7 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	SetWithBackends(mockClientFactory, nil)
 
-	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
-	clients["KialiCluster"] = k8s
-	layer := NewWithBackends(clients, clients, nil, nil)
+	layer := NewWithBackends(mockClientFactory.Clients, mockClientFactory.Clients, nil, nil)
 	meshSvc := layer.Mesh
 
 	r := httptest.NewRequest("GET", "http://kiali.url.local/", nil)
