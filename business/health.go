@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
@@ -126,12 +127,12 @@ func (in *HealthService) GetNamespaceAppHealth(ctx context.Context, criteria Nam
 	)
 	defer end()
 
-	// TODO: Use cluster
 	namespaceApps := models.NamespaceAppsHealth{}
 	for cluster := range in.userClients {
 		appEntities, err := fetchNamespaceApps(ctx, in.businessLayer, criteria.Namespace, cluster, "")
 		if err != nil {
-			return nil, err
+			log.Debugf("Error fetching Applications for cluster %s: %s", cluster, err)
+			continue
 		}
 
 		namespaceAppsCluster, err := in.getNamespaceAppHealth(appEntities, criteria, cluster)

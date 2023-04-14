@@ -361,7 +361,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           nsInfo.name,
           duration
         );
-        return healthPromise.then(rs => ({ health: rs, nsInfo: nsInfo }));
+        return healthPromise.then(rs => ({ namespaceHealth: rs, nsInfo: nsInfo }));
       })
     )
       .then(results => {
@@ -374,11 +374,12 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             notAvailable: []
           };
 
-          for (const item in result.health) {
-            const health: Health = result.health[item].health;
-            const name: string = result.health[item].name;
-            const status = health.getGlobalStatus();
-            if (result.nsInfo.cluster === result.health[item].cluster) {
+          for (var i in result.namespaceHealth) {
+            const appHealth: Health = result.namespaceHealth[i].health;
+            const name: string = result.namespaceHealth[i].name;
+            const status = appHealth.getGlobalStatus();
+            // As we could have several namespaces with the same name but different cluster, we need to check the cluster
+            if (result.nsInfo.cluster === result.namespaceHealth[i].cluster) {
               if (status === FAILURE) {
                 nsStatus.inError.push(name);
               } else if (status === DEGRADED) {
