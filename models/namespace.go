@@ -40,8 +40,10 @@ type Namespace struct {
 	Annotations map[string]string `json:"annotations"`
 }
 
-type Namespaces []Namespace
-type NamespaceNames []string
+type (
+	Namespaces     []Namespace
+	NamespaceNames []string
+)
 
 func CastNamespaceCollection(ns []core_v1.Namespace, cluster string) []Namespace {
 	namespaces := make([]Namespace, len(ns))

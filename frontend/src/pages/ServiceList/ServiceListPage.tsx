@@ -23,6 +23,7 @@ import { sortIstioReferences } from '../AppList/FiltersAndSorts';
 import { validationKey } from '../../types/IstioConfigList';
 import { ServiceHealth } from '../../types/Health';
 import RefreshNotifier from '../../components/Refresh/RefreshNotifier';
+import { isMultiCluster } from 'config';
 
 type ServiceListPageState = FilterComponent.State<ServiceListItem>;
 
@@ -103,6 +104,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
         name: service.name,
         istioSidecar: service.istioSidecar,
         namespace: data.namespace.name,
+        cluster: service.cluster,
         health: ServiceHealth.fromJson(data.namespace.name, service.name, service.health, {
           rateInterval: rateInterval,
           hasSidecar: service.istioSidecar
@@ -163,7 +165,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
   }
 
   render() {
-    const hiddenColumns = [] as string[];
+    const hiddenColumns = isMultiCluster() ? ([] as string[]) : ['cluster'];
     Toggles.getToggles().forEach((v, k) => {
       if (!v) {
         hiddenColumns.push(k);

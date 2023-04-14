@@ -266,7 +266,7 @@ const applications: Resource = {
 
 const services: Resource = {
   name: 'services',
-  columns: [health, serviceItem, namespace, labels, serviceConfiguration, details],
+  columns: [health, serviceItem, namespace, cluster, labels, serviceConfiguration, details],
   badge: PFBadges.Service
 };
 

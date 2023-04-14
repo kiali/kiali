@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util"
 )
@@ -103,6 +104,10 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params := mux.Vars(r)
+	cluster := params["cluster"]
+	if cluster == "" {
+		cluster = kubernetes.HomeClusterName
+	}
 	namespace := params["namespace"]
 	service := params["service"]
 	queryTime := util.Clock.Now()
@@ -112,7 +117,7 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var istioConfigValidations = models.IstioValidations{}
+	istioConfigValidations := models.IstioValidations{}
 	var errValidations error
 
 	wg := sync.WaitGroup{}
@@ -124,7 +129,7 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 		}()
 	}
 
-	serviceDetails, err := business.Svc.GetServiceDetails(r.Context(), namespace, service, rateInterval, queryTime)
+	serviceDetails, err := business.Svc.GetServiceDetails(r.Context(), cluster, namespace, service, rateInterval, queryTime)
 	if includeValidations && err == nil {
 		wg.Wait()
 		serviceDetails.Validations = istioConfigValidations
@@ -164,6 +169,7 @@ func ServiceUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params := mux.Vars(r)
+	cluster := params["cluster"]
 	namespace := params["namespace"]
 	service := params["service"]
 	queryTime := util.Clock.Now()
@@ -178,7 +184,7 @@ func ServiceUpdate(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
 	}
 	jsonPatch := string(body)
-	var istioConfigValidations = models.IstioValidations{}
+	istioConfigValidations := models.IstioValidations{}
 	var errValidations error
 
 	wg := sync.WaitGroup{}
@@ -190,7 +196,7 @@ func ServiceUpdate(w http.ResponseWriter, r *http.Request) {
 		}()
 	}
 
-	serviceDetails, err := business.Svc.UpdateService(r.Context(), namespace, service, rateInterval, queryTime, jsonPatch, patchType)
+	serviceDetails, err := business.Svc.UpdateService(r.Context(), cluster, namespace, service, rateInterval, queryTime, jsonPatch, patchType)
 
 	if includeValidations && err == nil {
 		wg.Wait()

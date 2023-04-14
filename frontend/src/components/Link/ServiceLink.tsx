@@ -3,6 +3,7 @@ import { Paths } from '../../config';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { TooltipPosition } from '@patternfly/react-core';
 import { KioskLink } from './KioskLink';
+import { isMultiCluster } from '../../config';
 
 type Props = {
   name: string;
@@ -10,10 +11,14 @@ type Props = {
   query?: string;
 };
 
-export const getServiceURL = (name: string, namespace: string, query?: string): string => {
+export const getServiceURL = (name: string, namespace: string, cluster?: string, query?: string): string => {
   let to = '/namespaces/' + namespace + '/' + Paths.SERVICES;
 
   to = to + '/' + name;
+
+  if (cluster && isMultiCluster()) {
+    to = to + '?cluster=' + cluster;
+  }
 
   if (!!query) {
     to = to + '?' + query;

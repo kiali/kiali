@@ -54,7 +54,8 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace
 
 	// Ensure the service exists
 	if service != "" {
-		_, err := in.businessLayer.Svc.GetService(ctx, namespace, service)
+		// TODO: Include cluster instead of hard coding home cluster.
+		_, err := in.businessLayer.Svc.GetService(ctx, kubernetes.HomeClusterName, namespace, service)
 		if err != nil {
 			if err != nil {
 				log.Warningf("Error invoking GetService %s", err)
@@ -78,7 +79,7 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace
 	var rbacDetails kubernetes.RBACDetails
 	var registryServices []*kubernetes.RegistryService
 
-	var istioApiEnabled = config.Get().ExternalServices.Istio.IstioAPIEnabled
+	istioApiEnabled := config.Get().ExternalServices.Istio.IstioAPIEnabled
 
 	wg.Add(3) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
 	if service != "" {
@@ -176,7 +177,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	var referenceChecker ReferenceChecker
 	istioReferences := models.IstioReferencesMap{}
 
-	var istioApiEnabled = config.Get().ExternalServices.Istio.IstioAPIEnabled
+	istioApiEnabled := config.Get().ExternalServices.Istio.IstioAPIEnabled
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
@@ -229,14 +230,18 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 		objectCheckers = []ObjectChecker{serviceEntryChecker}
 		referenceChecker = references.ServiceEntryReferences{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespace: namespace, Namespaces: namespaces, DestinationRules: istioConfigList.DestinationRules, ServiceEntries: istioConfigList.ServiceEntries, Sidecars: istioConfigList.Sidecars, RegistryServices: registryServices}
 	case kubernetes.Sidecars:
-		sidecarsChecker := checkers.SidecarChecker{Sidecars: istioConfigList.Sidecars, Namespaces: namespaces,
-			WorkloadsPerNamespace: workloadsPerNamespace, ServiceEntries: istioConfigList.ServiceEntries, RegistryServices: registryServices}
+		sidecarsChecker := checkers.SidecarChecker{
+			Sidecars: istioConfigList.Sidecars, Namespaces: namespaces,
+			WorkloadsPerNamespace: workloadsPerNamespace, ServiceEntries: istioConfigList.ServiceEntries, RegistryServices: registryServices,
+		}
 		objectCheckers = []ObjectChecker{sidecarsChecker}
 		referenceChecker = references.SidecarReferences{Sidecars: istioConfigList.Sidecars, Namespace: namespace, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries, RegistryServices: registryServices, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.AuthorizationPolicies:
-		authPoliciesChecker := checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies,
-			Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries,
-			WorkloadsPerNamespace: workloadsPerNamespace, MtlsDetails: mtlsDetails, VirtualServices: istioConfigList.VirtualServices, RegistryServices: registryServices, PolicyAllowAny: in.isPolicyAllowAny()}
+		authPoliciesChecker := checkers.AuthorizationPolicyChecker{
+			AuthorizationPolicies: rbacDetails.AuthorizationPolicies,
+			Namespaces:            namespaces, ServiceEntries: istioConfigList.ServiceEntries,
+			WorkloadsPerNamespace: workloadsPerNamespace, MtlsDetails: mtlsDetails, VirtualServices: istioConfigList.VirtualServices, RegistryServices: registryServices, PolicyAllowAny: in.isPolicyAllowAny(),
+		}
 		objectCheckers = []ObjectChecker{authPoliciesChecker}
 		referenceChecker = references.AuthorizationPolicyReferences{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespace: namespace, Namespaces: namespaces, VirtualServices: istioConfigList.VirtualServices, ServiceEntries: istioConfigList.ServiceEntries, RegistryServices: registryServices, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.PeerAuthentications:

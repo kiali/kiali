@@ -483,6 +483,7 @@ export const getServiceDetail = (
   namespace: string,
   service: string,
   validate: boolean,
+  cluster?: string,
   rateInterval?: DurationInSeconds
 ): Promise<ServiceDetailsInfo> => {
   const params: any = {};
@@ -491,6 +492,9 @@ export const getServiceDetail = (
   }
   if (rateInterval) {
     params.rateInterval = `${rateInterval}s`;
+  }
+  if (cluster) {
+    params.cluster = cluster;
   }
   return newRequest<ServiceDetailsInfo>(HTTP_VERBS.GET, urls.service(namespace, service), params, {}).then(r => {
     const info: ServiceDetailsInfo = r.data;

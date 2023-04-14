@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
@@ -165,7 +166,9 @@ func ServiceDashboard(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
 	}
-	svc, err := b.Svc.GetService(r.Context(), namespace, service)
+
+	// TODO: Pass cluster param.
+	svc, err := b.Svc.GetService(r.Context(), kubernetes.HomeClusterName, namespace, service)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return

@@ -172,14 +172,10 @@ func (c *promCacheImpl) GetServiceRequestRates(namespace string, service string,
 	defer c.svcRequestRatesLock.RUnlock()
 	c.svcRequestRatesLock.RLock()
 
-	if nsRates, okNs := c.cacheSvcRequestRates[namespace]; okNs {
-		if svcInterval, okSvc := nsRates[service]; okSvc {
-			if rtInterval, okRt := svcInterval[ratesInterval]; okRt {
-				if !queryTime.Before(rtInterval.queryTime) && queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
-					log.Tracef("[Prom Cache] GetServiceRequestRates [namespace: %s] [service: %s] [ratesInterval: %s] [queryTime: %s]", namespace, service, ratesInterval, queryTime.String())
-					return true, rtInterval.inResult
-				}
-			}
+	if rtInterval, okRt := c.cacheSvcRequestRates[namespace][service][ratesInterval]; okRt {
+		if !queryTime.Before(rtInterval.queryTime) && queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
+			log.Tracef("[Prom Cache] GetServiceRequestRates [namespace: %s] [service: %s] [ratesInterval: %s] [queryTime: %s]", namespace, service, ratesInterval, queryTime.String())
+			return true, rtInterval.inResult
 		}
 	}
 	return false, nil

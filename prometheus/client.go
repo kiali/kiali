@@ -21,9 +21,7 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
-var (
-	invalidLabelCharRE = regexp.MustCompile(`[^a-zA-Z0-9_]`)
-)
+var invalidLabelCharRE = regexp.MustCompile(`[^a-zA-Z0-9_]`)
 
 // ClientInterface for mocks (only mocked function are necessary here)
 type ClientInterface interface {
@@ -50,8 +48,10 @@ type Client struct {
 	ctx context.Context
 }
 
-var once sync.Once
-var promCache PromCache
+var (
+	once      sync.Once
+	promCache PromCache
+)
 
 func initPromCache() {
 	if config.Get().ExternalServices.Prometheus.CacheEnabled {

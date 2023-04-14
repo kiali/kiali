@@ -57,14 +57,13 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, namespaces []strin
 	}
 
 	minTLS, err := in.businessLayer.IstioCerts.GetTlsMinVersion()
-
 	if err != nil {
 		log.Errorf("Error getting TLS min version: %s ", err)
 	}
 
 	return models.MTLSStatus{
 		Status:          mtlsStatus.MeshMtlsStatus().OverallStatus,
-		AutoMTLSEnabled: *in.enabledAutoMtls,
+		AutoMTLSEnabled: mtlsStatus.AutoMtlsEnabled,
 		MinTLS:          minTLS,
 	}, nil
 }
@@ -107,7 +106,7 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace str
 
 	return models.MTLSStatus{
 		Status:          mtlsStatus.NamespaceMtlsStatus(namespace).OverallStatus,
-		AutoMTLSEnabled: *in.enabledAutoMtls,
+		AutoMTLSEnabled: mtlsStatus.AutoMtlsEnabled,
 	}, nil
 }
 

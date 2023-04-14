@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -24,6 +25,7 @@ import (
 // token access but the cache returns objects without any filtering or restrictions.
 type KialiCache interface {
 	GetKubeCaches() map[string]KubeCache
+	GetKubeCache(cluster string) (KubeCache, error)
 
 	// Embedded for backward compatibility for business methods that just use one cluster.
 	// All business methods should eventually use the multi-cluster cache.
@@ -121,6 +123,15 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config, na
 // GetKubeCaches returns a kube cache for every configured Kiali Service Account client keyed by cluster name.
 func (c *kialiCacheImpl) GetKubeCaches() map[string]KubeCache {
 	return c.kubeCache
+}
+
+func (c *kialiCacheImpl) GetKubeCache(cluster string) (KubeCache, error) {
+	cache, found := c.kubeCache[cluster]
+	if !found {
+		// This should not happen but it probably means the user clients have clusters that the cache doesn't know about.
+		return nil, fmt.Errorf("cache for cluster %s not found", cluster)
+	}
+	return cache, nil
 }
 
 // Stops all caches across all clusters.

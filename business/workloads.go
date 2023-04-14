@@ -461,6 +461,10 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy,
 	return opts, nil
 }
 
+func (in *WorkloadService) fetchWorkloads(ctx context.Context, namespace string, labelSelector string) (models.Workloads, error) {
+	return fetchWorkloads(ctx, in.businessLayer, namespace, labelSelector)
+}
+
 func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogEntry {
 	entry := LogEntry{
 		Message:       "",
@@ -1182,6 +1186,7 @@ func fetchWorkloadFromCluster(ctx context.Context, layer *Layer, client kubernet
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
+	// TODO: Update for multi-cluster
 	if _, err := layer.Namespace.GetNamespace(ctx, criteria.Namespace); err != nil {
 		return nil, err
 	}

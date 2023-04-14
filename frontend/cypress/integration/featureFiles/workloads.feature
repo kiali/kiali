@@ -13,7 +13,7 @@ Feature: Kiali Workloads page
       | Health | Name | Namespace | Type | Labels | Details |
     And the "details-v1" row is visible
     And the health column on the "details-v1" row has a health icon
-    And the "Name" column on the "details-v1" row has a link ending in "/namespaces/bookinfo/workloads/details-v1?cluster=_kiali_home"
+    And the "Name" column on the "details-v1" row has a link ending in "/namespaces/bookinfo/workloads/details-v1"
     And the "Namespace" column on the "details-v1" row has the text "bookinfo"
     And the "Labels" column on the "details-v1" row has the text "app=details"
     And the "Labels" column on the "details-v1" row has the text "version=v1"

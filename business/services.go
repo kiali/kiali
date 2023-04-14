@@ -24,10 +24,11 @@ import (
 
 // SvcService deals with fetching istio/kubernetes services related content and convert to kiali model
 type SvcService struct {
-	prom          prometheus.ClientInterface
-	k8s           kubernetes.ClientInterface
-	businessLayer *Layer
+	config        config.Config
 	kialiCache    cache.KialiCache
+	businessLayer *Layer
+	prom          prometheus.ClientInterface
+	userClients   map[string]kubernetes.ClientInterface
 }
 
 type ServiceCriteria struct {
@@ -54,24 +55,72 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 	)
 	defer end()
 
-	var svcs []core_v1.Service
-	var rSvcs []*kubernetes.RegistryService
-	var pods []core_v1.Pod
-	var deployments []apps_v1.Deployment
-	var istioConfigList models.IstioConfigList
-	var err error
-
+	serviceList := models.ServiceList{
+		Validations: models.IstioValidations{},
+	}
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err = in.businessLayer.Namespace.GetNamespace(ctx, criteria.Namespace); err != nil {
+	for cluster := range in.userClients {
+		if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, criteria.Namespace, cluster); err != nil {
+			// We want to throw an error if we're single vs. multi cluster to be backward compatible
+			// TODO: Probably need this in a few other places as well. It'd be nice to have a
+			// centralized check for this in the config instead of this hacky one.
+			if len(in.userClients) == 1 {
+				return nil, err
+			}
+
+			if errors.IsNotFound(err) || errors.IsForbidden(err) {
+				// If a cluster is not found or not accessible, then we skip it
+				log.Debugf("Error while accessing to cluster [%s]: %s", cluster, err.Error())
+				continue
+			}
+
+			// On any other error, abort and return the error.
+			return nil, err
+		}
+
+		singleClusterSVCList, err := in.getServiceList(ctx, criteria, cluster)
+		if err != nil {
+			if cluster == kubernetes.HomeClusterName {
+				return nil, err
+			}
+
+			log.Errorf("Unable to get services list from cluster: %s. Err: %s. Skipping", cluster, err)
+			continue
+		}
+
+		serviceList.Services = append(serviceList.Services, singleClusterSVCList.Services...)
+		serviceList.Namespace = singleClusterSVCList.Namespace
+		serviceList.Validations = serviceList.Validations.MergeValidations(singleClusterSVCList.Validations)
+	}
+
+	return &serviceList, nil
+}
+
+func (in *SvcService) getServiceList(ctx context.Context, criteria ServiceCriteria, cluster string) (*models.ServiceList, error) {
+	var (
+		svcs            []core_v1.Service
+		rSvcs           []*kubernetes.RegistryService
+		pods            []core_v1.Pod
+		deployments     []apps_v1.Deployment
+		istioConfigList models.IstioConfigList
+		err             error
+		kubeCache       cache.KubeCache
+	)
+
+	kubeCache, err = in.kialiCache.GetKubeCache(cluster)
+	if err != nil {
 		return nil, err
 	}
 
+	// TODO: Handle istio api registry.
+	// Only the home cluster will fetch the registry for now. This can change once Kiali supports
+	// talking to multiple istiods.
 	nFetches := 4
 	if criteria.IncludeIstioResources {
 		nFetches = 5
 	}
-	if !config.Get().ExternalServices.Istio.IstioAPIEnabled {
+	if !in.config.ExternalServices.Istio.IstioAPIEnabled || cluster != kubernetes.HomeClusterName {
 		nFetches--
 	}
 
@@ -90,14 +139,14 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 				log.Warningf("Services not filtered. Selector %s not valid", criteria.ServiceSelector)
 			}
 		}
-		svcs, err2 = in.kialiCache.GetServices(criteria.Namespace, selectorLabels)
+		svcs, err2 = kubeCache.GetServices(criteria.Namespace, selectorLabels)
 		if err2 != nil {
 			log.Errorf("Error fetching Services per namespace %s: %s", criteria.Namespace, err2)
 			errChan <- err2
 		}
 	}()
 
-	if config.Get().ExternalServices.Istio.IstioAPIEnabled {
+	if in.config.ExternalServices.Istio.IstioAPIEnabled && cluster == kubernetes.HomeClusterName {
 		go func() {
 			defer wg.Done()
 			var err2 error
@@ -117,7 +166,7 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 		defer wg.Done()
 		var err2 error
 		if !criteria.IncludeOnlyDefinitions {
-			pods, err2 = in.kialiCache.GetPods(criteria.Namespace, "")
+			pods, err2 = kubeCache.GetPods(criteria.Namespace, "")
 			if err2 != nil {
 				log.Errorf("Error fetching Pods per namespace %s: %s", criteria.Namespace, err2)
 				errChan <- err2
@@ -129,7 +178,7 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 		defer wg.Done()
 		var err2 error
 		if !criteria.IncludeOnlyDefinitions {
-			deployments, err2 = in.kialiCache.GetDeployments(criteria.Namespace)
+			deployments, err2 = kubeCache.GetDeployments(criteria.Namespace)
 			if err2 != nil {
 				log.Errorf("Error fetching Deployments per namespace %s: %s", criteria.Namespace, err2)
 				errChan <- err2
@@ -168,12 +217,13 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 	}
 
 	// Convert to Kiali model
-	services := in.buildServiceList(models.Namespace{Name: criteria.Namespace}, svcs, rSvcs, pods, deployments, istioConfigList, criteria)
+	services := in.buildServiceList(cluster, models.Namespace{Name: criteria.Namespace}, svcs, rSvcs, pods, deployments, istioConfigList, criteria)
 
 	// Check if we need to add health
 
 	if criteria.IncludeHealth {
 		for i, sv := range services.Services {
+			// TODO: Fix health for multi-cluster
 			services.Services[i].Health, err = in.businessLayer.Health.GetServiceHealth(ctx, criteria.Namespace, sv.Name, criteria.RateInterval, criteria.QueryTime, sv.ParseToService())
 			if err != nil {
 				log.Errorf("Error fetching health per service %s: %s", sv.Name, err)
@@ -204,7 +254,7 @@ func getDRKialiScenario(dr []*networking_v1beta1.DestinationRule) string {
 	return scenario
 }
 
-func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v1.Service, rSvcs []*kubernetes.RegistryService, pods []core_v1.Pod, deployments []apps_v1.Deployment, istioConfigList models.IstioConfigList, criteria ServiceCriteria) *models.ServiceList {
+func (in *SvcService) buildServiceList(cluster string, namespace models.Namespace, svcs []core_v1.Service, rSvcs []*kubernetes.RegistryService, pods []core_v1.Pod, deployments []apps_v1.Deployment, istioConfigList models.IstioConfigList, criteria ServiceCriteria) *models.ServiceList {
 	services := []models.ServiceOverview{}
 	validations := models.IstioValidations{}
 	if !criteria.IncludeOnlyDefinitions {
@@ -213,8 +263,14 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 
 	kubernetesServices := in.buildKubernetesServices(svcs, pods, istioConfigList, criteria.IncludeOnlyDefinitions)
 	services = append(services, kubernetesServices...)
+	// Add cluster to each kube service
+	for i := range services {
+		services[i].Cluster = cluster
+	}
 
 	// Add Istio Registry Services that are not present in the Kubernetes list
+	// TODO: Registry services are not associated to a cluster. They can have multiple clusters under
+	// "clusterVIPs". We need to decide how to handle this.
 	rSvcs = kubernetes.FilterRegistryServicesByServices(rSvcs, svcs)
 	registryServices := in.buildRegistryServices(rSvcs, istioConfigList)
 	services = append(services, registryServices...)
@@ -223,7 +279,7 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 
 func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []core_v1.Pod, istioConfigList models.IstioConfigList, onlyDefinitions bool) []models.ServiceOverview {
 	services := make([]models.ServiceOverview, len(svcs))
-	conf := config.Get()
+	conf := in.config
 
 	// Convert each k8sClients service into our model
 	for i, item := range svcs {
@@ -280,7 +336,7 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 			Namespace:              item.Namespace,
 			IstioSidecar:           hasSidecar,
 			AppLabel:               appLabel,
-			AdditionalDetailSample: models.GetFirstAdditionalIcon(conf, item.ObjectMeta.Annotations),
+			AdditionalDetailSample: models.GetFirstAdditionalIcon(&conf, item.ObjectMeta.Annotations),
 			Health:                 models.EmptyServiceHealth(),
 			HealthAnnotations:      models.GetHealthAnnotation(item.Annotations, models.GetHealthConfigAnnotation()),
 			Labels:                 item.Labels,
@@ -307,6 +363,8 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 //				]
 //			}
 //	}
+//
+// TODO: Shouldn't this be cached?
 func (in *SvcService) getClusterId() string {
 	// By default Istio uses "Kubernetes" as clusterId for single control planes scenarios.
 	// This clusterId is propagated into the Istio Registry and we need it to filter services in multi-cluster scenarios.
@@ -353,7 +411,7 @@ func filterIstioServiceByClusterId(clusterId string, item *kubernetes.RegistrySe
 
 func (in *SvcService) buildRegistryServices(rSvcs []*kubernetes.RegistryService, istioConfigList models.IstioConfigList) []models.ServiceOverview {
 	services := []models.ServiceOverview{}
-	conf := config.Get()
+	conf := in.config
 
 	clusterId := in.getClusterId()
 	for _, item := range rSvcs {
@@ -408,10 +466,11 @@ func (in *SvcService) buildRegistryServices(rSvcs []*kubernetes.RegistryService,
 }
 
 // GetService returns a single service and associated data using the interval and queryTime
-func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service, interval string, queryTime time.Time) (*models.ServiceDetails, error) {
+func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace, service, interval string, queryTime time.Time) (*models.ServiceDetails, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetServiceDetails",
 		observability.Attribute("package", "business"),
+		observability.Attribute("cluster", cluster),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("service", service),
 		observability.Attribute("interval", interval),
@@ -421,11 +480,11 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := in.businessLayer.Namespace.GetNamespace(ctx, namespace); err != nil {
+	if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
 		return nil, err
 	}
 
-	svc, err := in.GetService(ctx, namespace, service)
+	svc, err := in.GetService(ctx, cluster, namespace, service)
 	if err != nil {
 		return nil, err
 	}
@@ -440,18 +499,14 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 	var nsmtls models.MTLSStatus
 
 	wg := sync.WaitGroup{}
-	nwg := 6
-	if !config.Get().ExternalServices.Istio.IstioAPIEnabled {
-		nwg = 4
-	}
-	wg.Add(nwg)
-	errChan := make(chan error, nwg)
+	// Max possible number of errors. It's ok if the buffer size exceeds the number of goroutines
+	// in cases where istio api is disabled.
+	errChan := make(chan error, 9)
 
 	labelsSelector := labels.Set(svc.Selectors).String()
 	// If service doesn't have any selector, we can't know which are the pods and workloads applying.
 	if labelsSelector != "" {
-		wg.Add(3)
-
+		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			var err2 error
@@ -461,17 +516,19 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 			}
 		}()
 
+		wg.Add(1)
 		go func(ctx context.Context) {
 			defer wg.Done()
 			var err2 error
-			ws, err2 = fetchWorkloads(ctx, in.businessLayer, namespace, labelsSelector)
+			ws, err2 = in.businessLayer.Workload.fetchWorkloads(ctx, namespace, labelsSelector)
 			if err2 != nil {
 				log.Errorf("Error fetching Workloads per namespace %s and service %s: %s", namespace, service, err2)
 				errChan <- err2
 			}
 		}(ctx)
 
-		if config.Get().ExternalServices.Istio.IstioAPIEnabled {
+		if in.config.ExternalServices.Istio.IstioAPIEnabled {
+			wg.Add(1)
 			go func() {
 				defer wg.Done()
 				var err2 error
@@ -487,7 +544,8 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 		}
 	}
 
-	if config.Get().ExternalServices.Istio.IstioAPIEnabled {
+	if in.config.ExternalServices.Istio.IstioAPIEnabled {
+		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			var err2 error
@@ -503,6 +561,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 		}()
 	}
 
+	wg.Add(1)
 	go func(ctx context.Context) {
 		defer wg.Done()
 		var err2 error
@@ -513,15 +572,18 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 		}
 	}(ctx)
 
+	wg.Add(1)
 	go func(ctx context.Context) {
 		defer wg.Done()
 		var err2 error
+		// TODO: Fix health for multi-cluster
 		hth, err2 = in.businessLayer.Health.GetServiceHealth(ctx, namespace, service, interval, queryTime, &svc)
 		if err2 != nil {
 			errChan <- err2
 		}
 	}(ctx)
 
+	wg.Add(1)
 	go func(ctx context.Context) {
 		defer wg.Done()
 		var err2 error
@@ -531,6 +593,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 		}
 	}(ctx)
 
+	wg.Add(1)
 	go func(ctx context.Context) {
 		defer wg.Done()
 		var err2 error
@@ -553,6 +616,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 	}(ctx)
 
 	var vsCreate, vsUpdate, vsDelete bool
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		/*
@@ -561,7 +625,12 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 			Synced with:
 			https://github.com/kiali/kiali-operator/blob/master/roles/default/kiali-deploy/templates/kubernetes/role.yaml#L62
 		*/
-		vsCreate, vsUpdate, vsDelete = getPermissions(context.TODO(), in.k8s, namespace, kubernetes.VirtualServices)
+		userClient, found := in.userClients[cluster]
+		if !found {
+			errChan <- fmt.Errorf("client not found for cluster: %s", cluster)
+			return
+		}
+		vsCreate, vsUpdate, vsDelete = getPermissions(context.TODO(), userClient, namespace, kubernetes.VirtualServices)
 	}()
 
 	wg.Wait()
@@ -634,10 +703,11 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 	return &s, nil
 }
 
-func (in *SvcService) UpdateService(ctx context.Context, namespace, service string, interval string, queryTime time.Time, jsonPatch string, patchType string) (*models.ServiceDetails, error) {
+func (in *SvcService) UpdateService(ctx context.Context, cluster, namespace, service string, interval string, queryTime time.Time, jsonPatch string, patchType string) (*models.ServiceDetails, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "UpdateService",
 		observability.Attribute("package", "business"),
+		observability.Attribute("cluster", cluster),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("service", service),
 		observability.Attribute("interval", interval),
@@ -648,7 +718,18 @@ func (in *SvcService) UpdateService(ctx context.Context, namespace, service stri
 	defer end()
 
 	// Identify controller and apply patch to workload
-	if err := updateService(in.businessLayer, namespace, service, jsonPatch, patchType); err != nil {
+	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
+	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
+	if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(context.TODO(), namespace, cluster); err != nil {
+		return nil, err
+	}
+
+	userClient, found := in.userClients[cluster]
+	if !found {
+		return nil, fmt.Errorf("cluster: %s not found", cluster)
+	}
+
+	if err := userClient.UpdateService(namespace, service, jsonPatch, patchType); err != nil {
 		return nil, err
 	}
 
@@ -656,13 +737,14 @@ func (in *SvcService) UpdateService(ctx context.Context, namespace, service stri
 	in.kialiCache.Refresh(namespace)
 
 	// After the update we fetch the whole workload
-	return in.GetServiceDetails(ctx, namespace, service, interval, queryTime)
+	return in.GetServiceDetails(ctx, cluster, namespace, service, interval, queryTime)
 }
 
-func (in *SvcService) GetService(ctx context.Context, namespace, service string) (models.Service, error) {
+func (in *SvcService) GetService(ctx context.Context, cluster, namespace, service string) (models.Service, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetService",
 		observability.Attribute("package", "business"),
+		observability.Attribute("cluster", cluster),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("service", service),
 	)
@@ -670,18 +752,23 @@ func (in *SvcService) GetService(ctx context.Context, namespace, service string)
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := in.businessLayer.Namespace.GetNamespace(ctx, namespace); err != nil {
+	if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
 		return models.Service{}, err
 	}
 
 	var err error
 	var kSvc *core_v1.Service
+	var cache cache.KubeCache
+
+	cache, err = in.kialiCache.GetKubeCache(cluster)
+	if err != nil {
+		return models.Service{}, err
+	}
+
 	svc := models.Service{}
-	kSvc, err = in.kialiCache.GetService(namespace, service)
-	// Check if this service is in the Istio Registry
-	if kSvc != nil {
-		svc.Parse(kSvc)
-	} else {
+	kSvc, err = cache.GetService(namespace, service)
+	if err != nil {
+		// Check if this service is in the Istio Registry
 		criteria := RegistryCriteria{
 			Namespace: namespace,
 		}
@@ -700,6 +787,8 @@ func (in *SvcService) GetService(ctx context.Context, namespace, service string)
 			err = kubernetes.NewNotFound(service, "Kiali", "Service")
 			return svc, err
 		}
+	} else {
+		svc.Parse(kSvc)
 	}
 	return svc, err
 }
@@ -716,10 +805,11 @@ func (in *SvcService) getServiceValidations(services []core_v1.Service, deployme
 
 // GetServiceAppName returns the "Application" name (app label) that relates to a service
 // This label is taken from the service selector, which means it is assumed that pods are selected using that label
-func (in *SvcService) GetServiceAppName(ctx context.Context, namespace, service string) (string, error) {
+func (in *SvcService) GetServiceAppName(ctx context.Context, cluster, namespace, service string) (string, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetServiceAppName",
 		observability.Attribute("package", "business"),
+		observability.Attribute("cluster", cluster),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("service", service),
 	)
@@ -727,27 +817,16 @@ func (in *SvcService) GetServiceAppName(ctx context.Context, namespace, service 
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := in.businessLayer.Namespace.GetNamespace(ctx, namespace); err != nil {
+	if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
 		return "", err
 	}
 
-	svc, err := in.GetService(ctx, namespace, service)
+	svc, err := in.GetService(ctx, cluster, namespace, service)
 	if err != nil {
-		return "", fmt.Errorf("Service [namespace: %s] [name: %s] doesn't exist.", namespace, service)
+		return "", fmt.Errorf("Service [cluster: %s] [namespace: %s] [name: %s] doesn't exist.", cluster, namespace, service)
 	}
 
-	appLabelName := config.Get().IstioLabels.AppLabelName
+	appLabelName := in.config.IstioLabels.AppLabelName
 	app := svc.Selectors[appLabelName]
 	return app, nil
-}
-
-func updateService(layer *Layer, namespace string, service string, jsonPatch string, patchType string) error {
-	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
-	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := layer.Namespace.GetNamespace(context.TODO(), namespace); err != nil {
-		return err
-	}
-
-	// TODO: Multicluster
-	return layer.k8sClients[kubernetes.HomeClusterName].UpdateService(namespace, service, jsonPatch, patchType)
 }
