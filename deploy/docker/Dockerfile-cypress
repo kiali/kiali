@@ -13,10 +13,6 @@ ENV KIALI_HOME=/opt/kiali \
 
 WORKDIR $KIALI_HOME
 
-# "Fake" dbus address to prevent errors. (is this still needed?)
-# https://github.com/SeleniumHQ/docker-selenium/issues/87
-ENV DBUS_SESSION_BUS_ADDRESS=/dev/null
-
 # A few environment variables to make NPM installs easier.
 # Good colors for most applications.
 ENV TERM xterm
