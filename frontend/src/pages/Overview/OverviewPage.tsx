@@ -24,12 +24,12 @@ import * as API from '../../services/Api';
 import {
   DEGRADED,
   FAILURE,
-  Health,
   HEALTHY,
   NOT_READY,
-  NamespaceAppHealth,
   NamespaceServiceHealth,
-  NamespaceWorkloadHealth
+  NamespaceWorkloadHealth,
+  NamespaceAppsHealth,
+  Health
 } from '../../types/Health';
 import { SortField } from '../../types/SortFilters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
@@ -356,7 +356,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     );
     return Promise.all(
       chunk.map(nsInfo => {
-        const healthPromise: Promise<NamespaceAppHealth | NamespaceWorkloadHealth | NamespaceServiceHealth> = apiFunc(
+        const healthPromise: Promise<NamespaceAppsHealth | NamespaceWorkloadHealth | NamespaceServiceHealth> = apiFunc(
           nsInfo.name,
           duration
         );
@@ -372,8 +372,9 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             inSuccess: [],
             notAvailable: []
           };
-          Object.keys(result.health).forEach(item => {
-            const health: Health = result.health[item];
+
+          for (const item in result.health) {
+            const health: Health = result.health[item].health;
             const status = health.getGlobalStatus();
             if (status === FAILURE) {
               nsStatus.inError.push(item);
@@ -386,7 +387,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             } else {
               nsStatus.notAvailable.push(item);
             }
-          });
+          }
           result.nsInfo.status = nsStatus;
         });
       })

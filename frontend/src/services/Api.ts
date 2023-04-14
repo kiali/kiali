@@ -9,8 +9,7 @@ import { DashboardModel } from 'types/Dashboards';
 import { GrafanaInfo } from '../types/GrafanaInfo';
 import { GraphDefinition, NodeParamsType, NodeType } from '../types/Graph';
 import {
-  AppHealth,
-  NamespaceAppHealth,
+  NamespaceAppsHealth,
   NamespaceServiceHealth,
   NamespaceWorkloadHealth,
   ServiceHealth,
@@ -318,7 +317,7 @@ export const getNamespaceAppHealth = (
   namespace: string,
   duration: DurationInSeconds,
   queryTime?: TimeInSeconds
-): Promise<NamespaceAppHealth> => {
+): Promise<NamespaceAppsHealth> => {
   const params: any = {
     type: 'app'
   };

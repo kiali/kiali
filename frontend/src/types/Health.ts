@@ -550,7 +550,14 @@ export const healthNotAvailable = (): AppHealth => {
   );
 };
 
-export type NamespaceAppHealth = { [app: string]: AppHealth };
+export type NamespaceAppHealth = {
+  name: string;
+  namespace: string;
+  cluster: string;
+  health: AppHealth[];
+};
+
+export type NamespaceAppsHealth = NamespaceAppHealth[];
 export type NamespaceServiceHealth = { [service: string]: ServiceHealth };
 export type NamespaceWorkloadHealth = { [workload: string]: WorkloadHealth };
 
