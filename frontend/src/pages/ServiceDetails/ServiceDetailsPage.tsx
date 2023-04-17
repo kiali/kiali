@@ -103,7 +103,17 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     // @TODO add cluster
     this.promises.cancelAll();
     this.promises
-      .register('gateways', API.getAllIstioConfigs(this.state.cluster, [], ['gateways', 'k8sgateways'], false, '', ''))
+      .register(
+        'gateways',
+        API.getAllIstioConfigs(
+          this.state.cluster,
+          [this.props.match.params.namespace],
+          ['gateways', 'k8sgateways'],
+          false,
+          '',
+          ''
+        )
+      )
       .then(response => {
         const gws: Gateway[] = [];
         const k8sGws: K8sGateway[] = [];
@@ -141,10 +151,17 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         this.setState({ error: msg });
       });
 
-    API.getIstioConfig(this.props.match.params.namespace, ['peerauthentications'], false, '', '')
+    API.getAllIstioConfigs(
+      this.state.cluster,
+      [this.props.match.params.namespace],
+      ['peerauthentications'],
+      false,
+      '',
+      ''
+    )
       .then(results => {
         this.setState({
-          peerAuthentications: results.data.peerAuthentications
+          peerAuthentications: results.data[this.props.match.params.namespace].peerAuthentications
         });
       })
       .catch(error => {

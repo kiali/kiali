@@ -27,7 +27,7 @@ import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import DefaultSecondaryMasthead from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
-import { serverConfig } from '../../config';
+import { isMultiCluster, serverConfig } from '../../config';
 import { HomeClusterName } from '../../types/Common';
 
 interface IstioConfigListPageState extends FilterComponent.State<IstioConfigItem> {}
@@ -102,13 +102,24 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
 
     if (namespacesSelected.length !== 0) {
       this.setState({ listItems: [] });
-      for (let cluster in serverConfig.clusters) {
-        if (serverConfig.clusters[cluster].isKialiHome) {
-          // @TODO the cluster name is different for HomeClusterName
-          cluster = HomeClusterName;
+      if (isMultiCluster()) {
+        for (let cluster in serverConfig.clusters) {
+          if (serverConfig.clusters[cluster].isKialiHome) {
+            // @TODO the cluster name is different for HomeClusterName
+            cluster = HomeClusterName;
+          }
+          this.fetchConfigs(
+            cluster,
+            namespacesSelected,
+            istioTypeFilters,
+            istioNameFilters,
+            configValidationFilters,
+            activeToggles
+          );
         }
+      } else {
         this.fetchConfigs(
-          cluster,
+          HomeClusterName,
           namespacesSelected,
           istioTypeFilters,
           istioNameFilters,
@@ -172,20 +183,19 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     }
     // Request all configs from all namespaces, as in backend all configs are always loaded from registry
     return this.promises
-      .register('configs' + cluster, API.getAllIstioConfigs(cluster, [], typeFilters, validate, '', ''))
+      .register('configs' + cluster, API.getAllIstioConfigs(cluster, namespaces, typeFilters, validate, '', ''))
       .then(response => {
         let istioItems: IstioConfigItem[] = [];
         // filter by selected namespaces
         namespaces.forEach(ns => {
-          istioItems = istioItems.concat(toIstioItems(filterByName(response.data[ns], istioNameFilters)));
+          istioItems = istioItems.concat(toIstioItems(filterByName(response.data[ns], istioNameFilters), cluster));
         });
         return istioItems;
       });
   }
 
   render() {
-    const isMultiCluster = Object.keys(serverConfig.clusters || {}).length > 1;
-    const hiddenColumns = isMultiCluster ? ([] as string[]) : ['cluster'];
+    const hiddenColumns = isMultiCluster() ? ([] as string[]) : ['cluster'];
     if (this.props.istioAPIEnabled) {
       Toggles.getToggles().forEach((v, k) => {
         if (!v) {

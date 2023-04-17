@@ -18,9 +18,6 @@ type IstioConfigList struct {
 	// required: true
 	Namespace Namespace `json:"namespace"`
 
-	// required: true
-	Cluster string `json:"cluster"`
-
 	DestinationRules []*networking_v1beta1.DestinationRule `json:"destinationRules"`
 	EnvoyFilters     []*networking_v1alpha3.EnvoyFilter    `json:"envoyFilters"`
 	Gateways         []*networking_v1beta1.Gateway         `json:"gateways"`
@@ -201,7 +198,6 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 		if filtered[ns] == nil {
 			filtered[ns] = new(IstioConfigList)
 			filtered[ns].IstioValidations = IstioValidations{}
-			filtered[ns].Cluster = configList.Cluster
 			filtered[ns].Namespace = Namespace{Name: ns}
 			filtered[ns].DestinationRules = []*networking_v1beta1.DestinationRule{}
 			filtered[ns].EnvoyFilters = []*networking_v1alpha3.EnvoyFilter{}

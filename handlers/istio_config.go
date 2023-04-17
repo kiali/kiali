@@ -55,7 +55,7 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cluster := ""
-	if query.Has("cluster") && query.Get("cluster") != "null" {
+	if query.Has("cluster") && query.Get("cluster") != "" {
 		cluster = query.Get("cluster")
 	} else {
 		cluster = kubernetes.HomeClusterName
@@ -75,8 +75,8 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if allNamespaces && len(nss) == 0 {
-		allNamespaces, _ := business.Namespace.GetNamespaces(r.Context())
-		for _, ns := range allNamespaces {
+		loadedNamespaces, _ := business.Namespace.GetNamespacesByCluster(cluster)
+		for _, ns := range loadedNamespaces {
 			nss = append(nss, ns.Name)
 		}
 	}
@@ -139,7 +139,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cluster := ""
-	if query.Has("cluster") && query.Get("cluster") != "null" {
+	if query.Has("cluster") && query.Get("cluster") != "" {
 		cluster = query.Get("cluster")
 	} else {
 		cluster = kubernetes.HomeClusterName
@@ -169,7 +169,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func(istioConfigValidations *models.IstioValidations, istioConfigReferences *models.IstioReferencesMap, err *error) {
 			defer wg.Done()
-			istioConfigValidationResults, istioConfigReferencesResults, errValidations := business.Validations.GetIstioObjectValidations(r.Context(), namespace, objectType, object)
+			istioConfigValidationResults, istioConfigReferencesResults, errValidations := business.Validations.GetIstioObjectValidations(r.Context(), cluster, namespace, objectType, object)
 			if errValidations != nil && *err == nil {
 				*err = errValidations
 			} else {
@@ -222,7 +222,7 @@ func IstioConfigDelete(w http.ResponseWriter, r *http.Request) {
 
 	query := r.URL.Query()
 	cluster := ""
-	if query.Has("cluster") && query.Get("cluster") != "null" {
+	if query.Has("cluster") && query.Get("cluster") != "" {
 		cluster = query.Get("cluster")
 	} else {
 		cluster = kubernetes.HomeClusterName
@@ -257,7 +257,7 @@ func IstioConfigUpdate(w http.ResponseWriter, r *http.Request) {
 
 	query := r.URL.Query()
 	cluster := ""
-	if query.Has("cluster") && query.Get("cluster") != "null" {
+	if query.Has("cluster") && query.Get("cluster") != "" {
 		cluster = query.Get("cluster")
 	} else {
 		cluster = kubernetes.HomeClusterName

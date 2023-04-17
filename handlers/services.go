@@ -111,7 +111,7 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 	namespace := params["namespace"]
 	service := params["service"]
 	queryTime := util.Clock.Now()
-	rateInterval, err = adjustRateInterval(r.Context(), business, namespace, rateInterval, queryTime)
+	//rateInterval, err = adjustRateInterval(r.Context(), business, namespace, rateInterval, queryTime)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return

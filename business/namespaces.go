@@ -175,7 +175,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 			wg.Add(1)
 			go func(c string) {
 				defer wg.Done()
-				list, error := in.getNamespacesByCluster(c)
+				list, error := in.GetNamespacesByCluster(c)
 				if error != nil {
 					resultsCh <- result{cluster: c, ns: nil, err: error}
 				} else {
@@ -272,7 +272,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	return resultns, nil
 }
 
-func (in *NamespaceService) getNamespacesByCluster(cluster string) ([]models.Namespace, error) {
+func (in *NamespaceService) GetNamespacesByCluster(cluster string) ([]models.Namespace, error) {
 	configObject := config.Get()
 
 	labelSelectorInclude := configObject.API.Namespaces.LabelSelectorInclude

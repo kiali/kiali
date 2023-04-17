@@ -44,10 +44,13 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace
 		observability.Attribute("workload", workload),
 	)
 	defer end()
+	// TODO: Include cluster instead of hard coding home cluster.
+	cluster := kubernetes.HomeClusterName
+
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 	if namespace != "" {
-		if _, err := in.businessLayer.Namespace.GetNamespace(ctx, namespace); err != nil {
+		if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
 			return nil, err
 		}
 	}
@@ -55,7 +58,7 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace
 	// Ensure the service exists
 	if service != "" {
 		// TODO: Include cluster instead of hard coding home cluster.
-		_, err := in.businessLayer.Svc.GetService(ctx, kubernetes.HomeClusterName, namespace, service)
+		_, err := in.businessLayer.Svc.GetService(ctx, cluster, namespace, service)
 		if err != nil {
 			if err != nil {
 				log.Warningf("Error invoking GetService %s", err)
@@ -91,7 +94,7 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace
 	}
 
 	// We fetch without target service as some validations will require full-namespace details
-	go in.fetchIstioConfigList(ctx, &istioConfigList, &mtlsDetails, &rbacDetails, namespace, errChan, &wg)
+	go in.fetchIstioConfigList(ctx, &istioConfigList, &mtlsDetails, &rbacDetails, cluster, namespace, errChan, &wg)
 
 	if workload != "" {
 		// load only requested workload
@@ -156,10 +159,11 @@ func (in *IstioValidationsService) getAllObjectCheckers(istioConfigList models.I
 }
 
 // GetIstioObjectValidations validates a single Istio object of the given type with the given name found in the given namespace.
-func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context, namespace string, objectType string, object string) (models.IstioValidations, models.IstioReferencesMap, error) {
+func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context, cluster, namespace string, objectType string, object string) (models.IstioValidations, models.IstioReferencesMap, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetIstioObjectValidations",
 		observability.Attribute("package", "business"),
+		observability.Attribute("cluster", "cluster"),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("objectType", objectType),
 		observability.Attribute("object", object),
@@ -199,7 +203,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 		wg.Add(1)
 	}
 
-	go in.fetchIstioConfigList(ctx, &istioConfigList, &mtlsDetails, &rbacDetails, namespace, errChan, &wg)
+	go in.fetchIstioConfigList(ctx, &istioConfigList, &mtlsDetails, &rbacDetails, cluster, namespace, errChan, &wg)
 	go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, &namespaces, errChan, &wg)
 	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, errChan, &wg)
 
@@ -389,7 +393,7 @@ func (in *IstioValidationsService) fetchWorkload(ctx context.Context, rValue *ma
 	}
 }
 
-func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rValue *models.IstioConfigList, mtlsDetails *kubernetes.MTLSDetails, rbacDetails *kubernetes.RBACDetails, namespace string, errChan chan error, wg *sync.WaitGroup) {
+func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rValue *models.IstioConfigList, mtlsDetails *kubernetes.MTLSDetails, rbacDetails *kubernetes.RBACDetails, cluster, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) > 0 {
 		return
@@ -409,7 +413,7 @@ func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rVa
 		IncludeK8sHTTPRoutes:          true,
 		IncludeK8sGateways:            true,
 	}
-	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
+	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigListPerCluster(ctx, criteria, cluster)
 	if err != nil {
 		errChan <- err
 		return

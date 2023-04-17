@@ -140,7 +140,6 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 	}
 	istioConfigList := models.IstioConfigList{
 		Namespace: models.Namespace{Name: criteria.Namespace},
-		Cluster:   cluster,
 
 		DestinationRules: []*networking_v1beta1.DestinationRule{},
 		EnvoyFilters:     []*networking_v1alpha3.EnvoyFilter{},

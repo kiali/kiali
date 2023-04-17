@@ -49,7 +49,6 @@ export declare type IstioConfigsMap = { [key: string]: IstioConfigList };
 
 export interface IstioConfigList {
   namespace: Namespace;
-  cluster: string;
   gateways: Gateway[];
   k8sGateways: K8sGateway[];
   k8sHTTPRoutes: K8sHTTPRoute[];
@@ -142,7 +141,6 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
   }
   return {
     namespace: unfiltered.namespace,
-    cluster: unfiltered.cluster,
     gateways: unfiltered.gateways.filter(gw => includeName(gw.metadata.name, names)),
     k8sGateways: unfiltered.k8sGateways.filter(gw => includeName(gw.metadata.name, names)),
     k8sHTTPRoutes: unfiltered.k8sHTTPRoutes.filter(route => includeName(route.metadata.name, names)),
@@ -194,7 +192,7 @@ export const filterByConfigValidation = (unfiltered: IstioConfigItem[], configFi
   return filtered;
 };
 
-export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[] => {
+export const toIstioItems = (istioConfigList: IstioConfigList, cluster: string): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
 
   const hasValidations = (type: string, name: string, namespace: string) =>
@@ -225,7 +223,7 @@ export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[
     entries.forEach(entry => {
       const item = {
         namespace: istioConfigList.namespace.name,
-        cluster: istioConfigList.cluster,
+        cluster: cluster,
         type: typeName,
         name: entry.metadata.name,
         creationTimestamp: entry.metadata.creationTimestamp,

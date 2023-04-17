@@ -8,7 +8,6 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
     namespace: {
       name: 'test'
     },
-    cluster: HomeClusterName,
     gateways: [],
     k8sGateways: [],
     k8sHTTPRoutes: [],
@@ -68,7 +67,7 @@ describe('IstioConfigListContainer#filterByName', () => {
 
 describe('IstioConfigListContainer#toIstioItems', () => {
   it('should convert IstioConfigList in IstioConfigItems', () => {
-    const istioItems = toIstioItems(unfiltered);
+    const istioItems = toIstioItems(unfiltered, HomeClusterName);
 
     expect(istioItems).toBeDefined();
     expect(istioItems.length).toBe(15);
@@ -83,7 +82,7 @@ describe('IstioConfigListContainer#toIstioItems', () => {
 
 describe('IstioConfigComponent#sortIstioItems', () => {
   it('should sort IstioConfigItems by Istio Name', () => {
-    const istioItems = toIstioItems(unfiltered);
+    const istioItems = toIstioItems(unfiltered, HomeClusterName);
     const sortField: SortField<IstioConfigItem> = IstioConfigListFilters.sortFields[2];
     const isAscending = true;
 
@@ -105,7 +104,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
   });
 
   it('should sort DESC IstioConfigItems by Istio Name', () => {
-    const istioItems = toIstioItems(unfiltered);
+    const istioItems = toIstioItems(unfiltered, HomeClusterName);
     const sortField: SortField<IstioConfigItem> = IstioConfigListFilters.sortFields[2];
     const isAscending = false;
 
@@ -124,7 +123,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
   });
 
   it('should sort IstioConfigItems by Istio Type', () => {
-    const istioItems = toIstioItems(unfiltered);
+    const istioItems = toIstioItems(unfiltered, HomeClusterName);
     const sortField: SortField<IstioConfigItem> = IstioConfigListFilters.sortFields[1];
     const isAscending = true;
 
@@ -146,7 +145,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
   });
 
   it('should sort DESC IstioConfigItems by Istio Type', () => {
-    const istioItems = toIstioItems(unfiltered);
+    const istioItems = toIstioItems(unfiltered, HomeClusterName);
     const sortField: SortField<IstioConfigItem> = IstioConfigListFilters.sortFields[1];
     const isAscending = false;
 
