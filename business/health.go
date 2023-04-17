@@ -130,6 +130,11 @@ func (in *HealthService) GetNamespaceAppHealth(ctx context.Context, criteria Nam
 	namespaceApps := models.NamespaceAppsHealth{}
 	for cluster := range in.userClients {
 		appEntities, err := fetchNamespaceApps(ctx, in.businessLayer, criteria.Namespace, cluster, "")
+
+		// If the cluster is the home cluster, we want to return an error if we can't fetch the apps
+		if err != nil && cluster == kubernetes.HomeClusterName {
+			return nil, err
+		}
 		if err != nil {
 			log.Debugf("Error fetching Applications for cluster %s: %s", cluster, err)
 			continue
