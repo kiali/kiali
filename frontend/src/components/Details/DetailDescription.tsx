@@ -16,6 +16,7 @@ import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { isGateway } from '../../helpers/LabelFilterHelper';
 import { serverConfig } from '../../config';
 import AmbientLabel from '../Ambient/AmbientLabel';
+import { Workload } from '../../types/Workload';
 
 type ReduxProps = {
   kiosk: string;
@@ -27,7 +28,7 @@ type Props = ReduxProps & {
   workloads?: AppWorkload[];
   services?: string[];
   health?: H.Health;
-  waypointWorkloads?: string[];
+  waypointWorkloads?: Workload[];
 };
 
 const iconStyle = style({
@@ -307,8 +308,8 @@ class DetailDescription extends React.Component<Props> {
 
   private renderWaypoint() {
     const waypointWorkloads = this.props.waypointWorkloads
-      ? this.props.waypointWorkloads.map(workload => {
-          const href = '/namespaces/' + this.props.namespace + '/workloads/' + workload;
+      ? this.props.waypointWorkloads.map((workload, idx) => {
+          const href = '/namespaces/' + this.props.namespace + '/workloads/' + workload.name;
           const link = isParentKiosk(this.props.kiosk) ? (
             <Link
               to={''}
@@ -319,9 +320,13 @@ class DetailDescription extends React.Component<Props> {
               {workload}
             </Link>
           ) : (
-            <Link to={href}>{workload}</Link>
+            <Link to={href}>{workload.name}</Link>
           );
-          return <span key={'WorkloadWaypointItem_' + workload}>{link}</span>;
+          return (
+            <li key={idx}>
+              <span>{link}</span>
+            </li>
+          );
         })
       : 'No workload items found';
 

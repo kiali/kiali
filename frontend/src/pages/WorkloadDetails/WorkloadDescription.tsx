@@ -154,7 +154,12 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
                   isGateway={isGateway(workload.labels)}
                 />
               )}
-            {this.props.workload && this.props.workload.istioAmbient && <AmbientLabel tooltip={true} />}
+            {this.props.workload && this.props.workload.istioAmbient && !isWaypoint(this.props.workload.labels) && (
+              <AmbientLabel
+                tooltip={true}
+                waypoint={this.props.workload.waypointWorkloads?.length > 0 ? true : false}
+              />
+            )}
             {this.props.workload && hasMissingAuthPolicy(this.props.workload.name, this.props.workload.validations) && (
               <MissingAuthPolicy
                 namespace={this.props.namespace}
@@ -187,7 +192,13 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
             apps={apps}
             services={services}
             health={this.props.health}
-            waypointWorkloads={this.props.workload?.waypointWorkloads}
+            waypointWorkloads={
+              this.props.workload
+                ? isWaypoint(this.props.workload.labels)
+                  ? this.props.workload.waypointWorkloads
+                  : undefined
+                : undefined
+            }
           />
         </CardBody>
       </Card>

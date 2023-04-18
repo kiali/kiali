@@ -4,6 +4,7 @@ import { Label, Tooltip, TooltipPosition } from '@patternfly/react-core';
 type AmbientLabelProps = {
   tooltip: boolean;
   style?: React.CSSProperties;
+  waypoint?: boolean;
 };
 
 const AmbientComponent = 'ztunnel';
@@ -27,6 +28,11 @@ class AmbientLabel extends React.Component<AmbientLabelProps, {}> {
         <Label style={{ marginLeft: 5 }} color="green" isCompact>
           {AmbientComponent}
         </Label>
+        {this.props.waypoint && (
+          <Label style={{ marginLeft: 5 }} color="green" isCompact>
+            Waypoint
+          </Label>
+        )}
         {!this.props.tooltip && (
           <span style={{ marginLeft: '8px' }}>
             {msg}

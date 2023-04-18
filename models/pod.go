@@ -12,8 +12,8 @@ import (
 // Pods alias for list of Pod structs
 type Pods []*Pod
 
-const ambientAnnotation = "ambient.istio.io/redirection"
-const waypointLabel = "gateway.istio.io/managed"
+const AmbientAnnotation = "ambient.istio.io/redirection"
+const WaypointLabel = "gateway.istio.io/managed"
 
 // Pod holds a subset of v1.Pod data that is meaningful in Kiali
 type Pod struct {
@@ -146,7 +146,7 @@ func isIstioProxy(pod *core_v1.Pod, container *core_v1.Container, conf *config.C
 }
 
 func isIstioAmbient(pod *core_v1.Pod) bool {
-	return pod.ObjectMeta.Annotations[ambientAnnotation] == "enabled"
+	return pod.ObjectMeta.Annotations[AmbientAnnotation] == "enabled"
 }
 
 func lookupImage(containerName string, containers []core_v1.Container) string {
@@ -210,12 +210,12 @@ func (pods Pods) HasAnyAmbient() bool {
 
 // HasAmbient returns true if the pod is labeled as ambient-type
 func (pod *Pod) HasAmbient() bool {
-	return pod.Annotations[ambientAnnotation] == "enabled"
+	return pod.Annotations[AmbientAnnotation] == "enabled"
 }
 
-// IsWaypoint returns true if the pod is labeled as ambient-type
+// IsWaypoint returns true if the pod is a waypoint proxy
 func (pod *Pod) IsWaypoint() bool {
-	return pod.Labels[waypointLabel] == "istio.io-mesh-controller"
+	return pod.Labels[WaypointLabel] == "istio.io-mesh-controller"
 }
 
 // SyncedPodsCount returns the number of Pods with its proxy synced
