@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 
 	"github.com/kiali/kiali/config"
@@ -190,7 +191,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 	var nilDeployment *apps_v1.Deployment
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("GetDeployment", conf.IstioNamespace, "istiod").Return(nilDeployment, nil)
+	k8s.On("GetDeployment", conf.IstioNamespace, "istiod").Return(nilDeployment, errors.NewNotFound(schema.GroupResource{Group: "apps", Resource: "deployments"}, "istiod"))
 
 	newRemoteClient := func(config *rest.Config) (kubernetes.ClientInterface, error) {
 		remoteClient := new(kubetest.K8SClientMock)

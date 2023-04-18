@@ -19,7 +19,6 @@ import (
 	gatewayapifake "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/fake"
 	gatewayapischeme "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/scheme"
 
-	"github.com/kiali/kiali/config"
 	kialikube "github.com/kiali/kiali/kubernetes"
 )
 
@@ -106,7 +105,6 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 
 	return &FakeK8sClient{
 		ClientInterface:   kialikube.NewClient(kubeClient, istioClient, gatewayAPIClient),
-		Cluster:           kialikube.ClusterInfo{Name: config.Get().KubernetesConfig.ClusterName},
 		deploymentConfigs: deploymentConfigs,
 		projects:          projects,
 		KubeClientset:     kubeClient,
@@ -134,17 +132,12 @@ type FakeK8sClient struct {
 	GatewayAPIClientset gatewayapi.Interface
 	// Token is the kiali token this client uses.
 	Token string
-	// Cluster is the name of the cluster this client is connected to.
-	// This normally gets set by the client factory but in tests is mocked out
-	// to match the cluster name from the kiali config.
-	Cluster kialikube.ClusterInfo
 }
 
-func (c *FakeK8sClient) IsOpenShift() bool                     { return c.OpenShift }
-func (c *FakeK8sClient) IsGatewayAPI() bool                    { return c.GatewayAPIEnabled }
-func (c *FakeK8sClient) IsIstioAPI() bool                      { return c.IstioAPIEnabled }
-func (c *FakeK8sClient) GetToken() string                      { return c.Token }
-func (c *FakeK8sClient) GetClusterInfo() kialikube.ClusterInfo { return c.Cluster }
+func (c *FakeK8sClient) IsOpenShift() bool  { return c.OpenShift }
+func (c *FakeK8sClient) IsGatewayAPI() bool { return c.GatewayAPIEnabled }
+func (c *FakeK8sClient) IsIstioAPI() bool   { return c.IstioAPIEnabled }
+func (c *FakeK8sClient) GetToken() string   { return c.Token }
 
 // The openshift resources are stubbed out because Kiali talks directly to the
 // kube api for these instead of using the openshift client-go.

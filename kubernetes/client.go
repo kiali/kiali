@@ -21,16 +21,6 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
-// ClusterInfo holds some metadata about the cluster the client is connected to.
-type ClusterInfo struct {
-	// Name specifies the CLUSTER_ID as known by the Control Plane.
-	// The cluster name *should always* match what Istio thinks the cluster name is.
-	// For the home cluster, this name could come from the istio configuration at 'values.global.multiCluster.clusterName'.
-	// For remote clusters, the name comes from the name field in the remote cluster secret.
-	// Names need to be unique across all clusters in the mesh.
-	Name string
-}
-
 // RemoteSecretData is used to identify the remote cluster Kiali will connect to as its "local cluster".
 // This is to support installing Kiali in the control plane, but observing only the data plane in the remote cluster.
 // Experimental feature. See: https://github.com/kiali/kiali/issues/3002
@@ -47,7 +37,6 @@ type PodLogs struct {
 
 // ClientInterface for mocks (only mocked function are necessary here)
 type ClientInterface interface {
-	GetClusterInfo() ClusterInfo
 	GetServerVersion() (*version.Info, error)
 	GetToken() string
 	GetAuthInfo() *api.AuthInfo
@@ -63,7 +52,6 @@ type ClientInterface interface {
 // It hides the way it queries each API
 type K8SClient struct {
 	ClientInterface
-	cluster        ClusterInfo
 	token          string
 	k8s            kube.Interface
 	istioClientset istio.Interface
@@ -80,11 +68,6 @@ type K8SClient struct {
 
 	// Separated out for testing purposes
 	getPodPortForwarderFunc func(namespace, name, portMap string) (httputil.PortForwarder, error)
-}
-
-// GetClusterInfo returns the cluster info
-func (client *K8SClient) GetClusterInfo() ClusterInfo {
-	return client.cluster
 }
 
 // GetToken returns the BearerToken used from the config

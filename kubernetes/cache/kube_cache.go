@@ -203,8 +203,6 @@ func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, ref
 		}
 	}
 
-	log.Infof("[Kiali Cache] Kube cache is active for cluster: %s and namespaces: %v", kialiClient.GetClusterInfo().Name, cacheNamespaces)
-
 	return c, nil
 }
 

@@ -120,13 +120,11 @@ func newClientFactory(restConfig *rest.Config) (*clientFactory, error) {
 	// Note that this means each remote cluster secret token must be given the proper permissions
 	// in that remote cluster for Kiali to do its work. i.e. logging into a remote cluster with the
 	// remote cluster secret token must be given the same permissions as the local cluster Kiali SA.
-	// TODO: Support remote secret.
 	homeClient, err := f.newSAClient(nil)
 	if err != nil {
 		return nil, err
 	}
 
-	homeClient.cluster.Name = f.homeCluster
 	f.saClientEntries[f.homeCluster] = homeClient
 
 	for _, clusterInfo := range remoteClusterInfos {

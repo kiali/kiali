@@ -849,3 +849,43 @@ func DestinationRuleHasMTLSEnabled(destinationRule *networking_v1beta1.Destinati
 	}
 	return false, ""
 }
+
+// getClusterInfoFromIstiod tttempts to resolve the cluster name of the "home" cluster where kiali is running from the Istio deployment.
+// Assumes that the istiod deployment is in the same cluster as the kiali pod.
+func ClusterInfoFromIstiod(conf config.Config, k8s ClientInterface) (string, bool, error) {
+	// The "cluster_id" is set in an environment variable of
+	// the "istiod" deployment. Let's try to fetch it.
+	istioDeploymentConfig := conf.ExternalServices.Istio.IstiodDeploymentName
+	istiodDeployment, err := k8s.GetDeployment(conf.IstioNamespace, istioDeploymentConfig)
+	if err != nil {
+		return "", false, err
+	}
+
+	istiodContainers := istiodDeployment.Spec.Template.Spec.Containers
+	if len(istiodContainers) == 0 {
+		return "", false, fmt.Errorf("istiod deployment [%s] has no containers", istioDeploymentConfig)
+	}
+
+	clusterName := ""
+	for _, v := range istiodContainers[0].Env {
+		if v.Name == "CLUSTER_ID" {
+			clusterName = v.Value
+			break
+		}
+	}
+
+	gatewayToNamespace := false
+	for _, v := range istiodContainers[0].Env {
+		if v.Name == "PILOT_SCOPE_GATEWAY_TO_NAMESPACE" {
+			gatewayToNamespace = v.Value == "true"
+			break
+		}
+	}
+
+	if clusterName == "" {
+		// We didn't find it. This may mean that Istio is not setup with multi-cluster enabled.
+		return "", false, fmt.Errorf("istiod deployment [%s] does not have the CLUSTER_ID environment variable set", istioDeploymentConfig)
+	}
+
+	return clusterName, gatewayToNamespace, nil
+}

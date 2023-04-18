@@ -154,11 +154,6 @@ func (o *K8SClientMock) GetToken() string {
 	return args.Get(0).(string)
 }
 
-func (o *K8SClientMock) GetClusterInfo() kubernetes.ClusterInfo {
-	args := o.Called()
-	return args.Get(0).(kubernetes.ClusterInfo)
-}
-
 // GetAuthInfo returns the AuthInfo struct for the client
 func (o *K8SClientMock) GetAuthInfo() *api.AuthInfo {
 	args := o.Called()

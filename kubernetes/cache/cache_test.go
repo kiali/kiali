@@ -89,7 +89,6 @@ func TestKubeCacheCreatedPerClient(t *testing.T) {
 	deploymentCluster2 := &apps_v1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "deployment2", Namespace: "test"}}
 	client := kubetest.NewFakeK8sClient(ns, deploymentCluster1)
 	client2 := kubetest.NewFakeK8sClient(ns, deploymentCluster2)
-	client2.Cluster.Name = "cluster2"
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clientFactory.SetClients(map[string]kubernetes.ClientInterface{
 		conf.KubernetesConfig.ClusterName: client,

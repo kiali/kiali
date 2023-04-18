@@ -218,7 +218,6 @@ func determineContainerVersion(defaultVersion string) string {
 	return v
 }
 
-// TODO: Combine this with the mesh service's cluster fetching functionality.
 func updateConfigWithIstioInfo() {
 	conf := *config.Get()
 	homeCluster := conf.KubernetesConfig.ClusterName
@@ -239,7 +238,7 @@ func updateConfigWithIstioInfo() {
 		}
 
 		// Try to auto-detect the cluster name
-		homeCluster, err = getClusterInfoFromIstiod(conf, k8s)
+		homeCluster, _, err = kubernetes.ClusterInfoFromIstiod(conf, k8s)
 		if err != nil {
 			return err
 		}
@@ -253,36 +252,4 @@ func updateConfigWithIstioInfo() {
 
 	conf.KubernetesConfig.ClusterName = homeCluster
 	config.Set(&conf)
-}
-
-// getClusterInfoFromIstiod tttempts to resolve the cluster name of the "home" cluster where kiali is running from the Istio deployment.
-// Assumes that the istiod deployment is in the same cluster as the kiali pod.
-func getClusterInfoFromIstiod(conf config.Config, k8s kubernetes.ClientInterface) (string, error) {
-	// The "cluster_id" is set in an environment variable of
-	// the "istiod" deployment. Let's try to fetch it.
-	istioDeploymentConfig := conf.ExternalServices.Istio.IstiodDeploymentName
-	istiodDeployment, err := k8s.GetDeployment(conf.IstioNamespace, istioDeploymentConfig)
-	if err != nil {
-		return "", err
-	}
-
-	istiodContainers := istiodDeployment.Spec.Template.Spec.Containers
-	if len(istiodContainers) == 0 {
-		return "", fmt.Errorf("istiod deployment [%s] has no containers", istioDeploymentConfig)
-	}
-
-	myClusterName := ""
-	for _, v := range istiodContainers[0].Env {
-		if v.Name == "CLUSTER_ID" {
-			myClusterName = v.Value
-			break
-		}
-	}
-
-	if myClusterName == "" {
-		// We didn't find it. This may mean that Istio is not setup with multi-cluster enabled.
-		return "", fmt.Errorf("istiod deployment [%s] does not have the CLUSTER_ID environment variable set", istioDeploymentConfig)
-	}
-
-	return myClusterName, nil
 }
