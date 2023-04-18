@@ -313,45 +313,17 @@ class DetailDescription extends React.Component<Props> {
   }
 
   private renderWaypoint() {
-    const waypointWorkloads = this.props.waypointWorkloads
-      ? this.props.waypointWorkloads.map((workload, idx) => {
-          const href = '/namespaces/' + this.props.namespace + '/workloads/' + workload.name;
-          const link = isParentKiosk(this.props.kiosk) ? (
-            <Link
-              to={''}
-              onClick={() => {
-                kioskContextMenuAction(href);
-              }}
-            >
-              {workload}
-            </Link>
-          ) : (
-            <Link to={href}>{workload.name}</Link>
-          );
-          return (
-            <li key={idx}>
-              <span>{link}</span>
-            </li>
-          );
-        })
-      : 'No workload items found';
-
     return [
       <>
         <div key="waypoint-workloads-title">
           <PFBadge badge={PFBadges.Waypoint} position={TooltipPosition.top} />
-          Waypoint proxy workloads list
+          Waypoint proxy
           <Tooltip
             position={TooltipPosition.right}
-            content="List of workloads attached to the Waypoint proxy by the same Service account"
+            content="This workload is identified as a waypoint proxy, as part of Istio Ambient"
           >
             <KialiIcon.Info className={infoStyle} />
           </Tooltip>
-        </div>
-        <div key="waypoint-workloads" className={resourceListStyle}>
-          <ul id="waypoint-workloads" style={{ listStyleType: 'none', paddingLeft: '25px' }}>
-            {waypointWorkloads}
-          </ul>
         </div>
       </>
     ];
