@@ -203,6 +203,7 @@ export interface NodeParamsType {
   service: string;
   version?: string;
   workload: string;
+  cluster?: string;
 }
 
 // This data is stored in the _global scratch area in the cy graph

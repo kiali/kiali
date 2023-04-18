@@ -110,10 +110,10 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
     };
     const d = this.props.nodeData;
     const promise = d.workload
-      ? API.getWorkloadTraces('', d.namespace, d.workload, params)
+      ? API.getWorkloadTraces(d.namespace, d.workload, params, d.cluster)
       : d.service
-      ? API.getServiceTraces('', d.namespace, d.service, params)
-      : API.getAppTraces('', d.namespace, d.app!, params);
+      ? API.getServiceTraces(d.namespace, d.service, params, d.cluster)
+      : API.getAppTraces(d.namespace, d.app!, params, d.cluster);
     this.promises.cancelAll();
     this.promises
       .register('traces', promise)

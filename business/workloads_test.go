@@ -12,7 +12,9 @@ import (
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -30,13 +32,13 @@ func setupWorkloadService(k8s kubernetes.ClientInterface, conf *config.Config) W
 	config.Set(conf)
 	prom := new(prometheustest.PromClientMock)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = k8s
-	return *NewWorkloadService(k8s, prom, nil, NewWithBackends(k8sclients, k8sclients, prom, nil), conf)
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
+	return NewWithBackends(k8sclients, k8sclients, prom, nil).Workload
 }
 
 func callStreamPodLogs(svc WorkloadService, namespace, podName string, opts *LogOptions) PodLog {
 	w := httptest.NewRecorder()
-	_ = svc.StreamPodLogs(namespace, podName, opts, w)
+	_ = svc.StreamPodLogs(svc.config.KubernetesConfig.ClusterName, namespace, podName, opts, w)
 
 	response := w.Result()
 	body, _ := io.ReadAll(response.Body)
@@ -504,11 +506,12 @@ func TestGetPod(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
+	conf := config.NewConfig()
 	k8s := kubetest.NewFakeK8sClient(FakePodSyncedWithDeployments(), &osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}})
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
-	svc := setupWorkloadService(k8s, config.NewConfig())
+	SetupBusinessLayer(t, k8s, *conf)
+	svc := setupWorkloadService(k8s, conf)
 
-	pod, err := svc.GetPod("Namespace", "details-v1-3618568057-dnkjp")
+	pod, err := svc.GetPod(conf.KubernetesConfig.ClusterName, "Namespace", "details-v1-3618568057-dnkjp")
 	require.NoError(err)
 
 	assert.Equal("details-v1-3618568057-dnkjp", pod.Name)
@@ -879,6 +882,8 @@ func TestGetWorkloadListRSOwnedByCustom(t *testing.T) {
 	// Disabling CustomDashboards on Workload details testing
 	conf := config.NewConfig()
 	conf.ExternalServices.CustomDashboards.Enabled = false
+	conf.KubernetesConfig.ClusterName = "east"
+	config.Set(conf)
 
 	replicaSets := FakeRSSyncedWithPods()
 
@@ -914,14 +919,15 @@ func TestGetWorkloadListRSOwnedByCustom(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
+	SetupBusinessLayer(t, k8s, *conf)
 	svc := setupWorkloadService(k8s, conf)
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
-	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
+	workloadList, err := svc.GetWorkloadList(context.TODO(), criteria)
+	require.NoError(err)
 	workloads := workloadList.Workloads
 
-	criteria = WorkloadCriteria{Namespace: "Namespace", WorkloadName: owner.Name, WorkloadType: "", IncludeServices: false}
+	criteria = WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: owner.Name, WorkloadType: "", IncludeServices: false}
 	workload, _ := svc.GetWorkload(context.TODO(), criteria)
 
 	require.Equal(len(workloads), 1)
@@ -948,8 +954,10 @@ func TestGetPodLogsWithoutAccessLogs(t *testing.T) {
 		logs:            logs,
 		ClientInterface: kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}),
 	}
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
-	svc := setupWorkloadService(k8s, config.NewConfig())
+	conf := config.NewConfig()
+	config.Set(conf)
+	SetupBusinessLayer(t, k8s, *conf)
+	svc := setupWorkloadService(k8s, conf)
 
 	podLogs := callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{IsProxy: true, PodLogOptions: core_v1.PodLogOptions{Container: "istio-proxy"}})
 
@@ -968,4 +976,56 @@ func TestFilterUniqueIstioReferences(t *testing.T) {
 	}
 	filtered := FilterUniqueIstioReferences(references)
 	assert.Equal(2, len(filtered))
+}
+
+func TestGetWorkloadMultiCluster(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	conf.KubernetesConfig.ClusterName = "east"
+	config.Set(conf)
+
+	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
+	clients := map[string]kubernetes.ClientInterface{
+		"east": kubetest.NewFakeK8sClient(
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			&apps_v1.Deployment{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "ratings-v1",
+					Namespace: "bookinfo",
+					Annotations: map[string]string{
+						"unique-to-east": "true",
+					},
+				},
+			},
+		),
+		"west": kubetest.NewFakeK8sClient(
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			&apps_v1.Deployment{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "ratings-v1",
+					Namespace: "bookinfo",
+					Annotations: map[string]string{
+						"unique-to-west": "true",
+					},
+				},
+			},
+		),
+	}
+	clientFactory.SetClients(clients)
+	cache := newTestingCache(t, clientFactory, *conf)
+	kialiCache = cache
+
+	workloadService := NewWithBackends(clients, clients, nil, nil).Workload
+	workload, err := workloadService.GetWorkload(context.TODO(), WorkloadCriteria{Cluster: "west", Namespace: "bookinfo", WorkloadName: "ratings-v1"})
+	require.NoError(err)
+	assert.Equal("west", workload.Cluster)
+	assert.Contains(workload.Annotations, "unique-to-west")
+
+	workload, err = workloadService.GetWorkload(context.TODO(), WorkloadCriteria{Cluster: "east", Namespace: "bookinfo", WorkloadName: "ratings-v1"})
+	require.NoError(err)
+	assert.Equal("east", workload.Cluster)
+	assert.Contains(workload.Annotations, "unique-to-east")
 }

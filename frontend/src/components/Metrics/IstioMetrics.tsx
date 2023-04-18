@@ -47,7 +47,7 @@ type MetricsState = {
 type ObjectId = {
   namespace: string;
   object: string;
-  cluster: string;
+  cluster?: string;
 };
 
 type IstioMetricsProps = ObjectId &
@@ -171,7 +171,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     let promise: Promise<API.Response<DashboardModel>>;
     switch (this.props.objectType) {
       case MetricsObjectTypes.WORKLOAD:
-        promise = API.getWorkloadDashboard(this.props.cluster, this.props.namespace, this.props.object, opts);
+        promise = API.getWorkloadDashboard(this.props.namespace, this.props.object, opts, this.props.cluster);
         break;
       case MetricsObjectTypes.APP:
         promise = API.getAppDashboard(this.props.namespace, this.props.object, opts);

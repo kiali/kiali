@@ -16,4 +16,5 @@ type TracingQuery struct {
 	Tags        map[string]string
 	MinDuration time.Duration
 	Limit       int
+	Cluster     string
 }

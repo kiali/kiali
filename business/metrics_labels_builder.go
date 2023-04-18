@@ -74,6 +74,10 @@ func (lb *MetricsLabelsBuilder) Workload(name, namespace string) *MetricsLabelsB
 	return lb.addSided("workload", name, lb.side)
 }
 
+func (lb *MetricsLabelsBuilder) Cluster(cluster string) *MetricsLabelsBuilder {
+	return lb.addSided("cluster", cluster, lb.side)
+}
+
 func (lb *MetricsLabelsBuilder) App(name, namespace string) *MetricsLabelsBuilder {
 	if namespace != "" {
 		// workload_namespace works for app as well

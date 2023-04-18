@@ -79,7 +79,12 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
     if (!this.props.workload) {
       return;
     }
-    this.graphDataSource.fetchForWorkload(this.props.duration, this.props.namespace, this.props.workload.name);
+    this.graphDataSource.fetchForWorkload(
+      this.props.duration,
+      this.props.namespace,
+      this.props.workload.name,
+      this.props.workload.cluster
+    );
     this.setState({
       validations: this.workloadValidations(this.props.workload)
     });

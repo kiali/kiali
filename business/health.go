@@ -20,6 +20,7 @@ type HealthService struct {
 
 type NamespaceHealthCriteria struct {
 	IncludeMetrics bool
+	Cluster        string
 	Namespace      string
 	QueryTime      time.Time
 	RateInterval   string
@@ -118,15 +119,14 @@ func (in *HealthService) GetNamespaceAppHealth(ctx context.Context, criteria Nam
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetNamespaceAppHealth",
 		observability.Attribute("package", "business"),
+		observability.Attribute("cluster", criteria.Cluster),
 		observability.Attribute("namespace", criteria.Namespace),
 		observability.Attribute("rateInterval", criteria.RateInterval),
 		observability.Attribute("queryTime", criteria.QueryTime),
 	)
 	defer end()
 
-	// TODO: Use cluster
-
-	appEntities, err := fetchNamespaceApps(ctx, in.businessLayer, criteria.Namespace, "", "")
+	appEntities, err := in.businessLayer.App.fetchNamespaceApps(ctx, criteria.Namespace, criteria.Cluster, "")
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +255,7 @@ func (in *HealthService) GetNamespaceWorkloadHealth(ctx context.Context, criteri
 	)
 	defer end()
 
-	wl, err := fetchWorkloads(ctx, in.businessLayer, namespace, "")
+	wl, err := in.businessLayer.Workload.fetchWorkloads(ctx, namespace, "")
 	if err != nil {
 		return nil, err
 	}

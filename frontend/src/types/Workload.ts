@@ -9,6 +9,7 @@ export interface WorkloadId {
 
 export interface Workload {
   name: string;
+  cluster?: string;
   type: string;
   createdAt: string;
   resourceVersion: string;

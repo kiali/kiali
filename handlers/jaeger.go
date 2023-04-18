@@ -87,6 +87,7 @@ func WorkloadTraces(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, "WorkloadTraces initialization error: "+err.Error())
 		return
 	}
+
 	params := mux.Vars(r)
 	namespace := params["namespace"]
 	workload := params["workload"]
@@ -228,9 +229,10 @@ func WorkloadSpans(w http.ResponseWriter, r *http.Request) {
 
 func readQuery(values url.Values) (models.TracingQuery, error) {
 	q := models.TracingQuery{
-		End:   time.Now(),
-		Limit: 100,
-		Tags:  make(map[string]string),
+		End:     time.Now(),
+		Limit:   100,
+		Tags:    make(map[string]string),
+		Cluster: clusterNameFromQuery(values),
 	}
 
 	if v := values.Get("startMicros"); v != "" {

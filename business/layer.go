@@ -173,15 +173,15 @@ func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAC
 	temporaryLayer.Mesh = NewMeshService(userClients[homeClusterName], temporaryLayer, nil)
 	temporaryLayer.Namespace = NewNamespaceService(userClients, kialiSAClients)
 	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: userClients[homeClusterName]}
-	temporaryLayer.ProxyStatus = ProxyStatusService{k8s: userClients[homeClusterName], businessLayer: temporaryLayer}
+	temporaryLayer.ProxyStatus = ProxyStatusService{kialiSAClients: kialiSAClients, kialiCache: kialiCache, businessLayer: temporaryLayer}
 	// Out of order because it relies on ProxyStatus
-	temporaryLayer.ProxyLogging = ProxyLoggingService{k8s: userClients[homeClusterName], proxyStatus: &temporaryLayer.ProxyStatus}
+	temporaryLayer.ProxyLogging = ProxyLoggingService{userClients: userClients, proxyStatus: &temporaryLayer.ProxyStatus}
 	temporaryLayer.RegistryStatus = RegistryStatusService{k8s: userClients[homeClusterName], businessLayer: temporaryLayer}
 	temporaryLayer.TLS = TLSService{k8s: userClients[homeClusterName], businessLayer: temporaryLayer}
 	temporaryLayer.Svc = SvcService{config: *config.Get(), kialiCache: kialiCache, businessLayer: temporaryLayer, prom: prom, userClients: userClients}
 	temporaryLayer.TokenReview = NewTokenReview(userClients[homeClusterName])
 	temporaryLayer.Validations = IstioValidationsService{k8s: userClients[homeClusterName], businessLayer: temporaryLayer}
-	temporaryLayer.Workload = *NewWorkloadService(userClients[homeClusterName], prom, kialiCache, temporaryLayer, config.Get())
+	temporaryLayer.Workload = *NewWorkloadService(userClients, prom, kialiCache, temporaryLayer, config.Get())
 
 	return temporaryLayer
 }

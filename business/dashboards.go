@@ -210,7 +210,7 @@ func (in *DashboardsService) GetDashboard(authInfo *api.AuthInfo, params models.
 	var externalLinks []models.ExternalLink
 	go func() {
 		defer wg.Done()
-		links, _, err := GetGrafanaLinks(authInfo, dashboard.ExternalLinks)
+		links, _, err := GetGrafanaLinks(dashboard.ExternalLinks)
 		if err != nil {
 			log.Errorf("Error while getting Grafana links: %v", err)
 		}

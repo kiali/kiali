@@ -173,6 +173,7 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
     // Workload name can be used to find personalized dashboards defined at workload level
     this.options.workload = this.props.workload;
     this.options.workloadType = this.props.workloadType;
+    this.options.cluster = this.state.cluster;
     API.getCustomDashboard(this.props.namespace, this.props.template, this.options)
       .then(response => {
         const labelsSettings = MetricsHelper.extractLabelsSettings(response.data, this.state.labelsSettings);

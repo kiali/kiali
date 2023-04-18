@@ -12,7 +12,7 @@ import (
 )
 
 type ProxyStatusCache interface {
-	GetPodProxyStatus(namespace, pod string) *kubernetes.ProxyStatus
+	GetPodProxyStatus(cluster, namespace, pod string) *kubernetes.ProxyStatus
 }
 
 // pollIstiodForProxyStatus is a long running goroutine that will periodically poll istiod for proxy status.
@@ -60,12 +60,14 @@ func (c *kialiCacheImpl) pollIstiodForProxyStatus(ctx context.Context) {
 	}()
 }
 
-func (c *kialiCacheImpl) GetPodProxyStatus(namespace, pod string) *kubernetes.ProxyStatus {
+func (c *kialiCacheImpl) GetPodProxyStatus(cluster, namespace, pod string) *kubernetes.ProxyStatus {
 	defer c.proxyStatusLock.RUnlock()
 	c.proxyStatusLock.RLock()
-	if nsProxyStatus, ok := c.proxyStatusNamespaces[namespace]; ok {
-		if podProxyStatus, ok := nsProxyStatus[pod]; ok {
-			return podProxyStatus.proxyStatus
+	if clusterProxyStatus, ok := c.proxyStatusNamespaces[cluster]; ok {
+		if nsProxyStatus, ok := clusterProxyStatus[namespace]; ok {
+			if podProxyStatus, ok := nsProxyStatus[pod]; ok {
+				return podProxyStatus.proxyStatus
+			}
 		}
 	}
 	return nil
@@ -83,10 +85,15 @@ func (c *kialiCacheImpl) setProxyStatus(proxyStatus []*kubernetes.ProxyStatus) {
 				if len(podId) == 2 {
 					pod := podId[0]
 					ns := podId[1]
-					if _, exist := c.proxyStatusNamespaces[ns]; !exist {
-						c.proxyStatusNamespaces[ns] = make(map[string]podProxyStatus)
+					cluster := ps.ClusterID
+					if _, exist := c.proxyStatusNamespaces[cluster]; !exist {
+						c.proxyStatusNamespaces[cluster] = make(map[string]map[string]podProxyStatus)
 					}
-					c.proxyStatusNamespaces[ns][pod] = podProxyStatus{
+					if _, exist := c.proxyStatusNamespaces[cluster][ns]; !exist {
+						c.proxyStatusNamespaces[cluster][ns] = make(map[string]podProxyStatus)
+					}
+					c.proxyStatusNamespaces[cluster][ns][pod] = podProxyStatus{
+						cluster:     cluster,
 						namespace:   ns,
 						pod:         pod,
 						proxyStatus: ps,

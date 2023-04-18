@@ -72,7 +72,14 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
         const remove = key === WIZARD_REMOVE_AUTO_INJECTION;
         const enable = key === WIZARD_ENABLE_AUTO_INJECTION;
         const jsonInjectionPatch = buildWorkloadInjectionPatch(this.props.workload.type, enable, remove);
-        API.updateWorkload(this.props.namespace, this.props.workload.name, this.props.workload.type, jsonInjectionPatch)
+        API.updateWorkload(
+          this.props.namespace,
+          this.props.workload.name,
+          this.props.workload.type,
+          jsonInjectionPatch,
+          undefined,
+          this.props.workload.cluster
+        )
           .then(_ => {
             AlertUtils.add('Workload ' + this.props.workload.name + ' updated', 'default', MessageType.SUCCESS);
             this.setState(
@@ -119,7 +126,8 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
       this.props.workload.name,
       this.props.workload.type,
       jsonInjectionPatch,
-      'json'
+      'json',
+      this.props.workload.cluster
     )
       .then(_ => {
         AlertUtils.add('Workload ' + this.props.workload.name + ' updated', 'default', MessageType.SUCCESS);

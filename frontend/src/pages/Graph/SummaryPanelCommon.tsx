@@ -123,8 +123,7 @@ export const getNodeMetrics = (
     case NodeMetricType.SERVICE:
       return API.getServiceMetrics(nodeData.namespace, nodeData.service!, options);
     case NodeMetricType.WORKLOAD:
-      // @TODO add cluster
-      return API.getWorkloadMetrics('', nodeData.namespace, nodeData.workload!, options);
+      return API.getWorkloadMetrics(nodeData.namespace, nodeData.workload!, options, nodeData.cluster);
     default:
       return Promise.reject(new Error(`Unknown NodeMetricType: ${nodeMetricType}`));
   }

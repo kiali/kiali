@@ -139,7 +139,7 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
         activeKey: tabIndex
       });
       const mainTab = new URLSearchParams(history.location.search).get(workloadTabName) || workloadDefaultTab;
-      const urlParams = new URLSearchParams('');
+      const urlParams = new URLSearchParams(history.location.search);
       urlParams.set(tabName, targetResource);
       urlParams.set(workloadTabName, mainTab);
       history.push(history.location.pathname + '?' + urlParams.toString());
@@ -147,7 +147,12 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
   };
 
   fetchEnvoyProxyResourceEntries = (resource: string) => {
-    API.getPodEnvoyProxyResourceEntries(this.props.namespace, this.state.pod.name, resource)
+    API.getPodEnvoyProxyResourceEntries(
+      this.props.namespace,
+      this.state.pod.name,
+      resource,
+      this.props.workload.cluster
+    )
       .then(resultEnvoyProxy => {
         this.setState({
           config: resultEnvoyProxy.data,
@@ -160,7 +165,7 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
   };
 
   fetchEnvoyProxy = () => {
-    API.getPodEnvoyProxy(this.props.namespace, this.state.pod.name)
+    API.getPodEnvoyProxy(this.props.namespace, this.state.pod.name, this.props.workload.cluster)
       .then(resultEnvoyProxy => {
         this.setState({
           config: resultEnvoyProxy.data,

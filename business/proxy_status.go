@@ -2,22 +2,21 @@ package business
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/models"
 )
 
 type ProxyStatusService struct {
-	k8s           kubernetes.ClientInterface
-	businessLayer *Layer
+	kialiCache     cache.KialiCache
+	kialiSAClients map[string]kubernetes.ClientInterface
+	businessLayer  *Layer
 }
 
-func (in *ProxyStatusService) GetPodProxyStatus(ns, pod string) *models.ProxyStatus {
-	if kialiCache == nil {
-		return nil
-	}
-
-	return castProxyStatus(kialiCache.GetPodProxyStatus(ns, pod))
+func (in *ProxyStatusService) GetPodProxyStatus(cluster, ns, pod string) *models.ProxyStatus {
+	return castProxyStatus(kialiCache.GetPodProxyStatus(cluster, ns, pod))
 }
 
 func castProxyStatus(ps *kubernetes.ProxyStatus) *models.ProxyStatus {
@@ -48,13 +47,23 @@ func xdsStatus(sent, acked string) string {
 	return "Stale"
 }
 
-func (in *ProxyStatusService) GetConfigDump(namespace, pod string) (models.EnvoyProxyDump, error) {
-	dump, err := in.k8s.GetConfigDump(namespace, pod)
+func (in *ProxyStatusService) GetConfigDump(cluster, namespace, pod string) (models.EnvoyProxyDump, error) {
+	kialiSAClient, ok := in.kialiSAClients[cluster]
+	if !ok {
+		return models.EnvoyProxyDump{}, fmt.Errorf("cluster [%s] not found", cluster)
+	}
+
+	dump, err := kialiSAClient.GetConfigDump(namespace, pod)
 	return models.EnvoyProxyDump{ConfigDump: dump}, err
 }
 
-func (in *ProxyStatusService) GetConfigDumpResourceEntries(namespace, pod, resource string) (*models.EnvoyProxyDump, error) {
-	dump, err := in.k8s.GetConfigDump(namespace, pod)
+func (in *ProxyStatusService) GetConfigDumpResourceEntries(cluster, namespace, pod, resource string) (*models.EnvoyProxyDump, error) {
+	kialiSAClient, ok := in.kialiSAClients[cluster]
+	if !ok {
+		return nil, fmt.Errorf("cluster [%s] not found", cluster)
+	}
+
+	dump, err := kialiSAClient.GetConfigDump(namespace, pod)
 	if err != nil {
 		return nil, err
 	}

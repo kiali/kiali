@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/models"
 )
@@ -154,6 +155,8 @@ func (a *HealthAppender) attachHealthConfig(trafficMap graph.TrafficMap, globalI
 }
 
 func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo) {
+	conf := config.Get()
+
 	var nodesWithHealth []*graph.Node
 	type healthRequest struct {
 		app      bool
@@ -235,7 +238,8 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 				wg.Add(1)
 				go func(ctx context.Context, namespace string) {
 					defer wg.Done()
-					h, err := bs.Health.GetNamespaceAppHealth(ctx, business.NamespaceHealthCriteria{Namespace: namespace, IncludeMetrics: false})
+					// TODO: Pass node cluster
+					h, err := bs.Health.GetNamespaceAppHealth(ctx, business.NamespaceHealthCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: namespace, IncludeMetrics: false})
 					resultsCh <- result{appNSHealth: h, namespace: namespace, err: err}
 				}(ctx, namespace)
 			}
@@ -244,7 +248,8 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 				wg.Add(1)
 				go func(ctx context.Context, namespace string) {
 					defer wg.Done()
-					h, err := bs.Health.GetNamespaceWorkloadHealth(ctx, business.NamespaceHealthCriteria{Namespace: namespace, IncludeMetrics: false})
+					// TODO: Pass node cluster
+					h, err := bs.Health.GetNamespaceWorkloadHealth(ctx, business.NamespaceHealthCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: namespace, IncludeMetrics: false})
 					resultsCh <- result{workloadNSHealth: h, namespace: namespace, err: err}
 				}(ctx, namespace)
 			}
@@ -253,7 +258,8 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 				wg.Add(1)
 				go func(ctx context.Context, namespace string) {
 					defer wg.Done()
-					s, err := bs.Health.GetNamespaceServiceHealth(ctx, business.NamespaceHealthCriteria{Namespace: namespace, IncludeMetrics: false})
+					// TODO: Pass node cluster
+					s, err := bs.Health.GetNamespaceServiceHealth(ctx, business.NamespaceHealthCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: namespace, IncludeMetrics: false})
 					resultsCh <- result{serviceNSHealth: s, namespace: namespace, err: err}
 				}(ctx, namespace)
 			}

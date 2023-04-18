@@ -13,7 +13,7 @@ export type JaegerLineInfo = LineInfo & { traceId?: string; spanId?: string };
 
 type FetchOptions = {
   namespace: string;
-  cluster: string;
+  cluster?: string;
   target: string;
   targetKind: MetricsObjectTypes;
   range: TimeRange;
@@ -54,7 +54,7 @@ export class SpanOverlay {
         : opts.targetKind === MetricsObjectTypes.SERVICE
         ? API.getServiceSpans
         : API.getWorkloadSpans;
-    apiCall(opts.cluster, opts.namespace, opts.target, q)
+    apiCall(opts.namespace, opts.target, q, opts.cluster)
       .then(res => {
         this.lastFetchError = false;
         // Incremental refresh: we keep existing spans

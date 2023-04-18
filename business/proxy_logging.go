@@ -1,6 +1,8 @@
 package business
 
 import (
+	"fmt"
+
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -20,15 +22,21 @@ func IsValidProxyLogLevel(level string) bool {
 
 // ProxyLoggingService is a thin layer over the kube interface for proxy logging functions.
 type ProxyLoggingService struct {
-	k8s         kubernetes.ClientInterface
+	userClients map[string]kubernetes.ClientInterface
 	proxyStatus *ProxyStatusService
 }
 
 // SetLogLevel sets the pod's proxy log level.
-func (in *ProxyLoggingService) SetLogLevel(namespace, pod, level string) error {
+func (in *ProxyLoggingService) SetLogLevel(cluster, namespace, pod, level string) error {
+	client, ok := in.userClients[cluster]
+	if !ok {
+		return fmt.Errorf("user client for cluster [%s] not found", cluster)
+	}
+
 	// Ensure pod exists
-	if _, err := in.k8s.GetPod(namespace, pod); err != nil {
+	if _, err := client.GetPod(namespace, pod); err != nil {
 		return err
 	}
-	return in.k8s.SetProxyLogLevel(namespace, pod, level)
+
+	return client.SetProxyLogLevel(namespace, pod, level)
 }

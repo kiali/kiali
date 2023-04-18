@@ -17,24 +17,24 @@ import (
 func CustomDashboard(w http.ResponseWriter, r *http.Request) {
 	queryParams := r.URL.Query()
 	pathParams := mux.Vars(r)
+	cluster := clusterNameFromQuery(queryParams)
 	namespace := pathParams["namespace"]
 	dashboardName := pathParams["dashboard"]
 
 	authInfo, err := getAuthInfo(r)
 	if err != nil {
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
 
-	// Check namespace
 	layer, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	info, err := checkNamespaceAccess(r.Context(), layer.Namespace, namespace)
+
+	// Check namespace access
+	info, err := layer.Namespace.GetNamespaceByCluster(r.Context(), namespace, cluster)
 	if err != nil {
 		RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
 		return
@@ -49,7 +49,7 @@ func CustomDashboard(w http.ResponseWriter, r *http.Request) {
 
 	var wkd *models.Workload
 	if params.Workload != "" {
-		wkd, err = layer.Workload.GetWorkload(r.Context(), business.WorkloadCriteria{Namespace: namespace, WorkloadName: params.Workload, WorkloadType: params.WorkloadType, IncludeServices: false})
+		wkd, err = layer.Workload.GetWorkload(r.Context(), business.WorkloadCriteria{Cluster: cluster, Namespace: namespace, WorkloadName: params.Workload, WorkloadType: params.WorkloadType, IncludeServices: false})
 		if err != nil {
 			if errors.IsNotFound(err) {
 				RespondWithError(w, http.StatusNotFound, err.Error())
@@ -201,7 +201,7 @@ func WorkloadDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params := models.IstioMetricsQuery{Namespace: namespace, Workload: workload}
+	params := models.IstioMetricsQuery{Cluster: clusterNameFromQuery(r.URL.Query()), Namespace: namespace, Workload: workload}
 	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())

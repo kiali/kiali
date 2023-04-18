@@ -512,8 +512,8 @@ func buildNodeTrafficMap(cluster, namespace string, n *graph.Node, o graph.Telem
 	// only narrow by cluster if it is set on the target node
 	var sourceCluster, destCluster string
 	if cluster != graph.Unknown {
-		sourceCluster = fmt.Sprintf(",source_cluster=%s", cluster)
-		destCluster = fmt.Sprintf(",destination_cluster=%s", cluster)
+		sourceCluster = fmt.Sprintf(`,source_cluster="%s"`, cluster)
+		destCluster = fmt.Sprintf(`,destination_cluster="%s"`, cluster)
 	}
 
 	// HTTP/GRPC Traffic
