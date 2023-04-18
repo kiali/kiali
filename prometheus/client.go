@@ -128,7 +128,7 @@ func (in *Client) Inject(api prom_v1.API) {
 func (in *Client) GetAllRequestRates(namespace, cluster string, ratesInterval string, queryTime time.Time) (model.Vector, error) {
 	log.Tracef("GetAllRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
 	if promCache != nil {
-		if isCached, result := promCache.GetAllRequestRates(namespace, ratesInterval, queryTime); isCached {
+		if isCached, result := promCache.GetAllRequestRates(namespace, cluster, ratesInterval, queryTime); isCached {
 			return result, nil
 		}
 	}
@@ -137,7 +137,7 @@ func (in *Client) GetAllRequestRates(namespace, cluster string, ratesInterval st
 		return result, err
 	}
 	if promCache != nil {
-		promCache.SetAllRequestRates(namespace, ratesInterval, queryTime, result)
+		promCache.SetAllRequestRates(namespace, cluster, ratesInterval, queryTime, result)
 	}
 	return result, nil
 }
