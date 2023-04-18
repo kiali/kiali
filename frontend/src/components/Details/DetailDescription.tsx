@@ -116,9 +116,7 @@ class DetailDescription extends React.Component<Props> {
         ? this.props.apps
             .sort((a1: string, a2: string) => (a1 < a2 ? -1 : 1))
             .map(name => {
-              if (name !== undefined) {
-                this.renderAppItem(this.props.namespace, name);
-              }
+              this.renderAppItem(this.props.namespace, name);
             })
         : this.renderEmptyItem('applications');
 
