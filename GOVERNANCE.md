@@ -16,8 +16,8 @@ A maintainer is a contributor to the Kiali project's success and a citizen helpi
 Current list of maintainers (alphabetically ordered):
 
 * [aljesusg](https://github.com/aljesusg)
+* [ferhoyos](https://github.com/ferhoyos)
 * [hhovsepy](https://github.com/hhovsepy)
-* [israel-hdez](https://github.com/israel-hdez)
 * [jmazzitelli](https://github.com/jmazzitelli)
 * [josunect](https://github.com/josunect)
 * [leandroberetta](https://github.com/leandroberetta)
@@ -150,6 +150,7 @@ Contact the Maintainers about changing to Emeritus status, or reducing your cont
 * [burmanm](https://github.com/burmanm)
 * [cfcosta](https://github.com/cfcosta)
 * [gbaufake](https://github.com/gbaufake)
+* [israel-hdez](https://github.com/israel-hdez)
 * [josejulio](https://github.com/josejulio)
 * [jotak](https://github.com/jotak)
 * [jstickler](https://github.com/JStickler)
