@@ -68,7 +68,6 @@ func TestNamespaceHealthInvalidRate(t *testing.T) {
 }
 
 func TestNamespaceHealthService(t *testing.T) {
-	name := "details"
 	assert := assert.New(t)
 	params := map[string]string{"rateInterval": "60s"}
 
@@ -77,6 +76,6 @@ func TestNamespaceHealthService(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal(200, code)
 	assert.NotNil(health)
-	assert.NotNil((*health)[name])
-	assert.NotNil((*health)[name].Requests)
+	assert.NotNil((*health)[0])
+	assert.NotNil((*health)[0].Health.Requests)
 }

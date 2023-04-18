@@ -25,12 +25,12 @@ type (
 	PromCache interface {
 		GetAllRequestRates(namespace string, ratesInterval string, queryTime time.Time) (bool, model.Vector)
 		GetAppRequestRates(namespace, app, ratesInterval string, queryTime time.Time) (bool, model.Vector, model.Vector)
-		GetNamespaceServicesRequestRates(namespace string, ratesInterval string, queryTime time.Time) (bool, model.Vector)
+		GetNamespaceServicesRequestRates(namespace, cluster string, ratesInterval string, queryTime time.Time) (bool, model.Vector)
 		GetServiceRequestRates(namespace, service, ratesInterval string, queryTime time.Time) (bool, model.Vector)
 		GetWorkloadRequestRates(namespace, workload, ratesInterval string, queryTime time.Time) (bool, model.Vector, model.Vector)
 		SetAllRequestRates(namespace string, ratesInterval string, queryTime time.Time, inResult model.Vector)
 		SetAppRequestRates(namespace, app, ratesInterval string, queryTime time.Time, inResult model.Vector, outResult model.Vector)
-		SetNamespaceServicesRequestRates(namespace string, ratesInterval string, queryTime time.Time, inResult model.Vector)
+		SetNamespaceServicesRequestRates(namespace, cluster string, ratesInterval string, queryTime time.Time, inResult model.Vector)
 		SetServiceRequestRates(namespace, service, ratesInterval string, queryTime time.Time, inResult model.Vector)
 		SetWorkloadRequestRates(namespace, workload, ratesInterval string, queryTime time.Time, inResult model.Vector, outResult model.Vector)
 	}
@@ -40,7 +40,7 @@ type (
 		cacheExpiration        time.Duration
 		cacheAllRequestRates   map[string]map[string]timeInResult
 		cacheAppRequestRates   map[string]map[string]map[string]timeInOutResult
-		cacheNsSvcRequestRates map[string]map[string]timeInResult
+		cacheNsSvcRequestRates map[string]map[string]map[string]timeInResult
 		cacheSvcRequestRates   map[string]map[string]map[string]timeInResult
 		cacheWkRequestRates    map[string]map[string]map[string]timeInOutResult
 		allRequestRatesLock    sync.RWMutex
@@ -61,7 +61,7 @@ func NewPromCache() PromCache {
 		cacheExpiration:        cacheExpiration,
 		cacheAllRequestRates:   make(map[string]map[string]timeInResult),
 		cacheAppRequestRates:   make(map[string]map[string]map[string]timeInOutResult),
-		cacheNsSvcRequestRates: make(map[string]map[string]timeInResult),
+		cacheNsSvcRequestRates: make(map[string]map[string]map[string]timeInResult),
 		cacheSvcRequestRates:   make(map[string]map[string]map[string]timeInResult),
 		cacheWkRequestRates:    make(map[string]map[string]map[string]timeInOutResult),
 	}
@@ -138,11 +138,11 @@ func (c *promCacheImpl) SetAppRequestRates(namespace string, app string, ratesIn
 	log.Tracef("[Prom Cache] SetAppRequestRates [namespace: %s] [app: %s] [ratesInterval: %s] [queryTime: %s]", namespace, app, ratesInterval, queryTime.String())
 }
 
-func (c *promCacheImpl) GetNamespaceServicesRequestRates(namespace string, ratesInterval string, queryTime time.Time) (bool, model.Vector) {
+func (c *promCacheImpl) GetNamespaceServicesRequestRates(namespace, cluster string, ratesInterval string, queryTime time.Time) (bool, model.Vector) {
 	defer c.nsSvcRequestRatesLock.RUnlock()
 	c.nsSvcRequestRatesLock.RLock()
 
-	if nsRates, okNs := c.cacheNsSvcRequestRates[namespace]; okNs {
+	if nsRates, okNs := c.cacheNsSvcRequestRates[namespace][cluster]; okNs {
 		if rtInterval, okRt := nsRates[ratesInterval]; okRt {
 			if !queryTime.Before(rtInterval.queryTime) && queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
 				log.Tracef("[Prom Cache] GetNamespaceServicesRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
@@ -153,15 +153,19 @@ func (c *promCacheImpl) GetNamespaceServicesRequestRates(namespace string, rates
 	return false, nil
 }
 
-func (c *promCacheImpl) SetNamespaceServicesRequestRates(namespace string, ratesInterval string, queryTime time.Time, inResult model.Vector) {
+func (c *promCacheImpl) SetNamespaceServicesRequestRates(namespace, cluster string, ratesInterval string, queryTime time.Time, inResult model.Vector) {
 	defer c.nsSvcRequestRatesLock.Unlock()
 	c.nsSvcRequestRatesLock.Lock()
 
 	if _, okNs := c.cacheNsSvcRequestRates[namespace]; !okNs {
-		c.cacheNsSvcRequestRates[namespace] = make(map[string]timeInResult)
+		c.cacheNsSvcRequestRates[namespace] = make(map[string]map[string]timeInResult)
 	}
 
-	c.cacheNsSvcRequestRates[namespace][ratesInterval] = timeInResult{
+	if _, okCluster := c.cacheNsSvcRequestRates[namespace][cluster]; !okCluster {
+		c.cacheNsSvcRequestRates[namespace][cluster] = make(map[string]timeInResult)
+	}
+
+	c.cacheNsSvcRequestRates[namespace][cluster][ratesInterval] = timeInResult{
 		queryTime: queryTime,
 		inResult:  inResult,
 	}
@@ -251,7 +255,7 @@ func (c *promCacheImpl) watchExpiration() {
 		c.appRequestRatesLock.Unlock()
 
 		c.nsSvcRequestRatesLock.Lock()
-		c.cacheNsSvcRequestRates = make(map[string]map[string]timeInResult)
+		c.cacheNsSvcRequestRates = make(map[string]map[string]map[string]timeInResult)
 		c.nsSvcRequestRatesLock.Unlock()
 
 		c.svcRequestRatesLock.Lock()

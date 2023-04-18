@@ -13,6 +13,7 @@ import {
   NamespaceAppHealth,
   NamespaceAppsHealth,
   NamespaceServiceHealth,
+  NamespaceServicesHealth,
   NamespaceWorkloadHealth,
   ServiceHealth,
   WorkloadHealth
@@ -351,7 +352,7 @@ export const getNamespaceServiceHealth = (
   namespace: string,
   duration: DurationInSeconds,
   queryTime?: TimeInSeconds
-): Promise<NamespaceServiceHealth> => {
+): Promise<NamespaceServicesHealth> => {
   const params: any = {
     type: 'service'
   };
@@ -361,16 +362,22 @@ export const getNamespaceServiceHealth = (
   if (queryTime) {
     params.queryTime = String(queryTime);
   }
-  return newRequest<NamespaceServiceHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(
+  return newRequest<NamespaceServicesHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(
     response => {
-      const ret: NamespaceServiceHealth = {};
-      Object.keys(response.data).forEach(k => {
-        ret[k] = ServiceHealth.fromJson(namespace, k, response.data[k], {
+      const ret: NamespaceServicesHealth = [];
+
+      for (var i = 0; i < response.data.length; i++) {
+        var serviceHealth: NamespaceServiceHealth = response.data[i] as NamespaceServiceHealth;
+
+        serviceHealth.health = ServiceHealth.fromJson(namespace, serviceHealth.name, response.data[i].health, {
           rateInterval: duration,
           hasSidecar: true,
           hasAmbient: false
         });
-      });
+
+        ret.push(serviceHealth);
+      }
+
       return ret;
     }
   );

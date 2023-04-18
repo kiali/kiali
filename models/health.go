@@ -6,9 +6,10 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
-// NamespaceAppHealth is a list of app name x health for a given namespace
+// NamespaceAppsHealth is a list of app name x health for a given namespace
 type NamespaceAppsHealth []*NamespaceAppHealth
 
+// NamespaceAppHealth is a single app health for a given namespace/cluster
 type NamespaceAppHealth struct {
 	Name      string    `json:"name"`
 	Namespace string    `json:"namespace"`
@@ -16,8 +17,16 @@ type NamespaceAppHealth struct {
 	Health    AppHealth `json:"health,omitempty"`
 }
 
-// NamespaceServiceHealth is an alias of map of service name x health
-type NamespaceServiceHealth map[string]*ServiceHealth
+// NamespaceServicesHealth is a list of service name x health for a given namespace
+type NamespaceServicesHealth []*NamespaceServiceHealth
+
+// NamespaceServiceHealth is a single service health for a given namespace/cluster
+type NamespaceServiceHealth struct {
+	Name      string        `json:"name"`
+	Namespace string        `json:"namespace"`
+	Cluster   string        `json:"cluster"`
+	Health    ServiceHealth `json:"health,omitempty"`
+}
 
 // NamespaceWorkloadHealth is an alias of map of workload name x health
 type NamespaceWorkloadHealth map[string]*WorkloadHealth
@@ -68,6 +77,18 @@ func EmptyNamespaceAppHealth(name, namespace, cluster string) NamespaceAppHealth
 func EmptyServiceHealth() ServiceHealth {
 	return ServiceHealth{
 		Requests: NewEmptyRequestHealth(),
+	}
+}
+
+// EmptyNamespaceServiceHealth create an empty NamespaceServiceHealth
+func EmptyNamespaceServiceHealth(name, namespace, cluster string) NamespaceServiceHealth {
+	return NamespaceServiceHealth{
+		Name:      name,
+		Namespace: namespace,
+		Cluster:   cluster,
+		Health: ServiceHealth{
+			Requests: NewEmptyRequestHealth(),
+		},
 	}
 }
 

@@ -131,8 +131,8 @@ func (in *HealthService) GetNamespaceAppHealth(ctx context.Context, criteria Nam
 	for cluster := range in.userClients {
 		appEntities, err := fetchNamespaceApps(ctx, in.businessLayer, criteria.Namespace, cluster, "")
 
-		// If the cluster is the home cluster, we want to return an error if we can't fetch the apps
-		if err != nil && cluster == kubernetes.HomeClusterName {
+		// If the cluster is the home cluster and we have just one cluster (single cluster mode), we want to return an error if we can't fetch the apps
+		if err != nil && cluster == kubernetes.HomeClusterName && len(in.userClients) == 1 {
 			return nil, err
 		}
 		if err != nil {
@@ -191,7 +191,7 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 }
 
 // GetNamespaceServiceHealth returns a health for all services in given Namespace (thus, it fetches data from K8S and Prometheus)
-func (in *HealthService) GetNamespaceServiceHealth(ctx context.Context, criteria NamespaceHealthCriteria) (models.NamespaceServiceHealth, error) {
+func (in *HealthService) GetNamespaceServiceHealth(ctx context.Context, criteria NamespaceHealthCriteria) (models.NamespaceServicesHealth, error) {
 	namespace := criteria.Namespace
 	queryTime := criteria.QueryTime
 	rateInterval := criteria.RateInterval
@@ -206,11 +206,6 @@ func (in *HealthService) GetNamespaceServiceHealth(ctx context.Context, criteria
 
 	var services *models.ServiceList
 	var err error
-	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
-	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := in.businessLayer.Namespace.GetNamespace(ctx, namespace); err != nil {
-		return nil, err
-	}
 
 	svcCriteria := ServiceCriteria{
 		Namespace:              namespace,
@@ -225,34 +220,39 @@ func (in *HealthService) GetNamespaceServiceHealth(ctx context.Context, criteria
 	return in.getNamespaceServiceHealth(services, criteria), nil
 }
 
-func (in *HealthService) getNamespaceServiceHealth(services *models.ServiceList, criteria NamespaceHealthCriteria) models.NamespaceServiceHealth {
+func (in *HealthService) getNamespaceServiceHealth(services *models.ServiceList, criteria NamespaceHealthCriteria) models.NamespaceServicesHealth {
 	namespace := criteria.Namespace
 	queryTime := criteria.QueryTime
 	rateInterval := criteria.RateInterval
-	allHealth := make(models.NamespaceServiceHealth)
+	allHealth := models.NamespaceServicesHealth{}
 
 	// Prepare all data (note that it's important to provide data for all services, even those which may not have any health, for overview cards)
 	if services != nil {
 		for _, service := range services.Services {
-			h := models.EmptyServiceHealth()
-			h.Requests.HealthAnnotations = service.HealthAnnotations
-			allHealth[service.Name] = &h
+			h := models.EmptyNamespaceServiceHealth(service.Name, service.Namespace, service.Cluster)
+			h.Health.Requests.HealthAnnotations = service.HealthAnnotations
+			allHealth = append(allHealth, &h)
 		}
 	}
 
 	if criteria.IncludeMetrics {
-		// Fetch services requests rates
-		rates, _ := in.prom.GetNamespaceServicesRequestRates(namespace, rateInterval, queryTime)
-		// Fill with collected request rates
-		lblDestSvc := model.LabelName("destination_service_name")
-		for _, sample := range rates {
-			service := string(sample.Metric[lblDestSvc])
-			if health, ok := allHealth[service]; ok {
-				health.Requests.AggregateInbound(sample)
+		for cluster, _ := range in.userClients {
+			// Fetch services requests rates
+			rates, _ := in.prom.GetNamespaceServicesRequestRates(namespace, cluster, rateInterval, queryTime)
+			// Fill with collected request rates
+			lblDestSvc := model.LabelName("destination_service_name")
+
+			for _, serviceHealth := range allHealth {
+				for _, sample := range rates {
+					service := string(sample.Metric[lblDestSvc])
+					if serviceHealth.Name == service && serviceHealth.Cluster == cluster {
+						serviceHealth.Health.Requests.AggregateInbound(sample)
+					}
+				}
 			}
-		}
-		for _, health := range allHealth {
-			health.Requests.CombineReporters()
+			for _, health := range allHealth {
+				health.Health.Requests.CombineReporters()
+			}
 		}
 	}
 	return allHealth

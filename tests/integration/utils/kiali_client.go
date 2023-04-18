@@ -243,12 +243,12 @@ func NamespaceAppsHealth(namespace string, params map[string]string) (*models.Na
 	}
 }
 
-func NamespaceServiceHealth(namespace string, params map[string]string) (*models.NamespaceServiceHealth, int, error) {
+func NamespaceServiceHealth(namespace string, params map[string]string) (*models.NamespaceServicesHealth, int, error) {
 	params["type"] = "service"
 	url := fmt.Sprintf("%s/api/namespaces/%s/health?%s", client.kialiURL, namespace, ParamsAsString(params))
 	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
 	if err == nil {
-		health := new(models.NamespaceServiceHealth)
+		health := new(models.NamespaceServicesHealth)
 		err = json.Unmarshal(body, &health)
 		if err == nil {
 			return health, code, nil

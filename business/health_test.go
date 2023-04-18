@@ -275,21 +275,24 @@ func TestGetNamespaceServiceHealthWithNA(t *testing.T) {
 	reviews := kubetest.FakeService("tutorial", "reviews")
 	httpbin := kubetest.FakeService("tutorial", "httpbin")
 	k8s := kubetest.NewFakeK8sClient(
-		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
-		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
 		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "ns"}},
 		&reviews,
 		&httpbin,
 	)
-	k8s.OpenShift = true
+	k8s.OpenShift = false
 	prom := new(prometheustest.PromClientMock)
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
+	conf := config.NewConfig()
+	config.Set(conf)
+	setupGlobalMeshConfig()
+	SetupBusinessLayer(t, k8s, *conf)
 
-	prom.On("GetNamespaceServicesRequestRates", "tutorial", mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
+	prom.On("GetNamespaceServicesRequestRates", "tutorial", kubernetes.HomeClusterName, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[kubernetes.HomeClusterName] = k8s
-	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, clients, prom, nil)}
+	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, clients, prom, nil), userClients: clients}
 
 	criteria := NamespaceHealthCriteria{Namespace: "tutorial", RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
 	health, err := hs.GetNamespaceServiceHealth(context.TODO(), criteria)
@@ -297,8 +300,13 @@ func TestGetNamespaceServiceHealthWithNA(t *testing.T) {
 	assert.Nil(err)
 	// Make sure we get services with N/A health
 	assert.Len(health, 2)
-	assert.Equal(emptyResult, health["reviews"].Requests.Inbound)
-	assert.Equal(emptyResult, health["reviews"].Requests.Outbound)
+	for _, reviewsHealth := range health {
+		if reviewsHealth.Name == "reviews" {
+			assert.Equal(emptyResult, reviewsHealth.Health.Requests.Inbound)
+			assert.Equal(emptyResult, reviewsHealth.Health.Requests.Outbound)
+		}
+	}
+
 	result := map[string]map[string]float64{
 		"http": {
 			"200": 14,
@@ -309,8 +317,12 @@ func TestGetNamespaceServiceHealthWithNA(t *testing.T) {
 			"7": 1.4,
 		},
 	}
-	assert.Equal(result, health["httpbin"].Requests.Inbound)
-	assert.Equal(emptyResult, health["httpbin"].Requests.Outbound)
+	for _, reviewsHealth := range health {
+		if reviewsHealth.Name == "httpbin" {
+			assert.Equal(result, reviewsHealth.Health.Requests.Inbound)
+			assert.Equal(emptyResult, reviewsHealth.Health.Requests.Outbound)
+		}
+	}
 }
 
 var (

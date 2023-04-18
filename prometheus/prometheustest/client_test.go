@@ -104,9 +104,9 @@ func TestGetNamespaceServicesRequestRates(t *testing.T) {
 			Metric:    model.Metric{"foo": "bar"},
 		},
 	}
-	api.OnQueryTime(`rate(istio_requests_total{destination_service_namespace="ns"}[5m]) > 0`, &queryTime, vectorQ1)
+	api.OnQueryTime(`rate(istio_requests_total{destination_service_namespace="ns",destination_cluster="east"}[5m]) > 0`, &queryTime, vectorQ1)
 
-	rates, _ := client.GetNamespaceServicesRequestRates("ns", "5m", queryTime)
+	rates, _ := client.GetNamespaceServicesRequestRates("ns", "east", "5m", queryTime)
 	assert.Equal(t, 1, rates.Len())
 	assert.Equal(t, vectorQ1[0], rates[0])
 }
