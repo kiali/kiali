@@ -437,15 +437,15 @@ func (workload *Workload) HasIstioSidecar() bool {
 	return workload.Pods.HasIstioSidecar()
 }
 
-// HasIstioSidecar return true if is part of Ambient mesh
+// HasIstioAmbient returns true if the workload has any pod with Ambient mesh annotations
 func (workload *Workload) HasIstioAmbient() bool {
-	// if no pods we can't prove there is no ambient, so return true
+	// if no pods we can't prove that ambient is enabled, so return false (Default)
 	if len(workload.Pods) == 0 {
-		return true
+		return false
 	}
 	// All pods in a deployment should be the same
 	if workload.Type == "Deployment" {
-		return workload.Pods[0].HasAmbient()
+		return workload.Pods[0].AmbientEnabled()
 	}
 	// Need to check each pod
 	return workload.Pods.HasAnyAmbient()

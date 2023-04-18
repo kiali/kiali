@@ -1130,6 +1130,8 @@ func (in *IstioConfigService) IsGatewayAPI() bool {
 	return in.k8s.IsGatewayAPI()
 }
 
+// Check if istio Ambient profile was enabled
+// ATM it is defined in the istio-cni-config configmap
 func (in *IstioConfigService) IsAmbientEnabled() bool {
 
 	var cniNetwork map[string]any
@@ -1140,8 +1142,11 @@ func (in *IstioConfigService) IsAmbientEnabled() bool {
 		err = yaml.Unmarshal([]byte(istioConfigMap.Data["cni_network_config"]), &cniNetwork)
 		if err != nil {
 			log.Errorf("Error reading istio-cni-config configmap: %s ", err.Error())
+			return false
 		}
-		if cniNetwork["ambient_enabled"] == true {
+		ambientEnabled, ok := cniNetwork["ambient_enabled"].(bool)
+
+		if ok && ambientEnabled {
 			return true
 		}
 	}

@@ -13,9 +13,8 @@ import { KialiIcon } from '../../config/KialiIcon';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
-import { isGateway } from '../../helpers/LabelFilterHelper';
+import { isGateway, isWaypoint } from '../../helpers/LabelFilterHelper';
 import { serverConfig } from '../../config';
-import AmbientLabel from '../Ambient/AmbientLabel';
 import { Workload } from '../../types/Workload';
 
 type ReduxProps = {
@@ -116,7 +115,11 @@ class DetailDescription extends React.Component<Props> {
       this.props.apps && this.props.apps.length > 0
         ? this.props.apps
             .sort((a1: string, a2: string) => (a1 < a2 ? -1 : 1))
-            .map(name => this.renderAppItem(this.props.namespace, name))
+            .map(name => {
+              if (name !== undefined) {
+                this.renderAppItem(this.props.namespace, name);
+              }
+            })
         : this.renderEmptyItem('applications');
 
     return [
@@ -151,7 +154,10 @@ class DetailDescription extends React.Component<Props> {
         <Tooltip position={TooltipPosition.right} content={this.renderServiceAccounts(workload)}>
           <KialiIcon.Info className={infoStyle} />
         </Tooltip>
-        {((!workload.istioSidecar && !workload.istioAmbient && serverConfig.ambientEnabled) ||
+        {((!workload.istioSidecar &&
+          !workload.istioAmbient &&
+          !isWaypoint(workload.labels) &&
+          serverConfig.ambientEnabled) ||
           (!workload.istioSidecar && !serverConfig.ambientEnabled)) && (
           <MissingSidecar
             namespace={this.props.namespace}
@@ -161,7 +167,6 @@ class DetailDescription extends React.Component<Props> {
             text={''}
           />
         )}
-        {workload.istioAmbient && <AmbientLabel tooltip={true} />}
       </span>
     );
   }
@@ -218,7 +223,6 @@ class DetailDescription extends React.Component<Props> {
               text={''}
             />
           )}
-          {workload.istioAmbient && <AmbientLabel tooltip={true} />}
         </span>
       );
     } else {

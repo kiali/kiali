@@ -160,7 +160,6 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	go func(ctx context.Context) {
 		defer wg.Done()
 		var err2 error
-		// Exclude waypoint proxies
 		ws, err2 = fetchWorkloads(ctx, in.businessLayer, criteria.Namespace, "")
 		if err2 != nil {
 			log.Errorf("Error fetching Workloads per namespace %s: %s", criteria.Namespace, err2)
@@ -1718,11 +1717,12 @@ func fetchWorkloadFromCluster(ctx context.Context, layer *Layer, client kubernet
 					pod.ProxyStatus = layer.ProxyStatus.GetPodProxyStatus(criteria.Namespace, pod.Name)
 				}
 			}
-			if pod.HasAmbient() {
+			// If Ambient is enabled for pod, check if has any Waypoint proxy
+			if pod.AmbientEnabled() {
 				w.WaypointWorkloads = getWaypointForWorkload(ctx, layer, criteria.Namespace, w)
 			}
+			// If the pod is a waypoint proxy, check if it is attached to a namespace or to a service account, and get the affected workloads
 			if pod.IsWaypoint() {
-				w.Type = "waypoint"
 				// Get waypoint workloads from a namespace
 				if pod.Labels["istio.io/gateway-name"] == "namespace" {
 					w.WaypointWorkloads = append(w.WaypointWorkloads, listWaypointWorkloadsForNamespace(ctx, layer, criteria.Namespace)...)
@@ -1775,7 +1775,8 @@ func getWaypointForWorkload(ctx context.Context, layer *Layer, namespace string,
 	return workloadslist
 }
 
-// Return the list of workloads binded to a service account, when the waypoint proxy is applied to a service account
+// Return the list of workloads binded to a service account, valid when the waypoint proxy is applied to a service account
+// TODO: This is scoped by namespace
 func listWaypointWorkloadsForSA(ctx context.Context, layer *Layer, namespace string, sa string) []models.Workload {
 	wlist, err := fetchWorkloads(ctx, layer, namespace, "")
 	if err != nil {

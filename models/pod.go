@@ -196,11 +196,11 @@ func (pod Pod) HasIstioSidecar() bool {
 	return len(pod.IstioContainers) > 0
 }
 
-// HasAnyAmbient returns true if any pod is labeled as ambient
+// HasAnyAmbient check each pod individually and returns true if any of them is labeled with the Ambient annotation
 func (pods Pods) HasAnyAmbient() bool {
 	if len(pods) > 0 {
 		for _, p := range pods {
-			if p.HasAmbient() {
+			if p.AmbientEnabled() {
 				return true
 			}
 		}
@@ -208,8 +208,8 @@ func (pods Pods) HasAnyAmbient() bool {
 	return false
 }
 
-// HasAmbient returns true if the pod is labeled as ambient-type
-func (pod *Pod) HasAmbient() bool {
+// AmbientEnabled returns true if the pod is labeled as ambient-type
+func (pod *Pod) AmbientEnabled() bool {
 	return pod.Annotations[AmbientAnnotation] == "enabled"
 }
 
