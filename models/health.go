@@ -28,8 +28,16 @@ type NamespaceServiceHealth struct {
 	Health    ServiceHealth `json:"health,omitempty"`
 }
 
-// NamespaceWorkloadHealth is an alias of map of workload name x health
-type NamespaceWorkloadHealth map[string]*WorkloadHealth
+// NamespaceServiceHealth is a single workload health for a given namespace/cluster
+type NamespaceWorkloadHealth struct {
+	Name      string         `json:"name"`
+	Namespace string         `json:"namespace"`
+	Cluster   string         `json:"cluster"`
+	Health    WorkloadHealth `json:"health,omitempty"`
+}
+
+// NamespaceWorkloadsHealth is a list of workload name x health for a given namespace
+type NamespaceWorkloadsHealth []*NamespaceWorkloadHealth
 
 // ServiceHealth contains aggregated health from various sources, for a given service
 type ServiceHealth struct {
@@ -87,6 +95,17 @@ func EmptyNamespaceServiceHealth(name, namespace, cluster string) NamespaceServi
 		Namespace: namespace,
 		Cluster:   cluster,
 		Health: ServiceHealth{
+			Requests: NewEmptyRequestHealth(),
+		},
+	}
+}
+
+func EmptyNamespaceWorkloadHealth(name, namespace, cluster string) NamespaceWorkloadHealth {
+	return NamespaceWorkloadHealth{
+		Name:      name,
+		Namespace: namespace,
+		Cluster:   cluster,
+		Health: WorkloadHealth{
 			Requests: NewEmptyRequestHealth(),
 		},
 	}

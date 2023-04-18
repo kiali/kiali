@@ -299,7 +299,7 @@ func (o *PromClientMock) MockMetricsForLabels(metrics []string) {
 	o.On("GetMetricsForLabels", mock.AnythingOfType("[]string"), mock.AnythingOfType("string")).Return(metrics, nil)
 }
 
-func (o *PromClientMock) GetAllRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+func (o *PromClientMock) GetAllRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error) {
 	args := o.Called(namespace, ratesInterval, queryTime)
 	return args.Get(0).(model.Vector), args.Error(1)
 }

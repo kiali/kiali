@@ -568,7 +568,14 @@ export type NamespaceServiceHealth = {
 
 export type NamespaceServicesHealth = NamespaceServiceHealth[];
 
-export type NamespaceWorkloadHealth = { [workload: string]: WorkloadHealth };
+export type NamespaceWorkloadHealth = {
+  name: string;
+  namespace: string;
+  cluster: string;
+  health: WorkloadHealth;
+};
+
+export type NamespaceWorkloadsHealth = NamespaceWorkloadHealth[];
 
 export type WithAppHealth<T> = T & { health: AppHealth };
 export type WithServiceHealth<T> = T & { health: ServiceHealth };

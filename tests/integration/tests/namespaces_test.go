@@ -19,7 +19,6 @@ func TestNamespaces(t *testing.T) {
 }
 
 func TestNamespaceHealthWorkload(t *testing.T) {
-	name := "ratings-v1"
 	assert := assert.New(t)
 	params := map[string]string{"rateInterval": "60s"}
 
@@ -28,9 +27,9 @@ func TestNamespaceHealthWorkload(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal(200, code)
 	assert.NotNil(health)
-	assert.NotNil((*health)[name])
-	assert.NotNil((*health)[name].WorkloadStatus)
-	assert.NotNil((*health)[name].Requests)
+	assert.NotNil((*health)[0])
+	assert.NotNil((*health)[0].Health.WorkloadStatus)
+	assert.NotNil((*health)[0].Health.Requests)
 }
 
 func TestInvalidNamespaceHealth(t *testing.T) {

@@ -179,7 +179,7 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 
 	if sidecarPresent && criteria.IncludeMetrics {
 		// Fetch services requests rates
-		rates, err := in.prom.GetAllRequestRates(namespace, rateInterval, queryTime)
+		rates, err := in.prom.GetAllRequestRates(namespace, cluster, rateInterval, queryTime)
 		if err != nil {
 			return allHealth, errors.NewServiceUnavailable(err.Error())
 		}
@@ -236,7 +236,7 @@ func (in *HealthService) getNamespaceServiceHealth(services *models.ServiceList,
 	}
 
 	if criteria.IncludeMetrics {
-		for cluster, _ := range in.userClients {
+		for cluster := range in.userClients {
 			// Fetch services requests rates
 			rates, _ := in.prom.GetNamespaceServicesRequestRates(namespace, cluster, rateInterval, queryTime)
 			// Fill with collected request rates
@@ -259,7 +259,7 @@ func (in *HealthService) getNamespaceServiceHealth(services *models.ServiceList,
 }
 
 // GetNamespaceWorkloadHealth returns a health for all workloads in given Namespace (thus, it fetches data from K8S and Prometheus)
-func (in *HealthService) GetNamespaceWorkloadHealth(ctx context.Context, criteria NamespaceHealthCriteria) (models.NamespaceWorkloadHealth, error) {
+func (in *HealthService) GetNamespaceWorkloadHealth(ctx context.Context, criteria NamespaceHealthCriteria) (models.NamespaceWorkloadsHealth, error) {
 	namespace := criteria.Namespace
 	rateInterval := criteria.RateInterval
 	queryTime := criteria.QueryTime
@@ -280,31 +280,40 @@ func (in *HealthService) GetNamespaceWorkloadHealth(ctx context.Context, criteri
 	return in.getNamespaceWorkloadHealth(wl, criteria)
 }
 
-func (in *HealthService) getNamespaceWorkloadHealth(ws models.Workloads, criteria NamespaceHealthCriteria) (models.NamespaceWorkloadHealth, error) {
+func (in *HealthService) getNamespaceWorkloadHealth(ws models.Workloads, criteria NamespaceHealthCriteria) (models.NamespaceWorkloadsHealth, error) {
 	// Perf: do not bother fetching request rate if no workloads or no workload has sidecar
 	hasSidecar := false
 	namespace := criteria.Namespace
 	rateInterval := criteria.RateInterval
 	queryTime := criteria.QueryTime
 
-	allHealth := make(models.NamespaceWorkloadHealth)
+	allHealth := models.NamespaceWorkloadsHealth{}
 	for _, w := range ws {
-		allHealth[w.Name] = models.EmptyWorkloadHealth()
-		allHealth[w.Name].Requests.HealthAnnotations = models.GetHealthAnnotation(w.HealthAnnotations, HealthAnnotation)
-		allHealth[w.Name].WorkloadStatus = w.CastWorkloadStatus()
+		workloadHealth := models.EmptyNamespaceWorkloadHealth(w.Name, namespace, w.Cluster)
+
+		workloadHealth.Name = w.Name
+		workloadHealth.Namespace = criteria.Namespace
+		workloadHealth.Cluster = w.Cluster
+		workloadHealth.Health.WorkloadStatus = w.CastWorkloadStatus()
+		workloadHealth.Health.Requests.HealthAnnotations = models.GetHealthAnnotation(w.HealthAnnotations, HealthAnnotation)
+
 		if w.IstioSidecar {
 			hasSidecar = true
 		}
+
+		allHealth = append(allHealth, &workloadHealth)
 	}
 
 	if hasSidecar && criteria.IncludeMetrics {
 		// Fetch services requests rates
-		rates, err := in.prom.GetAllRequestRates(namespace, rateInterval, queryTime)
-		if err != nil {
-			return allHealth, errors.NewServiceUnavailable(err.Error())
+		for cluster := range in.userClients {
+			rates, err := in.prom.GetAllRequestRates(namespace, cluster, rateInterval, queryTime)
+			if err != nil {
+				return allHealth, errors.NewServiceUnavailable(err.Error())
+			}
+			// Fill with collected request rates
+			fillWorkloadRequestRates(allHealth, cluster, rates)
 		}
-		// Fill with collected request rates
-		fillWorkloadRequestRates(allHealth, rates)
 	}
 
 	return allHealth, nil
@@ -334,21 +343,23 @@ func fillAppRequestRates(allHealth models.NamespaceAppsHealth, rates model.Vecto
 }
 
 // fillWorkloadRequestRates aggregates requests rates from metrics fetched from Prometheus, and stores the result in the health map.
-func fillWorkloadRequestRates(allHealth models.NamespaceWorkloadHealth, rates model.Vector) {
+func fillWorkloadRequestRates(allHealth models.NamespaceWorkloadsHealth, cluster string, rates model.Vector) {
 	lblDest := model.LabelName("destination_workload")
 	lblSrc := model.LabelName("source_workload")
-	for _, sample := range rates {
-		name := string(sample.Metric[lblDest])
-		if health, ok := allHealth[name]; ok {
-			health.Requests.AggregateInbound(sample)
-		}
-		name = string(sample.Metric[lblSrc])
-		if health, ok := allHealth[name]; ok {
-			health.Requests.AggregateOutbound(sample)
+	for _, workloadHealth := range allHealth {
+		if workloadHealth.Cluster == cluster {
+			for _, sample := range rates {
+				if string(sample.Metric[lblDest]) == workloadHealth.Name {
+					workloadHealth.Health.Requests.AggregateInbound(sample)
+				}
+				if string(sample.Metric[lblSrc]) == workloadHealth.Name {
+					workloadHealth.Health.Requests.AggregateOutbound(sample)
+				}
+			}
 		}
 	}
 	for _, health := range allHealth {
-		health.Requests.CombineReporters()
+		health.Health.Requests.CombineReporters()
 	}
 }
 

@@ -15,8 +15,8 @@ import {
   NamespaceServiceHealth,
   NamespaceServicesHealth,
   NamespaceWorkloadHealth,
-  ServiceHealth,
-  WorkloadHealth
+  NamespaceWorkloadsHealth,
+  ServiceHealth
 } from '../types/Health';
 import { IstioConfigDetails, IstioPermissions } from '../types/IstioConfigDetails';
 import { IstioConfigList, IstioConfigsMap } from '../types/IstioConfigList';
@@ -387,7 +387,7 @@ export const getNamespaceWorkloadHealth = (
   namespace: string,
   duration: DurationInSeconds,
   queryTime?: TimeInSeconds
-): Promise<NamespaceWorkloadHealth> => {
+): Promise<NamespaceWorkloadsHealth> => {
   const params: any = {
     type: 'workload'
   };
@@ -397,16 +397,21 @@ export const getNamespaceWorkloadHealth = (
   if (queryTime) {
     params.queryTime = String(queryTime);
   }
-  return newRequest<NamespaceWorkloadHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(
+  return newRequest<NamespaceWorkloadsHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(
     response => {
-      const ret: NamespaceWorkloadHealth = {};
-      Object.keys(response.data).forEach(k => {
-        ret[k] = WorkloadHealth.fromJson(namespace, k, response.data[k], {
+      const ret: NamespaceWorkloadsHealth = [];
+
+      for (var i = 0; i < response.data.length; i++) {
+        var workloadHealth: NamespaceWorkloadHealth = response.data[i] as NamespaceWorkloadHealth;
+
+        workloadHealth.health = ServiceHealth.fromJson(namespace, workloadHealth.name, response.data[i].health, {
           rateInterval: duration,
           hasSidecar: true,
           hasAmbient: false
         });
-      });
+
+        ret.push(workloadHealth);
+      }
       return ret;
     }
   );

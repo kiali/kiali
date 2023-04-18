@@ -222,7 +222,7 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 		namespace        string
 		appNSHealth      models.NamespaceAppsHealth
 		serviceNSHealth  models.NamespaceServicesHealth
-		workloadNSHealth models.NamespaceWorkloadHealth
+		workloadNSHealth models.NamespaceWorkloadsHealth
 		err              error
 	}
 	resultsCh := make(chan result)
@@ -281,8 +281,8 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 				appHealth[health.Name+result.namespace] = &health.Health
 			}
 		} else if result.workloadNSHealth != nil {
-			for name, health := range result.workloadNSHealth {
-				workloadHealth[name+result.namespace] = health
+			for _, health := range result.workloadNSHealth {
+				workloadHealth[health.Name+result.namespace] = &health.Health
 			}
 		} else if result.serviceNSHealth != nil {
 			for _, health := range result.serviceNSHealth {
