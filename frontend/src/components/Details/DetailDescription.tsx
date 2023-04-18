@@ -115,9 +115,13 @@ class DetailDescription extends React.Component<Props> {
       this.props.apps && this.props.apps.length > 0
         ? this.props.apps
             .sort((a1: string, a2: string) => (a1 < a2 ? -1 : 1))
-            .map(name => {
-              this.renderAppItem(this.props.namespace, name);
+            .filter(name => {
+              if (name === undefined) {
+                return null;
+              }
+              return name;
             })
+            .map(name => this.renderAppItem(this.props.namespace, name))
         : this.renderEmptyItem('applications');
 
     return [
