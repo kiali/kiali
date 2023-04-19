@@ -52,6 +52,7 @@ interface Props extends ServiceId {
   peerAuthentications: PeerAuthentication[];
   validations: Validations;
   istioAPIEnabled: boolean;
+  cluster?: string;
 }
 
 type ServiceInfoState = {

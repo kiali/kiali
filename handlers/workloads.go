@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/kiali/kiali/kubernetes"
 	"io"
 	"net/http"
 	"strconv"
@@ -105,6 +106,11 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 		includeValidations = true
 	}
 
+	cluster := p.Cluster
+	if cluster == "" {
+		cluster = kubernetes.HomeClusterName
+	}
+
 	var istioConfigValidations = models.IstioValidations{}
 	var errValidations error
 
@@ -113,7 +119,7 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			istioConfigValidations, errValidations = business.Validations.GetValidations(r.Context(), criteria.Namespace, "", criteria.WorkloadName)
+			istioConfigValidations, errValidations = business.Validations.GetValidations(r.Context(), criteria.Namespace, "", criteria.WorkloadName, cluster)
 		}()
 	}
 
@@ -175,12 +181,17 @@ func WorkloadUpdate(w http.ResponseWriter, r *http.Request) {
 	var istioConfigValidations = models.IstioValidations{}
 	var errValidations error
 
+	cluster := query.Get("cluster")
+	if cluster == "" {
+		cluster = kubernetes.HomeClusterName
+	}
+
 	wg := sync.WaitGroup{}
 	if includeValidations {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			istioConfigValidations, errValidations = business.Validations.GetValidations(r.Context(), namespace, "", workload)
+			istioConfigValidations, errValidations = business.Validations.GetValidations(r.Context(), namespace, "", workload, cluster)
 		}()
 	}
 

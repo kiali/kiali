@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"github.com/kiali/kiali/kubernetes"
 	"io"
 	"net/http"
 	"strings"
@@ -53,6 +54,11 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		workloadSelector = query.Get("workloadSelector")
 	}
 
+	cluster := params["cluster"]
+	if cluster == "" {
+		cluster = kubernetes.HomeClusterName
+	}
+
 	criteria := business.ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelector, allNamespaces)
 
 	// Get business layer
@@ -77,7 +83,7 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		go func(namespace string, istioConfigValidations *models.IstioValidations, err *error) {
 			defer wg.Done()
 			// We don't filter by objects when calling validations, because certain validations require fetching all types to get the correct errors
-			istioConfigValidationResults, errValidations := business.Validations.GetValidations(context.TODO(), namespace, "", "")
+			istioConfigValidationResults, errValidations := business.Validations.GetValidations(context.TODO(), namespace, "", "", cluster)
 			if errValidations != nil && *err == nil {
 				*err = errValidations
 			} else {

@@ -35,7 +35,7 @@ type ReferenceChecker interface {
 // GetValidations returns an IstioValidations object with all the checks found when running
 // all the enabled checkers. If service is "" then the whole namespace is validated.
 // If service is not empty string, then all of its associated Istio objects are validated.
-func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace, service, workload string) (models.IstioValidations, error) {
+func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace, service, workload string, cluster string) (models.IstioValidations, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetValidations",
 		observability.Attribute("package", "business"),
@@ -54,8 +54,7 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace
 
 	// Ensure the service exists
 	if service != "" {
-		// TODO: Include cluster instead of hard coding home cluster.
-		_, err := in.businessLayer.Svc.GetService(ctx, kubernetes.HomeClusterName, namespace, service)
+		_, err := in.businessLayer.Svc.GetService(ctx, cluster, namespace, service)
 		if err != nil {
 			if err != nil {
 				log.Warningf("Error invoking GetService %s", err)

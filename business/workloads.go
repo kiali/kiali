@@ -465,6 +465,10 @@ func (in *WorkloadService) fetchWorkloads(ctx context.Context, namespace string,
 	return fetchWorkloads(ctx, in.businessLayer, namespace, labelSelector)
 }
 
+func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, namespace string, labelSelector string, cluster string) (models.Workloads, error) {
+	return fetchWorkloadsFromCluster(ctx, in.businessLayer, cluster, namespace, labelSelector)
+}
+
 func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogEntry {
 	entry := LogEntry{
 		Message:       "",

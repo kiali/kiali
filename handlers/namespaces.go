@@ -44,7 +44,11 @@ func NamespaceValidationSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var validationSummary models.IstioValidationSummary
-	istioConfigValidationResults, errValidations := business.Validations.GetValidations(r.Context(), namespace, "", "")
+	cluster := vars["cluster"]
+	if cluster == "" {
+		cluster = kubernetes.HomeClusterName
+	}
+	istioConfigValidationResults, errValidations := business.Validations.GetValidations(r.Context(), namespace, "", "", cluster)
 	if errValidations != nil {
 		log.Error(errValidations)
 		RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
@@ -71,8 +75,13 @@ func ConfigValidationSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cluster := params.Get("cluster")
+	if cluster == "" {
+		cluster = kubernetes.HomeClusterName
+	}
+
 	validationSummaries := models.ValidationSummaries{}
-	istioConfigValidationResults, errValidations := business.Validations.GetValidations(r.Context(), "", "", "")
+	istioConfigValidationResults, errValidations := business.Validations.GetValidations(r.Context(), "", "", "", cluster)
 	if errValidations != nil {
 		log.Error(errValidations)
 		RespondWithError(w, http.StatusInternalServerError, errValidations.Error())

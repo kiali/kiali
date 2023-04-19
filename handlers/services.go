@@ -103,11 +103,12 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 		includeValidations = true
 	}
 
-	params := mux.Vars(r)
-	cluster := params["cluster"]
+	cluster := queryParams.Get("cluster")
 	if cluster == "" {
 		cluster = kubernetes.HomeClusterName
 	}
+
+	params := mux.Vars(r)
 	namespace := params["namespace"]
 	service := params["service"]
 	queryTime := util.Clock.Now()
@@ -125,7 +126,7 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			istioConfigValidations, errValidations = business.Validations.GetValidations(r.Context(), namespace, service, "")
+			istioConfigValidations, errValidations = business.Validations.GetValidations(r.Context(), namespace, service, "", cluster)
 		}()
 	}
 
@@ -192,7 +193,7 @@ func ServiceUpdate(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			istioConfigValidations, errValidations = business.Validations.GetValidations(r.Context(), namespace, service, "")
+			istioConfigValidations, errValidations = business.Validations.GetValidations(r.Context(), namespace, service, "", cluster)
 		}()
 	}
 

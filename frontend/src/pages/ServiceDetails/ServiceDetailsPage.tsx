@@ -162,6 +162,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           k8sGateways={this.state.k8sGateways}
           peerAuthentications={this.state.peerAuthentications}
           validations={this.state.validations}
+          cluster={this.state.cluster}
         />
       </Tab>
     );
