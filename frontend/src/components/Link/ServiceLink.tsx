@@ -22,7 +22,11 @@ export const getServiceURL = (name: string, namespace: string, cluster: string, 
   }
 
   if (!!query) {
-    to = to + '?' + query;
+    if (to.includes('?')) {
+      to = to + '&' + query;
+    } else {
+      to = to + '?' + query;
+    }
   }
 
   return to;

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Paths } from '../../config';
+import { isMultiCluster, Paths } from '../../config';
 import { Link } from 'react-router-dom';
 import { IstioTypes } from '../VirtualList/Config';
 import { PFBadge } from 'components/Pf/PfBadges';
@@ -42,10 +42,18 @@ export const GetIstioObjectUrl = (
   const istioType = IstioTypes[type];
   let to = '/namespaces/' + namespace + '/' + Paths.ISTIO;
 
-  to = to + '/' + istioType.url + '/' + name + '?cluster=' + cluster;
+  to = to + '/' + istioType.url + '/' + name;
+
+  if (cluster && isMultiCluster()) {
+    to = to + '?cluster=' + cluster;
+  }
 
   if (!!query) {
-    to = to + '&' + query;
+    if (to.includes('?')) {
+      to = to + '&' + query;
+    } else {
+      to = to + '?' + query;
+    }
   }
 
   return to;

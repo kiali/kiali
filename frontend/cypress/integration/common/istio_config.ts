@@ -326,7 +326,7 @@ And('user sees Name information for Istio objects', () => {
   const object = 'bookinfo-gateway';
   // There should be a table with a heading for each piece of information.
   getColWithRowText(object, 'Name').within(() => {
-    cy.get(`a[href*="/namespaces/bookinfo/istio/gateways/${object}?cluster=_kiali_home"]`).should('be.visible');
+    cy.get(`a[href*="/namespaces/bookinfo/istio/gateways/${object}"]`).should('be.visible');
   });
 });
 
@@ -346,7 +346,7 @@ And('user sees Configuration information for Istio objects', () => {
   const object = 'bookinfo-gateway';
   // There should be a table with a heading for each piece of information.
   getColWithRowText(object, 'Configuration').within(() => {
-    cy.get(`a[href*="/namespaces/bookinfo/istio/gateways/${object}?cluster=_kiali_home"]`).should('be.visible');
+    cy.get(`a[href*="/namespaces/bookinfo/istio/gateways/${object}"]`).should('be.visible');
   });
 });
 

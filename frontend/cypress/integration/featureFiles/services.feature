@@ -18,8 +18,8 @@ Feature: Kiali Services page
     And the "Labels" column on the "productpage" row has the text "app=productpage"
     And the "Labels" column on the "productpage" row has the text "service=productpage"
     And the "Configuration" column on the "productpage" row has a link ending in "/namespaces/bookinfo/services/productpage"
-    And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/virtualservices/bookinfo?cluster=_kiali_home"
-    And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/gateways/bookinfo-gateway?cluster=_kiali_home"
+    And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/virtualservices/bookinfo"
+    And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/gateways/bookinfo-gateway"
 
   @services-page
   Scenario: See all Services toggles

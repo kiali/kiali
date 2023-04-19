@@ -50,7 +50,7 @@ const getLink = (item: TResource, config: Resource, query?: string) => {
       url = url + '?cluster=' + item.cluster;
     }
   }
-  if (query) {
+  if (!!query) {
     if (url.includes('?')) {
       url = url + '&' + query;
     } else {
