@@ -211,46 +211,8 @@ func (in *MeshService) ResolveKialiControlPlaneCluster(r *http.Request) (*Cluste
 
 	// The "cluster_id" is set in an environment variable of
 	// the "istiod" deployment. Let's try to fetch it.
-	var istioDeployment *v1.Deployment
-	istioDeploymentConfig := conf.ExternalServices.Istio.IstiodDeploymentName
-	var err error
-
-	if IsNamespaceCached(conf.IstioNamespace) {
-		istioDeployment, err = kialiCache.GetDeployment(conf.IstioNamespace, istioDeploymentConfig)
-	} else {
-		istioDeployment, err = in.k8s.GetDeployment(conf.IstioNamespace, istioDeploymentConfig)
-	}
-	if err != nil && !errors.IsNotFound(err) {
-		return nil, err
-	}
-
-	if istioDeployment == nil {
-		kialiControlPlaneClusterCached = true
-		return nil, nil
-	}
-
-	if len(istioDeployment.Spec.Template.Spec.Containers) == 0 {
-		kialiControlPlaneClusterCached = true
-		return nil, nil
-	}
-
-	myClusterName := ""
-	for _, v := range istioDeployment.Spec.Template.Spec.Containers[0].Env {
-		if v.Name == "CLUSTER_ID" {
-			myClusterName = v.Value
-			break
-		}
-	}
-
-	gatewayToNamespace := false
-	for _, v := range istioDeployment.Spec.Template.Spec.Containers[0].Env {
-		if v.Name == "PILOT_SCOPE_GATEWAY_TO_NAMESPACE" {
-			gatewayToNamespace = v.Value == "true"
-			break
-		}
-	}
-
-	if len(myClusterName) == 0 {
+	myClusterName, gatewayToNamespace, err := kubernetes.ClusterInfoFromIstiod(*conf, in.k8s)
+	if err != nil {
 		// We didn't find it. This may mean that Istio is not setup with multi-cluster enabled.
 		kialiControlPlaneClusterCached = true
 		return nil, nil
@@ -335,7 +297,12 @@ func findKialiInNamespace(ctx context.Context, namespace string, clusterName str
 				services = kubernetes.FilterServicesByLabels(selector, tmpSvc)
 			}
 		} else {
-			services, getSvcErr = layer.k8sClients[clusterName].GetServicesByLabels(kialiNs.Name, "app.kubernetes.io/part-of=kiali")
+			k8s, ok := layer.k8sClients[clusterName]
+			if !ok {
+				log.Warningf("Discovery for Kiali instances in cluster [%s] failed: k8s client not found", clusterName)
+				return
+			}
+			services, getSvcErr = k8s.GetServicesByLabels(kialiNs.Name, "app.kubernetes.io/part-of=kiali")
 		}
 		if getSvcErr != nil && !errors.IsNotFound(getSvcErr) {
 			log.Warningf("Discovery for Kiali instances in cluster [%s] failed when finding the service in [%s] namespace: %s", clusterName, namespace, getSvcErr.Error())

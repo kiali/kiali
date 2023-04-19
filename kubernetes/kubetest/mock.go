@@ -17,6 +17,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 	gatewayapifake "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/fake"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -30,7 +31,7 @@ type K8SClientFactoryMock struct {
 // Constructor
 func NewK8SClientFactoryMock(k8s kubernetes.ClientInterface) *K8SClientFactoryMock {
 	k8sClientFactory := new(K8SClientFactoryMock)
-	k8sClientFactory.Clients = map[string]kubernetes.ClientInterface{kubernetes.HomeClusterName: k8s}
+	k8sClientFactory.Clients = map[string]kubernetes.ClientInterface{config.Get().KubernetesConfig.ClusterName: k8s}
 	return k8sClientFactory
 }
 
@@ -45,7 +46,7 @@ func (o *K8SClientFactoryMock) SetClients(clients map[string]kubernetes.ClientIn
 func (o *K8SClientFactoryMock) GetClient(authInfo *api.AuthInfo) (kubernetes.ClientInterface, error) {
 	o.lock.RLock()
 	defer o.lock.RUnlock()
-	return o.Clients[kubernetes.HomeClusterName], nil
+	return o.Clients[config.Get().KubernetesConfig.ClusterName], nil
 }
 
 // Business Methods
@@ -70,17 +71,7 @@ func (o *K8SClientFactoryMock) GetSAClients() map[string]kubernetes.ClientInterf
 func (o *K8SClientFactoryMock) GetSAHomeClusterClient() kubernetes.ClientInterface {
 	o.lock.RLock()
 	defer o.lock.RUnlock()
-	return o.Clients[kubernetes.HomeClusterName]
-}
-
-func (o *K8SClientFactoryMock) GetClusterNames() []string {
-	o.lock.RLock()
-	defer o.lock.RUnlock()
-	clusterNames := make([]string, 0)
-	for cn := range o.Clients {
-		clusterNames = append(clusterNames, cn)
-	}
-	return clusterNames
+	return o.Clients[config.Get().KubernetesConfig.ClusterName]
 }
 
 /////
@@ -99,7 +90,6 @@ func NewK8SClientMock() *K8SClientMock {
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("IsIstioAPI").Return(true)
 	k8s.On("GetKialiTokenForHomeCluster").Return("")
-	k8s.On("GetClusterNames").Return(kubernetes.HomeClusterName)
 	return k8s
 }
 
@@ -162,11 +152,6 @@ func (o *K8SClientMock) GetServerVersion() (*version.Info, error) {
 func (o *K8SClientMock) GetToken() string {
 	args := o.Called()
 	return args.Get(0).(string)
-}
-
-func (o *K8SClientMock) GetClusterNames() []string {
-	args := o.Called()
-	return args.Get(0).([]string)
 }
 
 // GetAuthInfo returns the AuthInfo struct for the client

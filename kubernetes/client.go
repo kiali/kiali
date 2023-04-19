@@ -43,7 +43,6 @@ type ClientInterface interface {
 	IsOpenShift() bool
 	IsGatewayAPI() bool
 	IsIstioAPI() bool
-	GetClusterNames() []string
 	K8SClientInterface
 	IstioClientInterface
 	OSClientInterface

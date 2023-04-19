@@ -32,12 +32,13 @@ func (f *fakeKubeCache) getClient() kubernetes.ClientInterface {
 
 func TestClientUpdatedWhenSAClientChanges(t *testing.T) {
 	require := require.New(t)
-	config := config.NewConfig()
+	conf := config.NewConfig()
+	config.Set(conf)
 
 	client := kubetest.NewFakeK8sClient()
 	client.Token = "current-token"
 	clientFactory := kubetest.NewK8SClientFactoryMock(client)
-	k8sCache, err := NewKubeCache(client, *config, emptyHandler)
+	k8sCache, err := NewKubeCache(client, *conf, emptyHandler)
 	require.NoError(err)
 
 	kubeCache := &fakeKubeCache{kubeCache: k8sCache}
@@ -55,7 +56,7 @@ func TestClientUpdatedWhenSAClientChanges(t *testing.T) {
 	// Update the client. This should trigger a cache refresh.
 	newClient := kubetest.NewFakeK8sClient()
 	newClient.Token = "new-token"
-	clientFactory.SetClients(map[string]kubernetes.ClientInterface{kubernetes.HomeClusterName: newClient})
+	clientFactory.SetClients(map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: newClient})
 
 	require.Eventually(
 		func() bool { return kubeCache.getClient() != client },
@@ -67,19 +68,21 @@ func TestClientUpdatedWhenSAClientChanges(t *testing.T) {
 
 func TestNoHomeClusterReturnsError(t *testing.T) {
 	require := require.New(t)
-	config := config.NewConfig()
+	conf := config.NewConfig()
+	config.Set(conf)
 
 	client := kubetest.NewFakeK8sClient()
 	clientFactory := kubetest.NewK8SClientFactoryMock(client)
 	clientFactory.SetClients(map[string]kubernetes.ClientInterface{"nothomecluster": client})
 
-	_, err := NewKialiCache(clientFactory, *config)
+	_, err := NewKialiCache(clientFactory, *conf)
 	require.Error(err, "no home cluster should return an error")
 }
 
 func TestKubeCacheCreatedPerClient(t *testing.T) {
 	require := require.New(t)
-	config := config.NewConfig()
+	conf := config.NewConfig()
+	config.Set(conf)
 
 	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
 	deploymentCluster1 := &apps_v1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "deployment1", Namespace: "test"}}
@@ -88,18 +91,18 @@ func TestKubeCacheCreatedPerClient(t *testing.T) {
 	client2 := kubetest.NewFakeK8sClient(ns, deploymentCluster2)
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clientFactory.SetClients(map[string]kubernetes.ClientInterface{
-		kubernetes.HomeClusterName: client,
-		"cluster2":                 client2,
+		conf.KubernetesConfig.ClusterName: client,
+		"cluster2":                        client2,
 	})
 
-	kialiCache, err := NewKialiCache(clientFactory, *config)
+	kialiCache, err := NewKialiCache(clientFactory, *conf)
 	require.NoError(err)
 	defer kialiCache.Stop()
 
 	caches := kialiCache.GetKubeCaches()
 	require.Equal(2, len(caches))
 
-	_, err = caches[kubernetes.HomeClusterName].GetDeployment("test", "deployment1")
+	_, err = caches[conf.KubernetesConfig.ClusterName].GetDeployment("test", "deployment1")
 	require.NoError(err)
 
 	_, err = caches["cluster2"].GetDeployment("test", "deployment2")

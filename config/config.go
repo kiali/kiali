@@ -71,8 +71,10 @@ func (fn FeatureName) IsValid() error {
 }
 
 // Global configuration for the application.
-var configuration Config
-var rwMutex sync.RWMutex
+var (
+	configuration Config
+	rwMutex       sync.RWMutex
+)
 
 // Defines where the files are located that contain the secrets content
 var overrideSecretsDir = "/kiali-override-secrets"
@@ -295,6 +297,9 @@ type KubernetesConfig struct {
 	// Kiali cache list of namespaces per user, this is typically short lived cache compared with the duration of the
 	// namespace cache defined by previous CacheDuration parameter
 	CacheTokenNamespaceDuration int `yaml:"cache_token_namespace_duration,omitempty"`
+	// ClusterName is the name of the kubernetes cluster that Kiali is running in.
+	// If empty, then it will default to 'Kubernetes'.
+	ClusterName string `yaml:"cluster_name,omitempty"`
 	// List of controllers that won't be used for Workload calculation
 	// Kiali queries Deployment,ReplicaSet,ReplicationController,DeploymentConfig,StatefulSet,Job and CronJob controllers
 	// Deployment and ReplicaSet will be always queried, but ReplicationController,DeploymentConfig,StatefulSet,Job and CronJobs
@@ -710,6 +715,7 @@ func NewConfig() (c *Config) {
 			CacheIstioTypes:             []string{"AuthorizationPolicy", "DestinationRule", "EnvoyFilter", "Gateway", "PeerAuthentication", "RequestAuthentication", "ServiceEntry", "Sidecar", "VirtualService", "WorkloadEntry", "WorkloadGroup", "WasmPlugin", "Telemetry", "K8sGateway", "K8sHTTPRoute"},
 			CacheNamespaces:             []string{".*"},
 			CacheTokenNamespaceDuration: 10,
+			ClusterName:                 "",
 			ExcludeWorkloads:            []string{"CronJob", "DeploymentConfig", "Job", "ReplicationController"},
 			QPS:                         175,
 		},

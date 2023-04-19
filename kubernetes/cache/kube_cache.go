@@ -203,8 +203,6 @@ func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, ref
 		}
 	}
 
-	log.Infof("[Kiali Cache] Kube cache is active for namespaces %v", cacheNamespaces)
-
 	return c, nil
 }
 

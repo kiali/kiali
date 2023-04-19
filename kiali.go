@@ -39,6 +39,7 @@ import (
 
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/server"
@@ -61,11 +62,9 @@ var (
 func init() {
 	// log everything to stderr so that it can be easily gathered by logs, separate log files are problematic with containers
 	_ = flag.Set("logtostderr", "true")
-
 }
 
 func main() {
-
 	log.InitializeLogger()
 	util.Clock = util.RealClock{}
 
@@ -88,6 +87,8 @@ func main() {
 		log.Infof("No configuration file specified. Will rely on environment for configuration.")
 		config.Set(config.NewConfig())
 	}
+
+	updateConfigWithIstioInfo()
 
 	cfg := config.Get()
 	log.Tracef("Kiali Configuration:\n%s", cfg)
@@ -120,7 +121,7 @@ func main() {
 func waitForTermination() {
 	// Channel that is notified when we are done and should exit
 	// TODO: may want to make this a package variable - other things might want to tell us to exit
-	var doneChan = make(chan bool)
+	doneChan := make(chan bool)
 
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt)
@@ -215,4 +216,40 @@ func determineContainerVersion(defaultVersion string) string {
 		return defaultVersion
 	}
 	return v
+}
+
+func updateConfigWithIstioInfo() {
+	conf := *config.Get()
+	homeCluster := conf.KubernetesConfig.ClusterName
+	if homeCluster != "" {
+		// If the cluster name is already set, we don't need to do anything
+		return
+	}
+
+	err := func() error {
+		restConf, err := kubernetes.GetConfigForLocalCluster()
+		if err != nil {
+			return err
+		}
+
+		k8s, err := kubernetes.NewClientFromConfig(restConf)
+		if err != nil {
+			return err
+		}
+
+		// Try to auto-detect the cluster name
+		homeCluster, _, err = kubernetes.ClusterInfoFromIstiod(conf, k8s)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}()
+	if err != nil {
+		log.Warningf("Cannot resolve local cluster name. Err: %s. Falling back to 'Kubernetes'", err)
+		homeCluster = "Kubernetes"
+	}
+
+	conf.KubernetesConfig.ClusterName = homeCluster
+	config.Set(&conf)
 }

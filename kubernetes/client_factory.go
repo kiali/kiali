@@ -18,11 +18,19 @@ import (
 // the cached factory - only one is ever created; once created it is cached here
 var factory *clientFactory
 
+// Ensures only one factory is created
+var once sync.Once
+
 // defaultExpirationTime set the default expired time of a client
 const defaultExpirationTime = time.Minute * 15
 
 // cluster name to denote the cluster where Kiali is deployed
-const HomeClusterName = "_kiali_home"
+// If you need an SA client connected to the home cluster, use GetSAHomeClusterClient()
+// instead of this. This gets set when newClientFactory() is called.
+// TODO: Deprecated - remove this.
+var (
+	HomeClusterName = ""
+)
 
 // ClientFactory interface for the clientFactory object
 type ClientFactory interface {
@@ -31,23 +39,31 @@ type ClientFactory interface {
 	GetSAClient(cluster string) ClientInterface
 	GetSAClients() map[string]ClientInterface
 	GetSAHomeClusterClient() ClientInterface
-	GetClusterNames() []string
 }
 
 // clientFactory used to generate per users clients
 type clientFactory struct {
-	// remoteClusterInfos contains information on all remote clusters taken from the remote cluster secrets, keyed on cluster name.
-	remoteClusterInfos map[string]RemoteClusterInfo
 	// baseRestConfig contains some of the base rest config to be used for all clients.
 	// Not all of the data in this base config is used - some will be overridden per client like token and host info.
 	baseRestConfig *rest.Config
+
 	// clientEntries contain user clients that are used to authenticate as logged in users.
 	// Keyed by hash code generated from auth data.
 	clientEntries map[string]map[string]ClientInterface // By token by cluster
+
+	// Name of the home cluster. This is the cluster where Kiali is deployed which is usually the
+	// "in cluster" config. This name comes from the istio cluster id.
+	homeCluster string
+
 	// mutex for when accessing the stored clients
 	mutex sync.RWMutex
+
 	// when a client is expired, a signal with its tokenHash will be sent to recycleChan
 	recycleChan chan string
+
+	// remoteClusterInfos contains information on all remote clusters taken from the remote cluster secrets, keyed on cluster name.
+	remoteClusterInfos map[string]RemoteClusterInfo
+
 	// maps cluster name to a kiali client for that cluster. The kiali client uses the
 	// kiali service account to access the cluster API.
 	saClientEntries map[string]ClientInterface
@@ -55,11 +71,14 @@ type clientFactory struct {
 
 // GetClientFactory returns the client factory. Creates a new one if necessary
 func GetClientFactory() (ClientFactory, error) {
-	if factory == nil {
+	var err error
+	once.Do(func() {
+		HomeClusterName = kialiConfig.Get().KubernetesConfig.ClusterName
 		// Get the normal configuration
-		config, err := GetConfigForLocalCluster()
+		var config *rest.Config
+		config, err = GetConfigForLocalCluster()
 		if err != nil {
-			return nil, err
+			return
 		}
 
 		// Create a new config based on what was gathered above but don't specify the bearer token to use
@@ -70,14 +89,9 @@ func GetClientFactory() (ClientFactory, error) {
 			Burst:           config.Burst,
 		}
 
-		cf, err := newClientFactory(&baseConfig)
-		if err != nil {
-			return nil, err
-		}
-
-		factory = cf
-	}
-	return factory, nil
+		factory, err = newClientFactory(&baseConfig)
+	})
+	return factory, err
 }
 
 // newClientFactory allows for specifying the config and expiry duration
@@ -88,6 +102,7 @@ func newClientFactory(restConfig *rest.Config) (*clientFactory, error) {
 		clientEntries:   make(map[string]map[string]ClientInterface),
 		recycleChan:     make(chan string),
 		saClientEntries: make(map[string]ClientInterface),
+		homeCluster:     kialiConfig.Get().KubernetesConfig.ClusterName,
 	}
 	// after creating a client factory
 	// background goroutines will be watching the clients` expiration
@@ -105,12 +120,12 @@ func newClientFactory(restConfig *rest.Config) (*clientFactory, error) {
 	// Note that this means each remote cluster secret token must be given the proper permissions
 	// in that remote cluster for Kiali to do its work. i.e. logging into a remote cluster with the
 	// remote cluster secret token must be given the same permissions as the local cluster Kiali SA.
-	// TODO: should we use a real cluster name instead of the special HomeClusterName value?
 	homeClient, err := f.newSAClient(nil)
 	if err != nil {
 		return nil, err
 	}
-	f.saClientEntries[HomeClusterName] = homeClient
+
+	f.saClientEntries[f.homeCluster] = homeClient
 
 	for _, clusterInfo := range remoteClusterInfos {
 		client, err := f.newSAClient(&clusterInfo)
@@ -124,7 +139,6 @@ func newClientFactory(restConfig *rest.Config) (*clientFactory, error) {
 }
 
 // newClient creates a new ClientInterface based on a users k8s token
-// TODO: this probably needs a clusterName parameter and the server-side API info needs to be obtained from a remoteClusterInfo
 func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.Duration, cluster string) (ClientInterface, error) {
 	config := *cf.baseRestConfig
 
@@ -148,7 +162,7 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 		var kialiToken string
 		var err error
 
-		if cluster == HomeClusterName {
+		if cluster == cf.homeCluster {
 			kialiToken, err = GetKialiTokenForHomeCluster()
 		} else {
 			kialiToken, err = cf.GetSAClient(cluster).GetToken(), nil
@@ -187,7 +201,7 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 	var newClient ClientInterface
 	var err error
 
-	if cluster == HomeClusterName {
+	if cluster == cf.homeCluster {
 		newClient, err = NewClientFromConfig(&config)
 		if err != nil {
 			log.Errorf("Error creating client for cluster %s: %s", cluster, err.Error())
@@ -206,7 +220,8 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 			} else {
 				remoteConfig, err2 = GetConfigWithTokenForRemoteCluster(clusterInfo[cluster].Cluster,
 					RemoteSecretUser{
-						Name: authInfo.Username, User: RemoteSecretUserToken{Token: authInfo.Token}})
+						Name: authInfo.Username, User: RemoteSecretUserToken{Token: authInfo.Token},
+					})
 			}
 
 			if err2 != nil {
@@ -236,7 +251,6 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 
 // newSAClient returns a new client for the given cluster. If clusterInfo is nil then a client for the local cluster is returned.
 func (cf *clientFactory) newSAClient(clusterInfo *RemoteClusterInfo) (*K8SClient, error) {
-
 	// if no cluster info is provided, we are being asked to create a new client for the home cluster
 	if clusterInfo == nil {
 		config := *cf.baseRestConfig
@@ -266,26 +280,26 @@ func (cf *clientFactory) GetSAClients() map[string]ClientInterface {
 
 // getClient returns a client for the specified token. Creating one if necessary.
 func (cf *clientFactory) GetClient(authInfo *api.AuthInfo) (ClientInterface, error) {
-	return cf.getRecycleClient(authInfo, defaultExpirationTime, HomeClusterName)
+	return cf.getRecycleClient(authInfo, defaultExpirationTime, cf.homeCluster)
 }
 
 // getClient returns a client for the specified token. Creating one if necessary.
 func (cf *clientFactory) GetClients(authInfo *api.AuthInfo) (map[string]ClientInterface, error) {
 	clients := make(map[string]ClientInterface)
-	for _, cluster := range cf.GetClusterNames() {
+	// Try to create a user client for each cluster there's a kiali service account configured.
+	for cluster := range cf.saClientEntries {
 		ci, err := cf.getRecycleClient(authInfo, defaultExpirationTime, cluster)
-		if err == nil {
-			clients[cluster] = ci
-		} else {
-			log.Errorf("Error returning client %s", err)
+		if err != nil {
+			log.Errorf("Error returning user client for cluster: %s. Err: %s", cluster, err)
 		}
-	}
-	if len(clients) > 0 {
-		return clients, nil
-	} else {
-		return nil, errors.New("Error getting clients")
+		clients[cluster] = ci
 	}
 
+	if len(clients) == 0 {
+		return nil, errors.New("unable to create create any user clients")
+	}
+
+	return clients, nil
 }
 
 // getRecycleClient returns a client for the specified token with expirationTime. Creating one if necessary.
@@ -404,7 +418,7 @@ func (cf *clientFactory) refreshClientIfTokenChanged(cluster string) error {
 	var refreshTheClient bool // will be true if the client needs to be refreshed
 	var rci *RemoteClusterInfo
 
-	if cluster == HomeClusterName {
+	if cluster == cf.homeCluster {
 		// LOCAL CLUSTER
 		if newTokenToCheck, err := GetKialiTokenForHomeCluster(); err != nil {
 			return err
@@ -451,19 +465,5 @@ func (cf *clientFactory) refreshClientIfTokenChanged(cluster string) error {
 
 // KialiSAHomeClusterClient returns the Kiali service account client for the cluster where Kiali is running.
 func (cf *clientFactory) GetSAHomeClusterClient() ClientInterface {
-	return cf.GetSAClient(HomeClusterName)
-}
-
-// GetClusterNames returns all the known cluster names - this includes all remotes as well as the home cluster name.
-func (cf *clientFactory) GetClusterNames() []string {
-	cf.mutex.RLock()
-	defer cf.mutex.RUnlock()
-
-	clusterNames := make([]string, 0, 1+len(cf.remoteClusterInfos))
-	clusterNames = append(clusterNames, HomeClusterName)
-	for clusterName := range cf.remoteClusterInfos {
-		clusterNames = append(clusterNames, clusterName)
-	}
-
-	return clusterNames
+	return cf.GetSAClient(cf.homeCluster)
 }
