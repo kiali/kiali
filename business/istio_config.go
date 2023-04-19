@@ -128,27 +128,15 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 	for cluster := range in.userClients {
-		if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, criteria.Namespace, cluster); err != nil {
-			// We want to throw an error if we're single vs. multi cluster to be backward compatible
-			// TODO: Probably need this in a few other places as well. It'd be nice to have a
-			// centralized check for this in the config instead of this hacky one.
-			if len(in.userClients) == 1 {
-				return models.IstioConfigList{}, err
-			}
-
+		singleClusterConfigList, err := in.GetIstioConfigListPerCluster(ctx, criteria, cluster)
+		if err != nil {
 			if api_errors.IsNotFound(err) || api_errors.IsForbidden(err) {
 				// If a cluster is not found or not accessible, then we skip it
 				log.Debugf("Error while accessing to cluster [%s]: %s", cluster, err.Error())
 				continue
 			}
 
-			// On any other error, abort and return the error.
-			return models.IstioConfigList{}, err
-		}
-
-		singleClusterConfigList, err := in.GetIstioConfigListPerCluster(ctx, criteria, cluster)
-		if err != nil {
-			if cluster == kubernetes.HomeClusterName {
+			if cluster == kubernetes.HomeClusterName && len(in.userClients) == 1 {
 				return models.IstioConfigList{}, err
 			}
 

@@ -35,17 +35,16 @@ type ReferenceChecker interface {
 // GetValidations returns an IstioValidations object with all the checks found when running
 // all the enabled checkers. If service is "" then the whole namespace is validated.
 // If service is not empty string, then all of its associated Istio objects are validated.
-func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace, service, workload string) (models.IstioValidations, error) {
+func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, namespace, service, workload string) (models.IstioValidations, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetValidations",
 		observability.Attribute("package", "business"),
+		observability.Attribute("cluster", cluster),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("service", service),
 		observability.Attribute("workload", workload),
 	)
 	defer end()
-	// TODO: Include cluster instead of hard coding home cluster.
-	cluster := kubernetes.HomeClusterName
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)

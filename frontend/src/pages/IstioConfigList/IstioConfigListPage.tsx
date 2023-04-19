@@ -104,10 +104,6 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
       this.setState({ listItems: [] });
       if (isMultiCluster()) {
         for (let cluster in serverConfig.clusters) {
-          if (serverConfig.clusters[cluster].isKialiHome) {
-            // @TODO the cluster name is different for HomeClusterName
-            cluster = HomeClusterName;
-          }
           this.fetchConfigs(
             cluster,
             namespacesSelected,

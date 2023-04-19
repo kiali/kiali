@@ -30,7 +30,7 @@ func TestGetNamespaceValidations(t *testing.T) {
 	vs := mockCombinedValidationService(t, fakeIstioConfigList(),
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
 
-	validations, err := vs.GetValidations(context.TODO(), "test", "", "")
+	validations, err := vs.GetValidations(context.TODO(), kubernetes.HomeClusterName, "test", "", "")
 	require.NoError(err)
 	assert.NotEmpty(validations)
 	assert.True(validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
@@ -44,7 +44,7 @@ func TestGetAllValidations(t *testing.T) {
 	vs := mockCombinedValidationService(t, fakeIstioConfigList(),
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
 
-	validations, _ := vs.GetValidations(context.TODO(), "", "", "")
+	validations, _ := vs.GetValidations(context.TODO(), kubernetes.HomeClusterName, "", "", "")
 	assert.NotEmpty(validations)
 	assert.True(validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
 }
