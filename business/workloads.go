@@ -590,6 +590,7 @@ func (in *WorkloadService) fetchWorkloads(ctx context.Context, namespace string,
 			if errors.IsNotFound(err) || errors.IsForbidden(err) {
 				// If a cluster is not found or not accessible, then we skip it
 				log.Debugf("Error while accessing to cluster [%s]: %s", c, err.Error())
+				continue
 			} else {
 				// On any other error, abort and return the error.
 				return nil, err

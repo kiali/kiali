@@ -123,9 +123,59 @@ var newSecurityConfigTypes = []string{
 
 // GetIstioConfigList returns a list of Istio routing objects, Mixer Rules, (etc.)
 // per a given Namespace.
-// @TODO hardcoded home cluster
 func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria IstioConfigCriteria) (models.IstioConfigList, error) {
-	return in.GetIstioConfigListPerCluster(ctx, criteria, kubernetes.HomeClusterName)
+	istioConfigList := models.IstioConfigList{}
+	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
+	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
+	for cluster := range in.userClients {
+		if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, criteria.Namespace, cluster); err != nil {
+			// We want to throw an error if we're single vs. multi cluster to be backward compatible
+			// TODO: Probably need this in a few other places as well. It'd be nice to have a
+			// centralized check for this in the config instead of this hacky one.
+			if len(in.userClients) == 1 {
+				return models.IstioConfigList{}, err
+			}
+
+			if api_errors.IsNotFound(err) || api_errors.IsForbidden(err) {
+				// If a cluster is not found or not accessible, then we skip it
+				log.Debugf("Error while accessing to cluster [%s]: %s", cluster, err.Error())
+				continue
+			}
+
+			// On any other error, abort and return the error.
+			return models.IstioConfigList{}, err
+		}
+
+		singleClusterConfigList, err := in.GetIstioConfigListPerCluster(ctx, criteria, cluster)
+		if err != nil {
+			if cluster == kubernetes.HomeClusterName {
+				return models.IstioConfigList{}, err
+			}
+
+			log.Errorf("Unable to get config list from cluster: %s. Err: %s. Skipping", cluster, err)
+			continue
+		}
+
+		istioConfigList.DestinationRules = append(istioConfigList.DestinationRules, singleClusterConfigList.DestinationRules...)
+		istioConfigList.EnvoyFilters = append(istioConfigList.EnvoyFilters, singleClusterConfigList.EnvoyFilters...)
+		istioConfigList.Gateways = append(istioConfigList.Gateways, singleClusterConfigList.Gateways...)
+		istioConfigList.K8sGateways = append(istioConfigList.K8sGateways, singleClusterConfigList.K8sGateways...)
+		istioConfigList.K8sHTTPRoutes = append(istioConfigList.K8sHTTPRoutes, singleClusterConfigList.K8sHTTPRoutes...)
+		istioConfigList.VirtualServices = append(istioConfigList.VirtualServices, singleClusterConfigList.VirtualServices...)
+		istioConfigList.ServiceEntries = append(istioConfigList.ServiceEntries, singleClusterConfigList.ServiceEntries...)
+		istioConfigList.Sidecars = append(istioConfigList.Sidecars, singleClusterConfigList.Sidecars...)
+		istioConfigList.WorkloadEntries = append(istioConfigList.WorkloadEntries, singleClusterConfigList.WorkloadEntries...)
+		istioConfigList.WorkloadGroups = append(istioConfigList.WorkloadGroups, singleClusterConfigList.WorkloadGroups...)
+		istioConfigList.AuthorizationPolicies = append(istioConfigList.AuthorizationPolicies, singleClusterConfigList.AuthorizationPolicies...)
+		istioConfigList.PeerAuthentications = append(istioConfigList.PeerAuthentications, singleClusterConfigList.PeerAuthentications...)
+		istioConfigList.RequestAuthentications = append(istioConfigList.RequestAuthentications, singleClusterConfigList.RequestAuthentications...)
+		istioConfigList.WasmPlugins = append(istioConfigList.WasmPlugins, singleClusterConfigList.WasmPlugins...)
+		istioConfigList.Telemetries = append(istioConfigList.Telemetries, singleClusterConfigList.Telemetries...)
+		istioConfigList.Namespace = singleClusterConfigList.Namespace
+		istioConfigList.IstioValidations = istioConfigList.IstioValidations.MergeValidations(singleClusterConfigList.IstioValidations)
+	}
+
+	return istioConfigList, nil
 }
 
 func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, criteria IstioConfigCriteria, cluster string) (models.IstioConfigList, error) {
