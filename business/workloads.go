@@ -331,6 +331,7 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 	}
 
 	workload, err2 := in.fetchWorkload(ctx, criteria)
+
 	if err2 != nil {
 		return nil, err2
 	}
