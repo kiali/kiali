@@ -714,6 +714,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                   <div style={{ paddingTop: '10px', paddingLeft: '10px' }}>{NoLogsFoundMessage}</div>
                 )}
                 containerStyle={{ overflow: 'initial !important' }}
+                style={{ overflowX: 'auto', overflowY: 'auto' }}
               />
             )}
           </AutoSizer>
