@@ -41,6 +41,7 @@ func (p *workloadParams) extract(r *http.Request) {
 	p.WorkloadName = vars["workload"]
 	p.WorkloadType = query.Get("type")
 	p.Cluster = clusterNameFromQuery(query)
+
 	var err error
 	p.IncludeHealth, err = strconv.ParseBool(query.Get("health"))
 	if err != nil {
