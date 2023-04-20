@@ -270,8 +270,8 @@ type PromClientMock struct {
 }
 
 // MockAllRequestRates mocks GetAllRequestRates for given namespace, rateInverval and queryTime, returning out vector
-func (o *PromClientMock) MockAllRequestRates(namespace, ratesInterval string, queryTime time.Time, out model.Vector) {
-	o.On("GetAllRequestRates", namespace, ratesInterval, queryTime).Return(out, nil)
+func (o *PromClientMock) MockAllRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time, out model.Vector) {
+	o.On("GetAllRequestRates", namespace, cluster, ratesInterval, queryTime).Return(out, nil)
 }
 
 // MockAppRequestRates mocks GetAppRequestRates for given namespace and app, returning in & out vectors
@@ -300,7 +300,7 @@ func (o *PromClientMock) MockMetricsForLabels(metrics []string) {
 }
 
 func (o *PromClientMock) GetAllRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error) {
-	args := o.Called(namespace, ratesInterval, queryTime)
+	args := o.Called(namespace, cluster, ratesInterval, queryTime)
 	return args.Get(0).(model.Vector), args.Error(1)
 }
 

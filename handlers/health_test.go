@@ -67,8 +67,11 @@ func TestNamespaceAppHealth(t *testing.T) {
 	url := ts.URL + "/api/namespaces/ns/health"
 	mockClock()
 
+	conf := config.NewConfig()
+	config.Set(conf)
+
 	// Test 17s on rate interval to check that rate interval is adjusted correctly.
-	prom.On("GetAllRequestRates", "ns", "17s", util.Clock.Now()).Return(model.Vector{}, nil)
+	prom.On("GetAllRequestRates", "ns", conf.KubernetesConfig.ClusterName, "17s", util.Clock.Now()).Return(model.Vector{}, nil)
 
 	resp, err := http.Get(url)
 	if err != nil {
