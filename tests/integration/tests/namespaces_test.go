@@ -27,6 +27,7 @@ func TestNamespaceHealthWorkload(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal(200, code)
 	assert.NotNil(health)
+	// Checking for the first app in the list
 	assert.NotNil((*health)[0])
 	assert.NotNil((*health)[0].Health.WorkloadStatus)
 	assert.NotNil((*health)[0].Health.Requests)
@@ -51,6 +52,7 @@ func TestNamespaceHealthApp(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal(200, code)
 	assert.NotNil(health)
+	// Checking for the first app in the list
 	assert.NotNil((*health)[0])
 	assert.NotEmpty((*health)[0].Health.WorkloadStatuses)
 	assert.NotNil((*health)[0].Health.Requests)
@@ -74,6 +76,7 @@ func TestNamespaceHealthService(t *testing.T) {
 
 	assert.Nil(err)
 	assert.Equal(200, code)
+	// Checking for the first app in the list
 	assert.NotNil(health)
 	assert.NotNil((*health)[0])
 	assert.NotNil((*health)[0].Health.Requests)
