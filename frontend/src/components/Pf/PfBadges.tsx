@@ -66,6 +66,7 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   Template: { badge: 'T', tt: 'Template' } as PFBadgeType,
   Unknown: { badge: 'U', tt: 'Unknown' } as PFBadgeType,
   VirtualService: { badge: 'VS', tt: 'Virtual Service' } as PFBadgeType,
+  Waypoint: { badge: 'W', tt: 'Waypoint proxy' } as PFBadgeType,
   Workload: { badge: 'W', tt: 'Workload', style: { backgroundColor: PFColors.Blue500 } } as PFBadgeType,
   WorkloadEntry: { badge: 'WE', tt: 'Workload Entry' } as PFBadgeType,
   WorkloadGroup: { badge: 'WG', tt: 'Workload Group' } as PFBadgeType

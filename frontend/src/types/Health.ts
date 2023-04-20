@@ -323,6 +323,7 @@ export abstract class Health {
 interface HealthContext {
   rateInterval: number;
   hasSidecar: boolean;
+  hasAmbient: boolean;
 }
 
 export class ServiceHealth extends Health {
@@ -545,7 +546,7 @@ export const healthNotAvailable = (): AppHealth => {
     '',
     [],
     { inbound: {}, outbound: {}, healthAnnotations: {} },
-    { rateInterval: 60, hasSidecar: true }
+    { rateInterval: 60, hasSidecar: true, hasAmbient: false }
   );
 };
 

@@ -13,6 +13,7 @@ export interface ServiceOverview {
   name: string;
   cluster?: string;
   istioSidecar: boolean;
+  istioAmbient: boolean;
   additionalDetailSample?: AdditionalItem;
   labels: { [key: string]: string };
   ports: { [key: string]: number };

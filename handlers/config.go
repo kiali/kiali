@@ -51,6 +51,7 @@ type DeploymentConfig struct {
 type PublicConfig struct {
 	AccessibleNamespaces []string                    `json:"accesibleNamespaces,omitempty"`
 	AuthStrategy         string                      `json:"authStrategy,omitempty"`
+	AmbientEnabled       bool                        `json:"ambientEnabled,omitempty"`
 	ClusterInfo          ClusterInfo                 `json:"clusterInfo,omitempty"`
 	Clusters             map[string]business.Cluster `json:"clusters,omitempty"`
 	Deployment           DeploymentConfig            `json:"deployment,omitempty"`
@@ -152,6 +153,7 @@ func Config(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		publicConfig.GatewayAPIEnabled = bLayer.IstioConfig.IsGatewayAPI()
 	}
+	publicConfig.AmbientEnabled = bLayer.IstioConfig.IsAmbientEnabled()
 
 	RespondWithJSONIndent(w, http.StatusOK, publicConfig)
 }

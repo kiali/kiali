@@ -42,6 +42,7 @@ export interface WorkloadOverview {
   name: string;
   type: string;
   istioSidecar: boolean;
+  istioAmbient: boolean;
   labels?: { [key: string]: string };
   resourceVersion: string;
   createdAt: string;
@@ -65,6 +66,7 @@ export interface ServiceDetailsInfo {
   service: Service;
   endpoints?: Endpoints[];
   istioSidecar: boolean;
+  istioAmbient: boolean;
   virtualServices: VirtualService[];
   k8sHTTPRoutes: K8sHTTPRoute[];
   destinationRules: DestinationRule[];

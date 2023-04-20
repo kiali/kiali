@@ -164,7 +164,8 @@ export const decorateGraphData = (graphData: GraphElements, duration: number): D
               decoratedNode.data.healthData,
               {
                 rateInterval: duration,
-                hasSidecar: true
+                hasSidecar: true,
+                hasAmbient: false
               }
             );
             decoratedNode.data.healthStatus = decoratedNode.data.health.getGlobalStatus().name;
@@ -175,7 +176,8 @@ export const decorateGraphData = (graphData: GraphElements, duration: number): D
               decoratedNode.data.healthData,
               {
                 rateInterval: duration,
-                hasSidecar: true
+                hasSidecar: true,
+                hasAmbient: false
               }
             );
             decoratedNode.data.healthStatus = decoratedNode.data.health.getGlobalStatus().name;
@@ -186,7 +188,8 @@ export const decorateGraphData = (graphData: GraphElements, duration: number): D
               decoratedNode.data.healthData,
               {
                 rateInterval: duration,
-                hasSidecar: true
+                hasSidecar: true,
+                hasAmbient: false
               }
             );
             decoratedNode.data.healthStatus = decoratedNode.data.health.getGlobalStatus().name;

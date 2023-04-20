@@ -4,7 +4,7 @@ import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import { appLabelFilter, versionLabelFilter } from '../../pages/WorkloadList/FiltersAndSorts';
 import MissingSidecar from '../MissingSidecar/MissingSidecar';
-import { hasMissingSidecar, IstioTypes, Renderer, Resource, SortResource, TResource } from './Config';
+import { noAmbientLabels, hasMissingSidecar, IstioTypes, Renderer, Resource, SortResource, TResource } from './Config';
 import { HealthIndicator } from '../Health/HealthIndicator';
 import { ValidationObjectSummary } from '../Validations/ValidationObjectSummary';
 import { ValidationServiceSummary } from '../Validations/ValidationServiceSummary';
@@ -21,7 +21,7 @@ import ValidationSummary from '../Validations/ValidationSummary';
 import OverviewCardSparklineCharts from '../../pages/Overview/OverviewCardSparklineCharts';
 import { OverviewToolbar } from '../../pages/Overview/OverviewToolbar';
 import { StatefulFilters } from '../Filters/StatefulFilters';
-import IstioObjectLink, { GetIstioObjectUrl } from '../Link/IstioObjectLink';
+import IstioObjectLink, { GetIstioObjectUrl, infoStyle } from '../Link/IstioObjectLink';
 import { labelFilter } from 'components/Filters/CommonFilters';
 import { labelFilter as NsLabelFilter } from '../../pages/Overview/Filters';
 import ValidationSummaryLink from '../Link/ValidationSummaryLink';
@@ -34,7 +34,8 @@ import Label from 'components/Label/Label';
 import { isMultiCluster, serverConfig } from 'config/ServerConfig';
 import ControlPlaneBadge from 'pages/Overview/ControlPlaneBadge';
 import NamespaceStatuses from 'pages/Overview/NamespaceStatuses';
-import { isGateway } from '../../helpers/LabelFilterHelper';
+import { isGateway, isWaypoint } from '../../helpers/LabelFilterHelper';
+import { KialiIcon } from '../../config/KialiIcon';
 
 // Links
 
@@ -73,13 +74,16 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
   item: AppListItem | WorkloadListItem | ServiceListItem
 ) => {
   const hasMissingSC = hasMissingSidecar(item);
+  const hasMissingA = noAmbientLabels(item);
   const isWorkload = 'appLabel' in item;
-  const hasMissingApp = isWorkload && !item['appLabel'];
-  const hasMissingVersion = isWorkload && !item['versionLabel'];
+  const isAmbientWaypoint = isWaypoint(item.labels);
+  const hasMissingApp = isWorkload && !item['appLabel'] && !isWaypoint(item.labels);
+  const hasMissingVersion = isWorkload && !item['versionLabel'] && !isWaypoint(item.labels);
   const additionalDetails = (item as WorkloadListItem | ServiceListItem).additionalDetailSample;
   const spacer = hasMissingSC && additionalDetails && additionalDetails.icon;
   const hasMissingAP = isWorkload && (item as WorkloadListItem).notCoveredAuthPolicy;
 
+  // @ts-ignore
   return (
     <td
       role="gridcell"
@@ -92,7 +96,8 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
             <MissingAuthPolicy namespace={item.namespace} />
           </li>
         )}
-        {hasMissingSC && (
+        {((hasMissingSC && hasMissingA && serverConfig.ambientEnabled) ||
+          (!serverConfig.ambientEnabled && hasMissingSC)) && (
           <li>
             <MissingSidecar namespace={item.namespace} isGateway={isGateway(item.labels)} />
           </li>
@@ -114,6 +119,19 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
               </IstioObjectLink>
             </li>
           ))}
+        {isAmbientWaypoint && (
+          <li>
+            <PFBadge badge={PFBadges.Waypoint} position={TooltipPosition.top} />
+            Waypoint Proxy
+            <Tooltip
+              key={`tooltip_missing_label`}
+              position={TooltipPosition.top}
+              content="Layer 7 service Mesh capabilities in Istio Ambient"
+            >
+              <KialiIcon.Info className={infoStyle} />
+            </Tooltip>
+          </li>
+        )}
       </ul>
     </td>
   );

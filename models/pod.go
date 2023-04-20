@@ -12,6 +12,9 @@ import (
 // Pods alias for list of Pod structs
 type Pods []*Pod
 
+const AmbientAnnotation = "ambient.istio.io/redirection"
+const WaypointLabel = "gateway.istio.io/managed"
+
 // Pod holds a subset of v1.Pod data that is meaningful in Kiali
 type Pod struct {
 	Name                string            `json:"name"`
@@ -39,10 +42,11 @@ type Reference struct {
 
 // ContainerInfo holds container name and image
 type ContainerInfo struct {
-	Name    string `json:"name"`
-	Image   string `json:"image"`
-	IsProxy bool   `json:"isProxy"`
-	IsReady bool   `json:"isReady"`
+	Name      string `json:"name"`
+	Image     string `json:"image"`
+	IsProxy   bool   `json:"isProxy"`
+	IsReady   bool   `json:"isReady"`
+	IsAmbient bool   `json:"isAmbient"`
 }
 
 // Parse extracts desired information from k8s []Pod info
@@ -110,10 +114,11 @@ func (pod *Pod) Parse(p *core_v1.Pod) {
 			continue
 		}
 		container := ContainerInfo{
-			Name:    c.Name,
-			Image:   c.Image,
-			IsProxy: isIstioProxy(p, &c, conf),
-			IsReady: lookupReady(c.Name, p.Status.ContainerStatuses),
+			Name:      c.Name,
+			Image:     c.Image,
+			IsProxy:   isIstioProxy(p, &c, conf),
+			IsReady:   lookupReady(c.Name, p.Status.ContainerStatuses),
+			IsAmbient: isIstioAmbient(p),
 		}
 		pod.Containers = append(pod.Containers, &container)
 	}
@@ -138,6 +143,10 @@ func isIstioProxy(pod *core_v1.Pod, container *core_v1.Container, conf *config.C
 		}
 	}
 	return false
+}
+
+func isIstioAmbient(pod *core_v1.Pod) bool {
+	return pod.ObjectMeta.Annotations[AmbientAnnotation] == "enabled"
 }
 
 func lookupImage(containerName string, containers []core_v1.Container) string {
@@ -185,6 +194,28 @@ func (pods Pods) HasAnyIstioSidecar() bool {
 // HasIstioSidecar returns true if the pod has an Istio proxy sidecar
 func (pod Pod) HasIstioSidecar() bool {
 	return len(pod.IstioContainers) > 0
+}
+
+// HasAnyAmbient check each pod individually and returns true if any of them is labeled with the Ambient annotation
+func (pods Pods) HasAnyAmbient() bool {
+	if len(pods) > 0 {
+		for _, p := range pods {
+			if p.AmbientEnabled() {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// AmbientEnabled returns true if the pod is labeled as ambient-type
+func (pod *Pod) AmbientEnabled() bool {
+	return pod.Annotations[AmbientAnnotation] == "enabled"
+}
+
+// IsWaypoint returns true if the pod is a waypoint proxy
+func (pod *Pod) IsWaypoint() bool {
+	return pod.Labels[WaypointLabel] == "istio.io-mesh-controller"
 }
 
 // SyncedPodsCount returns the number of Pods with its proxy synced

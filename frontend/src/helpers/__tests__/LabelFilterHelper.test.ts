@@ -13,20 +13,20 @@ const emptyAppHealth = new AppHealth(
   '',
   [],
   { inbound: {}, outbound: {}, healthAnnotations: {} },
-  { rateInterval: 20, hasSidecar: true }
+  { rateInterval: 20, hasSidecar: true, hasAmbient: false }
 );
 const emptyWorkHealth = new WorkloadHealth(
   '',
   '',
   { desiredReplicas: 0, currentReplicas: 0, availableReplicas: 0, name: '', syncedProxies: 0 },
   { inbound: {}, outbound: {}, healthAnnotations: {} },
-  { rateInterval: 20, hasSidecar: true }
+  { rateInterval: 20, hasSidecar: true, hasAmbient: false }
 );
 const emptySvcHealth = new ServiceHealth(
   '',
   '',
   { inbound: {}, outbound: {}, healthAnnotations: {} },
-  { rateInterval: 20, hasSidecar: true }
+  { rateInterval: 20, hasSidecar: true, hasAmbient: false }
 );
 const appList: AppListItem[] = [
   {
@@ -35,6 +35,7 @@ const appList: AppListItem[] = [
     health: emptyAppHealth,
     name: 'ratings',
     istioSidecar: false,
+    istioAmbient: false,
     labels: { app: 'ratings', service: 'ratings', version: 'v1' },
     istioReferences: []
   },
@@ -44,6 +45,7 @@ const appList: AppListItem[] = [
     cluster: HomeClusterName,
     name: 'productpage',
     istioSidecar: false,
+    istioAmbient: false,
     labels: { app: 'productpage', service: 'productpage', version: 'v1' },
     istioReferences: []
   },
@@ -53,6 +55,7 @@ const appList: AppListItem[] = [
     cluster: HomeClusterName,
     name: 'details',
     istioSidecar: false,
+    istioAmbient: false,
     labels: { app: 'details', service: 'details', version: 'v1' },
     istioReferences: []
   },
@@ -62,6 +65,7 @@ const appList: AppListItem[] = [
     cluster: HomeClusterName,
     name: 'reviews',
     istioSidecar: false,
+    istioAmbient: false,
     labels: { app: 'reviews', service: 'reviews', version: 'v1,v2,v3' },
     istioReferences: []
   }
@@ -75,6 +79,7 @@ const workloadList: WorkloadListItem[] = [
     name: 'details-v1',
     type: 'Deployment',
     istioSidecar: false,
+    istioAmbient: false,
     labels: { app: 'details', version: 'v1' },
     appLabel: true,
     versionLabel: true,
@@ -88,6 +93,7 @@ const workloadList: WorkloadListItem[] = [
     name: 'productpage-v1',
     type: 'Deployment',
     istioSidecar: false,
+    istioAmbient: false,
     labels: { app: 'productpage', version: 'v1' },
     appLabel: true,
     versionLabel: true,
@@ -101,6 +107,7 @@ const workloadList: WorkloadListItem[] = [
     name: 'ratings-v1',
     type: 'Deployment',
     istioSidecar: false,
+    istioAmbient: false,
     labels: { app: 'ratings', version: 'v1' },
     appLabel: true,
     versionLabel: true,
@@ -114,6 +121,7 @@ const workloadList: WorkloadListItem[] = [
     name: 'reviews-v1',
     type: 'Deployment',
     istioSidecar: false,
+    istioAmbient: false,
     labels: { app: 'reviews', version: 'v1' },
     appLabel: true,
     versionLabel: true,
@@ -127,6 +135,7 @@ const workloadList: WorkloadListItem[] = [
     name: 'reviews-v2',
     type: 'Deployment',
     istioSidecar: false,
+    istioAmbient: false,
     labels: { app: 'reviews', version: 'v2' },
     appLabel: true,
     versionLabel: true,
@@ -140,6 +149,7 @@ const workloadList: WorkloadListItem[] = [
     name: 'reviews-v3',
     type: 'Deployment',
     istioSidecar: false,
+    istioAmbient: false,
     labels: { app: 'reviews', version: 'v3' },
     appLabel: true,
     versionLabel: true,
@@ -154,6 +164,7 @@ const serviceList: ServiceListItem[] = [
     health: emptySvcHealth,
     name: 'details',
     istioSidecar: false,
+    istioAmbient: false,
     labels: { app: 'details', service: 'details' },
     ports: { http: 9080 },
     validation: { name: 'details', objectType: 'service', valid: true, checks: [] },
@@ -166,6 +177,7 @@ const serviceList: ServiceListItem[] = [
     health: emptySvcHealth,
     name: 'reviews',
     istioSidecar: false,
+    istioAmbient: false,
     labels: { app: 'reviews', service: 'reviews' },
     ports: { http: 9080 },
     validation: { name: 'reviews', objectType: 'service', valid: true, checks: [] },
@@ -178,6 +190,7 @@ const serviceList: ServiceListItem[] = [
     health: emptySvcHealth,
     name: 'ratings',
     istioSidecar: false,
+    istioAmbient: false,
     labels: { app: 'ratings', service: 'ratings' },
     ports: { http: 9080 },
     validation: { name: 'ratings', objectType: 'service', valid: true, checks: [] },
@@ -190,6 +203,7 @@ const serviceList: ServiceListItem[] = [
     health: emptySvcHealth,
     name: 'productpage',
     istioSidecar: false,
+    istioAmbient: false,
     labels: { app: 'productpage', service: 'productpage' },
     ports: { http: 9080 },
     validation: { name: 'productpage', objectType: 'service', valid: true, checks: [] },
@@ -214,6 +228,7 @@ describe('LabelFilter', () => {
         health: emptyAppHealth,
         name: 'details',
         istioSidecar: false,
+        istioAmbient: false,
         labels: { app: 'details', service: 'details', version: 'v1' },
         istioReferences: []
       }
@@ -229,6 +244,7 @@ describe('LabelFilter', () => {
         health: emptyAppHealth,
         name: 'reviews',
         istioSidecar: false,
+        istioAmbient: false,
         labels: { app: 'reviews', service: 'reviews', version: 'v1,v2,v3' },
         istioReferences: []
       }
@@ -250,6 +266,7 @@ describe('LabelFilter', () => {
         name: 'reviews-v1',
         type: 'Deployment',
         istioSidecar: false,
+        istioAmbient: false,
         labels: { app: 'reviews', version: 'v1' },
         appLabel: true,
         versionLabel: true,
@@ -263,6 +280,7 @@ describe('LabelFilter', () => {
         name: 'reviews-v2',
         type: 'Deployment',
         istioSidecar: false,
+        istioAmbient: false,
         labels: { app: 'reviews', version: 'v2' },
         appLabel: true,
         versionLabel: true,
@@ -276,6 +294,7 @@ describe('LabelFilter', () => {
         name: 'reviews-v3',
         type: 'Deployment',
         istioSidecar: false,
+        istioAmbient: false,
         labels: { app: 'reviews', version: 'v3' },
         appLabel: true,
         versionLabel: true,
@@ -298,6 +317,7 @@ describe('LabelFilter', () => {
         health: emptySvcHealth,
         name: 'details',
         istioSidecar: false,
+        istioAmbient: false,
         labels: { app: 'details', service: 'details' },
         ports: { http: 9080 },
         validation: { name: 'details', objectType: 'service', valid: true, checks: [] },

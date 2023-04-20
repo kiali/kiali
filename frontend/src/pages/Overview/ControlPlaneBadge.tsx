@@ -1,6 +1,8 @@
 import { Label } from '@patternfly/react-core';
 import * as React from 'react';
 import IstioStatusInline from '../../components/IstioStatus/IstioStatusInline';
+import { serverConfig } from '../../config';
+import AmbientBadge from '../../components/Ambient/AmbientBadge';
 
 class ControlPlaneBadge extends React.Component<{}> {
   render() {
@@ -8,8 +10,8 @@ class ControlPlaneBadge extends React.Component<{}> {
       <>
         <Label style={{ marginLeft: 5 }} color="green" isCompact>
           Control plane
-        </Label>{' '}
-        <IstioStatusInline />
+        </Label>
+        {serverConfig.ambientEnabled && <AmbientBadge tooltip={true}></AmbientBadge>} <IstioStatusInline />
       </>
     );
   }

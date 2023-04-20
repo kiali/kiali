@@ -27,6 +27,7 @@ import RenderHeaderContainer from '../../components/Nav/Page/RenderHeader';
 import ErrorSection from '../../components/ErrorSection/ErrorSection';
 import { ErrorMsg } from '../../types/ErrorMsg';
 import connectRefresh from '../../components/Refresh/connectRefresh';
+import { isWaypoint } from '../../helpers/LabelFilterHelper';
 
 type WorkloadDetailsState = {
   workload?: Workload;
@@ -56,7 +57,8 @@ const paramToTab: { [key: string]: number } = {
   logs: 2,
   in_metrics: 3,
   out_metrics: 4,
-  traces: 5
+  traces: 5,
+  waypoint: 7
 };
 var nextTabIndex = 6;
 
@@ -116,7 +118,11 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
             this.props.match.params.namespace,
             this.props.match.params.workload,
             details.data.health,
-            { rateInterval: this.props.duration, hasSidecar: details.data.istioSidecar }
+            {
+              rateInterval: this.props.duration,
+              hasSidecar: details.data.istioSidecar,
+              hasAmbient: details.data.istioAmbient
+            }
           )
         });
       })
@@ -225,7 +231,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
         </Tab>
       );
     }
-    if (this.state.workload && this.hasIstioSidecars(this.state.workload)) {
+    if (this.state.workload && this.hasIstioSidecars(this.state.workload) && !isWaypoint(this.state.workload.labels)) {
       const envoyTab = (
         <Tab title="Envoy" eventKey={10} key={'Envoy'}>
           {this.state.workload && (

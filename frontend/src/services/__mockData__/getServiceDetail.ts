@@ -24,6 +24,7 @@ export const SERVICE_DETAILS: ServiceDetailsInfo = {
     resourceVersion: '2652'
   },
   istioSidecar: true,
+  istioAmbient: false,
   endpoints: [
     {
       addresses: [

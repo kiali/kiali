@@ -11,6 +11,7 @@ export interface AppId {
 export interface AppWorkload {
   workloadName: string;
   istioSidecar: boolean;
+  istioAmbient: boolean;
   serviceAccountNames: string[];
   labels: { [key: string]: string };
 }

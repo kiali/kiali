@@ -65,6 +65,11 @@ type WorkloadListItem struct {
 	// example: true
 	IstioSidecar bool `json:"istioSidecar"`
 
+	// Define if Pods related to this Workload has an IstioAmbient deployed
+	// required: true
+	// example: true
+	IstioAmbient bool `json:"istioAmbient"`
+
 	// Additional item sample, such as type of api being served (graphql, grpc, rest)
 	// example: rest
 	// required: false
@@ -145,6 +150,9 @@ type Workload struct {
 
 	Validations IstioValidations `json:"validations"`
 
+	// Ambient waypoint workloads
+	WaypointWorkloads []Workload `json:"waypointWorkloads"`
+
 	// Health
 	Health WorkloadHealth `json:"health"`
 }
@@ -159,6 +167,7 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	workload.CreatedAt = w.CreatedAt
 	workload.ResourceVersion = w.ResourceVersion
 	workload.IstioSidecar = w.HasIstioSidecar()
+	workload.IstioAmbient = w.HasIstioAmbient()
 	workload.Labels = w.Labels
 	workload.PodCount = len(w.Pods)
 	workload.ServiceAccountNames = w.Pods.ServiceAccounts()
@@ -407,6 +416,7 @@ func (workload *Workload) ParsePods(controllerName string, controllerType string
 func (workload *Workload) SetPods(pods []core_v1.Pod) {
 	workload.Pods.Parse(pods)
 	workload.IstioSidecar = workload.HasIstioSidecar()
+	workload.IstioAmbient = workload.HasIstioAmbient()
 }
 
 func (workload *Workload) SetServices(svcs *ServiceList) {
@@ -425,6 +435,20 @@ func (workload *Workload) HasIstioSidecar() bool {
 	}
 	// Need to check each pod
 	return workload.Pods.HasIstioSidecar()
+}
+
+// HasIstioAmbient returns true if the workload has any pod with Ambient mesh annotations
+func (workload *Workload) HasIstioAmbient() bool {
+	// if no pods we can't prove that ambient is enabled, so return false (Default)
+	if len(workload.Pods) == 0 {
+		return false
+	}
+	// All pods in a deployment should be the same
+	if workload.Type == "Deployment" {
+		return workload.Pods[0].AmbientEnabled()
+	}
+	// Need to check each pod
+	return workload.Pods.HasAnyAmbient()
 }
 
 // HasIstioSidecar returns true if there is at least one workload which has a sidecar

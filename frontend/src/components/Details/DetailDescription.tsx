@@ -13,7 +13,9 @@ import { KialiIcon } from '../../config/KialiIcon';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
-import { isGateway } from '../../helpers/LabelFilterHelper';
+import { isGateway, isWaypoint } from '../../helpers/LabelFilterHelper';
+import { serverConfig } from '../../config';
+import { Workload } from '../../types/Workload';
 
 type ReduxProps = {
   kiosk: string;
@@ -25,6 +27,7 @@ type Props = ReduxProps & {
   workloads?: AppWorkload[];
   services?: string[];
   health?: H.Health;
+  waypointWorkloads?: Workload[];
 };
 
 const iconStyle = style({
@@ -112,6 +115,12 @@ class DetailDescription extends React.Component<Props> {
       this.props.apps && this.props.apps.length > 0
         ? this.props.apps
             .sort((a1: string, a2: string) => (a1 < a2 ? -1 : 1))
+            .filter(name => {
+              if (name === undefined) {
+                return null;
+              }
+              return name;
+            })
             .map(name => this.renderAppItem(this.props.namespace, name))
         : this.renderEmptyItem('applications');
 
@@ -147,7 +156,11 @@ class DetailDescription extends React.Component<Props> {
         <Tooltip position={TooltipPosition.right} content={this.renderServiceAccounts(workload)}>
           <KialiIcon.Info className={infoStyle} />
         </Tooltip>
-        {!workload.istioSidecar && (
+        {((!workload.istioSidecar &&
+          !workload.istioAmbient &&
+          !isWaypoint(workload.labels) &&
+          serverConfig.ambientEnabled) ||
+          (!workload.istioSidecar && !serverConfig.ambientEnabled)) && (
           <MissingSidecar
             namespace={this.props.namespace}
             isGateway={isGateway(workload.labels)}
@@ -202,7 +215,8 @@ class DetailDescription extends React.Component<Props> {
           >
             <span style={{ marginLeft: '10px' }}>{createIcon(sub.status)}</span>
           </Tooltip>
-          {!workload.istioSidecar && (
+          {((!workload.istioSidecar && !workload.istioAmbient && serverConfig.ambientEnabled) ||
+            (!workload.istioSidecar && !serverConfig.ambientEnabled)) && (
             <MissingSidecar
               namespace={this.props.namespace}
               isGateway={isGateway(workload.labels)}
@@ -298,6 +312,23 @@ class DetailDescription extends React.Component<Props> {
     ];
   }
 
+  private renderWaypoint() {
+    return [
+      <>
+        <div key="waypoint-workloads-title">
+          <PFBadge badge={PFBadges.Waypoint} position={TooltipPosition.top} />
+          Waypoint proxy
+          <Tooltip
+            position={TooltipPosition.right}
+            content="This workload is identified as a waypoint proxy, as part of Istio Ambient"
+          >
+            <KialiIcon.Info className={infoStyle} />
+          </Tooltip>
+        </div>
+      </>
+    ];
+  }
+
   render() {
     return (
       <>
@@ -306,6 +337,7 @@ class DetailDescription extends React.Component<Props> {
         {this.props.workloads !== undefined && this.workloadSummary()}
         {this.props.services !== undefined && this.serviceList()}
         {this.props.health && renderTrafficStatus(this.props.health)}
+        {this.props.waypointWorkloads && this.renderWaypoint()}
       </>
     );
   }

@@ -83,7 +83,7 @@ describe('Health', () => {
       'reviews',
       [{ availableReplicas: 0, currentReplicas: 1, desiredReplicas: 1, name: 'a', syncedProxies: 1 }],
       { inbound: { http: { '500': 1 } }, outbound: { http: { '500': 1 } }, healthAnnotations: {} },
-      { rateInterval: 60, hasSidecar: true }
+      { rateInterval: 60, hasSidecar: true, hasAmbient: false }
     );
     expect(health.getGlobalStatus()).toEqual(H.FAILURE);
   });
@@ -96,7 +96,7 @@ describe('Health', () => {
         { availableReplicas: 2, currentReplicas: 2, desiredReplicas: 2, name: 'b', syncedProxies: 2 }
       ],
       { inbound: {}, outbound: {}, healthAnnotations: {} },
-      { rateInterval: 60, hasSidecar: true }
+      { rateInterval: 60, hasSidecar: true, hasAmbient: false }
     );
     expect(health.getGlobalStatus()).toEqual(H.HEALTHY);
   });
@@ -109,7 +109,7 @@ describe('Health', () => {
         { availableReplicas: 1, currentReplicas: 1, desiredReplicas: 2, name: 'b', syncedProxies: 2 }
       ],
       { inbound: {}, outbound: {}, healthAnnotations: {} },
-      { rateInterval: 60, hasSidecar: true }
+      { rateInterval: 60, hasSidecar: true, hasAmbient: false }
     );
     expect(health.getGlobalStatus()).toEqual(H.DEGRADED);
   });
@@ -122,7 +122,7 @@ describe('Health', () => {
         { availableReplicas: 2, currentReplicas: 2, desiredReplicas: 2, name: 'b', syncedProxies: 2 }
       ],
       { inbound: { http: { '200': 1.6, '500': 0.3 } }, outbound: { http: { '500': 0.1 } }, healthAnnotations: {} },
-      { rateInterval: 60, hasSidecar: true }
+      { rateInterval: 60, hasSidecar: true, hasAmbient: false }
     );
     expect(health.getGlobalStatus()).toEqual(H.FAILURE);
   });
@@ -135,7 +135,7 @@ describe('Health', () => {
         { availableReplicas: 0, currentReplicas: 0, desiredReplicas: 0, name: 'b', syncedProxies: 2 }
       ],
       { inbound: { http: { '200': 1.6, '500': 0.3 } }, outbound: { http: { '500': 0.1 } }, healthAnnotations: {} },
-      { rateInterval: 60, hasSidecar: true }
+      { rateInterval: 60, hasSidecar: true, hasAmbient: false }
     );
     expect(health.getGlobalStatus()).toEqual(H.FAILURE);
   });
@@ -145,7 +145,7 @@ describe('Health', () => {
       'reviews',
       [{ availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1, name: 'a', syncedProxies: 1 }],
       { inbound: {}, outbound: {}, healthAnnotations: {} },
-      { rateInterval: 60, hasSidecar: true }
+      { rateInterval: 60, hasSidecar: true, hasAmbient: false }
     );
     expect(health.health.items).toHaveLength(2);
   });
@@ -155,7 +155,7 @@ describe('Health', () => {
       'reviews',
       [{ availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1, name: 'a', syncedProxies: 1 }],
       { inbound: {}, outbound: {}, healthAnnotations: {} },
-      { rateInterval: 60, hasSidecar: false }
+      { rateInterval: 60, hasSidecar: false, hasAmbient: false }
     );
     expect(health.health.items).toHaveLength(1);
   });
@@ -175,7 +175,7 @@ describe('Health', () => {
           }
         ],
         { inbound: {}, outbound: {}, healthAnnotations: {} },
-        { rateInterval: 60, hasSidecar: true }
+        { rateInterval: 60, hasSidecar: true, hasAmbient: false }
       );
       expect(health.health.items).toHaveLength(2);
 
@@ -211,7 +211,7 @@ describe('Health', () => {
           }
         ],
         { inbound: {}, outbound: {}, healthAnnotations: {} },
-        { rateInterval: 60, hasSidecar: true }
+        { rateInterval: 60, hasSidecar: true, hasAmbient: false }
       );
       expect(health.health.items).toHaveLength(2);
 

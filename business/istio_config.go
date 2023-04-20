@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"gopkg.in/yaml.v2"
 	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -1127,6 +1128,29 @@ func (in *IstioConfigService) CreateIstioConfigDetail(namespace, resourceType st
 
 func (in *IstioConfigService) IsGatewayAPI() bool {
 	return in.k8s.IsGatewayAPI()
+}
+
+// Check if istio Ambient profile was enabled
+// ATM it is defined in the istio-cni-config configmap
+func (in *IstioConfigService) IsAmbientEnabled() bool {
+
+	var cniNetwork map[string]any
+	istioConfigMap, err := in.k8s.GetConfigMap(config.Get().IstioNamespace, "istio-cni-config")
+	if err != nil {
+		log.Errorf("Error getting istio-cni-config configmap: %s ", err.Error())
+	} else {
+		err = yaml.Unmarshal([]byte(istioConfigMap.Data["cni_network_config"]), &cniNetwork)
+		if err != nil {
+			log.Errorf("Error reading istio-cni-config configmap: %s ", err.Error())
+			return false
+		}
+		ambientEnabled, ok := cniNetwork["ambient_enabled"].(bool)
+
+		if ok && ambientEnabled {
+			return true
+		}
+	}
+	return false
 }
 
 func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, namespaces []string) models.IstioConfigPermissions {

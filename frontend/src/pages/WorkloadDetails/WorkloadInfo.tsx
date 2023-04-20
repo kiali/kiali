@@ -11,7 +11,7 @@ import { activeTab } from '../../components/Tab/Tabs';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import GraphDataSource from '../../services/GraphDataSource';
 import { DurationInSeconds } from 'types/Common';
-import { isIstioNamespace } from '../../config/ServerConfig';
+import { isIstioNamespace, serverConfig } from '../../config/ServerConfig';
 import { IstioConfigList, toIstioItems } from '../../types/IstioConfigList';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
@@ -131,6 +131,11 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
     };
 
     const validations: Validations = {};
+    const isWaypoint =
+      serverConfig.ambientEnabled === true &&
+      workload.labels &&
+      workload.labels['gateway.istio.io/managed'] === 'istio.io-mesh-controller';
+
     if (workload.pods.length > 0) {
       validations.pod = {};
       workload.pods.forEach(pod => {
@@ -141,36 +146,46 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
           checks: []
         };
         if (!isIstioNamespace(this.props.namespace)) {
-          if (!pod.istioContainers || pod.istioContainers.length === 0) {
-            validations.pod[pod.name].checks.push(noIstiosidecar);
-          } else {
-            pod.istioContainers.forEach(c => {
-              if (!c.isReady && validations.pod[pod.name].checks.indexOf(failingPodIstioContainer) === -1) {
-                validations.pod[pod.name].checks.push(failingPodIstioContainer);
+          if (!isWaypoint) {
+            if (!pod.istioContainers || pod.istioContainers.length === 0) {
+              if (
+                !(
+                  serverConfig.ambientEnabled === true &&
+                  (pod.annotations ? pod.annotations['ambient.istio.io/redirection'] === 'enabled' : false)
+                )
+              ) {
+                validations.pod[pod.name].checks.push(noIstiosidecar);
               }
-            });
-          }
-          if (!pod.containers || pod.containers.length === 0) {
-            validations.pod[pod.name].checks.push(failingPodContainer);
-          } else {
-            pod.containers.forEach(c => {
-              if (!c.isReady && validations.pod[pod.name].checks.indexOf(failingPodAppContainer) === -1) {
-                validations.pod[pod.name].checks.push(failingPodAppContainer);
-              }
-            });
-          }
-          if (!pod.labels) {
-            validations.pod[pod.name].checks.push(noAppLabel);
-            validations.pod[pod.name].checks.push(noVersionLabel);
-          } else {
-            if (!pod.appLabel) {
-              validations.pod[pod.name].checks.push(noAppLabel);
+            } else {
+              pod.istioContainers.forEach(c => {
+                if (!c.isReady && validations.pod[pod.name].checks.indexOf(failingPodIstioContainer) === -1) {
+                  validations.pod[pod.name].checks.push(failingPodIstioContainer);
+                }
+              });
             }
-            if (!pod.versionLabel) {
+            if (!pod.containers || pod.containers.length === 0) {
+              validations.pod[pod.name].checks.push(failingPodContainer);
+            } else {
+              pod.containers.forEach(c => {
+                if (!c.isReady && validations.pod[pod.name].checks.indexOf(failingPodAppContainer) === -1) {
+                  validations.pod[pod.name].checks.push(failingPodAppContainer);
+                }
+              });
+            }
+            if (!pod.labels) {
+              validations.pod[pod.name].checks.push(noAppLabel);
               validations.pod[pod.name].checks.push(noVersionLabel);
+            } else {
+              if (!pod.appLabel) {
+                validations.pod[pod.name].checks.push(noAppLabel);
+              }
+              if (!pod.versionLabel) {
+                validations.pod[pod.name].checks.push(noVersionLabel);
+              }
             }
           }
         }
+
         switch (pod.status) {
           case 'Pending':
             validations.pod[pod.name].checks.push(pendingPod);

@@ -157,6 +157,7 @@ export interface Port {
 
 export interface Pod {
   name: string;
+  annotations?: { [key: string]: string };
   labels?: { [key: string]: string };
   createdAt: string;
   createdBy: PodReference[];
