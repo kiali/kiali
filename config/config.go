@@ -541,6 +541,7 @@ func NewConfig() (c *Config) {
 		CustomDashboards: dashboards.GetBuiltInMonitoringDashboards(),
 		Deployment: DeploymentConfig{
 			AccessibleNamespaces: []string{"**"},
+			ClusterWideAccess:    true,
 			InstanceName:         "kiali",
 			Namespace:            "istio-system",
 			ViewOnlyMode:         false,

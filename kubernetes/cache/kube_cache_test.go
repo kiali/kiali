@@ -107,6 +107,7 @@ func TestRefreshNSScoped(t *testing.T) {
 
 	cfg := config.NewConfig()
 	cfg.Deployment.AccessibleNamespaces = []string{"ns1", "ns2"}
+	cfg.Deployment.ClusterWideAccess = false
 	kialiCache := newTestingKubeCache(t, cfg)
 	kialiCache.nsCacheLister = map[string]*cacheLister{}
 
@@ -129,6 +130,7 @@ func TestCheckNamespaceNotIncluded(t *testing.T) {
 
 	cfg := config.NewConfig()
 	cfg.Deployment.AccessibleNamespaces = []string{"bookinfo"}
+	cfg.Deployment.ClusterWideAccess = false
 	cfg.KubernetesConfig.CacheNamespaces = []string{"bookinfo"}
 	kialiCache := newTestingKubeCache(t, cfg)
 
