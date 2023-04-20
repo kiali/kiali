@@ -31,7 +31,7 @@ import MissingLabel from '../MissingLabel/MissingLabel';
 import MissingAuthPolicy from 'components/MissingAuthPolicy/MissingAuthPolicy';
 import { getReconciliationCondition } from 'utils/IstioConfigUtils';
 import Label from 'components/Label/Label';
-import { serverConfig } from 'config/ServerConfig';
+import { isMultiCluster, serverConfig } from 'config/ServerConfig';
 import ControlPlaneBadge from 'pages/Overview/ControlPlaneBadge';
 import NamespaceStatuses from 'pages/Overview/NamespaceStatuses';
 import { isGateway, isWaypoint } from '../../helpers/LabelFilterHelper';
@@ -50,7 +50,7 @@ const getLink = (item: TResource, config: Resource, query?: string) => {
       url = url + '?cluster=' + item.cluster;
     }
   }
-  if (!!query) {
+  if (query) {
     if (url.includes('?')) {
       url = url + '&' + query;
     } else {

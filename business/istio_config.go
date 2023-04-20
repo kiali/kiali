@@ -1196,7 +1196,7 @@ func (in *IstioConfigService) IsGatewayAPI(cluster string) bool {
 func (in *IstioConfigService) IsAmbientEnabled() bool {
 
 	var cniNetwork map[string]any
-	istioConfigMap, err := in.k8s.GetConfigMap(config.Get().IstioNamespace, "istio-cni-config")
+	istioConfigMap, err := in.kialiCache.GetConfigMap(config.Get().IstioNamespace, "istio-cni-config")
 	if err != nil {
 		log.Errorf("Error getting istio-cni-config configmap: %s ", err.Error())
 	} else {
