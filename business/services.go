@@ -202,9 +202,9 @@ func (in *SvcService) getServiceList(ctx context.Context, criteria ServiceCriter
 		go func() {
 			defer wg.Done()
 			var err2 error
-			istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
+			istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigListPerCluster(ctx, criteria, cluster)
 			if err2 != nil {
-				log.Errorf("Error fetching IstioConfigList per namespace %s: %s", criteria.Namespace, err2)
+				log.Errorf("Error fetching IstioConfigList per cluster %s per namespace %s: %s", cluster, criteria.Namespace, err2)
 				errChan <- err2
 			}
 		}()
