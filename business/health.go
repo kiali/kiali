@@ -2,6 +2,7 @@ package business
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/prometheus/common/model"
@@ -128,7 +129,13 @@ func (in *HealthService) GetNamespaceAppHealth(ctx context.Context, criteria Nam
 	)
 	defer end()
 
-	appEntities, err := fetchNamespaceApps(ctx, in.businessLayer, criteria.Namespace, criteria.Cluster, "")
+	cluster := criteria.Cluster
+
+	if _, ok := in.userClients[cluster]; !ok {
+		return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
+	}
+
+	appEntities, err := fetchNamespaceApps(ctx, in.businessLayer, criteria.Namespace, cluster, "")
 	if err != nil {
 		return nil, err
 	}
@@ -190,6 +197,10 @@ func (in *HealthService) GetNamespaceServiceHealth(ctx context.Context, criteria
 
 	namespace := criteria.Namespace
 	cluster := criteria.Cluster
+
+	if _, ok := in.userClients[cluster]; !ok {
+		return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
+	}
 
 	if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
 		return nil, err
@@ -261,6 +272,10 @@ func (in *HealthService) GetNamespaceWorkloadHealth(ctx context.Context, criteri
 		observability.Attribute("queryTime", queryTime),
 	)
 	defer end()
+
+	if _, ok := in.userClients[cluster]; !ok {
+		return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
+	}
 
 	if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
 		return nil, err
