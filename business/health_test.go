@@ -298,8 +298,8 @@ func TestGetNamespaceServiceHealthWithNA(t *testing.T) {
 	prom.On("GetNamespaceServicesRequestRates", "tutorial", conf.KubernetesConfig.ClusterName, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
 
 	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
-	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, clients, prom, nil)}
+	clients[conf.KubernetesConfig.ClusterName] = k8s
+	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, clients, prom, nil), userClients: clients}
 
 	criteria := NamespaceHealthCriteria{Namespace: "tutorial", RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
 	health, err := hs.GetNamespaceServiceHealth(context.TODO(), criteria)
@@ -385,7 +385,7 @@ func TestGetNamespaceApplicationsHealthMultiCluster(t *testing.T) {
 	kialiCache = cache
 	prom := new(prometheustest.PromClientMock)
 	prom.On("GetAllRequestRates", "tutorial", conf.KubernetesConfig.ClusterName, "1m", mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
-	prom.On("GetAllRequestRates", "tutorial", "west", "1m", mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
+	prom.On("GetAllRequestRates", "tutorial", "west", "1m", mock.AnythingOfType("time.Time")).Return(serviceRates500, nil)
 
 	layer := NewWithBackends(clients, clients, prom, nil)
 
@@ -397,44 +397,48 @@ func TestGetNamespaceApplicationsHealthMultiCluster(t *testing.T) {
 
 	assert.Nil(err)
 	assert.Len(applicationsHealth, 1)
+	// Validate that west health is not included
+	assert.NotContains(applicationsHealth["httpbin"].Requests.Inbound["http"], "500")
 }
 
-// func TestGetNamespaceWorkloadsHealthMultiCluster(t *testing.T) {
-// 	assert := assert.New(t)
+func TestGetNamespaceWorkloadsHealthMultiCluster(t *testing.T) {
+	assert := assert.New(t)
 
-// 	conf := config.NewConfig()
-// 	conf.ExternalServices.Istio.IstioAPIEnabled = false
-// 	config.Set(conf)
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(conf)
 
-// 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
-// 	clients := map[string]kubernetes.ClientInterface{
-// 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
-// 			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
-// 			&core_v1.Pod{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "tutorial", Labels: map[string]string{"app": "httpbin", "version": "v1"}, Annotations: kubetest.FakeIstioAnnotations()}, Status: core_v1.PodStatus{Phase: core_v1.PodRunning}},
-// 		),
-// 		"west": kubetest.NewFakeK8sClient(
-// 			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
-// 			&core_v1.Pod{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "tutorial", Labels: map[string]string{"app": "httpbin", "version": "v1"}, Annotations: kubetest.FakeIstioAnnotations()}, Status: core_v1.PodStatus{Phase: core_v1.PodRunning}},
-// 		),
-// 	}
-// 	clientFactory.SetClients(clients)
-// 	cache := newTestingCache(t, clientFactory, *conf)
-// 	kialiCache = cache
-// 	prom := new(prometheustest.PromClientMock)
-// 	prom.On("GetAllRequestRates", "tutorial", conf.KubernetesConfig.ClusterName, "1m", mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
-// 	prom.On("GetAllRequestRates", "tutorial", "west", "1m", mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
+	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
+	clients := map[string]kubernetes.ClientInterface{
+		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
+			&core_v1.Pod{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "tutorial", Labels: map[string]string{"app": "httpbin", "version": "v1"}, Annotations: kubetest.FakeIstioAnnotations()}, Status: core_v1.PodStatus{Phase: core_v1.PodRunning}},
+		),
+		"west": kubetest.NewFakeK8sClient(
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
+			&core_v1.Pod{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "tutorial", Labels: map[string]string{"app": "httpbin", "version": "v1"}, Annotations: kubetest.FakeIstioAnnotations()}, Status: core_v1.PodStatus{Phase: core_v1.PodRunning}},
+		),
+	}
+	clientFactory.SetClients(clients)
+	cache := newTestingCache(t, clientFactory, *conf)
+	kialiCache = cache
+	prom := new(prometheustest.PromClientMock)
+	prom.On("GetAllRequestRates", "tutorial", conf.KubernetesConfig.ClusterName, "1m", mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
+	prom.On("GetAllRequestRates", "tutorial", "west", "1m", mock.AnythingOfType("time.Time")).Return(serviceRates500, nil)
 
-// 	layer := NewWithBackends(clients, clients, prom, nil)
+	layer := NewWithBackends(clients, clients, prom, nil)
 
-// 	hs := HealthService{prom: prom, businessLayer: layer, userClients: clients}
+	hs := HealthService{prom: prom, businessLayer: layer, userClients: clients}
 
-// 	criteria := NamespaceHealthCriteria{Namespace: "tutorial", Cluster: conf.KubernetesConfig.ClusterName, RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
+	criteria := NamespaceHealthCriteria{Namespace: "tutorial", Cluster: conf.KubernetesConfig.ClusterName, RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
 
-// 	workloadsHealth, err := hs.GetNamespaceAppHealth(context.TODO(), criteria)
+	workloadsHealth, err := hs.GetNamespaceAppHealth(context.TODO(), criteria)
 
-// 	assert.Nil(err)
-// 	assert.Len(workloadsHealth, 2)
-// }
+	assert.Nil(err)
+	assert.Len(workloadsHealth, 1)
+	assert.NotContains(workloadsHealth["httpbin"].Requests.Inbound["http"], "500")
+
+}
 
 var (
 	sampleReviewsToHttpbin200 = model.Sample{
@@ -541,6 +545,19 @@ var (
 		Value:     model.SampleValue(1.4),
 		Timestamp: model.Now(),
 	}
+	sampleUnknownToHttpbin500 = model.Sample{
+		Metric: model.Metric{
+			"destination_canonical_service": "httpbin",
+			"destination_service":           "httpbin.tutorial.svc.cluster.local",
+			"destination_service_name":      "httpbin",
+			"source_canonical_service":      "unknown",
+			"source_service":                "unknown",
+			"request_protocol":              "http",
+			"response_code":                 "500",
+		},
+		Value:     model.SampleValue(1.6),
+		Timestamp: model.Now(),
+	}
 	sampleUnknownToReviews500 = model.Sample{
 		Metric: model.Metric{
 			"destination_canonical_service": "reviews",
@@ -560,6 +577,9 @@ var (
 		&sampleUnknownToHttpbin404,
 		&sampleUnknownToHttpbinGrpc0,
 		&sampleUnknownToHttpbinGrpc7,
+	}
+	serviceRates500 = model.Vector{
+		&sampleUnknownToHttpbin500,
 	}
 	otherRatesIn = model.Vector{
 		&sampleUnknownToReviews500,
