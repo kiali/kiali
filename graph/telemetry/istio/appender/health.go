@@ -223,6 +223,7 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 
 	type result struct {
 		namespace        string
+		cluster          string
 		appNSHealth      models.NamespaceAppHealth
 		serviceNSHealth  models.NamespaceServiceHealth
 		workloadNSHealth models.NamespaceWorkloadHealth
@@ -239,7 +240,7 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 				go func(ctx context.Context, namespace, cluster string) {
 					defer wg.Done()
 					h, err := bs.Health.GetNamespaceAppHealth(ctx, business.NamespaceHealthCriteria{Namespace: namespace, Cluster: cluster, IncludeMetrics: false})
-					resultsCh <- result{appNSHealth: h, namespace: namespace, err: err}
+					resultsCh <- result{appNSHealth: h, namespace: namespace, err: err, cluster: cluster}
 				}(ctx, namespace, req.cluster)
 			}
 
@@ -248,7 +249,7 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 				go func(ctx context.Context, namespace, cluster string) {
 					defer wg.Done()
 					h, err := bs.Health.GetNamespaceWorkloadHealth(ctx, business.NamespaceHealthCriteria{Namespace: namespace, Cluster: cluster, IncludeMetrics: false})
-					resultsCh <- result{workloadNSHealth: h, namespace: namespace, err: err}
+					resultsCh <- result{workloadNSHealth: h, namespace: namespace, err: err, cluster: cluster}
 				}(ctx, namespace, req.cluster)
 			}
 
@@ -257,7 +258,7 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 				go func(ctx context.Context, namespace, cluster string) {
 					defer wg.Done()
 					s, err := bs.Health.GetNamespaceServiceHealth(ctx, business.NamespaceHealthCriteria{Namespace: namespace, Cluster: cluster, IncludeMetrics: false})
-					resultsCh <- result{serviceNSHealth: s, namespace: namespace, err: err}
+					resultsCh <- result{serviceNSHealth: s, namespace: namespace, err: err, cluster: cluster}
 				}(ctx, namespace, req.cluster)
 			}
 		}
@@ -281,15 +282,15 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 
 		if result.appNSHealth != nil {
 			for name, health := range result.appNSHealth {
-				appHealth[name+result.namespace] = health
+				appHealth[name+result.namespace+result.cluster] = health
 			}
 		} else if result.workloadNSHealth != nil {
 			for name, health := range result.workloadNSHealth {
-				workloadHealth[name+result.namespace] = health
+				workloadHealth[name+result.namespace+result.cluster] = health
 			}
 		} else if result.serviceNSHealth != nil {
 			for name, health := range result.serviceNSHealth {
-				serviceHealth[name+result.namespace] = health
+				serviceHealth[name+result.namespace+result.cluster] = health
 			}
 		}
 	}
@@ -319,7 +320,7 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 				health = &models.AppHealth{}
 			}
 
-			if h, found := appHealth[n.App+n.Namespace]; found {
+			if h, found := appHealth[n.App+n.Namespace+n.Cluster]; found {
 				health.WorkloadStatuses = h.WorkloadStatuses
 				health.Requests.HealthAnnotations = h.Requests.HealthAnnotations
 			}
@@ -332,7 +333,7 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 				health = &models.ServiceHealth{}
 			}
 
-			if h, found := serviceHealth[n.Service+n.Namespace]; found {
+			if h, found := serviceHealth[n.Service+n.Namespace+n.Cluster]; found {
 				health.Requests.HealthAnnotations = h.Requests.HealthAnnotations
 			}
 			n.Metadata[graph.HealthData] = health
@@ -344,7 +345,7 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 				health = &models.WorkloadHealth{}
 			}
 
-			if h, found := workloadHealth[n.Workload+n.Namespace]; found {
+			if h, found := workloadHealth[n.Workload+n.Namespace+n.Cluster]; found {
 				health.WorkloadStatus = h.WorkloadStatus
 				health.Requests.HealthAnnotations = h.Requests.HealthAnnotations
 			}
