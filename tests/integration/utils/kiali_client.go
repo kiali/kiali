@@ -209,12 +209,12 @@ func Namespaces() (*models.Namespaces, int, error) {
 	}
 }
 
-func NamespaceWorkloadHealth(namespace string, params map[string]string) (*models.NamespaceWorkloadsHealth, int, error) {
+func NamespaceWorkloadHealth(namespace string, params map[string]string) (*models.NamespaceWorkloadHealth, int, error) {
 	params["type"] = "workload"
 	url := fmt.Sprintf("%s/api/namespaces/%s/health?%s", client.kialiURL, namespace, ParamsAsString(params))
 	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
 	if err == nil {
-		health := new(models.NamespaceWorkloadsHealth)
+		health := new(models.NamespaceWorkloadHealth)
 		err = json.Unmarshal(body, &health)
 		if err == nil {
 			return health, code, nil
@@ -226,12 +226,12 @@ func NamespaceWorkloadHealth(namespace string, params map[string]string) (*model
 	}
 }
 
-func NamespaceAppsHealth(namespace string, params map[string]string) (*models.NamespaceAppsHealth, int, error) {
+func NamespaceAppHealth(namespace string, params map[string]string) (*models.NamespaceAppHealth, int, error) {
 	params["type"] = "app"
 	url := fmt.Sprintf("%s/api/namespaces/%s/health?%s", client.kialiURL, namespace, ParamsAsString(params))
 	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
 	if err == nil {
-		health := new(models.NamespaceAppsHealth)
+		health := new(models.NamespaceAppHealth)
 		err = json.Unmarshal(body, &health)
 		if err == nil {
 			return health, code, nil
@@ -243,12 +243,12 @@ func NamespaceAppsHealth(namespace string, params map[string]string) (*models.Na
 	}
 }
 
-func NamespaceServiceHealth(namespace string, params map[string]string) (*models.NamespaceServicesHealth, int, error) {
+func NamespaceServiceHealth(namespace string, params map[string]string) (*models.NamespaceServiceHealth, int, error) {
 	params["type"] = "service"
 	url := fmt.Sprintf("%s/api/namespaces/%s/health?%s", client.kialiURL, namespace, ParamsAsString(params))
 	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
 	if err == nil {
-		health := new(models.NamespaceServicesHealth)
+		health := new(models.NamespaceServiceHealth)
 		err = json.Unmarshal(body, &health)
 		if err == nil {
 			return health, code, nil

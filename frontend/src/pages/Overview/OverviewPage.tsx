@@ -28,8 +28,8 @@ import {
   NOT_READY,
   NamespaceServiceHealth,
   NamespaceWorkloadHealth,
-  NamespaceAppsHealth,
-  Health
+  Health,
+  NamespaceAppHealth
 } from '../../types/Health';
 import { SortField } from '../../types/SortFilters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
@@ -357,11 +357,12 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     );
     return Promise.all(
       chunk.map(nsInfo => {
-        const healthPromise: Promise<NamespaceAppsHealth | NamespaceWorkloadHealth | NamespaceServiceHealth> = apiFunc(
+        const healthPromise: Promise<NamespaceAppHealth | NamespaceWorkloadHealth | NamespaceServiceHealth> = apiFunc(
           nsInfo.name,
+          nsInfo.cluster ? nsInfo.cluster : '',
           duration
         );
-        return healthPromise.then(rs => ({ namespaceHealth: rs, nsInfo: nsInfo }));
+        return healthPromise.then(rs => ({ health: rs, nsInfo: nsInfo }));
       })
     )
       .then(results => {
@@ -374,25 +375,21 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             notAvailable: []
           };
 
-          for (var i in result.namespaceHealth) {
-            const appHealth: Health = result.namespaceHealth[i].health;
-            const name: string = result.namespaceHealth[i].name;
-            const status = appHealth.getGlobalStatus();
-            // As we could have several namespaces with the same name but different cluster, we need to check the cluster
-            if (result.nsInfo.cluster === result.namespaceHealth[i].cluster) {
-              if (status === FAILURE) {
-                nsStatus.inError.push(name);
-              } else if (status === DEGRADED) {
-                nsStatus.inWarning.push(name);
-              } else if (status === HEALTHY) {
-                nsStatus.inSuccess.push(name);
-              } else if (status === NOT_READY) {
-                nsStatus.inNotReady.push(name);
-              } else {
-                nsStatus.notAvailable.push(name);
-              }
+          Object.keys(result.health).forEach(item => {
+            const health: Health = result.health[item];
+            const status = health.getGlobalStatus();
+            if (status === FAILURE) {
+              nsStatus.inError.push(item);
+            } else if (status === DEGRADED) {
+              nsStatus.inWarning.push(item);
+            } else if (status === HEALTHY) {
+              nsStatus.inSuccess.push(item);
+            } else if (status === NOT_READY) {
+              nsStatus.inNotReady.push(item);
+            } else {
+              nsStatus.notAvailable.push(item);
             }
-          }
+          });
           result.nsInfo.status = nsStatus;
         });
       })

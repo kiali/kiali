@@ -159,6 +159,7 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 		app      bool
 		service  bool
 		workload bool
+		cluster  string
 	}
 
 	// Health requests are per namespace meaning if a single node in the namespace
@@ -200,6 +201,8 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 			req.service = true
 		}
 
+		req.cluster = n.Cluster
+
 		healthReqs[n.Namespace] = req
 		nodesWithHealth = append(nodesWithHealth, n)
 	}
@@ -220,9 +223,9 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 
 	type result struct {
 		namespace        string
-		appNSHealth      models.NamespaceAppsHealth
-		serviceNSHealth  models.NamespaceServicesHealth
-		workloadNSHealth models.NamespaceWorkloadsHealth
+		appNSHealth      models.NamespaceAppHealth
+		serviceNSHealth  models.NamespaceServiceHealth
+		workloadNSHealth models.NamespaceWorkloadHealth
 		err              error
 	}
 	resultsCh := make(chan result)
@@ -233,29 +236,29 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 		for namespace, req := range healthReqs {
 			if req.app {
 				wg.Add(1)
-				go func(ctx context.Context, namespace string) {
+				go func(ctx context.Context, namespace, cluster string) {
 					defer wg.Done()
-					h, err := bs.Health.GetNamespaceAppHealth(ctx, business.NamespaceHealthCriteria{Namespace: namespace, IncludeMetrics: false})
+					h, err := bs.Health.GetNamespaceAppHealth(ctx, business.NamespaceHealthCriteria{Namespace: namespace, Cluster: cluster, IncludeMetrics: false})
 					resultsCh <- result{appNSHealth: h, namespace: namespace, err: err}
-				}(ctx, namespace)
+				}(ctx, namespace, req.cluster)
 			}
 
 			if req.workload {
 				wg.Add(1)
-				go func(ctx context.Context, namespace string) {
+				go func(ctx context.Context, namespace, cluster string) {
 					defer wg.Done()
-					h, err := bs.Health.GetNamespaceWorkloadHealth(ctx, business.NamespaceHealthCriteria{Namespace: namespace, IncludeMetrics: false})
+					h, err := bs.Health.GetNamespaceWorkloadHealth(ctx, business.NamespaceHealthCriteria{Namespace: namespace, Cluster: cluster, IncludeMetrics: false})
 					resultsCh <- result{workloadNSHealth: h, namespace: namespace, err: err}
-				}(ctx, namespace)
+				}(ctx, namespace, req.cluster)
 			}
 
 			if req.service {
 				wg.Add(1)
-				go func(ctx context.Context, namespace string) {
+				go func(ctx context.Context, namespace, cluster string) {
 					defer wg.Done()
-					s, err := bs.Health.GetNamespaceServiceHealth(ctx, business.NamespaceHealthCriteria{Namespace: namespace, IncludeMetrics: false})
+					s, err := bs.Health.GetNamespaceServiceHealth(ctx, business.NamespaceHealthCriteria{Namespace: namespace, Cluster: cluster, IncludeMetrics: false})
 					resultsCh <- result{serviceNSHealth: s, namespace: namespace, err: err}
-				}(ctx, namespace)
+				}(ctx, namespace, req.cluster)
 			}
 		}
 		// Wait for all requests to finish sending before closing the channel.
@@ -277,16 +280,16 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 		}
 
 		if result.appNSHealth != nil {
-			for _, health := range result.appNSHealth {
-				appHealth[health.Name+result.namespace] = &health.Health
+			for name, health := range result.appNSHealth {
+				appHealth[name+result.namespace] = health
 			}
 		} else if result.workloadNSHealth != nil {
-			for _, health := range result.workloadNSHealth {
-				workloadHealth[health.Name+result.namespace] = &health.Health
+			for name, health := range result.workloadNSHealth {
+				workloadHealth[name+result.namespace] = health
 			}
 		} else if result.serviceNSHealth != nil {
-			for _, health := range result.serviceNSHealth {
-				serviceHealth[health.Name+result.namespace] = &health.Health
+			for name, health := range result.serviceNSHealth {
+				serviceHealth[name+result.namespace] = health
 			}
 		}
 	}

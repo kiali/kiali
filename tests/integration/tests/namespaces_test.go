@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/tests/integration/utils"
 )
 
@@ -19,6 +20,7 @@ func TestNamespaces(t *testing.T) {
 }
 
 func TestNamespaceHealthWorkload(t *testing.T) {
+	name := "ratings-v1"
 	assert := assert.New(t)
 	params := map[string]string{"rateInterval": "60s"}
 
@@ -27,10 +29,9 @@ func TestNamespaceHealthWorkload(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal(200, code)
 	assert.NotNil(health)
-	// Checking for the first app in the list
-	assert.NotNil((*health)[0])
-	assert.NotNil((*health)[0].Health.WorkloadStatus)
-	assert.NotNil((*health)[0].Health.Requests)
+	assert.NotNil((*health)[name])
+	assert.NotNil((*health)[name].WorkloadStatus)
+	assert.NotNil((*health)[name].Requests)
 }
 
 func TestInvalidNamespaceHealth(t *testing.T) {
@@ -44,31 +45,35 @@ func TestInvalidNamespaceHealth(t *testing.T) {
 }
 
 func TestNamespaceHealthApp(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	name := "details"
 	assert := assert.New(t)
 	params := map[string]string{"rateInterval": "60s"}
 
-	health, code, err := utils.NamespaceAppsHealth(utils.BOOKINFO, params)
+	health, code, err := utils.NamespaceAppHealth(utils.BOOKINFO, params)
 
 	assert.Nil(err)
 	assert.Equal(200, code)
 	assert.NotNil(health)
-	// Checking for the first app in the list
-	assert.NotNil((*health)[0])
-	assert.NotEmpty((*health)[0].Health.WorkloadStatuses)
-	assert.NotNil((*health)[0].Health.Requests)
+	assert.NotNil((*health)[name])
+	assert.NotEmpty((*health)[name].WorkloadStatuses)
+	assert.NotNil((*health)[name].Requests)
 }
 
 func TestNamespaceHealthInvalidRate(t *testing.T) {
 	assert := assert.New(t)
 	params := map[string]string{"rateInterval": "invalid"}
 
-	_, code, err := utils.NamespaceAppsHealth(utils.BOOKINFO, params)
+	_, code, err := utils.NamespaceAppHealth(utils.BOOKINFO, params)
 
 	assert.NotNil(err)
 	assert.NotEqual(200, code)
 }
 
 func TestNamespaceHealthService(t *testing.T) {
+	name := "details"
 	assert := assert.New(t)
 	params := map[string]string{"rateInterval": "60s"}
 
@@ -76,8 +81,7 @@ func TestNamespaceHealthService(t *testing.T) {
 
 	assert.Nil(err)
 	assert.Equal(200, code)
-	// Checking for the first app in the list
 	assert.NotNil(health)
-	assert.NotNil((*health)[0])
-	assert.NotNil((*health)[0].Health.Requests)
+	assert.NotNil((*health)[name])
+	assert.NotNil((*health)[name].Requests)
 }

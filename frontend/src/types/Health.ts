@@ -550,32 +550,9 @@ export const healthNotAvailable = (): AppHealth => {
   );
 };
 
-export type NamespaceAppHealth = {
-  name: string;
-  namespace: string;
-  cluster: string;
-  health: AppHealth;
-};
-
-export type NamespaceAppsHealth = NamespaceAppHealth[];
-
-export type NamespaceServiceHealth = {
-  name: string;
-  namespace: string;
-  cluster: string;
-  health: ServiceHealth;
-};
-
-export type NamespaceServicesHealth = NamespaceServiceHealth[];
-
-export type NamespaceWorkloadHealth = {
-  name: string;
-  namespace: string;
-  cluster: string;
-  health: WorkloadHealth;
-};
-
-export type NamespaceWorkloadsHealth = NamespaceWorkloadHealth[];
+export type NamespaceAppHealth = { [app: string]: AppHealth };
+export type NamespaceServiceHealth = { [service: string]: ServiceHealth };
+export type NamespaceWorkloadHealth = { [workload: string]: WorkloadHealth };
 
 export type WithAppHealth<T> = T & { health: AppHealth };
 export type WithServiceHealth<T> = T & { health: ServiceHealth };

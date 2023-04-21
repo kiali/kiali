@@ -7,37 +7,13 @@ import (
 )
 
 // NamespaceAppsHealth is a list of app name x health for a given namespace
-type NamespaceAppsHealth []*NamespaceAppHealth
-
-// NamespaceAppHealth is a single app health for a given namespace/cluster
-type NamespaceAppHealth struct {
-	Name      string    `json:"name"`
-	Namespace string    `json:"namespace"`
-	Cluster   string    `json:"cluster"`
-	Health    AppHealth `json:"health,omitempty"`
-}
+type NamespaceAppHealth map[string]*AppHealth
 
 // NamespaceServicesHealth is a list of service name x health for a given namespace
-type NamespaceServicesHealth []*NamespaceServiceHealth
-
-// NamespaceServiceHealth is a single service health for a given namespace/cluster
-type NamespaceServiceHealth struct {
-	Name      string        `json:"name"`
-	Namespace string        `json:"namespace"`
-	Cluster   string        `json:"cluster"`
-	Health    ServiceHealth `json:"health,omitempty"`
-}
-
-// NamespaceServiceHealth is a single workload health for a given namespace/cluster
-type NamespaceWorkloadHealth struct {
-	Name      string         `json:"name"`
-	Namespace string         `json:"namespace"`
-	Cluster   string         `json:"cluster"`
-	Health    WorkloadHealth `json:"health,omitempty"`
-}
+type NamespaceServiceHealth map[string]*ServiceHealth
 
 // NamespaceWorkloadsHealth is a list of workload name x health for a given namespace
-type NamespaceWorkloadsHealth []*NamespaceWorkloadHealth
+type NamespaceWorkloadHealth map[string]*WorkloadHealth
 
 // ServiceHealth contains aggregated health from various sources, for a given service
 type ServiceHealth struct {
@@ -68,46 +44,10 @@ func EmptyAppHealth() AppHealth {
 	}
 }
 
-// EmptyAppHealth create an empty AppHealth
-func EmptyNamespaceAppHealth(name, namespace, cluster string) NamespaceAppHealth {
-	return NamespaceAppHealth{
-		Name:      name,
-		Namespace: namespace,
-		Cluster:   cluster,
-		Health: AppHealth{
-			WorkloadStatuses: []*WorkloadStatus{},
-			Requests:         NewEmptyRequestHealth(),
-		},
-	}
-}
-
 // EmptyServiceHealth create an empty ServiceHealth
 func EmptyServiceHealth() ServiceHealth {
 	return ServiceHealth{
 		Requests: NewEmptyRequestHealth(),
-	}
-}
-
-// EmptyNamespaceServiceHealth create an empty NamespaceServiceHealth
-func EmptyNamespaceServiceHealth(name, namespace, cluster string) NamespaceServiceHealth {
-	return NamespaceServiceHealth{
-		Name:      name,
-		Namespace: namespace,
-		Cluster:   cluster,
-		Health: ServiceHealth{
-			Requests: NewEmptyRequestHealth(),
-		},
-	}
-}
-
-func EmptyNamespaceWorkloadHealth(name, namespace, cluster string) NamespaceWorkloadHealth {
-	return NamespaceWorkloadHealth{
-		Name:      name,
-		Namespace: namespace,
-		Cluster:   cluster,
-		Health: WorkloadHealth{
-			Requests: NewEmptyRequestHealth(),
-		},
 	}
 }
 

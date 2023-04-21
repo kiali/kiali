@@ -11,12 +11,10 @@ import { GraphDefinition, NodeParamsType, NodeType } from '../types/Graph';
 import {
   AppHealth,
   NamespaceAppHealth,
-  NamespaceAppsHealth,
   NamespaceServiceHealth,
-  NamespaceServicesHealth,
   NamespaceWorkloadHealth,
-  NamespaceWorkloadsHealth,
-  ServiceHealth
+  ServiceHealth,
+  WorkloadHealth
 } from '../types/Health';
 import { IstioConfigDetails, IstioPermissions } from '../types/IstioConfigDetails';
 import { IstioConfigList, IstioConfigsMap } from '../types/IstioConfigList';
@@ -318,9 +316,10 @@ export const getCustomDashboard = (ns: string, tpl: string, params: DashboardQue
 
 export const getNamespaceAppHealth = (
   namespace: string,
+  cluster: string,
   duration: DurationInSeconds,
   queryTime?: TimeInSeconds
-): Promise<NamespaceAppsHealth> => {
+): Promise<NamespaceAppHealth> => {
   const params: any = {
     type: 'app'
   };
@@ -330,29 +329,29 @@ export const getNamespaceAppHealth = (
   if (queryTime) {
     params.queryTime = String(queryTime);
   }
-  return newRequest<NamespaceAppsHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(response => {
-    var ret: NamespaceAppsHealth = [];
-    for (var i = 0; i < response.data.length; i++) {
-      var appHealth: NamespaceAppHealth = response.data[i] as NamespaceAppHealth;
-
-      appHealth.health = AppHealth.fromJson(namespace, appHealth.name, response.data[i].health, {
+  var nsHealthUrl = urls.namespaceHealth(namespace);
+  if (cluster !== '') {
+    nsHealthUrl = nsHealthUrl + '?cluster=' + cluster;
+  }
+  return newRequest<NamespaceAppHealth>(HTTP_VERBS.GET, nsHealthUrl, params, {}).then(response => {
+    const ret: NamespaceAppHealth = {};
+    Object.keys(response.data).forEach(k => {
+      ret[k] = AppHealth.fromJson(namespace, k, response.data[k], {
         rateInterval: duration,
         hasSidecar: true,
         hasAmbient: false
       });
-
-      ret.push(appHealth);
-    }
-
+    });
     return ret;
   });
 };
 
 export const getNamespaceServiceHealth = (
   namespace: string,
+  cluster: string,
   duration: DurationInSeconds,
   queryTime?: TimeInSeconds
-): Promise<NamespaceServicesHealth> => {
+): Promise<NamespaceServiceHealth> => {
   const params: any = {
     type: 'service'
   };
@@ -362,32 +361,29 @@ export const getNamespaceServiceHealth = (
   if (queryTime) {
     params.queryTime = String(queryTime);
   }
-  return newRequest<NamespaceServicesHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(
-    response => {
-      const ret: NamespaceServicesHealth = [];
-
-      for (var i = 0; i < response.data.length; i++) {
-        var serviceHealth: NamespaceServiceHealth = response.data[i] as NamespaceServiceHealth;
-
-        serviceHealth.health = ServiceHealth.fromJson(namespace, serviceHealth.name, response.data[i].health, {
-          rateInterval: duration,
-          hasSidecar: true,
-          hasAmbient: false
-        });
-
-        ret.push(serviceHealth);
-      }
-
-      return ret;
-    }
-  );
+  var nsHealthUrl = urls.namespaceHealth(namespace);
+  if (cluster !== '') {
+    nsHealthUrl = nsHealthUrl + '?cluster=' + cluster;
+  }
+  return newRequest<NamespaceServiceHealth>(HTTP_VERBS.GET, nsHealthUrl, params, {}).then(response => {
+    const ret: NamespaceServiceHealth = {};
+    Object.keys(response.data).forEach(k => {
+      ret[k] = ServiceHealth.fromJson(namespace, k, response.data[k], {
+        rateInterval: duration,
+        hasSidecar: true,
+        hasAmbient: false
+      });
+    });
+    return ret;
+  });
 };
 
 export const getNamespaceWorkloadHealth = (
   namespace: string,
+  cluster: string,
   duration: DurationInSeconds,
   queryTime?: TimeInSeconds
-): Promise<NamespaceWorkloadsHealth> => {
+): Promise<NamespaceWorkloadHealth> => {
   const params: any = {
     type: 'workload'
   };
@@ -397,24 +393,21 @@ export const getNamespaceWorkloadHealth = (
   if (queryTime) {
     params.queryTime = String(queryTime);
   }
-  return newRequest<NamespaceWorkloadsHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(
-    response => {
-      const ret: NamespaceWorkloadsHealth = [];
-
-      for (var i = 0; i < response.data.length; i++) {
-        var workloadHealth: NamespaceWorkloadHealth = response.data[i] as NamespaceWorkloadHealth;
-
-        workloadHealth.health = ServiceHealth.fromJson(namespace, workloadHealth.name, response.data[i].health, {
-          rateInterval: duration,
-          hasSidecar: true,
-          hasAmbient: false
-        });
-
-        ret.push(workloadHealth);
-      }
-      return ret;
-    }
-  );
+  var nsHealthUrl = urls.namespaceHealth(namespace);
+  if (cluster !== '') {
+    nsHealthUrl = nsHealthUrl + '?cluster=' + cluster;
+  }
+  return newRequest<NamespaceWorkloadHealth>(HTTP_VERBS.GET, nsHealthUrl, params, {}).then(response => {
+    const ret: NamespaceWorkloadHealth = {};
+    Object.keys(response.data).forEach(k => {
+      ret[k] = WorkloadHealth.fromJson(namespace, k, response.data[k], {
+        rateInterval: duration,
+        hasSidecar: true,
+        hasAmbient: false
+      });
+    });
+    return ret;
+  });
 };
 
 export const getGrafanaInfo = () => {
