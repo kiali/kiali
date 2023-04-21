@@ -224,8 +224,8 @@ export const getIstioConfigDetail = (
 ) => {
   return newRequest<IstioConfigDetails>(
     HTTP_VERBS.GET,
-    urls.istioConfigDetail(cluster, namespace, objectType, object),
-    validate ? { validate: true, help: true } : {},
+    urls.istioConfigDetail(namespace, objectType, object),
+    validate ? { validate: true, help: true, cluster: cluster } : { cluster: cluster },
     {}
   );
 };

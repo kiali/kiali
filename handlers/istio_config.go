@@ -55,14 +55,10 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cluster := ""
-	if query.Has("cluster") && query.Get("cluster") != "" {
+	if query.Get("cluster") != "" {
 		cluster = query.Get("cluster")
 	} else {
 		cluster = kubernetes.HomeClusterName
-	}
-	if cluster != kubernetes.HomeClusterName {
-		// @TODO do not include validations from other clusters yet
-		includeValidations = false
 	}
 
 	criteria := business.ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelector, allNamespaces)
@@ -139,7 +135,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cluster := ""
-	if query.Has("cluster") && query.Get("cluster") != "" {
+	if query.Get("cluster") != "" {
 		cluster = query.Get("cluster")
 	} else {
 		cluster = kubernetes.HomeClusterName
@@ -222,7 +218,7 @@ func IstioConfigDelete(w http.ResponseWriter, r *http.Request) {
 
 	query := r.URL.Query()
 	cluster := ""
-	if query.Has("cluster") && query.Get("cluster") != "" {
+	if query.Get("cluster") != "" {
 		cluster = query.Get("cluster")
 	} else {
 		cluster = kubernetes.HomeClusterName
@@ -257,7 +253,7 @@ func IstioConfigUpdate(w http.ResponseWriter, r *http.Request) {
 
 	query := r.URL.Query()
 	cluster := ""
-	if query.Has("cluster") && query.Get("cluster") != "" {
+	if query.Get("cluster") != "" {
 		cluster = query.Get("cluster")
 	} else {
 		cluster = kubernetes.HomeClusterName
@@ -299,7 +295,7 @@ func IstioConfigCreate(w http.ResponseWriter, r *http.Request) {
 
 	query := r.URL.Query()
 	cluster := ""
-	if query.Has("cluster") && query.Get("cluster") != "null" {
+	if query.Get("cluster") != "" {
 		cluster = query.Get("cluster")
 	} else {
 		cluster = kubernetes.HomeClusterName

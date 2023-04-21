@@ -38,7 +38,7 @@ func NamespaceValidationSummary(w http.ResponseWriter, r *http.Request) {
 	namespace := vars["namespace"]
 
 	cluster := ""
-	if query.Has("cluster") && query.Get("cluster") != "" {
+	if query.Get("cluster") != "" {
 		cluster = query.Get("cluster")
 	} else {
 		cluster = kubernetes.HomeClusterName

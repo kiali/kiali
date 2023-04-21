@@ -46,10 +46,6 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, 
 	)
 	defer end()
 
-	if cluster == "null" || cluster == "" {
-		cluster = kubernetes.HomeClusterName
-	}
-
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 	if namespace != "" {

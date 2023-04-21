@@ -130,14 +130,14 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 	for cluster := range in.userClients {
 		singleClusterConfigList, err := in.GetIstioConfigListPerCluster(ctx, criteria, cluster)
 		if err != nil {
+			if cluster == kubernetes.HomeClusterName && len(in.userClients) == 1 {
+				return models.IstioConfigList{}, err
+			}
+
 			if api_errors.IsNotFound(err) || api_errors.IsForbidden(err) {
 				// If a cluster is not found or not accessible, then we skip it
 				log.Debugf("Error while accessing to cluster [%s]: %s", cluster, err.Error())
 				continue
-			}
-
-			if cluster == kubernetes.HomeClusterName && len(in.userClients) == 1 {
-				return models.IstioConfigList{}, err
 			}
 
 			log.Errorf("Unable to get config list from cluster: %s. Err: %s. Skipping", cluster, err)
@@ -270,6 +270,11 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 	if kubeCache == nil {
 		return istioConfigList, fmt.Errorf("K8s Cache [%s] is not found or is not accessible for Kiali", cluster)
 	}
+	userClient := in.userClients[cluster]
+	if userClient == nil {
+		return istioConfigList, fmt.Errorf("K8s Client [%s] is not found or is not accessible for Kiali", cluster)
+	}
+
 	if !criteria.AllNamespaces {
 		// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 		// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
@@ -300,7 +305,7 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 			if IsResourceCached(criteria.Namespace, kubernetes.DestinationRules) {
 				istioConfigList.DestinationRules, err = kubeCache.GetDestinationRules(criteria.Namespace, criteria.LabelSelector)
 			} else {
-				drl, e := in.userClients[cluster].Istio().NetworkingV1beta1().DestinationRules(criteria.Namespace).List(ctx, listOpts)
+				drl, e := userClient.Istio().NetworkingV1beta1().DestinationRules(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.DestinationRules = drl.Items
 				err = e
 			}
@@ -317,7 +322,7 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 			if IsResourceCached(criteria.Namespace, kubernetes.EnvoyFilters) {
 				istioConfigList.EnvoyFilters, err = kubeCache.GetEnvoyFilters(criteria.Namespace, criteria.LabelSelector)
 			} else {
-				efl, e := in.userClients[cluster].Istio().NetworkingV1alpha3().EnvoyFilters(criteria.Namespace).List(ctx, listOpts)
+				efl, e := userClient.Istio().NetworkingV1alpha3().EnvoyFilters(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.EnvoyFilters = efl.Items
 				err = e
 			}
@@ -340,7 +345,7 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 				istioConfigList.Gateways, err = kubeCache.GetGateways(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				log.Debugf("Listing Gateways for namespace [%s] with labelSelector [%s]", criteria.Namespace, criteria.LabelSelector)
-				gwl, e := in.userClients[cluster].Istio().NetworkingV1beta1().Gateways(criteria.Namespace).List(ctx, listOpts)
+				gwl, e := userClient.Istio().NetworkingV1beta1().Gateways(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.Gateways = gwl.Items
 				err = e
 			}
@@ -356,7 +361,7 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 
 	go func(ctx context.Context, errChan chan error) {
 		defer wg.Done()
-		if in.userClients[cluster].IsGatewayAPI() && criteria.Include(kubernetes.K8sGateways) {
+		if userClient.IsGatewayAPI() && criteria.Include(kubernetes.K8sGateways) {
 			var err error
 			// ignore an error as system could not be configured to support K8s Gateway API
 			// Check if namespace is cached
@@ -365,7 +370,7 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 			}
 			// TODO gwl.Items, there is conflict itself in Gateway API between returned types referenced or not
 			//else {
-			//	if gwl, e := in.userClients[cluster].GatewayAPI().GatewayV1beta1().Gateways(criteria.Namespace).List(ctx, listOpts); e == nil {
+			//	if gwl, e := userClient.GatewayAPI().GatewayV1beta1().Gateways(criteria.Namespace).List(ctx, listOpts); e == nil {
 			//		istioConfigList.K8sGateways = gwl.Items
 			//	}
 			//}
@@ -377,7 +382,7 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 
 	go func(ctx context.Context, errChan chan error) {
 		defer wg.Done()
-		if in.userClients[cluster].IsGatewayAPI() && criteria.Include(kubernetes.K8sHTTPRoutes) {
+		if userClient.IsGatewayAPI() && criteria.Include(kubernetes.K8sHTTPRoutes) {
 			var err error
 			// ignore an error as system could not be configured to support K8s Gateway API
 			// Check if namespace is cached
@@ -386,7 +391,7 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 			}
 			// TODO gwl.Items, there is conflict itself in Gateway API between returned types referenced or not
 			//else {
-			//	if gwl, e := in.userClients[cluster].GatewayAPI().GatewayV1beta1().HTTPRoutes(criteria.Namespace).List(ctx, listOpts); e == nil {
+			//	if gwl, e := userClient.GatewayAPI().GatewayV1beta1().HTTPRoutes(criteria.Namespace).List(ctx, listOpts); e == nil {
 			//		istioConfigList.K8sHTTPRoutes = gwl.Items
 			//	}
 			//}
@@ -404,7 +409,7 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 			if IsResourceCached(criteria.Namespace, kubernetes.ServiceEntries) {
 				istioConfigList.ServiceEntries, err = kubeCache.GetServiceEntries(criteria.Namespace, criteria.LabelSelector)
 			} else {
-				sel, e := in.userClients[cluster].Istio().NetworkingV1beta1().ServiceEntries(criteria.Namespace).List(ctx, listOpts)
+				sel, e := userClient.Istio().NetworkingV1beta1().ServiceEntries(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.ServiceEntries = sel.Items
 				err = e
 			}
@@ -421,7 +426,7 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 			if IsResourceCached(criteria.Namespace, kubernetes.Sidecars) {
 				istioConfigList.Sidecars, err = kubeCache.GetSidecars(criteria.Namespace, criteria.LabelSelector)
 			} else {
-				scl, e := in.userClients[cluster].Istio().NetworkingV1beta1().Sidecars(criteria.Namespace).List(ctx, listOpts)
+				scl, e := userClient.Istio().NetworkingV1beta1().Sidecars(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.Sidecars = scl.Items
 				err = e
 			}
@@ -443,7 +448,7 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 			if IsResourceCached(criteria.Namespace, kubernetes.VirtualServices) {
 				istioConfigList.VirtualServices, err = kubeCache.GetVirtualServices(criteria.Namespace, criteria.LabelSelector)
 			} else {
-				vsl, e := in.userClients[cluster].Istio().NetworkingV1beta1().VirtualServices(criteria.Namespace).List(ctx, listOpts)
+				vsl, e := userClient.Istio().NetworkingV1beta1().VirtualServices(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.VirtualServices = vsl.Items
 				err = e
 			}
@@ -460,7 +465,7 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 			if IsResourceCached(criteria.Namespace, kubernetes.WorkloadEntries) {
 				istioConfigList.WorkloadEntries, err = kubeCache.GetWorkloadEntries(criteria.Namespace, criteria.LabelSelector)
 			} else {
-				wel, e := in.userClients[cluster].Istio().NetworkingV1beta1().WorkloadEntries(criteria.Namespace).List(ctx, listOpts)
+				wel, e := userClient.Istio().NetworkingV1beta1().WorkloadEntries(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.WorkloadEntries = wel.Items
 				err = e
 			}
@@ -477,7 +482,7 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 			if IsResourceCached(criteria.Namespace, kubernetes.WorkloadGroups) {
 				istioConfigList.WorkloadGroups, err = kubeCache.GetWorkloadGroups(criteria.Namespace, criteria.LabelSelector)
 			} else {
-				wgl, e := in.userClients[cluster].Istio().NetworkingV1beta1().WorkloadGroups(criteria.Namespace).List(ctx, listOpts)
+				wgl, e := userClient.Istio().NetworkingV1beta1().WorkloadGroups(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.WorkloadGroups = wgl.Items
 				err = e
 			}
@@ -494,7 +499,7 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 			if IsResourceCached(criteria.Namespace, kubernetes.WasmPlugins) {
 				istioConfigList.WasmPlugins, err = kubeCache.GetWasmPlugins(criteria.Namespace, criteria.LabelSelector)
 			} else {
-				wgl, e := in.userClients[cluster].Istio().ExtensionsV1alpha1().WasmPlugins(criteria.Namespace).List(ctx, listOpts)
+				wgl, e := userClient.Istio().ExtensionsV1alpha1().WasmPlugins(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.WasmPlugins = wgl.Items
 				err = e
 			}
@@ -511,7 +516,7 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 			if IsResourceCached(criteria.Namespace, kubernetes.Telemetries) {
 				istioConfigList.Telemetries, err = kubeCache.GetTelemetries(criteria.Namespace, criteria.LabelSelector)
 			} else {
-				wgl, e := in.userClients[cluster].Istio().TelemetryV1alpha1().Telemetries(criteria.Namespace).List(ctx, listOpts)
+				wgl, e := userClient.Istio().TelemetryV1alpha1().Telemetries(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.Telemetries = wgl.Items
 				err = e
 			}
@@ -528,7 +533,7 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 			if IsResourceCached(criteria.Namespace, kubernetes.AuthorizationPolicies) {
 				istioConfigList.AuthorizationPolicies, err = kubeCache.GetAuthorizationPolicies(criteria.Namespace, criteria.LabelSelector)
 			} else {
-				apl, e := in.userClients[cluster].Istio().SecurityV1beta1().AuthorizationPolicies(criteria.Namespace).List(ctx, listOpts)
+				apl, e := userClient.Istio().SecurityV1beta1().AuthorizationPolicies(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.AuthorizationPolicies = apl.Items
 				err = e
 			}
@@ -549,7 +554,7 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 			if IsResourceCached(criteria.Namespace, kubernetes.PeerAuthentications) {
 				istioConfigList.PeerAuthentications, err = kubeCache.GetPeerAuthentications(criteria.Namespace, criteria.LabelSelector)
 			} else {
-				pal, e := in.userClients[cluster].Istio().SecurityV1beta1().PeerAuthentications(criteria.Namespace).List(ctx, listOpts)
+				pal, e := userClient.Istio().SecurityV1beta1().PeerAuthentications(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.PeerAuthentications = pal.Items
 				err = e
 			}
@@ -570,7 +575,7 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 			if IsResourceCached(criteria.Namespace, kubernetes.RequestAuthentications) {
 				istioConfigList.RequestAuthentications, err = kubeCache.GetRequestAuthentications(criteria.Namespace, criteria.LabelSelector)
 			} else {
-				ral, e := in.userClients[cluster].Istio().SecurityV1beta1().RequestAuthentications(criteria.Namespace).List(ctx, listOpts)
+				ral, e := userClient.Istio().SecurityV1beta1().RequestAuthentications(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.RequestAuthentications = ral.Items
 				err = e
 			}

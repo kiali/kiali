@@ -127,8 +127,8 @@ const conf = {
       istioConfig: (namespace: string) => `api/namespaces/${namespace}/istio`,
       allIstioConfigs: () => `api/istio/config`,
       istioConfigCreate: (namespace: string, objectType: string) => `api/namespaces/${namespace}/istio/${objectType}`,
-      istioConfigDetail: (cluster: string, namespace: string, objectType: string, object: string) =>
-        `api/namespaces/${namespace}/istio/${objectType}/${object}?cluster=${cluster}`,
+      istioConfigDetail: (namespace: string, objectType: string, object: string) =>
+        `api/namespaces/${namespace}/istio/${objectType}/${object}`,
       istioConfigDelete: (namespace: string, objectType: string, object: string) =>
         `api/namespaces/${namespace}/istio/${objectType}/${object}`,
       istioConfigUpdate: (namespace: string, objectType: string, object: string) =>

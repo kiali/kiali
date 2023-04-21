@@ -111,7 +111,7 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 	namespace := params["namespace"]
 	service := params["service"]
 	queryTime := util.Clock.Now()
-	//rateInterval, err = adjustRateInterval(r.Context(), business, namespace, rateInterval, queryTime)
+	rateInterval, err = adjustRateInterval(r.Context(), business, namespace, rateInterval, queryTime)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
@@ -170,6 +170,9 @@ func ServiceUpdate(w http.ResponseWriter, r *http.Request) {
 
 	params := mux.Vars(r)
 	cluster := params["cluster"]
+	if cluster == "" {
+		cluster = kubernetes.HomeClusterName
+	}
 	namespace := params["namespace"]
 	service := params["service"]
 	queryTime := util.Clock.Now()
