@@ -361,6 +361,7 @@ type OpenIdConfig struct {
 // DeploymentConfig provides details on how Kiali was deployed.
 type DeploymentConfig struct {
 	AccessibleNamespaces []string `yaml:"accessible_namespaces"`
+	ClusterWideAccess    bool     `yaml:"cluster_wide_access,omitempty"`
 	InstanceName         string   `yaml:"instance_name"`
 	Namespace            string   `yaml:"namespace,omitempty"` // Kiali deployment namespace
 	ViewOnlyMode         bool     `yaml:"view_only_mode,omitempty"`
@@ -540,6 +541,7 @@ func NewConfig() (c *Config) {
 		CustomDashboards: dashboards.GetBuiltInMonitoringDashboards(),
 		Deployment: DeploymentConfig{
 			AccessibleNamespaces: []string{"**"},
+			ClusterWideAccess:    true,
 			InstanceName:         "kiali",
 			Namespace:            "istio-system",
 			ViewOnlyMode:         false,
@@ -791,14 +793,18 @@ func (conf *Config) AddHealthDefault() {
 
 // AllNamespacesAccessible determines if kiali has access to all namespaces.
 // When using the operator, the operator will grant the kiali service account
-// cluster role permissions when '**' is provided as a namespace.
+// cluster role permissions when '**' is provided in the accessible_namespaces
+// or if cluster-wide-access was explicitly requested.
 func (conf *Config) AllNamespacesAccessible() bool {
+	// look for ** in accessible namespaces first, as we have done in the past. This backwards compatible
+	// behavior will help support users who installed the server via the server helm chart.
 	for _, ns := range conf.Deployment.AccessibleNamespaces {
 		if ns == "**" {
 			return true
 		}
 	}
-	return false
+	// it is still possible we are in cluster wide access mode even if accessible namespaces has been restricted
+	return conf.Deployment.ClusterWideAccess
 }
 
 // Get the global Config

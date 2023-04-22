@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"gopkg.in/yaml.v2"
 	api_networking_v1beta1 "istio.io/api/networking/v1beta1"
 	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
@@ -23,6 +22,7 @@ import (
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	gatewayapiclient "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 
@@ -678,7 +678,7 @@ func GetIstioConfigMap(istioConfig *core_v1.ConfigMap) (*IstioMeshConfig, error)
 		return nil, fmt.Errorf(errMsg, istioConfig)
 	}
 
-	err = yaml.Unmarshal([]byte(meshConfigYaml), &meshConfig)
+	err = k8syaml.Unmarshal([]byte(meshConfigYaml), &meshConfig)
 	if err != nil {
 		log.Warningf("GetIstioConfigMap: Cannot read Istio mesh configuration.")
 		return nil, err
