@@ -16,7 +16,8 @@ func FakeTlsKialiCache(token string, namespaces []string, pa []*security_v1beta1
 	kialiCacheImpl := kialiCacheImpl{
 		tokenNamespaces: make(map[string]namespaceCache),
 		// ~ long duration for unit testing
-		refreshDuration: time.Hour,
+		refreshDuration:        time.Hour,
+		tokenNamespaceDuration: time.Hour,
 	}
 	// Populate namespaces and PeerAuthentication informers
 	nss := []models.Namespace{}

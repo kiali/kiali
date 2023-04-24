@@ -324,6 +324,7 @@ export const getCustomDashboard = (ns: string, tpl: string, params: DashboardQue
 
 export const getNamespaceAppHealth = (
   namespace: string,
+  cluster: string,
   duration: DurationInSeconds,
   queryTime?: TimeInSeconds
 ): Promise<NamespaceAppHealth> => {
@@ -335,6 +336,9 @@ export const getNamespaceAppHealth = (
   }
   if (queryTime) {
     params.queryTime = String(queryTime);
+  }
+  if (cluster) {
+    params.cluster = cluster;
   }
   return newRequest<NamespaceAppHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(response => {
     const ret: NamespaceAppHealth = {};
@@ -351,6 +355,7 @@ export const getNamespaceAppHealth = (
 
 export const getNamespaceServiceHealth = (
   namespace: string,
+  cluster: string,
   duration: DurationInSeconds,
   queryTime?: TimeInSeconds
 ): Promise<NamespaceServiceHealth> => {
@@ -362,6 +367,9 @@ export const getNamespaceServiceHealth = (
   }
   if (queryTime) {
     params.queryTime = String(queryTime);
+  }
+  if (cluster) {
+    params.cluster = cluster;
   }
   return newRequest<NamespaceServiceHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(
     response => {
@@ -380,6 +388,7 @@ export const getNamespaceServiceHealth = (
 
 export const getNamespaceWorkloadHealth = (
   namespace: string,
+  cluster: string,
   duration: DurationInSeconds,
   queryTime?: TimeInSeconds
 ): Promise<NamespaceWorkloadHealth> => {
@@ -391,6 +400,9 @@ export const getNamespaceWorkloadHealth = (
   }
   if (queryTime) {
     params.queryTime = String(queryTime);
+  }
+  if (cluster) {
+    params.cluster = cluster;
   }
   return newRequest<NamespaceWorkloadHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(
     response => {

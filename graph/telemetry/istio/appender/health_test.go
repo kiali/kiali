@@ -503,7 +503,7 @@ func TestErrorCausesPanic(t *testing.T) {
 
 	prom := new(prometheustest.PromClientMock)
 	prom.MockNamespaceServicesRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
-	prom.MockAllRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
+	prom.MockAllRequestRates("testNamespace", conf.KubernetesConfig.ClusterName, "0s", time.Unix(0, 0), model.Vector{})
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, prom, nil)
@@ -578,7 +578,7 @@ func setupHealthConfig(t *testing.T, services []core_v1.Service, deployments []a
 
 	prom := new(prometheustest.PromClientMock)
 	prom.MockNamespaceServicesRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
-	prom.MockAllRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
+	prom.MockAllRequestRates("testNamespace", kubernetes.HomeClusterName, "0s", time.Unix(0, 0), model.Vector{})
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, prom, nil)

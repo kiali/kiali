@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/tests/integration/utils"
 )
 
@@ -44,6 +45,9 @@ func TestInvalidNamespaceHealth(t *testing.T) {
 }
 
 func TestNamespaceHealthApp(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
 	name := "details"
 	assert := assert.New(t)
 	params := map[string]string{"rateInterval": "60s"}
