@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/jaeger"
 	jaegerModels "github.com/kiali/kiali/jaeger/model/json"
 	"github.com/kiali/kiali/kubernetes"
@@ -74,8 +75,8 @@ func (in *JaegerService) GetServiceSpans(ctx context.Context, ns, service string
 	defer end()
 
 	// TODO: Need to include cluster here. This will require custom jaeger labeling of traces to add the cluster name
-	// since it is not standard. Hardcoding to the home cluster for now.
-	app, err := in.businessLayer.Svc.GetServiceAppName(ctx, kubernetes.HomeClusterName, ns, service)
+	// since it is not standard. Hardcoding to the home cluster name for now.
+	app, err := in.businessLayer.Svc.GetServiceAppName(ctx, config.Get().KubernetesConfig.ClusterName, ns, service)
 	if err != nil {
 		return nil, err
 	}
@@ -100,12 +101,13 @@ func (in *JaegerService) GetWorkloadSpans(ctx context.Context, ns, workload stri
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetWorkloadSpans",
 		observability.Attribute("package", "business"),
+		observability.Attribute("cluster", query.Cluster),
 		observability.Attribute("namespace", ns),
 		observability.Attribute("workload", workload),
 	)
 	defer end()
 
-	app, err := in.businessLayer.Workload.GetWorkloadAppName(ctx, ns, workload)
+	app, err := in.businessLayer.Workload.GetWorkloadAppName(ctx, query.Cluster, ns, workload)
 	if err != nil {
 		return nil, err
 	}
@@ -195,12 +197,13 @@ func (in *JaegerService) GetWorkloadTraces(ctx context.Context, ns, workload str
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetWorkloadTraces",
 		observability.Attribute("package", "business"),
+		observability.Attribute("cluster", query.Cluster),
 		observability.Attribute("namespace", ns),
 		observability.Attribute("workload", workload),
 	)
 	defer end()
 
-	app, err := in.businessLayer.Workload.GetWorkloadAppName(ctx, ns, workload)
+	app, err := in.businessLayer.Workload.GetWorkloadAppName(ctx, config.Get().KubernetesConfig.ClusterName, ns, workload)
 	if err != nil {
 		return nil, err
 	}

@@ -267,9 +267,10 @@ func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, clients, prom, nil), userClients: clients}
-	criteria := NamespaceHealthCriteria{Namespace: "ns", RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
+	clients[kubernetes.HomeClusterName] = k8s
+	hs := NewWithBackends(clients, clients, prom, nil).Health
+	criteria := NamespaceHealthCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "ns", RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
+
 	_, err := hs.GetNamespaceAppHealth(context.TODO(), criteria)
 	require.NoError(err)
 

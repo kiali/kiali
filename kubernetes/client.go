@@ -55,6 +55,8 @@ type K8SClient struct {
 	token          string
 	k8s            kube.Interface
 	istioClientset istio.Interface
+	// Used for portforwarding requests.
+	restConfig *rest.Config
 	// Used in REST queries after bump to client-go v0.20.x
 	ctx context.Context
 	// isOpenShift private variable will check if kiali is deployed under an OpenShift cluster or not
@@ -188,6 +190,7 @@ func NewClientFromConfig(config *rest.Config) (*K8SClient, error) {
 		return nil, err
 	}
 	client.k8s = k8s
+	client.restConfig = config
 
 	client.istioClientset, err = istio.NewForConfig(config)
 	if err != nil {

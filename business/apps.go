@@ -95,7 +95,7 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 			wg.Add(1)
 			go func(c string) {
 				defer wg.Done()
-				nsApps, error2 := fetchNamespaceApps(ctx, in.businessLayer, criteria.Namespace, c, "")
+				nsApps, error2 := in.fetchNamespaceApps(ctx, criteria.Namespace, c, "")
 				if error2 != nil {
 					resultsCh <- result{cluster: c, nsApps: nil, err: error2}
 				} else {
@@ -250,7 +250,7 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 	if cluster == "null" || cluster == "" {
 		cluster = kubernetes.HomeClusterName
 	}
-	namespaceApps, err := fetchNamespaceApps(ctx, in.businessLayer, criteria.Namespace, cluster, criteria.AppName)
+	namespaceApps, err := in.fetchNamespaceApps(ctx, criteria.Namespace, cluster, criteria.AppName)
 	if err != nil {
 		return *appInstance, err
 	}
@@ -332,7 +332,7 @@ func castAppDetails(allEntities namespaceApps, ss *models.ServiceList, w *models
 // Helper method to fetch all applications for a given namespace.
 // Optionally if appName parameter is provided, it filters apps for that name.
 // Return an error on any problem.
-func fetchNamespaceApps(ctx context.Context, layer *Layer, namespace string, cluster string, appName string) (namespaceApps, error) {
+func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, cluster string, appName string) (namespaceApps, error) {
 	var ss *models.ServiceList
 	var ws models.Workloads
 	cfg := config.Get()
@@ -345,12 +345,12 @@ func fetchNamespaceApps(ctx context.Context, layer *Layer, namespace string, clu
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := layer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
+	if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
 		return nil, err
 	}
 
 	var err error
-	ws, err = fetchWorkloadsFromCluster(ctx, layer, cluster, namespace, appNameSelector)
+	ws, err = in.businessLayer.Workload.fetchWorkloadsFromCluster(ctx, cluster, namespace, appNameSelector)
 	if err != nil {
 		return nil, err
 	}
@@ -364,7 +364,7 @@ func fetchNamespaceApps(ctx context.Context, layer *Layer, namespace string, clu
 			IncludeOnlyDefinitions: true,
 			ServiceSelector:        labels.Set(w.Labels).String(),
 		}
-		ss, err = layer.Svc.GetServiceList(ctx, criteria)
+		ss, err = in.businessLayer.Svc.GetServiceList(ctx, criteria)
 		if err != nil {
 			return nil, err
 		}

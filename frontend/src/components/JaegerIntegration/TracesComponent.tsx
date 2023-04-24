@@ -32,7 +32,7 @@ type ReduxProps = {
 type TracesProps = ReduxProps & {
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
-  cluster: string;
+  cluster?: string;
   target: string;
   targetKind: TargetKind;
 };

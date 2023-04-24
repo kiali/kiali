@@ -88,6 +88,7 @@ func (p *baseHealthParams) baseExtract(r *http.Request, vars map[string]string) 
 	if rateInterval := queryParams.Get("rateInterval"); rateInterval != "" {
 		p.RateInterval = rateInterval
 	}
+	p.Cluster = clusterNameFromQuery(queryParams)
 	if queryTime := queryParams.Get("queryTime"); queryTime != "" {
 		unix, err := strconv.ParseInt(queryTime, 10, 64)
 		if err == nil {

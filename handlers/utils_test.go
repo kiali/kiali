@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -112,4 +113,17 @@ func TestCreateMetricsServiceForSeveralNamespaces(t *testing.T) {
 	assert.Nil(info["ns2"].err)
 	assert.Nil(info["nsNil"].info)
 	assert.Equal("no privileges", info["nsNil"].err.Error())
+}
+
+func TestClusterNameFromQuery(t *testing.T) {
+	assert := assert.New(t)
+
+	query := url.Values{"cluster": []string{"east"}}
+	assert.Equal("east", clusterNameFromQuery(query))
+
+	query = url.Values{}
+	assert.Equal(config.Get().KubernetesConfig.ClusterName, clusterNameFromQuery(query))
+
+	query = url.Values{"notcluster": []string{"east"}}
+	assert.Equal(config.Get().KubernetesConfig.ClusterName, clusterNameFromQuery(query))
 }

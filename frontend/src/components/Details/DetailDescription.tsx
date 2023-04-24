@@ -22,6 +22,7 @@ type ReduxProps = {
 };
 
 type Props = ReduxProps & {
+  cluster?: string;
   namespace: string;
   apps?: string[];
   workloads?: AppWorkload[];
@@ -58,7 +59,10 @@ const infoStyle = style({
 
 class DetailDescription extends React.Component<Props> {
   private renderAppItem(namespace: string, appName: string) {
-    const href = '/namespaces/' + namespace + '/applications/' + appName;
+    let href = '/namespaces/' + namespace + '/applications/' + appName;
+    if (this.props.cluster) {
+      href = href + '?cluster=' + this.props.cluster;
+    }
     const link = isParentKiosk(this.props.kiosk) ? (
       <Link
         to={''}
@@ -82,7 +86,10 @@ class DetailDescription extends React.Component<Props> {
   }
 
   private renderServiceItem(namespace: string, serviceName: string) {
-    const href = '/namespaces/' + namespace + '/services/' + serviceName;
+    let href = '/namespaces/' + namespace + '/services/' + serviceName;
+    if (this.props.cluster) {
+      href = href + '?cluster=' + this.props.cluster;
+    }
     const link = isParentKiosk(this.props.kiosk) ? (
       <Link
         to={''}

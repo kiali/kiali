@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"net/url"
 
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/business/authentication"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
@@ -21,11 +23,7 @@ const defaultPatchType = "merge"
 var defaultPromClientSupplier = prometheus.NewClient
 
 func checkNamespaceAccess(ctx context.Context, nsServ business.NamespaceService, namespace string) (*models.Namespace, error) {
-	if nsInfo, err := nsServ.GetNamespace(ctx, namespace); err != nil {
-		return nil, err
-	} else {
-		return nsInfo, nil
-	}
+	return nsServ.GetNamespace(ctx, namespace)
 }
 
 func createMetricsServiceForNamespace(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, namespace string) (*business.MetricsService, *models.Namespace) {
@@ -89,4 +87,14 @@ func getBusiness(r *http.Request) (*business.Layer, error) {
 	}
 
 	return business.Get(authInfo)
+}
+
+// clusterNameFromQuery extracts the cluster name from the query parameters
+// and provides a default value if it's not present.
+func clusterNameFromQuery(queryParams url.Values) string {
+	cluster := queryParams.Get("cluster")
+	if cluster == "" {
+		cluster = config.Get().KubernetesConfig.ClusterName
+	}
+	return cluster
 }

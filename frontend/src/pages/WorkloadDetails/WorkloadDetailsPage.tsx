@@ -11,7 +11,7 @@ import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
 import { serverConfig } from '../../config/ServerConfig';
 import WorkloadPodLogs from './WorkloadPodLogs';
-import { DurationInSeconds, HomeClusterName, TimeInMilliseconds } from '../../types/Common';
+import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector } from '../../store/Selectors';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
@@ -31,7 +31,7 @@ import { isWaypoint } from '../../helpers/LabelFilterHelper';
 
 type WorkloadDetailsState = {
   workload?: Workload;
-  cluster: string;
+  cluster?: string;
   health?: WorkloadHealth;
   currentTab: string;
   error?: ErrorMsg;
@@ -66,7 +66,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
   constructor(props: WorkloadDetailsPageProps) {
     super(props);
     const urlParams = new URLSearchParams(this.props.location.search);
-    const cluster = urlParams.get('cluster') || HomeClusterName;
+    const cluster = urlParams.get('cluster') || undefined;
     this.state = { currentTab: activeTab(tabName, defaultTab), cluster: cluster };
   }
 
@@ -106,10 +106,10 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       health: 'true'
     };
     await API.getWorkload(
-      this.state.cluster,
       this.props.match.params.namespace,
       this.props.match.params.workload,
-      params
+      params,
+      this.state.cluster
     )
       .then(details => {
         this.setState({
@@ -160,6 +160,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
           itemType={MetricsObjectTypes.WORKLOAD}
           lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.match.params.namespace}
+          cluster={this.state.cluster}
         />
       </Tab>
     );
@@ -174,6 +175,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
               namespace={this.props.match.params.namespace}
               workload={this.props.match.params.workload}
               pods={this.state.workload!.pods}
+              cluster={this.state.cluster}
             />
           ) : (
             <EmptyState variant={EmptyStateVariant.full}>

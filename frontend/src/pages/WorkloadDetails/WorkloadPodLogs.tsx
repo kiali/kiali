@@ -30,14 +30,7 @@ import { Pod, LogEntry, AccessLog, PodLogs } from '../../types/IstioObjects';
 import { getPodLogs, getWorkloadSpans, setPodEnvoyProxyLogLevel } from '../../services/Api';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { ToolbarDropdown } from '../../components/ToolbarDropdown/ToolbarDropdown';
-import {
-  TimeRange,
-  evalTimeRange,
-  TimeInMilliseconds,
-  isEqualTimeRange,
-  TimeInSeconds,
-  HomeClusterName
-} from '../../types/Common';
+import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange, TimeInSeconds } from '../../types/Common';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { KialiIcon, defaultIconStyle } from '../../config/KialiIcon';
@@ -75,6 +68,7 @@ export type WorkloadPodLogsProps = ReduxProps & {
   namespace: string;
   pods: Pod[];
   workload: string;
+  cluster?: string;
 };
 
 type ContainerOption = {
@@ -94,7 +88,6 @@ type Entry = {
 
 interface WorkloadPodLogsState {
   accessLogModals: Map<string, AccessLog>;
-  cluster: string;
   containerOptions?: ContainerOption[];
   entries: Entry[];
   fullscreen: boolean;
@@ -206,11 +199,9 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
 
     const urlParams = new URLSearchParams(history.location.search);
     const showSpans = urlParams.get(URLParam.SHOW_SPANS);
-    const cluster = urlParams.get('cluster') || HomeClusterName;
 
     const defaultState = {
       accessLogModals: new Map<string, AccessLog>(),
-      cluster: cluster,
       entries: [],
       fullscreen: false,
       hideLogValue: '',
@@ -265,7 +256,8 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
         this.state.containerOptions,
         this.state.showSpans,
         this.state.maxLines,
-        this.props.timeRange
+        this.props.timeRange,
+        this.props.cluster
       );
     }
   }
@@ -286,7 +278,8 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
         newContainerOptions!,
         this.state.showSpans,
         this.state.maxLines,
-        this.props.timeRange
+        this.props.timeRange,
+        this.props.cluster
       );
     }
   }
@@ -790,7 +783,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
     this.setState({ kebabOpen: false });
     const pod = this.props.pods[this.state.podValue!];
 
-    setPodEnvoyProxyLogLevel(this.props.namespace, pod.name, level)
+    setPodEnvoyProxyLogLevel(this.props.namespace, pod.name, level, this.props.cluster)
       .then(_resp => {
         addSuccess(`Successfully updated proxy log level to '${level}' for pod: ${pod.name}`);
       })
@@ -951,7 +944,8 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
     containerOptions: ContainerOption[],
     showSpans: boolean,
     maxLines: number,
-    timeRange: TimeRange
+    timeRange: TimeRange,
+    cluster?: string
   ) => {
     const now: TimeInMilliseconds = Date.now();
     const timeRangeDates = evalTimeRange(timeRange);
@@ -965,7 +959,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
 
     const selectedContainers = containerOptions.filter(c => c.isSelected);
     const promises: Promise<AxiosResponse<PodLogs | Span[]>>[] = selectedContainers.map(c => {
-      return getPodLogs(namespace, podName, c.name, maxLines, sinceTime, duration, c.isProxy);
+      return getPodLogs(namespace, podName, c.name, maxLines, sinceTime, duration, c.isProxy, cluster);
     });
     if (showSpans) {
       // Convert seconds to microseconds
@@ -973,7 +967,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
         endMicros: endTime * 1000,
         startMicros: sinceTime * 1000000
       };
-      promises.unshift(getWorkloadSpans(this.state.cluster, namespace, this.props.workload, params));
+      promises.unshift(getWorkloadSpans(namespace, this.props.workload, params, this.props.cluster));
     }
 
     this.promises

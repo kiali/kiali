@@ -75,6 +75,7 @@ type TrafficDetailsProps = ReduxProps & {
   itemType: MetricsObjectTypes;
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
+  cluster?: string;
 };
 
 type TrafficDetailsState = {
@@ -173,7 +174,8 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
         const params = this.graphDataSource.fetchForWorkloadParams(
           this.props.duration,
           this.props.namespace,
-          this.props.itemName
+          this.props.itemName,
+          this.props.cluster
         );
         params.includeHealth = false;
         params.injectServiceNodes = false;

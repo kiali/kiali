@@ -4,31 +4,22 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"k8s.io/client-go/tools/clientcmd/api"
-
-	kiali_business "github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/kubernetes"
 )
 
 func ConfigDump(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
-	// Get business layer
-	kialiToken, err := kubernetes.GetKialiTokenForHomeCluster()
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Services initialization error (kiali token): "+err.Error())
-	}
-
-	business, err := kiali_business.Get(&api.AuthInfo{Token: kialiToken})
+	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
 	}
 
+	cluster := clusterNameFromQuery(r.URL.Query())
 	namespace := params["namespace"]
 	pod := params["pod"]
 
-	dump, err := business.ProxyStatus.GetConfigDump(namespace, pod)
+	dump, err := business.ProxyStatus.GetConfigDump(cluster, namespace, pod)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
@@ -40,23 +31,18 @@ func ConfigDump(w http.ResponseWriter, r *http.Request) {
 func ConfigDumpResourceEntries(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
-	// Get business layer
-	kialiToken, err := kubernetes.GetKialiTokenForHomeCluster()
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Services initialization error (kiali token): "+err.Error())
-	}
-
-	business, err := kiali_business.Get(&api.AuthInfo{Token: kialiToken})
+	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
 	}
 
+	cluster := clusterNameFromQuery(r.URL.Query())
 	namespace := params["namespace"]
 	pod := params["pod"]
 	resource := params["resource"]
 
-	dump, err := business.ProxyStatus.GetConfigDumpResourceEntries(namespace, pod, resource)
+	dump, err := business.ProxyStatus.GetConfigDumpResourceEntries(cluster, namespace, pod, resource)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return

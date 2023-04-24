@@ -192,6 +192,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
             apps={apps}
             services={services}
             health={this.props.health}
+            cluster={this.props.workload?.cluster}
             waypointWorkloads={
               this.props.workload
                 ? isWaypoint(this.props.workload.labels)

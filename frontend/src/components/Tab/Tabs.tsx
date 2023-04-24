@@ -69,11 +69,10 @@ export default class ParameterizedTabs extends React.Component<TabsProps> {
   };
 
   tabSelectHandler = (tabKey: string) => {
-    const urlParams = new URLSearchParams('');
+    const urlParams = new URLSearchParams(history.location.search);
 
     if (!!this.props.tabName) {
       urlParams.set(this.props.tabName, tabKey);
-
       history.push(history.location.pathname + '?' + urlParams.toString());
     }
 

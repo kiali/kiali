@@ -34,13 +34,13 @@ import (
 	"github.com/kiali/kiali/prometheus"
 )
 
-func NewWorkloadService(k8s kubernetes.ClientInterface, prom prometheus.ClientInterface, cache cache.KialiCache, layer *Layer, config *config.Config) *WorkloadService {
+func NewWorkloadService(userClients map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, cache cache.KialiCache, layer *Layer, config *config.Config) *WorkloadService {
 	return &WorkloadService{
-		k8s:           k8s,
-		prom:          prom,
-		cache:         cache,
 		businessLayer: layer,
+		cache:         cache,
 		config:        config,
+		prom:          prom,
+		userClients:   userClients,
 	}
 }
 
@@ -51,9 +51,9 @@ type WorkloadService struct {
 	// The global kiali cache. This should be passed into the workload service rather than created inside of it.
 	cache cache.KialiCache
 	// The global kiali config.
-	config *config.Config
-	k8s    kubernetes.ClientInterface
-	prom   prometheus.ClientInterface
+	config      *config.Config
+	prom        prometheus.ClientInterface
+	userClients map[string]kubernetes.ClientInterface
 }
 
 type WorkloadCriteria struct {
@@ -160,7 +160,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	go func(ctx context.Context) {
 		defer wg.Done()
 		var err2 error
-		ws, err2 = fetchWorkloads(ctx, in.businessLayer, criteria.Namespace, "")
+		ws, err2 = in.fetchWorkloads(ctx, criteria.Namespace, "")
 		if err2 != nil {
 			log.Errorf("Error fetching Workloads per namespace %s: %s", criteria.Namespace, err2)
 			errChan <- err2
@@ -330,16 +330,7 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 		return nil, err
 	}
 
-	cluster := criteria.Cluster
-	if cluster == "" {
-		cluster = kubernetes.HomeClusterName
-	}
-	client := in.businessLayer.k8sClients[cluster]
-	if client == nil {
-		return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
-	}
-
-	workload, err2 := fetchWorkloadFromCluster(ctx, in.businessLayer, client, criteria)
+	workload, err2 := in.fetchWorkload(ctx, criteria)
 	if err2 != nil {
 		return nil, err2
 	}
@@ -378,10 +369,11 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 	return workload, nil
 }
 
-func (in *WorkloadService) UpdateWorkload(ctx context.Context, namespace string, workloadName string, workloadType string, includeServices bool, jsonPatch string, patchType string) (*models.Workload, error) {
+func (in *WorkloadService) UpdateWorkload(ctx context.Context, cluster string, namespace string, workloadName string, workloadType string, includeServices bool, jsonPatch string, patchType string) (*models.Workload, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "UpdateWorkload",
 		observability.Attribute("package", "business"),
+		observability.Attribute("cluster", cluster),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("workloadName", workloadName),
 		observability.Attribute("workloadType", workloadType),
@@ -392,7 +384,7 @@ func (in *WorkloadService) UpdateWorkload(ctx context.Context, namespace string,
 	defer end()
 
 	// Identify controller and apply patch to workload
-	err := in.updateWorkload(namespace, workloadName, workloadType, jsonPatch, patchType)
+	err := in.updateWorkload(ctx, cluster, namespace, workloadName, workloadType, jsonPatch, patchType)
 	if err != nil {
 		return nil, err
 	}
@@ -400,21 +392,28 @@ func (in *WorkloadService) UpdateWorkload(ctx context.Context, namespace string,
 	// Cache is stopped after a Create/Update/Delete operation to force a refresh.
 	// Refresh once after all the updates have gone through since Update Workload will update
 	// every single workload type of that matches name/namespace and we only want to refresh once.
-	// TODO: Remove conditional once cache is mandatory
-	if in.cache != nil {
-		in.cache.Refresh(namespace)
-	}
-
-	// After the update we fetch the whole workload
-	return in.GetWorkload(ctx, WorkloadCriteria{Namespace: namespace, WorkloadName: workloadName, WorkloadType: workloadType, IncludeServices: includeServices})
-}
-
-func (in *WorkloadService) GetPod(namespace, name string) (*models.Pod, error) {
-	// This isn't using the cache for some reason but it never has.
-	p, err := in.k8s.GetPod(namespace, name)
+	cache, err := kialiCache.GetKubeCache(cluster)
 	if err != nil {
 		return nil, err
 	}
+	cache.Refresh(namespace)
+
+	// After the update we fetch the whole workload
+	return in.GetWorkload(ctx, WorkloadCriteria{Cluster: cluster, Namespace: namespace, WorkloadName: workloadName, WorkloadType: workloadType, IncludeServices: includeServices})
+}
+
+func (in *WorkloadService) GetPod(cluster, namespace, name string) (*models.Pod, error) {
+	k8s, ok := in.userClients[cluster]
+	if !ok {
+		return nil, fmt.Errorf("cluster [%s] is not found or is not accessible for Kiali", cluster)
+	}
+
+	// This isn't using the cache for some reason but it never has.
+	p, err := k8s.GetPod(namespace, name)
+	if err != nil {
+		return nil, err
+	}
+
 	pod := models.Pod{}
 	pod.Parse(p)
 	return &pod, nil
@@ -459,10 +458,6 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy,
 	}
 
 	return opts, nil
-}
-
-func (in *WorkloadService) fetchWorkloads(ctx context.Context, namespace string, labelSelector string) (models.Workloads, error) {
-	return fetchWorkloads(ctx, in.businessLayer, namespace, labelSelector)
 }
 
 func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogEntry {
@@ -587,10 +582,10 @@ func isAccessLogEmpty(al *parser.AccessLog) bool {
 		al.UserAgent == "")
 }
 
-func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSelector string) (models.Workloads, error) {
+func (in *WorkloadService) fetchWorkloads(ctx context.Context, namespace string, labelSelector string) (models.Workloads, error) {
 	allWls := models.Workloads{}
-	for c := range layer.k8sClients {
-		ws, err := fetchWorkloadsFromCluster(ctx, layer, c, namespace, labelSelector)
+	for c := range in.userClients {
+		ws, err := in.fetchWorkloadsFromCluster(ctx, c, namespace, labelSelector)
 		if err != nil {
 			if errors.IsNotFound(err) || errors.IsForbidden(err) {
 				// If a cluster is not found or not accessible, then we skip it
@@ -607,7 +602,7 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 	return allWls, nil
 }
 
-func fetchWorkloadsFromCluster(ctx context.Context, layer *Layer, cluster string, namespace string, labelSelector string) (models.Workloads, error) {
+func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluster string, namespace string, labelSelector string) (models.Workloads, error) {
 	var pods []core_v1.Pod
 	var repcon []core_v1.ReplicationController
 	var dep []apps_v1.Deployment
@@ -622,15 +617,16 @@ func fetchWorkloadsFromCluster(ctx context.Context, layer *Layer, cluster string
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := layer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
+	if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
 		return nil, err
 	}
 
-	if cluster == "" {
-		cluster = kubernetes.HomeClusterName
+	userClient, ok := in.userClients[cluster]
+	if !ok {
+		return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
 	}
 
-	kubeCache := layer.Workload.cache.GetKubeCaches()[cluster]
+	kubeCache := in.cache.GetKubeCaches()[cluster]
 	if kubeCache == nil {
 		return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
 	}
@@ -679,7 +675,7 @@ func fetchWorkloadsFromCluster(ctx context.Context, layer *Layer, cluster string
 		var err error
 		if isWorkloadIncluded(kubernetes.ReplicationControllerType) {
 			// No Cache for ReplicationControllers
-			repcon, err = layer.Workload.k8s.GetReplicationControllers(namespace)
+			repcon, err = userClient.GetReplicationControllers(namespace)
 			if err != nil {
 				log.Errorf("Error fetching GetReplicationControllers per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -692,9 +688,9 @@ func fetchWorkloadsFromCluster(ctx context.Context, layer *Layer, cluster string
 		defer wg.Done()
 
 		var err error
-		if layer.Workload.k8s.IsOpenShift() && isWorkloadIncluded(kubernetes.DeploymentConfigType) {
+		if userClient.IsOpenShift() && isWorkloadIncluded(kubernetes.DeploymentConfigType) {
 			// No cache for DeploymentConfigs
-			depcon, err = layer.Workload.k8s.GetDeploymentConfigs(namespace)
+			depcon, err = userClient.GetDeploymentConfigs(namespace)
 			if err != nil {
 				log.Errorf("Error fetching DeploymentConfigs per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -723,7 +719,7 @@ func fetchWorkloadsFromCluster(ctx context.Context, layer *Layer, cluster string
 		var err error
 		if isWorkloadIncluded(kubernetes.CronJobType) {
 			// No cache for Cronjobs
-			conjbs, err = layer.Workload.k8s.GetCronJobs(namespace)
+			conjbs, err = userClient.GetCronJobs(namespace)
 			if err != nil {
 				log.Errorf("Error fetching CronJobs per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -738,7 +734,7 @@ func fetchWorkloadsFromCluster(ctx context.Context, layer *Layer, cluster string
 		var err error
 		if isWorkloadIncluded(kubernetes.JobType) {
 			// No cache for Jobs
-			jbs, err = layer.Workload.k8s.GetJobs(namespace)
+			jbs, err = userClient.GetJobs(namespace)
 			if err != nil {
 				log.Errorf("Error fetching Jobs per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -1147,7 +1143,7 @@ func fetchWorkloadsFromCluster(ctx context.Context, layer *Layer, cluster string
 		// Add the Proxy Status to the workload
 		for _, pod := range w.Pods {
 			if pod.HasIstioSidecar() && config.Get().ExternalServices.Istio.IstioAPIEnabled {
-				pod.ProxyStatus = layer.ProxyStatus.GetPodProxyStatus(namespace, pod.Name)
+				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(cluster, namespace, pod.Name)
 			}
 		}
 
@@ -1158,14 +1154,7 @@ func fetchWorkloadsFromCluster(ctx context.Context, layer *Layer, cluster string
 	return ws, nil
 }
 
-// @TODO should be merged with fetchWorkloadFromCluster method
-func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria) (*models.Workload, error) {
-	client := layer.k8sClients[kubernetes.HomeClusterName]
-
-	return fetchWorkloadFromCluster(ctx, layer, client, criteria)
-}
-
-func fetchWorkloadFromCluster(ctx context.Context, layer *Layer, client kubernetes.ClientInterface, criteria WorkloadCriteria) (*models.Workload, error) {
+func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadCriteria) (*models.Workload, error) {
 	var pods []core_v1.Pod
 	var repcon []core_v1.ReplicationController
 	var dep *apps_v1.Deployment
@@ -1177,6 +1166,9 @@ func fetchWorkloadFromCluster(ctx context.Context, layer *Layer, client kubernet
 	var ds *apps_v1.DaemonSet
 
 	wl := &models.Workload{
+		WorkloadListItem: models.WorkloadListItem{
+			Cluster: criteria.Cluster,
+		},
 		Pods:              models.Pods{},
 		Services:          []models.ServiceOverview{},
 		Runtimes:          []models.Runtime{},
@@ -1186,8 +1178,7 @@ func fetchWorkloadFromCluster(ctx context.Context, layer *Layer, client kubernet
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	// TODO: Update for multi-cluster
-	if _, err := layer.Namespace.GetNamespace(ctx, criteria.Namespace); err != nil {
+	if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, criteria.Namespace, criteria.Cluster); err != nil {
 		return nil, err
 	}
 
@@ -1200,7 +1191,15 @@ func fetchWorkloadFromCluster(ctx context.Context, layer *Layer, client kubernet
 	wg.Add(9)
 	errChan := make(chan error, 9)
 
-	kialiCache := layer.Workload.cache
+	kialiCache, err := in.cache.GetKubeCache(criteria.Cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	client, ok := in.userClients[criteria.Cluster]
+	if !ok {
+		return nil, fmt.Errorf("no user client for cluster [%s]", criteria.Cluster)
+	}
 
 	// Pods are always fetched for all workload types
 	go func() {
@@ -1524,6 +1523,9 @@ func fetchWorkloadFromCluster(ctx context.Context, layer *Layer, client kubernet
 
 	if _, exist := controllers[criteria.WorkloadName]; exist {
 		w := models.Workload{
+			WorkloadListItem: models.WorkloadListItem{
+				Cluster: criteria.Cluster,
+			},
 			Pods:              models.Pods{},
 			Services:          []models.ServiceOverview{},
 			Runtimes:          []models.Runtime{},
@@ -1714,22 +1716,22 @@ func fetchWorkloadFromCluster(ctx context.Context, layer *Layer, client kubernet
 		for _, pod := range w.Pods {
 			if pod.HasIstioSidecar() {
 				if config.Get().ExternalServices.Istio.IstioAPIEnabled {
-					pod.ProxyStatus = layer.ProxyStatus.GetPodProxyStatus(criteria.Namespace, pod.Name)
+					pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(criteria.Cluster, criteria.Namespace, pod.Name)
 				}
 			}
 			// If Ambient is enabled for pod, check if has any Waypoint proxy
 			if pod.AmbientEnabled() {
-				w.WaypointWorkloads = getWaypointForWorkload(ctx, layer, criteria.Namespace, w)
+				w.WaypointWorkloads = in.getWaypointForWorkload(ctx, criteria.Namespace, w)
 			}
 			// If the pod is a waypoint proxy, check if it is attached to a namespace or to a service account, and get the affected workloads
 			if pod.IsWaypoint() {
 				// Get waypoint workloads from a namespace
 				if pod.Labels["istio.io/gateway-name"] == "namespace" {
-					w.WaypointWorkloads = append(w.WaypointWorkloads, listWaypointWorkloadsForNamespace(ctx, layer, criteria.Namespace)...)
+					w.WaypointWorkloads = append(w.WaypointWorkloads, in.listWaypointWorkloadsForNamespace(ctx, criteria.Namespace)...)
 				} else {
 					// Get waypoint workloads from a service account
 					sa := pod.Annotations["istio.io/for-service-account"]
-					w.WaypointWorkloads = append(w.WaypointWorkloads, listWaypointWorkloadsForSA(ctx, layer, criteria.Namespace, sa)...)
+					w.WaypointWorkloads = append(w.WaypointWorkloads, in.listWaypointWorkloadsForSA(ctx, criteria.Namespace, sa)...)
 				}
 			}
 		}
@@ -1742,8 +1744,8 @@ func fetchWorkloadFromCluster(ctx context.Context, layer *Layer, client kubernet
 }
 
 // Get the Waypoint proxy for a workload
-func getWaypointForWorkload(ctx context.Context, layer *Layer, namespace string, workload models.Workload) []models.Workload {
-	wlist, err := fetchWorkloads(ctx, layer, namespace, "")
+func (in *WorkloadService) getWaypointForWorkload(ctx context.Context, namespace string, workload models.Workload) []models.Workload {
+	wlist, err := in.fetchWorkloads(ctx, namespace, "")
 	if err != nil {
 		log.Errorf("Error fetching workloads")
 		return nil
@@ -1768,7 +1770,6 @@ func getWaypointForWorkload(ctx context.Context, layer *Layer, namespace string,
 					}
 
 				}
-
 			}
 		}
 	}
@@ -1777,8 +1778,8 @@ func getWaypointForWorkload(ctx context.Context, layer *Layer, namespace string,
 
 // Return the list of workloads binded to a service account, valid when the waypoint proxy is applied to a service account
 // TODO: This is scoped by namespace
-func listWaypointWorkloadsForSA(ctx context.Context, layer *Layer, namespace string, sa string) []models.Workload {
-	wlist, err := fetchWorkloads(ctx, layer, namespace, "")
+func (in *WorkloadService) listWaypointWorkloadsForSA(ctx context.Context, namespace string, sa string) []models.Workload {
+	wlist, err := in.fetchWorkloads(ctx, namespace, "")
 	if err != nil {
 		log.Errorf("Error fetching workloads")
 	}
@@ -1797,12 +1798,11 @@ func listWaypointWorkloadsForSA(ctx context.Context, layer *Layer, namespace str
 		}
 	}
 	return workloadslist
-
 }
 
 // Return the list of workloads when the waypoint proxy is applied per namespace
-func listWaypointWorkloadsForNamespace(ctx context.Context, layer *Layer, namespace string) []models.Workload {
-	wlist, err := fetchWorkloads(ctx, layer, namespace, "")
+func (in *WorkloadService) listWaypointWorkloadsForNamespace(ctx context.Context, namespace string) []models.Workload {
+	wlist, err := in.fetchWorkloads(ctx, namespace, "")
 	if err != nil {
 		log.Errorf("Error fetching workloads")
 	}
@@ -1817,11 +1817,16 @@ func listWaypointWorkloadsForNamespace(ctx context.Context, layer *Layer, namesp
 	return workloadslist
 }
 
-func (in *WorkloadService) updateWorkload(namespace string, workloadName string, workloadType string, jsonPatch string, patchType string) error {
+func (in *WorkloadService) updateWorkload(ctx context.Context, cluster string, namespace string, workloadName string, workloadType string, jsonPatch string, patchType string) error {
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := in.businessLayer.Namespace.GetNamespace(context.TODO(), namespace); err != nil {
+	if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
 		return err
+	}
+
+	userClient, ok := in.userClients[cluster]
+	if !ok {
+		return fmt.Errorf("user client for cluster [%s] not found", cluster)
 	}
 
 	workloadTypes := []string{
@@ -1860,7 +1865,7 @@ func (in *WorkloadService) updateWorkload(namespace string, workloadName string,
 			defer wg.Done()
 			var err error
 			if isWorkloadIncluded(wkType) {
-				err = in.k8s.UpdateWorkload(namespace, workloadName, wkType, jsonPatch, patchType)
+				err = userClient.UpdateWorkload(namespace, workloadName, wkType, jsonPatch, patchType)
 			}
 			if err != nil {
 				if !errors.IsNotFound(err) {
@@ -1914,16 +1919,17 @@ func controllerPriority(type1, type2 string) string {
 }
 
 // GetWorkloadAppName returns the "Application" name (app label) that relates to a workload
-func (in *WorkloadService) GetWorkloadAppName(ctx context.Context, namespace, workload string) (string, error) {
+func (in *WorkloadService) GetWorkloadAppName(ctx context.Context, cluster, namespace, workload string) (string, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetWorkloadAppName",
 		observability.Attribute("package", "business"),
+		observability.Attribute("cluster", cluster),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("workload", workload),
 	)
 	defer end()
 
-	wkd, err := fetchWorkload(ctx, in.businessLayer, WorkloadCriteria{Namespace: namespace, WorkloadName: workload, WorkloadType: ""})
+	wkd, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: cluster, Namespace: namespace, WorkloadName: workload, WorkloadType: ""})
 	if err != nil {
 		return "", err
 	}
@@ -1936,13 +1942,18 @@ func (in *WorkloadService) GetWorkloadAppName(ctx context.Context, namespace, wo
 // streamParsedLogs fetches logs from a container in a pod, parses and decorates each log line with some metadata (of possible) and
 // sends the processed lines to the client in JSON format. Results are sent as processing is performed, so in case of any error when
 // doing processing the JSON document will be truncated.
-func (in *WorkloadService) streamParsedLogs(namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
+func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
+	userClient, ok := in.userClients[cluster]
+	if !ok {
+		return fmt.Errorf("user client for cluster [%s] not found", cluster)
+	}
+
 	k8sOpts := opts.PodLogOptions
 	// the k8s API does not support "endTime/beforeTime". So for bounded time ranges we need to
 	// discard the logs after sinceTime+duration
 	isBounded := opts.Duration != nil
 
-	logsReader, err := in.k8s.StreamPodLogs(namespace, name, &k8sOpts)
+	logsReader, err := userClient.StreamPodLogs(namespace, name, &k8sOpts)
 	if err != nil {
 		return err
 	}
@@ -2064,6 +2075,6 @@ func (in *WorkloadService) streamParsedLogs(namespace, name string, opts *LogOpt
 }
 
 // StreamPodLogs streams pod logs to an HTTP Response given the provided options
-func (in *WorkloadService) StreamPodLogs(namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
-	return in.streamParsedLogs(namespace, name, opts, w)
+func (in *WorkloadService) StreamPodLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
+	return in.streamParsedLogs(cluster, namespace, name, opts, w)
 }

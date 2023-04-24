@@ -341,13 +341,18 @@ export default class GraphDataSource {
     return params;
   };
 
-  public fetchForWorkload = (duration: DurationInSeconds, namespace: string, workload: string) => {
-    const params = this.fetchForWorkloadParams(duration, namespace, workload);
+  public fetchForWorkload = (duration: DurationInSeconds, namespace: string, workload: string, cluster?: string) => {
+    const params = this.fetchForWorkloadParams(duration, namespace, workload, cluster);
     params.showSecurity = true;
     this.fetchGraphData(params);
   };
 
-  public fetchForWorkloadParams = (duration: DurationInSeconds, namespace: string, workload: string): FetchParams => {
+  public fetchForWorkloadParams = (
+    duration: DurationInSeconds,
+    namespace: string,
+    workload: string,
+    cluster?: string
+  ): FetchParams => {
     const params = GraphDataSource.defaultFetchParams(duration, namespace);
     params.edgeLabels = [
       EdgeLabelMode.RESPONSE_TIME_GROUP,
@@ -360,6 +365,9 @@ export default class GraphDataSource {
     params.graphType = GraphType.WORKLOAD;
     params.node!.nodeType = NodeType.WORKLOAD;
     params.node!.workload = workload;
+    if (cluster) {
+      params.node!.cluster = cluster;
+    }
     return params;
   };
 

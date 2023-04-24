@@ -19,6 +19,7 @@ import (
 type IstioMetricsQuery struct {
 	prometheus.RangeQuery
 	Filters         []string
+	Cluster         string
 	Namespace       string
 	App             string
 	Workload        string
@@ -106,6 +107,7 @@ func (q *MetricsStatsQuery) GenKey() string {
 	}
 	return fmt.Sprintf("%s:%s:%s:%s", q.Target.GenKey(), peer, q.Direction, q.RawInterval)
 }
+
 func (t *Target) GenKey() string {
 	return fmt.Sprintf("%s:%s:%s", t.Namespace, t.Kind, t.Name)
 }

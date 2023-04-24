@@ -28,7 +28,8 @@ func LoggingUpdate(w http.ResponseWriter, r *http.Request) {
 
 	namespace := params["namespace"]
 	pod := params["pod"]
-	level := r.URL.Query().Get("level")
+	query := r.URL.Query()
+	level := query.Get("level")
 	switch {
 	case level == "":
 		RespondWithError(w, 400, "level query param is not set")
@@ -39,10 +40,12 @@ func LoggingUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := businessLayer.ProxyLogging.SetLogLevel(namespace, pod, level); err != nil {
+	cluster := clusterNameFromQuery(query)
+
+	if err := businessLayer.ProxyLogging.SetLogLevel(cluster, namespace, pod, level); err != nil {
 		handleErrorResponse(w, err)
 		return
 	}
-	audit(r, "UPDATE Envoy log. Namespace: "+namespace+" Pod: "+pod+" Log level:"+level)
+	audit(r, "UPDATE Envoy log. Cluster: "+cluster+" Namespace: "+namespace+" Pod: "+pod+" Log level:"+level)
 	RespondWithCode(w, 200)
 }

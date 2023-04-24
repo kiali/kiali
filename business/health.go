@@ -122,6 +122,7 @@ func (in *HealthService) GetNamespaceAppHealth(ctx context.Context, criteria Nam
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetNamespaceAppHealth",
 		observability.Attribute("package", "business"),
+		observability.Attribute("cluster", criteria.Cluster),
 		observability.Attribute("namespace", criteria.Namespace),
 		observability.Attribute("cluster", criteria.Cluster),
 		observability.Attribute("rateInterval", criteria.RateInterval),
@@ -135,7 +136,7 @@ func (in *HealthService) GetNamespaceAppHealth(ctx context.Context, criteria Nam
 		return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
 	}
 
-	appEntities, err := fetchNamespaceApps(ctx, in.businessLayer, criteria.Namespace, cluster, "")
+	appEntities, err := in.businessLayer.App.fetchNamespaceApps(ctx, criteria.Namespace, cluster, "")
 	if err != nil {
 		return nil, err
 	}
@@ -281,7 +282,7 @@ func (in *HealthService) GetNamespaceWorkloadHealth(ctx context.Context, criteri
 		return nil, err
 	}
 
-	wl, err := fetchWorkloadsFromCluster(ctx, in.businessLayer, cluster, namespace, "")
+	wl, err := in.businessLayer.Workload.fetchWorkloadsFromCluster(ctx, cluster, namespace, "")
 	if err != nil {
 		return nil, err
 	}

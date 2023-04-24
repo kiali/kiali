@@ -58,6 +58,9 @@ func createMetricsLabelsBuilder(q *models.IstioMetricsQuery) *MetricsLabelsBuild
 	if q.Aggregate != "" {
 		lb.Aggregate(q.Aggregate, q.AggregateValue)
 	}
+	if q.Cluster != "" {
+		lb.Cluster(q.Cluster)
+	}
 
 	return lb
 }

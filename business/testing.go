@@ -49,6 +49,7 @@ func WithKialiCache(cache cache.KialiCache) {
 }
 
 func newTestingCache(t *testing.T, cf kubernetes.ClientFactory, conf config.Config) cache.KialiCache {
+	t.Helper()
 	// Disabling Istio API for tests. Otherwise the cache will try and poll the Istio endpoint
 	// when the cache is created.
 	conf.ExternalServices.Istio.IstioAPIEnabled = false

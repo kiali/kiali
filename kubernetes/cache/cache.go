@@ -43,6 +43,7 @@ type namespaceCache struct {
 }
 
 type podProxyStatus struct {
+	cluster     string
 	namespace   string
 	pod         string
 	proxyStatus *kubernetes.ProxyStatus
@@ -66,7 +67,7 @@ type kialiCacheImpl struct {
 	tokenNamespaces        map[string]namespaceCache // TODO: Another option can be define here the namespaces by token/cluster
 	tokenNamespaceDuration time.Duration
 	proxyStatusLock        sync.RWMutex
-	proxyStatusNamespaces  map[string]map[string]podProxyStatus
+	proxyStatusNamespaces  map[string]map[string]map[string]podProxyStatus
 	registryStatusLock     sync.RWMutex
 	registryStatusCreated  *time.Time
 	registryStatus         *kubernetes.RegistryStatus
@@ -77,7 +78,7 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config, na
 		clientFactory:              clientFactory,
 		clientRefreshPollingPeriod: time.Duration(time.Second * 60),
 		kubeCache:                  make(map[string]KubeCache),
-		proxyStatusNamespaces:      make(map[string]map[string]podProxyStatus),
+		proxyStatusNamespaces:      make(map[string]map[string]map[string]podProxyStatus),
 		refreshDuration:            time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second,
 		tokenNamespaces:            make(map[string]namespaceCache),
 		tokenNamespaceDuration:     time.Duration(cfg.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second,
@@ -134,7 +135,7 @@ func (c *kialiCacheImpl) GetKubeCache(cluster string) (KubeCache, error) {
 	cache, found := c.kubeCache[cluster]
 	if !found {
 		// This should not happen but it probably means the user clients have clusters that the cache doesn't know about.
-		return nil, fmt.Errorf("cache for cluster %s not found", cluster)
+		return nil, fmt.Errorf("cache for cluster [%s] not found", cluster)
 	}
 	return cache, nil
 }

@@ -199,6 +199,7 @@ type ProxyStatus struct {
 
 // SyncStatus is the synchronization status between Pilot and a given Envoy
 type SyncStatus struct {
+	ClusterID     string `json:"cluster_id,omitempty"`
 	ProxyID       string `json:"proxy,omitempty"`
 	ProxyVersion  string `json:"proxy_version,omitempty"`
 	IstioVersion  string `json:"istio_version,omitempty"`
