@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Paths } from '../../config';
+import { isMultiCluster, Paths } from '../../config';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { TooltipPosition } from '@patternfly/react-core';
 import { KioskLink } from './KioskLink';
@@ -14,10 +14,18 @@ type Props = {
 export const getWorkloadLink = (name: string, namespace: string, cluster: string, query?: string): string => {
   let to = '/namespaces/' + namespace + '/' + Paths.WORKLOADS;
 
-  to = to + '/' + name + '?cluster=' + cluster;
+  to = to + '/' + name;
+
+  if (cluster && isMultiCluster()) {
+    to = to + '?cluster=' + cluster;
+  }
 
   if (!!query) {
-    to = to + '&' + query;
+    if (to.includes('?')) {
+      to = to + '&' + query;
+    } else {
+      to = to + '?' + query;
+    }
   }
 
   return to;

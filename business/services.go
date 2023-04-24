@@ -202,9 +202,9 @@ func (in *SvcService) getServiceList(ctx context.Context, criteria ServiceCriter
 		go func() {
 			defer wg.Done()
 			var err2 error
-			istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
+			istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigListPerCluster(ctx, criteria, cluster)
 			if err2 != nil {
-				log.Errorf("Error fetching IstioConfigList per namespace %s: %s", criteria.Namespace, err2)
+				log.Errorf("Error fetching IstioConfigList per cluster %s per namespace %s: %s", cluster, criteria.Namespace, err2)
 				errChan <- err2
 			}
 		}()
@@ -523,7 +523,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		go func(ctx context.Context) {
 			defer wg.Done()
 			var err2 error
-			ws, err2 = in.businessLayer.Workload.fetchWorkloads(ctx, namespace, labelsSelector)
+			ws, err2 = in.businessLayer.Workload.fetchWorkloadsFromCluster(ctx, cluster, namespace, labelsSelector)
 			if err2 != nil {
 				log.Errorf("Error fetching Workloads per namespace %s and service %s: %s", namespace, service, err2)
 				errChan <- err2
@@ -611,7 +611,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 			IncludeServiceEntries:  true,
 			IncludeVirtualServices: true,
 		}
-		istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
+		istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigListPerCluster(ctx, criteria, cluster)
 		if err2 != nil {
 			log.Errorf("Error fetching IstioConfigList per namespace %s: %s", criteria.Namespace, err2)
 			errChan <- err2

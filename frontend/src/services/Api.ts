@@ -189,6 +189,7 @@ export const getIstioConfig = (
 };
 
 export const getAllIstioConfigs = (
+  cluster: string,
   namespaces: string[],
   objects: string[],
   validate: boolean,
@@ -208,20 +209,29 @@ export const getAllIstioConfigs = (
   if (workloadSelector) {
     params.workloadSelector = workloadSelector;
   }
+  if (cluster) {
+    params.cluster = cluster;
+  }
   return newRequest<IstioConfigsMap>(HTTP_VERBS.GET, urls.allIstioConfigs(), params, {});
 };
 
-export const getIstioConfigDetail = (namespace: string, objectType: string, object: string, validate: boolean) => {
+export const getIstioConfigDetail = (
+  cluster: string,
+  namespace: string,
+  objectType: string,
+  object: string,
+  validate: boolean
+) => {
   return newRequest<IstioConfigDetails>(
     HTTP_VERBS.GET,
     urls.istioConfigDetail(namespace, objectType, object),
-    validate ? { validate: true, help: true } : {},
+    validate ? { validate: true, help: true, cluster: cluster } : { cluster: cluster },
     {}
   );
 };
 
 export const deleteIstioConfigDetail = (namespace: string, objectType: string, object: string) => {
-  return newRequest<string>(HTTP_VERBS.DELETE, urls.istioConfigDetail(namespace, objectType, object), {}, {});
+  return newRequest<string>(HTTP_VERBS.DELETE, urls.istioConfigDelete(namespace, objectType, object), {}, {});
 };
 
 export const updateIstioConfigDetail = (
@@ -230,7 +240,7 @@ export const updateIstioConfigDetail = (
   object: string,
   jsonPatch: string
 ): Promise<Response<string>> => {
-  return newRequest(HTTP_VERBS.PATCH, urls.istioConfigDetail(namespace, objectType, object), {}, jsonPatch);
+  return newRequest(HTTP_VERBS.PATCH, urls.istioConfigUpdate(namespace, objectType, object), {}, jsonPatch);
 };
 
 export const createIstioConfigDetail = (

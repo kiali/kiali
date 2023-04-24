@@ -7,6 +7,7 @@ import { EnvoySummary, Host } from '../types/IstioObjects';
 import { ActiveFilter, ActiveFiltersInfo } from '../types/Filters';
 import { FilterSelected } from '../components/Filters/StatefulFilters';
 import { kioskContextMenuAction } from '../components/Kiosk/KioskActions';
+import { HomeClusterName } from '../types/Common';
 
 export type FilterMethodMap = { [id: string]: (value, filter) => boolean };
 
@@ -15,7 +16,7 @@ export const istioConfigLink = (halfQDN: string, objectType: string): JSX.Elemen
   if (nameParts.length === 2) {
     return (
       <React.Fragment>
-        <IstioObjectLink name={nameParts[0]} namespace={nameParts[1]} type={objectType}>
+        <IstioObjectLink name={nameParts[0]} namespace={nameParts[1]} cluster={HomeClusterName} type={objectType}>
           {halfQDN}
         </IstioObjectLink>
       </React.Fragment>

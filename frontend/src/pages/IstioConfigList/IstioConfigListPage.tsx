@@ -27,6 +27,8 @@ import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import DefaultSecondaryMasthead from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
+import { isMultiCluster, serverConfig } from '../../config';
+import { HomeClusterName } from '../../types/Common';
 
 interface IstioConfigListPageState extends FilterComponent.State<IstioConfigItem> {}
 interface IstioConfigListPageProps extends FilterComponent.Props<IstioConfigItem> {
@@ -99,20 +101,42 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     );
 
     if (namespacesSelected.length !== 0) {
-      this.fetchConfigs(namespacesSelected, istioTypeFilters, istioNameFilters, configValidationFilters, activeToggles);
+      this.setState({ listItems: [] });
+      if (isMultiCluster()) {
+        for (let cluster in serverConfig.clusters) {
+          this.fetchConfigs(
+            cluster,
+            namespacesSelected,
+            istioTypeFilters,
+            istioNameFilters,
+            configValidationFilters,
+            activeToggles
+          );
+        }
+      } else {
+        this.fetchConfigs(
+          HomeClusterName,
+          namespacesSelected,
+          istioTypeFilters,
+          istioNameFilters,
+          configValidationFilters,
+          activeToggles
+        );
+      }
     } else {
       this.setState({ listItems: [] });
     }
   }
 
   fetchConfigs(
+    cluster: string,
     namespaces: string[],
     istioTypeFilters: string[],
     istioNameFilters: string[],
     configValidationFilters: string[],
     toggles: ActiveTogglesInfo
   ) {
-    const configsPromises = this.fetchIstioConfigs(namespaces, istioTypeFilters, istioNameFilters, toggles);
+    const configsPromises = this.fetchIstioConfigs(cluster, namespaces, istioTypeFilters, istioNameFilters, toggles);
 
     configsPromises
       .then(items =>
@@ -130,7 +154,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
       .then(sorted => {
         // Update the view when data is fetched
         this.setState({
-          listItems: sorted
+          listItems: this.state.listItems.concat(sorted)
         });
       })
       .catch(istioError => {
@@ -143,6 +167,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
 
   // Fetch the Istio configs, apply filters and map them into flattened list items
   fetchIstioConfigs(
+    cluster: string,
     namespaces: string[],
     typeFilters: string[],
     istioNameFilters: string[],
@@ -154,19 +179,19 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     }
     // Request all configs from all namespaces, as in backend all configs are always loaded from registry
     return this.promises
-      .register('configs', API.getAllIstioConfigs([], typeFilters, validate, '', ''))
+      .register('configs' + cluster, API.getAllIstioConfigs(cluster, namespaces, typeFilters, validate, '', ''))
       .then(response => {
         let istioItems: IstioConfigItem[] = [];
         // filter by selected namespaces
         namespaces.forEach(ns => {
-          istioItems = istioItems.concat(toIstioItems(filterByName(response.data[ns], istioNameFilters)));
+          istioItems = istioItems.concat(toIstioItems(filterByName(response.data[ns], istioNameFilters), cluster));
         });
         return istioItems;
       });
   }
 
   render() {
-    const hiddenColumns = [] as string[];
+    const hiddenColumns = isMultiCluster() ? ([] as string[]) : ['cluster'];
     if (this.props.istioAPIEnabled) {
       Toggles.getToggles().forEach((v, k) => {
         if (!v) {

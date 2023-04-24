@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { CancelablePromise } from '../utils/CancelablePromises';
 import * as API from '../services/Api';
-import { DurationInSeconds, TimeInMilliseconds } from '../types/Common';
+import {DurationInSeconds, HomeClusterName, TimeInMilliseconds} from '../types/Common';
 import { ServiceDetailsInfo } from '../types/ServiceInfo';
 import { getGatewaysAsList, PeerAuthentication } from '../types/IstioObjects';
 import { AxiosError } from 'axios';
@@ -29,8 +29,9 @@ export function useServiceDetail(
     }
 
     setIsLoading(true); // Mark as loading
-    let getDetailPromise = API.getServiceDetail(namespace, serviceName, false, cluster, duration);
-    let getGwPromise = API.getAllIstioConfigs([], ['gateways'], false, '', '');
+    let getDetailPromise = API.getServiceDetail(namespace, serviceName, false, HomeClusterName, duration);
+    // @TODO add cluster
+    let getGwPromise = API.getAllIstioConfigs(HomeClusterName, [], ['gateways'], false, '', '');
     let getPeerAuthsPromise = API.getIstioConfig(namespace, ['peerauthentications'], false, '', '');
 
     const allPromise = new CancelablePromise(Promise.all([getDetailPromise, getGwPromise, getPeerAuthsPromise]));

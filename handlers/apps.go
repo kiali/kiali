@@ -30,7 +30,7 @@ func (p *appParams) extract(r *http.Request) {
 	query := r.URL.Query()
 	p.baseExtract(r, vars)
 	p.Namespace = vars["namespace"]
-	if query.Has("cluster") && query.Get("cluster") != "null" {
+	if query.Get("cluster") != "" {
 		p.Cluster = query.Get("cluster")
 	}
 	p.AppName = vars["app"]

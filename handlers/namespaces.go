@@ -33,8 +33,16 @@ func NamespaceList(w http.ResponseWriter, r *http.Request) {
 // NamespaceValidationSummary is the API handler to fetch validations summary to be displayed.
 // It is related to all the Istio Objects within the namespace
 func NamespaceValidationSummary(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
+
+	cluster := ""
+	if query.Get("cluster") != "" {
+		cluster = query.Get("cluster")
+	} else {
+		cluster = kubernetes.HomeClusterName
+	}
 
 	business, err := getBusiness(r)
 	if err != nil {
@@ -44,7 +52,7 @@ func NamespaceValidationSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var validationSummary models.IstioValidationSummary
-	istioConfigValidationResults, errValidations := business.Validations.GetValidations(r.Context(), namespace, "", "")
+	istioConfigValidationResults, errValidations := business.Validations.GetValidations(r.Context(), cluster, namespace, "", "")
 	if errValidations != nil {
 		log.Error(errValidations)
 		RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
@@ -64,6 +72,13 @@ func ConfigValidationSummary(w http.ResponseWriter, r *http.Request) {
 	if len(namespaces) > 0 {
 		nss = strings.Split(namespaces, ",")
 	}
+	cluster := ""
+	if params.Has("cluster") && params.Get("cluster") != "" {
+		cluster = params.Get("cluster")
+	} else {
+		cluster = kubernetes.HomeClusterName
+	}
+
 	business, err := getBusiness(r)
 	if err != nil {
 		log.Error(err)
@@ -72,7 +87,7 @@ func ConfigValidationSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	validationSummaries := models.ValidationSummaries{}
-	istioConfigValidationResults, errValidations := business.Validations.GetValidations(r.Context(), "", "", "")
+	istioConfigValidationResults, errValidations := business.Validations.GetValidations(r.Context(), cluster, "", "", "")
 	if errValidations != nil {
 		log.Error(errValidations)
 		RespondWithError(w, http.StatusInternalServerError, errValidations.Error())

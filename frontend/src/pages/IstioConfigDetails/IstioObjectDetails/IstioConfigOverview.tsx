@@ -28,6 +28,7 @@ import { GetIstioObjectUrl } from '../../../components/Link/IstioObjectLink';
 
 interface IstioConfigOverviewProps {
   istioObjectDetails: IstioConfigDetails;
+  cluster: string;
   istioValidations?: ObjectValidation;
   namespace: string;
   statusMessages: ValidationMessage[];
@@ -109,7 +110,12 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
       // here a "/console" is required as external link is used
       urlInKiali =
         '/console' +
-        GetIstioObjectUrl(istioObject.metadata.name, istioObject.metadata.namespace, istioObject.kind.toLowerCase());
+        GetIstioObjectUrl(
+          istioObject.metadata.name,
+          istioObject.metadata.namespace,
+          this.props.cluster,
+          istioObject.kind.toLowerCase()
+        );
     }
 
     return (
@@ -164,7 +170,10 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
 
         {this.props.istioValidations?.references && (
           <StackItem>
-            <IstioConfigValidationReferences objectReferences={this.props.istioValidations.references} />
+            <IstioConfigValidationReferences
+              objectReferences={this.props.istioValidations.references}
+              cluster={this.props.cluster}
+            />
           </StackItem>
         )}
 
@@ -175,6 +184,7 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
               serviceReferences={this.props.serviceReferences}
               workloadReferences={this.props.workloadReferences}
               isValid={this.props.istioValidations?.valid}
+              cluster={this.props.cluster}
             />
           </StackItem>
         )}

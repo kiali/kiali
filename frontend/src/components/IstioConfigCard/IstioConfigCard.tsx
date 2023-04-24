@@ -54,7 +54,12 @@ export default class IstioConfigCard extends React.Component<Props> {
 
   overviewLink(item: IstioConfigItem) {
     return (
-      <IstioObjectLinkContainer name={item.name} namespace={item.namespace || ''} type={item.type}>
+      <IstioObjectLinkContainer
+        name={item.name}
+        namespace={item.namespace || ''}
+        cluster={item.cluster}
+        type={item.type}
+      >
         {item.name}
       </IstioObjectLinkContainer>
     );

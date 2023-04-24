@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Paths } from '../../config';
+import { isMultiCluster, Paths } from '../../config';
 import { Link } from 'react-router-dom';
 import { IstioTypes } from '../VirtualList/Config';
 import { PFBadge } from 'components/Pf/PfBadges';
@@ -21,6 +21,7 @@ type ReduxProps = {
 type ReferenceIstioObjectProps = {
   name: string;
   namespace: string;
+  cluster: string;
   type: string;
   subType?: string;
   query?: string;
@@ -31,14 +32,28 @@ type IstioObjectProps = ReduxProps &
     children: React.ReactNode;
   };
 
-export const GetIstioObjectUrl = (name: string, namespace: string, type: string, query?: string): string => {
+export const GetIstioObjectUrl = (
+  name: string,
+  namespace: string,
+  cluster: string,
+  type: string,
+  query?: string
+): string => {
   const istioType = IstioTypes[type];
   let to = '/namespaces/' + namespace + '/' + Paths.ISTIO;
 
   to = to + '/' + istioType.url + '/' + name;
 
+  if (cluster && isMultiCluster()) {
+    to = to + '?cluster=' + cluster;
+  }
+
   if (!!query) {
-    to = to + '?' + query;
+    if (to.includes('?')) {
+      to = to + '&' + query;
+    } else {
+      to = to + '?' + query;
+    }
   }
 
   return to;
@@ -46,7 +61,7 @@ export const GetIstioObjectUrl = (name: string, namespace: string, type: string,
 
 export class ReferenceIstioObjectLink extends React.Component<ReferenceIstioObjectProps> {
   render() {
-    const { name, namespace, type, subType } = this.props;
+    const { name, namespace, cluster, type, subType } = this.props;
     const istioType = IstioTypes[type];
     let showLink = true;
     let showTooltip = false;
@@ -64,7 +79,7 @@ export class ReferenceIstioObjectLink extends React.Component<ReferenceIstioObje
       <>
         <PFBadge badge={istioType.badge} position={TooltipPosition.top} />
         {showLink && (
-          <IstioObjectLinkContainer name={name} namespace={namespace} type={type} subType={subType}>
+          <IstioObjectLinkContainer name={name} namespace={namespace} cluster={cluster} type={type} subType={subType}>
             {reference}
           </IstioObjectLinkContainer>
         )}
@@ -81,8 +96,8 @@ export class ReferenceIstioObjectLink extends React.Component<ReferenceIstioObje
 
 class IstioObjectLink extends React.Component<IstioObjectProps> {
   render() {
-    const { name, namespace, type, query } = this.props;
-    const href = GetIstioObjectUrl(name, namespace, type, query);
+    const { name, namespace, cluster, type, query } = this.props;
+    const href = GetIstioObjectUrl(name, namespace, cluster, type, query);
     return isParentKiosk(this.props.kiosk) ? (
       <Link
         to={''}
@@ -93,6 +108,7 @@ class IstioObjectLink extends React.Component<IstioObjectProps> {
         {this.props.children}
       </Link>
     ) : (
+      // @TODO put cluster in link when all objects have multicluster support
       <Link to={href} data-test={type + '-' + namespace + '-' + name}>
         {this.props.children}
       </Link>

@@ -5,6 +5,7 @@ import { ObjectReference } from '../../types/IstioObjects';
 
 interface Props {
   objectReferences: ObjectReference[];
+  cluster: string;
 }
 
 class ValidationReferences extends React.Component<Props> {
@@ -19,6 +20,7 @@ class ValidationReferences extends React.Component<Props> {
             return (
               <StackItem key={'rel-object-' + i}>
                 <ReferenceIstioObjectLink
+                  cluster={this.props.cluster}
                   name={reference.name}
                   type={reference.objectType}
                   namespace={reference.namespace}

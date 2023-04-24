@@ -129,6 +129,10 @@ const conf = {
       istioConfigCreate: (namespace: string, objectType: string) => `api/namespaces/${namespace}/istio/${objectType}`,
       istioConfigDetail: (namespace: string, objectType: string, object: string) =>
         `api/namespaces/${namespace}/istio/${objectType}/${object}`,
+      istioConfigDelete: (namespace: string, objectType: string, object: string) =>
+        `api/namespaces/${namespace}/istio/${objectType}/${object}`,
+      istioConfigUpdate: (namespace: string, objectType: string, object: string) =>
+        `api/namespaces/${namespace}/istio/${objectType}/${object}`,
       istioPermissions: 'api/istio/permissions',
       jaeger: 'api/jaeger',
       appTraces: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/traces`,

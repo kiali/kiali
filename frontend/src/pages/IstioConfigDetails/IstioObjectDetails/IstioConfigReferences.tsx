@@ -4,13 +4,13 @@ import { ServiceLink } from 'components/Link/ServiceLink';
 import { WorkloadLink } from 'components/Link/WorkloadLink';
 import * as React from 'react';
 import { ObjectReference, ServiceReference, WorkloadReference } from 'types/IstioObjects';
-import { HomeClusterName } from '../../../types/Common';
 
 interface IstioConfigReferencesProps {
   objectReferences: ObjectReference[];
   serviceReferences: ServiceReference[];
   workloadReferences: WorkloadReference[];
   isValid: boolean | undefined;
+  cluster: string;
 }
 
 class IstioConfigReferences extends React.Component<IstioConfigReferencesProps> {
@@ -50,7 +50,7 @@ class IstioConfigReferences extends React.Component<IstioConfigReferencesProps> 
           this.props.serviceReferences.map(reference => {
             return (
               <StackItem>
-                <ServiceLink name={reference.name} namespace={reference.namespace} />
+                <ServiceLink name={reference.name} namespace={reference.namespace} cluster={this.props.cluster} />
               </StackItem>
             );
           })}
@@ -58,7 +58,7 @@ class IstioConfigReferences extends React.Component<IstioConfigReferencesProps> 
           this.props.workloadReferences.map(reference => {
             return (
               <StackItem>
-                <WorkloadLink name={reference.name} namespace={reference.namespace} cluster={HomeClusterName} />
+                <WorkloadLink name={reference.name} namespace={reference.namespace} cluster={this.props.cluster} />
               </StackItem>
             );
           })}
@@ -69,6 +69,7 @@ class IstioConfigReferences extends React.Component<IstioConfigReferencesProps> 
                 <ReferenceIstioObjectLink
                   name={reference.name}
                   namespace={reference.namespace}
+                  cluster={this.props.cluster}
                   type={reference.objectType}
                 />
               </StackItem>
