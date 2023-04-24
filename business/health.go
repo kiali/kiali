@@ -23,7 +23,6 @@ type HealthService struct {
 
 type NamespaceHealthCriteria struct {
 	IncludeMetrics bool
-	Cluster        string
 	Namespace      string
 	Cluster        string
 	QueryTime      time.Time
@@ -137,7 +136,7 @@ func (in *HealthService) GetNamespaceAppHealth(ctx context.Context, criteria Nam
 		return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
 	}
 
-	appEntities, err := fetchNamespaceApps(ctx, in.businessLayer, criteria.Namespace, cluster, "")
+	appEntities, err := in.businessLayer.App.fetchNamespaceApps(ctx, criteria.Namespace, cluster, "")
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +282,7 @@ func (in *HealthService) GetNamespaceWorkloadHealth(ctx context.Context, criteri
 		return nil, err
 	}
 
-	wl, err := fetchWorkloadsFromCluster(ctx, in.businessLayer, cluster, namespace, "")
+	wl, err := in.businessLayer.Workload.fetchWorkloadsFromCluster(ctx, cluster, namespace, "")
 	if err != nil {
 		return nil, err
 	}
