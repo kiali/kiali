@@ -40,7 +40,7 @@ func TestGetAllRequestRates(t *testing.T) {
 			Metric:    model.Metric{"foo": "bar"},
 		},
 	}
-	api.OnQueryTime(`rate(istio_requests_total{destination_service_namespace="ns",source_workload_namespace!="ns"}[5m]) > 0`, &queryTime, vectorQ1)
+	api.OnQueryTime(`rate(istio_requests_total{destination_service_namespace="ns",source_workload_namespace!="ns",destination_cluster="east"}[5m]) > 0`, &queryTime, vectorQ1)
 
 	vectorQ2 := model.Vector{
 		&model.Sample{
@@ -48,9 +48,9 @@ func TestGetAllRequestRates(t *testing.T) {
 			Value:     model.SampleValue(2),
 			Metric:    model.Metric{"foo": "bar"}},
 	}
-	api.OnQueryTime(`rate(istio_requests_total{source_workload_namespace="ns"}[5m]) > 0`, &queryTime, vectorQ2)
+	api.OnQueryTime(`rate(istio_requests_total{source_workload_namespace="ns",source_cluster="east"}[5m]) > 0`, &queryTime, vectorQ2)
 
-	rates, _ := client.GetAllRequestRates("ns", "5m", queryTime)
+	rates, _ := client.GetAllRequestRates("ns", "east", "5m", queryTime)
 	assert.Equal(t, 2, rates.Len())
 	assert.Equal(t, vectorQ1[0], rates[0])
 	assert.Equal(t, vectorQ2[0], rates[1])
@@ -72,7 +72,7 @@ func TestGetAllRequestRatesIstioSystem(t *testing.T) {
 			Metric:    model.Metric{"foo": "bar"},
 		},
 	}
-	api.OnQueryTime(`rate(istio_requests_total{destination_service_namespace="istio-system",source_workload_namespace!="istio-system"}[5m]) > 0`, &queryTime, vectorQ1)
+	api.OnQueryTime(`rate(istio_requests_total{destination_service_namespace="istio-system",source_workload_namespace!="istio-system",destination_cluster="east"}[5m]) > 0`, &queryTime, vectorQ1)
 
 	vectorQ2 := model.Vector{
 		&model.Sample{
@@ -80,9 +80,9 @@ func TestGetAllRequestRatesIstioSystem(t *testing.T) {
 			Value:     model.SampleValue(2),
 			Metric:    model.Metric{"foo": "bar"}},
 	}
-	api.OnQueryTime(`rate(istio_requests_total{source_workload_namespace="istio-system"}[5m]) > 0`, &queryTime, vectorQ2)
+	api.OnQueryTime(`rate(istio_requests_total{source_workload_namespace="istio-system",source_cluster="east"}[5m]) > 0`, &queryTime, vectorQ2)
 
-	rates, _ := client.GetAllRequestRates("istio-system", "5m", queryTime)
+	rates, _ := client.GetAllRequestRates("istio-system", "east", "5m", queryTime)
 	assert.Equal(t, 2, rates.Len())
 	assert.Equal(t, vectorQ1[0], rates[0])
 	assert.Equal(t, vectorQ2[0], rates[1])
@@ -104,9 +104,9 @@ func TestGetNamespaceServicesRequestRates(t *testing.T) {
 			Metric:    model.Metric{"foo": "bar"},
 		},
 	}
-	api.OnQueryTime(`rate(istio_requests_total{destination_service_namespace="ns"}[5m]) > 0`, &queryTime, vectorQ1)
+	api.OnQueryTime(`rate(istio_requests_total{destination_service_namespace="ns",destination_cluster="east"}[5m]) > 0`, &queryTime, vectorQ1)
 
-	rates, _ := client.GetNamespaceServicesRequestRates("ns", "5m", queryTime)
+	rates, _ := client.GetNamespaceServicesRequestRates("ns", "east", "5m", queryTime)
 	assert.Equal(t, 1, rates.Len())
 	assert.Equal(t, vectorQ1[0], rates[0])
 }

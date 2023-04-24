@@ -164,7 +164,7 @@ func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAC
 	homeClusterName := config.Get().KubernetesConfig.ClusterName
 	// TODO: Modify the k8s argument to other services to pass the whole k8s map if needed
 	temporaryLayer.App = AppService{prom: prom, userClients: userClients, businessLayer: temporaryLayer}
-	temporaryLayer.Health = HealthService{prom: prom, businessLayer: temporaryLayer}
+	temporaryLayer.Health = HealthService{prom: prom, businessLayer: temporaryLayer, userClients: userClients}
 	temporaryLayer.IstioConfig = IstioConfigService{k8s: userClients[homeClusterName], cache: kialiCache, businessLayer: temporaryLayer}
 	temporaryLayer.IstioStatus = IstioStatusService{k8s: userClients[homeClusterName], businessLayer: temporaryLayer}
 	temporaryLayer.IstioCerts = IstioCertsService{k8s: userClients[homeClusterName], businessLayer: temporaryLayer}

@@ -24,12 +24,12 @@ import * as API from '../../services/Api';
 import {
   DEGRADED,
   FAILURE,
-  Health,
   HEALTHY,
   NOT_READY,
-  NamespaceAppHealth,
   NamespaceServiceHealth,
-  NamespaceWorkloadHealth
+  NamespaceWorkloadHealth,
+  Health,
+  NamespaceAppHealth
 } from '../../types/Health';
 import { SortField } from '../../types/SortFilters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
@@ -244,6 +244,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             const previous = this.state.namespaces.find(prev => prev.name === ns.name);
             return {
               name: ns.name,
+              cluster: ns.cluster,
               status: previous ? previous.status : undefined,
               tlsStatus: previous ? previous.tlsStatus : undefined,
               metrics: previous ? previous.metrics : undefined,
@@ -358,6 +359,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       chunk.map(nsInfo => {
         const healthPromise: Promise<NamespaceAppHealth | NamespaceWorkloadHealth | NamespaceServiceHealth> = apiFunc(
           nsInfo.name,
+          nsInfo.cluster ? nsInfo.cluster : '',
           duration
         );
         return healthPromise.then(rs => ({ health: rs, nsInfo: nsInfo }));
@@ -372,6 +374,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             inSuccess: [],
             notAvailable: []
           };
+
           Object.keys(result.health).forEach(item => {
             const health: Health = result.health[item];
             const status = health.getGlobalStatus();

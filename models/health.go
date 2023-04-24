@@ -6,13 +6,13 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
-// NamespaceAppHealth is an alias of map of app name x health
+// NamespaceAppsHealth is a list of app name x health for a given namespace
 type NamespaceAppHealth map[string]*AppHealth
 
-// NamespaceServiceHealth is an alias of map of service name x health
+// NamespaceServicesHealth is a list of service name x health for a given namespace
 type NamespaceServiceHealth map[string]*ServiceHealth
 
-// NamespaceWorkloadHealth is an alias of map of workload name x health
+// NamespaceWorkloadsHealth is a list of workload name x health for a given namespace
 type NamespaceWorkloadHealth map[string]*WorkloadHealth
 
 // ServiceHealth contains aggregated health from various sources, for a given service

@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
 )
@@ -38,7 +39,7 @@ func NamespaceHealth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	healthCriteria := business.NamespaceHealthCriteria{Namespace: p.Namespace, RateInterval: rateInterval, QueryTime: p.QueryTime, IncludeMetrics: true}
+	healthCriteria := business.NamespaceHealthCriteria{Namespace: p.Namespace, Cluster: p.Cluster, RateInterval: rateInterval, QueryTime: p.QueryTime, IncludeMetrics: true}
 	switch p.Type {
 	case "app":
 		health, err := businessLayer.Health.GetNamespaceAppHealth(r.Context(), healthCriteria)
@@ -65,6 +66,8 @@ func NamespaceHealth(w http.ResponseWriter, r *http.Request) {
 }
 
 type baseHealthParams struct {
+	// Cluster name
+	Cluster string `json:"cluster"`
 	// The namespace scope
 	//
 	// in: path
@@ -74,7 +77,6 @@ type baseHealthParams struct {
 	// in: query
 	// default: 10m
 	RateInterval string `json:"rateInterval"`
-
 	// The time to use for the prometheus query
 	QueryTime time.Time
 }
@@ -93,6 +95,12 @@ func (p *baseHealthParams) baseExtract(r *http.Request, vars map[string]string) 
 		}
 	}
 	p.Namespace = vars["namespace"]
+	cluster := queryParams.Get("cluster")
+	if cluster != "" {
+		p.Cluster = cluster
+	} else {
+		p.Cluster = config.Get().KubernetesConfig.ClusterName
+	}
 }
 
 // namespaceHealthParams holds the path and query parameters for NamespaceHealth

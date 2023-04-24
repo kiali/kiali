@@ -29,11 +29,11 @@ type ClientInterface interface {
 	FetchHistogramValues(metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error)
 	FetchRange(metricName, labels, grouping, aggregator string, q *RangeQuery) Metric
 	FetchRateRange(metricName string, labels []string, grouping string, q *RangeQuery) Metric
-	GetAllRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error)
+	GetAllRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetAppRequestRates(namespace, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
 	GetConfiguration() (prom_v1.ConfigResult, error)
 	GetFlags() (prom_v1.FlagsResult, error)
-	GetNamespaceServicesRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error)
+	GetNamespaceServicesRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetServiceRequestRates(namespace, service, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetWorkloadRequestRates(namespace, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
 	GetMetricsForLabels(metricNames []string, labels string) ([]string, error)
@@ -125,19 +125,19 @@ func (in *Client) Inject(api prom_v1.API) {
 // be inflated due to duplication, and therefore should be used mainly for calculating ratios
 // (e.g total rates / error rates).
 // Returns (rates, error)
-func (in *Client) GetAllRequestRates(namespace string, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+func (in *Client) GetAllRequestRates(namespace, cluster string, ratesInterval string, queryTime time.Time) (model.Vector, error) {
 	log.Tracef("GetAllRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
 	if promCache != nil {
-		if isCached, result := promCache.GetAllRequestRates(namespace, ratesInterval, queryTime); isCached {
+		if isCached, result := promCache.GetAllRequestRates(namespace, cluster, ratesInterval, queryTime); isCached {
 			return result, nil
 		}
 	}
-	result, err := getAllRequestRates(in.ctx, in.api, namespace, queryTime, ratesInterval)
+	result, err := getAllRequestRates(in.ctx, in.api, namespace, cluster, queryTime, ratesInterval)
 	if err != nil {
 		return result, err
 	}
 	if promCache != nil {
-		promCache.SetAllRequestRates(namespace, ratesInterval, queryTime, result)
+		promCache.SetAllRequestRates(namespace, cluster, ratesInterval, queryTime, result)
 	}
 	return result, nil
 }
@@ -147,19 +147,19 @@ func (in *Client) GetAllRequestRates(namespace string, ratesInterval string, que
 // be inflated due to duplication, and therefore should be used mainly for calculating ratios
 // (e.g total rates / error rates).
 // Returns (rates, error)
-func (in *Client) GetNamespaceServicesRequestRates(namespace string, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+func (in *Client) GetNamespaceServicesRequestRates(namespace, cluster string, ratesInterval string, queryTime time.Time) (model.Vector, error) {
 	log.Tracef("GetNamespaceServicesRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
 	if promCache != nil {
-		if isCached, result := promCache.GetNamespaceServicesRequestRates(namespace, ratesInterval, queryTime); isCached {
+		if isCached, result := promCache.GetNamespaceServicesRequestRates(namespace, cluster, ratesInterval, queryTime); isCached {
 			return result, nil
 		}
 	}
-	result, err := getNamespaceServicesRequestRates(in.ctx, in.api, namespace, queryTime, ratesInterval)
+	result, err := getNamespaceServicesRequestRates(in.ctx, in.api, namespace, cluster, queryTime, ratesInterval)
 	if err != nil {
 		return result, err
 	}
 	if promCache != nil {
-		promCache.SetNamespaceServicesRequestRates(namespace, ratesInterval, queryTime, result)
+		promCache.SetNamespaceServicesRequestRates(namespace, cluster, ratesInterval, queryTime, result)
 	}
 	return result, nil
 }
