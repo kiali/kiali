@@ -155,8 +155,6 @@ func (a *HealthAppender) attachHealthConfig(trafficMap graph.TrafficMap, globalI
 }
 
 func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo) {
-	conf := config.Get()
-
 	var nodesWithHealth []*graph.Node
 	type healthRequest struct {
 		app      bool
