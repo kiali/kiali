@@ -184,7 +184,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err = in.businessLayer.Namespace.GetNamespace(ctx, namespace); err != nil {
+	if _, err = in.businessLayer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
 		return nil, istioReferences, err
 	}
 

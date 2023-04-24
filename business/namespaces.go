@@ -571,6 +571,9 @@ func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace
 				return nil, errC
 			}
 		} else {
+			if _, ok := in.userClients[cluster]; !ok {
+				return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
+			}
 			ns, errC = in.userClients[cluster].GetNamespace(namespace)
 			if errC != nil {
 				return nil, errC

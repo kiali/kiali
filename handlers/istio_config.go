@@ -134,13 +134,8 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 		includeHelp = true
 	}
 
-	cluster := ""
-	if query.Get("cluster") != "" {
-		cluster = query.Get("cluster")
-	} else {
-		cluster = kubernetes.HomeClusterName
-	}
-	if cluster != kubernetes.HomeClusterName {
+	cluster := clusterNameFromQuery(query)
+	if cluster != config.Get().KubernetesConfig.ClusterName {
 		// @TODO do not include validations from other clusters yet
 		includeValidations = false
 	}
