@@ -54,11 +54,10 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		workloadSelector = query.Get("workloadSelector")
 	}
 
-	cluster := ""
-	if query.Get("cluster") != "" {
-		cluster = query.Get("cluster")
-	} else {
-		cluster = kubernetes.HomeClusterName
+	cluster := clusterNameFromQuery(query)
+	if cluster != config.Get().KubernetesConfig.ClusterName {
+		// @TODO do not include validations from other clusters yet
+		includeValidations = false
 	}
 
 	criteria := business.ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelector, allNamespaces)
