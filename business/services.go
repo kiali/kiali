@@ -224,7 +224,7 @@ func (in *SvcService) getServiceList(ctx context.Context, criteria ServiceCriter
 	if criteria.IncludeHealth {
 		for i, sv := range services.Services {
 			// TODO: Fix health for multi-cluster
-			services.Services[i].Health, err = in.businessLayer.Health.GetServiceHealth(ctx, sv.Cluster, criteria.Namespace, sv.Name, criteria.RateInterval, criteria.QueryTime, sv.ParseToService())
+			services.Services[i].Health, err = in.businessLayer.Health.GetServiceHealth(ctx, criteria.Namespace, sv.Cluster, sv.Name, criteria.RateInterval, criteria.QueryTime, sv.ParseToService())
 			if err != nil {
 				log.Errorf("Error fetching health per service %s: %s", sv.Name, err)
 			}
