@@ -41,7 +41,7 @@ func TestGetServiceHealth(t *testing.T) {
 	prom := new(prometheustest.PromClientMock)
 
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
-	prom.MockServiceRequestRates("ns", "httpbin", serviceRates)
+	prom.MockServiceRequestRates("ns", conf.KubernetesConfig.ClusterName, "httpbin", serviceRates)
 
 	setupGlobalMeshConfig()
 	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, clients, prom, nil), userClients: clients}
@@ -49,7 +49,7 @@ func TestGetServiceHealth(t *testing.T) {
 	mockSvc := models.Service{}
 	mockSvc.Name = "httpbin"
 
-	health, _ := hs.GetServiceHealth(context.TODO(), "ns", "httpbin", "1m", queryTime, &mockSvc)
+	health, _ := hs.GetServiceHealth(context.TODO(), "ns", conf.KubernetesConfig.ClusterName, "httpbin", "1m", queryTime, &mockSvc)
 
 	prom.AssertNumberOfCalls(t, "GetServiceRequestRates", 1)
 	result := map[string]map[string]float64{
@@ -92,7 +92,7 @@ func TestGetAppHealth(t *testing.T) {
 	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, clients, prom, nil), userClients: clients}
 
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
-	prom.MockAppRequestRates("ns", "reviews", otherRatesIn, otherRatesOut)
+	prom.MockAppRequestRates("ns", conf.KubernetesConfig.ClusterName, "reviews", otherRatesIn, otherRatesOut)
 
 	mockWkd := models.Workload{}
 	mockWkd.Name = "reviews-v1"
@@ -102,7 +102,7 @@ func TestGetAppHealth(t *testing.T) {
 		Workloads: models.Workloads{&mockWkd},
 	}
 
-	health, _ := hs.GetAppHealth(context.TODO(), "ns", "reviews", "1m", queryTime, &mockApp)
+	health, _ := hs.GetAppHealth(context.TODO(), "ns", conf.KubernetesConfig.ClusterName, "reviews", "1m", queryTime, &mockApp)
 
 	prom.AssertNumberOfCalls(t, "GetAppRequestRates", 1)
 	result := map[string]map[string]float64{
@@ -142,7 +142,7 @@ func TestGetWorkloadHealth(t *testing.T) {
 	prom := new(prometheustest.PromClientMock)
 
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
-	prom.MockWorkloadRequestRates("ns", "reviews-v1", otherRatesIn, otherRatesOut)
+	prom.MockWorkloadRequestRates("ns", conf.KubernetesConfig.ClusterName, "reviews-v1", otherRatesIn, otherRatesOut)
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
@@ -152,7 +152,7 @@ func TestGetWorkloadHealth(t *testing.T) {
 	mockWorkload.Name = "reviews-v1"
 	mockWorkload.IstioSidecar = true
 
-	health, _ := hs.GetWorkloadHealth(context.TODO(), "ns", "reviews-v1", "1m", queryTime, &mockWorkload)
+	health, _ := hs.GetWorkloadHealth(context.TODO(), "ns", conf.KubernetesConfig.ClusterName, "reviews-v1", "1m", queryTime, &mockWorkload)
 
 	prom.AssertNumberOfCalls(t, "GetWorkloadRequestRates", 1)
 	result := map[string]map[string]float64{
@@ -194,7 +194,7 @@ func TestGetAppHealthWithoutIstio(t *testing.T) {
 	prom := new(prometheustest.PromClientMock)
 
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
-	prom.MockAppRequestRates("ns", "reviews", otherRatesIn, otherRatesOut)
+	prom.MockAppRequestRates("ns", conf.KubernetesConfig.ClusterName, "reviews", otherRatesIn, otherRatesOut)
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
@@ -202,7 +202,7 @@ func TestGetAppHealthWithoutIstio(t *testing.T) {
 
 	mockApp := appDetails{}
 
-	health, _ := hs.GetAppHealth(context.TODO(), "ns", "reviews", "1m", queryTime, &mockApp)
+	health, _ := hs.GetAppHealth(context.TODO(), "ns", conf.KubernetesConfig.ClusterName, "reviews", "1m", queryTime, &mockApp)
 
 	prom.AssertNumberOfCalls(t, "GetAppRequestRates", 0)
 	assert.Equal(emptyResult, health.Requests.Inbound)
@@ -227,7 +227,7 @@ func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
 	prom := new(prometheustest.PromClientMock)
 
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
-	prom.MockWorkloadRequestRates("ns", "reviews-v1", otherRatesIn, otherRatesOut)
+	prom.MockWorkloadRequestRates("ns", conf.KubernetesConfig.ClusterName, "reviews-v1", otherRatesIn, otherRatesOut)
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
@@ -236,7 +236,7 @@ func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
 	mockWorkload := models.Workload{}
 	mockWorkload.Name = "reviews-v1"
 
-	health, _ := hs.GetWorkloadHealth(context.TODO(), "ns", "reviews-v1", "1m", queryTime, &mockWorkload)
+	health, _ := hs.GetWorkloadHealth(context.TODO(), "ns", conf.KubernetesConfig.ClusterName, "reviews-v1", "1m", queryTime, &mockWorkload)
 
 	prom.AssertNumberOfCalls(t, "GetWorkloadRequestRates", 0)
 	assert.Equal(emptyResult, health.Requests.Inbound)
