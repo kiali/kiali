@@ -210,6 +210,24 @@ func TestGetIstioConfigDetails(t *testing.T) {
 	assert.Error(err)
 }
 
+func TestCheckMulticlusterPermissions(t *testing.T) {
+	assert := assert.New(t)
+
+	configService := mockGetIstioConfigDetailsMulticluster(t)
+
+	istioConfigDetails, err := configService.GetIstioConfigDetails(context.TODO(), kubernetes.HomeClusterName, "test", "gateways", "gw-1")
+	assert.Equal("gw-1", istioConfigDetails.Gateway.Name)
+	assert.True(istioConfigDetails.Permissions.Update)
+	assert.False(istioConfigDetails.Permissions.Delete)
+	assert.Nil(err)
+
+	istioConfigDetailsRemote, err := configService.GetIstioConfigDetails(context.TODO(), "east", "test", "gateways", "gw-1")
+	assert.Equal("gw-1", istioConfigDetailsRemote.Gateway.Name)
+	assert.False(istioConfigDetailsRemote.Permissions.Update)
+	assert.False(istioConfigDetailsRemote.Permissions.Delete)
+	assert.Nil(err)
+}
+
 func mockGetIstioConfigList(t *testing.T) IstioConfigService {
 	fakeIstioObjects := []runtime.Object{&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}}}
 	for _, g := range fakeGetGateways() {
@@ -415,6 +433,27 @@ func mockGetIstioConfigDetails(t *testing.T) IstioConfigService {
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = &fakeAccessReview{k8s}
+	return IstioConfigService{userClients: k8sclients, kialiCache: cache, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
+}
+
+func mockGetIstioConfigDetailsMulticluster(t *testing.T) IstioConfigService {
+	conf := config.NewConfig()
+	config.Set(conf)
+	fakeIstioObjects := []runtime.Object{
+		fakeGetGateways()[0],
+		fakeGetVirtualServices()[0],
+		fakeGetDestinationRules()[0],
+		fakeGetServiceEntries()[0],
+		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
+	}
+	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
+	k8s.OpenShift = true
+
+	cache := SetupBusinessLayer(t, k8s, *conf)
+
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[kubernetes.HomeClusterName] = &fakeAccessReview{k8s}
+	k8sclients["east"] = &fakeAccessReview{k8s}
 	return IstioConfigService{userClients: k8sclients, kialiCache: cache, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 }
 
