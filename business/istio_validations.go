@@ -56,7 +56,6 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, 
 
 	// Ensure the service exists
 	if service != "" {
-		// TODO: Include cluster instead of hard coding home cluster.
 		_, err := in.businessLayer.Svc.GetService(ctx, cluster, namespace, service)
 		if err != nil {
 			if err != nil {
@@ -97,9 +96,9 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, 
 
 	if workload != "" {
 		// load only requested workload
-		go in.fetchWorkload(ctx, &workloadsPerNamespace, workload, namespace, errChan, &wg)
+		go in.fetchWorkload(ctx, &workloadsPerNamespace, cluster, workload, namespace, errChan, &wg)
 	} else {
-		go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, &namespaces, errChan, &wg)
+		go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, &namespaces, cluster, errChan, &wg)
 	}
 
 	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, errChan, &wg)
@@ -203,7 +202,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	}
 
 	go in.fetchIstioConfigList(ctx, &istioConfigList, &mtlsDetails, &rbacDetails, cluster, namespace, errChan, &wg)
-	go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, &namespaces, errChan, &wg)
+	go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, &namespaces, cluster, errChan, &wg)
 	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, errChan, &wg)
 
 	if istioApiEnabled {
@@ -346,10 +345,10 @@ func (in *IstioValidationsService) fetchServices(ctx context.Context, rValue *mo
 	}
 }
 
-func (in *IstioValidationsService) fetchAllWorkloads(ctx context.Context, rValue *map[string]models.WorkloadList, namespaces *models.Namespaces, errChan chan error, wg *sync.WaitGroup) {
+func (in *IstioValidationsService) fetchAllWorkloads(ctx context.Context, rValue *map[string]models.WorkloadList, namespaces *models.Namespaces, cluster string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
-		nss, err := in.businessLayer.Namespace.GetNamespaces(ctx)
+		nss, err := in.businessLayer.Namespace.GetNamespacesByCluster(cluster)
 		if err != nil {
 			errChan <- err
 			return
@@ -359,7 +358,7 @@ func (in *IstioValidationsService) fetchAllWorkloads(ctx context.Context, rValue
 
 		allWorkloads := map[string]models.WorkloadList{}
 		for _, ns := range nss {
-			criteria := WorkloadCriteria{Namespace: ns.Name, IncludeIstioResources: false, IncludeHealth: false}
+			criteria := WorkloadCriteria{Namespace: ns.Name, IncludeIstioResources: false, IncludeHealth: false, Cluster: cluster}
 			workloadList, err := in.businessLayer.Workload.GetWorkloadList(ctx, criteria)
 			if err != nil {
 				select {
@@ -374,11 +373,11 @@ func (in *IstioValidationsService) fetchAllWorkloads(ctx context.Context, rValue
 	}
 }
 
-func (in *IstioValidationsService) fetchWorkload(ctx context.Context, rValue *map[string]models.WorkloadList, workload, namespace string, errChan chan error, wg *sync.WaitGroup) {
+func (in *IstioValidationsService) fetchWorkload(ctx context.Context, rValue *map[string]models.WorkloadList, cluster, workload, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
 		allWorkloads := map[string]models.WorkloadList{}
-		criteria := WorkloadCriteria{WorkloadName: workload, Namespace: namespace, IncludeIstioResources: true, IncludeHealth: false}
+		criteria := WorkloadCriteria{WorkloadName: workload, Namespace: namespace, IncludeIstioResources: true, IncludeHealth: false, Cluster: cluster}
 		workloadList, err := in.businessLayer.Workload.GetWorkloadList(ctx, criteria)
 		if err != nil {
 			select {
