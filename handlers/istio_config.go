@@ -337,6 +337,7 @@ func IstioConfigPermissions(w http.ResponseWriter, r *http.Request) {
 	// query params
 	params := r.URL.Query()
 	namespaces := params.Get("namespaces") // csl of namespaces
+	cluster := params.Get("cluster")
 
 	business, err := getBusiness(r)
 	if err != nil {
@@ -346,7 +347,7 @@ func IstioConfigPermissions(w http.ResponseWriter, r *http.Request) {
 	istioConfigPermissions := models.IstioConfigPermissions{}
 	if len(namespaces) > 0 {
 		ns := strings.Split(namespaces, ",")
-		istioConfigPermissions = business.IstioConfig.GetIstioConfigPermissions(r.Context(), ns)
+		istioConfigPermissions = business.IstioConfig.GetIstioConfigPermissions(r.Context(), ns, cluster)
 	}
 	RespondWithJSON(w, http.StatusOK, istioConfigPermissions)
 }

@@ -638,7 +638,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster
 
 	go func(ctx context.Context) {
 		defer wg.Done()
-		canCreate, canUpdate, canDelete := getPermissions(ctx, in.userClients[cluster], namespace, objectType)
+		canCreate, canUpdate, canDelete := getPermissions(ctx, in.userClients[cluster], cluster, namespace, objectType)
 		istioConfigDetail.Permissions = models.ResourcePermissions{
 			Create: canCreate,
 			Update: canUpdate,
@@ -1219,8 +1219,7 @@ func (in *IstioConfigService) IsAmbientEnabled() bool {
 	return false
 }
 
-func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, namespaces []string) models.IstioConfigPermissions {
-	// @TODO put cluster argument here, replace the default kubernetes.HomeClusterName
+func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, namespaces []string, cluster string) models.IstioConfigPermissions {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetIstioConfigPermissions",
 		observability.Attribute("package", "business"),
@@ -1229,6 +1228,11 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 	defer end()
 
 	istioConfigPermissions := make(models.IstioConfigPermissions, len(namespaces))
+
+	_, ok := in.userClients[cluster]
+	if !ok {
+		cluster = in.config.KubernetesConfig.ClusterName
+	}
 
 	if len(namespaces) > 0 {
 		networkingPermissions := make(models.IstioConfigPermissions, len(namespaces))
@@ -1255,7 +1259,7 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 			*/
 			go func(ctx context.Context, namespace string, wg *sync.WaitGroup, networkingPermissions *models.ResourcesPermissions) {
 				defer wg.Done()
-				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, in.userClients[kubernetes.HomeClusterName], namespace, kubernetes.NetworkingGroupVersionV1Beta1.Group, allResources)
+				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, in.userClients[cluster], cluster, namespace, kubernetes.NetworkingGroupVersionV1Beta1.Group, allResources)
 				for _, rs := range newNetworkingConfigTypes {
 					networkingRP[rs] = &models.ResourcePermissions{
 						Create: canCreate,
@@ -1267,19 +1271,19 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 
 			go func(ctx context.Context, namespace string, wg *sync.WaitGroup, k8sNetworkingPermissions *models.ResourcesPermissions) {
 				defer wg.Done()
-				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, in.userClients[kubernetes.HomeClusterName], namespace, kubernetes.K8sNetworkingGroupVersionV1Beta1.Group, allResources)
+				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, in.userClients[cluster], cluster, namespace, kubernetes.K8sNetworkingGroupVersionV1Beta1.Group, allResources)
 				for _, rs := range newK8sNetworkingConfigTypes {
 					k8sNetworkingRP[rs] = &models.ResourcePermissions{
-						Create: canCreate && in.userClients[kubernetes.HomeClusterName].IsGatewayAPI(),
-						Update: canUpdate && in.userClients[kubernetes.HomeClusterName].IsGatewayAPI(),
-						Delete: canDelete && in.userClients[kubernetes.HomeClusterName].IsGatewayAPI(),
+						Create: canCreate && in.userClients[cluster].IsGatewayAPI(),
+						Update: canUpdate && in.userClients[cluster].IsGatewayAPI(),
+						Delete: canDelete && in.userClients[cluster].IsGatewayAPI(),
 					}
 				}
 			}(ctx, ns, &wg, &k8sNetworkingRP)
 
 			go func(ctx context.Context, namespace string, wg *sync.WaitGroup, securityPermissions *models.ResourcesPermissions) {
 				defer wg.Done()
-				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, in.userClients[kubernetes.HomeClusterName], namespace, kubernetes.SecurityGroupVersion.Group, allResources)
+				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, in.userClients[cluster], cluster, namespace, kubernetes.SecurityGroupVersion.Group, allResources)
 				for _, rs := range newSecurityConfigTypes {
 					securityRP[rs] = &models.ResourcePermissions{
 						Create: canCreate,
@@ -1309,22 +1313,27 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 	return istioConfigPermissions
 }
 
-func getPermissions(ctx context.Context, k8s kubernetes.ClientInterface, namespace, objectType string) (bool, bool, bool) {
+func getPermissions(ctx context.Context, k8s kubernetes.ClientInterface, cluster string, namespace, objectType string) (bool, bool, bool) {
 	var canCreate, canPatch, canDelete bool
 
 	if api, ok := kubernetes.ResourceTypesToAPI[objectType]; ok {
 		resourceType := objectType
-		return getPermissionsApi(ctx, k8s, namespace, api, resourceType)
+		return getPermissionsApi(ctx, k8s, cluster, namespace, api, resourceType)
 	}
 	return canCreate, canPatch, canDelete
 }
 
-func getPermissionsApi(ctx context.Context, k8s kubernetes.ClientInterface, namespace, api, resourceType string) (bool, bool, bool) {
+func getPermissionsApi(ctx context.Context, k8s kubernetes.ClientInterface, cluster string, namespace, api, resourceType string) (bool, bool, bool) {
 	var canCreate, canPatch, canDelete bool
 
 	// In view only mode, there is not need to check RBAC permissions, return false early
 	if config.Get().Deployment.ViewOnlyMode {
 		log.Debug("View only mode configured, skipping RBAC checks")
+		return canCreate, canPatch, canDelete
+	}
+	// Disable writes for remote clusters
+	if cluster != config.Get().KubernetesConfig.ClusterName {
+		log.Debug("Writes disabled for remote clusters")
 		return canCreate, canPatch, canDelete
 	}
 

@@ -164,8 +164,8 @@ export const getNamespaceValidations = (namespace: string) => {
   return newRequest<ValidationStatus>(HTTP_VERBS.GET, urls.namespaceValidations(namespace), {}, {});
 };
 
-export const updateNamespace = (namespace: string, jsonPatch: string): Promise<Response<string>> => {
-  return newRequest(HTTP_VERBS.PATCH, urls.namespace(namespace), {}, jsonPatch);
+export const updateNamespace = (namespace: string, jsonPatch: string, cluster?: string): Promise<Response<string>> => {
+  return newRequest(HTTP_VERBS.PATCH, urls.namespace(namespace), { cluster: cluster }, jsonPatch);
 };
 
 export const getIstioConfig = (
@@ -720,8 +720,13 @@ export const getWorkloadSpans = (namespace: string, workload: string, params: Tr
   return newRequest<Span[]>(HTTP_VERBS.GET, urls.workloadSpans(namespace, workload), params, {});
 };
 
-export const getIstioPermissions = (namespaces: string[]) => {
-  return newRequest<IstioPermissions>(HTTP_VERBS.GET, urls.istioPermissions, { namespaces: namespaces.join(',') }, {});
+export const getIstioPermissions = (namespaces: string[], cluster?: string) => {
+  const queryParams: any = {};
+  queryParams.namespaces = namespaces.join(',');
+  if (cluster) {
+    queryParams.cluster = cluster;
+  }
+  return newRequest<IstioPermissions>(HTTP_VERBS.GET, urls.istioPermissions, queryParams, {});
 };
 
 export const getMetricsStats = (queries: MetricsStatsQuery[]) => {
