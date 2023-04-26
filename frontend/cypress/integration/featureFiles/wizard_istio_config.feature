@@ -214,3 +214,43 @@ Feature: Kiali Istio Config page
     And user types "foobar" in the "addPortName1" input
     And user types "8080" in the "addTargetPort1" input
     Then the preview button should be disabled
+
+@wizard-istio-config
+  Scenario: Create multiple K8s Gateways with colliding hostnames and port combinations and check for a reference
+    When user clicks in the "K8sGateway" Istio config actions
+    And user sees the "Create K8sGateway" config wizard
+    And user adds listener
+    And user types "gatewayapi-1" in the "name" input
+    And user types "default" in the "addName0" input
+    And user types "bookinfo-istio-system.apps.ocp4-kqe1.maistra.upshift.redhat.com" in the "addHostname0" input
+    And user types "80" in the "addPort0" input
+    And user adds a hostname
+    And user chooses "Hostname" mode from the "addType0" select
+    And user types "google.com" in the "addValue0" input
+    And user previews the configuration
+    And user creates the istio config
+    And user clicks in the "K8sGateway" Istio config actions
+    And user sees the "Create K8sGateway" config wizard
+    And user adds listener
+    And user types "gatewayapi-2" in the "name" input
+    And user types "default" in the "addName0" input
+    And user types "bookinfo-istio-system.apps.ocp4-kqe1.maistra.upshift.redhat.com" in the "addHostname0" input
+    And user types "80" in the "addPort0" input
+    And user adds a hostname
+    And user chooses "Hostname" mode from the "addType0" select
+    And user types "google.com" in the "addValue0" input
+    And user previews the configuration
+    And user creates the istio config
+    Then the "K8sGateway" "gatewayapi-1" should be listed in "bookinfo" namespace
+    And the "K8sGateway" "gatewayapi-2" should be listed in "bookinfo" namespace
+    When viewing the detail for "gatewayapi-1"
+    Then "gatewayapi-2" should be referenced
+
+
+@wizard-istio-config
+  Scenario: Delete one of the K8s Gateways and check that the reference is removed
+    When viewing the detail for "gatewayapi-2"
+    And choosing to delete it 
+    Then the "K8sGateway" "gatewayapi-2" should not be listed in "bookinfo" namespace
+    When viewing the detail for "gatewayapi-1"
+    Then "gatewayapi-2" should not be referenced anymore
