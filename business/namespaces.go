@@ -75,11 +75,12 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	)
 	defer end()
 
-	if kialiCache != nil && in.homeClusterUserClient != nil {
-		if ns := kialiCache.GetNamespaces(in.homeClusterUserClient.GetToken()); ns != nil {
-			return ns, nil
-		}
-	}
+	// @TODO after opening Config page for particular cluster, the cache is overridden by home cluster namespaces only
+	//if kialiCache != nil && in.homeClusterUserClient != nil {
+	//	if ns := kialiCache.GetNamespaces(in.homeClusterUserClient.GetToken()); ns != nil {
+	//		return ns, nil
+	//	}
+	//}
 
 	configObject := config.Get()
 

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
@@ -27,10 +28,13 @@ func checkNamespaceAccess(ctx context.Context, nsServ business.NamespaceService,
 }
 
 func createMetricsServiceForNamespace(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, namespace string) (*business.MetricsService, *models.Namespace) {
+	// @TODO add cluster support
 	metrics, infoMap := createMetricsServiceForNamespaces(w, r, promSupplier, []string{namespace})
 	if result, ok := infoMap[namespace]; ok {
 		if result.err != nil {
-			RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+result.err.Error())
+			if !k8sErrors.IsNotFound(result.err) {
+				RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+result.err.Error())
+			}
 			return nil, nil
 		}
 		return metrics, result.info
