@@ -63,7 +63,7 @@ func ServiceList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if criteria.IncludeHealth {
-		rateInterval, err := adjustRateInterval(r.Context(), business, p.Namespace, p.RateInterval, p.QueryTime)
+		rateInterval, err := adjustRateInterval(r.Context(), business, p.Cluster, p.Namespace, p.RateInterval, p.QueryTime)
 		if err != nil {
 			handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 			return
@@ -108,7 +108,7 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 	namespace := params["namespace"]
 	service := params["service"]
 	queryTime := util.Clock.Now()
-	rateInterval, err = adjustRateInterval(r.Context(), business, namespace, rateInterval, queryTime)
+	rateInterval, err = adjustRateInterval(r.Context(), business, cluster, namespace, rateInterval, queryTime)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
@@ -171,7 +171,7 @@ func ServiceUpdate(w http.ResponseWriter, r *http.Request) {
 	namespace := params["namespace"]
 	service := params["service"]
 	queryTime := util.Clock.Now()
-	rateInterval, err = adjustRateInterval(r.Context(), business, namespace, rateInterval, queryTime)
+	rateInterval, err = adjustRateInterval(r.Context(), business, cluster, namespace, rateInterval, queryTime)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Adjust rate interval error: "+err.Error())
 		return

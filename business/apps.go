@@ -364,7 +364,7 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 			IncludeOnlyDefinitions: true,
 			ServiceSelector:        labels.Set(w.Labels).String(),
 		}
-		ss, err = in.businessLayer.Svc.GetServiceList(ctx, criteria)
+		ss, err = in.businessLayer.Svc.getServiceList(ctx, criteria, cluster)
 		if err != nil {
 			return nil, err
 		}
