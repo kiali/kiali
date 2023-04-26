@@ -11,7 +11,6 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
@@ -211,12 +210,7 @@ func IstioConfigDelete(w http.ResponseWriter, r *http.Request) {
 	object := params["object"]
 
 	query := r.URL.Query()
-	cluster := ""
-	if query.Get("cluster") != "" {
-		cluster = query.Get("cluster")
-	} else {
-		cluster = kubernetes.HomeClusterName
-	}
+	cluster := clusterNameFromQuery(query)
 
 	if !business.GetIstioAPI(objectType) {
 		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+objectType)
@@ -246,12 +240,7 @@ func IstioConfigUpdate(w http.ResponseWriter, r *http.Request) {
 	object := params["object"]
 
 	query := r.URL.Query()
-	cluster := ""
-	if query.Get("cluster") != "" {
-		cluster = query.Get("cluster")
-	} else {
-		cluster = kubernetes.HomeClusterName
-	}
+	cluster := clusterNameFromQuery(query)
 
 	if !business.GetIstioAPI(objectType) {
 		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+objectType)
@@ -288,12 +277,7 @@ func IstioConfigCreate(w http.ResponseWriter, r *http.Request) {
 	objectType := params["object_type"]
 
 	query := r.URL.Query()
-	cluster := ""
-	if query.Get("cluster") != "" {
-		cluster = query.Get("cluster")
-	} else {
-		cluster = kubernetes.HomeClusterName
-	}
+	cluster := clusterNameFromQuery(query)
 
 	if !business.GetIstioAPI(objectType) {
 		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+objectType)
@@ -337,13 +321,19 @@ func IstioConfigPermissions(w http.ResponseWriter, r *http.Request) {
 	// query params
 	params := r.URL.Query()
 	namespaces := params.Get("namespaces") // csl of namespaces
-	cluster := params.Get("cluster")
+	cluster := clusterNameFromQuery(params)
 
 	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
 	}
+
+	if !business.Mesh.IsValidCluster(cluster) {
+		RespondWithError(w, http.StatusBadRequest, "Cluster %s does not exist "+cluster)
+		return
+	}
+
 	istioConfigPermissions := models.IstioConfigPermissions{}
 	if len(namespaces) > 0 {
 		ns := strings.Split(namespaces, ",")
