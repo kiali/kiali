@@ -7,8 +7,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
@@ -38,12 +36,7 @@ func NamespaceValidationSummary(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 
-	cluster := ""
-	if query.Get("cluster") != "" {
-		cluster = query.Get("cluster")
-	} else {
-		cluster = kubernetes.HomeClusterName
-	}
+	cluster := clusterNameFromQuery(query)
 
 	business, err := getBusiness(r)
 	if err != nil {
@@ -73,12 +66,7 @@ func ConfigValidationSummary(w http.ResponseWriter, r *http.Request) {
 	if len(namespaces) > 0 {
 		nss = strings.Split(namespaces, ",")
 	}
-	cluster := ""
-	if params.Has("cluster") && params.Get("cluster") != "" {
-		cluster = params.Get("cluster")
-	} else {
-		cluster = kubernetes.HomeClusterName
-	}
+	cluster := clusterNameFromQuery(params)
 
 	business, err := getBusiness(r)
 	if err != nil {
@@ -117,12 +105,7 @@ func NamespaceUpdate(w http.ResponseWriter, r *http.Request) {
 	jsonPatch := string(body)
 
 	query := r.URL.Query()
-	cluster := ""
-	if query.Get("cluster") != "" {
-		cluster = query.Get("cluster")
-	} else {
-		cluster = config.Get().KubernetesConfig.ClusterName
-	}
+	cluster := clusterNameFromQuery(query)
 
 	ns, err := business.Namespace.UpdateNamespace(r.Context(), namespace, jsonPatch, cluster)
 	if err != nil {
