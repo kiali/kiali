@@ -223,6 +223,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           id: `${prefix}-${node.id}`,
           type: node.nodeType,
           namespace: node.namespace,
+          cluster: node.cluster,
           name: node.app || 'unknown',
           version: node.version || '',
           isInaccessible: node.isInaccessible || false
@@ -232,6 +233,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           id: `${prefix}-${node.id}`,
           type: node.nodeType,
           namespace: node.namespace,
+          cluster: node.cluster,
           name: node.service || 'unknown',
           isServiceEntry: node.isServiceEntry,
           isInaccessible: node.isInaccessible || false,
@@ -243,6 +245,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           id: `${prefix}-${node.id}`,
           type: NodeType.WORKLOAD,
           namespace: node.namespace,
+          cluster: node.cluster,
           name: node.workload || 'unknown',
           isInaccessible: node.isInaccessible || false,
           healthAnnotation: node.hasHealthConfig
