@@ -310,8 +310,8 @@ func getWorkloadList(namespace string, gi *graph.AppenderGlobalInfo) *models.Wor
 	if workloadList, ok := workloadListMap[namespace]; ok {
 		return workloadList
 	}
-
-	criteria := business.WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false, IncludeHealth: false}
+	// @TODO cluster support in graph
+	criteria := business.WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false, IncludeHealth: false, Cluster: config.Get().KubernetesConfig.ClusterName}
 	workloadList, err := gi.Business.Workload.GetWorkloadList(context.TODO(), criteria)
 	graph.CheckError(err)
 	workloadListMap[namespace] = &workloadList

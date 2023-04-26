@@ -377,7 +377,7 @@ func (in *IstioValidationsService) fetchWorkload(ctx context.Context, rValue *ma
 	defer wg.Done()
 	if len(errChan) == 0 {
 		allWorkloads := map[string]models.WorkloadList{}
-		criteria := WorkloadCriteria{WorkloadName: workload, Namespace: namespace, IncludeIstioResources: true, IncludeHealth: false, Cluster: cluster}
+		criteria := WorkloadCriteria{WorkloadName: workload, Namespace: namespace, IncludeIstioResources: false, IncludeHealth: false, Cluster: cluster}
 		workloadList, err := in.businessLayer.Workload.GetWorkloadList(ctx, criteria)
 		if err != nil {
 			select {
