@@ -144,8 +144,8 @@ func getNamespaceServicesRequestRates(ctx context.Context, api prom_v1.API, name
 // getServiceRequestRates retrieves traffic rates for requests entering, or internal to the namespace, for a specific service name
 // Note that it does not discriminate on "reporter", so rates can be inflated due to duplication, and therefore
 // should be used mainly for calculating ratios (e.g total rates / error rates)
-func getServiceRequestRates(ctx context.Context, api prom_v1.API, namespace, service string, queryTime time.Time, ratesInterval string) (model.Vector, error) {
-	lbl := fmt.Sprintf(`destination_service_name="%s",destination_service_namespace="%s"`, service, namespace)
+func getServiceRequestRates(ctx context.Context, api prom_v1.API, namespace, cluster, service string, queryTime time.Time, ratesInterval string) (model.Vector, error) {
+	lbl := fmt.Sprintf(`destination_service_name="%s",destination_service_namespace="%s",destination_cluster="%s"`, service, namespace, cluster)
 	in, err := getRequestRatesForLabel(ctx, api, queryTime, lbl, ratesInterval)
 	if err != nil {
 		return model.Vector{}, err
@@ -156,9 +156,9 @@ func getServiceRequestRates(ctx context.Context, api prom_v1.API, namespace, ser
 // getItemRequestRates retrieves traffic rates for requests entering, internal to, or exiting the namespace, for a specific destinatation_<itemLabelSuffix> value
 // Note that it does not discriminate on "reporter", so rates can be inflated due to duplication, and therefore
 // should be used mainly for calculating ratios (e.g total rates / error rates)
-func getItemRequestRates(ctx context.Context, api prom_v1.API, namespace, item, itemLabelSuffix string, queryTime time.Time, ratesInterval string) (model.Vector, model.Vector, error) {
-	lblIn := fmt.Sprintf(`destination_workload_namespace="%s",destination_%s="%s"`, namespace, itemLabelSuffix, item)
-	lblOut := fmt.Sprintf(`source_workload_namespace="%s",source_%s="%s"`, namespace, itemLabelSuffix, item)
+func getItemRequestRates(ctx context.Context, api prom_v1.API, namespace, cluster, item, itemLabelSuffix string, queryTime time.Time, ratesInterval string) (model.Vector, model.Vector, error) {
+	lblIn := fmt.Sprintf(`destination_workload_namespace="%s",destination_%s="%s",destination_cluster="%s"`, namespace, itemLabelSuffix, item, cluster)
+	lblOut := fmt.Sprintf(`source_workload_namespace="%s",source_%s="%s",source_cluster="%s"`, namespace, itemLabelSuffix, item, cluster)
 	in, err := getRequestRatesForLabel(ctx, api, queryTime, lblIn, ratesInterval)
 	if err != nil {
 		return model.Vector{}, model.Vector{}, err

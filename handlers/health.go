@@ -9,7 +9,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
 )
@@ -96,12 +95,6 @@ func (p *baseHealthParams) baseExtract(r *http.Request, vars map[string]string) 
 		}
 	}
 	p.Namespace = vars["namespace"]
-	cluster := queryParams.Get("cluster")
-	if cluster != "" {
-		p.Cluster = cluster
-	} else {
-		p.Cluster = config.Get().KubernetesConfig.ClusterName
-	}
 }
 
 // namespaceHealthParams holds the path and query parameters for NamespaceHealth
