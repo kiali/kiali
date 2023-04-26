@@ -502,7 +502,7 @@ func (in *NamespaceService) isIncludedNamespace(namespace string) bool {
 // TODO: Multicluster: We are going to need something else to identify the namespace, the cluster (OR Return a list/array/map)
 func (in *NamespaceService) GetNamespace(ctx context.Context, namespace string) (*models.Namespace, error) {
 	// TODO: Wrapper for MC while other services are not updated to propagate the cluster
-	return in.GetNamespaceByCluster(ctx, namespace, "")
+	return in.GetNamespaceByCluster(ctx, namespace, config.Get().KubernetesConfig.ClusterName)
 }
 
 // GetNamespace returns the definition of the specified namespace.
