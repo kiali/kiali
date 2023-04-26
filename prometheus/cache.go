@@ -36,13 +36,15 @@ type (
 	}
 
 	promCacheImpl struct {
-		cacheDuration          time.Duration
-		cacheExpiration        time.Duration
+		cacheDuration   time.Duration
+		cacheExpiration time.Duration
+		// Cached by namespace, cluster, app, ratesInterval
+		cacheSvcRequestRates map[string]map[string]map[string]map[string]timeInResult
+		cacheWkRequestRates  map[string]map[string]map[string]map[string]timeInOutResult
+		cacheAppRequestRates map[string]map[string]map[string]map[string]timeInOutResult
+		// Cached by namespace, cluster, ratesInterval
 		cacheAllRequestRates   map[string]map[string]map[string]timeInResult
-		cacheAppRequestRates   map[string]map[string]map[string]map[string]timeInOutResult
 		cacheNsSvcRequestRates map[string]map[string]map[string]timeInResult
-		cacheSvcRequestRates   map[string]map[string]map[string]map[string]timeInResult
-		cacheWkRequestRates    map[string]map[string]map[string]map[string]timeInOutResult
 		allRequestRatesLock    sync.RWMutex
 		appRequestRatesLock    sync.RWMutex
 		nsSvcRequestRatesLock  sync.RWMutex

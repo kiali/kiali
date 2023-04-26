@@ -172,7 +172,7 @@ func (in *Client) GetNamespaceServicesRequestRates(namespace, cluster string, ra
 func (in *Client) GetServiceRequestRates(namespace, cluster, service, ratesInterval string, queryTime time.Time) (model.Vector, error) {
 	log.Tracef("GetServiceRequestRates [namespace: %s] [service: %s] [ratesInterval: %s] [queryTime: %s]", namespace, service, ratesInterval, queryTime.String())
 	if promCache != nil {
-		if isCached, result := promCache.GetServiceRequestRates(namespace, kubernetes.KialiTokenForHomeCluster, service, ratesInterval, queryTime); isCached {
+		if isCached, result := promCache.GetServiceRequestRates(namespace, cluster, service, ratesInterval, queryTime); isCached {
 			return result, nil
 		}
 	}
