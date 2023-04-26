@@ -73,6 +73,7 @@ type ServiceDefinitionList struct {
 
 type ServiceDetails struct {
 	Service          Service                               `json:"service"`
+	Cluster          string                                `json:"cluster"`
 	IstioSidecar     bool                                  `json:"istioSidecar"`
 	Endpoints        Endpoints                             `json:"endpoints"`
 	VirtualServices  []*networking_v1beta1.VirtualService  `json:"virtualServices"`

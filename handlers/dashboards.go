@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
@@ -147,6 +146,9 @@ func ServiceDashboard(w http.ResponseWriter, r *http.Request) {
 	namespace := vars["namespace"]
 	service := vars["service"]
 
+	queryParams := r.URL.Query()
+	cluster := clusterNameFromQuery(queryParams)
+
 	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, defaultPromClientSupplier, namespace)
 	if metricsService == nil {
 		// any returned value nil means error & response already written
@@ -167,8 +169,7 @@ func ServiceDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Pass cluster param.
-	svc, err := b.Svc.GetService(r.Context(), kubernetes.HomeClusterName, namespace, service)
+	svc, err := b.Svc.GetService(r.Context(), cluster, namespace, service)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return

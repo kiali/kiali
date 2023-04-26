@@ -32,6 +32,7 @@ export interface AppNode {
   name: string;
   version: string;
   isInaccessible: boolean;
+  cluster?: string;
 }
 
 export interface WorkloadNode {
@@ -41,6 +42,7 @@ export interface WorkloadNode {
   name: string;
   isInaccessible: boolean;
   healthAnnotation?: HealthAnnotationType;
+  cluster?: string;
 }
 
 export interface ServiceNode {
@@ -52,6 +54,7 @@ export interface ServiceNode {
   isServiceEntry?: SEInfo;
   destServices?: DestService[];
   healthAnnotation?: HealthAnnotationType;
+  cluster?: string;
 }
 
 export type TrafficNode = AppNode | ServiceNode | WorkloadNode;

@@ -68,12 +68,14 @@ func ServiceTraces(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	namespace := params["namespace"]
 	service := params["service"]
-	q, err := readQuery(r.URL.Query())
+	query := r.URL.Query()
+	q, err := readQuery(query)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	traces, err := business.Jaeger.GetServiceTraces(r.Context(), namespace, service, q)
+	cluster := clusterNameFromQuery(query)
+	traces, err := business.Jaeger.GetServiceTraces(r.Context(), namespace, service, q, cluster)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
@@ -186,13 +188,15 @@ func ServiceSpans(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	namespace := params["namespace"]
 	service := params["service"]
-	q, err := readQuery(r.URL.Query())
+	query := r.URL.Query()
+	q, err := readQuery(query)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	spans, err := business.Jaeger.GetServiceSpans(r.Context(), namespace, service, q)
+	cluster := clusterNameFromQuery(query)
+	spans, err := business.Jaeger.GetServiceSpans(r.Context(), namespace, service, q, cluster)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return

@@ -139,7 +139,6 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
         AlertUtils.addError(`Could not fetch percentiles: ${err}`);
       }
     }
-
     this.fetcher.fetch(options, this.state.traces);
   };
 
@@ -160,7 +159,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
     };
     const queries: MetricsStatsQuery[] =
       this.props.targetKind === 'service' ? [query] : [query, { ...query, direction: 'outbound' }];
-    return API.getMetricsStats(queries).then(r => this.percentilesFetched(query, r.data));
+    return API.getMetricsStats(queries, this.props.cluster).then(r => this.percentilesFetched(query, r.data));
   };
 
   private percentilesFetched = (q: MetricsStatsQuery, r: MetricsStatsResult): Map<string, number> => {

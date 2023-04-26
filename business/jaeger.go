@@ -9,7 +9,6 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/jaeger"
 	jaegerModels "github.com/kiali/kiali/jaeger/model/json"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
@@ -65,7 +64,7 @@ func (in *JaegerService) GetAppSpans(ns, app string, query models.TracingQuery) 
 	return in.getFilteredSpans(ns, app, query, nil /*no post-filtering for apps*/)
 }
 
-func (in *JaegerService) GetServiceSpans(ctx context.Context, ns, service string, query models.TracingQuery) ([]jaeger.JaegerSpan, error) {
+func (in *JaegerService) GetServiceSpans(ctx context.Context, ns, service string, query models.TracingQuery, cluster string) ([]jaeger.JaegerSpan, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetServiceSpans",
 		observability.Attribute("package", "business"),
@@ -75,8 +74,8 @@ func (in *JaegerService) GetServiceSpans(ctx context.Context, ns, service string
 	defer end()
 
 	// TODO: Need to include cluster here. This will require custom jaeger labeling of traces to add the cluster name
-	// since it is not standard. Hardcoding to the home cluster name for now.
-	app, err := in.businessLayer.Svc.GetServiceAppName(ctx, config.Get().KubernetesConfig.ClusterName, ns, service)
+	// since it is not standard.
+	app, err := in.businessLayer.Svc.GetServiceAppName(ctx, cluster, ns, service)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +149,7 @@ func (in *JaegerService) GetAppTraces(ns, app string, query models.TracingQuery)
 // the number of desired traces.  It depends on the number of services backing the app. For example, if there are 2 services for the
 // app, if evenly distributed, a query limit of 20 may return only 10 traces.  The ratio is typically not as bad as it is with
 // GetWorkloadTraces.
-func (in *JaegerService) GetServiceTraces(ctx context.Context, ns, service string, query models.TracingQuery) (*jaeger.JaegerResponse, error) {
+func (in *JaegerService) GetServiceTraces(ctx context.Context, ns, service string, query models.TracingQuery, cluster string) (*jaeger.JaegerResponse, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetServiceTraces",
 		observability.Attribute("package", "business"),
@@ -160,8 +159,8 @@ func (in *JaegerService) GetServiceTraces(ctx context.Context, ns, service strin
 	defer end()
 
 	// TODO: Need to include cluster here. This will require custom jaeger labeling of traces to add the cluster name
-	// since it is not standard. Hardcoding to the home cluster for now.
-	app, err := in.businessLayer.Svc.GetServiceAppName(ctx, kubernetes.HomeClusterName, ns, service)
+	// since it is not standard.
+	app, err := in.businessLayer.Svc.GetServiceAppName(ctx, cluster, ns, service)
 	if err != nil {
 		return nil, err
 	}
