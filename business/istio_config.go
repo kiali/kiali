@@ -1232,7 +1232,7 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 	k8s, ok := in.userClients[cluster]
 	if !ok {
 		log.Errorf("Cluster %s doesn't exist ", cluster)
-		cluster = in.config.KubernetesConfig.ClusterName
+		return nil
 	}
 
 	if len(namespaces) > 0 {
