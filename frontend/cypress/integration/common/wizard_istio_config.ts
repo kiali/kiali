@@ -1,4 +1,5 @@
 import { And, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { ensureKialiFinishedLoading } from './transition';
 
 When('user clicks in the {string} Istio config actions', (action: string) => {
   cy.get('button[data-test="config-actions-dropdown"]')
@@ -12,12 +13,23 @@ When('user clicks in the {string} Istio config actions', (action: string) => {
       .should('not.exist');
 });
 
+
+When('viewing the detail for {string}', (object: string) => {
+  ensureKialiFinishedLoading();
+  cy.get('a').contains(object).click();
+});
+
+
 And('user sees the {string} config wizard', (title: string) => {
   cy.get('h1').should('contain.text', title);
 });
 
 And('user adds listener', () => {
   cy.get('button[name="addListener"]').click()
+});
+
+And('user adds a hostname', () => {
+  cy.get('[aria-label="Address List"]').find('button').click();
 });
 
 And('user types {string} in the {string} input', (value: string, id: string) => {
@@ -67,8 +79,18 @@ And('user opens the {string} submenu',(title: string)=>{
   cy.get('button').contains(title).click();
 });
 
+And('choosing to delete it',()=>{
+  cy.get('#actions').click();
+  cy.get('#actions').contains("Delete").click();
+  cy.get('#pf-modal-part-2').find('button').contains("Delete").click();
+});
+
 Then('the {string} {string} should be listed in {string} namespace', function(type: string, name: string, namespace: string) {
   cy.get(`[data-test=VirtualItem_Ns${namespace}_${type.toLowerCase()}_${name}] svg`).should('exist');
+});
+
+Then('the {string} {string} should not be listed in {string} namespace', function(type: string, name: string, namespace: string) {
+  cy.get(`[data-test=VirtualItem_Ns${namespace}_${type.toLowerCase()}_${name}] svg`).should('not.exist');
 });
 
 Then('the preview button should be disabled', () =>{
@@ -82,4 +104,16 @@ Then('an error message {string} is displayed', (message: string) =>{
 
 Then('the {string} input should be empty', (id: string) => {
   cy.get(`input[id="${id}"]`).should('be.empty');
+});
+
+
+Then('{string} should be referenced', (gateway: string) => {
+  ensureKialiFinishedLoading();
+  cy.get('h5').contains("Validation References").should("be.visible");
+  cy.get(`a[data-test="k8sgateway-bookinfo-${gateway}"]`).should("be.visible");
+});
+
+Then('{string} should not be referenced anymore', (gateway: string) => {
+  ensureKialiFinishedLoading();
+  cy.get(`a[data-test="k8sgateway-bookinfo-${gateway}"]`).should("not.exist");
 });
