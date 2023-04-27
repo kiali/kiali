@@ -54,10 +54,6 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cluster := clusterNameFromQuery(query)
-	if cluster != config.Get().KubernetesConfig.ClusterName {
-		// @TODO do not include validations from other clusters yet
-		includeValidations = false
-	}
 
 	criteria := business.ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelector, allNamespaces)
 
@@ -133,10 +129,6 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cluster := clusterNameFromQuery(query)
-	if cluster != config.Get().KubernetesConfig.ClusterName {
-		// @TODO do not include validations from other clusters yet
-		includeValidations = false
-	}
 
 	if !checkObjectType(objectType) {
 		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+objectType)

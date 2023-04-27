@@ -135,6 +135,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		observability.Attribute("includeHealth", criteria.IncludeHealth),
 		observability.Attribute("includeIstioResources", criteria.IncludeIstioResources),
 		observability.Attribute("namespace", criteria.Namespace),
+		observability.Attribute("cluster", criteria.Cluster),
 		observability.Attribute("rateInterval", criteria.RateInterval),
 		observability.Attribute("queryTime", criteria.QueryTime),
 	)
@@ -160,15 +161,21 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	go func(ctx context.Context) {
 		defer wg.Done()
 		var err2 error
-		ws, err2 = in.fetchWorkloads(ctx, criteria.Namespace, "")
-		if err2 != nil {
-			log.Errorf("Error fetching Workloads per namespace %s: %s", criteria.Namespace, err2)
-			errChan <- err2
+		if criteria.Cluster != "" {
+			// called for config validations, ignoring error
+			ws, _ = in.fetchWorkloadsFromCluster(ctx, criteria.Cluster, criteria.Namespace, "")
+		} else {
+			ws, err2 = in.fetchWorkloads(ctx, criteria.Namespace, "")
+			if err2 != nil {
+				log.Errorf("Error fetching Workloads per namespace %s: %s", criteria.Namespace, err2)
+				errChan <- err2
+			}
 		}
 	}(ctx)
 
 	istioConfigCriteria := IstioConfigCriteria{
 		Namespace:                     criteria.Namespace,
+		Cluster:                       criteria.Cluster,
 		IncludeAuthorizationPolicies:  true,
 		IncludeEnvoyFilters:           true,
 		IncludeGateways:               true,
@@ -182,7 +189,11 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		go func(ctx context.Context) {
 			defer wg.Done()
 			var err2 error
-			istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigList(ctx, istioConfigCriteria)
+			if istioConfigCriteria.Cluster != "" {
+				istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigListPerCluster(ctx, istioConfigCriteria, istioConfigCriteria.Cluster)
+			} else {
+				istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigList(ctx, istioConfigCriteria)
+			}
 			if err2 != nil {
 				log.Errorf("Error fetching Istio Config per namespace %s: %s", criteria.Namespace, err2)
 				errChan <- err2

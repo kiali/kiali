@@ -331,7 +331,8 @@ func (a IstioAppender) getIngressGatewayWorkloads(globalInfo *graph.AppenderGlob
 func (a IstioAppender) getIstioComponentWorkloads(component string, globalInfo *graph.AppenderGlobalInfo) map[string][]models.WorkloadListItem {
 	componentWorkloads := make(map[string][]models.WorkloadListItem)
 	for namespace := range a.AccessibleNamespaces {
-		criteria := business.WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false, IncludeHealth: false}
+		// @TODO cluster support in graph
+		criteria := business.WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false, IncludeHealth: false, Cluster: config.Get().KubernetesConfig.ClusterName}
 		wList, err := globalInfo.Business.Workload.GetWorkloadList(context.TODO(), criteria)
 		graph.CheckError(err)
 
@@ -351,7 +352,8 @@ func (a IstioAppender) getIstioComponentWorkloads(component string, globalInfo *
 func (a IstioAppender) getGatewayAPIWorkloads(globalInfo *graph.AppenderGlobalInfo) map[string][]models.WorkloadListItem {
 	managedWorkloads := make(map[string][]models.WorkloadListItem)
 	for namespace := range a.AccessibleNamespaces {
-		criteria := business.WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false, IncludeHealth: false}
+		// @TODO cluster support in graph
+		criteria := business.WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false, IncludeHealth: false, Cluster: config.Get().KubernetesConfig.ClusterName}
 		wList, err := globalInfo.Business.Workload.GetWorkloadList(context.TODO(), criteria)
 		graph.CheckError(err)
 
