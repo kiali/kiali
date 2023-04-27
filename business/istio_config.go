@@ -1229,8 +1229,9 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 
 	istioConfigPermissions := make(models.IstioConfigPermissions, len(namespaces))
 
-	_, ok := in.userClients[cluster]
+	k8s, ok := in.userClients[cluster]
 	if !ok {
+		log.Errorf("Cluster %s doesn't exist ", cluster)
 		cluster = in.config.KubernetesConfig.ClusterName
 	}
 
@@ -1259,7 +1260,7 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 			*/
 			go func(ctx context.Context, namespace string, wg *sync.WaitGroup, networkingPermissions *models.ResourcesPermissions) {
 				defer wg.Done()
-				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, in.userClients[cluster], cluster, namespace, kubernetes.NetworkingGroupVersionV1Beta1.Group, allResources)
+				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, kubernetes.NetworkingGroupVersionV1Beta1.Group, allResources)
 				for _, rs := range newNetworkingConfigTypes {
 					networkingRP[rs] = &models.ResourcePermissions{
 						Create: canCreate,
@@ -1271,7 +1272,7 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 
 			go func(ctx context.Context, namespace string, wg *sync.WaitGroup, k8sNetworkingPermissions *models.ResourcesPermissions) {
 				defer wg.Done()
-				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, in.userClients[cluster], cluster, namespace, kubernetes.K8sNetworkingGroupVersionV1Beta1.Group, allResources)
+				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, kubernetes.K8sNetworkingGroupVersionV1Beta1.Group, allResources)
 				for _, rs := range newK8sNetworkingConfigTypes {
 					k8sNetworkingRP[rs] = &models.ResourcePermissions{
 						Create: canCreate && in.userClients[cluster].IsGatewayAPI(),
@@ -1283,7 +1284,7 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 
 			go func(ctx context.Context, namespace string, wg *sync.WaitGroup, securityPermissions *models.ResourcesPermissions) {
 				defer wg.Done()
-				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, in.userClients[cluster], cluster, namespace, kubernetes.SecurityGroupVersion.Group, allResources)
+				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, kubernetes.SecurityGroupVersion.Group, allResources)
 				for _, rs := range newSecurityConfigTypes {
 					securityRP[rs] = &models.ResourcePermissions{
 						Create: canCreate,
