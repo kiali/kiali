@@ -357,14 +357,14 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 	allEntities := make(namespaceApps)
 	for _, w := range ws {
 		// Check if namespace is cached
-		criteria := ServiceCriteria{
+		serviceCriteria := ServiceCriteria{
 			Namespace:              namespace,
 			IncludeHealth:          false,
 			IncludeIstioResources:  false,
 			IncludeOnlyDefinitions: true,
 			ServiceSelector:        labels.Set(w.Labels).String(),
 		}
-		ss, err = in.businessLayer.Svc.GetServiceList(ctx, criteria)
+		ss, err = in.businessLayer.Svc.GetServiceListForCluster(ctx, serviceCriteria, cluster)
 		if err != nil {
 			return nil, err
 		}

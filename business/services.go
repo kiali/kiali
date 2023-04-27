@@ -79,7 +79,7 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 			return nil, err
 		}
 
-		singleClusterSVCList, err := in.getServiceList(ctx, criteria, cluster)
+		singleClusterSVCList, err := in.GetServiceListForCluster(ctx, criteria, cluster)
 		if err != nil {
 			if cluster == kubernetes.HomeClusterName {
 				return nil, err
@@ -97,7 +97,7 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 	return &serviceList, nil
 }
 
-func (in *SvcService) getServiceList(ctx context.Context, criteria ServiceCriteria, cluster string) (*models.ServiceList, error) {
+func (in *SvcService) GetServiceListForCluster(ctx context.Context, criteria ServiceCriteria, cluster string) (*models.ServiceList, error) {
 	var (
 		svcs            []core_v1.Service
 		rSvcs           []*kubernetes.RegistryService
