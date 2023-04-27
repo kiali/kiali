@@ -633,7 +633,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 			errChan <- fmt.Errorf("client not found for cluster: %s", cluster)
 			return
 		}
-		vsCreate, vsUpdate, vsDelete = getPermissions(context.TODO(), userClient, namespace, kubernetes.VirtualServices)
+		vsCreate, vsUpdate, vsDelete = getPermissions(context.TODO(), userClient, cluster, namespace, kubernetes.VirtualServices)
 	}()
 
 	wg.Wait()

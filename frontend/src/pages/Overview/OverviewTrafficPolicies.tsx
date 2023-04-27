@@ -96,15 +96,17 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
     confirmationModal: boolean = false,
     loaded: boolean = this.props.opTarget === 'update' || this.props.opTarget === 'create'
   ) => {
-    this.promises.register('namespacepermissions', API.getIstioPermissions([this.props.nsTarget])).then(result => {
-      const permission = result.data[this.props.nsTarget][AUTHORIZATION_POLICIES];
-      const disableOp = !(permission.create && permission.update && permission.delete);
-      this.setState({
-        confirmationModal,
-        disableOp,
-        loaded
+    this.promises
+      .register('namespacepermissions', API.getIstioPermissions([this.props.nsTarget], this.props.nsInfo.cluster))
+      .then(result => {
+        const permission = result.data[this.props.nsTarget][AUTHORIZATION_POLICIES];
+        const disableOp = !(permission.create && permission.update && permission.delete);
+        this.setState({
+          confirmationModal,
+          disableOp,
+          loaded
+        });
       });
-    });
   };
 
   generateTrafficPolicies = () => {
@@ -138,7 +140,7 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
       this.props.opTarget === 'remove',
       null
     );
-    API.updateNamespace(this.props.nsTarget, jsonPatch)
+    API.updateNamespace(this.props.nsTarget, jsonPatch, this.props.nsInfo.cluster)
       .then(_ => {
         AlertUtils.add('Namespace ' + this.props.nsTarget + ' updated', 'default', MessageType.SUCCESS);
         this.props.load();
@@ -150,7 +152,7 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
 
   onUpgradeDowngradeIstio = (): void => {
     const jsonPatch = buildNamespaceInjectionPatch(false, false, this.state.canaryVersion);
-    API.updateNamespace(this.props.nsTarget, jsonPatch)
+    API.updateNamespace(this.props.nsTarget, jsonPatch, this.props.nsInfo.cluster)
       .then(_ => {
         AlertUtils.add('Namespace ' + this.props.nsTarget + ' updated', 'default', MessageType.SUCCESS);
         this.props.load();

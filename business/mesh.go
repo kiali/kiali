@@ -625,3 +625,9 @@ func (in *MeshService) CanaryUpgradeStatus() (*models.CanaryUpgradeStatus, error
 
 	return status, nil
 }
+
+// Checks if a cluster exist
+func (in *MeshService) IsValidCluster(cluster string) bool {
+	_, exists := in.layer.k8sClients[cluster]
+	return exists
+}
