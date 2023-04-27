@@ -217,7 +217,7 @@ func (in *HealthService) GetNamespaceServiceHealth(ctx context.Context, criteria
 		IncludeIstioResources:  false,
 		IncludeOnlyDefinitions: true,
 	}
-	services, err = in.businessLayer.Svc.getServiceList(ctx, svcCriteria, cluster)
+	services, err = in.businessLayer.Svc.GetServiceListForCluster(ctx, svcCriteria, cluster)
 	if err != nil {
 		return nil, err
 	}

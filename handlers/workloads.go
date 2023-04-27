@@ -68,7 +68,7 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if criteria.IncludeHealth {
-		rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Cluster, p.Namespace, p.RateInterval, p.QueryTime)
+		rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime)
 		if err != nil {
 			handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 			return

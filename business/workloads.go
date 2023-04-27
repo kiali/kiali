@@ -351,13 +351,13 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 		var services *models.ServiceList
 		var err error
 
-		criteria := ServiceCriteria{
+		serviceCriteria := ServiceCriteria{
 			Namespace:              criteria.Namespace,
 			ServiceSelector:        labels.Set(workload.Labels).String(),
 			IncludeHealth:          false,
 			IncludeOnlyDefinitions: true,
 		}
-		services, err = in.businessLayer.Svc.GetServiceList(ctx, criteria)
+		services, err = in.businessLayer.Svc.GetServiceListForCluster(ctx, serviceCriteria, criteria.Cluster)
 		if err != nil {
 			return nil, err
 		}
