@@ -703,6 +703,8 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		// On ServiceEntries cases the Service name is the hostname
 		s.ServiceEntries = kubernetes.FilterServiceEntriesByHostname(istioConfigList.ServiceEntries, s.Service.Name)
 	}
+	s.Cluster = cluster
+
 	return &s, nil
 }
 

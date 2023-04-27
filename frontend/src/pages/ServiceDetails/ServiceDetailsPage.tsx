@@ -7,7 +7,7 @@ import ServiceId from '../../types/ServiceId';
 import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { KialiAppState } from '../../store/Store';
-import { DurationInSeconds, HomeClusterName, TimeInMilliseconds } from '../../types/Common';
+import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import ServiceInfo from './ServiceInfo';
 import TracesComponent from 'components/JaegerIntegration/TracesComponent';
@@ -33,7 +33,7 @@ import ErrorSection from '../../components/ErrorSection/ErrorSection';
 import connectRefresh from '../../components/Refresh/connectRefresh';
 
 type ServiceDetailsState = {
-  cluster: string;
+  cluster?: string;
   currentTab: string;
   gateways: Gateway[];
   k8sGateways: K8sGateway[];
@@ -66,7 +66,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   constructor(props: ServiceDetailsProps) {
     super(props);
     const urlParams = new URLSearchParams(this.props.location.search);
-    const cluster = urlParams.get('cluster') || HomeClusterName;
+    const cluster = urlParams.get('cluster') || undefined;
     this.state = {
       // Because null is not the same as undefined and urlParams.get(...) returns null.
       cluster: cluster,
@@ -100,18 +100,17 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   }
 
   private fetchService = () => {
-    // @TODO add cluster
     this.promises.cancelAll();
     this.promises
       .register(
         'gateways',
         API.getAllIstioConfigs(
-          this.state.cluster,
           [this.props.match.params.namespace],
           ['gateways', 'k8sgateways'],
           false,
           '',
-          ''
+          '',
+          this.state.cluster
         )
       )
       .then(response => {
@@ -152,12 +151,12 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       });
 
     API.getAllIstioConfigs(
-      this.state.cluster,
       [this.props.match.params.namespace],
       ['peerauthentications'],
       false,
       '',
-      ''
+      '',
+      this.state.cluster
     )
       .then(results => {
         this.setState({
@@ -173,7 +172,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     const overTab = (
       <Tab eventKey={0} title="Overview" key="Overview">
         <ServiceInfo
-          cluster={this.state.cluster}
+          cluster={this.state.cluster ? this.state.cluster : ''}
           namespace={this.props.match.params.namespace}
           service={this.props.match.params.service}
           serviceDetails={this.state.serviceDetails}
@@ -191,6 +190,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           itemType={MetricsObjectTypes.SERVICE}
           lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.match.params.namespace}
+          cluster={this.state.cluster}
         />
       </Tab>
     );

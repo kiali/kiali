@@ -495,8 +495,8 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       nss.push(ns.name);
     });
 
-    // @TODO add cluster
-    return Promise.all([API.getConfigValidations(nss), API.getAllIstioConfigs('', nss, [], false, '', '')])
+    // TODO: Do we need the cluster here?
+    return Promise.all([API.getConfigValidations(nss), API.getAllIstioConfigs(nss, [], false, '', '')])
       .then(results => {
         chunk.forEach(nsInfo => {
           nsInfo.validations = results[0].data[nsInfo.name];

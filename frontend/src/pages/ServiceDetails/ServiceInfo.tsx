@@ -111,7 +111,12 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
     }
 
     this.promises.cancelAll();
-    this.graphDataSource.fetchForService(this.props.duration, this.props.namespace, this.props.service);
+    this.graphDataSource.fetchForService(
+      this.props.duration,
+      this.props.namespace,
+      this.props.service,
+      this.props.cluster
+    );
   };
 
   private getServiceValidation(): ObjectValidation | undefined {

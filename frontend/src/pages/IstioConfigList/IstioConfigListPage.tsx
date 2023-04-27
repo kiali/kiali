@@ -179,7 +179,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     }
     // Request all configs from all namespaces, as in backend all configs are always loaded from registry
     return this.promises
-      .register('configs' + cluster, API.getAllIstioConfigs(cluster, namespaces, typeFilters, validate, '', ''))
+      .register('configs' + cluster, API.getAllIstioConfigs(namespaces, typeFilters, validate, '', '', cluster))
       .then(response => {
         let istioItems: IstioConfigItem[] = [];
         // filter by selected namespaces
