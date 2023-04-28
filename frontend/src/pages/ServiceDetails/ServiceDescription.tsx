@@ -153,8 +153,8 @@ class ServiceDescription extends React.Component<ServiceInfoDescriptionProps, St
     }
     return (
       <Card id={'ServiceDescriptionCard'}>
-        <CardHeader>
-          <Title headingLevel="h5" size={TitleSizes.lg} style={{ position: 'relative', width: '100%' }}>
+        <CardHeader style={{ display: 'table' }}>
+          <Title headingLevel="h5" size={TitleSizes.lg}>
             <div key="service-icon" className={iconStyle}>
               <PFBadge badge={serviceBadge} position={TooltipPosition.top} />
             </div>
@@ -171,17 +171,12 @@ class ServiceDescription extends React.Component<ServiceInfoDescriptionProps, St
                 health={this.props.serviceDetails ? this.props.serviceDetails.health : undefined}
               />
             </span>
-            {this.props.serviceDetails?.cluster && (
-              <div
-                key="cluster-icon"
-                className={iconStyle}
-                style={{ position: 'absolute', display: 'inline', right: 0 }}
-              >
-                <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} />{' '}
-                {this.props.serviceDetails.cluster}
-              </div>
-            )}
           </Title>
+          {this.props.serviceDetails?.cluster && (
+            <div key="cluster-icon" className={iconStyle}>
+              <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {this.props.serviceDetails.cluster}
+            </div>
+          )}
         </CardHeader>
         <CardBody>
           {this.props.serviceDetails && showServiceLabels && (
