@@ -79,6 +79,7 @@ export interface ServiceDetailsInfo {
   namespaceMTLS?: TLSStatus;
   validations: Validations;
   additionalDetails: AdditionalItem[];
+  cluster?: string;
 }
 
 export function getServiceDetailsUpdateLabel(serviceDetails: ServiceDetailsInfo | null) {

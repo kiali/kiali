@@ -35,7 +35,7 @@ class AppDescription extends React.Component<AppDescriptionProps> {
     return this.props.app ? (
       <Card id={'AppDescriptionCard'} data-test="app-description-card">
         <CardHeader>
-          <Title headingLevel="h5" size={TitleSizes.lg}>
+          <Title headingLevel="h5" size={TitleSizes.lg} style={{ position: 'relative', width: '100%' }}>
             <div key="service-icon" className={iconStyle}>
               <PFBadge badge={PFBadges.App} position={TooltipPosition.top} />
             </div>
@@ -43,12 +43,16 @@ class AppDescription extends React.Component<AppDescriptionProps> {
             <span className={healthIconStyle}>
               <HealthIndicator id={this.props.app.name} health={this.props.health} />
             </span>
+            {this.props.app.cluster && (
+              <div
+                key="cluster-icon"
+                className={iconStyle}
+                style={{ position: 'absolute', display: 'inline', right: 0 }}
+              >
+                <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {this.props.app.cluster}
+              </div>
+            )}
           </Title>
-          {this.props.app.cluster && (
-            <div key="cluster-icon" className={iconStyle}>
-              <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {this.props.app.cluster}
-            </div>
-          )}
         </CardHeader>
         <CardBody>
           <Labels
