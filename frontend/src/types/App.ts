@@ -18,6 +18,7 @@ export interface AppWorkload {
 
 export interface App {
   namespace: Namespace;
+  cluster: string;
   name: string;
   workloads: AppWorkload[];
   serviceNames: string[];

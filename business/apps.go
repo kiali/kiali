@@ -284,6 +284,8 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 		}
 	}
 
+	(*appInstance).Cluster = appDetails.cluster
+
 	return *appInstance, nil
 }
 
