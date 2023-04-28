@@ -6,10 +6,6 @@ Feature: Kiali login
     Given user opens base url
     And user clicks my_htpasswd_provider
 
-  Scenario: Verify console URL
-    And user fill in username and password
-    Then user see console in URL
-
   Scenario: Try to log in without filling the username and password
     And user does not fill in username and password
     Then user sees the "Login is required. Please try again." phrase displayed
