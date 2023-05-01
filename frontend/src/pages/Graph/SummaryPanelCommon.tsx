@@ -119,9 +119,9 @@ export const getNodeMetrics = (
     case NodeMetricType.AGGREGATE:
       return API.getAggregateMetrics(nodeData.namespace, nodeData.aggregate!, nodeData.aggregateValue!, options);
     case NodeMetricType.APP:
-      return API.getAppMetrics(nodeData.namespace, nodeData.app!, options);
+      return API.getAppMetrics(nodeData.namespace, nodeData.app!, options, nodeData.cluster);
     case NodeMetricType.SERVICE:
-      return API.getServiceMetrics(nodeData.namespace, nodeData.service!, options);
+      return API.getServiceMetrics(nodeData.namespace, nodeData.service!, options, nodeData.cluster);
     case NodeMetricType.WORKLOAD:
       return API.getWorkloadMetrics(nodeData.namespace, nodeData.workload!, options, nodeData.cluster);
     default:

@@ -174,7 +174,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
         promise = API.getWorkloadDashboard(this.props.namespace, this.props.object, opts, this.props.cluster);
         break;
       case MetricsObjectTypes.APP:
-        promise = API.getAppDashboard(this.props.namespace, this.props.object, opts);
+        promise = API.getAppDashboard(this.props.namespace, this.props.object, opts, this.props.cluster);
         break;
       case MetricsObjectTypes.SERVICE:
       default:

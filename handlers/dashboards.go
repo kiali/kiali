@@ -124,7 +124,7 @@ func AppDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params := models.IstioMetricsQuery{Namespace: namespace, App: app}
+	params := models.IstioMetricsQuery{Cluster: clusterNameFromQuery(r.URL.Query()), Namespace: namespace, App: app}
 	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
