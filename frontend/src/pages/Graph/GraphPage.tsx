@@ -134,7 +134,7 @@ type ReduxProps = {
   showServiceNodes: boolean;
   showTrafficAnimation: boolean;
   showVirtualServices: boolean;
-  startTour: ({ info: TourInfo, stop: number }) => void;
+  startTour: ({ info, stop }) => void;
   summaryData: SummaryData | null;
   trace?: JaegerTrace;
   trafficRates: TrafficRate[];
@@ -513,7 +513,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
                 </div>
               )}
             </ErrorBoundary>
-            {this.props.summaryData && (
+            {this.props.summaryData && !this.state.graphData.isLoading && (
               <SummaryPanel
                 data={this.props.summaryData}
                 duration={this.state.graphData.fetchParams.duration}
