@@ -74,6 +74,7 @@ build-olm-bundle: .prepare-olm-cluster-names .determine-olm-bundle-version
 	  sed -E -i "/.*kiali.*-operator.*/ n; s~(value:)(.*/.*-kiali-.*)~\1 ${CLUSTER_KIALI_INTERNAL_NAME}:${CONTAINER_VERSION}~g" $${csv} ;\
 	  sed -i "s/\$${KIALI_OPERATOR_VERSION}/$${bundle_version_sans_v}/g" $${csv} ;\
 	  sed -i "s/\$${CREATED_AT}/Created-By-Kiali-Makefile/g" $${csv} ;\
+	  sed -i "s|\$${KIALI_OPERATOR_REGISTRY}|${CLUSTER_OPERATOR_INTERNAL_NAME}:${OPERATOR_CONTAINER_VERSION}|g" $${csv} ;\
 	)
 	${DORP} build -f ${OUTDIR}/bundle/bundle.Dockerfile -t ${CLUSTER_OLM_BUNDLE_NAME}:${BUNDLE_VERSION}
 
