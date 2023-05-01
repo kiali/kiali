@@ -304,8 +304,12 @@ export const getAggregateMetrics = (
   );
 };
 
-export const getApp = (cluster: string, namespace: string, app: string, params?: { [key: string]: string }) => {
-  return newRequest<App>(HTTP_VERBS.GET, urls.app(cluster, namespace, app), params, {});
+export const getApp = (namespace: string, app: string, params?: { [key: string]: string }, cluster?: string) => {
+  const queryParams = { ...params };
+  if (cluster) {
+    queryParams.cluster = cluster;
+  }
+  return newRequest<App>(HTTP_VERBS.GET, urls.app(namespace, app), queryParams, {});
 };
 
 export const getApps = (namespace: string, params: any = {}) => {

@@ -15,6 +15,7 @@ import history, { URLParam } from '../../app/History';
 import MiniGraphCardContainer from '../../components/CytoscapeGraph/MiniGraphCard';
 
 type AppInfoProps = {
+  cluster: string;
   app?: App;
   duration: DurationInSeconds;
   health?: AppHealth;
@@ -51,7 +52,12 @@ class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
     if (!this.props.app) {
       return;
     }
-    this.graphDataSource.fetchForVersionedApp(this.props.duration, this.props.app.namespace.name, this.props.app.name);
+    this.graphDataSource.fetchForVersionedApp(
+      this.props.duration,
+      this.props.app.namespace.name,
+      this.props.app.name,
+      this.props.cluster
+    );
   };
 
   goToMetrics = (e: GraphEdgeTapEvent) => {

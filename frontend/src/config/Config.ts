@@ -104,8 +104,7 @@ const conf = {
       authenticate: 'api/authenticate',
       authInfo: 'api/auth/info',
       apps: (namespace: string) => `api/namespaces/${namespace}/apps`,
-      app: (cluster: string, namespace: string, app: string) =>
-        `api/namespaces/${namespace}/apps/${app}?cluster=${cluster}`,
+      app: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}`,
       appGraphElements: (namespace: string, app: string, version?: string) => {
         const baseUrl = `api/namespaces/${namespace}/applications/${app}`;
         const hasVersion = version && version !== 'unknown';

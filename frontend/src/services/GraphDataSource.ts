@@ -319,13 +319,18 @@ export default class GraphDataSource {
     return params;
   };
 
-  public fetchForVersionedApp = (duration: DurationInSeconds, namespace: string, app: string) => {
-    const params = this.fetchForVersionedAppParams(duration, namespace, app);
+  public fetchForVersionedApp = (duration: DurationInSeconds, namespace: string, app: string, cluster: string) => {
+    const params = this.fetchForVersionedAppParams(duration, namespace, app, cluster);
     params.showSecurity = true;
     this.fetchGraphData(params);
   };
 
-  public fetchForVersionedAppParams = (duration: DurationInSeconds, namespace: string, app: string): FetchParams => {
+  public fetchForVersionedAppParams = (
+    duration: DurationInSeconds,
+    namespace: string,
+    app: string,
+    cluster?: string
+  ): FetchParams => {
     const params = GraphDataSource.defaultFetchParams(duration, namespace);
     params.edgeLabels = [
       EdgeLabelMode.RESPONSE_TIME_GROUP,
@@ -338,6 +343,9 @@ export default class GraphDataSource {
     params.graphType = GraphType.VERSIONED_APP;
     params.node!.nodeType = NodeType.APP;
     params.node!.app = app;
+    if (cluster) {
+      params.node!.cluster = cluster;
+    }
     return params;
   };
 

@@ -60,6 +60,7 @@ class AppDescription extends React.Component<AppDescriptionProps> {
             workloads={this.props.app ? this.props.app.workloads : []}
             services={this.props.app ? this.props.app.serviceNames : []}
             health={this.props.health}
+            cluster={this.props.app?.cluster}
           />
         </CardBody>
       </Card>
