@@ -124,7 +124,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
 
     return workload ? (
       <Card id={'WorkloadDescriptionCard'} data-test="workload-description-card">
-        <CardHeader>
+        <CardHeader style={{ display: 'table' }}>
           <Title headingLevel="h5" size={TitleSizes.lg}>
             <div key="service-icon" className={iconStyle}>
               <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
@@ -179,6 +179,11 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
                 />
               )}
           </Title>
+          {this.props.workload?.cluster && (
+            <div key="cluster-icon" className={iconStyle}>
+              <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {this.props.workload.cluster}
+            </div>
+          )}
         </CardHeader>
         <CardBody>
           {workload.labels && (

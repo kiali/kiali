@@ -83,6 +83,11 @@ type App struct {
 	// example: reviews
 	Name string `json:"name"`
 
+	// Cluster of the application
+	// required: false
+	// example: east
+	Cluster string `json:"cluster"`
+
 	// Workloads for a given application
 	// required: true
 	Workloads []WorkloadItem `json:"workloads"`

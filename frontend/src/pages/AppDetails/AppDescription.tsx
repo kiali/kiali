@@ -34,7 +34,7 @@ class AppDescription extends React.Component<AppDescriptionProps> {
     }
     return this.props.app ? (
       <Card id={'AppDescriptionCard'} data-test="app-description-card">
-        <CardHeader>
+        <CardHeader style={{ display: 'table' }}>
           <Title headingLevel="h5" size={TitleSizes.lg}>
             <div key="service-icon" className={iconStyle}>
               <PFBadge badge={PFBadges.App} position={TooltipPosition.top} />
@@ -44,6 +44,11 @@ class AppDescription extends React.Component<AppDescriptionProps> {
               <HealthIndicator id={this.props.app.name} health={this.props.health} />
             </span>
           </Title>
+          {this.props.app.cluster && (
+            <div key="cluster-icon" style={{ paddingBottom: '10px' }}>
+              <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {this.props.app.cluster}
+            </div>
+          )}
         </CardHeader>
         <CardBody>
           <Labels
