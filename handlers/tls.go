@@ -20,9 +20,8 @@ func NamespaceTls(w http.ResponseWriter, r *http.Request) {
 	}
 
 	namespace := params["namespace"]
-	cluster := clusterNameFromQuery(r.URL.Query())
 
-	status, err := business.TLS.NamespaceWidemTLSStatus(r.Context(), namespace, cluster)
+	status, err := business.TLS.NamespaceWidemTLSStatus(r.Context(), namespace, clusterNameFromQuery(r.URL.Query()))
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -42,8 +41,10 @@ func MeshTls(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cluster := clusterNameFromQuery(r.URL.Query())
+
 	// Get all the namespaces
-	namespaces, err := business.Namespace.GetNamespaces(ctx)
+	namespaces, err := business.Namespace.GetNamespacesByCluster(cluster)
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -57,7 +58,7 @@ func MeshTls(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get mtls status given the whole namespaces
-	globalmTLSStatus, err := business.TLS.MeshWidemTLSStatus(ctx, nsNames)
+	globalmTLSStatus, err := business.TLS.MeshWidemTLSStatus(ctx, nsNames, cluster)
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
