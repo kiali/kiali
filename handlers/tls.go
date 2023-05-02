@@ -20,8 +20,9 @@ func NamespaceTls(w http.ResponseWriter, r *http.Request) {
 	}
 
 	namespace := params["namespace"]
+	cluster := clusterNameFromQuery(r.URL.Query())
 
-	status, err := business.TLS.NamespaceWidemTLSStatus(r.Context(), namespace)
+	status, err := business.TLS.NamespaceWidemTLSStatus(r.Context(), namespace, cluster)
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, http.StatusInternalServerError, err.Error())

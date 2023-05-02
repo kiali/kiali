@@ -178,7 +178,7 @@ func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAC
 	// Out of order because it relies on ProxyStatus
 	temporaryLayer.ProxyLogging = ProxyLoggingService{userClients: userClients, proxyStatus: &temporaryLayer.ProxyStatus}
 	temporaryLayer.RegistryStatus = RegistryStatusService{k8s: userClients[homeClusterName], businessLayer: temporaryLayer}
-	temporaryLayer.TLS = TLSService{k8s: userClients[homeClusterName], businessLayer: temporaryLayer}
+	temporaryLayer.TLS = TLSService{userClients: userClients, kialiCache: kialiCache, businessLayer: temporaryLayer}
 	temporaryLayer.Svc = SvcService{config: *config.Get(), kialiCache: kialiCache, businessLayer: temporaryLayer, prom: prom, userClients: userClients}
 	temporaryLayer.TokenReview = NewTokenReview(userClients[homeClusterName])
 	temporaryLayer.Validations = IstioValidationsService{k8s: userClients[homeClusterName], businessLayer: temporaryLayer}

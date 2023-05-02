@@ -590,7 +590,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 	go func(ctx context.Context) {
 		defer wg.Done()
 		var err2 error
-		nsmtls, err2 = in.businessLayer.TLS.NamespaceWidemTLSStatus(ctx, namespace)
+		nsmtls, err2 = in.businessLayer.TLS.NamespaceWidemTLSStatus(ctx, namespace, cluster)
 		if err2 != nil {
 			errChan <- err2
 		}
