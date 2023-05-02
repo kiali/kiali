@@ -69,7 +69,7 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if allNamespaces && len(nss) == 0 {
-		loadedNamespaces, _ := business.Namespace.GetNamespacesByCluster(cluster)
+		loadedNamespaces, _ := business.Namespace.GetNamespacesForCluster(r.Context(), cluster)
 		for _, ns := range loadedNamespaces {
 			nss = append(nss, ns.Name)
 		}
