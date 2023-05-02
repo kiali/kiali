@@ -30,7 +30,7 @@ func update_istio_api_enabled(value bool) {
 		}
 
 	} else {
-		cmdReplacecm := ocCommand + " get cm kiali -n istio-system -o yaml | sed -e 's|istio_api_enabled: " + strconv.FormatBool(original) +"|istio_api_enabled: " + strconv.FormatBool(value) +"|' | " + ocCommand + " apply -f -"
+		cmdReplacecm := ocCommand + " get cm kiali -n istio-system -o yaml | sed -e 's|istio_api_enabled: " + strconv.FormatBool(original) + "|istio_api_enabled: " + strconv.FormatBool(value) + "|' | " + ocCommand + " apply -f -"
 		_, err := exec.Command("bash", "-c", cmdReplacecm).Output()
 		if err != nil {
 			log.Errorf("Error updating config map: %s", err.Error())
