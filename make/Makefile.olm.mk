@@ -16,7 +16,7 @@ OPM_VERSION ?= 1.25.0
 # which OLM to install (for olm-install target)
 OLM_VERSION ?= latest
 
-.prepare-olm-cluster-names: .prepare-cluster
+.prepare-olm-cluster-names: .determine-olm-operators-namespace .prepare-cluster
 ifeq ($(CLUSTER_TYPE),minikube)
 	@$(eval CLUSTER_OLM_BUNDLE_NAME ?= ${CLUSTER_REPO}/${OLM_BUNDLE_NAME})
 	@$(eval CLUSTER_OLM_INDEX_NAME ?= ${CLUSTER_REPO}/${OLM_INDEX_NAME})
@@ -127,7 +127,7 @@ endif
 	@$(eval OPERATOR_NAMESPACE = ${OLM_OPERATORS_NAMESPACE})
 	@echo "Using OLM requires that the OPERATOR_NAMESPACE be set to [${OPERATOR_NAMESPACE}]"
 
-.generate-catalog-source: .prepare-olm-cluster-names .determine-olm-bundle-version .determine-olm-operators-namespace .prepare-operator-pull-secret
+.generate-catalog-source: .prepare-olm-cluster-names .determine-olm-bundle-version .prepare-operator-pull-secret
 	@mkdir -p "${OUTDIR}"
 	@echo "apiVersion: operators.coreos.com/v1alpha1" >  ${OUTDIR}/kiali-catalogsource.yaml
 	@echo "kind: CatalogSource"                       >> ${OUTDIR}/kiali-catalogsource.yaml
