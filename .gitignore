@@ -107,3 +107,9 @@ frontend/src/sass/*
 # Cypress
 frontend/cypress/videos
 frontend/cypress/screenshots
+
+# Do not commit core-ui code to this repo
+core-ui
+
+# Do not commit plugin code to this repo
+ossmc

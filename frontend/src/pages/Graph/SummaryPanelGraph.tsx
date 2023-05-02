@@ -644,6 +644,12 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
         )
         .then(() => {
           this.setState({ validationsMap: newValidationsMap });
+        })
+        .catch(err => {
+          if (!err.isCanceled) {
+            console.log('SummaryPanelGraph: Error fetching Ignore fetch validations error (canceled).');
+            return;
+          }
         });
     });
   };
@@ -651,12 +657,21 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
   private fetchValidationsChunk(chunk: Namespace[], validationsMap: ValidationsMap) {
     return Promise.all(
       chunk.map(ns => {
-        return API.getNamespaceValidations(ns.name).then(rs => ({ validation: rs.data, ns: ns }));
+        return API.getNamespaceValidations(ns.name)
+          .then(rs => ({ validation: rs.data, ns: ns }))
+          .catch(err => {
+            if (!err.isCanceled) {
+              console.log(`SummaryPanelGraph: Error fetching validation chunk: ${API.getErrorString(err)}`);
+            }
+            return { validation: undefined, ns: undefined };
+          });
       })
     )
       .then(results => {
         results.forEach(result => {
-          validationsMap[result.ns.name] = result.validation;
+          if (result.ns) {
+            validationsMap[result.ns.name] = result.validation;
+          }
         });
       })
       .catch(err => {
