@@ -68,7 +68,7 @@ const status: ResourceType<NamespaceInfo> = {
   name: 'Status',
   param: 'h',
   column: 'Status',
-  transforms: [sortable, cellWidth(40)],
+  transforms: [sortable, cellWidth(50)],
   cellTransforms: [textCenter],
   renderer: Renderers.status
 };
@@ -252,7 +252,7 @@ export type Resource = {
 
 const namespaces: Resource = {
   name: 'namespaces',
-  columns: [tlsStatus, nsItem, istioConfiguration, labels, status],
+  columns: [tlsStatus, nsItem, cluster, istioConfiguration, status],
   badge: PFBadges.Namespace
 };
 

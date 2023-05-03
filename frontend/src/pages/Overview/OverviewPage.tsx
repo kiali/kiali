@@ -43,7 +43,7 @@ import NamespaceInfo, { NamespaceStatus } from './NamespaceInfo';
 import NamespaceMTLSStatusContainer from '../../components/MTls/NamespaceMTLSStatus';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import NamespaceStatuses from './NamespaceStatuses';
-import OverviewCardSparklineCharts from './OverviewCardSparklineCharts';
+import OverviewCardSparklineCharts from './OverviewCardSparklineChartsComponent';
 import OverviewTrafficPolicies from './OverviewTrafficPolicies';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { computePrometheusRateParams } from '../../services/Prometheus';
@@ -82,6 +82,7 @@ import TLSInfo from 'components/Overview/TLSInfo';
 import CanaryUpgradeProgress from './CanaryUpgradeProgress';
 import ControlPlaneVersionBadge from './ControlPlaneVersionBadge';
 import AmbientBadge from '../../components/Ambient/AmbientBadge';
+import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 
 const gridStyleCompact = style({
   backgroundColor: '#f5f5f5',
@@ -986,6 +987,12 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                           <CardActions>{namespaceActions[i]}</CardActions>
                         </CardHeader>
                         <CardBody>
+                          {ns.cluster && (
+                            <div style={{ textAlign: 'left', paddingBottom: 3 }}>
+                              <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} />
+                              {ns.cluster}
+                            </div>
+                          )}
                           {ns.name === serverConfig.istioNamespace &&
                             this.state.displayMode === OverviewDisplayMode.EXPAND && (
                               <Grid>
@@ -1147,7 +1154,6 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           errorMetrics={ns.errorMetrics}
           controlPlaneMetrics={ns.controlPlaneMetrics}
           istiodResourceThresholds={this.state.istiodResourceThresholds}
-          istioAPIEnabled={this.props.istioAPIEnabled}
         />
       );
     }
