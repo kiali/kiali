@@ -252,7 +252,7 @@ export type Resource = {
 
 const namespaces: Resource = {
   name: 'namespaces',
-  columns: [tlsStatus, nsItem, cluster, istioConfiguration, status],
+  columns: [tlsStatus, nsItem, cluster, istioConfiguration, labels, status],
   badge: PFBadges.Namespace
 };
 
