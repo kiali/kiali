@@ -8,37 +8,15 @@ FROM cypress/base:14.17.0
 # Run as non-root user for MP+/OpenShift
 USER node
 
-ENV KIALI_HOME=/opt/kiali \
-    PATH=$KIALI_HOME:$PATH
-
+ENV KIALI_HOME=/opt/kiali
 WORKDIR $KIALI_HOME
-
-# A few environment variables to make NPM installs easier.
-# Good colors for most applications.
-ENV TERM xterm
-# Avoid million NPM install messages.
-ENV npm_config_loglevel warn
-# Allow installing when the main user is root.
-ENV npm_config_unsafe_perm true
 
 # copy frontend folder to container
 COPY --chown=node:node frontend/ $KIALI_HOME/
+
 # Install Cypress dependencies.
-RUN /usr/local/bin/yarn install --frozen-lockfile
+RUN /usr/local/bin/yarn install --frozen-lockfile --force
+RUN ls -la
 
 # Run Cypress tests.
 CMD ["yarn", "cypress:run:junit"]
-
-
-# TODO:
-# add oc and kubectl client binaries
-# log in clients above - all test using kubectl failed on `/bin/bash: kubectl: command not found`
-#
-# TODO:
-# shared folder with host for 
-# 1. test results (XML)
-# 2. videos and screenshots
-# 
-# TODO:
-# makefile target for build?
-# makefile target for run?
