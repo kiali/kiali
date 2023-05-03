@@ -61,7 +61,7 @@ import * as Sorts from './Sorts';
 import * as Filters from './Filters';
 import ValidationSummary from '../../components/Validations/ValidationSummary';
 import { DurationInSeconds, IntervalInMilliseconds } from 'types/Common';
-import { Paths, serverConfig } from '../../config';
+import { Paths, isMultiCluster, serverConfig } from '../../config';
 import { PFColors } from '../../components/Pf/PfColors';
 import VirtualList from '../../components/VirtualList/VirtualList';
 import { OverviewNamespaceAction, OverviewNamespaceActions } from './OverviewNamespaceActions';
@@ -987,7 +987,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                           <CardActions>{namespaceActions[i]}</CardActions>
                         </CardHeader>
                         <CardBody>
-                          {ns.cluster && (
+                          {isMultiCluster() && ns.cluster && (
                             <div style={{ textAlign: 'left', paddingBottom: 3 }}>
                               <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} />
                               {ns.cluster}
