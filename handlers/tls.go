@@ -44,7 +44,7 @@ func MeshTls(w http.ResponseWriter, r *http.Request) {
 	cluster := clusterNameFromQuery(r.URL.Query())
 
 	// Get all the namespaces
-	namespaces, err := business.Namespace.GetNamespacesByCluster(cluster)
+	namespaces, err := business.Namespace.GetNamespacesForCluster(ctx, cluster)
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, http.StatusInternalServerError, err.Error())

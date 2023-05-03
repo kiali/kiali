@@ -81,7 +81,7 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 	)
 	defer end()
 
-	nss, err := in.getNamespaces(cluster)
+	nss, err := in.getNamespaces(ctx, cluster)
 	if err != nil {
 		return models.MTLSStatus{}, nil
 	}
@@ -117,8 +117,8 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 	}, nil
 }
 
-func (in *TLSService) getNamespaces(cluster string) ([]string, error) {
-	nss, nssErr := in.businessLayer.Namespace.GetNamespacesByCluster(cluster)
+func (in *TLSService) getNamespaces(ctx context.Context, cluster string) ([]string, error) {
+	nss, nssErr := in.businessLayer.Namespace.GetNamespacesForCluster(ctx, cluster)
 	if nssErr != nil {
 		return nil, nssErr
 	}
