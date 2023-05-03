@@ -892,7 +892,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       const actions = this.getNamespaceActions(ns);
       return <OverviewNamespaceActions key={'namespaceAction_' + i} namespace={ns.name} actions={actions} />;
     });
-
+    const hiddenColumns = isMultiCluster() ? ([] as string[]) : ['cluster'];
     return (
       <>
         <OverviewToolbarContainer
@@ -913,6 +913,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                 sort={this.sort}
                 statefulProps={this.sFOverviewToolbar}
                 actions={namespaceActions}
+                hiddenColumns={hiddenColumns}
               />
             ) : (
               <Grid>
