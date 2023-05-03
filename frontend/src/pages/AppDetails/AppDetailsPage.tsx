@@ -150,12 +150,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   private staticTabs() {
     const overTab = (
       <Tab title="Overview" eventKey={0} key={'Overview'}>
-        <AppInfo
-          app={this.state.app}
-          duration={this.props.duration}
-          health={this.state.health}
-          cluster={this.state.cluster ? this.state.cluster : ''}
-        />
+        <AppInfo app={this.state.app} duration={this.props.duration} health={this.state.health} />
       </Tab>
     );
 

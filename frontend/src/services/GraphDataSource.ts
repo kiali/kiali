@@ -319,7 +319,7 @@ export default class GraphDataSource {
     return params;
   };
 
-  public fetchForVersionedApp = (duration: DurationInSeconds, namespace: string, app: string, cluster: string) => {
+  public fetchForVersionedApp = (duration: DurationInSeconds, namespace: string, app: string, cluster?: string) => {
     const params = this.fetchForVersionedAppParams(duration, namespace, app, cluster);
     params.showSecurity = true;
     this.fetchGraphData(params);
