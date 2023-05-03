@@ -83,17 +83,19 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, 
 
 	istioApiEnabled := config.Get().ExternalServices.Istio.IstioAPIEnabled
 
-	wg.Add(3) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
+	wg.Add(2) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
 	if service != "" {
 		wg.Add(1)
 	}
 
 	if istioApiEnabled {
-		wg.Add(1)
+		wg.Add(2)
 	}
 
-	// We fetch without target service as some validations will require full-namespace details
-	go in.fetchIstioConfigList(ctx, &istioConfigList, &mtlsDetails, &rbacDetails, cluster, namespace, errChan, &wg)
+	if istioApiEnabled {
+		// We fetch without target service as some validations will require full-namespace details
+		go in.fetchIstioConfigList(ctx, &istioConfigList, &mtlsDetails, &rbacDetails, cluster, namespace, errChan, &wg)
+	}
 
 	if workload != "" {
 		// load only requested workload

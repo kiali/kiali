@@ -45,7 +45,12 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, namespaces []strin
 		Cluster:                    cluster,
 	}
 
+	if !config.Get().ExternalServices.Istio.IstioAPIEnabled {
+		return models.MTLSStatus{}, nil
+	}
+
 	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigListPerCluster(ctx, criteria, cluster)
+
 	if err != nil {
 		return models.MTLSStatus{}, err
 	}
@@ -92,8 +97,13 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 		IncludePeerAuthentications: true,
 		Cluster:                    cluster,
 	}
+	
+	if !config.Get().ExternalServices.Istio.IstioAPIEnabled {
+		return models.MTLSStatus{}, nil
+	}
 
 	istioConfigList, err2 := in.businessLayer.IstioConfig.GetIstioConfigListPerCluster(ctx, criteria, cluster)
+
 	if err2 != nil {
 		return models.MTLSStatus{}, err2
 	}
