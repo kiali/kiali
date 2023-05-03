@@ -266,7 +266,6 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 
 		return istioConfigList, nil
 	}
-
 	kubeCache := in.kialiCache.GetKubeCaches()[cluster]
 	if kubeCache == nil {
 		return istioConfigList, fmt.Errorf("K8s Cache [%s] is not found or is not accessible for Kiali", cluster)

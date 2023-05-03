@@ -93,7 +93,7 @@ func initKialiCache() {
 			log.Errorf("Error initializing Kiali Cache. Details: %s", err)
 			return
 		}
-		log.Infof("Cache is initialised. ")
+
 		kialiCache = cache
 	}
 }
