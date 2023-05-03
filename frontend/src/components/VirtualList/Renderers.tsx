@@ -18,7 +18,7 @@ import { Health } from '../../types/Health';
 import NamespaceInfo from '../../pages/Overview/NamespaceInfo';
 import NamespaceMTLSStatusContainer from '../MTls/NamespaceMTLSStatus';
 import ValidationSummary from '../Validations/ValidationSummary';
-import OverviewCardSparklineCharts from '../../pages/Overview/OverviewCardSparklineCharts';
+import OverviewCardSparklineCharts from '../../pages/Overview/OverviewCardSparklineChartsComponent';
 import { OverviewToolbar } from '../../pages/Overview/OverviewToolbar';
 import { StatefulFilters } from '../Filters/StatefulFilters';
 import IstioObjectLink, { GetIstioObjectUrl, infoStyle } from '../Link/IstioObjectLink';
