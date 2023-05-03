@@ -377,7 +377,7 @@ func (c *kubeCache) createIstioInformers(namespace string) istio.SharedInformerF
 	sharedInformers := istio.NewSharedInformerFactoryWithOptions(c.client.Istio(), c.refreshDuration, opts...)
 	lister := c.getCacheLister(namespace)
 
-	if c.client.IsIstioAPI() && c.cfg.ExternalServices.Istio.IstioAPIEnabled {
+	if c.client.IsIstioAPI() {
 		if c.CheckIstioResource(kubernetes.AuthorizationPolicies) {
 			lister.authzLister = sharedInformers.Security().V1beta1().AuthorizationPolicies().Lister()
 			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Security().V1beta1().AuthorizationPolicies().Informer().HasSynced)

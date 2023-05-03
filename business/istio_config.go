@@ -266,15 +266,18 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 
 		return istioConfigList, nil
 	}
+	log.Infof("Get kube caches from cluster %s", cluster)
 	kubeCache := in.kialiCache.GetKubeCaches()[cluster]
 	if kubeCache == nil {
 		return istioConfigList, fmt.Errorf("K8s Cache [%s] is not found or is not accessible for Kiali", cluster)
 	}
+	log.Infof("Get client from cluster %s", cluster)
 	userClient := in.userClients[cluster]
 	if userClient == nil {
 		return istioConfigList, fmt.Errorf("K8s Client [%s] is not found or is not accessible for Kiali", cluster)
 	}
 
+	log.Infof("Not all namespaces")
 	if !criteria.AllNamespaces {
 		// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 		// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
@@ -294,6 +297,7 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 	var wg sync.WaitGroup
 	wg.Add(15)
 
+	log.Infof("Gtting resources")
 	listOpts := meta_v1.ListOptions{LabelSelector: criteria.LabelSelector}
 
 	go func(ctx context.Context, errChan chan error) {
