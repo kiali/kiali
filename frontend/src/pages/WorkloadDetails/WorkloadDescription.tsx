@@ -179,7 +179,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
                 />
               )}
           </Title>
-          {this.props.workload?.cluster && (
+          {this.props.workload?.cluster && Object.keys(serverConfig.clusters).length > 1 && (
             <div key="cluster-icon" className={iconStyle}>
               <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {this.props.workload.cluster}
             </div>

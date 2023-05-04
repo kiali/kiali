@@ -172,7 +172,7 @@ class ServiceDescription extends React.Component<ServiceInfoDescriptionProps, St
               />
             </span>
           </Title>
-          {this.props.serviceDetails?.cluster && (
+          {this.props.serviceDetails?.cluster && Object.keys(serverConfig.clusters).length > 1 && (
             <div key="cluster-icon" className={iconStyle}>
               <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {this.props.serviceDetails.cluster}
             </div>

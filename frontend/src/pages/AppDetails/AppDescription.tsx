@@ -44,7 +44,7 @@ class AppDescription extends React.Component<AppDescriptionProps> {
               <HealthIndicator id={this.props.app.name} health={this.props.health} />
             </span>
           </Title>
-          {this.props.app.cluster && (
+          {this.props.app.cluster && Object.keys(serverConfig.clusters).length > 1 && (
             <div key="cluster-icon" style={{ paddingBottom: '10px' }}>
               <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {this.props.app.cluster}
             </div>
