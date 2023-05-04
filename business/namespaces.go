@@ -518,6 +518,7 @@ func (in *NamespaceService) GetNamespace(ctx context.Context, namespace string) 
 
 // GetNamespace returns the definition of the specified namespace.
 // TODO: Multicluster: We are going to need something else to identify the namespace, the cluster (OR Return a list/array/map)
+// TODO: It returns empty Namespace for single cluster
 func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace string, cluster string) (*models.Namespace, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetNamespace",
