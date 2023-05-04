@@ -14,7 +14,7 @@ import (
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/util/mtls"
 )
-
+ 
 type TLSService struct {
 	userClients     map[string]kubernetes.ClientInterface
 	kialiCache      cache.KialiCache
@@ -97,7 +97,7 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 		IncludePeerAuthentications: true,
 		Cluster:                    cluster,
 	}
-	
+
 	if !config.Get().ExternalServices.Istio.IstioAPIEnabled {
 		return models.MTLSStatus{}, nil
 	}
