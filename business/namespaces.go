@@ -564,8 +564,16 @@ func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace
 			if err2 != nil {
 				return nil, err2
 			}
+		} else {
+			if _, ok := in.userClients[cluster]; !ok {
+				return nil, fmt.Errorf("OCP Cluster [%s] is not found or is not accessible for Kiali", cluster)
+			}
+			project, errC := in.userClients[cluster].GetProject(namespace)
+			if errC != nil {
+				return nil, errC
+			}
+			result = models.CastProject(*project, cluster)
 		}
-
 	} else {
 		// TODO: MC
 		var ns *core_v1.Namespace
