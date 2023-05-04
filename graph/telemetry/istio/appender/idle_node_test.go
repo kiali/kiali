@@ -152,7 +152,7 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 		false,
 	}
 
-	const cluster = "cluster-default"
+	const cluster = "Kubernetes"
 
 	trafficMap := a.v1Traffic(cluster)
 	services := mockServices(a)

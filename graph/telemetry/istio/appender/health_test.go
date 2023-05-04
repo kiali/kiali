@@ -442,7 +442,7 @@ func TestIdleNodesHaveHealthData(t *testing.T) {
 
 	config.Set(config.NewConfig())
 	trafficMap := make(graph.TrafficMap)
-	idleNode, _ := graph.NewNode("cluster-default", "testNamespace", "svc", "", "", "", "v1", graph.GraphTypeVersionedApp)
+	idleNode, _ := graph.NewNode("Kubernetes", "testNamespace", "svc", "", "", "", "v1", graph.GraphTypeVersionedApp)
 	trafficMap[idleNode.ID] = idleNode
 	idleNode.Metadata[graph.IsIdle] = true
 	idleNode.Metadata[graph.IsInaccessible] = true
