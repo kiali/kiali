@@ -136,8 +136,12 @@ export const getNamespaceMetrics = (namespace: string, params: IstioMetricsOptio
   return newRequest<Readonly<IstioMetricsMap>>(HTTP_VERBS.GET, urls.namespaceMetrics(namespace), params, {});
 };
 
-export const getMeshTls = () => {
-  return newRequest<TLSStatus>(HTTP_VERBS.GET, urls.meshTls(), {}, {});
+export const getMeshTls = (cluster?: string) => {
+  const queryParams: any = {};
+  if (cluster) {
+    queryParams.cluster = cluster;
+  }
+  return newRequest<TLSStatus>(HTTP_VERBS.GET, urls.meshTls(), queryParams, {});
 };
 
 export const getOutboundTrafficPolicyMode = () => {
@@ -156,8 +160,12 @@ export const getIstiodResourceThresholds = () => {
   return newRequest<IstiodResourceThresholds>(HTTP_VERBS.GET, urls.istiodResourceThresholds(), {}, {});
 };
 
-export const getNamespaceTls = (namespace: string) => {
-  return newRequest<TLSStatus>(HTTP_VERBS.GET, urls.namespaceTls(namespace), {}, {});
+export const getNamespaceTls = (namespace: string, cluster?: string) => {
+  const queryParams: any = {};
+  if (cluster) {
+    queryParams.cluster = cluster;
+  }
+  return newRequest<TLSStatus>(HTTP_VERBS.GET, urls.namespaceTls(namespace), queryParams, {});
 };
 
 export const getNamespaceValidations = (namespace: string) => {

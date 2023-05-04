@@ -461,7 +461,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   fetchTLSChunk(chunk: NamespaceInfo[]) {
     return Promise.all(
       chunk.map(nsInfo => {
-        return API.getNamespaceTls(nsInfo.name).then(rs => ({ status: rs.data, nsInfo: nsInfo }));
+        return API.getNamespaceTls(nsInfo.name, nsInfo.cluster).then(rs => ({ status: rs.data, nsInfo: nsInfo }));
       })
     )
       .then(results => {
