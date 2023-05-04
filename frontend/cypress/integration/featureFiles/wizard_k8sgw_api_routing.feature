@@ -5,6 +5,7 @@ Feature: Service Details Wizard: K8s Gateway API Routing
   Background:
     Given user is at administrator perspective
 
+  @gateway-api
   @wizard-k8s-routing
   Scenario: Create a K8s Gateway API Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
@@ -26,12 +27,14 @@ Feature: Service Details Wizard: K8s Gateway API Routing
     And user creates the configuration
     Then user sees the "Istio Config" table with 1 rows
 
+  @gateway-api
   @wizard-k8s-routing
   Scenario: See a HTTPRoute generated
     When user clicks in the "Istio Config" table "HTTP" badge "reviews" name row link
     Then user sees the "kind: HTTPRoute" regex in the editor
     And user sees the "bookinfo" "reviews" "service" reference
 
+  @gateway-api
   @wizard-k8s-routing
   Scenario: Update a K8s Gateway API Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
@@ -45,11 +48,13 @@ Feature: Service Details Wizard: K8s Gateway API Routing
     And user updates the configuration
     Then user sees the "Istio Config" table with 2 rows
 
+  @gateway-api
   @wizard-k8s-routing
   Scenario: See a K8s Gateway generated with warning
     When user clicks in the "Istio Config" table "G" badge "reviews-gateway" name row link
     Then user sees the "kind: Gateway" regex in the editor
 
+  @gateway-api
   ## @wizard-k8s-routing
   Scenario: Delete the K8s Gateway Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page

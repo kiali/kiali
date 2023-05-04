@@ -45,6 +45,7 @@ Feature: Kiali Istio Config page
   Scenario: Ability to create a Gateway object
     Then the user can create a "Gateway" Istio object
 
+  @gateway-api
   Scenario: Ability to create a K8sGateway object
     Then the user can create a "K8sGateway" K8s Istio object
 

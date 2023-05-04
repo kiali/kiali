@@ -10,6 +10,7 @@ Feature: Kiali Istio Config page
     And user is at the "istio" page
     And user selects the "bookinfo" namespace
 
+  @gateway-api
   @wizard-istio-config
   Scenario: Create a K8s Gateway scenario
     When user clicks in the "K8sGateway" Istio config actions
@@ -215,7 +216,9 @@ Feature: Kiali Istio Config page
     And user types "8080" in the "addTargetPort1" input
     Then the preview button should be disabled
 
-@wizard-istio-config
+
+  @gateway-api
+  @wizard-istio-config
   Scenario: Create multiple K8s Gateways with colliding hostnames and port combinations and check for a reference
     When user clicks in the "K8sGateway" Istio config actions
     And user sees the "Create K8sGateway" config wizard
@@ -247,7 +250,8 @@ Feature: Kiali Istio Config page
     Then "gatewayapi-2" should be referenced
 
 
-@wizard-istio-config
+  @gateway-api
+  @wizard-istio-config
   Scenario: Delete one of the K8s Gateways and check that the reference is removed
     When viewing the detail for "gatewayapi-2"
     And choosing to delete it 
