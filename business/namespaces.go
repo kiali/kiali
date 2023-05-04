@@ -404,7 +404,11 @@ func (in *NamespaceService) GetNamespacesForCluster(ctx context.Context, cluster
 
 	clusterNamespaces := []models.Namespace{}
 	for _, ns := range tokenNamespaces {
-		if ns.Cluster == cluster {
+		// TODO: The RHS of this expression shouldn't be necessary. I don't think we shold have a DefaultClusterID
+		// or a HomeClusterName constant.  We should always be using the configured cluster name (which should be
+		// set the proper "Kubernetes" default as needed).  The RHS is here because there are times when the client
+		// is using one value and the server is using the other.
+		if ns.Cluster == cluster || (cluster == DefaultClusterID && ns.Cluster == "") {
 			clusterNamespaces = append(clusterNamespaces, ns)
 		}
 	}
