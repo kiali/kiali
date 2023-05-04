@@ -20,17 +20,18 @@ When('viewing the detail for {string}', (object: string) => {
   cy.get('a').contains(object).should('be.visible').click();
 });
 
-When ('k8sgateway {string} is not created',(name:string) =>{
+
+When ('user deletes k8sgateway named {string} and the resource is no longer available',(name:string) =>{
   cy.exec(`kubectl delete gateways.gateway.networking.k8s.io ${name} -n bookinfo`, { failOnNonZeroExit: false });
   ensureKialiFinishedLoading();
 });
 
-When ('gateway {string} is not created',(name:string) =>{
+When ('user deletes gateway named {string} and the resource is no longer available',(name:string) =>{
   cy.exec(`kubectl delete gateway.networking.istio.io ${name} -n bookinfo`, { failOnNonZeroExit: false });
   ensureKialiFinishedLoading();
 });
 
-When ('service {string} is not created',(name:string) =>{
+When ('user deletes service named {string} and the resource is no longer available',(name:string) =>{
   cy.exec(`kubectl delete serviceEntries ${name} -n bookinfo`, { failOnNonZeroExit: false });
   ensureKialiFinishedLoading();
 });
@@ -96,6 +97,10 @@ And('choosing to delete it', () => {
   cy.get('#actions').should('be.visible').click();
   cy.get('#actions').contains('Delete').should('be.visible').click();
   cy.get('#pf-modal-part-2').find('button').contains('Delete').should('be.visible').click();
+});
+
+And('user closes the success notification',()=>{
+  cy.get('[aria-label="Close Success alert: alert: Istio Gateway created"]').click();
 });
 
 Then('the {string} {string} should be listed in {string} namespace', function (
