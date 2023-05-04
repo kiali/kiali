@@ -108,10 +108,11 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 	}()
 
 	// Combine namespace data
+	conf := config.Get()
 	for resultCh := range resultsCh {
 		if resultCh.err != nil {
 			// Return failure if we are in single cluster
-			if resultCh.cluster == kubernetes.HomeClusterName && len(in.userClients) == 1 {
+			if resultCh.cluster == conf.KubernetesConfig.ClusterName && len(in.userClients) == 1 {
 				log.Errorf("Error fetching Applications for local cluster %s: %s", resultCh.cluster, resultCh.err)
 				return models.AppList{}, resultCh.err
 			} else {

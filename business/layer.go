@@ -50,9 +50,11 @@ var (
 
 // sets the global kiali cache var.
 func initKialiCache() {
+	conf := config.Get()
+
 	if excludedWorkloads == nil {
 		excludedWorkloads = make(map[string]bool)
-		for _, w := range config.Get().KubernetesConfig.ExcludeWorkloads {
+		for _, w := range conf.KubernetesConfig.ExcludeWorkloads {
 			excludedWorkloads[w] = true
 		}
 	}
@@ -65,7 +67,7 @@ func initKialiCache() {
 	clientFactory = userClient
 
 	// TODO: Remove conditonal once cache is fully mandatory.
-	if config.Get().KubernetesConfig.CacheEnabled {
+	if conf.KubernetesConfig.CacheEnabled {
 		log.Infof("Initializing Kiali Cache")
 
 		// Initial list of namespaces to seed the cache with.
@@ -73,7 +75,7 @@ func initKialiCache() {
 		// For a cluster-scoped cache, all namespaces are accessible.
 		// TODO: This is leaking cluster-scoped vs. namespace-scoped in a way.
 		var namespaceSeedList []string
-		if !config.Get().AllNamespacesAccessible() {
+		if !conf.AllNamespacesAccessible() {
 			SAClients := clientFactory.GetSAClients()
 			// Special case when using the SA as the user, to fetch all the namespaces initially
 			initNamespaceService := NewNamespaceService(SAClients, SAClients)
@@ -162,7 +164,9 @@ func SetWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterfac
 // It should be the user client based on the logged in user's token.
 func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAClients map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, jaegerClient JaegerLoader) *Layer {
 	temporaryLayer := &Layer{}
-	homeClusterName := config.Get().KubernetesConfig.ClusterName
+	conf := config.Get()
+
+	homeClusterName := conf.KubernetesConfig.ClusterName
 	// TODO: Modify the k8s argument to other services to pass the whole k8s map if needed
 	temporaryLayer.App = AppService{prom: prom, userClients: userClients, businessLayer: temporaryLayer}
 	temporaryLayer.Health = HealthService{prom: prom, businessLayer: temporaryLayer, userClients: userClients}

@@ -176,11 +176,11 @@ func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.Pr
 	return ts, xapi, k8s
 }
 
-func setupAppListEndpoint(t *testing.T, k8s kubernetes.ClientInterface, config config.Config) (*httptest.Server, *prometheustest.PromClientMock) {
+func setupAppListEndpoint(t *testing.T, k8s kubernetes.ClientInterface, conf config.Config) (*httptest.Server, *prometheustest.PromClientMock) {
 	prom := new(prometheustest.PromClientMock)
 
-	business.SetupBusinessLayer(t, k8s, config)
-	business.SetKialiControlPlaneCluster(&business.Cluster{Name: business.DefaultClusterID})
+	business.SetupBusinessLayer(t, k8s, conf)
+	business.SetKialiControlPlaneCluster(&business.Cluster{Name: config.DefaultClusterID})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/apps", http.HandlerFunc(

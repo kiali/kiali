@@ -66,7 +66,7 @@ func TestParseRegistryServices(t *testing.T) {
 	k8s.On("IsGatewayAPI").Return(false)
 	setupGlobalMeshConfig()
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = k8s
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	svc := NewWithBackends(k8sclients, k8sclients, nil, nil).Svc
 
 	servicesz := "../tests/data/registry/services-registryz.json"
@@ -131,7 +131,7 @@ func TestGetServiceListFromMultipleClusters(t *testing.T) {
 
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.ClientInterface{
-		kubernetes.HomeClusterName: kubetest.NewFakeK8sClient(
+		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
 			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings-home-cluster", Namespace: "bookinfo"}},
 		),
@@ -152,7 +152,7 @@ func TestGetServiceListFromMultipleClusters(t *testing.T) {
 	sort.Slice(svcs.Services, func(i, j int) bool {
 		return svcs.Services[i].Name < svcs.Services[j].Name
 	})
-	assert.Equal(svcs.Services[0].Cluster, kubernetes.HomeClusterName)
+	assert.Equal(svcs.Services[0].Cluster, conf.KubernetesConfig.ClusterName)
 	assert.Equal(svcs.Services[1].Cluster, "west")
 }
 
@@ -166,7 +166,7 @@ func TestMultiClusterGetService(t *testing.T) {
 
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.ClientInterface{
-		kubernetes.HomeClusterName: kubetest.NewFakeK8sClient(
+		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
 			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings-home-cluster", Namespace: "bookinfo"}},
 		),
@@ -185,7 +185,7 @@ func TestMultiClusterGetService(t *testing.T) {
 
 	assert.Equal(s.Name, "ratings-west-cluster")
 
-	s, err = svc.GetService(context.TODO(), kubernetes.HomeClusterName, "bookinfo", "ratings-home-cluster")
+	s, err = svc.GetService(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "ratings-home-cluster")
 	require.NoError(err)
 
 	assert.Equal(s.Name, "ratings-home-cluster")
@@ -201,7 +201,7 @@ func TestMultiClusterServiceUpdate(t *testing.T) {
 
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.ClientInterface{
-		kubernetes.HomeClusterName: kubetest.NewFakeK8sClient(
+		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
 			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings-home-cluster", Namespace: "bookinfo"}},
 		),
@@ -228,7 +228,7 @@ func TestMultiClusterServiceUpdate(t *testing.T) {
 	require.NoError(err)
 	assert.Contains(s.Annotations, "test")
 
-	s, err = svc.GetService(context.TODO(), kubernetes.HomeClusterName, "bookinfo", "ratings-home-cluster")
+	s, err = svc.GetService(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "ratings-home-cluster")
 	require.NoError(err)
 	assert.NotContains(s.Annotations, "test")
 }
@@ -243,7 +243,7 @@ func TestMultiClusterGetServiceDetails(t *testing.T) {
 
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.ClientInterface{
-		kubernetes.HomeClusterName: kubetest.NewFakeK8sClient(
+		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
 			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings-home-cluster", Namespace: "bookinfo"}},
 		),
@@ -278,7 +278,7 @@ func TestMultiClusterGetServiceAppName(t *testing.T) {
 
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.ClientInterface{
-		kubernetes.HomeClusterName: kubetest.NewFakeK8sClient(
+		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
 			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings-home-cluster", Namespace: "bookinfo"}},
 		),

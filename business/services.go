@@ -44,6 +44,8 @@ type ServiceCriteria struct {
 // GetServiceList returns a list of all services for a given criteria
 func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriteria) (*models.ServiceList, error) {
 	var end observability.EndFunc
+	conf := config.Get()
+
 	ctx, end = observability.StartSpan(ctx, "GetServiceList",
 		observability.Attribute("package", "business"),
 		observability.Attribute("namespace", criteria.Namespace),
@@ -81,7 +83,7 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 
 		singleClusterSVCList, err := in.GetServiceListForCluster(ctx, criteria, cluster)
 		if err != nil {
-			if cluster == kubernetes.HomeClusterName {
+			if cluster == conf.KubernetesConfig.ClusterName {
 				return nil, err
 			}
 
@@ -107,6 +109,7 @@ func (in *SvcService) GetServiceListForCluster(ctx context.Context, criteria Ser
 		err             error
 		kubeCache       cache.KubeCache
 	)
+	conf := config.Get()
 
 	kubeCache, err = in.kialiCache.GetKubeCache(cluster)
 	if err != nil {
@@ -120,7 +123,7 @@ func (in *SvcService) GetServiceListForCluster(ctx context.Context, criteria Ser
 	if criteria.IncludeIstioResources {
 		nFetches = 5
 	}
-	if !in.config.ExternalServices.Istio.IstioAPIEnabled || cluster != kubernetes.HomeClusterName {
+	if !in.config.ExternalServices.Istio.IstioAPIEnabled || cluster != conf.KubernetesConfig.ClusterName {
 		nFetches--
 	}
 
@@ -146,7 +149,7 @@ func (in *SvcService) GetServiceListForCluster(ctx context.Context, criteria Ser
 		}
 	}()
 
-	if in.config.ExternalServices.Istio.IstioAPIEnabled && cluster == kubernetes.HomeClusterName {
+	if in.config.ExternalServices.Istio.IstioAPIEnabled && cluster == conf.KubernetesConfig.ClusterName {
 		go func() {
 			defer wg.Done()
 			var err2 error
@@ -379,7 +382,7 @@ func (in *SvcService) getClusterId() string {
 	//        ]
 	//      }
 	//    }
-	clusterId := DefaultClusterID
+	clusterId := config.DefaultClusterID
 	// Protection on tests
 	if in.businessLayer != nil {
 		if cluster, err := in.businessLayer.Mesh.ResolveKialiControlPlaneCluster(nil); err == nil {

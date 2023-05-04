@@ -19,6 +19,7 @@ import (
 func TestClientExpiration(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
+	conf := config.Get()
 
 	istioConfig := rest.Config{}
 	clientFactory, err := newClientFactory(&istioConfig)
@@ -30,7 +31,7 @@ func TestClientExpiration(t *testing.T) {
 	// Create a single initial test clients
 	authInfo := api.NewAuthInfo()
 	authInfo.Token = "foo-token"
-	_, err = clientFactory.getRecycleClient(authInfo, 100*time.Millisecond, HomeClusterName)
+	_, err = clientFactory.getRecycleClient(authInfo, 100*time.Millisecond, conf.KubernetesConfig.ClusterName)
 	require.NoError(err)
 
 	// Verify we have the client
@@ -42,7 +43,7 @@ func TestClientExpiration(t *testing.T) {
 	time.Sleep(time.Millisecond * 60)
 	authInfo1 := api.NewAuthInfo()
 	authInfo1.Token = "bar-token"
-	_, err = clientFactory.getRecycleClient(authInfo1, 100*time.Millisecond, HomeClusterName)
+	_, err = clientFactory.getRecycleClient(authInfo1, 100*time.Millisecond, conf.KubernetesConfig.ClusterName)
 	require.NoError(err)
 
 	// Verify we have both the foo and bar clients
@@ -84,7 +85,7 @@ func TestConcurrentClientExpiration(t *testing.T) {
 			defer wg.Done()
 			authInfo := api.NewAuthInfo()
 			authInfo.Token = fmt.Sprintf("%d", rand.Intn(10000000000))
-			_, innerErr := clientFactory.getRecycleClient(authInfo, 10*time.Millisecond, HomeClusterName)
+			_, innerErr := clientFactory.getRecycleClient(authInfo, 10*time.Millisecond, config.Get().KubernetesConfig.ClusterName)
 			assert.NoError(innerErr)
 		}()
 	}
@@ -146,8 +147,8 @@ func TestSAHomeClientUpdatesWhenKialiTokenChanges(t *testing.T) {
 
 func TestSAClientsUpdateWhenKialiTokenChanges(t *testing.T) {
 	require := require.New(t)
-	kialiConfig := config.NewConfig()
-	config.Set(kialiConfig)
+	conf := config.NewConfig()
+	config.Set(conf)
 	t.Cleanup(func() {
 		// Other tests use this global var so we need to reset it.
 		KialiTokenForHomeCluster = ""
@@ -160,11 +161,11 @@ func TestSAClientsUpdateWhenKialiTokenChanges(t *testing.T) {
 	clientFactory, err := newClientFactory(&restConfig)
 	require.NoError(err)
 
-	client := clientFactory.GetSAClient(HomeClusterName)
+	client := clientFactory.GetSAClient(conf.KubernetesConfig.ClusterName)
 	require.Equal(KialiTokenForHomeCluster, client.GetToken())
 
 	KialiTokenForHomeCluster = "new-token"
 
-	client = clientFactory.GetSAClient(HomeClusterName)
+	client = clientFactory.GetSAClient(conf.KubernetesConfig.ClusterName)
 	require.Equal(KialiTokenForHomeCluster, client.GetToken())
 }

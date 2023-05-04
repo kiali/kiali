@@ -125,12 +125,13 @@ var newSecurityConfigTypes = []string{
 // per a given Namespace.
 func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria IstioConfigCriteria) (models.IstioConfigList, error) {
 	istioConfigList := models.IstioConfigList{}
+	conf := config.Get()
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 	for cluster := range in.userClients {
 		singleClusterConfigList, err := in.GetIstioConfigListPerCluster(ctx, criteria, cluster)
 		if err != nil {
-			if cluster == kubernetes.HomeClusterName && len(in.userClients) == 1 {
+			if cluster == conf.KubernetesConfig.ClusterName && len(in.userClients) == 1 {
 				return models.IstioConfigList{}, err
 			}
 
@@ -1326,14 +1327,15 @@ func getPermissions(ctx context.Context, k8s kubernetes.ClientInterface, cluster
 
 func getPermissionsApi(ctx context.Context, k8s kubernetes.ClientInterface, cluster string, namespace, api, resourceType string) (bool, bool, bool) {
 	var canCreate, canPatch, canDelete bool
+	conf := config.Get()
 
 	// In view only mode, there is not need to check RBAC permissions, return false early
-	if config.Get().Deployment.ViewOnlyMode {
+	if conf.Deployment.ViewOnlyMode {
 		log.Debug("View only mode configured, skipping RBAC checks")
 		return canCreate, canPatch, canDelete
 	}
 	// Disable writes for remote clusters
-	if cluster != config.Get().KubernetesConfig.ClusterName {
+	if cluster != conf.KubernetesConfig.ClusterName {
 		log.Debug("Writes disabled for remote clusters")
 		return canCreate, canPatch, canDelete
 	}

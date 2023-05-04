@@ -195,7 +195,7 @@ func TestGrafanaWorking(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
+	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
@@ -233,7 +233,7 @@ func TestGrafanaDisabled(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
+	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
@@ -285,7 +285,7 @@ func TestGrafanaNotWorking(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
+	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
@@ -316,7 +316,7 @@ func TestFailingTracingService(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
+	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockFailingJaeger).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
@@ -342,7 +342,7 @@ func TestOverriddenUrls(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
+	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
@@ -372,7 +372,7 @@ func TestCustomDashboardsMainPrometheus(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
+	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
@@ -397,7 +397,7 @@ func TestNoIstioComponentFoundError(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
+	clients[conf.KubernetesConfig.ClusterName] = k8s
 
 	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
 	_, error := iss.GetStatus(context.TODO())
@@ -424,7 +424,7 @@ func TestDefaults(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
+	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
 
 	icsl, err := iss.GetStatus(context.TODO())
@@ -458,8 +458,8 @@ func TestNonDefaults(t *testing.T) {
 
 	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objects, true, false)
 
-	c := config.Get()
-	c.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
+	conf := config.Get()
+	conf.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
 		Enabled: true,
 		Components: []config.ComponentStatus{
 			{AppLabel: "istiod", IsCore: false},
@@ -467,13 +467,13 @@ func TestNonDefaults(t *testing.T) {
 			{AppLabel: "istio-ingressgateway", IsCore: false},
 		},
 	}
-	config.Set(c)
+	config.Set(conf)
 
 	// Set global cache var
-	SetupBusinessLayer(t, k8s, *c)
+	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
+	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO())
@@ -504,9 +504,9 @@ func TestIstiodNotReady(t *testing.T) {
 
 	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objects, false, false)
 
-	c := config.Get()
-	c.IstioLabels.AppLabelName = "app.kubernetes.io/name"
-	c.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
+	conf := config.Get()
+	conf.IstioLabels.AppLabelName = "app.kubernetes.io/name"
+	conf.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
 		Enabled: true,
 		Components: []config.ComponentStatus{
 			{AppLabel: "istiod", IsCore: true},
@@ -514,13 +514,13 @@ func TestIstiodNotReady(t *testing.T) {
 			{AppLabel: "istio-ingressgateway", IsCore: false},
 		},
 	}
-	config.Set(c)
+	config.Set(conf)
 
 	// Set global cache var
-	SetupBusinessLayer(t, k8s, *c)
+	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
+	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO())
@@ -566,9 +566,9 @@ func TestIstiodUnreachable(t *testing.T) {
 
 	k8s = &fakeIstiodConnecter{k8s, istioStatus}
 
-	c := config.Get()
-	c.IstioLabels.AppLabelName = "app.kubernetes.io/name"
-	c.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
+	conf := config.Get()
+	conf.IstioLabels.AppLabelName = "app.kubernetes.io/name"
+	conf.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
 		Enabled: true,
 		Components: []config.ComponentStatus{
 			{AppLabel: "istiod", IsCore: true},
@@ -576,13 +576,13 @@ func TestIstiodUnreachable(t *testing.T) {
 			{AppLabel: "istio-ingressgateway", IsCore: false},
 		},
 	}
-	config.Set(c)
+	config.Set(conf)
 
 	// Set global cache var
-	SetupBusinessLayer(t, k8s, *c)
+	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
+	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO())
@@ -621,9 +621,9 @@ func TestCustomizedAppLabel(t *testing.T) {
 
 	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objects, true, false)
 
-	c := config.Get()
-	c.IstioLabels.AppLabelName = "app.kubernetes.io/name"
-	c.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
+	conf := config.Get()
+	conf.IstioLabels.AppLabelName = "app.kubernetes.io/name"
+	conf.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
 		Enabled: true,
 		Components: []config.ComponentStatus{
 			{AppLabel: "istiod", IsCore: false},
@@ -631,13 +631,13 @@ func TestCustomizedAppLabel(t *testing.T) {
 			{AppLabel: "istio-ingressgateway", IsCore: false},
 		},
 	}
-	config.Set(c)
+	config.Set(conf)
 
 	// Set global cache var
-	SetupBusinessLayer(t, k8s, *c)
+	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
+	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO())
@@ -672,9 +672,9 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 
 	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objects, true, false)
 
-	c := config.Get()
-	c.IstioLabels.AppLabelName = "app.kubernetes.io/name"
-	c.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
+	conf := config.Get()
+	conf.IstioLabels.AppLabelName = "app.kubernetes.io/name"
+	conf.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
 		Enabled: true,
 		Components: []config.ComponentStatus{
 			{AppLabel: "istiod", IsCore: false},
@@ -682,13 +682,13 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 			{AppLabel: "istio-ingressgateway", IsCore: false},
 		},
 	}
-	config.Set(c)
+	config.Set(conf)
 
 	// Set global cache var
-	SetupBusinessLayer(t, k8s, *c)
+	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
+	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO())
@@ -719,9 +719,9 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 
 	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objects, true, false)
 
-	c := config.Get()
-	c.IstioLabels.AppLabelName = "app.kubernetes.io/name"
-	c.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
+	conf := config.Get()
+	conf.IstioLabels.AppLabelName = "app.kubernetes.io/name"
+	conf.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
 		Enabled: true,
 		Components: []config.ComponentStatus{
 			{AppLabel: "istiod", IsCore: false},
@@ -729,13 +729,13 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 			{AppLabel: "istio-ingressgateway", IsCore: false},
 		},
 	}
-	config.Set(c)
+	config.Set(conf)
 
 	// Set global cache var
-	SetupBusinessLayer(t, k8s, *c)
+	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
+	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO())

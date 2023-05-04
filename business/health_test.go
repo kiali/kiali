@@ -267,7 +267,7 @@ func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
+	clients[conf.KubernetesConfig.ClusterName] = k8s
 	hs := NewWithBackends(clients, clients, prom, nil).Health
 	criteria := NamespaceHealthCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "ns", RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
 
@@ -294,7 +294,7 @@ func TestGetNamespaceServiceHealthWithNA(t *testing.T) {
 	)
 	k8s.OpenShift = true
 	prom := new(prometheustest.PromClientMock)
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
+	SetupBusinessLayer(t, k8s, *conf)
 
 	prom.On("GetNamespaceServicesRequestRates", "tutorial", conf.KubernetesConfig.ClusterName, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
 
@@ -302,7 +302,7 @@ func TestGetNamespaceServiceHealthWithNA(t *testing.T) {
 	clients[conf.KubernetesConfig.ClusterName] = k8s
 	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, clients, prom, nil), userClients: clients}
 
-	criteria := NamespaceHealthCriteria{Namespace: "tutorial", RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
+	criteria := NamespaceHealthCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "tutorial", RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
 	health, err := hs.GetNamespaceServiceHealth(context.TODO(), criteria)
 
 	assert.Nil(err)
@@ -353,7 +353,7 @@ func TestGetNamespaceServicesHealthMultiCluster(t *testing.T) {
 
 	hs := HealthService{prom: prom, businessLayer: layer, userClients: clients}
 
-	criteria := NamespaceHealthCriteria{Namespace: "tutorial", RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
+	criteria := NamespaceHealthCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "tutorial", RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
 
 	servicesHealth, err := hs.GetNamespaceServiceHealth(context.TODO(), criteria)
 

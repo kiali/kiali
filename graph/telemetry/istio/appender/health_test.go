@@ -498,14 +498,14 @@ func TestErrorCausesPanic(t *testing.T) {
 	business.WithKialiCache(cache)
 
 	business.SetKialiControlPlaneCluster(&business.Cluster{
-		Name: business.DefaultClusterID,
+		Name: config.DefaultClusterID,
 	})
 
 	prom := new(prometheustest.PromClientMock)
 	prom.MockNamespaceServicesRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
 	prom.MockAllRequestRates("testNamespace", conf.KubernetesConfig.ClusterName, "0s", time.Unix(0, 0), model.Vector{})
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = k8s
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, prom, nil)
 
 	globalInfo := graph.NewAppenderGlobalInfo()
@@ -573,14 +573,14 @@ func setupHealthConfig(t *testing.T, services []core_v1.Service, deployments []a
 	config.Set(conf)
 	business.SetupBusinessLayer(t, k8s, *conf)
 	business.SetKialiControlPlaneCluster(&business.Cluster{
-		Name: business.DefaultClusterID,
+		Name: config.DefaultClusterID,
 	})
 
 	prom := new(prometheustest.PromClientMock)
 	prom.MockNamespaceServicesRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
-	prom.MockAllRequestRates("testNamespace", kubernetes.HomeClusterName, "0s", time.Unix(0, 0), model.Vector{})
+	prom.MockAllRequestRates("testNamespace", conf.KubernetesConfig.ClusterName, "0s", time.Unix(0, 0), model.Vector{})
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = k8s
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, prom, nil)
 	return businessLayer
 }

@@ -1,7 +1,6 @@
 package appender
 
 import (
-	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
@@ -38,7 +37,7 @@ func (a IdleNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 	services := []models.ServiceOverview{}
 	workloads := []models.WorkloadListItem{}
 	if globalInfo.HomeCluster == "" {
-		globalInfo.HomeCluster = business.DefaultClusterID
+		globalInfo.HomeCluster = config.DefaultClusterID
 		c, err := globalInfo.Business.Mesh.ResolveKialiControlPlaneCluster(nil)
 		graph.CheckError(err)
 		if c != nil {

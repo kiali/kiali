@@ -62,7 +62,7 @@ func TestReloadRemoteClusterSecret(t *testing.T) {
 		clusterNames = append(clusterNames, cluster)
 	}
 	check.Equal(2, len(clusterNames), "Should have seen the remote cluster secret")
-	check.Contains(clusterNames, HomeClusterName)
+	check.Contains(clusterNames, conf.KubernetesConfig.ClusterName)
 	check.Contains(clusterNames, testClusterName)
 
 	testRCI := clientFactory.remoteClusterInfos[testClusterName]

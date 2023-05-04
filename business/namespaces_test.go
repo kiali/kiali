@@ -24,7 +24,7 @@ func setupNamespaceService(k8s kubernetes.ClientInterface, conf *config.Config) 
 	config.Set(conf)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = k8s
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	return NewNamespaceService(k8sclients, k8sclients)
 }
 
@@ -112,7 +112,7 @@ func TestUpdateNamespaces(t *testing.T) {
 
 	nsservice := setupNamespaceService(k8s, conf)
 
-	ns, err := nsservice.UpdateNamespace(context.TODO(), "bookinfo", `{"metadata": {"labels": {"new": "label"}}}`, kubernetes.HomeClusterName)
+	ns, err := nsservice.UpdateNamespace(context.TODO(), "bookinfo", `{"metadata": {"labels": {"new": "label"}}}`, conf.KubernetesConfig.ClusterName)
 
 	assert.Nil(t, err)
 	assert.NotNil(t, ns)
@@ -152,7 +152,7 @@ func TestMultiClusterGetNamespace(t *testing.T) {
 	// GetNamespace should probably always return the home cluster to
 	// keep backward compatability and anything new should use
 	// GetNamespaceByCluster.
-	// assert.Equal(kubernetes.HomeClusterName, ns.Cluster)
+	// assert.Equal(conf.KubernetesConfig.ClusterName, ns.Cluster)
 }
 
 func TestMultiClusterGetNamespaces(t *testing.T) {

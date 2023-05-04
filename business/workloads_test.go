@@ -68,7 +68,7 @@ func TestGetWorkloadListFromDeployments(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 	svc := setupWorkloadService(k8s, config.NewConfig())
 
-	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false, Cluster: kubernetes.HomeClusterName}
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false, Cluster: conf.KubernetesConfig.ClusterName}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
@@ -412,7 +412,7 @@ func TestGetWorkloadFromDeployment(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *config.NewConfig())
 	svc := setupWorkloadService(k8s, conf)
 
-	criteria := WorkloadCriteria{Namespace: "Namespace", WorkloadName: "details-v1", WorkloadType: "", IncludeServices: false}
+	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details-v1", WorkloadType: "", IncludeServices: false}
 	workload, err := svc.GetWorkload(context.TODO(), criteria)
 	require.NoError(err)
 
@@ -448,7 +448,7 @@ func TestGetWorkloadWithInvalidWorkloadType(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *config.NewConfig())
 	svc := setupWorkloadService(k8s, conf)
 
-	criteria := WorkloadCriteria{Namespace: "Namespace", WorkloadName: "details-v1", WorkloadType: "invalid", IncludeServices: false}
+	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details-v1", WorkloadType: "invalid", IncludeServices: false}
 	workload, err := svc.GetWorkload(context.TODO(), criteria)
 	require.NoError(err)
 
@@ -483,14 +483,14 @@ func TestGetWorkloadFromPods(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *config.NewConfig())
 	svc := setupWorkloadService(k8s, conf)
 
-	criteria := WorkloadCriteria{Namespace: "Namespace", WorkloadName: "custom-controller", WorkloadType: "", IncludeServices: false}
+	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "custom-controller", WorkloadType: "", IncludeServices: false}
 	workload, err := svc.GetWorkload(context.TODO(), criteria)
 	require.Error(err)
 
 	// custom controller is not a workload type, only its replica set(s)
 	assert.Equal((*models.Workload)(nil), workload)
 
-	criteria = WorkloadCriteria{Namespace: "Namespace", WorkloadName: "custom-controller-RS-123", WorkloadType: "", IncludeServices: false}
+	criteria = WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "custom-controller-RS-123", WorkloadType: "", IncludeServices: false}
 	workload, err = svc.GetWorkload(context.TODO(), criteria)
 	require.NoError(err)
 
@@ -735,7 +735,7 @@ func TestDuplicatedControllers(t *testing.T) {
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
-	criteria = WorkloadCriteria{Namespace: "Namespace", WorkloadName: "duplicated-v1", WorkloadType: "", IncludeServices: false}
+	criteria = WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "duplicated-v1", WorkloadType: "", IncludeServices: false}
 	workload, err := svc.GetWorkload(context.TODO(), criteria)
 
 	require.NoError(err)
@@ -783,7 +783,7 @@ func TestGetWorkloadListFromGenericPodController(t *testing.T) {
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
-	criteria = WorkloadCriteria{Namespace: "Namespace", WorkloadName: owner.Name, WorkloadType: "", IncludeServices: false}
+	criteria = WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: owner.Name, WorkloadType: "", IncludeServices: false}
 	workload, err := svc.GetWorkload(context.TODO(), criteria)
 
 	require.NoError(err)

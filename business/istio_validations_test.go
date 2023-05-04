@@ -30,7 +30,7 @@ func TestGetNamespaceValidations(t *testing.T) {
 	vs := mockCombinedValidationService(t, fakeIstioConfigList(),
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
 
-	validations, err := vs.GetValidations(context.TODO(), kubernetes.HomeClusterName, "test", "", "")
+	validations, err := vs.GetValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "", "")
 	require.NoError(err)
 	assert.NotEmpty(validations)
 	assert.True(validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
@@ -44,7 +44,7 @@ func TestGetAllValidations(t *testing.T) {
 	vs := mockCombinedValidationService(t, fakeIstioConfigList(),
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
 
-	validations, _ := vs.GetValidations(context.TODO(), kubernetes.HomeClusterName, "", "", "")
+	validations, _ := vs.GetValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "", "", "")
 	assert.NotEmpty(validations)
 	assert.True(validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
 }
@@ -57,7 +57,7 @@ func TestGetIstioObjectValidations(t *testing.T) {
 	vs := mockCombinedValidationService(t, fakeIstioConfigList(),
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
 
-	validations, _, _ := vs.GetIstioObjectValidations(context.TODO(), kubernetes.HomeClusterName, "test", "virtualservices", "product-vs")
+	validations, _, _ := vs.GetIstioObjectValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "virtualservices", "product-vs")
 
 	assert.NotEmpty(validations)
 }
@@ -68,7 +68,7 @@ func TestGatewayValidation(t *testing.T) {
 	config.Set(conf)
 
 	v := mockMultiNamespaceGatewaysValidationService(t)
-	validations, _, _ := v.GetIstioObjectValidations(context.TODO(), kubernetes.HomeClusterName, "test", "gateways", "first")
+	validations, _, _ := v.GetIstioObjectValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "gateways", "first")
 	assert.NotEmpty(validations)
 }
 
@@ -114,7 +114,7 @@ func TestGetVSReferences(t *testing.T) {
 
 	vs := mockCombinedValidationService(t, fakeIstioConfigList(), []string{}, "test", fakePods())
 
-	_, referencesMap, err := vs.GetIstioObjectValidations(context.TODO(), kubernetes.HomeClusterName, "test", kubernetes.VirtualServices, "product-vs")
+	_, referencesMap, err := vs.GetIstioObjectValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, "product-vs")
 	references := referencesMap[models.IstioReferenceKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}]
 
 	// Check Service references
@@ -135,7 +135,7 @@ func TestGetVSReferencesNotExisting(t *testing.T) {
 
 	vs := mockCombinedValidationService(t, fakeEmptyIstioConfigList(), []string{}, "test", fakePods())
 
-	_, referencesMap, err := vs.GetIstioObjectValidations(context.TODO(), kubernetes.HomeClusterName, "wrong", "virtualservices", "wrong")
+	_, referencesMap, err := vs.GetIstioObjectValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "wrong", "virtualservices", "wrong")
 	references := referencesMap[models.IstioReferenceKey{ObjectType: "wrong", Namespace: "wrong", Name: "product-vs"}]
 
 	assert.Nil(err)
@@ -174,7 +174,7 @@ func mockMultiNamespaceGatewaysValidationService(t *testing.T) IstioValidationsS
 	})
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = k8s
+	k8sclients[config.Get().KubernetesConfig.ClusterName] = k8s
 	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 }
 
@@ -224,7 +224,7 @@ func mockCombinedValidationService(t *testing.T, istioConfigList *models.IstioCo
 	})
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = k8s
+	k8sclients[config.Get().KubernetesConfig.ClusterName] = k8s
 	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 }
 
@@ -235,7 +235,7 @@ func mockEmptyValidationService() IstioValidationsService {
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("IsMaistraApi").Return(false)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = k8s
+	k8sclients[config.Get().KubernetesConfig.ClusterName] = k8s
 	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 }
 

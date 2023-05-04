@@ -24,14 +24,6 @@ var once sync.Once
 // defaultExpirationTime set the default expired time of a client
 const defaultExpirationTime = time.Minute * 15
 
-// cluster name to denote the cluster where Kiali is deployed
-// If you need an SA client connected to the home cluster, use GetSAHomeClusterClient()
-// instead of this. This gets set when newClientFactory() is called.
-// TODO: Deprecated - remove this.
-var (
-	HomeClusterName = ""
-)
-
 // ClientFactory interface for the clientFactory object
 type ClientFactory interface {
 	GetClient(authInfo *api.AuthInfo) (ClientInterface, error) // TODO: Make private
@@ -73,7 +65,7 @@ type clientFactory struct {
 func GetClientFactory() (ClientFactory, error) {
 	var err error
 	once.Do(func() {
-		HomeClusterName = kialiConfig.Get().KubernetesConfig.ClusterName
+		// HomeClusterName = kialiConfig.Get().KubernetesConfig.ClusterName
 		// Get the normal configuration
 		var config *rest.Config
 		config, err = GetConfigForLocalCluster()

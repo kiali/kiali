@@ -55,6 +55,10 @@ const (
 	DashboardsDiscoveryAuto    = "auto"
 )
 
+const (
+	DefaultClusterID = "Kubernetes"
+)
+
 // FeatureName is the enum type used for named features that can be disabled via KialiFeatureFlags.DisabledFeatures
 type FeatureName string
 
@@ -717,7 +721,7 @@ func NewConfig() (c *Config) {
 			CacheIstioTypes:             []string{"AuthorizationPolicy", "DestinationRule", "EnvoyFilter", "Gateway", "PeerAuthentication", "RequestAuthentication", "ServiceEntry", "Sidecar", "VirtualService", "WorkloadEntry", "WorkloadGroup", "WasmPlugin", "Telemetry", "K8sGateway", "K8sHTTPRoute"},
 			CacheNamespaces:             []string{".*"},
 			CacheTokenNamespaceDuration: 10,
-			ClusterName:                 "",
+			ClusterName:                 DefaultClusterID,
 			ExcludeWorkloads:            []string{"CronJob", "DeploymentConfig", "Job", "ReplicationController"},
 			QPS:                         175,
 		},

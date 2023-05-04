@@ -152,7 +152,7 @@ func Config(w http.ResponseWriter, r *http.Request) {
 	bLayer, err := getBusiness(r)
 	if err == nil {
 		// @TODO hardcoded home cluster
-		publicConfig.GatewayAPIEnabled = bLayer.IstioConfig.IsGatewayAPI(kubernetes.HomeClusterName)
+		publicConfig.GatewayAPIEnabled = bLayer.IstioConfig.IsGatewayAPI(config.KubernetesConfig.ClusterName)
 	}
 	publicConfig.AmbientEnabled = bLayer.IstioConfig.IsAmbientEnabled()
 

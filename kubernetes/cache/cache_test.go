@@ -108,7 +108,7 @@ func TestKubeCacheCreatedPerClient(t *testing.T) {
 	_, err = caches["cluster2"].GetDeployment("test", "deployment2")
 	require.NoError(err)
 
-	_, err = kialiCache.GetKubeCache(kubernetes.HomeClusterName)
+	_, err = kialiCache.GetKubeCache(conf.KubernetesConfig.ClusterName)
 	require.NoError(err)
 
 	_, err = kialiCache.GetKubeCache("cluster2")

@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
@@ -51,7 +50,7 @@ func TestGetValidationsPerf(t *testing.T) {
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
 
 	now := time.Now()
-	validations, err := vs.GetValidations(context.TODO(), kubernetes.HomeClusterName, "test", "", "")
+	validations, err := vs.GetValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "", "")
 	require.NoError(err)
 	log.Debugf("Validation Performance test took %f seconds for %d namespaces", time.Since(now).Seconds(), numNs)
 	assert.NotEmpty(validations)

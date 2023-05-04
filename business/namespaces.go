@@ -44,15 +44,16 @@ func IsAccessibleError(err error) bool {
 
 func NewNamespaceService(userClients map[string]kubernetes.ClientInterface, kialiSAClients map[string]kubernetes.ClientInterface) NamespaceService {
 	var hasProjects bool
+	conf := config.Get()
 
-	homeClusterName := config.Get().KubernetesConfig.ClusterName
+	homeClusterName := conf.KubernetesConfig.ClusterName
 	if saClient, ok := kialiSAClients[homeClusterName]; ok && saClient.IsOpenShift() {
 		hasProjects = true
 	} else {
 		hasProjects = false
 	}
 
-	ans := config.Get().Deployment.AccessibleNamespaces
+	ans := conf.Deployment.AccessibleNamespaces
 	isAccessibleNamespaces := make(map[string]bool, len(ans))
 	for _, ns := range ans {
 		isAccessibleNamespaces[ns] = true
@@ -81,12 +82,12 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 		}
 	}
 
-	configObject := config.Get()
+	conf := config.Get()
 
 	// determine what the discoverySelectors are by examining the Istio ConfigMap
 	var discoverySelectors []*meta_v1.LabelSelector
 	if kialiCache != nil {
-		if icm, err := kialiCache.GetConfigMap(configObject.IstioNamespace, configObject.ExternalServices.Istio.ConfigMapName); err == nil {
+		if icm, err := kialiCache.GetConfigMap(conf.IstioNamespace, conf.ExternalServices.Istio.ConfigMapName); err == nil {
 			if ic, err2 := kubernetes.GetIstioConfigMap(icm); err2 == nil {
 				discoverySelectors = ic.DiscoverySelectors
 			} else {
@@ -142,7 +143,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	// never excluded via api.namespaces.exclude or api.namespaces.label_selector_exclude.)
 
 	// determine if we are to exclude namespaces by label - if so, set the label name and value for use later
-	labelSelectorExclude := configObject.API.Namespaces.LabelSelectorExclude
+	labelSelectorExclude := conf.API.Namespaces.LabelSelectorExclude
 	var labelSelectorExcludeName string
 	var labelSelectorExcludeValue string
 	if labelSelectorExclude != "" {
@@ -190,7 +191,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	// Combine namespace data
 	for resultCh := range resultsCh {
 		if resultCh.err != nil {
-			if resultCh.cluster == kubernetes.HomeClusterName {
+			if resultCh.cluster == conf.KubernetesConfig.ClusterName {
 				log.Errorf("Error fetching Namespaces for local cluster [%s]: %s", resultCh.cluster, resultCh.err)
 				return nil, resultCh.err
 			} else {
@@ -222,7 +223,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 		// 2. range over all namespaces to get discovery namespaces, notice each selector result is ORed (as per Istio convention)
 		selectedNamespaces := make([]models.Namespace, 0)
 		for _, ns := range resultns {
-			if ns.Name == configObject.IstioNamespace {
+			if ns.Name == conf.IstioNamespace {
 				selectedNamespaces = append(selectedNamespaces, ns) // we always want to return the control plane namespace
 			} else {
 				for _, selector := range selectors {
@@ -241,12 +242,12 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	// 1. to be filtered out via the exclude list
 	// 2. to be filtered out via the label selector
 	// Note that the control plane namespace is never excluded
-	excludes := configObject.API.Namespaces.Exclude
+	excludes := conf.API.Namespaces.Exclude
 	if len(excludes) > 0 || labelSelectorExclude != "" {
 		resultns = []models.Namespace{}
 	NAMESPACES:
 		for _, namespace := range namespaces {
-			if namespace.Name != configObject.IstioNamespace {
+			if namespace.Name != conf.IstioNamespace {
 				if len(excludes) > 0 {
 					for _, excludePattern := range excludes {
 						if match, _ := regexp.MatchString(excludePattern, namespace.Name); match {
@@ -286,7 +287,7 @@ func (in *NamespaceService) getNamespacesByCluster(cluster string) ([]models.Nam
 		if err2 == nil {
 			// Everything is good, return the projects we got from OpenShift
 			if queryAllNamespaces {
-				namespaces = models.CastProjectCollection(projects)
+				namespaces = models.CastProjectCollection(projects, cluster)
 				// add the namespaces explicitly included in the include list.
 				includes := configObject.API.Namespaces.Include
 				if len(includes) > 0 {
@@ -303,7 +304,7 @@ func (in *NamespaceService) getNamespacesByCluster(cluster string) ([]models.Nam
 						if allProjects, err := in.userClients[cluster].GetProjects(""); err != nil {
 							return nil, err
 						} else {
-							allNamespaces = models.CastProjectCollection(allProjects)
+							allNamespaces = models.CastProjectCollection(allProjects, cluster)
 							seedNamespaces = namespaces
 						}
 					}
@@ -316,7 +317,7 @@ func (in *NamespaceService) getNamespacesByCluster(cluster string) ([]models.Nam
 						filteredProjects = append(filteredProjects, project)
 					}
 				}
-				namespaces = models.CastProjectCollection(filteredProjects)
+				namespaces = models.CastProjectCollection(filteredProjects, cluster)
 			}
 		}
 	} else {
@@ -556,7 +557,7 @@ func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace
 			for cl := range in.userClients {
 				project, err2 = in.userClients[cl].GetProject(namespace)
 				if err2 == nil {
-					result = models.CastProject(*project)
+					result = models.CastProject(*project, cluster)
 					break
 				}
 			}

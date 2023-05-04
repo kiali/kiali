@@ -42,7 +42,7 @@ func TestMeshStatusEnabled(t *testing.T) {
 	SetWithBackends(mockClientFactory, nil)
 
 	TLSService := getTLSService(k8s, false, ns, pa, dr)
-	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns, config.Get().KubernetesConfig.ClusterName)
+	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns, conf.KubernetesConfig.ClusterName)
 
 	cleanTestGlobals()
 
@@ -69,7 +69,7 @@ func TestMeshStatusEnabledAutoMtls(t *testing.T) {
 	SetWithBackends(mockClientFactory, nil)
 
 	TLSService := getTLSService(k8s, true, ns, pa, dr)
-	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns, config.Get().KubernetesConfig.ClusterName)
+	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns, conf.KubernetesConfig.ClusterName)
 
 	cleanTestGlobals()
 
@@ -97,7 +97,7 @@ func TestMeshStatusPartiallyEnabled(t *testing.T) {
 	SetWithBackends(mockClientFactory, nil)
 
 	TLSService := getTLSService(k8s, false, ns, pa, dr)
-	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns, config.Get().KubernetesConfig.ClusterName)
+	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns, conf.KubernetesConfig.ClusterName)
 
 	cleanTestGlobals()
 
@@ -126,7 +126,7 @@ func TestMeshStatusNotEnabled(t *testing.T) {
 	SetWithBackends(mockClientFactory, nil)
 
 	TLSService := getTLSService(k8s, false, ns, pa, dr)
-	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns, config.Get().KubernetesConfig.ClusterName)
+	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns, conf.KubernetesConfig.ClusterName)
 
 	cleanTestGlobals()
 
@@ -155,7 +155,7 @@ func TestMeshStatusDisabled(t *testing.T) {
 	SetWithBackends(mockClientFactory, nil)
 
 	TLSService := getTLSService(k8s, false, ns, pa, dr)
-	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns, config.Get().KubernetesConfig.ClusterName)
+	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns, conf.KubernetesConfig.ClusterName)
 
 	cleanTestGlobals()
 
@@ -180,7 +180,7 @@ func TestMeshStatusNotEnabledAutoMtls(t *testing.T) {
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	SetWithBackends(mockClientFactory, nil)
 	TLSService := getTLSService(k8s, true, ns, pa, dr)
-	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns, config.Get().KubernetesConfig.ClusterName)
+	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns, conf.KubernetesConfig.ClusterName)
 
 	cleanTestGlobals()
 
@@ -312,11 +312,12 @@ func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
 	SetWithBackends(mockClientFactory, nil)
 
 	autoMtls := false
+	conf := config.Get()
 	kialiCache = cache.FakeTlsKialiCache("token", nss, ps, drs)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[config.Get().KubernetesConfig.ClusterName] = k8s
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	TLSService := TLSService{userClients: k8sclients, kialiCache: kialiCache, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil), enabledAutoMtls: &autoMtls}
-	status, err := TLSService.NamespaceWidemTLSStatus(context.TODO(), "bookinfo", config.Get().KubernetesConfig.ClusterName)
+	status, err := TLSService.NamespaceWidemTLSStatus(context.TODO(), "bookinfo", conf.KubernetesConfig.ClusterName)
 
 	cleanTestGlobals()
 
@@ -350,9 +351,9 @@ func testNamespaceScenario(exStatus string, drs []*networking_v1beta1.Destinatio
 
 	kialiCache = cache.FakeTlsKialiCache("token", nss, ps, drs)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[config.Get().KubernetesConfig.ClusterName] = k8s
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	TLSService := &TLSService{userClients: k8sclients, kialiCache: kialiCache, enabledAutoMtls: &autoMtls, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
-	status, err := TLSService.NamespaceWidemTLSStatus(context.TODO(), "bookinfo", config.Get().KubernetesConfig.ClusterName)
+	status, err := TLSService.NamespaceWidemTLSStatus(context.TODO(), "bookinfo", conf.KubernetesConfig.ClusterName)
 
 	cleanTestGlobals()
 

@@ -18,19 +18,19 @@ import (
 func setupLabelerTrafficMap() (map[string]*graph.Node, string, string, string, string, string) {
 	trafficMap := graph.NewTrafficMap()
 
-	appNode, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "test", "testNamespace", graph.Unknown, "test", "", graph.GraphTypeVersionedApp)
+	appNode, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "test", "testNamespace", graph.Unknown, "test", "", graph.GraphTypeVersionedApp)
 	trafficMap[appNode.ID] = appNode
 
-	appNodeV1, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "test", "testNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
+	appNodeV1, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "test", "testNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
 	trafficMap[appNodeV1.ID] = appNodeV1
 
-	appNodeV2, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "test", "testNamespace", "test-v2", "test", "v2", graph.GraphTypeVersionedApp)
+	appNodeV2, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "test", "testNamespace", "test-v2", "test", "v2", graph.GraphTypeVersionedApp)
 	trafficMap[appNodeV2.ID] = appNodeV2
 
-	serviceNode, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "test", "testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	serviceNode, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "test", "testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
 	trafficMap[serviceNode.ID] = serviceNode
 
-	workloadNode, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "test", "testNamespace", "test-v1", graph.Unknown, graph.Unknown, graph.GraphTypeWorkload)
+	workloadNode, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "test", "testNamespace", "test-v1", graph.Unknown, graph.Unknown, graph.GraphTypeWorkload)
 	trafficMap[workloadNode.ID] = workloadNode
 
 	return trafficMap, appNode.ID, appNodeV1.ID, appNodeV2.ID, serviceNode.ID, workloadNode.ID
@@ -101,7 +101,7 @@ func setupLabelerK8S(t *testing.T) *business.Layer {
 	business.SetupBusinessLayer(t, k8s, *conf)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = k8s
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 	return businessLayer
 }

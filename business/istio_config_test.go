@@ -181,32 +181,33 @@ func TestGetIstioConfigDetails(t *testing.T) {
 	assert := assert.New(t)
 
 	configService := mockGetIstioConfigDetails(t)
+	conf := config.Get()
 
-	istioConfigDetails, err := configService.GetIstioConfigDetails(context.TODO(), kubernetes.HomeClusterName, "test", "gateways", "gw-1")
+	istioConfigDetails, err := configService.GetIstioConfigDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "gateways", "gw-1")
 	assert.Equal("gw-1", istioConfigDetails.Gateway.Name)
 	assert.True(istioConfigDetails.Permissions.Update)
 	assert.False(istioConfigDetails.Permissions.Delete)
 	assert.Nil(err)
 
-	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), kubernetes.HomeClusterName, "test", "virtualservices", "reviews")
+	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "virtualservices", "reviews")
 	assert.Equal("reviews", istioConfigDetails.VirtualService.Name)
 	assert.Equal("VirtualService", istioConfigDetails.VirtualService.Kind)
 	assert.Equal("networking.istio.io/v1beta1", istioConfigDetails.VirtualService.APIVersion)
 	assert.Nil(err)
 
-	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), kubernetes.HomeClusterName, "test", "destinationrules", "reviews-dr")
+	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "destinationrules", "reviews-dr")
 	assert.Equal("reviews-dr", istioConfigDetails.DestinationRule.Name)
 	assert.Equal("DestinationRule", istioConfigDetails.DestinationRule.Kind)
 	assert.Equal("networking.istio.io/v1beta1", istioConfigDetails.DestinationRule.APIVersion)
 	assert.Nil(err)
 
-	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), kubernetes.HomeClusterName, "test", "serviceentries", "googleapis")
+	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "serviceentries", "googleapis")
 	assert.Equal("googleapis", istioConfigDetails.ServiceEntry.Name)
 	assert.Equal("ServiceEntry", istioConfigDetails.ServiceEntry.Kind)
 	assert.Equal("networking.istio.io/v1beta1", istioConfigDetails.ServiceEntry.APIVersion)
 	assert.Nil(err)
 
-	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), kubernetes.HomeClusterName, "test", "rules-bad", "stdio")
+	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "rules-bad", "stdio")
 	assert.Error(err)
 }
 
@@ -215,7 +216,7 @@ func TestCheckMulticlusterPermissions(t *testing.T) {
 
 	configService := mockGetIstioConfigDetailsMulticluster(t)
 
-	istioConfigDetails, err := configService.GetIstioConfigDetails(context.TODO(), kubernetes.HomeClusterName, "test", "gateways", "gw-1")
+	istioConfigDetails, err := configService.GetIstioConfigDetails(context.TODO(), config.Get().KubernetesConfig.ClusterName, "test", "gateways", "gw-1")
 	assert.Equal("gw-1", istioConfigDetails.Gateway.Name)
 	assert.True(istioConfigDetails.Permissions.Update)
 	assert.False(istioConfigDetails.Permissions.Delete)
@@ -250,7 +251,7 @@ func mockGetIstioConfigList(t *testing.T) IstioConfigService {
 	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = k8s
+	k8sclients[config.Get().KubernetesConfig.ClusterName] = k8s
 	return IstioConfigService{userClients: k8sclients, kialiCache: cache, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 }
 
@@ -432,7 +433,7 @@ func mockGetIstioConfigDetails(t *testing.T) IstioConfigService {
 	cache := SetupBusinessLayer(t, k8s, *conf)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = &fakeAccessReview{k8s}
+	k8sclients[conf.KubernetesConfig.ClusterName] = &fakeAccessReview{k8s}
 	return IstioConfigService{userClients: k8sclients, kialiCache: cache, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 }
 
@@ -452,7 +453,7 @@ func mockGetIstioConfigDetailsMulticluster(t *testing.T) IstioConfigService {
 	cache := SetupBusinessLayer(t, k8s, *conf)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = &fakeAccessReview{k8s}
+	k8sclients[conf.KubernetesConfig.ClusterName] = &fakeAccessReview{k8s}
 	k8sclients["east"] = &fakeAccessReview{k8s}
 	return IstioConfigService{userClients: k8sclients, kialiCache: cache, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 }
@@ -521,12 +522,13 @@ func TestDeleteIstioConfigDetails(t *testing.T) {
 	assert := assert.New(t)
 	k8s := kubetest.NewFakeK8sClient(data.CreateEmptyVirtualService("reviews-to-delete", "test", []string{"reviews"}))
 	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
+	conf := config.Get()
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = k8s
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache}
 
-	err := configService.DeleteIstioConfigDetail(kubernetes.HomeClusterName, "test", "virtualservices", "reviews-to-delete")
+	err := configService.DeleteIstioConfigDetail(conf.KubernetesConfig.ClusterName, "test", "virtualservices", "reviews-to-delete")
 	assert.Nil(err)
 }
 
@@ -534,12 +536,13 @@ func TestUpdateIstioConfigDetails(t *testing.T) {
 	assert := assert.New(t)
 	k8s := kubetest.NewFakeK8sClient(data.CreateEmptyVirtualService("reviews-to-update", "test", []string{"reviews"}))
 	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
+	conf := config.Get()
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = k8s
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache}
 
-	updatedVirtualService, err := configService.UpdateIstioConfigDetail(kubernetes.HomeClusterName, "test", "virtualservices", "reviews-to-update", "{}")
+	updatedVirtualService, err := configService.UpdateIstioConfigDetail(conf.KubernetesConfig.ClusterName, "test", "virtualservices", "reviews-to-update", "{}")
 	assert.Equal("test", updatedVirtualService.Namespace.Name)
 	assert.Equal("virtualservices", updatedVirtualService.ObjectType)
 	assert.Equal("reviews-to-update", updatedVirtualService.VirtualService.Name)
@@ -550,12 +553,13 @@ func TestCreateIstioConfigDetails(t *testing.T) {
 	assert := assert.New(t)
 	k8s := kubetest.NewFakeK8sClient()
 	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
+	conf := config.Get()
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = k8s
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache}
 
-	createVirtualService, err := configService.CreateIstioConfigDetail(kubernetes.HomeClusterName, "test", "virtualservices", []byte("{}"))
+	createVirtualService, err := configService.CreateIstioConfigDetail(conf.KubernetesConfig.ClusterName, "test", "virtualservices", []byte("{}"))
 	assert.Equal("test", createVirtualService.Namespace.Name)
 	assert.Equal("virtualservices", createVirtualService.ObjectType)
 	// Name is now encoded in the payload of the virtualservice so, it modifies this test

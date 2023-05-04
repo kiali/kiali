@@ -41,10 +41,10 @@ func TestOpenIdAuthControllerRejectsImplicitFlow(t *testing.T) {
 	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
 	util.Clock = util.ClockMock{Time: clockTime}
 
-	cfg := config.NewConfig()
-	cfg.LoginToken.SigningKey = "kiali67890123456"
-	cfg.LoginToken.ExpirationSeconds = 1
-	config.Set(cfg)
+	conf := config.NewConfig()
+	conf.LoginToken.SigningKey = "kiali67890123456"
+	conf.LoginToken.ExpirationSeconds = 1
+	config.Set(conf)
 
 	// Returning some namespace when a cluster API call is made should have the result of
 	// a successful authentication.
@@ -68,7 +68,7 @@ func TestOpenIdAuthControllerRejectsImplicitFlow(t *testing.T) {
 			return nil, errors.New("unexpected token")
 		}
 		k8sclients := make(map[string]kubernetes.ClientInterface)
-		k8sclients[kubernetes.HomeClusterName] = k8s
+		k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 		return business.NewWithBackends(k8sclients, k8sclients, nil, nil), nil
 	})
 
@@ -122,13 +122,13 @@ func TestOpenIdAuthControllerAuthenticatesCorrectlyWithAuthorizationCodeFlow(t *
 	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
 	util.Clock = util.ClockMock{Time: clockTime}
 
-	cfg := config.NewConfig()
-	cfg.Server.WebRoot = "/kiali-test"
-	cfg.LoginToken.SigningKey = "kiali67890123456"
-	cfg.LoginToken.ExpirationSeconds = 1
-	cfg.Auth.OpenId.IssuerUri = testServer.URL
-	cfg.Auth.OpenId.ClientId = "kiali-client"
-	config.Set(cfg)
+	conf := config.NewConfig()
+	conf.Server.WebRoot = "/kiali-test"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+	conf.LoginToken.ExpirationSeconds = 1
+	conf.Auth.OpenId.IssuerUri = testServer.URL
+	conf.Auth.OpenId.ClientId = "kiali-client"
+	config.Set(conf)
 
 	// Returning some namespace when a cluster API call is made should have the result of
 	// a successful authentication.
@@ -153,7 +153,7 @@ func TestOpenIdAuthControllerAuthenticatesCorrectlyWithAuthorizationCodeFlow(t *
 			return nil, errors.New("unexpected token")
 		}
 		k8sclients := make(map[string]kubernetes.ClientInterface)
-		k8sclients[kubernetes.HomeClusterName] = k8s
+		k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 		return business.NewWithBackends(k8sclients, k8sclients, nil, nil), nil
 	})
 
