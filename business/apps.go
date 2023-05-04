@@ -238,12 +238,13 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 	)
 	defer end()
 
-	appInstance := &models.App{Namespace: models.Namespace{Name: criteria.Namespace}, Name: criteria.AppName, Health: models.EmptyAppHealth(), Cluster: criteria.Cluster}
+	appInstance := &models.App{Namespace: models.Namespace{Name: criteria.Namespace, Cluster: criteria.Cluster}, Name: criteria.AppName, Health: models.EmptyAppHealth(), Cluster: criteria.Cluster}
 	ns, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, criteria.Namespace, criteria.Cluster)
 	if err != nil {
 		return *appInstance, err
 	}
-	appInstance.Namespace = *ns
+	// @TODO GetNamespaceByCluster is returning empty namespace for single cluster
+	//appInstance.Namespace = *ns
 
 	namespaceApps, err := in.fetchNamespaceApps(ctx, criteria.Namespace, criteria.Cluster, criteria.AppName)
 	if err != nil {
