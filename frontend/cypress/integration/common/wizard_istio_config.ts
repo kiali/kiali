@@ -20,6 +20,21 @@ When('viewing the detail for {string}', (object: string) => {
   cy.get('a').contains(object).should('be.visible').click();
 });
 
+When ('k8sgateway {string} is not created',(name:string) =>{
+  cy.exec(`kubectl delete gateways.gateway.networking.k8s.io ${name} -n bookinfo`, { failOnNonZeroExit: false });
+  ensureKialiFinishedLoading();
+});
+
+When ('gateway {string} is not created',(name:string) =>{
+  cy.exec(`kubectl delete gateway.networking.istio.io ${name} -n bookinfo`, { failOnNonZeroExit: false });
+  ensureKialiFinishedLoading();
+});
+
+When ('service {string} is not created',(name:string) =>{
+  cy.exec(`kubectl delete serviceEntries ${name} -n bookinfo`, { failOnNonZeroExit: false });
+  ensureKialiFinishedLoading();
+});
+
 And('user sees the {string} config wizard', (title: string) => {
   cy.get('h1').should('contain.text', title);
 });

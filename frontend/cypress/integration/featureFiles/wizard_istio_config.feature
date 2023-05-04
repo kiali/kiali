@@ -13,7 +13,8 @@ Feature: Kiali Istio Config page
   @gateway-api
   @wizard-istio-config
   Scenario: Create a K8s Gateway scenario
-    When user clicks in the "K8sGateway" Istio config actions
+    When k8sgateway "k8sapigateway" is not created
+    And user clicks in the "K8sGateway" Istio config actions
     And user sees the "Create K8sGateway" config wizard
     And user adds listener
     And user types "k8sapigateway" in the "name" input
@@ -43,7 +44,8 @@ Feature: Kiali Istio Config page
 
   @wizard-istio-config
   Scenario: Create a Gateway scenario
-    When user clicks in the "Gateway" Istio config actions
+    When gateway "mygateway" is not created
+    And user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
     And user types "mygateway" in the "name" input
     And user adds a server to a server list
@@ -123,7 +125,8 @@ Feature: Kiali Istio Config page
 
   @wizard-istio-config
   Scenario: Create a Gateway with TLS 
-    When user clicks in the "Gateway" Istio config actions
+    When gateway "mygatewaywithtls" is not created
+    And user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
     And user types "mygatewaywithtls" in the "name" input
     And user adds a server to a server list
@@ -161,7 +164,8 @@ Feature: Kiali Istio Config page
 
   @wizard-istio-config
   Scenario: Create a ServiceEntry without ports specified 
-    When user clicks in the "ServiceEntry" Istio config actions
+    When service "myservice" is not created
+    And user clicks in the "ServiceEntry" Istio config actions
     And user sees the "Create ServiceEntry" config wizard
     And user types "myservice" in the "name" input
     And user types "website.com,website2.com" in the "hosts" input
@@ -187,7 +191,8 @@ Feature: Kiali Istio Config page
 
   @wizard-istio-config
   Scenario: Create a ServiceEntry with ports specified 
-    When user clicks in the "ServiceEntry" Istio config actions
+    When service "myservice2" is not created
+    And user clicks in the "ServiceEntry" Istio config actions
     And user sees the "Create ServiceEntry" config wizard
     And user types "myservice2" in the "name" input
     And user types "website.com,website2.com" in the "hosts" input
@@ -220,7 +225,8 @@ Feature: Kiali Istio Config page
   @gateway-api
   @wizard-istio-config
   Scenario: Create multiple K8s Gateways with colliding hostnames and port combinations and check for a reference
-    When user clicks in the "K8sGateway" Istio config actions
+    When k8sgateway "gatewayapi-1" is not created
+    And user clicks in the "K8sGateway" Istio config actions
     And user sees the "Create K8sGateway" config wizard
     And user adds listener
     And user types "gatewayapi-1" in the "name" input
