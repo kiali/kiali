@@ -14,7 +14,7 @@ import (
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/util/mtls"
 )
- 
+
 type TLSService struct {
 	userClients     map[string]kubernetes.ClientInterface
 	kialiCache      cache.KialiCache
