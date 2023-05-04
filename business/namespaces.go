@@ -408,7 +408,7 @@ func (in *NamespaceService) GetNamespacesForCluster(ctx context.Context, cluster
 		// or a HomeClusterName constant.  We should always be using the configured cluster name (which should be
 		// set the proper "Kubernetes" default as needed).  The RHS is here because there are times when the client
 		// is using one value and the server is using the other.
-		if ns.Cluster == cluster || (cluster == DefaultClusterID && ns.Cluster == "") {
+		if ns.Cluster == cluster || (cluster == config.Get().KubernetesConfig.ClusterName && ns.Cluster == "") {
 			clusterNamespaces = append(clusterNamespaces, ns)
 		}
 	}
