@@ -11,7 +11,7 @@ import * as AlertUtils from '../../utils/AlertUtils';
 import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
-import { DurationInSeconds, HomeClusterName, TimeInMilliseconds, TimeRange } from '../../types/Common';
+import { DurationInSeconds, TimeInMilliseconds, TimeRange } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector } from '../../store/Selectors';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
@@ -27,7 +27,7 @@ import connectRefresh from '../../components/Refresh/connectRefresh';
 
 type AppDetailsState = {
   app?: App;
-  cluster: string;
+  cluster?: string;
   health?: AppHealth;
   // currentTab is needed to (un)mount tab components
   // when the tab is not rendered.
@@ -62,7 +62,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   constructor(props: AppDetailsProps) {
     super(props);
     const urlParams = new URLSearchParams(this.props.location.search);
-    const cluster = urlParams.get('cluster') || HomeClusterName;
+    const cluster = urlParams.get('cluster') || undefined;
     this.state = { currentTab: activeTab(tabName, defaultTab), cluster: cluster };
   }
 
@@ -90,7 +90,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
   private fetchApp = () => {
     const params: { [key: string]: string } = { rateInterval: String(this.props.duration) + 's', health: 'true' };
-    API.getApp(this.state.cluster, this.props.match.params.namespace, this.props.match.params.app, params)
+    API.getApp(this.props.match.params.namespace, this.props.match.params.app, params, this.state.cluster)
       .then(details => {
         this.setState({
           app: details.data,
@@ -161,6 +161,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           itemType={MetricsObjectTypes.APP}
           lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.match.params.namespace}
+          cluster={this.state.cluster}
         />
       </Tab>
     );
@@ -173,7 +174,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.app}
           objectType={MetricsObjectTypes.APP}
-          cluster={HomeClusterName}
+          cluster={this.state.cluster}
           direction={'inbound'}
         />
       </Tab>
@@ -187,7 +188,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.app}
           objectType={MetricsObjectTypes.APP}
-          cluster={HomeClusterName}
+          cluster={this.state.cluster}
           direction={'outbound'}
         />
       </Tab>
@@ -204,7 +205,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
             <TracesComponent
               lastRefreshAt={this.props.lastRefreshAt}
               namespace={this.props.match.params.namespace}
-              cluster={HomeClusterName}
+              cluster={this.state.cluster}
               target={this.props.match.params.app}
               targetKind={'app'}
             />

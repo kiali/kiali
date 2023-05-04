@@ -312,20 +312,32 @@ export const getAggregateMetrics = (
   );
 };
 
-export const getApp = (cluster: string, namespace: string, app: string, params?: { [key: string]: string }) => {
-  return newRequest<App>(HTTP_VERBS.GET, urls.app(cluster, namespace, app), params, {});
+export const getApp = (namespace: string, app: string, params?: { [key: string]: string }, cluster?: string) => {
+  const queryParams = { ...params };
+  if (cluster) {
+    queryParams.cluster = cluster;
+  }
+  return newRequest<App>(HTTP_VERBS.GET, urls.app(namespace, app), queryParams, {});
 };
 
 export const getApps = (namespace: string, params: any = {}) => {
   return newRequest<AppList>(HTTP_VERBS.GET, urls.apps(namespace), params, {});
 };
 
-export const getAppMetrics = (namespace: string, app: string, params: IstioMetricsOptions) => {
-  return newRequest<IstioMetricsMap>(HTTP_VERBS.GET, urls.appMetrics(namespace, app), params, {});
+export const getAppMetrics = (namespace: string, app: string, params: IstioMetricsOptions, cluster?: string) => {
+  const queryParams: any = { ...params };
+  if (cluster) {
+    queryParams.cluster = cluster;
+  }
+  return newRequest<IstioMetricsMap>(HTTP_VERBS.GET, urls.appMetrics(namespace, app), queryParams, {});
 };
 
-export const getAppDashboard = (namespace: string, app: string, params: IstioMetricsOptions) => {
-  return newRequest<DashboardModel>(HTTP_VERBS.GET, urls.appDashboard(namespace, app), params, {});
+export const getAppDashboard = (namespace: string, app: string, params: IstioMetricsOptions, cluster?: string) => {
+  const queryParams: any = { ...params };
+  if (cluster) {
+    queryParams.cluster = cluster;
+  }
+  return newRequest<DashboardModel>(HTTP_VERBS.GET, urls.appDashboard(namespace, app), queryParams, {});
 };
 
 export const getWorkloadMetrics = (
@@ -468,7 +480,7 @@ export const getAppTraces = (namespace: string, app: string, params: TracingQuer
   if (cluster) {
     queryParams.cluster = cluster;
   }
-  return newRequest<JaegerResponse>(HTTP_VERBS.GET, urls.appTraces(namespace, app), params, {});
+  return newRequest<JaegerResponse>(HTTP_VERBS.GET, urls.appTraces(namespace, app), queryParams, {});
 };
 
 export const getServiceTraces = (namespace: string, service: string, params: TracingQuery, cluster?: string) => {
@@ -484,7 +496,7 @@ export const getWorkloadTraces = (namespace: string, workload: string, params: T
   if (cluster) {
     queryParams.cluster = cluster;
   }
-  return newRequest<JaegerResponse>(HTTP_VERBS.GET, urls.workloadTraces(namespace, workload), params, {});
+  return newRequest<JaegerResponse>(HTTP_VERBS.GET, urls.workloadTraces(namespace, workload), queryParams, {});
 };
 
 export const getJaegerErrorTraces = (namespace: string, service: string, duration: DurationInSeconds) => {
@@ -731,7 +743,7 @@ export const getAppSpans = (namespace: string, app: string, params: TracingQuery
   if (cluster) {
     queryParams.cluster = cluster;
   }
-  return newRequest<Span[]>(HTTP_VERBS.GET, urls.appSpans(namespace, app), params, {});
+  return newRequest<Span[]>(HTTP_VERBS.GET, urls.appSpans(namespace, app), queryParams, {});
 };
 
 export const getServiceSpans = (namespace: string, service: string, params: TracingQuery, cluster?: string) => {
@@ -747,7 +759,7 @@ export const getWorkloadSpans = (namespace: string, workload: string, params: Tr
   if (cluster) {
     queryParams.cluster = cluster;
   }
-  return newRequest<Span[]>(HTTP_VERBS.GET, urls.workloadSpans(namespace, workload), params, {});
+  return newRequest<Span[]>(HTTP_VERBS.GET, urls.workloadSpans(namespace, workload), queryParams, {});
 };
 
 export const getIstioPermissions = (namespaces: string[], cluster?: string) => {

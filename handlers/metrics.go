@@ -37,7 +37,7 @@ func getAppMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClie
 		return
 	}
 
-	params := models.IstioMetricsQuery{Namespace: namespace, App: app}
+	params := models.IstioMetricsQuery{Cluster: clusterNameFromQuery(r.URL.Query()), Namespace: namespace, App: app}
 	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
@@ -69,7 +69,7 @@ func getWorkloadMetrics(w http.ResponseWriter, r *http.Request, promSupplier pro
 		return
 	}
 
-	params := models.IstioMetricsQuery{Namespace: namespace, Workload: workload}
+	params := models.IstioMetricsQuery{Cluster: clusterNameFromQuery(r.URL.Query()), Namespace: namespace, Workload: workload}
 	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
@@ -101,7 +101,7 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promSupplier prom
 		return
 	}
 
-	params := models.IstioMetricsQuery{Namespace: namespace, Service: service}
+	params := models.IstioMetricsQuery{Cluster: clusterNameFromQuery(r.URL.Query()), Namespace: namespace, Service: service}
 	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())

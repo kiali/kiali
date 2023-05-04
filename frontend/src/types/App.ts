@@ -3,7 +3,7 @@ import { Runtime } from './Workload';
 import { AppHealthResponse } from '../types/Health';
 
 export interface AppId {
-  cluster: string;
+  cluster?: string;
   namespace: string;
   app: string;
 }
@@ -17,8 +17,8 @@ export interface AppWorkload {
 }
 
 export interface App {
+  cluster?: string;
   namespace: Namespace;
-  cluster: string;
   name: string;
   workloads: AppWorkload[];
   serviceNames: string[];

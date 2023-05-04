@@ -51,7 +51,12 @@ class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
     if (!this.props.app) {
       return;
     }
-    this.graphDataSource.fetchForVersionedApp(this.props.duration, this.props.app.namespace.name, this.props.app.name);
+    this.graphDataSource.fetchForVersionedApp(
+      this.props.duration,
+      this.props.app.namespace.name,
+      this.props.app.name,
+      this.props.app.cluster
+    );
   };
 
   goToMetrics = (e: GraphEdgeTapEvent) => {

@@ -90,7 +90,7 @@ func TestGetAppFromDeployments(t *testing.T) {
 
 	svc := setupAppService(mockClientFactory.Clients)
 
-	criteria := AppCriteria{Namespace: "Namespace", AppName: "httpbin"}
+	criteria := AppCriteria{Namespace: "Namespace", AppName: "httpbin", Cluster: conf.KubernetesConfig.ClusterName}
 	appDetails, appDetailsErr := svc.GetAppDetails(context.TODO(), criteria)
 	assert.NoError(appDetailsErr)
 
@@ -163,7 +163,7 @@ func TestGetAppFromReplicaSets(t *testing.T) {
 
 	svc := setupAppService(mockClientFactory.Clients)
 
-	criteria := AppCriteria{Namespace: "Namespace", AppName: "httpbin"}
+	criteria := AppCriteria{Namespace: "Namespace", AppName: "httpbin", Cluster: conf.KubernetesConfig.ClusterName}
 	appDetails, _ := svc.GetAppDetails(context.TODO(), criteria)
 
 	assert.Equal("Namespace", appDetails.Namespace.Name)

@@ -238,19 +238,14 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 	)
 	defer end()
 
-	appInstance := &models.App{Namespace: models.Namespace{Name: criteria.Namespace}, Name: criteria.AppName, Health: models.EmptyAppHealth()}
-	ns, err := in.businessLayer.Namespace.GetNamespace(ctx, criteria.Namespace)
+	appInstance := &models.App{Namespace: models.Namespace{Name: criteria.Namespace}, Name: criteria.AppName, Health: models.EmptyAppHealth(), Cluster: criteria.Cluster}
+	ns, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, criteria.Namespace, criteria.Cluster)
 	if err != nil {
 		return *appInstance, err
 	}
 	appInstance.Namespace = *ns
 
-	// TODO: Include parameter
-	cluster := criteria.Cluster
-	if cluster == "null" || cluster == "" {
-		cluster = kubernetes.HomeClusterName
-	}
-	namespaceApps, err := in.fetchNamespaceApps(ctx, criteria.Namespace, cluster, criteria.AppName)
+	namespaceApps, err := in.fetchNamespaceApps(ctx, criteria.Namespace, criteria.Cluster, criteria.AppName)
 	if err != nil {
 		return *appInstance, err
 	}
