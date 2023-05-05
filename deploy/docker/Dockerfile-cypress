@@ -5,15 +5,19 @@
 # using same baseimage of node as its defined in package.json
 FROM cypress/base:14.17.0
 
-ENV KIALI_HOME=/opt/kiali
-WORKDIR $KIALI_HOME
+# we need to set HOME when running on OCP with random UID, otherwise the home is set to / and any writing there will fail with permission denied
+ENV HOME=/tmp/kiali
 
-# copy frontend folder to container
-COPY --chown=node:node frontend/ $KIALI_HOME/
+COPY frontend/ $HOME/
+
+WORKDIR $HOME
 
 # Install Cypress dependencies.
-RUN /usr/local/bin/yarn install --frozen-lockfile --force
-RUN ls -la
+RUN yarn install --frozen-lockfile
+
+# Set required permissions for OpenShift usage
+RUN chgrp -R 0 $HOME && \
+    chmod -R g=u $HOME
 
 # Run Cypress tests.
 CMD ["yarn", "cypress:run:junit"]
