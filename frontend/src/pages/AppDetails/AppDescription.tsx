@@ -2,7 +2,7 @@ import * as React from 'react';
 import { App } from '../../types/App';
 import { Card, CardBody, CardHeader, Title, TitleSizes, TooltipPosition } from '@patternfly/react-core';
 import DetailDescription from '../../components/Details/DetailDescription';
-import { serverConfig } from '../../config';
+import { isMultiCluster, serverConfig } from '../../config';
 import Labels from '../../components/Label/Labels';
 import { style } from 'typestyle';
 import * as H from '../../types/Health';
@@ -44,7 +44,7 @@ class AppDescription extends React.Component<AppDescriptionProps> {
               <HealthIndicator id={this.props.app.name} health={this.props.health} />
             </span>
           </Title>
-          {this.props.app.cluster && Object.keys(serverConfig.clusters).length > 1 && (
+          {this.props.app.cluster && isMultiCluster() && (
             <div key="cluster-icon" style={{ paddingBottom: '10px' }}>
               <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {this.props.app.cluster}
             </div>
