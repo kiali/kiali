@@ -8,6 +8,8 @@ FROM cypress/base:14.17.0
 # we need to set HOME when running on OCP with random UID, otherwise the home is set to / and any writing there will fail with permission denied
 ENV HOME=/tmp/kiali
 
+# copy also hack scripts which will be used to install demo apps
+COPY hack $HOME/hack
 COPY frontend/ $HOME/
 
 WORKDIR $HOME
