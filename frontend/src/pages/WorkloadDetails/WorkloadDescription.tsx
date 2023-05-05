@@ -9,7 +9,7 @@ import { renderAPILogo, renderRuntimeLogo } from '../../components/Logo/Logos';
 import * as H from '../../types/Health';
 import { KialiIcon } from '../../config/KialiIcon';
 import { HealthIndicator } from '../../components/Health/HealthIndicator';
-import { serverConfig } from '../../config';
+import { isMultiCluster, serverConfig } from '../../config';
 import MissingSidecar from '../../components/MissingSidecar/MissingSidecar';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import MissingLabel from '../../components/MissingLabel/MissingLabel';
@@ -179,7 +179,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
                 />
               )}
           </Title>
-          {this.props.workload?.cluster && (
+          {this.props.workload?.cluster && isMultiCluster() && (
             <div key="cluster-icon" className={iconStyle}>
               <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {this.props.workload.cluster}
             </div>

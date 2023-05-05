@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { ServiceDetailsInfo, WorkloadOverview } from '../../types/ServiceInfo';
 import { AppWorkload } from '../../types/App';
-import { serverConfig } from '../../config';
+import { isMultiCluster, serverConfig } from '../../config';
 import Labels from '../../components/Label/Labels';
 import { style } from 'typestyle';
 import LocalTime from '../../components/Time/LocalTime';
@@ -172,7 +172,7 @@ class ServiceDescription extends React.Component<ServiceInfoDescriptionProps, St
               />
             </span>
           </Title>
-          {this.props.serviceDetails?.cluster && (
+          {this.props.serviceDetails?.cluster && isMultiCluster() && (
             <div key="cluster-icon" className={iconStyle}>
               <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {this.props.serviceDetails.cluster}
             </div>
