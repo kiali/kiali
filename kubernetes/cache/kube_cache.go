@@ -354,6 +354,12 @@ func (c *kubeCache) startInformers(namespace string) error {
 	}
 
 	log.Debugf("[Kiali Cache] Starting %s informers", scope)
+
+	if !c.clusterScoped && namespace == "" {
+		log.Errorf("[Kiali Cache] Error starting namespace-scoped cache for empty namespace")
+		return nil
+	}
+
 	for _, informer := range informers {
 		go informer.Start(stop)
 	}

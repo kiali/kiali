@@ -18,11 +18,13 @@ var ocCommand = utils.NewExecCommand()
 func update_istio_api_enabled(value bool) {
 	original := !value
 
+	log.Debugf("Setting istio_api_enabled to: %t", value)
 	cmdGetProp := ocCommand + " get cm kiali -n istio-system -o yaml | grep 'istio_api_enabled'"
 	getPropOutput, _ := exec.Command("bash", "-c", cmdGetProp).Output()
 
 	if len(string(getPropOutput)) == 0 {
 		// Is the property is not there, we should add it, instead of replacing
+		log.Debugf("istio_api_enabled not set")
 		cmdReplacecm3 := ocCommand + " get cm kiali -n istio-system -o yaml | sed -e 's|root_namespace: istio-system|root_namespace: istio-system'\r'        istio_api_enabled: " + strconv.FormatBool(value) + "|' | " + ocCommand + " apply -f -"
 		_, err := exec.Command("bash", "-c", cmdReplacecm3).Output()
 		if err != nil {
@@ -30,6 +32,7 @@ func update_istio_api_enabled(value bool) {
 		}
 
 	} else {
+		log.Debugf("Setting istio_api_enabled already set")
 		cmdReplacecm := ocCommand + " get cm kiali -n istio-system -o yaml | sed -e 's|istio_api_enabled: " + strconv.FormatBool(original) + "|istio_api_enabled: " + strconv.FormatBool(value) + "|' | " + ocCommand + " apply -f -"
 		_, err := exec.Command("bash", "-c", cmdReplacecm).Output()
 		if err != nil {
@@ -75,6 +78,7 @@ func TestNoIstiod(t *testing.T) {
 func servicesListNoRegistryServices(t *testing.T) {
 	assert := assert.New(t)
 	serviceList, err := utils.ServicesList(utils.BOOKINFO)
+	log.Debugf("Services list: %+v", serviceList)
 
 	assert.Nil(err)
 	assert.NotEmpty(serviceList)
@@ -111,6 +115,7 @@ func noProxyStatus(t *testing.T) {
 	name := "details-v1"
 	assert := assert.New(t)
 	wl, _, err := utils.WorkloadDetails(name, utils.BOOKINFO)
+	log.Debugf("No proxy status: %+v", wl)
 
 	assert.Nil(err)
 	assert.NotNil(wl)
@@ -129,6 +134,7 @@ func emptyValidations(t *testing.T) {
 	assert := assert.New(t)
 
 	config, err := getConfigDetails(utils.BOOKINFO, name, kubernetes.Gateways, true, assert)
+	log.Debugf("Empty validations: %+v", config)
 
 	assert.Nil(err)
 	assert.NotNil(config)
@@ -145,6 +151,7 @@ func istioStatus(t *testing.T) {
 	assert := assert.New(t)
 
 	isEnabled, err := utils.IstioApiEnabled()
+	log.Debugf("Istio status: %t", isEnabled)
 	assert.Nil(err)
 	assert.False(isEnabled)
 }
