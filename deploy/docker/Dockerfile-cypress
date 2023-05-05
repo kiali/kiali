@@ -5,9 +5,6 @@
 # using same baseimage of node as its defined in package.json
 FROM cypress/base:14.17.0
 
-# Run as non-root user for MP+/OpenShift
-USER node
-
 ENV KIALI_HOME=/opt/kiali
 WORKDIR $KIALI_HOME
 
