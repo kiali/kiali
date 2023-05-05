@@ -1203,7 +1203,7 @@ func (in *IstioConfigService) IsAmbientEnabled() bool {
 	var cniNetwork map[string]any
 	istioConfigMap, err := in.kialiCache.GetConfigMap(config.Get().IstioNamespace, "istio-cni-config")
 	if err != nil {
-		log.Errorf("Error getting istio-cni-config configmap: %s ", err.Error())
+		log.Debugf("Error getting istio-cni-config configmap: %s ", err.Error())
 	} else {
 		err = yaml.Unmarshal([]byte(istioConfigMap.Data["cni_network_config"]), &cniNetwork)
 		if err != nil {
