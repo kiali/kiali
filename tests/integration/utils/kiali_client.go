@@ -298,6 +298,7 @@ func ServicesList(namespace string) (*ServiceListJson, error) {
 		if err == nil {
 			return serviceList, nil
 		} else {
+			log.Debugf("Error unmarshalling services list: %s", body)
 			log.Debugf("Error unmarshalling services list: %s", err)
 			return nil, err
 		}
