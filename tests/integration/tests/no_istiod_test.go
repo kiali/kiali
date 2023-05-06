@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -72,6 +73,7 @@ func update_istio_api_enabled(value bool) {
 func TestNoIstiod(t *testing.T) {
 	defer update_istio_api_enabled(true)
 	update_istio_api_enabled(false)
+	time.Sleep(10 * time.Second) // For some reason, the pod is supposed to be running but the application is not yet ready
 	t.Run("ServicesListNoRegistryServices", servicesListNoRegistryServices)
 	t.Run("NoProxyStatus", noProxyStatus)
 	t.Run("istioStatus", istioStatus)
