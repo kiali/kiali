@@ -17,7 +17,7 @@ var ocCommand = utils.NewExecCommand()
 func update_istio_api_enabled(value bool) {
 	original := !value
 
-	cmdGetProp1 := ocCommand + " get all -n istio-system"
+	cmdGetProp1 := ocCommand + " get all -n bookinfo"
 	getPropOutput1, _ := exec.Command("bash", "-c", cmdGetProp1).Output()
 	log.Debugf("Setting istio_api_enabled to: %s", getPropOutput1)
 
@@ -131,6 +131,8 @@ func noProxyStatus(t *testing.T) {
 		assert.Empty(pod.ProxyStatus)
 	}
 }
+
+// TODO: Istio configs are not working with istio_api_enabled false
 /*
 func emptyValidations(t *testing.T) {
 	name := "bookinfo-gateway"
@@ -151,6 +153,7 @@ func emptyValidations(t *testing.T) {
 	assert.Equal(len(config.IstioValidation.References), 0)
 }
 */
+
 func istioStatus(t *testing.T) {
 	assert := assert.New(t)
 
