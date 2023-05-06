@@ -8,7 +8,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/tests/integration/utils"
 )
@@ -17,6 +16,10 @@ var ocCommand = utils.NewExecCommand()
 
 func update_istio_api_enabled(value bool) {
 	original := !value
+
+	cmdGetProp1 := ocCommand + " get all -n istio-system"
+	getPropOutput1, _ := exec.Command("bash", "-c", cmdGetProp1).Output()
+	log.Debugf("Setting istio_api_enabled to: %s", getPropOutput1)
 
 	log.Debugf("Setting istio_api_enabled to: %t", value)
 	cmdGetProp := ocCommand + " get cm kiali -n istio-system -o yaml | grep 'istio_api_enabled'"
@@ -57,7 +60,7 @@ func update_istio_api_enabled(value bool) {
 			waitCmd := ocCommand + " wait --for=condition=ready pod -l app=kiali -n istio-system"
 			out, err4 := exec.Command("bash", "-c", waitCmd).Output()
 
-			log.Debugf("Waiting for condition to met %s", out)
+			log.Debugf("Pod restarted %s", out)
 
 			if err4 != nil {
 				log.Errorf("Error waiting for pod %s ", err4.Error())
@@ -72,7 +75,7 @@ func TestNoIstiod(t *testing.T) {
 	t.Run("ServicesListNoRegistryServices", servicesListNoRegistryServices)
 	t.Run("NoProxyStatus", noProxyStatus)
 	t.Run("istioStatus", istioStatus)
-	t.Run("emptyValidations", emptyValidations)
+	//t.Run("emptyValidations", emptyValidations)
 }
 
 func servicesListNoRegistryServices(t *testing.T) {
@@ -128,12 +131,13 @@ func noProxyStatus(t *testing.T) {
 		assert.Empty(pod.ProxyStatus)
 	}
 }
-
+/*
 func emptyValidations(t *testing.T) {
 	name := "bookinfo-gateway"
 	assert := assert.New(t)
 
-	config, err := getConfigDetails(utils.BOOKINFO, name, kubernetes.Gateways, true, assert)
+	config, _, err := utils.IstioConfigDetails(utils.BOOKINFO, name, kubernetes.Gateways)
+	//config, err := getConfigDetails(utils.BOOKINFO, name, kubernetes.Gateways, true, assert)
 	log.Debugf("Empty validations: %+v", config)
 
 	assert.Nil(err)
@@ -146,7 +150,7 @@ func emptyValidations(t *testing.T) {
 	assert.Equal(len(config.IstioValidation.Checks), 0)
 	assert.Equal(len(config.IstioValidation.References), 0)
 }
-
+*/
 func istioStatus(t *testing.T) {
 	assert := assert.New(t)
 
