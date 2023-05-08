@@ -284,7 +284,8 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 	} else {
 		clusterWideAccess := config.Get().Deployment.ClusterWideAccess
 		if !clusterWideAccess {
-			return models.IstioConfigList{}, fmt.Errorf("Kiali cannot obtain Istio resources because it does not have cluster-wide-access and does not have access to the Istio API.")
+			log.Debugf("Kiali cannot obtain Istio resources because it does not have cluster-wide-access and does not have access to the Istio API.")
+			return models.IstioConfigList{}, nil
 		}
 	}
 
