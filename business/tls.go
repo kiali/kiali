@@ -47,7 +47,7 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, namespaces []strin
 	conf := config.Get()
 
 	// @TODO hardcoded HomeClusterName
-	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigListPerCluster(ctx, criteria, conf.KubernetesConfig.ClusterName)
+	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigListPerCluster(ctx, criteria, cluster)
 	if err != nil {
 		return models.MTLSStatus{}, err
 	}
