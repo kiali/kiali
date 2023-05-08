@@ -77,7 +77,8 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 
 	if kialiCache != nil && in.homeClusterUserClient != nil {
 		if ns := kialiCache.GetNamespaces(in.homeClusterUserClient.GetToken()); ns != nil {
-			log.Infof("")
+			log.Infof("Get cache token for %s ", in.homeClusterUserClient.GetToken())
+			log.Infof("Get cached ns %v ", ns)
 			return ns, nil
 		}
 	}
@@ -268,6 +269,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	// store only the filtered set of namespaces in cache for the token
 	if kialiCache != nil && in.homeClusterUserClient != nil {
 		// just get the home cluster token because it is assumed tokens are identical across all clusters
+		log.Infof("Storing %s n %b", in.homeClusterUserClient.GetToken(), len(resultns))
 		kialiCache.SetNamespaces(in.homeClusterUserClient.GetToken(), resultns)
 	}
 
