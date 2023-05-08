@@ -173,9 +173,7 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 	)
 	defer end()
 
-	clusterWideAccess := config.Get().Deployment.ClusterWideAccess
-
-	if criteria.Namespace == "" && (!criteria.AllNamespaces || !clusterWideAccess) {
+	if criteria.Namespace == "" && !criteria.AllNamespaces {
 		return models.IstioConfigList{}, errors.New("GetIstioConfigList needs a non empty Namespace")
 	}
 	istioConfigList := models.IstioConfigList{
@@ -282,6 +280,11 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 		// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 		if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, criteria.Namespace, cluster); err != nil {
 			return models.IstioConfigList{}, err
+		}
+	} else {
+		clusterWideAccess := config.Get().Deployment.ClusterWideAccess
+		if !clusterWideAccess {
+			return models.IstioConfigList{}, fmt.Errorf("Kiali cannot obtain Istio resources because it does not have cluster-wide-access and does not have access to the Istio API.")
 		}
 	}
 
