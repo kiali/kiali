@@ -173,7 +173,9 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 	)
 	defer end()
 
-	if criteria.Namespace == "" && !criteria.AllNamespaces {
+	clusterWideAccess := config.Get().Deployment.ClusterWideAccess
+
+	if criteria.Namespace == "" && (!criteria.AllNamespaces || !clusterWideAccess) {
 		return models.IstioConfigList{}, errors.New("GetIstioConfigList needs a non empty Namespace")
 	}
 	istioConfigList := models.IstioConfigList{
