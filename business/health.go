@@ -125,7 +125,6 @@ func (in *HealthService) GetNamespaceAppHealth(ctx context.Context, criteria Nam
 		observability.Attribute("package", "business"),
 		observability.Attribute("cluster", criteria.Cluster),
 		observability.Attribute("namespace", criteria.Namespace),
-		observability.Attribute("cluster", criteria.Cluster),
 		observability.Attribute("rateInterval", criteria.RateInterval),
 		observability.Attribute("queryTime", criteria.QueryTime),
 	)

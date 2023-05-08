@@ -382,7 +382,7 @@ func (in *SvcService) getClusterId() string {
 	//        ]
 	//      }
 	//    }
-	clusterId := config.DefaultClusterID
+	clusterId := config.Get().KubernetesConfig.ClusterName
 	// Protection on tests
 	if in.businessLayer != nil {
 		if cluster, err := in.businessLayer.Mesh.ResolveKialiControlPlaneCluster(nil); err == nil {

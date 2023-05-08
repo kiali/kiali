@@ -36,7 +36,7 @@ func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 	}
 
 	if globalInfo.HomeCluster == "" {
-		globalInfo.HomeCluster = config.DefaultClusterID
+		globalInfo.HomeCluster = config.Get().KubernetesConfig.ClusterName
 		c, err := globalInfo.Business.Mesh.ResolveKialiControlPlaneCluster(nil)
 		graph.CheckError(err)
 		if c != nil {

@@ -17,6 +17,7 @@ import (
 
 func setupWorkloads(t *testing.T) *business.Layer {
 	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
 	config.Set(conf)
 
 	k8s := kubetest.NewFakeK8sClient(
@@ -98,7 +99,7 @@ func setupWorkloads(t *testing.T) *business.Layer {
 	business.SetupBusinessLayer(t, k8s, *conf)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
+	k8sclients[config.DefaultClusterID] = k8s
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 	return businessLayer
 }

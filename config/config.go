@@ -56,6 +56,7 @@ const (
 )
 
 const (
+	// DefaultClusterID is generally not for use outside of test-code. In general you should use config.Get().KubernetesConfig.ClusterName
 	DefaultClusterID = "Kubernetes"
 )
 
@@ -721,7 +722,7 @@ func NewConfig() (c *Config) {
 			CacheIstioTypes:             []string{"AuthorizationPolicy", "DestinationRule", "EnvoyFilter", "Gateway", "PeerAuthentication", "RequestAuthentication", "ServiceEntry", "Sidecar", "VirtualService", "WorkloadEntry", "WorkloadGroup", "WasmPlugin", "Telemetry", "K8sGateway", "K8sHTTPRoute"},
 			CacheNamespaces:             []string{".*"},
 			CacheTokenNamespaceDuration: 10,
-			ClusterName:                 DefaultClusterID,
+			ClusterName:                 "", // leave this unset as a flag that we need to fetch the information
 			ExcludeWorkloads:            []string{"CronJob", "DeploymentConfig", "Job", "ReplicationController"},
 			QPS:                         175,
 		},

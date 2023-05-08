@@ -288,7 +288,7 @@ func (cf *clientFactory) GetClients(authInfo *api.AuthInfo) (map[string]ClientIn
 	}
 
 	if len(clients) == 0 {
-		return nil, errors.New("unable to create create any user clients")
+		return nil, errors.New("unable to create any user clients")
 	}
 
 	return clients, nil
