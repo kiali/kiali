@@ -77,6 +77,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 
 	if kialiCache != nil && in.homeClusterUserClient != nil {
 		if ns := kialiCache.GetNamespaces(in.homeClusterUserClient.GetToken()); ns != nil {
+			log.Infof("")
 			return ns, nil
 		}
 	}
@@ -282,12 +283,13 @@ func (in *NamespaceService) getNamespacesByCluster(cluster string) ([]models.Nam
 	_, queryAllNamespaces := in.isAccessibleNamespaces["**"]
 	// If we are running in OpenShift, we will use the project names since these are the list of accessible namespaces
 	if in.hasProjects {
+		log.Infof("Is OC")
 		projects, err2 := in.userClients[cluster].GetProjects(labelSelectorInclude)
 		if err2 == nil {
 			// Everything is good, return the projects we got from OpenShift
 			if queryAllNamespaces {
 				log.Infof("Query all namespaces for cluster %s", cluster)
-				namespaces = models.CastProjectCollection(projects)
+				namespaces = models.CastProjectCollection(projects, cluster)
 				// add the namespaces explicitly included in the include list.
 				includes := configObject.API.Namespaces.Include
 				log.Infof("Includes: %s ", includes)
@@ -305,7 +307,7 @@ func (in *NamespaceService) getNamespacesByCluster(cluster string) ([]models.Nam
 						if allProjects, err := in.userClients[cluster].GetProjects(""); err != nil {
 							return nil, err
 						} else {
-							allNamespaces = models.CastProjectCollection(allProjects)
+							allNamespaces = models.CastProjectCollection(allProjects, cluster)
 							seedNamespaces = namespaces
 						}
 					}
@@ -314,12 +316,15 @@ func (in *NamespaceService) getNamespacesByCluster(cluster string) ([]models.Nam
 			} else {
 				filteredProjects := make([]osproject_v1.Project, 0)
 				for _, project := range projects {
+					log.Infof("Project %s", project.Name)
 					if _, isAccessible := in.isAccessibleNamespaces[project.Name]; isAccessible {
 						filteredProjects = append(filteredProjects, project)
 					}
 				}
-				namespaces = models.CastProjectCollection(filteredProjects)
+				namespaces = models.CastProjectCollection(filteredProjects, cluster)
 			}
+		} else {
+			log.Errorf("Error getting projects: %s", err2)
 		}
 	} else {
 		// if the accessible namespaces define a distinct list of namespaces, use only those.
@@ -558,7 +563,7 @@ func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace
 			for cl := range in.userClients {
 				project, err2 = in.userClients[cl].GetProject(namespace)
 				if err2 == nil {
-					result = models.CastProject(*project)
+					result = models.CastProject(*project, cluster)
 					break
 				}
 			}

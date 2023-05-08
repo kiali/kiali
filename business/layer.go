@@ -82,10 +82,10 @@ func initKialiCache() {
 				log.Errorf("Error fetching initial namespaces for populating the Kiali Cache. Details: %s", err)
 				return
 			}
-
 			for _, ns := range nss {
 				namespaceSeedList = append(namespaceSeedList, ns.Name)
 			}
+			log.Infof("Namespace seed list: %v", namespaceSeedList)
 		}
 
 		cache, err := cache.NewKialiCache(clientFactory, *config.Get(), namespaceSeedList...)

@@ -68,18 +68,19 @@ func CastNamespace(ns core_v1.Namespace, cluster string) Namespace {
 	return namespace
 }
 
-func CastProjectCollection(ps []osproject_v1.Project) []Namespace {
+func CastProjectCollection(ps []osproject_v1.Project, cluster string) []Namespace {
 	namespaces := make([]Namespace, len(ps))
 	for i, project := range ps {
-		namespaces[i] = CastProject(project)
+		namespaces[i] = CastProject(project, cluster)
 	}
 
 	return namespaces
 }
 
-func CastProject(p osproject_v1.Project) Namespace {
+func CastProject(p osproject_v1.Project, cluster string) Namespace {
 	namespace := Namespace{}
 	namespace.Name = p.Name
+	namespace.Cluster = cluster
 	namespace.CreationTimestamp = p.CreationTimestamp.Time
 	namespace.Labels = p.Labels
 	namespace.Annotations = make(map[string]string)
