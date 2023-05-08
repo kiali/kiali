@@ -286,9 +286,11 @@ func (in *NamespaceService) getNamespacesByCluster(cluster string) ([]models.Nam
 		if err2 == nil {
 			// Everything is good, return the projects we got from OpenShift
 			if queryAllNamespaces {
+				log.Infof("Query all namespaces for cluster %s", cluster)
 				namespaces = models.CastProjectCollection(projects)
 				// add the namespaces explicitly included in the include list.
 				includes := configObject.API.Namespaces.Include
+				log.Infof("Includes: %s ", includes)
 				if len(includes) > 0 {
 					var allNamespaces []models.Namespace
 					var seedNamespaces []models.Namespace
