@@ -800,10 +800,12 @@ func (conf *Config) AllNamespacesAccessible() bool {
 	// behavior will help support users who installed the server via the server helm chart.
 	for _, ns := range conf.Deployment.AccessibleNamespaces {
 		if ns == "**" {
+			log.Infof("ns **")
 			return true
 		}
 	}
 	// it is still possible we are in cluster wide access mode even if accessible namespaces has been restricted
+	log.Infof("Cluster wide Access %s", conf.Deployment.ClusterWideAccess)
 	return conf.Deployment.ClusterWideAccess
 }
 
