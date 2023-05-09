@@ -1,13 +1,13 @@
 package tests
 
 import (
+	"os/exec"
+	"strconv"
+	"strings"
+	"testing"
+	"time"
 
-"github.com/stretchr/testify/assert"
-"os/exec"
-"strconv"
-"strings"
-"testing""time"
-
+	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/tests/integration/utils"
