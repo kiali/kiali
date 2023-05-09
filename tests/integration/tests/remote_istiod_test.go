@@ -258,7 +258,7 @@ func restartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, names
 				}
 			}
 		}
-
+		time.Sleep(10 * time.Second)
 		return true, nil
 	})
 }
