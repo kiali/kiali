@@ -1,13 +1,13 @@
 package tests
 
 import (
-	"os/exec"
-	"strconv"
-	"strings"
-	"testing"
-	"time"
 
-	"github.com/stretchr/testify/assert"
+"github.com/stretchr/testify/assert"
+"os/exec"
+"strconv"
+"strings"
+"testing""time"
+
 
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/tests/integration/utils"
@@ -54,19 +54,21 @@ func update_istio_api_enabled(value bool) {
 			waitCmd := ocCommand + " wait --for=condition=ready pod -l app=kiali -n istio-system"
 			out, err4 := exec.Command("bash", "-c", waitCmd).Output()
 
-			log.Debugf("Waiting for condition to met %s", out)
+			log.Debugf("Kiali pod ready after restart %s", out)
+			// We need this because even if the pod is really the application is not responding yet
+			time.Sleep(10 * time.Second)
 
 			if err4 != nil {
 				log.Errorf("Error waiting for pod %s ", err4.Error())
 			}
 		}
 	}
+
 }
 
 func TestNoIstiod(t *testing.T) {
 	defer update_istio_api_enabled(true)
 	update_istio_api_enabled(false)
-	time.Sleep(10 * time.Second)
 	t.Run("ServicesListNoRegistryServices", servicesListNoRegistryServices)
 	t.Run("NoProxyStatus", noProxyStatus)
 	t.Run("istioStatus", istioStatus)
