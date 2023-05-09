@@ -214,8 +214,8 @@ func (c *kubeCache) isCached(namespace string) bool {
 				return true
 			}
 		}
-		return false
 	}
+	return false
 }
 
 // Client returns the underlying client for the KubeCache.
