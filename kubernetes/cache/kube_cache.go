@@ -208,11 +208,9 @@ func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, ref
 
 // It will indicate if a namespace should have a cache
 func (c *kubeCache) isCached(namespace string) bool {
-	if namespace != "" {
-		for _, cacheNs := range c.cacheNamespacesRegexps {
-			if cacheNs.MatchString(namespace) {
-				return true
-			}
+	for _, cacheNs := range c.cacheNamespacesRegexps {
+		if cacheNs.MatchString(namespace) {
+			return true
 		}
 	}
 	return false
