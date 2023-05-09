@@ -133,8 +133,6 @@ func emptyValidations(t *testing.T) {
 	config, err := getConfigDetails(utils.BOOKINFO, name, kubernetes.Gateways, true, assert)
 
 	assert.Nil(err)
-	assert.Nil(config)
-
 	assert.NotNil(config)
 	assert.Equal(kubernetes.Gateways, config.ObjectType)
 	assert.Equal(utils.BOOKINFO, config.Namespace.Name)
