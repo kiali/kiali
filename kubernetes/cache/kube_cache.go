@@ -208,9 +208,11 @@ func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, ref
 
 // It will indicate if a namespace should have a cache
 func (c *kubeCache) isCached(namespace string) bool {
-	for _, cacheNs := range c.cacheNamespacesRegexps {
-		if cacheNs.MatchString(namespace) {
-			return true
+	if namespace != "" {
+		for _, cacheNs := range c.cacheNamespacesRegexps {
+			if cacheNs.MatchString(namespace) {
+				return true
+			}
 		}
 	}
 	return false
@@ -356,11 +358,12 @@ func (c *kubeCache) startInformers(namespace string) error {
 	log.Debugf("[Kiali Cache] Starting %s informers", scope)
 
 	// TODO: This calls should not happen. At the moment, prevent the errors from these calls
-	if !c.clusterScoped && namespace == "" {
-		log.Errorf("[Kiali Cache] Error starting namespace-scoped cache for empty namespace")
-		return nil
-	}
-
+	/*
+		if !c.clusterScoped && namespace == "" {
+			log.Errorf("[Kiali Cache] Error starting namespace-scoped cache for empty namespace")
+			return nil
+		}
+	*/
 	for _, informer := range informers {
 		go informer.Start(stop)
 	}

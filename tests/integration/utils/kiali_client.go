@@ -373,6 +373,7 @@ func WorkloadDetails(name, namespace string) (*WorkloadJson, int, error) {
 		if err == nil {
 			return wl, code, nil
 		} else {
+			log.Infof("Error getting pod: %s", body)
 			return nil, code, err
 		}
 	} else {
