@@ -282,6 +282,12 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 		if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, criteria.Namespace, cluster); err != nil {
 			return models.IstioConfigList{}, err
 		}
+	} else {
+		clusterWideAccess := config.Get().Deployment.ClusterWideAccess
+		if !clusterWideAccess {
+			log.Debugf("Kiali cannot obtain Istio resources because it does not have cluster-wide-access and does not have access to the Istio API.")
+			return models.IstioConfigList{}, nil
+		}
 	}
 
 	isWorkloadSelector := criteria.WorkloadSelector != ""
