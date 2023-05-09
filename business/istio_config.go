@@ -200,7 +200,8 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 	}
 
 	// Use the Istio Registry when AllNamespaces is present
-	if criteria.AllNamespaces && in.config.ExternalServices.Istio.IstioAPIEnabled {
+	// TODO use Istio Registry for Home cluster only now
+	if criteria.AllNamespaces && in.config.ExternalServices.Istio.IstioAPIEnabled && cluster == config.Get().KubernetesConfig.ClusterName {
 		registryCriteria := RegistryCriteria{
 			AllNamespaces: true,
 		}
