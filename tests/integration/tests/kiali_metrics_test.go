@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/tests/integration/utils"
 )
 
@@ -26,8 +27,11 @@ func TestNamespaceMetrics(t *testing.T) {
 func TestServiceMetrics(t *testing.T) {
 	assert := assert.New(t)
 	name := "ratings"
+	conf := config.NewConfig()
+	config.Set(conf)
 
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
+		METRICS_PARAMS["cluster"] = conf.KubernetesConfig.ClusterName
 		metrics, err := utils.ObjectMetrics(utils.BOOKINFO, name, "services", METRICS_PARAMS)
 		return CheckMetrics(metrics.RequestCount, metrics.RequestDurationMillis, metrics.RequestErrorCount), err
 	})
@@ -37,8 +41,11 @@ func TestServiceMetrics(t *testing.T) {
 func TestAppMetrics(t *testing.T) {
 	assert := assert.New(t)
 	name := "productpage"
+	conf := config.NewConfig()
+	config.Set(conf)
 
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
+		METRICS_PARAMS["cluster"] = conf.KubernetesConfig.ClusterName
 		metrics, err := utils.ObjectMetrics(utils.BOOKINFO, name, "apps", METRICS_PARAMS)
 		return CheckMetrics(metrics.RequestDurationMillis), err
 	})
@@ -48,8 +55,11 @@ func TestAppMetrics(t *testing.T) {
 func TestWorkloadMetrics(t *testing.T) {
 	assert := assert.New(t)
 	name := "productpage-v1"
+	conf := config.NewConfig()
+	config.Set(conf)
 
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
+		METRICS_PARAMS["cluster"] = conf.KubernetesConfig.ClusterName
 		metrics, err := utils.ObjectMetrics(utils.BOOKINFO, name, "workloads", METRICS_PARAMS)
 		return CheckMetrics(metrics.RequestSize, metrics.ResponseSize), err
 	})
