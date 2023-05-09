@@ -1,8 +1,7 @@
 package tests
 
 import (
-	"github.com/kiali/kiali/kubernetes"
-"os/exec"
+	"os/exec"
 	"strconv"
 	"strings"
 	"testing"
@@ -11,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/tests/integration/utils"
 )
 
