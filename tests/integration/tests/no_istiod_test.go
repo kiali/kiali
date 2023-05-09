@@ -134,15 +134,16 @@ func emptyValidations(t *testing.T) {
 
 	assert.Nil(err)
 	assert.Nil(config)
-	/*
-	assert.NotNil(config)
-	assert.Equal(kubernetes.Gateways, config.ObjectType)
-	assert.Equal(utils.BOOKINFO, config.Namespace.Name)
-	assert.NotNil(config.Gateway)
-	assert.Equal(name, config.Gateway.Name)
-	assert.Equal(utils.BOOKINFO, config.Gateway.Namespace)
-	assert.Equal(len(config.IstioValidation.Checks), 0)
-	assert.Equal(len(config.IstioValidation.References), 0)
+
+	/* Validations not available
+		assert.NotNil(config)
+		assert.Equal(kubernetes.Gateways, config.ObjectType)
+		assert.Equal(utils.BOOKINFO, config.Namespace.Name)
+		assert.NotNil(config.Gateway)
+		assert.Equal(name, config.Gateway.Name)
+		assert.Equal(utils.BOOKINFO, config.Gateway.Namespace)
+		assert.Equal(len(config.IstioValidation.Checks), 0)
+		assert.Equal(len(config.IstioValidation.References), 0)
 	*/
 }
 
