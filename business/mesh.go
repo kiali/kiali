@@ -622,7 +622,7 @@ func (in *MeshService) CanaryUpgradeStatus() (*models.CanaryUpgradeStatus, error
 		migratedNsList = append(migratedNsList, ns.Name)
 	}
 
-	pendingNss, err := in.k8s.GetNamespaces("istio-injection=enabled")
+	pendingNss, err := in.k8s.GetNamespaces(fmt.Sprintf("%s=enabled", conf.IstioLabels.InjectionLabelName))
 	if err != nil {
 		return nil, err
 	}
@@ -630,7 +630,7 @@ func (in *MeshService) CanaryUpgradeStatus() (*models.CanaryUpgradeStatus, error
 		pendingNsList = append(pendingNsList, ns.Name)
 	}
 
-	pendingNss, err = in.k8s.GetNamespaces(fmt.Sprintf("istio.io/rev=%s", current))
+	pendingNss, err = in.k8s.GetNamespaces(fmt.Sprintf("%s=%s", conf.IstioLabels.InjectionLabelRev, current))
 	if err != nil {
 		return nil, err
 	}
