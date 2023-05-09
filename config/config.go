@@ -55,6 +55,11 @@ const (
 	DashboardsDiscoveryAuto    = "auto"
 )
 
+const (
+	// DefaultClusterID is generally not for use outside of test-code. In general you should use config.Get().KubernetesConfig.ClusterName
+	DefaultClusterID = "Kubernetes"
+)
+
 // FeatureName is the enum type used for named features that can be disabled via KialiFeatureFlags.DisabledFeatures
 type FeatureName string
 
@@ -717,7 +722,7 @@ func NewConfig() (c *Config) {
 			CacheIstioTypes:             []string{"AuthorizationPolicy", "DestinationRule", "EnvoyFilter", "Gateway", "PeerAuthentication", "RequestAuthentication", "ServiceEntry", "Sidecar", "VirtualService", "WorkloadEntry", "WorkloadGroup", "WasmPlugin", "Telemetry", "K8sGateway", "K8sHTTPRoute"},
 			CacheNamespaces:             []string{".*"},
 			CacheTokenNamespaceDuration: 10,
-			ClusterName:                 "",
+			ClusterName:                 "", // leave this unset as a flag that we need to fetch the information
 			ExcludeWorkloads:            []string{"CronJob", "DeploymentConfig", "Job", "ReplicationController"},
 			QPS:                         175,
 		},

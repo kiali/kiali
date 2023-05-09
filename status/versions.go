@@ -288,13 +288,14 @@ func kubernetesVersion() (*ExternalServiceInfo, error) {
 		serverVersion *kversion.Info
 	)
 
-	product := ExternalServiceInfo{}
 	k8sConfig, err = kubernetes.GetConfigForLocalCluster()
 	if err == nil {
-		k8sConfig.QPS = config.Get().KubernetesConfig.QPS
-		k8sConfig.Burst = config.Get().KubernetesConfig.Burst
+		conf := config.Get()
+		k8sConfig.QPS = conf.KubernetesConfig.QPS
+		k8sConfig.Burst = conf.KubernetesConfig.Burst
 		k8s, err = kube.NewForConfig(k8sConfig)
 		if err == nil {
+			product := ExternalServiceInfo{}
 			serverVersion, err = k8s.Discovery().ServerVersion()
 			if err == nil {
 				product.Name = "Kubernetes"

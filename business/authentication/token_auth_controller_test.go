@@ -47,9 +47,9 @@ func TestTokenAuthControllerRejectsUserWithoutPrivilegesInAnyNamespace(t *testin
 	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
 	util.Clock = util.ClockMock{Time: clockTime}
 
-	cfg := config.NewConfig()
-	cfg.LoginToken.SigningKey = "kiali67890123456"
-	config.Set(cfg)
+	conf := config.NewConfig()
+	conf.LoginToken.SigningKey = "kiali67890123456"
+	config.Set(conf)
 
 	// Returning no namespace when a cluster API call is made should have the result of
 	// a rejected authentication.
@@ -62,7 +62,7 @@ func TestTokenAuthControllerRejectsUserWithoutPrivilegesInAnyNamespace(t *testin
 
 	controller := NewTokenAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
 		k8sclients := make(map[string]kubernetes.ClientInterface)
-		k8sclients[kubernetes.HomeClusterName] = k8s
+		k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 		return business.NewWithBackends(k8sclients, k8sclients, nil, nil), nil
 	})
 
@@ -84,9 +84,9 @@ func TestTokenAuthControllerRejectsInvalidToken(t *testing.T) {
 	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
 	util.Clock = util.ClockMock{Time: clockTime}
 
-	cfg := config.NewConfig()
-	cfg.LoginToken.SigningKey = "kiali67890123456"
-	config.Set(cfg)
+	conf := config.NewConfig()
+	conf.LoginToken.SigningKey = "kiali67890123456"
+	config.Set(conf)
 
 	// Returning a forbidden error when a cluster API call is made should have the result of
 	// a rejected authentication.
@@ -106,7 +106,7 @@ func TestTokenAuthControllerRejectsInvalidToken(t *testing.T) {
 
 	controller := NewTokenAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
 		k8sclients := make(map[string]kubernetes.ClientInterface)
-		k8sclients[kubernetes.HomeClusterName] = k8s
+		k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 		return business.NewWithBackends(k8sclients, k8sclients, nil, nil), nil
 	})
 
@@ -129,7 +129,7 @@ func TestTokenAuthControllerRejectsEmptyToken(t *testing.T) {
 
 	controller := NewTokenAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
 		k8sclients := make(map[string]kubernetes.ClientInterface)
-		k8sclients[kubernetes.HomeClusterName] = new(kubetest.K8SClientMock)
+		k8sclients[config.Get().KubernetesConfig.ClusterName] = new(kubetest.K8SClientMock)
 		return business.NewWithBackends(k8sclients, k8sclients, nil, nil), nil
 	})
 
@@ -161,7 +161,7 @@ func TestTokenAuthControllerValidatesSessionCorrectly(t *testing.T) {
 
 	controller := NewTokenAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
 		k8sclients := make(map[string]kubernetes.ClientInterface)
-		k8sclients[kubernetes.HomeClusterName] = k8s
+		k8sclients[config.Get().KubernetesConfig.ClusterName] = k8s
 		return business.NewWithBackends(k8sclients, k8sclients, nil, nil), nil
 	})
 
@@ -181,7 +181,7 @@ func TestTokenAuthControllerValidatesSessionWithoutActiveSession(t *testing.T) {
 	k8s := kubetest.NewK8SClientMock()
 	controller := NewTokenAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
 		k8sclients := make(map[string]kubernetes.ClientInterface)
-		k8sclients[kubernetes.HomeClusterName] = k8s
+		k8sclients[config.Get().KubernetesConfig.ClusterName] = k8s
 		return business.NewWithBackends(k8sclients, k8sclients, nil, nil), nil
 	})
 
@@ -213,7 +213,7 @@ func TestTokenAuthControllerValidatesSessionForUserWithMissingPrivileges(t *test
 
 	controller := NewTokenAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
 		k8sclients := make(map[string]kubernetes.ClientInterface)
-		k8sclients[kubernetes.HomeClusterName] = k8s
+		k8sclients[config.Get().KubernetesConfig.ClusterName] = k8s
 		return business.NewWithBackends(k8sclients, k8sclients, nil, nil), nil
 	})
 
@@ -228,10 +228,10 @@ func createValidSession() (*httptest.ResponseRecorder, *UserSessionData, error) 
 	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
 	util.Clock = util.ClockMock{Time: clockTime}
 
-	cfg := config.NewConfig()
-	cfg.LoginToken.SigningKey = "kiali67890123456"
-	cfg.LoginToken.ExpirationSeconds = 1
-	config.Set(cfg)
+	conf := config.NewConfig()
+	conf.LoginToken.SigningKey = "kiali67890123456"
+	conf.LoginToken.ExpirationSeconds = 1
+	config.Set(conf)
 
 	// Returning some namespace when a cluster API call is made should have the result of
 	// a successful authentication.
@@ -246,7 +246,7 @@ func createValidSession() (*httptest.ResponseRecorder, *UserSessionData, error) 
 
 	controller := NewTokenAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
 		k8sclients := make(map[string]kubernetes.ClientInterface)
-		k8sclients[kubernetes.HomeClusterName] = k8s
+		k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 		return business.NewWithBackends(k8sclients, k8sclients, nil, nil), nil
 	})
 

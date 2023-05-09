@@ -35,8 +35,6 @@ import (
 	"regexp"
 	"strings"
 
-	_ "go.uber.org/automaxprocs"
-
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -246,8 +244,8 @@ func updateConfigWithIstioInfo() {
 		return nil
 	}()
 	if err != nil {
-		log.Warningf("Cannot resolve local cluster name. Err: %s. Falling back to 'Kubernetes'", err)
-		homeCluster = "Kubernetes"
+		log.Warningf("Cannot resolve local cluster name. Err: %s. Falling back to [%s]", err, config.DefaultClusterID)
+		homeCluster = config.DefaultClusterID
 	}
 
 	conf.KubernetesConfig.ClusterName = homeCluster

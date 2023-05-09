@@ -17,6 +17,7 @@ import (
 
 func setupWorkloads(t *testing.T) *business.Layer {
 	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
 	config.Set(conf)
 
 	k8s := kubetest.NewFakeK8sClient(
@@ -98,7 +99,7 @@ func setupWorkloads(t *testing.T) *business.Layer {
 	business.SetupBusinessLayer(t, k8s, *conf)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = k8s
+	k8sclients[config.DefaultClusterID] = k8s
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 	return businessLayer
 }
@@ -110,13 +111,13 @@ func TestDeadNode(t *testing.T) {
 	trafficMap := testTrafficMap()
 
 	assert.Equal(12, len(trafficMap))
-	unknownID, _, _ := graph.Id(business.DefaultClusterID, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	unknownID, _, _ := graph.Id(config.DefaultClusterID, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
 	unknownNode, found := trafficMap[unknownID]
 	assert.Equal(true, found)
 	assert.Equal(graph.Unknown, unknownNode.Workload)
 	assert.Equal(10, len(unknownNode.Edges))
 
-	ingressID, _, _ := graph.Id(business.DefaultClusterID, graph.Unknown, "", "istio-system", "istio-ingressgateway", "istio-ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	ingressID, _, _ := graph.Id(config.DefaultClusterID, graph.Unknown, "", "istio-system", "istio-ingressgateway", "istio-ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
 	ingressNode, found := trafficMap[ingressID]
 	assert.Equal(true, found)
 	assert.Equal("istio-ingressgateway", ingressNode.Workload)
@@ -146,7 +147,7 @@ func TestDeadNode(t *testing.T) {
 	assert.Equal("testNodeWithTcpSentTraffic-v1", ingressNode.Edges[5].Dest.Workload)
 	assert.Equal("testNodeWithTcpSentOutTraffic-v1", ingressNode.Edges[6].Dest.Workload)
 
-	id, _, _ := graph.Id(business.DefaultClusterID, "testNamespace", "testNoPodsNoTraffic", "testNamespace", "testNoPodsNoTraffic-v1", "testNoPodsNoTraffic", "v1", graph.GraphTypeVersionedApp)
+	id, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "testNoPodsNoTraffic", "testNamespace", "testNoPodsNoTraffic-v1", "testNoPodsNoTraffic", "v1", graph.GraphTypeVersionedApp)
 	noPodsNoTraffic, ok := trafficMap[id]
 	assert.Equal(true, ok)
 	isDead, ok := noPodsNoTraffic.Metadata[graph.IsDead]
@@ -154,7 +155,7 @@ func TestDeadNode(t *testing.T) {
 	assert.Equal(true, isDead)
 
 	// Check that external services are not removed
-	id, _, _ = graph.Id(business.DefaultClusterID, "testNamespace", "egress.io", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	id, _, _ = graph.Id(config.DefaultClusterID, "testNamespace", "egress.io", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	_, okExternal := trafficMap[id]
 	assert.Equal(true, okExternal)
 }
@@ -162,39 +163,39 @@ func TestDeadNode(t *testing.T) {
 func testTrafficMap() map[string]*graph.Node {
 	trafficMap := make(map[string]*graph.Node)
 
-	n0, _ := graph.NewNode(business.DefaultClusterID, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	n0, _ := graph.NewNode(config.DefaultClusterID, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
 
-	n00, _ := graph.NewNode(business.DefaultClusterID, graph.Unknown, "", "istio-system", "istio-ingressgateway", "istio-ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	n00, _ := graph.NewNode(config.DefaultClusterID, graph.Unknown, "", "istio-system", "istio-ingressgateway", "istio-ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
 	n00.Metadata["httpOut"] = 4.8
 
-	n1, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "testPodsWithTraffic", "testNamespace", "testPodsWithTraffic-v1", "testPodsWithTraffic", "v1", graph.GraphTypeVersionedApp)
+	n1, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "testPodsWithTraffic", "testNamespace", "testPodsWithTraffic-v1", "testPodsWithTraffic", "v1", graph.GraphTypeVersionedApp)
 	n1.Metadata["httpIn"] = 0.8
 
-	n2, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "testPodsNoTraffic", "testNamespace", "testPodsNoTraffic-v1", "testPodsNoTraffic", "v1", graph.GraphTypeVersionedApp)
+	n2, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "testPodsNoTraffic", "testNamespace", "testPodsNoTraffic-v1", "testPodsNoTraffic", "v1", graph.GraphTypeVersionedApp)
 
-	n3, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "testNoPodsWithTraffic", "testNamespace", "testNoPodsWithTraffic-v1", "testNoPodsWithTraffic", "v1", graph.GraphTypeVersionedApp)
+	n3, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "testNoPodsWithTraffic", "testNamespace", "testNoPodsWithTraffic-v1", "testNoPodsWithTraffic", "v1", graph.GraphTypeVersionedApp)
 	n3.Metadata["httpIn"] = 0.8
 
-	n4, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "testNoPodsNoTraffic", "testNamespace", "testNoPodsNoTraffic-v1", "testNoPodsNoTraffic", "v1", graph.GraphTypeVersionedApp)
+	n4, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "testNoPodsNoTraffic", "testNamespace", "testNoPodsNoTraffic-v1", "testNoPodsNoTraffic", "v1", graph.GraphTypeVersionedApp)
 
-	n5, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "testNoDeploymentWithTraffic", "testNamespace", "testNoDeploymentWithTraffic-v1", "testNoDeploymentWithTraffic", "v1", graph.GraphTypeVersionedApp)
+	n5, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "testNoDeploymentWithTraffic", "testNamespace", "testNoDeploymentWithTraffic-v1", "testNoDeploymentWithTraffic", "v1", graph.GraphTypeVersionedApp)
 	n5.Metadata["httpIn"] = 0.8
 
-	n6, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "testNoDeploymentNoTraffic", "testNamespace", "testNoDeploymentNoTraffic-v1", "testNoDeploymentNoTraffic", "v1", graph.GraphTypeVersionedApp)
+	n6, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "testNoDeploymentNoTraffic", "testNamespace", "testNoDeploymentNoTraffic-v1", "testNoDeploymentNoTraffic", "v1", graph.GraphTypeVersionedApp)
 
-	n7, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "testNodeWithTcpSentTraffic", "testNamespace", "testNodeWithTcpSentTraffic-v1", "testNodeWithTcpSentTraffic", "v1", graph.GraphTypeVersionedApp)
+	n7, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "testNodeWithTcpSentTraffic", "testNamespace", "testNodeWithTcpSentTraffic-v1", "testNodeWithTcpSentTraffic", "v1", graph.GraphTypeVersionedApp)
 	n7.Metadata["tcpIn"] = 74.1
 
-	n8, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "testNodeWithTcpSentOutTraffic", "testNamespace", "testNodeWithTcpSentOutTraffic-v1", "testNodeWithTcpSentOutTraffic", "v1", graph.GraphTypeVersionedApp)
+	n8, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "testNodeWithTcpSentOutTraffic", "testNamespace", "testNodeWithTcpSentOutTraffic-v1", "testNodeWithTcpSentOutTraffic", "v1", graph.GraphTypeVersionedApp)
 	n8.Metadata["tcpOut"] = 74.1
 
-	n9, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "egress.io", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	n9, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "egress.io", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	n9.Metadata["httpIn"] = 0.8
 	n9.Metadata[graph.IsServiceEntry] = &graph.SEInfo{
 		Location: "MESH_EXTERNAL",
 	}
 
-	n10, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "egress.not.defined", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	n10, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "egress.not.defined", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	n10.Metadata["httpIn"] = 0.8
 
 	trafficMap[n0.ID] = n0
@@ -260,17 +261,17 @@ func TestDeadNodeIssue2783(t *testing.T) {
 	trafficMap := testTrafficMapIssue2783()
 
 	assert.Equal(3, len(trafficMap))
-	aID, _, _ := graph.Id(business.DefaultClusterID, "testNamespace", "a", "testNamespace", "a-v1", "a", "v1", graph.GraphTypeVersionedApp)
+	aID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "a", "testNamespace", "a-v1", "a", "v1", graph.GraphTypeVersionedApp)
 	aNode, found := trafficMap[aID]
 	assert.Equal(true, found)
 	assert.Equal(1, len(aNode.Edges))
 
-	bSvcID, _, _ := graph.Id(business.DefaultClusterID, "testNamespace", "b", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	bSvcID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "b", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
 	bSvcNode, found := trafficMap[bSvcID]
 	assert.Equal(true, found)
 	assert.Equal(1, len(bSvcNode.Edges))
 
-	bID, _, _ := graph.Id(business.DefaultClusterID, "testNamespace", "b", "testNamespace", "b-v1", "b", "v1", graph.GraphTypeVersionedApp)
+	bID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "b", "testNamespace", "b-v1", "b", "v1", graph.GraphTypeVersionedApp)
 	bNode, found := trafficMap[bID]
 	assert.Equal(true, found)
 	assert.Equal(0, len(bNode.Edges))
@@ -289,11 +290,11 @@ func TestDeadNodeIssue2783(t *testing.T) {
 func testTrafficMapIssue2783() map[string]*graph.Node {
 	trafficMap := make(map[string]*graph.Node)
 
-	n0, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "a", "testNamespace", "a-v1", "a", "v1", graph.GraphTypeVersionedApp)
+	n0, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "a", "testNamespace", "a-v1", "a", "v1", graph.GraphTypeVersionedApp)
 
-	n1, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "b", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	n1, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "b", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
 
-	n2, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "b", "testNamespace", "b-v1", "b", "v1", graph.GraphTypeVersionedApp)
+	n2, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "b", "testNamespace", "b-v1", "b", "v1", graph.GraphTypeVersionedApp)
 
 	trafficMap[n0.ID] = n0
 	trafficMap[n1.ID] = n1
@@ -312,17 +313,17 @@ func TestDeadNodeIssue2982(t *testing.T) {
 	trafficMap := testTrafficMapIssue2982()
 
 	assert.Equal(3, len(trafficMap))
-	aID, _, _ := graph.Id(business.DefaultClusterID, "testNamespace", "testPodsWithTraffic", "testNamespace", "testPodsWithTraffic-v1", "a", "v1", graph.GraphTypeVersionedApp)
+	aID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "testPodsWithTraffic", "testNamespace", "testPodsWithTraffic-v1", "a", "v1", graph.GraphTypeVersionedApp)
 	aNode, found := trafficMap[aID]
 	assert.Equal(true, found)
 	assert.Equal(1, len(aNode.Edges))
 
-	bSvcID, _, _ := graph.Id(business.DefaultClusterID, "testNamespace", "b", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	bSvcID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "b", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
 	bSvcNode, found := trafficMap[bSvcID]
 	assert.Equal(true, found)
 	assert.Equal(1, len(bSvcNode.Edges))
 
-	bID, _, _ := graph.Id(business.DefaultClusterID, "testNamespace", "b", "testNamespace", "b-v1", "b", "v1", graph.GraphTypeVersionedApp)
+	bID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "b", "testNamespace", "b-v1", "b", "v1", graph.GraphTypeVersionedApp)
 	bNode, found := trafficMap[bID]
 	assert.Equal(true, found)
 	assert.Equal(0, len(bNode.Edges))
@@ -343,12 +344,12 @@ func TestDeadNodeIssue2982(t *testing.T) {
 func testTrafficMapIssue2982() map[string]*graph.Node {
 	trafficMap := make(map[string]*graph.Node)
 
-	n0, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "testPodsWithTraffic", "testNamespace", "testPodsWithTraffic-v1", "testPodsWithTraffic", "v1", graph.GraphTypeVersionedApp)
+	n0, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "testPodsWithTraffic", "testNamespace", "testPodsWithTraffic-v1", "testPodsWithTraffic", "v1", graph.GraphTypeVersionedApp)
 	n0.Metadata["httpIn"] = 0.8
 
-	n1, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "b", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	n1, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "b", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
 
-	n2, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "b", "testNamespace", "b-v1", "b", "v1", graph.GraphTypeVersionedApp)
+	n2, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "b", "testNamespace", "b-v1", "b", "v1", graph.GraphTypeVersionedApp)
 
 	trafficMap[n0.ID] = n0
 	trafficMap[n1.ID] = n1

@@ -7,7 +7,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 )
 
@@ -16,12 +16,12 @@ func TestResponseTimeP95(t *testing.T) {
 
 	q0 := `round(histogram_quantile(0.95, sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination",destination_service_namespace="bookinfo"}[60s])) by (le,source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol)) > 0,0.001)`
 	q0m0 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "istio-system",
 		"source_workload":                "ingressgateway-unknown",
 		"source_canonical_service":       "ingressgateway",
 		"source_canonical_revision":      model.LabelValue(graph.Unknown),
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "productpage.bookinfo.svc.cluster.local",
 		"destination_service_name":       "productpage",
@@ -31,12 +31,12 @@ func TestResponseTimeP95(t *testing.T) {
 		"destination_canonical_revision": "v1",
 		"request_protocol":               "http"}
 	q0m1 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews.bookinfo.svc.cluster.local",
 		"destination_service_name":       "reviews",
@@ -46,12 +46,12 @@ func TestResponseTimeP95(t *testing.T) {
 		"destination_canonical_revision": "v1",
 		"request_protocol":               "http"}
 	q0m2 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews.bookinfo.svc.cluster.local",
 		"destination_service_name":       "reviews",
@@ -61,12 +61,12 @@ func TestResponseTimeP95(t *testing.T) {
 		"destination_canonical_revision": "v2",
 		"request_protocol":               "http"}
 	q0m3 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "reviews-v1",
 		"source_canonical_service":       "reviews",
 		"source_canonical_revision":      "v1",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "ratings.bookinfo.svc.cluster.local",
 		"destination_service_name":       "ratings",
@@ -76,12 +76,12 @@ func TestResponseTimeP95(t *testing.T) {
 		"destination_canonical_revision": "v1",
 		"request_protocol":               "http"}
 	q0m4 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "reviews-v2",
 		"source_canonical_service":       "reviews",
 		"source_canonical_revision":      "v2",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "ratings.bookinfo.svc.cluster.local",
 		"destination_service_name":       "ratings",
@@ -110,12 +110,12 @@ func TestResponseTimeP95(t *testing.T) {
 
 	q1 := `round(histogram_quantile(0.95, sum(rate(istio_request_duration_milliseconds_bucket{reporter="source",source_workload_namespace="bookinfo"}[60s])) by (le,source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol)) > 0,0.001)`
 	q1m0 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews.bookinfo.svc.cluster.local",
 		"destination_service_name":       "reviews",
@@ -125,12 +125,12 @@ func TestResponseTimeP95(t *testing.T) {
 		"destination_canonical_revision": "v1",
 		"request_protocol":               "http"}
 	q1m1 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews.bookinfo.svc.cluster.local",
 		"destination_service_name":       "reviews",
@@ -140,12 +140,12 @@ func TestResponseTimeP95(t *testing.T) {
 		"destination_canonical_revision": "v2",
 		"request_protocol":               "http"}
 	q1m2 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "reviews-v1",
 		"source_canonical_service":       "reviews",
 		"source_canonical_revision":      "v1",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "ratings.bookinfo.svc.cluster.local",
 		"destination_service_name":       "ratings",
@@ -155,12 +155,12 @@ func TestResponseTimeP95(t *testing.T) {
 		"destination_canonical_revision": "v1",
 		"request_protocol":               "http"}
 	q1m3 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "reviews-v2",
 		"source_canonical_service":       "reviews",
 		"source_canonical_revision":      "v2",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "ratings.bookinfo.svc.cluster.local",
 		"destination_service_name":       "ratings",
@@ -194,7 +194,7 @@ func TestResponseTimeP95(t *testing.T) {
 	mockQuery(api, q1, &v1)
 
 	trafficMap := responseTimeTestTraffic()
-	ingressID, _, _ := graph.Id(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	ingressID, _, _ := graph.Id(config.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
 	ingress, ok := trafficMap[ingressID]
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
@@ -289,12 +289,12 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 
 	q0 := `round(sum(rate(istio_request_duration_milliseconds_sum{reporter="destination",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol) / sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol) > 0,0.001)`
 	q0m0 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "istio-system",
 		"source_workload":                "ingressgateway-unknown",
 		"source_canonical_service":       "ingressgateway",
 		"source_canonical_revision":      model.LabelValue(graph.Unknown),
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "productpage.bookinfo.svc.cluster.local",
 		"destination_service_name":       "productpage",
@@ -304,12 +304,12 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 		"destination_canonical_revision": "v1",
 		"request_protocol":               "http"}
 	q0m1 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews.bookinfo.svc.cluster.local",
 		"destination_service_name":       "reviews",
@@ -319,12 +319,12 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 		"destination_canonical_revision": "v1",
 		"request_protocol":               "http"}
 	q0m2 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews.bookinfo.svc.cluster.local",
 		"destination_service_name":       "reviews",
@@ -334,12 +334,12 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 		"destination_canonical_revision": "v2",
 		"request_protocol":               "http"}
 	q0m3 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "reviews-v1",
 		"source_canonical_service":       "reviews",
 		"source_canonical_revision":      "v1",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "ratings.bookinfo.svc.cluster.local",
 		"destination_service_name":       "ratings",
@@ -349,12 +349,12 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 		"destination_canonical_revision": "v1",
 		"request_protocol":               "http"}
 	q0m4 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "reviews-v2",
 		"source_canonical_service":       "reviews",
 		"source_canonical_revision":      "v2",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "ratings.bookinfo.svc.cluster.local",
 		"destination_service_name":       "ratings",
@@ -383,12 +383,12 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 
 	q1 := `round(sum(rate(istio_request_duration_milliseconds_sum{reporter="source",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol) / sum(rate(istio_request_duration_milliseconds_count{reporter="source",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol) > 0,0.001)`
 	q1m0 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews.bookinfo.svc.cluster.local",
 		"destination_service_name":       "reviews",
@@ -398,12 +398,12 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 		"destination_canonical_revision": "v1",
 		"request_protocol":               "http"}
 	q1m1 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews.bookinfo.svc.cluster.local",
 		"destination_service_name":       "reviews",
@@ -413,12 +413,12 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 		"destination_canonical_revision": "v2",
 		"request_protocol":               "http"}
 	q1m2 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "reviews-v1",
 		"source_canonical_service":       "reviews",
 		"source_canonical_revision":      "v1",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "ratings.bookinfo.svc.cluster.local",
 		"destination_service_name":       "ratings",
@@ -428,12 +428,12 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 		"destination_canonical_revision": "v1",
 		"request_protocol":               "http"}
 	q1m3 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "reviews-v2",
 		"source_canonical_service":       "reviews",
 		"source_canonical_revision":      "v2",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "ratings.bookinfo.svc.cluster.local",
 		"destination_service_name":       "ratings",
@@ -467,7 +467,7 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 	mockQuery(api, q1, &v1)
 
 	trafficMap := responseTimeTestTraffic()
-	ingressID, _, _ := graph.Id(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	ingressID, _, _ := graph.Id(config.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
 	ingress, ok := trafficMap[ingressID]
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
@@ -562,12 +562,12 @@ func TestResponseTimeAvg(t *testing.T) {
 
 	q0 := `round(sum(rate(istio_request_duration_milliseconds_sum{reporter="destination",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol) / sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol) > 0,0.001)`
 	q0m0 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "istio-system",
 		"source_workload":                "ingressgateway-unknown",
 		"source_canonical_service":       "ingressgateway",
 		"source_canonical_revision":      model.LabelValue(graph.Unknown),
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "productpage.bookinfo.svc.cluster.local",
 		"destination_service_name":       "productpage",
@@ -577,12 +577,12 @@ func TestResponseTimeAvg(t *testing.T) {
 		"destination_canonical_revision": "v1",
 		"request_protocol":               "http"}
 	q0m1 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews.bookinfo.svc.cluster.local",
 		"destination_service_name":       "reviews",
@@ -592,12 +592,12 @@ func TestResponseTimeAvg(t *testing.T) {
 		"destination_canonical_revision": "v1",
 		"request_protocol":               "http"}
 	q0m2 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews.bookinfo.svc.cluster.local",
 		"destination_service_name":       "reviews",
@@ -607,12 +607,12 @@ func TestResponseTimeAvg(t *testing.T) {
 		"destination_canonical_revision": "v2",
 		"request_protocol":               "http"}
 	q0m3 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "reviews-v1",
 		"source_canonical_service":       "reviews",
 		"source_canonical_revision":      "v1",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "ratings.bookinfo.svc.cluster.local",
 		"destination_service_name":       "ratings",
@@ -622,12 +622,12 @@ func TestResponseTimeAvg(t *testing.T) {
 		"destination_canonical_revision": "v1",
 		"request_protocol":               "http"}
 	q0m4 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "reviews-v2",
 		"source_canonical_service":       "reviews",
 		"source_canonical_revision":      "v2",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "ratings.bookinfo.svc.cluster.local",
 		"destination_service_name":       "ratings",
@@ -656,12 +656,12 @@ func TestResponseTimeAvg(t *testing.T) {
 
 	q1 := `round(sum(rate(istio_request_duration_milliseconds_sum{reporter="source",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol) / sum(rate(istio_request_duration_milliseconds_count{reporter="source",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol) > 0,0.001)`
 	q1m0 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews.bookinfo.svc.cluster.local",
 		"destination_service_name":       "reviews",
@@ -671,12 +671,12 @@ func TestResponseTimeAvg(t *testing.T) {
 		"destination_canonical_revision": "v1",
 		"request_protocol":               "http"}
 	q1m1 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews.bookinfo.svc.cluster.local",
 		"destination_service_name":       "reviews",
@@ -686,12 +686,12 @@ func TestResponseTimeAvg(t *testing.T) {
 		"destination_canonical_revision": "v2",
 		"request_protocol":               "http"}
 	q1m2 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "reviews-v1",
 		"source_canonical_service":       "reviews",
 		"source_canonical_revision":      "v1",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "ratings.bookinfo.svc.cluster.local",
 		"destination_service_name":       "ratings",
@@ -701,12 +701,12 @@ func TestResponseTimeAvg(t *testing.T) {
 		"destination_canonical_revision": "v1",
 		"request_protocol":               "http"}
 	q1m3 := model.Metric{
-		"source_cluster":                 business.DefaultClusterID,
+		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "reviews-v2",
 		"source_canonical_service":       "reviews",
 		"source_canonical_revision":      "v2",
-		"destination_cluster":            business.DefaultClusterID,
+		"destination_cluster":            config.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "ratings.bookinfo.svc.cluster.local",
 		"destination_service_name":       "ratings",
@@ -740,7 +740,7 @@ func TestResponseTimeAvg(t *testing.T) {
 	mockQuery(api, q1, &v1)
 
 	trafficMap := responseTimeTestTraffic()
-	ingressID, _, _ := graph.Id(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	ingressID, _, _ := graph.Id(config.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
 	ingress, ok := trafficMap[ingressID]
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
@@ -831,14 +831,14 @@ func TestResponseTimeAvg(t *testing.T) {
 }
 
 func responseTimeTestTraffic() graph.TrafficMap {
-	ingress, _ := graph.NewNode(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
-	productpageService, _ := graph.NewNode(business.DefaultClusterID, "bookinfo", "productpage", "", "", "", "", graph.GraphTypeVersionedApp)
-	productpage, _ := graph.NewNode(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
-	reviewsService, _ := graph.NewNode(business.DefaultClusterID, "bookinfo", "reviews", "", "", "", "", graph.GraphTypeVersionedApp)
-	reviewsV1, _ := graph.NewNode(business.DefaultClusterID, "bookinfo", "reviews", "bookinfo", "reviews-v1", "reviews", "v1", graph.GraphTypeVersionedApp)
-	reviewsV2, _ := graph.NewNode(business.DefaultClusterID, "bookinfo", "reviews", "bookinfo", "reviews-v2", "reviews", "v2", graph.GraphTypeVersionedApp)
-	ratingsService, _ := graph.NewNode(business.DefaultClusterID, "bookinfo", "ratings", "", "", "", "", graph.GraphTypeVersionedApp)
-	ratings, _ := graph.NewNode(business.DefaultClusterID, "bookinfo", "ratings", "bookinfo", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
+	ingress, _ := graph.NewNode(config.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	productpageService, _ := graph.NewNode(config.DefaultClusterID, "bookinfo", "productpage", "", "", "", "", graph.GraphTypeVersionedApp)
+	productpage, _ := graph.NewNode(config.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
+	reviewsService, _ := graph.NewNode(config.DefaultClusterID, "bookinfo", "reviews", "", "", "", "", graph.GraphTypeVersionedApp)
+	reviewsV1, _ := graph.NewNode(config.DefaultClusterID, "bookinfo", "reviews", "bookinfo", "reviews-v1", "reviews", "v1", graph.GraphTypeVersionedApp)
+	reviewsV2, _ := graph.NewNode(config.DefaultClusterID, "bookinfo", "reviews", "bookinfo", "reviews-v2", "reviews", "v2", graph.GraphTypeVersionedApp)
+	ratingsService, _ := graph.NewNode(config.DefaultClusterID, "bookinfo", "ratings", "", "", "", "", graph.GraphTypeVersionedApp)
+	ratings, _ := graph.NewNode(config.DefaultClusterID, "bookinfo", "ratings", "bookinfo", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
 	trafficMap := graph.NewTrafficMap()
 
 	trafficMap[ingress.ID] = ingress

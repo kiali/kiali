@@ -19,26 +19,26 @@ import (
 func setupTrafficMap() (map[string]*graph.Node, string, string, string, string, string, string) {
 	trafficMap := graph.NewTrafficMap()
 
-	appNode, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "ratings", "testNamespace", graph.Unknown, "ratings", "", graph.GraphTypeVersionedApp)
+	appNode, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "ratings", "testNamespace", graph.Unknown, "ratings", "", graph.GraphTypeVersionedApp)
 	appNode.Metadata[graph.DestServices] = graph.NewDestServicesMetadata().Add("testNamespace ratings", graph.ServiceName{Namespace: "testNamespace", Name: "ratings"})
 	trafficMap[appNode.ID] = appNode
 
-	appNodeV1, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "ratings", "testNamespace", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
+	appNodeV1, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "ratings", "testNamespace", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
 	appNodeV1.Metadata[graph.DestServices] = graph.NewDestServicesMetadata().Add("testNamespace ratings", graph.ServiceName{Namespace: "testNamespace", Name: "ratings"})
 	trafficMap[appNodeV1.ID] = appNodeV1
 
-	appNodeV2, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "ratings", "testNamespace", "ratings-v2", "ratings", "v2", graph.GraphTypeVersionedApp)
+	appNodeV2, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "ratings", "testNamespace", "ratings-v2", "ratings", "v2", graph.GraphTypeVersionedApp)
 	appNodeV2.Metadata[graph.DestServices] = graph.NewDestServicesMetadata().Add("testNamespace ratings", graph.ServiceName{Namespace: "testNamespace", Name: "ratings"})
 	trafficMap[appNodeV2.ID] = appNodeV2
 
-	serviceNode, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "ratings", "testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	serviceNode, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "ratings", "testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
 	trafficMap[serviceNode.ID] = serviceNode
 
-	workloadNode, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "ratings", "testNamespace", "ratings-v1", graph.Unknown, graph.Unknown, graph.GraphTypeWorkload)
+	workloadNode, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "ratings", "testNamespace", "ratings-v1", graph.Unknown, graph.Unknown, graph.GraphTypeWorkload)
 	workloadNode.Metadata[graph.DestServices] = graph.NewDestServicesMetadata().Add("testNamespace ratings", graph.ServiceName{Namespace: "testNamespace", Name: "ratings"})
 	trafficMap[workloadNode.ID] = workloadNode
 
-	fooServiceNode, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "foo", "testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	fooServiceNode, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "foo", "testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
 	trafficMap[fooServiceNode.ID] = fooServiceNode
 
 	return trafficMap, appNode.ID, appNodeV1.ID, appNodeV2.ID, serviceNode.ID, workloadNode.ID, fooServiceNode.ID
@@ -65,7 +65,7 @@ func TestCBAll(t *testing.T) {
 	business.SetupBusinessLayer(t, k8s, *conf)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = k8s
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _ := setupTrafficMap()
 
@@ -129,7 +129,7 @@ func TestCBSubset(t *testing.T) {
 	business.SetupBusinessLayer(t, k8s, *conf)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = k8s
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _ := setupTrafficMap()
 
@@ -304,11 +304,11 @@ func TestSEInAppBox(t *testing.T) {
 
 	business.SetupBusinessLayer(t, k8s, *conf)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = k8s
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 
 	trafficMap := graph.NewTrafficMap()
-	serviceEntryNode, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "ratings", "", "", "", "", graph.GraphTypeVersionedApp)
+	serviceEntryNode, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "ratings", "", "", "", "", graph.GraphTypeVersionedApp)
 	serviceEntryNode.Metadata[graph.IsServiceEntry] = &graph.SEInfo{
 		Hosts:     []string{"foobar.com"},
 		Location:  "MESH_INTERNAL",

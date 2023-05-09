@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/models"
@@ -27,10 +26,10 @@ func TestNonTrafficScenario(t *testing.T) {
 	services := mockServices(a)
 	workloads := mockWorkloads(a)
 
-	a.addIdleNodes(trafficMap, business.DefaultClusterID, "testNamespace", services, workloads)
+	a.addIdleNodes(trafficMap, config.DefaultClusterID, "testNamespace", services, workloads)
 	assert.Equal(7, len(trafficMap))
 
-	id, _, _ := graph.Id(business.DefaultClusterID, "testNamespace", "customer", "testNamespace", "customer-v1", "customer", "v1", a.GraphType)
+	id, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "customer", "testNamespace", "customer-v1", "customer", "v1", a.GraphType)
 	n, ok := trafficMap[id]
 	assert.Equal(true, ok)
 	assert.Equal("customer-v1", n.Workload)
@@ -38,7 +37,7 @@ func TestNonTrafficScenario(t *testing.T) {
 	assert.Equal("v1", n.Version)
 	assert.Equal(true, n.Metadata[graph.IsIdle])
 
-	id, _, _ = graph.Id(business.DefaultClusterID, "testNamespace", "preference", "testNamespace", "preference-v1", "preference", "v1", a.GraphType)
+	id, _, _ = graph.Id(config.DefaultClusterID, "testNamespace", "preference", "testNamespace", "preference-v1", "preference", "v1", a.GraphType)
 	n, ok = trafficMap[id]
 	assert.Equal(true, ok)
 	assert.Equal("preference-v1", n.Workload)
@@ -46,7 +45,7 @@ func TestNonTrafficScenario(t *testing.T) {
 	assert.Equal("v1", n.Version)
 	assert.Equal(true, n.Metadata[graph.IsIdle])
 
-	id, _, _ = graph.Id(business.DefaultClusterID, "testNamespace", "recommendation", "testNamespace", "recommendation-v1", "recommendation", "v1", a.GraphType)
+	id, _, _ = graph.Id(config.DefaultClusterID, "testNamespace", "recommendation", "testNamespace", "recommendation-v1", "recommendation", "v1", a.GraphType)
 	n, ok = trafficMap[id]
 	assert.Equal(true, ok)
 	assert.Equal("recommendation-v1", n.Workload)
@@ -54,7 +53,7 @@ func TestNonTrafficScenario(t *testing.T) {
 	assert.Equal("v1", n.Version)
 	assert.Equal(true, n.Metadata[graph.IsIdle])
 
-	id, _, _ = graph.Id(business.DefaultClusterID, "testNamespace", "recommendation", "testNamespace", "recommendation-v2", "recommendation", "v2", a.GraphType)
+	id, _, _ = graph.Id(config.DefaultClusterID, "testNamespace", "recommendation", "testNamespace", "recommendation-v2", "recommendation", "v2", a.GraphType)
 	n, ok = trafficMap[id]
 	assert.Equal(true, ok)
 	assert.Equal("recommendation-v2", n.Workload)
@@ -62,21 +61,21 @@ func TestNonTrafficScenario(t *testing.T) {
 	assert.Equal("v2", n.Version)
 	assert.Equal(true, n.Metadata[graph.IsIdle])
 
-	id, _, _ = graph.Id(business.DefaultClusterID, "testNamespace", "customer", "", "", "", "", a.GraphType)
+	id, _, _ = graph.Id(config.DefaultClusterID, "testNamespace", "customer", "", "", "", "", a.GraphType)
 	n, ok = trafficMap[id]
 	assert.Equal(true, ok)
 	assert.Equal(graph.NodeTypeService, n.NodeType)
 	assert.Equal("customer", n.Service)
 	assert.Equal(true, n.Metadata[graph.IsIdle])
 
-	id, _, _ = graph.Id(business.DefaultClusterID, "testNamespace", "preference", "", "", "", "", a.GraphType)
+	id, _, _ = graph.Id(config.DefaultClusterID, "testNamespace", "preference", "", "", "", "", a.GraphType)
 	n, ok = trafficMap[id]
 	assert.Equal(true, ok)
 	assert.Equal(graph.NodeTypeService, n.NodeType)
 	assert.Equal("preference", n.Service)
 	assert.Equal(true, n.Metadata[graph.IsIdle])
 
-	id, _, _ = graph.Id(business.DefaultClusterID, "testNamespace", "recommendation", "", "", "", "", a.GraphType)
+	id, _, _ = graph.Id(config.DefaultClusterID, "testNamespace", "recommendation", "", "", "", "", a.GraphType)
 	n, ok = trafficMap[id]
 	assert.Equal(true, ok)
 	assert.Equal(graph.NodeTypeService, n.NodeType)
@@ -99,7 +98,7 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 	services := mockServices(a)
 	workloads := mockWorkloads(a)
 
-	a.addIdleNodes(trafficMap, business.DefaultClusterID, "testNamespace", services, workloads)
+	a.addIdleNodes(trafficMap, config.DefaultClusterID, "testNamespace", services, workloads)
 
 	assert.Equal(5, len(trafficMap))
 	id, _, _ := graph.Id(graph.Unknown, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, a.GraphType)
@@ -116,7 +115,7 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 	assert.Equal("v1", n.Version)
 	assert.Equal(nil, n.Metadata[graph.IsIdle])
 
-	id, _, _ = graph.Id(business.DefaultClusterID, "testNamespace", "preference", "testNamespace", "preference-v1", "preference", "v1", a.GraphType)
+	id, _, _ = graph.Id(config.DefaultClusterID, "testNamespace", "preference", "testNamespace", "preference-v1", "preference", "v1", a.GraphType)
 	n, ok = trafficMap[id]
 	assert.Equal(true, ok)
 	assert.Equal("preference-v1", n.Workload)
@@ -124,7 +123,7 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 	assert.Equal("v1", n.Version)
 	assert.Equal(true, n.Metadata[graph.IsIdle])
 
-	id, _, _ = graph.Id(business.DefaultClusterID, "testNamespace", "recommendation", "testNamespace", "recommendation-v1", "recommendation", "v1", a.GraphType)
+	id, _, _ = graph.Id(config.DefaultClusterID, "testNamespace", "recommendation", "testNamespace", "recommendation-v1", "recommendation", "v1", a.GraphType)
 	n, ok = trafficMap[id]
 	assert.Equal(true, ok)
 	assert.Equal("recommendation-v1", n.Workload)
@@ -132,7 +131,7 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 	assert.Equal("v1", n.Version)
 	assert.Equal(true, n.Metadata[graph.IsIdle])
 
-	id, _, _ = graph.Id(business.DefaultClusterID, "testNamespace", "recommendation", "testNamespace", "recommendation-v2", "recommendation", "v2", a.GraphType)
+	id, _, _ = graph.Id(config.DefaultClusterID, "testNamespace", "recommendation", "testNamespace", "recommendation-v2", "recommendation", "v2", a.GraphType)
 	n, ok = trafficMap[id]
 	assert.Equal(true, ok)
 	assert.Equal("recommendation-v2", n.Workload)
@@ -254,7 +253,7 @@ func (a *IdleNodeAppender) oneNodeTraffic() map[string]*graph.Node {
 	trafficMap := make(map[string]*graph.Node)
 
 	unknown, _ := graph.NewNode(graph.Unknown, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, a.GraphType)
-	customer, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "customer", "testNamespace", "customer-v1", "customer", "v1", a.GraphType)
+	customer, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "customer", "testNamespace", "customer-v1", "customer", "v1", a.GraphType)
 	trafficMap[unknown.ID] = unknown
 	trafficMap[customer.ID] = customer
 	edge := unknown.AddEdge(customer)

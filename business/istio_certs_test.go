@@ -25,7 +25,7 @@ func TestCertificatesInformationIndicatorsDisabled(t *testing.T) {
 	k8s.On("IsGatewayAPI").Return(false)
 
 	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
+	clients[conf.KubernetesConfig.ClusterName] = k8s
 
 	layer := NewWithBackends(clients, clients, nil, nil)
 	ics := layer.IstioCerts
@@ -74,7 +74,7 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 	k8s.On("GetSecret", conf.IstioNamespace, "istio-ca-secret").Return(&secret, nil)
 
 	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
+	clients[conf.KubernetesConfig.ClusterName] = k8s
 	layer := NewWithBackends(clients, clients, nil, nil)
 	ics := layer.IstioCerts
 
@@ -132,7 +132,7 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 	k8s.On("GetSecret", conf.IstioNamespace, "istio-ca-secret").Return(&secret, forbiddenError)
 
 	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
+	clients[conf.KubernetesConfig.ClusterName] = k8s
 	layer := NewWithBackends(clients, clients, nil, nil)
 	ics := layer.IstioCerts
 
@@ -194,7 +194,7 @@ cdLzuNyDoeWOHU7mx52TuTwj3eObtQM+hlI=
 	k8s.On("GetSecret", conf.IstioNamespace, "cacerts").Return(&secret, nil)
 
 	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
+	clients[conf.KubernetesConfig.ClusterName] = k8s
 	layer := NewWithBackends(clients, clients, nil, nil)
 	ics := layer.IstioCerts
 
@@ -334,7 +334,7 @@ iMXzPzS/OeYyKQ==
 	k8s.On("GetSecret", conf.IstioNamespace, "dns.example2-service-account").Return(&example2secret, nil)
 
 	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
+	clients[conf.KubernetesConfig.ClusterName] = k8s
 	layer := NewWithBackends(clients, clients, nil, nil)
 	ics := layer.IstioCerts
 
@@ -421,7 +421,7 @@ iMXzPzS/OeYyKQ==
 	k8s.On("GetSecret", conf.IstioNamespace, "dns.example2-service-account").Return(&core_v1.Secret{}, kubernetes.NewNotFound("cacerts", "v1", "Secret"))
 
 	clients := make(map[string]kubernetes.ClientInterface)
-	clients[kubernetes.HomeClusterName] = k8s
+	clients[conf.KubernetesConfig.ClusterName] = k8s
 	layer := NewWithBackends(clients, clients, nil, nil)
 	ics := layer.IstioCerts
 

@@ -92,7 +92,7 @@ func setupNamespaceHealthEndpoint(t *testing.T, k8s *kubetest.FakeK8sClient) (*h
 
 	business.SetupBusinessLayer(t, k8s, *conf)
 	business.WithProm(prom)
-	business.SetKialiControlPlaneCluster(&business.Cluster{Name: business.DefaultClusterID})
+	business.SetKialiControlPlaneCluster(&business.Cluster{Name: config.DefaultClusterID})
 
 	mr := mux.NewRouter()
 

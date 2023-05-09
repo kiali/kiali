@@ -44,13 +44,15 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, namespaces []strin
 		IncludePeerAuthentications: true,
 		Cluster:                    cluster,
 	}
+	conf := config.Get()
 
+	// @TODO hardcoded HomeClusterName
 	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigListPerCluster(ctx, criteria, cluster)
 	if err != nil {
 		return models.MTLSStatus{}, err
 	}
 
-	pas := kubernetes.FilterPeerAuthenticationByNamespace(config.Get().ExternalServices.Istio.RootNamespace, istioConfigList.PeerAuthentications)
+	pas := kubernetes.FilterPeerAuthenticationByNamespace(conf.ExternalServices.Istio.RootNamespace, istioConfigList.PeerAuthentications)
 	drs := kubernetes.FilterDestinationRulesByNamespaces(namespaces, istioConfigList.DestinationRules)
 
 	mtlsStatus := mtls.MtlsStatus{

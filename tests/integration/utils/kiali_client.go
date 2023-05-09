@@ -531,6 +531,7 @@ func ObjectMetrics(namespace, service, objectType string, params map[string]stri
 			return nil, err
 		}
 	} else {
+		log.Errorf("Failed [ObjectMetrics] URL: [%s]", url)
 		return nil, err
 	}
 }

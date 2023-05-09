@@ -30,7 +30,7 @@ func setupBusinessLayer(t *testing.T, istioObjects ...runtime.Object) *business.
 
 	business.SetupBusinessLayer(t, k8s, *conf)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = k8s
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 	return businessLayer
 }
@@ -691,7 +691,7 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 	business.SetupBusinessLayer(t, k8s, *conf)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = k8s
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 
 	// Create a VersionedApp traffic map where a workload is calling a remote service entry and also an internal one
@@ -778,7 +778,7 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 
 	business.SetupBusinessLayer(t, k8s, *conf)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = k8s
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 
 	assert := assert.New(t)

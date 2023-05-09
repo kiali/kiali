@@ -6,6 +6,7 @@ import (
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -22,7 +23,7 @@ func FakeTlsKialiCache(token string, namespaces []string, pa []*security_v1beta1
 	// Populate namespaces and PeerAuthentication informers
 	nss := []models.Namespace{}
 	for _, ns := range namespaces {
-		nss = append(nss, models.Namespace{Name: ns})
+		nss = append(nss, models.Namespace{Name: ns, Cluster: config.Get().KubernetesConfig.ClusterName})
 	}
 	kialiCacheImpl.SetNamespaces(token, nss)
 

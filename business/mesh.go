@@ -24,8 +24,7 @@ import (
 )
 
 const (
-	DefaultClusterID = "Kubernetes"
-	AllowAny         = "ALLOW_ANY"
+	AllowAny = "ALLOW_ANY"
 )
 
 // MeshService is a support service for retrieving data about the mesh environment
