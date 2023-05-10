@@ -196,6 +196,7 @@ class ServiceDescription extends React.Component<ServiceInfoDescriptionProps, St
             apps={apps}
             workloads={workloads}
             health={this.props.serviceDetails?.health}
+            cluster={this.props.serviceDetails?.cluster}
           />
         </CardBody>
       </Card>
