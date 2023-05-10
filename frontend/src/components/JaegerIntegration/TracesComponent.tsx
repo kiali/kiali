@@ -159,6 +159,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
     };
     const queries: MetricsStatsQuery[] =
       this.props.targetKind === 'service' ? [query] : [query, { ...query, direction: 'outbound' }];
+    console.log('Metrics: %s', this.props.cluster);
     return API.getMetricsStats(queries, this.props.cluster).then(r => this.percentilesFetched(query, r.data));
   };
 
@@ -275,6 +276,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                 traces={this.state.traces}
                 errorFetchTraces={this.state.jaegerErrors}
                 errorTraces={true}
+                cluster={this.props.cluster ? this.props.cluster : ''}
               />
             </CardBody>
           </Card>
@@ -297,6 +299,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                     targetKind={this.props.targetKind}
                     jaegerURL={this.props.urlJaeger}
                     otherTraces={this.state.traces}
+                    cluster={this.props.cluster ? this.props.cluster : ''}
                   />
                 </Tab>
                 <Tab eventKey={spansDetailsTab} title="Span Details">
@@ -305,6 +308,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                     target={this.props.target}
                     externalURL={this.props.urlJaeger}
                     items={this.props.selectedTrace.spans}
+                    cluster={this.props.cluster ? this.props.cluster : ''}
                   />
                 </Tab>
               </Tabs>

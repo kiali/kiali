@@ -48,7 +48,7 @@ import { isParentKiosk, kioskContextMenuAction } from '../../Kiosk/KioskActions'
 
 type ReduxProps = {
   kiosk: string;
-  loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) => void;
+  loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean, cluster: string) => void;
   metricsStats: Map<string, MetricsStats>;
 };
 
@@ -56,6 +56,7 @@ type Props = ReduxProps & {
   externalURL?: string;
   items: RichSpanData[];
   namespace: string;
+  cluster: string;
 };
 
 interface State {
@@ -178,7 +179,7 @@ class SpanTable extends React.Component<Props, State> {
 
   private fetchComparisonMetrics(items: RichSpanData[]) {
     const queries = buildQueriesFromSpans(items, false);
-    this.props.loadMetricsStats(queries, false);
+    this.props.loadMetricsStats(queries, false, this.props.cluster);
   }
 
   private rows = (): IRow[] => {
@@ -576,8 +577,8 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
-  loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) =>
-    dispatch(MetricsStatsThunkActions.load(queries, isCompact))
+  loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean, cluster: string) =>
+    dispatch(MetricsStatsThunkActions.load(queries, isCompact, cluster))
 });
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(SpanTable);
