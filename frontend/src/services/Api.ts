@@ -181,7 +181,8 @@ export const getIstioConfig = (
   objects: string[],
   validate: boolean,
   labelSelector: string,
-  workloadSelector: string
+  workloadSelector: string,
+  cluster?: string
 ): Promise<Response<IstioConfigList>> => {
   const params: any = objects && objects.length > 0 ? { objects: objects.join(',') } : {};
   if (validate) {
@@ -192,6 +193,9 @@ export const getIstioConfig = (
   }
   if (workloadSelector) {
     params.workloadSelector = workloadSelector;
+  }
+  if (cluster) {
+    params.cluster = cluster;
   }
   return newRequest<IstioConfigList>(HTTP_VERBS.GET, urls.istioConfig(namespace), params, {});
 };

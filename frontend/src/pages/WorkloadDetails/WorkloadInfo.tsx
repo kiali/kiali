@@ -96,7 +96,14 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
     });
     const workloadSelector = wkLabels.join(',');
 
-    API.getIstioConfig(this.props.namespace, workloadIstioResources, true, '', workloadSelector)
+    API.getIstioConfig(
+      this.props.namespace,
+      workloadIstioResources,
+      true,
+      '',
+      workloadSelector,
+      this.props.workload.cluster
+    )
       .then(results => {
         this.setState({ workloadIstioConfig: results.data });
       })
