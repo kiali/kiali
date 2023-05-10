@@ -137,6 +137,8 @@ func TestRemoteIstiod(t *testing.T) {
 
 			// Restart Kiali pod to pick up the new config.
 			require.NoError(restartKialiPod(ctx, kubeClient, kialiNamespace))
+			// Pod is ready but app might not be ready
+			time.Sleep(10 * time.Second)
 		}
 
 		// Remove service:
@@ -169,6 +171,8 @@ func TestRemoteIstiod(t *testing.T) {
 		}), "Error waiting for kiali configmap to update")
 
 		require.NoError(restartKialiPod(ctx, kubeClient, kialiDeploymentNamespace))
+		// Pod is ready but app might not be ready
+		time.Sleep(10 * time.Second)
 	})
 
 	// Expose the istiod /debug endpoints by adding a proxy to the pod.
