@@ -219,6 +219,8 @@ func TestRemoteIstiod(t *testing.T) {
 
 	// Restart Kiali pod to pick up the new config.
 	require.NoError(restartKialiPod(ctx, kubeClient, kialiDeploymentNamespace), "Error waiting for kiali deployment to update")
+	// Pod is ready but app might not be ready
+	time.Sleep(10 * time.Second)
 
 	configs, err := utils.IstioConfigs()
 	require.NoError(err)
@@ -239,7 +241,7 @@ func restartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, names
 		return err
 	}
 
-	pollErr := wait.PollImmediate(time.Second*5, time.Minute*2, func() (bool, error) {
+	return wait.PollImmediate(time.Second*5, time.Minute*2, func() (bool, error) {
 		log.Debug("Waiting for kiali to be ready")
 		pods, err := kubeClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
 		if err != nil {
@@ -260,10 +262,4 @@ func restartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, names
 		}
 		return true, nil
 	})
-
-	if pollErr == nil {
-		time.Sleep(10 * time.Second)
-		return nil
-	}
-	return pollErr
 }
