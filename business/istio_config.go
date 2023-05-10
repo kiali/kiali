@@ -277,6 +277,11 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 		return istioConfigList, fmt.Errorf("K8s Client [%s] is not found or is not accessible for Kiali", cluster)
 	}
 
+	if cluster != config.Get().KubernetesConfig.ClusterName && !kubeCache.Client().IsIstioAPI() {
+		log.Infof("Cluster [%s] does not have Istio API installed", cluster)
+		return istioConfigList, nil
+	}
+
 	if !criteria.AllNamespaces {
 		// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 		// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
