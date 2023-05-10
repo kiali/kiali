@@ -195,7 +195,10 @@ class DetailDescription extends React.Component<Props> {
       }
     }
     if (workload) {
-      const href = '/namespaces/' + this.props.namespace + '/workloads/' + workload.workloadName;
+      let href = '/namespaces/' + this.props.namespace + '/workloads/' + workload.workloadName;
+      if (this.props.cluster) {
+        href = href + '?cluster=' + this.props.cluster;
+      }
       const link = isParentKiosk(this.props.kiosk) ? (
         <Link
           to={''}
