@@ -159,7 +159,6 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
     };
     const queries: MetricsStatsQuery[] =
       this.props.targetKind === 'service' ? [query] : [query, { ...query, direction: 'outbound' }];
-    console.log('Metrics: %s', this.props.cluster);
     return API.getMetricsStats(queries, this.props.cluster).then(r => this.percentilesFetched(query, r.data));
   };
 
