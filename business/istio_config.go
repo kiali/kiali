@@ -200,7 +200,8 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 	}
 
 	// Use the Istio Registry when AllNamespaces is present
-	if criteria.AllNamespaces && in.config.ExternalServices.Istio.IstioAPIEnabled {
+	// TODO use Istio Registry for Home cluster only now
+	if criteria.AllNamespaces && in.config.ExternalServices.Istio.IstioAPIEnabled && cluster == config.Get().KubernetesConfig.ClusterName {
 		registryCriteria := RegistryCriteria{
 			AllNamespaces: true,
 		}
@@ -274,6 +275,11 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 	userClient := in.userClients[cluster]
 	if userClient == nil {
 		return istioConfigList, fmt.Errorf("K8s Client [%s] is not found or is not accessible for Kiali", cluster)
+	}
+
+	if cluster != config.Get().KubernetesConfig.ClusterName && !kubeCache.Client().IsIstioAPI() {
+		log.Infof("Cluster [%s] does not have Istio API installed", cluster)
+		return istioConfigList, nil
 	}
 
 	if !criteria.AllNamespaces {
