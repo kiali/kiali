@@ -16,7 +16,6 @@ import * as AlertUtils from '../utils/AlertUtils';
 import { setServerConfig, serverConfig, humanDurations } from '../config/ServerConfig';
 import { AuthStrategy } from '../types/Auth';
 import { JaegerInfo } from '../types/JaegerInfo';
-import { ServerConfig } from '../types/ServerConfig';
 import { LoginActions } from '../actions/LoginActions';
 import history from './History';
 import { NamespaceActions } from 'actions/NamespaceAction';
@@ -202,7 +201,6 @@ export class AuthenticationController extends React.Component<
       this.props.setNamespaces(configs[0].data, new Date());
       setServerConfig(configs[1].data);
       this.applyUIDefaults();
-      this.checkConfiguredRemoteKialis(configs[1].data);
 
       if (this.props.landingRoute) {
         history.replace(this.props.landingRoute);
@@ -294,37 +292,6 @@ export class AuthenticationController extends React.Component<
         rates.push(TrafficRate.TCP_GROUP, tcpRate);
       }
       this.props.setTrafficRates(rates);
-    }
-  }
-
-  // Check which clusters do not have an accessible Kiali instance.
-  // Emit a warning telling that for those clusters, no cross-links will be available.
-  private checkConfiguredRemoteKialis(backendConfigs: ServerConfig) {
-    if (backendConfigs.clusters) {
-      const clustersWithoutKialis = [] as string[];
-      for (let cluster in backendConfigs.clusters) {
-        // skip home cluster, it's always reachable
-        if (cluster === backendConfigs.clusterInfo?.name) {
-          continue;
-        }
-        if (backendConfigs.clusters.hasOwnProperty(cluster)) {
-          const kialiInstance = backendConfigs.clusters[cluster].kialiInstances?.find(
-            instance => instance.url.length !== 0
-          );
-          if (!kialiInstance) {
-            clustersWithoutKialis.push(cluster);
-          }
-        }
-      }
-
-      if (clustersWithoutKialis.length > 0) {
-        AlertUtils.addWarning(
-          'Not all remote clusters have reachable Kiali instances.',
-          undefined,
-          undefined,
-          'Context menus are disabled for remote cluster nodes if a Kiali instance is not discovered, or if the remote Kiali is not configured with an external URL.'
-        );
-      }
     }
   }
 
