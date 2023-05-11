@@ -276,7 +276,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                 traces={this.state.traces}
                 errorFetchTraces={this.state.jaegerErrors}
                 errorTraces={true}
-                cluster={this.props.cluster ? this.props.cluster : ''}
+                cluster={this.props.cluster ? this.props.cluster : ''} // TODO: Test single cluster
               />
             </CardBody>
           </Card>
