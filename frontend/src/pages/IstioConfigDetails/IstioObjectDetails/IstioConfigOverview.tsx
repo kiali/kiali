@@ -203,7 +203,7 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
             ></IstioConfigHelp>
           </StackItem>
         )}
-        {!this.props.istioAPIEnabled && this.props.cluster == serverConfig.clusterInfo?.name && (
+        {!this.props.istioAPIEnabled && this.props.cluster === serverConfig.clusterInfo?.name && (
           <StackItem>
             <KialiIcon.Warning className={warnStyle} /> <b>Istio API is disabled.</b> Be careful when editing the
             configuration as the Istio config validations are disabled when the Istio API is disabled.
