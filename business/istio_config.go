@@ -199,9 +199,18 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 		RequestAuthentications: []*security_v1beta1.RequestAuthentication{},
 	}
 
+	kubeCache := in.kialiCache.GetKubeCaches()[cluster]
+	if kubeCache == nil {
+		return istioConfigList, fmt.Errorf("K8s Cache [%s] is not found or is not accessible for Kiali", cluster)
+	}
+	userClient := in.userClients[cluster]
+	if userClient == nil {
+		return istioConfigList, fmt.Errorf("K8s Client [%s] is not found or is not accessible for Kiali", cluster)
+	}
+
 	// Use the Istio Registry when AllNamespaces is present
 	// TODO use Istio Registry for Home cluster only now
-	if criteria.AllNamespaces && in.config.ExternalServices.Istio.IstioAPIEnabled && cluster == config.Get().KubernetesConfig.ClusterName {
+	if criteria.AllNamespaces && kubeCache.Client().IsIstioAPI() && cluster == config.Get().KubernetesConfig.ClusterName {
 		registryCriteria := RegistryCriteria{
 			AllNamespaces: true,
 		}
@@ -267,14 +276,6 @@ func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, 
 		}
 
 		return istioConfigList, nil
-	}
-	kubeCache := in.kialiCache.GetKubeCaches()[cluster]
-	if kubeCache == nil {
-		return istioConfigList, fmt.Errorf("K8s Cache [%s] is not found or is not accessible for Kiali", cluster)
-	}
-	userClient := in.userClients[cluster]
-	if userClient == nil {
-		return istioConfigList, fmt.Errorf("K8s Client [%s] is not found or is not accessible for Kiali", cluster)
 	}
 
 	if cluster != config.Get().KubernetesConfig.ClusterName && !kubeCache.Client().IsIstioAPI() {
