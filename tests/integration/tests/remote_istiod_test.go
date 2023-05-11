@@ -2,6 +2,7 @@ package tests
 
 import (
 	"context"
+	"os/exec"
 	"path"
 	"strings"
 	"testing"
@@ -137,8 +138,6 @@ func TestRemoteIstiod(t *testing.T) {
 
 			// Restart Kiali pod to pick up the new config.
 			require.NoError(restartKialiPod(ctx, kubeClient, kialiNamespace))
-			// Pod is ready but app might not be ready
-			time.Sleep(10 * time.Second)
 		}
 
 		// Remove service:
@@ -221,8 +220,6 @@ func TestRemoteIstiod(t *testing.T) {
 
 	// Restart Kiali pod to pick up the new config.
 	require.NoError(restartKialiPod(ctx, kubeClient, kialiDeploymentNamespace), "Error waiting for kiali deployment to update")
-	// Pod is ready but app might not be ready
-	time.Sleep(10 * time.Second)
 
 	configs, err := utils.IstioConfigs()
 	require.NoError(err)
@@ -231,37 +228,67 @@ func TestRemoteIstiod(t *testing.T) {
 
 // Deletes the existing kiali Pod and waits for the new one to be ready.
 func restartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, namespace string) error {
-	log.Debug("Restarting kiali pod")
-	pods, err := kubeClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
-	if err != nil {
-		return err
-	}
-	currentKialiPod := pods.Items[0]
+	// Get kiali pod name
+	cmdGetPodName := ocCommand + " get pods -o name -n istio-system | egrep kiali | sed 's|pod/||'"
+	kialiPodName, err2 := exec.Command("bash", "-c", cmdGetPodName).Output()
+	podName := strings.Replace(string(kialiPodName), "\n", "", -1)
+	log.Debugf("Kiali pod name: %s", podName)
 
-	err = kubeClient.CoreV1().Pods(namespace).Delete(ctx, currentKialiPod.Name, metav1.DeleteOptions{})
-	if err != nil {
-		return err
-	}
+	if err2 == nil {
+		// Restart
+		cmd3 := ocCommand + " delete pod " + podName + " -n istio-system"
+		_, err3 := exec.Command("bash", "-c", cmd3).Output()
+		log.Debugf("Delete pod command: %s", cmd3)
 
-	return wait.PollImmediate(time.Second*15, time.Minute*2, func() (bool, error) {
-		log.Debug("Waiting for kiali to be ready")
+		if err3 == nil {
+			waitCmd := ocCommand + " wait --for=condition=ready pod -l app=kiali -n istio-system"
+			out, err4 := exec.Command("bash", "-c", waitCmd).Output()
+
+			log.Debugf("Kiali pod ready after restart %s", out)
+			// We need this because even if the pod is really the application is not responding yet
+			time.Sleep(10 * time.Second)
+
+			if err4 != nil {
+				log.Errorf("Error waiting for pod %s ", err4.Error())
+				return err4
+			}
+		}
+	}
+	return nil
+	/*
+		log.Debug("Restarting kiali pod")
 		pods, err := kubeClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
 		if err != nil {
-			return false, err
+			return err
+		}
+		currentKialiPod := pods.Items[0]
+
+		err = kubeClient.CoreV1().Pods(namespace).Delete(ctx, currentKialiPod.Name, metav1.DeleteOptions{})
+		if err != nil {
+			return err
 		}
 
-		for _, pod := range pods.Items {
-			if pod.Name == currentKialiPod.Name {
-				log.Debug("Old kiali pod still exists.")
-				return false, nil
+		return wait.PollImmediate(time.Second*15, time.Minute*2, func() (bool, error) {
+			log.Debug("Waiting for kiali to be ready")
+			pods, err := kubeClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
+			if err != nil {
+				return false, err
 			}
-			for _, condition := range pod.Status.Conditions {
-				if condition.Type == "Ready" && condition.Status == "False" {
-					log.Debug("New kiali pod is not ready.")
+
+			for _, pod := range pods.Items {
+				if pod.Name == currentKialiPod.Name {
+					log.Debug("Old kiali pod still exists.")
 					return false, nil
 				}
+				for _, condition := range pod.Status.Conditions {
+					if condition.Type == "Ready" && condition.Status == "False" {
+						log.Debug("New kiali pod is not ready.")
+						return false, nil
+					}
+				}
 			}
-		}
-		return true, nil
-	})
+			return true, nil
+		})
+
+	*/
 }
