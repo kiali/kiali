@@ -1,6 +1,6 @@
 import { Label, Stack, StackItem, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import Labels from 'components/Label/Labels';
-import { PFBadge } from 'components/Pf/PfBadges';
+import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import LocalTime from 'components/Time/LocalTime';
 import { ValidationObjectSummary } from 'components/Validations/ValidationObjectSummary';
 import { IstioTypes } from 'components/VirtualList/Config';
@@ -25,6 +25,7 @@ import IstioStatusMessageList from './IstioStatusMessageList';
 import { KioskElement } from '../../../components/Kiosk/KioskElement';
 import { PFColors } from '../../../components/Pf/PfColors';
 import { GetIstioObjectUrl } from '../../../components/Link/IstioObjectLink';
+import { isMultiCluster, serverConfig } from '../../../config';
 
 interface IstioConfigOverviewProps {
   istioObjectDetails: IstioConfigDetails;
@@ -126,6 +127,11 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
           </Title>
         </StackItem>
         <StackItem>
+          {isMultiCluster() && (
+            <div key="cluster-icon">
+              <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {this.props.cluster}
+            </div>
+          )}
           {istioObject && istioObject.kind && (
             <>
               <div className={iconStyle}>
@@ -197,7 +203,7 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
             ></IstioConfigHelp>
           </StackItem>
         )}
-        {!this.props.istioAPIEnabled && (
+        {!this.props.istioAPIEnabled && this.props.cluster == serverConfig.clusterInfo?.name && (
           <StackItem>
             <KialiIcon.Warning className={warnStyle} /> <b>Istio API is disabled.</b> Be careful when editing the
             configuration as the Istio config validations are disabled when the Istio API is disabled.
