@@ -82,6 +82,11 @@ const OpacityUnhighlightMedium = 0.3;
 const OpacityUnhighlightMost = 0.1;
 const OpacityUnhighlightLabel = 0.3;
 
+type contentType = {
+  pfBadge?: PFBadgeType;
+  text: string;
+};
+
 // Puts a little more space between icons when a badge has multiple icons
 const badgeMargin = (existingIcons: string) =>
   existingIcons === '' ? style({ marginLeft: '1px' }) : style({ marginRight: '2px' });
@@ -109,7 +114,7 @@ const contentBox = style({
   backgroundColor: NodeTextBackgroundColorBox,
   color: NodeTextColorBox
 });
-
+/*
 const contentWithBadges = style({
   borderBottomLeftRadius: 'unset',
   borderColor: NodeBadgeBackgroundColor,
@@ -117,7 +122,7 @@ const contentWithBadges = style({
   borderTopLeftRadius: 'unset',
   borderLeft: '0'
 });
-
+*/
 const hostsClass = style({
   $nest: {
     '& div:last-child': {
@@ -147,7 +152,9 @@ const labelDefault = style({
 });
 
 const labelBox = style({
-  marginTop: '13px'
+  display: 'block',
+  marginTop: '13px',
+  textAlign: 'left'
 });
 
 export class GraphStyles {
@@ -306,6 +313,7 @@ export class GraphStyles {
     }
 
     const content: string[] = [];
+    const newContent: contentType[] = [];
 
     // append namespace if necessary
     if (
@@ -317,6 +325,7 @@ export class GraphStyles {
       isBox !== BoxByType.NAMESPACE
     ) {
       content.push(`(${namespace})`);
+      newContent.push({ pfBadge: PFBadges.Namespace, text: namespace });
     }
 
     // append cluster if necessary
@@ -328,27 +337,35 @@ export class GraphStyles {
       isBox !== BoxByType.CLUSTER
     ) {
       content.push(`(${cluster})`);
+      newContent.push({ pfBadge: PFBadges.Cluster, text: cluster });
     }
 
     switch (nodeType) {
       case NodeType.AGGREGATE:
         content.unshift(node.aggregateValue!);
+        newContent.unshift({ text: node.aggregateValue! });
         break;
       case NodeType.APP:
         if (isAppBoxed) {
           if (cyGlobal.graphType === GraphType.APP) {
             content.unshift(app);
+            newContent.unshift({ text: app });
           } else if (version && version !== UNKNOWN) {
             content.unshift(version);
+            newContent.unshift({ text: version });
           } else {
             content.unshift(workload ? workload : app);
+            newContent.unshift({ text: workload ? workload : app });
           }
         } else {
           if (cyGlobal.graphType === GraphType.APP || version === UNKNOWN) {
             content.unshift(app);
+            newContent.unshift({ text: app });
           } else {
             content.unshift(version);
+            newContent.unshift({ text: version });
             content.unshift(app);
+            newContent.unshift({ text: app });
           }
         }
         break;
@@ -356,30 +373,38 @@ export class GraphStyles {
         switch (isBox) {
           case BoxByType.APP:
             content.unshift(app);
+            newContent.unshift({ pfBadge: PFBadges.App, text: app });
             break;
           case BoxByType.CLUSTER:
             content.unshift(node.cluster);
+            newContent.unshift({ pfBadge: PFBadges.Cluster, text: node.cluster });
             break;
           case BoxByType.NAMESPACE:
             content.unshift(node.namespace);
+            newContent.unshift({ pfBadge: PFBadges.Namespace, text: node.namespace });
             break;
         }
         break;
       case NodeType.SERVICE:
         content.unshift(service);
+        newContent.unshift({ text: service });
         break;
       case NodeType.UNKNOWN:
         content.unshift(UNKNOWN);
+        newContent.unshift({ text: UNKNOWN });
         break;
       case NodeType.WORKLOAD:
         content.unshift(workload);
+        newContent.unshift({ text: workload });
         break;
       default:
         content.unshift('error');
+        newContent.unshift({ text: 'error' });
     }
 
     const contentText = content.join('<br/>');
-    let contentClasses = hasBadges && !noBadge ? `${contentDefault} ${contentWithBadges}` : `${contentDefault}`;
+    //let contentClasses = hasBadges && !noBadge ? `${contentDefault} ${contentWithBadges}` : `${contentDefault}`;
+    let contentClasses = `${contentDefault}`;
 
     // The final label...
     let fontSize = settings.fontLabel;
@@ -396,27 +421,19 @@ export class GraphStyles {
     }
 
     if (isBox) {
-      let appBoxStyle = '';
-      let pfBadge: PFBadgeType | undefined;
-      switch (isBox) {
-        case BoxByType.APP:
-          pfBadge = PFBadges.App;
-          appBoxStyle += `font-size: ${settings.fontLabel}px;`;
-          break;
-        case BoxByType.CLUSTER:
-          pfBadge = PFBadges.Cluster;
-          break;
-        case BoxByType.NAMESPACE:
-          pfBadge = PFBadges.Namespace;
-          break;
-        default:
-          console.warn(`GraphSyles: Unexpected box [${isBox}] `);
-      }
-      const badge = pfBadge ? pfBadge.badge : '';
-      const pfBadgeStyle = pfBadge ? style(pfBadge.style) : '';
-      const contentPfBadge = `<span class="pf-c-badge pf-m-unread ${kialiBadge} ${pfBadgeStyle}" style="${appBoxStyle}">${badge}</span>`;
-      const contentSpan = `<span class="${contentClasses} ${contentBox}" style="${appBoxStyle} ${contentStyle}">${contentPfBadge}${contentText}</span>`;
-      return `<div class="${labelDefault} ${labelBox}" style="${labelStyle}">${badges}${contentSpan}</div>`;
+      let appBoxStyle = isBox === BoxByType.APP ? `font-size: ${settings.fontLabel}px;` : '';
+
+      let contentDivs = '';
+      newContent.forEach(c => {
+        let contentPfBadge = '';
+        if (!!c.pfBadge) {
+          const pfBadgeStyle = style(c.pfBadge.style);
+          contentPfBadge = `<span class="pf-c-badge pf-m-unread ${kialiBadge} ${pfBadgeStyle}" style="${appBoxStyle}">${c.pfBadge.badge}</span>`;
+        }
+        const contentDiv = `<div class="${contentClasses} ${contentBox}" style="${appBoxStyle} ${contentStyle}">${contentPfBadge}${c.text}</div>`;
+        contentDivs = `${contentDivs}${contentDiv}`;
+      });
+      return `<div class="${labelDefault} ${labelBox}" style="${labelStyle}">${badges}${contentDivs}</div>`;
     }
 
     let hosts: string[] = [];
@@ -443,7 +460,22 @@ export class GraphStyles {
       contentClasses = `${contentClasses} ${hostsClass}`;
     }
 
-    const contentSpan = `<div class="${contentClasses}" style="${contentStyle}"><div>${contentText}</div>${htmlHosts}</div>`;
+    let contentDivs = '';
+    newContent.forEach(c => {
+      let contentPfBadge = '';
+      if (!!c.pfBadge) {
+        const pfBadgeStyle = style(c.pfBadge.style);
+        contentPfBadge = `<span class="pf-c-badge pf-m-unread ${kialiBadge} ${pfBadgeStyle}" style="${''}">${
+          c.pfBadge.badge
+        }</span>`;
+      }
+      const contentDiv = `<div class="${contentClasses}" style="${''} ${contentStyle}">${contentPfBadge}${
+        c.text
+      }</div>`;
+      contentDivs = `${contentDivs}${contentDiv}`;
+    });
+    console.log(`${contentText}`);
+    const contentSpan = `<div class="${contentClasses}" style="${contentStyle}">${contentDivs}${htmlHosts}</div>`;
     return `<div class="${labelDefault}" style="${labelStyle}">${badges}${contentSpan}</div>`;
   }
 
