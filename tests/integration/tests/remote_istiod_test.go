@@ -161,7 +161,7 @@ func TestRemoteIstiod(t *testing.T) {
 		require.NoError(err)
 
 		// Wait for the configmap to be updated again before exiting.
-		require.NoError(wait.PollImmediate(time.Second*15, time.Minute*2, func() (bool, error) {
+		require.NoError(wait.PollImmediate(time.Second*20, time.Minute*2, func() (bool, error) {
 			cm, err := kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Get(ctx, kialiName, metav1.GetOptions{})
 			if err != nil {
 				return false, err
@@ -190,7 +190,7 @@ func TestRemoteIstiod(t *testing.T) {
 
 		// Need to know when the kiali operator has seen the CR change and finished updating
 		// the configmap. There's no ObservedGeneration on the Kiali CR so just checking the configmap itself.
-		require.NoError(wait.PollImmediate(time.Second*15, time.Minute*2, func() (bool, error) {
+		require.NoError(wait.PollImmediate(time.Second*20, time.Minute*2, func() (bool, error) {
 			log.Debug("Waiting for kiali configmap to update")
 			cm, err := kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Get(ctx, kialiName, metav1.GetOptions{})
 			if err != nil {
