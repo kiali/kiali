@@ -38,6 +38,9 @@ type IstioConfigList struct {
 	IstioValidations       IstioValidations                         `json:"validations"`
 }
 
+// IstioConfigMap holds a map of IstioConfigList per cluster
+type IstioConfigMap map[string]IstioConfigList
+
 type IstioConfigDetails struct {
 	Namespace  Namespace `json:"namespace"`
 	ObjectType string    `json:"objectType"`

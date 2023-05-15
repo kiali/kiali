@@ -134,7 +134,7 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 		IncludeSidecars:               true,
 		IncludeVirtualServices:        true,
 	}
-	var istioConfigList models.IstioConfigList
+	var istioConfigMap models.IstioConfigMap
 
 	// TODO: MC
 	if criteria.IncludeIstioResources {
@@ -145,7 +145,7 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 		go func(ctx context.Context) {
 			defer wg2.Done()
 			var err2 error
-			istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigList(ctx, icCriteria)
+			istioConfigMap, err2 = in.businessLayer.IstioConfig.GetIstioConfigMap(ctx, icCriteria)
 			if err2 != nil {
 				log.Errorf("Error fetching Istio Config per namespace %s: %s", criteria.Namespace, err2)
 				errChan <- err2
@@ -166,6 +166,7 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 				IstioSidecar: true,
 				Health:       models.EmptyAppHealth(),
 			}
+			istioConfigList, _ := istioConfigMap[valueApp.cluster]
 			applabels := make(map[string][]string)
 			svcReferences := make([]*models.IstioValidationKey, 0)
 			for _, srv := range valueApp.Services {

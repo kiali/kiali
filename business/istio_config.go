@@ -123,6 +123,7 @@ var newSecurityConfigTypes = []string{
 
 // GetIstioConfigList returns a list of Istio routing objects, Mixer Rules, (etc.)
 // per a given Namespace.
+// @TODO this method should be replaced by GetIstioConfigMap
 func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria IstioConfigCriteria) (models.IstioConfigList, error) {
 	istioConfigList := models.IstioConfigList{}
 	conf := config.Get()
@@ -165,6 +166,36 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 	}
 
 	return istioConfigList, nil
+}
+
+// GetIstioConfigMap returns a map of Istio config objects list per cluster
+// @TODO this method should replace GetIstioConfigList
+func (in *IstioConfigService) GetIstioConfigMap(ctx context.Context, criteria IstioConfigCriteria) (models.IstioConfigMap, error) {
+	istioConfigMap := models.IstioConfigMap{}
+	conf := config.Get()
+	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
+	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
+	for cluster := range in.userClients {
+		singleClusterConfigList, err := in.GetIstioConfigListPerCluster(ctx, criteria, cluster)
+		if err != nil {
+			if cluster == conf.KubernetesConfig.ClusterName && len(in.userClients) == 1 {
+				return istioConfigMap, err
+			}
+
+			if api_errors.IsNotFound(err) || api_errors.IsForbidden(err) {
+				// If a cluster is not found or not accessible, then we skip it
+				log.Debugf("Error while accessing to cluster [%s]: %s", cluster, err.Error())
+				continue
+			}
+
+			log.Errorf("Unable to get config list from cluster: %s. Err: %s. Skipping", cluster, err)
+			continue
+		}
+
+		istioConfigMap[cluster] = singleClusterConfigList
+	}
+
+	return istioConfigMap, nil
 }
 
 func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, criteria IstioConfigCriteria, cluster string) (models.IstioConfigList, error) {
