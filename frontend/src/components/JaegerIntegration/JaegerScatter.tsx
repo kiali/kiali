@@ -22,9 +22,9 @@ interface JaegerScatterProps {
   duration: number;
   errorFetchTraces?: JaegerError[];
   errorTraces?: boolean;
-  loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean, cluster: string) => Promise<any>;
+  loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) => Promise<any>;
   selectedTrace?: JaegerTrace;
-  setTraceId: (traceId?: string) => void;
+  setTraceId: (cluster: string, traceId?: string) => void;
   showSpansAverage: boolean;
   traces: JaegerTrace[];
   cluster: string;
@@ -132,7 +132,7 @@ class JaegerScatter extends React.Component<JaegerScatterProps> {
             fill={true}
             unit="seconds"
             seriesComponent={<ChartScatter />}
-            onClick={dp => this.props.setTraceId(dp.trace.traceID)}
+            onClick={dp => this.props.setTraceId(this.props.cluster, dp.trace.traceID)}
             onTooltipClose={dp => this.onTooltipClose(dp.trace)}
             onTooltipOpen={dp => this.onTooltipOpen(dp.trace)}
             labelComponent={<TraceTooltip />}
@@ -157,7 +157,7 @@ class JaegerScatter extends React.Component<JaegerScatterProps> {
     const queries = buildQueriesFromSpans(trace.spans, true);
 
     this.props
-      .loadMetricsStats(queries, true, this.props.cluster)
+      .loadMetricsStats(queries, true)
       .then(_response => {
         if (this.nextToLoad) {
           const nextTrace = this.nextToLoad;
@@ -191,9 +191,9 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
-  loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean, cluster: string) =>
-    dispatch(MetricsStatsThunkActions.load(queries, isCompact, cluster)),
-  setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.setTraceId(traceId))
+  loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) =>
+    dispatch(MetricsStatsThunkActions.load(queries, isCompact)),
+  setTraceId: (cluster: string, traceId?: string) => dispatch(JaegerThunkActions.setTraceId(cluster, traceId))
 });
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(JaegerScatter);

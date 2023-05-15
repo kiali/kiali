@@ -150,7 +150,8 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
       target: {
         namespace: this.props.namespace,
         name: this.props.target,
-        kind: this.props.targetKind
+        kind: this.props.targetKind,
+        cluster: this.props.cluster
       },
       interval: '1h',
       direction: 'inbound',
@@ -159,7 +160,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
     };
     const queries: MetricsStatsQuery[] =
       this.props.targetKind === 'service' ? [query] : [query, { ...query, direction: 'outbound' }];
-    return API.getMetricsStats(queries, this.props.cluster).then(r => this.percentilesFetched(query, r.data));
+    return API.getMetricsStats(queries).then(r => this.percentilesFetched(query, r.data));
   };
 
   private percentilesFetched = (q: MetricsStatsQuery, r: MetricsStatsResult): Map<string, number> => {

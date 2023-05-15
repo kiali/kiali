@@ -23,7 +23,7 @@ import { KialiDispatch } from '../../types/Redux';
 type ReduxProps = {
   kiosk: string;
   selectedTrace?: JaegerTrace;
-  setTraceId: (traceId?: string) => void;
+  setTraceId: (cluster: string, traceId?: string) => void;
 };
 
 type Props = ReduxProps & {
@@ -120,7 +120,7 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
       .then(response => {
         const traces = response.data.data
           ? (response.data.data
-              .map(trace => transformTraceData(trace))
+              .map(trace => transformTraceData(trace, this.props.nodeData.cluster))
               .filter(trace => trace !== null) as JaegerTrace[])
           : [];
         if (this.props.selectedTrace && !traces.some(t => t.traceID === this.props.selectedTrace!.traceID)) {
@@ -137,9 +137,9 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
   private onClickTrace(trace: JaegerTrace) {
     if (this.props.selectedTrace?.traceID === trace.traceID) {
       // Deselect
-      this.props.setTraceId(undefined);
+      this.props.setTraceId(this.props.nodeData.cluster, undefined);
     } else {
-      this.props.setTraceId(trace.traceID);
+      this.props.setTraceId(this.props.nodeData.cluster, trace.traceID);
     }
   }
 
@@ -211,7 +211,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
-  setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.setTraceId(traceId))
+  setTraceId: (cluster: string, traceId?: string) => dispatch(JaegerThunkActions.setTraceId(cluster, traceId))
 });
 
 const SummaryPanelNodeTracesContainer = connect(mapStateToProps, mapDispatchToProps)(SummaryPanelNodeTraces);

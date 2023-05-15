@@ -912,7 +912,7 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setGraphDefinition: bindActionCreators(GraphActions.setGraphDefinition, dispatch),
   setNode: bindActionCreators(GraphActions.setNode, dispatch),
   setRankResult: bindActionCreators(GraphActions.setRankResult, dispatch),
-  setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.setTraceId(traceId)),
+  setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.setTraceId('', traceId)),
   setUpdateTime: (val: TimeInMilliseconds) => dispatch(GraphActions.setUpdateTime(val)),
   startTour: bindActionCreators(TourActions.startTour, dispatch),
   toggleIdleNodes: bindActionCreators(GraphToolbarActions.toggleIdleNodes, dispatch),

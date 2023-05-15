@@ -31,7 +31,7 @@ import { formatDuration, sameSpans } from 'utils/tracing/TracingHelper';
 
 type ReduxProps = {
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean, cluster: string) => void;
-  setTraceId: (traceId?: string) => void;
+  setTraceId: (cluster: string, traceId?: string) => void;
 };
 
 type Props = ReduxProps & {
@@ -53,10 +53,10 @@ class TraceDetails extends React.Component<Props, State> {
     super(props);
     const urlTrace = getTraceId();
     if (urlTrace && urlTrace !== props.trace?.traceID) {
-      props.setTraceId(urlTrace);
+      props.setTraceId(this.props.cluster, urlTrace);
     } else if (!urlTrace && props.trace) {
       // Remove old stored selected trace
-      props.setTraceId(undefined);
+      props.setTraceId(this.props.cluster, undefined);
     }
     this.state = { completeMetricsStats: false };
   }
@@ -265,9 +265,9 @@ const mapStateToProps = (state: KialiAppState) => {
 };
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
-  setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.setTraceId(traceId)),
-  loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean, cluster: string) =>
-    dispatch(MetricsStatsThunkActions.load(queries, isCompact, cluster))
+  setTraceId: (cluster: string, traceId?: string) => dispatch(JaegerThunkActions.setTraceId(cluster, traceId)),
+  loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) =>
+    dispatch(MetricsStatsThunkActions.load(queries, isCompact))
 });
 
 const TraceDetailsContainer = connect(mapStateToProps, mapDispatchToProps)(TraceDetails);
