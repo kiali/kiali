@@ -69,6 +69,7 @@ export type RichSpanData = Span & {
   pod?: string;
   linkToWorkload?: string;
   info: OpenTracingBaseInfo;
+  cluster: string;
 };
 
 export type OpenTracingBaseInfo = {

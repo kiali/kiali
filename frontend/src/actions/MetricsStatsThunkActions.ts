@@ -10,7 +10,7 @@ type ExpiringStats = MetricsStats & { timestamp: number };
 
 const expiry = 2 * 60 * 1000;
 const MetricsStatsThunkActions = {
-  load: (queries: MetricsStatsQuery[], isCompact: boolean, cluster: string) => {
+  load: (queries: MetricsStatsQuery[], isCompact: boolean) => {
     return (dispatch: KialiDispatch, getState: () => KialiAppState) => {
       const oldStats = getState().metricsStats.data as Map<string, ExpiringStats>;
       const now = Date.now();
@@ -22,7 +22,7 @@ const MetricsStatsThunkActions = {
         return !existingStat || (!isCompact && existingStat.isCompact);
       });
       if (filtered.length > 0) {
-        return API.getMetricsStats(filtered, cluster)
+        return API.getMetricsStats(filtered)
           .then(res => {
             // Merge result
             Object.entries(res.data.stats).forEach(e =>

@@ -36,6 +36,7 @@ export interface Target {
   namespace: string;
   name: string;
   kind: TargetKind;
+  cluster: string;
 }
 
 export interface MetricsStatsQuery {
