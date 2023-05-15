@@ -160,6 +160,8 @@ func TestRemoteIstiod(t *testing.T) {
 		_, err = kubeClient.AppsV1().Deployments("istio-system").Update(ctx, istiod, metav1.UpdateOptions{})
 		require.NoError(err)
 
+		time.Sleep(10 * time.Second)
+		
 		// Wait for the configmap to be updated again before exiting.
 		require.NoError(wait.PollImmediate(time.Second*5, time.Minute*2, func() (bool, error) {
 			cm, err := kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Get(ctx, kialiName, metav1.GetOptions{})
@@ -181,7 +183,7 @@ func TestRemoteIstiod(t *testing.T) {
 	// Then create a service for the proxy/debug endpoint.
 	require.True(utils.ApplyFile(assetsFolder+"/remote-istiod/istiod-debug-service.yaml", "istio-system"), "Could not create istiod debug service")
 
-	// Now patch kiali to use that remote endpoint.
+	// Now patch kiali to use that remote endpoint.istio/multicluster/install-primary-remote.sh -c kubectl -kudi true -kshc ~/dev/kiali_sources/helm-charts/_output/charts/kiali-server-1.64.0-SNAPSHOT.tgz
 	log.Debug("Patching kiali to use remote istiod")
 	if kialiCRDExists {
 		registryPatch := []byte(`{"spec": {"external_services": {"istio": {"registry": {"istiod_url": "http://istiod-debug.istio-system:9240"}}}}}`)
