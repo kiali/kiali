@@ -61,6 +61,7 @@ type Target struct {
 	Namespace string
 	Name      string
 	Kind      string // app | workload | service
+	Cluster   string
 }
 
 type MetricsStatsQuery struct {
