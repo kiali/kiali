@@ -107,22 +107,14 @@ const contentDefault = style({
   borderRadius: '3px',
   borderWidth: '1px',
   color: NodeTextColor,
-  padding: '3px 5px'
+  padding: '1px 5px'
 });
 
 const contentBox = style({
   backgroundColor: NodeTextBackgroundColorBox,
   color: NodeTextColorBox
 });
-/*
-const contentWithBadges = style({
-  borderBottomLeftRadius: 'unset',
-  borderColor: NodeBadgeBackgroundColor,
-  borderStyle: 'solid',
-  borderTopLeftRadius: 'unset',
-  borderLeft: '0'
-});
-*/
+
 const hostsClass = style({
   $nest: {
     '& div:last-child': {
@@ -403,7 +395,6 @@ export class GraphStyles {
     }
 
     const contentText = content.join('<br/>');
-    //let contentClasses = hasBadges && !noBadge ? `${contentDefault} ${contentWithBadges}` : `${contentDefault}`;
     let contentClasses = `${contentDefault}`;
 
     // The final label...
