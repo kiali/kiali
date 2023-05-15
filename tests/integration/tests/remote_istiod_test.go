@@ -160,8 +160,6 @@ func TestRemoteIstiod(t *testing.T) {
 		_, err = kubeClient.AppsV1().Deployments("istio-system").Update(ctx, istiod, metav1.UpdateOptions{})
 		require.NoError(err)
 
-		time.Sleep(10 * time.Second)
-
 		// Wait for the configmap to be updated again before exiting.
 		require.NoError(wait.PollImmediate(time.Second*15, time.Minute*2, func() (bool, error) {
 			cm, err := kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Get(ctx, kialiName, metav1.GetOptions{})
