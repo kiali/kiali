@@ -43,7 +43,7 @@ func dynamicClient(t *testing.T) dynamic.Interface {
 	return client
 }
 
-func kubeClient(t *testing.T) kubernetes.Interface {
+func createKubeClient(t *testing.T) kubernetes.Interface {
 	t.Helper()
 
 	cfg, err := cmd.GetKubeConfig()
@@ -68,7 +68,7 @@ func TestRemoteIstiod(t *testing.T) {
 	proxyPatch, err := kubeyaml.ToJSON(kialiKube.ReadFile(t, proxyPatchPath))
 	require.NoError(err)
 
-	kubeClient := kubeClient(t)
+	kubeClient := createKubeClient(t)
 	dynamicClient := dynamicClient(t)
 	kialiGVR := schema.GroupVersionResource{Group: "kiali.io", Version: "v1alpha1", Resource: "kialis"}
 
@@ -239,7 +239,7 @@ func restartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, names
 		return err
 	}
 
-	return wait.PollImmediate(time.Second*5, time.Minute*2, func() (bool, error) {
+	return wait.PollImmediate(time.Second*15, time.Minute*2, func() (bool, error) {
 		log.Debug("Waiting for kiali to be ready")
 		pods, err := kubeClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
 		if err != nil {
