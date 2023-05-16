@@ -27,6 +27,7 @@ export interface TrafficListItem {
   mTLS?: number;
   trafficRate: string;
   trafficPercentSuccess: string;
+  cluster?: string;
 }
 
 type ReduxProps = {
@@ -48,6 +49,10 @@ const columns = [
   {
     title: 'Name',
     transforms: [sortable, cellWidth(30)]
+  },
+  {
+    title: 'Cluster',
+    transforms: [sortable, cellWidth(15)]
   },
   {
     title: 'Rate',
@@ -192,6 +197,7 @@ class TrafficListComponent extends FilterComponent.Component<
         protocol: (ti.traffic.protocol || 'N/A').toUpperCase(),
         mTLS: ti.mTLS,
         healthStatus: this.getHealthStatus(ti),
+        cluster: ti.node.cluster,
         ...this.getTraffic(ti.traffic)
       };
       return item;
@@ -281,6 +287,10 @@ class TrafficListComponent extends FilterComponent.Component<
               ) : (
                 name
               )}
+            </>,
+            <>
+              <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} />
+              {item.cluster}
             </>,
             <>{item.trafficRate}</>,
             <>{item.trafficPercentSuccess}</>,
