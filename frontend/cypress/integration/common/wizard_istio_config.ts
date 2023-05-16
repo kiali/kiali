@@ -2,9 +2,14 @@ import { And, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 
 When('user clicks in the {string} Istio config actions', (action: string) => {
-  cy.get('button[data-test="config-actions-dropdown"]').click().get('#loading_kiali_spinner').should('not.exist');
+  cy.get('button[data-test="config-actions-dropdown"]')
+    .should('be.visible')
+    .click()
+    .get('#loading_kiali_spinner')
+    .should('not.exist');
 
   cy.get('a[data-test="create_' + action + '"]')
+    .should('be.visible')
     .click()
     .get('#loading_kiali_spinner')
     .should('not.exist');
@@ -12,7 +17,7 @@ When('user clicks in the {string} Istio config actions', (action: string) => {
 
 When('viewing the detail for {string}', (object: string) => {
   ensureKialiFinishedLoading();
-  cy.get('a').contains(object).click();
+  cy.get('a').contains(object).should('be.visible').click();
 });
 
 And('user sees the {string} config wizard', (title: string) => {
@@ -20,11 +25,11 @@ And('user sees the {string} config wizard', (title: string) => {
 });
 
 And('user adds listener', () => {
-  cy.get('button[name="addListener"]').click();
+  cy.get('button[name="addListener"]').should('be.visible').click();
 });
 
 And('user adds a hostname', () => {
-  cy.get('[aria-label="Address List"]').find('button').click();
+  cy.get('[aria-label="Address List"]').find('button').should('be.visible').click();
 });
 
 And('user types {string} in the {string} input', (value: string, id: string) => {
@@ -42,7 +47,7 @@ And('user checks validation of the hostname {string} input', (id: string) => {
 });
 
 And('user adds a server to a server list', () => {
-  cy.get('[aria-label="Server List"]').find('button').click();
+  cy.get('[aria-label="Server List"]').find('button').should('be.visible').click();
 });
 
 And('the {string} input should display a warning', (id: string) => {
@@ -54,7 +59,7 @@ And('the {string} input should not display a warning', (id: string) => {
 });
 
 And('user creates the istio config', () => {
-  cy.get('button[data-test="create"]').click();
+  cy.get('button[data-test="create"]').should('be.visible').click();
   it('spinner should disappear', { retries: 3 }, () => {
     cy.get('#loading_kiali_spinner').should('not.exist');
   });
@@ -73,9 +78,9 @@ And('user opens the {string} submenu', (title: string) => {
 });
 
 And('choosing to delete it', () => {
-  cy.get('#actions').click();
-  cy.get('#actions').contains('Delete').click();
-  cy.get('#pf-modal-part-2').find('button').contains('Delete').click();
+  cy.get('#actions').should('be.visible').click();
+  cy.get('#actions').contains('Delete').should('be.visible').click();
+  cy.get('#pf-modal-part-2').find('button').contains('Delete').should('be.visible').click();
 });
 
 Then('the {string} {string} should be listed in {string} namespace', function (
