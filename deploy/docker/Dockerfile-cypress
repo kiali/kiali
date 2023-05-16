@@ -8,6 +8,15 @@ FROM cypress/base:14.17.0
 # we need to set HOME when running on OCP with random UID, otherwise the home is set to / and any writing there will fail with permission denied
 ENV HOME=/tmp/kiali
 
+# install required packages and oc bin
+WORKDIR /usr/bin
+RUN apt -y update && \
+    apt install -y tar gzip bash gettext && \
+    apt-get clean && \
+    curl -Lo ./oc.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz && \
+    tar -xf oc.tar.gz && \
+    rm -f oc.tar.gz
+
 # copy also hack scripts which will be used to install demo apps
 COPY hack $HOME/hack
 COPY frontend/ $HOME/
