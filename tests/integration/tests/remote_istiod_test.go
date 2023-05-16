@@ -2,7 +2,6 @@ package tests
 
 import (
 	"context"
-	"os/exec"
 	"path"
 	"strings"
 	"testing"
@@ -137,7 +136,7 @@ func TestRemoteIstiod(t *testing.T) {
 			require.NoError(err)
 
 			// Restart Kiali pod to pick up the new config.
-			restartKialiPod()
+			require.NoError(restartKialiPod(ctx, kubeClient, kialiNamespace))
 		}
 
 		// Remove service:
@@ -161,7 +160,7 @@ func TestRemoteIstiod(t *testing.T) {
 		require.NoError(err)
 
 		// Wait for the configmap to be updated again before exiting.
-		require.NoError(wait.PollImmediate(time.Second*20, time.Minute*2, func() (bool, error) {
+		require.NoError(wait.PollImmediate(time.Second*5, time.Minute*2, func() (bool, error) {
 			cm, err := kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Get(ctx, kialiName, metav1.GetOptions{})
 			if err != nil {
 				return false, err
@@ -169,7 +168,7 @@ func TestRemoteIstiod(t *testing.T) {
 			return !strings.Contains(cm.Data["config.yaml"], "http://istiod-debug.istio-system:9240"), nil
 		}), "Error waiting for kiali configmap to update")
 
-		restartKialiPod()
+		require.NoError(restartKialiPod(ctx, kubeClient, kialiDeploymentNamespace))
 	})
 
 	// Expose the istiod /debug endpoints by adding a proxy to the pod.
@@ -181,7 +180,7 @@ func TestRemoteIstiod(t *testing.T) {
 	// Then create a service for the proxy/debug endpoint.
 	require.True(utils.ApplyFile(assetsFolder+"/remote-istiod/istiod-debug-service.yaml", "istio-system"), "Could not create istiod debug service")
 
-	// Now patch kiali to use that remote endpoint.istio/multicluster/install-primary-remote.sh -c kubectl -kudi true -kshc ~/dev/kiali_sources/helm-charts/_output/charts/kiali-server-1.64.0-SNAPSHOT.tgz
+	// Now patch kiali to use that remote endpoint.
 	log.Debug("Patching kiali to use remote istiod")
 	if kialiCRDExists {
 		registryPatch := []byte(`{"spec": {"external_services": {"istio": {"registry": {"istiod_url": "http://istiod-debug.istio-system:9240"}}}}}`)
@@ -190,7 +189,7 @@ func TestRemoteIstiod(t *testing.T) {
 
 		// Need to know when the kiali operator has seen the CR change and finished updating
 		// the configmap. There's no ObservedGeneration on the Kiali CR so just checking the configmap itself.
-		require.NoError(wait.PollImmediate(time.Second*20, time.Minute*2, func() (bool, error) {
+		require.NoError(wait.PollImmediate(time.Second*5, time.Minute*2, func() (bool, error) {
 			log.Debug("Waiting for kiali configmap to update")
 			cm, err := kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Get(ctx, kialiName, metav1.GetOptions{})
 			if err != nil {
@@ -219,7 +218,7 @@ func TestRemoteIstiod(t *testing.T) {
 	log.Debug("Successfully patched kiali to use remote istiod")
 
 	// Restart Kiali pod to pick up the new config.
-	restartKialiPod()
+	require.NoError(restartKialiPod(ctx, kubeClient, kialiDeploymentNamespace), "Error waiting for kiali deployment to update")
 
 	configs, err := utils.IstioConfigs()
 	require.NoError(err)
@@ -227,32 +226,39 @@ func TestRemoteIstiod(t *testing.T) {
 }
 
 // Deletes the existing kiali Pod and waits for the new one to be ready.
-func restartKialiPod() {
+func restartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, namespace string) error {
 	log.Debug("Restarting kiali pod")
-	// Restart kiali pod
-	// Get kiali pod name
-	cmdGetPodName := ocCommand + " get pods -o name -n istio-system | egrep kiali | sed 's|pod/||'"
-	kialiPodName, err2 := exec.Command("bash", "-c", cmdGetPodName).Output()
-	podName := strings.Replace(string(kialiPodName), "\n", "", -1)
-	log.Debugf("Kiali pod name: %s", podName)
+	pods, err := kubeClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
+	if err != nil {
+		return err
+	}
+	currentKialiPod := pods.Items[0]
 
-	if err2 == nil {
-		// Restart
-		cmd3 := ocCommand + " delete pod " + podName + " -n istio-system"
-		_, err3 := exec.Command("bash", "-c", cmd3).Output()
-		log.Debugf("Delete pod command: %s", cmd3)
+	err = kubeClient.CoreV1().Pods(namespace).Delete(ctx, currentKialiPod.Name, metav1.DeleteOptions{})
+	if err != nil {
+		return err
+	}
 
-		if err3 == nil {
-			waitCmd := ocCommand + " wait --for=condition=ready pod -l app=kiali -n istio-system"
-			out, err4 := exec.Command("bash", "-c", waitCmd).Output()
+	return wait.PollImmediate(time.Second*5, time.Minute*2, func() (bool, error) {
+		log.Debug("Waiting for kiali to be ready")
+		pods, err := kubeClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
+		if err != nil {
+			return false, err
+		}
 
-			log.Debugf("Kiali pod ready after restart %s", out)
-			// We need this because even if the pod is really the application is not responding yet
-			time.Sleep(10 * time.Second)
-
-			if err4 != nil {
-				log.Errorf("Error waiting for pod %s ", err4.Error())
+		for _, pod := range pods.Items {
+			if pod.Name == currentKialiPod.Name {
+				log.Debug("Old kiali pod still exists.")
+				return false, nil
+			}
+			for _, condition := range pod.Status.Conditions {
+				if condition.Type == "Ready" && condition.Status == "False" {
+					log.Debug("New kiali pod is not ready.")
+					return false, nil
+				}
 			}
 		}
-	}
+
+		return true, nil
+	})
 }
