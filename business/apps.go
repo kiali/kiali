@@ -166,7 +166,10 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 				IstioSidecar: true,
 				Health:       models.EmptyAppHealth(),
 			}
-			istioConfigList, _ := istioConfigMap[valueApp.cluster]
+			istioConfigList := models.IstioConfigList{}
+			if _, ok := istioConfigMap[valueApp.cluster]; ok {
+				istioConfigList = istioConfigMap[valueApp.cluster]
+			}
 			applabels := make(map[string][]string)
 			svcReferences := make([]*models.IstioValidationKey, 0)
 			for _, srv := range valueApp.Services {
