@@ -242,7 +242,9 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
   render() {
     const workload = this.props.workload;
     const pods = workload?.pods || [];
-    const istioConfigItems = this.state.workloadIstioConfig ? toIstioItems(this.state.workloadIstioConfig, '') : [];
+    const istioConfigItems = this.state.workloadIstioConfig
+      ? toIstioItems(this.state.workloadIstioConfig, workload?.cluster || '')
+      : [];
     // Helper to iterate at same time on workloadIstioConfig resources and validations
     const wkIstioTypes = [
       { field: 'gateways', validation: 'gateway' },
