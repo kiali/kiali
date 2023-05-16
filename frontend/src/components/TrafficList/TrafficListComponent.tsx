@@ -17,6 +17,7 @@ import { createTooltipIcon, KialiIcon } from 'config/KialiIcon';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
+import { isMultiCluster } from 'config';
 
 export interface TrafficListItem {
   direction: TrafficDirection;
@@ -27,6 +28,7 @@ export interface TrafficListItem {
   mTLS?: number;
   trafficRate: string;
   trafficPercentSuccess: string;
+  cluster?: string;
 }
 
 type ReduxProps = {
@@ -40,31 +42,42 @@ type TrafficListComponentProps = ReduxProps &
 
 type TrafficListComponentState = FilterComponent.State<TrafficListItem>;
 
-const columns = [
-  {
-    title: 'Status',
-    transforms: [sortable, cellWidth(15)]
-  },
-  {
-    title: 'Name',
-    transforms: [sortable, cellWidth(30)]
-  },
-  {
-    title: 'Rate',
-    transforms: [sortable, cellWidth(10)]
-  },
-  {
-    title: 'Percent Success',
-    transforms: [sortable, cellWidth(20)]
-  },
-  {
-    title: 'Protocol',
-    transforms: [sortable, cellWidth(15)]
-  },
-  {
-    title: 'Actions'
+const columns = (isMultiCluster: boolean): any[] => {
+  const cols = [
+    {
+      title: 'Status',
+      transforms: [sortable, cellWidth(15)]
+    },
+    {
+      title: 'Name',
+      transforms: [sortable, cellWidth(30)]
+    },
+    {
+      title: 'Rate',
+      transforms: [sortable, cellWidth(10)]
+    },
+    {
+      title: 'Percent Success',
+      transforms: [sortable, cellWidth(20)]
+    },
+    {
+      title: 'Protocol',
+      transforms: [sortable, cellWidth(15)]
+    },
+    {
+      title: 'Actions'
+    }
+  ];
+
+  if (isMultiCluster) {
+    cols.splice(2, 0, {
+      title: 'Cluster',
+      transforms: [sortable, cellWidth(15)]
+    });
   }
-];
+
+  return cols;
+};
 
 function LockIcon(props) {
   const msg = props.mTLS ? props.mTLS + ' % of mTLS traffic' : 'mTLS is disabled';
@@ -112,6 +125,7 @@ class TrafficListComponent extends FilterComponent.Component<
   }
 
   render() {
+    const cols = columns(isMultiCluster());
     const inboundRows = this.rows('inbound');
     const outboundRows = this.rows('outbound');
     const hasInbound = inboundRows.length > 0;
@@ -119,6 +133,7 @@ class TrafficListComponent extends FilterComponent.Component<
     const sortIndex = sortFields.findIndex(sf => sf.id === this.props.currentSortField.id);
     const sortDirection = this.props.isSortAscending ? SortByDirection.asc : SortByDirection.desc;
     const sortBy = { index: sortIndex, direction: sortDirection };
+
     return (
       <>
         <div className={containerPadding}>
@@ -126,7 +141,7 @@ class TrafficListComponent extends FilterComponent.Component<
             {hasInbound ? '' : 'No '} Inbound Traffic
           </Title>
           {hasInbound && (
-            <Table aria-label="Sortable Table" cells={columns} onSort={this.onSort} rows={inboundRows} sortBy={sortBy}>
+            <Table aria-label="Sortable Table" cells={cols} onSort={this.onSort} rows={inboundRows} sortBy={sortBy}>
               <TableHeader />
               <TableBody />
             </Table>
@@ -137,7 +152,7 @@ class TrafficListComponent extends FilterComponent.Component<
             {hasOutbound ? '' : 'No '} Outbound Traffic
           </Title>
           {hasOutbound && (
-            <Table aria-label="Sortable Table" cells={columns} onSort={this.onSort} rows={outboundRows} sortBy={sortBy}>
+            <Table aria-label="Sortable Table" cells={cols} onSort={this.onSort} rows={outboundRows} sortBy={sortBy}>
               <TableHeader />
               <TableBody />
             </Table>
@@ -192,6 +207,7 @@ class TrafficListComponent extends FilterComponent.Component<
         protocol: (ti.traffic.protocol || 'N/A').toUpperCase(),
         mTLS: ti.mTLS,
         healthStatus: this.getHealthStatus(ti),
+        cluster: ti.node.cluster,
         ...this.getTraffic(ti.traffic)
       };
       return item;
@@ -244,7 +260,8 @@ class TrafficListComponent extends FilterComponent.Component<
       .map((item, i) => {
         const name = item.node.name;
         const links = this.getLinks(item);
-        return {
+
+        var irow: IRow = {
           cells: [
             <>
               <Tooltip
@@ -313,6 +330,21 @@ class TrafficListComponent extends FilterComponent.Component<
             </>
           ]
         };
+
+        if (isMultiCluster()) {
+          if (irow.cells) {
+            irow.cells.splice(
+              2,
+              0,
+              <>
+                <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} />
+                {item.cluster}
+              </>
+            );
+          }
+        }
+
+        return irow;
       });
   };
 
