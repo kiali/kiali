@@ -34,7 +34,6 @@ type WorkloadAndNamespace = {
   pod: string;
   workload: string;
   namespace: string;
-  cluster: string;
 };
 export const getWorkloadFromSpan = (span: Span): WorkloadAndNamespace | undefined => {
   const nodeKV = span.tags.find(tag => tag.key === 'node_id');
@@ -48,7 +47,7 @@ export const getWorkloadFromSpan = (span: Span): WorkloadAndNamespace | undefine
     const podWithNamespace = parts[2];
     const nsIdx = podWithNamespace.lastIndexOf('.');
     if (nsIdx >= 0) {
-      return extractWorkloadFromPod(podWithNamespace.substring(0, nsIdx), podWithNamespace.substring(nsIdx + 1), '');
+      return extractWorkloadFromPod(podWithNamespace.substring(0, nsIdx), podWithNamespace.substring(nsIdx + 1));
     }
     return undefined;
   }
@@ -56,20 +55,19 @@ export const getWorkloadFromSpan = (span: Span): WorkloadAndNamespace | undefine
   const hostnameKV = span.process.tags.find(tag => tag.key === 'hostname');
   if (hostnameKV) {
     const svcNs = span.process.serviceName.split('.');
-    return extractWorkloadFromPod(hostnameKV.value, svcNs.length > 1 ? svcNs[1] : '', '');
+    return extractWorkloadFromPod(hostnameKV.value, svcNs.length > 1 ? svcNs[1] : '');
   }
   return undefined;
 };
 
 const replicasetFromPodRegex = /^([a-z0-9-.]+)-[a-z0-9]+$/;
-const extractWorkloadFromPod = (pod: string, ns: string, cluster: string): WorkloadAndNamespace | undefined => {
+const extractWorkloadFromPod = (pod: string, ns: string): WorkloadAndNamespace | undefined => {
   const result = replicasetFromPodRegex.exec(pod);
   if (result && result.length === 2) {
     return {
       pod: pod,
       workload: adjustWorkloadNameFromReplicaset(result[1]),
-      namespace: ns,
-      cluster: cluster
+      namespace: ns
     };
   }
   return undefined;
