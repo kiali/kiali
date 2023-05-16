@@ -394,7 +394,6 @@ export class GraphStyles {
         newContent.unshift({ text: 'error' });
     }
 
-    const contentText = content.join('<br/>');
     let contentClasses = `${contentDefault}`;
 
     // The final label...
@@ -465,7 +464,7 @@ export class GraphStyles {
       }</div>`;
       contentDivs = `${contentDivs}${contentDiv}`;
     });
-    console.log(`${contentText}`);
+
     const contentSpan = `<div class="${contentClasses}" style="${contentStyle}">${contentDivs}${htmlHosts}</div>`;
     return `<div class="${labelDefault}" style="${labelStyle}">${badges}${contentSpan}</div>`;
   }
