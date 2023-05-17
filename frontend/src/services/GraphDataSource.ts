@@ -267,6 +267,10 @@ export default class GraphDataSource {
       }
     });
 
+    if (fetchParams.node?.cluster) {
+      restParams.cluster = fetchParams.node.cluster;
+    }
+
     this._isLoading = true;
     this._isError = false;
 
