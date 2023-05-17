@@ -265,7 +265,7 @@ var checkDescriptors = map[string]IstioCheck{
 		Severity: WarningSeverity,
 	},
 	"serviceentries.workloadentries.addressmatch": {
-		Code:     "KIA1301",
+		Code:     "KIA1201",
 		Message:  "Missing one or more addresses from matching WorkloadEntries",
 		Severity: WarningSeverity,
 	},
@@ -320,7 +320,7 @@ var checkDescriptors = map[string]IstioCheck{
 		Severity: WarningSeverity,
 	},
 	"workload.authorizationpolicy.needstobecovered": {
-		Code:     "KIA1201",
+		Code:     "KIA1301",
 		Message:  "This workload is not covered by any authorization policy",
 		Severity: WarningSeverity,
 	},
