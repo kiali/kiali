@@ -517,6 +517,7 @@ export default class SummaryPanelNamespaceBox extends React.Component<
   private updateCharts = () => {
     const props: SummaryPanelPropType = this.props;
     const namespace = props.data.summaryTarget.data(CyNode.namespace);
+    const cluster = props.data.summaryTarget.data(CyNode.cluster);
 
     if (namespace === UNKNOWN) {
       this.setState({
@@ -559,7 +560,8 @@ export default class SummaryPanelNamespaceBox extends React.Component<
         queryTime: props.queryTime,
         rateInterval: props.rateInterval,
         reporter: 'destination',
-        step: props.step
+        step: props.step,
+        cluster: cluster
       } as IstioMetricsOptions);
       promiseOut = API.getNamespaceMetrics(namespace, {
         byLabels: ['request_protocol'], // ignored by prom if it doesn't exist
@@ -569,7 +571,8 @@ export default class SummaryPanelNamespaceBox extends React.Component<
         queryTime: props.queryTime,
         rateInterval: props.rateInterval,
         reporter: 'source',
-        step: props.step
+        step: props.step,
+        cluster: cluster
       } as IstioMetricsOptions);
     }
 
