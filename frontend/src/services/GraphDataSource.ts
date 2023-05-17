@@ -267,7 +267,7 @@ export default class GraphDataSource {
       }
     });
 
-    if (fetchParams.node && fetchParams.node.cluster) {
+    if (fetchParams.node?.cluster) {
       restParams.cluster = fetchParams.node.cluster;
     }
 
