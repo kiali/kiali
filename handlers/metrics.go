@@ -174,7 +174,8 @@ func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 		return
 	}
 
-	params := models.IstioMetricsQuery{Namespace: namespace}
+	params := models.IstioMetricsQuery{Cluster: clusterNameFromQuery(r.URL.Query()), Namespace: namespace}
+
 	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())

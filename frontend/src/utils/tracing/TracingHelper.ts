@@ -30,7 +30,11 @@ export const getTimeRangeMicros = () => {
   };
 };
 
-type WorkloadAndNamespace = { pod: string; workload: string; namespace: string };
+type WorkloadAndNamespace = {
+  pod: string;
+  workload: string;
+  namespace: string;
+};
 export const getWorkloadFromSpan = (span: Span): WorkloadAndNamespace | undefined => {
   const nodeKV = span.tags.find(tag => tag.key === 'node_id');
   if (nodeKV) {

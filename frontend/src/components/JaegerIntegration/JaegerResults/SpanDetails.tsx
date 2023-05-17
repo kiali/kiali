@@ -12,6 +12,7 @@ import { TraceLabels } from './TraceLabels';
 interface Props {
   items: RichSpanData[];
   namespace: string;
+  cluster: string;
   target: string;
   externalURL?: string;
 }
@@ -42,7 +43,12 @@ export class SpanDetails extends React.Component<Props, State> {
               oneline={true}
             />
           </StatefulFilters>
-          <SpanTable items={filteredItems} namespace={this.props.namespace} externalURL={this.props.externalURL} />
+          <SpanTable
+            items={filteredItems}
+            namespace={this.props.namespace}
+            externalURL={this.props.externalURL}
+            cluster={this.props.cluster}
+          />
         </CardBody>
       </Card>
     );

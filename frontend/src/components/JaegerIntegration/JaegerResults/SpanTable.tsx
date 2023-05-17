@@ -56,6 +56,7 @@ type Props = ReduxProps & {
   externalURL?: string;
   items: RichSpanData[];
   namespace: string;
+  cluster: string;
 };
 
 interface State {

@@ -30,8 +30,8 @@ import { HeatMap } from 'components/HeatMap/HeatMap';
 import { formatDuration, sameSpans } from 'utils/tracing/TracingHelper';
 
 type ReduxProps = {
-  loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) => void;
-  setTraceId: (traceId?: string) => void;
+  loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean, cluster: string) => void;
+  setTraceId: (cluster: string, traceId?: string) => void;
 };
 
 type Props = ReduxProps & {
@@ -43,6 +43,7 @@ type Props = ReduxProps & {
   target: string;
   targetKind: TargetKind;
   trace?: JaegerTrace;
+  cluster: string;
 };
 
 interface State {}
@@ -52,10 +53,10 @@ class TraceDetails extends React.Component<Props, State> {
     super(props);
     const urlTrace = getTraceId();
     if (urlTrace && urlTrace !== props.trace?.traceID) {
-      props.setTraceId(urlTrace);
+      props.setTraceId(this.props.cluster, urlTrace);
     } else if (!urlTrace && props.trace) {
       // Remove old stored selected trace
-      props.setTraceId(undefined);
+      props.setTraceId(this.props.cluster, undefined);
     }
     this.state = { completeMetricsStats: false };
   }
@@ -74,7 +75,7 @@ class TraceDetails extends React.Component<Props, State> {
 
   private fetchComparisonMetrics(spans: RichSpanData[]) {
     const queries = buildQueriesFromSpans(spans, false);
-    this.props.loadMetricsStats(queries, false);
+    this.props.loadMetricsStats(queries, false, this.props.cluster);
   }
 
   private getGraphURL = (traceID: string) => {
@@ -264,7 +265,7 @@ const mapStateToProps = (state: KialiAppState) => {
 };
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
-  setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.setTraceId(traceId)),
+  setTraceId: (cluster: string, traceId?: string) => dispatch(JaegerThunkActions.setTraceId(cluster, traceId)),
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) =>
     dispatch(MetricsStatsThunkActions.load(queries, isCompact))
 });

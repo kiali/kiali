@@ -50,7 +50,7 @@ export class TracesFetcher {
       .then(response => {
         const newTraces = response.data.data
           ? (response.data.data
-              .map(trace => transformTraceData(trace))
+              .map(trace => transformTraceData(trace, o.cluster ? o.cluster : ''))
               .filter(trace => trace !== null) as JaegerTrace[])
           : [];
         traces = traces

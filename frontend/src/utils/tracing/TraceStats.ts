@@ -97,7 +97,8 @@ export const buildQueriesFromSpans = (items: RichSpanData[], isCompact: boolean)
         target: {
           namespace: item.namespace,
           name: name,
-          kind: statsCompareKind
+          kind: statsCompareKind,
+          cluster: item.cluster
         }
       };
       return (isCompact ? compactStatsIntervals : statsIntervals).map(interval => ({ ...query, interval: interval }));
@@ -150,7 +151,8 @@ export const getSpanStats = (
     const target = {
       namespace: item.namespace,
       name: statsCompareKind === 'app' ? item.app : item.workload!,
-      kind: statsCompareKind
+      kind: statsCompareKind,
+      cluster: item.cluster
     };
     const key = genStatsKey(target, statsPerPeer ? info.peer : undefined, info.direction!, interval);
     if (key) {

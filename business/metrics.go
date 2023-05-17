@@ -245,6 +245,9 @@ func createStatsMetricsLabelsBuilder(q *models.MetricsStatsQuery) *MetricsLabels
 			lb.PeerService(q.PeerTarget.Name, q.PeerTarget.Namespace)
 		}
 	}
+	if q.Target.Cluster != "" {
+		lb.Cluster(q.Target.Cluster)
+	}
 	return lb
 }
 

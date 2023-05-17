@@ -775,12 +775,8 @@ export const getIstioPermissions = (namespaces: string[], cluster?: string) => {
   return newRequest<IstioPermissions>(HTTP_VERBS.GET, urls.istioPermissions, queryParams, {});
 };
 
-export const getMetricsStats = (queries: MetricsStatsQuery[], cluster?: string) => {
-  const queryParams: any = {};
-  if (cluster) {
-    queryParams.cluster = cluster;
-  }
-  return newRequest<MetricsStatsResult>(HTTP_VERBS.POST, urls.metricsStats, queryParams, { queries: queries });
+export const getMetricsStats = (queries: MetricsStatsQuery[]) => {
+  return newRequest<MetricsStatsResult>(HTTP_VERBS.POST, urls.metricsStats, {}, { queries: queries });
 };
 
 export const getClusters = () => {

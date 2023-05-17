@@ -365,7 +365,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
-  close: () => dispatch(JaegerThunkActions.setTraceId(undefined)),
+  close: () => dispatch(JaegerThunkActions.setTraceId('', undefined)),
   setNode: bindActionCreators(GraphActions.setNode, dispatch)
 });
 

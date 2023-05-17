@@ -150,7 +150,8 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
       target: {
         namespace: this.props.namespace,
         name: this.props.target,
-        kind: this.props.targetKind
+        kind: this.props.targetKind,
+        cluster: this.props.cluster
       },
       interval: '1h',
       direction: 'inbound',
@@ -159,7 +160,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
     };
     const queries: MetricsStatsQuery[] =
       this.props.targetKind === 'service' ? [query] : [query, { ...query, direction: 'outbound' }];
-    return API.getMetricsStats(queries, this.props.cluster).then(r => this.percentilesFetched(query, r.data));
+    return API.getMetricsStats(queries).then(r => this.percentilesFetched(query, r.data));
   };
 
   private percentilesFetched = (q: MetricsStatsQuery, r: MetricsStatsResult): Map<string, number> => {
@@ -275,6 +276,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                 traces={this.state.traces}
                 errorFetchTraces={this.state.jaegerErrors}
                 errorTraces={true}
+                cluster={this.props.cluster ? this.props.cluster : ''} // TODO: Test single cluster
               />
             </CardBody>
           </Card>
@@ -297,6 +299,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                     targetKind={this.props.targetKind}
                     jaegerURL={this.props.urlJaeger}
                     otherTraces={this.state.traces}
+                    cluster={this.props.cluster ? this.props.cluster : ''}
                   />
                 </Tab>
                 <Tab eventKey={spansDetailsTab} title="Span Details">
@@ -305,6 +308,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                     target={this.props.target}
                     externalURL={this.props.urlJaeger}
                     items={this.props.selectedTrace.spans}
+                    cluster={this.props.cluster ? this.props.cluster : ''}
                   />
                 </Tab>
               </Tabs>

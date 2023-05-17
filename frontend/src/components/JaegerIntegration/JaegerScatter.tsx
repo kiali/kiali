@@ -24,9 +24,10 @@ interface JaegerScatterProps {
   errorTraces?: boolean;
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) => Promise<any>;
   selectedTrace?: JaegerTrace;
-  setTraceId: (traceId?: string) => void;
+  setTraceId: (cluster: string, traceId?: string) => void;
   showSpansAverage: boolean;
   traces: JaegerTrace[];
+  cluster: string;
 }
 
 const ONE_MILLISECOND = 1000000;
@@ -131,7 +132,7 @@ class JaegerScatter extends React.Component<JaegerScatterProps> {
             fill={true}
             unit="seconds"
             seriesComponent={<ChartScatter />}
-            onClick={dp => this.props.setTraceId(dp.trace.traceID)}
+            onClick={dp => this.props.setTraceId(this.props.cluster, dp.trace.traceID)}
             onTooltipClose={dp => this.onTooltipClose(dp.trace)}
             onTooltipOpen={dp => this.onTooltipOpen(dp.trace)}
             labelComponent={<TraceTooltip />}
@@ -192,7 +193,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) =>
     dispatch(MetricsStatsThunkActions.load(queries, isCompact)),
-  setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.setTraceId(traceId))
+  setTraceId: (cluster: string, traceId?: string) => dispatch(JaegerThunkActions.setTraceId(cluster, traceId))
 });
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(JaegerScatter);
