@@ -16,7 +16,6 @@ import (
 
 	"github.com/nitishm/engarde/pkg/parser"
 	osapps_v1 "github.com/openshift/api/apps/v1"
-	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	core_v1 "k8s.io/api/core/v1"
@@ -24,7 +23,6 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
-	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
@@ -118,14 +116,15 @@ func isWorkloadValid(workloadType string) bool {
 	return knownWorkloadType && isWorkloadIncluded(workloadType)
 }
 
-func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1beta1.AuthorizationPolicy, workloadsPerNamespace map[string]models.WorkloadList) models.IstioValidations {
-	validations := checkers.WorkloadChecker{
-		AuthorizationPolicies: authpolicies,
-		WorkloadsPerNamespace: workloadsPerNamespace,
-	}.Check()
-
-	return validations
-}
+// @TODO do validations per cluster
+//func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1beta1.AuthorizationPolicy, workloadsPerNamespace map[string]models.WorkloadList) models.IstioValidations {
+//	validations := checkers.WorkloadChecker{
+//		AuthorizationPolicies: authpolicies,
+//		WorkloadsPerNamespace: workloadsPerNamespace,
+//	}.Check()
+//
+//	return validations
+//}
 
 // GetWorkloadList is the API handler to fetch the list of workloads in a given namespace.
 func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria WorkloadCriteria) (models.WorkloadList, error) {
@@ -145,7 +144,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		Workloads: []models.WorkloadListItem{},
 	}
 	var ws models.Workloads
-	var authpolicies []*security_v1beta1.AuthorizationPolicy
+	//var authpolicies []*security_v1beta1.AuthorizationPolicy
 	var err error
 
 	nFetches := 1
@@ -176,13 +175,13 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		IncludeRequestAuthentications: true,
 		IncludeSidecars:               true,
 	}
-	var istioConfigList models.IstioConfigList
+	var istioConfigMap models.IstioConfigMap
 
 	if criteria.IncludeIstioResources {
 		go func(ctx context.Context) {
 			defer wg.Done()
 			var err2 error
-			istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigList(ctx, istioConfigCriteria)
+			istioConfigMap, err2 = in.businessLayer.IstioConfig.GetIstioConfigMap(ctx, istioConfigCriteria)
 			if err2 != nil {
 				log.Errorf("Error fetching Istio Config per namespace %s: %s", criteria.Namespace, err2)
 				errChan <- err2
@@ -199,7 +198,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	for _, w := range ws {
 		wItem := &models.WorkloadListItem{Health: *models.EmptyWorkloadHealth()}
 		wItem.ParseWorkload(w)
-		if criteria.IncludeIstioResources {
+		if istioConfigList, ok := istioConfigMap[w.Cluster]; ok && criteria.IncludeIstioResources {
 			wSelector := labels.Set(wItem.Labels).AsSelector().String()
 			wItem.IstioReferences = FilterUniqueIstioReferences(FilterWorkloadReferences(wSelector, istioConfigList))
 		}
@@ -211,12 +210,15 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		}
 		workloadList.Workloads = append(workloadList.Workloads, *wItem)
 	}
-	authpolicies = istioConfigList.AuthorizationPolicies
-	allWorkloads := map[string]models.WorkloadList{}
-	allWorkloads[criteria.Namespace] = *workloadList
-	validations := in.getWorkloadValidations(authpolicies, allWorkloads)
-	validations.StripIgnoredChecks()
-	workloadList.Validations = validations
+	// @TODO validations for workload
+	//if criteria.IncludeValidations {
+	//authpolicies = istioConfigList.AuthorizationPolicies
+	//allWorkloads := map[string]models.WorkloadList{}
+	//allWorkloads[criteria.Namespace] = *workloadList
+	//validations := in.getWorkloadValidations(authpolicies, allWorkloads)
+	//validations.StripIgnoredChecks()
+	//workloadList.Validations = validations
+	//}
 	return *workloadList, nil
 }
 
