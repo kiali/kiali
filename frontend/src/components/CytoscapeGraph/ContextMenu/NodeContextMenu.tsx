@@ -314,7 +314,8 @@ export function NodeContextMenu(props: Props) {
         {renderHeader()}
         <hr style={{ margin: '8px 0 5px 0' }} />
         {menuOptions}
-        {renderWizardsItems()}
+        {(serverConfig.clusterInfo?.name ? linkParams.cluster === serverConfig.clusterInfo?.name : true) &&
+          renderWizardsItems()}
       </div>
     );
   }
@@ -369,24 +370,29 @@ export const getOptions = (node: DecoratedGraphNodeData, jaegerInfo?: JaegerInfo
 const getOptionsFromLinkParams = (linkParams: LinkParams, jaegerInfo?: JaegerInfo): ContextMenuOption[] => {
   let options: ContextMenuOption[] = [];
   const { namespace, type, name, cluster } = linkParams;
-  const detailsPageUrl = `/namespaces/${namespace}/${type}/${name}`;
+  let detailsPageUrl = `/namespaces/${namespace}/${type}/${name}`;
+  let concat = '?';
+  if (cluster) {
+    detailsPageUrl += '?cluster=' + cluster;
+    concat = '&';
+  }
 
   options.push({ text: 'Details', url: detailsPageUrl });
   if (type !== Paths.SERVICEENTRIES) {
-    options.push({ text: 'Traffic', url: `${detailsPageUrl}?tab=traffic` });
+    options.push({ text: 'Traffic', url: `${detailsPageUrl}${concat}tab=traffic` });
     if (type === Paths.WORKLOADS) {
-      options.push({ text: 'Logs', url: `${detailsPageUrl}?tab=logs` });
+      options.push({ text: 'Logs', url: `${detailsPageUrl}${concat}tab=logs` });
     }
     options.push({
       text: 'Inbound Metrics',
-      url: `${detailsPageUrl}?tab=${type === Paths.SERVICES ? 'metrics' : 'in_metrics'}`
+      url: `${detailsPageUrl}${concat}tab=${type === Paths.SERVICES ? 'metrics' : 'in_metrics'}`
     });
     if (type !== Paths.SERVICES) {
-      options.push({ text: 'Outbound Metrics', url: `${detailsPageUrl}?tab=out_metrics` });
+      options.push({ text: 'Outbound Metrics', url: `${detailsPageUrl}${concat}tab=out_metrics` });
     }
     if (type === Paths.APPLICATIONS && jaegerInfo && jaegerInfo.enabled) {
       if (jaegerInfo.integration) {
-        options.push({ text: 'Traces', url: `${detailsPageUrl}?tab=traces` });
+        options.push({ text: 'Traces', url: `${detailsPageUrl}${concat}tab=traces` });
       } else if (jaegerInfo.url) {
         options.push({
           text: 'Show Traces',
@@ -394,24 +400,6 @@ const getOptionsFromLinkParams = (linkParams: LinkParams, jaegerInfo?: JaegerInf
           external: true,
           target: '_blank'
         });
-      }
-    }
-  }
-
-  if (serverConfig.clusterInfo?.name && cluster !== serverConfig.clusterInfo.name) {
-    const externalClusterInfo = serverConfig.clusters[cluster];
-    const kialiInfo = externalClusterInfo?.kialiInstances?.find(instance => instance.url.length !== 0);
-    if (kialiInfo === undefined) {
-      options = options.filter(o => o.target === '_blank');
-    } else {
-      const externalKialiUrl = kialiInfo.url.replace(/\/$/g, '') + '/console';
-
-      for (let idx = 0; idx < options.length; idx++) {
-        if (options[idx].target !== '_blank') {
-          options[idx].external = true;
-          options[idx].target = '_blank';
-          options[idx].url = externalKialiUrl + options[idx].url;
-        }
       }
     }
   }
