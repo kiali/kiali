@@ -18,6 +18,7 @@ import { hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
 import DetailDescriptionContainer from '../../components/Details/DetailDescription';
 import { isGateway, isWaypoint } from '../../helpers/LabelFilterHelper';
 import AmbientLabel from '../../components/Ambient/AmbientLabel';
+import { validationKey } from '../../types/IstioConfigList';
 
 type WorkloadDescriptionProps = {
   workload?: Workload;
@@ -160,14 +161,18 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
                 waypoint={this.props.workload.waypointWorkloads?.length > 0 ? true : false}
               />
             )}
-            {this.props.workload && hasMissingAuthPolicy(this.props.workload.name, this.props.workload.validations) && (
-              <MissingAuthPolicy
-                namespace={this.props.namespace}
-                tooltip={true}
-                style={{ marginLeft: '10px' }}
-                text={''}
-              />
-            )}
+            {this.props.workload &&
+              hasMissingAuthPolicy(
+                validationKey(this.props.workload.name, this.props.namespace),
+                this.props.workload.validations
+              ) && (
+                <MissingAuthPolicy
+                  namespace={this.props.namespace}
+                  tooltip={true}
+                  style={{ marginLeft: '10px' }}
+                  text={''}
+                />
+              )}
             {this.props.workload &&
               (!this.props.workload.appLabel || !this.props.workload.versionLabel) &&
               !isWaypoint(this.props.workload.labels) && (
