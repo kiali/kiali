@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
@@ -36,7 +37,7 @@ func NamespaceValidationSummary(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 
-	cluster := clusterNameFromQuery(query)
+	cluster := query.Get("cluster")
 
 	business, err := getBusiness(r)
 	if err != nil {
@@ -46,7 +47,26 @@ func NamespaceValidationSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var validationSummary models.IstioValidationSummary
-	istioConfigValidationResults, errValidations := business.Validations.GetValidations(r.Context(), cluster, namespace, "", "")
+	var istioConfigValidationResults models.IstioValidations
+	var errValidations error
+
+	// If cluster is not set, is because we need a unified validations view (E.g. in the Summary graph)
+	clusters, _ := business.Mesh.GetClusters(r)
+	if len(clusters) == 1 {
+		if cluster == "" {
+			cluster = config.Get().KubernetesConfig.ClusterName
+		}
+		istioConfigValidationResults, errValidations = business.Validations.GetValidations(r.Context(), cluster, namespace, "", "")
+	} else {
+		for _, cl := range clusters {
+			clusterIstioConfigValidationResults, clusterErrValidations := business.Validations.GetValidations(r.Context(), cl.Name, namespace, "", "")
+			if clusterErrValidations == nil || !strings.Contains(clusterErrValidations.Error(), "not found") {
+				// TODO: Merge propertly
+				istioConfigValidationResults = clusterIstioConfigValidationResults
+			}
+		}
+	}
+
 	if errValidations != nil {
 		log.Error(errValidations)
 		RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
