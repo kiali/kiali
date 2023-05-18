@@ -118,7 +118,7 @@ const emptyStateStyle = style({
 });
 
 const cardNamespaceNameNormalStyle = style({
-  display: 'inline-block',
+  display: 'table-footer-group',
   verticalAlign: 'middle'
 });
 
@@ -128,9 +128,9 @@ const cardNamespaceNameNormalStyle = style({
 const NS_LONG = 20;
 
 const cardNamespaceNameLongStyle = style({
-  display: 'inline-block',
-  maxWidth: 'calc(100% - 75px)',
   overflow: 'hidden',
+  display: 'block',
+  maxWidth: 'calc(100% - 75px)',
   textOverflow: 'ellipsis',
   verticalAlign: 'middle',
   whiteSpace: 'nowrap'
@@ -950,7 +950,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                         }
                       >
                         <CardHeader>
-                          <CardHeaderMain>
+                          <CardHeaderMain style={{ width: '85%' }}>
                             <Title headingLevel="h5" size={TitleSizes.lg}>
                               <span
                                 className={isLongNs ? cardNamespaceNameLongStyle : cardNamespaceNameNormalStyle}
@@ -988,7 +988,9 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                               </span>
                             </Title>
                           </CardHeaderMain>
-                          <CardActions>{namespaceActions[i]}</CardActions>
+                          <CardActions style={{ width: '15%', textAlign: 'right', display: 'block' }}>
+                            {namespaceActions[i]}
+                          </CardActions>
                         </CardHeader>
                         <CardBody>
                           {isMultiCluster() && ns.cluster && (
