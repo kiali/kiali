@@ -49,7 +49,7 @@ type DeploymentConfig struct {
 // PublicConfig is a subset of Kiali configuration that can be exposed to clients to
 // help them interact with the system.
 type PublicConfig struct {
-	AccessibleNamespaces []string                    `json:"accesibleNamespaces,omitempty"`
+	AccessibleNamespaces []string                    `json:"accessibleNamespaces,omitempty"`
 	AuthStrategy         string                      `json:"authStrategy,omitempty"`
 	AmbientEnabled       bool                        `json:"ambientEnabled,omitempty"`
 	ClusterInfo          ClusterInfo                 `json:"clusterInfo,omitempty"`
