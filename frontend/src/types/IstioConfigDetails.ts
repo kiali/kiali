@@ -31,7 +31,7 @@ export interface IstioConfigId {
 
 export interface IstioConfigDetails {
   namespace: Namespace;
-  cluster: string;
+  cluster?: string;
   gateway: Gateway;
   k8sGateway: K8sGateway;
   k8sHTTPRoute: K8sHTTPRoute;

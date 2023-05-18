@@ -228,16 +228,24 @@ export const getAllIstioConfigs = (
 };
 
 export const getIstioConfigDetail = (
-  cluster: string,
   namespace: string,
   objectType: string,
   object: string,
-  validate: boolean
+  validate: boolean,
+  cluster?: string
 ) => {
+  const queryParams: any = {};
+  if (cluster) {
+    queryParams.cluster = cluster;
+  }
+  if (validate) {
+    queryParams.validate = true;
+    queryParams.help = true;
+  }
   return newRequest<IstioConfigDetails>(
     HTTP_VERBS.GET,
     urls.istioConfigDetail(namespace, objectType, object),
-    validate ? { validate: true, help: true, cluster: cluster } : { cluster: cluster },
+    queryParams,
     {}
   );
 };
@@ -376,8 +384,8 @@ export const getCustomDashboard = (ns: string, tpl: string, params: DashboardQue
 
 export const getNamespaceAppHealth = (
   namespace: string,
-  cluster: string,
   duration: DurationInSeconds,
+  cluster?: string,
   queryTime?: TimeInSeconds
 ): Promise<NamespaceAppHealth> => {
   const params: any = {
@@ -407,8 +415,8 @@ export const getNamespaceAppHealth = (
 
 export const getNamespaceServiceHealth = (
   namespace: string,
-  cluster: string,
   duration: DurationInSeconds,
+  cluster?: string,
   queryTime?: TimeInSeconds
 ): Promise<NamespaceServiceHealth> => {
   const params: any = {
@@ -440,8 +448,8 @@ export const getNamespaceServiceHealth = (
 
 export const getNamespaceWorkloadHealth = (
   namespace: string,
-  cluster: string,
   duration: DurationInSeconds,
+  cluster?: string,
   queryTime?: TimeInSeconds
 ): Promise<NamespaceWorkloadHealth> => {
   const params: any = {

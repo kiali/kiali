@@ -24,10 +24,10 @@ interface JaegerScatterProps {
   errorTraces?: boolean;
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) => Promise<any>;
   selectedTrace?: JaegerTrace;
-  setTraceId: (cluster: string, traceId?: string) => void;
+  setTraceId: (cluster?: string, traceId?: string) => void;
   showSpansAverage: boolean;
   traces: JaegerTrace[];
-  cluster: string;
+  cluster?: string;
 }
 
 const ONE_MILLISECOND = 1000000;
@@ -193,7 +193,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) =>
     dispatch(MetricsStatsThunkActions.load(queries, isCompact)),
-  setTraceId: (cluster: string, traceId?: string) => dispatch(JaegerThunkActions.setTraceId(cluster, traceId))
+  setTraceId: (cluster?: string, traceId?: string) => dispatch(JaegerThunkActions.setTraceId(cluster, traceId))
 });
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(JaegerScatter);

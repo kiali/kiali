@@ -36,7 +36,6 @@ import ControlPlaneBadge from 'pages/Overview/ControlPlaneBadge';
 import NamespaceStatuses from 'pages/Overview/NamespaceStatuses';
 import { isGateway, isWaypoint } from '../../helpers/LabelFilterHelper';
 import { KialiIcon } from '../../config/KialiIcon';
-import { HomeClusterName } from '../../types/Common';
 
 // Links
 
@@ -63,7 +62,7 @@ const getLink = (item: TResource, config: Resource, query?: string) => {
 const getIstioLink = (item: TResource) => {
   const type = item['type'];
 
-  return GetIstioObjectUrl(item.name, item.namespace, item.cluster ? item.cluster : HomeClusterName, type);
+  return GetIstioObjectUrl(item.name, item.namespace, type, item.cluster);
 };
 
 // Cells
@@ -123,7 +122,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
               <IstioObjectLink
                 name={ir.name}
                 namespace={ir.namespace || ''}
-                cluster={item.cluster ? item.cluster : HomeClusterName}
+                cluster={item.cluster}
                 type={ir.objectType.toLowerCase()}
               >
                 {ir.name}

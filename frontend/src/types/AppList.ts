@@ -9,7 +9,7 @@ export interface AppList {
 
 export interface AppOverview {
   name: string;
-  cluster: string;
+  cluster?: string;
   istioSidecar: boolean;
   istioAmbient: boolean;
   labels: { [key: string]: string };

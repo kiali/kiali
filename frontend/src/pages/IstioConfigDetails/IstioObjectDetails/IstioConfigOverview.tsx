@@ -29,7 +29,7 @@ import { isMultiCluster, serverConfig } from '../../../config';
 
 interface IstioConfigOverviewProps {
   istioObjectDetails: IstioConfigDetails;
-  cluster: string;
+  cluster?: string;
   istioValidations?: ObjectValidation;
   namespace: string;
   statusMessages: ValidationMessage[];
@@ -114,8 +114,8 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
         GetIstioObjectUrl(
           istioObject.metadata.name,
           istioObject.metadata.namespace,
-          this.props.cluster,
-          istioObject.kind.toLowerCase()
+          istioObject.kind.toLowerCase(),
+          this.props.cluster
         );
     }
 

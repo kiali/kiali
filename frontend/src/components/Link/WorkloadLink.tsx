@@ -7,11 +7,11 @@ import { KioskLink } from './KioskLink';
 type Props = {
   name: string;
   namespace: string;
-  cluster: string;
+  cluster?: string;
   query?: string;
 };
 
-export const getWorkloadLink = (name: string, namespace: string, cluster: string, query?: string): string => {
+export const getWorkloadLink = (name: string, namespace: string, cluster?: string, query?: string): string => {
   let to = '/namespaces/' + namespace + '/' + Paths.WORKLOADS;
 
   to = to + '/' + name;

@@ -383,7 +383,7 @@ export default class GraphDataSource {
     return params;
   };
 
-  public fetchForService = (duration: DurationInSeconds, namespace: string, service: string, cluster: string) => {
+  public fetchForService = (duration: DurationInSeconds, namespace: string, service: string, cluster?: string) => {
     const params = this.fetchForServiceParams(duration, namespace, service, cluster);
     params.showSecurity = true;
     this.fetchGraphData(params);

@@ -22,7 +22,7 @@ import { ResourcePermissions } from './Permissions';
 
 export interface IstioConfigItem {
   namespace: string;
-  cluster: string;
+  cluster?: string;
   type: string;
   name: string;
   creationTimestamp?: string;
@@ -192,7 +192,7 @@ export const filterByConfigValidation = (unfiltered: IstioConfigItem[], configFi
   return filtered;
 };
 
-export const toIstioItems = (istioConfigList: IstioConfigList, cluster: string): IstioConfigItem[] => {
+export const toIstioItems = (istioConfigList: IstioConfigList, cluster?: string): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
 
   const hasValidations = (type: string, name: string, namespace: string) =>
@@ -241,7 +241,11 @@ export const toIstioItems = (istioConfigList: IstioConfigList, cluster: string):
   return istioItems;
 };
 
-export const vsToIstioItems = (cluster: string, vss: VirtualService[], validations: Validations): IstioConfigItem[] => {
+export const vsToIstioItems = (
+  vss: VirtualService[],
+  validations: Validations,
+  cluster?: string
+): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
   const hasValidations = (vKey: string) => validations.virtualservice && validations.virtualservice[vKey];
 
@@ -267,9 +271,9 @@ export const vsToIstioItems = (cluster: string, vss: VirtualService[], validatio
 };
 
 export const drToIstioItems = (
-  cluster: string,
   drs: DestinationRule[],
-  validations: Validations
+  validations: Validations,
+  cluster?: string
 ): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
   const hasValidations = (vKey: string) => validations.destinationrule && validations.destinationrule[vKey];
@@ -296,10 +300,10 @@ export const drToIstioItems = (
 };
 
 export const gwToIstioItems = (
-  cluster: string,
   gws: Gateway[],
   vss: VirtualService[],
-  validations: Validations
+  validations: Validations,
+  cluster?: string
 ): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
   const hasValidations = (vKey: string) => validations.gateway && validations.gateway[vKey];
@@ -339,10 +343,10 @@ export const gwToIstioItems = (
 };
 
 export const k8sGwToIstioItems = (
-  cluster: string,
   gws: K8sGateway[],
   k8srs: K8sHTTPRoute[],
-  validations: Validations
+  validations: Validations,
+  cluster?: string
 ): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
   const hasValidations = (vKey: string) => validations.k8sgateway && validations.k8sgateway[vKey];
@@ -381,7 +385,7 @@ export const k8sGwToIstioItems = (
   return istioItems;
 };
 
-export const seToIstioItems = (cluster: string, see: ServiceEntry[], validations: Validations): IstioConfigItem[] => {
+export const seToIstioItems = (see: ServiceEntry[], validations: Validations, cluster?: string): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
   const hasValidations = (vKey: string) => validations.serviceentry && validations.serviceentry[vKey];
 
@@ -407,9 +411,9 @@ export const seToIstioItems = (cluster: string, see: ServiceEntry[], validations
 };
 
 export const k8sHTTPRouteToIstioItems = (
-  cluster: string,
   routes: K8sHTTPRoute[],
-  validations: Validations
+  validations: Validations,
+  cluster?: string
 ): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
   const hasValidations = (vKey: string) => validations.k8shttproute && validations.k8shttproute[vKey];

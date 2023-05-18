@@ -55,7 +55,6 @@ import RefreshNotifier from '../../components/Refresh/RefreshNotifier';
 import { isParentKiosk } from '../../components/Kiosk/KioskActions';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
-import { HomeClusterName } from '../../types/Common';
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
@@ -70,7 +69,7 @@ const editorDrawer = style({
 
 interface IstioConfigDetailsState {
   istioObjectDetails?: IstioConfigDetails;
-  cluster: string;
+  cluster?: string;
   istioValidations?: ObjectValidation;
   originalIstioObjectDetails?: IstioConfigDetails;
   originalIstioValidations?: ObjectValidation;
@@ -103,7 +102,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   constructor(props: IstioConfigDetailsProps) {
     super(props);
     const urlParams = new URLSearchParams(this.props.location.search);
-    const cluster = urlParams.get('cluster') || HomeClusterName;
+    const cluster = urlParams.get('cluster') || undefined;
     this.state = {
       cluster: cluster,
       isModified: false,
@@ -139,7 +138,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   };
 
   newIstioObjectPromise = (props: IstioConfigId, validate: boolean) => {
-    return API.getIstioConfigDetail(this.state.cluster, props.namespace, props.objectType, props.object, validate);
+    return API.getIstioConfigDetail(props.namespace, props.objectType, props.object, validate, this.state.cluster);
   };
 
   fetchIstioObjectDetailsFromProps = (props: IstioConfigId) => {

@@ -21,7 +21,7 @@ type ReduxProps = {
 type ReferenceIstioObjectProps = {
   name: string;
   namespace: string;
-  cluster: string;
+  cluster?: string;
   type: string;
   subType?: string;
   query?: string;
@@ -35,8 +35,8 @@ type IstioObjectProps = ReduxProps &
 export const GetIstioObjectUrl = (
   name: string,
   namespace: string,
-  cluster: string,
   type: string,
+  cluster?: string,
   query?: string
 ): string => {
   const istioType = IstioTypes[type];
@@ -96,8 +96,8 @@ export class ReferenceIstioObjectLink extends React.Component<ReferenceIstioObje
 
 class IstioObjectLink extends React.Component<IstioObjectProps> {
   render() {
-    const { name, namespace, cluster, type, query } = this.props;
-    const href = GetIstioObjectUrl(name, namespace, cluster, type, query);
+    const { name, namespace, type, cluster, query } = this.props;
+    const href = GetIstioObjectUrl(name, namespace, type, cluster, query);
     return isParentKiosk(this.props.kiosk) ? (
       <Link
         to={''}

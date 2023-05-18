@@ -28,7 +28,6 @@ import { activeNamespacesSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import DefaultSecondaryMasthead from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { isMultiCluster, serverConfig } from '../../config';
-import { HomeClusterName } from '../../types/Common';
 
 interface IstioConfigListPageState extends FilterComponent.State<IstioConfigItem> {}
 interface IstioConfigListPageProps extends FilterComponent.Props<IstioConfigItem> {
@@ -105,17 +104,16 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
       if (isMultiCluster()) {
         for (let cluster in serverConfig.clusters) {
           this.fetchConfigs(
-            cluster,
             namespacesSelected,
             istioTypeFilters,
             istioNameFilters,
             configValidationFilters,
-            activeToggles
+            activeToggles,
+            cluster
           );
         }
       } else {
         this.fetchConfigs(
-          HomeClusterName,
           namespacesSelected,
           istioTypeFilters,
           istioNameFilters,
@@ -129,14 +127,14 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
   }
 
   fetchConfigs(
-    cluster: string,
     namespaces: string[],
     istioTypeFilters: string[],
     istioNameFilters: string[],
     configValidationFilters: string[],
-    toggles: ActiveTogglesInfo
+    toggles: ActiveTogglesInfo,
+    cluster?: string
   ) {
-    const configsPromises = this.fetchIstioConfigs(cluster, namespaces, istioTypeFilters, istioNameFilters, toggles);
+    const configsPromises = this.fetchIstioConfigs(namespaces, istioTypeFilters, istioNameFilters, toggles, cluster);
 
     configsPromises
       .then(items =>
@@ -167,11 +165,11 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
 
   // Fetch the Istio configs, apply filters and map them into flattened list items
   fetchIstioConfigs(
-    cluster: string,
     namespaces: string[],
     typeFilters: string[],
     istioNameFilters: string[],
-    toggles: ActiveTogglesInfo
+    toggles: ActiveTogglesInfo,
+    cluster?: string
   ) {
     let validate = false;
     if (this.props.istioAPIEnabled) {

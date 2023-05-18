@@ -65,7 +65,7 @@ export const WorkloadType = {
 
 export interface WorkloadOverview {
   name: string;
-  cluster: string;
+  cluster?: string;
   type: string;
   istioSidecar: boolean;
   istioAmbient: boolean;

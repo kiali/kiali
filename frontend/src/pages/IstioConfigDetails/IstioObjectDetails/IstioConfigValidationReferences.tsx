@@ -5,7 +5,7 @@ import { ObjectReference } from 'types/IstioObjects';
 
 interface IstioConfigReferencesProps {
   objectReferences: ObjectReference[];
-  cluster: string;
+  cluster?: string;
 }
 
 class IstioConfigValidationReferences extends React.Component<IstioConfigReferencesProps> {

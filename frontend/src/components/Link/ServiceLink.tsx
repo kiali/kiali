@@ -8,11 +8,11 @@ import { isMultiCluster } from '../../config';
 type Props = {
   name: string;
   namespace: string;
-  cluster: string;
+  cluster?: string;
   query?: string;
 };
 
-export const getServiceURL = (name: string, namespace: string, cluster: string, query?: string): string => {
+export const getServiceURL = (name: string, namespace: string, cluster?: string, query?: string): string => {
   let to = '/namespaces/' + namespace + '/' + Paths.SERVICES;
 
   to = to + '/' + name;
