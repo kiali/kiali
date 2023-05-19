@@ -240,7 +240,7 @@ func restartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, names
 		return err
 	}
 
-	return wait.PollImmediate(time.Second*10, time.Minute*2, func() (bool, error) {
+	return wait.PollImmediate(time.Second*5, time.Minute*4, func() (bool, error) {
 		log.Debug("Waiting for kiali to be ready")
 		pods, err := kubeClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
 		if err != nil {
