@@ -15,6 +15,7 @@ type K8sHTTPRouteChecker struct {
 	K8sGateways      []*k8s_networking_v1beta1.Gateway
 	Namespaces       models.Namespaces
 	RegistryServices []*kubernetes.RegistryService
+	Cluster          string
 }
 
 // Check runs checks for the all namespaces actions as well as for the single namespace validations
@@ -40,7 +41,7 @@ func (in K8sHTTPRouteChecker) runIndividualChecks() models.IstioValidations {
 }
 
 func (in K8sHTTPRouteChecker) runChecks(rt *k8s_networking_v1beta1.HTTPRoute, gatewayNames map[string]struct{}) models.IstioValidations {
-	key, validations := EmptyValidValidation(rt.Name, rt.Namespace, K8sHTTPRouteCheckerType)
+	key, validations := EmptyValidValidation(rt.Name, rt.Namespace, K8sHTTPRouteCheckerType, in.Cluster)
 
 	enabledCheckers := []Checker{
 		k8shttproutes.NoK8sGatewayChecker{

@@ -38,7 +38,7 @@ func TestIstioValidationKeyMarshal(t *testing.T) {
 	}
 	b, err := json.Marshal(validationKey)
 	assert.NoError(err)
-	assert.Equal(string(b), `{"objectType":"virtualservice","name":"foo","namespace":""}`)
+	assert.Equal(string(b), `{"objectType":"virtualservice","name":"foo","namespace":"","cluster":""}`)
 }
 
 func TestSummarizeValidations(t *testing.T) {

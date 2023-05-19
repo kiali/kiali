@@ -12,6 +12,7 @@ const VirtualCheckerType = "virtualservice"
 
 type VirtualServiceChecker struct {
 	Namespaces       models.Namespaces
+	Cluster          string
 	VirtualServices  []*networking_v1beta1.VirtualService
 	DestinationRules []*networking_v1beta1.DestinationRule
 }
@@ -58,7 +59,7 @@ func (in VirtualServiceChecker) runGroupChecks() models.IstioValidations {
 // runChecks runs all the individual checks for a single virtual service and appends the result into validations.
 func (in VirtualServiceChecker) runChecks(virtualService *networking_v1beta1.VirtualService) models.IstioValidations {
 	virtualServiceName := virtualService.Name
-	key, rrValidation := EmptyValidValidation(virtualServiceName, virtualService.Namespace, VirtualCheckerType)
+	key, rrValidation := EmptyValidValidation(virtualServiceName, virtualService.Namespace, VirtualCheckerType, in.Cluster)
 
 	enabledCheckers := []Checker{
 		virtualservices.RouteChecker{VirtualService: virtualService, Namespaces: in.Namespaces.GetNames()},

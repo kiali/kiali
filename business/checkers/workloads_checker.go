@@ -12,6 +12,7 @@ const WorkloadCheckerType = "workload"
 type WorkloadChecker struct {
 	AuthorizationPolicies []*security_v1beta1.AuthorizationPolicy
 	WorkloadsPerNamespace map[string]models.WorkloadList
+	Cluster               string
 }
 
 func (w WorkloadChecker) Check() models.IstioValidations {
@@ -29,7 +30,7 @@ func (w WorkloadChecker) Check() models.IstioValidations {
 // runChecks runs all the individual checks for a single workload and appends the result into validations.
 func (w WorkloadChecker) runChecks(workload models.WorkloadListItem, namespace string) models.IstioValidations {
 	wlName := workload.Name
-	key, rrValidation := EmptyValidValidation(wlName, namespace, WorkloadCheckerType)
+	key, rrValidation := EmptyValidValidation(wlName, namespace, WorkloadCheckerType, w.Cluster)
 
 	enabledCheckers := []Checker{
 		workloads.UncoveredWorkloadChecker{Workload: workload, Namespace: namespace, AuthorizationPolicies: w.AuthorizationPolicies},

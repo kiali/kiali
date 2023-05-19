@@ -50,7 +50,7 @@ func TestAllIstioObjectWithServices(t *testing.T) {
 
 	assert.NotEmpty(vals)
 	assert.NotEmpty(vals[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}])
-	assert.NotEmpty(vals[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}])
+	assert.NotEmpty(vals[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr", Cluster: ""}])
 	assert.True(vals[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
 	assert.True(vals[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}].Valid)
 }

@@ -17,6 +17,7 @@ type SidecarChecker struct {
 	Namespaces            models.Namespaces
 	WorkloadsPerNamespace map[string]models.WorkloadList
 	RegistryServices      []*kubernetes.RegistryService
+	Cluster               string
 }
 
 func (s SidecarChecker) Check() models.IstioValidations {
@@ -54,7 +55,7 @@ func (s SidecarChecker) runIndividualChecks() models.IstioValidations {
 
 func (s SidecarChecker) runChecks(sidecar *networking_v1beta1.Sidecar) models.IstioValidations {
 	policyName := sidecar.Name
-	key, rrValidation := EmptyValidValidation(policyName, sidecar.Namespace, SidecarCheckerType)
+	key, rrValidation := EmptyValidValidation(policyName, sidecar.Namespace, SidecarCheckerType, s.Cluster)
 	serviceHosts := kubernetes.ServiceEntryHostnames(s.ServiceEntries)
 	selectorLabels := make(map[string]string)
 	if sidecar.Spec.WorkloadSelector != nil {

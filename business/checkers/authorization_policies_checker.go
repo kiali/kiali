@@ -25,6 +25,7 @@ type AuthorizationPolicyChecker struct {
 	VirtualServices       []*networking_v1beta1.VirtualService
 	RegistryServices      []*kubernetes.RegistryService
 	PolicyAllowAny        bool
+	Cluster               string
 }
 
 func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
@@ -48,7 +49,7 @@ func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
 // runChecks runs all the individual checks for a single mesh policy and appends the result into validations.
 func (a AuthorizationPolicyChecker) runChecks(authPolicy *security_v1beta.AuthorizationPolicy) models.IstioValidations {
 	policyName := authPolicy.Name
-	key, rrValidation := EmptyValidValidation(policyName, authPolicy.Namespace, AuthorizationPolicyCheckerType)
+	key, rrValidation := EmptyValidValidation(policyName, authPolicy.Namespace, AuthorizationPolicyCheckerType, a.Cluster)
 	serviceHosts := kubernetes.ServiceEntryHostnames(a.ServiceEntries)
 	matchLabels := make(map[string]string)
 	if authPolicy.Spec.Selector != nil {
