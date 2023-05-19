@@ -11,6 +11,7 @@ const K8sGatewayCheckerType = "k8sgateway"
 
 type K8sGatewayChecker struct {
 	K8sGateways []*k8s_networking_v1beta1.Gateway
+	Cluster     string
 }
 
 // Check runs checks for the all namespaces actions as well as for the single namespace validations
@@ -28,7 +29,7 @@ func (g K8sGatewayChecker) Check() models.IstioValidations {
 }
 
 func (g K8sGatewayChecker) runSingleChecks(gw *k8s_networking_v1beta1.Gateway) models.IstioValidations {
-	key, validations := EmptyValidValidation(gw.Name, gw.Namespace, K8sGatewayCheckerType)
+	key, validations := EmptyValidValidation(gw.Name, gw.Namespace, K8sGatewayCheckerType, g.Cluster)
 
 	enabledCheckers := []Checker{
 		k8sgateways.StatusChecker{

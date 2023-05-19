@@ -15,6 +15,7 @@ type IstioValidationKey struct {
 	ObjectType string `json:"objectType"`
 	Name       string `json:"name"`
 	Namespace  string `json:"namespace"`
+	Cluster    string `json:"cluster"`
 }
 
 // IstioValidationSummary represents the number of errors/warnings of a set of Istio Validations.

@@ -16,6 +16,7 @@ type DestinationRulesChecker struct {
 	MTLSDetails      kubernetes.MTLSDetails
 	ServiceEntries   []*networking_v1beta1.ServiceEntry
 	Namespaces       []models.Namespace
+	Cluster          string
 }
 
 func (in DestinationRulesChecker) Check() models.IstioValidations {
@@ -57,7 +58,7 @@ func (in DestinationRulesChecker) runIndividualChecks() models.IstioValidations 
 
 func (in DestinationRulesChecker) runChecks(destinationRule *networking_v1beta1.DestinationRule) models.IstioValidations {
 	destinationRuleName := destinationRule.Name
-	key, rrValidation := EmptyValidValidation(destinationRuleName, destinationRule.Namespace, DestinationRuleCheckerType)
+	key, rrValidation := EmptyValidValidation(destinationRuleName, destinationRule.Namespace, DestinationRuleCheckerType, in.Cluster)
 
 	enabledCheckers := []Checker{
 		destinationrules.DisabledNamespaceWideMTLSChecker{DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails},

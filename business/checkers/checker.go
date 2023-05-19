@@ -11,13 +11,13 @@ type GroupChecker interface {
 }
 
 // EmptyValidValidation returns a stub validation object which can be used by checkers
-func EmptyValidValidations(name, namespace, objectType string) models.IstioValidations {
-	key, emptyValidation := EmptyValidValidation(name, namespace, objectType)
+func EmptyValidValidations(name, namespace, objectType, cluster string) models.IstioValidations {
+	key, emptyValidation := EmptyValidValidation(name, namespace, cluster, objectType)
 	return models.IstioValidations{key: emptyValidation}
 }
 
-func EmptyValidValidation(name, namespace, objectType string) (models.IstioValidationKey, *models.IstioValidation) {
-	key := models.IstioValidationKey{Name: name, Namespace: namespace, ObjectType: objectType}
+func EmptyValidValidation(name, namespace, objectType, cluster string) (models.IstioValidationKey, *models.IstioValidation) {
+	key := models.IstioValidationKey{Name: name, Namespace: namespace, ObjectType: objectType, Cluster: cluster}
 	emptyValidation := &models.IstioValidation{
 		Name:       key.Name,
 		ObjectType: key.ObjectType,

@@ -15,6 +15,7 @@ type ServiceChecker struct {
 	Services    []v1.Service
 	Deployments []apps_v1.Deployment
 	Pods        []core_v1.Pod
+	Cluster     string
 }
 
 func (sc ServiceChecker) Check() models.IstioValidations {
@@ -28,7 +29,7 @@ func (sc ServiceChecker) Check() models.IstioValidations {
 }
 
 func (sc ServiceChecker) runSingleChecks(service v1.Service) models.IstioValidations {
-	key, validations := EmptyValidValidation(service.GetObjectMeta().GetName(), service.GetObjectMeta().GetNamespace(), ServiceCheckerType)
+	key, validations := EmptyValidValidation(service.GetObjectMeta().GetName(), service.GetObjectMeta().GetNamespace(), ServiceCheckerType, sc.Cluster)
 
 	enabledCheckers := []Checker{
 		services.PortMappingChecker{Service: service, Deployments: sc.Deployments, Pods: sc.Pods},

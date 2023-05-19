@@ -13,6 +13,7 @@ type GatewayChecker struct {
 	Gateways              []*networking_v1beta1.Gateway
 	WorkloadsPerNamespace map[string]models.WorkloadList
 	IsGatewayToNamespace  bool
+	Cluster               string
 }
 
 // Check runs checks for the all namespaces actions as well as for the single namespace validations
@@ -30,7 +31,7 @@ func (g GatewayChecker) Check() models.IstioValidations {
 }
 
 func (g GatewayChecker) runSingleChecks(gw *networking_v1beta1.Gateway) models.IstioValidations {
-	key, validations := EmptyValidValidation(gw.Name, gw.Namespace, GatewayCheckerType)
+	key, validations := EmptyValidValidation(gw.Name, gw.Namespace, GatewayCheckerType, g.Cluster)
 
 	enabledCheckers := []Checker{
 		gateways.SelectorChecker{
