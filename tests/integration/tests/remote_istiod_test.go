@@ -240,26 +240,27 @@ func restartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, names
 		return err
 	}
 	time.Sleep(5 * time.Second)
-	return wait.PollImmediate(time.Second*5, time.Minute*4, func() (bool, error) {
+	return wait.PollImmediate(time.Second*5, time.Minute*2, func() (bool, error) {
 		log.Debug("Waiting for kiali to be ready")
 		pods, err := kubeClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
 		if err != nil {
 			return false, err
 		}
 
+		podready := false
 		for _, pod := range pods.Items {
 			if pod.Name == currentKialiPod.Name {
 				log.Debug("Old kiali pod still exists.")
 				return false, nil
 			}
 			for _, condition := range pod.Status.Conditions {
-				if condition.Type == "Ready" && condition.Status == "False" {
+				if condition.Type == "Ready" && condition.Status == "true" {
 					log.Debug("New kiali pod is not ready.")
-					return false, nil
+					podready = true
 				}
 			}
 		}
 
-		return true, nil
+		return podready, nil
 	})
 }
