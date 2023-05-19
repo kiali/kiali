@@ -56,7 +56,6 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, 
 
 	// Ensure the service exists
 	if service != "" {
-		// TODO: Include cluster instead of hard coding home cluster.
 		_, err := in.businessLayer.Svc.GetService(ctx, cluster, namespace, service)
 		if err != nil {
 			if err != nil {

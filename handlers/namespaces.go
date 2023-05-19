@@ -47,7 +47,7 @@ func NamespaceValidationSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var validationSummary models.IstioValidationSummary
-	var istioConfigValidationResults models.IstioValidations
+	istioConfigValidationResults := models.IstioValidations{}
 	var errValidations error
 
 	// If cluster is not set, is because we need a unified validations view (E.g. in the Summary graph)
@@ -59,10 +59,10 @@ func NamespaceValidationSummary(w http.ResponseWriter, r *http.Request) {
 		istioConfigValidationResults, errValidations = business.Validations.GetValidations(r.Context(), cluster, namespace, "", "")
 	} else {
 		for _, cl := range clusters {
-			clusterIstioConfigValidationResults, clusterErrValidations := business.Validations.GetValidations(r.Context(), cl.Name, namespace, "", "")
-			if clusterErrValidations == nil || !strings.Contains(clusterErrValidations.Error(), "not found") {
-				// TODO: Merge propertly
-				istioConfigValidationResults = clusterIstioConfigValidationResults
+			_, errNs := business.Namespace.GetNamespaceByCluster(r.Context(), namespace, cl.Name)
+			if errNs == nil {
+				clusterIstioConfigValidationResults, _ := business.Validations.GetValidations(r.Context(), cl.Name, namespace, "", "")
+				istioConfigValidationResults = istioConfigValidationResults.MergeValidations(clusterIstioConfigValidationResults)
 			}
 		}
 	}
