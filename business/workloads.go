@@ -16,6 +16,7 @@ import (
 
 	"github.com/nitishm/engarde/pkg/parser"
 	osapps_v1 "github.com/openshift/api/apps/v1"
+	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	core_v1 "k8s.io/api/core/v1"
@@ -23,6 +24,7 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
+	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
@@ -117,14 +119,14 @@ func isWorkloadValid(workloadType string) bool {
 }
 
 // @TODO do validations per cluster
-//func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1beta1.AuthorizationPolicy, workloadsPerNamespace map[string]models.WorkloadList) models.IstioValidations {
-//	validations := checkers.WorkloadChecker{
-//		AuthorizationPolicies: authpolicies,
-//		WorkloadsPerNamespace: workloadsPerNamespace,
-//	}.Check()
-//
-//	return validations
-//}
+func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1beta1.AuthorizationPolicy, workloadsPerNamespace map[string]models.WorkloadList) models.IstioValidations {
+	validations := checkers.WorkloadChecker{
+		AuthorizationPolicies: authpolicies,
+		WorkloadsPerNamespace: workloadsPerNamespace,
+	}.Check()
+
+	return validations
+}
 
 // GetWorkloadList is the API handler to fetch the list of workloads in a given namespace.
 func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria WorkloadCriteria) (models.WorkloadList, error) {
@@ -140,8 +142,9 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	defer end()
 
 	workloadList := &models.WorkloadList{
-		Namespace: models.Namespace{Name: criteria.Namespace, CreationTimestamp: time.Time{}},
-		Workloads: []models.WorkloadListItem{},
+		Namespace:   models.Namespace{Name: criteria.Namespace, CreationTimestamp: time.Time{}},
+		Workloads:   []models.WorkloadListItem{},
+		Validations: models.IstioValidations{},
 	}
 	var ws models.Workloads
 	//var authpolicies []*security_v1beta1.AuthorizationPolicy
@@ -210,15 +213,17 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		}
 		workloadList.Workloads = append(workloadList.Workloads, *wItem)
 	}
-	// @TODO validations for workload
-	//if criteria.IncludeValidations {
-	//authpolicies = istioConfigList.AuthorizationPolicies
-	//allWorkloads := map[string]models.WorkloadList{}
-	//allWorkloads[criteria.Namespace] = *workloadList
-	//validations := in.getWorkloadValidations(authpolicies, allWorkloads)
-	//validations.StripIgnoredChecks()
-	//workloadList.Validations = validations
-	//}
+
+	for _, istioConfigList := range istioConfigMap {
+		// @TODO multi cluster validations
+		authpolicies := istioConfigList.AuthorizationPolicies
+		allWorkloads := map[string]models.WorkloadList{}
+		allWorkloads[criteria.Namespace] = *workloadList
+		validations := in.getWorkloadValidations(authpolicies, allWorkloads)
+		validations.StripIgnoredChecks()
+		workloadList.Validations = workloadList.Validations.MergeValidations(validations)
+	}
+
 	return *workloadList, nil
 }
 

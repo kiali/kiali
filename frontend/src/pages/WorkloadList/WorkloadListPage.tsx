@@ -23,6 +23,7 @@ import { hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
 import { WorkloadHealth } from '../../types/Health';
 import RefreshNotifier from '../../components/Refresh/RefreshNotifier';
 import { isMultiCluster } from 'config';
+import { validationKey } from '../../types/IstioConfigList';
 
 type WorkloadListPageState = FilterComponent.State<WorkloadListItem>;
 
@@ -114,7 +115,10 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         }),
         labels: deployment.labels,
         istioReferences: sortIstioReferences(deployment.istioReferences, true),
-        notCoveredAuthPolicy: hasMissingAuthPolicy(deployment.name, data.validations)
+        notCoveredAuthPolicy: hasMissingAuthPolicy(
+          validationKey(deployment.name, data.namespace.name),
+          data.validations
+        )
       }));
     }
     return [];
