@@ -218,7 +218,7 @@ export const nsItem: Renderer<NamespaceInfo> = (ns: NamespaceInfo, _config: Reso
     <td role="gridcell" key={'VirtuaItem_NamespaceItem_' + ns.name} style={{ verticalAlign: 'middle' }}>
       <PFBadge badge={badge} />
       {ns.name}
-      {ns.name === serverConfig.istioNamespace && <ControlPlaneBadge />}
+      {ns.name === serverConfig.istioNamespace && <ControlPlaneBadge cluster={ns.cluster} />}
     </td>
   );
 };

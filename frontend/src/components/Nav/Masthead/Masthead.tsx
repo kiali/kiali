@@ -32,7 +32,7 @@ class MastheadItems extends React.Component {
                 )}
               </FlexItem>
               <FlexItem>
-                <IstioStatus />
+                <IstioStatus cluster={serverConfig.clusterInfo?.name} />
               </FlexItem>
               <FlexItem>
                 <MeshMTLSStatus />

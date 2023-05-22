@@ -171,7 +171,7 @@ func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAC
 	temporaryLayer.App = AppService{prom: prom, userClients: userClients, businessLayer: temporaryLayer}
 	temporaryLayer.Health = HealthService{prom: prom, businessLayer: temporaryLayer, userClients: userClients}
 	temporaryLayer.IstioConfig = IstioConfigService{config: *config.Get(), userClients: userClients, kialiCache: kialiCache, businessLayer: temporaryLayer}
-	temporaryLayer.IstioStatus = IstioStatusService{k8s: userClients[homeClusterName], businessLayer: temporaryLayer}
+	temporaryLayer.IstioStatus = IstioStatusService{userClients: userClients, businessLayer: temporaryLayer}
 	temporaryLayer.IstioCerts = IstioCertsService{k8s: userClients[homeClusterName], businessLayer: temporaryLayer}
 	temporaryLayer.Jaeger = JaegerService{loader: jaegerClient, businessLayer: temporaryLayer}
 	temporaryLayer.k8sClients = userClients

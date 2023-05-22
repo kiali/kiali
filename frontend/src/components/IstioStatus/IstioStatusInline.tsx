@@ -7,7 +7,11 @@ import {
   MinusCircleIcon
 } from '@patternfly/react-icons';
 
-export default function IstioStatusInline() {
+type Props = {
+  cluster?: string;
+};
+
+export default function IstioStatusInline({ cluster }: Props) {
   return (
     <IstioStatus
       icons={{
@@ -16,6 +20,7 @@ export default function IstioStatusInline() {
         InfoIcon: MinusCircleIcon,
         WarningIcon: ExclamationTriangleIcon
       }}
+      cluster={cluster}
     />
   );
 }

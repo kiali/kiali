@@ -37,6 +37,7 @@ type StatusIcons = {
 type Props = ReduxProps & {
   lastRefreshAt: TimeInMilliseconds;
   icons?: StatusIcons;
+  cluster?: string;
 };
 
 const ValidToColor = {
@@ -70,7 +71,7 @@ export class IstioStatus extends React.Component<Props> {
   }
 
   fetchStatus = () => {
-    API.getIstioStatus()
+    API.getIstioStatus(this.props.cluster)
       .then(response => {
         return this.props.setIstioStatus(response.data);
       })
