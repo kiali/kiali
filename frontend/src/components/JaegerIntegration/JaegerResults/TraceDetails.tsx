@@ -30,8 +30,8 @@ import { HeatMap } from 'components/HeatMap/HeatMap';
 import { formatDuration, sameSpans } from 'utils/tracing/TracingHelper';
 
 type ReduxProps = {
-  loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean, cluster: string) => void;
-  setTraceId: (cluster: string, traceId?: string) => void;
+  loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean, cluster?: string) => void;
+  setTraceId: (cluster?: string, traceId?: string) => void;
 };
 
 type Props = ReduxProps & {
@@ -43,7 +43,7 @@ type Props = ReduxProps & {
   target: string;
   targetKind: TargetKind;
   trace?: JaegerTrace;
-  cluster: string;
+  cluster?: string;
 };
 
 interface State {}
@@ -265,7 +265,7 @@ const mapStateToProps = (state: KialiAppState) => {
 };
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
-  setTraceId: (cluster: string, traceId?: string) => dispatch(JaegerThunkActions.setTraceId(cluster, traceId)),
+  setTraceId: (cluster?: string, traceId?: string) => dispatch(JaegerThunkActions.setTraceId(cluster, traceId)),
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) =>
     dispatch(MetricsStatsThunkActions.load(queries, isCompact))
 });

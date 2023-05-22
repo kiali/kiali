@@ -23,7 +23,7 @@ import { KialiDispatch } from '../../types/Redux';
 type ReduxProps = {
   kiosk: string;
   selectedTrace?: JaegerTrace;
-  setTraceId: (cluster: string, traceId?: string) => void;
+  setTraceId: (cluster?: string, traceId?: string) => void;
 };
 
 type Props = ReduxProps & {
@@ -211,7 +211,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
-  setTraceId: (cluster: string, traceId?: string) => dispatch(JaegerThunkActions.setTraceId(cluster, traceId))
+  setTraceId: (cluster?: string, traceId?: string) => dispatch(JaegerThunkActions.setTraceId(cluster, traceId))
 });
 
 const SummaryPanelNodeTracesContainer = connect(mapStateToProps, mapDispatchToProps)(SummaryPanelNodeTraces);

@@ -10,7 +10,6 @@ import { MetricsObjectTypes } from '../../../types/Metrics';
 import MounterMocker from 'services/__mocks__/MounterMocker';
 import { ChartModel, DashboardModel } from 'types/Dashboards';
 import { KialiCrippledFeatures } from 'types/ServerConfig';
-import { HomeClusterName } from '../../../types/Common';
 
 const createMetricChart = (name: string): ChartModel => {
   return {
@@ -109,7 +108,6 @@ describe('Metrics for a service', () => {
                 lastRefreshAt={Date.now()}
                 namespace="ns"
                 object="svc"
-                cluster={HomeClusterName}
                 objectType={MetricsObjectTypes.SERVICE}
                 direction={'inbound'}
               />
@@ -129,7 +127,6 @@ describe('Metrics for a service', () => {
         <IstioMetrics
           namespace="ns"
           object="svc"
-          cluster={HomeClusterName}
           objectType={MetricsObjectTypes.SERVICE}
           direction={'inbound'}
           lastRefreshAt={Date.now()}
@@ -159,7 +156,6 @@ describe('Metrics for a service', () => {
         <IstioMetrics
           namespace="ns"
           object="svc"
-          cluster={HomeClusterName}
           objectType={MetricsObjectTypes.SERVICE}
           direction={'inbound'}
           lastRefreshAt={Date.now()}
@@ -200,7 +196,6 @@ describe('Inbound Metrics for a workload', () => {
               lastRefreshAt={Date.now()}
               namespace="ns"
               object="svc"
-              cluster={HomeClusterName}
               objectType={MetricsObjectTypes.WORKLOAD}
               direction={'inbound'}
             />
@@ -219,7 +214,6 @@ describe('Inbound Metrics for a workload', () => {
         <IstioMetrics
           namespace="ns"
           object="wkd"
-          cluster={HomeClusterName}
           objectType={MetricsObjectTypes.WORKLOAD}
           direction={'inbound'}
           lastRefreshAt={Date.now()}
@@ -249,7 +243,6 @@ describe('Inbound Metrics for a workload', () => {
         <IstioMetrics
           namespace="ns"
           object="wkd"
-          cluster={HomeClusterName}
           objectType={MetricsObjectTypes.WORKLOAD}
           direction={'inbound'}
           lastRefreshAt={Date.now()}

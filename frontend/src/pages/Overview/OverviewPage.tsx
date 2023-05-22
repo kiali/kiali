@@ -362,8 +362,8 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       chunk.map(nsInfo => {
         const healthPromise: Promise<NamespaceAppHealth | NamespaceWorkloadHealth | NamespaceServiceHealth> = apiFunc(
           nsInfo.name,
-          nsInfo.cluster ? nsInfo.cluster : '',
-          duration
+          duration,
+          nsInfo.cluster
         );
         return healthPromise.then(rs => ({ health: rs, nsInfo: nsInfo }));
       })

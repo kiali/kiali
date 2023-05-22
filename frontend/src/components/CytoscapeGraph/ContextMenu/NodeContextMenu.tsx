@@ -65,10 +65,10 @@ const contextMenuItemLink = style({
 });
 
 type Props = NodeContextMenuProps & ReduxProps;
-type LinkParams = { cluster: string; namespace: string; name: string; type: string };
+type LinkParams = { namespace: string; type: string; name: string; cluster?: string };
 
 function getLinkParamsForNode(node: DecoratedGraphNodeData): LinkParams | undefined {
-  const cluster: string = node.cluster;
+  let cluster = node.cluster;
   const namespace: string = node.isServiceEntry ? node.isServiceEntry.namespace : node.namespace;
   let name: string | undefined = undefined;
   let type: string | undefined = undefined;
@@ -98,7 +98,7 @@ function getLinkParamsForNode(node: DecoratedGraphNodeData): LinkParams | undefi
       break;
   }
 
-  return type && name ? { cluster, namespace, type, name } : undefined;
+  return type && name ? { namespace, type, name, cluster } : undefined;
 }
 
 export function NodeContextMenu(props: Props) {

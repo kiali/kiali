@@ -144,7 +144,7 @@ export function getTraceSpanIdsAsTree(trace: TraceData<SpanData>) {
  * NOTE: Mutates `data` - Transform the HTTP response data into the form the app
  * generally requires.
  */
-export default function transformTraceData(data: TraceData<SpanData>, cluster: string): JaegerTrace | null {
+export default function transformTraceData(data: TraceData<SpanData>, cluster?: string): JaegerTrace | null {
   let { traceID } = data;
   if (!traceID) {
     return null;
@@ -239,7 +239,7 @@ export default function transformTraceData(data: TraceData<SpanData>, cluster: s
 }
 
 // Extracts some information from a span to make it suitable for table-display
-export const transformSpanData = (span: Span, cluster: string): RichSpanData => {
+export const transformSpanData = (span: Span, cluster?: string): RichSpanData => {
   span.warnings = span.warnings || [];
   span.tags = span.tags || [];
   span.references = span.references || [];

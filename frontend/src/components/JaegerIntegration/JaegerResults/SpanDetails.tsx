@@ -12,7 +12,7 @@ import { TraceLabels } from './TraceLabels';
 interface Props {
   items: RichSpanData[];
   namespace: string;
-  cluster: string;
+  cluster?: string;
   target: string;
   externalURL?: string;
 }

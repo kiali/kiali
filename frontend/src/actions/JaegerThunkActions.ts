@@ -8,7 +8,7 @@ import { setTraceId as setURLTraceId } from 'utils/SearchParamUtils';
 import transformTraceData from 'utils/tracing/TraceTransform';
 
 export const JaegerThunkActions = {
-  setTraceId: (cluster: string, traceId?: string) => {
+  setTraceId: (cluster?: string, traceId?: string) => {
     setURLTraceId(traceId);
     return (dispatch: KialiDispatch) => {
       if (traceId) {

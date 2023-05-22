@@ -1,7 +1,6 @@
 import { findChildren, findParent, getWorkloadFromSpan, searchParentWorkload } from '../TracingHelper';
 import { Span, KeyValuePair, SpanData } from 'types/JaegerInfo';
 import transformTraceData from '../TraceTransform';
-import { HomeClusterName } from '../../../types/Common';
 
 describe('TracingHelper', () => {
   it('should get workload from span', () => {
@@ -135,44 +134,41 @@ describe('TracingHelper', () => {
 });
 
 describe('Trace find related', () => {
-  const trace = transformTraceData(
-    {
-      traceID: 't-1234',
-      processes: { p: { serviceName: 'svc', tags: [] } },
-      spans: [
-        { spanID: 's-1', operationName: 'op1', startTime: 1, processID: 'p' },
-        {
-          spanID: 's-2',
-          operationName: 'op2',
-          startTime: 2,
-          processID: 'p',
-          references: [{ refType: 'CHILD_OF', spanID: 's-1' }]
-        },
-        {
-          spanID: 's-3',
-          operationName: 'op3',
-          startTime: 3,
-          processID: 'p',
-          references: [{ refType: 'CHILD_OF', spanID: 's-1' }]
-        },
-        {
-          spanID: 's-4',
-          operationName: 'op4',
-          startTime: 4,
-          processID: 'p',
-          references: [{ refType: 'CHILD_OF', spanID: 's-2' }]
-        },
-        {
-          spanID: 's-5',
-          operationName: 'op5',
-          startTime: 5,
-          processID: 'p',
-          references: [{ refType: 'CHILD_OF', spanID: 's-2' }]
-        }
-      ] as SpanData[]
-    },
-    HomeClusterName
-  )!;
+  const trace = transformTraceData({
+    traceID: 't-1234',
+    processes: { p: { serviceName: 'svc', tags: [] } },
+    spans: [
+      { spanID: 's-1', operationName: 'op1', startTime: 1, processID: 'p' },
+      {
+        spanID: 's-2',
+        operationName: 'op2',
+        startTime: 2,
+        processID: 'p',
+        references: [{ refType: 'CHILD_OF', spanID: 's-1' }]
+      },
+      {
+        spanID: 's-3',
+        operationName: 'op3',
+        startTime: 3,
+        processID: 'p',
+        references: [{ refType: 'CHILD_OF', spanID: 's-1' }]
+      },
+      {
+        spanID: 's-4',
+        operationName: 'op4',
+        startTime: 4,
+        processID: 'p',
+        references: [{ refType: 'CHILD_OF', spanID: 's-2' }]
+      },
+      {
+        spanID: 's-5',
+        operationName: 'op5',
+        startTime: 5,
+        processID: 'p',
+        references: [{ refType: 'CHILD_OF', spanID: 's-2' }]
+      }
+    ] as SpanData[]
+  })!;
   const s1 = trace.spans.find(s => s.spanID === 's-1')!;
   const s2 = trace.spans.find(s => s.spanID === 's-2')!;
   const s3 = trace.spans.find(s => s.spanID === 's-3')!;
