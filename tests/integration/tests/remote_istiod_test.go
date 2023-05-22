@@ -169,7 +169,6 @@ func TestRemoteIstiod(t *testing.T) {
 			return !strings.Contains(cm.Data["config.yaml"], "http://istiod-debug.istio-system:9240"), nil
 		}), "Error waiting for kiali configmap to update")
 
-		time.Sleep(10 * time.Second) // Give time to be ready
 		require.NoError(restartKialiPod(ctx, kubeClient, kialiDeploymentNamespace))
 	})
 
@@ -232,15 +231,17 @@ func restartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, names
 	log.Debug("Restarting kiali pod")
 	pods, err := kubeClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
 	if err != nil {
+		log.Error("Error getting the pods list %s", err)
 		return err
 	}
 	currentKialiPod := pods.Items[0]
 
 	err = kubeClient.CoreV1().Pods(namespace).Delete(ctx, currentKialiPod.Name, metav1.DeleteOptions{})
 	if err != nil {
+		log.Error("Error deleting Kiali pod %s", err)
 		return err
 	}
-	time.Sleep(5 * time.Second)
+
 	return wait.PollImmediate(time.Second*5, time.Minute*4, func() (bool, error) {
 		log.Debug("Waiting for kiali to be ready")
 		pods, err := kubeClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
