@@ -150,7 +150,7 @@ func TestRemoteIstiod(t *testing.T) {
 		require.NoError(err)
 
 		// Restart Kiali pod to pick up the new config.
-		require.NoError(restartKialiPod(ctx, kubeClient, kialiNamespace, kialiCRDExists, currentKialiPod))
+		require.NoError(restartKialiPod(ctx, kubeClient, kialiDeploymentNamespace, kialiCRDExists, currentKialiPod))
 		//}
 
 		// Remove service:
