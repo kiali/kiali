@@ -249,12 +249,8 @@ func restartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, names
 
 		podready := false
 		for _, pod := range pods.Items {
-			if pod.Name == currentKialiPod.Name {
-				log.Debug("Old kiali pod still exists.")
-				return false, nil
-			}
 			for _, condition := range pod.Status.Conditions {
-				if condition.Type == "Ready" && condition.Status == "true" {
+				if condition.Type == "Ready" && condition.Status == "true" && pod.Name != currentKialiPod.Name {
 					log.Debug("New kiali pod is not ready.")
 					podready = true
 				}
