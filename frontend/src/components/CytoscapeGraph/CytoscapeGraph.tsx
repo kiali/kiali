@@ -113,6 +113,7 @@ export interface GraphNodeTapEvent {
   aggregate?: string;
   aggregateValue?: string;
   app: string;
+  cluster?: string;
   hasMissingSC: boolean;
   isBox?: string;
   isInaccessible: boolean;
@@ -346,6 +347,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
       aggregate: target.data(CyNode.aggregate),
       aggregateValue: target.data(CyNode.aggregateValue),
       app: target.data(CyNode.app),
+      cluster: target.data(CyNode.cluster),
       hasMissingSC: targetOrBoxChildren.every(t => t.data(CyNode.hasMissingSC)),
       isBox: target.data(CyNode.isBox),
       isIdle: targetOrBoxChildren.every(t => t.data(CyNode.isIdle)),
@@ -444,7 +446,6 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
           }
         }
       }
-
       let tapped: NodeSingular | EdgeSingular | Core | null = event.target;
       if (CytoscapeGraph.tapTimeout) {
         // cancel any single-tap timer in progress
