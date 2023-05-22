@@ -186,6 +186,8 @@ func TestRemoteIstiod(t *testing.T) {
 		}), "Error waiting for kiali configmap to update")
 
 		require.NoError(restartKialiPod(ctx, kubeClient, kialiDeploymentNamespace, kialiCRDExists, currentKialiPod))
+
+		time.Sleep(10 * time.Second) // Give time for the application to be ready
 	})
 
 	// Expose the istiod /debug endpoints by adding a proxy to the pod.
