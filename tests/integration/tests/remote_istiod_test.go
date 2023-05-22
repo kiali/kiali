@@ -143,7 +143,10 @@ func TestRemoteIstiod(t *testing.T) {
 		require.NoError(err)
 		cm.Data["config.yaml"] = string(newConfig)
 
-		_, err = kubeClient.CoreV1().ConfigMaps(kialiNamespace).Update(ctx, cm, metav1.UpdateOptions{})
+		log.Info("Kiali namespace: %s ", kialiNamespace)
+		log.Info("Kiali deplument namespace: %s ", kialiDeploymentNamespace)
+
+		_, err = kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Update(ctx, cm, metav1.UpdateOptions{})
 		require.NoError(err)
 
 		// Restart Kiali pod to pick up the new config.
