@@ -247,16 +247,14 @@ func restartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, names
 			return false, err
 		}
 
-		podready := false
 		for _, pod := range pods.Items {
 			for _, condition := range pod.Status.Conditions {
 				if condition.Type == "Ready" && condition.Status == "true" && pod.Name != currentKialiPod.Name {
 					log.Debug("New kiali pod is not ready.")
-					podready = true
+					return true, nil
 				}
 			}
 		}
-
-		return podready, nil
+		return false, nil
 	})
 }
