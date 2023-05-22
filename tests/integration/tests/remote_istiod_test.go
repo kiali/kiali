@@ -124,31 +124,31 @@ func TestRemoteIstiod(t *testing.T) {
 		} else {
 			currentKialiPod = pods.Items[0].Name
 		}
+		/*
+			if kialiCRDExists {
+				undoRegistryPatch := []byte(`[{"op": "remove", "path": "/spec/external_services/istio/registry"}]`)
+				response, err2 := dynamicClient.Resource(kialiGVR).Namespace(kialiNamespace).Patch(ctx, kialiName, types.JSONPatchType, undoRegistryPatch, metav1.PatchOptions{})
+				log.Info("Response code [ %v ] body", response)
+				require.NoError(err2)
+			} else { */
+		// Update the configmap directly by getting the configmap and patching it.
+		cm, err := kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Get(ctx, kialiName, metav1.GetOptions{})
+		require.NoError(err)
 
-		if kialiCRDExists {
-			undoRegistryPatch := []byte(`[{"op": "remove", "path": "/spec/external_services/istio/registry"}]`)
-			response, err2 := dynamicClient.Resource(kialiGVR).Namespace(kialiNamespace).Patch(ctx, kialiName, types.JSONPatchType, undoRegistryPatch, metav1.PatchOptions{})
-			log.Info("Response code [ %v ] body", response)
-			require.NoError(err2)
-		} else {
-			// Update the configmap directly by getting the configmap and patching it.
-			cm, err := kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Get(ctx, kialiName, metav1.GetOptions{})
-			require.NoError(err)
+		var currentConfig config.Config
+		require.NoError(yaml.Unmarshal([]byte(cm.Data["config.yaml"]), &currentConfig))
+		currentConfig.ExternalServices.Istio.Registry = nil
 
-			var currentConfig config.Config
-			require.NoError(yaml.Unmarshal([]byte(cm.Data["config.yaml"]), &currentConfig))
-			currentConfig.ExternalServices.Istio.Registry = nil
+		newConfig, err := yaml.Marshal(currentConfig)
+		require.NoError(err)
+		cm.Data["config.yaml"] = string(newConfig)
 
-			newConfig, err := yaml.Marshal(currentConfig)
-			require.NoError(err)
-			cm.Data["config.yaml"] = string(newConfig)
+		_, err = kubeClient.CoreV1().ConfigMaps(kialiNamespace).Update(ctx, cm, metav1.UpdateOptions{})
+		require.NoError(err)
 
-			_, err = kubeClient.CoreV1().ConfigMaps(kialiNamespace).Update(ctx, cm, metav1.UpdateOptions{})
-			require.NoError(err)
-
-			// Restart Kiali pod to pick up the new config.
-			require.NoError(restartKialiPod(ctx, kubeClient, kialiNamespace, kialiCRDExists, currentKialiPod))
-		}
+		// Restart Kiali pod to pick up the new config.
+		require.NoError(restartKialiPod(ctx, kubeClient, kialiNamespace, kialiCRDExists, currentKialiPod))
+		//}
 
 		// Remove service:
 		err = kubeClient.CoreV1().Services("istio-system").Delete(ctx, "istiod-debug", metav1.DeleteOptions{})
