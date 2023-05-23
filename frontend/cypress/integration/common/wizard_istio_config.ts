@@ -63,8 +63,8 @@ And('the {string} message should be displayed', (message: string) => {
   cy.get('main').contains(message).should('be.visible');
 });
 
-And('user opens the {string} submenu', (title: string) => {
-  cy.get('button').contains(title).should('be.visible').should('be.enabled').click();
+And('user opens the Add Port submenu', () => {
+  cy.get('button[id=addServerBtn').should('be.visible').click();
 });
 
 Then('the {string} {string} should be listed in {string} namespace', function (
