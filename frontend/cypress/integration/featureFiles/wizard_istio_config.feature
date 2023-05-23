@@ -25,7 +25,7 @@ Feature: Kiali Istio Config page
     Then the "K8sGateway" "k8sapigateway" should be listed in "bookinfo" namespace
 
   @wizard-istio-config
-  Scenario: Try to create a Gateway with no name 
+  Scenario: Try to create a Gateway with no name
     When user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
     Then the "name" input should be empty
@@ -33,7 +33,7 @@ Feature: Kiali Istio Config page
     And the preview button should be disabled
 
   @wizard-istio-config
-  Scenario: Try to create a Gateway with invalid name 
+  Scenario: Try to create a Gateway with invalid name
     When user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
     And user types "!@#$%^*()_+" in the "name" input
@@ -91,7 +91,7 @@ Feature: Kiali Istio Config page
     And the "addPortNumber0" input should display a warning
 
   @wizard-istio-config
-  Scenario: Create a Gateway with duplicate name 
+  Scenario: Create a Gateway with duplicate name
     When user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
     And user types "mygateway" in the "name" input
@@ -104,7 +104,7 @@ Feature: Kiali Istio Config page
     Then an error message "Could not create Istio Gateway objects." is displayed
 
   @wizard-istio-config
-  Scenario: Try to create a Gateway without filling the inputs related to TLS 
+  Scenario: Try to create a Gateway without filling the inputs related to TLS
     When user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
     And user types "mygatewaywithtls" in the "name" input
@@ -121,7 +121,7 @@ Feature: Kiali Istio Config page
     And the preview button should be disabled
 
   @wizard-istio-config
-  Scenario: Create a Gateway with TLS 
+  Scenario: Create a Gateway with TLS
     When user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
     And user types "mygatewaywithtls" in the "name" input
@@ -159,7 +159,7 @@ Feature: Kiali Istio Config page
     And the preview button should be disabled
 
   @wizard-istio-config
-  Scenario: Create a ServiceEntry without ports specified 
+  Scenario: Create a ServiceEntry without ports specified
     When user clicks in the "ServiceEntry" Istio config actions
     And user sees the "Create ServiceEntry" config wizard
     And user types "myservice" in the "name" input
@@ -170,12 +170,12 @@ Feature: Kiali Istio Config page
     Then the "ServiceEntry" "myservice" should be listed in "bookinfo" namespace
 
   @wizard-istio-config
-  Scenario: Try to create a ServiceEntry with empty ports specified 
+  Scenario: Try to create a ServiceEntry with empty ports specified
     When user clicks in the "ServiceEntry" Istio config actions
     And user sees the "Create ServiceEntry" config wizard
     And user types "myservice" in the "name" input
     And user types "website.com" in the "hosts" input
-    And user opens the "Add Port" submenu
+    And user opens the Add Port submenu
     Then the "addPortNumber0" input should be empty
     And the "addPortNumber0" input should display a warning
     And the "addPortName0" input should be empty
@@ -185,12 +185,12 @@ Feature: Kiali Istio Config page
     And the preview button should be disabled
 
   @wizard-istio-config
-  Scenario: Create a ServiceEntry with ports specified 
+  Scenario: Create a ServiceEntry with ports specified
     When user clicks in the "ServiceEntry" Istio config actions
     And user sees the "Create ServiceEntry" config wizard
     And user types "myservice2" in the "name" input
     And user types "website.com,website2.com" in the "hosts" input
-    And user opens the "Add Port" submenu
+    And user opens the Add Port submenu
     Then the "addPortNumber0" input should be empty
     And user types "8080" in the "addPortNumber0" input
     And user types "foobar" in the "addPortName0" input
@@ -205,11 +205,11 @@ Feature: Kiali Istio Config page
     And user sees the "Create ServiceEntry" config wizard
     And user types "myservice2" in the "name" input
     And user types "website.com,website2.com" in the "hosts" input
-    And user opens the "Add Port" submenu
+    And user opens the Add Port submenu
     And user types "8080" in the "addPortNumber0" input
     And user types "foobar" in the "addPortName0" input
-    And user types "8080" in the "addTargetPort0" input  
-    And user opens the "Add Port" submenu
+    And user types "8080" in the "addTargetPort0" input
+    And user opens the Add Port submenu
     And user types "8080" in the "addPortNumber1" input
     And user types "foobar" in the "addPortName1" input
     And user types "8080" in the "addTargetPort1" input

@@ -119,9 +119,11 @@ Then('user cannot see any apps in the table', () => {
 Then('user may only see {string}', (sees: string) => {
   cy.get('tbody').within(() => {
     cy.get('tr').should('have.length', 1);
-    cy.contains('tr', sees).then($el => {
-      if (!$el.length) {
+    cy.get('td').then(td => {
+      if (td.length === 1) {
         cy.get('h5').contains('No applications found');
+      } else {
+        cy.contains('tr', sees);
       }
     });
   });
