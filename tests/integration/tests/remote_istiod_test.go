@@ -72,8 +72,7 @@ func TestRemoteIstiod(t *testing.T) {
 	dynamicClient := dynamicClient(t)
 	kialiGVR := schema.GroupVersionResource{Group: "kiali.io", Version: "v1alpha1", Resource: "kialis"}
 
-	//deadline, _ := t.Deadline()
-	deadline := time.Now().Local().Add(10 * time.Minute)
+	deadline, _ := t.Deadline()
 	ctx, cancel := context.WithDeadline(context.Background(), deadline)
 	// This is used by cleanup so needs to be added to cleanup instead of deferred.
 	t.Cleanup(cancel)
@@ -127,9 +126,7 @@ func TestRemoteIstiod(t *testing.T) {
 
 		if kialiCRDExists {
 			undoRegistryPatch := []byte(`[{"op": "remove", "path": "/spec/external_services/istio/registry"}]`)
-			response, err2 := dynamicClient.Resource(kialiGVR).Namespace(kialiNamespace).Patch(ctx, kialiName, types.JSONPatchType, undoRegistryPatch, metav1.PatchOptions{})
-			//response, err2 := dynamicClient.Resource(kialiGVR).Patch(ctx, kialiName, types.JSONPatchType, undoRegistryPatch, metav1.PatchOptions{})
-			log.Info("Response code [ %v ] body", response)
+			_, err2 := dynamicClient.Resource(kialiGVR).Namespace(kialiNamespace).Patch(ctx, kialiName, types.JSONPatchType, undoRegistryPatch, metav1.PatchOptions{})
 			require.NoError(err2)
 		} else {
 			// Update the configmap directly by getting the configmap and patching it.
@@ -144,8 +141,8 @@ func TestRemoteIstiod(t *testing.T) {
 			require.NoError(err)
 			cm.Data["config.yaml"] = string(newConfig)
 
-			log.Infof("Kiali namespace: %s ", kialiNamespace)
-			log.Infof("Kiali deployment namespace: %s ", kialiDeploymentNamespace)
+			log.Debugf("Kiali namespace: %s ", kialiNamespace)
+			log.Debugf("Kiali deployment namespace: %s ", kialiDeploymentNamespace)
 
 			_, err = kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Update(ctx, cm, metav1.UpdateOptions{})
 			require.NoError(err)
