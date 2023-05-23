@@ -72,7 +72,7 @@ func TestRemoteIstiod(t *testing.T) {
 	dynamicClient := dynamicClient(t)
 	kialiGVR := schema.GroupVersionResource{Group: "kiali.io", Version: "v1alpha1", Resource: "kialis"}
 
-	deadline, _ := t.Deadline()
+	deadline := time.Now().Local().Add(15 * time.Minute)
 	ctx, cancel := context.WithDeadline(context.Background(), deadline)
 	// This is used by cleanup so needs to be added to cleanup instead of deferred.
 	t.Cleanup(cancel)
