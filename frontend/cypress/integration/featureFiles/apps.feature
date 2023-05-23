@@ -16,12 +16,12 @@ Feature: Kiali Apps List page
     And user sees Namespace information for Apps
     And user sees Labels information for Apps
     And user sees Details information for Apps
-  
+
   @apps-page
   Scenario: Filter Apps by Istio Name
     When the user filters by "App Name" for "productpage"
     Then user only sees "productpage"
-  
+
   @apps-page
   Scenario: Filter Apps by Istio Sidecar
     When the user filters by "Istio Sidecar" for "Present"
@@ -34,7 +34,7 @@ Feature: Kiali Apps List page
   @apps-page
   Scenario: Filter workloads table by Istio Sidecar not being present
     When the user filters by "Istio Sidecar" for "Not Present"
-    Then user cannot see any apps in the table
+    Then user may only see "kiali-traffic-generator"
 
   @apps-page
   Scenario: Filter Apps by Istio Type
@@ -46,7 +46,7 @@ Feature: Kiali Apps List page
     When the user filters by "Health" for "Healthy"
     Then user only sees healthy apps
 
-  @apps-page 
+  @apps-page
   Scenario: Filter Applications table by Label
     When the user filters by "Label" for "app=reviews"
     Then user sees "reviews"

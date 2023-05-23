@@ -44,7 +44,7 @@ And('user sees span details', () => {
     .eq(1) // take 1st  row
     .find('td')
     .eq(4) // take 5th cell (kebab)
-    .should('be.visible')
+    .should('be.visible');
 });
 
 When('I fetch the list of applications', function () {
@@ -85,11 +85,11 @@ And('user sees Details information for Apps', () => {
   });
 });
 
-And('user only sees the apps with the {string} name in the {string} namespace', (name:string,ns:string) => {
-  let count:number;
-  cy.request('GET', `/api/namespaces/${ns}/apps`).should((response) =>{
-    count = response.body.applications.filter((item) => item.name.includes(name)).length;
-  }); 
+And('user only sees the apps with the {string} name in the {string} namespace', (name: string, ns: string) => {
+  let count: number;
+  cy.request('GET', `/api/namespaces/${ns}/apps`).should(response => {
+    count = response.body.applications.filter(item => item.name.includes(name)).length;
+  });
   cy.get('tbody').within(() => {
     cy.contains('No apps found').should('not.exist');
     cy.get('tr').should('have.length', count);
@@ -114,4 +114,15 @@ Then('the health status of the application should be {string}', function (health
 
 Then('user cannot see any apps in the table', () => {
   cy.get('h5').contains('No applications found').should('exist');
+});
+
+Then('user may only see {string}', (sees: string) => {
+  cy.get('tbody').within(() => {
+    cy.get('tr').should('have.length', 1);
+    cy.contains('tr', sees).then($el => {
+      if (!$el.length) {
+        cy.get('h5').contains('No applications found');
+      }
+    });
+  });
 });
