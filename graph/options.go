@@ -173,6 +173,10 @@ func NewOptions(r *net_http.Request) Options {
 	} else if graphType != GraphTypeApp && graphType != GraphTypeService && graphType != GraphTypeVersionedApp && graphType != GraphTypeWorkload {
 		BadRequest(fmt.Sprintf("Invalid graphType [%s]", graphType))
 	}
+	// service graphs do not inject service nodes
+	if graphType == GraphTypeService {
+		injectServiceNodesString = "false"
+	}
 	// app node graphs require an app graph type
 	if app != "" && graphType != GraphTypeApp && graphType != GraphTypeVersionedApp {
 		BadRequest(fmt.Sprintf("Invalid graphType [%s]. This node detail graph supports only graphType app or versionedApp.", graphType))

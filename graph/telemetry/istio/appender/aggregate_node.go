@@ -46,6 +46,11 @@ func (a AggregateNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalIn
 		return
 	}
 
+	// Aggregate Nodes are not applicable to Service Graphs
+	if a.GraphType == graph.GraphTypeService {
+		return
+	}
+
 	// Aggregate Nodes are currently supported only on Requests traffic (not TCP or gRPC-message traffic)
 	if a.Rates.Grpc != graph.RateRequests && a.Rates.Http != graph.RateRequests {
 		return
