@@ -234,7 +234,12 @@ class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardSta
     let resource = e[eNodeType];
     let resourceType: string = eNodeType === NodeType.APP ? 'application' : eNodeType;
 
-    const href = `/namespaces/${e.namespace}/${resourceType}s/${resource}`;
+    let href = `/namespaces/${e.namespace}/${resourceType}s/${resource}`;
+
+    if (e.cluster) {
+      href = href + '?cluster=' + e.cluster;
+    }
+
     if (isParentKiosk(this.props.kiosk)) {
       kioskContextMenuAction(href);
     } else {
