@@ -178,6 +178,7 @@ func TestRemoteIstiod(t *testing.T) {
 			log.Error("Error getting the pods list %s", err)
 		} else {
 			currentKialiPod = pods.Items[0].Name
+			log.Infof("Current Kiali pod %s", currentKialiPod)
 		}
 
 		// Wait for the configmap to be updated again before exiting.
@@ -259,7 +260,7 @@ func TestRemoteIstiod(t *testing.T) {
 
 // Deletes the existing kiali Pod and waits for the new one to be ready.
 func restartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, namespace string, kialiCRDExists bool, currentKialiPod string) error {
-	log.Debug("Restarting kiali pod")
+	log.Debug("Restarting kiali pod %s %s", namespace, currentKialiPod)
 
 	// Restart Kiali pod when kiali CRD does not exist
 	if !kialiCRDExists {
@@ -283,6 +284,8 @@ func restartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, names
 				if condition.Type == "Ready" && condition.Status == "True" && pod.Name != currentKialiPod {
 					log.Debug("New kiali pod is not ready.")
 					return true, nil
+				} else {
+					log.Debug("Condition type %s status %s pod name %s", condition.Type, condition.Status, pod.Name)
 				}
 			}
 		}
