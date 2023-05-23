@@ -72,7 +72,7 @@ func TestRemoteIstiod(t *testing.T) {
 	dynamicClient := dynamicClient(t)
 	kialiGVR := schema.GroupVersionResource{Group: "kiali.io", Version: "v1alpha1", Resource: "kialis"}
 
-	deadline := time.Now().Local().Add(15 * time.Minute)
+	deadline, _ := t.Deadline()
 	ctx, cancel := context.WithDeadline(context.Background(), deadline)
 	// This is used by cleanup so needs to be added to cleanup instead of deferred.
 	t.Cleanup(cancel)
@@ -281,15 +281,18 @@ func restartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, names
 		}
 
 		for _, pod := range pods.Items {
+			if pod.Name == currentKialiPod {
+				log.Debug("Old kiali pod still exists.")
+				return false, nil
+			}
 			for _, condition := range pod.Status.Conditions {
-				if condition.Type == "Ready" && condition.Status == "True" && pod.Name != currentKialiPod {
-					log.Debugf("New kiali pod is ready.")
-					return true, nil
-				} else {
+				if condition.Type == "Ready" && condition.Status == "False" {
+					log.Debugf("New kiali pod is not ready.")
 					log.Debugf("Condition type %s status %s pod name %s", condition.Type, condition.Status, pod.Name)
+					return false, nil
 				}
 			}
 		}
-		return false, nil
+		return true, nil
 	})
 }
