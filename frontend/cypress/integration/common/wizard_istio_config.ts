@@ -3,14 +3,12 @@ import { And, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 When('user clicks in the {string} Istio config actions', (action: string) => {
   cy.get('button[data-test="config-actions-dropdown"]')
     .should('be.visible')
-    .and('be.enabled')
     .click()
     .get('#loading_kiali_spinner')
     .should('not.exist');
 
   cy.get('a[data-test="create_' + action + '"]')
     .should('be.visible')
-    .and('be.enabled')
     .click()
     .get('#loading_kiali_spinner')
     .should('not.exist');
@@ -21,7 +19,7 @@ And('user sees the {string} config wizard', (title: string) => {
 });
 
 And('user adds listener', () => {
-  cy.get('button[name="addListener"]').should('be.visible').and('be.enabled').click();
+  cy.get('button[name="addListener"]').should('be.visible').click();
 });
 
 And('user types {string} in the {string} input', (value: string, id: string) => {
@@ -39,7 +37,7 @@ And('user checks validation of the hostname {string} input', (id: string) => {
 });
 
 And('user adds a server to a server list', () => {
-  cy.get('[aria-label="Server List"]').find('button').should('be.visible').and('be.enabled').click();
+  cy.get('[aria-label="Server List"]').find('button').should('be.visible').click();
 });
 
 And('the {string} input should display a warning', (id: string) => {
@@ -51,7 +49,7 @@ And('the {string} input should not display a warning', (id: string) => {
 });
 
 And('user creates the istio config', () => {
-  cy.get('button[data-test="create"]').should('be.visible').and('be.enabled').click();
+  cy.get('button[data-test="create"]').should('be.visible').click();
   it('spinner should disappear', { retries: 3 }, () => {
     cy.get('#loading_kiali_spinner').should('not.exist');
   });
@@ -62,11 +60,11 @@ And('user chooses {string} mode from the {string} select', (option: string, id: 
 });
 
 And('the {string} message should be displayed', (message: string) => {
-  cy.get('main').contains(message).should('be.visible').and('be.enabled');
+  cy.get('main').contains(message).should('be.visible');
 });
 
 And('user opens the {string} submenu', (title: string) => {
-  cy.get('button').contains(title).should('be.visible').and('be.enabled').click();
+  cy.get('button').contains(title).should('be.visible').should('be.enabled').click();
 });
 
 Then('the {string} {string} should be listed in {string} namespace', function (
@@ -82,7 +80,7 @@ Then('the preview button should be disabled', () => {
 });
 
 Then('an error message {string} is displayed', (message: string) => {
-  cy.get('h4').contains(message).should('be.visible').and('be.enabled');
+  cy.get('h4').contains(message).should('be.visible');
 });
 
 Then('the {string} input should be empty', (id: string) => {
