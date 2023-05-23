@@ -18,11 +18,11 @@ import (
 
 // SvcService deals with fetching istio/kubernetes services related content and convert to kiali model
 type IstioStatusService struct {
-	k8s           kubernetes.ClientInterface
+	userClients   map[string]kubernetes.ClientInterface
 	businessLayer *Layer
 }
 
-func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioComponentStatus, error) {
+func (iss *IstioStatusService) GetStatus(ctx context.Context, cluster string) (kubernetes.IstioComponentStatus, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetStatus",
 		observability.Attribute("package", "business"),
@@ -33,7 +33,7 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioC
 		return kubernetes.IstioComponentStatus{}, nil
 	}
 
-	ics, err := iss.getIstioComponentStatus(ctx)
+	ics, err := iss.getIstioComponentStatus(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioC
 	return ics.Merge(iss.getAddonComponentStatus()), nil
 }
 
-func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context) (kubernetes.IstioComponentStatus, error) {
+func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, cluster string) (kubernetes.IstioComponentStatus, error) {
 	// Fetching workloads from component namespaces
 	workloads, err := iss.getComponentNamespacesWorkloads(ctx)
 	if err != nil {
@@ -53,7 +53,12 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context) (kub
 		return kubernetes.IstioComponentStatus{}, err
 	}
 
-	istiodStatus, err := iss.k8s.CanConnectToIstiod()
+	k8s, ok := iss.userClients[cluster]
+	if !ok {
+		return kubernetes.IstioComponentStatus{}, fmt.Errorf("Cluster %s doesn't exist ", cluster)
+	}
+
+	istiodStatus, err := k8s.CanConnectToIstiod()
 	if err != nil {
 		return kubernetes.IstioComponentStatus{}, err
 	}

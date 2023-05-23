@@ -957,7 +957,9 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                 title={ns.name}
                               >
                                 {ns.name}
-                                {ns.name === serverConfig.istioNamespace && <ControlPlaneBadge></ControlPlaneBadge>}
+                                {ns.name === serverConfig.istioNamespace && (
+                                  <ControlPlaneBadge cluster={ns.cluster}></ControlPlaneBadge>
+                                )}
                                 {ns.name !== serverConfig.istioNamespace &&
                                   this.hasCanaryUpgradeConfigured() &&
                                   this.state.canaryUpgradeStatus?.migratedNamespaces.includes(ns.name) && (

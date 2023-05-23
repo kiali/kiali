@@ -148,8 +148,12 @@ export const getOutboundTrafficPolicyMode = () => {
   return newRequest<OutboundTrafficPolicy>(HTTP_VERBS.GET, urls.outboundTrafficPolicyMode(), {}, {});
 };
 
-export const getIstioStatus = () => {
-  return newRequest<ComponentStatus[]>(HTTP_VERBS.GET, urls.istioStatus(), {}, {});
+export const getIstioStatus = (cluster?: string) => {
+  const queryParams: any = {};
+  if (cluster) {
+    queryParams.cluster = cluster;
+  }
+  return newRequest<ComponentStatus[]>(HTTP_VERBS.GET, urls.istioStatus(), queryParams, {});
 };
 
 export const getIstioCertsInfo = () => {

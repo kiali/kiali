@@ -4,14 +4,19 @@ import IstioStatusInline from '../../components/IstioStatus/IstioStatusInline';
 import { serverConfig } from '../../config';
 import AmbientBadge from '../../components/Ambient/AmbientBadge';
 
-class ControlPlaneBadge extends React.Component<{}> {
+type Props = {
+  cluster?: string;
+};
+
+class ControlPlaneBadge extends React.Component<Props> {
   render() {
     return (
       <>
         <Label style={{ marginLeft: 5 }} color="green" isCompact>
           Control plane
         </Label>
-        {serverConfig.ambientEnabled && <AmbientBadge tooltip={true}></AmbientBadge>} <IstioStatusInline />
+        {serverConfig.ambientEnabled && <AmbientBadge tooltip={true}></AmbientBadge>}{' '}
+        <IstioStatusInline cluster={this.props.cluster} />
       </>
     );
   }
