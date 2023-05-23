@@ -120,7 +120,7 @@ func TestRemoteIstiod(t *testing.T) {
 		var currentKialiPod string
 		pods, err := kubeClient.CoreV1().Pods(kialiDeploymentNamespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
 		if err != nil {
-			log.Error("Error getting the pods list %s", err)
+			log.Errorf("Error getting the pods list %s", err)
 		} else {
 			currentKialiPod = pods.Items[0].Name
 		}
@@ -150,7 +150,7 @@ func TestRemoteIstiod(t *testing.T) {
 		require.NoError(err)
 
 		// Restart Kiali pod to pick up the new config.
-		require.NoError(restartKialiPod(ctx, kubeClient, kialiDeploymentNamespace, false, currentKialiPod))
+		require.NoError(restartKialiPod(ctx, kubeClient, kialiDeploymentNamespace, kialiCRDExists, currentKialiPod))
 		//}
 
 		// Remove service:
@@ -277,12 +277,14 @@ func restartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, names
 		if err != nil {
 			log.Errorf("Error getting the pods list %s", err)
 			return false, err
+		} else {
+			log.Debugf("Found %d pods", len(pods.Items))
 		}
 
 		for _, pod := range pods.Items {
 			for _, condition := range pod.Status.Conditions {
-				if condition.Type == "Ready" && condition.Status == "True" && pod.Name != currentKialiPod {
-					log.Debugf("New kiali pod is not ready.")
+				if condition.Type == "Ready" && condition.Status == "True" {
+					log.Debugf("New kiali pod is ready.")
 					return true, nil
 				} else {
 					log.Debugf("Condition type %s status %s pod name %s", condition.Type, condition.Status, pod.Name)
