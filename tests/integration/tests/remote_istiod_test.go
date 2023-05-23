@@ -124,34 +124,35 @@ func TestRemoteIstiod(t *testing.T) {
 		} else {
 			currentKialiPod = pods.Items[0].Name
 		}
-		/*
-			if kialiCRDExists {
-				undoRegistryPatch := []byte(`[{"op": "remove", "path": "/spec/external_services/istio/registry"}]`)
-				response, err2 := dynamicClient.Resource(kialiGVR).Namespace(kialiNamespace).Patch(ctx, kialiName, types.JSONPatchType, undoRegistryPatch, metav1.PatchOptions{})
-				log.Info("Response code [ %v ] body", response)
-				require.NoError(err2)
-			} else { */
-		// Update the configmap directly by getting the configmap and patching it.
-		cm, err := kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Get(ctx, kialiName, metav1.GetOptions{})
-		require.NoError(err)
 
-		var currentConfig config.Config
-		require.NoError(yaml.Unmarshal([]byte(cm.Data["config.yaml"]), &currentConfig))
-		currentConfig.ExternalServices.Istio.Registry = nil
+		if kialiCRDExists {
+			undoRegistryPatch := []byte(`[{"op": "remove", "path": "/spec/external_services/istio/registry"}]`)
+			response, err2 := dynamicClient.Resource(kialiGVR).Namespace(kialiNamespace).Patch(ctx, kialiName, types.JSONPatchType, undoRegistryPatch, metav1.PatchOptions{})
+			//response, err2 := dynamicClient.Resource(kialiGVR).Patch(ctx, kialiName, types.JSONPatchType, undoRegistryPatch, metav1.PatchOptions{})
+			log.Info("Response code [ %v ] body", response)
+			require.NoError(err2)
+		} else {
+			// Update the configmap directly by getting the configmap and patching it.
+			cm, err := kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Get(ctx, kialiName, metav1.GetOptions{})
+			require.NoError(err)
 
-		newConfig, err := yaml.Marshal(currentConfig)
-		require.NoError(err)
-		cm.Data["config.yaml"] = string(newConfig)
+			var currentConfig config.Config
+			require.NoError(yaml.Unmarshal([]byte(cm.Data["config.yaml"]), &currentConfig))
+			currentConfig.ExternalServices.Istio.Registry = nil
 
-		log.Infof("Kiali namespace: %s ", kialiNamespace)
-		log.Infof("Kiali deployment namespace: %s ", kialiDeploymentNamespace)
+			newConfig, err := yaml.Marshal(currentConfig)
+			require.NoError(err)
+			cm.Data["config.yaml"] = string(newConfig)
 
-		_, err = kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Update(ctx, cm, metav1.UpdateOptions{})
-		require.NoError(err)
+			log.Infof("Kiali namespace: %s ", kialiNamespace)
+			log.Infof("Kiali deployment namespace: %s ", kialiDeploymentNamespace)
 
-		// Restart Kiali pod to pick up the new config.
-		require.NoError(restartKialiPod(ctx, kubeClient, kialiDeploymentNamespace, kialiCRDExists, currentKialiPod))
-		//}
+			_, err = kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Update(ctx, cm, metav1.UpdateOptions{})
+			require.NoError(err)
+
+			// Restart Kiali pod to pick up the new config.
+			require.NoError(restartKialiPod(ctx, kubeClient, kialiDeploymentNamespace, kialiCRDExists, currentKialiPod))
+		}
 
 		// Remove service:
 		err = kubeClient.CoreV1().Services("istio-system").Delete(ctx, "istiod-debug", metav1.DeleteOptions{})
@@ -183,7 +184,7 @@ func TestRemoteIstiod(t *testing.T) {
 
 		// Wait for the configmap to be updated again before exiting.
 		require.NoError(wait.PollImmediate(time.Second*5, time.Minute*2, func() (bool, error) {
-			cm, err := kubeClient.CoreV1().ConfigMaps(kialiNamespace).Get(ctx, kialiName, metav1.GetOptions{})
+			cm, err := kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Get(ctx, kialiName, metav1.GetOptions{})
 			if err != nil {
 				return false, err
 			}
@@ -208,7 +209,7 @@ func TestRemoteIstiod(t *testing.T) {
 	log.Debug("Patching kiali to use remote istiod")
 	var currentKialiPod string
 
-	pods, err := kubeClient.CoreV1().Pods(kialiNamespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
+	pods, err := kubeClient.CoreV1().Pods(kialiDeploymentNamespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
 	if err != nil {
 		log.Error("Error getting the pods list %s", err)
 	} else {
@@ -283,7 +284,7 @@ func restartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, names
 
 		for _, pod := range pods.Items {
 			for _, condition := range pod.Status.Conditions {
-				if condition.Type == "Ready" && condition.Status == "True" {
+				if condition.Type == "Ready" && condition.Status == "True" && pod.Name != currentKialiPod {
 					log.Debugf("New kiali pod is ready.")
 					return true, nil
 				} else {
