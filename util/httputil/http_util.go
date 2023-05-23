@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 )
 
 const DefaultTimeout = 10 * time.Second
@@ -202,13 +203,13 @@ func GuessKialiURL(r *http.Request) string {
 		} else if len(r.URL.Hostname()) != 0 {
 			host = r.URL.Hostname()
 		} else if len(r.Host) != 0 {
-			// r.Host could be of the form host:port. Split it if this is the case.
-			colon := strings.LastIndexByte(r.Host, ':')
-			if colon != -1 {
-				host, port = r.Host[:colon], r.Host[colon+1:]
-			} else {
-				host = r.Host
-			}
+			host = r.Host
+		}
+
+		// host could be of the form host:port. Split it if this is the case.
+		colon := strings.LastIndexByte(host, ':')
+		if colon != -1 {
+			host, port = host[:colon], host[colon+1:]
 		}
 	}
 
@@ -240,5 +241,8 @@ func GuessKialiURL(r *http.Request) string {
 		guessedKialiURL = fmt.Sprintf("%s://%s:%s%s", schema, host, port, cfg.Server.WebRoot)
 	}
 
-	return strings.TrimRight(guessedKialiURL, "/")
+	guessedKialiURL = strings.TrimRight(guessedKialiURL, "/")
+	log.Tracef("Guessed Kiali URL=%v", guessedKialiURL)
+
+	return guessedKialiURL
 }
