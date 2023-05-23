@@ -143,8 +143,8 @@ func TestRemoteIstiod(t *testing.T) {
 		require.NoError(err)
 		cm.Data["config.yaml"] = string(newConfig)
 
-		log.Info("Kiali namespace: %s ", kialiNamespace)
-		log.Info("Kiali deplument namespace: %s ", kialiDeploymentNamespace)
+		log.Infof("Kiali namespace: %s ", kialiNamespace)
+		log.Infof("Kiali deployment namespace: %s ", kialiDeploymentNamespace)
 
 		_, err = kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Update(ctx, cm, metav1.UpdateOptions{})
 		require.NoError(err)
@@ -175,7 +175,7 @@ func TestRemoteIstiod(t *testing.T) {
 
 		pods, err = kubeClient.CoreV1().Pods(kialiDeploymentNamespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
 		if err != nil {
-			log.Error("Error getting the pods list %s", err)
+			log.Errorf("Error getting the pods list %s", err)
 		} else {
 			currentKialiPod = pods.Items[0].Name
 			log.Infof("Current Kiali pod %s", currentKialiPod)
@@ -183,7 +183,7 @@ func TestRemoteIstiod(t *testing.T) {
 
 		// Wait for the configmap to be updated again before exiting.
 		require.NoError(wait.PollImmediate(time.Second*5, time.Minute*2, func() (bool, error) {
-			cm, err := kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Get(ctx, kialiName, metav1.GetOptions{})
+			cm, err := kubeClient.CoreV1().ConfigMaps(kialiNamespace).Get(ctx, kialiName, metav1.GetOptions{})
 			if err != nil {
 				return false, err
 			}
@@ -248,7 +248,7 @@ func TestRemoteIstiod(t *testing.T) {
 		_, err = kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Update(ctx, cm, metav1.UpdateOptions{})
 		require.NoError(err)
 	}
-	log.Debug("Successfully patched kiali to use remote istiod")
+	log.Debugf("Successfully patched kiali to use remote istiod")
 
 	// Restart Kiali pod to pick up the new config.
 	require.NoError(restartKialiPod(ctx, kubeClient, kialiDeploymentNamespace, kialiCRDExists, currentKialiPod), "Error waiting for kiali deployment to update")
@@ -260,32 +260,32 @@ func TestRemoteIstiod(t *testing.T) {
 
 // Deletes the existing kiali Pod and waits for the new one to be ready.
 func restartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, namespace string, kialiCRDExists bool, currentKialiPod string) error {
-	log.Debug("Restarting kiali pod %s %s", namespace, currentKialiPod)
+	log.Debugf("Restarting kiali pod %s %s", namespace, currentKialiPod)
 
 	// Restart Kiali pod when kiali CRD does not exist
 	if !kialiCRDExists {
 		err := kubeClient.CoreV1().Pods(namespace).Delete(ctx, currentKialiPod, metav1.DeleteOptions{})
 		if err != nil {
-			log.Error("Error deleting Kiali pod %s", err)
+			log.Errorf("Error deleting Kiali pod %s", err)
 			return err
 		}
 	}
 
 	return wait.PollImmediate(time.Second*5, time.Minute*4, func() (bool, error) {
-		log.Debug("Waiting for kiali to be ready")
+		log.Debugf("Waiting for kiali to be ready")
 		pods, err := kubeClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
 		if err != nil {
-			log.Error("Error getting the pods list %s", err)
+			log.Errorf("Error getting the pods list %s", err)
 			return false, err
 		}
 
 		for _, pod := range pods.Items {
 			for _, condition := range pod.Status.Conditions {
 				if condition.Type == "Ready" && condition.Status == "True" && pod.Name != currentKialiPod {
-					log.Debug("New kiali pod is not ready.")
+					log.Debugf("New kiali pod is not ready.")
 					return true, nil
 				} else {
-					log.Debug("Condition type %s status %s pod name %s", condition.Type, condition.Status, pod.Name)
+					log.Debugf("Condition type %s status %s pod name %s", condition.Type, condition.Status, pod.Name)
 				}
 			}
 		}
