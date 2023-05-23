@@ -48,6 +48,7 @@ func graphNamespacesIstio(ctx context.Context, business *business.Layer, prom *p
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = business
 	globalInfo.Context = ctx
+	globalInfo.Cluster = o.NodeOptions.Cluster
 
 	trafficMap := istio.BuildNamespacesTrafficMap(ctx, o.TelemetryOptions, prom, globalInfo)
 	code, config = generateGraph(trafficMap, o)

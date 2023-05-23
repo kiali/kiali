@@ -130,7 +130,6 @@ func NewOptions(r *net_http.Request) Options {
 	var queryTime int64
 	appenders := RequestedAppenders{All: true}
 	boxBy := params.Get("boxBy")
-	cluster := params.Get("cluster")
 	configVendor := params.Get("configVendor")
 	durationString := params.Get("duration")
 	graphType := params.Get("graphType")
@@ -142,16 +141,16 @@ func NewOptions(r *net_http.Request) Options {
 	rateHttp := params.Get("rateHttp")
 	rateTcp := params.Get("rateTcp")
 	telemetryVendor := params.Get("telemetryVendor")
-
+	cluster := params.Get("cluster")
+	if cluster == "" {
+		cluster = config.Get().KubernetesConfig.ClusterName
+	}
 	if _, ok := params["appenders"]; ok {
 		appenderNames := strings.Split(params.Get("appenders"), ",")
 		for i, appenderName := range appenderNames {
 			appenderNames[i] = strings.TrimSpace(appenderName)
 		}
 		appenders = RequestedAppenders{All: false, AppenderNames: appenderNames}
-	}
-	if cluster == "" {
-		cluster = Unknown
 	}
 	if configVendor == "" {
 		configVendor = defaultConfigVendor
