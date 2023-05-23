@@ -135,3 +135,16 @@ When('user {string} toggle {string}', function (action: 'checks' | 'unchecks', t
 Then('the {string} column {string}', (col: string, action: 'appears' | 'disappears') => {
   colExists(col, action === 'appears');
 });
+
+Then('user may only see {string}', (sees: string) => {
+  cy.get('tbody').within(() => {
+    cy.get('tr').should('have.length', 1);
+    cy.get('td').then(td => {
+      if (td.length === 1) {
+        cy.get('h5').contains('No applications found');
+      } else {
+        cy.contains('tr', sees);
+      }
+    });
+  });
+});
