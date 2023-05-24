@@ -1,10 +1,15 @@
 package tests
 
 import (
+	"context"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes"
 	"os/exec"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -16,7 +21,7 @@ const kialiNamespace = "istio-system"
 
 var ocCommand = utils.NewExecCommand()
 
-func update_istio_api_enabled(value bool) {
+func update_istio_api_enabled(value bool, kubeClientSet kubernetes.Interface, ctx context.Context) {
 	original := !value
 
 	cmdGetProp := ocCommand + " get cm kiali -n " + kialiNamespace + " -o yaml | grep 'istio_api_enabled'"
@@ -52,31 +57,42 @@ func update_istio_api_enabled(value bool) {
 		log.Debugf("Delete pod command: %s", cmd3)
 
 		if err3 == nil {
-			waitCmd2 := ocCommand + " wait --for=condition=delete pod/" + podName + " -n " + kialiNamespace
-			out2, err5 := exec.Command("bash", "-c", waitCmd2).Output()
+			wait.PollImmediate(time.Second*5, time.Minute*4, func() (bool, error) {
+				log.Debugf("Waiting for kiali to be ready")
+				pods, err := kubeClientSet.CoreV1().Pods(kialiNamespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
+				if err != nil {
+					log.Errorf("Error getting the pods list %s", err)
+					return false, err
+				} else {
+					log.Debugf("Found %d pods", len(pods.Items))
+				}
 
-			if err5 != nil {
-				log.Errorf("Error waiting for pod %s ", err5.Error())
-			}
-
-			log.Debugf("Pod terminated %s", out2)
-
-			waitCmd := ocCommand + " wait --for=condition=ready pod -l app=kiali -n " + kialiNamespace
-			out, err4 := exec.Command("bash", "-c", waitCmd).Output()
-
-			log.Debugf("Kiali pod ready after restart %s", out)
-
-			if err4 != nil {
-				log.Errorf("Error waiting for pod %s ", err4.Error())
-			}
+				for _, pod := range pods.Items {
+					if pod.Name == podName {
+						log.Debug("Old kiali pod still exists.")
+						return false, nil
+					}
+					for _, condition := range pod.Status.Conditions {
+						if condition.Type == "Ready" && condition.Status == "False" {
+							log.Debugf("New kiali pod is not ready.")
+							log.Debugf("Condition type %s status %s pod name %s", condition.Type, condition.Status, pod.Name)
+							return false, nil
+						}
+					}
+				}
+				return true, nil
+			})
 		}
 	}
 
 }
 
 func TestNoIstiod(t *testing.T) {
-	defer update_istio_api_enabled(true)
-	update_istio_api_enabled(false)
+	kubeClientSet := kubeClient(t)
+	deadline, _ := t.Deadline()
+	ctx, _ := context.WithDeadline(context.Background(), deadline)
+	defer update_istio_api_enabled(true, kubeClientSet, ctx)
+	update_istio_api_enabled(false, kubeClientSet, ctx)
 	t.Run("ServicesListNoRegistryServices", servicesListNoRegistryServices)
 	t.Run("NoProxyStatus", noProxyStatus)
 	t.Run("istioStatus", istioStatus)
