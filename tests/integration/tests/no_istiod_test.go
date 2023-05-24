@@ -57,7 +57,7 @@ func update_istio_api_enabled(value bool, kubeClientSet kubernetes.Interface, ct
 		log.Debugf("Delete pod command: %s", cmd3)
 
 		if err3 == nil {
-			wait.PollImmediate(time.Second*5, time.Minute*4, func() (bool, error) {
+			err4 := wait.PollImmediate(time.Second*5, time.Minute*4, func() (bool, error) {
 				log.Debugf("Waiting for kiali to be ready")
 				pods, err := kubeClientSet.CoreV1().Pods(kialiNamespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
 				if err != nil {
@@ -82,6 +82,9 @@ func update_istio_api_enabled(value bool, kubeClientSet kubernetes.Interface, ct
 				}
 				return true, nil
 			})
+			if err4 != nil {
+				log.Errorf("Error waiting for pod to initialize %s", err4)
+			}
 		}
 	}
 
@@ -90,7 +93,10 @@ func update_istio_api_enabled(value bool, kubeClientSet kubernetes.Interface, ct
 func TestNoIstiod(t *testing.T) {
 	kubeClientSet := kubeClient(t)
 	deadline, _ := t.Deadline()
-	ctx, _ := context.WithDeadline(context.Background(), deadline)
+	ctx, err := context.WithDeadline(context.Background(), deadline)
+	if err != nil {
+		log.Errorf("Error creating context %s", err)
+	}
 	defer update_istio_api_enabled(true, kubeClientSet, ctx)
 	update_istio_api_enabled(false, kubeClientSet, ctx)
 	t.Run("ServicesListNoRegistryServices", servicesListNoRegistryServices)
