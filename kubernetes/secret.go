@@ -5,6 +5,7 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 type RemoteSecretCluster struct {
@@ -18,12 +19,23 @@ type RemoteSecretClusterListItem struct {
 }
 
 type RemoteSecretUser struct {
-	Name string                `yaml:"name"`
-	User RemoteSecretUserToken `yaml:"user"`
+	Name string                   `yaml:"name"`
+	User RemoteSecretUserAuthInfo `yaml:"user"`
 }
 
-type RemoteSecretUserToken struct {
-	Token string `yaml:"token"`
+type RemoteSecretUserAuthInfo struct {
+	Token string                `yaml:"token"`
+	Exec  *RemoteSecretUserExec `yaml:"exec"`
+}
+
+type RemoteSecretUserExec struct {
+	Command            string                  `yaml:"command"`
+	Args               []string                `yaml:"args"`
+	Env                []api.ExecEnvVar        `yaml:"env"`
+	APIVersion         string                  `yaml:"apiVersion"`
+	InstallHint        string                  `yaml:"installHint"`
+	ProvideClusterInfo bool                    `yaml:"provideClusterInfo"`
+	InteractiveMode    api.ExecInteractiveMode `yaml:"interactiveMode"`
 }
 
 // RemoteSecret contains all the content for a secret containing kubeconfig information.

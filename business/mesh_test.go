@@ -179,7 +179,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 		Users: []kubernetes.RemoteSecretUser{
 			{
 				Name: "foo",
-				User: kubernetes.RemoteSecretUserToken{
+				User: kubernetes.RemoteSecretUserAuthInfo{
 					Token: "bar",
 				},
 			},
