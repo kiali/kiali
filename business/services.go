@@ -194,6 +194,7 @@ func (in *SvcService) GetServiceListForCluster(ctx context.Context, criteria Ser
 	if criteria.IncludeIstioResources {
 		criteria := IstioConfigCriteria{
 			AllNamespaces:           true,
+			Cluster:                 cluster,
 			Namespace:               criteria.Namespace,
 			IncludeDestinationRules: true,
 			IncludeGateways:         true,
@@ -205,7 +206,7 @@ func (in *SvcService) GetServiceListForCluster(ctx context.Context, criteria Ser
 		go func() {
 			defer wg.Done()
 			var err2 error
-			istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigListPerCluster(ctx, criteria, cluster)
+			istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigListPerCluster(ctx, criteria)
 			if err2 != nil {
 				log.Errorf("Error fetching IstioConfigList per cluster %s per namespace %s: %s", cluster, criteria.Namespace, err2)
 				errChan <- err2
@@ -605,6 +606,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		var err2 error
 		criteria := IstioConfigCriteria{
 			AllNamespaces:           true,
+			Cluster:                 cluster,
 			Namespace:               namespace,
 			IncludeDestinationRules: true,
 			// TODO the frontend is merging the Gateways per ServiceDetails but it would be a clean design to locate it here
@@ -614,7 +616,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 			IncludeServiceEntries:  true,
 			IncludeVirtualServices: true,
 		}
-		istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigListPerCluster(ctx, criteria, cluster)
+		istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigListPerCluster(ctx, criteria)
 		if err2 != nil {
 			log.Errorf("Error fetching IstioConfigList per namespace %s: %s", criteria.Namespace, err2)
 			errChan <- err2

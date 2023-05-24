@@ -91,7 +91,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 		// service must match a defined host.  Note that the source namespace is assumed to be the
 		// the same as the appender namespace as all requests for the service entry should be coming
 		// from workloads in the current namespace being processed for the graph.
-		if se, ok := a.getServiceEntry(namespaceInfo.Namespace, n.Service, globalInfo); ok {
+		if se, ok := a.getServiceEntry(namespaceInfo.Namespace, n.Cluster, n.Service, globalInfo); ok {
 			if nodes, ok := seMap[se]; ok {
 				seMap[se] = append(nodes, n)
 			} else {
@@ -162,13 +162,14 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 // TODO: I don't know what happens (nothing good) if a ServiceEntry is defined in an inaccessible namespace
 // but exported to all namespaces (exportTo: *). It's possible that would allow traffic to flow from an
 // accessible workload through a serviceEntry whose definition we can't fetch.
-func (a ServiceEntryAppender) getServiceEntry(namespace, serviceName string, globalInfo *graph.AppenderGlobalInfo) (*serviceEntry, bool) {
+func (a ServiceEntryAppender) getServiceEntry(namespace, cluster, serviceName string, globalInfo *graph.AppenderGlobalInfo) (*serviceEntry, bool) {
 	serviceEntryHosts, found := getServiceEntryHosts(globalInfo)
 	if !found {
 		for ns := range a.AccessibleNamespaces {
-			istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
+			istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigListPerCluster(context.TODO(), business.IstioConfigCriteria{
 				IncludeServiceEntries: true,
 				Namespace:             ns,
+				Cluster:               cluster,
 			})
 			graph.CheckError(err)
 

@@ -52,15 +52,15 @@ func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *grap
 
 func addBadging(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	// Currently no other appenders use DestinationRules or VirtualServices, so they are not cached in AppenderNamespaceInfo
-	istioCfgDestionationRules, err := globalInfo.Business.IstioConfig.GetIstioConfigListPerCluster(context.TODO(), business.IstioConfigCriteria{
+	istioCfgDestionationRules, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
 		IncludeDestinationRules: true,
 		Namespace:               namespaceInfo.Namespace,
-	}, globalInfo.Cluster)
+	})
 	graph.CheckError(err)
-	istioCfgVirtualServices, err := globalInfo.Business.IstioConfig.GetIstioConfigListPerCluster(context.TODO(), business.IstioConfigCriteria{
+	istioCfgVirtualServices, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
 		IncludeVirtualServices: true,
 		AllNamespaces:          true,
-	}, globalInfo.Cluster)
+	})
 	graph.CheckError(err)
 
 	applyCircuitBreakers(trafficMap, namespaceInfo.Namespace, istioCfgDestionationRules)

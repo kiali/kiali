@@ -22,10 +22,12 @@ import (
 )
 
 func TestParseListParams(t *testing.T) {
+	conf := config.NewConfig()
 	namespace := "bookinfo"
 	objects := ""
 	labelSelector := ""
-	criteria := ParseIstioConfigCriteria(namespace, objects, labelSelector, "", false)
+	cluster := conf.KubernetesConfig.ClusterName
+	criteria := ParseIstioConfigCriteria(cluster, namespace, objects, labelSelector, "", false)
 
 	assert.Equal(t, namespace, criteria.Namespace)
 	assert.True(t, criteria.IncludeVirtualServices)
@@ -34,7 +36,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.AllNamespaces)
 
 	objects = "gateways"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "", false)
+	criteria = ParseIstioConfigCriteria(cluster, namespace, objects, labelSelector, "", false)
 
 	assert.True(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
@@ -43,7 +45,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.AllNamespaces)
 	assert.Equal(t, namespace, criteria.Namespace)
 
-	criteria = ParseIstioConfigCriteria("", objects, labelSelector, "", true)
+	criteria = ParseIstioConfigCriteria(cluster, "", objects, labelSelector, "", true)
 
 	assert.True(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
@@ -53,7 +55,7 @@ func TestParseListParams(t *testing.T) {
 	assert.Equal(t, "", criteria.Namespace)
 
 	objects = "virtualservices"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "", false)
+	criteria = ParseIstioConfigCriteria(cluster, namespace, objects, labelSelector, "", false)
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.True(t, criteria.IncludeVirtualServices)
@@ -63,7 +65,7 @@ func TestParseListParams(t *testing.T) {
 	assert.Equal(t, namespace, criteria.Namespace)
 
 	objects = "destinationrules"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "", false)
+	criteria = ParseIstioConfigCriteria(cluster, namespace, objects, labelSelector, "", false)
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
@@ -73,7 +75,7 @@ func TestParseListParams(t *testing.T) {
 	assert.Equal(t, namespace, criteria.Namespace)
 
 	objects = "serviceentries"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "", false)
+	criteria = ParseIstioConfigCriteria(cluster, namespace, objects, labelSelector, "", false)
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
@@ -83,7 +85,7 @@ func TestParseListParams(t *testing.T) {
 	assert.Equal(t, namespace, criteria.Namespace)
 
 	objects = "virtualservices"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "", false)
+	criteria = ParseIstioConfigCriteria(cluster, namespace, objects, labelSelector, "", false)
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.True(t, criteria.IncludeVirtualServices)
@@ -93,7 +95,7 @@ func TestParseListParams(t *testing.T) {
 	assert.Equal(t, namespace, criteria.Namespace)
 
 	objects = "destinationrules,virtualservices"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "", false)
+	criteria = ParseIstioConfigCriteria(cluster, namespace, objects, labelSelector, "", false)
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.True(t, criteria.IncludeVirtualServices)
@@ -103,7 +105,7 @@ func TestParseListParams(t *testing.T) {
 	assert.Equal(t, namespace, criteria.Namespace)
 
 	objects = "notsupported"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "", false)
+	criteria = ParseIstioConfigCriteria(cluster, namespace, objects, labelSelector, "", false)
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
@@ -120,6 +122,7 @@ func TestGetIstioConfigList(t *testing.T) {
 
 	criteria := IstioConfigCriteria{
 		Namespace:               "test",
+		Cluster:                 conf.KubernetesConfig.ClusterName,
 		IncludeGateways:         false,
 		IncludeVirtualServices:  false,
 		IncludeDestinationRules: false,

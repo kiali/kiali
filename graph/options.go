@@ -152,6 +152,9 @@ func NewOptions(r *net_http.Request) Options {
 		}
 		appenders = RequestedAppenders{All: false, AppenderNames: appenderNames}
 	}
+	if cluster == "" {
+		cluster = Unknown
+	}
 	if configVendor == "" {
 		configVendor = defaultConfigVendor
 	} else if configVendor != VendorCytoscape {

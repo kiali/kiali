@@ -59,7 +59,7 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		includeValidations = false
 	}
 
-	criteria := business.ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelector, allNamespaces)
+	criteria := business.ParseIstioConfigCriteria(cluster, namespace, objects, labelSelector, workloadSelector, allNamespaces)
 
 	// Get business layer
 	business, err := getBusiness(r)
@@ -95,7 +95,7 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		}(namespace, &istioConfigValidations, &err)
 	}
 
-	istioConfig, err := business.IstioConfig.GetIstioConfigListPerCluster(r.Context(), criteria, cluster)
+	istioConfig, err := business.IstioConfig.GetIstioConfigListPerCluster(r.Context(), criteria)
 	if includeValidations {
 		// Add validation results to the IstioConfigList once they're available (previously done in the UI layer)
 		wg.Wait()

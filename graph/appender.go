@@ -17,7 +17,6 @@ type AppenderGlobalInfo struct {
 	Business    *business.Layer
 	Context     context.Context
 	HomeCluster string
-	Cluster     string
 	PromClient  *prometheus.Client
 	Vendor      AppenderVendorInfo // telemetry vendor's global info
 }
