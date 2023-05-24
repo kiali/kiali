@@ -24,12 +24,19 @@ var ocCommand = utils.NewExecCommand()
 func update_istio_api_enabled(value bool, kubeClientSet kubernetes.Interface, ctx context.Context) {
 	original := !value
 
+	// Restart kiali pod
+	// Get kiali pod name
+	cmdGetPodName := ocCommand + " get pods -o name -n " + kialiNamespace + " | egrep kiali | sed 's|pod/||'"
+	kialiPodName, err2 := exec.Command("bash", "-c", cmdGetPodName).Output()
+	podName := strings.Replace(string(kialiPodName), "\n", "", -1)
+	log.Debugf("Kiali pod name: %s", podName)
+
 	cmdGetProp := ocCommand + " get cm kiali -n " + kialiNamespace + " -o yaml | grep 'istio_api_enabled'"
 	getPropOutput, _ := exec.Command("bash", "-c", cmdGetProp).Output()
 
 	if len(string(getPropOutput)) == 0 {
 		// Is the property is not there, we should add it, instead of replacing
-		cmdReplacecm3 := ocCommand + " get cm kiali -n " + kialiNamespace + " -o yaml | sed -e 's|root_namespace: " + kialiNamespace + "|root_namespace: " + kialiNamespace + "'\r'        istio_api_enabled: " + strconv.FormatBool(value) + "|' | " + ocCommand + " apply -f -"
+		cmdReplacecm3 := ocCommand + " get cm kiali -n istio-system -o yaml | sed -e 's|root_namespace: istio-system|root_namespace: istio-system'\r'        istio_api_enabled: " + strconv.FormatBool(value) + "|' | " + ocCommand + " apply -f -"
 		_, err := exec.Command("bash", "-c", cmdReplacecm3).Output()
 		if err != nil {
 			log.Errorf("Error updating config map: %s", err.Error())
@@ -42,13 +49,6 @@ func update_istio_api_enabled(value bool, kubeClientSet kubernetes.Interface, ct
 			log.Errorf("Error updating config map: %s", err.Error())
 		}
 	}
-
-	// Restart kiali pod
-	// Get kiali pod name
-	cmdGetPodName := ocCommand + " get pods -o name -n " + kialiNamespace + " | egrep kiali | sed 's|pod/||'"
-	kialiPodName, err2 := exec.Command("bash", "-c", cmdGetPodName).Output()
-	podName := strings.Replace(string(kialiPodName), "\n", "", -1)
-	log.Debugf("Kiali pod name: %s", podName)
 
 	if err2 == nil {
 		// Restart
@@ -83,7 +83,7 @@ func update_istio_api_enabled(value bool, kubeClientSet kubernetes.Interface, ct
 				return true, nil
 			})
 			if err4 != nil {
-				log.Errorf("Error waiting for pod to initialize %s", err4)
+				log.Errorf("Error waiting for pod to initialize %s", err4.Error())
 			}
 		}
 	}
@@ -92,11 +92,8 @@ func update_istio_api_enabled(value bool, kubeClientSet kubernetes.Interface, ct
 
 func TestNoIstiod(t *testing.T) {
 	kubeClientSet := kubeClient(t)
-	deadline, _ := t.Deadline()
-	ctx, err := context.WithDeadline(context.Background(), deadline)
-	if err != nil {
-		log.Errorf("Error creating context %s", err)
-	}
+	ctx := context.TODO()
+
 	defer update_istio_api_enabled(true, kubeClientSet, ctx)
 	update_istio_api_enabled(false, kubeClientSet, ctx)
 	t.Run("ServicesListNoRegistryServices", servicesListNoRegistryServices)
