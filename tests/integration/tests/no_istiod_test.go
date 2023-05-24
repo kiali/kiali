@@ -19,19 +19,19 @@ var ocCommand = utils.NewExecCommand()
 func update_istio_api_enabled(value bool) {
 	original := !value
 
-	cmdGetProp := ocCommand + " get cm kiali -n "+ kialiNamespace +" -o yaml | grep 'istio_api_enabled'"
+	cmdGetProp := ocCommand + " get cm kiali -n " + kialiNamespace + " -o yaml | grep 'istio_api_enabled'"
 	getPropOutput, _ := exec.Command("bash", "-c", cmdGetProp).Output()
 
 	if len(string(getPropOutput)) == 0 {
 		// Is the property is not there, we should add it, instead of replacing
-		cmdReplacecm3 := ocCommand + " get cm kiali -n "+ kialiNamespace +" -o yaml | sed -e 's|root_namespace: "+ kialiNamespace +"|root_namespace: "+ kialiNamespace +"'\r'        istio_api_enabled: " + strconv.FormatBool(value) + "|' | " + ocCommand + " apply -f -"
+		cmdReplacecm3 := ocCommand + " get cm kiali -n " + kialiNamespace + " -o yaml | sed -e 's|root_namespace: " + kialiNamespace + "|root_namespace: " + kialiNamespace + "'\r'        istio_api_enabled: " + strconv.FormatBool(value) + "|' | " + ocCommand + " apply -f -"
 		_, err := exec.Command("bash", "-c", cmdReplacecm3).Output()
 		if err != nil {
 			log.Errorf("Error updating config map: %s", err.Error())
 		}
 
 	} else {
-		cmdReplacecm := ocCommand + " get cm kiali -n "+ kialiNamespace +" -o yaml | sed -e 's|istio_api_enabled: " + strconv.FormatBool(original) + "|istio_api_enabled: " + strconv.FormatBool(value) + "|' | " + ocCommand + " apply -f -"
+		cmdReplacecm := ocCommand + " get cm kiali -n " + kialiNamespace + " -o yaml | sed -e 's|istio_api_enabled: " + strconv.FormatBool(original) + "|istio_api_enabled: " + strconv.FormatBool(value) + "|' | " + ocCommand + " apply -f -"
 		_, err := exec.Command("bash", "-c", cmdReplacecm).Output()
 		if err != nil {
 			log.Errorf("Error updating config map: %s", err.Error())
@@ -40,24 +40,24 @@ func update_istio_api_enabled(value bool) {
 
 	// Restart kiali pod
 	// Get kiali pod name
-	cmdGetPodName := ocCommand + " get pods -o name -n "+ kialiNamespace +" | egrep kiali | sed 's|pod/||'"
+	cmdGetPodName := ocCommand + " get pods -o name -n " + kialiNamespace + " | egrep kiali | sed 's|pod/||'"
 	kialiPodName, err2 := exec.Command("bash", "-c", cmdGetPodName).Output()
 	podName := strings.Replace(string(kialiPodName), "\n", "", -1)
 	log.Debugf("Kiali pod name: %s", podName)
 
 	if err2 == nil {
 		// Restart
-		cmd3 := ocCommand + " delete pod " + podName + " -n "+ kialiNamespace
+		cmd3 := ocCommand + " delete pod " + podName + " -n " + kialiNamespace
 		_, err3 := exec.Command("bash", "-c", cmd3).Output()
 		log.Debugf("Delete pod command: %s", cmd3)
 
 		if err3 == nil {
-			waitCmd2 := ocCommand + " wait --for=condition=delete pod/"+podName+" -n "+ kialiNamespace
+			waitCmd2 := ocCommand + " wait --for=condition=delete pod/"+podName+" -n " + kialiNamespace
             out2, _ := exec.Command("bash", "-c", waitCmd2).Output()
 
 			log.Debugf("Pod terminated %s", out2)
 
-			waitCmd := ocCommand + " wait --for=condition=ready pod -l app=kiali -n "+ kialiNamespace
+			waitCmd := ocCommand + " wait --for=condition=ready pod -l app=kiali -n " + kialiNamespace
 			out, err4 := exec.Command("bash", "-c", waitCmd).Output()
 
 			log.Debugf("Kiali pod ready after restart %s", out)
