@@ -184,6 +184,23 @@ export const sortFields: SortField<WorkloadListItem>[] = [
         return 0;
       }
     }
+  },
+  {
+    id: 'cluster',
+    title: 'Cluster',
+    isNumeric: false,
+    param: 'cl',
+    compare: (a: WorkloadListItem, b: WorkloadListItem) => {
+      if (a.cluster && b.cluster) {
+        let sortValue = a.cluster.localeCompare(b.cluster);
+        if (sortValue === 0) {
+          sortValue = a.name.localeCompare(b.name);
+        }
+        return sortValue;
+      } else {
+        return 0;
+      }
+    }
   }
 ];
 

@@ -61,6 +61,24 @@ export const sortFields: SortField<IstioConfigItem>[] = [
 
       return sortValue || a.name.localeCompare(b.name);
     }
+  },
+  {
+    id: 'cluster',
+    title: 'Cluster',
+    isNumeric: false,
+    param: 'cl',
+    compare: (a: IstioConfigItem, b: IstioConfigItem) => {
+      console.log('a ' + a.cluster + ' b ' + b.cluster);
+      if (a.cluster && b.cluster) {
+        let sortValue = a.cluster.localeCompare(b.cluster);
+        if (sortValue === 0) {
+          sortValue = a.name.localeCompare(b.name);
+        }
+        return sortValue;
+      } else {
+        return 0;
+      }
+    }
   }
 ];
 
