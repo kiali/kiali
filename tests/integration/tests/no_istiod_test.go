@@ -53,7 +53,7 @@ func update_istio_api_enabled(value bool) {
 
 		if err3 == nil {
 			waitCmd2 := ocCommand + " wait --for=condition=delete pod/" + podName + " -n " + kialiNamespace
-            out2, err5 := exec.Command("bash", "-c", waitCmd2).Output()
+			out2, err5 := exec.Command("bash", "-c", waitCmd2).Output()
 
 			if err5 != nil {
 				log.Errorf("Error waiting for pod %s ", err5.Error())
