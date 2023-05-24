@@ -534,17 +534,31 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
 
       if (this.props.compressOnHide) {
         this.removedElements = cy.remove(hiddenElements);
-        // now subtract any appboxes that don't have any visible children
-        const hiddenAppBoxes = cy.$('$node[isBox]').subtract(cy.$('$node[isBox] > :inside'));
-        this.removedElements = this.removedElements.add(cy.remove(hiddenAppBoxes));
+        // now subtract any boxes that no longer have children. this is iterative as boxes may be nested
+        let done = false;
+        while (!done) {
+          const emptyBoxes = cy.$('$node[isBox]').subtract(cy.$('$node[isBox] > :inside'));
+          if (emptyBoxes.length > 0) {
+            this.removedElements = this.removedElements.add(cy.remove(emptyBoxes));
+          } else {
+            done = true;
+          }
+        }
       } else {
         // set the remaining hide-hits hidden
         this.hiddenElements = hiddenElements;
         this.hiddenElements.style({ visibility: 'hidden' });
-        // now subtract any appboxes that don't have any visible children
-        const hiddenAppBoxes = cy.$('$node[isBox]').subtract(cy.$('$node[isBox] > :visible'));
-        hiddenAppBoxes.style({ visibility: 'hidden' });
-        this.hiddenElements = this.hiddenElements.add(hiddenAppBoxes);
+        // now subtract any visible boxes that don't have any visible children
+        let done = false;
+        while (!done) {
+          const emptyBoxes = cy.$('$node[isBox]:visible').subtract(cy.$('$node[isBox] > :visible'));
+          if (emptyBoxes.length > 0) {
+            emptyBoxes.style({ visibility: 'hidden' });
+            this.hiddenElements = this.hiddenElements.add(emptyBoxes);
+          } else {
+            done = true;
+          }
+        }
       }
     }
 
