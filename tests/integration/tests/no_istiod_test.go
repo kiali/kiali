@@ -12,8 +12,9 @@ import (
 	"github.com/kiali/kiali/tests/integration/utils"
 )
 
-var ocCommand = utils.NewExecCommand()
 const kialiNamespace = "istio-system"
+
+var ocCommand = utils.NewExecCommand()
 
 func update_istio_api_enabled(value bool) {
 	original := !value
