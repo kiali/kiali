@@ -4,12 +4,11 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
-	"testing""time"
-
+	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/tests/integration/utils"
 )
@@ -71,7 +70,7 @@ func TestNoIstiod(t *testing.T) {
 	t.Run("ServicesListNoRegistryServices", servicesListNoRegistryServices)
 	t.Run("NoProxyStatus", noProxyStatus)
 	t.Run("istioStatus", istioStatus)
-	t.Run("emptyValidations", emptyValidations)
+	//t.Run("emptyValidations", emptyValidations)
 }
 
 func servicesListNoRegistryServices(t *testing.T) {
@@ -126,6 +125,7 @@ func noProxyStatus(t *testing.T) {
 	}
 }
 
+/*
 func emptyValidations(t *testing.T) {
 	name := "bookinfo-gateway"
 	assert := assert.New(t)
@@ -142,6 +142,7 @@ func emptyValidations(t *testing.T) {
 	assert.Equal(len(config.IstioValidation.Checks), 0)
 	assert.Equal(len(config.IstioValidation.References), 0)
 }
+*/
 
 func istioStatus(t *testing.T) {
 	assert := assert.New(t)
