@@ -48,7 +48,7 @@ func update_istio_api_enabled(t *testing.T, value bool, kubeClientSet kubernetes
 	}
 
 	// Restart Kiali pod to pick up the new config.
-    require.NoError(restartKialiPod(ctx, kubeClientSet, kialiNamespace, false, podName))
+	require.NoError(restartKialiPod(ctx, kubeClientSet, kialiNamespace, false, podName))
 
 }
 
