@@ -52,7 +52,7 @@ func update_istio_api_enabled(value bool) {
 		log.Debugf("Delete pod command: %s", cmd3)
 
 		if err3 == nil {
-			waitCmd2 := ocCommand + " wait --for=condition=delete pod/"+podName+" -n " + kialiNamespace
+			waitCmd2 := ocCommand + " wait --for=condition=delete pod/" + podName + " -n " + kialiNamespace
             out2, _ := exec.Command("bash", "-c", waitCmd2).Output()
 
 			log.Debugf("Pod terminated %s", out2)
