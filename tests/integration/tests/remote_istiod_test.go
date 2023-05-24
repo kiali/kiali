@@ -118,11 +118,9 @@ func TestRemoteIstiod(t *testing.T) {
 
 		var currentKialiPod string
 		pods, err := kubeClient.CoreV1().Pods(kialiDeploymentNamespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
-		if err != nil {
-			log.Errorf("Error getting the pods list %s", err)
-		} else {
-			currentKialiPod = pods.Items[0].Name
-		}
+		require.NoError(err)
+		require.Len(pods.Items, 1)
+		currentKialiPod = pods.Items[0].Name
 
 		if kialiCRDExists {
 			undoRegistryPatch := []byte(`[{"op": "remove", "path": "/spec/external_services/istio/registry"}]`)
