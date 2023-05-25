@@ -315,3 +315,26 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 	}
 	return &filtered
 }
+
+// Merge two config lists. To get configs from different namespaces
+func (configList IstioConfigList) MergeConfigs(ns IstioConfigList) IstioConfigList {
+
+	configList.DestinationRules = append(configList.DestinationRules, ns.DestinationRules...)
+	configList.EnvoyFilters = append(configList.EnvoyFilters, ns.EnvoyFilters...)
+	configList.Gateways = append(configList.Gateways, ns.Gateways...)
+	configList.AuthorizationPolicies = append(configList.AuthorizationPolicies, ns.AuthorizationPolicies...)
+	configList.K8sGateways = append(configList.K8sGateways, ns.K8sGateways...)
+	configList.K8sHTTPRoutes = append(configList.K8sHTTPRoutes, ns.K8sHTTPRoutes...)
+	configList.PeerAuthentications = append(configList.PeerAuthentications, ns.PeerAuthentications...)
+	configList.RequestAuthentications = append(configList.RequestAuthentications, ns.RequestAuthentications...)
+	configList.ServiceEntries = append(configList.ServiceEntries, ns.ServiceEntries...)
+	configList.Sidecars = append(configList.Sidecars, ns.Sidecars...)
+	configList.Telemetries = append(configList.Telemetries, ns.Telemetries...)
+	configList.VirtualServices = append(configList.VirtualServices, ns.VirtualServices...)
+	configList.WasmPlugins = append(configList.WasmPlugins, ns.WasmPlugins...)
+	configList.WorkloadEntries = append(configList.WorkloadEntries, ns.WorkloadEntries...)
+	configList.WorkloadGroups = append(configList.WorkloadGroups, ns.WorkloadGroups...)
+	configList.Namespace = Namespace{}
+
+	return configList
+}
