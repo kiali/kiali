@@ -1,72 +1,63 @@
 package tests
 
 import (
+	"context"
 	"os/exec"
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/tests/integration/utils"
 )
 
+const kialiNamespace = "istio-system"
+
 var ocCommand = utils.NewExecCommand()
 
-func update_istio_api_enabled(value bool) {
+func update_istio_api_enabled(t *testing.T, value bool, kubeClientSet kubernetes.Interface, ctx context.Context) {
 	original := !value
+	require := require.New(t)
 
-	cmdGetProp := ocCommand + " get cm kiali -n istio-system -o yaml | grep 'istio_api_enabled'"
+	// Restart kiali pod
+	// Get kiali pod name
+	cmdGetPodName := ocCommand + " get pods -o name -n " + kialiNamespace + " | egrep kiali | sed 's|pod/||'"
+	kialiPodName, err2 := exec.Command("bash", "-c", cmdGetPodName).Output()
+	require.NoError(err2)
+
+	podName := strings.Replace(string(kialiPodName), "\n", "", -1)
+	log.Debugf("Kiali pod name: %s", podName)
+
+	cmdGetProp := ocCommand + " get cm kiali -n " + kialiNamespace + " -o yaml | grep 'istio_api_enabled'"
 	getPropOutput, _ := exec.Command("bash", "-c", cmdGetProp).Output()
 
 	if len(string(getPropOutput)) == 0 {
 		// Is the property is not there, we should add it, instead of replacing
 		cmdReplacecm3 := ocCommand + " get cm kiali -n istio-system -o yaml | sed -e 's|root_namespace: istio-system|root_namespace: istio-system'\r'        istio_api_enabled: " + strconv.FormatBool(value) + "|' | " + ocCommand + " apply -f -"
 		_, err := exec.Command("bash", "-c", cmdReplacecm3).Output()
-		if err != nil {
-			log.Errorf("Error updating config map: %s", err.Error())
-		}
+		require.NoError(err)
 
 	} else {
-		cmdReplacecm := ocCommand + " get cm kiali -n istio-system -o yaml | sed -e 's|istio_api_enabled: " + strconv.FormatBool(original) + "|istio_api_enabled: " + strconv.FormatBool(value) + "|' | " + ocCommand + " apply -f -"
+		cmdReplacecm := ocCommand + " get cm kiali -n " + kialiNamespace + " -o yaml | sed -e 's|istio_api_enabled: " + strconv.FormatBool(original) + "|istio_api_enabled: " + strconv.FormatBool(value) + "|' | " + ocCommand + " apply -f -"
 		_, err := exec.Command("bash", "-c", cmdReplacecm).Output()
-		if err != nil {
-			log.Errorf("Error updating config map: %s", err.Error())
-		}
+		require.NoError(err)
 	}
 
-	// Restart kiali pod
-	// Get kiali pod name
-	cmdGetPodName := ocCommand + " get pods -o name -n istio-system | egrep kiali | sed 's|pod/||'"
-	kialiPodName, err2 := exec.Command("bash", "-c", cmdGetPodName).Output()
-	podName := strings.Replace(string(kialiPodName), "\n", "", -1)
-	log.Debugf("Kiali pod name: %s", podName)
+	// Restart Kiali pod to pick up the new config.
+	require.NoError(restartKialiPod(ctx, kubeClientSet, kialiNamespace, false, podName))
 
-	if err2 == nil {
-		// Restart
-		cmd3 := ocCommand + " delete pod " + podName + " -n istio-system"
-		_, err3 := exec.Command("bash", "-c", cmd3).Output()
-		log.Debugf("Delete pod command: %s", cmd3)
-
-		if err3 == nil {
-			waitCmd := ocCommand + " wait --for=condition=ready pod -l app=kiali -n istio-system"
-			out, err4 := exec.Command("bash", "-c", waitCmd).Output()
-
-			log.Debugf("Waiting for condition to met %s", out)
-
-			if err4 != nil {
-				log.Errorf("Error waiting for pod %s ", err4.Error())
-			}
-		}
-	}
 }
 
 func TestNoIstiod(t *testing.T) {
-	defer update_istio_api_enabled(true)
-	update_istio_api_enabled(false)
-	time.Sleep(10 * time.Second)
+	kubeClientSet := kubeClient(t)
+	ctx := context.TODO()
+
+	defer update_istio_api_enabled(t, true, kubeClientSet, ctx)
+	update_istio_api_enabled(t, false, kubeClientSet, ctx)
 	t.Run("ServicesListNoRegistryServices", servicesListNoRegistryServices)
 	t.Run("NoProxyStatus", noProxyStatus)
 	t.Run("istioStatus", istioStatus)
