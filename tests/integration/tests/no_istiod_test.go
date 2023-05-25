@@ -130,7 +130,7 @@ func emptyValidations(t *testing.T) {
 	name := "bookinfo-gateway"
 	assert := assert.New(t)
 
-	config, err := getConfigDetails(utils.BOOKINFO, name, k8s.Gateways, true, assert)
+	config, err := getConfigForNamespace(utils.BOOKINFO, name, k8s.Gateways)
 
 	assert.Nil(err)
 	assert.NotNil(config)
