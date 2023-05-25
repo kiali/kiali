@@ -1,8 +1,6 @@
 package appender
 
 import (
-	"time"
-
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 )
@@ -13,7 +11,7 @@ const SidecarsCheckAppenderName = "sidecarsCheck"
 // a node with no backing workloads is not flagged.
 // Name: sidecarsCheck
 type SidecarsCheckAppender struct {
-	AccessibleNamespaces map[string]time.Time
+	AccessibleNamespaces graph.AccessibleNamespaces
 }
 
 // Name implements Appender

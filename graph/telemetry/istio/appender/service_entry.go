@@ -3,7 +3,6 @@ package appender
 import (
 	"context"
 	"strings"
-	"time"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -41,7 +40,7 @@ const ServiceEntryAppenderName = "serviceEntry"
 // host = *.wikipedia.com would match requests for en.wikipedia.com and de.wikipedia.com. The Istio
 // telemetry produces only one "se-service" node with the wilcard host as the destination_service_name.
 type ServiceEntryAppender struct {
-	AccessibleNamespaces map[string]time.Time
+	AccessibleNamespaces graph.AccessibleNamespaces
 	GraphType            string // This appender does not operate on service graphs because it adds workload nodes.
 }
 
