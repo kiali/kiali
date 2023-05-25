@@ -99,14 +99,9 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
         })
       });
     case getType(GraphToolbarActions.setGraphType):
-      const isServiceGraph = action.payload === GraphType.SERVICE;
-      const showOperationNodes = isServiceGraph ? false : state.toolbarState.showOperationNodes;
-      const showServiceNodes = isServiceGraph ? false : state.toolbarState.showServiceNodes;
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
-          graphType: action.payload,
-          showOperationNodes: showOperationNodes,
-          showServiceNodes: showServiceNodes
+          graphType: action.payload
         }),
         // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on type change)
         summaryData: INITIAL_GRAPH_STATE.summaryData
