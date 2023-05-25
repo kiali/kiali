@@ -113,10 +113,6 @@ Then('the health status of the application should be {string}', function (health
   checkHealthStatusInTable(this.targetNamespace, null, this.targetApp, healthStatus);
 });
 
-Then('user cannot see any apps in the table', () => {
-  cy.get('h5').contains('No applications found').should('exist');
-});
-
 Then('user sees all the Apps toggles', () => {
   cy.get('[data-test="toggle-health"]').should('be.checked');
   cy.get('[data-test="toggle-istioResources"]').should('be.checked');
@@ -134,4 +130,17 @@ When('user {string} toggle {string}', function (action: 'checks' | 'unchecks', t
 
 Then('the {string} column {string}', (col: string, action: 'appears' | 'disappears') => {
   colExists(col, action === 'appears');
+});
+
+Then('user may only see {string}', (sees: string) => {
+  cy.get('tbody').within(() => {
+    cy.get('tr').should('have.length', 1);
+    cy.get('td').then(td => {
+      if (td.length === 1) {
+        cy.get('h5').contains('No applications found');
+      } else {
+        cy.contains('tr', sees);
+      }
+    });
+  });
 });
