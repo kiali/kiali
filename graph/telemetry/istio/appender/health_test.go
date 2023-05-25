@@ -517,6 +517,67 @@ func TestErrorCausesPanic(t *testing.T) {
 	assert.PanicsWithValue(panicErrMsg, func() { a.AppendGraph(trafficMap, globalInfo, namespaceInfo) })
 }
 
+func TestMultiClusterHealthConfig(t *testing.T) {
+	assert := assert.New(t)
+
+	trafficMap := graph.NewTrafficMap()
+	eastNode, _ := graph.NewNode("east", "testNamespace", "", "testNamespace", graph.Unknown, "myTest", graph.Unknown, graph.GraphTypeVersionedApp)
+	trafficMap[eastNode.ID] = eastNode
+	westNode, _ := graph.NewNode("west", "testNamespace", "", "testNamespace", graph.Unknown, "myTest", graph.Unknown, graph.GraphTypeVersionedApp)
+	trafficMap[westNode.ID] = westNode
+	objects := []runtime.Object{
+		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
+	}
+	westClient := kubetest.NewFakeK8sClient(objects...)
+	for _, obj := range buildFakeWorkloadDeploymentsHealth(rateDefinition) {
+		o := obj
+		objects = append(objects, &o)
+	}
+	for _, obj := range buildFakePodsHealth(rateDefinition) {
+		o := obj
+		objects = append(objects, &o)
+	}
+	for _, obj := range buildFakeServicesHealth(rateDefinition) {
+		o := obj
+		objects = append(objects, &o)
+	}
+
+	factory := kubetest.NewK8SClientFactoryMock(nil)
+	factory.Clients = map[string]kubernetes.ClientInterface{
+		"east": kubetest.NewFakeK8sClient(objects...),
+		"west": westClient,
+	}
+
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	conf.KubernetesConfig.ClusterName = "east"
+	config.Set(conf)
+	cache := business.NewTestingCacheWithFactory(t, factory, *conf)
+	business.WithKialiCache(cache)
+
+	business.SetKialiControlPlaneCluster(&business.Cluster{
+		Name: config.DefaultClusterID,
+	})
+
+	prom := new(prometheustest.PromClientMock)
+	prom.MockNamespaceServicesRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
+	prom.MockAllRequestRates("testNamespace", conf.KubernetesConfig.ClusterName, "0s", time.Unix(0, 0), model.Vector{})
+	businessLayer := business.NewWithBackends(factory.GetSAClients(), factory.GetSAClients(), prom, nil)
+
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+
+	a := HealthAppender{}
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+
+	assert.Contains(eastNode.Metadata, graph.HealthData)
+	assert.Contains(westNode.Metadata, graph.HealthData)
+	assert.NotEmpty(eastNode.Metadata[graph.HealthData].(*models.AppHealth).WorkloadStatuses)
+	assert.Empty(westNode.Metadata[graph.HealthData].(*models.AppHealth).WorkloadStatuses)
+}
+
 func buildFakeServicesHealth(rate string) []core_v1.Service {
 	annotationMap := map[string]string{}
 	if rate != "" {

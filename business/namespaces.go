@@ -521,9 +521,10 @@ func (in *NamespaceService) GetNamespace(ctx context.Context, namespace string) 
 // TODO: Multicluster: We are going to need something else to identify the namespace, the cluster (OR Return a list/array/map)
 func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace string, cluster string) (*models.Namespace, error) {
 	var end observability.EndFunc
-	ctx, end = observability.StartSpan(ctx, "GetNamespace",
+	ctx, end = observability.StartSpan(ctx, "GetNamespaceByCluster",
 		observability.Attribute("package", "business"),
 		observability.Attribute("namespace", namespace),
+		observability.Attribute("cluster", cluster),
 	)
 	defer end()
 
