@@ -54,7 +54,7 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cluster := clusterNameFromQuery(query)
-	if cluster != config.Get().KubernetesConfig.ClusterName || config.Get().ExternalServices.Istio.IstioAPIEnabled == false {
+	if cluster != config.Get().KubernetesConfig.ClusterName || !config.Get().ExternalServices.Istio.IstioAPIEnabled {
 		// @TODO do not include validations from other clusters yet
 		includeValidations = false
 	}
@@ -146,7 +146,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cluster := clusterNameFromQuery(query)
-	if cluster != config.Get().KubernetesConfig.ClusterName || config.Get().ExternalServices.Istio.IstioAPIEnabled == false {
+	if cluster != config.Get().KubernetesConfig.ClusterName || !config.Get().ExternalServices.Istio.IstioAPIEnabled {
 		// @TODO do not include validations from other clusters yet
 		includeValidations = false
 	}

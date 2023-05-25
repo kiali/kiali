@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kiali/kiali/kubernetes"
+	k8s "github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/tests/integration/utils"
 )
@@ -130,11 +130,11 @@ func emptyValidations(t *testing.T) {
 	name := "bookinfo-gateway"
 	assert := assert.New(t)
 
-	config, err := getConfigDetails(utils.BOOKINFO, name, kubernetes.Gateways, true, assert)
+	config, err := getConfigDetails(utils.BOOKINFO, name, k8s.Gateways, true, assert)
 
 	assert.Nil(err)
 	assert.NotNil(config)
-	assert.Equal(kubernetes.Gateways, config.ObjectType)
+	assert.Equal(k8s.Gateways, config.ObjectType)
 	assert.Equal(utils.BOOKINFO, config.Namespace.Name)
 	assert.NotNil(config.Gateway)
 	assert.Equal(name, config.Gateway.Name)
