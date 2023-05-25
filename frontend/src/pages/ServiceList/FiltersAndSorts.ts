@@ -130,6 +130,23 @@ export const sortFields: SortField<ServiceListItem>[] = [
 
       return sortValue || a.name.localeCompare(b.name);
     }
+  },
+  {
+    id: 'cluster',
+    title: 'Cluster',
+    isNumeric: false,
+    param: 'cl',
+    compare: (a: ServiceListItem, b: ServiceListItem) => {
+      if (a.cluster && b.cluster) {
+        let sortValue = a.cluster.localeCompare(b.cluster);
+        if (sortValue === 0) {
+          sortValue = a.name.localeCompare(b.name);
+        }
+        return sortValue;
+      } else {
+        return 0;
+      }
+    }
   }
 ];
 

@@ -145,14 +145,15 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
       .then(validations => showInMessageCenter(validations));
 
     configsPromises
-      .then(items =>
-        IstioConfigListFilters.sortIstioItems(items, this.state.currentSortField, this.state.isSortAscending)
-      )
       .then(configItems => filterByConfigValidation(configItems, configValidationFilters))
       .then(sorted => {
         // Update the view when data is fetched
         this.setState({
-          listItems: this.state.listItems.concat(sorted)
+          listItems: IstioConfigListFilters.sortIstioItems(
+            this.state.listItems.concat(sorted),
+            this.state.currentSortField,
+            this.state.isSortAscending
+          )
         });
       })
       .catch(istioError => {
