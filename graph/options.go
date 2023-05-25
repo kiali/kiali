@@ -268,16 +268,24 @@ func NewOptions(r *net_http.Request) Options {
 		BadRequest("At least one namespace must be specified via the namespaces query parameter.")
 	}
 
-	for _, namespaceToken := range strings.Split(namespaces, ",") {
-		namespaceToken = strings.TrimSpace(namespaceToken)
-		if creationTime, found := accessibleNamespaces[namespaceToken]; found {
-			namespaceMap[namespaceToken] = NamespaceInfo{
-				Name:     namespaceToken,
-				Duration: getSafeNamespaceDuration(namespaceToken, creationTime, time.Duration(duration), queryTime),
-				IsIstio:  config.IsIstioNamespace(namespaceToken),
+	for _, namespaceName := range strings.Split(namespaces, ",") {
+		namespaceName = strings.TrimSpace(namespaceName)
+		var earliestCreationTimestamp time.Time
+		for _, an := range accessibleNamespaces {
+			if namespaceName == an.Name {
+				if earliestCreationTimestamp.IsZero() || earliestCreationTimestamp.After(an.CreationTimestamp) {
+					earliestCreationTimestamp = *&an.CreationTimestamp
+				}
 			}
+		}
+		if earliestCreationTimestamp.IsZero() {
+			Forbidden(fmt.Sprintf("Requested namespace [%s] is not accessible.", namespaceName))
 		} else {
-			Forbidden(fmt.Sprintf("Requested namespace [%s] is not accessible.", namespaceToken))
+			namespaceMap[namespaceName] = NamespaceInfo{
+				Name:     namespaceName,
+				Duration: getSafeNamespaceDuration(namespaceName, earliestCreationTimestamp, time.Duration(duration), queryTime),
+				IsIstio:  config.IsIstioNamespace(namespaceName),
+			}
 		}
 	}
 

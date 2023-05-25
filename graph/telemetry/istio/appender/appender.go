@@ -223,6 +223,7 @@ const (
 )
 
 type serviceEntry struct {
+	cluster   string
 	exportTo  []string
 	hosts     []string
 	location  string
@@ -298,7 +299,7 @@ func getServiceEntryHosts(gi *graph.AppenderGlobalInfo) (serviceEntryHosts, bool
 	return newServiceEntryHosts(), false
 }
 
-func getWorkloadList(namespace string, gi *graph.AppenderGlobalInfo) *models.WorkloadList {
+func getWorkloadList(cluster, namespace string, gi *graph.AppenderGlobalInfo) *models.WorkloadList {
 	var workloadListMap map[string]*models.WorkloadList
 	if existingWorkloadMap, ok := gi.Vendor[workloadListKey]; ok {
 		workloadListMap = existingWorkloadMap.(map[string]*models.WorkloadList)
@@ -307,24 +308,25 @@ func getWorkloadList(namespace string, gi *graph.AppenderGlobalInfo) *models.Wor
 		gi.Vendor[workloadListKey] = workloadListMap
 	}
 
-	if workloadList, ok := workloadListMap[namespace]; ok {
+	key := fmt.Sprintf("%s:%s", cluster, namespace)
+	if workloadList, ok := workloadListMap[key]; ok {
 		return workloadList
 	}
 
-	criteria := business.WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false, IncludeHealth: false}
+	criteria := business.WorkloadCriteria{Cluster: cluster, Namespace: namespace, IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, err := gi.Business.Workload.GetWorkloadList(context.TODO(), criteria)
 	graph.CheckError(err)
-	workloadListMap[namespace] = &workloadList
+	workloadListMap[key] = &workloadList
 
 	return &workloadList
 }
 
-func getWorkload(namespace, workloadName string, gi *graph.AppenderGlobalInfo) (*models.WorkloadListItem, bool) {
+func getWorkload(cluster, namespace, workloadName string, gi *graph.AppenderGlobalInfo) (*models.WorkloadListItem, bool) {
 	if workloadName == "" || workloadName == graph.Unknown {
 		return nil, false
 	}
 
-	workloadList := getWorkloadList(namespace, gi)
+	workloadList := getWorkloadList(cluster, namespace, gi)
 
 	for _, workload := range workloadList.Workloads {
 		if workload.Name == workloadName {
@@ -334,14 +336,14 @@ func getWorkload(namespace, workloadName string, gi *graph.AppenderGlobalInfo) (
 	return nil, false
 }
 
-func getAppWorkloads(namespace, app, version string, gi *graph.AppenderGlobalInfo) []models.WorkloadListItem {
+func getAppWorkloads(cluster, namespace, app, version string, gi *graph.AppenderGlobalInfo) []models.WorkloadListItem {
 	cfg := config.Get()
 	appLabel := cfg.IstioLabels.AppLabelName
 	versionLabel := cfg.IstioLabels.VersionLabelName
 
 	result := []models.WorkloadListItem{}
 	versionOk := graph.IsOKVersion(version)
-	for _, workload := range getWorkloadList(namespace, gi).Workloads {
+	for _, workload := range getWorkloadList(cluster, namespace, gi).Workloads {
 		if appVal, ok := workload.Labels[appLabel]; ok && app == appVal {
 			if !versionOk {
 				result = append(result, workload)

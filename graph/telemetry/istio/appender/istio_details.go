@@ -3,7 +3,6 @@ package appender
 import (
 	"context"
 	"strings"
-	"time"
 
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -24,7 +23,7 @@ const IstioAppenderName = "istio"
 // - VirtualService: n.Metadata[HasVS] = Map of VirtualServiceName => hosts
 // Name: istio
 type IstioAppender struct {
-	AccessibleNamespaces map[string]time.Time
+	AccessibleNamespaces graph.AccessibleNamespaces
 }
 
 // Name implements Appender

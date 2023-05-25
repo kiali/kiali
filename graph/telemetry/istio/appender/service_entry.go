@@ -60,14 +60,16 @@ func (a ServiceEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 		return
 	}
 
-	if globalInfo.HomeCluster == "" {
-		globalInfo.HomeCluster = config.Get().KubernetesConfig.ClusterName
-		c, err := globalInfo.Business.Mesh.ResolveKialiControlPlaneCluster(nil)
-		graph.CheckError(err)
-		if c != nil {
-			globalInfo.HomeCluster = c.Name
+	/*
+		if globalInfo.HomeCluster == "" {
+			globalInfo.HomeCluster = config.Get().KubernetesConfig.ClusterName
+			c, err := globalInfo.Business.Mesh.ResolveKialiControlPlaneCluster(nil)
+			graph.CheckError(err)
+			if c != nil {
+				globalInfo.HomeCluster = c.Name
+			}
 		}
-	}
+	*/
 
 	a.applyServiceEntries(trafficMap, globalInfo, namespaceInfo)
 }
@@ -90,7 +92,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 		// service must match a defined host.  Note that the source namespace is assumed to be the
 		// the same as the appender namespace as all requests for the service entry should be coming
 		// from workloads in the current namespace being processed for the graph.
-		if se, ok := a.getServiceEntry(namespaceInfo.Namespace, n.Service, globalInfo); ok {
+		if se, ok := a.getServiceEntry(n.Cluster, n.Namespace, n.Service, globalInfo); ok {
 			if nodes, ok := seMap[se]; ok {
 				seMap[se] = append(nodes, n)
 			} else {
@@ -101,7 +103,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 
 	// Replace "se-service" nodes with an "se-aggregate" serviceEntry node
 	for se, seServiceNodes := range seMap {
-		serviceEntryNode, err := graph.NewNode(globalInfo.HomeCluster, namespaceInfo.Namespace, se.name, "", "", "", "", a.GraphType)
+		serviceEntryNode, err := graph.NewNode(se.cluster, namespaceInfo.Namespace, se.name, "", "", "", "", a.GraphType)
 		if err != nil {
 			log.Warningf("Skipping serviceEntryNode, %s", err)
 			continue
@@ -161,30 +163,35 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 // TODO: I don't know what happens (nothing good) if a ServiceEntry is defined in an inaccessible namespace
 // but exported to all namespaces (exportTo: *). It's possible that would allow traffic to flow from an
 // accessible workload through a serviceEntry whose definition we can't fetch.
-func (a ServiceEntryAppender) getServiceEntry(namespace, serviceName string, globalInfo *graph.AppenderGlobalInfo) (*serviceEntry, bool) {
+func (a ServiceEntryAppender) getServiceEntry(cluster, namespace, serviceName string, globalInfo *graph.AppenderGlobalInfo) (*serviceEntry, bool) {
 	serviceEntryHosts, found := getServiceEntryHosts(globalInfo)
 	if !found {
-		for ns := range a.AccessibleNamespaces {
-			istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
-				IncludeServiceEntries: true,
-				Namespace:             ns,
-			})
-			graph.CheckError(err)
+		for _, ns := range a.AccessibleNamespaces {
+			// Narrow to only the cluster of this service node
+			if cluster == ns.Cluster {
+				istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
+					Cluster:               ns.Cluster,
+					IncludeServiceEntries: true,
+					Namespace:             ns.Name,
+				})
+				graph.CheckError(err)
 
-			for _, entry := range istioCfg.ServiceEntries {
-				if entry.Spec.Hosts != nil {
-					location := "MESH_EXTERNAL"
-					if entry.Spec.Location.String() == "MESH_INTERNAL" {
-						location = "MESH_INTERNAL"
-					}
-					se := serviceEntry{
-						exportTo:  entry.Spec.ExportTo,
-						location:  location,
-						name:      entry.Name,
-						namespace: entry.Namespace,
-					}
-					for _, host := range entry.Spec.Hosts {
-						serviceEntryHosts.addHost(host, &se)
+				for _, entry := range istioCfg.ServiceEntries {
+					if entry.Spec.Hosts != nil {
+						location := "MESH_EXTERNAL"
+						if entry.Spec.Location.String() == "MESH_INTERNAL" {
+							location = "MESH_INTERNAL"
+						}
+						se := serviceEntry{
+							cluster:   cluster,
+							exportTo:  entry.Spec.ExportTo,
+							location:  location,
+							name:      entry.Name,
+							namespace: entry.Namespace,
+						}
+						for _, host := range entry.Spec.Hosts {
+							serviceEntryHosts.addHost(host, &se)
+						}
 					}
 				}
 			}
