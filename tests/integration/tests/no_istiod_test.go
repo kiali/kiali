@@ -49,12 +49,12 @@ func update_istio_api_enabled(t *testing.T, value bool, kubeClientSet kubernetes
 	}
 
 	// Restart Kiali pod to pick up the new config.
-	require.NoError(restartKialiPod(ctx, kubeClientSet, kialiNamespace, false, podName))
+	require.NoError(utils.RestartKialiPod(ctx, kubeClientSet, kialiNamespace, false, podName))
 
 }
 
 func TestNoIstiod(t *testing.T) {
-	kubeClientSet := kubeClient(t)
+	kubeClientSet := utils.NewKubeClient(t)
 	ctx := context.TODO()
 
 	defer update_istio_api_enabled(t, true, kubeClientSet, ctx)
@@ -75,29 +75,21 @@ func servicesListNoRegistryServices(t *testing.T) {
 	sl := len(serviceList.Services)
 
 	// Deploy an external service entry
-	applySe := ocCommand + " apply -f ../assets/bookinfo-service-entry-external.yaml"
-	_, err2 := exec.Command("bash", "-c", applySe).Output()
-	if err2 != nil {
-		log.Errorf("Failed to execute command: %s", applySe)
-	}
+	applySe := utils.ApplyFile("../assets/bookinfo-service-entry-external.yaml", "bookinfo")
+	require.True(t, applySe)
 
 	// The service result should be the same
 	serviceList2, err3 := utils.ServicesList(utils.BOOKINFO)
+	require.NoError(t, err3)
 	assert.True(len(serviceList2.Services) == sl)
-	if err3 != nil {
-		log.Errorf("Failed to execute command: %s", applySe)
-	}
 
 	// Now, create a Service Entry (Part of th
 	assert.NotNil(serviceList.Validations)
 	assert.Equal(utils.BOOKINFO, serviceList.Namespace.Name)
 
 	// Cleanup
-	rmSe := ocCommand + " delete -f ../assets/bookinfo-service-entry-external.yaml"
-	_, err4 := exec.Command("bash", "-c", rmSe).Output()
-	if err4 != nil {
-		log.Errorf("Failed to execute command: %s", rmSe)
-	}
+	deleteSe := utils.DeleteFile("../assets/bookinfo-service-entry-external.yaml", "bookinfo")
+	require.True(t, deleteSe)
 }
 
 func noProxyStatus(t *testing.T) {

@@ -7,6 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kiali/kiali/config"
+	kialiKube "github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/tests/integration/utils"
+	"github.com/kiali/kiali/tools/cmd"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -15,49 +20,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	kubeyaml "k8s.io/apimachinery/pkg/util/yaml"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
-
-	"github.com/kiali/kiali/config"
-	kialiKube "github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/tests/integration/utils"
-	"github.com/kiali/kiali/tools/cmd"
 )
 
 var assetsFolder = path.Join(cmd.KialiProjectRoot, utils.ASSETS)
-
-func dynamicClient(t *testing.T) dynamic.Interface {
-	t.Helper()
-
-	cfg, err := cmd.GetKubeConfig()
-	if err != nil {
-		t.Fatalf("Error getting kube config: %v", err)
-	}
-
-	client, err := dynamic.NewForConfig(cfg)
-	if err != nil {
-		t.Fatalf("Error creating dynamic client: %v", err)
-	}
-
-	return client
-}
-
-func kubeClient(t *testing.T) kubernetes.Interface {
-	t.Helper()
-
-	cfg, err := cmd.GetKubeConfig()
-	if err != nil {
-		t.Fatalf("Error getting kube config: %v", err)
-	}
-
-	client, err := kubernetes.NewForConfig(cfg)
-	if err != nil {
-		t.Fatalf("Error creating kube client: %v", err)
-	}
-
-	return client
-}
 
 // Testing a remote istiod by exposing /debug endpoints through a proxy.
 // It assumes you've deployed Kiali through the operator.
@@ -68,8 +33,8 @@ func TestRemoteIstiod(t *testing.T) {
 	proxyPatch, err := kubeyaml.ToJSON(kialiKube.ReadFile(t, proxyPatchPath))
 	require.NoError(err)
 
-	kubeClient := kubeClient(t)
-	dynamicClient := dynamicClient(t)
+	kubeClient := utils.NewKubeClient(t)
+	dynamicClient := utils.NewDynamicClient(t)
 	kialiGVR := schema.GroupVersionResource{Group: "kiali.io", Version: "v1alpha1", Resource: "kialis"}
 
 	deadline, _ := t.Deadline()
@@ -116,11 +81,7 @@ func TestRemoteIstiod(t *testing.T) {
 	t.Cleanup(func() {
 		log.Debug("Cleaning up resources from RemoteIstiod test")
 
-		var currentKialiPod string
-		pods, err := kubeClient.CoreV1().Pods(kialiDeploymentNamespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
-		require.NoError(err)
-		require.Len(pods.Items, 1)
-		currentKialiPod = pods.Items[0].Name
+		currentKialiPod := utils.GetKialiPodName(kubeClient, kialiDeploymentNamespace, ctx, t)
 
 		if kialiCRDExists {
 			undoRegistryPatch := []byte(`[{"op": "remove", "path": "/spec/external_services/istio/registry"}]`)
@@ -146,7 +107,7 @@ func TestRemoteIstiod(t *testing.T) {
 			require.NoError(err)
 
 			// Restart Kiali pod to pick up the new config.
-			require.NoError(restartKialiPod(ctx, kubeClient, kialiDeploymentNamespace, kialiCRDExists, currentKialiPod))
+			require.NoError(utils.RestartKialiPod(ctx, kubeClient, kialiDeploymentNamespace, kialiCRDExists, currentKialiPod))
 		}
 
 		// Remove service:
@@ -169,13 +130,7 @@ func TestRemoteIstiod(t *testing.T) {
 		_, err = kubeClient.AppsV1().Deployments("istio-system").Update(ctx, istiod, metav1.UpdateOptions{})
 		require.NoError(err)
 
-		pods, err = kubeClient.CoreV1().Pods(kialiDeploymentNamespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
-		if err != nil {
-			log.Errorf("Error getting the pods list %s", err)
-		} else {
-			currentKialiPod = pods.Items[0].Name
-			log.Infof("Current Kiali pod %s", currentKialiPod)
-		}
+		currentKialiPod = utils.GetKialiPodName(kubeClient, kialiDeploymentNamespace, ctx, t)
 
 		// Wait for the configmap to be updated again before exiting.
 		require.NoError(wait.PollImmediate(time.Second*5, time.Minute*2, func() (bool, error) {
@@ -186,7 +141,7 @@ func TestRemoteIstiod(t *testing.T) {
 			return !strings.Contains(cm.Data["config.yaml"], "http://istiod-debug.istio-system:9240"), nil
 		}), "Error waiting for kiali configmap to update")
 
-		require.NoError(restartKialiPod(ctx, kubeClient, kialiDeploymentNamespace, kialiCRDExists, currentKialiPod))
+		require.NoError(utils.RestartKialiPod(ctx, kubeClient, kialiDeploymentNamespace, kialiCRDExists, currentKialiPod))
 	})
 
 	// Expose the istiod /debug endpoints by adding a proxy to the pod.
@@ -245,49 +200,9 @@ func TestRemoteIstiod(t *testing.T) {
 	log.Debugf("Successfully patched kiali to use remote istiod")
 
 	// Restart Kiali pod to pick up the new config.
-	require.NoError(restartKialiPod(ctx, kubeClient, kialiDeploymentNamespace, kialiCRDExists, currentKialiPod), "Error waiting for kiali deployment to update")
+	require.NoError(utils.RestartKialiPod(ctx, kubeClient, kialiDeploymentNamespace, kialiCRDExists, currentKialiPod), "Error waiting for kiali deployment to update")
 
 	configs, err := utils.IstioConfigs()
 	require.NoError(err)
 	require.NotEmpty(configs)
-}
-
-// Deletes the existing kiali Pod and waits for the new one to be ready.
-func restartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, namespace string, kialiCRDExists bool, currentKialiPod string) error {
-	log.Debugf("Restarting kiali pod %s %s", namespace, currentKialiPod)
-
-	// Restart Kiali pod when kiali CRD does not exist
-	if !kialiCRDExists {
-		err := kubeClient.CoreV1().Pods(namespace).Delete(ctx, currentKialiPod, metav1.DeleteOptions{})
-		if err != nil {
-			log.Errorf("Error deleting Kiali pod %s", err)
-			return err
-		}
-	}
-
-	return wait.PollImmediate(time.Second*5, time.Minute*4, func() (bool, error) {
-		log.Debugf("Waiting for kiali to be ready")
-		pods, err := kubeClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
-		if err != nil {
-			log.Errorf("Error getting the pods list %s", err)
-			return false, err
-		} else {
-			log.Debugf("Found %d pods", len(pods.Items))
-		}
-
-		for _, pod := range pods.Items {
-			if pod.Name == currentKialiPod {
-				log.Debug("Old kiali pod still exists.")
-				return false, nil
-			}
-			for _, condition := range pod.Status.Conditions {
-				if condition.Type == "Ready" && condition.Status == "False" {
-					log.Debugf("New kiali pod is not ready.")
-					log.Debugf("Condition type %s status %s pod name %s", condition.Type, condition.Status, pod.Name)
-					return false, nil
-				}
-			}
-		}
-		return true, nil
-	})
 }
