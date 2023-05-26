@@ -54,7 +54,7 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cluster := clusterNameFromQuery(query)
-	if cluster != config.Get().KubernetesConfig.ClusterName {
+	if cluster != config.Get().KubernetesConfig.ClusterName || !config.Get().ExternalServices.Istio.IstioAPIEnabled {
 		// @TODO do not include validations from other clusters yet
 		includeValidations = false
 	}
@@ -95,7 +95,20 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		}(namespace, &istioConfigValidations, &err)
 	}
 
-	istioConfig, err := business.IstioConfig.GetIstioConfigListPerCluster(r.Context(), criteria, cluster)
+	istioConfig := models.IstioConfigList{}
+
+	// This can result on an error, so filter here
+	if criteria.AllNamespaces && !config.Get().AllNamespacesAccessible() {
+		criteria.AllNamespaces = false
+		for _, ns := range nss {
+			criteria.Namespace = ns
+			istioConfigNs, _ := business.IstioConfig.GetIstioConfigListPerCluster(r.Context(), criteria, cluster)
+			istioConfig = istioConfig.MergeConfigs(istioConfigNs)
+		}
+	} else {
+		istioConfig, err = business.IstioConfig.GetIstioConfigListPerCluster(r.Context(), criteria, cluster)
+	}
+
 	if includeValidations {
 		// Add validation results to the IstioConfigList once they're available (previously done in the UI layer)
 		wg.Wait()
@@ -133,7 +146,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cluster := clusterNameFromQuery(query)
-	if cluster != config.Get().KubernetesConfig.ClusterName {
+	if cluster != config.Get().KubernetesConfig.ClusterName || !config.Get().ExternalServices.Istio.IstioAPIEnabled {
 		// @TODO do not include validations from other clusters yet
 		includeValidations = false
 	}

@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/integration/utils"
 	"github.com/kiali/kiali/tools/cmd"
@@ -191,4 +192,10 @@ func getConfigDetails(namespace, name, configType string, skipReferences bool, a
 	})
 	assert.Nil(pollErr)
 	return config, nil
+}
+
+func getConfigForNamespace(namespace, name, configType string) (*models.IstioConfigDetails, error) {
+	config, _, err := utils.IstioConfigDetails(namespace, name, configType)
+	log.Debugf("Config response returned: %+v", config)
+	return config, err
 }
