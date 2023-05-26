@@ -14,8 +14,6 @@ import (
 
 const kialiNamespace = "istio-system"
 
-var ocCommand = utils.NewExecCommand()
-
 func update_istio_api_enabled(t *testing.T, value bool, kubeClientSet kubernetes.Interface, ctx context.Context) {
 	//original := !value
 	require := require.New(t)
