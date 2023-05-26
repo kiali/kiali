@@ -7,11 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kiali/kiali/config"
-	kialiKube "github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/tests/integration/utils"
-	"github.com/kiali/kiali/tools/cmd"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -20,6 +15,12 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	kubeyaml "k8s.io/apimachinery/pkg/util/yaml"
+
+	"github.com/kiali/kiali/config"
+	kialiKube "github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/tests/integration/utils"
+	"github.com/kiali/kiali/tools/cmd"
 )
 
 var assetsFolder = path.Join(cmd.KialiProjectRoot, utils.ASSETS)
@@ -186,7 +187,7 @@ func TestRemoteIstiod(t *testing.T) {
 		currentConfig.ExternalServices.Istio.Registry = &config.RegistryConfig{
 			IstiodURL: "http://istiod-debug.istio-system:9240",
 		}
-		
+
 		utils.UpdateKialiConfigMap(kubeClient, kialiNamespace, currentConfig, cm, ctx, t)
 	}
 	log.Debugf("Successfully patched kiali to use remote istiod")
