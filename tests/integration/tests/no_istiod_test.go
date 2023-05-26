@@ -2,6 +2,8 @@ package tests
 
 import (
 	"context"
+	"os/exec"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,14 +16,26 @@ import (
 
 const kialiNamespace = "istio-system"
 
-func update_istio_api_enabled(t *testing.T, value bool, kubeClientSet kubernetes.Interface, ctx context.Context) {
+var ocCommand = utils.NewExecCommand()
 
+func update_istio_api_enabled(t *testing.T, value bool, kubeClientSet kubernetes.Interface, ctx context.Context) {
+	original := !value
 	require := require.New(t)
 
-	config, cm := utils.GetKialiConfigMap(kubeClientSet, kialiNamespace, "kiali", ctx, t)
-	config.ExternalServices.Istio.IstioAPIEnabled = value
+	cmdGetProp := ocCommand + " get cm kiali -n " + kialiNamespace + " -o yaml | grep 'istio_api_enabled'"
+	getPropOutput, _ := exec.Command("bash", "-c", cmdGetProp).Output()
 
-	utils.UpdateKialiConfigMap(kubeClientSet, kialiNamespace, config, cm, ctx, t)
+	if len(string(getPropOutput)) == 0 {
+		// Is the property is not there, we should add it, instead of replacing
+		cmdReplacecm3 := ocCommand + " get cm kiali -n istio-system -o yaml | sed -e 's|root_namespace: istio-system|root_namespace: istio-system'\r'        istio_api_enabled: " + strconv.FormatBool(value) + "|' | " + ocCommand + " apply -f -"
+		_, err := exec.Command("bash", "-c", cmdReplacecm3).Output()
+		require.NoError(err)
+
+	} else {
+		cmdReplacecm := ocCommand + " get cm kiali -n " + kialiNamespace + " -o yaml | sed -e 's|istio_api_enabled: " + strconv.FormatBool(original) + "|istio_api_enabled: " + strconv.FormatBool(value) + "|' | " + ocCommand + " apply -f -"
+		_, err := exec.Command("bash", "-c", cmdReplacecm).Output()
+		require.NoError(err)
+	}
 
 	// Restart Kiali pod to pick up the new config.
 	require.NoError(utils.RestartKialiPod(ctx, kubeClientSet, kialiNamespace, false, t))
