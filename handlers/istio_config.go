@@ -59,7 +59,7 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		includeValidations = false
 	}
 
-	criteria := business.ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelector, allNamespaces)
+	criteria := business.ParseIstioConfigCriteria(cluster, namespace, objects, labelSelector, workloadSelector, allNamespaces)
 
 	// Get business layer
 	business, err := getBusiness(r)
@@ -102,11 +102,11 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		criteria.AllNamespaces = false
 		for _, ns := range nss {
 			criteria.Namespace = ns
-			istioConfigNs, _ := business.IstioConfig.GetIstioConfigListPerCluster(r.Context(), criteria, cluster)
+			istioConfigNs, _ := business.IstioConfig.GetIstioConfigList(r.Context(), criteria)
 			istioConfig = istioConfig.MergeConfigs(istioConfigNs)
 		}
 	} else {
-		istioConfig, err = business.IstioConfig.GetIstioConfigListPerCluster(r.Context(), criteria, cluster)
+		istioConfig, err = business.IstioConfig.GetIstioConfigList(r.Context(), criteria)
 	}
 
 	if includeValidations {

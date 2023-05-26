@@ -130,7 +130,11 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 	for cluster := range in.userClients {
-		singleClusterConfigList, err := in.GetIstioConfigListPerCluster(ctx, criteria, cluster)
+		if criteria.Cluster != "" && cluster != criteria.Cluster {
+			continue
+		}
+
+		singleClusterConfigList, err := in.getIstioConfigListForCluster(ctx, criteria, cluster)
 		if err != nil {
 			if cluster == conf.KubernetesConfig.ClusterName && len(in.userClients) == 1 {
 				return models.IstioConfigList{}, err
@@ -176,7 +180,11 @@ func (in *IstioConfigService) GetIstioConfigMap(ctx context.Context, criteria Is
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 	for cluster := range in.userClients {
-		singleClusterConfigList, err := in.GetIstioConfigListPerCluster(ctx, criteria, cluster)
+		if criteria.Cluster != "" && cluster != criteria.Cluster {
+			continue
+		}
+
+		singleClusterConfigList, err := in.getIstioConfigListForCluster(ctx, criteria, cluster)
 		if err != nil {
 			if cluster == conf.KubernetesConfig.ClusterName && len(in.userClients) == 1 {
 				return istioConfigMap, err
@@ -198,7 +206,7 @@ func (in *IstioConfigService) GetIstioConfigMap(ctx context.Context, criteria Is
 	return istioConfigMap, nil
 }
 
-func (in *IstioConfigService) GetIstioConfigListPerCluster(ctx context.Context, criteria IstioConfigCriteria, cluster string) (models.IstioConfigList, error) {
+func (in *IstioConfigService) getIstioConfigListForCluster(ctx context.Context, criteria IstioConfigCriteria, cluster string) (models.IstioConfigList, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetIstioConfigList",
 		observability.Attribute("package", "business"),
@@ -1420,7 +1428,7 @@ func checkType(types []string, name string) bool {
 	return false
 }
 
-func ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelector string, allNamespaces bool) IstioConfigCriteria {
+func ParseIstioConfigCriteria(cluster, namespace, objects, labelSelector, workloadSelector string, allNamespaces bool) IstioConfigCriteria {
 	defaultInclude := objects == ""
 	criteria := IstioConfigCriteria{}
 	criteria.IncludeGateways = defaultInclude
@@ -1440,6 +1448,10 @@ func ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelecto
 	criteria.IncludeTelemetry = defaultInclude
 	criteria.LabelSelector = labelSelector
 	criteria.WorkloadSelector = workloadSelector
+
+	if cluster != "" {
+		criteria.Cluster = cluster
+	}
 
 	if allNamespaces {
 		criteria.AllNamespaces = true

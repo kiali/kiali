@@ -91,8 +91,8 @@ func (a *SidecarsCheckAppender) namespaceOK(namespace string, namespaceInfo *gra
 	if namespace == namespaceInfo.Namespace {
 		return true
 	}
-	for ns := range a.AccessibleNamespaces {
-		if namespace == ns {
+	for _, ns := range a.AccessibleNamespaces {
+		if namespace == ns.Name {
 			return true
 		}
 	}

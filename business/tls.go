@@ -40,14 +40,14 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, namespaces []strin
 
 	criteria := IstioConfigCriteria{
 		AllNamespaces:              true,
+		Cluster:                    cluster,
 		IncludeDestinationRules:    true,
 		IncludePeerAuthentications: true,
-		Cluster:                    cluster,
 	}
 	conf := config.Get()
 
 	// @TODO hardcoded HomeClusterName
-	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigListPerCluster(ctx, criteria, cluster)
+	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
 	if err != nil {
 		return models.MTLSStatus{}, err
 	}
@@ -90,12 +90,12 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 
 	criteria := IstioConfigCriteria{
 		AllNamespaces:              true,
+		Cluster:                    cluster,
 		IncludeDestinationRules:    true,
 		IncludePeerAuthentications: true,
-		Cluster:                    cluster,
 	}
 
-	istioConfigList, err2 := in.businessLayer.IstioConfig.GetIstioConfigListPerCluster(ctx, criteria, cluster)
+	istioConfigList, err2 := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
 	if err2 != nil {
 		return models.MTLSStatus{}, err2
 	}

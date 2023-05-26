@@ -187,49 +187,55 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo
 
 	appLabelName := config.Get().IstioLabels.AppLabelName
 	for _, n := range trafficMap {
-		// make sure service nodes have the defined app label so it can be used for app grouping in the UI.
-		if n.NodeType == graph.NodeTypeService && n.Namespace == serviceLists.Namespace.Name && n.App == "" {
-			// For service nodes that are a service entries, use the `hosts` property of the SE to find
-			// a matching Kubernetes Svc for adding missing labels
-			if _, ok := n.Metadata[graph.IsServiceEntry]; ok {
-				seInfo := n.Metadata[graph.IsServiceEntry].(*graph.SEInfo)
-				for _, host := range seInfo.Hosts {
-					var hostToTest string
+		if serviceList, ok := serviceLists[n.Cluster]; ok {
+			// make sure service nodes have the defined app label so it can be used for app grouping in the UI.
+			if n.NodeType == graph.NodeTypeService && n.Namespace == serviceList.Namespace.Name && n.App == "" {
+				// For service nodes that are a service entries, use the `hosts` property of the SE to find
+				// a matching Kubernetes Svc for adding missing labels
+				if _, ok := n.Metadata[graph.IsServiceEntry]; ok {
+					seInfo := n.Metadata[graph.IsServiceEntry].(*graph.SEInfo)
+					for _, host := range seInfo.Hosts {
+						var hostToTest string
 
-					hostSplitted := strings.Split(host, ".")
-					if len(hostSplitted) == 3 && hostSplitted[2] == config.IstioMultiClusterHostSuffix {
-						hostToTest = host
-					} else {
-						hostToTest = hostSplitted[0]
-					}
-
-					if svc, found := svcMap[fmt.Sprintf("%s:%s", n.Cluster, hostToTest)]; found {
-						if app, ok := svc.Labels[appLabelName]; ok {
-							n.App = app
+						hostSplitted := strings.Split(host, ".")
+						if len(hostSplitted) == 3 && hostSplitted[2] == config.IstioMultiClusterHostSuffix {
+							hostToTest = host
+						} else {
+							hostToTest = hostSplitted[0]
 						}
-						continue
-					}
-				}
-				continue
-			}
-			// A service node that is an Istio egress cluster will not have a service definition
-			if _, ok := n.Metadata[graph.IsEgressCluster]; ok {
-				continue
-			}
 
-			if svc, found := svcMap[fmt.Sprintf("%s:%s", n.Cluster, n.Service)]; !found {
-				log.Debugf("Service not found, may not apply app label correctly for [%s:%s]", n.Namespace, n.Service)
-				continue
-			} else if app, ok := svc.Labels[appLabelName]; ok {
-				n.App = app
+						if svc, found := svcMap[fmt.Sprintf("%s:%s", n.Cluster, hostToTest)]; found {
+							if app, ok := svc.Labels[appLabelName]; ok {
+								n.App = app
+							}
+							continue
+						}
+					}
+					continue
+				}
+				// A service node that is an Istio egress cluster will not have a service definition
+				if _, ok := n.Metadata[graph.IsEgressCluster]; ok {
+					continue
+				}
+
+				if svc, found := svcMap[fmt.Sprintf("%s:%s", n.Cluster, n.Service)]; !found {
+					log.Debugf("Service not found, may not apply app label correctly for [%s:%s]", n.Namespace, n.Service)
+					continue
+				} else if app, ok := svc.Labels[appLabelName]; ok {
+					n.App = app
+				}
 			}
 		}
 	}
 }
 
-func decorateMatchingGateways(gwCrd *networking_v1beta1.Gateway, gatewayNodeMapping map[*models.WorkloadListItem][]*graph.Node, nodeMetadataKey graph.MetadataKey) {
+func decorateMatchingGateways(cluster string, gwCrd *networking_v1beta1.Gateway, gatewayNodeMapping map[*models.WorkloadListItem][]*graph.Node, nodeMetadataKey graph.MetadataKey) {
 	gwSelector := labels.Set(gwCrd.Spec.Selector).AsSelector()
 	for gw, nodes := range gatewayNodeMapping {
+		if gw.Cluster != cluster {
+			continue
+		}
+
 		if gwSelector.Matches(labels.Set(gw.Labels)) {
 
 			// If we are here, the GatewayCrd selects the Gateway workload.
@@ -253,9 +259,13 @@ func decorateMatchingGateways(gwCrd *networking_v1beta1.Gateway, gatewayNodeMapp
 	}
 }
 
-func decorateMatchingAPIGateways(gwCrd *k8s_networking_v1beta1.Gateway, gatewayNodeMapping map[*models.WorkloadListItem][]*graph.Node, nodeMetadataKey graph.MetadataKey) {
+func decorateMatchingAPIGateways(cluster string, gwCrd *k8s_networking_v1beta1.Gateway, gatewayNodeMapping map[*models.WorkloadListItem][]*graph.Node, nodeMetadataKey graph.MetadataKey) {
 	gwSelector := labels.Set(gwCrd.Labels).AsSelector()
 	for gw, nodes := range gatewayNodeMapping {
+		if gw.Cluster != cluster {
+			continue
+		}
+
 		if gwSelector.Matches(labels.Set(gw.Labels)) {
 
 			// If we are here, the GatewayCrd selects the GatewayAPI workload.
@@ -284,11 +294,14 @@ func resolveGatewayNodeMapping(gatewayWorkloads map[string][]models.WorkloadList
 	istioAppLabelName := config.Get().IstioLabels.AppLabelName
 
 	gatewayNodeMapping := make(map[*models.WorkloadListItem][]*graph.Node)
-	for gwNs, gwWorkloadsList := range gatewayWorkloads {
+	for key, gwWorkloadsList := range gatewayWorkloads {
+		split := strings.Split(key, ":")
+		gwCluster := split[0]
+		gwNs := split[1]
 		for _, gw := range gwWorkloadsList {
 			for _, node := range trafficMap {
 				if _, ok := node.Metadata[nodeMetadataKey]; !ok {
-					if (node.NodeType == graph.NodeTypeApp || node.NodeType == graph.NodeTypeWorkload) && node.App == gw.Labels[istioAppLabelName] && node.Namespace == gwNs {
+					if (node.NodeType == graph.NodeTypeApp || node.NodeType == graph.NodeTypeWorkload) && node.App == gw.Labels[istioAppLabelName] && node.Cluster == gwCluster && node.Namespace == gwNs {
 						node.Metadata[nodeMetadataKey] = graph.GatewaysMetadata{}
 						gatewayNodeMapping[&gw] = append(gatewayNodeMapping[&gw], node)
 					}
@@ -318,17 +331,22 @@ func (a IstioAppender) decorateGateways(trafficMap graph.TrafficMap, globalInfo 
 	if len(ingressNodeMapping) != 0 || len(egressNodeMapping) != 0 {
 		gatewaysCrds := a.getIstioGatewayResources(globalInfo)
 
-		for _, gwCrd := range gatewaysCrds {
-			decorateMatchingGateways(gwCrd, ingressNodeMapping, graph.IsIngressGateway)
-			decorateMatchingGateways(gwCrd, egressNodeMapping, graph.IsEgressGateway)
+		for cluster, gwCrds := range gatewaysCrds {
+			for _, gwCrd := range gwCrds {
+				decorateMatchingGateways(cluster, gwCrd, ingressNodeMapping, graph.IsIngressGateway)
+				decorateMatchingGateways(cluster, gwCrd, egressNodeMapping, graph.IsEgressGateway)
+			}
 		}
 	}
 	// If there is any GatewayAPI node in the processing namespace, find GatewayAPI CRDs and
 	// match them against gateways in the graph.
 	if len(gatewayAPINodeMapping) != 0 {
 		gatewaysCrds := a.getGatewayAPIResources(globalInfo)
-		for _, gwCrd := range gatewaysCrds {
-			decorateMatchingAPIGateways(gwCrd, gatewayAPINodeMapping, graph.IsGatewayAPI)
+
+		for cluster, gwCrds := range gatewaysCrds {
+			for _, gwCrd := range gwCrds {
+				decorateMatchingAPIGateways(cluster, gwCrd, gatewayAPINodeMapping, graph.IsGatewayAPI)
+			}
 		}
 	}
 }
@@ -343,8 +361,8 @@ func (a IstioAppender) getIngressGatewayWorkloads(globalInfo *graph.AppenderGlob
 
 func (a IstioAppender) getIstioComponentWorkloads(component string, globalInfo *graph.AppenderGlobalInfo) map[string][]models.WorkloadListItem {
 	componentWorkloads := make(map[string][]models.WorkloadListItem)
-	for namespace := range a.AccessibleNamespaces {
-		criteria := business.WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false, IncludeHealth: false}
+	for key, an := range a.AccessibleNamespaces {
+		criteria := business.WorkloadCriteria{Cluster: an.Cluster, Namespace: an.Name, IncludeIstioResources: false, IncludeHealth: false}
 		wList, err := globalInfo.Business.Workload.GetWorkloadList(context.TODO(), criteria)
 		graph.CheckError(err)
 
@@ -352,7 +370,7 @@ func (a IstioAppender) getIstioComponentWorkloads(component string, globalInfo *
 		for _, workload := range wList.Workloads {
 			if workload.Type == "Deployment" {
 				if labelValue, ok := workload.Labels["operator.istio.io/component"]; ok && labelValue == component {
-					componentWorkloads[namespace] = append(componentWorkloads[namespace], workload)
+					componentWorkloads[key] = append(componentWorkloads[key], workload)
 				}
 			}
 		}
@@ -363,8 +381,8 @@ func (a IstioAppender) getIstioComponentWorkloads(component string, globalInfo *
 
 func (a IstioAppender) getGatewayAPIWorkloads(globalInfo *graph.AppenderGlobalInfo) map[string][]models.WorkloadListItem {
 	managedWorkloads := make(map[string][]models.WorkloadListItem)
-	for namespace := range a.AccessibleNamespaces {
-		criteria := business.WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false, IncludeHealth: false}
+	for key, an := range a.AccessibleNamespaces {
+		criteria := business.WorkloadCriteria{Cluster: an.Cluster, Namespace: an.Name, IncludeIstioResources: false, IncludeHealth: false}
 		wList, err := globalInfo.Business.Workload.GetWorkloadList(context.TODO(), criteria)
 		graph.CheckError(err)
 
@@ -372,7 +390,7 @@ func (a IstioAppender) getGatewayAPIWorkloads(globalInfo *graph.AppenderGlobalIn
 		for _, workload := range wList.Workloads {
 			if workload.Type == "Deployment" {
 				if _, ok := workload.Labels["istio.io/gateway-name"]; ok {
-					managedWorkloads[namespace] = append(managedWorkloads[namespace], workload)
+					managedWorkloads[key] = append(managedWorkloads[key], workload)
 				}
 			}
 		}
@@ -381,31 +399,33 @@ func (a IstioAppender) getGatewayAPIWorkloads(globalInfo *graph.AppenderGlobalIn
 	return managedWorkloads
 }
 
-func (a IstioAppender) getIstioGatewayResources(globalInfo *graph.AppenderGlobalInfo) []*networking_v1beta1.Gateway {
-	retVal := []*networking_v1beta1.Gateway{}
-	for namespace := range a.AccessibleNamespaces {
+func (a IstioAppender) getIstioGatewayResources(globalInfo *graph.AppenderGlobalInfo) map[string][]*networking_v1beta1.Gateway {
+	retVal := map[string][]*networking_v1beta1.Gateway{}
+	for key, an := range a.AccessibleNamespaces {
 		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
+			Cluster:         an.Cluster,
 			IncludeGateways: true,
-			Namespace:       namespace,
+			Namespace:       an.Name,
 		})
 		graph.CheckError(err)
 
-		retVal = append(retVal, istioCfg.Gateways...)
+		retVal[key] = append(retVal[key], istioCfg.Gateways...)
 	}
 
 	return retVal
 }
 
-func (a IstioAppender) getGatewayAPIResources(globalInfo *graph.AppenderGlobalInfo) []*k8s_networking_v1beta1.Gateway {
-	retVal := []*k8s_networking_v1beta1.Gateway{}
-	for namespace := range a.AccessibleNamespaces {
+func (a IstioAppender) getGatewayAPIResources(globalInfo *graph.AppenderGlobalInfo) map[string][]*k8s_networking_v1beta1.Gateway {
+	retVal := map[string][]*k8s_networking_v1beta1.Gateway{}
+	for key, an := range a.AccessibleNamespaces {
 		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
+			Cluster:            an.Cluster,
 			IncludeK8sGateways: true,
-			Namespace:          namespace,
+			Namespace:          an.Name,
 		})
 		graph.CheckError(err)
 
-		retVal = append(retVal, istioCfg.K8sGateways...)
+		retVal[key] = append(retVal[key], istioCfg.K8sGateways...)
 	}
 
 	return retVal
