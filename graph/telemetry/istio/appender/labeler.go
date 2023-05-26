@@ -65,7 +65,7 @@ func labelNodes(trafficMap graph.TrafficMap, gi *graph.AppenderGlobalInfo) {
 				}
 			}
 		case graph.NodeTypeService:
-			if svc, ok := getServiceDefinition(n.Namespace, n.Service, gi); ok {
+			if svc, ok := getServiceDefinition(n.Cluster, n.Namespace, n.Service, gi); ok {
 				labelsMetadata = copyMap(svc.Labels)
 			} else {
 				log.Debugf("Failed to obtain service details for [%+v]", n)

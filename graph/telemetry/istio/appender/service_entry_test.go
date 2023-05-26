@@ -183,14 +183,17 @@ func TestServiceEntry(t *testing.T) {
 	assert.Equal(nil, internalSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
 
 	globalInfo := graph.NewAppenderGlobalInfo()
-	globalInfo.HomeCluster = testCluster
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
-		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
-	}
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			config.DefaultClusterID: &graph.AccessibleNamespace{
+				Cluster:           config.DefaultClusterID,
+				CreationTimestamp: time.Now(),
+				Name:              "testNamespace",
+			}}}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(6, len(trafficMap))
@@ -298,13 +301,16 @@ func TestServiceEntryExportAll(t *testing.T) {
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
-	globalInfo.HomeCluster = testCluster
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
-		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
-	}
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			config.DefaultClusterID: &graph.AccessibleNamespace{
+				Cluster:           config.DefaultClusterID,
+				CreationTimestamp: time.Now(),
+				Name:              "testNamespace",
+			}}}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(6, len(trafficMap))
@@ -406,13 +412,16 @@ func TestServiceEntryExportNamespaceFound(t *testing.T) {
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
-	globalInfo.HomeCluster = testCluster
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
-		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
-	}
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			config.DefaultClusterID: &graph.AccessibleNamespace{
+				Cluster:           config.DefaultClusterID,
+				CreationTimestamp: time.Now(),
+				Name:              "testNamespace",
+			}}}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(6, len(trafficMap))
@@ -514,13 +523,16 @@ func TestServiceEntryExportDefinitionNamespace(t *testing.T) {
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
-	globalInfo.HomeCluster = testCluster
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
-		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
-	}
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			config.DefaultClusterID: &graph.AccessibleNamespace{
+				Cluster:           config.DefaultClusterID,
+				CreationTimestamp: time.Now(),
+				Name:              "testNamespace",
+			}}}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(6, len(trafficMap))
@@ -622,13 +634,16 @@ func TestServiceEntryExportNamespaceNotFound(t *testing.T) {
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
-	globalInfo.HomeCluster = testCluster
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
-		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
-	}
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			config.DefaultClusterID: &graph.AccessibleNamespace{
+				Cluster:           config.DefaultClusterID,
+				CreationTimestamp: time.Now(),
+				Name:              "testNamespace",
+			}}}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(7, len(trafficMap))
@@ -711,12 +726,15 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 	// Run the appender
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
-	globalInfo.HomeCluster = testCluster
 	namespaceInfo := graph.NewAppenderNamespaceInfo("namespace")
 
 	a := ServiceEntryAppender{
-		AccessibleNamespaces: map[string]time.Time{"namespace": time.Now()},
-	}
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			config.DefaultClusterID: &graph.AccessibleNamespace{
+				Cluster:           config.DefaultClusterID,
+				CreationTimestamp: time.Now(),
+				Name:              "namespace",
+			}}}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	// Assertions
@@ -844,13 +862,16 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
-	globalInfo.HomeCluster = testCluster
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
-		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
-	}
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			config.DefaultClusterID: &graph.AccessibleNamespace{
+				Cluster:           config.DefaultClusterID,
+				CreationTimestamp: time.Now(),
+				Name:              "testNamespace",
+			}}}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(3, len(trafficMap))
@@ -961,13 +982,16 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
-	globalInfo.HomeCluster = testCluster
 	namespaceInfo := graph.NewAppenderNamespaceInfo("otherNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
-		AccessibleNamespaces: map[string]time.Time{"otherNamespace": time.Now()},
-	}
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			config.DefaultClusterID: &graph.AccessibleNamespace{
+				Cluster:           config.DefaultClusterID,
+				CreationTimestamp: time.Now(),
+				Name:              "otherNamespace",
+			}}}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(4, len(trafficMap))
@@ -1066,14 +1090,17 @@ func TestServiceEntryMultipleEdges(t *testing.T) {
 	assert.Equal(nil, v2Node.Metadata[graph.IsServiceEntry])
 
 	globalInfo := graph.NewAppenderGlobalInfo()
-	globalInfo.HomeCluster = testCluster
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
-		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
-	}
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			config.DefaultClusterID: &graph.AccessibleNamespace{
+				Cluster:           config.DefaultClusterID,
+				CreationTimestamp: time.Now(),
+				Name:              "testNamespace",
+			}}}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(3, len(trafficMap))
