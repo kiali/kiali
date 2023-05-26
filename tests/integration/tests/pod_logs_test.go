@@ -12,7 +12,7 @@ import (
 
 func TestLogsContainerIstioProxy(t *testing.T) {
 	assert := assert.New(t)
-	workloadName := "details-v1"
+	workloadName := "details-v3"
 	lines := 50
 	podName, err := utils.FirstPodName(workloadName, utils.BOOKINFO)
 	assert.Nil(err)
@@ -24,7 +24,7 @@ func TestLogsContainerIstioProxy(t *testing.T) {
 
 func TestLogsContainerDetails(t *testing.T) {
 	assert := assert.New(t)
-	workloadName := "details-v1"
+	workloadName := "details-v3"
 	lines := 25
 	podName, err := utils.FirstPodName(workloadName, utils.BOOKINFO)
 	assert.Nil(err)
@@ -36,7 +36,7 @@ func TestLogsContainerDetails(t *testing.T) {
 
 func TestLogsInvalidContainer(t *testing.T) {
 	assert := assert.New(t)
-	workloadName := "details-v1"
+	workloadName := "details-v3"
 	lines := 25
 	podName, err := utils.FirstPodName(workloadName, utils.BOOKINFO)
 	assert.Nil(err)
@@ -48,7 +48,7 @@ func TestLogsInvalidContainer(t *testing.T) {
 
 func TestLogsInvalidLineCount(t *testing.T) {
 	assert := assert.New(t)
-	workloadName := "details-v1"
+	workloadName := "details-v3"
 	podName, err := utils.FirstPodName(workloadName, utils.BOOKINFO)
 	assert.Nil(err)
 	assert.NotEmpty(podName)
