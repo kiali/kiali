@@ -2,9 +2,6 @@ package tests
 
 import (
 	"context"
-	"os/exec"
-	"strconv"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,7 +9,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	k8s "github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/tests/integration/utils"
 )
 
@@ -21,18 +17,14 @@ const kialiNamespace = "istio-system"
 var ocCommand = utils.NewExecCommand()
 
 func update_istio_api_enabled(t *testing.T, value bool, kubeClientSet kubernetes.Interface, ctx context.Context) {
-	original := !value
+	//original := !value
 	require := require.New(t)
 
-	// Restart kiali pod
-	// Get kiali pod name
-	cmdGetPodName := ocCommand + " get pods -o name -n " + kialiNamespace + " | egrep kiali | sed 's|pod/||'"
-	kialiPodName, err2 := exec.Command("bash", "-c", cmdGetPodName).Output()
-	require.NoError(err2)
+	config, cm := utils.GetKialiConfigMap(kubeClientSet, kialiNamespace, "kiali", ctx, t)
+	config.ExternalServices.Istio.IstioAPIEnabled = value
 
-	podName := strings.Replace(string(kialiPodName), "\n", "", -1)
-	log.Debugf("Kiali pod name: %s", podName)
-
+	utils.UpdateKialiConfigMap(kubeClientSet, kialiNamespace, config, cm, ctx, t)
+	/*
 	cmdGetProp := ocCommand + " get cm kiali -n " + kialiNamespace + " -o yaml | grep 'istio_api_enabled'"
 	getPropOutput, _ := exec.Command("bash", "-c", cmdGetProp).Output()
 
@@ -47,9 +39,10 @@ func update_istio_api_enabled(t *testing.T, value bool, kubeClientSet kubernetes
 		_, err := exec.Command("bash", "-c", cmdReplacecm).Output()
 		require.NoError(err)
 	}
+*/
 
 	// Restart Kiali pod to pick up the new config.
-	require.NoError(utils.RestartKialiPod(ctx, kubeClientSet, kialiNamespace, false, podName))
+	require.NoError(utils.RestartKialiPod(ctx, kubeClientSet, kialiNamespace, false, t))
 
 }
 

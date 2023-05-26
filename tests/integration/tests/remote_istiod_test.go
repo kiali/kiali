@@ -107,7 +107,7 @@ func TestRemoteIstiod(t *testing.T) {
 			require.NoError(err)
 
 			// Restart Kiali pod to pick up the new config.
-			require.NoError(utils.RestartKialiPod(ctx, kubeClient, kialiDeploymentNamespace, kialiCRDExists, currentKialiPod))
+			require.NoError(utils.RestartKialiPodName(ctx, kubeClient, kialiDeploymentNamespace, kialiCRDExists, currentKialiPod))
 		}
 
 		// Remove service:
@@ -141,7 +141,7 @@ func TestRemoteIstiod(t *testing.T) {
 			return !strings.Contains(cm.Data["config.yaml"], "http://istiod-debug.istio-system:9240"), nil
 		}), "Error waiting for kiali configmap to update")
 
-		require.NoError(utils.RestartKialiPod(ctx, kubeClient, kialiDeploymentNamespace, kialiCRDExists, currentKialiPod))
+		require.NoError(utils.RestartKialiPodName(ctx, kubeClient, kialiDeploymentNamespace, kialiCRDExists, currentKialiPod))
 	})
 
 	// Expose the istiod /debug endpoints by adding a proxy to the pod.
@@ -181,26 +181,18 @@ func TestRemoteIstiod(t *testing.T) {
 		}), "Error waiting for kiali configmap to update")
 	} else {
 		// Update the configmap directly.
-		cm, err := kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Get(ctx, kialiName, metav1.GetOptions{})
-		require.NoError(err)
+		currentConfig, cm := utils.GetKialiConfigMap(kubeClient, kialiDeploymentNamespace, kialiName, ctx, t)
 
-		currentConfig := config.NewConfig()
-		require.NoError(yaml.Unmarshal([]byte(cm.Data["config.yaml"]), currentConfig))
 		currentConfig.ExternalServices.Istio.Registry = &config.RegistryConfig{
 			IstiodURL: "http://istiod-debug.istio-system:9240",
 		}
-
-		newConfig, err := yaml.Marshal(currentConfig)
-		require.NoError(err)
-		cm.Data["config.yaml"] = string(newConfig)
-
-		_, err = kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Update(ctx, cm, metav1.UpdateOptions{})
-		require.NoError(err)
+		
+		utils.UpdateKialiConfigMap(kubeClient, kialiNamespace, currentConfig, cm, ctx, t)
 	}
 	log.Debugf("Successfully patched kiali to use remote istiod")
 
 	// Restart Kiali pod to pick up the new config.
-	require.NoError(utils.RestartKialiPod(ctx, kubeClient, kialiDeploymentNamespace, kialiCRDExists, currentKialiPod), "Error waiting for kiali deployment to update")
+	require.NoError(utils.RestartKialiPodName(ctx, kubeClient, kialiDeploymentNamespace, kialiCRDExists, currentKialiPod), "Error waiting for kiali deployment to update")
 
 	configs, err := utils.IstioConfigs()
 	require.NoError(err)
