@@ -34,30 +34,22 @@ func (a IdleNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 		return
 	}
 
-	services := []models.ServiceOverview{}
-	workloads := []models.WorkloadListItem{}
-	if globalInfo.HomeCluster == "" {
-		globalInfo.HomeCluster = config.Get().KubernetesConfig.ClusterName
-		c, err := globalInfo.Business.Mesh.ResolveKialiControlPlaneCluster(nil)
-		graph.CheckError(err)
-		if c != nil {
-			globalInfo.HomeCluster = c.Name
-		}
-	}
+	serviceLists := map[string]*models.ServiceList{}
+	workloadLists := map[string]*models.WorkloadList{}
 
 	if a.GraphType != graph.GraphTypeService {
-		workloads = getWorkloadList(namespaceInfo.Namespace, globalInfo).Workloads
+		workloadLists = getWorkloadLists(trafficMap, namespaceInfo.Namespace, globalInfo)
 	}
 
 	if a.GraphType == graph.GraphTypeService || a.InjectServiceNodes {
-		services = getServiceList(namespaceInfo.Namespace, globalInfo).Services
+		serviceLists = getServiceLists(trafficMap, namespaceInfo.Namespace, globalInfo)
 	}
 
-	a.addIdleNodes(trafficMap, globalInfo.HomeCluster, namespaceInfo.Namespace, services, workloads)
+	a.addIdleNodes(trafficMap, namespaceInfo.Namespace, serviceLists, workloadLists)
 }
 
-func (a IdleNodeAppender) addIdleNodes(trafficMap graph.TrafficMap, cluster, namespace string, services []models.ServiceOverview, workloads []models.WorkloadListItem) {
-	idleNodeTrafficMap := a.buildIdleNodeTrafficMap(trafficMap, cluster, namespace, services, workloads)
+func (a IdleNodeAppender) addIdleNodes(trafficMap graph.TrafficMap, namespace string, serviceLists map[string]*models.ServiceList, workloadLists map[string]*models.WorkloadList) {
+	idleNodeTrafficMap := a.buildIdleNodeTrafficMap(trafficMap, namespace, serviceLists, workloadLists)
 
 	// Integrate the idle nodes into the existing traffic map
 	for id, idleNode := range idleNodeTrafficMap {
@@ -65,43 +57,47 @@ func (a IdleNodeAppender) addIdleNodes(trafficMap graph.TrafficMap, cluster, nam
 	}
 }
 
-func (a IdleNodeAppender) buildIdleNodeTrafficMap(trafficMap graph.TrafficMap, cluster, namespace string, services []models.ServiceOverview, workloads []models.WorkloadListItem) graph.TrafficMap {
+func (a IdleNodeAppender) buildIdleNodeTrafficMap(trafficMap graph.TrafficMap, namespace string, serviceLists map[string]*models.ServiceList, workloadLists map[string]*models.WorkloadList) graph.TrafficMap {
 	idleNodeTrafficMap := graph.NewTrafficMap()
 
-	for _, s := range services {
-		id, nodeType, _ := graph.Id(cluster, namespace, s.Name, "", "", "", "", a.GraphType)
-		if _, found := trafficMap[id]; !found {
-			if _, found = idleNodeTrafficMap[id]; !found {
-				log.Tracef("Adding idle node for service [%s]", s.Name)
-				node := graph.NewNodeExplicit(id, cluster, namespace, "", "", "", s.Name, nodeType, a.GraphType)
-				// note: we don't know what the protocol really should be, http is most common, it's a dead edge anyway
-				node.Metadata = graph.Metadata{"httpIn": 0.0, "httpOut": 0.0, graph.IsIdle: true}
-				idleNodeTrafficMap[id] = node
+	for cluster, serviceList := range serviceLists {
+		for _, s := range serviceList.Services {
+			id, nodeType, _ := graph.Id(cluster, namespace, s.Name, "", "", "", "", a.GraphType)
+			if _, found := trafficMap[id]; !found {
+				if _, found = idleNodeTrafficMap[id]; !found {
+					log.Tracef("Adding idle node for service [%s]", s.Name)
+					node := graph.NewNodeExplicit(id, cluster, namespace, "", "", "", s.Name, nodeType, a.GraphType)
+					// note: we don't know what the protocol really should be, http is most common, it's a dead edge anyway
+					node.Metadata = graph.Metadata{"httpIn": 0.0, "httpOut": 0.0, graph.IsIdle: true}
+					idleNodeTrafficMap[id] = node
+				}
 			}
 		}
-	}
 
-	cfg := config.Get()
-	appLabel := cfg.IstioLabels.AppLabelName
-	versionLabel := cfg.IstioLabels.VersionLabelName
-	for _, w := range workloads {
-		labels := w.Labels
-		app := graph.Unknown
-		version := graph.Unknown
-		if v, ok := labels[appLabel]; ok {
-			app = v
-		}
-		if v, ok := labels[versionLabel]; ok {
-			version = v
-		}
-		id, nodeType, _ := graph.Id(cluster, "", "", namespace, w.Name, app, version, a.GraphType)
-		if _, found := trafficMap[id]; !found {
-			if _, found = idleNodeTrafficMap[id]; !found {
-				log.Tracef("Adding idle node for workload [%s] with labels [%v]", w.Name, labels)
-				node := graph.NewNodeExplicit(id, cluster, namespace, w.Name, app, version, "", nodeType, a.GraphType)
-				// note: we don't know what the protocol really should be, http is most common, it's a dead edge anyway
-				node.Metadata = graph.Metadata{"httpIn": 0.0, "httpOut": 0.0, graph.IsIdle: true}
-				idleNodeTrafficMap[id] = node
+		cfg := config.Get()
+		appLabel := cfg.IstioLabels.AppLabelName
+		versionLabel := cfg.IstioLabels.VersionLabelName
+		if workloadList, ok := workloadLists[cluster]; ok {
+			for _, w := range workloadList.Workloads {
+				labels := w.Labels
+				app := graph.Unknown
+				version := graph.Unknown
+				if v, ok := labels[appLabel]; ok {
+					app = v
+				}
+				if v, ok := labels[versionLabel]; ok {
+					version = v
+				}
+				id, nodeType, _ := graph.Id(cluster, "", "", namespace, w.Name, app, version, a.GraphType)
+				if _, found := trafficMap[id]; !found {
+					if _, found = idleNodeTrafficMap[id]; !found {
+						log.Tracef("Adding idle node for workload [%s] with labels [%v]", w.Name, labels)
+						node := graph.NewNodeExplicit(id, cluster, namespace, w.Name, app, version, "", nodeType, a.GraphType)
+						// note: we don't know what the protocol really should be, http is most common, it's a dead edge anyway
+						node.Metadata = graph.Metadata{"httpIn": 0.0, "httpOut": 0.0, graph.IsIdle: true}
+						idleNodeTrafficMap[id] = node
+					}
+				}
 			}
 		}
 	}

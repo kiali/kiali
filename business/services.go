@@ -32,6 +32,7 @@ type SvcService struct {
 }
 
 type ServiceCriteria struct {
+	Cluster                string
 	Namespace              string
 	IncludeHealth          bool
 	IncludeIstioResources  bool
@@ -48,6 +49,7 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 
 	ctx, end = observability.StartSpan(ctx, "GetServiceList",
 		observability.Attribute("package", "business"),
+		observability.Attribute("cluster", criteria.Cluster),
 		observability.Attribute("namespace", criteria.Namespace),
 		observability.Attribute("includeHealth", criteria.IncludeHealth),
 		observability.Attribute("includeIstioResources", criteria.IncludeIstioResources),
@@ -63,6 +65,10 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 	for cluster := range in.userClients {
+		if criteria.Cluster != "" && cluster != criteria.Cluster {
+			continue
+		}
+
 		if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, criteria.Namespace, cluster); err != nil {
 			// We want to throw an error if we're single vs. multi cluster to be backward compatible
 			// TODO: Probably need this in a few other places as well. It'd be nice to have a
@@ -81,7 +87,7 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 			return nil, err
 		}
 
-		singleClusterSVCList, err := in.GetServiceListForCluster(ctx, criteria, cluster)
+		singleClusterSVCList, err := in.getServiceListForCluster(ctx, criteria, cluster)
 		if err != nil {
 			if cluster == conf.KubernetesConfig.ClusterName {
 				return nil, err
@@ -99,7 +105,7 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 	return &serviceList, nil
 }
 
-func (in *SvcService) GetServiceListForCluster(ctx context.Context, criteria ServiceCriteria, cluster string) (*models.ServiceList, error) {
+func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria ServiceCriteria, cluster string) (*models.ServiceList, error) {
 	var (
 		svcs            []core_v1.Service
 		rSvcs           []*kubernetes.RegistryService

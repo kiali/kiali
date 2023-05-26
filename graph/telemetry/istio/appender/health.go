@@ -140,11 +140,11 @@ func (a *HealthAppender) attachHealthConfig(trafficMap graph.TrafficMap, globalI
 		// for applicable node types, attach any custom health configuration.  additionally,
 		switch n.NodeType {
 		case graph.NodeTypeService:
-			if srv, found := getServiceDefinition(n.Namespace, n.Service, globalInfo); found {
+			if srv, found := getServiceDefinition(n.Cluster, n.Namespace, n.Service, globalInfo); found {
 				n.Metadata[graph.HasHealthConfig] = models.GetHealthAnnotation(srv.HealthAnnotations, models.GetHealthConfigAnnotation())
 			}
 		case graph.NodeTypeWorkload:
-			if workload, found := getWorkload(n.Namespace, n.Workload, globalInfo); found {
+			if workload, found := getWorkload(n.Cluster, n.Namespace, n.Workload, globalInfo); found {
 				n.Metadata[graph.HasHealthConfig] = models.GetHealthAnnotation(workload.HealthAnnotations, models.GetHealthConfigAnnotation())
 			}
 		default:

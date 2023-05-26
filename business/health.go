@@ -211,12 +211,13 @@ func (in *HealthService) GetNamespaceServiceHealth(ctx context.Context, criteria
 	var err error
 
 	svcCriteria := ServiceCriteria{
+		Cluster:                cluster,
 		Namespace:              namespace,
 		IncludeHealth:          false,
 		IncludeIstioResources:  false,
 		IncludeOnlyDefinitions: true,
 	}
-	services, err = in.businessLayer.Svc.GetServiceListForCluster(ctx, svcCriteria, cluster)
+	services, err = in.businessLayer.Svc.GetServiceList(ctx, svcCriteria)
 	if err != nil {
 		return nil, err
 	}

@@ -52,7 +52,7 @@ func labelNodes(trafficMap graph.TrafficMap, gi *graph.AppenderGlobalInfo) {
 		case graph.NodeTypeApp:
 			if n.Version != "" {
 				// the node is a "versioned-app" node
-				if wl, ok := getWorkload(n.Namespace, n.Workload, gi); ok {
+				if wl, ok := getWorkload(n.Cluster, n.Namespace, n.Workload, gi); ok {
 					labelsMetadata = copyMap(wl.Labels)
 				} else {
 					log.Debugf("Failed to obtain versioned-app details for [%+v]", n)
@@ -71,7 +71,7 @@ func labelNodes(trafficMap graph.TrafficMap, gi *graph.AppenderGlobalInfo) {
 				log.Debugf("Failed to obtain service details for [%+v]", n)
 			}
 		case graph.NodeTypeWorkload:
-			if wl, ok := getWorkload(n.Namespace, n.Workload, gi); ok {
+			if wl, ok := getWorkload(n.Cluster, n.Namespace, n.Workload, gi); ok {
 				labelsMetadata = copyMap(wl.Labels)
 			} else {
 				log.Debugf("Failed to obtain workload details for [%+v].", n)
