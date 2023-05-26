@@ -47,6 +47,7 @@ hack/*.local.sh
 
 # E2E testing files
 tests/integration/junit-rest-report.xml
+tests/integration/int-test.log
 
 # Do not commit operator code to this repo
 operator
