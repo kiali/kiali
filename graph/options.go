@@ -270,20 +270,20 @@ func NewOptions(r *net_http.Request) Options {
 
 	for _, namespaceName := range strings.Split(namespaces, ",") {
 		namespaceName = strings.TrimSpace(namespaceName)
-		var earliestCreationTimestamp time.Time
+		var earliestCreationTimestamp *time.Time
 		for _, an := range accessibleNamespaces {
 			if namespaceName == an.Name {
-				if earliestCreationTimestamp.IsZero() || earliestCreationTimestamp.After(an.CreationTimestamp) {
-					earliestCreationTimestamp = *&an.CreationTimestamp
+				if nil == earliestCreationTimestamp || earliestCreationTimestamp.After(an.CreationTimestamp) {
+					earliestCreationTimestamp = &an.CreationTimestamp
 				}
 			}
 		}
-		if earliestCreationTimestamp.IsZero() {
+		if nil == earliestCreationTimestamp {
 			Forbidden(fmt.Sprintf("Requested namespace [%s] is not accessible.", namespaceName))
 		} else {
 			namespaceMap[namespaceName] = NamespaceInfo{
 				Name:     namespaceName,
-				Duration: getSafeNamespaceDuration(namespaceName, earliestCreationTimestamp, time.Duration(duration), queryTime),
+				Duration: getSafeNamespaceDuration(namespaceName, *earliestCreationTimestamp, time.Duration(duration), queryTime),
 				IsIstio:  config.IsIstioNamespace(namespaceName),
 			}
 		}

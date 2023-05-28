@@ -25,6 +25,7 @@ import (
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -86,7 +87,7 @@ func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K
 	return client, api, k8s, nil
 }
 
-func setupMockedWithIstioComponentNamespaces(meshId string) (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K8SClientMock, error) {
+func setupMockedWithIstioComponentNamespaces(meshId string, userClients map[string]kubernetes.ClientInterface) (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K8SClientMock, error) {
 	testConfig := config.NewConfig()
 	testConfig.KubernetesConfig.CacheEnabled = false
 	if meshId != "" {
@@ -157,6 +158,10 @@ func setupMockedWithIstioComponentNamespaces(meshId string) (*prometheus.Client,
 	client.Inject(api)
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	if len(userClients) > 0 {
+		mockClientFactory.SetClients(userClients)
+	}
+
 	business.SetWithBackends(mockClientFactory, nil)
 
 	return client, api, k8s, nil
@@ -3106,7 +3111,7 @@ func TestComplexGraph(t *testing.T) {
 	q17 := `round(sum(rate(istio_tcp_sent_bytes_total{mesh_id="mesh1",reporter="source",source_workload_namespace="istio-system"} [600s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags) > 0,0.001)`
 	v17 := model.Vector{}
 
-	client, xapi, _, err := setupMockedWithIstioComponentNamespaces("mesh1")
+	client, xapi, _, err := setupMockedWithIstioComponentNamespaces("mesh1", map[string]kubernetes.ClientInterface{})
 	if err != nil {
 		t.Error(err)
 		return
@@ -3405,11 +3410,22 @@ func TestMultiClusterSourceGraph(t *testing.T) {
 	q5 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="bookinfo"} [600s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags) ,0.001)`
 	v5 := model.Vector{}
 
-	client, xapi, _, err := setupMockedWithIstioComponentNamespaces("")
+	clients := map[string]kubernetes.ClientInterface{
+		"kukulcan": kubetest.NewFakeK8sClient(
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
+		),
+		"tzotz": kubetest.NewFakeK8sClient(
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
+		),
+	}
+	client, xapi, _, err := setupMockedWithIstioComponentNamespaces("", clients)
 	if err != nil {
 		t.Error(err)
 		return
 	}
+
 	mockQuery(xapi, q0, &v0)
 	mockQuery(xapi, q1, &v1)
 	mockQuery(xapi, q2, &v2)
