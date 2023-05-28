@@ -47,6 +47,7 @@ func setupTrafficMap() (map[string]*graph.Node, string, string, string, string, 
 func TestCBAll(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
@@ -63,9 +64,11 @@ func TestCBAll(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(dRule, &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}})
 	business.SetupBusinessLayer(t, k8s, *conf)
-
-	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
+	k8sclients := map[string]kubernetes.ClientInterface{
+		config.DefaultClusterID: kubetest.NewFakeK8sClient(
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
+		),
+	}
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _ := setupTrafficMap()
 
@@ -104,6 +107,7 @@ func TestCBAll(t *testing.T) {
 func TestCBSubset(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
@@ -127,9 +131,11 @@ func TestCBSubset(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(dRule, &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}})
 	business.SetupBusinessLayer(t, k8s, *conf)
-
-	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
+	k8sclients := map[string]kubernetes.ClientInterface{
+		config.DefaultClusterID: kubetest.NewFakeK8sClient(
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
+		),
+	}
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _ := setupTrafficMap()
 
@@ -288,6 +294,7 @@ func TestCBSubset(t *testing.T) {
 func TestSEInAppBox(t *testing.T) {
 	check := assert.New(t)
 	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
@@ -301,10 +308,12 @@ func TestSEInAppBox(t *testing.T) {
 		},
 	}
 	k8s := kubetest.NewFakeK8sClient(svc, &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}})
-
 	business.SetupBusinessLayer(t, k8s, *conf)
-	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
+	k8sclients := map[string]kubernetes.ClientInterface{
+		config.DefaultClusterID: kubetest.NewFakeK8sClient(
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
+		),
+	}
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 
 	trafficMap := graph.NewTrafficMap()
