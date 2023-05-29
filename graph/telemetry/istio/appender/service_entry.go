@@ -60,17 +60,6 @@ func (a ServiceEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 		return
 	}
 
-	/*
-		if globalInfo.HomeCluster == "" {
-			globalInfo.HomeCluster = config.Get().KubernetesConfig.ClusterName
-			c, err := globalInfo.Business.Mesh.ResolveKialiControlPlaneCluster(nil)
-			graph.CheckError(err)
-			if c != nil {
-				globalInfo.HomeCluster = c.Name
-			}
-		}
-	*/
-
 	a.applyServiceEntries(trafficMap, globalInfo, namespaceInfo)
 }
 
