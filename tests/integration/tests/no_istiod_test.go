@@ -19,7 +19,7 @@ func update_istio_api_enabled(t *testing.T, value bool, kubeClientSet kubernetes
 	require := require.New(t)
 
 	config, cm := utils.GetKialiConfigMap(kubeClientSet, kialiNamespace, "kiali", ctx, t)
-    config.ExternalServices.Istio.IstioAPIEnabled = value
+	config.ExternalServices.Istio.IstioAPIEnabled = value
 
 	utils.UpdateKialiConfigMap(kubeClientSet, kialiNamespace, config, cm, ctx, t)
 
