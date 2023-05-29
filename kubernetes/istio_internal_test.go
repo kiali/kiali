@@ -171,6 +171,8 @@ func TestInvalidProtocolNameMatcher(t *testing.T) {
 func TestValidPortNameMatcher(t *testing.T) {
 	assert.True(t, MatchPortNameWithValidProtocols("http-name"))
 	assert.True(t, MatchPortNameWithValidProtocols("http2-name"))
+	assert.True(t, MatchPortNameWithValidProtocols("grpc-net-test"))
+	assert.True(t, MatchPortNameWithValidProtocols("grpc-web-net"))
 }
 
 func TestInvalidPortNameMatcher(t *testing.T) {
@@ -181,8 +183,10 @@ func TestInvalidPortNameMatcher(t *testing.T) {
 func TestValidPortAppProtocolMatcher(t *testing.T) {
 	s1 := "http"
 	s2 := "mysql"
+	s3 := "grpc-web"
 	assert.True(t, MatchPortAppProtocolWithValidProtocols(&s1))
 	assert.True(t, MatchPortAppProtocolWithValidProtocols(&s2))
+	assert.True(t, MatchPortAppProtocolWithValidProtocols(&s3))
 }
 
 func TestInvalidPortAppProtocolMatcher(t *testing.T) {
@@ -190,10 +194,12 @@ func TestInvalidPortAppProtocolMatcher(t *testing.T) {
 	s2 := "name"
 	s3 := "http-name"
 	s4 := ""
+	s5 := "grpc-web-wrong"
 	assert.False(t, MatchPortAppProtocolWithValidProtocols(&s1))
 	assert.False(t, MatchPortAppProtocolWithValidProtocols(&s2))
 	assert.False(t, MatchPortAppProtocolWithValidProtocols(&s3))
 	assert.False(t, MatchPortAppProtocolWithValidProtocols(&s4))
+	assert.False(t, MatchPortAppProtocolWithValidProtocols(&s5))
 	assert.False(t, MatchPortAppProtocolWithValidProtocols(nil))
 }
 
