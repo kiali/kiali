@@ -76,7 +76,8 @@ const (
 
 var (
 	portNameMatcher = regexp.MustCompile(`^[\-].*`)
-	portProtocols   = [...]string{"grpc", "http", "http2", "https", "mongo", "redis", "tcp", "tls", "udp", "mysql"}
+	// UDP protocol is not proxied, but it is functional. keeping it in protocols list not to cause UI issues.
+	portProtocols = [...]string{"grpc", "grpc-web", "http", "http2", "https", "mongo", "redis", "tcp", "tls", "udp", "mysql"}
 )
 
 type IstioClientInterface interface {
