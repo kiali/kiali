@@ -61,6 +61,7 @@ func RestartKialiPodName(ctx context.Context, kubeClient kubernetes.Interface, n
 
 	// Restart Kiali pod when kiali CRD does not exist (Otherwise, operator will delete the old one)
 	if !keepOldPod {
+		log.Debugf("Deleting Kiali pod %s", currentKialiPod)
 		err := kubeClient.CoreV1().Pods(namespace).Delete(ctx, currentKialiPod, metav1.DeleteOptions{})
 		if err != nil {
 			log.Errorf("Error deleting Kiali pod %s", err)
