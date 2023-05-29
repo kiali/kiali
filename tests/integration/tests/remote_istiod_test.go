@@ -59,7 +59,8 @@ func TestRemoteIstiod(t *testing.T) {
 	kialiName := "kiali"
 	kialiNamespace := "istio-system"
 	kialiDeploymentNamespace := kialiNamespace
-	istioDeploymentName := config.Get().ExternalServices.Istio.IstiodDeploymentName
+	ipods, err := kubeClient.AppsV1().Deployments(kialiNamespace).List(ctx, metav1.ListOptions{LabelSelector: "app=istiod"})
+	istioDeploymentName := ipods.Items[0].Name
 
 	if kialiCRDExists {
 		// Find the Kiali CR and override some settings if they're set on the CR.
@@ -148,7 +149,7 @@ func TestRemoteIstiod(t *testing.T) {
 	})
 
 	// Expose the istiod /debug endpoints by adding a proxy to the pod.
-	log.Debug("Patching istiod %s deployment with proxy", istioDeploymentName)
+	log.Debugf("Patching istiod %s deployment with proxy", istioDeploymentName)
 	_, err = kubeClient.AppsV1().Deployments("istio-system").Patch(ctx, istioDeploymentName, types.StrategicMergePatchType, proxyPatch, metav1.PatchOptions{})
 	require.NoError(err)
 	log.Debug("Successfully patched istiod deployment with proxy")
