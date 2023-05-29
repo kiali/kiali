@@ -60,6 +60,7 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 	defer end()
 
 	serviceList := models.ServiceList{
+		Services:    []models.ServiceOverview{},
 		Validations: models.IstioValidations{},
 	}
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or

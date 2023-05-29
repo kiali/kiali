@@ -125,7 +125,27 @@ var newSecurityConfigTypes = []string{
 // per a given Namespace.
 // @TODO this method should be replaced by GetIstioConfigMap
 func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria IstioConfigCriteria) (models.IstioConfigList, error) {
-	istioConfigList := models.IstioConfigList{}
+	istioConfigList := models.IstioConfigList{
+		Namespace: models.Namespace{Name: criteria.Namespace},
+
+		DestinationRules: []*networking_v1beta1.DestinationRule{},
+		EnvoyFilters:     []*networking_v1alpha3.EnvoyFilter{},
+		Gateways:         []*networking_v1beta1.Gateway{},
+		VirtualServices:  []*networking_v1beta1.VirtualService{},
+		ServiceEntries:   []*networking_v1beta1.ServiceEntry{},
+		Sidecars:         []*networking_v1beta1.Sidecar{},
+		WorkloadEntries:  []*networking_v1beta1.WorkloadEntry{},
+		WorkloadGroups:   []*networking_v1beta1.WorkloadGroup{},
+		WasmPlugins:      []*extentions_v1alpha1.WasmPlugin{},
+		Telemetries:      []*v1alpha1.Telemetry{},
+
+		K8sGateways:   []*k8s_networking_v1beta1.Gateway{},
+		K8sHTTPRoutes: []*k8s_networking_v1beta1.HTTPRoute{},
+
+		AuthorizationPolicies:  []*security_v1beta1.AuthorizationPolicy{},
+		PeerAuthentications:    []*security_v1beta1.PeerAuthentication{},
+		RequestAuthentications: []*security_v1beta1.RequestAuthentication{},
+	}
 	conf := config.Get()
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
