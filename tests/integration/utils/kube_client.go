@@ -109,7 +109,7 @@ func GetKialiPodName(kubeClient kubernetes.Interface, kialiNamespace string, ctx
 }
 
 // Get Kiali config map
-func GetKialiConfigMap(kubeClient kubernetes.Interface, kialiNamespace string, kialiName string, ctx context.Context, t *testing.T) (config.Config, *v1.ConfigMap) {
+func GetKialiConfigMap(kubeClient kubernetes.Interface, kialiNamespace string, kialiName string, ctx context.Context, t *testing.T) (*config.Config, *v1.ConfigMap) {
 
 	require := require.New(t)
 
@@ -117,14 +117,14 @@ func GetKialiConfigMap(kubeClient kubernetes.Interface, kialiNamespace string, k
 	cm, err := kubeClient.CoreV1().ConfigMaps(kialiNamespace).Get(ctx, kialiName, metav1.GetOptions{})
 	require.NoError(err)
 
-	var currentConfig config.Config
-	require.NoError(yaml.Unmarshal([]byte(cm.Data["config.yaml"]), &currentConfig))
+	currentConfig := config.NewConfig()
+	require.NoError(yaml.Unmarshal([]byte(cm.Data["config.yaml"]), currentConfig))
 
 	return currentConfig, cm
 }
 
 // Update Kiali config map
-func UpdateKialiConfigMap(kubeClient kubernetes.Interface, kialiNamespace string, currentConfig config.Config, cm *v1.ConfigMap, ctx context.Context, t *testing.T) {
+func UpdateKialiConfigMap(kubeClient kubernetes.Interface, kialiNamespace string, currentConfig *config.Config, cm *v1.ConfigMap, ctx context.Context, t *testing.T) {
 
 	require := require.New(t)
 
