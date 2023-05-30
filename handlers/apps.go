@@ -49,7 +49,7 @@ func AppList(w http.ResponseWriter, r *http.Request) {
 	p.extract(r)
 
 	criteria := business.AppCriteria{Namespace: p.Namespace, IncludeIstioResources: p.IncludeIstioResources,
-		IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime, Cluster: p.Cluster}
+		IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
 
 	// Get business layer
 	business, err := getBusiness(r)
