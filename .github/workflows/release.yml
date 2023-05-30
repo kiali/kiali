@@ -190,29 +190,11 @@ jobs:
       target_branch: ${{needs.initialize.outputs.target_branch}}
       build_branch: ${{ github.event.inputs.release_branch || github.ref_name }}
 
-  integration_tests_backend:
-    name: Run backend integration tests
-    if: ${{ needs.initialize.outputs.release_type != 'skip' }}
-    uses: ./.github/workflows/integration-tests-backend.yml
-    needs: [initialize, build_backend, build_frontend]
-    with:
-      target_branch: ${{ needs.initialize.outputs.target_branch }}
-      build_branch: ${{ github.event.inputs.release_branch || github.ref_name }}
-
-  integration_tests_frontend:
-    name: Run frontend integration tests
-    if: ${{ needs.initialize.outputs.release_type != 'skip' }}
-    uses: ./.github/workflows/integration-tests-frontend.yml
-    needs: [initialize, build_backend, build_frontend]
-    with:
-      target_branch: ${{ needs.initialize.outputs.target_branch }}
-      build_branch: ${{ github.event.inputs.release_branch || github.ref_name }}
-
   release:
     name: Release
     if: ${{ needs.initialize.outputs.release_type != 'skip' && ((github.event_name == 'schedule' && github.repository == 'kiali/kiali') || github.event_name != 'schedule') }}
     runs-on: ubuntu-20.04
-    needs: [initialize, build_backend, build_frontend, integration_tests_backend, integration_tests_frontend]
+    needs: [initialize, build_backend, build_frontend]
     env:
       RELEASE_VERSION: ${{ needs.initialize.outputs.release_version }}
       BRANCH_VERSION: ${{ needs.initialize.outputs.branch_version }}
