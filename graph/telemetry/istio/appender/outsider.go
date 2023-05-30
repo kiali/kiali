@@ -1,7 +1,7 @@
 package appender
 
 import (
-	"time"
+	"fmt"
 
 	"github.com/kiali/kiali/graph"
 )
@@ -11,7 +11,7 @@ const OutsiderAppenderName = "outsider"
 // OutsiderAppender is responsible for marking the outsiders (i.e. nodes not in the requested namespaces) and inaccessible nodes
 // Name: outsider
 type OutsiderAppender struct {
-	AccessibleNamespaces map[string]time.Time
+	AccessibleNamespaces graph.AccessibleNamespaces
 	Namespaces           graph.NamespaceInfoMap
 }
 
@@ -78,8 +78,9 @@ func isOutside(n *graph.Node, namespaces map[string]graph.NamespaceInfo) bool {
 	return true
 }
 
-func isInaccessible(n *graph.Node, accessibleNamespaces map[string]time.Time) bool {
-	if _, found := accessibleNamespaces[n.Namespace]; !found {
+func isInaccessible(n *graph.Node, accessibleNamespaces graph.AccessibleNamespaces) bool {
+	key := fmt.Sprintf("%s:%s", n.Cluster, n.Namespace)
+	if _, found := accessibleNamespaces[key]; !found {
 		return true
 	} else {
 		return false

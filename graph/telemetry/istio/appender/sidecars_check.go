@@ -1,8 +1,6 @@
 package appender
 
 import (
-	"time"
-
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 )
@@ -13,7 +11,7 @@ const SidecarsCheckAppenderName = "sidecarsCheck"
 // a node with no backing workloads is not flagged.
 // Name: sidecarsCheck
 type SidecarsCheckAppender struct {
-	AccessibleNamespaces map[string]time.Time
+	AccessibleNamespaces graph.AccessibleNamespaces
 }
 
 // Name implements Appender
@@ -65,11 +63,11 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 		hasIstioSidecar := true
 		switch n.NodeType {
 		case graph.NodeTypeWorkload:
-			if workload, found := getWorkload(n.Namespace, n.Workload, globalInfo); found {
+			if workload, found := getWorkload(n.Cluster, n.Namespace, n.Workload, globalInfo); found {
 				hasIstioSidecar = workload.IstioSidecar
 			}
 		case graph.NodeTypeApp:
-			workloads := getAppWorkloads(n.Namespace, n.App, n.Version, globalInfo)
+			workloads := getAppWorkloads(n.Cluster, n.Namespace, n.App, n.Version, globalInfo)
 			if len(workloads) > 0 {
 				for _, workload := range workloads {
 					if !workload.IstioSidecar {
@@ -93,8 +91,8 @@ func (a *SidecarsCheckAppender) namespaceOK(namespace string, namespaceInfo *gra
 	if namespace == namespaceInfo.Namespace {
 		return true
 	}
-	for ns := range a.AccessibleNamespaces {
-		if namespace == ns {
+	for _, ns := range a.AccessibleNamespaces {
+		if namespace == ns.Name {
 			return true
 		}
 	}

@@ -399,6 +399,7 @@ func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rVa
 
 	criteria := IstioConfigCriteria{
 		AllNamespaces:                 true,
+		Cluster:                       cluster,
 		IncludeGateways:               true,
 		IncludeDestinationRules:       true,
 		IncludeServiceEntries:         true,
@@ -411,7 +412,7 @@ func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rVa
 		IncludeK8sHTTPRoutes:          true,
 		IncludeK8sGateways:            true,
 	}
-	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigListPerCluster(ctx, criteria, cluster)
+	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
 	if err != nil {
 		errChan <- err
 		return

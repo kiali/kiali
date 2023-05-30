@@ -91,9 +91,18 @@ type RequestedRates struct {
 	Tcp  string
 }
 
+type AccessibleNamespace struct {
+	Cluster           string
+	CreationTimestamp time.Time
+	Name              string
+}
+
+// AccessibleNamepaces is a map with string Key like "clusterName:namespaceName", Value of type *AccessibleNamespace
+type AccessibleNamespaces map[string]*AccessibleNamespace
+
 // TelemetryOptions are those supplied to Telemetry Vendors
 type TelemetryOptions struct {
-	AccessibleNamespaces map[string]time.Time
+	AccessibleNamespaces AccessibleNamespaces
 	Appenders            RequestedAppenders // requested appenders, nil if param not supplied
 	IncludeIdleEdges     bool               // include edges with request rates of 0
 	InjectServiceNodes   bool               // inject destination service nodes between source and destination nodes.
@@ -259,16 +268,24 @@ func NewOptions(r *net_http.Request) Options {
 		BadRequest("At least one namespace must be specified via the namespaces query parameter.")
 	}
 
-	for _, namespaceToken := range strings.Split(namespaces, ",") {
-		namespaceToken = strings.TrimSpace(namespaceToken)
-		if creationTime, found := accessibleNamespaces[namespaceToken]; found {
-			namespaceMap[namespaceToken] = NamespaceInfo{
-				Name:     namespaceToken,
-				Duration: getSafeNamespaceDuration(namespaceToken, creationTime, time.Duration(duration), queryTime),
-				IsIstio:  config.IsIstioNamespace(namespaceToken),
+	for _, namespaceName := range strings.Split(namespaces, ",") {
+		namespaceName = strings.TrimSpace(namespaceName)
+		var earliestCreationTimestamp *time.Time
+		for _, an := range accessibleNamespaces {
+			if namespaceName == an.Name {
+				if nil == earliestCreationTimestamp || earliestCreationTimestamp.After(an.CreationTimestamp) {
+					earliestCreationTimestamp = &an.CreationTimestamp
+				}
 			}
+		}
+		if nil == earliestCreationTimestamp {
+			Forbidden(fmt.Sprintf("Requested namespace [%s] is not accessible.", namespaceName))
 		} else {
-			Forbidden(fmt.Sprintf("Requested namespace [%s] is not accessible.", namespaceToken))
+			namespaceMap[namespaceName] = NamespaceInfo{
+				Name:     namespaceName,
+				Duration: getSafeNamespaceDuration(namespaceName, *earliestCreationTimestamp, time.Duration(duration), queryTime),
+				IsIstio:  config.IsIstioNamespace(namespaceName),
+			}
 		}
 	}
 
@@ -384,7 +401,7 @@ func (o *TelemetryOptions) GetGraphKind() string {
 // The Set is implemented using the map convention. Each map entry is set to the
 // creation timestamp of the namespace, to be used to ensure valid time ranges for
 // queries against the namespace.
-func getAccessibleNamespaces(authInfo *api.AuthInfo) map[string]time.Time {
+func getAccessibleNamespaces(authInfo *api.AuthInfo) AccessibleNamespaces {
 	// Get the namespaces
 	business, err := business.Get(authInfo)
 	CheckError(err)
@@ -393,12 +410,16 @@ func getAccessibleNamespaces(authInfo *api.AuthInfo) map[string]time.Time {
 	CheckError(err)
 
 	// Create a map to store the namespaces
-	namespaceMap := make(map[string]time.Time)
+	accessibleNamespaces := make(AccessibleNamespaces)
 	for _, namespace := range namespaces {
-		namespaceMap[namespace.Name] = namespace.CreationTimestamp
+		accessibleNamespaces[fmt.Sprintf("%s:%s", namespace.Cluster, namespace.Name)] = &AccessibleNamespace{
+			Cluster:           namespace.Cluster,
+			CreationTimestamp: namespace.CreationTimestamp,
+			Name:              namespace.Name,
+		}
 	}
 
-	return namespaceMap
+	return accessibleNamespaces
 }
 
 // getSafeNamespaceDuration returns a safe duration for the query. If queryTime-requestedDuration > namespace

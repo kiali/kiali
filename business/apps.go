@@ -360,13 +360,14 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 	for _, w := range ws {
 		// Check if namespace is cached
 		serviceCriteria := ServiceCriteria{
+			Cluster:                cluster,
 			Namespace:              namespace,
 			IncludeHealth:          false,
 			IncludeIstioResources:  false,
 			IncludeOnlyDefinitions: true,
 			ServiceSelector:        labels.Set(w.Labels).String(),
 		}
-		ss, err = in.businessLayer.Svc.GetServiceListForCluster(ctx, serviceCriteria, cluster)
+		ss, err = in.businessLayer.Svc.GetServiceList(ctx, serviceCriteria)
 		if err != nil {
 			return nil, err
 		}

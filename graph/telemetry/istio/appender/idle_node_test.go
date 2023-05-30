@@ -23,10 +23,10 @@ func TestNonTrafficScenario(t *testing.T) {
 
 	// Empty trafficMap
 	trafficMap := graph.NewTrafficMap()
-	services := mockServices(a)
-	workloads := mockWorkloads(a)
+	serviceLists := mockServiceLists(a)
+	workloadLists := mockWorkloadLists(a)
 
-	a.addIdleNodes(trafficMap, config.DefaultClusterID, "testNamespace", services, workloads)
+	a.addIdleNodes(trafficMap, "testNamespace", serviceLists, workloadLists)
 	assert.Equal(7, len(trafficMap))
 
 	id, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "customer", "testNamespace", "customer-v1", "customer", "v1", a.GraphType)
@@ -95,10 +95,10 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 	}
 
 	trafficMap := a.oneNodeTraffic()
-	services := mockServices(a)
-	workloads := mockWorkloads(a)
+	serviceLists := mockServiceLists(a)
+	workloadLists := mockWorkloadLists(a)
 
-	a.addIdleNodes(trafficMap, config.DefaultClusterID, "testNamespace", services, workloads)
+	a.addIdleNodes(trafficMap, "testNamespace", serviceLists, workloadLists)
 
 	assert.Equal(5, len(trafficMap))
 	id, _, _ := graph.Id(graph.Unknown, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, a.GraphType)
@@ -151,13 +151,13 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 		false,
 	}
 
-	const cluster = "cluster-default"
+	const cluster = config.DefaultClusterID
 
 	trafficMap := a.v1Traffic(cluster)
-	services := mockServices(a)
-	workloads := mockWorkloads(a)
+	serviceLists := mockServiceLists(a)
+	workloadLists := mockWorkloadLists(a)
 
-	a.addIdleNodes(trafficMap, cluster, "testNamespace", services, workloads)
+	a.addIdleNodes(trafficMap, "testNamespace", serviceLists, workloadLists)
 
 	assert.Equal(5, len(trafficMap))
 	id, _, _ := graph.Id(graph.Unknown, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, a.GraphType)
@@ -203,50 +203,54 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	assert.Equal(idleV2Node.Cluster, cluster)
 }
 
-func mockServices(a IdleNodeAppender) []models.ServiceOverview {
-	if !(a.GraphType == graph.GraphTypeService || a.InjectServiceNodes) {
-		return []models.ServiceOverview{}
+func mockServiceLists(a IdleNodeAppender) map[string]*models.ServiceList {
+	serviceOverviews := []models.ServiceOverview{}
+
+	if a.GraphType == graph.GraphTypeService || a.InjectServiceNodes {
+		serviceOverviews = []models.ServiceOverview{
+			{
+				Name: "customer",
+			},
+			{
+				Name: "preference",
+			},
+			{
+				Name: "recommendation",
+			},
+			{
+				Name: "recommendation",
+			},
+		}
 	}
 
-	return []models.ServiceOverview{
-		{
-			Name: "customer",
-		},
-		{
-			Name: "preference",
-		},
-		{
-			Name: "recommendation",
-		},
-		{
-			Name: "recommendation",
-		},
-	}
+	return map[string]*models.ServiceList{config.DefaultClusterID: &models.ServiceList{Services: serviceOverviews}}
 }
 
-func mockWorkloads(a IdleNodeAppender) []models.WorkloadListItem {
-	if a.GraphType == graph.GraphTypeService {
-		return []models.WorkloadListItem{}
+func mockWorkloadLists(a IdleNodeAppender) map[string]*models.WorkloadList {
+	workloadListItems := []models.WorkloadListItem{}
+
+	if a.GraphType != graph.GraphTypeService {
+		workloadListItems = []models.WorkloadListItem{
+			{
+				Name:   "customer-v1",
+				Labels: map[string]string{"app": "customer", "version": "v1"},
+			},
+			{
+				Name:   "preference-v1",
+				Labels: map[string]string{"app": "preference", "version": "v1"},
+			},
+			{
+				Name:   "recommendation-v1",
+				Labels: map[string]string{"app": "recommendation", "version": "v1"},
+			},
+			{
+				Name:   "recommendation-v2",
+				Labels: map[string]string{"app": "recommendation", "version": "v2"},
+			},
+		}
 	}
 
-	return []models.WorkloadListItem{
-		{
-			Name:   "customer-v1",
-			Labels: map[string]string{"app": "customer", "version": "v1"},
-		},
-		{
-			Name:   "preference-v1",
-			Labels: map[string]string{"app": "preference", "version": "v1"},
-		},
-		{
-			Name:   "recommendation-v1",
-			Labels: map[string]string{"app": "recommendation", "version": "v1"},
-		},
-		{
-			Name:   "recommendation-v2",
-			Labels: map[string]string{"app": "recommendation", "version": "v2"},
-		},
-	}
+	return map[string]*models.WorkloadList{config.DefaultClusterID: &models.WorkloadList{Workloads: workloadListItems}}
 }
 
 func (a *IdleNodeAppender) oneNodeTraffic() map[string]*graph.Node {

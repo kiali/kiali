@@ -26,8 +26,12 @@ func TestWorkloadSidecarsPasses(t *testing.T) {
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := SidecarsCheckAppender{
-		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
-	}
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			config.DefaultClusterID: &graph.AccessibleNamespace{
+				Cluster:           config.DefaultClusterID,
+				CreationTimestamp: time.Now(),
+				Name:              "testNamespace",
+			}}}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -45,8 +49,12 @@ func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := SidecarsCheckAppender{
-		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
-	}
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			config.DefaultClusterID: &graph.AccessibleNamespace{
+				Cluster:           config.DefaultClusterID,
+				CreationTimestamp: time.Now(),
+				Name:              "testNamespace",
+			}}}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -65,8 +73,12 @@ func TestInaccessibleWorkload(t *testing.T) {
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := SidecarsCheckAppender{
-		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
-	}
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			config.DefaultClusterID: &graph.AccessibleNamespace{
+				Cluster:           config.DefaultClusterID,
+				CreationTimestamp: time.Now(),
+				Name:              "testNamespace",
+			}}}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -84,8 +96,12 @@ func TestAppNoPodsPasses(t *testing.T) {
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := SidecarsCheckAppender{
-		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
-	}
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			config.DefaultClusterID: &graph.AccessibleNamespace{
+				Cluster:           config.DefaultClusterID,
+				CreationTimestamp: time.Now(),
+				Name:              "testNamespace",
+			}}}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -103,8 +119,12 @@ func TestAppSidecarsPasses(t *testing.T) {
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := SidecarsCheckAppender{
-		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
-	}
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			config.DefaultClusterID: &graph.AccessibleNamespace{
+				Cluster:           config.DefaultClusterID,
+				CreationTimestamp: time.Now(),
+				Name:              "testNamespace",
+			}}}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -122,8 +142,12 @@ func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := SidecarsCheckAppender{
-		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
-	}
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			config.DefaultClusterID: &graph.AccessibleNamespace{
+				Cluster:           config.DefaultClusterID,
+				CreationTimestamp: time.Now(),
+				Name:              "testNamespace",
+			}}}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -142,8 +166,12 @@ func TestServicesAreAlwaysValid(t *testing.T) {
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := SidecarsCheckAppender{
-		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
-	}
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			config.DefaultClusterID: &graph.AccessibleNamespace{
+				Cluster:           config.DefaultClusterID,
+				CreationTimestamp: time.Now(),
+				Name:              "testNamespace",
+			}}}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {

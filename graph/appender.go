@@ -14,11 +14,10 @@ type AppenderVendorInfo map[string]interface{}
 // can re-use the information.  A new instance is generated for graph and
 // is initially empty.
 type AppenderGlobalInfo struct {
-	Business    *business.Layer
-	Context     context.Context
-	HomeCluster string
-	PromClient  *prometheus.Client
-	Vendor      AppenderVendorInfo // telemetry vendor's global info
+	Business   *business.Layer
+	Context    context.Context
+	PromClient *prometheus.Client
+	Vendor     AppenderVendorInfo // telemetry vendor's global info
 }
 
 // AppenderNamespaceInfo caches information relevant to a single namespace. It allows

@@ -126,7 +126,6 @@ func TestWorkloadEntry(t *testing.T) {
 	assert.NotContains(v4Node.Metadata, graph.HasWorkloadEntry)
 
 	globalInfo := graph.NewAppenderGlobalInfo()
-	globalInfo.HomeCluster = testCluster
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
 
@@ -198,7 +197,6 @@ func TestWorkloadEntryAppLabelNotMatching(t *testing.T) {
 	assert.NotContains(v3Node.Metadata, graph.HasWorkloadEntry)
 
 	globalInfo := graph.NewAppenderGlobalInfo()
-	globalInfo.HomeCluster = testCluster
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
 
@@ -278,7 +276,6 @@ func TestMultipleWorkloadEntryForSameWorkload(t *testing.T) {
 	assert.NotContains(v3Node.Metadata, graph.HasWorkloadEntry)
 
 	globalInfo := graph.NewAppenderGlobalInfo()
-	globalInfo.HomeCluster = testCluster
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
 
@@ -340,7 +337,6 @@ func TestWorkloadWithoutWorkloadEntries(t *testing.T) {
 	assert.NotContains(v3Node.Metadata, graph.HasWorkloadEntry)
 
 	globalInfo := graph.NewAppenderGlobalInfo()
-	globalInfo.HomeCluster = testCluster
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
 

@@ -38,6 +38,7 @@ func setupLabelerTrafficMap() (map[string]*graph.Node, string, string, string, s
 
 func setupLabelerK8S(t *testing.T) *business.Layer {
 	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
@@ -99,9 +100,11 @@ func setupLabelerK8S(t *testing.T) *business.Layer {
 	)
 
 	business.SetupBusinessLayer(t, k8s, *conf)
-
-	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
+	k8sclients := map[string]kubernetes.ClientInterface{
+		config.DefaultClusterID: kubetest.NewFakeK8sClient(
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
+		),
+	}
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 	return businessLayer
 }
