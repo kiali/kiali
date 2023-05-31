@@ -46,7 +46,7 @@ func TestRootContextPath(t *testing.T) {
 	testServerHostPort := fmt.Sprintf("%v:%v", testHostname, testPort)
 	testCustomRoot := "/customroot"
 
-	rnd.Seed(time.Now().UnixNano())
+	rnd.New(rnd.NewSource(time.Now().UnixNano()))
 	conf := new(config.Config)
 	conf.LoginToken.SigningKey = util.RandomString(10)
 	conf.Server.WebRoot = testCustomRoot
@@ -184,7 +184,7 @@ func TestSecureComm(t *testing.T) {
 	defer os.Remove(testClientCertFile)
 	defer os.Remove(testClientKeyFile)
 
-	rnd.Seed(time.Now().UnixNano())
+	rnd.New(rnd.NewSource(time.Now().UnixNano()))
 	conf := new(config.Config)
 	conf.Identity.CertFile = testServerCertFile
 	conf.Identity.PrivateKeyFile = testServerKeyFile
