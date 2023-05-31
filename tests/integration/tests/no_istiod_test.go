@@ -9,10 +9,10 @@ import (
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/kiali/kiali/tests/integration/utils/kiali"
-	"github.com/kiali/kiali/tests/integration/utils/kube"
 	k8s "github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/tests/integration/utils"
+	"github.com/kiali/kiali/tests/integration/utils/kiali"
+	"github.com/kiali/kiali/tests/integration/utils/kube"
 )
 
 const kialiNamespace = "istio-system"
