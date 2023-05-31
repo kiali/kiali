@@ -328,7 +328,7 @@ func (in *Client) GetExistingMetricNames(metricNames []string) ([]string, error)
 	log.Tracef("[Prom] GetExistingMetricNames: metricNames=[%v]", metricNames)
 	startT := time.Now()
 	results, warnings, err := in.api.LabelValues(in.ctx, "__name__", []string{}, time.Unix(0, 0), time.Now())
-	if warnings != nil && len(warnings) > 0 {
+	if len(warnings) > 0 {
 		log.Warningf("GetExistingMetricNames. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
 	if err != nil {
