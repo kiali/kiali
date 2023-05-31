@@ -213,7 +213,7 @@ func (g *Generator) genAppsWithIngress(index int, numApps int) []*graph.Node {
 }
 
 func (g *Generator) generate() []*graph.Node {
-	rand.Seed(time.Now().UnixNano())
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 	var nodes []*graph.Node
 
 	appsPerIngress := g.NumberOfApps / g.NumberOfIngress

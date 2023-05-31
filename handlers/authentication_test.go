@@ -28,7 +28,7 @@ import (
 // TestStrategyTokenAuthentication checks that a user with no active
 // session is logged in successfully
 func TestStrategyTokenAuthentication(t *testing.T) {
-	rand.Seed(time.Now().UnixNano())
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyToken
 	cfg.LoginToken.SigningKey = util.RandomString(16)
@@ -141,7 +141,7 @@ func TestLogout(t *testing.T) {
 // TestStrategyHeaderOidcAuthentication checks that a user with no active
 // session is logged in successfully with an OIDC header
 func TestStrategyHeaderOidcAuthentication(t *testing.T) {
-	rand.Seed(time.Now().UnixNano())
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyHeader
 	cfg.LoginToken.SigningKey = util.RandomString(16)
@@ -201,7 +201,7 @@ func TestStrategyHeaderOidcAuthentication(t *testing.T) {
 // TestStrategyHeaderAuthentication checks that a user with no active
 // session is logged in successfully with a header that is NOT OIDC
 func TestStrategyHeaderAuthentication(t *testing.T) {
-	rand.Seed(time.Now().UnixNano())
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyHeader
 	cfg.LoginToken.SigningKey = util.RandomString(16)
@@ -261,7 +261,7 @@ func TestStrategyHeaderAuthentication(t *testing.T) {
 // TestStrategyHeaderOidcWithImpersonationAuthentication checks that a user with no active
 // session is logged in successfully with a header that is NOT OIDC
 func TestStrategyHeaderOidcWithImpersonationAuthentication(t *testing.T) {
-	rand.Seed(time.Now().UnixNano())
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyHeader
 	cfg.LoginToken.SigningKey = util.RandomString(16)
