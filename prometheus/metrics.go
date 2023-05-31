@@ -175,7 +175,7 @@ func getRequestRatesForLabel(ctx context.Context, api prom_v1.API, time time.Tim
 	log.Tracef("[Prom] getRequestRatesForLabel: %s", query)
 	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Metrics-GetRequestRates")
 	result, warnings, err := api.Query(ctx, query, time)
-	if warnings != nil && len(warnings) > 0 {
+	if len(warnings) > 0 {
 		log.Warningf("fetchHistogramValues. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
 	if err != nil {
