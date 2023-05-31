@@ -1,7 +1,7 @@
 package kubernetes
 
 import (
-	"io/ioutil"
+	"os"
 
 	yaml "gopkg.in/yaml.v2"
 	core_v1 "k8s.io/api/core/v1"
@@ -45,7 +45,7 @@ type RemoteSecret struct {
 }
 
 func GetRemoteSecret(path string) (*RemoteSecret, error) {
-	secretFile, err := ioutil.ReadFile(path)
+	secretFile, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

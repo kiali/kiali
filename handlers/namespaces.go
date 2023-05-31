@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -62,7 +62,7 @@ func NamespaceUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	namespace := params["namespace"]
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
 	}

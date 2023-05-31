@@ -1,9 +1,8 @@
 package handlers
 
 import (
-	"context"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -24,6 +23,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
@@ -41,7 +41,7 @@ func setupWorkloadList() (*httptest.Server, *kubetest.K8SClientMock, *prometheus
 
 	mr.HandleFunc("/api/namespaces/{namespace}/workloads", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			WorkloadList(w, r.WithContext(context))
 		}))
 
@@ -73,7 +73,7 @@ func TestWorkloadsEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
+	actual, _ := io.ReadAll(resp.Body)
 
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
@@ -108,7 +108,7 @@ func TestWorkloadMetricsDefault(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	actual, _ := ioutil.ReadAll(resp.Body)
+	actual, _ := io.ReadAll(resp.Body)
 
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
@@ -166,7 +166,7 @@ func TestWorkloadMetricsWithParams(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
+	actual, _ := io.ReadAll(resp.Body)
 
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
@@ -200,7 +200,7 @@ func TestWorkloadMetricsBadQueryTime(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
+	actual, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, 400, resp.StatusCode)
 	assert.Contains(t, string(actual), "cannot parse query parameter 'queryTime'")
@@ -230,7 +230,7 @@ func TestWorkloadMetricsBadDuration(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
+	actual, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, 400, resp.StatusCode)
 	assert.Contains(t, string(actual), "cannot parse query parameter 'duration'")
@@ -260,7 +260,7 @@ func TestWorkloadMetricsBadStep(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
+	actual, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, 400, resp.StatusCode)
 	assert.Contains(t, string(actual), "cannot parse query parameter 'step'")
@@ -289,7 +289,7 @@ func TestWorkloadMetricsBadRateFunc(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
+	actual, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, 400, resp.StatusCode)
 	assert.Contains(t, string(actual), "query parameter 'rateFunc' must be either 'rate' or 'irate'")
@@ -327,7 +327,7 @@ func setupWorkloadMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheuste
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/workloads/{workload}/metrics", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			getWorkloadMetrics(w, r.WithContext(context), func() (*prometheus.Client, error) {
 				return prom, nil
 			})

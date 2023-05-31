@@ -53,7 +53,7 @@ func fetchHistogramValues(ctx context.Context, api prom_v1.API, metricName, labe
 	for k, query := range queries {
 		log.Tracef("[Prom] fetchHistogramValues: %s", query)
 		result, warnings, err := api.Query(ctx, query, queryTime)
-		if warnings != nil && len(warnings) > 0 {
+		if len(warnings) > 0 {
 			log.Warningf("fetchHistogramValues. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 		}
 		if err != nil {
@@ -97,7 +97,7 @@ func buildHistogramQueries(metricName, labels, grouping, rateInterval string, av
 func fetchRange(ctx context.Context, api prom_v1.API, query string, bounds prom_v1.Range) Metric {
 	log.Tracef("[Prom] fetchRange: %s", query)
 	result, warnings, err := api.QueryRange(ctx, query, bounds)
-	if warnings != nil && len(warnings) > 0 {
+	if len(warnings) > 0 {
 		log.Warningf("fetchRange. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
 	if err != nil {
@@ -178,7 +178,7 @@ func getRequestRatesForLabel(ctx context.Context, api prom_v1.API, time time.Tim
 	log.Tracef("[Prom] getRequestRatesForLabel: %s", query)
 	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Metrics-GetRequestRates")
 	result, warnings, err := api.Query(ctx, query, time)
-	if warnings != nil && len(warnings) > 0 {
+	if len(warnings) > 0 {
 		log.Warningf("fetchHistogramValues. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
 	if err != nil {

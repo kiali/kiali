@@ -1,9 +1,8 @@
 package handlers
 
 import (
-	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,6 +12,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
@@ -25,7 +25,7 @@ func setupTestLoggingServer(t *testing.T, namespace, pod string) *httptest.Serve
 	mr := mux.NewRouter()
 	path := "/api/namespaces/{namespace}/pods/{pod}/logging"
 	mr.HandleFunc(path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+		ctx := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 		LoggingUpdate(w, r.Clone(ctx))
 	}))
 
@@ -57,7 +57,7 @@ func TestProxyLoggingSucceeds(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 	assert.Equalf(200, resp.StatusCode, "response text: %s", string(body))
 }
 
@@ -76,7 +76,7 @@ func TestMissingQueryParamFails(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 	assert.Equalf(400, resp.StatusCode, "response text: %s", string(body))
 }
 
@@ -95,6 +95,6 @@ func TestIncorrectQueryParamFails(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 	assert.Equalf(400, resp.StatusCode, "response text: %s", string(body))
 }

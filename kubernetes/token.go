@@ -1,6 +1,6 @@
 package kubernetes
 
-import "io/ioutil"
+import "os"
 
 // Be careful with how you use this token. This is the Kiali Service Account token, not the user token.
 // We need the Service Account token to access third-party in-cluster services (e.g. Grafana).
@@ -14,7 +14,7 @@ func GetKialiToken() (string, error) {
 		if remoteSecret, err := GetRemoteSecret(RemoteSecretData); err == nil {
 			KialiToken = remoteSecret.Users[0].User.Token
 		} else {
-			token, err := ioutil.ReadFile(DefaultServiceAccountPath)
+			token, err := os.ReadFile(DefaultServiceAccountPath)
 			if err != nil {
 				return "", err
 			}

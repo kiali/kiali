@@ -6,9 +6,7 @@ import (
 )
 
 // IstioConfigList istioConfigList
-//
 // This type is used for returning a response of IstioConfigList
-//
 // swagger:model IstioConfigList
 type IstioConfigList struct {
 	// The namespace of istioConfiglist

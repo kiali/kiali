@@ -5,9 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"runtime"
 	"testing"
 
@@ -21,6 +22,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes/kubetest"
@@ -1074,7 +1076,7 @@ func TestAppGraph(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
@@ -1088,8 +1090,8 @@ func TestAppGraph(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
-	expected, _ := ioutil.ReadFile("testdata/test_app_graph.expected")
+	actual, _ := io.ReadAll(resp.Body)
+	expected, _ := os.ReadFile("testdata/test_app_graph.expected")
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
 	}
@@ -1113,7 +1115,7 @@ func TestVersionedAppGraph(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
@@ -1127,8 +1129,8 @@ func TestVersionedAppGraph(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
-	expected, _ := ioutil.ReadFile("testdata/test_versioned_app_graph.expected")
+	actual, _ := io.ReadAll(resp.Body)
+	expected, _ := os.ReadFile("testdata/test_versioned_app_graph.expected")
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
 	}
@@ -1152,7 +1154,7 @@ func TestServiceGraph(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
@@ -1166,8 +1168,8 @@ func TestServiceGraph(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
-	expected, _ := ioutil.ReadFile("testdata/test_service_graph.expected")
+	actual, _ := io.ReadAll(resp.Body)
+	expected, _ := os.ReadFile("testdata/test_service_graph.expected")
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
 	}
@@ -1191,7 +1193,7 @@ func TestWorkloadGraph(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
@@ -1205,8 +1207,8 @@ func TestWorkloadGraph(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
-	expected, _ := ioutil.ReadFile("testdata/test_workload_graph.expected")
+	actual, _ := io.ReadAll(resp.Body)
+	expected, _ := os.ReadFile("testdata/test_workload_graph.expected")
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
 	}
@@ -1230,7 +1232,7 @@ func TestRatesGraphSent(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
@@ -1244,8 +1246,8 @@ func TestRatesGraphSent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
-	expected, _ := ioutil.ReadFile("testdata/test_rates_sent_graph.expected")
+	actual, _ := io.ReadAll(resp.Body)
+	expected, _ := os.ReadFile("testdata/test_rates_sent_graph.expected")
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
 	}
@@ -1269,7 +1271,7 @@ func TestRatesGraphReceived(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
@@ -1283,8 +1285,8 @@ func TestRatesGraphReceived(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
-	expected, _ := ioutil.ReadFile("testdata/test_rates_received_graph.expected")
+	actual, _ := io.ReadAll(resp.Body)
+	expected, _ := os.ReadFile("testdata/test_rates_received_graph.expected")
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
 	}
@@ -1308,7 +1310,7 @@ func TestRatesGraphTotal(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
@@ -1322,8 +1324,8 @@ func TestRatesGraphTotal(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
-	expected, _ := ioutil.ReadFile("testdata/test_rates_total_graph.expected")
+	actual, _ := io.ReadAll(resp.Body)
+	expected, _ := os.ReadFile("testdata/test_rates_total_graph.expected")
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
 	}
@@ -1347,7 +1349,7 @@ func TestRatesGraphNone(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
@@ -1361,8 +1363,8 @@ func TestRatesGraphNone(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
-	expected, _ := ioutil.ReadFile("testdata/test_rates_none_graph.expected")
+	actual, _ := io.ReadAll(resp.Body)
+	expected, _ := os.ReadFile("testdata/test_rates_none_graph.expected")
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
 	}
@@ -1623,7 +1625,7 @@ func TestWorkloadNodeGraph(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/workloads/{workload}/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
@@ -1637,8 +1639,8 @@ func TestWorkloadNodeGraph(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
-	expected, _ := ioutil.ReadFile("testdata/test_workload_node_graph.expected")
+	actual, _ := io.ReadAll(resp.Body)
+	expected, _ := os.ReadFile("testdata/test_workload_node_graph.expected")
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
 	}
@@ -1899,7 +1901,7 @@ func TestAppNodeGraph(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/applications/{app}/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
@@ -1913,8 +1915,8 @@ func TestAppNodeGraph(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
-	expected, _ := ioutil.ReadFile("testdata/test_app_node_graph.expected")
+	actual, _ := io.ReadAll(resp.Body)
+	expected, _ := os.ReadFile("testdata/test_app_node_graph.expected")
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
 	}
@@ -2175,7 +2177,7 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/applications/{app}/versions/{version}/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
@@ -2189,8 +2191,8 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
-	expected, _ := ioutil.ReadFile("testdata/test_versioned_app_node_graph.expected")
+	actual, _ := io.ReadAll(resp.Body)
+	expected, _ := os.ReadFile("testdata/test_versioned_app_node_graph.expected")
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
 	}
@@ -2261,7 +2263,7 @@ func TestServiceNodeGraph(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/services/{service}/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
@@ -2275,8 +2277,8 @@ func TestServiceNodeGraph(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
-	expected, _ := ioutil.ReadFile("testdata/test_service_node_graph.expected")
+	actual, _ := io.ReadAll(resp.Body)
+	expected, _ := os.ReadFile("testdata/test_service_node_graph.expected")
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
 	}
@@ -2628,7 +2630,7 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/workloads/{workload}/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
@@ -2642,8 +2644,8 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
-	expected, _ := ioutil.ReadFile("testdata/test_rates_node_graph_total.expected")
+	actual, _ := io.ReadAll(resp.Body)
+	expected, _ := os.ReadFile("testdata/test_rates_node_graph_total.expected")
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
 	}
@@ -3131,7 +3133,7 @@ func TestComplexGraph(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
@@ -3145,8 +3147,8 @@ func TestComplexGraph(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
-	expected, _ := ioutil.ReadFile("testdata/test_complex_graph.expected")
+	actual, _ := io.ReadAll(resp.Body)
+	expected, _ := os.ReadFile("testdata/test_complex_graph.expected")
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
 	}
@@ -3418,7 +3420,7 @@ func TestMultiClusterSourceGraph(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
@@ -3432,8 +3434,8 @@ func TestMultiClusterSourceGraph(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
-	expected, _ := ioutil.ReadFile("testdata/test_mc_source_graph.expected")
+	actual, _ := io.ReadAll(resp.Body)
+	expected, _ := os.ReadFile("testdata/test_mc_source_graph.expected")
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
 	}

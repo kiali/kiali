@@ -67,8 +67,10 @@ func ConfigureKialiLogger() {
 // Usage: cmd <pos-arg1> <pos-arg2> ... [Options]
 //
 // Options:
-//  --opt1 string
-//        opt description (default "")
+// --opt1 string
+//
+//	opt description (default "")
+//
 // ...
 func Usage(cmd string, posArgs ...string) func() {
 	return func() {
