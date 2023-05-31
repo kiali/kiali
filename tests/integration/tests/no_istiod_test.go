@@ -3,7 +3,6 @@ package tests
 import (
 	"context"
 	"fmt"
-"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
