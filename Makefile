@@ -28,7 +28,7 @@ VERSION_LABEL ?= ${VERSION}
 # The go commands and the minimum Go version that must be used to build the app.
 GO ?= go
 GOFMT ?= $(shell ${GO} env GOROOT)/bin/gofmt
-GO_VERSION_KIALI = 1.19.4
+GO_VERSION_KIALI = 1.20.3
 
 SWAGGER_VERSION ?= 0.27.0
 
