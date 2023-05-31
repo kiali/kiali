@@ -1,17 +1,16 @@
 package tests
 
 import (
+	"github.com/kiali/kiali/tests/integration/utils/kiali"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/kiali/kiali/tests/integration/utils"
 )
 
 func TestApplicationsList(t *testing.T) {
 	assert := assert.New(t)
-	appList, err := utils.ApplicationsList(utils.BOOKINFO)
+	appList, err := kiali.ApplicationsList(kiali.BOOKINFO)
 
 	assert.Nil(err)
 	assert.NotEmpty(appList)
@@ -24,17 +23,17 @@ func TestApplicationsList(t *testing.T) {
 			assert.NotNil(app.IstioReferences)
 		}
 	}
-	assert.Equal(utils.BOOKINFO, appList.Namespace.Name)
+	assert.Equal(kiali.BOOKINFO, appList.Namespace.Name)
 }
 
 func TestApplicationDetails(t *testing.T) {
 	name := "productpage"
 	assert := assert.New(t)
-	app, _, err := utils.ApplicationDetails(name, utils.BOOKINFO)
+	app, _, err := kiali.ApplicationDetails(name, kiali.BOOKINFO)
 
 	assert.Nil(err)
 	assert.NotNil(app)
-	assert.Equal(utils.BOOKINFO, app.Namespace.Name)
+	assert.Equal(kiali.BOOKINFO, app.Namespace.Name)
 	assert.Equal(name, app.Name)
 	assert.NotEmpty(app.Workloads)
 	for _, workload := range app.Workloads {
@@ -61,7 +60,7 @@ func TestApplicationDetails(t *testing.T) {
 func TestAppDetailsInvalidName(t *testing.T) {
 	name := "invalid"
 	assert := assert.New(t)
-	app, code, _ := utils.ApplicationDetails(name, utils.BOOKINFO)
+	app, code, _ := kiali.ApplicationDetails(name, kiali.BOOKINFO)
 	assert.NotEqual(200, code)
 	assert.Empty(app)
 }

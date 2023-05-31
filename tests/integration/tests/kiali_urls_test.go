@@ -2,17 +2,17 @@ package tests
 
 import (
 	"fmt"
+	"github.com/kiali/kiali/tests/integration/utils/kiali"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/tests/integration/utils"
 )
 
 func TestKialiStatus(t *testing.T) {
 	assert := assert.New(t)
-	response, statusCode, err := utils.KialiStatus()
+	response, statusCode, err := kiali.KialiStatus()
 
 	assert.Nil(err)
 	assert.True(response)
@@ -21,7 +21,7 @@ func TestKialiStatus(t *testing.T) {
 
 func TestKialiConfig(t *testing.T) {
 	assert := assert.New(t)
-	response, statusCode, err := utils.KialiConfig()
+	response, statusCode, err := kiali.KialiConfig()
 
 	assert.Nil(err)
 	assert.Equal(200, statusCode)
@@ -30,7 +30,7 @@ func TestKialiConfig(t *testing.T) {
 
 func TestIstioPermissions(t *testing.T) {
 	assert := assert.New(t)
-	response, statusCode, err := utils.IstioPermissions()
+	response, statusCode, err := kiali.IstioPermissions()
 
 	assert.Nil(err)
 	assert.Equal(200, statusCode)
@@ -39,7 +39,7 @@ func TestIstioPermissions(t *testing.T) {
 
 func TestJaeger(t *testing.T) {
 	assert := assert.New(t)
-	response, statusCode, err := utils.Jaeger()
+	response, statusCode, err := kiali.Jaeger()
 
 	if statusCode == 200 {
 		assert.Nil(err)
@@ -54,7 +54,7 @@ func TestJaeger(t *testing.T) {
 
 func TestGrafana(t *testing.T) {
 	assert := assert.New(t)
-	response, statusCode, err := utils.Grafana()
+	response, statusCode, err := kiali.Grafana()
 
 	if statusCode == 200 {
 		assert.Nil(err)
@@ -71,7 +71,7 @@ func TestGrafana(t *testing.T) {
 
 func TestMeshTls(t *testing.T) {
 	assert := assert.New(t)
-	response, statusCode, err := utils.MeshTls()
+	response, statusCode, err := kiali.MeshTls()
 
 	assert.Nil(err)
 	assert.Equal(200, statusCode)
@@ -82,7 +82,7 @@ func TestMeshTls(t *testing.T) {
 
 func TestNamespaceTls(t *testing.T) {
 	assert := assert.New(t)
-	response, statusCode, err := utils.NamespaceTls(utils.BOOKINFO)
+	response, statusCode, err := kiali.NamespaceTls(kiali.BOOKINFO)
 
 	assert.Nil(err)
 	assert.Equal(200, statusCode)

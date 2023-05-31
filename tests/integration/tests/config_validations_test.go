@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"github.com/kiali/kiali/tests/integration/utils/kiali"
 	"path"
 	"testing"
 	"time"
@@ -19,19 +20,19 @@ import (
 func TestAuthPolicyPrincipalsError(t *testing.T) {
 	name := "ratings-policy"
 	assert := assert.New(t)
-	filePath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/bookinfo-auth-policy-principals.yaml")
-	defer utils.DeleteFile(filePath, utils.BOOKINFO)
-	assert.True(utils.ApplyFile(filePath, utils.BOOKINFO))
+	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-auth-policy-principals.yaml")
+	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
+	assert.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
 
-	config, err := getConfigDetails(utils.BOOKINFO, name, kubernetes.AuthorizationPolicies, false, assert)
+	config, err := getConfigDetails(kiali.BOOKINFO, name, kubernetes.AuthorizationPolicies, false, assert)
 
 	assert.Nil(err)
 	assert.NotNil(config)
 	assert.Equal(kubernetes.AuthorizationPolicies, config.ObjectType)
-	assert.Equal(utils.BOOKINFO, config.Namespace.Name)
+	assert.Equal(kiali.BOOKINFO, config.Namespace.Name)
 	assert.NotNil(config.AuthorizationPolicy)
 	assert.Equal(name, config.AuthorizationPolicy.Name)
-	assert.Equal(utils.BOOKINFO, config.AuthorizationPolicy.Namespace)
+	assert.Equal(kiali.BOOKINFO, config.AuthorizationPolicy.Namespace)
 	assert.NotNil(config.IstioReferences)
 	assert.NotNil(config.IstioValidation)
 	assert.Equal(name, config.IstioValidation.Name)
@@ -46,13 +47,13 @@ func TestAuthPolicyPrincipalsError(t *testing.T) {
 
 func TestServiceEntryLabels(t *testing.T) {
 	assert := assert.New(t)
-	filePath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/bookinfo-service-entry-labels.yaml")
-	defer utils.DeleteFile(filePath, utils.BOOKINFO)
-	assert.True(utils.ApplyFile(filePath, utils.BOOKINFO))
+	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-service-entry-labels.yaml")
+	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
+	assert.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
 
 	// the DR with matching labels with SE
 	name := "dest-rule-labels"
-	config, err := getConfigDetails(utils.BOOKINFO, name, kubernetes.DestinationRules, false, assert)
+	config, err := getConfigDetails(kiali.BOOKINFO, name, kubernetes.DestinationRules, false, assert)
 	assert.Nil(err)
 	assert.NotNil(config)
 	assert.True(config.IstioValidation.Valid)
@@ -61,13 +62,13 @@ func TestServiceEntryLabels(t *testing.T) {
 
 func TestServiceEntryLabelsNotMatch(t *testing.T) {
 	assert := assert.New(t)
-	filePath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/bookinfo-service-entry-wrong-labels.yaml")
-	defer utils.DeleteFile(filePath, utils.BOOKINFO)
-	assert.True(utils.ApplyFile(filePath, utils.BOOKINFO))
+	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-service-entry-wrong-labels.yaml")
+	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
+	assert.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
 
 	// the DR with error, labels not match with SE
 	name := "dest-rule-labels-wrong"
-	config, err := getConfigDetails(utils.BOOKINFO, name, kubernetes.DestinationRules, false, assert)
+	config, err := getConfigDetails(kiali.BOOKINFO, name, kubernetes.DestinationRules, false, assert)
 	assert.Nil(err)
 	assert.NotNil(config)
 	assert.False(config.IstioValidation.Valid)
@@ -79,19 +80,19 @@ func TestServiceEntryLabelsNotMatch(t *testing.T) {
 func TestK8sGatewaysAddressesError(t *testing.T) {
 	name := "gatewayapi"
 	assert := assert.New(t)
-	filePath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/bookinfo-k8sgateways-addresses.yaml")
-	defer utils.DeleteFile(filePath, utils.BOOKINFO)
-	assert.True(utils.ApplyFile(filePath, utils.BOOKINFO))
+	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-k8sgateways-addresses.yaml")
+	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
+	assert.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
 
-	config, err := getConfigDetails(utils.BOOKINFO, name, kubernetes.K8sGateways, true, assert)
+	config, err := getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sGateways, true, assert)
 
 	assert.Nil(err)
 	assert.NotNil(config)
 	assert.Equal(kubernetes.K8sGateways, config.ObjectType)
-	assert.Equal(utils.BOOKINFO, config.Namespace.Name)
+	assert.Equal(kiali.BOOKINFO, config.Namespace.Name)
 	assert.NotNil(config.K8sGateway)
 	assert.Equal(name, config.K8sGateway.Name)
-	assert.Equal(utils.BOOKINFO, config.K8sGateway.Namespace)
+	assert.Equal(kiali.BOOKINFO, config.K8sGateway.Namespace)
 	assert.NotNil(config.IstioValidation)
 	assert.Equal(name, config.IstioValidation.Name)
 	assert.Equal("k8sgateway", config.IstioValidation.ObjectType)
@@ -103,19 +104,19 @@ func TestK8sGatewaysAddressesError(t *testing.T) {
 func TestK8sGatewaysListenersError(t *testing.T) {
 	name := "gatewayapi"
 	assert := assert.New(t)
-	filePath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/bookinfo-k8sgateways-listeners.yaml")
-	defer utils.DeleteFile(filePath, utils.BOOKINFO)
-	assert.True(utils.ApplyFile(filePath, utils.BOOKINFO))
+	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-k8sgateways-listeners.yaml")
+	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
+	assert.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
 
-	config, err := getConfigDetails(utils.BOOKINFO, name, kubernetes.K8sGateways, true, assert)
+	config, err := getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sGateways, true, assert)
 
 	assert.Nil(err)
 	assert.NotNil(config)
 	assert.Equal(kubernetes.K8sGateways, config.ObjectType)
-	assert.Equal(utils.BOOKINFO, config.Namespace.Name)
+	assert.Equal(kiali.BOOKINFO, config.Namespace.Name)
 	assert.NotNil(config.K8sGateway)
 	assert.Equal(name, config.K8sGateway.Name)
-	assert.Equal(utils.BOOKINFO, config.K8sGateway.Namespace)
+	assert.Equal(kiali.BOOKINFO, config.K8sGateway.Namespace)
 	assert.NotNil(config.IstioValidation)
 	assert.Equal(name, config.IstioValidation.Name)
 	assert.Equal("k8sgateway", config.IstioValidation.ObjectType)
@@ -127,19 +128,19 @@ func TestK8sGatewaysListenersError(t *testing.T) {
 func TestK8sHTTPRoutesGatewaysError(t *testing.T) {
 	name := "httproute"
 	assert := assert.New(t)
-	filePath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/bookinfo-k8shttproutes-gateways.yaml")
-	defer utils.DeleteFile(filePath, utils.BOOKINFO)
-	assert.True(utils.ApplyFile(filePath, utils.BOOKINFO))
+	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-k8shttproutes-gateways.yaml")
+	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
+	assert.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
 
-	config, err := getConfigDetails(utils.BOOKINFO, name, kubernetes.K8sHTTPRoutes, true, assert)
+	config, err := getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sHTTPRoutes, true, assert)
 
 	assert.Nil(err)
 	assert.NotNil(config)
 	assert.Equal(kubernetes.K8sHTTPRoutes, config.ObjectType)
-	assert.Equal(utils.BOOKINFO, config.Namespace.Name)
+	assert.Equal(kiali.BOOKINFO, config.Namespace.Name)
 	assert.NotNil(config.K8sHTTPRoute)
 	assert.Equal(name, config.K8sHTTPRoute.Name)
-	assert.Equal(utils.BOOKINFO, config.K8sHTTPRoute.Namespace)
+	assert.Equal(kiali.BOOKINFO, config.K8sHTTPRoute.Namespace)
 	assert.NotNil(config.IstioValidation)
 	assert.False(config.IstioValidation.Valid)
 	assert.Equal(name, config.IstioValidation.Name)
@@ -152,19 +153,19 @@ func TestK8sHTTPRoutesGatewaysError(t *testing.T) {
 func TestK8sHTTPRoutesServicesError(t *testing.T) {
 	name := "httprouteservices"
 	assert := assert.New(t)
-	filePath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/bookinfo-k8shttproutes-services.yaml")
-	defer utils.DeleteFile(filePath, utils.BOOKINFO)
-	assert.True(utils.ApplyFile(filePath, utils.BOOKINFO))
+	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-k8shttproutes-services.yaml")
+	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
+	assert.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
 
-	config, err := getConfigDetails(utils.BOOKINFO, name, kubernetes.K8sHTTPRoutes, true, assert)
+	config, err := getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sHTTPRoutes, true, assert)
 
 	assert.Nil(err)
 	assert.NotNil(config)
 	assert.Equal(kubernetes.K8sHTTPRoutes, config.ObjectType)
-	assert.Equal(utils.BOOKINFO, config.Namespace.Name)
+	assert.Equal(kiali.BOOKINFO, config.Namespace.Name)
 	assert.NotNil(config.K8sHTTPRoute)
 	assert.Equal(name, config.K8sHTTPRoute.Name)
-	assert.Equal(utils.BOOKINFO, config.K8sHTTPRoute.Namespace)
+	assert.Equal(kiali.BOOKINFO, config.K8sHTTPRoute.Namespace)
 	assert.NotNil(config.IstioValidation)
 	assert.False(config.IstioValidation.Valid)
 	assert.Equal(name, config.IstioValidation.Name)
@@ -175,12 +176,12 @@ func TestK8sHTTPRoutesServicesError(t *testing.T) {
 }
 
 func getConfigDetails(namespace, name, configType string, skipReferences bool, assert *assert.Assertions) (*models.IstioConfigDetails, error) {
-	config, _, err := utils.IstioConfigDetails(namespace, name, configType)
+	config, _, err := kiali.IstioConfigDetails(namespace, name, configType)
 	if err == nil && config != nil && config.IstioValidation != nil && config.IstioReferences != nil {
 		return config, nil
 	}
 	pollErr := wait.Poll(time.Second, time.Minute*5, func() (bool, error) {
-		config, _, err = utils.IstioConfigDetails(namespace, name, configType)
+		config, _, err = kiali.IstioConfigDetails(namespace, name, configType)
 		if err == nil && config != nil && config.IstioValidation != nil {
 			if !skipReferences && config.IstioReferences != nil {
 				return true, nil
@@ -195,7 +196,7 @@ func getConfigDetails(namespace, name, configType string, skipReferences bool, a
 }
 
 func getConfigForNamespace(namespace, name, configType string) (*models.IstioConfigDetails, error) {
-	config, _, err := utils.IstioConfigDetails(namespace, name, configType)
+	config, _, err := kiali.IstioConfigDetails(namespace, name, configType)
 	log.Debugf("Config response returned: %+v", config)
 	return config, err
 }

@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"github.com/kiali/kiali/tests/integration/utils/kiali"
 	"path"
 	"testing"
 	"time"
@@ -22,10 +23,10 @@ func TestExternalHostNode(t *testing.T) {
 }
 
 func assertExternalNode(params map[string]string, yaml, name string, assert *assert.Assertions) {
-	params["namespaces"] = utils.BOOKINFO
-	filePath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/"+yaml)
-	defer utils.DeleteFile(filePath, utils.BOOKINFO)
-	assert.True(utils.ApplyFile(filePath, utils.BOOKINFO))
+	params["namespaces"] = kiali.BOOKINFO
+	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/"+yaml)
+	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
+	assert.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
 
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
 		return NodeMatch(params, name)
@@ -34,7 +35,7 @@ func assertExternalNode(params map[string]string, yaml, name string, assert *ass
 }
 
 func NodeMatch(params map[string]string, nodeName string) (bool, error) {
-	graph, statusCode, err := utils.Graph(params)
+	graph, statusCode, err := kiali.Graph(params)
 	if statusCode != 200 {
 		return false, err
 	}

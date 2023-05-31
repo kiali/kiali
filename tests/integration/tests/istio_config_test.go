@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"github.com/kiali/kiali/tests/integration/utils/kiali"
 	"path"
 	"testing"
 
@@ -13,11 +14,11 @@ import (
 
 func TestIstioConfigList(t *testing.T) {
 	assert := assert.New(t)
-	filePath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/bookinfo-k8sgateways.yaml")
-	defer utils.DeleteFile(filePath, utils.BOOKINFO)
-	assert.True(utils.ApplyFile(filePath, utils.BOOKINFO))
+	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-k8sgateways.yaml")
+	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
+	assert.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
 
-	configList, err := utils.IstioConfigsList(utils.BOOKINFO)
+	configList, err := kiali.IstioConfigsList(kiali.BOOKINFO)
 
 	assert.Nil(err)
 	assertConfigs(*configList, assert)
@@ -25,20 +26,20 @@ func TestIstioConfigList(t *testing.T) {
 
 func TestIstioConfigs(t *testing.T) {
 	assert := assert.New(t)
-	filePath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/bookinfo-k8sgateways.yaml")
-	defer utils.DeleteFile(filePath, utils.BOOKINFO)
-	assert.True(utils.ApplyFile(filePath, utils.BOOKINFO))
-	configMap, err := utils.IstioConfigs()
+	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-k8sgateways.yaml")
+	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
+	assert.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
+	configMap, err := kiali.IstioConfigs()
 
 	assert.Nil(err)
 	assert.NotEmpty(configMap)
 	assertConfigs(*configMap["bookinfo"], assert)
 }
 
-func assertConfigs(configList utils.IstioConfigListJson, assert *assert.Assertions) {
+func assertConfigs(configList kiali.IstioConfigListJson, assert *assert.Assertions) {
 	assert.NotEmpty(configList)
 	assert.NotNil(configList.IstioValidations)
-	assert.Equal(utils.BOOKINFO, configList.Namespace.Name)
+	assert.Equal(kiali.BOOKINFO, configList.Namespace.Name)
 
 	assert.NotNil(configList.DestinationRules)
 	for _, dr := range configList.DestinationRules {
@@ -110,15 +111,15 @@ func assertConfigs(configList utils.IstioConfigListJson, assert *assert.Assertio
 func TestIstioConfigDetails(t *testing.T) {
 	name := "bookinfo"
 	assert := assert.New(t)
-	config, _, err := utils.IstioConfigDetails(utils.BOOKINFO, name, kubernetes.VirtualServices)
+	config, _, err := kiali.IstioConfigDetails(kiali.BOOKINFO, name, kubernetes.VirtualServices)
 
 	assert.Nil(err)
 	assert.NotNil(config)
 	assert.Equal(kubernetes.VirtualServices, config.ObjectType)
-	assert.Equal(utils.BOOKINFO, config.Namespace.Name)
+	assert.Equal(kiali.BOOKINFO, config.Namespace.Name)
 	assert.NotNil(config.VirtualService)
 	assert.Equal(name, config.VirtualService.Name)
-	assert.Equal(utils.BOOKINFO, config.VirtualService.Namespace)
+	assert.Equal(kiali.BOOKINFO, config.VirtualService.Namespace)
 	assert.NotNil(config.IstioReferences)
 	assert.NotNil(config.IstioValidation)
 	assert.Equal(name, config.IstioValidation.Name)
@@ -131,17 +132,17 @@ func TestIstioConfigDetails(t *testing.T) {
 func TestIstioConfigInvalidName(t *testing.T) {
 	name := "invalid"
 	assert := assert.New(t)
-	config, code, _ := utils.IstioConfigDetails(utils.BOOKINFO, name, kubernetes.VirtualServices)
+	config, code, _ := kiali.IstioConfigDetails(kiali.BOOKINFO, name, kubernetes.VirtualServices)
 	assert.NotEqual(200, code)
 	assert.Empty(config)
 }
 
 func TestIstioConfigPermissions(t *testing.T) {
 	assert := assert.New(t)
-	perms, err := utils.IstioConfigPermissions(utils.BOOKINFO)
+	perms, err := kiali.IstioConfigPermissions(kiali.BOOKINFO)
 
 	assert.Nil(err)
 	assert.NotEmpty(perms)
-	assert.NotEmpty((*perms)[utils.BOOKINFO])
-	assert.NotEmpty((*(*perms)[utils.BOOKINFO])["authorizationpolicies"])
+	assert.NotEmpty((*perms)[kiali.BOOKINFO])
+	assert.NotEmpty((*(*perms)[kiali.BOOKINFO])["authorizationpolicies"])
 }

@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"github.com/kiali/kiali/tests/integration/utils/kiali"
 	"path"
 	"strings"
 	"testing"
@@ -15,7 +16,7 @@ import (
 
 func TestWorkloadsList(t *testing.T) {
 	assert := assert.New(t)
-	wlList, err := utils.WorkloadsList(utils.BOOKINFO)
+	wlList, err := kiali.WorkloadsList(kiali.BOOKINFO)
 
 	assert.Nil(err)
 	assert.NotEmpty(wlList)
@@ -29,13 +30,13 @@ func TestWorkloadsList(t *testing.T) {
 		}
 	}
 	assert.NotNil(wlList.Validations)
-	assert.Equal(utils.BOOKINFO, wlList.Namespace.Name)
+	assert.Equal(kiali.BOOKINFO, wlList.Namespace.Name)
 }
 
 func TestWorkloadDetails(t *testing.T) {
 	name := "details-v1"
 	assert := assert.New(t)
-	wl, _, err := utils.WorkloadDetails(name, utils.BOOKINFO)
+	wl, _, err := kiali.WorkloadDetails(name, kiali.BOOKINFO)
 
 	assert.Nil(err)
 	assert.NotNil(wl)
@@ -49,7 +50,7 @@ func TestWorkloadDetails(t *testing.T) {
 	}
 	assert.NotEmpty(wl.Services)
 	for _, wl := range wl.Services {
-		assert.Equal(utils.BOOKINFO, wl.Namespace)
+		assert.Equal(kiali.BOOKINFO, wl.Namespace)
 	}
 	assert.NotEmpty(wl.Runtimes)
 	assert.NotEmpty(wl.Validations)
@@ -65,23 +66,23 @@ func TestWorkloadDetails(t *testing.T) {
 func TestWorkloadDetailsInvalidName(t *testing.T) {
 	name := "invalid"
 	assert := assert.New(t)
-	app, code, _ := utils.WorkloadDetails(name, utils.BOOKINFO)
+	app, code, _ := kiali.WorkloadDetails(name, kiali.BOOKINFO)
 	assert.NotEqual(200, code)
 	assert.Empty(app)
 }
 
 func TestDiscoverWorkload(t *testing.T) {
 	assert := assert.New(t)
-	workloadsPath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/bookinfo-workloads.yaml")
+	workloadsPath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-workloads.yaml")
 	extraWorkloads := map[string]string{
 		"details-v2": "Pod",
 		"reviews-v4": "ReplicaSet",
 	}
 
-	defer utils.DeleteFile(workloadsPath, utils.BOOKINFO)
-	assert.True(utils.ApplyFile(workloadsPath, utils.BOOKINFO))
+	defer utils.DeleteFile(workloadsPath, kiali.BOOKINFO)
+	assert.True(utils.ApplyFile(workloadsPath, kiali.BOOKINFO))
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
-		wlList, err := utils.WorkloadsList(utils.BOOKINFO)
+		wlList, err := kiali.WorkloadsList(kiali.BOOKINFO)
 		assert.Nil(err)
 		assert.NotNil(wlList)
 		foundWorkloads := 0

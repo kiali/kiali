@@ -2,6 +2,7 @@ package tests
 
 import (
 	"fmt"
+	"github.com/kiali/kiali/tests/integration/utils/kiali"
 	"path"
 	"testing"
 	"time"
@@ -16,7 +17,7 @@ import (
 
 func TestServicesList(t *testing.T) {
 	assert := assert.New(t)
-	serviceList, err := utils.ServicesList(utils.BOOKINFO)
+	serviceList, err := kiali.ServicesList(kiali.BOOKINFO)
 
 	assert.Nil(err)
 	assert.NotEmpty(serviceList)
@@ -31,18 +32,18 @@ func TestServicesList(t *testing.T) {
 		assert.NotNil(service.Health.Requests.Inbound)
 	}
 	assert.NotNil(serviceList.Validations)
-	assert.Equal(utils.BOOKINFO, serviceList.Namespace.Name)
+	assert.Equal(kiali.BOOKINFO, serviceList.Namespace.Name)
 }
 
 func TestServiceDetails(t *testing.T) {
 	name := "productpage"
 	assert := assert.New(t)
-	service, _, err := utils.ServiceDetails(name, utils.BOOKINFO)
+	service, _, err := kiali.ServiceDetails(name, kiali.BOOKINFO)
 
 	assert.Nil(err)
 	assert.NotNil(service)
 	assert.NotNil(service.Service)
-	assert.Equal(utils.BOOKINFO, service.Service.Namespace.Name)
+	assert.Equal(kiali.BOOKINFO, service.Service.Namespace.Name)
 	assert.NotEmpty(service.Workloads)
 	assert.NotEmpty(service.Service.Ports)
 	assert.NotEmpty(service.Service.Ports)
@@ -62,7 +63,7 @@ func TestServiceDetails(t *testing.T) {
 func TestServiceDetailsInvalidName(t *testing.T) {
 	name := "invalid"
 	assert := assert.New(t)
-	app, code, _ := utils.ServiceDetails(name, utils.BOOKINFO)
+	app, code, _ := kiali.ServiceDetails(name, kiali.BOOKINFO)
 	assert.NotEqual(200, code)
 	assert.Empty(app)
 }
@@ -71,16 +72,16 @@ func TestServiceDiscoverVS(t *testing.T) {
 	assert := assert.New(t)
 	serviceName := "reviews"
 	vsName := "reviews"
-	vsPath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/bookinfo-reviews-80-20.yaml")
-	service, _, err := utils.ServiceDetails(serviceName, utils.BOOKINFO)
+	vsPath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-reviews-80-20.yaml")
+	service, _, err := kiali.ServiceDetails(serviceName, kiali.BOOKINFO)
 	assert.Nil(err)
 	assert.NotNil(service)
 	preVsCount := len(service.VirtualServices)
-	defer utils.DeleteFile(vsPath, utils.BOOKINFO)
-	assert.True(utils.ApplyFile(vsPath, utils.BOOKINFO))
+	defer utils.DeleteFile(vsPath, kiali.BOOKINFO)
+	assert.True(utils.ApplyFile(vsPath, kiali.BOOKINFO))
 
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
-		service, _, err = utils.ServiceDetails(serviceName, utils.BOOKINFO)
+		service, _, err = kiali.ServiceDetails(serviceName, kiali.BOOKINFO)
 		assert.Nil(err)
 		assert.NotNil(service)
 		if len(service.VirtualServices) > preVsCount {
@@ -122,16 +123,16 @@ func TestServiceDiscoverDR(t *testing.T) {
 	assert := assert.New(t)
 	serviceName := "reviews"
 	drName := "reviews"
-	drPath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/bookinfo-destination-rule-reviews.yaml")
-	service, _, err := utils.ServiceDetails(serviceName, utils.BOOKINFO)
+	drPath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-destination-rule-reviews.yaml")
+	service, _, err := kiali.ServiceDetails(serviceName, kiali.BOOKINFO)
 	assert.Nil(err)
 	assert.NotNil(service)
 	preDrCount := len(service.DestinationRules)
-	defer utils.DeleteFile(drPath, utils.BOOKINFO)
-	assert.True(utils.ApplyFile(drPath, utils.BOOKINFO))
+	defer utils.DeleteFile(drPath, kiali.BOOKINFO)
+	assert.True(utils.ApplyFile(drPath, kiali.BOOKINFO))
 
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
-		service, _, err = utils.ServiceDetails(serviceName, utils.BOOKINFO)
+		service, _, err = kiali.ServiceDetails(serviceName, kiali.BOOKINFO)
 		assert.Nil(err)
 		assert.NotNil(service)
 		if len(service.DestinationRules) > preDrCount {
