@@ -99,7 +99,7 @@ test-integration: test-integration-setup
 
 ## lint-install: Installs golangci-lint
 lint-install:
-	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(${GO} env GOPATH)/bin v1.23.8
+	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(${GO} env GOPATH)/bin v1.52.2
 
 ## lint: Runs golangci-lint
 # doc.go is ommited for linting, because it generates lots of warnings.
