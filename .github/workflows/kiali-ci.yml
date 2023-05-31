@@ -3,13 +3,17 @@ name: Kiali CI
 on:
   # Run on master and release branches
   push:
-    branches: [master, "^v\\d+\\.\\d+$"]
+    branches:
+    - master
+    - v*.*
     paths-ignore:
       - 'design/**'
       - '**/*.md'
       - '**/*.adoc'
   pull_request:
-    branches: [master, "^v\\d+\\.\\d+$"]
+    branches:
+    - master
+    - v*.*
     paths-ignore:
       - 'design/**'
       - '**/*.md'
