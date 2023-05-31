@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -17,6 +16,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -69,7 +69,7 @@ func setupNamespaceHealthEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8S
 
 	mr.HandleFunc("/api/namespaces/{namespace}/health", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			NamespaceHealth(w, r.WithContext(context))
 		}))
 
