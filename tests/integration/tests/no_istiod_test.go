@@ -2,12 +2,14 @@ package tests
 
 import (
 	"context"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/dynamic"
 
 	k8s "github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/tests/integration/utils"
@@ -17,17 +19,21 @@ import (
 
 const kialiNamespace = "istio-system"
 
-func update_istio_api_enabled(ctx context.Context, t *testing.T, value bool, kubeClientSet kubernetes.Interface, kialiCRDExists bool) {
+func update_istio_api_enabled(ctx context.Context, t *testing.T, value bool, kubeClientSet kubernetes.Interface, dynamicClient dynamic.Interface, kialiCRDExists bool) {
 
 	require := require.New(t)
 
 	kialiPodName := kube.GetKialiPodName(ctx, kubeClientSet, kialiNamespace, t)
 
-	config, cm := kube.GetKialiConfigMap(ctx, kubeClientSet, kialiNamespace, "kiali", t)
-	config.ExternalServices.Istio.IstioAPIEnabled = value
-
-	kube.UpdateKialiConfigMap(ctx, kubeClientSet, kialiNamespace, config, cm, t)
-
+	if kialiCRDExists {
+		registryPatch := []byte(`{"spec": {"external_services": {"istio": {"istio_api_enabled": `+ strconv.FormatBool(value) +`}}}}`)
+		kube.UpdateKialiCR(ctx, dynamicClient, kubeClientSet, kialiNamespace, "istio_api_enabled", registryPatch, t)
+	} else {
+		config, cm := kube.GetKialiConfigMap(ctx, kubeClientSet, kialiNamespace, "kiali", t)
+		config.ExternalServices.Istio.IstioAPIEnabled = value
+		kube.UpdateKialiConfigMap(ctx, kubeClientSet, kialiNamespace, config, cm, t)
+	}
+	
 	// Restart Kiali pod to pick up the new config.
 	if !kialiCRDExists {
 		require.NoError(kube.DeleteKialiPod(ctx, kubeClientSet, kialiNamespace, kialiPodName))
@@ -39,6 +45,7 @@ func update_istio_api_enabled(ctx context.Context, t *testing.T, value bool, kub
 
 func TestNoIstiod(t *testing.T) {
 	kubeClientSet := kube.NewKubeClient(t)
+	dynamicClient := kube.NewDynamicClient(t)
 	ctx := context.TODO()
 
 	kialiCRDExists := false
@@ -47,8 +54,8 @@ func TestNoIstiod(t *testing.T) {
 		kialiCRDExists = true
 	}
 
-	defer update_istio_api_enabled(ctx, t, true, kubeClientSet, kialiCRDExists)
-	update_istio_api_enabled(ctx, t, false, kubeClientSet, kialiCRDExists)
+	defer update_istio_api_enabled(ctx, t, true, kubeClientSet, dynamicClient, kialiCRDExists)
+	update_istio_api_enabled(ctx, t, false, kubeClientSet, dynamicClient, kialiCRDExists)
 	t.Run("ServicesListNoRegistryServices", servicesListNoRegistryServices)
 	t.Run("NoProxyStatus", noProxyStatus)
 	t.Run("istioStatus", istioStatus)

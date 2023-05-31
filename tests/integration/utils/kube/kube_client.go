@@ -2,6 +2,9 @@ package kube
 
 import (
 	"context"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
+	"strings"
 	"testing"
 	"time"
 
@@ -116,6 +119,43 @@ func GetKialiConfigMap(ctx context.Context, kubeClient kubernetes.Interface, kia
 	require.NoError(yaml.Unmarshal([]byte(cm.Data["config.yaml"]), currentConfig))
 
 	return currentConfig, cm
+}
+
+func UpdateKialiCR(ctx context.Context, dynamicClient dynamic.Interface, kubeClient kubernetes.Interface,
+	kialiNamespace string, check string, registryPatch []byte, t *testing.T) {
+	require := require.New(t)
+	kialiGVR := schema.GroupVersionResource{Group: "kiali.io", Version: "v1alpha1", Resource: "kialis"}
+	// Find the Kiali CR and override some settings if they're set on the CR.
+	kialiCRs, err := dynamicClient.Resource(kialiGVR).List(ctx, metav1.ListOptions{})
+	require.NoError(err)
+
+	kialiCR := kialiCRs.Items[0]
+
+	kialiName := kialiCR.GetName()
+	kialiDeploymentNamespace := kialiNamespace
+	kialiNamespace = kialiCR.GetNamespace()
+	if spec, ok := kialiCR.Object["spec"].(map[string]interface{}); ok {
+		if deployment, ok := spec["deployment"].(map[string]interface{}); ok {
+			if namespace, ok := deployment["namespace"].(string); ok {
+				kialiDeploymentNamespace = namespace
+			}
+		}
+	}
+
+	//registryPatch := []byte(`{"spec": {"external_services": {"istio": {"registry": {"istiod_url": "http://istiod-debug.istio-system:9240"}}}}}`)
+	_, err = dynamicClient.Resource(kialiGVR).Namespace(kialiNamespace).Patch(ctx, kialiName, types.MergePatchType, registryPatch, metav1.PatchOptions{})
+	require.NoError(err)
+
+	// Need to know when the kiali operator has seen the CR change and finished updating
+	// the configmap. There's no ObservedGeneration on the Kiali CR so just checking the configmap itself.
+	require.NoError(wait.PollImmediate(time.Second*5, time.Minute*2, func() (bool, error) {
+		log.Debug("Waiting for kiali configmap to update")
+		cm, err := kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Get(ctx, kialiName, metav1.GetOptions{})
+		if err != nil {
+			return false, err
+		}
+		return strings.Contains(cm.Data["config.yaml"], check), nil
+	}), "Error waiting for kiali configmap to update")
 }
 
 // Update Kiali config map
