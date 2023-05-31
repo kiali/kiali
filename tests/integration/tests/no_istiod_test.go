@@ -6,7 +6,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes"
 
 	k8s "github.com/kiali/kiali/kubernetes"
@@ -15,7 +14,7 @@ import (
 
 const kialiNamespace = "istio-system"
 
-func update_istio_api_enabled(t *testing.T, value bool, kubeClientSet kubernetes.Interface, ctx context.Context, kialiCRD bool) {
+func update_istio_api_enabled(t *testing.T, value bool, kubeClientSet kubernetes.Interface, ctx context.Context) {
 
 	require := require.New(t)
 
@@ -27,7 +26,7 @@ func update_istio_api_enabled(t *testing.T, value bool, kubeClientSet kubernetes
 	utils.UpdateKialiConfigMap(kubeClientSet, kialiNamespace, config, cm, ctx, t)
 
 	// Restart Kiali pod to pick up the new config.
-	require.NoError(utils.RestartKialiPodName(ctx, kubeClientSet, kialiNamespace, kialiCRD, kialiPodName))
+	require.NoError(utils.RestartKialiPodName(ctx, kubeClientSet, kialiNamespace, false, kialiPodName))
 
 }
 
@@ -35,14 +34,8 @@ func TestNoIstiod(t *testing.T) {
 	kubeClientSet := utils.NewKubeClient(t)
 	ctx := context.TODO()
 
-	kialiCRDExists := false
-	_, err := kubeClientSet.Discovery().RESTClient().Get().AbsPath("/apis/kiali.io").DoRaw(ctx)
-	if !kubeerrors.IsNotFound(err) {
-		kialiCRDExists = true
-	}
-
-	defer update_istio_api_enabled(t, true, kubeClientSet, ctx, kialiCRDExists)
-	update_istio_api_enabled(t, false, kubeClientSet, ctx, kialiCRDExists)
+	defer update_istio_api_enabled(t, true, kubeClientSet, ctx)
+	update_istio_api_enabled(t, false, kubeClientSet, ctx)
 	t.Run("ServicesListNoRegistryServices", servicesListNoRegistryServices)
 	t.Run("NoProxyStatus", noProxyStatus)
 	t.Run("istioStatus", istioStatus)
