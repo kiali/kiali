@@ -98,7 +98,7 @@ func RestartKialiPodName(ctx context.Context, kubeClient kubernetes.Interface, n
 
 // Returns the name of the Kiali pod
 // It expects to find just one Kiali pod
-func GetKialiPodName(kubeClient kubernetes.Interface, kialiNamespace string, ctx context.Context, t *testing.T) string {
+func GetKialiPodName(ctx context.Context, kubeClient kubernetes.Interface, kialiNamespace string, t *testing.T) string {
 
 	require := require.New(t)
 	pods, err := kubeClient.CoreV1().Pods(kialiNamespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
