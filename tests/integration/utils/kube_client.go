@@ -50,24 +50,19 @@ func NewKubeClient(t *testing.T) kubernetes.Interface {
 	return client
 }
 
-func RestartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, namespace string, keepOldPod bool, t *testing.T) error {
-	kialiPodName := GetKialiPodName(kubeClient, namespace, ctx, t)
-	return RestartKialiPodName(ctx, kubeClient, namespace, keepOldPod, kialiPodName)
+func DeleteKialiPod(ctx context.Context, kubeClient kubernetes.Interface, namespace string, currentKialiPod string) error {
+	log.Debugf("Deleting Kiali pod %s", currentKialiPod)
+	err := kubeClient.CoreV1().Pods(namespace).Delete(ctx, currentKialiPod, metav1.DeleteOptions{})
+	if err != nil {
+		log.Errorf("Error deleting Kiali pod %s", err)
+		return err
+	}
+	return nil
 }
 
 // Deletes the existing kiali Pod and waits for the new one to be ready.
-func RestartKialiPodName(ctx context.Context, kubeClient kubernetes.Interface, namespace string, keepOldPod bool, currentKialiPod string) error {
+func RestartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, namespace string, currentKialiPod string) error {
 	log.Debugf("Restarting kiali pod %s %s", namespace, currentKialiPod)
-
-	// Restart Kiali pod when kiali CRD does not exist (Otherwise, operator will delete the old one)
-	if !keepOldPod {
-		log.Debugf("Deleting Kiali pod %s", currentKialiPod)
-		err := kubeClient.CoreV1().Pods(namespace).Delete(ctx, currentKialiPod, metav1.DeleteOptions{})
-		if err != nil {
-			log.Errorf("Error deleting Kiali pod %s", err)
-			return err
-		}
-	}
 
 	return wait.PollImmediate(time.Second*5, time.Minute*4, func() (bool, error) {
 		log.Debugf("Waiting for kiali to be ready")
@@ -109,7 +104,7 @@ func GetKialiPodName(ctx context.Context, kubeClient kubernetes.Interface, kiali
 }
 
 // Get Kiali config map
-func GetKialiConfigMap(kubeClient kubernetes.Interface, kialiNamespace string, kialiName string, ctx context.Context, t *testing.T) (*config.Config, *v1.ConfigMap) {
+func GetKialiConfigMap(ctx context.Context, kubeClient kubernetes.Interface, kialiNamespace string, kialiName string, t *testing.T) (*config.Config, *v1.ConfigMap) {
 
 	require := require.New(t)
 
@@ -124,7 +119,7 @@ func GetKialiConfigMap(kubeClient kubernetes.Interface, kialiNamespace string, k
 }
 
 // Update Kiali config map
-func UpdateKialiConfigMap(kubeClient kubernetes.Interface, kialiNamespace string, currentConfig *config.Config, cm *v1.ConfigMap, ctx context.Context, t *testing.T) {
+func UpdateKialiConfigMap(ctx context.Context, kubeClient kubernetes.Interface, kialiNamespace string, currentConfig *config.Config, cm *v1.ConfigMap, t *testing.T) {
 
 	require := require.New(t)
 

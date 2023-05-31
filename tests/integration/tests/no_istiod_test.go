@@ -18,15 +18,16 @@ func update_istio_api_enabled(t *testing.T, value bool, kubeClientSet kubernetes
 
 	require := require.New(t)
 
-	kialiPodName := utils.GetKialiPodName(kubeClientSet, kialiNamespace, ctx, t)
+	kialiPodName := utils.GetKialiPodName(ctx, kubeClientSet, kialiNamespace, t)
 
-	config, cm := utils.GetKialiConfigMap(kubeClientSet, kialiNamespace, "kiali", ctx, t)
+	config, cm := utils.GetKialiConfigMap(ctx, kubeClientSet, kialiNamespace, "kiali", t)
 	config.ExternalServices.Istio.IstioAPIEnabled = value
 
-	utils.UpdateKialiConfigMap(kubeClientSet, kialiNamespace, config, cm, ctx, t)
+	utils.UpdateKialiConfigMap(ctx, kubeClientSet, kialiNamespace, config, cm, t)
 
 	// Restart Kiali pod to pick up the new config.
-	require.NoError(utils.RestartKialiPodName(ctx, kubeClientSet, kialiNamespace, false, kialiPodName))
+	require.NoError(utils.DeleteKialiPod(ctx, kubeClientSet, kialiNamespace, kialiPodName))
+	require.NoError(utils.RestartKialiPod(ctx, kubeClientSet, kialiNamespace, kialiPodName))
 
 }
 

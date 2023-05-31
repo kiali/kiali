@@ -84,7 +84,7 @@ func TestRemoteIstiod(t *testing.T) {
 	t.Cleanup(func() {
 		log.Debug("Cleaning up resources from RemoteIstiod test")
 
-		currentKialiPod := utils.GetKialiPodName(kubeClient, kialiDeploymentNamespace, ctx, t)
+		currentKialiPod := utils.GetKialiPodName(ctx, kubeClient, kialiDeploymentNamespace, t)
 
 		if kialiCRDExists {
 			undoRegistryPatch := []byte(`[{"op": "remove", "path": "/spec/external_services/istio/registry"}]`)
@@ -109,8 +109,11 @@ func TestRemoteIstiod(t *testing.T) {
 			_, err = kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Update(ctx, cm, metav1.UpdateOptions{})
 			require.NoError(err)
 
+			if !kialiCRDExists {
+				require.NoError(utils.DeleteKialiPod(ctx, kubeClient, kialiDeploymentNamespace, currentKialiPod))
+			}
 			// Restart Kiali pod to pick up the new config.
-			require.NoError(utils.RestartKialiPodName(ctx, kubeClient, kialiDeploymentNamespace, kialiCRDExists, currentKialiPod))
+			require.NoError(utils.RestartKialiPod(ctx, kubeClient, kialiDeploymentNamespace, currentKialiPod))
 		}
 
 		// Remove service:
@@ -134,7 +137,7 @@ func TestRemoteIstiod(t *testing.T) {
 		_, err = kubeClient.AppsV1().Deployments("istio-system").Update(ctx, istiod, metav1.UpdateOptions{})
 		require.NoError(err)
 
-		currentKialiPod = utils.GetKialiPodName(kubeClient, kialiDeploymentNamespace, ctx, t)
+		currentKialiPod = utils.GetKialiPodName(ctx, kubeClient, kialiDeploymentNamespace, t)
 
 		// Wait for the configmap to be updated again before exiting.
 		require.NoError(wait.PollImmediate(time.Second*5, time.Minute*2, func() (bool, error) {
@@ -145,7 +148,10 @@ func TestRemoteIstiod(t *testing.T) {
 			return !strings.Contains(cm.Data["config.yaml"], "http://istiod-debug.istio-system:9240"), nil
 		}), "Error waiting for kiali configmap to update")
 
-		require.NoError(utils.RestartKialiPodName(ctx, kubeClient, kialiDeploymentNamespace, kialiCRDExists, currentKialiPod))
+		if !kialiCRDExists {
+			require.NoError(utils.DeleteKialiPod(ctx, kubeClient, kialiDeploymentNamespace, currentKialiPod))
+		}
+		require.NoError(utils.RestartKialiPod(ctx, kubeClient, kialiDeploymentNamespace, currentKialiPod))
 	})
 
 	// Expose the istiod /debug endpoints by adding a proxy to the pod.
@@ -185,18 +191,21 @@ func TestRemoteIstiod(t *testing.T) {
 		}), "Error waiting for kiali configmap to update")
 	} else {
 		// Update the configmap directly.
-		currentConfig, cm := utils.GetKialiConfigMap(kubeClient, kialiDeploymentNamespace, kialiName, ctx, t)
+		currentConfig, cm := utils.GetKialiConfigMap(ctx, kubeClient, kialiDeploymentNamespace, kialiName, t)
 
 		currentConfig.ExternalServices.Istio.Registry = &config.RegistryConfig{
 			IstiodURL: "http://istiod-debug.istio-system:9240",
 		}
 
-		utils.UpdateKialiConfigMap(kubeClient, kialiNamespace, currentConfig, cm, ctx, t)
+		utils.UpdateKialiConfigMap(ctx, kubeClient, kialiNamespace, currentConfig, cm, t)
 	}
 	log.Debugf("Successfully patched kiali to use remote istiod")
 
 	// Restart Kiali pod to pick up the new config.
-	require.NoError(utils.RestartKialiPodName(ctx, kubeClient, kialiDeploymentNamespace, kialiCRDExists, currentKialiPod), "Error waiting for kiali deployment to update")
+	if !kialiCRDExists {
+		require.NoError(utils.DeleteKialiPod(ctx, kubeClient, kialiDeploymentNamespace, currentKialiPod))
+	}
+	require.NoError(utils.RestartKialiPod(ctx, kubeClient, kialiDeploymentNamespace, currentKialiPod), "Error waiting for kiali deployment to update")
 
 	configs, err := utils.IstioConfigs()
 	require.NoError(err)
