@@ -295,7 +295,7 @@ func (in *Client) GetMetricsForLabels(metricNames []string, labelQueryString str
 	startT := time.Now()
 	queryString := fmt.Sprintf("count(%v) by (__name__)", labelQueryString)
 	results, warnings, err := in.api.Query(in.ctx, queryString, time.Now())
-	if warnings != nil && len(warnings) > 0 {
+	if len(warnings) > 0 {
 		log.Warningf("GetMetricsForLabels. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
 	if err != nil {
