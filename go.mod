@@ -1,6 +1,6 @@
 module github.com/kiali/kiali
 
-go 1.19
+go 1.20
 
 require (
 	github.com/NYTimes/gziphandler v1.1.1
@@ -18,7 +18,6 @@ require (
 	go.opentelemetry.io/otel/exporters/jaeger v1.2.0
 	go.opentelemetry.io/otel/sdk v1.2.0
 	go.opentelemetry.io/otel/trace v1.2.0
-	go.uber.org/automaxprocs v1.4.0
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/genproto v0.0.0-20220628213854-d9e0b6570c03
 	google.golang.org/grpc v1.47.0
