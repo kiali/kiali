@@ -1,11 +1,12 @@
 package tests
 
 import (
-	"github.com/kiali/kiali/tests/integration/utils/kiali"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kiali/kiali/tests/integration/utils/kiali"
 )
 
 func TestApplicationsList(t *testing.T) {

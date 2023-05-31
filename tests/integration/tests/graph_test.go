@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/kiali/kiali/tests/integration/utils/kiali"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestAppBase(t *testing.T) {
