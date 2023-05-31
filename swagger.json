@@ -1,17 +1,10 @@
 {
-  "consumes": [
-    "application/json"
-  ],
-  "produces": [
-    "application/json"
-  ],
-  "schemes": [
-    "http",
-    "https"
-  ],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "schemes": ["http", "https"],
   "swagger": "2.0",
   "info": {
-    "description": "Kiali project, observability for the Istio service mesh",
+    "description": "# Kiali Project, The Console for Istio Service Mesh\n\nNOTE! The Kiali API is not for public use and is not supported for any use outside of the Kiali UI itself.\nThe API can and will change from version to version with no guarantee of backwards compatibility.\n\nTo generate this API document:\n```\n\n\u003e alias swagger='docker run --rm -it  --user $(id -u):$(id -g) -e GOCACHE=/tmp -e GOPATH=$(go env GOPATH):/go -v $HOME:$HOME -w $(pwd) quay.io/goswagger/swagger'\n\u003e swagger generate spec -o ./swagger.json\n\u003e swagger generate markdown --quiet --spec ./swagger.json --output ./kiali_internal_api.md\n\n```",
     "title": "Kiali",
     "version": "_"
   },
@@ -20,16 +13,9 @@
     "/": {
       "get": {
         "description": "Endpoint to get the status of Kiali",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "kiali"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["kiali"],
         "operationId": "root",
         "responses": {
           "200": {
@@ -44,19 +30,10 @@
     "/auth/info": {
       "get": {
         "description": "Endpoint to get login info, such as strategy, authorization endpoints\nfor OAuth providers and so on.",
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "auth"
-        ],
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["auth"],
         "operationId": "authenticationInfo",
         "responses": {
           "200": {
@@ -71,19 +48,10 @@
     "/auth/openid_redirect": {
       "get": {
         "description": "Endpoint to redirect the browser of the user to the authentication\nendpoint of the configured OpenId provider.",
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/html"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "auth"
-        ],
+        "consumes": ["application/json"],
+        "produces": ["application/html"],
+        "schemes": ["http", "https"],
+        "tags": ["auth"],
         "operationId": "openidRedirect",
         "responses": {
           "200": {
@@ -99,23 +67,13 @@
       "get": {
         "security": [
           {
-            "authorization": [
-              "user",
-              "password"
-            ]
+            "authorization": ["user", "password"]
           }
         ],
         "description": "Endpoint to authenticate the user",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "auth"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["auth"],
         "operationId": "authenticate",
         "responses": {
           "200": {
@@ -128,16 +86,9 @@
       },
       "post": {
         "description": "Endpoint to check if a token from Openshift is working correctly",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "auth"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["auth"],
         "operationId": "openshiftCheckToken",
         "responses": {
           "200": {
@@ -152,16 +103,9 @@
     "/config": {
       "get": {
         "description": "Endpoint to get the config of Kiali",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "kiali"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["kiali"],
         "operationId": "getConfig",
         "responses": {
           "200": {
@@ -176,16 +120,9 @@
     "/grafana": {
       "get": {
         "description": "Get the grafana URL and other descriptors",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "integrations"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["integrations"],
         "operationId": "grafanaInfo",
         "responses": {
           "200": {
@@ -206,16 +143,9 @@
     "/healthz": {
       "get": {
         "description": "Endpoint to get the health of Kiali",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "kiali"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["kiali"],
         "operationId": "healthz",
         "responses": {
           "500": {
@@ -227,16 +157,9 @@
     "/istio": {
       "get": {
         "description": "Endpoint to get the list of Istio Config of all namespaces",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "config"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["config"],
         "operationId": "istioConfigListAll",
         "responses": {
           "200": {
@@ -251,16 +174,9 @@
     "/istio/certs": {
       "get": {
         "description": "Get certificates (internal) information used by Istio",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "certs"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["certs"],
         "operationId": "istioCerts",
         "responses": {
           "200": {
@@ -275,16 +191,9 @@
     "/istio/permissions": {
       "get": {
         "description": "Endpoint to get the caller permissions on new Istio Config objects",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "config"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["config"],
         "operationId": "getPermissions",
         "responses": {
           "200": {
@@ -299,16 +208,9 @@
     "/istio/status": {
       "get": {
         "description": "Get the status of each components needed in the control plane",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "status"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["status"],
         "operationId": "istioStatus",
         "responses": {
           "200": {
@@ -326,16 +228,9 @@
     "/jaeger": {
       "get": {
         "description": "Get the jaeger URL and other descriptors",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "integrations"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["integrations"],
         "operationId": "jaegerInfo",
         "responses": {
           "200": {
@@ -353,13 +248,8 @@
     "/logout": {
       "get": {
         "description": "Endpoint to logout an user (unset the session cookie)",
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "auth"
-        ],
+        "schemes": ["http", "https"],
+        "tags": ["auth"],
         "operationId": "logout",
         "responses": {
           "204": {
@@ -371,16 +261,9 @@
     "/mesh/tls": {
       "get": {
         "description": "Get TLS status for the whole mesh",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "tls"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["tls"],
         "operationId": "meshTls",
         "responses": {
           "200": {
@@ -398,16 +281,9 @@
     "/namespaces": {
       "get": {
         "description": "Endpoint to get the list of the available namespaces",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "namespaces"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["namespaces"],
         "operationId": "namespaceList",
         "responses": {
           "200": {
@@ -421,16 +297,9 @@
     },
     "/namespaces/graph": {
       "get": {
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "graphs"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["graphs"],
         "summary": "The backing JSON for a namespaces graph.",
         "operationId": "graphNamespaces",
         "parameters": [
@@ -553,19 +422,10 @@
     },
     "/namespaces/{namespace}": {
       "patch": {
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "namespaces"
-        ],
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["namespaces"],
         "summary": "Endpoint to update the Namespace configuration using Json Merge Patch strategy.",
         "operationId": "namespaceUpdate",
         "parameters": [
@@ -597,16 +457,9 @@
     "/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/graph": {
       "get": {
         "description": "The backing JSON for an aggregate node detail graph. (supported graphTypes: app | versionedApp | workload)",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "graphs"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["graphs"],
         "operationId": "graphAggregate",
         "parameters": [
           {
@@ -657,16 +510,9 @@
     "/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/metrics": {
       "get": {
         "description": "Endpoint to fetch metrics to be displayed, related to a single aggregate",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "aggregates"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["aggregates"],
         "operationId": "aggregateMetrics",
         "parameters": [
           {
@@ -816,16 +662,9 @@
     "/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/{service}/graph": {
       "get": {
         "description": "The backing JSON for an aggregate node detail graph, specific to a service. (supported graphTypes: app | versionedApp | workload)",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "graphs"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["graphs"],
         "operationId": "graphAggregateByService",
         "parameters": [
           {
@@ -884,16 +723,9 @@
     "/namespaces/{namespace}/applications/{app}/graph": {
       "get": {
         "description": "The backing JSON for an app node detail graph. (supported graphTypes: app | versionedApp)",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "graphs"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["graphs"],
         "operationId": "graphApp",
         "parameters": [
           {
@@ -1031,16 +863,9 @@
     "/namespaces/{namespace}/applications/{app}/versions/{version}/graph": {
       "get": {
         "description": "The backing JSON for a versioned app node detail graph. (supported graphTypes: app | versionedApp)",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "graphs"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["graphs"],
         "operationId": "graphAppVersion",
         "parameters": [
           {
@@ -1186,16 +1011,9 @@
     "/namespaces/{namespace}/apps": {
       "get": {
         "description": "Endpoint to get the list of apps for a namespace",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "apps"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["apps"],
         "operationId": "appList",
         "parameters": [
           {
@@ -1248,16 +1066,9 @@
     "/namespaces/{namespace}/apps/{app}": {
       "get": {
         "description": "Endpoint to get the app details",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "apps"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["apps"],
         "operationId": "appDetails",
         "parameters": [
           {
@@ -1293,16 +1104,9 @@
     "/namespaces/{namespace}/apps/{app}/dashboard": {
       "get": {
         "description": "Endpoint to fetch dashboard to be displayed, related to a single app",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "apps"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["apps"],
         "operationId": "appDashboard",
         "parameters": [
           {
@@ -1426,16 +1230,9 @@
     "/namespaces/{namespace}/apps/{app}/errortraces": {
       "get": {
         "description": "Endpoint to get the number of traces in error for a given service",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "traces"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["traces"],
         "operationId": "errorTraces",
         "parameters": [
           {
@@ -1471,16 +1268,9 @@
     "/namespaces/{namespace}/apps/{app}/metrics": {
       "get": {
         "description": "Endpoint to fetch metrics to be displayed, related to a single app",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "apps"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["apps"],
         "operationId": "appMetrics",
         "parameters": [
           {
@@ -1622,16 +1412,9 @@
     "/namespaces/{namespace}/apps/{app}/spans": {
       "get": {
         "description": "Endpoint to get Jaeger spans for a given app",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "traces"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["traces"],
         "operationId": "appSpans",
         "parameters": [
           {
@@ -1664,16 +1447,9 @@
     "/namespaces/{namespace}/apps/{app}/traces": {
       "get": {
         "description": "Endpoint to get the traces of a given app",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "traces"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["traces"],
         "operationId": "appTraces",
         "parameters": [
           {
@@ -1709,16 +1485,9 @@
     "/namespaces/{namespace}/customdashboard/{dashboard}": {
       "get": {
         "description": "Endpoint to fetch a custom dashboard",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "dashboards"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["dashboards"],
         "operationId": "customDashboard",
         "parameters": [
           {
@@ -1832,16 +1601,9 @@
     "/namespaces/{namespace}/health": {
       "get": {
         "description": "Get health for all objects in the given namespace",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "namespaces"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["namespaces"],
         "operationId": "namespaceHealth",
         "parameters": [
           {
@@ -1893,16 +1655,9 @@
     "/namespaces/{namespace}/istio": {
       "get": {
         "description": "Endpoint to get the list of Istio Config of a namespace",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "config"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["config"],
         "operationId": "istioConfigList",
         "parameters": [
           {
@@ -1934,16 +1689,9 @@
     "/namespaces/{namespace}/istio/{object_type}": {
       "post": {
         "description": "Endpoint to create an Istio object by using an Istio Config item",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "config"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["config"],
         "operationId": "istioConfigCreate",
         "parameters": [
           {
@@ -1983,16 +1731,9 @@
     "/namespaces/{namespace}/istio/{object_type}/{object}": {
       "get": {
         "description": "Endpoint to get the Istio Config of an Istio object",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "config"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["config"],
         "operationId": "istioConfigDetails",
         "parameters": [
           {
@@ -2045,16 +1786,9 @@
       },
       "delete": {
         "description": "Endpoint to delete the Istio Config of an (arbitrary) Istio object",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "config"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["config"],
         "operationId": "istioConfigDelete",
         "parameters": [
           {
@@ -2093,19 +1827,10 @@
         }
       },
       "patch": {
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "config"
-        ],
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["config"],
         "summary": "Endpoint to update the Istio Config of an Istio object used for templates and adapters using Json Merge Patch strategy.",
         "operationId": "istioConfigUpdate",
         "parameters": [
@@ -2154,16 +1879,9 @@
     "/namespaces/{namespace}/metrics": {
       "get": {
         "description": "Endpoint to fetch metrics to be displayed, related to a namespace",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "namespaces"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["namespaces"],
         "operationId": "namespaceMetrics",
         "parameters": [
           {
@@ -2191,16 +1909,9 @@
     "/namespaces/{namespace}/pods/{pod}": {
       "get": {
         "description": "Endpoint to get pod details",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "pods"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["pods"],
         "operationId": "podDetails",
         "parameters": [
           {
@@ -2236,16 +1947,9 @@
     "/namespaces/{namespace}/pods/{pod}/config_dump": {
       "get": {
         "description": "Endpoint to get pod proxy dump",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "pods"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["pods"],
         "operationId": "podProxyDump",
         "parameters": [
           {
@@ -2281,16 +1985,9 @@
     "/namespaces/{namespace}/pods/{pod}/config_dump/{resource}": {
       "get": {
         "description": "Endpoint to get pod logs",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "pods"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["pods"],
         "operationId": "podProxyResource",
         "parameters": [
           {
@@ -2334,16 +2031,9 @@
     "/namespaces/{namespace}/pods/{pod}/logging": {
       "post": {
         "description": "Endpoint to set pod proxy log level",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "pods"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["pods"],
         "operationId": "podProxyLogging",
         "parameters": [
           {
@@ -2399,16 +2089,9 @@
     "/namespaces/{namespace}/pods/{pod}/logs": {
       "get": {
         "description": "Endpoint to get pod logs",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "pods"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["pods"],
         "operationId": "podLogs",
         "parameters": [
           {
@@ -2465,16 +2148,9 @@
     "/namespaces/{namespace}/services": {
       "get": {
         "description": "Endpoint to get the details of a given service",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "services"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["services"],
         "operationId": "serviceList",
         "parameters": [
           {
@@ -2521,16 +2197,9 @@
     "/namespaces/{namespace}/services/{service}": {
       "get": {
         "description": "Endpoint to get the details of a given service",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "services"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["services"],
         "operationId": "serviceDetails",
         "parameters": [
           {
@@ -2570,19 +2239,10 @@
         }
       },
       "patch": {
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "services"
-        ],
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["services"],
         "summary": "Endpoint to update the Service configuration using Json Merge Patch strategy.",
         "operationId": "serviceUpdate",
         "parameters": [
@@ -2629,16 +2289,9 @@
     "/namespaces/{namespace}/services/{service}/dashboard": {
       "get": {
         "description": "Endpoint to fetch dashboard to be displayed, related to a single service",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "services"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["services"],
         "operationId": "serviceDashboard",
         "parameters": [
           {
@@ -2761,16 +2414,9 @@
     },
     "/namespaces/{namespace}/services/{service}/graph": {
       "get": {
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "graphs"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["graphs"],
         "summary": "The backing JSON for a service node detail graph.",
         "operationId": "graphService",
         "parameters": [
@@ -2893,16 +2539,9 @@
     "/namespaces/{namespace}/services/{service}/metrics": {
       "get": {
         "description": "Endpoint to fetch metrics to be displayed, related to a single service",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "services"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["services"],
         "operationId": "serviceMetrics",
         "parameters": [
           {
@@ -3044,16 +2683,9 @@
     "/namespaces/{namespace}/services/{service}/spans": {
       "get": {
         "description": "Endpoint to get Jaeger spans for a given service",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "traces"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["traces"],
         "operationId": "serviceSpans",
         "parameters": [
           {
@@ -3086,16 +2718,9 @@
     "/namespaces/{namespace}/services/{service}/traces": {
       "get": {
         "description": "Endpoint to get the traces of a given service",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "traces"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["traces"],
         "operationId": "serviceTraces",
         "parameters": [
           {
@@ -3131,16 +2756,9 @@
     "/namespaces/{namespace}/tls": {
       "get": {
         "description": "Get TLS status for the given namespace",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "tls"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["tls"],
         "operationId": "namespaceTls",
         "parameters": [
           {
@@ -3168,16 +2786,9 @@
     "/namespaces/{namespace}/validations": {
       "get": {
         "description": "Get validation summary for all objects in the given namespace",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "namespaces"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["namespaces"],
         "operationId": "namespaceValidations",
         "parameters": [
           {
@@ -3205,16 +2816,9 @@
     "/namespaces/{namespace}/workloads": {
       "get": {
         "description": "Endpoint to get the list of workloads for a namespace",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "workloads"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["workloads"],
         "operationId": "workloadList",
         "parameters": [
           {
@@ -3239,16 +2843,9 @@
     "/namespaces/{namespace}/workloads/{workload}": {
       "get": {
         "description": "Endpoint to get the workload details",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "workloads"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["workloads"],
         "operationId": "workloadDetails",
         "parameters": [
           {
@@ -3281,19 +2878,10 @@
         }
       },
       "patch": {
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "workloads"
-        ],
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["workloads"],
         "summary": "Endpoint to update the Workload configuration using Json Merge Patch strategy.",
         "operationId": "workloadUpdate",
         "parameters": [
@@ -3333,16 +2921,9 @@
     "/namespaces/{namespace}/workloads/{workload}/dashboard": {
       "get": {
         "description": "Endpoint to fetch dashboard to be displayed, related to a single workload",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "workloads"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["workloads"],
         "operationId": "workloadDashboard",
         "parameters": [
           {
@@ -3465,16 +3046,9 @@
     },
     "/namespaces/{namespace}/workloads/{workload}/graph": {
       "get": {
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "graphs"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["graphs"],
         "summary": "The backing JSON for a workload node detail graph.",
         "operationId": "graphWorkload",
         "parameters": [
@@ -3613,16 +3187,9 @@
     "/namespaces/{namespace}/workloads/{workload}/metrics": {
       "get": {
         "description": "Endpoint to fetch metrics to be displayed, related to a single workload",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "workloads"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["workloads"],
         "operationId": "workloadMetrics",
         "parameters": [
           {
@@ -3764,16 +3331,9 @@
     "/namespaces/{namespace}/workloads/{workload}/spans": {
       "get": {
         "description": "Endpoint to get Jaeger spans for a given workload",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "traces"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["traces"],
         "operationId": "workloadSpans",
         "parameters": [
           {
@@ -3806,16 +3366,9 @@
     "/namespaces/{namespace}/workloads/{workload}/traces": {
       "get": {
         "description": "Endpoint to get the traces of a given workload",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "traces"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["traces"],
         "operationId": "workloadTraces",
         "parameters": [
           {
@@ -3851,16 +3404,9 @@
     "/stats/metrics": {
       "post": {
         "description": "Produces metrics statistics",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "stats"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["stats"],
         "operationId": "metricsStats",
         "parameters": [
           {
@@ -3890,16 +3436,9 @@
     "/status": {
       "get": {
         "description": "Endpoint to get the status of Kiali",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "status"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["status"],
         "operationId": "getStatus",
         "responses": {
           "200": {
@@ -3914,16 +3453,9 @@
     "/traces/{traceID}": {
       "get": {
         "description": "Endpoint to get a specific trace from ID",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "traces"
-        ],
+        "produces": ["application/json"],
+        "schemes": ["http", "https"],
+        "tags": ["traces"],
         "operationId": "traceDetails",
         "parameters": [
           {
@@ -4061,12 +3593,7 @@
     },
     "App": {
       "type": "object",
-      "required": [
-        "namespace",
-        "name",
-        "workloads",
-        "serviceNames"
-      ],
+      "required": ["namespace", "name", "workloads", "serviceNames"],
       "properties": {
         "health": {
           "$ref": "#/definitions/AppHealth"
@@ -4126,10 +3653,7 @@
     },
     "AppList": {
       "type": "object",
-      "required": [
-        "namespace",
-        "applications"
-      ],
+      "required": ["namespace", "applications"],
       "properties": {
         "applications": {
           "description": "Applications for a given namespace",
@@ -4148,10 +3672,7 @@
     "AppListItem": {
       "description": "AppListItem has the necessary information to display the console app list",
       "type": "object",
-      "required": [
-        "name",
-        "istioSidecar"
-      ],
+      "required": ["name", "istioSidecar"],
       "properties": {
         "health": {
           "$ref": "#/definitions/AppHealth"
@@ -4451,11 +3972,7 @@
     },
     "ComponentStatus": {
       "type": "object",
-      "required": [
-        "name",
-        "status",
-        "is_core"
-      ],
+      "required": ["name", "status", "is_core"],
       "properties": {
         "is_core": {
           "description": "When true, the component is necessary for Istio to function. Otherwise, it is an addon",
@@ -5125,11 +4642,7 @@
     "IstioCheck": {
       "type": "object",
       "title": "IstioCheck represents an individual check.",
-      "required": [
-        "code",
-        "message",
-        "severity"
-      ],
+      "required": ["code", "message", "severity"],
       "properties": {
         "code": {
           "description": "The check code used to identify a check",
@@ -5272,12 +4785,9 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "IstioConfigList": {
-      "description": "This type is used for returning a response of IstioConfigList",
+      "description": "IstioConfigList istioConfigList\nThis type is used for returning a response of IstioConfigList",
       "type": "object",
-      "title": "IstioConfigList istioConfigList",
-      "required": [
-        "namespace"
-      ],
+      "required": ["namespace"],
       "properties": {
         "authorizationPolicies": {
           "type": "array",
@@ -5376,9 +4886,7 @@
     "IstioEnvironment": {
       "description": "IstioEnvironment describes the Istio implementation environment",
       "type": "object",
-      "required": [
-        "isMaistra"
-      ],
+      "required": ["isMaistra"],
       "properties": {
         "isMaistra": {
           "description": "If true, the Istio implementation is a variant of Maistra.",
@@ -5469,11 +4977,7 @@
     "IstioValidation": {
       "type": "object",
       "title": "IstioValidation represents a list of checks associated to an Istio object.",
-      "required": [
-        "name",
-        "objectType",
-        "valid"
-      ],
+      "required": ["name", "objectType", "valid"],
       "properties": {
         "checks": {
           "description": "Array of checks. It might be empty.",
@@ -5534,11 +5038,7 @@
     "IstioValidationSummary": {
       "type": "object",
       "title": "IstioValidationSummary represents the number of errors/warnings of a set of Istio Validations.",
-      "required": [
-        "errors",
-        "objectCount",
-        "warnings"
-      ],
+      "required": ["errors", "objectCount", "warnings"],
       "properties": {
         "errors": {
           "description": "Number of validations with error severity",
@@ -5740,9 +5240,7 @@
     "MTLSStatus": {
       "description": "MTLSStatus describes the current mTLS status of a mesh entity",
       "type": "object",
-      "required": [
-        "status"
-      ],
+      "required": ["status"],
       "properties": {
         "status": {
           "description": "mTLS status: MTLS_ENABLED, MTLS_PARTIALLY_ENABLED, MTLS_NOT_ENABLED",
@@ -7044,11 +6542,7 @@
     },
     "ServiceOverview": {
       "type": "object",
-      "required": [
-        "name",
-        "istioSidecar",
-        "appLabel"
-      ],
+      "required": ["name", "istioSidecar", "appLabel"],
       "properties": {
         "additionalDetailSample": {
           "$ref": "#/definitions/AdditionalItem"
@@ -7349,14 +6843,9 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "StatusInfo": {
-      "description": "This is used for returning a response of Kiali Status",
+      "description": "StatusInfo statusInfo\nThis is used for returning a response of Kiali Status",
       "type": "object",
-      "title": "StatusInfo statusInfo",
-      "required": [
-        "status",
-        "externalServices",
-        "istioEnvironment"
-      ],
+      "required": ["status", "externalServices", "istioEnvironment"],
       "properties": {
         "externalServices": {
           "description": "An array of external services installed",
@@ -7431,14 +6920,10 @@
       "x-go-package": "github.com/gogo/protobuf/types"
     },
     "TokenResponse": {
-      "description": "This is used for returning the token",
+      "description": "# This is used for returning the token",
       "type": "object",
       "title": "TokenResponse tokenResponse",
-      "required": [
-        "username",
-        "token",
-        "expiresOn"
-      ],
+      "required": ["username", "token", "expiresOn"],
       "properties": {
         "expiresOn": {
           "description": "The expired time for the token\nA string with the Datetime when the token will be expired",
@@ -7640,9 +7125,7 @@
     "WEInfo": {
       "description": "WEInfo provides static information about a workload entry\nassociated with a workload node.",
       "type": "object",
-      "required": [
-        "name"
-      ],
+      "required": ["name"],
       "properties": {
         "name": {
           "description": "Name of the workload entry object",
@@ -8068,11 +7551,7 @@
     },
     "WorkloadItem": {
       "type": "object",
-      "required": [
-        "workloadName",
-        "istioSidecar",
-        "serviceAccountNames"
-      ],
+      "required": ["workloadName", "istioSidecar", "serviceAccountNames"],
       "properties": {
         "istioSidecar": {
           "description": "Define if all Pods related to the Workload has an IstioSidecar deployed",
@@ -8099,10 +7578,7 @@
     },
     "WorkloadList": {
       "type": "object",
-      "required": [
-        "namespace",
-        "workloads"
-      ],
+      "required": ["namespace", "workloads"],
       "properties": {
         "namespace": {
           "$ref": "#/definitions/namespace"
@@ -8261,8 +7737,9 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "WorkloadStatus": {
-      "description": "WorkloadStatus gives\nnumber of desired replicas defined in the Spec of a controller\nnumber of current replicas that matches selector of a controller\nnumber of available replicas for a given workload\nIn healthy scenarios all variables should point same value.\nWhen something wrong happens the different values can indicate an unhealthy situation.\ni.e.\ndesired = 1, current = 10, available = 0 would means that a user scaled down a workload from 10 to 1\nbut in the operaton 10 pods showed problems, so no pod is available/ready but user will see 10 pods under a workload",
+      "description": "desired = 1, current = 10, available = 0 would means that a user scaled down a workload from 10 to 1\nbut in the operaton 10 pods showed problems, so no pod is available/ready but user will see 10 pods under a workload",
       "type": "object",
+      "title": "WorkloadStatus gives\nnumber of desired replicas defined in the Spec of a controller\nnumber of current replicas that matches selector of a controller\nnumber of available replicas for a given workload\nIn healthy scenarios all variables should point same value.\nWhen something wrong happens the different values can indicate an unhealthy situation.\ni.e.",
       "properties": {
         "availableReplicas": {
           "type": "integer",
@@ -8292,12 +7769,9 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "externalServiceInfo": {
-      "description": "This is used for returning a response of Kiali Status",
+      "description": "Status response model\nThis is used for returning a response of Kiali Status",
       "type": "object",
-      "title": "Status response model",
-      "required": [
-        "name"
-      ],
+      "required": ["name"],
       "properties": {
         "name": {
           "description": "The name of the service",
@@ -8324,9 +7798,7 @@
     "namespace": {
       "description": "A Namespace provide a scope for names\nThis type is used to describe a set of objects.",
       "type": "object",
-      "required": [
-        "name"
-      ],
+      "required": ["name"],
       "properties": {
         "annotations": {
           "description": "Specific annotations used in Kiali",
@@ -8360,12 +7832,6 @@
       "description": "Detailed information of an specific app",
       "schema": {
         "$ref": "#/definitions/App"
-      }
-    },
-    "appHealthResponse": {
-      "description": "appHealthResponse contains aggregated health from various sources, for a given app",
-      "schema": {
-        "$ref": "#/definitions/AppHealth"
       }
     },
     "appListResponse": {
@@ -8623,12 +8089,6 @@
         "$ref": "#/definitions/ServiceDetails"
       }
     },
-    "serviceHealthResponse": {
-      "description": "serviceHealthResponse contains aggregated health from various sources, for a given service",
-      "schema": {
-        "$ref": "#/definitions/ServiceHealth"
-      }
-    },
     "serviceListResponse": {
       "description": "Listing all services in the namespace",
       "schema": {
@@ -8689,12 +8149,6 @@
       "description": "Listing all the information related to a workload",
       "schema": {
         "$ref": "#/definitions/Workload"
-      }
-    },
-    "workloadHealthResponse": {
-      "description": "workloadHealthResponse contains aggregated health from various sources, for a given workload",
-      "schema": {
-        "$ref": "#/definitions/WorkloadHealth"
       }
     },
     "workloadListResponse": {
