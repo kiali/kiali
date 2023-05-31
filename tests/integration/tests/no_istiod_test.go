@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 
 	k8s "github.com/kiali/kiali/kubernetes"
