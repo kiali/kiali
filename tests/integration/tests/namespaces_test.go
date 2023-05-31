@@ -1,12 +1,12 @@
 package tests
 
 import (
-	"github.com/kiali/kiali/tests/integration/utils/kiali"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/tests/integration/utils/kiali"
 )
 
 func TestNamespaces(t *testing.T) {

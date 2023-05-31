@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"github.com/kiali/kiali/tests/integration/utils/kiali"
 	"testing"
 	"time"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/tests/integration/utils/kiali"
 )
 
 var METRICS_PARAMS = map[string]string{"direction": "outbound", "reporter": "destination"}

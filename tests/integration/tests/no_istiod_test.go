@@ -2,16 +2,15 @@ package tests
 
 import (
 	"context"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/client-go/kubernetes"
+
 	"github.com/kiali/kiali/tests/integration/utils/kiali"
-"github.com/kiali/kiali/tests/integration/utils/kube"
-"testing"
-
-
-"github.com/stretchr/testify/assert"
-"github.com/stretchr/testify/require"
-kubeerrors "k8s.io/apimachinery/pkg/api/errors"
-"k8s.io/client-go/kubernetes"
-
+	"github.com/kiali/kiali/tests/integration/utils/kube"
 	k8s "github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/tests/integration/utils"
 )

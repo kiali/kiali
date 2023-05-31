@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"github.com/kiali/kiali/tests/integration/utils/kiali"
 	"path"
 	"testing"
 	"time"
@@ -14,6 +13,7 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/integration/utils"
+	"github.com/kiali/kiali/tests/integration/utils/kiali"
 	"github.com/kiali/kiali/tools/cmd"
 )
 

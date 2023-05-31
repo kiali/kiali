@@ -2,12 +2,12 @@ package tests
 
 import (
 	"fmt"
-	"github.com/kiali/kiali/tests/integration/utils/kiali"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/tests/integration/utils/kiali"
 )
 
 func TestLogsContainerIstioProxy(t *testing.T) {

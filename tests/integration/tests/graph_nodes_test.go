@@ -1,12 +1,12 @@
 package tests
 
 import (
-	"github.com/kiali/kiali/tests/integration/utils/kiali"
 	"testing"
 	"time"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	"github.com/kiali/kiali/tests/integration/utils/kiali"
 	"github.com/stretchr/testify/assert"
 )
 

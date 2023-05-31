@@ -2,8 +2,6 @@ package tests
 
 import (
 	"context"
-	"github.com/kiali/kiali/tests/integration/utils/kiali"
-	"github.com/kiali/kiali/tests/integration/utils/kube"
 	"path"
 	"strings"
 	"testing"
@@ -22,6 +20,8 @@ import (
 	kialiKube "github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/tests/integration/utils"
+	"github.com/kiali/kiali/tests/integration/utils/kiali"
+	"github.com/kiali/kiali/tests/integration/utils/kube"
 	"github.com/kiali/kiali/tools/cmd"
 )
 
