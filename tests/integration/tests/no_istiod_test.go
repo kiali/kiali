@@ -2,7 +2,8 @@ package tests
 
 import (
 	"context"
-	"strconv"
+	"fmt"
+"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,7 +27,7 @@ func update_istio_api_enabled(ctx context.Context, t *testing.T, value bool, kub
 	kialiPodName := kube.GetKialiPodName(ctx, kubeClientSet, kialiNamespace, t)
 
 	if kialiCRDExists {
-		registryPatch := []byte(`{"spec": {"external_services": {"istio": {"istio_api_enabled": `+ strconv.FormatBool(value) +`}}}}`)
+		registryPatch := []byte(fmt.Sprintf(`{"spec": {"external_services": {"istio": {"istio_api_enabled": %t}}}}`, value))
 		kube.UpdateKialiCR(ctx, dynamicClient, kubeClientSet, kialiNamespace, "istio_api_enabled", registryPatch, t)
 	} else {
 		config, cm := kube.GetKialiConfigMap(ctx, kubeClientSet, kialiNamespace, "kiali", t)
