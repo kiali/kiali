@@ -7,9 +7,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/dynamic"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 
 	k8s "github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/tests/integration/utils"
@@ -33,7 +33,7 @@ func update_istio_api_enabled(ctx context.Context, t *testing.T, value bool, kub
 		config.ExternalServices.Istio.IstioAPIEnabled = value
 		kube.UpdateKialiConfigMap(ctx, kubeClientSet, kialiNamespace, config, cm, t)
 	}
-	
+
 	// Restart Kiali pod to pick up the new config.
 	if !kialiCRDExists {
 		require.NoError(kube.DeleteKialiPod(ctx, kubeClientSet, kialiNamespace, kialiPodName))
