@@ -63,12 +63,11 @@ func DeleteKialiPod(ctx context.Context, kubeClient kubernetes.Interface, namesp
 	return nil
 }
 
-// Deletes the existing kiali Pod and waits for the new one to be ready.
+// Waits for old kiali pod to terminate and for the new one to be ready
 func RestartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, namespace string, currentKialiPod string) error {
-	log.Debugf("Restarting kiali pod %s %s", namespace, currentKialiPod)
 
 	return wait.PollImmediate(time.Second*5, time.Minute*4, func() (bool, error) {
-		log.Debugf("Waiting for kiali to be ready")
+		log.Debugf("Waiting for kiali pod %s in %s namespace to be ready", currentKialiPod, namespace)
 		pods, err := kubeClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
 		if err != nil {
 			log.Errorf("Error getting the pods list %s", err)
