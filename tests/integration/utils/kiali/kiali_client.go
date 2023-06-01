@@ -1,4 +1,4 @@
-package utils
+package kiali
 
 import (
 	"encoding/json"
@@ -322,6 +322,7 @@ func ServiceDetails(name, namespace string) (*ServiceDetailsJson, int, error) {
 
 func Traces(objectType, name, namespace string) (*jaeger.JaegerResponse, int, error) {
 	body, code, _, err := httputil.HttpGet(fmt.Sprintf("%s/api/namespaces/%s/%s/%s/traces?startMicros=%d&tags=&limit=100", client.kialiURL, namespace, objectType, name, TimeSince()), client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	log.Debugf("Traces response: %s", body)
 	if err == nil {
 		traces := new(jaeger.JaegerResponse)
 		err = json.Unmarshal(body, &traces)

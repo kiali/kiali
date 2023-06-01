@@ -7,34 +7,34 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/jaeger"
-	"github.com/kiali/kiali/tests/integration/utils"
+	"github.com/kiali/kiali/tests/integration/utils/kiali"
 )
 
 func TestServiceTraces(t *testing.T) {
 	assert := assert.New(t)
 	name := "details"
-	traces, statusCode, err := utils.Traces("services", name, utils.BOOKINFO)
+	traces, statusCode, err := kiali.Traces("services", name, kiali.BOOKINFO)
 	assertTraces(traces, statusCode, err, assert)
 }
 
 func TestWorkloadTraces(t *testing.T) {
 	assert := assert.New(t)
 	name := "details-v1"
-	traces, statusCode, err := utils.Traces("workloads", name, utils.BOOKINFO)
+	traces, statusCode, err := kiali.Traces("workloads", name, kiali.BOOKINFO)
 	assertTraces(traces, statusCode, err, assert)
 }
 
 func TestAppTraces(t *testing.T) {
 	assert := assert.New(t)
 	name := "details"
-	traces, statusCode, err := utils.Traces("apps", name, utils.BOOKINFO)
+	traces, statusCode, err := kiali.Traces("apps", name, kiali.BOOKINFO)
 	assertTraces(traces, statusCode, err, assert)
 }
 
 func TestWrongTracesType(t *testing.T) {
 	assert := assert.New(t)
 	name := "details"
-	traces, statusCode, err := utils.Traces("wrong", name, utils.BOOKINFO)
+	traces, statusCode, err := kiali.Traces("wrong", name, kiali.BOOKINFO)
 	assert.NotEqual(200, statusCode)
 	assert.NotNil(err)
 	assert.Empty(traces)
@@ -43,7 +43,7 @@ func TestWrongTracesType(t *testing.T) {
 func TestWrongNamespaceTraces(t *testing.T) {
 	assert := assert.New(t)
 	name := "details"
-	traces, _, _ := utils.Traces("apps", name, "wrong")
+	traces, _, _ := kiali.Traces("apps", name, "wrong")
 	assert.Empty(traces.Data)
 	assert.Empty(traces.Errors)
 }
@@ -51,28 +51,28 @@ func TestWrongNamespaceTraces(t *testing.T) {
 func TestServiceSpans(t *testing.T) {
 	assert := assert.New(t)
 	name := "details"
-	spans, statusCode, err := utils.Spans("services", name, utils.BOOKINFO)
+	spans, statusCode, err := kiali.Spans("services", name, kiali.BOOKINFO)
 	assertSpans(spans, statusCode, err, assert)
 }
 
 func TestAppSpans(t *testing.T) {
 	assert := assert.New(t)
 	name := "details"
-	spans, statusCode, err := utils.Spans("apps", name, utils.BOOKINFO)
+	spans, statusCode, err := kiali.Spans("apps", name, kiali.BOOKINFO)
 	assertSpans(spans, statusCode, err, assert)
 }
 
 func TestWorkloadSpans(t *testing.T) {
 	assert := assert.New(t)
 	name := "details-v1"
-	spans, statusCode, err := utils.Spans("workloads", name, utils.BOOKINFO)
+	spans, statusCode, err := kiali.Spans("workloads", name, kiali.BOOKINFO)
 	assertSpans(spans, statusCode, err, assert)
 }
 
 func TestWrongTypeSpans(t *testing.T) {
 	assert := assert.New(t)
 	name := "details-v1"
-	spans, statusCode, err := utils.Spans("wrong", name, utils.BOOKINFO)
+	spans, statusCode, err := kiali.Spans("wrong", name, kiali.BOOKINFO)
 	assert.NotEqual(200, statusCode)
 	assert.NotNil(err)
 	assert.Empty(spans)
@@ -81,7 +81,7 @@ func TestWrongTypeSpans(t *testing.T) {
 func TestWrongNamespaceSpans(t *testing.T) {
 	assert := assert.New(t)
 	name := "details-v1"
-	spans, _, _ := utils.Spans("apps", name, "wrong")
+	spans, _, _ := kiali.Spans("apps", name, "wrong")
 	assert.Empty(spans)
 }
 

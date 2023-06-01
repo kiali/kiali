@@ -2,63 +2,60 @@ package tests
 
 import (
 	"context"
-	"os/exec"
-	"strconv"
-	"strings"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 
 	k8s "github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/tests/integration/utils"
+	"github.com/kiali/kiali/tests/integration/utils/kiali"
+	"github.com/kiali/kiali/tests/integration/utils/kube"
 )
 
 const kialiNamespace = "istio-system"
 
-var ocCommand = utils.NewExecCommand()
+func update_istio_api_enabled(ctx context.Context, t *testing.T, value bool, kubeClientSet kubernetes.Interface, dynamicClient dynamic.Interface, kialiCRDExists bool) {
 
-func update_istio_api_enabled(t *testing.T, value bool, kubeClientSet kubernetes.Interface, ctx context.Context) {
-	original := !value
 	require := require.New(t)
 
-	// Restart kiali pod
-	// Get kiali pod name
-	cmdGetPodName := ocCommand + " get pods -o name -n " + kialiNamespace + " | egrep kiali | sed 's|pod/||'"
-	kialiPodName, err2 := exec.Command("bash", "-c", cmdGetPodName).Output()
-	require.NoError(err2)
+	kialiPodName := kube.GetKialiPodName(ctx, kubeClientSet, kialiNamespace, t)
 
-	podName := strings.Replace(string(kialiPodName), "\n", "", -1)
-	log.Debugf("Kiali pod name: %s", podName)
-
-	cmdGetProp := ocCommand + " get cm kiali -n " + kialiNamespace + " -o yaml | grep 'istio_api_enabled'"
-	getPropOutput, _ := exec.Command("bash", "-c", cmdGetProp).Output()
-
-	if len(string(getPropOutput)) == 0 {
-		// Is the property is not there, we should add it, instead of replacing
-		cmdReplacecm3 := ocCommand + " get cm kiali -n istio-system -o yaml | sed -e 's|root_namespace: istio-system|root_namespace: istio-system'\r'        istio_api_enabled: " + strconv.FormatBool(value) + "|' | " + ocCommand + " apply -f -"
-		_, err := exec.Command("bash", "-c", cmdReplacecm3).Output()
-		require.NoError(err)
-
+	if kialiCRDExists {
+		registryPatch := []byte(fmt.Sprintf(`{"spec": {"external_services": {"istio": {"istio_api_enabled": %t}}}}`, value))
+		kube.UpdateKialiCR(ctx, dynamicClient, kubeClientSet, kialiNamespace, "istio_api_enabled", registryPatch, t)
 	} else {
-		cmdReplacecm := ocCommand + " get cm kiali -n " + kialiNamespace + " -o yaml | sed -e 's|istio_api_enabled: " + strconv.FormatBool(original) + "|istio_api_enabled: " + strconv.FormatBool(value) + "|' | " + ocCommand + " apply -f -"
-		_, err := exec.Command("bash", "-c", cmdReplacecm).Output()
-		require.NoError(err)
+		config, cm := kube.GetKialiConfigMap(ctx, kubeClientSet, kialiNamespace, "kiali", t)
+		config.ExternalServices.Istio.IstioAPIEnabled = value
+		kube.UpdateKialiConfigMap(ctx, kubeClientSet, kialiNamespace, config, cm, t)
 	}
 
 	// Restart Kiali pod to pick up the new config.
-	require.NoError(restartKialiPod(ctx, kubeClientSet, kialiNamespace, false, podName))
+	if !kialiCRDExists {
+		require.NoError(kube.DeleteKialiPod(ctx, kubeClientSet, kialiNamespace, kialiPodName))
+	}
+	require.NoError(kube.DeleteKialiPod(ctx, kubeClientSet, kialiNamespace, kialiPodName))
+	require.NoError(kube.RestartKialiPod(ctx, kubeClientSet, kialiNamespace, kialiPodName))
 
 }
 
 func TestNoIstiod(t *testing.T) {
-	kubeClientSet := kubeClient(t)
+	kubeClientSet := kube.NewKubeClient(t)
+	dynamicClient := kube.NewDynamicClient(t)
 	ctx := context.TODO()
 
-	defer update_istio_api_enabled(t, true, kubeClientSet, ctx)
-	update_istio_api_enabled(t, false, kubeClientSet, ctx)
+	kialiCRDExists := false
+	_, err := kubeClientSet.Discovery().RESTClient().Get().AbsPath("/apis/kiali.io").DoRaw(ctx)
+	if !kubeerrors.IsNotFound(err) {
+		kialiCRDExists = true
+	}
+
+	defer update_istio_api_enabled(ctx, t, true, kubeClientSet, dynamicClient, kialiCRDExists)
+	update_istio_api_enabled(ctx, t, false, kubeClientSet, dynamicClient, kialiCRDExists)
 	t.Run("ServicesListNoRegistryServices", servicesListNoRegistryServices)
 	t.Run("NoProxyStatus", noProxyStatus)
 	t.Run("istioStatus", istioStatus)
@@ -67,7 +64,7 @@ func TestNoIstiod(t *testing.T) {
 
 func servicesListNoRegistryServices(t *testing.T) {
 	assert := assert.New(t)
-	serviceList, err := utils.ServicesList(utils.BOOKINFO)
+	serviceList, err := kiali.ServicesList(kiali.BOOKINFO)
 
 	assert.Nil(err)
 	assert.NotEmpty(serviceList)
@@ -75,35 +72,27 @@ func servicesListNoRegistryServices(t *testing.T) {
 	sl := len(serviceList.Services)
 
 	// Deploy an external service entry
-	applySe := ocCommand + " apply -f ../assets/bookinfo-service-entry-external.yaml"
-	_, err2 := exec.Command("bash", "-c", applySe).Output()
-	if err2 != nil {
-		log.Errorf("Failed to execute command: %s", applySe)
-	}
+	applySe := utils.ApplyFile("../assets/bookinfo-service-entry-external.yaml", "bookinfo")
+	require.True(t, applySe)
 
 	// The service result should be the same
-	serviceList2, err3 := utils.ServicesList(utils.BOOKINFO)
+	serviceList2, err3 := kiali.ServicesList(kiali.BOOKINFO)
+	require.NoError(t, err3)
 	assert.True(len(serviceList2.Services) == sl)
-	if err3 != nil {
-		log.Errorf("Failed to execute command: %s", applySe)
-	}
 
 	// Now, create a Service Entry (Part of th
 	assert.NotNil(serviceList.Validations)
-	assert.Equal(utils.BOOKINFO, serviceList.Namespace.Name)
+	assert.Equal(kiali.BOOKINFO, serviceList.Namespace.Name)
 
 	// Cleanup
-	rmSe := ocCommand + " delete -f ../assets/bookinfo-service-entry-external.yaml"
-	_, err4 := exec.Command("bash", "-c", rmSe).Output()
-	if err4 != nil {
-		log.Errorf("Failed to execute command: %s", rmSe)
-	}
+	deleteSe := utils.DeleteFile("../assets/bookinfo-service-entry-external.yaml", "bookinfo")
+	require.True(t, deleteSe)
 }
 
 func noProxyStatus(t *testing.T) {
 	name := "details-v1"
 	assert := assert.New(t)
-	wl, _, err := utils.WorkloadDetails(name, utils.BOOKINFO)
+	wl, _, err := kiali.WorkloadDetails(name, kiali.BOOKINFO)
 
 	assert.Nil(err)
 	assert.NotNil(wl)
@@ -121,15 +110,15 @@ func emptyValidations(t *testing.T) {
 	name := "bookinfo-gateway"
 	assert := assert.New(t)
 
-	config, err := getConfigForNamespace(utils.BOOKINFO, name, k8s.Gateways)
+	config, err := getConfigForNamespace(kiali.BOOKINFO, name, k8s.Gateways)
 
 	assert.Nil(err)
 	assert.NotNil(config)
 	assert.Equal(k8s.Gateways, config.ObjectType)
-	assert.Equal(utils.BOOKINFO, config.Namespace.Name)
+	assert.Equal(kiali.BOOKINFO, config.Namespace.Name)
 	assert.NotNil(config.Gateway)
 	assert.Equal(name, config.Gateway.Name)
-	assert.Equal(utils.BOOKINFO, config.Gateway.Namespace)
+	assert.Equal(kiali.BOOKINFO, config.Gateway.Namespace)
 	assert.Nil(config.IstioValidation)
 	assert.Nil(config.IstioReferences)
 }
@@ -137,7 +126,7 @@ func emptyValidations(t *testing.T) {
 func istioStatus(t *testing.T) {
 	assert := assert.New(t)
 
-	isEnabled, err := utils.IstioApiEnabled()
+	isEnabled, err := kiali.IstioApiEnabled()
 	assert.Nil(err)
 	assert.False(isEnabled)
 }

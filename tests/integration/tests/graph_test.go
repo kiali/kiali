@@ -5,11 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"github.com/stretchr/testify/assert"
-
-	"github.com/kiali/kiali/tests/integration/utils"
+	"github.com/kiali/kiali/tests/integration/utils/kiali"
 )
 
 func TestAppBase(t *testing.T) {
@@ -230,15 +229,15 @@ func TestDisplayServiceNodes(t *testing.T) {
 	assertGraph(params, assert)
 }
 func assertGraphInvalid(params map[string]string, assert *assert.Assertions) {
-	params["namespaces"] = utils.BOOKINFO
-	_, statusCode, _ := utils.Graph(params)
+	params["namespaces"] = kiali.BOOKINFO
+	_, statusCode, _ := kiali.Graph(params)
 	assert.Equal(statusCode, 400)
 }
 
 func assertGraph(params map[string]string, assert *assert.Assertions) {
-	params["namespaces"] = utils.BOOKINFO
+	params["namespaces"] = kiali.BOOKINFO
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
-		graph, statusCode, err := utils.Graph(params)
+		graph, statusCode, err := kiali.Graph(params)
 		if statusCode != 200 {
 			return false, err
 		}

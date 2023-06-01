@@ -8,6 +8,7 @@ spec:
             - |
               cat <<EOF > /etc/nginx/nginx.conf
               events { }
+              pid /tmp/nginx.pid;
               http {
                 server {
                   listen 9240;
@@ -18,5 +19,5 @@ spec:
               }
               EOF
               nginx -g "daemon off;"
-          image: nginx:stable
+          image: nginxinc/nginx-unprivileged
           name: nginx

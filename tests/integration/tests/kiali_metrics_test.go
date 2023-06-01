@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/tests/integration/utils"
+	"github.com/kiali/kiali/tests/integration/utils/kiali"
 )
 
 var METRICS_PARAMS = map[string]string{"direction": "outbound", "reporter": "destination"}
@@ -18,7 +18,7 @@ func TestNamespaceMetrics(t *testing.T) {
 	assert := assert.New(t)
 
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
-		metrics, err := utils.NamespaceMetrics(utils.BOOKINFO, METRICS_PARAMS)
+		metrics, err := kiali.NamespaceMetrics(kiali.BOOKINFO, METRICS_PARAMS)
 		return CheckMetrics(metrics.ResponseSize, metrics.RequestSize), err
 	})
 	assert.Nil(pollErr, "Metrics should be returned")
@@ -32,7 +32,7 @@ func TestServiceMetrics(t *testing.T) {
 
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
 		METRICS_PARAMS["cluster"] = conf.KubernetesConfig.ClusterName
-		metrics, err := utils.ObjectMetrics(utils.BOOKINFO, name, "services", METRICS_PARAMS)
+		metrics, err := kiali.ObjectMetrics(kiali.BOOKINFO, name, "services", METRICS_PARAMS)
 		return CheckMetrics(metrics.RequestCount, metrics.RequestDurationMillis, metrics.RequestErrorCount), err
 	})
 	assert.Nil(pollErr, "Metrics should be returned")
@@ -46,7 +46,7 @@ func TestAppMetrics(t *testing.T) {
 
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
 		METRICS_PARAMS["cluster"] = conf.KubernetesConfig.ClusterName
-		metrics, err := utils.ObjectMetrics(utils.BOOKINFO, name, "apps", METRICS_PARAMS)
+		metrics, err := kiali.ObjectMetrics(kiali.BOOKINFO, name, "apps", METRICS_PARAMS)
 		return CheckMetrics(metrics.RequestDurationMillis), err
 	})
 	assert.Nil(pollErr, "Metrics should be returned")
@@ -60,13 +60,13 @@ func TestWorkloadMetrics(t *testing.T) {
 
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
 		METRICS_PARAMS["cluster"] = conf.KubernetesConfig.ClusterName
-		metrics, err := utils.ObjectMetrics(utils.BOOKINFO, name, "workloads", METRICS_PARAMS)
+		metrics, err := kiali.ObjectMetrics(kiali.BOOKINFO, name, "workloads", METRICS_PARAMS)
 		return CheckMetrics(metrics.RequestSize, metrics.ResponseSize), err
 	})
 	assert.Nil(pollErr, "Metrics should be returned")
 }
 
-func CheckMetrics(metrics ...[]utils.MetricJson) bool {
+func CheckMetrics(metrics ...[]kiali.MetricJson) bool {
 	for _, metric := range metrics {
 		if len(metric) == 0 || len(metric[0].Datapoints) == 0 {
 			return false

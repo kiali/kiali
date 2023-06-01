@@ -4,25 +4,24 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"github.com/stretchr/testify/assert"
-
-	"github.com/kiali/kiali/tests/integration/utils"
+	"github.com/kiali/kiali/tests/integration/utils/kiali"
 )
 
 func TestAppGraph(t *testing.T) {
 	assert := assert.New(t)
 	name := "details"
 	graphType := "app"
-	assertGraphConfig("applications", graphType, utils.BOOKINFO, name, assert)
+	assertGraphConfig("applications", graphType, kiali.BOOKINFO, name, assert)
 }
 
 func TestAppVersionGraph(t *testing.T) {
 	assert := assert.New(t)
 	name := "details"
 	graphType := "app"
-	assertGraphConfig("applications", graphType, utils.BOOKINFO, name, assert)
+	assertGraphConfig("applications", graphType, kiali.BOOKINFO, name, assert)
 }
 
 func TestVersionedAppGraph(t *testing.T) {
@@ -30,7 +29,7 @@ func TestVersionedAppGraph(t *testing.T) {
 	name := "ratings"
 	graphType := "versionedApp"
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
-		config, statusCode, err := utils.AppVersionGraph(graphType, name, "v1", utils.BOOKINFO)
+		config, statusCode, err := kiali.AppVersionGraph(graphType, name, "v1", kiali.BOOKINFO)
 		if statusCode != 200 {
 			return false, err
 		}
@@ -45,40 +44,40 @@ func TestAppGraphEmpty(t *testing.T) {
 	assert := assert.New(t)
 	name := "detailswrong"
 	graphType := "app"
-	assertEmptyGraphConfig("applications", graphType, utils.BOOKINFO, name, assert)
+	assertEmptyGraphConfig("applications", graphType, kiali.BOOKINFO, name, assert)
 }
 
 func TestServiceGraph(t *testing.T) {
 	assert := assert.New(t)
 	name := "details"
 	graphType := "versionedApp"
-	assertGraphConfig("services", graphType, utils.BOOKINFO, name, assert)
+	assertGraphConfig("services", graphType, kiali.BOOKINFO, name, assert)
 }
 
 func TestServiceGraphEmpty(t *testing.T) {
 	assert := assert.New(t)
 	name := "detailswrong"
 	graphType := "workload"
-	assertEmptyGraphConfig("services", graphType, utils.BOOKINFO, name, assert)
+	assertEmptyGraphConfig("services", graphType, kiali.BOOKINFO, name, assert)
 }
 
 func TestWorkloadGraph(t *testing.T) {
 	assert := assert.New(t)
 	name := "details-v1"
 	graphType := "workload"
-	assertGraphConfig("workloads", graphType, utils.BOOKINFO, name, assert)
+	assertGraphConfig("workloads", graphType, kiali.BOOKINFO, name, assert)
 }
 
 func TestWorkloadGraphEmpty(t *testing.T) {
 	assert := assert.New(t)
 	name := "reviews-wrong"
 	graphType := "workload"
-	assertEmptyGraphConfig("workloads", graphType, utils.BOOKINFO, name, assert)
+	assertEmptyGraphConfig("workloads", graphType, kiali.BOOKINFO, name, assert)
 }
 
 func assertGraphConfig(objectType, graphType, namespace, name string, assert *assert.Assertions) {
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
-		config, statusCode, err := utils.ObjectGraph(objectType, graphType, name, namespace)
+		config, statusCode, err := kiali.ObjectGraph(objectType, graphType, name, namespace)
 		if statusCode != 200 {
 			return false, err
 		}
@@ -90,7 +89,7 @@ func assertGraphConfig(objectType, graphType, namespace, name string, assert *as
 }
 
 func assertEmptyGraphConfig(objectType, graphType, namespace, name string, assert *assert.Assertions) {
-	config, statusCode, err := utils.ObjectGraph(objectType, graphType, name, namespace)
+	config, statusCode, err := kiali.ObjectGraph(objectType, graphType, name, namespace)
 	assert.Equal(200, statusCode)
 	assert.Nil(err)
 	assert.Equal(config.GraphType, graphType)
