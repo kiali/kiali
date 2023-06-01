@@ -70,3 +70,9 @@ func NewTestingCache(t *testing.T, k8s kubernetes.ClientInterface, conf config.C
 	cf := kubetest.NewK8SClientFactoryMock(k8s)
 	return newTestingCache(t, cf, conf)
 }
+
+// NewTestingCacheWithFactory allows you to pass in a custom client factory. Good for testing multicluster.
+func NewTestingCacheWithFactory(t *testing.T, cf kubernetes.ClientFactory, conf config.Config) cache.KialiCache {
+	t.Helper()
+	return newTestingCache(t, cf, conf)
+}
