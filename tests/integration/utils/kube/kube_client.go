@@ -142,7 +142,6 @@ func UpdateKialiCR(ctx context.Context, dynamicClient dynamic.Interface, kubeCli
 		}
 	}
 
-	//registryPatch := []byte(`{"spec": {"external_services": {"istio": {"registry": {"istiod_url": "http://istiod-debug.istio-system:9240"}}}}}`)
 	_, err = dynamicClient.Resource(kialiGVR).Namespace(kialiNamespace).Patch(ctx, kialiName, types.MergePatchType, registryPatch, metav1.PatchOptions{})
 	require.NoError(err)
 

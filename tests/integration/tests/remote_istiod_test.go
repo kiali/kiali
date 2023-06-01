@@ -111,9 +111,7 @@ func TestRemoteIstiod(t *testing.T) {
 			_, err = kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Update(ctx, cm, metav1.UpdateOptions{})
 			require.NoError(err)
 
-			if !kialiCRDExists {
-				require.NoError(kube.DeleteKialiPod(ctx, kubeClient, kialiDeploymentNamespace, currentKialiPod))
-			}
+			require.NoError(kube.DeleteKialiPod(ctx, kubeClient, kialiDeploymentNamespace, currentKialiPod))
 			// Restart Kiali pod to pick up the new config.
 			require.NoError(kube.RestartKialiPod(ctx, kubeClient, kialiDeploymentNamespace, currentKialiPod))
 		}
@@ -178,19 +176,7 @@ func TestRemoteIstiod(t *testing.T) {
 
 	if kialiCRDExists {
 		registryPatch := []byte(`{"spec": {"external_services": {"istio": {"registry": {"istiod_url": "http://istiod-debug.istio-system:9240"}}}}}`)
-		_, err = dynamicClient.Resource(kialiGVR).Namespace(kialiNamespace).Patch(ctx, kialiName, types.MergePatchType, registryPatch, metav1.PatchOptions{})
-		require.NoError(err)
-
-		// Need to know when the kiali operator has seen the CR change and finished updating
-		// the configmap. There's no ObservedGeneration on the Kiali CR so just checking the configmap itself.
-		require.NoError(wait.PollImmediate(time.Second*5, time.Minute*2, func() (bool, error) {
-			log.Debug("Waiting for kiali configmap to update")
-			cm, err := kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Get(ctx, kialiName, metav1.GetOptions{})
-			if err != nil {
-				return false, err
-			}
-			return strings.Contains(cm.Data["config.yaml"], "http://istiod-debug.istio-system:9240"), nil
-		}), "Error waiting for kiali configmap to update")
+		kube.UpdateKialiCR(ctx, dynamicClient, kubeClient, kialiDeploymentNamespace, "http://istiod-debug.istio-system:9240", registryPatch, t)
 	} else {
 		// Update the configmap directly.
 		currentConfig, cm := kube.GetKialiConfigMap(ctx, kubeClient, kialiDeploymentNamespace, kialiName, t)
