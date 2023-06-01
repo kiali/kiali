@@ -30,10 +30,47 @@ import (
 //  "name": "John Doe",
 //  "iat": 1516239022,
 //  "nonce": "1ba9b834d08ac81feb34e208402eb18e909be084518c328510940184",
-//  "exp": 1311281970
+//  "exp": 1638316801
 // }
 
 const openIdTestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqZG9lQGRvbWFpbi5jb20iLCJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjIsIm5vbmNlIjoiMWJhOWI4MzRkMDhhYzgxZmViMzRlMjA4NDAyZWIxOGU5MDliZTA4NDUxOGMzMjg1MTA5NDAxODQiLCJleHAiOjE2MzgzMTY4MDF9.agHBziXM7SDLBKCnA6BvjWenU1n6juL8Fz3go4MSzyw"
+
+/*** Function tests ***/
+
+// see https://github.com/kiali/kiali/issues/6226
+func TestVerifyAudienceClaim(t *testing.T) {
+	oidCfg := config.OpenIdConfig{
+		ClientId: "kiali-client",
+	}
+
+	oip := openidFlowHelper{
+		IdTokenPayload: map[string]interface{}{},
+	}
+
+	oip.IdTokenPayload["aud"] = []interface{}{oidCfg.ClientId}
+	err := verifyAudienceClaim(&oip, oidCfg)
+	assert.Nil(t, err, "verifyAudienceClaim failed: %v", err)
+
+	oip.IdTokenPayload["aud"] = []string{oidCfg.ClientId}
+	err = verifyAudienceClaim(&oip, oidCfg)
+	assert.Nil(t, err, "verifyAudienceClaim failed: %v", err)
+
+	oip.IdTokenPayload["aud"] = oidCfg.ClientId
+	err = verifyAudienceClaim(&oip, oidCfg)
+	assert.Nil(t, err, "verifyAudienceClaim failed: %v", err)
+
+	oip.IdTokenPayload["aud"] = []interface{}{oidCfg.ClientId + "DIFFERENT"}
+	err = verifyAudienceClaim(&oip, oidCfg)
+	assert.NotNil(t, err, "verifyAudienceClaim should have failed")
+
+	oip.IdTokenPayload["aud"] = []string{oidCfg.ClientId + "DIFFERENT"}
+	err = verifyAudienceClaim(&oip, oidCfg)
+	assert.NotNil(t, err, "verifyAudienceClaim should have failed")
+
+	oip.IdTokenPayload["aud"] = oidCfg.ClientId + "DIFFERENT"
+	err = verifyAudienceClaim(&oip, oidCfg)
+	assert.NotNil(t, err, "verifyAudienceClaim should have failed")
+}
 
 /*** Implicit flow tests ***/
 
