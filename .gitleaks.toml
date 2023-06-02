@@ -1,0 +1,5 @@
+[allowlist]
+  description = "Allowlist"
+  paths = [
+    '''business/authentication/openid_auth_controller_test\.go''',
+  ]

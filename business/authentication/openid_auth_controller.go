@@ -1236,6 +1236,38 @@ func parseTimeClaim(claimValue interface{}) (int64, error) {
 	return parsedTime, nil
 }
 
+func verifyAudienceClaim(openIdParams *openidFlowHelper, oidCfg config.OpenIdConfig) error {
+	if audienceClaim, ok := openIdParams.IdTokenPayload["aud"]; !ok {
+		return errors.New("the OpenId token has no aud claim")
+	} else {
+		switch ac := audienceClaim.(type) {
+		case string:
+			if oidCfg.ClientId != ac {
+				return fmt.Errorf("the OpenId token is not targeted for Kiali; got aud = '%s'", audienceClaim)
+			}
+		case []string:
+			if len(ac) != 1 {
+				return fmt.Errorf("the OpenId string token was rejected because it has more than one audience; got aud = %v", audienceClaim)
+			}
+			if oidCfg.ClientId != ac[0] {
+				return fmt.Errorf("the OpenId string token is not targeted for Kiali; got []aud = '%v'", audienceClaim)
+			}
+		case []any:
+			if len(audienceClaim.([]any)) != 1 {
+				return fmt.Errorf("the OpenId token was rejected because it has more than one audience; got aud = %v", audienceClaim)
+			}
+			acStr := fmt.Sprintf("%v", audienceClaim.([]any)[0])
+			if oidCfg.ClientId != acStr {
+				return fmt.Errorf("the OpenId token is not targeted for Kiali; got []aud = '%v'", acStr)
+			}
+		default:
+			return fmt.Errorf("the OpenId token has an unexpected audience claim; value [%v] of type [%T]", audienceClaim, audienceClaim)
+		}
+	}
+
+	return nil
+}
+
 // validateOpenIdTokenInHouse checks that the id_token provided by the OpenId server
 // is valid. Its claims are validated to check that the expected values are present.
 // If the claims look OK, the signature is checked against the key sets published by
@@ -1253,24 +1285,8 @@ func validateOpenIdTokenInHouse(openIdParams *openidFlowHelper) error {
 	}
 
 	// Check the aud claim contains our client-id
-	if audienceClaim, ok := openIdParams.IdTokenPayload["aud"]; !ok {
-		return errors.New("the OpenId token has no aud claim")
-	} else {
-		switch ac := audienceClaim.(type) {
-		case string:
-			if oidCfg.ClientId != ac {
-				return fmt.Errorf("the OpenId token is not targeted for Kiali; got aud = '%s'", audienceClaim)
-			}
-		case []string:
-			if len(ac) != 1 {
-				return fmt.Errorf("the OpenId token was rejected because it has more than one audience; got aud = %v", audienceClaim)
-			}
-			if oidCfg.ClientId != ac[0] {
-				return fmt.Errorf("the OpenId token is not targeted for Kiali; got []aud = '%v'", audienceClaim)
-			}
-		default:
-			return fmt.Errorf("the OpenId token has an unexpected audience claim; got '%v'", audienceClaim)
-		}
+	if err := verifyAudienceClaim(openIdParams, oidCfg); err != nil {
+		return err
 	}
 
 	if len(openIdParams.ParsedIdToken.Headers) != 1 {
