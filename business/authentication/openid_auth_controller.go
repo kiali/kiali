@@ -1261,7 +1261,7 @@ func verifyAudienceClaim(openIdParams *openidFlowHelper, oidCfg config.OpenIdCon
 				return fmt.Errorf("the OpenId token is not targeted for Kiali; got []aud = '%v'", acStr)
 			}
 		default:
-			return fmt.Errorf("the OpenId token has an unexpected audience claim; got '%v'", audienceClaim)
+			return fmt.Errorf("the OpenId token has an unexpected audience claim; value [%v] of type [%T]", audienceClaim, audienceClaim)
 		}
 	}
 
