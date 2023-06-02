@@ -480,32 +480,28 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   }
 
   fetchValidations(isAscending: boolean, sortField: SortField<NamespaceInfo>) {
-    _.chunk(this.state.namespaces, 10).forEach(chunk => {
-      this.promises
-        .registerChained('validation', undefined, () => this.fetchValidationResult(chunk))
-        .then(() => {
-          this.setState(prevState => {
-            let newNamespaces = prevState.namespaces.slice();
-            if (sortField.id === 'validations') {
-              newNamespaces = Sorts.sortFunc(newNamespaces, sortField, isAscending);
-            }
-            return { namespaces: newNamespaces };
-          });
+    this.promises
+      .registerChained('validation', undefined, () => this.fetchValidationResult(this.state.namespaces))
+      .then(() => {
+        this.setState(prevState => {
+          let newNamespaces = prevState.namespaces.slice();
+          if (sortField.id === 'validations') {
+            newNamespaces = Sorts.sortFunc(newNamespaces, sortField, isAscending);
+          }
+          return { namespaces: newNamespaces };
         });
-    });
+      });
   }
 
-  fetchValidationResult(chunk: NamespaceInfo[]) {
-    const nss: string[] = [];
-    chunk.forEach(ns => {
-      nss.push(ns.name);
-    });
-
-    // TODO: Do we need the cluster here?
-    return Promise.all([API.getConfigValidations(nss), API.getAllIstioConfigs(nss, [], false, '', '')])
+  fetchValidationResult(namespaces: NamespaceInfo[]) {
+    // TODO: cluster param here when remote cluster validations supported, by default home cluster is used
+    return Promise.all([API.getConfigValidations(), API.getAllIstioConfigs([], [], false, '', '')])
       .then(results => {
-        chunk.forEach(nsInfo => {
-          nsInfo.validations = results[0].data[nsInfo.name];
+        namespaces.forEach(nsInfo => {
+          if (nsInfo.cluster && results[0].data[nsInfo.cluster]) {
+            nsInfo.validations = results[0].data[nsInfo.cluster][nsInfo.name];
+          }
+          // TODO: cluster param here when remote cluster config creation supported
           nsInfo.istioConfig = results[1].data[nsInfo.name];
         });
       })

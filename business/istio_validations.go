@@ -412,11 +412,13 @@ func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rVa
 		IncludeK8sHTTPRoutes:          true,
 		IncludeK8sGateways:            true,
 	}
-	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
+	istioConfigMap, err := in.businessLayer.IstioConfig.GetIstioConfigMap(ctx, criteria)
 	if err != nil {
 		errChan <- err
 		return
 	}
+	istioConfigList := istioConfigMap[criteria.Cluster]
+
 	// Filter VS
 	filteredVSs := in.filterVSExportToNamespaces(namespace, istioConfigList.VirtualServices)
 	rValue.VirtualServices = append(rValue.VirtualServices, filteredVSs...)

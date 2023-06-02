@@ -34,8 +34,8 @@ type IstioValidationSummary struct {
 	Warnings int `json:"warnings"`
 }
 
-// ValidationSummaries holds a map of IstioValidationSummary per namespace
-type ValidationSummaries map[string]*IstioValidationSummary
+// ValidationSummaries holds a map of IstioValidationSummary per cluster and namespace
+type ValidationSummaries map[string]map[string]*IstioValidationSummary
 
 // IstioValidations represents a set of IstioValidation grouped by IstioValidationKey.
 type IstioValidations map[IstioValidationKey]*IstioValidation

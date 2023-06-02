@@ -95,14 +95,21 @@ func ConfigValidationSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validationSummaries := models.ValidationSummaries{}
+	if len(nss) == 0 {
+		loadedNamespaces, _ := business.Namespace.GetNamespacesForCluster(r.Context(), cluster)
+		for _, ns := range loadedNamespaces {
+			nss = append(nss, ns.Name)
+		}
+	}
+
+	validationSummaries := models.ValidationSummaries{cluster: {}}
 	istioConfigValidationResults, errValidations := business.Validations.GetValidations(r.Context(), cluster, "", "", "")
 	if errValidations != nil {
 		log.Error(errValidations)
 		RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
 	} else {
 		for _, ns := range nss {
-			validationSummaries[ns] = istioConfigValidationResults.SummarizeValidation(ns)
+			validationSummaries[cluster][ns] = istioConfigValidationResults.SummarizeValidation(ns)
 		}
 	}
 
