@@ -20,7 +20,7 @@ func TestRegistryStatusUpdatedOnAdd(t *testing.T) {
 	assert := assert.New(t)
 	kialiCache := &fakeRegistryStatus{}
 	handler := NewRegistryHandler(kialiCache.RefreshRegistryStatus)
-	handler.OnAdd(&corev1.Service{})
+	handler.OnAdd(&corev1.Service{}, false)
 	assert.True(kialiCache.statusRefreshed)
 }
 
