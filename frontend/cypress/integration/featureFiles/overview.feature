@@ -78,6 +78,7 @@ Feature: Kiali Overview page
     Then user sees the "alpha" namespace with "outbound" traffic "10m"
 
   @overview-page
+  @bookinfo-app
   Scenario: The healthy status of a logical mesh application is reported in the overview of a namespace
     Given a healthy application in the cluster
     When I fetch the overview of the cluster

@@ -8,6 +8,7 @@ Feature: Kiali Service Details page
     And user is at the details page for the "service" "bookinfo/productpage"
 
   @service-details-page
+  @bookinfo-app
   Scenario: See details for productpage
     Then sd::user sees a list with content "Overview"
     Then sd::user sees a list with content "Traffic"
@@ -16,20 +17,24 @@ Feature: Kiali Service Details page
     Then sd::user sees the actions button
 
   @service-details-page
+  @bookinfo-app
   Scenario: See details for service
     Then sd::user sees "productpage" details information for service "v1"
     Then sd::user sees Network card
     Then sd::user sees Istio Config
 
   @service-details-page
+  @bookinfo-app
   Scenario: See service minigraph for details app.
     Then sd::user sees a minigraph
 
   @service-details-page
+  @bookinfo-app
   Scenario: See service Traffic information
     Then sd::user sees inbound and outbound traffic information
 
   @service-details-page
+  @bookinfo-app
   Scenario: See Inbound Metrics for productspage service details
     Then sd::user sees "Request volume" graph
     Then sd::user sees "Request duration" graph
@@ -45,22 +50,26 @@ Feature: Kiali Service Details page
     Then sd::user sees "TCP sent" graph
 
   @service-details-page
+  @bookinfo-app
   Scenario: See Graph data for productspage service details Inbound Metrics graphs
     Then sd::user does not see No data message in the "Request volume" graph
 
   @service-details-page
+  @bookinfo-app
   Scenario: See graph traces for productspage service details
     And user sees trace information
     When user selects a trace
     Then user sees trace details
 
   @service-details-page
+  @bookinfo-app
   Scenario: See span info after selecting service span
     And user sees trace information
     When user selects a trace
     Then user sees span details
 
   @service-details-page
+  @bookinfo-app
   Scenario: Verify that the Graph type dropdown is disabled when changing to Show node graph
     When user sees a minigraph
     And user chooses the "Show node graph" option

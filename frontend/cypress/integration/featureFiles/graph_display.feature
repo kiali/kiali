@@ -123,6 +123,7 @@ Scenario: User enables idle edges
   Then idle edges "appear" in the graph
 
 @graph-page-display
+@bookinfo-app
 Scenario: User enables idle nodes
   When user "enables" "idle nodes" option
   Then idle nodes "appear" in the graph

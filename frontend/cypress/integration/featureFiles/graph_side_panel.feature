@@ -6,6 +6,7 @@ Feature: Kiali Graph page - Side panel menu actions
     Given user is at administrator perspective
 
   @graph-page-context
+  @bookinfo-app
   Scenario: Actions in kebab menu of the side panel for a service node with existing traffic routing
     When user graphs "bookinfo" namespaces
     And user clicks the "productpage" service node
@@ -14,6 +15,7 @@ Feature: Kiali Graph page - Side panel menu actions
     Then user should see the confirmation dialog to delete all traffic routing
 
   @graph-page-context
+  @bookinfo-app
   Scenario Outline: Ability to launch <action> wizard from graph side panel
     When user graphs "bookinfo" namespaces
     And user clicks the "reviews" service node
