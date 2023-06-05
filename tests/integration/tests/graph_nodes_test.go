@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -28,7 +29,8 @@ func TestVersionedAppGraph(t *testing.T) {
 	assert := assert.New(t)
 	name := "ratings"
 	graphType := "versionedApp"
-	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
+	ctx := context.TODO()
+	pollErr := wait.PollUntilContextTimeout(ctx, time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
 		config, statusCode, err := kiali.AppVersionGraph(graphType, name, "v1", kiali.BOOKINFO)
 		if statusCode != 200 {
 			return false, err
@@ -76,7 +78,8 @@ func TestWorkloadGraphEmpty(t *testing.T) {
 }
 
 func assertGraphConfig(objectType, graphType, namespace, name string, assert *assert.Assertions) {
-	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
+	ctx := context.TODO()
+	pollErr := wait.PollUntilContextTimeout(ctx, time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
 		config, statusCode, err := kiali.ObjectGraph(objectType, graphType, name, namespace)
 		if statusCode != 200 {
 			return false, err

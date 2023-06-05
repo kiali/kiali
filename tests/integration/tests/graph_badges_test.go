@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"golang.org/x/net/context"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/stretchr/testify/assert"
@@ -155,8 +156,8 @@ func assertGraphBadges(params map[string]string, yaml, badge string, assert *ass
 	preBadgeCount := BadgeCount(params, badge)
 	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
 	assert.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
-
-	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
+	ctx := context.TODO()
+	pollErr := wait.PollUntilContextTimeout(ctx, time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
 		badgeCount := BadgeCount(params, badge)
 		if badgeCount > preBadgeCount {
 			return true, nil

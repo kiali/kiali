@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"context"
 	"path"
 	"testing"
 	"time"
@@ -27,8 +28,8 @@ func assertExternalNode(params map[string]string, yaml, name string, assert *ass
 	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/"+yaml)
 	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
 	assert.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
-
-	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
+	ctx := context.TODO()
+	pollErr := wait.PollUntilContextTimeout(ctx, time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
 		return NodeMatch(params, name)
 	})
 	assert.Nil(pollErr, "Name %s should exist in node services names", name)

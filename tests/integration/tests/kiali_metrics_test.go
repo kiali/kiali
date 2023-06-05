@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -16,8 +17,9 @@ var METRICS_PARAMS = map[string]string{"direction": "outbound", "reporter": "des
 
 func TestNamespaceMetrics(t *testing.T) {
 	assert := assert.New(t)
+	ctx := context.TODO()
 
-	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
+	pollErr := wait.PollUntilContextTimeout(ctx, time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
 		metrics, err := kiali.NamespaceMetrics(kiali.BOOKINFO, METRICS_PARAMS)
 		return CheckMetrics(metrics.ResponseSize, metrics.RequestSize), err
 	})
@@ -29,8 +31,9 @@ func TestServiceMetrics(t *testing.T) {
 	name := "ratings"
 	conf := config.NewConfig()
 	config.Set(conf)
+	ctx := context.TODO()
 
-	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
+	pollErr := wait.PollUntilContextTimeout(ctx, time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
 		METRICS_PARAMS["cluster"] = conf.KubernetesConfig.ClusterName
 		metrics, err := kiali.ObjectMetrics(kiali.BOOKINFO, name, "services", METRICS_PARAMS)
 		return CheckMetrics(metrics.RequestCount, metrics.RequestDurationMillis, metrics.RequestErrorCount), err
@@ -43,8 +46,9 @@ func TestAppMetrics(t *testing.T) {
 	name := "productpage"
 	conf := config.NewConfig()
 	config.Set(conf)
+	ctx := context.TODO()
 
-	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
+	pollErr := wait.PollUntilContextTimeout(ctx, time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
 		METRICS_PARAMS["cluster"] = conf.KubernetesConfig.ClusterName
 		metrics, err := kiali.ObjectMetrics(kiali.BOOKINFO, name, "apps", METRICS_PARAMS)
 		return CheckMetrics(metrics.RequestDurationMillis), err
@@ -57,8 +61,9 @@ func TestWorkloadMetrics(t *testing.T) {
 	name := "productpage-v1"
 	conf := config.NewConfig()
 	config.Set(conf)
+	ctx := context.TODO()
 
-	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
+	pollErr := wait.PollUntilContextTimeout(ctx, time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
 		METRICS_PARAMS["cluster"] = conf.KubernetesConfig.ClusterName
 		metrics, err := kiali.ObjectMetrics(kiali.BOOKINFO, name, "workloads", METRICS_PARAMS)
 		return CheckMetrics(metrics.RequestSize, metrics.ResponseSize), err

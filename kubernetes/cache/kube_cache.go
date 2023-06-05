@@ -390,67 +390,106 @@ func (c *kubeCache) createIstioInformers(namespace string) istio.SharedInformerF
 		if c.CheckIstioResource(kubernetes.AuthorizationPolicies) {
 			lister.authzLister = sharedInformers.Security().V1beta1().AuthorizationPolicies().Lister()
 			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Security().V1beta1().AuthorizationPolicies().Informer().HasSynced)
-			sharedInformers.Security().V1beta1().AuthorizationPolicies().Informer().AddEventHandler(c.registryRefreshHandler)
+			_, error := sharedInformers.Security().V1beta1().AuthorizationPolicies().Informer().AddEventHandler(c.registryRefreshHandler)
+			if error != nil {
+				log.Errorf("[Kiali Cache] Failed to Add event handler in AuthorizationPolicies cache : %s", error)
+			}
 		}
 		if c.CheckIstioResource(kubernetes.DestinationRules) {
 			lister.destinationRuleLister = sharedInformers.Networking().V1beta1().DestinationRules().Lister()
 			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().DestinationRules().Informer().HasSynced)
-			sharedInformers.Networking().V1beta1().DestinationRules().Informer().AddEventHandler(c.registryRefreshHandler)
+			_, error := sharedInformers.Networking().V1beta1().DestinationRules().Informer().AddEventHandler(c.registryRefreshHandler)
+			if error != nil {
+				log.Errorf("[Kiali Cache] Failed to Add event handler in DestinationRules cache : %s", error)
+			}
 		}
 		if c.CheckIstioResource(kubernetes.EnvoyFilters) {
 			lister.envoyFilterLister = sharedInformers.Networking().V1alpha3().EnvoyFilters().Lister()
 			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1alpha3().EnvoyFilters().Informer().HasSynced)
-			sharedInformers.Networking().V1alpha3().EnvoyFilters().Informer().AddEventHandler(c.registryRefreshHandler)
+			_, error := sharedInformers.Networking().V1alpha3().EnvoyFilters().Informer().AddEventHandler(c.registryRefreshHandler)
+			if error != nil {
+				log.Errorf("[Kiali Cache] Failed to Add event handler in EnvoyFilters cache : %s", error)
+			}
 		}
 		if c.CheckIstioResource(kubernetes.Gateways) {
 			lister.gatewayLister = sharedInformers.Networking().V1beta1().Gateways().Lister()
 			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().Gateways().Informer().HasSynced)
-			sharedInformers.Networking().V1beta1().Gateways().Informer().AddEventHandler(c.registryRefreshHandler)
+			_, error := sharedInformers.Networking().V1beta1().Gateways().Informer().AddEventHandler(c.registryRefreshHandler)
+			if error != nil {
+				log.Errorf("[Kiali Cache] Failed to Add event handler in Gateways cache : %s", error)
+			}
 		}
 		if c.CheckIstioResource(kubernetes.PeerAuthentications) {
 			lister.peerAuthnLister = sharedInformers.Security().V1beta1().PeerAuthentications().Lister()
 			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Security().V1beta1().PeerAuthentications().Informer().HasSynced)
-			sharedInformers.Security().V1beta1().PeerAuthentications().Informer().AddEventHandler(c.registryRefreshHandler)
+			_, error := sharedInformers.Security().V1beta1().PeerAuthentications().Informer().AddEventHandler(c.registryRefreshHandler)
+			if error != nil {
+				log.Errorf("[Kiali Cache] Failed to Add event handler in PeerAuthentications cache : %s", error)
+			}
 		}
 		if c.CheckIstioResource(kubernetes.RequestAuthentications) {
 			lister.requestAuthnLister = sharedInformers.Security().V1beta1().RequestAuthentications().Lister()
 			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Security().V1beta1().RequestAuthentications().Informer().HasSynced)
-			sharedInformers.Security().V1beta1().RequestAuthentications().Informer().AddEventHandler(c.registryRefreshHandler)
+			_, error := sharedInformers.Security().V1beta1().RequestAuthentications().Informer().AddEventHandler(c.registryRefreshHandler)
+			if error != nil {
+				log.Errorf("[Kiali Cache] Failed to Add event handler in RequestAuthentications cache : %s", error)
+			}
 		}
 		if c.CheckIstioResource(kubernetes.ServiceEntries) {
 			lister.serviceEntryLister = sharedInformers.Networking().V1beta1().ServiceEntries().Lister()
 			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().ServiceEntries().Informer().HasSynced)
-			sharedInformers.Networking().V1beta1().ServiceEntries().Informer().AddEventHandler(c.registryRefreshHandler)
+			_, error := sharedInformers.Networking().V1beta1().ServiceEntries().Informer().AddEventHandler(c.registryRefreshHandler)
+			if error != nil {
+				log.Errorf("[Kiali Cache] Failed to Add event handler in ServiceEntries cache : %s", error)
+			}
 		}
 		if c.CheckIstioResource(kubernetes.Sidecars) {
 			lister.sidecarLister = sharedInformers.Networking().V1beta1().Sidecars().Lister()
 			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().Sidecars().Informer().HasSynced)
-			sharedInformers.Networking().V1beta1().Sidecars().Informer().AddEventHandler(c.registryRefreshHandler)
+			_, error := sharedInformers.Networking().V1beta1().Sidecars().Informer().AddEventHandler(c.registryRefreshHandler)
+			if error != nil {
+				log.Errorf("[Kiali Cache] Failed to Add event handler in Sidecars cache : %s", error)
+			}
 		}
 		if c.CheckIstioResource(kubernetes.Telemetries) {
 			lister.telemetryLister = sharedInformers.Telemetry().V1alpha1().Telemetries().Lister()
 			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Telemetry().V1alpha1().Telemetries().Informer().HasSynced)
-			sharedInformers.Telemetry().V1alpha1().Telemetries().Informer().AddEventHandler(c.registryRefreshHandler)
+			_, error := sharedInformers.Telemetry().V1alpha1().Telemetries().Informer().AddEventHandler(c.registryRefreshHandler)
+			if error != nil {
+				log.Errorf("[Kiali Cache] Failed to Add event handler in Telemetries cache : %s", error)
+			}
 		}
 		if c.CheckIstioResource(kubernetes.VirtualServices) {
 			lister.virtualServiceLister = sharedInformers.Networking().V1beta1().VirtualServices().Lister()
 			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().VirtualServices().Informer().HasSynced)
-			sharedInformers.Networking().V1beta1().VirtualServices().Informer().AddEventHandler(c.registryRefreshHandler)
+			_, error := sharedInformers.Networking().V1beta1().VirtualServices().Informer().AddEventHandler(c.registryRefreshHandler)
+			if error != nil {
+				log.Errorf("[Kiali Cache] Failed to Add event handler in VirtualServices cache : %s", error)
+			}
 		}
 		if c.CheckIstioResource(kubernetes.WasmPlugins) {
 			lister.wasmPluginLister = sharedInformers.Extensions().V1alpha1().WasmPlugins().Lister()
 			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Extensions().V1alpha1().WasmPlugins().Informer().HasSynced)
-			sharedInformers.Extensions().V1alpha1().WasmPlugins().Informer().AddEventHandler(c.registryRefreshHandler)
+			_, error := sharedInformers.Extensions().V1alpha1().WasmPlugins().Informer().AddEventHandler(c.registryRefreshHandler)
+			if error != nil {
+				log.Errorf("[Kiali Cache] Failed to Add event handler in WasmPlugins cache : %s", error)
+			}
 		}
 		if c.CheckIstioResource(kubernetes.WorkloadEntries) {
 			lister.workloadEntryLister = sharedInformers.Networking().V1beta1().WorkloadEntries().Lister()
 			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().WorkloadEntries().Informer().HasSynced)
-			sharedInformers.Networking().V1beta1().WorkloadEntries().Informer().AddEventHandler(c.registryRefreshHandler)
+			_, error := sharedInformers.Networking().V1beta1().WorkloadEntries().Informer().AddEventHandler(c.registryRefreshHandler)
+			if error != nil {
+				log.Errorf("[Kiali Cache] Failed to Add event handler in WorkloadEntries cache : %s", error)
+			}
 		}
 		if c.CheckIstioResource(kubernetes.WorkloadGroups) {
 			lister.workloadGroupLister = sharedInformers.Networking().V1beta1().WorkloadGroups().Lister()
 			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().WorkloadGroups().Informer().HasSynced)
-			sharedInformers.Networking().V1beta1().WorkloadGroups().Informer().AddEventHandler(c.registryRefreshHandler)
+			_, error := sharedInformers.Networking().V1beta1().WorkloadGroups().Informer().AddEventHandler(c.registryRefreshHandler)
+			if error != nil {
+				log.Errorf("[Kiali Cache] Failed to Add event handler in WorkloadGroups cache : %s", error)
+			}
 		}
 	}
 
@@ -465,12 +504,18 @@ func (c *kubeCache) createGatewayInformers(namespace string) gateway.SharedInfor
 		if c.CheckIstioResource(kubernetes.K8sGateways) {
 			lister.k8sgatewayLister = sharedInformers.Gateway().V1beta1().Gateways().Lister()
 			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1beta1().Gateways().Informer().HasSynced)
-			sharedInformers.Gateway().V1beta1().Gateways().Informer().AddEventHandler(c.registryRefreshHandler)
+			_, err := sharedInformers.Gateway().V1beta1().Gateways().Informer().AddEventHandler(c.registryRefreshHandler)
+			if err != nil {
+				log.Errorf("Error adding Handler to Informer Gateways: %s", err.Error())
+			}
 		}
 		if c.CheckIstioResource(kubernetes.K8sHTTPRoutes) {
 			lister.k8shttprouteLister = sharedInformers.Gateway().V1beta1().HTTPRoutes().Lister()
 			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1beta1().HTTPRoutes().Informer().HasSynced)
-			sharedInformers.Gateway().V1beta1().Gateways().Informer().AddEventHandler(c.registryRefreshHandler)
+			_, err := sharedInformers.Gateway().V1beta1().Gateways().Informer().AddEventHandler(c.registryRefreshHandler)
+			if err != nil {
+				log.Errorf("Error adding Handler to Informer Gateways: %s", err.Error())
+			}
 		}
 	}
 	return sharedInformers
@@ -507,8 +552,14 @@ func (c *kubeCache) createKubernetesInformers(namespace string) informers.Shared
 		sharedInformers.Apps().V1().ReplicaSets().Informer().HasSynced,
 		sharedInformers.Core().V1().ConfigMaps().Informer().HasSynced,
 	)
-	sharedInformers.Core().V1().Services().Informer().AddEventHandler(c.registryRefreshHandler)
-	sharedInformers.Core().V1().Endpoints().Informer().AddEventHandler(c.registryRefreshHandler)
+	_, err := sharedInformers.Core().V1().Services().Informer().AddEventHandler(c.registryRefreshHandler)
+	if err != nil {
+		log.Errorf("Error adding Handler to Informer services: %s", err.Error())
+	}
+	_, err = sharedInformers.Core().V1().Endpoints().Informer().AddEventHandler(c.registryRefreshHandler)
+	if err != nil {
+		log.Errorf("Error adding Handler to Informer Endpoints: %s", err.Error())
+	}
 
 	if c.clusterScoped {
 		c.clusterCacheLister = lister

@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"context"
 	"path"
 	"strings"
 	"testing"
@@ -81,7 +82,9 @@ func TestDiscoverWorkload(t *testing.T) {
 
 	defer utils.DeleteFile(workloadsPath, kiali.BOOKINFO)
 	assert.True(utils.ApplyFile(workloadsPath, kiali.BOOKINFO))
-	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
+	ctx := context.TODO()
+
+	pollErr := wait.PollUntilContextTimeout(ctx, time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
 		wlList, err := kiali.WorkloadsList(kiali.BOOKINFO)
 		assert.Nil(err)
 		assert.NotNil(wlList)
