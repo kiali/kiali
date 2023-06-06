@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/testutils/validations"
@@ -15,6 +16,7 @@ func TestTwoSidecarsWithSelector(t *testing.T) {
 	assert := assert.New(t)
 
 	validations := SidecarSelectorMultiMatchChecker(
+		config.Get().KubernetesConfig.ClusterName,
 		"sidecar",
 		[]*networking_v1beta1.Sidecar{
 			data.AddSelectorToSidecar(map[string]string{
@@ -32,6 +34,7 @@ func TestTwoSidecarsWithSelector(t *testing.T) {
 
 func TestTwoSidecarsWithoutSelector(t *testing.T) {
 	validations := SidecarSelectorMultiMatchChecker(
+		config.Get().KubernetesConfig.ClusterName,
 		"sidecar",
 		[]*networking_v1beta1.Sidecar{
 			data.CreateSidecar("sidecar1", "bookinfo"),
@@ -49,6 +52,7 @@ func TestTwoSidecarsWithoutSelectorDifferentNamespaces(t *testing.T) {
 	assert := assert.New(t)
 
 	validations := SidecarSelectorMultiMatchChecker(
+		config.Get().KubernetesConfig.ClusterName,
 		"sidecar",
 		[]*networking_v1beta1.Sidecar{
 			data.CreateSidecar("sidecar1", "bookinfo"),
@@ -78,6 +82,7 @@ func TestTwoSidecarsTargetingOneDeployment(t *testing.T) {
 		}, data.CreateSidecar("sidecar4", "bookinfo")),
 	}
 	validations := SidecarSelectorMultiMatchChecker(
+		config.Get().KubernetesConfig.ClusterName,
 		"sidecar",
 		sidecars,
 		workloadList(),
@@ -108,6 +113,7 @@ func TestSidecarsCrossNamespaces(t *testing.T) {
 		}, data.CreateSidecar("sidecar4", "bookinfo2")),
 	}
 	validations := SidecarSelectorMultiMatchChecker(
+		config.Get().KubernetesConfig.ClusterName,
 		"sidecar",
 		sidecars,
 		workloadList(),
@@ -139,6 +145,7 @@ func TestSidecarsDifferentNamespaces(t *testing.T) {
 		}, data.CreateSidecar("sidecar4", "bookinfo4")),
 	}
 	validations := SidecarSelectorMultiMatchChecker(
+		config.Get().KubernetesConfig.ClusterName,
 		"sidecar",
 		sidecars,
 		workloadList(),
