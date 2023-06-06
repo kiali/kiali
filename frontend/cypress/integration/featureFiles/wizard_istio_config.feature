@@ -13,7 +13,8 @@ Feature: Kiali Istio Config page
   @gateway-api
   @wizard-istio-config
   Scenario: Create a K8s Gateway scenario
-    When user clicks in the "K8sGateway" Istio config actions
+    When user deletes k8sgateway named "k8sapigateway" and the resource is no longer available
+    And user clicks in the "K8sGateway" Istio config actions
     And user sees the "Create K8sGateway" config wizard
     And user adds listener
     And user types "k8sapigateway" in the "name" input
@@ -42,8 +43,9 @@ Feature: Kiali Istio Config page
     And the preview button should be disabled
 
   @wizard-istio-config
-  Scenario: Create a Gateway scenario
-    When user clicks in the "Gateway" Istio config actions
+  Scenario: Create a Gateway scenario and check that Gateway with the same name cannot be created
+    When user deletes gateway named "mygateway" and the resource is no longer available
+    And user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
     And user types "mygateway" in the "name" input
     And user adds a server to a server list
@@ -54,6 +56,17 @@ Feature: Kiali Istio Config page
     And user previews the configuration
     And user creates the istio config
     Then the "Gateway" "mygateway" should be listed in "bookinfo" namespace
+    And user closes the success notification
+    And user clicks in the "Gateway" Istio config actions
+    And user sees the "Create Gateway" config wizard
+    And user types "mygateway" in the "name" input
+    And user adds a server to a server list
+    And user types "website.com" in the "hosts0" input
+    And user types "8080" in the "addPortNumber0" input
+    And user types "foobar" in the "addPortName0" input
+    And user previews the configuration
+    And user creates the istio config
+    Then an error message "Could not create Istio Gateway objects." is displayed
 
   @wizard-istio-config
   Scenario: Try to create a Gateway with negative port number
@@ -91,18 +104,6 @@ Feature: Kiali Istio Config page
     Then the preview button should be disabled
     And the "addPortNumber0" input should display a warning
 
-  @wizard-istio-config
-  Scenario: Create a Gateway with duplicate name 
-    When user clicks in the "Gateway" Istio config actions
-    And user sees the "Create Gateway" config wizard
-    And user types "mygateway" in the "name" input
-    And user adds a server to a server list
-    And user types "website.com" in the "hosts0" input
-    And user types "8080" in the "addPortNumber0" input
-    And user types "foobar" in the "addPortName0" input
-    And user previews the configuration
-    And user creates the istio config
-    Then an error message "Could not create Istio Gateway objects." is displayed
 
   @wizard-istio-config
   Scenario: Try to create a Gateway without filling the inputs related to TLS 
@@ -123,7 +124,8 @@ Feature: Kiali Istio Config page
 
   @wizard-istio-config
   Scenario: Create a Gateway with TLS 
-    When user clicks in the "Gateway" Istio config actions
+    When user deletes gateway named "mygatewaywithtls" and the resource is no longer available
+    And user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
     And user types "mygatewaywithtls" in the "name" input
     And user adds a server to a server list
@@ -161,7 +163,8 @@ Feature: Kiali Istio Config page
 
   @wizard-istio-config
   Scenario: Create a ServiceEntry without ports specified 
-    When user clicks in the "ServiceEntry" Istio config actions
+    When user deletes service named "myservice" and the resource is no longer available
+    And user clicks in the "ServiceEntry" Istio config actions
     And user sees the "Create ServiceEntry" config wizard
     And user types "myservice" in the "name" input
     And user types "website.com,website2.com" in the "hosts" input
@@ -187,7 +190,8 @@ Feature: Kiali Istio Config page
 
   @wizard-istio-config
   Scenario: Create a ServiceEntry with ports specified 
-    When user clicks in the "ServiceEntry" Istio config actions
+    When user deletes service named "myservice2" and the resource is no longer available
+    And user clicks in the "ServiceEntry" Istio config actions
     And user sees the "Create ServiceEntry" config wizard
     And user types "myservice2" in the "name" input
     And user types "website.com,website2.com" in the "hosts" input
@@ -219,8 +223,10 @@ Feature: Kiali Istio Config page
 
   @gateway-api
   @wizard-istio-config
-  Scenario: Create multiple K8s Gateways with colliding hostnames and port combinations and check for a reference
-    When user clicks in the "K8sGateway" Istio config actions
+  Scenario: Create multiple K8s Gateways with colliding hostnames and port combinations and check for a reference. Then delete one of them and the reference should be gone.
+    When user deletes k8sgateway named "gatewayapi-1" and the resource is no longer available
+    And user deletes k8sgateway named "gatewayapi-2" and the resource is no longer available
+    And user clicks in the "K8sGateway" Istio config actions
     And user sees the "Create K8sGateway" config wizard
     And user adds listener
     And user types "gatewayapi-1" in the "name" input
@@ -248,12 +254,8 @@ Feature: Kiali Istio Config page
     And the "K8sGateway" "gatewayapi-2" should be listed in "bookinfo" namespace
     When viewing the detail for "gatewayapi-1"
     Then "gatewayapi-2" should be referenced
-
-
-  @gateway-api
-  @wizard-istio-config
-  Scenario: Delete one of the K8s Gateways and check that the reference is removed
-    When viewing the detail for "gatewayapi-2"
+    When user is at the "istio" page
+    And viewing the detail for "gatewayapi-2"
     And choosing to delete it 
     Then the "K8sGateway" "gatewayapi-2" should not be listed in "bookinfo" namespace
     When viewing the detail for "gatewayapi-1"
