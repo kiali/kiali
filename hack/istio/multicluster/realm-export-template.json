@@ -585,9 +585,7 @@
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "secret": "kube-client-secret",
-      "redirectUris": [
-        "https://_KIALI_KUBE_HOSTNAME/kiali/*"
-      ],
+      "redirectUris": [],
       "webOrigins": [],
       "notBefore": 0,
       "bearerOnly": false,

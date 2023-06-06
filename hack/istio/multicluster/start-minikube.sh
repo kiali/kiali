@@ -140,24 +140,10 @@ ${CLIENT_EXE} create secret tls -n keycloak keycloak.kind.cluster-tls \
   --cert="${KEYCLOAK_CERTS_DIR}"/cert.pem \
   --key="${KEYCLOAK_CERTS_DIR}"/key.pem
 
-# Give the ingress some time to be ready
-# ${CLIENT_EXE} wait ingress/keycloak -n keycloak --context east --for=jsonpath='{.status.loadBalancer.ingress[*].hostname}'=localhost
-sleep 20
+# Before proceeding with the rest of the keycloak setup, we need to start the second cluster so that we can get the IP
+# and add it to the redirect URI of the kube client in keycloak.
 
-# Get a token from keycloak to use the admin api
-TOKEN_KEY=$(curl -k -X POST https://"${KUBE_HOSTNAME}"/realms/master/protocol/openid-connect/token \
-            -d grant_type=password \
-            -d client_id=admin-cli \
-            -d username=admin \
-            -d password=admin \
-            -d scope=openid \
-            -d response_type=id_token | jq -r '.access_token')
-
-# Replace the redirect URI with the minikube ip. Create the realm.
-sed "s/_KIALI_KUBE_HOSTNAME/$(minikube ip -p "${CLUSTER1_NAME}")/g" "${SCRIPT_DIR}"/realm-export-template.json | curl -k -L https://"${KUBE_HOSTNAME}"/admin/realms -H "Authorization: Bearer $TOKEN_KEY" -H "Content-Type: application/json" -X POST -d @-
-
-# Create the kiali user
-curl -k -L https://"${KUBE_HOSTNAME}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d '{"username": "kiali", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}]}' -H 'Content-Type: application/json'
+CLUSTER1_IP=$(minikube ip -p "${CLUSTER1_NAME}")
 
 # Now start the west cluster, copy over certs, restart with certs and options.
 # First start a minikube cluster without kubernetes to both copy over the certs and get the IP
@@ -171,6 +157,27 @@ do
   echo "Copying ${f} to minikube"
   minikube cp "${f}" "${MINIKUBE_KEYCLOAK_CERTS_DIR}/$(basename "${f}")" -p "${CLUSTER2_NAME}"
 done
+
+CLUSTER2_IP=$(minikube ip -p "${CLUSTER2_NAME}")
+
+# Give the ingress some time to be ready
+${CLIENT_EXE} wait ingress/keycloak -n keycloak --context "${CLUSTER1_CONTEXT}" --for=jsonpath='{.status.loadBalancer.ingress[*].ip}'="${CLUSTER1_IP}"
+
+# Get a token from keycloak to use the admin api
+TOKEN_KEY=$(curl -k -X POST https://"${KUBE_HOSTNAME}"/realms/master/protocol/openid-connect/token \
+            -d grant_type=password \
+            -d client_id=admin-cli \
+            -d username=admin \
+            -d password=admin \
+            -d scope=openid \
+            -d response_type=id_token | jq -r '.access_token')
+
+# "https://_KIALI_KUBE_HOSTNAME/kiali/*`
+# Replace the redirect URI with the minikube ip. Create the realm.
+jq ".clients[] |= if .clientId == \"kube\" then .redirectUris = [\"https://${CLUSTER1_IP}/kiali/*\", \"https://${CLUSTER2_IP}/kiali/*\"] else . end" < "${SCRIPT_DIR}"/realm-export-template.json | curl -k -L https://"${KUBE_HOSTNAME}"/admin/realms -H "Authorization: Bearer $TOKEN_KEY" -H "Content-Type: application/json" -X POST -d @-
+
+# Create the kiali user
+curl -k -L https://"${KUBE_HOSTNAME}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d '{"username": "kiali", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}]}' -H 'Content-Type: application/json'
 
 # Restart with kubernetes
 minikube stop -p "${CLUSTER2_NAME}"
