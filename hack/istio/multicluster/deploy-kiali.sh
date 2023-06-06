@@ -39,12 +39,15 @@ deploy_kiali() {
   local cluster_name="${1}"
   local web_fqdn="${2}"
   local web_schema="${3}"
+  local keycloak_cluster_name="${4}"
   [ ! -z "${web_fqdn}" ] && helm_args="--set server.web_fqdn=${web_fqdn} ${helm_args}"
   [ ! -z "${web_schema}" ] && helm_args="--set server.web_schema=${web_schema} ${helm_args}"
 
   local minikube_ip=$(minikube ip -p "${cluster_name}")
-  local minikube_ip_dashed=$(minikube ip -p "${cluster_name}" | sed 's/\./-/g')
-  local kube_hostname="keycloak-${minikube_ip_dashed}.nip.io"
+
+  # determine where we can find keycloak
+  local keycloak_minikube_ip_dashed=$(minikube ip -p "${keycloak_cluster_name}" | sed 's/\./-/g')
+  local keycloak_hostname="keycloak-${keycloak_minikube_ip_dashed}.nip.io"
 
   if [ "${KIALI_USE_DEV_IMAGE}" == "true" ]; then
     local image_to_tag="quay.io/kiali/kiali:dev"
@@ -80,7 +83,7 @@ deploy_kiali() {
     --set kubernetes_config.cache_enabled="false" \
     --set auth.strategy="openid"                  \
     --set auth.openid.client_id="kube"            \
-    --set auth.openid.issuer_uri="https://${kube_hostname}/realms/kube" \
+    --set auth.openid.issuer_uri="https://${keycloak_hostname}/realms/kube" \
     --set auth.openid.insecure_skip_verify_tls="false" \
     --set deployment.logger.log_level="debug"     \
     --set deployment.ingress.enabled="true"       \
@@ -89,13 +92,13 @@ deploy_kiali() {
     ${KIALI_SERVER_HELM_CHARTS}
 }
 
-echo "==== DEPLOY KIALI TO CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
+echo "==== DEPLOY KIALI TO CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT} (keycloak is at ${CLUSTER1_NAME})"
 switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
-deploy_kiali "${CLUSTER1_NAME}" "${KIALI1_WEB_FQDN}" "${KIALI1_WEB_SCHEMA}"
+deploy_kiali "${CLUSTER1_NAME}" "${KIALI1_WEB_FQDN}" "${KIALI1_WEB_SCHEMA}" "${CLUSTER1_NAME}"
 
 if [ "${SINGLE_KIALI}" != "true" ]
 then
-  echo "==== DEPLOY KIALI TO CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
+  echo "==== DEPLOY KIALI TO CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT} (keycloak is at ${CLUSTER1_NAME})"
   switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
-  deploy_kiali "${CLUSTER2_NAME}" "${KIALI2_WEB_FQDN}" "${KIALI2_WEB_SCHEMA}"
+  deploy_kiali "${CLUSTER2_NAME}" "${KIALI2_WEB_FQDN}" "${KIALI2_WEB_SCHEMA}" "${CLUSTER1_NAME}"
 fi
