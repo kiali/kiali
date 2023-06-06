@@ -54,6 +54,9 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cluster := clusterNameFromQuery(query)
+	if !config.Get().ExternalServices.Istio.IstioAPIEnabled {
+		includeValidations = false
+	}
 
 	criteria := business.ParseIstioConfigCriteria(cluster, namespace, objects, labelSelector, workloadSelector, allNamespaces)
 
@@ -142,6 +145,9 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cluster := clusterNameFromQuery(query)
+	if !config.Get().ExternalServices.Istio.IstioAPIEnabled {
+		includeValidations = false
+	}
 
 	if !checkObjectType(objectType) {
 		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+objectType)
