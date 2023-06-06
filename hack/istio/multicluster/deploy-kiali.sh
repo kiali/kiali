@@ -81,7 +81,7 @@ deploy_kiali() {
     --set auth.strategy="openid"                  \
     --set auth.openid.client_id="kube"            \
     --set auth.openid.issuer_uri="https://${kube_hostname}/realms/kube" \
-    --set auth.openid.insecure_skip_verify_tls="true" \
+    --set auth.openid.insecure_skip_verify_tls="false" \
     --set deployment.logger.log_level="debug"     \
     --set deployment.ingress.enabled="true"       \
     --repo https://kiali.org/helm-charts          \
