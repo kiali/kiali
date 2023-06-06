@@ -21,6 +21,7 @@ func (g GatewayChecker) Check() models.IstioValidations {
 	// Multinamespace checkers
 	validations := gateways.MultiMatchChecker{
 		Gateways: g.Gateways,
+		Cluster:  g.Cluster,
 	}.Check()
 
 	for _, gw := range g.Gateways {

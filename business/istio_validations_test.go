@@ -175,7 +175,7 @@ func mockMultiNamespaceGatewaysValidationService(t *testing.T) IstioValidationsS
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[config.Get().KubernetesConfig.ClusterName] = k8s
-	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
+	return IstioValidationsService{userClients: k8sclients, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 }
 
 func mockCombinedValidationService(t *testing.T, istioConfigList *models.IstioConfigList, services []string, namespace string, podList *core_v1.PodList) IstioValidationsService {
@@ -225,7 +225,7 @@ func mockCombinedValidationService(t *testing.T, istioConfigList *models.IstioCo
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[config.Get().KubernetesConfig.ClusterName] = k8s
-	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
+	return IstioValidationsService{userClients: k8sclients, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 }
 
 func mockEmptyValidationService() IstioValidationsService {
@@ -236,7 +236,7 @@ func mockEmptyValidationService() IstioValidationsService {
 	k8s.On("IsMaistraApi").Return(false)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[config.Get().KubernetesConfig.ClusterName] = k8s
-	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
+	return IstioValidationsService{userClients: k8sclients, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 }
 
 func fakeEmptyIstioConfigList() *models.IstioConfigList {

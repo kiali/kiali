@@ -9,6 +9,7 @@ import (
 )
 
 type GenericMultiMatchChecker struct {
+	Cluster               string
 	SubjectType           string
 	Keys                  []models.IstioValidationKey
 	Selectors             map[int]map[string]string
@@ -17,7 +18,7 @@ type GenericMultiMatchChecker struct {
 	skipSelSubj           bool
 }
 
-func PeerAuthenticationMultiMatchChecker(subjectType string, pa []*security_v1beta.PeerAuthentication, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
+func PeerAuthenticationMultiMatchChecker(cluster, subjectType string, pa []*security_v1beta.PeerAuthentication, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
 	keys := []models.IstioValidationKey{}
 	selectors := make(map[int]map[string]string, len(pa))
 	for i, p := range pa {
@@ -25,6 +26,7 @@ func PeerAuthenticationMultiMatchChecker(subjectType string, pa []*security_v1be
 			ObjectType: subjectType,
 			Name:       p.Name,
 			Namespace:  p.Namespace,
+			Cluster:    cluster,
 		}
 		keys = append(keys, key)
 		selectors[i] = make(map[string]string)
@@ -34,6 +36,7 @@ func PeerAuthenticationMultiMatchChecker(subjectType string, pa []*security_v1be
 		}
 	}
 	return GenericMultiMatchChecker{
+		Cluster:               cluster,
 		SubjectType:           subjectType,
 		Keys:                  keys,
 		Selectors:             selectors,
@@ -43,7 +46,7 @@ func PeerAuthenticationMultiMatchChecker(subjectType string, pa []*security_v1be
 	}
 }
 
-func RequestAuthenticationMultiMatchChecker(subjectType string, ra []*security_v1beta.RequestAuthentication, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
+func RequestAuthenticationMultiMatchChecker(cluster, subjectType string, ra []*security_v1beta.RequestAuthentication, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
 	keys := []models.IstioValidationKey{}
 	selectors := make(map[int]map[string]string, len(ra))
 	for i, r := range ra {
@@ -51,6 +54,7 @@ func RequestAuthenticationMultiMatchChecker(subjectType string, ra []*security_v
 			ObjectType: subjectType,
 			Name:       r.Name,
 			Namespace:  r.Namespace,
+			Cluster:    cluster,
 		}
 		keys = append(keys, key)
 		selectors[i] = make(map[string]string)
@@ -61,6 +65,7 @@ func RequestAuthenticationMultiMatchChecker(subjectType string, ra []*security_v
 	// For RequestAuthentication, when more than one policy matches a workload, Istio combines all rules as if they were specified as a single policy.
 	// So skip multi match validation
 	return GenericMultiMatchChecker{
+		Cluster:               cluster,
 		SubjectType:           subjectType,
 		Keys:                  keys,
 		Selectors:             selectors,
@@ -70,7 +75,7 @@ func RequestAuthenticationMultiMatchChecker(subjectType string, ra []*security_v
 	}
 }
 
-func SidecarSelectorMultiMatchChecker(subjectType string, sc []*networking_v1beta1.Sidecar, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
+func SidecarSelectorMultiMatchChecker(cluster, subjectType string, sc []*networking_v1beta1.Sidecar, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
 	keys := []models.IstioValidationKey{}
 	selectors := make(map[int]map[string]string, len(sc))
 	i := 0
@@ -84,6 +89,7 @@ func SidecarSelectorMultiMatchChecker(subjectType string, sc []*networking_v1bet
 				ObjectType: subjectType,
 				Name:       s.Name,
 				Namespace:  s.Namespace,
+				Cluster:    cluster,
 			}
 			keys = append(keys, key)
 			selectors[i] = make(map[string]string)
@@ -94,6 +100,7 @@ func SidecarSelectorMultiMatchChecker(subjectType string, sc []*networking_v1bet
 		}
 	}
 	return GenericMultiMatchChecker{
+		Cluster:               cluster,
 		SubjectType:           subjectType,
 		Keys:                  keys,
 		Selectors:             selectors,
@@ -147,6 +154,7 @@ func (m GenericMultiMatchChecker) selectorLessSubjects() []KeyWithIndex {
 					ObjectType: k.ObjectType,
 					Name:       k.Name,
 					Namespace:  k.Namespace,
+					Cluster:    m.Cluster,
 				},
 			})
 		}

@@ -34,7 +34,7 @@ func (in DestinationRulesChecker) runGroupChecks() models.IstioValidations {
 	seHosts := kubernetes.ServiceEntryHostnames(in.ServiceEntries)
 
 	enabledDRCheckers := []GroupChecker{
-		destinationrules.MultiMatchChecker{Namespaces: in.Namespaces, ServiceEntries: seHosts, DestinationRules: in.DestinationRules},
+		destinationrules.MultiMatchChecker{Namespaces: in.Namespaces, ServiceEntries: seHosts, DestinationRules: in.DestinationRules, Cluster: in.Cluster},
 	}
 
 	enabledDRCheckers = append(enabledDRCheckers, destinationrules.TrafficPolicyChecker{DestinationRules: in.DestinationRules, MTLSDetails: in.MTLSDetails})

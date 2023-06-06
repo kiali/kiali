@@ -16,6 +16,7 @@ import (
 )
 
 type MultiMatchChecker struct {
+	Cluster         string
 	Gateways        []*networking_v1beta1.Gateway
 	existingList    map[string][]Host
 	hostRegexpCache map[string]regexp.Regexp
@@ -76,7 +77,7 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 				duplicate, dhosts := m.findMatch(host, selectorString)
 				if duplicate {
 					// The above is referenced by each one below..
-					currentHostValidation := createError(host.GatewayRuleName, host.Namespace, host.ServerIndex, host.HostIndex)
+					currentHostValidation := createError(host.GatewayRuleName, host.Namespace, m.Cluster, host.ServerIndex, host.HostIndex)
 					existingHosts := make(map[string]bool)
 					for i := 0; i < len(dhosts); i++ {
 						dh := dhosts[i]
@@ -86,7 +87,7 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 							continue
 						}
 						existingHosts[dh.Namespace+"/"+dh.GatewayRuleName] = true
-						refValidation := createError(dh.GatewayRuleName, dh.Namespace, dh.ServerIndex, dh.HostIndex)
+						refValidation := createError(dh.GatewayRuleName, dh.Namespace, m.Cluster, dh.ServerIndex, dh.HostIndex)
 						refValidation = refValidation.MergeReferences(currentHostValidation)
 						currentHostValidation = currentHostValidation.MergeReferences(refValidation)
 						validations = validations.MergeValidations(refValidation)
@@ -101,8 +102,8 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func createError(gatewayRuleName, namespace string, serverIndex, hostIndex int) models.IstioValidations {
-	key := models.IstioValidationKey{Name: gatewayRuleName, Namespace: namespace, ObjectType: GatewayCheckerType}
+func createError(gatewayRuleName, namespace, cluster string, serverIndex, hostIndex int) models.IstioValidations {
+	key := models.IstioValidationKey{Name: gatewayRuleName, Namespace: namespace, ObjectType: GatewayCheckerType, Cluster: cluster}
 	checks := models.Build("gateways.multimatch",
 		"spec/servers["+strconv.Itoa(serverIndex)+"]/hosts["+strconv.Itoa(hostIndex)+"]")
 	rrValidation := &models.IstioValidation{
