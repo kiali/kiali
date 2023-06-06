@@ -71,6 +71,10 @@ NETWORK2_ID="network-west"
 # Deploy a single kiali or a kiali per cluster
 SINGLE_KIALI="true"
 
+# Create kiali remote secrets so kiali can access the different clusters
+# When left empty, this will be true if SINGLE_KIALI is true or false otherwise.
+KIALI_CREATE_REMOTE_CLUSTER_SECRETS=""
+
 # If a gateway is required to cross the networks, set this to true and one will be created
 # See: https://istio.io/latest/docs/setup/install/multicluster/multi-primary_multi-network/
 CROSSNETWORK_GATEWAY_REQUIRED="true"
@@ -198,6 +202,11 @@ while [[ $# -gt 0 ]]; do
       ISTIO_TAG="$2"
       shift;shift
       ;;
+    -kcrcs|--kiali-create-remote-cluster-secrets)
+      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--kiali-create-remote-cluster-secrets must be 'true' or 'false'" && exit 1
+      KIALI_CREATE_REMOTE_CLUSTER_SECRETS="$2"
+      shift;shift
+      ;;
     -ke|--kiali-enabled)
       [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--kiali-enabled must be 'true' or 'false'" && exit 1
       KIALI_ENABLED="$2"
@@ -297,6 +306,7 @@ Valid command line arguments:
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
   -it|--istio-tag <tag>: If you want to override the image tag used by istioctl, set this to the tag name.
+  -kcrcs|--kiali-create-remote-cluster-secrets <bool>: Create remote cluster secrets for kiali remote cluster access.
   -ke|--kiali-enabled <bool>: If "true" the latest release of Kiali will be installed in both clusters. If you want
                               a different version of Kiali installed, you must set this to "false" and install it yourself.
                               (Default: true)
@@ -448,6 +458,12 @@ if [ -z "${NETWORK2_ID}" ]; then
   NETWORK2_ID="${NETWORK1_ID}"
 fi
 
+# If not told explicitly to create remote cluster secrets, only do so if SINGLE_KIALI is true.
+# We want the secrets by default if only installing one Kiali since presumably it needs access to the remote cluster.
+if [ -z "${KIALI_CREATE_REMOTE_CLUSTER_SECRETS}" ]; then
+  KIALI_CREATE_REMOTE_CLUSTER_SECRETS="${SINGLE_KIALI}"
+fi
+
 # Export all variables so child scripts pick them up
 export BOOKINFO_ENABLED \
        BOOKINFO_NAMESPACE \
@@ -466,6 +482,7 @@ export BOOKINFO_ENABLED \
        ISTIO_DIR \
        ISTIO_NAMESPACE \
        ISTIO_TAG \
+       KIALI_CREATE_REMOTE_CLUSTER_SECRETS \
        KIALI_ENABLED \
        KIALI_USE_DEV_IMAGE \
        MANAGE_KIND \
@@ -499,6 +516,7 @@ IS_OPENSHIFT=$IS_OPENSHIFT
 ISTIO_DIR=$ISTIO_DIR
 ISTIO_NAMESPACE=$ISTIO_NAMESPACE
 ISTIO_TAG=$ISTIO_TAG
+KIALI_CREATE_REMOTE_CLUSTER_SECRETS=$KIALI_CREATE_REMOTE_CLUSTER_SECRETS
 KIALI_ENABLED=$KIALI_ENABLED
 KIALI_USE_DEV_IMAGE=$KIALI_USE_DEV_IMAGE
 KIALI1_WEB_FQDN=$KIALI1_WEB_FQDN

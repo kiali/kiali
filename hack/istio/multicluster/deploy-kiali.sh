@@ -62,9 +62,15 @@ deploy_kiali() {
   ${CLIENT_EXE} create secret generic kiali --from-literal="oidc-secret=kube-client-secret" -n istio-system
   ${CLIENT_EXE} create clusterrolebinding kiali-user-viewer --clusterrole=kiali-viewer --user=oidc:kiali
 
-  if [ "${SINGLE_KIALI}" == "true" ]; then
-    echo "Preparing remote cluster secret for single Kiali install in multicluster mode."
-    ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh -c ${CLIENT_EXE} -kcc ${CLUSTER1_CONTEXT} -rcc ${CLUSTER2_CONTEXT} -vo false
+  if [ "${KIALI_CREATE_REMOTE_CLUSTER_SECRETS}" == "true" ]; then
+    if [ "${SINGLE_KIALI}" == "true" ]; then
+      echo "Preparing remote cluster secret for single Kiali install in multicluster mode."
+      ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh -c ${CLIENT_EXE} -kcc ${CLUSTER1_CONTEXT} -rcc ${CLUSTER2_CONTEXT} -vo false
+    else
+      echo "Preparing remote cluster secrets for both Kiali installs."
+      ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh -c ${CLIENT_EXE} -kcc ${CLUSTER1_CONTEXT} -rcc ${CLUSTER2_CONTEXT} -vo false
+      ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh -c ${CLIENT_EXE} -kcc ${CLUSTER2_CONTEXT} -rcc ${CLUSTER1_CONTEXT} -vo false
+    fi
   fi
 
   # use the latest published server helm chart (if using dev images, it is up to the user to make sure this chart works with the dev image)
@@ -75,6 +81,7 @@ deploy_kiali() {
     --set auth.strategy="openid"                  \
     --set auth.openid.client_id="kube"            \
     --set auth.openid.issuer_uri="https://${kube_hostname}/realms/kube" \
+    --set auth.openid.insecure_skip_verify_tls="true" \
     --set deployment.logger.log_level="debug"     \
     --set deployment.ingress.enabled="true"       \
     --repo https://kiali.org/helm-charts          \
