@@ -165,6 +165,7 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
   onAddRemoveTrafficPolicies = (): void => {
     const op = this.props.opTarget;
     const ns = this.props.nsTarget;
+    const cluster = this.props.nsInfo?.cluster;
     const duration = this.props.duration;
     const apsP = this.state.authorizationPolicies;
     const sdsP = this.state.sidecars;
@@ -173,8 +174,8 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
         .registerAll(
           'trafficPoliciesDelete',
           apsP
-            .map(ap => API.deleteIstioConfigDetail(ns, 'authorizationpolicies', ap.metadata.name))
-            .concat(sdsP.map(sc => API.deleteIstioConfigDetail(ns, 'sidecars', sc.metadata.name)))
+            .map(ap => API.deleteIstioConfigDetail(ns, 'authorizationpolicies', ap.metadata.name, cluster))
+            .concat(sdsP.map(sc => API.deleteIstioConfigDetail(ns, 'sidecars', sc.metadata.name, cluster)))
         )
         .then(_ => {
           //Error here
@@ -200,7 +201,8 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
     duration: DurationInSeconds,
     aps: AuthorizationPolicy[],
     sds: Sidecar[],
-    op: string = 'create'
+    op: string = 'create',
+    cluster?: string
   ) => {
     const graphDataSource = new GraphDataSource();
     graphDataSource.on('fetchSuccess', () => {
@@ -208,8 +210,8 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
         .registerAll(
           'trafficPoliciesCreate',
           aps
-            .map(ap => API.createIstioConfigDetail(ns, 'authorizationpolicies', JSON.stringify(ap)))
-            .concat(sds.map(sc => API.createIstioConfigDetail(ns, 'sidecars', JSON.stringify(sc))))
+            .map(ap => API.createIstioConfigDetail(ns, 'authorizationpolicies', JSON.stringify(ap), cluster))
+            .concat(sds.map(sc => API.createIstioConfigDetail(ns, 'sidecars', JSON.stringify(sc), cluster)))
         )
         .then(results => {
           if (results.length > 0) {
