@@ -67,7 +67,7 @@ done
 
 # Then get the IP
 MINIKUBE_IP_DASHED=$(minikube ip -p "${CLUSTER1_NAME}" | sed 's/\./-/g')
-KUBE_HOSTNAME="keycloak-${MINIKUBE_IP_DASHED}.nip.io"
+KEYCLOAK_HOSTNAME="keycloak-${MINIKUBE_IP_DASHED}.nip.io"
 
 # Now generate the oidc server cert from the root CA
 cat <<EOF > "${KEYCLOAK_CERTS_DIR}"/req.cnf
@@ -83,7 +83,7 @@ keyUsage = nonRepudiation, digitalSignature, keyEncipherment
 subjectAltName = @alt_names
 
 [alt_names]
-DNS.1 = ${KUBE_HOSTNAME}
+DNS.1 = ${KEYCLOAK_HOSTNAME}
 EOF
 
 # generate private key
@@ -92,7 +92,7 @@ openssl genrsa -out "${KEYCLOAK_CERTS_DIR}"/key.pem 2048
 # create certificate signing request
 openssl req -new -key "${KEYCLOAK_CERTS_DIR}"/key.pem -out "${KEYCLOAK_CERTS_DIR}"/csr.pem \
   -subj "/CN=kube-ca" \
-  -addext "subjectAltName = DNS:${KUBE_HOSTNAME}" \
+  -addext "subjectAltName = DNS:${KEYCLOAK_HOSTNAME}" \
   -sha256 -config "${KEYCLOAK_CERTS_DIR}"/req.cnf
 
 # create certificate
@@ -104,7 +104,7 @@ openssl x509 -req -in "${KEYCLOAK_CERTS_DIR}"/csr.pem \
 # Restart with kubernetes
 minikube stop -p "${CLUSTER1_NAME}"
 echo "==== START MINIKUBE FOR CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
-start_minikube "${CLUSTER1_NAME}" "70-84" "--extra-config=apiserver.oidc-issuer-url=https://${KUBE_HOSTNAME}/realms/kube --extra-config=apiserver.oidc-ca-file=${MINIKUBE_KEYCLOAK_CERTS_DIR}/root-ca.pem --extra-config=apiserver.oidc-client-id=kube --extra-config=apiserver.oidc-groups-claim=groups --extra-config=apiserver.oidc-username-prefix=oidc: --extra-config=apiserver.oidc-groups-prefix=oidc: --extra-config=apiserver.oidc-username-claim=preferred_username"
+start_minikube "${CLUSTER1_NAME}" "70-84" "--extra-config=apiserver.oidc-issuer-url=https://${KEYCLOAK_HOSTNAME}/realms/kube --extra-config=apiserver.oidc-ca-file=${MINIKUBE_KEYCLOAK_CERTS_DIR}/root-ca.pem --extra-config=apiserver.oidc-client-id=kube --extra-config=apiserver.oidc-groups-claim=groups --extra-config=apiserver.oidc-username-prefix=oidc: --extra-config=apiserver.oidc-groups-prefix=oidc: --extra-config=apiserver.oidc-username-claim=preferred_username"
 
 # Wait for ingress to become ready before deploying keycloak since keycloak relies on it.
 ${CLIENT_EXE} rollout status deployment/ingress-nginx-controller -n ingress-nginx
@@ -122,13 +122,13 @@ auth:
 proxyAddressForwarding: true
 ingress:
   enabled: true
-  hostname: ${KUBE_HOSTNAME}
+  hostname: ${KEYCLOAK_HOSTNAME}
   annotations:
     kubernetes.io/ingress.class: nginx
   tls: true
   extraTls:
   - hosts:
-    - ${KUBE_HOSTNAME}
+    - ${KEYCLOAK_HOSTNAME}
     secretName: keycloak.kind.cluster-tls
 postgresql:
   enabled: true
@@ -140,24 +140,10 @@ ${CLIENT_EXE} create secret tls -n keycloak keycloak.kind.cluster-tls \
   --cert="${KEYCLOAK_CERTS_DIR}"/cert.pem \
   --key="${KEYCLOAK_CERTS_DIR}"/key.pem
 
-# Give the ingress some time to be ready
-# ${CLIENT_EXE} wait ingress/keycloak -n keycloak --context east --for=jsonpath='{.status.loadBalancer.ingress[*].hostname}'=localhost
-sleep 20
+# Before proceeding with the rest of the keycloak setup, we need to start the second cluster so that we can get the IP
+# and add it to the redirect URI of the kube client in keycloak.
 
-# Get a token from keycloak to use the admin api
-TOKEN_KEY=$(curl -k -X POST https://"${KUBE_HOSTNAME}"/realms/master/protocol/openid-connect/token \
-            -d grant_type=password \
-            -d client_id=admin-cli \
-            -d username=admin \
-            -d password=admin \
-            -d scope=openid \
-            -d response_type=id_token | jq -r '.access_token')
-
-# Replace the redirect URI with the minikube ip. Create the realm.
-sed "s/_KIALI_KUBE_HOSTNAME/$(minikube ip -p "${CLUSTER1_NAME}")/g" "${SCRIPT_DIR}"/realm-export-template.json | curl -k -L https://"${KUBE_HOSTNAME}"/admin/realms -H "Authorization: Bearer $TOKEN_KEY" -H "Content-Type: application/json" -X POST -d @-
-
-# Create the kiali user
-curl -k -L https://"${KUBE_HOSTNAME}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d '{"username": "kiali", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}]}' -H 'Content-Type: application/json'
+CLUSTER1_IP=$(minikube ip -p "${CLUSTER1_NAME}")
 
 # Now start the west cluster, copy over certs, restart with certs and options.
 # First start a minikube cluster without kubernetes to both copy over the certs and get the IP
@@ -172,7 +158,27 @@ do
   minikube cp "${f}" "${MINIKUBE_KEYCLOAK_CERTS_DIR}/$(basename "${f}")" -p "${CLUSTER2_NAME}"
 done
 
+CLUSTER2_IP=$(minikube ip -p "${CLUSTER2_NAME}")
+
+# Give the ingress some time to be ready
+${CLIENT_EXE} wait ingress/keycloak -n keycloak --context "${CLUSTER1_CONTEXT}" --for=jsonpath='{.status.loadBalancer.ingress[*].ip}'="${CLUSTER1_IP}"
+
+# Get a token from keycloak to use the admin api
+TOKEN_KEY=$(curl -k -X POST https://"${KEYCLOAK_HOSTNAME}"/realms/master/protocol/openid-connect/token \
+            -d grant_type=password \
+            -d client_id=admin-cli \
+            -d username=admin \
+            -d password=admin \
+            -d scope=openid \
+            -d response_type=id_token | jq -r '.access_token')
+
+# Replace the redirect URI with the minikube ip. Create the realm.
+jq ".clients[] |= if .clientId == \"kube\" then .redirectUris = [\"https://${CLUSTER1_IP}/kiali/*\", \"https://${CLUSTER2_IP}/kiali/*\"] else . end" < "${SCRIPT_DIR}"/realm-export-template.json | curl -k -L https://"${KEYCLOAK_HOSTNAME}"/admin/realms -H "Authorization: Bearer $TOKEN_KEY" -H "Content-Type: application/json" -X POST -d @-
+
+# Create the kiali user
+curl -k -L https://"${KEYCLOAK_HOSTNAME}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d '{"username": "kiali", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}]}' -H 'Content-Type: application/json'
+
 # Restart with kubernetes
 minikube stop -p "${CLUSTER2_NAME}"
 echo "==== START MINIKUBE FOR CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
-start_minikube "${CLUSTER2_NAME}" "85-98" "--network=mk-${CLUSTER1_NAME} --extra-config=apiserver.oidc-issuer-url=https://${KUBE_HOSTNAME}/realms/kube --extra-config=apiserver.oidc-ca-file=${MINIKUBE_KEYCLOAK_CERTS_DIR}/root-ca.pem --extra-config=apiserver.oidc-client-id=kube --extra-config=apiserver.oidc-groups-claim=groups --extra-config=apiserver.oidc-username-prefix=oidc: --extra-config=apiserver.oidc-groups-prefix=oidc: --extra-config=apiserver.oidc-username-claim=preferred_username"
+start_minikube "${CLUSTER2_NAME}" "85-98" "--network=mk-${CLUSTER1_NAME} --extra-config=apiserver.oidc-issuer-url=https://${KEYCLOAK_HOSTNAME}/realms/kube --extra-config=apiserver.oidc-ca-file=${MINIKUBE_KEYCLOAK_CERTS_DIR}/root-ca.pem --extra-config=apiserver.oidc-client-id=kube --extra-config=apiserver.oidc-groups-claim=groups --extra-config=apiserver.oidc-username-prefix=oidc: --extra-config=apiserver.oidc-groups-prefix=oidc: --extra-config=apiserver.oidc-username-claim=preferred_username"
