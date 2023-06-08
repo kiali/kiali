@@ -8,12 +8,12 @@
         "data": {
           "id": "bc5b79fec012cfbc67b972036c8f867f",
           "nodeType": "app",
-          "cluster": "unknown",
+          "cluster": "east",
           "namespace": "bankapp",
           "app": "deposit",
           "destServices": [
             {
-              "cluster": "unknown",
+              "cluster": "east",
               "namespace": "bankapp",
               "name": "deposit"
             }
@@ -35,12 +35,12 @@
         "data": {
           "id": "4e958835e3486518a0acc09297780511",
           "nodeType": "app",
-          "cluster": "unknown",
+          "cluster": "east",
           "namespace": "bankapp",
           "app": "pricing",
           "destServices": [
             {
-              "cluster": "unknown",
+              "cluster": "east",
               "namespace": "bankapp",
               "name": "pricing"
             }
@@ -62,7 +62,7 @@
         "data": {
           "id": "b94359ba714ee15770e25d49d16b48bd",
           "nodeType": "workload",
-          "cluster": "unknown",
+          "cluster": "east",
           "namespace": "bookinfo",
           "workload": "kiali-2412",
           "traffic": [
@@ -80,12 +80,12 @@
         "data": {
           "id": "7cfbf9099e17c55901bf2f60a799c9d6",
           "nodeType": "app",
-          "cluster": "unknown",
+          "cluster": "east",
           "namespace": "bookinfo",
           "app": "details",
           "destServices": [
             {
-              "cluster": "unknown",
+              "cluster": "east",
               "namespace": "bookinfo",
               "name": "details"
             }
@@ -108,12 +108,12 @@
         "data": {
           "id": "3be4b9f5a87d64357e9b54f0b94a5cde",
           "nodeType": "app",
-          "cluster": "unknown",
+          "cluster": "east",
           "namespace": "bookinfo",
           "app": "productpage",
           "destServices": [
             {
-              "cluster": "unknown",
+              "cluster": "east",
               "namespace": "bookinfo",
               "name": "productpage"
             }
@@ -140,12 +140,12 @@
         "data": {
           "id": "ade778da2388a16e1417504fcb442c63",
           "nodeType": "app",
-          "cluster": "unknown",
+          "cluster": "east",
           "namespace": "bookinfo",
           "app": "ratings",
           "destServices": [
             {
-              "cluster": "unknown",
+              "cluster": "east",
               "namespace": "bookinfo",
               "name": "ratings"
             }
@@ -166,12 +166,12 @@
         "data": {
           "id": "972d1587fe96aaaa64d0207c1401ae27",
           "nodeType": "app",
-          "cluster": "unknown",
+          "cluster": "east",
           "namespace": "bookinfo",
           "app": "reviews",
           "destServices": [
             {
-              "cluster": "unknown",
+              "cluster": "east",
               "namespace": "bookinfo",
               "name": "reviews"
             }
@@ -198,12 +198,12 @@
         "data": {
           "id": "dd3bd1e097c5e644137e4b816e3037a6",
           "nodeType": "app",
-          "cluster": "unknown",
+          "cluster": "east",
           "namespace": "bookinfo",
           "app": "tcp",
           "destServices": [
             {
-              "cluster": "unknown",
+              "cluster": "east",
               "namespace": "bookinfo",
               "name": "tcp"
             }
@@ -223,7 +223,7 @@
         "data": {
           "id": "f00f54a2f51e81b86ac6d6ebb483470b",
           "nodeType": "app",
-          "cluster": "unknown",
+          "cluster": "east",
           "namespace": "istio-system",
           "app": "ingressgateway",
           "traffic": [
@@ -250,7 +250,7 @@
         "data": {
           "id": "c806ddbb86ea4bb8a9c7c8b6be3ce196",
           "nodeType": "service",
-          "cluster": "unknown",
+          "cluster": "east",
           "namespace": "unknown",
           "service": "unknown",
           "traffic": [
@@ -270,7 +270,7 @@
         "data": {
           "id": "375ab940b56ae7bcf0f89cb1a7af5d44",
           "nodeType": "unknown",
-          "cluster": "unknown",
+          "cluster": "east",
           "namespace": "unknown",
           "workload": "unknown",
           "app": "unknown",
