@@ -89,85 +89,28 @@ func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K
 	return client, api, k8s, nil
 }
 
-func setupMockedWithIstioComponentNamespaces(meshId string, userClients map[string]kubernetes.ClientInterface) (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K8SClientMock, error) {
+func setupMockedWithIstioComponentNamespaces(meshId string, userClients map[string]kubernetes.ClientInterface) (*prometheus.Client, *prometheustest.PromAPIMock, error) {
 	testConfig := config.NewConfig()
 	testConfig.KubernetesConfig.CacheEnabled = false
-	testConfig.KubernetesConfig.ClusterName = "unknown"
 	if meshId != "" {
 		testConfig.ExternalServices.Prometheus.QueryScope = map[string]string{"mesh_id": meshId}
 	}
 	config.Set(testConfig)
-	k8s := new(kubetest.K8SClientMock)
-
 	fmt.Println("!!! Set up complex mock")
-	k8s.On("GetNamespaces", mock.AnythingOfType("string")).Return(
-		&core_v1.NamespaceList{
-			Items: []core_v1.Namespace{
-				{
-					ObjectMeta: meta_v1.ObjectMeta{
-						Name: "bookinfo",
-					},
-				},
-				{
-					ObjectMeta: meta_v1.ObjectMeta{
-						Name: "tutorial",
-					},
-				},
-				{
-					ObjectMeta: meta_v1.ObjectMeta{
-						Name: "istio-system",
-					},
-				},
-				{
-					ObjectMeta: meta_v1.ObjectMeta{
-						Name: "istio-telemetry",
-					},
-				},
-			},
-		}, nil)
-
-	k8s.On("GetProjects", mock.AnythingOfType("string")).Return(
-		[]osproject_v1.Project{
-			{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Name: "bookinfo",
-				},
-			},
-			{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Name: "tutorial",
-				},
-			},
-			{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Name: "istio-system",
-				},
-			},
-			{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Name: "istio-telemetry",
-				},
-			},
-		}, nil)
-
-	k8s.On("IsOpenShift").Return(true)
-	k8s.On("IsGatewayAPI").Return(false)
 
 	api := new(prometheustest.PromAPIMock)
 	client, err := prometheus.NewClient()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 	client.Inject(api)
 
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	if len(userClients) > 0 {
-		mockClientFactory.SetClients(userClients)
-	}
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(nil)
+	mockClientFactory.SetClients(userClients)
 
 	business.SetWithBackends(mockClientFactory, nil)
 
-	return client, api, k8s, nil
+	return client, api, nil
 }
 
 func mockQuery(api *prometheustest.PromAPIMock, query string, ret *model.Vector) {
@@ -1093,6 +1036,8 @@ func mockNamespaceRatesGraph(t *testing.T) (*prometheus.Client, *prometheustest.
 		"source_workload":                "ingressgateway-unknown",
 		"source_canonical_service":       "ingressgateway",
 		"source_canonical_revision":      "latest",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "tcp:9080",
 		"destination_service_name":       "tcp",
@@ -1107,6 +1052,8 @@ func mockNamespaceRatesGraph(t *testing.T) (*prometheus.Client, *prometheustest.
 		"source_workload":                "unknown",
 		"source_canonical_service":       "unknown",
 		"source_canonical_revision":      "unknown",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "tcp:9080",
 		"destination_service_name":       "tcp",
@@ -1121,6 +1068,8 @@ func mockNamespaceRatesGraph(t *testing.T) (*prometheus.Client, *prometheustest.
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "tcp:9080",
 		"destination_service_name":       "tcp",
@@ -1151,6 +1100,8 @@ func mockNamespaceRatesGraph(t *testing.T) (*prometheus.Client, *prometheustest.
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "tcp:9080",
 		"destination_service_name":       "tcp",
@@ -1179,6 +1130,8 @@ func mockNamespaceRatesGraph(t *testing.T) (*prometheus.Client, *prometheustest.
 		"source_workload":                "reviews-v3",
 		"source_canonical_service":       "reviews",
 		"source_canonical_revision":      "v3",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bankapp",
 		"destination_service":            "deposit:9080",
 		"destination_service_name":       "deposit",
@@ -1206,6 +1159,8 @@ func mockNamespaceRatesGraph(t *testing.T) (*prometheus.Client, *prometheustest.
 		"source_workload":                "reviews-v3",
 		"source_canonical_service":       "reviews",
 		"source_canonical_revision":      "v3",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bankapp",
 		"destination_service":            "deposit:9080",
 		"destination_service_name":       "deposit",
@@ -1246,6 +1201,40 @@ func respond(w http.ResponseWriter, code int, payload interface{}) {
 	_, _ = w.Write(response)
 }
 
+// Helper method that tests the objects are equal and if they aren't will
+// unmarshal them into a json object and diff them. This way the output of the failure
+// is actually useful. Otherwise printing the byte slice results in completely incomprehensible output.
+func assertObjectsEqual(t *testing.T, expected, actual []byte) {
+	if !assert.ObjectsAreEqual(expected, actual) {
+		t.Log("Actual response does not equal expected golden copy. If you've updated the golden copy, ensure it ends with a newline.")
+		t.Fail()
+
+		var (
+			ev any
+			av any
+		)
+		err := func() error {
+			if err := json.Unmarshal(expected, &ev); err != nil {
+				t.Logf("Failed to unmarshal expected value: %s", err)
+				return err
+			}
+
+			if err := json.Unmarshal(actual, &av); err != nil {
+				t.Logf("Failed to unmarshal actual value: %s", err)
+				return err
+			}
+
+			return nil
+		}()
+		if err != nil {
+			t.Logf("Failed to unmarshal expected or actual value. Falling back to string comparison.\nExpected: %s\nActual: %s", string(expected), string(actual))
+			return
+		}
+
+		t.Logf("Diff: %s", cmp.Diff(ev, av))
+	}
+}
+
 func TestAppGraph(t *testing.T) {
 	client, _, err := mockNamespaceGraph(t)
 	if err != nil {
@@ -1279,20 +1268,7 @@ func TestAppGraph(t *testing.T) {
 	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
-	// assert.Equalf()
-	// Printing the actual values here results in completely incomprehensible output
-	// so compare first and then if they are not equal, fail the test and unmarshal them
-	// into something useful to diff.
-	if !assert.ObjectsAreEqual(expected, actual) {
-		t.Log("Actual response does not equal expected golden copy.")
-		t.Fail()
-		var ev any
-		json.Unmarshal(expected, &ev)
-		var av any
-		json.Unmarshal(actual, &av)
-		t.Logf("Diff: %s", cmp.Diff(ev, av))
-	}
-
+	assertObjectsEqual(t, expected, actual)
 	assert.Equal(t, 200, resp.StatusCode)
 }
 
@@ -1329,9 +1305,7 @@ func TestVersionedAppGraph(t *testing.T) {
 	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
-	if !assert.Equal(t, expected, actual) {
-		fmt.Printf("\nActual:\n%v", string(actual))
-	}
+	assertObjectsEqual(t, expected, actual)
 	assert.Equal(t, 200, resp.StatusCode)
 }
 
@@ -1362,15 +1336,14 @@ func TestServiceGraph(t *testing.T) {
 		t.Fatal(err)
 	}
 	actual, _ := io.ReadAll(resp.Body)
+	// os.WriteFile("testdata/test_.actual", actual, 0o644)
 	expected, _ := os.ReadFile("testdata/test_service_graph.expected")
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
 	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
-	if !assert.Equal(t, expected, actual) {
-		fmt.Printf("\nActual:\n%v", string(actual))
-	}
+	assertObjectsEqual(t, expected, actual)
 	assert.Equal(t, 200, resp.StatusCode)
 }
 
@@ -1407,9 +1380,7 @@ func TestWorkloadGraph(t *testing.T) {
 	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
-	if !assert.Equal(t, expected, actual) {
-		fmt.Printf("\nActual:\n%v", string(actual))
-	}
+	assertObjectsEqual(t, expected, actual)
 	assert.Equal(t, 200, resp.StatusCode)
 }
 
@@ -1446,9 +1417,7 @@ func TestRatesGraphSent(t *testing.T) {
 	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
-	if !assert.Equal(t, expected, actual) {
-		fmt.Printf("\nActual:\n%v", string(actual))
-	}
+	assertObjectsEqual(t, expected, actual)
 	assert.Equal(t, 200, resp.StatusCode)
 }
 
@@ -1485,9 +1454,7 @@ func TestRatesGraphReceived(t *testing.T) {
 	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
-	if !assert.Equal(t, expected, actual) {
-		fmt.Printf("\nActual:\n%v", string(actual))
-	}
+	assertObjectsEqual(t, expected, actual)
 	assert.Equal(t, 200, resp.StatusCode)
 }
 
@@ -1524,9 +1491,7 @@ func TestRatesGraphTotal(t *testing.T) {
 	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
-	if !assert.Equal(t, expected, actual) {
-		fmt.Printf("\nActual:\n%v", string(actual))
-	}
+	assertObjectsEqual(t, expected, actual)
 	assert.Equal(t, 200, resp.StatusCode)
 }
 
@@ -1563,9 +1528,7 @@ func TestRatesGraphNone(t *testing.T) {
 	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
-	if !assert.Equal(t, expected, actual) {
-		fmt.Printf("\nActual:\n%v", string(actual))
-	}
+	assertObjectsEqual(t, expected, actual)
 	assert.Equal(t, 200, resp.StatusCode)
 }
 
@@ -1576,6 +1539,8 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"source_workload":                "unknown",
 		"source_canonical_service":       "unknown",
 		"source_canonical_revision":      "unknown",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "productpage:9080",
 		"destination_service_name":       "productpage",
@@ -1593,6 +1558,8 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"source_workload":                "ingressgateway-unknown",
 		"source_canonical_service":       "ingressgateway",
 		"source_canonical_revision":      "latest",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "productpage:9080",
 		"destination_service_name":       "productpage",
@@ -1622,6 +1589,8 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews:9080",
 		"destination_service_name":       "reviews",
@@ -1639,6 +1608,8 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews:9080",
 		"destination_service_name":       "reviews",
@@ -1656,6 +1627,8 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews:9080",
 		"destination_service_name":       "reviews",
@@ -1673,6 +1646,8 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "details:9080",
 		"destination_service_name":       "details",
@@ -1689,6 +1664,8 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "details:9080",
 		"destination_service_name":       "details",
@@ -1705,6 +1682,8 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "details:9080",
 		"destination_service_name":       "details",
@@ -1721,6 +1700,8 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "details:9080",
 		"destination_service_name":       "details",
@@ -1738,6 +1719,8 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "productpage:9080",
 		"destination_service_name":       "productpage",
@@ -1755,6 +1738,8 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "unknown",
 		"destination_service":            "unknown",
 		"destination_service_name":       "unknown",
@@ -1814,6 +1799,8 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "tcp:9080",
 		"destination_service_name":       "tcp",
@@ -1866,9 +1853,7 @@ func TestWorkloadNodeGraph(t *testing.T) {
 	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
-	if !assert.Equal(t, expected, actual) {
-		fmt.Printf("\nActual:\n%v", string(actual))
-	}
+	assertObjectsEqual(t, expected, actual)
 	assert.Equal(t, 200, resp.StatusCode)
 }
 
@@ -1879,6 +1864,8 @@ func TestAppNodeGraph(t *testing.T) {
 		"source_workload":                "unknown",
 		"source_canonical_service":       "unknown",
 		"source_canonical_revision":      "unknown",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "productpage:9080",
 		"destination_service_name":       "productpage",
@@ -1896,6 +1883,8 @@ func TestAppNodeGraph(t *testing.T) {
 		"source_workload":                "ingressgateway-unknown",
 		"source_canonical_service":       "ingressgateway",
 		"source_canonical_revision":      "latest",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "productpage:9080",
 		"destination_service_name":       "productpage",
@@ -1925,6 +1914,8 @@ func TestAppNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews:9080",
 		"destination_service_name":       "reviews",
@@ -1942,6 +1933,8 @@ func TestAppNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews:9080",
 		"destination_service_name":       "reviews",
@@ -1959,6 +1952,8 @@ func TestAppNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews:9080",
 		"destination_service_name":       "reviews",
@@ -1976,6 +1971,8 @@ func TestAppNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "details:9080",
 		"destination_service_name":       "details",
@@ -1992,6 +1989,8 @@ func TestAppNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "details:9080",
 		"destination_service_name":       "details",
@@ -2008,6 +2007,8 @@ func TestAppNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "details:9080",
 		"destination_service_name":       "details",
@@ -2024,6 +2025,8 @@ func TestAppNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "details:9080",
 		"destination_service_name":       "details",
@@ -2041,6 +2044,8 @@ func TestAppNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "productpage:9080",
 		"destination_service_name":       "productpage",
@@ -2058,6 +2063,8 @@ func TestAppNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "unknown",
 		"destination_service":            "unknown",
 		"destination_service_name":       "unknown",
@@ -2117,6 +2124,8 @@ func TestAppNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "tcp:9080",
 		"destination_service_name":       "tcp",
@@ -2169,9 +2178,7 @@ func TestAppNodeGraph(t *testing.T) {
 	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
-	if !assert.Equal(t, expected, actual) {
-		fmt.Printf("\nActual:\n%v", string(actual))
-	}
+	assertObjectsEqual(t, expected, actual)
 	assert.Equal(t, 200, resp.StatusCode)
 }
 
@@ -2182,6 +2189,8 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		"source_workload":                "unknown",
 		"source_canonical_service":       "unknown",
 		"source_canonical_revision":      "unknown",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "productpage:9080",
 		"destination_service_name":       "productpage",
@@ -2199,6 +2208,8 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		"source_workload":                "ingressgateway-unknown",
 		"source_canonical_service":       "ingressgateway",
 		"source_canonical_revision":      "latest",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "productpage:9080",
 		"destination_service_name":       "productpage",
@@ -2228,6 +2239,8 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews:9080",
 		"destination_service_name":       "reviews",
@@ -2245,6 +2258,8 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews:9080",
 		"destination_service_name":       "reviews",
@@ -2262,6 +2277,8 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews:9080",
 		"destination_service_name":       "reviews",
@@ -2279,6 +2296,8 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "details:9080",
 		"destination_service_name":       "details",
@@ -2295,6 +2314,8 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "details:9080",
 		"destination_service_name":       "details",
@@ -2311,6 +2332,8 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "details:9080",
 		"destination_service_name":       "details",
@@ -2327,6 +2350,8 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "details:9080",
 		"destination_service_name":       "details",
@@ -2344,6 +2369,8 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "productpage:9080",
 		"destination_service_name":       "productpage",
@@ -2361,6 +2388,8 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "unknown",
 		"destination_service":            "unknown",
 		"destination_service_name":       "unknown",
@@ -2420,6 +2449,8 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "tcp:9080",
 		"destination_service_name":       "tcp",
@@ -2472,9 +2503,7 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
-	if !assert.Equal(t, expected, actual) {
-		fmt.Printf("\nActual:\n%v", string(actual))
-	}
+	assertObjectsEqual(t, expected, actual)
 	assert.Equal(t, 200, resp.StatusCode)
 }
 
@@ -2488,6 +2517,8 @@ func TestServiceNodeGraph(t *testing.T) {
 		"source_workload":                "ingressgateway-unknown",
 		"source_canonical_service":       "ingressgateway",
 		"source_canonical_revision":      "latest",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "productpage:9080",
 		"destination_service_name":       "productpage",
@@ -2513,6 +2544,8 @@ func TestServiceNodeGraph(t *testing.T) {
 		"source_workload":                "ingressgateway-unknown",
 		"source_canonical_service":       "ingressgateway",
 		"source_canonical_revision":      "latest",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "productpage:9080",
 		"destination_service_name":       "productpage",
@@ -2564,9 +2597,7 @@ func TestServiceNodeGraph(t *testing.T) {
 	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
-	if !assert.Equal(t, expected, actual) {
-		fmt.Printf("\nActual:\n%v", string(actual))
-	}
+	assertObjectsEqual(t, expected, actual)
 	assert.Equal(t, 200, resp.StatusCode)
 }
 
@@ -2577,6 +2608,8 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 		"source_workload":                "unknown",
 		"source_canonical_service":       "unknown",
 		"source_canonical_revision":      "unknown",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "productpage:9080",
 		"destination_service_name":       "productpage",
@@ -2594,6 +2627,8 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 		"source_workload":                "ingressgateway-unknown",
 		"source_canonical_service":       "ingressgateway",
 		"source_canonical_revision":      "latest",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "productpage:9080",
 		"destination_service_name":       "productpage",
@@ -2623,6 +2658,8 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews:9080",
 		"destination_service_name":       "reviews",
@@ -2640,6 +2677,8 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews:9080",
 		"destination_service_name":       "reviews",
@@ -2657,6 +2696,8 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews:9080",
 		"destination_service_name":       "reviews",
@@ -2674,6 +2715,8 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "details:9080",
 		"destination_service_name":       "details",
@@ -2690,6 +2733,8 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "details:9080",
 		"destination_service_name":       "details",
@@ -2706,6 +2751,8 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "details:9080",
 		"destination_service_name":       "details",
@@ -2722,6 +2769,8 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "details:9080",
 		"destination_service_name":       "details",
@@ -2739,6 +2788,8 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "productpage:9080",
 		"destination_service_name":       "productpage",
@@ -2756,6 +2807,8 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "unknown",
 		"destination_service":            "unknown",
 		"destination_service_name":       "unknown",
@@ -2772,6 +2825,8 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bankapp",
 		"destination_service":            "deposit:9080",
 		"destination_service_name":       "deposit",
@@ -2836,6 +2891,8 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "tcp:9080",
 		"destination_service_name":       "tcp",
@@ -2861,6 +2918,8 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "tcp:9080",
 		"destination_service_name":       "tcp",
@@ -2886,6 +2945,8 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "tcp:9080",
 		"destination_service_name":       "tcp",
@@ -2911,6 +2972,8 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 		"source_workload":                "productpage-v1",
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
+		"source_cluster":                 "east",
+		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "tcp:9080",
 		"destination_service_name":       "tcp",
@@ -2969,9 +3032,7 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
-	if !assert.Equal(t, expected, actual) {
-		fmt.Printf("\nActual:\n%v", string(actual))
-	}
+	assertObjectsEqual(t, expected, actual)
 	assert.Equal(t, 200, resp.StatusCode)
 }
 
@@ -3459,7 +3520,27 @@ func TestComplexGraph(t *testing.T) {
 	q17 := `round(sum(rate(istio_tcp_sent_bytes_total{mesh_id="mesh1",reporter="source",source_workload_namespace="istio-system"} [600s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags) > 0,0.001)`
 	v17 := model.Vector{}
 
-	client, xapi, _, err := setupMockedWithIstioComponentNamespaces("mesh1", map[string]kubernetes.ClientInterface{})
+	clients := map[string]kubernetes.ClientInterface{
+		"cluster-tutorial": kubetest.NewFakeK8sClient(
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-telemetry"}},
+		),
+		"cluster-cp": kubetest.NewFakeK8sClient(
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-telemetry"}},
+		),
+		"cluster-bookinfo": kubetest.NewFakeK8sClient(
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-telemetry"}},
+		),
+	}
+	client, xapi, err := setupMockedWithIstioComponentNamespaces("mesh1", clients)
 	if err != nil {
 		t.Error(err)
 		return
@@ -3509,9 +3590,7 @@ func TestComplexGraph(t *testing.T) {
 	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
-	if !assert.Equal(t, expected, actual) {
-		fmt.Printf("\nActual:\n%v", string(actual))
-	}
+	assertObjectsEqual(t, expected, actual)
 	assert.Equal(t, 200, resp.StatusCode)
 }
 
@@ -3790,7 +3869,7 @@ func TestMultiClusterSourceGraph(t *testing.T) {
 			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
 		),
 	}
-	client, xapi, _, err := setupMockedWithIstioComponentNamespaces("", clients)
+	client, xapi, err := setupMockedWithIstioComponentNamespaces("", clients)
 	if err != nil {
 		t.Error(err)
 		return
@@ -3829,8 +3908,6 @@ func TestMultiClusterSourceGraph(t *testing.T) {
 	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
-	if !assert.Equal(t, expected, actual) {
-		fmt.Printf("\nActual:\n%v", string(actual))
-	}
+	assertObjectsEqual(t, expected, actual)
 	assert.Equal(t, 200, resp.StatusCode)
 }
