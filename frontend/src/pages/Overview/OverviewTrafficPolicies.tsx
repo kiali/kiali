@@ -180,7 +180,7 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
         .then(_ => {
           //Error here
           if (op !== 'delete') {
-            this.createTrafficPolicies(ns, duration, apsP, sdsP, op);
+            this.createTrafficPolicies(ns, duration, apsP, sdsP, op, cluster);
           } else {
             AlertUtils.add('Traffic policies ' + op + 'd for ' + ns + ' namespace.', 'default', MessageType.SUCCESS);
             this.props.load();
@@ -192,7 +192,7 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
           }
         });
     } else {
-      this.createTrafficPolicies(ns, duration, apsP, sdsP);
+      this.createTrafficPolicies(ns, duration, apsP, sdsP, op, cluster);
     }
   };
 

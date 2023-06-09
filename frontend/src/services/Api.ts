@@ -811,13 +811,15 @@ export const getClusters = () => {
 export function deleteServiceTrafficRouting(
   virtualServices: VirtualService[],
   destinationRules: DestinationRuleC[],
-  k8sHTTPRouteList: K8sHTTPRoute[]
+  k8sHTTPRouteList: K8sHTTPRoute[],
+  cluster?: string
 ): Promise<any>;
 export function deleteServiceTrafficRouting(serviceDetail: ServiceDetailsInfo): Promise<any>;
 export function deleteServiceTrafficRouting(
   vsOrSvc: VirtualService[] | ServiceDetailsInfo,
   destinationRules?: DestinationRuleC[],
-  k8sHTTPRouteList?: K8sHTTPRoute[]
+  k8sHTTPRouteList?: K8sHTTPRoute[],
+  cluster?: string
 ): Promise<any> {
   let vsList: VirtualService[];
   let drList: DestinationRuleC[];
@@ -835,19 +837,25 @@ export function deleteServiceTrafficRouting(
   }
 
   vsList.forEach(vs => {
-    deletePromises.push(deleteIstioConfigDetail(vs.metadata.namespace || '', 'virtualservices', vs.metadata.name));
+    deletePromises.push(
+      deleteIstioConfigDetail(vs.metadata.namespace || '', 'virtualservices', vs.metadata.name, cluster)
+    );
   });
 
   routeList.forEach(k8sr => {
-    deletePromises.push(deleteIstioConfigDetail(k8sr.metadata.namespace || '', 'k8shttproutes', k8sr.metadata.name));
+    deletePromises.push(
+      deleteIstioConfigDetail(k8sr.metadata.namespace || '', 'k8shttproutes', k8sr.metadata.name, cluster)
+    );
   });
 
   drList.forEach(dr => {
-    deletePromises.push(deleteIstioConfigDetail(dr.metadata.namespace || '', 'destinationrules', dr.metadata.name));
+    deletePromises.push(
+      deleteIstioConfigDetail(dr.metadata.namespace || '', 'destinationrules', dr.metadata.name, cluster)
+    );
 
     const paName = dr.hasPeerAuthentication();
     if (!!paName) {
-      deletePromises.push(deleteIstioConfigDetail(dr.metadata.namespace || '', 'peerauthentications', paName));
+      deletePromises.push(deleteIstioConfigDetail(dr.metadata.namespace || '', 'peerauthentications', paName, cluster));
     }
   });
 

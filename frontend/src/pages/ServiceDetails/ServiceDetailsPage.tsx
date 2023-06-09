@@ -242,6 +242,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     const actionsToolbar = this.state.serviceDetails ? (
       <ServiceWizardDropdown
         namespace={this.props.match.params.namespace}
+        cluster={this.state.cluster ? this.state.cluster : ''}
         serviceName={this.state.serviceDetails.service.name}
         annotations={this.state.serviceDetails.service.annotations}
         show={false}

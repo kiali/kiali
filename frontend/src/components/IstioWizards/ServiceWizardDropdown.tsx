@@ -40,6 +40,7 @@ type ReduxProps = {
 
 type Props = ReduxProps & {
   namespace: string;
+  cluster?: string;
   serviceName: string;
   show: boolean;
   readOnly: boolean;
@@ -165,7 +166,8 @@ class ServiceWizardDropdownComponent extends React.Component<Props, State> {
     deleteServiceTrafficRouting(
       this.props.virtualServices,
       DestinationRuleC.fromDrArray(this.props.destinationRules),
-      this.props.k8sHTTPRoutes
+      this.props.k8sHTTPRoutes,
+      this.props.cluster
     )
       .then(_results => {
         this.setState({
@@ -207,7 +209,7 @@ class ServiceWizardDropdownComponent extends React.Component<Props, State> {
 
   onChangeAnnotations = (annotations: { [key: string]: string }) => {
     const jsonInjectionPatch = buildAnnotationPatch(annotations);
-    API.updateService(this.props.namespace, this.props.serviceName, jsonInjectionPatch, 'json')
+    API.updateService(this.props.namespace, this.props.serviceName, jsonInjectionPatch, 'json', this.props.cluster)
       .then(_ => {
         AlertUtils.add('Service ' + this.props.serviceName + ' updated', 'default', MessageType.SUCCESS);
         this.setState(
@@ -268,6 +270,7 @@ class ServiceWizardDropdownComponent extends React.Component<Props, State> {
           type={this.state.wizardType}
           update={this.state.updateWizard}
           namespace={this.props.namespace}
+          cluster={this.props.cluster}
           serviceName={this.props.serviceName}
           workloads={validWorkloads}
           subServices={this.props.subServices}
