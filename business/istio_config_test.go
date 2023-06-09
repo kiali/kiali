@@ -227,7 +227,7 @@ func TestCheckMulticlusterPermissions(t *testing.T) {
 
 	istioConfigDetailsRemote, err := configService.GetIstioConfigDetails(context.TODO(), "east", "test", "gateways", "gw-1")
 	assert.Equal("gw-1", istioConfigDetailsRemote.Gateway.Name)
-	assert.False(istioConfigDetailsRemote.Permissions.Update)
+	assert.True(istioConfigDetailsRemote.Permissions.Update)
 	assert.False(istioConfigDetailsRemote.Permissions.Delete)
 	assert.Nil(err)
 }

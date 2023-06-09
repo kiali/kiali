@@ -252,7 +252,11 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
     const aps = items.filter(i => i.type === 'authorizationPolicy')[0];
     const sds = items.filter(i => i.type === 'sidecar')[0];
     this.setState(
-      { authorizationPolicies: aps.items as AuthorizationPolicy[], sidecars: sds.items as Sidecar[], loaded: false },
+      {
+        authorizationPolicies: aps ? (aps.items as AuthorizationPolicy[]) : [],
+        sidecars: sds ? (sds.items as Sidecar[]) : [],
+        loaded: false
+      },
       () => this.fetchPermission(true, false)
     );
   };

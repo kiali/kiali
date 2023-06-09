@@ -506,14 +506,15 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   }
 
   fetchValidationResultForCluster(namespaces: NamespaceInfo[], cluster: string) {
-    return Promise.all([API.getConfigValidations(cluster), API.getAllIstioConfigs([], [], false, '', '')])
+    return Promise.all([API.getConfigValidations(cluster), API.getAllIstioConfigs([], [], false, '', '', cluster)])
       .then(results => {
         namespaces.forEach(nsInfo => {
           if (nsInfo.cluster && nsInfo.cluster === cluster && results[0].data[nsInfo.cluster]) {
             nsInfo.validations = results[0].data[nsInfo.cluster][nsInfo.name];
           }
-          // TODO: cluster param here when remote cluster config creation supported
-          nsInfo.istioConfig = results[1].data[nsInfo.name];
+          if (nsInfo.cluster && nsInfo.cluster === cluster) {
+            nsInfo.istioConfig = results[1].data[nsInfo.name];
+          }
         });
       })
       .catch(err => this.handleAxiosError('Could not fetch validations status', err));
