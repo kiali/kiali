@@ -6,7 +6,7 @@
     "nodes": [
       {
         "data": {
-          "id": "bc5b79fec012cfbc67b972036c8f867f",
+          "id": "c295ebf2d0930c6f549a795377b38277",
           "nodeType": "app",
           "cluster": "east",
           "namespace": "bankapp",
@@ -33,7 +33,7 @@
       },
       {
         "data": {
-          "id": "4e958835e3486518a0acc09297780511",
+          "id": "6b88461eaea21e34652115bb04d68be1",
           "nodeType": "app",
           "cluster": "east",
           "namespace": "bankapp",
@@ -60,7 +60,7 @@
       },
       {
         "data": {
-          "id": "b94359ba714ee15770e25d49d16b48bd",
+          "id": "266a0fdb50669cdc0414cf40bb2c645a",
           "nodeType": "workload",
           "cluster": "east",
           "namespace": "bookinfo",
@@ -78,7 +78,7 @@
       },
       {
         "data": {
-          "id": "7cfbf9099e17c55901bf2f60a799c9d6",
+          "id": "3a4614f870105cd611fd15f2ae9a5446",
           "nodeType": "app",
           "cluster": "east",
           "namespace": "bookinfo",
@@ -106,7 +106,7 @@
       },
       {
         "data": {
-          "id": "3be4b9f5a87d64357e9b54f0b94a5cde",
+          "id": "458c29db37507df1690523b3653589f0",
           "nodeType": "app",
           "cluster": "east",
           "namespace": "bookinfo",
@@ -138,7 +138,7 @@
       },
       {
         "data": {
-          "id": "ade778da2388a16e1417504fcb442c63",
+          "id": "f06142c0f458ed97beb8d710c692afe2",
           "nodeType": "app",
           "cluster": "east",
           "namespace": "bookinfo",
@@ -164,7 +164,7 @@
       },
       {
         "data": {
-          "id": "972d1587fe96aaaa64d0207c1401ae27",
+          "id": "bcec4cf8d88e968dbb62002883bacac6",
           "nodeType": "app",
           "cluster": "east",
           "namespace": "bookinfo",
@@ -196,7 +196,7 @@
       },
       {
         "data": {
-          "id": "dd3bd1e097c5e644137e4b816e3037a6",
+          "id": "4f522c16fe6f3af4e57ea65e9240ae5e",
           "nodeType": "app",
           "cluster": "east",
           "namespace": "bookinfo",
@@ -221,7 +221,7 @@
       },
       {
         "data": {
-          "id": "f00f54a2f51e81b86ac6d6ebb483470b",
+          "id": "182284ee7435b1da2d0e2b29c637edac",
           "nodeType": "app",
           "cluster": "east",
           "namespace": "istio-system",
@@ -248,7 +248,7 @@
       },
       {
         "data": {
-          "id": "c806ddbb86ea4bb8a9c7c8b6be3ce196",
+          "id": "4719af4daf407366b52bf349679030c3",
           "nodeType": "service",
           "cluster": "east",
           "namespace": "unknown",
@@ -268,7 +268,7 @@
       },
       {
         "data": {
-          "id": "375ab940b56ae7bcf0f89cb1a7af5d44",
+          "id": "82153da3334f62d98eb539d57013cad8",
           "nodeType": "unknown",
           "cluster": "east",
           "namespace": "unknown",
@@ -299,8 +299,8 @@
       {
         "data": {
           "id": "4a3baa4bf69e481dd447a1fc4e3dc197",
-          "source": "375ab940b56ae7bcf0f89cb1a7af5d44",
-          "target": "3be4b9f5a87d64357e9b54f0b94a5cde",
+          "source": "82153da3334f62d98eb539d57013cad8",
+          "target": "458c29db37507df1690523b3653589f0",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -323,8 +323,8 @@
       {
         "data": {
           "id": "806203ba5574f9612c8a187798a2d39c",
-          "source": "375ab940b56ae7bcf0f89cb1a7af5d44",
-          "target": "b94359ba714ee15770e25d49d16b48bd",
+          "source": "82153da3334f62d98eb539d57013cad8",
+          "target": "266a0fdb50669cdc0414cf40bb2c645a",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -344,8 +344,8 @@
       {
         "data": {
           "id": "85546ede28da39778e5444d77e5d69c5",
-          "source": "375ab940b56ae7bcf0f89cb1a7af5d44",
-          "target": "dd3bd1e097c5e644137e4b816e3037a6",
+          "source": "82153da3334f62d98eb539d57013cad8",
+          "target": "4f522c16fe6f3af4e57ea65e9240ae5e",
           "traffic": {
             "protocol": "tcp",
             "rates": {
@@ -367,8 +367,8 @@
       {
         "data": {
           "id": "d9ae8b79c27cd801d592e3a65c481f34",
-          "source": "3be4b9f5a87d64357e9b54f0b94a5cde",
-          "target": "3be4b9f5a87d64357e9b54f0b94a5cde",
+          "source": "458c29db37507df1690523b3653589f0",
+          "target": "458c29db37507df1690523b3653589f0",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -391,8 +391,8 @@
       {
         "data": {
           "id": "ffe01d37d4ecb9e9abba3e30058debe1",
-          "source": "3be4b9f5a87d64357e9b54f0b94a5cde",
-          "target": "7cfbf9099e17c55901bf2f60a799c9d6",
+          "source": "458c29db37507df1690523b3653589f0",
+          "target": "3a4614f870105cd611fd15f2ae9a5446",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -443,8 +443,8 @@
       {
         "data": {
           "id": "8f745f650660645a12579c15d592571e",
-          "source": "3be4b9f5a87d64357e9b54f0b94a5cde",
-          "target": "972d1587fe96aaaa64d0207c1401ae27",
+          "source": "458c29db37507df1690523b3653589f0",
+          "target": "bcec4cf8d88e968dbb62002883bacac6",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -467,8 +467,8 @@
       {
         "data": {
           "id": "7553c207ed4b5f557e59a0e63a66c974",
-          "source": "3be4b9f5a87d64357e9b54f0b94a5cde",
-          "target": "dd3bd1e097c5e644137e4b816e3037a6",
+          "source": "458c29db37507df1690523b3653589f0",
+          "target": "4f522c16fe6f3af4e57ea65e9240ae5e",
           "traffic": {
             "protocol": "tcp",
             "rates": {
@@ -490,8 +490,8 @@
       {
         "data": {
           "id": "76677863610f5dad62508ce1457974be",
-          "source": "972d1587fe96aaaa64d0207c1401ae27",
-          "target": "4e958835e3486518a0acc09297780511",
+          "source": "bcec4cf8d88e968dbb62002883bacac6",
+          "target": "6b88461eaea21e34652115bb04d68be1",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -514,8 +514,8 @@
       {
         "data": {
           "id": "cfaad3aab9836640adbbb5afbf2a4cc1",
-          "source": "972d1587fe96aaaa64d0207c1401ae27",
-          "target": "972d1587fe96aaaa64d0207c1401ae27",
+          "source": "bcec4cf8d88e968dbb62002883bacac6",
+          "target": "bcec4cf8d88e968dbb62002883bacac6",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -538,8 +538,8 @@
       {
         "data": {
           "id": "1bf3eb7dcf83cbbbbd8d7a5e86703a44",
-          "source": "972d1587fe96aaaa64d0207c1401ae27",
-          "target": "ade778da2388a16e1417504fcb442c63",
+          "source": "bcec4cf8d88e968dbb62002883bacac6",
+          "target": "f06142c0f458ed97beb8d710c692afe2",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -572,8 +572,8 @@
       {
         "data": {
           "id": "2a2b210c724ed5addd0de63db0159831",
-          "source": "972d1587fe96aaaa64d0207c1401ae27",
-          "target": "bc5b79fec012cfbc67b972036c8f867f",
+          "source": "bcec4cf8d88e968dbb62002883bacac6",
+          "target": "c295ebf2d0930c6f549a795377b38277",
           "traffic": {
             "protocol": "grpc",
             "rates": {
@@ -596,8 +596,8 @@
       {
         "data": {
           "id": "5abb0a4cd0f9ded6f31372b6c5afd39a",
-          "source": "972d1587fe96aaaa64d0207c1401ae27",
-          "target": "c806ddbb86ea4bb8a9c7c8b6be3ce196",
+          "source": "bcec4cf8d88e968dbb62002883bacac6",
+          "target": "4719af4daf407366b52bf349679030c3",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -622,8 +622,8 @@
       {
         "data": {
           "id": "33ccba733bbc80e8e00bf3667c211386",
-          "source": "f00f54a2f51e81b86ac6d6ebb483470b",
-          "target": "3be4b9f5a87d64357e9b54f0b94a5cde",
+          "source": "182284ee7435b1da2d0e2b29c637edac",
+          "target": "458c29db37507df1690523b3653589f0",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -646,8 +646,8 @@
       {
         "data": {
           "id": "641e06b119ab3e45521f0ed11e9a7704",
-          "source": "f00f54a2f51e81b86ac6d6ebb483470b",
-          "target": "dd3bd1e097c5e644137e4b816e3037a6",
+          "source": "182284ee7435b1da2d0e2b29c637edac",
+          "target": "4f522c16fe6f3af4e57ea65e9240ae5e",
           "traffic": {
             "protocol": "tcp",
             "rates": {

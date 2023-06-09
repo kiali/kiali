@@ -33,10 +33,11 @@ var (
 
 // Proxy specific flags
 var (
-	certFileFlag string
-	dataDirFlag  string
-	httpsFlag    bool
-	keyFileFlag  string
+	certFileFlag     string
+	dataDirFlag      string
+	httpsFlag        bool
+	keyFileFlag      string
+	runGeneratorFlag bool
 )
 
 func init() {
@@ -45,6 +46,7 @@ func init() {
 	flag.StringVar(&dataDirFlag, "data-dir", "", "path to dir where json graph data is.")
 	flag.BoolVar(&httpsFlag, "https", false, "use https. Uses minikube certs by default")
 	flag.StringVar(&keyFileFlag, "key-file", filepath.Join(homeDir, ".minikube/ca.key"), "path to key file for https")
+	flag.BoolVar(&runGeneratorFlag, "run-generator", false, "If enabled, the proxy runs the generator to generate a new graph.")
 
 	// Generate flags
 	flag.BoolVar(&boxFlag, "box", false, "adds boxing to the graph")
