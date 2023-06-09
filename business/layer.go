@@ -185,7 +185,7 @@ func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAC
 	temporaryLayer.TLS = TLSService{userClients: userClients, kialiCache: kialiCache, businessLayer: temporaryLayer}
 	temporaryLayer.Svc = SvcService{config: *config.Get(), kialiCache: kialiCache, businessLayer: temporaryLayer, prom: prom, userClients: userClients}
 	temporaryLayer.TokenReview = NewTokenReview(userClients[homeClusterName])
-	temporaryLayer.Validations = IstioValidationsService{k8s: userClients[homeClusterName], businessLayer: temporaryLayer}
+	temporaryLayer.Validations = IstioValidationsService{userClients: userClients, businessLayer: temporaryLayer}
 	temporaryLayer.Workload = *NewWorkloadService(userClients, prom, kialiCache, temporaryLayer, config.Get())
 
 	registryStatuses := make(map[string]RegistryStatusService)

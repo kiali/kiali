@@ -8,6 +8,7 @@ import (
 )
 
 type SingleHostChecker struct {
+	Cluster         string
 	Namespaces      models.Namespaces
 	VirtualServices []*networking_v1beta1.VirtualService
 }
@@ -36,7 +37,7 @@ func (s SingleHostChecker) Check() models.IstioValidations {
 						//   a host for that namespace
 						if targetSameHost {
 							// Reference everything within serviceCounter
-							multipleVirtualServiceCheck(virtualService, validations, serviceCounter)
+							multipleVirtualServiceCheck(virtualService, validations, serviceCounter, s.Cluster)
 						}
 
 						if isNamespaceWildcard && otherServiceHosts {
@@ -53,7 +54,7 @@ func (s SingleHostChecker) Check() models.IstioValidations {
 								// a or b referencing to *
 								refs = append(refs, namespaceCounter["*"]...)
 							}
-							multipleVirtualServiceCheck(virtualService, validations, refs)
+							multipleVirtualServiceCheck(virtualService, validations, refs, s.Cluster)
 						}
 					}
 				}
@@ -73,9 +74,9 @@ func containsVirtualService(vs *networking_v1beta1.VirtualService, vss []*networ
 	return false
 }
 
-func multipleVirtualServiceCheck(virtualService *networking_v1beta1.VirtualService, validations models.IstioValidations, references []*networking_v1beta1.VirtualService) {
+func multipleVirtualServiceCheck(virtualService *networking_v1beta1.VirtualService, validations models.IstioValidations, references []*networking_v1beta1.VirtualService, cluster string) {
 	virtualServiceName := virtualService.Name
-	key := models.IstioValidationKey{Name: virtualServiceName, Namespace: virtualService.Namespace, ObjectType: "virtualservice"}
+	key := models.IstioValidationKey{Name: virtualServiceName, Namespace: virtualService.Namespace, ObjectType: "virtualservice", Cluster: cluster}
 	checks := models.Build("virtualservices.singlehost", "spec/hosts")
 	rrValidation := &models.IstioValidation{
 		Name:       virtualServiceName,
@@ -88,7 +89,7 @@ func multipleVirtualServiceCheck(virtualService *networking_v1beta1.VirtualServi
 	}
 
 	for _, ref := range references {
-		refKey := models.IstioValidationKey{Name: ref.Name, Namespace: ref.Namespace, ObjectType: "virtualservice"}
+		refKey := models.IstioValidationKey{Name: ref.Name, Namespace: ref.Namespace, ObjectType: "virtualservice", Cluster: cluster}
 		if refKey != key {
 			rrValidation.References = append(rrValidation.References, refKey)
 		}

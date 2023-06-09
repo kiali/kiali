@@ -46,7 +46,7 @@ func (in VirtualServiceChecker) runGroupChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	enabledCheckers := []GroupChecker{
-		virtualservices.SingleHostChecker{Namespaces: in.Namespaces, VirtualServices: in.VirtualServices},
+		virtualservices.SingleHostChecker{Namespaces: in.Namespaces, VirtualServices: in.VirtualServices, Cluster: in.Cluster},
 	}
 
 	for _, checker := range enabledCheckers {

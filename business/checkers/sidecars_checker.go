@@ -33,7 +33,7 @@ func (s SidecarChecker) runGroupChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	enabledDRCheckers := []GroupChecker{
-		common.SidecarSelectorMultiMatchChecker(SidecarCheckerType, s.Sidecars, s.WorkloadsPerNamespace),
+		common.SidecarSelectorMultiMatchChecker(s.Cluster, SidecarCheckerType, s.Sidecars, s.WorkloadsPerNamespace),
 	}
 
 	for _, checker := range enabledDRCheckers {

@@ -22,7 +22,7 @@ type PeerAuthenticationChecker struct {
 func (m PeerAuthenticationChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	validations.MergeValidations(common.PeerAuthenticationMultiMatchChecker(PeerAuthenticationCheckerType, m.PeerAuthentications, m.WorkloadsPerNamespace).Check())
+	validations.MergeValidations(common.PeerAuthenticationMultiMatchChecker(m.Cluster, PeerAuthenticationCheckerType, m.PeerAuthentications, m.WorkloadsPerNamespace).Check())
 
 	for _, peerAuthn := range m.PeerAuthentications {
 		validations.MergeValidations(m.runChecks(peerAuthn))

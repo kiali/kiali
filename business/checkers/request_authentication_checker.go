@@ -18,7 +18,7 @@ type RequestAuthenticationChecker struct {
 func (m RequestAuthenticationChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	validations.MergeValidations(common.RequestAuthenticationMultiMatchChecker(RequestAuthenticationCheckerType, m.RequestAuthentications, m.WorkloadsPerNamespace).Check())
+	validations.MergeValidations(common.RequestAuthenticationMultiMatchChecker(m.Cluster, RequestAuthenticationCheckerType, m.RequestAuthentications, m.WorkloadsPerNamespace).Check())
 
 	for _, peerAuthn := range m.RequestAuthentications {
 		validations.MergeValidations(m.runChecks(peerAuthn))

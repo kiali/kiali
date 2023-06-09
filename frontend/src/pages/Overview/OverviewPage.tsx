@@ -480,25 +480,36 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   }
 
   fetchValidations(isAscending: boolean, sortField: SortField<NamespaceInfo>) {
-    this.promises
-      .registerChained('validation', undefined, () => this.fetchValidationResult(this.state.namespaces))
-      .then(() => {
-        this.setState(prevState => {
-          let newNamespaces = prevState.namespaces.slice();
-          if (sortField.id === 'validations') {
-            newNamespaces = Sorts.sortFunc(newNamespaces, sortField, isAscending);
-          }
-          return { namespaces: newNamespaces };
+    const uniqueClusters = new Set<string>();
+
+    this.state.namespaces.forEach(namespace => {
+      if (namespace.cluster) {
+        uniqueClusters.add(namespace.cluster);
+      }
+    });
+
+    uniqueClusters.forEach(cluster => {
+      this.promises
+        .registerChained('validation', undefined, () =>
+          this.fetchValidationResultForCluster(this.state.namespaces, cluster)
+        )
+        .then(() => {
+          this.setState(prevState => {
+            let newNamespaces = prevState.namespaces.slice();
+            if (sortField.id === 'validations') {
+              newNamespaces = Sorts.sortFunc(newNamespaces, sortField, isAscending);
+            }
+            return { namespaces: newNamespaces };
+          });
         });
-      });
+    });
   }
 
-  fetchValidationResult(namespaces: NamespaceInfo[]) {
-    // TODO: cluster param here when remote cluster validations supported, by default home cluster is used
-    return Promise.all([API.getConfigValidations(), API.getAllIstioConfigs([], [], false, '', '')])
+  fetchValidationResultForCluster(namespaces: NamespaceInfo[], cluster: string) {
+    return Promise.all([API.getConfigValidations(cluster), API.getAllIstioConfigs([], [], false, '', '')])
       .then(results => {
         namespaces.forEach(nsInfo => {
-          if (nsInfo.cluster && results[0].data[nsInfo.cluster]) {
+          if (nsInfo.cluster && nsInfo.cluster === cluster && results[0].data[nsInfo.cluster]) {
             nsInfo.validations = results[0].data[nsInfo.cluster][nsInfo.name];
           }
           // TODO: cluster param here when remote cluster config creation supported
