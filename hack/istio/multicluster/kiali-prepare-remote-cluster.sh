@@ -36,6 +36,7 @@ DEFAULT_REMOTE_CLUSTER_CONTEXT="west"
 DEFAULT_REMOTE_CLUSTER_NAME=""
 DEFAULT_REMOTE_CLUSTER_NAMESPACE="kiali-access-ns"
 DEFAULT_VIEW_ONLY="true"
+DEFAULT_EXEC_AUTH="false"
 
 : ${ALLOW_SKIP_TLS_VERIFY:=${DEFAULT_ALLOW_SKIP_TLS_VERIFY}}
 : ${CLIENT_EXE:=${DEFAULT_CLIENT_EXE}}
@@ -51,6 +52,7 @@ DEFAULT_VIEW_ONLY="true"
 : ${REMOTE_CLUSTER_NAMESPACE:=${DEFAULT_REMOTE_CLUSTER_NAMESPACE}}
 : ${REMOTE_CLUSTER_NAME:=${DEFAULT_REMOTE_CLUSTER_NAME}}
 : ${VIEW_ONLY:=${DEFAULT_VIEW_ONLY}}
+: ${EXEC_AUTH:=${DEFAULT_EXEC_AUTH}}
 
 DRY_RUN_ARG="--dry-run=none"
 
@@ -244,6 +246,24 @@ create_kiali_remote_cluster_secret() {
     error "The remote cluster name [${REMOTE_CLUSTER_NAME}] does not conform to Kubernetes rules for secret key data. Use --remote-cluster-name to specify a name that matches the regex '^[-._a-zA-Z0-9]+$'"
   fi
 
+  if [ "${EXEC_AUTH}" == "true" ]; then
+    local user_auth="exec:
+          apiVersion: client.authentication.k8s.io/v1beta1
+          command: echo
+          args:
+          - |
+            {
+              \"apiVersion\": \"client.authentication.k8s.io/v1beta1\",
+              \"kind\": \"ExecCredential\",
+              \"status\": {
+                \"token\": "\"$TOKEN\""
+              }
+            }
+          interactiveMode: IfAvailable"
+  else
+    local user_auth="token: ${TOKEN}"
+  fi
+
   KIALI_SECRET_YAML=$(cat <<EOF
 ---
 apiVersion: v1
@@ -269,7 +289,7 @@ stringData:
     users:
     - name: ${REMOTE_CLUSTER_NAME}
       user:
-        token: ${TOKEN}
+        ${user_auth}
     clusters:
     - name: ${REMOTE_CLUSTER_NAME}
       cluster:
@@ -360,6 +380,11 @@ while [ $# -gt 0 ]; do
     -vo|--view-only)
       [ "${2:-}" != "true" -a "${2:-}" != "false" ] && error "--view-only must be 'true' or 'false'"
       VIEW_ONLY="$2"
+      shift;shift
+      ;;
+    -ea|--exec-auth)
+      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && error "--exec-auth must be 'true' or 'false'"
+      EXEC_AUTH="$2"
       shift;shift
       ;;
     -h|--help)
@@ -456,6 +481,11 @@ Valid command line arguments:
   -vo|--view-only: if 'true' then the created service account/remote secret
                    will only provide a read-only view of the remote cluster.
                    Default: "${DEFAULT_VIEW_ONLY}"
+  -ea|--exec-auth: If 'true', use the mocked exec auth for remote secret authentication.
+                   To use this option, kiali's 'auth.strategy' must be changed to 'anonymous'.
+                   (e.g. helm upgrade -n istio-system --set auth.strategy="anonymous" \\
+                         kiali-server kiali/kiali-server)
+                   Default: "${DEFAULT_EXEC_AUTH}"
   -h|--help: this text.
 HELPMSG
       exit 1
@@ -484,6 +514,7 @@ info REMOTE_CLUSTER_CONTEXT=${REMOTE_CLUSTER_CONTEXT}
 info REMOTE_CLUSTER_NAME=${REMOTE_CLUSTER_NAME}
 info REMOTE_CLUSTER_NAMESPACE=${REMOTE_CLUSTER_NAMESPACE}
 info VIEW_ONLY=${VIEW_ONLY}
+info EXEC_AUTH=${EXEC_AUTH}
 
 #
 # Main processing - get some additional information we need and then start creating (or deleting) resources.
