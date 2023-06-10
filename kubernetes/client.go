@@ -92,6 +92,8 @@ func SetUserIdentificationFromRemoteSecretUser(config *rest.Config, user *Remote
 			ProvideClusterInfo: exec.ProvideClusterInfo,
 			InteractiveMode:    exec.InteractiveMode,
 		}
+		SetDefaultsExecConfig(config.ExecProvider)
+		log.Debugf("Auth ExecProvider has been detected: cmd=[%v], args=%v", exec.Command, exec.Args)
 	}
 }
 

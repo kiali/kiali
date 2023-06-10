@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"strings"
 	"unicode"
+
+	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 // cleanANSIEscapeCodes takes an arbitrary string and ensures that there are no
@@ -57,4 +59,18 @@ func cleanANSIEscapeCodes(s string) string {
 		}
 	}
 	return builder.String()
+}
+
+// From the "kubernetes/client-go" repository.
+// (https://github.com/kubernetes/client-go/blob/b8a8d9494492f5a03b3f1449bee19eb22fda4bd5/tools/clientcmd/api/v1/defaults.go#L27-L37)
+func SetDefaultsExecConfig(exec *api.ExecConfig) {
+	if len(exec.InteractiveMode) == 0 {
+		switch exec.APIVersion {
+		case "client.authentication.k8s.io/v1beta1", "client.authentication.k8s.io/v1alpha1":
+			// default to IfAvailableExecInteractiveMode for backwards compatibility
+			exec.InteractiveMode = api.IfAvailableExecInteractiveMode
+		default:
+			// require other versions to explicitly declare whether they want stdin or not
+		}
+	}
 }
