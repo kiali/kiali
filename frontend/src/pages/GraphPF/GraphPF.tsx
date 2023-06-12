@@ -262,6 +262,7 @@ export const TopologyContent: React.FC<{
           data: data,
           group: true,
           id: data.id,
+          status: getNodeStatus(data),
           style: { padding: 10 },
           type: 'group'
         };

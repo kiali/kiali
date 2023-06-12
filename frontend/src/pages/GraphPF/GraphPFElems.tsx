@@ -116,7 +116,7 @@ const EdgeColorFailure = PFColors.Danger;
 const EdgeColorTCPWithTraffic = PFColors.Blue600;
 
 export const getNodeStatus = (data: NodeData): NodeStatus => {
-  if (data.isBox || data.isIdle) {
+  if ((data.isBox && data.isBox !== BoxByType.APP) || data.isIdle) {
     return NodeStatus.default;
   }
 

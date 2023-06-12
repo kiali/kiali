@@ -132,7 +132,7 @@ type ReduxProps = {
   showServiceNodes: boolean;
   showTrafficAnimation: boolean;
   showVirtualServices: boolean;
-  startTour: ({ info: TourInfo, stop: number }) => void;
+  startTour: ({ info, stop }) => void;
   summaryData: SummaryData | null;
   trace?: JaegerTrace;
   trafficRates: TrafficRate[];
