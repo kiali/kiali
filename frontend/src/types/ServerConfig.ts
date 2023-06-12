@@ -37,6 +37,7 @@ interface GraphSettings {
 interface GraphUIDefaults {
   findOptions: GraphFindOption[];
   hideOptions: GraphFindOption[];
+  menuItemsAll: boolean;
   settings: GraphSettings;
   traffic: GraphTraffic;
 }

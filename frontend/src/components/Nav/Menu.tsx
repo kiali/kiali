@@ -50,6 +50,7 @@ export class Menu extends React.Component<MenuProps, MenuState> {
   renderMenuItems = () => {
     const { location } = this.props;
     const allNavMenuItems = navMenuItems;
+    const graphMenuItemsAll = !!serverConfig.kialiFeatureFlags.uiDefaults.graph.menuItemsAll;
     const activeMenuItem = allNavMenuItems.find(item => {
       let isRoute = matchPath(location.pathname, { path: item.to, exact: true, strict: false }) ? true : false;
       if (!isRoute && item.pathsActive) {
@@ -63,6 +64,9 @@ export class Menu extends React.Component<MenuProps, MenuState> {
         if (item.title === 'Mesh') {
           return serverConfig.clusterInfo?.name !== undefined;
         }
+        if (item.title === 'Graph [PF]') {
+          return graphMenuItemsAll;
+        }
         return true;
       })
       .map(item => {
@@ -74,10 +78,15 @@ export class Menu extends React.Component<MenuProps, MenuState> {
           );
         }
 
+        let title = item.title;
+        if (title === 'Graph [Cy]' && !graphMenuItemsAll) {
+          title = 'Graph';
+        }
+
         return (
           <NavItem isActive={activeMenuItem === item} key={item.to}>
-            <Link id={item.title} to={item.to} onClick={() => history.push(item.to)}>
-              {item.title}
+            <Link id={title} to={item.to} onClick={() => history.push(item.to)}>
+              {title}
             </Link>
           </NavItem>
         );

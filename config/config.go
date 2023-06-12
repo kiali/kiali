@@ -400,10 +400,11 @@ type GraphTraffic struct {
 
 // GraphUIDefaults defines UI Defaults specific to the UI Graph
 type GraphUIDefaults struct {
-	FindOptions []GraphFindOption `yaml:"find_options,omitempty" json:"findOptions,omitempty"`
-	HideOptions []GraphFindOption `yaml:"hide_options,omitempty" json:"hideOptions,omitempty"`
-	Settings    GraphSettings     `yaml:"settings,omitempty" json:"settings,omitempty"`
-	Traffic     GraphTraffic      `yaml:"traffic,omitempty" json:"traffic,omitempty"`
+	FindOptions  []GraphFindOption `yaml:"find_options,omitempty" json:"findOptions,omitempty"`
+	HideOptions  []GraphFindOption `yaml:"hide_options,omitempty" json:"hideOptions,omitempty"`
+	MenuItemsAll bool              `yaml:"menu_items_all,omitempty" json:"menuItemsAll,omitempty"`
+	Settings     GraphSettings     `yaml:"settings,omitempty" json:"settings,omitempty"`
+	Traffic      GraphTraffic      `yaml:"traffic,omitempty" json:"traffic,omitempty"`
 }
 
 // ListUIDefaults defines UI Defaults specific to the UI List pages

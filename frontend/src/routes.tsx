@@ -26,12 +26,12 @@ const navMenuItems: MenuItem[] = [
     pathsActive: [/^\/overview\/(.*)/]
   },
   {
-    title: 'Graph',
+    title: 'Graph [Cy]',
     to: '/graph/namespaces/',
     pathsActive: [/^\/graph\/(.*)/]
   },
   {
-    title: 'PF Graph',
+    title: 'Graph [PF]',
     to: '/pfgraph/namespaces/',
     pathsActive: [/^\/pfgraph\/(.*)/]
   },
