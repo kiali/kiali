@@ -1203,7 +1203,7 @@ func respond(w http.ResponseWriter, code int, payload interface{}) {
 
 // Helper method that tests the objects are equal and if they aren't will
 // unmarshal them into a json object and diff them. This way the output of the failure
-// is actually useful. Otherwise printing the byte slice results in completely incomprehensible output.
+// is actually useful. Otherwise printing the byte slice results is incomprehensible.
 func assertObjectsEqual(t *testing.T, expected, actual []byte) {
 	if !assert.ObjectsAreEqual(expected, actual) {
 		t.Log("Actual response does not equal expected golden copy. If you've updated the golden copy, ensure it ends with a newline.")
