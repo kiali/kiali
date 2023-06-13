@@ -3026,7 +3026,6 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 	}
 	actual, _ := io.ReadAll(resp.Body)
 	expected, _ := os.ReadFile("testdata/test_rates_node_graph_total.expected")
-	// os.WriteFile("testdata/test_rates_node_graph_total.actual", actual, 0o644)
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
 	}
@@ -3584,7 +3583,6 @@ func TestComplexGraph(t *testing.T) {
 		t.Fatal(err)
 	}
 	actual, _ := io.ReadAll(resp.Body)
-	// os.WriteFile("testdata/test_complex_graph.actual", actual, 0o644)
 	expected, _ := os.ReadFile("testdata/test_complex_graph.expected")
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
