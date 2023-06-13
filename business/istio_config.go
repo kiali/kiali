@@ -1405,11 +1405,6 @@ func getPermissionsApi(ctx context.Context, k8s kubernetes.ClientInterface, clus
 		log.Debug("View only mode configured, skipping RBAC checks")
 		return canCreate, canPatch, canDelete
 	}
-	// Disable writes for remote clusters
-	if cluster != conf.KubernetesConfig.ClusterName {
-		log.Debug("Writes disabled for remote clusters")
-		return canCreate, canPatch, canDelete
-	}
 
 	/*
 		Kiali only uses create,patch,delete as WRITE permissions

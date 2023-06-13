@@ -165,6 +165,7 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
   onAddRemoveTrafficPolicies = (): void => {
     const op = this.props.opTarget;
     const ns = this.props.nsTarget;
+    const cluster = this.props.nsInfo?.cluster;
     const duration = this.props.duration;
     const apsP = this.state.authorizationPolicies;
     const sdsP = this.state.sidecars;
@@ -173,13 +174,13 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
         .registerAll(
           'trafficPoliciesDelete',
           apsP
-            .map(ap => API.deleteIstioConfigDetail(ns, 'authorizationpolicies', ap.metadata.name))
-            .concat(sdsP.map(sc => API.deleteIstioConfigDetail(ns, 'sidecars', sc.metadata.name)))
+            .map(ap => API.deleteIstioConfigDetail(ns, 'authorizationpolicies', ap.metadata.name, cluster))
+            .concat(sdsP.map(sc => API.deleteIstioConfigDetail(ns, 'sidecars', sc.metadata.name, cluster)))
         )
         .then(_ => {
           //Error here
           if (op !== 'delete') {
-            this.createTrafficPolicies(ns, duration, apsP, sdsP, op);
+            this.createTrafficPolicies(ns, duration, apsP, sdsP, op, cluster);
           } else {
             AlertUtils.add('Traffic policies ' + op + 'd for ' + ns + ' namespace.', 'default', MessageType.SUCCESS);
             this.props.load();
@@ -191,7 +192,7 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
           }
         });
     } else {
-      this.createTrafficPolicies(ns, duration, apsP, sdsP);
+      this.createTrafficPolicies(ns, duration, apsP, sdsP, op, cluster);
     }
   };
 
@@ -200,7 +201,8 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
     duration: DurationInSeconds,
     aps: AuthorizationPolicy[],
     sds: Sidecar[],
-    op: string = 'create'
+    op: string = 'create',
+    cluster?: string
   ) => {
     const graphDataSource = new GraphDataSource();
     graphDataSource.on('fetchSuccess', () => {
@@ -208,8 +210,8 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
         .registerAll(
           'trafficPoliciesCreate',
           aps
-            .map(ap => API.createIstioConfigDetail(ns, 'authorizationpolicies', JSON.stringify(ap)))
-            .concat(sds.map(sc => API.createIstioConfigDetail(ns, 'sidecars', JSON.stringify(sc))))
+            .map(ap => API.createIstioConfigDetail(ns, 'authorizationpolicies', JSON.stringify(ap), cluster))
+            .concat(sds.map(sc => API.createIstioConfigDetail(ns, 'sidecars', JSON.stringify(sc), cluster)))
         )
         .then(results => {
           if (results.length > 0) {
@@ -250,7 +252,11 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
     const aps = items.filter(i => i.type === 'authorizationPolicy')[0];
     const sds = items.filter(i => i.type === 'sidecar')[0];
     this.setState(
-      { authorizationPolicies: aps.items as AuthorizationPolicy[], sidecars: sds.items as Sidecar[], loaded: false },
+      {
+        authorizationPolicies: aps ? (aps.items as AuthorizationPolicy[]) : [],
+        sidecars: sds ? (sds.items as Sidecar[]) : [],
+        loaded: false
+      },
       () => this.fetchPermission(true, false)
     );
   };

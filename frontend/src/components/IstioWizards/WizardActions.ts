@@ -104,6 +104,7 @@ export type ServiceWizardProps = {
   type: string;
   update: boolean;
   namespace: string;
+  cluster?: string;
   serviceName: string;
   servicePort?: number;
   tlsStatus?: TLSStatus;
@@ -2053,10 +2054,12 @@ export const buildWorkloadInjectionPatch = (workloadType: string, enable: boolea
 };
 
 export const buildAnnotationPatch = (annotations: { [key: string]: string }): string => {
-  const patch = [{
-    "op": "replace",
-    "path": "/metadata/annotations",    
-    "value": annotations
-  }];  
+  const patch = [
+    {
+      op: 'replace',
+      path: '/metadata/annotations',
+      value: annotations
+    }
+  ];
   return JSON.stringify(patch);
 };

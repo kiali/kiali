@@ -256,7 +256,8 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     API.deleteIstioConfigDetail(
       this.props.match.params.namespace,
       this.props.match.params.objectType,
-      this.props.match.params.object
+      this.props.match.params.object,
+      this.state.cluster
     )
       .then(() => this.backToList())
       .catch(error => {
@@ -273,7 +274,8 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
         this.props.match.params.namespace,
         this.props.match.params.objectType,
         this.props.match.params.object,
-        jsonPatch
+        jsonPatch,
+        this.state.cluster
       )
         .then(() => {
           const targetMessage =

@@ -254,25 +254,39 @@ export const getIstioConfigDetail = (
   );
 };
 
-export const deleteIstioConfigDetail = (namespace: string, objectType: string, object: string) => {
-  return newRequest<string>(HTTP_VERBS.DELETE, urls.istioConfigDelete(namespace, objectType, object), {}, {});
+export const deleteIstioConfigDetail = (namespace: string, objectType: string, object: string, cluster?: string) => {
+  const queryParams: any = {};
+  if (cluster) {
+    queryParams.cluster = cluster;
+  }
+  return newRequest<string>(HTTP_VERBS.DELETE, urls.istioConfigDelete(namespace, objectType, object), queryParams, {});
 };
 
 export const updateIstioConfigDetail = (
   namespace: string,
   objectType: string,
   object: string,
-  jsonPatch: string
+  jsonPatch: string,
+  cluster?: string
 ): Promise<Response<string>> => {
-  return newRequest(HTTP_VERBS.PATCH, urls.istioConfigUpdate(namespace, objectType, object), {}, jsonPatch);
+  const queryParams: any = {};
+  if (cluster) {
+    queryParams.cluster = cluster;
+  }
+  return newRequest(HTTP_VERBS.PATCH, urls.istioConfigUpdate(namespace, objectType, object), queryParams, jsonPatch);
 };
 
 export const createIstioConfigDetail = (
   namespace: string,
   objectType: string,
-  json: string
+  json: string,
+  cluster?: string
 ): Promise<Response<string>> => {
-  return newRequest(HTTP_VERBS.POST, urls.istioConfigCreate(namespace, objectType), {}, json);
+  const queryParams: any = {};
+  if (cluster) {
+    queryParams.cluster = cluster;
+  }
+  return newRequest(HTTP_VERBS.POST, urls.istioConfigCreate(namespace, objectType), queryParams, json);
 };
 
 export const getConfigValidations = (cluster?: string) => {
@@ -797,13 +811,15 @@ export const getClusters = () => {
 export function deleteServiceTrafficRouting(
   virtualServices: VirtualService[],
   destinationRules: DestinationRuleC[],
-  k8sHTTPRouteList: K8sHTTPRoute[]
+  k8sHTTPRouteList: K8sHTTPRoute[],
+  cluster?: string
 ): Promise<any>;
 export function deleteServiceTrafficRouting(serviceDetail: ServiceDetailsInfo): Promise<any>;
 export function deleteServiceTrafficRouting(
   vsOrSvc: VirtualService[] | ServiceDetailsInfo,
   destinationRules?: DestinationRuleC[],
-  k8sHTTPRouteList?: K8sHTTPRoute[]
+  k8sHTTPRouteList?: K8sHTTPRoute[],
+  cluster?: string
 ): Promise<any> {
   let vsList: VirtualService[];
   let drList: DestinationRuleC[];
@@ -821,19 +837,25 @@ export function deleteServiceTrafficRouting(
   }
 
   vsList.forEach(vs => {
-    deletePromises.push(deleteIstioConfigDetail(vs.metadata.namespace || '', 'virtualservices', vs.metadata.name));
+    deletePromises.push(
+      deleteIstioConfigDetail(vs.metadata.namespace || '', 'virtualservices', vs.metadata.name, cluster)
+    );
   });
 
   routeList.forEach(k8sr => {
-    deletePromises.push(deleteIstioConfigDetail(k8sr.metadata.namespace || '', 'k8shttproutes', k8sr.metadata.name));
+    deletePromises.push(
+      deleteIstioConfigDetail(k8sr.metadata.namespace || '', 'k8shttproutes', k8sr.metadata.name, cluster)
+    );
   });
 
   drList.forEach(dr => {
-    deletePromises.push(deleteIstioConfigDetail(dr.metadata.namespace || '', 'destinationrules', dr.metadata.name));
+    deletePromises.push(
+      deleteIstioConfigDetail(dr.metadata.namespace || '', 'destinationrules', dr.metadata.name, cluster)
+    );
 
     const paName = dr.hasPeerAuthentication();
     if (!!paName) {
-      deletePromises.push(deleteIstioConfigDetail(dr.metadata.namespace || '', 'peerauthentications', paName));
+      deletePromises.push(deleteIstioConfigDetail(dr.metadata.namespace || '', 'peerauthentications', paName, cluster));
     }
   });
 
