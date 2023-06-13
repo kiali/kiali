@@ -201,9 +201,9 @@
       },
       {
         "data": {
-          "id": "4719af4daf407366b52bf349679030c3",
+          "id": "c806ddbb86ea4bb8a9c7c8b6be3ce196",
           "nodeType": "service",
-          "cluster": "east",
+          "cluster": "unknown",
           "namespace": "unknown",
           "service": "unknown",
           "traffic": [
@@ -221,9 +221,9 @@
       },
       {
         "data": {
-          "id": "82153da3334f62d98eb539d57013cad8",
+          "id": "375ab940b56ae7bcf0f89cb1a7af5d44",
           "nodeType": "unknown",
-          "cluster": "east",
+          "cluster": "unknown",
           "namespace": "unknown",
           "workload": "unknown",
           "app": "unknown",
@@ -243,6 +243,30 @@
       }
     ],
     "edges": [
+      {
+        "data": {
+          "id": "61028a967055b02bacee418073ce3e43",
+          "source": "375ab940b56ae7bcf0f89cb1a7af5d44",
+          "target": "6fb400654f51831b495b454c7d54839b",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "50.00",
+              "httpPercentReq": "100.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "productpage:9080": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
       {
         "data": {
           "id": "d36794db8fe678f42751820b857db9fd",
@@ -284,32 +308,6 @@
                 },
                 "hosts": {
                   "tcp:9080": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "81783244c439f272847a8a477de6f793",
-          "source": "6fb400654f51831b495b454c7d54839b",
-          "target": "4719af4daf407366b52bf349679030c3",
-          "traffic": {
-            "protocol": "http",
-            "rates": {
-              "http": "4.00",
-              "http4xx": "4.00",
-              "httpPercentErr": "100.0",
-              "httpPercentReq": "2.4"
-            },
-            "responses": {
-              "404": {
-                "flags": {
-                  "NR": "100.0"
-                },
-                "hosts": {
-                  "unknown": "100.0"
                 }
               }
             }
@@ -390,6 +388,32 @@
       },
       {
         "data": {
+          "id": "b41bde098985920aaa13c547a7ee5065",
+          "source": "6fb400654f51831b495b454c7d54839b",
+          "target": "c806ddbb86ea4bb8a9c7c8b6be3ce196",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "4.00",
+              "http4xx": "4.00",
+              "httpPercentErr": "100.0",
+              "httpPercentReq": "2.4"
+            },
+            "responses": {
+              "404": {
+                "flags": {
+                  "NR": "100.0"
+                },
+                "hosts": {
+                  "unknown": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
           "id": "fc4d065839655ec68aaffbd2881c7380",
           "source": "6fb400654f51831b495b454c7d54839b",
           "target": "e33863bda999d21bfea986c66eb0ae39",
@@ -434,30 +458,6 @@
                 },
                 "hosts": {
                   "details:9080": "25.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "3c8cf385fbe17442ba0b50d6ff95f98b",
-          "source": "82153da3334f62d98eb539d57013cad8",
-          "target": "6fb400654f51831b495b454c7d54839b",
-          "traffic": {
-            "protocol": "http",
-            "rates": {
-              "http": "50.00",
-              "httpPercentReq": "100.0"
-            },
-            "responses": {
-              "200": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "productpage:9080": "100.0"
                 }
               }
             }

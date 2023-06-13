@@ -127,9 +127,9 @@
       },
       {
         "data": {
-          "id": "82153da3334f62d98eb539d57013cad8",
+          "id": "375ab940b56ae7bcf0f89cb1a7af5d44",
           "nodeType": "unknown",
-          "cluster": "east",
+          "cluster": "unknown",
           "namespace": "unknown",
           "workload": "unknown",
           "app": "unknown",
@@ -149,6 +149,29 @@
       }
     ],
     "edges": [
+      {
+        "data": {
+          "id": "2aa853bff0f7b51700f8167376bcbca1",
+          "source": "375ab940b56ae7bcf0f89cb1a7af5d44",
+          "target": "25c659622371eeab9ed18ffa7cfd8559",
+          "traffic": {
+            "protocol": "tcp",
+            "rates": {
+              "tcp": "1200.00"
+            },
+            "responses": {
+              "-": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "tcp:9080": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
       {
         "data": {
           "id": "185d2d2e10a3edf9d4f339c43138d4da",
@@ -179,29 +202,6 @@
             "protocol": "tcp",
             "rates": {
               "tcp": "93.00"
-            },
-            "responses": {
-              "-": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "tcp:9080": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "9821288be1892090217f79be46261916",
-          "source": "82153da3334f62d98eb539d57013cad8",
-          "target": "25c659622371eeab9ed18ffa7cfd8559",
-          "traffic": {
-            "protocol": "tcp",
-            "rates": {
-              "tcp": "1200.00"
             },
             "responses": {
               "-": {

@@ -215,9 +215,9 @@
       },
       {
         "data": {
-          "id": "4719af4daf407366b52bf349679030c3",
+          "id": "c806ddbb86ea4bb8a9c7c8b6be3ce196",
           "nodeType": "service",
-          "cluster": "east",
+          "cluster": "unknown",
           "namespace": "unknown",
           "service": "unknown",
           "traffic": [
@@ -235,9 +235,9 @@
       },
       {
         "data": {
-          "id": "82153da3334f62d98eb539d57013cad8",
+          "id": "375ab940b56ae7bcf0f89cb1a7af5d44",
           "nodeType": "unknown",
-          "cluster": "east",
+          "cluster": "unknown",
           "namespace": "unknown",
           "workload": "unknown",
           "app": "unknown",
@@ -283,6 +283,30 @@
       },
       {
         "data": {
+          "id": "e5ddccfa14b200c38d87d2fb47e6e0d7",
+          "source": "375ab940b56ae7bcf0f89cb1a7af5d44",
+          "target": "618cde0596062954dd7ceab6b6daf357",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "50.00",
+              "httpPercentReq": "100.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "productpage:9080": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
           "id": "57b3ca50a2a034b7f5d209fdcb7b6977",
           "source": "618cde0596062954dd7ceab6b6daf357",
           "target": "0db12cbb2c4c702977b3268ac6be3164",
@@ -298,32 +322,6 @@
                 },
                 "hosts": {
                   "tcp:9080": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "2415001e3ab4a11a904598431746b91d",
-          "source": "618cde0596062954dd7ceab6b6daf357",
-          "target": "4719af4daf407366b52bf349679030c3",
-          "traffic": {
-            "protocol": "http",
-            "rates": {
-              "http": "4.00",
-              "http4xx": "4.00",
-              "httpPercentErr": "100.0",
-              "httpPercentReq": "2.4"
-            },
-            "responses": {
-              "404": {
-                "flags": {
-                  "NR": "100.0"
-                },
-                "hosts": {
-                  "unknown": "100.0"
                 }
               }
             }
@@ -432,6 +430,32 @@
       },
       {
         "data": {
+          "id": "7c018ac1b52af94e343a32782e6b8cb6",
+          "source": "618cde0596062954dd7ceab6b6daf357",
+          "target": "c806ddbb86ea4bb8a9c7c8b6be3ce196",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "4.00",
+              "http4xx": "4.00",
+              "httpPercentErr": "100.0",
+              "httpPercentReq": "2.4"
+            },
+            "responses": {
+              "404": {
+                "flags": {
+                  "NR": "100.0"
+                },
+                "hosts": {
+                  "unknown": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
           "id": "9bee57ecf8757154cc248c2b71530ecd",
           "source": "618cde0596062954dd7ceab6b6daf357",
           "target": "d442c511909e5b1ea95b93be024e3c23",
@@ -472,30 +496,6 @@
                 },
                 "hosts": {
                   "reviews:9080": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "a3d59d22092c56b381745ad47e548106",
-          "source": "82153da3334f62d98eb539d57013cad8",
-          "target": "618cde0596062954dd7ceab6b6daf357",
-          "traffic": {
-            "protocol": "http",
-            "rates": {
-              "http": "50.00",
-              "httpPercentReq": "100.0"
-            },
-            "responses": {
-              "200": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "productpage:9080": "100.0"
                 }
               }
             }

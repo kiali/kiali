@@ -333,9 +333,9 @@
       },
       {
         "data": {
-          "id": "4719af4daf407366b52bf349679030c3",
+          "id": "c806ddbb86ea4bb8a9c7c8b6be3ce196",
           "nodeType": "service",
-          "cluster": "east",
+          "cluster": "unknown",
           "namespace": "unknown",
           "service": "unknown",
           "traffic": [
@@ -353,9 +353,9 @@
       },
       {
         "data": {
-          "id": "82153da3334f62d98eb539d57013cad8",
+          "id": "375ab940b56ae7bcf0f89cb1a7af5d44",
           "nodeType": "unknown",
-          "cluster": "east",
+          "cluster": "unknown",
           "namespace": "unknown",
           "workload": "unknown",
           "app": "unknown",
@@ -430,6 +430,74 @@
       },
       {
         "data": {
+          "id": "f5259c882d1715182d12a32adf4bea2b",
+          "source": "375ab940b56ae7bcf0f89cb1a7af5d44",
+          "target": "0db12cbb2c4c702977b3268ac6be3164",
+          "traffic": {
+            "protocol": "tcp",
+            "rates": {
+              "tcp": "400.00"
+            },
+            "responses": {
+              "-": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "tcp:9080": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "2c4c1734e6ef786704ada3982752d051",
+          "source": "375ab940b56ae7bcf0f89cb1a7af5d44",
+          "target": "266a0fdb50669cdc0414cf40bb2c645a",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "50.00",
+              "httpPercentReq": "50.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "e5ddccfa14b200c38d87d2fb47e6e0d7",
+          "source": "375ab940b56ae7bcf0f89cb1a7af5d44",
+          "target": "618cde0596062954dd7ceab6b6daf357",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "50.00",
+              "httpPercentReq": "50.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "productpage:9080": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
           "id": "ea516cdd66dac12174e46121631fd5a2",
           "source": "58acf15518f0491535b16d0c2efc4455",
           "target": "3cb1b1c64f77cdf407d773b9d4b67d92",
@@ -446,32 +514,6 @@
                 },
                 "hosts": {
                   "pricing:9080": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "90b183c3670df0cdec8431d431fd2cf9",
-          "source": "58acf15518f0491535b16d0c2efc4455",
-          "target": "4719af4daf407366b52bf349679030c3",
-          "traffic": {
-            "protocol": "http",
-            "rates": {
-              "http": "4.00",
-              "http4xx": "4.00",
-              "httpPercentErr": "100.0",
-              "httpPercentReq": "5.4"
-            },
-            "responses": {
-              "404": {
-                "flags": {
-                  "NR": "100.0"
-                },
-                "hosts": {
-                  "unknown": "100.0"
                 }
               }
             }
@@ -520,6 +562,32 @@
                 },
                 "hosts": {
                   "deposit:9080": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "5cf2a25ed58d9355d236c9ba66494e89",
+          "source": "58acf15518f0491535b16d0c2efc4455",
+          "target": "c806ddbb86ea4bb8a9c7c8b6be3ce196",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "4.00",
+              "http4xx": "4.00",
+              "httpPercentErr": "100.0",
+              "httpPercentReq": "5.4"
+            },
+            "responses": {
+              "404": {
+                "flags": {
+                  "NR": "100.0"
+                },
+                "hosts": {
+                  "unknown": "100.0"
                 }
               }
             }
@@ -725,74 +793,6 @@
                 },
                 "hosts": {
                   "reviews:9080": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "d0c7a442fca890046c43b84f3a6c5b9f",
-          "source": "82153da3334f62d98eb539d57013cad8",
-          "target": "0db12cbb2c4c702977b3268ac6be3164",
-          "traffic": {
-            "protocol": "tcp",
-            "rates": {
-              "tcp": "400.00"
-            },
-            "responses": {
-              "-": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "tcp:9080": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "5f3516fd2858eb428fa5b7cf60b883e0",
-          "source": "82153da3334f62d98eb539d57013cad8",
-          "target": "266a0fdb50669cdc0414cf40bb2c645a",
-          "traffic": {
-            "protocol": "http",
-            "rates": {
-              "http": "50.00",
-              "httpPercentReq": "50.0"
-            },
-            "responses": {
-              "200": {
-                "flags": {
-                  "-": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "a3d59d22092c56b381745ad47e548106",
-          "source": "82153da3334f62d98eb539d57013cad8",
-          "target": "618cde0596062954dd7ceab6b6daf357",
-          "traffic": {
-            "protocol": "http",
-            "rates": {
-              "http": "50.00",
-              "httpPercentReq": "50.0"
-            },
-            "responses": {
-              "200": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "productpage:9080": "100.0"
                 }
               }
             }

@@ -158,7 +158,7 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, *prometheustest.PromA
 		"source_workload":                "unknown",
 		"source_canonical_service":       "unknown",
 		"source_canonical_revision":      "unknown",
-		"source_cluster":                 "east",
+		"source_cluster":                 "unknown",
 		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "productpage:9080",
@@ -177,7 +177,7 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, *prometheustest.PromA
 		"source_workload":                "unknown",
 		"source_canonical_service":       "unknown",
 		"source_canonical_revision":      "unknown",
-		"source_cluster":                 "east",
+		"source_cluster":                 "unknown",
 		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "",
@@ -810,7 +810,7 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, *prometheustest.PromA
 		"source_canonical_service":       "reviews",
 		"source_canonical_revision":      "v3",
 		"source_cluster":                 "east",
-		"destination_cluster":            "east",
+		"destination_cluster":            "unknown",
 		"destination_service_namespace":  "unknown",
 		"destination_service":            "unknown",
 		"destination_service_name":       "unknown",
@@ -937,7 +937,7 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, *prometheustest.PromA
 		"source_workload":                "unknown",
 		"source_canonical_service":       "unknown",
 		"source_canonical_revision":      "unknown",
-		"source_cluster":                 "east",
+		"source_cluster":                 "unknown",
 		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "tcp:9080",
@@ -1052,7 +1052,7 @@ func mockNamespaceRatesGraph(t *testing.T) (*prometheus.Client, *prometheustest.
 		"source_workload":                "unknown",
 		"source_canonical_service":       "unknown",
 		"source_canonical_revision":      "unknown",
-		"source_cluster":                 "east",
+		"source_cluster":                 "unknown",
 		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "tcp:9080",
@@ -1336,7 +1336,6 @@ func TestServiceGraph(t *testing.T) {
 		t.Fatal(err)
 	}
 	actual, _ := io.ReadAll(resp.Body)
-	// os.WriteFile("testdata/test_.actual", actual, 0o644)
 	expected, _ := os.ReadFile("testdata/test_service_graph.expected")
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
@@ -1539,7 +1538,7 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"source_workload":                "unknown",
 		"source_canonical_service":       "unknown",
 		"source_canonical_revision":      "unknown",
-		"source_cluster":                 "east",
+		"source_cluster":                 "unknown",
 		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "productpage:9080",
@@ -1739,7 +1738,7 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
 		"source_cluster":                 "east",
-		"destination_cluster":            "east",
+		"destination_cluster":            "unknown",
 		"destination_service_namespace":  "unknown",
 		"destination_service":            "unknown",
 		"destination_service_name":       "unknown",
@@ -1864,7 +1863,7 @@ func TestAppNodeGraph(t *testing.T) {
 		"source_workload":                "unknown",
 		"source_canonical_service":       "unknown",
 		"source_canonical_revision":      "unknown",
-		"source_cluster":                 "east",
+		"source_cluster":                 "unknown",
 		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "productpage:9080",
@@ -2064,7 +2063,7 @@ func TestAppNodeGraph(t *testing.T) {
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
 		"source_cluster":                 "east",
-		"destination_cluster":            "east",
+		"destination_cluster":            "unknown",
 		"destination_service_namespace":  "unknown",
 		"destination_service":            "unknown",
 		"destination_service_name":       "unknown",
@@ -2189,7 +2188,7 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		"source_workload":                "unknown",
 		"source_canonical_service":       "unknown",
 		"source_canonical_revision":      "unknown",
-		"source_cluster":                 "east",
+		"source_cluster":                 "unknown",
 		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "productpage:9080",
@@ -2389,7 +2388,7 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
 		"source_cluster":                 "east",
-		"destination_cluster":            "east",
+		"destination_cluster":            "unknown",
 		"destination_service_namespace":  "unknown",
 		"destination_service":            "unknown",
 		"destination_service_name":       "unknown",
@@ -2608,7 +2607,7 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 		"source_workload":                "unknown",
 		"source_canonical_service":       "unknown",
 		"source_canonical_revision":      "unknown",
-		"source_cluster":                 "east",
+		"source_cluster":                 "unknown",
 		"destination_cluster":            "east",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "productpage:9080",
@@ -2808,7 +2807,7 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 		"source_canonical_service":       "productpage",
 		"source_canonical_revision":      "v1",
 		"source_cluster":                 "east",
-		"destination_cluster":            "east",
+		"destination_cluster":            "unknown",
 		"destination_service_namespace":  "unknown",
 		"destination_service":            "unknown",
 		"destination_service_name":       "unknown",
@@ -3027,6 +3026,7 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 	}
 	actual, _ := io.ReadAll(resp.Body)
 	expected, _ := os.ReadFile("testdata/test_rates_node_graph_total.expected")
+	// os.WriteFile("testdata/test_rates_node_graph_total.actual", actual, 0o644)
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
 	}
@@ -3584,6 +3584,7 @@ func TestComplexGraph(t *testing.T) {
 		t.Fatal(err)
 	}
 	actual, _ := io.ReadAll(resp.Body)
+	// os.WriteFile("testdata/test_complex_graph.actual", actual, 0o644)
 	expected, _ := os.ReadFile("testdata/test_complex_graph.expected")
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
