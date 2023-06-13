@@ -56,11 +56,10 @@ func (a *OutsiderAppender) markOutsideOrInaccessible(trafficMap graph.TrafficMap
 				n.Metadata[graph.IsOutside] = true
 			}
 		}
-		if isOutsider, ok := n.Metadata[graph.IsOutside]; ok && isOutsider.(bool) {
-			if _, ok2 := n.Metadata[graph.IsInaccessible]; !ok2 {
-				if isInaccessible(n, a.AccessibleNamespaces) {
-					n.Metadata[graph.IsInaccessible] = true
-				}
+		// Check if the node is outside accessible namespaces.
+		if _, ok := n.Metadata[graph.IsInaccessible]; !ok {
+			if isInaccessible(n, a.AccessibleNamespaces) {
+				n.Metadata[graph.IsInaccessible] = true
 			}
 		}
 	}
