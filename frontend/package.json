@@ -61,7 +61,7 @@
     "@patternfly/react-core": "4.221.3",
     "@patternfly/react-table": "4.90.3",
     "@patternfly/react-tokens": "4.50.5",
-    "@patternfly/react-topology": "4.68.3",
+    "@patternfly/react-topology": "4.91.27",
     "axios": "0.21.4",
     "bootstrap-slider-without-jquery": "10.0.0",
     "cy-node-html-label": "2.0.0",
