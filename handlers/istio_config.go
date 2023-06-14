@@ -101,11 +101,18 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		criteria.AllNamespaces = false
 		for _, ns := range nss {
 			criteria.Namespace = ns
-			istioConfigNs, _ := business.IstioConfig.GetIstioConfigList(r.Context(), criteria)
-			istioConfig = istioConfig.MergeConfigs(istioConfigNs)
+			istioConfigMap, err2 := business.IstioConfig.GetIstioConfigMap(r.Context(), criteria)
+			if err2 != nil {
+				istioConfig = istioConfig.MergeConfigs(istioConfigMap[criteria.Cluster])
+			}
 		}
 	} else {
-		istioConfig, err = business.IstioConfig.GetIstioConfigList(r.Context(), criteria)
+		istioConfigMap, err2 := business.IstioConfig.GetIstioConfigMap(r.Context(), criteria)
+		if err2 != nil {
+			handleErrorResponse(w, err)
+			return
+		}
+		istioConfig = istioConfigMap[criteria.Cluster]
 	}
 
 	log.Infof("K8s GWs before return: [%d]", len(istioConfig.K8sGateways))
