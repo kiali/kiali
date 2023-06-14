@@ -174,6 +174,7 @@ func FilterSupportedK8sGateways(gateways []*k8s_networking_v1beta1.Gateway) []*k
 			filtered = append(filtered, gw)
 		}
 	}
+	log.Infof("After adding [%d]", len(filtered))
 	return filtered
 }
 
