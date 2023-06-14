@@ -168,7 +168,7 @@ func FilterSupportedK8sGateways(gateways []*k8s_networking_v1beta1.Gateway) []*k
 	}
 	filtered := []*k8s_networking_v1beta1.Gateway{}
 	for _, gw := range gateways {
-		log.Infof("Supported GW %s, %b", gw, string(gw.Spec.GatewayClassName) == gatewayAPIClassName)
+		log.Infof("K8s GW [%s], [%s], [%s]", gw.Name, string(gw.Spec.GatewayClassName), gatewayAPIClassName)
 		if string(gw.Spec.GatewayClassName) == gatewayAPIClassName {
 			filtered = append(filtered, gw)
 		}
