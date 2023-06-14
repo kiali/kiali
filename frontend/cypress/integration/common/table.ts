@@ -72,6 +72,7 @@ When('user filters by {string} istio type', (istioType: string) => {
 
 And('user filters for istio type {string}', (istioType: string) => {
   cy.get('input[placeholder="Filter by Istio Type"]').type(`${istioType}{enter}`);
+  cy.get(`button[label="${istioType}"]`).should('be.visible').click();
 });
 
 // checkCol

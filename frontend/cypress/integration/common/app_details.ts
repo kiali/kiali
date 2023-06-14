@@ -56,6 +56,7 @@ Then('user sees outbound metrics information', () => {
 And('user can filter spans by app', () => {
   cy.get('select[aria-label="filter_select_type"]').select('App');
   cy.get('input[placeholder="Filter by App"]').type('productpage{enter}');
+  cy.get('button[label="productpage"]').should('be.visible').click();
   getCellsForCol('App / Workload').each($cell => {
     cy.wrap($cell).contains('productpage');
   });
