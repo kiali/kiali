@@ -155,7 +155,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		}
 
 		singleClusterConfigList, err := in.getIstioConfigListForCluster(ctx, criteria, cluster)
-		log.Infof("Cluster [%s] K8s GWs [%d]", cluster, len(singleClusterConfigList.K8sGateways))
+		log.Infof("List Cluster [%s] K8s GWs [%d]", cluster, len(singleClusterConfigList.K8sGateways))
 		if err != nil {
 			if cluster == conf.KubernetesConfig.ClusterName && len(in.userClients) == 1 {
 				return models.IstioConfigList{}, err
@@ -190,7 +190,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		istioConfigList.IstioValidations = istioConfigList.IstioValidations.MergeValidations(singleClusterConfigList.IstioValidations)
 	}
 
-	log.Infof("All Clusters K8s GWs [%d]", len(istioConfigList.K8sGateways))
+	log.Infof("Liat All Clusters K8s GWs [%d]", len(istioConfigList.K8sGateways))
 
 	return istioConfigList, nil
 }
@@ -208,6 +208,7 @@ func (in *IstioConfigService) GetIstioConfigMap(ctx context.Context, criteria Is
 		}
 
 		singleClusterConfigList, err := in.getIstioConfigListForCluster(ctx, criteria, cluster)
+		log.Infof("Map Cluster [%s] K8s GWs [%d]", cluster, len(singleClusterConfigList.K8sGateways))
 		if err != nil {
 			if cluster == conf.KubernetesConfig.ClusterName && len(in.userClients) == 1 {
 				return istioConfigMap, err
