@@ -7,6 +7,7 @@ Feature: Kiali Services page
     And user is at the "services" list page
 
   @services-page
+  @bookinfo-app
   Scenario: See services table with correct info
     When user selects the "bookinfo" namespace
     Then user sees a table with headings
@@ -33,6 +34,7 @@ Feature: Kiali Services page
     Then the "Configuration" column "appears"
 
   @services-page
+  @bookinfo-app
   Scenario: Filter services table by Service Name
     When user selects the "bookinfo" namespace
     And user selects filter "Service Name"
@@ -41,6 +43,7 @@ Feature: Kiali Services page
     And table length should be 1
 
   @services-page
+  @bookinfo-app
   Scenario: Filter services table by Service Type
     When user selects the "bookinfo" namespace
     And user selects filter "Service Type"
@@ -48,6 +51,7 @@ Feature: Kiali Services page
     Then user sees "nothing" in the table
 
   @services-page
+  @bookinfo-app
   Scenario: Filter services table by sidecar
     When user selects the "bookinfo" namespace
     And user selects filter "Istio Sidecar"
@@ -55,6 +59,7 @@ Feature: Kiali Services page
     Then user sees "something" in the table
 
   @services-page
+  @bookinfo-app
   Scenario: Filter services table by Istio Type
     When user selects the "bookinfo" namespace
     And user selects filter "Istio Type"
@@ -63,6 +68,7 @@ Feature: Kiali Services page
     And table length should be 1
 
   @services-page
+  @bookinfo-app
   Scenario: Filter services table by health
     When user selects the "bookinfo" namespace
     And user selects filter "Health"
@@ -71,6 +77,7 @@ Feature: Kiali Services page
     And user should only see healthy services in the table
 
   @services-page
+  @bookinfo-app
   Scenario: Filter services table by label
     When user selects the "bookinfo" namespace
     And user selects filter "Label"
@@ -79,6 +86,7 @@ Feature: Kiali Services page
     And table length should be 1
 
   @services-page
+  @bookinfo-app
   Scenario: Filter services table by label click
     When user selects the "bookinfo" namespace
     And user clicks "app=productpage" label
@@ -86,6 +94,7 @@ Feature: Kiali Services page
     And table length should be 1
 
   @services-page
+  @bookinfo-app
   Scenario: Filter and unfilter services table by label click
     When user selects the "bookinfo" namespace
     And user clicks "app=productpage" label
@@ -93,6 +102,7 @@ Feature: Kiali Services page
     Then table length should exceed 1
 
   @services-page
+  @bookinfo-app
   Scenario: The healthy status of a service is reported in the list of services
     Given a service in the cluster with a healthy amount of traffic
     When user selects the "bookinfo" namespace

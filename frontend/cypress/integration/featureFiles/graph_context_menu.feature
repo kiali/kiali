@@ -6,6 +6,7 @@ Feature: Kiali Graph page - Context menu actions
     Given user is at administrator perspective
 
   @graph-page-context
+  @bookinfo-app
   Scenario: Actions in context menu for service node with existing traffic routing
     When user graphs "bookinfo" namespaces
     And user opens the context menu of the "productpage" service node
@@ -13,6 +14,7 @@ Feature: Kiali Graph page - Context menu actions
     Then user should see the confirmation dialog to delete all traffic routing
 
   @graph-page-context
+  @bookinfo-app
   Scenario Outline: Ability to launch <action> wizard from graph context menu
     When user graphs "bookinfo" namespaces
     And user opens the context menu of the "reviews" service node
