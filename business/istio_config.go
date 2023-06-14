@@ -328,7 +328,7 @@ func (in *IstioConfigService) getIstioConfigListForCluster(ctx context.Context, 
 		if criteria.Include(kubernetes.RequestAuthentications) {
 			istioConfigList.RequestAuthentications = registryConfiguration.RequestAuthentications
 		}
-		log.Infof("K8s GWs registry [%d] for cluster [%s]", len(istioConfigList.K8sGateways), cluster)
+		log.Infof("Registry K8s GWs [%d] for cluster [%s]", len(istioConfigList.K8sGateways), cluster)
 		return istioConfigList, nil
 	}
 	kubeCache := in.kialiCache.GetKubeCaches()[cluster]
@@ -675,6 +675,7 @@ func (in *IstioConfigService) getIstioConfigListForCluster(ctx context.Context, 
 		}
 	}
 
+	log.Infof("Cache K8s GWs [%d] for cluster [%s]", len(istioConfigList.K8sGateways), cluster)
 	return istioConfigList, nil
 }
 
