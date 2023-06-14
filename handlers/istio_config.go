@@ -108,8 +108,8 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		istioConfig, err = business.IstioConfig.GetIstioConfigList(r.Context(), criteria)
 	}
 
-	log.Infof("K8s GWs before return: [%s]", len(istioConfig.K8sGateways))
-	
+	log.Infof("K8s GWs before return: [%d]", len(istioConfig.K8sGateways))
+
 	if includeValidations {
 		// Add validation results to the IstioConfigList once they're available (previously done in the UI layer)
 		wg.Wait()
