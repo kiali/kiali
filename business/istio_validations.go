@@ -594,18 +594,19 @@ func (in *IstioValidationsService) fetchRegistryServices(rValue *[]*kubernetes.R
 }
 
 func (in *IstioValidationsService) isGatewayToNamespace() bool {
+	clusters, err := in.businessLayer.Mesh.GetClusters(nil)
+	if err != nil {
+		log.Errorf("Error fetching clusters: %s", err)
+		return false
+	}
+
 	gatewayToNamespace := false
-	if in.businessLayer != nil {
-		if cluster, err := in.businessLayer.Mesh.ResolveKialiControlPlaneCluster(nil); err == nil {
-			if cluster != nil {
-				gatewayToNamespace = cluster.IsGatewayToNamespace
-			} else {
-				log.Debug("No GatewayToNamespace is set in the istiod environment variables. Using default GatewayToNamespace: false")
-			}
-		} else {
-			log.Errorf("GatewayToNamespace resolution failed: %s", err)
+	for _, cluster := range clusters {
+		if cluster.IsKialiHome {
+			gatewayToNamespace = cluster.IsGatewayToNamespace
 		}
 	}
+
 	return gatewayToNamespace
 }
 

@@ -17,6 +17,7 @@ import (
 	gatewayapiclient "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 
 	kialiConfig "github.com/kiali/kiali/config"
+	kialiconfig "github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util/httputil"
 )
@@ -35,14 +36,28 @@ type PodLogs struct {
 	Logs string `json:"logs,omitempty"`
 }
 
+// ClusterInfo is basically a rest.Config with a few extra fields that are useful to Kiali.
+type ClusterInfo struct {
+	// ClientConfig is the rest.Config is used to create clients for the various APIs.
+	ClientConfig *rest.Config
+
+	// Name is the name of the cluster this client is connected to.
+	Name string
+
+	// SecretName is the name of the secret that contains the credentials for this cluster.
+	SecretName string
+}
+
 // ClientInterface for mocks (only mocked function are necessary here)
 type ClientInterface interface {
 	GetServerVersion() (*version.Info, error)
 	GetToken() string
-	GetAuthInfo() *api.AuthInfo
 	IsOpenShift() bool
 	IsGatewayAPI() bool
 	IsIstioAPI() bool
+	// ClusterInfo returns some information about the cluster this client is connected to.
+	// This gets set when the client is first created.
+	ClusterInfo() ClusterInfo
 	K8SClientInterface
 	IstioClientInterface
 	OSClientInterface
@@ -51,7 +66,6 @@ type ClientInterface interface {
 // K8SClient is the client struct for Kubernetes and Istio APIs
 // It hides the way it queries each API
 type K8SClient struct {
-	ClientInterface
 	token          string
 	k8s            kube.Interface
 	istioClientset istio.Interface
@@ -67,10 +81,14 @@ type K8SClient struct {
 	isGatewayAPI *bool
 	gatewayapi   gatewayapiclient.Interface
 	isIstioAPI   *bool
+	clusterInfo  ClusterInfo
 
 	// Separated out for testing purposes
 	getPodPortForwarderFunc func(namespace, name, portMap string) (httputil.PortForwarder, error)
 }
+
+// Ensure the K8SClient implements the ClientInterface
+var _ ClientInterface = &K8SClient{}
 
 // GetToken returns the BearerToken used from the config
 func (client *K8SClient) GetToken() string {
@@ -114,9 +132,13 @@ func GetConfigForRemoteClusterInfo(cluster RemoteClusterInfo) (*rest.Config, err
 	return config, nil
 }
 
-// GetConfigWithTokenForRemoteCluster points the returned k8s client config to a remote cluster's API server.
+func (client *K8SClient) ClusterInfo() ClusterInfo {
+	return client.clusterInfo
+}
+
+// getConfigWithTokenForRemoteCluster points the returned k8s client config to a remote cluster's API server.
 // The returned config will have the given user's token associated with it.
-func GetConfigWithTokenForRemoteCluster(cluster RemoteSecretClusterListItem, user RemoteSecretUser) (*rest.Config, error) {
+func getConfigWithTokenForRemoteCluster(cluster RemoteSecretClusterListItem, user RemoteSecretUser) (*rest.Config, error) {
 	config, err := GetConfigForRemoteCluster(cluster)
 	if err != nil {
 		return nil, err
@@ -202,6 +224,29 @@ func GetConfigForLocalCluster() (*rest.Config, error) {
 		QPS:   c.KubernetesConfig.QPS,
 		Burst: c.KubernetesConfig.Burst,
 	}, nil
+}
+
+func NewClientWithRemoteClusterInfo(config *rest.Config, remoteClusterInfo *RemoteClusterInfo) (*K8SClient, error) {
+	client, err := NewClientFromConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	if remoteClusterInfo != nil {
+		client.clusterInfo = ClusterInfo{
+			Name:       remoteClusterInfo.Cluster.Name,
+			SecretName: remoteClusterInfo.SecretName,
+		}
+	} else {
+		client.clusterInfo = ClusterInfo{
+			Name: kialiconfig.Get().KubernetesConfig.ClusterName,
+		}
+	}
+	// Copy config
+	clientConfig := *config
+	client.clusterInfo.ClientConfig = &clientConfig
+
+	return client, nil
 }
 
 // NewClientFromConfig creates a new client to the Kubernetes and Istio APIs.

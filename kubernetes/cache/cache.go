@@ -26,10 +26,16 @@ import (
 type KialiCache interface {
 	GetKubeCaches() map[string]KubeCache
 	GetKubeCache(cluster string) (KubeCache, error)
-
+	// GetClusters returns the list of clusters that the cache knows about.
+	// This gets set by the mesh service.
+	GetClusters() []kubernetes.Cluster
+	// SetClusters sets the list of clusters that the cache knows about.
+	SetClusters([]kubernetes.Cluster)
 	// Embedded for backward compatibility for business methods that just use one cluster.
 	// All business methods should eventually use the multi-cluster cache.
+	// Instead of using the interface directly for kube objects, use the GetKubeCache() method.
 	KubeCache
+
 	NamespacesCache
 	ProxyStatusCache
 	RegistryStatusCache
@@ -71,6 +77,10 @@ type kialiCacheImpl struct {
 	registryStatusLock     sync.RWMutex
 	registryStatusCreated  *time.Time
 	registryStatus         *kubernetes.RegistryStatus
+
+	// Info about the kube clusters that the cache knows about.
+	clusters    []kubernetes.Cluster
+	clusterLock sync.RWMutex
 }
 
 func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config, namespaceSeedList ...string) (KialiCache, error) {
@@ -186,4 +196,16 @@ func (c *kialiCacheImpl) watchForClientChanges(ctx context.Context, token string
 			}
 		}
 	}()
+}
+
+func (c *kialiCacheImpl) GetClusters() []kubernetes.Cluster {
+	defer c.clusterLock.RUnlock()
+	c.clusterLock.RLock()
+	return c.clusters
+}
+
+func (c *kialiCacheImpl) SetClusters(clusters []kubernetes.Cluster) {
+	defer c.clusterLock.Unlock()
+	c.clusterLock.Lock()
+	c.clusters = clusters
 }

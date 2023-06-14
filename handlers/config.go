@@ -7,9 +7,7 @@ import (
 
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v2"
-	"k8s.io/client-go/tools/clientcmd/api"
 
-	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
@@ -49,25 +47,25 @@ type DeploymentConfig struct {
 // PublicConfig is a subset of Kiali configuration that can be exposed to clients to
 // help them interact with the system.
 type PublicConfig struct {
-	AccessibleNamespaces []string                    `json:"accessibleNamespaces,omitempty"`
-	AuthStrategy         string                      `json:"authStrategy,omitempty"`
-	AmbientEnabled       bool                        `json:"ambientEnabled,omitempty"`
-	ClusterInfo          ClusterInfo                 `json:"clusterInfo,omitempty"`
-	Clusters             map[string]business.Cluster `json:"clusters,omitempty"`
-	Deployment           DeploymentConfig            `json:"deployment,omitempty"`
-	GatewayAPIEnabled    bool                        `json:"gatewayAPIEnabled,omitempty"`
-	HealthConfig         config.HealthConfig         `json:"healthConfig,omitempty"`
-	InstallationTag      string                      `json:"installationTag,omitempty"`
-	IstioAnnotations     IstioAnnotations            `json:"istioAnnotations,omitempty"`
-	IstioCanaryRevision  IstioCanaryRevision         `json:"istioCanaryRevision,omitempty"`
-	IstioStatusEnabled   bool                        `json:"istioStatusEnabled,omitempty"`
-	IstioIdentityDomain  string                      `json:"istioIdentityDomain,omitempty"`
-	IstioNamespace       string                      `json:"istioNamespace,omitempty"`
-	IstioLabels          config.IstioLabels          `json:"istioLabels,omitempty"`
-	IstioConfigMap       string                      `json:"istioConfigMap"`
-	KialiFeatureFlags    config.KialiFeatureFlags    `json:"kialiFeatureFlags,omitempty"`
-	LogLevel             string                      `json:"logLevel,omitempty"`
-	Prometheus           PrometheusConfig            `json:"prometheus,omitempty"`
+	AccessibleNamespaces []string                      `json:"accessibleNamespaces,omitempty"`
+	AuthStrategy         string                        `json:"authStrategy,omitempty"`
+	AmbientEnabled       bool                          `json:"ambientEnabled,omitempty"`
+	ClusterInfo          ClusterInfo                   `json:"clusterInfo,omitempty"`
+	Clusters             map[string]kubernetes.Cluster `json:"clusters,omitempty"`
+	Deployment           DeploymentConfig              `json:"deployment,omitempty"`
+	GatewayAPIEnabled    bool                          `json:"gatewayAPIEnabled,omitempty"`
+	HealthConfig         config.HealthConfig           `json:"healthConfig,omitempty"`
+	InstallationTag      string                        `json:"installationTag,omitempty"`
+	IstioAnnotations     IstioAnnotations              `json:"istioAnnotations,omitempty"`
+	IstioCanaryRevision  IstioCanaryRevision           `json:"istioCanaryRevision,omitempty"`
+	IstioStatusEnabled   bool                          `json:"istioStatusEnabled,omitempty"`
+	IstioIdentityDomain  string                        `json:"istioIdentityDomain,omitempty"`
+	IstioNamespace       string                        `json:"istioNamespace,omitempty"`
+	IstioLabels          config.IstioLabels            `json:"istioLabels,omitempty"`
+	IstioConfigMap       string                        `json:"istioConfigMap"`
+	KialiFeatureFlags    config.KialiFeatureFlags      `json:"kialiFeatureFlags,omitempty"`
+	LogLevel             string                        `json:"logLevel,omitempty"`
+	Prometheus           PrometheusConfig              `json:"prometheus,omitempty"`
 }
 
 // Config is a REST http.HandlerFunc serving up the Kiali configuration made public to clients.
@@ -81,7 +79,7 @@ func Config(w http.ResponseWriter, r *http.Request) {
 	publicConfig := PublicConfig{
 		AccessibleNamespaces: config.Deployment.AccessibleNamespaces,
 		AuthStrategy:         config.Auth.Strategy,
-		Clusters:             make(map[string]business.Cluster),
+		Clusters:             make(map[string]kubernetes.Cluster),
 		Deployment: DeploymentConfig{
 			ViewOnlyMode: config.Deployment.ViewOnlyMode,
 		},
@@ -110,51 +108,41 @@ func Config(w http.ResponseWriter, r *http.Request) {
 	// The following code fetches the cluster info. Cluster info is not critical.
 	// It's even possible that it cannot be resolved (because of Istio not being with MC turned on).
 	// Because of these two reasons, let's simply ignore errors in the following code.
-	token, getTokenErr := kubernetes.GetKialiTokenForHomeCluster()
-	if getTokenErr == nil {
-		layer, getLayerErr := business.Get(&api.AuthInfo{Token: token})
-		if getLayerErr == nil {
-			isMeshIdSet, mcErr := layer.Mesh.IsMeshConfigured()
-			if isMeshIdSet {
-				// Resolve home cluster
-				cluster, resolveClusterErr := layer.Mesh.ResolveKialiControlPlaneCluster(nil)
-				if cluster != nil {
-					publicConfig.ClusterInfo = ClusterInfo{
-						Name:    cluster.Name,
-						Network: cluster.Network,
-					}
-				} else if resolveClusterErr != nil {
-					log.Warningf("Failure while resolving cluster info: %s", resolveClusterErr.Error())
-				} else {
-					log.Info("Cluster ID couldn't be resolved. Most likely, no Cluster ID is set in the service mesh control plane configuration.")
-				}
-
-				// Fetch the list of all clusters in the mesh
-				// One usage of this data is to cross-link Kiali instances, when possible.
-				clusters, resolveAllClustersErr := layer.Mesh.GetClusters(r)
-				for _, c := range clusters {
-					publicConfig.Clusters[c.Name] = c
-				}
-				if resolveAllClustersErr != nil {
-					log.Warningf("Failure while listing clusters in the mesh: %s", resolveAllClustersErr.Error())
-				}
-			} else if mcErr != nil {
-				log.Warningf("Failure when checking if mesh-id is configured: %s", mcErr.Error())
-			}
-		} else {
-			log.Warningf("Failed to create business layer when resolving cluster info: %s", getLayerErr.Error())
+	err := func() error {
+		layer, err := getBusiness(r)
+		if err != nil {
+			return err
 		}
-	} else {
-		log.Warningf("Failed to fetch Kiali token when resolving cluster info: %s", getTokenErr.Error())
-	}
 
-	// Get business layer
-	bLayer, err := getBusiness(r)
-	if err == nil {
 		// @TODO hardcoded home cluster
-		publicConfig.GatewayAPIEnabled = bLayer.IstioConfig.IsGatewayAPI(config.KubernetesConfig.ClusterName)
+		publicConfig.GatewayAPIEnabled = layer.IstioConfig.IsGatewayAPI(config.KubernetesConfig.ClusterName)
+		publicConfig.AmbientEnabled = layer.IstioConfig.IsAmbientEnabled()
+
+		// Fetch the list of all clusters in the mesh
+		// One usage of this data is to cross-link Kiali instances, when possible.
+		clusters, err := layer.Mesh.GetClusters(r)
+		if err != nil {
+			return fmt.Errorf("failure while listing clusters in the mesh: %w", err)
+		}
+
+		for _, cluster := range clusters {
+			publicConfig.Clusters[cluster.Name] = cluster
+			// Setting this will cause the "mesh" page to appear in the UI.
+			// Keeping the old behavior where this only appears when more than
+			// one cluster is present.
+			if len(clusters) > 1 && cluster.IsKialiHome {
+				publicConfig.ClusterInfo = ClusterInfo{
+					Name:    cluster.Name,
+					Network: cluster.Network,
+				}
+			}
+		}
+
+		return nil
+	}()
+	if err != nil {
+		log.Warningf("Unable to resolve cluster info: %s", err)
 	}
-	publicConfig.AmbientEnabled = bLayer.IstioConfig.IsAmbientEnabled()
 
 	RespondWithJSONIndent(w, http.StatusOK, publicConfig)
 }

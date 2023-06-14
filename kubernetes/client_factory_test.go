@@ -3,9 +3,12 @@ package kubernetes
 import (
 	"fmt"
 	"math/rand"
+	"os"
 	"sync"
 	"testing"
 	"time"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,6 +17,16 @@ import (
 
 	"github.com/kiali/kiali/config"
 )
+
+func newTestingClientFactory(t *testing.T) *clientFactory {
+	t.Helper()
+	clientConfig := rest.Config{}
+	client, err := newClientFactory(&clientConfig)
+	if err != nil {
+		t.Fatalf("Error creating client factory: %v", err)
+	}
+	return client
+}
 
 // TestClientExpiration Verify the details that clients expire are correct
 func TestClientExpiration(t *testing.T) {
@@ -168,4 +181,96 @@ func TestSAClientsUpdateWhenKialiTokenChanges(t *testing.T) {
 
 	client = clientFactory.GetSAClient(conf.KubernetesConfig.ClusterName)
 	require.Equal(KialiTokenForHomeCluster, client.GetToken())
+}
+
+// Helper function to create a test remote cluster secret file from a RemoteSecret.
+// It will cleanup after itself when the test is done.
+func createTestRemoteClusterSecret(t *testing.T, remoteSecret RemoteSecret) {
+	t.Helper()
+	// create a mock volume mount directory where the test remote cluster secret content will go
+	originalRemoteClusterSecretsDir := RemoteClusterSecretsDir
+	t.Cleanup(func() {
+		RemoteClusterSecretsDir = originalRemoteClusterSecretsDir
+	})
+	RemoteClusterSecretsDir = t.TempDir()
+
+	marshalledRemoteSecretData, err := yaml.Marshal(remoteSecret)
+	if err != nil {
+		t.Fatalf("Failed to marshal remote secret data: %v", err)
+	}
+	createTestRemoteClusterSecretFile(t, RemoteClusterSecretsDir, remoteSecret.Clusters[0].Name, string(marshalledRemoteSecretData))
+}
+
+// Helper function to create a test token to standin for the kiali token.
+func newFakeToken(t *testing.T) {
+	t.Helper()
+	tokenDir := t.TempDir()
+	fileName := tokenDir + "/token"
+	oldTokenPath := DefaultServiceAccountPath
+	oldToken := KialiTokenForHomeCluster
+	t.Cleanup(func() {
+		DefaultServiceAccountPath = oldTokenPath
+		KialiTokenForHomeCluster = oldToken
+	})
+	DefaultServiceAccountPath = fileName
+	if err := os.WriteFile(fileName, []byte("fake-token"), 0o644); err != nil {
+		t.Fatalf("Failed to create fake token: %v", err)
+	}
+}
+
+func TestClientCreatedWithClusterInfo(t *testing.T) {
+	// Create a fake cluster info file.
+	// Ensure client gets created with this.
+	// Need to test newClient and newSAClient
+	// Need to test that home cluster gets this info as well
+	require := require.New(t)
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	const (
+		testClusterName = "TestRemoteCluster"
+	)
+	remoteSecretData := RemoteSecret{
+		Clusters: []RemoteSecretClusterListItem{
+			{
+				Name: testClusterName,
+				Cluster: RemoteSecretCluster{
+					Server: "https://192.168.1.2:1234",
+				},
+			},
+		},
+		Users: []RemoteSecretUser{
+			{
+				Name: "remoteuser1",
+				User: RemoteSecretUserAuthInfo{
+					Token: "remotetoken1",
+				},
+			},
+		},
+	}
+
+	createTestRemoteClusterSecret(t, remoteSecretData)
+	newFakeToken(t)
+
+	clientFactory := newTestingClientFactory(t)
+
+	// Service account clients
+	saClients := clientFactory.GetSAClients()
+	require.Contains(saClients, testClusterName)
+	require.Contains(saClients, conf.KubernetesConfig.ClusterName)
+	assert.Equal(testClusterName, saClients[testClusterName].ClusterInfo().Name)
+	assert.Equal("https://192.168.1.2:1234", saClients[testClusterName].ClusterInfo().ClientConfig.Host)
+	assert.Contains(saClients[conf.KubernetesConfig.ClusterName].ClusterInfo().Name, conf.KubernetesConfig.ClusterName)
+
+	// User clients
+	userClients, err := clientFactory.GetClients(api.NewAuthInfo())
+	require.NoError(err)
+
+	require.Contains(userClients, testClusterName)
+	require.Contains(userClients, conf.KubernetesConfig.ClusterName)
+	assert.Equal(testClusterName, userClients[testClusterName].ClusterInfo().Name)
+	assert.Equal("https://192.168.1.2:1234", userClients[testClusterName].ClusterInfo().ClientConfig.Host)
+	assert.Contains(userClients[conf.KubernetesConfig.ClusterName].ClusterInfo().Name, conf.KubernetesConfig.ClusterName)
 }

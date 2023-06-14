@@ -65,7 +65,6 @@ type clientFactory struct {
 func GetClientFactory() (ClientFactory, error) {
 	var err error
 	once.Do(func() {
-		// HomeClusterName = kialiConfig.Get().KubernetesConfig.ClusterName
 		// Get the normal configuration
 		var config *rest.Config
 		config, err = GetConfigForLocalCluster()
@@ -191,62 +190,63 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 	}
 
 	var newClient ClientInterface
-	var err error
-
 	if cluster == cf.homeCluster {
-		newClient, err = NewClientFromConfig(&config)
+		client, err := NewClientWithRemoteClusterInfo(&config, nil)
 		if err != nil {
 			log.Errorf("Error creating client for cluster %s: %s", cluster, err.Error())
 			return nil, err
 		}
-
+		newClient = client
 	} else {
 		// Remote clusters
-		clusterInfo, errClusterInfo := GetRemoteClusterInfos()
-		if errClusterInfo == nil {
-			var remoteConfig *rest.Config
-			var err2 error
-			// In auth strategy should we use SA token
-			if cfg.Auth.Strategy == kialiConfig.AuthStrategyAnonymous ||
-				(cfg.Auth.Strategy == kialiConfig.AuthStrategyOpenId && cfg.Auth.OpenId.DisableRBAC) {
-				remoteConfig, err2 = GetConfigForRemoteClusterInfo(clusterInfo[cluster])
-			} else {
-				remoteConfig, err2 = GetConfigWithTokenForRemoteCluster(clusterInfo[cluster].Cluster,
-					RemoteSecretUser{
-						Name: authInfo.Username, User: RemoteSecretUserAuthInfo{Token: authInfo.Token},
-					})
-			}
+		clusterInfos, err := GetRemoteClusterInfos()
+		if err != nil {
+			log.Errorf("Error getting remote cluster infos: %c", err)
+			return nil, err
+		}
 
-			if err2 != nil {
-				log.Errorf("Error getting remote cluster [%s] info: %s", cluster, err2)
-			}
-			newClient, err = NewClientFromConfig(remoteConfig)
-			if err != nil {
-				log.Errorf("Error getting remote client for cluster %s, %s", cluster, err.Error())
-			}
+		clusterInfo, ok := clusterInfos[cluster]
+		if !ok {
+			return nil, fmt.Errorf("unable to find cluster [%s] in remote cluster info", cluster)
+		}
+
+		var remoteConfig *rest.Config
+		// In auth strategy should we use SA token
+		if cfg.Auth.Strategy == kialiConfig.AuthStrategyAnonymous {
+			remoteConfig, err = GetConfigForRemoteClusterInfo(clusterInfo)
 		} else {
-			log.Errorf("Error getting remote cluster infos: %c", errClusterInfo)
+			remoteConfig, err = getConfigWithTokenForRemoteCluster(clusterInfo.Cluster,
+				RemoteSecretUser{
+					Name: authInfo.Username, User: RemoteSecretUserAuthInfo{Token: authInfo.Token},
+				})
+		}
+		if err != nil {
+			log.Errorf("Error getting remote cluster [%s] info: %s", cluster, err)
+			return nil, err
+		}
+
+		newClient, err = NewClientWithRemoteClusterInfo(remoteConfig, &clusterInfo)
+		if err != nil {
+			log.Errorf("Error getting remote client for cluster [%s]. Err: %s", cluster, err.Error())
+			return nil, err
 		}
 	}
 
-	// check if client is created correctly
-	// if it is true, run to recycle client
-	// if it is not, the token should not be added to recycleChan
-	go func(token string, err error) {
-		if err == nil {
-			<-time.After(expirationTime)
-			cf.recycleChan <- token
-		}
-	}(getTokenHash(authInfo), err)
+	// run to recycle client
+	go func(token string) {
+		<-time.After(expirationTime)
+		cf.recycleChan <- token
+	}(getTokenHash(authInfo))
 
-	return newClient, err
+	return newClient, nil
 }
 
 // newSAClient returns a new client for the given cluster. If clusterInfo is nil then a client for the local cluster is returned.
-func (cf *clientFactory) newSAClient(clusterInfo *RemoteClusterInfo) (*K8SClient, error) {
+func (cf *clientFactory) newSAClient(remoteClusterInfo *RemoteClusterInfo) (*K8SClient, error) {
 	// if no cluster info is provided, we are being asked to create a new client for the home cluster
-	if clusterInfo == nil {
-		config := *cf.baseRestConfig
+	var config rest.Config
+	if remoteClusterInfo == nil {
+		config = *cf.baseRestConfig
 		if kialiConfig.Get().InCluster {
 			if saToken, err := GetKialiTokenForHomeCluster(); err != nil {
 				return nil, err
@@ -254,14 +254,20 @@ func (cf *clientFactory) newSAClient(clusterInfo *RemoteClusterInfo) (*K8SClient
 				config.BearerToken = saToken
 			}
 		}
-		return NewClientFromConfig(&config)
+	} else {
+		remoteConfig, err := GetConfigForRemoteClusterInfo(*remoteClusterInfo)
+		if err != nil {
+			return nil, err
+		}
+		config = *remoteConfig
 	}
 
-	if config, err := GetConfigForRemoteClusterInfo(*clusterInfo); err != nil {
+	client, err := NewClientWithRemoteClusterInfo(&config, remoteClusterInfo)
+	if err != nil {
 		return nil, err
-	} else {
-		return NewClientFromConfig(config)
 	}
+
+	return client, nil
 }
 
 // getClient returns a client for the specified token. Creating one if necessary.
@@ -420,7 +426,7 @@ func (cf *clientFactory) refreshClientIfTokenChanged(cluster string) error {
 			client, ok := cf.saClientEntries[cluster]
 			cf.mutex.RUnlock()
 			if !ok {
-				return fmt.Errorf("There is no home cluster SA client to refresh")
+				return fmt.Errorf("there is no home cluster SA client to refresh")
 			}
 			refreshTheClient = client.GetToken() != newTokenToCheck
 			rci = nil
@@ -431,7 +437,7 @@ func (cf *clientFactory) refreshClientIfTokenChanged(cluster string) error {
 		remoteRci, ok := cf.remoteClusterInfos[cluster]
 		cf.mutex.RUnlock()
 		if !ok {
-			return fmt.Errorf("Cannot refresh token for unknown cluster [%s]", cluster)
+			return fmt.Errorf("cannot refresh token for unknown cluster [%s]", cluster)
 		} else {
 			if reloadedRci, err := reloadRemoteClusterInfoFromFile(remoteRci); err != nil {
 				return err

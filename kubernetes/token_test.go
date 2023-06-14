@@ -7,12 +7,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const tmpFileTokenExpired = "/tmp/token"
-const tmpFileGetToken = "/tmp/token2"
+const (
+	tmpFileTokenExpired = "/tmp/token"
+	tmpFileGetToken     = "/tmp/token2"
+)
 
 // Test Token is Expired
 func TestIsTokenExpired(t *testing.T) {
-
 	DefaultServiceAccountPath = tmpFileTokenExpired
 
 	setupFile("thisisarandomtoken", tmpFileTokenExpired, t)
@@ -35,14 +36,14 @@ func TestGetKialiToken(t *testing.T) {
 	token, err := GetKialiTokenForHomeCluster()
 	assert.Nil(t, err)
 
-	assert.True(t, data == token)
+	assert.Equal(t, data, token)
 	removeFile(tmpFileGetToken, t)
 }
 
 // Aux func to setup files
 func setupFile(content string, name string, t *testing.T) {
 	data := []byte(content)
-	err := os.WriteFile(name, data, 0644)
+	err := os.WriteFile(name, data, 0o644)
 	assert.Nil(t, err)
 }
 

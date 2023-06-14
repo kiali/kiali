@@ -363,49 +363,6 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 	return services
 }
 
-// The istiod registry doesn't have a explicit flag when a service is deployed in a different control plane.
-// The only way to identify it is to check that the service has an address in the current cluster.
-// To avoid side effects, Kiali will process only services that belongs to the current cluster.
-// This should be revisited on more multi-cluster deployments scenarios.
-//
-//	{
-//		"hostname": "test-svc.evil.svc.cluster.local",
-//		"clusterVIPs": {
-//			"Addresses": {
-//				"istio-west": [
-//					"0.0.0.0"
-//				]
-//			}
-//	}
-//
-// TODO: Shouldn't this be cached?
-func (in *SvcService) getClusterId() string {
-	// By default Istio uses "Kubernetes" as clusterId for single control planes scenarios.
-	// This clusterId is propagated into the Istio Registry and we need it to filter services in multi-cluster scenarios.
-	// I.e.:
-	//    "clusterVIPs": {
-	//      "Addresses": {
-	//        "Kubernetes": [
-	//          "10.217.4.189"
-	//        ]
-	//      }
-	//    }
-	clusterId := config.Get().KubernetesConfig.ClusterName
-	// Protection on tests
-	if in.businessLayer != nil {
-		if cluster, err := in.businessLayer.Mesh.ResolveKialiControlPlaneCluster(nil); err == nil {
-			if cluster != nil {
-				clusterId = cluster.Name
-			} else {
-				log.Debugf("No Cluster ID is set in the service mesh control plane configuration. Or please check 'istiod_deployment_name' is set properly. Using default Cluster ID: %s", clusterId)
-			}
-		} else {
-			log.Errorf("Cluster Id resolution failed: %s", err)
-		}
-	}
-	return clusterId
-}
-
 func filterIstioServiceByClusterId(clusterId string, item *kubernetes.RegistryService) bool {
 	if clusterId == "Kubernetes" {
 		return true
@@ -427,7 +384,31 @@ func (in *SvcService) buildRegistryServices(rSvcs []*kubernetes.RegistryService,
 	services := []models.ServiceOverview{}
 	conf := in.config
 
-	clusterId := in.getClusterId()
+	// The istiod registry doesn't have a explicit flag when a service is deployed in a different control plane.
+	// The only way to identify it is to check that the service has an address in the current cluster.
+	// To avoid side effects, Kiali will process only services that belongs to the current cluster.
+	// This should be revisited on more multi-cluster deployments scenarios.
+	//
+	//	{
+	//		"hostname": "test-svc.evil.svc.cluster.local",
+	//		"clusterVIPs": {
+	//			"Addresses": {
+	//				"istio-west": [
+	//					"0.0.0.0"
+	//				]
+	//			}
+	//	}
+	// By default Istio uses "Kubernetes" as clusterId for single control planes scenarios.
+	// This clusterId is propagated into the Istio Registry and we need it to filter services in multi-cluster scenarios.
+	// I.e.:
+	//    "clusterVIPs": {
+	//      "Addresses": {
+	//        "Kubernetes": [
+	//          "10.217.4.189"
+	//        ]
+	//      }
+	//    }
+	clusterId := conf.KubernetesConfig.ClusterName
 	for _, item := range rSvcs {
 		if !filterIstioServiceByClusterId(clusterId, item) {
 			continue
