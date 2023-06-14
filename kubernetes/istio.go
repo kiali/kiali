@@ -482,7 +482,6 @@ func ParseRegistryConfig(config map[string][]byte) (*RegistryConfiguration, erro
 			for _, iItem := range ajRegistry {
 				if mItem, ok := iItem.(map[string]interface{}); ok {
 					kind := mItem["kind"].(string)
-					log.Infof("Kind %s %s", kind, iItem)
 					switch kind {
 					case "DestinationRule", "EnvoyFilter", "Gateway", "ServiceEntry", "Sidecar", "VirtualService", "WorkloadEntry", "WorkloadGroup", "AuthorizationPolicy", "PeerAuthentication", "RequestAuthentication", "WasmPlugin", "Telemetry", "HTTPRoute":
 						bItem, err := json.Marshal(iItem)

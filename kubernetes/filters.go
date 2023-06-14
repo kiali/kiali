@@ -12,6 +12,7 @@ import (
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 )
 
 func FilterAuthorizationPoliciesBySelector(workloadSelector string, authorizationpolicies []*security_v1beta1.AuthorizationPolicy) []*security_v1beta1.AuthorizationPolicy {
@@ -167,6 +168,7 @@ func FilterSupportedK8sGateways(gateways []*k8s_networking_v1beta1.Gateway) []*k
 	}
 	filtered := []*k8s_networking_v1beta1.Gateway{}
 	for _, gw := range gateways {
+		log.Infof("Supported GW %s, %b", gw, string(gw.Spec.GatewayClassName) == gatewayAPIClassName)
 		if string(gw.Spec.GatewayClassName) == gatewayAPIClassName {
 			filtered = append(filtered, gw)
 		}
