@@ -155,6 +155,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		}
 
 		singleClusterConfigList, err := in.getIstioConfigListForCluster(ctx, criteria, cluster)
+		log.Infof("Cluster [%s] K8s GWs [%d]", cluster, len(singleClusterConfigList.K8sGateways))
 		if err != nil {
 			if cluster == conf.KubernetesConfig.ClusterName && len(in.userClients) == 1 {
 				return models.IstioConfigList{}, err
@@ -188,6 +189,8 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		istioConfigList.Namespace = singleClusterConfigList.Namespace
 		istioConfigList.IstioValidations = istioConfigList.IstioValidations.MergeValidations(singleClusterConfigList.IstioValidations)
 	}
+
+	log.Infof("All Clusters K8s GWs [%d]", len(istioConfigList.K8sGateways))
 
 	return istioConfigList, nil
 }
@@ -324,7 +327,7 @@ func (in *IstioConfigService) getIstioConfigListForCluster(ctx context.Context, 
 		if criteria.Include(kubernetes.RequestAuthentications) {
 			istioConfigList.RequestAuthentications = registryConfiguration.RequestAuthentications
 		}
-		log.Infof("K8s GWs registry [%d]", len(istioConfigList.K8sGateways))
+		log.Infof("K8s GWs registry [%d] for cluster [%s]", len(istioConfigList.K8sGateways), cluster)
 		return istioConfigList, nil
 	}
 	kubeCache := in.kialiCache.GetKubeCaches()[cluster]
