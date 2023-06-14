@@ -17,7 +17,7 @@ import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import { TimeInMilliseconds } from 'types/Common';
 import { KialiDispatch } from 'types/Redux';
 import { AutoComplete } from 'utils/AutoComplete';
-import { DEGRADED, FAILURE, HEALTHY } from 'types/Health';
+import { HEALTHY, NA, NOT_READY } from 'types/Health';
 import { GraphFindOptions } from './GraphFindOptions';
 import { history, HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
@@ -951,7 +951,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
         return {
           target: 'node',
           selector: isNegation
-            ? `[${CyNode.healthStatus} = "${FAILURE.name}"],[${CyNode.healthStatus} = "${DEGRADED.name}"]`
+            ? `[${CyNode.healthStatus} != "${HEALTHY.name}"][${CyNode.healthStatus} != "${NA.name}"][${CyNode.healthStatus} != "${NOT_READY.name}"]`
             : `[${CyNode.healthStatus} = "${HEALTHY.name}"]`
         };
       case 'idle':

@@ -33,6 +33,7 @@ import {
   SelectOr
 } from 'pages/GraphPF/GraphPFElems';
 import { FIT_PADDING } from 'pages/GraphPF/GraphPF';
+import { isArray } from 'lodash';
 
 type ReduxProps = {
   edgeLabels: EdgeLabelMode[];
@@ -70,7 +71,7 @@ type GraphFindState = {
 
 type ParsedExpression = {
   target: 'node' | 'edge';
-  selector: SelectExp | SelectOr;
+  selector: SelectExp | SelectAnd | SelectOr;
 };
 
 const inputWidth = {
@@ -660,8 +661,19 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
           return { nodeSelector: undefined, edgeSelector: undefined };
         }
 
+        const selector = parsedExpression.selector;
         if (target === 'node') {
-          nodeSelector.push(parsedExpression.selector as SelectExp);
+          // special case, selector is a SelectAnd or SelectOr
+          if (isArray(selector)) {
+            // if 'selector' is already a SelectOr then directly add to orSelector
+            if (isArray(selector[0])) {
+              orNodeSelector.push(...(selector as SelectAnd[]));
+            } else {
+              nodeSelector.push(...(selector as SelectExp[]));
+            }
+          } else {
+            nodeSelector.push(selector as SelectExp);
+          }
         } else {
           edgeSelector.push(parsedExpression.selector as SelectExp);
         }
@@ -1001,11 +1013,9 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
           target: 'node',
           selector: isNegation
             ? [
-                [
-                  { prop: CyNode.healthStatus, op: '!=', val: HEALTHY.name },
-                  { prop: CyNode.healthStatus, op: '!=', val: NA.name },
-                  { prop: CyNode.healthStatus, op: '!=', val: NOT_READY.name }
-                ]
+                { prop: CyNode.healthStatus, op: '!=', val: HEALTHY.name },
+                { prop: CyNode.healthStatus, op: '!=', val: NA.name },
+                { prop: CyNode.healthStatus, op: '!=', val: NOT_READY.name }
               ]
             : { prop: CyNode.healthStatus, val: HEALTHY.name }
         };

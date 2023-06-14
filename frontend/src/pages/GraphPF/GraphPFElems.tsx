@@ -664,36 +664,37 @@ export const selectAnd = (elems: GraphElement[], ands: SelectAnd): GraphElement[
 
 export const select = (elems: GraphElement[], exp: SelectExp): GraphElement[] => {
   return elems.filter(e => {
-    const d = e.getData();
+    const propVal = e.getData()[exp.prop] || '';
+
     switch (exp.op) {
       case '!=':
-        return d[exp.prop] !== exp.val;
+        return propVal !== exp.val;
       case '<':
-        return d[exp.prop] < exp.val;
+        return propVal < exp.val;
       case '>':
-        return d[exp.prop] > exp.val;
+        return propVal > exp.val;
       case '>=':
-        return d[exp.prop] >= exp.val;
+        return propVal >= exp.val;
       case '<=':
-        return d[exp.prop] <= exp.val;
+        return propVal <= exp.val;
       case '!*=':
-        return !(d[exp.prop] as string).includes(exp.val as string);
+        return !(propVal as string).includes(exp.val as string);
       case '!$=':
-        return !(d[exp.prop] as string).endsWith(exp.val as string);
+        return !(propVal as string).endsWith(exp.val as string);
       case '!^=':
-        return !(d[exp.prop] as string).startsWith(exp.val as string);
+        return !(propVal as string).startsWith(exp.val as string);
       case '*=':
-        return (d[exp.prop] as string).includes(exp.val as string);
+        return (propVal as string).includes(exp.val as string);
       case '$=':
-        return (d[exp.prop] as string).endsWith(exp.val as string);
+        return (propVal as string).endsWith(exp.val as string);
       case '^=':
-        return (d[exp.prop] as string).startsWith(exp.val as string);
+        return (propVal as string).startsWith(exp.val as string);
       case 'falsy':
-        return !d[exp.prop];
+        return !propVal;
       case 'truthy':
-        return !!d[exp.prop];
+        return !!propVal;
       default:
-        return d[exp.prop] === exp.val;
+        return propVal === exp.val;
     }
   });
 };
