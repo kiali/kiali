@@ -79,7 +79,7 @@ export const TopologyContent: React.FC<{
   graphData: GraphData;
   setEdgeMode: (edgeMode: EdgeMode) => void;
   highlighter: GraphHighlighterPF;
-  homeCluster: string;
+  isMiniGraph: boolean;
   layoutName: LayoutName;
   onReady: (controller: any) => void;
   setLayout: (val: LayoutName) => void;
@@ -96,7 +96,7 @@ export const TopologyContent: React.FC<{
   edgeMode,
   graphData,
   highlighter,
-  homeCluster,
+  isMiniGraph,
   layoutName,
   onReady,
   setEdgeMode,
@@ -116,13 +116,12 @@ export const TopologyContent: React.FC<{
       activeNamespaces: graphData.fetchParams.namespaces,
       edgeLabels: edgeLabels,
       graphType: graphData.fetchParams.graphType,
-      homeCluster: homeCluster,
       showMissingSidecars: showMissingSidecars,
       showSecurity: showSecurity,
       showVirtualServices: showVirtualServices,
       trafficRates: graphData.fetchParams.trafficRates
     } as GraphPFSettings;
-  }, [graphData, edgeLabels, homeCluster, showMissingSidecars, showSecurity, showVirtualServices]);
+  }, [graphData, edgeLabels, showMissingSidecars, showSecurity, showVirtualServices]);
 
   //
   // SelectedIds State
@@ -414,6 +413,10 @@ export const TopologyContent: React.FC<{
   }, [highlighter]);
 
   React.useEffect(() => {
+    console.log(`isMiniGraph changed`);
+  }, [isMiniGraph]);
+
+  React.useEffect(() => {
     console.log(`onReady changed`);
     initialLayout = true;
   }, [onReady]);
@@ -507,9 +510,13 @@ export const TopologyContent: React.FC<{
   useEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
 
   console.log(`Render Topology hasGraph=${controller.hasGraph()}`);
-  return (
+  return isMiniGraph ? (
+    <TopologyView data-test="topology-view-pf">
+      <VisualizationSurface data-test="visualization-surface" state={{}} />
+    </TopologyView>
+  ) : (
     <TopologyView
-      data-test="topology-view"
+      data-test="topology-view-pf"
       controlBar={
         <TopologyControlBar
           data-test="topology-control-bar"
@@ -616,6 +623,7 @@ export const TopologyContent: React.FC<{
         />
       }
     >
+      )
       <VisualizationSurface data-test="visualization-surface" state={{}} />
     </TopologyView>
   );
@@ -626,7 +634,7 @@ export const GraphPF: React.FC<{
   edgeMode: EdgeMode;
   focusNode?: FocusNode;
   graphData: GraphData;
-  homeCluster: string;
+  isMiniGraph: boolean;
   layout: Layout;
   onReady: (controller: any) => void;
   setEdgeMode: (edgeMode: EdgeMode) => void;
@@ -643,7 +651,7 @@ export const GraphPF: React.FC<{
   edgeMode,
   focusNode,
   graphData,
-  homeCluster,
+  isMiniGraph,
   layout,
   onReady,
   setEdgeMode,
@@ -724,7 +732,7 @@ export const GraphPF: React.FC<{
         focusNode={focusNode}
         graphData={graphData}
         highlighter={highlighter!}
-        homeCluster={homeCluster}
+        isMiniGraph={isMiniGraph}
         layoutName={getLayoutName(layout)}
         onReady={onReady}
         setEdgeMode={setEdgeMode}

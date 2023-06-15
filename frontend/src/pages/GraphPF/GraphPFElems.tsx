@@ -14,9 +14,10 @@ import {
   NodeStatus
 } from '@patternfly/react-topology';
 import { PFBadges, PFBadgeType } from 'components/Pf/PfBadges';
-import { icons } from 'config';
+import { icons, serverConfig } from 'config';
 import {
   BoxByType,
+  CLUSTER_DEFAULT,
   DecoratedGraphEdgeData,
   DecoratedGraphEdgeWrapper,
   DecoratedGraphNodeData,
@@ -89,7 +90,6 @@ export type GraphPFSettings = {
   activeNamespaces: Namespace[];
   edgeLabels: EdgeLabelMode[];
   graphType: GraphType;
-  homeCluster: string;
   showMissingSidecars: boolean;
   showSecurity: boolean;
   showVirtualServices: boolean;
@@ -250,7 +250,8 @@ export const setNodeLabel = (node: NodeModel, nodeMap: NodeMap, settings: GraphP
   }
 
   // append cluster if necessary
-  if (!!cluster && cluster !== UNKNOWN && cluster !== settings.homeCluster && !isBoxed && isBox !== BoxByType.CLUSTER) {
+  const homeCluster = serverConfig?.clusterInfo?.name || CLUSTER_DEFAULT;
+  if (!!cluster && cluster !== UNKNOWN && cluster !== homeCluster && !isBoxed && isBox !== BoxByType.CLUSTER) {
     content.push(`(${cluster})`);
   }
 

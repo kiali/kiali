@@ -20,8 +20,7 @@ import {
   TrafficRate,
   RankMode,
   RankResult,
-  EdgeMode,
-  CLUSTER_DEFAULT
+  EdgeMode
 } from '../../types/Graph';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import * as AlertUtils from '../../utils/AlertUtils';
@@ -74,7 +73,6 @@ import { triggerRefresh } from '../../hooks/refresh';
 import { GraphData, GraphPageProps } from 'pages/Graph/GraphPage';
 import GraphPF, { FocusNode } from './GraphPF';
 import * as CytoscapeGraphUtils from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
-import { serverConfig } from 'config';
 import { Controller } from '@patternfly/react-topology';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
@@ -109,7 +107,7 @@ type ReduxProps = {
   mtlsEnabled: boolean;
   node?: NodeParamsType;
   onNamespaceChange: () => void;
-  onReady: (graph: any) => void;
+  onReady: (controller: any) => void;
   rankBy: RankMode[];
   refreshInterval: IntervalInMilliseconds;
   replayActive: boolean;
@@ -456,11 +454,7 @@ export class GraphPagePF extends React.Component<GraphPagePropsPF, GraphPageStat
               fallBackComponent={<GraphErrorBoundaryFallback />}
             >
               {this.props.showLegend && false && (
-                <GraphLegend
-                  className={graphLegendStyle}
-                  isMTLSEnabled={this.props.mtlsEnabled}
-                  closeLegend={this.props.toggleLegend}
-                />
+                <GraphLegend className={graphLegendStyle} closeLegend={this.props.toggleLegend} />
               )}
               {isReady && (
                 <Chip
@@ -489,7 +483,7 @@ export class GraphPagePF extends React.Component<GraphPagePropsPF, GraphPageStat
                     <GraphPF
                       focusNode={this.focusNode}
                       graphData={this.state.graphData}
-                      homeCluster={serverConfig?.clusterInfo?.name || CLUSTER_DEFAULT}
+                      isMiniGraph={false}
                       {...this.props}
                     />
                   </EmptyGraphLayout>

@@ -470,11 +470,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
               fallBackComponent={<GraphErrorBoundaryFallback />}
             >
               {this.props.showLegend && (
-                <GraphLegend
-                  className={graphLegendStyle}
-                  isMTLSEnabled={this.props.mtlsEnabled}
-                  closeLegend={this.props.toggleLegend}
-                />
+                <GraphLegend className={graphLegendStyle} closeLegend={this.props.toggleLegend} />
               )}
               {isReady && (
                 <Chip
@@ -494,7 +490,6 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
                   contextMenuNodeComponent={NodeContextMenu}
                   focusSelector={this.focusSelector}
                   graphData={this.state.graphData}
-                  isMTLSEnabled={this.props.mtlsEnabled}
                   onEmptyGraphAction={this.handleEmptyGraphAction}
                   onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
                   onLaunchWizard={this.handleLaunchWizard}

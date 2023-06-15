@@ -11,38 +11,45 @@ import {
   KebabToggle,
   ToolbarItem
 } from '@patternfly/react-core';
-import { history } from '../../app/History';
-import { GraphDataSource } from '../../services/GraphDataSource';
-import { DecoratedGraphElements, EdgeMode, GraphType, NodeType } from '../../types/Graph';
-import { CytoscapeGraph, GraphEdgeTapEvent, GraphNodeTapEvent } from './CytoscapeGraph';
-import { CytoscapeGraphSelectorBuilder } from './CytoscapeGraphSelector';
+import history from '../../app/History';
+import GraphDataSource from '../../services/GraphDataSource';
+import { DecoratedGraphElements, EdgeMode, GraphEvent, GraphType, Layout, NodeType } from '../../types/Graph';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
 import { store } from 'store/ConfigStore';
-import { style } from 'typestyle';
-import { toRangeString } from '../Time/Utils';
 import { TimeInMilliseconds } from '../../types/Common';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
-import { KialiDagreGraph } from './graphs/KialiDagreGraph';
 import { KialiAppState } from '../../store/Store';
-import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
-import { LoadingWizardActionsDropdownGroup } from '../IstioWizards/LoadingWizardActionsDropdownGroup';
-import { ServiceWizardActionsDropdownGroup } from '../IstioWizards/ServiceWizardActionsDropdownGroup';
-import { WizardAction, WizardMode } from '../IstioWizards/WizardActions';
-import { TimeDurationModal } from '../Time/TimeDurationModal';
-import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
-import { KioskElement } from '../Kiosk/KioskElement';
+import GraphPF from './GraphPF';
+import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
+import { isParentKiosk } from 'components/Kiosk/KioskActions';
+import { LoadingWizardActionsDropdownGroup } from 'components/IstioWizards/LoadingWizardActionsDropdownGroup';
+import ServiceWizardActionsDropdownGroup from 'components/IstioWizards/ServiceWizardActionsDropdownGroup';
+import { toRangeString } from 'components/Time/Utils';
+import { KioskElement } from 'components/Kiosk/KioskElement';
+import TimeDurationIndicatorContainer from 'components/Time/TimeDurationIndicatorComponent';
+import { TimeDurationModal } from 'components/Time/TimeDurationModal';
+import { KialiDagreGraph } from 'components/CytoscapeGraph/graphs/KialiDagreGraph';
+import { KialiDispatch } from 'types/Redux';
+import GraphThunkActions from 'actions/GraphThunkActions';
+import { bindActionCreators } from 'redux';
+import { GraphActions } from 'actions/GraphActions';
 
-const initGraphContainerStyle = style({ width: '100%', height: '100%' });
+// const initGraphContainerStyle = style({ width: '100%', height: '100%' });
 
 type ReduxProps = {
   kiosk: string;
+  onReady: (controller: any) => void;
+  setEdgeMode: (edgeMode: EdgeMode) => void;
+  setLayout: (layout: Layout) => void;
+  setUpdateTime: (val: TimeInMilliseconds) => void;
+  updateSummary: (event: GraphEvent) => void;
 };
 
-type MiniGraphCardProps = ReduxProps & {
+type MiniGraphCardPropsPF = ReduxProps & {
   dataSource: GraphDataSource;
-  graphContainerStyle?: string;
+  // graphContainerStyle?: string;
   onDeleteTrafficRouting?: (key: string) => void;
-  onEdgeTap?: (e: GraphEdgeTapEvent) => void;
+  //onEdgeTap?: (e: GraphEdgeTapEvent) => void;
   onLaunchWizard?: (key: WizardAction, mode: WizardMode) => void;
   serviceDetails?: ServiceDetailsInfo | null;
 };
@@ -53,12 +60,12 @@ type MiniGraphCardState = {
   graphData: DecoratedGraphElements;
 };
 
-class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGraphCardState> {
-  private cytoscapeGraphRef: any;
+class MiniGraphCardPF extends React.Component<MiniGraphCardPropsPF, MiniGraphCardState> {
+  //private cytoscapeGraphRef: any;
 
   constructor(props) {
     super(props);
-    this.cytoscapeGraphRef = React.createRef();
+    //this.cytoscapeGraphRef = React.createRef();
     this.state = { isKebabOpen: false, isTimeOptionsOpen: false, graphData: props.dataSource.graphData };
   }
 
@@ -117,7 +124,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
             <CardActions>
               <KioskElement>
                 <ToolbarItem>
-                  <TimeDurationIndicator onClick={this.toggleTimeOptionsVisibility} isDuration={true} />
+                  <TimeDurationIndicatorContainer onClick={this.toggleTimeOptionsVisibility} isDuration={true} />
                 </ToolbarItem>
               </KioskElement>
               <Dropdown
@@ -132,11 +139,12 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
           </CardHeader>
           <CardBody>
             <div style={{ height: '100%' }}>
-              <CytoscapeGraph
-                compressOnHide={true}
-                containerClassName={
-                  this.props.graphContainerStyle ? this.props.graphContainerStyle : initGraphContainerStyle
-                }
+              <GraphPF
+                //containerClassName={
+                //  this.props.graphContainerStyle ? this.props.graphContainerStyle : initGraphContainerStyle
+                //}
+                edgeLabels={this.props.dataSource.fetchParameters.edgeLabels}
+                edgeMode={EdgeMode.ALL}
                 graphData={{
                   elements: this.state.graphData,
                   elementsChanged: true,
@@ -146,29 +154,31 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
                   fetchParams: this.props.dataSource.fetchParameters,
                   timestamp: this.props.dataSource.graphTimestamp
                 }}
-                toggleIdleNodes={() => undefined}
-                edgeLabels={this.props.dataSource.fetchParameters.edgeLabels}
-                edgeMode={EdgeMode.ALL}
+                //toggleIdleNodes={() => undefined}
                 isMiniGraph={true}
-                onEdgeTap={this.props.onEdgeTap}
+                //onEdgeTap={this.props.onEdgeTap}
                 layout={KialiDagreGraph.getLayout()}
-                namespaceLayout={KialiDagreGraph.getLayout()}
-                onNodeTap={this.handleNodeTap}
+                //onNodeTap={this.handleNodeTap}
                 // Ranking not enabled for minigraphs yet
-                rankBy={[]}
-                ref={refInstance => this.setCytoscapeGraph(refInstance)}
-                refreshInterval={0}
-                setRankResult={undefined}
-                showIdleEdges={false}
+                //rankBy={[]}
+                //ref={refInstance => this.setCytoscapeGraph(refInstance)}
+                //refreshInterval={0}
+                //setRankResult={undefined}
+                //showIdleEdges={false}
+                onReady={this.props.onReady}
+                setEdgeMode={this.props.setEdgeMode}
+                setLayout={this.props.setLayout}
+                setUpdateTime={this.props.setUpdateTime}
+                updateSummary={this.props.updateSummary}
                 showMissingSidecars={true}
-                showOperationNodes={false}
-                showRank={false}
+                //showOperationNodes={false}
+                //showRank={false}
                 showSecurity={true}
-                showServiceNodes={true}
+                //showServiceNodes={true}
                 showTrafficAnimation={false}
-                showIdleNodes={false}
+                //showIdleNodes={false}
                 showVirtualServices={true}
-                summaryData={null}
+                //summaryData={null}
               />
             </div>
           </CardBody>
@@ -181,10 +191,6 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
         />
       </>
     );
-  }
-
-  private setCytoscapeGraph(cytoscapeGraph: any) {
-    this.cytoscapeGraphRef.current = cytoscapeGraph;
   }
 
   private handleLaunchWizard = (key: WizardAction, mode: WizardMode) => {
@@ -201,6 +207,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     }
   };
 
+  /*
   private handleNodeTap = (e: GraphNodeTapEvent) => {
     // Do nothing on inaccessible nodes or service entry nodes
     if (e.isInaccessible || e.isServiceEntry) {
@@ -208,11 +215,11 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     }
 
     // If we are already on the details page of the tapped node, do nothing.
-    const displayedNode = this.props.dataSource.fetchParameters.node;
+    const displayedNode = this.props.dataSource.fetchParameters.node!;
     // Minigraph will consider box nodes as app
     const eNodeType = e.nodeType === 'box' && e.isBox ? e.isBox : e.workload ? 'workload' : e.nodeType;
     const isSameResource =
-      displayedNode?.namespace.name === e.namespace &&
+      displayedNode.namespace.name === e.namespace &&
       displayedNode.nodeType === eNodeType &&
       displayedNode[displayedNode.nodeType] === e[eNodeType];
 
@@ -233,7 +240,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     let href = `/namespaces/${e.namespace}/${resourceType}s/${resource}`;
 
     if (e.cluster) {
-      href = href + '?clusterName=' + e.cluster;
+      href = href + '?cluster=' + e.cluster;
     }
 
     if (isParentKiosk(this.props.kiosk)) {
@@ -242,6 +249,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
       history.push(href);
     }
   };
+  */
 
   private onGraphActionsToggle = (isOpen: boolean) => {
     this.setState({
@@ -250,6 +258,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
   };
 
   private onViewFullGraph = () => {
+    /*
     const namespace = this.props.dataSource.fetchParameters.namespaces[0].name;
     let cytoscapeGraph = new CytoscapeGraphSelectorBuilder().namespace(namespace);
     let graphType: GraphType = GraphType.APP;
@@ -288,6 +297,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     } else {
       history.push(graphUrl);
     }
+    */
   };
 
   private onViewNodeGraph = () => {
@@ -330,8 +340,17 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
   };
 }
 
-const mapStateToProps = (state: KialiAppState): ReduxProps => ({
+const mapStateToProps = (state: KialiAppState) => ({
   kiosk: state.globalState.kiosk
 });
 
-export const MiniGraphCard = connect(mapStateToProps)(MiniGraphCardComponent);
+const mapDispatchToProps = (dispatch: KialiDispatch) => ({
+  onReady: (controller: any) => dispatch(GraphThunkActions.graphPFReady(controller)),
+  setEdgeMode: bindActionCreators(GraphActions.setEdgeMode, dispatch),
+  setLayout: bindActionCreators(GraphActions.setLayout, dispatch),
+  setUpdateTime: (val: TimeInMilliseconds) => dispatch(GraphActions.setUpdateTime(val)),
+  updateSummary: (event: GraphEvent) => dispatch(GraphActions.updateSummary(event))
+});
+
+const MiniGraphCardPFContainer = connect(mapStateToProps, mapDispatchToProps)(MiniGraphCardPF);
+export default MiniGraphCardPFContainer;

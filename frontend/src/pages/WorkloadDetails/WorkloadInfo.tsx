@@ -13,21 +13,18 @@ import { GraphDataSource } from '../../services/GraphDataSource';
 import { DurationInSeconds } from 'types/Common';
 import { isIstioNamespace, serverConfig } from '../../config/ServerConfig';
 import { IstioConfigList, toIstioItems } from '../../types/IstioConfigList';
-import { KialiAppState } from '../../store/Store';
-import { connect } from 'react-redux';
-import { meshWideMTLSEnabledSelector } from '../../store/Selectors';
 import { WorkloadPods } from './WorkloadPods';
 import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
 import { history, URLParam } from '../../app/History';
 import { MiniGraphCard } from '../../components/CytoscapeGraph/MiniGraphCard';
 import { IstioConfigCard } from '../../components/IstioConfigCard/IstioConfigCard';
+import MiniGraphCardPFContainer from 'pages/GraphPF/MiniGraphCardPF';
 
 type WorkloadInfoProps = {
   duration: DurationInSeconds;
   namespace: string;
   workload?: Workload;
   health?: WorkloadHealth;
-  mtlsEnabled: boolean;
   refreshWorkload: () => void;
 };
 
@@ -54,7 +51,7 @@ const workloadIstioResources = [
   'envoyfilters'
 ];
 
-class WorkloadInfoComponent extends React.Component<WorkloadInfoProps, WorkloadInfoState> {
+export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState> {
   private graphDataSource = new GraphDataSource();
 
   constructor(props: WorkloadInfoProps) {
@@ -271,6 +268,8 @@ class WorkloadInfoComponent extends React.Component<WorkloadInfoProps, WorkloadI
     // Graph resizes correctly on width
     const height = this.state.tabHeight ? this.state.tabHeight - 115 : 300;
     const graphContainerStyle = style({ width: '100%', height: height });
+    const includeMiniGraphPF = !!serverConfig.kialiFeatureFlags.uiDefaults.graph.menuItemsAll;
+    const miniGraphSpan = includeMiniGraphPF ? 4 : 8;
 
     return (
       <>
@@ -301,23 +300,25 @@ class WorkloadInfoComponent extends React.Component<WorkloadInfoProps, WorkloadI
                 </StackItem>
               </Stack>
             </GridItem>
-            <GridItem span={8}>
+            <GridItem span={miniGraphSpan}>
               <MiniGraphCard
                 onEdgeTap={this.goToMetrics}
                 dataSource={this.graphDataSource}
-                mtlsEnabled={this.props.mtlsEnabled}
                 graphContainerStyle={graphContainerStyle}
               />
             </GridItem>
+            {includeMiniGraphPF && (
+              <GridItem span={miniGraphSpan}>
+                <MiniGraphCardPFContainer
+                  // onEdgeTap={this.goToMetrics}
+                  dataSource={this.graphDataSource}
+                  // graphContainerStyle={graphContainerStyle}
+                />
+              </GridItem>
+            )}
           </Grid>
         </RenderComponentScroll>
       </>
     );
   }
 }
-
-const mapStateToProps = (state: KialiAppState) => ({
-  mtlsEnabled: meshWideMTLSEnabledSelector(state)
-});
-
-export const WorkloadInfo = connect(mapStateToProps)(WorkloadInfoComponent);

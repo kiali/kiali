@@ -83,7 +83,6 @@ describe('CytoscapeGraph component test', () => {
           refreshInterval={0}
           setActiveNamespaces={testSetHandler}
           setNode={testSetHandler}
-          isMTLSEnabled={false}
           rankBy={[]}
           showIdleEdges={false}
           showIdleNodes={false}

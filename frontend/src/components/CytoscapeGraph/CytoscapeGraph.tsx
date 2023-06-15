@@ -56,7 +56,6 @@ type CytoscapeGraphProps = {
   focusSelector?: string;
   graphData: GraphData;
   isMiniGraph: boolean;
-  isMTLSEnabled: boolean;
   layout: Layout;
   namespaceLayout: Layout;
   onEmptyGraphAction?: () => void;
