@@ -8,26 +8,20 @@
 ##############################################################################
 set -e
 
+apps=("details-v1"
+      "kiali-traffic-generator"
+      "productpage-v1"
+      "ratings-v1"
+      "reviews-v1"
+      "reviews-v2"
+      "reviews-v3")
+
 input=$(kubectl get pods -n bookinfo -o=custom-columns=NAME:.metadata.name,Status:.status.phase --no-headers=true)
 
-pods=("$(echo "$input" | grep details-v1 | awk -F ' ' '{print $1}' | wc -l )"
-      "$(echo "$input" | grep productpage-v1 | awk -F ' ' '{print $1}' | wc -l )" 
-      "$(echo "$input" | grep ratings-v1 | awk -F ' ' '{print $1}' | wc -l)"
-      "$(echo "$input" | grep reviews-v1 | awk -F ' ' '{print $1}' | wc -l)"
-      "$(echo "$input" | grep reviews-v2 | awk -F ' ' '{print $1}' | wc -l)"
-      "$(echo "$input" | grep reviews-v3 | awk -F ' ' '{print $1}' | wc -l)"
-      "$(echo "$input" | grep kiali-traffic-generator | awk -F ' ' '{print $1}' | wc -l)")
-
-status=("$(echo "$input" | grep details-v1 | awk -F ' ' '{print $2}')"
-      "$(echo "$input" | grep productpage-v1 | awk -F ' ' '{print $2}')" 
-      "$(echo "$input" | grep ratings-v1 | awk -F ' ' '{print $2}')"
-      "$(echo "$input" | grep reviews-v1 | awk -F ' ' '{print $2}')"
-      "$(echo "$input" | grep reviews-v2 | awk -F ' ' '{print $2}')"
-      "$(echo "$input" | grep reviews-v3 | awk -F ' ' '{print $2}')"
-      "$(echo "$input" | grep kiali-traffic-generator | awk -F ' ' '{print $2}')")
-
-for pod in ${!pods[@]}; do
-  if [ ${pods[$pod]} -ne 1 ] || [ "${status[$pod]}" = "Running\n" ]
+for pod in ${!apps[@]}; do
+  count=$(echo "$input" | grep "${apps[$pod]}" | awk -F ' ' '{print $1}' | wc -l)
+  status=$(echo "$input" | grep "${apps[$pod]}" | awk -F ' ' '{print $2}')
+  if [ $count -ne 1 ] || [ $status = "Running\n" ]
   then
     echo "Invalid number of pods in a Running state detected."
     exit 1
