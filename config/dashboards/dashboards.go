@@ -54,7 +54,7 @@ const DEFAULT_DASHBOARDS_YAML = `
   - chart:
       name: "CPU ratio"
       spans: 4
-      metricName: "process_cpu_seconds_total"
+      metricName: "container_cpu_usage_seconds_total"
       dataType: "rate"
       aggregations:
       - label: "pod_name"

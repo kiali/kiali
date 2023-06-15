@@ -27,8 +27,8 @@ export type IstioMetricsMap = {
   tcp_received?: Metric[];
   tcp_sent?: Metric[];
   pilot_proxy_convergence_time?: Metric[];
-  process_cpu_seconds_total?: Metric[];
-  process_virtual_memory_bytes?: Metric[];
+  container_cpu_usage_seconds_total?: Metric[];
+  container_memory_working_set_bytes?: Metric[];
 };
 
 export enum MetricsObjectTypes {

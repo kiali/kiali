@@ -262,19 +262,19 @@ func (in *MetricsService) GetControlPlaneMetrics(q models.IstioMetricsQuery, sca
 	}
 	metrics["pilot_proxy_convergence_time"] = append(metrics["pilot_proxy_convergence_time"], converted...)
 
-	metric := in.prom.FetchRateRange("process_cpu_seconds_total", []string{`{app="istiod"}`}, "", &q.RangeQuery)
-	converted, err = models.ConvertMetric("process_cpu_seconds_total", metric, models.ConversionParams{Scale: 1})
+	metric := in.prom.FetchRateRange("container_cpu_usage_seconds_total", []string{`{pod=~"istiod-.*|istio-pilot-.*"}`}, "", &q.RangeQuery)
+	converted, err = models.ConvertMetric("container_cpu_usage_seconds_total", metric, models.ConversionParams{Scale: 1})
 	if err != nil {
 		return nil, err
 	}
-	metrics["process_cpu_seconds_total"] = append(metrics["process_cpu_seconds_total"], converted...)
+	metrics["container_cpu_usage_seconds_total"] = append(metrics["container_cpu_usage_seconds_total"], converted...)
 
 	metric = in.prom.FetchRange("container_memory_working_set_bytes", `{pod=~"istiod-.*|istio-pilot-.*"}`, "", "", &q.RangeQuery)
 	converted, err = models.ConvertMetric("container_memory_working_set_bytes", metric, models.ConversionParams{Scale: 0.000001})
 	if err != nil {
 		return nil, err
 	}
-	metrics["process_virtual_memory_bytes"] = append(metrics["container_memory_working_set_bytes"], converted...)
+	metrics["container_memory_working_set_bytes"] = append(metrics["container_memory_working_set_bytes"], converted...)
 
 	return metrics, nil
 }
