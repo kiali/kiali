@@ -442,6 +442,7 @@ func (in *IstioConfigService) getIstioConfigListForCluster(ctx context.Context, 
 			// ignore an error as system could not be configured to support K8s Gateway API
 			// Check if namespace is cached
 			if IsResourceCached(criteria.Namespace, kubernetes.K8sGateways) {
+				log.Infof("kubernetes.K8sGateways cached for [%s]", criteria.Namespace)
 				istioConfigList.K8sGateways, err = kubeCache.GetK8sGateways(criteria.Namespace, criteria.LabelSelector)
 			}
 			// TODO gwl.Items, there is conflict itself in Gateway API between returned types referenced or not
