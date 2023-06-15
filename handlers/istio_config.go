@@ -58,8 +58,6 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		includeValidations = false
 	}
 
-	includeValidations = false
-
 	criteria := business.ParseIstioConfigCriteria(cluster, namespace, objects, labelSelector, workloadSelector, allNamespaces)
 
 	// Get business layer
