@@ -98,7 +98,7 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 
 	// This can result on an error, so filter here
 	if criteria.AllNamespaces && !config.Get().AllNamespacesAccessible() {
-		//criteria.AllNamespaces = false
+		criteria.AllNamespaces = false
 		for _, ns := range nss {
 			criteria.Namespace = ns
 			istioConfigNs, _ := business.IstioConfig.GetIstioConfigList(r.Context(), criteria)
