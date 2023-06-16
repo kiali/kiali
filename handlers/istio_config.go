@@ -96,8 +96,9 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 
 	istioConfig := models.IstioConfigList{}
 
-	// This can result on an error, so filter here
-	if criteria.AllNamespaces && !config.Get().AllNamespacesAccessible() {
+	// This can result on an error when IstioAPI is disabled, so filter here
+	// Even if all namespaces are not accessible, but the IstioAPI is enabled, still use the Istio Registry by AllNamespaces=true
+	if criteria.AllNamespaces && !config.Get().AllNamespacesAccessible() && !config.Get().ExternalServices.Istio.IstioAPIEnabled {
 		criteria.AllNamespaces = false
 		for _, ns := range nss {
 			criteria.Namespace = ns
