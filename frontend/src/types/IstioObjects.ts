@@ -34,10 +34,10 @@ export interface K8sMetadata {
   selfLink?: string;
   uid?: string;
   resourceVersion?: string;
-  generation?: string;
+  generation?: number;
   creationTimestamp?: string;
   deletionTimestamp?: string;
-  deletionGracePeriodSeconds?: string;
+  deletionGracePeriodSeconds?: number;
   labels?: { [key: string]: string };
   annotations?: { [key: string]: string };
   ownerReferences?: K8sOwnerReference[];
@@ -714,12 +714,12 @@ export function getK8sHTTPRouteUpdateLabel(k8sr: K8sHTTPRoute | K8sHTTPRoute[] |
 }
 
 export interface K8sOwnerReference {
-  apiVersion?: string;
-  kind?: string;
-  name?: string;
-  uid?: string;
-  controller?: string;
-  blockOwnerDeletion?: string;
+  apiVersion: string;
+  kind: string;
+  name: string;
+  uid: string;
+  controller?: boolean;
+  blockOwnerDeletion?: boolean;
 }
 
 // 1.6
