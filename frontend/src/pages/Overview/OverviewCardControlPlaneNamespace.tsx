@@ -20,8 +20,10 @@ export const infoStyle = style({
 
 type ControlPlaneProps = {
   pilotLatency?: Metric[];
-  istiodMemory?: Metric[];
-  istiodCpu?: Metric[];
+  istiodContainerMemory?: Metric[];
+  istiodContainerCpu?: Metric[];
+  istiodProcessMemory?: Metric[];
+  istiodProcessCpu?: Metric[];
   duration: DurationInSeconds;
   istiodResourceThresholds?: IstiodResourceThresholds;
 };
@@ -47,19 +49,26 @@ class OverviewCardControlPlaneNamespace extends React.Component<ControlPlaneProp
     let memoryThresholds: VCLine<RichDataPoint>[] = [];
     let cpuThresholds: VCLine<RichDataPoint>[] = [];
 
-    if (showMetrics(this.props.istiodMemory)) {
-      if (this.props.istiodMemory && this.props.istiodMemory?.length > 0) {
-        const data = toVCLine(this.props.istiodMemory[0].datapoints, 'Mb', PFColors.Green400);
+    let cpu = this.props.istiodContainerCpu;
+    if (!showMetrics(this.props.istiodContainerCpu)) {
+      cpu = this.props.istiodProcessCpu;
+    }
+
+    let memory = this.props.istiodContainerMemory;
+    if (!showMetrics(this.props.istiodContainerMemory)) {
+      memory = this.props.istiodProcessMemory;
+    }
+
+    if (showMetrics(memory)) {
+      if (memory && memory?.length > 0) {
+        const data = toVCLine(memory[0].datapoints, 'Mb', PFColors.Green400);
 
         if (this.props.istiodResourceThresholds?.memory) {
-          const datapoint0: Datapoint = [
-            this.props.istiodMemory[0].datapoints[0][0],
-            this.props.istiodMemory[0].datapoints[0][1]
-          ];
+          const datapoint0: Datapoint = [memory[0].datapoints[0][0], memory[0].datapoints[0][1]];
           datapoint0[1] = this.props.istiodResourceThresholds?.memory;
           const datapointn: Datapoint = [
-            this.props.istiodMemory[0].datapoints[this.props.istiodMemory[0].datapoints.length - 1][0],
-            this.props.istiodMemory[0].datapoints[this.props.istiodMemory[0].datapoints.length - 1][0]
+            memory[0].datapoints[memory[0].datapoints.length - 1][0],
+            memory[0].datapoints[memory[0].datapoints.length - 1][0]
           ];
           datapointn[1] = this.props.istiodResourceThresholds?.memory;
           const dataThre = toVCLine([datapoint0, datapointn], 'Mb (Threshold)', PFColors.Green300);
@@ -70,19 +79,16 @@ class OverviewCardControlPlaneNamespace extends React.Component<ControlPlaneProp
       }
     }
 
-    if (showMetrics(this.props.istiodCpu)) {
-      if (this.props.istiodCpu && this.props.istiodCpu?.length > 0) {
-        const data = toVCLine(this.props.istiodCpu[0].datapoints, 'cores', PFColors.Green400);
+    if (showMetrics(cpu)) {
+      if (cpu && cpu?.length > 0) {
+        const data = toVCLine(cpu[0].datapoints, 'cores', PFColors.Green400);
 
         if (this.props.istiodResourceThresholds?.cpu) {
-          const datapoint0: Datapoint = [
-            this.props.istiodCpu[0].datapoints[0][0],
-            this.props.istiodCpu[0].datapoints[0][1]
-          ];
+          const datapoint0: Datapoint = [cpu[0].datapoints[0][0], cpu[0].datapoints[0][1]];
           datapoint0[1] = this.props.istiodResourceThresholds?.cpu;
           const datapointn: Datapoint = [
-            this.props.istiodCpu[0].datapoints[this.props.istiodCpu[0].datapoints.length - 1][0],
-            this.props.istiodCpu[0].datapoints[this.props.istiodCpu[0].datapoints.length - 1][0]
+            cpu[0].datapoints[cpu[0].datapoints.length - 1][0],
+            cpu[0].datapoints[cpu[0].datapoints.length - 1][0]
           ];
           datapointn[1] = this.props.istiodResourceThresholds?.cpu;
           const dataThre = toVCLine([datapoint0, datapointn], 'cores', PFColors.Green300);
@@ -106,7 +112,7 @@ class OverviewCardControlPlaneNamespace extends React.Component<ControlPlaneProp
         >
           <Card isPlain>
             <CardBody>
-              {showMetrics(this.props.istiodMemory) && (
+              {showMetrics(memory) && (
                 <Grid style={{ marginBottom: 20 }} hasGutter>
                   <GridItem md={2}>
                     <Flex
@@ -152,7 +158,7 @@ class OverviewCardControlPlaneNamespace extends React.Component<ControlPlaneProp
                   </GridItem>
                 </Grid>
               )}
-              {showMetrics(this.props.istiodCpu) && (
+              {showMetrics(cpu) && (
                 <Grid hasGutter>
                   <GridItem md={2}>
                     <Flex
