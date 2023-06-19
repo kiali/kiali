@@ -2,6 +2,7 @@ import { defineConfig } from 'cypress';
 import { getAuthStrategy } from './cypress/plugins/setup';
 import { addCucumberPreprocessorPlugin } from '@badeball/cypress-cucumber-preprocessor';
 import browserify from '@badeball/cypress-cucumber-preprocessor/browserify';
+import { cloudPlugin } from 'cypress-cloud/plugin';
 
 export default defineConfig({
   viewportWidth: 1920,
@@ -37,7 +38,7 @@ export default defineConfig({
       config.env.AUTH_PROVIDER = config.env.AUTH_PROVIDER || 'my_htpasswd_provider';
       config.env.AUTH_STRATEGY = await getAuthStrategy(config.baseUrl!);
 
-      return config;
+      return cloudPlugin(on, config);
     },
     specPattern: '**/*.feature',
     supportFile: 'cypress/support/index.ts'
