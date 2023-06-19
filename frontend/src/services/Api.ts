@@ -49,6 +49,10 @@ export interface Response<T> {
   data: T;
 }
 
+const getKialiProxy = (): string | null => {
+  return process.env.KIALI_PROXY ?? null;
+};
+
 /** API URLs */
 
 const urls = config.api.urls;
@@ -59,13 +63,17 @@ const loginHeaders = config.login.headers;
 
 /**  Helpers to Requests */
 
-const getHeaders = () => {
-  return { ...loginHeaders };
+const getHeaders = (proxyUrl: string | null) => {
+  if (proxyUrl) {
+    return { 'Content-Type': 'application/x-www-form-urlencoded' };
+  } else {
+    return { ...loginHeaders };
+  }
 };
 
 /** Create content type correctly for a given request type */
-const getHeadersWithMethod = method => {
-  var allHeaders = getHeaders();
+const getHeadersWithMethod = (method: HTTP_VERBS, proxyUrl: string | null) => {
+  let allHeaders = getHeaders(proxyUrl);
   if (method === HTTP_VERBS.PATCH) {
     allHeaders['Content-Type'] = 'application/json';
   }
@@ -77,14 +85,17 @@ const basicAuth = (username: UserName, password: Password) => {
   return { username: username, password: password };
 };
 
-const newRequest = <P>(method: HTTP_VERBS, url: string, queryParams: any, data: any) =>
-  axios.request<P>({
+const newRequest = <P>(method: HTTP_VERBS, url: string, queryParams: any, data: any) => {
+  const proxyUrl = getKialiProxy();
+
+  return axios.request<P>({
     method: method,
-    url: url,
+    url: proxyUrl ? `${proxyUrl}/${url}` : url,
     data: data,
-    headers: getHeadersWithMethod(method),
+    headers: getHeadersWithMethod(method, proxyUrl),
     params: queryParams
   });
+};
 
 interface LoginRequest {
   username: UserName;
@@ -103,10 +114,12 @@ export const login = async (
   const params = new URLSearchParams();
   params.append('token', request.token);
 
+  const proxyUrl = getKialiProxy();
+
   return axios({
     method: HTTP_VERBS.POST,
-    url: urls.authenticate,
-    headers: getHeaders(),
+    url: proxyUrl ? `${proxyUrl}/${urls.authenticate}` : urls.authenticate,
+    headers: getHeaders(proxyUrl),
     auth: basicAuth(request.username, request.password),
     data: params
   });
