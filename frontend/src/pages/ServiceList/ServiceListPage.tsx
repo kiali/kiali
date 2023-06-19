@@ -185,7 +185,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
           />
         </div>
         <RenderContent>
-          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns}>
+          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} type="services">
             <StatefulFilters
               initialFilters={ServiceListFilters.availableFilters}
               initialToggles={this.initialToggles}

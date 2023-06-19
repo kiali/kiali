@@ -176,7 +176,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
           />
         </div>
         <RenderContent>
-          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns}>
+          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} type="workloads">
             <StatefulFilters
               initialFilters={WorkloadListFilters.availableFilters}
               initialToggles={this.initialToggles}

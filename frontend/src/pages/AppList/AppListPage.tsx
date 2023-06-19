@@ -139,7 +139,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
           />
         </div>
         <RenderContent>
-          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns}>
+          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} type="applications">
             <StatefulFilters
               initialFilters={AppListFilters.availableFilters}
               initialToggles={this.initialToggles}
