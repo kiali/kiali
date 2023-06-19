@@ -118,6 +118,7 @@
     "axios-mock-adapter": "1.16.0",
     "cy2": "^4.0.6",
     "cypress": "^10.7.0",
+    "cypress-cloud": "^1.7.4",
     "cypress-multi-reporters": "^1.6.0",
     "cypress-react-selector": "^2.3.17",
     "enzyme": "3.11.0",
