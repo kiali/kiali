@@ -925,6 +925,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                 statefulProps={this.sFOverviewToolbar}
                 actions={namespaceActions}
                 hiddenColumns={hiddenColumns}
+                type="overview"
               />
             ) : (
               <Grid>

@@ -210,7 +210,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
           />
         </div>
         <RenderContent>
-          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns}>
+          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} type="istio">
             <StatefulFilters
               initialFilters={IstioConfigListFilters.availableFilters}
               initialToggles={this.props.istioAPIEnabled ? this.initialToggles : undefined}

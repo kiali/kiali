@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Table, TableHeader, TableGridBreakpoint } from '@patternfly/react-table';
-import history, { HistoryManager, URLParam } from '../../app/History';
+import { HistoryManager, URLParam } from '../../app/History';
 import { config, RenderResource, Resource } from './Config';
 import VirtualItem from './VirtualItem';
 import { EmptyState, EmptyStateBody, EmptyStateVariant, Title, TitleSizes } from '@patternfly/react-core';
@@ -33,10 +33,10 @@ type VirtualListProps<R> = {
   rows: R[];
   sort?: (sortField: SortField<NamespaceInfo>, isAscending: boolean) => void;
   statefulProps?: React.RefObject<StatefulFilters>;
+  type: string;
 };
 
 type VirtualListState = {
-  type: string;
   sortBy: {
     index: number;
     direction: Direction;
@@ -45,25 +45,19 @@ type VirtualListState = {
   conf: Resource;
 };
 
-// get the type of list user request
-const listRegex = /\/([a-z0-9-]+)/;
-
 class VirtualListC<R extends RenderResource> extends React.Component<VirtualListProps<R>, VirtualListState> {
   private statefulFilters: React.RefObject<StatefulFilters> = React.createRef();
 
   constructor(props: VirtualListProps<R>) {
     super(props);
-    const match = history.location.pathname.match(listRegex) || [];
-    const type = match[1] || '';
-    const conf = config[type] as Resource;
-    const columns = this.getColumns(type);
+    const conf = config[props.type] as Resource;
+    const columns = this.getColumns(props.type);
     let index = -1;
     const sortParam = HistoryManager.getParam(URLParam.SORT);
     if (sortParam) {
       index = conf.columns.findIndex(column => column.param === sortParam);
     }
     this.state = {
-      type,
       sortBy: {
         index,
         direction: HistoryManager.getParam(URLParam.DIRECTION) as Direction
@@ -88,7 +82,7 @@ class VirtualListC<R extends RenderResource> extends React.Component<VirtualList
   };
 
   componentDidUpdate() {
-    const columns = this.getColumns(this.state.type);
+    const columns = this.getColumns(this.props.type);
     if (columns.length !== this.state.columns.length) {
       this.setState({ columns: columns });
     }
@@ -97,7 +91,7 @@ class VirtualListC<R extends RenderResource> extends React.Component<VirtualList
   private getColumns = (type): any[] => {
     let columns = [] as any[];
     const conf = config[type] as Resource;
-    if (conf.columns && config.headerTable) {
+    if (conf.columns) {
       const filteredColumns = conf.columns.filter(
         info => !this.props.hiddenColumns || !this.props.hiddenColumns.includes(info.column.toLowerCase())
       );
@@ -130,12 +124,12 @@ class VirtualListC<R extends RenderResource> extends React.Component<VirtualList
       role: 'presentation',
       caption: conf.caption ? conf.caption : undefined
     };
-    const typeDisplay = this.state.type === 'istio' ? 'Istio config' : this.state.type;
+    const typeDisplay = this.props.type === 'istio' ? 'Istio config' : this.props.type;
 
     const childrenWithProps = React.Children.map(this.props.children, child => {
       // Checking isValidElement is the safe way and avoids a TS error too.
       if (React.isValidElement(child)) {
-        return React.cloneElement(child, { ref: this.statefulFilters });
+        return React.cloneElement(child, { ref: this.statefulFilters } as React.Attributes);
       }
 
       return child;

@@ -280,7 +280,6 @@ const istio: Resource = {
 };
 
 const conf = {
-  headerTable: true,
   applications: applications,
   workloads: workloads,
   overview: namespaces,
