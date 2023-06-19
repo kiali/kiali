@@ -116,6 +116,7 @@
     "@types/react-router-dom": "5.1.5",
     "@wojtekmaj/enzyme-adapter-react-17": "^0.6.7",
     "axios-mock-adapter": "1.16.0",
+    "cy2": "^4.0.6",
     "cypress": "^10.7.0",
     "cypress-multi-reporters": "^1.6.0",
     "cypress-react-selector": "^2.3.17",
