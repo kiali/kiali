@@ -49,6 +49,7 @@ export interface Response<T> {
   data: T;
 }
 
+/** Get internal Kiali proxy if exists */
 const getKialiProxy = (): string | null => {
   return process.env.KIALI_PROXY ?? null;
 };
