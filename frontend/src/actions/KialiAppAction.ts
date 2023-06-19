@@ -5,6 +5,7 @@ import { HelpDropdownAction } from './HelpDropdownActions';
 import { LoginAction } from './LoginActions';
 import { MessageCenterAction } from './MessageCenterActions';
 import { NamespaceAction } from './NamespaceAction';
+import { ClusterAction } from './ClusterAction';
 import { UserSettingsAction } from './UserSettingsActions';
 import { JaegerAction } from './JaegerActions';
 import { MeshTlsAction } from './MeshTlsActions';
@@ -21,6 +22,7 @@ export type KialiAppAction =
   | LoginAction
   | MessageCenterAction
   | NamespaceAction
+  | ClusterAction
   | UserSettingsAction
   | JaegerAction
   | MeshTlsAction

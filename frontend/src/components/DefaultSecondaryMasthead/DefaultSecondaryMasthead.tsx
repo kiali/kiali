@@ -2,6 +2,7 @@ import React from 'react';
 import { Title, TitleSizes } from '@patternfly/react-core';
 import { NamespaceDropdown } from '../NamespaceDropdown';
 import { kialiStyle } from 'styles/StyleUtils';
+import { ClusterDropdown } from '../ClusterDropdown';
 import { KialiIcon } from '../../config/KialiIcon';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
@@ -15,6 +16,7 @@ type ReduxProps = {
 type Props = ReduxProps & {
   actionsToolbar?: JSX.Element;
   hideNamespaceSelector?: boolean;
+  showClusterSelector?: boolean;
   rightToolbar?: JSX.Element;
 };
 
@@ -78,7 +80,14 @@ class DefaultSecondaryMastheadComponent extends React.Component<Props> {
     return (
       <div className={mainPadding}>
         <div className={flexStyle}>
-          <div>{this.props.hideNamespaceSelector === true ? null : <NamespaceDropdown disabled={disabled} />}</div>
+          {this.props.showClusterSelector && (
+            <div>
+              <ClusterDropdown />
+            </div>
+          )}
+          <div>
+            {this.props.hideNamespaceSelector === true ? null : <NamespaceDropdown disabled={disabled} />}
+          </div>
           {this.props.rightToolbar && <div className={rightToolbarStyle}>{this.props.rightToolbar}</div>}
         </div>
         <div className={flexStyle}>

@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { KialiAppState } from '../../store/Store';
-import { activeNamespacesSelector } from '../../store/Selectors';
+import { activeClustersSelector, activeNamespacesSelector, clusterItemsSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import { Namespace } from '../../types/Namespace';
+import { Cluster } from '../../types/Cluster';
 import { ActionGroup, Button, ButtonVariant, Form, FormGroup, TextInput } from '@patternfly/react-core';
 import { RenderContent } from '../../components/Nav/Page';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -73,6 +74,8 @@ import { isValid } from 'utils/Common';
 type Props = {
   objectType: string;
   activeNamespaces: Namespace[];
+  activeClusters: Cluster[];
+  clusters: Cluster[];
 };
 
 type State = {
@@ -153,7 +156,10 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props, _prevState: State) {
-    if (prevProps.activeNamespaces !== this.props.activeNamespaces) {
+    if (
+      prevProps.activeNamespaces !== this.props.activeNamespaces ||
+      prevProps.activeClusters !== this.props.activeClusters
+    ) {
       this.fetchPermissions();
     }
   }
@@ -167,9 +173,25 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
   };
 
   fetchPermissions = () => {
+    if (this.props.activeClusters.length > 0) {
+      this.props.activeClusters.forEach(cluster => {
+        this.fetchPermissionsForCluster(cluster.name);
+      });
+    } else {
+      this.fetchPermissionsForCluster();
+    }
+  };
+
+  fetchPermissionsForCluster = (cluster?: string) => {
     if (this.props.activeNamespaces.length > 0) {
       this.promises
-        .register('permissions', API.getIstioPermissions(this.props.activeNamespaces.map(n => n.name)))
+        .register(
+          'permissions',
+          API.getIstioPermissions(
+            this.props.activeNamespaces.map(n => n.name),
+            cluster
+          )
+        )
         .then(permResponse => {
           this.setState(
             {
@@ -179,7 +201,9 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
               this.props.activeNamespaces.forEach(ns => {
                 if (!this.canCreate(ns.name)) {
                   AlertUtils.addWarning(
-                    'User does not have permission to create Istio Config on namespace: ' + ns.name
+                    'User does not have permission to create Istio Config on namespace: ' +
+                      ns.name +
+                      (cluster ? ' in cluster ' + cluster : '')
                   );
                 }
               });
@@ -202,6 +226,16 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
   };
 
   onIstioResourceCreate = () => {
+    if (this.props.activeClusters.length > 0) {
+      this.props.activeClusters.forEach(cluster => {
+        this.onIstioResourceCreateForCluster(cluster.name);
+      });
+    } else {
+      this.onIstioResourceCreateForCluster();
+    }
+  };
+
+  onIstioResourceCreateForCluster = (cluster?: string) => {
     const jsonIstioObjects: { namespace: string; json: string }[] = this.state.itemsPreview.map(item => ({
       namespace: item.items[0].metadata.namespace || '',
       json: JSON.stringify(item.items[0])
@@ -210,16 +244,26 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     this.promises
       .registerAll(
         'Create ' + DIC[this.props.objectType],
-        jsonIstioObjects.map(o => API.createIstioConfigDetail(o.namespace, DIC[this.props.objectType], o.json))
+        jsonIstioObjects.map(o => API.createIstioConfigDetail(o.namespace, DIC[this.props.objectType], o.json, cluster))
       )
       .then(results => {
         if (results.length > 0) {
-          AlertUtils.add('Istio ' + this.props.objectType + ' created', 'default', MessageType.SUCCESS);
+          AlertUtils.add(
+            'Istio ' + this.props.objectType + ' created' + (cluster ? ' in cluster ' + cluster : ''),
+            'default',
+            MessageType.SUCCESS
+          );
         }
         this.backToList();
       })
       .catch(error => {
-        AlertUtils.addError('Could not create Istio ' + this.props.objectType + ' objects.', error);
+        AlertUtils.addError(
+          'Could not create Istio ' +
+            this.props.objectType +
+            ' objects ' +
+            (cluster ? ' in cluster ' + cluster + '.' : '.'),
+          error
+        );
       });
   };
 
@@ -383,11 +427,12 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     const canCreate = this.props.activeNamespaces.every(ns => this.canCreate(ns.name));
     const isNameValid = isValidK8SName(this.state.name);
     const isNamespacesValid = this.props.activeNamespaces.length > 0;
-    const isFormValid = isNameValid && isNamespacesValid && this.isIstioFormValid();
+    const isClustersValid = this.props.activeClusters.length > 0 || this.props.clusters.length === 1;
+    const isFormValid = isNameValid && isNamespacesValid && isClustersValid && this.isIstioFormValid();
     return (
       <>
         <div style={{ backgroundColor: '#fff' }}>
-          <DefaultSecondaryMasthead />
+          <DefaultSecondaryMasthead showClusterSelector={true} />
         </div>
         <RenderContent>
           <Form className={formPadding} isHorizontal={true}>
@@ -454,6 +499,9 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
               {!isNamespacesValid && (
                 <span className={warningStyle}>An Istio Config resource needs at least a namespace selected</span>
               )}
+              {!isClustersValid && (
+                <span className={warningStyle}>An Istio Config resource needs at least a cluster selected</span>
+              )}
             </ActionGroup>
           </Form>
           <IstioConfigPreview
@@ -476,7 +524,9 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    activeNamespaces: activeNamespacesSelector(state)
+    activeNamespaces: activeNamespacesSelector(state),
+    activeClusters: activeClustersSelector(state),
+    clusters: clusterItemsSelector(state)!
   };
 };
 

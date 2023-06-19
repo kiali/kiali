@@ -1,5 +1,6 @@
 import { NotificationGroup } from '../types/MessageCenter';
 import { Namespace } from '../types/Namespace';
+import { Cluster } from '../types/Cluster';
 import {
   DurationInSeconds,
   IntervalInMilliseconds,
@@ -34,6 +35,14 @@ export interface GlobalState {
   readonly loadingCounter: number;
   readonly isPageVisible: boolean;
   readonly kiosk: string;
+}
+
+export interface ClusterState {
+  readonly activeClusters: Cluster[];
+  readonly items?: Cluster[];
+  readonly isFetching: boolean;
+  readonly lastUpdated?: Date;
+  readonly filter: string;
 }
 
 export interface NamespaceState {
@@ -142,6 +151,7 @@ export interface KialiAppState {
   authentication: LoginState;
   messageCenter: MessageCenterState;
   namespaces: NamespaceState;
+  clusters: ClusterState;
   graph: GraphState;
   /** User Settings */
   userSettings: UserSettings;
