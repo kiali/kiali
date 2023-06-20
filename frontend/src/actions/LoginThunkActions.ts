@@ -75,7 +75,9 @@ const LoginThunkActions = {
           dispatch(LoginActions.logoutSuccess());
         }
       } catch (err) {
-        AlertUtils.addError('Logout failed', err);
+        if (err instanceof Error) {
+          AlertUtils.addError('Logout failed', err);
+        }
       }
     };
   }

@@ -92,5 +92,5 @@ const sendParentMessage = (msg: string): void => {
   // Kiosk parameter will capture the parent target when kiosk !== "true"
   // this will enable iframe -> parent communication
   const targetOrigin = store.getState().globalState.kiosk;
-  window.top.postMessage(msg, targetOrigin);
+  window.top?.postMessage(msg, targetOrigin);
 };
