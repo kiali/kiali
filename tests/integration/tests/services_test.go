@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"testing"
@@ -79,8 +80,9 @@ func TestServiceDiscoverVS(t *testing.T) {
 	preVsCount := len(service.VirtualServices)
 	defer utils.DeleteFile(vsPath, kiali.BOOKINFO)
 	assert.True(utils.ApplyFile(vsPath, kiali.BOOKINFO))
+	ctx := context.TODO()
 
-	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
+	pollErr := wait.PollUntilContextTimeout(ctx, time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
 		service, _, err = kiali.ServiceDetails(serviceName, kiali.BOOKINFO)
 		assert.Nil(err)
 		assert.NotNil(service)
@@ -130,8 +132,9 @@ func TestServiceDiscoverDR(t *testing.T) {
 	preDrCount := len(service.DestinationRules)
 	defer utils.DeleteFile(drPath, kiali.BOOKINFO)
 	assert.True(utils.ApplyFile(drPath, kiali.BOOKINFO))
+	ctx := context.TODO()
 
-	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
+	pollErr := wait.PollUntilContextTimeout(ctx, time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
 		service, _, err = kiali.ServiceDetails(serviceName, kiali.BOOKINFO)
 		assert.Nil(err)
 		assert.NotNil(service)

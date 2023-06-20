@@ -66,7 +66,7 @@ func DeleteKialiPod(ctx context.Context, kubeClient kubernetes.Interface, namesp
 // Waits for old kiali pod to terminate and for the new one to be ready
 func RestartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, namespace string, currentKialiPod string) error {
 
-	return wait.PollImmediate(time.Second*5, time.Minute*4, func() (bool, error) {
+	return wait.PollUntilContextTimeout(ctx, time.Second*5, time.Minute*4, true, func(ctx context.Context) (bool, error) {
 		log.Debugf("Waiting for kiali pod %s in %s namespace to be ready", currentKialiPod, namespace)
 		pods, err := kubeClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
 		if err != nil {
@@ -146,7 +146,7 @@ func UpdateKialiCR(ctx context.Context, dynamicClient dynamic.Interface, kubeCli
 
 	// Need to know when the kiali operator has seen the CR change and finished updating
 	// the configmap. There's no ObservedGeneration on the Kiali CR so just checking the configmap itself.
-	require.NoError(wait.PollImmediate(time.Second*5, time.Minute*2, func() (bool, error) {
+	require.NoError(wait.PollUntilContextTimeout(ctx, time.Second*5, time.Minute*2, true, func(ctx context.Context) (bool, error) {
 		log.Debug("Waiting for kiali configmap to update")
 		cm, err := kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Get(ctx, kialiName, metav1.GetOptions{})
 		if err != nil {

@@ -140,7 +140,7 @@ func TestRemoteIstiod(t *testing.T) {
 		currentKialiPod = kube.GetKialiPodName(ctx, kubeClient, kialiDeploymentNamespace, t)
 
 		// Wait for the configmap to be updated again before exiting.
-		require.NoError(wait.PollImmediate(time.Second*5, time.Minute*2, func() (bool, error) {
+		require.NoError(wait.PollUntilContextTimeout(ctx, time.Second*5, time.Minute*2, false, func(ctx context.Context) (bool, error) {
 			cm, err := kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Get(ctx, kialiName, metav1.GetOptions{})
 			if err != nil {
 				return false, err

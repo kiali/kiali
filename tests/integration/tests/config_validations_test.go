@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"context"
 	"path"
 	"testing"
 	"time"
@@ -176,11 +177,13 @@ func TestK8sHTTPRoutesServicesError(t *testing.T) {
 }
 
 func getConfigDetails(namespace, name, configType string, skipReferences bool, assert *assert.Assertions) (*models.IstioConfigDetails, error) {
+	ctx := context.TODO()
 	config, _, err := kiali.IstioConfigDetails(namespace, name, configType)
 	if err == nil && config != nil && config.IstioValidation != nil && config.IstioReferences != nil {
 		return config, nil
 	}
-	pollErr := wait.Poll(time.Second, time.Minute*5, func() (bool, error) {
+
+	pollErr := wait.PollUntilContextTimeout(ctx, time.Second, time.Minute*5, false, func(ctx context.Context) (bool, error) {
 		config, _, err = kiali.IstioConfigDetails(namespace, name, configType)
 		if err == nil && config != nil && config.IstioValidation != nil {
 			if !skipReferences && config.IstioReferences != nil {

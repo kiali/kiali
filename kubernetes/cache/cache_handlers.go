@@ -16,7 +16,7 @@ func NewRegistryHandler(refresh func()) RegistryRefreshHandler {
 	return RegistryRefreshHandler{refresh: refresh}
 }
 
-func (sh RegistryRefreshHandler) OnAdd(obj interface{}) {
+func (sh RegistryRefreshHandler) OnAdd(obj interface{}, isInInitialList bool) {
 	sh.refresh()
 }
 

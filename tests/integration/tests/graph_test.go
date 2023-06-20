@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -236,7 +237,8 @@ func assertGraphInvalid(params map[string]string, assert *assert.Assertions) {
 
 func assertGraph(params map[string]string, assert *assert.Assertions) {
 	params["namespaces"] = kiali.BOOKINFO
-	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
+	ctx := context.TODO()
+	pollErr := wait.PollUntilContextTimeout(ctx, time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
 		graph, statusCode, err := kiali.Graph(params)
 		if statusCode != 200 {
 			return false, err
