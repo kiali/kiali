@@ -148,6 +148,7 @@ git clone --single-branch --branch "${TARGET_BRANCH}" https://github.com/kiali/h
 make -C helm-charts build-helm-charts
 
 infomsg "Installing kiali server via Helm"
+infomsg "Chart to be installed: $(ls -1 helm-charts/_output/charts/kiali-server-*.tgz)"
 # The grafana and tracing urls need to be set for backend e2e tests
 # but they don't need to be accessible outside the cluster.
 # Need a single dashboard set for grafana.
@@ -169,7 +170,7 @@ helm install \
   --set health_config.rate[0].tolerance[0].degraded=2 \
   --set health_config.rate[0].tolerance[0].failure=100 \
   kiali-server \
-  helm-charts/_output/charts/kiali-server-*-SNAPSHOT.tgz
+  helm-charts/_output/charts/kiali-server-*.tgz
 
 # Unfortunately kubectl rollout status fails if the resource does not exist yet.
 for (( i=1; i<=60; i++ ))
