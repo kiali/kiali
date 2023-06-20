@@ -34,6 +34,16 @@ else
 container-build: container-build-kiali
 endif
 
+## container-build-int-tests: Build Kiali integration tests container image
+container-build-int-tests:
+ifeq ($(DORP),docker)
+	@echo Building container image for Kiali integration tests using docker
+	docker build --pull -t ${INT_TESTS_QUAY_TAG} -f tests/integration/Dockerfile .
+else
+	@echo Building container image for Kiali integration tests using podman
+	podman build --pull -t ${INT_TESTS_QUAY_TAG} -f tests/integration/Dockerfile .
+endif
+
 ## container-push-kiali-quay: Pushes the Kiali image to quay.
 container-push-kiali-quay:
 ifeq ($(DORP),docker)
@@ -50,6 +60,16 @@ container-push-operator-quay:
 
 ## container-push: Pushes all container images to quay
 container-push: container-push-kiali-quay container-push-operator-quay
+
+## container-push-int-tests-quay: Pushes the Kiali integration tests image to quay.
+container-push-int-tests-quay:
+ifeq ($(DORP),docker)
+	@echo Pushing Kiali integration tests image to ${INT_TESTS_QUAY_TAG} using docker
+	docker push ${INT_TESTS_QUAY_TAG}
+else
+	@echo Pushing Kiali integration tests image to ${INT_TESTS_QUAY_TAG} using podman
+	podman push ${INT_TESTS_QUAY_TAG}
+endif
 
 # Ensure "docker buildx" is available and enabled. For more details, see: https://github.com/docker/buildx/blob/master/README.md
 # This does a few things:
