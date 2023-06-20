@@ -179,7 +179,7 @@ ${HELM} install \
 
 # Create the citest service account whose token will be used to log into Kiali
 infomsg "Installing the test ServiceAccount with read-write permissions"
-for o in role rolebinding serviceaccount; do ${HELM} template --show-only "templates/${o}.yaml" --namespace=istio-system --set deployment.instance_name=citest --set auth.strategy=anonymous kiali-server helm-charts/_output/charts/kiali-server-*-SNAPSHOT.tgz; done | kubectl apply -f -
+for o in role rolebinding serviceaccount; do ${HELM} template --show-only "templates/${o}.yaml" --namespace=istio-system --set deployment.instance_name=citest --set auth.strategy=anonymous kiali-server helm-charts/_output/charts/kiali-server-*.tgz; done | kubectl apply -f -
 
 # Unfortunately kubectl rollout status fails if the resource does not exist yet.
 for (( i=1; i<=60; i++ ))
