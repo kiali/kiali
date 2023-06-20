@@ -31,7 +31,7 @@ func promQuery(query string, queryTime time.Time, ctx context.Context, api prom_
 
 	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Graph-Appender-" + a.Name())
 	value, warnings, err := api.Query(ctx, query, queryTime)
-	if warnings != nil && len(warnings) > 0 {
+	if len(warnings) > 0 {
 		log.Warningf("promQuery. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
 	graph.CheckUnavailable(err)

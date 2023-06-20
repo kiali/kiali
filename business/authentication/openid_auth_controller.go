@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -876,7 +876,7 @@ func (p *openidFlowHelper) requestOpenIdToken(redirect_uri string) *openidFlowHe
 	}
 
 	defer response.Body.Close()
-	rawTokenResponse, err := ioutil.ReadAll(response.Body)
+	rawTokenResponse, err := io.ReadAll(response.Body)
 	if err != nil {
 		p.Error = fmt.Errorf("failed to read token response from IdP: %w", err)
 		return p
@@ -972,7 +972,7 @@ func createHttpClient(toUrl string) (*http.Client, error) {
 	var cafile []byte
 	if _, customCaErr := os.Stat(OpenIdServerCAFile); customCaErr == nil {
 		var caReadErr error
-		if cafile, caReadErr = ioutil.ReadFile(OpenIdServerCAFile); caReadErr != nil {
+		if cafile, caReadErr = os.ReadFile(OpenIdServerCAFile); caReadErr != nil {
 			return nil, fmt.Errorf("failed to read the OpenId CA certificate: %w", caReadErr)
 		}
 	} else if !errors.Is(customCaErr, os.ErrNotExist) {
@@ -1130,7 +1130,7 @@ func getOpenIdJwks() (*jose.JSONWebKeySet, error) {
 		// Parse the Keys document
 		var oidcKeys jose.JSONWebKeySet
 
-		rawMetadata, err := ioutil.ReadAll(response.Body)
+		rawMetadata, err := io.ReadAll(response.Body)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read OpenId JWKS document: %s", err.Error())
 		}
@@ -1186,7 +1186,7 @@ func getOpenIdMetadata() (*openIdMetadata, error) {
 		// Parse JSON document
 		var metadata openIdMetadata
 
-		rawMetadata, err := ioutil.ReadAll(response.Body)
+		rawMetadata, err := io.ReadAll(response.Body)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read OpenId Metadata: %s", err.Error())
 		}

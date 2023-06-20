@@ -3,8 +3,8 @@ package routing
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -171,7 +171,7 @@ func serveIndexFile(w http.ResponseWriter) {
 	webRootPath = strings.TrimSuffix(webRootPath, "/")
 
 	path, _ := filepath.Abs("./console/index.html")
-	b, err := ioutil.ReadFile(path)
+	b, err := os.ReadFile(path)
 	if err != nil {
 		log.Errorf("File I/O error [%v]", err.Error())
 		handlers.RespondWithDetailedError(w, http.StatusInternalServerError, "Unable to read index.html template file", err.Error())

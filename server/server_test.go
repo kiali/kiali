@@ -8,7 +8,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/big"
 	rnd "math/rand"
 	"net"
@@ -46,7 +46,7 @@ func TestRootContextPath(t *testing.T) {
 	testServerHostPort := fmt.Sprintf("%v:%v", testHostname, testPort)
 	testCustomRoot := "/customroot"
 
-	rnd.Seed(time.Now().UnixNano())
+	rnd.New(rnd.NewSource(time.Now().UnixNano()))
 	conf := new(config.Config)
 	conf.LoginToken.SigningKey = util.RandomString(10)
 	conf.Server.WebRoot = testCustomRoot
@@ -184,7 +184,7 @@ func TestSecureComm(t *testing.T) {
 	defer os.Remove(testClientCertFile)
 	defer os.Remove(testClientKeyFile)
 
-	rnd.Seed(time.Now().UnixNano())
+	rnd.New(rnd.NewSource(time.Now().UnixNano()))
 	conf := new(config.Config)
 	conf.Identity.CertFile = testServerCertFile
 	conf.Identity.PrivateKeyFile = testServerKeyFile
@@ -333,7 +333,7 @@ func getRequestResults(t *testing.T, httpClient *http.Client, url string, creden
 	} else {
 		defer resp.Body.Close()
 		if resp.StatusCode == http.StatusOK {
-			bodyBytes, err2 := ioutil.ReadAll(resp.Body)
+			bodyBytes, err2 := io.ReadAll(resp.Body)
 			if err2 != nil {
 				return "", err2
 			}

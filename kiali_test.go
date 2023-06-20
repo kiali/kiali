@@ -11,7 +11,7 @@ import (
 
 func TestValidateWebRoot(t *testing.T) {
 	// create a base config that we know is valid
-	rand.Seed(time.Now().UnixNano())
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 	conf := config.NewConfig()
 	conf.LoginToken.SigningKey = util.RandomString(16)
 	conf.Server.StaticContentRootDirectory = "."
@@ -53,7 +53,7 @@ func TestValidateWebRoot(t *testing.T) {
 
 func TestValidateAuthStrategy(t *testing.T) {
 	// create a base config that we know is valid
-	rand.Seed(time.Now().UnixNano())
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 	conf := config.NewConfig()
 	conf.LoginToken.SigningKey = util.RandomString(16)
 	conf.Server.StaticContentRootDirectory = "."
