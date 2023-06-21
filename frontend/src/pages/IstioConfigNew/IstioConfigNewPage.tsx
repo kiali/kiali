@@ -65,12 +65,8 @@ import ServiceEntryForm, {
 import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 import { isValid } from 'utils/Common';
 
-export interface IstioConfigNewPageId {
-  objectType: string;
-}
-
 type Props = {
-  istioConfigNewPageId: IstioConfigNewPageId;
+  objectType: string;
   activeNamespaces: Namespace[];
 };
 
@@ -160,8 +156,8 @@ class IstioConfigNewPage extends React.Component<Props, State> {
   canCreate = (namespace: string): boolean => {
     return (
       this.state.istioPermissions[namespace] &&
-      this.props.istioConfigNewPageId.objectType.length > 0 &&
-      this.state.istioPermissions[namespace][DIC[this.props.istioConfigNewPageId.objectType]].create
+      this.props.objectType.length > 0 &&
+      this.state.istioPermissions[namespace][DIC[this.props.objectType]].create
     );
   };
 
@@ -208,33 +204,24 @@ class IstioConfigNewPage extends React.Component<Props, State> {
 
     this.promises
       .registerAll(
-        'Create ' + DIC[this.props.istioConfigNewPageId.objectType],
-        jsonIstioObjects.map(o =>
-          API.createIstioConfigDetail(o.namespace, DIC[this.props.istioConfigNewPageId.objectType], o.json)
-        )
+        'Create ' + DIC[this.props.objectType],
+        jsonIstioObjects.map(o => API.createIstioConfigDetail(o.namespace, DIC[this.props.objectType], o.json))
       )
       .then(results => {
         if (results.length > 0) {
-          AlertUtils.add(
-            'Istio ' + this.props.istioConfigNewPageId.objectType + ' created',
-            'default',
-            MessageType.SUCCESS
-          );
+          AlertUtils.add('Istio ' + this.props.objectType + ' created', 'default', MessageType.SUCCESS);
         }
         this.backToList();
       })
       .catch(error => {
-        AlertUtils.addError(
-          'Could not create Istio ' + this.props.istioConfigNewPageId.objectType + ' objects.',
-          error
-        );
+        AlertUtils.addError('Could not create Istio ' + this.props.objectType + ' objects.', error);
       });
   };
 
   showPreview = () => {
     const items: ConfigPreviewItem[] = [];
     this.props.activeNamespaces.forEach(ns => {
-      switch (this.props.istioConfigNewPageId.objectType) {
+      switch (this.props.objectType) {
         case AUTHORIZACION_POLICY:
           items.push({
             title: 'Authorization Policy',
@@ -298,7 +285,7 @@ class IstioConfigNewPage extends React.Component<Props, State> {
   };
 
   isIstioFormValid = (): boolean => {
-    switch (this.props.istioConfigNewPageId.objectType) {
+    switch (this.props.objectType) {
       case AUTHORIZACION_POLICY:
         return isAuthorizationPolicyStateValid(this.state.authorizationPolicy);
       case GATEWAY:
@@ -403,7 +390,7 @@ class IstioConfigNewPage extends React.Component<Props, State> {
               label="Name"
               isRequired={true}
               fieldId="name"
-              helperTextInvalid={'A valid ' + this.props.istioConfigNewPageId.objectType + ' name is required'}
+              helperTextInvalid={'A valid ' + this.props.objectType + ' name is required'}
               validated={isValid(isNameValid)}
             >
               <TextInput
@@ -417,34 +404,34 @@ class IstioConfigNewPage extends React.Component<Props, State> {
                 validated={isValid(isNameValid)}
               />
             </FormGroup>
-            {this.props.istioConfigNewPageId.objectType === AUTHORIZACION_POLICY && (
+            {this.props.objectType === AUTHORIZACION_POLICY && (
               <AuthorizationPolicyForm
                 authorizationPolicy={this.state.authorizationPolicy}
                 onChange={this.onChangeAuthorizationPolicy}
               />
             )}
-            {this.props.istioConfigNewPageId.objectType === GATEWAY && (
+            {this.props.objectType === GATEWAY && (
               <GatewayForm gateway={this.state.gateway} onChange={this.onChangeGateway} />
             )}
-            {this.props.istioConfigNewPageId.objectType === K8SGATEWAY && (
+            {this.props.objectType === K8SGATEWAY && (
               <K8sGatewayForm k8sGateway={this.state.k8sGateway} onChange={this.onChangeK8sGateway} />
             )}
-            {this.props.istioConfigNewPageId.objectType === PEER_AUTHENTICATION && (
+            {this.props.objectType === PEER_AUTHENTICATION && (
               <PeerAuthenticationForm
                 peerAuthentication={this.state.peerAuthentication}
                 onChange={this.onChangePeerAuthentication}
               />
             )}
-            {this.props.istioConfigNewPageId.objectType === REQUEST_AUTHENTICATION && (
+            {this.props.objectType === REQUEST_AUTHENTICATION && (
               <RequestAuthenticationForm
                 requestAuthentication={this.state.requestAuthentication}
                 onChange={this.onChangeRequestAuthentication}
               />
             )}
-            {this.props.istioConfigNewPageId.objectType === SERVICE_ENTRY && (
+            {this.props.objectType === SERVICE_ENTRY && (
               <ServiceEntryForm serviceEntry={this.state.serviceEntry} onChange={this.onChangeServiceEntry} />
             )}
-            {this.props.istioConfigNewPageId.objectType === SIDECAR && (
+            {this.props.objectType === SIDECAR && (
               <SidecarForm sidecar={this.state.sidecar} onChange={this.onChangeSidecar} />
             )}
             <ActionGroup>

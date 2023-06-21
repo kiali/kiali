@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { useParams } from 'react-router';
-import IstioConfigNewPage, { IstioConfigNewPageId } from 'pages/IstioConfigNew/IstioConfigNewPage';
+import IstioConfigNewPage from 'pages/IstioConfigNew/IstioConfigNewPage';
 
 const IstioConfigNewRoute = () => {
-  const istioConfigNewPageId = useParams<IstioConfigNewPageId>();
+  const objectType = useParams<string>();
 
-  return <IstioConfigNewPage istioConfigNewPageId={istioConfigNewPageId}></IstioConfigNewPage>;
+  return <IstioConfigNewPage objectType={objectType}></IstioConfigNewPage>;
 };
 
 export default IstioConfigNewRoute;
