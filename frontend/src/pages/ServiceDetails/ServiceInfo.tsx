@@ -223,8 +223,9 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
     // Graph resizes correctly on width
     const height = this.state.tabHeight ? this.state.tabHeight - 115 : 300;
     const graphContainerStyle = style({ width: '100%', height: height });
-    const includeMiniGraphPF = !!serverConfig.kialiFeatureFlags.uiDefaults.graph.menuItemsAll;
-    const miniGraphSpan = includeMiniGraphPF ? 4 : 8;
+    const includeMiniGraphCy = !!serverConfig.kialiFeatureFlags.uiDefaults.graph.enableCytoscape;
+    const includeMiniGraphPF = !!serverConfig.kialiFeatureFlags.uiDefaults.graph.enablePatternfly;
+    const miniGraphSpan = includeMiniGraphCy && includeMiniGraphPF ? 4 : 8;
 
     return (
       <>
@@ -247,16 +248,18 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
                 </StackItem>
               </Stack>
             </GridItem>
-            <GridItem span={miniGraphSpan}>
-              <MiniGraphCard
-                dataSource={this.graphDataSource}
-                onEdgeTap={this.goToMetrics}
-                graphContainerStyle={graphContainerStyle}
-                serviceDetails={this.props.serviceDetails}
-                onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
-                onLaunchWizard={this.handleLaunchWizard}
-              />
-            </GridItem>
+            {includeMiniGraphCy && (
+              <GridItem span={miniGraphSpan}>
+                <MiniGraphCard
+                  dataSource={this.graphDataSource}
+                  onEdgeTap={this.goToMetrics}
+                  graphContainerStyle={graphContainerStyle}
+                  serviceDetails={this.props.serviceDetails}
+                  onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
+                  onLaunchWizard={this.handleLaunchWizard}
+                />
+              </GridItem>
+            )}
             {includeMiniGraphPF && (
               <GridItem span={miniGraphSpan}>
                 <MiniGraphCardPFContainer

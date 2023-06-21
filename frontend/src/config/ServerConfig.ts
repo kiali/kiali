@@ -89,9 +89,10 @@ const defaultServerConfig: ComputedServerConfig = {
     istioUpgradeAction: false,
     uiDefaults: {
       graph: {
+        enableCytoscape: true,
+        enablePatternfly: false,
         findOptions: [],
         hideOptions: [],
-        menuItemsAll: false,
         settings: {
           fontLabel: 13,
           minFontBadge: 7,

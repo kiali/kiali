@@ -50,7 +50,8 @@ export class Menu extends React.Component<MenuProps, MenuState> {
   renderMenuItems = () => {
     const { location } = this.props;
     const allNavMenuItems = navMenuItems;
-    const graphMenuItemsAll = !!serverConfig.kialiFeatureFlags.uiDefaults.graph.menuItemsAll;
+    const graphEnableCytoscape = !!serverConfig.kialiFeatureFlags.uiDefaults.graph.enableCytoscape;
+    const graphEnablePatternfly = !!serverConfig.kialiFeatureFlags.uiDefaults.graph.enablePatternfly;
     const activeMenuItem = allNavMenuItems.find(item => {
       let isRoute = matchPath(location.pathname, { path: item.to, exact: true, strict: false }) ? true : false;
       if (!isRoute && item.pathsActive) {
@@ -64,8 +65,11 @@ export class Menu extends React.Component<MenuProps, MenuState> {
         if (item.title === 'Mesh') {
           return serverConfig.clusterInfo?.name !== undefined;
         }
+        if (item.title === 'Graph [Cy]') {
+          return graphEnableCytoscape;
+        }
         if (item.title === 'Graph [PF]') {
-          return graphMenuItemsAll;
+          return graphEnablePatternfly;
         }
         return true;
       })
@@ -79,7 +83,10 @@ export class Menu extends React.Component<MenuProps, MenuState> {
         }
 
         let title = item.title;
-        if (title === 'Graph [Cy]' && !graphMenuItemsAll) {
+        if (title === 'Graph [Cy]' && !graphEnablePatternfly) {
+          title = 'Graph';
+        }
+        if (title === 'Graph [PF]' && !graphEnableCytoscape) {
           title = 'Graph';
         }
 

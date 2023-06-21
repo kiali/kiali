@@ -74,21 +74,24 @@ export class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
     // Graph resizes correctly on width
     const height = this.state.tabHeight ? this.state.tabHeight - 115 : 300;
     const graphContainerStyle = style({ width: '100%', height: height });
-    const includeMiniGraphPF = !!serverConfig.kialiFeatureFlags.uiDefaults.graph.menuItemsAll;
-    const miniGraphSpan = includeMiniGraphPF ? 4 : 8;
+    const includeMiniGraphCy = !!serverConfig.kialiFeatureFlags.uiDefaults.graph.enableCytoscape;
+    const includeMiniGraphPF = !!serverConfig.kialiFeatureFlags.uiDefaults.graph.enablePatternfly;
+    const miniGraphSpan = includeMiniGraphCy && includeMiniGraphPF ? 4 : 8;
     return (
       <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
         <Grid hasGutter={true} className={fullHeightStyle}>
           <GridItem span={4}>
             <AppDescription app={this.props.app} health={this.props.health} />
           </GridItem>
-          <GridItem span={miniGraphSpan}>
-            <MiniGraphCard
-              onEdgeTap={this.goToMetrics}
-              dataSource={this.graphDataSource}
-              graphContainerStyle={graphContainerStyle}
-            />
-          </GridItem>
+          {includeMiniGraphCy && (
+            <GridItem span={miniGraphSpan}>
+              <MiniGraphCard
+                onEdgeTap={this.goToMetrics}
+                dataSource={this.graphDataSource}
+                graphContainerStyle={graphContainerStyle}
+              />
+            </GridItem>
+          )}
           {includeMiniGraphPF && (
             <GridItem span={miniGraphSpan}>
               <MiniGraphCardPFContainer
