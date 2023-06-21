@@ -109,6 +109,7 @@ Feature: Kiali Services page
     Then the service should be listed as "healthy"
 
   @services-page
+  @sleep-app
   Scenario: The idle status of a service is reported in the list of services
     Given a service in the cluster with no traffic
     When user selects the "sleep" namespace

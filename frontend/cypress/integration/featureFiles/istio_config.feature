@@ -112,6 +112,7 @@ Feature: Kiali Istio Config page
 
   @crd-validation
   @bookinfo-app
+  @sleep-app
   Scenario: KIA0201 validation
     Given a "foo" DestinationRule in the "sleep" namespace for "sleep" host
     And the DestinationRule has a "mysubset" subset for "version=v1" labels
@@ -124,6 +125,7 @@ Feature: Kiali Istio Config page
 
   @crd-validation
   @bookinfo-app
+  @sleep-app
   Scenario: KIA0202 validation
     Given a "foo" DestinationRule in the "sleep" namespace for "nonexistent" host
     When the user refreshes the list page
@@ -132,6 +134,7 @@ Feature: Kiali Istio Config page
 
   @crd-validation
   @bookinfo-app
+  @sleep-app
   Scenario: KIA0203 validation
     Given a "foo" DestinationRule in the "sleep" namespace for "sleep" host
     And the DestinationRule has a "v1" subset for "version=v1" labels
@@ -141,6 +144,7 @@ Feature: Kiali Istio Config page
 
   @crd-validation
   @bookinfo-app
+  @sleep-app
   Scenario: KIA0207 validation
     Given a "disable-mtls" DestinationRule in the "sleep" namespace for "*.sleep.svc.cluster.local" host
     And the DestinationRule disables mTLS
@@ -151,6 +155,7 @@ Feature: Kiali Istio Config page
 
   @crd-validation
   @bookinfo-app
+  @sleep-app
   Scenario: KIA0208 validation
     Given a "disable-mtls" DestinationRule in the "sleep" namespace for "*.sleep.svc.cluster.local" host
     And the DestinationRule disables mTLS
@@ -161,6 +166,7 @@ Feature: Kiali Istio Config page
 
   @crd-validation
   @bookinfo-app
+  @sleep-app
   Scenario: KIA0209 validation
     Given a "foo" DestinationRule in the "sleep" namespace for "*.sleep.svc.cluster.local" host
     And the DestinationRule has a "v1" subset for "" labels
@@ -169,6 +175,7 @@ Feature: Kiali Istio Config page
 
   @crd-validation
   @bookinfo-app
+  @sleep-app
   Scenario: KIA0301 validation
     Given there is a "foo" Gateway on "bookinfo" namespace for "productpage.local" hosts on HTTP port 80 with "app=productpage" labels selector
     And there is a "foo" Gateway on "sleep" namespace for "productpage.local" hosts on HTTP port 80 with "app=productpage" labels selector
@@ -178,6 +185,7 @@ Feature: Kiali Istio Config page
 
   @crd-validation
   @bookinfo-app
+  @sleep-app
   Scenario: KIA0302 validation
     Given there is a "foo" Gateway on "sleep" namespace for "foo.local" hosts on HTTP port 80 with "app=foo" labels selector
     When user selects the "sleep" namespace
@@ -185,6 +193,7 @@ Feature: Kiali Istio Config page
 
   @crd-validation
   @bookinfo-app
+  @sleep-app
   Scenario: KIA0505 validation
     Given a "enable-mtls" DestinationRule in the "sleep" namespace for "*.sleep.svc.cluster.local" host
     And the DestinationRule enables mTLS
@@ -195,6 +204,7 @@ Feature: Kiali Istio Config page
 
   @crd-validation
   @bookinfo-app
+  @sleep-app
   Scenario: KIA0506 validation
     Given a "enable-mtls" DestinationRule in the "sleep" namespace for "*.local" host
     And the DestinationRule enables mTLS
@@ -205,6 +215,7 @@ Feature: Kiali Istio Config page
 
   @crd-validation
   @bookinfo-app
+  @sleep-app
   Scenario: KIA1004 validation
     Given there is a "foo" Sidecar resource in the "sleep" namespace that captures egress traffic for hosts "sleep/foo.sleep.svc.cluster.local"
     And the Sidecar is applied to workloads with "app=sleep" labels
@@ -221,6 +232,7 @@ Feature: Kiali Istio Config page
 
   @crd-validation
   @bookinfo-app
+  @sleep-app
   Scenario: KIA1101 validation
     Given there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "foo"
     When user selects the "sleep" namespace
@@ -228,6 +240,7 @@ Feature: Kiali Istio Config page
 
   @crd-validation
   @bookinfo-app
+  @sleep-app
   Scenario: KIA1102 validation
     Given there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "sleep"
     And the VirtualService applies to "sleep" hosts
@@ -237,6 +250,7 @@ Feature: Kiali Istio Config page
 
   @crd-validation
   @bookinfo-app
+  @sleep-app
   Scenario: KIA1104 validation
     Given there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "sleep"
     And the route of the VirtualService has weight 10
@@ -245,6 +259,7 @@ Feature: Kiali Istio Config page
 
   @crd-validation
   @bookinfo-app
+  @sleep-app
   Scenario: KIA1105 validation
     Given there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "sleep" and subset "v1"
     And the route of the VirtualService has weight 50
@@ -256,6 +271,7 @@ Feature: Kiali Istio Config page
 
   @crd-validation
   @bookinfo-app
+  @sleep-app
   Scenario: KIA1106 validation
     Given there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "sleep"
     And the VirtualService applies to "sleep" hosts
@@ -267,6 +283,7 @@ Feature: Kiali Istio Config page
 
   @crd-validation
   @bookinfo-app
+  @sleep-app
   Scenario: KIA1107 validation
     Given there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "sleep" and subset "v1"
     When user selects the "sleep" namespace

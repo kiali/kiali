@@ -82,6 +82,7 @@ Feature: Kiali Apps List page
 
   @apps-page
   @bookinfo-app
+  @sleep-app
   Scenario: The idle status of a logical mesh application is reported in the list of applications
     Given an idle application in the cluster
     When I fetch the list of applications

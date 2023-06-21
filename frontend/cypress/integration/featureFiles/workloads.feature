@@ -111,6 +111,7 @@ Feature: Kiali Workloads page
     Then the workload should be listed as "healthy"
 
   @workloads-page
+  @sleep-app
   Scenario: The idle status of a workload is reported in the list of workloads
     Given an idle workload in the cluster
     When user selects the "sleep" namespace
