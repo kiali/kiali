@@ -20,7 +20,7 @@ func (p PortChecker) Check() ([]*models.IstioCheck, bool) {
 		if port == nil {
 			continue
 		}
-		if !kubernetes.ValidatePort(port) {
+		if !kubernetes.ValidateServicePort(port) {
 			validation := models.Build("port.name.mismatch",
 				fmt.Sprintf("spec/ports[%d]/name", portIndex))
 			validations = append(validations, &validation)

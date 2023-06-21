@@ -18,7 +18,7 @@ func TestValidPortDefinition(t *testing.T) {
 	assert := assert.New(t)
 
 	se := data.AddPortDefinitionToServiceEntry(
-		data.CreateEmptyPortDefinition(80, "http", "HTTP"),
+		data.CreateEmptyServicePortDefinition(80, "http", "HTTP"),
 		data.CreateEmptyMeshExternalServiceEntry("valid-se", "test", []string{"localhost"}),
 	)
 
@@ -35,7 +35,7 @@ func TestInvalidPortDefinition(t *testing.T) {
 	assert := assert.New(t)
 
 	se := data.AddPortDefinitionToServiceEntry(
-		data.CreateEmptyPortDefinition(80, "example-http", "HTTP"),
+		data.CreateEmptyServicePortDefinition(80, "example-http", "HTTP"),
 		data.CreateEmptyMeshExternalServiceEntry("notvalid-se", "test", []string{"localhost"}),
 	)
 

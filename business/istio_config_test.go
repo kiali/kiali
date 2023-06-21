@@ -360,7 +360,7 @@ func fakeGetServiceEntries() []*networking_v1beta1.ServiceEntry {
 	serviceEntry.Spec.Hosts = []string{
 		"*.googleapis.com",
 	}
-	serviceEntry.Spec.Ports = []*api_networking_v1beta1.Port{
+	serviceEntry.Spec.Ports = []*api_networking_v1beta1.ServicePort{
 		{
 			Number:   443,
 			Name:     "https",

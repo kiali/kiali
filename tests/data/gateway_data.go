@@ -32,3 +32,12 @@ func AddGatewaysToVirtualService(gateways []string, vs *networking_v1beta1.Virtu
 	vs.Spec.Gateways = gateways
 	return vs
 }
+
+func CreateEmptyPortDefinition(port uint32, portName, protocolName string) *api_networking_v1beta1.Port {
+	p := api_networking_v1beta1.Port{
+		Number:   port,
+		Name:     portName,
+		Protocol: protocolName,
+	}
+	return &p
+}
