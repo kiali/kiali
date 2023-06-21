@@ -28,7 +28,7 @@ Before({tags: '@bookinfo-app'}, async function () {
             if (result.code == 0){
               cy.exec('../hack/istio/install-bookinfo-demo.sh --delete-bookinfo true').then(()=>{
                 cy.exec(`../hack/istio/install-bookinfo-demo.sh -tg -in istio-system -a ${arch}`).then(() =>{
-                  cy.exec('../hack/istio/cypress/wait-for-bookinfo.sh');
+                  cy.exec('../hack/istio/cypress/wait-for-namespace.sh -n bookinfo');
                 })
               })
             }
@@ -64,14 +64,14 @@ Before({tags: '@error-rates-app'}, async function () {
           cy.exec('kubectl api-versions | grep --quiet "route.openshift.io";', {failOnNonZeroExit:false}).then((result) =>{
             if (result.code == 0){
               cy.exec('../hack/istio/install-error-rates-demo.sh --delete true').then(()=>{
-                cy.exec('../hack/istio/install-error-rates-demo.sh -in istio-system -a amd64').then(()=> {
-                  cy.exec('oc wait --for=condition=Successful kiali/kiali --timeout=120s -n kiali-operator; sleep 80;');
+                cy.exec(`../hack/istio/install-error-rates-demo.sh -in istio-system -a ${arch}`).then(()=> {
+                  cy.exec('../hack/istio/cypress/wait-for-namespace.sh -n alpha beta');
                 });
               })
             }
             else{
               cy.exec('../hack/istio/install-error-rates-demo.sh --delete true -c kubectl').then(()=>{
-                cy.exec('../hack/istio/install-error-rates-demo.sh -c kubectl -in istio-system -a amd64');
+                cy.exec(`../hack/istio/install-error-rates-demo.sh -c kubectl -in istio-system -a ${arch}`);
               })
             }
           })

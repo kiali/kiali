@@ -11,29 +11,34 @@ Feature: Kiali Graph page - Find/Hide
     Given user is at administrator perspective
     And user graphs "alpha,beta" namespaces
 
+  @error-rates-app
   @graph-page-find-hide
   Scenario: Find unhealthy workloads
     Then user sees nothing highlighted on the graph
     When user finds unhealthy workloads
     Then user sees unhealthy workloads highlighted on the graph
 
+  @error-rates-app
   @graph-page-find-hide
   Scenario: Hide unhealthy workloads
     When user hides unhealthy workloads
     Then user sees no unhealthy workloads on the graph
 
+  @error-rates-app
   @graph-page-find-hide
   Scenario: Use preset find option to filter workloads
     Then user sees preset find options
     When user selects the preset the find option "Find: unhealthy nodes"
     Then user sees unhealthy workloads highlighted on the graph
   
+  @error-rates-app
   @graph-page-find-hide
   Scenario: Use preset hide option to filter workloads
     Then user sees preset hide options
     When user selects the preset hide option "Hide: healthy nodes"
     Then user sees no healthy workloads on the graph
 
+  @error-rates-app
   @graph-page-find-hide
   Scenario: Show Graph Find/Hide help menu
     When user seeks help for find and hide
@@ -44,6 +49,7 @@ Feature: Kiali Graph page - Find/Hide
     And the help menu has info on "Operators"
     And the help menu has info on "Usage Notes"
 
+  @error-rates-app
   @graph-page-find-hide
   Scenario: Filling the find form with nonsense
     When user fills "hello world" in find and submits
