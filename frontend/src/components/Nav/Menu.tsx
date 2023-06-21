@@ -50,8 +50,8 @@ export class Menu extends React.Component<MenuProps, MenuState> {
   renderMenuItems = () => {
     const { location } = this.props;
     const allNavMenuItems = navMenuItems;
-    const graphEnableCytoscape = !!serverConfig.kialiFeatureFlags.uiDefaults.graph.enableCytoscape;
-    const graphEnablePatternfly = !!serverConfig.kialiFeatureFlags.uiDefaults.graph.enablePatternfly;
+    const graphEnableCytoscape = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'pf';
+    const graphEnablePatternfly = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'cy';
     const activeMenuItem = allNavMenuItems.find(item => {
       let isRoute = matchPath(location.pathname, { path: item.to, exact: true, strict: false }) ? true : false;
       if (!isRoute && item.pathsActive) {

@@ -268,8 +268,8 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     // Graph resizes correctly on width
     const height = this.state.tabHeight ? this.state.tabHeight - 115 : 300;
     const graphContainerStyle = style({ width: '100%', height: height });
-    const includeMiniGraphCy = !!serverConfig.kialiFeatureFlags.uiDefaults.graph.enableCytoscape;
-    const includeMiniGraphPF = !!serverConfig.kialiFeatureFlags.uiDefaults.graph.enablePatternfly;
+    const includeMiniGraphCy = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'pf';
+    const includeMiniGraphPF = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'cy';
     const miniGraphSpan = includeMiniGraphCy && includeMiniGraphPF ? 4 : 8;
 
     return (

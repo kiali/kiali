@@ -400,12 +400,11 @@ type GraphTraffic struct {
 
 // GraphUIDefaults defines UI Defaults specific to the UI Graph
 type GraphUIDefaults struct {
-	EnableCytoscape  bool              `yaml:"enable_cytoscape,omitempty" json:"enableCytoscape,omitempty"`
-	EnablePatternfly bool              `yaml:"enable_patternfly,omitempty" json:"enablePatternfly,omitempty"`
-	FindOptions      []GraphFindOption `yaml:"find_options,omitempty" json:"findOptions,omitempty"`
-	HideOptions      []GraphFindOption `yaml:"hide_options,omitempty" json:"hideOptions,omitempty"`
-	Settings         GraphSettings     `yaml:"settings,omitempty" json:"settings,omitempty"`
-	Traffic          GraphTraffic      `yaml:"traffic,omitempty" json:"traffic,omitempty"`
+	FindOptions []GraphFindOption `yaml:"find_options,omitempty" json:"findOptions,omitempty"`
+	HideOptions []GraphFindOption `yaml:"hide_options,omitempty" json:"hideOptions,omitempty"`
+	Impl        string            `yaml:"impl,omitempty" json:"impl,omitempty"`
+	Settings    GraphSettings     `yaml:"settings,omitempty" json:"settings,omitempty"`
+	Traffic     GraphTraffic      `yaml:"traffic,omitempty" json:"traffic,omitempty"`
 }
 
 // ListUIDefaults defines UI Defaults specific to the UI List pages
@@ -699,6 +698,7 @@ func NewConfig() (c *Config) {
 							Expression:  "rank > 2",
 						},
 					},
+					Impl: "cy",
 					Settings: GraphSettings{
 						FontLabel:    13,
 						MinFontBadge: 7,

@@ -35,10 +35,9 @@ interface GraphSettings {
 }
 
 interface GraphUIDefaults {
-  enableCytoscape: boolean;
-  enablePatternfly: boolean;
   findOptions: GraphFindOption[];
   hideOptions: GraphFindOption[];
+  impl: 'both' | 'cy' | 'pf';
   settings: GraphSettings;
   traffic: GraphTraffic;
 }
