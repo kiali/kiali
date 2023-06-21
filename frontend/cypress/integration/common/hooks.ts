@@ -1,5 +1,60 @@
 import { Before } from '@badeball/cypress-cucumber-preprocessor';
 
+function install_demoapp(demoapp:string){
+  var namespaces:string = "bookinfo";
+  var deletion:string = `--delete-${demoapp}`;
+  var tg:string = "-tg";
+
+  if (demoapp == "error-rates"){
+    namespaces = "alpha beta";
+    deletion = "--delete";
+    tg = "";
+  }
+  else if (demoapp == "sleep"){
+    namespaces = "sleep";
+    tg = "";
+  }
+
+  cy.exec(`../hack/istio/cypress/${demoapp}-status.sh`,{failOnNonZeroExit: false}).then((result) => {
+    cy.log(result.stdout);
+    if (result.code == 0){
+      cy.log(`${demoapp} demo app is up and running`);
+    } 
+    else{
+      cy.log(`${demoapp} demo app is either broken or not present. Installing now.`);
+      cy.log(`Detecting pod architecture.`);
+      cy.exec('../hack/istio/cypress/get-node-architecture.sh',{failOnNonZeroExit: false}).then((result)=>{
+        if(result.code == 0){
+          const arch:string = result.stdout;
+          cy.log(`Installing apps on ${arch} architecture.`);
+          // is the suite running on openshift?
+          cy.exec('kubectl api-versions | grep --quiet "route.openshift.io";', {failOnNonZeroExit:false}).then((result) =>{
+            if (result.code == 0){
+              cy.log("Openshift detected.").log(`Removing old ${demoapp} installations.`);
+              cy.exec(`../hack/istio/install-${demoapp}-demo.sh ${deletion} true`).then(()=>{
+                cy.log("Installing new demo app.");
+                cy.exec(`../hack/istio/install-${demoapp}-demo.sh ${tg} -in istio-system -a ${arch}`,{timeout:300000}).then(() =>{
+                  cy.log("Waiting for demoapp to be ready.");
+                  cy.exec(`../hack/istio/cypress/wait-for-namespace.sh -n ${namespaces}`,{timeout:400000});
+                })
+              })
+            }
+            else{
+              cy.log(`Removing old ${demoapp} installations.`).exec(`../hack/istio/install-${demoapp}-demo.sh ${deletion} true -c kubectl`).then(()=>{
+                cy.log("Installing new demo app.");
+                cy.exec(`../hack/istio/install-${demoapp}-demo.sh -c kubectl ${tg} -in istio-system -a ${arch}`,{timeout:300000});
+              })
+            }
+          })
+        }
+        else {
+          cy.log("Different architectures on various nodes detected. Failed to install the demoapp using the Cypress hook.");
+        }
+      })
+    }
+  })
+}
+
 Before({tags: '@gateway-api'}, async function () {
   cy.exec('kubectl get crd gateways.gateway.networking.k8s.io',{failOnNonZeroExit: false}).then((result) => {
     if (result.code != 0){
@@ -11,75 +66,13 @@ Before({tags: '@gateway-api'}, async function () {
 });
 
 Before({tags: '@bookinfo-app'}, async function () {
-  cy.exec('../hack/istio/cypress/bookinfo-status.sh',{failOnNonZeroExit: false}).then((result) => {
-    cy.log(result.stdout);
-    if (result.code == 0){
-      cy.log("Bookinfo demo app is up and running.");
-    } 
-    else{
-      cy.log("Bookinfo demo app is either broken or not present. Installing now.").log("Removing old bookinfo installations.");
-      cy.exec('../hack/istio/cypress/get-node-architecture.sh',{failOnNonZeroExit: false}).then((result)=>{
-        cy.log(`Exit code: ${result.code}`);
-        if(result.code == 0){
-          const arch:string = result.stdout;
-          cy.log(`Installing apps on ${arch} architecture.`);
-          // is the suite running on openshift?
-          cy.exec('kubectl api-versions | grep --quiet "route.openshift.io";', {failOnNonZeroExit:false}).then((result) =>{
-            if (result.code == 0){
-              cy.exec('../hack/istio/install-bookinfo-demo.sh --delete-bookinfo true').then(()=>{
-                cy.exec(`../hack/istio/install-bookinfo-demo.sh -tg -in istio-system -a ${arch}`).then(() =>{
-                  cy.exec('../hack/istio/cypress/wait-for-namespace.sh -n bookinfo');
-                })
-              })
-            }
-            else{
-              cy.exec('../hack/istio/install-bookinfo-demo.sh --delete-bookinfo true -c kubectl').then(()=>{
-                cy.exec(`../hack/istio/install-bookinfo-demo.sh -c kubectl -tg -in istio-system -a ${arch}`);
-              })
-            }
-          })
-        }
-        else {
-          cy.log("Different architectures on various nodes detected. Failed to install the demoapp using the Cypress hook.");
-        }
-      })
-    }
-  })
+  install_demoapp("bookinfo");
 });
 
 Before({tags: '@error-rates-app'}, async function () {
-  cy.exec('../hack/istio/cypress/error-rates-status.sh',{failOnNonZeroExit: false}).then((result) => {
-    cy.log(result.stdout);
-    if (result.code == 0){
-      cy.log("Error Rates demo app is up and running.");
-    } 
-    else{
-      cy.log("Error Rates demo app is either broken or not present. Installing now.").log("Removing old Error Rates installations.");
-      cy.exec('../hack/istio/cypress/get-node-architecture.sh',{failOnNonZeroExit: false}).then((result)=>{
-        cy.log(`Exit code: ${result.code}`);
-        if (result.code == 0){
-          const arch:string = result.stdout;
-          cy.log(`Installing apps on ${arch} architecture.`);
-          // is the suite running on openshift?
-          cy.exec('kubectl api-versions | grep --quiet "route.openshift.io";', {failOnNonZeroExit:false}).then((result) =>{
-            if (result.code == 0){
-              cy.exec('../hack/istio/install-error-rates-demo.sh --delete true').then(()=>{
-                cy.exec(`../hack/istio/install-error-rates-demo.sh -in istio-system -a ${arch}`).then(()=> {
-                  cy.exec('../hack/istio/cypress/wait-for-namespace.sh -n alpha beta');
-                });
-              })
-            }
-            else{
-              cy.exec('../hack/istio/install-error-rates-demo.sh --delete true -c kubectl').then(()=>{
-                cy.exec(`../hack/istio/install-error-rates-demo.sh -c kubectl -in istio-system -a ${arch}`);
-              })
-            }
-          })
-        }
-        else{
-          cy.log("Different architectures on various nodes detected. Failed to install the demoapp using the Cypress hook.");
-        }
-      })
-    }
-  })
+  install_demoapp("error-rates");
+});
+
+Before({tags: '@sleep-app'}, async function () {
+  install_demoapp("sleep");
 });

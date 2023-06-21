@@ -21,7 +21,7 @@ input=$(kubectl get pods -n bookinfo -o=custom-columns=NAME:.metadata.name,Statu
 for pod in ${!apps[@]}; do
   count=$(echo "$input" | grep "${apps[$pod]}" | awk -F ' ' '{print $1}' | wc -l)
   status=$(echo "$input" | grep "${apps[$pod]}" | awk -F ' ' '{print $2}')
-  if [ $count -ne 1 ] || [ $status = "Running\n" ]
+  if [ $count -ne 1 ] || [ $status != "Running" ]
   then
     echo "Invalid number of pods in a Running state detected."
     exit 1
