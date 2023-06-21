@@ -11,7 +11,7 @@ import { TextOrLink } from '../../components/TextOrLink';
 import { KialiIcon } from '../../config/KialiIcon';
 import { HealthIndicator } from '../../components/Health/HealthIndicator';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
-import DetailDescriptionContainer from '../../components/Details/DetailDescription';
+import DetailDescriptionContainer from '../../components/DetailDescription/DetailDescription';
 
 interface ServiceInfoDescriptionProps {
   namespace: string;

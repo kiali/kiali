@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { App } from '../../types/App';
 import { Card, CardBody, CardHeader, Title, TitleSizes, TooltipPosition } from '@patternfly/react-core';
-import DetailDescription from '../../components/Details/DetailDescription';
+import DetailDescription from '../../components/DetailDescription/DetailDescription';
 import { isMultiCluster, serverConfig } from '../../config';
 import Labels from '../../components/Label/Labels';
 import { style } from 'typestyle';
