@@ -536,8 +536,8 @@ func TestExportMultiServiceEntry(t *testing.T) {
 
 	assert := assert.New(t)
 
-	seA := data.AddPortDefinitionToServiceEntry(data.CreateEmptyPortDefinition(443, "https", "TLS"), data.CreateEmptyMeshExternalServiceEntry("service-a", "test", []string{"api.service_a.com"}))
-	seB := data.AddPortDefinitionToServiceEntry(data.CreateEmptyPortDefinition(443, "https", "TLS"), data.CreateEmptyMeshExternalServiceEntry("service-b", "test2", []string{"api.service_b.com"}))
+	seA := data.AddPortDefinitionToServiceEntry(data.CreateEmptyServicePortDefinition(443, "https", "TLS"), data.CreateEmptyMeshExternalServiceEntry("service-a", "test", []string{"api.service_a.com"}))
+	seB := data.AddPortDefinitionToServiceEntry(data.CreateEmptyServicePortDefinition(443, "https", "TLS"), data.CreateEmptyMeshExternalServiceEntry("service-b", "test2", []string{"api.service_b.com"}))
 
 	drA := data.CreateEmptyDestinationRule("test", "service-a", "api.service_a.com")
 	drB := data.CreateEmptyDestinationRule("test2", "service-b", "api.service_b.com")
@@ -556,7 +556,7 @@ func TestExportMultiServiceEntryInvalid(t *testing.T) {
 
 	assert := assert.New(t)
 
-	seA := data.AddPortDefinitionToServiceEntry(data.CreateEmptyPortDefinition(443, "https", "TLS"), data.CreateEmptyMeshExternalServiceEntry("service-a", "test", []string{"api.service_a.com"}))
+	seA := data.AddPortDefinitionToServiceEntry(data.CreateEmptyServicePortDefinition(443, "https", "TLS"), data.CreateEmptyMeshExternalServiceEntry("service-a", "test", []string{"api.service_a.com"}))
 
 	drA := data.CreateEmptyDestinationRule("test", "service-a", "api.service_a.com")
 	drB := data.CreateEmptyDestinationRule("test2", "service-a2", "api.service_a.com")

@@ -728,8 +728,16 @@ func mapPortToVirtualServiceProtocol(proto string) string {
 	}
 }
 
-// ValidaPort parses the Istio Port definition and validates the naming scheme
+// ValidatePort parses the Istio Port definition and validates the naming scheme
 func ValidatePort(portDef *api_networking_v1beta1.Port) bool {
+	if portDef == nil {
+		return false
+	}
+	return MatchPortNameRule(portDef.Name, portDef.Protocol)
+}
+
+// ValidateServicePort parses the Istio Port definition and validates the naming scheme
+func ValidateServicePort(portDef *api_networking_v1beta1.ServicePort) bool {
 	if portDef == nil {
 		return false
 	}
