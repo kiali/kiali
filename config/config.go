@@ -448,9 +448,15 @@ type CertificatesInformationIndicators struct {
 	Secrets []string `yaml:"secrets,omitempty" json:"secrets,omitempty"`
 }
 
+// Clustering defines configuration around multi-cluster functionality.
+type Clustering struct {
+	EnableExecProvider bool `yaml:"enable_exec_provider,omitempty" json:"enable_exec_provider"`
+}
+
 // KialiFeatureFlags available from the CR
 type KialiFeatureFlags struct {
 	CertificatesInformationIndicators CertificatesInformationIndicators `yaml:"certificates_information_indicators,omitempty" json:"certificatesInformationIndicators"`
+	Clustering                        Clustering                        `yaml:"clustering,omitempty" json:"clustering,omitempty"`
 	DisabledFeatures                  []string                          `yaml:"disabled_features,omitempty" json:"disabledFeatures,omitempty"`
 	IstioAnnotationAction             bool                              `yaml:"istio_annotation_action,omitempty" json:"istioAnnotationAction"`
 	IstioInjectionAction              bool                              `yaml:"istio_injection_action,omitempty" json:"istioInjectionAction"`
@@ -649,6 +655,9 @@ func NewConfig() (c *Config) {
 			CertificatesInformationIndicators: CertificatesInformationIndicators{
 				Enabled: true,
 				Secrets: []string{"cacerts", "istio-ca-secret"},
+			},
+			Clustering: Clustering{
+				EnableExecProvider: false,
 			},
 			DisabledFeatures:      []string{},
 			IstioAnnotationAction: true,

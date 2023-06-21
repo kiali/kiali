@@ -83,17 +83,22 @@ func SetUserIdentificationFromRemoteSecretUser(config *rest.Config, user *Remote
 	}
 	exec := user.User.Exec
 	if exec != nil {
-		config.ExecProvider = &api.ExecConfig{
-			Command:            exec.Command,
-			Args:               exec.Args,
-			Env:                exec.Env,
-			APIVersion:         exec.APIVersion,
-			InstallHint:        cleanANSIEscapeCodes(exec.InstallHint),
-			ProvideClusterInfo: exec.ProvideClusterInfo,
-			InteractiveMode:    exec.InteractiveMode,
+		c := kialiConfig.Get()
+		if c.KialiFeatureFlags.Clustering.EnableExecProvider {
+			config.ExecProvider = &api.ExecConfig{
+				Command:            exec.Command,
+				Args:               exec.Args,
+				Env:                exec.Env,
+				APIVersion:         exec.APIVersion,
+				InstallHint:        cleanANSIEscapeCodes(exec.InstallHint),
+				ProvideClusterInfo: exec.ProvideClusterInfo,
+				InteractiveMode:    exec.InteractiveMode,
+			}
+			SetDefaultsExecConfig(config.ExecProvider)
+			log.Debugf("Auth ExecProvider has been detected: cmd=[%v], args=%v", exec.Command, exec.Args)
+		} else {
+			log.Warningf("Auth ExecProvider has been disabled. Connecting to remote clusters via an ExecProvider is prohibited.")
 		}
-		SetDefaultsExecConfig(config.ExecProvider)
-		log.Debugf("Auth ExecProvider has been detected: cmd=[%v], args=%v", exec.Command, exec.Args)
 	}
 }
 

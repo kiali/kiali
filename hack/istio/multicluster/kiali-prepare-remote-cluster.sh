@@ -249,7 +249,7 @@ create_kiali_remote_cluster_secret() {
   if [ "${EXEC_AUTH_JSON}" != "" ]; then
     local user_auth=$(cat <<EOF
 exec:
-$(echo ${EXEC_AUTH_JSON} | yq -P | sed "s/^/  /g")
+$(echo "${EXEC_AUTH_JSON}" | yq -P | sed "s/^/  /g")
 EOF
 )
   else
@@ -507,7 +507,7 @@ info REMOTE_CLUSTER_CONTEXT=${REMOTE_CLUSTER_CONTEXT}
 info REMOTE_CLUSTER_NAME=${REMOTE_CLUSTER_NAME}
 info REMOTE_CLUSTER_NAMESPACE=${REMOTE_CLUSTER_NAMESPACE}
 info VIEW_ONLY=${VIEW_ONLY}
-info EXEC_AUTH_JSON=${EXEC_AUTH_JSON}
+info EXEC_AUTH_JSON="${EXEC_AUTH_JSON}"
 
 #
 # Main processing - get some additional information we need and then start creating (or deleting) resources.
