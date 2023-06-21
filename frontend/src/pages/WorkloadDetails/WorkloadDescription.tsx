@@ -15,7 +15,7 @@ import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import MissingLabel from '../../components/MissingLabel/MissingLabel';
 import MissingAuthPolicy from 'components/MissingAuthPolicy/MissingAuthPolicy';
 import { hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
-import DetailDescriptionContainer from '../../components/Details/DetailDescription';
+import DetailDescriptionContainer from '../../components/DetailDescription/DetailDescription';
 import { isGateway, isWaypoint } from '../../helpers/LabelFilterHelper';
 import AmbientLabel from '../../components/Ambient/AmbientLabel';
 import { validationKey } from '../../types/IstioConfigList';
