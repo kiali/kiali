@@ -42,7 +42,7 @@ import { Link } from 'react-router-dom';
 import { PFColors } from 'components/Pf/PfColors';
 import responseFlags from 'utils/ResponseFlags';
 import { renderMetricsComparison } from './StatsComparison';
-import history from 'app/History';
+import { history } from 'app/History';
 import { AngleDownIcon, AngleRightIcon, ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { isParentKiosk, kioskContextMenuAction } from '../../Kiosk/KioskActions';
 

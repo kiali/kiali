@@ -2,16 +2,24 @@ import { createBrowserHistory, createMemoryHistory, createHashHistory } from 'hi
 import { toValidDuration } from '../config/ServerConfig';
 import { BoundsInMilliseconds } from 'types/Common';
 
+const createHistory = (baseName: string) => {
+  return process.env.TEST_RUNNER
+    ? createMemoryHistory()
+    : historyMode === 'hash'
+    ? createHashHistory()
+    : createBrowserHistory({ basename: baseName });
+};
+
+export const setHistory = (baseName: string) => {
+  history = createHistory(baseName);
+};
+
 const webRoot = (window as any).WEB_ROOT ? (window as any).WEB_ROOT : undefined;
 const baseName = webRoot && webRoot !== '/' ? webRoot + '/console' : '/console';
 const historyMode = (window as any).HISTORY_MODE ? (window as any).HISTORY_MODE : 'browser';
-const history = process.env.TEST_RUNNER
-  ? createMemoryHistory()
-  : historyMode === 'hash'
-  ? createHashHistory()
-  : createBrowserHistory({ basename: baseName });
+let history = createHistory(baseName);
 
-export default history;
+export { history };
 
 export enum URLParam {
   AGGREGATOR = 'aggregator',

@@ -33,7 +33,7 @@ import { KialiAppState } from '../../store/Store';
 import { durationSelector, meshWideMTLSEnabledSelector } from '../../store/Selectors';
 import ServiceNetwork from './ServiceNetwork';
 import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
-import history, { URLParam } from '../../app/History';
+import { history, URLParam } from '../../app/History';
 import MiniGraphCardContainer from '../../components/CytoscapeGraph/MiniGraphCard';
 import IstioConfigCard from '../../components/IstioConfigCard/IstioConfigCard';
 import ServiceWizard from '../../components/IstioWizards/ServiceWizard';

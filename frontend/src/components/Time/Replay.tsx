@@ -16,7 +16,7 @@ import { serverConfig } from 'config';
 import { PFColors } from 'components/Pf/PfColors';
 import { DateTimePicker } from './DateTimePicker';
 import _ from 'lodash';
-import history, { HistoryManager, URLParam } from 'app/History';
+import { history, HistoryManager, URLParam } from 'app/History';
 
 type ReduxProps = {
   duration: DurationInSeconds;

@@ -26,7 +26,7 @@ import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropd
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import './IstioConfigDetailsPage.css';
 import { default as IstioActionButtonsContainer } from '../../components/IstioActions/IstioActionsButtons';
-import history from '../../app/History';
+import { history } from '../../app/History';
 import { Paths } from '../../config';
 import { MessageType } from '../../types/MessageCenter';
 import { getIstioObject, mergeJsonPatch } from '../../utils/IstioConfigUtils';

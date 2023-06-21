@@ -18,7 +18,7 @@ import { connect } from 'react-redux';
 import { meshWideMTLSEnabledSelector } from '../../store/Selectors';
 import WorkloadPods from './WorkloadPods';
 import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
-import history, { URLParam } from '../../app/History';
+import { history, URLParam } from '../../app/History';
 import MiniGraphCardContainer from '../../components/CytoscapeGraph/MiniGraphCard';
 import IstioConfigCard from '../../components/IstioConfigCard/IstioConfigCard';
 

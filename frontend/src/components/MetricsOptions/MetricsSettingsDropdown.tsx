@@ -12,7 +12,7 @@ import {
 import { style } from 'typestyle';
 import isEqual from 'lodash/isEqual';
 
-import history, { URLParam } from '../../app/History';
+import { history, URLParam } from '../../app/History';
 import { MetricsSettings, Quantiles, allQuantiles, LabelsSettings } from './MetricsSettings';
 import {
   mergeLabelFilter,

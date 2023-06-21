@@ -41,7 +41,7 @@ import { timeRangeSelector } from '../../store/Selectors';
 import { PFColors, PFColorVal } from 'components/Pf/PfColors';
 import AccessLogModal from 'components/Envoy/AccessLogModal';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import history, { URLParam } from 'app/History';
+import { history, URLParam } from 'app/History';
 import { TracingQuery, Span } from 'types/Tracing';
 import { AxiosResponse } from 'axios';
 import moment from 'moment';

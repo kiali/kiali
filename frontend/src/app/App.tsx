@@ -8,7 +8,7 @@ import { GlobalActions } from '../actions/GlobalActions';
 import NavigationContainer from '../components/Nav/Navigation';
 import { persistor, store } from '../store/ConfigStore';
 import AuthenticationControllerContainer from './AuthenticationController';
-import history from './History';
+import { history } from './History';
 import InitializingScreen from './InitializingScreen';
 import StartupInitializer from './StartupInitializer';
 import LoginPageContainer from '../pages/Login/LoginPage';

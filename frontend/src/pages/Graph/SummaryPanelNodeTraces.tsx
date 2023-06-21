@@ -6,7 +6,7 @@ import { style } from 'typestyle';
 
 import { KialiAppState } from 'store/Store';
 import { JaegerThunkActions } from 'actions/JaegerThunkActions';
-import history from '../../app/History';
+import { history } from '../../app/History';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { JaegerTrace } from 'types/JaegerInfo';

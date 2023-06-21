@@ -1,5 +1,5 @@
 import { camelCase } from 'lodash';
-import history, { URLParam, HistoryManager } from '../../app/History';
+import { history, URLParam, HistoryManager } from '../../app/History';
 import { config } from '../../config';
 import {
   ActiveFilter,

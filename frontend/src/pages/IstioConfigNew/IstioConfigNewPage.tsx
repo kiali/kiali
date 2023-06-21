@@ -20,7 +20,7 @@ import { PromisesRegistry } from '../../utils/CancelablePromises';
 import * as API from '../../services/Api';
 import { IstioPermissions } from '../../types/IstioConfigDetails';
 import * as AlertUtils from '../../utils/AlertUtils';
-import history from '../../app/History';
+import { history } from '../../app/History';
 import {
   buildAuthorizationPolicy,
   buildGateway,

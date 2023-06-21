@@ -23,7 +23,7 @@ import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
 import { GraphType, NodeParamsType, EdgeLabelMode, SummaryData, TrafficRate, RankMode } from '../../../types/Graph';
 import GraphFindContainer from './GraphFind';
 import GraphSettingsContainer from './GraphSettings';
-import history, { HistoryManager, URLParam } from '../../../app/History';
+import { history, HistoryManager, URLParam } from '../../../app/History';
 import Namespace, { namespacesFromString, namespacesToString } from '../../../types/Namespace';
 import { KialiDispatch } from '../../../types/Redux';
 import { NamespaceActions } from '../../../actions/NamespaceAction';

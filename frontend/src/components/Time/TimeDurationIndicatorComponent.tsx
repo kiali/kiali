@@ -8,7 +8,7 @@ import { getName, getRefreshIntervalName } from '../../utils/RateIntervals';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector, refreshIntervalSelector, timeRangeSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
-import history, { HistoryManager } from '../../app/History';
+import { history, HistoryManager } from '../../app/History';
 import { KialiDispatch } from '../../types/Redux';
 import { bindActionCreators } from 'redux';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';

@@ -5,7 +5,7 @@ import { style } from 'typestyle';
 import { Spinner, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 
-import history from 'app/History';
+import { history } from 'app/History';
 import { BoxByType, DecoratedGraphNodeData, NodeType } from 'types/Graph';
 import { JaegerInfo } from 'types/JaegerInfo';
 import { durationSelector } from 'store/Selectors';

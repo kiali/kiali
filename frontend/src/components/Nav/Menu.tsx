@@ -4,7 +4,7 @@ import { matchPath } from 'react-router';
 import { Link } from 'react-router-dom';
 import { Nav, NavList, NavItem } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
-import history from '../../app/History';
+import { history } from '../../app/History';
 import { navMenuItems } from '../../routes';
 import { serverConfig } from '../../config';
 

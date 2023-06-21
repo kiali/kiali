@@ -34,7 +34,7 @@ import { DashboardRef } from 'types/Runtimes';
 import CustomMetricsContainer from 'components/Metrics/CustomMetrics';
 import { serverConfig } from 'config';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
-import history from '../../app/History';
+import { history } from '../../app/History';
 import {
   tabName as workloadTabName,
   defaultTab as workloadDefaultTab

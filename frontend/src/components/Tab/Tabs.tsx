@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { TabProps, Tabs } from '@patternfly/react-core';
-import history from '../../app/History';
+import { history } from '../../app/History';
 
 type TabsProps = {
   activeTab: string;

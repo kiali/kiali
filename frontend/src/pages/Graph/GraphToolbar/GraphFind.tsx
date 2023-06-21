@@ -19,7 +19,7 @@ import { KialiDispatch } from 'types/Redux';
 import { AutoComplete } from 'utils/AutoComplete';
 import { DEGRADED, FAILURE, HEALTHY } from 'types/Health';
 import { GraphFindOptions } from './GraphFindOptions';
-import history, { HistoryManager, URLParam } from '../../../app/History';
+import { history, HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
 
 type ReduxProps = {
