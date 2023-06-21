@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { RouteComponentProps } from 'react-router-dom';
 import { Tab } from '@patternfly/react-core';
 
 import ServiceId from '../../types/ServiceId';
@@ -31,6 +30,8 @@ import RenderHeaderContainer from '../../components/Nav/Page/RenderHeader';
 import { ErrorMsg } from '../../types/ErrorMsg';
 import ErrorSection from '../../components/ErrorSection/ErrorSection';
 import connectRefresh from '../../components/Refresh/connectRefresh';
+import history from 'app/History';
+import { durationSelector } from 'store/Selectors';
 
 type ServiceDetailsState = {
   cluster?: string;
@@ -43,7 +44,8 @@ type ServiceDetailsState = {
   error?: ErrorMsg;
 };
 
-interface ServiceDetailsProps extends RouteComponentProps<ServiceId> {
+interface ServiceDetailsProps {
+  serviceId: ServiceId;
   duration: DurationInSeconds;
   jaegerInfo?: JaegerInfo;
   lastRefreshAt: TimeInMilliseconds;
@@ -65,7 +67,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 
   constructor(props: ServiceDetailsProps) {
     super(props);
-    const urlParams = new URLSearchParams(this.props.location.search);
+    const urlParams = new URLSearchParams(history.location.search);
     const cluster = urlParams.get('cluster') || undefined;
     this.state = {
       // Because null is not the same as undefined and urlParams.get(...) returns null.
@@ -85,8 +87,8 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   componentDidUpdate(prevProps: ServiceDetailsProps, _prevState: ServiceDetailsState) {
     const currentTab = activeTab(tabName, defaultTab);
     if (
-      prevProps.match.params.namespace !== this.props.match.params.namespace ||
-      prevProps.match.params.service !== this.props.match.params.service ||
+      prevProps.serviceId.namespace !== this.props.serviceId.namespace ||
+      prevProps.serviceId.service !== this.props.serviceId.service ||
       currentTab !== this.state.currentTab ||
       prevProps.lastRefreshAt !== this.props.lastRefreshAt
     ) {
@@ -105,7 +107,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       .register(
         'gateways',
         API.getAllIstioConfigs(
-          [this.props.match.params.namespace],
+          [this.props.serviceId.namespace],
           ['gateways', 'k8sgateways'],
           false,
           '',
@@ -129,8 +131,8 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 
     // this.props.
     API.getServiceDetail(
-      this.props.match.params.namespace,
-      this.props.match.params.service,
+      this.props.serviceId.namespace,
+      this.props.serviceId.service,
       true,
       this.state.cluster,
       this.props.duration
@@ -145,22 +147,15 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         AlertUtils.addError('Could not fetch Service Details.', error);
         const msg: ErrorMsg = {
           title: 'No Service is selected',
-          description: this.props.match.params.service + ' is not found in the mesh'
+          description: this.props.serviceId.service + ' is not found in the mesh'
         };
         this.setState({ error: msg });
       });
 
-    API.getAllIstioConfigs(
-      [this.props.match.params.namespace],
-      ['peerauthentications'],
-      false,
-      '',
-      '',
-      this.state.cluster
-    )
+    API.getAllIstioConfigs([this.props.serviceId.namespace], ['peerauthentications'], false, '', '', this.state.cluster)
       .then(results => {
         this.setState({
-          peerAuthentications: results.data[this.props.match.params.namespace].peerAuthentications
+          peerAuthentications: results.data[this.props.serviceId.namespace].peerAuthentications
         });
       })
       .catch(error => {
@@ -173,8 +168,8 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       <Tab eventKey={0} title="Overview" key="Overview">
         <ServiceInfo
           cluster={this.state.cluster ? this.state.cluster : ''}
-          namespace={this.props.match.params.namespace}
-          service={this.props.match.params.service}
+          namespace={this.props.serviceId.namespace}
+          service={this.props.serviceId.service}
           serviceDetails={this.state.serviceDetails}
           gateways={this.state.gateways}
           k8sGateways={this.state.k8sGateways}
@@ -186,10 +181,10 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     const trafficTab = (
       <Tab eventKey={1} title="Traffic" key={trafficTabName}>
         <TrafficDetails
-          itemName={this.props.match.params.service}
+          itemName={this.props.serviceId.service}
           itemType={MetricsObjectTypes.SERVICE}
           lastRefreshAt={this.props.lastRefreshAt}
-          namespace={this.props.match.params.namespace}
+          namespace={this.props.serviceId.namespace}
           cluster={this.state.cluster}
         />
       </Tab>
@@ -199,8 +194,8 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       <Tab eventKey={2} title="Inbound Metrics" key="Inbound Metrics">
         <IstioMetricsContainer
           lastRefreshAt={this.props.lastRefreshAt}
-          namespace={this.props.match.params.namespace}
-          object={this.props.match.params.service}
+          namespace={this.props.serviceId.namespace}
+          object={this.props.serviceId.service}
           objectType={MetricsObjectTypes.SERVICE}
           cluster={this.state.cluster}
           direction={'inbound'}
@@ -215,9 +210,9 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         <Tab eventKey={3} title="Traces" key="Traces">
           <TracesComponent
             lastRefreshAt={this.props.lastRefreshAt}
-            namespace={this.props.match.params.namespace}
+            namespace={this.props.serviceId.namespace}
             cluster={this.state.cluster}
-            target={this.props.match.params.service}
+            target={this.props.serviceId.service}
             targetKind={'service'}
           />
         </Tab>
@@ -241,7 +236,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     }
     const actionsToolbar = this.state.serviceDetails ? (
       <ServiceWizardDropdown
-        namespace={this.props.match.params.namespace}
+        namespace={this.props.serviceId.namespace}
         cluster={this.state.cluster ? this.state.cluster : ''}
         serviceName={this.state.serviceDetails.service.name}
         annotations={this.state.serviceDetails.service.annotations}
@@ -264,7 +259,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     return (
       <>
         <RenderHeaderContainer
-          location={this.props.location}
+          location={history.location}
           rightToolbar={<TimeControl customDuration={useCustomTime} />}
           actionsToolbar={actionsToolbar}
         />
@@ -291,7 +286,8 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerInfo: state.jaegerState.info
+  jaegerInfo: state.jaegerState.info,
+  duration: durationSelector(state)
 });
 
 const ServiceDetailsPageContainer = connectRefresh(connect(mapStateToProps)(ServiceDetails));

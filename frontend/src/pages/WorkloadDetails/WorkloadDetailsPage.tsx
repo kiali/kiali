@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { RouteComponentProps } from 'react-router-dom';
 import { EmptyState, EmptyStateBody, EmptyStateVariant, Tab, Title, TitleSizes } from '@patternfly/react-core';
 import * as API from '../../services/Api';
 import { Workload, WorkloadId } from '../../types/Workload';
@@ -28,6 +27,7 @@ import ErrorSection from '../../components/ErrorSection/ErrorSection';
 import { ErrorMsg } from '../../types/ErrorMsg';
 import connectRefresh from '../../components/Refresh/connectRefresh';
 import { isWaypoint } from '../../helpers/LabelFilterHelper';
+import history from 'app/History';
 
 type WorkloadDetailsState = {
   workload?: Workload;
@@ -43,10 +43,10 @@ type ReduxProps = {
   statusState: StatusState;
 };
 
-type WorkloadDetailsPageProps = ReduxProps &
-  RouteComponentProps<WorkloadId> & {
-    lastRefreshAt: TimeInMilliseconds;
-  };
+type WorkloadDetailsPageProps = ReduxProps & {
+  workloadId: WorkloadId;
+  lastRefreshAt: TimeInMilliseconds;
+};
 
 export const tabName = 'tab';
 export const defaultTab = 'info';
@@ -65,7 +65,7 @@ var nextTabIndex = 6;
 class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, WorkloadDetailsState> {
   constructor(props: WorkloadDetailsPageProps) {
     super(props);
-    const urlParams = new URLSearchParams(this.props.location.search);
+    const urlParams = new URLSearchParams(history.location.search);
     const cluster = urlParams.get('cluster') || undefined;
     this.state = { currentTab: activeTab(tabName, defaultTab), cluster: cluster };
   }
@@ -77,8 +77,8 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
   componentDidUpdate(prevProps: WorkloadDetailsPageProps) {
     const currentTab = activeTab(tabName, defaultTab);
     if (
-      this.props.match.params.namespace !== prevProps.match.params.namespace ||
-      this.props.match.params.workload !== prevProps.match.params.workload ||
+      this.props.workloadId.namespace !== prevProps.workloadId.namespace ||
+      this.props.workloadId.workload !== prevProps.workloadId.workload ||
       this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
       currentTab !== this.state.currentTab ||
       this.props.duration !== prevProps.duration
@@ -105,18 +105,13 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       rateInterval: String(this.props.duration) + 's',
       health: 'true'
     };
-    await API.getWorkload(
-      this.props.match.params.namespace,
-      this.props.match.params.workload,
-      params,
-      this.state.cluster
-    )
+    await API.getWorkload(this.props.workloadId.namespace, this.props.workloadId.workload, params, this.state.cluster)
       .then(details => {
         this.setState({
           workload: details.data,
           health: WorkloadHealth.fromJson(
-            this.props.match.params.namespace,
-            this.props.match.params.workload,
+            this.props.workloadId.namespace,
+            this.props.workloadId.workload,
             details.data.health,
             {
               rateInterval: this.props.duration,
@@ -130,7 +125,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
         AlertUtils.addError('Could not fetch Workload.', error);
         const msg: ErrorMsg = {
           title: 'No Workload is selected',
-          description: this.props.match.params.workload + ' is not found in the mesh'
+          description: this.props.workloadId.workload + ' is not found in the mesh'
         };
         this.setState({ error: msg });
       });
@@ -146,7 +141,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
           workload={this.state.workload}
           duration={this.props.duration}
           health={this.state.health}
-          namespace={this.props.match.params.namespace}
+          namespace={this.props.workloadId.namespace}
           refreshWorkload={this.fetchWorkload}
         />
       </Tab>
@@ -156,10 +151,10 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     const trafficTab = (
       <Tab title="Traffic" eventKey={1} key={'Traffic'}>
         <TrafficDetails
-          itemName={this.props.match.params.workload}
+          itemName={this.props.workloadId.workload}
           itemType={MetricsObjectTypes.WORKLOAD}
           lastRefreshAt={this.props.lastRefreshAt}
-          namespace={this.props.match.params.namespace}
+          namespace={this.props.workloadId.namespace}
           cluster={this.state.cluster}
         />
       </Tab>
@@ -172,15 +167,15 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
           {hasPods ? (
             <WorkloadPodLogs
               lastRefreshAt={this.props.lastRefreshAt}
-              namespace={this.props.match.params.namespace}
-              workload={this.props.match.params.workload}
+              namespace={this.props.workloadId.namespace}
+              workload={this.props.workloadId.workload}
               pods={this.state.workload!.pods}
               cluster={this.state.cluster}
             />
           ) : (
             <EmptyState variant={EmptyStateVariant.full}>
               <Title headingLevel="h5" size={TitleSizes.lg}>
-                No logs for Workload {this.props.match.params.workload}
+                No logs for Workload {this.props.workloadId.workload}
               </Title>
               <EmptyStateBody>There are no logs to display because the workload has no pods.</EmptyStateBody>
             </EmptyState>
@@ -195,8 +190,8 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
         <IstioMetricsContainer
           data-test="inbound-metrics-component"
           lastRefreshAt={this.props.lastRefreshAt}
-          namespace={this.props.match.params.namespace}
-          object={this.props.match.params.workload}
+          namespace={this.props.workloadId.namespace}
+          object={this.props.workloadId.workload}
           cluster={this.state.cluster}
           objectType={MetricsObjectTypes.WORKLOAD}
           direction={'inbound'}
@@ -210,8 +205,8 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
         <IstioMetricsContainer
           data-test="outbound-metrics-component"
           lastRefreshAt={this.props.lastRefreshAt}
-          namespace={this.props.match.params.namespace}
-          object={this.props.match.params.workload}
+          namespace={this.props.workloadId.namespace}
+          object={this.props.workloadId.workload}
           cluster={this.state.cluster}
           objectType={MetricsObjectTypes.WORKLOAD}
           direction={'outbound'}
@@ -225,9 +220,9 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
         <Tab eventKey={5} title="Traces" key="Traces">
           <TracesComponent
             lastRefreshAt={this.props.lastRefreshAt}
-            namespace={this.props.match.params.namespace}
+            namespace={this.props.workloadId.namespace}
             cluster={this.state.cluster}
-            target={this.props.match.params.workload}
+            target={this.props.workloadId.workload}
             targetKind={'workload'}
           />
         </Tab>
@@ -239,7 +234,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
           {this.state.workload && (
             <EnvoyDetailsContainer
               lastRefreshAt={this.props.lastRefreshAt}
-              namespace={this.props.match.params.namespace}
+              namespace={this.props.workloadId.namespace}
               workload={this.state.workload}
             />
           )}
@@ -289,7 +284,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
                 <Tab key={dashboard.template} title={dashboard.title} eventKey={tabKey}>
                   <CustomMetricsContainer
                     lastRefreshAt={this.props.lastRefreshAt}
-                    namespace={this.props.match.params.namespace}
+                    namespace={this.props.workloadId.namespace}
                     app={app}
                     version={version}
                     workload={this.state.workload!.name}
@@ -332,7 +327,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     const actionsToolbar =
       this.state.currentTab === 'info' && this.state.workload ? (
         <WorkloadWizardDropdown
-          namespace={this.props.match.params.namespace}
+          namespace={this.props.workloadId.namespace}
           workload={this.state.workload}
           onChange={this.fetchWorkload}
           statusState={this.props.statusState}
@@ -341,7 +336,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     return (
       <>
         <RenderHeaderContainer
-          location={this.props.location}
+          location={history.location}
           rightToolbar={<TimeControl customDuration={useCustomTime} />}
           actionsToolbar={actionsToolbar}
         />

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Prompt, RouteComponentProps } from 'react-router-dom';
+import { Prompt } from 'react-router-dom';
 import { aceOptions, IstioConfigDetails, IstioConfigId, safeDumpOptions } from '../../types/IstioConfigDetails';
 import * as AlertUtils from '../../utils/AlertUtils';
 import * as API from '../../services/Api';
@@ -88,7 +88,8 @@ const paramToTab: { [key: string]: number } = {
   yaml: 0
 };
 
-interface IstioConfigDetailsProps extends RouteComponentProps<IstioConfigId> {
+interface IstioConfigDetailsProps {
+  istioConfigId: IstioConfigId;
   kiosk: string;
   istioAPIEnabled: boolean;
 }
@@ -101,7 +102,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
 
   constructor(props: IstioConfigDetailsProps) {
     super(props);
-    const urlParams = new URLSearchParams(this.props.location.search);
+    const urlParams = new URLSearchParams(history.location.search);
     const cluster = urlParams.get('cluster') || undefined;
     this.state = {
       cluster: cluster,
@@ -123,7 +124,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   objectTitle() {
     let title: string = '';
     if (this.state.istioObjectDetails) {
-      const objectType = dicIstioType[this.props.match.params.objectType];
+      const objectType = dicIstioType[this.props.istioConfigId.objectType];
       const methodName = objectType.charAt(0).toLowerCase() + objectType.slice(1);
       const object = this.state.istioObjectDetails[methodName];
       if (object) {
@@ -134,7 +135,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   }
 
   fetchIstioObjectDetails = () => {
-    this.fetchIstioObjectDetailsFromProps(this.props.match.params);
+    this.fetchIstioObjectDetailsFromProps(this.props.istioConfigId);
   };
 
   newIstioObjectPromise = (props: IstioConfigId, validate: boolean) => {
@@ -166,7 +167,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
       .catch(error => {
         const msg: ErrorMsg = {
           title: 'No Istio object is selected',
-          description: this.props.match.params.object + ' is not found in the mesh'
+          description: this.props.istioConfigId.object + ' is not found in the mesh'
         };
         this.setState({
           isRemoved: true,
@@ -183,7 +184,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     this.fetchIstioObjectDetails();
   }
 
-  componentDidUpdate(prevProps: RouteComponentProps<IstioConfigId>, prevState: IstioConfigDetailsState): void {
+  componentDidUpdate(prevProps: IstioConfigDetailsProps, prevState: IstioConfigDetailsState): void {
     // This will ask confirmation if we want to leave page on pending changes without save
     if (this.state.isModified) {
       window.onbeforeunload = () => true;
@@ -213,7 +214,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     }
 
     if (!this.propsMatch(prevProps)) {
-      this.fetchIstioObjectDetailsFromProps(this.props.match.params);
+      this.fetchIstioObjectDetailsFromProps(this.props.istioConfigId);
     }
 
     if (this.state.istioValidations && this.state.istioValidations !== prevState.istioValidations) {
@@ -221,11 +222,11 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     }
   }
 
-  propsMatch(prevProps: RouteComponentProps<IstioConfigId>) {
+  propsMatch(prevProps: IstioConfigDetailsProps) {
     return (
-      this.props.match.params.namespace === prevProps.match.params.namespace &&
-      this.props.match.params.object === prevProps.match.params.object &&
-      this.props.match.params.objectType === prevProps.match.params.objectType
+      this.props.istioConfigId.namespace === prevProps.istioConfigId.namespace &&
+      this.props.istioConfigId.object === prevProps.istioConfigId.object &&
+      this.props.istioConfigId.objectType === prevProps.istioConfigId.objectType
     );
   }
 
@@ -237,7 +238,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
 
   backToList = () => {
     // Back to list page
-    history.push(`/${Paths.ISTIO}?namespaces=${this.props.match.params.namespace}`);
+    history.push(`/${Paths.ISTIO}?namespaces=${this.props.istioConfigId.namespace}`);
   };
 
   canDelete = () => {
@@ -254,9 +255,9 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
 
   onDelete = () => {
     API.deleteIstioConfigDetail(
-      this.props.match.params.namespace,
-      this.props.match.params.objectType,
-      this.props.match.params.object,
+      this.props.istioConfigId.namespace,
+      this.props.istioConfigId.objectType,
+      this.props.istioConfigId.object,
       this.state.cluster
     )
       .then(() => this.backToList())
@@ -271,19 +272,19 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
         mergeJsonPatch(objectModified, getIstioObject(this.state.istioObjectDetails))
       ).replace(new RegExp('"(,null)+]', 'g'), '"]');
       API.updateIstioConfigDetail(
-        this.props.match.params.namespace,
-        this.props.match.params.objectType,
-        this.props.match.params.object,
+        this.props.istioConfigId.namespace,
+        this.props.istioConfigId.objectType,
+        this.props.istioConfigId.object,
         jsonPatch,
         this.state.cluster
       )
         .then(() => {
           const targetMessage =
-            this.props.match.params.namespace +
+            this.props.istioConfigId.namespace +
             ' / ' +
-            this.props.match.params.objectType +
+            this.props.istioConfigId.objectType +
             ' / ' +
-            this.props.match.params.object;
+            this.props.istioConfigId.object;
           AlertUtils.add('Changes applied on ' + targetMessage, 'default', MessageType.SUCCESS);
           this.fetchIstioObjectDetails();
         })
@@ -548,7 +549,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     const yamlErrors = !!(this.state.yamlValidations && this.state.yamlValidations.markers.length > 0);
     return !isParentKiosk(this.props.kiosk) ? (
       <IstioActionButtonsContainer
-        objectName={this.props.match.params.object}
+        objectName={this.props.istioConfigId.object}
         readOnly={!this.canUpdate()}
         canUpdate={this.canUpdate() && this.state.isModified && !this.state.isRemoved && !yamlErrors}
         onCancel={this.onCancel}
@@ -574,7 +575,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
       <span className={rightToolbarStyle}>
         <IstioActionDropdown
           objectKind={istioObject ? istioObject.kind : undefined}
-          objectName={this.props.match.params.object}
+          objectName={this.props.istioConfigId.object}
           canDelete={canDelete}
           onDelete={this.onDelete}
         />
@@ -587,7 +588,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
       <>
         <RefreshNotifier onTick={this.onRefresh} />
         <RenderHeaderContainer
-          location={this.props.location}
+          location={history.location}
           rightToolbar={<RefreshContainer id="config_details_refresh" hideLabel={true} />}
           actionsToolbar={!this.state.error ? this.renderActions() : undefined}
         />
@@ -636,5 +637,5 @@ const mapStateToProps = (state: KialiAppState) => ({
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
 });
 
-const IstioConfigDetailsPage = connect(mapStateToProps, null)(IstioConfigDetailsPageComponent);
+const IstioConfigDetailsPage = connect(mapStateToProps)(IstioConfigDetailsPageComponent);
 export default IstioConfigDetailsPage;

@@ -1,9 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { RouteComponentProps } from 'react-router-dom';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { Tab } from '@patternfly/react-core';
-
 import * as API from '../../services/Api';
 import { App, AppId } from '../../types/App';
 import AppInfo from './AppInfo';
@@ -13,7 +11,7 @@ import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
 import { DurationInSeconds, TimeInMilliseconds, TimeRange } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
-import { durationSelector } from '../../store/Selectors';
+import { durationSelector, timeRangeSelector } from '../../store/Selectors';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import { JaegerInfo } from '../../types/JaegerInfo';
 import TracesComponent from '../../components/JaegerIntegration/TracesComponent';
@@ -24,6 +22,7 @@ import RenderHeaderContainer from '../../components/Nav/Page/RenderHeader';
 import { ErrorMsg } from '../../types/ErrorMsg';
 import ErrorSection from '../../components/ErrorSection/ErrorSection';
 import connectRefresh from '../../components/Refresh/connectRefresh';
+import history from 'app/History';
 
 type AppDetailsState = {
   app?: App;
@@ -41,10 +40,10 @@ type ReduxProps = {
   timeRange: TimeRange;
 };
 
-type AppDetailsProps = RouteComponentProps<AppId> &
-  ReduxProps & {
-    lastRefreshAt: TimeInMilliseconds;
-  };
+type AppDetailsProps = ReduxProps & {
+  appId: AppId;
+  lastRefreshAt: TimeInMilliseconds;
+};
 
 const tabName = 'tab';
 const defaultTab = 'info';
@@ -61,7 +60,7 @@ const nextTabIndex = 5;
 class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   constructor(props: AppDetailsProps) {
     super(props);
-    const urlParams = new URLSearchParams(this.props.location.search);
+    const urlParams = new URLSearchParams(history.location.search);
     const cluster = urlParams.get('cluster') || undefined;
     this.state = { currentTab: activeTab(tabName, defaultTab), cluster: cluster };
   }
@@ -73,8 +72,8 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   componentDidUpdate(prevProps: AppDetailsProps) {
     const currentTab = activeTab(tabName, defaultTab);
     if (
-      this.props.match.params.namespace !== prevProps.match.params.namespace ||
-      this.props.match.params.app !== prevProps.match.params.app ||
+      this.props.appId.namespace !== prevProps.appId.namespace ||
+      this.props.appId.app !== prevProps.appId.app ||
       this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
       currentTab !== this.state.currentTab ||
       this.props.duration !== prevProps.duration
@@ -90,27 +89,22 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
   private fetchApp = () => {
     const params: { [key: string]: string } = { rateInterval: String(this.props.duration) + 's', health: 'true' };
-    API.getApp(this.props.match.params.namespace, this.props.match.params.app, params, this.state.cluster)
+    API.getApp(this.props.appId.namespace, this.props.appId.app, params, this.state.cluster)
       .then(details => {
         this.setState({
           app: details.data,
-          health: AppHealth.fromJson(
-            this.props.match.params.namespace,
-            this.props.match.params.app,
-            details.data.health,
-            {
-              rateInterval: this.props.duration,
-              hasSidecar: details.data.workloads.some(w => w.istioSidecar),
-              hasAmbient: details.data.workloads.some(w => w.istioAmbient)
-            }
-          )
+          health: AppHealth.fromJson(this.props.appId.namespace, this.props.appId.app, details.data.health, {
+            rateInterval: this.props.duration,
+            hasSidecar: details.data.workloads.some(w => w.istioSidecar),
+            hasAmbient: details.data.workloads.some(w => w.istioAmbient)
+          })
         });
       })
       .catch(error => {
         AlertUtils.addError('Could not fetch App Details.', error);
         const msg: ErrorMsg = {
           title: 'No App is selected',
-          description: this.props.match.params.app + ' is not found in the mesh'
+          description: this.props.appId.app + ' is not found in the mesh'
         };
         this.setState({ error: msg });
       });
@@ -131,8 +125,8 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
               <Tab title={dashboard.title} key={'cd-' + dashboard.template} eventKey={tabKey}>
                 <CustomMetricsContainer
                   lastRefreshAt={this.props.lastRefreshAt}
-                  namespace={this.props.match.params.namespace}
-                  app={this.props.match.params.app}
+                  namespace={this.props.appId.namespace}
+                  app={this.props.appId.app}
                   template={dashboard.template}
                 />
               </Tab>
@@ -157,10 +151,10 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     const trafficTab = (
       <Tab title="Traffic" eventKey={1} key={'Traffic'}>
         <TrafficDetails
-          itemName={this.props.match.params.app}
+          itemName={this.props.appId.app}
           itemType={MetricsObjectTypes.APP}
           lastRefreshAt={this.props.lastRefreshAt}
-          namespace={this.props.match.params.namespace}
+          namespace={this.props.appId.namespace}
           cluster={this.state.cluster}
         />
       </Tab>
@@ -171,8 +165,8 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
         <IstioMetricsContainer
           data-test="inbound-metrics-component"
           lastRefreshAt={this.props.lastRefreshAt}
-          namespace={this.props.match.params.namespace}
-          object={this.props.match.params.app}
+          namespace={this.props.appId.namespace}
+          object={this.props.appId.app}
           objectType={MetricsObjectTypes.APP}
           cluster={this.state.cluster}
           direction={'inbound'}
@@ -185,8 +179,8 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
         <IstioMetricsContainer
           data-test="outbound-metrics-component"
           lastRefreshAt={this.props.lastRefreshAt}
-          namespace={this.props.match.params.namespace}
-          object={this.props.match.params.app}
+          namespace={this.props.appId.namespace}
+          object={this.props.appId.app}
           objectType={MetricsObjectTypes.APP}
           cluster={this.state.cluster}
           direction={'outbound'}
@@ -204,17 +198,17 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           <Tab eventKey={4} style={{ textAlign: 'center' }} title={'Traces'} key={tracesTabName}>
             <TracesComponent
               lastRefreshAt={this.props.lastRefreshAt}
-              namespace={this.props.match.params.namespace}
+              namespace={this.props.appId.namespace}
               cluster={this.state.cluster}
-              target={this.props.match.params.app}
+              target={this.props.appId.app}
               targetKind={'app'}
             />
           </Tab>
         );
       } else {
         const service = this.props.jaegerInfo.namespaceSelector
-          ? this.props.match.params.app + '.' + this.props.match.params.namespace
-          : this.props.match.params.app;
+          ? this.props.appId.app + '.' + this.props.appId.namespace
+          : this.props.appId.app;
         tabsArray.push(
           <Tab
             eventKey={4}
@@ -255,7 +249,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     return (
       <>
         <RenderHeaderContainer
-          location={this.props.location}
+          location={history.location}
           rightToolbar={<TimeControl customDuration={useCustomTime} />}
         />
         {this.state.error && <ErrorSection error={this.state.error} />}
@@ -282,7 +276,8 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  jaegerInfo: state.jaegerState.info
+  jaegerInfo: state.jaegerState.info,
+  timeRange: timeRangeSelector(state)
 });
 
 const AppDetailsContainer = connectRefresh(connect(mapStateToProps)(AppDetails));

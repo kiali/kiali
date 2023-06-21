@@ -2,7 +2,6 @@ import * as Cy from 'cytoscape';
 import * as React from 'react';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
-import { RouteComponentProps } from 'react-router-dom';
 import FlexView from 'react-flexview';
 import { style } from 'typestyle';
 import history from '../../app/History';
@@ -83,7 +82,7 @@ import connectRefresh from '../../components/Refresh/connectRefresh';
 import { triggerRefresh } from '../../hooks/refresh';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
-type GraphURLPathProps = {
+export type GraphURLPathProps = {
   aggregate: string;
   aggregateValue: string;
   app: string;
@@ -144,7 +143,7 @@ type ReduxProps = {
   istioAPIEnabled: boolean;
 };
 
-export type GraphPageProps = RouteComponentProps<Partial<GraphURLPathProps>> &
+export type GraphPageProps = Partial<GraphURLPathProps> &
   ReduxProps & {
     lastRefreshAt: TimeInMilliseconds;
   };
@@ -245,18 +244,18 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
   private focusSelector?: string;
   private graphDataSource: GraphDataSource;
 
-  static getNodeParamsFromProps(props: RouteComponentProps<Partial<GraphURLPathProps>>): NodeParamsType | undefined {
-    const aggregate = props.match.params.aggregate;
+  static getNodeParamsFromProps(props: Partial<GraphURLPathProps>): NodeParamsType | undefined {
+    const aggregate = props.aggregate;
     const aggregateOk = aggregate && aggregate !== UNKNOWN;
-    const aggregateValue = props.match.params.aggregateValue;
+    const aggregateValue = props.aggregateValue;
     const aggregateValueOk = aggregateValue && aggregateValue !== UNKNOWN;
-    const app = props.match.params.app;
+    const app = props.app;
     const appOk = app && app !== UNKNOWN;
-    const namespace = props.match.params.namespace;
+    const namespace = props.namespace;
     const namespaceOk = namespace && namespace !== UNKNOWN;
-    const service = props.match.params.service;
+    const service = props.service;
     const serviceOk = service && service !== UNKNOWN;
-    const workload = props.match.params.workload;
+    const workload = props.workload;
     const workloadOk = workload && workload !== UNKNOWN;
     if (!aggregateOk && !aggregateValueOk && !appOk && !namespaceOk && !serviceOk && !workloadOk) {
       // @ts-ignore
@@ -270,7 +269,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       version = '';
     } else if (appOk || workloadOk) {
       nodeType = appOk ? NodeType.APP : NodeType.WORKLOAD;
-      version = props.match.params.version;
+      version = props.version;
     } else {
       nodeType = NodeType.SERVICE;
       version = '';
