@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -100,7 +101,14 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config, na
 			log.Errorf("[Kiali Cache] Error creating kube cache for cluster: [%s]. Err: %v", cluster, err)
 			return nil, err
 		}
-		log.Infof("[Kiali Cache] Kube cache is active for cluster: [%s] and namespaces: %v", cluster, namespaceSeedList)
+
+		var scope string
+		if cache.clusterScoped {
+			scope = "*"
+		} else {
+			scope = strings.Join(namespaceSeedList, ",")
+		}
+		log.Infof("[Kiali Cache] Kube cache is active for cluster: [%s] and namespaces: [%v]", cluster, scope)
 
 		kialiCacheImpl.kubeCache[cluster] = cache
 

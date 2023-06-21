@@ -18,7 +18,6 @@ const (
 
 // ParseAppenders determines which appenders should run for this graphing request
 func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, finalizers []graph.Appender) {
-
 	requestedAppenders := map[string]bool{}
 	requestedFinalizers := map[string]bool{}
 

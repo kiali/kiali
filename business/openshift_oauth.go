@@ -22,6 +22,8 @@ import (
 
 type OpenshiftOAuthService struct {
 	k8s kubernetes.ClientInterface
+	// TODO: Support multi-cluster
+	kialiSAClient kubernetes.ClientInterface
 }
 
 type OAuthMetadata struct {
@@ -109,7 +111,6 @@ func getOAuthAuthorizationServer(config config.OpenShiftConfig) (*OAuthAuthoriza
 	var server *OAuthAuthorizationServer
 
 	response, err := request("GET", config.ServerPrefix, ".well-known/oauth-authorization-server", nil, config.UseSystemCA, config.CustomCA)
-
 	if err != nil {
 		log.Error(err)
 		message := fmt.Errorf("could not get OAuthAuthorizationServer: %v", err)
@@ -132,7 +133,6 @@ func (in *OpenshiftOAuthService) GetUserInfo(token string) (*OAuthUser, error) {
 	config := config.Get().Auth.OpenShift
 
 	response, err := request("GET", config.ServerPrefix, "apis/user.openshift.io/v1/users/~", &token, config.UseSystemCA, config.CustomCA)
-
 	if err != nil {
 		log.Error(err)
 		return nil, fmt.Errorf("could not get user info from Openshift: %v", err)
@@ -160,13 +160,6 @@ func getKialiNamespace() (string, error) {
 }
 
 func (in *OpenshiftOAuthService) Logout(token string) error {
-	conf, err := kubernetes.GetConfigForLocalCluster()
-
-	if err != nil {
-		log.Error(err)
-		return fmt.Errorf("could not connect to Openshift: %v", err)
-	}
-
 	config := config.Get().Auth.OpenShift
 
 	// https://github.com/kiali/kiali/issues/3595
@@ -185,19 +178,10 @@ func (in *OpenshiftOAuthService) Logout(token string) error {
 	log.Debugf("Logging out by deleting OAuth access token [%v] which was converted from access token [%v]", oauthTokenName, token)
 
 	// Delete the access token from the API server using OpenShift 4.6+ access token name
-	_, err = request("DELETE", config.ServerPrefix, fmt.Sprintf("apis/oauth.openshift.io/v1/oauthaccesstokens/%v", oauthTokenName), &conf.BearerToken, config.UseSystemCA, config.CustomCA)
-
+	adminToken := in.kialiSAClient.GetToken()
+	_, err := request("DELETE", config.ServerPrefix, fmt.Sprintf("apis/oauth.openshift.io/v1/oauthaccesstokens/%v", oauthTokenName), &adminToken, config.UseSystemCA, config.CustomCA)
 	if err != nil {
-		// Try to delete the access token from the API server using the pre-4.6 access token name.
-		// If this also fails, we'll send back the err from the first attempt.
-		// If this succeeds, set err to nil to indicate a successful logout.
-		_, err2 := request("DELETE", config.ServerPrefix, fmt.Sprintf("apis/oauth.openshift.io/v1/oauthaccesstokens/%v", token), &conf.BearerToken, config.UseSystemCA, config.CustomCA)
-		if err2 == nil {
-			err = nil
-		}
-	}
-
-	if err != nil {
+		// TODO: Do we support 4.6 anymore?
 		return err
 	}
 
@@ -244,12 +228,12 @@ func requestWithTimeout(method string, serverPrefix string, url string, auth *st
 		Timeout: timeout,
 		Transport: &http.Transport{
 			TLSClientConfig: &tlsConfig,
-		}}
+		},
+	}
 
 	defer client.CloseIdleConnections()
 
 	request, err := http.NewRequest(method, strings.Join([]string{serverPrefix, url}, ""), nil)
-
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create request for api endpoint [%s] for oauth consumption, error: %s", url, err)
 	}
@@ -259,7 +243,6 @@ func requestWithTimeout(method string, serverPrefix string, url string, auth *st
 	}
 
 	response, err := client.Do(request)
-
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get response for api endpoint [%s] for oauth consumption, error: %s", url, err)
 	}
@@ -267,7 +250,6 @@ func requestWithTimeout(method string, serverPrefix string, url string, auth *st
 	defer response.Body.Close()
 
 	body, err := io.ReadAll(response.Body)
-
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read response body for api endpoint [%s] for oauth consumption, error: %s", url, err)
 	}

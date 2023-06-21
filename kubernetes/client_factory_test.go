@@ -1,14 +1,13 @@
 package kubernetes
 
 import (
+	_ "embed"
+	"encoding/base64"
 	"fmt"
 	"math/rand"
-	"os"
 	"sync"
 	"testing"
 	"time"
-
-	"gopkg.in/yaml.v2"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,25 +17,27 @@ import (
 	"github.com/kiali/kiali/config"
 )
 
-func newTestingClientFactory(t *testing.T) *clientFactory {
-	t.Helper()
-	clientConfig := rest.Config{}
-	client, err := newClientFactory(&clientConfig)
-	if err != nil {
-		t.Fatalf("Error creating client factory: %v", err)
-	}
-	return client
-}
+var (
+	//go:embed testdata/remote-cluster-exec.yaml
+	remoteClusterExecYAML string
+
+	//go:embed testdata/remote-cluster.yaml
+	remoteClusterYAML string
+
+	//go:embed testdata/proxy-ca.pem
+	proxyCAData []byte
+)
 
 // TestClientExpiration Verify the details that clients expire are correct
 func TestClientExpiration(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 	conf := config.Get()
+	conf.Auth.Strategy = config.AuthStrategyOpenId
+	conf.Auth.OpenId.DisableRBAC = false
+	SetConfig(t, *conf)
 
-	istioConfig := rest.Config{}
-	clientFactory, err := newClientFactory(&istioConfig)
-	require.NoError(err)
+	clientFactory := NewTestingClientFactory(t)
 
 	// Make sure we are starting off with an empty set of clients
 	assert.Equal(0, clientFactory.getClientsLength())
@@ -44,7 +45,7 @@ func TestClientExpiration(t *testing.T) {
 	// Create a single initial test clients
 	authInfo := api.NewAuthInfo()
 	authInfo.Token = "foo-token"
-	_, err = clientFactory.getRecycleClient(authInfo, 100*time.Millisecond, conf.KubernetesConfig.ClusterName)
+	_, err := clientFactory.getRecycleClient(authInfo, 100*time.Millisecond, conf.KubernetesConfig.ClusterName)
 	require.NoError(err)
 
 	// Verify we have the client
@@ -83,11 +84,8 @@ func TestClientExpiration(t *testing.T) {
 // TestConcurrentClientExpiration Verify Concurrent clients are expired correctly
 func TestConcurrentClientExpiration(t *testing.T) {
 	assert := assert.New(t)
-	require := require.New(t)
 
-	istioConfig := rest.Config{}
-	clientFactory, err := newClientFactory(&istioConfig)
-	require.NoError(err)
+	clientFactory := NewTestingClientFactory(t)
 	count := 100
 
 	wg := sync.WaitGroup{}
@@ -111,18 +109,17 @@ func TestConcurrentClientExpiration(t *testing.T) {
 
 // TestConcurrentClientFactory test Concurrently create ClientFactory
 func TestConcurrentClientFactory(t *testing.T) {
-	assert := assert.New(t)
-	istioConfig := rest.Config{}
 	count := 100
 
 	wg := sync.WaitGroup{}
 	wg.Add(count)
 
+	setGlobalKialiSAToken(t, "test-token")
+
 	for i := 0; i < count; i++ {
 		go func() {
 			defer wg.Done()
-			_, err := newClientFactory(&istioConfig)
-			assert.NoError(err)
+			NewTestingClientFactory(t)
 		}()
 	}
 
@@ -134,9 +131,12 @@ func TestSAHomeClientUpdatesWhenKialiTokenChanges(t *testing.T) {
 	require := require.New(t)
 	kialiConfig := config.NewConfig()
 	config.Set(kialiConfig)
+	currentToken := KialiTokenForHomeCluster
+	currentTime := tokenRead
 	t.Cleanup(func() {
 		// Other tests use this global var so we need to reset it.
-		KialiTokenForHomeCluster = ""
+		tokenRead = currentTime
+		KialiTokenForHomeCluster = currentToken
 	})
 
 	tokenRead = time.Now()
@@ -183,41 +183,6 @@ func TestSAClientsUpdateWhenKialiTokenChanges(t *testing.T) {
 	require.Equal(KialiTokenForHomeCluster, client.GetToken())
 }
 
-// Helper function to create a test remote cluster secret file from a RemoteSecret.
-// It will cleanup after itself when the test is done.
-func createTestRemoteClusterSecret(t *testing.T, remoteSecret RemoteSecret) {
-	t.Helper()
-	// create a mock volume mount directory where the test remote cluster secret content will go
-	originalRemoteClusterSecretsDir := RemoteClusterSecretsDir
-	t.Cleanup(func() {
-		RemoteClusterSecretsDir = originalRemoteClusterSecretsDir
-	})
-	RemoteClusterSecretsDir = t.TempDir()
-
-	marshalledRemoteSecretData, err := yaml.Marshal(remoteSecret)
-	if err != nil {
-		t.Fatalf("Failed to marshal remote secret data: %v", err)
-	}
-	createTestRemoteClusterSecretFile(t, RemoteClusterSecretsDir, remoteSecret.Clusters[0].Name, string(marshalledRemoteSecretData))
-}
-
-// Helper function to create a test token to standin for the kiali token.
-func newFakeToken(t *testing.T) {
-	t.Helper()
-	tokenDir := t.TempDir()
-	fileName := tokenDir + "/token"
-	oldTokenPath := DefaultServiceAccountPath
-	oldToken := KialiTokenForHomeCluster
-	t.Cleanup(func() {
-		DefaultServiceAccountPath = oldTokenPath
-		KialiTokenForHomeCluster = oldToken
-	})
-	DefaultServiceAccountPath = fileName
-	if err := os.WriteFile(fileName, []byte("fake-token"), 0o644); err != nil {
-		t.Fatalf("Failed to create fake token: %v", err)
-	}
-}
-
 func TestClientCreatedWithClusterInfo(t *testing.T) {
 	// Create a fake cluster info file.
 	// Ensure client gets created with this.
@@ -229,32 +194,10 @@ func TestClientCreatedWithClusterInfo(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	const (
-		testClusterName = "TestRemoteCluster"
-	)
-	remoteSecretData := RemoteSecret{
-		Clusters: []RemoteSecretClusterListItem{
-			{
-				Name: testClusterName,
-				Cluster: RemoteSecretCluster{
-					Server: "https://192.168.1.2:1234",
-				},
-			},
-		},
-		Users: []RemoteSecretUser{
-			{
-				Name: "remoteuser1",
-				User: RemoteSecretUserAuthInfo{
-					Token: "remotetoken1",
-				},
-			},
-		},
-	}
+	const testClusterName = "TestRemoteCluster"
+	createTestRemoteClusterSecret(t, testClusterName, remoteClusterYAML)
 
-	createTestRemoteClusterSecret(t, remoteSecretData)
-	newFakeToken(t)
-
-	clientFactory := newTestingClientFactory(t)
+	clientFactory := NewTestingClientFactory(t)
 
 	// Service account clients
 	saClients := clientFactory.GetSAClients()
@@ -273,4 +216,157 @@ func TestClientCreatedWithClusterInfo(t *testing.T) {
 	assert.Equal(testClusterName, userClients[testClusterName].ClusterInfo().Name)
 	assert.Equal("https://192.168.1.2:1234", userClients[testClusterName].ClusterInfo().ClientConfig.Host)
 	assert.Contains(userClients[conf.KubernetesConfig.ClusterName].ClusterInfo().Name, conf.KubernetesConfig.ClusterName)
+}
+
+func TestSAClientCreatedWithExecProvider(t *testing.T) {
+	// by default, ExecProvider support should be disabled
+	cases := map[string]struct {
+		remoteSecretContents string
+		expected             rest.Config
+	}{
+		"Only bearer token": {
+			remoteSecretContents: remoteClusterYAML,
+			expected: rest.Config{
+				BearerToken:  "token",
+				ExecProvider: nil,
+			},
+		},
+		"Use bearer token and exec credentials (which should be ignored)": {
+			remoteSecretContents: remoteClusterExecYAML,
+			expected: rest.Config{
+				BearerToken:  "token",
+				ExecProvider: nil,
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+			const clusterName = "TestRemoteCluster"
+
+			originalSecretsDir := RemoteClusterSecretsDir
+			t.Cleanup(func() {
+				RemoteClusterSecretsDir = originalSecretsDir
+			})
+			RemoteClusterSecretsDir = t.TempDir()
+
+			createTestRemoteClusterSecretFile(t, RemoteClusterSecretsDir, clusterName, tc.remoteSecretContents)
+			cf := NewTestingClientFactory(t)
+
+			saClients := cf.GetSAClients()
+			// Should be home cluster client and one remote client
+			require.Equal(2, len(saClients))
+			require.Contains(saClients, clusterName)
+
+			clientConfig := saClients[clusterName].ClusterInfo().ClientConfig
+			require.Equal(tc.expected.BearerToken, clientConfig.BearerToken)
+			require.Nil(clientConfig.ExecProvider)
+		})
+	}
+
+	// now enable ExecProvider support
+	conf := config.NewConfig()
+	conf.KialiFeatureFlags.Clustering.EnableExecProvider = true
+	SetConfig(t, *conf)
+
+	cases = map[string]struct {
+		remoteSecretContents string
+		expected             rest.Config
+	}{
+		"Only bearer token": {
+			remoteSecretContents: remoteClusterYAML,
+			expected: rest.Config{
+				BearerToken:  "token",
+				ExecProvider: nil,
+			},
+		},
+		"Use bearer token and exec credentials": {
+			remoteSecretContents: remoteClusterExecYAML,
+			expected: rest.Config{
+				BearerToken: "token",
+				ExecProvider: &api.ExecConfig{
+					Command: "command",
+					Args:    []string{"arg1", "arg2"},
+				},
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+			const clusterName = "TestRemoteCluster"
+
+			originalSecretsDir := RemoteClusterSecretsDir
+			t.Cleanup(func() {
+				RemoteClusterSecretsDir = originalSecretsDir
+			})
+			RemoteClusterSecretsDir = t.TempDir()
+
+			createTestRemoteClusterSecretFile(t, RemoteClusterSecretsDir, clusterName, tc.remoteSecretContents)
+			cf := NewTestingClientFactory(t)
+
+			saClients := cf.GetSAClients()
+			// Should be home cluster client and one remote client
+			require.Equal(2, len(saClients))
+			require.Contains(saClients, clusterName)
+
+			clientConfig := saClients[clusterName].ClusterInfo().ClientConfig
+			require.Equal(tc.expected.BearerToken, clientConfig.BearerToken)
+			if tc.expected.ExecProvider != nil {
+				// Just check a few fields for sanity
+				require.Equal(tc.expected.ExecProvider.Command, clientConfig.ExecProvider.Command)
+				require.Equal(tc.expected.ExecProvider.Args, clientConfig.ExecProvider.Args)
+			}
+		})
+	}
+}
+
+func setGlobalKialiSAToken(t *testing.T, newToken string) {
+	t.Helper()
+
+	originalToken := KialiTokenForHomeCluster
+	t.Cleanup(func() {
+		KialiTokenForHomeCluster = originalToken
+		tokenRead = time.Time{}
+	})
+
+	KialiTokenForHomeCluster = newToken
+	tokenRead = time.Now()
+}
+
+func TestClientCreatedWithProxyInfo(t *testing.T) {
+	require := require.New(t)
+
+	cfg := config.NewConfig()
+	cfg.Auth.Strategy = config.AuthStrategyOpenId
+	cfg.Auth.OpenId.ApiProxyCAData = base64.StdEncoding.EncodeToString(proxyCAData)
+	cfg.Auth.OpenId.ApiProxy = "https://api-proxy:8443"
+	SetConfig(t, *cfg)
+
+	clientFactory := NewTestingClientFactory(t)
+
+	// Regular clients should have the proxy info
+	client, err := clientFactory.GetClient(api.NewAuthInfo())
+	require.NoError(err)
+
+	require.Equal(cfg.Auth.OpenId.ApiProxy, client.ClusterInfo().ClientConfig.Host)
+	require.Equal(proxyCAData, client.ClusterInfo().ClientConfig.CAData)
+
+	// Service account clients should not have the proxy info.
+	// Two ways to get a SA client: 1. GetClient with SA token and 2. GetSAClient
+	setGlobalKialiSAToken(t, "current-token")
+	authInfo := api.NewAuthInfo()
+	authInfo.Token = KialiTokenForHomeCluster
+
+	client, err = clientFactory.GetClient(authInfo)
+	require.NoError(err)
+
+	require.NotEqual(cfg.Auth.OpenId.ApiProxy, client.ClusterInfo().ClientConfig.Host)
+	require.NotEqual(proxyCAData, client.ClusterInfo().ClientConfig.CAData)
+
+	client = clientFactory.GetSAClient(cfg.KubernetesConfig.ClusterName)
+	require.NotEqual(cfg.Auth.OpenId.ApiProxy, client.ClusterInfo().ClientConfig.Host)
+	require.NotEqual(proxyCAData, client.ClusterInfo().ClientConfig.CAData)
 }

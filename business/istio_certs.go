@@ -87,7 +87,6 @@ func (ics *IstioCertsService) getCertificateFromSecret(secretName, certName stri
 	cert.SecretNamespace = cfg.IstioNamespace
 
 	secret, err := ics.k8s.GetSecret(cfg.IstioNamespace, secretName)
-
 	if err != nil {
 		if errors.IsForbidden(err) {
 			cert.Accessible = false
@@ -136,7 +135,6 @@ func (ics *IstioCertsService) getChironCertificates(certsConfig []certConfig) ([
 
 			cert.DNSNames = dnsNames
 			certChan <- cert
-
 		}(certConfig.SecretName, certConfig.DNSNames)
 	}
 

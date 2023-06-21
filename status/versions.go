@@ -7,10 +7,6 @@ import (
 	"strings"
 	"time"
 
-	kversion "k8s.io/apimachinery/pkg/version"
-	kube "k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
@@ -281,30 +277,23 @@ func prometheusVersion() (*ExternalServiceInfo, error) {
 }
 
 func kubernetesVersion() (*ExternalServiceInfo, error) {
-	var (
-		err           error
-		k8sConfig     *rest.Config
-		k8s           *kube.Clientset
-		serverVersion *kversion.Info
-	)
-
-	k8sConfig, err = kubernetes.GetConfigForLocalCluster()
-	if err == nil {
-		conf := config.Get()
-		k8sConfig.QPS = conf.KubernetesConfig.QPS
-		k8sConfig.Burst = conf.KubernetesConfig.Burst
-		k8s, err = kube.NewForConfig(k8sConfig)
-		if err == nil {
-			product := ExternalServiceInfo{}
-			serverVersion, err = k8s.Discovery().ServerVersion()
-			if err == nil {
-				product.Name = "Kubernetes"
-				product.Version = serverVersion.GitVersion
-				return &product, nil
-			}
-		}
+	// Use the Kiali Service Account client to get the Kubernetes version
+	// since the status endpoint does not have a user token.
+	cf, err := kubernetes.GetClientFactory()
+	if err != nil {
+		return nil, err
 	}
-	return nil, err
+
+	// TODO: Support multi-primary
+	serverVersion, err := cf.GetSAHomeClusterClient().GetServerVersion()
+	if err != nil {
+		return nil, err
+	}
+
+	return &ExternalServiceInfo{
+		Name:    "Kubernetes",
+		Version: serverVersion.GitVersion,
+	}, nil
 }
 
 func isMaistraExternalService(esi *ExternalServiceInfo) bool {

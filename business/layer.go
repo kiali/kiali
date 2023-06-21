@@ -115,6 +115,7 @@ func IsResourceCached(namespace string, resource string) bool {
 
 func Start() {
 	// Kiali Cache will be initialized once at start up.
+	// TODO: Provide some error handling for start.
 	once.Do(initKialiCache)
 }
 

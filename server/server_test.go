@@ -18,8 +18,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/config/security"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/util"
 )
 
@@ -33,7 +35,7 @@ func TestRootContextPath(t *testing.T) {
 	oldWd, _ := os.Getwd()
 	defer func() { _ = os.Chdir(oldWd) }()
 	_ = os.Chdir(os.TempDir())
-	_ = os.MkdirAll("./console", 0777)
+	_ = os.MkdirAll("./console", 0o777)
 	_, _ = os.Create("./console/index.html")
 
 	testPort, err := getFreePort(testHostname)
@@ -97,6 +99,9 @@ func TestRootContextPath(t *testing.T) {
 }
 
 func TestAnonymousMode(t *testing.T) {
+	cf := kubernetes.NewTestingClientFactory(t)
+	business.SetWithBackends(cf, nil)
+
 	testPort, err := getFreePort(testHostname)
 	if err != nil {
 		t.Fatalf("Cannot get a free port to run tests on host [%v]", testHostname)
@@ -151,6 +156,9 @@ func TestAnonymousMode(t *testing.T) {
 }
 
 func TestSecureComm(t *testing.T) {
+	cf := kubernetes.NewTestingClientFactory(t)
+	business.SetWithBackends(cf, nil)
+
 	testPort, err := getFreePort(testHostname)
 	if err != nil {
 		t.Fatalf("Cannot get a free port to run tests on host [%v]", testHostname)
@@ -272,7 +280,6 @@ func TestSecureComm(t *testing.T) {
 	if _, err = getRequestResults(t, httpClientTLS11, apiURL, noCredentials); err == nil {
 		t.Fatalf("Failed: Should not have been able to use TLS 1.1")
 	}
-
 }
 
 func TestTracingConfigured(t *testing.T) {
@@ -395,7 +402,7 @@ func generateCertificate(t *testing.T, certPath string, keyPath string, host str
 	_ = pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
 	certOut.Close()
 
-	keyOut, err := os.OpenFile(keyPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	keyOut, err := os.OpenFile(keyPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
 		return err
 	}
@@ -441,7 +448,6 @@ type httpClientConfig struct {
 }
 
 func (conf *httpClientConfig) buildHTTPClient() (*http.Client, error) {
-
 	// make our own copy of TLS config
 	tlsConfig := &tls.Config{}
 	if conf.TLSConfig != nil {
