@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -124,7 +123,7 @@ func makeRequest(client http.Client, endpoint string, body io.Reader) (response 
 		return
 	}
 	defer resp.Body.Close()
-	response, err = ioutil.ReadAll(resp.Body)
+	response, err = io.ReadAll(resp.Body)
 	status = resp.StatusCode
 	return
 }

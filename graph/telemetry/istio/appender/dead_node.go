@@ -9,12 +9,13 @@ import (
 const DeadNodeAppenderName = "deadNode"
 
 // DeadNodeAppender is responsible for removing from the graph unwanted nodes:
-// - nodes for which there is no traffic reported and a backing workload that can't be found
-//   (presumably removed from K8S). (kiali-621)
+//   - nodes for which there is no traffic reported and a backing workload that can't be found
+//     (presumably removed from K8S). (kiali-621)
 //   - this includes "unknown"
-// - service nodes that are not service entries (kiali-1526), egress handlers and for which there is no
-//   incoming traffic or outgoing edges
-//   error traffic and no outgoing edges (kiali-1326).
+//   - service nodes that are not service entries (kiali-1526), egress handlers and for which there is no
+//     incoming traffic or outgoing edges
+//     error traffic and no outgoing edges (kiali-1326).
+//
 // Name: deadNode
 type DeadNodeAppender struct{}
 

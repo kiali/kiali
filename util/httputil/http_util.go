@@ -6,9 +6,9 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -41,7 +41,7 @@ func HttpGet(url string, auth *config.Auth, timeout time.Duration, customHeaders
 		return nil, 0, err
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	return body, resp.StatusCode, err
 }
 
@@ -64,7 +64,7 @@ func HttpPost(url string, auth *config.Auth, body io.Reader, timeout time.Durati
 		return nil, 0, err
 	}
 	defer resp.Body.Close()
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	return respBody, resp.StatusCode, err
 }
 
@@ -156,7 +156,7 @@ func GetTLSConfig(auth *config.Auth) (*tls.Config, error) {
 		var certPool *x509.CertPool
 		if auth.CAFile != "" {
 			certPool = x509.NewCertPool()
-			cert, err := ioutil.ReadFile(auth.CAFile)
+			cert, err := os.ReadFile(auth.CAFile)
 
 			if err != nil {
 				return nil, fmt.Errorf("failed to get root CA certificates: %s", err)

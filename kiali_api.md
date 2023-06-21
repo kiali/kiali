@@ -2,7 +2,19 @@
 
 
 # Kiali
-Kiali project, observability for the Istio service mesh
+# Kiali Project, The Console for Istio Service Mesh
+
+NOTE! The Kiali API is not for public use and is not supported for any use outside of the Kiali UI itself.
+The API can and will change from version to version with no guarantee of backwards compatibility.
+
+To generate this API document:
+```
+
+> alias swagger='docker run --rm -it  --user $(id -u):$(id -g) -e GOCACHE=/tmp -e GOPATH=$(go env GOPATH):/go -v $HOME:$HOME -w $(pwd) quay.io/goswagger/swagger'
+> swagger generate spec -o ./swagger.json
+> swagger generate markdown --quiet --spec ./swagger.json --output ./kiali_internal_api.md
+
+```
   
 
 ## Informations
@@ -6940,7 +6952,8 @@ to be removed in 1.21 release.
 ### <span id="external-service-info"></span> ExternalServiceInfo
 
 
-> This is used for returning a response of Kiali Status
+> Status response model
+This is used for returning a response of Kiali Status
   
 
 
@@ -7322,7 +7335,8 @@ Can be True, False, Unknown. |  |
 ### <span id="istio-config-list"></span> IstioConfigList
 
 
-> This type is used for returning a response of IstioConfigList
+> IstioConfigList istioConfigList
+This type is used for returning a response of IstioConfigList
   
 
 
@@ -9301,7 +9315,8 @@ included, ES with dynamic settings off will automatically ignore unneeded fields
 ### <span id="status-info"></span> StatusInfo
 
 
-> This is used for returning a response of Kiali Status
+> StatusInfo statusInfo
+This is used for returning a response of Kiali Status
   
 
 
@@ -9451,7 +9466,7 @@ inclusive. |  |
 ### <span id="token-response"></span> TokenResponse
 
 
-> This is used for returning the token
+> # This is used for returning the token
   
 
 
@@ -10208,14 +10223,7 @@ It's mapped as a pointer to show three values nil, true, false |  |
 ### <span id="workload-status"></span> WorkloadStatus
 
 
-> WorkloadStatus gives
-number of desired replicas defined in the Spec of a controller
-number of current replicas that matches selector of a controller
-number of available replicas for a given workload
-In healthy scenarios all variables should point same value.
-When something wrong happens the different values can indicate an unhealthy situation.
-i.e.
-desired = 1, current = 10, available = 0 would means that a user scaled down a workload from 10 to 1
+> desired = 1, current = 10, available = 0 would means that a user scaled down a workload from 10 to 1
 but in the operaton 10 pods showed problems, so no pod is available/ready but user will see 10 pods under a workload
   
 

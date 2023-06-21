@@ -1,9 +1,8 @@
 package handlers
 
 import (
-	"context"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -21,6 +20,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
@@ -179,7 +179,7 @@ func TestAggregateMetricsDefault(t *testing.T) {
 	}
 
 	// default has direction=outbound
-	actual, _ := ioutil.ReadAll(resp.Body)
+	actual, _ := io.ReadAll(resp.Body)
 	assert.Equal(t, 400, resp.StatusCode)
 	assert.Contains(t, string(actual), "'direction' must be 'inbound'")
 }
@@ -236,7 +236,7 @@ func TestAggregateMetricsWithParams(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
+	actual, _ := io.ReadAll(resp.Body)
 
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
@@ -281,7 +281,7 @@ func TestAggregateMetricsBadDirection(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	actual, _ := ioutil.ReadAll(resp.Body)
+	actual, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, 400, resp.StatusCode)
 	assert.Contains(t, string(actual), "'direction' must be 'inbound'")
@@ -306,7 +306,7 @@ func TestAggregateMetricsBadReporter(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	actual, _ := ioutil.ReadAll(resp.Body)
+	actual, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, 400, resp.StatusCode)
 	assert.Contains(t, string(actual), "'reporter' must be 'destination'")
@@ -326,7 +326,7 @@ func setupAggregateMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheust
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/metrics", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			getAggregateMetrics(w, r.WithContext(context), func() (*prometheus.Client, error) {
 				return prom, nil
 			})
@@ -345,7 +345,7 @@ func TestPrepareStatsQueriesPartialError(t *testing.T) {
 	prom, _, _ := utilSetupMocks(t)
 
 	req := httptest.NewRequest("GET", "/foo", nil)
-	req = req.WithContext(context.WithValue(req.Context(), "authInfo", &api.AuthInfo{Token: "test"}))
+	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), &api.AuthInfo{Token: "test"}))
 	w := httptest.NewRecorder()
 	queryTime := time.Date(2020, 10, 22, 0, 0, 0, 0, time.UTC).Unix()
 
@@ -425,7 +425,7 @@ func TestPrepareStatsQueriesNoErrorIntervalAdjusted(t *testing.T) {
 	k8s.On("GetNamespace", "ns3").Return(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns3", CreationTimestamp: creation}}, nil)
 
 	req := httptest.NewRequest("GET", "/foo", nil)
-	req = req.WithContext(context.WithValue(req.Context(), "authInfo", &api.AuthInfo{Token: "test"}))
+	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), &api.AuthInfo{Token: "test"}))
 	w := httptest.NewRecorder()
 
 	rawQ := []models.MetricsStatsQuery{{
@@ -457,7 +457,7 @@ func TestValidateBadRequest(t *testing.T) {
 	queryTime := time.Date(2020, 10, 22, 0, 0, 0, 0, time.UTC)
 
 	req := httptest.NewRequest("GET", "/foo", nil)
-	req = req.WithContext(context.WithValue(req.Context(), "authInfo", &api.AuthInfo{Token: "test"}))
+	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), &api.AuthInfo{Token: "test"}))
 	w := httptest.NewRecorder()
 
 	rawQ := []models.MetricsStatsQuery{{

@@ -2,9 +2,13 @@ name: Kiali Go CI
 
 on:
   push:
-    branches: [master]
+    branches:
+    - master
+    - v*.*
   pull_request:
-    branches: [master]
+    branches:
+    - master
+    - v*.*
 
 jobs:
   build:
@@ -14,7 +18,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.19.4
+          go-version: 1.20.3
 
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2

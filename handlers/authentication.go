@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -42,7 +41,7 @@ type sessionInfo struct {
 
 // TokenResponse tokenResponse
 //
-// This is used for returning the token
+// # This is used for returning the token
 //
 // swagger:model TokenResponse
 type TokenResponse struct {
@@ -360,7 +359,7 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 				log.Errorf("No authInfo: %v", http.StatusBadRequest)
 			}
-			context := context.WithValue(r.Context(), "authInfo", authInfo)
+			context := authentication.SetAuthInfoContext(r.Context(), authInfo)
 			next.ServeHTTP(w, r.WithContext(context))
 		case http.StatusUnauthorized:
 			deleteTokenCookies(w, r)
@@ -374,7 +373,7 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 
 func (aHandler AuthenticationHandler) HandleUnauthenticated(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: ""})
+		context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: ""})
 		next.ServeHTTP(w, r.WithContext(context))
 	})
 }
