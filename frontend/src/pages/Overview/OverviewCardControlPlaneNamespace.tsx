@@ -119,7 +119,7 @@ class OverviewCardControlPlaneNamespace extends React.Component<ControlPlaneProp
           <Card isPlain>
             <CardBody>
               {showMetrics(memory) && (
-                <Grid style={{ marginBottom: 20 }} hasGutter>
+                <Grid data-test="memory-chart" style={{ marginBottom: 20 }} hasGutter>
                   <GridItem md={2}>
                     <Flex
                       className="pf-u-h-100-on-md"
@@ -165,7 +165,7 @@ class OverviewCardControlPlaneNamespace extends React.Component<ControlPlaneProp
                 </Grid>
               )}
               {showMetrics(cpu) && (
-                <Grid hasGutter>
+                <Grid data-test="cpu-chart" hasGutter>
                   <GridItem md={2}>
                     <Flex
                       className="pf-u-h-100-on-md"
