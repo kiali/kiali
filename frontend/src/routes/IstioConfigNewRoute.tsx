@@ -3,7 +3,7 @@ import { useParams } from 'react-router';
 import IstioConfigNewPage from 'pages/IstioConfigNew/IstioConfigNewPage';
 
 const IstioConfigNewRoute = () => {
-  const objectType = useParams<string>();
+  const { objectType } = useParams<{ objectType: string }>();
 
   return <IstioConfigNewPage objectType={objectType}></IstioConfigNewPage>;
 };
