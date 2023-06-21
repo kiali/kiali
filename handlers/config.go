@@ -58,11 +58,11 @@ type PublicConfig struct {
 	InstallationTag      string                        `json:"installationTag,omitempty"`
 	IstioAnnotations     IstioAnnotations              `json:"istioAnnotations,omitempty"`
 	IstioCanaryRevision  IstioCanaryRevision           `json:"istioCanaryRevision,omitempty"`
-	IstioStatusEnabled   bool                          `json:"istioStatusEnabled,omitempty"`
-	IstioIdentityDomain  string                        `json:"istioIdentityDomain,omitempty"`
-	IstioNamespace       string                        `json:"istioNamespace,omitempty"`
-	IstioLabels          config.IstioLabels            `json:"istioLabels,omitempty"`
 	IstioConfigMap       string                        `json:"istioConfigMap"`
+	IstioIdentityDomain  string                        `json:"istioIdentityDomain,omitempty"`
+	IstioLabels          config.IstioLabels            `json:"istioLabels,omitempty"`
+	IstioNamespace       string                        `json:"istioNamespace,omitempty"`
+	IstioStatusEnabled   bool                          `json:"istioStatusEnabled,omitempty"`
 	KialiFeatureFlags    config.KialiFeatureFlags      `json:"kialiFeatureFlags,omitempty"`
 	LogLevel             string                        `json:"logLevel,omitempty"`
 	Prometheus           PrometheusConfig              `json:"prometheus,omitempty"`

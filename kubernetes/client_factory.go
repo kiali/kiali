@@ -426,7 +426,7 @@ func (cf *clientFactory) refreshClientIfTokenChanged(cluster string) error {
 			client, ok := cf.saClientEntries[cluster]
 			cf.mutex.RUnlock()
 			if !ok {
-				return fmt.Error("there is no home cluster SA client to refresh")
+				return errors.New("there is no home cluster SA client to refresh")
 			}
 			refreshTheClient = client.GetToken() != newTokenToCheck
 			rci = nil

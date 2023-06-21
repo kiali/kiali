@@ -192,10 +192,6 @@ type Cluster struct {
 // KialiInstance represents a Kiali installation. It holds some data about
 // where and how Kiali was deployed.
 type KialiInstance struct {
-	// ServiceName is the name of the Kubernetes service associated to the Kiali installation. The Kiali Service is the
-	// entity that is looked for in order to determine if a Kiali instance is available.
-	ServiceName string `json:"serviceName"`
-
 	// Namespace is the name of the namespace where is Kiali installed on.
 	Namespace string `json:"namespace"`
 
@@ -204,6 +200,10 @@ type KialiInstance struct {
 	// to install Kiali. This resource is populated from annotations in the Service. It has
 	// the format "namespace/resource_name".
 	OperatorResource string `json:"operatorResource"`
+
+	// ServiceName is the name of the Kubernetes service associated to the Kiali installation. The Kiali Service is the
+	// entity that is looked for in order to determine if a Kiali instance is available.
+	ServiceName string `json:"serviceName"`
 
 	// Url is the URI that can be used to access Kiali.
 	Url string `json:"url"`

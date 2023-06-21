@@ -30,9 +30,9 @@ const (
 type MeshService struct {
 	conf                config.Config
 	homeClusterSAClient kubernetes.ClientInterface
-	layer               *Layer
 	kialiCache          cache.KialiCache
 	kialiSAClients      map[string]kubernetes.ClientInterface
+	layer               *Layer
 }
 
 type meshTrafficPolicyConfig struct {
@@ -45,10 +45,10 @@ type meshTrafficPolicyConfig struct {
 func NewMeshService(kialiSAClients map[string]kubernetes.ClientInterface, cache cache.KialiCache, layer *Layer, conf config.Config) MeshService {
 	return MeshService{
 		conf:                conf,
-		kialiSAClients:      kialiSAClients,
 		homeClusterSAClient: kialiSAClients[conf.KubernetesConfig.ClusterName],
-		layer:               layer,
 		kialiCache:          cache,
+		kialiSAClients:      kialiSAClients,
+		layer:               layer,
 	}
 }
 

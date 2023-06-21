@@ -600,14 +600,13 @@ func (in *IstioValidationsService) isGatewayToNamespace() bool {
 		return false
 	}
 
-	gatewayToNamespace := false
 	for _, cluster := range clusters {
 		if cluster.IsKialiHome {
-			gatewayToNamespace = cluster.IsGatewayToNamespace
+			return cluster.IsGatewayToNamespace
 		}
 	}
 
-	return gatewayToNamespace
+	return false
 }
 
 func (in *IstioValidationsService) isPolicyAllowAny() bool {
