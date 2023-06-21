@@ -49,14 +49,20 @@ class OverviewCardControlPlaneNamespace extends React.Component<ControlPlaneProp
     let memoryThresholds: VCLine<RichDataPoint>[] = [];
     let cpuThresholds: VCLine<RichDataPoint>[] = [];
 
+    // The CPU metric can be respresented by a container or a process metric. We need to check which one to use
+    let cpuMetricSource = 'container';
     let cpu = this.props.istiodContainerCpu;
     if (!showMetrics(this.props.istiodContainerCpu)) {
       cpu = this.props.istiodProcessCpu;
+      cpuMetricSource = 'process';
     }
 
+    // The memory metric can be respresented by a container or a process metric. We need to check which one to use
+    let memoryMetricSource = 'process';
     let memory = this.props.istiodContainerMemory;
     if (!showMetrics(this.props.istiodContainerMemory)) {
       memory = this.props.istiodProcessMemory;
+      memoryMetricSource = 'container';
     }
 
     if (showMetrics(memory)) {
@@ -131,7 +137,7 @@ class OverviewCardControlPlaneNamespace extends React.Component<ControlPlaneProp
                           position={TooltipPosition.right}
                           content={
                             <div style={{ textAlign: 'left' }}>
-                              This values represents the memory of the istiod process
+                              This values represents the memory of the istiod {memoryMetricSource}
                             </div>
                           }
                         >
@@ -176,7 +182,9 @@ class OverviewCardControlPlaneNamespace extends React.Component<ControlPlaneProp
                         <Tooltip
                           position={TooltipPosition.right}
                           content={
-                            <div style={{ textAlign: 'left' }}>This values represents cpu of the istiod process</div>
+                            <div style={{ textAlign: 'left' }}>
+                              This values represents cpu of the istiod {cpuMetricSource}
+                            </div>
                           }
                         >
                           <KialiIcon.Info className={infoStyle} />
