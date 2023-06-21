@@ -4,6 +4,7 @@ function install_demoapp(demoapp:string){
   var namespaces:string = "bookinfo";
   var deletion:string = `--delete-${demoapp}`;
   var tg:string = "-tg";
+  var istio:string = "-in istio-system";
 
   if (demoapp == "error-rates"){
     namespaces = "alpha beta";
@@ -13,6 +14,7 @@ function install_demoapp(demoapp:string){
   else if (demoapp == "sleep"){
     namespaces = "sleep";
     tg = "";
+    istio = "";
   }
 
   cy.exec(`../hack/istio/cypress/${demoapp}-status.sh`,{failOnNonZeroExit: false}).then((result) => {
@@ -33,7 +35,7 @@ function install_demoapp(demoapp:string){
               cy.log("Openshift detected.").log(`Removing old ${demoapp} installations.`);
               cy.exec(`../hack/istio/install-${demoapp}-demo.sh ${deletion} true`).then(()=>{
                 cy.log("Installing new demo app.");
-                cy.exec(`../hack/istio/install-${demoapp}-demo.sh ${tg} -in istio-system -a ${arch}`,{timeout:300000}).then(() =>{
+                cy.exec(`../hack/istio/install-${demoapp}-demo.sh ${tg} ${istio} -a ${arch}`,{timeout:300000}).then(() =>{
                   cy.log("Waiting for demoapp to be ready.");
                   cy.exec(`../hack/istio/cypress/wait-for-namespace.sh -n ${namespaces}`,{timeout:400000});
                 })
@@ -42,7 +44,7 @@ function install_demoapp(demoapp:string){
             else{
               cy.log(`Removing old ${demoapp} installations.`).exec(`../hack/istio/install-${demoapp}-demo.sh ${deletion} true -c kubectl`).then(()=>{
                 cy.log("Installing new demo app.");
-                cy.exec(`../hack/istio/install-${demoapp}-demo.sh -c kubectl ${tg} -in istio-system -a ${arch}`,{timeout:300000});
+                cy.exec(`../hack/istio/install-${demoapp}-demo.sh -c kubectl ${tg} ${istio} -a ${arch}`,{timeout:300000});
               })
             }
           })

@@ -12,12 +12,11 @@ input=$(kubectl get pods -n sleep -o=custom-columns=NAME:.metadata.name,Status:.
 
 count=$(echo "$input" | grep sleep | awk -F ' ' '{print $1}' | wc -l)
 status=$(echo "$input" | grep sleep | awk -F ' ' '{print $2}')
-  if [ $count -ne 1 ] || [ $status != "Running" ]
-  then
-    echo "Invalid number of pods in a Running state detected."
-    exit 1
-  fi
-done
+if [ $count -ne 1 ] || [ $status != "Running" ]
+then
+  echo "Invalid number of pods in a Running state detected."
+  exit 1
+fi
 
 echo "Sleep app ready."
 exit 0
