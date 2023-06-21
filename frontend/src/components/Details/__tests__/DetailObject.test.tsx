@@ -6,6 +6,8 @@ import { shallowToJson } from 'enzyme-to-json';
 import Validation from '../../Validations/Validation';
 
 describe('DetailObject test', () => {
+  const name = '';
+
   const detail: HTTPRouteDestination = {
     destination: {
       host: 'reviews',

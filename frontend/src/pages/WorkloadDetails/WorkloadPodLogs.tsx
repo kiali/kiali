@@ -827,7 +827,9 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
             this.setState({ showError: undefined });
           }
         } catch (e) {
-          this.setState({ showError: `Show: ${e.message}` });
+          if (e instanceof Error) {
+            this.setState({ showError: `Show: ${e.message}` });
+          }
         }
       } else {
         filteredEntries = filteredEntries.filter(e => !e.logEntry || e.logEntry.message.includes(showValue));
@@ -843,7 +845,9 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
             this.setState({ hideError: undefined });
           }
         } catch (e) {
-          this.setState({ hideError: `Hide: ${e.message}` });
+          if (e instanceof Error) {
+            this.setState({ hideError: `Hide: ${e.message}` });
+          }
         }
       } else {
         filteredEntries = filteredEntries.filter(e => !e.logEntry || !e.logEntry.message.includes(hideValue));

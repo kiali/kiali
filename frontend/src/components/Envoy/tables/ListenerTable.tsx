@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { SummaryTable, SummaryTableRenderer } from './BaseTable';
 import { ICell, ISortBy, sortable } from '@patternfly/react-table';
 import { ListenerSummary } from '../../../types/IstioObjects';
