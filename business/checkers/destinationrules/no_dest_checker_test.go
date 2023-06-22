@@ -457,7 +457,7 @@ func TestSNIProxyExample(t *testing.T) {
 	assert := assert.New(t)
 
 	dr := data.CreateEmptyDestinationRule("test", "disable-mtls-for-sni-proxy", "sni-proxy.local")
-	se := data.AddPortDefinitionToServiceEntry(data.CreateEmptyPortDefinition(8443, "tcp", "TCP"),
+	se := data.AddPortDefinitionToServiceEntry(data.CreateEmptyServicePortDefinition(8443, "tcp", "TCP"),
 		data.CreateEmptyMeshExternalServiceEntry("sni-proxy", "test", []string{"sni-proxy.local"}))
 
 	vals, valid := NoDestinationChecker{
@@ -476,7 +476,7 @@ func TestWildcardServiceEntry(t *testing.T) {
 	assert := assert.New(t)
 
 	dr := data.CreateEmptyDestinationRule("test", "disable-mtls-for-sni-proxy", "sni-proxy.local")
-	se := data.AddPortDefinitionToServiceEntry(data.CreateEmptyPortDefinition(8443, "tcp", "TCP"),
+	se := data.AddPortDefinitionToServiceEntry(data.CreateEmptyServicePortDefinition(8443, "tcp", "TCP"),
 		data.CreateEmptyMeshExternalServiceEntry("sni-proxy", "test", []string{"*.local"}))
 
 	vals, valid := NoDestinationChecker{
@@ -658,7 +658,6 @@ func TestNoLabelsInSubset(t *testing.T) {
 	assert.Equal(models.Unknown, vals[0].Severity)
 	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.subsetnolabels", vals[0]))
 	assert.Equal("spec/subsets[0]", vals[0].Path)
-
 }
 
 func TestSubsetWithoutLabels(t *testing.T) {
