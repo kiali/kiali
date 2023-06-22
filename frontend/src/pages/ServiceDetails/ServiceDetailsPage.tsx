@@ -30,7 +30,7 @@ import RenderHeaderContainer from '../../components/Nav/Page/RenderHeader';
 import { ErrorMsg } from '../../types/ErrorMsg';
 import ErrorSection from '../../components/ErrorSection/ErrorSection';
 import connectRefresh from '../../components/Refresh/connectRefresh';
-import history from 'app/History';
+import { history } from 'app/History';
 import { durationSelector } from 'store/Selectors';
 
 type ServiceDetailsState = {
