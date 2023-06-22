@@ -49,9 +49,14 @@ export interface Response<T> {
   data: T;
 }
 
-/** Get internal Kiali proxy if exists */
-const getKialiProxy = (): string | null => {
-  return process.env.KIALI_PROXY ?? null;
+/**
+ * Some platforms defines a proxy to the internal Kiali backend (like Openshift Console)
+ * https://github.com/openshift/enhancements/blob/master/enhancements/console/dynamic-plugins.md#delivering-plugins
+ * API Proxy defined by the platform is added before url request
+ * This environment variable is not defined in standalone Kiali application
+ */
+const getAPIProxy = (): string | null => {
+  return process.env.API_PROXY ?? null;
 };
 
 /** API URLs */
@@ -87,7 +92,7 @@ const basicAuth = (username: UserName, password: Password) => {
 };
 
 const newRequest = <P>(method: HTTP_VERBS, url: string, queryParams: any, data: any) => {
-  const proxyUrl = getKialiProxy();
+  const proxyUrl = getAPIProxy();
 
   return axios.request<P>({
     method: method,
@@ -115,7 +120,7 @@ export const login = async (
   const params = new URLSearchParams();
   params.append('token', request.token);
 
-  const proxyUrl = getKialiProxy();
+  const proxyUrl = getAPIProxy();
 
   return axios({
     method: HTTP_VERBS.POST,

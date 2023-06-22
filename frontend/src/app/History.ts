@@ -10,6 +10,12 @@ const createHistory = (baseName: string) => {
     : createBrowserHistory({ basename: baseName });
 };
 
+/**
+ * Some platforms set a different basename for each page (e.g., Openshift Console)
+ * A setHistory method is defined to be able to modify the history basename when user
+ * routes to a different page within Kiali in these platforms.
+ * This method is not used in standalone Kiali application
+ */
 export const setHistory = (baseName: string) => {
   history = createHistory(baseName);
 };
