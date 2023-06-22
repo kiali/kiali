@@ -628,7 +628,8 @@ func (in *SvcService) GetService(ctx context.Context, namespace, service string)
 		criteria := RegistryCriteria{
 			Namespace: namespace,
 		}
-		rSvcs, err := in.businessLayer.RegistryStatus.GetRegistryServices(criteria)
+		var rSvcs []*kubernetes.RegistryService
+		rSvcs, err = in.businessLayer.RegistryStatus.GetRegistryServices(criteria)
 		if err != nil {
 			return svc, err
 		}
