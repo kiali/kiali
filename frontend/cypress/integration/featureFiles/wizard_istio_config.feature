@@ -165,9 +165,7 @@ Feature: Kiali Istio Config page
     And user types "myservice" in the "name" input
     And user types "website.com,website2.com" in the "hosts" input
     And the "ServiceEntry has no Ports defined" message should be displayed
-    And user previews the configuration
-    And user creates the istio config
-    Then the "ServiceEntry" "myservice" should be listed in "bookinfo" namespace
+    And the preview button should be disabled
 
   @wizard-istio-config
   Scenario: Try to create a ServiceEntry with empty ports specified
