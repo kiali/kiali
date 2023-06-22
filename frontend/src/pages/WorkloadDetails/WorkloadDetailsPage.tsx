@@ -27,7 +27,7 @@ import ErrorSection from '../../components/ErrorSection/ErrorSection';
 import { ErrorMsg } from '../../types/ErrorMsg';
 import connectRefresh from '../../components/Refresh/connectRefresh';
 import { isWaypoint } from '../../helpers/LabelFilterHelper';
-import history from 'app/History';
+import { history } from 'app/History';
 
 type WorkloadDetailsState = {
   workload?: Workload;
