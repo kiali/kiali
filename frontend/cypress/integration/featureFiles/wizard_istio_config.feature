@@ -29,7 +29,7 @@ Feature: Kiali Istio Config page
 
   @wizard-istio-config
   @bookinfo-app
-  Scenario: Try to create a Gateway with no name 
+  Scenario: Try to create a Gateway with no name
     When user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
     Then the "name" input should be empty
@@ -38,7 +38,7 @@ Feature: Kiali Istio Config page
 
   @wizard-istio-config
   @bookinfo-app
-  Scenario: Try to create a Gateway with invalid name 
+  Scenario: Try to create a Gateway with invalid name
     When user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
     And user types "!@#$%^*()_+" in the "name" input
@@ -114,7 +114,7 @@ Feature: Kiali Istio Config page
 
   @wizard-istio-config
   @bookinfo-app
-  Scenario: Try to create a Gateway without filling the inputs related to TLS 
+  Scenario: Try to create a Gateway without filling the inputs related to TLS
     When user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
     And user types "mygatewaywithtls" in the "name" input
@@ -132,7 +132,7 @@ Feature: Kiali Istio Config page
 
   @wizard-istio-config
   @bookinfo-app
-  Scenario: Create a Gateway with TLS 
+  Scenario: Create a Gateway with TLS
     When user deletes gateway named "mygatewaywithtls" and the resource is no longer available
     And user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
@@ -174,20 +174,18 @@ Feature: Kiali Istio Config page
 
   @wizard-istio-config
   @bookinfo-app
-  Scenario: Create a ServiceEntry without ports specified 
+  Scenario: Try to create a ServiceEntry without ports specified
     When user deletes service named "myservice" and the resource is no longer available
     And user clicks in the "ServiceEntry" Istio config actions
     And user sees the "Create ServiceEntry" config wizard
     And user types "myservice" in the "name" input
     And user types "website.com,website2.com" in the "hosts" input
     And the "ServiceEntry has no Ports defined" message should be displayed
-    And user previews the configuration
-    And user creates the istio config
-    Then the "ServiceEntry" "myservice" should be listed in "bookinfo" namespace
+    And the preview button should be disabled
 
   @wizard-istio-config
   @bookinfo-app
-  Scenario: Try to create a ServiceEntry with empty ports specified 
+  Scenario: Try to create a ServiceEntry with empty ports specified
     When user clicks in the "ServiceEntry" Istio config actions
     And user sees the "Create ServiceEntry" config wizard
     And user types "myservice" in the "name" input
@@ -203,7 +201,7 @@ Feature: Kiali Istio Config page
 
   @wizard-istio-config
   @bookinfo-app
-  Scenario: Create a ServiceEntry with ports specified 
+  Scenario: Create a ServiceEntry with ports specified
     When user deletes service named "myservice2" and the resource is no longer available
     And user clicks in the "ServiceEntry" Istio config actions
     And user sees the "Create ServiceEntry" config wizard
@@ -228,7 +226,7 @@ Feature: Kiali Istio Config page
     And user opens the "Add Port" submenu
     And user types "8080" in the "addPortNumber0" input
     And user types "foobar" in the "addPortName0" input
-    And user types "8080" in the "addTargetPort0" input  
+    And user types "8080" in the "addTargetPort0" input
     And user opens the "Add Port" submenu
     And user types "8080" in the "addPortNumber1" input
     And user types "foobar" in the "addPortName1" input
@@ -272,7 +270,7 @@ Feature: Kiali Istio Config page
     Then "gatewayapi-2" should be referenced
     When user is at the "istio" page
     And viewing the detail for "gatewayapi-2"
-    And choosing to delete it 
+    And choosing to delete it
     Then the "K8sGateway" "gatewayapi-2" should not be listed in "bookinfo" namespace
     When viewing the detail for "gatewayapi-1"
     Then "gatewayapi-2" should not be referenced anymore

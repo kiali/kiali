@@ -101,7 +101,12 @@ const noDuplicatePortNames = (name: string, index: number, ports: FormPort[]) =>
 };
 
 export const isServiceEntryValid = (se: ServiceEntryState): boolean => {
-  return se.validHosts && se.serviceEntry.ports !== undefined && isValidPort(se.formPorts);
+  return (
+    se.validHosts &&
+    se.serviceEntry.ports !== undefined &&
+    se.serviceEntry.ports.length !== 0 &&
+    isValidPort(se.formPorts)
+  );
 };
 
 const isValidName = (name: string): boolean => {
