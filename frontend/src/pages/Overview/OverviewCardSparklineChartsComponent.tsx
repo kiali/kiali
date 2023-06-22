@@ -38,8 +38,10 @@ class OverviewCardSparklineChartsComponent extends React.Component<Props & Redux
         {this.props.name === serverConfig.istioNamespace && this.props.istioAPIEnabled && (
           <OverviewCardControlPlaneNamespace
             pilotLatency={this.props.controlPlaneMetrics?.istiod_proxy_time}
-            istiodMemory={this.props.controlPlaneMetrics?.istiod_mem}
-            istiodCpu={this.props.controlPlaneMetrics?.istiod_cpu}
+            istiodContainerMemory={this.props.controlPlaneMetrics?.istiod_container_mem}
+            istiodContainerCpu={this.props.controlPlaneMetrics?.istiod_container_cpu}
+            istiodProcessMemory={this.props.controlPlaneMetrics?.istiod_process_mem}
+            istiodProcessCpu={this.props.controlPlaneMetrics?.istiod_process_cpu}
             duration={this.props.duration}
             istiodResourceThresholds={this.props.istiodResourceThresholds}
           />

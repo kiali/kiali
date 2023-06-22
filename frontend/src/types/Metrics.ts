@@ -10,8 +10,10 @@ export interface Metric {
 
 export type ControlPlaneMetricsMap = {
   istiod_proxy_time?: Metric[];
-  istiod_cpu?: Metric[];
-  istiod_mem?: Metric[];
+  istiod_container_cpu?: Metric[];
+  istiod_container_mem?: Metric[];
+  istiod_process_cpu?: Metric[];
+  istiod_process_mem?: Metric[];
 };
 
 export type IstioMetricsMap = {
@@ -27,8 +29,10 @@ export type IstioMetricsMap = {
   tcp_received?: Metric[];
   tcp_sent?: Metric[];
   pilot_proxy_convergence_time?: Metric[];
+  container_cpu_usage_seconds_total?: Metric[];
+  container_memory_working_set_bytes?: Metric[];
   process_cpu_seconds_total?: Metric[];
-  process_virtual_memory_bytes?: Metric[];
+  process_resident_memory_bytes?: Metric[];
 };
 
 export enum MetricsObjectTypes {

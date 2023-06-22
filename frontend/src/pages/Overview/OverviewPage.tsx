@@ -435,8 +435,10 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           if (nsInfo.name === serverConfig.istioNamespace) {
             nsInfo.controlPlaneMetrics = {
               istiod_proxy_time: rs.data.pilot_proxy_convergence_time,
-              istiod_cpu: rs.data.process_cpu_seconds_total,
-              istiod_mem: rs.data.process_virtual_memory_bytes
+              istiod_container_cpu: rs.data.container_cpu_usage_seconds_total,
+              istiod_container_mem: rs.data.container_memory_working_set_bytes,
+              istiod_process_cpu: rs.data.process_cpu_seconds_total,
+              istiod_process_mem: rs.data.process_resident_memory_bytes
             };
           }
           return nsInfo;

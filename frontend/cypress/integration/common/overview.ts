@@ -162,6 +162,14 @@ Then(`user sees the {string} namespace with {string} traffic {string}`, (ns, dir
   );
 });
 
+Then('user sees the memory chart', () => {
+  cy.get('div[data-test="memory-chart"]').should('exist');
+});
+
+And('user sees the cpu chart', () => {
+  cy.get('div[data-test="cpu-chart"]').should('exist');
+});
+
 Then('there should be a {string} application indicator in the namespace', function (healthStatus: string) {
   cy.get(
     `[data-test=${this.targetNamespace}-EXPAND] [data-test=overview-app-health] svg[class=icon-${healthStatus}]`
