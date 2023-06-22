@@ -1,17 +1,18 @@
+import { MenuItem, Path } from './types/Routes';
+import { Paths } from './config';
 import WorkloadListPage from './pages/WorkloadList/WorkloadListPage';
 import ServiceListPage from './pages/ServiceList/ServiceListPage';
 import IstioConfigPage from './pages/IstioConfigList/IstioConfigListPage';
-import IstioConfigDetailsPage from './pages/IstioConfigDetails/IstioConfigDetailsPage';
-import WorkloadDetailsPage from './pages/WorkloadDetails/WorkloadDetailsPage';
 import AppListPage from './pages/AppList/AppListPage';
-import AppDetailsPage from './pages/AppDetails/AppDetailsPage';
-import OverviewPageContainer from './pages/Overview/OverviewPage';
-import { MenuItem, Path } from './types/Routes';
-import GraphPageContainer from './pages/Graph/GraphPage';
-import { Paths } from './config';
-import ServiceDetailsPageContainer from './pages/ServiceDetails/ServiceDetailsPage';
-import IstioConfigNewPageContainer from './pages/IstioConfigNew/IstioConfigNewPage';
+import OverviewPage from './pages/Overview/OverviewPage';
+import GraphPage from 'pages/Graph/GraphPage';
 import MeshPage from 'pages/Mesh/MeshPage';
+import GraphRoute from 'routes/GraphRoute';
+import ServiceDetailsRoute from 'routes/ServiceDetailsRoute';
+import WorkloadDetailsRoute from 'routes/WorkloadDetailsRoute';
+import AppDetailsRoute from 'routes/AppDetailsRoute';
+import IstioConfigDetailsRoute from 'routes/IstioConfigDetailsRoute';
+import IstioConfigNewRoute from 'routes/IstioConfigNewRoute';
 
 /**
  * Return array of objects that describe vertical menu
@@ -63,39 +64,39 @@ const defaultRoute = '/overview';
 const pathRoutes: Path[] = [
   {
     path: '/overview',
-    component: OverviewPageContainer
+    component: OverviewPage
   },
   {
     path: '/graph/node/namespaces/:namespace/' + Paths.AGGREGATES + '/:aggregate/:aggregateValue',
-    component: GraphPageContainer
+    component: GraphRoute
   },
   {
     path: '/graph/node/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app/versions/:version',
-    component: GraphPageContainer
+    component: GraphRoute
   },
   {
     path: '/graph/node/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app',
-    component: GraphPageContainer
+    component: GraphRoute
   },
   {
     path: '/graph/node/namespaces/:namespace/' + Paths.SERVICES + '/:service',
-    component: GraphPageContainer
+    component: GraphRoute
   },
   {
     path: '/graph/node/namespaces/:namespace/' + Paths.WORKLOADS + '/:workload',
-    component: GraphPageContainer
+    component: GraphRoute
   },
   {
     path: '/graph/namespaces',
-    component: GraphPageContainer
+    component: GraphPage
   },
   {
     path: '/namespaces/:namespace/' + Paths.SERVICES + '/:service',
-    component: ServiceDetailsPageContainer
+    component: ServiceDetailsRoute
   },
   {
     path: '/namespaces/:namespace/' + Paths.ISTIO + '/:objectType/:object',
-    component: IstioConfigDetailsPage
+    component: IstioConfigDetailsRoute
   },
   {
     path: '/' + Paths.SERVICES,
@@ -107,7 +108,7 @@ const pathRoutes: Path[] = [
   },
   {
     path: '/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app',
-    component: AppDetailsPage
+    component: AppDetailsRoute
   },
   {
     path: '/' + Paths.WORKLOADS,
@@ -115,11 +116,11 @@ const pathRoutes: Path[] = [
   },
   {
     path: '/namespaces/:namespace/' + Paths.WORKLOADS + '/:workload',
-    component: WorkloadDetailsPage
+    component: WorkloadDetailsRoute
   },
   {
     path: '/' + Paths.ISTIO + '/new/:objectType',
-    component: IstioConfigNewPageContainer
+    component: IstioConfigNewRoute
   },
   {
     path: '/' + Paths.ISTIO,
