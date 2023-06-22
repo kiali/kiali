@@ -5,7 +5,8 @@ import AppDetailsPage from 'pages/AppDetails/AppDetailsPage';
 
 /**
  * AppDetails wrapper to add routing parameters to AppDetailsPage
- * since some platforms does not work with react-router params (like Openshift Console)
+ * Some platforms where Kiali is deployed reuse AppDetailsPage but
+ * do not work with react-router params (like Openshift Console)
  */
 const AppDetailsRoute = () => {
   const appId = useParams<AppId>();
