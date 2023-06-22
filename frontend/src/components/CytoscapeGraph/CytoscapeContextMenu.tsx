@@ -8,7 +8,7 @@ import { PeerAuthentication } from '../../types/IstioObjects';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { Provider } from 'react-redux';
 import { store } from '../../store/ConfigStore';
-import history from '../../app/History';
+import { history } from '../../app/History';
 import { getOptions } from './ContextMenu/NodeContextMenu';
 import { WizardAction, WizardMode } from '../IstioWizards/WizardActions';
 

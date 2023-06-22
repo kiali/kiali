@@ -32,7 +32,7 @@ import { style } from 'typestyle';
 import { LabelFilters } from './LabelFilter';
 import { arrayEquals } from 'utils/Common';
 import { labelFilter } from './CommonFilters';
-import history, { HistoryManager } from 'app/History';
+import { history, HistoryManager } from 'app/History';
 import { serverConfig } from 'config';
 
 var classNames = require('classnames');

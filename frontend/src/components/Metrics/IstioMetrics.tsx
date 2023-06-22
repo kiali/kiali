@@ -17,7 +17,7 @@ import { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettin
 import { MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettingsDropdown';
 import MetricsReporter from '../MetricsOptions/MetricsReporter';
 import { TimeDurationModal } from '../Time/TimeDurationModal';
-import history, { URLParam } from 'app/History';
+import { history, URLParam } from 'app/History';
 import { MetricsObjectTypes } from 'types/Metrics';
 import { GrafanaInfo } from 'types/GrafanaInfo';
 import { MessageType } from 'types/MessageCenter';

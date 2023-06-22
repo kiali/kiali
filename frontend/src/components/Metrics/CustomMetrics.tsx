@@ -15,7 +15,7 @@ import {
 } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { serverConfig } from '../../config/ServerConfig';
-import history, { URLParam } from '../../app/History';
+import { history, URLParam } from '../../app/History';
 import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
 import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange } from '../../types/Common';

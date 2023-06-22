@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Dropdown, DropdownGroup, DropdownItem, DropdownPosition, DropdownToggle } from '@patternfly/react-core';
-import history from '../../app/History';
+import { history } from '../../app/History';
 import { serverConfig } from '../../config';
 import { NEW_ISTIO_RESOURCE } from '../../pages/IstioConfigNew/IstioConfigNewPage';
 import { K8SGATEWAY } from '../../pages/IstioConfigNew/K8sGatewayForm';

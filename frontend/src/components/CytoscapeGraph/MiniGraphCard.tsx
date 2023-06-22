@@ -11,7 +11,7 @@ import {
   KebabToggle,
   ToolbarItem
 } from '@patternfly/react-core';
-import history from '../../app/History';
+import { history } from '../../app/History';
 import GraphDataSource from '../../services/GraphDataSource';
 import { DecoratedGraphElements, EdgeMode, GraphType, NodeType } from '../../types/Graph';
 import CytoscapeGraph, { GraphEdgeTapEvent, GraphNodeTapEvent } from './CytoscapeGraph';

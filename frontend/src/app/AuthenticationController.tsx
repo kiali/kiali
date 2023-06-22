@@ -17,7 +17,7 @@ import { setServerConfig, serverConfig, humanDurations } from '../config/ServerC
 import { AuthStrategy } from '../types/Auth';
 import { JaegerInfo } from '../types/JaegerInfo';
 import { LoginActions } from '../actions/LoginActions';
-import history from './History';
+import { history } from './History';
 import { NamespaceActions } from 'actions/NamespaceAction';
 import Namespace from 'types/Namespace';
 import { UserSettingsActions } from 'actions/UserSettingsActions';

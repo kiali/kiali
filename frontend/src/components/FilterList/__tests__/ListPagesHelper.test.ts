@@ -1,4 +1,4 @@
-import history from '../../../app/History';
+import { history } from '../../../app/History';
 import * as FilterHelper from '../FilterHelper';
 import { DEFAULT_LABEL_OPERATION, FilterType } from '../../../types/Filters';
 

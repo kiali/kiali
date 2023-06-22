@@ -2,7 +2,7 @@ import * as React from 'react';
 import { CardActions, CardHeader, CardTitle, Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { FormattedTraceInfo, fullIDStyle } from './FormattedTraceInfo';
-import history from 'app/History';
+import { history } from 'app/History';
 import { KialiAppState } from '../../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../../Kiosk/KioskActions';

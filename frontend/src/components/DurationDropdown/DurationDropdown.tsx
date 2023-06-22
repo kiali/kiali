@@ -9,7 +9,7 @@ import { bindActionCreators } from 'redux';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { connect } from 'react-redux';
 import { HistoryManager, URLParam } from '../../app/History';
-import history from '../../app/History';
+import { history } from '../../app/History';
 import { TooltipPosition } from '@patternfly/react-core';
 import { isKioskMode } from '../../utils/SearchParamUtils';
 import { kioskDurationAction } from '../Kiosk/KioskActions';

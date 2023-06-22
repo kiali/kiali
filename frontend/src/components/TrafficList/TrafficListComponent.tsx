@@ -8,7 +8,7 @@ import * as FilterComponent from '../FilterList/FilterComponent';
 import { ThresholdStatus, NA } from 'types/Health';
 import { NodeType, hasProtocolTraffic, ProtocolTraffic } from 'types/Graph';
 import { getTrafficHealth } from 'types/ErrorRate';
-import history, { URLParam } from 'app/History';
+import { history, URLParam } from 'app/History';
 import { createIcon } from 'components/Health/Helper';
 import { sortFields } from './FiltersAndSorts';
 import { SortField } from 'types/SortFilters';
