@@ -15,7 +15,6 @@ import { history } from '../../app/History';
 import { GraphDataSource } from '../../services/GraphDataSource';
 import { DecoratedGraphElements, EdgeMode, GraphType, NodeType } from '../../types/Graph';
 import { CytoscapeGraph, GraphEdgeTapEvent, GraphNodeTapEvent } from './CytoscapeGraph';
-import { CytoscapeGraphSelectorBuilder } from './CytoscapeGraphSelector';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
 import { store } from 'store/ConfigStore';
 import { style } from 'typestyle';
@@ -31,6 +30,7 @@ import { WizardAction, WizardMode } from '../IstioWizards/WizardActions';
 import { TimeDurationModal } from '../Time/TimeDurationModal';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { KioskElement } from '../Kiosk/KioskElement';
+import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
 
 const initGraphContainerStyle = style({ width: '100%', height: '100%' });
 
@@ -251,7 +251,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
 
   private onViewFullGraph = () => {
     const namespace = this.props.dataSource.fetchParameters.namespaces[0].name;
-    let cytoscapeGraph = new CytoscapeGraphSelectorBuilder().namespace(namespace);
+    let cytoscapeGraph = new GraphSelectorBuilder().namespace(namespace);
     let graphType: GraphType = GraphType.APP;
 
     switch (this.props.dataSource.fetchParameters.node!.nodeType) {

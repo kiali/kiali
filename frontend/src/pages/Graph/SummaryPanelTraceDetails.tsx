@@ -17,7 +17,6 @@ import { JaegerThunkActions } from 'actions/JaegerThunkActions';
 import { GraphActions } from 'actions/GraphActions';
 import { PFColors } from 'components/Pf/PfColors';
 import { findChildren, findParent, formatDuration } from 'utils/tracing/TracingHelper';
-import { CytoscapeGraphSelectorBuilder } from 'components/CytoscapeGraph/CytoscapeGraphSelector';
 import { decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { FocusAnimation } from 'components/CytoscapeGraph/FocusAnimation';
 import { FormattedTraceInfo, shortIDStyle } from 'components/JaegerIntegration/JaegerResults/FormattedTraceInfo';
@@ -32,6 +31,7 @@ import { Visualization } from '@patternfly/react-topology';
 import { elems, selectAnd } from 'pages/GraphPF/GraphPFElems';
 import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { FocusNode } from 'pages/GraphPF/GraphPF';
+import { GraphSelectorBuilder } from './GraphSelector';
 
 type ReduxProps = {
   close: () => void;
@@ -292,7 +292,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
     let tooltipContent = <>{text}</>;
     if (targetElt) {
       const cy = this.props.data.summaryTarget.cy();
-      const selBuilder = new CytoscapeGraphSelectorBuilder().namespace(target.namespace).class('span');
+      const selBuilder = new GraphSelectorBuilder().namespace(target.namespace).class('span');
       const selector = useApp ? selBuilder.app(targetElt).build() : selBuilder.workload(targetElt).build();
       tooltipContent = (
         <>

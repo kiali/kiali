@@ -21,7 +21,7 @@ import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { KialiAppState } from '../../store/Store';
 import GraphPF from './GraphPF';
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
-import { isParentKiosk } from 'components/Kiosk/KioskActions';
+import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 import { LoadingWizardActionsDropdownGroup } from 'components/IstioWizards/LoadingWizardActionsDropdownGroup';
 import ServiceWizardActionsDropdownGroup from 'components/IstioWizards/ServiceWizardActionsDropdownGroup';
 import { toRangeString } from 'components/Time/Utils';
@@ -33,6 +33,7 @@ import { KialiDispatch } from 'types/Redux';
 import GraphThunkActions from 'actions/GraphThunkActions';
 import { bindActionCreators } from 'redux';
 import { GraphActions } from 'actions/GraphActions';
+import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
 
 // const initGraphContainerStyle = style({ width: '100%', height: '100%' });
 
@@ -258,14 +259,13 @@ class MiniGraphCardPF extends React.Component<MiniGraphCardPropsPF, MiniGraphCar
   };
 
   private onViewFullGraph = () => {
-    /*
     const namespace = this.props.dataSource.fetchParameters.namespaces[0].name;
-    let cytoscapeGraph = new CytoscapeGraphSelectorBuilder().namespace(namespace);
+    let graphSelector = new GraphSelectorBuilder().namespace(namespace);
     let graphType: GraphType = GraphType.APP;
 
     switch (this.props.dataSource.fetchParameters.node!.nodeType) {
       case NodeType.AGGREGATE:
-        cytoscapeGraph = cytoscapeGraph
+        graphSelector = graphSelector
           .aggregate(
             this.props.dataSource.fetchParameters.node!.aggregate!,
             this.props.dataSource.fetchParameters.node!.aggregateValue!
@@ -273,23 +273,23 @@ class MiniGraphCardPF extends React.Component<MiniGraphCardPropsPF, MiniGraphCar
           .nodeType(NodeType.AGGREGATE);
         break;
       case NodeType.APP:
-        cytoscapeGraph = cytoscapeGraph.app(this.props.dataSource.fetchParameters.node!.app).nodeType(NodeType.APP);
+        graphSelector = graphSelector.app(this.props.dataSource.fetchParameters.node!.app).nodeType(NodeType.APP);
         break;
       case NodeType.SERVICE:
         graphType = GraphType.SERVICE;
-        cytoscapeGraph = cytoscapeGraph.service(this.props.dataSource.fetchParameters.node!.service);
+        graphSelector = graphSelector.service(this.props.dataSource.fetchParameters.node!.service);
         break;
       case NodeType.WORKLOAD:
         graphType = GraphType.WORKLOAD;
-        cytoscapeGraph = cytoscapeGraph.workload(this.props.dataSource.fetchParameters.node!.workload);
+        graphSelector = graphSelector.workload(this.props.dataSource.fetchParameters.node!.workload);
         break;
       default:
         // NodeType.BOX is n/a
         break;
     }
 
-    const graphUrl = `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${namespace}&focusSelector=${encodeURI(
-      cytoscapeGraph.build()
+    const graphUrl = `/pfgraph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${namespace}&focusSelector=${encodeURI(
+      graphSelector.build()
     )}`;
 
     if (isParentKiosk(this.props.kiosk)) {
@@ -297,7 +297,6 @@ class MiniGraphCardPF extends React.Component<MiniGraphCardPropsPF, MiniGraphCar
     } else {
       history.push(graphUrl);
     }
-    */
   };
 
   private onViewNodeGraph = () => {
@@ -332,7 +331,7 @@ class MiniGraphCardPF extends React.Component<MiniGraphCardPropsPF, MiniGraphCar
     };
 
     // To ensure updated components get the updated URL, update the URL first and then the state
-    history.push(makeNodeGraphUrlFromParams(urlParams));
+    history.push(makeNodeGraphUrlFromParams(urlParams, true));
   };
 
   private toggleTimeOptionsVisibility = () => {
