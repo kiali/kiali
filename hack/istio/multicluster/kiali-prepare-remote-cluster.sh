@@ -248,7 +248,7 @@ create_kiali_remote_cluster_secret() {
 
   if [ "${EXEC_AUTH_JSON}" != "" ]; then
     local user_auth=$(cat <<EOF
-env:
+exec:
 $(echo ${EXEC_AUTH_JSON} | yq -P | sed "s/^/  /g")
 EOF
 )
