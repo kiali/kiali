@@ -66,6 +66,7 @@ export enum LayoutName {
   Grid = 'Grid'
 }
 
+// TODO: Implement some sort of focus when provided
 export interface FocusNode {
   id: string;
   isSelected?: boolean;
@@ -128,6 +129,11 @@ export const TopologyContent: React.FC<{
   //
   const [selectedIds] = useVisualizationState<string[]>(SELECTION_STATE, []);
   React.useEffect(() => {
+    if (isMiniGraph) {
+      console.log('MINI');
+      return;
+    }
+
     highlighter.setSelectedId(selectedIds.length > 0 ? selectedIds[0] : undefined);
 
     if (selectedIds.length > 0) {
@@ -148,7 +154,7 @@ export const TopologyContent: React.FC<{
     } else {
       updateSummary({ isPF: true, summaryType: 'graph', summaryTarget: controller } as GraphEvent);
     }
-  }, [updateSummary, selectedIds, highlighter, controller]);
+  }, [updateSummary, selectedIds, highlighter, controller, isMiniGraph]);
 
   //
   // TraceOverlay State
