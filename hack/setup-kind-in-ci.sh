@@ -48,19 +48,19 @@ TARGET_BRANCH="${TARGET_BRANCH:-master}"
 # based on the Kiali branch being tested (TARGET_BRANCH) and the compatibility matrices:
 # https://kiali.io/docs/installation/installation-guide/prerequisites/
 # https://istio.io/latest/docs/releases/supported-releases/
-if [ "${TARGET_BRANCH}" == "v1.48" ]; then
-  ISTIO_VERSION="1.13.0"
-elif [ "${TARGET_BRANCH}" == "v1.36" ]; then
-  ISTIO_VERSION="1.10.0"
+if [ "${TARGET_BRANCH}" == "v1.59" ]; then
+  ISTIO_VERSION="1.16.5"
+elif [ "${TARGET_BRANCH}" == "v1.65" ]; then
+  ISTIO_VERSION="1.17.3"
 fi
 
 KIND_NODE_IMAGE=""
-if [ "${ISTIO_VERSION}" == "1.10.0" ]; then
-  KIND_NODE_IMAGE="kindest/node:v1.21.10@sha256:84709f09756ba4f863769bdcabe5edafc2ada72d3c8c44d6515fc581b66b029c"
-elif [ "${ISTIO_VERSION}" == "1.13.0" ]; then
-  KIND_NODE_IMAGE="kindest/node:v1.23.4@sha256:0e34f0d0fd448aa2f2819cfd74e99fe5793a6e4938b328f657c8e3f81ee0dfb9"
+if [ "${ISTIO_VERSION}" == "1.16.5" ]; then
+  KIND_NODE_IMAGE="kindest/node:v1.22.17@sha256:f5b2e5698c6c9d6d0adc419c0deae21a425c07d81bbf3b6a6834042f25d4fba2"
+elif [ "${ISTIO_VERSION}" == "1.17.3" ]; then
+  KIND_NODE_IMAGE="kindest/node:v1.23.17@sha256:59c989ff8a517a93127d4a536e7014d28e235fb3529d9fba91b3951d461edfdb"
 else
-  KIND_NODE_IMAGE="kindest/node:v1.24.4@sha256:adfaebada924a26c2c9308edd53c6e33b3d4e453782c0063dc0028bdebaddf98"
+  KIND_NODE_IMAGE="kindest/node:v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72"
 fi
 
 # print out our settings for debug purposes
