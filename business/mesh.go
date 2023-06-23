@@ -330,7 +330,7 @@ func (in *MeshService) findRemoteKiali(clusterName string, cluster kubernetes.Re
 	}
 
 	restConfig.Timeout = 15 * time.Second
-	restConfig.BearerToken = user.User.Token
+	kubernetes.SetUserIdentificationFromRemoteSecretUser(restConfig, &user)
 	remoteClientSet, clientSetErr := in.newRemoteClient(restConfig)
 	if clientSetErr != nil {
 		log.Errorf("Error creating client set for cluster [%s]: %v", clusterName, clientSetErr)
@@ -480,7 +480,7 @@ func (in *MeshService) resolveNetwork(clusterName string, cluster kubernetes.Rem
 	}
 
 	restConfig.Timeout = 15 * time.Second
-	restConfig.BearerToken = user.User.Token
+	kubernetes.SetUserIdentificationFromRemoteSecretUser(restConfig, &user)
 	remoteClientSet, clientSetErr := in.newRemoteClient(restConfig)
 	if clientSetErr != nil {
 		log.Errorf("Error creating client set for cluster [%s]: %v", clusterName, clientSetErr)

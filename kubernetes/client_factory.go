@@ -212,7 +212,7 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 			} else {
 				remoteConfig, err2 = GetConfigWithTokenForRemoteCluster(clusterInfo[cluster].Cluster,
 					RemoteSecretUser{
-						Name: authInfo.Username, User: RemoteSecretUserToken{Token: authInfo.Token},
+						Name: authInfo.Username, User: RemoteSecretUserAuthInfo{Token: authInfo.Token},
 					})
 			}
 

@@ -43,7 +43,7 @@ func TestReloadRemoteClusterSecret(t *testing.T) {
 		Users: []RemoteSecretUser{
 			{
 				Name: "remoteuser1",
-				User: RemoteSecretUserToken{
+				User: RemoteSecretUserAuthInfo{
 					Token: "remotetoken1",
 				},
 			},

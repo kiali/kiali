@@ -77,10 +77,41 @@ func (client *K8SClient) GetToken() string {
 	return client.token
 }
 
+func SetUserIdentificationFromRemoteSecretUser(config *rest.Config, user *RemoteSecretUser) {
+	if len(user.User.Token) > 0 {
+		config.BearerToken = user.User.Token
+	}
+	exec := user.User.Exec
+	if exec != nil {
+		c := kialiConfig.Get()
+		if c.KialiFeatureFlags.Clustering.EnableExecProvider {
+			config.ExecProvider = &api.ExecConfig{
+				Command:            exec.Command,
+				Args:               exec.Args,
+				Env:                exec.Env,
+				APIVersion:         exec.APIVersion,
+				InstallHint:        cleanANSIEscapeCodes(exec.InstallHint),
+				ProvideClusterInfo: exec.ProvideClusterInfo,
+				InteractiveMode:    exec.InteractiveMode,
+			}
+			SetDefaultsExecConfig(config.ExecProvider)
+			log.Debugf("Auth ExecProvider has been detected: cmd=[%v], args=%v", exec.Command, exec.Args)
+		} else {
+			log.Warningf("Auth ExecProvider has been disabled. Connecting to remote clusters via an ExecProvider is prohibited.")
+		}
+	}
+}
+
 // GetConfigForRemoteClusterInfo points the returned k8s client config to a remote cluster's API server.
-// The returned config will have the user's token associated with it.
+// The returned config will have the user's token and ExecProvider associated with it.
+// If both are set, the bearer token takes precedence.
 func GetConfigForRemoteClusterInfo(cluster RemoteClusterInfo) (*rest.Config, error) {
-	return GetConfigWithTokenForRemoteCluster(cluster.Cluster, cluster.User)
+	config, err := GetConfigForRemoteCluster(cluster.Cluster)
+	if err != nil {
+		return nil, err
+	}
+	SetUserIdentificationFromRemoteSecretUser(config, &cluster.User)
+	return config, nil
 }
 
 // GetConfigWithTokenForRemoteCluster points the returned k8s client config to a remote cluster's API server.
