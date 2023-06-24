@@ -13,7 +13,8 @@ import { WorkloadDetailsRoute } from 'routes/WorkloadDetailsRoute';
 import { AppDetailsRoute } from 'routes/AppDetailsRoute';
 import { IstioConfigDetailsRoute } from 'routes/IstioConfigDetailsRoute';
 import { IstioConfigNewRoute } from 'routes/IstioConfigNewRoute';
-import GraphPagePFContainer from 'pages/GraphPF/GraphPagePF';
+import GraphRoutePF from 'routes/GraphRoutePF';
+import GraphPagePF from 'pages/GraphPF/GraphPagePF';
 
 /**
  * Return array of objects that describe vertical menu
@@ -32,8 +33,8 @@ const navMenuItems: MenuItem[] = [
   },
   {
     title: 'Graph [PF]',
-    to: '/pfgraph/namespaces/',
-    pathsActive: [/^\/pfgraph\/(.*)/]
+    to: '/graphpf/namespaces/',
+    pathsActive: [/^\/graphpf\/(.*)/]
   },
   {
     title: 'Applications',
@@ -93,32 +94,24 @@ const pathRoutes: Path[] = [
     component: GraphRoute
   },
   {
-    path: '/graph/node/namespaces/:namespace/' + Paths.AGGREGATES + '/:aggregate/:aggregateValue',
-    component: GraphPageContainer
-  },
-  {
-    path: '/graph/node/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app/versions/:version',
-    component: GraphPageContainer
-  },
-  {
     path: '/graph/namespaces',
     component: GraphPage
   },
   {
-    path: '/pfgraph/node/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app',
-    component: GraphPagePFContainer
+    path: '/graphpf/node/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app',
+    component: GraphRoutePF
   },
   {
-    path: '/pfgraph/node/namespaces/:namespace/' + Paths.SERVICES + '/:service',
-    component: GraphPagePFContainer
+    path: '/graphpf/node/namespaces/:namespace/' + Paths.SERVICES + '/:service',
+    component: GraphRoutePF
   },
   {
-    path: '/pfgraph/node/namespaces/:namespace/' + Paths.WORKLOADS + '/:workload',
-    component: GraphPagePFContainer
+    path: '/graphpf/node/namespaces/:namespace/' + Paths.WORKLOADS + '/:workload',
+    component: GraphRoutePF
   },
   {
-    path: '/pfgraph/namespaces',
-    component: GraphPagePFContainer
+    path: '/graphpf/namespaces',
+    component: GraphPagePF
   },
   {
     path: '/namespaces/:namespace/' + Paths.SERVICES + '/:service',

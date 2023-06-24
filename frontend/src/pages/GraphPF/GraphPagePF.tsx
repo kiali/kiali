@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
-import { RouteComponentProps } from 'react-router-dom';
 import FlexView from 'react-flexview';
 import { style } from 'typestyle';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
@@ -70,13 +69,13 @@ import { deleteServiceTrafficRouting } from 'services/Api';
 import { canCreate, canUpdate } from '../../types/Permissions';
 import connectRefresh from '../../components/Refresh/connectRefresh';
 import { triggerRefresh } from '../../hooks/refresh';
-import { GraphData, GraphPageProps } from 'pages/Graph/GraphPage';
+import { GraphData } from 'pages/Graph/GraphPage';
 import GraphPF, { FocusNode } from './GraphPF';
 import * as CytoscapeGraphUtils from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { Controller } from '@patternfly/react-topology';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
-type GraphURLPathProps = {
+export type GraphURLPathProps = {
   aggregate: string;
   aggregateValue: string;
   app: string;
@@ -139,10 +138,9 @@ type ReduxProps = {
   updateSummary: (event: GraphEvent) => void;
 };
 
-export type GraphPagePropsPF = RouteComponentProps<Partial<GraphURLPathProps>> &
+export type GraphPagePropsPF = Partial<GraphURLPathProps> &
   ReduxProps & {
-    lastRefreshAt: TimeInMilliseconds;
-    setSelectedIds: (selectedIds: string[]) => void;
+    lastRefreshAt: TimeInMilliseconds; // redux by way of ConnectRefresh
   };
 
 type WizardsData = {
@@ -222,22 +220,21 @@ const GraphErrorBoundaryFallback = () => {
 export class GraphPagePF extends React.Component<GraphPagePropsPF, GraphPageStatePF> {
   private controller?: Controller;
   private readonly errorBoundaryRef: any;
-  // private cytoscapeGraphRef: any;
   private focusNode?: FocusNode;
   private graphDataSource: GraphDataSource;
 
-  static getNodeParamsFromProps(props: RouteComponentProps<Partial<GraphURLPathProps>>): NodeParamsType | undefined {
-    const aggregate = props.match.params.aggregate;
+  static getNodeParamsFromProps(props: Partial<GraphURLPathProps>): NodeParamsType | undefined {
+    const aggregate = props.aggregate;
     const aggregateOk = aggregate && aggregate !== UNKNOWN;
-    const aggregateValue = props.match.params.aggregateValue;
+    const aggregateValue = props.aggregateValue;
     const aggregateValueOk = aggregateValue && aggregateValue !== UNKNOWN;
-    const app = props.match.params.app;
+    const app = props.app;
     const appOk = app && app !== UNKNOWN;
-    const namespace = props.match.params.namespace;
+    const namespace = props.namespace;
     const namespaceOk = namespace && namespace !== UNKNOWN;
-    const service = props.match.params.service;
+    const service = props.service;
     const serviceOk = service && service !== UNKNOWN;
-    const workload = props.match.params.workload;
+    const workload = props.workload;
     const workloadOk = workload && workload !== UNKNOWN;
     if (!aggregateOk && !aggregateValueOk && !appOk && !namespaceOk && !serviceOk && !workloadOk) {
       // @ts-ignore
@@ -251,7 +248,7 @@ export class GraphPagePF extends React.Component<GraphPagePropsPF, GraphPageStat
       version = '';
     } else if (appOk || workloadOk) {
       nodeType = appOk ? NodeType.APP : NodeType.WORKLOAD;
-      version = props.match.params.version;
+      version = props.version;
     } else {
       nodeType = NodeType.SERVICE;
       version = '';
@@ -350,7 +347,7 @@ export class GraphPagePF extends React.Component<GraphPagePropsPF, GraphPageStat
     }
   }
 
-  componentDidUpdate(prev: GraphPageProps) {
+  componentDidUpdate(prev: GraphPagePropsPF) {
     const curr = this.props;
 
     // Ensure we initialize the graph. We wait for the first update so that
@@ -502,7 +499,6 @@ export class GraphPagePF extends React.Component<GraphPagePropsPF, GraphPageStat
                 onLaunchWizard={this.handleLaunchWizard}
                 onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
                 queryTime={this.state.graphData.timestamp / 1000}
-                setSelectedIdsPF={this.props.setSelectedIds}
                 trafficRates={this.props.trafficRates}
                 {...computePrometheusRateParams(this.props.duration, NUMBER_OF_DATAPOINTS)}
               />

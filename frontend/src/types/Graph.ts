@@ -30,7 +30,6 @@ export interface SummaryPanelPropType {
   namespaces: Namespace[];
   queryTime: TimeInSeconds;
   rateInterval: string;
-  setSelectedIdsPF?: (selectedIds: string[]) => void;
   step: number;
   trafficRates: TrafficRate[];
 }

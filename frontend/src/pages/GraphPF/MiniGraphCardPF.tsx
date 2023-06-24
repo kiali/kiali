@@ -11,7 +11,7 @@ import {
   KebabToggle,
   ToolbarItem
 } from '@patternfly/react-core';
-import history from '../../app/History';
+import { history } from '../../app/History';
 import GraphDataSource from '../../services/GraphDataSource';
 import { DecoratedGraphElements, EdgeMode, GraphEvent, GraphType, Layout, NodeType } from '../../types/Graph';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
@@ -19,7 +19,7 @@ import { store } from 'store/ConfigStore';
 import { TimeInMilliseconds } from '../../types/Common';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { KialiAppState } from '../../store/Store';
-import GraphPF from './GraphPF';
+import GraphPF, { GraphEdgeTapData, GraphNodeTapData } from './GraphPF';
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 import { LoadingWizardActionsDropdownGroup } from 'components/IstioWizards/LoadingWizardActionsDropdownGroup';
@@ -159,7 +159,8 @@ class MiniGraphCardPF extends React.Component<MiniGraphCardPropsPF, MiniGraphCar
                 isMiniGraph={true}
                 //onEdgeTap={this.props.onEdgeTap}
                 layout={KialiDagreGraph.getLayout()}
-                //onNodeTap={this.handleNodeTap}
+                onEdgeTap={this.handleEdgeTap}
+                onNodeTap={this.handleNodeTap}
                 // Ranking not enabled for minigraphs yet
                 //rankBy={[]}
                 //ref={refInstance => this.setCytoscapeGraph(refInstance)}
@@ -206,6 +207,14 @@ class MiniGraphCardPF extends React.Component<MiniGraphCardPropsPF, MiniGraphCar
     if (this.props.onDeleteTrafficRouting) {
       this.props.onDeleteTrafficRouting(key);
     }
+  };
+
+  private handleEdgeTap = (tapData: GraphEdgeTapData) => {
+    console.log(`Handle Edge Tap: ${tapData.type}`);
+  };
+
+  private handleNodeTap = (tapData: GraphNodeTapData) => {
+    console.log(`Handle Node Tap: ${tapData.nodeType}`);
   };
 
   /*
@@ -288,7 +297,7 @@ class MiniGraphCardPF extends React.Component<MiniGraphCardPropsPF, MiniGraphCar
         break;
     }
 
-    const graphUrl = `/pfgraph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${namespace}&focusSelector=${encodeURI(
+    const graphUrl = `/graphpf/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${namespace}&focusSelector=${encodeURI(
       graphSelector.build()
     )}`;
 

@@ -20,7 +20,7 @@ import { KialiDispatch } from 'types/Redux';
 import { AutoComplete } from 'utils/AutoComplete';
 import { HEALTHY, NA, NOT_READY } from 'types/Health';
 import { GraphFindOptions } from './GraphFindOptions';
-import history, { HistoryManager, URLParam } from '../../../app/History';
+import { history, HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
 import {
   descendents,

@@ -44,7 +44,6 @@ type Props = ReduxProps & {
   graphType: GraphType;
   jaegerURL?: string;
   onFocus?: (focusNode: FocusNode) => void;
-  setSelectedIdsPF?: (selectedIds: string[]) => void;
   trace: JaegerTrace;
 };
 

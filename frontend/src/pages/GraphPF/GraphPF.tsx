@@ -21,16 +21,18 @@ import {
   useVisualizationState,
   Visualization,
   VisualizationProvider,
-  VisualizationSurface
+  VisualizationSurface,
+  Edge
 } from '@patternfly/react-topology';
 import { GraphData } from 'pages/Graph/GraphPage';
 import * as React from 'react';
-import { EdgeLabelMode, EdgeMode, GraphEvent, Layout, Protocol } from 'types/Graph';
+import { EdgeLabelMode, EdgeMode, GraphEvent, Layout, NodeType, Protocol } from 'types/Graph';
 import { JaegerTrace } from 'types/JaegerInfo';
 import stylesComponentFactory from './components/stylesComponentFactory';
 import elementFactory from './elements/elementFactory';
 import {
   assignEdgeHealth,
+  descendents,
   EdgeData,
   getNodeShape,
   getNodeStatus,
@@ -66,6 +68,31 @@ export enum LayoutName {
   Grid = 'Grid'
 }
 
+export interface GraphEdgeTapData {
+  namespace: string;
+  type: string;
+  source: Node<NodeModel>;
+  target: Node<NodeModel>;
+}
+
+export interface GraphNodeTapData {
+  aggregate?: string;
+  aggregateValue?: string;
+  app: string;
+  cluster?: string;
+  hasMissingSC: boolean;
+  isBox?: string;
+  isInaccessible: boolean;
+  isOutside: boolean;
+  isServiceEntry: boolean;
+  isIdle: boolean;
+  namespace: string;
+  nodeType: NodeType;
+  service: string;
+  version?: string;
+  workload: string;
+}
+
 // TODO: Implement some sort of focus when provided
 export interface FocusNode {
   id: string;
@@ -82,6 +109,8 @@ export const TopologyContent: React.FC<{
   highlighter: GraphHighlighterPF;
   isMiniGraph: boolean;
   layoutName: LayoutName;
+  onEdgeTap?: (e: GraphEdgeTapData) => void;
+  onNodeTap?: (e: GraphNodeTapData) => void;
   onReady: (controller: any) => void;
   setLayout: (val: LayoutName) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
@@ -99,6 +128,8 @@ export const TopologyContent: React.FC<{
   highlighter,
   isMiniGraph,
   layoutName,
+  onEdgeTap,
+  onNodeTap,
   onReady,
   setEdgeMode,
   setLayout: setLayoutName,
@@ -130,6 +161,53 @@ export const TopologyContent: React.FC<{
   const [selectedIds] = useVisualizationState<string[]>(SELECTION_STATE, []);
   React.useEffect(() => {
     if (isMiniGraph) {
+      if (selectedIds.length > 0) {
+        const elem = controller.getElementById(selectedIds[0]);
+        switch (elem?.getKind()) {
+          case ModelKind.edge: {
+            if (onEdgeTap) {
+              const edge = elem as Edge<EdgeModel>;
+              const sourceData = edge.getSource().getData() as NodeData;
+
+              onEdgeTap({
+                namespace: sourceData.namespace,
+                type: sourceData.nodeType,
+                source: edge.getSource(),
+                target: edge.getTarget()
+              } as GraphEdgeTapData);
+            }
+            return;
+          }
+          case ModelKind.node: {
+            if (onNodeTap) {
+              const node = elem as Node<NodeModel>;
+              const data = node.getData() as NodeData;
+              const nodeOrChildren = data.isBox ? descendents(node) : [node];
+
+              onNodeTap({
+                aggregate: data.aggregate,
+                aggregateValue: data.aggregateValue,
+                app: data.app!,
+                cluster: data.cluster,
+                hasMissingSC: nodeOrChildren.every(n => (n.getData() as NodeData).hasMissingSC),
+                isBox: data.isBox,
+                isIdle: nodeOrChildren.every(n => (n.getData() as NodeData).isIdle),
+                isInaccessible: !!data.isInaccessible,
+                isOutside: !!data.isOutside,
+                isServiceEntry: !!data.isServiceEntry,
+                namespace: data.namespace,
+                nodeType: data.nodeType,
+                service: data.service!,
+                version: data.isBox ? undefined : data.version,
+                workload: data.workload!
+              } as GraphNodeTapData);
+            }
+            return;
+          }
+          default:
+            updateSummary({ isPF: true, summaryType: 'graph', summaryTarget: controller } as GraphEvent);
+        }
+      }
       console.log('MINI');
       return;
     }
@@ -154,7 +232,7 @@ export const TopologyContent: React.FC<{
     } else {
       updateSummary({ isPF: true, summaryType: 'graph', summaryTarget: controller } as GraphEvent);
     }
-  }, [updateSummary, selectedIds, highlighter, controller, isMiniGraph]);
+  }, [updateSummary, selectedIds, highlighter, controller, isMiniGraph, onEdgeTap, onNodeTap]);
 
   //
   // TraceOverlay State
@@ -642,6 +720,8 @@ export const GraphPF: React.FC<{
   graphData: GraphData;
   isMiniGraph: boolean;
   layout: Layout;
+  onEdgeTap?: (e: GraphEdgeTapData) => void;
+  onNodeTap?: (e: GraphNodeTapData) => void;
   onReady: (controller: any) => void;
   setEdgeMode: (edgeMode: EdgeMode) => void;
   setLayout: (layout: Layout) => void;
@@ -659,6 +739,8 @@ export const GraphPF: React.FC<{
   graphData,
   isMiniGraph,
   layout,
+  onEdgeTap,
+  onNodeTap,
   onReady,
   setEdgeMode,
   setLayout,
@@ -740,6 +822,8 @@ export const GraphPF: React.FC<{
         highlighter={highlighter!}
         isMiniGraph={isMiniGraph}
         layoutName={getLayoutName(layout)}
+        onEdgeTap={onEdgeTap}
+        onNodeTap={onNodeTap}
         onReady={onReady}
         setEdgeMode={setEdgeMode}
         setLayout={setLayoutByName}

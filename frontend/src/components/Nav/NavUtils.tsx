@@ -38,7 +38,7 @@ const buildCommonQueryParams = (params: GraphUrlParams): string => {
 };
 
 export const makeNamespacesGraphUrlFromParams = (params: GraphUrlParams, isPf = false): string => {
-  const route = isPf ? 'pfgraph' : 'graph';
+  const route = isPf ? 'graphpf' : 'graph';
   let queryParams = buildCommonQueryParams(params);
   if (params.activeNamespaces.length > 0) {
     const namespaces = params.activeNamespaces.map(namespace => namespace.name).join(',');
@@ -52,7 +52,7 @@ export const makeNamespacesGraphUrlFromParams = (params: GraphUrlParams, isPf = 
 };
 
 export const makeNodeGraphUrlFromParams = (params: GraphUrlParams, isPf = false): string => {
-  const route = isPf ? 'pfgraph' : 'graph';
+  const route = isPf ? 'graphpf' : 'graph';
   const node = params.node;
   if (node) {
     switch (node.nodeType) {

@@ -76,7 +76,7 @@ export class NavigationComponent extends React.Component<PropsType, NavigationSt
   }
 
   isGraph = () => {
-    return this.props.location.pathname.startsWith('/graph') || this.props.location.pathname.startsWith('/pfgraph');
+    return this.props.location.pathname.startsWith('/graph') || this.props.location.pathname.startsWith('/graphpf');
   };
 
   onNavToggleDesktop = () => {

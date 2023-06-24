@@ -130,7 +130,6 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
                   graphType={this.props.graphType}
                   jaegerURL={this.props.jaegerState.info?.url}
                   onFocus={this.props.onFocus}
-                  setSelectedIdsPF={this.props.setSelectedIdsPF}
                   trace={this.props.jaegerState.selectedTrace}
                 />
               </div>

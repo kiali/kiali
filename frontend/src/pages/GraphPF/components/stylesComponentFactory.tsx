@@ -22,7 +22,7 @@ import { MessageType } from 'types/MessageCenter';
 import { store } from 'store/ConfigStore';
 import { NamespaceActions } from 'actions/NamespaceAction';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
-import history from '../../../app/History';
+import { history } from '../../../app/History';
 import { GraphNodeDoubleTapEvent } from 'components/CytoscapeGraph/CytoscapeGraph';
 
 type ContextMenuOptionPF = ContextMenuOption & {
