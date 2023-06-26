@@ -26,18 +26,20 @@ import {
 } from '@patternfly/react-topology';
 import { GraphData } from 'pages/Graph/GraphPage';
 import * as React from 'react';
-import { EdgeLabelMode, EdgeMode, GraphEvent, Layout, NodeType, Protocol } from 'types/Graph';
+import { BoxByType, EdgeLabelMode, EdgeMode, GraphEvent, Layout, NodeType, Protocol, UNKNOWN } from 'types/Graph';
 import { JaegerTrace } from 'types/JaegerInfo';
 import stylesComponentFactory from './components/stylesComponentFactory';
 import elementFactory from './elements/elementFactory';
 import {
   assignEdgeHealth,
-  descendents,
   EdgeData,
+  elems,
   getNodeShape,
   getNodeStatus,
   GraphPFSettings,
   NodeData,
+  selectAnd,
+  SelectAnd,
   setEdgeOptions,
   setNodeLabel
 } from './GraphPFElems';
@@ -51,6 +53,7 @@ import { KialiGridGraph } from 'components/CytoscapeGraph/graphs/KialiGridGraph'
 import { KialiBreadthFirstGraph } from 'components/CytoscapeGraph/graphs/KialiBreadthFirstGraph';
 import { HistoryManager, URLParam } from 'app/History';
 import { tcpTimerConfig, timerConfig } from 'components/CytoscapeGraph/TrafficAnimation/AnimationTimerConfig';
+import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 
 let initialLayout = false;
 let requestFit = false;
@@ -66,31 +69,6 @@ export enum LayoutName {
   Concentric = 'Concentric',
   Dagre = 'Dagre',
   Grid = 'Grid'
-}
-
-export interface GraphEdgeTapData {
-  namespace: string;
-  type: string;
-  source: Node<NodeModel>;
-  target: Node<NodeModel>;
-}
-
-export interface GraphNodeTapData {
-  aggregate?: string;
-  aggregateValue?: string;
-  app: string;
-  cluster?: string;
-  hasMissingSC: boolean;
-  isBox?: string;
-  isInaccessible: boolean;
-  isOutside: boolean;
-  isServiceEntry: boolean;
-  isIdle: boolean;
-  namespace: string;
-  nodeType: NodeType;
-  service: string;
-  version?: string;
-  workload: string;
 }
 
 // TODO: Implement some sort of focus when provided
@@ -109,8 +87,8 @@ export const TopologyContent: React.FC<{
   highlighter: GraphHighlighterPF;
   isMiniGraph: boolean;
   layoutName: LayoutName;
-  onEdgeTap?: (e: GraphEdgeTapData) => void;
-  onNodeTap?: (e: GraphNodeTapData) => void;
+  onEdgeTap?: (edge: Edge<EdgeModel>) => void;
+  onNodeTap?: (node: Node<NodeModel>) => void;
   onReady: (controller: any) => void;
   setLayout: (val: LayoutName) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
@@ -153,7 +131,7 @@ export const TopologyContent: React.FC<{
       showVirtualServices: showVirtualServices,
       trafficRates: graphData.fetchParams.trafficRates
     } as GraphPFSettings;
-  }, [graphData, edgeLabels, showMissingSidecars, showSecurity, showVirtualServices]);
+  }, [graphData.fetchParams, edgeLabels, showMissingSidecars, showSecurity, showVirtualServices]);
 
   //
   // SelectedIds State
@@ -166,41 +144,13 @@ export const TopologyContent: React.FC<{
         switch (elem?.getKind()) {
           case ModelKind.edge: {
             if (onEdgeTap) {
-              const edge = elem as Edge<EdgeModel>;
-              const sourceData = edge.getSource().getData() as NodeData;
-
-              onEdgeTap({
-                namespace: sourceData.namespace,
-                type: sourceData.nodeType,
-                source: edge.getSource(),
-                target: edge.getTarget()
-              } as GraphEdgeTapData);
+              onEdgeTap(elem as Edge<EdgeModel>);
             }
             return;
           }
           case ModelKind.node: {
             if (onNodeTap) {
-              const node = elem as Node<NodeModel>;
-              const data = node.getData() as NodeData;
-              const nodeOrChildren = data.isBox ? descendents(node) : [node];
-
-              onNodeTap({
-                aggregate: data.aggregate,
-                aggregateValue: data.aggregateValue,
-                app: data.app!,
-                cluster: data.cluster,
-                hasMissingSC: nodeOrChildren.every(n => (n.getData() as NodeData).hasMissingSC),
-                isBox: data.isBox,
-                isIdle: nodeOrChildren.every(n => (n.getData() as NodeData).isIdle),
-                isInaccessible: !!data.isInaccessible,
-                isOutside: !!data.isOutside,
-                isServiceEntry: !!data.isServiceEntry,
-                namespace: data.namespace,
-                nodeType: data.nodeType,
-                service: data.service!,
-                version: data.isBox ? undefined : data.version,
-                workload: data.workload!
-              } as GraphNodeTapData);
+              onNodeTap(elem as Node<NodeModel>);
             }
             return;
           }
@@ -208,7 +158,6 @@ export const TopologyContent: React.FC<{
             updateSummary({ isPF: true, summaryType: 'graph', summaryTarget: controller } as GraphEvent);
         }
       }
-      console.log('MINI');
       return;
     }
 
@@ -463,6 +412,61 @@ export const TopologyContent: React.FC<{
 
       controller.fromModel(model);
       controller.getGraph().setData({ graphData: graphData });
+
+      // pre-select node if provided
+      const graphNode = graphData.fetchParams.node;
+      if (graphNode) {
+        let selector: SelectAnd = [
+          { prop: CyNode.namespace, val: graphNode.namespace.name },
+          { prop: CyNode.nodeType, val: graphNode.nodeType }
+        ];
+        switch (graphNode.nodeType) {
+          case NodeType.AGGREGATE:
+            selector.push({ prop: CyNode.aggregate, val: graphNode.aggregate });
+            selector.push({ prop: CyNode.aggregateValue, val: graphNode.aggregateValue });
+            break;
+          case NodeType.APP:
+          case NodeType.BOX: // we only support app box node graphs, treat like an app node
+            selector.push({ prop: CyNode.app, val: graphNode.app });
+            if (graphNode.version && graphNode.version !== UNKNOWN) {
+              selector.push({ prop: CyNode.version, val: graphNode.version });
+            }
+            break;
+          case NodeType.SERVICE:
+            selector.push({ prop: CyNode.service, val: graphNode.service });
+            break;
+          default:
+            selector.push({ prop: CyNode.workload, val: graphNode.workload });
+        }
+
+        const { nodes } = elems(controller);
+        const selectedNodes = selectAnd(nodes, selector);
+        if (selectedNodes.length > 0) {
+          let target = selectedNodes[0];
+          // default app to the whole app box, when appropriate
+          if (
+            (graphNode.nodeType === NodeType.APP || graphNode.nodeType === NodeType.BOX) &&
+            !graphNode.version &&
+            target.hasParent() &&
+            target.getParent().getData().isBox === BoxByType.APP
+          ) {
+            target = target.getParent();
+          }
+
+          const data = target.getData() as NodeData;
+          console.log('Set SELECTED!');
+          data.isSelected = true;
+          interface SelectionHandlerState {
+            [SELECTION_STATE]?: string[];
+          }
+          const state = controller.getState<SelectionHandlerState>();
+          const selectedIds = [target.getId()];
+          state.selectedIds = selectedIds;
+          //controller.fireEvent('selection', selectedIds);
+
+          target.setData(data);
+        }
+      }
     };
 
     const initialGraph = !controller.hasGraph();
@@ -720,8 +724,8 @@ export const GraphPF: React.FC<{
   graphData: GraphData;
   isMiniGraph: boolean;
   layout: Layout;
-  onEdgeTap?: (e: GraphEdgeTapData) => void;
-  onNodeTap?: (e: GraphNodeTapData) => void;
+  onEdgeTap?: (edge: Edge<EdgeModel>) => void;
+  onNodeTap?: (node: Node<NodeModel>) => void;
   onReady: (controller: any) => void;
   setEdgeMode: (edgeMode: EdgeMode) => void;
   setLayout: (layout: Layout) => void;

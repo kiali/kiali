@@ -11,6 +11,7 @@ import {
   KebabToggle,
   ToolbarItem
 } from '@patternfly/react-core';
+import { Edge, EdgeModel, Node, NodeModel } from '@patternfly/react-topology';
 import { history } from '../../app/History';
 import GraphDataSource from '../../services/GraphDataSource';
 import { DecoratedGraphElements, EdgeMode, GraphEvent, GraphType, Layout, NodeType } from '../../types/Graph';
@@ -19,7 +20,7 @@ import { store } from 'store/ConfigStore';
 import { TimeInMilliseconds } from '../../types/Common';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { KialiAppState } from '../../store/Store';
-import GraphPF, { GraphEdgeTapData, GraphNodeTapData } from './GraphPF';
+import GraphPF from './GraphPF';
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 import { LoadingWizardActionsDropdownGroup } from 'components/IstioWizards/LoadingWizardActionsDropdownGroup';
@@ -34,6 +35,7 @@ import GraphThunkActions from 'actions/GraphThunkActions';
 import { bindActionCreators } from 'redux';
 import { GraphActions } from 'actions/GraphActions';
 import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
+import { EdgeData, NodeData } from './GraphPFElems';
 
 // const initGraphContainerStyle = style({ width: '100%', height: '100%' });
 
@@ -157,7 +159,6 @@ class MiniGraphCardPF extends React.Component<MiniGraphCardPropsPF, MiniGraphCar
                 }}
                 //toggleIdleNodes={() => undefined}
                 isMiniGraph={true}
-                //onEdgeTap={this.props.onEdgeTap}
                 layout={KialiDagreGraph.getLayout()}
                 onEdgeTap={this.handleEdgeTap}
                 onNodeTap={this.handleNodeTap}
@@ -209,12 +210,52 @@ class MiniGraphCardPF extends React.Component<MiniGraphCardPropsPF, MiniGraphCar
     }
   };
 
-  private handleEdgeTap = (tapData: GraphEdgeTapData) => {
-    console.log(`Handle Edge Tap: ${tapData.type}`);
+  private handleEdgeTap = (edge: Edge<EdgeModel>) => {
+    const data = edge.getData() as EdgeData;
+    console.log(`Handle Edge Tap: ${data.isSelected}`);
   };
 
-  private handleNodeTap = (tapData: GraphNodeTapData) => {
-    console.log(`Handle Node Tap: ${tapData.nodeType}`);
+  private handleNodeTap = (node: Node<NodeModel>) => {
+    const data = node.getData() as NodeData;
+
+    console.log(`Handle Node Tap: ${data.nodeType}`);
+
+    // Do nothing on inaccessible nodes or service entry nodes
+    if (data.isInaccessible || data.isServiceEntry) {
+      return;
+    }
+
+    // If we are already on the details page of the tapped node, do nothing.
+    const displayedNode = this.props.dataSource.fetchParameters.node!;
+    // Minigraph will consider box nodes as app
+    const eNodeType = data.nodeType === 'box' && data.isBox ? data.isBox : data.workload ? 'workload' : data.nodeType;
+    const isSameResource =
+      displayedNode.namespace.name === data.namespace &&
+      displayedNode.nodeType === eNodeType &&
+      displayedNode[displayedNode.nodeType] === data[eNodeType];
+
+    if (isSameResource) {
+      return;
+    }
+
+    // unselect the currently selected node
+    (node as any).selected = false;
+
+    // Redirect to the details page of the tapped node.
+    let resource = data[eNodeType];
+    let resourceType: string = eNodeType === NodeType.APP ? 'application' : eNodeType;
+
+    let href = `/namespaces/${data.namespace}/${resourceType}s/${resource}`;
+
+    if (data.cluster) {
+      href = href + '?cluster=' + data.cluster;
+    }
+
+    if (isParentKiosk(this.props.kiosk)) {
+      kioskContextMenuAction(href);
+    } else {
+      history.push(href);
+    }
   };
 
   /*

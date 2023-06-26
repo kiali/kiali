@@ -98,6 +98,14 @@ const pathRoutes: Path[] = [
     component: GraphPage
   },
   {
+    path: '/graphpf/node/namespaces/:namespace/' + Paths.AGGREGATES + '/:aggregate/:aggregateValue',
+    component: GraphRoutePF
+  },
+  {
+    path: '/graphpf/node/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app/versions/:version',
+    component: GraphRoutePF
+  },
+  {
     path: '/graphpf/node/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app',
     component: GraphRoutePF
   },
