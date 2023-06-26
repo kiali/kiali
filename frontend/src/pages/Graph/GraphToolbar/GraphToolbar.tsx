@@ -237,6 +237,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
   }
 
   private handleNamespaceReturn = () => {
+    console.log(`isPf=${this.props.isPF}`);
     const route = this.props.isPF ? 'graphpf' : 'graph';
     if (
       !this.props.summaryData ||
@@ -246,7 +247,9 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
       return;
     }
 
-    const selector = `node[id = "${this.props.summaryData!.summaryTarget.data(CyNode.id)}"]`;
+    const selector = this.props.isPF
+      ? this.props.summaryData!.summaryTarget.getId()
+      : `node[id = "${this.props.summaryData!.summaryTarget.data(CyNode.id)}"]`;
     this.props.setNode(undefined);
     history.push(`/${route}/namespaces?focusSelector=${encodeURI(selector)}`);
   };
