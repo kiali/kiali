@@ -12,7 +12,7 @@ import {
   ToolbarItem
 } from '@patternfly/react-core';
 import { Edge, EdgeModel, Node, NodeModel } from '@patternfly/react-topology';
-import { history } from '../../app/History';
+import { URLParam, history } from '../../app/History';
 import GraphDataSource from '../../services/GraphDataSource';
 import { DecoratedGraphElements, EdgeMode, GraphEvent, GraphType, Layout, NodeType } from '../../types/Graph';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
@@ -35,7 +35,7 @@ import GraphThunkActions from 'actions/GraphThunkActions';
 import { bindActionCreators } from 'redux';
 import { GraphActions } from 'actions/GraphActions';
 import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
-import { EdgeData, NodeData } from './GraphPFElems';
+import { NodeData, elems, selectAnd } from './GraphPFElems';
 
 // const initGraphContainerStyle = style({ width: '100%', height: '100%' });
 
@@ -143,9 +143,6 @@ class MiniGraphCardPF extends React.Component<MiniGraphCardPropsPF, MiniGraphCar
           <CardBody>
             <div style={{ height: '100%' }}>
               <GraphPF
-                //containerClassName={
-                //  this.props.graphContainerStyle ? this.props.graphContainerStyle : initGraphContainerStyle
-                //}
                 edgeLabels={this.props.dataSource.fetchParameters.edgeLabels}
                 edgeMode={EdgeMode.ALL}
                 graphData={{
@@ -157,31 +154,19 @@ class MiniGraphCardPF extends React.Component<MiniGraphCardPropsPF, MiniGraphCar
                   fetchParams: this.props.dataSource.fetchParameters,
                   timestamp: this.props.dataSource.graphTimestamp
                 }}
-                //toggleIdleNodes={() => undefined}
                 isMiniGraph={true}
                 layout={KialiDagreGraph.getLayout()}
                 onEdgeTap={this.handleEdgeTap}
                 onNodeTap={this.handleNodeTap}
-                // Ranking not enabled for minigraphs yet
-                //rankBy={[]}
-                //ref={refInstance => this.setCytoscapeGraph(refInstance)}
-                //refreshInterval={0}
-                //setRankResult={undefined}
-                //showIdleEdges={false}
                 onReady={this.props.onReady}
                 setEdgeMode={this.props.setEdgeMode}
                 setLayout={this.props.setLayout}
                 setUpdateTime={this.props.setUpdateTime}
                 updateSummary={this.props.updateSummary}
                 showMissingSidecars={true}
-                //showOperationNodes={false}
-                //showRank={false}
                 showSecurity={true}
-                //showServiceNodes={true}
                 showTrafficAnimation={false}
-                //showIdleNodes={false}
                 showVirtualServices={true}
-                //summaryData={null}
               />
             </div>
           </CardBody>
@@ -211,8 +196,46 @@ class MiniGraphCardPF extends React.Component<MiniGraphCardPropsPF, MiniGraphCar
   };
 
   private handleEdgeTap = (edge: Edge<EdgeModel>) => {
-    const data = edge.getData() as EdgeData;
-    console.log(`Handle Edge Tap: ${data.isSelected}`);
+    const source = edge.getSource();
+    const sourceData = source.getData() as NodeData;
+    const target = edge.getTarget();
+    const targetData = target.getData() as NodeData;
+
+    const selected = selectAnd(elems(source.getController()).nodes, [{ prop: 'isSelected', op: 'truthy' }]);
+    if (selected.length === 0) {
+      return;
+    }
+    const nodeData = selected[0].getData();
+    const nodeApp = nodeData.app;
+    const nodeService = nodeData.service;
+    const nodeType = nodeData.nodeType;
+
+    if (source.getId() !== target.getId()) {
+      const urlParams = new URLSearchParams(history.location.search);
+      switch (nodeType) {
+        case NodeType.APP: {
+          const isInbound = targetData.app === nodeApp;
+          const destination = isInbound ? 'source_canonical_service' : 'destination_canonical_service';
+          urlParams.set('tab', isInbound ? 'in_metrics' : 'out_metrics');
+          urlParams.set(URLParam.BY_LABELS, `${destination}=${isInbound ? sourceData.app : targetData.app}`);
+          break;
+        }
+        case NodeType.SERVICE: {
+          const isInbound = targetData.service === nodeService;
+          const destination = isInbound ? 'source_canonical_service' : 'destination_canonical_service';
+          urlParams.set('tab', 'metrics');
+          urlParams.set(URLParam.BY_LABELS, `${destination}=${isInbound ? sourceData.app : targetData.app}`);
+          break;
+        }
+        case NodeType.WORKLOAD: {
+          const isInbound = targetData.app === nodeApp;
+          const destination = isInbound ? 'source_canonical_service' : 'destination_canonical_service';
+          urlParams.set('tab', isInbound ? 'in_metrics' : 'out_metrics');
+          urlParams.set(URLParam.BY_LABELS, `${destination}=${isInbound ? sourceData.app : targetData.app}`);
+        }
+      }
+      history.replace(history.location.pathname + '?' + urlParams.toString());
+    }
   };
 
   private handleNodeTap = (node: Node<NodeModel>) => {
@@ -257,50 +280,6 @@ class MiniGraphCardPF extends React.Component<MiniGraphCardPropsPF, MiniGraphCar
       history.push(href);
     }
   };
-
-  /*
-  private handleNodeTap = (e: GraphNodeTapEvent) => {
-    // Do nothing on inaccessible nodes or service entry nodes
-    if (e.isInaccessible || e.isServiceEntry) {
-      return;
-    }
-
-    // If we are already on the details page of the tapped node, do nothing.
-    const displayedNode = this.props.dataSource.fetchParameters.node!;
-    // Minigraph will consider box nodes as app
-    const eNodeType = e.nodeType === 'box' && e.isBox ? e.isBox : e.workload ? 'workload' : e.nodeType;
-    const isSameResource =
-      displayedNode.namespace.name === e.namespace &&
-      displayedNode.nodeType === eNodeType &&
-      displayedNode[displayedNode.nodeType] === e[eNodeType];
-
-    if (isSameResource) {
-      return;
-    }
-
-    // unselect the currently selected node
-    const cy = this.cytoscapeGraphRef.current.getCy();
-    if (cy) {
-      cy.$(':selected').selectify().unselect().unselectify();
-    }
-
-    // Redirect to the details page of the tapped node.
-    let resource = e[eNodeType];
-    let resourceType: string = eNodeType === NodeType.APP ? 'application' : eNodeType;
-
-    let href = `/namespaces/${e.namespace}/${resourceType}s/${resource}`;
-
-    if (e.cluster) {
-      href = href + '?cluster=' + e.cluster;
-    }
-
-    if (isParentKiosk(this.props.kiosk)) {
-      kioskContextMenuAction(href);
-    } else {
-      history.push(href);
-    }
-  };
-  */
 
   private onGraphActionsToggle = (isOpen: boolean) => {
     this.setState({

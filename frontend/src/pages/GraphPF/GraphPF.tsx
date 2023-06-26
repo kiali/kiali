@@ -462,7 +462,6 @@ export const TopologyContent: React.FC<{
           const state = controller.getState<SelectionHandlerState>();
           const selectedIds = [target.getId()];
           state.selectedIds = selectedIds;
-          //controller.fireEvent('selection', selectedIds);
 
           target.setData(data);
         }
