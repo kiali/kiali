@@ -19,10 +19,14 @@ Given('user opens base url', () => {
 
 And('user clicks my_htpasswd_provider', () => {
     if (auth_strategy === 'openshift') {
-        cy.log('Log in using auth provider: ' + KUBEADMIN_IDP);
-        cy.contains(KUBEADMIN_IDP)
+        cy.exec("kubectl get user").then((result) => {
+            if (result.stderr != "No resources found"){
+                cy.log('Log in using auth provider: ' + KUBEADMIN_IDP);
+                    cy.contains(KUBEADMIN_IDP)
                     .should('be.visible')
                     .click();
+            }
+        })
     }
 })
 
