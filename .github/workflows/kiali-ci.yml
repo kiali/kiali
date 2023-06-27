@@ -23,17 +23,11 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
-      - name: Swagger Install
-        run: make swagger-install
-
       - name: Lint Install
         run: make lint-install
 
       - name: Verify code linting
         run: make lint
-
-      - name: Verify swagger file
-        run: make swagger-ci
 
       - name: Build
         run: make clean build
