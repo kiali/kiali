@@ -541,6 +541,7 @@ export class GraphPagePF extends React.Component<GraphPagePropsPF, GraphPageStat
     );
   }
 
+  // TODO Focus...
   private onFocus = (focusNode: FocusNode) => {
     console.debug(`onFocus(${focusNode})`);
   };
@@ -607,125 +608,6 @@ export class GraphPagePF extends React.Component<GraphPagePropsPF, GraphPageStat
       }
     });
   };
-
-  // private handleDoubleTap = (event: GraphNodeDoubleTapEvent) => {
-  //   if (
-  //     event.isInaccessible ||
-  //     event.isServiceEntry ||
-  //     (event.nodeType === NodeType.BOX && event.isBox !== BoxByType.APP)
-  //   ) {
-  //     return;
-  //   }
-
-  //   if (event.hasMissingSC) {
-  //     AlertUtils.add(
-  //       `A node with a missing sidecar provides no node-specific telemetry and can not provide a node detail graph.`,
-  //       undefined,
-  //       MessageType.WARNING
-  //     );
-  //     return;
-  //   }
-  //   if (event.isIdle) {
-  //     AlertUtils.add(
-  //       `An idle node has no node-specific traffic and can not provide a node detail graph.`,
-  //       undefined,
-  //       MessageType.WARNING
-  //     );
-  //     return;
-  //   }
-  //   if (event.isOutside && this.props.setActiveNamespaces) {
-  //     this.props.setActiveNamespaces([{ name: event.namespace }]);
-  //     return;
-  //   }
-
-  //   // If graph is in the drilled-down view, there is the chance that the user
-  //   // double clicked the same node as in the full graph. Determine if this is
-  //   // the case.
-  //   let sameNode = false;
-  //   const node = this.state.graphData.fetchParams.node;
-  //   if (node) {
-  //     sameNode = node && node.nodeType === event.nodeType;
-  //     switch (event.nodeType) {
-  //       case NodeType.AGGREGATE:
-  //         sameNode = sameNode && node.aggregate === event.aggregate;
-  //         sameNode = sameNode && node.aggregateValue === event.aggregateValue;
-  //         break;
-  //       case NodeType.APP:
-  //         sameNode = sameNode && node.app === event.app;
-  //         sameNode = sameNode && node.version === event.version;
-  //         break;
-  //       case NodeType.BOX:
-  //         // we only support node graphs on app boxes, so assume app box
-  //         sameNode = sameNode && node.app === event.app;
-  //         break;
-  //       case NodeType.SERVICE:
-  //         sameNode = sameNode && node.service === event.service;
-  //         break;
-  //       case NodeType.WORKLOAD:
-  //         sameNode = sameNode && node.workload === event.workload;
-  //         break;
-  //       default:
-  //         sameNode = true; // don't navigate to unsupported node type
-  //     }
-  //   }
-
-  //   const targetNode: NodeParamsType = { ...event, namespace: { name: event.namespace } };
-
-  //   // If, while in the drilled-down graph, the user double clicked the same
-  //   // node as in the main graph, it doesn't make sense to re-load the same view.
-  //   // Instead, assume that the user wants more details for the node and do a
-  //   // redirect to the details page.
-  //   if (sameNode) {
-  //     this.handleDoubleTapSameNode(targetNode);
-  //     return;
-  //   }
-
-  //   // In case user didn't double-tap the same node, or if graph is in
-  //   // full graph mode, redirect to the drilled-down graph of the chosen node.
-  //   const urlParams: GraphUrlParams = {
-  //     activeNamespaces: this.state.graphData.fetchParams.namespaces,
-  //     duration: this.state.graphData.fetchParams.duration,
-  //     edgeLabels: this.state.graphData.fetchParams.edgeLabels,
-  //     edgeMode: this.props.edgeMode,
-  //     graphLayout: this.props.layout,
-  //     graphType: this.state.graphData.fetchParams.graphType,
-  //     namespaceLayout: this.props.namespaceLayout,
-  //     node: targetNode,
-  //     refreshInterval: this.props.refreshInterval,
-  //     showIdleEdges: this.props.showIdleEdges,
-  //     showIdleNodes: this.props.showIdleNodes,
-  //     showOperationNodes: this.props.showOperationNodes,
-  //     showServiceNodes: this.props.showServiceNodes,
-  //     trafficRates: this.state.graphData.fetchParams.trafficRates
-  //   };
-
-  //   // To ensure updated components get the updated URL, update the URL first and then the state
-  //   history.push(makeNodeGraphUrlFromParams(urlParams));
-  // };
-
-  // // This allows us to navigate to the service details page when zoomed in on nodes
-  // private handleDoubleTapSameNode = (targetNode: NodeParamsType) => {
-  //   const makeAppDetailsPageUrl = (namespace: string, nodeType: string, name?: string): string => {
-  //     return `/namespaces/${namespace}/${nodeType}/${name}`;
-  //   };
-  //   const nodeType = targetNode.nodeType;
-  //   let urlNodeType = targetNode.nodeType + 's';
-  //   let name = targetNode.app;
-  //   if (nodeType === 'service') {
-  //     name = targetNode.service;
-  //   } else if (nodeType === 'workload') {
-  //     name = targetNode.workload;
-  //   } else {
-  //     urlNodeType = 'applications';
-  //   }
-  //   const detailsPageUrl = makeAppDetailsPageUrl(targetNode.namespace.name, urlNodeType, name);
-  //   if (isParentKiosk(this.props.kiosk)) {
-  //     kioskContextMenuAction(detailsPageUrl);
-  //   } else {
-  //     history.push(detailsPageUrl);
-  //   }
-  //   return;
-  // };
 
   private handleLaunchWizard = (
     action: WizardAction,
@@ -803,10 +685,6 @@ export class GraphPagePF extends React.Component<GraphPagePropsPF, GraphPageStat
       this.props.startTour({ info: GraphTour, stop: firstStop });
     }
   };
-
-  // private setCytoscapeGraph(cytoscapeGraph: any) {
-  //   this.cytoscapeGraphRef.current = cytoscapeGraph;
-  // }
 
   private loadGraphDataFromBackend = () => {
     const queryTime: TimeInMilliseconds | undefined = !!this.props.replayQueryTime

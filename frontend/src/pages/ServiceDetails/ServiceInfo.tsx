@@ -264,11 +264,9 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
               <GridItem span={miniGraphSpan}>
                 <MiniGraphCardPFContainer
                   dataSource={this.graphDataSource}
-                  //onEdgeTap={this.goToMetrics}
-                  //graphContainerStyle={graphContainerStyle}
-                  serviceDetails={this.props.serviceDetails}
                   onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
                   onLaunchWizard={this.handleLaunchWizard}
+                  serviceDetails={this.props.serviceDetails}
                 />
               </GridItem>
             )}

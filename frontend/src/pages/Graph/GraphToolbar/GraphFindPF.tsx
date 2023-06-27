@@ -473,17 +473,6 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
     this.props.setHideValue(val);
   };
 
-  // we need to remove edges completely because an invisible edge will still
-  // be considered by the layout (I don't know why)
-  //private fhideEdge(e: GraphElement) {
-  //  e.setVisible(false);
-  // e.remove();
-  //}
-
-  //private fhideNode(e: GraphElement) {
-  //  e.setVisible(false);
-  //}
-
   // All edges have the graph as a parent
   private unhideElement(g: Graph, e: GraphElement) {
     e.setVisible(true);
@@ -587,8 +576,7 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
 
   private handleFind = (controller: Controller) => {
     const selector = this.parseValue(this.props.findValue, true);
-    // TODO: Change back to debug
-    console.info(`Find selector=[${JSON.stringify(selector)}]`);
+    console.debug(`Find selector=[${JSON.stringify(selector)}]`);
 
     // unhighlight old find-hits
     this.findElements?.forEach(e => {

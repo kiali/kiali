@@ -45,6 +45,9 @@ import { style } from 'typestyle';
 //   [Node] element.data.isHighlighted?: boolean         // adds highlight effects based on hover
 //   [Node] element.data.isUnhighlighted?: boolean       // adds unhighlight effects based on hover
 //   [Node] element.data.hasSpans?: Span[]               // adds trace overlay
+//
+// If we could contribute all of these customizations for PFT then we may be able to avoid this "BaseNode" component and
+// just use "DefaultNode" directly.
 
 const StatusQuadrant = TopologyQuadrant.upperLeft;
 

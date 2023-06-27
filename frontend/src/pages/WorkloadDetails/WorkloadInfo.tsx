@@ -312,11 +312,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
             )}
             {includeMiniGraphPF && (
               <GridItem span={miniGraphSpan}>
-                <MiniGraphCardPFContainer
-                  // onEdgeTap={this.goToMetrics}
-                  dataSource={this.graphDataSource}
-                  // graphContainerStyle={graphContainerStyle}
-                />
+                <MiniGraphCardPFContainer dataSource={this.graphDataSource} />
               </GridItem>
             )}
           </Grid>

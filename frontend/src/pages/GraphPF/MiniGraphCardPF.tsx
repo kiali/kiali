@@ -37,8 +37,6 @@ import { GraphActions } from 'actions/GraphActions';
 import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
 import { NodeData, elems, selectAnd } from './GraphPFElems';
 
-// const initGraphContainerStyle = style({ width: '100%', height: '100%' });
-
 type ReduxProps = {
   kiosk: string;
   onReady: (controller: any) => void;
@@ -50,9 +48,7 @@ type ReduxProps = {
 
 type MiniGraphCardPropsPF = ReduxProps & {
   dataSource: GraphDataSource;
-  // graphContainerStyle?: string;
   onDeleteTrafficRouting?: (key: string) => void;
-  //onEdgeTap?: (e: GraphEdgeTapEvent) => void;
   onLaunchWizard?: (key: WizardAction, mode: WizardMode) => void;
   serviceDetails?: ServiceDetailsInfo | null;
 };
@@ -64,11 +60,8 @@ type MiniGraphCardState = {
 };
 
 class MiniGraphCardPF extends React.Component<MiniGraphCardPropsPF, MiniGraphCardState> {
-  //private cytoscapeGraphRef: any;
-
   constructor(props) {
     super(props);
-    //this.cytoscapeGraphRef = React.createRef();
     this.state = { isKebabOpen: false, isTimeOptionsOpen: false, graphData: props.dataSource.graphData };
   }
 
@@ -240,8 +233,6 @@ class MiniGraphCardPF extends React.Component<MiniGraphCardPropsPF, MiniGraphCar
 
   private handleNodeTap = (node: Node<NodeModel>) => {
     const data = node.getData() as NodeData;
-
-    console.log(`Handle Node Tap: ${data.nodeType}`);
 
     // Do nothing on inaccessible nodes or service entry nodes
     if (data.isInaccessible || data.isServiceEntry) {

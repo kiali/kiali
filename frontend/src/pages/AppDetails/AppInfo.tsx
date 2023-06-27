@@ -94,10 +94,7 @@ export class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
           )}
           {includeMiniGraphPF && (
             <GridItem span={miniGraphSpan}>
-              <MiniGraphCardPFContainer
-                //onEdgeTap={this.goToMetrics}
-                dataSource={this.graphDataSource}
-              />
+              <MiniGraphCardPFContainer dataSource={this.graphDataSource} />
             </GridItem>
           )}
         </Grid>

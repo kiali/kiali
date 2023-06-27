@@ -35,6 +35,9 @@ import { style } from 'typestyle';
 //   [Edge] element.data.isUnhighlighted?: boolean       // adds unhighlight effects
 //   [Edge] element.data.hasSpans?: Span[]               // adds trace overlay
 //   add showTag prop and show scaled tag on hover (when showTag is false)
+//
+// If we could contribute all of these customizations for PFT then we may be able to avoid this "BaseEdge" component and
+// just use "DefaultEdge" directly.
 
 type BaseEdgeProps = {
   children?: React.ReactNode;

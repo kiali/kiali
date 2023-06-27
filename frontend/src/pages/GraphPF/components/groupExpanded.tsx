@@ -34,6 +34,9 @@ import {
 //   element.data.isHighlighted?: boolean         // adds highlight effects based on hover
 //   element.data.isUnhighlighted?: boolean       // adds unhighlight effects based on hover
 //   show scaled label on hover (when showLabel is false)
+//
+// If we could contribute all of these customizations for PFT then we may be able to avoid this "BaseGroupExpanded" component and
+// just use "DefaultGroupExpanded" directly.
 
 type BaseGroupExpandedProps = {
   className?: string;

@@ -31,6 +31,9 @@ import { NODE_SHADOW_FILTER_ID_HOVER } from '@patternfly/react-topology/dist/esm
 // *No* active customizations, possibly may need:
 //   [Node] element.data.isHighlighted?: boolean         // adds highlight effects based on hover
 //   [Node] element.data.isUnhighlighted?: boolean       // adds unhighlight effects based on hover
+//
+// If we could contribute all of these customizations for PFT then we may be able to avoid this "BaseGroupCollapsed" component and
+// just use "DefaultGroupCollapsed" directly.
 
 type BaseGroupCollapsedProps = {
   children?: React.ReactNode;

@@ -77,6 +77,7 @@ export interface FocusNode {
   isSelected?: boolean;
 }
 
+// The is the main graph rendering component
 export const TopologyContent: React.FC<{
   controller: Controller;
   edgeLabels: EdgeLabelMode[];
@@ -136,7 +137,7 @@ export const TopologyContent: React.FC<{
   //
   // SelectedIds State
   //
-  const [selectedIds] = useVisualizationState<string[]>(SELECTION_STATE, []);
+  const [selectedIds, setSelectedIds] = useVisualizationState<string[]>(SELECTION_STATE, []);
   React.useEffect(() => {
     if (isMiniGraph) {
       if (selectedIds.length > 0) {
@@ -454,14 +455,8 @@ export const TopologyContent: React.FC<{
           }
 
           const data = target.getData() as NodeData;
-          console.log('Set SELECTED!');
           data.isSelected = true;
-          interface SelectionHandlerState {
-            [SELECTION_STATE]?: string[];
-          }
-          const state = controller.getState<SelectionHandlerState>();
-          const selectedIds = [target.getId()];
-          state.selectedIds = selectedIds;
+          setSelectedIds([target.getId()]);
 
           target.setData(data);
         }
@@ -469,10 +464,10 @@ export const TopologyContent: React.FC<{
     };
 
     const initialGraph = !controller.hasGraph();
-    console.log(`updateModel`);
+    console.debug(`updateModel`);
     updateModel(controller);
     if (initialGraph) {
-      console.log('onReady');
+      console.debug('onReady');
       onReady(controller);
     }
 
@@ -480,41 +475,51 @@ export const TopologyContent: React.FC<{
     const updateModelTime = Date.now();
     setUpdateModelTime(updateModelTime);
     setUpdateTime(updateModelTime);
-  }, [controller, graphData, graphSettings, highlighter, layoutName, onReady, setDetailsLevel, setUpdateTime]);
+  }, [
+    controller,
+    graphData,
+    graphSettings,
+    highlighter,
+    layoutName,
+    onReady,
+    setDetailsLevel,
+    setSelectedIds,
+    setUpdateTime
+  ]);
 
   //TODO REMOVE THESE DEBUGGING MESSAGES...
+  // Leave them for now, they are just good for understanding state changes while we develop this PFT graph.
   React.useEffect(() => {
-    console.log(`controller changed`);
+    console.debug(`controller changed`);
   }, [controller]);
 
   React.useEffect(() => {
-    console.log(`graphData changed`);
+    console.debug(`graphData changed`);
   }, [graphData]);
 
   React.useEffect(() => {
-    console.log(`graphSettings changed`);
+    console.debug(`graphSettings changed`);
   }, [graphSettings]);
 
   React.useEffect(() => {
-    console.log(`highlighter changed`);
+    console.debug(`highlighter changed`);
   }, [highlighter]);
 
   React.useEffect(() => {
-    console.log(`isMiniGraph changed`);
+    console.debug(`isMiniGraph changed`);
   }, [isMiniGraph]);
 
   React.useEffect(() => {
-    console.log(`onReady changed`);
+    console.debug(`onReady changed`);
     initialLayout = true;
   }, [onReady]);
 
   React.useEffect(() => {
-    console.log(`setDetails changed`);
+    console.debug(`setDetails changed`);
   }, [setDetailsLevel]);
 
   React.useEffect(() => {
     const edges = controller.getGraph().getEdges();
-    console.log(`showTrafficAnimation changed to ${showTrafficAnimation}`);
     if (!showTrafficAnimation) {
       edges
         .filter(e => e.getEdgeAnimationSpeed() !== EdgeAnimationSpeed.none)
@@ -562,7 +567,7 @@ export const TopologyContent: React.FC<{
   }, [controller, showTrafficAnimation, updateModelTime]);
 
   React.useEffect(() => {
-    console.log(`layout changed`);
+    console.debug(`layout changed`);
     if (!controller.hasGraph()) {
       return;
     }
@@ -596,7 +601,7 @@ export const TopologyContent: React.FC<{
 
   useEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
 
-  console.log(`Render Topology hasGraph=${controller.hasGraph()}`);
+  console.debug(`Render Topology hasGraph=${controller.hasGraph()}`);
   return isMiniGraph ? (
     <TopologyView data-test="topology-view-pf">
       <VisualizationSurface data-test="visualization-surface" state={{}} />
@@ -761,7 +766,7 @@ export const GraphPF: React.FC<{
 
   // Set up the controller one time
   React.useEffect(() => {
-    console.log('New Controller!');
+    console.debug('New Controller!');
     const c = new Visualization();
     c.registerElementFactory(elementFactory);
     c.registerLayoutFactory(layoutFactory);
@@ -813,7 +818,7 @@ export const GraphPF: React.FC<{
     );
   }
 
-  console.log(`Render GraphPF! hasGraph=${controller?.hasGraph()}`);
+  console.debug(`Render GraphPF! hasGraph=${controller?.hasGraph()}`);
   return (
     <VisualizationProvider data-test="visualization-provider" controller={controller}>
       <TopologyContent

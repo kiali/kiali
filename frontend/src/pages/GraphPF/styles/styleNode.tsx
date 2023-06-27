@@ -4,7 +4,7 @@ import * as React from 'react';
 import { KeyIcon, TopologyIcon } from '@patternfly/react-icons';
 import BaseNode from '../components/node';
 
-// This is the registered Node component override that utilizes our customized Edge.tsx component.
+// This is the registered Node component override that utilizes our customized Node.tsx component.
 
 type StyleNodeProps = {
   element: Node;

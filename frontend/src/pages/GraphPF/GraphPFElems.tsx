@@ -103,10 +103,10 @@ const badgeMap = new Map<string, string>()
   .set('MI', icons.istio.mirroring.className) // migration
   .set('MS', icons.istio.missingSidecar.className) // blueprint
   .set('RO', icons.istio.root.className) // alt-arrow-circle-right
-  .set('VS', icons.istio.virtualService.className) // code-branch
   .set('RR', icons.istio.requestRouting.className) // code-branch
   .set('RT', icons.istio.requestTimeout.className) // clock
   .set('TS', icons.istio.trafficShifting.className) // share-alt
+  .set('VS', icons.istio.virtualService.className) // code-branch
   .set('WE', icons.istio.workloadEntry.className); // pf-icon-virtual-machine
 
 const EdgeColor = PFColors.Success;
@@ -498,7 +498,7 @@ const safeNum = (num: any): number => {
     return num;
   }
   if (typeof num === 'string' || num instanceof String) {
-    console.log(`Expected number but received string: |${num}|`);
+    console.info(`Expected number but received string: |${num}|`);
   }
   // this will return NaN if the string is 'NaN' or any other non-number
   return Number(num);
@@ -597,7 +597,7 @@ export const elems = (c: Controller): { nodes: Node[]; edges: Edge[] } => {
   };
 };
 
-// TODO: When it is fixed this can be replaced with a straight call to node.getAllNodeChildren();
+// TODO: When/if it is fixed this can be replaced with a straight call to node.getAllNodeChildren();
 // https://github.com/patternfly/patternfly-react/issues/8350
 export const descendents = (node: Node): Node[] => {
   const result: Node[] = [];
