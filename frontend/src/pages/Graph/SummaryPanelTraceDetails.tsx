@@ -27,7 +27,7 @@ import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { responseFlags } from 'utils/ResponseFlags';
 import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/KioskActions';
-import { Visualization } from '@patternfly/react-topology';
+import { Visualization, Node } from '@patternfly/react-topology';
 import { elems, selectAnd } from 'pages/GraphPF/GraphPFElems';
 import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { FocusNode } from 'pages/GraphPF/GraphPF';
@@ -342,7 +342,10 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
     let tooltipContent = <>{text}</>;
     if (targetElt) {
       // PF Graph
-      const controller = this.props.data.summaryTarget as Visualization;
+      const controller =
+        this.props.data.summaryType === 'graph'
+          ? (this.props.data.summaryTarget as Visualization)
+          : (this.props.data.summaryTarget as Node).getController();
       if (!controller) {
         return <></>;
       }
