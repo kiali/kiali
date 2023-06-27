@@ -17,7 +17,7 @@ function install_demoapp(demoapp:string){
     istio = "";
   }
 
-  cy.exec(`../hack/istio/cypress/${demoapp}-status.sh`,{failOnNonZeroExit: false}).then((result) => {
+  cy.exec(`../hack/istio/cypress/${demoapp}-status.sh`,{failOnNonZeroExit: false, timeout:120000}).then((result) => {
     cy.log(result.stdout);
     if (result.code == 0){
       cy.log(`${demoapp} demo app is up and running`);
@@ -37,7 +37,7 @@ function install_demoapp(demoapp:string){
                 cy.log("Installing new demo app.");
                 cy.exec(`../hack/istio/install-${demoapp}-demo.sh ${tg} ${istio} -a ${arch}`,{timeout:300000}).then(() =>{
                   cy.log("Waiting for demoapp to be ready.");
-                  cy.exec(`../hack/istio/cypress/wait-for-namespace.sh -n ${namespaces}`,{timeout:400000});
+                  cy.exec(`../hack/istio/wait-for-namespace.sh -n ${namespaces}`,{timeout:400000});
                 })
               })
             }

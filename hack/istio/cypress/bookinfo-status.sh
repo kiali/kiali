@@ -16,6 +16,7 @@ apps=("details-v1"
       "reviews-v2"
       "reviews-v3")
 
+kubectl wait pods -n bookinfo --for condition=Ready --timeout=60s --all
 input=$(kubectl get pods -n bookinfo -o=custom-columns=NAME:.metadata.name,Status:.status.phase --no-headers=true)
 
 for pod in ${!apps[@]}; do

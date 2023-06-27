@@ -20,7 +20,9 @@ apps=("a-client"
       "y-server"
       "z-server")
 
+kubectl wait pods -n alpha --for condition=Ready --timeout=60s --all
 alpha_input=$(kubectl get pods -n alpha -o=custom-columns=NAME:.metadata.name,Status:.status.phase --no-headers=true)
+kubectl wait pods -n beta --for condition=Ready --timeout=60s --all
 beta_input=$(kubectl get pods -n beta -o=custom-columns=NAME:.metadata.name,Status:.status.phase --no-headers=true)
 
 for pod in ${!apps[@]}; do

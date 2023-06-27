@@ -8,6 +8,7 @@
 ##############################################################################
 set -e
 
+kubectl wait pods -n sleep --for condition=Ready --timeout=60s --all
 input=$(kubectl get pods -n sleep -o=custom-columns=NAME:.metadata.name,Status:.status.phase --no-headers=true)
 
 count=$(echo "$input" | grep sleep | awk -F ' ' '{print $1}' | wc -l)
