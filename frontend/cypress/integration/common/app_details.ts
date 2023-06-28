@@ -26,9 +26,11 @@ Then('user sees inbound metrics information', () => {
   openTab('Inbound Metrics');
   cy.wait('@fetchMetrics');
   cy.waitForReact(1000, '#root');
-  cy.getReact('IstioMetrics', { props: { 'data-test': 'inbound-metrics-component' } })
+  cy.getReact('IstioMetricsComponent', { props: { 'data-test': 'inbound-metrics-component' } })
     // HOCs can match the component name. This filters the HOCs for just the bare component.
-    .then((metricsComponents: any) => metricsComponents.filter(component => component.name === 'IstioMetrics')[0])
+    .then(
+      (metricsComponents: any) => metricsComponents.filter(component => component.name === 'IstioMetricsComponent')[0]
+    )
     .getCurrentState()
     .then(state => {
       cy.wrap(state.dashboard).should('not.be.empty');
@@ -40,9 +42,11 @@ Then('user sees outbound metrics information', () => {
   openTab('Outbound Metrics');
   cy.wait('@fetchMetrics');
   cy.waitForReact(1000, '#root');
-  cy.getReact('IstioMetrics', { props: { 'data-test': 'outbound-metrics-component' } })
+  cy.getReact('IstioMetricsComponent', { props: { 'data-test': 'outbound-metrics-component' } })
     // HOCs can match the component name. This filters the HOCs for just the bare component.
-    .then((metricsComponents: any) => metricsComponents.filter(component => component.name === 'IstioMetrics')[0])
+    .then(
+      (metricsComponents: any) => metricsComponents.filter(component => component.name === 'IstioMetricsComponent')[0]
+    )
     .getCurrentState()
     .then(state => {
       cy.wrap(state.dashboard).should('not.be.empty');
