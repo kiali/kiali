@@ -1,16 +1,12 @@
-FROM registry.access.redhat.com/ubi8-micro AS base-amd64
-FROM registry.access.redhat.com/ubi8-micro AS base-arm64
-FROM registry.access.redhat.com/ubi8-micro AS base-s390x
-FROM registry.access.redhat.com/ubi8-micro AS base-ppc64le
-FROM registry.access.redhat.com/ubi8/openssl as ca-certs-source
+# ubi8/openssl is essentially ubi8-micro with openssl
+FROM registry.access.redhat.com/ubi8/openssl AS base-amd64
+FROM registry.access.redhat.com/ubi8/openssl AS base-arm64
+FROM registry.access.redhat.com/ubi8/openssl AS base-s390x
+FROM registry.access.redhat.com/ubi8/openssl AS base-ppc64le
 
 FROM base-${TARGETARCH}
 
 LABEL maintainer="kiali-dev@googlegroups.com"
-
-# Micro container doesn't have CA certificates, install them now
-COPY --from=ca-certs-source /etc/pki /etc/pki
-COPY --from=ca-certs-source /usr/share/pki /usr/share/pki
 
 # Add kiali user and group
 RUN echo kiali:x:1000: >> /etc/group
