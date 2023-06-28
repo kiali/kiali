@@ -21,6 +21,7 @@ import { DEGRADED, FAILURE, HEALTHY } from 'types/Health';
 import { GraphFindOptions } from './GraphFindOptions';
 import { history, HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
+import { serverConfig } from '../../../config';
 
 type ReduxProps = {
   compressOnHide: boolean;
@@ -162,6 +163,12 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       }
     } else if (!!findValue) {
       HistoryManager.setParam(URLParam.GRAPH_FIND, findValue);
+    } else {
+      serverConfig.kialiFeatureFlags.uiDefaults.graph.findOptions.forEach(opt => {
+        if (opt.autoEnable == true) {
+          props.setFindValue(opt.expression);
+        }
+      });
     }
     const urlHide = HistoryManager.getParam(URLParam.GRAPH_HIDE, urlParams);
     if (!!urlHide) {
@@ -171,6 +178,12 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       }
     } else if (!!hideValue) {
       HistoryManager.setParam(URLParam.GRAPH_HIDE, hideValue);
+    } else {
+      serverConfig.kialiFeatureFlags.uiDefaults.graph.hideOptions.forEach(opt => {
+        if (opt.autoEnable == true) {
+          props.setHideValue(opt.expression);
+        }
+      });
     }
 
     this.state = { findInputValue: findValue, hideInputValue: hideValue };
