@@ -1,6 +1,6 @@
 import React from 'react';
 import { Redirect, Route } from 'react-router-dom';
-import SwitchErrorBoundary from '../SwitchErrorBoundary/SwitchErrorBoundary';
+import { SwitchErrorBoundary } from '../SwitchErrorBoundary/SwitchErrorBoundary';
 import { pathRoutes, defaultRoute } from '../../routes';
 import { Path } from '../../types/Routes';
 import { style } from 'typestyle';
@@ -13,7 +13,7 @@ const containerPadding = style({ padding: '0 20px 0 20px' });
 const containerGray = style({ background: PFColors.Black150 });
 const containerError = style({ height: 'calc(100vh - 76px)' });
 
-class RenderPage extends React.Component<{ isGraph: boolean }> {
+export class RenderPage extends React.Component<{ isGraph: boolean }> {
   renderPaths(paths: Path[]) {
     return paths.map((item, index) => {
       return <Route key={index} path={item.path} component={item.component} render={item.render} />;
@@ -49,5 +49,3 @@ class RenderPage extends React.Component<{ isGraph: boolean }> {
     return <>{!this.props.isGraph ? <div className={containerGray}>{component}</div> : component}</>;
   }
 }
-
-export default RenderPage;

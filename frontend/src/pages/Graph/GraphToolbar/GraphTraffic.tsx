@@ -44,7 +44,7 @@ interface TrafficRateOptionType {
 
 const marginBottom = 20;
 
-class GraphTraffic extends React.PureComponent<GraphTrafficProps, GraphTrafficState> {
+class GraphTrafficComponent extends React.PureComponent<GraphTrafficProps, GraphTrafficState> {
   constructor(props: GraphTrafficProps) {
     super(props);
     this.state = {
@@ -395,5 +395,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
 };
 
 // hook up to Redux for our State to be mapped to props
-const GraphTrafficContainer = connect(mapStateToProps, mapDispatchToProps)(GraphTraffic);
-export default GraphTrafficContainer;
+export const GraphTraffic = connect(mapStateToProps, mapDispatchToProps)(GraphTrafficComponent);

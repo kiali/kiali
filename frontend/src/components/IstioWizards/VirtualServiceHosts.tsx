@@ -8,7 +8,7 @@ type Props = {
   onVsHostsChange: (valid: boolean, vsHosts: string[]) => void;
 };
 
-class VirtualServiceHosts extends React.Component<Props> {
+export class VirtualServiceHosts extends React.Component<Props> {
   isVirtualServiceHostsValid = (vsHosts: string[]): boolean => {
     if (vsHosts.length === 0) {
       // vsHosts must have a value
@@ -56,5 +56,3 @@ class VirtualServiceHosts extends React.Component<Props> {
     );
   }
 }
-
-export default VirtualServiceHosts;

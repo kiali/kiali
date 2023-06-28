@@ -13,7 +13,7 @@ export const infoStyle = style({
   margin: '0px 0px -1px 4px'
 });
 
-class CanaryUpgradeProgress extends React.Component<Props> {
+export class CanaryUpgradeProgress extends React.Component<Props> {
   render() {
     const total =
       this.props.canaryUpgradeStatus.migratedNamespaces.length +
@@ -53,5 +53,3 @@ class CanaryUpgradeProgress extends React.Component<Props> {
     );
   }
 }
-
-export default CanaryUpgradeProgress;

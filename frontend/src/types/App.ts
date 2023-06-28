@@ -1,4 +1,4 @@
-import Namespace from './Namespace';
+import { Namespace } from './Namespace';
 import { Runtime } from './Workload';
 import { AppHealthResponse } from '../types/Health';
 

@@ -9,14 +9,14 @@ import { evalTimeRange } from 'types/Common';
 import { KialiAppState } from 'store/Store';
 import { JaegerThunkActions } from 'actions/JaegerThunkActions';
 import { LineInfo, makeLegend, VCDataPoint } from 'types/VictoryChartInfo';
-import ChartWithLegend from 'components/Charts/ChartWithLegend';
+import { ChartWithLegend } from 'components/Charts/ChartWithLegend';
 import { durationSelector } from '../../store/Selectors';
 import { TraceTooltip } from './TraceTooltip';
 import { isErrorTag } from 'utils/tracing/TracingHelper';
 import { averageSpanDuration, buildQueriesFromSpans } from 'utils/tracing/TraceStats';
 import { style } from 'typestyle';
 import { MetricsStatsQuery } from 'types/MetricsOptions';
-import MetricsStatsThunkActions from 'actions/MetricsStatsThunkActions';
+import { MetricsStatsThunkActions } from 'actions/MetricsStatsThunkActions';
 
 interface JaegerScatterProps {
   duration: number;
@@ -54,7 +54,7 @@ const emptyStyle = style({
   textAlign: 'center'
 });
 
-class JaegerScatter extends React.Component<JaegerScatterProps> {
+class JaegerScatterComponent extends React.Component<JaegerScatterProps> {
   isLoading = false;
   nextToLoad?: JaegerTrace = undefined;
 
@@ -196,5 +196,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setTraceId: (cluster?: string, traceId?: string) => dispatch(JaegerThunkActions.setTraceId(cluster, traceId))
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(JaegerScatter);
-export default Container;
+export const JaegerScatter = connect(mapStateToProps, mapDispatchToProps)(JaegerScatterComponent);

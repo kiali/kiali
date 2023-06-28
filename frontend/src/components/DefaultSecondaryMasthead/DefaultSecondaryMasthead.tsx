@@ -1,6 +1,6 @@
 import React from 'react';
 import { Title, TitleSizes } from '@patternfly/react-core';
-import NamespaceDropdownContainer from '../NamespaceDropdown';
+import { NamespaceDropdown } from '../NamespaceDropdown';
 import { style } from 'typestyle';
 import { KialiIcon } from '../../config/KialiIcon';
 import { KialiAppState } from '../../store/Store';
@@ -78,9 +78,7 @@ class DefaultSecondaryMastheadComponent extends React.Component<Props> {
     return (
       <div className={mainPadding}>
         <div className={flexStyle}>
-          <div>
-            {this.props.hideNamespaceSelector === true ? null : <NamespaceDropdownContainer disabled={disabled} />}
-          </div>
+          <div>{this.props.hideNamespaceSelector === true ? null : <NamespaceDropdown disabled={disabled} />}</div>
           {this.props.rightToolbar && <div className={rightToolbarStyle}>{this.props.rightToolbar}</div>}
         </div>
         <div className={flexStyle}>
@@ -96,5 +94,4 @@ const mapStateToProps = (state: KialiAppState) => ({
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
 });
 
-const DefaultSecondaryMasthead = connect(mapStateToProps)(DefaultSecondaryMastheadComponent);
-export default DefaultSecondaryMasthead;
+export const DefaultSecondaryMasthead = connect(mapStateToProps)(DefaultSecondaryMastheadComponent);

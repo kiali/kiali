@@ -80,7 +80,7 @@ const defaultState: SummaryPanelAppBoxState = {
   ...defaultMetricsState
 };
 
-export default class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, SummaryPanelAppBoxState> {
+export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, SummaryPanelAppBoxState> {
   private metricsPromise?: CancelablePromise<Response<IstioMetricsMap>[]>;
   private readonly mainDivRef: React.RefObject<HTMLDivElement>;
 

@@ -1,6 +1,6 @@
 import * as React from 'react';
-import IstioObjectLink from '../components/Link/IstioObjectLink';
-import Namespace from '../types/Namespace';
+import { IstioObjectLink } from '../components/Link/IstioObjectLink';
+import { Namespace } from '../types/Namespace';
 import { Paths } from '../config';
 import { Link } from 'react-router-dom';
 import { EnvoySummary, Host } from '../types/IstioObjects';

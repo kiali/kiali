@@ -13,7 +13,7 @@ interface IstioConfigReferencesProps {
   cluster?: string;
 }
 
-class IstioConfigReferences extends React.Component<IstioConfigReferencesProps> {
+export class IstioConfigReferences extends React.Component<IstioConfigReferencesProps> {
   objectReferencesExists = (): boolean => {
     if (this.props.objectReferences && this.props.objectReferences.length > 0) {
       return true;
@@ -79,5 +79,3 @@ class IstioConfigReferences extends React.Component<IstioConfigReferencesProps> 
     );
   }
 }
-
-export default IstioConfigReferences;

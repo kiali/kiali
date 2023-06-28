@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
-import { GraphFind } from '../GraphFind';
+import { GraphFindComponent } from '../GraphFind';
 import { EdgeMode } from 'types/Graph';
 
 const testHandler = () => undefined;
@@ -10,7 +10,7 @@ const testSetter = _val => undefined;
 describe('Parse find value test', () => {
   it('should return the correct selector for raw find values', () => {
     const wrapper = shallow(
-      <GraphFind
+      <GraphFindComponent
         cy={undefined}
         edgeLabels={[]}
         edgeMode={EdgeMode.ALL}
@@ -35,7 +35,7 @@ describe('Parse find value test', () => {
       />
     );
 
-    const instance = wrapper.instance() as GraphFind;
+    const instance = wrapper.instance() as GraphFindComponent;
 
     // check coverage of node operands
     // @ts-ignore

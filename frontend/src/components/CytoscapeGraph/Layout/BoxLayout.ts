@@ -104,7 +104,7 @@ class SyntheticEdgeGenerator {
 /**
  * Main class for the BoxLayout, used to bridge with cytoscape to make it easier to integrate with current code
  */
-export default class BoxLayout {
+export class BoxLayout {
   readonly appBoxLayout;
   readonly clusterBoxLayout;
   readonly defaultLayout;

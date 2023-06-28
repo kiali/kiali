@@ -6,7 +6,7 @@ type Props = {
   isCanary: boolean;
 };
 
-class ControlPlaneVersionBadge extends React.Component<Props> {
+export class ControlPlaneVersionBadge extends React.Component<Props> {
   render() {
     return (
       <>
@@ -17,5 +17,3 @@ class ControlPlaneVersionBadge extends React.Component<Props> {
     );
   }
 }
-
-export default ControlPlaneVersionBadge;

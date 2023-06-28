@@ -126,7 +126,7 @@ const isValidTargetPort = (targetPort: string): boolean => {
   return targetPort.length === 0 || isValidPortNumber(targetPort);
 };
 
-class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
+export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
   constructor(props: Props) {
     super(props);
     this.state = initServiceEntry();
@@ -451,5 +451,3 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
     );
   }
 }
-
-export default ServiceEntryForm;

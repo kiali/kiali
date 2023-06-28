@@ -9,7 +9,7 @@ type AmbientLabelProps = {
 
 const AmbientComponent = 'ztunnel';
 
-class AmbientLabel extends React.Component<AmbientLabelProps, {}> {
+export class AmbientLabel extends React.Component<AmbientLabelProps, {}> {
   render() {
     const msg = 'Component is labeled as part of the Istio Ambient Mesh';
 
@@ -54,5 +54,3 @@ class AmbientLabel extends React.Component<AmbientLabelProps, {}> {
     );
   }
 }
-
-export default AmbientLabel;

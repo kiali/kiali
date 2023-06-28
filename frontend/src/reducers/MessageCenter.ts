@@ -73,7 +73,7 @@ const updateMessage = (state: MessageCenterState, messageIds: number[], updater)
   return updateState(state, { groups });
 };
 
-const Messages = (
+export const MessageCenterReducer = (
   state: MessageCenterState = INITIAL_MESSAGE_CENTER_STATE,
   action: KialiAppAction
 ): MessageCenterState => {
@@ -196,5 +196,3 @@ const Messages = (
       return state;
   }
 };
-
-export default Messages;

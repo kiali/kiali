@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallowToJson } from 'enzyme-to-json';
 import { shallow } from 'enzyme';
-import ServiceValidationSummary from '../ServiceValidationSummary';
+import { ServiceValidationSummary } from '../ServiceValidationSummary';
 
 const testScenario = (summary: any) => {
   const wrapper = shallow(summary);

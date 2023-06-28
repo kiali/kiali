@@ -2,7 +2,7 @@ import { MessageCenterActions } from './MessageCenterActions';
 import { KialiAppState } from '../store/Store';
 import { KialiDispatch } from '../types/Redux';
 
-const MessageCenterThunkActions = {
+export const MessageCenterThunkActions = {
   toggleMessageCenter: () => {
     return (dispatch, getState) => {
       const state = getState();
@@ -48,5 +48,3 @@ const MessageCenterThunkActions = {
     };
   }
 };
-
-export default MessageCenterThunkActions;

@@ -6,9 +6,9 @@ import { KialiAppState } from 'store/Store';
 import { replayQueryTimeSelector, durationSelector } from 'store/Selectors';
 import { Tooltip, ButtonVariant, Button, Text } from '@patternfly/react-core';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
-import ToolbarDropdown from 'components/ToolbarDropdown/ToolbarDropdown';
+import { ToolbarDropdown } from 'components/ToolbarDropdown/ToolbarDropdown';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
-import Slider from 'components/IstioWizards/Slider/Slider';
+import { Slider } from 'components/IstioWizards/Slider/Slider';
 import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
 import { style } from 'typestyle';
 import { toString } from './Utils';
@@ -132,14 +132,14 @@ const vrStyle = style({
   width: '1px'
 });
 
-export class Replay extends React.PureComponent<ReplayProps, ReplayState> {
+class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
   static getFrameCount = (elapsedTime: IntervalInMilliseconds): number => {
     return elapsedTime > 0 ? Math.floor(elapsedTime / frameInterval) : 0;
   };
 
   static queryTimeToFrame = (replayQueryTime: TimeInMilliseconds, replayStartTime: TimeInMilliseconds): number => {
     const elapsedTime: IntervalInMilliseconds = replayQueryTime - replayStartTime;
-    const frame: number = Replay.getFrameCount(elapsedTime);
+    const frame: number = ReplayComponent.getFrameCount(elapsedTime);
     return frame;
   };
 
@@ -172,8 +172,8 @@ export class Replay extends React.PureComponent<ReplayProps, ReplayState> {
     this.state = {
       isCustomStartTime: isCustomStartTime,
       refresherRef: undefined,
-      replayFrame: Replay.queryTimeToFrame(0, startTime),
-      replayFrameCount: Replay.getFrameCount(interval),
+      replayFrame: ReplayComponent.queryTimeToFrame(0, startTime),
+      replayFrameCount: ReplayComponent.getFrameCount(interval),
       replaySpeed: defaultReplaySpeed,
       replayWindow: { interval: interval, startTime: startTime } as ReplayWindow,
       status: 'initialized'
@@ -195,7 +195,7 @@ export class Replay extends React.PureComponent<ReplayProps, ReplayState> {
     }
 
     if (this.state.status !== 'initialized') {
-      const frameQueryTime = Replay.frameToQueryTime(this.state.replayFrame, this.state.replayWindow);
+      const frameQueryTime = ReplayComponent.frameToQueryTime(this.state.replayFrame, this.state.replayWindow);
       if (frameQueryTime !== this.props.replayQueryTime) {
         this.props.setReplayQueryTime(frameQueryTime);
       }
@@ -320,7 +320,9 @@ export class Replay extends React.PureComponent<ReplayProps, ReplayState> {
   }
 
   formatTooltip = (val: number): string => {
-    const time: string = toString(Replay.frameToQueryTime(val, this.state.replayWindow), { second: '2-digit' });
+    const time: string = toString(ReplayComponent.frameToQueryTime(val, this.state.replayWindow), {
+      second: '2-digit'
+    });
     return `${time} [${val}/${this.state.replayFrameCount}]`;
   };
 
@@ -381,7 +383,7 @@ export class Replay extends React.PureComponent<ReplayProps, ReplayState> {
       HistoryManager.setParam(URLParam.GRAPH_REPLAY_START, String(replayWindow.startTime));
     }
 
-    const frameCount = Replay.getFrameCount(replayWindow.interval);
+    const frameCount = ReplayComponent.getFrameCount(replayWindow.interval);
     this.setState({
       replayFrame: 0,
       replayFrameCount: frameCount,
@@ -433,7 +435,7 @@ export class Replay extends React.PureComponent<ReplayProps, ReplayState> {
       this.done();
     } else {
       this.setState({ replayFrame: nextFrame });
-      this.props.setReplayQueryTime(Replay.frameToQueryTime(nextFrame, this.state.replayWindow));
+      this.props.setReplayQueryTime(ReplayComponent.frameToQueryTime(nextFrame, this.state.replayWindow));
     }
   };
 
@@ -467,6 +469,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   toggleReplayActive: bindActionCreators(UserSettingsActions.toggleReplayActive, dispatch)
 });
 
-const ReplayContainer = connect(mapStateToProps, mapDispatchToProps)(Replay);
-
-export default ReplayContainer;
+export const Replay = connect(mapStateToProps, mapDispatchToProps)(ReplayComponent);

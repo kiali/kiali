@@ -7,7 +7,7 @@ import { config } from '../../config';
 import { IntervalInMilliseconds } from '../../types/Common';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
-import RefreshButtonContainer from './RefreshButton';
+import { RefreshButton } from './RefreshButton';
 import { HistoryManager, URLParam } from 'app/History';
 import { TooltipPosition } from '@patternfly/react-core';
 import { triggerRefresh } from '../../hooks/refresh';
@@ -32,7 +32,7 @@ type Props = ComponentProps & ReduxProps;
 
 const REFRESH_INTERVALS = config.toolbar.refreshInterval;
 
-export class Refresh extends React.PureComponent<Props> {
+export class RefreshComponent extends React.PureComponent<Props> {
   constructor(props: Props) {
     super(props);
 
@@ -73,12 +73,12 @@ export class Refresh extends React.PureComponent<Props> {
             tooltipPosition={TooltipPosition.left}
           />
           {this.props.hideRefreshButton || (
-            <RefreshButtonContainer handleRefresh={triggerRefresh} disabled={this.props.disabled} />
+            <RefreshButton handleRefresh={triggerRefresh} disabled={this.props.disabled} />
           )}
         </>
       );
     } else {
-      return this.props.hideRefreshButton ? null : <RefreshButtonContainer handleRefresh={triggerRefresh} />;
+      return this.props.hideRefreshButton ? null : <RefreshButton handleRefresh={triggerRefresh} />;
     }
   }
 
@@ -102,6 +102,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
   };
 };
 
-const RefreshContainer = connect(mapStateToProps, mapDispatchToProps)(Refresh);
-
-export default RefreshContainer;
+export const Refresh = connect(mapStateToProps, mapDispatchToProps)(RefreshComponent);

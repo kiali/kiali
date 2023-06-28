@@ -21,7 +21,7 @@ type VirtualItemState = {
   health?: Health;
 };
 
-export default class VirtualItem extends React.Component<VirtualItemProps, VirtualItemState> {
+export class VirtualItem extends React.Component<VirtualItemProps, VirtualItemState> {
   private promises = new PromisesRegistry();
 
   constructor(props: VirtualItemProps) {

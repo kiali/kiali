@@ -1,12 +1,12 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 
-import CytoscapeGraph from '../CytoscapeGraph';
+import { CytoscapeGraph } from '../CytoscapeGraph';
 import * as GRAPH_DATA from '../../../services/__mockData__/getGraphElements';
 import { DefaultTrafficRates, EdgeLabelMode, EdgeMode, GraphType, Layout } from '../../../types/Graph';
-import EmptyGraphLayoutContainer from '../EmptyGraphLayout';
+import { EmptyGraphLayout } from '../EmptyGraphLayout';
 import { decorateGraphData } from '../../../store/Selectors/GraphData';
-import GraphDataSource from '../../../services/GraphDataSource';
+import { GraphDataSource } from '../../../services/GraphDataSource';
 import { toSafeCyFieldName } from '../CytoscapeGraphUtils';
 
 jest.mock('../../../services/Api');
@@ -99,7 +99,7 @@ describe('CytoscapeGraph component test', () => {
         />
       );
 
-      const emptyGraphLayoutWrapper = wrapper.find(EmptyGraphLayoutContainer);
+      const emptyGraphLayoutWrapper = wrapper.find(EmptyGraphLayout);
       const emptyGraphDecorated = decorateGraphData(GRAPH_DATA[testNamespace].elements, 60);
       expect(emptyGraphLayoutWrapper.prop('elements')!.nodes).toEqual(emptyGraphDecorated.nodes);
       expect(emptyGraphLayoutWrapper.prop('elements')!.edges).toEqual(emptyGraphDecorated.edges);

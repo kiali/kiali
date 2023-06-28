@@ -14,7 +14,7 @@ type GraphResetProps = ReduxProps & {};
 
 type GraphResetState = {};
 
-class GraphReset extends React.Component<GraphResetProps, GraphResetState> {
+class GraphResetComponent extends React.Component<GraphResetProps, GraphResetState> {
   onReset = (): void => {
     this.props.resetSettings();
   };
@@ -41,6 +41,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
   };
 };
 
-const GraphResetContainer = connect(null, mapDispatchToProps)(GraphReset);
-
-export default GraphResetContainer;
+export const GraphReset = connect(null, mapDispatchToProps)(GraphResetComponent);

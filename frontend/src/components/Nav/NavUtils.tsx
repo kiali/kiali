@@ -1,6 +1,6 @@
 import { Layout, EdgeLabelMode, NodeType, NodeParamsType, GraphType, TrafficRate, EdgeMode } from '../../types/Graph';
 import { DurationInSeconds, IntervalInMilliseconds } from '../../types/Common';
-import Namespace from '../../types/Namespace';
+import { Namespace } from '../../types/Namespace';
 import { URLParam } from '../../app/History';
 import { getKioskMode, isKioskMode } from '../../utils/SearchParamUtils';
 

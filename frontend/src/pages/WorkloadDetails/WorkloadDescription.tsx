@@ -2,22 +2,22 @@ import * as React from 'react';
 import { Workload } from '../../types/Workload';
 import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { style } from 'typestyle';
-import Labels from '../../components/Label/Labels';
-import LocalTime from '../../components/Time/LocalTime';
+import { Labels } from '../../components/Label/Labels';
+import { LocalTime } from '../../components/Time/LocalTime';
 import { TextOrLink } from '../../components/TextOrLink';
 import { renderAPILogo, renderRuntimeLogo } from '../../components/Logo/Logos';
 import * as H from '../../types/Health';
 import { KialiIcon } from '../../config/KialiIcon';
 import { HealthIndicator } from '../../components/Health/HealthIndicator';
 import { isMultiCluster, serverConfig } from '../../config';
-import MissingSidecar from '../../components/MissingSidecar/MissingSidecar';
+import { MissingSidecar } from '../../components/MissingSidecar/MissingSidecar';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
-import MissingLabel from '../../components/MissingLabel/MissingLabel';
-import MissingAuthPolicy from 'components/MissingAuthPolicy/MissingAuthPolicy';
+import { MissingLabel } from '../../components/MissingLabel/MissingLabel';
+import { MissingAuthPolicy } from 'components/MissingAuthPolicy/MissingAuthPolicy';
 import { hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
-import DetailDescriptionContainer from '../../components/DetailDescription/DetailDescription';
+import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
 import { isGateway, isWaypoint } from '../../helpers/LabelFilterHelper';
-import AmbientLabel from '../../components/Ambient/AmbientLabel';
+import { AmbientLabel } from '../../components/Ambient/AmbientLabel';
 import { validationKey } from '../../types/IstioConfigList';
 
 type WorkloadDescriptionProps = {
@@ -52,7 +52,7 @@ const healthIconStyle = style({
   verticalAlign: '-1px !important'
 });
 
-class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
+export class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
   render() {
     const workload = this.props.workload;
     const apps: string[] = [];
@@ -197,7 +197,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
               tooltipMessage={isTemplateLabels ? 'Labels defined on the Workload template' : undefined}
             />
           )}
-          <DetailDescriptionContainer
+          <DetailDescription
             namespace={this.props.namespace}
             apps={apps}
             services={services}
@@ -218,5 +218,3 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
     );
   }
 }
-
-export default WorkloadDescription;

@@ -1,4 +1,4 @@
-import Namespace from './Namespace';
+import { Namespace } from './Namespace';
 import { WorkloadHealth, WorkloadHealthResponse } from './Health';
 import { ObjectReference, Pod, Service, Validations } from './IstioObjects';
 

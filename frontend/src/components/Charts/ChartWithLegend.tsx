@@ -91,7 +91,7 @@ const noEnoughHeightStyle = style({
   verticalAlign: '-4px !important'
 });
 
-class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React.Component<Props<T, O>, State> {
+export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React.Component<Props<T, O>, State> {
   containerRef: React.RefObject<HTMLDivElement>;
   hoveredItem?: VCDataPoint;
   mouseOnLegend = false;
@@ -610,5 +610,3 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
     return this.props.overlay!.vcLine.datapoints.map(dp => ({ ...dp, y: dp.y * factor, scaleFactor: factor }));
   }
 }
-
-export default ChartWithLegend;

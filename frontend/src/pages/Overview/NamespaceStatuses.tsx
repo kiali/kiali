@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { DEGRADED, FAILURE, HEALTHY, NOT_READY } from '../../types/Health';
-import OverviewStatus from './OverviewStatus';
+import { OverviewStatus } from './OverviewStatus';
 import { OverviewType } from './OverviewToolbar';
 import { NamespaceStatus } from './NamespaceInfo';
 import { switchType } from './OverviewHelper';
@@ -12,7 +12,7 @@ type Props = {
   status: NamespaceStatus;
 };
 
-class NamespaceStatuses extends React.Component<Props> {
+export class NamespaceStatuses extends React.Component<Props> {
   render() {
     const targetPage = switchType(this.props.type, Paths.APPLICATIONS, Paths.SERVICES, Paths.WORKLOADS);
     const name = this.props.name;
@@ -83,5 +83,3 @@ class NamespaceStatuses extends React.Component<Props> {
     );
   }
 }
-
-export default NamespaceStatuses;

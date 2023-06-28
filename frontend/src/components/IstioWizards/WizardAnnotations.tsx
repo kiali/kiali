@@ -27,7 +27,7 @@ interface State {
   validation: string[];
 }
 
-class WizardAnnotations extends React.Component<Props, State> {
+export class WizardAnnotations extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { annotations: this.convertAnnotationsToMap(), validation: [] };
@@ -225,4 +225,3 @@ class WizardAnnotations extends React.Component<Props, State> {
     );
   }
 }
-export default WizardAnnotations;

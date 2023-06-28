@@ -1,6 +1,6 @@
 // Authentication
 
-import authenticationConfig from './AuthenticationConfig';
+import { authenticationConfig } from './AuthenticationConfig';
 // Configuration
 
 import { config } from './Config';

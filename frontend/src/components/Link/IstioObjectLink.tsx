@@ -79,9 +79,9 @@ export class ReferenceIstioObjectLink extends React.Component<ReferenceIstioObje
       <>
         <PFBadge badge={istioType.badge} position={TooltipPosition.top} />
         {showLink && (
-          <IstioObjectLinkContainer name={name} namespace={namespace} cluster={cluster} type={type} subType={subType}>
+          <IstioObjectLink name={name} namespace={namespace} cluster={cluster} type={type} subType={subType}>
             {reference}
-          </IstioObjectLinkContainer>
+          </IstioObjectLink>
         )}
         {!showLink && <div style={{ display: 'inline-block' }}>{reference}</div>}
         {showTooltip && (
@@ -94,7 +94,7 @@ export class ReferenceIstioObjectLink extends React.Component<ReferenceIstioObje
   }
 }
 
-class IstioObjectLink extends React.Component<IstioObjectProps> {
+class IstioObjectLinkComponent extends React.Component<IstioObjectProps> {
   render() {
     const { name, namespace, type, cluster, query } = this.props;
     const href = GetIstioObjectUrl(name, namespace, type, cluster, query);
@@ -120,5 +120,4 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   kiosk: state.globalState.kiosk
 });
 
-const IstioObjectLinkContainer = connect(mapStateToProps)(IstioObjectLink);
-export default IstioObjectLinkContainer;
+export const IstioObjectLink = connect(mapStateToProps)(IstioObjectLinkComponent);

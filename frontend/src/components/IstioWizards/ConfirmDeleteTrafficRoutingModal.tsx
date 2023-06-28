@@ -11,7 +11,7 @@ type Props = {
   onConfirm: () => void;
 };
 
-const ConfirmDeleteTrafficRoutingModal: React.FunctionComponent<Props> = props => {
+export const ConfirmDeleteTrafficRoutingModal: React.FunctionComponent<Props> = props => {
   function hasAnyPeerAuthn(drs: DestinationRuleC[]): boolean {
     return drs.filter(dr => !!dr.hasPeerAuthentication()).length > 0;
   }
@@ -83,5 +83,3 @@ const ConfirmDeleteTrafficRoutingModal: React.FunctionComponent<Props> = props =
     </Modal>
   );
 };
-
-export default ConfirmDeleteTrafficRoutingModal;

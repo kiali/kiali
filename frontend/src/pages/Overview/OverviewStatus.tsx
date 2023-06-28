@@ -29,7 +29,7 @@ type Props = ReduxProps & {
   targetPage: Paths;
 };
 
-class OverviewStatus extends React.Component<Props, {}> {
+class OverviewStatusComponent extends React.Component<Props, {}> {
   setFilters = () => {
     const filters: ActiveFilter[] = [
       {
@@ -100,5 +100,4 @@ const mapStateToProps = (state: KialiAppState) => ({
   refreshInterval: refreshIntervalSelector(state)
 });
 
-const OverviewStatusContainer = connect(mapStateToProps)(OverviewStatus);
-export default OverviewStatusContainer;
+export const OverviewStatus = connect(mapStateToProps)(OverviewStatusComponent);

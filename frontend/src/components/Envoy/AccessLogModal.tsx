@@ -44,7 +44,7 @@ type AccessLogModalState = {
   description: React.ReactFragment;
 };
 
-export default class AccessLogModal extends React.Component<AccessLogModalProps, AccessLogModalState> {
+export class AccessLogModal extends React.Component<AccessLogModalProps, AccessLogModalState> {
   constructor(props) {
     super(props);
 

@@ -47,7 +47,7 @@ const noRulesStyle = style({
   width: '100%'
 });
 
-class Rules extends React.Component<Props> {
+export class Rules extends React.Component<Props> {
   matchAllIndex = (rules: Rule[]): number => {
     let matchAll: number = -1;
     for (let index = 0; index < rules.length; index++) {
@@ -221,5 +221,3 @@ class Rules extends React.Component<Props> {
     );
   }
 }
-
-export default Rules;

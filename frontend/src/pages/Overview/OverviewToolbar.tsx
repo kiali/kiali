@@ -12,14 +12,14 @@ import { KialiAppState } from '../../store/Store';
 import { durationSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { IntervalInMilliseconds, DurationInSeconds } from '../../types/Common';
 import { SortField } from '../../types/SortFilters';
-import NamespaceInfo from './NamespaceInfo';
+import { NamespaceInfo } from './NamespaceInfo';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
 import { style } from 'typestyle';
 import { PFColors } from '../../components/Pf/PfColors';
-import TimeDurationContainer from '../../components/Time/TimeDurationComponent';
+import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
 import { KialiDispatch } from '../../types/Redux';
-import RefreshNotifier from '../../components/Refresh/RefreshNotifier';
+import { RefreshNotifier } from '../../components/Refresh/RefreshNotifier';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -106,7 +106,7 @@ type State = {
   sortField: SortField<NamespaceInfo>;
 };
 
-export class OverviewToolbar extends React.Component<Props, State> {
+class OverviewToolbarComponent extends React.Component<Props, State> {
   static currentOverviewType(): OverviewType {
     const otype = HistoryManager.getParam(URLParam.OVERVIEW_TYPE);
     return (otype as OverviewType) || 'app';
@@ -220,7 +220,7 @@ export class OverviewToolbar extends React.Component<Props, State> {
     const timeToolbar = (
       <div className={timeToolbarStyle}>
         <RefreshNotifier onTick={this.props.onRefresh} />
-        <TimeDurationContainer key="overview-time-range" id="overview-time-range" disabled={false} />
+        <TimeDurationComponent key="overview-time-range" id="overview-time-range" disabled={false} />
       </div>
     );
     const actionsToolbar = (
@@ -308,6 +308,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
   };
 };
 
-const OverviewToolbarContainer = connect(mapStateToProps, mapDispatchToProps)(OverviewToolbar);
-
-export default OverviewToolbarContainer;
+export const OverviewToolbar = connect(mapStateToProps, mapDispatchToProps)(OverviewToolbarComponent);

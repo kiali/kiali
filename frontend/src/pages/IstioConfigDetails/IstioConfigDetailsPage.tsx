@@ -22,16 +22,16 @@ import {
   parseLine,
   parseYamlValidations
 } from '../../types/AceValidations';
-import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropdown';
+import { IstioActionDropdown } from '../../components/IstioActions/IstioActionsDropdown';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import './IstioConfigDetailsPage.css';
-import { default as IstioActionButtonsContainer } from '../../components/IstioActions/IstioActionsButtons';
+import { IstioActionButtons } from '../../components/IstioActions/IstioActionsButtons';
 import { history } from '../../app/History';
 import { Paths } from '../../config';
 import { MessageType } from '../../types/MessageCenter';
 import { getIstioObject, mergeJsonPatch } from '../../utils/IstioConfigUtils';
 import { style } from 'typestyle';
-import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
+import { ParameterizedTabs, activeTab } from '../../components/Tab/Tabs';
 import {
   Drawer,
   DrawerActions,
@@ -45,13 +45,13 @@ import {
 import { dicIstioType } from '../../types/IstioConfigList';
 import { showInMessageCenter } from '../../utils/IstioValidationUtils';
 import { AxiosError } from 'axios';
-import RefreshContainer from '../../components/Refresh/Refresh';
-import IstioConfigOverview from './IstioObjectDetails/IstioConfigOverview';
+import { Refresh } from '../../components/Refresh/Refresh';
+import { IstioConfigOverview } from './IstioObjectDetails/IstioConfigOverview';
 import { Annotation } from 'react-ace/types';
-import RenderHeaderContainer from '../../components/Nav/Page/RenderHeader';
+import { RenderHeader } from '../../components/Nav/Page/RenderHeader';
 import { ErrorMsg } from '../../types/ErrorMsg';
-import ErrorSection from '../../components/ErrorSection/ErrorSection';
-import RefreshNotifier from '../../components/Refresh/RefreshNotifier';
+import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
+import { RefreshNotifier } from '../../components/Refresh/RefreshNotifier';
 import { isParentKiosk } from '../../components/Kiosk/KioskActions';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
@@ -548,7 +548,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     // User won't save if file has yaml errors
     const yamlErrors = !!(this.state.yamlValidations && this.state.yamlValidations.markers.length > 0);
     return !isParentKiosk(this.props.kiosk) ? (
-      <IstioActionButtonsContainer
+      <IstioActionButtons
         objectName={this.props.istioConfigId.object}
         readOnly={!this.canUpdate()}
         canUpdate={this.canUpdate() && this.state.isModified && !this.state.isRemoved && !yamlErrors}
@@ -587,9 +587,9 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     return (
       <>
         <RefreshNotifier onTick={this.onRefresh} />
-        <RenderHeaderContainer
+        <RenderHeader
           location={history.location}
-          rightToolbar={<RefreshContainer id="config_details_refresh" hideLabel={true} />}
+          rightToolbar={<Refresh id="config_details_refresh" hideLabel={true} />}
           actionsToolbar={!this.state.error ? this.renderActions() : undefined}
         />
         {this.state.error && <ErrorSection error={this.state.error} />}
@@ -637,5 +637,4 @@ const mapStateToProps = (state: KialiAppState) => ({
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
 });
 
-const IstioConfigDetailsPage = connect(mapStateToProps)(IstioConfigDetailsPageComponent);
-export default IstioConfigDetailsPage;
+export const IstioConfigDetailsPage = connect(mapStateToProps)(IstioConfigDetailsPageComponent);

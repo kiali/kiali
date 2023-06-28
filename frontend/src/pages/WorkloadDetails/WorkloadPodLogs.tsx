@@ -39,7 +39,7 @@ import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { timeRangeSelector } from '../../store/Selectors';
 import { PFColors, PFColorVal } from 'components/Pf/PfColors';
-import AccessLogModal from 'components/Envoy/AccessLogModal';
+import { AccessLogModal } from 'components/Envoy/AccessLogModal';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { history, URLParam } from 'app/History';
 import { TracingQuery, Span } from 'types/Tracing';
@@ -51,7 +51,7 @@ import { isValid } from 'utils/Common';
 import { isKiosk } from '../../components/Kiosk/KioskActions';
 import { KioskElement } from '../../components/Kiosk/KioskElement';
 import { TimeDurationModal } from '../../components/Time/TimeDurationModal';
-import TimeDurationIndicatorContainer from '../../components/Time/TimeDurationIndicatorComponent';
+import { TimeDurationIndicator } from '../../components/Time/TimeDurationIndicator';
 import { serverConfig } from '../../config';
 
 const appContainerColors = [PFColors.White, PFColors.LightGreen400, PFColors.Purple100, PFColors.LightBlue400];
@@ -188,7 +188,7 @@ const logsHeight = (showToolbar: boolean, fullscreen: boolean, kiosk: string, sh
   };
 };
 
-export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, WorkloadPodLogsState> {
+export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsProps, WorkloadPodLogsState> {
   private promises: PromisesRegistry = new PromisesRegistry();
   private podOptions: string[] = [];
   private readonly logsRef: React.RefObject<any>;
@@ -393,7 +393,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                           </ToolbarItem>
                           <KioskElement>
                             <ToolbarItem>
-                              <TimeDurationIndicatorContainer onClick={this.toggleTimeOptionsVisibility} />
+                              <TimeDurationIndicator onClick={this.toggleTimeOptionsVisibility} />
                             </ToolbarItem>
                           </KioskElement>
                         </ToolbarGroup>
@@ -1082,5 +1082,4 @@ const mapStateToProps = (state: KialiAppState) => {
   };
 };
 
-const WorkloadPodLogsContainer = connect(mapStateToProps)(WorkloadPodLogs);
-export default WorkloadPodLogsContainer;
+export const WorkloadPodLogs = connect(mapStateToProps)(WorkloadPodLogsComponent);

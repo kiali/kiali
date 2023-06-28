@@ -131,5 +131,3 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadCum
     );
   }
 }
-
-export default BreadcrumbView;

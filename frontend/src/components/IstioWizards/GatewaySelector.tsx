@@ -41,7 +41,7 @@ enum GatewayForm {
   PORT
 }
 
-class GatewaySelector extends React.Component<Props, GatewaySelectorState> {
+export class GatewaySelector extends React.Component<Props, GatewaySelectorState> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -259,5 +259,3 @@ class GatewaySelector extends React.Component<Props, GatewaySelectorState> {
     );
   }
 }
-
-export default GatewaySelector;

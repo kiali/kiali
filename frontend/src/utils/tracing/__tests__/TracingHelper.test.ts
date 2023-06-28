@@ -1,6 +1,6 @@
 import { findChildren, findParent, getWorkloadFromSpan, searchParentWorkload } from '../TracingHelper';
 import { Span, KeyValuePair, SpanData } from 'types/JaegerInfo';
-import transformTraceData from '../TraceTransform';
+import { transformTraceData } from '../TraceTransform';
 
 describe('TracingHelper', () => {
   it('should get workload from span', () => {

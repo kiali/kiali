@@ -1,4 +1,4 @@
-import Namespace from './Namespace';
+import { Namespace } from './Namespace';
 import { DurationInSeconds, TimeInSeconds } from './Common';
 import { Health } from './Health';
 import { HealthAnnotationType } from './HealthAnnotation';

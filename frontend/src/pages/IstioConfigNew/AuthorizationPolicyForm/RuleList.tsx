@@ -43,7 +43,7 @@ const noRulesStyle = style({
   width: '100%'
 });
 
-class RuleList extends React.Component<Props> {
+export class RuleList extends React.Component<Props> {
   rows = () => {
     return this.props.ruleList.map((rule, i) => {
       return {
@@ -152,5 +152,3 @@ class RuleList extends React.Component<Props> {
     );
   }
 }
-
-export default RuleList;

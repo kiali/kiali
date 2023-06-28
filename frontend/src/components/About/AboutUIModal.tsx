@@ -29,7 +29,7 @@ const iconStyle = style({
   marginRight: '10px'
 });
 
-class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState> {
+export class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState> {
   constructor(props: AboutUIModalProps) {
     super(props);
     this.state = { showModal: false };
@@ -160,5 +160,3 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
     return null;
   };
 }
-
-export default AboutUIModal;

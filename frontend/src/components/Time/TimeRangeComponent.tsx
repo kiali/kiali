@@ -32,7 +32,7 @@ const labelStyle = style({
   margin: '5px 5px 0px 5px'
 });
 
-export class TimeRangeComponent extends React.Component<Props> {
+export class TimeRangeComp extends React.Component<Props> {
   constructor(props: Props) {
     super(props);
     const range = retrieveTimeRange();
@@ -140,5 +140,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
   };
 };
 
-const TimeRangeContainer = connect(mapStateToProps, mapDispatchToProps)(TimeRangeComponent);
-export default TimeRangeContainer;
+export const TimeRangeComponent = connect(mapStateToProps, mapDispatchToProps)(TimeRangeComp);

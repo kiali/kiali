@@ -3,14 +3,14 @@ import { Label, Flex, FlexItem, Tooltip, Toolbar, ToolbarItem } from '@patternfl
 import { ClusterIcon } from '@patternfly/react-icons';
 
 import { serverConfig } from '../../../config';
-import { default as MeshMTLSStatus } from '../../../components/MTls/MeshMTLSStatus';
-import { default as IstioStatus } from '../../IstioStatus/IstioStatus';
-import PfSpinner from '../../PfSpinner';
-import UserDropdown from './UserDropdown';
-import HelpDropdown from './HelpDropdown';
-import MessageCenterTriggerContainer from '../../../components/MessageCenter/MessageCenterTrigger';
+import { MeshMTLSStatus } from '../../../components/MTls/MeshMTLSStatus';
+import { IstioStatus } from '../../IstioStatus/IstioStatus';
+import { PfSpinner } from '../../PfSpinner';
+import { UserDropdown } from './UserDropdown';
+import { HelpDropdown } from './HelpDropdown';
+import { MessageCenterTrigger } from '../../../components/MessageCenter/MessageCenterTrigger';
 
-class MastheadItems extends React.Component {
+export class MastheadItems extends React.Component {
   render() {
     return (
       <>
@@ -38,7 +38,7 @@ class MastheadItems extends React.Component {
                 <MeshMTLSStatus />
               </FlexItem>
               <FlexItem style={{ marginRight: 0 }}>
-                <MessageCenterTriggerContainer />
+                <MessageCenterTrigger />
               </FlexItem>
               <FlexItem>
                 <HelpDropdown />
@@ -53,5 +53,3 @@ class MastheadItems extends React.Component {
     );
   }
 }
-
-export default MastheadItems;

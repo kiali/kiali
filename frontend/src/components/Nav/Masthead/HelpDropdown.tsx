@@ -1,14 +1,14 @@
 import * as React from 'react';
-import AboutUIModal from '../../About/AboutUIModal';
+import { AboutUIModal } from '../../About/AboutUIModal';
 import { KialiAppState } from '../../../store/Store';
-import DebugInformationContainer from '../../../components/DebugInformation/DebugInformation';
+import { DebugInformation } from '../../../components/DebugInformation/DebugInformation';
 import { Dropdown, DropdownToggle, DropdownItem } from '@patternfly/react-core';
 import { QuestionCircleIcon } from '@patternfly/react-icons/';
 import { connect } from 'react-redux';
 import { isUpstream } from '../../UpstreamDetector/UpstreamDetector';
 import { Status, ExternalServiceInfo, StatusKey } from '../../../types/StatusState';
 import { config, serverConfig } from '../../../config';
-import IstioCertsInfoConnected from 'components/IstioCertsInfo/IstioCertsInfo';
+import { IstioCertsInfo } from 'components/IstioCertsInfo/IstioCertsInfo';
 
 type HelpDropdownProps = {
   status: Status;
@@ -20,7 +20,7 @@ interface HelpDropdownState {
   isDropdownOpen: boolean;
 }
 
-class HelpDropdownContainer extends React.Component<HelpDropdownProps, HelpDropdownState> {
+class HelpDropdownComponent extends React.Component<HelpDropdownProps, HelpDropdownState> {
   about: React.RefObject<AboutUIModal>;
   debugInformation: React.RefObject<any>;
   certsInformation: React.RefObject<any>;
@@ -126,9 +126,9 @@ class HelpDropdownContainer extends React.Component<HelpDropdownProps, HelpDropd
           externalServices={this.props.externalServices}
           warningMessages={this.props.warningMessages}
         />
-        <DebugInformationContainer ref={this.debugInformation} />
+        <DebugInformation ref={this.debugInformation} />
         {serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled && (
-          <IstioCertsInfoConnected ref={this.certsInformation} />
+          <IstioCertsInfo ref={this.certsInformation} />
         )}
         <Dropdown
           data-test="about-help-button"
@@ -150,5 +150,4 @@ const mapStateToProps = (state: KialiAppState) => ({
   warningMessages: state.statusState.warningMessages
 });
 
-const HelpDropdown = connect(mapStateToProps)(HelpDropdownContainer);
-export default HelpDropdown;
+export const HelpDropdown = connect(mapStateToProps)(HelpDropdownComponent);

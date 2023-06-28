@@ -26,7 +26,7 @@ const makeShortcut = (shortcut: Shortcut): JSX.Element => {
   );
 };
 
-const GraphShortcuts = (): JSX.Element => (
+export const GraphShortcuts = (): JSX.Element => (
   <>
     {shortcuts.map(
       (s: Shortcut): JSX.Element => {
@@ -35,5 +35,3 @@ const GraphShortcuts = (): JSX.Element => (
     )}
   </>
 );
-
-export default GraphShortcuts;

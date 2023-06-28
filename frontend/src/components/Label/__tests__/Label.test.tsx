@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
-import Label from '../Label';
+import { Label } from '../Label';
 import { shallowToJson } from 'enzyme-to-json';
 
 const mockBadge = (name = 'my_key', value = 'my_value') => {

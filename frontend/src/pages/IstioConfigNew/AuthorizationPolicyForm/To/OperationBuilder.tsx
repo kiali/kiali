@@ -51,7 +51,7 @@ const headerCells: ICell[] = [
   }
 ];
 
-class OperationBuilder extends React.Component<Props, State> {
+export class OperationBuilder extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -204,5 +204,3 @@ class OperationBuilder extends React.Component<Props, State> {
     );
   }
 }
-
-export default OperationBuilder;

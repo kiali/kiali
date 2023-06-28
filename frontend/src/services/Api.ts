@@ -34,7 +34,7 @@ import { JaegerInfo, JaegerResponse, JaegerSingleResponse } from '../types/Jaege
 import { MeshClusters } from '../types/Mesh';
 import { DashboardQuery, IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
 import { IstioMetricsMap, MetricsStatsResult } from '../types/Metrics';
-import Namespace from '../types/Namespace';
+import { Namespace } from '../types/Namespace';
 import { KialiCrippledFeatures, ServerConfig } from '../types/ServerConfig';
 import { StatusState } from '../types/StatusState';
 import { ServiceDetailsInfo } from '../types/ServiceInfo';

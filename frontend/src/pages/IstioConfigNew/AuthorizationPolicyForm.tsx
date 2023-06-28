@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { FormGroup, FormSelect, FormSelectOption, Switch, TextInputBase as TextInput } from '@patternfly/react-core';
-import RuleBuilder, { Rule } from './AuthorizationPolicyForm/RuleBuilder';
-import RuleList from './AuthorizationPolicyForm/RuleList';
+import { RuleBuilder, Rule } from './AuthorizationPolicyForm/RuleBuilder';
+import { RuleList } from './AuthorizationPolicyForm/RuleList';
 import { isValid } from 'utils/Common';
 
 type Props = {
@@ -52,7 +52,7 @@ export const isAuthorizationPolicyStateValid = (ap: AuthorizationPolicyState): b
   return workloadSelectorRule && denyRule;
 };
 
-class AuthorizationPolicyForm extends React.Component<Props, AuthorizationPolicyState> {
+export class AuthorizationPolicyForm extends React.Component<Props, AuthorizationPolicyState> {
   constructor(props: Props) {
     super(props);
     this.state = initAuthorizationPolicy();
@@ -224,5 +224,3 @@ class AuthorizationPolicyForm extends React.Component<Props, AuthorizationPolicy
     );
   }
 }
-
-export default AuthorizationPolicyForm;

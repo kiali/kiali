@@ -66,7 +66,7 @@ export function getNextTourStop(
   return undefined;
 }
 
-class TourStop extends React.PureComponent<TourStopProps> {
+class TourStopComponent extends React.PureComponent<TourStopProps> {
   tourStopInfo: TourStopInfo[];
 
   constructor(props: TourStopProps) {
@@ -215,6 +215,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
   };
 };
 
-const TourStopContainer = connect(mapStateToProps, mapDispatchToProps)(TourStop);
-
-export default TourStopContainer;
+export const TourStop = connect(mapStateToProps, mapDispatchToProps)(TourStopComponent);

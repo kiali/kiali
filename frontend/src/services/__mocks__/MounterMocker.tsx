@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import { MemoryRouter, Route } from 'react-router';
 import { store } from '../../store/ConfigStore';
 
-export default class MounterMocker {
+export class MounterMocker {
   private promises: Promise<void>[] = [];
   private toMount: JSX.Element = (<></>);
   private caughtErrors: string[] = [];

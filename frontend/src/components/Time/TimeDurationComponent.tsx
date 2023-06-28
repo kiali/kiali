@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { DurationDropdownContainer } from '../DurationDropdown/DurationDropdown';
-import RefreshContainer from 'components/Refresh/Refresh';
+import { Refresh } from 'components/Refresh/Refresh';
 import { KialiAppState } from 'store/Store';
 import { durationSelector, replayActiveSelector } from 'store/Selectors';
 import { DurationInSeconds } from 'types/Common';
@@ -24,7 +24,7 @@ type TimeControlsProps = ReduxProps & {
   supportsReplay?: boolean;
 };
 
-export class TimeDurationComponent extends React.PureComponent<TimeControlsProps> {
+class TimeDurationComp extends React.PureComponent<TimeControlsProps> {
   render() {
     const durationTooltip = this.props.replayActive ? 'Traffic metrics per frame' : 'Traffic metrics per refresh';
     let [prefix, suffix] = this.props.replayActive ? [undefined, 'Traffic'] : ['Last', undefined];
@@ -52,7 +52,7 @@ export class TimeDurationComponent extends React.PureComponent<TimeControlsProps
           tooltipPosition={TooltipPosition.left}
         />
         {!(this.props.supportsReplay && this.props.replayActive) && (
-          <RefreshContainer id="time_range_refresh" disabled={this.props.disabled} hideLabel={true} manageURL={true} />
+          <Refresh id="time_range_refresh" disabled={this.props.disabled} hideLabel={true} manageURL={true} />
         )}
         {this.props.supportsReplay && this.props.replayActive && (
           <Button
@@ -85,6 +85,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   toggleReplayActive: bindActionCreators(UserSettingsActions.toggleReplayActive, dispatch)
 });
 
-const TimeDurationContainer = connect(mapStateToProps, mapDispatchToProps)(TimeDurationComponent);
-
-export default TimeDurationContainer;
+export const TimeDurationComponent = connect(mapStateToProps, mapDispatchToProps)(TimeDurationComp);

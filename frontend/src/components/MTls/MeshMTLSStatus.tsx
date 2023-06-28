@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { KialiAppState } from '../../store/Store';
 import { MTLSIconTypes } from './MTLSIcon';
-import { default as MTLSStatus, emptyDescriptor, StatusDescriptor } from './MTLSStatus';
+import { MTLSStatus, emptyDescriptor, StatusDescriptor } from './MTLSStatus';
 import { style } from 'typestyle';
 import { meshWideMTLSEnabledSelector, meshWideMTLSStatusSelector, namespaceItemsSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
@@ -14,8 +14,8 @@ import { KialiDispatch } from '../../types/Redux';
 import { bindActionCreators } from 'redux';
 import { MeshTlsActions } from '../../actions/MeshTlsActions';
 import { TimeInMilliseconds } from '../../types/Common';
-import Namespace from '../../types/Namespace';
-import connectRefresh from '../Refresh/connectRefresh';
+import { Namespace } from '../../types/Namespace';
+import { connectRefresh } from '../Refresh/connectRefresh';
 
 type ReduxProps = {
   setMeshTlsStatus: (meshStatus: TLSStatus) => void;
@@ -72,7 +72,7 @@ const statusDescriptors = new Map<string, StatusDescriptor>([
   [MTLSStatuses.NOT_ENABLED, emptyDescriptor]
 ]);
 
-class MeshMTLSStatus extends React.Component<Props> {
+class MeshMTLSStatusComponent extends React.Component<Props> {
   componentDidMount() {
     this.fetchStatus();
   }
@@ -138,5 +138,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setMeshTlsStatus: bindActionCreators(MeshTlsActions.setinfo, dispatch)
 });
 
-const MeshMTLSStatusConnected = connectRefresh(connect(mapStateToProps, mapDispatchToProps)(MeshMTLSStatus));
-export default MeshMTLSStatusConnected;
+export const MeshMTLSStatus = connectRefresh(connect(mapStateToProps, mapDispatchToProps)(MeshMTLSStatusComponent));

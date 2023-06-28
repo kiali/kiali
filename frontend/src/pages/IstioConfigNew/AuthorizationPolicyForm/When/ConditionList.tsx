@@ -28,7 +28,7 @@ const noConditionsStyle = style({
   width: '100%'
 });
 
-class ConditionList extends React.Component<Props> {
+export class ConditionList extends React.Component<Props> {
   rows = () => {
     return this.props.conditionList.map((condition, i) => {
       return {
@@ -83,5 +83,3 @@ class ConditionList extends React.Component<Props> {
     );
   }
 }
-
-export default ConditionList;

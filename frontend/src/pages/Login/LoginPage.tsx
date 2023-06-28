@@ -17,7 +17,7 @@ import {
 import { KialiAppState, LoginSession, LoginStatus } from '../../store/Store';
 import { AuthStrategy } from '../../types/Auth';
 import { authenticationConfig, kialiLogo } from '../../config';
-import LoginThunkActions from '../../actions/LoginThunkActions';
+import { LoginThunkActions } from '../../actions/LoginThunkActions';
 import { isAuthStrategyOAuth } from '../../config/AuthenticationConfig';
 import { KialiDispatch } from '../../types/Redux';
 
@@ -42,7 +42,7 @@ type LoginState = {
   errorInput?: string;
 };
 
-export class LoginPage extends React.Component<LoginProps, LoginState> {
+export class LoginPageComponent extends React.Component<LoginProps, LoginState> {
   static contextTypes = {
     store: () => null
   };
@@ -277,5 +277,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   authenticate: (username: string, password: string) => dispatch(LoginThunkActions.authenticate(username, password))
 });
 
-const LoginPageContainer = connect(mapStateToProps, mapDispatchToProps)(LoginPage);
-export default LoginPageContainer;
+export const LoginPage = connect(mapStateToProps, mapDispatchToProps)(LoginPageComponent);

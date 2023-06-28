@@ -247,7 +247,7 @@ type TrafficEdgeHash = {
  * responseTime determines how fast the TrafficPoint should travel from the start to the end of the edge.
  * percentErr determine if the next TrafficPoint is error or not.
  */
-export default class TrafficRenderer {
+export class TrafficRenderer {
   private animationTimer;
   private previousTimestamp;
   private trafficEdges: TrafficEdgeHash = {};

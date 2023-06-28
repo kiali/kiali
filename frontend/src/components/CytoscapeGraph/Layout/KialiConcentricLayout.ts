@@ -47,7 +47,7 @@ const defaults = {
   } // transform a given node position. Useful for changing flow direction in discrete layouts
 };
 
-export default class KialiConcentricLayout {
+export class KialiConcentricLayout {
   readonly cy;
   readonly eles;
   readonly options;

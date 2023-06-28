@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { style } from 'typestyle';
-import legendData, { GraphLegendItem, GraphLegendItemRow } from './GraphLegendData';
+import { legendData, GraphLegendItem, GraphLegendItemRow } from './GraphLegendData';
 import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
 import CloseIcon from '@patternfly/react-icons/dist/js/icons/close-icon';
 import { PFColors } from 'components/Pf/PfColors';
@@ -14,7 +14,7 @@ export interface GraphLegendProps {
 
 const width = '190px';
 
-export default class GraphLegend extends React.Component<GraphLegendProps> {
+export class GraphLegend extends React.Component<GraphLegendProps> {
   render() {
     const legendBoxStyle = style({
       backgroundColor: PFColors.White,

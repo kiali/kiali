@@ -2,16 +2,16 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { Tab } from '@patternfly/react-core';
 
-import ServiceId from '../../types/ServiceId';
-import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
+import { ServiceId } from '../../types/ServiceId';
+import { IstioMetrics } from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { KialiAppState } from '../../store/Store';
 import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
-import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
-import ServiceInfo from './ServiceInfo';
-import TracesComponent from 'components/JaegerIntegration/TracesComponent';
+import { ParameterizedTabs, activeTab } from '../../components/Tab/Tabs';
+import { ServiceInfo } from './ServiceInfo';
+import { TracesComponent } from 'components/JaegerIntegration/TracesComponent';
 import { JaegerInfo } from 'types/JaegerInfo';
-import TrafficDetails from 'components/TrafficList/TrafficDetails';
+import { TrafficDetails } from 'components/TrafficList/TrafficDetails';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
@@ -24,12 +24,12 @@ import {
   Validations,
   getK8sGatewaysAsList
 } from '../../types/IstioObjects';
-import ServiceWizardDropdown from '../../components/IstioWizards/ServiceWizardDropdown';
-import TimeControl from '../../components/Time/TimeControl';
-import RenderHeaderContainer from '../../components/Nav/Page/RenderHeader';
+import { ServiceWizardDropdown } from '../../components/IstioWizards/ServiceWizardDropdown';
+import { TimeControl } from '../../components/Time/TimeControl';
+import { RenderHeader } from '../../components/Nav/Page/RenderHeader';
 import { ErrorMsg } from '../../types/ErrorMsg';
-import ErrorSection from '../../components/ErrorSection/ErrorSection';
-import connectRefresh from '../../components/Refresh/connectRefresh';
+import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
+import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { history } from 'app/History';
 import { durationSelector } from 'store/Selectors';
 
@@ -62,7 +62,7 @@ const tabIndex: { [tab: string]: number } = {
   traces: 3
 };
 
-class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetailsState> {
+class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, ServiceDetailsState> {
   private promises = new PromisesRegistry();
 
   constructor(props: ServiceDetailsProps) {
@@ -192,7 +192,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 
     const inTab = (
       <Tab eventKey={2} title="Inbound Metrics" key="Inbound Metrics">
-        <IstioMetricsContainer
+        <IstioMetrics
           lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.serviceId.namespace}
           object={this.props.serviceId.service}
@@ -258,7 +258,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 
     return (
       <>
-        <RenderHeaderContainer
+        <RenderHeader
           location={history.location}
           rightToolbar={<TimeControl customDuration={useCustomTime} />}
           actionsToolbar={actionsToolbar}
@@ -290,5 +290,4 @@ const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state)
 });
 
-const ServiceDetailsPageContainer = connectRefresh(connect(mapStateToProps)(ServiceDetails));
-export default ServiceDetailsPageContainer;
+export const ServiceDetailsPage = connectRefresh(connect(mapStateToProps)(ServiceDetailsPageComponent));

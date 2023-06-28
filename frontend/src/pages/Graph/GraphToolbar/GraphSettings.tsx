@@ -76,7 +76,7 @@ interface DisplayOptionType {
 
 const marginBottom = 20;
 
-class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSettingsState> {
+class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, GraphSettingsState> {
   constructor(props: GraphSettingsProps) {
     super(props);
     this.state = {
@@ -953,5 +953,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
 };
 
 // hook up to Redux for our State to be mapped to props
-const GraphSettingsContainer = connect(mapStateToProps, mapDispatchToProps)(GraphSettings);
-export default GraphSettingsContainer;
+export const GraphSettings = connect(mapStateToProps, mapDispatchToProps)(GraphSettingsComponent);

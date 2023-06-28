@@ -1,14 +1,14 @@
 import * as React from 'react';
 import { List, Text, TextContent, TextVariants } from '@patternfly/react-core';
 import { ComponentStatus, Status } from '../../types/IstioStatus';
-import IstioComponentStatus from './IstioComponentStatus';
+import { IstioComponentStatus } from './IstioComponentStatus';
 import { PFColors } from '../Pf/PfColors';
 
 type Props = {
   status: ComponentStatus[];
 };
 
-class IstioStatusList extends React.Component<Props> {
+export class IstioStatusList extends React.Component<Props> {
   nonhealthyComponents = () => {
     return this.props.status.filter((c: ComponentStatus) => c.status !== Status.Healthy);
   };
@@ -49,5 +49,3 @@ class IstioStatusList extends React.Component<Props> {
     );
   }
 }
-
-export default IstioStatusList;

@@ -15,7 +15,7 @@ export function triggerRefresh(time?: TimeInMilliseconds) {
   doTick(time);
 }
 
-export default function useRefreshInterval() {
+export function useRefreshInterval() {
   const refreshInterval = useSelector<KialiAppState, IntervalInMilliseconds>(
     state => state.userSettings.refreshInterval
   );

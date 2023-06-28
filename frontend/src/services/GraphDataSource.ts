@@ -11,7 +11,7 @@ import {
   TrafficRate,
   DefaultTrafficRates
 } from '../types/Graph';
-import Namespace from '../types/Namespace';
+import { Namespace } from '../types/Namespace';
 import * as AlertUtils from '../utils/AlertUtils';
 import { PromisesRegistry } from '../utils/CancelablePromises';
 import * as API from './Api';
@@ -87,7 +87,7 @@ type OnEvents = {
   ): void;
 };
 
-export default class GraphDataSource {
+export class GraphDataSource {
   public graphDuration: DurationInSeconds;
   public graphTimestamp: TimeInSeconds;
 

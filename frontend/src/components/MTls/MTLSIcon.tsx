@@ -28,7 +28,7 @@ const nameToSource = new Map<string, string>([
   [MTLSIconTypes.LOCK_HOLLOW_DARK, hollowIconDark]
 ]);
 
-class MTLSIcon extends React.Component<Props> {
+export class MTLSIcon extends React.Component<Props> {
   render() {
     return (
       <Tooltip
@@ -46,4 +46,3 @@ class MTLSIcon extends React.Component<Props> {
     );
   }
 }
-export default MTLSIcon;

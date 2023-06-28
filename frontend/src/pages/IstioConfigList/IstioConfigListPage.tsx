@@ -10,7 +10,7 @@ import {
   IstioConfigItem,
   toIstioItems
 } from '../../types/IstioConfigList';
-import Namespace from '../../types/Namespace';
+import { Namespace } from '../../types/Namespace';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { namespaceEquals } from '../../utils/Common';
 import { SortField } from '../../types/SortFilters';
@@ -20,13 +20,13 @@ import { getFilterSelectedValues } from '../../components/Filters/CommonFilters'
 import * as API from '../../services/Api';
 import { ObjectValidation } from '../../types/IstioObjects';
 import { showInMessageCenter } from '../../utils/IstioValidationUtils';
-import VirtualList from '../../components/VirtualList/VirtualList';
-import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
-import IstioActionsNamespaceDropdown from '../../components/IstioActions/IstioActionsNamespaceDropdown';
+import { VirtualList } from '../../components/VirtualList/VirtualList';
+import { RefreshButton } from '../../components/Refresh/RefreshButton';
+import { IstioActionsNamespaceDropdown } from '../../components/IstioActions/IstioActionsNamespaceDropdown';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
-import DefaultSecondaryMasthead from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
+import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { isMultiCluster, serverConfig } from '../../config';
 
 interface IstioConfigListPageState extends FilterComponent.State<IstioConfigItem> {}
@@ -205,7 +205,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
       <>
         <div style={{ backgroundColor: '#fff' }}>
           <DefaultSecondaryMasthead
-            rightToolbar={<RefreshButtonContainer key={'Refresh'} handleRefresh={this.updateListItems} />}
+            rightToolbar={<RefreshButton key={'Refresh'} handleRefresh={this.updateListItems} />}
             actionsToolbar={<IstioActionsNamespaceDropdown />}
           />
         </div>
@@ -229,5 +229,4 @@ const mapStateToProps = (state: KialiAppState) => ({
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
 });
 
-const IstioConfigListPage = connect(mapStateToProps, null)(IstioConfigListPageComponent);
-export default IstioConfigListPage;
+export const IstioConfigListPage = connect(mapStateToProps, null)(IstioConfigListPageComponent);

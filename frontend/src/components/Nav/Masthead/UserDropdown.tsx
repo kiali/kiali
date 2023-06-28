@@ -5,11 +5,11 @@ import { config } from '../../../config';
 import { MILLISECONDS } from '../../../types/Common';
 import { Timer } from 'globals';
 import { KialiAppState, LoginSession } from '../../../store/Store';
-import authenticationConfig from '../../../config/AuthenticationConfig';
+import { authenticationConfig } from '../../../config/AuthenticationConfig';
 import { AuthStrategy } from '../../../types/Auth';
 import moment from 'moment';
 import { KialiDispatch } from 'types/Redux';
-import LoginThunkActions from '../../../actions/LoginThunkActions';
+import { LoginThunkActions } from '../../../actions/LoginThunkActions';
 import { connect } from 'react-redux';
 import * as API from '../../../services/Api';
 
@@ -28,7 +28,7 @@ type UserState = {
   isSessionTimeoutDismissed: boolean;
 };
 
-class UserDropdownConnected extends React.Component<UserProps, UserState> {
+class UserDropdownComponent extends React.Component<UserProps, UserState> {
   constructor(props: UserProps) {
     super(props);
     this.state = {
@@ -167,6 +167,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   extendSession: (session: LoginSession) => dispatch(LoginThunkActions.extendSession(session))
 });
 
-const UserDropdown = connect(mapStateToProps, mapDispatchToProps)(UserDropdownConnected);
-
-export default UserDropdown;
+export const UserDropdown = connect(mapStateToProps, mapDispatchToProps)(UserDropdownComponent);

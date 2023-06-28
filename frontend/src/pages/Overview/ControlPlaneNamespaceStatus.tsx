@@ -2,7 +2,7 @@ import { Tooltip, TooltipPosition, Label } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 import * as React from 'react';
 import { OutboundTrafficPolicy } from 'types/IstioObjects';
-import NamespaceInfo from './NamespaceInfo';
+import { NamespaceInfo } from './NamespaceInfo';
 import { infoStyle } from './OverviewCardControlPlaneNamespace';
 
 type Props = {
@@ -10,7 +10,7 @@ type Props = {
   outboundTrafficPolicy?: OutboundTrafficPolicy;
 };
 
-class ControlPlaneNamespaceStatus extends React.Component<Props> {
+export class ControlPlaneNamespaceStatus extends React.Component<Props> {
   render() {
     let maxProxyPushTime: number | undefined = undefined;
     if (this.props.namespace.controlPlaneMetrics && this.props.namespace.controlPlaneMetrics.istiod_proxy_time) {
@@ -71,5 +71,3 @@ class ControlPlaneNamespaceStatus extends React.Component<Props> {
     );
   }
 }
-
-export default ControlPlaneNamespaceStatus;

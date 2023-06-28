@@ -27,7 +27,7 @@ type Props = {
   maxLimit: number;
 };
 
-class BootstrapSlider extends React.Component<Props> {
+export class BootstrapSlider extends React.Component<Props> {
   static defaultProps = {
     formatter: value => value,
     onSlide: event => event,
@@ -122,5 +122,3 @@ class BootstrapSlider extends React.Component<Props> {
     );
   }
 }
-
-export default BootstrapSlider;

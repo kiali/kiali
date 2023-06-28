@@ -3,8 +3,7 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { shallowToJson } from 'enzyme-to-json';
 import { mount, shallow, ReactWrapper } from 'enzyme';
-import { OverviewPage } from '../OverviewPage';
-import OverviewPageContainer from '../OverviewPage';
+import { OverviewPage, OverviewPageComponent } from '../OverviewPage';
 import { FilterSelected } from '../../../components/Filters/StatefulFilters';
 import * as API from '../../../services/Api';
 import { AppHealth, NamespaceAppHealth, HEALTHY, FAILURE, DEGRADED } from '../../../types/Health';
@@ -54,7 +53,7 @@ const mountPage = () => {
   mounted = mount(
     <Provider store={store}>
       <Router>
-        <OverviewPageContainer />
+        <OverviewPage />
       </Router>
     </Provider>
   );
@@ -101,7 +100,7 @@ describe('Overview page', () => {
 
   it('renders initial layout', () => {
     const wrapper = shallow(
-      <OverviewPage
+      <OverviewPageComponent
         meshStatus={MTLSStatuses.NOT_ENABLED}
         navCollapse={false}
         duration={600}

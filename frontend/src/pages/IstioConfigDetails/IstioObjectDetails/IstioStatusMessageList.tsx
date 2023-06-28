@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { IstioLevelToSeverity, ObjectCheck, ValidationMessage, ValidationTypes } from '../../../types/IstioObjects';
 import { Flex, FlexItem, Stack, StackItem, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import Validation from '../../../components/Validations/Validation';
+import { Validation } from '../../../components/Validations/Validation';
 import { KialiIcon } from '../../../config/KialiIcon';
 import { style } from 'typestyle';
 
@@ -14,7 +14,7 @@ const infoStyle = style({
   verticalAlign: '-0.125em !important'
 });
 
-class IstioStatusMessageList extends React.Component<Props> {
+export class IstioStatusMessageList extends React.Component<Props> {
   render() {
     return (
       <>
@@ -67,5 +67,3 @@ class IstioStatusMessageList extends React.Component<Props> {
     );
   }
 }
-
-export default IstioStatusMessageList;

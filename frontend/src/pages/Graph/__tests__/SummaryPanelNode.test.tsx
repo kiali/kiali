@@ -1,16 +1,16 @@
 import * as React from 'react';
 import { DecoratedGraphNodeData, GraphNodeData, GraphType, NodeType } from '../../../types/Graph';
 import { mount } from 'enzyme';
-import { SummaryPanelNode, SummaryPanelNodeProps } from '../SummaryPanelNode';
+import { SummaryPanelNodeComponent, SummaryPanelNodeComponentProps } from '../SummaryPanelNode';
 import { MemoryRouter } from 'react-router-dom';
 import { ExpandableSection } from '@patternfly/react-core';
 import { store } from '../../../store/ConfigStore';
 import { Provider } from 'react-redux';
 
-let defaultProps: SummaryPanelNodeProps;
+let defaultProps: SummaryPanelNodeComponentProps;
 let nodeData: GraphNodeData;
 
-describe('SummaryPanelNode', () => {
+describe('SummaryPanelNodeComponent', () => {
   beforeEach(() => {
     nodeData = {
       id: '1234',
@@ -50,7 +50,7 @@ describe('SummaryPanelNode', () => {
     const wrapper = mount(
       <Provider store={store}>
         <MemoryRouter>
-          <SummaryPanelNode {...defaultProps} />
+          <SummaryPanelNodeComponent {...defaultProps} />
         </MemoryRouter>
       </Provider>
     );
@@ -62,7 +62,7 @@ describe('SummaryPanelNode', () => {
     const wrapper = mount(
       <Provider store={store}>
         <MemoryRouter>
-          <SummaryPanelNode {...defaultProps} />
+          <SummaryPanelNodeComponent {...defaultProps} />
         </MemoryRouter>
       </Provider>
     );
@@ -76,7 +76,7 @@ describe('SummaryPanelNode', () => {
     const wrapper = mount(
       <Provider store={store}>
         <MemoryRouter>
-          <SummaryPanelNode {...defaultProps} />
+          <SummaryPanelNodeComponent {...defaultProps} />
         </MemoryRouter>
       </Provider>
     );
@@ -96,7 +96,7 @@ describe('SummaryPanelNode', () => {
     const wrapper = mount(
       <Provider store={store}>
         <MemoryRouter>
-          <SummaryPanelNode {...defaultProps} />
+          <SummaryPanelNodeComponent {...defaultProps} />
         </MemoryRouter>
       </Provider>
     );
@@ -110,7 +110,7 @@ describe('SummaryPanelNode', () => {
     const wrapper = mount(
       <Provider store={store}>
         <MemoryRouter>
-          <SummaryPanelNode {...props} />
+          <SummaryPanelNodeComponent {...props} />
         </MemoryRouter>
       </Provider>
     );
@@ -128,7 +128,7 @@ describe('SummaryPanelNode', () => {
     const wrapper = mount(
       <Provider store={store}>
         <MemoryRouter>
-          <SummaryPanelNode {...props} />
+          <SummaryPanelNodeComponent {...props} />
         </MemoryRouter>
       </Provider>
     );

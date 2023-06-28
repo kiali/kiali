@@ -13,7 +13,7 @@ type AlertToastProps = AlertProps & {
   onTtl?: () => void;
 };
 
-export default class AlertToast extends React.Component<AlertToastProps> {
+export class AlertToast extends React.Component<AlertToastProps> {
   ttlTimer: NodeJS.Timeout | undefined;
 
   componentDidMount() {

@@ -51,7 +51,7 @@ const centerVerticalHorizontalStyle = style({
   }
 });
 
-const InitializingScreen: React.FC<initializingScreenProps> = (props: initializingScreenProps) => {
+export const InitializingScreen: React.FC<initializingScreenProps> = (props: initializingScreenProps) => {
   const errorDiv = React.createRef<HTMLDivElement>();
 
   if (document.documentElement) {
@@ -91,5 +91,3 @@ const InitializingScreen: React.FC<initializingScreenProps> = (props: initializi
     </div>
   );
 };
-
-export default InitializingScreen;

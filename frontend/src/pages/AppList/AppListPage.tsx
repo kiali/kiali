@@ -2,11 +2,11 @@ import * as React from 'react';
 import * as FilterHelper from '../../components/FilterList/FilterHelper';
 import { RenderContent } from '../../components/Nav/Page';
 import * as AppListFilters from './FiltersAndSorts';
-import DefaultSecondaryMasthead from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
+import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import * as FilterComponent from '../../components/FilterList/FilterComponent';
 import { AppListItem } from '../../types/AppList';
 import { DurationInSeconds } from '../../types/Common';
-import Namespace from '../../types/Namespace';
+import { Namespace } from '../../types/Namespace';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
@@ -17,9 +17,9 @@ import { ActiveFiltersInfo, ActiveTogglesInfo } from '../../types/Filters';
 import { FilterSelected, StatefulFilters, Toggles } from '../../components/Filters/StatefulFilters';
 import * as API from '../../services/Api';
 import * as AppListClass from './AppListClass';
-import VirtualList from '../../components/VirtualList/VirtualList';
-import TimeDurationContainer from '../../components/Time/TimeDurationComponent';
-import RefreshNotifier from '../../components/Refresh/RefreshNotifier';
+import { VirtualList } from '../../components/VirtualList/VirtualList';
+import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
+import { RefreshNotifier } from '../../components/Refresh/RefreshNotifier';
 import { isMultiCluster } from '../../config';
 
 type AppListPageState = FilterComponent.State<AppListItem>;
@@ -134,7 +134,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
         <div style={{ backgroundColor: '#fff' }}>
           <DefaultSecondaryMasthead
             rightToolbar={
-              <TimeDurationContainer key={'DurationDropdown'} id="app-list-duration-dropdown" disabled={false} />
+              <TimeDurationComponent key={'DurationDropdown'} id="app-list-duration-dropdown" disabled={false} />
             }
           />
         </div>
@@ -158,6 +158,4 @@ const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state)
 });
 
-const AppListPage = connect(mapStateToProps)(AppListPageComponent);
-
-export default AppListPage;
+export const AppListPage = connect(mapStateToProps)(AppListPageComponent);

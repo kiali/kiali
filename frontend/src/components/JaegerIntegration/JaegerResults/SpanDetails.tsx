@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Card, CardBody } from '@patternfly/react-core';
 
 import { RichSpanData } from 'types/JaegerInfo';
-import SpanTable from './SpanTable';
+import { SpanTable } from './SpanTable';
 import { FilterSelected, StatefulFilters } from 'components/Filters/StatefulFilters';
 import { spanFilters } from './Filters';
 import { runFilters } from 'components/FilterList/FilterHelper';

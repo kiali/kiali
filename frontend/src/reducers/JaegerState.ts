@@ -21,5 +21,3 @@ export const JaegerStateReducer = (state: JaegerState = INITIAL_JAEGER_STATE, ac
       return state;
   }
 };
-
-export default JaegerStateReducer;

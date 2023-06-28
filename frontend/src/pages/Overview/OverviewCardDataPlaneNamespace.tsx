@@ -27,7 +27,7 @@ function showMetrics(metrics: Metric[] | undefined): boolean {
   return false;
 }
 
-class OverviewCardDataPlaneNamespace extends React.Component<Props, {}> {
+export class OverviewCardDataPlaneNamespace extends React.Component<Props, {}> {
   render() {
     let series: VCLine<RichDataPoint>[] = [];
 
@@ -89,5 +89,3 @@ class OverviewCardDataPlaneNamespace extends React.Component<Props, {}> {
     );
   }
 }
-
-export default OverviewCardDataPlaneNamespace;

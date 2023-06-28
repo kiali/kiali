@@ -9,7 +9,7 @@ type Props = {
   onConnectionPool: (isConnectionPool: boolean, connectionPool: ConnectionPoolSettings) => void;
 };
 
-class ConnectionPool extends React.Component<Props> {
+export class ConnectionPool extends React.Component<Props> {
   render() {
     return (
       <>
@@ -73,5 +73,3 @@ class ConnectionPool extends React.Component<Props> {
     );
   }
 }
-
-export default ConnectionPool;

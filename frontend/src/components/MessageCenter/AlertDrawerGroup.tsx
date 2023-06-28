@@ -5,8 +5,8 @@ import { Card, Button, CardBody, CardFooter, ButtonVariant } from '@patternfly/r
 import { InfoIcon } from '@patternfly/react-icons';
 import { style } from 'typestyle';
 import { NotificationGroup } from '../../types/MessageCenter';
-import MessageCenterThunkActions from 'actions/MessageCenterThunkActions';
-import AlertDrawerMessageContainer from './AlertDrawerMessage';
+import { MessageCenterThunkActions } from 'actions/MessageCenterThunkActions';
+import { AlertDrawerMessage } from './AlertDrawerMessage';
 
 type ReduxProps = {
   clearGroup: (group) => void;
@@ -25,7 +25,7 @@ const noNotificationsMessage = (
   </>
 );
 
-class AlertDrawerGroup extends React.PureComponent<AlertDrawerGroupProps> {
+class AlertDrawerGroupComponent extends React.PureComponent<AlertDrawerGroupProps> {
   static readonly body = style({
     padding: 0 // note: I don't know why but paddingTop with the additional explicit style prop used below
   });
@@ -45,23 +45,23 @@ class AlertDrawerGroup extends React.PureComponent<AlertDrawerGroupProps> {
 
     return (
       <Card>
-        <CardBody className={AlertDrawerGroup.body} style={{ paddingTop: 0 }}>
+        <CardBody className={AlertDrawerGroupComponent.body} style={{ paddingTop: 0 }}>
           {group.messages.length === 0 && noNotificationsMessage}
           {this.getMessages().map(message => (
-            <AlertDrawerMessageContainer key={message.id} message={message} />
+            <AlertDrawerMessage key={message.id} message={message} />
           ))}
         </CardBody>
         {group.showActions && group.messages.length > 0 && (
-          <CardFooter className={AlertDrawerGroup.footer}>
+          <CardFooter className={AlertDrawerGroupComponent.footer}>
             <Button
-              className={AlertDrawerGroup.left}
+              className={AlertDrawerGroupComponent.left}
               variant={ButtonVariant.link}
               onClick={() => this.props.markGroupAsRead(group)}
             >
               Mark All Read
             </Button>
             <Button
-              className={AlertDrawerGroup.right}
+              className={AlertDrawerGroupComponent.right}
               variant={ButtonVariant.link}
               onClick={() => this.props.clearGroup(group)}
             >
@@ -85,5 +85,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
   };
 };
 
-const AlertDrawerGroupContainer = connect(null, mapDispatchToProps)(AlertDrawerGroup);
-export default AlertDrawerGroupContainer;
+export const AlertDrawerGroup = connect(null, mapDispatchToProps)(AlertDrawerGroupComponent);

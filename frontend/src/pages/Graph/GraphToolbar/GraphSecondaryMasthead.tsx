@@ -1,14 +1,14 @@
 import React from 'react';
-import SecondaryMasthead from 'components/Nav/SecondaryMasthead';
-import NamespaceDropdownContainer from 'components/NamespaceDropdown';
+import { SecondaryMasthead } from 'components/Nav/SecondaryMasthead';
+import { NamespaceDropdown } from 'components/NamespaceDropdown';
 import { style } from 'typestyle';
-import TourStopContainer from 'components/Tour/TourStop';
+import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from '../GraphHelpTour';
-import ToolbarDropdown from 'components/ToolbarDropdown/ToolbarDropdown';
+import { ToolbarDropdown } from 'components/ToolbarDropdown/ToolbarDropdown';
 import { GraphType } from 'types/Graph';
 import * as _ from 'lodash';
-import TimeDurationContainer from '../../../components/Time/TimeDurationComponent';
-import GraphTrafficContainer from './GraphTraffic';
+import { TimeDurationComponent } from '../../../components/Time/TimeDurationComponent';
+import { GraphTraffic } from './GraphTraffic';
 
 type GraphSecondaryMastheadProps = {
   disabled: boolean;
@@ -46,22 +46,22 @@ const rightToolbarStyle = style({
  */
 const GRAPH_TYPES = _.mapValues(GraphType, val => `${_.capitalize(_.startCase(val))} graph`);
 
-export default class GraphSecondaryMasthead extends React.PureComponent<GraphSecondaryMastheadProps> {
+export class GraphSecondaryMasthead extends React.PureComponent<GraphSecondaryMastheadProps> {
   render() {
     const graphTypeKey: string = _.findKey(GraphType, val => val === this.props.graphType)!;
 
     return (
       <SecondaryMasthead title={false}>
         <div className={mastheadStyle}>
-          <NamespaceDropdownContainer disabled={this.props.isNodeGraph} />
+          <NamespaceDropdown disabled={this.props.isNodeGraph} />
           <span className={vrStyle} />
-          <TourStopContainer info={GraphTourStops.GraphTraffic}>
+          <TourStop info={GraphTourStops.GraphTraffic}>
             <span className={leftSpacerStyle}>
-              <GraphTrafficContainer disabled={this.props.disabled} />
+              <GraphTraffic disabled={this.props.disabled} />
             </span>
-          </TourStopContainer>
+          </TourStop>
           <span className={vrStyle} />
-          <TourStopContainer info={GraphTourStops.GraphType}>
+          <TourStop info={GraphTourStops.GraphType}>
             <span className={leftSpacerStyle}>
               <ToolbarDropdown
                 id={'graph_type_dropdown'}
@@ -72,11 +72,11 @@ export default class GraphSecondaryMasthead extends React.PureComponent<GraphSec
                 options={GRAPH_TYPES}
               />
             </span>
-          </TourStopContainer>
+          </TourStop>
           <div className={rightToolbarStyle}>
-            <TourStopContainer info={GraphTourStops.TimeRange}>
-              <TimeDurationContainer id="graph_time_range" disabled={this.props.disabled} supportsReplay={true} />
-            </TourStopContainer>
+            <TourStop info={GraphTourStops.TimeRange}>
+              <TimeDurationComponent id="graph_time_range" disabled={this.props.disabled} supportsReplay={true} />
+            </TourStop>
           </div>
         </div>
       </SecondaryMasthead>

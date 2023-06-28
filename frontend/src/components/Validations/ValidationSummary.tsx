@@ -3,7 +3,7 @@ import { CSSProperties } from 'react';
 import { StatusCondition, ValidationTypes } from '../../types/IstioObjects';
 import { style } from 'typestyle';
 import { Text, TextVariants, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import Validation from './Validation';
+import { Validation } from './Validation';
 
 interface Props {
   id: string;
@@ -123,5 +123,3 @@ export class ValidationSummary extends React.PureComponent<Props> {
     );
   }
 }
-
-export default ValidationSummary;

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Text, TextVariants } from '@patternfly/react-core';
-import ValidationSummary from './ValidationSummary';
+import { ValidationSummary } from './ValidationSummary';
 import { style } from 'typestyle';
 
 const tooltipListStyle = style({
@@ -30,5 +30,3 @@ export class ServiceValidationSummary extends ValidationSummary {
     return this.tooltipSummary();
   }
 }
-
-export default ServiceValidationSummary;

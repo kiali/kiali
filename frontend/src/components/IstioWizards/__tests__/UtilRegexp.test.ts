@@ -44,5 +44,4 @@ describe('Should check a complex regexp name', () => {
 });
 
 // To avoid TS error: "All files must be modules when the '--isolatedModules' flag is provided"
-const dummy = 0;
-export default dummy;
+export const dummy = 0;

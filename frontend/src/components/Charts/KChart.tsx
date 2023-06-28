@@ -13,7 +13,7 @@ import { CubesIcon, ErrorCircleOIcon } from '@patternfly/react-icons';
 import { ChartModel } from 'types/Dashboards';
 import { VCLines, RawOrBucket, RichDataPoint, LineInfo } from 'types/VictoryChartInfo';
 import { Overlay } from 'types/Overlay';
-import ChartWithLegend, { LEGEND_HEIGHT, MIN_HEIGHT, MIN_HEIGHT_YAXIS } from './ChartWithLegend';
+import { ChartWithLegend, LEGEND_HEIGHT, MIN_HEIGHT, MIN_HEIGHT_YAXIS } from './ChartWithLegend';
 import { BrushHandlers } from './Container';
 import { defaultIconStyle, KialiIcon } from '../../config/KialiIcon';
 import { style } from 'typestyle';
@@ -93,7 +93,7 @@ const scatterInfo: ChartTypeData = {
   sizeRatio: 1 / 30
 };
 
-class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, State> {
+export class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, State> {
   constructor(props: KChartProps<T>) {
     super(props);
     this.state = {
@@ -262,5 +262,3 @@ class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, State> 
     );
   }
 }
-
-export default KChart;

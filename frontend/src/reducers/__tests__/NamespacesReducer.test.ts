@@ -1,10 +1,10 @@
-import namespaceState from '../NamespaceState';
+import { NamespaceStateReducer } from '../NamespaceState';
 import { GlobalActions } from '../../actions/GlobalActions';
 import { NamespaceActions } from '../../actions/NamespaceAction';
 
 describe('Namespaces reducer', () => {
   it('should return the initial state', () => {
-    expect(namespaceState(undefined, GlobalActions.unknown())).toEqual({
+    expect(NamespaceStateReducer(undefined, GlobalActions.unknown())).toEqual({
       isFetching: false,
       activeNamespaces: [],
       items: [],
@@ -29,7 +29,7 @@ describe('Namespaces reducer', () => {
       lastUpdated: undefined,
       filter: ''
     };
-    expect(namespaceState(currentState, requestStartedAction)).toEqual(expectedState);
+    expect(NamespaceStateReducer(currentState, requestStartedAction)).toEqual(expectedState);
   });
 
   it('should handle SET_FILTER', () => {
@@ -48,7 +48,7 @@ describe('Namespaces reducer', () => {
       lastUpdated: undefined,
       filter: 'istio'
     };
-    expect(namespaceState(currentState, requestStartedAction)).toEqual(expectedState);
+    expect(NamespaceStateReducer(currentState, requestStartedAction)).toEqual(expectedState);
   });
 
   it('should handle TOGGLE_NAMESPACE to remove a namespace', () => {
@@ -67,7 +67,7 @@ describe('Namespaces reducer', () => {
       lastUpdated: undefined,
       filter: ''
     };
-    expect(namespaceState(currentState, requestStartedAction)).toEqual(expectedState);
+    expect(NamespaceStateReducer(currentState, requestStartedAction)).toEqual(expectedState);
   });
 
   it('should handle TOGGLE_NAMESPACE to add a namespace', () => {
@@ -86,7 +86,7 @@ describe('Namespaces reducer', () => {
       lastUpdated: undefined,
       filter: ''
     };
-    expect(namespaceState(currentState, requestStartedAction)).toEqual(expectedState);
+    expect(NamespaceStateReducer(currentState, requestStartedAction)).toEqual(expectedState);
   });
 
   it('should handle NAMESPACE_REQUEST_STARTED', () => {
@@ -105,7 +105,7 @@ describe('Namespaces reducer', () => {
       lastUpdated: undefined,
       filter: ''
     };
-    expect(namespaceState(currentState, requestStartedAction)).toEqual(expectedState);
+    expect(NamespaceStateReducer(currentState, requestStartedAction)).toEqual(expectedState);
   });
 
   it('should handle NAMESPACE_FAILED', () => {
@@ -122,7 +122,7 @@ describe('Namespaces reducer', () => {
       items: [],
       filter: ''
     };
-    expect(namespaceState(currentState, requestStartedAction)).toEqual(expectedState);
+    expect(NamespaceStateReducer(currentState, requestStartedAction)).toEqual(expectedState);
   });
 
   it('should handle NAMESPACE_SUCCESS', () => {
@@ -145,6 +145,6 @@ describe('Namespaces reducer', () => {
       lastUpdated: currentDate,
       filter: ''
     };
-    expect(namespaceState(currentState, requestStartedAction)).toEqual(expectedState);
+    expect(NamespaceStateReducer(currentState, requestStartedAction)).toEqual(expectedState);
   });
 });

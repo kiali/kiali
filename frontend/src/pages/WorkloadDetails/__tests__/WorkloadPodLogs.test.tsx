@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Provider } from 'react-redux';
 import { mount, shallow } from 'enzyme';
 import screenfull, { Screenfull } from 'screenfull';
-import { WorkloadPodLogs } from '../WorkloadPodLogs';
+import { WorkloadPodLogsComponent } from '../WorkloadPodLogs';
 import { Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core';
 import { store } from '../../../store/ConfigStore';
 
@@ -27,7 +27,7 @@ const defaultProps = () => ({
   ]
 });
 
-describe('WorkloadPodLogs', () => {
+describe('WorkloadPodLogsComponent', () => {
   beforeEach(() => {
     jest.mock('screenfull');
 
@@ -39,12 +39,12 @@ describe('WorkloadPodLogs', () => {
   });
 
   it('renders', () => {
-    const wrapper = shallow(<WorkloadPodLogs {...defaultProps()} />);
+    const wrapper = shallow(<WorkloadPodLogsComponent {...defaultProps()} />);
     expect(wrapper.exists()).toBeTruthy();
   });
 
   it('renders a kebab toggle dropdown', () => {
-    const wrapper = shallow(<WorkloadPodLogs {...defaultProps()} />);
+    const wrapper = shallow(<WorkloadPodLogsComponent {...defaultProps()} />);
     const kebabDropdownWrapper = wrapper
       .find(Dropdown)
       .findWhere(n => n.prop('toggle') && n.prop('toggle').type === KebabToggle);
@@ -56,7 +56,7 @@ describe('WorkloadPodLogs', () => {
     // using 'mount' since the dropdowns are children of the kebab
     const wrapper = mount(
       <Provider store={store}>
-        <WorkloadPodLogs {...defaultProps()} />
+        <WorkloadPodLogsComponent {...defaultProps()} />
       </Provider>
     );
     wrapper.find(KebabToggle).find('button').simulate('click');
@@ -73,7 +73,7 @@ describe('WorkloadPodLogs', () => {
     props.pods[0].istioContainers = [];
     const wrapper = mount(
       <Provider store={store}>
-        <WorkloadPodLogs {...props} />
+        <WorkloadPodLogsComponent {...props} />
       </Provider>
     );
     wrapper.find(KebabToggle).find('button').simulate('click');
@@ -91,7 +91,7 @@ describe('WorkloadPodLogs', () => {
 
     const wrapper = mount(
       <Provider store={store}>
-        <WorkloadPodLogs {...defaultProps()} />
+        <WorkloadPodLogsComponent {...defaultProps()} />
       </Provider>
     );
     wrapper.find(KebabToggle).find('button').simulate('click');

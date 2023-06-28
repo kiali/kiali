@@ -11,7 +11,7 @@ type Props = {
   onK8sRouteHostsChange: (valid: boolean, k8sRouteHosts: string[]) => void;
 };
 
-class K8sRouteHosts extends React.Component<Props> {
+export class K8sRouteHosts extends React.Component<Props> {
   isK8sRouteHostsValid = (k8sRouteHosts: string[]): boolean => {
     // All k8s route hosts must be valid
     return k8sRouteHosts.every(host => {
@@ -48,5 +48,3 @@ class K8sRouteHosts extends React.Component<Props> {
     );
   }
 }
-
-export default K8sRouteHosts;

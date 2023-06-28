@@ -54,7 +54,7 @@ const statusMsg = {
   [Status.Unreachable]: 'Unreachable'
 };
 
-class IstioComponentStatus extends React.Component<Props> {
+export class IstioComponentStatus extends React.Component<Props> {
   renderIcon = (status: Status, isCore: boolean) => {
     let compIcon = validToIcon[`${status === Status.Healthy}-${isCore}`];
     if (status === Status.NotReady) {
@@ -80,5 +80,3 @@ class IstioComponentStatus extends React.Component<Props> {
     return this.renderCells();
   }
 }
-
-export default IstioComponentStatus;

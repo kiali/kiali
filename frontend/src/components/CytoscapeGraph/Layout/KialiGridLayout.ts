@@ -73,7 +73,7 @@ export const makeBoundingBox = bb => {
   return defaultBB;
 };
 
-export default class KialiGridLayout {
+export class KialiGridLayout {
   readonly cy;
   readonly eles;
   readonly options;

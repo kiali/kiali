@@ -1,35 +1,33 @@
 import { combineReducers } from 'redux';
 
 import { KialiAppState } from '../store/Store';
-import messageCenter from './MessageCenter';
-import loginState from './LoginState';
-import HelpDropdownState from './HelpDropdownState';
-import graphDataState from './GraphDataState';
-import globalState from './GlobalState';
-import namespaceState from './NamespaceState';
-import UserSettingsState from './UserSettingsState';
-import TourState from './TourState';
+import { MessageCenterReducer } from './MessageCenter';
+import { LoginStateReducer } from './LoginState';
+import { HelpDropdownStateReducer } from './HelpDropdownState';
+import { GraphDataStateReducer } from './GraphDataState';
+import { GlobalStateReducer } from './GlobalState';
+import { NamespaceStateReducer } from './NamespaceState';
+import { UserSettingsStateReducer } from './UserSettingsState';
+import { TourStateReducer } from './TourState';
 import { KialiAppAction } from '../actions/KialiAppAction';
-import MeshTlsState from './MeshTlsState';
-import IstioStatusState from './IstioStatusState';
-import JaegerStateReducer from './JaegerState';
-import MetricsStatsReducer from './MetricsStatsState';
-import IstioCertsInfoState from './IstioCertsInfoState';
+import { MeshTlsStateReducer } from './MeshTlsState';
+import { IstioStatusStateReducer } from './IstioStatusState';
+import { JaegerStateReducer } from './JaegerState';
+import { MetricsStatsStateReducer } from './MetricsStatsState';
+import { IstioCertsInfoStateReducer } from './IstioCertsInfoState';
 
-const rootReducer = combineReducers<KialiAppState, KialiAppAction>({
-  authentication: loginState,
-  globalState: globalState,
-  graph: graphDataState,
-  messageCenter,
-  namespaces: namespaceState,
-  statusState: HelpDropdownState,
-  userSettings: UserSettingsState,
+export const rootReducer = combineReducers<KialiAppState, KialiAppAction>({
+  authentication: LoginStateReducer,
+  globalState: GlobalStateReducer,
+  graph: GraphDataStateReducer,
+  messageCenter: MessageCenterReducer,
+  namespaces: NamespaceStateReducer,
+  statusState: HelpDropdownStateReducer,
+  userSettings: UserSettingsStateReducer,
   jaegerState: JaegerStateReducer,
-  meshTLSStatus: MeshTlsState,
-  istioStatus: IstioStatusState,
-  istioCertsInfo: IstioCertsInfoState,
-  tourState: TourState,
-  metricsStats: MetricsStatsReducer
+  meshTLSStatus: MeshTlsStateReducer,
+  istioStatus: IstioStatusStateReducer,
+  istioCertsInfo: IstioCertsInfoStateReducer,
+  tourState: TourStateReducer,
+  metricsStats: MetricsStatsStateReducer
 });
-
-export default rootReducer;

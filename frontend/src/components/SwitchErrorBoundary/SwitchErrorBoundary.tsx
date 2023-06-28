@@ -12,7 +12,7 @@ type SwitchErrorBoundaryState = {
   hasError: boolean;
 };
 
-export default class SwitchErrorBoundary extends React.Component<SwitchErrorBoundaryProps, SwitchErrorBoundaryState> {
+export class SwitchErrorBoundary extends React.Component<SwitchErrorBoundaryProps, SwitchErrorBoundaryState> {
   private show: boolean;
 
   constructor(props: SwitchErrorBoundaryProps) {

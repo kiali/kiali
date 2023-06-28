@@ -9,7 +9,7 @@ export const INITIAL_TOUR_STATE: TourState = {
   activeStop: undefined
 };
 
-const tour = (state: TourState = INITIAL_TOUR_STATE, action: KialiAppAction): TourState => {
+export const TourStateReducer = (state: TourState = INITIAL_TOUR_STATE, action: KialiAppAction): TourState => {
   switch (action.type) {
     case getType(TourActions.endTour):
       return updateState(state, { activeTour: undefined, activeStop: undefined });
@@ -24,5 +24,3 @@ const tour = (state: TourState = INITIAL_TOUR_STATE, action: KialiAppAction): To
       return state;
   }
 };
-
-export default tour;

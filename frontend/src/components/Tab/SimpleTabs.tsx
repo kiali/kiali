@@ -16,7 +16,7 @@ type SimpleTabsProps = {
 interface SimpleTabsState {
   activeTab: number;
 }
-export default class SimpleTabs extends React.Component<SimpleTabsProps, SimpleTabsState> {
+export class SimpleTabs extends React.Component<SimpleTabsProps, SimpleTabsState> {
   constructor(props: SimpleTabsProps) {
     super(props);
     this.state = { activeTab: props.defaultTab };

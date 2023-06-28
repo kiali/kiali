@@ -32,7 +32,7 @@ type AlertDrawerMessageProps = ReduxProps & {
   message: NotificationMessage;
 };
 
-class AlertDrawerMessage extends React.PureComponent<AlertDrawerMessageProps> {
+class AlertDrawerMessageComponent extends React.PureComponent<AlertDrawerMessageProps> {
   static readonly body = style({
     paddingTop: 0
   });
@@ -46,7 +46,7 @@ class AlertDrawerMessage extends React.PureComponent<AlertDrawerMessageProps> {
   render() {
     return (
       <Card>
-        <CardBody className={AlertDrawerMessage.body}>
+        <CardBody className={AlertDrawerMessageComponent.body}>
           {getIcon(this.props.message.type)}{' '}
           {this.props.message.seen ? this.props.message.content : <b>{this.props.message.content}</b>}
           {this.props.message.detail && (
@@ -64,8 +64,8 @@ class AlertDrawerMessage extends React.PureComponent<AlertDrawerMessageProps> {
             </div>
           )}
           <div>
-            <span className={AlertDrawerMessage.left}>{this.props.message.created.toLocaleDateString()}</span>
-            <span className={AlertDrawerMessage.right}>{this.props.message.created.toLocaleTimeString()}</span>
+            <span className={AlertDrawerMessageComponent.left}>{this.props.message.created.toLocaleDateString()}</span>
+            <span className={AlertDrawerMessageComponent.right}>{this.props.message.created.toLocaleTimeString()}</span>
           </div>
         </CardBody>
       </Card>
@@ -80,5 +80,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
   };
 };
 
-const AlertDrawerMessageContainer = connect(null, mapDispatchToProps)(AlertDrawerMessage);
-export default AlertDrawerMessageContainer;
+export const AlertDrawerMessage = connect(null, mapDispatchToProps)(AlertDrawerMessageComponent);

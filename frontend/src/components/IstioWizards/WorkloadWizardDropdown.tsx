@@ -21,7 +21,7 @@ import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { MessageType } from '../../types/MessageCenter';
 import { StatusState } from '../../types/StatusState';
-import WizardAnnotations from './WizardAnnotations';
+import { WizardAnnotations } from './WizardAnnotations';
 
 interface Props {
   namespace: string;
@@ -36,7 +36,7 @@ interface State {
   type: string;
 }
 
-class WorkloadWizardDropdown extends React.Component<Props, State> {
+export class WorkloadWizardDropdown extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -282,5 +282,3 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
     );
   }
 }
-
-export default WorkloadWizardDropdown;

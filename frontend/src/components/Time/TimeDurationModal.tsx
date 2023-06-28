@@ -5,8 +5,8 @@ import { HistoryManager, URLParam } from '../../app/History';
 import { useKialiDispatch, useKialiSelector } from '../../hooks/redux';
 import { DurationInSeconds, IntervalInMilliseconds, TimeRange } from '../../types/Common';
 import { DurationDropdownComponent } from '../DurationDropdown/DurationDropdown';
-import { Refresh } from '../Refresh/Refresh';
-import { TimeRangeComponent } from './TimeRangeComponent';
+import { RefreshComponent } from '../Refresh/Refresh';
+import { TimeRangeComp } from './TimeRangeComponent';
 import { kioskDurationAction, kioskTimeRangeAction } from '../Kiosk/KioskActions';
 
 interface Props {
@@ -87,7 +87,7 @@ export function TimeDurationModal(props: Props) {
         {props.customDuration ? (
           <FormGroup label="Time range" fieldId="drform-time-range">
             <div style={{ display: 'flex' }}>
-              <TimeRangeComponent
+              <TimeRangeComp
                 menuAppendTo="parent"
                 timeRange={timeRange}
                 setTimeRange={handleSetTimeRange}
@@ -110,7 +110,7 @@ export function TimeDurationModal(props: Props) {
           </FormGroup>
         )}
         <FormGroup label="Refresh interval" fieldId="drform-refresh">
-          <Refresh
+          <RefreshComponent
             id="drform-metrics-refresh"
             hideLabel={true}
             hideRefreshButton={true}

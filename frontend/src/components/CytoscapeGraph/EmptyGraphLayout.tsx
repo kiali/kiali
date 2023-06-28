@@ -11,7 +11,7 @@ import {
 } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import * as _ from 'lodash';
-import Namespace from '../../types/Namespace';
+import { Namespace } from '../../types/Namespace';
 import { KialiIcon } from '../../config/KialiIcon';
 import { DecoratedGraphElements } from '../../types/Graph';
 
@@ -37,7 +37,7 @@ const emptyStateStyle = style({
 
 type EmptyGraphLayoutState = {};
 
-export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, EmptyGraphLayoutState> {
+export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, EmptyGraphLayoutState> {
   shouldComponentUpdate(nextProps: EmptyGraphLayoutProps) {
     const currentIsEmpty = this.props.elements === undefined || _.isEmpty(this.props.elements.nodes);
     const nextIsEmpty = nextProps.elements === undefined || _.isEmpty(nextProps.elements.nodes);

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import _ from 'lodash';
 import { Responses } from '../../types/Graph';
-import responseFlags from '../../utils/ResponseFlags';
+import { responseFlags } from '../../utils/ResponseFlags';
 import { summaryTitle } from 'pages/Graph/SummaryPanelCommon';
 
 type ResponseFlagsTableProps = {

@@ -5,7 +5,7 @@ import _round from 'lodash/round';
 import { Button, ButtonVariant, Card, CardBody, Grid, GridItem, Tooltip } from '@patternfly/react-core';
 import { InfoAltIcon, WarningTriangleIcon } from '@patternfly/react-icons';
 import { JaegerTrace, RichSpanData } from 'types/JaegerInfo';
-import JaegerTraceTitleContainer from './JaegerTraceTitle';
+import { JaegerTraceTitle } from './JaegerTraceTitle';
 import { CytoscapeGraphSelectorBuilder } from 'components/CytoscapeGraph/CytoscapeGraphSelector';
 import { GraphType, NodeType } from 'types/Graph';
 import { FormattedTraceInfo, shortIDStyle } from './FormattedTraceInfo';
@@ -24,7 +24,7 @@ import {
 import { TraceLabels } from './TraceLabels';
 import { TargetKind } from 'types/Common';
 import { MetricsStatsQuery } from 'types/MetricsOptions';
-import MetricsStatsThunkActions from 'actions/MetricsStatsThunkActions';
+import { MetricsStatsThunkActions } from 'actions/MetricsStatsThunkActions';
 import { renderTraceHeatMap } from './StatsComparison';
 import { HeatMap } from 'components/HeatMap/HeatMap';
 import { formatDuration, sameSpans } from 'utils/tracing/TracingHelper';
@@ -48,7 +48,7 @@ type Props = ReduxProps & {
 
 interface State {}
 
-class TraceDetails extends React.Component<Props, State> {
+class TraceDetailsComponent extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     const urlTrace = getTraceId();
@@ -189,7 +189,7 @@ class TraceDetails extends React.Component<Props, State> {
 
     return (
       <Card isCompact style={{ border: '1px solid #e6e6e6' }}>
-        <JaegerTraceTitleContainer
+        <JaegerTraceTitle
           formattedTrace={formattedTrace}
           externalURL={jaegerURL ? `${jaegerURL}/trace/${trace.traceID}` : undefined}
           graphURL={this.getGraphURL(trace.traceID)}
@@ -270,5 +270,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
     dispatch(MetricsStatsThunkActions.load(queries, isCompact))
 });
 
-const TraceDetailsContainer = connect(mapStateToProps, mapDispatchToProps)(TraceDetails);
-export default TraceDetailsContainer;
+export const TraceDetails = connect(mapStateToProps, mapDispatchToProps)(TraceDetailsComponent);

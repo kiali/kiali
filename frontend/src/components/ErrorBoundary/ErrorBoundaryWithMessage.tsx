@@ -1,12 +1,12 @@
 import * as React from 'react';
 import { Alert, Card, CardBody } from '@patternfly/react-core';
-import ErrorBoundary from './ErrorBoundary';
+import { ErrorBoundary } from './ErrorBoundary';
 
 interface MessageProps {
   message: string;
 }
 
-export default class ErrorBoundaryWithMessage extends React.Component<MessageProps> {
+export class ErrorBoundaryWithMessage extends React.Component<MessageProps> {
   alert() {
     return (
       <Card>

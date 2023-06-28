@@ -12,9 +12,9 @@ import {
   ToolbarItem
 } from '@patternfly/react-core';
 import { history } from '../../app/History';
-import GraphDataSource from '../../services/GraphDataSource';
+import { GraphDataSource } from '../../services/GraphDataSource';
 import { DecoratedGraphElements, EdgeMode, GraphType, NodeType } from '../../types/Graph';
-import CytoscapeGraph, { GraphEdgeTapEvent, GraphNodeTapEvent } from './CytoscapeGraph';
+import { CytoscapeGraph, GraphEdgeTapEvent, GraphNodeTapEvent } from './CytoscapeGraph';
 import { CytoscapeGraphSelectorBuilder } from './CytoscapeGraphSelector';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
 import { store } from 'store/ConfigStore';
@@ -26,10 +26,10 @@ import { KialiDagreGraph } from './graphs/KialiDagreGraph';
 import { KialiAppState } from '../../store/Store';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { LoadingWizardActionsDropdownGroup } from '../IstioWizards/LoadingWizardActionsDropdownGroup';
-import ServiceWizardActionsDropdownGroup from '../IstioWizards/ServiceWizardActionsDropdownGroup';
+import { ServiceWizardActionsDropdownGroup } from '../IstioWizards/ServiceWizardActionsDropdownGroup';
 import { WizardAction, WizardMode } from '../IstioWizards/WizardActions';
 import { TimeDurationModal } from '../Time/TimeDurationModal';
-import TimeDurationIndicatorContainer from '../Time/TimeDurationIndicatorComponent';
+import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { KioskElement } from '../Kiosk/KioskElement';
 
 const initGraphContainerStyle = style({ width: '100%', height: '100%' });
@@ -56,7 +56,7 @@ type MiniGraphCardState = {
   graphData: DecoratedGraphElements;
 };
 
-class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardState> {
+class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGraphCardState> {
   private cytoscapeGraphRef: any;
 
   constructor(props) {
@@ -120,7 +120,7 @@ class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardSta
             <CardActions>
               <KioskElement>
                 <ToolbarItem>
-                  <TimeDurationIndicatorContainer onClick={this.toggleTimeOptionsVisibility} isDuration={true} />
+                  <TimeDurationIndicator onClick={this.toggleTimeOptionsVisibility} isDuration={true} />
                 </ToolbarItem>
               </KioskElement>
               <Dropdown
@@ -338,5 +338,4 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   kiosk: state.globalState.kiosk
 });
 
-const MiniGraphCardContainer = connect(mapStateToProps)(MiniGraphCard);
-export default MiniGraphCardContainer;
+export const MiniGraphCard = connect(mapStateToProps)(MiniGraphCardComponent);

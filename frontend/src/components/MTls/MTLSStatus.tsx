@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { default as MTLSIcon } from './MTLSIcon';
+import { MTLSIcon } from './MTLSIcon';
 import { TooltipPosition } from '@patternfly/react-core';
 
 type Props = {
@@ -22,7 +22,7 @@ export const emptyDescriptor = {
   showStatus: false
 };
 
-class MTLSStatus extends React.Component<Props> {
+export class MTLSStatus extends React.Component<Props> {
   statusDescriptor() {
     return this.props.statusDescriptors.get(this.props.status) || emptyDescriptor;
   }
@@ -62,5 +62,3 @@ class MTLSStatus extends React.Component<Props> {
     return null;
   }
 }
-
-export default MTLSStatus;

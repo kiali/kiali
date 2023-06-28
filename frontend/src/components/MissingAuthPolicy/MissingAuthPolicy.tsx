@@ -21,7 +21,7 @@ const infoStyle = style({
   verticalAlign: '-5px !important'
 });
 
-class MissingAuthPolicy extends React.Component<MissingAuthPolicyProps, {}> {
+export class MissingAuthPolicy extends React.Component<MissingAuthPolicyProps, {}> {
   static defaultProps = {
     text: 'Missing Authorization Policy',
     textTooltip: 'This workload is not covered by any authorization policy.',
@@ -64,5 +64,3 @@ class MissingAuthPolicy extends React.Component<MissingAuthPolicyProps, {}> {
     );
   }
 }
-
-export default MissingAuthPolicy;

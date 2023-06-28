@@ -2,8 +2,8 @@ import * as React from 'react';
 import { ConnectionPoolSettings, OutlierDetection as OutlierDetectionProps } from '../../types/IstioObjects';
 import { isValidConnectionPool, isValidOutlierDetection } from '../../utils/IstioConfigUtils';
 import { Form } from '@patternfly/react-core';
-import ConnectionPool from './CircuitBreaker/ConnectionPool';
-import OutlierDetection from './CircuitBreaker/OutlierDetection';
+import { ConnectionPool } from './CircuitBreaker/ConnectionPool';
+import { OutlierDetection } from './CircuitBreaker/OutlierDetection';
 
 type Props = {
   hasConnectionPool: boolean;
@@ -21,7 +21,7 @@ export type CircuitBreakerState = {
   isValidOutlierDetection: boolean;
 };
 
-class CircuitBreaker extends React.Component<Props, CircuitBreakerState> {
+export class CircuitBreaker extends React.Component<Props, CircuitBreakerState> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -108,5 +108,3 @@ class CircuitBreaker extends React.Component<Props, CircuitBreakerState> {
     );
   }
 }
-
-export default CircuitBreaker;

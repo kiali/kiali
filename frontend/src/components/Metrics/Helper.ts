@@ -2,7 +2,7 @@ import { MetricsSettings, LabelsSettings, Quantiles, LabelSettings } from '../Me
 import { boundsToDuration, guardTimeRange, TimeRange, DurationInSeconds } from '../../types/Common';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import { history, URLParam } from '../../app/History';
-import responseFlags from 'utils/ResponseFlags';
+import { responseFlags } from 'utils/ResponseFlags';
 import { AggregationModel, DashboardModel } from 'types/Dashboards';
 import { AllPromLabelsValues, Metric, PromLabel, SingleLabelValues } from 'types/Metrics';
 import { MetricsQuery } from 'types/MetricsOptions';

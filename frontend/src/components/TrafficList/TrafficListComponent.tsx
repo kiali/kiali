@@ -95,7 +95,7 @@ function LockIcon(props) {
 const containerPadding = style({ padding: '20px' });
 const lockIconStyle = style({ marginLeft: '5px' });
 
-class TrafficListComponent extends FilterComponent.Component<
+class TrafficList extends FilterComponent.Component<
   TrafficListComponentProps,
   TrafficListComponentState,
   TrafficListItem
@@ -420,5 +420,4 @@ const mapStateToProps = (state: KialiAppState) => {
   };
 };
 
-const TrafficListComponentContainer = connect(mapStateToProps)(TrafficListComponent);
-export default TrafficListComponentContainer;
+export const TrafficListComponent = connect(mapStateToProps)(TrafficList);

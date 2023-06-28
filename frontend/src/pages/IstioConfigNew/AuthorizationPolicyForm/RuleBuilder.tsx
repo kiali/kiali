@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { Button, ButtonVariant, FormGroup, Switch } from '@patternfly/react-core';
-import SourceBuilder from './From/SourceBuilder';
-import SourceList from './From/SourceList';
-import OperationBuilder from './To/OperationBuilder';
-import OperationList from './To/OperationList';
-import ConditionBuilder, { Condition } from './When/ConditionBuilder';
-import ConditionList from './When/ConditionList';
+import { SourceBuilder } from './From/SourceBuilder';
+import { SourceList } from './From/SourceList';
+import { OperationBuilder } from './To/OperationBuilder';
+import { OperationList } from './To/OperationList';
+import { ConditionBuilder, Condition } from './When/ConditionBuilder';
+import { ConditionList } from './When/ConditionList';
 import { style } from 'typestyle';
 import { PlusCircleIcon } from '@patternfly/react-icons';
 import { PFColors } from '../../../components/Pf/PfColors';
@@ -40,7 +40,7 @@ const addRuleStyle = style({
   paddingLeft: 0
 });
 
-class RuleBuilder extends React.Component<Props, State> {
+export class RuleBuilder extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -220,5 +220,3 @@ class RuleBuilder extends React.Component<Props, State> {
     );
   }
 }
-
-export default RuleBuilder;

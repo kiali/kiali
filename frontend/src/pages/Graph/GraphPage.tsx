@@ -7,7 +7,7 @@ import { style } from 'typestyle';
 import { history } from '../../app/History';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
 import { MessageType } from '../../types/MessageCenter';
-import Namespace from '../../types/Namespace';
+import { Namespace } from '../../types/Namespace';
 import {
   CytoscapeEvent,
   DecoratedGraphElements,
@@ -27,14 +27,14 @@ import {
 } from '../../types/Graph';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import * as AlertUtils from '../../utils/AlertUtils';
-import CytoscapeGraph, { GraphNodeDoubleTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
-import CytoscapeToolbarContainer from '../../components/CytoscapeGraph/CytoscapeToolbar';
-import ErrorBoundary from '../../components/ErrorBoundary/ErrorBoundary';
+import { CytoscapeGraph, GraphNodeDoubleTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
+import { CytoscapeToolbar } from '../../components/CytoscapeGraph/CytoscapeToolbar';
+import { ErrorBoundary } from '../../components/ErrorBoundary/ErrorBoundary';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from '../../components/Nav/NavUtils';
-import GraphToolbarContainer from './GraphToolbar/GraphToolbar';
-import GraphLegend from './GraphLegend';
-import EmptyGraphLayout from '../../components/CytoscapeGraph/EmptyGraphLayout';
-import SummaryPanel from './SummaryPanel';
+import { GraphToolbar } from './GraphToolbar/GraphToolbar';
+import { GraphLegend } from './GraphLegend';
+import { EmptyGraphLayout } from '../../components/CytoscapeGraph/EmptyGraphLayout';
+import { SummaryPanel } from './SummaryPanel';
 import {
   activeNamespacesSelector,
   durationSelector,
@@ -60,25 +60,25 @@ import { isKioskMode, getFocusSelector, unsetFocusSelector, getTraceId } from 'u
 import { Badge, Chip } from '@patternfly/react-core';
 import { toRangeString } from 'components/Time/Utils';
 import { replayBorder } from 'components/Time/Replay';
-import GraphDataSource, { FetchParams, EMPTY_GRAPH_DATA } from '../../services/GraphDataSource';
+import { GraphDataSource, FetchParams, EMPTY_GRAPH_DATA } from '../../services/GraphDataSource';
 import { NamespaceActions } from '../../actions/NamespaceAction';
-import GraphThunkActions from '../../actions/GraphThunkActions';
+import { GraphThunkActions } from '../../actions/GraphThunkActions';
 import { JaegerTrace } from 'types/JaegerInfo';
 import { KialiDispatch } from 'types/Redux';
 import { JaegerThunkActions } from 'actions/JaegerThunkActions';
-import GraphTour from 'pages/Graph/GraphHelpTour';
+import { GraphTour } from 'pages/Graph/GraphHelpTour';
 import { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
 import { EdgeContextMenu } from 'components/CytoscapeGraph/ContextMenu/EdgeContextMenu';
 import * as CytoscapeGraphUtils from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/KioskActions';
-import ServiceWizard from 'components/IstioWizards/ServiceWizard';
+import { ServiceWizard } from 'components/IstioWizards/ServiceWizard';
 import { ServiceDetailsInfo } from 'types/ServiceInfo';
 import { DestinationRuleC, PeerAuthentication } from 'types/IstioObjects';
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
-import ConfirmDeleteTrafficRoutingModal from 'components/IstioWizards/ConfirmDeleteTrafficRoutingModal';
+import { ConfirmDeleteTrafficRoutingModal } from 'components/IstioWizards/ConfirmDeleteTrafficRoutingModal';
 import { deleteServiceTrafficRouting } from 'services/Api';
 import { canCreate, canUpdate } from '../../types/Permissions';
-import connectRefresh from '../../components/Refresh/connectRefresh';
+import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { triggerRefresh } from '../../hooks/refresh';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
@@ -238,7 +238,7 @@ const GraphErrorBoundaryFallback = () => {
   );
 };
 
-export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
+class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState> {
   private readonly errorBoundaryRef: any;
   private cytoscapeGraphRef: any;
   private focusSelector?: string;
@@ -353,8 +353,8 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
     // the constructor but it seems to work better here when the initial URL
     // is for a node graph.  When setting the node here it is available for the
     // loadGraphFromBackend() call.
-    const urlNode = GraphPage.getNodeParamsFromProps(this.props);
-    if (GraphPage.isNodeChanged(urlNode, this.props.node)) {
+    const urlNode = GraphPageComponent.getNodeParamsFromProps(this.props);
+    if (GraphPageComponent.isNodeChanged(urlNode, this.props.node)) {
       // add the node namespace if necessary, but don't lose previously selected namespaces
       if (urlNode && !this.props.activeNamespaces.map(ns => ns.name).includes(urlNode.namespace.name)) {
         this.props.setActiveNamespaces([urlNode.namespace, ...this.props.activeNamespaces]);
@@ -407,7 +407,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       prev.showSecurity !== curr.showSecurity ||
       prev.showIdleNodes !== curr.showIdleNodes ||
       prev.trafficRates !== curr.trafficRates ||
-      GraphPage.isNodeChanged(prev.node, curr.node)
+      GraphPageComponent.isNodeChanged(prev.node, curr.node)
     ) {
       this.loadGraphDataFromBackend();
     }
@@ -453,7 +453,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       <>
         <FlexView className={conStyle} column={true}>
           <div>
-            <GraphToolbarContainer
+            <GraphToolbar
               cy={cy}
               disabled={this.state.graphData.isLoading}
               elementsChanged={this.state.graphData.elementsChanged}
@@ -505,7 +505,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
               )}
               {isReady && (
                 <div className={cytoscapeToolbarWrapperDivStyle}>
-                  <CytoscapeToolbarContainer
+                  <CytoscapeToolbar
                     cytoscapeGraphRef={this.cytoscapeGraphRef}
                     disabled={this.state.graphData.isLoading}
                   />
@@ -919,5 +919,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   updateSummary: (event: CytoscapeEvent) => dispatch(GraphActions.updateSummary(event))
 });
 
-const GraphPageContainer = connectRefresh(connect(mapStateToProps, mapDispatchToProps)(GraphPage));
-export default GraphPageContainer;
+export const GraphPage = connectRefresh(connect(mapStateToProps, mapDispatchToProps)(GraphPageComponent));

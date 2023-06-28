@@ -1,5 +1,5 @@
 import { GraphActions } from '../GraphActions';
-import GraphThunkActions from '../GraphThunkActions';
+import { GraphThunkActions } from '../GraphThunkActions';
 import { getType } from 'typesafe-actions';
 
 describe('GraphActions', () => {

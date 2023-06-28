@@ -6,7 +6,7 @@ type Props = Omit<Omit<Omit<SelectProps, 'isOpen'>, 'onSelect'>, 'onToggle'> & {
   onToggle?: (isOpen: boolean) => void;
 };
 
-const SimplerSelect = (props: Props) => {
+export const SimplerSelect = (props: Props) => {
   const [isOpen, setExpanded] = React.useState(false);
   return (
     <Select
@@ -29,5 +29,3 @@ const SimplerSelect = (props: Props) => {
     </Select>
   );
 };
-
-export default SimplerSelect;

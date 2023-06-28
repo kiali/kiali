@@ -1,7 +1,7 @@
 import { Label, Stack, StackItem, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import Labels from 'components/Label/Labels';
+import { Labels } from 'components/Label/Labels';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import LocalTime from 'components/Time/LocalTime';
+import { LocalTime } from 'components/Time/LocalTime';
 import { ValidationObjectSummary } from 'components/Validations/ValidationObjectSummary';
 import { IstioTypes } from 'components/VirtualList/Config';
 import { KialiIcon } from 'config/KialiIcon';
@@ -18,10 +18,10 @@ import {
 } from 'types/IstioObjects';
 import { style } from 'typestyle';
 import { getIstioObject, getReconciliationCondition } from 'utils/IstioConfigUtils';
-import IstioConfigHelp from './IstioConfigHelp';
-import IstioConfigReferences from './IstioConfigReferences';
-import IstioConfigValidationReferences from './IstioConfigValidationReferences';
-import IstioStatusMessageList from './IstioStatusMessageList';
+import { IstioConfigHelp } from './IstioConfigHelp';
+import { IstioConfigReferences } from './IstioConfigReferences';
+import { IstioConfigValidationReferences } from './IstioConfigValidationReferences';
+import { IstioStatusMessageList } from './IstioStatusMessageList';
 import { KioskElement } from '../../../components/Kiosk/KioskElement';
 import { PFColors } from '../../../components/Pf/PfColors';
 import { GetIstioObjectUrl } from '../../../components/Link/IstioObjectLink';
@@ -75,7 +75,7 @@ const resourceListStyle = style({
   }
 });
 
-class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
+export class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
   configurationHasWarnings = (): boolean | undefined => {
     return this.props.istioValidations?.checks.some(check => {
       return check.severity === ValidationTypes.Warning;
@@ -235,5 +235,3 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
     );
   }
 }
-
-export default IstioConfigOverview;

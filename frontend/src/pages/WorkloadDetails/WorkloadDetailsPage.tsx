@@ -3,29 +3,29 @@ import { connect } from 'react-redux';
 import { EmptyState, EmptyStateBody, EmptyStateVariant, Tab, Title, TitleSizes } from '@patternfly/react-core';
 import * as API from '../../services/Api';
 import { Workload, WorkloadId } from '../../types/Workload';
-import WorkloadInfo from './WorkloadInfo';
+import { WorkloadInfo } from './WorkloadInfo';
 import * as AlertUtils from '../../utils/AlertUtils';
-import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
+import { IstioMetrics } from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
-import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
+import { CustomMetrics } from '../../components/Metrics/CustomMetrics';
 import { serverConfig } from '../../config/ServerConfig';
-import WorkloadPodLogs from './WorkloadPodLogs';
+import { WorkloadPodLogs } from './WorkloadPodLogs';
 import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector } from '../../store/Selectors';
-import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
-import TracesComponent from 'components/JaegerIntegration/TracesComponent';
+import { ParameterizedTabs, activeTab } from '../../components/Tab/Tabs';
+import { TracesComponent } from 'components/JaegerIntegration/TracesComponent';
 import { JaegerInfo } from 'types/JaegerInfo';
-import TrafficDetails from 'components/TrafficList/TrafficDetails';
-import WorkloadWizardDropdown from '../../components/IstioWizards/WorkloadWizardDropdown';
-import TimeControl from '../../components/Time/TimeControl';
-import EnvoyDetailsContainer from 'components/Envoy/EnvoyDetails';
+import { TrafficDetails } from 'components/TrafficList/TrafficDetails';
+import { WorkloadWizardDropdown } from '../../components/IstioWizards/WorkloadWizardDropdown';
+import { TimeControl } from '../../components/Time/TimeControl';
+import { EnvoyDetails } from 'components/Envoy/EnvoyDetails';
 import { StatusState } from '../../types/StatusState';
 import { WorkloadHealth } from 'types/Health';
-import RenderHeaderContainer from '../../components/Nav/Page/RenderHeader';
-import ErrorSection from '../../components/ErrorSection/ErrorSection';
+import { RenderHeader } from '../../components/Nav/Page/RenderHeader';
+import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
 import { ErrorMsg } from '../../types/ErrorMsg';
-import connectRefresh from '../../components/Refresh/connectRefresh';
+import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { isWaypoint } from '../../helpers/LabelFilterHelper';
 import { history } from 'app/History';
 
@@ -62,7 +62,7 @@ const paramToTab: { [key: string]: number } = {
 };
 var nextTabIndex = 6;
 
-class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, WorkloadDetailsState> {
+class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPageProps, WorkloadDetailsState> {
   constructor(props: WorkloadDetailsPageProps) {
     super(props);
     const urlParams = new URLSearchParams(history.location.search);
@@ -187,7 +187,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
 
     const inTab = (
       <Tab title="Inbound Metrics" eventKey={3} key={'Inbound Metrics'}>
-        <IstioMetricsContainer
+        <IstioMetrics
           data-test="inbound-metrics-component"
           lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.workloadId.namespace}
@@ -202,7 +202,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
 
     const outTab = (
       <Tab title="Outbound Metrics" eventKey={4} key={'Outbound Metrics'}>
-        <IstioMetricsContainer
+        <IstioMetrics
           data-test="outbound-metrics-component"
           lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.workloadId.namespace}
@@ -232,7 +232,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       const envoyTab = (
         <Tab title="Envoy" eventKey={10} key={'Envoy'}>
           {this.state.workload && (
-            <EnvoyDetailsContainer
+            <EnvoyDetails
               lastRefreshAt={this.props.lastRefreshAt}
               namespace={this.props.workloadId.namespace}
               workload={this.state.workload}
@@ -282,7 +282,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
               paramToTab[dashboard.template] = tabKey;
               const tab = (
                 <Tab key={dashboard.template} title={dashboard.title} eventKey={tabKey}>
-                  <CustomMetricsContainer
+                  <CustomMetrics
                     lastRefreshAt={this.props.lastRefreshAt}
                     namespace={this.props.workloadId.namespace}
                     app={app}
@@ -335,7 +335,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       ) : undefined;
     return (
       <>
-        <RenderHeaderContainer
+        <RenderHeader
           location={history.location}
           rightToolbar={<TimeControl customDuration={useCustomTime} />}
           actionsToolbar={actionsToolbar}
@@ -368,6 +368,4 @@ const mapStateToProps = (state: KialiAppState) => ({
   statusState: state.statusState
 });
 
-const WorkloadDetailsContainer = connectRefresh(connect(mapStateToProps)(WorkloadDetails));
-
-export default WorkloadDetailsContainer;
+export const WorkloadDetailsPage = connectRefresh(connect(mapStateToProps)(WorkloadDetailsPageComponent));

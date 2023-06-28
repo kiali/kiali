@@ -1,7 +1,7 @@
 import React from 'react';
-import BootstrapSlider from './BootstrapSlider';
+import { BootstrapSlider } from './BootstrapSlider';
 import { Button, ButtonVariant, InputGroupText, TextInput, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import Boundaries from './Boundaries';
+import { Boundaries } from './Boundaries';
 import { style } from 'typestyle';
 import { MinusIcon, PlusIcon, ThumbTackIcon, MigrationIcon } from '@patternfly/react-icons';
 import './styles/default.css';
@@ -38,7 +38,7 @@ type State = {
   tooltipFormat: string;
 };
 
-class Slider extends React.Component<Props, State> {
+export class Slider extends React.Component<Props, State> {
   static defaultProps = {
     id: null,
     orientation: 'horizontal',
@@ -231,5 +231,3 @@ class Slider extends React.Component<Props, State> {
     );
   }
 }
-
-export default Slider;

@@ -12,7 +12,7 @@ export type RouteTimeoutProps = {
 
 const timeoutMsg = 'Timeout for HTTP requests. Format: 1h/1m/1s/1ms. MUST be >=1ms.';
 
-class RouteTimeout extends React.Component<RouteTimeoutProps> {
+export class RouteTimeout extends React.Component<RouteTimeoutProps> {
   render() {
     return (
       <>
@@ -47,5 +47,3 @@ class RouteTimeout extends React.Component<RouteTimeoutProps> {
     );
   }
 }
-
-export default RouteTimeout;

@@ -8,7 +8,7 @@ type ComponentProps = {
   handleRefresh: () => void;
 };
 
-class RefreshButton extends React.Component<ComponentProps> {
+export class RefreshButton extends React.Component<ComponentProps> {
   getElementId() {
     return this.props.id || 'refresh_button';
   }
@@ -38,5 +38,3 @@ class RefreshButton extends React.Component<ComponentProps> {
     this.props.handleRefresh();
   };
 }
-
-export default RefreshButton;

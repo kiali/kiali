@@ -11,7 +11,7 @@ const errorSectionStyle = style({
   height: '80vh'
 });
 
-export default class ErrorSection extends React.Component<MessageProps> {
+export class ErrorSection extends React.Component<MessageProps> {
   render() {
     return (
       <div>

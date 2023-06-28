@@ -15,7 +15,7 @@ import * as MetricsHelper from './Helper';
 import { KioskElement } from '../Kiosk/KioskElement';
 import { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettings';
 import { MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettingsDropdown';
-import MetricsReporter from '../MetricsOptions/MetricsReporter';
+import { MetricsReporter } from '../MetricsOptions/MetricsReporter';
 import { TimeDurationModal } from '../Time/TimeDurationModal';
 import { history, URLParam } from 'app/History';
 import { MetricsObjectTypes } from 'types/Metrics';
@@ -30,7 +30,7 @@ import { Dashboard } from 'components/Charts/Dashboard';
 import { refreshIntervalSelector, timeRangeSelector } from 'store/Selectors';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { KialiCrippledFeatures } from 'types/ServerConfig';
-import TimeDurationIndicatorContainer from '../Time/TimeDurationIndicatorComponent';
+import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 
 type MetricsState = {
   crippledFeatures?: KialiCrippledFeatures;
@@ -80,7 +80,7 @@ const toolbarInputStyle = style({
   }
 });
 
-class IstioMetrics extends React.Component<Props, MetricsState> {
+class IstioMetricsComponent extends React.Component<Props, MetricsState> {
   toolbarRef: React.RefObject<HTMLDivElement>;
   options: IstioMetricsOptions;
   spanOverlay: SpanOverlay;
@@ -196,15 +196,15 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
   };
 
   private fetchGrafanaInfo() {
-    if (!IstioMetrics.grafanaInfoPromise) {
-      IstioMetrics.grafanaInfoPromise = API.getGrafanaInfo().then(response => {
+    if (!IstioMetricsComponent.grafanaInfoPromise) {
+      IstioMetricsComponent.grafanaInfoPromise = API.getGrafanaInfo().then(response => {
         if (response.status === 204) {
           return undefined;
         }
         return response.data;
       });
     }
-    IstioMetrics.grafanaInfoPromise
+    IstioMetricsComponent.grafanaInfoPromise
       .then(grafanaInfo => {
         if (grafanaInfo) {
           this.setState({ grafanaLinks: grafanaInfo.externalLinks });
@@ -391,7 +391,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
             </ToolbarItem>
             <KioskElement>
               <ToolbarItem>
-                <TimeDurationIndicatorContainer onClick={this.toggleTimeOptionsVisibility} />
+                <TimeDurationIndicator onClick={this.toggleTimeOptionsVisibility} />
               </ToolbarItem>
             </KioskElement>
           </ToolbarGroup>
@@ -424,8 +424,6 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
   };
 };
 
-const IstioMetricsContainer = withRouter<RouteComponentProps<{}> & IstioMetricsProps, any>(
-  connect(mapStateToProps, mapDispatchToProps)(IstioMetrics)
+export const IstioMetrics = withRouter<RouteComponentProps<{}> & IstioMetricsProps, any>(
+  connect(mapStateToProps, mapDispatchToProps)(IstioMetricsComponent)
 );
-
-export default IstioMetricsContainer;

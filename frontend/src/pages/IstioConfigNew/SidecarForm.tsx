@@ -70,7 +70,7 @@ export const initSidecar = (initHost: string): SidecarState => {
   };
 };
 
-class SidecarForm extends React.Component<Props, SidecarState> {
+export class SidecarForm extends React.Component<Props, SidecarState> {
   constructor(props: Props) {
     super(props);
     this.state = initSidecar('');
@@ -264,5 +264,3 @@ class SidecarForm extends React.Component<Props, SidecarState> {
     );
   }
 }
-
-export default SidecarForm;

@@ -14,7 +14,10 @@ export const INITIAL_USER_SETTINGS_STATE: UserSettings = {
   replayQueryTime: 0
 };
 
-const UserSettingsState = (state: UserSettings = INITIAL_USER_SETTINGS_STATE, action: KialiAppAction): UserSettings => {
+export const UserSettingsStateReducer = (
+  state: UserSettings = INITIAL_USER_SETTINGS_STATE,
+  action: KialiAppAction
+): UserSettings => {
   switch (action.type) {
     case getType(UserSettingsActions.navCollapse):
       return updateState(state, {
@@ -49,5 +52,3 @@ const UserSettingsState = (state: UserSettings = INITIAL_USER_SETTINGS_STATE, ac
       return state;
   }
 };
-
-export default UserSettingsState;

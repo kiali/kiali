@@ -42,7 +42,7 @@ function showMetrics(metrics: Metric[] | undefined): boolean {
   return false;
 }
 
-class OverviewCardControlPlaneNamespace extends React.Component<ControlPlaneProps, {}> {
+export class OverviewCardControlPlaneNamespace extends React.Component<ControlPlaneProps, {}> {
   render() {
     let memorySeries: VCLine<RichDataPoint>[] = [];
     let cpuSeries: VCLine<RichDataPoint>[] = [];
@@ -217,5 +217,3 @@ class OverviewCardControlPlaneNamespace extends React.Component<ControlPlaneProp
     );
   }
 }
-
-export default OverviewCardControlPlaneNamespace;

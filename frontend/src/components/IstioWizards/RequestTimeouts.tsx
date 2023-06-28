@@ -3,8 +3,8 @@ import { HTTPRetry } from '../../types/IstioObjects';
 import { Form } from '@patternfly/react-core';
 import { isValidDuration } from '../../utils/IstioConfigUtils';
 import { WorkloadWeight } from './TrafficShifting';
-import RouteTimeout from './RequestTimeouts/RouteTimeout';
-import RouteRetry from './RequestTimeouts/RouteRetry';
+import { RouteTimeout } from './RequestTimeouts/RouteTimeout';
+import { RouteRetry } from './RequestTimeouts/RouteRetry';
 
 type Props = {
   initTimeoutRetry: TimeoutRetryRoute;
@@ -26,7 +26,7 @@ type State = {
   timeoutRetryRoute: TimeoutRetryRoute;
 };
 
-class RequestTimeouts extends React.Component<Props, State> {
+export class RequestTimeouts extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -149,5 +149,3 @@ class RequestTimeouts extends React.Component<Props, State> {
     );
   }
 }
-
-export default RequestTimeouts;

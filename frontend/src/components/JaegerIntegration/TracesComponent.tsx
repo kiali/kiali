@@ -9,8 +9,8 @@ import { KioskElement } from '../Kiosk/KioskElement';
 import { TimeDurationModal } from '../Time/TimeDurationModal';
 import { KialiAppState } from 'store/Store';
 import { JaegerError, JaegerTrace } from 'types/JaegerInfo';
-import TraceDetails from './JaegerResults/TraceDetails';
-import JaegerScatter from './JaegerScatter';
+import { TraceDetails } from './JaegerResults/TraceDetails';
+import { JaegerScatter } from './JaegerScatter';
 import { TracesFetcher, FetchOptions } from './TracesFetcher';
 import { SpanDetails } from './JaegerResults/SpanDetails';
 import { isEqualTimeRange, TargetKind, TimeInMilliseconds, TimeRange } from 'types/Common';
@@ -20,7 +20,7 @@ import { TracesDisplayOptions, QuerySettings, DisplaySettings, percentilesOption
 import { Direction, genStatsKey, MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsResult } from 'types/Metrics';
 import { getSpanId } from 'utils/SearchParamUtils';
-import TimeDurationIndicatorContainer from '../Time/TimeDurationIndicatorComponent';
+import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 
 type ReduxProps = {
   namespaceSelector: boolean;
@@ -53,7 +53,7 @@ interface TracesState {
 const traceDetailsTab = 0;
 const spansDetailsTab = 1;
 
-class TracesComponent extends React.Component<TracesProps, TracesState> {
+class TracesComp extends React.Component<TracesProps, TracesState> {
   private fetcher: TracesFetcher;
   private percentilesPromise: Promise<Map<string, number>>;
 
@@ -266,7 +266,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                   )}
                   <KioskElement>
                     <ToolbarItem>
-                      <TimeDurationIndicatorContainer onClick={this.toggleTimeOptionsVisibility} />
+                      <TimeDurationIndicator onClick={this.toggleTimeOptionsVisibility} />
                     </ToolbarItem>
                   </KioskElement>
                 </ToolbarGroup>
@@ -335,6 +335,4 @@ const mapStateToProps = (state: KialiAppState) => {
   };
 };
 
-export const TracesContainer = connect(mapStateToProps)(TracesComponent);
-
-export default TracesContainer;
+export const TracesComponent = connect(mapStateToProps)(TracesComp);

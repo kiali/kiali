@@ -32,7 +32,7 @@ export const isValidAddress = (address: Address) => {
 
 export const addressTypes = ['IPAddress', 'Hostname'];
 
-class AddressBuilder extends React.Component<Props, State> {
+export class AddressBuilder extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -95,5 +95,3 @@ class AddressBuilder extends React.Component<Props, State> {
     );
   }
 }
-
-export default AddressBuilder;

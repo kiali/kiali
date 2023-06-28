@@ -7,7 +7,7 @@ interface IstioConfigHelpProps {
   selectedLine?: string;
 }
 
-class IstioConfigHelp extends React.Component<IstioConfigHelpProps> {
+export class IstioConfigHelp extends React.Component<IstioConfigHelpProps> {
   render() {
     const helpMessage = this.props.helpMessages?.find(helpMessage =>
       this.props.selectedLine?.includes(helpMessage.objectField.substring(helpMessage.objectField.lastIndexOf('.') + 1))
@@ -42,5 +42,3 @@ class IstioConfigHelp extends React.Component<IstioConfigHelpProps> {
     );
   }
 }
-
-export default IstioConfigHelp;

@@ -1,4 +1,4 @@
-import Namespace from './Namespace';
+import { Namespace } from './Namespace';
 import { ServicePort } from './ServiceInfo';
 import { ProxyStatus } from './Health';
 import { TimeInSeconds } from './Common';

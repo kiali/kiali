@@ -24,11 +24,11 @@ import {
   WIZARD_EDIT_ANNOTATIONS
 } from './WizardActions';
 import { MessageType } from '../../types/MessageCenter';
-import WizardAnnotations from './WizardAnnotations';
-import ServiceWizard from './ServiceWizard';
+import { WizardAnnotations } from './WizardAnnotations';
+import { ServiceWizard } from './ServiceWizard';
 import { canCreate, canUpdate, ResourcePermissions } from '../../types/Permissions';
-import ServiceWizardActionsDropdownGroup, { DELETE_TRAFFIC_ROUTING } from './ServiceWizardActionsDropdownGroup';
-import ConfirmDeleteTrafficRoutingModal from './ConfirmDeleteTrafficRoutingModal';
+import { ServiceWizardActionsDropdownGroup, DELETE_TRAFFIC_ROUTING } from './ServiceWizardActionsDropdownGroup';
+import { ConfirmDeleteTrafficRoutingModal } from './ConfirmDeleteTrafficRoutingModal';
 import { deleteServiceTrafficRouting } from 'services/Api';
 import { ServiceOverview } from '../../types/ServiceList';
 import { KialiAppState } from '../../store/Store';
@@ -302,5 +302,4 @@ const mapStateToProps = (state: KialiAppState) => ({
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
 });
 
-const ServiceWizardDropdown = connect(mapStateToProps)(ServiceWizardDropdownComponent);
-export default ServiceWizardDropdown;
+export const ServiceWizardDropdown = connect(mapStateToProps)(ServiceWizardDropdownComponent);

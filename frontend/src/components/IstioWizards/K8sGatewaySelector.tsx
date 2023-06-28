@@ -32,7 +32,7 @@ enum K8sGatewayForm {
   PORT
 }
 
-class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelectorState> {
+export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelectorState> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -195,5 +195,3 @@ class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelectorState>
     );
   }
 }
-
-export default K8sGatewaySelector;

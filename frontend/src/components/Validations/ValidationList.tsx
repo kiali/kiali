@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { ObjectCheck, ValidationTypes } from '../../types/IstioObjects';
-import Validation from './Validation';
+import { Validation } from './Validation';
 import { highestSeverity } from '../../types/ServiceInfo';
 
 type Props = {
@@ -9,7 +9,7 @@ type Props = {
   tooltipPosition?: TooltipPosition;
 };
 
-class ValidationList extends React.Component<Props> {
+export class ValidationList extends React.Component<Props> {
   content() {
     return (this.props.checks || []).map((check, index) => {
       return (
@@ -40,5 +40,3 @@ class ValidationList extends React.Component<Props> {
     return tooltip;
   }
 }
-
-export default ValidationList;

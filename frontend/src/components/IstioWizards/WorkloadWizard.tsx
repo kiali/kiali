@@ -3,7 +3,7 @@ import { WIZARD_TITLES, WorkloadWizardProps, WorkloadWizardState } from './Wizar
 import { Button, ButtonVariant, Modal } from '@patternfly/react-core';
 
 // NOTE: This class is not used but I will keep it in the repo as skeleton as we'll add again WorkloadWizards for other
-class WorkloadWizard extends React.Component<WorkloadWizardProps, WorkloadWizardState> {
+export class WorkloadWizard extends React.Component<WorkloadWizardProps, WorkloadWizardState> {
   constructor(props: WorkloadWizardProps) {
     super(props);
     this.state = {
@@ -68,5 +68,3 @@ class WorkloadWizard extends React.Component<WorkloadWizardProps, WorkloadWizard
     );
   }
 }
-
-export default WorkloadWizard;

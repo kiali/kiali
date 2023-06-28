@@ -1,4 +1,4 @@
-import graphDataState from '../GraphDataState';
+import { GraphDataStateReducer } from '../GraphDataState';
 import { GraphActions } from '../../actions/GraphActions';
 import { GlobalActions } from '../../actions/GlobalActions';
 import { DefaultTrafficRates, EdgeMode, GraphType } from '../../types/Graph';
@@ -7,7 +7,7 @@ import { KialiDagreGraph } from '../../components/CytoscapeGraph/graphs/KialiDag
 
 describe('GraphDataState', () => {
   it('should return the initial state', () => {
-    expect(graphDataState(undefined, GlobalActions.unknown())).toEqual({
+    expect(GraphDataStateReducer(undefined, GlobalActions.unknown())).toEqual({
       edgeMode: EdgeMode.ALL,
       graphDefinition: null,
       layout: KialiDagreGraph.getLayout(),
@@ -43,7 +43,7 @@ describe('GraphDataState', () => {
 
   it('should handle UPDATE_SUMMARY', () => {
     const action = GraphActions.updateSummary({ summaryType: 'node', summaryTarget: 'mynode' });
-    const updatedState = graphDataState(undefined, action);
+    const updatedState = GraphDataStateReducer(undefined, action);
 
     expect(updatedState.summaryData).toEqual({ summaryType: 'node', summaryTarget: 'mynode' });
   });

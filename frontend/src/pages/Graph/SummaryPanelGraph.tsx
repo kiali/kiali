@@ -31,12 +31,12 @@ import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise, PromisesRegistry } from '../../utils/CancelablePromises';
 import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
-import SimpleTabs from 'components/Tab/SimpleTabs';
+import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { ValidationStatus } from 'types/IstioObjects';
-import Namespace from 'types/Namespace';
-import ValidationSummary from 'components/Validations/ValidationSummary';
+import { Namespace } from 'types/Namespace';
+import { ValidationSummary } from 'components/Validations/ValidationSummary';
 import { PFColors } from '../../components/Pf/PfColors';
-import ValidationSummaryLink from '../../components/Link/ValidationSummaryLink';
+import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 
 type SummaryPanelGraphMetricsState = {
@@ -112,7 +112,7 @@ const topologyStyle = style({
   margin: '0 1em'
 });
 
-export default class SummaryPanelGraph extends React.Component<SummaryPanelPropType, SummaryPanelGraphState> {
+export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, SummaryPanelGraphState> {
   static readonly panelStyle = {
     height: '100%',
     margin: 0,

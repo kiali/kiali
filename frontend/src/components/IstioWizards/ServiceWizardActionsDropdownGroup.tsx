@@ -26,7 +26,7 @@ type Props = {
   onDelete?: (key: string) => void;
 };
 
-const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = props => {
+export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = props => {
   const updateLabel = getWizardUpdateLabel(props.virtualServices, props.k8sHTTPRoutes);
 
   function hasTrafficRouting() {
@@ -139,5 +139,3 @@ const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = props 
   const label = updateLabel === '' ? 'Create' : 'Update';
   return <DropdownGroup key={`group_${label}`} label={label} className="kiali-group-menu" children={actionItems} />;
 };
-
-export default ServiceWizardActionsDropdownGroup;

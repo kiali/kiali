@@ -1,14 +1,14 @@
 import * as React from 'react';
 import { NotificationMessage, MessageType } from '../../types/MessageCenter';
 import { AlertVariant } from '@patternfly/react-core';
-import AlertToast from './AlertToast';
+import { AlertToast } from './AlertToast';
 
 type NotificationListProps = {
   messages: NotificationMessage[];
   onDismiss?: (message: NotificationMessage, userDismissed: boolean) => void;
 };
 
-export default class NotificationList extends React.PureComponent<NotificationListProps> {
+export class NotificationList extends React.PureComponent<NotificationListProps> {
   render() {
     return (
       <>

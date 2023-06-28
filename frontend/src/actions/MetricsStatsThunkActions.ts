@@ -9,7 +9,7 @@ import { MetricsStats } from 'types/Metrics';
 type ExpiringStats = MetricsStats & { timestamp: number };
 
 const expiry = 2 * 60 * 1000;
-const MetricsStatsThunkActions = {
+export const MetricsStatsThunkActions = {
   load: (queries: MetricsStatsQuery[], isCompact: boolean) => {
     return (dispatch: KialiDispatch, getState: () => KialiAppState) => {
       const oldStats = getState().metricsStats.data as Map<string, ExpiringStats>;
@@ -42,5 +42,3 @@ const MetricsStatsThunkActions = {
     };
   }
 };
-
-export default MetricsStatsThunkActions;

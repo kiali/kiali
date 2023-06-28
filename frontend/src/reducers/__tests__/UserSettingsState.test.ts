@@ -1,4 +1,4 @@
-import UserSettingsState from '../UserSettingsState';
+import { UserSettingsStateReducer } from '../UserSettingsState';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { GlobalActions } from '../../actions/GlobalActions';
 
@@ -20,7 +20,7 @@ describe('UserSettingsState reducer', () => {
   });
 
   it('should return the initial state', () => {
-    expect(UserSettingsState(undefined, GlobalActions.unknown())).toEqual({
+    expect(UserSettingsStateReducer(undefined, GlobalActions.unknown())).toEqual({
       duration: 60,
       interface: { navCollapse: false },
       refreshInterval: 60000,
@@ -32,7 +32,7 @@ describe('UserSettingsState reducer', () => {
 
   it('should collapse the nav', () => {
     expect(
-      UserSettingsState(
+      UserSettingsStateReducer(
         {
           duration: 60,
           interface: { navCollapse: false },
@@ -55,7 +55,7 @@ describe('UserSettingsState reducer', () => {
 
   it('should set duration', () => {
     expect(
-      UserSettingsState(
+      UserSettingsStateReducer(
         {
           duration: 60,
           interface: { navCollapse: false },
@@ -78,7 +78,7 @@ describe('UserSettingsState reducer', () => {
 
   it('should set refresh interval', () => {
     expect(
-      UserSettingsState(
+      UserSettingsStateReducer(
         {
           duration: 60,
           interface: { navCollapse: false },
@@ -101,7 +101,7 @@ describe('UserSettingsState reducer', () => {
 
   it('should set time range', () => {
     expect(
-      UserSettingsState(
+      UserSettingsStateReducer(
         {
           duration: 60,
           interface: { navCollapse: false },
@@ -125,7 +125,7 @@ describe('UserSettingsState reducer', () => {
 
 it('should set replay active', () => {
   expect(
-    UserSettingsState(
+    UserSettingsStateReducer(
       {
         duration: 60,
         interface: { navCollapse: false },

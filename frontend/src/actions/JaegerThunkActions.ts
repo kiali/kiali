@@ -5,7 +5,7 @@ import * as API from '../services/Api';
 import { KialiDispatch } from '../types/Redux';
 import { JaegerActions } from './JaegerActions';
 import { setTraceId as setURLTraceId } from 'utils/SearchParamUtils';
-import transformTraceData from 'utils/tracing/TraceTransform';
+import { transformTraceData } from 'utils/tracing/TraceTransform';
 
 export const JaegerThunkActions = {
   setTraceId: (cluster?: string, traceId?: string) => {

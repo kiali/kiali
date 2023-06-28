@@ -5,23 +5,23 @@ import * as WorkloadListFilters from './FiltersAndSorts';
 import * as FilterComponent from '../../components/FilterList/FilterComponent';
 import { WorkloadListItem, WorkloadNamespaceResponse } from '../../types/Workload';
 import { DurationInSeconds } from '../../types/Common';
-import Namespace from '../../types/Namespace';
+import { Namespace } from '../../types/Namespace';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { namespaceEquals } from '../../utils/Common';
 import { SortField } from '../../types/SortFilters';
 import { ActiveFiltersInfo, ActiveTogglesInfo } from '../../types/Filters';
 import { FilterSelected, StatefulFilters, Toggles } from '../../components/Filters/StatefulFilters';
 import * as API from '../../services/Api';
-import VirtualList from '../../components/VirtualList/VirtualList';
+import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
-import DefaultSecondaryMasthead from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
-import TimeDurationContainer from '../../components/Time/TimeDurationComponent';
+import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
+import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
 import { sortIstioReferences } from '../AppList/FiltersAndSorts';
 import { hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
 import { WorkloadHealth } from '../../types/Health';
-import RefreshNotifier from '../../components/Refresh/RefreshNotifier';
+import { RefreshNotifier } from '../../components/Refresh/RefreshNotifier';
 import { isMultiCluster } from 'config';
 import { validationKey } from '../../types/IstioConfigList';
 
@@ -171,7 +171,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         <div style={{ backgroundColor: '#fff' }}>
           <DefaultSecondaryMasthead
             rightToolbar={
-              <TimeDurationContainer key={'DurationDropdown'} id="workload-list-duration-dropdown" disabled={false} />
+              <TimeDurationComponent key={'DurationDropdown'} id="workload-list-duration-dropdown" disabled={false} />
             }
           />
         </div>
@@ -195,6 +195,4 @@ const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state)
 });
 
-const WorkloadListPage = connect(mapStateToProps)(WorkloadListPageComponent);
-
-export default WorkloadListPage;
+export const WorkloadListPage = connect(mapStateToProps)(WorkloadListPageComponent);

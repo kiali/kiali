@@ -1,4 +1,4 @@
-import NamespaceInfo from '../NamespaceInfo';
+import { NamespaceInfo } from '../NamespaceInfo';
 import { sortFields, sortFunc } from '../Sorts';
 
 const allNamespaces: NamespaceInfo[] = [

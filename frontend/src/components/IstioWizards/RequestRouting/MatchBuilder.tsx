@@ -53,7 +53,7 @@ const placeholderText = {
   [AUTHORITY]: 'Authority value...'
 };
 
-class MatchBuilder extends React.Component<Props, State> {
+export class MatchBuilder extends React.Component<Props, State> {
   constructor(props) {
     super(props);
     this.state = {
@@ -150,5 +150,3 @@ class MatchBuilder extends React.Component<Props, State> {
     );
   }
 }
-
-export default MatchBuilder;

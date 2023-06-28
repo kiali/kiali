@@ -11,7 +11,7 @@ export const INITIAL_GLOBAL_STATE: GlobalState = {
 };
 
 // This Reducer allows changes to the 'globalState' portion of Redux Store
-const globalState = (state: GlobalState = INITIAL_GLOBAL_STATE, action: KialiAppAction): GlobalState => {
+export const GlobalStateReducer = (state: GlobalState = INITIAL_GLOBAL_STATE, action: KialiAppAction): GlobalState => {
   switch (action.type) {
     case getType(GlobalActions.incrementLoadingCounter):
       return updateState(state, { loadingCounter: state.loadingCounter + 1 });
@@ -28,5 +28,3 @@ const globalState = (state: GlobalState = INITIAL_GLOBAL_STATE, action: KialiApp
       return state;
   }
 };
-
-export default globalState;

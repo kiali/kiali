@@ -1,6 +1,6 @@
 import axios from 'axios';
 import axiosMockAdapter from 'axios-mock-adapter';
-import GraphDataSource, { EMPTY_GRAPH_DATA } from '../GraphDataSource';
+import { GraphDataSource, EMPTY_GRAPH_DATA } from '../GraphDataSource';
 import { DefaultTrafficRates, GraphType } from '../../types/Graph';
 import MockAdapter from 'axios-mock-adapter';
 

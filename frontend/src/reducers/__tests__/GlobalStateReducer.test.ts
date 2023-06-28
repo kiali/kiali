@@ -1,7 +1,7 @@
-import globalState from '../GlobalState';
+import { GlobalStateReducer } from '../GlobalState';
 import { GlobalActions } from '../../actions/GlobalActions';
 
-describe('GlobalState reducer', () => {
+describe('GlobalStateReducer reducer', () => {
   const RealDate = Date.now;
   const currentDate = Date.now();
 
@@ -19,7 +19,7 @@ describe('GlobalState reducer', () => {
   });
 
   it('should return the initial state', () => {
-    expect(globalState(undefined, GlobalActions.unknown())).toEqual({
+    expect(GlobalStateReducer(undefined, GlobalActions.unknown())).toEqual({
       loadingCounter: 0,
       isPageVisible: true,
       kiosk: ''
@@ -28,7 +28,7 @@ describe('GlobalState reducer', () => {
 
   it('should turn Loading spinner On', () => {
     expect(
-      globalState(
+      GlobalStateReducer(
         {
           loadingCounter: 0,
           isPageVisible: true,
@@ -45,7 +45,7 @@ describe('GlobalState reducer', () => {
 
   it('should turn Loading spinner off', () => {
     expect(
-      globalState(
+      GlobalStateReducer(
         {
           loadingCounter: 1,
           isPageVisible: true,
@@ -62,7 +62,7 @@ describe('GlobalState reducer', () => {
 
   it('should increment counter', () => {
     expect(
-      globalState(
+      GlobalStateReducer(
         {
           loadingCounter: 1,
           isPageVisible: true,
@@ -79,7 +79,7 @@ describe('GlobalState reducer', () => {
 
   it('should decrement counter', () => {
     expect(
-      globalState(
+      GlobalStateReducer(
         {
           loadingCounter: 2,
           isPageVisible: true,
@@ -95,7 +95,7 @@ describe('GlobalState reducer', () => {
   });
   it('should turn on page visibility status', () => {
     expect(
-      globalState(
+      GlobalStateReducer(
         {
           loadingCounter: 0,
           isPageVisible: false,
@@ -111,7 +111,7 @@ describe('GlobalState reducer', () => {
   });
   it('should turn off page visibility status', () => {
     expect(
-      globalState(
+      GlobalStateReducer(
         {
           loadingCounter: 0,
           isPageVisible: true,
@@ -127,7 +127,7 @@ describe('GlobalState reducer', () => {
   });
   it('should turn on kiosk status', () => {
     expect(
-      globalState(
+      GlobalStateReducer(
         {
           loadingCounter: 0,
           isPageVisible: true,

@@ -6,6 +6,7 @@
     "no-used-before-declare": "off",
     "no-unused-variable": "off",
     "no-restricted-globals": ["error", "event"],
-    "no-undef": "off"
+    "no-undef": "off",
+    "import/no-default-export": "error"
   }
 }

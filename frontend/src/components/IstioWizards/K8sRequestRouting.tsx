@@ -1,6 +1,6 @@
 import * as React from 'react';
-import K8sRules, { MOVE_TYPE, K8sRule } from './K8sRequestRouting/K8sRules';
-import K8sRuleBuilder from './K8sRequestRouting/K8sRuleBuilder';
+import { K8sRules, MOVE_TYPE, K8sRule } from './K8sRequestRouting/K8sRules';
+import { K8sRuleBuilder } from './K8sRequestRouting/K8sRuleBuilder';
 import { K8sRouteBackendRef } from './K8sTrafficShifting';
 import { EXACT, PATH, METHOD, GET, HEADERS, QUERY_PARAMS } from './K8sRequestRouting/K8sMatchBuilder';
 import { getDefaultBackendRefs, getDefaultService } from './WizardActions';
@@ -44,7 +44,7 @@ const MSG_PORT_NON_EMPTY = 'Port is incorrect';
 const MSG_QUERY_NAME_NON_EMPTY = 'Query name must be non empty';
 const MSG_QUERY_VALUE_NON_EMPTY = 'Query value must be non empty';
 
-class K8sRequestRouting extends React.Component<Props, State> {
+export class K8sRequestRouting extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -432,5 +432,3 @@ class K8sRequestRouting extends React.Component<Props, State> {
     );
   }
 }
-
-export default K8sRequestRouting;

@@ -25,7 +25,7 @@ const infoStyle = style({
   verticalAlign: '-5px !important'
 });
 
-class MissingSidecar extends React.Component<MissingSidecarProps, {}> {
+export class MissingSidecar extends React.Component<MissingSidecarProps, {}> {
   static defaultProps = {
     textmesh: 'Out of mesh',
     text: 'Missing Sidecar',
@@ -82,5 +82,3 @@ class MissingSidecar extends React.Component<MissingSidecarProps, {}> {
     );
   }
 }
-
-export default MissingSidecar;
