@@ -30,7 +30,7 @@ yarn cypress:run
 ```
 
 ### Running tests in a container
-You can also run the test suite in a container, using the image `quay.io/kiali/kiali-cypress-tests:v1.57`.
+You can also run the test suite in a container, using the image `quay.io/kiali/kiali-cypress-tests:v1.65`.
 System dependencies are bundled in the container but you are still required to install istio + kiali + demo apps in advance.
 
 Use the `-e` option to set the environment variables that affect the execution of the test suite, as described in the previous sections.
@@ -43,7 +43,7 @@ podman run -it \
   -e CYPRESS_PASSWD=<password> \
   -e CYPRESS_USERNAME="kubeadmin" \
   -e CYPRESS_AUTH_PROVIDER="kube:admin" \
-  quay.io/kiali/kiali-cypress-tests:v1.57
+  quay.io/kiali/kiali-cypress-tests:v1.65
 ```
 
 ## Structure
