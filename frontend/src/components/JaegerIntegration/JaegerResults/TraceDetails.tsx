@@ -79,26 +79,26 @@ class TraceDetailsComponent extends React.Component<Props, State> {
   }
 
   private getGraphURL = (traceID: string) => {
-    let cytoscapeGraph = new GraphSelectorBuilder().namespace(this.props.namespace);
+    let graphSelector = new GraphSelectorBuilder().namespace(this.props.namespace);
     let graphType: GraphType = GraphType.APP;
 
     switch (this.props.targetKind) {
       case 'app':
-        cytoscapeGraph = cytoscapeGraph.app(this.props.target).nodeType(NodeType.APP);
+        graphSelector = graphSelector.app(this.props.target).nodeType(NodeType.APP);
         break;
       case 'service':
         graphType = GraphType.SERVICE;
-        cytoscapeGraph = cytoscapeGraph.service(this.props.target);
+        graphSelector = graphSelector.service(this.props.target);
         break;
       case 'workload':
         graphType = GraphType.WORKLOAD;
-        cytoscapeGraph = cytoscapeGraph.workload(this.props.target);
+        graphSelector = graphSelector.workload(this.props.target);
         break;
     }
 
     return `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${
       this.props.namespace
-    }&traceId=${traceID}&focusSelector=${encodeURI(cytoscapeGraph.build())}`;
+    }&traceId=${traceID}&focusSelector=${encodeURI(graphSelector.build())}`;
   };
 
   private renderSimilarHeatmap = (

@@ -7,6 +7,7 @@ import {
   CytoscapeGlobalScratchNamespace,
   EdgeLabelMode,
   GraphType,
+  NodeAttr,
   NodeType,
   numLabels,
   Protocol,
@@ -16,7 +17,7 @@ import {
 import { icons, serverConfig } from '../../../config';
 import NodeImageTopology from '../../../assets/img/node-background-topology.png';
 import NodeImageKey from '../../../assets/img/node-background-key.png';
-import { CyNode, decoratedEdgeData, decoratedNodeData } from '../CytoscapeGraphUtils';
+import { decoratedEdgeData, decoratedNodeData } from '../CytoscapeGraphUtils';
 import _ from 'lodash';
 import * as Cy from 'cytoscape';
 import { PFBadges } from 'components/Pf/PfBadges';
@@ -731,12 +732,12 @@ export class GraphStyles {
     };
 
     const getNodeBorderColor = (ele: Cy.NodeSingular): string => {
-      const isBox = ele.data(CyNode.isBox);
+      const isBox = ele.data(NodeAttr.isBox);
       if (isBox && isBox !== BoxByType.APP) {
         return NodeColorBorderBox;
       }
 
-      const healthStatus = ele.data(CyNode.healthStatus);
+      const healthStatus = ele.data(NodeAttr.healthStatus);
       switch (healthStatus) {
         case DEGRADED.name:
           return NodeColorBorderDegraded;
@@ -770,7 +771,7 @@ export class GraphStyles {
 
     const nodeSelectedStyle = {
       'border-color': (ele: Cy.NodeSingular) => {
-        switch (ele.data(CyNode.healthStatus)) {
+        switch (ele.data(NodeAttr.healthStatus)) {
           case DEGRADED.name:
             return NodeColorBorderDegraded;
           case FAILURE.name:
@@ -845,7 +846,7 @@ export class GraphStyles {
         selector: `node.${HighlightClass}[^isBox]`,
         style: {
           'background-color': (ele: Cy.NodeSingular) => {
-            switch (ele.data(CyNode.healthStatus)) {
+            switch (ele.data(NodeAttr.healthStatus)) {
               case DEGRADED.name:
                 return NodeColorFillHoverDegraded;
               case FAILURE.name:
@@ -855,7 +856,7 @@ export class GraphStyles {
             }
           },
           'border-color': (ele: Cy.NodeSingular) => {
-            switch (ele.data(CyNode.healthStatus)) {
+            switch (ele.data(NodeAttr.healthStatus)) {
               case DEGRADED.name:
                 return NodeColorBorderDegraded;
               case FAILURE.name:

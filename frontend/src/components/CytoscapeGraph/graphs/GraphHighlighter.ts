@@ -1,5 +1,4 @@
-import { BoxByType, CytoscapeBaseEvent } from '../../../types/Graph';
-import { CyNode } from '../CytoscapeGraphUtils';
+import { BoxByType, CytoscapeBaseEvent, NodeAttr } from '../../../types/Graph';
 import { UnhighlightClass, HoveredClass, HighlightClass } from './GraphStyles';
 
 // There are three special states for a Node or Edge:
@@ -145,7 +144,7 @@ export class GraphHighlighter {
   getBoxHighlight(box: any, neighborhoodOnly: boolean): { toHighlight: any; unhighlightOthers: boolean } {
     // treat App boxes in a typical way, but to reduce "flashing", Namespace and Cluster
     // boxes highlight themselves and their anscestors.
-    if (box.data(CyNode.isBox) === BoxByType.APP) {
+    if (box.data(NodeAttr.isBox) === BoxByType.APP) {
       let elems;
       if (neighborhoodOnly) {
         elems = box.descendants().reduce((prev, child) => {

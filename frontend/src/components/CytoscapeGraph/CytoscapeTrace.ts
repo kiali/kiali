@@ -1,7 +1,6 @@
 import * as Cy from 'cytoscape';
-import { CyNode } from './CytoscapeGraphUtils';
 import { JaegerTrace, Span } from 'types/JaegerInfo';
-import { NodeType, GraphType, SEInfo } from 'types/Graph';
+import { NodeType, GraphType, SEInfo, NodeAttr } from 'types/Graph';
 import {
   getAppFromSpan,
   getWorkloadFromSpan,
@@ -31,13 +30,13 @@ const showSpanSubtrace = (cy: Cy.Core, graphType: GraphType, span: Span) => {
     // In service graph type, parent can be a Service or a Workload (e.g. when it initiates the transaction)
     const sourceAppNs = searchParentApp(span);
     if (sourceAppNs) {
-      let selector = `node[!${CyNode.isBox}][${CyNode.nodeType}="${NodeType.SERVICE}"][${CyNode.app}="${sourceAppNs.app}"][${CyNode.namespace}="${sourceAppNs.namespace}"]`;
+      let selector = `node[!${NodeAttr.isBox}][${NodeAttr.nodeType}="${NodeType.SERVICE}"][${NodeAttr.app}="${sourceAppNs.app}"][${NodeAttr.namespace}="${sourceAppNs.namespace}"]`;
       let parent = cy.elements(selector);
       if (!parent || parent.length === 0) {
         // Try workload
         const sourceWlNs = searchParentWorkload(span);
         if (sourceWlNs) {
-          selector = `node[${CyNode.workload}="${sourceWlNs.workload}"][${CyNode.namespace}="${sourceWlNs.namespace}"]`;
+          selector = `node[${NodeAttr.workload}="${sourceWlNs.workload}"][${NodeAttr.namespace}="${sourceWlNs.namespace}"]`;
           parent = cy.elements(selector);
         }
       }
@@ -49,7 +48,7 @@ const showSpanSubtrace = (cy: Cy.Core, graphType: GraphType, span: Span) => {
     // Parent app
     const sourceAppNs = searchParentApp(span);
     if (sourceAppNs) {
-      const selector = `node[${CyNode.nodeType}="${NodeType.APP}"][${CyNode.app}="${sourceAppNs.app}"][${CyNode.namespace}="${sourceAppNs.namespace}"]`;
+      const selector = `node[${NodeAttr.nodeType}="${NodeType.APP}"][${NodeAttr.app}="${sourceAppNs.app}"][${NodeAttr.namespace}="${sourceAppNs.namespace}"]`;
       const parent = cy.elements(selector);
       if (!!parent && parent.length !== 0) {
         lastSelection = parent;
@@ -59,7 +58,7 @@ const showSpanSubtrace = (cy: Cy.Core, graphType: GraphType, span: Span) => {
     // Parent workload
     const sourceWlNs = searchParentWorkload(span);
     if (sourceWlNs) {
-      const selector = `node[${CyNode.workload}="${sourceWlNs.workload}"][${CyNode.namespace}="${sourceWlNs.namespace}"]`;
+      const selector = `node[${NodeAttr.workload}="${sourceWlNs.workload}"][${NodeAttr.namespace}="${sourceWlNs.namespace}"]`;
       const parent = cy.elements(selector);
       if (!!parent && parent.length !== 0) {
         lastSelection = parent;
@@ -72,22 +71,22 @@ const showSpanSubtrace = (cy: Cy.Core, graphType: GraphType, span: Span) => {
   lastSelection = nextHop(span, seSelectionInbound, lastSelection);
 
   // Main service
-  const nsSelector = split.length > 1 ? `[${CyNode.namespace}="${split[1]}"]` : '';
-  const selector = `[${CyNode.nodeType}="${NodeType.SERVICE}"][${CyNode.app}="${app}"]${nsSelector}`;
+  const nsSelector = split.length > 1 ? `[${NodeAttr.namespace}="${split[1]}"]` : '';
+  const selector = `[${NodeAttr.nodeType}="${NodeType.SERVICE}"][${NodeAttr.app}="${app}"]${nsSelector}`;
   lastSelection = nextHop(span, cy.elements(selector), lastSelection);
 
   if (graphType === GraphType.APP) {
     // Main app
     const destAppNs = getAppFromSpan(span);
     if (destAppNs) {
-      const selector = `node[${CyNode.nodeType}="${NodeType.APP}"][${CyNode.app}="${destAppNs.app}"][${CyNode.namespace}="${destAppNs.namespace}"]`;
+      const selector = `node[${NodeAttr.nodeType}="${NodeType.APP}"][${NodeAttr.app}="${destAppNs.app}"][${NodeAttr.namespace}="${destAppNs.namespace}"]`;
       lastSelection = nextHop(span, cy.elements(selector), lastSelection);
     }
   } else {
     // Main workload
     const destWlNs = getWorkloadFromSpan(span);
     if (destWlNs) {
-      const selector = `node[${CyNode.workload}="${destWlNs.workload}"][${CyNode.namespace}="${destWlNs.namespace}"]`;
+      const selector = `node[${NodeAttr.workload}="${destWlNs.workload}"][${NodeAttr.namespace}="${destWlNs.namespace}"]`;
       lastSelection = nextHop(span, cy.elements(selector), lastSelection);
     }
   }
@@ -163,8 +162,8 @@ const findServiceEntry = (span: Span, cy: Cy.Core): Cy.NodeCollection | undefine
 };
 
 const findSEHost = (hostname: string, cy: Cy.Core): Cy.NodeCollection | undefined => {
-  return cy.elements(`[${CyNode.nodeType}="${NodeType.SERVICE}"]`).filter(ele => {
-    const seInfo: SEInfo | undefined = ele.data(CyNode.isServiceEntry);
+  return cy.elements(`[${NodeAttr.nodeType}="${NodeType.SERVICE}"]`).filter(ele => {
+    const seInfo: SEInfo | undefined = ele.data(NodeAttr.isServiceEntry);
     if (seInfo) {
       // TODO: improve host matching, as "startsWith" allows false-positives
       if (seInfo.hosts.some(h => h.startsWith(hostname))) {

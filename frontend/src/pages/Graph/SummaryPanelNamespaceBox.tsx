@@ -4,7 +4,7 @@ import { Node } from '@patternfly/react-topology';
 import { style } from 'typestyle';
 import { RateTableGrpc, RateTableHttp, RateTableTcp } from '../../components/SummaryPanel/RateTable';
 import { RequestChart, StreamChart } from '../../components/SummaryPanel/RpsChart';
-import { SummaryPanelPropType, NodeType, TrafficRate, Protocol, UNKNOWN } from '../../types/Graph';
+import { SummaryPanelPropType, NodeType, TrafficRate, Protocol, UNKNOWN, NodeAttr } from '../../types/Graph';
 import {
   getAccumulatedTrafficRateGrpc,
   getAccumulatedTrafficRateHttp,
@@ -29,7 +29,6 @@ import { Response } from '../../services/Api';
 import { IstioMetricsMap, Datapoint, Labels } from '../../types/Metrics';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
-import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { ValidationStatus } from 'types/IstioObjects';
@@ -165,7 +164,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     const namespaceBox = this.props.data.summaryTarget;
     const data = isPF ? namespaceBox.getData() : namespaceBox.data();
     const boxed = isPF ? descendents(namespaceBox) : namespaceBox.descendants();
-    const namespace = data[CyNode.namespace];
+    const namespace = data[NodeAttr.namespace];
 
     let numSvc;
     let numWorkloads;
@@ -175,8 +174,8 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
       this.boxTraffic || this.getBoxTraffic();
 
     if (isPF) {
-      numSvc = select(boxed, { prop: CyNode.nodeType, val: NodeType.SERVICE }).length;
-      numWorkloads = select(boxed, { prop: CyNode.nodeType, val: NodeType.WORKLOAD }).length;
+      numSvc = select(boxed, { prop: NodeAttr.nodeType, val: NodeType.SERVICE }).length;
+      numWorkloads = select(boxed, { prop: NodeAttr.nodeType, val: NodeType.WORKLOAD }).length;
       numEdges = edgesInOut(boxed).length;
     } else {
       numSvc = boxed.filter(`node[nodeType = "${NodeType.SERVICE}"]`).size();
@@ -323,8 +322,8 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     const namespaceBox = this.props.data.summaryTarget;
     const data = isPF ? namespaceBox.getData() : namespaceBox.data();
     const boxed = isPF ? descendents(namespaceBox) : namespaceBox.descendants();
-    const namespace = data[CyNode.namespace];
-    const cluster = data[CyNode.cluster];
+    const namespace = data[NodeAttr.namespace];
+    const cluster = data[NodeAttr.cluster];
 
     let inboundEdges;
     let outboundEdges;
@@ -333,8 +332,8 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
       const controller = (namespaceBox as Node).getController();
       const { nodes } = elems(controller);
       const outsideNodes = selectOr(nodes, [
-        [{ prop: CyNode.namespace, op: '!=', val: namespace }],
-        [{ prop: CyNode.cluster, op: '!=', val: cluster }]
+        [{ prop: NodeAttr.namespace, op: '!=', val: namespace }],
+        [{ prop: NodeAttr.cluster, op: '!=', val: cluster }]
       ]) as Node[];
       // inbound edges are from a different namespace or a different cluster
       inboundEdges = edgesOut(outsideNodes, boxed);
@@ -342,17 +341,17 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
       outboundEdges = edgesIn(outsideNodes, boxed);
       // total edges are inbound + edges from boxed workload|app|root nodes (i.e. not injected service nodes or box nodes)
       totalEdges = [...inboundEdges];
-      totalEdges.push(...edgesOut(select(boxed, { prop: CyNode.workload, op: 'truthy' }) as Node[]));
+      totalEdges.push(...edgesOut(select(boxed, { prop: NodeAttr.workload, op: 'truthy' }) as Node[]));
     } else {
       // inbound edges are from a different namespace or a different cluster
       inboundEdges = namespaceBox
         .cy()
-        .nodes(`[${CyNode.namespace} != "${namespace}"],[${CyNode.cluster} != "${cluster}"]`)
+        .nodes(`[${NodeAttr.namespace} != "${namespace}"],[${NodeAttr.cluster} != "${cluster}"]`)
         .edgesTo(boxed);
       // outbound edges are to a different namespace or a different cluster
-      outboundEdges = boxed.edgesTo(`[${CyNode.namespace} != "${namespace}"],[${CyNode.cluster} != "${cluster}"]`);
+      outboundEdges = boxed.edgesTo(`[${NodeAttr.namespace} != "${namespace}"],[${NodeAttr.cluster} != "${cluster}"]`);
       // total edges are inbound + edges from boxed workload|app|root nodes (i.e. not injected service nodes or box nodes)
-      totalEdges = inboundEdges.add(boxed.filter(`[?${CyNode.workload}]`).edgesTo('*'));
+      totalEdges = inboundEdges.add(boxed.filter(`[?${NodeAttr.workload}]`).edgesTo('*'));
     }
 
     return {
@@ -377,11 +376,11 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     const appVersions: { [key: string]: Set<string> } = {};
 
     boxed.filter(`node[nodeType = "${NodeType.APP}"]`).forEach(node => {
-      const app = node.data(CyNode.app);
+      const app = node.data(NodeAttr.app);
       if (appVersions[app] === undefined) {
         appVersions[app] = new Set();
       }
-      appVersions[app].add(node.data(CyNode.version));
+      appVersions[app].add(node.data(NodeAttr.version));
     });
 
     return {
@@ -395,13 +394,13 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
   private countAppsPF = (boxed: Node[]): { numApps: number; numVersions: number } => {
     const appVersions: { [key: string]: Set<string> } = {};
 
-    select(boxed, { prop: CyNode.nodeType, val: NodeType.APP }).forEach(node => {
+    select(boxed, { prop: NodeAttr.nodeType, val: NodeType.APP }).forEach(node => {
       const data = node.getData();
-      const app = data[CyNode.app];
+      const app = data[NodeAttr.app];
       if (appVersions[app] === undefined) {
         appVersions[app] = new Set();
       }
-      appVersions[app].add(data[CyNode.version]);
+      appVersions[app].add(data[NodeAttr.version]);
     });
 
     return {
@@ -483,8 +482,8 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
   private renderCharts = (isPF: boolean) => {
     const props: SummaryPanelPropType = this.props;
     const namespace = isPF
-      ? props.data.summaryTarget.getData()[CyNode.namespace]
-      : props.data.summaryTarget.data(CyNode.namespace);
+      ? props.data.summaryTarget.getData()[NodeAttr.namespace]
+      : props.data.summaryTarget.data(NodeAttr.namespace);
 
     if (this.state.loading) {
       return <strong>Loading chart...</strong>;
@@ -574,11 +573,11 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
   private updateCharts = (isPF: boolean) => {
     const props: SummaryPanelPropType = this.props;
     const cluster = isPF
-      ? props.data.summaryTarget.getData()[CyNode.cluster]
-      : props.data.summaryTarget.data(CyNode.cluster);
+      ? props.data.summaryTarget.getData()[NodeAttr.cluster]
+      : props.data.summaryTarget.data(NodeAttr.cluster);
     const namespace = isPF
-      ? props.data.summaryTarget.getData()[CyNode.namespace]
-      : props.data.summaryTarget.data(CyNode.namespace);
+      ? props.data.summaryTarget.getData()[NodeAttr.namespace]
+      : props.data.summaryTarget.data(NodeAttr.namespace);
 
     if (namespace === UNKNOWN) {
       this.setState({
@@ -685,8 +684,8 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
 
   private updateValidation = (isPF: boolean) => {
     const namespace = isPF
-      ? this.props.data.summaryTarget.getData()[CyNode.namespace]
-      : this.props.data.summaryTarget.data(CyNode.namespace);
+      ? this.props.data.summaryTarget.getData()[NodeAttr.namespace]
+      : this.props.data.summaryTarget.data(NodeAttr.namespace);
 
     this.validationPromise = makeCancelablePromise(API.getNamespaceValidations(namespace));
     this.validationPromise.promise

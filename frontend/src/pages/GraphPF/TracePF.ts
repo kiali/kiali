@@ -1,6 +1,6 @@
 import { Controller, Edge, Node } from '@patternfly/react-topology';
 import { JaegerTrace, Span } from 'types/JaegerInfo';
-import { NodeType, GraphType, SEInfo } from 'types/Graph';
+import { NodeType, GraphType, SEInfo, NodeAttr } from 'types/Graph';
 import {
   getAppFromSpan,
   getWorkloadFromSpan,
@@ -8,7 +8,6 @@ import {
   searchParentWorkload
 } from 'utils/tracing/TracingHelper';
 import { edgesOut, elems, select, SelectAnd, selectAnd } from './GraphPFElems';
-import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 
 export const showTrace = (controller: Controller, graphType: GraphType, trace: JaegerTrace) => {
   if (!controller.hasGraph()) {
@@ -31,18 +30,18 @@ const showSpanSubtrace = (controller: Controller, graphType: GraphType, span: Sp
     const sourceAppNs = searchParentApp(span);
     if (sourceAppNs) {
       let parent = selectAnd(nodes, [
-        { prop: CyNode.isBox, op: 'falsy' },
-        { prop: CyNode.nodeType, val: NodeType.SERVICE },
-        { prop: CyNode.app, val: sourceAppNs.app },
-        { prop: CyNode.namespace, val: sourceAppNs.namespace }
+        { prop: NodeAttr.isBox, op: 'falsy' },
+        { prop: NodeAttr.nodeType, val: NodeType.SERVICE },
+        { prop: NodeAttr.app, val: sourceAppNs.app },
+        { prop: NodeAttr.namespace, val: sourceAppNs.namespace }
       ]);
       if (parent.length === 0) {
         // Try workload
         const sourceWlNs = searchParentWorkload(span);
         if (sourceWlNs) {
           parent = selectAnd(nodes, [
-            { prop: CyNode.workload, val: sourceWlNs.workload },
-            { prop: CyNode.namespace, val: sourceWlNs.namespace }
+            { prop: NodeAttr.workload, val: sourceWlNs.workload },
+            { prop: NodeAttr.namespace, val: sourceWlNs.namespace }
           ]);
         }
       }
@@ -55,9 +54,9 @@ const showSpanSubtrace = (controller: Controller, graphType: GraphType, span: Sp
     const sourceAppNs = searchParentApp(span);
     if (sourceAppNs) {
       const parent = selectAnd(nodes, [
-        { prop: CyNode.nodeType, val: NodeType.APP },
-        { prop: CyNode.app, val: sourceAppNs.app },
-        { prop: CyNode.namespace, val: sourceAppNs.namespace }
+        { prop: NodeAttr.nodeType, val: NodeType.APP },
+        { prop: NodeAttr.app, val: sourceAppNs.app },
+        { prop: NodeAttr.namespace, val: sourceAppNs.namespace }
       ]);
       if (parent.length !== 0) {
         lastSelection = parent as Node[];
@@ -68,8 +67,8 @@ const showSpanSubtrace = (controller: Controller, graphType: GraphType, span: Sp
     const sourceWlNs = searchParentWorkload(span);
     if (sourceWlNs) {
       const parent = selectAnd(nodes, [
-        { prop: CyNode.workload, val: sourceWlNs.workload },
-        { prop: CyNode.namespace, val: sourceWlNs.namespace }
+        { prop: NodeAttr.workload, val: sourceWlNs.workload },
+        { prop: NodeAttr.namespace, val: sourceWlNs.namespace }
       ]);
       if (parent.length !== 0) {
         lastSelection = parent as Node[];
@@ -83,11 +82,11 @@ const showSpanSubtrace = (controller: Controller, graphType: GraphType, span: Sp
 
   // Main service
   const selector: SelectAnd = [
-    { prop: CyNode.nodeType, val: NodeType.SERVICE },
-    { prop: CyNode.app, val: app }
+    { prop: NodeAttr.nodeType, val: NodeType.SERVICE },
+    { prop: NodeAttr.app, val: app }
   ];
   if (split.length > 1) {
-    selector.push({ prop: CyNode.namespace, val: split[1] });
+    selector.push({ prop: NodeAttr.namespace, val: split[1] });
   }
   lastSelection = nextHop(span, selectAnd(nodes, selector) as Node[], lastSelection);
 
@@ -96,9 +95,9 @@ const showSpanSubtrace = (controller: Controller, graphType: GraphType, span: Sp
     const destAppNs = getAppFromSpan(span);
     if (destAppNs) {
       const selector: SelectAnd = [
-        { prop: CyNode.nodeType, val: NodeType.APP },
-        { prop: CyNode.app, val: destAppNs.app },
-        { prop: CyNode.namespace, val: destAppNs.namespace }
+        { prop: NodeAttr.nodeType, val: NodeType.APP },
+        { prop: NodeAttr.app, val: destAppNs.app },
+        { prop: NodeAttr.namespace, val: destAppNs.namespace }
       ];
       lastSelection = nextHop(span, selectAnd(nodes, selector) as Node[], lastSelection);
     }
@@ -107,8 +106,8 @@ const showSpanSubtrace = (controller: Controller, graphType: GraphType, span: Sp
     const destWlNs = getWorkloadFromSpan(span);
     if (destWlNs) {
       const selector: SelectAnd = [
-        { prop: CyNode.app, val: destWlNs.workload },
-        { prop: CyNode.namespace, val: destWlNs.namespace }
+        { prop: NodeAttr.app, val: destWlNs.workload },
+        { prop: NodeAttr.namespace, val: destWlNs.namespace }
       ];
       lastSelection = nextHop(span, selectAnd(nodes, selector) as Node[], lastSelection);
     }
@@ -187,9 +186,9 @@ const findServiceEntry = (span: Span, nodes: Node[]): Node[] | undefined => {
 };
 
 const findSEHost = (hostname: string, nodes: Node[]): Node[] | undefined => {
-  const serviceNodes = select(nodes, { prop: CyNode.nodeType, val: NodeType.SERVICE }) as Node[];
+  const serviceNodes = select(nodes, { prop: NodeAttr.nodeType, val: NodeType.SERVICE }) as Node[];
   return serviceNodes.filter(node => {
-    const seInfo: SEInfo | undefined = node.getData()[CyNode.isServiceEntry];
+    const seInfo: SEInfo | undefined = node.getData()[NodeAttr.isServiceEntry];
     if (seInfo) {
       // TODO: improve host matching, as "startsWith" allows false-positives
       if (seInfo.hosts.some(h => h.startsWith(hostname))) {

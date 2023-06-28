@@ -20,9 +20,17 @@ import {
   trafficRatesSelector
 } from '../../../store/Selectors';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
-import { GraphType, NodeParamsType, EdgeLabelMode, SummaryData, TrafficRate, RankMode } from '../../../types/Graph';
 import { GraphFind } from './GraphFind';
 import { GraphSettings } from './GraphSettings';
+import {
+  GraphType,
+  NodeParamsType,
+  EdgeLabelMode,
+  SummaryData,
+  TrafficRate,
+  RankMode,
+  NodeAttr
+} from '../../../types/Graph';
 import { history, HistoryManager, URLParam } from '../../../app/History';
 import { Namespace, namespacesFromString, namespacesToString } from '../../../types/Namespace';
 import { KialiDispatch } from '../../../types/Redux';
@@ -34,7 +42,6 @@ import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
 import { Replay } from 'components/Time/Replay';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { GraphSecondaryMasthead } from './GraphSecondaryMasthead';
-import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { INITIAL_USER_SETTINGS_STATE } from 'reducers/UserSettingsState';
 import { GraphReset } from './GraphReset';
 import GraphFindPFContainer from './GraphFindPF';
@@ -249,7 +256,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
 
     const selector = this.props.isPF
       ? this.props.summaryData!.summaryTarget.getId()
-      : `node[id = "${this.props.summaryData!.summaryTarget.data(CyNode.id)}"]`;
+      : `node[id = "${this.props.summaryData!.summaryTarget.data(NodeAttr.id)}"]`;
     this.props.setNode(undefined);
     history.push(`/${route}/namespaces?focusSelector=${encodeURI(selector)}`);
   };

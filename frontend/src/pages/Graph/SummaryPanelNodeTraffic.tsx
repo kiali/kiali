@@ -14,7 +14,8 @@ import {
   Protocol,
   DecoratedGraphNodeData,
   UNKNOWN,
-  TrafficRate
+  TrafficRate,
+  NodeAttr
 } from '../../types/Graph';
 import { IstioMetricsMap, Datapoint, Labels } from '../../types/Metrics';
 import {
@@ -30,7 +31,7 @@ import {
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { Response } from '../../services/Api';
 import { Reporter } from '../../types/MetricsOptions';
-import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
+import { decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { edgesOut, nodesIn, select } from 'pages/GraphPF/GraphPFElems';
 
@@ -479,8 +480,8 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
     let serviceWithUnknownSource: boolean = false;
     if (isServiceNode) {
       serviceWithUnknownSource = isPF
-        ? select(nodesIn([node]), { prop: CyNode.nodeType, val: NodeType.UNKNOWN }).length > 0
-        : (serviceWithUnknownSource = node.incomers(`node[${CyNode.nodeType} = "${NodeType.UNKNOWN}"]`).size() > 0);
+        ? select(nodesIn([node]), { prop: NodeAttr.nodeType, val: NodeType.UNKNOWN }).length > 0
+        : (serviceWithUnknownSource = node.incomers(`node[${NodeAttr.nodeType} = "${NodeType.UNKNOWN}"]`).size() > 0);
     }
 
     let grpcCharts, httpCharts, tcpCharts;
@@ -636,7 +637,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
     if (nodeData.nodeType === NodeType.UNKNOWN || nodeData.isIstio) {
       return false;
     }
-    return node.edgesTo(`node[?${CyNode.isIstio}]`).size() > 0;
+    return node.edgesTo(`node[?${NodeAttr.isIstio}]`).size() > 0;
   };
 
   private hasGrpcTraffic = (data: DecoratedGraphNodeData): boolean => {

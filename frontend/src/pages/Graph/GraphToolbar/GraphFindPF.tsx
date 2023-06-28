@@ -7,9 +7,8 @@ import { KialiAppState } from '../../../store/Store';
 import { findValueSelector, hideValueSelector, edgeLabelsSelector, edgeModeSelector } from '../../../store/Selectors';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
 import GraphHelpFind from '../../../pages/Graph/GraphHelpFind';
-import { CyNode, CyEdge } from '../../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import * as CytoscapeGraphUtils from '../../../components/CytoscapeGraph/CytoscapeGraphUtils';
-import { EdgeLabelMode, NodeType, Layout, EdgeMode } from '../../../types/Graph';
+import { EdgeLabelMode, NodeType, Layout, EdgeMode, NodeAttr, EdgeAttr } from '../../../types/Graph';
 import * as AlertUtils from '../../../utils/AlertUtils';
 import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
 import { style } from 'typestyle';
@@ -542,7 +541,7 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
             break;
           case EdgeMode.UNHEALTHY:
             edges.forEach(e => {
-              if (e.isVisible() && !e.getData()[CyNode.healthStatus]) {
+              if (e.isVisible() && !e.getData()[NodeAttr.healthStatus]) {
                 e.setVisible(false);
               }
             });
@@ -763,23 +762,23 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
       // nodes...
       //
       case 'app':
-        return { target: 'node', selector: { prop: CyNode.app, op: op, val: val } };
+        return { target: 'node', selector: { prop: NodeAttr.app, op: op, val: val } };
       case 'cluster':
-        return { target: 'node', selector: { prop: CyNode.cluster, op: op, val: val } };
+        return { target: 'node', selector: { prop: NodeAttr.cluster, op: op, val: val } };
       case 'grpcin': {
-        const s = this.getNumericSelector(CyNode.grpcIn, op, val, expression, isFind);
+        const s = this.getNumericSelector(NodeAttr.grpcIn, op, val, expression, isFind);
         return s ? { target: 'node', selector: s } : undefined;
       }
       case 'grpcout': {
-        const s = this.getNumericSelector(CyNode.grpcOut, op, val, expression, isFind);
+        const s = this.getNumericSelector(NodeAttr.grpcOut, op, val, expression, isFind);
         return s ? { target: 'node', selector: s } : undefined;
       }
       case 'httpin': {
-        const s = this.getNumericSelector(CyNode.httpIn, op, val, expression, isFind);
+        const s = this.getNumericSelector(NodeAttr.httpIn, op, val, expression, isFind);
         return s ? { target: 'node', selector: s } : undefined;
       }
       case 'httpout': {
-        const s = this.getNumericSelector(CyNode.httpOut, op, val, expression, isFind);
+        const s = this.getNumericSelector(NodeAttr.httpOut, op, val, expression, isFind);
         return s ? { target: 'node', selector: s } : undefined;
       }
       case 'name': {
@@ -787,10 +786,10 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
         if (conjunctive) {
           return this.setError(`Can not use 'AND' with 'name' operand`, isFind);
         }
-        const agg = { prop: CyNode.aggregateValue, op: op, val: val };
-        const app = { prop: CyNode.app, op: op, val: val };
-        const svc = { prop: CyNode.service, op: op, val: val };
-        const wl = { prop: CyNode.workload, op: op, val: val };
+        const agg = { prop: NodeAttr.aggregateValue, op: op, val: val };
+        const app = { prop: NodeAttr.app, op: op, val: val };
+        const svc = { prop: NodeAttr.service, op: op, val: val };
+        const wl = { prop: NodeAttr.workload, op: op, val: val };
         return { target: 'node', selector: isNegation ? [[agg, app, svc, wl]] : [[agg], [app], [svc], [wl]] };
       }
       case 'node':
@@ -815,7 +814,7 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
           case NodeType.SERVICE:
           case NodeType.WORKLOAD:
           case NodeType.UNKNOWN:
-            return { target: 'node', selector: { prop: CyNode.nodeType, op: op, val: nodeType } };
+            return { target: 'node', selector: { prop: NodeAttr.nodeType, op: op, val: nodeType } };
           default:
             this.setError(
               `Invalid node type [${nodeType}]. Expected app | operation | service | unknown | workload`,
@@ -825,10 +824,10 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
         return undefined;
       case 'ns':
       case 'namespace':
-        return { target: 'node', selector: { prop: CyNode.namespace, op: op, val: val } };
+        return { target: 'node', selector: { prop: NodeAttr.namespace, op: op, val: val } };
       case 'op':
       case 'operation':
-        return { target: 'node', selector: { prop: CyNode.aggregateValue, op: op, val: val } };
+        return { target: 'node', selector: { prop: NodeAttr.aggregateValue, op: op, val: val } };
       case 'rank': {
         if (!this.props.showRank) {
           AlertUtils.addSuccess('Enabling "Rank" display option for graph find/hide expression');
@@ -839,25 +838,25 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
         if (Number.isNaN(valAsNum) || valAsNum < 1 || valAsNum > 100) {
           return this.setError(`Invalid rank range [${val}]. Expected a number between 1..100`, isFind);
         }
-        const s = this.getNumericSelector(CyNode.rank, op, val, expression, isFind);
+        const s = this.getNumericSelector(NodeAttr.rank, op, val, expression, isFind);
         return s ? { target: 'node', selector: s } : undefined;
       }
       case 'svc':
       case 'service':
-        return { target: 'node', selector: { prop: CyNode.service, op: op, val: val } };
+        return { target: 'node', selector: { prop: NodeAttr.service, op: op, val: val } };
       case 'tcpin': {
-        const s = this.getNumericSelector(CyNode.tcpIn, op, val, expression, isFind);
+        const s = this.getNumericSelector(NodeAttr.tcpIn, op, val, expression, isFind);
         return s ? { target: 'node', selector: s } : undefined;
       }
       case 'tcpout': {
-        const s = this.getNumericSelector(CyNode.tcpOut, op, val, expression, isFind);
+        const s = this.getNumericSelector(NodeAttr.tcpOut, op, val, expression, isFind);
         return s ? { target: 'node', selector: s } : undefined;
       }
       case 'version':
-        return { target: 'node', selector: { prop: CyNode.version, op: op, val: val } };
+        return { target: 'node', selector: { prop: NodeAttr.version, op: op, val: val } };
       case 'wl':
       case 'workload':
-        return { target: 'node', selector: { prop: CyNode.workload, op: op, val: val } };
+        return { target: 'node', selector: { prop: NodeAttr.workload, op: op, val: val } };
       //
       // edges..
       //
@@ -866,35 +865,35 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
           AlertUtils.addSuccess('Enabling "Security" display option for graph find/hide expression');
           this.props.toggleGraphSecurity();
         }
-        return { target: 'edge', selector: { prop: CyEdge.destPrincipal, op: op, val: val } };
+        return { target: 'edge', selector: { prop: EdgeAttr.destPrincipal, op: op, val: val } };
       case 'grpc': {
-        const s = this.getNumericSelector(CyEdge.grpc, op, val, expression, isFind);
+        const s = this.getNumericSelector(EdgeAttr.grpc, op, val, expression, isFind);
         return s ? { target: 'edge', selector: s } : undefined;
       }
       case '%grpcerror':
       case '%grpcerr': {
-        const s = this.getNumericSelector(CyEdge.grpcPercentErr, op, val, expression, isFind);
+        const s = this.getNumericSelector(EdgeAttr.grpcPercentErr, op, val, expression, isFind);
         return s ? { target: 'edge', selector: s } : undefined;
       }
       case '%grpctraffic': {
-        const s = this.getNumericSelector(CyEdge.grpcPercentReq, op, val, expression, isFind);
+        const s = this.getNumericSelector(EdgeAttr.grpcPercentReq, op, val, expression, isFind);
         return s ? { target: 'edge', selector: s } : undefined;
       }
       case 'http': {
-        const s = this.getNumericSelector(CyEdge.http, op, val, expression, isFind);
+        const s = this.getNumericSelector(EdgeAttr.http, op, val, expression, isFind);
         return s ? { target: 'edge', selector: s } : undefined;
       }
       case '%httperror':
       case '%httperr': {
-        const s = this.getNumericSelector(CyEdge.httpPercentErr, op, val, expression, isFind);
+        const s = this.getNumericSelector(EdgeAttr.httpPercentErr, op, val, expression, isFind);
         return s ? { target: 'edge', selector: s } : undefined;
       }
       case '%httptraffic': {
-        const s = this.getNumericSelector(CyEdge.httpPercentReq, op, val, expression, isFind);
+        const s = this.getNumericSelector(EdgeAttr.httpPercentReq, op, val, expression, isFind);
         return s ? { target: 'edge', selector: s } : undefined;
       }
       case 'protocol': {
-        return { target: 'edge', selector: { prop: CyEdge.protocol, op: op, val: val } };
+        return { target: 'edge', selector: { prop: EdgeAttr.protocol, op: op, val: val } };
       }
       case 'rt':
       case 'responsetime': {
@@ -906,7 +905,7 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
             EdgeLabelMode.RESPONSE_TIME_P95
           ]);
         }
-        const s = this.getNumericSelector(CyEdge.responseTime, op, val, expression, isFind);
+        const s = this.getNumericSelector(EdgeAttr.responseTime, op, val, expression, isFind);
         return s ? { target: 'edge', selector: s } : undefined;
       }
       case 'sourceprincipal':
@@ -914,9 +913,9 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
           AlertUtils.addSuccess('Enabling "Security" display option for this graph find/hide expression');
           this.props.toggleGraphSecurity();
         }
-        return { target: 'edge', selector: { prop: CyEdge.sourcePrincipal, op: op, val: val } };
+        return { target: 'edge', selector: { prop: EdgeAttr.sourcePrincipal, op: op, val: val } };
       case 'tcp': {
-        const s = this.getNumericSelector(CyEdge.tcp, op, val, expression, isFind);
+        const s = this.getNumericSelector(EdgeAttr.tcp, op, val, expression, isFind);
         return s ? { target: 'edge', selector: s } : undefined;
       }
       case 'throughput': {
@@ -928,7 +927,7 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
             EdgeLabelMode.THROUGHPUT_REQUEST
           ]);
         }
-        const s = this.getNumericSelector(CyEdge.throughput, op, val, expression, isFind);
+        const s = this.getNumericSelector(EdgeAttr.throughput, op, val, expression, isFind);
         return s ? { target: 'edge', selector: s } : undefined;
       }
       default:
@@ -982,86 +981,86 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
       //
       case 'cb':
       case 'circuitbreaker':
-        return { target: 'node', selector: { prop: CyNode.hasCB, op: isNegation ? 'falsy' : 'truthy' } };
+        return { target: 'node', selector: { prop: NodeAttr.hasCB, op: isNegation ? 'falsy' : 'truthy' } };
       case 'dead':
-        return { target: 'node', selector: { prop: CyNode.isDead, op: isNegation ? 'falsy' : 'truthy' } };
+        return { target: 'node', selector: { prop: NodeAttr.isDead, op: isNegation ? 'falsy' : 'truthy' } };
       case 'fi':
       case 'faultinjection':
         return {
           target: 'node',
-          selector: { prop: CyNode.hasFaultInjection, op: isNegation ? 'falsy' : 'truthy' }
+          selector: { prop: NodeAttr.hasFaultInjection, op: isNegation ? 'falsy' : 'truthy' }
         };
       case 'inaccessible':
         return {
           target: 'node',
-          selector: { prop: CyNode.isInaccessible, op: isNegation ? 'falsy' : 'truthy' }
+          selector: { prop: NodeAttr.isInaccessible, op: isNegation ? 'falsy' : 'truthy' }
         };
       case 'healthy':
         return {
           target: 'node',
           selector: isNegation
             ? [
-                { prop: CyNode.healthStatus, op: '!=', val: HEALTHY.name },
-                { prop: CyNode.healthStatus, op: '!=', val: NA.name },
-                { prop: CyNode.healthStatus, op: '!=', val: NOT_READY.name }
+                { prop: NodeAttr.healthStatus, op: '!=', val: HEALTHY.name },
+                { prop: NodeAttr.healthStatus, op: '!=', val: NA.name },
+                { prop: NodeAttr.healthStatus, op: '!=', val: NOT_READY.name }
               ]
-            : { prop: CyNode.healthStatus, val: HEALTHY.name }
+            : { prop: NodeAttr.healthStatus, val: HEALTHY.name }
         };
       case 'idle':
         if (!this.props.showIdleNodes) {
           AlertUtils.addSuccess('Enabling "Idle nodes" display option for graph find/hide expression');
           this.props.toggleIdleNodes();
         }
-        return { target: 'node', selector: { prop: CyNode.isIdle, op: isNegation ? 'falsy' : 'truthy' } };
+        return { target: 'node', selector: { prop: NodeAttr.isIdle, op: isNegation ? 'falsy' : 'truthy' } };
       case 'mirroring':
-        return { target: 'node', selector: { prop: CyNode.hasMirroring, op: isNegation ? 'falsy' : 'truthy' } };
+        return { target: 'node', selector: { prop: NodeAttr.hasMirroring, op: isNegation ? 'falsy' : 'truthy' } };
       case 'outside':
       case 'outsider':
-        return { target: 'node', selector: { prop: CyNode.isOutside, op: isNegation ? 'falsy' : 'truthy' } };
+        return { target: 'node', selector: { prop: NodeAttr.isOutside, op: isNegation ? 'falsy' : 'truthy' } };
       case 'rr':
       case 'requestrouting':
         return {
           target: 'node',
-          selector: { prop: CyNode.hasRequestRouting, op: isNegation ? 'falsy' : 'truthy' }
+          selector: { prop: NodeAttr.hasRequestRouting, op: isNegation ? 'falsy' : 'truthy' }
         };
       case 'rto':
       case 'requesttimeout':
         return {
           target: 'node',
-          selector: { prop: CyNode.hasRequestTimeout, op: isNegation ? 'falsy' : 'truthy' }
+          selector: { prop: NodeAttr.hasRequestTimeout, op: isNegation ? 'falsy' : 'truthy' }
         };
       case 'se':
       case 'serviceentry':
         return {
           target: 'node',
-          selector: { prop: CyNode.isServiceEntry, op: isNegation ? 'falsy' : 'truthy' }
+          selector: { prop: NodeAttr.isServiceEntry, op: isNegation ? 'falsy' : 'truthy' }
         };
       case 'sc':
       case 'sidecar':
-        return { target: 'node', selector: { prop: CyNode.hasMissingSC, op: isNegation ? 'falsy' : 'truthy' } };
+        return { target: 'node', selector: { prop: NodeAttr.hasMissingSC, op: isNegation ? 'falsy' : 'truthy' } };
       case 'tcpts':
       case 'tcptrafficshifting':
         return {
           target: 'node',
-          selector: { prop: CyNode.hasTCPTrafficShifting, op: isNegation ? 'falsy' : 'truthy' }
+          selector: { prop: NodeAttr.hasTCPTrafficShifting, op: isNegation ? 'falsy' : 'truthy' }
         };
       case 'ts':
       case 'trafficshifting':
         return {
           target: 'node',
-          selector: { prop: CyNode.hasTrafficShifting, op: isNegation ? 'falsy' : 'truthy' }
+          selector: { prop: NodeAttr.hasTrafficShifting, op: isNegation ? 'falsy' : 'truthy' }
         };
       case 'trafficsource':
       case 'root':
-        return { target: 'node', selector: { prop: CyNode.isRoot, op: isNegation ? 'falsy' : 'truthy' } };
+        return { target: 'node', selector: { prop: NodeAttr.isRoot, op: isNegation ? 'falsy' : 'truthy' } };
       case 'vs':
       case 'virtualservice':
-        return { target: 'node', selector: { prop: CyNode.hasVS, op: isNegation ? 'falsy' : 'truthy' } };
+        return { target: 'node', selector: { prop: NodeAttr.hasVS, op: isNegation ? 'falsy' : 'truthy' } };
       case 'we':
       case 'workloadentry':
         return {
           target: 'node',
-          selector: { prop: CyNode.hasWorkloadEntry, op: isNegation ? 'falsy' : 'truthy' }
+          selector: { prop: NodeAttr.hasWorkloadEntry, op: isNegation ? 'falsy' : 'truthy' }
         };
       //
       // edges...
@@ -1071,9 +1070,9 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
           AlertUtils.addSuccess('Enabling "Security" display option for graph find/hide expression');
           this.props.toggleGraphSecurity();
         }
-        return { target: 'edge', selector: { prop: CyEdge.isMTLS, op: isNegation ? '<=' : '>', val: 0 } };
+        return { target: 'edge', selector: { prop: EdgeAttr.isMTLS, op: isNegation ? '<=' : '>', val: 0 } };
       case 'traffic': {
-        return { target: 'edge', selector: { prop: CyEdge.hasTraffic, op: isNegation ? 'falsy' : 'truthy' } };
+        return { target: 'edge', selector: { prop: EdgeAttr.hasTraffic, op: isNegation ? 'falsy' : 'truthy' } };
       }
       default:
         // special node operand

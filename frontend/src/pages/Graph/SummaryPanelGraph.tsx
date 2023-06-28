@@ -5,7 +5,7 @@ import { style } from 'typestyle';
 import _ from 'lodash';
 import { RateTableGrpc, RateTableHttp, RateTableTcp } from '../../components/SummaryPanel/RateTable';
 import { RequestChart, StreamChart } from '../../components/SummaryPanel/RpsChart';
-import { NodeType, Protocol, SummaryPanelPropType, TrafficRate, UNKNOWN } from '../../types/Graph';
+import { NodeAttr, NodeType, Protocol, SummaryPanelPropType, TrafficRate, UNKNOWN } from '../../types/Graph';
 import {
   getAccumulatedTrafficRateGrpc,
   getAccumulatedTrafficRateHttp,
@@ -30,7 +30,6 @@ import {
 import { Datapoint, IstioMetricsMap, Labels } from '../../types/Metrics';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise, PromisesRegistry } from '../../utils/CancelablePromises';
-import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { ValidationStatus } from 'types/IstioObjects';
@@ -196,8 +195,8 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
       }
       const { nodes, edges } = elems(controller);
 
-      numSvc = select(nodes, { prop: CyNode.nodeType, val: NodeType.SERVICE }).length;
-      numWorkloads = select(nodes, { prop: CyNode.nodeType, val: NodeType.WORKLOAD }).length;
+      numSvc = select(nodes, { prop: NodeAttr.nodeType, val: NodeType.SERVICE }).length;
+      numWorkloads = select(nodes, { prop: NodeAttr.nodeType, val: NodeType.WORKLOAD }).length;
       ({ numApps, numVersions } = this.countApps());
       numEdges = edges.length;
 
@@ -362,8 +361,11 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     // when getting total traffic rates don't count requests from injected service nodes
     const cy = this.props.data.summaryTarget;
     const totalEdges = cy.nodes(`[nodeType != "${NodeType.SERVICE}"][!isBox]`).edgesTo('*');
-    const inboundEdges = cy.nodes(`[?${CyNode.isRoot}]`).edgesTo('*');
-    const outboundEdges = cy.nodes().leaves(`node[?${CyNode.isOutside}],[?${CyNode.isServiceEntry}]`).connectedEdges();
+    const inboundEdges = cy.nodes(`[?${NodeAttr.isRoot}]`).edgesTo('*');
+    const outboundEdges = cy
+      .nodes()
+      .leaves(`node[?${NodeAttr.isOutside}],[?${NodeAttr.isServiceEntry}]`)
+      .connectedEdges();
 
     return {
       grpcIn: getAccumulatedTrafficRateGrpc(inboundEdges),
@@ -384,15 +386,15 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     const { nodes } = elems(controller);
 
     // when getting total traffic rates don't count requests from injected service nodes
-    const nonServiceNodes = select(nodes, { prop: CyNode.nodeType, val: NodeType.SERVICE, op: '!=' });
-    const nonBoxNodes = select(nonServiceNodes, { prop: CyNode.isBox, op: 'falsy' });
+    const nonServiceNodes = select(nodes, { prop: NodeAttr.nodeType, val: NodeType.SERVICE, op: '!=' });
+    const nonBoxNodes = select(nonServiceNodes, { prop: NodeAttr.isBox, op: 'falsy' });
     const totalEdges = edgesOut(nonBoxNodes as Node[]).length;
-    const inboundEdges = edgesOut(select(nodes, { prop: CyNode.isRoot, op: 'truthy' }) as Node[]);
+    const inboundEdges = edgesOut(select(nodes, { prop: NodeAttr.isRoot, op: 'truthy' }) as Node[]);
     const allLeafNodes = leafNodes(nodes) as Node[];
     const outboundEdges = edgesIn(
       _.union(
-        select(allLeafNodes, { prop: CyNode.isOutside, op: 'truthy' }),
-        select(allLeafNodes, { prop: CyNode.isServiceEntry, op: 'truthy' })
+        select(allLeafNodes, { prop: NodeAttr.isOutside, op: 'truthy' }),
+        select(allLeafNodes, { prop: NodeAttr.isServiceEntry, op: 'truthy' })
       ) as Node[]
     );
 
@@ -419,11 +421,11 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     const appVersions: { [key: string]: Set<string> } = {};
 
     cy.$(`node[nodeType = "${NodeType.APP}"]`).forEach(node => {
-      const app = node.data(CyNode.app);
+      const app = node.data(NodeAttr.app);
       if (appVersions[app] === undefined) {
         appVersions[app] = new Set();
       }
-      appVersions[app].add(node.data(CyNode.version));
+      appVersions[app].add(node.data(NodeAttr.version));
     });
 
     return {
@@ -440,13 +442,13 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
 
     const appVersions: { [key: string]: Set<string> } = {};
 
-    select(nodes, { prop: CyNode.nodeType, val: NodeType.APP }).forEach(appNode => {
+    select(nodes, { prop: NodeAttr.nodeType, val: NodeType.APP }).forEach(appNode => {
       const d = appNode.getData() as NodeData;
-      const app = d[CyNode.app];
+      const app = d[NodeAttr.app];
       if (appVersions[app] === undefined) {
         appVersions[app] = new Set();
       }
-      appVersions[app].add(d[CyNode.version]);
+      appVersions[app].add(d[NodeAttr.version]);
     });
 
     return {

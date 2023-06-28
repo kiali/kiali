@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { style } from 'typestyle';
-import { SummaryPanelPropType, BoxByType, SummaryData } from '../../types/Graph';
 import { SummaryPanelEdge } from './SummaryPanelEdge';
 import { SummaryPanelGraph } from './SummaryPanelGraph';
 import { SummaryPanelAppBox } from './SummaryPanelAppBox';
+import { SummaryPanelPropType, BoxByType, SummaryData, NodeAttr } from '../../types/Graph';
 import { KialiIcon } from 'config/KialiIcon';
 import { SummaryPanelNode } from './SummaryPanelNode';
 import { JaegerState } from 'reducers/JaegerState';
@@ -12,7 +12,6 @@ import { SummaryPanelTraceDetails } from './SummaryPanelTraceDetails';
 import { KialiAppState } from 'store/Store';
 import { SummaryPanelClusterBox } from './SummaryPanelClusterBox';
 import { SummaryPanelNamespaceBox } from './SummaryPanelNamespaceBox';
-import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import { TourStop } from 'components/Tour/TourStop';
 import { summaryPanelWidth } from './SummaryPanelCommon';
@@ -147,8 +146,8 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
     switch (summaryType) {
       case 'box': {
         const boxType: BoxByType = isPF
-          ? summary.summaryTarget.getData()[CyNode.isBox]
-          : summary.summaryTarget.data(CyNode.isBox);
+          ? summary.summaryTarget.getData()[NodeAttr.isBox]
+          : summary.summaryTarget.data(NodeAttr.isBox);
         switch (boxType) {
           case 'app':
             return (

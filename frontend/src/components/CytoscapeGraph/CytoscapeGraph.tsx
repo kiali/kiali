@@ -19,7 +19,8 @@ import {
   RankMode,
   RankResult,
   SummaryData,
-  UNKNOWN
+  UNKNOWN,
+  NodeAttr
 } from '../../types/Graph';
 import { JaegerTrace } from 'types/JaegerInfo';
 import { Namespace } from '../../types/Namespace';
@@ -32,7 +33,7 @@ import {
   EdgeContextMenuComponentType
 } from './CytoscapeContextMenu';
 import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
-import { CyNode, isCore, isEdge, isNode } from './CytoscapeGraphUtils';
+import { isCore, isEdge, isNode } from './CytoscapeGraphUtils';
 import { CytoscapeReactWrapper } from './CytoscapeReactWrapper';
 import { showTrace, hideTrace } from './CytoscapeTrace';
 import { EmptyGraphLayout } from './EmptyGraphLayout';
@@ -266,7 +267,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
             (node.nodeType === NodeType.APP || node.nodeType === NodeType.BOX) &&
             !node.version &&
             target.isChild() &&
-            target.parent()[0].data(CyNode.isBox) === BoxByType.APP
+            target.parent()[0].data(NodeAttr.isBox) === BoxByType.APP
           ) {
             target = target.parent()[0];
           }
@@ -343,21 +344,21 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
     // Invoke callback
     return {
-      aggregate: target.data(CyNode.aggregate),
-      aggregateValue: target.data(CyNode.aggregateValue),
-      app: target.data(CyNode.app),
-      cluster: target.data(CyNode.cluster),
-      hasMissingSC: targetOrBoxChildren.every(t => t.data(CyNode.hasMissingSC)),
-      isBox: target.data(CyNode.isBox),
-      isIdle: targetOrBoxChildren.every(t => t.data(CyNode.isIdle)),
-      isInaccessible: target.data(CyNode.isInaccessible),
-      isOutside: target.data(CyNode.isOutside),
-      isServiceEntry: target.data(CyNode.isServiceEntry),
-      namespace: target.data(CyNode.namespace),
-      nodeType: target.data(CyNode.nodeType),
-      service: target.data(CyNode.service),
-      version: targetType === 'box' ? undefined : target.data(CyNode.version),
-      workload: target.data(CyNode.workload)
+      aggregate: target.data(NodeAttr.aggregate),
+      aggregateValue: target.data(NodeAttr.aggregateValue),
+      app: target.data(NodeAttr.app),
+      cluster: target.data(NodeAttr.cluster),
+      hasMissingSC: targetOrBoxChildren.every(t => t.data(NodeAttr.hasMissingSC)),
+      isBox: target.data(NodeAttr.isBox),
+      isIdle: targetOrBoxChildren.every(t => t.data(NodeAttr.isIdle)),
+      isInaccessible: target.data(NodeAttr.isInaccessible),
+      isOutside: target.data(NodeAttr.isOutside),
+      isServiceEntry: target.data(NodeAttr.isServiceEntry),
+      namespace: target.data(NodeAttr.namespace),
+      nodeType: target.data(NodeAttr.nodeType),
+      service: target.data(NodeAttr.service),
+      version: targetType === 'box' ? undefined : target.data(NodeAttr.version),
+      workload: target.data(NodeAttr.workload)
     };
   }
 
@@ -404,7 +405,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       if (target === cy) {
         return { summaryType: 'graph', summaryTarget: cy };
       } else if (isNode(target)) {
-        if (target.data(CyNode.isBox)) {
+        if (target.data(NodeAttr.isBox)) {
           return { summaryType: 'box', summaryTarget: target };
         } else {
           return { summaryType: 'node', summaryTarget: target };
@@ -524,7 +525,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         const elements: Cy.Collection = evt.target;
         if (elements) {
           elements.forEach(e => {
-            if (e.data(CyNode.nodeType) !== NodeType.BOX) {
+            if (e.data(NodeAttr.nodeType) !== NodeType.BOX) {
               this.userBoxSelected = this.userBoxSelected?.add(elements);
             }
           });
@@ -918,7 +919,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   private selectTargetAndUpdateSummary = (target: Cy.NodeSingular | Cy.EdgeSingular) => {
     this.selectTarget(target);
     const event: GraphEvent = {
-      summaryType: target.data(CyNode.isBox) ? 'box' : 'node',
+      summaryType: target.data(NodeAttr.isBox) ? 'box' : 'node',
       summaryTarget: target
     };
     if (this.props.updateSummary) {

@@ -36,8 +36,7 @@
      c. For every child set the relative position to its parent
  */
 
-import { CyNode } from '../CytoscapeGraphUtils';
-import { BoxByType } from 'types/Graph';
+import { BoxByType, NodeAttr } from 'types/Graph';
 import { getLayoutByName } from '../graphs/LayoutDictionary';
 
 export const BOX_NODE_CLASS = '__boxNodeClass';
@@ -97,7 +96,7 @@ class SyntheticEdgeGenerator {
   // Returns the element's parent if it exists and is also of the correct boxType.
   private normalizeToParent(parentBoxType: BoxByType, element: any) {
     const parent = element.parent();
-    return parent && parent.data(CyNode.isBox) === parentBoxType ? parent : element;
+    return parent && parent.data(NodeAttr.isBox) === parentBoxType ? parent : element;
   }
 }
 
@@ -326,6 +325,6 @@ export class BoxLayout {
   }
 
   getBoxNodes(boxByType: BoxByType): any {
-    return this.elements.nodes(`[${CyNode.isBox}="${boxByType}"]`);
+    return this.elements.nodes(`[${NodeAttr.isBox}="${boxByType}"]`);
   }
 }

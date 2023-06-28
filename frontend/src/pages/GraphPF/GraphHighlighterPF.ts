@@ -22,8 +22,7 @@
 
 import { Edge, Node } from '@patternfly/react-topology';
 import { Controller, GraphElement } from '@patternfly/react-topology/src/types';
-import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
-import { BoxByType } from 'types/Graph';
+import { BoxByType, NodeAttr } from 'types/Graph';
 import { ancestors, NodeData, predecessors, successors } from './GraphPFElems';
 
 export class GraphHighlighterPF {
@@ -147,7 +146,7 @@ export class GraphHighlighterPF {
   getBoxHighlight(box: Node): { toHighlight: GraphElement[]; unhighlightOthers: boolean } {
     // treat App boxes in a typical way, but to reduce "flashing", Namespace and Cluster
     // boxes highlight themselves and their anscestors.
-    if (box.getData()[CyNode.isBox] === BoxByType.APP) {
+    if (box.getData()[NodeAttr.isBox] === BoxByType.APP) {
       let elems: GraphElement[];
       const children = box.getChildren();
       elems = [...children];

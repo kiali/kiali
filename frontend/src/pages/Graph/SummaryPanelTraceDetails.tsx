@@ -22,14 +22,13 @@ import { FocusAnimation } from 'components/CytoscapeGraph/FocusAnimation';
 import { FormattedTraceInfo, shortIDStyle } from 'components/JaegerIntegration/JaegerResults/FormattedTraceInfo';
 import { SimplerSelect } from 'components/SimplerSelect';
 import { summaryFont, summaryTitle } from './SummaryPanelCommon';
-import { NodeParamsType, GraphType, SummaryData } from 'types/Graph';
+import { NodeParamsType, GraphType, SummaryData, NodeAttr } from 'types/Graph';
 import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { responseFlags } from 'utils/ResponseFlags';
 import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/KioskActions';
 import { Visualization, Node } from '@patternfly/react-topology';
 import { elems, selectAnd } from 'pages/GraphPF/GraphPFElems';
-import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { FocusNode } from 'pages/GraphPF/GraphPF';
 import { GraphSelectorBuilder } from './GraphSelector';
 
@@ -351,9 +350,9 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
       }
       const { nodes } = elems(controller);
       const node = selectAnd(nodes, [
-        { prop: CyNode.namespace, val: target.namespace },
+        { prop: NodeAttr.namespace, val: target.namespace },
         { prop: 'hasSpans', op: 'truthy' },
-        { prop: useApp ? CyNode.app : CyNode.workload, val: targetElt }
+        { prop: useApp ? NodeAttr.app : NodeAttr.workload, val: targetElt }
       ]);
 
       tooltipContent = (

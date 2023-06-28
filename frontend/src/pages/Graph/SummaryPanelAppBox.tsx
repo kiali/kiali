@@ -3,7 +3,7 @@ import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { Node } from '@patternfly/react-topology';
 import { InOutRateTableGrpc, InOutRateTableHttp } from '../../components/SummaryPanel/InOutRateTable';
 import { RequestChart, StreamChart } from '../../components/SummaryPanel/RpsChart';
-import { NodeType, Protocol, SummaryPanelPropType, TrafficRate } from '../../types/Graph';
+import { NodeAttr, NodeType, Protocol, SummaryPanelPropType, TrafficRate } from '../../types/Graph';
 import { getAccumulatedTrafficRateGrpc, getAccumulatedTrafficRateHttp } from '../../utils/TrafficRate';
 import { renderBadgedLink, renderHealth } from './SummaryLink';
 import {
@@ -23,7 +23,7 @@ import { IstioMetricsMap, Datapoint, Labels } from '../../types/Metrics';
 import { Reporter } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { KialiIcon } from 'config/KialiIcon';
-import { decoratedNodeData, CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
+import { decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { Dropdown, DropdownPosition, DropdownItem, KebabToggle, DropdownGroup } from '@patternfly/react-core';
 import { getOptions, clickHandler } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
@@ -397,15 +397,15 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
       return this.renderBadgeSummaryPF(appBox);
     }
 
-    let hasCB: boolean = appBox.data(CyNode.hasCB) === true;
-    let hasVS: boolean = appBox.data(CyNode.hasVS) === true;
+    let hasCB: boolean = appBox.data(NodeAttr.hasCB) === true;
+    let hasVS: boolean = appBox.data(NodeAttr.hasVS) === true;
 
     appBox
-      .children(`node[${CyNode.hasCB}],[${CyNode.hasVS}]`)
+      .children(`node[${NodeAttr.hasCB}],[${NodeAttr.hasVS}]`)
       .nodes()
       .forEach(n => {
-        hasCB = hasCB || n.data(CyNode.hasCB);
-        hasVS = hasVS || n.data(CyNode.hasVS);
+        hasCB = hasCB || n.data(NodeAttr.hasCB);
+        hasVS = hasVS || n.data(NodeAttr.hasVS);
       });
 
     return (
@@ -428,16 +428,17 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
 
   private renderBadgeSummaryPF = (appBox: Node) => {
     const appBoxData = appBox.getData();
-    let hasCB: boolean = appBoxData[CyNode.hasCB] === true;
-    let hasVS: boolean = appBoxData[CyNode.hasVS] === true;
+    let hasCB: boolean = appBoxData[NodeAttr.hasCB] === true;
+    let hasVS: boolean = appBoxData[NodeAttr.hasVS] === true;
 
     const appBoxChildren = appBox.getAllNodeChildren();
-    selectOr(appBoxChildren, [[{ prop: CyNode.hasCB, op: 'truthy' }], [{ prop: CyNode.hasVS, op: 'truthy' }]]).forEach(
-      n => {
-        hasCB = hasCB || !!n.getData()[CyNode.hasCB];
-        hasVS = hasVS || !!n.getData()[CyNode.hasVS];
-      }
-    );
+    selectOr(appBoxChildren, [
+      [{ prop: NodeAttr.hasCB, op: 'truthy' }],
+      [{ prop: NodeAttr.hasVS, op: 'truthy' }]
+    ]).forEach(n => {
+      hasCB = hasCB || !!n.getData()[NodeAttr.hasCB];
+      hasVS = hasVS || !!n.getData()[NodeAttr.hasVS];
+    });
 
     return (
       <div style={{ marginTop: '10px', marginBottom: '10px' }}>
@@ -488,8 +489,8 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     // only consider the physical children to avoid inflated rates
     const appBoxChildren = appBox.getAllNodeChildren();
     const validChildren = selectAnd(appBoxChildren, [
-      { prop: CyNode.nodeType, op: '!=', val: NodeType.SERVICE },
-      { prop: CyNode.nodeType, op: '!=', val: NodeType.AGGREGATE }
+      { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE },
+      { prop: NodeAttr.nodeType, op: '!=', val: NodeType.AGGREGATE }
     ]);
     const inbound = getAccumulatedTrafficRateGrpc(edgesIn(validChildren as Node[]), true);
     const outbound = getAccumulatedTrafficRateGrpc(edgesOut(validChildren as Node[]), true);
@@ -544,8 +545,8 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     // only consider the physical children to avoid inflated rates
     const appBoxChildren = appBox.getAllNodeChildren();
     const validChildren = selectAnd(appBoxChildren, [
-      { prop: CyNode.nodeType, op: '!=', val: NodeType.SERVICE },
-      { prop: CyNode.nodeType, op: '!=', val: NodeType.AGGREGATE }
+      { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE },
+      { prop: NodeAttr.nodeType, op: '!=', val: NodeType.AGGREGATE }
     ]);
     const inbound = getAccumulatedTrafficRateHttp(edgesIn(validChildren as Node[]), true);
     const outbound = getAccumulatedTrafficRateHttp(edgesOut(validChildren as Node[]), true);
@@ -724,12 +725,12 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     const serviceList: any[] = [];
 
     const appBoxChildren = appBox.getAllNodeChildren();
-    select(appBoxChildren, { prop: CyNode.nodeType, val: NodeType.SERVICE }).forEach((serviceNode, i) => {
+    select(appBoxChildren, { prop: NodeAttr.nodeType, val: NodeType.SERVICE }).forEach((serviceNode, i) => {
       const serviceNodeData = serviceNode.getData();
       serviceList.push(renderBadgedLink(serviceNodeData, NodeType.SERVICE));
       const aggregates = selectAnd(appBoxChildren, [
-        { prop: CyNode.nodeType, val: NodeType.AGGREGATE },
-        { prop: CyNode.service, val: serviceNodeData.service }
+        { prop: NodeAttr.nodeType, val: NodeType.AGGREGATE },
+        { prop: NodeAttr.service, val: serviceNodeData.service }
       ]);
       if (!!aggregates && aggregates.length > 0) {
         const aggregateList: any[] = [];
@@ -763,7 +764,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     const workloadList: any[] = [];
 
     const appBoxChildren = appBox.getAllNodeChildren();
-    select(appBoxChildren, { prop: CyNode.workload, op: 'truthy' }).forEach(node => {
+    select(appBoxChildren, { prop: NodeAttr.workload, op: 'truthy' }).forEach(node => {
       const nodeData = node.getData();
       workloadList.push(renderBadgedLink(nodeData, NodeType.WORKLOAD));
     });
@@ -778,10 +779,12 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
   private hasGrpcTraffic = (appBox, isPF: boolean): boolean => {
     if (isPF) {
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
-      const notServices = select(appBoxChildren, { prop: CyNode.nodeType, op: '!=', val: NodeType.SERVICE });
+      const notServices = select(appBoxChildren, { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE });
       return (
-        selectOr(notServices, [[{ prop: CyNode.grpcIn, op: '>', val: 0 }], [{ prop: CyNode.grpcOut, op: '>', val: 0 }]])
-          .length > 0
+        selectOr(notServices, [
+          [{ prop: NodeAttr.grpcIn, op: '>', val: 0 }],
+          [{ prop: NodeAttr.grpcOut, op: '>', val: 0 }]
+        ]).length > 0
       );
     }
 
@@ -793,8 +796,8 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
       return (
         selectAnd(appBoxChildren, [
-          { prop: CyNode.nodeType, op: '!=', val: NodeType.SERVICE },
-          { prop: CyNode.grpcIn, op: '>', val: 0 }
+          { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE },
+          { prop: NodeAttr.grpcIn, op: '>', val: 0 }
         ]).length > 0
       );
     }
@@ -807,8 +810,8 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
       return (
         selectAnd(appBoxChildren, [
-          { prop: CyNode.nodeType, op: '!=', val: NodeType.SERVICE },
-          { prop: CyNode.grpcOut, op: '>', val: 0 }
+          { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE },
+          { prop: NodeAttr.grpcOut, op: '>', val: 0 }
         ]).length > 0
       );
     }
@@ -818,10 +821,12 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
   private hasHttpTraffic = (appBox, isPF: boolean): boolean => {
     if (isPF) {
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
-      const notServices = select(appBoxChildren, { prop: CyNode.nodeType, op: '!=', val: NodeType.SERVICE });
+      const notServices = select(appBoxChildren, { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE });
       return (
-        selectOr(notServices, [[{ prop: CyNode.httpIn, op: '>', val: 0 }], [{ prop: CyNode.httpOut, op: '>', val: 0 }]])
-          .length > 0
+        selectOr(notServices, [
+          [{ prop: NodeAttr.httpIn, op: '>', val: 0 }],
+          [{ prop: NodeAttr.httpOut, op: '>', val: 0 }]
+        ]).length > 0
       );
     }
     return appBox.children().filter('[nodeType != "service"]').filter('[httpIn > 0],[httpOut > 0]').size() > 0;
@@ -832,8 +837,8 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
       return (
         selectAnd(appBoxChildren, [
-          { prop: CyNode.nodeType, op: '!=', val: NodeType.SERVICE },
-          { prop: CyNode.httpIn, op: '>', val: 0 }
+          { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE },
+          { prop: NodeAttr.httpIn, op: '>', val: 0 }
         ]).length > 0
       );
     }
@@ -845,8 +850,8 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
       return (
         selectAnd(appBoxChildren, [
-          { prop: CyNode.nodeType, op: '!=', val: NodeType.SERVICE },
-          { prop: CyNode.httpOut, op: '>', val: 0 }
+          { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE },
+          { prop: NodeAttr.httpOut, op: '>', val: 0 }
         ]).length > 0
       );
     }
@@ -856,10 +861,12 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
   private hasTcpTraffic = (appBox, isPF: boolean): boolean => {
     if (isPF) {
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
-      const notServices = select(appBoxChildren, { prop: CyNode.nodeType, op: '!=', val: NodeType.SERVICE });
+      const notServices = select(appBoxChildren, { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE });
       return (
-        selectOr(notServices, [[{ prop: CyNode.tcpIn, op: '>', val: 0 }], [{ prop: CyNode.tcpOut, op: '>', val: 0 }]])
-          .length > 0
+        selectOr(notServices, [
+          [{ prop: NodeAttr.tcpIn, op: '>', val: 0 }],
+          [{ prop: NodeAttr.tcpOut, op: '>', val: 0 }]
+        ]).length > 0
       );
     }
     return appBox.children().filter('[nodeType != "service"]').filter('[tcpIn > 0],[tcpOut > 0]').size() > 0;
@@ -870,8 +877,8 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
       return (
         selectAnd(appBoxChildren, [
-          { prop: CyNode.nodeType, op: '!=', val: NodeType.SERVICE },
-          { prop: CyNode.tcpIn, op: '>', val: 0 }
+          { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE },
+          { prop: NodeAttr.tcpIn, op: '>', val: 0 }
         ]).length > 0
       );
     }
@@ -883,8 +890,8 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
       return (
         selectAnd(appBoxChildren, [
-          { prop: CyNode.nodeType, op: '!=', val: NodeType.SERVICE },
-          { prop: CyNode.tcpOut, op: '>', val: 0 }
+          { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE },
+          { prop: NodeAttr.tcpOut, op: '>', val: 0 }
         ]).length > 0
       );
     }

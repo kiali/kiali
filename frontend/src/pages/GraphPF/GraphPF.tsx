@@ -26,7 +26,17 @@ import {
 } from '@patternfly/react-topology';
 import { GraphData } from 'pages/Graph/GraphPage';
 import * as React from 'react';
-import { BoxByType, EdgeLabelMode, EdgeMode, GraphEvent, Layout, NodeType, Protocol, UNKNOWN } from 'types/Graph';
+import {
+  BoxByType,
+  EdgeLabelMode,
+  EdgeMode,
+  GraphEvent,
+  Layout,
+  NodeAttr,
+  NodeType,
+  Protocol,
+  UNKNOWN
+} from 'types/Graph';
 import { JaegerTrace } from 'types/JaegerInfo';
 import stylesComponentFactory from './components/stylesComponentFactory';
 import elementFactory from './elements/elementFactory';
@@ -53,7 +63,6 @@ import { KialiGridGraph } from 'components/CytoscapeGraph/graphs/KialiGridGraph'
 import { KialiBreadthFirstGraph } from 'components/CytoscapeGraph/graphs/KialiBreadthFirstGraph';
 import { HistoryManager, URLParam } from 'app/History';
 import { tcpTimerConfig, timerConfig } from 'components/CytoscapeGraph/TrafficAnimation/AnimationTimerConfig';
-import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 
 let initialLayout = false;
 let requestFit = false;
@@ -418,26 +427,26 @@ export const TopologyContent: React.FC<{
       const graphNode = graphData.fetchParams.node;
       if (graphNode) {
         let selector: SelectAnd = [
-          { prop: CyNode.namespace, val: graphNode.namespace.name },
-          { prop: CyNode.nodeType, val: graphNode.nodeType }
+          { prop: NodeAttr.namespace, val: graphNode.namespace.name },
+          { prop: NodeAttr.nodeType, val: graphNode.nodeType }
         ];
         switch (graphNode.nodeType) {
           case NodeType.AGGREGATE:
-            selector.push({ prop: CyNode.aggregate, val: graphNode.aggregate });
-            selector.push({ prop: CyNode.aggregateValue, val: graphNode.aggregateValue });
+            selector.push({ prop: NodeAttr.aggregate, val: graphNode.aggregate });
+            selector.push({ prop: NodeAttr.aggregateValue, val: graphNode.aggregateValue });
             break;
           case NodeType.APP:
           case NodeType.BOX: // we only support app box node graphs, treat like an app node
-            selector.push({ prop: CyNode.app, val: graphNode.app });
+            selector.push({ prop: NodeAttr.app, val: graphNode.app });
             if (graphNode.version && graphNode.version !== UNKNOWN) {
-              selector.push({ prop: CyNode.version, val: graphNode.version });
+              selector.push({ prop: NodeAttr.version, val: graphNode.version });
             }
             break;
           case NodeType.SERVICE:
-            selector.push({ prop: CyNode.service, val: graphNode.service });
+            selector.push({ prop: NodeAttr.service, val: graphNode.service });
             break;
           default:
-            selector.push({ prop: CyNode.workload, val: graphNode.workload });
+            selector.push({ prop: NodeAttr.workload, val: graphNode.workload });
         }
 
         const { nodes } = elems(controller);

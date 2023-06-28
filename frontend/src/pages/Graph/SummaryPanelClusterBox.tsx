@@ -3,12 +3,11 @@ import { Tab, Tooltip } from '@patternfly/react-core';
 import { Node } from '@patternfly/react-topology';
 import { style } from 'typestyle';
 import { summaryFont, summaryHeader, summaryBodyTabs, summaryPanelWidth, getTitle } from './SummaryPanelCommon';
-import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { RateTableGrpc, RateTableHttp, RateTableTcp } from 'components/SummaryPanel/RateTable';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
-import { SummaryPanelPropType, NodeType, TrafficRate } from 'types/Graph';
+import { SummaryPanelPropType, NodeType, TrafficRate, NodeAttr } from 'types/Graph';
 import {
   getAccumulatedTrafficRateGrpc,
   getAccumulatedTrafficRateHttp,
@@ -56,7 +55,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     const clusterBox = this.props.data.summaryTarget;
     const data = isPF ? clusterBox.getData() : clusterBox.data();
     const boxed = isPF ? descendents(clusterBox) : clusterBox.descendants();
-    const cluster = data[CyNode.cluster];
+    const cluster = data[NodeAttr.cluster];
 
     let numSvc;
     let numWorkloads;
@@ -76,8 +75,8 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     } = this.getBoxTraffic(boxed, isPF);
 
     if (isPF) {
-      numSvc = select(boxed, { prop: CyNode.nodeType, val: NodeType.SERVICE }).length;
-      numWorkloads = select(boxed, { prop: CyNode.nodeType, val: NodeType.WORKLOAD }).length;
+      numSvc = select(boxed, { prop: NodeAttr.nodeType, val: NodeType.SERVICE }).length;
+      numWorkloads = select(boxed, { prop: NodeAttr.nodeType, val: NodeType.WORKLOAD }).length;
       numEdges = edgesInOut(boxed).length;
     } else {
       numSvc = boxed.filter(`node[nodeType = "${NodeType.SERVICE}"]`).size();
@@ -220,7 +219,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
   ): { grpcIn; grpcOut; grpcTotal; httpIn; httpOut; httpTotal; isGrpcRequests; tcpIn; tcpOut; tcpTotal } => {
     const clusterBox = this.props.data.summaryTarget;
     const data = isPF ? clusterBox.getData() : clusterBox.data();
-    const cluster = data[CyNode.cluster];
+    const cluster = data[NodeAttr.cluster];
 
     let inboundEdges;
     let outboundEdges;
@@ -228,21 +227,21 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     if (isPF) {
       const controller = (clusterBox as Node).getController();
       const { nodes } = elems(controller);
-      const outsideNodes = select(nodes, { prop: CyNode.cluster, op: '!=', val: cluster }) as Node[];
+      const outsideNodes = select(nodes, { prop: NodeAttr.cluster, op: '!=', val: cluster }) as Node[];
       // inbound edges are from a different cluster
       inboundEdges = edgesOut(outsideNodes, boxed);
       // outbound edges are to a different different cluster
       outboundEdges = edgesIn(outsideNodes, boxed);
       // total edges are inbound + edges from boxed workload|app|root nodes (i.e. not injected service nodes or box nodes)
       totalEdges = [...inboundEdges];
-      totalEdges.push(...edgesOut(select(boxed, { prop: CyNode.workload, op: 'truthy' }) as Node[]));
+      totalEdges.push(...edgesOut(select(boxed, { prop: NodeAttr.workload, op: 'truthy' }) as Node[]));
     } else {
       // inbound edges are from a different cluster
-      inboundEdges = clusterBox.cy().nodes(`[${CyNode.cluster} != "${cluster}"]`).edgesTo(boxed);
+      inboundEdges = clusterBox.cy().nodes(`[${NodeAttr.cluster} != "${cluster}"]`).edgesTo(boxed);
       // outbound edges are to a different cluster
-      outboundEdges = boxed.edgesTo(`[${CyNode.cluster} != "${cluster}"]`);
+      outboundEdges = boxed.edgesTo(`[${NodeAttr.cluster} != "${cluster}"]`);
       // total edges are inbound + edges from boxed workload|app|root nodes (i.e. not injected service nodes or box nodes)
-      totalEdges = inboundEdges.add(boxed.filter(`[?${CyNode.workload}]`).edgesTo('*'));
+      totalEdges = inboundEdges.add(boxed.filter(`[?${NodeAttr.workload}]`).edgesTo('*'));
     }
 
     return {
@@ -267,11 +266,11 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     const appVersions: { [key: string]: Set<string> } = {};
 
     boxed.filter(`node[nodeType = "${NodeType.APP}"]`).forEach(node => {
-      const app = node.data(CyNode.app);
+      const app = node.data(NodeAttr.app);
       if (appVersions[app] === undefined) {
         appVersions[app] = new Set();
       }
-      appVersions[app].add(node.data(CyNode.version));
+      appVersions[app].add(node.data(NodeAttr.version));
     });
 
     return {
@@ -285,13 +284,13 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
   private countAppsPF = (boxed): { numApps: number; numVersions: number } => {
     const appVersions: { [key: string]: Set<string> } = {};
 
-    select(boxed, { prop: CyNode.nodeType, val: NodeType.APP }).forEach(node => {
+    select(boxed, { prop: NodeAttr.nodeType, val: NodeType.APP }).forEach(node => {
       const data = node.getData();
-      const app = data[CyNode.app];
+      const app = data[NodeAttr.app];
       if (appVersions[app] === undefined) {
         appVersions[app] = new Set();
       }
-      appVersions[app].add(data[CyNode.version]);
+      appVersions[app].add(data[NodeAttr.version]);
     });
 
     return {

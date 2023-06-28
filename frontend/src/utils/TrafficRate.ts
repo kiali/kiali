@@ -1,5 +1,5 @@
-import { CyNode, CyEdge } from '../components/CytoscapeGraph/CytoscapeGraphUtils';
 import _ from 'lodash';
+import { EdgeAttr, NodeAttr } from 'types/Graph';
 
 const safeRate = (rate: any) => (isNaN(rate) ? 0.0 : Number(rate));
 
@@ -10,14 +10,14 @@ type TRAFFIC_GRPC = {
 };
 
 const NODE_GRPC_IN: TRAFFIC_GRPC = {
-  RATE: CyNode.grpcIn,
-  RATEGRPCERR: CyNode.grpcInErr,
-  RATENORESPONSE: CyNode.grpcInNoResponse
+  RATE: NodeAttr.grpcIn,
+  RATEGRPCERR: NodeAttr.grpcInErr,
+  RATENORESPONSE: NodeAttr.grpcInNoResponse
 };
 const EDGE_GRPC: TRAFFIC_GRPC = {
-  RATE: CyEdge.grpc,
-  RATEGRPCERR: CyEdge.grpcErr,
-  RATENORESPONSE: CyEdge.grpcNoResponse
+  RATE: EdgeAttr.grpc,
+  RATEGRPCERR: EdgeAttr.grpcErr,
+  RATENORESPONSE: EdgeAttr.grpcNoResponse
 };
 
 export interface TrafficRateGrpc {
@@ -65,18 +65,18 @@ type TRAFFIC_HTTP = {
 };
 
 const NODE_HTTP_IN: TRAFFIC_HTTP = {
-  RATE: CyNode.httpIn,
-  RATE3XX: CyNode.httpIn3xx,
-  RATE4XX: CyNode.httpIn4xx,
-  RATE5XX: CyNode.httpIn5xx,
-  RATENORESPONSE: CyNode.httpInNoResponse
+  RATE: NodeAttr.httpIn,
+  RATE3XX: NodeAttr.httpIn3xx,
+  RATE4XX: NodeAttr.httpIn4xx,
+  RATE5XX: NodeAttr.httpIn5xx,
+  RATENORESPONSE: NodeAttr.httpInNoResponse
 };
 const EDGE_HTTP: TRAFFIC_HTTP = {
-  RATE: CyEdge.http,
-  RATE3XX: CyEdge.http3xx,
-  RATE4XX: CyEdge.http4xx,
-  RATE5XX: CyEdge.http5xx,
-  RATENORESPONSE: CyEdge.httpNoResponse
+  RATE: EdgeAttr.http,
+  RATE3XX: EdgeAttr.http3xx,
+  RATE4XX: EdgeAttr.http4xx,
+  RATE5XX: EdgeAttr.http5xx,
+  RATENORESPONSE: EdgeAttr.httpNoResponse
 };
 
 export interface TrafficRateHttp {
@@ -122,10 +122,10 @@ type TRAFFIC_TCP = {
 };
 
 const NODE_TCP_IN: TRAFFIC_TCP = {
-  RATE: CyNode.tcpIn
+  RATE: NodeAttr.tcpIn
 };
 const EDGE_TCP: TRAFFIC_TCP = {
-  RATE: CyEdge.tcp
+  RATE: EdgeAttr.tcp
 };
 
 export interface TrafficRateTcp {
