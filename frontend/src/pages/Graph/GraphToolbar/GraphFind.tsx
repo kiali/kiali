@@ -166,7 +166,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     } else {
       const autoSelect = serverConfig.kialiFeatureFlags.uiDefaults.graph.findOptions.find(opt => opt.autoSelect);
       if (autoSelect) {
-        props.setFindValue(opt.expression);
+        props.setFindValue(autoSelect.expression);
       }
     }
     const urlHide = HistoryManager.getParam(URLParam.GRAPH_HIDE, urlParams);
@@ -178,11 +178,10 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     } else if (!!hideValue) {
       HistoryManager.setParam(URLParam.GRAPH_HIDE, hideValue);
     } else {
-      serverConfig.kialiFeatureFlags.uiDefaults.graph.hideOptions.forEach(opt => {
-        if (opt.autoEnable === true) {
-          props.setHideValue(opt.expression);
-        }
-      });
+      const autoSelect = serverConfig.kialiFeatureFlags.uiDefaults.graph.hideOptions.find(opt => opt.autoSelect);
+      if (autoSelect) {
+        props.setHideValue(autoSelect.expression);
+      }
     }
 
     this.state = { findInputValue: findValue, hideInputValue: hideValue };

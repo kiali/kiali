@@ -20,7 +20,7 @@ interface IstioAnnotations {
 interface GraphFindOption {
   description: string;
   expression: string;
-  autoEnable: boolean;
+  autoSelect: boolean;
 }
 
 interface GraphTraffic {
