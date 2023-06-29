@@ -376,7 +376,7 @@ type DeploymentConfig struct {
 type GraphFindOption struct {
 	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 	Expression  string `yaml:"expression,omitempty" json:"expression,omitempty"`
-	AutoEnable  bool   `yaml:"auto_enable,omitempty" json:"autoEnable,omitempty"`
+	AutoSelect  bool   `yaml:"auto_select,omitempty" json:"autoSelect,omitempty"`
 }
 
 // GraphSettings affect the graph visualization.
