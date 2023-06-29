@@ -52,7 +52,7 @@ import {
 import { KialiAppState } from '../../store/Store';
 import { GraphActions } from '../../actions/GraphActions';
 import { GraphToolbarActions } from '../../actions/GraphToolbarActions';
-import { NodeContextMenuContainer } from '../../components/CytoscapeGraph/ContextMenu/NodeContextMenu';
+import { NodeContextMenu } from '../../components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 import { PFColors } from 'components/Pf/PfColors';
 import { TourActions } from 'actions/TourActions';
 import { arrayEquals } from 'utils/Common';
@@ -491,7 +491,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
                 <CytoscapeGraph
                   containerClassName={cytoscapeGraphContainerStyle}
                   contextMenuEdgeComponent={EdgeContextMenu}
-                  contextMenuNodeComponent={NodeContextMenuContainer}
+                  contextMenuNodeComponent={NodeContextMenu}
                   focusSelector={this.focusSelector}
                   graphData={this.state.graphData}
                   isMTLSEnabled={this.props.mtlsEnabled}

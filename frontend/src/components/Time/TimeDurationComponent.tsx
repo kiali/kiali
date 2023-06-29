@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { DurationDropdownContainer } from '../DurationDropdown/DurationDropdown';
+import { DurationDropdown } from '../DurationDropdown/DurationDropdown';
 import { Refresh } from 'components/Refresh/Refresh';
 import { KialiAppState } from 'store/Store';
 import { durationSelector, replayActiveSelector } from 'store/Selectors';
@@ -43,7 +43,7 @@ class TimeDurationComp extends React.PureComponent<TimeControlsProps> {
             </Button>
           </Tooltip>
         )}
-        <DurationDropdownContainer
+        <DurationDropdown
           id={'time_range_duration'}
           disabled={this.props.disabled}
           prefix={prefix}
