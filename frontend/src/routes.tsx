@@ -13,8 +13,8 @@ import { WorkloadDetailsRoute } from 'routes/WorkloadDetailsRoute';
 import { AppDetailsRoute } from 'routes/AppDetailsRoute';
 import { IstioConfigDetailsRoute } from 'routes/IstioConfigDetailsRoute';
 import { IstioConfigNewRoute } from 'routes/IstioConfigNewRoute';
-import GraphRoutePF from 'routes/GraphRoutePF';
-import GraphPagePF from 'pages/GraphPF/GraphPagePF';
+import { GraphRoutePF } from 'routes/GraphRoutePF';
+import { GraphPagePF } from 'pages/GraphPF/GraphPagePF';
 
 /**
  * Return array of objects that describe vertical menu

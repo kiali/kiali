@@ -9,7 +9,7 @@ import {
 } from '@patternfly/react-topology';
 import { LayoutName } from '../GraphPF';
 
-const layoutFactory: LayoutFactory = (type: string, graph: Graph): Layout | undefined => {
+export const layoutFactory: LayoutFactory = (type: string, graph: Graph): Layout | undefined => {
   switch (type) {
     case LayoutName.BreadthFirst:
       return new BreadthFirstLayout(graph);
@@ -30,5 +30,3 @@ const layoutFactory: LayoutFactory = (type: string, graph: Graph): Layout | unde
       });
   }
 };
-
-export default layoutFactory;

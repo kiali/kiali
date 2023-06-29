@@ -1,5 +1,5 @@
 import { Edge, observer, ScaleDetailsLevel, WithSelectionProps } from '@patternfly/react-topology';
-import BaseEdge from '../components/edge';
+import { BaseEdge } from '../components/edge';
 import useDetailsLevel from '@patternfly/react-topology/dist/esm/hooks/useDetailsLevel';
 import * as React from 'react';
 import { style } from 'typestyle';
@@ -14,7 +14,7 @@ const tagClass = style({
   fontFamily: 'Verdana,Arial,Helvetica,sans-serif,pficon'
 });
 
-const StyleEdge: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
+const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
 
@@ -34,4 +34,4 @@ const StyleEdge: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   return <BaseEdge element={element} tagClass={tagClass} {...rest} {...passedData} />;
 };
 
-export default observer(StyleEdge);
+export const StyleEdge = observer(StyleEdgeComponent);

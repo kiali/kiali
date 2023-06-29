@@ -2,7 +2,7 @@ import { CubesIcon } from '@patternfly/react-icons';
 import { Node, observer, ScaleDetailsLevel, ShapeProps, WithSelectionProps } from '@patternfly/react-topology';
 import useDetailsLevel from '@patternfly/react-topology/dist/esm/hooks/useDetailsLevel';
 import React from 'react';
-import BaseGroup from '../components/group';
+import { BaseGroup } from '../components/group';
 
 const ICON_PADDING = 20;
 
@@ -20,7 +20,12 @@ type StyleGroupProps = {
   collapsedShadowOffset?: number; // defaults to 10
 } & WithSelectionProps;
 
-const StyleGroup: React.FC<StyleGroupProps> = ({ element, collapsedWidth = 75, collapsedHeight = 75, ...rest }) => {
+const StyleGroupComponent: React.FC<StyleGroupProps> = ({
+  element,
+  collapsedWidth = 75,
+  collapsedHeight = 75,
+  ...rest
+}) => {
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
 
@@ -61,4 +66,4 @@ const StyleGroup: React.FC<StyleGroupProps> = ({ element, collapsedWidth = 75, c
   );
 };
 
-export default observer(StyleGroup);
+export const StyleGroup = observer(StyleGroupComponent);

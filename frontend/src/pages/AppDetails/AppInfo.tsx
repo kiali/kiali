@@ -11,7 +11,7 @@ import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGrap
 import { history, URLParam } from '../../app/History';
 import { MiniGraphCard } from '../../components/CytoscapeGraph/MiniGraphCard';
 import { serverConfig } from 'config';
-import MiniGraphCardPFContainer from 'pages/GraphPF/MiniGraphCardPF';
+import { MiniGraphCardPF } from 'pages/GraphPF/MiniGraphCardPF';
 
 type AppInfoProps = {
   app?: App;
@@ -94,7 +94,7 @@ export class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
           )}
           {includeMiniGraphPF && (
             <GridItem span={miniGraphSpan}>
-              <MiniGraphCardPFContainer dataSource={this.graphDataSource} />
+              <MiniGraphCardPF dataSource={this.graphDataSource} />
             </GridItem>
           )}
         </Grid>

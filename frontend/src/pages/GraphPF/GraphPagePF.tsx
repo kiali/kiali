@@ -70,7 +70,7 @@ import { canCreate, canUpdate } from '../../types/Permissions';
 import connectRefresh from '../../components/Refresh/connectRefresh';
 import { triggerRefresh } from '../../hooks/refresh';
 import { GraphData } from 'pages/Graph/GraphPage';
-import GraphPF, { FocusNode } from './GraphPF';
+import { GraphPF, FocusNode } from './GraphPF';
 import * as CytoscapeGraphUtils from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { Controller } from '@patternfly/react-topology';
 
@@ -217,7 +217,7 @@ const GraphErrorBoundaryFallback = () => {
   );
 };
 
-export class GraphPagePF extends React.Component<GraphPagePropsPF, GraphPageStatePF> {
+class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageStatePF> {
   private controller?: Controller;
   private readonly errorBoundaryRef: any;
   private focusNode?: FocusNode;
@@ -332,8 +332,8 @@ export class GraphPagePF extends React.Component<GraphPagePropsPF, GraphPageStat
     // the constructor but it seems to work better here when the initial URL
     // is for a node graph.  When setting the node here it is available for the
     // loadGraphFromBackend() call.
-    const urlNode = GraphPagePF.getNodeParamsFromProps(this.props);
-    if (GraphPagePF.isNodeChanged(urlNode, this.props.node)) {
+    const urlNode = GraphPagePFComponent.getNodeParamsFromProps(this.props);
+    if (GraphPagePFComponent.isNodeChanged(urlNode, this.props.node)) {
       // add the node namespace if necessary, but don't lose previously selected namespaces
       if (urlNode && !this.props.activeNamespaces.map(ns => ns.name).includes(urlNode.namespace.name)) {
         this.props.setActiveNamespaces([urlNode.namespace, ...this.props.activeNamespaces]);
@@ -390,7 +390,7 @@ export class GraphPagePF extends React.Component<GraphPagePropsPF, GraphPageStat
       prev.showSecurity !== curr.showSecurity ||
       prev.showIdleNodes !== curr.showIdleNodes ||
       prev.trafficRates !== curr.trafficRates ||
-      GraphPagePF.isNodeChanged(prev.node, curr.node)
+      GraphPagePFComponent.isNodeChanged(prev.node, curr.node)
     ) {
       this.loadGraphDataFromBackend();
     }
@@ -779,5 +779,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   updateSummary: (event: GraphEvent) => dispatch(GraphActions.updateSummary(event))
 });
 
-const GraphPagePFContainer = connectRefresh(connect(mapStateToProps, mapDispatchToProps)(GraphPagePF));
-export default GraphPagePFContainer;
+export const GraphPagePF = connectRefresh(connect(mapStateToProps, mapDispatchToProps)(GraphPagePFComponent));

@@ -10,8 +10,8 @@ import {
   LabelPosition,
   Node
 } from '@patternfly/react-topology';
-import BaseGroupCollapsed from './groupCollapsed';
-import BaseGroupExpanded from './groupExpanded';
+import { BaseGroupCollapsed } from './groupCollapsed';
+import { BaseGroupExpanded } from './groupExpanded';
 
 // This is a copy of PFT DefaultGroup (v4.68.3), then modified.  I don't see a better way to really
 // do this because DefaultGroup embeds DefaultGroupCollapsed and DefaulGroupExpanded, but we need to
@@ -42,7 +42,12 @@ type BaseGroupProps = {
   badgeLocation?: BadgeLocation;
 } & Partial<CollapsibleGroupProps & WithSelectionProps & WithDndDropProps & WithDragNodeProps & WithContextMenuProps>;
 
-const BaseGroup: React.FunctionComponent<BaseGroupProps> = ({ className, element, onCollapseChange, ...rest }) => {
+const BaseGroupComponent: React.FunctionComponent<BaseGroupProps> = ({
+  className,
+  element,
+  onCollapseChange,
+  ...rest
+}) => {
   const handleCollapse = (group: Node, collapsed: boolean): void => {
     if (collapsed && rest.collapsedWidth !== undefined && rest.collapsedHeight !== undefined) {
       group.setBounds(group.getBounds().setSize(rest.collapsedWidth, rest.collapsedHeight));
@@ -57,4 +62,4 @@ const BaseGroup: React.FunctionComponent<BaseGroupProps> = ({ className, element
   return <BaseGroupExpanded className={className} element={element} onCollapseChange={handleCollapse} {...rest} />;
 };
 
-export default observer(BaseGroup);
+export const BaseGroup = observer(BaseGroupComponent);

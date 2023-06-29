@@ -71,7 +71,7 @@ const OverlayWidth = 40;
 //const OpacityUnhighlightMost = 0.1;
 //const OpacityUnhighlightLabel = 0.3;
 
-const BaseEdge: React.FunctionComponent<BaseEdgeProps> = ({
+const BaseEdgeComponent: React.FunctionComponent<BaseEdgeProps> = ({
   element,
   dragging,
   sourceDragRef,
@@ -218,4 +218,4 @@ const BaseEdge: React.FunctionComponent<BaseEdgeProps> = ({
   );
 };
 
-export default observer(BaseEdge);
+export const BaseEdge = observer(BaseEdgeComponent);

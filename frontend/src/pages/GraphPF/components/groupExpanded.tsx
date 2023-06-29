@@ -86,7 +86,7 @@ export function computeLabelLocation(points: PointWithSize[]): PointWithSize {
   ];
 }
 
-const BaseGroupExpanded: React.FunctionComponent<BaseGroupExpandedProps> = ({
+const BaseGroupExpandedComponent: React.FunctionComponent<BaseGroupExpandedProps> = ({
   className,
   element,
   collapsible,
@@ -262,4 +262,4 @@ const BaseGroupExpanded: React.FunctionComponent<BaseGroupExpandedProps> = ({
   );
 };
 
-export default observer(BaseGroupExpanded);
+export const BaseGroupExpanded = observer(BaseGroupExpandedComponent);

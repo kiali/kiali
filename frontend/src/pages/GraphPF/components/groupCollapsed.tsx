@@ -60,7 +60,7 @@ type BaseGroupCollapsedProps = {
   badgeLocation?: BadgeLocation;
 } & Partial<CollapsibleGroupProps & WithDragNodeProps & WithSelectionProps & WithDndDropProps & WithContextMenuProps>;
 
-const BaseGroupCollapsed: React.FunctionComponent<BaseGroupCollapsedProps> = ({
+const BaseGroupCollapsedComponent: React.FunctionComponent<BaseGroupCollapsedProps> = ({
   className,
   element,
   collapsible,
@@ -197,4 +197,4 @@ const BaseGroupCollapsed: React.FunctionComponent<BaseGroupCollapsedProps> = ({
   );
 };
 
-export default observer(BaseGroupCollapsed);
+export const BaseGroupCollapsed = observer(BaseGroupCollapsedComponent);

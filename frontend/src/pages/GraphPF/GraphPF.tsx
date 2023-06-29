@@ -38,8 +38,8 @@ import {
   UNKNOWN
 } from 'types/Graph';
 import { JaegerTrace } from 'types/JaegerInfo';
-import stylesComponentFactory from './components/stylesComponentFactory';
-import elementFactory from './elements/elementFactory';
+import { stylesComponentFactory } from './components/stylesComponentFactory';
+import { elementFactory } from './elements/elementFactory';
 import {
   assignEdgeHealth,
   EdgeData,
@@ -53,7 +53,7 @@ import {
   setEdgeOptions,
   setNodeLabel
 } from './GraphPFElems';
-import layoutFactory from './layouts/layoutFactory';
+import { layoutFactory } from './layouts/layoutFactory';
 import { hideTrace, showTrace } from './TracePF';
 import { GraphHighlighterPF } from './GraphHighlighterPF';
 import { TimeInMilliseconds } from 'types/Common';
@@ -855,5 +855,3 @@ export const GraphPF: React.FC<{
     </VisualizationProvider>
   );
 };
-
-export default GraphPF;

@@ -142,7 +142,7 @@ const operands: string[] = [
   'workloadentry'
 ];
 
-export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState> {
+class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindState> {
   static contextTypes = {
     router: () => null
   };
@@ -1112,6 +1112,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
   };
 };
 
-const GraphFindPFContainer = connect(mapStateToProps, mapDispatchToProps)(GraphFindPF);
-
-export default GraphFindPFContainer;
+export const GraphFindPF = connect(mapStateToProps, mapDispatchToProps)(GraphFindPFComponent);

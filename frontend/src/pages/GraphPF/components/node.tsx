@@ -110,7 +110,7 @@ type BaseNodeProps = {
 
 const SCALE_UP_TIME = 200;
 
-const BaseNode: React.FunctionComponent<BaseNodeProps> = ({
+const BaseNodeComponent: React.FunctionComponent<BaseNodeProps> = ({
   className,
   element,
   selected,
@@ -380,4 +380,4 @@ const BaseNode: React.FunctionComponent<BaseNodeProps> = ({
   );
 };
 
-export default observer(BaseNode);
+export const BaseNode = observer(BaseNodeComponent);

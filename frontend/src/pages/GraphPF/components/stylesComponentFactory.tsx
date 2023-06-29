@@ -13,9 +13,9 @@ import {
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { clickHandler, ContextMenuOption, getOptions } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 import * as React from 'react';
-import StyleEdge from '../styles/styleEdge';
-import StyleGroup from '../styles/styleGroup';
-import StyleNode from '../styles/styleNode';
+import { StyleEdge } from '../styles/styleEdge';
+import { StyleGroup } from '../styles/styleGroup';
+import { StyleNode } from '../styles/styleNode';
 import { BoxByType, DecoratedGraphNodeData, NodeParamsType, NodeType } from 'types/Graph';
 import * as AlertUtils from '../../../utils/AlertUtils';
 import { MessageType } from 'types/MessageCenter';
@@ -232,5 +232,3 @@ export const stylesComponentFactory: ComponentFactory = (
       return undefined;
   }
 };
-
-export default stylesComponentFactory;

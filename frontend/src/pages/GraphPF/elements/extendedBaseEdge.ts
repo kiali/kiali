@@ -8,7 +8,7 @@ import { BaseEdge, Point } from '@patternfly/react-topology';
 //  useBendpoints?: boolean;
 //};
 
-export default class ExtendedBaseEdge extends BaseEdge {
+export class ExtendedBaseEdge extends BaseEdge {
   getBendpoints(): Point[] {
     return [];
   }

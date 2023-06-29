@@ -2,7 +2,7 @@ import { Node, NodeShape, observer, ScaleDetailsLevel, useHover, WithSelectionPr
 import useDetailsLevel from '@patternfly/react-topology/dist/esm/hooks/useDetailsLevel';
 import * as React from 'react';
 import { KeyIcon, TopologyIcon } from '@patternfly/react-icons';
-import BaseNode from '../components/node';
+import { BaseNode } from '../components/node';
 
 // This is the registered Node component override that utilizes our customized Node.tsx component.
 
@@ -41,7 +41,7 @@ const renderIcon = (element: Node): React.ReactNode => {
   );
 };
 
-const StyleNode: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
+const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
   const [hover, hoverRef] = useHover();
@@ -76,4 +76,4 @@ const StyleNode: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
   );
 };
 
-export default observer(StyleNode);
+export const StyleNode = observer(StyleNodeComponent);

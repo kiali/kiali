@@ -44,7 +44,7 @@ import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { GraphSecondaryMasthead } from './GraphSecondaryMasthead';
 import { INITIAL_USER_SETTINGS_STATE } from 'reducers/UserSettingsState';
 import { GraphReset } from './GraphReset';
-import GraphFindPFContainer from './GraphFindPF';
+import { GraphFindPF } from './GraphFindPF';
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
@@ -213,7 +213,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
 
             {this.props.isPF ? (
               <ToolbarItem>
-                <GraphFindPFContainer controller={this.props.controller} elementsChanged={this.props.elementsChanged} />
+                <GraphFindPF controller={this.props.controller} elementsChanged={this.props.elementsChanged} />
               </ToolbarItem>
             ) : (
               <ToolbarItem>

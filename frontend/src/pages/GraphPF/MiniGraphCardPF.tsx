@@ -20,7 +20,7 @@ import { store } from 'store/ConfigStore';
 import { TimeInMilliseconds } from '../../types/Common';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { KialiAppState } from '../../store/Store';
-import GraphPF from './GraphPF';
+import { GraphPF } from './GraphPF';
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 import { LoadingWizardActionsDropdownGroup } from 'components/IstioWizards/LoadingWizardActionsDropdownGroup';
@@ -59,7 +59,7 @@ type MiniGraphCardState = {
   graphData: DecoratedGraphElements;
 };
 
-class MiniGraphCardPF extends React.Component<MiniGraphCardPropsPF, MiniGraphCardState> {
+class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, MiniGraphCardState> {
   constructor(props) {
     super(props);
     this.state = { isKebabOpen: false, isTimeOptionsOpen: false, graphData: props.dataSource.graphData };
@@ -371,5 +371,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   updateSummary: (event: GraphEvent) => dispatch(GraphActions.updateSummary(event))
 });
 
-const MiniGraphCardPFContainer = connect(mapStateToProps, mapDispatchToProps)(MiniGraphCardPF);
-export default MiniGraphCardPFContainer;
+export const MiniGraphCardPF = connect(mapStateToProps, mapDispatchToProps)(MiniGraphCardPFComponent);

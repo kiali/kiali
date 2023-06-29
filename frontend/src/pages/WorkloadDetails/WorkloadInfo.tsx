@@ -18,7 +18,7 @@ import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGrap
 import { history, URLParam } from '../../app/History';
 import { MiniGraphCard } from '../../components/CytoscapeGraph/MiniGraphCard';
 import { IstioConfigCard } from '../../components/IstioConfigCard/IstioConfigCard';
-import MiniGraphCardPFContainer from 'pages/GraphPF/MiniGraphCardPF';
+import { MiniGraphCardPF } from 'pages/GraphPF/MiniGraphCardPF';
 
 type WorkloadInfoProps = {
   duration: DurationInSeconds;
@@ -312,7 +312,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
             )}
             {includeMiniGraphPF && (
               <GridItem span={miniGraphSpan}>
-                <MiniGraphCardPFContainer dataSource={this.graphDataSource} />
+                <MiniGraphCardPF dataSource={this.graphDataSource} />
               </GridItem>
             )}
           </Grid>

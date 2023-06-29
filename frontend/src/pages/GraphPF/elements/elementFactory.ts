@@ -1,9 +1,5 @@
-import {
-  ElementFactory,
-  GraphElement,
-  ModelKind,
-} from '@patternfly/react-topology';
-import ExtendedBaseEdge from './extendedBaseEdge';
+import { ElementFactory, GraphElement, ModelKind } from '@patternfly/react-topology';
+import { ExtendedBaseEdge } from './extendedBaseEdge';
 
 export const elementFactory: ElementFactory = (kind: ModelKind, _type: string): GraphElement | undefined => {
   switch (kind) {
@@ -13,5 +9,3 @@ export const elementFactory: ElementFactory = (kind: ModelKind, _type: string): 
       return undefined;
   }
 };
-
-export default elementFactory;

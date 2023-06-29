@@ -43,7 +43,7 @@ import { deleteServiceTrafficRouting } from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { triggerRefresh } from '../../hooks/refresh';
 import { serverConfig } from 'config';
-import MiniGraphCardPFContainer from 'pages/GraphPF/MiniGraphCardPF';
+import { MiniGraphCardPF } from 'pages/GraphPF/MiniGraphCardPF';
 
 interface Props extends ServiceId {
   cluster?: string;
@@ -262,7 +262,7 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
             )}
             {includeMiniGraphPF && (
               <GridItem span={miniGraphSpan}>
-                <MiniGraphCardPFContainer
+                <MiniGraphCardPF
                   dataSource={this.graphDataSource}
                   onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
                   onLaunchWizard={this.handleLaunchWizard}
