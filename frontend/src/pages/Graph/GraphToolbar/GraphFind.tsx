@@ -164,11 +164,10 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     } else if (!!findValue) {
       HistoryManager.setParam(URLParam.GRAPH_FIND, findValue);
     } else {
-      serverConfig.kialiFeatureFlags.uiDefaults.graph.findOptions.forEach(opt => {
-        if (opt.autoEnable === true) {
-          props.setFindValue(opt.expression);
-        }
-      });
+      const autoSelect = serverConfig.kialiFeatureFlags.uiDefaults.graph.findOptions.find(opt => opt.autoSelect);
+      if (autoSelect) {
+        props.setFindValue(opt.expression);
+      }
     }
     const urlHide = HistoryManager.getParam(URLParam.GRAPH_HIDE, urlParams);
     if (!!urlHide) {
