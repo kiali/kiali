@@ -12,7 +12,7 @@ const shouldFetchClusters = (state: KialiAppState) => {
   }
 };
 
-const ClusterThunkActions = {
+export const ClusterThunkActions = {
   asyncFetchClusters: () => {
     return (dispatch: KialiDispatch) => {
       dispatch(ClusterActions.requestStarted());
@@ -47,5 +47,3 @@ const ClusterThunkActions = {
     };
   }
 };
-
-export default ClusterThunkActions;

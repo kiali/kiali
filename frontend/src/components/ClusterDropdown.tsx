@@ -23,7 +23,7 @@ import { TourStop } from './Tour/TourStop';
 import { GraphTourStops } from '../pages/Graph/GraphHelpTour';
 import { KialiAppState } from '../store/Store';
 import { KialiDispatch } from '../types/Redux';
-import ClusterThunkActions from '../actions/ClusterThunkActions';
+import { ClusterThunkActions } from '../actions/ClusterThunkActions';
 import { serverConfig } from '../config';
 
 type ReduxProps = {
