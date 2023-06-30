@@ -209,11 +209,11 @@ func buildNamespaceTrafficMap(ctx context.Context, namespace string, o graph.Tel
 
 		switch o.Rates.Tcp {
 		case graph.RateReceived:
-			metrics = []string{"istio_tcp_received_bytes_total"}
-		case graph.RateSent:
 			metrics = []string{"istio_tcp_sent_bytes_total"}
+		case graph.RateSent:
+			metrics = []string{"istio_tcp_received_bytes_total"}
 		case graph.RateTotal:
-			metrics = []string{"istio_tcp_sent_bytes_total", "istio_tcp_received_bytes_total"}
+			metrics = []string{"istio_tcp_received_bytes_total", "istio_tcp_sent_bytes_total"}
 		default:
 			metrics = []string{}
 		}
@@ -742,11 +742,11 @@ func buildNodeTrafficMap(cluster, namespace string, n *graph.Node, o graph.Telem
 
 		switch o.Rates.Tcp {
 		case graph.RateReceived:
-			metrics = []string{"istio_tcp_received_bytes_total"}
-		case graph.RateSent:
 			metrics = []string{"istio_tcp_sent_bytes_total"}
+		case graph.RateSent:
+			metrics = []string{"istio_tcp_received_bytes_total"}
 		case graph.RateTotal:
-			metrics = []string{"istio_tcp_sent_bytes_total", "istio_tcp_received_bytes_total"}
+			metrics = []string{"istio_tcp_received_bytes_total", "istio_tcp_sent_bytes_total"}
 		default:
 			metrics = []string{}
 		}
