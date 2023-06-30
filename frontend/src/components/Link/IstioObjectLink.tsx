@@ -45,7 +45,7 @@ export const GetIstioObjectUrl = (
   to = to + '/' + istioType.url + '/' + name;
 
   if (cluster && isMultiCluster()) {
-    to = to + '?clusterMesh=' + cluster;
+    to = to + '?clusterName=' + cluster;
   }
 
   if (!!query) {

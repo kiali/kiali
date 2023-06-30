@@ -237,7 +237,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     let href = `/namespaces/${e.namespace}/${resourceType}s/${resource}`;
 
     if (e.cluster) {
-      href = href + '?clusterMesh=' + e.cluster;
+      href = href + '?clusterName=' + e.cluster;
     }
 
     if (isParentKiosk(this.props.kiosk)) {

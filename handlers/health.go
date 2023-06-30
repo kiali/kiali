@@ -38,7 +38,7 @@ func NamespaceHealth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	healthCriteria := business.NamespaceHealthCriteria{Namespace: p.Namespace, Cluster: p.ClusterMesh, RateInterval: rateInterval, QueryTime: p.QueryTime, IncludeMetrics: true}
+	healthCriteria := business.NamespaceHealthCriteria{Namespace: p.Namespace, Cluster: p.ClusterName, RateInterval: rateInterval, QueryTime: p.QueryTime, IncludeMetrics: true}
 	switch p.Type {
 	case "app":
 		health, err := businessLayer.Health.GetNamespaceAppHealth(r.Context(), healthCriteria)
@@ -66,7 +66,7 @@ func NamespaceHealth(w http.ResponseWriter, r *http.Request) {
 
 type baseHealthParams struct {
 	// Cluster name
-	ClusterMesh string `json:"clusterMesh"`
+	ClusterName string `json:"clusterName"`
 	// The namespace scope
 	//
 	// in: path
@@ -87,7 +87,7 @@ func (p *baseHealthParams) baseExtract(r *http.Request, vars map[string]string) 
 	if rateInterval := queryParams.Get("rateInterval"); rateInterval != "" {
 		p.RateInterval = rateInterval
 	}
-	p.ClusterMesh = clusterNameFromQuery(queryParams)
+	p.ClusterName = clusterNameFromQuery(queryParams)
 	if queryTime := queryParams.Get("queryTime"); queryTime != "" {
 		unix, err := strconv.ParseInt(queryTime, 10, 64)
 		if err == nil {

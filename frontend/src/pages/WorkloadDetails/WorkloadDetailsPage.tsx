@@ -66,7 +66,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
   constructor(props: WorkloadDetailsPageProps) {
     super(props);
     const urlParams = new URLSearchParams(history.location.search);
-    const cluster = urlParams.get('clusterMesh') || undefined;
+    const cluster = urlParams.get('clusterName') || undefined;
     this.state = { currentTab: activeTab(tabName, defaultTab), cluster: cluster };
   }
 

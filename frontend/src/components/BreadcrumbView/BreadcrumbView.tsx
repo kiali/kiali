@@ -57,7 +57,7 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadCum
     let itemName = page !== 'istio' ? match[3] : match[5];
     return {
       namespace: ns,
-      cluster: urlParams.get('clusterMesh') || undefined,
+      cluster: urlParams.get('clusterName') || undefined,
       pathItem: page,
       item: itemName,
       itemName: ItemNames[page],

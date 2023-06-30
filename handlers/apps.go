@@ -18,7 +18,7 @@ type appParams struct {
 	//
 	// in: path
 	Namespace   string `json:"namespace"`
-	ClusterMesh string `json:"clusterMesh"`
+	ClusterName string `json:"clusterName"`
 	AppName     string `json:"app"`
 	// Optional
 	IncludeHealth         bool `json:"health"`
@@ -30,7 +30,7 @@ func (p *appParams) extract(r *http.Request) {
 	query := r.URL.Query()
 	p.baseExtract(r, vars)
 	p.Namespace = vars["namespace"]
-	p.ClusterMesh = clusterNameFromQuery(query)
+	p.ClusterName = clusterNameFromQuery(query)
 	p.AppName = vars["app"]
 	var err error
 	p.IncludeHealth, err = strconv.ParseBool(query.Get("health"))
@@ -83,7 +83,7 @@ func AppDetails(w http.ResponseWriter, r *http.Request) {
 	p.extract(r)
 
 	criteria := business.AppCriteria{Namespace: p.Namespace, AppName: p.AppName, IncludeIstioResources: true, IncludeHealth: p.IncludeHealth,
-		RateInterval: p.RateInterval, QueryTime: p.QueryTime, Cluster: p.ClusterMesh}
+		RateInterval: p.RateInterval, QueryTime: p.QueryTime, Cluster: p.ClusterName}
 
 	// Get business layer
 	business, err := getBusiness(r)

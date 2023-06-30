@@ -44,9 +44,9 @@ const getLink = (item: TResource, config: Resource, query?: string) => {
 
   if (item.cluster && isMultiCluster() && !url.includes('cluster')) {
     if (url.includes('?')) {
-      url = url + '&clusterMesh=' + item.cluster;
+      url = url + '&clusterName=' + item.cluster;
     } else {
-      url = url + '?clusterMesh=' + item.cluster;
+      url = url + '?clusterName=' + item.cluster;
     }
   }
   if (query) {

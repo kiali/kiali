@@ -61,7 +61,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   constructor(props: AppDetailsProps) {
     super(props);
     const urlParams = new URLSearchParams(history.location.search);
-    const cluster = urlParams.get('clusterMesh') || undefined;
+    const cluster = urlParams.get('clusterName') || undefined;
     this.state = { currentTab: activeTab(tabName, defaultTab), cluster: cluster };
   }
 

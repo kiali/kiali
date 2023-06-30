@@ -92,7 +92,7 @@ func getBusiness(r *http.Request) (*business.Layer, error) {
 // clusterNameFromQuery extracts the cluster name from the query parameters
 // and provides a default value if it's not present.
 func clusterNameFromQuery(queryParams url.Values) string {
-	cluster := queryParams.Get("clusterMesh")
+	cluster := queryParams.Get("clusterName")
 	if cluster == "" {
 		cluster = config.Get().KubernetesConfig.ClusterName
 	}

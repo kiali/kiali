@@ -28,7 +28,7 @@ type workloadParams struct {
 	// in: query
 	WorkloadType string `json:"type"`
 	// Optional
-	ClusterMesh           string `json:"clusterMesh,omitempty"`
+	ClusterName           string `json:"clusterName,omitempty"`
 	IncludeHealth         bool   `json:"health"`
 	IncludeIstioResources bool   `json:"istioResources"`
 }
@@ -40,7 +40,7 @@ func (p *workloadParams) extract(r *http.Request) {
 	p.Namespace = vars["namespace"]
 	p.WorkloadName = vars["workload"]
 	p.WorkloadType = query.Get("type")
-	p.ClusterMesh = clusterNameFromQuery(query)
+	p.ClusterName = clusterNameFromQuery(query)
 
 	var err error
 	p.IncludeHealth, err = strconv.ParseBool(query.Get("health"))
@@ -93,7 +93,7 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 
 	criteria := business.WorkloadCriteria{Namespace: p.Namespace, WorkloadName: p.WorkloadName,
 		WorkloadType: p.WorkloadType, IncludeIstioResources: true, IncludeServices: true, IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval,
-		QueryTime: p.QueryTime, Cluster: p.ClusterMesh}
+		QueryTime: p.QueryTime, Cluster: p.ClusterName}
 
 	// Get business layer
 	business, err := getBusiness(r)
