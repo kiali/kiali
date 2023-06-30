@@ -119,7 +119,7 @@ func TestClusterNameFromQuery(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.Get()
 
-	query := url.Values{"cluster": []string{"east"}}
+	query := url.Values{"clusterMesh": []string{"east"}}
 	assert.Equal("east", clusterNameFromQuery(query))
 
 	query = url.Values{}
