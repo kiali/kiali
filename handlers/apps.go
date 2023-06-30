@@ -18,7 +18,7 @@ type appParams struct {
 	//
 	// in: path
 	Namespace   string `json:"namespace"`
-	MeshCluster string `json:"meshCluster"`
+	ClusterMesh string `json:"clusterMesh"`
 	AppName     string `json:"app"`
 	// Optional
 	IncludeHealth         bool `json:"health"`
