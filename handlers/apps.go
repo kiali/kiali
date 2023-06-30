@@ -17,9 +17,9 @@ type appParams struct {
 	// The target workload
 	//
 	// in: path
-	Namespace string `json:"namespace"`
-	Cluster   string `json:"cluster"`
-	AppName   string `json:"app"`
+	Namespace   string `json:"namespace"`
+	MeshCluster string `json:"meshCluster"`
+	AppName     string `json:"app"`
 	// Optional
 	IncludeHealth         bool `json:"health"`
 	IncludeIstioResources bool `json:"istioResources"`
@@ -30,7 +30,7 @@ func (p *appParams) extract(r *http.Request) {
 	query := r.URL.Query()
 	p.baseExtract(r, vars)
 	p.Namespace = vars["namespace"]
-	p.Cluster = clusterNameFromQuery(query)
+	p.ClusterMesh = clusterNameFromQuery(query)
 	p.AppName = vars["app"]
 	var err error
 	p.IncludeHealth, err = strconv.ParseBool(query.Get("health"))
@@ -83,7 +83,7 @@ func AppDetails(w http.ResponseWriter, r *http.Request) {
 	p.extract(r)
 
 	criteria := business.AppCriteria{Namespace: p.Namespace, AppName: p.AppName, IncludeIstioResources: true, IncludeHealth: p.IncludeHealth,
-		RateInterval: p.RateInterval, QueryTime: p.QueryTime, Cluster: p.Cluster}
+		RateInterval: p.RateInterval, QueryTime: p.QueryTime, Cluster: p.ClusterMesh}
 
 	// Get business layer
 	business, err := getBusiness(r)

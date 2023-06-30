@@ -27,7 +27,7 @@ export interface IstioMetricsOptions extends MetricsQuery {
   filters?: string[];
   requestProtocol?: string;
   reporter: Reporter;
-  cluster?: string;
+  clusterMesh?: string;
 }
 
 export type Reporter = 'source' | 'destination' | 'both';

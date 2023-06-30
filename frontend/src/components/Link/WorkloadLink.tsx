@@ -17,7 +17,7 @@ export const getWorkloadLink = (name: string, namespace: string, cluster?: strin
   to = to + '/' + name;
 
   if (cluster && isMultiCluster()) {
-    to = to + '?cluster=' + cluster;
+    to = to + '?clusterMesh=' + cluster;
   }
 
   if (!!query) {

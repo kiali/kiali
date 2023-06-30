@@ -158,7 +158,7 @@ export const getNamespaceMetrics = (namespace: string, params: IstioMetricsOptio
 export const getMeshTls = (cluster?: string) => {
   const queryParams: any = {};
   if (cluster) {
-    queryParams.cluster = cluster;
+    queryParams.clusterMesh = cluster;
   }
   return newRequest<TLSStatus>(HTTP_VERBS.GET, urls.meshTls(), queryParams, {});
 };
@@ -170,7 +170,7 @@ export const getOutboundTrafficPolicyMode = () => {
 export const getIstioStatus = (cluster?: string) => {
   const queryParams: any = {};
   if (cluster) {
-    queryParams.cluster = cluster;
+    queryParams.clusterMesh = cluster;
   }
   return newRequest<ComponentStatus[]>(HTTP_VERBS.GET, urls.istioStatus(), queryParams, {});
 };
@@ -186,7 +186,7 @@ export const getIstiodResourceThresholds = () => {
 export const getNamespaceTls = (namespace: string, cluster?: string) => {
   const queryParams: any = {};
   if (cluster) {
-    queryParams.cluster = cluster;
+    queryParams.clusterMesh = cluster;
   }
   return newRequest<TLSStatus>(HTTP_VERBS.GET, urls.namespaceTls(namespace), queryParams, {});
 };
@@ -218,7 +218,7 @@ export const getIstioConfig = (
     params.workloadSelector = workloadSelector;
   }
   if (cluster) {
-    params.cluster = cluster;
+    params.clusterMesh = cluster;
   }
   return newRequest<IstioConfigList>(HTTP_VERBS.GET, urls.istioConfig(namespace), params, {});
 };
@@ -245,7 +245,7 @@ export const getAllIstioConfigs = (
     params.workloadSelector = workloadSelector;
   }
   if (cluster) {
-    params.cluster = cluster;
+    params.clusterMesh = cluster;
   }
   return newRequest<IstioConfigsMap>(HTTP_VERBS.GET, urls.allIstioConfigs(), params, {});
 };
@@ -259,7 +259,7 @@ export const getIstioConfigDetail = (
 ) => {
   const queryParams: any = {};
   if (cluster) {
-    queryParams.cluster = cluster;
+    queryParams.clusterMesh = cluster;
   }
   if (validate) {
     queryParams.validate = true;
@@ -276,7 +276,7 @@ export const getIstioConfigDetail = (
 export const deleteIstioConfigDetail = (namespace: string, objectType: string, object: string, cluster?: string) => {
   const queryParams: any = {};
   if (cluster) {
-    queryParams.cluster = cluster;
+    queryParams.clusterMesh = cluster;
   }
   return newRequest<string>(HTTP_VERBS.DELETE, urls.istioConfigDelete(namespace, objectType, object), queryParams, {});
 };
@@ -290,7 +290,7 @@ export const updateIstioConfigDetail = (
 ): Promise<Response<string>> => {
   const queryParams: any = {};
   if (cluster) {
-    queryParams.cluster = cluster;
+    queryParams.clusterMesh = cluster;
   }
   return newRequest(HTTP_VERBS.PATCH, urls.istioConfigUpdate(namespace, objectType, object), queryParams, jsonPatch);
 };
@@ -303,7 +303,7 @@ export const createIstioConfigDetail = (
 ): Promise<Response<string>> => {
   const queryParams: any = {};
   if (cluster) {
-    queryParams.cluster = cluster;
+    queryParams.clusterMesh = cluster;
   }
   return newRequest(HTTP_VERBS.POST, urls.istioConfigCreate(namespace, objectType), queryParams, json);
 };
@@ -311,7 +311,7 @@ export const createIstioConfigDetail = (
 export const getConfigValidations = (cluster?: string) => {
   const queryParams: any = {};
   if (cluster) {
-    queryParams.cluster = cluster;
+    queryParams.clusterMesh = cluster;
   }
   return newRequest<ValidationStatus>(HTTP_VERBS.GET, urls.configValidations(), queryParams, {});
 };
@@ -328,7 +328,7 @@ export const getServiceMetrics = (
 ) => {
   const queryParams: any = { ...params };
   if (cluster) {
-    queryParams.cluster = cluster;
+    queryParams.clusterMesh = cluster;
   }
   return newRequest<IstioMetricsMap>(HTTP_VERBS.GET, urls.serviceMetrics(namespace, service), queryParams, {});
 };
@@ -341,7 +341,7 @@ export const getServiceDashboard = (
 ) => {
   const queryParams: any = { ...params };
   if (cluster) {
-    queryParams.cluster = cluster;
+    queryParams.clusterMesh = cluster;
   }
   return newRequest<DashboardModel>(HTTP_VERBS.GET, urls.serviceDashboard(namespace, service), queryParams, {});
 };
@@ -363,7 +363,7 @@ export const getAggregateMetrics = (
 export const getApp = (namespace: string, app: string, params?: { [key: string]: string }, cluster?: string) => {
   const queryParams = { ...params };
   if (cluster) {
-    queryParams.cluster = cluster;
+    queryParams.clusterMesh = cluster;
   }
   return newRequest<App>(HTTP_VERBS.GET, urls.app(namespace, app), queryParams, {});
 };
@@ -375,7 +375,7 @@ export const getApps = (namespace: string, params: any = {}) => {
 export const getAppMetrics = (namespace: string, app: string, params: IstioMetricsOptions, cluster?: string) => {
   const queryParams: any = { ...params };
   if (cluster) {
-    queryParams.cluster = cluster;
+    queryParams.clusterMesh = cluster;
   }
   return newRequest<IstioMetricsMap>(HTTP_VERBS.GET, urls.appMetrics(namespace, app), queryParams, {});
 };
@@ -383,7 +383,7 @@ export const getAppMetrics = (namespace: string, app: string, params: IstioMetri
 export const getAppDashboard = (namespace: string, app: string, params: IstioMetricsOptions, cluster?: string) => {
   const queryParams: any = { ...params };
   if (cluster) {
-    queryParams.cluster = cluster;
+    queryParams.clusterMesh = cluster;
   }
   return newRequest<DashboardModel>(HTTP_VERBS.GET, urls.appDashboard(namespace, app), queryParams, {});
 };
@@ -396,7 +396,7 @@ export const getWorkloadMetrics = (
 ) => {
   const queryParams: any = { ...params };
   if (cluster) {
-    queryParams.cluster = cluster;
+    queryParams.clusterMesh = cluster;
   }
   return newRequest<IstioMetricsMap>(HTTP_VERBS.GET, urls.workloadMetrics(namespace, workload), queryParams, {});
 };
@@ -409,7 +409,7 @@ export const getWorkloadDashboard = (
 ) => {
   const queryParams: any = { ...params };
   if (cluster) {
-    queryParams.cluster = cluster;
+    queryParams.clusterMesh = cluster;
   }
   return newRequest<DashboardModel>(HTTP_VERBS.GET, urls.workloadDashboard(namespace, workload), queryParams, {});
 };
@@ -434,7 +434,7 @@ export const getNamespaceAppHealth = (
     params.queryTime = String(queryTime);
   }
   if (cluster) {
-    params.cluster = cluster;
+    params.clusterMesh = cluster;
   }
   return newRequest<NamespaceAppHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(response => {
     const ret: NamespaceAppHealth = {};
@@ -465,7 +465,7 @@ export const getNamespaceServiceHealth = (
     params.queryTime = String(queryTime);
   }
   if (cluster) {
-    params.cluster = cluster;
+    params.clusterMesh = cluster;
   }
   return newRequest<NamespaceServiceHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(
     response => {
@@ -498,7 +498,7 @@ export const getNamespaceWorkloadHealth = (
     params.queryTime = String(queryTime);
   }
   if (cluster) {
-    params.cluster = cluster;
+    params.clusterMesh = cluster;
   }
   return newRequest<NamespaceWorkloadHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(
     response => {
@@ -526,7 +526,7 @@ export const getJaegerInfo = () => {
 export const getAppTraces = (namespace: string, app: string, params: TracingQuery, cluster?: string) => {
   const queryParams: any = { ...params };
   if (cluster) {
-    queryParams.cluster = cluster;
+    queryParams.clusterMesh = cluster;
   }
   return newRequest<JaegerResponse>(HTTP_VERBS.GET, urls.appTraces(namespace, app), queryParams, {});
 };
@@ -534,7 +534,7 @@ export const getAppTraces = (namespace: string, app: string, params: TracingQuer
 export const getServiceTraces = (namespace: string, service: string, params: TracingQuery, cluster?: string) => {
   const queryParams: any = { ...params };
   if (cluster) {
-    queryParams.cluster = cluster;
+    queryParams.clusterMesh = cluster;
   }
   return newRequest<JaegerResponse>(HTTP_VERBS.GET, urls.serviceTraces(namespace, service), queryParams, {});
 };
@@ -542,7 +542,7 @@ export const getServiceTraces = (namespace: string, service: string, params: Tra
 export const getWorkloadTraces = (namespace: string, workload: string, params: TracingQuery, cluster?: string) => {
   const queryParams: any = { ...params };
   if (cluster) {
-    queryParams.cluster = cluster;
+    queryParams.clusterMesh = cluster;
   }
   return newRequest<JaegerResponse>(HTTP_VERBS.GET, urls.workloadTraces(namespace, workload), queryParams, {});
 };
@@ -597,7 +597,7 @@ export const getNodeGraphElements = (node: NodeParamsType, params: any) => {
       );
     case NodeType.WORKLOAD:
       if (node.cluster) {
-        params['cluster'] = node.cluster;
+        params['clusterMesh'] = node.cluster;
       }
       return newRequest<GraphDefinition>(
         HTTP_VERBS.GET,
@@ -630,7 +630,7 @@ export const getServiceDetail = (
     params.rateInterval = `${rateInterval}s`;
   }
   if (cluster) {
-    params.cluster = cluster;
+    params.clusterMesh = cluster;
   }
   return newRequest<ServiceDetailsInfo>(HTTP_VERBS.GET, urls.service(namespace, service), params, {}).then(r => {
     const info: ServiceDetailsInfo = r.data;
@@ -653,7 +653,7 @@ export const getWorkloads = (namespace: string, params: { [key: string]: string 
 export const getWorkload = (namespace: string, name: string, params?: { [key: string]: string }, cluster?: string) => {
   const queryParams = { ...params };
   if (cluster) {
-    queryParams.cluster = cluster;
+    queryParams.clusterMesh = cluster;
   }
   return newRequest<Workload>(HTTP_VERBS.GET, urls.workload(namespace, name), queryParams, {});
 };
@@ -672,7 +672,7 @@ export const updateWorkload = (
     params.patchType = patchType;
   }
   if (cluster) {
-    params.cluster = cluster;
+    params.clusterMesh = cluster;
   }
   return newRequest(HTTP_VERBS.PATCH, urls.workload(namespace, name), params, jsonPatch);
 };
@@ -689,7 +689,7 @@ export const updateService = (
     params.patchType = patchType;
   }
   if (cluster) {
-    params.cluster = cluster;
+    params.clusterMesh = cluster;
   }
   return newRequest(HTTP_VERBS.PATCH, urls.service(namespace, name), params, jsonPatch);
 };
@@ -722,7 +722,7 @@ export const getPodLogs = (
     params.duration = `${duration}s`;
   }
   if (cluster) {
-    params.cluster = cluster;
+    params.clusterMesh = cluster;
   }
   params.isProxy = !!isProxy;
 
@@ -734,7 +734,7 @@ export const setPodEnvoyProxyLogLevel = (namespace: string, name: string, level:
     level: level
   };
   if (cluster) {
-    params.cluster = cluster;
+    params.clusterMesh = cluster;
   }
 
   return newRequest<undefined>(HTTP_VERBS.POST, urls.podEnvoyProxyLogging(namespace, name), params, {});
@@ -743,7 +743,7 @@ export const setPodEnvoyProxyLogLevel = (namespace: string, name: string, level:
 export const getPodEnvoyProxy = (namespace: string, pod: string, cluster?: string) => {
   const params: any = {};
   if (cluster) {
-    params.cluster = cluster;
+    params.clusterMesh = cluster;
   }
   return newRequest<EnvoyProxyDump>(HTTP_VERBS.GET, urls.podEnvoyProxy(namespace, pod), params, {});
 };
@@ -751,7 +751,7 @@ export const getPodEnvoyProxy = (namespace: string, pod: string, cluster?: strin
 export const getPodEnvoyProxyResourceEntries = (namespace: string, pod: string, resource: string, cluster?: string) => {
   const params: any = {};
   if (cluster) {
-    params.cluster = cluster;
+    params.clusterMesh = cluster;
   }
   return newRequest<EnvoyProxyDump>(
     HTTP_VERBS.GET,
@@ -789,7 +789,7 @@ export const getErrorDetail = (error: AxiosError): string => {
 export const getAppSpans = (namespace: string, app: string, params: TracingQuery, cluster?: string) => {
   const queryParams: any = { ...params };
   if (cluster) {
-    queryParams.cluster = cluster;
+    queryParams.clusterMesh = cluster;
   }
   return newRequest<Span[]>(HTTP_VERBS.GET, urls.appSpans(namespace, app), queryParams, {});
 };
@@ -797,7 +797,7 @@ export const getAppSpans = (namespace: string, app: string, params: TracingQuery
 export const getServiceSpans = (namespace: string, service: string, params: TracingQuery, cluster?: string) => {
   const queryParams: any = { ...params };
   if (cluster) {
-    queryParams.cluster = cluster;
+    queryParams.clusterMesh = cluster;
   }
   return newRequest<Span[]>(HTTP_VERBS.GET, urls.serviceSpans(namespace, service), queryParams, {});
 };
@@ -805,7 +805,7 @@ export const getServiceSpans = (namespace: string, service: string, params: Trac
 export const getWorkloadSpans = (namespace: string, workload: string, params: TracingQuery, cluster?: string) => {
   const queryParams: any = { ...params };
   if (cluster) {
-    queryParams.cluster = cluster;
+    queryParams.clusterMesh = cluster;
   }
   return newRequest<Span[]>(HTTP_VERBS.GET, urls.workloadSpans(namespace, workload), queryParams, {});
 };
@@ -814,7 +814,7 @@ export const getIstioPermissions = (namespaces: string[], cluster?: string) => {
   const queryParams: any = {};
   queryParams.namespaces = namespaces.join(',');
   if (cluster) {
-    queryParams.cluster = cluster;
+    queryParams.clusterMesh = cluster;
   }
   return newRequest<IstioPermissions>(HTTP_VERBS.GET, urls.istioPermissions, queryParams, {});
 };
