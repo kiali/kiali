@@ -374,9 +374,9 @@ type DeploymentConfig struct {
 
 // GraphFindOption defines a single Graph Find/Hide Option
 type GraphFindOption struct {
+	AutoSelect  bool   `yaml:"auto_select,omitempty" json:"autoSelect,omitempty"`
 	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 	Expression  string `yaml:"expression,omitempty" json:"expression,omitempty"`
-	AutoSelect  bool   `yaml:"auto_select,omitempty" json:"autoSelect,omitempty"`
 }
 
 // GraphSettings affect the graph visualization.
