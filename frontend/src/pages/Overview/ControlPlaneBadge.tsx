@@ -1,14 +1,14 @@
 import { Label } from '@patternfly/react-core';
 import * as React from 'react';
-import IstioStatusInline from '../../components/IstioStatus/IstioStatusInline';
+import { IstioStatusInline } from '../../components/IstioStatus/IstioStatusInline';
 import { serverConfig } from '../../config';
-import AmbientBadge from '../../components/Ambient/AmbientBadge';
+import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 
 type Props = {
   cluster?: string;
 };
 
-class ControlPlaneBadge extends React.Component<Props> {
+export class ControlPlaneBadge extends React.Component<Props> {
   render() {
     return (
       <>
@@ -21,5 +21,3 @@ class ControlPlaneBadge extends React.Component<Props> {
     );
   }
 }
-
-export default ControlPlaneBadge;

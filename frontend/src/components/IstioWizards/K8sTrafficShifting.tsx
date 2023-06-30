@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { cellWidth, ICell, Table, TableHeader, TableBody } from '@patternfly/react-table';
-import Slider from './Slider/Slider';
+import { Slider } from './Slider/Slider';
 import { style } from 'typestyle';
 import { Button, ButtonVariant, TooltipPosition } from '@patternfly/react-core';
 import { EqualizerIcon } from '@patternfly/react-icons';
@@ -46,7 +46,7 @@ const evenlyButtonStyle = style({
   textAlign: 'right'
 });
 
-class K8sTrafficShifting extends React.Component<Props, State> {
+export class K8sTrafficShifting extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -160,5 +160,3 @@ class K8sTrafficShifting extends React.Component<Props, State> {
     );
   }
 }
-
-export default K8sTrafficShifting;

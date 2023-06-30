@@ -52,7 +52,7 @@ const isFunction = function (o) {
   return typeof o === 'function';
 };
 
-export default class KialiDagreLayout {
+export class KialiDagreLayout {
   readonly cy;
   readonly eles;
   readonly options;

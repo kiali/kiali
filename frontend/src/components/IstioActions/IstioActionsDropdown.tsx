@@ -27,7 +27,7 @@ type State = {
   dropdownOpen: boolean;
 };
 
-class IstioActionDropdown extends React.Component<Props, State> {
+export class IstioActionDropdown extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -113,5 +113,3 @@ class IstioActionDropdown extends React.Component<Props, State> {
     );
   }
 }
-
-export default IstioActionDropdown;

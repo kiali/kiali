@@ -18,7 +18,7 @@ type State = {
   showConfirmModal: boolean;
 };
 
-class IstioActionButtons extends React.Component<Props, State> {
+export class IstioActionButtons extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { showConfirmModal: false };
@@ -66,5 +66,3 @@ class IstioActionButtons extends React.Component<Props, State> {
     triggerRefresh();
   };
 }
-
-export default IstioActionButtons;

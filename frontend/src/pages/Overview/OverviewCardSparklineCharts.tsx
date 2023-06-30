@@ -3,8 +3,8 @@ import { DirectionType } from './OverviewToolbar';
 import { serverConfig } from '../../config';
 import { ControlPlaneMetricsMap, Metric } from '../../types/Metrics';
 import { DurationInSeconds } from '../../types/Common';
-import OverviewCardDataPlaneNamespace from './OverviewCardDataPlaneNamespace';
-import OverviewCardControlPlaneNamespace from './OverviewCardControlPlaneNamespace';
+import { OverviewCardDataPlaneNamespace } from './OverviewCardDataPlaneNamespace';
+import { OverviewCardControlPlaneNamespace } from './OverviewCardControlPlaneNamespace';
 import { IstiodResourceThresholds } from 'types/IstioStatus';
 import { connect } from 'react-redux';
 import { KialiAppState } from 'store/Store';
@@ -55,5 +55,4 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
 });
 
-const OverviewCardSparklineCharts = connect(mapStateToProps)(OverviewCardSparklineChartsComponent);
-export default OverviewCardSparklineCharts;
+export const OverviewCardSparklineCharts = connect(mapStateToProps)(OverviewCardSparklineChartsComponent);

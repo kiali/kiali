@@ -1,16 +1,16 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import authenticationConfig, { isAuthStrategyOAuth } from '../config/AuthenticationConfig';
+import { authenticationConfig, isAuthStrategyOAuth } from '../config/AuthenticationConfig';
 import { KialiAppState, LoginStatus } from '../store/Store';
 import * as API from '../services/Api';
 import { HelpDropdownActions } from '../actions/HelpDropdownActions';
 import { JaegerActions } from '../actions/JaegerActions';
-import LoginThunkActions from '../actions/LoginThunkActions';
+import { LoginThunkActions } from '../actions/LoginThunkActions';
 import { MessageCenterActions } from '../actions/MessageCenterActions';
 import { MessageType } from '../types/MessageCenter';
 import { KialiDispatch } from '../types/Redux';
-import InitializingScreen from './InitializingScreen';
+import { InitializingScreen } from './InitializingScreen';
 import { getKioskMode, isKioskMode } from '../utils/SearchParamUtils';
 import * as AlertUtils from '../utils/AlertUtils';
 import { setServerConfig, serverConfig, humanDurations } from '../config/ServerConfig';
@@ -19,7 +19,7 @@ import { JaegerInfo } from '../types/JaegerInfo';
 import { LoginActions } from '../actions/LoginActions';
 import { history } from './History';
 import { NamespaceActions } from 'actions/NamespaceAction';
-import Namespace from 'types/Namespace';
+import { Namespace } from 'types/Namespace';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { DurationInSeconds, IntervalInMilliseconds } from 'types/Common';
 import { config } from 'config';
@@ -63,7 +63,7 @@ interface AuthenticationControllerState {
   isPostLoginError: boolean;
 }
 
-export class AuthenticationController extends React.Component<
+class AuthenticationControllerComponent extends React.Component<
   AuthenticationControllerProps,
   AuthenticationControllerState
 > {
@@ -152,7 +152,7 @@ export class AuthenticationController extends React.Component<
       return !this.state.isPostLoginError ? (
         <InitializingScreen />
       ) : (
-        <InitializingScreen errorMsg={AuthenticationController.PostLoginErrorMsg} />
+        <InitializingScreen errorMsg={AuthenticationControllerComponent.PostLoginErrorMsg} />
       );
     } else if (this.state.stage === LoginStage.POST_LOGIN) {
       // For OAuth/OpenID auth strategies, show/keep the initializing screen unless there
@@ -163,7 +163,7 @@ export class AuthenticationController extends React.Component<
 
       return !this.state.isPostLoginError
         ? this.props.publicAreaComponent(true)
-        : this.props.publicAreaComponent(false, AuthenticationController.PostLoginErrorMsg);
+        : this.props.publicAreaComponent(false, AuthenticationControllerComponent.PostLoginErrorMsg);
     } else {
       return this.props.publicAreaComponent(false);
     }
@@ -337,5 +337,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   statusRefresh: bindActionCreators(HelpDropdownActions.statusRefresh, dispatch)
 });
 
-const AuthenticationControllerContainer = connect(mapStateToProps, mapDispatchToProps)(AuthenticationController);
-export default AuthenticationControllerContainer;
+export const AuthenticationController = connect(mapStateToProps, mapDispatchToProps)(AuthenticationControllerComponent);

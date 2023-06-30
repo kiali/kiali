@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { WorkloadOverview } from '../../types/ServiceInfo';
-import Rules, { MOVE_TYPE, Rule } from './RequestRouting/Rules';
-import RuleBuilder from './RequestRouting/RuleBuilder';
+import { Rules, MOVE_TYPE, Rule } from './RequestRouting/Rules';
+import { RuleBuilder } from './RequestRouting/RuleBuilder';
 import { ANYTHING, EXACT, HEADERS, PRESENCE, REGEX } from './RequestRouting/MatchBuilder';
 import { MSG_WEIGHTS_NOT_VALID, WorkloadWeight } from './TrafficShifting';
 import { getDefaultWeights } from './WizardActions';
@@ -32,7 +32,7 @@ const MSG_SAME_MATCHING = 'A Rule with same matching criteria is already added.'
 const MSG_HEADER_NAME_NON_EMPTY = 'Header name must be non empty';
 const MSG_HEADER_VALUE_NON_EMPTY = 'Header value must be non empty';
 
-class RequestRouting extends React.Component<Props, State> {
+export class RequestRouting extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -344,5 +344,3 @@ class RequestRouting extends React.Component<Props, State> {
     );
   }
 }
-
-export default RequestRouting;

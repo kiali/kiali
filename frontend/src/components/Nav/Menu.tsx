@@ -26,7 +26,7 @@ type MenuState = {
   activeItem: string;
 };
 
-class Menu extends React.Component<MenuProps, MenuState> {
+export class Menu extends React.Component<MenuProps, MenuState> {
   static contextTypes = {
     router: () => null
   };
@@ -92,5 +92,3 @@ class Menu extends React.Component<MenuProps, MenuState> {
     );
   }
 }
-
-export default Menu;

@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { Grid, GridItem } from '@patternfly/react-core';
-import AppDescription from './AppDescription';
+import { AppDescription } from './AppDescription';
 import { App } from '../../types/App';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { DurationInSeconds } from 'types/Common';
-import GraphDataSource from 'services/GraphDataSource';
+import { GraphDataSource } from 'services/GraphDataSource';
 import { AppHealth } from 'types/Health';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
@@ -12,7 +12,7 @@ import { meshWideMTLSEnabledSelector } from '../../store/Selectors';
 import { style } from 'typestyle';
 import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
 import { history, URLParam } from '../../app/History';
-import MiniGraphCardContainer from '../../components/CytoscapeGraph/MiniGraphCard';
+import { MiniGraphCard } from '../../components/CytoscapeGraph/MiniGraphCard';
 
 type AppInfoProps = {
   app?: App;
@@ -29,7 +29,7 @@ const fullHeightStyle = style({
   height: '100%'
 });
 
-class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
+class AppInfoComponent extends React.Component<AppInfoProps, AppInfoState> {
   private graphDataSource = new GraphDataSource();
 
   constructor(props: AppInfoProps) {
@@ -83,7 +83,7 @@ class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
             <AppDescription app={this.props.app} health={this.props.health} />
           </GridItem>
           <GridItem span={8}>
-            <MiniGraphCardContainer
+            <MiniGraphCard
               onEdgeTap={this.goToMetrics}
               dataSource={this.graphDataSource}
               mtlsEnabled={this.props.mtlsEnabled}
@@ -100,5 +100,4 @@ const mapStateToProps = (state: KialiAppState) => ({
   mtlsEnabled: meshWideMTLSEnabledSelector(state)
 });
 
-const AppInfoContainer = connect(mapStateToProps)(AppInfo);
-export default AppInfoContainer;
+export const AppInfo = connect(mapStateToProps)(AppInfoComponent);

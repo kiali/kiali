@@ -1,5 +1,5 @@
 import * as React from 'react';
-import MissingSidecar from '../../components/MissingSidecar/MissingSidecar';
+import { MissingSidecar } from '../../components/MissingSidecar/MissingSidecar';
 import { ServiceIcon, BundleIcon, ApplicationsIcon } from '@patternfly/react-icons';
 import { style } from 'typestyle';
 
@@ -29,7 +29,7 @@ interface PfTitleState {
 
 const namespaceRegex = /namespaces\/([a-z0-9-]+)\/([a-z0-9-]+)\/([a-z0-9-]+)(\/([a-z0-9-]+))?(\/([a-z0-9-]+))?/;
 
-class PfTitle extends React.Component<PfTitleProps, PfTitleState> {
+export class PfTitle extends React.Component<PfTitleProps, PfTitleState> {
   constructor(props: PfTitleProps) {
     super(props);
     this.state = {
@@ -107,5 +107,3 @@ class PfTitle extends React.Component<PfTitleProps, PfTitleState> {
     );
   }
 }
-
-export default PfTitle;

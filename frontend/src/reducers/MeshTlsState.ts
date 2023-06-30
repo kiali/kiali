@@ -10,7 +10,7 @@ export const INITIAL_MESH_TLS_STATE: TLSStatus = {
 };
 
 // This Reducer allows changes to the 'graphDataState' portion of Redux Store
-const MeshTlsState = (state: TLSStatus = INITIAL_MESH_TLS_STATE, action: KialiAppAction): TLSStatus => {
+export const MeshTlsStateReducer = (state: TLSStatus = INITIAL_MESH_TLS_STATE, action: KialiAppAction): TLSStatus => {
   switch (action.type) {
     case getType(MeshTlsActions.setinfo):
       return {
@@ -23,5 +23,3 @@ const MeshTlsState = (state: TLSStatus = INITIAL_MESH_TLS_STATE, action: KialiAp
       return state;
   }
 };
-
-export default MeshTlsState;

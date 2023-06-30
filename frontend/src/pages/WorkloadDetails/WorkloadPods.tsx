@@ -13,11 +13,11 @@ import {
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
-import PodStatus from './PodStatus';
+import { PodStatus } from './PodStatus';
 import { style } from 'typestyle';
 import { KialiIcon } from '../../config/KialiIcon';
-import LocalTime from '../../components/Time/LocalTime';
-import Labels from '../../components/Label/Labels';
+import { LocalTime } from '../../components/Time/LocalTime';
+import { Labels } from '../../components/Label/Labels';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 
 type WorkloadPodsProps = {
@@ -53,7 +53,7 @@ const iconStyle = style({
   verticalAlign: '2px !important'
 });
 
-class WorkloadPods extends React.Component<WorkloadPodsProps> {
+export class WorkloadPods extends React.Component<WorkloadPodsProps> {
   columns(): ICell[] {
     return [{ title: 'Name' }, { title: 'Status', transforms: [cellWidth(10) as any] }];
   }
@@ -189,5 +189,3 @@ class WorkloadPods extends React.Component<WorkloadPodsProps> {
     );
   }
 }
-
-export default WorkloadPods;

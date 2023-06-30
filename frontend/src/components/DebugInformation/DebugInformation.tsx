@@ -17,10 +17,10 @@ import {
 } from '@patternfly/react-core';
 import { aceOptions } from '../../types/IstioConfigDetails';
 import AceEditor from 'react-ace';
-import ParameterizedTabs from '../Tab/Tabs';
+import { ParameterizedTabs } from '../Tab/Tabs';
 import { ICell, Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
 import { AuthConfig } from '../../types/Auth';
-import authenticationConfig from '../../config/AuthenticationConfig';
+import { authenticationConfig } from '../../config/AuthenticationConfig';
 
 enum CopyStatus {
   NOT_COPIED, // We haven't copied the current output
@@ -78,7 +78,7 @@ const tabIndex: { [tab: string]: number } = {
   additionalState: 1
 };
 
-export class DebugInformation extends React.PureComponent<DebugInformationProps, DebugInformationState> {
+class DebugInformationComponent extends React.PureComponent<DebugInformationProps, DebugInformationState> {
   aceEditorRef: React.RefObject<AceEditor>;
   kialiConfig = {};
 
@@ -297,6 +297,4 @@ const mapStateToProps = (state: KialiAppState) => ({
   appState: state
 });
 
-const DebugInformationContainer = connect(mapStateToProps, null, null, { forwardRef: true })(DebugInformation);
-
-export default DebugInformationContainer;
+export const DebugInformation = connect(mapStateToProps, null, null, { forwardRef: true })(DebugInformationComponent);

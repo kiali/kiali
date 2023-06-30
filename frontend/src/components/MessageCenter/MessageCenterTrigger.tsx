@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { Badge, Button, ButtonVariant } from '@patternfly/react-core';
 import { KialiAppState } from '../../store/Store';
 import { MessageType, NotificationGroup, NotificationMessage } from '../../types/MessageCenter';
-import MessageCenterThunkActions from '../../actions/MessageCenterThunkActions';
+import { MessageCenterThunkActions } from '../../actions/MessageCenterThunkActions';
 import { KialiIcon } from 'config/KialiIcon';
 import { style } from 'typestyle';
 
@@ -21,7 +21,7 @@ const systemErrorCountStyle = style({
   paddingTop: '0.1em'
 });
 
-export class MessageCenterTrigger extends React.PureComponent<PropsType, {}> {
+class MessageCenterTriggerComponent extends React.PureComponent<PropsType, {}> {
   render() {
     return (
       <>
@@ -123,8 +123,7 @@ const mapDispatchToPropsMessageCenterTrigger = (dispatch: KialiDispatch) => {
   };
 };
 
-const MessageCenterTriggerContainer = connect(
+export const MessageCenterTrigger = connect(
   mapStateToPropsMessageCenterTrigger,
   mapDispatchToPropsMessageCenterTrigger
-)(MessageCenterTrigger);
-export default MessageCenterTriggerContainer;
+)(MessageCenterTriggerComponent);

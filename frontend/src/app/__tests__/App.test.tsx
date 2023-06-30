@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import App from '../App';
+import { App } from '../App';
 
 it('renders full App without crashing', () => {
   // Mock getComputedStyle: Cytoscape relies on the result of this to have a valid paddingXXX

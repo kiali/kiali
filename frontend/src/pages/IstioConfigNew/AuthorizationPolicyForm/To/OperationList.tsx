@@ -27,7 +27,7 @@ const noOperationsStyle = style({
   width: '100%'
 });
 
-class OperationList extends React.Component<Props> {
+export class OperationList extends React.Component<Props> {
   rows = () => {
     return this.props.toList.map((operation, i) => {
       return {
@@ -78,5 +78,3 @@ class OperationList extends React.Component<Props> {
     );
   }
 }
-
-export default OperationList;

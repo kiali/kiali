@@ -8,7 +8,7 @@ interface IstioConfigReferencesProps {
   cluster?: string;
 }
 
-class IstioConfigValidationReferences extends React.Component<IstioConfigReferencesProps> {
+export class IstioConfigValidationReferences extends React.Component<IstioConfigReferencesProps> {
   render() {
     return (
       <Stack>
@@ -35,5 +35,3 @@ class IstioConfigValidationReferences extends React.Component<IstioConfigReferen
     );
   }
 }
-
-export default IstioConfigValidationReferences;

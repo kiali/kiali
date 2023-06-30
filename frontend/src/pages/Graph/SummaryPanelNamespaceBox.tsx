@@ -30,11 +30,11 @@ import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
-import SimpleTabs from 'components/Tab/SimpleTabs';
+import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { ValidationStatus } from 'types/IstioObjects';
 import { PFColors } from '../../components/Pf/PfColors';
-import ValidationSummary from 'components/Validations/ValidationSummary';
-import ValidationSummaryLink from '../../components/Link/ValidationSummaryLink';
+import { ValidationSummary } from 'components/Validations/ValidationSummary';
+import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 
 type SummaryPanelNamespaceBoxMetricsState = {
@@ -107,10 +107,7 @@ const topologyStyle = style({
   margin: '0 1em'
 });
 
-export default class SummaryPanelNamespaceBox extends React.Component<
-  SummaryPanelPropType,
-  SummaryPanelNamespaceBoxState
-> {
+export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropType, SummaryPanelNamespaceBoxState> {
   static readonly panelStyle = {
     height: '100%',
     margin: 0,

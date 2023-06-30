@@ -55,7 +55,7 @@ function LockIcon(props) {
   );
 }
 
-class TLSInfo extends React.Component<Props> {
+class TLSInfoComponent extends React.Component<Props> {
   render() {
     return (
       <div style={{ textAlign: 'left' }}>
@@ -89,5 +89,4 @@ const mapStateToProps = (state: KialiAppState) => ({
   certsInfo: istioCertsInfoSelector(state)
 });
 
-const TLSInfoConnect = connect(mapStateToProps)(TLSInfo);
-export default TLSInfoConnect;
+export const TLSInfo = connect(mapStateToProps)(TLSInfoComponent);

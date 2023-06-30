@@ -20,14 +20,14 @@ import { PFColors } from 'components/Pf/PfColors';
 import { findChildren, findParent, formatDuration } from 'utils/tracing/TracingHelper';
 import { CytoscapeGraphSelectorBuilder } from 'components/CytoscapeGraph/CytoscapeGraphSelector';
 import { decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
-import FocusAnimation from 'components/CytoscapeGraph/FocusAnimation';
+import { FocusAnimation } from 'components/CytoscapeGraph/FocusAnimation';
 import { FormattedTraceInfo, shortIDStyle } from 'components/JaegerIntegration/JaegerResults/FormattedTraceInfo';
-import SimplerSelect from 'components/SimplerSelect';
+import { SimplerSelect } from 'components/SimplerSelect';
 import { summaryFont, summaryTitle } from './SummaryPanelCommon';
 import { NodeParamsType, GraphType } from 'types/Graph';
 import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
-import responseFlags from 'utils/ResponseFlags';
+import { responseFlags } from 'utils/ResponseFlags';
 import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/KioskActions';
 
 type ReduxProps = {
@@ -83,7 +83,7 @@ const spanSelectStyle = style({
   }
 });
 
-class SummaryPanelTraceDetails extends React.Component<Props, State> {
+class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { selectedSpanID: undefined };
@@ -369,5 +369,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setNode: bindActionCreators(GraphActions.setNode, dispatch)
 });
 
-const SummaryPanelTraceDetailsContainer = connect(mapStateToProps, mapDispatchToProps)(SummaryPanelTraceDetails);
-export default SummaryPanelTraceDetailsContainer;
+export const SummaryPanelTraceDetails = connect(mapStateToProps, mapDispatchToProps)(SummaryPanelTraceDetailsComponent);

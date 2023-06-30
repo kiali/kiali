@@ -16,7 +16,7 @@ import { TimeInSeconds } from 'types/Common';
 import { TraceListItem } from 'components/JaegerIntegration/TraceListItem';
 import { summaryFont } from './SummaryPanelCommon';
 import { DecoratedGraphNodeData } from 'types/Graph';
-import transformTraceData from 'utils/tracing/TraceTransform';
+import { transformTraceData } from 'utils/tracing/TraceTransform';
 import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/KioskActions';
 import { KialiDispatch } from '../../types/Redux';
 
@@ -63,7 +63,7 @@ const dividerStyle = style({
   paddingBottom: '3px'
 });
 
-class SummaryPanelNodeTraces extends React.Component<Props, State> {
+class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
   private promises = new PromisesRegistry();
 
   static getDerivedStateFromProps(props: Props, state: State) {
@@ -214,5 +214,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setTraceId: (cluster?: string, traceId?: string) => dispatch(JaegerThunkActions.setTraceId(cluster, traceId))
 });
 
-const SummaryPanelNodeTracesContainer = connect(mapStateToProps, mapDispatchToProps)(SummaryPanelNodeTraces);
-export default SummaryPanelNodeTracesContainer;
+export const SummaryPanelNodeTraces = connect(mapStateToProps, mapDispatchToProps)(SummaryPanelNodeTracesComponent);

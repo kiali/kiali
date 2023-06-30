@@ -12,14 +12,14 @@ import { StarIcon } from '@patternfly/react-icons';
 import { cellWidth, sortable, SortByDirection, Table, TableBody, TableHeader } from '@patternfly/react-table';
 import { style } from 'typestyle';
 
-import DefaultSecondaryMasthead from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
+import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { RenderContent } from '../../components/Nav/Page';
-import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
+import { RefreshButton } from '../../components/Refresh/RefreshButton';
 import { getClusters } from '../../services/Api';
 import { MeshClusters } from '../../types/Mesh';
 import { addError } from '../../utils/AlertUtils';
 
-const MeshPage: React.FunctionComponent = () => {
+export const MeshPage: React.FunctionComponent = () => {
   const [meshClustersList, setMeshClustersList] = React.useState(null as MeshClusters | null);
   const [sortBy, setSortBy] = React.useState({ index: 0, direction: SortByDirection.asc });
 
@@ -127,7 +127,7 @@ const MeshPage: React.FunctionComponent = () => {
       <div style={{ backgroundColor: '#fff' }}>
         <DefaultSecondaryMasthead
           hideNamespaceSelector={true}
-          rightToolbar={<RefreshButtonContainer key={'Refresh'} handleRefresh={fetchMeshClusters} />}
+          rightToolbar={<RefreshButton key={'Refresh'} handleRefresh={fetchMeshClusters} />}
         />
       </div>
       <RenderContent>
@@ -152,5 +152,3 @@ const MeshPage: React.FunctionComponent = () => {
     </>
   );
 };
-
-export default MeshPage;

@@ -25,7 +25,7 @@ import * as MetricsHelper from './Helper';
 import { KioskElement } from '../Kiosk/KioskElement';
 import { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettings';
 import { MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettingsDropdown';
-import MetricsRawAggregation from '../MetricsOptions/MetricsRawAggregation';
+import { MetricsRawAggregation } from '../MetricsOptions/MetricsRawAggregation';
 import { TimeDurationModal } from '../Time/TimeDurationModal';
 import { GrafanaLinks } from './GrafanaLinks';
 import { MetricsObjectTypes } from 'types/Metrics';
@@ -39,7 +39,7 @@ import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { timeRangeSelector } from '../../store/Selectors';
-import TimeDurationIndicatorContainer from '../Time/TimeDurationIndicatorComponent';
+import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 
 type MetricsState = {
   cluster?: string;
@@ -95,7 +95,7 @@ const emptyStyle = style({
   textAlign: 'center'
 });
 
-class CustomMetrics extends React.Component<Props, MetricsState> {
+class CustomMetricsComponent extends React.Component<Props, MetricsState> {
   toolbarRef: React.RefObject<HTMLDivElement>;
   options: DashboardQuery;
   spanOverlay: SpanOverlay;
@@ -333,7 +333,7 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
             </ToolbarItem>
             <KioskElement>
               <ToolbarItem style={{ marginLeft: 'auto' }}>
-                <TimeDurationIndicatorContainer onClick={this.toggleTimeOptionsVisibility} />
+                <TimeDurationIndicator onClick={this.toggleTimeOptionsVisibility} />
               </ToolbarItem>
             </KioskElement>
           </ToolbarGroup>
@@ -378,8 +378,6 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
   };
 };
 
-const CustomMetricsContainer = withRouter<RouteComponentProps<{}> & CustomMetricsProps, any>(
-  connect(mapStateToProps, mapDispatchToProps)(CustomMetrics)
+export const CustomMetrics = withRouter<RouteComponentProps<{}> & CustomMetricsProps, any>(
+  connect(mapStateToProps, mapDispatchToProps)(CustomMetricsComponent)
 );
-
-export default CustomMetricsContainer;

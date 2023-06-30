@@ -12,7 +12,7 @@ import {
 } from '../../types/Graph';
 import { RenderComponentScroll } from '../Nav/Page';
 import { MetricsObjectTypes } from '../../types/Metrics';
-import GraphDataSource from 'services/GraphDataSource';
+import { GraphDataSource } from 'services/GraphDataSource';
 import { DurationInSeconds, TimeInMilliseconds } from 'types/Common';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import * as TrafficListFilters from './FiltersAndSorts';
@@ -20,10 +20,10 @@ import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { durationSelector } from '../../store/Selectors';
 import { HealthAnnotationType } from '../../types/HealthAnnotation';
-import TrafficListComponentContainer from 'components/TrafficList/TrafficListComponent';
+import { TrafficListComponent } from 'components/TrafficList/TrafficListComponent';
 import { KioskElement } from '../Kiosk/KioskElement';
 import { TimeDurationModal } from '../Time/TimeDurationModal';
-import TimeDurationIndicatorContainer from '../Time/TimeDurationIndicatorComponent';
+import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 
 export interface AppNode {
   id: string;
@@ -86,7 +86,7 @@ type TrafficDetailsState = {
   traffic: TrafficItem[];
 };
 
-class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetailsState> {
+class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, TrafficDetailsState> {
   private graphDataSource = new GraphDataSource();
 
   constructor(props: TrafficDetailsProps) {
@@ -132,15 +132,12 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
                     <ToolbarGroup>
                       <KioskElement>
                         <ToolbarItem style={{ marginLeft: 'auto' }}>
-                          <TimeDurationIndicatorContainer
-                            isDuration={true}
-                            onClick={this.toggleTimeOptionsVisibility}
-                          />
+                          <TimeDurationIndicator isDuration={true} onClick={this.toggleTimeOptionsVisibility} />
                         </ToolbarItem>
                       </KioskElement>
                     </ToolbarGroup>
                   </Toolbar>
-                  <TrafficListComponentContainer
+                  <TrafficListComponent
                     currentSortField={FilterHelper.currentSortField(TrafficListFilters.sortFields)}
                     isSortAscending={FilterHelper.isCurrentSortAscending()}
                     trafficItems={this.state.traffic}
@@ -348,5 +345,4 @@ const mapStateToProps = (state: KialiAppState) => {
   };
 };
 
-const TrafficDetailsContainer = connect(mapStateToProps)(TrafficDetails);
-export default TrafficDetailsContainer;
+export const TrafficDetails = connect(mapStateToProps)(TrafficDetailsComponent);

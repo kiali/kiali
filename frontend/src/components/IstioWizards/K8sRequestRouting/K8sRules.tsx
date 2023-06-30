@@ -43,7 +43,7 @@ const noRulesStyle = style({
   width: '100%'
 });
 
-class K8sRules extends React.Component<Props> {
+export class K8sRules extends React.Component<Props> {
   matchAllIndex = (k8sRules: K8sRule[]): number => {
     let matchAll: number = -1;
     for (let index = 0; index < k8sRules.length; index++) {
@@ -191,5 +191,3 @@ class K8sRules extends React.Component<Props> {
     );
   }
 }
-
-export default K8sRules;

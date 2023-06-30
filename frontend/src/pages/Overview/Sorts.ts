@@ -1,6 +1,6 @@
 import { serverConfig } from 'config';
 import { SortField } from '../../types/SortFilters';
-import NamespaceInfo from './NamespaceInfo';
+import { NamespaceInfo } from './NamespaceInfo';
 
 export const sortFields: SortField<NamespaceInfo>[] = [
   {

@@ -29,7 +29,7 @@ const noJWTRulesStyle = style({
   width: '100%'
 });
 
-class JwtRuleList extends React.Component<Props> {
+export class JwtRuleList extends React.Component<Props> {
   rows = () => {
     return this.props.jwtRules.map((jwtRule, i) => {
       return {
@@ -113,5 +113,3 @@ class JwtRuleList extends React.Component<Props> {
     );
   }
 }
-
-export default JwtRuleList;

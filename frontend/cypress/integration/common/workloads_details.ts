@@ -33,9 +33,11 @@ Then('user sees workload inbound metrics information', () => {
   openTab('Inbound Metrics');
   cy.wait('@fetchMetrics');
   cy.waitForReact(1000, '#root');
-  cy.getReact('IstioMetrics', { props: { 'data-test': 'inbound-metrics-component' } })
+  cy.getReact('IstioMetricsComponent', { props: { 'data-test': 'inbound-metrics-component' } })
     // HOCs can match the component name. This filters the HOCs for just the bare component.
-    .then((metricsComponents: any) => metricsComponents.filter(component => component.name === 'IstioMetrics')[0])
+    .then(
+      (metricsComponents: any) => metricsComponents.filter(component => component.name === 'IstioMetricsComponent')[0]
+    )
     .getCurrentState()
     .then(state => {
       cy.wrap(state.dashboard).should('not.be.empty');
@@ -49,9 +51,11 @@ Then('user sees workload outbound metrics information', () => {
   openTab('Outbound Metrics');
   cy.wait('@fetchMetrics');
   cy.waitForReact(1000, '#root');
-  cy.getReact('IstioMetrics', { props: { 'data-test': 'outbound-metrics-component' } })
+  cy.getReact('IstioMetricsComponent', { props: { 'data-test': 'outbound-metrics-component' } })
     // HOCs can match the component name. This filters the HOCs for just the bare component.
-    .then((metricsComponents: any) => metricsComponents.filter(component => component.name === 'IstioMetrics')[0])
+    .then(
+      (metricsComponents: any) => metricsComponents.filter(component => component.name === 'IstioMetricsComponent')[0]
+    )
     .getCurrentState()
     .then(state => {
       cy.wrap(state.dashboard).should('not.be.empty');
@@ -126,8 +130,10 @@ Then('the user sees the metrics tab', () => {
   cy.wait('@fetchEnvoyMetrics');
   cy.waitForReact(1000, '#root');
   cy.contains('Loading metrics').should('not.exist');
-  cy.getReact('CustomMetrics', { props: { 'data-test': 'envoy-metrics-component' } })
-    .then((metricsComponents: any) => metricsComponents.filter(component => component.name === 'CustomMetrics')[0])
+  cy.getReact('CustomMetricsComponent', { props: { 'data-test': 'envoy-metrics-component' } })
+    .then(
+      (metricsComponents: any) => metricsComponents.filter(component => component.name === 'CustomMetricsComponent')[0]
+    )
     .getCurrentState()
     .then(state => {
       cy.wrap(state.dashboard).should('not.be.empty');

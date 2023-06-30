@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
-import { Navigation } from '../Navigation';
+import { NavigationComponent } from '../Navigation';
 import { createMemoryHistory } from 'history';
 
 const history = createMemoryHistory();
@@ -15,7 +15,7 @@ describe('RenderPage isGraph prop', () => {
     };
     history.push(graph);
     const wrapper = shallow(
-      <Navigation
+      <NavigationComponent
         history={history}
         location={graph}
         match={{ url: '', params: {}, path: '/graph', isExact: true }}
@@ -36,7 +36,7 @@ describe('RenderPage isGraph prop', () => {
     };
     history.push(overview);
     const wrapper = shallow(
-      <Navigation
+      <NavigationComponent
         history={history}
         location={overview}
         match={{ url: '', params: {}, path: '/overview', isExact: true }}

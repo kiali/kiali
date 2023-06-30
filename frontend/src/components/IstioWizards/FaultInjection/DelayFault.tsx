@@ -13,7 +13,7 @@ export type DelayFaultProps = {
 
 const fixedDelayedMsg = 'Add a fixed delay before forwarding the request. Format: 1h/1m/1s/1ms. MUST be >=1ms.';
 
-class DelayFault extends React.Component<DelayFaultProps> {
+export class DelayFault extends React.Component<DelayFaultProps> {
   render() {
     return (
       <>
@@ -78,5 +78,3 @@ class DelayFault extends React.Component<DelayFaultProps> {
     );
   }
 }
-
-export default DelayFault;

@@ -16,7 +16,7 @@ type KialiPageLinkProps = ReduxProps & {
   href: string;
 };
 
-class KialiPageLink extends React.Component<KialiPageLinkProps> {
+class KialiPageLinkComponent extends React.Component<KialiPageLinkProps> {
   render() {
     // Without a cluster, simply render a local link
     // If cluster is specified, and it's the home cluster, render a local link.
@@ -62,5 +62,4 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   kiosk: state.globalState.kiosk
 });
 
-const KialiPageLinkContainer = connect(mapStateToProps)(KialiPageLink);
-export default KialiPageLinkContainer;
+export const KialiPageLink = connect(mapStateToProps)(KialiPageLinkComponent);

@@ -5,7 +5,7 @@ import { LoginSession, KialiAppState } from '../store/Store';
 import { AuthStrategy, AuthResult, AuthConfig } from '../types/Auth';
 import { TimeInMilliseconds } from '../types/Common';
 import { KialiDispatch } from '../types/Redux';
-import authenticationConfig from '../config/AuthenticationConfig';
+import { authenticationConfig } from '../config/AuthenticationConfig';
 
 export interface LoginResult {
   status: AuthResult;

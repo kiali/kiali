@@ -5,7 +5,7 @@ interface TimeProps {
   time: string;
 }
 
-export default class LocalTime extends React.Component<TimeProps> {
+export class LocalTime extends React.Component<TimeProps> {
   render() {
     let renderedTime: string;
 

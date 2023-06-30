@@ -1,7 +1,7 @@
 import { KialiDispatch } from '../types/Redux';
 import { GraphActions } from './GraphActions';
 
-const GraphThunkActions = {
+export const GraphThunkActions = {
   graphReady: (cyRef: any) => {
     return (dispatch: KialiDispatch) => {
       dispatch(
@@ -13,5 +13,3 @@ const GraphThunkActions = {
     };
   }
 };
-
-export default GraphThunkActions;

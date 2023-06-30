@@ -3,7 +3,7 @@ import { updateState } from '../utils/Reducer';
 import { NamespaceState } from '../store/Store';
 import { KialiAppAction } from '../actions/KialiAppAction';
 import { NamespaceActions } from '../actions/NamespaceAction';
-import Namespace from '../types/Namespace';
+import { Namespace } from '../types/Namespace';
 
 function filterDuplicateNamespaces(namespaces: Namespace[]): Namespace[] {
   const nsMap = new Map<string, Namespace>();
@@ -19,7 +19,10 @@ export const INITIAL_NAMESPACE_STATE: NamespaceState = {
   filter: ''
 };
 
-const namespaces = (state: NamespaceState = INITIAL_NAMESPACE_STATE, action: KialiAppAction): NamespaceState => {
+export const NamespaceStateReducer = (
+  state: NamespaceState = INITIAL_NAMESPACE_STATE,
+  action: KialiAppAction
+): NamespaceState => {
   switch (action.type) {
     case getType(NamespaceActions.toggleActiveNamespace):
       const namespaceIndex = state.activeNamespaces.findIndex(namespace => namespace.name === action.payload.name);
@@ -67,5 +70,3 @@ const namespaces = (state: NamespaceState = INITIAL_NAMESPACE_STATE, action: Kia
       return state;
   }
 };
-
-export default namespaces;

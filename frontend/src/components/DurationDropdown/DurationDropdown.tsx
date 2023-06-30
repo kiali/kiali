@@ -1,4 +1,4 @@
-import ToolbarDropdown from '../ToolbarDropdown/ToolbarDropdown';
+import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import { serverConfig, humanDurations } from '../../config/ServerConfig';
 import * as React from 'react';
 import { DurationInSeconds } from '../../types/Common';
@@ -30,7 +30,7 @@ type DurationDropdownProps = ReduxProps & {
   prefix?: string;
 };
 
-export class DurationDropdown extends React.Component<DurationDropdownProps> {
+class DurationDropdownComp extends React.Component<DurationDropdownProps> {
   render() {
     const durations = humanDurations(serverConfig, this.props.prefix, this.props.suffix);
 
@@ -98,9 +98,9 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
     setDuration: bindActionCreators(UserSettingsActions.setDuration, dispatch)
   };
 };
-export const DurationDropdownComponent = withDurations(DurationDropdown);
+export const DurationDropdownComponent = withDurations(DurationDropdownComp);
 
-export const DurationDropdownContainer = connect(
+export const DurationDropdown = connect(
   mapStateToProps,
   mapDispatchToProps
 )(withURLAwareness(DurationDropdownComponent));

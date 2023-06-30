@@ -3,16 +3,16 @@ import { ObjectCheck, ValidationTypes } from '../../types/IstioObjects';
 import { DEGRADED, HEALTHY, isProxyStatusSynced, mergeStatus, ProxyStatus, Status } from '../../types/Health';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { createIcon } from '../../components/Health/Helper';
-import ProxyStatusList from './ProxyStatusList';
+import { ProxyStatusList } from './ProxyStatusList';
 import { highestSeverity, validationToHealth } from '../../types/ServiceInfo';
-import ValidationStack from '../../components/Validations/ValidationStack';
+import { ValidationStack } from '../../components/Validations/ValidationStack';
 
 type Props = {
   checks?: ObjectCheck[];
   proxyStatus?: ProxyStatus;
 };
 
-class PodStatus extends React.Component<Props> {
+export class PodStatus extends React.Component<Props> {
   proxyStatusSeverity = (): Status => {
     return this.props.proxyStatus && !isProxyStatusSynced(this.props.proxyStatus) ? DEGRADED : HEALTHY;
   };
@@ -50,4 +50,3 @@ class PodStatus extends React.Component<Props> {
     }
   }
 }
-export default PodStatus;

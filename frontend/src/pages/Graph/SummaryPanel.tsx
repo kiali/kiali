@@ -2,19 +2,19 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { style } from 'typestyle';
 import { SummaryPanelPropType, BoxByType, SummaryData } from '../../types/Graph';
-import SummaryPanelEdge from './SummaryPanelEdge';
-import SummaryPanelGraph from './SummaryPanelGraph';
-import SummaryPanelAppBox from './SummaryPanelAppBox';
+import { SummaryPanelEdge } from './SummaryPanelEdge';
+import { SummaryPanelGraph } from './SummaryPanelGraph';
+import { SummaryPanelAppBox } from './SummaryPanelAppBox';
 import { KialiIcon } from 'config/KialiIcon';
-import SummaryPanelNodeContainer from './SummaryPanelNode';
+import { SummaryPanelNode } from './SummaryPanelNode';
 import { JaegerState } from 'reducers/JaegerState';
-import SummaryPanelTraceDetailsContainer from './SummaryPanelTraceDetails';
+import { SummaryPanelTraceDetails } from './SummaryPanelTraceDetails';
 import { KialiAppState } from 'store/Store';
-import SummaryPanelClusterBox from './SummaryPanelClusterBox';
-import SummaryPanelNamespaceBox from './SummaryPanelNamespaceBox';
+import { SummaryPanelClusterBox } from './SummaryPanelClusterBox';
+import { SummaryPanelNamespaceBox } from './SummaryPanelNamespaceBox';
 import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
-import TourStopContainer from 'components/Tour/TourStop';
+import { TourStop } from 'components/Tour/TourStop';
 import { summaryPanelWidth } from './SummaryPanelCommon';
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
@@ -78,7 +78,7 @@ const toggleSidePanelStyle = style({
   transformOrigin: 'left top 0'
 });
 
-class SummaryPanel extends React.Component<MainSummaryPanelPropType, SummaryPanelState> {
+class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, SummaryPanelState> {
   constructor(props: MainSummaryPanelPropType) {
     super(props);
     this.state = {
@@ -104,7 +104,7 @@ class SummaryPanel extends React.Component<MainSummaryPanelPropType, SummaryPane
       : collapsedStyle;
 
     return (
-      <TourStopContainer info={[GraphTourStops.Graph, GraphTourStops.ContextualMenu, GraphTourStops.SidePanel]}>
+      <TourStop info={[GraphTourStops.Graph, GraphTourStops.ContextualMenu, GraphTourStops.SidePanel]}>
         <div id="graph-side-panel" className={mainStyle}>
           <div className={mainTopStyle}>
             <div className={toggleSidePanelStyle} onClick={this.togglePanel}>
@@ -123,7 +123,7 @@ class SummaryPanel extends React.Component<MainSummaryPanelPropType, SummaryPane
           {this.props.jaegerState.selectedTrace && this.state.isVisible && (
             <div className={`panel panel-default ${summaryPanelBottomSplit}`}>
               <div className="panel-body">
-                <SummaryPanelTraceDetailsContainer
+                <SummaryPanelTraceDetails
                   trace={this.props.jaegerState.selectedTrace}
                   node={this.props.data.summaryTarget}
                   graphType={this.props.graphType}
@@ -133,7 +133,7 @@ class SummaryPanel extends React.Component<MainSummaryPanelPropType, SummaryPane
             </div>
           )}
         </div>
-      </TourStopContainer>
+      </TourStop>
     );
   }
 
@@ -213,7 +213,7 @@ class SummaryPanel extends React.Component<MainSummaryPanelPropType, SummaryPane
         );
       case 'node':
         return (
-          <SummaryPanelNodeContainer
+          <SummaryPanelNode
             data={this.props.data}
             duration={this.props.duration}
             graphType={this.props.graphType}
@@ -244,5 +244,4 @@ const mapStateToProps = (state: KialiAppState) => ({
   kiosk: state.globalState.kiosk
 });
 
-const SummaryPanelContainer = connect(mapStateToProps)(SummaryPanel);
-export default SummaryPanelContainer;
+export const SummaryPanel = connect(mapStateToProps)(SummaryPanelComponent);

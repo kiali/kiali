@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import NotificationList from './NotificationList';
+import { NotificationList } from './NotificationList';
 import { style } from 'typestyle';
 import { NotificationMessage, NotificationGroup } from '../../types/MessageCenter';
-import AlertDrawerContainer from './AlertDrawer';
+import { AlertDrawer } from './AlertDrawer';
 import { KialiAppState } from 'store/Store';
 import { KialiDispatch } from 'types/Redux';
 import { MessageCenterActions } from 'actions/MessageCenterActions';
@@ -23,7 +23,7 @@ type MessageCenterProps = ReduxProps & {
   drawerTitle: string;
 };
 
-export class MessageCenter extends React.Component<MessageCenterProps> {
+export class MessageCenterComponent extends React.Component<MessageCenterProps> {
   // Get messages that are meant to be show as notifications (Toast), appending
   // the groupId to allow to recognize the group they belong. (see onDismissNotification)
   getNotificationMessages = (groups: NotificationGroup[]) => {
@@ -39,7 +39,7 @@ export class MessageCenter extends React.Component<MessageCenterProps> {
   render() {
     return (
       <div className={notificationStyle}>
-        <AlertDrawerContainer title={this.props.drawerTitle} />
+        <AlertDrawer title={this.props.drawerTitle} />
         <NotificationList
           messages={this.getNotificationMessages(this.props.groups)}
           onDismiss={this.props.onDismissNotification}
@@ -67,5 +67,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
   };
 };
 
-const MessageCenterContainer = connect(mapStateToProps, mapDispatchToProps)(MessageCenter);
-export default MessageCenterContainer;
+export const MessageCenter = connect(mapStateToProps, mapDispatchToProps)(MessageCenterComponent);

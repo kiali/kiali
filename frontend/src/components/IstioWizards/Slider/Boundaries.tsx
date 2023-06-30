@@ -10,7 +10,7 @@ type BoundariesProps = {
   slider?: JSX.Element;
 };
 
-class Boundaries extends React.Component<BoundariesProps, {}> {
+export class Boundaries extends React.Component<BoundariesProps, {}> {
   static defaultProps = {
     min: 0,
     max: 100,
@@ -47,5 +47,3 @@ class Boundaries extends React.Component<BoundariesProps, {}> {
     );
   }
 }
-
-export default Boundaries;

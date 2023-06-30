@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import IstioConfigListLink from './IstioConfigListLink';
+import { IstioConfigListLink } from './IstioConfigListLink';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskIstioConfigAction } from '../Kiosk/KioskActions';
@@ -17,7 +17,7 @@ type Props = ReduxProps & {
   children: React.ReactNode;
 };
 
-class ValidationSummaryLink extends React.Component<Props> {
+class ValidationSummaryLinkComponent extends React.Component<Props> {
   hasIstioObjects = () => {
     return this.props.objectCount && this.props.objectCount > 0;
   };
@@ -51,5 +51,4 @@ const mapStateToProps = (state: KialiAppState) => ({
   kiosk: state.globalState.kiosk
 });
 
-const ValidationSummaryLinkContainer = connect(mapStateToProps)(ValidationSummaryLink);
-export default ValidationSummaryLinkContainer;
+export const ValidationSummaryLink = connect(mapStateToProps)(ValidationSummaryLinkComponent);

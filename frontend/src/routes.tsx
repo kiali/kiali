@@ -1,18 +1,18 @@
 import { MenuItem, Path } from './types/Routes';
 import { Paths } from './config';
-import WorkloadListPage from './pages/WorkloadList/WorkloadListPage';
-import ServiceListPage from './pages/ServiceList/ServiceListPage';
-import IstioConfigPage from './pages/IstioConfigList/IstioConfigListPage';
-import AppListPage from './pages/AppList/AppListPage';
-import OverviewPage from './pages/Overview/OverviewPage';
-import GraphPage from 'pages/Graph/GraphPage';
-import MeshPage from 'pages/Mesh/MeshPage';
-import GraphRoute from 'routes/GraphRoute';
-import ServiceDetailsRoute from 'routes/ServiceDetailsRoute';
-import WorkloadDetailsRoute from 'routes/WorkloadDetailsRoute';
-import AppDetailsRoute from 'routes/AppDetailsRoute';
-import IstioConfigDetailsRoute from 'routes/IstioConfigDetailsRoute';
-import IstioConfigNewRoute from 'routes/IstioConfigNewRoute';
+import { WorkloadListPage } from './pages/WorkloadList/WorkloadListPage';
+import { ServiceListPage } from './pages/ServiceList/ServiceListPage';
+import { IstioConfigListPage } from './pages/IstioConfigList/IstioConfigListPage';
+import { AppListPage } from './pages/AppList/AppListPage';
+import { OverviewPage } from './pages/Overview/OverviewPage';
+import { GraphPage } from 'pages/Graph/GraphPage';
+import { MeshPage } from 'pages/Mesh/MeshPage';
+import { GraphRoute } from 'routes/GraphRoute';
+import { ServiceDetailsRoute } from 'routes/ServiceDetailsRoute';
+import { WorkloadDetailsRoute } from 'routes/WorkloadDetailsRoute';
+import { AppDetailsRoute } from 'routes/AppDetailsRoute';
+import { IstioConfigDetailsRoute } from 'routes/IstioConfigDetailsRoute';
+import { IstioConfigNewRoute } from 'routes/IstioConfigNewRoute';
 
 /**
  * Return array of objects that describe vertical menu
@@ -124,7 +124,7 @@ const pathRoutes: Path[] = [
   },
   {
     path: '/' + Paths.ISTIO,
-    component: IstioConfigPage
+    component: IstioConfigListPage
   },
   {
     path: '/' + Paths.JAEGER,

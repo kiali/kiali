@@ -16,18 +16,6 @@ type Props = {
 
 type KioskProps = ReduxProps & Props;
 
-export class KioskLink extends React.Component<Props> {
-  render() {
-    const { linkName, href, dataTest } = this.props;
-
-    return (
-      <>
-        <KioskLinkContainer linkName={linkName} href={href} dataTest={dataTest} />
-      </>
-    );
-  }
-}
-
 class KioskLinkItem extends React.Component<KioskProps> {
   render() {
     return isParentKiosk(this.props.kiosk) ? (
@@ -52,3 +40,15 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
 });
 
 const KioskLinkContainer = connect(mapStateToProps)(KioskLinkItem);
+
+export class KioskLink extends React.Component<Props> {
+  render() {
+    const { linkName, href, dataTest } = this.props;
+
+    return (
+      <>
+        <KioskLinkContainer linkName={linkName} href={href} dataTest={dataTest} />
+      </>
+    );
+  }
+}

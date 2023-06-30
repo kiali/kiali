@@ -17,7 +17,7 @@ const infoStyle = style({
   verticalAlign: '-5px !important'
 });
 
-class MissingLabel extends React.Component<MissingLabelProps, {}> {
+export class MissingLabel extends React.Component<MissingLabelProps, {}> {
   render() {
     const appLabel = serverConfig.istioLabels.appLabelName;
     const versionLabel = serverConfig.istioLabels.versionLabelName;
@@ -68,5 +68,3 @@ class MissingLabel extends React.Component<MissingLabelProps, {}> {
     );
   }
 }
-
-export default MissingLabel;

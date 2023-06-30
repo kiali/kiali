@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
-import MTLSIcon, { MTLSIconTypes } from '../MTLSIcon';
+import { MTLSIcon, MTLSIconTypes } from '../MTLSIcon';
 import { shallowToJson } from 'enzyme-to-json';
 import { TooltipPosition } from '@patternfly/react-core';
 

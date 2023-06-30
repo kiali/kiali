@@ -27,7 +27,7 @@ const noSourceStyle = style({
   width: '100%'
 });
 
-class SourceList extends React.Component<Props> {
+export class SourceList extends React.Component<Props> {
   rows = () => {
     return this.props.fromList.map((source, i) => {
       return {
@@ -79,5 +79,3 @@ class SourceList extends React.Component<Props> {
     );
   }
 }
-
-export default SourceList;

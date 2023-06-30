@@ -16,7 +16,7 @@ type ActionItem = {
   action: JSX.Element;
 };
 
-class IstioActionsNamespaceDropdown extends React.Component<Props, State> {
+export class IstioActionsNamespaceDropdown extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -82,5 +82,3 @@ class IstioActionsNamespaceDropdown extends React.Component<Props, State> {
     );
   }
 }
-
-export default IstioActionsNamespaceDropdown;

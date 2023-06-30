@@ -2,14 +2,14 @@ import * as React from 'react';
 import { Table, TableHeader, TableGridBreakpoint } from '@patternfly/react-table';
 import { HistoryManager, URLParam } from '../../app/History';
 import { config, RenderResource, Resource } from './Config';
-import VirtualItem from './VirtualItem';
+import { VirtualItem } from './VirtualItem';
 import { EmptyState, EmptyStateBody, EmptyStateVariant, Title, TitleSizes } from '@patternfly/react-core';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
-import Namespace from '../../types/Namespace';
+import { Namespace } from '../../types/Namespace';
 import { SortField } from '../../types/SortFilters';
-import NamespaceInfo from '../../pages/Overview/NamespaceInfo';
+import { NamespaceInfo } from '../../pages/Overview/NamespaceInfo';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import * as Sorts from '../../pages/Overview/Sorts';
 import { StatefulFilters } from '../Filters/StatefulFilters';
@@ -45,7 +45,7 @@ type VirtualListState = {
   conf: Resource;
 };
 
-class VirtualListC<R extends RenderResource> extends React.Component<VirtualListProps<R>, VirtualListState> {
+class VirtualListComponent<R extends RenderResource> extends React.Component<VirtualListProps<R>, VirtualListState> {
   private statefulFilters: React.RefObject<StatefulFilters> = React.createRef();
 
   constructor(props: VirtualListProps<R>) {
@@ -201,5 +201,4 @@ const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state)
 });
 
-const VirtualList = connect(mapStateToProps)(VirtualListC);
-export default VirtualList;
+export const VirtualList = connect(mapStateToProps)(VirtualListComponent);

@@ -22,7 +22,7 @@ import { HistoryManager, URLParam } from '../../app/History';
 import * as LayoutDictionary from './graphs/LayoutDictionary';
 import { GraphToolbarActions } from '../../actions/GraphToolbarActions';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
-import TourStopContainer from 'components/Tour/TourStop';
+import { TourStop } from 'components/Tour/TourStop';
 import { edgeModeSelector } from 'store/Selectors';
 import { KialiDagreGraph } from './graphs/KialiDagreGraph';
 import { KialiGridGraph } from './graphs/KialiGridGraph';
@@ -65,7 +65,7 @@ const cyToolbarStyle = style({
   width: '20px'
 });
 
-export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps, CytoscapeToolbarState> {
+class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProps, CytoscapeToolbarState> {
   constructor(props: CytoscapeToolbarProps) {
     super(props);
     // Let URL override current redux state at construction time. Update URL with unset params.
@@ -188,7 +188,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
           </Tooltip>
         </div>
 
-        <TourStopContainer info={GraphTourStops.Layout}>
+        <TourStop info={GraphTourStops.Layout}>
           <div>
             <Tooltip content={'Layout 1 ' + KialiGridGraph.getLayout().name} position={TooltipPosition.right}>
               <Button
@@ -208,7 +208,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
               </Button>
             </Tooltip>
           </div>
-        </TourStopContainer>
+        </TourStop>
 
         <div>
           <Tooltip content={'Layout 2 ' + KialiConcentricGraph.getLayout().name} position={TooltipPosition.right}>
@@ -310,7 +310,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
           </div>
         )}
 
-        <TourStopContainer info={GraphTourStops.Legend}>
+        <TourStop info={GraphTourStops.Legend}>
           <div>
             <Tooltip content="Show Legend" position={TooltipPosition.right}>
               <Button
@@ -325,7 +325,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
               </Button>
             </Tooltip>
           </div>
-        </TourStopContainer>
+        </TourStop>
       </div>
     );
   }
@@ -385,5 +385,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   toggleLegend: bindActionCreators(GraphToolbarActions.toggleLegend, dispatch)
 });
 
-const CytoscapeToolbarContainer = connect(mapStateToProps, mapDispatchToProps)(CytoscapeToolbar);
-export default CytoscapeToolbarContainer;
+export const CytoscapeToolbar = connect(mapStateToProps, mapDispatchToProps)(CytoscapeToolbarComponent);

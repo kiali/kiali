@@ -4,7 +4,7 @@ import { cellWidth, TableComposable, Tbody, Td, Th, Thead, Tr } from '@patternfl
 import { style } from 'typestyle';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { PlusCircleIcon } from '@patternfly/react-icons';
-import AddressBuilder from './AddressBuilder';
+import { AddressBuilder } from './AddressBuilder';
 import { PFColors } from '../../../components/Pf/PfColors';
 
 type Props = {
@@ -37,7 +37,7 @@ const headerCells = [
   }
 ];
 
-class AddressList extends React.Component<Props> {
+export class AddressList extends React.Component<Props> {
   onAddAddress = () => {
     const newAddress: Address = {
       type: 'IPAddress',
@@ -100,5 +100,3 @@ class AddressList extends React.Component<Props> {
     );
   }
 }
-
-export default AddressList;

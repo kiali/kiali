@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { ComponentStatus, Status } from '../../../types/IstioStatus';
-import IstioComponentStatus from '../IstioComponentStatus';
+import { IstioComponentStatus } from '../IstioComponentStatus';
 import { shallowToJson } from 'enzyme-to-json';
 import { shallow } from 'enzyme';
 

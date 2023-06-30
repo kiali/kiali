@@ -5,20 +5,20 @@ import * as AlertUtils from '../../utils/AlertUtils';
 import { TimeInMilliseconds } from '../../types/Common';
 import { ComponentStatus, Status } from '../../types/IstioStatus';
 import { MessageType } from '../../types/MessageCenter';
-import Namespace from '../../types/Namespace';
+import { Namespace } from '../../types/Namespace';
 import { KialiAppState } from '../../store/Store';
 import { istioStatusSelector, namespaceItemsSelector } from '../../store/Selectors';
 import { bindActionCreators } from 'redux';
 import { IstioStatusActions } from '../../actions/IstioStatusActions';
 import { connect } from 'react-redux';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
-import IstioStatusList from './IstioStatusList';
+import { IstioStatusList } from './IstioStatusList';
 import { PFColors } from '../Pf/PfColors';
 import './IstioStatus.css';
 import { ResourcesFullIcon } from '@patternfly/react-icons';
 import { KialiDispatch } from 'types/Redux';
-import NamespaceThunkActions from '../../actions/NamespaceThunkActions';
-import connectRefresh from '../Refresh/connectRefresh';
+import { NamespaceThunkActions } from '../../actions/NamespaceThunkActions';
+import { connectRefresh } from '../Refresh/connectRefresh';
 
 type ReduxProps = {
   setIstioStatus: (istioStatus: ComponentStatus[]) => void;
@@ -58,7 +58,7 @@ const defaultIcons = {
   HealthyIcon: ResourcesFullIcon
 };
 
-export class IstioStatus extends React.Component<Props> {
+export class IstioStatusComponent extends React.Component<Props> {
   componentDidMount() {
     this.props.refreshNamespaces();
     this.fetchStatus();
@@ -157,6 +157,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   }
 });
 
-const IstioStatusConnected = connectRefresh(connect(mapStateToProps, mapDispatchToProps)(IstioStatus));
-
-export default IstioStatusConnected;
+export const IstioStatus = connectRefresh(connect(mapStateToProps, mapDispatchToProps)(IstioStatusComponent));

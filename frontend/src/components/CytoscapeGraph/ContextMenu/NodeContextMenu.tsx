@@ -101,7 +101,7 @@ function getLinkParamsForNode(node: DecoratedGraphNodeData): LinkParams | undefi
   return type && name ? { namespace, type, name, cluster } : undefined;
 }
 
-export function NodeContextMenu(props: Props) {
+export function NodeContextMenuComponent(props: Props) {
   const [serviceDetails, gateways, peerAuthentications, isServiceDetailsLoading] = useServiceDetailForGraphNode(
     props,
     true,
@@ -414,4 +414,4 @@ const mapStateToProps = (state: KialiAppState) => ({
   kiosk: state.globalState.kiosk
 });
 
-export const NodeContextMenuContainer = connect(mapStateToProps)(NodeContextMenu);
+export const NodeContextMenu = connect(mapStateToProps)(NodeContextMenuComponent);

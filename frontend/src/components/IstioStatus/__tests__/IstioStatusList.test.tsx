@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import { ComponentStatus, Status } from '../../../types/IstioStatus';
-import IstioStatusList from '../IstioStatusList';
+import { IstioStatusList } from '../IstioStatusList';
 import { shallowToJson } from 'enzyme-to-json';
 
 it('lists all the components grouped', () => {

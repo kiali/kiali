@@ -5,7 +5,7 @@ import * as ServiceListFilters from './FiltersAndSorts';
 import * as FilterComponent from '../../components/FilterList/FilterComponent';
 import { ServiceList, ServiceListItem } from '../../types/ServiceList';
 import { DurationInSeconds } from '../../types/Common';
-import Namespace from '../../types/Namespace';
+import { Namespace } from '../../types/Namespace';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { namespaceEquals } from '../../utils/Common';
 import { SortField } from '../../types/SortFilters';
@@ -13,16 +13,16 @@ import { ActiveFiltersInfo, ActiveTogglesInfo } from '../../types/Filters';
 import { FilterSelected, StatefulFilters, Toggles } from '../../components/Filters/StatefulFilters';
 import * as API from '../../services/Api';
 import { ObjectValidation, Validations } from '../../types/IstioObjects';
-import VirtualList from '../../components/VirtualList/VirtualList';
+import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
-import DefaultSecondaryMasthead from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
+import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { connect } from 'react-redux';
-import TimeDurationContainer from '../../components/Time/TimeDurationComponent';
+import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
 import { sortIstioReferences } from '../AppList/FiltersAndSorts';
 import { validationKey } from '../../types/IstioConfigList';
 import { ServiceHealth } from '../../types/Health';
-import RefreshNotifier from '../../components/Refresh/RefreshNotifier';
+import { RefreshNotifier } from '../../components/Refresh/RefreshNotifier';
 import { isMultiCluster } from 'config';
 
 type ServiceListPageState = FilterComponent.State<ServiceListItem>;
@@ -180,7 +180,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
         <div style={{ backgroundColor: '#fff' }}>
           <DefaultSecondaryMasthead
             rightToolbar={
-              <TimeDurationContainer key={'DurationDropdown'} id="service-list-duration-dropdown" disabled={false} />
+              <TimeDurationComponent key={'DurationDropdown'} id="service-list-duration-dropdown" disabled={false} />
             }
           />
         </div>
@@ -204,5 +204,4 @@ const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state)
 });
 
-const ServiceListPage = connect(mapStateToProps)(ServiceListPageComponent);
-export default ServiceListPage;
+export const ServiceListPage = connect(mapStateToProps)(ServiceListPageComponent);

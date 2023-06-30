@@ -1,4 +1,4 @@
-import Namespace from './Namespace';
+import { Namespace } from './Namespace';
 import { ServiceHealth } from './Health';
 import { Validations, ObjectValidation, ObjectReference } from './IstioObjects';
 import { AdditionalItem } from './Workload';

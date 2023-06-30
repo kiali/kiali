@@ -54,7 +54,7 @@ const placeholderText = {
   [QUERY_PARAMS]: 'Query param value...'
 };
 
-class K8sMatchBuilder extends React.Component<Props, State> {
+export class K8sMatchBuilder extends React.Component<Props, State> {
   constructor(props) {
     super(props);
     this.state = {
@@ -158,5 +158,3 @@ class K8sMatchBuilder extends React.Component<Props, State> {
     );
   }
 }
-
-export default K8sMatchBuilder;

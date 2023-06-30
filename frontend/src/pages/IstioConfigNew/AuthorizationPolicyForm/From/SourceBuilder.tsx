@@ -59,7 +59,7 @@ const headerCells: ICell[] = [
   }
 ];
 
-class SourceBuilder extends React.Component<Props, State> {
+export class SourceBuilder extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -240,5 +240,3 @@ class SourceBuilder extends React.Component<Props, State> {
     );
   }
 }
-
-export default SourceBuilder;

@@ -62,7 +62,7 @@ export const areValidHosts = (hosts: string[]): boolean => {
   return isValid;
 };
 
-class ServerBuilder extends React.Component<Props, State> {
+export class ServerBuilder extends React.Component<Props, State> {
   onAddHosts = (value: string, _) => {
     const server = this.props.server;
     server.hosts = value.trim().length === 0 ? [] : value.split(',').map(host => host.trim());
@@ -288,5 +288,3 @@ class ServerBuilder extends React.Component<Props, State> {
     );
   }
 }
-
-export default ServerBuilder;

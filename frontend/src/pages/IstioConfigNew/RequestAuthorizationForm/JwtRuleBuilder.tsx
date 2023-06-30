@@ -90,7 +90,7 @@ export const formatJwtField = (jwtField: string, jwtRule: JWTRule): string => {
   return '';
 };
 
-class JwtRuleBuilder extends React.Component<Props, State> {
+export class JwtRuleBuilder extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -317,5 +317,3 @@ class JwtRuleBuilder extends React.Component<Props, State> {
     );
   }
 }
-
-export default JwtRuleBuilder;

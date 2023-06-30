@@ -1,6 +1,6 @@
 import { PopoverPosition } from '@patternfly/react-core';
 import { TourStopInfo, TourInfo } from 'components/Tour/TourStop';
-import GraphShortcuts from './GraphToolbar/GraphShortcuts';
+import { GraphShortcuts } from './GraphToolbar/GraphShortcuts';
 
 export const GraphTourStops: { [name: string]: TourStopInfo } = {
   ContextualMenu: {
@@ -75,7 +75,7 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
   }
 };
 
-const GraphTour: TourInfo = {
+export const GraphTour: TourInfo = {
   name: 'GraphTour',
   stops: [
     GraphTourStops.Shortcuts,
@@ -92,5 +92,3 @@ const GraphTour: TourInfo = {
     GraphTourStops.Legend
   ]
 };
-
-export default GraphTour;

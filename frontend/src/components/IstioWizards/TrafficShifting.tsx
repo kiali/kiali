@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { cellWidth, ICell, Table, TableHeader, TableBody } from '@patternfly/react-table';
-import Slider from './Slider/Slider';
+import { Slider } from './Slider/Slider';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { style } from 'typestyle';
 import { PFColors } from '../Pf/PfColors';
@@ -42,7 +42,7 @@ const evenlyButtonStyle = style({
 
 export const MSG_WEIGHTS_NOT_VALID = 'The sum of all non-mirrored weights must be 100 %';
 
-class TrafficShifting extends React.Component<Props, State> {
+export class TrafficShifting extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -327,5 +327,3 @@ class TrafficShifting extends React.Component<Props, State> {
     );
   }
 }
-
-export default TrafficShifting;

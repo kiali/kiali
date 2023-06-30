@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { ObjectValidation, StatusCondition, ValidationTypes } from '../../types/IstioObjects';
-import ValidationSummary from './ValidationSummary';
+import { ValidationSummary } from './ValidationSummary';
 import { CSSProperties } from 'react';
 
 interface Props {

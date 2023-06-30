@@ -6,7 +6,7 @@ type AmbientLabelProps = {
   style?: React.CSSProperties;
 };
 
-class AmbientBadge extends React.Component<AmbientLabelProps, {}> {
+export class AmbientBadge extends React.Component<AmbientLabelProps, {}> {
   render() {
     const msg = 'Istio Ambient profile is detected.';
 
@@ -46,5 +46,3 @@ class AmbientBadge extends React.Component<AmbientLabelProps, {}> {
     );
   }
 }
-
-export default AmbientBadge;

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { ObjectValidation, ValidationTypes } from '../../types/IstioObjects';
-import ServiceValidationSummary from './ServiceValidationSummary';
+import { ServiceValidationSummary } from './ServiceValidationSummary';
 import { CSSProperties } from 'react';
 
 interface Props {

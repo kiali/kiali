@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { App } from '../../types/App';
 import { Card, CardBody, CardHeader, Title, TitleSizes, TooltipPosition } from '@patternfly/react-core';
-import DetailDescription from '../../components/DetailDescription/DetailDescription';
+import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
 import { isMultiCluster, serverConfig } from '../../config';
-import Labels from '../../components/Label/Labels';
+import { Labels } from '../../components/Label/Labels';
 import { style } from 'typestyle';
 import * as H from '../../types/Health';
 import { HealthIndicator } from '../../components/Health/HealthIndicator';
@@ -26,7 +26,7 @@ const healthIconStyle = style({
   verticalAlign: '-1px !important'
 });
 
-class AppDescription extends React.Component<AppDescriptionProps> {
+export class AppDescription extends React.Component<AppDescriptionProps> {
   render() {
     const appLabels: { [key: string]: string } = {};
     if (this.props.app) {
@@ -69,5 +69,3 @@ class AppDescription extends React.Component<AppDescriptionProps> {
     );
   }
 }
-
-export default AppDescription;

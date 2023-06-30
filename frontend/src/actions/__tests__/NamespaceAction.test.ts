@@ -4,7 +4,7 @@ import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 
 import { NamespaceActions } from '../NamespaceAction';
-import NamespaceThunkActions from '../NamespaceThunkActions';
+import { NamespaceThunkActions } from '../NamespaceThunkActions';
 
 const middlewares = [thunk];
 const mockStore = configureMockStore(middlewares);

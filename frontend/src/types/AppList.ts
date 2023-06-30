@@ -1,4 +1,4 @@
-import Namespace from './Namespace';
+import { Namespace } from './Namespace';
 import { AppHealth } from './Health';
 import { ObjectReference } from './IstioObjects';
 

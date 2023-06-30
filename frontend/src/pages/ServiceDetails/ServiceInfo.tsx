@@ -2,8 +2,8 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { style } from 'typestyle';
 import { Grid, GridItem, Stack, StackItem } from '@patternfly/react-core';
-import ServiceId from '../../types/ServiceId';
-import ServiceDescription from './ServiceDescription';
+import { ServiceId } from '../../types/ServiceId';
+import { ServiceDescription } from './ServiceDescription';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import {
   DestinationRuleC,
@@ -18,7 +18,7 @@ import {
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { DurationInSeconds } from 'types/Common';
-import GraphDataSource from 'services/GraphDataSource';
+import { GraphDataSource } from 'services/GraphDataSource';
 import {
   drToIstioItems,
   vsToIstioItems,
@@ -31,13 +31,13 @@ import {
 import { canCreate, canUpdate } from '../../types/Permissions';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector, meshWideMTLSEnabledSelector } from '../../store/Selectors';
-import ServiceNetwork from './ServiceNetwork';
+import { ServiceNetwork } from './ServiceNetwork';
 import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
 import { history, URLParam } from '../../app/History';
-import MiniGraphCardContainer from '../../components/CytoscapeGraph/MiniGraphCard';
-import IstioConfigCard from '../../components/IstioConfigCard/IstioConfigCard';
-import ServiceWizard from '../../components/IstioWizards/ServiceWizard';
-import ConfirmDeleteTrafficRoutingModal from '../../components/IstioWizards/ConfirmDeleteTrafficRoutingModal';
+import { MiniGraphCard } from '../../components/CytoscapeGraph/MiniGraphCard';
+import { IstioConfigCard } from '../../components/IstioConfigCard/IstioConfigCard';
+import { ServiceWizard } from '../../components/IstioWizards/ServiceWizard';
+import { ConfirmDeleteTrafficRoutingModal } from '../../components/IstioWizards/ConfirmDeleteTrafficRoutingModal';
 import { WizardAction, WizardMode } from '../../components/IstioWizards/WizardActions';
 import { deleteServiceTrafficRouting } from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
@@ -69,7 +69,7 @@ const fullHeightStyle = style({
   height: '100%'
 });
 
-class ServiceInfo extends React.Component<Props, ServiceInfoState> {
+class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
   private promises = new PromisesRegistry();
   private graphDataSource = new GraphDataSource();
 
@@ -245,7 +245,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
               </Stack>
             </GridItem>
             <GridItem span={8}>
-              <MiniGraphCardContainer
+              <MiniGraphCard
                 dataSource={this.graphDataSource}
                 mtlsEnabled={this.props.mtlsEnabled}
                 onEdgeTap={this.goToMetrics}
@@ -300,5 +300,4 @@ const mapStateToProps = (state: KialiAppState) => ({
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
 });
 
-const ServiceInfoContainer = connect(mapStateToProps)(ServiceInfo);
-export default ServiceInfoContainer;
+export const ServiceInfo = connect(mapStateToProps)(ServiceInfoComponent);

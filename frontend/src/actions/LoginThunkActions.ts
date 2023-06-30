@@ -41,7 +41,7 @@ const performLogin = (dispatch: KialiDispatch, state: KialiAppState, data?: any)
   });
 };
 
-const LoginThunkActions = {
+export const LoginThunkActions = {
   authenticate: (username: string, password: string) => {
     return (dispatch: KialiDispatch, getState: () => KialiAppState) => {
       dispatch(LoginActions.loginRequest());
@@ -82,5 +82,3 @@ const LoginThunkActions = {
     };
   }
 };
-
-export default LoginThunkActions;

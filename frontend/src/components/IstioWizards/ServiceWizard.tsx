@@ -4,16 +4,17 @@ import { WorkloadOverview } from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
 import { Response } from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
-import RequestRouting from './RequestRouting';
-import K8sRequestRouting from './K8sRequestRouting';
-import TrafficShifting, { WorkloadWeight } from './TrafficShifting';
-import TrafficPolicyContainer, {
+import { RequestRouting } from './RequestRouting';
+import { K8sRequestRouting } from './K8sRequestRouting';
+import { TrafficShifting, WorkloadWeight } from './TrafficShifting';
+import {
+  TrafficPolicy,
   ConsistentHashType,
   TrafficPolicyState,
   UNSET
 } from '../../components/IstioWizards/TrafficPolicy';
 import { ROUND_ROBIN } from './TrafficPolicy';
-import FaultInjection, { FaultInjectionRoute } from './FaultInjection';
+import { FaultInjection, FaultInjectionRoute } from './FaultInjection';
 import { Rule } from './RequestRouting/Rules';
 import { K8sRule } from './K8sRequestRouting/K8sRules';
 import {
@@ -47,10 +48,10 @@ import {
   WizardPreviews
 } from './WizardActions';
 import { MessageType } from '../../types/MessageCenter';
-import GatewaySelector, { GatewaySelectorState } from './GatewaySelector';
-import K8sGatewaySelector, { K8sGatewaySelectorState } from './K8sGatewaySelector';
-import VirtualServiceHosts from './VirtualServiceHosts';
-import K8sRouteHosts from './K8sRouteHosts';
+import { GatewaySelector, GatewaySelectorState } from './GatewaySelector';
+import { K8sGatewaySelector, K8sGatewaySelectorState } from './K8sGatewaySelector';
+import { VirtualServiceHosts } from './VirtualServiceHosts';
+import { K8sRouteHosts } from './K8sRouteHosts';
 import {
   DestinationRule,
   Gateway,
@@ -61,8 +62,8 @@ import {
   VirtualService
 } from '../../types/IstioObjects';
 import { style } from 'typestyle';
-import RequestTimeouts, { TimeoutRetryRoute } from './RequestTimeouts';
-import CircuitBreaker, { CircuitBreakerState } from './CircuitBreaker';
+import { RequestTimeouts, TimeoutRetryRoute } from './RequestTimeouts';
+import { CircuitBreaker, CircuitBreakerState } from './CircuitBreaker';
 import _ from 'lodash';
 import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 import { KialiIcon } from '../../config/KialiIcon';
@@ -154,7 +155,7 @@ const advancedOptionsStyle = style({
   marginTop: 10
 });
 
-class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardState> {
+export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardState> {
   constructor(props: ServiceWizardProps) {
     super(props);
     this.state = emptyServiceWizardState(fqdnServiceName(props.serviceName, props.namespace));
@@ -889,7 +890,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
                 </Tab>
                 <Tab eventKey={2} title={'Traffic Policy'}>
                   <div style={{ marginTop: '20px', marginBottom: '10px' }}>
-                    <TrafficPolicyContainer
+                    <TrafficPolicy
                       mtlsMode={this.state.trafficPolicy.mtlsMode}
                       clientCertificate={this.state.trafficPolicy.clientCertificate}
                       privateKey={this.state.trafficPolicy.privateKey}
@@ -966,5 +967,3 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
     );
   }
 }
-
-export default ServiceWizard;

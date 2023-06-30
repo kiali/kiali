@@ -1,9 +1,9 @@
-import MessageCenter from '../MessageCenter';
+import { MessageCenterReducer } from '../MessageCenter';
 import { MessageType } from '../../types/MessageCenter';
 import { GlobalActions } from '../../actions/GlobalActions';
 import { MessageCenterActions } from '../../actions/MessageCenterActions';
 
-describe('MessageCenter reducer', () => {
+describe('MessageCenterReducer reducer', () => {
   const RealDate = Date;
 
   const mockDate = date => {
@@ -16,7 +16,7 @@ describe('MessageCenter reducer', () => {
   });
 
   it('should return the initial state', () => {
-    expect(MessageCenter(undefined, GlobalActions.unknown())).toEqual({
+    expect(MessageCenterReducer(undefined, GlobalActions.unknown())).toEqual({
       expanded: false,
       expandedGroupId: 'default',
       groups: [
@@ -43,7 +43,7 @@ describe('MessageCenter reducer', () => {
   it('should handle ADD_MESSAGE', () => {
     const date = mockDate(new Date());
     expect(
-      MessageCenter(
+      MessageCenterReducer(
         {
           expanded: false,
           expandedGroupId: 'default',
@@ -94,7 +94,7 @@ describe('MessageCenter reducer', () => {
   it('should handle Duplicate Messages', () => {
     const date = mockDate(new Date());
     expect(
-      MessageCenter(
+      MessageCenterReducer(
         {
           expanded: false,
           expandedGroupId: 'default',
@@ -158,7 +158,7 @@ describe('MessageCenter reducer', () => {
   it('should handle REMOVE_MESSAGE', () => {
     const date = mockDate(new Date());
     expect(
-      MessageCenter(
+      MessageCenterReducer(
         {
           expanded: false,
           expandedGroupId: 'default',
@@ -242,7 +242,7 @@ describe('MessageCenter reducer', () => {
   it('should handle MARK_MESSAGE_AS_READ', () => {
     const date = mockDate(new Date());
     expect(
-      MessageCenter(
+      MessageCenterReducer(
         {
           expanded: false,
           expandedGroupId: 'default',
@@ -348,7 +348,7 @@ describe('MessageCenter reducer', () => {
   it('should handle HIDE_NOTIFICATION', () => {
     const date = mockDate(new Date());
     expect(
-      MessageCenter(
+      MessageCenterReducer(
         {
           expanded: false,
           expandedGroupId: 'default',
@@ -431,7 +431,7 @@ describe('MessageCenter reducer', () => {
 
   it('should handle SHOW', () => {
     expect(
-      MessageCenter(
+      MessageCenterReducer(
         {
           expanded: false,
           expandedGroupId: 'default',
@@ -467,7 +467,7 @@ describe('MessageCenter reducer', () => {
   });
   it('should handle HIDE', () => {
     expect(
-      MessageCenter(
+      MessageCenterReducer(
         {
           expanded: false,
           expandedGroupId: 'default',
@@ -504,7 +504,7 @@ describe('MessageCenter reducer', () => {
 
   it('should handle TOGGLE_EXPAND', () => {
     expect(
-      MessageCenter(
+      MessageCenterReducer(
         {
           expanded: false,
           expandedGroupId: 'default',
@@ -541,7 +541,7 @@ describe('MessageCenter reducer', () => {
 
   it('should handle TOGGLE_GROUP to hide a group', () => {
     expect(
-      MessageCenter(
+      MessageCenterReducer(
         {
           expanded: false,
           expandedGroupId: 'default',
@@ -578,7 +578,7 @@ describe('MessageCenter reducer', () => {
 
   it('should handle TOGGLE_GROUP to show a group', () => {
     expect(
-      MessageCenter(
+      MessageCenterReducer(
         {
           expanded: false,
           expandedGroupId: undefined,

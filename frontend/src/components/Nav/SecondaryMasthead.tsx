@@ -11,7 +11,7 @@ const secondaryMastheadStyle = style({
   marginRight: 0
 });
 
-export default class SecondaryMasthead extends React.Component<{ title: boolean }> {
+export class SecondaryMasthead extends React.Component<{ title: boolean }> {
   render() {
     let secondaryMastheadStyleHeight = style({ height: '42px' });
     if (this.props.title) {

@@ -11,7 +11,7 @@ const ANIMATION_DURATION = 2000;
 
 type OnFinishedCallback = () => void;
 
-export default class FocusAnimation {
+export class FocusAnimation {
   private animationTimer;
   private startTimestamp;
   private elements;

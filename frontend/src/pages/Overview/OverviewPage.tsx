@@ -33,18 +33,13 @@ import {
 } from '../../types/Health';
 import { SortField } from '../../types/SortFilters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
-import OverviewToolbarContainer, {
-  OverviewDisplayMode,
-  OverviewToolbar,
-  OverviewType,
-  DirectionType
-} from './OverviewToolbar';
-import NamespaceInfo, { NamespaceStatus } from './NamespaceInfo';
-import NamespaceMTLSStatusContainer from '../../components/MTls/NamespaceMTLSStatus';
+import { OverviewToolbar, OverviewDisplayMode, OverviewType, DirectionType } from './OverviewToolbar';
+import { NamespaceInfo, NamespaceStatus } from './NamespaceInfo';
+import { NamespaceMTLSStatus } from '../../components/MTls/NamespaceMTLSStatus';
 import { RenderComponentScroll } from '../../components/Nav/Page';
-import NamespaceStatuses from './NamespaceStatuses';
-import OverviewCardSparklineCharts from './OverviewCardSparklineChartsComponent';
-import OverviewTrafficPolicies from './OverviewTrafficPolicies';
+import { NamespaceStatuses } from './NamespaceStatuses';
+import { OverviewCardSparklineCharts } from './OverviewCardSparklineCharts';
+import { OverviewTrafficPolicies } from './OverviewTrafficPolicies';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import { KialiAppState } from '../../store/Store';
@@ -59,11 +54,11 @@ import { nsWideMTLSStatus } from '../../types/TLSStatus';
 import { switchType } from './OverviewHelper';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
-import ValidationSummary from '../../components/Validations/ValidationSummary';
+import { ValidationSummary } from '../../components/Validations/ValidationSummary';
 import { DurationInSeconds, IntervalInMilliseconds } from 'types/Common';
 import { Paths, isMultiCluster, serverConfig } from '../../config';
 import { PFColors } from '../../components/Pf/PfColors';
-import VirtualList from '../../components/VirtualList/VirtualList';
+import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { OverviewNamespaceAction, OverviewNamespaceActions } from './OverviewNamespaceActions';
 import { history, HistoryManager, URLParam } from '../../app/History';
 import * as AlertUtils from '../../utils/AlertUtils';
@@ -72,16 +67,16 @@ import { CanaryUpgradeStatus, OutboundTrafficPolicy, ValidationStatus } from '..
 import { GrafanaInfo, ISTIO_DASHBOARDS } from '../../types/GrafanaInfo';
 import { ExternalLink } from '../../types/Dashboards';
 import { isParentKiosk, kioskOverviewAction } from '../../components/Kiosk/KioskActions';
-import ValidationSummaryLinkContainer from '../../components/Link/ValidationSummaryLink';
+import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
 import _ from 'lodash';
-import ControlPlaneBadge from './ControlPlaneBadge';
-import OverviewStatusContainer from './OverviewStatus';
-import ControlPlaneNamespaceStatus from './ControlPlaneNamespaceStatus';
+import { ControlPlaneBadge } from './ControlPlaneBadge';
+import { OverviewStatus } from './OverviewStatus';
+import { ControlPlaneNamespaceStatus } from './ControlPlaneNamespaceStatus';
 import { IstiodResourceThresholds } from 'types/IstioStatus';
-import TLSInfo from 'components/Overview/TLSInfo';
-import CanaryUpgradeProgress from './CanaryUpgradeProgress';
-import ControlPlaneVersionBadge from './ControlPlaneVersionBadge';
-import AmbientBadge from '../../components/Ambient/AmbientBadge';
+import { TLSInfo } from 'components/Overview/TLSInfo';
+import { CanaryUpgradeProgress } from './CanaryUpgradeProgress';
+import { ControlPlaneVersionBadge } from './ControlPlaneVersionBadge';
+import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 
 const gridStyleCompact = style({
@@ -173,7 +168,7 @@ type ReduxProps = {
 
 type OverviewProps = ReduxProps & {};
 
-export class OverviewPage extends React.Component<OverviewProps, State> {
+export class OverviewPageComponent extends React.Component<OverviewProps, State> {
   private sFOverviewToolbar: React.RefObject<StatefulFilters> = React.createRef();
   private promises = new PromisesRegistry();
   // Grafana promise is only invoked by componentDidMount() no need to repeat it on componentDidUpdate()
@@ -322,15 +317,15 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   }
 
   fetchGrafanaInfo() {
-    if (!OverviewPage.grafanaInfoPromise) {
-      OverviewPage.grafanaInfoPromise = API.getGrafanaInfo().then(response => {
+    if (!OverviewPageComponent.grafanaInfoPromise) {
+      OverviewPageComponent.grafanaInfoPromise = API.getGrafanaInfo().then(response => {
         if (response.status === 204) {
           return undefined;
         }
         return response.data;
       });
     }
-    OverviewPage.grafanaInfoPromise
+    OverviewPageComponent.grafanaInfoPromise
       .then(grafanaInfo => {
         if (grafanaInfo) {
           // For Overview Page only Performance and Wasm Extension dashboard are interesting
@@ -908,7 +903,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     const hiddenColumns = isMultiCluster() ? ([] as string[]) : ['cluster'];
     return (
       <>
-        <OverviewToolbarContainer
+        <OverviewToolbar
           onRefresh={this.load}
           onError={FilterHelper.handleError}
           sort={this.sort}
@@ -1022,7 +1017,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                     <div style={{ display: 'inline-block', width: '125px' }}>Istio config</div>
                                     {ns.tlsStatus && (
                                       <span>
-                                        <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} />
+                                        <NamespaceMTLSStatus status={ns.tlsStatus.status} />
                                       </span>
                                     )}
                                     {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(ns) : 'N/A'}
@@ -1078,7 +1073,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                 <div style={{ display: 'inline-block', width: '125px' }}>Istio config</div>
                                 {ns.tlsStatus && (
                                   <span>
-                                    <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} />
+                                    <NamespaceMTLSStatus status={ns.tlsStatus.status} />
                                   </span>
                                 )}
                                 {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(ns) : 'N/A'}
@@ -1186,7 +1181,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     }
 
     return (
-      <ValidationSummaryLinkContainer
+      <ValidationSummaryLink
         namespace={ns.name}
         objectCount={validations.objectCount}
         errors={validations.errors}
@@ -1198,7 +1193,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           warnings={validations.warnings}
           objectCount={validations.objectCount}
         />
-      </ValidationSummaryLinkContainer>
+      </ValidationSummaryLink>
     );
   }
 
@@ -1247,7 +1242,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             {mainLink}
             <div style={{ display: 'inline-block' }} data-test="overview-app-health">
               {ns.status && ns.status.inNotReady.length > 0 && (
-                <OverviewStatusContainer
+                <OverviewStatus
                   id={name + '-not-ready'}
                   namespace={name}
                   status={NOT_READY}
@@ -1256,7 +1251,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                 />
               )}
               {ns.status && ns.status.inError.length > 0 && (
-                <OverviewStatusContainer
+                <OverviewStatus
                   id={name + '-failure'}
                   namespace={name}
                   status={FAILURE}
@@ -1265,7 +1260,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                 />
               )}
               {ns.status && ns.status.inWarning.length > 0 && (
-                <OverviewStatusContainer
+                <OverviewStatus
                   id={name + '-degraded'}
                   namespace={name}
                   status={DEGRADED}
@@ -1274,7 +1269,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                 />
               )}
               {ns.status && ns.status.inSuccess.length > 0 && (
-                <OverviewStatusContainer
+                <OverviewStatus
                   id={name + '-healthy'}
                   namespace={name}
                   status={HEALTHY}
@@ -1301,5 +1296,4 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   refreshInterval: refreshIntervalSelector(state)
 });
 
-const OverviewPageContainer = connect(mapStateToProps)(OverviewPage);
-export default OverviewPageContainer;
+export const OverviewPage = connect(mapStateToProps)(OverviewPageComponent);

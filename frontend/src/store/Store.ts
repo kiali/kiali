@@ -1,5 +1,5 @@
 import { NotificationGroup } from '../types/MessageCenter';
-import Namespace from '../types/Namespace';
+import { Namespace } from '../types/Namespace';
 import {
   DurationInSeconds,
   IntervalInMilliseconds,

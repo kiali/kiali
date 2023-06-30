@@ -16,7 +16,7 @@ import { ValidationObjectSummary } from '../Validations/ValidationObjectSummary'
 import { IstioTypes } from '../VirtualList/Config';
 import { style } from 'typestyle';
 import { PFBadge } from '../Pf/PfBadges';
-import IstioObjectLinkContainer from '../Link/IstioObjectLink';
+import { IstioObjectLink } from '../Link/IstioObjectLink';
 
 type Props = {
   name: string;
@@ -28,7 +28,7 @@ const emtpytStyle = style({
   margin: '0 0 0 0'
 });
 
-export default class IstioConfigCard extends React.Component<Props> {
+export class IstioConfigCard extends React.Component<Props> {
   columns(): ICell[] {
     return [{ title: 'Name' }, { title: 'Status', transforms: [cellWidth(10) as any] }];
   }
@@ -54,14 +54,9 @@ export default class IstioConfigCard extends React.Component<Props> {
 
   overviewLink(item: IstioConfigItem) {
     return (
-      <IstioObjectLinkContainer
-        name={item.name}
-        namespace={item.namespace || ''}
-        cluster={item.cluster}
-        type={item.type}
-      >
+      <IstioObjectLink name={item.name} namespace={item.namespace || ''} cluster={item.cluster} type={item.type}>
         {item.name}
-      </IstioObjectLinkContainer>
+      </IstioObjectLink>
     );
   }
 

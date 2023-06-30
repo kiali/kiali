@@ -3,15 +3,15 @@ import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition
 import { ServiceDetailsInfo, WorkloadOverview } from '../../types/ServiceInfo';
 import { AppWorkload } from '../../types/App';
 import { isMultiCluster, serverConfig } from '../../config';
-import Labels from '../../components/Label/Labels';
+import { Labels } from '../../components/Label/Labels';
 import { style } from 'typestyle';
-import LocalTime from '../../components/Time/LocalTime';
+import { LocalTime } from '../../components/Time/LocalTime';
 import { renderAPILogo } from '../../components/Logo/Logos';
 import { TextOrLink } from '../../components/TextOrLink';
 import { KialiIcon } from '../../config/KialiIcon';
 import { HealthIndicator } from '../../components/Health/HealthIndicator';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
-import DetailDescriptionContainer from '../../components/DetailDescription/DetailDescription';
+import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
 
 interface ServiceInfoDescriptionProps {
   namespace: string;
@@ -50,7 +50,7 @@ const healthIconStyle = style({
   verticalAlign: '-1px !important'
 });
 
-class ServiceDescription extends React.Component<ServiceInfoDescriptionProps, State> {
+export class ServiceDescription extends React.Component<ServiceInfoDescriptionProps, State> {
   constructor(props: ServiceInfoDescriptionProps) {
     super(props);
     this.state = {
@@ -191,7 +191,7 @@ class ServiceDescription extends React.Component<ServiceInfoDescriptionProps, St
               tooltipMessage={'Labels defined on the ' + (showServiceLabels ? 'Selector' : 'Service and Selector')}
             />
           )}
-          <DetailDescriptionContainer
+          <DetailDescription
             namespace={this.props.namespace}
             apps={apps}
             workloads={workloads}
@@ -203,5 +203,3 @@ class ServiceDescription extends React.Component<ServiceInfoDescriptionProps, St
     );
   }
 }
-
-export default ServiceDescription;

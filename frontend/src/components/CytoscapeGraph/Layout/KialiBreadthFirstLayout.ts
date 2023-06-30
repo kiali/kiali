@@ -34,7 +34,7 @@ const defaults = {
 const getInfo = ele => ele.scratch('breadthfirst');
 const setInfo = (ele, obj) => ele.scratch('breadthfirst', obj);
 
-export default class KialiBreadFirstLayout {
+export class KialiBreadFirstLayout {
   readonly cy;
   readonly eles;
   readonly options;

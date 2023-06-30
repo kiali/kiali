@@ -27,7 +27,7 @@ const infoStyle = style({
   verticalAlign: '-5px !important'
 });
 
-export class TimeDurationIndicatorComponent extends React.PureComponent<Props> {
+class TimeDurationIndicatorComponent extends React.PureComponent<Props> {
   constructor(props: Props) {
     super(props);
 
@@ -102,6 +102,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
   };
 };
 
-const TimeDurationIndicatorContainer = connect(mapStateToProps, mapDispatchToProps)(TimeDurationIndicatorComponent);
-
-export default TimeDurationIndicatorContainer;
+export const TimeDurationIndicator = connect(mapStateToProps, mapDispatchToProps)(TimeDurationIndicatorComponent);

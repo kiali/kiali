@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { MTLSIconTypes } from './MTLSIcon';
-import { default as MTLSStatus, emptyDescriptor, StatusDescriptor } from './MTLSStatus';
+import { MTLSStatus, emptyDescriptor, StatusDescriptor } from './MTLSStatus';
 import { style } from 'typestyle';
 import { MTLSStatuses } from '../../types/TLSStatus';
 
@@ -46,10 +46,8 @@ const iconStyle = style({
   width: 10
 });
 
-class NamespaceMTLSStatus extends React.Component<Props> {
+export class NamespaceMTLSStatus extends React.Component<Props> {
   render() {
     return <MTLSStatus status={this.props.status} className={iconStyle} statusDescriptors={statusDescriptors} />;
   }
 }
-
-export default NamespaceMTLSStatus;

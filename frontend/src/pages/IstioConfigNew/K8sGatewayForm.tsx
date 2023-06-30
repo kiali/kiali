@@ -1,9 +1,9 @@
 import * as React from 'react';
 // Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
 import { FormGroup } from '@patternfly/react-core';
-import AddressList from './GatewayForm/AddressList';
+import { AddressList } from './GatewayForm/AddressList';
 import { Address, Listener, MAX_PORT, MIN_PORT } from '../../types/IstioObjects';
-import ListenerList from './GatewayForm/ListenerList';
+import { ListenerList } from './GatewayForm/ListenerList';
 import { isValidHostname, isValidName } from './GatewayForm/ListenerBuilder';
 import { isValidAddress } from './GatewayForm/AddressBuilder';
 
@@ -65,7 +65,7 @@ const validAddresses = (address: Address[]) => {
   });
 };
 
-class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
+export class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
   constructor(props: Props) {
     super(props);
     this.state = initK8sGateway();
@@ -100,5 +100,3 @@ class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
     );
   }
 }
-
-export default K8sGatewayForm;

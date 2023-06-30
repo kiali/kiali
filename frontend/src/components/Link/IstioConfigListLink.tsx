@@ -9,7 +9,7 @@ interface Props {
   warnings?: boolean;
 }
 
-class IstioConfigListLink extends React.Component<Props> {
+export class IstioConfigListLink extends React.Component<Props> {
   namespacesToParams = () => {
     let param: string = '';
     if (this.props.namespaces.length > 0) {
@@ -58,5 +58,3 @@ class IstioConfigListLink extends React.Component<Props> {
     );
   }
 }
-
-export default IstioConfigListLink;

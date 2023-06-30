@@ -1,4 +1,4 @@
-export default interface Namespace {
+export interface Namespace {
   name: string;
   cluster?: string;
   labels?: { [key: string]: string };

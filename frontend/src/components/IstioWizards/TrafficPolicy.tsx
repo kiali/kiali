@@ -93,7 +93,7 @@ enum TrafficPolicyForm {
   PA_MODE
 }
 
-class TrafficPolicy extends React.Component<Props, TrafficPolicyState> {
+class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> {
   constructor(props: Props) {
     super(props);
     let consistentHashType: ConsistentHashType = ConsistentHashType.HTTP_HEADER_NAME;
@@ -650,5 +650,4 @@ const mapStateToProps = (state: KialiAppState) => ({
   meshWideStatus: meshWideMTLSStatusSelector(state)
 });
 
-const TraffiPolicyContainer = connect(mapStateToProps)(TrafficPolicy);
-export default TraffiPolicyContainer;
+export const TrafficPolicy = connect(mapStateToProps)(TrafficPolicyComponent);

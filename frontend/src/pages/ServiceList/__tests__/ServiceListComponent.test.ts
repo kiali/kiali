@@ -75,7 +75,7 @@ describe('SortField#compare', () => {
   });
 });
 
-describe('ServiceListContainer#sortServices', () => {
+describe('ServiceList#sortServices', () => {
   beforeAll(() => {
     setServerConfig(healthConfig);
   });

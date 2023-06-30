@@ -20,18 +20,18 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { SummaryTableBuilder } from './tables/BaseTable';
-import Namespace from 'types/Namespace';
+import { Namespace } from 'types/Namespace';
 import { style } from 'typestyle';
 import AceEditor from 'react-ace';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import ToolbarDropdown from 'components/ToolbarDropdown/ToolbarDropdown';
+import { ToolbarDropdown } from 'components/ToolbarDropdown/ToolbarDropdown';
 import { activeTab } from '../../components/Tab/Tabs';
 import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
 import { aceOptions } from 'types/IstioConfigDetails';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { RenderComponentScroll } from 'components/Nav/Page';
 import { DashboardRef } from 'types/Runtimes';
-import CustomMetricsContainer from 'components/Metrics/CustomMetrics';
+import { CustomMetrics } from 'components/Metrics/CustomMetrics';
 import { serverConfig } from 'config';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
 import { history } from '../../app/History';
@@ -82,7 +82,7 @@ const fullHeightStyle = style({
   height: '100%'
 });
 
-class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState> {
+class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDetailsState> {
   aceEditorRef: React.RefObject<AceEditor>;
 
   constructor(props: EnvoyDetailsProps) {
@@ -326,7 +326,7 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
                   />
                 </div>
               ) : this.showMetrics() && envoyMetricsDashboardRef ? (
-                <CustomMetricsContainer
+                <CustomMetrics
                   lastRefreshAt={this.props.lastRefreshAt}
                   namespace={this.props.namespace}
                   app={app}
@@ -378,6 +378,4 @@ const mapStateToProps = (state: KialiAppState) => ({
   namespaces: namespaceItemsSelector(state)!
 });
 
-const EnvoyDetailsContainer = connect(mapStateToProps)(EnvoyDetails);
-
-export default EnvoyDetailsContainer;
+export const EnvoyDetails = connect(mapStateToProps)(EnvoyDetailsComponent);

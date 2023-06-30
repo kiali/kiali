@@ -3,7 +3,7 @@ import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { style } from 'typestyle';
 import { Gateway, ObjectCheck, ObjectValidation, VirtualService } from '../../types/IstioObjects';
-import ValidationList from '../../components/Validations/ValidationList';
+import { ValidationList } from '../../components/Validations/ValidationList';
 import { KialiIcon } from '../../config/KialiIcon';
 
 type Props = {
@@ -34,7 +34,7 @@ const infoStyle = style({
   verticalAlign: '-3px !important'
 });
 
-class ServiceNetwork extends React.Component<Props> {
+export class ServiceNetwork extends React.Component<Props> {
   getPortOver(portId: number) {
     return <ValidationList checks={this.getPortChecks(portId)} />;
   }
@@ -234,5 +234,3 @@ class ServiceNetwork extends React.Component<Props> {
     );
   }
 }
-
-export default ServiceNetwork;

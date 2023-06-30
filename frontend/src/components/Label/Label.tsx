@@ -18,7 +18,7 @@ const labelStyle = style({
   maxWidth: '100%'
 });
 
-const Label = (props: Props) => {
+export const Label = (props: Props) => {
   const { name, value } = props;
   let label = 'This label has an unexpected format';
 
@@ -32,5 +32,3 @@ const Label = (props: Props) => {
     </PfLabel>
   );
 };
-
-export default Label;

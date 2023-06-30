@@ -13,7 +13,7 @@ export type RouteRetryProps = {
 
 const tryTimeoutMsg = 'Timeout per retry attempt for a given request. Format: 1h/1m/1s/1ms. MUST be >=1ms.';
 
-class RouteRetry extends React.Component<RouteRetryProps> {
+export class RouteRetry extends React.Component<RouteRetryProps> {
   render() {
     return (
       <>
@@ -73,5 +73,3 @@ class RouteRetry extends React.Component<RouteRetryProps> {
     );
   }
 }
-
-export default RouteRetry;

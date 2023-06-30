@@ -7,7 +7,7 @@ import { Health } from 'types/Health';
 import { HealthIndicator } from 'components/Health/HealthIndicator';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { serverConfig } from 'config';
-import KialiPageLinkContainer from 'components/Link/KialiPageLink';
+import { KialiPageLink } from 'components/Link/KialiPageLink';
 
 interface LinkInfo {
   link: string;
@@ -139,9 +139,9 @@ export const getLink = (nodeData: GraphNodeData, nodeType?: NodeType, linkGenera
 
   if (link && !nodeData.isInaccessible) {
     return (
-      <KialiPageLinkContainer key={key} href={link} cluster={cluster}>
+      <KialiPageLink key={key} href={link} cluster={cluster}>
         {displayName}
-      </KialiPageLinkContainer>
+      </KialiPageLink>
     );
   }
 

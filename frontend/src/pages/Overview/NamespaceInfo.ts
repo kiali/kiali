@@ -24,5 +24,3 @@ export type NamespaceStatus = {
   inSuccess: string[];
   notAvailable: string[];
 };
-
-export default NamespaceInfo;

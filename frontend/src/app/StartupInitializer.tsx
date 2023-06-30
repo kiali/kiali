@@ -4,8 +4,8 @@ import { LoginActions } from '../actions/LoginActions';
 import * as API from '../services/Api';
 import { LoginSession } from '../store/Store';
 import { KialiDispatch } from '../types/Redux';
-import InitializingScreen from './InitializingScreen';
-import authenticationConfig from '../config/AuthenticationConfig';
+import { InitializingScreen } from './InitializingScreen';
+import { authenticationConfig } from '../config/AuthenticationConfig';
 import axios from 'axios';
 
 interface InitializerComponentProps {
@@ -71,5 +71,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setInitialAuthentication: (session: LoginSession) => dispatch(LoginActions.loginSuccess(session))
 });
 
-const StartupInitializer = connect(null, mapDispatchToProps)(InitializerComponent);
-export default StartupInitializer;
+export const StartupInitializer = connect(null, mapDispatchToProps)(InitializerComponent);

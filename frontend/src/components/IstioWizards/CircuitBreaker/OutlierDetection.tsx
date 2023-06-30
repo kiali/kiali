@@ -9,7 +9,7 @@ type Props = {
   onOutlierDetection: (isOutlierDetection: boolean, outlierDetection: OutlierDetectionProps) => void;
 };
 
-class OutlierDetection extends React.Component<Props> {
+export class OutlierDetection extends React.Component<Props> {
   render() {
     return (
       <>
@@ -47,5 +47,3 @@ class OutlierDetection extends React.Component<Props> {
     );
   }
 }
-
-export default OutlierDetection;

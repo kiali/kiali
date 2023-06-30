@@ -2,7 +2,7 @@
 
 exports[`Overview page renders initial layout 1`] = `
 <Fragment>
-  <Connect(OverviewToolbar)
+  <Connect(OverviewToolbarComponent)
     displayMode={1}
     onError={[Function]}
     onRefresh={[Function]}

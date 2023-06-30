@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 
-import NotificationList from '../NotificationList';
-import { MessageCenter } from '../MessageCenter';
+import { NotificationList } from '../NotificationList';
+import { MessageCenterComponent } from '../MessageCenter';
 import { NotificationGroup, MessageType } from '../../../types/MessageCenter';
 
 describe('MessageCenter', () => {
@@ -60,7 +60,7 @@ describe('MessageCenter', () => {
 
   it('.getNotificationMessages only gets notifications', () => {
     const wrapper = shallow(
-      <MessageCenter
+      <MessageCenterComponent
         drawerTitle="Title"
         onDismissNotification={() => console.log('onDismissNotification')}
         groups={groupMessages}

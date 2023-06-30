@@ -1,13 +1,13 @@
 import * as React from 'react';
 import { Button, Tabs, Tab, ButtonVariant } from '@patternfly/react-core';
-import K8sMatchBuilder from './K8sMatchBuilder';
-import K8sMatches from './K8sMatches';
+import { K8sMatchBuilder } from './K8sMatchBuilder';
+import { K8sMatches } from './K8sMatches';
 import { style } from 'typestyle';
 import { PFColors } from '../../Pf/PfColors';
-import K8sTrafficShifting, { K8sRouteBackendRef } from '../K8sTrafficShifting';
+import { K8sTrafficShifting, K8sRouteBackendRef } from '../K8sTrafficShifting';
 import { ServiceOverview } from '../../../types/ServiceList';
-import K8sFilterBuilder from './K8sFilterBuilder';
-import K8sFilters from './K8sFilters';
+import { K8sFilterBuilder } from './K8sFilterBuilder';
+import { K8sFilters } from './K8sFilters';
 
 type Props = {
   // K8sMatchBuilder props
@@ -77,7 +77,7 @@ const validationStyle = style({
   display: 'inline'
 });
 
-class K8sRuleBuilder extends React.Component<Props, State> {
+export class K8sRuleBuilder extends React.Component<Props, State> {
   constructor(props) {
     super(props);
     this.state = {
@@ -141,5 +141,3 @@ class K8sRuleBuilder extends React.Component<Props, State> {
     );
   }
 }
-
-export default K8sRuleBuilder;

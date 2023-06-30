@@ -115,5 +115,3 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
     );
   }
 }
-
-export default ToolbarDropdown;

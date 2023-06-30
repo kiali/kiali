@@ -3,7 +3,7 @@ import ReactResizeDetector from 'react-resize-detector';
 import { Tab, Popover, PopoverPosition } from '@patternfly/react-core';
 import { ICell, Table, TableBody, TableHeader, TableVariant, cellWidth } from '@patternfly/react-table';
 import { style } from 'typestyle';
-import SimpleTabs from 'components/Tab/SimpleTabs';
+import { SimpleTabs } from 'components/Tab/SimpleTabs';
 
 export interface GraphHelpFindProps {
   onClose: () => void;
@@ -16,7 +16,7 @@ const tabFont: React.CSSProperties = {
 
 const contentWidth = '540px';
 
-export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
+export class GraphHelpFind extends React.Component<GraphHelpFindProps> {
   private onResize = () => {
     this.forceUpdate();
   };

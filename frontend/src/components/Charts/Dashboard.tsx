@@ -6,7 +6,7 @@ import { AllPromLabelsValues } from 'types/Metrics';
 import { ChartModel, DashboardModel } from 'types/Dashboards';
 import { getDataSupplier } from 'utils/VictoryChartsUtils';
 import { Overlay } from 'types/Overlay';
-import KChart from './KChart';
+import { KChart } from './KChart';
 import { LineInfo, RawOrBucket } from 'types/VictoryChartInfo';
 import { BrushHandlers } from './Container';
 import { isArray } from 'lodash';

@@ -5,7 +5,7 @@ import { IstioCertsInfoActions } from 'actions/IstioCertsInfoActions';
 
 export const INITIAL_ISTIO_CERTS_INFO_STATE: CertsInfo[] = [];
 
-const IstioCertsInfoState = (
+export const IstioCertsInfoStateReducer = (
   state: CertsInfo[] = INITIAL_ISTIO_CERTS_INFO_STATE,
   action: KialiAppAction
 ): CertsInfo[] => {
@@ -16,5 +16,3 @@ const IstioCertsInfoState = (
       return state;
   }
 };
-
-export default IstioCertsInfoState;

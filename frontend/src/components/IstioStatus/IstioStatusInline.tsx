@@ -1,5 +1,5 @@
 import * as React from 'react';
-import IstioStatus from './IstioStatus';
+import { IstioStatus } from './IstioStatus';
 import {
   CheckCircleIcon,
   ExclamationCircleIcon,
@@ -11,7 +11,7 @@ type Props = {
   cluster?: string;
 };
 
-export default function IstioStatusInline({ cluster }: Props) {
+export function IstioStatusInline({ cluster }: Props) {
   return (
     <IstioStatus
       icons={{

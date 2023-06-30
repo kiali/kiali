@@ -2,7 +2,7 @@ import * as React from 'react';
 import { shallow } from 'enzyme';
 import { shallowToJson } from 'enzyme-to-json';
 
-import ToolbarDropdown from '../ToolbarDropdown';
+import { ToolbarDropdown } from '../ToolbarDropdown';
 import { config } from '../../../config';
 import { serverConfig } from '../../../config/ServerConfig';
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { style } from 'typestyle';
 import { PFColors } from '../../Pf/PfColors';
-import BreadcrumbView from '../../BreadcrumbView/BreadcrumbView';
+import { BreadcrumbView } from '../../BreadcrumbView/BreadcrumbView';
 import { KialiAppState } from '../../../store/Store';
 import { connect } from 'react-redux';
 import { isKiosk } from '../../Kiosk/KioskActions';
@@ -42,7 +42,7 @@ type RenderHeaderProps = ReduxProps & {
   actionsToolbar?: JSX.Element;
 };
 
-export class RenderHeader extends React.Component<RenderHeaderProps> {
+class RenderHeaderComponent extends React.Component<RenderHeaderProps> {
   render() {
     // RenderHeader is used only in the detail pages
     // On kiosk mode, it should be hidden
@@ -71,5 +71,4 @@ const mapStateToProps = (state: KialiAppState) => ({
   kiosk: state.globalState.kiosk
 });
 
-const RenderHeaderContainer = connect(mapStateToProps)(RenderHeader);
-export default RenderHeaderContainer;
+export const RenderHeader = connect(mapStateToProps)(RenderHeaderComponent);

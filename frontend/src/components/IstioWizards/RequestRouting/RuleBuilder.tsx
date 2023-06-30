@@ -1,13 +1,13 @@
 import * as React from 'react';
 import { Button, Tabs, Tab, ButtonVariant } from '@patternfly/react-core';
-import MatchBuilder from './MatchBuilder';
-import Matches from './Matches';
+import { MatchBuilder } from './MatchBuilder';
+import { Matches } from './Matches';
 import { style } from 'typestyle';
 import { WorkloadOverview } from '../../../types/ServiceInfo';
-import TrafficShifting, { WorkloadWeight } from '../TrafficShifting';
-import FaultInjection, { FaultInjectionRoute } from '../FaultInjection';
+import { TrafficShifting, WorkloadWeight } from '../TrafficShifting';
+import { FaultInjection, FaultInjectionRoute } from '../FaultInjection';
 import { PFColors } from '../../Pf/PfColors';
-import RequestTimeouts, { TimeoutRetryRoute } from '../RequestTimeouts';
+import { RequestTimeouts, TimeoutRetryRoute } from '../RequestTimeouts';
 
 type Props = {
   // MatchBuilder props
@@ -57,7 +57,7 @@ const validationStyle = style({
   display: 'inline'
 });
 
-class RuleBuilder extends React.Component<Props, State> {
+export class RuleBuilder extends React.Component<Props, State> {
   constructor(props) {
     super(props);
     this.state = {
@@ -137,5 +137,3 @@ class RuleBuilder extends React.Component<Props, State> {
     );
   }
 }
-
-export default RuleBuilder;

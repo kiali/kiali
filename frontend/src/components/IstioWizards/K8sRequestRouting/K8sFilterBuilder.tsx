@@ -74,7 +74,7 @@ const serviceStyle = style({
   width: '100%'
 });
 
-class K8sFilterBuilder extends React.Component<Props, State> {
+export class K8sFilterBuilder extends React.Component<Props, State> {
   constructor(props) {
     super(props);
     this.state = {
@@ -284,5 +284,3 @@ class K8sFilterBuilder extends React.Component<Props, State> {
     );
   }
 }
-
-export default K8sFilterBuilder;

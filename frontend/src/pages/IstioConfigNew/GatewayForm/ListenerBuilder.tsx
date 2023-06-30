@@ -35,7 +35,7 @@ export const isValidSelector = (selector: string) => {
   return selector.length === 0 || typeof addSelectorLabels(selector) !== 'undefined';
 };
 
-class ListenerBuilder extends React.Component<Props> {
+export class ListenerBuilder extends React.Component<Props> {
   isValidHost = (host: string): boolean => {
     return isK8sGatewayHostValid(host);
   };
@@ -168,5 +168,3 @@ class ListenerBuilder extends React.Component<Props> {
     );
   }
 }
-
-export default ListenerBuilder;

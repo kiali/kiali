@@ -1,13 +1,13 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import { ComponentStatus, Status } from '../../../types/IstioStatus';
-import { IstioStatus } from '../IstioStatus';
+import { IstioStatusComponent } from '../IstioStatus';
 import { shallowToJson } from 'enzyme-to-json';
 import { PFColors } from '../../Pf/PfColors';
 
 const mockIcon = (componentList: ComponentStatus[]) => {
   return shallow(
-    <IstioStatus
+    <IstioStatusComponent
       status={componentList}
       lastRefreshAt={848152}
       namespaces={[{ name: 'bookinfo' }, { name: 'istio-system' }]}

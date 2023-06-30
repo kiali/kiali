@@ -2,19 +2,20 @@ import * as React from 'react';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
-import Namespace from '../../types/Namespace';
+import { Namespace } from '../../types/Namespace';
 import { ActionGroup, Button, ButtonVariant, Form, FormGroup, TextInput } from '@patternfly/react-core';
 import { RenderContent } from '../../components/Nav/Page';
 import { style } from 'typestyle';
-import GatewayForm, { GATEWAY, GATEWAYS, GatewayState, initGateway, isGatewayStateValid } from './GatewayForm';
-import K8sGatewayForm, {
+import { GatewayForm, GATEWAY, GATEWAYS, GatewayState, initGateway, isGatewayStateValid } from './GatewayForm';
+import {
+  K8sGatewayForm,
   K8SGATEWAY,
   K8SGATEWAYS,
   K8sGatewayState,
   initK8sGateway,
   isK8sGatewayStateValid
 } from './K8sGatewayForm';
-import SidecarForm, { initSidecar, isSidecarStateValid, SIDECAR, SIDECARS, SidecarState } from './SidecarForm';
+import { SidecarForm, initSidecar, isSidecarStateValid, SIDECAR, SIDECARS, SidecarState } from './SidecarForm';
 import { Paths, serverConfig } from '../../config';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import * as API from '../../services/Api';
@@ -31,21 +32,24 @@ import {
   buildSidecar
 } from '../../components/IstioWizards/WizardActions';
 import { MessageType } from '../../types/MessageCenter';
-import AuthorizationPolicyForm, {
+import {
+  AuthorizationPolicyForm,
   AUTHORIZACION_POLICY,
   AUTHORIZATION_POLICIES,
   AuthorizationPolicyState,
   initAuthorizationPolicy,
   isAuthorizationPolicyStateValid
 } from './AuthorizationPolicyForm';
-import PeerAuthenticationForm, {
+import {
+  PeerAuthenticationForm,
   initPeerAuthentication,
   isPeerAuthenticationStateValid,
   PEER_AUTHENTICATION,
   PEER_AUTHENTICATIONS,
   PeerAuthenticationState
 } from './PeerAuthenticationForm';
-import RequestAuthenticationForm, {
+import {
+  RequestAuthenticationForm,
   initRequestAuthentication,
   isRequestAuthenticationStateValid,
   REQUEST_AUTHENTICATION,
@@ -53,9 +57,10 @@ import RequestAuthenticationForm, {
   RequestAuthenticationState
 } from './RequestAuthenticationForm';
 import { isValidK8SName } from '../../helpers/ValidationHelpers';
-import DefaultSecondaryMasthead from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
+import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { PFColors } from '../../components/Pf/PfColors';
-import ServiceEntryForm, {
+import {
+  ServiceEntryForm,
   initServiceEntry,
   isServiceEntryValid,
   SERVICE_ENTRIES,
@@ -129,7 +134,7 @@ const initState = (): State => ({
   sidecar: initSidecar(serverConfig.istioNamespace + '/*')
 });
 
-class IstioConfigNewPage extends React.Component<Props, State> {
+class IstioConfigNewPageComponent extends React.Component<Props, State> {
   private promises = new PromisesRegistry();
 
   constructor(props: Props) {
@@ -475,6 +480,4 @@ const mapStateToProps = (state: KialiAppState) => {
   };
 };
 
-const IstioConfigNewPageContainer = connect(mapStateToProps)(IstioConfigNewPage);
-
-export default IstioConfigNewPageContainer;
+export const IstioConfigNewPage = connect(mapStateToProps)(IstioConfigNewPageComponent);

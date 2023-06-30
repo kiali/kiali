@@ -60,7 +60,7 @@ const conditionFixedKeys = [
 
 const conditionIpAddressKeys = ['source.ip', 'remote.ip', 'destination.ip'];
 
-class ConditionBuilder extends React.Component<Props, State> {
+export class ConditionBuilder extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -238,5 +238,3 @@ class ConditionBuilder extends React.Component<Props, State> {
     );
   }
 }
-
-export default ConditionBuilder;

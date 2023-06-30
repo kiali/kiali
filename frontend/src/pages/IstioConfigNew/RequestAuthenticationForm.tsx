@@ -2,8 +2,8 @@ import * as React from 'react';
 import { FormGroup, Switch } from '@patternfly/react-core';
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
 import { JWTRule } from '../../types/IstioObjects';
-import JwtRuleBuilder from './RequestAuthorizationForm/JwtRuleBuilder';
-import JwtRuleList from './RequestAuthorizationForm/JwtRuleList';
+import { JwtRuleBuilder } from './RequestAuthorizationForm/JwtRuleBuilder';
+import { JwtRuleList } from './RequestAuthorizationForm/JwtRuleList';
 import { isValid } from 'utils/Common';
 
 type Props = {
@@ -37,7 +37,7 @@ export const isRequestAuthenticationStateValid = (ra: RequestAuthenticationState
   return workloadSelectorRule && jwtRulesRule;
 };
 
-class RequestAuthenticationForm extends React.Component<Props, RequestAuthenticationState> {
+export class RequestAuthenticationForm extends React.Component<Props, RequestAuthenticationState> {
   constructor(props: Props) {
     super(props);
     this.state = initRequestAuthentication();
@@ -196,5 +196,3 @@ class RequestAuthenticationForm extends React.Component<Props, RequestAuthentica
     );
   }
 }
-
-export default RequestAuthenticationForm;

@@ -5,7 +5,7 @@ import { style } from 'typestyle';
 import { PFColors } from '../../../components/Pf/PfColors';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { PlusCircleIcon } from '@patternfly/react-icons';
-import ServerBuilder, { protocols } from './ServerBuilder';
+import { ServerBuilder, protocols } from './ServerBuilder';
 
 type Props = {
   serverList: Server[];
@@ -37,7 +37,7 @@ const addServerStyle = style({
   paddingLeft: 0
 });
 
-class ServerList extends React.Component<Props> {
+export class ServerList extends React.Component<Props> {
   onAddServer = () => {
     const newServerForm: ServerForm = {
       hosts: [],
@@ -150,5 +150,3 @@ class ServerList extends React.Component<Props> {
     );
   }
 }
-
-export default ServerList;

@@ -8,7 +8,7 @@ interface Props {
   cluster?: string;
 }
 
-class ValidationReferences extends React.Component<Props> {
+export class ValidationReferences extends React.Component<Props> {
   render() {
     return (
       <>
@@ -33,5 +33,3 @@ class ValidationReferences extends React.Component<Props> {
     );
   }
 }
-
-export default ValidationReferences;

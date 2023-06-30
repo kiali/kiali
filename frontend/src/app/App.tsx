@@ -5,13 +5,13 @@ import { Provider } from 'react-redux';
 import { Router, withRouter } from 'react-router-dom';
 import * as Visibility from 'visibilityjs';
 import { GlobalActions } from '../actions/GlobalActions';
-import NavigationContainer from '../components/Nav/Navigation';
+import { Navigation } from '../components/Nav/Navigation';
 import { persistor, store } from '../store/ConfigStore';
-import AuthenticationControllerContainer from './AuthenticationController';
+import { AuthenticationController } from './AuthenticationController';
 import { history } from './History';
-import InitializingScreen from './InitializingScreen';
-import StartupInitializer from './StartupInitializer';
-import LoginPageContainer from '../pages/Login/LoginPage';
+import { InitializingScreen } from './InitializingScreen';
+import { StartupInitializer } from './StartupInitializer';
+import { LoginPage } from '../pages/Login/LoginPage';
 import { LoginActions } from '../actions/LoginActions';
 import 'tippy.js/dist/tippy.css';
 import 'tippy.js/dist/themes/light-border.css';
@@ -89,7 +89,7 @@ type AppState = {
   isInitialized: boolean;
 };
 
-class App extends React.Component<{}, AppState> {
+export class App extends React.Component<{}, AppState> {
   private protectedArea: React.ReactNode;
 
   constructor(props: {}) {
@@ -98,7 +98,7 @@ class App extends React.Component<{}, AppState> {
       isInitialized: false
     };
 
-    const Navigator = withRouter(NavigationContainer);
+    const Navigator = withRouter(Navigation);
     this.protectedArea = (
       <Router history={history}>
         <Navigator />
@@ -111,9 +111,9 @@ class App extends React.Component<{}, AppState> {
       <Provider store={store}>
         <PersistGate loading={<InitializingScreen />} persistor={persistor}>
           {this.state.isInitialized ? (
-            <AuthenticationControllerContainer
+            <AuthenticationController
               publicAreaComponent={(isPostLoginPerforming: boolean, errorMsg?: string) => (
-                <LoginPageContainer isPostLoginPerforming={isPostLoginPerforming} postLoginErrorMsg={errorMsg} />
+                <LoginPage isPostLoginPerforming={isPostLoginPerforming} postLoginErrorMsg={errorMsg} />
               )}
               protectedAreaComponent={this.protectedArea}
             />
@@ -129,5 +129,3 @@ class App extends React.Component<{}, AppState> {
     this.setState({ isInitialized: true });
   };
 }
-
-export default App;

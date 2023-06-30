@@ -1,6 +1,6 @@
 import * as React from 'react';
-import DelayFault from './FaultInjection/DelayFault';
-import AbortFault from './FaultInjection/AbortFault';
+import { DelayFault } from './FaultInjection/DelayFault';
+import { AbortFault } from './FaultInjection/AbortFault';
 import { Abort, Delay } from '../../types/IstioObjects';
 import { Form } from '@patternfly/react-core';
 import { isValidAbortStatusCode, isValidDuration } from '../../utils/IstioConfigUtils';
@@ -26,7 +26,7 @@ type State = {
   faultInjectionRoute: FaultInjectionRoute;
 };
 
-class FaultInjection extends React.Component<Props, State> {
+export class FaultInjection extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -148,5 +148,3 @@ class FaultInjection extends React.Component<Props, State> {
     );
   }
 }
-
-export default FaultInjection;

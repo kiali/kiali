@@ -22,7 +22,7 @@ import {
   UNKNOWN
 } from '../../types/Graph';
 import { JaegerTrace } from 'types/JaegerInfo';
-import Namespace from '../../types/Namespace';
+import { Namespace } from '../../types/Namespace';
 import { addInfo } from 'utils/AlertUtils';
 import { angleBetweenVectors, squaredDistance, normalize } from '../../utils/MathUtils';
 import { WizardAction, WizardMode } from '../IstioWizards/WizardActions';
@@ -35,10 +35,10 @@ import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
 import { CyNode, isCore, isEdge, isNode } from './CytoscapeGraphUtils';
 import { CytoscapeReactWrapper } from './CytoscapeReactWrapper';
 import { showTrace, hideTrace } from './CytoscapeTrace';
-import EmptyGraphLayout from './EmptyGraphLayout';
-import FocusAnimation from './FocusAnimation';
+import { EmptyGraphLayout } from './EmptyGraphLayout';
+import { FocusAnimation } from './FocusAnimation';
 import { GraphHighlighter } from './graphs/GraphHighlighter';
-import TrafficRenderer from './TrafficAnimation/TrafficRenderer';
+import { TrafficRenderer } from './TrafficAnimation/TrafficRenderer';
 import { serverConfig } from 'config';
 import { decoratedNodeData } from './CytoscapeGraphUtils';
 import { scoreNodes, ScoringCriteria } from './GraphScore';
@@ -130,7 +130,7 @@ export interface GraphNodeTapEvent {
 export interface GraphNodeDoubleTapEvent extends GraphNodeTapEvent {}
 
 // exporting this class for testing
-export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps, CytoscapeGraphState> {
+export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, CytoscapeGraphState> {
   static contextTypes = {
     router: () => null
   };

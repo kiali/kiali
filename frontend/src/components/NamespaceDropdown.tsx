@@ -16,15 +16,15 @@ import {
 import { KialiAppState } from '../store/Store';
 import { activeNamespacesSelector, namespaceFilterSelector, namespaceItemsSelector } from '../store/Selectors';
 import { NamespaceActions } from '../actions/NamespaceAction';
-import NamespaceThunkActions from '../actions/NamespaceThunkActions';
-import Namespace from '../types/Namespace';
+import { NamespaceThunkActions } from '../actions/NamespaceThunkActions';
+import { Namespace } from '../types/Namespace';
 import { HistoryManager, URLParam } from '../app/History';
 import {
   BoundingClientAwareComponent,
   PropertyType
 } from './BoundingClientAwareComponent/BoundingClientAwareComponent';
 import { KialiIcon } from 'config/KialiIcon';
-import TourStopContainer from './Tour/TourStop';
+import { TourStop } from './Tour/TourStop';
 import { GraphTourStops } from '../pages/Graph/GraphHelpTour';
 
 type ReduxProps = {
@@ -68,7 +68,7 @@ const namespaceContainerStyle = style({
   overflow: 'auto'
 });
 
-export class NamespaceDropdown extends React.PureComponent<NamespaceDropdownProps, NamespaceDropdownState> {
+class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownProps, NamespaceDropdownState> {
   constructor(props: NamespaceDropdownProps) {
     super(props);
     this.state = {
@@ -219,7 +219,7 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceDropdownProp
 
   render() {
     return (
-      <TourStopContainer info={GraphTourStops.Namespaces}>
+      <TourStop info={GraphTourStops.Namespaces}>
         <Dropdown
           toggle={
             <DropdownToggle
@@ -236,7 +236,7 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceDropdownProp
           {this.getHeader()}
           {this.getBody()}
         </Dropdown>
-      </TourStopContainer>
+      </TourStop>
     );
   }
 
@@ -314,5 +314,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
   };
 };
 
-const NamespaceDropdownContainer = connect(mapStateToProps, mapDispatchToProps)(NamespaceDropdown);
-export default NamespaceDropdownContainer;
+export const NamespaceDropdown = connect(mapStateToProps, mapDispatchToProps)(NamespaceDropdownComponent);

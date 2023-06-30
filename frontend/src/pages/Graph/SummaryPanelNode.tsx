@@ -23,15 +23,15 @@ import {
   Tab
 } from '@patternfly/react-core';
 import { SummaryPanelNodeTraffic } from './SummaryPanelNodeTraffic';
-import SummaryPanelNodeTraces from './SummaryPanelNodeTraces';
-import SimpleTabs from 'components/Tab/SimpleTabs';
+import { SummaryPanelNodeTraces } from './SummaryPanelNodeTraces';
+import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { JaegerState } from 'reducers/JaegerState';
 import { classes, style } from 'typestyle';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ServiceDetailsInfo } from 'types/ServiceInfo';
 import { LoadingWizardActionsDropdownGroup } from 'components/IstioWizards/LoadingWizardActionsDropdownGroup';
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
-import ServiceWizardActionsDropdownGroup from 'components/IstioWizards/ServiceWizardActionsDropdownGroup';
+import { ServiceWizardActionsDropdownGroup } from 'components/IstioWizards/ServiceWizardActionsDropdownGroup';
 import { PeerAuthentication } from '../../types/IstioObjects';
 import { useServiceDetailForGraphNode } from '../../hooks/services';
 import { useKialiSelector } from '../../hooks/redux';
@@ -51,7 +51,7 @@ type ReduxProps = {
   showRank: boolean;
 };
 
-export type SummaryPanelNodeHocProps = Omit<SummaryPanelPropType, 'kiosk'> & {
+export type SummaryPanelNodeProps = Omit<SummaryPanelPropType, 'kiosk'> & {
   onDeleteTrafficRouting?: (key: string, serviceDetails: ServiceDetailsInfo) => void;
   onLaunchWizard?: (
     key: WizardAction,
@@ -63,8 +63,8 @@ export type SummaryPanelNodeHocProps = Omit<SummaryPanelPropType, 'kiosk'> & {
   ) => void;
 };
 
-export type SummaryPanelNodeProps = ReduxProps &
-  SummaryPanelNodeHocProps & {
+export type SummaryPanelNodeComponentProps = ReduxProps &
+  SummaryPanelNodeProps & {
     gateways: string[] | null;
     onKebabToggled?: (isOpen: boolean) => void;
     peerAuthentications: PeerAuthentication[] | null;
@@ -91,17 +91,17 @@ const expandableSectionStyle = style({
 
 const workloadExpandableSectionStyle = classes(expandableSectionStyle, style({ display: 'inline' }));
 
-export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, SummaryPanelNodeState> {
+export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeComponentProps, SummaryPanelNodeState> {
   private readonly mainDivRef: React.RefObject<HTMLDivElement>;
 
-  constructor(props: SummaryPanelNodeProps) {
+  constructor(props: SummaryPanelNodeComponentProps) {
     super(props);
 
     this.state = { ...defaultState };
     this.mainDivRef = React.createRef<HTMLDivElement>();
   }
 
-  componentDidUpdate(prevProps: SummaryPanelNodeProps) {
+  componentDidUpdate(prevProps: SummaryPanelNodeComponentProps) {
     if (prevProps.data.summaryTarget !== this.props.data.summaryTarget) {
       if (this.mainDivRef.current) {
         this.mainDivRef.current.scrollTop = 0;
@@ -462,7 +462,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
   };
 }
 
-export default function SummaryPanelNodeHOC(props: SummaryPanelNodeHocProps) {
+export function SummaryPanelNode(props: SummaryPanelNodeProps) {
   const jaegerState = useKialiSelector(state => state.jaegerState);
   const kiosk = useKialiSelector(state => state.globalState.kiosk);
   const rankResult = useKialiSelector(state => state.graph.rankResult);
@@ -485,7 +485,7 @@ export default function SummaryPanelNodeHOC(props: SummaryPanelNodeHocProps) {
   }
 
   return (
-    <SummaryPanelNode
+    <SummaryPanelNodeComponent
       jaegerState={jaegerState}
       kiosk={kiosk}
       rankResult={rankResult}

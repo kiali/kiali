@@ -11,7 +11,7 @@ type Props = {
 const smallStyle = style({ fontSize: '70%', color: PFColors.White });
 const colorStyle = style({ fontSize: '1.1rem', color: PFColors.White });
 
-class ProxyStatusList extends React.Component<Props> {
+export class ProxyStatusList extends React.Component<Props> {
   statusList = () => {
     if (!this.props.status) {
       return [];
@@ -49,5 +49,3 @@ class ProxyStatusList extends React.Component<Props> {
     }
   }
 }
-
-export default ProxyStatusList;

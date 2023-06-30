@@ -13,7 +13,7 @@ type Props = {
 
 const httpStatusMsg = 'HTTP status code to use to abort the Http request.';
 
-class AbortFault extends React.Component<Props> {
+export class AbortFault extends React.Component<Props> {
   render() {
     return (
       <>
@@ -79,5 +79,3 @@ class AbortFault extends React.Component<Props> {
     );
   }
 }
-
-export default AbortFault;

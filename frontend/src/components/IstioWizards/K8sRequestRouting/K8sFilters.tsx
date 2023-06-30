@@ -17,7 +17,7 @@ const remove = style({
   cursor: 'not-allowed'
 });
 
-class K8sFilters extends React.Component<Props> {
+export class K8sFilters extends React.Component<Props> {
   render() {
     const filters: any[] = this.props.filters.map((filter, index) => (
       <span key={filter + '-' + index} data-test={filter} className={remove}>
@@ -41,5 +41,3 @@ class K8sFilters extends React.Component<Props> {
     );
   }
 }
-
-export default K8sFilters;

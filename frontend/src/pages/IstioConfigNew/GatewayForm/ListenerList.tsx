@@ -6,7 +6,7 @@ import { Button, ButtonVariant } from '@patternfly/react-core';
 import { PlusCircleIcon } from '@patternfly/react-icons';
 import { Listener } from '../../../types/IstioObjects';
 import { ListenerForm } from '../K8sGatewayForm';
-import ListenerBuilder, { allowedRoutes, protocols } from './ListenerBuilder';
+import { ListenerBuilder, allowedRoutes, protocols } from './ListenerBuilder';
 
 type Props = {
   onChange: (listener: Listener[], listenerForm: ListenerForm[]) => void;
@@ -94,7 +94,7 @@ type ListenerListState = {
   keyFocus: string;
 };
 
-class ListenerList extends React.Component<Props, ListenerListState> {
+export class ListenerList extends React.Component<Props, ListenerListState> {
   onAddListener = () => {
     const newListener: ListenerForm = {
       hostname: '',
@@ -202,5 +202,3 @@ class ListenerList extends React.Component<Props, ListenerListState> {
     );
   }
 }
-
-export default ListenerList;

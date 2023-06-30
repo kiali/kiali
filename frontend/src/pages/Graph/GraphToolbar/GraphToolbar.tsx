@@ -21,22 +21,22 @@ import {
 } from '../../../store/Selectors';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
 import { GraphType, NodeParamsType, EdgeLabelMode, SummaryData, TrafficRate, RankMode } from '../../../types/Graph';
-import GraphFindContainer from './GraphFind';
-import GraphSettingsContainer from './GraphSettings';
+import { GraphFind } from './GraphFind';
+import { GraphSettings } from './GraphSettings';
 import { history, HistoryManager, URLParam } from '../../../app/History';
-import Namespace, { namespacesFromString, namespacesToString } from '../../../types/Namespace';
+import { Namespace, namespacesFromString, namespacesToString } from '../../../types/Namespace';
 import { KialiDispatch } from '../../../types/Redux';
 import { NamespaceActions } from '../../../actions/NamespaceAction';
 import { GraphActions } from '../../../actions/GraphActions';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
-import TourStopContainer from 'components/Tour/TourStop';
+import { TourStop } from 'components/Tour/TourStop';
 import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
-import ReplayContainer from 'components/Time/Replay';
+import { Replay } from 'components/Time/Replay';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
-import GraphSecondaryMasthead from './GraphSecondaryMasthead';
+import { GraphSecondaryMasthead } from './GraphSecondaryMasthead';
 import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { INITIAL_USER_SETTINGS_STATE } from 'reducers/UserSettingsState';
-import GraphResetContainer from './GraphReset';
+import { GraphReset } from './GraphReset';
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
@@ -66,7 +66,7 @@ type GraphToolbarProps = ReduxProps & {
   onToggleHelp: () => void;
 };
 
-export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
+class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
   static contextTypes = {
     router: () => null
   };
@@ -196,18 +196,18 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
             )}
 
             <ToolbarItem style={{ margin: 0 }}>
-              <TourStopContainer info={GraphTourStops.Display}>
-                <GraphSettingsContainer graphType={this.props.graphType} disabled={this.props.disabled} />
-              </TourStopContainer>
+              <TourStop info={GraphTourStops.Display}>
+                <GraphSettings graphType={this.props.graphType} disabled={this.props.disabled} />
+              </TourStop>
             </ToolbarItem>
 
             <ToolbarItem>
-              <GraphFindContainer cy={this.props.cy} elementsChanged={this.props.elementsChanged} />
+              <GraphFind cy={this.props.cy} elementsChanged={this.props.elementsChanged} />
             </ToolbarItem>
 
             <ToolbarItem style={{ marginLeft: 'auto' }}>
               <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content="Shortcuts and tips...">
-                <TourStopContainer info={GraphTourStops.Shortcuts}>
+                <TourStop info={GraphTourStops.Shortcuts}>
                   <Button
                     id="graph-tour"
                     variant={ButtonVariant.link}
@@ -216,13 +216,13 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
                   >
                     <KialiIcon.Help className={defaultIconStyle} />
                   </Button>
-                </TourStopContainer>
+                </TourStop>
               </Tooltip>
-              <GraphResetContainer />
+              <GraphReset />
             </ToolbarItem>
           </ToolbarGroup>
         </Toolbar>
-        {this.props.replayActive && <ReplayContainer id="time-range-replay" />}
+        {this.props.replayActive && <Replay id="time-range-replay" />}
       </>
     );
   }
@@ -267,6 +267,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
   };
 };
 
-const GraphToolbarContainer = connect(mapStateToProps, mapDispatchToProps)(GraphToolbar);
-
-export default GraphToolbarContainer;
+export const GraphToolbar = connect(mapStateToProps, mapDispatchToProps)(GraphToolbarComponent);

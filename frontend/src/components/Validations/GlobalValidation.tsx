@@ -1,12 +1,12 @@
 import React from 'react';
 import { ObjectCheck, ObjectValidation, ValidationTypes } from '../../types/IstioObjects';
-import Validation from './Validation';
+import { Validation } from './Validation';
 
 type Props = {
   validation?: ObjectValidation;
 };
 
-class GlobalValidation extends React.Component<Props> {
+export class GlobalValidation extends React.Component<Props> {
   isValid(): boolean {
     return !!this.props.validation && this.props.validation.valid;
   }
@@ -76,5 +76,3 @@ class GlobalValidation extends React.Component<Props> {
     return <Validation severity={this.severity()} message={this.message()} messageColor={true} />;
   }
 }
-
-export default GlobalValidation;

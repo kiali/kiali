@@ -10,7 +10,7 @@ export type MetricsStatsState = {
 
 export const INITIAL_METRICS_STATS_STATE: MetricsStatsState = { data: new Map() };
 
-export const MetricsStatsReducer = (
+export const MetricsStatsStateReducer = (
   state: MetricsStatsState = INITIAL_METRICS_STATS_STATE,
   action: KialiAppAction
 ): MetricsStatsState => {
@@ -21,5 +21,3 @@ export const MetricsStatsReducer = (
       return state;
   }
 };
-
-export default MetricsStatsReducer;

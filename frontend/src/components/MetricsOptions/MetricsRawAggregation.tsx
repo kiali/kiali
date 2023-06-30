@@ -8,7 +8,7 @@ interface Props {
   onChanged: (aggregator: Aggregator) => void;
 }
 
-export default class MetricsRawAggregation extends React.Component<Props> {
+export class MetricsRawAggregation extends React.Component<Props> {
   static Aggregators: { [key: string]: string } = {
     sum: 'Sum',
     avg: 'Average',

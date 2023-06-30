@@ -25,7 +25,7 @@ import { CertsInfo } from 'types/CertsInfo';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { infoStyle } from 'styles/DropdownStyles';
-import connectRefresh from '../Refresh/connectRefresh';
+import { connectRefresh } from '../Refresh/connectRefresh';
 
 type IstioCertsInfoState = {
   showModal: boolean;
@@ -42,7 +42,7 @@ type IstioCertsInfoProps = ReduxProps & {
   ref: React.RefObject<any>;
 };
 
-class IstioCertsInfo extends React.Component<IstioCertsInfoProps, IstioCertsInfoState> {
+class IstioCertsInfoComponent extends React.Component<IstioCertsInfoProps, IstioCertsInfoState> {
   constructor(props: IstioCertsInfoProps) {
     super(props);
     this.state = { showModal: false, certsError: false };
@@ -178,8 +178,6 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setIstioCertsInfo: bindActionCreators(IstioCertsInfoActions.setinfo, dispatch)
 });
 
-const IstioCertsInfoConnected = connectRefresh(
-  connect(mapStateToProps, mapDispatchToProps, null, { forwardRef: true })(IstioCertsInfo)
+export const IstioCertsInfo = connectRefresh(
+  connect(mapStateToProps, mapDispatchToProps, null, { forwardRef: true })(IstioCertsInfoComponent)
 );
-
-export default IstioCertsInfoConnected;

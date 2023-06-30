@@ -19,7 +19,7 @@ import { KialiAppState } from 'store/Store';
 import { style } from 'typestyle';
 import { NotificationMessage, NotificationGroup } from '../../types/MessageCenter';
 import { MessageCenterActions } from 'actions/MessageCenterActions';
-import AlertDrawerGroupContainer from './AlertDrawerGroup';
+import { AlertDrawerGroup } from './AlertDrawerGroup';
 import {
   BoundingClientAwareComponent,
   PropertyType
@@ -63,7 +63,7 @@ const noNotificationsMessage = (
   </>
 );
 
-export class AlertDrawer extends React.PureComponent<AlertDrawerProps> {
+class AlertDrawerComponent extends React.PureComponent<AlertDrawerProps> {
   static readonly head = style({
     paddingBottom: 0
   });
@@ -90,7 +90,7 @@ export class AlertDrawer extends React.PureComponent<AlertDrawerProps> {
     return (
       !this.props.isHidden && (
         <Card className={drawer} hidden={this.props.isHidden}>
-          <CardHeader className={AlertDrawer.head}>
+          <CardHeader className={AlertDrawerComponent.head}>
             <CardActions>
               {this.props.isExpanded ? (
                 <Button id="alert_drawer_collapse" variant={ButtonVariant.plain} onClick={this.props.expandDrawer}>
@@ -107,15 +107,18 @@ export class AlertDrawer extends React.PureComponent<AlertDrawerProps> {
             </CardActions>
             <CardTitle>{this.props.title}</CardTitle>
           </CardHeader>
-          <CardBody className={AlertDrawer.body}>
+          <CardBody className={AlertDrawerComponent.body}>
             {this.props.groups.length === 0 ? (
               noNotificationsMessage
             ) : (
               <BoundingClientAwareComponent
-                className={AlertDrawer.wrapper}
-                maxHeight={{ type: PropertyType.VIEWPORT_HEIGHT_MINUS_TOP, margin: AlertDrawer.wrapperMarginBottom }}
+                className={AlertDrawerComponent.wrapper}
+                maxHeight={{
+                  type: PropertyType.VIEWPORT_HEIGHT_MINUS_TOP,
+                  margin: AlertDrawerComponent.wrapperMarginBottom
+                }}
               >
-                <Accordion className={AlertDrawer.groups}>
+                <Accordion className={AlertDrawerComponent.groups}>
                   {this.props.groups.map(group => {
                     return hideGroup(group) ? null : (
                       <AccordionItem key={group.id + '_item'}>
@@ -129,7 +132,7 @@ export class AlertDrawer extends React.PureComponent<AlertDrawerProps> {
                           {group.title} {getUnreadMessageLabel(group.messages)}
                         </AccordionToggle>
                         <AccordionContent id={group.id + '_content'} isHidden={group.id !== this.props.expandedGroupId}>
-                          <AlertDrawerGroupContainer key={group.id} group={group} />
+                          <AlertDrawerGroup key={group.id} group={group} />
                         </AccordionContent>
                       </AccordionItem>
                     );
@@ -161,5 +164,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
   };
 };
 
-const AlertDrawerContainer = connect(mapStateToProps, mapDispatchToProps)(AlertDrawer);
-export default AlertDrawerContainer;
+export const AlertDrawer = connect(mapStateToProps, mapDispatchToProps)(AlertDrawerComponent);

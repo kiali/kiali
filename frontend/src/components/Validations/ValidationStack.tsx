@@ -1,6 +1,6 @@
 import React from 'react';
 import { ObjectCheck, ValidationTypes } from '../../types/IstioObjects';
-import Validation from './Validation';
+import { Validation } from './Validation';
 import { highestSeverity } from '../../types/ServiceInfo';
 import { Stack, StackItem, Text, TextVariants } from '@patternfly/react-core';
 import { style } from 'typestyle';
@@ -13,7 +13,7 @@ type Props = {
 const colorStyle = style({ color: PFColors.White });
 const titleStyle = style({ color: PFColors.White, fontSize: '1.1rem' });
 
-class ValidationStack extends React.Component<Props> {
+export class ValidationStack extends React.Component<Props> {
   validationList() {
     return (this.props.checks || []).map((check, index) => {
       return (
@@ -45,5 +45,3 @@ class ValidationStack extends React.Component<Props> {
     }
   }
 }
-
-export default ValidationStack;

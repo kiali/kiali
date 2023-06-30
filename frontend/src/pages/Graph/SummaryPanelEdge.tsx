@@ -35,7 +35,7 @@ import { ResponseFlagsTable } from 'components/SummaryPanel/ResponseFlagsTable';
 import { ResponseHostsTable } from 'components/SummaryPanel/ResponseHostsTable';
 import { KialiIcon } from 'config/KialiIcon';
 import { Tab, Tooltip } from '@patternfly/react-core';
-import SimpleTabs from 'components/Tab/SimpleTabs';
+import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { Direction } from 'types/MetricsOptions';
 import { style } from 'typestyle';
 
@@ -84,7 +84,7 @@ const principalStyle = style({
   whiteSpace: 'nowrap'
 });
 
-export default class SummaryPanelEdge extends React.Component<SummaryPanelPropType, SummaryPanelEdgeState> {
+export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, SummaryPanelEdgeState> {
   private metricsPromise?: CancelablePromise<Response<IstioMetricsMap>>;
   private readonly mainDivRef: React.RefObject<HTMLDivElement>;
 

@@ -72,7 +72,7 @@ export const isPeerAuthenticationStateValid = (pa: PeerAuthenticationState): boo
   return workloadSelectorRule && validPortsMtlsRule;
 };
 
-class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationState> {
+export class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationState> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -363,5 +363,3 @@ class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationSt
     );
   }
 }
-
-export default PeerAuthenticationForm;

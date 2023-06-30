@@ -11,7 +11,7 @@ const shouldFetchNamespaces = (state: KialiAppState) => {
   }
 };
 
-const NamespaceThunkActions = {
+export const NamespaceThunkActions = {
   asyncFetchNamespaces: () => {
     return (dispatch: KialiDispatch) => {
       dispatch(NamespaceActions.requestStarted());
@@ -46,5 +46,3 @@ const NamespaceThunkActions = {
     };
   }
 };
-
-export default NamespaceThunkActions;

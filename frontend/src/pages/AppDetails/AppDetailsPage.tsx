@@ -4,24 +4,24 @@ import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { Tab } from '@patternfly/react-core';
 import * as API from '../../services/Api';
 import { App, AppId } from '../../types/App';
-import AppInfo from './AppInfo';
+import { AppInfo } from './AppInfo';
 import * as AlertUtils from '../../utils/AlertUtils';
-import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
+import { IstioMetrics } from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
-import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
+import { CustomMetrics } from '../../components/Metrics/CustomMetrics';
 import { DurationInSeconds, TimeInMilliseconds, TimeRange } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector, timeRangeSelector } from '../../store/Selectors';
-import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
+import { ParameterizedTabs, activeTab } from '../../components/Tab/Tabs';
 import { JaegerInfo } from '../../types/JaegerInfo';
-import TracesComponent from '../../components/JaegerIntegration/TracesComponent';
-import TrafficDetails from 'components/TrafficList/TrafficDetails';
-import TimeControl from '../../components/Time/TimeControl';
+import { TracesComponent } from '../../components/JaegerIntegration/TracesComponent';
+import { TrafficDetails } from 'components/TrafficList/TrafficDetails';
+import { TimeControl } from '../../components/Time/TimeControl';
 import { AppHealth } from 'types/Health';
-import RenderHeaderContainer from '../../components/Nav/Page/RenderHeader';
+import { RenderHeader } from '../../components/Nav/Page/RenderHeader';
 import { ErrorMsg } from '../../types/ErrorMsg';
-import ErrorSection from '../../components/ErrorSection/ErrorSection';
-import connectRefresh from '../../components/Refresh/connectRefresh';
+import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
+import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { history } from 'app/History';
 
 type AppDetailsState = {
@@ -123,7 +123,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
             const tab = (
               <Tab title={dashboard.title} key={'cd-' + dashboard.template} eventKey={tabKey}>
-                <CustomMetricsContainer
+                <CustomMetrics
                   lastRefreshAt={this.props.lastRefreshAt}
                   namespace={this.props.appId.namespace}
                   app={this.props.appId.app}
@@ -162,7 +162,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
     const inTab = (
       <Tab title="Inbound Metrics" eventKey={2} key={'Inbound Metrics'}>
-        <IstioMetricsContainer
+        <IstioMetrics
           data-test="inbound-metrics-component"
           lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.appId.namespace}
@@ -176,7 +176,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
     const outTab = (
       <Tab title="Outbound Metrics" eventKey={3} key={'Outbound Metrics'}>
-        <IstioMetricsContainer
+        <IstioMetrics
           data-test="outbound-metrics-component"
           lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.appId.namespace}
@@ -248,10 +248,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     }
     return (
       <>
-        <RenderHeaderContainer
-          location={history.location}
-          rightToolbar={<TimeControl customDuration={useCustomTime} />}
-        />
+        <RenderHeader location={history.location} rightToolbar={<TimeControl customDuration={useCustomTime} />} />
         {this.state.error && <ErrorSection error={this.state.error} />}
         {this.state.app && (
           <ParameterizedTabs
@@ -280,5 +277,4 @@ const mapStateToProps = (state: KialiAppState) => ({
   timeRange: timeRangeSelector(state)
 });
 
-const AppDetailsContainer = connectRefresh(connect(mapStateToProps)(AppDetails));
-export default AppDetailsContainer;
+export const AppDetailsPage = connectRefresh(connect(mapStateToProps)(AppDetails));

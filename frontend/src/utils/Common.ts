@@ -1,4 +1,4 @@
-import Namespace from '../types/Namespace';
+import { Namespace } from '../types/Namespace';
 
 export const removeDuplicatesArray = a => [...Array.from(new Set(a))] as string[];
 

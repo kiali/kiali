@@ -4,7 +4,7 @@ import { persistStore, persistReducer } from 'redux-persist';
 import { persistFilter } from 'redux-persist-transform-filter';
 import { createTransform } from 'redux-persist';
 
-import rootReducer from '../reducers';
+import { rootReducer } from '../reducers';
 import thunk from 'redux-thunk';
 
 // defaults to localStorage for web and AsyncStorage for react-native

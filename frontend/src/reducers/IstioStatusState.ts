@@ -6,7 +6,7 @@ import { getType } from 'typesafe-actions';
 export const INITIAL_ISTIO_STATUS_STATE: ComponentStatus[] = [];
 
 // This Reducer allows changes to the 'graphDataState' portion of Redux Store
-const IstioStatusState = (
+export const IstioStatusStateReducer = (
   state: ComponentStatus[] = INITIAL_ISTIO_STATUS_STATE,
   action: KialiAppAction
 ): ComponentStatus[] => {
@@ -17,5 +17,3 @@ const IstioStatusState = (
       return state;
   }
 };
-
-export default IstioStatusState;

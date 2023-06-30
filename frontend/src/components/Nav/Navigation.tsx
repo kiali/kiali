@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { KialiDispatch } from 'types/Redux';
-import RenderPage from './RenderPage';
+import { RenderPage } from './RenderPage';
 import { RouteComponentProps } from 'react-router';
-import MastheadItems from './Masthead/Masthead';
+import { MastheadItems } from './Masthead/Masthead';
 import {
   Page,
   Masthead,
@@ -18,11 +18,11 @@ import {
 } from '@patternfly/react-core';
 import { BarsIcon } from '@patternfly/react-icons';
 import { style } from 'typestyle';
-import MessageCenterContainer from '../../components/MessageCenter/MessageCenter';
+import { MessageCenter } from '../../components/MessageCenter/MessageCenter';
 import { kialiLogo, serverConfig } from '../../config';
 import { KialiAppState } from '../../store/Store';
-import UserSettingsThunkActions from '../../actions/UserSettingsThunkActions';
-import Menu from './Menu';
+import { UserSettingsThunkActions } from '../../actions/UserSettingsThunkActions';
+import { Menu } from './Menu';
 import { Link } from 'react-router-dom';
 
 type PropsType = RouteComponentProps & {
@@ -42,7 +42,7 @@ const flexBoxColumnStyle = style({
   flexDirection: 'column'
 });
 
-export class Navigation extends React.Component<PropsType, NavigationState> {
+export class NavigationComponent extends React.Component<PropsType, NavigationState> {
   static contextTypes = {
     router: () => null
   };
@@ -135,7 +135,7 @@ export class Navigation extends React.Component<PropsType, NavigationState> {
 
     return (
       <Page header={masthead} sidebar={Sidebar} onPageResize={this.onPageResize}>
-        <MessageCenterContainer drawerTitle="Message Center" />
+        <MessageCenter drawerTitle="Message Center" />
         <PageSection className={flexBoxColumnStyle} variant="light">
           <RenderPage isGraph={this.isGraph()} />
         </PageSection>
@@ -153,5 +153,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setNavCollapsed: (collapse: boolean) => dispatch(UserSettingsThunkActions.setNavCollapsed(collapse))
 });
 
-const NavigationContainer = connect(mapStateToProps, mapDispatchToProps)(Navigation);
-export default NavigationContainer;
+export const Navigation = connect(mapStateToProps, mapDispatchToProps)(NavigationComponent);

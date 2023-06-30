@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Button, ButtonVariant, Modal, ModalVariant } from '@patternfly/react-core';
-import NamespaceInfo from './NamespaceInfo';
+import { NamespaceInfo } from './NamespaceInfo';
 import { AuthorizationPolicy, Sidecar } from 'types/IstioObjects';
 import { MessageType } from 'types/MessageCenter';
 import { PromisesRegistry } from 'utils/CancelablePromises';
@@ -9,7 +9,7 @@ import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPre
 import * as AlertUtils from 'utils/AlertUtils';
 import * as API from 'services/Api';
 import { serverConfig } from '../../config';
-import GraphDataSource from 'services/GraphDataSource';
+import { GraphDataSource } from 'services/GraphDataSource';
 import {
   buildGraphAuthorizationPolicy,
   buildNamespaceInjectionPatch,
@@ -37,7 +37,7 @@ type State = {
   loaded: boolean;
 };
 
-export default class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoliciesProps, State> {
+export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoliciesProps, State> {
   private promises = new PromisesRegistry();
   constructor(props: OverviewTrafficPoliciesProps) {
     super(props);

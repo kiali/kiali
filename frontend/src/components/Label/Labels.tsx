@@ -1,5 +1,5 @@
 import * as React from 'react';
-import Label from './Label';
+import { Label } from './Label';
 import { Button, ButtonVariant, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { KialiIcon } from '../../config/KialiIcon';
@@ -30,7 +30,7 @@ const labelsContainerStyle = style({
   overflow: 'hidden'
 });
 
-class Labels extends React.Component<Props, State> {
+export class Labels extends React.Component<Props, State> {
   constructor(props: Props, state: State) {
     super(props, state);
     this.state = {
@@ -108,5 +108,3 @@ class Labels extends React.Component<Props, State> {
     );
   }
 }
-
-export default Labels;

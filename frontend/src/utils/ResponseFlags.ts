@@ -1,6 +1,6 @@
 // The Envoy response flags can be found here (search for %RESPONSE_FLAGS% on the page):
 // https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage
-const responseFlags = {
+export const responseFlags = {
   DC: { code: '500', help: 'Downstream connection termination', short: 'Downstream cx term' },
   DI: { help: 'Delayed via fault injection' },
   DPE: {
@@ -33,5 +33,3 @@ const responseFlags = {
   },
   UT: { code: '504', help: 'Upstream request timeout' }
 };
-
-export default responseFlags;

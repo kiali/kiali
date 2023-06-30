@@ -60,7 +60,7 @@ export const severityToValidation: { [severity: string]: ValidationType } = {
   info: InfoValidation
 };
 
-class Validation extends React.Component<Props> {
+export class Validation extends React.Component<Props> {
   validation() {
     return severityToValidation[this.props.severity];
   }
@@ -105,5 +105,3 @@ class Validation extends React.Component<Props> {
     }
   }
 }
-
-export default Validation;

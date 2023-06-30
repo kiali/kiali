@@ -4,7 +4,7 @@ import { style } from 'typestyle';
 import { summaryFont, summaryHeader, summaryBodyTabs, summaryPanelWidth, getTitle } from './SummaryPanelCommon';
 import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { RateTableGrpc, RateTableHttp, RateTableTcp } from 'components/SummaryPanel/RateTable';
-import SimpleTabs from 'components/Tab/SimpleTabs';
+import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { SummaryPanelPropType, NodeType, TrafficRate } from 'types/Graph';
@@ -14,7 +14,7 @@ import {
   getAccumulatedTrafficRateTcp
 } from 'utils/TrafficRate';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import KialiPageLinkContainer from 'components/Link/KialiPageLink';
+import { KialiPageLink } from 'components/Link/KialiPageLink';
 
 type SummaryPanelClusterBoxState = {
   clusterBox: any;
@@ -28,7 +28,7 @@ const topologyStyle = style({
   margin: '0 1em'
 });
 
-export default class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType, SummaryPanelClusterBoxState> {
+export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType, SummaryPanelClusterBoxState> {
   static readonly panelStyle = {
     height: '100%',
     margin: 0,
@@ -228,9 +228,9 @@ export default class SummaryPanelClusterBox extends React.Component<SummaryPanel
       <React.Fragment key={cluster}>
         <span>
           <PFBadge badge={PFBadges.Cluster} size="sm" style={{ marginBottom: '2px' }} />
-          <KialiPageLinkContainer href="/" cluster={cluster}>
+          <KialiPageLink href="/" cluster={cluster}>
             {cluster}
-          </KialiPageLinkContainer>{' '}
+          </KialiPageLink>{' '}
         </span>
         <br />
       </React.Fragment>

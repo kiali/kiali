@@ -45,7 +45,7 @@ export interface GraphLegendItemRow {
   icon: string;
 }
 
-const legendData: GraphLegendItem[] = [
+export const legendData: GraphLegendItem[] = [
   {
     title: 'Node Shapes',
     data: [
@@ -107,5 +107,3 @@ const legendData: GraphLegendItem[] = [
     ]
   }
 ];
-
-export default legendData;
