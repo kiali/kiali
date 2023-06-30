@@ -109,12 +109,14 @@ Feature: Kiali Services page
     Then the service should be listed as "healthy"
 
   @services-page
+  @sleep-app
   Scenario: The idle status of a service is reported in the list of services
     Given a service in the cluster with no traffic
     When user selects the "sleep" namespace
     Then the service should be listed as "na"
     And the health status of the service should be "No health information"
 
+  @error-rates-app
   @services-page
   Scenario: The failing status of a service is reported in the list of services
     Given a service in the mesh with a failing amount of traffic
@@ -122,6 +124,7 @@ Feature: Kiali Services page
     Then the service should be listed as "failure"
     And the health status of the service should be "Failure"
 
+  @error-rates-app
   @services-page
   Scenario: The degraded status of a service is reported in the list of services
     Given a service in the mesh with a degraded amount of traffic

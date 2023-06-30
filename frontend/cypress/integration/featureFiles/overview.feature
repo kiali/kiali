@@ -66,17 +66,20 @@ Feature: Kiali Overview page
     When user selects Health for "Services"
     Then user sees the "alpha" namespace with "Services"
 
+  @error-rates-app
   @overview-page
   Scenario: Last 10 minutes
     When user selects "Last 10m" time range
     Then user sees the "alpha" namespace with "inbound" traffic "10m"
 
+  @error-rates-app
   @overview-page
   Scenario: Last 10 minutes Outbound traffic
     When user selects "Last 10m" time range
     And user selects "Outbound" traffic direction
     Then user sees the "alpha" namespace with "outbound" traffic "10m"
 
+  @error-rates-app
   @overview-page
   @bookinfo-app
   Scenario: The healthy status of a logical mesh application is reported in the overview of a namespace
@@ -85,6 +88,7 @@ Feature: Kiali Overview page
     Then there should be a "healthy" application indicator in the namespace
     And the "healthy" application indicator should list the application
 
+  @error-rates-app
   @overview-page
   Scenario: The idle status of a logical mesh application is reported in the overview of a namespace
     Given an idle application in the cluster
@@ -92,6 +96,7 @@ Feature: Kiali Overview page
     Then there should be a "idle" application indicator in the namespace
     And the "idle" application indicator should list the application
 
+  @error-rates-app
   @overview-page
   Scenario: The failing status of a logical mesh application is reported in the overview of a namespace
     Given a failing application in the mesh
@@ -99,6 +104,7 @@ Feature: Kiali Overview page
     Then there should be a "failure" application indicator in the namespace
     And the "failure" application indicator should list the application
 
+  @error-rates-app
   @overview-page
   Scenario: The degraded status of a logical mesh application is reported in the overview of a namespace
     Given a degraded application in the mesh
@@ -106,16 +112,19 @@ Feature: Kiali Overview page
     Then there should be a "degraded" application indicator in the namespace
     And the "degraded" application indicator should list the application
 
+  @error-rates-app
   @overview-page
   Scenario: The minimum TLS version is visible in the control plane
     When user hovers over the MinTLS locker
     Then the user sees the certificates information
     And the minimum TLS version
 
+  @error-rates-app
   @overview-page
   Scenario: The canary upgrade information is not present when there is no canary configured
     Then the user sees no information related to canary upgrades
 
+  @error-rates-app
   @overview-page
   Scenario: The Istio panel should be visible in the control panel
     Then user sees the "istio-system" namespace card

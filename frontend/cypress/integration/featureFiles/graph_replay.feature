@@ -5,12 +5,14 @@ Feature: Kiali Graph page - Replay
   Background:
     Given user is at administrator perspective
 
+@error-rates-app
 @graph-page-replay
 Scenario: Graph alpha and beta namespaces
   When user graphs "alpha,beta" namespaces
   Then user sees the "alpha" namespace
   And user sees the "beta" namespace
 
+@error-rates-app
 @graph-page-replay
 Scenario: Show Replay
   When user presses the Replay button
@@ -22,6 +24,7 @@ Scenario: Show Replay
   And user presses the "medium" speed button
   And user presses the Pause button
 
+@error-rates-app
 @graph-page-replay
 Scenario: Close Replay
   When user presses the Replay Close button

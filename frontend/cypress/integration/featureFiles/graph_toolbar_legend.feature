@@ -7,6 +7,7 @@ Feature: Kiali Graph page - Graph toolbar and legend sidebar
     Given user is at administrator perspective
     And user graphs "alpha,beta" namespaces
 
+@error-rates-app
 @graph-page-manipulation
 Scenario Outline: Check if the <label> button is usable
   Then the toggle button "<label>" is enabled
@@ -24,17 +25,20 @@ Scenario Outline: Check if the <label> button is usable
   | Namespace Layout Style 2 |
   | Show Legend |
      
+@error-rates-app
 @graph-page-manipulation
 Scenario: Check if the Toggle Drag Graph button can be turned off 
   When the button "Toggle Drag" is clicked
   Then the button "Toggle Drag" is not active
 
+@error-rates-app
 @graph-page-manipulation
 Scenario: Check if the Toggle Drag Graph button can be turned on 
   When the "Toggle Drag" is turned off 
   And the button "Toggle Drag" is clicked
   Then the button "Toggle Drag" is active
 
+@error-rates-app
 @graph-page-manipulation
 Scenario Outline: Check if the not active by default <label> Graph button can be turned on  
   When the button "<label>" is clicked
@@ -48,6 +52,7 @@ Scenario Outline: Check if the not active by default <label> Graph button can be
       | Graph Layout Style 3 | 
       | Namespace Layout Style 2 | 
 
+@error-rates-app
 @graph-page-manipulation
 Scenario Outline: Check if the not active by default <label> Graph button can be turned off 
   When the "<label>" is turned on
@@ -58,6 +63,7 @@ Scenario Outline: Check if the not active by default <label> Graph button can be
       | Hide Healthy Edges | 
       | Hide All Edges | 
 
+@error-rates-app
 @graph-page-manipulation
 Scenario: The Hide Healthy Edges is turned off by turning on the Hide All Edges
   When the "Hide Healthy Edges" is turned off 
@@ -67,6 +73,7 @@ Scenario: The Hide Healthy Edges is turned off by turning on the Hide All Edges
   Then the button "Hide Healthy Edges" is not active
   And the button "Hide All Edges" is active
 
+@error-rates-app
 @graph-page-manipulation
 Scenario: The Hide All Edges is turned off by turning on the Hide Healthy Edges
   When the "Hide Healthy Edges" is turned off 
@@ -76,6 +83,7 @@ Scenario: The Hide All Edges is turned off by turning on the Hide Healthy Edges
   Then the button "Hide Healthy Edges" is active
   And the button "Hide All Edges" is not active
 
+@error-rates-app
 @graph-page-manipulation
 Scenario: The Namespace Layout Style 1 is turned off by turning on the Namespace Layout Style 2 
   When the "Namespace Layout Style 1" is turned off 
@@ -85,6 +93,7 @@ Scenario: The Namespace Layout Style 1 is turned off by turning on the Namespace
   Then the button "Namespace Layout Style 1" is not active
   And the button "Namespace Layout Style 2" is active
 
+@error-rates-app
 @graph-page-manipulation
 Scenario: The Namespace Layout Style 2 is turned off by turning on the Namespace Layout Style 1 
   When the "Namespace Layout Style 1" is turned off 
@@ -94,6 +103,7 @@ Scenario: The Namespace Layout Style 2 is turned off by turning on the Namespace
   Then the button "Namespace Layout Style 1" is active
   And the button "Namespace Layout Style 2" is not active
 
+@error-rates-app
 @graph-page-manipulation
 Scenario: First 3 Graph Layout Style buttons are mutually exclusive
   When the "Graph Layout Default Style" is turned on 
@@ -108,6 +118,7 @@ Scenario: First 3 Graph Layout Style buttons are mutually exclusive
   And the button "Graph Layout Style 2" is not active
   And the button "Graph Layout Style 3" is active
 
+@error-rates-app
 @graph-page-manipulation
 Scenario: The last Graph Layout Style button is mutually exclusive with the rest 
   When the "Graph Layout Default Style" is turned off 
@@ -122,12 +133,14 @@ Scenario: The last Graph Layout Style button is mutually exclusive with the rest
   And the button "Graph Layout Style 2" is not active
   And the button "Graph Layout Style 3" is not active     
 
+@error-rates-app
 @graph-page-manipulation
 Scenario: Show the Legend
   When the button "Show Legend" is clicked
   Then user can see the legend section
   And the button "Show Legend" is active 
 
+@error-rates-app
 @graph-page-manipulation
 Scenario: Close the Legend using the button
   When the Legend section is visible 
@@ -135,6 +148,7 @@ Scenario: Close the Legend using the button
   Then user cannot see the legend section  
   And the button "Show Legend" is not active 
 
+@error-rates-app
 @graph-page-manipulation
 Scenario: Close the Legend using the cross
   When the Legend section is visible 

@@ -82,6 +82,7 @@ Feature: Kiali Apps List page
 
   @apps-page
   @bookinfo-app
+  @sleep-app
   Scenario: The idle status of a logical mesh application is reported in the list of applications
     Given an idle application in the cluster
     When I fetch the list of applications
@@ -91,6 +92,7 @@ Feature: Kiali Apps List page
 
   @apps-page
   @bookinfo-app
+  @error-rates-app
   Scenario: The failing status of a logical mesh application is reported in the list of applications
     Given a failing application in the mesh
     When I fetch the list of applications
@@ -100,6 +102,7 @@ Feature: Kiali Apps List page
 
   @apps-page
   @bookinfo-app
+  @error-rates-app
   Scenario: The degraded status of a logical mesh application is reported in the list of applications
     Given a degraded application in the mesh
     When I fetch the list of applications

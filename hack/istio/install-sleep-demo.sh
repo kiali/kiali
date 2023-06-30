@@ -24,6 +24,9 @@ DELETE_SLEEP="false"
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+    -a|--arch)
+      shift;shift
+      ;;
     -ds|--delete-sleep)
       DELETE_SLEEP="$2"
       shift;shift
