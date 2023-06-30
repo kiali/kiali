@@ -95,8 +95,8 @@ func TestGetServiceMetrics(t *testing.T) {
 	assertHisto(assert, rqSizeIn, "0.99", 0.7)
 	assertHisto(assert, rqDurationMillisIn, "0.99", 0.8)
 	assertHisto(assert, rsSizeIn, "0.99", 0.9)
-	assert.Equal(11.0, float64(tcpRecIn[0].Datapoints[0].Value))
-	assert.Equal(13.0, float64(tcpSentIn[0].Datapoints[0].Value))
+	assert.Equal(13.0, float64(tcpRecIn[0].Datapoints[0].Value))  // L4 Telemetry is backwards
+	assert.Equal(11.0, float64(tcpSentIn[0].Datapoints[0].Value)) // L4 Telemetry is backwards
 }
 
 func assertHisto(assert *assert.Assertions, metrics []models.Metric, stat string, expected float64) {
@@ -188,8 +188,8 @@ func TestGetAppMetrics(t *testing.T) {
 	assertHisto(assert, rqSizeIn, "0.99", 0.4)
 	assertHisto(assert, rqDurationMillisIn, "0.99", 0.5)
 	assertHisto(assert, rsSizeIn, "0.99", 0.6)
-	assert.Equal(10.0, float64(tcpRecIn[0].Datapoints[0].Value))
-	assert.Equal(12.0, float64(tcpSentIn[0].Datapoints[0].Value))
+	assert.Equal(12.0, float64(tcpRecIn[0].Datapoints[0].Value))  // L4 Telemetry is backwards
+	assert.Equal(10.0, float64(tcpSentIn[0].Datapoints[0].Value)) // L4 Telemetry is backwards
 }
 
 func TestGetFilteredAppMetrics(t *testing.T) {
@@ -344,8 +344,8 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	assertHisto(assert, rqSizeOut, "0.99", 0.4)
 	assertHisto(assert, rqDurationMillisOut, "0.99", 0.5)
 	assertHisto(assert, rsSizeOut, "0.99", 0.6)
-	assert.Equal(10.0, float64(tcpRecOut[0].Datapoints[0].Value))
-	assert.Equal(12.0, float64(tcpSentOut[0].Datapoints[0].Value))
+	assert.Equal(12.0, float64(tcpRecOut[0].Datapoints[0].Value))  // L4 Telemetry is backwards
+	assert.Equal(10.0, float64(tcpSentOut[0].Datapoints[0].Value)) // L4 Telemetry is backwards
 }
 
 func TestCreateMetricsLabelsBuilder(t *testing.T) {
