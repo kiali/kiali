@@ -18,9 +18,9 @@ interface IstioAnnotations {
 }
 
 interface GraphFindOption {
+  autoSelect: boolean;
   description: string;
   expression: string;
-  autoSelect: boolean;
 }
 
 interface GraphTraffic {
