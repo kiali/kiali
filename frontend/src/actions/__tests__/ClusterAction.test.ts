@@ -4,7 +4,7 @@ import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 
 import { ClusterActions } from '../ClusterAction';
-import ClusterThunkActions from '../ClusterThunkActions';
+import { ClusterThunkActions } from '../ClusterThunkActions';
 
 const middlewares = [thunk];
 const mockStore = configureMockStore(middlewares);
