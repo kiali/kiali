@@ -68,7 +68,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
   constructor(props: ServiceDetailsProps) {
     super(props);
     const urlParams = new URLSearchParams(history.location.search);
-    const cluster = urlParams.get('cluster') || undefined;
+    const cluster = urlParams.get('clusterMesh') || undefined;
     this.state = {
       // Because null is not the same as undefined and urlParams.get(...) returns null.
       cluster: cluster,

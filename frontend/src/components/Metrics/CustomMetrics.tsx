@@ -107,7 +107,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
     const urlParams = new URLSearchParams(history.location.search);
-    const cluster = urlParams.get('cluster') || undefined;
+    const cluster = urlParams.get('clusterMesh') || undefined;
     this.state = {
       cluster: cluster,
       isTimeOptionsOpen: false,
