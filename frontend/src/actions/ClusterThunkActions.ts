@@ -16,6 +16,7 @@ export const ClusterThunkActions = {
   asyncFetchClusters: () => {
     return (dispatch: KialiDispatch) => {
       dispatch(ClusterActions.requestStarted());
+      // @TODO better way to retrieve clusters
       return Api.getNamespaces()
         .then(response => response.data)
         .then(data => {
