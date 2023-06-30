@@ -30,7 +30,7 @@ export { history };
 export enum URLParam {
   AGGREGATOR = 'aggregator',
   BY_LABELS = 'bylbl',
-  CLUSTER = 'cluster',
+  CLUSTERNAME = 'clusterName',
   DIRECTION = 'direction',
   DISPLAY_MODE = 'displayMode',
   DURATION = 'duration',

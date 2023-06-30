@@ -373,7 +373,7 @@ const getOptionsFromLinkParams = (linkParams: LinkParams, jaegerInfo?: JaegerInf
   let detailsPageUrl = `/namespaces/${namespace}/${type}/${name}`;
   let concat = '?';
   if (cluster) {
-    detailsPageUrl += '?cluster=' + cluster;
+    detailsPageUrl += '?clusterName=' + cluster;
     concat = '&';
   }
 

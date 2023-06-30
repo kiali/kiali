@@ -61,7 +61,7 @@ class DetailDescriptionComponent extends React.Component<Props> {
   private renderAppItem(namespace: string, appName: string) {
     let href = '/namespaces/' + namespace + '/applications/' + appName;
     if (this.props.cluster) {
-      href = href + '?cluster=' + this.props.cluster;
+      href = href + '?clusterName=' + this.props.cluster;
     }
     const link = isParentKiosk(this.props.kiosk) ? (
       <Link
@@ -88,7 +88,7 @@ class DetailDescriptionComponent extends React.Component<Props> {
   private renderServiceItem(namespace: string, serviceName: string) {
     let href = '/namespaces/' + namespace + '/services/' + serviceName;
     if (this.props.cluster) {
-      href = href + '?cluster=' + this.props.cluster;
+      href = href + '?clusterName=' + this.props.cluster;
     }
     const link = isParentKiosk(this.props.kiosk) ? (
       <Link
@@ -143,7 +143,7 @@ class DetailDescriptionComponent extends React.Component<Props> {
   private renderWorkloadItem(workload: AppWorkload) {
     let href = '/namespaces/' + this.props.namespace + '/workloads/' + workload.workloadName;
     if (this.props.cluster) {
-      href = href + '?cluster=' + this.props.cluster;
+      href = href + '?clusterName=' + this.props.cluster;
     }
     const link = isParentKiosk(this.props.kiosk) ? (
       <Link
@@ -197,7 +197,7 @@ class DetailDescriptionComponent extends React.Component<Props> {
     if (workload) {
       let href = '/namespaces/' + this.props.namespace + '/workloads/' + workload.workloadName;
       if (this.props.cluster) {
-        href = href + '?cluster=' + this.props.cluster;
+        href = href + '?clusterName=' + this.props.cluster;
       }
       const link = isParentKiosk(this.props.kiosk) ? (
         <Link

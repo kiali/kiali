@@ -355,7 +355,7 @@ class TrafficList extends FilterComponent.Component<
 
     const detail = `/namespaces/${item.node.namespace}/${this.nodeTypeToType(item.node.type, true)}/${
       item.node.name
-    }?cluster=${item.node.cluster}`;
+    }?clusterName=${item.node.cluster}`;
 
     const metricsDirection = item.direction === 'inbound' ? 'in_metrics' : 'out_metrics';
     let metrics = `${history.location.pathname}?tab=${metricsDirection}`;

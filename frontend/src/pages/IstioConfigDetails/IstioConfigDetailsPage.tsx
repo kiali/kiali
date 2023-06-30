@@ -103,7 +103,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   constructor(props: IstioConfigDetailsProps) {
     super(props);
     const urlParams = new URLSearchParams(history.location.search);
-    const cluster = urlParams.get('cluster') || undefined;
+    const cluster = urlParams.get('clusterName') || undefined;
     this.state = {
       cluster: cluster,
       isModified: false,
