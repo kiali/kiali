@@ -13,7 +13,7 @@ import {
 } from '@patternfly/react-core';
 import { Edge, EdgeModel, Node, NodeModel } from '@patternfly/react-topology';
 import { URLParam, history } from '../../app/History';
-import GraphDataSource from '../../services/GraphDataSource';
+import { GraphDataSource } from '../../services/GraphDataSource';
 import { DecoratedGraphElements, EdgeMode, GraphEvent, GraphType, Layout, NodeType } from '../../types/Graph';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
 import { store } from 'store/ConfigStore';
@@ -24,14 +24,14 @@ import { GraphPF } from './GraphPF';
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 import { LoadingWizardActionsDropdownGroup } from 'components/IstioWizards/LoadingWizardActionsDropdownGroup';
-import ServiceWizardActionsDropdownGroup from 'components/IstioWizards/ServiceWizardActionsDropdownGroup';
+import { ServiceWizardActionsDropdownGroup } from 'components/IstioWizards/ServiceWizardActionsDropdownGroup';
 import { toRangeString } from 'components/Time/Utils';
 import { KioskElement } from 'components/Kiosk/KioskElement';
-import TimeDurationIndicatorContainer from 'components/Time/TimeDurationIndicatorComponent';
+import { TimeDurationIndicator } from 'components/Time/TimeDurationIndicator';
 import { TimeDurationModal } from 'components/Time/TimeDurationModal';
 import { KialiDagreGraph } from 'components/CytoscapeGraph/graphs/KialiDagreGraph';
 import { KialiDispatch } from 'types/Redux';
-import GraphThunkActions from 'actions/GraphThunkActions';
+import { GraphThunkActions } from 'actions/GraphThunkActions';
 import { bindActionCreators } from 'redux';
 import { GraphActions } from 'actions/GraphActions';
 import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
@@ -120,7 +120,7 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
             <CardActions>
               <KioskElement>
                 <ToolbarItem>
-                  <TimeDurationIndicatorContainer onClick={this.toggleTimeOptionsVisibility} isDuration={true} />
+                  <TimeDurationIndicator onClick={this.toggleTimeOptionsVisibility} isDuration={true} />
                 </ToolbarItem>
               </KioskElement>
               <Dropdown

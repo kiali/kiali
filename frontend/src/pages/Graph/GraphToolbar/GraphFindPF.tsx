@@ -6,13 +6,13 @@ import { bindActionCreators } from 'redux';
 import { KialiAppState } from '../../../store/Store';
 import { findValueSelector, hideValueSelector, edgeLabelsSelector, edgeModeSelector } from '../../../store/Selectors';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
-import GraphHelpFind from '../../../pages/Graph/GraphHelpFind';
+import { GraphHelpFind } from '../../../pages/Graph/GraphHelpFind';
 import * as CytoscapeGraphUtils from '../../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { EdgeLabelMode, NodeType, Layout, EdgeMode, NodeAttr, EdgeAttr } from '../../../types/Graph';
 import * as AlertUtils from '../../../utils/AlertUtils';
 import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
 import { style } from 'typestyle';
-import TourStopContainer from 'components/Tour/TourStop';
+import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import { TimeInMilliseconds } from 'types/Common';
 import { KialiDispatch } from 'types/Redux';
@@ -274,7 +274,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
 
   render() {
     return (
-      <TourStopContainer info={GraphTourStops.Find}>
+      <TourStop info={GraphTourStops.Find}>
         <Form style={{ float: 'left' }} isHorizontal={true}>
           <span className={thinGroupStyle}>
             <TextInput
@@ -350,7 +350,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
             {this.state.hideError && <div style={{ color: 'red' }}>{this.state.hideError}</div>}
           </span>
         </Form>
-      </TourStopContainer>
+      </TourStop>
     );
   }
 

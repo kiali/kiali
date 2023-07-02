@@ -30,7 +30,7 @@ import {
   UNKNOWN
 } from 'types/Graph';
 import { DEGRADED, FAILURE } from 'types/Health';
-import Namespace from 'types/Namespace';
+import { Namespace } from 'types/Namespace';
 import _ from 'lodash';
 import { PFColors } from 'components/Pf/PfColors';
 import { getEdgeHealth } from 'types/ErrorRate/GraphEdgeStatus';

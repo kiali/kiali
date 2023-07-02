@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import FlexView from 'react-flexview';
 import { style } from 'typestyle';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
-import Namespace from '../../types/Namespace';
+import { Namespace } from '../../types/Namespace';
 import {
   GraphEvent,
   DecoratedGraphElements,
@@ -23,11 +23,11 @@ import {
 } from '../../types/Graph';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import * as AlertUtils from '../../utils/AlertUtils';
-import ErrorBoundary from '../../components/ErrorBoundary/ErrorBoundary';
-import GraphToolbarContainer from '../Graph/GraphToolbar/GraphToolbar';
-import GraphLegend from '../Graph/GraphLegend';
-import EmptyGraphLayout from '../../components/CytoscapeGraph/EmptyGraphLayout';
-import SummaryPanel from '../Graph/SummaryPanel';
+import { ErrorBoundary } from '../../components/ErrorBoundary/ErrorBoundary';
+import { GraphToolbar } from '../Graph/GraphToolbar/GraphToolbar';
+import { GraphLegend } from '../Graph/GraphLegend';
+import { EmptyGraphLayout } from '../../components/CytoscapeGraph/EmptyGraphLayout';
+import { SummaryPanel } from '../Graph/SummaryPanel';
 import {
   activeNamespacesSelector,
   durationSelector,
@@ -52,22 +52,22 @@ import { isKioskMode, getFocusSelector, unsetFocusSelector, getTraceId } from 'u
 import { Badge, Chip } from '@patternfly/react-core';
 import { toRangeString } from 'components/Time/Utils';
 import { replayBorder } from 'components/Time/Replay';
-import GraphDataSource, { FetchParams, EMPTY_GRAPH_DATA } from '../../services/GraphDataSource';
+import { GraphDataSource, FetchParams, EMPTY_GRAPH_DATA } from '../../services/GraphDataSource';
 import { NamespaceActions } from '../../actions/NamespaceAction';
-import GraphThunkActions from '../../actions/GraphThunkActions';
+import { GraphThunkActions } from '../../actions/GraphThunkActions';
 import { JaegerTrace } from 'types/JaegerInfo';
 import { KialiDispatch } from 'types/Redux';
 import { JaegerThunkActions } from 'actions/JaegerThunkActions';
-import GraphTour from 'pages/Graph/GraphHelpTour';
+import { GraphTour } from 'pages/Graph/GraphHelpTour';
 import { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
-import ServiceWizard from 'components/IstioWizards/ServiceWizard';
+import { ServiceWizard } from 'components/IstioWizards/ServiceWizard';
 import { ServiceDetailsInfo } from 'types/ServiceInfo';
 import { DestinationRuleC, PeerAuthentication } from 'types/IstioObjects';
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
-import ConfirmDeleteTrafficRoutingModal from 'components/IstioWizards/ConfirmDeleteTrafficRoutingModal';
+import { ConfirmDeleteTrafficRoutingModal } from 'components/IstioWizards/ConfirmDeleteTrafficRoutingModal';
 import { deleteServiceTrafficRouting } from 'services/Api';
 import { canCreate, canUpdate } from '../../types/Permissions';
-import connectRefresh from '../../components/Refresh/connectRefresh';
+import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { triggerRefresh } from '../../hooks/refresh';
 import { GraphData } from 'pages/Graph/GraphPage';
 import { GraphPF, FocusNode } from './GraphPF';
@@ -436,7 +436,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
       <>
         <FlexView className={conStyle} column={true}>
           <div>
-            <GraphToolbarContainer
+            <GraphToolbar
               controller={this.controller}
               disabled={this.state.graphData.isLoading}
               elementsChanged={this.state.graphData.elementsChanged}
