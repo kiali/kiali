@@ -596,9 +596,6 @@ export const getNodeGraphElements = (node: NodeParamsType, params: any) => {
         {}
       );
     case NodeType.WORKLOAD:
-      if (node.cluster) {
-        params['clusterName'] = node.cluster;
-      }
       return newRequest<GraphDefinition>(
         HTTP_VERBS.GET,
         urls.workloadGraphElements(node.namespace.name, node.workload),
