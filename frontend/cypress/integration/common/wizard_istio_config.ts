@@ -99,8 +99,8 @@ And('choosing to delete it', () => {
   cy.get('#pf-modal-part-2').find('button').contains('Delete').should('be.visible').click();
 });
 
-And('user closes the success notification for ${string}',(config: string)=>{
-  cy.get(`[aria-label="Close Success alert: alert: Istio ${config} created"]`).click();
+And('user closes the success notification',()=>{
+  cy.get('[aria-label="Close Success alert: alert: Istio Gateway created"]').click();
 });
 
 Then('the {string} {string} should be listed in {string} namespace', function (

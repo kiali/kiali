@@ -60,7 +60,7 @@ Feature: Kiali Istio Config page
     And user previews the configuration
     And user creates the istio config
     Then the "Gateway" "mygateway" should be listed in "bookinfo" namespace
-    And user closes the success notification for "Gateway"
+    And user closes the success notification
     And user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
     And user types "mygateway" in the "name" input
