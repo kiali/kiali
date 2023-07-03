@@ -32,7 +32,8 @@ Then('user sees trace details', () => {
 });
 
 When('user selects a trace', () => {
-  const tracingDotQuery = '[style*="fill: var(--pf-global--palette--blue-200)"][style*="stroke: transparent;"]';
+  const tracingDotQuery =
+    '[style*="fill: var(--pf-global--palette--blue-200)"][style*="stroke: var(--pf-chart-scatter--data--stroke--Color, transparent)"]';
   cy.getBySel('jaeger-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
 });
 

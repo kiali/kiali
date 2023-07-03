@@ -38,6 +38,7 @@ interface GraphSettings {
 interface GraphUIDefaults {
   findOptions: GraphFindOption[];
   hideOptions: GraphFindOption[];
+  impl: 'both' | 'cy' | 'pf';
   settings: GraphSettings;
   traffic: GraphTraffic;
 }

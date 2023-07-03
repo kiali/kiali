@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { Tab, Tooltip } from '@patternfly/react-core';
+import { Node, Visualization } from '@patternfly/react-topology';
 import { style } from 'typestyle';
 import _ from 'lodash';
 import { RateTableGrpc, RateTableHttp, RateTableTcp } from '../../components/SummaryPanel/RateTable';
 import { RequestChart, StreamChart } from '../../components/SummaryPanel/RpsChart';
-import { NodeType, Protocol, SummaryPanelPropType, TrafficRate, UNKNOWN } from '../../types/Graph';
+import { NodeAttr, NodeType, Protocol, SummaryPanelPropType, TrafficRate, UNKNOWN } from '../../types/Graph';
 import {
   getAccumulatedTrafficRateGrpc,
   getAccumulatedTrafficRateHttp,
@@ -29,7 +30,6 @@ import {
 import { Datapoint, IstioMetricsMap, Labels } from '../../types/Metrics';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise, PromisesRegistry } from '../../utils/CancelablePromises';
-import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { ValidationStatus } from 'types/IstioObjects';
@@ -38,6 +38,7 @@ import { ValidationSummary } from 'components/Validations/ValidationSummary';
 import { PFColors } from '../../components/Pf/PfColors';
 import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
+import { edgesIn, edgesOut, elems, leafNodes, NodeData, select } from 'pages/GraphPF/GraphPFElems';
 
 type SummaryPanelGraphMetricsState = {
   grpcRequestIn: Datapoint[];
@@ -123,12 +124,14 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
   };
 
   private graphTraffic?: SummaryPanelGraphTraffic;
+  private isPF: boolean = false;
   private metricsPromise?: CancelablePromise<Response<IstioMetricsMap>[]>;
   private validationSummaryPromises: PromisesRegistry = new PromisesRegistry();
 
   constructor(props: SummaryPanelPropType) {
     super(props);
 
+    this.isPF = !!props.data.isPF;
     this.state = { ...defaultState };
   }
 
@@ -168,18 +171,52 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
   }
 
   render() {
-    const cy = this.props.data.summaryTarget;
-    if (!cy) {
-      return null;
+    let numSvc,
+      numWorkloads,
+      numApps,
+      numVersions,
+      numEdges,
+      grpcIn,
+      grpcOut,
+      grpcTotal,
+      httpIn,
+      httpOut,
+      httpTotal,
+      isGrpcRequests,
+      tcpIn,
+      tcpOut,
+      tcpTotal;
+
+    if (this.isPF) {
+      // PF Graph
+      const controller = this.props.data.summaryTarget as Visualization;
+      if (!controller) {
+        return null;
+      }
+      const { nodes, edges } = elems(controller);
+
+      numSvc = select(nodes, { prop: NodeAttr.nodeType, val: NodeType.SERVICE }).length;
+      numWorkloads = select(nodes, { prop: NodeAttr.nodeType, val: NodeType.WORKLOAD }).length;
+      ({ numApps, numVersions } = this.countApps());
+      numEdges = edges.length;
+
+      ({ grpcIn, grpcOut, grpcTotal, httpIn, httpOut, httpTotal, isGrpcRequests, tcpIn, tcpOut, tcpTotal } =
+        this.graphTraffic || this.getGraphTraffic());
+    } else {
+      // CY Graph
+      const cy = this.props.data.summaryTarget;
+      if (!cy) {
+        return null;
+      }
+
+      numSvc = cy.nodes(`[nodeType = "${NodeType.SERVICE}"]`).size();
+      numWorkloads = cy.nodes(`[nodeType = "${NodeType.WORKLOAD}"]`).size();
+      ({ numApps, numVersions } = this.countApps());
+      numEdges = cy.edges().size();
+
+      ({ grpcIn, grpcOut, grpcTotal, httpIn, httpOut, httpTotal, isGrpcRequests, tcpIn, tcpOut, tcpTotal } =
+        this.graphTraffic || this.getGraphTraffic());
     }
-
-    const numSvc = cy.nodes(`[nodeType = "${NodeType.SERVICE}"]`).size();
-    const numWorkloads = cy.nodes(`[nodeType = "${NodeType.WORKLOAD}"]`).size();
-    const { numApps, numVersions } = this.countApps(cy);
-    const numEdges = cy.edges().size();
-
-    const { grpcIn, grpcOut, grpcTotal, httpIn, httpOut, httpTotal, isGrpcRequests, tcpIn, tcpOut, tcpTotal } =
-      this.graphTraffic || this.getGraphTraffic();
 
     const tooltipInboundRef = React.createRef();
     const tooltipOutboundRef = React.createRef();
@@ -318,11 +355,17 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
   }
 
   private getGraphTraffic = (): SummaryPanelGraphTraffic => {
+    if (this.isPF) {
+      return this.getGraphTrafficPF();
+    }
     // when getting total traffic rates don't count requests from injected service nodes
     const cy = this.props.data.summaryTarget;
     const totalEdges = cy.nodes(`[nodeType != "${NodeType.SERVICE}"][!isBox]`).edgesTo('*');
-    const inboundEdges = cy.nodes(`[?${CyNode.isRoot}]`).edgesTo('*');
-    const outboundEdges = cy.nodes().leaves(`node[?${CyNode.isOutside}],[?${CyNode.isServiceEntry}]`).connectedEdges();
+    const inboundEdges = cy.nodes(`[?${NodeAttr.isRoot}]`).edgesTo('*');
+    const outboundEdges = cy
+      .nodes()
+      .leaves(`node[?${NodeAttr.isOutside}],[?${NodeAttr.isServiceEntry}]`)
+      .connectedEdges();
 
     return {
       grpcIn: getAccumulatedTrafficRateGrpc(inboundEdges),
@@ -338,15 +381,74 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     };
   };
 
-  private countApps = (cy): { numApps: number; numVersions: number } => {
+  private getGraphTrafficPF = (): SummaryPanelGraphTraffic => {
+    const controller = this.props.data.summaryTarget as Visualization;
+    const { nodes } = elems(controller);
+
+    // when getting total traffic rates don't count requests from injected service nodes
+    const nonServiceNodes = select(nodes, { prop: NodeAttr.nodeType, val: NodeType.SERVICE, op: '!=' });
+    const nonBoxNodes = select(nonServiceNodes, { prop: NodeAttr.isBox, op: 'falsy' });
+    const totalEdges = edgesOut(nonBoxNodes as Node[]).length;
+    const inboundEdges = edgesOut(select(nodes, { prop: NodeAttr.isRoot, op: 'truthy' }) as Node[]);
+    const allLeafNodes = leafNodes(nodes) as Node[];
+    const outboundEdges = edgesIn(
+      _.union(
+        select(allLeafNodes, { prop: NodeAttr.isOutside, op: 'truthy' }),
+        select(allLeafNodes, { prop: NodeAttr.isServiceEntry, op: 'truthy' })
+      ) as Node[]
+    );
+
+    return {
+      grpcIn: getAccumulatedTrafficRateGrpc(inboundEdges, true),
+      grpcOut: getAccumulatedTrafficRateGrpc(outboundEdges, true),
+      grpcTotal: getAccumulatedTrafficRateGrpc(totalEdges, true),
+      httpIn: getAccumulatedTrafficRateHttp(inboundEdges, true),
+      httpOut: getAccumulatedTrafficRateHttp(outboundEdges, true),
+      httpTotal: getAccumulatedTrafficRateHttp(totalEdges, true),
+      isGrpcRequests: this.props.trafficRates.includes(TrafficRate.GRPC_REQUEST),
+      tcpIn: getAccumulatedTrafficRateTcp(inboundEdges, true),
+      tcpOut: getAccumulatedTrafficRateTcp(outboundEdges, true),
+      tcpTotal: getAccumulatedTrafficRateTcp(totalEdges, true)
+    };
+  };
+
+  private countApps = (): { numApps: number; numVersions: number } => {
+    if (this.isPF) {
+      return this.countAppsPF();
+    }
+
+    const cy = this.props.data.summaryTarget;
     const appVersions: { [key: string]: Set<string> } = {};
 
     cy.$(`node[nodeType = "${NodeType.APP}"]`).forEach(node => {
-      const app = node.data(CyNode.app);
+      const app = node.data(NodeAttr.app);
       if (appVersions[app] === undefined) {
         appVersions[app] = new Set();
       }
-      appVersions[app].add(node.data(CyNode.version));
+      appVersions[app].add(node.data(NodeAttr.version));
+    });
+
+    return {
+      numApps: Object.getOwnPropertyNames(appVersions).length,
+      numVersions: Object.getOwnPropertyNames(appVersions).reduce((totalCount: number, version: string) => {
+        return totalCount + appVersions[version].size;
+      }, 0)
+    };
+  };
+
+  private countAppsPF = (): { numApps: number; numVersions: number } => {
+    const controller = this.props.data.summaryTarget as Visualization;
+    const { nodes } = elems(controller);
+
+    const appVersions: { [key: string]: Set<string> } = {};
+
+    select(nodes, { prop: NodeAttr.nodeType, val: NodeType.APP }).forEach(appNode => {
+      const d = appNode.getData() as NodeData;
+      const app = d[NodeAttr.app];
+      if (appVersions[app] === undefined) {
+        appVersions[app] = new Set();
+      }
+      appVersions[app].add(d[NodeAttr.version]);
     });
 
     return {
@@ -442,9 +544,6 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
   }
 
   private renderCharts = () => {
-    const props: SummaryPanelPropType = this.props;
-    const namespace = props.data.summaryTarget.data(CyNode.namespace);
-
     if (this.state.loading) {
       return <strong>Loading chart...</strong>;
     } else if (this.state.metricsLoadError) {
@@ -454,8 +553,6 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
           {this.state.metricsLoadError}
         </div>
       );
-    } else if (namespace === UNKNOWN) {
-      return <></>;
     }
 
     // When there is any traffic for the protocol, show both inbound and outbound charts. It's a little

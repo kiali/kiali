@@ -1,8 +1,6 @@
 import { When, And, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
 
-const tracingDotQuery = '[style*="fill: var(--pf-global--palette--blue-200)"][style*="stroke: transparent;"]';
-
 function openTab(tab: string) {
   cy.get('#basic-tabs').should('be.visible').contains(tab).click();
 }
@@ -65,6 +63,7 @@ Then('user sees workload outbound metrics information', () => {
 And('user can filter spans by workload', () => {
   cy.get('select[aria-label="filter_select_type"]').select('Workload');
   cy.get('input[placeholder="Filter by Workload"]').type('details-v1{enter}');
+  cy.get('button[label="details-v1"]').should('be.visible').click();
   getCellsForCol('App / Workload').each($cell => {
     cy.wrap($cell).contains('details-v1');
   });

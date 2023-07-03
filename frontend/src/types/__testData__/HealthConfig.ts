@@ -1,3 +1,4 @@
+import { ServerConfig } from 'types/ServerConfig';
 import { getExpr } from '../../config/HealthConfig';
 
 export const healthConfig = {
@@ -19,6 +20,7 @@ export const healthConfig = {
       graph: {
         findOptions: [],
         hideOptions: [],
+        impl: 'cy',
         settings: {
           fontLabel: 13,
           minFontBadge: 7,
@@ -91,7 +93,7 @@ export const healthConfig = {
   deployment: {
     viewOnlyMode: false
   }
-};
+} as ServerConfig;
 
 export const tolerancesDefault = [
   {

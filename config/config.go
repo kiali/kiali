@@ -403,6 +403,7 @@ type GraphTraffic struct {
 type GraphUIDefaults struct {
 	FindOptions []GraphFindOption `yaml:"find_options,omitempty" json:"findOptions,omitempty"`
 	HideOptions []GraphFindOption `yaml:"hide_options,omitempty" json:"hideOptions,omitempty"`
+	Impl        string            `yaml:"impl,omitempty" json:"impl,omitempty"`
 	Settings    GraphSettings     `yaml:"settings,omitempty" json:"settings,omitempty"`
 	Traffic     GraphTraffic      `yaml:"traffic,omitempty" json:"traffic,omitempty"`
 }
@@ -698,6 +699,7 @@ func NewConfig() (c *Config) {
 							Expression:  "rank > 2",
 						},
 					},
+					Impl: "cy",
 					Settings: GraphSettings{
 						FontLabel:    13,
 						MinFontBadge: 7,

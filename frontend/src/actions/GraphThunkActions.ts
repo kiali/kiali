@@ -11,5 +11,16 @@ export const GraphThunkActions = {
         })
       );
     };
+  },
+  graphPFReady: (controller: any) => {
+    return (dispatch: KialiDispatch) => {
+      dispatch(
+        GraphActions.updateSummary({
+          isPF: true,
+          summaryType: 'graph',
+          summaryTarget: controller
+        })
+      );
+    };
   }
 };

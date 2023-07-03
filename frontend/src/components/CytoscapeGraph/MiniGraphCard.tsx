@@ -15,7 +15,6 @@ import { history } from '../../app/History';
 import { GraphDataSource } from '../../services/GraphDataSource';
 import { DecoratedGraphElements, EdgeMode, GraphType, NodeType } from '../../types/Graph';
 import { CytoscapeGraph, GraphEdgeTapEvent, GraphNodeTapEvent } from './CytoscapeGraph';
-import { CytoscapeGraphSelectorBuilder } from './CytoscapeGraphSelector';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
 import { store } from 'store/ConfigStore';
 import { style } from 'typestyle';
@@ -31,6 +30,7 @@ import { WizardAction, WizardMode } from '../IstioWizards/WizardActions';
 import { TimeDurationModal } from '../Time/TimeDurationModal';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { KioskElement } from '../Kiosk/KioskElement';
+import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
 
 const initGraphContainerStyle = style({ width: '100%', height: '100%' });
 
@@ -41,13 +41,10 @@ type ReduxProps = {
 type MiniGraphCardProps = ReduxProps & {
   dataSource: GraphDataSource;
   graphContainerStyle?: string;
-  mtlsEnabled: boolean;
-  onEdgeTap?: (e: GraphEdgeTapEvent) => void;
-
-  serviceDetails?: ServiceDetailsInfo | null;
-
   onDeleteTrafficRouting?: (key: string) => void;
+  onEdgeTap?: (e: GraphEdgeTapEvent) => void;
   onLaunchWizard?: (key: WizardAction, mode: WizardMode) => void;
+  serviceDetails?: ServiceDetailsInfo | null;
 };
 
 type MiniGraphCardState = {
@@ -152,7 +149,6 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
                 toggleIdleNodes={() => undefined}
                 edgeLabels={this.props.dataSource.fetchParameters.edgeLabels}
                 edgeMode={EdgeMode.ALL}
-                isMTLSEnabled={this.props.mtlsEnabled}
                 isMiniGraph={true}
                 onEdgeTap={this.props.onEdgeTap}
                 layout={KialiDagreGraph.getLayout()}
@@ -255,12 +251,12 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
 
   private onViewFullGraph = () => {
     const namespace = this.props.dataSource.fetchParameters.namespaces[0].name;
-    let cytoscapeGraph = new CytoscapeGraphSelectorBuilder().namespace(namespace);
+    let graphSelector = new GraphSelectorBuilder().namespace(namespace);
     let graphType: GraphType = GraphType.APP;
 
     switch (this.props.dataSource.fetchParameters.node!.nodeType) {
       case NodeType.AGGREGATE:
-        cytoscapeGraph = cytoscapeGraph
+        graphSelector = graphSelector
           .aggregate(
             this.props.dataSource.fetchParameters.node!.aggregate!,
             this.props.dataSource.fetchParameters.node!.aggregateValue!
@@ -268,15 +264,15 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
           .nodeType(NodeType.AGGREGATE);
         break;
       case NodeType.APP:
-        cytoscapeGraph = cytoscapeGraph.app(this.props.dataSource.fetchParameters.node!.app).nodeType(NodeType.APP);
+        graphSelector = graphSelector.app(this.props.dataSource.fetchParameters.node!.app).nodeType(NodeType.APP);
         break;
       case NodeType.SERVICE:
         graphType = GraphType.SERVICE;
-        cytoscapeGraph = cytoscapeGraph.service(this.props.dataSource.fetchParameters.node!.service);
+        graphSelector = graphSelector.service(this.props.dataSource.fetchParameters.node!.service);
         break;
       case NodeType.WORKLOAD:
         graphType = GraphType.WORKLOAD;
-        cytoscapeGraph = cytoscapeGraph.workload(this.props.dataSource.fetchParameters.node!.workload);
+        graphSelector = graphSelector.workload(this.props.dataSource.fetchParameters.node!.workload);
         break;
       default:
         // NodeType.BOX is n/a
@@ -284,7 +280,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     }
 
     const graphUrl = `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${namespace}&focusSelector=${encodeURI(
-      cytoscapeGraph.build()
+      graphSelector.build()
     )}`;
 
     if (isParentKiosk(this.props.kiosk)) {

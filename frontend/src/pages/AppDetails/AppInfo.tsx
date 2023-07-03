@@ -6,19 +6,17 @@ import { RenderComponentScroll } from '../../components/Nav/Page';
 import { DurationInSeconds } from 'types/Common';
 import { GraphDataSource } from 'services/GraphDataSource';
 import { AppHealth } from 'types/Health';
-import { KialiAppState } from '../../store/Store';
-import { connect } from 'react-redux';
-import { meshWideMTLSEnabledSelector } from '../../store/Selectors';
 import { style } from 'typestyle';
 import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
 import { history, URLParam } from '../../app/History';
 import { MiniGraphCard } from '../../components/CytoscapeGraph/MiniGraphCard';
+import { serverConfig } from 'config';
+import { MiniGraphCardPF } from 'pages/GraphPF/MiniGraphCardPF';
 
 type AppInfoProps = {
   app?: App;
   duration: DurationInSeconds;
   health?: AppHealth;
-  mtlsEnabled: boolean;
 };
 
 type AppInfoState = {
@@ -29,7 +27,7 @@ const fullHeightStyle = style({
   height: '100%'
 });
 
-class AppInfoComponent extends React.Component<AppInfoProps, AppInfoState> {
+export class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
   private graphDataSource = new GraphDataSource();
 
   constructor(props: AppInfoProps) {
@@ -76,28 +74,31 @@ class AppInfoComponent extends React.Component<AppInfoProps, AppInfoState> {
     // Graph resizes correctly on width
     const height = this.state.tabHeight ? this.state.tabHeight - 115 : 300;
     const graphContainerStyle = style({ width: '100%', height: height });
+    const includeMiniGraphCy = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'pf';
+    const includeMiniGraphPF = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'cy';
+    const miniGraphSpan = includeMiniGraphCy && includeMiniGraphPF ? 4 : 8;
     return (
       <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
         <Grid hasGutter={true} className={fullHeightStyle}>
           <GridItem span={4}>
             <AppDescription app={this.props.app} health={this.props.health} />
           </GridItem>
-          <GridItem span={8}>
-            <MiniGraphCard
-              onEdgeTap={this.goToMetrics}
-              dataSource={this.graphDataSource}
-              mtlsEnabled={this.props.mtlsEnabled}
-              graphContainerStyle={graphContainerStyle}
-            />
-          </GridItem>
+          {includeMiniGraphCy && (
+            <GridItem span={miniGraphSpan}>
+              <MiniGraphCard
+                onEdgeTap={this.goToMetrics}
+                dataSource={this.graphDataSource}
+                graphContainerStyle={graphContainerStyle}
+              />
+            </GridItem>
+          )}
+          {includeMiniGraphPF && (
+            <GridItem span={miniGraphSpan}>
+              <MiniGraphCardPF dataSource={this.graphDataSource} />
+            </GridItem>
+          )}
         </Grid>
       </RenderComponentScroll>
     );
   }
 }
-
-const mapStateToProps = (state: KialiAppState) => ({
-  mtlsEnabled: meshWideMTLSEnabledSelector(state)
-});
-
-export const AppInfo = connect(mapStateToProps)(AppInfoComponent);

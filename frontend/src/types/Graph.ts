@@ -10,6 +10,7 @@ export interface Layout {
 export const SUMMARY_PANEL_CHART_WIDTH = 250;
 export type SummaryType = 'graph' | 'node' | 'edge' | 'box';
 export interface SummaryData {
+  isPF?: boolean;
   summaryType: SummaryType;
   summaryTarget: any;
 }
@@ -227,7 +228,9 @@ export interface CytoscapeBaseEvent {
   summaryTarget: any; // the cytoscape element that was the target of the event
 }
 
-export interface CytoscapeEvent extends CytoscapeBaseEvent {}
+export interface GraphEvent extends CytoscapeBaseEvent {
+  isPF?: boolean;
+}
 
 // Graph Structures
 
@@ -512,3 +515,77 @@ export interface DecoratedGraphElements {
   nodes?: DecoratedGraphNodeWrapper[];
   edges?: DecoratedGraphEdgeWrapper[];
 }
+
+export const EdgeAttr = {
+  destPrincipal: 'destPrincipal',
+  grpc: 'grpc',
+  grpcErr: 'grpcErr',
+  grpcNoResponse: 'grpcNoResponse',
+  grpcPercentErr: 'grpcPercentErr',
+  grpcPercentReq: 'grpcPercentReq',
+  hasTraffic: 'hasTraffic',
+  healthStatus: 'healthStatus',
+  http: 'http',
+  http3xx: 'http3xx',
+  http4xx: 'http4xx',
+  http5xx: 'http5xx',
+  httpNoResponse: 'httpNoResponse',
+  httpPercentErr: 'httpPercentErr',
+  httpPercentReq: 'httpPercentReq',
+  id: 'id',
+  isMTLS: 'isMTLS',
+  protocol: 'protocol',
+  responses: 'responses',
+  responseTime: 'responseTime',
+  sourcePrincipal: 'sourcePrincipal',
+  tcp: 'tcp',
+  throughput: 'throughput'
+};
+
+export const NodeAttr = {
+  aggregate: 'aggregate',
+  aggregateValue: 'aggregateValue',
+  app: 'app',
+  cluster: 'cluster',
+  destServices: 'destServices',
+  grpcIn: 'grpcIn',
+  grpcInErr: 'grpcInErr',
+  grpcInNoResponse: 'grpcInNoResponse',
+  grpcOut: 'grpcOut',
+  hasCB: 'hasCB',
+  hasFaultInjection: 'hasFaultInjection',
+  hasMirroring: 'hasMirroring',
+  hasMissingSC: 'hasMissingSC',
+  hasRequestRouting: 'hasRequestRouting',
+  hasRequestTimeout: 'hasRequestTimeout',
+  hasTCPTrafficShifting: 'hasTCPTrafficShifting',
+  hasTrafficShifting: 'hasTrafficShifting',
+  hasVS: 'hasVS',
+  hasWorkloadEntry: 'hasWorkloadEntry',
+  health: 'health',
+  healthStatus: 'healthStatus',
+  httpIn: 'httpIn',
+  httpIn3xx: 'httpIn3xx',
+  httpIn4xx: 'httpIn4xx',
+  httpIn5xx: 'httpIn5xx',
+  httpInNoResponse: 'httpInNoResponse',
+  httpOut: 'httpOut',
+  id: 'id',
+  isBox: 'isBox',
+  isDead: 'isDead',
+  isIdle: 'isIdle',
+  isInaccessible: 'isInaccessible',
+  isIstio: 'isIstio',
+  isMisconfigured: 'isMisconfigured',
+  isOutside: 'isOutside',
+  isRoot: 'isRoot',
+  isServiceEntry: 'isServiceEntry',
+  namespace: 'namespace',
+  nodeType: 'nodeType',
+  rank: 'rank',
+  service: 'service',
+  tcpIn: 'tcpIn',
+  tcpOut: 'tcpOut',
+  version: 'version',
+  workload: 'workload'
+};

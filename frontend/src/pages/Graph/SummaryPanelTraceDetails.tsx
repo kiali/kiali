@@ -10,7 +10,6 @@ import {
   ExclamationCircleIcon,
   MapMarkerIcon
 } from '@patternfly/react-icons';
-
 import { URLParam } from '../../app/History';
 import { JaegerTrace, RichSpanData, EnvoySpanInfo, OpenTracingHTTPInfo, OpenTracingTCPInfo } from 'types/JaegerInfo';
 import { KialiAppState } from 'store/Store';
@@ -18,17 +17,20 @@ import { JaegerThunkActions } from 'actions/JaegerThunkActions';
 import { GraphActions } from 'actions/GraphActions';
 import { PFColors } from 'components/Pf/PfColors';
 import { findChildren, findParent, formatDuration } from 'utils/tracing/TracingHelper';
-import { CytoscapeGraphSelectorBuilder } from 'components/CytoscapeGraph/CytoscapeGraphSelector';
 import { decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { FocusAnimation } from 'components/CytoscapeGraph/FocusAnimation';
 import { FormattedTraceInfo, shortIDStyle } from 'components/JaegerIntegration/JaegerResults/FormattedTraceInfo';
 import { SimplerSelect } from 'components/SimplerSelect';
 import { summaryFont, summaryTitle } from './SummaryPanelCommon';
-import { NodeParamsType, GraphType } from 'types/Graph';
+import { NodeParamsType, GraphType, SummaryData, NodeAttr } from 'types/Graph';
 import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { responseFlags } from 'utils/ResponseFlags';
 import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/KioskActions';
+import { Visualization, Node } from '@patternfly/react-topology';
+import { elems, selectAnd } from 'pages/GraphPF/GraphPFElems';
+import { FocusNode } from 'pages/GraphPF/GraphPF';
+import { GraphSelectorBuilder } from './GraphSelector';
 
 type ReduxProps = {
   close: () => void;
@@ -37,10 +39,11 @@ type ReduxProps = {
 };
 
 type Props = ReduxProps & {
-  trace: JaegerTrace;
-  node: any;
+  data: SummaryData;
   graphType: GraphType;
   jaegerURL?: string;
+  onFocus?: (focusNode: FocusNode) => void;
+  trace: JaegerTrace;
 };
 
 type State = {
@@ -96,14 +99,20 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
   }
 
   render() {
-    const node = decoratedNodeData(this.props.node);
-    const tracesDetailsURL = node.namespace
-      ? `/namespaces/${node.namespace}` +
-        (node.workload
-          ? `/workloads/${node.workload}`
-          : node.service
-          ? `/services/${node.service}`
-          : `/applications/${node.app!}`) +
+    const isPF = this.props.data.isPF;
+    let node: any = {};
+    let nodeData: any = {};
+    if (this.props.data.summaryType === 'node') {
+      node = this.props.data.summaryTarget;
+      nodeData = isPF ? node.getData() : decoratedNodeData(node);
+    }
+    const tracesDetailsURL = nodeData.namespace
+      ? `/namespaces/${nodeData.namespace}` +
+        (nodeData.workload
+          ? `/workloads/${nodeData.workload}`
+          : nodeData.service
+          ? `/services/${nodeData.service}`
+          : `/applications/${nodeData.app!}`) +
         `?tab=traces&${URLParam.JAEGER_TRACE_ID}=${this.props.trace.traceID}`
       : undefined;
     const jaegerTraceURL = this.props.jaegerURL
@@ -116,7 +125,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
         <span className={shortIDStyle}>{info.shortID()}</span>
       </span>
     );
-    const spans: RichSpanData[] = this.props.node.data('spans') || [];
+    const spans: RichSpanData[] = (isPF ? nodeData['hasSpans'] : nodeData['spans']) || [];
     let currentSpan = spans.find(s => s.spanID === this.state.selectedSpanID);
     if (!currentSpan && spans.length > 0) {
       currentSpan = spans[0];
@@ -205,14 +214,15 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
   }
 
   private spanViewLink(span: RichSpanData): string | undefined {
-    const node = decoratedNodeData(this.props.node);
-    return node.namespace
-      ? `/namespaces/${node.namespace}` +
-          (node.workload
-            ? `/workloads/${node.workload}`
-            : node.service
-            ? `/services/${node.service}`
-            : `/applications/${node.app!}`) +
+    const node = this.props.data.summaryTarget;
+    const nodeData = this.props.data.isPF ? node.getData() : decoratedNodeData(node);
+    return nodeData.namespace
+      ? `/namespaces/${nodeData.namespace}` +
+          (nodeData.workload
+            ? `/workloads/${nodeData.workload}`
+            : nodeData.service
+            ? `/services/${nodeData.service}`
+            : `/applications/${nodeData.app!}`) +
           `?tab=traces&${URLParam.JAEGER_TRACE_ID}=${this.props.trace.traceID}&${URLParam.JAEGER_SPAN_ID}=${span.spanID}`
       : undefined;
   }
@@ -269,14 +279,18 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
     );
   }
 
-  private linkToSpan(current: RichSpanData, target: RichSpanData, text: string) {
+  private linkToSpan(current: RichSpanData, target: RichSpanData, text: string): React.ReactFragment {
+    if (this.props.data.isPF) {
+      return this.linkToSpanPF(current, target, text);
+    }
+
     const useApp = this.props.graphType === GraphType.APP || this.props.graphType === GraphType.SERVICE;
     const currentElt = useApp ? current.app : current.workload;
     const targetElt = useApp ? target.app : target.workload;
     let tooltipContent = <>{text}</>;
     if (targetElt) {
-      const cy = this.props.node.cy();
-      const selBuilder = new CytoscapeGraphSelectorBuilder().namespace(target.namespace).class('span');
+      const cy = this.props.data.summaryTarget.cy();
+      const selBuilder = new GraphSelectorBuilder().namespace(target.namespace).class('span');
       const selector = useApp ? selBuilder.app(targetElt).build() : selBuilder.workload(targetElt).build();
       tooltipContent = (
         <>
@@ -297,6 +311,65 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
             onClick={() => new FocusAnimation(cy).start(cy.elements(selector))}
             isInline
           >
+            <span style={summaryFont}>
+              <MapMarkerIcon />
+            </span>
+          </Button>
+        </>
+      );
+    }
+    return (
+      <Tooltip
+        key={target.spanID}
+        content={
+          <>
+            Operation name: {target.operationName}
+            <br />
+            Workload: {target.workload || 'unknown'}
+          </>
+        }
+      >
+        {tooltipContent}
+      </Tooltip>
+    );
+  }
+
+  private linkToSpanPF(current: RichSpanData, target: RichSpanData, text: string): React.ReactFragment {
+    const useApp = this.props.graphType === GraphType.APP || this.props.graphType === GraphType.SERVICE;
+    const currentElt = useApp ? current.app : current.workload;
+    const targetElt = useApp ? target.app : target.workload;
+    let tooltipContent = <>{text}</>;
+    if (targetElt) {
+      // PF Graph
+      const controller =
+        this.props.data.summaryType === 'graph'
+          ? (this.props.data.summaryTarget as Visualization)
+          : (this.props.data.summaryTarget as Node).getController();
+      if (!controller) {
+        return <></>;
+      }
+      const { nodes } = elems(controller);
+      const node = selectAnd(nodes, [
+        { prop: NodeAttr.namespace, val: target.namespace },
+        { prop: 'hasSpans', op: 'truthy' },
+        { prop: useApp ? NodeAttr.app : NodeAttr.workload, val: targetElt }
+      ]);
+
+      tooltipContent = (
+        <>
+          <Button
+            variant={ButtonVariant.link}
+            onClick={() => {
+              this.setState({ selectedSpanID: target.spanID });
+              if (targetElt !== currentElt || target.namespace !== current.namespace) {
+                this.props.onFocus!({ id: node[0].getId(), isSelected: true });
+              }
+            }}
+            isInline
+          >
+            <span style={summaryFont}>{text}</span>
+          </Button>{' '}
+          <Button variant={ButtonVariant.link} onClick={() => this.props.onFocus!({ id: node[0].getId() })} isInline>
             <span style={summaryFont}>
               <MapMarkerIcon />
             </span>

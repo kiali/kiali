@@ -1,13 +1,13 @@
 import * as React from 'react';
 import { Tab, Tooltip } from '@patternfly/react-core';
+import { Node } from '@patternfly/react-topology';
 import { style } from 'typestyle';
 import { summaryFont, summaryHeader, summaryBodyTabs, summaryPanelWidth, getTitle } from './SummaryPanelCommon';
-import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { RateTableGrpc, RateTableHttp, RateTableTcp } from 'components/SummaryPanel/RateTable';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
-import { SummaryPanelPropType, NodeType, TrafficRate } from 'types/Graph';
+import { SummaryPanelPropType, NodeType, TrafficRate, NodeAttr } from 'types/Graph';
 import {
   getAccumulatedTrafficRateGrpc,
   getAccumulatedTrafficRateHttp,
@@ -15,6 +15,7 @@ import {
 } from 'utils/TrafficRate';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { KialiPageLink } from 'components/Link/KialiPageLink';
+import { descendents, edgesIn, edgesInOut, edgesOut, elems, select } from 'pages/GraphPF/GraphPFElems';
 
 type SummaryPanelClusterBoxState = {
   clusterBox: any;
@@ -50,30 +51,38 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
   }
 
   render() {
+    const isPF = !!this.props.data.isPF;
     const clusterBox = this.props.data.summaryTarget;
-    const boxed = clusterBox.descendants();
-    const cluster = clusterBox.data(CyNode.cluster);
+    const data = isPF ? clusterBox.getData() : clusterBox.data();
+    const boxed = isPF ? descendents(clusterBox) : clusterBox.descendants();
+    const cluster = data[NodeAttr.cluster];
 
-    const numSvc = boxed.filter(`node[nodeType = "${NodeType.SERVICE}"]`).size();
-    const numWorkloads = boxed.filter(`node[nodeType = "${NodeType.WORKLOAD}"]`).size();
-    const { numApps, numVersions } = this.countApps(boxed);
-    const numEdges = boxed.connectedEdges().size();
-    // inbound edges are from a different cluster
-    const inboundEdges = clusterBox.cy().nodes(`[${CyNode.cluster} != "${cluster}"]`).edgesTo(boxed);
-    // outbound edges are to a different cluster
-    const outboundEdges = boxed.edgesTo(`[${CyNode.cluster} != "${cluster}"]`);
-    // total edges are inbound + edges from boxed workload|app|root nodes (i.e. not injected service nodes or box nodes)
-    const totalEdges = inboundEdges.add(boxed.filter(`[?${CyNode.workload}]`).edgesTo('*'));
-    const grpcIn = getAccumulatedTrafficRateGrpc(inboundEdges);
-    const grpcOut = getAccumulatedTrafficRateGrpc(outboundEdges);
-    const grpcTotal = getAccumulatedTrafficRateGrpc(totalEdges);
-    const httpIn = getAccumulatedTrafficRateHttp(inboundEdges);
-    const httpOut = getAccumulatedTrafficRateHttp(outboundEdges);
-    const httpTotal = getAccumulatedTrafficRateHttp(totalEdges);
-    const isGrpcRequests = this.props.trafficRates.includes(TrafficRate.GRPC_REQUEST);
-    const tcpIn = getAccumulatedTrafficRateTcp(inboundEdges);
-    const tcpOut = getAccumulatedTrafficRateTcp(outboundEdges);
-    const tcpTotal = getAccumulatedTrafficRateTcp(totalEdges);
+    let numSvc;
+    let numWorkloads;
+    let numEdges;
+    const { numApps, numVersions } = this.countApps(boxed, isPF);
+    const {
+      grpcIn,
+      grpcOut,
+      grpcTotal,
+      httpIn,
+      httpOut,
+      httpTotal,
+      isGrpcRequests,
+      tcpIn,
+      tcpOut,
+      tcpTotal
+    } = this.getBoxTraffic(boxed, isPF);
+
+    if (isPF) {
+      numSvc = select(boxed, { prop: NodeAttr.nodeType, val: NodeType.SERVICE }).length;
+      numWorkloads = select(boxed, { prop: NodeAttr.nodeType, val: NodeType.WORKLOAD }).length;
+      numEdges = edgesInOut(boxed).length;
+    } else {
+      numSvc = boxed.filter(`node[nodeType = "${NodeType.SERVICE}"]`).size();
+      numWorkloads = boxed.filter(`node[nodeType = "${NodeType.WORKLOAD}"]`).size();
+      numEdges = boxed.connectedEdges().size();
+    }
 
     const tooltipInboundRef = React.createRef();
     const tooltipOutboundRef = React.createRef();
@@ -204,15 +213,84 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     );
   }
 
-  private countApps = (boxed): { numApps: number; numVersions: number } => {
+  private getBoxTraffic = (
+    boxed,
+    isPF: boolean
+  ): { grpcIn; grpcOut; grpcTotal; httpIn; httpOut; httpTotal; isGrpcRequests; tcpIn; tcpOut; tcpTotal } => {
+    const clusterBox = this.props.data.summaryTarget;
+    const data = isPF ? clusterBox.getData() : clusterBox.data();
+    const cluster = data[NodeAttr.cluster];
+
+    let inboundEdges;
+    let outboundEdges;
+    let totalEdges;
+    if (isPF) {
+      const controller = (clusterBox as Node).getController();
+      const { nodes } = elems(controller);
+      const outsideNodes = select(nodes, { prop: NodeAttr.cluster, op: '!=', val: cluster }) as Node[];
+      // inbound edges are from a different cluster
+      inboundEdges = edgesOut(outsideNodes, boxed);
+      // outbound edges are to a different different cluster
+      outboundEdges = edgesIn(outsideNodes, boxed);
+      // total edges are inbound + edges from boxed workload|app|root nodes (i.e. not injected service nodes or box nodes)
+      totalEdges = [...inboundEdges];
+      totalEdges.push(...edgesOut(select(boxed, { prop: NodeAttr.workload, op: 'truthy' }) as Node[]));
+    } else {
+      // inbound edges are from a different cluster
+      inboundEdges = clusterBox.cy().nodes(`[${NodeAttr.cluster} != "${cluster}"]`).edgesTo(boxed);
+      // outbound edges are to a different cluster
+      outboundEdges = boxed.edgesTo(`[${NodeAttr.cluster} != "${cluster}"]`);
+      // total edges are inbound + edges from boxed workload|app|root nodes (i.e. not injected service nodes or box nodes)
+      totalEdges = inboundEdges.add(boxed.filter(`[?${NodeAttr.workload}]`).edgesTo('*'));
+    }
+
+    return {
+      grpcIn: getAccumulatedTrafficRateGrpc(inboundEdges, isPF),
+      grpcOut: getAccumulatedTrafficRateGrpc(outboundEdges, isPF),
+      grpcTotal: getAccumulatedTrafficRateGrpc(totalEdges, isPF),
+      httpIn: getAccumulatedTrafficRateHttp(inboundEdges, isPF),
+      httpOut: getAccumulatedTrafficRateHttp(outboundEdges, isPF),
+      httpTotal: getAccumulatedTrafficRateHttp(totalEdges, isPF),
+      isGrpcRequests: this.props.trafficRates.includes(TrafficRate.GRPC_REQUEST),
+      tcpIn: getAccumulatedTrafficRateTcp(inboundEdges, isPF),
+      tcpOut: getAccumulatedTrafficRateTcp(outboundEdges, isPF),
+      tcpTotal: getAccumulatedTrafficRateTcp(totalEdges, isPF)
+    };
+  };
+
+  private countApps = (boxed, isPF: boolean): { numApps: number; numVersions: number } => {
+    if (isPF) {
+      return this.countAppsPF(boxed);
+    }
+
     const appVersions: { [key: string]: Set<string> } = {};
 
     boxed.filter(`node[nodeType = "${NodeType.APP}"]`).forEach(node => {
-      const app = node.data(CyNode.app);
+      const app = node.data(NodeAttr.app);
       if (appVersions[app] === undefined) {
         appVersions[app] = new Set();
       }
-      appVersions[app].add(node.data(CyNode.version));
+      appVersions[app].add(node.data(NodeAttr.version));
+    });
+
+    return {
+      numApps: Object.getOwnPropertyNames(appVersions).length,
+      numVersions: Object.getOwnPropertyNames(appVersions).reduce((totalCount: number, version: string) => {
+        return totalCount + appVersions[version].size;
+      }, 0)
+    };
+  };
+
+  private countAppsPF = (boxed): { numApps: number; numVersions: number } => {
+    const appVersions: { [key: string]: Set<string> } = {};
+
+    select(boxed, { prop: NodeAttr.nodeType, val: NodeType.APP }).forEach(node => {
+      const data = node.getData();
+      const app = data[NodeAttr.app];
+      if (appVersions[app] === undefined) {
+        appVersions[app] = new Set();
+      }
+      appVersions[app].add(data[NodeAttr.version]);
     });
 
     return {

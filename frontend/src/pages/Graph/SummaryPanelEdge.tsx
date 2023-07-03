@@ -38,6 +38,7 @@ import { Tab, Tooltip } from '@patternfly/react-core';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { Direction } from 'types/MetricsOptions';
 import { style } from 'typestyle';
+import { Edge } from '@patternfly/react-topology';
 
 type SummaryPanelEdgeMetricsState = {
   rates: Datapoint[];
@@ -125,15 +126,16 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
   }
 
   render() {
-    const target = this.props.data.summaryTarget;
-    const source = decoratedNodeData(target.source());
-    const dest = decoratedNodeData(target.target());
-    const edge = decoratedEdgeData(target);
-    const mTLSPercentage = edge.isMTLS;
+    const isPF = !!this.props.data.isPF;
+    const edge = this.props.data.summaryTarget;
+    const edgeData = isPF ? (edge as Edge).getData() : decoratedEdgeData(edge);
+    const sourceData = isPF ? (edge as Edge).getSource().getData() : decoratedNodeData(edge.source());
+    const destData = isPF ? (edge as Edge).getTarget().getData() : decoratedNodeData(edge.target());
+    const mTLSPercentage = edgeData.isMTLS;
     const isMtls = mTLSPercentage && mTLSPercentage > 0;
-    const hasPrincipals = !!edge.sourcePrincipal || !!edge.destPrincipal;
+    const hasPrincipals = !!edgeData.sourcePrincipal || !!edgeData.destPrincipal;
     const hasSecurity = isMtls || hasPrincipals;
-    const protocol = edge.protocol;
+    const protocol = edgeData.protocol;
     const isGrpc = protocol === Protocol.GRPC;
     const isHttp = protocol === Protocol.HTTP;
     const isTcp = protocol === Protocol.TCP;
@@ -148,11 +150,11 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
               <div style={{ padding: '5px 0 2px 0' }}>
                 <strong>Principals:</strong>
               </div>
-              <Tooltip key="tt_src_ppl" position="top" content={`Source principal: ${edge.sourcePrincipal}`}>
-                <span className={principalStyle}>{edge.sourcePrincipal || 'unknown'}</span>
+              <Tooltip key="tt_src_ppl" position="top" content={`Source principal: ${edgeData.sourcePrincipal}`}>
+                <span className={principalStyle}>{edgeData.sourcePrincipal || 'unknown'}</span>
               </Tooltip>
-              <Tooltip key="tt_src_ppl" position="top" content={`Destination principal: ${edge.destPrincipal}`}>
-                <span className={principalStyle}>{edge.destPrincipal || 'unknown'}</span>
+              <Tooltip key="tt_src_ppl" position="top" content={`Destination principal: ${edgeData.destPrincipal}`}>
+                <span className={principalStyle}>{edgeData.destPrincipal || 'unknown'}</span>
               </Tooltip>
             </>
           )}
@@ -164,8 +166,8 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       <div ref={this.mainDivRef} className={`panel panel-default ${summaryPanel}`}>
         <div className="panel-heading" style={summaryHeader}>
           {getTitle(`Edge (${prettyProtocol(protocol)})`)}
-          {renderBadgedLink(source, undefined, 'From:  ')}
-          {renderBadgedLink(dest, undefined, 'To:        ')}
+          {renderBadgedLink(sourceData, undefined, 'From:  ')}
+          {renderBadgedLink(destData, undefined, 'To:        ')}
         </div>
         {hasSecurity && <SecurityBlock />}
         {(isHttp || isGrpc) && (
@@ -177,9 +179,9 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
                     <>
                       <RateTableGrpc
                         isRequests={isRequests}
-                        rate={this.safeRate(edge.grpc)}
-                        rateGrpcErr={this.safeRate(edge.grpcErr)}
-                        rateNR={this.safeRate(edge.grpcNoResponse)}
+                        rate={this.safeRate(edgeData.grpc)}
+                        rateGrpcErr={this.safeRate(edgeData.grpcErr)}
+                        rateNR={this.safeRate(edgeData.grpcNoResponse)}
                       />
                     </>
                   )}
@@ -187,11 +189,11 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
                     <>
                       <RateTableHttp
                         title="HTTP requests per second:"
-                        rate={this.safeRate(edge.http)}
-                        rate3xx={this.safeRate(edge.http3xx)}
-                        rate4xx={this.safeRate(edge.http4xx)}
-                        rate5xx={this.safeRate(edge.http5xx)}
-                        rateNR={this.safeRate(edge.httpNoResponse)}
+                        rate={this.safeRate(edgeData.http)}
+                        rate3xx={this.safeRate(edgeData.http3xx)}
+                        rate4xx={this.safeRate(edgeData.http4xx)}
+                        rate5xx={this.safeRate(edgeData.http5xx)}
+                        rateNR={this.safeRate(edgeData.httpNoResponse)}
                       />
                     </>
                   )}
@@ -202,7 +204,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
                   <div style={summaryFont}>
                     <ResponseFlagsTable
                       title={'Response flags by ' + (isGrpc ? 'GRPC code:' : 'HTTP code:')}
-                      responses={edge.responses}
+                      responses={edgeData.responses}
                     />
                   </div>
                 </Tab>
@@ -211,13 +213,13 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
                 <div style={summaryFont}>
                   <ResponseHostsTable
                     title={'Hosts by ' + (isGrpc ? 'GRPC code:' : 'HTTP code:')}
-                    responses={edge.responses}
+                    responses={edgeData.responses}
                   />
                 </div>
               </Tab>
             </SimpleTabs>
             {hr()}
-            {this.renderCharts(target, isGrpc, isHttp, isTcp, isRequests)}
+            {this.renderCharts(edge, isGrpc, isHttp, isTcp, isRequests, isPF)}
           </div>
         )}
         {isTcp && (
@@ -225,17 +227,17 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
             <SimpleTabs id="edge_summary_flag_hosts_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
               <Tab style={summaryFont} eventKey={0} title="Flags">
                 <div style={summaryFont}>
-                  <ResponseFlagsTable title="Response flags by code:" responses={edge.responses} />
+                  <ResponseFlagsTable title="Response flags by code:" responses={edgeData.responses} />
                 </div>
               </Tab>
               <Tab style={summaryFont} eventKey={1} title="Hosts">
                 <div style={summaryFont}>
-                  <ResponseHostsTable title="Hosts by code:" responses={edge.responses} />
+                  <ResponseHostsTable title="Hosts by code:" responses={edgeData.responses} />
                 </div>
               </Tab>
             </SimpleTabs>
             {hr()}
-            {this.renderCharts(target, isGrpc, isHttp, isTcp, isRequests)}
+            {this.renderCharts(edge, isGrpc, isHttp, isTcp, isRequests, isPF)}
           </div>
         )}
         {!isGrpc && !isHttp && !isTcp && <div className="panel-body">{renderNoTraffic()}</div>}
@@ -335,10 +337,11 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
   };
 
   private updateCharts = (props: SummaryPanelPropType) => {
-    const edge = props.data.summaryTarget;
-    const edgeData = decoratedEdgeData(edge);
-    const sourceData = decoratedNodeData(edge.source());
-    const destData = decoratedNodeData(edge.target());
+    const isPF = !!props.data.isPF;
+    const edge = this.props.data.summaryTarget;
+    const edgeData = isPF ? (edge as Edge).getData() : decoratedEdgeData(edge);
+    const sourceData = isPF ? (edge as Edge).getSource().getData() : decoratedNodeData(edge.source());
+    const destData = isPF ? (edge as Edge).getTarget().getData() : decoratedNodeData(edge.target());
     const sourceMetricType = getNodeMetricType(sourceData);
     const destMetricType = getNodeMetricType(destData);
     const protocol = edgeData.protocol;
@@ -356,7 +359,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     if (
       !destMetricType ||
       !sourceMetricType ||
-      !this.hasSupportedCharts(edge) ||
+      !this.hasSupportedCharts(edge, isPF) ||
       (!isGrpc && !isHttp && !isTcp) ||
       destData.isInaccessible
     ) {
@@ -370,7 +373,6 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     const isSourceAggregate = sourceData.nodeType === NodeType.AGGREGATE;
     const isDestServiceEntry = !!destData.isServiceEntry;
     const useDestMetrics = isDestServiceEntry || isSourceAggregate ? false : true;
-    const metricsNode = useDestMetrics ? edge.target() : edge.source();
     const metricsNodeData = useDestMetrics ? destData : sourceData;
     const direction: Direction = useDestMetrics || isSourceAggregate ? 'inbound' : 'outbound';
     const metricType = useDestMetrics ? destMetricType : sourceMetricType;
@@ -385,14 +387,14 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       const reporterRps =
         [NodeType.SERVICE, NodeType.UNKNOWN].includes(sourceData.nodeType) ||
         NodeType.AGGREGATE === metricsNodeData.nodeType ||
-        edge.source().isIstio ||
-        edge.target().isIstio
+        sourceData.isIstio ||
+        edgeData.isIstio
           ? 'destination'
           : 'source';
       const filtersRps = ['request_count', 'request_duration_millis', 'request_error_count'];
       promiseRequests = getNodeMetrics(
         metricType,
-        metricsNode,
+        metricsNodeData,
         props,
         filtersRps,
         direction,
@@ -410,7 +412,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       const filters = ['grpc_sent', 'grpc_received'];
       promiseStream = getNodeMetrics(
         metricType,
-        metricsNode,
+        metricsNodeData,
         props,
         filters,
         direction,
@@ -428,7 +430,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       const filtersTCP = ['tcp_sent', 'tcp_received'];
       promiseStream = getNodeMetrics(
         metricType,
-        metricsNode,
+        metricsNodeData,
         props,
         filtersTCP,
         direction,
@@ -538,8 +540,8 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     return isNaN(s) ? 0.0 : Number(s);
   };
 
-  private renderCharts = (edge, isGrpc, isHttp, isTcp, isRequests) => {
-    if (!this.hasSupportedCharts(edge)) {
+  private renderCharts = (edge, isGrpc, isHttp, isTcp, isRequests, isPF: boolean) => {
+    if (!this.hasSupportedCharts(edge, isPF)) {
       return isGrpc || isHttp ? (
         <>
           <KialiIcon.Info /> Service graphs do not support service-to-service aggregate sparklines. See the chart above
@@ -554,8 +556,8 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       );
     }
 
-    const target = decoratedNodeData(edge.target());
-    if (target.isInaccessible) {
+    const destData = isPF ? (edge as Edge).getTarget().getData() : decoratedNodeData(edge.target());
+    if (destData.isInaccessible) {
       return (
         <>
           <KialiIcon.Info /> Sparkline charts cannot be shown because the destination is inaccessible.
@@ -622,9 +624,9 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     );
   };
 
-  private hasSupportedCharts = edge => {
-    const sourceData = decoratedNodeData(edge.source());
-    const destData = decoratedNodeData(edge.target());
+  private hasSupportedCharts = (edge, isPF: boolean) => {
+    const sourceData = isPF ? (edge as Edge).getSource().getData() : decoratedNodeData(edge.source());
+    const destData = isPF ? (edge as Edge).getTarget().getData() : decoratedNodeData(edge.target());
     const sourceMetricType = getNodeMetricType(sourceData);
     const destMetricType = getNodeMetricType(destData);
 

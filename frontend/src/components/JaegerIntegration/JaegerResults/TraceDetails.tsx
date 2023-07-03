@@ -6,7 +6,6 @@ import { Button, ButtonVariant, Card, CardBody, Grid, GridItem, Tooltip } from '
 import { InfoAltIcon, WarningTriangleIcon } from '@patternfly/react-icons';
 import { JaegerTrace, RichSpanData } from 'types/JaegerInfo';
 import { JaegerTraceTitle } from './JaegerTraceTitle';
-import { CytoscapeGraphSelectorBuilder } from 'components/CytoscapeGraph/CytoscapeGraphSelector';
 import { GraphType, NodeType } from 'types/Graph';
 import { FormattedTraceInfo, shortIDStyle } from './FormattedTraceInfo';
 import { PFColors } from 'components/Pf/PfColors';
@@ -28,6 +27,7 @@ import { MetricsStatsThunkActions } from 'actions/MetricsStatsThunkActions';
 import { renderTraceHeatMap } from './StatsComparison';
 import { HeatMap } from 'components/HeatMap/HeatMap';
 import { formatDuration, sameSpans } from 'utils/tracing/TracingHelper';
+import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
 
 type ReduxProps = {
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean, cluster?: string) => void;
@@ -79,26 +79,26 @@ class TraceDetailsComponent extends React.Component<Props, State> {
   }
 
   private getGraphURL = (traceID: string) => {
-    let cytoscapeGraph = new CytoscapeGraphSelectorBuilder().namespace(this.props.namespace);
+    let graphSelector = new GraphSelectorBuilder().namespace(this.props.namespace);
     let graphType: GraphType = GraphType.APP;
 
     switch (this.props.targetKind) {
       case 'app':
-        cytoscapeGraph = cytoscapeGraph.app(this.props.target).nodeType(NodeType.APP);
+        graphSelector = graphSelector.app(this.props.target).nodeType(NodeType.APP);
         break;
       case 'service':
         graphType = GraphType.SERVICE;
-        cytoscapeGraph = cytoscapeGraph.service(this.props.target);
+        graphSelector = graphSelector.service(this.props.target);
         break;
       case 'workload':
         graphType = GraphType.WORKLOAD;
-        cytoscapeGraph = cytoscapeGraph.workload(this.props.target);
+        graphSelector = graphSelector.workload(this.props.target);
         break;
     }
 
     return `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${
       this.props.namespace
-    }&traceId=${traceID}&focusSelector=${encodeURI(cytoscapeGraph.build())}`;
+    }&traceId=${traceID}&focusSelector=${encodeURI(graphSelector.build())}`;
   };
 
   private renderSimilarHeatmap = (

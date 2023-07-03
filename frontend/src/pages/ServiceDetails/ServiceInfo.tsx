@@ -30,7 +30,7 @@ import {
 } from '../../types/IstioConfigList';
 import { canCreate, canUpdate } from '../../types/Permissions';
 import { KialiAppState } from '../../store/Store';
-import { durationSelector, meshWideMTLSEnabledSelector } from '../../store/Selectors';
+import { durationSelector } from '../../store/Selectors';
 import { ServiceNetwork } from './ServiceNetwork';
 import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
 import { history, URLParam } from '../../app/History';
@@ -42,11 +42,12 @@ import { WizardAction, WizardMode } from '../../components/IstioWizards/WizardAc
 import { deleteServiceTrafficRouting } from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { triggerRefresh } from '../../hooks/refresh';
+import { serverConfig } from 'config';
+import { MiniGraphCardPF } from 'pages/GraphPF/MiniGraphCardPF';
 
 interface Props extends ServiceId {
   cluster?: string;
   duration: DurationInSeconds;
-  mtlsEnabled: boolean;
   serviceDetails?: ServiceDetailsInfo;
   gateways: Gateway[];
   k8sGateways: K8sGateway[];
@@ -222,6 +223,9 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
     // Graph resizes correctly on width
     const height = this.state.tabHeight ? this.state.tabHeight - 115 : 300;
     const graphContainerStyle = style({ width: '100%', height: height });
+    const includeMiniGraphCy = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'pf';
+    const includeMiniGraphPF = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'cy';
+    const miniGraphSpan = includeMiniGraphCy && includeMiniGraphPF ? 4 : 8;
 
     return (
       <>
@@ -244,17 +248,28 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
                 </StackItem>
               </Stack>
             </GridItem>
-            <GridItem span={8}>
-              <MiniGraphCard
-                dataSource={this.graphDataSource}
-                mtlsEnabled={this.props.mtlsEnabled}
-                onEdgeTap={this.goToMetrics}
-                graphContainerStyle={graphContainerStyle}
-                serviceDetails={this.props.serviceDetails}
-                onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
-                onLaunchWizard={this.handleLaunchWizard}
-              />
-            </GridItem>
+            {includeMiniGraphCy && (
+              <GridItem span={miniGraphSpan}>
+                <MiniGraphCard
+                  dataSource={this.graphDataSource}
+                  onEdgeTap={this.goToMetrics}
+                  graphContainerStyle={graphContainerStyle}
+                  serviceDetails={this.props.serviceDetails}
+                  onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
+                  onLaunchWizard={this.handleLaunchWizard}
+                />
+              </GridItem>
+            )}
+            {includeMiniGraphPF && (
+              <GridItem span={miniGraphSpan}>
+                <MiniGraphCardPF
+                  dataSource={this.graphDataSource}
+                  onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
+                  onLaunchWizard={this.handleLaunchWizard}
+                  serviceDetails={this.props.serviceDetails}
+                />
+              </GridItem>
+            )}
           </Grid>
         </RenderComponentScroll>
         <ServiceWizard
@@ -296,7 +311,6 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  mtlsEnabled: meshWideMTLSEnabledSelector(state),
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
 });
 

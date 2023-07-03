@@ -39,7 +39,7 @@ const mutIcons = {
       ascii: '\ue915 ',
       color: 'red'
     },
-    mtls: { className: 'pf-icon pf-icon-locked', type: 'pf', name: 'locked', ascii: '\uE923 ' },
+    mtls: { className: 'pf-icon pf-icon-locked', type: 'pf', name: 'locked', ascii: '\ue923 ' },
     requestRouting: { className: 'fa fa-code-branch', type: 'fa', name: 'code-fork', ascii: '\uf126 ' },
     requestTimeout: { className: 'fa fa-clock', type: 'fa', name: 'clock', ascii: '\uf017 ' },
     root: { className: 'fa fa-arrow-alt-circle-right', type: 'fa', name: 'arrow-alt-circle-right', ascii: '\uf35a ' },

@@ -91,6 +91,7 @@ const defaultServerConfig: ComputedServerConfig = {
       graph: {
         findOptions: [],
         hideOptions: [],
+        impl: 'cy',
         settings: {
           fontLabel: 13,
           minFontBadge: 7,

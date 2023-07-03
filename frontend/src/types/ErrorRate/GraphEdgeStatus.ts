@@ -61,7 +61,7 @@ export const assignEdgeHealth = (cy: any) => {
 /*
  Return the status for the edge from source to target
 */
-const getEdgeHealth = (
+export const getEdgeHealth = (
   edge: DecoratedGraphEdgeData,
   source: DecoratedGraphNodeData,
   target: DecoratedGraphNodeData

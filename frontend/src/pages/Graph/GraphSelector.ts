@@ -1,8 +1,8 @@
 import { NodeType, BoxByType } from '../../types/Graph';
 
-export type CytoscapeGraphSelector = string;
+export type GraphSelector = string;
 
-interface CytoscapeElementData {
+interface GraphElementData {
   aggregate?: string;
   aggregateValue?: string;
   app?: string;
@@ -15,8 +15,8 @@ interface CytoscapeElementData {
   workload?: string;
 }
 
-export class CytoscapeGraphSelectorBuilder {
-  private data: CytoscapeElementData = {};
+export class GraphSelectorBuilder {
+  private data: GraphElementData = {};
   private clazz: string = '';
 
   aggregate(aggregate: string, aggregateValue: string) {
@@ -70,7 +70,7 @@ export class CytoscapeGraphSelectorBuilder {
     return this;
   }
 
-  build(): CytoscapeGraphSelector {
+  build(): GraphSelector {
     return 'node' + this.clazz + this.buildDataSelector();
   }
 

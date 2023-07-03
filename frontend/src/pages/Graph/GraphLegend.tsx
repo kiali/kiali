@@ -9,7 +9,6 @@ import { summaryFont, summaryTitle } from './SummaryPanelCommon';
 export interface GraphLegendProps {
   closeLegend: () => void;
   className?: string;
-  isMTLSEnabled: boolean;
 }
 
 const width = '190px';

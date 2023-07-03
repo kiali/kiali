@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { style } from 'typestyle';
-import { SummaryPanelPropType, BoxByType, SummaryData } from '../../types/Graph';
 import { SummaryPanelEdge } from './SummaryPanelEdge';
 import { SummaryPanelGraph } from './SummaryPanelGraph';
 import { SummaryPanelAppBox } from './SummaryPanelAppBox';
+import { SummaryPanelPropType, BoxByType, SummaryData, NodeAttr } from '../../types/Graph';
 import { KialiIcon } from 'config/KialiIcon';
 import { SummaryPanelNode } from './SummaryPanelNode';
 import { JaegerState } from 'reducers/JaegerState';
@@ -12,13 +12,13 @@ import { SummaryPanelTraceDetails } from './SummaryPanelTraceDetails';
 import { KialiAppState } from 'store/Store';
 import { SummaryPanelClusterBox } from './SummaryPanelClusterBox';
 import { SummaryPanelNamespaceBox } from './SummaryPanelNamespaceBox';
-import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import { TourStop } from 'components/Tour/TourStop';
 import { summaryPanelWidth } from './SummaryPanelCommon';
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { PeerAuthentication } from '../../types/IstioObjects';
+import { FocusNode } from 'pages/GraphPF/GraphPF';
 
 type SummaryPanelState = {
   isVisible: boolean;
@@ -29,6 +29,7 @@ type MainSummaryPanelPropType = SummaryPanelPropType & {
   jaegerState: JaegerState;
   kiosk: string;
   onDeleteTrafficRouting?: (key: string, serviceDetails: ServiceDetailsInfo) => void;
+  onFocus?: (focusNode: FocusNode) => void;
   onLaunchWizard?: (
     key: WizardAction,
     mode: WizardMode,
@@ -124,10 +125,11 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
             <div className={`panel panel-default ${summaryPanelBottomSplit}`}>
               <div className="panel-body">
                 <SummaryPanelTraceDetails
-                  trace={this.props.jaegerState.selectedTrace}
-                  node={this.props.data.summaryTarget}
+                  data={this.props.data}
                   graphType={this.props.graphType}
                   jaegerURL={this.props.jaegerState.info?.url}
+                  onFocus={this.props.onFocus}
+                  trace={this.props.jaegerState.selectedTrace}
                 />
               </div>
             </div>
@@ -138,17 +140,19 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
   }
 
   private getSummaryPanel = (summary: SummaryData): React.ReactFragment => {
+    const isPF = !!summary.isPF;
     const summaryType = summary.summaryType as string;
 
     switch (summaryType) {
       case 'box': {
-        const boxType: BoxByType | undefined =
-          summaryType === 'box' ? this.props.data.summaryTarget.data(CyNode.isBox) : undefined;
+        const boxType: BoxByType = isPF
+          ? summary.summaryTarget.getData()[NodeAttr.isBox]
+          : summary.summaryTarget.data(NodeAttr.isBox);
         switch (boxType) {
           case 'app':
             return (
               <SummaryPanelAppBox
-                data={this.props.data}
+                data={summary}
                 duration={this.props.duration}
                 graphType={this.props.graphType}
                 injectServiceNodes={this.props.injectServiceNodes}
@@ -163,7 +167,7 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
           case 'cluster':
             return (
               <SummaryPanelClusterBox
-                data={this.props.data}
+                data={summary}
                 duration={this.props.duration}
                 graphType={this.props.graphType}
                 injectServiceNodes={this.props.injectServiceNodes}
@@ -178,7 +182,7 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
           case 'namespace':
             return (
               <SummaryPanelNamespaceBox
-                data={this.props.data}
+                data={summary}
                 duration={this.props.duration}
                 graphType={this.props.graphType}
                 injectServiceNodes={this.props.injectServiceNodes}

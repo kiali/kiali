@@ -13,6 +13,8 @@ import { WorkloadDetailsRoute } from 'routes/WorkloadDetailsRoute';
 import { AppDetailsRoute } from 'routes/AppDetailsRoute';
 import { IstioConfigDetailsRoute } from 'routes/IstioConfigDetailsRoute';
 import { IstioConfigNewRoute } from 'routes/IstioConfigNewRoute';
+import { GraphRoutePF } from 'routes/GraphRoutePF';
+import { GraphPagePF } from 'pages/GraphPF/GraphPagePF';
 
 /**
  * Return array of objects that describe vertical menu
@@ -25,9 +27,14 @@ const navMenuItems: MenuItem[] = [
     pathsActive: [/^\/overview\/(.*)/]
   },
   {
-    title: 'Graph',
+    title: 'Graph [Cy]',
     to: '/graph/namespaces/',
     pathsActive: [/^\/graph\/(.*)/]
+  },
+  {
+    title: 'Graph [PF]',
+    to: '/graphpf/namespaces/',
+    pathsActive: [/^\/graphpf\/(.*)/]
   },
   {
     title: 'Applications',
@@ -89,6 +96,30 @@ const pathRoutes: Path[] = [
   {
     path: '/graph/namespaces',
     component: GraphPage
+  },
+  {
+    path: '/graphpf/node/namespaces/:namespace/' + Paths.AGGREGATES + '/:aggregate/:aggregateValue',
+    component: GraphRoutePF
+  },
+  {
+    path: '/graphpf/node/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app/versions/:version',
+    component: GraphRoutePF
+  },
+  {
+    path: '/graphpf/node/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app',
+    component: GraphRoutePF
+  },
+  {
+    path: '/graphpf/node/namespaces/:namespace/' + Paths.SERVICES + '/:service',
+    component: GraphRoutePF
+  },
+  {
+    path: '/graphpf/node/namespaces/:namespace/' + Paths.WORKLOADS + '/:workload',
+    component: GraphRoutePF
+  },
+  {
+    path: '/graphpf/namespaces',
+    component: GraphPagePF
   },
   {
     path: '/namespaces/:namespace/' + Paths.SERVICES + '/:service',

@@ -357,6 +357,7 @@ And('the user filters by {string} for {string}', (filter: string, filterValue: s
   } else if (filter === 'Istio Type') {
     cy.get('select[aria-label="filter_select_type"]').select('Istio Type');
     cy.get('input[placeholder="Filter by Istio Type"]').type(`${filterValue}{enter}`);
+    cy.get(`button[label="${filterValue}"]`).should('be.visible').click();
   } else if (filter === 'Config') {
     cy.get('select[aria-label="filter_select_type"]').select(filter);
     cy.get('select[aria-label="filter_select_value"]').select(filterValue);

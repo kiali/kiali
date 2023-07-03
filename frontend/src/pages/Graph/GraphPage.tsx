@@ -9,7 +9,7 @@ import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSe
 import { MessageType } from '../../types/MessageCenter';
 import { Namespace } from '../../types/Namespace';
 import {
-  CytoscapeEvent,
+  GraphEvent,
   DecoratedGraphElements,
   EdgeLabelMode,
   GraphDefinition,
@@ -105,6 +105,7 @@ type ReduxProps = {
   findValue: string;
   graphType: GraphType;
   hideValue: string;
+  istioAPIEnabled: boolean;
   isPageVisible: boolean;
   kiosk: string;
   layout: Layout;
@@ -139,8 +140,7 @@ type ReduxProps = {
   trafficRates: TrafficRate[];
   toggleIdleNodes: () => void;
   toggleLegend: () => void;
-  updateSummary: (event: CytoscapeEvent) => void;
-  istioAPIEnabled: boolean;
+  updateSummary: (event: GraphEvent) => void;
 };
 
 export type GraphPageProps = Partial<GraphURLPathProps> &
@@ -470,11 +470,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
               fallBackComponent={<GraphErrorBoundaryFallback />}
             >
               {this.props.showLegend && (
-                <GraphLegend
-                  className={graphLegendStyle}
-                  isMTLSEnabled={this.props.mtlsEnabled}
-                  closeLegend={this.props.toggleLegend}
-                />
+                <GraphLegend className={graphLegendStyle} closeLegend={this.props.toggleLegend} />
               )}
               {isReady && (
                 <Chip
@@ -494,7 +490,6 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
                   contextMenuNodeComponent={NodeContextMenu}
                   focusSelector={this.focusSelector}
                   graphData={this.state.graphData}
-                  isMTLSEnabled={this.props.mtlsEnabled}
                   onEmptyGraphAction={this.handleEmptyGraphAction}
                   onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
                   onLaunchWizard={this.handleLaunchWizard}
@@ -916,7 +911,7 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   startTour: bindActionCreators(TourActions.startTour, dispatch),
   toggleIdleNodes: bindActionCreators(GraphToolbarActions.toggleIdleNodes, dispatch),
   toggleLegend: bindActionCreators(GraphToolbarActions.toggleLegend, dispatch),
-  updateSummary: (event: CytoscapeEvent) => dispatch(GraphActions.updateSummary(event))
+  updateSummary: (event: GraphEvent) => dispatch(GraphActions.updateSummary(event))
 });
 
 export const GraphPage = connectRefresh(connect(mapStateToProps, mapDispatchToProps)(GraphPageComponent));
