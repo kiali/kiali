@@ -87,7 +87,7 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadCum
   getItemPage = () => {
     let path = `/namespaces/${this.state.namespace}/${this.state.pathItem}/${this.state.item}`;
     if (this.state.cluster) {
-      path += `?cluster=${this.state.cluster}`;
+      path += `?clusterName=${this.state.cluster}`;
     }
     return path;
   };

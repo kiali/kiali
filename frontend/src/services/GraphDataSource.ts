@@ -268,7 +268,7 @@ export class GraphDataSource {
     });
 
     if (fetchParams.node?.cluster) {
-      restParams.cluster = fetchParams.node.cluster;
+      restParams.clusterName = fetchParams.node.cluster;
     }
 
     this._isLoading = true;
