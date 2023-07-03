@@ -260,7 +260,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
         AlertUtils.addError(
           'Could not create Istio ' +
             this.props.objectType +
-            ' objects ' +
+            ' objects' +
             (cluster ? ' in cluster ' + cluster + '.' : '.'),
           error
         );
