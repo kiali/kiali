@@ -1236,7 +1236,7 @@ func assertObjectsEqual(t *testing.T, expected, actual []byte) {
 }
 
 func TestAppGraph(t *testing.T) {
-	client, _, err := mockNamespaceGraph(t)
+	client, _, err := mockNamespaceRatesGraph(t)
 	if err != nil {
 		t.Error(err)
 		return
@@ -1273,7 +1273,7 @@ func TestAppGraph(t *testing.T) {
 }
 
 func TestVersionedAppGraph(t *testing.T) {
-	client, _, err := mockNamespaceGraph(t)
+	client, _, err := mockNamespaceRatesGraph(t)
 	if err != nil {
 		t.Error(err)
 		return
@@ -1310,7 +1310,7 @@ func TestVersionedAppGraph(t *testing.T) {
 }
 
 func TestServiceGraph(t *testing.T) {
-	client, _, err := mockNamespaceGraph(t)
+	client, _, err := mockNamespaceRatesGraph(t)
 	if err != nil {
 		t.Error(err)
 		return
@@ -1347,7 +1347,7 @@ func TestServiceGraph(t *testing.T) {
 }
 
 func TestWorkloadGraph(t *testing.T) {
-	client, _, err := mockNamespaceGraph(t)
+	client, _, err := mockNamespaceRatesGraph(t)
 	if err != nil {
 		t.Error(err)
 		return
