@@ -243,7 +243,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
 
     this.promises
       .registerAll(
-        'Create ' + DIC[this.props.objectType],
+        'Create ' + DIC[this.props.objectType] + (cluster ? cluster : ''),
         jsonIstioObjects.map(o => API.createIstioConfigDetail(o.namespace, DIC[this.props.objectType], o.json, cluster))
       )
       .then(results => {
