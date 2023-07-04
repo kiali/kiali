@@ -506,13 +506,6 @@ func (in *NamespaceService) isIncludedNamespace(namespace string) bool {
 	return false
 }
 
-// GetNamespace returns the definition of the specified namespace.
-// TODO: Multicluster: We are going to need something else to identify the namespace, the cluster (OR Return a list/array/map)
-func (in *NamespaceService) GetNamespace(ctx context.Context, namespace string) (*models.Namespace, error) {
-	// TODO: Wrapper for MC while other services are not updated to propagate the cluster
-	return in.GetNamespaceByCluster(ctx, namespace, "")
-}
-
 // GetNamespaceClusters is a convenience routine that filters GetNamespaces for a particular namespace
 func (in *NamespaceService) GetNamespaceClusters(ctx context.Context, namespace string) ([]models.Namespace, error) {
 	namespaces, err := in.GetNamespaces(ctx)
@@ -531,7 +524,6 @@ func (in *NamespaceService) GetNamespaceClusters(ctx context.Context, namespace 
 }
 
 // GetNamespace returns the definition of the specified namespace.
-// TODO: Multicluster: We are going to need something else to identify the namespace, the cluster (OR Return a list/array/map)
 func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace string, cluster string) (*models.Namespace, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetNamespaceByCluster",

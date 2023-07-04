@@ -32,7 +32,7 @@ func NamespaceHealth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Adjust rate interval
-	rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime)
+	rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime, p.ClusterName)
 	if err != nil {
 		handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 		return
@@ -124,8 +124,8 @@ func (p *namespaceHealthParams) extract(r *http.Request) (bool, string) {
 	return true, ""
 }
 
-func adjustRateInterval(ctx context.Context, business *business.Layer, namespace, rateInterval string, queryTime time.Time) (string, error) {
-	namespaceInfo, err := business.Namespace.GetNamespace(ctx, namespace)
+func adjustRateInterval(ctx context.Context, business *business.Layer, namespace, rateInterval string, queryTime time.Time, cluster string) (string, error) {
+	namespaceInfo, err := business.Namespace.GetNamespaceByCluster(ctx, namespace, cluster)
 	if err != nil {
 		return "", err
 	}

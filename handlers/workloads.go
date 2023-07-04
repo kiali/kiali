@@ -58,7 +58,8 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 	p := workloadParams{}
 	p.extract(r)
 
-	criteria := business.WorkloadCriteria{Namespace: p.Namespace, IncludeHealth: p.IncludeHealth, IncludeIstioResources: p.IncludeIstioResources, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
+	criteria := business.WorkloadCriteria{Namespace: p.Namespace, IncludeHealth: p.IncludeHealth,
+		IncludeIstioResources: p.IncludeIstioResources, RateInterval: p.RateInterval, QueryTime: p.QueryTime, Cluster: p.ClusterName}
 
 	// Get business layer
 	businessLayer, err := getBusiness(r)
@@ -68,7 +69,7 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if criteria.IncludeHealth {
-		rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime)
+		rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime, p.ClusterName)
 		if err != nil {
 			handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 			return

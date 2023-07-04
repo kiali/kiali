@@ -49,7 +49,7 @@ func AppList(w http.ResponseWriter, r *http.Request) {
 	p.extract(r)
 
 	criteria := business.AppCriteria{Namespace: p.Namespace, IncludeIstioResources: p.IncludeIstioResources,
-		IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
+		IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime, Cluster: p.ClusterName}
 
 	// Get business layer
 	business, err := getBusiness(r)
@@ -59,7 +59,7 @@ func AppList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if criteria.IncludeHealth {
-		rateInterval, err := adjustRateInterval(r.Context(), business, p.Namespace, p.RateInterval, p.QueryTime)
+		rateInterval, err := adjustRateInterval(r.Context(), business, p.Namespace, p.RateInterval, p.QueryTime, p.ClusterName)
 		if err != nil {
 			handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 			return
