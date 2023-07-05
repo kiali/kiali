@@ -524,6 +524,7 @@ func (in *NamespaceService) GetNamespaceClusters(ctx context.Context, namespace 
 }
 
 // GetNamespace returns the definition of the specified namespace.
+// TODO: When cluster is "" it returns the first occurrence
 func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace string, cluster string) (*models.Namespace, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetNamespaceByCluster",
@@ -532,9 +533,6 @@ func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace
 		observability.Attribute("cluster", cluster),
 	)
 	defer end()
-	if cluster == "" {
-		log.Infof("*** Get Namespace for cluster: %s ", cluster)
-	}
 
 	var err error
 
