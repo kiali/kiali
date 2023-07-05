@@ -49,7 +49,7 @@ func AppList(w http.ResponseWriter, r *http.Request) {
 	p.extract(r)
 
 	criteria := business.AppCriteria{Namespace: p.Namespace, IncludeIstioResources: p.IncludeIstioResources,
-		IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime, Cluster: p.ClusterName}
+		IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
 
 	// Get business layer
 	business, err := getBusiness(r)
@@ -59,7 +59,13 @@ func AppList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if criteria.IncludeHealth {
-		rateInterval, err := adjustRateInterval(r.Context(), business, p.Namespace, p.RateInterval, p.QueryTime, p.ClusterName)
+		// When the cluster is not specified, we need to get it. If there are more than one, the home cluster will be used
+		clusters := business.Namespace.GetNamespaceClusters(p.Namespace)
+		if len(clusters) == 0 {
+			handleErrorResponse(w, err, "Error looking for cluster: "+err.Error())
+			return
+		}
+		rateInterval, err := adjustRateInterval(r.Context(), business, p.Namespace, p.RateInterval, p.QueryTime, clusters[0])
 		if err != nil {
 			handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 			return

@@ -59,7 +59,7 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 	p.extract(r)
 
 	criteria := business.WorkloadCriteria{Namespace: p.Namespace, IncludeHealth: p.IncludeHealth,
-		IncludeIstioResources: p.IncludeIstioResources, RateInterval: p.RateInterval, QueryTime: p.QueryTime, Cluster: p.ClusterName}
+		IncludeIstioResources: p.IncludeIstioResources, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
 
 	// Get business layer
 	businessLayer, err := getBusiness(r)
@@ -69,8 +69,15 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if criteria.IncludeHealth {
-		rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime, p.ClusterName)
+		// When the cluster is not specified, we need to get it. If there are more than one, get the first one
+		clusters := businessLayer.Namespace.GetNamespaceClusters(p.Namespace)
+		if len(clusters) == 0 {
+			handleErrorResponse(w, err, "Error looking for cluster: "+err.Error())
+			return
+		}
+		rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime, clusters[0])
 		if err != nil {
+			log.Errorf("error %s", err.Error())
 			handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 			return
 		}
@@ -78,6 +85,7 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch and build workloads
+	// Criteria does not include cluster, so it will look workloads from all the clusters
 	workloadList, err := businessLayer.Workload.GetWorkloadList(r.Context(), criteria)
 	if err != nil {
 		handleErrorResponse(w, err)

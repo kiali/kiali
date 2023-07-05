@@ -532,6 +532,9 @@ func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace
 		observability.Attribute("cluster", cluster),
 	)
 	defer end()
+	if cluster == "" {
+		log.Infof("*** Get Namespace for cluster: %s ", cluster)
+	}
 
 	var err error
 

@@ -54,8 +54,7 @@ func ServiceList(w http.ResponseWriter, r *http.Request) {
 	p.extract(r)
 
 	criteria := business.ServiceCriteria{Namespace: p.Namespace, IncludeHealth: p.IncludeHealth,
-		IncludeIstioResources: p.IncludeIstioResources, IncludeOnlyDefinitions: p.IncludeOnlyDefinitions, RateInterval: "", QueryTime: p.QueryTime,
-		Cluster: p.ClusterName}
+		IncludeIstioResources: p.IncludeIstioResources, IncludeOnlyDefinitions: p.IncludeOnlyDefinitions, RateInterval: "", QueryTime: p.QueryTime}
 
 	// Get business layer
 	business, err := getBusiness(r)
@@ -65,7 +64,13 @@ func ServiceList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if criteria.IncludeHealth {
-		rateInterval, err := adjustRateInterval(r.Context(), business, p.Namespace, p.RateInterval, p.QueryTime, p.ClusterName)
+		// When the cluster is not specified, we need to get it. If there are more than one, get the first one
+		clusters := business.Namespace.GetNamespaceClusters(p.Namespace)
+		if len(clusters) == 0 {
+			handleErrorResponse(w, err, "Error looking for cluster: "+err.Error())
+			return
+		}
+		rateInterval, err := adjustRateInterval(r.Context(), business, p.Namespace, p.RateInterval, p.QueryTime, clusters[0])
 		if err != nil {
 			handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 			return

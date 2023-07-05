@@ -22,12 +22,12 @@ const defaultPatchType = "merge"
 
 var defaultPromClientSupplier = prometheus.NewClient
 
-func checkNamespaceAccess(ctx context.Context, nsServ business.NamespaceService, namespace string) (*models.Namespace, error) {
-	return nsServ.GetNamespaceByCluster(ctx, namespace, "")
+func checkNamespaceAccess(ctx context.Context, nsServ business.NamespaceService, namespace string, cluster string) (*models.Namespace, error) {
+	return nsServ.GetNamespaceByCluster(ctx, namespace, cluster)
 }
 
-func createMetricsServiceForNamespace(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, namespace string) (*business.MetricsService, *models.Namespace) {
-	metrics, infoMap := createMetricsServiceForNamespaces(w, r, promSupplier, []string{namespace})
+func createMetricsServiceForNamespace(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, namespace string, cluster string) (*business.MetricsService, *models.Namespace) {
+	metrics, infoMap := createMetricsServiceForNamespaces(w, r, promSupplier, []string{namespace}, cluster)
 	if result, ok := infoMap[namespace]; ok {
 		if result.err != nil {
 			RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+result.err.Error())
@@ -43,7 +43,7 @@ type nsInfoError struct {
 	err  error
 }
 
-func createMetricsServiceForNamespaces(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, namespaces []string) (*business.MetricsService, map[string]nsInfoError) {
+func createMetricsServiceForNamespaces(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, namespaces []string, cluster string) (*business.MetricsService, map[string]nsInfoError) {
 	layer, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -58,7 +58,7 @@ func createMetricsServiceForNamespaces(w http.ResponseWriter, r *http.Request, p
 
 	nsInfos := make(map[string]nsInfoError)
 	for _, ns := range namespaces {
-		info, err := checkNamespaceAccess(r.Context(), layer.Namespace, ns)
+		info, err := checkNamespaceAccess(r.Context(), layer.Namespace, ns, cluster)
 		nsInfos[ns] = nsInfoError{info: info, err: err}
 	}
 	metrics := business.NewMetricsService(prom)
