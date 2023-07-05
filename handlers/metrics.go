@@ -361,24 +361,23 @@ func MetricsStats(w http.ResponseWriter, r *http.Request) {
 
 func prepareStatsQueries(w http.ResponseWriter, r *http.Request, rawQ []models.MetricsStatsQuery, promSupplier promClientSupplier) (*business.MetricsService, []models.MetricsStatsQuery, *util.Errors) {
 	// Get unique namespaces list
-	var namespaces []string
-	var cluster string
+	var namespaces []models.Namespace
 	for _, q := range rawQ {
 		found := false
 		for _, ns := range namespaces {
-			if ns == q.Target.Namespace {
+			if ns.Name == q.Target.Namespace {
 				found = true
-				cluster = q.Target.Cluster
 				break
 			}
 		}
 		if !found {
-			namespaces = append(namespaces, q.Target.Namespace)
+			newNs := models.Namespace{Name: q.Target.Namespace, Cluster: q.Target.Cluster}
+			namespaces = append(namespaces, newNs)
 		}
 	}
 
 	// Create the metrics service, along with namespaces information for adjustements
-	metricsService, nsInfos := createMetricsServiceForNamespaces(w, r, promSupplier, namespaces, cluster)
+	metricsService, nsInfos := createMetricsServiceForNamespaces(w, r, promSupplier, namespaces)
 
 	// Keep only valid queries (fill errors if needed) and adjust queryTime / interval
 	var errors util.Errors

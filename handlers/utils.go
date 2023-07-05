@@ -27,7 +27,8 @@ func checkNamespaceAccess(ctx context.Context, nsServ business.NamespaceService,
 }
 
 func createMetricsServiceForNamespace(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, namespace string, cluster string) (*business.MetricsService, *models.Namespace) {
-	metrics, infoMap := createMetricsServiceForNamespaces(w, r, promSupplier, []string{namespace}, cluster)
+	ns := models.Namespace{Name: namespace, Cluster: cluster}
+	metrics, infoMap := createMetricsServiceForNamespaces(w, r, promSupplier, []models.Namespace{ns})
 	if result, ok := infoMap[namespace]; ok {
 		if result.err != nil {
 			RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+result.err.Error())
@@ -43,7 +44,7 @@ type nsInfoError struct {
 	err  error
 }
 
-func createMetricsServiceForNamespaces(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, namespaces []string, cluster string) (*business.MetricsService, map[string]nsInfoError) {
+func createMetricsServiceForNamespaces(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, namespaces []models.Namespace) (*business.MetricsService, map[string]nsInfoError) {
 	layer, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -58,8 +59,8 @@ func createMetricsServiceForNamespaces(w http.ResponseWriter, r *http.Request, p
 
 	nsInfos := make(map[string]nsInfoError)
 	for _, ns := range namespaces {
-		info, err := checkNamespaceAccess(r.Context(), layer.Namespace, ns, cluster)
-		nsInfos[ns] = nsInfoError{info: info, err: err}
+		info, err := checkNamespaceAccess(r.Context(), layer.Namespace, ns.Name, ns.Cluster)
+		nsInfos[ns.Name] = nsInfoError{info: info, err: err}
 	}
 	metrics := business.NewMetricsService(prom)
 	return metrics, nsInfos

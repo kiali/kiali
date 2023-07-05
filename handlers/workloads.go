@@ -77,7 +77,6 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 		}
 		rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime, clusters[0])
 		if err != nil {
-			log.Errorf("error %s", err.Error())
 			handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 			return
 		}
