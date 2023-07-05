@@ -51,7 +51,7 @@ func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *grap
 }
 
 func addBadging(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
-	clusters := getTrafficClusters(trafficMap, namespaceInfo.Namespace)
+	clusters := getTrafficClusters(trafficMap, namespaceInfo.Namespace, globalInfo)
 	destinationRuleLists := map[string]models.IstioConfigList{}
 	virtualServiceLists := map[string]models.IstioConfigList{}
 

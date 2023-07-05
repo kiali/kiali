@@ -255,9 +255,10 @@ func (seh serviceEntryHosts) addHost(host string, se *serviceEntry) {
 	se.hosts = append(se.hosts, host)
 }
 
-// getServiceLists returns a map[clusterName]*models.ServiceList for all clusters with traffic in the namespace
+// getServiceLists returns a map[clusterName]*models.ServiceList for all clusters with traffic in the namespace, or if trafficMap is nil
+// then all clusters on which the namespace is valid.
 func getServiceLists(trafficMap graph.TrafficMap, namespace string, gi *graph.AppenderGlobalInfo) map[string]*models.ServiceList {
-	clusters := getTrafficClusters(trafficMap, namespace)
+	clusters := getTrafficClusters(trafficMap, namespace, gi)
 	serviceLists := map[string]*models.ServiceList{}
 
 	for _, cluster := range clusters {
@@ -313,9 +314,10 @@ func getServiceEntryHosts(gi *graph.AppenderGlobalInfo) (serviceEntryHosts, bool
 	return newServiceEntryHosts(), false
 }
 
-// getWorkloadLists returns a map[clusterName]*models.WorkloadList for all clusters with traffic in the namespace
+// getWorkloadLists returns a map[clusterName]*models.WorkloadList for all clusters with traffic in the namespace, or if trafficMap is nil
+// then all clusters on which the namespace is valid.
 func getWorkloadLists(trafficMap graph.TrafficMap, namespace string, gi *graph.AppenderGlobalInfo) map[string]*models.WorkloadList {
-	clusters := getTrafficClusters(trafficMap, namespace)
+	clusters := getTrafficClusters(trafficMap, namespace, gi)
 	workloadLists := map[string]*models.WorkloadList{}
 
 	for _, cluster := range clusters {
@@ -418,8 +420,20 @@ func getApp(namespace, appName string, gi *graph.AppenderGlobalInfo) (*models.Ap
 	return nil, false
 }
 
-// getTrafficClusters returns an array of clusters for which the TrafficMap has accessible nodes for the given namespace
-func getTrafficClusters(trafficMap graph.TrafficMap, namespace string) []string {
+// getTrafficClusters returns an array of clusters for which the TrafficMap has accessible nodes for the given
+// namespace, or of trafficMap is nil then clusters for which the namespace exists.
+func getTrafficClusters(trafficMap graph.TrafficMap, namespace string, gi *graph.AppenderGlobalInfo) []string {
+	if trafficMap == nil {
+		namespaceClusters, err := gi.Business.Namespace.GetNamespaceClusters(context.TODO(), namespace)
+		graph.CheckError(err)
+
+		clusters := make([]string, len(namespaceClusters))
+		for i, nc := range namespaceClusters {
+			clusters[i] = nc.Cluster
+		}
+		return clusters
+	}
+
 	clusterMap := map[string]bool{}
 
 	for _, n := range trafficMap {
