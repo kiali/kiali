@@ -207,13 +207,14 @@ func buildNamespaceTrafficMap(ctx context.Context, namespace string, o graph.Tel
 		var metrics []string
 		groupBy := "source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags"
 
+		// L4 telemetry is backwards, see https://github.com/istio/istio/issues/32399
 		switch o.Rates.Tcp {
 		case graph.RateReceived:
-			metrics = []string{"istio_tcp_received_bytes_total"}
-		case graph.RateSent:
 			metrics = []string{"istio_tcp_sent_bytes_total"}
+		case graph.RateSent:
+			metrics = []string{"istio_tcp_received_bytes_total"}
 		case graph.RateTotal:
-			metrics = []string{"istio_tcp_sent_bytes_total", "istio_tcp_received_bytes_total"}
+			metrics = []string{"istio_tcp_received_bytes_total", "istio_tcp_sent_bytes_total"}
 		default:
 			metrics = []string{}
 		}
@@ -740,13 +741,14 @@ func buildNodeTrafficMap(cluster, namespace string, n *graph.Node, o graph.Telem
 		var metrics []string
 		groupBy := "source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags"
 
+		// L4 telemetry is backwards, see https://github.com/istio/istio/issues/32399
 		switch o.Rates.Tcp {
 		case graph.RateReceived:
-			metrics = []string{"istio_tcp_received_bytes_total"}
-		case graph.RateSent:
 			metrics = []string{"istio_tcp_sent_bytes_total"}
+		case graph.RateSent:
+			metrics = []string{"istio_tcp_received_bytes_total"}
 		case graph.RateTotal:
-			metrics = []string{"istio_tcp_sent_bytes_total", "istio_tcp_received_bytes_total"}
+			metrics = []string{"istio_tcp_received_bytes_total", "istio_tcp_sent_bytes_total"}
 		default:
 			metrics = []string{}
 		}

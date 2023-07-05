@@ -56,12 +56,12 @@ var istioMetrics = []istioMetric{
 	},
 	{
 		kialiName: "tcp_received",
-		istioName: "istio_tcp_received_bytes_total",
+		istioName: "istio_tcp_sent_bytes_total", // L4 telemetry is backwards, see https://github.com/istio/istio/issues/32399
 		isHisto:   false,
 	},
 	{
 		kialiName: "tcp_sent",
-		istioName: "istio_tcp_sent_bytes_total",
+		istioName: "istio_tcp_received_bytes_total", // L4 telemetry is backwards, see https://github.com/istio/istio/issues/32399
 		isHisto:   false,
 	},
 	{

@@ -137,7 +137,7 @@
             {
               "protocol": "tcp",
               "rates": {
-                "tcpOut": "62.00"
+                "tcpOut": "31.00"
               }
             }
           ],
@@ -281,7 +281,7 @@
             {
               "protocol": "tcp",
               "rates": {
-                "tcpIn": "1162.00"
+                "tcpIn": "581.00"
               }
             }
           ],
@@ -307,7 +307,7 @@
             {
               "protocol": "tcp",
               "rates": {
-                "tcpOut": "300.00"
+                "tcpOut": "150.00"
               }
             }
           ],
@@ -356,7 +356,7 @@
             {
               "protocol": "tcp",
               "rates": {
-                "tcpOut": "800.00"
+                "tcpOut": "400.00"
               }
             }
           ],
@@ -375,7 +375,7 @@
           "traffic": {
             "protocol": "tcp",
             "rates": {
-              "tcp": "800.00"
+              "tcp": "400.00"
             },
             "responses": {
               "-": {
@@ -596,7 +596,7 @@
           "traffic": {
             "protocol": "tcp",
             "rates": {
-              "tcp": "62.00"
+              "tcp": "31.00"
             },
             "responses": {
               "-": {
@@ -801,7 +801,7 @@
           "traffic": {
             "protocol": "tcp",
             "rates": {
-              "tcp": "300.00"
+              "tcp": "150.00"
             },
             "responses": {
               "-": {
