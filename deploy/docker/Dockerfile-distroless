@@ -1,11 +1,7 @@
-FROM registry.access.redhat.com/ubi8/openssl as ca-certs-source
-FROM registry.access.redhat.com/ubi8-micro
+# ubi8/openssl is essentially ubi8-micro with openssl
+FROM registry.access.redhat.com/ubi8/openssl
 
 LABEL maintainer="kiali-dev@googlegroups.com"
-
-# Micro container doesn't have CA certificates, install them now
-COPY --from=ca-certs-source /etc/pki /etc/pki
-COPY --from=ca-certs-source /usr/share/pki /usr/share/pki
 
 # Add kiali user and group
 RUN echo kiali:x:1000: >> /etc/group
