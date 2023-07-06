@@ -43,7 +43,7 @@ func getAppMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClie
 		log.Errorf("Error getting namespace clusters %s", errNs.Error())
 	}
 
-	// TODO: Namespace is used to check permissions, this is checking just in one of them 
+	//TODO: Namespace is used to check permissions, this is checking just in one of them
 	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, namespaces[0])
 	if metricsService == nil {
 		// any returned value nil means error & response already written
