@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"errors"
-	"github.com/kiali/kiali/models"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -19,6 +18,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
