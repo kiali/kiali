@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -70,12 +71,12 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 
 	if criteria.IncludeHealth {
 		// When the cluster is not specified, we need to get it. If there are more than one, get the first one
-		clusters := businessLayer.Namespace.GetNamespaceClusters(p.Namespace)
+		clusters, _ := businessLayer.Namespace.GetNamespaceClusters(context.TODO(), p.Namespace)
 		if len(clusters) == 0 {
 			handleErrorResponse(w, err, "Error looking for cluster: "+err.Error())
 			return
 		}
-		rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime, clusters[0])
+		rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime, clusters[0].Cluster)
 		if err != nil {
 			handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 			return
