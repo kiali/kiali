@@ -119,7 +119,7 @@ func AppDashboard(w http.ResponseWriter, r *http.Request) {
 	app := vars["app"]
 	cluster := clusterNameFromQuery(r.URL.Query())
 
-	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, defaultPromClientSupplier, namespace, cluster)
+	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, defaultPromClientSupplier, models.Namespace{Name: namespace, Cluster: cluster})
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
@@ -150,7 +150,7 @@ func ServiceDashboard(w http.ResponseWriter, r *http.Request) {
 	queryParams := r.URL.Query()
 	cluster := clusterNameFromQuery(queryParams)
 
-	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, defaultPromClientSupplier, namespace, cluster)
+	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, defaultPromClientSupplier, models.Namespace{Name: namespace, Cluster: cluster})
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
@@ -198,7 +198,7 @@ func WorkloadDashboard(w http.ResponseWriter, r *http.Request) {
 	workload := vars["workload"]
 	cluster := clusterNameFromQuery(r.URL.Query())
 
-	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, defaultPromClientSupplier, namespace, cluster)
+	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, defaultPromClientSupplier, models.Namespace{Name: namespace, Cluster: cluster})
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return

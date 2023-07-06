@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -32,7 +33,18 @@ func getAppMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClie
 	app := vars["app"]
 	cluster := clusterNameFromQuery(r.URL.Query())
 
-	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, namespace, cluster)
+	layer, errBs := getBusiness(r)
+	if errBs != nil {
+		log.Errorf("Error getting business %s", errBs.Error())
+	}
+
+	namespaces, errNs := layer.Namespace.GetNamespaceClusters(context.TODO(), namespace)
+	if errNs != nil {
+		log.Errorf("Error getting namespace clusters %s", errNs.Error())
+	}
+
+	// TODO: Namespace is used to check permissions, this is checking just in one of them 
+	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, namespaces[0])
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
@@ -65,7 +77,19 @@ func getWorkloadMetrics(w http.ResponseWriter, r *http.Request, promSupplier pro
 	workload := vars["workload"]
 	cluster := clusterNameFromQuery(r.URL.Query())
 
-	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, namespace, cluster)
+	layer, errBs := getBusiness(r)
+	if errBs != nil {
+		log.Errorf("Error getting business %s", errBs.Error())
+	}
+
+	namespaces, errNs := layer.Namespace.GetNamespaceClusters(context.TODO(), namespace)
+	if errNs != nil {
+		log.Errorf("Error getting namespace clusters %s", errNs.Error())
+	}
+
+	// TODO: Namespace is used to check permissions, this is checking just in one of them
+	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, namespaces[0])
+
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
@@ -98,7 +122,18 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promSupplier prom
 	service := vars["service"]
 	cluster := clusterNameFromQuery(r.URL.Query())
 
-	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, namespace, cluster)
+	layer, errBs := getBusiness(r)
+	if errBs != nil {
+		log.Errorf("Error getting business %s", errBs.Error())
+	}
+
+	namespaces, errNs := layer.Namespace.GetNamespaceClusters(context.TODO(), namespace)
+	if errNs != nil {
+		log.Errorf("Error getting namespace clusters %s", errNs.Error())
+	}
+
+	// TODO: Namespace is used to check permissions, this is checking just in one of them
+	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, namespaces[0])
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
@@ -130,9 +165,19 @@ func getAggregateMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 	namespace := vars["namespace"]
 	aggregate := vars["aggregate"]
 	aggregateValue := vars["aggregateValue"]
-	cluster := clusterNameFromQuery(r.URL.Query())
 
-	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, namespace, cluster)
+	layer, errBs := getBusiness(r)
+	if errBs != nil {
+		log.Errorf("Error getting business %s", errBs.Error())
+	}
+
+	namespaces, errNs := layer.Namespace.GetNamespaceClusters(context.TODO(), namespace)
+	if errNs != nil {
+		log.Errorf("Error getting namespace clusters %s", errNs.Error())
+	}
+
+	// TODO: Namespace is used to check permissions, this is checking just in one of them
+	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, namespaces[0])
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
@@ -172,7 +217,19 @@ func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 	cluster := clusterNameFromQuery(r.URL.Query())
-	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, namespace, "")
+
+	layer, errBs := getBusiness(r)
+	if errBs != nil {
+		log.Errorf("Error getting business %s", errBs.Error())
+	}
+
+	namespaces, errNs := layer.Namespace.GetNamespaceClusters(context.TODO(), namespace)
+	if errNs != nil {
+		log.Errorf("Error getting namespace clusters %s", errNs.Error())
+	}
+
+	// TODO: Namespace is used to check permissions, this is checking just in one of them
+	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, namespaces[0])
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return

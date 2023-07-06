@@ -72,7 +72,7 @@ func TestCreateMetricsServiceForNamespace(t *testing.T) {
 	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), &api.AuthInfo{Token: "test"}))
 
 	w := httptest.NewRecorder()
-	srv, info := createMetricsServiceForNamespace(w, req, prom, "ns1", config.Get().KubernetesConfig.ClusterName)
+	srv, info := createMetricsServiceForNamespace(w, req, prom, models.Namespace{Name: "ns1", Cluster: config.Get().KubernetesConfig.ClusterName})
 
 	assert.NotNil(srv)
 	assert.NotNil(info)
@@ -88,7 +88,7 @@ func TestCreateMetricsServiceForNamespaceForbidden(t *testing.T) {
 	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), &api.AuthInfo{Token: "test"}))
 
 	w := httptest.NewRecorder()
-	srv, info := createMetricsServiceForNamespace(w, req, prom, "nsNil", config.Get().KubernetesConfig.ClusterName)
+	srv, info := createMetricsServiceForNamespace(w, req, prom, models.Namespace{Name: "nsNil", Cluster: config.Get().KubernetesConfig.ClusterName})
 
 	assert.Nil(srv)
 	assert.Nil(info)

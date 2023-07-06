@@ -26,10 +26,10 @@ func checkNamespaceAccess(ctx context.Context, nsServ business.NamespaceService,
 	return nsServ.GetNamespaceByCluster(ctx, namespace, cluster)
 }
 
-func createMetricsServiceForNamespace(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, namespace string, cluster string) (*business.MetricsService, *models.Namespace) {
-	ns := models.Namespace{Name: namespace, Cluster: cluster}
+func createMetricsServiceForNamespace(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, ns models.Namespace) (*business.MetricsService, *models.Namespace) {
+
 	metrics, infoMap := createMetricsServiceForNamespaces(w, r, promSupplier, []models.Namespace{ns})
-	if result, ok := infoMap[namespace]; ok {
+	if result, ok := infoMap[ns.Name]; ok {
 		if result.err != nil {
 			RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+result.err.Error())
 			return nil, nil
