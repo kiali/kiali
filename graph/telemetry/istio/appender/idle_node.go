@@ -38,11 +38,11 @@ func (a IdleNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 	workloadLists := map[string]*models.WorkloadList{}
 
 	if a.GraphType != graph.GraphTypeService {
-		workloadLists = getWorkloadLists(trafficMap, namespaceInfo.Namespace, globalInfo)
+		workloadLists = getWorkloadLists(nil, namespaceInfo.Namespace, globalInfo)
 	}
 
 	if a.GraphType == graph.GraphTypeService || a.InjectServiceNodes {
-		serviceLists = getServiceLists(trafficMap, namespaceInfo.Namespace, globalInfo)
+		serviceLists = getServiceLists(nil, namespaceInfo.Namespace, globalInfo)
 	}
 
 	a.addIdleNodes(trafficMap, namespaceInfo.Namespace, serviceLists, workloadLists)

@@ -517,6 +517,23 @@ func (in *NamespaceService) GetNamespace(ctx context.Context, namespace string) 
 	return in.GetNamespaceByCluster(ctx, namespace, "")
 }
 
+// GetNamespaceClusters is a convenience routine that filters GetNamespaces for a particular namespace
+func (in *NamespaceService) GetNamespaceClusters(ctx context.Context, namespace string) ([]models.Namespace, error) {
+	namespaces, err := in.GetNamespaces(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	result := []models.Namespace{}
+	for _, ns := range namespaces {
+		if ns.Name == namespace {
+			result = append(result, ns)
+		}
+	}
+
+	return result, nil
+}
+
 // GetNamespace returns the definition of the specified namespace.
 // TODO: Multicluster: We are going to need something else to identify the namespace, the cluster (OR Return a list/array/map)
 func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace string, cluster string) (*models.Namespace, error) {
