@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { KialiAppState } from '../../store/Store';
-import { activeClustersSelector, activeNamespacesSelector, clusterItemsSelector } from '../../store/Selectors';
+import { activeClustersSelector, activeNamespacesSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import { Namespace } from '../../types/Namespace';
-import { Cluster } from '../../types/Cluster';
+import { MeshCluster } from '../../types/Mesh';
 import { ActionGroup, Button, ButtonVariant, Form, FormGroup, TextInput } from '@patternfly/react-core';
 import { RenderContent } from '../../components/Nav/Page';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -74,8 +74,8 @@ import { isValid } from 'utils/Common';
 type Props = {
   objectType: string;
   activeNamespaces: Namespace[];
-  activeClusters: Cluster[];
-  clusters: Cluster[];
+  activeClusters: MeshCluster[];
+  clusters: MeshCluster[];
 };
 
 type State = {
@@ -186,7 +186,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     if (this.props.activeNamespaces.length > 0) {
       this.promises
         .register(
-          'permissions',
+          'permissions' + cluster,
           API.getIstioPermissions(
             this.props.activeNamespaces.map(n => n.name),
             cluster
@@ -235,36 +235,40 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     }
   };
 
-  onIstioResourceCreateForCluster = (cluster?: string) => {
+  onIstioResourceCreateForCluster = async (cluster?: string) => {
     const jsonIstioObjects: { namespace: string; json: string }[] = this.state.itemsPreview.map(item => ({
       namespace: item.items[0].metadata.namespace || '',
       json: JSON.stringify(item.items[0])
     }));
-
-    this.promises
-      .registerAll(
-        'Create ' + DIC[this.props.objectType] + (cluster ? cluster : ''),
-        jsonIstioObjects.map(o => API.createIstioConfigDetail(o.namespace, DIC[this.props.objectType], o.json, cluster))
-      )
-      .then(results => {
-        if (results.length > 0) {
-          AlertUtils.add(
-            'Istio ' + this.props.objectType + ' created' + (cluster ? ' in cluster ' + cluster : ''),
-            'default',
-            MessageType.SUCCESS
-          );
-        }
-        this.backToList();
-      })
-      .catch(error => {
-        AlertUtils.addError(
-          'Could not create Istio ' +
-            this.props.objectType +
-            ' objects' +
-            (cluster ? ' in cluster ' + cluster + '.' : '.'),
-          error
+    let err = 0;
+    await Promise.all(
+      jsonIstioObjects
+        .map(o => API.createIstioConfigDetail(o.namespace, DIC[this.props.objectType], o.json, cluster))
+        .map(p =>
+          p.catch(error => {
+            AlertUtils.addError(
+              'Could not create Istio ' +
+                this.props.objectType +
+                ' objects' +
+                (cluster ? ' in cluster ' + cluster + '.' : '.'),
+              error
+            );
+            err++;
+          })
+        )
+    ).then(results => {
+      if (results.filter(value => value !== undefined).length > 0) {
+        AlertUtils.add(
+          'Istio ' + this.props.objectType + ' created' + (cluster ? ' in cluster ' + cluster : ''),
+          'default',
+          MessageType.SUCCESS
         );
-      });
+      }
+    });
+
+    if (err === 0) {
+      this.backToList();
+    }
   };
 
   showPreview = () => {
@@ -526,7 +530,7 @@ const mapStateToProps = (state: KialiAppState) => {
   return {
     activeNamespaces: activeNamespacesSelector(state),
     activeClusters: activeClustersSelector(state),
-    clusters: clusterItemsSelector(state)!
+    clusters: Object.values(serverConfig.clusters)
   };
 };
 

@@ -1,6 +1,5 @@
 import { NotificationGroup } from '../types/MessageCenter';
 import { Namespace } from '../types/Namespace';
-import { Cluster } from '../types/Cluster';
 import {
   DurationInSeconds,
   IntervalInMilliseconds,
@@ -28,6 +27,7 @@ import { ComponentStatus } from '../types/IstioStatus';
 import { JaegerState } from 'reducers/JaegerState';
 import { MetricsStatsState } from 'reducers/MetricsStatsState';
 import { CertsInfo } from 'types/CertsInfo';
+import { MeshCluster } from '../types/Mesh';
 
 // Store is the Redux Data store
 
@@ -38,10 +38,7 @@ export interface GlobalState {
 }
 
 export interface ClusterState {
-  readonly activeClusters: Cluster[];
-  readonly items?: Cluster[];
-  readonly isFetching: boolean;
-  readonly lastUpdated?: Date;
+  readonly activeClusters: MeshCluster[];
   readonly filter: string;
 }
 

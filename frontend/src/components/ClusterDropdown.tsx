@@ -11,9 +11,9 @@ import {
   Divider,
   Badge
 } from '@patternfly/react-core';
-import { activeClustersSelector, clusterItemsSelector, clusterFilterSelector } from '../store/Selectors';
+import { activeClustersSelector, clusterFilterSelector } from '../store/Selectors';
 import { ClusterActions } from '../actions/ClusterAction';
-import { Cluster } from '../types/Cluster';
+import { MeshCluster } from '../types/Mesh';
 import {
   BoundingClientAwareComponent,
   PropertyType
@@ -23,15 +23,13 @@ import { TourStop } from './Tour/TourStop';
 import { GraphTourStops } from '../pages/Graph/GraphHelpTour';
 import { KialiAppState } from '../store/Store';
 import { KialiDispatch } from '../types/Redux';
-import { ClusterThunkActions } from '../actions/ClusterThunkActions';
 import { serverConfig } from '../config';
 
 type ReduxProps = {
-  activeClusters: Cluster[];
+  activeClusters: MeshCluster[];
   filter: string;
-  clusters: Cluster[];
-  refresh: () => void;
-  setActiveClusters: (clusters: Cluster[]) => void;
+  clusters: MeshCluster[];
+  setActiveClusters: (clusters: MeshCluster[]) => void;
   setFilter: (filter: string) => void;
 };
 
@@ -42,7 +40,7 @@ type ClusterDropdownProps = ReduxProps & {
 type ClusterDropdownState = {
   isBulkSelectorOpen: boolean;
   isOpen: boolean;
-  selectedClusters: Cluster[];
+  selectedClusters: MeshCluster[];
 };
 
 const checkboxBulkStyle = style({
@@ -77,13 +75,12 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
   }
 
   componentDidMount() {
-    this.props.refresh();
     this.syncClusterParam();
   }
 
   syncClusterParam = () => {
-    if (this.props.activeClusters.length === 0 && serverConfig.clusterInfo) {
-      this.props.setActiveClusters([{ name: serverConfig.clusterInfo?.name }]);
+    if (this.props.activeClusters.length === 0 && serverConfig.clusters) {
+      this.props.setActiveClusters(Object.values(serverConfig.clusters));
     }
   };
 
@@ -168,7 +165,7 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
         map[cluster.name] = cluster.name;
         return map;
       }, {});
-      const clusters = this.filtered().map((cluster: Cluster) => (
+      const clusters = this.filtered().map((cluster: MeshCluster) => (
         <div
           className={checkboxStyle}
           id={`cluster-list-item[${cluster.name}]`}
@@ -221,9 +218,7 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
   }
 
   private onToggle = isOpen => {
-    if (isOpen) {
-      this.props.refresh();
-    } else {
+    if (!isOpen) {
       this.props.setActiveClusters(this.state.selectedClusters);
       this.clearFilter();
     }
@@ -247,7 +242,7 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
     const cluster = event.target.value;
     const selectedClusters = !!this.state.selectedClusters.find(cl => cl.name === cluster)
       ? this.state.selectedClusters.filter(cl => cl.name !== cluster)
-      : this.state.selectedClusters.concat([{ name: event.target.value } as Cluster]);
+      : this.state.selectedClusters.concat(serverConfig.clusters[event.target.value]);
     this.setState({ selectedClusters: selectedClusters });
   };
 
@@ -259,11 +254,11 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
     this.props.setFilter('');
   };
 
-  private filtered = (): Cluster[] => {
+  private filtered = (): MeshCluster[] => {
     return this.props.clusters.filter(cl => cl.name.includes(this.props.filter));
   };
 
-  private filteredSelected = (): Cluster[] => {
+  private filteredSelected = (): MeshCluster[] => {
     const filtered = this.filtered();
     return this.state.selectedClusters.filter(s => filtered.findIndex(f => f.name === s.name) >= 0);
   };
@@ -271,7 +266,7 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    clusters: clusterItemsSelector(state)!,
+    clusters: Object.values(serverConfig.clusters),
     activeClusters: activeClustersSelector(state),
     filter: clusterFilterSelector(state)
   };
@@ -279,13 +274,10 @@ const mapStateToProps = (state: KialiAppState) => {
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
-    refresh: () => {
-      dispatch(ClusterThunkActions.fetchClustersIfNeeded());
-    },
     clearAll: () => {
       dispatch(ClusterActions.setActiveClusters([]));
     },
-    setActiveClusters: (clusters: Cluster[]) => {
+    setActiveClusters: (clusters: MeshCluster[]) => {
       dispatch(ClusterActions.setActiveClusters(clusters));
     },
     setFilter: (filter: string) => {

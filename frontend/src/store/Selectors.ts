@@ -60,10 +60,6 @@ const namespaceItems = (state: KialiAppState) => state.namespaces.items;
 
 export const namespaceItemsSelector = createIdentitySelector(namespaceItems);
 
-const clusterItems = (state: KialiAppState) => state.clusters.items;
-
-export const clusterItemsSelector = createIdentitySelector(clusterItems);
-
 const rankBy = (state: KialiAppState) => state.graph.toolbarState.rankBy;
 
 export const rankBySelector = createIdentitySelector(rankBy);
