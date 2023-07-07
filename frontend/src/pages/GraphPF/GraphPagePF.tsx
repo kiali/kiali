@@ -2,7 +2,7 @@ import * as React from 'react';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import FlexView from 'react-flexview';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
 import { Namespace } from '../../types/Namespace';
 import {
@@ -165,21 +165,21 @@ type GraphPageStatePF = {
 
 const NUMBER_OF_DATAPOINTS = 30;
 
-const containerStyle = style({
+const containerStyle = kialiStyle({
   minHeight: '350px',
   // TODO: try flexbox to remove this calc
   height: 'calc(100vh - 113px)' // View height minus top bar height minus secondary masthead
 });
 
-const kioskContainerStyle = style({
+const kioskContainerStyle = kialiStyle({
   minHeight: '350px',
   height: 'calc(100vh - 10px)' // View height minus top bar height
 });
 
-const graphContainerStyle = style({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
-const graphWrapperDivStyle = style({ position: 'relative', backgroundColor: PFColors.Black200 });
+const graphContainerStyle = kialiStyle({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
+const graphWrapperDivStyle = kialiStyle({ position: 'relative', backgroundColor: PFColors.Black200 });
 
-const graphTimeRange = style({
+const graphTimeRange = kialiStyle({
   position: 'absolute',
   top: '10px',
   left: '10px',
@@ -188,15 +188,15 @@ const graphTimeRange = style({
   backgroundColor: PFColors.White
 });
 
-const whiteBackground = style({
+const whiteBackground = kialiStyle({
   backgroundColor: PFColors.White
 });
 
-const replayBackground = style({
+const replayBackground = kialiStyle({
   backgroundColor: PFColors.Replay
 });
 
-const graphLegendStyle = style({
+const graphLegendStyle = kialiStyle({
   right: '0',
   bottom: '10px',
   position: 'absolute',

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { ObjectCheck, Validations, ValidationTypes } from '../../types/IstioObjects';
@@ -35,7 +35,7 @@ type WorkloadInfoState = {
   tabHeight?: number;
 };
 
-const fullHeightStyle = style({
+const fullHeightStyle = kialiStyle({
   height: '100%'
 });
 
@@ -267,7 +267,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     // This height needs to be propagated to minigraph to proper resize in height
     // Graph resizes correctly on width
     const height = this.state.tabHeight ? this.state.tabHeight - 115 : 300;
-    const graphContainerStyle = style({ width: '100%', height: height });
+    const graphContainerStyle = kialiStyle({ width: '100%', height: height });
     const includeMiniGraphCy = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'pf';
     const includeMiniGraphPF = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'cy';
     const miniGraphSpan = includeMiniGraphCy && includeMiniGraphPF ? 4 : 8;

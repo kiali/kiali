@@ -16,7 +16,7 @@ import {
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { AxiosError } from 'axios';
 import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
 import * as FilterHelper from '../../components/FilterList/FilterHelper';
@@ -79,13 +79,13 @@ import { ControlPlaneVersionBadge } from './ControlPlaneVersionBadge';
 import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 
-const gridStyleCompact = style({
+const gridStyleCompact = kialiStyle({
   backgroundColor: '#f5f5f5',
   paddingBottom: '20px',
   marginTop: '0px'
 });
 
-const gridStyleList = style({
+const gridStyleList = kialiStyle({
   backgroundColor: '#f5f5f5',
   // The VirtualTable component has a different style than cards
   // We need to adjust the grid style if we are on compact vs list view
@@ -93,26 +93,26 @@ const gridStyleList = style({
   marginTop: '0px'
 });
 
-const cardGridStyle = style({
+const cardGridStyle = kialiStyle({
   textAlign: 'center',
   marginTop: '0px',
   marginBottom: '10px'
 });
 
-const cardControlPlaneGridStyle = style({
+const cardControlPlaneGridStyle = kialiStyle({
   textAlign: 'center',
   marginTop: '0px',
   marginBottom: '10px'
 });
 
-const emptyStateStyle = style({
+const emptyStateStyle = kialiStyle({
   height: '300px',
   marginRight: 5,
   marginBottom: 10,
   marginTop: 10
 });
 
-const cardNamespaceNameNormalStyle = style({
+const cardNamespaceNameNormalStyle = kialiStyle({
   display: 'table-footer-group',
   verticalAlign: 'middle'
 });
@@ -122,7 +122,7 @@ const cardNamespaceNameNormalStyle = style({
 // maxWidth calc() used doesn't work well for all cases
 const NS_LONG = 20;
 
-const cardNamespaceNameLongStyle = style({
+const cardNamespaceNameLongStyle = kialiStyle({
   overflow: 'hidden',
   display: 'block',
   maxWidth: 'calc(100% - 75px)',

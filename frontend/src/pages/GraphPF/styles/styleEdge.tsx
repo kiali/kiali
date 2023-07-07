@@ -2,7 +2,7 @@ import { Edge, observer, ScaleDetailsLevel, WithSelectionProps } from '@patternf
 import { BaseEdge } from '../components/edge';
 import useDetailsLevel from '@patternfly/react-topology/dist/esm/hooks/useDetailsLevel';
 import * as React from 'react';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
 // This is the registered Edge component override that utilizes our customized Edge.tsx component.
 
@@ -10,7 +10,7 @@ type StyleEdgeProps = {
   element: Edge;
 } & WithSelectionProps;
 
-const tagClass = style({
+const tagClass = kialiStyle({
   fontFamily: 'Verdana,Arial,Helvetica,sans-serif,pficon'
 });
 

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Label as PfLabel } from '@patternfly/react-core';
 import { canRender } from '../../utils/SafeRender';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
 interface Props {
   name: string;
@@ -10,7 +10,7 @@ interface Props {
   value: string;
 }
 
-const labelStyle = style({
+const labelStyle = kialiStyle({
   display: 'block',
   float: 'left',
   fontSize: 'var(--kiali-global--font-size)',

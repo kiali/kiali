@@ -22,7 +22,7 @@ exports[`Overview page renders initial layout 1`] = `
     }
   >
     <EmptyState
-      className="fu1tihc"
+      className="kiali_fu1tihc"
       variant="full"
     >
       <Title

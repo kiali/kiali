@@ -9,7 +9,7 @@ import { defaultFilter, istioConfigLink, serviceLink } from '../../../helpers/En
 import { Tooltip } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { isParentKiosk } from '../../Kiosk/KioskActions';
 
 export class ClusterTable implements SummaryTable {
@@ -147,7 +147,7 @@ export class ClusterTable implements SummaryTable {
 
   render_cluster_type = (): React.ReactNode => {
     return (
-      <ul className={style({ textAlign: 'left' })}>
+      <ul className={kialiStyle({ textAlign: 'left' })}>
         <li>
           <b>STATIC</b>: Static is the simplest service discovery type. The configuration explicitly specifies the
           resolved network name (IP address/port, unix domain socket, etc.) of each upstream host.
@@ -188,7 +188,7 @@ export class ClusterTable implements SummaryTable {
         header: {
           info: {
             tooltip: (
-              <ul className={style({ textAlign: 'left' })}>
+              <ul className={kialiStyle({ textAlign: 'left' })}>
                 <li>
                   <b>inbound</b>: The inbound cluster events are the events that come into a node. These cluster events
                   come from another node and enter other nodes.
@@ -225,12 +225,12 @@ export class ClusterTable implements SummaryTable {
     return (
       <Tooltip
         content={
-          <div className={style({ textAlign: 'left' })}>
+          <div className={kialiStyle({ textAlign: 'left' })}>
             Group of logically similar upstream hosts that Envoy connects to. (All the hosts that envoy manage traffic)
           </div>
         }
       >
-        <KialiIcon.Help className={style({ width: '14px', height: '14px', color: PFColors.Blue400 })} />
+        <KialiIcon.Help className={kialiStyle({ width: '14px', height: '14px', color: PFColors.Blue400 })} />
       </Tooltip>
     );
   };

@@ -5,7 +5,7 @@ import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/compo
 import { isGatewayHostValid } from '../../utils/IstioConfigUtils';
 import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
 import { PlusCircleIcon, TrashIcon } from '@patternfly/react-icons';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../components/Pf/PfColors';
 import { isValid } from 'utils/Common';
 import { FormEvent } from 'react';
@@ -53,7 +53,7 @@ const headerCells: ICell[] = [
   }
 ];
 
-const noPortsStyle = style({
+const noPortsStyle = kialiStyle({
   marginTop: 15,
   color: PFColors.Red100
 });

@@ -19,7 +19,7 @@ import {
   CloseIcon,
   CodeBranchIcon,
   CompressIcon,
-  CopyIcon,  
+  CopyIcon,
   EllipsisHIcon,
   ErrorCircleOIcon,
   ExpandIcon,
@@ -57,13 +57,13 @@ import {
   WarningTriangleIcon,
   ProcessAutomationIcon
 } from '@patternfly/react-icons';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
-export const defaultIconStyle = style({
+export const defaultIconStyle = kialiStyle({
   // nothing special
 });
 
-const iconStyle = style({
+const iconStyle = kialiStyle({
   width: '10px'
 });
 
@@ -74,7 +74,7 @@ interface IconProps {
 
 // keep alphabetized
 export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } = {
-  AddMore: (props: IconProps) => <PlusCircleIcon className={props.className} />,  
+  AddMore: (props: IconProps) => <PlusCircleIcon className={props.className} />,
   AngleDoubleDown: (props: IconProps) => <AngleDoubleDownIcon className={props.className} />,
   AngleDoubleLeft: (props: IconProps) => <AngleDoubleLeftIcon className={props.className} />,
   AngleDoubleRight: (props: IconProps) => <AngleDoubleRightIcon className={props.className} />,

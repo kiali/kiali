@@ -7,7 +7,7 @@ import { KialiAppState } from 'store/Store';
 import ReactResizeDetector from 'react-resize-detector';
 import { KialiIcon } from 'config/KialiIcon';
 import { TourActions } from 'actions/TourActions';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 
 export interface TourStopInfo {
@@ -24,7 +24,7 @@ export interface TourInfo {
   stops: Array<TourStopInfo>;
 }
 
-const stopNumberStyle = style({
+const stopNumberStyle = kialiStyle({
   borderRadius: '20px',
   backgroundColor: PFColors.Blue300,
   padding: '2px 6px',
@@ -97,7 +97,7 @@ class TourStopComponent extends React.PureComponent<TourStopProps> {
   };
 
   private nextButton = () => {
-    const right = style({
+    const right = kialiStyle({
       float: 'right'
     });
     const stop = this.getStop('forward');

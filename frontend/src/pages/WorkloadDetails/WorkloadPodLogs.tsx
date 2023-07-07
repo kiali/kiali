@@ -24,7 +24,7 @@ import {
 } from '@patternfly/react-core';
 import memoize from 'micro-memoize';
 import { AutoSizer, List } from 'react-virtualized';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { addError, addSuccess } from 'utils/AlertUtils';
 import { Pod, LogEntry, AccessLog, PodLogs } from '../../types/IstioObjects';
 import { getPodLogs, getWorkloadSpans, setPodEnvoyProxyLogLevel } from '../../services/Api';
@@ -137,26 +137,26 @@ const MaxLinesOptions = {
   '25000': '25000 lines'
 };
 
-const alInfoIcon = style({
+const alInfoIcon = kialiStyle({
   display: 'inline-block',
   margin: '0px 5px 0px 0px',
   width: '10px'
 });
 
-const infoIcons = style({
+const infoIcons = kialiStyle({
   marginLeft: '0.5em',
   width: '24px'
 });
 
-const toolbarTail = style({
+const toolbarTail = kialiStyle({
   marginTop: '2px'
 });
 
-const logsDiv = style({
+const logsDiv = kialiStyle({
   marginRight: '5px'
 });
 
-const logsDisplay = style({
+const logsDisplay = kialiStyle({
   fontFamily: 'monospace',
   margin: 0,
   overflow: 'auto',
@@ -167,7 +167,7 @@ const logsDisplay = style({
 });
 
 // For some reason checkbox as a ToolbarItem needs to be tweaked
-const toolbarInputStyle = style({
+const toolbarInputStyle = kialiStyle({
   $nest: {
     '& > input': {
       marginTop: '2px'

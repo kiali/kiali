@@ -10,7 +10,7 @@ import {
 } from '@patternfly/react-core';
 import { PlusCircleIcon } from '@patternfly/react-icons';
 import { isValidIp } from '../../../../utils/IstioConfigUtils';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../../components/Pf/PfColors';
 import { isValid } from 'utils/Common';
 
@@ -38,7 +38,7 @@ const INIT_SOURCE_FIELDS = [
   'notIpBlocks'
 ].sort();
 
-const noSourceStyle = style({
+const noSourceStyle = kialiStyle({
   color: PFColors.Red100
 });
 

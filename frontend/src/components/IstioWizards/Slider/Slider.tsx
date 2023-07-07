@@ -2,7 +2,7 @@ import React from 'react';
 import { BootstrapSlider } from './BootstrapSlider';
 import { Button, ButtonVariant, InputGroupText, TextInput, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Boundaries } from './Boundaries';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { MinusIcon, PlusIcon, ThumbTackIcon, MigrationIcon } from '@patternfly/react-icons';
 import './styles/default.css';
 
@@ -139,27 +139,27 @@ export class Slider extends React.Component<Props, State> {
       />
     );
 
-    const leftButtonStyle = style({
+    const leftButtonStyle = kialiStyle({
       width: '20px',
       paddingLeft: 0,
       paddingRight: 0,
       marginLeft: 0,
       marginRight: 5
     });
-    const inputStyle = style({
+    const inputStyle = kialiStyle({
       width: '3em',
       textAlign: 'center',
       marginLeft: 0,
       marginRight: 0
     });
-    const rightButtonStyle = style({
+    const rightButtonStyle = kialiStyle({
       width: '20px',
       paddingLeft: 0,
       paddingRight: 0,
       marginLeft: 5,
       marginRight: 5
     });
-    const pinButtonStyle = style({
+    const pinButtonStyle = kialiStyle({
       paddingLeft: 8,
       paddingRight: 8
     });

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { cellWidth, ICell, Table, TableHeader, TableBody } from '@patternfly/react-table';
 import { Slider } from './Slider/Slider';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { Button, ButtonVariant, TooltipPosition } from '@patternfly/react-core';
 import { EqualizerIcon } from '@patternfly/react-icons';
 import { getDefaultBackendRefs } from './WizardActions';
@@ -41,7 +41,7 @@ type State = {
   backendRefs: K8sRouteBackendRef[];
 };
 
-const evenlyButtonStyle = style({
+const evenlyButtonStyle = kialiStyle({
   width: '100%',
   textAlign: 'right'
 });

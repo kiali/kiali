@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Button, ButtonVariant, Modal, Split, SplitItem } from '@patternfly/react-core';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { AccessLog } from 'types/IstioObjects';
 import { PFColors } from 'components/Pf/PfColors';
 
@@ -11,17 +11,17 @@ export interface AccessLogModalProps {
   onClose?: () => void;
 }
 
-const fieldStyle = style({
+const fieldStyle = kialiStyle({
   color: PFColors.Gold400,
   display: 'inline-block'
 });
 
-const modalStyle = style({
+const modalStyle = kialiStyle({
   height: '70%',
   width: '50%'
 });
 
-const prefaceStyle = style({
+const prefaceStyle = kialiStyle({
   fontFamily: 'monospace',
   fontSize: 'var(--kiali-global--font-size)',
   backgroundColor: PFColors.Black1000,
@@ -34,7 +34,7 @@ const prefaceStyle = style({
   width: 'calc(100% - 15px)'
 });
 
-const splitStyle = style({
+const splitStyle = kialiStyle({
   overflow: 'auto',
   overflowY: 'auto',
   width: '50%'

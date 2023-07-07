@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
 import GrpcIcon from '../../assets/img/grpc-logo.svg';
 import RestIcon from '../../assets/img/rest-logo.svg';
@@ -44,7 +44,7 @@ const apiLogos = {
   graphql: GraphqlIcon
 };
 
-const iconStyle = style({
+const iconStyle = kialiStyle({
   marginTop: -2,
   marginRight: 6,
   width: 30

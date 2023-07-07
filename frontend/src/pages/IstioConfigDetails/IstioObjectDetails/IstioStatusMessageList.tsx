@@ -3,14 +3,14 @@ import { IstioLevelToSeverity, ObjectCheck, ValidationMessage, ValidationTypes }
 import { Flex, FlexItem, Stack, StackItem, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Validation } from '../../../components/Validations/Validation';
 import { KialiIcon } from '../../../config/KialiIcon';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
 interface Props {
   messages?: ValidationMessage[];
   checks?: ObjectCheck[];
 }
 
-const infoStyle = style({
+const infoStyle = kialiStyle({
   verticalAlign: '-0.125em !important'
 });
 

@@ -1,27 +1,27 @@
 import React from 'react';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../Pf/PfColors';
 import { BreadcrumbView } from '../../BreadcrumbView/BreadcrumbView';
 import { KialiAppState } from '../../../store/Store';
 import { connect } from 'react-redux';
 import { isKiosk } from '../../Kiosk/KioskActions';
 
-const containerPadding = style({ padding: '0 20px 28px 20px' });
-const containerWhite = style({ backgroundColor: PFColors.White });
+const containerPadding = kialiStyle({ padding: '0 20px 28px 20px' });
+const containerWhite = kialiStyle({ backgroundColor: PFColors.White });
 // This magic style tries to adjust Breadcrumb with Namespace selector
 // to give impression that both components are placed in the same location
-const breadcrumbMargin = style({ padding: '10px 0 4px 0' });
+const breadcrumbMargin = kialiStyle({ padding: '10px 0 4px 0' });
 
-const breadcrumbStyle = style({
+const breadcrumbStyle = kialiStyle({
   display: 'flex',
   flexWrap: 'wrap'
 });
 
-const rightToolbarStyle = style({
+const rightToolbarStyle = kialiStyle({
   marginLeft: 'auto'
 });
 
-const actionsToolbarStyle = style({
+const actionsToolbarStyle = kialiStyle({
   float: 'right',
   backgroundColor: '#fff',
   padding: '0px 20px 22px 5px',

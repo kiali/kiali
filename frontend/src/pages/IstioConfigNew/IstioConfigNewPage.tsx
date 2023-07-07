@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { Namespace } from '../../types/Namespace';
 import { ActionGroup, Button, ButtonVariant, Form, FormGroup, TextInput } from '@patternfly/react-core';
 import { RenderContent } from '../../components/Nav/Page';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { GatewayForm, GATEWAY, GATEWAYS, GatewayState, initGateway, isGatewayStateValid } from './GatewayForm';
 import {
   K8sGatewayForm,
@@ -89,9 +89,9 @@ type State = {
   sidecar: SidecarState;
 };
 
-const formPadding = style({ padding: '30px 20px 30px 20px' });
+const formPadding = kialiStyle({ padding: '30px 20px 30px 20px' });
 
-const warningStyle = style({
+const warningStyle = kialiStyle({
   marginLeft: 15,
   paddingTop: 5,
   color: PFColors.Red100,

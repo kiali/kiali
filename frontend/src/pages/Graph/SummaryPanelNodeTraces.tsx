@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { SimpleList, SimpleListItem, Button, Checkbox, Divider, ButtonVariant } from '@patternfly/react-core';
 import { SyncAltIcon } from '@patternfly/react-icons';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
 import { KialiAppState } from 'store/Store';
 import { JaegerThunkActions } from 'actions/JaegerThunkActions';
@@ -38,12 +38,12 @@ type State = {
 
 const tracesLimit = 15;
 
-const refreshDivStyle = style({
+const refreshDivStyle = kialiStyle({
   display: 'inline-flex',
   width: '100%'
 });
 
-const checkboxStyle = style({
+const checkboxStyle = kialiStyle({
   paddingBottom: 10,
   $nest: {
     '& > label': {
@@ -53,13 +53,13 @@ const checkboxStyle = style({
   }
 });
 
-const refreshButtonStyle = style({
+const refreshButtonStyle = kialiStyle({
   padding: '2px 10px',
   margin: '5px 0 5px auto',
   top: -4
 });
 
-const dividerStyle = style({
+const dividerStyle = kialiStyle({
   paddingBottom: '3px'
 });
 

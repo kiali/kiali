@@ -1,10 +1,10 @@
 import React from 'react';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../Pf/PfColors';
 import { RenderComponentScroll } from './RenderComponentScroll';
 
-const containerPadding = style({ padding: '30px 20px 0 20px' });
-const containerWhite = style({ backgroundColor: PFColors.White });
+const containerPadding = kialiStyle({ padding: '30px 20px 0 20px' });
+const containerWhite = kialiStyle({ backgroundColor: PFColors.White });
 
 export class RenderContent extends React.Component<{ needScroll?: boolean }> {
   render() {

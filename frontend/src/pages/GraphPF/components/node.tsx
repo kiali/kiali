@@ -36,7 +36,7 @@ import {
   NODE_SHADOW_FILTER_ID_HOVER
 } from '@patternfly/react-topology/dist/esm/components/nodes/NodeShadows';
 import { PFColors } from 'components/Pf/PfColors';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
 // This is a copy of PFT DefaultNode (v4.68.3), then modified.  I don't see a better way to really
 // do this because DefaultNode doesn't really seem itself extensible and to add certain behavior you have
@@ -306,13 +306,13 @@ const BaseNodeComponent: React.FunctionComponent<BaseNodeProps> = ({
   const OverlayWidth = 40;
   const UnhighlightOpacity = 0.1;
 
-  const findOverlayStyle = style({
+  const findOverlayStyle = kialiStyle({
     strokeWidth: OverlayWidth,
     stroke: ColorFind,
     strokeOpacity: OverlayOpacity
   });
 
-  const traceOverlayStyle = style({
+  const traceOverlayStyle = kialiStyle({
     strokeWidth: OverlayWidth,
     stroke: ColorSpan,
     strokeOpacity: OverlayOpacity

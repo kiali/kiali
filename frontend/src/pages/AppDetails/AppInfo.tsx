@@ -6,7 +6,7 @@ import { RenderComponentScroll } from '../../components/Nav/Page';
 import { DurationInSeconds } from 'types/Common';
 import { GraphDataSource } from 'services/GraphDataSource';
 import { AppHealth } from 'types/Health';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
 import { history, URLParam } from '../../app/History';
 import { MiniGraphCard } from '../../components/CytoscapeGraph/MiniGraphCard';
@@ -23,7 +23,7 @@ type AppInfoState = {
   tabHeight?: number;
 };
 
-const fullHeightStyle = style({
+const fullHeightStyle = kialiStyle({
   height: '100%'
 });
 
@@ -73,7 +73,7 @@ export class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
     // This height needs to be propagated to minigraph to proper resize in height
     // Graph resizes correctly on width
     const height = this.state.tabHeight ? this.state.tabHeight - 115 : 300;
-    const graphContainerStyle = style({ width: '100%', height: height });
+    const graphContainerStyle = kialiStyle({ width: '100%', height: height });
     const includeMiniGraphCy = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'pf';
     const includeMiniGraphPF = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'cy';
     const miniGraphSpan = includeMiniGraphCy && includeMiniGraphPF ? 4 : 8;

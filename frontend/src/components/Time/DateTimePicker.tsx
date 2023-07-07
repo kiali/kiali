@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import DatePicker from 'react-datepicker';
 
-const pickerStyle = style({
+const pickerStyle = kialiStyle({
   height: '36px',
   paddingLeft: '.75em',
   width: '10em'

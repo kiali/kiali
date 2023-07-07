@@ -1,6 +1,6 @@
 import { JWTRule } from '../../../types/IstioObjects';
 import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../components/Pf/PfColors';
 import * as React from 'react';
 import { formatJwtField } from './JwtRuleBuilder';
@@ -22,7 +22,7 @@ const headerCells: ICell[] = [
   }
 ];
 
-const noJWTRulesStyle = style({
+const noJWTRulesStyle = kialiStyle({
   marginTop: 10,
   color: PFColors.Red100,
   textAlign: 'center',

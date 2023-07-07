@@ -5,13 +5,13 @@ import { InfoAltIcon } from '@patternfly/react-icons';
 import './Health.css';
 import { PFColors } from '../Pf/PfColors';
 import { Title, TitleSizes } from '@patternfly/react-core';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
 interface Props {
   health: H.Health;
 }
 
-const titleStyle = style({
+const titleStyle = kialiStyle({
   margin: '15px 0 8px 0'
 });
 

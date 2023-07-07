@@ -1,16 +1,16 @@
 import { JaegerTrace } from '../../../types/JaegerInfo';
 import moment from 'moment';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 import { formatDuration, formatRelativeDate, isErrorTag } from 'utils/tracing/TracingHelper';
 
-export const shortIDStyle = style({
+export const shortIDStyle = kialiStyle({
   color: PFColors.Black600,
   padding: 4,
   fontSize: 12
 });
 
-export const fullIDStyle = style({
+export const fullIDStyle = kialiStyle({
   color: PFColors.Black600,
   paddingLeft: 10,
   fontSize: 14

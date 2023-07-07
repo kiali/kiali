@@ -30,7 +30,7 @@ import { history } from '../../app/History';
 import { Paths } from '../../config';
 import { MessageType } from '../../types/MessageCenter';
 import { getIstioObject, mergeJsonPatch } from '../../utils/IstioConfigUtils';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { ParameterizedTabs, activeTab } from '../../components/Tab/Tabs';
 import {
   Drawer,
@@ -59,11 +59,11 @@ import { connect } from 'react-redux';
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
 
-const rightToolbarStyle = style({
+const rightToolbarStyle = kialiStyle({
   zIndex: 500
 });
 
-const editorDrawer = style({
+const editorDrawer = kialiStyle({
   margin: '0'
 });
 

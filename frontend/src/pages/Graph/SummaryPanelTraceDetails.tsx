@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { Tooltip, Button, ButtonVariant, pluralize, SelectOption } from '@patternfly/react-core';
 import {
   InfoAltIcon,
@@ -50,12 +50,12 @@ type State = {
   selectedSpanID: string | undefined;
 };
 
-const closeBoxStyle = style({
+const closeBoxStyle = kialiStyle({
   float: 'right',
   marginTop: '-7px'
 });
 
-const nameStyle = style({
+const nameStyle = kialiStyle({
   display: 'inline-block',
   maxWidth: '95%',
   textOverflow: 'ellipsis',
@@ -63,11 +63,11 @@ const nameStyle = style({
   whiteSpace: 'nowrap'
 });
 
-const pStyle = style({
+const pStyle = kialiStyle({
   paddingTop: 9
 });
 
-const spanSelectStyle = style({
+const spanSelectStyle = kialiStyle({
   $nest: {
     '& > button': {
       fontSize: 'var(--graph-side-panel--font-size)',

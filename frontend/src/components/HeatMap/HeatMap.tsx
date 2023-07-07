@@ -3,7 +3,7 @@
 
 import { PFColors } from 'components/Pf/PfColors';
 import React from 'react';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
 // rgb in [0,255] bounds
 export type Color = { r: number; g: number; b: number };
@@ -31,9 +31,12 @@ const baseStyle = {
   textOverflow: 'clip'
 };
 
-const labelStyle = style(baseStyle);
+const labelStyle = kialiStyle(baseStyle);
 
-const cellStyle = style(baseStyle, { whiteSpace: 'nowrap' });
+const cellStyle = kialiStyle({
+  ...baseStyle,
+  whiteSpace: 'nowrap'
+});
 
 export class HeatMap extends React.Component<Props> {
   static HealthColorMap: ColorMap = [

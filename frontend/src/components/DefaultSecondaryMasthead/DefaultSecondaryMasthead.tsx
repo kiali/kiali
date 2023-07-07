@@ -1,7 +1,7 @@
 import React from 'react';
 import { Title, TitleSizes } from '@patternfly/react-core';
 import { NamespaceDropdown } from '../NamespaceDropdown';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from '../../config/KialiIcon';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
@@ -18,20 +18,20 @@ type Props = ReduxProps & {
   rightToolbar?: JSX.Element;
 };
 
-const mainPadding = style({
+const mainPadding = kialiStyle({
   padding: '10px 20px 10px 20px'
 });
 
-const flexStyle = style({
+const flexStyle = kialiStyle({
   display: 'flex',
   flexWrap: 'wrap'
 });
 
-const rightToolbarStyle = style({
+const rightToolbarStyle = kialiStyle({
   marginLeft: 'auto'
 });
 
-const actionsToolbarStyle = style({
+const actionsToolbarStyle = kialiStyle({
   marginLeft: 'auto',
   paddingTop: '17px'
 });

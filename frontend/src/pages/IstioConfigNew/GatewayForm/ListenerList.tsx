@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { cellWidth, TableComposable, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../components/Pf/PfColors';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { PlusCircleIcon } from '@patternfly/react-icons';
@@ -14,14 +14,14 @@ type Props = {
   listeners: Listener[];
 };
 
-const noListenerStyle = style({
+const noListenerStyle = kialiStyle({
   marginTop: 10,
   color: PFColors.Red100,
   textAlign: 'center',
   width: '100%'
 });
 
-const addListenerStyle = style({
+const addListenerStyle = kialiStyle({
   marginLeft: 0,
   paddingLeft: 0
 });

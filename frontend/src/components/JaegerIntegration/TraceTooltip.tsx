@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { pluralize } from '@patternfly/react-core';
 import { ChartCursorFlyout, ChartLabelProps } from '@patternfly/react-charts';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { KialiAppState } from 'store/Store';
 import { averageSpanDuration, reduceMetricsStats, StatsMatrix } from 'utils/tracing/TraceStats';
 import { JaegerLineInfo } from './JaegerScatter';
@@ -18,20 +18,20 @@ const flyoutMargin = 10;
 const innerWidth = flyoutWidth - 2 * flyoutMargin;
 const innerHeight = flyoutHeight - 2 * flyoutMargin;
 
-const tooltipStyle = style({
+const tooltipStyle = kialiStyle({
   color: PFColors.Black100,
   width: innerWidth,
   height: innerHeight
 });
 
-const titleStyle = style({
+const titleStyle = kialiStyle({
   whiteSpace: 'nowrap',
   overflow: 'hidden',
   textOverflow: 'ellipsis'
 });
 
-const contentStyle = style({ width: '100%', height: '100%' });
-const leftStyle = style({ width: '35%', height: '100%', float: 'left' });
+const contentStyle = kialiStyle({ width: '100%', height: '100%' });
+const leftStyle = kialiStyle({ width: '35%', height: '100%', float: 'left' });
 
 type LabelProps = ChartLabelProps & {
   trace: JaegerTrace;

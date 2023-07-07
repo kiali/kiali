@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { KialiDispatch } from 'types/Redux';
 import _ from 'lodash';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import {
   Button,
   Dropdown,
@@ -47,24 +47,24 @@ type NamespaceDropdownState = {
   selectedNamespaces: Namespace[];
 };
 
-const checkboxBulkStyle = style({
+const checkboxBulkStyle = kialiStyle({
   marginLeft: '0.5em',
   position: 'relative',
   top: 8
 });
 
-const checkboxStyle = style({ marginLeft: '1.0em' });
+const checkboxStyle = kialiStyle({ marginLeft: '1.0em' });
 
-const checkboxLabelStyle = style({ marginLeft: '0.5em' });
+const checkboxLabelStyle = kialiStyle({ marginLeft: '0.5em' });
 
-const headerStyle = style({
+const headerStyle = kialiStyle({
   margin: '0 0.5em 10px 0.5em',
   width: 300
 });
 
 const marginBottom = 20;
 
-const namespaceContainerStyle = style({
+const namespaceContainerStyle = kialiStyle({
   overflow: 'auto'
 });
 

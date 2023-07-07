@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { MissingSidecar } from '../../components/MissingSidecar/MissingSidecar';
 import { ServiceIcon, BundleIcon, ApplicationsIcon } from '@patternfly/react-icons';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
-const PfTitleStyle = style({
+const PfTitleStyle = kialiStyle({
   fontSize: '19px',
   fontWeight: 400,
   margin: '20px 0',

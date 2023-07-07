@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Workload } from '../../types/Workload';
 import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { Labels } from '../../components/Label/Labels';
 import { LocalTime } from '../../components/Time/LocalTime';
 import { TextOrLink } from '../../components/TextOrLink';
@@ -26,7 +26,7 @@ type WorkloadDescriptionProps = {
   namespace: string;
 };
 
-const resourceListStyle = style({
+const resourceListStyle = kialiStyle({
   margin: '0px 0 11px 0',
   $nest: {
     '& > ul > li > span': {
@@ -37,17 +37,17 @@ const resourceListStyle = style({
   }
 });
 
-const iconStyle = style({
+const iconStyle = kialiStyle({
   display: 'inline-block',
   verticalAlign: '2px !important'
 });
 
-const infoStyle = style({
+const infoStyle = kialiStyle({
   margin: '0px 0px 2px 10px',
   verticalAlign: '-5px !important'
 });
 
-const healthIconStyle = style({
+const healthIconStyle = kialiStyle({
   marginLeft: '10px',
   verticalAlign: '-1px !important'
 });

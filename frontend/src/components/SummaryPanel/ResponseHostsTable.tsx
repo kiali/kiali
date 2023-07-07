@@ -1,6 +1,6 @@
 import * as React from 'react';
 import _ from 'lodash';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { Responses } from '../../types/Graph';
 import { Tooltip } from '@patternfly/react-core';
 import { summaryTitle } from 'pages/Graph/SummaryPanelCommon';
@@ -17,7 +17,7 @@ interface Row {
   val: string;
 }
 
-const hostStyle = style({
+const hostStyle = kialiStyle({
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap'

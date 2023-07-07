@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { SummaryPanelEdge } from './SummaryPanelEdge';
 import { SummaryPanelGraph } from './SummaryPanelGraph';
 import { SummaryPanelAppBox } from './SummaryPanelAppBox';
@@ -40,17 +40,17 @@ type MainSummaryPanelPropType = SummaryPanelPropType & {
   ) => void;
 };
 
-const mainStyle = style({
+const mainStyle = kialiStyle({
   fontSize: 'var(--graph-side-panel--font-size)',
   padding: '0',
   position: 'relative'
 });
 
-const expandedStyle = style({ height: '100%' });
+const expandedStyle = kialiStyle({ height: '100%' });
 
-const expandedHalfStyle = style({ height: '50%' });
+const expandedHalfStyle = kialiStyle({ height: '50%' });
 
-const collapsedStyle = style({
+const collapsedStyle = kialiStyle({
   $nest: {
     '& > .panel': {
       display: 'none'
@@ -58,14 +58,14 @@ const collapsedStyle = style({
   }
 });
 
-const summaryPanelBottomSplit = style({
+const summaryPanelBottomSplit = kialiStyle({
   height: '50%',
   width: summaryPanelWidth,
   minWidth: summaryPanelWidth,
   overflowY: 'auto'
 });
 
-const toggleSidePanelStyle = style({
+const toggleSidePanelStyle = kialiStyle({
   backgroundColor: 'white',
   border: '1px #ddd solid',
   borderRadius: '3px',

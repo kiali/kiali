@@ -2,7 +2,7 @@ import * as React from 'react';
 import { cellWidth, ICell, Table, TableHeader, TableBody } from '@patternfly/react-table';
 import { Slider } from './Slider/Slider';
 import { WorkloadOverview } from '../../types/ServiceInfo';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../Pf/PfColors';
 import { Button, ButtonVariant, TooltipPosition } from '@patternfly/react-core';
 import { EqualizerIcon } from '@patternfly/react-icons';
@@ -29,13 +29,13 @@ type State = {
   workloads: WorkloadWeight[];
 };
 
-const validationStyle = style({
+const validationStyle = kialiStyle({
   marginBottom: 10,
   color: PFColors.Red100,
   textAlign: 'right'
 });
 
-const evenlyButtonStyle = style({
+const evenlyButtonStyle = kialiStyle({
   width: '100%',
   textAlign: 'right'
 });

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { AppWorkload } from '../../types/App';
 import { PopoverPosition, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { Link } from 'react-router-dom';
 import { MissingSidecar } from '../MissingSidecar/MissingSidecar';
 import * as H from '../../types/Health';
@@ -31,13 +31,13 @@ type Props = ReduxProps & {
   waypointWorkloads?: Workload[];
 };
 
-const iconStyle = style({
+const iconStyle = kialiStyle({
   margin: '0 0 0 0',
   padding: '0 0 0 0',
   display: 'inline-block'
 });
 
-const resourceListStyle = style({
+const resourceListStyle = kialiStyle({
   margin: '0px 0 11px 0',
   $nest: {
     '& > span': {
@@ -48,11 +48,11 @@ const resourceListStyle = style({
   }
 });
 
-const titleStyle = style({
+const titleStyle = kialiStyle({
   margin: '15px 0 8px 0'
 });
 
-const infoStyle = style({
+const infoStyle = kialiStyle({
   margin: '0px 4px 2px 10px',
   verticalAlign: '-4px !important'
 });

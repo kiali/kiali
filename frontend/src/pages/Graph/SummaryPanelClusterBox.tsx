@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Tab, Tooltip } from '@patternfly/react-core';
 import { Node } from '@patternfly/react-topology';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { summaryFont, summaryHeader, summaryBodyTabs, summaryPanelWidth, getTitle } from './SummaryPanelCommon';
 import { RateTableGrpc, RateTableHttp, RateTableTcp } from 'components/SummaryPanel/RateTable';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
@@ -25,7 +25,7 @@ const defaultState: SummaryPanelClusterBoxState = {
   clusterBox: null
 };
 
-const topologyStyle = style({
+const topologyStyle = kialiStyle({
   margin: '0 1em'
 });
 

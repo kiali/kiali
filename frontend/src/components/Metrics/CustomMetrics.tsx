@@ -13,7 +13,7 @@ import {
   Title,
   TitleSizes
 } from '@patternfly/react-core';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { serverConfig } from '../../config/ServerConfig';
 import { history, URLParam } from '../../app/History';
 import * as API from '../../services/Api';
@@ -72,12 +72,12 @@ type ReduxProps = {
 
 type Props = ReduxProps & CustomMetricsProps;
 
-const fullHeightStyle = style({
+const fullHeightStyle = kialiStyle({
   height: '100%'
 });
 
 // For some reason checkbox as a ToolbarItem needs to be tweaked
-const toolbarInputStyle = style({
+const toolbarInputStyle = kialiStyle({
   $nest: {
     '& > input': {
       marginTop: '2px'
@@ -85,7 +85,7 @@ const toolbarInputStyle = style({
   }
 });
 
-const emptyStyle = style({
+const emptyStyle = kialiStyle({
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Chip } from '@patternfly/react-core';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { MATCHING_SELECTED_TOOLTIP, wizardTooltip } from '../WizardHelp';
 
 type Props = {
@@ -8,12 +8,12 @@ type Props = {
   onRemoveMatch: (match: string) => void;
 };
 
-const labelContainerStyle = style({
+const labelContainerStyle = kialiStyle({
   marginTop: 20,
   height: 40
 });
 
-const remove = style({
+const remove = kialiStyle({
   cursor: 'not-allowed'
 });
 

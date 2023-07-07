@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { Gateway, ObjectCheck, ObjectValidation, VirtualService } from '../../types/IstioObjects';
 import { ValidationList } from '../../components/Validations/ValidationList';
 import { KialiIcon } from '../../config/KialiIcon';
@@ -18,7 +18,7 @@ type HostnameInfo = {
   fromName: string | undefined;
 };
 
-const resourceListStyle = style({
+const resourceListStyle = kialiStyle({
   margin: '0px 0 11px 0',
   $nest: {
     '& > ul > li > span': {
@@ -29,7 +29,7 @@ const resourceListStyle = style({
   }
 });
 
-const infoStyle = style({
+const infoStyle = kialiStyle({
   margin: '0px 0px 2px 10px',
   verticalAlign: '-3px !important'
 });

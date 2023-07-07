@@ -16,7 +16,7 @@ import { CloseIcon, InfoIcon } from '@patternfly/react-icons';
 import { connect } from 'react-redux';
 import { KialiDispatch } from 'types/Redux';
 import { KialiAppState } from 'store/Store';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { NotificationMessage, NotificationGroup } from '../../types/MessageCenter';
 import { MessageCenterActions } from 'actions/MessageCenterActions';
 import { AlertDrawerGroup } from './AlertDrawerGroup';
@@ -64,24 +64,24 @@ const noNotificationsMessage = (
 );
 
 class AlertDrawerComponent extends React.PureComponent<AlertDrawerProps> {
-  static readonly head = style({
+  static readonly head = kialiStyle({
     paddingBottom: 0
   });
-  static readonly body = style({
+  static readonly body = kialiStyle({
     paddingLeft: 0,
     paddingRight: 0
   });
-  static readonly wrapper = style({
+  static readonly wrapper = kialiStyle({
     overflow: 'auto'
   });
   static readonly wrapperMarginBottom = 10;
-  static readonly groups = style({
+  static readonly groups = kialiStyle({
     paddingTop: 0,
     paddingBottom: 0
   });
 
   render() {
-    const drawer = style({
+    const drawer = kialiStyle({
       position: 'absolute',
       right: '0',
       width: this.props.isExpanded ? '80%' : '30em'

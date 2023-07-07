@@ -18,7 +18,7 @@ import { KialiDispatch } from 'types/Redux';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type Props = {
   manageURL?: boolean;
@@ -28,7 +28,7 @@ type Props = {
   setTimeRange: (range: TimeRange) => void;
 };
 
-const labelStyle = style({
+const labelStyle = kialiStyle({
   margin: '5px 5px 0px 5px'
 });
 

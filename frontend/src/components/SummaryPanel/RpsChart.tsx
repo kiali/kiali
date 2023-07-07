@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { InfoAltIcon, SquareFullIcon } from '@patternfly/react-icons';
 
 import { SparklineChart } from 'components/Charts/SparklineChart';
@@ -35,7 +35,7 @@ type BytesAbbreviation = {
   format: (includeUnit: boolean) => string;
 };
 
-const blockStyle = style({
+const blockStyle = kialiStyle({
   marginTop: '0.5em',
   marginBottom: '0.5em'
 });

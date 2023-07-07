@@ -61,7 +61,7 @@ import {
   PeerAuthenticationMutualTLSMode,
   VirtualService
 } from '../../types/IstioObjects';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { RequestTimeouts, TimeoutRetryRoute } from './RequestTimeouts';
 import { CircuitBreaker, CircuitBreakerState } from './CircuitBreaker';
 import _ from 'lodash';
@@ -151,7 +151,7 @@ const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState =>
   };
 };
 
-const advancedOptionsStyle = style({
+const advancedOptionsStyle = kialiStyle({
   marginTop: 10
 });
 

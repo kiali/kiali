@@ -11,7 +11,7 @@ import * as CytoscapeGraphUtils from '../../../components/CytoscapeGraph/Cytosca
 import { EdgeLabelMode, NodeType, Layout, EdgeMode, NodeAttr, EdgeAttr } from '../../../types/Graph';
 import * as AlertUtils from '../../../utils/AlertUtils';
 import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import { TimeInMilliseconds } from 'types/Common';
@@ -78,13 +78,13 @@ const inputWidth = {
 };
 
 // reduce toolbar padding from 20px to 10px to save space
-const thinGroupStyle = style({
+const thinGroupStyle = kialiStyle({
   paddingLeft: '10px',
   paddingRight: '10px'
 });
 
 // styles for clear button
-const buttonClearStyle = style({
+const buttonClearStyle = kialiStyle({
   minWidth: '20px',
   width: '20px',
   paddingLeft: '5px',

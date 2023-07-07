@@ -17,7 +17,7 @@ import { DecoratedGraphElements, EdgeMode, GraphType, NodeType } from '../../typ
 import { CytoscapeGraph, GraphEdgeTapEvent, GraphNodeTapEvent } from './CytoscapeGraph';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
 import { store } from 'store/ConfigStore';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { toRangeString } from '../Time/Utils';
 import { TimeInMilliseconds } from '../../types/Common';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
@@ -32,7 +32,7 @@ import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { KioskElement } from '../Kiosk/KioskElement';
 import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
 
-const initGraphContainerStyle = style({ width: '100%', height: '100%' });
+const initGraphContainerStyle = kialiStyle({ width: '100%', height: '100%' });
 
 type ReduxProps = {
   kiosk: string;

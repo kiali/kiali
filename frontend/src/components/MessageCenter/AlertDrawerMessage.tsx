@@ -5,7 +5,7 @@ import { MessageType, NotificationMessage } from '../../types/MessageCenter';
 import moment from 'moment';
 import { MessageCenterActions } from 'actions/MessageCenterActions';
 import { KialiDispatch } from 'types/Redux';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
 
 const getIcon = (type: MessageType) => {
@@ -33,13 +33,13 @@ type AlertDrawerMessageProps = ReduxProps & {
 };
 
 class AlertDrawerMessageComponent extends React.PureComponent<AlertDrawerMessageProps> {
-  static readonly body = style({
+  static readonly body = kialiStyle({
     paddingTop: 0
   });
-  static readonly left = style({
+  static readonly left = kialiStyle({
     float: 'left'
   });
-  static readonly right = style({
+  static readonly right = kialiStyle({
     float: 'right'
   });
 

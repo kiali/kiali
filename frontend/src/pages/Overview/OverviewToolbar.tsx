@@ -15,7 +15,7 @@ import { SortField } from '../../types/SortFilters';
 import { NamespaceInfo } from './NamespaceInfo';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../components/Pf/PfColors';
 import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
 import { KialiDispatch } from '../../types/Redux';
@@ -63,35 +63,35 @@ const sortTypes = (function () {
   return o;
 })();
 
-const containerPadding = style({
+const containerPadding = kialiStyle({
   backgroundColor: PFColors.White,
   padding: '0px 20px 0px 20px'
 });
 
-const containerFlex = style({
+const containerFlex = kialiStyle({
   display: 'flex',
   flexWrap: 'wrap'
 });
 
-const filterToolbarStyle = style({
+const filterToolbarStyle = kialiStyle({
   paddingTop: '10px'
 });
 
-const rightToolbarStyle = style({
+const rightToolbarStyle = kialiStyle({
   marginLeft: 'auto',
   height: '118px',
   padding: '10px 0px 0px 0px'
 });
 
-const timeToolbarStyle = style({
+const timeToolbarStyle = kialiStyle({
   textAlign: 'right'
 });
 
-const actionsToolbarStyle = style({
+const actionsToolbarStyle = kialiStyle({
   paddingTop: '17px'
 });
 
-const typeSelectStyle = style({
+const typeSelectStyle = kialiStyle({
   paddingRight: '6px'
 });
 

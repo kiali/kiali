@@ -5,7 +5,7 @@ import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import { Reporter, Direction } from '../../types/MetricsOptions';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { KialiIcon } from '../../config/KialiIcon';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
 interface Props {
   onChanged: (reproter: Reporter) => void;
@@ -13,7 +13,7 @@ interface Props {
   reporter: Reporter;
 }
 
-const infoStyle = style({
+const infoStyle = kialiStyle({
   margin: '0px 5px 2px 5px',
   verticalAlign: '-5px !important'
 });
