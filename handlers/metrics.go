@@ -43,6 +43,11 @@ func getAppMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClie
 		log.Errorf("Error getting namespace clusters %s", errNs.Error())
 	}
 
+	if len(namespaces) == 0 {
+		RespondWithError(w, http.StatusBadRequest, "No namespaces matching the request")
+		return
+	}
+
 	//TODO: Namespace is used to check permissions, this is checking just in one of them
 	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, namespaces[0])
 	if metricsService == nil {
@@ -85,6 +90,11 @@ func getWorkloadMetrics(w http.ResponseWriter, r *http.Request, promSupplier pro
 	namespaces, errNs := layer.Namespace.GetNamespaceClusters(context.TODO(), namespace)
 	if errNs != nil {
 		log.Errorf("Error getting namespace clusters %s", errNs.Error())
+	}
+
+	if len(namespaces) == 0 {
+		RespondWithError(w, http.StatusBadRequest, "No namespaces matching the request")
+		return
 	}
 
 	// TODO: Namespace is used to check permissions, this is checking just in one of them
@@ -132,6 +142,11 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promSupplier prom
 		log.Errorf("Error getting namespace clusters %s", errNs.Error())
 	}
 
+	if len(namespaces) == 0 {
+		RespondWithError(w, http.StatusBadRequest, "No namespaces matching the request")
+		return
+	}
+
 	// TODO: Namespace is used to check permissions, this is checking just in one of them
 	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, namespaces[0])
 	if metricsService == nil {
@@ -174,6 +189,11 @@ func getAggregateMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 	namespaces, errNs := layer.Namespace.GetNamespaceClusters(context.TODO(), namespace)
 	if errNs != nil {
 		log.Errorf("Error getting namespace clusters %s", errNs.Error())
+	}
+
+	if len(namespaces) == 0 {
+		RespondWithError(w, http.StatusBadRequest, "No namespaces matching the request")
+		return
 	}
 
 	// TODO: Namespace is used to check permissions, this is checking just in one of them
@@ -226,6 +246,11 @@ func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 	namespaces, errNs := layer.Namespace.GetNamespaceClusters(context.TODO(), namespace)
 	if errNs != nil {
 		log.Errorf("Error getting namespace clusters %s", errNs.Error())
+	}
+
+	if len(namespaces) == 0 {
+		RespondWithError(w, http.StatusBadRequest, "No namespaces matching the request")
+		return
 	}
 
 	// TODO: Namespace is used to check permissions, this is checking just in one of them
