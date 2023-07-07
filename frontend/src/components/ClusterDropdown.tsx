@@ -81,17 +81,6 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
   syncClusterParam = () => {
     if (this.props.activeClusters.length === 0 && serverConfig.clusters) {
       this.props.setActiveClusters(Object.values(serverConfig.clusters));
-    } else if (serverConfig.clusterInfo) {
-      this.props.setActiveClusters([
-        {
-          name: serverConfig.clusterInfo.name,
-          network: '',
-          secretName: '',
-          apiEndpoint: '',
-          kialiInstances: [],
-          isKialiHome: true
-        }
-      ]);
     }
   };
 

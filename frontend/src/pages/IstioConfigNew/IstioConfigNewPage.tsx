@@ -75,7 +75,6 @@ type Props = {
   objectType: string;
   activeNamespaces: Namespace[];
   activeClusters: MeshCluster[];
-  clusters: MeshCluster[];
 };
 
 type State = {
@@ -431,7 +430,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     const canCreate = this.props.activeNamespaces.every(ns => this.canCreate(ns.name));
     const isNameValid = isValidK8SName(this.state.name);
     const isNamespacesValid = this.props.activeNamespaces.length > 0;
-    const isClustersValid = this.props.activeClusters.length > 0 || this.props.clusters.length === 1;
+    const isClustersValid = this.props.activeClusters.length > 0 || Object.keys(serverConfig.clusters).length <= 1;
     const isFormValid = isNameValid && isNamespacesValid && isClustersValid && this.isIstioFormValid();
     return (
       <>
@@ -529,8 +528,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
 const mapStateToProps = (state: KialiAppState) => {
   return {
     activeNamespaces: activeNamespacesSelector(state),
-    activeClusters: activeClustersSelector(state),
-    clusters: Object.values(serverConfig.clusters)
+    activeClusters: activeClustersSelector(state)
   };
 };
 
