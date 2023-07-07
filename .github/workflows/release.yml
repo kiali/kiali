@@ -6,19 +6,6 @@ on:
   - cron: '00 7 * * MON'
   workflow_dispatch:
     inputs:
-      release_type:
-        description: Release type
-        required: true
-        default: "auto"
-        type: choice
-        options:
-        - minor
-        - patch
-      release_branch:
-        description: Branch to release
-        required: true
-        default: master
-        type: string
       quay_repository:
         description: Quay repository
         type: string
@@ -36,11 +23,12 @@ jobs:
       branch_version: ${{ env.branch_version }}
       next_version: ${{ env.next_version }}
       quay_tag: ${{ env.quay_tag }}
+      go_version: ${{ env.go_version }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
       with:
-        ref: ${{ github.event.inputs.release_branch || github.ref_name }}
+        ref: ${{ github.ref_name }}
 
     - name: Prepare scripts
       run: |
@@ -82,8 +70,9 @@ jobs:
     - name: Determine release type
       id: release_type
       run: |
-        if [ -z ${{ github.event.inputs.release_type }} ];
-        then
+        echo ${{ github.ref_name }}
+        if [[ "${{ github.ref_name }}" == "master" ]];
+        then 
           DO_RELEASE=$(python minor.py)
           if [[ $DO_RELEASE == "1" ]]
           then
@@ -92,7 +81,7 @@ jobs:
             echo "release_type=skip" >> $GITHUB_ENV 
           fi
         else
-          echo "release_type=${{ github.event.inputs.release_type }}" >> $GITHUB_ENV 
+          echo "release_type=patch" >> $GITHUB_ENV 
         fi
 
     - name: Determine release version
@@ -158,6 +147,17 @@ jobs:
 
         echo "quay_tag=$QUAY_TAG" >> $GITHUB_ENV
 
+    - name: Determine go version
+      if: ${{ env.release_type != 'skip' }}
+      id: go_version
+      run: |
+        GO_VERSION=$(sed -rn 's/^GO_VERSION_KIALI \= (.*)/\1/p' Makefile)
+
+        # Remove any pre release identifier (ie: "-SNAPSHOT")
+        GO_VERSION=${GO_VERSION%-*}
+
+        echo "go_version=$GO_VERSION" >> $GITHUB_ENV 
+
     - name: Cleanup
       run: rm bump.py minor.py
 
@@ -171,7 +171,9 @@ jobs:
 
         echo "Branch version: ${{ env.branch_version }}"
 
-        echo "Quay tag": ${{ env.quay_tag }}
+        echo "Quay tag: ${{ env.quay_tag }}"
+
+        echo "Go version: ${{ env.go_version }}"
 
   build_backend:
     name: Build backend
@@ -179,7 +181,7 @@ jobs:
     uses: ./.github/workflows/build-backend.yml
     needs: [initialize]
     with:
-      build_branch: ${{ github.event.inputs.release_branch || github.ref_name }}
+      build_branch: ${{ github.ref_name }}
 
   build_frontend:
     name: Build frontend
@@ -188,7 +190,7 @@ jobs:
     needs: [initialize]
     with:
       target_branch: ${{needs.initialize.outputs.target_branch}}
-      build_branch: ${{ github.event.inputs.release_branch || github.ref_name }}
+      build_branch: ${{ github.ref_name }}
 
   release:
     name: Release
@@ -199,13 +201,14 @@ jobs:
       RELEASE_VERSION: ${{ needs.initialize.outputs.release_version }}
       BRANCH_VERSION: ${{ needs.initialize.outputs.branch_version }}
       NEXT_VERSION: ${{ needs.initialize.outputs.next_version }}
-      RELEASE_BRANCH: ${{ github.event.inputs.release_branch || github.ref_name }}
+      RELEASE_BRANCH: ${{ github.ref_name }}
       QUAY_TAG: ${{ needs.initialize.outputs.quay_tag }}
+      GO_VERSION: ${{ needs.initialize.outputs.go_version }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
       with:
-        ref: ${{ github.event.inputs.release_branch || github.ref_name }}
+        ref: ${{ github.ref_name }}
 
     - name: Set version to release
       run: |
@@ -220,9 +223,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
-        go-version-file: go.mod
-        # The builtin cache feature ensures that installing golangci-lint
-        # is consistently fast.
+        go-version: ${{ env.GO_VERSION }}
         cache: true
         cache-dependency-path: go.sum
 
