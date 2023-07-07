@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Tab, Tooltip } from '@patternfly/react-core';
 import { Node, Visualization } from '@patternfly/react-topology';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import _ from 'lodash';
 import { RateTableGrpc, RateTableHttp, RateTableTcp } from '../../components/SummaryPanel/RateTable';
 import { RequestChart, StreamChart } from '../../components/SummaryPanel/RpsChart';
@@ -109,7 +109,7 @@ const defaultState: SummaryPanelGraphState = {
   ...defaultMetricsState
 };
 
-const topologyStyle = style({
+const topologyStyle = kialiStyle({
   margin: '0 1em'
 });
 

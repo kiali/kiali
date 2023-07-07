@@ -4,7 +4,7 @@ import { bindActionCreators } from 'redux';
 import { KialiDispatch } from 'types/Redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { Card, CardBody, Checkbox, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import * as API from 'services/Api';
 import { KialiAppState } from 'store/Store';
 import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange, IntervalInMilliseconds } from 'types/Common';
@@ -67,12 +67,12 @@ type ReduxProps = {
 
 type Props = ReduxProps & IstioMetricsProps;
 
-const fullHeightStyle = style({
+const fullHeightStyle = kialiStyle({
   height: '100%'
 });
 
 // For some reason checkbox as a ToolbarItem needs to be tweaked
-const toolbarInputStyle = style({
+const toolbarInputStyle = kialiStyle({
   $nest: {
     '& > input': {
       marginTop: '2px'

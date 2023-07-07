@@ -14,7 +14,7 @@ import {
 } from '@patternfly/react-core';
 import { ValidationObjectSummary } from '../Validations/ValidationObjectSummary';
 import { IstioTypes } from '../VirtualList/Config';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { PFBadge } from '../Pf/PfBadges';
 import { IstioObjectLink } from '../Link/IstioObjectLink';
 
@@ -23,7 +23,7 @@ type Props = {
   items: IstioConfigItem[];
 };
 
-const emtpytStyle = style({
+const emtpytStyle = kialiStyle({
   padding: '0 0 0 0',
   margin: '0 0 0 0'
 });

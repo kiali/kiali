@@ -9,7 +9,7 @@ import {
   TenantIcon,
   TopologyIcon
 } from '@patternfly/react-icons';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { KialiDispatch } from 'types/Redux';
@@ -51,7 +51,7 @@ type CytoscapeToolbarState = {
   allowGrab: boolean;
 };
 
-const activeButtonStyle = style({
+const activeButtonStyle = kialiStyle({
   color: PFColors.Active
 });
 
@@ -61,7 +61,7 @@ const buttonStyle = {
   padding: '2px 6px 4px 6px'
 };
 
-const cyToolbarStyle = style({
+const cyToolbarStyle = kialiStyle({
   width: '20px'
 });
 

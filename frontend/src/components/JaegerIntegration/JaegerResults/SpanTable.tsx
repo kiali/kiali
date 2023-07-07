@@ -35,7 +35,7 @@ import { EnvoySpanInfo, OpenTracingHTTPInfo, OpenTracingTCPInfo, RichSpanData } 
 import { sameSpans } from 'utils/tracing/TracingHelper';
 import { buildQueriesFromSpans } from 'utils/tracing/TraceStats';
 import { getSpanId } from '../../../utils/SearchParamUtils';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { ExclamationCircleIcon } from '@patternfly/react-icons';
 import { formatDuration, isErrorTag } from 'utils/tracing/TracingHelper';
 import { Link } from 'react-router-dom';
@@ -70,26 +70,26 @@ type SortableCell<T> = ICell & {
   compare?: (a: T, b: T) => number;
 };
 
-const dangerErrorStyle = style({
+const dangerErrorStyle = kialiStyle({
   borderLeft: '3px solid var(--pf-global--danger-color--100)'
 });
 
-const selectedErrorStyle = style({
+const selectedErrorStyle = kialiStyle({
   borderRight: '3px solid var(--pf-global--info-color--100)',
   borderLeft: '3px solid var(--pf-global--danger-color--100)'
 });
 
-const selectedStyle = style({
+const selectedStyle = kialiStyle({
   borderRight: '3px solid var(--pf-global--info-color--100)'
 });
 
-const rowKebabStyle = style({
+const rowKebabStyle = kialiStyle({
   paddingLeft: 0,
   textAlign: 'left',
   whiteSpace: 'nowrap'
 });
 
-const linkStyle = style({
+const linkStyle = kialiStyle({
   fontSize: 14
 });
 

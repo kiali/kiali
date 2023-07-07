@@ -16,7 +16,7 @@ import { Overlay } from 'types/Overlay';
 import { ChartWithLegend, LEGEND_HEIGHT, MIN_HEIGHT, MIN_HEIGHT_YAXIS } from './ChartWithLegend';
 import { BrushHandlers } from './Container';
 import { defaultIconStyle, KialiIcon } from '../../config/KialiIcon';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type KChartProps<T extends LineInfo> = {
   chart: ChartModel;
@@ -37,12 +37,12 @@ export const maximizeButtonStyle: React.CSSProperties = {
   float: 'right'
 };
 
-const emptyStyle = style({
+const emptyStyle = kialiStyle({
   padding: '0 0 0 0',
   margin: '0 0 0 0'
 });
 
-const kchartStyle = style({
+const kchartStyle = kialiStyle({
   paddingTop: 15,
   paddingLeft: 25,
   paddingRight: 25,

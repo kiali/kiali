@@ -1,6 +1,6 @@
 import { Badge, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import React, { CSSProperties } from 'react';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from './PfColors';
 
 export type PFBadgeType = {
@@ -73,7 +73,7 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
 });
 
 // This is styled for consistency with OpenShift Console.  See console: public/components/_resource.scss
-export const kialiBadge = style({
+export const kialiBadge = kialiStyle({
   backgroundColor: PFColors.Badge,
   color: PFColors.White,
   borderRadius: '20px',
@@ -88,7 +88,7 @@ export const kialiBadge = style({
   whiteSpace: 'nowrap'
 });
 
-export const kialiBadgeSmall = style({
+export const kialiBadgeSmall = kialiStyle({
   backgroundColor: PFColors.Badge,
   color: PFColors.White,
   borderRadius: '20px',

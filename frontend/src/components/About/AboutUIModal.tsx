@@ -12,7 +12,7 @@ import {
 } from '@patternfly/react-core';
 import { ExternalServiceInfo, Status, StatusKey } from '../../types/StatusState';
 import { config, kialiLogo } from '../../config';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
 
 type AboutUIModalState = {
@@ -25,7 +25,7 @@ type AboutUIModalProps = {
   warningMessages: string[];
 };
 
-const iconStyle = style({
+const iconStyle = kialiStyle({
   marginRight: '10px'
 });
 

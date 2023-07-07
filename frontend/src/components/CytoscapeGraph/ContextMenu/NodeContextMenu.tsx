@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { Spinner, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 
@@ -32,25 +32,25 @@ type ReduxProps = {
 };
 
 // Note, in the below styles we assign colors to be consistent with PF Dropdown
-const contextMenu = style({
+const contextMenu = kialiStyle({
   fontSize: 'var(--graph-side-panel--font-size)',
   textAlign: 'left'
 });
 
-const contextMenuHeader = style({
+const contextMenuHeader = kialiStyle({
   fontSize: 'var(--graph-side-panel--font-size)',
   marginBottom: '3px',
   textAlign: 'left'
 });
 
-const contextMenuSubTitle = style({
+const contextMenuSubTitle = kialiStyle({
   color: PFColors.Black600,
   fontWeight: 700,
   paddingTop: 2,
   paddingBottom: 4
 });
 
-const contextMenuItem = style({
+const contextMenuItem = kialiStyle({
   textDecoration: 'none',
   $nest: {
     '&:hover': {
@@ -60,7 +60,7 @@ const contextMenuItem = style({
   }
 });
 
-const contextMenuItemLink = style({
+const contextMenuItemLink = kialiStyle({
   color: PFColors.Black900
 });
 

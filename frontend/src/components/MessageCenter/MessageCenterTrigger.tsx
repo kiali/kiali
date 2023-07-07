@@ -6,7 +6,7 @@ import { KialiAppState } from '../../store/Store';
 import { MessageType, NotificationGroup, NotificationMessage } from '../../types/MessageCenter';
 import { MessageCenterThunkActions } from '../../actions/MessageCenterThunkActions';
 import { KialiIcon } from 'config/KialiIcon';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type PropsType = {
   newMessagesCount: number;
@@ -16,7 +16,7 @@ type PropsType = {
   toggleSystemErrorsCenter: () => void;
 };
 
-const systemErrorCountStyle = style({
+const systemErrorCountStyle = kialiStyle({
   marginRight: '0.3em',
   paddingTop: '0.1em'
 });
@@ -51,12 +51,12 @@ class MessageCenterTriggerComponent extends React.PureComponent<PropsType, {}> {
   };
 
   private renderMessageCenterBadge = () => {
-    const bell = style({
+    const bell = kialiStyle({
       position: 'relative',
       right: '5px',
       top: '2px'
     });
-    const count = style({
+    const count = kialiStyle({
       position: 'relative',
       top: '2px',
       verticalAlign: '0.125em'

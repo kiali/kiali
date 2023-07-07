@@ -3,13 +3,13 @@ import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 import * as React from 'react';
 import { CanaryUpgradeStatus } from 'types/IstioObjects';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type Props = {
   canaryUpgradeStatus: CanaryUpgradeStatus;
 };
 
-export const infoStyle = style({
+export const infoStyle = kialiStyle({
   margin: '0px 0px -1px 4px'
 });
 

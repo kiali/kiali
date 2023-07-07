@@ -37,7 +37,7 @@ import { KialiIcon } from 'config/KialiIcon';
 import { Tab, Tooltip } from '@patternfly/react-core';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { Direction } from 'types/MetricsOptions';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { Edge } from '@patternfly/react-topology';
 
 type SummaryPanelEdgeMetricsState = {
@@ -77,7 +77,7 @@ const defaultState: SummaryPanelEdgeState = {
   ...defaultMetricsState
 };
 
-const principalStyle = style({
+const principalStyle = kialiStyle({
   display: 'inline-block',
   overflow: 'hidden',
   textOverflow: 'ellipsis',

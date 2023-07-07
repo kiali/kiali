@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { IRow, sortable, SortByDirection, Table, TableBody, TableHeader, cellWidth } from '@patternfly/react-table';
 import { Link } from 'react-router-dom';
 import { TrafficItem, TrafficNode, TrafficDirection } from './TrafficDetails';
@@ -92,8 +92,8 @@ function LockIcon(props) {
 }
 
 // Style constants
-const containerPadding = style({ padding: '20px' });
-const lockIconStyle = style({ marginLeft: '5px' });
+const containerPadding = kialiStyle({ padding: '20px' });
+const lockIconStyle = kialiStyle({ marginLeft: '5px' });
 
 class TrafficList extends FilterComponent.Component<
   TrafficListComponentProps,

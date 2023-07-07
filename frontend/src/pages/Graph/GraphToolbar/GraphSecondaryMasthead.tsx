@@ -1,7 +1,7 @@
 import React from 'react';
 import { SecondaryMasthead } from 'components/Nav/SecondaryMasthead';
 import { NamespaceDropdown } from 'components/NamespaceDropdown';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from '../GraphHelpTour';
 import { ToolbarDropdown } from 'components/ToolbarDropdown/ToolbarDropdown';
@@ -19,23 +19,23 @@ type GraphSecondaryMastheadProps = {
   onGraphTypeChange: (graphType: GraphType) => void;
 };
 
-const mastheadStyle = style({
+const mastheadStyle = kialiStyle({
   marginLeft: '-20px',
   marginRight: '-40px'
 });
 
-const leftSpacerStyle = style({
+const leftSpacerStyle = kialiStyle({
   marginLeft: '10px'
 });
 
-const vrStyle = style({
+const vrStyle = kialiStyle({
   border: '1px inset',
   height: '20px',
   margin: '4px 0 0 10px',
   width: '1px'
 });
 
-const rightToolbarStyle = style({
+const rightToolbarStyle = kialiStyle({
   float: 'right'
 });
 

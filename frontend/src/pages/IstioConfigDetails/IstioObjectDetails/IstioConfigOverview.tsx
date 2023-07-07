@@ -16,7 +16,7 @@ import {
   ValidationTypes,
   WorkloadReference
 } from 'types/IstioObjects';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { getIstioObject, getReconciliationCondition } from 'utils/IstioConfigUtils';
 import { IstioConfigHelp } from './IstioConfigHelp';
 import { IstioConfigReferences } from './IstioConfigReferences';
@@ -42,29 +42,29 @@ interface IstioConfigOverviewProps {
   istioAPIEnabled: boolean;
 }
 
-const iconStyle = style({
+const iconStyle = kialiStyle({
   margin: '0 0 0 0',
   padding: '0 0 0 0',
   display: 'inline-block',
   verticalAlign: '2px !important'
 });
 
-const infoStyle = style({
+const infoStyle = kialiStyle({
   margin: '0px 0px 2px 10px',
   verticalAlign: '-5px !important'
 });
 
-const warnStyle = style({
+const warnStyle = kialiStyle({
   margin: '0px 0px 2px 0px',
   verticalAlign: '-3px !important'
 });
 
-const healthIconStyle = style({
+const healthIconStyle = kialiStyle({
   marginLeft: '10px',
   verticalAlign: '-1px !important'
 });
 
-const resourceListStyle = style({
+const resourceListStyle = kialiStyle({
   margin: '0px 0 11px 0',
   $nest: {
     '& > ul > li > span': {

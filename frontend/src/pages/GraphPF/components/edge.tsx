@@ -24,7 +24,7 @@ import DefaultConnectorTag from '@patternfly/react-topology/dist/esm/components/
 import { getConnectorStartPoint } from '@patternfly/react-topology/dist/esm/components/edges/terminals/terminalUtils';
 import { EdgeData } from '../GraphPFElems';
 import { PFColors } from 'components/Pf/PfColors';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
 // This is a copy of PFT DefaultEdge (v4.68.3), then modified.  I don't see a better way to really
 // do this because DefaultEdge doesn't really seem itself extensible and to add certain behavior you have
@@ -133,7 +133,7 @@ const BaseEdgeComponent: React.FunctionComponent<BaseEdgeProps> = ({
 
   const data = element.getData() as EdgeData;
   const pathStyle: React.CSSProperties = data.pathStyle || {};
-  const terminatorFill = style({
+  const terminatorFill = kialiStyle({
     fill: data.pathStyle?.stroke
   });
   const customEndTerminalClass = css(endTerminalClass, terminatorFill);

@@ -4,7 +4,7 @@ import { ServiceDetailsInfo, WorkloadOverview } from '../../types/ServiceInfo';
 import { AppWorkload } from '../../types/App';
 import { isMultiCluster, serverConfig } from '../../config';
 import { Labels } from '../../components/Label/Labels';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { LocalTime } from '../../components/Time/LocalTime';
 import { renderAPILogo } from '../../components/Logo/Logos';
 import { TextOrLink } from '../../components/TextOrLink';
@@ -22,7 +22,7 @@ type State = {
   serviceInfoTabKey: number;
 };
 
-const resourceListStyle = style({
+const resourceListStyle = kialiStyle({
   margin: '0px 0 11px 0',
   $nest: {
     '& > ul > li > span': {
@@ -33,19 +33,19 @@ const resourceListStyle = style({
   }
 });
 
-const iconStyle = style({
+const iconStyle = kialiStyle({
   margin: '0 0 0 0',
   padding: '0 0 0 0',
   display: 'inline-block',
   verticalAlign: '2px !important'
 });
 
-const infoStyle = style({
+const infoStyle = kialiStyle({
   margin: '0px 0px 2px 10px',
   verticalAlign: '-5px !important'
 });
 
-const healthIconStyle = style({
+const healthIconStyle = kialiStyle({
   marginLeft: '10px',
   verticalAlign: '-1px !important'
 });

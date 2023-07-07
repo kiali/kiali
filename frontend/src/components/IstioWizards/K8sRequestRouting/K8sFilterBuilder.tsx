@@ -10,7 +10,7 @@ import {
 } from '@patternfly/react-core';
 import { ServiceOverview } from '../../../types/ServiceList';
 import { getServicePort } from '../../../types/ServiceInfo';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type Props = {
   filterType: string;
@@ -70,7 +70,7 @@ const allOptions = {
   [RESP_MOD]: [SET, ADD, REMOVE]
 };
 
-const serviceStyle = style({
+const serviceStyle = kialiStyle({
   width: '100%'
 });
 

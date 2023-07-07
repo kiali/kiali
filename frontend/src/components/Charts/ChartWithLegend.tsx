@@ -24,7 +24,7 @@ import { INTERPOLATION_STRATEGY } from './SparklineChart';
 import { KialiIcon } from '../../config/KialiIcon';
 import { Button, ButtonVariant, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import regression from 'regression';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type Props<T extends RichDataPoint, O extends LineInfo> = {
   chartHeight?: number;
@@ -81,12 +81,12 @@ export const MIN_WIDTH = 275;
 export const LEGEND_HEIGHT = 25;
 const FONT_SIZE_LEGEND = 14;
 
-const moreLegendIconStyle = style({
+const moreLegendIconStyle = kialiStyle({
   margin: '0px 5px 2px 10px',
   verticalAlign: '-4px !important'
 });
 
-const noEnoughHeightStyle = style({
+const noEnoughHeightStyle = kialiStyle({
   margin: '0px 0px 0px 0px',
   verticalAlign: '-4px !important'
 });

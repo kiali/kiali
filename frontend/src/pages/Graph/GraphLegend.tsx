@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { legendData, GraphLegendItem, GraphLegendItemRow } from './GraphLegendData';
 import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
 import CloseIcon from '@patternfly/react-icons/dist/js/icons/close-icon';
@@ -15,7 +15,7 @@ const width = '190px';
 
 export class GraphLegend extends React.Component<GraphLegendProps> {
   render() {
-    const legendBoxStyle = style({
+    const legendBoxStyle = kialiStyle({
       backgroundColor: PFColors.White,
       border: '1px #ddd solid',
       margin: '0 0 3.25em 0',
@@ -25,16 +25,16 @@ export class GraphLegend extends React.Component<GraphLegendProps> {
       zIndex: 3
     });
 
-    const headerStyle = style({
+    const headerStyle = kialiStyle({
       width: width
     });
 
-    const bodyStyle = style({
+    const bodyStyle = kialiStyle({
       height: 'auto',
       width: width
     });
 
-    const closeBoxStyle = style({
+    const closeBoxStyle = kialiStyle({
       float: 'right',
       margin: '-7px -5px 0 -10px'
     });
@@ -59,11 +59,11 @@ export class GraphLegend extends React.Component<GraphLegendProps> {
   }
 
   renderGraphLegendList(legendData: GraphLegendItem[]) {
-    const legendColumnHeadingStyle = style({
+    const legendColumnHeadingStyle = kialiStyle({
       fontWeight: 'bold',
       paddingTop: '1.25em'
     });
-    const aStyle = style({
+    const aStyle = kialiStyle({
       height: '100%'
     });
 
@@ -88,18 +88,18 @@ export class GraphLegend extends React.Component<GraphLegendProps> {
   static renderLegendIconAndLabel(legendItemRow: GraphLegendItemRow) {
     const keyWidth = '70px';
 
-    const keyStyle = style({
+    const keyStyle = kialiStyle({
       minWidth: keyWidth,
       width: keyWidth
     });
 
-    const legendItemStyle = style({
+    const legendItemStyle = kialiStyle({
       display: 'flex',
       flexDirection: 'row',
       padding: '5px 5px 0 5px'
     });
 
-    const legendItemLabelStyle = style({
+    const legendItemLabelStyle = kialiStyle({
       fontWeight: 'normal'
     });
 

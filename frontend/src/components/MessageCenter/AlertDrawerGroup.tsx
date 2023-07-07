@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { KialiDispatch } from 'types/Redux';
 import { Card, Button, CardBody, CardFooter, ButtonVariant } from '@patternfly/react-core';
 import { InfoIcon } from '@patternfly/react-icons';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { NotificationGroup } from '../../types/MessageCenter';
 import { MessageCenterThunkActions } from 'actions/MessageCenterThunkActions';
 import { AlertDrawerMessage } from './AlertDrawerMessage';
@@ -26,17 +26,17 @@ const noNotificationsMessage = (
 );
 
 class AlertDrawerGroupComponent extends React.PureComponent<AlertDrawerGroupProps> {
-  static readonly body = style({
+  static readonly body = kialiStyle({
     padding: 0 // note: I don't know why but paddingTop with the additional explicit style prop used below
   });
-  static readonly footer = style({
+  static readonly footer = kialiStyle({
     paddingBottom: 5,
     paddingTop: 5
   });
-  static readonly left = style({
+  static readonly left = kialiStyle({
     float: 'left'
   });
-  static readonly right = style({
+  static readonly right = kialiStyle({
     float: 'right'
   });
 

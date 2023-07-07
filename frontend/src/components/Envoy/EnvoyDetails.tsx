@@ -21,7 +21,7 @@ import {
 } from '@patternfly/react-core';
 import { SummaryTableBuilder } from './tables/BaseTable';
 import { Namespace } from 'types/Namespace';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import AceEditor from 'react-ace';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ToolbarDropdown } from 'components/ToolbarDropdown/ToolbarDropdown';
@@ -46,7 +46,7 @@ require('ace-builds/src-noconflict/ext-searchbox');
 
 const resources: string[] = ['clusters', 'listeners', 'routes', 'bootstrap', 'config', 'metrics'];
 
-const iconStyle = style({
+const iconStyle = kialiStyle({
   display: 'inline-block',
   paddingTop: '5px'
 });
@@ -78,7 +78,7 @@ type EnvoyDetailsState = {
   resource: string;
 };
 
-const fullHeightStyle = style({
+const fullHeightStyle = kialiStyle({
   height: '100%'
 });
 

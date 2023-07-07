@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { NodeType, SummaryPanelPropType, Protocol, DecoratedGraphNodeData, BoxByType } from '../../types/Graph';
 import { IstioMetricsOptions, Reporter, Direction } from '../../types/MetricsOptions';
 import * as API from '../../services/Api';
@@ -17,7 +17,7 @@ export enum NodeMetricType {
   NAMESPACE = 6
 }
 
-export const summaryBodyTabs = style({
+export const summaryBodyTabs = kialiStyle({
   padding: '10px 15px 0 15px'
 });
 
@@ -27,7 +27,7 @@ export const summaryHeader: React.CSSProperties = {
 
 export const summaryPanelWidth = '25em';
 
-export const summaryPanel = style({
+export const summaryPanel = kialiStyle({
   backgroundColor: PFColors.White,
   fontSize: 'var(--graph-side-panel--font-size)',
   height: '100%',
@@ -43,7 +43,7 @@ export const summaryFont: React.CSSProperties = {
   fontSize: 'var(--graph-side-panel--font-size)'
 };
 
-export const summaryTitle = style({
+export const summaryTitle = kialiStyle({
   fontWeight: 'bolder',
   marginBottom: '5px',
   textAlign: 'left'

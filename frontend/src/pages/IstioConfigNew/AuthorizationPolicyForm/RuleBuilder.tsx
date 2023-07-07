@@ -6,7 +6,7 @@ import { OperationBuilder } from './To/OperationBuilder';
 import { OperationList } from './To/OperationList';
 import { ConditionBuilder, Condition } from './When/ConditionBuilder';
 import { ConditionList } from './When/ConditionList';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { PlusCircleIcon } from '@patternfly/react-icons';
 import { PFColors } from '../../../components/Pf/PfColors';
 
@@ -29,13 +29,13 @@ type State = {
   conditionList: Condition[];
 };
 
-const warningStyle = style({
+const warningStyle = kialiStyle({
   marginLeft: 25,
   color: PFColors.Red100,
   textAlign: 'center'
 });
 
-const addRuleStyle = style({
+const addRuleStyle = kialiStyle({
   marginLeft: 0,
   paddingLeft: 0
 });

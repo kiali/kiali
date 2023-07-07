@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { pluralize, Tooltip } from '@patternfly/react-core';
 
 import { JaegerTrace } from '../../types/JaegerInfo';
@@ -10,12 +10,12 @@ interface Props {
   trace: JaegerTrace;
 }
 
-const parentDivStyle = style({
+const parentDivStyle = kialiStyle({
   fontSize: 'var(--graph-side-panel--font-size)',
   lineHeight: 1.3
 });
 
-const nameStyle = style({
+const nameStyle = kialiStyle({
   display: 'inline-block',
   maxWidth: 175,
   textOverflow: 'ellipsis',
@@ -23,15 +23,15 @@ const nameStyle = style({
   whiteSpace: 'nowrap'
 });
 
-const errorStyle = style({
+const errorStyle = kialiStyle({
   color: PFColors.Danger
 });
 
-const secondaryLeftStyle = style({
+const secondaryLeftStyle = kialiStyle({
   color: PFColors.Black600
 });
 
-const secondaryRightStyle = style({
+const secondaryRightStyle = kialiStyle({
   color: PFColors.Black600,
   float: 'right'
 });

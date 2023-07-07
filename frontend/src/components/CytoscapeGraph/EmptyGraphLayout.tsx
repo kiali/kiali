@@ -9,7 +9,7 @@ import {
   Title,
   TitleSizes
 } from '@patternfly/react-core';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import * as _ from 'lodash';
 import { Namespace } from '../../types/Namespace';
 import { KialiIcon } from '../../config/KialiIcon';
@@ -27,7 +27,7 @@ type EmptyGraphLayoutProps = {
   toggleIdleNodes: () => void;
 };
 
-const emptyStateStyle = style({
+const emptyStateStyle = kialiStyle({
   height: '98%',
   marginRight: 'auto',
   marginLeft: 'auto',

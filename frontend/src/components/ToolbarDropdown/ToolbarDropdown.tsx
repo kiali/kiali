@@ -1,12 +1,12 @@
 import * as React from 'react';
 import { Select, SelectOption, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
-const widthAuto = style({
+const widthAuto = kialiStyle({
   width: 'auto'
 });
 
-const dropdownTitle = style({
+const dropdownTitle = kialiStyle({
   fontSize: 'var(--pf-global--FontSize--md)', // valueOf --pf-c-select__toggle--FontSize
   // @ts-ignore
   fontWeight: 'var(--pf-global--FontSize--normal)', // valueOf --pf-c-select__toggle--FontWeigt

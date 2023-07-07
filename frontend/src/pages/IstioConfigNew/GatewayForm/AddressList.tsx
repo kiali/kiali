@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Address } from '../../../types/IstioObjects';
 import { cellWidth, TableComposable, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { PlusCircleIcon } from '@patternfly/react-icons';
 import { AddressBuilder } from './AddressBuilder';
@@ -12,14 +12,14 @@ type Props = {
   onChange: (address: Address[]) => void;
 };
 
-const noAddressStyle = style({
+const noAddressStyle = kialiStyle({
   marginTop: 10,
   color: PFColors.Red100,
   textAlign: 'center',
   width: '100%'
 });
 
-const addAddressStyle = style({
+const addAddressStyle = kialiStyle({
   marginLeft: 0,
   paddingLeft: 0
 });

@@ -10,7 +10,7 @@ import {
 } from '@patternfly/react-core';
 import { StarIcon } from '@patternfly/react-icons';
 import { cellWidth, sortable, SortByDirection, Table, TableBody, TableHeader } from '@patternfly/react-table';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { RenderContent } from '../../components/Nav/Page';
@@ -23,7 +23,7 @@ export const MeshPage: React.FunctionComponent = () => {
   const [meshClustersList, setMeshClustersList] = React.useState(null as MeshClusters | null);
   const [sortBy, setSortBy] = React.useState({ index: 0, direction: SortByDirection.asc });
 
-  const containerPadding = style({ padding: '20px' });
+  const containerPadding = kialiStyle({ padding: '20px' });
   const columns = [
     {
       title: 'Cluster Name',

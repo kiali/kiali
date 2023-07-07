@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { MTLSIconTypes } from './MTLSIcon';
 import { MTLSStatus, emptyDescriptor, StatusDescriptor } from './MTLSStatus';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { MTLSStatuses } from '../../types/TLSStatus';
 
 type Props = {
@@ -39,7 +39,7 @@ const statusDescriptors = new Map<string, StatusDescriptor>([
 ]);
 
 // Magic style to align Istio Config icons on top of status overview
-const iconStyle = style({
+const iconStyle = kialiStyle({
   marginTop: -3,
   marginRight: 18,
   marginLeft: 2,

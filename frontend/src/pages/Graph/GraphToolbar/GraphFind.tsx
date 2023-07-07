@@ -10,7 +10,7 @@ import * as CytoscapeGraphUtils from '../../../components/CytoscapeGraph/Cytosca
 import { EdgeLabelMode, NodeType, Layout, EdgeMode, EdgeAttr, NodeAttr } from '../../../types/Graph';
 import * as AlertUtils from '../../../utils/AlertUtils';
 import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import { TimeInMilliseconds } from 'types/Common';
@@ -67,13 +67,13 @@ const inputWidth = {
 };
 
 // reduce toolbar padding from 20px to 10px to save space
-const thinGroupStyle = style({
+const thinGroupStyle = kialiStyle({
   paddingLeft: '10px',
   paddingRight: '10px'
 });
 
 // styles for clear button
-const buttonClearStyle = style({
+const buttonClearStyle = kialiStyle({
   minWidth: '20px',
   width: '20px',
   paddingLeft: '5px',
@@ -498,7 +498,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
 
     // unhide hidden elements when we are dealing with the same graph. Either way,release for garbage collection
     if (!!this.hiddenElements && !graphChanged) {
-      this.hiddenElements.style({ visibility: 'visible' });
+      this.hiddenElements.kialiStyle({ visibility: 'visible' });
     }
     this.hiddenElements = undefined;
 
@@ -557,13 +557,13 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
       } else {
         // set the remaining hide-hits hidden
         this.hiddenElements = hiddenElements;
-        this.hiddenElements.style({ visibility: 'hidden' });
+        this.hiddenElements.kialiStyle({ visibility: 'hidden' });
         // now subtract any visible boxes that don't have any visible children
         let done = false;
         while (!done) {
           const emptyBoxes = cy.$('$node[isBox]:visible').subtract(cy.$('$node[isBox] > :visible'));
           if (emptyBoxes.length > 0) {
-            emptyBoxes.style({ visibility: 'hidden' });
+            emptyBoxes.kialiStyle({ visibility: 'hidden' });
             this.hiddenElements = this.hiddenElements.add(emptyBoxes);
           } else {
             done = true;

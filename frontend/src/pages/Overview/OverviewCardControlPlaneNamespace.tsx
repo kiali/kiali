@@ -11,10 +11,10 @@ import { DurationInSeconds } from 'types/Common';
 import { getName } from 'utils/RateIntervals';
 import { Card, CardBody, Flex, FlexItem, Grid, GridItem, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { IstiodResourceThresholds } from 'types/IstioStatus';
 
-export const infoStyle = style({
+export const infoStyle = kialiStyle({
   margin: '0px 0px -1px 4px'
 });
 

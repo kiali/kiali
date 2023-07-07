@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { cellWidth, ICell, Table, TableHeader, TableBody } from '@patternfly/react-table';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../Pf/PfColors';
 import {
   EmptyState,
@@ -31,12 +31,12 @@ type Props = {
   onMoveRule: (index: number, move: MOVE_TYPE) => void;
 };
 
-const validationStyle = style({
+const validationStyle = kialiStyle({
   marginTop: 15,
   color: PFColors.Red100
 });
 
-const noRulesStyle = style({
+const noRulesStyle = kialiStyle({
   marginTop: 15,
   color: PFColors.Red100,
   textAlign: 'center',

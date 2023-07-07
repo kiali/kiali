@@ -17,7 +17,7 @@ import {
   ButtonVariant
 } from '@patternfly/react-core';
 import { BarsIcon } from '@patternfly/react-icons';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { MessageCenter } from '../../components/MessageCenter/MessageCenter';
 import { kialiLogo, serverConfig } from '../../config';
 import { KialiAppState } from '../../store/Store';
@@ -37,7 +37,7 @@ type NavigationState = {
   isNavOpenMobile: boolean;
 };
 
-const flexBoxColumnStyle = style({
+const flexBoxColumnStyle = kialiStyle({
   display: 'flex',
   flexDirection: 'column'
 });

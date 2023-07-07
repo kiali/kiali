@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { prettyProtocol } from 'types/Graph';
 import { EdgeContextMenuProps } from '../CytoscapeContextMenu';
 import { getTitle } from 'pages/Graph/SummaryPanelCommon';
@@ -7,7 +7,7 @@ import { renderBadgedName } from 'pages/Graph/SummaryLink';
 import { decoratedNodeData } from '../CytoscapeGraphUtils';
 import { EdgeSingular } from 'cytoscape';
 
-const contextMenu = style({
+const contextMenu = kialiStyle({
   fontSize: 'var(--graph-side-panel--font-size)',
   textAlign: 'left'
 });

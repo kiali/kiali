@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { CSSProperties } from 'react';
 import { StatusCondition, ValidationTypes } from '../../types/IstioObjects';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { Text, TextVariants, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Validation } from './Validation';
 
@@ -14,14 +14,14 @@ interface Props {
   style?: CSSProperties;
 }
 
-const tooltipListStyle = style({
+const tooltipListStyle = kialiStyle({
   textAlign: 'left',
   border: 0,
   padding: '0 0 0 0',
   margin: '0 0 0 0'
 });
 
-const tooltipSentenceStyle = style({
+const tooltipSentenceStyle = kialiStyle({
   textAlign: 'center',
   border: 0,
   padding: '0 0 0 0',

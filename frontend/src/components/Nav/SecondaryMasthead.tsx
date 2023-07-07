@@ -1,10 +1,10 @@
 import React from 'react';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
-const marginStyle = style({
+const marginStyle = kialiStyle({
   margin: '10px 20px 0 0'
 });
-const secondaryMastheadStyle = style({
+const secondaryMastheadStyle = kialiStyle({
   position: 'sticky',
   zIndex: 10,
   marginLeft: 0,
@@ -13,9 +13,9 @@ const secondaryMastheadStyle = style({
 
 export class SecondaryMasthead extends React.Component<{ title: boolean }> {
   render() {
-    let secondaryMastheadStyleHeight = style({ height: '42px' });
+    let secondaryMastheadStyleHeight = kialiStyle({ height: '42px' });
     if (this.props.title) {
-      secondaryMastheadStyleHeight = style({ height: 'unset' });
+      secondaryMastheadStyleHeight = kialiStyle({ height: 'unset' });
     }
     return (
       <div

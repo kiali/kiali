@@ -9,7 +9,7 @@ import { defaultFilter, istioConfigLink, serviceLink } from '../../../helpers/En
 import { Tooltip } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { isParentKiosk } from '../../Kiosk/KioskActions';
 
 export class RouteTable implements SummaryTable {
@@ -111,7 +111,7 @@ export class RouteTable implements SummaryTable {
         header: {
           info: {
             tooltip: (
-              <div className={style({ textAlign: 'left' })}>
+              <div className={kialiStyle({ textAlign: 'left' })}>
                 Envoy will be matched this domain to this virtual host.
               </div>
             )
@@ -124,7 +124,7 @@ export class RouteTable implements SummaryTable {
         header: {
           info: {
             tooltip: (
-              <div className={style({ textAlign: 'left' })}>
+              <div className={kialiStyle({ textAlign: 'left' })}>
                 The match tree to use when resolving route actions for incoming requests
               </div>
             )
@@ -153,12 +153,12 @@ export class RouteTable implements SummaryTable {
     return (
       <Tooltip
         content={
-          <div className={style({ textAlign: 'left' })}>
+          <div className={kialiStyle({ textAlign: 'left' })}>
             Network connection between source a destination that is configured in envoy
           </div>
         }
       >
-        <KialiIcon.Help className={style({ width: '14px', height: '14px', color: PFColors.Blue400 })} />
+        <KialiIcon.Help className={kialiStyle({ width: '14px', height: '14px', color: PFColors.Blue400 })} />
       </Tooltip>
     );
   };

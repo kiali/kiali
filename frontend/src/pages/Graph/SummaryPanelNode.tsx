@@ -26,7 +26,8 @@ import { SummaryPanelNodeTraffic } from './SummaryPanelNodeTraffic';
 import { SummaryPanelNodeTraces } from './SummaryPanelNodeTraces';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { JaegerState } from 'reducers/JaegerState';
-import { classes, style } from 'typestyle';
+import { classes } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ServiceDetailsInfo } from 'types/ServiceInfo';
 import { LoadingWizardActionsDropdownGroup } from 'components/IstioWizards/LoadingWizardActionsDropdownGroup';
@@ -71,7 +72,7 @@ export type SummaryPanelNodeComponentProps = ReduxProps &
     serviceDetails: ServiceDetailsInfo | null | undefined;
   };
 
-const expandableSectionStyle = style({
+const expandableSectionStyle = kialiStyle({
   fontSize: 'var(--graph-side-panel--font-size)',
   paddingLeft: '1em',
   $nest: {
@@ -89,7 +90,7 @@ const expandableSectionStyle = style({
   }
 });
 
-const workloadExpandableSectionStyle = classes(expandableSectionStyle, style({ display: 'inline' }));
+const workloadExpandableSectionStyle = classes(expandableSectionStyle, kialiStyle({ display: 'inline' }));
 
 export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeComponentProps, SummaryPanelNodeState> {
   private readonly mainDivRef: React.RefObject<HTMLDivElement>;

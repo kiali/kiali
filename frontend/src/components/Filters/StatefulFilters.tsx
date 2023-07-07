@@ -28,7 +28,7 @@ import {
 } from '../../types/Filters';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { LabelFilters } from './LabelFilter';
 import { arrayEquals } from 'utils/Common';
 import { labelFilter } from './CommonFilters';
@@ -37,7 +37,7 @@ import { serverConfig } from 'config';
 
 var classNames = require('classnames');
 
-const toolbarStyle = style({
+const toolbarStyle = kialiStyle({
   padding: 0,
   rowGap: 'var(--pf-global--spacer--md)',
   $nest: {
@@ -47,7 +47,7 @@ const toolbarStyle = style({
   }
 });
 
-const bottomPadding = style({
+const bottomPadding = kialiStyle({
   paddingBottom: 'var(--pf-global--spacer--md)'
 });
 
@@ -137,8 +137,8 @@ export class Toggles {
   };
 }
 
-const dividerStyle = style({ borderRight: '1px solid #d1d1d1;', padding: '10px', display: 'inherit' });
-const paddingStyle = style({ padding: '10px' });
+const dividerStyle = kialiStyle({ borderRight: '1px solid #d1d1d1;', padding: '10px', display: 'inherit' });
+const paddingStyle = kialiStyle({ padding: '10px' });
 
 export class StatefulFilters extends React.Component<StatefulFiltersProps, StatefulFiltersState> {
   private promises = new PromisesRegistry();

@@ -14,7 +14,7 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { PodStatus } from './PodStatus';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from '../../config/KialiIcon';
 import { LocalTime } from '../../components/Time/LocalTime';
 import { Labels } from '../../components/Label/Labels';
@@ -27,12 +27,12 @@ type WorkloadPodsProps = {
   validations: { [key: string]: ObjectValidation };
 };
 
-const emptyStyle = style({
+const emptyStyle = kialiStyle({
   padding: '0 0 0 0',
   margin: '0 0 0 0'
 });
 
-const resourceListStyle = style({
+const resourceListStyle = kialiStyle({
   margin: '0px 0 11px 0',
   $nest: {
     '& > ul > li > span': {
@@ -43,12 +43,12 @@ const resourceListStyle = style({
   }
 });
 
-const infoStyle = style({
+const infoStyle = kialiStyle({
   margin: '0px 5px 2px 10px',
   verticalAlign: '-4px !important'
 });
 
-const iconStyle = style({
+const iconStyle = kialiStyle({
   display: 'inline-block',
   verticalAlign: '2px !important'
 });

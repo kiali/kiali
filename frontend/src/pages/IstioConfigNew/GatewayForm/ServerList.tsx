@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Server, ServerForm } from '../../../types/IstioObjects';
 import { cellWidth, Tbody, Td, Th, Thead, Tr, TableComposable } from '@patternfly/react-table';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../components/Pf/PfColors';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { PlusCircleIcon } from '@patternfly/react-icons';
@@ -13,7 +13,7 @@ type Props = {
   onChange: (server: Server[], serverForm: ServerForm[]) => void;
 };
 
-const noServerStyle = style({
+const noServerStyle = kialiStyle({
   marginTop: 10,
   color: PFColors.Red100,
   textAlign: 'center',
@@ -32,7 +32,7 @@ const headerCells = [
   }
 ];
 
-const addServerStyle = style({
+const addServerStyle = kialiStyle({
   marginLeft: 0,
   paddingLeft: 0
 });

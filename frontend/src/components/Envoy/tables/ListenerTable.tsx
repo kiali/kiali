@@ -9,7 +9,7 @@ import { defaultFilter, routeLink } from '../../../helpers/EnvoyHelpers';
 import { Tooltip } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
 export class ListenerTable implements SummaryTable {
   summaries: ListenerSummary[];
@@ -136,7 +136,7 @@ export class ListenerTable implements SummaryTable {
         header: {
           info: {
             tooltip: (
-              <div className={style({ textAlign: 'left' })}>
+              <div className={kialiStyle({ textAlign: 'left' })}>
                 The address that the listener should listen on. In general, the address must be unique, though that is
                 governed by the bind rules of the OS
               </div>
@@ -152,7 +152,7 @@ export class ListenerTable implements SummaryTable {
         header: {
           info: {
             tooltip: (
-              <div className={style({ textAlign: 'left' })}>
+              <div className={kialiStyle({ textAlign: 'left' })}>
                 Original destination listener filter reads the SO_ORIGINAL_DST socket option set when a connection has
                 been redirected by an iptables REDIRECT target, or by an iptables TPROXY target in combination with
                 setting the listener’s transparent option
@@ -182,13 +182,13 @@ export class ListenerTable implements SummaryTable {
     return (
       <Tooltip
         content={
-          <div className={style({ textAlign: 'left' })}>
+          <div className={kialiStyle({ textAlign: 'left' })}>
             Network location that can be connected to by downstream clients (Incomming to envoy). List of
             endpoints:ports that envoy lets traffic
           </div>
         }
       >
-        <KialiIcon.Help className={style({ width: '14px', height: '14px', color: PFColors.Blue400 })} />
+        <KialiIcon.Help className={kialiStyle({ width: '14px', height: '14px', color: PFColors.Blue400 })} />
       </Tooltip>
     );
   };

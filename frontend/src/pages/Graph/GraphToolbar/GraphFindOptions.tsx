@@ -2,7 +2,7 @@ import { Dropdown, DropdownToggle, DropdownItem } from '@patternfly/react-core';
 import * as React from 'react';
 import { KialiIcon } from 'config/KialiIcon';
 import { serverConfig } from 'config';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type FindKind = 'find' | 'hide';
 
@@ -13,7 +13,7 @@ type GraphFindOptionsProps = {
 
 type GraphFindOptionsState = { isOpen: boolean };
 
-const dropdown = style({
+const dropdown = kialiStyle({
   minWidth: '20px',
   width: '20px',
   paddingLeft: '5px',

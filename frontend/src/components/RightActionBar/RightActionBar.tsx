@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
-export const actionBarStyle = style({
+export const actionBarStyle = kialiStyle({
   position: 'absolute',
   marginTop: -60,
   right: 18,

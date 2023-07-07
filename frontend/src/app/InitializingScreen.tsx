@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Alert, Button, ButtonVariant } from '@patternfly/react-core';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { isKioskMode } from '../utils/SearchParamUtils';
 
 import kialiTitle from '../assets/img/logo-lightbkg.svg';
@@ -10,7 +10,7 @@ type initializingScreenProps = {
   errorDetails?: string;
 };
 
-const defaultErrorStyle = style({
+const defaultErrorStyle = kialiStyle({
   $nest: {
     '& > textarea': {
       display: 'none'
@@ -21,7 +21,7 @@ const defaultErrorStyle = style({
   }
 });
 
-const expandedErrorStyle = style({
+const expandedErrorStyle = kialiStyle({
   $nest: {
     '& > p:last-of-type': {
       display: 'none'
@@ -34,7 +34,7 @@ const expandedErrorStyle = style({
   }
 });
 
-const centerVerticalHorizontalStyle = style({
+const centerVerticalHorizontalStyle = kialiStyle({
   position: 'relative',
   top: '10em',
   textAlign: 'center',

@@ -2,7 +2,7 @@ import * as React from 'react';
 import ReactResizeDetector from 'react-resize-detector';
 import { Tab, Popover, PopoverPosition } from '@patternfly/react-core';
 import { ICell, Table, TableBody, TableHeader, TableVariant, cellWidth } from '@patternfly/react-table';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 
 export interface GraphHelpFindProps {
@@ -24,7 +24,7 @@ export class GraphHelpFind extends React.Component<GraphHelpFindProps> {
   render() {
     const width = '600px';
     const maxWidth = '604px';
-    const popoverStyle = style({
+    const popoverStyle = kialiStyle({
       width: width,
       maxWidth: maxWidth,
       height: '550px',
@@ -32,7 +32,7 @@ export class GraphHelpFind extends React.Component<GraphHelpFindProps> {
       overflowX: 'auto',
       overflowY: 'auto'
     });
-    const prefaceStyle = style({
+    const prefaceStyle = kialiStyle({
       fontSize: '12px',
       color: '#fff',
       backgroundColor: '#003145',

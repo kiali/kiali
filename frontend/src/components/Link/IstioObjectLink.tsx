@@ -5,12 +5,12 @@ import { IstioTypes } from '../VirtualList/Config';
 import { PFBadge } from 'components/Pf/PfBadges';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 
-export const infoStyle = style({
+export const infoStyle = kialiStyle({
   margin: '0px 0px -2px 3px'
 });
 

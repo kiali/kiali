@@ -3,15 +3,15 @@ import { Redirect, Route } from 'react-router-dom';
 import { SwitchErrorBoundary } from '../SwitchErrorBoundary/SwitchErrorBoundary';
 import { pathRoutes, defaultRoute } from '../../routes';
 import { Path } from '../../types/Routes';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../Pf/PfColors';
 import { Button, ButtonVariant, EmptyState, EmptyStateBody, EmptyStateIcon, Title } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 
-const containerStyle = style({ marginLeft: 0, marginRight: 0 });
-const containerPadding = style({ padding: '0 20px 0 20px' });
-const containerGray = style({ background: PFColors.Black150 });
-const containerError = style({ height: 'calc(100vh - 76px)' });
+const containerStyle = kialiStyle({ marginLeft: 0, marginRight: 0 });
+const containerPadding = kialiStyle({ padding: '0 20px 0 20px' });
+const containerGray = kialiStyle({ background: PFColors.Black150 });
+const containerError = kialiStyle({ height: 'calc(100vh - 76px)' });
 
 export class RenderPage extends React.Component<{ isGraph: boolean }> {
   renderPaths(paths: Path[]) {

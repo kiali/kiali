@@ -3,7 +3,7 @@ import * as React from 'react';
 import { KialiAppState } from '../../store/Store';
 import { MTLSIconTypes } from './MTLSIcon';
 import { MTLSStatus, emptyDescriptor, StatusDescriptor } from './MTLSStatus';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { meshWideMTLSEnabledSelector, meshWideMTLSStatusSelector, namespaceItemsSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import { MTLSStatuses, TLSStatus } from '../../types/TLSStatus';
@@ -101,7 +101,7 @@ class MeshMTLSStatusComponent extends React.Component<Props> {
   };
 
   iconStyle() {
-    return style({
+    return kialiStyle({
       marginRight: 10,
       marginLeft: 10,
       width: 13

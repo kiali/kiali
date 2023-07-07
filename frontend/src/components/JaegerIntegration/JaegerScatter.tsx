@@ -14,7 +14,7 @@ import { durationSelector } from '../../store/Selectors';
 import { TraceTooltip } from './TraceTooltip';
 import { isErrorTag } from 'utils/tracing/TracingHelper';
 import { averageSpanDuration, buildQueriesFromSpans } from 'utils/tracing/TraceStats';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsThunkActions } from 'actions/MetricsStatsThunkActions';
 
@@ -37,14 +37,14 @@ const MAXIMAL_SIZE = 30;
 export type JaegerLineInfo = LineInfo & { trace: JaegerTrace };
 type Datapoint = VCDataPoint & JaegerLineInfo;
 
-const jaegerChartStyle = style({
+const jaegerChartStyle = kialiStyle({
   paddingTop: 15,
   paddingLeft: 25,
   paddingRight: 25,
   paddingBottom: 15
 });
 
-const emptyStyle = style({
+const emptyStyle = kialiStyle({
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',

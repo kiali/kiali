@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Button, Tabs, Tab, ButtonVariant } from '@patternfly/react-core';
 import { K8sMatchBuilder } from './K8sMatchBuilder';
 import { K8sMatches } from './K8sMatches';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../Pf/PfColors';
 import { K8sTrafficShifting, K8sRouteBackendRef } from '../K8sTrafficShifting';
 import { ServiceOverview } from '../../../types/ServiceList';
@@ -66,12 +66,12 @@ type State = {
   ruleTabKey: number;
 };
 
-const addRuleStyle = style({
+const addRuleStyle = kialiStyle({
   width: '100%',
   textAlign: 'right'
 });
 
-const validationStyle = style({
+const validationStyle = kialiStyle({
   marginRight: 20,
   color: PFColors.Red100,
   display: 'inline'

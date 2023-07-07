@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { EmptyState, EmptyStateBody, EmptyStateVariant, Title, TitleSizes } from '@patternfly/react-core';
 import { ErrorMsg } from '../../types/ErrorMsg';
 
@@ -7,7 +7,7 @@ interface MessageProps {
   error: ErrorMsg;
 }
 
-const errorSectionStyle = style({
+const errorSectionStyle = kialiStyle({
   height: '80vh'
 });
 

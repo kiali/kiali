@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { Button, Tooltip } from '@patternfly/react-core';
 import { config } from '../../config';
 import { KialiIcon } from '../../config/KialiIcon';
@@ -22,7 +22,7 @@ interface Props {
   timeRange: TimeRange;
 }
 
-const infoStyle = style({
+const infoStyle = kialiStyle({
   margin: '0px 5px 2px 5px',
   verticalAlign: '-5px !important'
 });

@@ -1,24 +1,24 @@
 import { PFColors } from 'components/Pf/PfColors';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { NestedCSSProperties } from 'typestyle/lib/types';
 
-export const containerStyle = style({
+export const containerStyle = kialiStyle({
   overflow: 'auto'
 });
 
 // this emulates Select component .pf-c-select__menu
-export const menuStyle = style({
+export const menuStyle = kialiStyle({
   fontSize: 'var(--kiali-global--font-size)'
 });
 
 // this emulates Select component .pf-c-select__menu but w/o cursor manipulation
-export const menuEntryStyle = style({
+export const menuEntryStyle = kialiStyle({
   display: 'inline-block',
   width: '100%'
 });
 
 // this emulates Select component .pf-c-select__menu-group-title but with less bottom padding to conserve space
-export const titleStyle = style({
+export const titleStyle = kialiStyle({
   padding: '8px 16px 2px 16px',
   fontWeight: 700,
   color: PFColors.Black600
@@ -40,14 +40,14 @@ const itemStyle: NestedCSSProperties = {
 };
 
 // this emulates Select component .pf-c-select__menu-item but with less vertical padding to conserve space
-export const itemStyleWithoutInfo = style(itemStyle);
+export const itemStyleWithoutInfo = kialiStyle(itemStyle);
 
 // this emulates Select component .pf-c-select__menu-item but with less vertical padding to conserve space
-export const itemStyleWithInfo = style({
+export const itemStyleWithInfo = kialiStyle({
   ...itemStyle,
   padding: '6px 0px 6px 16px'
 });
 
-export const infoStyle = style({
+export const infoStyle = kialiStyle({
   margin: '0px 5px 2px 4px'
 });

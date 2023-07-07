@@ -21,7 +21,7 @@ import {
   VirtualService
 } from 'types/IstioObjects';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon, defaultIconStyle } from '../../config/KialiIcon';
 import { safeDumpOptions } from '../../types/IstioConfigDetails';
 import { jsYaml } from '../../types/AceValidations';
@@ -203,7 +203,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
       >
         <Toolbar>
           <ToolbarGroup
-            className={style({
+            className={kialiStyle({
               marginLeft: 'auto'
             })}
           >
@@ -222,7 +222,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
                   variant={ButtonVariant.link}
                   isInline
                   aria-label="Download"
-                  className={style({ marginLeft: '0.5em' })}
+                  className={kialiStyle({ marginLeft: '0.5em' })}
                   onClick={() => this.downloadTraffic()}
                 >
                   <KialiIcon.Download className={defaultIconStyle} />
@@ -242,7 +242,9 @@ export class IstioConfigPreview extends React.Component<Props, State> {
           </Tabs>
         )}
         {this.props.disableAction && (
-          <div className={style({ color: PFColors.Danger })}>User does not have enough permission for this action.</div>
+          <div className={kialiStyle({ color: PFColors.Danger })}>
+            User does not have enough permission for this action.
+          </div>
         )}
       </Modal>
     );

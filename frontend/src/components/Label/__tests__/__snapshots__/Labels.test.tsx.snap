@@ -2,7 +2,7 @@
 
 exports[`#Labels render correctly with data should render badges with More labels link 1`] = `
 <div
-  className="faowcuh"
+  className="kiali_faowcuh"
 >
   <div
     data-test="app-label-container"
@@ -25,7 +25,7 @@ exports[`#Labels render correctly with data should render badges with More label
     />
   </div>
   <Button
-    className="f1tvybfg"
+    className="kiali_f1tvybfg"
     data-test="label_more"
     key="label_more"
     onClick={[Function]}
@@ -38,7 +38,7 @@ exports[`#Labels render correctly with data should render badges with More label
 
 exports[`#Labels render correctly with data should render badges without More labels link 1`] = `
 <div
-  className="faowcuh"
+  className="kiali_faowcuh"
 >
   <div
     data-test="app-label-container"

@@ -9,7 +9,7 @@ import {
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import isEqual from 'lodash/isEqual';
 
 import { history, URLParam } from '../../app/History';
@@ -40,10 +40,10 @@ type State = MetricsSettings & {
   allSelected: boolean;
 };
 
-const checkboxSelectAllStyle = style({ marginLeft: 10 });
-const secondLevelStyle = style({ marginLeft: 18 });
-const spacerStyle = style({ height: '1em' });
-const titlePaddingStyle = style({ paddingLeft: 0, fontSize: 'small' });
+const checkboxSelectAllStyle = kialiStyle({ marginLeft: 10 });
+const secondLevelStyle = kialiStyle({ marginLeft: 18 });
+const spacerStyle = kialiStyle({ height: '1em' });
+const titlePaddingStyle = kialiStyle({ paddingLeft: 0, fontSize: 'small' });
 
 export class MetricsSettingsDropdown extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -290,7 +290,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
   renderHistogramOptions(): JSX.Element {
     // Prettier removes the parenthesis introducing JSX
     // prettier-ignore
-    const infoStyle = style({
+    const infoStyle = kialiStyle({
       margin: '8px 5px -1px 2px'
     });
 
