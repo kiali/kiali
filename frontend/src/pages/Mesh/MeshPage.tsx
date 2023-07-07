@@ -1,13 +1,5 @@
 import * as React from 'react';
-import {
-  Alert,
-  EmptyState,
-  EmptyStateBody,
-  EmptyStateVariant,
-  Title,
-  TitleSizes,
-  Tooltip
-} from '@patternfly/react-core';
+import { EmptyState, EmptyStateBody, EmptyStateVariant, Title, TitleSizes, Tooltip } from '@patternfly/react-core';
 import { StarIcon } from '@patternfly/react-icons';
 import { cellWidth, sortable, SortByDirection, Table, TableBody, TableHeader } from '@patternfly/react-table';
 import { style } from 'typestyle';
@@ -131,9 +123,6 @@ export const MeshPage: React.FunctionComponent = () => {
         />
       </div>
       <RenderContent>
-        <div className={containerPadding}>
-          <Alert isInline={true} variant="warning" title="This feature is experimental." />
-        </div>
         <div className={containerPadding}>
           <Table aria-label="Sortable Table" cells={columns} onSort={onSortHandler} rows={clusterRows} sortBy={sortBy}>
             <TableHeader />
