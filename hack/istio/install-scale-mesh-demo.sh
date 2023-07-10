@@ -17,12 +17,14 @@
 
 apply_network_attachment() {
   NAME=$1
+  if [ "${IS_MAISTRA}" != "true" ]; then
 cat <<NAD | $CLIENT_EXE -n ${NAME} apply -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
 NAD
+  fi
     cat <<SCC | $CLIENT_EXE apply -f -
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
@@ -47,6 +49,7 @@ install_scale_mesh_demo() {
     if [ "${IS_OPENSHIFT}" == "true" ]; then
       ${CLIENT_EXE} new-project depth-${x}
       apply_network_attachment depth-${x}
+      $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n depth-${x}
     else
       ${CLIENT_EXE} create ns depth-${x}
     fi
@@ -95,8 +98,10 @@ HELPMSG
 done
 
 IS_OPENSHIFT="false"
+IS_MAISTRA="false"
 if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   IS_OPENSHIFT="true"
+  IS_MAISTRA=$([ "$(oc get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
 fi
 
 echo "CLIENT_EXE=${CLIENT_EXE}"
@@ -114,8 +119,14 @@ else
   while [ $x -lt ${NUM_NS} ]
   do
     if [ "${IS_OPENSHIFT}" == "true" ]; then
+      if [ "${IS_MAISTRA}" != "true" ]; then
+        $CLIENT_EXE delete network-attachment-definition istio-cni -n depth-${x}
+      else
+        $CLIENT_EXE delete smm default -n depth-${x}
+      fi
+      ${CLIENT_EXE} delete scc depth-${x}-scc
+
       ${CLIENT_EXE} delete project depth-${x}
-      ${CLIENT_EXE} delete SecurityContextConstraints depth-${x}-scc
     else
       ${CLIENT_EXE} delete ns depth-${x} --ignore-not-found=true
     fi
