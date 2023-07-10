@@ -314,8 +314,7 @@ export function NodeContextMenuComponent(props: Props) {
         {renderHeader()}
         <hr style={{ margin: '8px 0 5px 0' }} />
         {menuOptions}
-        {(serverConfig.clusterInfo?.name ? linkParams.cluster === serverConfig.clusterInfo?.name : true) &&
-          renderWizardsItems()}
+        {renderWizardsItems()}
       </div>
     );
   }
