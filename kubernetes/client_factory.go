@@ -207,7 +207,8 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 			var remoteConfig *rest.Config
 			var err2 error
 			// In auth strategy should we use SA token
-			if cfg.Auth.Strategy == kialiConfig.AuthStrategyAnonymous {
+			if cfg.Auth.Strategy == kialiConfig.AuthStrategyAnonymous ||
+				(cfg.Auth.Strategy == kialiConfig.AuthStrategyOpenId && cfg.Auth.OpenId.DisableRBAC) {
 				remoteConfig, err2 = GetConfigForRemoteClusterInfo(clusterInfo[cluster])
 			} else {
 				remoteConfig, err2 = GetConfigWithTokenForRemoteCluster(clusterInfo[cluster].Cluster,
