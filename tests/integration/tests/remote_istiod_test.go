@@ -93,6 +93,8 @@ func TestRemoteIstiod(t *testing.T) {
 	kialiName := "kiali"
 	kialiNamespace := "istio-system"
 	kialiDeploymentNamespace := kialiNamespace
+	ipods, err := kubeClient.AppsV1().Deployments(kialiNamespace).List(ctx, metav1.ListOptions{LabelSelector: "app=istiod"})
+	istioDeploymentName := ipods.Items[0].Name
 
 	if kialiCRDExists {
 		// Find the Kiali CR and override some settings if they're set on the CR.
@@ -159,7 +161,7 @@ func TestRemoteIstiod(t *testing.T) {
 		// Remove nginx container
 		istiod, err := kubeClient.AppsV1().Deployments("istio-system").Get(ctx, "istiod", metav1.GetOptions{})
 		if err != nil {
-			istiod, err = kubeClient.AppsV1().Deployments("istio-system").Get(ctx, "istiod-install-istio-system", metav1.GetOptions{})
+			istiod, err = kubeClient.AppsV1().Deployments("istio-system").Get(ctx, istioDeploymentName, metav1.GetOptions{})
 		}
 		require.NoError(err)
 
@@ -194,10 +196,7 @@ func TestRemoteIstiod(t *testing.T) {
 
 	// Expose the istiod /debug endpoints by adding a proxy to the pod.
 	log.Debug("Patching istiod deployment with proxy")
-	_, err = kubeClient.AppsV1().Deployments("istio-system").Patch(ctx, "istiod", types.StrategicMergePatchType, proxyPatch, metav1.PatchOptions{})
-	if err != nil {
-		_, err = kubeClient.AppsV1().Deployments("istio-system").Patch(ctx, "istiod-install-istio-system", types.StrategicMergePatchType, proxyPatch, metav1.PatchOptions{})
-	}
+	_, err = kubeClient.AppsV1().Deployments("istio-system").Patch(ctx, istioDeploymentName, types.StrategicMergePatchType, proxyPatch, metav1.PatchOptions{})
 	require.NoError(err)
 	log.Debug("Successfully patched istiod deployment with proxy")
 
