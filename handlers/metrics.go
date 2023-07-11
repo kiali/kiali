@@ -172,7 +172,7 @@ func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 	cluster := clusterNameFromQuery(r.URL.Query())
-	
+
 	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, models.Namespace{Name: namespace})
 	if metricsService == nil {
 		// any returned value nil means error & response already written
