@@ -16,12 +16,14 @@
 
 apply_network_attachment() {
   NAME=$1
+  if [ "${IS_MAISTRA}" != "true" ]; then
 cat <<NAD | $CLIENT_EXE -n ${NAME} apply -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
 NAD
+  fi
     cat <<SCC | $CLIENT_EXE apply -f -
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
@@ -43,11 +45,13 @@ install_service_spawner_demo() {
 
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     ${CLIENT_EXE} new-project ${SSPAWNER}
+    apply_network_attachment ${SSPAWNER}
+    $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${SSPAWNER}
   else
     ${CLIENT_EXE} create ns ${SSPAWNER}
   fi
+
   ${CLIENT_EXE} label namespace ${SSPAWNER} istio-injection=enabled --overwrite=true
-  apply_network_attachment ${SSPAWNER}
 
   for (( c=0; c<$NUM_SPAWNS; c++ ))
   do
@@ -58,7 +62,6 @@ install_service_spawner_demo() {
     curl -L ${BASE_URL}/service-spawner/deployment-tpl.yaml -o deployment-tpl.yaml
     cat deployment-tpl.yaml \
           | sed -e "s:this-service:service-$c:g" \
-          | sed -e "s:80:8080:g" \
           | sed -e "s:target-service:service-$next\:8080:g" \
           | sed -e "s:this-namespace:$SSPAWNER:g" \
           | sed -e "s:quay.io/jotak/nginx-hello:nginxdemos/nginx-hello:g" \
@@ -105,8 +108,10 @@ HELPMSG
 done
 
 IS_OPENSHIFT="false"
+IS_MAISTRA="false"
 if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   IS_OPENSHIFT="true"
+  IS_MAISTRA=$([ "$(oc get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
 fi
 
 echo "CLIENT_EXE=${CLIENT_EXE}"
@@ -121,8 +126,14 @@ else
   ${CLIENT_EXE} delete all -l project=service-spawner
 
   if [ "${IS_OPENSHIFT}" == "true" ]; then
+    if [ "${IS_MAISTRA}" != "true" ]; then
+      $CLIENT_EXE delete network-attachment-definition istio-cni -n ${SSPAWNER}
+    else
+      $CLIENT_EXE delete smm default -n ${SSPAWNER}
+    fi
+    $CLIENT_EXE delete scc ${SSPAWNER}-scc
+
     ${CLIENT_EXE} delete project ${SSPAWNER}
-    ${CLIENT_EXE} delete SecurityContextConstraints ${SSPAWNER}-scc
   else
     ${CLIENT_EXE} delete ns ${SSPAWNER} --ignore-not-found=true
   fi
