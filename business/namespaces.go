@@ -524,7 +524,6 @@ func (in *NamespaceService) GetNamespaceClusters(ctx context.Context, namespace 
 }
 
 // GetNamespace returns the definition of the specified namespace.
-// TODO: When cluster is "" it returns the first occurrence
 func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace string, cluster string) (*models.Namespace, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetNamespaceByCluster",
@@ -556,53 +555,23 @@ func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace
 	var result models.Namespace
 	if in.hasProjects {
 		var project *osproject_v1.Project
-		// TODO: MC
-		if cluster == "" {
-			var err2 error
-			for cl := range in.userClients {
-				project, err2 = in.userClients[cl].GetProject(namespace)
-				if err2 == nil {
-					result = models.CastProject(*project, cluster)
-					break
-				}
-			}
-			if err2 != nil {
-				return nil, err2
-			}
-		} else {
-			if _, ok := in.userClients[cluster]; !ok {
-				return nil, fmt.Errorf("OCP Cluster [%s] is not found or is not accessible for Kiali", cluster)
-			}
-			project, errC := in.userClients[cluster].GetProject(namespace)
-			if errC != nil {
-				return nil, errC
-			}
-			result = models.CastProject(*project, cluster)
+		if _, ok := in.userClients[cluster]; !ok {
+			return nil, fmt.Errorf("OCP Cluster [%s] is not found or is not accessible for Kiali", cluster)
 		}
+		project, errC := in.userClients[cluster].GetProject(namespace)
+		if errC != nil {
+			return nil, errC
+		}
+		result = models.CastProject(*project, cluster)
 	} else {
-		// TODO: MC
 		var ns *core_v1.Namespace
 		var errC error
-		if cluster == "" {
-			for cl := range in.userClients {
-				ns, errC = in.userClients[cl].GetNamespace(namespace)
-				if errC == nil {
-					// Namespace found, assign that cluster
-					cluster = cl
-					break
-				}
-			}
-			if errC != nil {
-				return nil, errC
-			}
-		} else {
-			if _, ok := in.userClients[cluster]; !ok {
-				return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
-			}
-			ns, errC = in.userClients[cluster].GetNamespace(namespace)
-			if errC != nil {
-				return nil, errC
-			}
+		if _, ok := in.userClients[cluster]; !ok {
+			return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
+		}
+		ns, errC = in.userClients[cluster].GetNamespace(namespace)
+		if errC != nil {
+			return nil, errC
 		}
 
 		result = models.CastNamespace(*ns, cluster)

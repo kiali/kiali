@@ -26,6 +26,51 @@ func checkNamespaceAccess(ctx context.Context, nsServ business.NamespaceService,
 	return nsServ.GetNamespaceByCluster(ctx, namespace, cluster)
 }
 
+// Create Metrics Service for a single namespace and no cluster parameter. It will check permissions for all the clusters, and return the service
+// if it has permissions at least one of the clusters
+func createMetricsServiceForNamespaceMC(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, ns models.Namespace) (*business.MetricsService, *models.Namespace) {
+	layer, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return nil, nil
+	}
+	prom, err := promSupplier()
+	if err != nil {
+		log.Error(err)
+		RespondWithError(w, http.StatusServiceUnavailable, "Prometheus client error: "+err.Error())
+		return nil, nil
+	}
+	var nsInfo nsInfoError
+
+	nsLists, err := layer.Namespace.GetNamespaceClusters(r.Context(), ns.Name)
+	if err != nil || len(nsLists) == 0 {
+		log.Infof("No clusters found.")
+		// TWe cant find the cluster list, we asume it is local
+		nsLists = make([]models.Namespace, 1)
+		nsLists[0] = models.Namespace{Cluster: config.Get().KubernetesConfig.ClusterName, Name: ns.Name}
+	}
+
+	for _, nsCluster := range nsLists {
+		nsNoErrors := len(nsLists)
+		info, err := checkNamespaceAccess(r.Context(), layer.Namespace, nsCluster.Name, nsCluster.Cluster)
+		nsInfo = nsInfoError{info: info, err: err}
+		if err != nil {
+			nsNoErrors--
+		}
+		// At least, one ns with permissions
+		if nsNoErrors > 0 {
+			nsInfo = nsInfoError{info: info, err: nil}
+		}
+	}
+	metrics := business.NewMetricsService(prom)
+	if nsInfo.err != nil {
+		RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+nsInfo.err.Error())
+		return nil, nil
+	}
+
+	return metrics, nsInfo.info
+}
+
 func createMetricsServiceForNamespace(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, ns models.Namespace) (*business.MetricsService, *models.Namespace) {
 
 	metrics, infoMap := createMetricsServiceForNamespaces(w, r, promSupplier, []models.Namespace{ns})

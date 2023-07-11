@@ -32,8 +32,7 @@ func getAppMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClie
 	app := vars["app"]
 	cluster := clusterNameFromQuery(r.URL.Query())
 
-	//TODO: Namespace is used to check permissions, this is checking just in one of them
-	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, models.Namespace{Name: namespace, Cluster: ""})
+	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, models.Namespace{Name: namespace})
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
@@ -66,8 +65,7 @@ func getWorkloadMetrics(w http.ResponseWriter, r *http.Request, promSupplier pro
 	workload := vars["workload"]
 	cluster := clusterNameFromQuery(r.URL.Query())
 
-	//TODO: Namespace is used to check permissions, this is checking just in one of them
-	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, models.Namespace{Name: namespace, Cluster: ""})
+	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, models.Namespace{Name: namespace})
 
 	if metricsService == nil {
 		// any returned value nil means error & response already written
@@ -101,8 +99,7 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promSupplier prom
 	service := vars["service"]
 	cluster := clusterNameFromQuery(r.URL.Query())
 
-	//TODO: Namespace is used to check permissions, this is checking just in one of them
-	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, models.Namespace{Name: namespace, Cluster: ""})
+	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, models.Namespace{Name: namespace})
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
@@ -135,8 +132,7 @@ func getAggregateMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 	aggregate := vars["aggregate"]
 	aggregateValue := vars["aggregateValue"]
 
-	//TODO: Namespace is used to check permissions, this is checking just in one of them
-	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, models.Namespace{Name: namespace, Cluster: ""})
+	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, models.Namespace{Name: namespace})
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
@@ -176,9 +172,8 @@ func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 	cluster := clusterNameFromQuery(r.URL.Query())
-
-	//TODO: Namespace is used to check permissions, this is checking just in one of them
-	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, models.Namespace{Name: namespace, Cluster: ""})
+	
+	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, models.Namespace{Name: namespace})
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
