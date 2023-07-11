@@ -114,4 +114,3 @@ else
     ${CLIENT_EXE} delete namespace ${RUNTIMES}
   fi
 fi
-
