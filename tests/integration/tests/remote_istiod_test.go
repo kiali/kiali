@@ -94,6 +94,7 @@ func TestRemoteIstiod(t *testing.T) {
 	kialiNamespace := "istio-system"
 	kialiDeploymentNamespace := kialiNamespace
 	ipods, err := kubeClient.AppsV1().Deployments(kialiNamespace).List(ctx, metav1.ListOptions{LabelSelector: "app=istiod"})
+	require.NoError(err)
 	istioDeploymentName := ipods.Items[0].Name
 
 	if kialiCRDExists {
