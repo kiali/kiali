@@ -63,7 +63,8 @@ func AppList(w http.ResponseWriter, r *http.Request) {
 		// When the cluster is not specified, we need to get it. If there are more than one, the home cluster will be used
 		clusters, _ := business.Namespace.GetNamespaceClusters(context.TODO(), p.Namespace)
 		if len(clusters) == 0 {
-			handleErrorResponse(w, err, "Error looking for cluster: "+err.Error())
+                        err = fmt.Errorf("No clusters found for namespace  [%s], p.Namespace)
+			handleErrorResponse(w, err, err.Error())
 			return
 		}
 		rateInterval, err := adjustRateInterval(r.Context(), business, p.Namespace, p.RateInterval, p.QueryTime, clusters[0].Cluster)
