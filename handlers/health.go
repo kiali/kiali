@@ -126,7 +126,7 @@ func (p *namespaceHealthParams) extract(r *http.Request) (bool, string) {
 
 func adjustRateInterval(ctx context.Context, business *business.Layer, namespace, rateInterval string, queryTime time.Time, cluster string) (string, error) {
 
-	namespaceInfo, err := business.Namespace.GetNamespaceByCluster(ctx, namespace, cluster)
+	namespaceInfo, err := business.Namespace.GetClusterNamespace(ctx, namespace, cluster)
 	if err != nil {
 		return "", err
 	}

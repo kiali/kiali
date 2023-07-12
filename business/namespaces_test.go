@@ -74,7 +74,7 @@ func TestGetNamespace(t *testing.T) {
 
 	nsservice := setupNamespaceService(t, k8s, conf)
 
-	ns, _ := nsservice.GetNamespaceByCluster(context.TODO(), "bookinfo", config.Get().KubernetesConfig.ClusterName)
+	ns, _ := nsservice.GetClusterNamespace(context.TODO(), "bookinfo", config.Get().KubernetesConfig.ClusterName)
 
 	assert.NotNil(t, ns)
 	assert.Equal(t, ns.Name, "bookinfo")
@@ -92,7 +92,7 @@ func TestGetNamespaceWithError(t *testing.T) {
 
 	nsservice := setupNamespaceService(t, k8s, conf)
 
-	ns2, err := nsservice.GetNamespaceByCluster(context.TODO(), "fakeNS", config.Get().KubernetesConfig.ClusterName)
+	ns2, err := nsservice.GetClusterNamespace(context.TODO(), "fakeNS", config.Get().KubernetesConfig.ClusterName)
 
 	assert.NotNil(t, err)
 	assert.Nil(t, ns2)
@@ -143,7 +143,7 @@ func TestMultiClusterGetNamespace(t *testing.T) {
 
 	nsservice := NewNamespaceService(clients, clients, cache, *conf)
 
-	ns, err := nsservice.GetNamespaceByCluster(context.TODO(), "bookinfo", conf.KubernetesConfig.ClusterName)
+	ns, err := nsservice.GetClusterNamespace(context.TODO(), "bookinfo", conf.KubernetesConfig.ClusterName)
 	require.NoError(err)
 
 	assert.Equal(t, conf.KubernetesConfig.ClusterName, ns.Cluster)
@@ -217,7 +217,7 @@ func TestGetNamespacesCached(t *testing.T) {
 
 	require.Len(namespaces, 4)
 
-	namespace, err := nsservice.GetNamespaceByCluster(context.TODO(), "gamma", "west")
+	namespace, err := nsservice.GetClusterNamespace(context.TODO(), "gamma", "west")
 	require.NoError(err)
 
 	assert.Equal("west", namespace.Cluster)
@@ -259,7 +259,7 @@ func TestGetNamespacesForbiddenCached(t *testing.T) {
 
 	nsservice := NewNamespaceService(clients, clients, cache, *conf)
 	// Try to get the bookinfo namespace from the home cluster.
-	_, err := nsservice.GetNamespaceByCluster(context.TODO(), "bookinfo", "east")
+	_, err := nsservice.GetClusterNamespace(context.TODO(), "bookinfo", "east")
 	require.Error(err)
 }
 

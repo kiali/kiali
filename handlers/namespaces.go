@@ -59,7 +59,7 @@ func NamespaceValidationSummary(w http.ResponseWriter, r *http.Request) {
 		istioConfigValidationResults, errValidations = business.Validations.GetValidations(r.Context(), cluster, namespace, "", "")
 	} else {
 		for _, cl := range clusters {
-			_, errNs := business.Namespace.GetNamespaceByCluster(r.Context(), namespace, cl.Name)
+			_, errNs := business.Namespace.GetClusterNamespace(r.Context(), namespace, cl.Name)
 			if errNs == nil {
 				clusterIstioConfigValidationResults, _ := business.Validations.GetValidations(r.Context(), cl.Name, namespace, "", "")
 				istioConfigValidationResults = istioConfigValidationResults.MergeValidations(clusterIstioConfigValidationResults)
@@ -96,7 +96,7 @@ func ConfigValidationSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(nss) == 0 {
-		loadedNamespaces, _ := business.Namespace.GetNamespacesForCluster(r.Context(), cluster)
+		loadedNamespaces, _ := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
 		for _, ns := range loadedNamespaces {
 			nss = append(nss, ns.Name)
 		}

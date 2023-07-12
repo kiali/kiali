@@ -70,7 +70,7 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 			continue
 		}
 
-		if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, criteria.Namespace, cluster); err != nil {
+		if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, criteria.Namespace, cluster); err != nil {
 			// We want to throw an error if we're single vs. multi cluster to be backward compatible
 			// TODO: Probably need this in a few other places as well. It'd be nice to have a
 			// centralized check for this in the config instead of this hacky one.
@@ -474,7 +474,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
+	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
 		return nil, err
 	}
 
@@ -717,7 +717,7 @@ func (in *SvcService) UpdateService(ctx context.Context, cluster, namespace, ser
 	// Identify controller and apply patch to workload
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(context.TODO(), namespace, cluster); err != nil {
+	if _, err := in.businessLayer.Namespace.GetClusterNamespace(context.TODO(), namespace, cluster); err != nil {
 		return nil, err
 	}
 
@@ -749,7 +749,7 @@ func (in *SvcService) GetService(ctx context.Context, cluster, namespace, servic
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
+	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
 		return models.Service{}, err
 	}
 
@@ -815,7 +815,7 @@ func (in *SvcService) GetServiceAppName(ctx context.Context, cluster, namespace,
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
+	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
 		return "", err
 	}
 

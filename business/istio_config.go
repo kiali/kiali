@@ -344,7 +344,7 @@ func (in *IstioConfigService) getIstioConfigListForCluster(ctx context.Context, 
 	if !criteria.AllNamespaces {
 		// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 		// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-		if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, criteria.Namespace, cluster); err != nil {
+		if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, criteria.Namespace, cluster); err != nil {
 			return models.IstioConfigList{}, err
 		}
 	} else {
@@ -595,7 +595,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster
 	}
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
+	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
 		return istioConfigDetail, err
 	}
 

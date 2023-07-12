@@ -33,7 +33,7 @@ func CustomDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check namespace access
-	info, err := layer.Namespace.GetNamespaceByCluster(r.Context(), namespace, cluster)
+	info, err := layer.Namespace.GetClusterNamespace(r.Context(), namespace, cluster)
 	if err != nil {
 		RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
 		return

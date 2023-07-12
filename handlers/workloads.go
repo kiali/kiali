@@ -1,12 +1,12 @@
 package handlers
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -70,13 +70,22 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if criteria.IncludeHealth {
-		// When the cluster is not specified, we need to get it. If there are more than one, get the first one
-		clusters, _ := businessLayer.Namespace.GetNamespaceClusters(context.TODO(), p.Namespace)
+		// When the cluster is not specified, we need to get it. If there are more than one,
+		// get the one for which the namespace creation time is oldest
+		clusters, _ := businessLayer.Namespace.GetNamespaceClusters(r.Context(), p.Namespace)
 		if len(clusters) == 0 {
 			handleErrorResponse(w, err, "Error looking for cluster: "+err.Error())
 			return
 		}
-		rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime, clusters[0].Cluster)
+		var cluster string
+		var creationTimestamp time.Time
+		for i, cl := range clusters {
+			if i == 0 || cl.CreationTimestamp.Before(creationTimestamp) {
+				cluster = cl.Cluster
+			}
+		}
+
+		rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime, cluster)
 		if err != nil {
 			handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 			return

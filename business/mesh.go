@@ -116,6 +116,7 @@ func (in *MeshService) discoverKiali(ctx context.Context, clusterName string, r 
 	client, ok := in.kialiSAClients[clusterName]
 	if !ok {
 		log.Warningf("Discovery for Kiali instances in cluster [%s] failed. Unable to find SA client for cluster [%s]", clusterName, clusterName)
+
 		return nil
 	}
 

@@ -392,8 +392,8 @@ func (in *NamespaceService) getNamespacesByCluster(cluster string) ([]models.Nam
 	return namespaces, nil
 }
 
-// GetNamespacesForCluster is just a convenience routine that filters GetNamespaces for a particular cluster
-func (in *NamespaceService) GetNamespacesForCluster(ctx context.Context, cluster string) ([]models.Namespace, error) {
+// GetClusterNamespaces is just a convenience routine that filters GetNamespaces for a particular cluster
+func (in *NamespaceService) GetClusterNamespaces(ctx context.Context, cluster string) ([]models.Namespace, error) {
 	tokenNamespaces, err := in.GetNamespaces(ctx)
 	if err != nil {
 		return nil, err
@@ -523,10 +523,10 @@ func (in *NamespaceService) GetNamespaceClusters(ctx context.Context, namespace 
 	return result, nil
 }
 
-// GetNamespace returns the definition of the specified namespace.
-func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace string, cluster string) (*models.Namespace, error) {
+// GetClusterNamespace returns the definition of the specified namespace.
+func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace string, cluster string) (*models.Namespace, error) {
 	var end observability.EndFunc
-	ctx, end = observability.StartSpan(ctx, "GetNamespaceByCluster",
+	ctx, end = observability.StartSpan(ctx, "GetClusterNamespace",
 		observability.Attribute("package", "business"),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("cluster", cluster),
@@ -593,7 +593,7 @@ func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace strin
 	defer end()
 
 	// A first check to run the accessible/excluded logic and not run the Update operation on filtered namespaces
-	_, err := in.GetNamespaceByCluster(ctx, namespace, cluster)
+	_, err := in.GetClusterNamespace(ctx, namespace, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -608,7 +608,7 @@ func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace strin
 	in.kialiCache.RefreshTokenNamespaces()
 
 	// Call GetNamespace to update the caching
-	return in.GetNamespaceByCluster(ctx, namespace, cluster)
+	return in.GetClusterNamespace(ctx, namespace, cluster)
 }
 
 func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, labelSelector string, forwardedError error) ([]core_v1.Namespace, error) {
