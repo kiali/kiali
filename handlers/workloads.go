@@ -74,6 +74,7 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 		// get the one for which the namespace creation time is oldest
 		clusters, _ := businessLayer.Namespace.GetNamespaceClusters(r.Context(), p.Namespace)
 		if len(clusters) == 0 {
+			err = fmt.Errorf("No clusters found for namespace  [%s]", p.Namespace)
 			handleErrorResponse(w, err, "Error looking for cluster: "+err.Error())
 			return
 		}
