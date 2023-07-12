@@ -103,6 +103,10 @@ Then(`user sees no namespace selected`, () => {
   cy.get('div#empty-graph-no-namespace').should('be.visible');
 });
 
+Then(`user sees empty graph`, () => {
+  cy.get('div#empty-graph').should('be.visible');
+});
+
 Then(`user sees the {string} namespace`, ns => {
   cy.get('div#summary-panel-graph').find('div#summary-panel-graph-heading').find(`span#ns-${ns}`).should('be.visible');
 });
@@ -242,7 +246,7 @@ Then('idle nodes {string} in the graph', (action: string) => {
     .then(state => {
       const numNodes = state.cy.nodes(`[?isIdle]`).length;
       if (action === 'appear') {
-        assert.isAbove(numNodes, 0);
+        assert.equal(numNodes, 16);
       } else {
         assert.equal(numNodes, 0);
       }

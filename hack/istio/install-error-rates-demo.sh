@@ -13,6 +13,7 @@ source ${HACK_SCRIPT_DIR}/functions.sh
 : ${ISTIO_NAMESPACE:=istio-system}
 : ${NAMESPACE_ALPHA:=alpha}
 : ${NAMESPACE_BETA:=beta}
+: ${NAMESPACE_GAMMA:=gamma}
 : ${SOURCE:="https://raw.githubusercontent.com/kiali/demos/master"}
 : ${DISTRIBUTE_DEMO:=false}
 : ${CLUSTER1_CONTEXT=east}
@@ -53,7 +54,7 @@ Valid command line arguments:
   -d|--delete: either 'true' or 'false'. If 'true' the demo will be deleted, not installed.
   -ei|--enable-injection: either 'true' or 'false' (default is true). If 'true' auto-inject proxies for the workloads.
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
-  -dd|--distribute-demo 'true' or 'false'. If 'true' alpha namespace will be created on east cluster and beta namespace on west cluster.
+  -dd|--distribute-demo 'true' or 'false'. If 'true' alpha namespace will be created on east cluster, beta and gamma namespaces on west cluster.
   -h|--help: this text
   -s|--source: demo file source. For example: file:///home/me/demos Default: https://raw.githubusercontent.com/kiali/demos/master
 HELPMSG
@@ -78,6 +79,7 @@ echo ENABLE_INJECTION=${ENABLE_INJECTION}
 echo ISTIO_NAMESPACE=${ISTIO_NAMESPACE}
 echo NAMESPACE_ALPHA=${NAMESPACE_ALPHA}
 echo NAMESPACE_BETA=${NAMESPACE_BETA}
+echo NAMESPACE_GAMMA=${NAMESPACE_GAMMA}
 echo SOURCE=${SOURCE}
 
 # check arch values
@@ -108,9 +110,11 @@ if [ "${DELETE_DEMO}" == "true" ]; then
     if [ "${IS_MAISTRA}" != "true" ]; then
       $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE_ALPHA}
       $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE_BETA}
+      $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE_GAMMA}
     else
       $CLIENT_EXE delete smm default -n ${NAMESPACE_ALPHA}
       $CLIENT_EXE delete smm default -n ${NAMESPACE_BETA}
+      $CLIENT_EXE delete smm default -n ${NAMESPACE_GAMMA}
     fi
     $CLIENT_EXE delete scc error-rates-scc
   fi
@@ -118,9 +122,11 @@ if [ "${DELETE_DEMO}" == "true" ]; then
   if [ "${DISTRIBUTE_DEMO}" == "true" ]; then
     ${CLIENT_EXE} delete namespace ${NAMESPACE_ALPHA} --context ${CLUSTER1_CONTEXT}
     ${CLIENT_EXE} delete namespace ${NAMESPACE_BETA}  --context ${CLUSTER2_CONTEXT}
+    ${CLIENT_EXE} delete namespace ${NAMESPACE_GAMMA} --context ${CLUSTER2_CONTEXT}
   else
     ${CLIENT_EXE} delete namespace ${NAMESPACE_ALPHA}
     ${CLIENT_EXE} delete namespace ${NAMESPACE_BETA}
+    ${CLIENT_EXE} delete namespace ${NAMESPACE_GAMMA}
   fi
   
   exit 0
@@ -131,13 +137,16 @@ fi
 if [ "${IS_OPENSHIFT}" == "true" ]; then
   $CLIENT_EXE new-project ${NAMESPACE_ALPHA}
   $CLIENT_EXE new-project ${NAMESPACE_BETA}
+  $CLIENT_EXE new-project ${NAMESPACE_GAMMA}
 else
   if [ "${DISTRIBUTE_DEMO}" == "true" ]; then
     $CLIENT_EXE create namespace ${NAMESPACE_ALPHA} --context ${CLUSTER1_CONTEXT}
     $CLIENT_EXE create namespace ${NAMESPACE_BETA} --context ${CLUSTER2_CONTEXT}
+    $CLIENT_EXE create namespace ${NAMESPACE_GAMMA} --context ${CLUSTER2_CONTEXT}
   else
     $CLIENT_EXE create namespace ${NAMESPACE_ALPHA}
     $CLIENT_EXE create namespace ${NAMESPACE_BETA}
+    $CLIENT_EXE create namespace ${NAMESPACE_GAMMA}
   fi
 fi
 
@@ -145,9 +154,11 @@ if [ "${ENABLE_INJECTION}" == "true" ]; then
  if [ "${DISTRIBUTE_DEMO}" == "true" ]; then
     ${CLIENT_EXE} label namespace ${NAMESPACE_ALPHA} istio-injection=enabled --context ${CLUSTER1_CONTEXT}
     ${CLIENT_EXE} label namespace ${NAMESPACE_BETA} istio-injection=enabled  --context ${CLUSTER2_CONTEXT}
+    ${CLIENT_EXE} label namespace ${NAMESPACE_GAMMA} istio-injection=enabled  --context ${CLUSTER2_CONTEXT}
   else
     ${CLIENT_EXE} label namespace ${NAMESPACE_ALPHA} istio-injection=enabled
     ${CLIENT_EXE} label namespace ${NAMESPACE_BETA} istio-injection=enabled
+    ${CLIENT_EXE} label namespace ${NAMESPACE_GAMMA} istio-injection=enabled
   fi
 fi
 
@@ -155,6 +166,7 @@ fi
 if [ "${IS_OPENSHIFT}" == "true" ]; then
   $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${NAMESPACE_ALPHA}
   $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${NAMESPACE_BETA}
+  $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${NAMESPACE_GAMMA}
 fi
 
 if [ "${IS_OPENSHIFT}" == "true" ]; then
@@ -166,6 +178,12 @@ metadata:
   name: istio-cni
 NAD
     cat <<NAD | $CLIENT_EXE -n ${NAMESPACE_BETA} create -f -
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: istio-cni
+NAD
+    cat <<NAD | $CLIENT_EXE -n ${NAMESPACE_GAMMA} create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
@@ -186,12 +204,14 @@ supplementalGroups:
 users:
 - "system:serviceaccount:${NAMESPACE_ALPHA}:default"
 - "system:serviceaccount:${NAMESPACE_BETA}:default"
+- "system:serviceaccount:${NAMESPACE_GAMMA}:default"
 SCC
 fi
 
 # Deploy the demo
 url_alpha="${SOURCE}/error-rates/alpha.yaml"
 url_beta="${SOURCE}/error-rates/beta.yaml"
+url_gamma="${SOURCE}/error-rates/gamma.yaml"
 sed_client_p="s;kiali/demo_error_rates_client;maistra/demo_error_rates_client-p;g"
 sed_server_p="s;kiali/demo_error_rates_server;maistra/demo_error_rates_server-p;g"
 sed_client_z="s;kiali/demo_error_rates_client;maistra/demo_error_rates_client-z;g"
@@ -201,23 +221,29 @@ if [ "${DISTRIBUTE_DEMO}" == "true" ]; then
   if [ "${ARCH}" == "ppc64le" ]; then
     ${CLIENT_EXE} apply -f <(curl -L ${url_alpha} | sed "${sed_client_p}" | sed "${sed_server_p}") -n ${NAMESPACE_ALPHA} --context ${CLUSTER1_CONTEXT}
     ${CLIENT_EXE} apply -f <(curl -L "${url_beta}" | sed "${sed_client_p}" | sed "${sed_server_p}") -n ${NAMESPACE_BETA} --context ${CLUSTER2_CONTEXT}
+    ${CLIENT_EXE} apply -f <(curl -L "${url_gamma}" | sed "${sed_client_p}" | sed "${sed_server_p}") -n ${NAMESPACE_GAMMA} --context ${CLUSTER2_CONTEXT}
   elif [ "${ARCH}" == "s390x" ]; then
     ${CLIENT_EXE} apply -f <(curl -L ${url_alpha} | sed "${sed_client_z}" | sed "${sed_server_z}") -n ${NAMESPACE_ALPHA} --context ${CLUSTER1_CONTEXT}
     ${CLIENT_EXE} apply -f <(curl -L "${url_beta}" | sed "${sed_client_z}" | sed "${sed_server_z}") -n ${NAMESPACE_BETA} --context ${CLUSTER2_CONTEXT}
+    ${CLIENT_EXE} apply -f <(curl -L "${url_gamma}" | sed "${sed_client_z}" | sed "${sed_server_z}") -n ${NAMESPACE_GAMMA} --context ${CLUSTER2_CONTEXT}
   else
     ${CLIENT_EXE} apply -f <(curl -L ${url_alpha}) -n ${NAMESPACE_ALPHA} --context ${CLUSTER1_CONTEXT}
     ${CLIENT_EXE} apply -f <(curl -L "${url_beta}") -n ${NAMESPACE_BETA} --context ${CLUSTER2_CONTEXT}
+    ${CLIENT_EXE} apply -f <(curl -L "${url_gamma}") -n ${NAMESPACE_GAMMA} --context ${CLUSTER2_CONTEXT}
   fi
 else
   if [ "${ARCH}" == "ppc64le" ]; then
     ${CLIENT_EXE} apply -f <(curl -L ${url_alpha} | sed "${sed_client_p}" | sed "${sed_server_p}") -n ${NAMESPACE_ALPHA}
     ${CLIENT_EXE} apply -f <(curl -L "${url_beta}" | sed "${sed_client_p}" | sed "${sed_server_p}") -n ${NAMESPACE_BETA}
+    ${CLIENT_EXE} apply -f <(curl -L "${url_gamma}" | sed "${sed_client_p}" | sed "${sed_server_p}") -n ${NAMESPACE_GAMMA}
   elif [ "${ARCH}" == "s390x" ]; then
     ${CLIENT_EXE} apply -f <(curl -L ${url_alpha} | sed "${sed_client_z}" | sed "${sed_server_z}") -n ${NAMESPACE_ALPHA}
     ${CLIENT_EXE} apply -f <(curl -L "${url_beta}" | sed "${sed_client_z}" | sed "${sed_server_z}") -n ${NAMESPACE_BETA}
+    ${CLIENT_EXE} apply -f <(curl -L "${url_gamma}" | sed "${sed_client_z}" | sed "${sed_server_z}") -n ${NAMESPACE_GAMMA}
   else
     ${CLIENT_EXE} apply -f <(curl -L ${url_alpha}) -n ${NAMESPACE_ALPHA}
     ${CLIENT_EXE} apply -f <(curl -L "${url_beta}") -n ${NAMESPACE_BETA}
+    ${CLIENT_EXE} apply -f <(curl -L "${url_gamma}") -n ${NAMESPACE_GAMMA}
   fi
 fi
 
@@ -225,4 +251,5 @@ fi
 if [ "${IS_MAISTRA}" == "true" ]; then
   prepare_maistra "${NAMESPACE_ALPHA}"
   prepare_maistra "${NAMESPACE_BETA}"
+  prepare_maistra "${NAMESPACE_GAMMA}"
 fi
