@@ -5,6 +5,7 @@ import { PFColors } from '../../components/Pf/PfColors';
 import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
 import { RichDataPoint, VCLines } from 'types/VictoryChartInfo';
 import { addLegendEvent, VCEvent } from 'utils/VictoryEvents';
+import cssVariables from 'styles/variables.module.scss';
 
 export const legendHeight = 25;
 export const legendTopMargin = 20;
@@ -57,12 +58,15 @@ export class RateChart extends React.Component<Props, State> {
         }
       });
     });
-    const fontSize = getComputedStyle(document.body).getPropertyValue('--graph-side-panel--font-size');
-    const fontSizePx = getComputedStyle(document.body).getPropertyValue('--graph-side-panel--font-size-px');
+
+    const fontSize = cssVariables.kialiFontSize;
+    const fontSizePx = cssVariables.kialiFontSizePx;
+
     const horizontalAxisStyle = { tickLabels: { fontSize: fontSize, padding: 3 } };
     const verticalAxisStyle = singleBar
       ? { tickLabels: { fill: 'none', fontSize: fontSize } }
       : { tickLabels: { padding: 2, fontSize: fontSize } };
+
     return (
       <Chart
         height={height}

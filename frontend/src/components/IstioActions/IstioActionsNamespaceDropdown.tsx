@@ -4,6 +4,7 @@ import { history } from '../../app/History';
 import { serverConfig } from '../../config';
 import { NEW_ISTIO_RESOURCE } from '../../pages/IstioConfigNew/IstioConfigNewPage';
 import { K8SGATEWAY } from '../../pages/IstioConfigNew/K8sGatewayForm';
+import { groupMenuStyle } from 'styles/DropdownStyles';
 
 type Props = {};
 
@@ -61,7 +62,7 @@ export class IstioActionsNamespaceDropdown extends React.Component<Props, State>
       <DropdownGroup
         key={'group_create'}
         label={'Create'}
-        className="kiali-group-menu"
+        className={groupMenuStyle}
         children={dropdownItemsRaw.map(r => r.action)}
       />
     ];

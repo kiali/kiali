@@ -1,8 +1,8 @@
-:root {
-  --graph-find-input--width: 15em;
-  --graph-side-panel--font-size: var(--kiali-global--font-size);
-  --graph-side-panel--font-size-px: var(--kiali-global--font-size-px);
-}
+// :root {
+//   --graph-find-input--width: 15em;
+//   --graph-side-panel--font-size: var(--kiali-global--font-size);
+//   --graph-side-panel--font-size-px: var(--kiali-global--font-size-px);
+// }
 
 #summary-appbox-actions .pf-c-dropdown__toggle {
   font-size: var(--graph-side-panel--font-size);
@@ -48,6 +48,6 @@
 
 // Override to Dropdown's internal style for Find/Hide presets
 
-#graph-findhide-presets .pf-c-dropdown__menu {
-  left: calc(-1 * var(--graph-find-input--width));
-}
+// #graph-findhide-presets .pf-c-dropdown__menu {
+//   left: calc(-1 * var(--graph-find-input--width));
+// }

@@ -21,6 +21,7 @@ import { ParameterizedTabs } from '../Tab/Tabs';
 import { ICell, Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
 import { AuthConfig } from '../../types/Auth';
 import { authenticationConfig } from '../../config/AuthenticationConfig';
+import { basicTabStyle } from 'styles/TabStyles';
 
 enum CopyStatus {
   NOT_COPIED, // We haven't copied the current output
@@ -276,6 +277,7 @@ class DebugInformationComponent extends React.PureComponent<DebugInformationProp
         )}
         <ParameterizedTabs
           id="basic-tabs"
+          className={basicTabStyle}
           onSelect={tabValue => {
             this.setState({ currentTab: tabValue });
             this.hideAlert();

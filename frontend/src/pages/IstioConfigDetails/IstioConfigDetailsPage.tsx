@@ -55,6 +55,7 @@ import { RefreshNotifier } from '../../components/Refresh/RefreshNotifier';
 import { isParentKiosk } from '../../components/Kiosk/KioskActions';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
+import { basicTabStyle } from 'styles/TabStyles';
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
@@ -596,6 +597,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
         {!this.state.error && !isParentKiosk(this.props.kiosk) && (
           <ParameterizedTabs
             id="basic-tabs"
+            className={basicTabStyle}
             onSelect={tabValue => {
               this.setState({ currentTab: tabValue });
             }}

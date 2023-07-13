@@ -23,6 +23,7 @@ import { ErrorMsg } from '../../types/ErrorMsg';
 import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { history } from 'app/History';
+import { basicTabStyle } from 'styles/TabStyles';
 
 type AppDetailsState = {
   app?: App;
@@ -253,6 +254,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
         {this.state.app && (
           <ParameterizedTabs
             id="basic-tabs"
+            className={basicTabStyle}
             onSelect={tabValue => {
               this.setState({ currentTab: tabValue, cluster: this.state.cluster });
             }}

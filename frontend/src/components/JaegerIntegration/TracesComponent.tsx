@@ -21,6 +21,7 @@ import { Direction, genStatsKey, MetricsStatsQuery } from 'types/MetricsOptions'
 import { MetricsStatsResult } from 'types/Metrics';
 import { getSpanId } from 'utils/SearchParamUtils';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
+import { traceTabStyle } from 'styles/TabStyles';
 
 type ReduxProps = {
   namespaceSelector: boolean;
@@ -289,6 +290,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
               <Tabs
                 id="trace-details"
                 data-test="trace-details-tabs"
+                className={traceTabStyle}
                 activeKey={this.state.activeTab}
                 onSelect={(_, idx: any) => this.setState({ activeTab: idx })}
               >

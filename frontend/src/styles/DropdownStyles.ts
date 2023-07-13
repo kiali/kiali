@@ -51,3 +51,7 @@ export const itemStyleWithInfo = kialiStyle({
 export const infoStyle = kialiStyle({
   margin: '0px 5px 2px 4px'
 });
+
+export const groupMenuStyle = kialiStyle({
+  textAlign: 'left'
+});

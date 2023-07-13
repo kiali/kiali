@@ -1,6 +1,12 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { App } from './app/App';
+import { globalStyle } from 'styles/GlobalStyle';
+import cssVariables from './styles/variables.module.scss';
+import '@patternfly/patternfly/patternfly.css';
+import 'tippy.js/dist/tippy.css';
+import 'tippy.js/dist/themes/light-border.css';
+import 'react-datepicker/dist/react-datepicker.css';
 import './styles/index.css';
 
 declare global {
@@ -16,5 +22,9 @@ Date.prototype.toLocaleStringWithConditionalDate = function () {
 
   return nowDate === thisDate ? this.toLocaleTimeString() : this.toLocaleString();
 };
+
+// Adding global styles and CSS variables to body element
+document.body.classList.add(cssVariables.kiali);
+document.body.classList.add(globalStyle);
 
 ReactDOM.render(<App />, document.getElementById('root') as HTMLElement);
