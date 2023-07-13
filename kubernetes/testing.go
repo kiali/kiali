@@ -34,6 +34,7 @@ func SetConfig(t *testing.T, newConfig config.Config) {
 // Without this token file, the client factory will try to read the token from
 // the default path at /var/run/secrets/... which probably doesn't exist and
 // we probably don't want to use it even if it does.
+// This sets globals so it is NOT safe to use in parallel tests.
 func NewTestingClientFactory(t *testing.T) *clientFactory {
 	t.Helper()
 
