@@ -48,9 +48,6 @@ func TestServicesHealthConfigPasses(t *testing.T) {
 }
 
 func TestServicesHealthNoConfigPasses(t *testing.T) {
-	cfg := config.NewConfig()
-	cfg.KubernetesConfig.CacheEnabled = false
-	config.Set(cfg)
 	trafficMap := buildServiceTrafficMap()
 	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(""), buildFakeWorkloadDeploymentsHealth(""), buildFakePodsHealth(""))
 
@@ -69,9 +66,6 @@ func TestServicesHealthNoConfigPasses(t *testing.T) {
 }
 
 func TestWorkloadHealthConfigPasses(t *testing.T) {
-	cfg := config.NewConfig()
-	cfg.KubernetesConfig.CacheEnabled = false
-	config.Set(cfg)
 	trafficMap := buildWorkloadTrafficMap()
 	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
 
@@ -90,9 +84,6 @@ func TestWorkloadHealthConfigPasses(t *testing.T) {
 }
 
 func TestWorkloadHealthNoConfigPasses(t *testing.T) {
-	cfg := config.NewConfig()
-	cfg.KubernetesConfig.CacheEnabled = false
-	config.Set(cfg)
 	trafficMap := buildWorkloadTrafficMap()
 	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(""), buildFakeWorkloadDeploymentsHealth(""), buildFakePodsHealth(""))
 
@@ -113,9 +104,6 @@ func TestWorkloadHealthNoConfigPasses(t *testing.T) {
 func TestHealthDataPresent(t *testing.T) {
 	assert := assert.New(t)
 
-	cfg := config.NewConfig()
-	cfg.KubernetesConfig.CacheEnabled = false
-	config.Set(cfg)
 	svcNodes := buildServiceTrafficMap()
 	appNodes := buildAppTrafficMap()
 	wkNodes := buildWorkloadTrafficMap()

@@ -19,7 +19,6 @@ var emptyHandler = NewRegistryHandler(func() {})
 func FakeGatewaysKialiCache(gws []*networking_v1beta1.Gateway) KialiCache {
 	cfg := config.Get()
 	cfg.Deployment.AccessibleNamespaces = []string{"bookinfo"}
-	cfg.KubernetesConfig.CacheNamespaces = []string{"test"}
 	cache, err := NewKubeCache(kubetest.NewFakeK8sClient(), *cfg, emptyHandler)
 	if err != nil {
 		panic(fmt.Sprintf("Error creating KialiCache in testing. Err: %v", err))
@@ -57,7 +56,6 @@ func FakeServicesKialiCache(rss []*kubernetes.RegistryService,
 	// Tests that use this rely on namespaced scoped caches.
 	cfg := config.Get()
 	cfg.Deployment.AccessibleNamespaces = []string{"bookinfo"}
-	cfg.KubernetesConfig.CacheNamespaces = []string{"test"}
 	cfg.KubernetesConfig.CacheDuration = 3600 // 1 hr for tests
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(kubetest.NewFakeK8sClient())

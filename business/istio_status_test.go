@@ -930,7 +930,6 @@ func defaultAddOnCalls(grafana, prom *int) map[string]addOnsSetup {
 }
 
 func addonAddMockUrls(baseUrl string, conf *config.Config, overrideUrl bool) *config.Config {
-	conf.KubernetesConfig.CacheEnabled = false
 	conf.ExternalServices.Grafana.Enabled = true
 	conf.ExternalServices.Grafana.InClusterURL = baseUrl + "/grafana/mock"
 	conf.ExternalServices.Grafana.IsCore = false

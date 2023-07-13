@@ -15,6 +15,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
@@ -22,11 +23,13 @@ import (
 
 // NamespaceService deals with fetching k8sClients namespaces / OpenShift projects and convert to kiali model
 type NamespaceService struct {
-	userClients            map[string]kubernetes.ClientInterface
-	kialiSAClients         map[string]kubernetes.ClientInterface
-	homeClusterUserClient  kubernetes.ClientInterface
+	conf                   config.Config
 	hasProjects            bool
+	homeClusterUserClient  kubernetes.ClientInterface
 	isAccessibleNamespaces map[string]bool
+	kialiCache             cache.KialiCache
+	kialiSAClients         map[string]kubernetes.ClientInterface
+	userClients            map[string]kubernetes.ClientInterface
 }
 
 type AccessibleNamespaceError struct {
@@ -42,9 +45,8 @@ func IsAccessibleError(err error) bool {
 	return isAccessibleError
 }
 
-func NewNamespaceService(userClients map[string]kubernetes.ClientInterface, kialiSAClients map[string]kubernetes.ClientInterface) NamespaceService {
+func NewNamespaceService(userClients map[string]kubernetes.ClientInterface, kialiSAClients map[string]kubernetes.ClientInterface, cache cache.KialiCache, conf config.Config) NamespaceService {
 	var hasProjects bool
-	conf := config.Get()
 
 	homeClusterName := conf.KubernetesConfig.ClusterName
 	if saClient, ok := kialiSAClients[homeClusterName]; ok && saClient.IsOpenShift() {
@@ -60,11 +62,13 @@ func NewNamespaceService(userClients map[string]kubernetes.ClientInterface, kial
 	}
 
 	return NamespaceService{
-		userClients:            userClients,
-		kialiSAClients:         kialiSAClients,
+		conf:                   conf,
 		hasProjects:            hasProjects,
 		homeClusterUserClient:  userClients[homeClusterName],
 		isAccessibleNamespaces: isAccessibleNamespaces,
+		kialiCache:             cache,
+		kialiSAClients:         kialiSAClients,
+		userClients:            userClients,
 	}
 }
 
@@ -76,26 +80,20 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	)
 	defer end()
 
-	if kialiCache != nil && in.homeClusterUserClient != nil {
-		if ns := kialiCache.GetNamespaces(in.homeClusterUserClient.GetToken()); ns != nil {
-			return ns, nil
-		}
+	if ns := in.kialiCache.GetNamespaces(in.homeClusterUserClient.GetToken()); ns != nil {
+		return ns, nil
 	}
-
-	conf := config.Get()
 
 	// determine what the discoverySelectors are by examining the Istio ConfigMap
 	var discoverySelectors []*meta_v1.LabelSelector
-	if kialiCache != nil {
-		if icm, err := kialiCache.GetConfigMap(conf.IstioNamespace, conf.ExternalServices.Istio.ConfigMapName); err == nil {
-			if ic, err2 := kubernetes.GetIstioConfigMap(icm); err2 == nil {
-				discoverySelectors = ic.DiscoverySelectors
-			} else {
-				log.Errorf("Will not process discoverySelectors due to a failure to get the Istio ConfigMap: %v", err2)
-			}
+	if icm, err := in.kialiCache.GetConfigMap(in.conf.IstioNamespace, in.conf.ExternalServices.Istio.ConfigMapName); err == nil {
+		if ic, err2 := kubernetes.GetIstioConfigMap(icm); err2 == nil {
+			discoverySelectors = ic.DiscoverySelectors
 		} else {
-			log.Errorf("Will not process discoverySelectors due to a failure to parse the Istio ConfigMap: %v", err)
+			log.Errorf("Will not process discoverySelectors due to a failure to get the Istio ConfigMap: %v", err2)
 		}
+	} else {
+		log.Errorf("Will not process discoverySelectors due to a failure to parse the Istio ConfigMap: %v", err)
 	}
 
 	if len(discoverySelectors) > 0 {
@@ -143,7 +141,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	// never excluded via api.namespaces.exclude or api.namespaces.label_selector_exclude.)
 
 	// determine if we are to exclude namespaces by label - if so, set the label name and value for use later
-	labelSelectorExclude := conf.API.Namespaces.LabelSelectorExclude
+	labelSelectorExclude := in.conf.API.Namespaces.LabelSelectorExclude
 	var labelSelectorExcludeName string
 	var labelSelectorExcludeValue string
 	if labelSelectorExclude != "" {
@@ -191,7 +189,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	// Combine namespace data
 	for resultCh := range resultsCh {
 		if resultCh.err != nil {
-			if resultCh.cluster == conf.KubernetesConfig.ClusterName {
+			if resultCh.cluster == in.conf.KubernetesConfig.ClusterName {
 				log.Errorf("Error fetching Namespaces for local cluster [%s]: %s", resultCh.cluster, resultCh.err)
 				return nil, resultCh.err
 			} else {
@@ -223,7 +221,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 		// 2. range over all namespaces to get discovery namespaces, notice each selector result is ORed (as per Istio convention)
 		selectedNamespaces := make([]models.Namespace, 0)
 		for _, ns := range resultns {
-			if ns.Name == conf.IstioNamespace {
+			if ns.Name == in.conf.IstioNamespace {
 				selectedNamespaces = append(selectedNamespaces, ns) // we always want to return the control plane namespace
 			} else {
 				for _, selector := range selectors {
@@ -242,12 +240,12 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	// 1. to be filtered out via the exclude list
 	// 2. to be filtered out via the label selector
 	// Note that the control plane namespace is never excluded
-	excludes := conf.API.Namespaces.Exclude
+	excludes := in.conf.API.Namespaces.Exclude
 	if len(excludes) > 0 || labelSelectorExclude != "" {
 		resultns = []models.Namespace{}
 	NAMESPACES:
 		for _, namespace := range namespaces {
-			if namespace.Name != conf.IstioNamespace {
+			if namespace.Name != in.conf.IstioNamespace {
 				if len(excludes) > 0 {
 					for _, excludePattern := range excludes {
 						if match, _ := regexp.MatchString(excludePattern, namespace.Name); match {
@@ -266,10 +264,8 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	}
 
 	// store only the filtered set of namespaces in cache for the token
-	if kialiCache != nil && in.homeClusterUserClient != nil {
-		// just get the home cluster token because it is assumed tokens are identical across all clusters
-		kialiCache.SetNamespaces(in.homeClusterUserClient.GetToken(), resultns)
-	}
+	// just get the home cluster token because it is assumed tokens are identical across all clusters
+	in.kialiCache.SetNamespaces(in.homeClusterUserClient.GetToken(), resultns)
 
 	return resultns, nil
 }
@@ -548,10 +544,8 @@ func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace
 	var err error
 
 	// Cache already has included/excluded namespaces applied
-	if kialiCache != nil && in.homeClusterUserClient != nil {
-		if ns := kialiCache.GetNamespace(in.homeClusterUserClient.GetToken(), namespace, cluster); ns != nil {
-			return ns, nil
-		}
+	if ns := in.kialiCache.GetNamespace(in.homeClusterUserClient.GetToken(), namespace, cluster); ns != nil {
+		return ns, nil
 	}
 
 	if !in.isAccessibleNamespace(namespace) {
@@ -621,10 +615,8 @@ func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace
 		result = models.CastNamespace(*ns, cluster)
 	}
 	// Refresh cache in case of cache expiration
-	if kialiCache != nil {
-		if _, err = in.GetNamespaces(ctx); err != nil {
-			return nil, err
-		}
+	if _, err = in.GetNamespaces(ctx); err != nil {
+		return nil, err
 	}
 	return &result, nil
 }
@@ -650,10 +642,9 @@ func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace strin
 	}
 
 	// Cache is stopped after a Create/Update/Delete operation to force a refresh
-	if kialiCache != nil && err == nil {
-		kialiCache.Refresh(namespace)
-		kialiCache.RefreshTokenNamespaces()
-	}
+	in.kialiCache.Refresh(namespace)
+	in.kialiCache.RefreshTokenNamespaces()
+
 	// Call GetNamespace to update the caching
 	return in.GetNamespaceByCluster(ctx, namespace, cluster)
 }

@@ -2,7 +2,6 @@ package cache
 
 import (
 	"fmt"
-	"regexp"
 	"testing"
 	"time"
 
@@ -25,7 +24,7 @@ func newTestingKubeCache(t *testing.T, cfg *config.Config, objects ...runtime.Ob
 	t.Helper()
 
 	emptyRefreshHandler := NewRegistryHandler(func() {})
-	kubeCache, err := NewKubeCache(kubetest.NewFakeK8sClient(objects...), *cfg, emptyRefreshHandler, cfg.Deployment.AccessibleNamespaces...)
+	kubeCache, err := NewKubeCache(kubetest.NewFakeK8sClient(objects...), *cfg, emptyRefreshHandler)
 	if err != nil {
 		t.Fatalf("Unable to create kube cache for testing. Err: %s", err)
 	}
@@ -35,9 +34,16 @@ func newTestingKubeCache(t *testing.T, cfg *config.Config, objects ...runtime.Ob
 func TestNewKialiCache_isCached(t *testing.T) {
 	assert := assert.New(t)
 
-	kubeCache := newTestingKubeCache(t, config.NewConfig())
+	conf := config.NewConfig()
+	conf.Deployment.AccessibleNamespaces = []string{
+		"bookinfo",
+		"a",
+		"abcdefghi",
+		"galicia",
+	}
+
+	kubeCache := newTestingKubeCache(t, conf)
 	kubeCache.refreshDuration = 0
-	kubeCache.cacheNamespacesRegexps = []regexp.Regexp{*regexp.MustCompile("bookinfo"), *regexp.MustCompile("a.*"), *regexp.MustCompile("galicia")}
 
 	assert.True(kubeCache.isCached("bookinfo"))
 	assert.True(kubeCache.isCached("a"))
@@ -45,6 +51,7 @@ func TestNewKialiCache_isCached(t *testing.T) {
 	assert.False(kubeCache.isCached("b"))
 	assert.False(kubeCache.isCached("bbcdefghi"))
 	assert.True(kubeCache.isCached("galicia"))
+	assert.False(kubeCache.isCached(""))
 }
 
 func TestClusterScopedCacheStopped(t *testing.T) {
@@ -131,7 +138,6 @@ func TestCheckNamespaceNotIncluded(t *testing.T) {
 	cfg := config.NewConfig()
 	cfg.Deployment.AccessibleNamespaces = []string{"bookinfo"}
 	cfg.Deployment.ClusterWideAccess = false
-	cfg.KubernetesConfig.CacheNamespaces = []string{"bookinfo"}
 	kialiCache := newTestingKubeCache(t, cfg)
 
 	assert.False(kialiCache.CheckNamespace("ns1"))
@@ -213,7 +219,6 @@ func TestGetSidecar(t *testing.T) {
 	}
 
 	cfg := config.NewConfig()
-	cfg.KubernetesConfig.CacheIstioTypes = []string{kubernetes.PluralType[kubernetes.Sidecars]}
 
 	kubeCache := newTestingKubeCache(t, cfg, ns, sidecar)
 
@@ -281,23 +286,6 @@ func TestGetSidecar(t *testing.T) {
 	}
 }
 
-func TestGetNonCachedResource(t *testing.T) {
-	assert := assert.New(t)
-	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
-	sidecar := &networking_v1beta1.VirtualService{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "sidecar", Namespace: "test", Labels: map[string]string{"app": "bookinfo", "version": "v1"},
-		},
-	}
-
-	cfg := config.NewConfig()
-	cfg.KubernetesConfig.CacheIstioTypes = nil
-	kialiCache := newTestingKubeCache(t, cfg, ns, sidecar)
-
-	_, err := kialiCache.GetVirtualServices("testing-ns", "app=bookinfo")
-	assert.Error(err)
-}
-
 // Other parts of the codebase assume that this kind field is present so it's important
 // that the cache sets it.
 func TestGetAndListReturnKindInfo(t *testing.T) {
@@ -353,7 +341,7 @@ func TestIstioAPIDisabled(t *testing.T) {
 	emptyRefreshHandler := NewRegistryHandler(func() {})
 	fakeClient := kubetest.NewFakeK8sClient(ns)
 	fakeClient.IstioAPIEnabled = false
-	kubeCache, err := NewKubeCache(fakeClient, *cfg, emptyRefreshHandler, cfg.Deployment.AccessibleNamespaces...)
+	kubeCache, err := NewKubeCache(fakeClient, *cfg, emptyRefreshHandler)
 	if err != nil {
 		t.Fatalf("Unable to create kube cache for testing. Err: %s", err)
 	}

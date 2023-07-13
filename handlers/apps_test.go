@@ -25,13 +25,17 @@ import (
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
 func TestAppMetricsDefault(t *testing.T) {
-	ts, api, _ := setupAppMetricsEndpoint(t)
+	ts, api, k8s := setupAppMetricsEndpoint(t)
+	cache := business.NewTestingCache(t, k8s, *config.NewConfig())
+	business.WithKialiCache(cache)
 
 	url := ts.URL + "/api/namespaces/ns/apps/my_app/metrics"
 	now := time.Now()
@@ -66,7 +70,10 @@ func TestAppMetricsDefault(t *testing.T) {
 }
 
 func TestAppMetricsWithParams(t *testing.T) {
-	ts, api, _ := setupAppMetricsEndpoint(t)
+	ts, api, k8s := setupAppMetricsEndpoint(t)
+
+	cache := business.NewTestingCache(t, k8s, *config.NewConfig())
+	business.WithKialiCache(cache)
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/apps/my-app/metrics", nil)
 	if err != nil {
@@ -123,13 +130,31 @@ func TestAppMetricsWithParams(t *testing.T) {
 	assert.NotZero(t, gaugeSentinel)
 }
 
+type cacheNoPrivileges struct {
+	cache.KialiCache
+}
+
+func (c *cacheNoPrivileges) GetNamespace(token string, namespace string, cluster string) *models.Namespace {
+	return nil
+}
+
+type clientNoPrivileges struct {
+	kubernetes.ClientInterface
+}
+
+func (c *clientNoPrivileges) GetNamespace(namespace string) (*core_v1.Namespace, error) {
+	if namespace == "my_namespace" {
+		return nil, errors.New("No privileges")
+	}
+	return c.ClientInterface.GetNamespace(namespace)
+}
+
 func TestAppMetricsInaccessibleNamespace(t *testing.T) {
 	ts, _, k8s := setupAppMetricsEndpoint(t)
+	cache := &cacheNoPrivileges{business.NewTestingCache(t, k8s, *config.NewConfig())}
+	business.WithKialiCache(cache)
 
 	url := ts.URL + "/api/namespaces/my_namespace/apps/my_app/metrics"
-
-	var nsNil *core_v1.Namespace
-	k8s.On("GetNamespace", "my_namespace").Return(nsNil, errors.New("no privileges"))
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -137,23 +162,22 @@ func TestAppMetricsInaccessibleNamespace(t *testing.T) {
 	}
 
 	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
-	k8s.AssertCalled(t, "GetNamespace", "my_namespace")
 }
 
-func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock, *kubetest.K8SClientMock) {
-	conf := config.NewConfig()
-	conf.KubernetesConfig.CacheEnabled = false
-	config.Set(conf)
+func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock, kubernetes.ClientInterface) {
+	old := config.Get()
+	t.Cleanup(func() {
+		config.Set(old)
+	})
+	config.Set(config.NewConfig())
 	xapi := new(prometheustest.PromAPIMock)
-	k8s := new(kubetest.K8SClientMock)
 	prom, err := prometheus.NewClient()
 	if err != nil {
 		t.Fatal(err)
 	}
 	prom.Inject(xapi)
-	k8s.On("IsOpenShift").Return(false)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("GetNamespace", "ns").Return(&core_v1.Namespace{}, nil)
+
+	k8s := &clientNoPrivileges{kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})}
 
 	mr := mux.NewRouter()
 

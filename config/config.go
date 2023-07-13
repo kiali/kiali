@@ -290,14 +290,6 @@ type KubernetesConfig struct {
 	// Cache duration expressed in seconds
 	// Cache uses watchers to sync with the backend, after a CacheDuration watchers are closed and re-opened
 	CacheDuration int `yaml:"cache_duration,omitempty"`
-	// Enable cache for kubernetes and istio resources
-	// TODO: Remove once all services are migrated to use the cache.
-	CacheEnabled bool `yaml:"-,omitempty"`
-	// Kiali can cache VirtualService,DestinationRule,Gateway and ServiceEntry Istio resources if they are present
-	// on this list of Istio types. Other Istio types are not yet supported.
-	CacheIstioTypes []string `yaml:"cache_istio_types,omitempty"`
-	// List of namespaces or regex defining namespaces to include in a cache
-	CacheNamespaces []string `yaml:"cache_namespaces,omitempty"`
 	// Cache duration expressed in seconds
 	// Kiali cache list of namespaces per user, this is typically short lived cache compared with the duration of the
 	// namespace cache defined by previous CacheDuration parameter
@@ -730,9 +722,6 @@ func NewConfig() (c *Config) {
 		KubernetesConfig: KubernetesConfig{
 			Burst:                       200,
 			CacheDuration:               5 * 60,
-			CacheEnabled:                true,
-			CacheIstioTypes:             []string{"AuthorizationPolicy", "DestinationRule", "EnvoyFilter", "Gateway", "PeerAuthentication", "RequestAuthentication", "ServiceEntry", "Sidecar", "VirtualService", "WorkloadEntry", "WorkloadGroup", "WasmPlugin", "Telemetry", "K8sGateway", "K8sHTTPRoute"},
-			CacheNamespaces:             []string{".*"},
 			CacheTokenNamespaceDuration: 10,
 			ClusterName:                 "", // leave this unset as a flag that we need to fetch the information
 			ExcludeWorkloads:            []string{"CronJob", "DeploymentConfig", "Job", "ReplicationController"},

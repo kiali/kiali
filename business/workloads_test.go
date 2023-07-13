@@ -28,8 +28,6 @@ import (
 
 func setupWorkloadService(k8s kubernetes.ClientInterface, conf *config.Config) WorkloadService {
 	// config needs to be set by other services since those rely on the global.
-	conf.KubernetesConfig.CacheEnabled = false
-	config.Set(conf)
 	prom := new(prometheustest.PromClientMock)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s

@@ -18,6 +18,7 @@ import (
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/square/go-jose.v2"
+	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd/api"
 
@@ -396,13 +397,11 @@ func TestOpenIdAuthControllerAuthenticatesCorrectlyWithAuthorizationCodeFlow(t *
 
 	// Returning some namespace when a cluster API call is made should have the result of
 	// a successful authentication.
-	k8s := kubetest.NewK8SClientMock()
+	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}})
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	cache := business.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
+	business.WithKialiCache(cache)
 	business.SetWithBackends(mockClientFactory, nil)
-
-	k8s.On("GetProjects", "").Return([]osproject_v1.Project{
-		{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}},
-	}, nil)
 
 	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), config.GetSigningKey())))
 	uri := fmt.Sprintf("https://kiali.io:44/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))

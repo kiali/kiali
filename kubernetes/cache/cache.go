@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -84,7 +83,7 @@ type kialiCacheImpl struct {
 	clusterLock sync.RWMutex
 }
 
-func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config, namespaceSeedList ...string) (KialiCache, error) {
+func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config) (KialiCache, error) {
 	kialiCacheImpl := kialiCacheImpl{
 		clientFactory:              clientFactory,
 		clientRefreshPollingPeriod: time.Duration(time.Second * 60),
@@ -96,19 +95,12 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config, na
 	}
 
 	for cluster, client := range clientFactory.GetSAClients() {
-		cache, err := NewKubeCache(client, cfg, NewRegistryHandler(kialiCacheImpl.RefreshRegistryStatus), namespaceSeedList...)
+		cache, err := NewKubeCache(client, cfg, NewRegistryHandler(kialiCacheImpl.RefreshRegistryStatus))
 		if err != nil {
 			log.Errorf("[Kiali Cache] Error creating kube cache for cluster: [%s]. Err: %v", cluster, err)
 			return nil, err
 		}
-
-		var scope string
-		if cache.clusterScoped {
-			scope = "*"
-		} else {
-			scope = strings.Join(namespaceSeedList, ",")
-		}
-		log.Infof("[Kiali Cache] Kube cache is active for cluster: [%s] and namespaces: [%v]", cluster, scope)
+		log.Infof("[Kiali Cache] Kube cache is active for cluster: [%s]", cluster)
 
 		kialiCacheImpl.kubeCache[cluster] = cache
 
