@@ -28,7 +28,7 @@ func checkNamespaceAccess(ctx context.Context, nsServ business.NamespaceService,
 
 // createMetricsServiceForNamespaceMC is used when the service will query across all clusters for the namespace.
 // It will return an error if the user does not have access to the namespace on all of the clusters.
-func createMetricsServiceForNamespaceMC(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, ns models.Namespace) (*business.MetricsService, *models.Namespace) {
+func createMetricsServiceForNamespaceMC(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, nsName string) (*business.MetricsService, *models.Namespace) {
 	layer, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
