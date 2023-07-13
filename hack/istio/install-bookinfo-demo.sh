@@ -21,7 +21,8 @@ CLIENT_EXE_NAME="oc"
 NAMESPACE="bookinfo"
 ISTIO_NAMESPACE="istio-system"
 RATE=1
-ENABLE_INJECTION="true"
+AUTO_INJECTION="true"
+MANUAL_INJECTION="false"
 DELETE_BOOKINFO="false"
 MINIKUBE_PROFILE="minikube"
 ARCH="amd64"
@@ -35,7 +36,7 @@ while [[ $# -gt 0 ]]; do
       shift;shift
       ;;
     -ai|--auto-injection)
-      ENABLE_INJECTION="$2"
+      AUTO_INJECTION="$2"
       shift;shift
       ;;
     -db|--delete-bookinfo)
@@ -56,6 +57,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -n|--namespace)
       NAMESPACE="$2"
+      shift;shift
+      ;;
+    -mi|--manual-injection)
+      MANUAL_INJECTION="$2"
       shift;shift
       ;;
     -mp|--minikube-profile)
@@ -86,11 +91,12 @@ while [[ $# -gt 0 ]]; do
       cat <<HELPMSG
 Valid command line arguments:
   -a|--arch <amd64|ppc64le|s390x>: Images for given arch will be used (default: amd64). Custom bookinfo yaml file provided via '-b' argument is ignored when using different arch than the default.
-  -ai|--auto-injection <true|false>: If you want sidecars to be auto-injected or manually injected (default: true).
+  -ai|--auto-injection <true|false>: If you want sidecars to be auto-injected (default: true).
   -db|--delete-bookinfo <true|false>: If true, uninstall bookinfo. If false, install bookinfo. (default: false).
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
   -c|--client-exe <name>: Cluster client executable name - valid values are "kubectl" or "oc"
+  -mi|--manual-injection <true|false>: If you want sidecars to be manually injected via istioctl (default: false).
   -mp|--minikube-profile <name>: If using minikube, this is the minikube profile name (default: minikube).
   -n|--namespace <name>: Install the demo in this namespace (default: bookinfo)
   -b|--bookinfo.yaml <file>: A custom yaml file to deploy the bookinfo demo. This is ignored when not using default arch via '-a' argument.
@@ -241,11 +247,15 @@ users:
 SCC
 fi
 
-if [ "${ENABLE_INJECTION}" == "true" ]; then
+if [ "${AUTO_INJECTION}" == "true" ]; then
   $CLIENT_EXE label namespace ${NAMESPACE} "istio-injection=enabled"
   $CLIENT_EXE apply -n ${NAMESPACE} -f ${BOOKINFO_YAML}
 else
-  $ISTIOCTL kube-inject -f ${BOOKINFO_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+  if [ "${MANUAL_INJECTION}" == "true" ]; then
+    $ISTIOCTL kube-inject -f ${BOOKINFO_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+  else
+    $CLIENT_EXE apply -n ${NAMESPACE} -f ${BOOKINFO_YAML}
+  fi
 fi
 
 
@@ -269,12 +279,17 @@ if [ "${MONGO_ENABLED}" == "true" ]; then
     MONGO_SERVICE_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ratings-v2-s390x.yaml"
   fi
 
-  if [ "${ENABLE_INJECTION}" == "true" ]; then
+  if [ "${AUTO_INJECTION}" == "true" ]; then
     $CLIENT_EXE apply -n ${NAMESPACE} -f ${MONGO_DB_YAML}
     $CLIENT_EXE apply -n ${NAMESPACE} -f ${MONGO_SERVICE_YAML}
   else
-    $ISTIOCTL kube-inject -f ${MONGO_DB_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
-    $ISTIOCTL kube-inject -f ${MONGO_SERVICE_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+    if [ "${MANUAL_INJECTION}" == "true" ]; then
+      $ISTIOCTL kube-inject -f ${MONGO_DB_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+      $ISTIOCTL kube-inject -f ${MONGO_SERVICE_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+    else
+      $CLIENT_EXE apply -n ${NAMESPACE} -f ${MONGO_DB_YAML}
+      $CLIENT_EXE apply -n ${NAMESPACE} -f ${MONGO_SERVICE_YAML}
+    fi
   fi
 fi
 
@@ -296,12 +311,17 @@ if [ "${MYSQL_ENABLED}" == "true" ]; then
     MYSQL_SERVICE_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql-s390x.yaml"
   fi
 
-  if [ "${ENABLE_INJECTION}" == "true" ]; then
+  if [ "${AUTO_INJECTION}" == "true" ]; then
     $CLIENT_EXE apply -n ${NAMESPACE} -f ${MYSQL_DB_YAML}
     $CLIENT_EXE apply -n ${NAMESPACE} -f ${MYSQL_SERVICE_YAML}
   else
-    $ISTIOCTL kube-inject -f ${MYSQL_DB_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
-    $ISTIOCTL kube-inject -f ${MYSQL_SERVICE_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+    if [ "${MANUAL_INJECTION}" == "true" ]; then
+      $ISTIOCTL kube-inject -f ${MYSQL_DB_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+      $ISTIOCTL kube-inject -f ${MYSQL_SERVICE_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+    else
+      $CLIENT_EXE apply -n ${NAMESPACE} -f ${MYSQL_DB_YAML}
+      $CLIENT_EXE apply -n ${NAMESPACE} -f ${MYSQL_SERVICE_YAML}
+    fi
   fi
 fi
 
@@ -314,6 +334,13 @@ sleep 4
 echo "Bookinfo Demo should be installed and starting up - here are the pods and services"
 $CLIENT_EXE get services -n ${NAMESPACE}
 $CLIENT_EXE get pods -n ${NAMESPACE}
+
+if [ "${AUTO_INJECTION}" == "false" -a "${MANUAL_INJECTION}" == "false" ]; then
+  echo "====="
+  echo "Sidecar injection was not performed. If you want Ambient support, label the namespace via:"
+  echo "  ${CLIENT_EXE} label namespace ${NAMESPACE} istio.io/dataplane-mode=ambient"
+  echo "====="
+fi
 
 if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
   echo "Installing Traffic Generator"
