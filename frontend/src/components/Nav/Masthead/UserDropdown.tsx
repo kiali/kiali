@@ -13,6 +13,9 @@ import { LoginThunkActions } from '../../../actions/LoginThunkActions';
 import { connect } from 'react-redux';
 import * as API from '../../../services/Api';
 
+const darkmode = 'pf-theme-dark';
+const themes = ['default', 'dark'];
+
 type UserProps = {
   session?: LoginSession;
   logout: () => void;
@@ -26,6 +29,7 @@ type UserState = {
   timeLeftTimerId?: Timer;
   isDropdownOpen: boolean;
   isSessionTimeoutDismissed: boolean;
+  theme: string;
 };
 
 class UserDropdownComponent extends React.Component<UserProps, UserState> {
@@ -35,7 +39,8 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
       showSessionTimeOut: false,
       timeCountDownSeconds: this.timeLeft() / MILLISECONDS,
       isSessionTimeoutDismissed: false,
-      isDropdownOpen: false
+      isDropdownOpen: false,
+      theme: themes[0]
     };
   }
   componentDidMount() {
@@ -93,6 +98,16 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
     }
   };
 
+  handleTheme = () => {
+    if (this.state.theme == themes[0]) {
+      this.setState({ theme: themes[1] });
+      document.getElementsByTagName('html')[0].classList.add(darkmode);
+    } else {
+      this.setState({ theme: themes[0] });
+      document.getElementsByTagName('html')[0].classList.remove(darkmode);
+    }
+  };
+
   extendSession = (session: LoginSession) => {
     this.props.extendSession(session);
     this.setState({ showSessionTimeOut: false });
@@ -116,9 +131,17 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
       authenticationConfig.strategy !== AuthStrategy.anonymous && authenticationConfig.strategy !== AuthStrategy.header;
 
     const userDropdownItems = (
-      <DropdownItem key={'user_logout_option'} onClick={this.handleLogout} isDisabled={!canLogout}>
-        Logout
-      </DropdownItem>
+      <>
+        {' '}
+        {canLogout && (
+          <DropdownItem key={'user_logout_option'} onClick={this.handleLogout} isDisabled={!canLogout}>
+            Logout
+          </DropdownItem>
+        )}
+        <DropdownItem key={'them_update'} onClick={this.handleTheme}>
+          {this.state.theme == themes[0] ? themes[1] : themes[0]} theme
+        </DropdownItem>
+      </>
     );
     return (
       <>
@@ -129,8 +152,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
           show={this.state.showSessionTimeOut && !this.state.isSessionTimeoutDismissed}
           timeOutCountDown={this.state.timeCountDownSeconds}
         />
-        {this.props.session && !canLogout && <>{this.props.session.username}</>}
-        {this.props.session && canLogout && (
+        {this.props.session && (
           <Dropdown
             isPlain={true}
             position="right"
