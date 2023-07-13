@@ -129,6 +129,7 @@ describe('Namespaces reducer', () => {
     const currentDate = new Date();
     const currentState = {
       activeNamespaces: [{ name: 'my-namespace' }],
+      namespacesPerCluster: new Map<string, string[]>(),
       isFetching: true,
       items: [{ name: 'old' }, { name: 'my-namespace' }],
       lastUpdated: undefined,
@@ -140,6 +141,7 @@ describe('Namespaces reducer', () => {
     );
     const expectedState = {
       activeNamespaces: [],
+      namespacesPerCluster: new Map<string, string[]>(),
       isFetching: false,
       items: [{ name: 'a' }, { name: 'b' }, { name: 'c' }],
       lastUpdated: currentDate,
