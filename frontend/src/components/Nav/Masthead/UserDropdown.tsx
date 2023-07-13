@@ -99,7 +99,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
   };
 
   handleTheme = () => {
-    if (this.state.theme == themes[0]) {
+    if (this.state.theme === themes[0]) {
       this.setState({ theme: themes[1] });
       document.getElementsByTagName('html')[0].classList.add(darkmode);
     } else {
@@ -139,7 +139,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
           </DropdownItem>
         )}
         <DropdownItem key={'them_update'} onClick={this.handleTheme}>
-          {this.state.theme == themes[0] ? themes[1] : themes[0]} theme
+          {this.state.theme === themes[0] ? themes[1] : themes[0]} theme
         </DropdownItem>
       </>
     );
