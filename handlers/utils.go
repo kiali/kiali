@@ -26,8 +26,8 @@ func checkNamespaceAccess(ctx context.Context, nsServ business.NamespaceService,
 	return nsServ.GetClusterNamespace(ctx, namespace, cluster)
 }
 
-// Create Metrics Service for a single namespace and no cluster parameter. It will check permissions for all the clusters, and return the service
-// if it has permissions at least one of the clusters
+// createMetricsServiceForNamespaceMC is used when the service will query across all clusters for the namespace.
+// It will return an error if the user does not have access to the namespace on all of the clusters.
 func createMetricsServiceForNamespaceMC(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, ns models.Namespace) (*business.MetricsService, *models.Namespace) {
 	layer, err := getBusiness(r)
 	if err != nil {
