@@ -15,6 +15,12 @@ const activeNamespaces = (state: KialiAppState) => state.namespaces.activeNamesp
 export const activeNamespacesSelector = createIdentitySelector(activeNamespaces);
 
 // select the proper field from Redux State
+const namespacesPerCluster = (state: KialiAppState) => state.namespaces.namespacesPerCluster;
+
+// Select from the above field(s) and the last function is the formatter
+export const namespacesPerClusterSelector = createIdentitySelector(namespacesPerCluster);
+
+// select the proper field from Redux State
 const activeClusters = (state: KialiAppState) => state.clusters.activeClusters;
 
 // Select from the above field(s) and the last function is the formatter

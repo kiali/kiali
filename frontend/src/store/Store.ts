@@ -44,6 +44,7 @@ export interface ClusterState {
 
 export interface NamespaceState {
   readonly activeNamespaces: Namespace[];
+  readonly namespacesPerCluster?: Map<string, string[]>;
   readonly items?: Namespace[];
   readonly isFetching: boolean;
   readonly lastUpdated?: Date;

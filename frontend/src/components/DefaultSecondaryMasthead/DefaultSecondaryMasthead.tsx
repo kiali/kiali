@@ -24,6 +24,10 @@ const mainPadding = kialiStyle({
   padding: '10px 20px 10px 20px'
 });
 
+const clusterPadding = kialiStyle({
+  padding: '0px 0px 0px 10px'
+});
+
 const flexStyle = kialiStyle({
   display: 'flex',
   flexWrap: 'wrap'
@@ -80,14 +84,12 @@ class DefaultSecondaryMastheadComponent extends React.Component<Props> {
     return (
       <div className={mainPadding}>
         <div className={flexStyle}>
+          <div>{this.props.hideNamespaceSelector === true ? null : <NamespaceDropdown disabled={disabled} />}</div>
           {this.props.showClusterSelector && (
-            <div>
+            <div className={clusterPadding}>
               <ClusterDropdown />
             </div>
           )}
-          <div>
-            {this.props.hideNamespaceSelector === true ? null : <NamespaceDropdown disabled={disabled} />}
-          </div>
           {this.props.rightToolbar && <div className={rightToolbarStyle}>{this.props.rightToolbar}</div>}
         </div>
         <div className={flexStyle}>

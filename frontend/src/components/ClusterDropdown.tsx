@@ -70,24 +70,8 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
     this.state = {
       isBulkSelectorOpen: false,
       isOpen: false,
-      selectedClusters: [...this.props.activeClusters]
+      selectedClusters: []
     };
-  }
-
-  componentDidMount() {
-    this.syncClusterParam();
-  }
-
-  syncClusterParam = () => {
-    if (this.props.activeClusters.length === 0 && serverConfig.clusters) {
-      this.props.setActiveClusters(Object.values(serverConfig.clusters));
-    }
-  };
-
-  componentDidUpdate(prevProps: ClusterDropdownProps) {
-    if (prevProps.activeClusters !== this.props.activeClusters) {
-      this.setState({ selectedClusters: this.props.activeClusters });
-    }
   }
 
   private clusterButtonText() {

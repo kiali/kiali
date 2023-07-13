@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { KialiAppState } from '../../store/Store';
-import { activeClustersSelector, activeNamespacesSelector } from '../../store/Selectors';
+import { activeClustersSelector, activeNamespacesSelector, namespacesPerClusterSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import { Namespace } from '../../types/Namespace';
 import { MeshCluster } from '../../types/Mesh';
@@ -75,6 +75,7 @@ type Props = {
   objectType: string;
   activeNamespaces: Namespace[];
   activeClusters: MeshCluster[];
+  namespacesPerCluster?: Map<string, string[]>;
 };
 
 type State = {
@@ -171,6 +172,14 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     );
   };
 
+  isNamespaceInCluster = (namespace: string, cluster: string): boolean => {
+    return (
+      this.props.namespacesPerCluster !== undefined &&
+      this.props.namespacesPerCluster.has(cluster) &&
+      this.props.namespacesPerCluster.get(cluster)!.includes(namespace)
+    );
+  };
+
   fetchPermissions = () => {
     if (this.props.activeClusters.length > 0) {
       this.props.activeClusters.forEach(cluster => {
@@ -204,6 +213,9 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
                       ns.name +
                       (cluster ? ' in cluster ' + cluster : '')
                   );
+                }
+                if (cluster && !this.isNamespaceInCluster(ns.name, cluster)) {
+                  AlertUtils.addWarning('Namespace: ' + ns.name + ' is not found in cluster ' + cluster);
                 }
               });
             }
@@ -428,6 +440,9 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
 
   render() {
     const canCreate = this.props.activeNamespaces.every(ns => this.canCreate(ns.name));
+    const isNamespaceInCluster = this.props.activeClusters.every(cl =>
+      this.props.activeNamespaces.every(ns => this.isNamespaceInCluster(ns.name, cl.name))
+    );
     const isNameValid = isValidK8SName(this.state.name);
     const isNamespacesValid = this.props.activeNamespaces.length > 0;
     const isClustersValid = this.props.activeClusters.length > 0 || Object.keys(serverConfig.clusters).length <= 1;
@@ -512,7 +527,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
             items={this.state.itemsPreview}
             title={'Preview new istio objects'}
             opTarget={'create'}
-            disableAction={!canCreate}
+            disableAction={!canCreate || !isNamespaceInCluster}
             ns={this.props.activeNamespaces.join(',')}
             onConfirm={items =>
               this.setState({ showPreview: false, itemsPreview: items }, () => this.onIstioResourceCreate())
@@ -528,7 +543,8 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
 const mapStateToProps = (state: KialiAppState) => {
   return {
     activeNamespaces: activeNamespacesSelector(state),
-    activeClusters: activeClustersSelector(state)
+    activeClusters: activeClustersSelector(state),
+    namespacesPerCluster: namespacesPerClusterSelector(state)
   };
 };
 
