@@ -32,14 +32,15 @@ func getAppMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClie
 	app := vars["app"]
 	cluster := clusterNameFromQuery(r.URL.Query())
 
-	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, models.Namespace{Name: namespace})
+	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
 	}
 
 	params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace, App: app}
-	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
+	oldestNs := GetNsWithOldestCreationDate(namespaceInfo)
+	err := extractIstioMetricsQueryParams(r, &params, oldestNs)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
@@ -65,15 +66,15 @@ func getWorkloadMetrics(w http.ResponseWriter, r *http.Request, promSupplier pro
 	workload := vars["workload"]
 	cluster := clusterNameFromQuery(r.URL.Query())
 
-	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, models.Namespace{Name: namespace})
-
+	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
 	}
+	oldestNs := GetNsWithOldestCreationDate(namespaceInfo)
 
 	params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace, Workload: workload}
-	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
+	err := extractIstioMetricsQueryParams(r, &params, oldestNs)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
@@ -99,14 +100,15 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promSupplier prom
 	service := vars["service"]
 	cluster := clusterNameFromQuery(r.URL.Query())
 
-	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, models.Namespace{Name: namespace})
+	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
 	}
+	oldestNs := GetNsWithOldestCreationDate(namespaceInfo)
 
 	params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace, Service: service}
-	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
+	err := extractIstioMetricsQueryParams(r, &params, oldestNs)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
@@ -132,14 +134,15 @@ func getAggregateMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 	aggregate := vars["aggregate"]
 	aggregateValue := vars["aggregateValue"]
 
-	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, models.Namespace{Name: namespace})
+	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
 	}
+	oldestNs := GetNsWithOldestCreationDate(namespaceInfo)
 
 	params := models.IstioMetricsQuery{Namespace: namespace, Aggregate: aggregate, AggregateValue: aggregateValue}
-	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
+	err := extractIstioMetricsQueryParams(r, &params, oldestNs)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
@@ -173,15 +176,16 @@ func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 	namespace := vars["namespace"]
 	cluster := clusterNameFromQuery(r.URL.Query())
 
-	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, models.Namespace{Name: namespace})
+	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
 	}
+	oldestNs := GetNsWithOldestCreationDate(namespaceInfo)
 
 	params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace}
 
-	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
+	err := extractIstioMetricsQueryParams(r, &params, oldestNs)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return

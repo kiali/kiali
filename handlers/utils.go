@@ -28,7 +28,7 @@ func checkNamespaceAccess(ctx context.Context, nsServ business.NamespaceService,
 
 // createMetricsServiceForNamespaceMC is used when the service will query across all clusters for the namespace.
 // It will return an error if the user does not have access to the namespace on all of the clusters.
-func createMetricsServiceForNamespaceMC(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, nsName string) (*business.MetricsService, *models.Namespace) {
+func createMetricsServiceForNamespaceMC(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, nsName string) (*business.MetricsService, []models.Namespace) {
 	layer, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -40,32 +40,41 @@ func createMetricsServiceForNamespaceMC(w http.ResponseWriter, r *http.Request, 
 		RespondWithError(w, http.StatusServiceUnavailable, "Prometheus client error: "+err.Error())
 		return nil, nil
 	}
-	var nsInfo nsInfoError
+	var nsInfo []models.Namespace
 
-	nsClusters, err := layer.Namespace.GetNamespaceClusters(r.Context(), ns.Name)
+	nsClusters, err := layer.Namespace.GetNamespaceClusters(r.Context(), nsName)
 	if err != nil || len(nsClusters) == 0 {
 		log.Infof("No clusters found.")
 		//TODO: We cant find the cluster list, we assume it is local
 		nsClusters = make([]models.Namespace, 1)
-		nsClusters[0] = models.Namespace{Cluster: config.Get().KubernetesConfig.ClusterName, Name: ns.Name}
+		nsClusters[0] = models.Namespace{Cluster: config.Get().KubernetesConfig.ClusterName, Name: nsName}
 	}
 
 	for _, nsCluster := range nsClusters {
-		info, err := checkNamespaceAccess(r.Context(), layer.Namespace, nsCluster.Name, nsCluster.Cluster)
+		_, err := checkNamespaceAccess(r.Context(), layer.Namespace, nsCluster.Name, nsCluster.Cluster)
 		// If there is no access to one of the namespace, return the error
 		if err != nil {
 			RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
 			return nil, nil
 		}
-		// If there are more than one, we return the oldest (Used for the metrics service)
-		if nsInfo.info == nil || info.CreationTimestamp.Before(nsInfo.info.CreationTimestamp) {
-			nsInfo = nsInfoError{info: info, err: err}
-		}
+		nsInfo = append(nsInfo, nsCluster)
 
 	}
 	metrics := business.NewMetricsService(prom)
 
-	return metrics, nsInfo.info
+	return metrics, nsInfo
+}
+
+// Get namespespace with oldest creation time
+// Used to choose between one namespace from all the clusters and use the creation timestamp for the metrics service
+func GetNsWithOldestCreationDate(namespaces []models.Namespace) *models.Namespace {
+	var oldestNamespace *models.Namespace
+	for i, ns := range namespaces {
+		if i == 0 || ns.CreationTimestamp.Before(oldestNamespace.CreationTimestamp) {
+			oldestNamespace = &ns
+		}
+	}
+	return oldestNamespace
 }
 
 func createMetricsServiceForNamespace(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, ns models.Namespace) (*business.MetricsService, *models.Namespace) {
