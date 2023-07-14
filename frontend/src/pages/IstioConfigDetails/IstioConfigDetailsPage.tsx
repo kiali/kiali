@@ -24,7 +24,6 @@ import {
 } from '../../types/AceValidations';
 import { IstioActionDropdown } from '../../components/IstioActions/IstioActionsDropdown';
 import { RenderComponentScroll } from '../../components/Nav/Page';
-import './IstioConfigDetailsPage.css';
 import { IstioActionButtons } from '../../components/IstioActions/IstioActionsButtons';
 import { history } from '../../app/History';
 import { Paths } from '../../config';
@@ -56,6 +55,7 @@ import { isParentKiosk } from '../../components/Kiosk/KioskActions';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { basicTabStyle } from 'styles/TabStyles';
+import { istioAceEditorStyle } from 'styles/AceEditorStyle';
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
@@ -517,7 +517,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
           onChange={this.onEditorChange}
           height={`calc(var(--kiali-yaml-editor-height) + ${isParentKiosk(this.props.kiosk) ? '100px' : '0px'})`}
           width={'100%'}
-          className={'istio-ace-editor'}
+          className={istioAceEditorStyle}
           wrapEnabled={true}
           readOnly={!this.canUpdate() || isParentKiosk(this.props.kiosk)}
           setOptions={aceOptions}

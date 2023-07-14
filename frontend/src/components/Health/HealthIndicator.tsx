@@ -4,7 +4,7 @@ import { HealthDetails } from './HealthDetails';
 import * as H from '../../types/Health';
 import { createIcon } from './Helper';
 import { createTooltipIcon } from '../../config/KialiIcon';
-import './Health.css';
+import { healthIndicatorStyle } from './HealthStyle';
 
 interface Props {
   id: string;
@@ -42,7 +42,7 @@ export class HealthIndicator extends React.PureComponent<Props, HealthState> {
             </div>
           }
           position={PopoverPosition.auto}
-          className={'health_indicator'}
+          className={healthIndicatorStyle}
         >
           {createTooltipIcon(icon)}
         </Tooltip>

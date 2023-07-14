@@ -1,5 +1,6 @@
 // Clone of Slider component to workaround issue https://github.com/patternfly/patternfly-react/issues/1221
 import React from 'react';
+import { sliderMirroredStyle, sliderStyle } from './SliderStyle';
 
 type BoundariesProps = {
   min: number;
@@ -38,7 +39,7 @@ export class Boundaries extends React.Component<BoundariesProps, {}> {
     }
 
     return (
-      <div className={this.props.mirrored ? 'slider-pf-mirrored' : 'slider-pf'}>
+      <div className={this.props.mirrored ? sliderMirroredStyle : sliderStyle}>
         {leftBoundary}
         {slider}
         {rightBoundary}

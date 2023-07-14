@@ -40,6 +40,7 @@ import {
   defaultTab as workloadDefaultTab
 } from '../../pages/WorkloadDetails/WorkloadDetailsPage';
 import { TimeInMilliseconds } from '../../types/Common';
+import { istioAceEditorStyle } from 'styles/AceEditorStyle';
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
@@ -318,7 +319,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                     theme="eclipse"
                     width={'100%'}
                     height={height.toString() + 'px'}
-                    className={'istio-ace-editor'}
+                    className={istioAceEditorStyle}
                     wrapEnabled={true}
                     readOnly={true}
                     setOptions={aceOptions || { foldStyle: 'markbegin' }}

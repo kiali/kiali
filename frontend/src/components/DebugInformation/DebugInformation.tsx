@@ -22,6 +22,7 @@ import { ICell, Table, TableBody, TableHeader, TableVariant } from '@patternfly/
 import { AuthConfig } from '../../types/Auth';
 import { authenticationConfig } from '../../config/AuthenticationConfig';
 import { basicTabStyle } from 'styles/TabStyles';
+import { istioAceEditorStyle } from 'styles/AceEditorStyle';
 
 enum CopyStatus {
   NOT_COPIED, // We haven't copied the current output
@@ -224,7 +225,7 @@ class DebugInformationComponent extends React.PureComponent<DebugInformationProp
             mode="yaml"
             theme="eclipse"
             width={'100%'}
-            className={'istio-ace-editor'}
+            className={istioAceEditorStyle}
             wrapEnabled={true}
             readOnly={true}
             setOptions={aceOptions || { foldStyle: 'markbegin' }}

@@ -28,6 +28,18 @@ import { Dropdown, DropdownPosition, DropdownItem, KebabToggle, DropdownGroup } 
 import { getOptions, clickHandler } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { edgesIn, edgesOut, select, selectAnd, selectOr } from 'pages/GraphPF/GraphPFElems';
+import { kialiStyle } from 'styles/StyleUtils';
+
+const summaryAppBoxActionsStyle = kialiStyle({
+  $nest: {
+    '.pf-c-dropdown__toggle': {
+      fontSize: 'var(--graph-side-panel--font-size)'
+    },
+    '.pf-c-dropdown__menu-item': {
+      fontSize: 'var(--graph-side-panel--font-size)'
+    }
+  }
+});
 
 type SummaryPanelAppBoxMetricsState = {
   grpcRequestIn: Datapoint[];
@@ -164,6 +176,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
               <Dropdown
                 dropdownItems={items}
                 id="summary-appbox-actions"
+                className={summaryAppBoxActionsStyle}
                 isGrouped={true}
                 isOpen={this.state.isOpen}
                 isPlain={true}

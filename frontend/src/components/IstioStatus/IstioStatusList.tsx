@@ -3,6 +3,7 @@ import { List, Text, TextContent, TextVariants } from '@patternfly/react-core';
 import { ComponentStatus, Status } from '../../types/IstioStatus';
 import { IstioComponentStatus } from './IstioComponentStatus';
 import { PFColors } from '../Pf/PfColors';
+import style from './IstioStatus.module.scss';
 
 type Props = {
   status: ComponentStatus[];
@@ -42,7 +43,7 @@ export class IstioStatusList extends React.Component<Props> {
     return (
       <TextContent style={{ color: PFColors.White }}>
         <Text component={TextVariants.h4}>Istio Components Status</Text>
-        <List id="istio-status" aria-label="Istio Component List">
+        <List id="istio-status" className={style.istioStatus} aria-label="Istio Component List">
           {this.renderComponentList()}
         </List>
       </TextContent>

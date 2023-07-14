@@ -1,13 +1,10 @@
 import * as React from 'react';
-
 import { DurationInSeconds } from '../../types/Common';
 import { Metric } from '../../types/Metrics';
 import { getName } from '../../utils/RateIntervals';
 import { PFColors } from 'components/Pf/PfColors';
 import { SparklineChart } from 'components/Charts/SparklineChart';
 import { toVCLine } from 'utils/VictoryChartsUtils';
-
-import 'components/Charts/Charts.css';
 import { RichDataPoint, VCLine } from 'types/VictoryChartInfo';
 import { DirectionType } from './OverviewToolbar';
 

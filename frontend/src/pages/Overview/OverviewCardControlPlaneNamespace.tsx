@@ -1,8 +1,5 @@
 import * as React from 'react';
-
 import { Datapoint, Metric } from '../../types/Metrics';
-
-import 'components/Charts/Charts.css';
 import { SparklineChart } from 'components/Charts/SparklineChart';
 import { VCLine, RichDataPoint } from 'types/VictoryChartInfo';
 import { PFColors } from 'components/Pf/PfColors';

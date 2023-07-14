@@ -1,15 +1,12 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { InfoAltIcon, SquareFullIcon } from '@patternfly/react-icons';
-
 import { SparklineChart } from 'components/Charts/SparklineChart';
 import { PFColors } from '../Pf/PfColors';
 import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
 import { Datapoint } from '../../types/Metrics';
 import { toVCLine } from 'utils/VictoryChartsUtils';
 import { RichDataPoint, VCDataPoint, VCLine, VCLines } from 'types/VictoryChartInfo';
-
-import 'components/Charts/Charts.css';
 import { summaryTitle } from 'pages/Graph/SummaryPanelCommon';
 
 type RequestChartProp = {

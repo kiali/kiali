@@ -18,6 +18,7 @@ import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { isMultiCluster } from 'config';
+import { virtualItemLinkStyle } from 'components/VirtualList/VirtualListStyle';
 
 export interface TrafficListItem {
   direction: TrafficDirection;
@@ -282,16 +283,12 @@ class TrafficList extends FilterComponent.Component<
                     onClick={() => {
                       kioskContextMenuAction(links.detail);
                     }}
-                    className={'virtualitem_definition_link'}
+                    className={virtualItemLinkStyle}
                   >
                     {name}
                   </Link>
                 ) : (
-                  <Link
-                    key={`link_d_${item.badge}_${name}`}
-                    to={links.detail}
-                    className={'virtualitem_definition_link'}
-                  >
+                  <Link key={`link_d_${item.badge}_${name}`} to={links.detail} className={virtualItemLinkStyle}>
                     {name}
                   </Link>
                 )
@@ -314,16 +311,12 @@ class TrafficList extends FilterComponent.Component<
                     onClick={() => {
                       kioskContextMenuAction(links.metrics);
                     }}
-                    className={'virtualitem_definition_link'}
+                    className={virtualItemLinkStyle}
                   >
                     View metrics
                   </Link>
                 ) : (
-                  <Link
-                    key={`link_m_${item.badge}_${name}`}
-                    to={links.metrics}
-                    className={'virtualitem_definition_link'}
-                  >
+                  <Link key={`link_m_${item.badge}_${name}`} to={links.metrics} className={virtualItemLinkStyle}>
                     View metrics
                   </Link>
                 ))}

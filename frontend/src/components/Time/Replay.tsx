@@ -55,6 +55,29 @@ export const replayBorder = kialiStyle({
   borderLeft: `solid 5px ${PFColors.Replay}`
 });
 
+/**
+ * Overrides for Replay use of the Slider component.
+ * - to avoid the tt occluding other components (like close replay), limit to when mouse is over the slider only,
+ * not the tooltip area itself.
+ * - to avoid the tooltip getting clipped on the right, add padding to move the shift the "attach" point
+ */
+const replaySliderStyle = kialiStyle({
+  $nest: {
+    '.slider': {
+      $nest: {
+        '.tooltip': {
+          pointerEvents: 'none',
+          paddingRight: '175px'
+        }
+      }
+    },
+
+    '.slider-selection': {
+      background: 'var(--pf-global--active-color--300)' // should match PFColors.Replay
+    }
+  }
+});
+
 // key represents replay interval in milliseconds
 const replayIntervals = {
   60000: '1 minute',
@@ -259,9 +282,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
           </Button>
         </Tooltip>
         <span className={sliderStyle}>
-          <div
-            id="replay-slider-div" // see _Time.scss
-          >
+          <div className={replaySliderStyle}>
             <Slider
               key={endString} // on new endTime force new slider because of bug updating tick labels
               id="replay-slider"

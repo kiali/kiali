@@ -38,6 +38,17 @@ import { useServiceDetailForGraphNode } from '../../hooks/services';
 import { useKialiSelector } from '../../hooks/redux';
 import { groupMenuStyle } from 'styles/DropdownStyles';
 
+const summaryNodeActionsStyle = kialiStyle({
+  $nest: {
+    '.pf-c-dropdown__toggle': {
+      fontSize: 'var(--graph-side-panel--font-size)'
+    },
+    '.pf-c-dropdown__menu-item': {
+      fontSize: 'var(--graph-side-panel--font-size)'
+    }
+  }
+});
+
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
 };
@@ -172,6 +183,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
                 <Dropdown
                   dropdownItems={items}
                   id="summary-node-actions"
+                  className={summaryNodeActionsStyle}
                   isGrouped={true}
                   isOpen={this.state.isActionOpen}
                   isPlain={true}
