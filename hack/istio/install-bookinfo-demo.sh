@@ -27,6 +27,8 @@ DELETE_BOOKINFO="false"
 MINIKUBE_PROFILE="minikube"
 ARCH="amd64"
 
+AMBIENT_ENABLED="false" # the script will set this to true only if Ambient is enabled and no sidecars are injected
+
 # process command line args
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -161,8 +163,21 @@ if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   IS_MAISTRA=$([ "$(oc get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
 fi
 
+# If no sidecars are to be injected, then see if Ambient is enabled.
+# Look everywhere for a "ztunnel" daemonset (in case it is in a kube internal namespace and not just istio-system)
+if [ "${AUTO_INJECTION}" == "false" -a "${MANUAL_INJECTION}" == "false" ]; then
+  for n in $(${CLIENT_EXE} get daemonset --all-namespaces -o jsonpath='{.items[*].metadata.name}')
+  do
+    if [ "${n}" == "ztunnel" ]; then
+      AMBIENT_ENABLED="true"
+      break
+    fi
+  done
+fi
+
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
 echo "IS_MAISTRA=${IS_MAISTRA}"
+echo "AMBIENT_ENABLED=${AMBIENT_ENABLED}"
 
 # check arch values and prepare new bookinfo-arch.yaml with matching images
 if [ "${ARCH}" == "ppc64le" ]; then
@@ -335,11 +350,13 @@ echo "Bookinfo Demo should be installed and starting up - here are the pods and 
 $CLIENT_EXE get services -n ${NAMESPACE}
 $CLIENT_EXE get pods -n ${NAMESPACE}
 
-if [ "${AUTO_INJECTION}" == "false" -a "${MANUAL_INJECTION}" == "false" ]; then
-  echo "====="
-  echo "Sidecar injection was not performed. If you want Ambient support, label the namespace via:"
-  echo "  ${CLIENT_EXE} label namespace ${NAMESPACE} istio.io/dataplane-mode=ambient"
-  echo "====="
+if [ "${AMBIENT_ENABLED}" == "true" ]; then
+  echo "Sidecar injection was not performed. Ambient support will be enabled."
+  ${CLIENT_EXE} label namespace ${NAMESPACE} istio.io/dataplane-mode=ambient
+else
+  if [ "${AUTO_INJECTION}" == "false" -a "${MANUAL_INJECTION}" == "false" ]; then
+    echo "WARNING! Sidecar injection was not performed and there is no Ambient support. This demo may not work until sidecars are injected."
+  fi
 fi
 
 if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
@@ -372,6 +389,7 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
     if [ "${IS_OPENSHIFT}" == "true" ]; then
       $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${NAMESPACE}
     fi
+
     # TODO - these access the "openshift" yaml files - but there are no kubernetes specific versions. using --validate=false
     curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator-configmap.yaml | DURATION='0s' ROUTE="http://${INGRESS_ROUTE}/productpage" RATE="${RATE}" envsubst | $CLIENT_EXE apply -n ${NAMESPACE} -f -
     url="https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator.yaml"
@@ -381,6 +399,26 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
       curl ${url} | sed 's;quay.io/kiali.*;quay.io/maistra/kiali-test-mesh-traffic-generator:0.0-ibm-z;g' | $CLIENT_EXE apply --validate=false -n ${NAMESPACE} -f -
     else
       curl ${url} | $CLIENT_EXE apply --validate=false -n ${NAMESPACE} -f -
+    fi
+
+    if [ "${AMBIENT_ENABLED}" == "true" ]; then
+      cat <<AUTHPOLICY | $CLIENT_EXE -n ${NAMESPACE} apply -f -
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+ name: productpage-viewer
+spec:
+ selector:
+   matchLabels:
+     app: productpage
+ action: ALLOW
+ rules:
+ - from:
+   - source:
+       principals:
+       - cluster.local/ns/${NAMESPACE}/sa/default
+       - cluster.local/ns/${ISTIO_NAMESPACE}/sa/istio-ingressgateway-service-account
+AUTHPOLICY
     fi
   fi
 fi
