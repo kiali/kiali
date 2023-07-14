@@ -145,9 +145,6 @@
     "npm": ">=6.0.0 ",
     "yarn": ">=1.0.0 "
   },
-  "sassIncludes": {
-    "src": "src"
-  },
   "husky": {
     "hooks": {
       "pre-commit": "yarn run pretty-quick --staged --pattern \"{frontend/src/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\" && npm run lint:precommit"
