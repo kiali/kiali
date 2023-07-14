@@ -14,6 +14,7 @@ import (
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd/api"
 
@@ -328,7 +329,9 @@ func TestServiceMetricsInaccessibleNamespace(t *testing.T) {
 func setupServiceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock) {
 	conf := config.NewConfig()
 	config.Set(conf)
-	k := kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})
+	k := kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "my_namespace"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})
 	k.OpenShift = true
 
 	xapi := new(prometheustest.PromAPIMock)

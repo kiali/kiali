@@ -246,6 +246,7 @@ func TestAggregateMetricsInaccessibleNamespace(t *testing.T) {
 	ts, _ := setupAggregateMetricsEndpoint(t)
 
 	k := kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})
+
 	business.SetupBusinessLayer(t, &noPrivClient{k}, *config.Get())
 
 	url := ts.URL + "/api/namespaces/my_namespace/aggregates/my_aggregate/my_aggregate_value/metrics"

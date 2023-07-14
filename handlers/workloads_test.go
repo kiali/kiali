@@ -286,7 +286,8 @@ func TestWorkloadMetricsBadRateFunc(t *testing.T) {
 
 func TestWorkloadMetricsInaccessibleNamespace(t *testing.T) {
 	ts, _ := setupWorkloadMetricsEndpoint(t)
-	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})
+	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "my_namespace"}})
 	business.SetupBusinessLayer(t, &nsForbidden{k8s, "my_namespace"}, *config.Get())
 
 	url := ts.URL + "/api/namespaces/my_namespace/workloads/my_workload/metrics"

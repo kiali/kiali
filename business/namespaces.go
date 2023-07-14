@@ -315,6 +315,8 @@ func (in *NamespaceService) getNamespacesByCluster(cluster string) ([]models.Nam
 				}
 				namespaces = models.CastProjectCollection(filteredProjects, cluster)
 			}
+		} else {
+			return nil, err2
 		}
 	} else {
 		// if the accessible namespaces define a distinct list of namespaces, use only those.

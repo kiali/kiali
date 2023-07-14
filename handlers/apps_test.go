@@ -41,7 +41,18 @@ func TestAppMetricsDefault(t *testing.T) {
 	now := time.Now()
 	delta := 15 * time.Second
 	var gaugeSentinel uint32
-
+	/*
+		ns := []core_v1.Namespace{
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "ns",
+					Namespace: "Namespace",
+					Labels:    map[string]string{"app": "ns"},
+				},
+			},
+		}
+		k8s.On("GetNamespaces", "").Return(ns, nil)
+	*/
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		query := args[1].(string)
 		assert.IsType(t, prom_v1.Range{}, args[2])
@@ -91,7 +102,18 @@ func TestAppMetricsWithParams(t *testing.T) {
 	q.Add("filters[]", "request_count")
 	q.Add("filters[]", "request_size")
 	req.URL.RawQuery = q.Encode()
-
+	/*
+		ns := []core_v1.Namespace{
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "ns",
+					Namespace: "Namespace",
+					Labels:    map[string]string{"app": "ns"},
+				},
+			},
+		}
+		k8s.On("GetNamespaces", "").Return(ns, nil)
+	*/
 	queryTime := time.Unix(1523364075, 0)
 	delta := 2 * time.Second
 	var histogramSentinel, gaugeSentinel uint32
@@ -156,6 +178,20 @@ func TestAppMetricsInaccessibleNamespace(t *testing.T) {
 
 	url := ts.URL + "/api/namespaces/my_namespace/apps/my_app/metrics"
 
+	/*
+		var nsNil *core_v1.Namespace
+		ns := []core_v1.Namespace{
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "my_namespace",
+					Namespace: "Namespace",
+					Labels:    map[string]string{"app": "my_namespace"},
+				},
+			},
+		}
+		k8s.On("GetNamespaces", "").Return(ns, nil)
+		k8s.On("GetNamespace", "my_namespace").Return(nsNil, errors.New("no privileges"))
+	*/
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -176,7 +212,11 @@ func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.Pr
 		t.Fatal(err)
 	}
 	prom.Inject(xapi)
-
+	/*
+		k8s.On("IsOpenShift").Return(false)
+		k8s.On("IsGatewayAPI").Return(false)
+		k8s.On("GetNamespace", "ns").Return(&core_v1.Namespace{}, nil)
+	*/
 	k8s := &clientNoPrivileges{kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})}
 	/*
 		k8s.On("IsOpenShift").Return(false)

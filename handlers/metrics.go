@@ -67,7 +67,7 @@ func getWorkloadMetrics(w http.ResponseWriter, r *http.Request, promSupplier pro
 	cluster := clusterNameFromQuery(r.URL.Query())
 
 	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
-	if metricsService == nil {
+	if metricsService == nil || namespaceInfo == nil {
 		// any returned value nil means error & response already written
 		return
 	}

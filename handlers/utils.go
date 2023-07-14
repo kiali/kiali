@@ -42,22 +42,24 @@ func createMetricsServiceForNamespaceMC(w http.ResponseWriter, r *http.Request, 
 	}
 	var nsInfo []models.Namespace
 
-	nsClusters, err := layer.Namespace.GetNamespaceClusters(r.Context(), nsName)
-	if err != nil || len(nsClusters) == 0 {
-		log.Infof("No clusters found.")
-		//TODO: We cant find the cluster list, we assume it is local
-		nsClusters = make([]models.Namespace, 1)
-		nsClusters[0] = models.Namespace{Cluster: config.Get().KubernetesConfig.ClusterName, Name: nsName}
+	namespaces, err := layer.Namespace.GetNamespaceClusters(r.Context(), nsName)
+	if err != nil {
+		RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
+		return nil, nil
+	}
+	if len(namespaces) == 0 {
+		RespondWithError(w, http.StatusBadRequest, "No clusters found for namespace ")
+		return nil, nil
 	}
 
-	for _, nsCluster := range nsClusters {
-		_, err := checkNamespaceAccess(r.Context(), layer.Namespace, nsCluster.Name, nsCluster.Cluster)
+	for _, ns := range namespaces {
+		_, err2 := checkNamespaceAccess(r.Context(), layer.Namespace, ns.Name, ns.Cluster)
 		// If there is no access to one of the namespace, return the error
-		if err != nil {
-			RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
+		if err2 != nil {
+			RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err2.Error())
 			return nil, nil
 		}
-		nsInfo = append(nsInfo, nsCluster)
+		nsInfo = append(nsInfo, ns)
 
 	}
 	metrics := business.NewMetricsService(prom)
