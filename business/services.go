@@ -158,9 +158,6 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 	if in.config.ExternalServices.Istio.IstioAPIEnabled && cluster == in.config.KubernetesConfig.ClusterName {
 		go func() {
 			defer wg.Done()
-			if in.config.InCluster {
-				return
-			}
 			var err2 error
 			registryCriteria := RegistryCriteria{
 				Namespace:       criteria.Namespace,
