@@ -70,6 +70,8 @@ import {
 } from './ServiceEntryForm';
 import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 import { isValid } from 'utils/Common';
+import { ClusterDropdownForm } from './ClusterDropdownForm';
+import { NamespaceDropdown } from '../../components/NamespaceDropdown';
 
 type Props = {
   objectType: string;
@@ -450,10 +452,14 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     return (
       <>
         <div style={{ backgroundColor: '#fff' }}>
-          <DefaultSecondaryMasthead showClusterSelector={true} />
+          <DefaultSecondaryMasthead showClusterSelector={false} hideNamespaceSelector={true} />
         </div>
         <RenderContent>
           <Form className={formPadding} isHorizontal={true}>
+            <FormGroup label="Namespaces" isRequired={true} fieldId="namespaces">
+              <NamespaceDropdown disabled={false} />
+            </FormGroup>
+            <ClusterDropdownForm />
             <FormGroup
               label="Name"
               isRequired={true}

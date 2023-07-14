@@ -5,25 +5,24 @@ import {
   Button,
   Dropdown,
   DropdownToggle,
+  FormGroup,
   TextInput,
   Tooltip,
   DropdownToggleCheckbox,
   Divider,
   Badge
 } from '@patternfly/react-core';
-import { activeClustersSelector, clusterFilterSelector } from '../store/Selectors';
-import { ClusterActions } from '../actions/ClusterAction';
-import { MeshCluster } from '../types/Mesh';
+import { activeClustersSelector, clusterFilterSelector } from '../../store/Selectors';
+import { ClusterActions } from '../../actions/ClusterAction';
+import { MeshCluster } from '../../types/Mesh';
 import {
   BoundingClientAwareComponent,
   PropertyType
-} from './BoundingClientAwareComponent/BoundingClientAwareComponent';
+} from '../../components/BoundingClientAwareComponent/BoundingClientAwareComponent';
 import { KialiIcon } from 'config/KialiIcon';
-import { TourStop } from './Tour/TourStop';
-import { GraphTourStops } from '../pages/Graph/GraphHelpTour';
-import { KialiAppState } from '../store/Store';
-import { KialiDispatch } from '../types/Redux';
-import { serverConfig } from '../config';
+import { KialiAppState } from '../../store/Store';
+import { KialiDispatch } from '../../types/Redux';
+import { serverConfig } from '../../config';
 
 type ReduxProps = {
   activeClusters: MeshCluster[];
@@ -182,7 +181,7 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
   render() {
     if (this.props.clusters.length > 1) {
       return (
-        <TourStop info={GraphTourStops.Clusters}>
+        <FormGroup label="Clusters" isRequired={true} fieldId="clusters">
           <Dropdown
             toggle={
               <DropdownToggle data-test="cluster-dropdown" id="cluster-selector" onToggle={this.onToggle}>
@@ -194,7 +193,7 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
             {this.getHeader()}
             {this.getBody()}
           </Dropdown>
-        </TourStop>
+        </FormGroup>
       );
     } else {
       return null;
@@ -270,4 +269,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
   };
 };
 
-export const ClusterDropdown = connect(mapStateToProps, mapDispatchToProps)(ClusterDropdownComponent);
+export const ClusterDropdownForm = connect(mapStateToProps, mapDispatchToProps)(ClusterDropdownComponent);
