@@ -1,5 +1,5 @@
 export function activeFilters(count:number){
-  cy.get('#filter-selection > :nth-child(2)').find('[aria-label="close"]')
+  cy.get('#filter-selection > :nth-child(2)', { timeout: 1000 }).should('be.visible').find('[data-ouia-component-id="close"]')
     .each(() => {
     })
     .then(($lis) => {
