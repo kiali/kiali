@@ -65,9 +65,9 @@ func createMetricsServiceForNamespaceMC(w http.ResponseWriter, r *http.Request, 
 	return metrics, nsInfo
 }
 
-// Get namespespace with oldest creation time
-// Used to choose between one namespace from all the clusters and use the creation timestamp for the metrics service
-func GetNsWithOldestCreationDate(namespaces []models.Namespace) *models.Namespace {
+// GetOldestNamespace is a convenience function that takes a list of Namespaces and returns the
+// Namespace with the oldest CreationTimestamp.  In a tie, preference is towards the head of the list.
+func GetOldestNamespace(namespaces []models.Namespace) *models.Namespace {
 	var oldestNamespace *models.Namespace
 	for i, ns := range namespaces {
 		if i == 0 || ns.CreationTimestamp.Before(oldestNamespace.CreationTimestamp) {

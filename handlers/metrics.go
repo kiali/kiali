@@ -39,7 +39,7 @@ func getAppMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClie
 	}
 
 	params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace, App: app}
-	oldestNs := GetNsWithOldestCreationDate(namespaceInfo)
+	oldestNs := GetOldestNamespace(namespaceInfo)
 	err := extractIstioMetricsQueryParams(r, &params, oldestNs)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
@@ -71,7 +71,7 @@ func getWorkloadMetrics(w http.ResponseWriter, r *http.Request, promSupplier pro
 		// any returned value nil means error & response already written
 		return
 	}
-	oldestNs := GetNsWithOldestCreationDate(namespaceInfo)
+	oldestNs := GetOldestNamespace(namespaceInfo)
 
 	params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace, Workload: workload}
 	err := extractIstioMetricsQueryParams(r, &params, oldestNs)
@@ -105,7 +105,7 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promSupplier prom
 		// any returned value nil means error & response already written
 		return
 	}
-	oldestNs := GetNsWithOldestCreationDate(namespaceInfo)
+	oldestNs := GetOldestNamespace(namespaceInfo)
 
 	params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace, Service: service}
 	err := extractIstioMetricsQueryParams(r, &params, oldestNs)
@@ -139,7 +139,7 @@ func getAggregateMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 		// any returned value nil means error & response already written
 		return
 	}
-	oldestNs := GetNsWithOldestCreationDate(namespaceInfo)
+	oldestNs := GetOldestNamespace(namespaceInfo)
 
 	params := models.IstioMetricsQuery{Namespace: namespace, Aggregate: aggregate, AggregateValue: aggregateValue}
 	err := extractIstioMetricsQueryParams(r, &params, oldestNs)
@@ -181,7 +181,7 @@ func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 		// any returned value nil means error & response already written
 		return
 	}
-	oldestNs := GetNsWithOldestCreationDate(namespaceInfo)
+	oldestNs := GetOldestNamespace(namespaceInfo)
 
 	params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace}
 
