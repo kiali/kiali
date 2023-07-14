@@ -17,6 +17,12 @@
   --kiali-global--font-size-px: kialiFontSizePx;
   --pf-global--FontSize--md: kialiFontSize;
 
+  /**
+    * --pf-c-page__header--MinHeight is the height of the masthead
+    * 130px is the vertical space being used by the breadcrumb, tab headers, and the name of the {workload,svc,app}
+    */
+  --kiali-details-pages-tab-content-height: calc(100vh - 130px - var(--pf-c-page__header--MinHeight));
+
   // Graph CSS variables
   --graph-find-input--width: 15em;
   --graph-side-panel--font-size: kialiFontSize;
