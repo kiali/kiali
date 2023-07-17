@@ -101,8 +101,8 @@ deploy_kiali() {
 
   local ingress_enabled_flag
   if [ "${MANAGE_KIND}" == "true" ]; then
-  # Re-use bookinfo gateway to access Kiali externally.
-  ${CLIENT_EXE} apply -f - <<EOF
+    # Re-use bookinfo gateway to access Kiali externally.
+    ${CLIENT_EXE} apply -f - <<EOF
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
@@ -123,7 +123,7 @@ spec:
         port:
           number: 20001
 EOF
-  ingress_enabled_flag=false
+    ingress_enabled_flag=false
   else
     ingress_enabled_flag=true
   fi
