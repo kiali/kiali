@@ -24,34 +24,39 @@ start_kind() {
 config_metallb() {
   local lb_addr_range="${1}"
 
-  ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/namespace.yaml
-  [ "$?" != "0" ] && echo "Failed to setup metallb namespace on kind" && exit 1
-
-  #${CLIENT_EXE} create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
-  #[ "$?" != "0" ] && echo "Failed to setup metallb secret on kind" && exit 1
-
-  ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/metallb.yaml
-  [ "$?" != "0" ] && echo "Failed to setup metallb resources on kind" && exit 1
+  ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.5/config/manifests/metallb-native.yaml
+  [ "$?" != "0" ] && echo "Failed to setup metallb on kind" && exit 1
 
   local subnet=$(${DORP} network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}')
   [ "$?" != "0" ] && echo "Failed to inspect kind network" && exit 1
+
+  kubectl rollout status deployment controller -n metallb-system
 
   local subnet_trimmed=$(echo ${subnet} | sed -E 's/([0-9]+\.[0-9]+)\.[0-9]+\..*/\1/')
   local first_ip="${subnet_trimmed}.$(echo "${lb_addr_range}" | cut -d '-' -f 1)"
   local last_ip="${subnet_trimmed}.$(echo "${lb_addr_range}" | cut -d '-' -f 2)"
   cat <<LBCONFIGMAP | ${CLIENT_EXE} apply -f -
-apiVersion: v1
-kind: ConfigMap
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
 metadata:
   namespace: metallb-system
   name: config
-data:
-  config: |
-    address-pools:
-    - name: default
-      protocol: layer2
-      addresses: ['${first_ip}-${last_ip}']
+spec:
+  addresses:
+  - ${first_ip}-${last_ip}
 LBCONFIGMAP
+
+  cat <<LBCONFIGMAP | ${CLIENT_EXE} apply -f -
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  namespace: metallb-system
+  name: l2config
+spec:
+  ipAddressPools:
+  - config
+LBCONFIGMAP
+
   [ "$?" != "0" ] && echo "Failed to configure metallb on kind" && exit 1
 }
 

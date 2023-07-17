@@ -35,6 +35,7 @@ DEFAULT_PROCESS_REMOTE_RESOURCES="true"
 DEFAULT_REMOTE_CLUSTER_CONTEXT="west"
 DEFAULT_REMOTE_CLUSTER_NAME=""
 DEFAULT_REMOTE_CLUSTER_NAMESPACE="kiali-access-ns"
+DEFAULT_REMOTE_CLUSTER_URL=""
 DEFAULT_VIEW_ONLY="true"
 DEFAULT_EXEC_AUTH_JSON=""
 
@@ -51,6 +52,7 @@ DEFAULT_EXEC_AUTH_JSON=""
 : ${REMOTE_CLUSTER_CONTEXT:=${DEFAULT_REMOTE_CLUSTER_CONTEXT}}
 : ${REMOTE_CLUSTER_NAMESPACE:=${DEFAULT_REMOTE_CLUSTER_NAMESPACE}}
 : ${REMOTE_CLUSTER_NAME:=${DEFAULT_REMOTE_CLUSTER_NAME}}
+: ${REMOTE_CLUSTER_URL:=${DEFAULT_REMOTE_CLUSTER_URL}}
 : ${VIEW_ONLY:=${DEFAULT_VIEW_ONLY}}
 : ${EXEC_AUTH_JSON:=${DEFAULT_EXEC_AUTH_JSON}}
 
@@ -198,8 +200,13 @@ get_remote_cluster_token() {
 create_kiali_remote_cluster_secret() {
   info "Create the remote cluster secret in the Kiali cluster"
 
-  # Examine the local kubeconfig and extract the rest of the necessary data we need in order to create the Kiali remote cluster secret.
-  local remote_cluster_server_url="$(${CLIENT_EXE} config view -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME_FROM_CONTEXT}'")].cluster.server}' 2>/dev/null)"
+  # If the remote cluster URL was not provided by the user, then examine the local kubeconfig and extract the rest of the necessary data we need in order to create the Kiali remote cluster secret.
+  local remote_cluster_server_url
+  if [ "${REMOTE_CLUSTER_URL}" == "" ]; then
+    remote_cluster_server_url="$(${CLIENT_EXE} config view -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME_FROM_CONTEXT}'")].cluster.server}' 2>/dev/null)"
+  else
+    remote_cluster_server_url="${REMOTE_CLUSTER_URL}"
+  fi
   if [ "${remote_cluster_server_url}" == "" ]; then
     error "Unable to determine the remote cluster server URL from the kubeconfig remote cluster named [${REMOTE_CLUSTER_NAME_FROM_CONTEXT}]. Check that the kubeconfig is correct."
   else
@@ -369,6 +376,10 @@ while [ $# -gt 0 ]; do
       REMOTE_CLUSTER_NAMESPACE="$2"
       shift;shift
       ;;
+    -rcu|--remote-cluster-url)
+      REMOTE_CLUSTER_URL="$2"
+      shift;shift
+      ;;
     -vo|--view-only)
       [ "${2:-}" != "true" -a "${2:-}" != "false" ] && error "--view-only must be 'true' or 'false'"
       VIEW_ONLY="$2"
@@ -469,6 +480,10 @@ Valid command line arguments:
   -rcns|--remote-cluster-namespace: the namespace where the resources will be
                                     created on the remote cluster.
                                     Default: "${DEFAULT_REMOTE_CLUSTER_NAMESPACE}"
+  -rcu|--remote_cluster_url: the URL to the Kubernetes API server for the remote cluster.
+                             If empty, the local kubeconfig will be examined and the server
+                             associated with the remote cluster context will be used.
+                             Default: "${DEFAULT_REMOTE_CLUSTER_URL}"
   -vo|--view-only: if 'true' then the created service account/remote secret
                    will only provide a read-only view of the remote cluster.
                    Default: "${DEFAULT_VIEW_ONLY}"
@@ -506,6 +521,7 @@ info KIALI_VERSION=${KIALI_VERSION}
 info REMOTE_CLUSTER_CONTEXT=${REMOTE_CLUSTER_CONTEXT}
 info REMOTE_CLUSTER_NAME=${REMOTE_CLUSTER_NAME}
 info REMOTE_CLUSTER_NAMESPACE=${REMOTE_CLUSTER_NAMESPACE}
+info REMOTE_CLUSTER_URL=${REMOTE_CLUSTER_URL}
 info VIEW_ONLY=${VIEW_ONLY}
 info EXEC_AUTH_JSON="${EXEC_AUTH_JSON}"
 

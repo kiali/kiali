@@ -43,11 +43,29 @@ deploy_kiali() {
   [ ! -z "${web_fqdn}" ] && helm_args="--set server.web_fqdn=${web_fqdn} ${helm_args}"
   [ ! -z "${web_schema}" ] && helm_args="--set server.web_schema=${web_schema} ${helm_args}"
 
-  local minikube_ip=$(minikube ip -p "${cluster_name}")
+  local auth_flags
+  if [ "${KIALI_AUTH_STRATEGY}" == "anonymous" ]; then
+    auth_flags="--set auth.strategy=anonymous"
+  elif [ "${KIALI_AUTH_STRATEGY}" == "openid" ]; then
+    # These need to exist prior to installing Kiali.
+    # Create secret with the oidc secret
+    ${CLIENT_EXE} create configmap kiali-cabundle --from-file="openid-server-ca.crt=${KEYCLOAK_CERTS_DIR}/root-ca.pem" -n "${ISTIO_NAMESPACE}"
+    ${CLIENT_EXE} create secret generic kiali --from-literal="oidc-secret=kube-client-secret" -n istio-system
+    ${CLIENT_EXE} create clusterrolebinding kiali-user-viewer --clusterrole=kiali-viewer --user=oidc:kiali
 
-  # determine where we can find keycloak
-  local keycloak_minikube_ip_dashed=$(minikube ip -p "${keycloak_cluster_name}" | sed 's/\./-/g')
-  local keycloak_hostname="keycloak-${keycloak_minikube_ip_dashed}.nip.io"
+    local minikube_ip
+    minikube_ip=$(minikube ip -p "${cluster_name}")
+
+    # determine where we can find keycloak
+
+    local keycloak_minikube_ip_dashed
+    keycloak_minikube_ip_dashed=$(minikube ip -p "${keycloak_cluster_name}" | sed 's/\./-/g')
+    local keycloak_hostname="keycloak-${keycloak_minikube_ip_dashed}.nip.io"
+    auth_flags="--set auth.strategy=openid --set auth.openid.client_id=kube --set auth.openid.issuer_uri=\"https://${keycloak_hostname}/realms/kube\" --set auth.openid.insecure_skip_verify_tls=\"false\""
+  else
+    echo "Kiali auth strategy [${KIALI_AUTH_STRATEGY}] is not supported for multi-cluster - will not install Kiali"
+    return 1
+  fi
 
   if [ "${KIALI_USE_DEV_IMAGE}" == "true" ]; then
     local image_to_tag="quay.io/kiali/kiali:dev"
@@ -59,36 +77,67 @@ deploy_kiali() {
     helm_args="--set deployment.image_name=localhost:5000/kiali/kiali --set deployment.image_version=dev ${helm_args}"
   fi
 
-  # These need to exist prior to installing Kiali.
-  # Create secret with the oidc secret
-  ${CLIENT_EXE} create configmap kiali-cabundle --from-file="openid-server-ca.crt=${KEYCLOAK_CERTS_DIR}/root-ca.pem" -n "${ISTIO_NAMESPACE}"
-  ${CLIENT_EXE} create secret generic kiali --from-literal="oidc-secret=kube-client-secret" -n istio-system
-  ${CLIENT_EXE} create clusterrolebinding kiali-user-viewer --clusterrole=kiali-viewer --user=oidc:kiali
 
   if [ "${KIALI_CREATE_REMOTE_CLUSTER_SECRETS}" == "true" ]; then
     if [ "${SINGLE_KIALI}" == "true" ]; then
+      local remote_url_flag
+      if [ "${MANAGE_KIND}" == "true" ]; then
+        remote_url_flag="--remote-cluster-url https://$(${CLIENT_EXE} get nodes ${CLUSTER2_NAME}-control-plane --context ${CLUSTER2_CONTEXT} -o jsonpath='{.status.addresses[?(@.type == "InternalIP")].address}'):6443"
+      fi
       echo "Preparing remote cluster secret for single Kiali install in multicluster mode."
-      ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh -c ${CLIENT_EXE} -kcc ${CLUSTER1_CONTEXT} -rcc ${CLUSTER2_CONTEXT} -vo false
+      ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh -c ${CLIENT_EXE} --remote-cluster-name ${CLUSTER2_NAME} -kcc ${CLUSTER1_CONTEXT} -rcc ${CLUSTER2_CONTEXT} ${remote_url_flag} -vo false
     else
       echo "Preparing remote cluster secrets for both Kiali installs."
-      ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh -c ${CLIENT_EXE} -kcc ${CLUSTER1_CONTEXT} -rcc ${CLUSTER2_CONTEXT} -vo false
-      ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh -c ${CLIENT_EXE} -kcc ${CLUSTER2_CONTEXT} -rcc ${CLUSTER1_CONTEXT} -vo false
+      local remote_url_flag1
+      local remote_url_flag2
+      if [ "${MANAGE_KIND}" == "true" ]; then
+        remote_url_flag1="--remote-cluster-url https://$(${CLIENT_EXE} get nodes ${CLUSTER2_NAME}-control-plane --context ${CLUSTER2_CONTEXT} -o jsonpath='{.status.addresses[?(@.type == "InternalIP")].address}'):6443"
+        remote_url_flag2="--remote-cluster-url https://$(${CLIENT_EXE} get nodes ${CLUSTER1_NAME}-control-plane --context ${CLUSTER1_CONTEXT} -o jsonpath='{.status.addresses[?(@.type == "InternalIP")].address}'):6443"
+      fi
+      ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh -c ${CLIENT_EXE} --remote-cluster-name ${CLUSTER2_NAME} -kcc ${CLUSTER1_CONTEXT} -rcc ${CLUSTER2_CONTEXT} ${remote_url_flag1} -vo false
+      ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh -c ${CLIENT_EXE} --remote-cluster-name ${CLUSTER1_NAME} -kcc ${CLUSTER2_CONTEXT} -rcc ${CLUSTER1_CONTEXT} ${remote_url_flag2} -vo false
     fi
   fi
 
+  local ingress_enabled_flag
+  if [ "${MANAGE_KIND}" == "true" ]; then
+    # Re-use bookinfo gateway to access Kiali externally.
+    ${CLIENT_EXE} apply -f - <<EOF
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: kiali
+  namespace: istio-system
+spec:
+  gateways:
+  - bookinfo/bookinfo-gateway
+  hosts:
+  - '*'
+  http:
+  - match:
+    - uri:
+        prefix: /kiali
+    route:
+    - destination:
+        host: kiali
+        port:
+          number: 20001
+EOF
+    ingress_enabled_flag=false
+  else
+    ingress_enabled_flag=true
+  fi
+
+
   # use the latest published server helm chart (if using dev images, it is up to the user to make sure this chart works with the dev image)
-  helm upgrade --install                          \
-    ${helm_args}                                  \
-    --namespace ${ISTIO_NAMESPACE}                \
-    --set kubernetes_config.cache_enabled="false" \
-    --set auth.strategy="openid"                  \
-    --set auth.openid.client_id="kube"            \
-    --set auth.openid.issuer_uri="https://${keycloak_hostname}/realms/kube" \
-    --set auth.openid.insecure_skip_verify_tls="false" \
-    --set deployment.logger.log_level="debug"     \
-    --set deployment.ingress.enabled="true"       \
-    --repo https://kiali.org/helm-charts          \
-    kiali-server                                  \
+  helm upgrade --install                                       \
+    ${helm_args}                                               \
+    --namespace ${ISTIO_NAMESPACE}                             \
+    ${auth_flags}                                              \
+    --set deployment.logger.log_level="debug"                  \
+    --set deployment.ingress.enabled="${ingress_enabled_flag}" \
+    --repo https://kiali.org/helm-charts                       \
+    kiali-server                                               \
     ${KIALI_SERVER_HELM_CHARTS}
 }
 

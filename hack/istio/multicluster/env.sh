@@ -104,6 +104,9 @@ KIALI_ENABLED="true"
 # When installing Kiali, this will determine if a released image is used or if a local dev image is to be pushed and used.
 KIALI_USE_DEV_IMAGE="false"
 
+# Sets the auth strategy for kiali. If "openid" is used then keycloak is provisioned for the auth provider.
+KIALI_AUTH_STRATEGY="openid"
+
 # Should Bookinfo demo be installed? If so, where?
 BOOKINFO_ENABLED="true"
 BOOKINFO_NAMESPACE="bookinfo"
@@ -200,6 +203,11 @@ while [[ $# -gt 0 ]]; do
       ;;
     -it|--istio-tag)
       ISTIO_TAG="$2"
+      shift;shift
+      ;;
+    -kas|--kiali-auth-strategy)
+      [ "${2:-}" != "anonymous" -a "${2:-}" != "openid" ] && echo "--kiali-auth-strategy must be 'anonymous' or 'openid'" && exit 1
+      KIALI_AUTH_STRATEGY="$2"
       shift;shift
       ;;
     -kcrcs|--kiali-create-remote-cluster-secrets)
@@ -306,6 +314,7 @@ Valid command line arguments:
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
   -it|--istio-tag <tag>: If you want to override the image tag used by istioctl, set this to the tag name.
+  -kas|--kiali-auth-strategy <openid|anonymous>: The authentication strategy to use for Kiali (Default: openid)
   -kcrcs|--kiali-create-remote-cluster-secrets <bool>: Create remote cluster secrets for kiali remote cluster access.
   -ke|--kiali-enabled <bool>: If "true" the latest release of Kiali will be installed in both clusters. If you want
                               a different version of Kiali installed, you must set this to "false" and install it yourself.
@@ -482,6 +491,7 @@ export BOOKINFO_ENABLED \
        ISTIO_DIR \
        ISTIO_NAMESPACE \
        ISTIO_TAG \
+       KIALI_AUTH_STRATEGY \
        KIALI_CREATE_REMOTE_CLUSTER_SECRETS \
        KIALI_ENABLED \
        KIALI_USE_DEV_IMAGE \
@@ -516,6 +526,7 @@ IS_OPENSHIFT=$IS_OPENSHIFT
 ISTIO_DIR=$ISTIO_DIR
 ISTIO_NAMESPACE=$ISTIO_NAMESPACE
 ISTIO_TAG=$ISTIO_TAG
+KIALI_AUTH_STRATEGY=$KIALI_AUTH_STRATEGY
 KIALI_CREATE_REMOTE_CLUSTER_SECRETS=$KIALI_CREATE_REMOTE_CLUSTER_SECRETS
 KIALI_ENABLED=$KIALI_ENABLED
 KIALI_USE_DEV_IMAGE=$KIALI_USE_DEV_IMAGE
