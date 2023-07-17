@@ -75,7 +75,7 @@ func NewNamespaceService(userClients map[string]kubernetes.ClientInterface, kial
 // Returns a list of the given namespaces / projects
 func (in *NamespaceService) GetClusterList() []string {
 	var clusterList []string
-	for cluster, _ := range in.userClients {
+	for cluster := range in.userClients {
 		clusterList = append(clusterList, cluster)
 	}
 	return clusterList
@@ -284,7 +284,7 @@ func (in *NamespaceService) getNamespacesByCluster(cluster string) ([]models.Nam
 
 	labelSelectorInclude := configObject.API.Namespaces.LabelSelectorInclude
 
-	namespaces := []models.Namespace{}
+	var namespaces []models.Namespace
 	_, queryAllNamespaces := in.isAccessibleNamespaces["**"]
 	// If we are running in OpenShift, we will use the project names since these are the list of accessible namespaces
 	if in.hasProjects {
