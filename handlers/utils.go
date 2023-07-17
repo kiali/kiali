@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"k8s.io/client-go/tools/clientcmd/api"
 
@@ -42,26 +43,18 @@ func createMetricsServiceForNamespaceMC(w http.ResponseWriter, r *http.Request, 
 	}
 	var nsInfo []models.Namespace
 
-	namespaces, err := layer.Namespace.GetNamespaceClusters(r.Context(), nsName)
-	if err != nil {
-		RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
-		return nil, nil
-	}
-	if len(namespaces) == 0 {
-		RespondWithError(w, http.StatusBadRequest, "No clusters found for namespace ")
-		return nil, nil
-	}
-
-	for _, ns := range namespaces {
-		_, err2 := checkNamespaceAccess(r.Context(), layer.Namespace, ns.Name, ns.Cluster)
-		// If there is no access to one of the namespace, return the error
+	for _, cluster := range layer.Namespace.GetClusterList() {
+		ns, err2 := checkNamespaceAccess(r.Context(), layer.Namespace, nsName, cluster)
 		if err2 != nil {
+			if strings.Contains(err2.Error(), "not found") {
+				continue
+			}
 			RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err2.Error())
 			return nil, nil
 		}
-		nsInfo = append(nsInfo, ns)
-
+		nsInfo = append(nsInfo, *ns)
 	}
+
 	metrics := business.NewMetricsService(prom)
 
 	return metrics, nsInfo

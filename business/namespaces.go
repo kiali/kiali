@@ -73,6 +73,15 @@ func NewNamespaceService(userClients map[string]kubernetes.ClientInterface, kial
 }
 
 // Returns a list of the given namespaces / projects
+func (in *NamespaceService) GetClusterList() []string {
+	var clusterList []string
+	for cluster, _ := range in.userClients {
+		clusterList = append(clusterList, cluster)
+	}
+	return clusterList
+}
+
+// Returns a list of the given namespaces / projects
 func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespace, error) {
 	var end observability.EndFunc
 	_, end = observability.StartSpan(ctx, "GetNamespaces",

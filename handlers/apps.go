@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gorilla/mux"
 
@@ -63,20 +62,14 @@ func AppList(w http.ResponseWriter, r *http.Request) {
 	if criteria.IncludeHealth {
 		// When the cluster is not specified, we need to get it. If there are more than one,
 		// get the one for which the namespace creation time is oldest
-		clusters, _ := business.Namespace.GetNamespaceClusters(r.Context(), p.Namespace)
-		if len(clusters) == 0 {
+		namespaces, _ := business.Namespace.GetNamespaceClusters(r.Context(), p.Namespace)
+		if len(namespaces) == 0 {
 			err = fmt.Errorf("No clusters found for namespace  [%s]", p.Namespace)
 			handleErrorResponse(w, err, err.Error())
 			return
 		}
-		var cluster string
-		var creationTimestamp time.Time
-		for i, cl := range clusters {
-			if i == 0 || cl.CreationTimestamp.Before(creationTimestamp) {
-				cluster = cl.Cluster
-			}
-		}
-		rateInterval, err := adjustRateInterval(r.Context(), business, p.Namespace, p.RateInterval, p.QueryTime, cluster)
+		ns := GetOldestNamespace(namespaces)
+		rateInterval, err := adjustRateInterval(r.Context(), business, p.Namespace, p.RateInterval, p.QueryTime, ns.Cluster)
 		if err != nil {
 			handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 			return
