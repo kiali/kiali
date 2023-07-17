@@ -51,7 +51,7 @@ When('user clicks in the {string} view', view => {
     .should('not.exist');
 });
 
-When(`user filters {string} namespace`, ns => {
+When(`user filters {string} namespace`, (ns: string) => {
   cy.get('select[aria-label="filter_select_type"]').select('Namespace').should('have.value', 'Namespace');
   cy.get('input[aria-label="filter_input_value"]')
     .type(ns)
@@ -60,7 +60,7 @@ When(`user filters {string} namespace`, ns => {
     .should('not.exist');
 });
 
-When(`user filters {string} health`, health => {
+When(`user filters {string} health`, (health: string) => {
   cy.get('select[aria-label="filter_select_type"]').select('Health').should('have.value', 'Health');
   cy.get('select[aria-label="filter_select_value"]').select(health).get('#loading_kiali_spinner').should('not.exist');
 });
@@ -115,15 +115,20 @@ When('I fetch the overview of the cluster', function () {
   cy.visit('/console/overview?refresh=0');
 });
 
-Then(`user sees the {string} namespace card`, ns => {
-  cy.get('article[data-test^="' + ns + '"]');
+Then(`user sees the {string} namespace card`, (ns: string) => {
+  cy.get(`article[data-test^="${ns}"]`);
+});
+
+Then(`user sees the {string} namespace card in cluster {string}`, (ns: string, cluster: string) => {
+  // TODO: Incorporate cluster into existing namespace checks with cluster+ns as data-test-id.
+  cy.get(`article[data-test^="${ns}"]`).contains(cluster).should('exist').and('length', 1);
 });
 
 Then(`user doesn't see the {string} namespace card`, ns => {
   cy.get('article[data-test^="' + ns + '"]').should('not.exist');
 });
 
-Then(`user sees a {string} {string} namespace`, (view, ns) => {
+Then(`user sees a {string} {string} namespace`, (view, ns: string) => {
   if (view === 'LIST') {
     cy.get('td[role="gridcell"]').contains(ns);
   } else {
@@ -147,7 +152,7 @@ Then(`user sees the {string} namespace with {string}`, (ns, type) => {
   cy.get('article[data-test^="' + ns + '"]').find('[data-test="overview-type-' + innerType + '"]');
 });
 
-Then(`user sees the {string} namespace list`, nslist => {
+Then(`user sees the {string} namespace list`, (nslist: string) => {
   const nss = nslist.split(',');
   cy.get('article')
     .should('have.length', nss.length)
@@ -195,38 +200,30 @@ Then('the {string} application indicator should list the application', function 
 
 // New CP Card validations
 When('user hovers over the MinTLS locker', view => {
-  cy.get('[data-test="lockerCA"]')
-  .should('exist');
+  cy.get('[data-test="lockerCA"]').should('exist');
 });
 
-Then ('the toggle on the right side of the {string} namespace card exists', (ns:string) => {
-  ensureKialiFinishedLoading(); 
-  cy.get('article[data-test^="' + ns + '"]')
-  .should('exist');
+Then('the toggle on the right side of the {string} namespace card exists', (ns: string) => {
+  ensureKialiFinishedLoading();
+  cy.get('article[data-test^="' + ns + '"]').should('exist');
 });
 
 Then('the user sees the certificates information', view => {
-  cy.get('[data-test="lockerCA"]')
-      .trigger('mouseenter')
-      .get('[role="tooltip"]')
-      .contains('Valid From');
+  cy.get('[data-test="lockerCA"]').trigger('mouseenter').get('[role="tooltip"]').contains('Valid From');
 });
 
 // We will suppose that the min TLS Version was not set
 // So we verify the default
 Then('the minimum TLS version', view => {
-  cy.get('[data-test="label-TLS"]')
-      .contains('N/A');
+  cy.get('[data-test="label-TLS"]').contains('N/A');
 });
 
-Then("the user sees no information related to canary upgrades", view => {
-  cy.get('[data-test="canary-upgrade"]')
-      .should('not.exist');
+Then('the user sees no information related to canary upgrades', view => {
+  cy.get('[data-test="canary-upgrade"]').should('not.exist');
 });
 
-Then("the user sees information related to canary upgrades", view => {
-  cy.get('[data-test="canary-upgrade"]')
-      .should('exist');
+Then('the user sees information related to canary upgrades', view => {
+  cy.get('[data-test="canary-upgrade"]').should('exist');
 });
 
 And('user sees the {string} label in the {string} namespace card', (label: string, ns: string) => {

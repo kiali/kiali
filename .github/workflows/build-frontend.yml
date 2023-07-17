@@ -20,6 +20,8 @@ jobs:
         with:
           ref: ${{ inputs.build_branch }}
 
+      # Cypress binary gets installed here but it won't get cached so we'll
+      # cache it explicitly.
       - name: Setup node
         uses: actions/setup-node@v3
         with:

@@ -1,4 +1,4 @@
-name: Integration Tests Backend
+name: Integration Tests Multicluster Backend
 
 on:
   workflow_call:
@@ -14,8 +14,8 @@ env:
   TARGET_BRANCH: ${{ inputs.target_branch }}
 
 jobs:
-  integration_tests_backend:
-    name: Backend API integration tests
+  integration_tests_backend_multicluster:
+    name: Backend API multi-cluster integration tests
     runs-on: ubuntu-20.04
     steps:
       - name: Check out code
@@ -48,16 +48,15 @@ jobs:
           path: frontend/build
 
       - name: Run backend integration tests
-        run: hack/run-integration-tests.sh --test-suite backend
+        run: hack/run-integration-tests.sh --test-suite backend-multi-cluster
 
       - name: Get debug info when integration tests fail
         if: failure()
         run: |
-          kubectl logs -l app.kubernetes.io/name=kiali --tail=-1 --all-containers -n istio-system
-          kubectl describe nodes
-          kubectl get pods -l app.kubernetes.io/name=kiali -n istio-system -o yaml
-          kubectl describe pods -n metallb-system
-          kubectl logs -p deployments/controller -n metallb-system
-          kubectl logs -p ds/speaker -n metallb-system
-          kubectl logs deployments/controller -n metallb-system
-          kubectl logs ds/speaker -n metallb-system
+          kubectl --context kind-east logs -l app.kubernetes.io/name=kiali --tail=-1 --all-containers -n istio-system
+          kubectl --context kind-east describe nodes
+          kubectl --context kind-east get pods -l app.kubernetes.io/name=kiali -n istio-system -o yaml
+          kubectl --context kind-east logs -p deployments/controller -n metallb-system
+          kubectl --context kind-east logs -p ds/speaker -n metallb-system
+          kubectl --context kind-east logs deployments/controller -n metallb-system
+          kubectl --context kind-east logs ds/speaker -n metallb-system
