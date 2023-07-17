@@ -14,7 +14,7 @@ import { connect } from 'react-redux';
 import * as API from '../../../services/Api';
 
 const darkmode = 'pf-theme-dark';
-const themes = ['default', 'dark'];
+const themes = ['Default', 'Dark'];
 
 type UserProps = {
   session?: LoginSession;
@@ -101,10 +101,10 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
   handleTheme = () => {
     if (this.state.theme === themes[0]) {
       this.setState({ theme: themes[1] });
-      document.getElementsByTagName('html')[0].classList.add(darkmode);
+      document.documentElement.classList.add(darkmode);
     } else {
       this.setState({ theme: themes[0] });
-      document.getElementsByTagName('html')[0].classList.remove(darkmode);
+      document.documentElement.classList.remove(darkmode);
     }
   };
 
@@ -138,7 +138,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
             Logout
           </DropdownItem>
         )}
-        <DropdownItem key={'them_update'} onClick={this.handleTheme}>
+        <DropdownItem key={'theme_update'} onClick={this.handleTheme}>
           {this.state.theme === themes[0] ? themes[1] : themes[0]} theme
         </DropdownItem>
       </>
