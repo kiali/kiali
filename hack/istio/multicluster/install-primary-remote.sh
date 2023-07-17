@@ -14,8 +14,17 @@
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 source ${SCRIPT_DIR}/env.sh $*
 
-echo "Starting minikube instances"
-source ${SCRIPT_DIR}/start-minikube.sh
+# Start up two minikube instances if requested
+if [ "${MANAGE_MINIKUBE}" == "true" ]; then
+  echo "Starting minikube instances"
+  source ${SCRIPT_DIR}/start-minikube.sh
+fi
+
+# Start up two kind instances if requested
+if [ "${MANAGE_KIND}" == "true" ]; then
+  echo "Starting kind instances"
+  source ${SCRIPT_DIR}/start-kind.sh
+fi
 
 # Setup the certificates
 source ${SCRIPT_DIR}/setup-ca.sh
@@ -63,7 +72,13 @@ ${CLIENT_EXE} patch mutatingwebhookconfigurations.admissionregistration.k8s.io -
 ${CLIENT_EXE} patch mutatingwebhookconfigurations.admissionregistration.k8s.io -n ${ISTIO_NAMESPACE} istio-revision-tag-default -p "{\"webhooks\":[{\"clientConfig\":{\"caBundle\":\"${CA_BUNDLE}\"},\"name\":\"namespace.sidecar-injector.istio.io\"}]}"
 ${CLIENT_EXE} patch mutatingwebhookconfigurations.admissionregistration.k8s.io -n ${ISTIO_NAMESPACE} istio-revision-tag-default -p "{\"webhooks\":[{\"clientConfig\":{\"caBundle\":\"${CA_BUNDLE}\"},\"name\":\"object.sidecar-injector.istio.io\"}]}"
 
-${ISTIOCTL} x create-remote-secret --context=${CLUSTER2_CONTEXT} --name=${CLUSTER2_NAME} | ${CLIENT_EXE} apply -f - --context="${CLUSTER1_CONTEXT}"
+# For kind we need to use the container IP otherwise the unresolvable localhost will be used.
+SERVER_FLAG=""
+if [ "${MANAGE_KIND}" == "true" ]; then
+    CLUSTER2_CONTAINER_IP=$(${CLIENT_EXE} get nodes "${CLUSTER2_NAME}"-control-plane --context "${CLUSTER2_CONTEXT}" -o jsonpath='{.status.addresses[?(@.type == "InternalIP")].address}')
+    SERVER_FLAG="--server=https://${CLUSTER2_CONTAINER_IP}:6443"
+fi
+${ISTIOCTL} x create-remote-secret --context=${CLUSTER2_CONTEXT} --name=${CLUSTER2_NAME} ${SERVER_FLAG} | ${CLIENT_EXE} apply -f - --context="${CLUSTER1_CONTEXT}"
 
 ${GEN_GATEWAY_SCRIPT} --mesh ${MESH_ID} --cluster ${CLUSTER2_NAME} --network ${NETWORK2_ID} | ${ISTIOCTL} --context=${CLUSTER2_CONTEXT} install -y -f -
 
