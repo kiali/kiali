@@ -59,7 +59,6 @@ import {
 } from './RequestAuthenticationForm';
 import { isValidK8SName } from '../../helpers/ValidationHelpers';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
-import { PFColors } from '../../components/Pf/PfColors';
 import {
   ServiceEntryForm,
   initServiceEntry,
@@ -70,7 +69,7 @@ import {
 } from './ServiceEntryForm';
 import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 import { isValid } from 'utils/Common';
-import { ClusterDropdownForm } from './ClusterDropdownForm';
+import { ClusterDropdown } from './ClusterDropdown';
 import { NamespaceDropdown } from '../../components/NamespaceDropdown';
 
 type Props = {
@@ -95,13 +94,6 @@ type State = {
 };
 
 const formPadding = kialiStyle({ padding: '30px 20px 30px 20px' });
-
-const warningStyle = kialiStyle({
-  marginLeft: 15,
-  paddingTop: 5,
-  color: PFColors.Red100,
-  textAlign: 'center'
-});
 
 const DIC = {
   AuthorizationPolicy: AUTHORIZATION_POLICIES,
@@ -456,10 +448,24 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
         </div>
         <RenderContent>
           <Form className={formPadding} isHorizontal={true}>
-            <FormGroup label="Namespaces" isRequired={true} fieldId="namespaces">
+            <FormGroup
+              label="Namespaces"
+              isRequired={true}
+              fieldId="namespaces"
+              helperTextInvalid={'An Istio Config resource needs at least a namespace selected'}
+              validated={isValid(isNamespacesValid)}
+            >
               <NamespaceDropdown disabled={false} />
             </FormGroup>
-            <ClusterDropdownForm />
+            <FormGroup
+              label="Clusters"
+              isRequired={true}
+              fieldId="clusters"
+              helperTextInvalid={'An Istio Config resource needs at least a cluster selected'}
+              validated={isValid(isClustersValid)}
+            >
+              <ClusterDropdown />
+            </FormGroup>
             <FormGroup
               label="Name"
               isRequired={true}
@@ -520,12 +526,6 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
               <Button variant={ButtonVariant.secondary} onClick={() => this.backToList()}>
                 Cancel
               </Button>
-              {!isNamespacesValid && (
-                <span className={warningStyle}>An Istio Config resource needs at least a namespace selected</span>
-              )}
-              {!isClustersValid && (
-                <span className={warningStyle}>An Istio Config resource needs at least a cluster selected</span>
-              )}
             </ActionGroup>
           </Form>
           <IstioConfigPreview

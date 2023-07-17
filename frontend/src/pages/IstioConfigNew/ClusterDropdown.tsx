@@ -5,7 +5,6 @@ import {
   Button,
   Dropdown,
   DropdownToggle,
-  FormGroup,
   TextInput,
   Tooltip,
   DropdownToggleCheckbox,
@@ -69,7 +68,7 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
     this.state = {
       isBulkSelectorOpen: false,
       isOpen: false,
-      selectedClusters: []
+      selectedClusters: [...this.props.activeClusters]
     };
   }
 
@@ -181,19 +180,17 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
   render() {
     if (this.props.clusters.length > 1) {
       return (
-        <FormGroup label="Clusters" isRequired={true} fieldId="clusters">
-          <Dropdown
-            toggle={
-              <DropdownToggle data-test="cluster-dropdown" id="cluster-selector" onToggle={this.onToggle}>
-                {this.clusterButtonText()}
-              </DropdownToggle>
-            }
-            isOpen={this.state.isOpen}
-          >
-            {this.getHeader()}
-            {this.getBody()}
-          </Dropdown>
-        </FormGroup>
+        <Dropdown
+          toggle={
+            <DropdownToggle data-test="cluster-dropdown" id="cluster-selector" onToggle={this.onToggle}>
+              {this.clusterButtonText()}
+            </DropdownToggle>
+          }
+          isOpen={this.state.isOpen}
+        >
+          {this.getHeader()}
+          {this.getBody()}
+        </Dropdown>
       );
     } else {
       return null;
@@ -269,4 +266,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
   };
 };
 
-export const ClusterDropdownForm = connect(mapStateToProps, mapDispatchToProps)(ClusterDropdownComponent);
+export const ClusterDropdown = connect(mapStateToProps, mapDispatchToProps)(ClusterDropdownComponent);
