@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -26,10 +27,16 @@ import (
 type KialiCache interface {
 	GetKubeCaches() map[string]KubeCache
 	GetKubeCache(cluster string) (KubeCache, error)
-
+	// GetClusters returns the list of clusters that the cache knows about.
+	// This gets set by the mesh service.
+	GetClusters() []kubernetes.Cluster
+	// SetClusters sets the list of clusters that the cache knows about.
+	SetClusters([]kubernetes.Cluster)
 	// Embedded for backward compatibility for business methods that just use one cluster.
 	// All business methods should eventually use the multi-cluster cache.
+	// Instead of using the interface directly for kube objects, use the GetKubeCache() method.
 	KubeCache
+
 	NamespacesCache
 	ProxyStatusCache
 	RegistryStatusCache
@@ -71,6 +78,10 @@ type kialiCacheImpl struct {
 	registryStatusLock     sync.RWMutex
 	registryStatusCreated  *time.Time
 	registryStatus         *kubernetes.RegistryStatus
+
+	// Info about the kube clusters that the cache knows about.
+	clusters    []kubernetes.Cluster
+	clusterLock sync.RWMutex
 }
 
 func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config, namespaceSeedList ...string) (KialiCache, error) {
@@ -90,7 +101,14 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config, na
 			log.Errorf("[Kiali Cache] Error creating kube cache for cluster: [%s]. Err: %v", cluster, err)
 			return nil, err
 		}
-		log.Infof("[Kiali Cache] Kube cache is active for cluster: [%s] and namespaces: %v", cluster, namespaceSeedList)
+
+		var scope string
+		if cache.clusterScoped {
+			scope = "*"
+		} else {
+			scope = strings.Join(namespaceSeedList, ",")
+		}
+		log.Infof("[Kiali Cache] Kube cache is active for cluster: [%s] and namespaces: [%v]", cluster, scope)
 
 		kialiCacheImpl.kubeCache[cluster] = cache
 
@@ -186,4 +204,16 @@ func (c *kialiCacheImpl) watchForClientChanges(ctx context.Context, token string
 			}
 		}
 	}()
+}
+
+func (c *kialiCacheImpl) GetClusters() []kubernetes.Cluster {
+	defer c.clusterLock.RUnlock()
+	c.clusterLock.RLock()
+	return c.clusters
+}
+
+func (c *kialiCacheImpl) SetClusters(clusters []kubernetes.Cluster) {
+	defer c.clusterLock.Unlock()
+	c.clusterLock.Lock()
+	c.clusters = clusters
 }

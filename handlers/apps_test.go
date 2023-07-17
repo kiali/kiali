@@ -180,7 +180,6 @@ func setupAppListEndpoint(t *testing.T, k8s kubernetes.ClientInterface, conf con
 	prom := new(prometheustest.PromClientMock)
 
 	business.SetupBusinessLayer(t, k8s, conf)
-	business.SetKialiControlPlaneCluster(&business.Cluster{Name: config.DefaultClusterID})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/apps", http.HandlerFunc(

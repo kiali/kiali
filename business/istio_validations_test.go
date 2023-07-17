@@ -205,8 +205,6 @@ func mockCombinedValidationService(t *testing.T, istioConfigList *models.IstioCo
 		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
 	}
 
-	setupGlobalMeshConfig()
-
 	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
 
 	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())

@@ -37,7 +37,6 @@ func TestServiceListParsing(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 	k8s := kubetest.NewFakeK8sClient(objects...)
-	setupGlobalMeshConfig()
 	SetupBusinessLayer(t, k8s, *conf)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
@@ -57,14 +56,15 @@ func TestServiceListParsing(t *testing.T) {
 
 func TestParseRegistryServices(t *testing.T) {
 	assert := assert.New(t)
+	require := require.New(t)
 
 	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
 	config.Set(conf)
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
-	setupGlobalMeshConfig()
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	svc := NewWithBackends(k8sclients, k8sclients, nil, nil).Svc
@@ -96,7 +96,7 @@ func TestParseRegistryServices(t *testing.T) {
 	}
 
 	parsedServices := svc.buildRegistryServices(registryServices, istioConfigList)
-	assert.Equal(3, len(parsedServices))
+	require.Equal(3, len(parsedServices))
 	assert.Equal(1, len(parsedServices[0].IstioReferences))
 	assert.Equal(1, len(parsedServices[1].IstioReferences))
 	assert.Equal(0, len(parsedServices[2].IstioReferences))

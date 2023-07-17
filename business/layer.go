@@ -115,6 +115,7 @@ func IsResourceCached(namespace string, resource string) bool {
 
 func Start() {
 	// Kiali Cache will be initialized once at start up.
+	// TODO: Provide some error handling for start.
 	once.Do(initKialiCache)
 }
 
@@ -170,12 +171,12 @@ func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAC
 	// TODO: Modify the k8s argument to other services to pass the whole k8s map if needed
 	temporaryLayer.App = AppService{prom: prom, userClients: userClients, businessLayer: temporaryLayer}
 	temporaryLayer.Health = HealthService{prom: prom, businessLayer: temporaryLayer, userClients: userClients}
-	temporaryLayer.IstioConfig = IstioConfigService{config: *config.Get(), userClients: userClients, kialiCache: kialiCache, businessLayer: temporaryLayer}
+	temporaryLayer.IstioConfig = IstioConfigService{config: *conf, userClients: userClients, kialiCache: kialiCache, businessLayer: temporaryLayer}
 	temporaryLayer.IstioStatus = IstioStatusService{userClients: userClients, businessLayer: temporaryLayer}
 	temporaryLayer.IstioCerts = IstioCertsService{k8s: userClients[homeClusterName], businessLayer: temporaryLayer}
 	temporaryLayer.Jaeger = JaegerService{loader: jaegerClient, businessLayer: temporaryLayer}
 	temporaryLayer.k8sClients = userClients
-	temporaryLayer.Mesh = NewMeshService(userClients[homeClusterName], temporaryLayer, nil)
+	temporaryLayer.Mesh = NewMeshService(kialiSAClients, kialiCache, temporaryLayer, *conf)
 	temporaryLayer.Namespace = NewNamespaceService(userClients, kialiSAClients)
 	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: userClients[homeClusterName]}
 	temporaryLayer.ProxyStatus = ProxyStatusService{kialiSAClients: kialiSAClients, kialiCache: kialiCache, businessLayer: temporaryLayer}
@@ -183,10 +184,10 @@ func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAC
 	temporaryLayer.ProxyLogging = ProxyLoggingService{userClients: userClients, proxyStatus: &temporaryLayer.ProxyStatus}
 	temporaryLayer.RegistryStatus = RegistryStatusService{k8s: userClients[homeClusterName], businessLayer: temporaryLayer}
 	temporaryLayer.TLS = TLSService{userClients: userClients, kialiCache: kialiCache, businessLayer: temporaryLayer}
-	temporaryLayer.Svc = SvcService{config: *config.Get(), kialiCache: kialiCache, businessLayer: temporaryLayer, prom: prom, userClients: userClients}
+	temporaryLayer.Svc = SvcService{config: *conf, kialiCache: kialiCache, businessLayer: temporaryLayer, prom: prom, userClients: userClients}
 	temporaryLayer.TokenReview = NewTokenReview(userClients[homeClusterName])
 	temporaryLayer.Validations = IstioValidationsService{userClients: userClients, businessLayer: temporaryLayer}
-	temporaryLayer.Workload = *NewWorkloadService(userClients, prom, kialiCache, temporaryLayer, config.Get())
+	temporaryLayer.Workload = *NewWorkloadService(userClients, prom, kialiCache, temporaryLayer, conf)
 
 	registryStatuses := make(map[string]RegistryStatusService)
 	for name, client := range userClients {

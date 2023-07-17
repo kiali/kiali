@@ -35,6 +35,8 @@ import (
 	"regexp"
 	"strings"
 
+	"k8s.io/client-go/rest"
+
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -218,6 +220,12 @@ func determineContainerVersion(defaultVersion string) string {
 
 func updateConfigWithIstioInfo() {
 	conf := *config.Get()
+
+	if !conf.InCluster {
+		// If it's not an in-cluster kiali, we don't need to do anything
+		return
+	}
+
 	homeCluster := conf.KubernetesConfig.ClusterName
 	if homeCluster != "" {
 		// If the cluster name is already set, we don't need to do anything
@@ -225,7 +233,7 @@ func updateConfigWithIstioInfo() {
 	}
 
 	err := func() error {
-		restConf, err := kubernetes.GetConfigForLocalCluster()
+		restConf, err := rest.InClusterConfig()
 		if err != nil {
 			return err
 		}

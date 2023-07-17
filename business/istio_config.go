@@ -1271,7 +1271,6 @@ func (in *IstioConfigService) IsGatewayAPI(cluster string) bool {
 // Check if istio Ambient profile was enabled
 // ATM it is defined in the istio-cni-config configmap
 func (in *IstioConfigService) IsAmbientEnabled() bool {
-
 	var cniNetwork map[string]any
 	istioConfigMap, err := in.kialiCache.GetConfigMap(config.Get().IstioNamespace, "istio-cni-config")
 	if err != nil {

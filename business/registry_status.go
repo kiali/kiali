@@ -4,7 +4,6 @@ import (
 	"sync"
 
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
@@ -48,7 +47,6 @@ func (in *RegistryStatusService) GetRegistryEndpoints(criteria RegistryCriteria)
 	registryStatus := kialiCache.GetRegistryStatus()
 	registryEndpoints := filterRegistryEndpoints(registryStatus, criteria)
 	return registryEndpoints, nil
-
 }
 
 func (in *RegistryStatusService) GetRegistryServices(criteria RegistryCriteria) ([]*kubernetes.RegistryService, error) {
@@ -289,7 +287,6 @@ func (in *RegistryStatusService) refreshRegistryStatus() (*kubernetes.RegistrySt
 	}
 
 	return &registryStatus, nil
-
 }
 
 func getSAClient() (kubernetes.ClientInterface, error) {
@@ -298,17 +295,7 @@ func getSAClient() (kubernetes.ClientInterface, error) {
 		return nil, err
 	}
 
-	kialiToken, err := kubernetes.GetKialiTokenForHomeCluster()
-	if err != nil {
-		return nil, err
-	}
-
-	k8s, err := clientFactory.GetClient(&api.AuthInfo{Token: kialiToken})
-	if err != nil {
-		return nil, err
-	}
-
-	return k8s, nil
+	return clientFactory.GetSAHomeClusterClient(), nil
 }
 
 func (in *RegistryStatusService) getRegistryEndpointsUsingKialiSA() ([]*kubernetes.RegistryEndpoint, error) {

@@ -28,6 +28,9 @@ type K8SClientFactoryMock struct {
 	Clients map[string]kubernetes.ClientInterface
 }
 
+// Interface guard to ensure K8SClientFactoryMock implements ClientFactory.
+var _ kubernetes.ClientFactory = &K8SClientFactoryMock{}
+
 // Constructor
 func NewK8SClientFactoryMock(k8s kubernetes.ClientInterface) *K8SClientFactoryMock {
 	k8sClientFactory := new(K8SClientFactoryMock)
@@ -81,6 +84,9 @@ type K8SClientMock struct {
 	istioClientset      *istio_fake.Clientset
 	gatewayapiClientSet *gatewayapifake.Clientset
 }
+
+// Interface guard to ensure K8SClientMock implements ClientInterface.
+var _ kubernetes.ClientInterface = &K8SClientMock{}
 
 // Constructor
 
@@ -154,10 +160,9 @@ func (o *K8SClientMock) GetToken() string {
 	return args.Get(0).(string)
 }
 
-// GetAuthInfo returns the AuthInfo struct for the client
-func (o *K8SClientMock) GetAuthInfo() *api.AuthInfo {
+func (o *K8SClientMock) ClusterInfo() kubernetes.ClusterInfo {
 	args := o.Called()
-	return args.Get(0).(*api.AuthInfo)
+	return args.Get(0).(kubernetes.ClusterInfo)
 }
 
 // GetTokenSubject returns the subject of the authInfo using

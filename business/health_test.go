@@ -43,7 +43,6 @@ func TestGetServiceHealth(t *testing.T) {
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockServiceRequestRates("ns", conf.KubernetesConfig.ClusterName, "httpbin", serviceRates)
 
-	setupGlobalMeshConfig()
 	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, clients, prom, nil), userClients: clients}
 
 	mockSvc := models.Service{}
@@ -263,7 +262,6 @@ func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	k8s.OpenShift = true
 	prom := new(prometheustest.PromClientMock)
-	setupGlobalMeshConfig()
 	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
@@ -438,7 +436,6 @@ func TestGetNamespaceWorkloadsHealthMultiCluster(t *testing.T) {
 	assert.Nil(err)
 	assert.Len(workloadsHealth, 1)
 	assert.NotContains(workloadsHealth["httpbin"].Requests.Inbound["http"], "500")
-
 }
 
 var (

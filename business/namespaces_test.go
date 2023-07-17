@@ -104,6 +104,9 @@ func TestGetNamespaceWithError(t *testing.T) {
 func TestUpdateNamespaces(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
+	// TODO: Remove this once cache is mandatory
+	// Make sure the cache is nil for tests
+	kialiCache = nil
 
 	k8s := setupNamespaceServiceWithNs()
 

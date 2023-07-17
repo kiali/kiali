@@ -497,10 +497,6 @@ func TestErrorCausesPanic(t *testing.T) {
 	cache = &servicesError{cache, panicErrMsg}
 	business.WithKialiCache(cache)
 
-	business.SetKialiControlPlaneCluster(&business.Cluster{
-		Name: config.DefaultClusterID,
-	})
-
 	prom := new(prometheustest.PromClientMock)
 	prom.MockNamespaceServicesRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
 	prom.MockAllRequestRates("testNamespace", conf.KubernetesConfig.ClusterName, "0s", time.Unix(0, 0), model.Vector{})
@@ -555,10 +551,6 @@ func TestMultiClusterHealthConfig(t *testing.T) {
 	config.Set(conf)
 	cache := business.NewTestingCacheWithFactory(t, factory, *conf)
 	business.WithKialiCache(cache)
-
-	business.SetKialiControlPlaneCluster(&business.Cluster{
-		Name: config.DefaultClusterID,
-	})
 
 	prom := new(prometheustest.PromClientMock)
 	prom.MockNamespaceServicesRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
@@ -633,9 +625,6 @@ func setupHealthConfig(t *testing.T, services []core_v1.Service, deployments []a
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 	business.SetupBusinessLayer(t, k8s, *conf)
-	business.SetKialiControlPlaneCluster(&business.Cluster{
-		Name: config.DefaultClusterID,
-	})
 
 	prom := new(prometheustest.PromClientMock)
 	prom.MockNamespaceServicesRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
