@@ -15,12 +15,14 @@
 
 apply_network_attachment() {
   NAME=$1
+  if [ "${IS_MAISTRA}" != "true" ]; then
 cat <<NAD | $CLIENT_EXE -n ${NAME} apply -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
 NAD
+  fi
     cat <<SCC | $CLIENT_EXE apply -f -
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
@@ -45,12 +47,14 @@ install_runtimes_demo() {
     ${CLIENT_EXE} get ns ${RUNTIMES} || ${CLIENT_EXE} create ns ${RUNTIMES}
   fi
 
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    apply_network_attachment ${RUNTIMES}
+    $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${RUNTIMES}
+  fi
+
   ${CLIENT_EXE} label namespace ${RUNTIMES} istio-injection=enabled --overwrite=true
   ${CLIENT_EXE} apply -f ${BASE_URL}/runtimes-demo/quickstart.yml -n ${RUNTIMES}
 
-  if [ "${IS_OPENSHIFT}" == "true" ]; then
-    apply_network_attachment ${RUNTIMES}
-  fi
 }
 
 while [ $# -gt 0 ]; do
@@ -81,8 +85,10 @@ HELPMSG
 done
 
 IS_OPENSHIFT="false"
+IS_MAISTRA="false"
 if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   IS_OPENSHIFT="true"
+  IS_MAISTRA=$([ "$(${CLIENT_EXE} get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
 fi
 
 echo "CLIENT_EXE=${CLIENT_EXE}"
@@ -95,9 +101,16 @@ else
   echo "Deleting the '${RUNTIMES}' app in the '${RUNTIMES}' namespace..."
   ${CLIENT_EXE} delete -f ${BASE_URL}/runtimes-demo/quickstart.yml -n ${RUNTIMES}
 
-  ${CLIENT_EXE} delete ns ${RUNTIMES} --ignore-not-found=true
   if [ "${IS_OPENSHIFT}" == "true" ]; then
+    if [ "${IS_MAISTRA}" != "true" ]; then
+      $CLIENT_EXE delete network-attachment-definition istio-cni -n ${RUNTIMES}
+    else
+      $CLIENT_EXE delete smm default -n ${RUNTIMES}
+    fi
+    $CLIENT_EXE delete scc ${RUNTIMES}-scc
+
     ${CLIENT_EXE} delete project ${RUNTIMES}
-    ${CLIENT_EXE} delete SecurityContextConstraints ${RUNTIMES}-scc
+  else  
+    ${CLIENT_EXE} delete namespace ${RUNTIMES}
   fi
 fi

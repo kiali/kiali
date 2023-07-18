@@ -17,12 +17,14 @@
 
 apply_network_attachment() {
   NAME=$1
+  if [ "${IS_MAISTRA}" != "true" ]; then
 cat <<NAD | $CLIENT_EXE -n ${NAME} apply -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
 NAD
+  fi
     cat <<SCC | $CLIENT_EXE apply -f -
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
@@ -44,16 +46,19 @@ install_mstore_app() {
 
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     ${CLIENT_EXE} get project ${MSTORE} || ${CLIENT_EXE} new-project ${MSTORE}
+  else
+    ${CLIENT_EXE} get ns ${MSTORE} || ${CLIENT_EXE} create ns ${MSTORE}
   fi
 
-  ${CLIENT_EXE} get ns ${MSTORE} || ${CLIENT_EXE} create ns ${MSTORE}
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    apply_network_attachment ${MSTORE}
+    $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${MSTORE}
+  fi
+
   ${CLIENT_EXE} label namespace ${MSTORE} istio-injection=enabled --overwrite=true
   ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/leandroberetta/demos/master/music-store/ui.yaml -n ${MSTORE}
   ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/leandroberetta/demos/master/music-store/backend.yaml -n ${MSTORE}
 
-  if [ "${IS_OPENSHIFT}" == "true" ]; then
-    apply_network_attachment ${MSTORE}
-  fi
   ${CLIENT_EXE} wait --timeout 60s --for condition=available deployment/music-store-backend-v1 -n music-store
   ${CLIENT_EXE} wait --timeout 60s --for condition=available deployment/music-store-ui-v1 -n music-store
 
@@ -155,8 +160,10 @@ HELPMSG
 done
 
 IS_OPENSHIFT="false"
+IS_MAISTRA="false"
 if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   IS_OPENSHIFT="true"
+  S_MAISTRA=$([ "$(${CLIENT_EXE} get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
 fi
 
 echo "CLIENT_EXE=${CLIENT_EXE}"
@@ -172,10 +179,17 @@ else
   ${CLIENT_EXE} delete -f https://raw.githubusercontent.com/leandroberetta/demos/master/music-store/ui.yaml -n ${MSTORE}
   ${CLIENT_EXE} delete -f https://raw.githubusercontent.com/leandroberetta/demos/master/music-store/backend.yaml -n ${MSTORE}
 
-  ${CLIENT_EXE} delete ns ${MSTORE} --ignore-not-found=true
   if [ "${IS_OPENSHIFT}" == "true" ]; then
+    if [ "${IS_MAISTRA}" != "true" ]; then
+      $CLIENT_EXE delete network-attachment-definition istio-cni -n ${MSTORE}
+    else
+      $CLIENT_EXE delete smm default -n ${MSTORE}
+    fi
+    $CLIENT_EXE delete scc ${MSTORE}-scc
+
     ${CLIENT_EXE} delete project ${MSTORE}
-    ${CLIENT_EXE} delete SecurityContextConstraints ${MSTORE}-scc
+  else
+    ${CLIENT_EXE} delete namespace ${MSTORE}
   fi
 fi
 

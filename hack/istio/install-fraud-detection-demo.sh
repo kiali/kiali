@@ -94,24 +94,6 @@ else
   $CLIENT_EXE create namespace ${NAMESPACE}
 fi
 
-if [ "${ENABLE_INJECTION}" == "true" ]; then
-  ${CLIENT_EXE} label namespace ${NAMESPACE} istio-injection=enabled
-fi
-
-# Deploy the demo
-
-${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/fraud-detection/accounts.yaml") -n ${NAMESPACE}
-${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/fraud-detection/cards.yaml") -n ${NAMESPACE}
-${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/fraud-detection/bank.yaml") -n ${NAMESPACE}
-${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/fraud-detection/policies.yaml") -n ${NAMESPACE}
-${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/fraud-detection/claims.yaml") -n ${NAMESPACE}
-${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/fraud-detection/insurance.yaml") -n ${NAMESPACE}
-${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/fraud-detection/fraud.yaml") -n ${NAMESPACE}
-
-if [ "${IS_MAISTRA}" == "true" ]; then
-  prepare_maistra "${NAMESPACE}"
-fi
-
 if [ "${IS_OPENSHIFT}" == "true" ]; then
   if [ "${IS_MAISTRA}" != "true" ]; then
     cat <<NAD | $CLIENT_EXE -n ${NAMESPACE} create -f -
@@ -136,3 +118,27 @@ users:
 - "system:serviceaccount:${NAMESPACE}:default"
 SCC
 fi
+   
+
+if [ "${ENABLE_INJECTION}" == "true" ]; then
+  ${CLIENT_EXE} label namespace ${NAMESPACE} istio-injection=enabled
+fi
+
+# Deploy the demo
+
+${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/fraud-detection/accounts.yaml") -n ${NAMESPACE}
+${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/fraud-detection/cards.yaml") -n ${NAMESPACE}
+${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/fraud-detection/bank.yaml") -n ${NAMESPACE}
+${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/fraud-detection/policies.yaml") -n ${NAMESPACE}
+${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/fraud-detection/claims.yaml") -n ${NAMESPACE}
+${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/fraud-detection/insurance.yaml") -n ${NAMESPACE}
+${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/fraud-detection/fraud.yaml") -n ${NAMESPACE}
+
+if [ "${IS_MAISTRA}" == "true" ]; then
+  prepare_maistra "${NAMESPACE}"
+fi
+
+if [ "${IS_OPENSHIFT}" == "true" ]; then
+  $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${NAMESPACE}
+fi
+
