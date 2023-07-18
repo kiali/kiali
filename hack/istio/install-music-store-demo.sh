@@ -163,7 +163,7 @@ IS_OPENSHIFT="false"
 IS_MAISTRA="false"
 if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   IS_OPENSHIFT="true"
-  S_MAISTRA=$([ "$(oc get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
+  S_MAISTRA=$([ "$(${CLIENT_EXE} get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
 fi
 
 echo "CLIENT_EXE=${CLIENT_EXE}"
