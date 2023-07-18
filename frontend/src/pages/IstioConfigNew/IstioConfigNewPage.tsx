@@ -452,7 +452,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
               label="Namespaces"
               isRequired={true}
               fieldId="namespaces"
-              helperTextInvalid={'An Istio Config resource needs at least a namespace selected'}
+              helperTextInvalid={'An Istio Config resource needs at least one namespace selected'}
               validated={isValid(isNamespacesValid)}
             >
               <NamespaceDropdown disabled={false} />
@@ -461,7 +461,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
               label="Clusters"
               isRequired={true}
               fieldId="clusters"
-              helperTextInvalid={'An Istio Config resource needs at least a cluster selected'}
+              helperTextInvalid={'An Istio Config resource needs at least one cluster selected'}
               validated={isValid(isClustersValid)}
             >
               <ClusterDropdown />
@@ -548,8 +548,8 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    activeNamespaces: activeNamespacesSelector(state),
     activeClusters: activeClustersSelector(state),
+    activeNamespaces: activeNamespacesSelector(state),
     namespacesPerCluster: namespacesPerClusterSelector(state)
   };
 };

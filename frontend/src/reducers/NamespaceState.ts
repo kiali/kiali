@@ -69,8 +69,8 @@ export const NamespaceStateReducer = (
       return updateState(state, {
         isFetching: false,
         items: filterDuplicateNamespaces(action.payload.list),
-        namespacesPerCluster: namespacesPerCluster(action.payload.list),
         lastUpdated: action.payload.receivedAt,
+        namespacesPerCluster: namespacesPerCluster(action.payload.list),
         ...updatedActive
       });
 
