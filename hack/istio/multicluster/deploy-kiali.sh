@@ -80,7 +80,7 @@ deploy_kiali() {
 
   if [ "${KIALI_CREATE_REMOTE_CLUSTER_SECRETS}" == "true" ]; then
     if [ "${SINGLE_KIALI}" == "true" ]; then
-      local remote_url_flag
+      local remote_url_flag=""
       if [ "${MANAGE_KIND}" == "true" ]; then
         remote_url_flag="--remote-cluster-url https://$(${CLIENT_EXE} get nodes ${CLUSTER2_NAME}-control-plane --context ${CLUSTER2_CONTEXT} -o jsonpath='{.status.addresses[?(@.type == "InternalIP")].address}'):6443"
       fi
@@ -88,8 +88,8 @@ deploy_kiali() {
       ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh -c ${CLIENT_EXE} --remote-cluster-name ${CLUSTER2_NAME} -kcc ${CLUSTER1_CONTEXT} -rcc ${CLUSTER2_CONTEXT} ${remote_url_flag} -vo false
     else
       echo "Preparing remote cluster secrets for both Kiali installs."
-      local remote_url_flag1
-      local remote_url_flag2
+      local remote_url_flag1=""
+      local remote_url_flag2=""
       if [ "${MANAGE_KIND}" == "true" ]; then
         remote_url_flag1="--remote-cluster-url https://$(${CLIENT_EXE} get nodes ${CLUSTER2_NAME}-control-plane --context ${CLUSTER2_CONTEXT} -o jsonpath='{.status.addresses[?(@.type == "InternalIP")].address}'):6443"
         remote_url_flag2="--remote-cluster-url https://$(${CLIENT_EXE} get nodes ${CLUSTER1_NAME}-control-plane --context ${CLUSTER1_CONTEXT} -o jsonpath='{.status.addresses[?(@.type == "InternalIP")].address}'):6443"
