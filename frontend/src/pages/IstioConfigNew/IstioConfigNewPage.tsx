@@ -457,16 +457,17 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
             >
               <NamespaceDropdown disabled={false} />
             </FormGroup>
-            <FormGroup
-              label="Clusters"
-              isRequired={true}
-              fieldId="clusters"
-              hidden={!isMultiCluster}
-              helperTextInvalid={'An Istio Config resource needs at least one cluster selected'}
-              validated={isValid(isClustersValid)}
-            >
-              <ClusterDropdown />
-            </FormGroup>
+            {isMultiCluster && (
+              <FormGroup
+                label="Clusters"
+                isRequired={true}
+                fieldId="clusters"
+                helperTextInvalid={'An Istio Config resource needs at least one cluster selected'}
+                validated={isValid(isClustersValid)}
+              >
+                <ClusterDropdown />
+              </FormGroup>
+            )}
             <FormGroup
               label="Name"
               isRequired={true}
