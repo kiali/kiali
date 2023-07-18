@@ -609,8 +609,7 @@ fi
 setup_kubeconfig() {
   local kubeconfig=""
   if [ "${KUBE_CONTEXT}" == "current" ]; then
-    KUBE_ORIGINAL_CONTEXT="$(${CLIENT_EXE} config current-context)"
-    infomsg "Will use the current context as-is: ${KUBE_ORIGINAL_CONTEXT}"
+    infomsg "Will use the current context as-is: $(${CLIENT_EXE} config current-context)"
     # Re-use your current kubeconfig file.
     kubeconfig="${HOME}/.kube/config"
   else
