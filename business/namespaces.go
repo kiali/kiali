@@ -72,7 +72,7 @@ func NewNamespaceService(userClients map[string]kubernetes.ClientInterface, kial
 	}
 }
 
-// Returns a list of the given namespaces / projects
+// GetClusterList Returns a list of cluster names based on the user clients
 func (in *NamespaceService) GetClusterList() []string {
 	var clusterList []string
 	for cluster := range in.userClients {
