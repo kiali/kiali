@@ -89,7 +89,10 @@ func (s *Server) Start() {
 	// Start the business to initialize cache dependencies.
 	// The business cache should start before the server endpoint to ensure
 	// that the cache is ready before it's used by one of the server handlers.
-	business.Start()
+	if err := business.Start(); err != nil {
+		log.Errorf("Error starting business layer: %s", err)
+		panic(err)
+	}
 
 	conf := config.Get()
 	log.Infof("Server endpoint will start at [%v%v]", s.httpServer.Addr, conf.Server.WebRoot)

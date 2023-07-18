@@ -1,9 +1,6 @@
 package business
 
 import (
-	"context"
-	"sync"
-
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/config"
@@ -44,12 +41,11 @@ var (
 	clientFactory    kubernetes.ClientFactory
 	jaegerClient     jaeger.ClientInterface
 	kialiCache       cache.KialiCache
-	once             sync.Once
 	prometheusClient prometheus.ClientInterface
 )
 
 // sets the global kiali cache var.
-func initKialiCache() {
+func initKialiCache() error {
 	conf := config.Get()
 
 	if excludedWorkloads == nil {
@@ -62,61 +58,38 @@ func initKialiCache() {
 	userClient, err := kubernetes.GetClientFactory()
 	if err != nil {
 		log.Errorf("Failed to create client factory. Err: %s", err)
-		return
+		return err
 	}
 	clientFactory = userClient
 
-	// TODO: Remove conditonal once cache is fully mandatory.
-	if conf.KubernetesConfig.CacheEnabled {
-		log.Infof("Initializing Kiali Cache")
+	log.Infof("Initializing Kiali Cache")
 
-		// Initial list of namespaces to seed the cache with.
-		// This is only necessary if the cache is namespace-scoped.
-		// For a cluster-scoped cache, all namespaces are accessible.
-		// TODO: This is leaking cluster-scoped vs. namespace-scoped in a way.
-		var namespaceSeedList []string
-		if !conf.AllNamespacesAccessible() {
-			SAClients := clientFactory.GetSAClients()
-			// Special case when using the SA as the user, to fetch all the namespaces initially
-			initNamespaceService := NewNamespaceService(SAClients, SAClients)
-			nss, err := initNamespaceService.GetNamespaces(context.Background())
-			if err != nil {
-				log.Errorf("Error fetching initial namespaces for populating the Kiali Cache. Details: %s", err)
-				return
-			}
-
-			for _, ns := range nss {
-				namespaceSeedList = append(namespaceSeedList, ns.Name)
-			}
-		}
-
-		cache, err := cache.NewKialiCache(clientFactory, *config.Get(), namespaceSeedList...)
-		if err != nil {
-			log.Errorf("Error initializing Kiali Cache. Details: %s", err)
-			return
-		}
-
-		kialiCache = cache
+	cache, err := cache.NewKialiCache(clientFactory, *conf)
+	if err != nil {
+		log.Errorf("Error initializing Kiali Cache. Details: %s", err)
+		return err
 	}
+
+	// Seed namespaces when not in cluster wide mode.
+	if !conf.AllNamespacesAccessible() {
+		for _, namespace := range conf.Deployment.AccessibleNamespaces {
+			cache.CheckNamespace(namespace)
+		}
+	}
+
+	kialiCache = cache
+
+	return nil
 }
 
 func IsNamespaceCached(namespace string) bool {
-	ok := kialiCache != nil && kialiCache.CheckNamespace(namespace)
-	return ok
+	return kialiCache.CheckNamespace(namespace)
 }
 
-func IsResourceCached(namespace string, resource string) bool {
-	ok := IsNamespaceCached(namespace)
-	if ok && resource != "" {
-		ok = kialiCache.CheckIstioResource(resource)
-	}
-	return ok
-}
-
-func Start() {
-	// Kiali Cache will be initialized once at start up.
-	// TODO: Provide some error handling for start.
-	once.Do(initKialiCache)
+// Start initializes the Kiali Cache and sets the
+// globals necessary for the business layer.
+func Start() error {
+	return initKialiCache()
 }
 
 // Get the business.Layer
@@ -177,7 +150,7 @@ func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAC
 	temporaryLayer.Jaeger = JaegerService{loader: jaegerClient, businessLayer: temporaryLayer}
 	temporaryLayer.k8sClients = userClients
 	temporaryLayer.Mesh = NewMeshService(kialiSAClients, kialiCache, temporaryLayer, *conf)
-	temporaryLayer.Namespace = NewNamespaceService(userClients, kialiSAClients)
+	temporaryLayer.Namespace = NewNamespaceService(userClients, kialiSAClients, kialiCache, *conf)
 	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: userClients[homeClusterName]}
 	temporaryLayer.ProxyStatus = ProxyStatusService{kialiSAClients: kialiSAClients, kialiCache: kialiCache, businessLayer: temporaryLayer}
 	// Out of order because it relies on ProxyStatus
@@ -199,7 +172,5 @@ func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAC
 }
 
 func Stop() {
-	if kialiCache != nil {
-		kialiCache.Stop()
-	}
+	kialiCache.Stop()
 }

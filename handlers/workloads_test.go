@@ -45,9 +45,6 @@ func setupWorkloadList(t *testing.T, k8s *kubetest.FakeK8sClient) (*httptest.Ser
 }
 
 func TestWorkloadsEndpoint(t *testing.T) {
-	conf := config.NewConfig()
-	conf.KubernetesConfig.CacheEnabled = false
-	config.Set(conf)
 	mockClock()
 
 	kubeObjects := []runtime.Object{&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}}}

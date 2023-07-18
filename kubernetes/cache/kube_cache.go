@@ -3,10 +3,10 @@ package cache
 import (
 	"errors"
 	"fmt"
-	"regexp"
-	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/exp/slices"
 
 	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
@@ -35,6 +35,15 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
+// checkIstioAPIsExist checks if the istio APIs are present in the cluster
+// and returns an error if they are not.
+func checkIstioAPIsExist(client kubernetes.ClientInterface) error {
+	if !client.IsIstioAPI() {
+		return fmt.Errorf("istio APIs and resources are not present in cluster [%s]", client.ClusterInfo().Name)
+	}
+	return nil
+}
+
 type KubeCache interface {
 	// Control methods
 	// Check if a namespace is listed to be cached; if yes, creates a cache for that namespace
@@ -56,8 +65,6 @@ type KubeCache interface {
 	// Useful for when the token is refreshed for the client.
 	// This causes a full refresh of the cache.
 	UpdateClient(client kubernetes.ClientInterface) error
-
-	CheckIstioResource(resourceType string) bool
 
 	GetConfigMap(namespace, name string) (*core_v1.ConfigMap, error)
 	GetDaemonSets(namespace string) ([]apps_v1.DaemonSet, error)
@@ -142,9 +149,7 @@ type cacheLister struct {
 
 // kubeCache is a local cache of kube objects. Manages informers and listers.
 type kubeCache struct {
-	cacheIstioTypes        map[string]bool
 	cacheLock              sync.RWMutex
-	cacheNamespacesRegexps []regexp.Regexp
 	cfg                    config.Config
 	client                 kubernetes.ClientInterface
 	clusterCacheLister     *cacheLister
@@ -160,26 +165,12 @@ type kubeCache struct {
 }
 
 // Starts all informers. These run until context is cancelled.
-func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, refreshHandler RegistryRefreshHandler, namespaceSeedList ...string) (*kubeCache, error) {
+func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, refreshHandler RegistryRefreshHandler) (*kubeCache, error) {
 	refreshDuration := time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second
 
-	cacheNamespaces := cfg.KubernetesConfig.CacheNamespaces
-	cacheIstioTypes := make(map[string]bool)
-	for _, iType := range cfg.KubernetesConfig.CacheIstioTypes {
-		cacheIstioTypes[iType] = true
-	}
-	log.Tracef("[Kiali Cache] cacheIstioTypes %v", cacheIstioTypes)
-
-	cacheNamespacesRegexps := make([]regexp.Regexp, len(cacheNamespaces))
-	for i, ns := range cacheNamespaces {
-		cacheNamespacesRegexps[i] = *regexp.MustCompile(strings.TrimSpace(ns))
-	}
-
 	c := &kubeCache{
-		cacheIstioTypes:        cacheIstioTypes,
-		cacheNamespacesRegexps: cacheNamespacesRegexps,
-		cfg:                    cfg,
-		client:                 kialiClient,
+		cfg:    cfg,
+		client: kialiClient,
 		// Only when all namespaces are accessible should the cache be cluster scoped.
 		// Otherwise, kiali may not have access to all namespaces since
 		// the operator only grants clusterroles when all namespaces are accessible.
@@ -197,10 +188,6 @@ func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, ref
 		log.Debug("[Kiali Cache] Using 'namespace' scoped Kiali Cache")
 		c.nsCacheLister = make(map[string]*cacheLister)
 		c.stopNSChans = make(map[string]chan struct{})
-
-		for _, ns := range namespaceSeedList {
-			c.CheckNamespace(ns)
-		}
 	}
 
 	return c, nil
@@ -209,11 +196,7 @@ func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, ref
 // It will indicate if a namespace should have a cache
 func (c *kubeCache) isCached(namespace string) bool {
 	if namespace != "" {
-		for _, cacheNs := range c.cacheNamespacesRegexps {
-			if cacheNs.MatchString(namespace) {
-				return true
-			}
-		}
+		return slices.Contains(c.cfg.Deployment.AccessibleNamespaces, namespace)
 	}
 	return false
 }
@@ -327,11 +310,6 @@ func (c *kubeCache) refresh(namespace string) error {
 	return c.startInformers(namespace)
 }
 
-func (c *kubeCache) CheckIstioResource(resourceType string) bool {
-	_, exist := c.cacheIstioTypes[kubernetes.PluralType[resourceType]]
-	return exist && c.client.IsIstioAPI()
-}
-
 // starter is a small interface around the different informer factories that
 // allows us to start them all.
 type starter interface {
@@ -387,109 +365,95 @@ func (c *kubeCache) createIstioInformers(namespace string) istio.SharedInformerF
 	lister := c.getCacheLister(namespace)
 
 	if c.client.IsIstioAPI() {
-		if c.CheckIstioResource(kubernetes.AuthorizationPolicies) {
-			lister.authzLister = sharedInformers.Security().V1beta1().AuthorizationPolicies().Lister()
-			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Security().V1beta1().AuthorizationPolicies().Informer().HasSynced)
-			_, error := sharedInformers.Security().V1beta1().AuthorizationPolicies().Informer().AddEventHandler(c.registryRefreshHandler)
-			if error != nil {
-				log.Errorf("[Kiali Cache] Failed to Add event handler in AuthorizationPolicies cache : %s", error)
-			}
+		lister.authzLister = sharedInformers.Security().V1beta1().AuthorizationPolicies().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Security().V1beta1().AuthorizationPolicies().Informer().HasSynced)
+		_, error := sharedInformers.Security().V1beta1().AuthorizationPolicies().Informer().AddEventHandler(c.registryRefreshHandler)
+		if error != nil {
+			log.Errorf("[Kiali Cache] Failed to Add event handler in AuthorizationPolicies cache : %s", error)
 		}
-		if c.CheckIstioResource(kubernetes.DestinationRules) {
-			lister.destinationRuleLister = sharedInformers.Networking().V1beta1().DestinationRules().Lister()
-			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().DestinationRules().Informer().HasSynced)
-			_, error := sharedInformers.Networking().V1beta1().DestinationRules().Informer().AddEventHandler(c.registryRefreshHandler)
-			if error != nil {
-				log.Errorf("[Kiali Cache] Failed to Add event handler in DestinationRules cache : %s", error)
-			}
+
+		lister.destinationRuleLister = sharedInformers.Networking().V1beta1().DestinationRules().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().DestinationRules().Informer().HasSynced)
+		_, error = sharedInformers.Networking().V1beta1().DestinationRules().Informer().AddEventHandler(c.registryRefreshHandler)
+		if error != nil {
+			log.Errorf("[Kiali Cache] Failed to Add event handler in DestinationRules cache : %s", error)
 		}
-		if c.CheckIstioResource(kubernetes.EnvoyFilters) {
-			lister.envoyFilterLister = sharedInformers.Networking().V1alpha3().EnvoyFilters().Lister()
-			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1alpha3().EnvoyFilters().Informer().HasSynced)
-			_, error := sharedInformers.Networking().V1alpha3().EnvoyFilters().Informer().AddEventHandler(c.registryRefreshHandler)
-			if error != nil {
-				log.Errorf("[Kiali Cache] Failed to Add event handler in EnvoyFilters cache : %s", error)
-			}
+
+		lister.envoyFilterLister = sharedInformers.Networking().V1alpha3().EnvoyFilters().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1alpha3().EnvoyFilters().Informer().HasSynced)
+		_, error = sharedInformers.Networking().V1alpha3().EnvoyFilters().Informer().AddEventHandler(c.registryRefreshHandler)
+		if error != nil {
+			log.Errorf("[Kiali Cache] Failed to Add event handler in EnvoyFilters cache : %s", error)
 		}
-		if c.CheckIstioResource(kubernetes.Gateways) {
-			lister.gatewayLister = sharedInformers.Networking().V1beta1().Gateways().Lister()
-			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().Gateways().Informer().HasSynced)
-			_, error := sharedInformers.Networking().V1beta1().Gateways().Informer().AddEventHandler(c.registryRefreshHandler)
-			if error != nil {
-				log.Errorf("[Kiali Cache] Failed to Add event handler in Gateways cache : %s", error)
-			}
+
+		lister.gatewayLister = sharedInformers.Networking().V1beta1().Gateways().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().Gateways().Informer().HasSynced)
+		_, error = sharedInformers.Networking().V1beta1().Gateways().Informer().AddEventHandler(c.registryRefreshHandler)
+		if error != nil {
+			log.Errorf("[Kiali Cache] Failed to Add event handler in Gateways cache : %s", error)
 		}
-		if c.CheckIstioResource(kubernetes.PeerAuthentications) {
-			lister.peerAuthnLister = sharedInformers.Security().V1beta1().PeerAuthentications().Lister()
-			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Security().V1beta1().PeerAuthentications().Informer().HasSynced)
-			_, error := sharedInformers.Security().V1beta1().PeerAuthentications().Informer().AddEventHandler(c.registryRefreshHandler)
-			if error != nil {
-				log.Errorf("[Kiali Cache] Failed to Add event handler in PeerAuthentications cache : %s", error)
-			}
+
+		lister.peerAuthnLister = sharedInformers.Security().V1beta1().PeerAuthentications().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Security().V1beta1().PeerAuthentications().Informer().HasSynced)
+		_, error = sharedInformers.Security().V1beta1().PeerAuthentications().Informer().AddEventHandler(c.registryRefreshHandler)
+		if error != nil {
+			log.Errorf("[Kiali Cache] Failed to Add event handler in PeerAuthentications cache : %s", error)
 		}
-		if c.CheckIstioResource(kubernetes.RequestAuthentications) {
-			lister.requestAuthnLister = sharedInformers.Security().V1beta1().RequestAuthentications().Lister()
-			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Security().V1beta1().RequestAuthentications().Informer().HasSynced)
-			_, error := sharedInformers.Security().V1beta1().RequestAuthentications().Informer().AddEventHandler(c.registryRefreshHandler)
-			if error != nil {
-				log.Errorf("[Kiali Cache] Failed to Add event handler in RequestAuthentications cache : %s", error)
-			}
+
+		lister.requestAuthnLister = sharedInformers.Security().V1beta1().RequestAuthentications().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Security().V1beta1().RequestAuthentications().Informer().HasSynced)
+		_, error = sharedInformers.Security().V1beta1().RequestAuthentications().Informer().AddEventHandler(c.registryRefreshHandler)
+		if error != nil {
+			log.Errorf("[Kiali Cache] Failed to Add event handler in RequestAuthentications cache : %s", error)
 		}
-		if c.CheckIstioResource(kubernetes.ServiceEntries) {
-			lister.serviceEntryLister = sharedInformers.Networking().V1beta1().ServiceEntries().Lister()
-			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().ServiceEntries().Informer().HasSynced)
-			_, error := sharedInformers.Networking().V1beta1().ServiceEntries().Informer().AddEventHandler(c.registryRefreshHandler)
-			if error != nil {
-				log.Errorf("[Kiali Cache] Failed to Add event handler in ServiceEntries cache : %s", error)
-			}
+
+		lister.serviceEntryLister = sharedInformers.Networking().V1beta1().ServiceEntries().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().ServiceEntries().Informer().HasSynced)
+		_, error = sharedInformers.Networking().V1beta1().ServiceEntries().Informer().AddEventHandler(c.registryRefreshHandler)
+		if error != nil {
+			log.Errorf("[Kiali Cache] Failed to Add event handler in ServiceEntries cache : %s", error)
 		}
-		if c.CheckIstioResource(kubernetes.Sidecars) {
-			lister.sidecarLister = sharedInformers.Networking().V1beta1().Sidecars().Lister()
-			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().Sidecars().Informer().HasSynced)
-			_, error := sharedInformers.Networking().V1beta1().Sidecars().Informer().AddEventHandler(c.registryRefreshHandler)
-			if error != nil {
-				log.Errorf("[Kiali Cache] Failed to Add event handler in Sidecars cache : %s", error)
-			}
+
+		lister.sidecarLister = sharedInformers.Networking().V1beta1().Sidecars().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().Sidecars().Informer().HasSynced)
+		_, error = sharedInformers.Networking().V1beta1().Sidecars().Informer().AddEventHandler(c.registryRefreshHandler)
+		if error != nil {
+			log.Errorf("[Kiali Cache] Failed to Add event handler in Sidecars cache : %s", error)
 		}
-		if c.CheckIstioResource(kubernetes.Telemetries) {
-			lister.telemetryLister = sharedInformers.Telemetry().V1alpha1().Telemetries().Lister()
-			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Telemetry().V1alpha1().Telemetries().Informer().HasSynced)
-			_, error := sharedInformers.Telemetry().V1alpha1().Telemetries().Informer().AddEventHandler(c.registryRefreshHandler)
-			if error != nil {
-				log.Errorf("[Kiali Cache] Failed to Add event handler in Telemetries cache : %s", error)
-			}
+
+		lister.telemetryLister = sharedInformers.Telemetry().V1alpha1().Telemetries().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Telemetry().V1alpha1().Telemetries().Informer().HasSynced)
+		_, error = sharedInformers.Telemetry().V1alpha1().Telemetries().Informer().AddEventHandler(c.registryRefreshHandler)
+		if error != nil {
+			log.Errorf("[Kiali Cache] Failed to Add event handler in Telemetries cache : %s", error)
 		}
-		if c.CheckIstioResource(kubernetes.VirtualServices) {
-			lister.virtualServiceLister = sharedInformers.Networking().V1beta1().VirtualServices().Lister()
-			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().VirtualServices().Informer().HasSynced)
-			_, error := sharedInformers.Networking().V1beta1().VirtualServices().Informer().AddEventHandler(c.registryRefreshHandler)
-			if error != nil {
-				log.Errorf("[Kiali Cache] Failed to Add event handler in VirtualServices cache : %s", error)
-			}
+
+		lister.virtualServiceLister = sharedInformers.Networking().V1beta1().VirtualServices().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().VirtualServices().Informer().HasSynced)
+		_, error = sharedInformers.Networking().V1beta1().VirtualServices().Informer().AddEventHandler(c.registryRefreshHandler)
+		if error != nil {
+			log.Errorf("[Kiali Cache] Failed to Add event handler in VirtualServices cache : %s", error)
 		}
-		if c.CheckIstioResource(kubernetes.WasmPlugins) {
-			lister.wasmPluginLister = sharedInformers.Extensions().V1alpha1().WasmPlugins().Lister()
-			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Extensions().V1alpha1().WasmPlugins().Informer().HasSynced)
-			_, error := sharedInformers.Extensions().V1alpha1().WasmPlugins().Informer().AddEventHandler(c.registryRefreshHandler)
-			if error != nil {
-				log.Errorf("[Kiali Cache] Failed to Add event handler in WasmPlugins cache : %s", error)
-			}
+
+		lister.wasmPluginLister = sharedInformers.Extensions().V1alpha1().WasmPlugins().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Extensions().V1alpha1().WasmPlugins().Informer().HasSynced)
+		_, error = sharedInformers.Extensions().V1alpha1().WasmPlugins().Informer().AddEventHandler(c.registryRefreshHandler)
+		if error != nil {
+			log.Errorf("[Kiali Cache] Failed to Add event handler in WasmPlugins cache : %s", error)
 		}
-		if c.CheckIstioResource(kubernetes.WorkloadEntries) {
-			lister.workloadEntryLister = sharedInformers.Networking().V1beta1().WorkloadEntries().Lister()
-			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().WorkloadEntries().Informer().HasSynced)
-			_, error := sharedInformers.Networking().V1beta1().WorkloadEntries().Informer().AddEventHandler(c.registryRefreshHandler)
-			if error != nil {
-				log.Errorf("[Kiali Cache] Failed to Add event handler in WorkloadEntries cache : %s", error)
-			}
+
+		lister.workloadEntryLister = sharedInformers.Networking().V1beta1().WorkloadEntries().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().WorkloadEntries().Informer().HasSynced)
+		_, error = sharedInformers.Networking().V1beta1().WorkloadEntries().Informer().AddEventHandler(c.registryRefreshHandler)
+		if error != nil {
+			log.Errorf("[Kiali Cache] Failed to Add event handler in WorkloadEntries cache : %s", error)
 		}
-		if c.CheckIstioResource(kubernetes.WorkloadGroups) {
-			lister.workloadGroupLister = sharedInformers.Networking().V1beta1().WorkloadGroups().Lister()
-			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().WorkloadGroups().Informer().HasSynced)
-			_, error := sharedInformers.Networking().V1beta1().WorkloadGroups().Informer().AddEventHandler(c.registryRefreshHandler)
-			if error != nil {
-				log.Errorf("[Kiali Cache] Failed to Add event handler in WorkloadGroups cache : %s", error)
-			}
+
+		lister.workloadGroupLister = sharedInformers.Networking().V1beta1().WorkloadGroups().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().WorkloadGroups().Informer().HasSynced)
+		_, error = sharedInformers.Networking().V1beta1().WorkloadGroups().Informer().AddEventHandler(c.registryRefreshHandler)
+		if error != nil {
+			log.Errorf("[Kiali Cache] Failed to Add event handler in WorkloadGroups cache : %s", error)
 		}
 	}
 
@@ -501,21 +465,18 @@ func (c *kubeCache) createGatewayInformers(namespace string) gateway.SharedInfor
 	lister := c.getCacheLister(namespace)
 
 	if c.client.IsGatewayAPI() {
-		if c.CheckIstioResource(kubernetes.K8sGateways) {
-			lister.k8sgatewayLister = sharedInformers.Gateway().V1beta1().Gateways().Lister()
-			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1beta1().Gateways().Informer().HasSynced)
-			_, err := sharedInformers.Gateway().V1beta1().Gateways().Informer().AddEventHandler(c.registryRefreshHandler)
-			if err != nil {
-				log.Errorf("Error adding Handler to Informer Gateways: %s", err.Error())
-			}
+		lister.k8sgatewayLister = sharedInformers.Gateway().V1beta1().Gateways().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1beta1().Gateways().Informer().HasSynced)
+		_, err := sharedInformers.Gateway().V1beta1().Gateways().Informer().AddEventHandler(c.registryRefreshHandler)
+		if err != nil {
+			log.Errorf("Error adding Handler to Informer Gateways: %s", err.Error())
 		}
-		if c.CheckIstioResource(kubernetes.K8sHTTPRoutes) {
-			lister.k8shttprouteLister = sharedInformers.Gateway().V1beta1().HTTPRoutes().Lister()
-			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1beta1().HTTPRoutes().Informer().HasSynced)
-			_, err := sharedInformers.Gateway().V1beta1().Gateways().Informer().AddEventHandler(c.registryRefreshHandler)
-			if err != nil {
-				log.Errorf("Error adding Handler to Informer Gateways: %s", err.Error())
-			}
+
+		lister.k8shttprouteLister = sharedInformers.Gateway().V1beta1().HTTPRoutes().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1beta1().HTTPRoutes().Informer().HasSynced)
+		_, err = sharedInformers.Gateway().V1beta1().Gateways().Informer().AddEventHandler(c.registryRefreshHandler)
+		if err != nil {
+			log.Errorf("Error adding Handler to Informer Gateways: %s", err.Error())
 		}
 	}
 	return sharedInformers
@@ -844,8 +805,8 @@ func (c *kubeCache) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, erro
 }
 
 func (c *kubeCache) GetDestinationRule(namespace, name string) (*networking_v1beta1.DestinationRule, error) {
-	if !c.CheckIstioResource(kubernetes.DestinationRules) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.DestinationRuleType)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
 
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
@@ -864,9 +825,10 @@ func (c *kubeCache) GetDestinationRule(namespace, name string) (*networking_v1be
 }
 
 func (c *kubeCache) GetDestinationRules(namespace, labelSelector string) ([]*networking_v1beta1.DestinationRule, error) {
-	if !c.CheckIstioResource(kubernetes.DestinationRules) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.DestinationRuleType)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
+
 	selector, err := labels.Parse(labelSelector)
 	if err != nil {
 		return nil, err
@@ -898,8 +860,8 @@ func (c *kubeCache) GetDestinationRules(namespace, labelSelector string) ([]*net
 }
 
 func (c *kubeCache) GetEnvoyFilter(namespace, name string) (*networking_v1alpha3.EnvoyFilter, error) {
-	if !c.CheckIstioResource(kubernetes.EnvoyFilters) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.EnvoyFilterType)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
 
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
@@ -918,9 +880,10 @@ func (c *kubeCache) GetEnvoyFilter(namespace, name string) (*networking_v1alpha3
 }
 
 func (c *kubeCache) GetEnvoyFilters(namespace, labelSelector string) ([]*networking_v1alpha3.EnvoyFilter, error) {
-	if !c.CheckIstioResource(kubernetes.EnvoyFilters) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.EnvoyFilterType)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
+
 	selector, err := labels.Parse(labelSelector)
 	if err != nil {
 		return nil, err
@@ -951,8 +914,8 @@ func (c *kubeCache) GetEnvoyFilters(namespace, labelSelector string) ([]*network
 }
 
 func (c *kubeCache) GetGateway(namespace, name string) (*networking_v1beta1.Gateway, error) {
-	if !c.CheckIstioResource(kubernetes.Gateways) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.GatewayType)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
 
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
@@ -970,9 +933,10 @@ func (c *kubeCache) GetGateway(namespace, name string) (*networking_v1beta1.Gate
 }
 
 func (c *kubeCache) GetGateways(namespace, labelSelector string) ([]*networking_v1beta1.Gateway, error) {
-	if !c.CheckIstioResource(kubernetes.Gateways) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.Gateways)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
+
 	selector, err := labels.Parse(labelSelector)
 	if err != nil {
 		return nil, err
@@ -1003,8 +967,8 @@ func (c *kubeCache) GetGateways(namespace, labelSelector string) ([]*networking_
 }
 
 func (c *kubeCache) GetServiceEntry(namespace, name string) (*networking_v1beta1.ServiceEntry, error) {
-	if !c.CheckIstioResource(kubernetes.ServiceEntries) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.ServiceEntryType)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
 
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
@@ -1022,9 +986,10 @@ func (c *kubeCache) GetServiceEntry(namespace, name string) (*networking_v1beta1
 }
 
 func (c *kubeCache) GetServiceEntries(namespace, labelSelector string) ([]*networking_v1beta1.ServiceEntry, error) {
-	if !c.CheckIstioResource(kubernetes.ServiceEntries) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.ServiceEntryType)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
+
 	selector, err := labels.Parse(labelSelector)
 	if err != nil {
 		return nil, err
@@ -1055,8 +1020,8 @@ func (c *kubeCache) GetServiceEntries(namespace, labelSelector string) ([]*netwo
 }
 
 func (c *kubeCache) GetSidecar(namespace, name string) (*networking_v1beta1.Sidecar, error) {
-	if !c.CheckIstioResource(kubernetes.Sidecars) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.SidecarType)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
 
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
@@ -1074,9 +1039,10 @@ func (c *kubeCache) GetSidecar(namespace, name string) (*networking_v1beta1.Side
 }
 
 func (c *kubeCache) GetSidecars(namespace, labelSelector string) ([]*networking_v1beta1.Sidecar, error) {
-	if !c.CheckIstioResource(kubernetes.Sidecars) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.SidecarType)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
+
 	selector, err := labels.Parse(labelSelector)
 	if err != nil {
 		return nil, err
@@ -1107,8 +1073,8 @@ func (c *kubeCache) GetSidecars(namespace, labelSelector string) ([]*networking_
 }
 
 func (c *kubeCache) GetVirtualService(namespace, name string) (*networking_v1beta1.VirtualService, error) {
-	if !c.CheckIstioResource(kubernetes.VirtualServices) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.VirtualServiceType)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
 
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
@@ -1126,9 +1092,10 @@ func (c *kubeCache) GetVirtualService(namespace, name string) (*networking_v1bet
 }
 
 func (c *kubeCache) GetVirtualServices(namespace, labelSelector string) ([]*networking_v1beta1.VirtualService, error) {
-	if !c.CheckIstioResource(kubernetes.VirtualServices) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.VirtualServiceType)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
+
 	selector, err := labels.Parse(labelSelector)
 	if err != nil {
 		return nil, err
@@ -1159,8 +1126,8 @@ func (c *kubeCache) GetVirtualServices(namespace, labelSelector string) ([]*netw
 }
 
 func (c *kubeCache) GetWorkloadEntry(namespace, name string) (*networking_v1beta1.WorkloadEntry, error) {
-	if !c.CheckIstioResource(kubernetes.WorkloadEntries) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadEntryType)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
 
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
@@ -1178,8 +1145,8 @@ func (c *kubeCache) GetWorkloadEntry(namespace, name string) (*networking_v1beta
 }
 
 func (c *kubeCache) GetWorkloadEntries(namespace, labelSelector string) ([]*networking_v1beta1.WorkloadEntry, error) {
-	if !c.CheckIstioResource(kubernetes.WorkloadEntries) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadEntryType)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
 
 	selector, err := labels.Parse(labelSelector)
@@ -1212,8 +1179,8 @@ func (c *kubeCache) GetWorkloadEntries(namespace, labelSelector string) ([]*netw
 }
 
 func (c *kubeCache) GetWorkloadGroup(namespace, name string) (*networking_v1beta1.WorkloadGroup, error) {
-	if !c.CheckIstioResource(kubernetes.WorkloadGroups) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadGroupType)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
 
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
@@ -1231,9 +1198,10 @@ func (c *kubeCache) GetWorkloadGroup(namespace, name string) (*networking_v1beta
 }
 
 func (c *kubeCache) GetWorkloadGroups(namespace, labelSelector string) ([]*networking_v1beta1.WorkloadGroup, error) {
-	if !c.CheckIstioResource(kubernetes.WorkloadGroups) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadGroups)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
+
 	selector, err := labels.Parse(labelSelector)
 	if err != nil {
 		return nil, err
@@ -1264,8 +1232,8 @@ func (c *kubeCache) GetWorkloadGroups(namespace, labelSelector string) ([]*netwo
 }
 
 func (c *kubeCache) GetWasmPlugin(namespace, name string) (*extentions_v1alpha1.WasmPlugin, error) {
-	if !c.CheckIstioResource(kubernetes.WasmPlugins) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WasmPluginType)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
 
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
@@ -1283,8 +1251,8 @@ func (c *kubeCache) GetWasmPlugin(namespace, name string) (*extentions_v1alpha1.
 }
 
 func (c *kubeCache) GetWasmPlugins(namespace, labelSelector string) ([]*extentions_v1alpha1.WasmPlugin, error) {
-	if !c.CheckIstioResource(kubernetes.WasmPlugins) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WasmPlugins)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
 
 	selector, err := labels.Parse(labelSelector)
@@ -1317,8 +1285,8 @@ func (c *kubeCache) GetWasmPlugins(namespace, labelSelector string) ([]*extentio
 }
 
 func (c *kubeCache) GetTelemetry(namespace, name string) (*v1alpha1.Telemetry, error) {
-	if !c.CheckIstioResource(kubernetes.Telemetries) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.TelemetryType)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
 
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
@@ -1336,8 +1304,8 @@ func (c *kubeCache) GetTelemetry(namespace, name string) (*v1alpha1.Telemetry, e
 }
 
 func (c *kubeCache) GetTelemetries(namespace, labelSelector string) ([]*v1alpha1.Telemetry, error) {
-	if !c.CheckIstioResource(kubernetes.Telemetries) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.Telemetries)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
 
 	selector, err := labels.Parse(labelSelector)
@@ -1371,8 +1339,8 @@ func (c *kubeCache) GetTelemetries(namespace, labelSelector string) ([]*v1alpha1
 }
 
 func (c *kubeCache) GetK8sGateway(namespace, name string) (*gatewayapi_v1beta1.Gateway, error) {
-	if !c.CheckIstioResource(kubernetes.K8sGateways) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.K8sGatewayType)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
 
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
@@ -1390,8 +1358,8 @@ func (c *kubeCache) GetK8sGateway(namespace, name string) (*gatewayapi_v1beta1.G
 }
 
 func (c *kubeCache) GetK8sGateways(namespace, labelSelector string) ([]*gatewayapi_v1beta1.Gateway, error) {
-	if !c.CheckIstioResource(kubernetes.K8sGateways) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.K8sGateways)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
 
 	selector, err := labels.Parse(labelSelector)
@@ -1425,8 +1393,8 @@ func (c *kubeCache) GetK8sGateways(namespace, labelSelector string) ([]*gatewaya
 }
 
 func (c *kubeCache) GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1beta1.HTTPRoute, error) {
-	if !c.CheckIstioResource(kubernetes.K8sHTTPRoutes) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.K8sHTTPRouteType)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
 
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
@@ -1444,8 +1412,8 @@ func (c *kubeCache) GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1beta1
 }
 
 func (c *kubeCache) GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewayapi_v1beta1.HTTPRoute, error) {
-	if !c.CheckIstioResource(kubernetes.K8sHTTPRoutes) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.K8sHTTPRoutes)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
 
 	selector, err := labels.Parse(labelSelector)
@@ -1479,8 +1447,8 @@ func (c *kubeCache) GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewa
 }
 
 func (c *kubeCache) GetAuthorizationPolicy(namespace, name string) (*security_v1beta1.AuthorizationPolicy, error) {
-	if !c.CheckIstioResource(kubernetes.AuthorizationPolicies) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.AuthorizationPoliciesType)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
 
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
@@ -1498,9 +1466,10 @@ func (c *kubeCache) GetAuthorizationPolicy(namespace, name string) (*security_v1
 }
 
 func (c *kubeCache) GetAuthorizationPolicies(namespace, labelSelector string) ([]*security_v1beta1.AuthorizationPolicy, error) {
-	if !c.CheckIstioResource(kubernetes.AuthorizationPolicies) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.AuthorizationPolicies)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
+
 	selector, err := labels.Parse(labelSelector)
 	if err != nil {
 		return nil, err
@@ -1531,8 +1500,8 @@ func (c *kubeCache) GetAuthorizationPolicies(namespace, labelSelector string) ([
 }
 
 func (c *kubeCache) GetPeerAuthentication(namespace, name string) (*security_v1beta1.PeerAuthentication, error) {
-	if !c.CheckIstioResource(kubernetes.PeerAuthentications) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.PeerAuthenticationsType)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
 
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
@@ -1550,8 +1519,8 @@ func (c *kubeCache) GetPeerAuthentication(namespace, name string) (*security_v1b
 }
 
 func (c *kubeCache) GetPeerAuthentications(namespace, labelSelector string) ([]*security_v1beta1.PeerAuthentication, error) {
-	if !c.CheckIstioResource(kubernetes.PeerAuthentications) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.PeerAuthenticationsType)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
 
 	selector, err := labels.Parse(labelSelector)
@@ -1584,8 +1553,8 @@ func (c *kubeCache) GetPeerAuthentications(namespace, labelSelector string) ([]*
 }
 
 func (c *kubeCache) GetRequestAuthentication(namespace, name string) (*security_v1beta1.RequestAuthentication, error) {
-	if !c.CheckIstioResource(kubernetes.RequestAuthentications) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.RequestAuthentications)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
 
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
@@ -1603,8 +1572,8 @@ func (c *kubeCache) GetRequestAuthentication(namespace, name string) (*security_
 }
 
 func (c *kubeCache) GetRequestAuthentications(namespace, labelSelector string) ([]*security_v1beta1.RequestAuthentication, error) {
-	if !c.CheckIstioResource(kubernetes.RequestAuthentications) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.RequestAuthenticationsType)
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
 	}
 
 	selector, err := labels.Parse(labelSelector)

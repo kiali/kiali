@@ -57,6 +57,9 @@ func TestRootContextPath(t *testing.T) {
 	conf.Server.StaticContentRootDirectory = tmpDir
 	conf.Auth.Strategy = "anonymous"
 
+	// Set the global client factory.
+	kubernetes.NewTestingClientFactory(t)
+
 	serverURL := fmt.Sprintf("http://%v", testServerHostPort)
 
 	config.Set(conf)
@@ -298,6 +301,9 @@ func TestTracingConfigured(t *testing.T) {
 	conf.Server.StaticContentRootDirectory = tmpDir
 	conf.Server.Observability.Tracing.Enabled = true
 	conf.Auth.Strategy = "anonymous"
+
+	// Set the global client factory.
+	kubernetes.NewTestingClientFactory(t)
 
 	serverURL := fmt.Sprintf("http://%v", testServerHostPort)
 

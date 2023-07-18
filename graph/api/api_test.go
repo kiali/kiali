@@ -14,7 +14,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/mux"
-	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -34,64 +33,45 @@ import (
 
 // Setup mock
 
-func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K8SClientMock, error) {
+func setupMocked(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock) {
 	conf := config.NewConfig()
-	conf.KubernetesConfig.CacheEnabled = false
 	conf.KubernetesConfig.ClusterName = "east"
 	config.Set(conf)
 
-	k8s := new(kubetest.K8SClientMock)
-
-	k8s.On("GetNamespaces", mock.AnythingOfType("string")).Return(
-		&core_v1.NamespaceList{
-			Items: []core_v1.Namespace{
-				{
-					ObjectMeta: meta_v1.ObjectMeta{
-						Name: "bookinfo",
-					},
-				},
-				{
-					ObjectMeta: meta_v1.ObjectMeta{
-						Name: "tutorial",
-					},
-				},
-			},
-		}, nil)
-
-	fmt.Println("!!! Set up standard mock")
-	k8s.On("GetProjects", mock.AnythingOfType("string")).Return(
-		[]osproject_v1.Project{
-			{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Name: "bookinfo",
-				},
-			},
-			{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Name: "tutorial",
-				},
-			},
-		}, nil)
-
-	k8s.On("IsOpenShift").Return(true)
-	k8s.On("IsGatewayAPI").Return(false)
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
+	)
 
 	api := new(prometheustest.PromAPIMock)
 	client, err := prometheus.NewClient()
 	if err != nil {
-		return nil, nil, nil, err
+		t.Fatal(err)
 	}
 	client.Inject(api)
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	business.SetWithBackends(mockClientFactory, nil)
+	cache := business.NewTestingCache(t, k8s, *conf)
+	business.WithKialiCache(cache)
 
-	return client, api, k8s, nil
+	return client, api
 }
 
-func setupMockedWithIstioComponentNamespaces(meshId string, userClients map[string]kubernetes.ClientInterface) (*prometheus.Client, *prometheustest.PromAPIMock, error) {
+// firstKey returns the first key from the map.
+// Useful when you don't care about ordering.
+// Empty map returns empty K value.
+func firstKey[K comparable, V any](m map[K]V) K {
+	var k K
+	for k = range m {
+		break
+	}
+	return k
+}
+
+func setupMockedWithIstioComponentNamespaces(t *testing.T, meshId string, userClients map[string]kubernetes.ClientInterface) (*prometheus.Client, *prometheustest.PromAPIMock, error) {
 	testConfig := config.NewConfig()
-	testConfig.KubernetesConfig.CacheEnabled = false
+	testConfig.KubernetesConfig.ClusterName = firstKey(userClients)
 	if meshId != "" {
 		testConfig.ExternalServices.Prometheus.QueryScope = map[string]string{"mesh_id": meshId}
 	}
@@ -108,6 +88,9 @@ func setupMockedWithIstioComponentNamespaces(meshId string, userClients map[stri
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	mockClientFactory.SetClients(userClients)
 
+	cache := business.NewTestingCacheWithFactory(t, mockClientFactory, *testConfig)
+
+	business.WithKialiCache(cache)
 	business.SetWithBackends(mockClientFactory, nil)
 
 	return client, api, nil
@@ -1003,10 +986,7 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, *prometheustest.PromA
 		},
 	}
 
-	client, api, _, err := setupMocked()
-	if err != nil {
-		return client, api, err
-	}
+	client, api := setupMocked(t)
 
 	mockQuery(api, q0, &v0)
 	mockQuery(api, q1, &v1)
@@ -1816,10 +1796,7 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		},
 	}
 
-	client, xapi, _, err := setupMocked()
-	if err != nil {
-		return
-	}
+	client, xapi := setupMocked(t)
 
 	mockQuery(xapi, q0, &v0)
 	mockQuery(xapi, q1, &v1)
@@ -2141,10 +2118,7 @@ func TestAppNodeGraph(t *testing.T) {
 		},
 	}
 
-	client, xapi, _, err := setupMocked()
-	if err != nil {
-		return
-	}
+	client, xapi := setupMocked(t)
 
 	mockQuery(xapi, q0, &v0)
 	mockQuery(xapi, q1, &v1)
@@ -2466,10 +2440,7 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		},
 	}
 
-	client, xapi, _, err := setupMocked()
-	if err != nil {
-		return
-	}
+	client, xapi := setupMocked(t)
 
 	mockQuery(xapi, q0, &v0)
 	mockQuery(xapi, q1, &v1)
@@ -2561,10 +2532,7 @@ func TestServiceNodeGraph(t *testing.T) {
 		},
 	}
 
-	client, xapi, _, err := setupMocked()
-	if err != nil {
-		return
-	}
+	client, xapi := setupMocked(t)
 
 	mockQuery(xapi, q0, &v0)
 	mockQuery(xapi, q1, &v1)
@@ -2989,10 +2957,7 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 		},
 	}
 
-	client, xapi, _, err := setupMocked()
-	if err != nil {
-		return
-	}
+	client, xapi := setupMocked(t)
 
 	mockQuery(xapi, q0, &v0)
 	mockQuery(xapi, q1, &v1)
@@ -3539,7 +3504,7 @@ func TestComplexGraph(t *testing.T) {
 			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-telemetry"}},
 		),
 	}
-	client, xapi, err := setupMockedWithIstioComponentNamespaces("mesh1", clients)
+	client, xapi, err := setupMockedWithIstioComponentNamespaces(t, "mesh1", clients)
 	if err != nil {
 		t.Error(err)
 		return
@@ -3868,7 +3833,7 @@ func TestMultiClusterSourceGraph(t *testing.T) {
 			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
 		),
 	}
-	client, xapi, err := setupMockedWithIstioComponentNamespaces("", clients)
+	client, xapi, err := setupMockedWithIstioComponentNamespaces(t, "", clients)
 	if err != nil {
 		t.Error(err)
 		return

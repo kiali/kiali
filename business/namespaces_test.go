@@ -18,14 +18,12 @@ import (
 )
 
 // Namespace service setup
-func setupNamespaceService(k8s kubernetes.ClientInterface, conf *config.Config) NamespaceService {
-	// config needs to be set by other services since those rely on the global.
-	conf.KubernetesConfig.CacheEnabled = false
-	config.Set(conf)
+func setupNamespaceService(t *testing.T, k8s kubernetes.ClientInterface, conf *config.Config) NamespaceService {
+	cache := NewTestingCache(t, k8s, *conf)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	return NewNamespaceService(k8sclients, k8sclients)
+	return NewNamespaceService(k8sclients, k8sclients, cache, *conf)
 }
 
 // Namespace service setup
@@ -55,7 +53,7 @@ func TestGetNamespaces(t *testing.T) {
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	SetWithBackends(mockClientFactory, nil)
 
-	nsservice := setupNamespaceService(k8s, conf)
+	nsservice := setupNamespaceService(t, k8s, conf)
 
 	ns, _ := nsservice.GetNamespaces(context.TODO())
 
@@ -74,7 +72,7 @@ func TestGetNamespace(t *testing.T) {
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	SetWithBackends(mockClientFactory, nil)
 
-	nsservice := setupNamespaceService(k8s, conf)
+	nsservice := setupNamespaceService(t, k8s, conf)
 
 	ns, _ := nsservice.GetNamespace(context.TODO(), "bookinfo")
 
@@ -92,7 +90,7 @@ func TestGetNamespaceWithError(t *testing.T) {
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	SetWithBackends(mockClientFactory, nil)
 
-	nsservice := setupNamespaceService(k8s, conf)
+	nsservice := setupNamespaceService(t, k8s, conf)
 
 	ns2, err := nsservice.GetNamespace(context.TODO(), "fakeNS")
 
@@ -104,16 +102,13 @@ func TestGetNamespaceWithError(t *testing.T) {
 func TestUpdateNamespaces(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
-	// TODO: Remove this once cache is mandatory
-	// Make sure the cache is nil for tests
-	kialiCache = nil
 
 	k8s := setupNamespaceServiceWithNs()
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	SetWithBackends(mockClientFactory, nil)
 
-	nsservice := setupNamespaceService(k8s, conf)
+	nsservice := setupNamespaceService(t, k8s, conf)
 
 	ns, err := nsservice.UpdateNamespace(context.TODO(), "bookinfo", `{"metadata": {"labels": {"new": "label"}}}`, conf.KubernetesConfig.ClusterName)
 
@@ -145,9 +140,8 @@ func TestMultiClusterGetNamespace(t *testing.T) {
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	SetWithBackends(mockClientFactory, nil)
 	cache := newTestingCache(t, clientFactory, *conf)
-	kialiCache = cache
 
-	nsservice := NewNamespaceService(clients, clients)
+	nsservice := NewNamespaceService(clients, clients, cache, *conf)
 
 	_, err := nsservice.GetNamespace(context.TODO(), "bookinfo")
 	require.NoError(err)
@@ -181,9 +175,8 @@ func TestMultiClusterGetNamespaces(t *testing.T) {
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	SetWithBackends(mockClientFactory, nil)
 	cache := newTestingCache(t, clientFactory, *conf)
-	kialiCache = cache
 
-	nsservice := NewNamespaceService(clients, clients)
+	nsservice := NewNamespaceService(clients, clients, cache, *conf)
 	namespaces, err := nsservice.GetNamespaces(context.TODO())
 	require.NoError(err)
 
@@ -220,9 +213,8 @@ func TestGetNamespacesCached(t *testing.T) {
 		// gamma is only cached.
 		[]models.Namespace{{Name: "bookinfo"}, {Name: "alpha"}, {Name: "beta"}, {Name: "gamma", Cluster: "west"}},
 	)
-	kialiCache = cache
 
-	nsservice := NewNamespaceService(clients, clients)
+	nsservice := NewNamespaceService(clients, clients, cache, *conf)
 	namespaces, err := nsservice.GetNamespaces(context.TODO())
 	require.NoError(err)
 
@@ -267,9 +259,8 @@ func TestGetNamespacesForbiddenCached(t *testing.T) {
 		// but NOT for the east cluster that the user doesn't have access to.
 		[]models.Namespace{{Name: "bookinfo", Cluster: "west"}},
 	)
-	kialiCache = cache
 
-	nsservice := NewNamespaceService(clients, clients)
+	nsservice := NewNamespaceService(clients, clients, cache, *conf)
 	// Try to get the bookinfo namespace from the home cluster.
 	_, err := nsservice.GetNamespaceByCluster(context.TODO(), "bookinfo", "east")
 	require.Error(err)

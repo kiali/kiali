@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	k8s_errors "k8s.io/apimachinery/pkg/api/errors"
@@ -27,11 +26,10 @@ import (
 const testToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6azhzX3VzZXIifQ.PYnWgochOQsfMInTpJPul7zkDSyMmJwfvJ6nXowITZk"
 
 func TestTokenAuthControllerAuthenticatesCorrectly(t *testing.T) {
-	rr, sData, err := createValidSession()
+	rr, sData, _ := createValidSession(t)
 
 	expectedExpiration := time.Date(2021, 12, 1, 0, 0, 1, 0, time.UTC)
 
-	assert.Nil(t, err)
 	assert.NotNil(t, sData)
 	assert.Equal(t, "k8s_user", sData.Username)
 	assert.Equal(t, testToken, sData.AuthInfo.Token)
@@ -53,8 +51,7 @@ func TestTokenAuthControllerRejectsUserWithoutPrivilegesInAnyNamespace(t *testin
 
 	// Returning no namespace when a cluster API call is made should have the result of
 	// a rejected authentication.
-	k8s := kubetest.NewK8SClientMock()
-	k8s.On("GetProjects", "").Return([]osproject_v1.Project{}, nil)
+	k8s := kubetest.NewFakeK8sClient()
 
 	requestBody := strings.NewReader("token=Foo")
 	request := httptest.NewRequest(http.MethodPost, "/api/authenticate", requestBody)
@@ -68,6 +65,8 @@ func TestTokenAuthControllerRejectsUserWithoutPrivilegesInAnyNamespace(t *testin
 
 	rr := httptest.NewRecorder()
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	cache := business.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
+	business.WithKialiCache(cache)
 	business.SetWithBackends(mockClientFactory, nil)
 	sData, err := controller.Authenticate(request, rr)
 
@@ -146,18 +145,13 @@ func TestTokenAuthControllerRejectsEmptyToken(t *testing.T) {
 }
 
 func TestTokenAuthControllerValidatesSessionCorrectly(t *testing.T) {
-	rr, _, _ := createValidSession()
+	rr, _, k8s := createValidSession(t)
 	response := rr.Result()
 
 	request := httptest.NewRequest(http.MethodGet, "/api/get", nil)
 	for _, c := range response.Cookies() {
 		request.AddCookie(c)
 	}
-
-	k8s := kubetest.NewK8SClientMock()
-	k8s.On("GetProjects", "").Return([]osproject_v1.Project{
-		{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}},
-	}, nil)
 
 	controller := NewTokenAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
 		k8sclients := make(map[string]kubernetes.ClientInterface)
@@ -192,8 +186,16 @@ func TestTokenAuthControllerValidatesSessionWithoutActiveSession(t *testing.T) {
 	assert.Nil(t, sData)
 }
 
+type forbiddenClient struct {
+	kubernetes.ClientInterface
+}
+
+func (f forbiddenClient) GetNamespaces(labelSelector string) ([]v1.Namespace, error) {
+	return nil, k8s_errors.NewForbidden(schema.GroupResource{Group: "v1", Resource: "namespaces"}, "", errors.New("err"))
+}
+
 func TestTokenAuthControllerValidatesSessionForUserWithMissingPrivileges(t *testing.T) {
-	rr, _, _ := createValidSession()
+	rr, _, k8s := createValidSession(t)
 	response := rr.Result()
 
 	request := httptest.NewRequest(http.MethodGet, "/api/get", nil)
@@ -201,19 +203,16 @@ func TestTokenAuthControllerValidatesSessionForUserWithMissingPrivileges(t *test
 		request.AddCookie(c)
 	}
 
-	k8s := new(kubetest.K8SClientMock)
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	forbiddenClient := &forbiddenClient{k8s}
+
+	// Empty cache that will miss.
+	business.WithKialiCache(business.NewTestingCache(t, kubetest.NewFakeK8sClient(), *config.NewConfig()))
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(forbiddenClient)
 	business.SetWithBackends(mockClientFactory, nil)
-	k8s.On("IsOpenShift").Return(false)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("GetNamespaces", "").Return([]v1.Namespace{
-		{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}},
-	}, k8s_errors.NewForbidden(schema.GroupResource{Group: "v1", Resource: "Projects"}, "", errors.New("err")))
-	k8s.On("GetToken").Return(kubernetes.GetKialiTokenForHomeCluster())
 
 	controller := NewTokenAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
 		k8sclients := make(map[string]kubernetes.ClientInterface)
-		k8sclients[config.Get().KubernetesConfig.ClusterName] = k8s
+		k8sclients[config.Get().KubernetesConfig.ClusterName] = forbiddenClient
 		return business.NewWithBackends(k8sclients, k8sclients, nil, nil), nil
 	})
 
@@ -224,7 +223,9 @@ func TestTokenAuthControllerValidatesSessionForUserWithMissingPrivileges(t *test
 	assert.Nil(t, sData)
 }
 
-func createValidSession() (*httptest.ResponseRecorder, *UserSessionData, error) {
+func createValidSession(t *testing.T) (*httptest.ResponseRecorder, *UserSessionData, *kubetest.FakeK8sClient) {
+	t.Helper()
+
 	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
 	util.Clock = util.ClockMock{Time: clockTime}
 
@@ -235,10 +236,7 @@ func createValidSession() (*httptest.ResponseRecorder, *UserSessionData, error) 
 
 	// Returning some namespace when a cluster API call is made should have the result of
 	// a successful authentication.
-	k8s := kubetest.NewK8SClientMock()
-	k8s.On("GetProjects", "").Return([]osproject_v1.Project{
-		{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}},
-	}, nil)
+	k8s := kubetest.NewFakeK8sClient(&v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}})
 
 	requestBody := strings.NewReader("token=" + testToken)
 	request := httptest.NewRequest(http.MethodPost, "/api/authenticate", requestBody)
@@ -252,7 +250,12 @@ func createValidSession() (*httptest.ResponseRecorder, *UserSessionData, error) 
 
 	rr := httptest.NewRecorder()
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	cache := business.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
+	business.WithKialiCache(cache)
 	business.SetWithBackends(mockClientFactory, nil)
 	sData, err := controller.Authenticate(request, rr)
-	return rr, sData, err
+	if err != nil {
+		t.Fatal(err)
+	}
+	return rr, sData, k8s
 }

@@ -14,15 +14,10 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/business/authentication"
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
 func setupTestLoggingServer(t *testing.T, namespace, pod string) *httptest.Server {
-	conf := config.NewConfig()
-	conf.KubernetesConfig.CacheEnabled = false
-	config.Set(conf)
-
 	mr := mux.NewRouter()
 	path := "/api/namespaces/{namespace}/pods/{pod}/logging"
 	mr.HandleFunc(path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

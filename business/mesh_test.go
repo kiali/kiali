@@ -135,6 +135,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 	check := assert.New(t)
 
 	conf := config.NewConfig()
+	conf.InCluster = false
 	config.Set(conf)
 
 	remoteNs := &core_v1.Namespace{
