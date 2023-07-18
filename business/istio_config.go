@@ -1027,37 +1027,43 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(cluster, namespace, resour
 	var err error
 	delOpts := meta_v1.DeleteOptions{}
 	ctx := context.TODO()
+
+	userClient := in.userClients[cluster]
+	if userClient == nil {
+		return fmt.Errorf("K8s Client [%s] is not found or is not accessible for Kiali", cluster)
+	}
+
 	switch resourceType {
 	case kubernetes.DestinationRules:
-		err = in.userClients[cluster].Istio().NetworkingV1beta1().DestinationRules(namespace).Delete(ctx, name, delOpts)
+		err = userClient.Istio().NetworkingV1beta1().DestinationRules(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.EnvoyFilters:
-		err = in.userClients[cluster].Istio().NetworkingV1alpha3().EnvoyFilters(namespace).Delete(ctx, name, delOpts)
+		err = userClient.Istio().NetworkingV1alpha3().EnvoyFilters(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.Gateways:
-		err = in.userClients[cluster].Istio().NetworkingV1beta1().Gateways(namespace).Delete(ctx, name, delOpts)
+		err = userClient.Istio().NetworkingV1beta1().Gateways(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.K8sGateways:
-		err = in.userClients[cluster].GatewayAPI().GatewayV1beta1().Gateways(namespace).Delete(ctx, name, delOpts)
+		err = userClient.GatewayAPI().GatewayV1beta1().Gateways(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.K8sHTTPRoutes:
-		err = in.userClients[cluster].GatewayAPI().GatewayV1beta1().HTTPRoutes(namespace).Delete(ctx, name, delOpts)
+		err = userClient.GatewayAPI().GatewayV1beta1().HTTPRoutes(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.ServiceEntries:
-		err = in.userClients[cluster].Istio().NetworkingV1beta1().ServiceEntries(namespace).Delete(ctx, name, delOpts)
+		err = userClient.Istio().NetworkingV1beta1().ServiceEntries(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.Sidecars:
-		err = in.userClients[cluster].Istio().NetworkingV1beta1().Sidecars(namespace).Delete(ctx, name, delOpts)
+		err = userClient.Istio().NetworkingV1beta1().Sidecars(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.VirtualServices:
-		err = in.userClients[cluster].Istio().NetworkingV1beta1().VirtualServices(namespace).Delete(ctx, name, delOpts)
+		err = userClient.Istio().NetworkingV1beta1().VirtualServices(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.WorkloadEntries:
-		err = in.userClients[cluster].Istio().NetworkingV1beta1().WorkloadEntries(namespace).Delete(ctx, name, delOpts)
+		err = userClient.Istio().NetworkingV1beta1().WorkloadEntries(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.WorkloadGroups:
-		err = in.userClients[cluster].Istio().NetworkingV1beta1().WorkloadGroups(namespace).Delete(ctx, name, delOpts)
+		err = userClient.Istio().NetworkingV1beta1().WorkloadGroups(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.AuthorizationPolicies:
-		err = in.userClients[cluster].Istio().SecurityV1beta1().AuthorizationPolicies(namespace).Delete(ctx, name, delOpts)
+		err = userClient.Istio().SecurityV1beta1().AuthorizationPolicies(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.PeerAuthentications:
-		err = in.userClients[cluster].Istio().SecurityV1beta1().PeerAuthentications(namespace).Delete(ctx, name, delOpts)
+		err = userClient.Istio().SecurityV1beta1().PeerAuthentications(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.RequestAuthentications:
-		err = in.userClients[cluster].Istio().SecurityV1beta1().RequestAuthentications(namespace).Delete(ctx, name, delOpts)
+		err = userClient.Istio().SecurityV1beta1().RequestAuthentications(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.WasmPlugins:
-		err = in.userClients[cluster].Istio().ExtensionsV1alpha1().WasmPlugins(namespace).Delete(ctx, name, delOpts)
+		err = userClient.Istio().ExtensionsV1alpha1().WasmPlugins(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.Telemetries:
-		err = in.userClients[cluster].Istio().TelemetryV1alpha1().Telemetries(namespace).Delete(ctx, name, delOpts)
+		err = userClient.Istio().TelemetryV1alpha1().Telemetries(namespace).Delete(ctx, name, delOpts)
 	default:
 		err = fmt.Errorf("object type not found: %v", resourceType)
 	}
@@ -1081,53 +1087,58 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(cluster, namespace, resour
 	patchType := api_types.MergePatchType
 	bytePatch := []byte(jsonPatch)
 
+	userClient := in.userClients[cluster]
+	if userClient == nil {
+		return istioConfigDetail, fmt.Errorf("K8s Client [%s] is not found or is not accessible for Kiali", cluster)
+	}
+
 	var err error
 	switch resourceType {
 	case kubernetes.DestinationRules:
 		istioConfigDetail.DestinationRule = &networking_v1beta1.DestinationRule{}
-		istioConfigDetail.DestinationRule, err = in.userClients[cluster].Istio().NetworkingV1beta1().DestinationRules(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+		istioConfigDetail.DestinationRule, err = userClient.Istio().NetworkingV1beta1().DestinationRules(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 	case kubernetes.EnvoyFilters:
 		istioConfigDetail.EnvoyFilter = &networking_v1alpha3.EnvoyFilter{}
-		istioConfigDetail.EnvoyFilter, err = in.userClients[cluster].Istio().NetworkingV1alpha3().EnvoyFilters(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+		istioConfigDetail.EnvoyFilter, err = userClient.Istio().NetworkingV1alpha3().EnvoyFilters(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 	case kubernetes.Gateways:
 		istioConfigDetail.Gateway = &networking_v1beta1.Gateway{}
-		istioConfigDetail.Gateway, err = in.userClients[cluster].Istio().NetworkingV1beta1().Gateways(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+		istioConfigDetail.Gateway, err = userClient.Istio().NetworkingV1beta1().Gateways(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 	case kubernetes.K8sGateways:
 		istioConfigDetail.K8sGateway = &k8s_networking_v1beta1.Gateway{}
-		istioConfigDetail.K8sGateway, err = in.userClients[cluster].GatewayAPI().GatewayV1beta1().Gateways(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+		istioConfigDetail.K8sGateway, err = userClient.GatewayAPI().GatewayV1beta1().Gateways(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 	case kubernetes.K8sHTTPRoutes:
 		istioConfigDetail.K8sHTTPRoute = &k8s_networking_v1beta1.HTTPRoute{}
-		istioConfigDetail.K8sHTTPRoute, err = in.userClients[cluster].GatewayAPI().GatewayV1beta1().HTTPRoutes(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+		istioConfigDetail.K8sHTTPRoute, err = userClient.GatewayAPI().GatewayV1beta1().HTTPRoutes(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 	case kubernetes.ServiceEntries:
 		istioConfigDetail.ServiceEntry = &networking_v1beta1.ServiceEntry{}
-		istioConfigDetail.ServiceEntry, err = in.userClients[cluster].Istio().NetworkingV1beta1().ServiceEntries(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+		istioConfigDetail.ServiceEntry, err = userClient.Istio().NetworkingV1beta1().ServiceEntries(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 	case kubernetes.Sidecars:
 		istioConfigDetail.Sidecar = &networking_v1beta1.Sidecar{}
-		istioConfigDetail.Sidecar, err = in.userClients[cluster].Istio().NetworkingV1beta1().Sidecars(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+		istioConfigDetail.Sidecar, err = userClient.Istio().NetworkingV1beta1().Sidecars(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 	case kubernetes.VirtualServices:
 		istioConfigDetail.VirtualService = &networking_v1beta1.VirtualService{}
-		istioConfigDetail.VirtualService, err = in.userClients[cluster].Istio().NetworkingV1beta1().VirtualServices(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+		istioConfigDetail.VirtualService, err = userClient.Istio().NetworkingV1beta1().VirtualServices(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 	case kubernetes.WorkloadEntries:
 		istioConfigDetail.WorkloadEntry = &networking_v1beta1.WorkloadEntry{}
-		istioConfigDetail.WorkloadEntry, err = in.userClients[cluster].Istio().NetworkingV1beta1().WorkloadEntries(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+		istioConfigDetail.WorkloadEntry, err = userClient.Istio().NetworkingV1beta1().WorkloadEntries(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 	case kubernetes.WorkloadGroups:
 		istioConfigDetail.WorkloadGroup = &networking_v1beta1.WorkloadGroup{}
-		istioConfigDetail.WorkloadGroup, err = in.userClients[cluster].Istio().NetworkingV1beta1().WorkloadGroups(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+		istioConfigDetail.WorkloadGroup, err = userClient.Istio().NetworkingV1beta1().WorkloadGroups(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 	case kubernetes.AuthorizationPolicies:
 		istioConfigDetail.AuthorizationPolicy = &security_v1beta1.AuthorizationPolicy{}
-		istioConfigDetail.AuthorizationPolicy, err = in.userClients[cluster].Istio().SecurityV1beta1().AuthorizationPolicies(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+		istioConfigDetail.AuthorizationPolicy, err = userClient.Istio().SecurityV1beta1().AuthorizationPolicies(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 	case kubernetes.PeerAuthentications:
 		istioConfigDetail.PeerAuthentication = &security_v1beta1.PeerAuthentication{}
-		istioConfigDetail.PeerAuthentication, err = in.userClients[cluster].Istio().SecurityV1beta1().PeerAuthentications(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+		istioConfigDetail.PeerAuthentication, err = userClient.Istio().SecurityV1beta1().PeerAuthentications(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 	case kubernetes.RequestAuthentications:
 		istioConfigDetail.RequestAuthentication = &security_v1beta1.RequestAuthentication{}
-		istioConfigDetail.RequestAuthentication, err = in.userClients[cluster].Istio().SecurityV1beta1().RequestAuthentications(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+		istioConfigDetail.RequestAuthentication, err = userClient.Istio().SecurityV1beta1().RequestAuthentications(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 	case kubernetes.WasmPlugins:
 		istioConfigDetail.WasmPlugin = &extentions_v1alpha1.WasmPlugin{}
-		istioConfigDetail.WasmPlugin, err = in.userClients[cluster].Istio().ExtensionsV1alpha1().WasmPlugins(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+		istioConfigDetail.WasmPlugin, err = userClient.Istio().ExtensionsV1alpha1().WasmPlugins(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 	case kubernetes.Telemetries:
 		istioConfigDetail.Telemetry = &v1alpha1.Telemetry{}
-		istioConfigDetail.Telemetry, err = in.userClients[cluster].Istio().TelemetryV1alpha1().Telemetries(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+		istioConfigDetail.Telemetry, err = userClient.Istio().TelemetryV1alpha1().Telemetries(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 	default:
 		err = fmt.Errorf("object type not found: %v", resourceType)
 	}
@@ -1147,6 +1158,11 @@ func (in *IstioConfigService) CreateIstioConfigDetail(cluster, namespace, resour
 	createOpts := meta_v1.CreateOptions{}
 	ctx := context.TODO()
 
+	userClient := in.userClients[cluster]
+	if userClient == nil {
+		return istioConfigDetail, fmt.Errorf("K8s Client [%s] is not found or is not accessible for Kiali", cluster)
+	}
+
 	var err error
 	switch resourceType {
 	case kubernetes.DestinationRules:
@@ -1155,105 +1171,105 @@ func (in *IstioConfigService) CreateIstioConfigDetail(cluster, namespace, resour
 		if err != nil {
 			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
 		}
-		istioConfigDetail.DestinationRule, err = in.userClients[cluster].Istio().NetworkingV1beta1().DestinationRules(namespace).Create(ctx, istioConfigDetail.DestinationRule, createOpts)
+		istioConfigDetail.DestinationRule, err = userClient.Istio().NetworkingV1beta1().DestinationRules(namespace).Create(ctx, istioConfigDetail.DestinationRule, createOpts)
 	case kubernetes.EnvoyFilters:
 		istioConfigDetail.EnvoyFilter = &networking_v1alpha3.EnvoyFilter{}
 		err = json.Unmarshal(body, istioConfigDetail.EnvoyFilter)
 		if err != nil {
 			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
 		}
-		istioConfigDetail.EnvoyFilter, err = in.userClients[cluster].Istio().NetworkingV1alpha3().EnvoyFilters(namespace).Create(ctx, istioConfigDetail.EnvoyFilter, createOpts)
+		istioConfigDetail.EnvoyFilter, err = userClient.Istio().NetworkingV1alpha3().EnvoyFilters(namespace).Create(ctx, istioConfigDetail.EnvoyFilter, createOpts)
 	case kubernetes.Gateways:
 		istioConfigDetail.Gateway = &networking_v1beta1.Gateway{}
 		err = json.Unmarshal(body, istioConfigDetail.Gateway)
 		if err != nil {
 			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
 		}
-		istioConfigDetail.Gateway, err = in.userClients[cluster].Istio().NetworkingV1beta1().Gateways(namespace).Create(ctx, istioConfigDetail.Gateway, createOpts)
+		istioConfigDetail.Gateway, err = userClient.Istio().NetworkingV1beta1().Gateways(namespace).Create(ctx, istioConfigDetail.Gateway, createOpts)
 	case kubernetes.K8sGateways:
 		istioConfigDetail.K8sGateway = &k8s_networking_v1beta1.Gateway{}
 		err = json.Unmarshal(body, istioConfigDetail.K8sGateway)
 		if err != nil {
 			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
 		}
-		istioConfigDetail.K8sGateway, err = in.userClients[cluster].GatewayAPI().GatewayV1beta1().Gateways(namespace).Create(ctx, istioConfigDetail.K8sGateway, createOpts)
+		istioConfigDetail.K8sGateway, err = userClient.GatewayAPI().GatewayV1beta1().Gateways(namespace).Create(ctx, istioConfigDetail.K8sGateway, createOpts)
 	case kubernetes.K8sHTTPRoutes:
 		istioConfigDetail.K8sHTTPRoute = &k8s_networking_v1beta1.HTTPRoute{}
 		err = json.Unmarshal(body, istioConfigDetail.K8sHTTPRoute)
 		if err != nil {
 			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
 		}
-		istioConfigDetail.K8sHTTPRoute, err = in.userClients[cluster].GatewayAPI().GatewayV1beta1().HTTPRoutes(namespace).Create(ctx, istioConfigDetail.K8sHTTPRoute, createOpts)
+		istioConfigDetail.K8sHTTPRoute, err = userClient.GatewayAPI().GatewayV1beta1().HTTPRoutes(namespace).Create(ctx, istioConfigDetail.K8sHTTPRoute, createOpts)
 	case kubernetes.ServiceEntries:
 		istioConfigDetail.ServiceEntry = &networking_v1beta1.ServiceEntry{}
 		err = json.Unmarshal(body, istioConfigDetail.ServiceEntry)
 		if err != nil {
 			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
 		}
-		istioConfigDetail.ServiceEntry, err = in.userClients[cluster].Istio().NetworkingV1beta1().ServiceEntries(namespace).Create(ctx, istioConfigDetail.ServiceEntry, createOpts)
+		istioConfigDetail.ServiceEntry, err = userClient.Istio().NetworkingV1beta1().ServiceEntries(namespace).Create(ctx, istioConfigDetail.ServiceEntry, createOpts)
 	case kubernetes.Sidecars:
 		istioConfigDetail.Sidecar = &networking_v1beta1.Sidecar{}
 		err = json.Unmarshal(body, istioConfigDetail.Sidecar)
 		if err != nil {
 			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
 		}
-		istioConfigDetail.Sidecar, err = in.userClients[cluster].Istio().NetworkingV1beta1().Sidecars(namespace).Create(ctx, istioConfigDetail.Sidecar, createOpts)
+		istioConfigDetail.Sidecar, err = userClient.Istio().NetworkingV1beta1().Sidecars(namespace).Create(ctx, istioConfigDetail.Sidecar, createOpts)
 	case kubernetes.VirtualServices:
 		istioConfigDetail.VirtualService = &networking_v1beta1.VirtualService{}
 		err = json.Unmarshal(body, istioConfigDetail.VirtualService)
 		if err != nil {
 			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
 		}
-		istioConfigDetail.VirtualService, err = in.userClients[cluster].Istio().NetworkingV1beta1().VirtualServices(namespace).Create(ctx, istioConfigDetail.VirtualService, createOpts)
+		istioConfigDetail.VirtualService, err = userClient.Istio().NetworkingV1beta1().VirtualServices(namespace).Create(ctx, istioConfigDetail.VirtualService, createOpts)
 	case kubernetes.WorkloadEntries:
 		istioConfigDetail.WorkloadEntry = &networking_v1beta1.WorkloadEntry{}
 		err = json.Unmarshal(body, istioConfigDetail.WorkloadEntry)
 		if err != nil {
 			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
 		}
-		istioConfigDetail.WorkloadEntry, err = in.userClients[cluster].Istio().NetworkingV1beta1().WorkloadEntries(namespace).Create(ctx, istioConfigDetail.WorkloadEntry, createOpts)
+		istioConfigDetail.WorkloadEntry, err = userClient.Istio().NetworkingV1beta1().WorkloadEntries(namespace).Create(ctx, istioConfigDetail.WorkloadEntry, createOpts)
 	case kubernetes.WorkloadGroups:
 		istioConfigDetail.WorkloadGroup = &networking_v1beta1.WorkloadGroup{}
 		err = json.Unmarshal(body, istioConfigDetail.WorkloadGroup)
 		if err != nil {
 			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
 		}
-		istioConfigDetail.WorkloadGroup, err = in.userClients[cluster].Istio().NetworkingV1beta1().WorkloadGroups(namespace).Create(ctx, istioConfigDetail.WorkloadGroup, createOpts)
+		istioConfigDetail.WorkloadGroup, err = userClient.Istio().NetworkingV1beta1().WorkloadGroups(namespace).Create(ctx, istioConfigDetail.WorkloadGroup, createOpts)
 	case kubernetes.WasmPlugins:
 		istioConfigDetail.WasmPlugin = &extentions_v1alpha1.WasmPlugin{}
 		err = json.Unmarshal(body, istioConfigDetail.WasmPlugin)
 		if err != nil {
 			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
 		}
-		istioConfigDetail.WasmPlugin, err = in.userClients[cluster].Istio().ExtensionsV1alpha1().WasmPlugins(namespace).Create(ctx, istioConfigDetail.WasmPlugin, createOpts)
+		istioConfigDetail.WasmPlugin, err = userClient.Istio().ExtensionsV1alpha1().WasmPlugins(namespace).Create(ctx, istioConfigDetail.WasmPlugin, createOpts)
 	case kubernetes.Telemetries:
 		istioConfigDetail.Telemetry = &v1alpha1.Telemetry{}
 		err = json.Unmarshal(body, istioConfigDetail.Telemetry)
 		if err != nil {
 			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
 		}
-		istioConfigDetail.Telemetry, err = in.userClients[cluster].Istio().TelemetryV1alpha1().Telemetries(namespace).Create(ctx, istioConfigDetail.Telemetry, createOpts)
+		istioConfigDetail.Telemetry, err = userClient.Istio().TelemetryV1alpha1().Telemetries(namespace).Create(ctx, istioConfigDetail.Telemetry, createOpts)
 	case kubernetes.AuthorizationPolicies:
 		istioConfigDetail.AuthorizationPolicy = &security_v1beta1.AuthorizationPolicy{}
 		err = json.Unmarshal(body, istioConfigDetail.AuthorizationPolicy)
 		if err != nil {
 			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
 		}
-		istioConfigDetail.AuthorizationPolicy, err = in.userClients[cluster].Istio().SecurityV1beta1().AuthorizationPolicies(namespace).Create(ctx, istioConfigDetail.AuthorizationPolicy, createOpts)
+		istioConfigDetail.AuthorizationPolicy, err = userClient.Istio().SecurityV1beta1().AuthorizationPolicies(namespace).Create(ctx, istioConfigDetail.AuthorizationPolicy, createOpts)
 	case kubernetes.PeerAuthentications:
 		istioConfigDetail.PeerAuthentication = &security_v1beta1.PeerAuthentication{}
 		err = json.Unmarshal(body, istioConfigDetail.PeerAuthentication)
 		if err != nil {
 			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
 		}
-		istioConfigDetail.PeerAuthentication, err = in.userClients[cluster].Istio().SecurityV1beta1().PeerAuthentications(namespace).Create(ctx, istioConfigDetail.PeerAuthentication, createOpts)
+		istioConfigDetail.PeerAuthentication, err = userClient.Istio().SecurityV1beta1().PeerAuthentications(namespace).Create(ctx, istioConfigDetail.PeerAuthentication, createOpts)
 	case kubernetes.RequestAuthentications:
 		istioConfigDetail.RequestAuthentication = &security_v1beta1.RequestAuthentication{}
 		err = json.Unmarshal(body, istioConfigDetail.RequestAuthentication)
 		if err != nil {
 			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
 		}
-		istioConfigDetail.RequestAuthentication, err = in.userClients[cluster].Istio().SecurityV1beta1().RequestAuthentications(namespace).Create(ctx, istioConfigDetail.RequestAuthentication, createOpts)
+		istioConfigDetail.RequestAuthentication, err = userClient.Istio().SecurityV1beta1().RequestAuthentications(namespace).Create(ctx, istioConfigDetail.RequestAuthentication, createOpts)
 	default:
 		err = fmt.Errorf("object type not found: %v", resourceType)
 	}

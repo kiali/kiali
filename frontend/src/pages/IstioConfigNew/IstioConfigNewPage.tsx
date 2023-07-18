@@ -209,7 +209,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
                   );
                 }
                 if (cluster && !this.isNamespaceInCluster(ns.name, cluster)) {
-                  AlertUtils.addWarning('Namespace: ' + ns.name + ' is not found in cluster ' + cluster);
+                  AlertUtils.addInfo('Namespace: ' + ns.name + ' is not found in cluster ' + cluster);
                 }
               });
             }
@@ -251,14 +251,16 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
         .map(o => API.createIstioConfigDetail(o.namespace, DIC[this.props.objectType], o.json, cluster))
         .map(p =>
           p.catch(error => {
-            AlertUtils.addError(
-              'Could not create Istio ' +
-                this.props.objectType +
-                ' objects' +
-                (cluster ? ' in cluster ' + cluster + '.' : '.'),
-              error
-            );
-            err++;
+            if (error.response.status !== 404) {
+              AlertUtils.addError(
+                'Could not create Istio ' +
+                  this.props.objectType +
+                  ' objects' +
+                  (cluster ? ' in cluster ' + cluster + '.' : '.'),
+                error
+              );
+              err++;
+            }
           })
         )
     ).then(results => {
@@ -434,12 +436,10 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
 
   render() {
     const canCreate = this.props.activeNamespaces.every(ns => this.canCreate(ns.name));
-    const isNamespaceInCluster = this.props.activeClusters.every(cl =>
-      this.props.activeNamespaces.every(ns => this.isNamespaceInCluster(ns.name, cl.name))
-    );
     const isNameValid = isValidK8SName(this.state.name);
     const isNamespacesValid = this.props.activeNamespaces.length > 0;
-    const isClustersValid = this.props.activeClusters.length > 0 || Object.keys(serverConfig.clusters).length <= 1;
+    const isMultiCluster = Object.keys(serverConfig.clusters).length > 1;
+    const isClustersValid = this.props.activeClusters.length > 0 || !isMultiCluster;
     const isFormValid = isNameValid && isNamespacesValid && isClustersValid && this.isIstioFormValid();
     return (
       <>
@@ -461,6 +461,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
               label="Clusters"
               isRequired={true}
               fieldId="clusters"
+              hidden={!isMultiCluster}
               helperTextInvalid={'An Istio Config resource needs at least one cluster selected'}
               validated={isValid(isClustersValid)}
             >
@@ -533,7 +534,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
             items={this.state.itemsPreview}
             title={'Preview new istio objects'}
             opTarget={'create'}
-            disableAction={!canCreate || !isNamespaceInCluster}
+            disableAction={!canCreate}
             ns={this.props.activeNamespaces.join(',')}
             onConfirm={items =>
               this.setState({ showPreview: false, itemsPreview: items }, () => this.onIstioResourceCreate())

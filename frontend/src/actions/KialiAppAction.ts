@@ -15,18 +15,18 @@ import { MetricsStatsAction } from './MetricsStatsActions';
 import { IstioCertsInfoAction } from './IstioCertsInfoActions';
 
 export type KialiAppAction =
+  | ClusterAction
   | GlobalAction
   | GraphAction
   | GraphToolbarAction
   | HelpDropdownAction
-  | LoginAction
-  | MessageCenterAction
-  | NamespaceAction
-  | ClusterAction
-  | UserSettingsAction
-  | JaegerAction
-  | MeshTlsAction
-  | IstioStatusAction
   | IstioCertsInfoAction
+  | IstioStatusAction
+  | JaegerAction
+  | LoginAction
+  | MeshTlsAction
+  | MessageCenterAction
+  | MetricsStatsAction
+  | NamespaceAction
   | TourAction
-  | MetricsStatsAction;
+  | UserSettingsAction;

@@ -57,11 +57,6 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
     description: 'Select the namespaces you want to see in the graph.',
     position: PopoverPosition.bottomStart
   },
-  Clusters: {
-    name: 'Clusters',
-    description: 'Select the clusters.',
-    position: PopoverPosition.bottomStart
-  },
   Shortcuts: {
     name: 'Shortcuts',
     htmlDescription: GraphShortcuts,
@@ -85,7 +80,6 @@ export const GraphTour: TourInfo = {
   stops: [
     GraphTourStops.Shortcuts,
     GraphTourStops.Namespaces,
-    GraphTourStops.Clusters,
     GraphTourStops.GraphTraffic,
     GraphTourStops.GraphType,
     GraphTourStops.Display,

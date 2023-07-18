@@ -44,11 +44,11 @@ export interface ClusterState {
 
 export interface NamespaceState {
   readonly activeNamespaces: Namespace[];
+  readonly filter: string;
   readonly items?: Namespace[];
   readonly isFetching: boolean;
   readonly lastUpdated?: Date;
   readonly namespacesPerCluster?: Map<string, string[]>;
-  readonly filter: string;
 }
 
 // Various pages are described here with their various sections
@@ -140,21 +140,21 @@ export interface TourState {
 export interface KialiAppState {
   // Global state === across multiple pages
   // could also be session state
-  globalState: GlobalState;
-  statusState: StatusState;
-  meshTLSStatus: TLSStatus;
-  istioStatus: ComponentStatus[];
-  istioCertsInfo: CertsInfo[];
   /** Page Settings */
   authentication: LoginState;
-  messageCenter: MessageCenterState;
-  namespaces: NamespaceState;
   clusters: ClusterState;
+  globalState: GlobalState;
   graph: GraphState;
-  /** User Settings */
-  userSettings: UserSettings;
+  istioStatus: ComponentStatus[];
+  istioCertsInfo: CertsInfo[];
   /** Jaeger Settings */
   jaegerState: JaegerState;
-  tourState: TourState;
+  meshTLSStatus: TLSStatus;
+  messageCenter: MessageCenterState;
   metricsStats: MetricsStatsState;
+  namespaces: NamespaceState;
+  statusState: StatusState;
+  tourState: TourState;
+  /** User Settings */
+  userSettings: UserSettings;
 }

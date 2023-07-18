@@ -19,17 +19,17 @@ import { IstioCertsInfoStateReducer } from './IstioCertsInfoState';
 
 export const rootReducer = combineReducers<KialiAppState, KialiAppAction>({
   authentication: LoginStateReducer,
+  clusters: ClusterStateReducer,
   globalState: GlobalStateReducer,
   graph: GraphDataStateReducer,
-  messageCenter: MessageCenterReducer,
-  namespaces: NamespaceStateReducer,
-  clusters: ClusterStateReducer,
-  statusState: HelpDropdownStateReducer,
-  userSettings: UserSettingsStateReducer,
-  jaegerState: JaegerStateReducer,
-  meshTLSStatus: MeshTlsStateReducer,
   istioStatus: IstioStatusStateReducer,
   istioCertsInfo: IstioCertsInfoStateReducer,
+  jaegerState: JaegerStateReducer,
+  meshTLSStatus: MeshTlsStateReducer,
+  messageCenter: MessageCenterReducer,
+  metricsStats: MetricsStatsStateReducer,
+  namespaces: NamespaceStateReducer,
+  statusState: HelpDropdownStateReducer,
   tourState: TourStateReducer,
-  metricsStats: MetricsStatsStateReducer
+  userSettings: UserSettingsStateReducer
 });
