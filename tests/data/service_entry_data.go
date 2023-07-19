@@ -11,7 +11,7 @@ func CreateExternalServiceEntry() *networking_v1beta1.ServiceEntry {
 	se.Namespace = "wikipedia"
 	se.Spec.Hosts = []string{"wikipedia.org"}
 	se.Spec.Location = api_networking_v1beta1.ServiceEntry_MESH_EXTERNAL
-	se.Spec.Ports = []*api_networking_v1beta1.Port{
+	se.Spec.Ports = []*api_networking_v1beta1.ServicePort{
 		{
 			Number:   80,
 			Name:     "http-example",
@@ -53,13 +53,13 @@ func CreateEmptyMeshInternalServiceEntry(name, namespace string, hosts []string)
 	return &se
 }
 
-func AddPortDefinitionToServiceEntry(portDef *api_networking_v1beta1.Port, se *networking_v1beta1.ServiceEntry) *networking_v1beta1.ServiceEntry {
+func AddPortDefinitionToServiceEntry(portDef *api_networking_v1beta1.ServicePort, se *networking_v1beta1.ServiceEntry) *networking_v1beta1.ServiceEntry {
 	se.Spec.Ports = append(se.Spec.Ports, portDef)
 	return se
 }
 
-func CreateEmptyPortDefinition(port uint32, portName, protocolName string) *api_networking_v1beta1.Port {
-	p := api_networking_v1beta1.Port{
+func CreateEmptyServicePortDefinition(port uint32, portName, protocolName string) *api_networking_v1beta1.ServicePort {
+	p := api_networking_v1beta1.ServicePort{
 		Number:   port,
 		Name:     portName,
 		Protocol: protocolName,
