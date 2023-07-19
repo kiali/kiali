@@ -658,15 +658,23 @@ EOM
   # This is a directory hardcoded into the Kial server - there is no way to configure it to be anything else.
   # We must link our kubeconfig to the hardcoded path that the Kiali server will look for.
   # TODO: Make this path configurable inside kiali server.
-  REMOTE_SECRET_FILE="/kiali-remote-secret/kiali"
-  if [ ! -d "$(dirname ${REMOTE_SECRET_FILE})" ]; then
-    errormsg "You first must prepare the secrets directory: sudo mkdir -p $(dirname ${REMOTE_SECRET_FILE}); sudo chmod ugo+w $(dirname ${REMOTE_SECRET_FILE})"
+  REMOTE_SECRET_DIR="/kiali-remote-secret"
+  if [ ! -d "${REMOTE_SECRET_DIR}" ]; then
+    errormsg "You first must prepare the secrets directory: sudo mkdir -p ${REMOTE_SECRET_DIR}; sudo chmod ugo+w ${REMOTE_SECRET_DIR}"
     exit 1
   fi
 
-  rm -f "${REMOTE_SECRET_FILE}"
+  REMOTE_SECRET_FILE="${REMOTE_SECRET_DIR}/kiali"
 
+  rm -f "${REMOTE_SECRET_FILE}"
   ln -s "${kubeconfig}" "${REMOTE_SECRET_FILE}"
+
+  # Need to link the newly minted ca file as well because kubectl config set-cluster always sets a relative path.
+  if [ "${KUBE_CONTEXT}" != "current" ]; then
+    REMOTE_CA_FILE="${REMOTE_SECRET_DIR}/ca.crt"
+    rm -f "${REMOTE_CA_FILE}"
+    ln -s "${CA_FILE}" "${REMOTE_CA_FILE}"
+  fi
 }
 
 setup_kubeconfig
