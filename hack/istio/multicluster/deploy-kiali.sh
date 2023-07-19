@@ -43,9 +43,10 @@ deploy_kiali() {
   [ ! -z "${web_fqdn}" ] && helm_args="--set server.web_fqdn=${web_fqdn} ${helm_args}"
   [ ! -z "${web_schema}" ] && helm_args="--set server.web_schema=${web_schema} ${helm_args}"
 
-  local auth_flags
+  # Setting this as an array so things expand correctly.
+  local auth_flags=()
   if [ "${KIALI_AUTH_STRATEGY}" == "anonymous" ]; then
-    auth_flags="--set auth.strategy=anonymous"
+    auth_flags=("--set auth.strategy=anonymous")
   elif [ "${KIALI_AUTH_STRATEGY}" == "openid" ]; then
     # These need to exist prior to installing Kiali.
     # Create secret with the oidc secret
@@ -61,7 +62,12 @@ deploy_kiali() {
     local keycloak_minikube_ip_dashed
     keycloak_minikube_ip_dashed=$(minikube ip -p "${keycloak_cluster_name}" | sed 's/\./-/g')
     local keycloak_hostname="keycloak-${keycloak_minikube_ip_dashed}.nip.io"
-    auth_flags="--set auth.strategy=openid --set auth.openid.client_id=kube --set auth.openid.issuer_uri=\"https://${keycloak_hostname}/realms/kube\" --set auth.openid.insecure_skip_verify_tls=\"false\""
+    auth_flags=(
+      "--set auth.strategy=openid"
+      "--set auth.openid.client_id=kube"
+      "--set-string auth.openid.issuer_uri=https://${keycloak_hostname}/realms/kube"
+      "--set auth.openid.insecure_skip_verify_tls=false"
+    )
   else
     echo "Kiali auth strategy [${KIALI_AUTH_STRATEGY}] is not supported for multi-cluster - will not install Kiali"
     return 1
@@ -128,12 +134,13 @@ EOF
     ingress_enabled_flag=true
   fi
 
+  local helm_auth_flags="${auth_flags[*]}"
 
   # use the latest published server helm chart (if using dev images, it is up to the user to make sure this chart works with the dev image)
   helm upgrade --install                                       \
     ${helm_args}                                               \
     --namespace ${ISTIO_NAMESPACE}                             \
-    ${auth_flags}                                              \
+    ${helm_auth_flags}                                         \
     --set deployment.logger.log_level="debug"                  \
     --set deployment.ingress.enabled="${ingress_enabled_flag}" \
     --repo https://kiali.org/helm-charts                       \
