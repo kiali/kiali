@@ -10,20 +10,21 @@ import * as FilterHelper from '../../components/FilterList/FilterHelper';
 import { ToolbarDropdown } from '../../components/ToolbarDropdown/ToolbarDropdown';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector, refreshIntervalSelector } from '../../store/Selectors';
-import { IntervalInMilliseconds, DurationInSeconds } from '../../types/Common';
+import { IntervalInMilliseconds, DurationInSeconds, themes } from '../../types/Common';
 import { SortField } from '../../types/SortFilters';
 import { NamespaceInfo } from './NamespaceInfo';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
 import { kialiStyle } from 'styles/StyleUtils';
-import { PFColors } from '../../components/Pf/PfColors';
 import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
 import { KialiDispatch } from '../../types/Redux';
 import { RefreshNotifier } from '../../components/Refresh/RefreshNotifier';
+import { PFColors } from '../../components/Pf/PfColors';
 
 type ReduxProps = {
   duration: DurationInSeconds;
   refreshInterval: IntervalInMilliseconds;
+  theme: string;
   setRefreshInterval: (refresh: IntervalInMilliseconds) => void;
 };
 
@@ -65,6 +66,11 @@ const sortTypes = (function () {
 
 const containerPadding = kialiStyle({
   backgroundColor: PFColors.White,
+  padding: '0px 20px 0px 20px'
+});
+
+const containerPaddingDarkMode = kialiStyle({
+  backgroundColor: PFColors.Black800,
   padding: '0px 20px 0px 20px'
 });
 
@@ -282,7 +288,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
       </div>
     );
     return (
-      <div className={containerPadding}>
+      <div className={this.props.theme === themes[0] ? containerPadding : containerPaddingDarkMode}>
         <div className={containerFlex}>
           <div className={filterToolbarStyle}>{filterToolbar}</div>
           <div className={rightToolbarStyle}>
@@ -297,7 +303,8 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  refreshInterval: refreshIntervalSelector(state)
+  refreshInterval: refreshIntervalSelector(state),
+  theme: state.globalState.theme
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => {

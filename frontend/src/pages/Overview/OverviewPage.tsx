@@ -55,7 +55,7 @@ import { switchType } from './OverviewHelper';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
 import { ValidationSummary } from '../../components/Validations/ValidationSummary';
-import { DurationInSeconds, IntervalInMilliseconds } from 'types/Common';
+import { DurationInSeconds, IntervalInMilliseconds, themes } from 'types/Common';
 import { Paths, isMultiCluster, serverConfig } from '../../config';
 import { PFColors } from '../../components/Pf/PfColors';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
@@ -85,8 +85,22 @@ const gridStyleCompact = kialiStyle({
   marginTop: '0px'
 });
 
+const gridStyleCompactDark = kialiStyle({
+  backgroundColor: PFColors.Black500,
+  paddingBottom: '20px',
+  marginTop: '0px'
+});
+
 const gridStyleList = kialiStyle({
   backgroundColor: '#f5f5f5',
+  // The VirtualTable component has a different style than cards
+  // We need to adjust the grid style if we are on compact vs list view
+  padding: '0 !important',
+  marginTop: '0px'
+});
+
+const gridStyleListDark = kialiStyle({
+  backgroundColor: PFColors.Black500,
   // The VirtualTable component has a different style than cards
   // We need to adjust the grid style if we are on compact vs list view
   padding: '0 !important',
@@ -164,6 +178,7 @@ type ReduxProps = {
   minTLS: string;
   navCollapse: boolean;
   refreshInterval: IntervalInMilliseconds;
+  theme: string;
 };
 
 type OverviewProps = ReduxProps & {};
@@ -914,7 +929,15 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         />
         {filteredNamespaces.length > 0 ? (
           <RenderComponentScroll
-            className={this.state.displayMode === OverviewDisplayMode.LIST ? gridStyleList : gridStyleCompact}
+            className={
+              this.state.displayMode === OverviewDisplayMode.LIST
+                ? this.props.theme === themes[0]
+                  ? gridStyleList
+                  : gridStyleListDark
+                : this.props.theme === themes[0]
+                ? gridStyleCompact
+                : gridStyleCompactDark
+            }
           >
             {this.state.displayMode === OverviewDisplayMode.LIST ? (
               <VirtualList
@@ -1292,7 +1315,8 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   meshStatus: meshWideMTLSStatusSelector(state),
   minTLS: minTLSVersionSelector(state),
   navCollapse: state.userSettings.interface.navCollapse,
-  refreshInterval: refreshIntervalSelector(state)
+  refreshInterval: refreshIntervalSelector(state),
+  theme: state.globalState.theme
 });
 
 export const OverviewPage = connect(mapStateToProps)(OverviewPageComponent);

@@ -12,6 +12,8 @@ import { KialiDispatch } from 'types/Redux';
 import { LoginThunkActions } from '../../../actions/LoginThunkActions';
 import { connect } from 'react-redux';
 import * as API from '../../../services/Api';
+import { store } from '../../../store/ConfigStore';
+import { GlobalActions } from '../../../actions/GlobalActions';
 
 const darkmode = 'pf-theme-dark';
 const themes = ['Default', 'Dark'];
@@ -102,9 +104,11 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
     if (this.state.theme === themes[0]) {
       this.setState({ theme: themes[1] });
       document.documentElement.classList.add(darkmode);
+      store.dispatch(GlobalActions.setTheme(themes[1]));
     } else {
       this.setState({ theme: themes[0] });
       document.documentElement.classList.remove(darkmode);
+      store.dispatch(GlobalActions.setTheme(themes[0]));
     }
   };
 
