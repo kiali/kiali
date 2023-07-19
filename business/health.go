@@ -153,6 +153,7 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 
 	// Perf: do not bother fetching request rate if no workloads or no workload has sidecar
 	sidecarPresent := false
+	var appSidecars = make(map[string]bool)
 
 	// Prepare all data
 	for app, entities := range appEntities {
@@ -164,6 +165,7 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 				for _, w := range entities.Workloads {
 					if w.IstioSidecar {
 						sidecarPresent = true
+						appSidecars[app] = true
 						break
 					}
 				}
@@ -178,7 +180,7 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 			return allHealth, errors.NewServiceUnavailable(err.Error())
 		}
 		// Fill with collected request rates
-		fillAppRequestRates(allHealth, rates)
+		fillAppRequestRates(allHealth, rates, appSidecars)
 	}
 
 	return allHealth, nil
@@ -298,6 +300,7 @@ func (in *HealthService) getNamespaceWorkloadHealth(ws models.Workloads, criteri
 	rateInterval := criteria.RateInterval
 	queryTime := criteria.QueryTime
 	cluster := criteria.Cluster
+	var wlSidecars = make(map[string]bool)
 
 	allHealth := make(models.NamespaceWorkloadHealth)
 	for _, w := range ws {
@@ -306,6 +309,7 @@ func (in *HealthService) getNamespaceWorkloadHealth(ws models.Workloads, criteri
 		allHealth[w.Name].WorkloadStatus = w.CastWorkloadStatus()
 		if w.IstioSidecar {
 			hasSidecar = true
+			wlSidecars[w.Name] = true
 		}
 	}
 
@@ -316,25 +320,28 @@ func (in *HealthService) getNamespaceWorkloadHealth(ws models.Workloads, criteri
 			return allHealth, errors.NewServiceUnavailable(err.Error())
 		}
 		// Fill with collected request rates
-		fillWorkloadRequestRates(allHealth, rates)
+		fillWorkloadRequestRates(allHealth, rates, wlSidecars)
 	}
 
 	return allHealth, nil
 }
 
 // fillAppRequestRates aggregates requests rates from metrics fetched from Prometheus, and stores the result in the health map.
-func fillAppRequestRates(allHealth models.NamespaceAppHealth, rates model.Vector) {
+func fillAppRequestRates(allHealth models.NamespaceAppHealth, rates model.Vector, appSidecars map[string]bool) {
 	lblDest := model.LabelName("destination_canonical_service")
 	lblSrc := model.LabelName("source_canonical_service")
 
 	for _, sample := range rates {
 		name := string(sample.Metric[lblDest])
-		if health, ok := allHealth[name]; ok {
-			health.Requests.AggregateInbound(sample)
-		}
-		name = string(sample.Metric[lblSrc])
-		if health, ok := allHealth[name]; ok {
-			health.Requests.AggregateOutbound(sample)
+		// include requests only to apps which have a sidecar
+		if _, ok := appSidecars[name]; ok {
+			if health, ok := allHealth[name]; ok {
+				health.Requests.AggregateInbound(sample)
+			}
+			name = string(sample.Metric[lblSrc])
+			if health, ok := allHealth[name]; ok {
+				health.Requests.AggregateOutbound(sample)
+			}
 		}
 	}
 	for _, health := range allHealth {
@@ -343,17 +350,20 @@ func fillAppRequestRates(allHealth models.NamespaceAppHealth, rates model.Vector
 }
 
 // fillWorkloadRequestRates aggregates requests rates from metrics fetched from Prometheus, and stores the result in the health map.
-func fillWorkloadRequestRates(allHealth models.NamespaceWorkloadHealth, rates model.Vector) {
+func fillWorkloadRequestRates(allHealth models.NamespaceWorkloadHealth, rates model.Vector, wlSidecars map[string]bool) {
 	lblDest := model.LabelName("destination_workload")
 	lblSrc := model.LabelName("source_workload")
 	for _, sample := range rates {
 		name := string(sample.Metric[lblDest])
-		if health, ok := allHealth[name]; ok {
-			health.Requests.AggregateInbound(sample)
-		}
-		name = string(sample.Metric[lblSrc])
-		if health, ok := allHealth[name]; ok {
-			health.Requests.AggregateOutbound(sample)
+		// include requests only to workloads which have a sidecar
+		if _, ok := wlSidecars[name]; ok {
+			if health, ok := allHealth[name]; ok {
+				health.Requests.AggregateInbound(sample)
+			}
+			name = string(sample.Metric[lblSrc])
+			if health, ok := allHealth[name]; ok {
+				health.Requests.AggregateOutbound(sample)
+			}
 		}
 	}
 	for _, health := range allHealth {
