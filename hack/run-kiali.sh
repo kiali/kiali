@@ -649,7 +649,8 @@ EOM
     chmod 'u=r,go=' "${TOKEN_FILE}" "${CA_FILE}"
 
     infomsg "Setting up kubeconfig at [${kubeconfig}]"
-    ${CLIENT_EXE} config set-cluster ${KUBE_CONTEXT} --kubeconfig="${kubeconfig}" "--server=https://${KUBERNETES_API_HOST}:${KUBERNETES_API_PORT}" "--certificate-authority=${CA_FILE}"
+    # Embedding the ca cert so we don't have pathing issues.
+    ${CLIENT_EXE} config set-cluster ${KUBE_CONTEXT} --kubeconfig="${kubeconfig}" "--server=https://${KUBERNETES_API_HOST}:${KUBERNETES_API_PORT}" --certificate-authority="${CA_FILE}" --embed-certs
     ${CLIENT_EXE} config set-credentials ${KUBE_CONTEXT} --kubeconfig="${kubeconfig}" --token="$(cat ${TOKEN_FILE})"
     ${CLIENT_EXE} config set-context ${KUBE_CONTEXT} --kubeconfig="${kubeconfig}" --user=${KUBE_CONTEXT} --cluster=${KUBE_CONTEXT} --namespace=${ISTIO_NAMESPACE}
     ${CLIENT_EXE} config use-context --kubeconfig="${kubeconfig}" ${KUBE_CONTEXT}
@@ -668,13 +669,6 @@ EOM
 
   rm -f "${REMOTE_SECRET_FILE}"
   ln -s "${kubeconfig}" "${REMOTE_SECRET_FILE}"
-
-  # Need to link the newly minted ca file as well because kubectl config set-cluster always sets a relative path.
-  if [ "${KUBE_CONTEXT}" != "current" ]; then
-    REMOTE_CA_FILE="${REMOTE_SECRET_DIR}/ca.crt"
-    rm -f "${REMOTE_CA_FILE}"
-    ln -s "${CA_FILE}" "${REMOTE_CA_FILE}"
-  fi
 }
 
 setup_kubeconfig
