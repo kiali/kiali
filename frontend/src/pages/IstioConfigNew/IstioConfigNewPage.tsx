@@ -251,7 +251,11 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
         .map(o => API.createIstioConfigDetail(o.namespace, DIC[this.props.objectType], o.json, cluster))
         .map(p =>
           p.catch(error => {
-            if (error.response.status !== 404) {
+            // ignore 404 errors besides no CRD found ones
+            if (
+              error.response.status !== 404 ||
+              API.getErrorString(error).includes('the server could not find the requested resource')
+            ) {
               AlertUtils.addError(
                 'Could not create Istio ' +
                   this.props.objectType +
