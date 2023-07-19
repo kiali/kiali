@@ -75,6 +75,16 @@ func (o *K8SClientMock) GetNamespaces(labelSelector string) ([]core_v1.Namespace
 	return args.Get(0).([]core_v1.Namespace), args.Error(1)
 }
 
+func (o *K8SClientMock) GetNamespaceClusters(namespace string) ([]core_v1.Namespace, error) {
+	args := o.Called(namespace)
+	return args.Get(0).([]core_v1.Namespace), args.Error(1)
+}
+
+func (o *K8SClientMock) GetNamespacesByCluster(namespace string) ([]core_v1.Namespace, error) {
+	args := o.Called(namespace)
+	return args.Get(0).([]core_v1.Namespace), args.Error(1)
+}
+
 func (o *K8SClientMock) GetPods(namespace, labelSelector string) ([]core_v1.Pod, error) {
 	args := o.Called(namespace, labelSelector)
 	return args.Get(0).([]core_v1.Pod), args.Error(1)

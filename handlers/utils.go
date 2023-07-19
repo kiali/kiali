@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"k8s.io/client-go/tools/clientcmd/api"
 
@@ -22,13 +23,59 @@ const defaultPatchType = "merge"
 
 var defaultPromClientSupplier = prometheus.NewClient
 
-func checkNamespaceAccess(ctx context.Context, nsServ business.NamespaceService, namespace string) (*models.Namespace, error) {
-	return nsServ.GetNamespace(ctx, namespace)
+func checkNamespaceAccess(ctx context.Context, nsServ business.NamespaceService, namespace string, cluster string) (*models.Namespace, error) {
+	return nsServ.GetClusterNamespace(ctx, namespace, cluster)
 }
 
-func createMetricsServiceForNamespace(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, namespace string) (*business.MetricsService, *models.Namespace) {
-	metrics, infoMap := createMetricsServiceForNamespaces(w, r, promSupplier, []string{namespace})
-	if result, ok := infoMap[namespace]; ok {
+// createMetricsServiceForNamespaceMC is used when the service will query across all clusters for the namespace.
+// It will return an error if the user does not have access to the namespace on all of the clusters.
+func createMetricsServiceForNamespaceMC(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, nsName string) (*business.MetricsService, []models.Namespace) {
+	layer, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return nil, nil
+	}
+	prom, err := promSupplier()
+	if err != nil {
+		log.Error(err)
+		RespondWithError(w, http.StatusServiceUnavailable, "Prometheus client error: "+err.Error())
+		return nil, nil
+	}
+	var nsInfo []models.Namespace
+
+	for _, cluster := range layer.Namespace.GetClusterList() {
+		ns, err2 := checkNamespaceAccess(r.Context(), layer.Namespace, nsName, cluster)
+		if err2 != nil {
+			if strings.Contains(err2.Error(), "not found") {
+				continue
+			}
+			RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err2.Error())
+			return nil, nil
+		}
+		nsInfo = append(nsInfo, *ns)
+	}
+
+	metrics := business.NewMetricsService(prom)
+
+	return metrics, nsInfo
+}
+
+// GetOldestNamespace is a convenience function that takes a list of Namespaces and returns the
+// Namespace with the oldest CreationTimestamp.  In a tie, preference is towards the head of the list.
+func GetOldestNamespace(namespaces []models.Namespace) *models.Namespace {
+	var oldestNamespace *models.Namespace
+	for i, ns := range namespaces {
+		if i == 0 || ns.CreationTimestamp.Before(oldestNamespace.CreationTimestamp) {
+			oldestNamespace = &ns
+		}
+	}
+	return oldestNamespace
+}
+
+func createMetricsServiceForNamespace(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, ns models.Namespace) (*business.MetricsService, *models.Namespace) {
+
+	metrics, infoMap := createMetricsServiceForNamespaces(w, r, promSupplier, []models.Namespace{ns})
+	if result, ok := infoMap[ns.Name]; ok {
 		if result.err != nil {
 			RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+result.err.Error())
 			return nil, nil
@@ -43,7 +90,7 @@ type nsInfoError struct {
 	err  error
 }
 
-func createMetricsServiceForNamespaces(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, namespaces []string) (*business.MetricsService, map[string]nsInfoError) {
+func createMetricsServiceForNamespaces(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, namespaces []models.Namespace) (*business.MetricsService, map[string]nsInfoError) {
 	layer, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -58,8 +105,8 @@ func createMetricsServiceForNamespaces(w http.ResponseWriter, r *http.Request, p
 
 	nsInfos := make(map[string]nsInfoError)
 	for _, ns := range namespaces {
-		info, err := checkNamespaceAccess(r.Context(), layer.Namespace, ns)
-		nsInfos[ns] = nsInfoError{info: info, err: err}
+		info, err := checkNamespaceAccess(r.Context(), layer.Namespace, ns.Name, ns.Cluster)
+		nsInfos[ns.Name] = nsInfoError{info: info, err: err}
 	}
 	metrics := business.NewMetricsService(prom)
 	return metrics, nsInfos

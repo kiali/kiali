@@ -49,7 +49,7 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 	if namespace != "" {
-		if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
+		if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
 			return nil, err
 		}
 	}
@@ -184,7 +184,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err = in.businessLayer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
+	if _, err = in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
 		return nil, istioReferences, err
 	}
 
@@ -350,7 +350,7 @@ func (in *IstioValidationsService) fetchServices(ctx context.Context, rValue *mo
 func (in *IstioValidationsService) fetchAllWorkloads(ctx context.Context, rValue *map[string]models.WorkloadList, cluster string, namespaces *models.Namespaces, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
-		nss, err := in.businessLayer.Namespace.GetNamespacesForCluster(ctx, cluster)
+		nss, err := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
 		if err != nil {
 			errChan <- err
 			return

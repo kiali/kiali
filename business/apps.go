@@ -244,7 +244,7 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 	defer end()
 
 	appInstance := &models.App{Namespace: models.Namespace{Name: criteria.Namespace}, Name: criteria.AppName, Health: models.EmptyAppHealth(), Cluster: criteria.Cluster}
-	ns, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, criteria.Namespace, criteria.Cluster)
+	ns, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, criteria.Namespace, criteria.Cluster)
 	if err != nil {
 		return *appInstance, err
 	}
@@ -347,7 +347,7 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
+	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
 		return nil, err
 	}
 

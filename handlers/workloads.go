@@ -58,7 +58,8 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 	p := workloadParams{}
 	p.extract(r)
 
-	criteria := business.WorkloadCriteria{Namespace: p.Namespace, IncludeHealth: p.IncludeHealth, IncludeIstioResources: p.IncludeIstioResources, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
+	criteria := business.WorkloadCriteria{Namespace: p.Namespace, IncludeHealth: p.IncludeHealth,
+		IncludeIstioResources: p.IncludeIstioResources, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
 
 	// Get business layer
 	businessLayer, err := getBusiness(r)
@@ -68,7 +69,17 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if criteria.IncludeHealth {
-		rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime)
+		// When the cluster is not specified, we need to get it. If there are more than one,
+		// get the one for which the namespace creation time is oldest
+		namespaces, _ := businessLayer.Namespace.GetNamespaceClusters(r.Context(), p.Namespace)
+		if len(namespaces) == 0 {
+			err = fmt.Errorf("No clusters found for namespace  [%s]", p.Namespace)
+			handleErrorResponse(w, err, "Error looking for cluster: "+err.Error())
+			return
+		}
+		ns := GetOldestNamespace(namespaces)
+
+		rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime, ns.Cluster)
 		if err != nil {
 			handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 			return
@@ -77,6 +88,7 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch and build workloads
+	// Criteria does not include cluster, so it will look workloads from all the clusters
 	workloadList, err := businessLayer.Workload.GetWorkloadList(r.Context(), criteria)
 	if err != nil {
 		handleErrorResponse(w, err)

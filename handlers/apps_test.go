@@ -176,9 +176,7 @@ func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.Pr
 		t.Fatal(err)
 	}
 	prom.Inject(xapi)
-
 	k8s := &clientNoPrivileges{kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})}
-
 	mr := mux.NewRouter()
 
 	authInfo := &api.AuthInfo{Token: "test"}

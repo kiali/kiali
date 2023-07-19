@@ -203,7 +203,7 @@ func (in *HealthService) GetNamespaceServiceHealth(ctx context.Context, criteria
 		return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
 	}
 
-	if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
+	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
 		return nil, err
 	}
 
@@ -279,7 +279,7 @@ func (in *HealthService) GetNamespaceWorkloadHealth(ctx context.Context, criteri
 		return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
 	}
 
-	if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
+	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
 		return nil, err
 	}
 

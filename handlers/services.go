@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -53,7 +54,8 @@ func ServiceList(w http.ResponseWriter, r *http.Request) {
 	p := serviceListParams{}
 	p.extract(r)
 
-	criteria := business.ServiceCriteria{Namespace: p.Namespace, IncludeHealth: p.IncludeHealth, IncludeIstioResources: p.IncludeIstioResources, IncludeOnlyDefinitions: p.IncludeOnlyDefinitions, RateInterval: "", QueryTime: p.QueryTime}
+	criteria := business.ServiceCriteria{Namespace: p.Namespace, IncludeHealth: p.IncludeHealth,
+		IncludeIstioResources: p.IncludeIstioResources, IncludeOnlyDefinitions: p.IncludeOnlyDefinitions, RateInterval: "", QueryTime: p.QueryTime}
 
 	// Get business layer
 	business, err := getBusiness(r)
@@ -63,7 +65,16 @@ func ServiceList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if criteria.IncludeHealth {
-		rateInterval, err := adjustRateInterval(r.Context(), business, p.Namespace, p.RateInterval, p.QueryTime)
+		// When the cluster is not specified, we need to get it. If there are more than one,
+		// get the one for which the namespace creation time is oldest
+		namespaces, _ := business.Namespace.GetNamespaceClusters(r.Context(), p.Namespace)
+		if len(namespaces) == 0 {
+			err = fmt.Errorf("No clusters found for namespace  [%s]", p.Namespace)
+			handleErrorResponse(w, err, "Error looking for cluster: "+err.Error())
+			return
+		}
+		ns := GetOldestNamespace(namespaces)
+		rateInterval, err := adjustRateInterval(r.Context(), business, p.Namespace, p.RateInterval, p.QueryTime, ns.Cluster)
 		if err != nil {
 			handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 			return
@@ -108,7 +119,7 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 	namespace := params["namespace"]
 	service := params["service"]
 	queryTime := util.Clock.Now()
-	rateInterval, err = adjustRateInterval(r.Context(), business, namespace, rateInterval, queryTime)
+	rateInterval, err = adjustRateInterval(r.Context(), business, namespace, rateInterval, queryTime, cluster)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
@@ -171,7 +182,7 @@ func ServiceUpdate(w http.ResponseWriter, r *http.Request) {
 	namespace := params["namespace"]
 	service := params["service"]
 	queryTime := util.Clock.Now()
-	rateInterval, err = adjustRateInterval(r.Context(), business, namespace, rateInterval, queryTime)
+	rateInterval, err = adjustRateInterval(r.Context(), business, namespace, rateInterval, queryTime, cluster)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Adjust rate interval error: "+err.Error())
 		return

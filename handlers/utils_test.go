@@ -18,6 +18,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
@@ -71,7 +72,7 @@ func TestCreateMetricsServiceForNamespace(t *testing.T) {
 	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), &api.AuthInfo{Token: "test"}))
 
 	w := httptest.NewRecorder()
-	srv, info := createMetricsServiceForNamespace(w, req, prom, "ns1")
+	srv, info := createMetricsServiceForNamespace(w, req, prom, models.Namespace{Name: "ns1", Cluster: config.Get().KubernetesConfig.ClusterName})
 
 	assert.NotNil(srv)
 	assert.NotNil(info)
@@ -87,7 +88,7 @@ func TestCreateMetricsServiceForNamespaceForbidden(t *testing.T) {
 	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), &api.AuthInfo{Token: "test"}))
 
 	w := httptest.NewRecorder()
-	srv, info := createMetricsServiceForNamespace(w, req, prom, "nsNil")
+	srv, info := createMetricsServiceForNamespace(w, req, prom, models.Namespace{Name: "nsNil", Cluster: config.Get().KubernetesConfig.ClusterName})
 
 	assert.Nil(srv)
 	assert.Nil(info)
@@ -102,7 +103,7 @@ func TestCreateMetricsServiceForSeveralNamespaces(t *testing.T) {
 	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), &api.AuthInfo{Token: "test"}))
 
 	w := httptest.NewRecorder()
-	srv, info := createMetricsServiceForNamespaces(w, req, prom, []string{"ns1", "ns2", "nsNil"})
+	srv, info := createMetricsServiceForNamespaces(w, req, prom, []models.Namespace{{Name: "ns1"}, {Name: "ns2"}, {Name: "nsNil"}})
 
 	assert.NotNil(srv)
 	assert.Len(info, 3)

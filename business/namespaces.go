@@ -72,6 +72,15 @@ func NewNamespaceService(userClients map[string]kubernetes.ClientInterface, kial
 	}
 }
 
+// GetClusterList Returns a list of cluster names based on the user clients
+func (in *NamespaceService) GetClusterList() []string {
+	var clusterList []string
+	for cluster := range in.userClients {
+		clusterList = append(clusterList, cluster)
+	}
+	return clusterList
+}
+
 // Returns a list of the given namespaces / projects
 func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespace, error) {
 	var end observability.EndFunc
@@ -275,7 +284,7 @@ func (in *NamespaceService) getNamespacesByCluster(cluster string) ([]models.Nam
 
 	labelSelectorInclude := configObject.API.Namespaces.LabelSelectorInclude
 
-	namespaces := []models.Namespace{}
+	var namespaces []models.Namespace
 	_, queryAllNamespaces := in.isAccessibleNamespaces["**"]
 	// If we are running in OpenShift, we will use the project names since these are the list of accessible namespaces
 	if in.hasProjects {
@@ -315,6 +324,8 @@ func (in *NamespaceService) getNamespacesByCluster(cluster string) ([]models.Nam
 				}
 				namespaces = models.CastProjectCollection(filteredProjects, cluster)
 			}
+		} else {
+			return nil, err2
 		}
 	} else {
 		// if the accessible namespaces define a distinct list of namespaces, use only those.
@@ -392,8 +403,8 @@ func (in *NamespaceService) getNamespacesByCluster(cluster string) ([]models.Nam
 	return namespaces, nil
 }
 
-// GetNamespacesForCluster is just a convenience routine that filters GetNamespaces for a particular cluster
-func (in *NamespaceService) GetNamespacesForCluster(ctx context.Context, cluster string) ([]models.Namespace, error) {
+// GetClusterNamespaces is just a convenience routine that filters GetNamespaces for a particular cluster
+func (in *NamespaceService) GetClusterNamespaces(ctx context.Context, cluster string) ([]models.Namespace, error) {
 	tokenNamespaces, err := in.GetNamespaces(ctx)
 	if err != nil {
 		return nil, err
@@ -506,13 +517,6 @@ func (in *NamespaceService) isIncludedNamespace(namespace string) bool {
 	return false
 }
 
-// GetNamespace returns the definition of the specified namespace.
-// TODO: Multicluster: We are going to need something else to identify the namespace, the cluster (OR Return a list/array/map)
-func (in *NamespaceService) GetNamespace(ctx context.Context, namespace string) (*models.Namespace, error) {
-	// TODO: Wrapper for MC while other services are not updated to propagate the cluster
-	return in.GetNamespaceByCluster(ctx, namespace, "")
-}
-
 // GetNamespaceClusters is a convenience routine that filters GetNamespaces for a particular namespace
 func (in *NamespaceService) GetNamespaceClusters(ctx context.Context, namespace string) ([]models.Namespace, error) {
 	namespaces, err := in.GetNamespaces(ctx)
@@ -530,11 +534,10 @@ func (in *NamespaceService) GetNamespaceClusters(ctx context.Context, namespace 
 	return result, nil
 }
 
-// GetNamespace returns the definition of the specified namespace.
-// TODO: Multicluster: We are going to need something else to identify the namespace, the cluster (OR Return a list/array/map)
-func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace string, cluster string) (*models.Namespace, error) {
+// GetClusterNamespace returns the definition of the specified namespace.
+func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace string, cluster string) (*models.Namespace, error) {
 	var end observability.EndFunc
-	ctx, end = observability.StartSpan(ctx, "GetNamespaceByCluster",
+	ctx, end = observability.StartSpan(ctx, "GetClusterNamespace",
 		observability.Attribute("package", "business"),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("cluster", cluster),
@@ -563,53 +566,23 @@ func (in *NamespaceService) GetNamespaceByCluster(ctx context.Context, namespace
 	var result models.Namespace
 	if in.hasProjects {
 		var project *osproject_v1.Project
-		// TODO: MC
-		if cluster == "" {
-			var err2 error
-			for cl := range in.userClients {
-				project, err2 = in.userClients[cl].GetProject(namespace)
-				if err2 == nil {
-					result = models.CastProject(*project, cluster)
-					break
-				}
-			}
-			if err2 != nil {
-				return nil, err2
-			}
-		} else {
-			if _, ok := in.userClients[cluster]; !ok {
-				return nil, fmt.Errorf("OCP Cluster [%s] is not found or is not accessible for Kiali", cluster)
-			}
-			project, errC := in.userClients[cluster].GetProject(namespace)
-			if errC != nil {
-				return nil, errC
-			}
-			result = models.CastProject(*project, cluster)
+		if _, ok := in.userClients[cluster]; !ok {
+			return nil, fmt.Errorf("OCP Cluster [%s] is not found or is not accessible for Kiali", cluster)
 		}
+		project, errC := in.userClients[cluster].GetProject(namespace)
+		if errC != nil {
+			return nil, errC
+		}
+		result = models.CastProject(*project, cluster)
 	} else {
-		// TODO: MC
 		var ns *core_v1.Namespace
 		var errC error
-		if cluster == "" {
-			for cl := range in.userClients {
-				ns, errC = in.userClients[cl].GetNamespace(namespace)
-				if errC == nil {
-					// Namespace found, assign that cluster
-					cluster = cl
-					break
-				}
-			}
-			if errC != nil {
-				return nil, errC
-			}
-		} else {
-			if _, ok := in.userClients[cluster]; !ok {
-				return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
-			}
-			ns, errC = in.userClients[cluster].GetNamespace(namespace)
-			if errC != nil {
-				return nil, errC
-			}
+		if _, ok := in.userClients[cluster]; !ok {
+			return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
+		}
+		ns, errC = in.userClients[cluster].GetNamespace(namespace)
+		if errC != nil {
+			return nil, errC
 		}
 
 		result = models.CastNamespace(*ns, cluster)
@@ -631,7 +604,7 @@ func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace strin
 	defer end()
 
 	// A first check to run the accessible/excluded logic and not run the Update operation on filtered namespaces
-	_, err := in.GetNamespaceByCluster(ctx, namespace, cluster)
+	_, err := in.GetClusterNamespace(ctx, namespace, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -646,7 +619,7 @@ func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace strin
 	in.kialiCache.RefreshTokenNamespaces()
 
 	// Call GetNamespace to update the caching
-	return in.GetNamespaceByCluster(ctx, namespace, cluster)
+	return in.GetClusterNamespace(ctx, namespace, cluster)
 }
 
 func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, labelSelector string, forwardedError error) ([]core_v1.Namespace, error) {

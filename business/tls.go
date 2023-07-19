@@ -119,7 +119,7 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 }
 
 func (in *TLSService) getNamespaces(ctx context.Context, cluster string) ([]string, error) {
-	nss, nssErr := in.businessLayer.Namespace.GetNamespacesForCluster(ctx, cluster)
+	nss, nssErr := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
 	if nssErr != nil {
 		return nil, nssErr
 	}

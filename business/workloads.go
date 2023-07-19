@@ -338,7 +338,7 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 	)
 	defer end()
 
-	ns, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, criteria.Namespace, criteria.Cluster)
+	ns, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, criteria.Namespace, criteria.Cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -633,7 +633,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
+	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
 		return nil, err
 	}
 
@@ -1194,7 +1194,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, criteria.Namespace, criteria.Cluster); err != nil {
+	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, criteria.Namespace, criteria.Cluster); err != nil {
 		return nil, err
 	}
 
@@ -1836,7 +1836,7 @@ func (in *WorkloadService) listWaypointWorkloadsForNamespace(ctx context.Context
 func (in *WorkloadService) updateWorkload(ctx context.Context, cluster string, namespace string, workloadName string, workloadType string, jsonPatch string, patchType string) error {
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := in.businessLayer.Namespace.GetNamespaceByCluster(ctx, namespace, cluster); err != nil {
+	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
 		return err
 	}
 

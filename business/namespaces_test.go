@@ -74,7 +74,7 @@ func TestGetNamespace(t *testing.T) {
 
 	nsservice := setupNamespaceService(t, k8s, conf)
 
-	ns, _ := nsservice.GetNamespace(context.TODO(), "bookinfo")
+	ns, _ := nsservice.GetClusterNamespace(context.TODO(), "bookinfo", config.Get().KubernetesConfig.ClusterName)
 
 	assert.NotNil(t, ns)
 	assert.Equal(t, ns.Name, "bookinfo")
@@ -92,7 +92,7 @@ func TestGetNamespaceWithError(t *testing.T) {
 
 	nsservice := setupNamespaceService(t, k8s, conf)
 
-	ns2, err := nsservice.GetNamespace(context.TODO(), "fakeNS")
+	ns2, err := nsservice.GetClusterNamespace(context.TODO(), "fakeNS", config.Get().KubernetesConfig.ClusterName)
 
 	assert.NotNil(t, err)
 	assert.Nil(t, ns2)
@@ -143,13 +143,10 @@ func TestMultiClusterGetNamespace(t *testing.T) {
 
 	nsservice := NewNamespaceService(clients, clients, cache, *conf)
 
-	_, err := nsservice.GetNamespace(context.TODO(), "bookinfo")
+	ns, err := nsservice.GetClusterNamespace(context.TODO(), "bookinfo", conf.KubernetesConfig.ClusterName)
 	require.NoError(err)
-	// TODO: It is indeterminite which cluster will be returned first.
-	// GetNamespace should probably always return the home cluster to
-	// keep backward compatability and anything new should use
-	// GetNamespaceByCluster.
-	// assert.Equal(conf.KubernetesConfig.ClusterName, ns.Cluster)
+
+	assert.Equal(t, conf.KubernetesConfig.ClusterName, ns.Cluster)
 }
 
 func TestMultiClusterGetNamespaces(t *testing.T) {
@@ -220,7 +217,7 @@ func TestGetNamespacesCached(t *testing.T) {
 
 	require.Len(namespaces, 4)
 
-	namespace, err := nsservice.GetNamespaceByCluster(context.TODO(), "gamma", "west")
+	namespace, err := nsservice.GetClusterNamespace(context.TODO(), "gamma", "west")
 	require.NoError(err)
 
 	assert.Equal("west", namespace.Cluster)
@@ -262,7 +259,7 @@ func TestGetNamespacesForbiddenCached(t *testing.T) {
 
 	nsservice := NewNamespaceService(clients, clients, cache, *conf)
 	// Try to get the bookinfo namespace from the home cluster.
-	_, err := nsservice.GetNamespaceByCluster(context.TODO(), "bookinfo", "east")
+	_, err := nsservice.GetClusterNamespace(context.TODO(), "bookinfo", "east")
 	require.Error(err)
 }
 

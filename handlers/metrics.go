@@ -30,15 +30,17 @@ func getAppMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClie
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 	app := vars["app"]
+	cluster := clusterNameFromQuery(r.URL.Query())
 
-	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, namespace)
+	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
 	}
 
-	params := models.IstioMetricsQuery{Cluster: clusterNameFromQuery(r.URL.Query()), Namespace: namespace, App: app}
-	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
+	params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace, App: app}
+	oldestNs := GetOldestNamespace(namespaceInfo)
+	err := extractIstioMetricsQueryParams(r, &params, oldestNs)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
@@ -62,15 +64,17 @@ func getWorkloadMetrics(w http.ResponseWriter, r *http.Request, promSupplier pro
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 	workload := vars["workload"]
+	cluster := clusterNameFromQuery(r.URL.Query())
 
-	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, namespace)
-	if metricsService == nil {
+	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
+	if metricsService == nil || namespaceInfo == nil {
 		// any returned value nil means error & response already written
 		return
 	}
+	oldestNs := GetOldestNamespace(namespaceInfo)
 
-	params := models.IstioMetricsQuery{Cluster: clusterNameFromQuery(r.URL.Query()), Namespace: namespace, Workload: workload}
-	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
+	params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace, Workload: workload}
+	err := extractIstioMetricsQueryParams(r, &params, oldestNs)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
@@ -94,15 +98,17 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promSupplier prom
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 	service := vars["service"]
+	cluster := clusterNameFromQuery(r.URL.Query())
 
-	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, namespace)
+	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
 	}
+	oldestNs := GetOldestNamespace(namespaceInfo)
 
-	params := models.IstioMetricsQuery{Cluster: clusterNameFromQuery(r.URL.Query()), Namespace: namespace, Service: service}
-	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
+	params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace, Service: service}
+	err := extractIstioMetricsQueryParams(r, &params, oldestNs)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
@@ -128,14 +134,15 @@ func getAggregateMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 	aggregate := vars["aggregate"]
 	aggregateValue := vars["aggregateValue"]
 
-	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, namespace)
+	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
 	}
+	oldestNs := GetOldestNamespace(namespaceInfo)
 
 	params := models.IstioMetricsQuery{Namespace: namespace, Aggregate: aggregate, AggregateValue: aggregateValue}
-	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
+	err := extractIstioMetricsQueryParams(r, &params, oldestNs)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
@@ -167,16 +174,18 @@ func NamespaceMetrics(w http.ResponseWriter, r *http.Request) {
 func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier) {
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
+	cluster := clusterNameFromQuery(r.URL.Query())
 
-	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, namespace)
+	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
 	}
+	oldestNs := GetOldestNamespace(namespaceInfo)
 
-	params := models.IstioMetricsQuery{Cluster: clusterNameFromQuery(r.URL.Query()), Namespace: namespace}
+	params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace}
 
-	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
+	err := extractIstioMetricsQueryParams(r, &params, oldestNs)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
@@ -331,6 +340,7 @@ func MetricsStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var raw models.MetricsStatsQueries
+
 	err = json.Unmarshal(body, &raw)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
@@ -356,17 +366,18 @@ func MetricsStats(w http.ResponseWriter, r *http.Request) {
 
 func prepareStatsQueries(w http.ResponseWriter, r *http.Request, rawQ []models.MetricsStatsQuery, promSupplier promClientSupplier) (*business.MetricsService, []models.MetricsStatsQuery, *util.Errors) {
 	// Get unique namespaces list
-	var namespaces []string
+	var namespaces []models.Namespace
 	for _, q := range rawQ {
 		found := false
 		for _, ns := range namespaces {
-			if ns == q.Target.Namespace {
+			if ns.Name == q.Target.Namespace {
 				found = true
 				break
 			}
 		}
 		if !found {
-			namespaces = append(namespaces, q.Target.Namespace)
+			newNs := models.Namespace{Name: q.Target.Namespace, Cluster: q.Target.Cluster}
+			namespaces = append(namespaces, newNs)
 		}
 	}
 

@@ -33,7 +33,7 @@ func CustomDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check namespace access
-	info, err := layer.Namespace.GetNamespaceByCluster(r.Context(), namespace, cluster)
+	info, err := layer.Namespace.GetClusterNamespace(r.Context(), namespace, cluster)
 	if err != nil {
 		RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
 		return
@@ -117,14 +117,15 @@ func AppDashboard(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 	app := vars["app"]
+	cluster := clusterNameFromQuery(r.URL.Query())
 
-	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, defaultPromClientSupplier, namespace)
+	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, defaultPromClientSupplier, models.Namespace{Name: namespace, Cluster: cluster})
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
 	}
 
-	params := models.IstioMetricsQuery{Cluster: clusterNameFromQuery(r.URL.Query()), Namespace: namespace, App: app}
+	params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace, App: app}
 	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
@@ -149,7 +150,7 @@ func ServiceDashboard(w http.ResponseWriter, r *http.Request) {
 	queryParams := r.URL.Query()
 	cluster := clusterNameFromQuery(queryParams)
 
-	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, defaultPromClientSupplier, namespace)
+	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, defaultPromClientSupplier, models.Namespace{Name: namespace, Cluster: cluster})
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
@@ -195,14 +196,15 @@ func WorkloadDashboard(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 	workload := vars["workload"]
+	cluster := clusterNameFromQuery(r.URL.Query())
 
-	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, defaultPromClientSupplier, namespace)
+	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, defaultPromClientSupplier, models.Namespace{Name: namespace, Cluster: cluster})
 	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
 	}
 
-	params := models.IstioMetricsQuery{Cluster: clusterNameFromQuery(r.URL.Query()), Namespace: namespace, Workload: workload}
+	params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace, Workload: workload}
 	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
