@@ -6,7 +6,7 @@ import { RenderComponentScroll } from './RenderComponentScroll';
 const containerPadding = kialiStyle({ padding: '30px 20px 0 20px' });
 const containerWhite = kialiStyle({ backgroundColor: PFColors.White });
 
-export class RenderContent extends React.Component<{ needScroll?: boolean }> {
+export class RenderContent extends React.Component<{ needScroll?: boolean; theme?: string }> {
   render() {
     return (
       <RenderComponentScroll className={containerPadding}>

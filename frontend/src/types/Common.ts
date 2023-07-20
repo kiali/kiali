@@ -1,4 +1,6 @@
 import { defaultMetricsDuration } from '../components/Metrics/Helper';
+import { kialiStyle } from '../styles/StyleUtils';
+import { PFColors } from '../components/Pf/PfColors';
 
 export type AppenderString = string;
 
@@ -99,3 +101,12 @@ export const isEqualTimeRange = (t1: TimeRange, t2: TimeRange): boolean => {
 // Dark mode support
 export const darkmode = 'pf-theme-dark';
 export const themes = ['Default', 'Dark'];
+export const bgDefault = kialiStyle({
+  backgroundColor: PFColors.White
+});
+export const bgDark = kialiStyle({
+  backgroundColor: PFColors.Black800
+});
+export const bgDarkSoft = kialiStyle({
+  backgroundColor: PFColors.Black500
+});

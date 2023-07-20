@@ -27,6 +27,7 @@ type AppListPageState = FilterComponent.State<AppListItem>;
 type ReduxProps = {
   duration: DurationInSeconds;
   activeNamespaces: Namespace[];
+  theme: string;
 };
 
 type AppListPageProps = ReduxProps & FilterComponent.Props<AppListItem>;
@@ -145,6 +146,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
               initialToggles={this.initialToggles}
               onFilterChange={this.onFilterChange}
               onToggleChange={this.onFilterChange}
+              theme={this.props.theme}
             />
           </VirtualList>
         </RenderContent>
@@ -155,7 +157,8 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
 
 const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state),
-  duration: durationSelector(state)
+  duration: durationSelector(state),
+  theme: state.globalState.theme
 });
 
 export const AppListPage = connect(mapStateToProps)(AppListPageComponent);

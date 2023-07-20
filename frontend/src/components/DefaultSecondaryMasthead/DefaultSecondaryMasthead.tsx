@@ -5,11 +5,13 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from '../../config/KialiIcon';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
+import { bgDark, themes } from '../../types/Common';
 
 const titles = ['applications', 'istio', 'istio/new', 'mesh', 'services', 'workloads'];
 
 type ReduxProps = {
   istioAPIEnabled: boolean;
+  theme: string;
 };
 
 type Props = ReduxProps & {
@@ -77,7 +79,7 @@ class DefaultSecondaryMastheadComponent extends React.Component<Props> {
   render() {
     const { title, disabled } = this.showTitle();
     return (
-      <div className={mainPadding}>
+      <div className={this.props.theme === themes[0] ? mainPadding : `${mainPadding} ${bgDark}`}>
         <div className={flexStyle}>
           <div>{this.props.hideNamespaceSelector === true ? null : <NamespaceDropdown disabled={disabled} />}</div>
           {this.props.rightToolbar && <div className={rightToolbarStyle}>{this.props.rightToolbar}</div>}
@@ -92,7 +94,8 @@ class DefaultSecondaryMastheadComponent extends React.Component<Props> {
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
+  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
+  theme: state.globalState.theme
 });
 
 export const DefaultSecondaryMasthead = connect(mapStateToProps)(DefaultSecondaryMastheadComponent);

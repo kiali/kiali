@@ -14,6 +14,7 @@ import * as FilterHelper from '../FilterList/FilterHelper';
 import * as Sorts from '../../pages/Overview/Sorts';
 import { StatefulFilters } from '../Filters/StatefulFilters';
 import { kialiStyle } from 'styles/StyleUtils';
+import { bgDark, bgDefault, themes } from '../../types/Common';
 
 const virtualListStyle = kialiStyle({
   padding: '20px',
@@ -40,6 +41,7 @@ type VirtualListProps<R> = {
   sort?: (sortField: SortField<NamespaceInfo>, isAscending: boolean) => void;
   statefulProps?: React.RefObject<StatefulFilters>;
   type: string;
+  theme: string;
 };
 
 type VirtualListState = {
@@ -156,7 +158,8 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     });
 
     return (
-      <div className={virtualListStyle}>
+
+      <div className={this.props.theme === themes[0] ? `${bgDefault} ${virtualListStyle}` : `${bgDark} ${virtualListStyle}`}>
         {childrenWithProps}
         <Table {...tableProps} sortBy={sortBy} onSort={this.onSort}>
           <TableHeader />
@@ -199,7 +202,8 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  activeNamespaces: activeNamespacesSelector(state)
+  activeNamespaces: activeNamespacesSelector(state),
+  theme: state.globalState.theme
 });
 
 export const VirtualList = connect(mapStateToProps)(VirtualListComponent);
