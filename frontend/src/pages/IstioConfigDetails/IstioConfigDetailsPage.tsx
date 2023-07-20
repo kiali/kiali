@@ -93,6 +93,7 @@ interface IstioConfigDetailsProps {
   istioConfigId: IstioConfigId;
   kiosk: string;
   istioAPIEnabled: boolean;
+  theme: string;
 }
 
 class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetailsProps, IstioConfigDetailsState> {
@@ -607,6 +608,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
             activeTab={this.state.currentTab}
             mountOnEnter={false}
             unmountOnExit={true}
+            theme={this.props.theme}
           >
             <Tab key="istio-yaml" title={`YAML ${this.state.isModified ? ' * ' : ''}`} eventKey={0}>
               <RenderComponentScroll>{this.renderEditor()}</RenderComponentScroll>
@@ -636,7 +638,8 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
 
 const mapStateToProps = (state: KialiAppState) => ({
   kiosk: state.globalState.kiosk,
-  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
+  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
+  theme: state.globalState.theme
 });
 
 export const IstioConfigDetailsPage = connect(mapStateToProps)(IstioConfigDetailsPageComponent);

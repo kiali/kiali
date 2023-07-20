@@ -19,7 +19,7 @@ import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions'
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { PeerAuthentication } from '../../types/IstioObjects';
 import { FocusNode } from 'pages/GraphPF/GraphPF';
-import { bgDarkSoft, bgDefault, themes } from '../../types/Common';
+import { bgDark, bgDarkSoft, bgDefault, themes } from '../../types/Common';
 
 type SummaryPanelState = {
   isVisible: boolean;
@@ -108,7 +108,9 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
     return (
       <TourStop info={[GraphTourStops.Graph, GraphTourStops.ContextualMenu, GraphTourStops.SidePanel]}>
         <div id="graph-side-panel" className={mainStyle}>
-          <div className={mainTopStyle}>
+          <div
+            className={this.props.theme === themes[0] ? `${mainTopStyle} ${bgDefault}` : `${mainTopStyle} ${bgDark}`}
+          >
             <div
               className={
                 this.props.theme === themes[0]

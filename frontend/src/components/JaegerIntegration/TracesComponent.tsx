@@ -13,7 +13,7 @@ import { TraceDetails } from './JaegerResults/TraceDetails';
 import { JaegerScatter } from './JaegerScatter';
 import { TracesFetcher, FetchOptions } from './TracesFetcher';
 import { SpanDetails } from './JaegerResults/SpanDetails';
-import { isEqualTimeRange, TargetKind, TimeInMilliseconds, TimeRange } from 'types/Common';
+import { bgDark, bgDefault, isEqualTimeRange, TargetKind, themes, TimeInMilliseconds, TimeRange } from 'types/Common';
 import { timeRangeSelector } from 'store/Selectors';
 import { getTimeRangeMicros } from 'utils/tracing/TracingHelper';
 import { TracesDisplayOptions, QuerySettings, DisplaySettings, percentilesOptions } from './TracesDisplayOptions';
@@ -28,6 +28,7 @@ type ReduxProps = {
   selectedTrace?: JaegerTrace;
   timeRange: TimeRange;
   urlJaeger: string;
+  theme: string;
 };
 
 type TracesProps = ReduxProps & {
@@ -238,6 +239,8 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
 
   render() {
     const jaegerURL = this.getJaegerUrl();
+    const bg = this.props.theme === themes[0] ? bgDefault : bgDark;
+
     return (
       <>
         <RenderComponentScroll>
@@ -294,7 +297,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                 activeKey={this.state.activeTab}
                 onSelect={(_, idx: any) => this.setState({ activeTab: idx })}
               >
-                <Tab eventKey={traceDetailsTab} title="Trace Details">
+                <Tab eventKey={traceDetailsTab} title="Trace Details" className={bg}>
                   <TraceDetails
                     namespace={this.props.namespace}
                     target={this.props.target}
@@ -304,7 +307,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                     cluster={this.props.cluster ? this.props.cluster : ''}
                   />
                 </Tab>
-                <Tab eventKey={spansDetailsTab} title="Span Details">
+                <Tab eventKey={spansDetailsTab} title="Span Details" className={bg}>
                   <SpanDetails
                     namespace={this.props.namespace}
                     target={this.props.target}
@@ -333,7 +336,8 @@ const mapStateToProps = (state: KialiAppState) => {
     timeRange: timeRangeSelector(state),
     urlJaeger: state.jaegerState.info ? state.jaegerState.info.url : '',
     namespaceSelector: state.jaegerState.info ? state.jaegerState.info.namespaceSelector : true,
-    selectedTrace: state.jaegerState.selectedTrace
+    selectedTrace: state.jaegerState.selectedTrace,
+    theme: state.globalState.theme
   };
 };
 

@@ -39,8 +39,9 @@ import {
   tabName as workloadTabName,
   defaultTab as workloadDefaultTab
 } from '../../pages/WorkloadDetails/WorkloadDetailsPage';
-import { TimeInMilliseconds } from '../../types/Common';
 import { istioAceEditorStyle } from 'styles/AceEditorStyle';
+import { themes, TimeInMilliseconds } from '../../types/Common';
+import { PFColors } from '../Pf/PfColors';
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
@@ -67,6 +68,7 @@ type EnvoyDetailsProps = ReduxProps & {
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
   workload: Workload;
+  theme: string;
 };
 
 type EnvoyDetailsState = {
@@ -284,7 +286,16 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     const tabs = filteredEnvoyTabs.map((value, index) => {
       const title = value.charAt(0).toUpperCase() + value.slice(1);
       return (
-        <Tab style={{ backgroundColor: 'white' }} key={'tab_' + value} eventKey={index} title={title}>
+        <Tab
+          style={
+            this.props.theme === themes[1]
+              ? { backgroundColor: PFColors.Black700 }
+              : { backgroundColor: PFColors.White }
+          }
+          key={'tab_' + value}
+          eventKey={index}
+          title={title}
+        >
           <Card className={fullHeightStyle}>
             <CardBody>
               {this.showEditor() ? (
@@ -376,7 +387,8 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
 
 const mapStateToProps = (state: KialiAppState) => ({
   kiosk: state.globalState.kiosk,
-  namespaces: namespaceItemsSelector(state)!
+  namespaces: namespaceItemsSelector(state)!,
+  theme: state.globalState.theme
 });
 
 export const EnvoyDetails = connect(mapStateToProps)(EnvoyDetailsComponent);
