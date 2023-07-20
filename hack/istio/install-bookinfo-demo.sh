@@ -359,4 +359,4 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
 fi
 
 echo "Waiting for all pods to be ready in namespace [${NAMESPACE}]"
-$CLIENT_EXE wait pods --all -n ${NAMESPACE} --for=condition=Ready
+$CLIENT_EXE wait pods --all -n ${NAMESPACE} --for=condition=Ready --timeout=60m
