@@ -26,6 +26,7 @@ MANUAL_INJECTION="false"
 DELETE_BOOKINFO="false"
 MINIKUBE_PROFILE="minikube"
 ARCH="amd64"
+WAIT_TIMEOUT="0" # can be things like "60s" or "30m"
 
 AMBIENT_ENABLED="false" # the script will set this to true only if Ambient is enabled and no sidecars are injected
 
@@ -89,6 +90,10 @@ while [[ $# -gt 0 ]]; do
       TRAFFIC_GENERATOR_ENABLED="true"
       shift;
       ;;
+    -wt|--wait-timeout)
+      WAIT_TIMEOUT="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -105,6 +110,7 @@ Valid command line arguments:
   -g|--gateway.yaml <file>: A custom yaml file to deploy the bookinfo-gateway resources
   --mongo: Install a Mongo DB that a ratings service will access
   --mysql: Install a MySQL DB that a ratings service will access
+  -wt|--wait-timeout <timeout>: If not "0", then this script will wait for all pods in the new bookinfo namespace to be Ready before exiting. This value can be things like "60s" or "30m". (default: 0)
   -tg|--traffic-generator: Install Kiali Traffic Generator on Bookinfo
   -h|--help : this message
 HELPMSG
@@ -424,4 +430,9 @@ spec:
 AUTHPOLICY
     fi
   fi
+fi
+
+if [ "${WAIT_TIMEOUT}" != "0" ]; then
+  echo "Waiting for all pods to be ready in namespace [${NAMESPACE}]"
+  $CLIENT_EXE wait pods --all -n ${NAMESPACE} --for=condition=Ready --timeout=${WAIT_TIMEOUT}
 fi
