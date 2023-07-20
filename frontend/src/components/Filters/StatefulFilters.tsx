@@ -34,6 +34,8 @@ import { arrayEquals } from 'utils/Common';
 import { labelFilter } from './CommonFilters';
 import { history, HistoryManager } from 'app/History';
 import { serverConfig } from 'config';
+import { PFColors } from '../Pf/PfColors';
+import { themes } from '../../types/Common';
 
 var classNames = require('classnames');
 
@@ -47,6 +49,14 @@ const toolbarStyle = kialiStyle({
   }
 });
 
+const backgroundStyle = kialiStyle({
+  backgroundColor: '#ededed'
+});
+
+const backgroundStyleDark = kialiStyle({
+  backgroundColor: PFColors.Black700
+});
+
 const bottomPadding = kialiStyle({
   paddingBottom: 'var(--pf-global--spacer--md)'
 });
@@ -58,6 +68,7 @@ export interface StatefulFiltersProps {
   onFilterChange: (active: ActiveFiltersInfo) => void;
   onToggleChange?: (active: ActiveTogglesInfo) => void;
   ref?: React.RefObject<StatefulFilters>;
+  theme?: string;
 }
 
 interface StatefulFiltersState {
@@ -364,6 +375,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
           onChange={this.updateCurrentValue}
           onKeyPress={e => this.onValueKeyPress(e)}
           style={{ width: 'auto' }}
+          className={this.props.theme === themes[0] ? backgroundStyle : backgroundStyleDark}
         />
       );
     }
@@ -437,7 +449,8 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                         value={currentFilterType.category}
                         aria-label="filter_select_type"
                         onChange={this.selectFilterType}
-                        style={{ width: 'auto', backgroundColor: '#ededed', borderColor: '#bbb' }}
+                        style={{ width: 'auto', borderColor: '#bbb' }}
+                        className={this.props.theme === themes[0] ? backgroundStyle : backgroundStyleDark}
                       >
                         {filterOptions}
                       </FormSelect>

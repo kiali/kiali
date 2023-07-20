@@ -199,6 +199,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
       <StatefulFilters
         initialFilters={Filters.availableFilters}
         onFilterChange={this.props.onRefresh}
+        theme={this.props.theme}
         ref={this.props.statefulFilterRef}
       >
         {this.props.displayMode !== OverviewDisplayMode.LIST && (
