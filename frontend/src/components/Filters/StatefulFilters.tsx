@@ -375,7 +375,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
           onChange={this.updateCurrentValue}
           onKeyPress={e => this.onValueKeyPress(e)}
           style={{ width: 'auto' }}
-          className={this.props.theme === themes[0] ? backgroundStyle : backgroundStyleDark}
+          className={this.props.theme === themes[1] ? backgroundStyleDark : backgroundStyle}
         />
       );
     }

@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { TabProps, Tabs } from '@patternfly/react-core';
 import { history } from '../../app/History';
+import { PFColors } from '../Pf/PfColors';
+import { themes } from '../../types/Common';
 
 type TabsProps = {
   activeTab: string;
@@ -13,6 +15,7 @@ type TabsProps = {
   tabName?: string;
   unmountOnExit?: boolean;
   className?: string;
+  theme?: string;
 };
 
 export const activeTab = (tabName: string, defaultTab: string): string => {
@@ -105,6 +108,9 @@ export class ParameterizedTabs extends React.Component<TabsProps> {
         }}
         mountOnEnter={this.props.mountOnEnter === undefined ? true : this.props.mountOnEnter}
         unmountOnExit={this.props.unmountOnExit === undefined ? true : this.props.unmountOnExit}
+        style={
+          this.props.theme === themes[1] ? { backgroundColor: PFColors.Black800 } : { backgroundColor: PFColors.White }
+        }
       >
         {this.props.children}
       </Tabs>

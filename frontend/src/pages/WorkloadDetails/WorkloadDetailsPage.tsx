@@ -42,6 +42,7 @@ type ReduxProps = {
   duration: DurationInSeconds;
   jaegerInfo?: JaegerInfo;
   statusState: StatusState;
+  theme: string;
 };
 
 type WorkloadDetailsPageProps = ReduxProps & {
@@ -355,6 +356,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
             activeTab={this.state.currentTab}
             mountOnEnter={true}
             unmountOnExit={true}
+            theme={this.props.theme}
           >
             {this.renderTabs()}
           </ParameterizedTabs>
@@ -367,7 +369,8 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
   jaegerInfo: state.jaegerState.info,
-  statusState: state.statusState
+  statusState: state.statusState,
+  theme: state.globalState.theme
 });
 
 export const WorkloadDetailsPage = connectRefresh(connect(mapStateToProps)(WorkloadDetailsPageComponent));
