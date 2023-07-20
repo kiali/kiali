@@ -109,6 +109,7 @@ describe('Overview page', () => {
         minTLS={''}
         istioAPIEnabled={false}
         isMaistra={false}
+        theme={'default'}
       />
     );
     expect(shallowToJson(wrapper)).toMatchSnapshot();
