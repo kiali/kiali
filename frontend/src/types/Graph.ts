@@ -27,6 +27,7 @@ export interface SummaryPanelPropType {
   graphType: GraphType;
   injectServiceNodes: boolean;
   kiosk: string;
+  theme: string;
   namespaces: Namespace[];
   queryTime: TimeInSeconds;
   rateInterval: string;
