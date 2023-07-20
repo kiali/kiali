@@ -30,6 +30,7 @@ type WorkloadListPageState = FilterComponent.State<WorkloadListItem>;
 type ReduxProps = {
   duration: DurationInSeconds;
   activeNamespaces: Namespace[];
+  theme: string;
 };
 
 type WorkloadListPageProps = ReduxProps & FilterComponent.Props<WorkloadListItem>;
@@ -182,6 +183,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
               initialToggles={this.initialToggles}
               onFilterChange={this.onFilterChange}
               onToggleChange={this.onFilterChange}
+              theme={this.props.theme}
             />
           </VirtualList>
         </RenderContent>
@@ -192,7 +194,8 @@ class WorkloadListPageComponent extends FilterComponent.Component<
 
 const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state),
-  duration: durationSelector(state)
+  duration: durationSelector(state),
+  theme: state.globalState.theme
 });
 
 export const WorkloadListPage = connect(mapStateToProps)(WorkloadListPageComponent);

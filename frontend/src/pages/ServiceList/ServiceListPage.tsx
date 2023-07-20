@@ -30,6 +30,7 @@ type ServiceListPageState = FilterComponent.State<ServiceListItem>;
 type ReduxProps = {
   duration: DurationInSeconds;
   activeNamespaces: Namespace[];
+  theme: string;
 };
 
 type ServiceListPageProps = ReduxProps & FilterComponent.Props<ServiceListItem>;
@@ -191,6 +192,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
               initialToggles={this.initialToggles}
               onFilterChange={this.onFilterChange}
               onToggleChange={this.onFilterChange}
+              theme={this.props.theme}
             />
           </VirtualList>
         </RenderContent>
@@ -201,7 +203,8 @@ class ServiceListPageComponent extends FilterComponent.Component<
 
 const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state),
-  duration: durationSelector(state)
+  duration: durationSelector(state),
+  theme: state.globalState.theme
 });
 
 export const ServiceListPage = connect(mapStateToProps)(ServiceListPageComponent);

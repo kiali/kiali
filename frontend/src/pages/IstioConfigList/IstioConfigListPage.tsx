@@ -33,6 +33,7 @@ interface IstioConfigListPageState extends FilterComponent.State<IstioConfigItem
 interface IstioConfigListPageProps extends FilterComponent.Props<IstioConfigItem> {
   activeNamespaces: Namespace[];
   istioAPIEnabled: boolean;
+  theme: string;
 }
 
 class IstioConfigListPageComponent extends FilterComponent.Component<
@@ -216,6 +217,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
               initialToggles={this.props.istioAPIEnabled ? this.initialToggles : undefined}
               onFilterChange={this.onFilterChange}
               onToggleChange={this.props.istioAPIEnabled ? this.onFilterChange : undefined}
+              theme={this.props.theme}
             />
           </VirtualList>
         </RenderContent>
@@ -226,7 +228,8 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
 
 const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state),
-  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
+  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
+  theme: state.globalState.theme
 });
 
 export const IstioConfigListPage = connect(mapStateToProps, null)(IstioConfigListPageComponent);
