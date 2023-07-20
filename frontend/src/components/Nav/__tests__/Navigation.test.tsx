@@ -16,6 +16,7 @@ describe('Masthead Navigation', () => {
         navCollapsed={false}
         setNavCollapsed={() => {}}
         jaegerUrl={''}
+        theme={'Default'}
       />
     ).dive();
     expect(wrapper.find('Masthead').props().role).toEqual('kiali_header');

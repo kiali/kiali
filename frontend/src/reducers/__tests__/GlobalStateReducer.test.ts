@@ -1,5 +1,6 @@
 import { GlobalStateReducer } from '../GlobalState';
 import { GlobalActions } from '../../actions/GlobalActions';
+import { themes } from '../../types/Common';
 
 describe('GlobalStateReducer reducer', () => {
   const RealDate = Date.now;
@@ -22,7 +23,8 @@ describe('GlobalStateReducer reducer', () => {
     expect(GlobalStateReducer(undefined, GlobalActions.unknown())).toEqual({
       loadingCounter: 0,
       isPageVisible: true,
-      kiosk: ''
+      kiosk: '',
+      theme: themes[0]
     });
   });
 
@@ -33,7 +35,7 @@ describe('GlobalStateReducer reducer', () => {
           loadingCounter: 0,
           isPageVisible: true,
           kiosk: '',
-          theme: ''
+          theme: themes[0]
         },
         GlobalActions.incrementLoadingCounter()
       )
@@ -41,7 +43,7 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 1,
       isPageVisible: true,
       kiosk: '',
-      theme: ''
+      theme: themes[0]
     });
   });
 
@@ -52,7 +54,7 @@ describe('GlobalStateReducer reducer', () => {
           loadingCounter: 1,
           isPageVisible: true,
           kiosk: '',
-          theme: ''
+          theme: themes[0]
         },
         GlobalActions.decrementLoadingCounter()
       )
@@ -60,7 +62,7 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 0,
       isPageVisible: true,
       kiosk: '',
-      theme: ''
+      theme: themes[0]
     });
   });
 
@@ -71,7 +73,7 @@ describe('GlobalStateReducer reducer', () => {
           loadingCounter: 1,
           isPageVisible: true,
           kiosk: '',
-          theme: ''
+          theme: themes[0]
         },
         GlobalActions.incrementLoadingCounter()
       )
@@ -79,7 +81,7 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 2,
       isPageVisible: true,
       kiosk: '',
-      theme: ''
+      theme: themes[0]
     });
   });
 
@@ -90,7 +92,7 @@ describe('GlobalStateReducer reducer', () => {
           loadingCounter: 2,
           isPageVisible: true,
           kiosk: '',
-          theme: ''
+          theme: themes[0]
         },
         GlobalActions.decrementLoadingCounter()
       )
@@ -98,7 +100,7 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 1,
       isPageVisible: true,
       kiosk: '',
-      theme: ''
+      theme: themes[0]
     });
   });
   it('should turn on page visibility status', () => {
@@ -108,7 +110,7 @@ describe('GlobalStateReducer reducer', () => {
           loadingCounter: 0,
           isPageVisible: false,
           kiosk: '',
-          theme: ''
+          theme: themes[0]
         },
         GlobalActions.setPageVisibilityVisible()
       )
@@ -116,7 +118,7 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 0,
       isPageVisible: true,
       kiosk: '',
-      theme: ''
+      theme: themes[0]
     });
   });
   it('should turn off page visibility status', () => {
@@ -126,7 +128,7 @@ describe('GlobalStateReducer reducer', () => {
           loadingCounter: 0,
           isPageVisible: true,
           kiosk: '',
-          theme: ''
+          theme: themes[0]
         },
         GlobalActions.setPageVisibilityHidden()
       )
@@ -134,7 +136,7 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 0,
       isPageVisible: false,
       kiosk: '',
-      theme: ''
+      theme: themes[0]
     });
   });
   it('should turn on kiosk status', () => {
@@ -144,7 +146,7 @@ describe('GlobalStateReducer reducer', () => {
           loadingCounter: 0,
           isPageVisible: true,
           kiosk: '',
-          theme: ''
+          theme: themes[0]
         },
         GlobalActions.setKiosk('test')
       )
@@ -152,7 +154,7 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 0,
       isPageVisible: true,
       kiosk: 'test',
-      theme: ''
+      theme: themes[0]
     });
   });
 });

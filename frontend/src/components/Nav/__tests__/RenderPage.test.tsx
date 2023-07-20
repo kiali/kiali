@@ -22,6 +22,7 @@ describe('RenderPage isGraph prop', () => {
         navCollapsed={false}
         setNavCollapsed={() => {}}
         jaegerUrl={''}
+        theme={''}
       />
     ).dive();
     expect(wrapper.find('RenderPage').prop('isGraph')).toEqual(true);
@@ -43,6 +44,7 @@ describe('RenderPage isGraph prop', () => {
         navCollapsed={false}
         setNavCollapsed={() => {}}
         jaegerUrl={''}
+        theme={''}
       />
     ).dive();
     expect(wrapper.find('RenderPage').prop('isGraph')).toEqual(false);
