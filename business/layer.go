@@ -151,7 +151,7 @@ func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAC
 	temporaryLayer.k8sClients = userClients
 	temporaryLayer.Mesh = NewMeshService(kialiSAClients, kialiCache, temporaryLayer, *conf)
 	temporaryLayer.Namespace = NewNamespaceService(userClients, kialiSAClients, kialiCache, *conf)
-	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: userClients[homeClusterName]}
+	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: userClients[homeClusterName], kialiSAClient: kialiSAClients[homeClusterName]}
 	temporaryLayer.ProxyStatus = ProxyStatusService{kialiSAClients: kialiSAClients, kialiCache: kialiCache, businessLayer: temporaryLayer}
 	// Out of order because it relies on ProxyStatus
 	temporaryLayer.ProxyLogging = ProxyLoggingService{userClients: userClients, proxyStatus: &temporaryLayer.ProxyStatus}
