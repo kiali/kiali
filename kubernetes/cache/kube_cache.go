@@ -461,7 +461,12 @@ func (c *kubeCache) createIstioInformers(namespace string) istio.SharedInformerF
 }
 
 func (c *kubeCache) createGatewayInformers(namespace string) gateway.SharedInformerFactory {
-	sharedInformers := gateway.NewSharedInformerFactory(c.client.GatewayAPI(), c.refreshDuration)
+	var opts []gateway.SharedInformerOption
+	if namespace != "" {
+		opts = append(opts, gateway.WithNamespace(namespace))
+	}
+
+	sharedInformers := gateway.NewSharedInformerFactoryWithOptions(c.client.GatewayAPI(), c.refreshDuration, opts...)
 	lister := c.getCacheLister(namespace)
 
 	if c.client.IsGatewayAPI() {
