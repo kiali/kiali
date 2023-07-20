@@ -46,6 +46,14 @@ while [ $# -gt 0 ]; do
       DISTRIBUTE_DEMO="$2"
       shift;shift
       ;;
+    -c1|--cluster1)
+      CLUSTER1_CONTEXT="$2"
+      shift;shift
+      ;;
+    -c2|--cluster2)
+      CLUSTER2_CONTEXT="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -55,6 +63,8 @@ Valid command line arguments:
   -ei|--enable-injection: either 'true' or 'false' (default is true). If 'true' auto-inject proxies for the workloads.
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
   -dd|--distribute-demo 'true' or 'false'. If 'true' alpha namespace will be created on east cluster, beta and gamma namespaces on west cluster.
+  -c1|--cluster1: context name of the cluster 1. Doesn't do anything if --distribute-demo is set to false (default: east)
+  -c2|--cluster2: context name of the cluster 2. Doesn't do anything if --distribute-demo is set to false (default: west)
   -h|--help: this text
   -s|--source: demo file source. For example: file:///home/me/demos Default: https://raw.githubusercontent.com/kiali/demos/master
 HELPMSG
@@ -72,9 +82,12 @@ HELPMSG
 done
 
 echo Will deploy Error Rates Demo using these settings:
-echo CLIENT_EXE=${CLIENT_EXE}
 echo ARCH=${ARCH}
+echo CLIENT_EXE=${CLIENT_EXE}
+echo CLUSTER1_CONTEXT=${CLUSTER1_CONTEXT}
+echo CLUSTER2_CONTEXT=${CLUSTER2_CONTEXT}
 echo DELETE_DEMO=${DELETE_DEMO}
+echo DISTRIBUTE_DEMO=${DISTRIBUTE_DEMO}
 echo ENABLE_INJECTION=${ENABLE_INJECTION}
 echo ISTIO_NAMESPACE=${ISTIO_NAMESPACE}
 echo NAMESPACE_ALPHA=${NAMESPACE_ALPHA}
