@@ -167,8 +167,6 @@ func (in *OpenshiftOAuthService) Logout(token string) error {
 	// In pre-4.6, the access_token given to the client is the same name as the OAuthAccessToken resource.
 	// In 4.6+, that is not true anymore - you have to encode the access_token to obtain the OAuthAccessToken resource name.
 	// The code below will attempt to delete the access token using the new 4.6+ format.
-	// If this first delete attempt fails, an attempt will immediately be made to delete using the old pre-4.6 name.
-	// This will allow for supporting running Kiali in pre-4.6 OpenShift.
 
 	// convert the access token to the corresponding oauthaccesstoken resource name
 	// see: https://github.com/openshift/console/blob/9f352ba49f82ad693a72d0d35709961428b43b93/pkg/server/server.go#L609-L613
@@ -181,7 +179,6 @@ func (in *OpenshiftOAuthService) Logout(token string) error {
 	adminToken := in.kialiSAClient.GetToken()
 	_, err := request("DELETE", config.ServerPrefix, fmt.Sprintf("apis/oauth.openshift.io/v1/oauthaccesstokens/%v", oauthTokenName), &adminToken, config.UseSystemCA, config.CustomCA)
 	if err != nil {
-		// TODO: Do we support 4.6 anymore?
 		return err
 	}
 
