@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { KialiAppState } from '../../store/Store';
-import { activeNamespacesSelector } from '../../store/Selectors';
+import { activeClustersSelector, activeNamespacesSelector, namespacesPerClusterSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import { Namespace } from '../../types/Namespace';
+import { MeshCluster } from '../../types/Mesh';
 import { ActionGroup, Button, ButtonVariant, Form, FormGroup, TextInput } from '@patternfly/react-core';
 import { RenderContent } from '../../components/Nav/Page';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -58,7 +59,6 @@ import {
 } from './RequestAuthenticationForm';
 import { isValidK8SName } from '../../helpers/ValidationHelpers';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
-import { PFColors } from '../../components/Pf/PfColors';
 import {
   ServiceEntryForm,
   initServiceEntry,
@@ -69,10 +69,14 @@ import {
 } from './ServiceEntryForm';
 import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 import { isValid } from 'utils/Common';
+import { ClusterDropdown } from './ClusterDropdown';
+import { NamespaceDropdown } from '../../components/NamespaceDropdown';
 
 type Props = {
   objectType: string;
   activeNamespaces: Namespace[];
+  activeClusters: MeshCluster[];
+  namespacesPerCluster?: Map<string, string[]>;
 };
 
 type State = {
@@ -90,13 +94,6 @@ type State = {
 };
 
 const formPadding = kialiStyle({ padding: '30px 20px 30px 20px' });
-
-const warningStyle = kialiStyle({
-  marginLeft: 15,
-  paddingTop: 5,
-  color: PFColors.Red100,
-  textAlign: 'center'
-});
 
 const DIC = {
   AuthorizationPolicy: AUTHORIZATION_POLICIES,
@@ -153,7 +150,10 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props, _prevState: State) {
-    if (prevProps.activeNamespaces !== this.props.activeNamespaces) {
+    if (
+      prevProps.activeNamespaces !== this.props.activeNamespaces ||
+      prevProps.activeClusters !== this.props.activeClusters
+    ) {
       this.fetchPermissions();
     }
   }
@@ -166,10 +166,34 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     );
   };
 
+  isNamespaceInCluster = (namespace: string, cluster: string): boolean => {
+    return (
+      this.props.namespacesPerCluster !== undefined &&
+      this.props.namespacesPerCluster.has(cluster) &&
+      this.props.namespacesPerCluster.get(cluster)!.includes(namespace)
+    );
+  };
+
   fetchPermissions = () => {
+    if (this.props.activeClusters.length > 0) {
+      this.props.activeClusters.forEach(cluster => {
+        this.fetchPermissionsForCluster(cluster.name);
+      });
+    } else {
+      this.fetchPermissionsForCluster();
+    }
+  };
+
+  fetchPermissionsForCluster = (cluster?: string) => {
     if (this.props.activeNamespaces.length > 0) {
       this.promises
-        .register('permissions', API.getIstioPermissions(this.props.activeNamespaces.map(n => n.name)))
+        .register(
+          'permissions' + cluster,
+          API.getIstioPermissions(
+            this.props.activeNamespaces.map(n => n.name),
+            cluster
+          )
+        )
         .then(permResponse => {
           this.setState(
             {
@@ -179,8 +203,13 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
               this.props.activeNamespaces.forEach(ns => {
                 if (!this.canCreate(ns.name)) {
                   AlertUtils.addWarning(
-                    'User does not have permission to create Istio Config on namespace: ' + ns.name
+                    'User does not have permission to create Istio Config on namespace: ' +
+                      ns.name +
+                      (cluster ? ' in cluster ' + cluster : '')
                   );
+                }
+                if (cluster && !this.isNamespaceInCluster(ns.name, cluster)) {
+                  AlertUtils.addInfo('Namespace: ' + ns.name + ' is not found in cluster ' + cluster);
                 }
               });
             }
@@ -202,25 +231,55 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
   };
 
   onIstioResourceCreate = () => {
+    if (this.props.activeClusters.length > 0) {
+      this.props.activeClusters.forEach(cluster => {
+        this.onIstioResourceCreateForCluster(cluster.name);
+      });
+    } else {
+      this.onIstioResourceCreateForCluster();
+    }
+  };
+
+  onIstioResourceCreateForCluster = async (cluster?: string) => {
     const jsonIstioObjects: { namespace: string; json: string }[] = this.state.itemsPreview.map(item => ({
       namespace: item.items[0].metadata.namespace || '',
       json: JSON.stringify(item.items[0])
     }));
+    let err = 0;
+    await Promise.all(
+      jsonIstioObjects
+        .map(o => API.createIstioConfigDetail(o.namespace, DIC[this.props.objectType], o.json, cluster))
+        .map(p =>
+          p.catch(error => {
+            // ignore 404 errors besides no CRD found ones
+            if (
+              error.response.status !== 404 ||
+              API.getErrorString(error).includes('the server could not find the requested resource')
+            ) {
+              AlertUtils.addError(
+                'Could not create Istio ' +
+                  this.props.objectType +
+                  ' objects' +
+                  (cluster ? ' in cluster ' + cluster + '.' : '.'),
+                error
+              );
+              err++;
+            }
+          })
+        )
+    ).then(results => {
+      if (results.filter(value => value !== undefined).length > 0) {
+        AlertUtils.add(
+          'Istio ' + this.props.objectType + ' created' + (cluster ? ' in cluster ' + cluster : ''),
+          'default',
+          MessageType.SUCCESS
+        );
+      }
+    });
 
-    this.promises
-      .registerAll(
-        'Create ' + DIC[this.props.objectType],
-        jsonIstioObjects.map(o => API.createIstioConfigDetail(o.namespace, DIC[this.props.objectType], o.json))
-      )
-      .then(results => {
-        if (results.length > 0) {
-          AlertUtils.add('Istio ' + this.props.objectType + ' created', 'default', MessageType.SUCCESS);
-        }
-        this.backToList();
-      })
-      .catch(error => {
-        AlertUtils.addError('Could not create Istio ' + this.props.objectType + ' objects.', error);
-      });
+    if (err === 0) {
+      this.backToList();
+    }
   };
 
   showPreview = () => {
@@ -383,14 +442,36 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     const canCreate = this.props.activeNamespaces.every(ns => this.canCreate(ns.name));
     const isNameValid = isValidK8SName(this.state.name);
     const isNamespacesValid = this.props.activeNamespaces.length > 0;
-    const isFormValid = isNameValid && isNamespacesValid && this.isIstioFormValid();
+    const isMultiCluster = Object.keys(serverConfig.clusters).length > 1;
+    const isClustersValid = this.props.activeClusters.length > 0 || !isMultiCluster;
+    const isFormValid = isNameValid && isNamespacesValid && isClustersValid && this.isIstioFormValid();
     return (
       <>
         <div style={{ backgroundColor: '#fff' }}>
-          <DefaultSecondaryMasthead />
+          <DefaultSecondaryMasthead showClusterSelector={false} hideNamespaceSelector={true} />
         </div>
         <RenderContent>
           <Form className={formPadding} isHorizontal={true}>
+            <FormGroup
+              label="Namespaces"
+              isRequired={true}
+              fieldId="namespaces"
+              helperTextInvalid={'An Istio Config resource needs at least one namespace selected'}
+              validated={isValid(isNamespacesValid)}
+            >
+              <NamespaceDropdown disabled={false} />
+            </FormGroup>
+            {isMultiCluster && (
+              <FormGroup
+                label="Clusters"
+                isRequired={true}
+                fieldId="clusters"
+                helperTextInvalid={'An Istio Config resource needs at least one cluster selected'}
+                validated={isValid(isClustersValid)}
+              >
+                <ClusterDropdown />
+              </FormGroup>
+            )}
             <FormGroup
               label="Name"
               isRequired={true}
@@ -451,9 +532,6 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
               <Button variant={ButtonVariant.secondary} onClick={() => this.backToList()}>
                 Cancel
               </Button>
-              {!isNamespacesValid && (
-                <span className={warningStyle}>An Istio Config resource needs at least a namespace selected</span>
-              )}
             </ActionGroup>
           </Form>
           <IstioConfigPreview
@@ -476,7 +554,9 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    activeNamespaces: activeNamespacesSelector(state)
+    activeClusters: activeClustersSelector(state),
+    activeNamespaces: activeNamespacesSelector(state),
+    namespacesPerCluster: namespacesPerClusterSelector(state)
   };
 };
 

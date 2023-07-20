@@ -100,7 +100,7 @@ And('choosing to delete it', () => {
 });
 
 And('user closes the success notification',()=>{
-  cy.get('[aria-label="Close Success alert: alert: Istio Gateway created"]').click();
+  cy.get('[aria-label^="Close Success alert: alert: Istio Gateway created"]').click();
 });
 
 Then('the {string} {string} should be listed in {string} namespace', function (

@@ -14,6 +14,18 @@ const activeNamespaces = (state: KialiAppState) => state.namespaces.activeNamesp
 // Select from the above field(s) and the last function is the formatter
 export const activeNamespacesSelector = createIdentitySelector(activeNamespaces);
 
+// select the proper field from Redux State
+const namespacesPerCluster = (state: KialiAppState) => state.namespaces.namespacesPerCluster;
+
+// Select from the above field(s) and the last function is the formatter
+export const namespacesPerClusterSelector = createIdentitySelector(namespacesPerCluster);
+
+// select the proper field from Redux State
+const activeClusters = (state: KialiAppState) => state.clusters.activeClusters;
+
+// Select from the above field(s) and the last function is the formatter
+export const activeClustersSelector = createIdentitySelector(activeClusters);
+
 const duration = (state: KialiAppState) => state.userSettings.duration;
 
 export const durationSelector = createIdentitySelector(duration);
@@ -25,6 +37,10 @@ export const timeRangeSelector = createIdentitySelector(timeRange);
 const namespaceFilter = (state: KialiAppState) => state.namespaces.filter;
 
 export const namespaceFilterSelector = createIdentitySelector(namespaceFilter);
+
+const clusterFilter = (state: KialiAppState) => state.clusters.filter;
+
+export const clusterFilterSelector = createIdentitySelector(clusterFilter);
 
 const edgeLabels = (state: KialiAppState) => state.graph.toolbarState.edgeLabels;
 

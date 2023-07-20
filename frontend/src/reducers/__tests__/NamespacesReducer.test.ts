@@ -129,10 +129,11 @@ describe('Namespaces reducer', () => {
     const currentDate = new Date();
     const currentState = {
       activeNamespaces: [{ name: 'my-namespace' }],
+      filter: '',
       isFetching: true,
       items: [{ name: 'old' }, { name: 'my-namespace' }],
       lastUpdated: undefined,
-      filter: ''
+      namespacesPerCluster: new Map<string, string[]>()
     };
     const requestStartedAction = NamespaceActions.receiveList(
       [{ name: 'a' }, { name: 'b' }, { name: 'c' }],
@@ -140,10 +141,11 @@ describe('Namespaces reducer', () => {
     );
     const expectedState = {
       activeNamespaces: [],
+      filter: '',
       isFetching: false,
       items: [{ name: 'a' }, { name: 'b' }, { name: 'c' }],
       lastUpdated: currentDate,
-      filter: ''
+      namespacesPerCluster: new Map<string, string[]>()
     };
     expect(NamespaceStateReducer(currentState, requestStartedAction)).toEqual(expectedState);
   });

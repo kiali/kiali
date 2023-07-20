@@ -7,6 +7,7 @@ import { HelpDropdownStateReducer } from './HelpDropdownState';
 import { GraphDataStateReducer } from './GraphDataState';
 import { GlobalStateReducer } from './GlobalState';
 import { NamespaceStateReducer } from './NamespaceState';
+import { ClusterStateReducer } from './ClusterState';
 import { UserSettingsStateReducer } from './UserSettingsState';
 import { TourStateReducer } from './TourState';
 import { KialiAppAction } from '../actions/KialiAppAction';
@@ -18,16 +19,17 @@ import { IstioCertsInfoStateReducer } from './IstioCertsInfoState';
 
 export const rootReducer = combineReducers<KialiAppState, KialiAppAction>({
   authentication: LoginStateReducer,
+  clusters: ClusterStateReducer,
   globalState: GlobalStateReducer,
   graph: GraphDataStateReducer,
-  messageCenter: MessageCenterReducer,
-  namespaces: NamespaceStateReducer,
-  statusState: HelpDropdownStateReducer,
-  userSettings: UserSettingsStateReducer,
-  jaegerState: JaegerStateReducer,
-  meshTLSStatus: MeshTlsStateReducer,
   istioStatus: IstioStatusStateReducer,
   istioCertsInfo: IstioCertsInfoStateReducer,
+  jaegerState: JaegerStateReducer,
+  meshTLSStatus: MeshTlsStateReducer,
+  messageCenter: MessageCenterReducer,
+  metricsStats: MetricsStatsStateReducer,
+  namespaces: NamespaceStateReducer,
+  statusState: HelpDropdownStateReducer,
   tourState: TourStateReducer,
-  metricsStats: MetricsStatsStateReducer
+  userSettings: UserSettingsStateReducer
 });

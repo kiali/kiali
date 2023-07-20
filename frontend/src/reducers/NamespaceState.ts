@@ -11,6 +11,18 @@ function filterDuplicateNamespaces(namespaces: Namespace[]): Namespace[] {
   return Array.from(nsMap.values());
 }
 
+function namespacesPerCluster(namespaces: Namespace[]): Map<string, string[]> {
+  const clusterMap: Map<string, string[]> = new Map<string, string[]>();
+  namespaces.forEach(namespace => {
+    const cluster = namespace.cluster;
+    if (cluster) {
+      const existingValue = clusterMap.get(cluster) || [];
+      clusterMap.set(cluster, existingValue.concat(namespace.name));
+    }
+  });
+  return clusterMap;
+}
+
 export const INITIAL_NAMESPACE_STATE: NamespaceState = {
   activeNamespaces: [],
   isFetching: false,
@@ -58,6 +70,7 @@ export const NamespaceStateReducer = (
         isFetching: false,
         items: filterDuplicateNamespaces(action.payload.list),
         lastUpdated: action.payload.receivedAt,
+        namespacesPerCluster: namespacesPerCluster(action.payload.list),
         ...updatedActive
       });
 

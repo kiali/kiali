@@ -5,6 +5,7 @@ import { HelpDropdownAction } from './HelpDropdownActions';
 import { LoginAction } from './LoginActions';
 import { MessageCenterAction } from './MessageCenterActions';
 import { NamespaceAction } from './NamespaceAction';
+import { ClusterAction } from './ClusterAction';
 import { UserSettingsAction } from './UserSettingsActions';
 import { JaegerAction } from './JaegerActions';
 import { MeshTlsAction } from './MeshTlsActions';
@@ -14,17 +15,18 @@ import { MetricsStatsAction } from './MetricsStatsActions';
 import { IstioCertsInfoAction } from './IstioCertsInfoActions';
 
 export type KialiAppAction =
+  | ClusterAction
   | GlobalAction
   | GraphAction
   | GraphToolbarAction
   | HelpDropdownAction
-  | LoginAction
-  | MessageCenterAction
-  | NamespaceAction
-  | UserSettingsAction
-  | JaegerAction
-  | MeshTlsAction
-  | IstioStatusAction
   | IstioCertsInfoAction
+  | IstioStatusAction
+  | JaegerAction
+  | LoginAction
+  | MeshTlsAction
+  | MessageCenterAction
+  | MetricsStatsAction
+  | NamespaceAction
   | TourAction
-  | MetricsStatsAction;
+  | UserSettingsAction;

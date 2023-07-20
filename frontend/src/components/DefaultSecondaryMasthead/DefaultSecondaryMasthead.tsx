@@ -16,6 +16,7 @@ type Props = ReduxProps & {
   actionsToolbar?: JSX.Element;
   hideNamespaceSelector?: boolean;
   rightToolbar?: JSX.Element;
+  showClusterSelector?: boolean;
 };
 
 const mainPadding = kialiStyle({
