@@ -36,7 +36,7 @@ HELPMSG
 done
 
 for NAMESPACE in ${NAMESPACES[@]}; do
-  oc patch kiali kiali -n kiali-operator --type=json '-p=[{"op": "add", "path": "/spec/deployment/accessible_namespaces/0", "value":\""$NAMESPACE"\"}]'
+  oc patch kiali kiali -n kiali-operator --type=json '-p=[{"op": "add", "path": "/spec/deployment/accessible_namespaces/0", "value":"'$NAMESPACE'"}]'
 done
 
 oc wait --for=condition=Successful kiali/kiali --timeout=120s -n kiali-operator
