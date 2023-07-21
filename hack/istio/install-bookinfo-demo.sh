@@ -381,16 +381,28 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
       INGRESS_HOST=$(minikube -p ${MINIKUBE_PROFILE} ip)
       INGRESS_PORT=$($CLIENT_EXE -n ${ISTIO_NAMESPACE} get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
       INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
-      echo "Traffic Generator will use the Kubernetes (minikube) ingress route of: ${INGRESS_ROUTE}"
+      if curl --fail http://${INGRESS_ROUTE} &> /dev/null; then
+        echo "Traffic Generator will use the Kubernetes (minikube) ingress route of: ${INGRESS_ROUTE}"
+      else
+        INGRESS_HOST="productpage.${NAMESPACE}"
+        INGRESS_PORT="9080"
+        INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
+        echo "Ingress does not seem to work. Falling back to using the internal productpage endpoint: ${INGRESS_ROUTE}"
+      fi
     else
       echo "Failed to get minikube ip. If you are using minikube, make sure it is up and your profile is defined properly (--minikube-profile option)"
       echo "Will try to get the ingressgateway IP in case you are running 'kind' and we can access it directly."
       INGRESS_HOST=$($CLIENT_EXE get service -n ${ISTIO_NAMESPACE} istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-      if [ "${INGRESS_HOST}" == ""]; then
-        INGRESS_HOST="istio-ingressgateway.${ISTIO_NAMESPACE}"
-      fi
       INGRESS_PORT="80"
       INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
+      if curl --fail http://${INGRESS_ROUTE} &> /dev/null; then
+        echo "Traffic Generator will use the Kubernetes (loadBalancer) route of: ${INGRESS_ROUTE}"
+      else
+        INGRESS_HOST="productpage.${NAMESPACE}"
+        INGRESS_PORT="9080"
+        INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
+        echo "Ingress loadBalancer does not seem to work. Falling back to using the internal productpage endpoint: ${INGRESS_ROUTE}"
+      fi
     fi
   fi
 
