@@ -5,28 +5,28 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/kiali/kiali/tests/integration/utils/kiali"
 )
 
 func TestAppGraph(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	name := "details"
 	graphType := "app"
-	assertGraphConfig("applications", graphType, kiali.BOOKINFO, name, assert)
+	assertGraphConfig("applications", graphType, kiali.BOOKINFO, name, require)
 }
 
 func TestAppVersionGraph(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	name := "details"
 	graphType := "app"
-	assertGraphConfig("applications", graphType, kiali.BOOKINFO, name, assert)
+	assertGraphConfig("applications", graphType, kiali.BOOKINFO, name, require)
 }
 
 func TestVersionedAppGraph(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	name := "ratings"
 	graphType := "versionedApp"
 	ctx := context.TODO()
@@ -35,68 +35,68 @@ func TestVersionedAppGraph(t *testing.T) {
 		if statusCode != 200 {
 			return false, err
 		}
-		assert.Equal(config.GraphType, graphType)
-		assert.NotNil(config.Elements)
+		require.Equal(config.GraphType, graphType)
+		require.NotNil(config.Elements)
 		return len(config.Elements.Nodes) > 0 && len(config.Elements.Edges) > 0, nil
 	})
-	assert.Nil(pollErr, "Graph elements should contains Nodes and Edges")
+	require.Nil(pollErr, "Graph elements should contains Nodes and Edges")
 }
 
 func TestAppGraphEmpty(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	name := "detailswrong"
 	graphType := "app"
-	assertEmptyGraphConfig("applications", graphType, kiali.BOOKINFO, name, assert)
+	assertEmptyGraphConfig("applications", graphType, kiali.BOOKINFO, name, require)
 }
 
 func TestServiceGraph(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	name := "details"
 	graphType := "versionedApp"
-	assertGraphConfig("services", graphType, kiali.BOOKINFO, name, assert)
+	assertGraphConfig("services", graphType, kiali.BOOKINFO, name, require)
 }
 
 func TestServiceGraphEmpty(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	name := "detailswrong"
 	graphType := "workload"
-	assertEmptyGraphConfig("services", graphType, kiali.BOOKINFO, name, assert)
+	assertEmptyGraphConfig("services", graphType, kiali.BOOKINFO, name, require)
 }
 
 func TestWorkloadGraph(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	name := "details-v1"
 	graphType := "workload"
-	assertGraphConfig("workloads", graphType, kiali.BOOKINFO, name, assert)
+	assertGraphConfig("workloads", graphType, kiali.BOOKINFO, name, require)
 }
 
 func TestWorkloadGraphEmpty(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	name := "reviews-wrong"
 	graphType := "workload"
-	assertEmptyGraphConfig("workloads", graphType, kiali.BOOKINFO, name, assert)
+	assertEmptyGraphConfig("workloads", graphType, kiali.BOOKINFO, name, require)
 }
 
-func assertGraphConfig(objectType, graphType, namespace, name string, assert *assert.Assertions) {
+func assertGraphConfig(objectType, graphType, namespace, name string, require *require.Assertions) {
 	ctx := context.TODO()
 	pollErr := wait.PollUntilContextTimeout(ctx, time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
 		config, statusCode, err := kiali.ObjectGraph(objectType, graphType, name, namespace)
 		if statusCode != 200 {
 			return false, err
 		}
-		assert.Equal(config.GraphType, graphType)
-		assert.NotNil(config.Elements)
+		require.Equal(config.GraphType, graphType)
+		require.NotNil(config.Elements)
 		return len(config.Elements.Nodes) > 0 && len(config.Elements.Edges) > 0, nil
 	})
-	assert.Nil(pollErr, "Graph elements should contains Nodes and Edges")
+	require.Nil(pollErr, "Graph elements should contains Nodes and Edges")
 }
 
-func assertEmptyGraphConfig(objectType, graphType, namespace, name string, assert *assert.Assertions) {
+func assertEmptyGraphConfig(objectType, graphType, namespace, name string, require *require.Assertions) {
 	config, statusCode, err := kiali.ObjectGraph(objectType, graphType, name, namespace)
-	assert.Equal(200, statusCode)
-	assert.Nil(err)
-	assert.Equal(config.GraphType, graphType)
-	assert.NotNil(config.Elements)
-	assert.Empty(config.Elements.Nodes)
-	assert.Empty(config.Elements.Edges)
+	require.Equal(200, statusCode)
+	require.NoError(err)
+	require.Equal(config.GraphType, graphType)
+	require.NotNil(config.Elements)
+	require.Empty(config.Elements.Nodes)
+	require.Empty(config.Elements.Edges)
 }

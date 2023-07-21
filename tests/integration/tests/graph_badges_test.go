@@ -5,10 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 	"k8s.io/apimachinery/pkg/util/wait"
-
-	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/tests/integration/utils"
@@ -16,146 +15,150 @@ import (
 	"github.com/kiali/kiali/tools/cmd"
 )
 
-const DURATION = "60s"
-const CB_BADGE = "hasCB"
-const VS_BADGE = "hasVS"
-const TF_BADGE = "hasTrafficShifting"
-const TCP_TF_BADGE = "hasTCPTrafficShifting"
-const RT_BADGE = "hasRequestTimeout"
-const FI_BADGE = "hasFaultInjection"
-const CIRCUIT_BREAKER_FILE = "bookinfo-reviews-all-cb.yaml"
-const VIRTUAL_SERVICE_FILE = "bookinfo-ratings-delay.yaml"
-const TRAFFIC_SHIFTING_FILE = "bookinfo-traffic-shifting-reviews.yaml"
-const TCP_TRAFFIC_SHIFTING_FILE = "bookinfo-tcp-traffic-shifting-reviews.yaml"
-const REQUEST_ROUTING_FILE = "bookinfo-request-timeouts-reviews.yaml"
-const FAULT_INJECTION_FILE = "bookinfo-fault-injection-reviews.yaml"
+const (
+	DURATION                  = "60s"
+	CB_BADGE                  = "hasCB"
+	VS_BADGE                  = "hasVS"
+	TF_BADGE                  = "hasTrafficShifting"
+	TCP_TF_BADGE              = "hasTCPTrafficShifting"
+	RT_BADGE                  = "hasRequestTimeout"
+	FI_BADGE                  = "hasFaultInjection"
+	CIRCUIT_BREAKER_FILE      = "bookinfo-reviews-all-cb.yaml"
+	VIRTUAL_SERVICE_FILE      = "bookinfo-ratings-delay.yaml"
+	TRAFFIC_SHIFTING_FILE     = "bookinfo-traffic-shifting-reviews.yaml"
+	TCP_TRAFFIC_SHIFTING_FILE = "bookinfo-tcp-traffic-shifting-reviews.yaml"
+	REQUEST_ROUTING_FILE      = "bookinfo-request-timeouts-reviews.yaml"
+	FAULT_INJECTION_FILE      = "bookinfo-fault-injection-reviews.yaml"
+)
 
-var VERSIONED_APP_PARAMS = map[string]string{"graphType": "versionedApp", "duration": DURATION, "injectServiceNodes": "true"}
-var WORKLOAD_PARAMS = map[string]string{"graphType": "workload", "duration": DURATION, "injectServiceNodes": "true"}
-var APP_PARAMS = map[string]string{"graphType": "app", "duration": DURATION, "injectServiceNodes": "true"}
-var SERVICE_PARAMS = map[string]string{"graphType": "service", "duration": DURATION, "injectServiceNodes": "true"}
+var (
+	VERSIONED_APP_PARAMS = map[string]string{"graphType": "versionedApp", "duration": DURATION, "injectServiceNodes": "true"}
+	WORKLOAD_PARAMS      = map[string]string{"graphType": "workload", "duration": DURATION, "injectServiceNodes": "true"}
+	APP_PARAMS           = map[string]string{"graphType": "app", "duration": DURATION, "injectServiceNodes": "true"}
+	SERVICE_PARAMS       = map[string]string{"graphType": "service", "duration": DURATION, "injectServiceNodes": "true"}
+)
 
 func TestCBVersionedApp(t *testing.T) {
-	assert := assert.New(t)
-	assertGraphBadges(VERSIONED_APP_PARAMS, CIRCUIT_BREAKER_FILE, CB_BADGE, assert)
+	require := require.New(t)
+	assertGraphBadges(VERSIONED_APP_PARAMS, CIRCUIT_BREAKER_FILE, CB_BADGE, require)
 }
 
 func TestCBWorkload(t *testing.T) {
-	assert := assert.New(t)
-	assertGraphBadges(WORKLOAD_PARAMS, CIRCUIT_BREAKER_FILE, CB_BADGE, assert)
+	require := require.New(t)
+	assertGraphBadges(WORKLOAD_PARAMS, CIRCUIT_BREAKER_FILE, CB_BADGE, require)
 }
 
 func TestCBService(t *testing.T) {
-	assert := assert.New(t)
-	assertGraphBadges(SERVICE_PARAMS, CIRCUIT_BREAKER_FILE, CB_BADGE, assert)
+	require := require.New(t)
+	assertGraphBadges(SERVICE_PARAMS, CIRCUIT_BREAKER_FILE, CB_BADGE, require)
 }
 
 func TestVSVersionedApp(t *testing.T) {
-	assert := assert.New(t)
-	assertGraphBadges(VERSIONED_APP_PARAMS, VIRTUAL_SERVICE_FILE, VS_BADGE, assert)
+	require := require.New(t)
+	assertGraphBadges(VERSIONED_APP_PARAMS, VIRTUAL_SERVICE_FILE, VS_BADGE, require)
 }
 
 func TestVSWorkload(t *testing.T) {
-	assert := assert.New(t)
-	assertGraphBadges(WORKLOAD_PARAMS, VIRTUAL_SERVICE_FILE, VS_BADGE, assert)
+	require := require.New(t)
+	assertGraphBadges(WORKLOAD_PARAMS, VIRTUAL_SERVICE_FILE, VS_BADGE, require)
 }
 
 func TestVSApp(t *testing.T) {
-	assert := assert.New(t)
-	assertGraphBadges(APP_PARAMS, VIRTUAL_SERVICE_FILE, VS_BADGE, assert)
+	require := require.New(t)
+	assertGraphBadges(APP_PARAMS, VIRTUAL_SERVICE_FILE, VS_BADGE, require)
 }
 
 func TestVSService(t *testing.T) {
-	assert := assert.New(t)
-	assertGraphBadges(SERVICE_PARAMS, VIRTUAL_SERVICE_FILE, VS_BADGE, assert)
+	require := require.New(t)
+	assertGraphBadges(SERVICE_PARAMS, VIRTUAL_SERVICE_FILE, VS_BADGE, require)
 }
 
 func TestTraficShiftingVersionedApp(t *testing.T) {
-	assert := assert.New(t)
-	assertGraphBadges(VERSIONED_APP_PARAMS, TRAFFIC_SHIFTING_FILE, TF_BADGE, assert)
+	require := require.New(t)
+	assertGraphBadges(VERSIONED_APP_PARAMS, TRAFFIC_SHIFTING_FILE, TF_BADGE, require)
 }
 
 func TestTcpTraficShiftingVersionedApp(t *testing.T) {
-	assert := assert.New(t)
-	assertGraphBadges(VERSIONED_APP_PARAMS, TCP_TRAFFIC_SHIFTING_FILE, TCP_TF_BADGE, assert)
+	require := require.New(t)
+	assertGraphBadges(VERSIONED_APP_PARAMS, TCP_TRAFFIC_SHIFTING_FILE, TCP_TF_BADGE, require)
 }
 
 func TestRequestTimeoutsVersionedApp(t *testing.T) {
-	assert := assert.New(t)
-	assertGraphBadges(VERSIONED_APP_PARAMS, REQUEST_ROUTING_FILE, RT_BADGE, assert)
+	require := require.New(t)
+	assertGraphBadges(VERSIONED_APP_PARAMS, REQUEST_ROUTING_FILE, RT_BADGE, require)
 }
 
 func TestFaultInjectionVersionedApp(t *testing.T) {
-	assert := assert.New(t)
-	assertGraphBadges(VERSIONED_APP_PARAMS, FAULT_INJECTION_FILE, FI_BADGE, assert)
+	require := require.New(t)
+	assertGraphBadges(VERSIONED_APP_PARAMS, FAULT_INJECTION_FILE, FI_BADGE, require)
 }
 
 func TestTrafficShiftingWorkload(t *testing.T) {
-	assert := assert.New(t)
-	assertGraphBadges(WORKLOAD_PARAMS, TRAFFIC_SHIFTING_FILE, TF_BADGE, assert)
+	require := require.New(t)
+	assertGraphBadges(WORKLOAD_PARAMS, TRAFFIC_SHIFTING_FILE, TF_BADGE, require)
 }
 
 func TestTcpTrafficShiftingWorkload(t *testing.T) {
-	assert := assert.New(t)
-	assertGraphBadges(WORKLOAD_PARAMS, TCP_TRAFFIC_SHIFTING_FILE, TCP_TF_BADGE, assert)
+	require := require.New(t)
+	assertGraphBadges(WORKLOAD_PARAMS, TCP_TRAFFIC_SHIFTING_FILE, TCP_TF_BADGE, require)
 }
 
 func TestRequestTimeoutWorkload(t *testing.T) {
-	assert := assert.New(t)
-	assertGraphBadges(WORKLOAD_PARAMS, REQUEST_ROUTING_FILE, RT_BADGE, assert)
+	require := require.New(t)
+	assertGraphBadges(WORKLOAD_PARAMS, REQUEST_ROUTING_FILE, RT_BADGE, require)
 }
 
 func TestFaultInjectionWorkload(t *testing.T) {
-	assert := assert.New(t)
-	assertGraphBadges(WORKLOAD_PARAMS, FAULT_INJECTION_FILE, FI_BADGE, assert)
+	require := require.New(t)
+	assertGraphBadges(WORKLOAD_PARAMS, FAULT_INJECTION_FILE, FI_BADGE, require)
 }
 
 func TestTrafficShiftingApp(t *testing.T) {
-	assert := assert.New(t)
-	assertGraphBadges(APP_PARAMS, TRAFFIC_SHIFTING_FILE, TF_BADGE, assert)
+	require := require.New(t)
+	assertGraphBadges(APP_PARAMS, TRAFFIC_SHIFTING_FILE, TF_BADGE, require)
 }
 
 func TestTcpTrafficShiftingApp(t *testing.T) {
-	assert := assert.New(t)
-	assertGraphBadges(APP_PARAMS, TCP_TRAFFIC_SHIFTING_FILE, TCP_TF_BADGE, assert)
+	require := require.New(t)
+	assertGraphBadges(APP_PARAMS, TCP_TRAFFIC_SHIFTING_FILE, TCP_TF_BADGE, require)
 }
 
 func TestRequestTimeoutsApp(t *testing.T) {
-	assert := assert.New(t)
-	assertGraphBadges(APP_PARAMS, REQUEST_ROUTING_FILE, RT_BADGE, assert)
+	require := require.New(t)
+	assertGraphBadges(APP_PARAMS, REQUEST_ROUTING_FILE, RT_BADGE, require)
 }
 
 func TestFaultInjectionApp(t *testing.T) {
-	assert := assert.New(t)
-	assertGraphBadges(APP_PARAMS, FAULT_INJECTION_FILE, FI_BADGE, assert)
+	require := require.New(t)
+	assertGraphBadges(APP_PARAMS, FAULT_INJECTION_FILE, FI_BADGE, require)
 }
 
 func TestTrafficShiftingService(t *testing.T) {
-	assert := assert.New(t)
-	assertGraphBadges(SERVICE_PARAMS, TRAFFIC_SHIFTING_FILE, TF_BADGE, assert)
+	require := require.New(t)
+	assertGraphBadges(SERVICE_PARAMS, TRAFFIC_SHIFTING_FILE, TF_BADGE, require)
 }
 
 func TestTcpTrafficShiftingService(t *testing.T) {
-	assert := assert.New(t)
-	assertGraphBadges(SERVICE_PARAMS, TCP_TRAFFIC_SHIFTING_FILE, TCP_TF_BADGE, assert)
+	require := require.New(t)
+	assertGraphBadges(SERVICE_PARAMS, TCP_TRAFFIC_SHIFTING_FILE, TCP_TF_BADGE, require)
 }
 
 func TestRequestTimeoutsService(t *testing.T) {
-	assert := assert.New(t)
-	assertGraphBadges(SERVICE_PARAMS, REQUEST_ROUTING_FILE, RT_BADGE, assert)
+	require := require.New(t)
+	assertGraphBadges(SERVICE_PARAMS, REQUEST_ROUTING_FILE, RT_BADGE, require)
 }
 
 func TestFultInjectionService(t *testing.T) {
-	assert := assert.New(t)
-	assertGraphBadges(SERVICE_PARAMS, FAULT_INJECTION_FILE, FI_BADGE, assert)
+	require := require.New(t)
+	assertGraphBadges(SERVICE_PARAMS, FAULT_INJECTION_FILE, FI_BADGE, require)
 }
 
-func assertGraphBadges(params map[string]string, yaml, badge string, assert *assert.Assertions) {
+func assertGraphBadges(params map[string]string, yaml, badge string, require *require.Assertions) {
 	params["namespaces"] = kiali.BOOKINFO
 	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/"+yaml)
 	preBadgeCount := BadgeCount(params, badge)
 	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
-	assert.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
+	require.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
 	ctx := context.TODO()
 	pollErr := wait.PollUntilContextTimeout(ctx, time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
 		badgeCount := BadgeCount(params, badge)
@@ -164,7 +167,7 @@ func assertGraphBadges(params map[string]string, yaml, badge string, assert *ass
 		}
 		return false, nil
 	})
-	assert.Nil(pollErr, "Badge %s should exist", badge)
+	require.Nil(pollErr, "Badge %s should exist", badge)
 }
 
 func BadgeCount(params map[string]string, badge string) int {
