@@ -499,15 +499,15 @@ func (c *kubeCache) createGatewayInformers(namespace string) gateway.SharedInfor
 			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1beta1().Gateways().Informer().HasSynced)
 			_, err := sharedInformers.Gateway().V1beta1().Gateways().Informer().AddEventHandler(c.registryRefreshHandler)
 			if err != nil {
-				log.Errorf("Error adding Handler to Informer Gateways: %s", err.Error())
+				log.Errorf("[Kiali Cache] Error adding Handler to Informer Gateways: %s", err.Error())
 			}
 		}
 		if c.CheckIstioResource(kubernetes.K8sHTTPRoutes) {
 			lister.k8shttprouteLister = sharedInformers.Gateway().V1beta1().HTTPRoutes().Lister()
 			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1beta1().HTTPRoutes().Informer().HasSynced)
-			_, err := sharedInformers.Gateway().V1beta1().Gateways().Informer().AddEventHandler(c.registryRefreshHandler)
+			_, err := sharedInformers.Gateway().V1beta1().HTTPRoutes().Informer().AddEventHandler(c.registryRefreshHandler)
 			if err != nil {
-				log.Errorf("Error adding Handler to Informer Gateways: %s", err.Error())
+				log.Errorf("[Kiali Cache] Error adding Handler to Informer HTTPRoutes : %s", err.Error())
 			}
 		}
 	}
