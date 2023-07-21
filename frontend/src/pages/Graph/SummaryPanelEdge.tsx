@@ -143,9 +143,14 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     const isTcp = protocol === Protocol.TCP;
     const isRequests = isHttp || (isGrpc && this.props.trafficRates.includes(TrafficRate.GRPC_REQUEST));
 
+    const bgStyle = {
+      backgroundColor: this.props.theme === themes[1] ? PFColors.Black700 : PFColors.White,
+      color: this.props.theme === themes[1] ? PFColors.White : PFColors.Black700
+    };
+
     const SecurityBlock = () => {
       return (
-        <div className="panel-heading" style={summaryHeader}>
+        <div className="panel-heading" style={{ ...summaryHeader, ...bgStyle }}>
           {isMtls && this.renderMTLSSummary(mTLSPercentage)}
           {hasPrincipals && (
             <>
@@ -162,11 +167,6 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
           )}
         </div>
       );
-    };
-
-    const bgStyle = {
-      backgroundColor: this.props.theme === themes[1] ? PFColors.Black700 : PFColors.White,
-      color: this.props.theme === themes[1] ? PFColors.White : PFColors.Black700
     };
 
     return (
