@@ -18,7 +18,6 @@ import {
   shouldRefreshData,
   getFirstDatapoints,
   summaryFont,
-  summaryHeader,
   summaryBodyTabs,
   hr,
   getDatapoints,
@@ -37,6 +36,7 @@ import { ValidationSummary } from 'components/Validations/ValidationSummary';
 import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { descendents, edgesIn, edgesInOut, edgesOut, elems, select, selectOr } from 'pages/GraphPF/GraphPFElems';
+import { themes } from '../../types/Common';
 
 type SummaryPanelNamespaceBoxMetricsState = {
   grpcRequestIn: Datapoint[];
@@ -114,7 +114,6 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     margin: 0,
     minWidth: summaryPanelWidth,
     overflowY: 'auto' as 'auto',
-    backgroundColor: PFColors.White,
     width: summaryPanelWidth
   };
 
@@ -187,9 +186,14 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     const tooltipOutboundRef = React.createRef();
     const tooltipTotalRef = React.createRef();
 
+    const bgStyle = {
+      backgroundColor: this.props.theme === themes[1] ? PFColors.Black700 : PFColors.White,
+      color: this.props.theme === themes[1] ? PFColors.White : PFColors.Black700
+    };
+
     return (
-      <div className="panel panel-default" style={SummaryPanelNamespaceBox.panelStyle}>
-        <div className="panel-heading" style={summaryHeader}>
+      <div className="panel panel-default" style={{ ...SummaryPanelNamespaceBox.panelStyle, ...bgStyle }}>
+        <div className="panel-heading" style={bgStyle}>
           {getTitle('Namespace')}
           {this.renderNamespace(namespace)}
           <br />

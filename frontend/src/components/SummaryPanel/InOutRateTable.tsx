@@ -108,7 +108,7 @@ export class InOutRateTableHttp extends React.Component<InOutRateTableHttpPropTy
         <div className={summaryTitle}>{this.props.title}</div>
         <table className="table" style={{ marginBottom: '10px' }}>
           <thead>
-            <tr style={{ backgroundColor: 'white' }}>
+            <tr>
               <th />
               <th>Total</th>
               <th>%Success</th>

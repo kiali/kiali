@@ -39,6 +39,8 @@ import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { Direction } from 'types/MetricsOptions';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Edge } from '@patternfly/react-topology';
+import { themes } from '../../types/Common';
+import { PFColors } from '../../components/Pf/PfColors';
 
 type SummaryPanelEdgeMetricsState = {
   rates: Datapoint[];
@@ -162,9 +164,14 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       );
     };
 
+    const bgStyle = {
+      backgroundColor: this.props.theme === themes[1] ? PFColors.Black700 : PFColors.White,
+      color: this.props.theme === themes[1] ? PFColors.White : PFColors.Black700
+    };
+
     return (
-      <div ref={this.mainDivRef} className={`panel panel-default ${summaryPanel}`}>
-        <div className="panel-heading" style={summaryHeader}>
+      <div ref={this.mainDivRef} className={`panel panel-default ${summaryPanel}`} style={bgStyle}>
+        <div className="panel-heading" style={{ ...summaryHeader, ...bgStyle }}>
           {getTitle(`Edge (${prettyProtocol(protocol)})`)}
           {renderBadgedLink(sourceData, undefined, 'From:  ')}
           {renderBadgedLink(destData, undefined, 'To:        ')}
