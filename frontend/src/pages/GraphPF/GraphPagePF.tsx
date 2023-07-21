@@ -3,7 +3,14 @@ import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import FlexView from 'react-flexview';
 import { kialiStyle } from 'styles/StyleUtils';
-import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
+import {
+  bgDark,
+  DurationInSeconds,
+  IntervalInMilliseconds,
+  themes,
+  TimeInMilliseconds,
+  TimeInSeconds
+} from '../../types/Common';
 import { Namespace } from '../../types/Namespace';
 import {
   GraphEvent,
@@ -136,6 +143,7 @@ type ReduxProps = {
   toggleIdleNodes: () => void;
   toggleLegend: () => void;
   updateSummary: (event: GraphEvent) => void;
+  theme: string;
 };
 
 export type GraphPagePropsPF = Partial<GraphURLPathProps> &
@@ -184,8 +192,7 @@ const graphTimeRange = kialiStyle({
   top: '10px',
   left: '10px',
   width: 'auto',
-  zIndex: 2,
-  backgroundColor: PFColors.White
+  zIndex: 2
 });
 
 const whiteBackground = kialiStyle({
@@ -455,7 +462,13 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
               )}
               {isReady && (
                 <Chip
-                  className={`${graphTimeRange} ${this.props.replayActive ? replayBackground : whiteBackground}`}
+                  className={`${graphTimeRange} ${
+                    this.props.replayActive
+                      ? replayBackground
+                      : this.props.theme === themes[1]
+                      ? bgDark
+                      : whiteBackground
+                  }`}
                   isReadOnly={true}
                 >
                   {this.props.replayActive && <Badge style={{ marginRight: '4px' }} isRead={true}>{`Replay`}</Badge>}
@@ -758,7 +771,8 @@ const mapStateToProps = (state: KialiAppState) => ({
   showVirtualServices: state.graph.toolbarState.showVirtualServices,
   summaryData: state.graph.summaryData,
   trace: state.jaegerState?.selectedTrace,
-  trafficRates: trafficRatesSelector(state)
+  trafficRates: trafficRatesSelector(state),
+  theme: state.globalState.theme
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
