@@ -4,91 +4,91 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/tests/integration/utils/kiali"
 )
 
 func TestKialiStatus(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	response, statusCode, err := kiali.KialiStatus()
 
-	assert.Nil(err)
-	assert.True(response)
-	assert.Equal(200, statusCode)
+	require.NoError(err)
+	require.True(response)
+	require.Equal(200, statusCode)
 }
 
 func TestKialiConfig(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	response, statusCode, err := kiali.KialiConfig()
 
-	assert.Nil(err)
-	assert.Equal(200, statusCode)
-	assert.NotEmpty(response)
+	require.NoError(err)
+	require.Equal(200, statusCode)
+	require.NotEmpty(response)
 }
 
 func TestIstioPermissions(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	response, statusCode, err := kiali.IstioPermissions()
 
-	assert.Nil(err)
-	assert.Equal(200, statusCode)
-	assert.NotNil(response)
+	require.NoError(err)
+	require.Equal(200, statusCode)
+	require.NotNil(response)
 }
 
 func TestJaeger(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	response, statusCode, err := kiali.Jaeger()
 
 	if statusCode == 200 {
-		assert.Nil(err)
-		assert.NotNil(response)
-		assert.True(response.Enabled)
-		assert.True(response.Integration)
-		assert.NotEmpty(response.URL)
+		require.NoError(err)
+		require.NotNil(response)
+		require.True(response.Enabled)
+		require.True(response.Integration)
+		require.NotEmpty(response.URL)
 	} else {
-		assert.Fail(fmt.Sprintf("Status code should be '200' but was: %d and error: %s", statusCode, err.Error()))
+		require.Fail(fmt.Sprintf("Status code should be '200' but was: %d and error: %s", statusCode, err.Error()))
 	}
 }
 
 func TestGrafana(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	response, statusCode, err := kiali.Grafana()
 
 	if statusCode == 200 {
-		assert.Nil(err)
-		assert.NotNil(response)
-		assert.NotEmpty(response.ExternalLinks)
+		require.NoError(err)
+		require.NotNil(response)
+		require.NotEmpty(response.ExternalLinks)
 		for _, extLink := range response.ExternalLinks {
-			assert.NotEmpty(extLink.Name)
-			assert.NotEmpty(extLink.URL)
+			require.NotEmpty(extLink.Name)
+			require.NotEmpty(extLink.URL)
 		}
 	} else {
-		assert.Fail(fmt.Sprintf("Status code should be '200' but was: %d and error: %s", statusCode, err))
+		require.Fail(fmt.Sprintf("Status code should be '200' but was: %d and error: %s", statusCode, err))
 	}
 }
 
 func TestMeshTls(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	response, statusCode, err := kiali.MeshTls()
 
-	assert.Nil(err)
-	assert.Equal(200, statusCode)
-	assert.NotNil(response)
-	assert.NotNil(response.Status)
-	assert.True(MTLSCorrect(response.Status))
+	require.NoError(err)
+	require.Equal(200, statusCode)
+	require.NotNil(response)
+	require.NotNil(response.Status)
+	require.True(MTLSCorrect(response.Status))
 }
 
 func TestNamespaceTls(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	response, statusCode, err := kiali.NamespaceTls(kiali.BOOKINFO)
 
-	assert.Nil(err)
-	assert.Equal(200, statusCode)
-	assert.NotNil(response)
-	assert.NotNil(response.Status)
-	assert.True(MTLSCorrect(response.Status))
+	require.NoError(err)
+	require.Equal(200, statusCode)
+	require.NotNil(response)
+	require.NotNil(response.Status)
+	require.True(MTLSCorrect(response.Status))
 }
 
 func MTLSCorrect(status string) bool {
