@@ -3,11 +3,6 @@ import { MeshCluster } from './Mesh';
 
 export type IstioLabelKey = 'appLabelName' | 'versionLabelName' | 'injectionLabelName' | 'injectionLabelRev';
 
-interface ClusterInfo {
-  name: string;
-  network: string;
-}
-
 interface DeploymentConfig {
   viewOnlyMode: boolean;
 }
@@ -123,7 +118,6 @@ export interface ServerConfig {
   accessibleNamespaces: Array<string>;
   ambientEnabled: boolean;
   authStrategy: string;
-  clusterInfo?: ClusterInfo;
   clusters: { [key: string]: MeshCluster };
   deployment: DeploymentConfig;
   gatewayAPIEnabled: boolean;

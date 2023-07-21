@@ -1,12 +1,17 @@
 import _ from 'lodash';
 import { ServerConfig } from '../types/ServerConfig';
 import { parseHealthConfig } from './HealthConfig';
+import { MeshCluster } from '../types/Mesh';
 
 export type Durations = { [key: number]: string };
 
 export type ComputedServerConfig = ServerConfig & {
   durations: Durations;
 };
+
+function getHomeCluster(cfg: ServerConfig): MeshCluster | undefined {
+  return Object.values(cfg.clusters).find(cluster => cluster.isKialiHome);
+}
 
 export const humanDurations = (cfg: ComputedServerConfig, prefix?: string, suffix?: string) =>
   _.mapValues(cfg.durations, v => _.reject([prefix, v, suffix], _.isEmpty).join(' '));
@@ -122,6 +127,9 @@ let serverConfig = defaultServerConfig;
 computeValidDurations(serverConfig);
 export { serverConfig };
 
+let homeCluster = getHomeCluster(serverConfig);
+export { homeCluster };
+
 export const toValidDuration = (duration: number): number => {
   // Check if valid
   if (serverConfig.durations[duration]) {
@@ -145,6 +153,8 @@ export const setServerConfig = (cfg: ServerConfig) => {
 
   serverConfig.healthConfig = cfg.healthConfig ? parseHealthConfig(cfg.healthConfig) : serverConfig.healthConfig;
   computeValidDurations(serverConfig);
+
+  homeCluster = getHomeCluster(serverConfig);
 };
 
 export const isIstioNamespace = (namespace: string): boolean => {

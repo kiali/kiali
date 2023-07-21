@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Label, Flex, FlexItem, Tooltip, Toolbar, ToolbarItem } from '@patternfly/react-core';
 import { ClusterIcon } from '@patternfly/react-icons';
 
-import { serverConfig } from '../../../config';
+import { homeCluster } from '../../../config';
 import { MeshMTLSStatus } from '../../../components/MTls/MeshMTLSStatus';
 import { IstioStatus } from '../../IstioStatus/IstioStatus';
 import { PfSpinner } from '../../PfSpinner';
@@ -19,20 +19,20 @@ export class MastheadItems extends React.Component {
           <ToolbarItem>
             <Flex>
               <FlexItem align={{ default: 'alignRight' }}>
-                {!!serverConfig.clusterInfo?.name && (
+                {homeCluster?.name && (
                   <Tooltip
                     entryDelay={0}
                     position="bottom"
-                    content={<div>Kiali home cluster: {serverConfig.clusterInfo.name}</div>}
+                    content={<div>Kiali home cluster: {homeCluster?.name}</div>}
                   >
                     <Label color="blue" icon={<ClusterIcon />}>
-                      {serverConfig.clusterInfo.name}
+                      {homeCluster?.name}
                     </Label>
                   </Tooltip>
                 )}
               </FlexItem>
               <FlexItem>
-                <IstioStatus cluster={serverConfig.clusterInfo?.name} />
+                <IstioStatus cluster={homeCluster?.name} />
               </FlexItem>
               <FlexItem>
                 <MeshMTLSStatus />

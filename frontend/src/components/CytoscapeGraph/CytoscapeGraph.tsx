@@ -40,7 +40,7 @@ import { EmptyGraphLayout } from './EmptyGraphLayout';
 import { FocusAnimation } from './FocusAnimation';
 import { GraphHighlighter } from './graphs/GraphHighlighter';
 import { TrafficRenderer } from './TrafficAnimation/TrafficRenderer';
-import { serverConfig } from 'config';
+import { homeCluster, serverConfig } from 'config';
 import { decoratedNodeData } from './CytoscapeGraphUtils';
 import { scoreNodes, ScoringCriteria } from './GraphScore';
 import { assignEdgeHealth } from 'types/ErrorRate/GraphEdgeStatus';
@@ -813,7 +813,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       edgeLabels: this.props.edgeLabels,
       forceLabels: false,
       graphType: this.props.graphData.fetchParams.graphType,
-      homeCluster: serverConfig?.clusterInfo?.name || CLUSTER_DEFAULT,
+      homeCluster: homeCluster?.name || CLUSTER_DEFAULT,
       showMissingSidecars: this.props.showMissingSidecars,
       showSecurity: this.props.showSecurity,
       showVirtualServices: this.props.showVirtualServices,

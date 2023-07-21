@@ -6,7 +6,7 @@ import { Nav, NavList, NavItem } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { history } from '../../app/History';
 import { navMenuItems } from '../../routes';
-import { serverConfig } from '../../config';
+import { homeCluster, serverConfig } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 
 const externalLinkStyle = kialiStyle({
@@ -77,7 +77,7 @@ export class Menu extends React.Component<MenuProps, MenuState> {
     return allNavMenuItems
       .filter(item => {
         if (item.title === 'Mesh') {
-          return serverConfig.clusterInfo?.name !== undefined;
+          return homeCluster?.name !== undefined;
         }
         if (item.title === 'Graph [Cy]') {
           return graphEnableCytoscape;

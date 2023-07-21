@@ -1,11 +1,18 @@
 import * as React from 'react';
-import { NodeType, GraphNodeData, DestService, BoxByType, CLUSTER_DEFAULT, DecoratedGraphNodeData } from '../../types/Graph';
+import {
+  NodeType,
+  GraphNodeData,
+  DestService,
+  BoxByType,
+  CLUSTER_DEFAULT,
+  DecoratedGraphNodeData
+} from '../../types/Graph';
 import { KialiIcon } from 'config/KialiIcon';
 import { Badge, PopoverPosition } from '@patternfly/react-core';
 import { Health } from 'types/Health';
 import { HealthIndicator } from 'components/Health/HealthIndicator';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { serverConfig } from 'config';
+import { homeCluster } from 'config';
 import { KialiPageLink } from 'components/Link/KialiPageLink';
 
 interface LinkInfo {
@@ -19,7 +26,7 @@ const getTooltip = (tooltip: React.ReactFragment, nodeData: GraphNodeData): Reac
   const addCluster =
     nodeData.isBox !== BoxByType.CLUSTER &&
     nodeData.cluster !== CLUSTER_DEFAULT &&
-    serverConfig?.clusterInfo?.name !== nodeData.cluster;
+    homeCluster?.name !== nodeData.cluster;
   return (
     <div style={{ textAlign: 'left' }}>
       <span>{tooltip}</span>
