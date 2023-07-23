@@ -181,14 +181,18 @@ if ! ${minikube_sh} status; then
     ${CLIENT_EXE} create -f https://operatorhub.io/install/stable/kiali.yaml
 
     echo -n "Waiting for Kiali CRD to be created."
-    timeout 1h bash -c "until ${CLIENT_EXE} get crd kialis.kiali.io >& /dev/null; do echo -n '.' ; sleep 3; done"
+    timeout 10m bash -c "until ${CLIENT_EXE} get crd kialis.kiali.io &> /dev/null; do echo -n '.' ; sleep 3; done"
     echo
 
     echo "Waiting for Kiali CRD to be established."
     ${CLIENT_EXE} wait --for condition=established --timeout=300s crd kialis.kiali.io
 
+    echo -n "Waiting for the Kiali operator to be created."
+    timeout 10m bash -c "until ${CLIENT_EXE} get deployments --all-namespaces | grep kiali-operator &> /dev/null; do echo -n '.' ; sleep 3; done"
+    echo
+
     echo "Configuring the Kiali operator to allow ad hoc images and ad hoc namespaces and security context override."
-    operator_namespace="$(${CLIENT_EXE} get deployments --all-namespaces  | grep kiali-operator | cut -d ' ' -f 1)"
+    operator_namespace="$(${CLIENT_EXE} get deployments --all-namespaces | grep kiali-operator | cut -d ' ' -f 1)"
     for env_name in ALLOW_AD_HOC_KIALI_NAMESPACE ALLOW_AD_HOC_KIALI_IMAGE ALLOW_SECURITY_CONTEXT_OVERRIDE; do
       ${CLIENT_EXE} -n ${operator_namespace} patch $(${CLIENT_EXE} -n ${operator_namespace} get csv -o name | grep kiali) --type=json -p "[{'op':'replace','path':"/spec/install/spec/deployments/0/spec/template/spec/containers/0/env/$(${CLIENT_EXE} -n ${operator_namespace} get $(${CLIENT_EXE} -n ${operator_namespace} get csv -o name | grep kiali) -o jsonpath='{.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[*].name}' | tr ' ' '\n' | cat --number | grep ${env_name} | cut -f 1 | xargs echo -n | cat - <(echo "-1") | bc)/value",'value':"\"true\""}]"
     done
