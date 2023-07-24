@@ -309,7 +309,7 @@ Valid command line arguments:
   -c2n|--cluster2-name <name>: The name of cluster2 (Default: west)
   -c2p|--cluster2-password <name>: If cluster2 is OpenShift, this is the password used to log in (Default: kiali)
   -c2u|--cluster2-username <name>: If cluster2 is OpenShift, this is the username used to log in (Default: kiali)
-  -dorp|--docker-or-podman <docker|podman>: What image registry client to use (Default: docker)
+  -dorp|--docker-or-podman <docker|podman>: What image registry client to use (Default: podman)
   -gr|--gateway-required <bool>: If a gateway is required to cross between networks, set this to true
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
