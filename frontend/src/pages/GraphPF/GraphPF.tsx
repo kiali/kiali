@@ -51,6 +51,7 @@ import {
   selectAnd,
   SelectAnd,
   setEdgeOptions,
+  setNodeAttachments,
   setNodeLabel
 } from './GraphPFElems';
 import { layoutFactory } from './layouts/layoutFactory';
@@ -67,7 +68,7 @@ import { tcpTimerConfig, timerConfig } from 'components/CytoscapeGraph/TrafficAn
 let initialLayout = false;
 let requestFit = false;
 
-const DEFAULT_NODE_SIZE = 75;
+const DEFAULT_NODE_SIZE = 50;
 const ZOOM_IN = 4 / 3;
 const ZOOM_OUT = 3 / 4;
 
@@ -423,6 +424,11 @@ export const TopologyContent: React.FC<{
       controller.fromModel(model);
       controller.getGraph().setData({ graphData: graphData });
 
+      const { nodes } = elems(controller);
+
+      // set decorators
+      nodes.forEach(n => setNodeAttachments(n, graphSettings));
+
       // pre-select node if provided
       const graphNode = graphData.fetchParams.node;
       if (graphNode) {
@@ -449,7 +455,6 @@ export const TopologyContent: React.FC<{
             selector.push({ prop: NodeAttr.workload, val: graphNode.workload });
         }
 
-        const { nodes } = elems(controller);
         const selectedNodes = selectAnd(nodes, selector);
         if (selectedNodes.length > 0) {
           let target = selectedNodes[0];

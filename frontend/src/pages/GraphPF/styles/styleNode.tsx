@@ -65,6 +65,7 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
         element={element}
         {...rest}
         {...passedData}
+        attachments={hover || detailsLevel === ScaleDetailsLevel.high ? data.attachments : undefined}
         scaleLabel={hover && detailsLevel !== ScaleDetailsLevel.high}
         // scaleNode={hover && detailsLevel === ScaleDetailsLevel.low}
         showLabel={hover || detailsLevel === ScaleDetailsLevel.high}

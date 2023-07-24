@@ -2,9 +2,12 @@ import * as React from 'react';
 import {
   BadgeLocation,
   Controller,
+  Decorator,
+  DEFAULT_DECORATOR_RADIUS,
   Edge,
   EdgeModel,
   EdgeTerminalType,
+  getDefaultShapeDecoratorCenter,
   GraphElement,
   isEdge,
   isNode,
@@ -12,7 +15,8 @@ import {
   Node,
   NodeModel,
   NodeShape,
-  NodeStatus
+  NodeStatus,
+  TopologyQuadrant
 } from '@patternfly/react-topology';
 import { PFBadges, PFBadgeType } from 'components/Pf/PfBadges';
 import { icons, serverConfig } from 'config';
@@ -36,6 +40,9 @@ import _ from 'lodash';
 import { PFColors } from 'components/Pf/PfColors';
 import { getEdgeHealth } from 'types/ErrorRate/GraphEdgeStatus';
 import { Span } from 'types/JaegerInfo';
+import { Tooltip } from '@patternfly/react-core';
+import { IconType } from 'config/Icons';
+import React from 'react';
 
 // Utilities for working with PF Topology
 // - most of these add cytoscape-like functions
@@ -45,6 +52,7 @@ export type NodeMap = Map<string, NodeModel>;
 export type NodeData = DecoratedGraphNodeData & {
   // These are node.data fields that have an impact on the PFT rendering of the node.
   // TODO: Is there an actual type defined for these in PFT?
+  attachments?: React.ReactNode; // ie. decorators
   badge?: string;
   badgeBorderColor?: string;
   badgeClassName?: string;
@@ -60,6 +68,7 @@ export type NodeData = DecoratedGraphNodeData & {
   isUnhighlighted?: boolean;
   labelIcon?: React.ReactNode;
   labelIconClass?: string;
+  labelIconPadding?: number;
   labelPosition?: LabelPosition;
   marginX?: number;
   onHover?: (element: GraphElement, isMouseIn: boolean) => void;
@@ -97,18 +106,18 @@ export type GraphPFSettings = {
   trafficRates: TrafficRate[];
 };
 
-const badgeMap = new Map<string, string>()
-  .set('CB', icons.istio.circuitBreaker.className) // bolt
-  .set('FI', icons.istio.faultInjection.className) // ban
-  .set('GW', icons.istio.gateway.className) // globe
-  .set('MI', icons.istio.mirroring.className) // migration
-  .set('MS', icons.istio.missingSidecar.className) // blueprint
-  .set('RO', icons.istio.root.className) // alt-arrow-circle-right
-  .set('RR', icons.istio.requestRouting.className) // code-branch
-  .set('RT', icons.istio.requestTimeout.className) // clock
-  .set('TS', icons.istio.trafficShifting.className) // share-alt
-  .set('VS', icons.istio.virtualService.className) // code-branch
-  .set('WE', icons.istio.workloadEntry.className); // pf-icon-virtual-machine
+const badgeMap = new Map<string, IconType>()
+  .set('CB', icons.istio.circuitBreaker) // bolt
+  .set('FI', icons.istio.faultInjection) // ban
+  .set('GW', icons.istio.gateway) // globe
+  .set('MI', icons.istio.mirroring) // migration
+  .set('MS', icons.istio.missingSidecar) // blueprint
+  .set('RO', icons.istio.root) // alt-arrow-circle-right
+  .set('RR', icons.istio.requestRouting) // code-branch
+  .set('RT', icons.istio.requestTimeout) // clock
+  .set('TS', icons.istio.trafficShifting) // share-alt
+  .set('VS', icons.istio.virtualService) // code-branch
+  .set('WE', icons.istio.workloadEntry); // pf-icon-virtual-machine
 
 const EdgeColor = PFColors.Success;
 const EdgeColorDead = PFColors.Black500;
@@ -146,6 +155,62 @@ export const getNodeShape = (data: NodeData): NodeShape => {
   }
 };
 
+const getDecorator = (element: Node, quadrant: TopologyQuadrant, icon: IconType, tooltip?: string): React.ReactNode => {
+  const { x, y } = getDefaultShapeDecoratorCenter(quadrant, element);
+
+  return (
+    <Tooltip content={!!tooltip ? tooltip : icon.text}>
+      <Decorator x={x} y={y} radius={DEFAULT_DECORATOR_RADIUS} showBackground icon={React.createElement(icon.icon)} />
+    </Tooltip>
+  );
+};
+
+export const setNodeAttachments = (node: Node<NodeModel>, settings: GraphPFSettings): void => {
+  // PFT provides the ability to add a single Icon (badge) on the label. And so we will use
+  // attachments (up to 4) to display what we would have done with label badges in Cytoscape.
+  const data = node.getData() as NodeData;
+  const attachments = [] as React.ReactNode[];
+
+  if (settings.showMissingSidecars && data.hasMissingSC) {
+    attachments.push(getDecorator(node, TopologyQuadrant.lowerRight, badgeMap.get('MS')!));
+  }
+  if (data.hasWorkloadEntry) {
+    attachments.push(getDecorator(node, TopologyQuadrant.upperRight, badgeMap.get('WE')!));
+  }
+  if (settings.showVirtualServices) {
+    if (data.hasCB) {
+      attachments.push(getDecorator(node, TopologyQuadrant.upperLeft, badgeMap.get('CB')!));
+    }
+    // Because we have limited attachments, just show a single VS attachement and let the
+    // Tooltip list the active VS features
+    if (data.hasVS) {
+      const vsFeatures: string[] = [];
+      if (data.hasFaultInjection) {
+        vsFeatures.push(badgeMap.get('FI')!.text);
+      }
+      if (data.hasMirroring) {
+        vsFeatures.push(badgeMap.get('MI')!.text);
+      }
+      if (data.hasRequestRouting) {
+        vsFeatures.push(badgeMap.get('RR')!.text);
+      }
+      if (data.hasRequestTimeout) {
+        vsFeatures.push(badgeMap.get('RT')!.text);
+      }
+      if (data.hasTrafficShifting || data.hasTCPTrafficShifting) {
+        vsFeatures.push(badgeMap.get('TS')!.text);
+      }
+      const tooltip = vsFeatures.length === 0 ? undefined : `${badgeMap.get('VS')!.text}:\n ${vsFeatures.join(' ,')}`;
+
+      attachments.push(getDecorator(node, TopologyQuadrant.lowerLeft, badgeMap.get('VS')!, tooltip));
+    }
+  }
+
+  if (attachments.length > 0) {
+    data.attachments = attachments;
+  }
+};
+
 export const setNodeLabel = (node: NodeModel, nodeMap: NodeMap, settings: GraphPFSettings): void => {
   const data = node.data as NodeData;
   const app = data.app || '';
@@ -173,67 +238,31 @@ export const setNodeLabel = (node: NodeModel, nodeMap: NodeMap, settings: GraphP
 
   // Badges portion of label...
 
-  let badges = [] as string[];
-  if (settings.showMissingSidecars && data.hasMissingSC) {
-    badges.push(badgeMap.get('MS')!);
-  }
-  if (settings.showVirtualServices) {
-    if (data.hasCB) {
-      badges.push(badgeMap.get('CB')!);
-    }
-    // If there's an additional traffic scenario present then it's assumed
-    // that there is a VS present so the VS badge is omitted.
-    if (data.hasVS) {
-      const hasKialiScenario =
-        data.hasFaultInjection ||
-        data.hasMirroring ||
-        data.hasRequestRouting ||
-        data.hasRequestTimeout ||
-        data.hasTCPTrafficShifting ||
-        data.hasTrafficShifting;
-      if (!hasKialiScenario) {
-        badges.push(badgeMap.get('VS')!);
-      } else {
-        if (data.hasFaultInjection) {
-          badges.push(badgeMap.get('FI')!);
-        }
-        if (data.hasMirroring) {
-          badges.push(badgeMap.get('MI')!);
-        }
-        if (data.hasTrafficShifting || data.hasTCPTrafficShifting) {
-          badges.push(badgeMap.get('TS')!);
-        }
-        if (data.hasRequestTimeout) {
-          badges.push(badgeMap.get('RT')!);
-        }
-        if (data.hasRequestRouting) {
-          badges.push(badgeMap.get('RR')!);
-        }
-      }
-    }
+  // PFT provides the ability to add a single Icon (badge) on the label. Given that we can't
+  // duplicate what we do with Cytoscape, which is to add multiple badges on the label,
+  // we'll reserve the single icon to be used only to identify traffic sources (i.e. roots).
+  // Note that a gateway is a special traffic source.
+  // Other badges will be added as attachments (decorators) on the node, but that requires
+  // the Node, not the NodeModel, and it;s no longer part of the label, so it's not done here.
 
-    if (data.hasWorkloadEntry) {
-      badges.push(badgeMap.get('WE')!);
-    }
-    if (data.isRoot) {
-      if (
-        data.isGateway?.ingressInfo?.hostnames?.length !== undefined ||
-        data.isGateway?.gatewayAPIInfo?.hostnames?.length !== undefined
-      ) {
-        badges.push(badgeMap.get('GW')!);
-      }
-      badges.push(badgeMap.get('RO')!);
+  if (data.isRoot) {
+    if (
+      data.isGateway?.ingressInfo?.hostnames?.length !== undefined ||
+      data.isGateway?.gatewayAPIInfo?.hostnames?.length !== undefined
+    ) {
+      data.labelIcon = (
+        <span className={`${badgeMap.get('GW')?.className}`} style={{ fontSize: '14px', marginBottom: '1px' }}></span>
+      );
     } else {
-      if (data.isGateway?.egressInfo?.hostnames?.length !== undefined) {
-        badges.push(badgeMap.get('GW')!);
-      }
+      data.labelIcon = (
+        <span className={`${badgeMap.get('RO')?.className}`} style={{ marginBottom: '1px', marginLeft: '2px' }}></span>
+      );
+    }
+  } else {
+    if (data.isGateway?.egressInfo?.hostnames?.length !== undefined) {
+      data.labelIcon = <span className={`${badgeMap.get('GW')?.className}`}></span>;
     }
   }
-  // TODO: PFT can only handle one badge/icon at the moment, need an RFE
-  if (badges.length > 0) {
-    data.labelIcon = <span className={`${badges[0]}`}></span>;
-  }
-  data.component = <span className={`${badges[0]}`}></span>;
 
   // Content portion of label (i.e. the text)...
   const content: string[] = [];

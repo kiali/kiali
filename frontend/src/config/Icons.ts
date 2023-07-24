@@ -1,56 +1,153 @@
 import deepFreeze from 'deep-freeze';
-
 import solidPinIcon from '../assets/img/solid-pin.png';
 import hollowPinIcon from '../assets/img/hollow-pin.png';
-import { BlueprintIcon, WrenchIcon, SecurityIcon } from '@patternfly/react-icons';
+import {
+  ArrowAltCircleRightIcon,
+  BanIcon,
+  BlueprintIcon,
+  BoltIcon,
+  ClockIcon,
+  CodeBranchIcon,
+  GlobeRouteIcon,
+  LockedIcon,
+  MigrationIcon,
+  SecurityIcon,
+  ShareAltIcon,
+  VirtualMachineIcon,
+  WrenchIcon
+} from '@patternfly/react-icons';
+import React from 'react';
 
 export { solidPinIcon, hollowPinIcon };
+
+export type IconType = {
+  ascii?: string;
+  className: string;
+  color?: string;
+  icon: React.ComponentClass<any, any>;
+  name: string;
+  text: string;
+  type: string;
+};
 
 // The unicode values in the ascii fields come from:
 // https://www.patternfly.org/v3/styles/icons/index.html
 // or from the font awesome site: https://fontawesome.com/icons
 const mutIcons = {
   istio: {
-    circuitBreaker: { className: 'fa fa-bolt', type: 'fa', name: 'bolt', ascii: '\uf0e7 ' },
+    circuitBreaker: {
+      ascii: '\uf0e7 ',
+      className: 'fa fa-bolt',
+      icon: BoltIcon,
+      name: 'bolt',
+      text: 'Circuit Breaker',
+      type: 'fa'
+    } as IconType,
     missingLabel: {
-      icon: WrenchIcon,
-      className: 'fa fa-wrench',
-      type: 'fa',
-      name: 'wrench',
       ascii: '\uE932',
-      color: 'red'
-    },
-    faultInjection: { className: 'fa fa-ban', type: 'fa', name: 'ban', ascii: '\uf05e ' },
-    gateway: { className: 'pf-icon pf-icon-globe-route', type: 'pf', name: 'globe-route' },
-    mirroring: { className: 'pf-icon pf-icon-migration', type: 'pf', name: 'migration' },
+      className: 'fa fa-wrench',
+      color: 'red',
+      icon: WrenchIcon,
+      name: 'wrench',
+      text: 'Missing Label',
+      type: 'fa'
+    } as IconType,
+    faultInjection: {
+      ascii: '\uf05e ',
+      className: 'fa fa-ban',
+      icon: BanIcon,
+      name: 'ban',
+      text: 'Fault Injection',
+      type: 'fa'
+    } as IconType,
+    gateway: {
+      className: 'pf-icon pf-icon-globe-route',
+      icon: GlobeRouteIcon,
+      name: 'globe-route',
+      text: 'Gateway',
+      type: 'pf'
+    } as IconType,
+    mirroring: {
+      className: 'pf-icon pf-icon-migration',
+      icon: MigrationIcon,
+      name: 'migration',
+      text: 'Mirroring',
+      type: 'pf'
+    } as IconType,
     missingAuthPolicy: {
-      icon: SecurityIcon,
-      className: 'pf-icon pf-icon-security',
-      type: 'pf',
-      name: 'security',
       ascii: '\ue946 ',
-      color: 'red'
-    },
+      className: 'pf-icon pf-icon-security',
+      color: 'red',
+      icon: SecurityIcon,
+      name: 'security',
+      text: 'Missing Auth Policy',
+      type: 'pf'
+    } as IconType,
     missingSidecar: {
-      icon: BlueprintIcon,
-      className: 'pf-icon pf-icon-blueprint',
-      type: 'pf',
-      name: 'blueprint',
       ascii: '\ue915 ',
-      color: 'red'
+      className: 'pf-icon pf-icon-blueprint',
+      color: 'red',
+      icon: BlueprintIcon,
+      name: 'blueprint',
+      text: 'Missing Sidecar',
+      type: 'pf'
+    } as IconType,
+    mtls: {
+      ascii: '\ue923 ',
+      className: 'pf-icon pf-icon-locked',
+      icon: LockedIcon,
+      name: 'locked',
+      text: 'mTLS',
+      type: 'pf'
+    } as IconType,
+    requestRouting: {
+      ascii: '\uf126 ',
+      className: 'fa fa-code-branch',
+      icon: CodeBranchIcon,
+      name: 'code-fork',
+      text: 'Request Routing',
+      type: 'fa'
+    } as IconType,
+    requestTimeout: {
+      ascii: '\uf017 ',
+      className: 'fa fa-clock',
+      icon: ClockIcon,
+      name: 'clock',
+      text: 'request Timeout',
+      type: 'fa'
     },
-    mtls: { className: 'pf-icon pf-icon-locked', type: 'pf', name: 'locked', ascii: '\ue923 ' },
-    requestRouting: { className: 'fa fa-code-branch', type: 'fa', name: 'code-fork', ascii: '\uf126 ' },
-    requestTimeout: { className: 'fa fa-clock', type: 'fa', name: 'clock', ascii: '\uf017 ' },
-    root: { className: 'fa fa-arrow-alt-circle-right', type: 'fa', name: 'arrow-alt-circle-right', ascii: '\uf35a ' },
-    trafficShifting: { className: 'fa fa-share-alt', type: 'fa', name: 'share-alt', ascii: '\uf1e0 ' },
-    virtualService: { className: 'fa fa-code-branch', type: 'fa', name: 'code-fork', ascii: '\uf126 ' },
+    root: {
+      ascii: '\uf35a ',
+      className: 'fa fa-arrow-alt-circle-right',
+      icon: ArrowAltCircleRightIcon,
+      name: 'arrow-alt-circle-right',
+      text: 'Traffic Source',
+      type: 'fa'
+    } as IconType,
+    trafficShifting: {
+      ascii: '\uf1e0 ',
+      className: 'fa fa-share-alt',
+      icon: ShareAltIcon,
+      name: 'share-alt',
+      text: 'Traffic Shifting',
+      type: 'fa'
+    } as IconType,
+    virtualService: {
+      ascii: '\uf126 ',
+      className: 'fa fa-code-branch',
+      icon: CodeBranchIcon,
+      name: 'code-fork',
+      text: 'Virtual Service',
+      type: 'fa'
+    } as IconType,
     workloadEntry: {
+      ascii: '\uf126 ',
       className: 'pf-icon pf-icon-virtual-machine',
-      type: 'pf',
+      icon: VirtualMachineIcon,
       name: 'virtual-machine',
-      ascii: '\uf126 '
-    }
+      text: 'Workload Entry',
+      type: 'pf'
+    } as IconType
   }
 };
 
