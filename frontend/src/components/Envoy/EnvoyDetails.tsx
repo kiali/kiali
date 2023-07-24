@@ -23,6 +23,7 @@ import { SummaryTableBuilder } from './tables/BaseTable';
 import { Namespace } from 'types/Namespace';
 import { kialiStyle } from 'styles/StyleUtils';
 import AceEditor from 'react-ace';
+import 'ace-builds/src-noconflict/theme-twilight';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ToolbarDropdown } from 'components/ToolbarDropdown/ToolbarDropdown';
 import { activeTab } from '../../components/Tab/Tabs';
@@ -283,6 +284,8 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     if (!envoyMetricsDashboardRef) {
       filteredEnvoyTabs = envoyTabs.slice(0, envoyTabs.length - 1);
     }
+    const ace_theme = this.props.theme === themes[1] ? 'twilight' : 'eclipse';
+
     const tabs = filteredEnvoyTabs.map((value, index) => {
       const title = value.charAt(0).toUpperCase() + value.slice(1);
       return (
@@ -327,7 +330,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                   <AceEditor
                     ref={this.aceEditorRef}
                     mode="yaml"
-                    theme="eclipse"
+                    theme={ace_theme}
                     width={'100%'}
                     height={height.toString() + 'px'}
                     className={istioAceEditorStyle}

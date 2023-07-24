@@ -6,6 +6,7 @@ import * as API from '../../services/Api';
 import AceEditor from 'react-ace';
 import 'ace-builds/src-noconflict/mode-yaml';
 import 'ace-builds/src-noconflict/theme-eclipse';
+import 'ace-builds/src-noconflict/theme-twilight';
 import {
   HelpMessage,
   ObjectReference,
@@ -56,6 +57,7 @@ import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { basicTabStyle } from 'styles/TabStyles';
 import { istioAceEditorStyle } from 'styles/AceEditorStyle';
+import { themes } from '../../types/Common';
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
@@ -475,6 +477,8 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     const helpAnnotations = parseHelpAnnotations(yamlSource, helpMessages);
     helpAnnotations.forEach(ha => editorValidations.annotations.push(ha));
 
+    const ace_theme = this.props.theme === themes[1] ? 'twilight' : 'eclipse';
+
     const panelContent = (
       <DrawerPanelContent>
         <DrawerHead>
@@ -514,7 +518,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
         <AceEditor
           ref={this.aceEditorRef}
           mode="yaml"
-          theme="eclipse"
+          theme={ace_theme}
           onChange={this.onEditorChange}
           height={`calc(var(--kiali-yaml-editor-height) + ${isParentKiosk(this.props.kiosk) ? '100px' : '0px'})`}
           width={'100%'}
