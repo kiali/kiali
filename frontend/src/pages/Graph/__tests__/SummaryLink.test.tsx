@@ -6,6 +6,7 @@ import { mount } from 'enzyme';
 import { MemoryRouter } from 'react-router-dom';
 import { store } from '../../../store/ConfigStore';
 import { Provider } from 'react-redux';
+import { serverConfig, setServerConfig } from '../../../config/ServerConfig';
 
 let defaultGraphData: GraphNodeData;
 
@@ -20,6 +21,17 @@ describe('renderBadgedLink', () => {
   });
 
   it('should generate a link to workload page and badge', () => {
+    serverConfig.clusters = {
+      'cluster-default': {
+        apiEndpoint: '',
+        isKialiHome: true,
+        kialiInstances: [],
+        name: 'cluster-default',
+        network: 'test-net',
+        secretName: 'test-secret'
+      }
+    };
+    setServerConfig(serverConfig);
     const node = { ...defaultGraphData, workload: 'details-v1' };
     const expectedLink = `/namespaces/${encodeURIComponent(node.namespace)}/workloads/${encodeURIComponent(
       node.workload!
@@ -29,6 +41,9 @@ describe('renderBadgedLink', () => {
         <MemoryRouter>{renderBadgedLink(node)}</MemoryRouter>
       </Provider>
     );
+    debugger;
+    console.log('change');
+    console.log(wrapper.find('a').debug());
     expect(wrapper.find('a').filter(`[href="${expectedLink}"]`).exists()).toBeTruthy();
     expect(
       wrapper
