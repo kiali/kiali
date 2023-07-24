@@ -118,7 +118,7 @@ MANAGE_MINIKUBE="true"
 MANAGE_KIND="false"
 
 # Minikube options - these are ignored if MANAGE_MINIKUBE is false
-MINIKUBE_DRIVER="virtualbox"
+MINIKUBE_DRIVER="kvm2"
 MINIKUBE_CPU=""
 MINIKUBE_DISK=""
 MINIKUBE_MEMORY=""
@@ -309,7 +309,7 @@ Valid command line arguments:
   -c2n|--cluster2-name <name>: The name of cluster2 (Default: west)
   -c2p|--cluster2-password <name>: If cluster2 is OpenShift, this is the password used to log in (Default: kiali)
   -c2u|--cluster2-username <name>: If cluster2 is OpenShift, this is the username used to log in (Default: kiali)
-  -dorp|--docker-or-podman <docker|podman>: What image registry client to use (Default: docker)
+  -dorp|--docker-or-podman <docker|podman>: What image registry client to use (Default: podman)
   -gr|--gateway-required <bool>: If a gateway is required to cross between networks, set this to true
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
@@ -331,7 +331,7 @@ Valid command line arguments:
   -k2wf|--kiali2-web-fqdn <fqdn>: If specified, this will be the #2 Kaili setting for spec.server.web_fqdn.
   -k2ws|--kiali2-web-schema <schema>: If specified, this will be the #2 Kaili setting for spec.server.web_schema.
   -mcpu|--minikube-cpu <cpu count>: Number of CPUs to give to each minikube cluster
-  -md|--minikube-driver <name>: The driver used by minikube (e.g. virtualbox, kvm2) (Default: virtualbox)
+  -md|--minikube-driver <name>: The driver used by minikube (e.g. virtualbox, kvm2) (Default: kvm2)
   -mdisk|--minikube-disk <space>: Amount of disk space to give to each minikube cluster
   -mi|--mesh-id <id>: When Istio is installed, it will be part of the mesh with this given name. (Default: mesh-default)
   -mk|--manage-kind <bool>: If "true" and if --client-exe is kubectl, two kind instances will be managed
