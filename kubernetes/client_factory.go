@@ -72,20 +72,17 @@ func GetClientFactory() (ClientFactory, error) {
 
 		// Get the normal configuration
 		var config *rest.Config
-		config, err = GetConfigForLocalCluster()
+		config, err = getConfigForLocalCluster()
 		if err != nil {
 			return
 		}
 
 		// Create a new config based on what was gathered above but don't specify the bearer token to use
-		baseConfig := rest.Config{
-			Host:            config.Host, // TODO: do we need this? remote cluster clients should ignore this
-			TLSClientConfig: config.TLSClientConfig,
-			QPS:             kialiConfig.Get().KubernetesConfig.QPS,
-			Burst:           kialiConfig.Get().KubernetesConfig.Burst,
-		}
+		config.BearerToken = ""
+		config.QPS = kialiConfig.Get().KubernetesConfig.QPS
+		config.Burst = kialiConfig.Get().KubernetesConfig.Burst
 
-		factory, err = newClientFactory(&baseConfig)
+		factory, err = newClientFactory(config)
 	})
 	return factory, err
 }
@@ -467,21 +464,22 @@ func (cf *clientFactory) getConfig(clusterInfo *RemoteClusterInfo) (*rest.Config
 			return nil, err
 		}
 
-		if !kialiConfig.KialiFeatureFlags.Clustering.EnableExecProvider {
-			remoteConfig.ExecProvider = nil
-		}
-
 		// Use the remote config entirely for remote clusters.
 		clientConfig = *remoteConfig
 	} else {
+		// Just read the token and then use the base config.
 		// We're an in cluster client. Read the kiali service account token.
 		kialiToken, err := GetKialiTokenForHomeCluster()
 		if err != nil {
 			return nil, fmt.Errorf("unable to get Kiali service account token: %s", err)
 		}
 
-		// Copy just the token for in cluster
+		// Copy over the base rest config and the token
 		clientConfig.BearerToken = kialiToken
+	}
+
+	if !kialiConfig.KialiFeatureFlags.Clustering.EnableExecProvider {
+		clientConfig.ExecProvider = nil
 	}
 
 	// Override some settings with what's in kiali config

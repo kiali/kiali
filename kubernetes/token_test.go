@@ -3,8 +3,12 @@ package kubernetes
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/kiali/kiali/config"
 )
 
 const (
@@ -14,41 +18,64 @@ const (
 
 // Test Token is Expired
 func TestIsTokenExpired(t *testing.T) {
+	require := require.New(t)
+	assert := assert.New(t)
+	config := config.NewConfig()
+	config.Deployment.RemoteSecretPath = t.TempDir()
+	setConfig(t, *config)
+
 	DefaultServiceAccountPath = tmpFileTokenExpired
 
-	setupFile("thisisarandomtoken", tmpFileTokenExpired, t)
+	setupFile(t, "thisisarandomtoken", tmpFileTokenExpired)
 	token, err := GetKialiTokenForHomeCluster()
-	assert.Nil(t, err)
+	require.NoError(err)
 
-	assert.True(t, token != "")
-	assert.False(t, shouldRefreshToken())
-
-	removeFile(tmpFileTokenExpired, t)
+	assert.True(token != "")
+	assert.False(shouldRefreshToken())
 }
 
 // Test Kiali Get Token
 func TestGetKialiToken(t *testing.T) {
+	require := require.New(t)
+	assert := assert.New(t)
+	config := config.NewConfig()
+	config.Deployment.RemoteSecretPath = t.TempDir()
+	setConfig(t, *config)
+
 	DefaultServiceAccountPath = tmpFileGetToken
 	data := "thisisarandomtoken"
 
-	setupFile(data, tmpFileGetToken, t)
+	setupFile(t, data, tmpFileGetToken)
 
 	token, err := GetKialiTokenForHomeCluster()
-	assert.Nil(t, err)
+	require.NoError(err)
 
-	assert.Equal(t, data, token)
-	removeFile(tmpFileGetToken, t)
+	assert.Equal(data, token)
+}
+
+func TestGetKialiTokenRemoteCluster(t *testing.T) {
+	require := require.New(t)
+
+	config := config.NewConfig()
+	config.Deployment.RemoteSecretPath = "testdata/remote-cluster-multiple-users.yaml"
+	setConfig(t, *config)
+	tokenRead = time.Time{}
+
+	token, err := GetKialiTokenForHomeCluster()
+	require.NoError(err)
+
+	require.Equal("token2", token)
 }
 
 // Aux func to setup files
-func setupFile(content string, name string, t *testing.T) {
+func setupFile(t *testing.T, content string, name string) {
 	data := []byte(content)
-	err := os.WriteFile(name, data, 0o644)
-	assert.Nil(t, err)
-}
-
-// Aux func to remove file
-func removeFile(name string, t *testing.T) {
-	err := os.Remove(name)
-	assert.Nil(t, err)
+	if err := os.WriteFile(name, data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.Remove(name); err != nil {
+			t.Fatal(err)
+		}
+	})
 }

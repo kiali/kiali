@@ -343,6 +343,7 @@ func TestClientCreatedWithProxyInfo(t *testing.T) {
 	require := require.New(t)
 
 	cfg := config.NewConfig()
+	cfg.Deployment.RemoteSecretPath = t.TempDir() // Random dir so that the remote secret isn't read if it exists.
 	cfg.Auth.Strategy = config.AuthStrategyOpenId
 	cfg.Auth.OpenId.ApiProxyCAData = base64.StdEncoding.EncodeToString(proxyCAData)
 	cfg.Auth.OpenId.ApiProxy = "https://api-proxy:8443"

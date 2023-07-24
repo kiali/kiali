@@ -362,6 +362,10 @@ type DeploymentConfig struct {
 	InstanceName         string   `yaml:"instance_name"`
 	Namespace            string   `yaml:"namespace,omitempty"` // Kiali deployment namespace
 	ViewOnlyMode         bool     `yaml:"view_only_mode,omitempty"`
+	// RemoteSecretPath is used to identify the remote cluster Kiali will connect to as its "local cluster".
+	// This is to support installing Kiali in the control plane, but observing only the data plane in the remote cluster.
+	// Experimental feature. See: https://github.com/kiali/kiali/issues/3002
+	RemoteSecretPath string `yaml:"remote_secret_path,omitempty"`
 }
 
 // GraphFindOption defines a single Graph Find/Hide Option
@@ -549,6 +553,7 @@ func NewConfig() (c *Config) {
 			ClusterWideAccess:    true,
 			InstanceName:         "kiali",
 			Namespace:            "istio-system",
+			RemoteSecretPath:     "/kiali-remote-secret/kiali",
 			ViewOnlyMode:         false,
 		},
 		ExternalServices: ExternalServices{
