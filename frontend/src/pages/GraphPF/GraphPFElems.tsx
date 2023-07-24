@@ -42,7 +42,6 @@ import { getEdgeHealth } from 'types/ErrorRate/GraphEdgeStatus';
 import { Span } from 'types/JaegerInfo';
 import { Tooltip } from '@patternfly/react-core';
 import { IconType } from 'config/Icons';
-import React from 'react';
 
 // Utilities for working with PF Topology
 // - most of these add cytoscape-like functions
