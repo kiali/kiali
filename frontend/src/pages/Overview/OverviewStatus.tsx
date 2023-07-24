@@ -7,13 +7,12 @@ import { ActiveFilter, DEFAULT_LABEL_OPERATION } from '../../types/Filters';
 import { healthFilter } from '../../components/Filters/CommonFilters';
 import { FilterSelected } from '../../components/Filters/StatefulFilters';
 import { createIcon } from '../../components/Health/Helper';
-
-import '../../components/Health/Health.css';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskGraphAction } from '../../components/Kiosk/KioskActions';
 import { durationSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { DurationInSeconds, IntervalInMilliseconds } from '../../types/Common';
+import { healthIndicatorStyle } from 'components/Health/HealthStyle';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -81,7 +80,7 @@ class OverviewStatusComponent extends React.Component<Props, {}> {
         aria-label={'Overview status'}
         position={TooltipPosition.auto}
         content={tooltipContent}
-        className={'health_indicator'}
+        className={healthIndicatorStyle}
       >
         <div style={{ display: 'inline-block', marginRight: '5px' }}>
           <Link to={`/${this.props.targetPage}?namespaces=${this.props.namespace}`} onClick={() => this.linkAction()}>

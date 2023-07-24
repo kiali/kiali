@@ -4,6 +4,20 @@ import { Label, pluralize } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { Span } from 'types/JaegerInfo';
 import { isErrorTag } from 'utils/tracing/TracingHelper';
+import { kialiStyle } from 'styles/StyleUtils';
+
+/**
+ * PF4 adds a wrapper for the label content
+ * And the label color is override by .pf-c-label__content
+ * And there are not styles with the color white
+ */
+const whiteLabelStyle = kialiStyle({
+  $nest: {
+    '& > .pf-c-label__content': {
+      color: '#fff'
+    }
+  }
+});
 
 type Props = {
   spans: Span[];
@@ -36,12 +50,12 @@ export const TraceLabels = (p: Props) => {
       </Label>
       {!p.oneline && <br />}
       {errors === 0 ? (
-        <Label className="whiteColorLabelContent" style={{ margin: 10, backgroundColor: PFColors.Success }}>
+        <Label className={whiteLabelStyle} style={{ margin: 10, backgroundColor: PFColors.Success }}>
           0 Spans with error
         </Label>
       ) : (
         <Label
-          className="whiteColorLabelContent"
+          className={whiteLabelStyle}
           style={{ margin: 10, backgroundColor: filteredErrors === 0 ? PFColors.Warning : PFColors.Danger }}
         >
           {p.filteredSpans && `${filteredErrors} / `}

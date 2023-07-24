@@ -7,10 +7,24 @@ import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { history } from '../../app/History';
 import { navMenuItems } from '../../routes';
 import { serverConfig } from '../../config';
+import { kialiStyle } from 'styles/StyleUtils';
+
+const externalLinkStyle = kialiStyle({
+  $nest: {
+    '&:focus': {
+      backgroundColor: 'transparent',
+      $nest: {
+        '&::before': {
+          borderBottomWidth: '1px'
+        }
+      }
+    }
+  }
+});
 
 const ExternalLink = ({ href, name }) => (
-  <NavItem isActive={false} key={name} className={'external_link'}>
-    <a className="pf-c-nav__link" href={href} target="_blank" rel="noopener noreferrer">
+  <NavItem isActive={false} key={name}>
+    <a className={externalLinkStyle} href={href} target="_blank" rel="noopener noreferrer">
       {name} <ExternalLinkAltIcon style={{ margin: '-4px 0 0 5px' }} />
     </a>
   </NavItem>

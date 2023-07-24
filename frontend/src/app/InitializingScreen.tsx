@@ -54,8 +54,8 @@ const centerVerticalHorizontalStyle = kialiStyle({
 export const InitializingScreen: React.FC<initializingScreenProps> = (props: initializingScreenProps) => {
   const errorDiv = React.createRef<HTMLDivElement>();
 
-  if (document.documentElement) {
-    document.documentElement.className = isKioskMode() ? 'kiosk' : '';
+  if (document.body && isKioskMode()) {
+    document.body.classList.add('kiosk');
   }
 
   return (

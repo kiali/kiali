@@ -9,6 +9,7 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
+import { groupMenuStyle } from 'styles/DropdownStyles';
 
 export type OverviewNamespaceAction = {
   isGroup: boolean;
@@ -69,7 +70,7 @@ export class OverviewNamespaceActions extends React.Component<Props, State> {
           <DropdownGroup
             key={'group_' + i}
             label={action.title}
-            className="kiali-group-menu"
+            className={groupMenuStyle}
             children={action.children.map((subaction, j) => {
               const itemKey = 'subaction_' + i + '_' + j;
               const item = (

@@ -12,6 +12,7 @@ import {
   WizardMode
 } from './WizardActions';
 import { hasServiceDetailsTrafficRouting } from '../../types/ServiceInfo';
+import { groupMenuStyle } from 'styles/DropdownStyles';
 
 export const DELETE_TRAFFIC_ROUTING = 'delete_traffic_routing';
 
@@ -137,5 +138,5 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
 
   actionItems.push(deleteDropdownItem);
   const label = updateLabel === '' ? 'Create' : 'Update';
-  return <DropdownGroup key={`group_${label}`} label={label} className="kiali-group-menu" children={actionItems} />;
+  return <DropdownGroup key={`group_${label}`} label={label} className={groupMenuStyle} children={actionItems} />;
 };

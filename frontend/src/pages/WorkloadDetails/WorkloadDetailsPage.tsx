@@ -28,6 +28,7 @@ import { ErrorMsg } from '../../types/ErrorMsg';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { isWaypoint } from '../../helpers/LabelFilterHelper';
 import { history } from 'app/History';
+import { basicTabStyle } from 'styles/TabStyles';
 
 type WorkloadDetailsState = {
   workload?: Workload;
@@ -344,6 +345,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
         {this.state.workload && (
           <ParameterizedTabs
             id="basic-tabs"
+            className={basicTabStyle}
             onSelect={tabValue => {
               this.setState({ currentTab: tabValue, cluster: this.state.cluster });
             }}

@@ -1,0 +1,63 @@
+@value kialiFontSize: 14px;
+@value kialiFontSizePx: 14;
+
+.kiali {
+  // Set global base font size to 14px per current OpenShift design
+  // https://github.com/openshift/console/blob/ef1212655ba60571aaeec666843cd9f1ef139189/frontend/public/style/_vars.scss#L16
+  $font-size-base: kialiFontSize;
+
+  /**
+   * Define --kiali-global--font-size to match $font-size-base.
+   * It should be used across kiali as the default fontSize, unless the case is exceptional.
+   * We then override --pf-global--FontSize--md to be our kiali default. This is a widely
+   * used PF default font size (typically 16px), but we want it smaller in Kiali, for
+   * consistency and space efficiency (and to echo console).
+   */
+  --kiali-global--font-size: kialiFontSize;
+  --kiali-global--font-size-px: kialiFontSizePx;
+  --pf-global--FontSize--md: kialiFontSize;
+
+  /**
+    * --pf-c-page__header--MinHeight is the height of the masthead
+    * 130px is the vertical space being used by the breadcrumb, tab headers, and the name of the {workload,svc,app}
+    */
+  --kiali-details-pages-tab-content-height: calc(100vh - 130px - var(--pf-c-page__header--MinHeight));
+
+  // Graph CSS variables
+  --graph-find-input--width: 15em;
+  --graph-side-panel--font-size: kialiFontSize;
+  --graph-side-panel--font-size-px: kialiFontSizePx;
+
+  :global {
+    /**
+    * --pf-c-page__header--MinHeight is the height of the masthead
+    * 130px is the vertical space being used by the breadcrumb, tab headers, and the name of the {workload,svc,app}
+    */
+    .pf-c-page__main-section {
+      --kiali-details-pages-tab-content-height: calc(100vh - 130px - var(--pf-c-page__header--MinHeight));
+    }
+
+    /**
+     * Then, in components for which we don't want the override, we must
+     * revert the change back to the desired font size.
+     */
+    .pf-c-nav__link {
+      --pf-c-nav__link--FontSize: 16px;
+    }
+
+    .pf-c-tabs__link {
+      --pf-c-tabs__link--FontSize: 16px;
+    }
+
+    /**
+     * Ensure Chips and ChipGroups show long values
+     */
+    .pf-c-chip-group__label {
+      --pf-c-chip-group__label--MaxWidth: 50em;
+    }
+
+    .pf-c-chip__text {
+      --pf-c-chip__text--MaxWidth: 50em;
+    }
+  }
+}

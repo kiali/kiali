@@ -13,6 +13,12 @@ import { NamespaceInfo } from '../../pages/Overview/NamespaceInfo';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import * as Sorts from '../../pages/Overview/Sorts';
 import { StatefulFilters } from '../Filters/StatefulFilters';
+import { kialiStyle } from 'styles/StyleUtils';
+
+const virtualListStyle = kialiStyle({
+  padding: '20px',
+  marginBottom: '20px'
+});
 
 // ******************************
 // VirtualList and its associated classes are intended to be used for main list pages: Applications,
@@ -150,12 +156,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     });
 
     return (
-      <div
-        style={{
-          padding: '20px',
-          marginBottom: '20px'
-        }}
-      >
+      <div className={virtualListStyle}>
         {childrenWithProps}
         <Table {...tableProps} sortBy={sortBy} onSort={this.onSort}>
           <TableHeader />

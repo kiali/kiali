@@ -36,6 +36,18 @@ import { ServiceWizardActionsDropdownGroup } from 'components/IstioWizards/Servi
 import { PeerAuthentication } from '../../types/IstioObjects';
 import { useServiceDetailForGraphNode } from '../../hooks/services';
 import { useKialiSelector } from '../../hooks/redux';
+import { groupMenuStyle } from 'styles/DropdownStyles';
+
+const summaryNodeActionsStyle = kialiStyle({
+  $nest: {
+    '.pf-c-dropdown__toggle': {
+      fontSize: 'var(--graph-side-panel--font-size)'
+    },
+    '.pf-c-dropdown__menu-item': {
+      fontSize: 'var(--graph-side-panel--font-size)'
+    }
+  }
+});
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -131,7 +143,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
 
     const options = getOptions(nodeData);
     const items = [
-      <DropdownGroup key="show" label="Show" className="kiali-group-menu">
+      <DropdownGroup key="show" label="Show" className={groupMenuStyle}>
         {options.map((o, i) => {
           return (
             <DropdownItem key={`option-${i}`} onClick={() => clickHandler(o, this.props.kiosk)}>
@@ -171,6 +183,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
                 <Dropdown
                   dropdownItems={items}
                   id="summary-node-actions"
+                  className={summaryNodeActionsStyle}
                   isGrouped={true}
                   isOpen={this.state.isActionOpen}
                   isPlain={true}

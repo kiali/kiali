@@ -12,6 +12,7 @@ type TabsProps = {
   tabMap: { [key: string]: number };
   tabName?: string;
   unmountOnExit?: boolean;
+  className?: string;
 };
 
 export const activeTab = (tabName: string, defaultTab: string): string => {
@@ -95,6 +96,7 @@ export class ParameterizedTabs extends React.Component<TabsProps> {
     return (
       <Tabs
         id={this.props.id}
+        className={this.props.className}
         activeKey={this.activeIndex()}
         onSelect={(_, ek) => {
           if (!this.isLinkTab(ek as number)) {

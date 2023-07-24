@@ -27,7 +27,7 @@ export class IstioStatusMessageList extends React.Component<Props> {
           {(this.props.messages || []).map((msg: ValidationMessage, i: number) => {
             const severity: ValidationTypes = IstioLevelToSeverity[msg.level || 'UNKNOWN'];
             return (
-              <StackItem id={'msg-' + i} className={'validation-message'}>
+              <StackItem id={'msg-' + i}>
                 <Flex>
                   <FlexItem>
                     <Validation severity={severity} />
@@ -46,7 +46,7 @@ export class IstioStatusMessageList extends React.Component<Props> {
             {(this.props.checks || []).map((check, index) => {
               const severity: ValidationTypes = IstioLevelToSeverity[check.severity.toUpperCase() || 'UNKNOWN'];
               return (
-                <StackItem id={'valid_msg-' + index} className={'validation-message'}>
+                <StackItem id={'valid_msg-' + index}>
                   <Flex>
                     <FlexItem>
                       <Validation severity={severity} />

@@ -16,6 +16,7 @@ import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { isGateway, isWaypoint } from '../../helpers/LabelFilterHelper';
 import { serverConfig } from '../../config';
 import { Workload } from '../../types/Workload';
+import { healthIndicatorStyle } from 'components/Health/HealthStyle';
 
 type ReduxProps = {
   kiosk: string;
@@ -224,7 +225,7 @@ class DetailDescriptionComponent extends React.Component<Props> {
             aria-label={'Health indicator'}
             content={<>{sub.text}</>}
             position={PopoverPosition.auto}
-            className={'health_indicator'}
+            className={healthIndicatorStyle}
           >
             <span style={{ marginLeft: '10px' }}>{createIcon(sub.status)}</span>
           </Tooltip>

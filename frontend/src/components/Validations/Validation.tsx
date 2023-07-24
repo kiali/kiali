@@ -8,8 +8,17 @@ import {
 import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import { ValidationTypes } from '../../types/IstioObjects';
 import { Text, TextVariants } from '@patternfly/react-core';
-import './Validation.css';
 import { PFColors } from 'components/Pf/PfColors';
+import { kialiStyle } from 'styles/StyleUtils';
+
+const validationStyle = kialiStyle({
+  textAlign: 'left',
+  $nest: {
+    '&:last-child p': {
+      margin: 0
+    }
+  }
+});
 
 type Props = ValidationDescription & {
   messageColor?: boolean;
@@ -94,7 +103,7 @@ export class Validation extends React.Component<Props> {
     const hasMessage = !!this.props.message;
     if (hasMessage) {
       return (
-        <div className="validation">
+        <div className={validationStyle}>
           <Text component={TextVariants.p} style={this.textStyle()}>
             <IconComponent style={this.iconStyle()} /> {this.props.message}
           </Text>

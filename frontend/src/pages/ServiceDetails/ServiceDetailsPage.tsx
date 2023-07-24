@@ -32,6 +32,7 @@ import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { history } from 'app/History';
 import { durationSelector } from 'store/Selectors';
+import { basicTabStyle } from 'styles/TabStyles';
 
 type ServiceDetailsState = {
   cluster?: string;
@@ -267,6 +268,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         {!this.state.error && (
           <ParameterizedTabs
             id="basic-tabs"
+            className={basicTabStyle}
             onSelect={tabValue => {
               this.setState({ currentTab: tabValue });
             }}

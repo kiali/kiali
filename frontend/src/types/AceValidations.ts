@@ -2,6 +2,11 @@ import { HelpMessage, ObjectCheck, ObjectValidation } from './IstioObjects';
 import { Annotation } from 'react-ace/types';
 import { IMarker } from 'react-ace';
 import { YAMLException } from 'js-yaml';
+import {
+  istioValidationErrorStyle,
+  istioValidationInfoStyle,
+  istioValidationWarningStyle
+} from 'styles/AceEditorStyle';
 
 export const jsYaml = require('js-yaml');
 
@@ -197,6 +202,18 @@ const parseMarker = (
   return aceMarker;
 };
 
+const getSeverityClassName = (severity: string) => {
+  switch (severity) {
+    case 'error':
+      return istioValidationErrorStyle;
+    case 'warning':
+      return istioValidationWarningStyle;
+    case 'info':
+    default:
+      return istioValidationInfoStyle;
+  }
+};
+
 const parseCheck = (yaml: string, check: ObjectCheck): AceCheck => {
   const severity = check.severity === 'error' || check.severity === 'warning' ? check.severity : 'info';
   const marker: IMarker = {
@@ -204,7 +221,7 @@ const parseCheck = (yaml: string, check: ObjectCheck): AceCheck => {
     startCol: 0,
     endRow: 0,
     endCol: 0,
-    className: 'istio-validation-' + severity,
+    className: getSeverityClassName(severity),
     type: 'fullLine'
   };
   const annotation = {
@@ -294,7 +311,7 @@ export const parseYamlValidations = (yamlInput: string): AceValidations => {
         startCol: 0,
         endRow: row + 1,
         endCol: 0,
-        className: 'istio-validation-error',
+        className: istioValidationErrorStyle,
         type: 'fullLine'
       });
       parsedValidations.annotations.push({

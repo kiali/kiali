@@ -3,7 +3,7 @@
 exports[`HealthIndicator proxy status section renders the degraded workloads 1`] = `
 <Tooltip
   aria-label="Health indicator"
-  className="health_indicator"
+  className="kiali_fkii99k"
   content={
     <div>
       <strong>
@@ -110,7 +110,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
 exports[`HealthIndicator renders healthy 1`] = `
 <Tooltip
   aria-label="Health indicator"
-  className="health_indicator"
+  className="kiali_fkii99k"
   content={
     <div>
       <strong>

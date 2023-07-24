@@ -15,6 +15,7 @@ exports[`lists all the components grouped 1`] = `
   </Text>
   <List
     aria-label="Istio Component List"
+    className="istioStatus"
     id="istio-status"
   >
     <IstioComponentStatus

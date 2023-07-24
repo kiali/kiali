@@ -296,9 +296,11 @@ class AuthenticationControllerComponent extends React.Component<
   }
 
   private setDocLayout = () => {
-    if (document.documentElement) {
+    if (document.body) {
       const isKiosk = isKioskMode();
-      document.documentElement.className = isKiosk ? 'kiosk' : '';
+      if (isKiosk) {
+        document.body.classList.add('kiosk');
+      }
       store.dispatch(GlobalActions.setKiosk(getKioskMode()));
     }
   };

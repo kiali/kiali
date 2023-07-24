@@ -4,6 +4,7 @@ import { AceValidations, jsYaml } from '../../types/AceValidations';
 import AceEditor from 'react-ace';
 import { aceOptions } from '../../types/IstioConfigDetails';
 import { YAMLException } from 'js-yaml';
+import { istioAceEditorStyle, istioValidationErrorStyle } from 'styles/AceEditorStyle';
 
 type PolicyItem = AuthorizationPolicy | Sidecar;
 
@@ -46,7 +47,7 @@ export class EditorPreview extends React.Component<Props, State> {
           startCol: 0,
           endRow: row + 1,
           endCol: 0,
-          className: 'istio-validation-error',
+          className: istioValidationErrorStyle,
           type: 'fullLine'
         });
         parsedValidations.annotations.push({
@@ -69,7 +70,7 @@ export class EditorPreview extends React.Component<Props, State> {
         onChange={value => this.onChange(value)}
         height={'275px  '}
         width={'100%'}
-        className={'istio-ace-editor'}
+        className={istioAceEditorStyle}
         wrapEnabled={true}
         setOptions={aceOptions}
         value={this.state.yaml}
