@@ -437,6 +437,16 @@ func (workload *Workload) HasIstioSidecar() bool {
 	return workload.Pods.HasIstioSidecar()
 }
 
+// IsGateway return true if the workload is Ingress or Egress Gateway
+func (workload *Workload) IsGateway() bool {
+	if workload.Type == "Deployment" {
+		if labelValue, ok := workload.Labels["operator.istio.io/component"]; ok && (labelValue == "IngressGateways" || labelValue == "EgressGateways") {
+			return true
+		}
+	}
+	return false
+}
+
 // HasIstioAmbient returns true if the workload has any pod with Ambient mesh annotations
 func (workload *Workload) HasIstioAmbient() bool {
 	// if no pods we can't prove that ambient is enabled, so return false (Default)

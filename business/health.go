@@ -70,7 +70,7 @@ func (in *HealthService) getAppHealth(namespace, cluster, app, rateInterval stri
 	// Perf: do not bother fetching request rate if there are no workloads or no workload has sidecar
 	hasSidecar := false
 	for _, w := range ws {
-		if w.IstioSidecar {
+		if w.IstioSidecar || w.IsGateway() {
 			hasSidecar = true
 			break
 		}
@@ -103,7 +103,7 @@ func (in *HealthService) GetWorkloadHealth(ctx context.Context, namespace, clust
 	defer end()
 
 	// Perf: do not bother fetching request rate if workload has no sidecar
-	if !w.IstioSidecar {
+	if !w.IstioSidecar && !w.IsGateway() {
 		return models.WorkloadHealth{
 			WorkloadStatus: w.CastWorkloadStatus(),
 			Requests:       models.NewEmptyRequestHealth(),
@@ -163,7 +163,7 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 			if entities != nil {
 				h.WorkloadStatuses = entities.Workloads.CastWorkloadStatuses()
 				for _, w := range entities.Workloads {
-					if w.IstioSidecar {
+					if w.IstioSidecar || w.IsGateway() {
 						sidecarPresent = true
 						appSidecars[app] = true
 						break
@@ -307,7 +307,7 @@ func (in *HealthService) getNamespaceWorkloadHealth(ws models.Workloads, criteri
 		allHealth[w.Name] = models.EmptyWorkloadHealth()
 		allHealth[w.Name].Requests.HealthAnnotations = models.GetHealthAnnotation(w.HealthAnnotations, HealthAnnotation)
 		allHealth[w.Name].WorkloadStatus = w.CastWorkloadStatus()
-		if w.IstioSidecar {
+		if w.IstioSidecar || w.IsGateway() {
 			hasSidecar = true
 			wlSidecars[w.Name] = true
 		}
