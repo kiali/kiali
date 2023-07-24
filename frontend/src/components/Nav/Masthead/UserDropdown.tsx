@@ -16,6 +16,7 @@ import { store } from '../../../store/ConfigStore';
 import { GlobalActions } from '../../../actions/GlobalActions';
 
 const darkmode = 'pf-theme-dark';
+const darkmodeKiali = 'kiali-theme-dark';
 const themes = ['Default', 'Dark'];
 
 type UserProps = {
@@ -104,10 +105,12 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
     if (this.state.theme === themes[0]) {
       this.setState({ theme: themes[1] });
       document.documentElement.classList.add(darkmode);
+      document.body.classList.add(darkmodeKiali); // Avoid to override OpenShift styles
       store.dispatch(GlobalActions.setTheme(themes[1]));
     } else {
       this.setState({ theme: themes[0] });
       document.documentElement.classList.remove(darkmode);
+      document.body.classList.add(darkmodeKiali); // Avoid to override OpenShift styles
       store.dispatch(GlobalActions.setTheme(themes[0]));
     }
   };
