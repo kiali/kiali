@@ -118,7 +118,7 @@ MANAGE_MINIKUBE="true"
 MANAGE_KIND="false"
 
 # Minikube options - these are ignored if MANAGE_MINIKUBE is false
-MINIKUBE_DRIVER="virtualbox"
+MINIKUBE_DRIVER="kvm2"
 MINIKUBE_CPU=""
 MINIKUBE_DISK=""
 MINIKUBE_MEMORY=""
@@ -331,7 +331,7 @@ Valid command line arguments:
   -k2wf|--kiali2-web-fqdn <fqdn>: If specified, this will be the #2 Kaili setting for spec.server.web_fqdn.
   -k2ws|--kiali2-web-schema <schema>: If specified, this will be the #2 Kaili setting for spec.server.web_schema.
   -mcpu|--minikube-cpu <cpu count>: Number of CPUs to give to each minikube cluster
-  -md|--minikube-driver <name>: The driver used by minikube (e.g. virtualbox, kvm2) (Default: virtualbox)
+  -md|--minikube-driver <name>: The driver used by minikube (e.g. virtualbox, kvm2) (Default: kvm2)
   -mdisk|--minikube-disk <space>: Amount of disk space to give to each minikube cluster
   -mi|--mesh-id <id>: When Istio is installed, it will be part of the mesh with this given name. (Default: mesh-default)
   -mk|--manage-kind <bool>: If "true" and if --client-exe is kubectl, two kind instances will be managed
