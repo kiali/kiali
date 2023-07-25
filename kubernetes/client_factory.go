@@ -78,11 +78,14 @@ func GetClientFactory() (ClientFactory, error) {
 		}
 
 		// Create a new config based on what was gathered above but don't specify the bearer token to use
-		config.BearerToken = ""
-		config.QPS = kialiConfig.Get().KubernetesConfig.QPS
-		config.Burst = kialiConfig.Get().KubernetesConfig.Burst
+		baseConfig := rest.Config{
+			Host:            config.Host, // TODO: do we need this? remote cluster clients should ignore this
+			TLSClientConfig: config.TLSClientConfig,
+			QPS:             kialiConfig.Get().KubernetesConfig.QPS,
+			Burst:           kialiConfig.Get().KubernetesConfig.Burst,
+		}
 
-		factory, err = newClientFactory(config)
+		factory, err = newClientFactory(&baseConfig)
 	})
 	return factory, err
 }
