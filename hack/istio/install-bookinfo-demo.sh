@@ -21,10 +21,14 @@ CLIENT_EXE_NAME="oc"
 NAMESPACE="bookinfo"
 ISTIO_NAMESPACE="istio-system"
 RATE=1
-ENABLE_INJECTION="true"
+AUTO_INJECTION="true"
+MANUAL_INJECTION="false"
 DELETE_BOOKINFO="false"
 MINIKUBE_PROFILE="minikube"
 ARCH="amd64"
+WAIT_TIMEOUT="0" # can be things like "60s" or "30m"
+
+AMBIENT_ENABLED="false" # the script will set this to true only if Ambient is enabled and no sidecars are injected
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -35,7 +39,7 @@ while [[ $# -gt 0 ]]; do
       shift;shift
       ;;
     -ai|--auto-injection)
-      ENABLE_INJECTION="$2"
+      AUTO_INJECTION="$2"
       shift;shift
       ;;
     -db|--delete-bookinfo)
@@ -56,6 +60,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -n|--namespace)
       NAMESPACE="$2"
+      shift;shift
+      ;;
+    -mi|--manual-injection)
+      MANUAL_INJECTION="$2"
       shift;shift
       ;;
     -mp|--minikube-profile)
@@ -82,21 +90,27 @@ while [[ $# -gt 0 ]]; do
       TRAFFIC_GENERATOR_ENABLED="true"
       shift;
       ;;
+    -wt|--wait-timeout)
+      WAIT_TIMEOUT="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
   -a|--arch <amd64|ppc64le|s390x>: Images for given arch will be used (default: amd64). Custom bookinfo yaml file provided via '-b' argument is ignored when using different arch than the default.
-  -ai|--auto-injection <true|false>: If you want sidecars to be auto-injected or manually injected (default: true).
+  -ai|--auto-injection <true|false>: If you want sidecars to be auto-injected (default: true).
   -db|--delete-bookinfo <true|false>: If true, uninstall bookinfo. If false, install bookinfo. (default: false).
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
   -c|--client-exe <name>: Cluster client executable name - valid values are "kubectl" or "oc"
+  -mi|--manual-injection <true|false>: If you want sidecars to be manually injected via istioctl (default: false).
   -mp|--minikube-profile <name>: If using minikube, this is the minikube profile name (default: minikube).
   -n|--namespace <name>: Install the demo in this namespace (default: bookinfo)
   -b|--bookinfo.yaml <file>: A custom yaml file to deploy the bookinfo demo. This is ignored when not using default arch via '-a' argument.
   -g|--gateway.yaml <file>: A custom yaml file to deploy the bookinfo-gateway resources
   --mongo: Install a Mongo DB that a ratings service will access
   --mysql: Install a MySQL DB that a ratings service will access
+  -wt|--wait-timeout <timeout>: If not "0", then this script will wait for all pods in the new bookinfo namespace to be Ready before exiting. This value can be things like "60s" or "30m". (default: 0)
   -tg|--traffic-generator: Install Kiali Traffic Generator on Bookinfo
   -h|--help : this message
 HELPMSG
@@ -155,8 +169,21 @@ if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   IS_MAISTRA=$([ "$(oc get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
 fi
 
+# If no sidecars are to be injected, then see if Ambient is enabled.
+# Look everywhere for a "ztunnel" daemonset (in case it is in a kube internal namespace and not just istio-system)
+if [ "${AUTO_INJECTION}" == "false" -a "${MANUAL_INJECTION}" == "false" ]; then
+  for n in $(${CLIENT_EXE} get daemonset --all-namespaces -o jsonpath='{.items[*].metadata.name}')
+  do
+    if [ "${n}" == "ztunnel" ]; then
+      AMBIENT_ENABLED="true"
+      break
+    fi
+  done
+fi
+
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
 echo "IS_MAISTRA=${IS_MAISTRA}"
+echo "AMBIENT_ENABLED=${AMBIENT_ENABLED}"
 
 # check arch values and prepare new bookinfo-arch.yaml with matching images
 if [ "${ARCH}" == "ppc64le" ]; then
@@ -241,11 +268,15 @@ users:
 SCC
 fi
 
-if [ "${ENABLE_INJECTION}" == "true" ]; then
+if [ "${AUTO_INJECTION}" == "true" ]; then
   $CLIENT_EXE label namespace ${NAMESPACE} "istio-injection=enabled"
   $CLIENT_EXE apply -n ${NAMESPACE} -f ${BOOKINFO_YAML}
 else
-  $ISTIOCTL kube-inject -f ${BOOKINFO_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+  if [ "${MANUAL_INJECTION}" == "true" ]; then
+    $ISTIOCTL kube-inject -f ${BOOKINFO_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+  else
+    $CLIENT_EXE apply -n ${NAMESPACE} -f ${BOOKINFO_YAML}
+  fi
 fi
 
 
@@ -269,12 +300,17 @@ if [ "${MONGO_ENABLED}" == "true" ]; then
     MONGO_SERVICE_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ratings-v2-s390x.yaml"
   fi
 
-  if [ "${ENABLE_INJECTION}" == "true" ]; then
+  if [ "${AUTO_INJECTION}" == "true" ]; then
     $CLIENT_EXE apply -n ${NAMESPACE} -f ${MONGO_DB_YAML}
     $CLIENT_EXE apply -n ${NAMESPACE} -f ${MONGO_SERVICE_YAML}
   else
-    $ISTIOCTL kube-inject -f ${MONGO_DB_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
-    $ISTIOCTL kube-inject -f ${MONGO_SERVICE_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+    if [ "${MANUAL_INJECTION}" == "true" ]; then
+      $ISTIOCTL kube-inject -f ${MONGO_DB_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+      $ISTIOCTL kube-inject -f ${MONGO_SERVICE_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+    else
+      $CLIENT_EXE apply -n ${NAMESPACE} -f ${MONGO_DB_YAML}
+      $CLIENT_EXE apply -n ${NAMESPACE} -f ${MONGO_SERVICE_YAML}
+    fi
   fi
 fi
 
@@ -296,12 +332,17 @@ if [ "${MYSQL_ENABLED}" == "true" ]; then
     MYSQL_SERVICE_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql-s390x.yaml"
   fi
 
-  if [ "${ENABLE_INJECTION}" == "true" ]; then
+  if [ "${AUTO_INJECTION}" == "true" ]; then
     $CLIENT_EXE apply -n ${NAMESPACE} -f ${MYSQL_DB_YAML}
     $CLIENT_EXE apply -n ${NAMESPACE} -f ${MYSQL_SERVICE_YAML}
   else
-    $ISTIOCTL kube-inject -f ${MYSQL_DB_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
-    $ISTIOCTL kube-inject -f ${MYSQL_SERVICE_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+    if [ "${MANUAL_INJECTION}" == "true" ]; then
+      $ISTIOCTL kube-inject -f ${MYSQL_DB_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+      $ISTIOCTL kube-inject -f ${MYSQL_SERVICE_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+    else
+      $CLIENT_EXE apply -n ${NAMESPACE} -f ${MYSQL_DB_YAML}
+      $CLIENT_EXE apply -n ${NAMESPACE} -f ${MYSQL_SERVICE_YAML}
+    fi
   fi
 fi
 
@@ -314,6 +355,15 @@ sleep 4
 echo "Bookinfo Demo should be installed and starting up - here are the pods and services"
 $CLIENT_EXE get services -n ${NAMESPACE}
 $CLIENT_EXE get pods -n ${NAMESPACE}
+
+if [ "${AMBIENT_ENABLED}" == "true" ]; then
+  echo "Sidecar injection was not performed. Ambient support will be enabled."
+  ${CLIENT_EXE} label namespace ${NAMESPACE} istio.io/dataplane-mode=ambient
+else
+  if [ "${AUTO_INJECTION}" == "false" -a "${MANUAL_INJECTION}" == "false" ]; then
+    echo "WARNING! Sidecar injection was not performed and there is no Ambient support. This demo may not work until sidecars are injected."
+  fi
+fi
 
 if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
   echo "Installing Traffic Generator"
@@ -331,13 +381,28 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
       INGRESS_HOST=$(minikube -p ${MINIKUBE_PROFILE} ip)
       INGRESS_PORT=$($CLIENT_EXE -n ${ISTIO_NAMESPACE} get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
       INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
-      echo "Traffic Generator will use the Kubernetes (minikube) ingress route of: ${INGRESS_ROUTE}"
+      if curl --fail http://${INGRESS_ROUTE} &> /dev/null; then
+        echo "Traffic Generator will use the Kubernetes (minikube) ingress route of: ${INGRESS_ROUTE}"
+      else
+        INGRESS_HOST="productpage.${NAMESPACE}"
+        INGRESS_PORT="9080"
+        INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
+        echo "Ingress does not seem to work. Falling back to using the internal productpage endpoint: ${INGRESS_ROUTE}"
+      fi
     else
       echo "Failed to get minikube ip. If you are using minikube, make sure it is up and your profile is defined properly (--minikube-profile option)"
       echo "Will try to get the ingressgateway IP in case you are running 'kind' and we can access it directly."
       INGRESS_HOST=$($CLIENT_EXE get service -n ${ISTIO_NAMESPACE} istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
       INGRESS_PORT="80"
       INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
+      if curl --fail http://${INGRESS_ROUTE} &> /dev/null; then
+        echo "Traffic Generator will use the Kubernetes (loadBalancer) route of: ${INGRESS_ROUTE}"
+      else
+        INGRESS_HOST="productpage.${NAMESPACE}"
+        INGRESS_PORT="9080"
+        INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
+        echo "Ingress loadBalancer does not seem to work. Falling back to using the internal productpage endpoint: ${INGRESS_ROUTE}"
+      fi
     fi
   fi
 
@@ -345,6 +410,7 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
     if [ "${IS_OPENSHIFT}" == "true" ]; then
       $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${NAMESPACE}
     fi
+
     # TODO - these access the "openshift" yaml files - but there are no kubernetes specific versions. using --validate=false
     curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator-configmap.yaml | DURATION='0s' ROUTE="http://${INGRESS_ROUTE}/productpage" RATE="${RATE}" envsubst | $CLIENT_EXE apply -n ${NAMESPACE} -f -
     url="https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator.yaml"
@@ -355,5 +421,30 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
     else
       curl ${url} | $CLIENT_EXE apply --validate=false -n ${NAMESPACE} -f -
     fi
+
+    if [ "${AMBIENT_ENABLED}" == "true" ]; then
+      cat <<AUTHPOLICY | $CLIENT_EXE -n ${NAMESPACE} apply -f -
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+ name: productpage-viewer
+spec:
+ selector:
+   matchLabels:
+     app: productpage
+ action: ALLOW
+ rules:
+ - from:
+   - source:
+       principals:
+       - cluster.local/ns/${NAMESPACE}/sa/default
+       - cluster.local/ns/${ISTIO_NAMESPACE}/sa/istio-ingressgateway-service-account
+AUTHPOLICY
+    fi
   fi
+fi
+
+if [ "${WAIT_TIMEOUT}" != "0" ]; then
+  echo "Waiting for all pods to be ready in namespace [${NAMESPACE}]"
+  $CLIENT_EXE wait pods --all -n ${NAMESPACE} --for=condition=Ready --timeout=${WAIT_TIMEOUT}
 fi
