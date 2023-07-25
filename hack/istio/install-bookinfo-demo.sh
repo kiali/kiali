@@ -382,7 +382,7 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
       INGRESS_PORT=$($CLIENT_EXE -n ${ISTIO_NAMESPACE} get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
       INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
 
-      echo "Wait for productpage to come up to see if it is accessible via ingress"
+      echo "Wait for productpage to come up to see if it is accessible via minikube ingress"
       $CLIENT_EXE wait pods --all -n ${NAMESPACE} --for=condition=Ready --timeout=5m
       if curl --fail http://${INGRESS_ROUTE}/productpage &> /dev/null; then
         echo "Traffic Generator will use the Kubernetes (minikube) ingress route of: ${INGRESS_ROUTE}"
