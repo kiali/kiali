@@ -244,7 +244,6 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
   }
 
   private handleNamespaceReturn = () => {
-    console.log(`isPf=${this.props.isPF}`);
     const route = this.props.isPF ? 'graphpf' : 'graph';
     if (
       !this.props.summaryData ||
