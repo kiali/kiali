@@ -381,7 +381,7 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
       INGRESS_HOST=$(minikube -p ${MINIKUBE_PROFILE} ip)
       INGRESS_PORT=$($CLIENT_EXE -n ${ISTIO_NAMESPACE} get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
       INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
-      if curl --fail http://${INGRESS_ROUTE} &> /dev/null; then
+      if curl --fail http://${INGRESS_ROUTE}/productpage &> /dev/null; then
         echo "Traffic Generator will use the Kubernetes (minikube) ingress route of: ${INGRESS_ROUTE}"
       else
         INGRESS_HOST="productpage.${NAMESPACE}"
@@ -395,7 +395,7 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
       INGRESS_HOST=$($CLIENT_EXE get service -n ${ISTIO_NAMESPACE} istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
       INGRESS_PORT="80"
       INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
-      if curl --fail http://${INGRESS_ROUTE} &> /dev/null; then
+      if curl --fail http://${INGRESS_ROUTE}/productpage &> /dev/null; then
         echo "Traffic Generator will use the Kubernetes (loadBalancer) route of: ${INGRESS_ROUTE}"
       else
         INGRESS_HOST="productpage.${NAMESPACE}"
