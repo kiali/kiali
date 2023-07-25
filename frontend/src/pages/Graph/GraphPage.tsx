@@ -507,7 +507,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
                 </div>
               )}
             </ErrorBoundary>
-            {this.props.summaryData && !this.state.graphData.isLoading && (
+            {isReady && this.props.summaryData && (
               <SummaryPanel
                 data={this.props.summaryData}
                 duration={this.state.graphData.fetchParams.duration}
