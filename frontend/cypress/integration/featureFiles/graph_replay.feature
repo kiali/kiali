@@ -5,27 +5,30 @@ Feature: Kiali Graph page - Replay
   Background:
     Given user is at administrator perspective
 
-@error-rates-app
-@graph-page-replay
-Scenario: Graph alpha and beta namespaces
-  When user graphs "alpha,beta" namespaces
-  Then user sees the "alpha" namespace
-  And user sees the "beta" namespace
+  @error-rates-app
+  @graph-page-replay
+  @single-cluster
+  Scenario: Graph alpha and beta namespaces
+    When user graphs "alpha,beta" namespaces
+    Then user sees the "alpha" namespace
+    And user sees the "beta" namespace
 
-@error-rates-app
-@graph-page-replay
-Scenario: Show Replay
-  When user presses the Replay button
-  Then user sees the Replay Close button
-  And user presses the Play button
-  And user sees the slider
-  And user presses the "fast" speed button
-  And user presses the "slow" speed button
-  And user presses the "medium" speed button
-  And user presses the Pause button
+  @error-rates-app
+  @graph-page-replay
+  @single-cluster
+  Scenario: Show Replay
+    When user presses the Replay button
+    Then user sees the Replay Close button
+    And user presses the Play button
+    And user sees the slider
+    And user presses the "fast" speed button
+    And user presses the "slow" speed button
+    And user presses the "medium" speed button
+    And user presses the Pause button
 
-@error-rates-app
-@graph-page-replay
-Scenario: Close Replay
-  When user presses the Replay Close button
-  Then user no longer sees the slider
+  @error-rates-app
+  @graph-page-replay
+  @single-cluster
+  Scenario: Close Replay
+    When user presses the Replay Close button
+    Then user no longer sees the slider

@@ -14,30 +14,36 @@ Feature: Kiali Overview page
     And user is at the "overview" page
 
   @overview-page
+  @single-cluster
   Scenario: See "alpha" and "beta" namespaces
     Then user sees the "alpha" namespace card
     And user sees the "beta" namespace card
 
   @overview-page
+  @single-cluster
   Scenario: Doesn't see a "bad" namespace
     Then user doesn't see the "bad" namespace card
 
   @overview-page
+  @single-cluster
   Scenario: Select the COMPACT view
     When user clicks in the "COMPACT" view
     Then user sees a "COMPACT" "alpha" namespace
 
   @overview-page
+  @single-cluster
   Scenario: Select the EXPAND view
     When user clicks in the "EXPAND" view
     Then user sees a "EXPAND" "beta" namespace
 
   @overview-page
+  @single-cluster
   Scenario: Select the LIST view
     When user clicks in the "LIST" view
     Then user sees a "LIST" "beta" namespace
 
   @overview-page
+  @single-cluster
   Scenario: Filter by namespace
     When user filters "alpha" namespace
     Then user sees the "alpha" namespace card
@@ -45,6 +51,7 @@ Feature: Kiali Overview page
 
 
   @overview-page
+  @single-cluster
   Scenario: Sort by name
     When user filters "alpha" namespace
     And user filters "beta" namespace
@@ -52,28 +59,33 @@ Feature: Kiali Overview page
     Then user sees the "beta,alpha" namespace list
 
   @overview-page
+  @single-cluster
   Scenario: Health for Apps
     When user selects Health for "Apps"
     Then user sees the "alpha" namespace with "Applications"
 
   @overview-page
+  @single-cluster
   Scenario: Health for Workloads
     When user selects Health for "Workloads"
     Then user sees the "alpha" namespace with "Workloads"
 
   @overview-page
+  @single-cluster
   Scenario: Health for Services
     When user selects Health for "Services"
     Then user sees the "alpha" namespace with "Services"
 
   @error-rates-app
   @overview-page
+  @single-cluster
   Scenario: Last 10 minutes
     When user selects "Last 10m" time range
     Then user sees the "alpha" namespace with "inbound" traffic "10m"
 
   @error-rates-app
   @overview-page
+  @single-cluster
   Scenario: Last 10 minutes Outbound traffic
     When user selects "Last 10m" time range
     And user selects "Outbound" traffic direction
@@ -82,6 +94,7 @@ Feature: Kiali Overview page
   @error-rates-app
   @overview-page
   @bookinfo-app
+  @single-cluster
   Scenario: The healthy status of a logical mesh application is reported in the overview of a namespace
     Given a healthy application in the cluster
     When I fetch the overview of the cluster
@@ -90,6 +103,7 @@ Feature: Kiali Overview page
 
   @error-rates-app
   @overview-page
+  @single-cluster
   Scenario: The idle status of a logical mesh application is reported in the overview of a namespace
     Given an idle application in the cluster
     When I fetch the overview of the cluster
@@ -98,6 +112,7 @@ Feature: Kiali Overview page
 
   @error-rates-app
   @overview-page
+  @single-cluster
   Scenario: The failing status of a logical mesh application is reported in the overview of a namespace
     Given a failing application in the mesh
     When I fetch the overview of the cluster
@@ -106,6 +121,7 @@ Feature: Kiali Overview page
 
   @error-rates-app
   @overview-page
+  @single-cluster
   Scenario: The degraded status of a logical mesh application is reported in the overview of a namespace
     Given a degraded application in the mesh
     When I fetch the overview of the cluster
@@ -114,6 +130,7 @@ Feature: Kiali Overview page
 
   @error-rates-app
   @overview-page
+  @single-cluster
   Scenario: The minimum TLS version is visible in the control plane
     When user hovers over the MinTLS locker
     Then the user sees the certificates information
@@ -121,11 +138,13 @@ Feature: Kiali Overview page
 
   @error-rates-app
   @overview-page
+  @single-cluster
   Scenario: The canary upgrade information is not present when there is no canary configured
     Then the user sees no information related to canary upgrades
 
   @error-rates-app
   @overview-page
+  @single-cluster
   Scenario: The Istio panel should be visible in the control panel
     Then user sees the "istio-system" namespace card
     And user sees the "Control plane" label in the "istio-system" namespace card
@@ -133,6 +152,7 @@ Feature: Kiali Overview page
     Then the toggle on the right side of the "istio-system" namespace card exists
 
   @overview-page
+  @single-cluster
   Scenario: The control plane metrics should be present
     Then user sees the memory chart
     And user sees the cpu chart

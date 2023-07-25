@@ -10,31 +10,37 @@ Feature: Kiali Workload Details page
 
   @workload-details
   @bookinfo-app
+  @single-cluster
   Scenario: See details for workload
     Then user sees details information for workload
 
   @workload-details
   @bookinfo-app
+  @single-cluster
   Scenario: See minigraph for workload.
     Then user sees a minigraph
 
   @workload-details
   @bookinfo-app
+  @single-cluster
   Scenario: See workload traffic information
     Then user sees workload inbound and outbound traffic information
 
   @workload-details
   @bookinfo-app
+  @single-cluster
   Scenario: See workload Inbound Metrics
     Then user sees workload inbound metrics information
 
   @workload-details
   @bookinfo-app
+  @single-cluster
   Scenario: See workload Outbound Metrics
     Then user sees workload outbound metrics information
 
   @workload-details
   @bookinfo-app
+  @single-cluster
   Scenario: See workload tracing info after selecting a trace
     And user sees trace information
     When user selects a trace
@@ -42,6 +48,7 @@ Feature: Kiali Workload Details page
 
   @workload-details
   @bookinfo-app
+  @single-cluster
   Scenario: See workload span info after selecting a span
     And user sees trace information
     When user selects a trace
@@ -50,35 +57,41 @@ Feature: Kiali Workload Details page
 
   @workload-details
   @bookinfo-app
+  @single-cluster
   Scenario: See Envoy clusters configuration for a workload
     When the user filters by "Port" with value "9080" on the "Clusters" tab
     Then the user sees clusters expected information
 
   @workload-details
   @bookinfo-app
+  @single-cluster
   Scenario: See Envoy listeners configuration for a workload
     When the user filters by "Destination" with value "Route: 9090" on the "Listeners" tab
     Then the user sees listeners expected information
 
   @workload-details
   @bookinfo-app
+  @single-cluster
   Scenario: See Envoy routes configuration for a workload
     When the user filters by "Domains" with value "details" on the "Routes" tab
     Then the user sees routes expected information
 
   @workload-details
   @bookinfo-app
+  @single-cluster
   Scenario: See Envoy bootstrap configuration for a workload
     When the user looks for the bootstrap tab
     Then the user sees bootstrap expected information
 
   @workload-details
   @bookinfo-app
+  @single-cluster
   Scenario: See Envoy config configuration for a workload
     When the user looks for the config tab
     Then the user sees bootstrap expected information
 
   @workload-details
   @bookinfo-app
+  @single-cluster
   Scenario: See Envoy metrics for a workload
     Then the user sees the metrics tab

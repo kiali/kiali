@@ -7,6 +7,7 @@ Feature: Kiali logout
     And user is at the "overview" page
 
   @smoke
+  @single-cluster
   Scenario: Kiali logout successfully
 
     And user clicks on admin

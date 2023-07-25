@@ -7,6 +7,7 @@ Feature: Kiali Graph page - Context menu actions
 
   @graph-page-context
   @bookinfo-app
+  @single-cluster
   Scenario: Actions in context menu for service node with existing traffic routing
     When user graphs "bookinfo" namespaces
     And user opens the context menu of the "productpage" service node
@@ -15,6 +16,7 @@ Feature: Kiali Graph page - Context menu actions
 
   @graph-page-context
   @bookinfo-app
+  @single-cluster
   Scenario Outline: Ability to launch <action> wizard from graph context menu
     When user graphs "bookinfo" namespaces
     And user opens the context menu of the "reviews" service node

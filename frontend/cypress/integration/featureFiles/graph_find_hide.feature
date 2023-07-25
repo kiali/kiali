@@ -13,6 +13,7 @@ Feature: Kiali Graph page - Find/Hide
 
   @error-rates-app
   @graph-page-find-hide
+  @single-cluster
   Scenario: Find unhealthy workloads
     Then user sees nothing highlighted on the graph
     When user finds unhealthy workloads
@@ -20,12 +21,14 @@ Feature: Kiali Graph page - Find/Hide
 
   @error-rates-app
   @graph-page-find-hide
+  @single-cluster
   Scenario: Hide unhealthy workloads
     When user hides unhealthy workloads
     Then user sees no unhealthy workloads on the graph
 
   @error-rates-app
   @graph-page-find-hide
+  @single-cluster
   Scenario: Use preset find option to filter workloads
     Then user sees preset find options
     When user selects the preset the find option "Find: unhealthy nodes"
@@ -33,6 +36,7 @@ Feature: Kiali Graph page - Find/Hide
   
   @error-rates-app
   @graph-page-find-hide
+  @single-cluster
   Scenario: Use preset hide option to filter workloads
     Then user sees preset hide options
     When user selects the preset hide option "Hide: healthy nodes"
@@ -40,6 +44,7 @@ Feature: Kiali Graph page - Find/Hide
 
   @error-rates-app
   @graph-page-find-hide
+  @single-cluster
   Scenario: Show Graph Find/Hide help menu
     When user seeks help for find and hide
     Then user sees the help menu
@@ -51,6 +56,7 @@ Feature: Kiali Graph page - Find/Hide
 
   @error-rates-app
   @graph-page-find-hide
+  @single-cluster
   Scenario: Filling the find form with nonsense
     When user fills "hello world" in find and submits
     Then user sees the "Find: No valid operator found in expression" message 

@@ -7,12 +7,14 @@ User opens the Overview page and toggles the main sidebar.
     And user is at the "overview" page
 
   @smoke  @sidebar-toggle
+  @single-cluster
   Scenario: Close the sidebar
     When the sidebar is open
     And user presses the navigation toggle button
     Then user cannot see the sidebar
 
   @smoke  @sidebar-toggle
+  @single-cluster
   Scenario: Open the sidebar
     When the sidebar is closed
     And user presses the navigation toggle button

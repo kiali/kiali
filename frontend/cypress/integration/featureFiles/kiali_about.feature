@@ -7,6 +7,7 @@ Feature: Kiali help about verify
     And user is at the "overview" page
 
   @smoke
+  @single-cluster
   Scenario: Open Kiali about page
 
     And user clicks on Help Button

@@ -9,6 +9,7 @@ Feature: Kiali Graph page - Graph toolbar and legend sidebar
 
 @error-rates-app
 @graph-page-manipulation
+  @single-cluster
 Scenario Outline: Check if the <label> button is usable
   Then the toggle button "<label>" is enabled
   Examples:
@@ -27,12 +28,14 @@ Scenario Outline: Check if the <label> button is usable
      
 @error-rates-app
 @graph-page-manipulation
+  @single-cluster
 Scenario: Check if the Toggle Drag Graph button can be turned off 
   When the button "Toggle Drag" is clicked
   Then the button "Toggle Drag" is not active
 
 @error-rates-app
 @graph-page-manipulation
+  @single-cluster
 Scenario: Check if the Toggle Drag Graph button can be turned on 
   When the "Toggle Drag" is turned off 
   And the button "Toggle Drag" is clicked
@@ -40,6 +43,7 @@ Scenario: Check if the Toggle Drag Graph button can be turned on
 
 @error-rates-app
 @graph-page-manipulation
+  @single-cluster
 Scenario Outline: Check if the not active by default <label> Graph button can be turned on  
   When the button "<label>" is clicked
   Then the button "<label>" is active
@@ -54,6 +58,7 @@ Scenario Outline: Check if the not active by default <label> Graph button can be
 
 @error-rates-app
 @graph-page-manipulation
+  @single-cluster
 Scenario Outline: Check if the not active by default <label> Graph button can be turned off 
   When the "<label>" is turned on
   And the button "<label>" is clicked 
@@ -65,6 +70,7 @@ Scenario Outline: Check if the not active by default <label> Graph button can be
 
 @error-rates-app
 @graph-page-manipulation
+  @single-cluster
 Scenario: The Hide Healthy Edges is turned off by turning on the Hide All Edges
   When the "Hide Healthy Edges" is turned off 
   And the "Hide All Edges" is turned off 
@@ -75,6 +81,7 @@ Scenario: The Hide Healthy Edges is turned off by turning on the Hide All Edges
 
 @error-rates-app
 @graph-page-manipulation
+  @single-cluster
 Scenario: The Hide All Edges is turned off by turning on the Hide Healthy Edges
   When the "Hide Healthy Edges" is turned off 
   And the "Hide All Edges" is turned off 
@@ -85,6 +92,7 @@ Scenario: The Hide All Edges is turned off by turning on the Hide Healthy Edges
 
 @error-rates-app
 @graph-page-manipulation
+  @single-cluster
 Scenario: The Namespace Layout Style 1 is turned off by turning on the Namespace Layout Style 2 
   When the "Namespace Layout Style 1" is turned off 
   And the "Namespace Layout Style 2" is turned off 
@@ -95,6 +103,7 @@ Scenario: The Namespace Layout Style 1 is turned off by turning on the Namespace
 
 @error-rates-app
 @graph-page-manipulation
+  @single-cluster
 Scenario: The Namespace Layout Style 2 is turned off by turning on the Namespace Layout Style 1 
   When the "Namespace Layout Style 1" is turned off 
   And the "Namespace Layout Style 2" is turned off 
@@ -105,6 +114,7 @@ Scenario: The Namespace Layout Style 2 is turned off by turning on the Namespace
 
 @error-rates-app
 @graph-page-manipulation
+  @single-cluster
 Scenario: First 3 Graph Layout Style buttons are mutually exclusive
   When the "Graph Layout Default Style" is turned on 
   And the "Graph Layout Style 1" is turned off 
@@ -120,6 +130,7 @@ Scenario: First 3 Graph Layout Style buttons are mutually exclusive
 
 @error-rates-app
 @graph-page-manipulation
+@single-cluster
 Scenario: The last Graph Layout Style button is mutually exclusive with the rest 
   When the "Graph Layout Default Style" is turned off 
   And the "Graph Layout Style 1" is turned off 
@@ -135,6 +146,7 @@ Scenario: The last Graph Layout Style button is mutually exclusive with the rest
 
 @error-rates-app
 @graph-page-manipulation
+@single-cluster
 Scenario: Show the Legend
   When the button "Show Legend" is clicked
   Then user can see the legend section
@@ -142,6 +154,7 @@ Scenario: Show the Legend
 
 @error-rates-app
 @graph-page-manipulation
+@single-cluster
 Scenario: Close the Legend using the button
   When the Legend section is visible 
   And the button "Show Legend" is clicked 
@@ -150,6 +163,7 @@ Scenario: Close the Legend using the button
 
 @error-rates-app
 @graph-page-manipulation
+@single-cluster
 Scenario: Close the Legend using the cross
   When the Legend section is visible 
   And the cross is clicked

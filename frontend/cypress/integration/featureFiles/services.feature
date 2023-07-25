@@ -8,6 +8,7 @@ Feature: Kiali Services page
 
   @services-page
   @bookinfo-app
+  @single-cluster
   Scenario: See services table with correct info
     When user selects the "bookinfo" namespace
     Then user sees a table with headings
@@ -23,10 +24,12 @@ Feature: Kiali Services page
     And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/gateways/bookinfo-gateway"
 
   @services-page
+  @single-cluster
   Scenario: See all Services toggles
     Then user sees all the Services toggles
 
   @services-page
+  @single-cluster
   Scenario: Toggle Services configuration toggle
     When user "unchecks" toggle "configuration"
     Then the "Configuration" column "disappears"
@@ -35,6 +38,7 @@ Feature: Kiali Services page
 
   @services-page
   @bookinfo-app
+  @single-cluster
   Scenario: Filter services table by Service Name
     When user selects the "bookinfo" namespace
     And user selects filter "Service Name"
@@ -44,6 +48,7 @@ Feature: Kiali Services page
 
   @services-page
   @bookinfo-app
+  @single-cluster
   Scenario: Filter services table by Service Type
     When user selects the "bookinfo" namespace
     And user selects filter "Service Type"
@@ -52,6 +57,7 @@ Feature: Kiali Services page
 
   @services-page
   @bookinfo-app
+  @single-cluster
   Scenario: Filter services table by sidecar
     When user selects the "bookinfo" namespace
     And user selects filter "Istio Sidecar"
@@ -60,6 +66,7 @@ Feature: Kiali Services page
 
   @services-page
   @bookinfo-app
+  @single-cluster
   Scenario: Filter services table by Istio Type
     When user selects the "bookinfo" namespace
     And user selects filter "Istio Type"
@@ -69,6 +76,7 @@ Feature: Kiali Services page
 
   @services-page
   @bookinfo-app
+  @single-cluster
   Scenario: Filter services table by health
     When user selects the "bookinfo" namespace
     And user selects filter "Health"
@@ -78,6 +86,7 @@ Feature: Kiali Services page
 
   @services-page
   @bookinfo-app
+  @single-cluster
   Scenario: Filter services table by label
     When user selects the "bookinfo" namespace
     And user selects filter "Label"
@@ -87,6 +96,7 @@ Feature: Kiali Services page
 
   @services-page
   @bookinfo-app
+  @single-cluster
   Scenario: Filter services table by label click
     When user selects the "bookinfo" namespace
     And user clicks "app=productpage" label
@@ -95,6 +105,7 @@ Feature: Kiali Services page
 
   @services-page
   @bookinfo-app
+  @single-cluster
   Scenario: Filter and unfilter services table by label click
     When user selects the "bookinfo" namespace
     And user clicks "app=productpage" label
@@ -103,6 +114,7 @@ Feature: Kiali Services page
 
   @services-page
   @bookinfo-app
+  @single-cluster
   Scenario: The healthy status of a service is reported in the list of services
     Given a service in the cluster with a healthy amount of traffic
     When user selects the "bookinfo" namespace
@@ -110,6 +122,7 @@ Feature: Kiali Services page
 
   @services-page
   @sleep-app
+  @single-cluster
   Scenario: The idle status of a service is reported in the list of services
     Given a service in the cluster with no traffic
     When user selects the "sleep" namespace
@@ -118,6 +131,7 @@ Feature: Kiali Services page
 
   @error-rates-app
   @services-page
+  @single-cluster
   Scenario: The failing status of a service is reported in the list of services
     Given a service in the mesh with a failing amount of traffic
     When user selects the "alpha" namespace
@@ -126,6 +140,7 @@ Feature: Kiali Services page
 
   @error-rates-app
   @services-page
+  @single-cluster
   Scenario: The degraded status of a service is reported in the list of services
     Given a service in the mesh with a degraded amount of traffic
     When user selects the "alpha" namespace

@@ -7,6 +7,7 @@ Feature: Kiali Graph page - Side panel menu actions
 
   @graph-page-context
   @bookinfo-app
+  @single-cluster
   Scenario: Actions in kebab menu of the side panel for a service node with existing traffic routing
     When user graphs "bookinfo" namespaces
     And user clicks the "productpage" service node
@@ -16,6 +17,7 @@ Feature: Kiali Graph page - Side panel menu actions
 
   @graph-page-context
   @bookinfo-app
+  @single-cluster
   Scenario Outline: Ability to launch <action> wizard from graph side panel
     When user graphs "bookinfo" namespaces
     And user clicks the "reviews" service node

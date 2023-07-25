@@ -12,6 +12,7 @@ Feature: Kiali Graph page - Toolbar (various)
 
 @error-rates-app
 @graph-page-toolbar
+@single-cluster
 Scenario: Graph alpha namespace with query params
   When user graphs "alpha" namespaces with refresh "900000" and duration "300"
   Then user sees the "alpha" namespace
@@ -20,24 +21,28 @@ Scenario: Graph alpha namespace with query params
 
 @error-rates-app
 @graph-page-toolbar
+@single-cluster
 Scenario: Open graph Tour
   When user clicks graph tour
   Then user "sees" graph tour
 
 @error-rates-app
 @graph-page-toolbar
+@single-cluster
 Scenario: Close graph Tour
   When user closes graph tour
   Then user "does not see" graph tour
 
 @error-rates-app
 @graph-page-toolbar
+@single-cluster
 Scenario: Open traffic dropdown
   When user clicks graph traffic menu
   Then user sees default graph traffic menu
 
 @error-rates-app
 @graph-page-toolbar
+@single-cluster
 Scenario: Disable all traffic
   When user disables all traffic
   Then user does not see any traffic
@@ -45,6 +50,7 @@ Scenario: Disable all traffic
 # todo: would be a better test if demos has tcp and/or grpc traffic
 @error-rates-app
 @graph-page-toolbar
+@single-cluster
 Scenario: Enable http traffic
   When user disables all traffic
   When user enables "http" traffic
@@ -54,12 +60,14 @@ Scenario: Enable http traffic
 
 @error-rates-app
 @graph-page-toolbar
+@single-cluster
 Scenario: Close traffic dropdown
   When user clicks graph traffic menu
   Then user does not see graph traffic menu
 
 @error-rates-app
 @graph-page-display
+@single-cluster
 Scenario: User resets to factory default
   When user resets to factory default
   And user clicks graph traffic menu
@@ -67,60 +75,70 @@ Scenario: User resets to factory default
 
 @error-rates-app
 @graph-page-toolbar
+@single-cluster
 Scenario: Open duration dropdown
   When user clicks graph duration menu
   Then user sees graph duration menu
 
 @error-rates-app
 @graph-page-toolbar
+@single-cluster
 Scenario: Close duration dropdown
   When user clicks graph duration menu
   Then user does not see graph duration menu
 
 @error-rates-app
 @graph-page-toolbar
+@single-cluster
 Scenario: Set duration dropdown
   When user selects graph duration "600"
   Then user sees selected graph duration "Last 10m"
 
 @error-rates-app
 @graph-page-toolbar
+@single-cluster
 Scenario: Open refresh dropdown
   When user clicks graph refresh menu
   Then user sees graph refresh menu
 
 @error-rates-app
 @graph-page-toolbar
+@single-cluster
 Scenario: Close refresh dropdown
   When user clicks graph refresh menu
   Then user does not see graph refresh menu
 
 @error-rates-app
 @graph-page-toolbar
+@single-cluster
 Scenario: Set refresh dropdown
   When user selects graph refresh "0"  
   Then user sees selected graph refresh "Pause"
 
 @error-rates-app
 @graph-page-toolbar
+@single-cluster
 Scenario: graph type app
   When user selects "APP" graph type
   Then user sees a "app" graph
 
 @error-rates-app
 @graph-page-toolbar
+@single-cluster
 Scenario: graph type service
   When user selects "SERVICE" graph type
   Then user sees a "service" graph
 
 @error-rates-app
 @graph-page-toolbar
+@single-cluster
 Scenario: graph type versioned app
   When user selects "VERSIONED_APP" graph type
   Then user sees a "versionedApp" graph
 
 @error-rates-app
 @graph-page-toolbar
+@single-cluster
 Scenario: graph type workload
   When user selects "WORKLOAD" graph type
   Then user sees a "workload" graph

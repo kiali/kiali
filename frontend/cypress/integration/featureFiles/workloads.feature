@@ -8,6 +8,7 @@ Feature: Kiali Workloads page
 
   @workloads-page
   @bookinfo-app
+  @single-cluster
   Scenario: See workloads table with correct info
     When user selects the "bookinfo" namespace
     Then user sees a table with headings
@@ -23,11 +24,13 @@ Feature: Kiali Workloads page
 
   @workloads-page
   @bookinfo-app
+  @single-cluster
   Scenario: See all Workloads toggles
     Then user sees all the Apps toggles
 
   @workloads-page
   @bookinfo-app
+  @single-cluster
   Scenario: Toggle Workloads health toggle
     When user "unchecks" toggle "health"
     Then the "Health" column "disappears"
@@ -36,6 +39,7 @@ Feature: Kiali Workloads page
 
   @workloads-page
   @bookinfo-app
+  @single-cluster
   Scenario: Filter workloads table by Workloads Name
     When user selects the "bookinfo" namespace
     And user selects filter "Workload Name"
@@ -45,6 +49,7 @@ Feature: Kiali Workloads page
 
   @workloads-page
   @bookinfo-app
+  @single-cluster
   Scenario: Filter workloads table by Workloads Type
     When user selects the "bookinfo" namespace
     And user selects filter "Workload Type"
@@ -53,6 +58,7 @@ Feature: Kiali Workloads page
 
   @workloads-page
   @bookinfo-app
+  @single-cluster
   Scenario: Filter workloads table by sidecar
     When user selects the "bookinfo" namespace
     And user selects filter "Istio Sidecar"
@@ -61,6 +67,7 @@ Feature: Kiali Workloads page
 
   @workloads-page
   @bookinfo-app
+  @single-cluster
   Scenario: Filter workloads table by Istio Type
     When user selects the "bookinfo" namespace
     And user selects filter "Istio Type"
@@ -69,6 +76,7 @@ Feature: Kiali Workloads page
 
   @workloads-page
   @bookinfo-app
+  @single-cluster
   Scenario: Filter workloads table by health
     When user selects the "bookinfo" namespace
     And user selects filter "Health"
@@ -78,6 +86,7 @@ Feature: Kiali Workloads page
 
   @workloads-page
   @bookinfo-app
+  @single-cluster
   Scenario: Filter workloads table by App Label
     When user selects the "bookinfo" namespace
     And user selects filter "App Label"
@@ -87,6 +96,7 @@ Feature: Kiali Workloads page
 
   @workloads-page
   @bookinfo-app
+  @single-cluster
   Scenario: Filter workloads table by Version Label
     When user selects the "bookinfo" namespace
     And user selects filter "Version Label"
@@ -96,6 +106,7 @@ Feature: Kiali Workloads page
 
   @workloads-page
   @bookinfo-app
+  @single-cluster
   Scenario: Filter workloads table by label
     When user selects the "bookinfo" namespace
     And user selects filter "Label"
@@ -105,6 +116,7 @@ Feature: Kiali Workloads page
 
   @workloads-page
   @bookinfo-app
+  @single-cluster
   Scenario: The healthy status of a workload is reported in the list of workloads
     Given a healthy workload in the cluster
     When user selects the "bookinfo" namespace
@@ -112,6 +124,7 @@ Feature: Kiali Workloads page
 
   @workloads-page
   @sleep-app
+  @single-cluster
   Scenario: The idle status of a workload is reported in the list of workloads
     Given an idle workload in the cluster
     When user selects the "sleep" namespace
@@ -120,6 +133,7 @@ Feature: Kiali Workloads page
 
   @error-rates-app
   @workloads-page
+  @single-cluster
   Scenario: The failing status of a workload is reported in the list of workloads
     Given a failing workload in the mesh
     When user selects the "alpha" namespace
@@ -128,6 +142,7 @@ Feature: Kiali Workloads page
 
   @error-rates-app
   @workloads-page
+  @single-cluster
   Scenario: The degraded status of a workload is reported in the list of workloads
     Given a degraded workload in the mesh
     When user selects the "alpha" namespace

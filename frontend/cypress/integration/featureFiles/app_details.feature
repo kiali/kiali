@@ -12,31 +12,37 @@ Feature: Kiali App Details page
 
   @app-details-page
   @bookinfo-app
+  @single-cluster
   Scenario: See details for app.
     Then user sees details information for app
 
   @app-details-page
   @bookinfo-app
+  @single-cluster
   Scenario: See app minigraph for details app.
     Then user sees a minigraph
 
   @app-details-page
   @bookinfo-app
+  @single-cluster
   Scenario: See app Traffic information
     Then user sees inbound and outbound traffic information
 
   @app-details-page
   @bookinfo-app
+  @single-cluster
   Scenario: See Inbound Metrics
     Then user sees inbound metrics information
 
   @app-details-page
   @bookinfo-app
+  @single-cluster
   Scenario: See Outbound Metrics
     Then user sees outbound metrics information
 
   @app-details-page
   @bookinfo-app
+  @single-cluster
   Scenario: See tracing info after selecting a trace
     And user sees trace information
     When user selects a trace
@@ -44,6 +50,7 @@ Feature: Kiali App Details page
 
   @app-details-page
   @bookinfo-app
+  @single-cluster
   Scenario: See span info after selecting app span
     And user sees trace information
     When user selects a trace
