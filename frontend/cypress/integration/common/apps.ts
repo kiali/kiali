@@ -47,6 +47,15 @@ And('user sees span details', () => {
     .find('td')
     .eq(4) // take 5th cell (kebab)
     .should('be.visible');
+  cy.get('table')
+    .should('be.visible')
+    .find('tbody tr') // ignore thead rows
+    .should('have.length.above', 1) // retries above cy.find() until we have a non head-row
+    .eq(1) // take 1st  row
+    .find('td')
+    .eq(3) // take 4th cell (Statistics)
+    .children('button')
+    .should('not.exist'); // Load Statistics button should not exist when metrics are loaded
 });
 
 When('I fetch the list of applications', function () {
