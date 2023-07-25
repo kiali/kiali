@@ -20,7 +20,7 @@ class KialiPageLinkComponent extends React.Component<KialiPageLinkProps> {
   render() {
     // Without a cluster, simply render a local link
     // If cluster is specified, and it's the home cluster, render a local link.
-    if (!this.props.cluster || !homeCluster?.name || this.props.cluster === homeCluster.name) {
+    if (!this.props.cluster || homeCluster?.name !== '' || this.props.cluster === homeCluster?.name) {
       if (isParentKiosk(this.props.kiosk)) {
         return (
           <Link
