@@ -68,7 +68,7 @@ const persistConfig = {
 const composeEnhancers =
   (process.env.NODE_ENV === 'development' && window && window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__) || compose;
 
-export const configureStore = (initialState: KialiAppState): Store<KialiAppState, KialiAppAction> => {
+const configureStore = (initialState: KialiAppState): Store<KialiAppState, KialiAppAction> => {
   // configure middlewares
   const middlewares = [thunk];
   // compose enhancers
@@ -82,7 +82,7 @@ export const configureStore = (initialState: KialiAppState): Store<KialiAppState
 // Setup the initial state of the Redux store with defaults
 // (instead of having things be undefined until they are populated by query)
 // Redux 4.0 actually required this
-export const initialStore: KialiAppState = {
+const initialStore: KialiAppState = {
   globalState: INITIAL_GLOBAL_STATE,
   statusState: INITIAL_STATUS_STATE,
   namespaces: INITIAL_NAMESPACE_STATE,

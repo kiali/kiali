@@ -18,9 +18,7 @@ describe('renderBadgedLink', () => {
       cluster: 'default-cluster',
       namespace: 'bookinfo'
     };
-  });
 
-  it('should generate a link to workload page and badge', () => {
     serverConfig.clusters = {
       'cluster-default': {
         apiEndpoint: '',
@@ -32,6 +30,9 @@ describe('renderBadgedLink', () => {
       }
     };
     setServerConfig(serverConfig);
+  });
+
+  it('should generate a link to workload page and badge', () => {
     const node = { ...defaultGraphData, workload: 'details-v1' };
     const expectedLink = `/namespaces/${encodeURIComponent(node.namespace)}/workloads/${encodeURIComponent(
       node.workload!
@@ -41,9 +42,6 @@ describe('renderBadgedLink', () => {
         <MemoryRouter>{renderBadgedLink(node)}</MemoryRouter>
       </Provider>
     );
-    debugger;
-    console.log('change');
-    console.log(wrapper.find('a').debug());
     expect(wrapper.find('a').filter(`[href="${expectedLink}"]`).exists()).toBeTruthy();
     expect(
       wrapper
