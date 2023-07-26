@@ -8,7 +8,6 @@ import (
 
 	pmod "github.com/prometheus/common/model"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/util"
 )
@@ -251,14 +250,4 @@ func convertSamplePair(from *pmod.SamplePair, scale float64) Datapoint {
 		Timestamp: int64(from.Timestamp),
 		Value:     scale * float64(from.Value),
 	}
-}
-
-// ClusterNameFromTarget extracts the cluster name from the Target query
-// and provides a default value if it's not present.
-func ClusterNameFromTarget(target Target) string {
-	cluster := target.Cluster
-	if cluster == "" {
-		cluster = config.Get().KubernetesConfig.ClusterName
-	}
-	return cluster
 }
