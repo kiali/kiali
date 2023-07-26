@@ -7,7 +7,7 @@ import (
 
 const AmbientCheckAppenderName = "ambientCheck"
 
-// AmbientCheckAppender flags nodes whose backing workloads are missing at least one Envoy sidecar. Note that
+// AmbientCheckAppender flags nodes whose backing workloads that doesn't have ambient component. Note that
 // a node with no backing workloads is not flagged.
 // Name: AmbientCheck
 type AmbientCheckAppender struct {
@@ -34,8 +34,8 @@ func (a AmbientCheckAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 
 func (a *AmbientCheckAppender) applyAmbientChecks(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	for _, n := range trafficMap {
-		// skip if we already determined there is a missing sidecar. we can process the same
-		// node multiple times because to ensure we check every node (missing sidecars indicate missing
+		// skip if we already determined there is a missining ambient indicator. we can process the same
+		// node multiple times because to ensure we check every node (missing ambient indicate missing
 		// telemetry so we need to check nodes when we can, regardless of namespace)
 		if n.Metadata[graph.HasMissingA] == true {
 			continue
@@ -46,7 +46,7 @@ func (a *AmbientCheckAppender) applyAmbientChecks(trafficMap graph.TrafficMap, g
 			continue
 		}
 
-		// We whitelist istio components because they may not report telemetry using injected sidecars.
+		// We whitelist istio components because they may not report telemetry using ambient components.
 		if config.IsIstioNamespace(n.Namespace) {
 			continue
 		}
@@ -56,9 +56,9 @@ func (a *AmbientCheckAppender) applyAmbientChecks(trafficMap graph.TrafficMap, g
 			continue
 		}
 
-		// get the workloads for the node and check to see if they have sidecars. Note that
-		// if there are no workloads/pods we don't flag it as missing sidecars.  No pods means
-		// no missing sidecars.  (In most cases this means it was flagged as dead, and handled above)
+		// get the workloads for the node and check to see if they have ambient components. Note that
+		// if there are no workloads/pods we don't flag it as missing ambient.  No pods means
+		// no missing ambient.  (In most cases this means it was flagged as dead, and handled above)
 		hasIstioAmbient := true
 		switch n.NodeType {
 		case graph.NodeTypeWorkload:
