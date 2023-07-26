@@ -114,6 +114,7 @@ export interface GraphNodeTapEvent {
   aggregateValue?: string;
   app: string;
   cluster?: string;
+  hasMissingA: boolean;
   hasMissingSC: boolean;
   isBox?: string;
   isInaccessible: boolean;
@@ -348,6 +349,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       aggregateValue: target.data(NodeAttr.aggregateValue),
       app: target.data(NodeAttr.app),
       cluster: target.data(NodeAttr.cluster),
+      hasMissingA: targetOrBoxChildren.every(t => t.data(NodeAttr.hasMissingA)),
       hasMissingSC: targetOrBoxChildren.every(t => t.data(NodeAttr.hasMissingSC)),
       isBox: target.data(NodeAttr.isBox),
       isIdle: targetOrBoxChildren.every(t => t.data(NodeAttr.isIdle)),

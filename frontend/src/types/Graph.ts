@@ -374,6 +374,7 @@ export interface GraphNodeData {
   hasHealthConfig?: HealthAnnotationType;
   hasMirroring?: boolean;
   hasMissingSC?: boolean;
+  hasMissingA?: boolean;
   hasRequestRouting?: boolean;
   hasRequestTimeout?: boolean;
   hasTCPTrafficShifting?: boolean;
@@ -557,6 +558,7 @@ export const NodeAttr = {
   hasFaultInjection: 'hasFaultInjection',
   hasMirroring: 'hasMirroring',
   hasMissingSC: 'hasMissingSC',
+  hasMissingA: 'hasMissingA',
   hasRequestRouting: 'hasRequestRouting',
   hasRequestTimeout: 'hasRequestTimeout',
   hasTCPTrafficShifting: 'hasTCPTrafficShifting',

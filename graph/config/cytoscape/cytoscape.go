@@ -105,6 +105,7 @@ type NodeData struct {
 	HasFaultInjection     bool                `json:"hasFaultInjection,omitempty"`     // true (vs has fault injection) | false
 	HasHealthConfig       HealthConfig        `json:"hasHealthConfig,omitempty"`       // set to the health config override
 	HasMirroring          bool                `json:"hasMirroring,omitempty"`          // true (has mirroring) | false
+	HasMissingA           bool                `json:"hasMissingA,omitempty"`           // true (has missing Ambient annotations) | false
 	HasMissingSC          bool                `json:"hasMissingSC,omitempty"`          // true (has missing sidecar) | false
 	HasRequestRouting     bool                `json:"hasRequestRouting,omitempty"`     // true (vs has request routing) | false
 	HasRequestTimeout     bool                `json:"hasRequestTimeout,omitempty"`     // true (vs has request timeout) | false
@@ -345,6 +346,11 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// set sidecars checks, if available
 		if val, ok := n.Metadata[graph.HasMissingSC]; ok {
 			nd.HasMissingSC = val.(bool)
+		}
+
+		// set ambient checks, if available
+		if val, ok := n.Metadata[graph.HasMissingA]; ok {
+			nd.HasMissingA = val.(bool)
 		}
 
 		// check if node is on another namespace
@@ -635,6 +641,7 @@ func generateBoxCompoundNodes(box map[string][]*NodeData, nodes *[]*NodeWrapper,
 
 			// assign each member node to the compound parent
 			nd.HasMissingSC = false // TODO: this is probably unecessarily noisy
+			nd.HasMissingA = false
 			nd.IsInaccessible = false
 			nd.IsOutside = false
 
@@ -654,6 +661,7 @@ func generateBoxCompoundNodes(box map[string][]*NodeData, nodes *[]*NodeWrapper,
 						}
 					}
 					nd.HasMissingSC = nd.HasMissingSC || n.HasMissingSC
+					nd.HasMissingA = nd.HasMissingA || n.HasMissingA
 					nd.IsInaccessible = nd.IsInaccessible || n.IsInaccessible
 					nd.IsOutside = nd.IsOutside || n.IsOutside
 				}

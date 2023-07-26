@@ -37,6 +37,7 @@ import { PeerAuthentication } from '../../types/IstioObjects';
 import { useServiceDetailForGraphNode } from '../../hooks/services';
 import { useKialiSelector } from '../../hooks/redux';
 import { groupMenuStyle } from 'styles/DropdownStyles';
+import { serverConfig } from '../../config';
 
 const summaryNodeActionsStyle = kialiStyle({
   $nest: {
@@ -326,6 +327,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       hasFaultInjection,
       hasMirroring,
       hasMissingSC,
+      hasMissingA,
       hasRequestRouting,
       hasRequestTimeout,
       hasTCPTrafficShifting,
@@ -374,10 +376,16 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
             <span style={{ paddingLeft: '4px' }}>Has Mirroring{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
           </div>
         )}
-        {hasMissingSC && (
+        {hasMissingSC && !serverConfig.ambientEnabled && (
           <div>
             <KialiIcon.MissingSidecar />
             <span style={{ paddingLeft: '4px' }}>Has Missing Sidecar</span>
+          </div>
+        )}
+        {hasMissingSC && hasMissingA && serverConfig.ambientEnabled && (
+          <div>
+            <KialiIcon.MissingSidecar />
+            <span style={{ paddingLeft: '4px' }}>Out of Mesh</span>
           </div>
         )}
         {isDead && (
