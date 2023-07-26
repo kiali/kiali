@@ -27,6 +27,7 @@ DEFAULT_DEX_REPO="https://github.com/dexidp/dex"
 DEFAULT_DEX_VERSION="v2.30.2"
 DEFAULT_DEX_USER_NAMESPACES="bookinfo"
 DEFAULT_INSECURE_REGISTRY_IP=""
+DEFAULT_K8S_CNI="auto"
 DEFAULT_K8S_CPU="4"
 DEFAULT_K8S_DISK="40g"
 DEFAULT_K8S_DRIVER="kvm2"
@@ -316,6 +317,7 @@ EOF
     ${MINIKUBE_START_FLAGS} \
     ${INSECURE_REGISTRY_START_ARG} \
     --insecure-registry ${MINIKUBE_IP}:5000 \
+    --cni=${K8S_CNI} \
     --cpus=${K8S_CPU} \
     --memory=${K8S_MEMORY} \
     --disk-size=${K8S_DISK} \
@@ -446,6 +448,7 @@ while [[ $# -gt 0 ]]; do
     -dv|--dex-version) DEX_VERSION="$2"; shift;shift ;;
     -iri|--insecure-registry-ip) INSECURE_REGISTRY_IP="$2"; shift;shift ;;
     -kc|--kubernetes-cpu) K8S_CPU="$2"; shift;shift ;;
+    -kcni|--kubernetes-cni) K8S_CNI="$2"; shift;shift ;;
     -kd|--kubernetes-disk) K8S_DISK="$2"; shift;shift ;;
     -kdr|--kubernetes-driver) K8S_DRIVER="$2"; shift;shift ;;
     -km|--kubernetes-memory) K8S_MEMORY="$2"; shift;shift ;;
@@ -504,6 +507,10 @@ Valid options:
       The number of CPUs to give to Kubernetes at startup.
       Only used for the 'start' command.
       Default: ${DEFAULT_K8S_CPU}
+  -kcni|--kubernetes-cni
+      The CNI implementation used by minikube. See 'minikube start --help' for the --cni options.
+      Only used for the 'start' command.
+      Default: ${DEFAULT_K8S_CNI}
   -kd|--kubernetes-disk
       The amount of disk space to give to Kubernetes at startup.
       Only used for the 'start' command.
@@ -588,6 +595,7 @@ done
 : ${DEX_USER_NAMESPACES:=${DEFAULT_DEX_USER_NAMESPACES}}
 : ${DEX_VERSION:=${DEFAULT_DEX_VERSION}}
 : ${INSECURE_REGISTRY_IP:=${DEFAULT_INSECURE_REGISTRY_IP}}
+: ${K8S_CNI:=${DEFAULT_K8S_CNI}}
 : ${K8S_CPU:=${DEFAULT_K8S_CPU}}
 : ${K8S_DISK:=${DEFAULT_K8S_DISK}}
 : ${K8S_DRIVER:=${DEFAULT_K8S_DRIVER}}
@@ -616,6 +624,7 @@ debug "DEX_USER_NAMESPACES=$DEX_USER_NAMESPACES"
 debug "DEX_VERSION=$DEX_VERSION"
 debug "INSECURE_REGISTRY_IP=$INSECURE_REGISTRY_IP"
 debug "INSECURE_REGISTRY_START_ARG=$INSECURE_REGISTRY_START_ARG"
+debug "K8S_CNI=$K8S_CNI"
 debug "K8S_CPU=$K8S_CPU"
 debug "K8S_DISK=$K8S_DISK"
 debug "K8S_DRIVER=$K8S_DRIVER"
@@ -648,6 +657,7 @@ if [ "$_CMD" = "start" ]; then
     ${MINIKUBE_EXEC_WITH_PROFILE} start \
       ${MINIKUBE_START_FLAGS} \
       ${INSECURE_REGISTRY_START_ARG} \
+      --cni=${K8S_CNI} \
       --cpus=${K8S_CPU} \
       --memory=${K8S_MEMORY} \
       --disk-size=${K8S_DISK} \
@@ -661,6 +671,7 @@ if [ "$_CMD" = "start" ]; then
   ${MINIKUBE_EXEC_WITH_PROFILE} start \
     ${MINIKUBE_START_FLAGS} \
     ${INSECURE_REGISTRY_START_ARG} \
+    --cni=${K8S_CNI} \
     --cpus=${K8S_CPU} \
     --memory=${K8S_MEMORY} \
     --disk-size=${K8S_DISK} \
