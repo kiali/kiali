@@ -90,7 +90,7 @@ Options:
 
 -lb|--logs-branch <branch name>
     The logs branch to clone.
-    Default: master
+    Default: kind
 
 -lf|--logs-fork <name>
     The logs fork/org to clone.
@@ -114,7 +114,7 @@ Options:
 
 -sd|--src-dir <directory>
     Where the git source repositories will be cloned.
-    Default: /tmp/KIALI-GIT
+    Default: /tmp/KIALI-GIT-KIND
 
 -st|--skip-tests <tests>
     Space-separated list of all the molecule tests to be skipped.
@@ -181,7 +181,7 @@ set -e
 
 # set up some of our defaults
 CLIENT_EXE=${CLIENT_EXE:-/usr/bin/kubectl}
-SRC="${SRC:-/tmp/KIALI-GIT}"
+SRC="${SRC:-/tmp/KIALI-GIT-KIND}"
 DORP="${DORP:-docker}"
 GIT_CLONE_PROTOCOL="${GIT_CLONE_PROTOCOL:-git}"
 OLM_ENABLED="${OLM_ENABLED:-false}"
@@ -205,7 +205,7 @@ KIALI_OPERATOR_BRANCH="${KIALI_OPERATOR_BRANCH:-master}"
 # details about the github repo where the logs are to be stored
 LOGS_PROJECT_NAME="${LOGS_PROJECT_NAME:-kiali-molecule-test-logs}"
 LOGS_FORK="${LOGS_FORK:-jmazzitelli}"
-LOGS_BRANCH="${LOGS_BRANCH:-master}"
+LOGS_BRANCH="${LOGS_BRANCH:-kind}"
 
 LOGS_LOCAL_DIRNAME="${LOGS_PROJECT_NAME}"
 LOGS_LOCAL_DIRNAME_ABS="${SRC}/${LOGS_LOCAL_DIRNAME}"
@@ -266,6 +266,7 @@ LOGS_GITHUB_HTTPS_SUBDIR=$LOGS_GITHUB_HTTPS_SUBDIR
 LOGS_LOCAL_RESULTS=$LOGS_LOCAL_RESULTS
 LOGS_LOCAL_SUBDIR=$LOGS_LOCAL_SUBDIR
 LOGS_LOCAL_SUBDIR_ABS=$LOGS_LOCAL_SUBDIR_ABS
+LOGS_PROJECT_NAME=$LOGS_PROJECT_NAME
 OLM_ENABLED=$OLM_ENABLED
 OPERATOR_INSTALLER=$OPERATOR_INSTALLER
 SKIP_TESTS=$SKIP_TESTS
@@ -322,7 +323,7 @@ cd ${SRC}
 
 if [ "$CI" != "true" ]; then
   infomsg "Cloning logs repo [${LOGS_FORK}/${LOGS_PROJECT_NAME}:${LOGS_BRANCH}] from [${LOGS_GITHUB_GITCLONE}]..."
-  git clone --single-branch --branch ${LOGS_BRANCH} ${LOGS_GITHUB_GITCLONE} logs
+  git clone --single-branch --branch ${LOGS_BRANCH} ${LOGS_GITHUB_GITCLONE} ${LOGS_PROJECT_NAME}
 fi
 
 infomsg "Cloning helm-charts [${HELM_FORK}:${HELM_BRANCH}] from [${HELM_GITHUB_GITCLONE}]..."
@@ -345,50 +346,65 @@ else
   exit 1
 fi
 
-if [ "${DORP}" == "podman" ]; then
-  export KIND_EXPERIMENTAL_PROVIDER=podman
-fi
+# TODO kind doesn't work with podman
+#if [ "${DORP}" == "podman" ]; then
+#  export KIND_EXPERIMENTAL_PROVIDER=podman
+#fi
 
 if ${KIND_EXE} get kubeconfig --name ${KIND_NAME} > /dev/null 2>&1; then
   infomsg "Kind cluster named [${KIND_NAME}] already exists - it will be used as-is"
 else
   infomsg "Kind cluster to be created with name [${KIND_NAME}]"
+  # if you want a specific version of kind, put the image here. Setting to empty string pulls the latest.
+  KIND_NODE_IMAGE="" #"image: kindest/node:v1.24.15@sha256:24473777a1eef985dc405c23ab9f4daddb1352ca23db60b75de9e7c408096491"
   cat <<EOF | ${KIND_EXE} create cluster --name ${KIND_NAME} --config -
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
   - role: control-plane
+    ${KIND_NODE_IMAGE}
   - role: worker
+    ${KIND_NODE_IMAGE}
 EOF
 
   infomsg "Create Kind LoadBalancer via MetalLB"
   lb_addr_range="255.70-255.84"
 
-  ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/namespace.yaml
-  # ${CLIENT_EXE} create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
-  ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/metallb.yaml
+  ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.5/config/manifests/metallb-native.yaml
 
-  if [ "${DORP}" == "docker" ]; then
-    subnet=$(docker network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}')
-  else
-    subnet=$(podman network inspect kind --format '{{ (index (index (index .plugins 0).ipam.ranges 1) 0).subnet }}')
-  fi
+  #if [ "${DORP}" == "docker" ]; then
+  #  subnet=$(docker network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}')
+  #else
+  #  subnet=$(podman network inspect kind --format '{{ (index (index (index .plugins 0).ipam.ranges 1) 0).subnet }}')
+  #fi
+  # TODO the above if-stmt assumes podman works with KinD which it doesn't - we always use docker for KinD, so use docker to inspect network
+  subnet=$(docker network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}')
+
   subnet_trimmed=$(echo ${subnet} | sed -E 's/([0-9]+\.[0-9]+)\.[0-9]+\..*/\1/')
   first_ip="${subnet_trimmed}.$(echo "${lb_addr_range}" | cut -d '-' -f 1)"
   last_ip="${subnet_trimmed}.$(echo "${lb_addr_range}" | cut -d '-' -f 2)"
-  cat <<LBCONFIGMAP | ${CLIENT_EXE} apply -f -
-apiVersion: v1
-kind: ConfigMap
+  echo "LoadBalancer IP Address pool: ${first_ip}-${last_ip}"
+  ${CLIENT_EXE} rollout status deployment controller -n metallb-system
+  cat <<LB1 | ${CLIENT_EXE} apply -f -
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
 metadata:
   namespace: metallb-system
   name: config
-data:
-  config: |
-    address-pools:
-    - name: default
-      protocol: layer2
-      addresses: ['${first_ip}-${last_ip}']
-LBCONFIGMAP
+spec:
+  addresses:
+  - ${first_ip}-${last_ip}
+LB1
+  cat <<LB2 | ${CLIENT_EXE} apply -f -
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  namespace: metallb-system
+  name: l2config
+spec:
+  ipAddressPools:
+  - config
+LB2
 fi
 
 if [ "${USE_DEV_IMAGES}" == "true" ]; then
