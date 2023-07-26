@@ -1016,3 +1016,11 @@ func IsFeatureDisabled(featureName FeatureName) bool {
 	}
 	return false
 }
+
+// GetSafeClusterName checks the input value provides a default cluster name if it's empty
+func GetSafeClusterName(cluster string) string {
+	if cluster == "" {
+		return Get().KubernetesConfig.ClusterName
+	}
+	return cluster
+}

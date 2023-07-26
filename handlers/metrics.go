@@ -376,7 +376,7 @@ func prepareStatsQueries(w http.ResponseWriter, r *http.Request, rawQ []models.M
 			}
 		}
 		if !found {
-			newNs := models.Namespace{Name: q.Target.Namespace, Cluster: q.Target.Cluster}
+			newNs := models.Namespace{Name: q.Target.Namespace, Cluster: config.GetSafeClusterName(q.Target.Cluster)}
 			namespaces = append(namespaces, newNs)
 		}
 	}
