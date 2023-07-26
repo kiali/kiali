@@ -19,7 +19,7 @@ import {
   TopologyQuadrant
 } from '@patternfly/react-topology';
 import { PFBadges, PFBadgeType } from 'components/Pf/PfBadges';
-import { icons, serverConfig } from 'config';
+import { homeCluster as kialiHomeCluster, icons } from 'config';
 import {
   BoxByType,
   CLUSTER_DEFAULT,
@@ -279,7 +279,7 @@ export const setNodeLabel = (node: NodeModel, nodeMap: NodeMap, settings: GraphP
   }
 
   // append cluster if necessary
-  const homeCluster = serverConfig?.clusterInfo?.name || CLUSTER_DEFAULT;
+  const homeCluster = kialiHomeCluster?.name || CLUSTER_DEFAULT;
   if (!!cluster && cluster !== UNKNOWN && cluster !== homeCluster && !isBoxed && isBox !== BoxByType.CLUSTER) {
     content.push(`(${cluster})`);
   }

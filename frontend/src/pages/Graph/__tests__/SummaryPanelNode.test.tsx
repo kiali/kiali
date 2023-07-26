@@ -6,6 +6,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { ExpandableSection } from '@patternfly/react-core';
 import { store } from '../../../store/ConfigStore';
 import { Provider } from 'react-redux';
+import { serverConfig, setServerConfig } from '../../../config/ServerConfig';
 
 let defaultProps: SummaryPanelNodeComponentProps;
 let nodeData: GraphNodeData;
@@ -44,6 +45,18 @@ describe('SummaryPanelNodeComponent', () => {
       peerAuthentications: null,
       serviceDetails: null
     };
+
+    serverConfig.clusters = {
+      'cluster-default': {
+        apiEndpoint: '',
+        isKialiHome: true,
+        kialiInstances: [],
+        name: 'cluster-default',
+        network: 'test-net',
+        secretName: 'test-secret'
+      }
+    };
+    setServerConfig(serverConfig);
   });
 
   it('renders', () => {

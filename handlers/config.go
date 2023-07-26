@@ -19,11 +19,6 @@ const (
 	defaultPrometheusGlobalStorageTSDBRetention = 21600 // seconds
 )
 
-type ClusterInfo struct {
-	Name    string `json:"name,omitempty"`
-	Network string `json:"network,omitempty"`
-}
-
 type IstioAnnotations struct {
 	IstioInjectionAnnotation string `json:"istioInjectionAnnotation,omitempty"`
 }
@@ -50,7 +45,6 @@ type PublicConfig struct {
 	AccessibleNamespaces []string                      `json:"accessibleNamespaces,omitempty"`
 	AuthStrategy         string                        `json:"authStrategy,omitempty"`
 	AmbientEnabled       bool                          `json:"ambientEnabled,omitempty"`
-	ClusterInfo          ClusterInfo                   `json:"clusterInfo,omitempty"`
 	Clusters             map[string]kubernetes.Cluster `json:"clusters,omitempty"`
 	Deployment           DeploymentConfig              `json:"deployment,omitempty"`
 	GatewayAPIEnabled    bool                          `json:"gatewayAPIEnabled,omitempty"`
@@ -127,15 +121,6 @@ func Config(w http.ResponseWriter, r *http.Request) {
 
 		for _, cluster := range clusters {
 			publicConfig.Clusters[cluster.Name] = cluster
-			// Setting this will cause the "mesh" page to appear in the UI.
-			// Keeping the old behavior where this only appears when more than
-			// one cluster is present.
-			if len(clusters) > 1 && cluster.IsKialiHome {
-				publicConfig.ClusterInfo = ClusterInfo{
-					Name:    cluster.Name,
-					Network: cluster.Network,
-				}
-			}
 		}
 
 		return nil

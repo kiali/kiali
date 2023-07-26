@@ -18,6 +18,16 @@ import { Paths } from './Paths';
 import { jaegerQuery } from './JaegerQuery';
 
 // ServerConfig
-import { isMultiCluster, serverConfig } from './ServerConfig';
+import { homeCluster, isMultiCluster, serverConfig } from './ServerConfig';
 
-export { authenticationConfig, config, Paths, icons, isMultiCluster, kialiLogo, serverConfig, jaegerQuery };
+export {
+  authenticationConfig,
+  config,
+  Paths,
+  icons,
+  homeCluster,
+  isMultiCluster,
+  kialiLogo,
+  serverConfig,
+  jaegerQuery
+};

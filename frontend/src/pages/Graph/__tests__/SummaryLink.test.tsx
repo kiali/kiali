@@ -6,6 +6,7 @@ import { mount } from 'enzyme';
 import { MemoryRouter } from 'react-router-dom';
 import { store } from '../../../store/ConfigStore';
 import { Provider } from 'react-redux';
+import { serverConfig, setServerConfig } from '../../../config/ServerConfig';
 
 let defaultGraphData: GraphNodeData;
 
@@ -17,6 +18,18 @@ describe('renderBadgedLink', () => {
       cluster: 'default-cluster',
       namespace: 'bookinfo'
     };
+
+    serverConfig.clusters = {
+      'cluster-default': {
+        apiEndpoint: '',
+        isKialiHome: true,
+        kialiInstances: [],
+        name: 'cluster-default',
+        network: 'test-net',
+        secretName: 'test-secret'
+      }
+    };
+    setServerConfig(serverConfig);
   });
 
   it('should generate a link to workload page and badge', () => {

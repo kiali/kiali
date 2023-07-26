@@ -25,7 +25,7 @@ import { IstioStatusMessageList } from './IstioStatusMessageList';
 import { KioskElement } from '../../../components/Kiosk/KioskElement';
 import { PFColors } from '../../../components/Pf/PfColors';
 import { GetIstioObjectUrl } from '../../../components/Link/IstioObjectLink';
-import { isMultiCluster, serverConfig } from '../../../config';
+import { homeCluster, isMultiCluster } from '../../../config';
 
 interface IstioConfigOverviewProps {
   istioObjectDetails: IstioConfigDetails;
@@ -203,7 +203,7 @@ export class IstioConfigOverview extends React.Component<IstioConfigOverviewProp
             ></IstioConfigHelp>
           </StackItem>
         )}
-        {!this.props.istioAPIEnabled && this.props.cluster === serverConfig.clusterInfo?.name && (
+        {!this.props.istioAPIEnabled && this.props.cluster === homeCluster?.name && (
           <StackItem>
             <KialiIcon.Warning className={warnStyle} /> <b>Istio API is disabled.</b> Be careful when editing the
             configuration as the Istio config validations are disabled when the Istio API is disabled.

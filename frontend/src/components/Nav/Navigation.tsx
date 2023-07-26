@@ -19,7 +19,7 @@ import {
 import { BarsIcon } from '@patternfly/react-icons';
 import { kialiStyle } from 'styles/StyleUtils';
 import { MessageCenter } from '../../components/MessageCenter/MessageCenter';
-import { kialiLogo, serverConfig } from '../../config';
+import { homeCluster, kialiLogo, serverConfig } from '../../config';
 import { KialiAppState } from '../../store/Store';
 import { UserSettingsThunkActions } from '../../actions/UserSettingsThunkActions';
 import { Menu } from './Menu';
@@ -68,8 +68,8 @@ export class NavigationComponent extends React.Component<PropsType, NavigationSt
 
   componentDidMount() {
     let pageTitle = serverConfig.installationTag ? serverConfig.installationTag : 'Kiali';
-    if (!!serverConfig.clusterInfo?.name) {
-      pageTitle += ` [${serverConfig.clusterInfo.name}]`;
+    if (homeCluster?.name) {
+      pageTitle += ` [${homeCluster?.name}]`;
     }
 
     document.title = pageTitle;
