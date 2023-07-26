@@ -4,10 +4,9 @@ import { connect } from 'react-redux';
 import FlexView from 'react-flexview';
 import { kialiStyle } from 'styles/StyleUtils';
 import {
-  bgDark,
   DurationInSeconds,
   IntervalInMilliseconds,
-  themes,
+  Theme,
   TimeInMilliseconds,
   TimeInSeconds
 } from '../../types/Common';
@@ -80,6 +79,7 @@ import { GraphData } from 'pages/Graph/GraphPage';
 import { GraphPF, FocusNode } from './GraphPF';
 import * as CytoscapeGraphUtils from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { Controller } from '@patternfly/react-topology';
+import { bgDark, bgLight } from 'styles/ThemeStyle';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 export type GraphURLPathProps = {
@@ -193,10 +193,6 @@ const graphTimeRange = kialiStyle({
   left: '10px',
   width: 'auto',
   zIndex: 2
-});
-
-const whiteBackground = kialiStyle({
-  backgroundColor: PFColors.White
 });
 
 const replayBackground = kialiStyle({
@@ -463,11 +459,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
               {isReady && (
                 <Chip
                   className={`${graphTimeRange} ${
-                    this.props.replayActive
-                      ? replayBackground
-                      : this.props.theme === themes[1]
-                      ? bgDark
-                      : whiteBackground
+                    this.props.replayActive ? replayBackground : this.props.theme === Theme.Light ? bgLight : bgDark
                   }`}
                   isReadOnly={true}
                 >

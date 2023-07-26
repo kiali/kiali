@@ -11,7 +11,6 @@ import {
   getNodeMetrics,
   getNodeMetricType,
   renderNoTraffic,
-  summaryHeader,
   hr,
   summaryPanel,
   mergeMetricsResponses,
@@ -29,8 +28,8 @@ import { getOptions, clickHandler } from 'components/CytoscapeGraph/ContextMenu/
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { edgesIn, edgesOut, select, selectAnd, selectOr } from 'pages/GraphPF/GraphPFElems';
 import { kialiStyle } from 'styles/StyleUtils';
-import { themes } from '../../types/Common';
-import { PFColors } from '../../components/Pf/PfColors';
+import { getGraphBackgroundStyle } from 'styles/ThemeStyle';
+import { classes } from 'typestyle';
 
 const summaryAppBoxActionsStyle = kialiStyle({
   $nest: {
@@ -167,14 +166,11 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
       </DropdownGroup>
     ];
 
-    const bgStyle = {
-      backgroundColor: this.props.theme === themes[1] ? PFColors.Black700 : PFColors.White,
-      color: this.props.theme === themes[1] ? PFColors.White : PFColors.Black700
-    };
+    const bgStyle = getGraphBackgroundStyle(this.props.theme);
 
     return (
-      <div ref={this.mainDivRef} className={`panel panel-default ${summaryPanel}`} style={bgStyle}>
-        <div className="panel-heading" style={{ ...summaryHeader, ...bgStyle }}>
+      <div ref={this.mainDivRef} className={classes('panel', 'panel-default', summaryPanel)} style={bgStyle}>
+        <div className={'panel-heading'} style={bgStyle}>
           {getTitle('Application')}
           <span>
             <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />

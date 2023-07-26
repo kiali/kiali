@@ -13,7 +13,7 @@ import { TraceDetails } from './JaegerResults/TraceDetails';
 import { JaegerScatter } from './JaegerScatter';
 import { TracesFetcher, FetchOptions } from './TracesFetcher';
 import { SpanDetails } from './JaegerResults/SpanDetails';
-import { bgDark, bgDefault, isEqualTimeRange, TargetKind, themes, TimeInMilliseconds, TimeRange } from 'types/Common';
+import { isEqualTimeRange, TargetKind, Theme, TimeInMilliseconds, TimeRange } from 'types/Common';
 import { timeRangeSelector } from 'store/Selectors';
 import { getTimeRangeMicros } from 'utils/tracing/TracingHelper';
 import { TracesDisplayOptions, QuerySettings, DisplaySettings, percentilesOptions } from './TracesDisplayOptions';
@@ -21,7 +21,7 @@ import { Direction, genStatsKey, MetricsStatsQuery } from 'types/MetricsOptions'
 import { MetricsStatsResult } from 'types/Metrics';
 import { getSpanId } from 'utils/SearchParamUtils';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
-import { traceTabStyle } from 'styles/TabStyles';
+import { bgDark, bgLight } from 'styles/ThemeStyle';
 
 type ReduxProps = {
   namespaceSelector: boolean;
@@ -239,7 +239,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
 
   render() {
     const jaegerURL = this.getJaegerUrl();
-    const bg = this.props.theme === themes[0] ? bgDefault : bgDark;
+    const bg = this.props.theme === Theme.Light ? bgLight : bgDark;
 
     return (
       <>
@@ -293,7 +293,6 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
               <Tabs
                 id="trace-details"
                 data-test="trace-details-tabs"
-                className={traceTabStyle}
                 activeKey={this.state.activeTab}
                 onSelect={(_, idx: any) => this.setState({ activeTab: idx })}
               >

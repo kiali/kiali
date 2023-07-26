@@ -36,9 +36,9 @@ import { ValidationSummary } from 'components/Validations/ValidationSummary';
 import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { edgesIn, edgesOut, elems, leafNodes, NodeData, select } from 'pages/GraphPF/GraphPFElems';
-import { PFColors } from '../../components/Pf/PfColors';
-import { themes } from '../../types/Common';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
+import { getGraphBackgroundStyle } from 'styles/ThemeStyle';
+import { classes } from 'typestyle';
 
 type SummaryPanelGraphMetricsState = {
   grpcRequestIn: Datapoint[];
@@ -220,18 +220,16 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     const tooltipInboundRef = React.createRef();
     const tooltipOutboundRef = React.createRef();
     const tooltipTotalRef = React.createRef();
-    const summaryHeaderStyle = {
-      backgroundColor: this.props.theme === themes[1] ? PFColors.Black700 : PFColors.White,
-      color: this.props.theme === themes[1] ? PFColors.White : PFColors.Black700
-    };
+
+    const bgStyle = getGraphBackgroundStyle(this.props.theme);
 
     return (
       <div
         id="summary-panel-graph"
-        className="panel panel-default"
-        style={{ ...summaryHeaderStyle, ...SummaryPanelGraph.panelStyle }}
+        className={classes('panel', 'panel-default')}
+        style={{ ...SummaryPanelGraph.panelStyle, ...bgStyle }}
       >
-        <div id="summary-panel-graph-heading" className="panel-heading" style={summaryHeaderStyle}>
+        <div id="summary-panel-graph-heading" className={'panel-heading'} style={bgStyle}>
           {getTitle('Current Graph')}
           {this.renderNamespacesSummary()}
           <br />

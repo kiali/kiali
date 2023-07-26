@@ -7,7 +7,8 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../Pf/PfColors';
 import { Button, ButtonVariant, EmptyState, EmptyStateBody, EmptyStateIcon, Title } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
-import { bgDarkSoft, themes } from '../../types/Common';
+import { bgDarkSoft } from 'styles/ThemeStyle';
+import { Theme } from 'types/Common';
 
 const containerStyle = kialiStyle({ marginLeft: 0, marginRight: 0 });
 const containerPadding = kialiStyle({ padding: '0 20px 0 20px' });
@@ -50,7 +51,7 @@ export class RenderPage extends React.Component<{ isGraph: boolean; theme: strin
     return (
       <>
         {!this.props.isGraph ? (
-          <div className={this.props.theme === themes[0] ? containerGray : bgDarkSoft}>{component}</div>
+          <div className={this.props.theme === Theme.Light ? containerGray : bgDarkSoft}>{component}</div>
         ) : (
           component
         )}

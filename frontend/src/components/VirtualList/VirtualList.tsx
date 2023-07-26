@@ -14,7 +14,9 @@ import * as FilterHelper from '../FilterList/FilterHelper';
 import * as Sorts from '../../pages/Overview/Sorts';
 import { StatefulFilters } from '../Filters/StatefulFilters';
 import { kialiStyle } from 'styles/StyleUtils';
-import { bgDark, bgDefault, themes } from '../../types/Common';
+import { Theme } from '../../types/Common';
+import { classes } from 'typestyle';
+import { bgDark, bgLight } from 'styles/ThemeStyle';
 
 const virtualListStyle = kialiStyle({
   padding: '20px',
@@ -158,8 +160,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     });
 
     return (
-
-      <div className={this.props.theme === themes[0] ? `${bgDefault} ${virtualListStyle}` : `${bgDark} ${virtualListStyle}`}>
+      <div className={classes(virtualListStyle, this.props.theme === Theme.Light ? bgLight : bgDark)}>
         {childrenWithProps}
         <Table {...tableProps} sortBy={sortBy} onSort={this.onSort}>
           <TableHeader />

@@ -3,13 +3,12 @@ import { updateState } from '../utils/Reducer';
 import { GlobalActions } from '../actions/GlobalActions';
 import { KialiAppAction } from '../actions/KialiAppAction';
 import { getType } from 'typesafe-actions';
-import { themes } from '../types/Common';
 
 export const INITIAL_GLOBAL_STATE: GlobalState = {
   loadingCounter: 0,
   isPageVisible: true,
   kiosk: '',
-  theme: themes[0]
+  theme: ''
 };
 
 // This Reducer allows changes to the 'globalState' portion of Redux Store

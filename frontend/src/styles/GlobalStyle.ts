@@ -10,10 +10,6 @@ export const globalStyle = kialiStyle({
   overflow: 'hidden',
   color: '#363636',
   $nest: {
-    '&.kiali-theme-dark': {
-      color: '#fff'
-    },
-
     /**
      * Kiosk mode
      */
@@ -159,7 +155,6 @@ export const globalStyle = kialiStyle({
     /* Panel graph CSS styles extracted from bootstrap library (v3.4.1) */
     '.panel': {
       marginBottom: '23px',
-      backgroundColor: '#fff',
       border: '1px solid transparent',
       borderRadius: '1px',
       '-webkit-box-shadow': '0 1px 1px rgba(0, 0, 0, 0.05)',

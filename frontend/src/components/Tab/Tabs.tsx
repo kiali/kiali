@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { TabProps, Tabs } from '@patternfly/react-core';
 import { history } from '../../app/History';
-import { PFColors } from '../Pf/PfColors';
-import { themes } from '../../types/Common';
+import { Theme } from 'types/Common';
+import { bgDark, bgLight } from 'styles/ThemeStyle';
+import { classes } from 'typestyle';
 
 type TabsProps = {
   activeTab: string;
@@ -99,7 +100,7 @@ export class ParameterizedTabs extends React.Component<TabsProps> {
     return (
       <Tabs
         id={this.props.id}
-        className={this.props.className}
+        className={classes(this.props.className, this.props.theme === Theme.Light ? bgLight : bgDark)}
         activeKey={this.activeIndex()}
         onSelect={(_, ek) => {
           if (!this.isLinkTab(ek as number)) {
@@ -108,9 +109,6 @@ export class ParameterizedTabs extends React.Component<TabsProps> {
         }}
         mountOnEnter={this.props.mountOnEnter === undefined ? true : this.props.mountOnEnter}
         unmountOnExit={this.props.unmountOnExit === undefined ? true : this.props.unmountOnExit}
-        style={
-          this.props.theme === themes[1] ? { backgroundColor: PFColors.Black800 } : { backgroundColor: PFColors.White }
-        }
       >
         {this.props.children}
       </Tabs>

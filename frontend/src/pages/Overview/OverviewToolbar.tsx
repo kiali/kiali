@@ -10,7 +10,7 @@ import * as FilterHelper from '../../components/FilterList/FilterHelper';
 import { ToolbarDropdown } from '../../components/ToolbarDropdown/ToolbarDropdown';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector, refreshIntervalSelector } from '../../store/Selectors';
-import { IntervalInMilliseconds, DurationInSeconds, themes } from '../../types/Common';
+import { IntervalInMilliseconds, DurationInSeconds, Theme } from '../../types/Common';
 import { SortField } from '../../types/SortFilters';
 import { NamespaceInfo } from './NamespaceInfo';
 import * as Sorts from './Sorts';
@@ -19,7 +19,8 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
 import { KialiDispatch } from '../../types/Redux';
 import { RefreshNotifier } from '../../components/Refresh/RefreshNotifier';
-import { PFColors } from '../../components/Pf/PfColors';
+import { bgDark, bgLight } from 'styles/ThemeStyle';
+import { classes } from 'typestyle';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -65,12 +66,6 @@ const sortTypes = (function () {
 })();
 
 const containerPadding = kialiStyle({
-  backgroundColor: PFColors.White,
-  padding: '0px 20px 0px 20px'
-});
-
-const containerPaddingDarkMode = kialiStyle({
-  backgroundColor: PFColors.Black800,
   padding: '0px 20px 0px 20px'
 });
 
@@ -289,7 +284,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
       </div>
     );
     return (
-      <div className={this.props.theme === themes[0] ? containerPadding : containerPaddingDarkMode}>
+      <div className={classes(containerPadding, this.props.theme === Theme.Light ? bgLight : bgDark)}>
         <div className={containerFlex}>
           <div className={filterToolbarStyle}>{filterToolbar}</div>
           <div className={rightToolbarStyle}>

@@ -19,7 +19,9 @@ import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions'
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { PeerAuthentication } from '../../types/IstioObjects';
 import { FocusNode } from 'pages/GraphPF/GraphPF';
-import { bgDark, bgDarkSoft, bgDefault, themes } from '../../types/Common';
+import { Theme } from '../../types/Common';
+import { classes } from 'typestyle';
+import { bgDark, bgDarkSoft, bgLight } from 'styles/ThemeStyle';
 
 type SummaryPanelState = {
   isVisible: boolean;
@@ -108,15 +110,9 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
     return (
       <TourStop info={[GraphTourStops.Graph, GraphTourStops.ContextualMenu, GraphTourStops.SidePanel]}>
         <div id="graph-side-panel" className={mainStyle}>
-          <div
-            className={this.props.theme === themes[0] ? `${mainTopStyle} ${bgDefault}` : `${mainTopStyle} ${bgDark}`}
-          >
+          <div className={classes(mainTopStyle, this.props.theme === Theme.Light ? bgLight : bgDark)}>
             <div
-              className={
-                this.props.theme === themes[0]
-                  ? `${toggleSidePanelStyle} ${bgDefault}`
-                  : `${toggleSidePanelStyle} ${bgDarkSoft}`
-              }
+              className={classes(toggleSidePanelStyle, this.props.theme === Theme.Light ? bgLight : bgDarkSoft)}
               onClick={this.togglePanel}
             >
               {this.state.isVisible ? (

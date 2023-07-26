@@ -4,7 +4,9 @@ import { BreadcrumbView } from '../../BreadcrumbView/BreadcrumbView';
 import { KialiAppState } from '../../../store/Store';
 import { connect } from 'react-redux';
 import { isKiosk } from '../../Kiosk/KioskActions';
-import { bgDark, bgDefault, themes } from '../../../types/Common';
+import { bgDark, bgLight } from 'styles/ThemeStyle';
+import { Theme } from 'types/Common';
+import { classes } from 'typestyle';
 
 const containerPadding = kialiStyle({ padding: '0 20px 28px 20px' });
 // This magic style tries to adjust Breadcrumb with Namespace selector
@@ -50,11 +52,7 @@ class RenderHeaderComponent extends React.Component<RenderHeaderProps> {
     // On kiosk mode, it should be hidden
     return isKiosk(this.props.kiosk) ? null : (
       <>
-        <div
-          className={
-            this.props.theme === themes[0] ? `${bgDefault} ${containerPadding}` : `${bgDark} ${containerPadding}`
-          }
-        >
+        <div className={classes(containerPadding, this.props.theme === Theme.Light ? bgLight : bgDark)}>
           {this.props.location && (
             <>
               <div className={breadcrumbMargin}>
@@ -69,11 +67,10 @@ class RenderHeaderComponent extends React.Component<RenderHeaderProps> {
         </div>
         {this.props.actionsToolbar && (
           <div
-            className={
-              this.props.theme === themes[0]
-                ? `${bgDefault} ${actionsToolbarStyle} ${borderBottom}`
-                : `${bgDark} ${actionsToolbarStyle}`
-            }
+            className={classes(
+              actionsToolbarStyle,
+              this.props.theme === Theme.Light ? `${bgLight} ${borderBottom}` : bgDark
+            )}
           >
             {this.props.actionsToolbar}
           </div>

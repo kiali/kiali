@@ -55,7 +55,7 @@ import { switchType } from './OverviewHelper';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
 import { ValidationSummary } from '../../components/Validations/ValidationSummary';
-import { DurationInSeconds, IntervalInMilliseconds, themes } from 'types/Common';
+import { DurationInSeconds, IntervalInMilliseconds, Theme } from 'types/Common';
 import { Paths, isMultiCluster, serverConfig } from '../../config';
 import { PFColors } from '../../components/Pf/PfColors';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
@@ -79,33 +79,23 @@ import { ControlPlaneVersionBadge } from './ControlPlaneVersionBadge';
 import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 
-const gridStyleCompact = kialiStyle({
-  backgroundColor: '#f5f5f5',
-  paddingBottom: '20px',
-  marginTop: '0px'
-});
+const gridStyleCompact = (theme: string) => {
+  return kialiStyle({
+    backgroundColor: theme === Theme.Light ? '#f5f5f5' : PFColors.Black500,
+    paddingBottom: '20px',
+    marginTop: '0px'
+  });
+};
 
-const gridStyleCompactDark = kialiStyle({
-  backgroundColor: PFColors.Black500,
-  paddingBottom: '20px',
-  marginTop: '0px'
-});
-
-const gridStyleList = kialiStyle({
-  backgroundColor: '#f5f5f5',
-  // The VirtualTable component has a different style than cards
-  // We need to adjust the grid style if we are on compact vs list view
-  padding: '0 !important',
-  marginTop: '0px'
-});
-
-const gridStyleListDark = kialiStyle({
-  backgroundColor: PFColors.Black500,
-  // The VirtualTable component has a different style than cards
-  // We need to adjust the grid style if we are on compact vs list view
-  padding: '0 !important',
-  marginTop: '0px'
-});
+const gridStyleList = (theme: string) => {
+  return kialiStyle({
+    backgroundColor: theme === Theme.Light ? '#f5f5f5' : PFColors.Black500,
+    // The VirtualTable component has a different style than cards
+    // We need to adjust the grid style if we are on compact vs list view
+    padding: '0 !important',
+    marginTop: '0px'
+  });
+};
 
 const cardGridStyle = kialiStyle({
   textAlign: 'center',
@@ -931,12 +921,8 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           <RenderComponentScroll
             className={
               this.state.displayMode === OverviewDisplayMode.LIST
-                ? this.props.theme === themes[0]
-                  ? gridStyleList
-                  : gridStyleListDark
-                : this.props.theme === themes[0]
-                ? gridStyleCompact
-                : gridStyleCompactDark
+                ? gridStyleList(this.props.theme)
+                : gridStyleCompact(this.props.theme)
             }
           >
             {this.state.displayMode === OverviewDisplayMode.LIST ? (

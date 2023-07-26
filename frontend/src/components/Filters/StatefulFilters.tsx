@@ -35,7 +35,7 @@ import { labelFilter } from './CommonFilters';
 import { history, HistoryManager } from 'app/History';
 import { serverConfig } from 'config';
 import { PFColors } from '../Pf/PfColors';
-import { themes } from '../../types/Common';
+import { Theme } from 'types/Common';
 
 var classNames = require('classnames');
 
@@ -375,7 +375,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
           onChange={this.updateCurrentValue}
           onKeyPress={e => this.onValueKeyPress(e)}
           style={{ width: 'auto' }}
-          className={this.props.theme === themes[1] ? backgroundStyleDark : backgroundStyle}
+          className={this.props.theme === Theme.Light ? backgroundStyle : backgroundStyleDark}
         />
       );
     }
@@ -450,7 +450,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                         aria-label="filter_select_type"
                         onChange={this.selectFilterType}
                         style={{ width: 'auto', borderColor: '#bbb' }}
-                        className={this.props.theme === themes[0] ? backgroundStyle : backgroundStyleDark}
+                        className={this.props.theme === Theme.Light ? backgroundStyle : backgroundStyleDark}
                       >
                         {filterOptions}
                       </FormSelect>

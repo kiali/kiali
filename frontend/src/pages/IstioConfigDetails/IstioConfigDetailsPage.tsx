@@ -57,7 +57,7 @@ import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { basicTabStyle } from 'styles/TabStyles';
 import { istioAceEditorStyle } from 'styles/AceEditorStyle';
-import { themes } from '../../types/Common';
+import { Theme } from 'types/Common';
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
@@ -477,7 +477,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     const helpAnnotations = parseHelpAnnotations(yamlSource, helpMessages);
     helpAnnotations.forEach(ha => editorValidations.annotations.push(ha));
 
-    const ace_theme = this.props.theme === themes[1] ? 'twilight' : 'eclipse';
+    const ace_theme = this.props.theme === Theme.Light ? 'eclipse' : 'twilight';
 
     const panelContent = (
       <DrawerPanelContent>

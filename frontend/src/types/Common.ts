@@ -1,6 +1,4 @@
 import { defaultMetricsDuration } from '../components/Metrics/Helper';
-import { kialiStyle } from '../styles/StyleUtils';
-import { PFColors } from '../components/Pf/PfColors';
 
 export type AppenderString = string;
 
@@ -16,6 +14,14 @@ export enum HTTP_VERBS {
   PATCH = 'patch',
   POST = 'post',
   PUT = 'put'
+}
+
+export const PF_THEME_DARK = 'pf-theme-dark';
+export const KIALI_THEME = 'kiali-theme';
+
+export enum Theme {
+  Light = 'Light',
+  Dark = 'Dark'
 }
 
 export type TargetKind = 'app' | 'service' | 'workload';
@@ -97,16 +103,3 @@ export const isEqualTimeRange = (t1: TimeRange, t2: TimeRange): boolean => {
   }
   return true;
 };
-
-// Dark mode support
-export const darkmode = 'pf-theme-dark';
-export const themes = ['Default', 'Dark'];
-export const bgDefault = kialiStyle({
-  backgroundColor: PFColors.White
-});
-export const bgDark = kialiStyle({
-  backgroundColor: PFColors.Black800
-});
-export const bgDarkSoft = kialiStyle({
-  backgroundColor: PFColors.Black500
-});

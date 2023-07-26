@@ -21,7 +21,6 @@ import {
   hr,
   renderNoTraffic,
   NodeMetricType,
-  summaryHeader,
   summaryBodyTabs,
   summaryPanel,
   summaryFont,
@@ -39,8 +38,8 @@ import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { Direction } from 'types/MetricsOptions';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Edge } from '@patternfly/react-topology';
-import { themes } from '../../types/Common';
-import { PFColors } from '../../components/Pf/PfColors';
+import { getGraphBackgroundStyle } from 'styles/ThemeStyle';
+import { classes } from 'typestyle';
 
 type SummaryPanelEdgeMetricsState = {
   rates: Datapoint[];
@@ -143,14 +142,11 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     const isTcp = protocol === Protocol.TCP;
     const isRequests = isHttp || (isGrpc && this.props.trafficRates.includes(TrafficRate.GRPC_REQUEST));
 
-    const bgStyle = {
-      backgroundColor: this.props.theme === themes[1] ? PFColors.Black700 : PFColors.White,
-      color: this.props.theme === themes[1] ? PFColors.White : PFColors.Black700
-    };
+    const bgStyle = getGraphBackgroundStyle(this.props.theme);
 
     const SecurityBlock = () => {
       return (
-        <div className="panel-heading" style={{ ...summaryHeader, ...bgStyle }}>
+        <div className={'panel-heading'} style={bgStyle}>
           {isMtls && this.renderMTLSSummary(mTLSPercentage)}
           {hasPrincipals && (
             <>
@@ -170,8 +166,8 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     };
 
     return (
-      <div ref={this.mainDivRef} className={`panel panel-default ${summaryPanel}`} style={bgStyle}>
-        <div className="panel-heading" style={{ ...summaryHeader, ...bgStyle }}>
+      <div ref={this.mainDivRef} className={classes('panel', 'panel-default', summaryPanel)} style={bgStyle}>
+        <div className={'panel-heading'} style={bgStyle}>
           {getTitle(`Edge (${prettyProtocol(protocol)})`)}
           {renderBadgedLink(sourceData, undefined, 'From:  ')}
           {renderBadgedLink(destData, undefined, 'To:        ')}

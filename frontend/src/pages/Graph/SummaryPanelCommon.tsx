@@ -5,7 +5,6 @@ import { IstioMetricsOptions, Reporter, Direction } from '../../types/MetricsOpt
 import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
 import { Response } from '../../services/Api';
-import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 
 export enum NodeMetricType {
@@ -21,14 +20,9 @@ export const summaryBodyTabs = kialiStyle({
   padding: '10px 15px 0 15px'
 });
 
-export const summaryHeader: React.CSSProperties = {
-  backgroundColor: PFColors.White
-};
-
 export const summaryPanelWidth = '25em';
 
 export const summaryPanel = kialiStyle({
-  backgroundColor: PFColors.White,
   fontSize: 'var(--graph-side-panel--font-size)',
   height: '100%',
   margin: 0,

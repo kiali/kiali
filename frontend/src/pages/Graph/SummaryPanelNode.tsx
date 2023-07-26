@@ -9,7 +9,7 @@ import {
   renderHealth
 } from './SummaryLink';
 import { DecoratedGraphNodeData, DestService, NodeType, RankResult, SummaryPanelPropType } from '../../types/Graph';
-import { getTitle, summaryBodyTabs, summaryFont, summaryHeader, summaryPanel } from './SummaryPanelCommon';
+import { getTitle, summaryBodyTabs, summaryFont, summaryPanel } from './SummaryPanelCommon';
 import { decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { clickHandler, getOptions } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
@@ -38,8 +38,7 @@ import { useServiceDetailForGraphNode } from '../../hooks/services';
 import { useKialiSelector } from '../../hooks/redux';
 import { groupMenuStyle } from 'styles/DropdownStyles';
 import { serverConfig } from '../../config';
-import { themes } from '../../types/Common';
-import { PFColors } from '../../components/Pf/PfColors';
+import { getGraphBackgroundStyle } from 'styles/ThemeStyle';
 
 const summaryNodeActionsStyle = kialiStyle({
   $nest: {
@@ -174,14 +173,11 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       }
     }
 
-    const bgStyle = {
-      backgroundColor: this.props.theme === themes[1] ? PFColors.Black700 : PFColors.White,
-      color: this.props.theme === themes[1] ? PFColors.White : PFColors.Black700
-    };
+    const bgStyle = getGraphBackgroundStyle(this.props.theme);
 
     return (
-      <div ref={this.mainDivRef} className={`panel panel-default ${summaryPanel}`} style={bgStyle}>
-        <div className="panel-heading" style={{ ...summaryHeader, ...bgStyle }}>
+      <div ref={this.mainDivRef} className={classes('panel', 'panel-default', summaryPanel)} style={bgStyle}>
+        <div className={'panel-heading'} style={bgStyle}>
           {getTitle(nodeType)}
           <div>
             <span>

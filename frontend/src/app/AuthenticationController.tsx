@@ -21,7 +21,7 @@ import { history } from './History';
 import { NamespaceActions } from 'actions/NamespaceAction';
 import { Namespace } from 'types/Namespace';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
-import { DurationInSeconds, IntervalInMilliseconds } from 'types/Common';
+import { DurationInSeconds, IntervalInMilliseconds, KIALI_THEME, PF_THEME_DARK, Theme } from 'types/Common';
 import { config } from 'config';
 import { store } from 'store/ConfigStore';
 import { toGrpcRate, toHttpRate, toTcpRate, TrafficRate } from 'types/Graph';
@@ -296,6 +296,16 @@ class AuthenticationControllerComponent extends React.Component<
   }
 
   private setDocLayout = () => {
+    // Set theme from browser cache
+    if (document.documentElement) {
+      const theme = localStorage.getItem(KIALI_THEME) ?? Theme.Light;
+      if (theme === Theme.Dark) {
+        document.documentElement.classList.add(PF_THEME_DARK);
+      }
+      store.dispatch(GlobalActions.setTheme(theme));
+    }
+
+    // Set Kiosk mode
     if (document.body) {
       const isKiosk = isKioskMode();
       if (isKiosk) {

@@ -31,12 +31,12 @@ import { CancelablePromise, makeCancelablePromise } from '../../utils/Cancelable
 import { KialiIcon } from 'config/KialiIcon';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { ValidationStatus } from 'types/IstioObjects';
-import { PFColors } from '../../components/Pf/PfColors';
 import { ValidationSummary } from 'components/Validations/ValidationSummary';
 import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { descendents, edgesIn, edgesInOut, edgesOut, elems, select, selectOr } from 'pages/GraphPF/GraphPFElems';
-import { themes } from '../../types/Common';
+import { getGraphBackgroundStyle } from 'styles/ThemeStyle';
+import { classes } from 'typestyle';
 
 type SummaryPanelNamespaceBoxMetricsState = {
   grpcRequestIn: Datapoint[];
@@ -186,14 +186,11 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     const tooltipOutboundRef = React.createRef();
     const tooltipTotalRef = React.createRef();
 
-    const bgStyle = {
-      backgroundColor: this.props.theme === themes[1] ? PFColors.Black700 : PFColors.White,
-      color: this.props.theme === themes[1] ? PFColors.White : PFColors.Black700
-    };
+    const bgStyle = getGraphBackgroundStyle(this.props.theme);
 
     return (
-      <div className="panel panel-default" style={{ ...SummaryPanelNamespaceBox.panelStyle, ...bgStyle }}>
-        <div className="panel-heading" style={bgStyle}>
+      <div className={classes('panel', 'panel-default')} style={{ ...SummaryPanelNamespaceBox.panelStyle, ...bgStyle }}>
+        <div className={'panel-heading'} style={bgStyle}>
           {getTitle('Namespace')}
           {this.renderNamespace(namespace)}
           <br />

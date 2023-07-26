@@ -12,7 +12,9 @@ import { MeshClusters } from '../../types/Mesh';
 import { addError } from '../../utils/AlertUtils';
 import { KialiAppState } from '../../store/Store';
 import { useSelector } from 'react-redux';
-import { bgDark, bgDefault, themes } from '../../types/Common';
+import { Theme } from '../../types/Common';
+import { classes } from 'typestyle';
+import { bgDark, bgLight } from 'styles/ThemeStyle';
 
 export const MeshPage: React.FunctionComponent = () => {
   const [meshClustersList, setMeshClustersList] = React.useState(null as MeshClusters | null);
@@ -120,14 +122,14 @@ export const MeshPage: React.FunctionComponent = () => {
 
   return (
     <>
-      <div className={bgDefault}>
+      <div className={theme === Theme.Light ? bgLight : bgDark}>
         <DefaultSecondaryMasthead
           hideNamespaceSelector={true}
           rightToolbar={<RefreshButton key={'Refresh'} handleRefresh={fetchMeshClusters} />}
         />
       </div>
       <RenderContent>
-        <div className={theme === themes[0] ? `${bgDefault} ${containerPadding}` : `${bgDark} ${containerPadding}`}>
+        <div className={classes(containerPadding, theme === Theme.Light ? bgLight : bgDark)}>
           <Table aria-label="Sortable Table" cells={columns} onSort={onSortHandler} rows={clusterRows} sortBy={sortBy}>
             <TableHeader />
             <TableBody />

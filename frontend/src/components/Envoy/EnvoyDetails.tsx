@@ -41,8 +41,8 @@ import {
   defaultTab as workloadDefaultTab
 } from '../../pages/WorkloadDetails/WorkloadDetailsPage';
 import { istioAceEditorStyle } from 'styles/AceEditorStyle';
-import { themes, TimeInMilliseconds } from '../../types/Common';
-import { PFColors } from '../Pf/PfColors';
+import { Theme, TimeInMilliseconds } from '../../types/Common';
+import { bgDarkMedium, bgLight } from 'styles/ThemeStyle';
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
@@ -284,17 +284,13 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     if (!envoyMetricsDashboardRef) {
       filteredEnvoyTabs = envoyTabs.slice(0, envoyTabs.length - 1);
     }
-    const ace_theme = this.props.theme === themes[1] ? 'twilight' : 'eclipse';
+    const ace_theme = this.props.theme === Theme.Light ? 'eclipse' : 'twilight';
 
     const tabs = filteredEnvoyTabs.map((value, index) => {
       const title = value.charAt(0).toUpperCase() + value.slice(1);
       return (
         <Tab
-          style={
-            this.props.theme === themes[1]
-              ? { backgroundColor: PFColors.Black700 }
-              : { backgroundColor: PFColors.White }
-          }
+          className={this.props.theme === Theme.Light ? bgLight : bgDarkMedium}
           key={'tab_' + value}
           eventKey={index}
           title={title}

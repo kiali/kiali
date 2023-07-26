@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Dropdown, DropdownItem, DropdownToggle } from '@patternfly/react-core';
 import { SessionTimeout } from '../../SessionTimeout/SessionTimeout';
 import { config } from '../../../config';
-import { MILLISECONDS } from '../../../types/Common';
+import { KIALI_THEME, MILLISECONDS, PF_THEME_DARK, Theme } from '../../../types/Common';
 import { Timer } from 'globals';
 import { KialiAppState, LoginSession } from '../../../store/Store';
 import { authenticationConfig } from '../../../config/AuthenticationConfig';
@@ -15,12 +15,9 @@ import * as API from '../../../services/Api';
 import { store } from '../../../store/ConfigStore';
 import { GlobalActions } from '../../../actions/GlobalActions';
 
-const darkmode = 'pf-theme-dark';
-const darkmodeKiali = 'kiali-theme-dark';
-const themes = ['Default', 'Dark'];
-
 type UserProps = {
   session?: LoginSession;
+  theme: string;
   logout: () => void;
   extendSession: (session: LoginSession) => void;
 };
@@ -32,7 +29,6 @@ type UserState = {
   timeLeftTimerId?: Timer;
   isDropdownOpen: boolean;
   isSessionTimeoutDismissed: boolean;
-  theme: string;
 };
 
 class UserDropdownComponent extends React.Component<UserProps, UserState> {
@@ -42,8 +38,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
       showSessionTimeOut: false,
       timeCountDownSeconds: this.timeLeft() / MILLISECONDS,
       isSessionTimeoutDismissed: false,
-      isDropdownOpen: false,
-      theme: themes[0]
+      isDropdownOpen: false
     };
   }
   componentDidMount() {
@@ -102,16 +97,14 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
   };
 
   handleTheme = () => {
-    if (this.state.theme === themes[0]) {
-      this.setState({ theme: themes[1] });
-      document.documentElement.classList.add(darkmode);
-      document.body.classList.add(darkmodeKiali); // Avoid to override OpenShift styles
-      store.dispatch(GlobalActions.setTheme(themes[1]));
+    if (this.props.theme === Theme.Light) {
+      document.documentElement.classList.add(PF_THEME_DARK);
+      store.dispatch(GlobalActions.setTheme(Theme.Dark));
+      localStorage.setItem(KIALI_THEME, Theme.Dark);
     } else {
-      this.setState({ theme: themes[0] });
-      document.documentElement.classList.remove(darkmode);
-      document.body.classList.add(darkmodeKiali); // Avoid to override OpenShift styles
-      store.dispatch(GlobalActions.setTheme(themes[0]));
+      document.documentElement.classList.remove(PF_THEME_DARK);
+      store.dispatch(GlobalActions.setTheme(Theme.Light));
+      localStorage.setItem(KIALI_THEME, Theme.Light);
     }
   };
 
@@ -146,7 +139,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
           </DropdownItem>
         )}
         <DropdownItem key={'theme_update'} onClick={this.handleTheme}>
-          {this.state.theme === themes[0] ? themes[1] : themes[0]} theme
+          {this.props.theme === Theme.Light ? Theme.Dark : Theme.Light} theme
         </DropdownItem>
       </>
     );
@@ -188,7 +181,8 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  session: state.authentication.session
+  session: state.authentication.session,
+  theme: state.globalState.theme
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
