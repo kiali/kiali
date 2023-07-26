@@ -112,6 +112,10 @@ Options:
     than to install its own operator.
     Default: helm
 
+-rc|--rebuild-cluster <true|false>
+    If true, any existing cluster will be destroyed and a new one will be rebuilt.
+    Default: false
+
 -sd|--src-dir <directory>
     Where the git source repositories will be cloned.
     Default: /tmp/KIALI-GIT-KIND
@@ -167,6 +171,7 @@ while [[ $# -gt 0 ]]; do
     -lpn|--logs-project-name)     LOGS_PROJECT_NAME="$2";     shift;shift; ;;
     -oe|--olm-enabled)            OLM_ENABLED="$2";           shift;shift; ;;
     -oi|--operator-installer)     OPERATOR_INSTALLER="$2";    shift;shift; ;;
+    -rc|--rebuild-cluster)        REBUILD_CLUSTER="$2";       shift;shift; ;;
     -sd|--src-dir)                SRC="$2";                   shift;shift; ;;
     -st|--skip-tests)             SKIP_TESTS="$2";            shift;shift; ;;
     -sv|--spec-version)           SPEC_VERSION="$2";          shift;shift; ;;
@@ -185,6 +190,7 @@ SRC="${SRC:-/tmp/KIALI-GIT-KIND}"
 DORP="${DORP:-docker}"
 GIT_CLONE_PROTOCOL="${GIT_CLONE_PROTOCOL:-git}"
 OLM_ENABLED="${OLM_ENABLED:-false}"
+REBUILD_CLUSTER="${REBUILD_CLUSTER:-false}"
 
 KIND_NAME="${KIND_NAME:-ci}"
 CI="${CI:-false}"
@@ -269,6 +275,7 @@ LOGS_LOCAL_SUBDIR_ABS=$LOGS_LOCAL_SUBDIR_ABS
 LOGS_PROJECT_NAME=$LOGS_PROJECT_NAME
 OLM_ENABLED=$OLM_ENABLED
 OPERATOR_INSTALLER=$OPERATOR_INSTALLER
+REBUILD_CLUSTER=$REBUILD_CLUSTER
 SKIP_TESTS=$SKIP_TESTS
 SPEC_VERSION=$SPEC_VERSION
 SRC=$SRC
@@ -350,6 +357,11 @@ fi
 #if [ "${DORP}" == "podman" ]; then
 #  export KIND_EXPERIMENTAL_PROVIDER=podman
 #fi
+
+if [ "${REBUILD_CLUSTER}" == "true" ]; then
+  infomsg "Destroying any existing cluster to ensure a new one will be rebuilt."
+  ${KIND_EXE} delete cluster --name ${KIND_NAME}
+fi
 
 if ${KIND_EXE} get kubeconfig --name ${KIND_NAME} > /dev/null 2>&1; then
   infomsg "Kind cluster named [${KIND_NAME}] already exists - it will be used as-is"
