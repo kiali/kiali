@@ -24,7 +24,7 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 0,
       isPageVisible: true,
       kiosk: '',
-      theme: Theme.Light
+      theme: ''
     });
   });
 
