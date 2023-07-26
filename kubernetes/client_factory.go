@@ -72,7 +72,7 @@ func GetClientFactory() (ClientFactory, error) {
 
 		// Get the normal configuration
 		var config *rest.Config
-		config, err = GetConfigForLocalCluster()
+		config, err = getConfigForLocalCluster()
 		if err != nil {
 			return
 		}
@@ -467,21 +467,22 @@ func (cf *clientFactory) getConfig(clusterInfo *RemoteClusterInfo) (*rest.Config
 			return nil, err
 		}
 
-		if !kialiConfig.KialiFeatureFlags.Clustering.EnableExecProvider {
-			remoteConfig.ExecProvider = nil
-		}
-
 		// Use the remote config entirely for remote clusters.
 		clientConfig = *remoteConfig
 	} else {
+		// Just read the token and then use the base config.
 		// We're an in cluster client. Read the kiali service account token.
 		kialiToken, err := GetKialiTokenForHomeCluster()
 		if err != nil {
 			return nil, fmt.Errorf("unable to get Kiali service account token: %s", err)
 		}
 
-		// Copy just the token for in cluster
+		// Copy over the base rest config and the token
 		clientConfig.BearerToken = kialiToken
+	}
+
+	if !kialiConfig.KialiFeatureFlags.Clustering.EnableExecProvider {
+		clientConfig.ExecProvider = nil
 	}
 
 	// Override some settings with what's in kiali config

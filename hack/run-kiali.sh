@@ -539,6 +539,15 @@ if ! echo "${LOG_LEVEL}" | grep -qiE "^(trace|debug|info|warn|error|fatal)$"; th
 [ "${ENABLE_SERVER}" == "false" -a "${REBOOTABLE}" == "true" ] && infomsg "--enable-server was set to false - turning off rebootable flag for you" && REBOOTABLE="false"
 [ "${COPY_CLUSTER_SECRETS}" != "true" -a "${COPY_CLUSTER_SECRETS}" != "false" ] && errormsg "--copy-cluster-secrets must be 'true' or 'false'" && exit 1
 
+REMOTE_SECRET_PATH=""
+if [ "${KUBE_CONTEXT}" == "current" ]; then
+  infomsg "Will use the current context as-is: $(${CLIENT_EXE} config current-context)"
+  # Re-use your current kubeconfig file.
+  REMOTE_SECRET_PATH="${HOME}/.kube/config"
+else
+  REMOTE_SECRET_PATH="${TMP_DIR}/kubeconfig"
+fi
+
 # Build the config file from the template
 
 KIALI_CONFIG_FILE="${TMP_DIR}/run-kiali-config.yaml"
@@ -549,6 +558,7 @@ cat ${KIALI_CONFIG_TEMPLATE_FILE} | \
   GRAFANA_URL=${GRAFANA_URL} \
   TRACING_URL=${TRACING_URL} \
   UI_CONSOLE_DIR=${UI_CONSOLE_DIR}   \
+  REMOTE_SECRET_PATH=${REMOTE_SECRET_PATH} \
   envsubst > ${KIALI_CONFIG_FILE}
 
 # Kiali wants the UI Console in a directory called "console" under its cwd
@@ -606,27 +616,19 @@ fi
 # Kiali will report errors in this case because it will be missing the service account, and
 # the current user may have permissions that are different than the Kiali service account.
 # But the benefit of this is that you do not need to have a Kiali deployment in the cluster.
-setup_kubeconfig() {
-  local kubeconfig=""
-  if [ "${KUBE_CONTEXT}" == "current" ]; then
-    infomsg "Will use the current context as-is: $(${CLIENT_EXE} config current-context)"
-    # Re-use your current kubeconfig file.
-    kubeconfig="${HOME}/.kube/config"
-  else
-    kubeconfig="${TMP_DIR}/kubeconfig"
+if [ "${KUBE_CONTEXT}" != "current" ]; then
+  TOKEN_FILE="${TMP_DIR}/token"
+  CA_FILE="${TMP_DIR}/ca.crt"
 
-    TOKEN_FILE="${TMP_DIR}/token"
-    CA_FILE="${TMP_DIR}/ca.crt"
+  infomsg "Attempting to obtain the service account token and certificates..."
+  SERVICE_ACCOUNT_NAME="$(${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get sa -l app.kubernetes.io/name=kiali -o jsonpath={.items[0].metadata.name})"
+  if [ -z "${SERVICE_ACCOUNT_NAME}" ]; then
+    errormsg "Cannot get the service account name. Kiali must be deployed in [${ISTIO_NAMESPACE}]. If you do not want to deploy Kiali in the cluster, use '--kube-context current'"
+    exit 1
+  fi
 
-    infomsg "Attempting to obtain the service account token and certificates..."
-    SERVICE_ACCOUNT_NAME="$(${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get sa -l app.kubernetes.io/name=kiali -o jsonpath={.items[0].metadata.name})"
-    if [ -z "${SERVICE_ACCOUNT_NAME}" ]; then
-      errormsg "Cannot get the service account name. Kiali must be deployed in [${ISTIO_NAMESPACE}]. If you do not want to deploy Kiali in the cluster, use '--kube-context current'"
-      exit 1
-    fi
-
-    # Newer k8s/OpenShift clusters no longer provide secrets for SAs - so manually create a secret that will contain the certs/token
-    cat <<EOM | ${CLIENT_EXE} apply -f -
+  # Newer k8s/OpenShift clusters no longer provide secrets for SAs - so manually create a secret that will contain the certs/token
+  cat <<EOM | ${CLIENT_EXE} apply -f -
 apiVersion: v1
 kind: Secret
 metadata:
@@ -637,41 +639,24 @@ metadata:
 type: kubernetes.io/service-account-token
 EOM
 
-    wait_for_secret=1
-    until [ $wait_for_secret -eq 5 ] || [ "$(${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get secret ${SERVICE_ACCOUNT_SECRET_NAME} -o jsonpath="{.data.token}" 2> /dev/null)" != "" ] ; do
-      sleep $(( wait_for_secret++ ))
-    done
+  wait_for_secret=1
+  until [ $wait_for_secret -eq 5 ] || [ "$(${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get secret ${SERVICE_ACCOUNT_SECRET_NAME} -o jsonpath="{.data.token}" 2> /dev/null)" != "" ] ; do
+    sleep $(( wait_for_secret++ ))
+  done
 
-    ${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get secret ${SERVICE_ACCOUNT_SECRET_NAME} -o jsonpath="{.data.token}" | base64 --decode > "${TOKEN_FILE}"
-    ${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get secret ${SERVICE_ACCOUNT_SECRET_NAME} -o jsonpath="{.data['ca\.crt']}" | base64 --decode > "${CA_FILE}"
-    if [ ! -s "${TOKEN_FILE}"  ]; then errormsg "Cannot obtain the Kiali service account token"; exit 1; fi
-    if [ ! -s "${CA_FILE}"  ]; then errormsg "Cannot obtain the Kiali service account ca.crt"; exit 1; fi
-    chmod 'u=r,go=' "${TOKEN_FILE}" "${CA_FILE}"
+  ${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get secret ${SERVICE_ACCOUNT_SECRET_NAME} -o jsonpath="{.data.token}" | base64 --decode > "${TOKEN_FILE}"
+  ${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get secret ${SERVICE_ACCOUNT_SECRET_NAME} -o jsonpath="{.data['ca\.crt']}" | base64 --decode > "${CA_FILE}"
+  if [ ! -s "${TOKEN_FILE}"  ]; then errormsg "Cannot obtain the Kiali service account token"; exit 1; fi
+  if [ ! -s "${CA_FILE}"  ]; then errormsg "Cannot obtain the Kiali service account ca.crt"; exit 1; fi
+  chmod 'u=r,go=' "${TOKEN_FILE}" "${CA_FILE}"
 
-    infomsg "Setting up kubeconfig at [${kubeconfig}]"
-    # Embedding the ca cert so we don't have pathing issues.
-    ${CLIENT_EXE} config set-cluster ${KUBE_CONTEXT} --kubeconfig="${kubeconfig}" "--server=https://${KUBERNETES_API_HOST}:${KUBERNETES_API_PORT}" --certificate-authority="${CA_FILE}" --embed-certs
-    ${CLIENT_EXE} config set-credentials ${KUBE_CONTEXT} --kubeconfig="${kubeconfig}" --token="$(cat ${TOKEN_FILE})"
-    ${CLIENT_EXE} config set-context ${KUBE_CONTEXT} --kubeconfig="${kubeconfig}" --user=${KUBE_CONTEXT} --cluster=${KUBE_CONTEXT} --namespace=${ISTIO_NAMESPACE}
-    ${CLIENT_EXE} config use-context --kubeconfig="${kubeconfig}" ${KUBE_CONTEXT}
-  fi
-  
-  # This is a directory hardcoded into the Kial server - there is no way to configure it to be anything else.
-  # We must link our kubeconfig to the hardcoded path that the Kiali server will look for.
-  # TODO: Make this path configurable inside kiali server.
-  REMOTE_SECRET_DIR="/kiali-remote-secret"
-  if [ ! -d "${REMOTE_SECRET_DIR}" ]; then
-    errormsg "You first must prepare the secrets directory: sudo mkdir -p ${REMOTE_SECRET_DIR}; sudo chmod ugo+w ${REMOTE_SECRET_DIR}"
-    exit 1
-  fi
-
-  REMOTE_SECRET_FILE="${REMOTE_SECRET_DIR}/kiali"
-
-  rm -f "${REMOTE_SECRET_FILE}"
-  ln -s "${kubeconfig}" "${REMOTE_SECRET_FILE}"
-}
-
-setup_kubeconfig
+  infomsg "Setting up kubeconfig at [${REMOTE_SECRET_PATH}]"
+  # Embedding the ca cert so we don't have pathing issues.
+  ${CLIENT_EXE} config set-cluster ${KUBE_CONTEXT} --kubeconfig="${REMOTE_SECRET_PATH}" "--server=https://${KUBERNETES_API_HOST}:${KUBERNETES_API_PORT}" --certificate-authority="${CA_FILE}" --embed-certs
+  ${CLIENT_EXE} config set-credentials ${KUBE_CONTEXT} --kubeconfig="${REMOTE_SECRET_PATH}" --token="$(cat ${TOKEN_FILE})"
+  ${CLIENT_EXE} config set-context ${KUBE_CONTEXT} --kubeconfig="${REMOTE_SECRET_PATH}" --user=${KUBE_CONTEXT} --cluster=${KUBE_CONTEXT} --namespace=${ISTIO_NAMESPACE}
+  ${CLIENT_EXE} config use-context --kubeconfig="${REMOTE_SECRET_PATH}" ${KUBE_CONTEXT}
+fi
 
 # Functions that port-forward to components we need
 

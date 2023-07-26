@@ -35,6 +35,9 @@ func SetConfig(t *testing.T, newConfig config.Config) {
 // the default path at /var/run/secrets/... which probably doesn't exist and
 // we probably don't want to use it even if it does.
 // This sets globals so it is NOT safe to use in parallel tests.
+// It really should just be used for internal client factory tests
+// since it has side effects with globals and local files/env vars.
+// If you need a test client factory outside this package, use the mock implementation.
 func NewTestingClientFactory(t *testing.T) *clientFactory {
 	t.Helper()
 

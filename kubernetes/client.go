@@ -16,11 +16,6 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
-// RemoteSecretData is used to identify the remote cluster Kiali will connect to as its "local cluster".
-// This is to support installing Kiali in the control plane, but observing only the data plane in the remote cluster.
-// Experimental feature. See: https://github.com/kiali/kiali/issues/3002
-const RemoteSecretData = "/kiali-remote-secret/kiali"
-
 var (
 	emptyGetOptions  = meta_v1.GetOptions{}
 	emptyListOptions = meta_v1.ListOptions{}
@@ -122,13 +117,14 @@ func NewClientWithRemoteClusterInfo(config *rest.Config, remoteClusterInfo *Remo
 	return client, nil
 }
 
-// GetConfigForLocalCluster return a client with the correct configuration
+// getConfigForLocalCluster return a client with the correct configuration
 // Returns configuration if Kiali is in Cluster when InCluster is true
 // Returns configuration if Kiali is not in Cluster when InCluster is false
 // It returns an error on any problem
-func GetConfigForLocalCluster() (*rest.Config, error) {
-	if remoteSecret, readErr := GetRemoteSecret(RemoteSecretData); readErr == nil {
-		log.Debugf("Using remote secret for local cluster config. Kiali must be running outside the kube cluster.")
+func getConfigForLocalCluster() (*rest.Config, error) {
+	remoteSecretPath := kialiconfig.Get().Deployment.RemoteSecretPath
+	if remoteSecret, readErr := GetRemoteSecret(remoteSecretPath); readErr == nil {
+		log.Debugf("Using remote secret for local cluster config found at: [%s]. Kiali must be running outside the kube cluster.", remoteSecretPath)
 		return clientcmd.NewDefaultClientConfig(*remoteSecret, nil).ClientConfig()
 	} else {
 		log.Debugf("Unable to read remote secret. It may or may not exist. Error: %v. Falling back to in cluster config", readErr)

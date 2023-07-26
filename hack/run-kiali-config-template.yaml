@@ -19,7 +19,8 @@ auth:
   strategy: "anonymous"
 
 deployment:
-  accessible_namespaces: ['**']
+  accessible_namespaces: ["**"]
+  remote_secret_path: "${REMOTE_SECRET_PATH}"
 
 external_services:
   custom_dashboards:
@@ -41,11 +42,8 @@ external_services:
     in_cluster_url: "${TRACING_URL}"
     url: "${TRACING_URL}"
 
-kubernetes_config:
-  cache_enabled: true
-
 login_token:
-   signing_key: "notsecure"
+  signing_key: "notsecure"
 
 server:
   static_content_root_directory: "${UI_CONSOLE_DIR}"
