@@ -114,7 +114,7 @@ Options:
 
 -sd|--src-dir <directory>
     Where the git source repositories will be cloned.
-    Default: /tmp/KIALI-GIT
+    Default: /tmp/KIALI-GIT-KIND
 
 -st|--skip-tests <tests>
     Space-separated list of all the molecule tests to be skipped.
@@ -181,7 +181,7 @@ set -e
 
 # set up some of our defaults
 CLIENT_EXE=${CLIENT_EXE:-/usr/bin/kubectl}
-SRC="${SRC:-/tmp/KIALI-GIT}"
+SRC="${SRC:-/tmp/KIALI-GIT-KIND}"
 DORP="${DORP:-docker}"
 GIT_CLONE_PROTOCOL="${GIT_CLONE_PROTOCOL:-git}"
 OLM_ENABLED="${OLM_ENABLED:-false}"
