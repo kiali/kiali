@@ -226,3 +226,19 @@ Feature: Kiali Graph page - Display menu
     And user opens display menu
     Then the display menu opens
     And the display menu has default settings
+
+  @error-rates-app
+  @graph-page-display
+  Scenario: User observes some options not being clickable when switching to Service graph 
+    When user "disables" "service nodes" option
+    And user "enables" "operation nodes" option
+    And user selects "SERVICE" graph type
+    And user opens display menu
+    Then the display menu opens
+    And the "service nodes" option should "not be checked" and "disabled"
+    And the "operation nodes" option should "be checked" and "disabled"
+    When user selects "APP" graph type
+    And user opens display menu
+    Then the display menu opens
+    And the "service nodes" option should "not be checked" and "enabled"
+    And the "operation nodes" option should "be checked" and "enabled"
