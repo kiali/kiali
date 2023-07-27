@@ -30,10 +30,10 @@ func (a MeshCheckAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *
 		return
 	}
 
-	a.applySidecarsChecks(trafficMap, globalInfo, namespaceInfo)
+	a.applyMeshChecks(trafficMap, globalInfo, namespaceInfo)
 }
 
-func (a *MeshCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a *MeshCheckAppender) applyMeshChecks(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	for _, n := range trafficMap {
 		// skip if we already determined there is a missing sidecar. we can process the same
 		// node multiple times because to ensure we check every node (missing sidecars indicate missing
@@ -74,10 +74,12 @@ func (a *MeshCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap, glo
 				for _, workload := range workloads {
 					if !workload.IstioSidecar {
 						hasIstioSidecar = false
-						break
 					}
 					if !workload.IstioAmbient {
 						hasIstioAmbient = false
+					}
+					if !hasIstioSidecar && !hasIstioAmbient {
+						break
 					}
 				}
 			}
