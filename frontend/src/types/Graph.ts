@@ -373,8 +373,6 @@ export interface GraphNodeData {
   hasFaultInjection?: boolean;
   hasHealthConfig?: HealthAnnotationType;
   hasMirroring?: boolean;
-  hasMissingSC?: boolean;
-  hasMissingA?: boolean;
   hasRequestRouting?: boolean;
   hasRequestTimeout?: boolean;
   hasTCPTrafficShifting?: boolean;
@@ -405,6 +403,7 @@ export interface GraphNodeData {
   isRoot?: boolean;
   isServiceEntry?: SEInfo;
   labels?: { [key: string]: string };
+  outOfMesh?: boolean;
   parent?: string;
   service?: string;
   traffic?: ProtocolTraffic[];

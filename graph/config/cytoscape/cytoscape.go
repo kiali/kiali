@@ -105,8 +105,6 @@ type NodeData struct {
 	HasFaultInjection     bool                `json:"hasFaultInjection,omitempty"`     // true (vs has fault injection) | false
 	HasHealthConfig       HealthConfig        `json:"hasHealthConfig,omitempty"`       // set to the health config override
 	HasMirroring          bool                `json:"hasMirroring,omitempty"`          // true (has mirroring) | false
-	HasMissingA           bool                `json:"hasMissingA,omitempty"`           // true (has missing Ambient annotations) | false
-	HasMissingSC          bool                `json:"hasMissingSC,omitempty"`          // true (has missing sidecar) | false
 	HasRequestRouting     bool                `json:"hasRequestRouting,omitempty"`     // true (vs has request routing) | false
 	HasRequestTimeout     bool                `json:"hasRequestTimeout,omitempty"`     // true (vs has request timeout) | false
 	HasTCPTrafficShifting bool                `json:"hasTCPTrafficShifting,omitempty"` // true (vs has tcp traffic shifting) | false
@@ -119,6 +117,7 @@ type NodeData struct {
 	IsIdle                bool                `json:"isIdle,omitempty"`                // true | false
 	IsInaccessible        bool                `json:"isInaccessible,omitempty"`        // true if the node exists in an inaccessible namespace
 	IsK8sGatewayAPI       bool                `json:"isK8sGatewayAPI,omitempty"`       // true (object is auto-generated from K8s API Gateway) | false
+	IsOutOfMesh           bool                `json:"isOutOfMesh,omitempty"`           // true (has missing sidecar) | false
 	IsOutside             bool                `json:"isOutside,omitempty"`             // true | false
 	IsRoot                bool                `json:"isRoot,omitempty"`                // true | false
 	IsServiceEntry        *graph.SEInfo       `json:"isServiceEntry,omitempty"`        // set static service entry information
@@ -343,14 +342,9 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 			nd.HasVS = &VSInfo{Hostnames: configuredHostnames}
 		}
 
-		// set sidecars checks, if available
-		if val, ok := n.Metadata[graph.HasMissingSC]; ok {
-			nd.HasMissingSC = val.(bool)
-		}
-
-		// set ambient checks, if available
-		if val, ok := n.Metadata[graph.HasMissingA]; ok {
-			nd.HasMissingA = val.(bool)
+		// set mesh checks, if available
+		if val, ok := n.Metadata[graph.IsOutOfMesh]; ok {
+			nd.IsOutOfMesh = val.(bool)
 		}
 
 		// check if node is on another namespace
@@ -640,8 +634,7 @@ func generateBoxCompoundNodes(box map[string][]*NodeData, nodes *[]*NodeWrapper,
 			}
 
 			// assign each member node to the compound parent
-			nd.HasMissingSC = false // TODO: this is probably unecessarily noisy
-			nd.HasMissingA = false
+			nd.IsOutside = false // TODO: this is probably unecessarily noisy
 			nd.IsInaccessible = false
 			nd.IsOutside = false
 
@@ -660,8 +653,7 @@ func generateBoxCompoundNodes(box map[string][]*NodeData, nodes *[]*NodeWrapper,
 							nd.HealthData = n.HealthData
 						}
 					}
-					nd.HasMissingSC = nd.HasMissingSC || n.HasMissingSC
-					nd.HasMissingA = nd.HasMissingA || n.HasMissingA
+					nd.IsOutOfMesh = nd.IsOutOfMesh || n.IsOutOfMesh
 					nd.IsInaccessible = nd.IsInaccessible || n.IsInaccessible
 					nd.IsOutside = nd.IsOutside || n.IsOutside
 				}

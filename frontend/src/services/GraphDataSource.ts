@@ -174,7 +174,7 @@ export class GraphDataSource {
     }
 
     // Some appenders are expensive so only specify an appender if needed.
-    let appenders: AppenderString = 'deadNode,istio,serviceEntry,sidecarsCheck,ambientCheck,workloadEntry';
+    let appenders: AppenderString = 'deadNode,istio,serviceEntry,meshCheck,workloadEntry';
 
     if (fetchParams.includeHealth) {
       appenders += ',health';

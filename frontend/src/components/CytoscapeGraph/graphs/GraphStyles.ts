@@ -224,7 +224,10 @@ export class GraphStyles {
     // Badges portion of label...
 
     let badges = '';
-    if (cyGlobal.showMissingSidecars && node.hasMissingSC) {
+    if (
+      (cyGlobal.showMissingSidecars && node.outOfMesh && !serverConfig.ambientEnabled) ||
+      (cyGlobal.showMissingSidecars && node.outOfMesh && serverConfig.ambientEnabled)
+    ) {
       badges = `<span class="${NodeIconMS} ${badgeMargin(badges)}"></span> ${badges}`;
     }
     if (cyGlobal.showVirtualServices) {

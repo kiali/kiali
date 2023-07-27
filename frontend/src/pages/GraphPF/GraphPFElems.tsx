@@ -170,7 +170,7 @@ export const setNodeAttachments = (node: Node<NodeModel>, settings: GraphPFSetti
   const data = node.getData() as NodeData;
   const attachments = [] as React.ReactNode[];
 
-  if (settings.showMissingSidecars && data.hasMissingSC) {
+  if (settings.showMissingSidecars && data.outOfMesh) {
     attachments.push(getDecorator(node, TopologyQuadrant.lowerRight, badgeMap.get('MS')!));
   }
   if (data.hasWorkloadEntry) {
