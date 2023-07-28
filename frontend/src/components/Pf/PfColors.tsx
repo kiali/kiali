@@ -46,7 +46,7 @@ export enum PFColors {
   Active = 'var(--pf-global--active-color--400)',
   ActiveText = 'var(--pf-global--primary-color--200)',
   Badge = 'var(--pf-global--palette--blue-300)',
-  Replay = 'var(--pf-global--active-color--300)', // also, see dep in _Time.scss
+  Replay = 'var(--pf-global--active-color--300)',
 
   // Health/Alert colors https://www.patternfly.org/v4/design-guidelines/styles/colors
   Danger = 'var(--pf-global--danger-color--100)',

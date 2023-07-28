@@ -74,7 +74,7 @@ const fullHeightStyle = kialiStyle({
 // For some reason checkbox as a ToolbarItem needs to be tweaked
 const toolbarInputStyle = kialiStyle({
   $nest: {
-    '& > input': {
+    '&.pf-c-check input[type=checkbox]': {
       marginTop: '2px'
     }
   }

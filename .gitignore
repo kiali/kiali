@@ -90,27 +90,6 @@ frontend/package-lock.json
 
 frontend/logs
 
-# compiled patternfly assets
-frontend/src/**/*.css
-frontend/src/**/*.css.map
-!frontend/src/index.css
-!frontend/src/css/.gitkeep
-frontend/src/img/*
-!frontend/src/img/.gitkeep
-frontend/src/fonts/*
-!frontend/src/fonts/.gitkeep
-frontend/src/sass/*
-!frontend/src/sass/index.sass
-
-# Commit Slider css
-!frontend/src/components/IstioWizards/Slider/styles/default.css
-
 # Cypress
 frontend/cypress/videos
 frontend/cypress/screenshots
-
-# Do not commit core-ui code to this repo
-core-ui
-
-# Do not commit plugin code to this repo
-ossmc

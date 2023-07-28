@@ -27,18 +27,3 @@ yarn-debug.log*
 yarn-error.log*
 
 package-lock.json
-
-# compiled patternfly assets
-src/**/*.css
-src/**/*.css.map
-!src/index.css
-!src/css/.gitkeep
-src/img/*
-!src/img/.gitkeep
-src/fonts/*
-!src/fonts/.gitkeep
-src/sass/*
-!src/sass/index.sass
-
-# Commit Slider css
-!src/components/IstioWizards/Slider/styles/default.css

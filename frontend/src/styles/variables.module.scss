@@ -1,7 +1,7 @@
 @value kialiFontSize: 14px;
 @value kialiFontSizePx: 14;
 
-.kiali {
+.style {
   // Set global base font size to 14px per current OpenShift design
   // https://github.com/openshift/console/blob/ef1212655ba60571aaeec666843cd9f1ef139189/frontend/public/style/_vars.scss#L16
   $font-size-base: kialiFontSize;

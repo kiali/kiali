@@ -24,6 +24,7 @@ import { titleStyle } from 'styles/DropdownStyles';
 import { PFColors } from '../Pf/PfColors';
 import { PromLabel } from 'types/Metrics';
 import { KialiIcon } from 'config/KialiIcon';
+import { classes } from 'typestyle';
 
 interface Props {
   onChanged: (state: MetricsSettings) => void;
@@ -43,7 +44,8 @@ type State = MetricsSettings & {
 const checkboxSelectAllStyle = kialiStyle({ marginLeft: 10 });
 const secondLevelStyle = kialiStyle({ marginLeft: 18 });
 const spacerStyle = kialiStyle({ height: '1em' });
-const titlePaddingStyle = kialiStyle({ paddingLeft: 0, fontSize: 'small' });
+const titleLabelStyle = kialiStyle({ paddingLeft: 0, marginBottom: '5px', fontSize: 'small' });
+const labelStyle = kialiStyle({ display: 'inline-block' });
 
 export class MetricsSettingsDropdown extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -252,7 +254,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
                     value={val}
                   />
                 ) : (
-                  <label>
+                  <label className={labelStyle}>
                     <Checkbox
                       id={val}
                       isChecked={lblObj.values[val]}
@@ -266,7 +268,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
           : null;
       displayGroupingLabels.push(
         <div key={'groupings_' + promName}>
-          <label>
+          <label className={labelStyle}>
             <Checkbox
               id={lblObj.displayName}
               label={lblObj.displayName}
@@ -280,7 +282,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     });
     return (
       <>
-        <label className={`${titlePaddingStyle} ${titleStyle}`}>Show metrics by:</label>
+        <label className={classes(titleLabelStyle, titleStyle, labelStyle)}>Show metrics by:</label>
         {displayGroupingLabels}
         <div className={spacerStyle} />
       </>
@@ -296,7 +298,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
 
     const displayHistogramOptions = [
       <div key="histo_avg">
-        <label>
+        <label className={labelStyle}>
           <Checkbox
             id="histo_avg"
             isChecked={this.state.showAverage && this.props.hasHistogramsAverage}
@@ -311,7 +313,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
         const checked = this.state.showQuantiles.includes(o);
         return (
           <div key={'histo_' + idx}>
-            <label>
+            <label className={labelStyle}>
               <Checkbox
                 id={o}
                 isChecked={checked && this.props.hasHistogramsPercentiles}
@@ -326,7 +328,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     );
     return (
       <>
-        <label className={`${titlePaddingStyle} ${titleStyle}`} style={{ paddingRight: '4px' }}>
+        <label className={classes(titleLabelStyle, titleStyle, labelStyle)} style={{ paddingRight: '4px' }}>
           Histograms:
         </label>
         <Tooltip

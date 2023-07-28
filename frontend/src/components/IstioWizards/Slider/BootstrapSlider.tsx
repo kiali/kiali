@@ -3,7 +3,6 @@
 import React from 'react';
 import Slider from 'bootstrap-slider-without-jquery';
 import _ from 'lodash';
-import { sliderStyle } from './SliderStyle';
 
 const orientation = {
   horizontal: 'horizontal',
@@ -114,7 +113,6 @@ export class BootstrapSlider extends React.Component<Props> {
   render() {
     return (
       <input
-        className={sliderStyle}
         type="range"
         ref={input => {
           this.sliderDiv = input;

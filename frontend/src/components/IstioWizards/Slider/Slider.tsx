@@ -4,7 +4,6 @@ import { Button, ButtonVariant, InputGroupText, TextInput, Tooltip, TooltipPosit
 import { Boundaries } from './Boundaries';
 import { kialiStyle } from 'styles/StyleUtils';
 import { MinusIcon, PlusIcon, ThumbTackIcon, MigrationIcon } from '@patternfly/react-icons';
-import './styles/default.css';
 
 export const noop = Function.prototype;
 

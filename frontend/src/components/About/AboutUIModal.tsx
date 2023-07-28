@@ -29,6 +29,14 @@ const iconStyle = kialiStyle({
   marginRight: '10px'
 });
 
+const textContentStyle = kialiStyle({
+  $nest: {
+    'dt, dd': {
+      lineHeight: 1.667
+    }
+  }
+});
+
 export class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState> {
   constructor(props: AboutUIModalProps) {
     super(props);
@@ -63,7 +71,7 @@ export class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModa
         brandImageAlt="Kiali Logo"
         noAboutModalBoxContentContainer={true}
       >
-        <TextContent>
+        <TextContent className={textContentStyle}>
           <TextList component="dl">
             <TextListItem key={'kiali-name'} component="dt">
               Kiali
@@ -88,7 +96,7 @@ export class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModa
         {this.props.warningMessages.length > 0 && (
           <Alert variant="warning" title={this.props.warningMessages[0]} style={{ marginTop: '1em' }} />
         )}
-        <TextContent>
+        <TextContent className={textContentStyle}>
           <Title headingLevel="h3" size={TitleSizes.xl} style={{ padding: '20px 0px 20px' }}>
             Components
           </Title>

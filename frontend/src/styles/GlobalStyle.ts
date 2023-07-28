@@ -8,6 +8,7 @@ export const globalStyle = kialiStyle({
   fontFamily: 'var(--pf-global--FontFamily--sans-serif)',
   fontSize: '14px',
   overflow: 'hidden',
+  color: '#363636',
   $nest: {
     /**
      * Kiosk mode
@@ -26,6 +27,15 @@ export const globalStyle = kialiStyle({
 
     '#root': {
       height: '100%'
+    },
+
+    img: {
+      verticalAlign: 'middle'
+    },
+
+    'input[type=checkbox], input[type=radio]': {
+      margin: '4px 0 0',
+      lineHeight: 'normal'
     },
 
     /**
@@ -80,11 +90,6 @@ export const globalStyle = kialiStyle({
       right: '118px'
     },
 
-    // Make sure tooltips are below datepicker popper but above secondary masthead
-    '.tooltip': {
-      zIndex: 10
-    },
-
     /**
      * Drawer panels should have less z-index than dropdowns
      */
@@ -114,6 +119,37 @@ export const globalStyle = kialiStyle({
 
     '.pf-c-chart svg': {
       overflow: 'visible !important'
+    },
+
+    // Table styles from bootstrap
+    '.table': {
+      width: '100%',
+      maxWidth: '100%',
+      $nest: {
+        // eslint-disable-next-line
+        '& > tbody > tr > td, \
+        & > tbody > tr > th, \
+        & > tfoot > tr > td, \
+        & > tfoot > tr > th, \
+        & > thead > tr > td, \
+        & > thead > tr > th': {
+          padding: '10px',
+          lineHeight: 1.66667,
+          verticalAlign: 'top',
+          borderTop: '1px solid #d1d1d1'
+        },
+
+        '& > thead > tr > th': {
+          verticalAlign: 'bottom',
+          borderBottom: '2px solid #d1d1d1'
+        },
+
+        // eslint-disable-next-line
+        '& > thead:first-child > tr:first-child > td, \
+        & > thead:first-child > tr:first-child > th': {
+          borderTop: 0
+        }
+      }
     },
 
     // Panel graph styles from bootstrap
