@@ -369,16 +369,16 @@ $CLIENT_EXE get pods -n ${NAMESPACE}
 if [ "${AMBIENT_ENABLED}" == "true" ]; then
   echo "Sidecar injection was not performed. Ambient support will be enabled."
   ${CLIENT_EXE} label namespace ${NAMESPACE} istio.io/dataplane-mode=ambient
-   # It could also be applied to service account
-   if [ "${WAYPOINT}" == "true" ]; then
-     # Verify Gateway API
-     echo "Verifying that Gateway API is installed; if it is not then it will be installed now."
-     $CLIENT_EXE get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-       { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v0.6.2" | $CLIENT_EXE apply -f -; }
-     # Create Waypoint proxy
-     echo "Create Waypoint proxy"
-     ${ISTIOCTL} x waypoint apply -n ${NAMESPACE}
-   fi
+  # It could also be applied to service account
+  if [ "${WAYPOINT}" == "true" ]; then
+    # Verify Gateway API
+    echo "Verifying that Gateway API is installed; if it is not then it will be installed now."
+    $CLIENT_EXE get crd gateways.gateway.networking.k8s.io &> /dev/null || \
+      { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v0.6.2" | $CLIENT_EXE apply -f -; }
+    # Create Waypoint proxy
+    echo "Create Waypoint proxy"
+    ${ISTIOCTL} x waypoint apply -n ${NAMESPACE}
+  fi
 else
   if [ "${AUTO_INJECTION}" == "false" -a "${MANUAL_INJECTION}" == "false" ]; then
     echo "WARNING! Sidecar injection was not performed and there is no Ambient support. This demo may not work until sidecars are injected."
