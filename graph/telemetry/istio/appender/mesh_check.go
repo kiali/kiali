@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"context"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 )
@@ -91,6 +92,8 @@ func (a *MeshCheckAppender) applyMeshChecks(trafficMap graph.TrafficMap, globalI
 		if !hasIstioSidecar && !hasIstioAmbient {
 			n.Metadata[graph.IsOutOfMesh] = true
 		}
+
+		n.Metadata[graph.IsAmbient] = a.isAmbientNs(n.Namespace, n.Cluster, globalInfo)
 	}
 }
 
@@ -101,6 +104,18 @@ func (a *MeshCheckAppender) namespaceOK(namespace string, namespaceInfo *graph.A
 	}
 	for _, ns := range a.AccessibleNamespaces {
 		if namespace == ns.Name {
+			return true
+		}
+	}
+	return false
+}
+
+// isAmbientNs returns true if the namespace has the ambient annotations
+func (a *MeshCheckAppender) isAmbientNs(namespace string, cluster string, globalInfo *graph.AppenderGlobalInfo) bool {
+	ns, _ := globalInfo.Business.Namespace.GetClusterNamespace(context.TODO(), namespace, cluster)
+
+	for _, label := range ns.Labels {
+		if label == "istio.io/dataplane-mode" {
 			return true
 		}
 	}

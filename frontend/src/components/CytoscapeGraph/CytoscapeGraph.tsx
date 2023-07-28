@@ -353,7 +353,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       isBox: target.data(NodeAttr.isBox),
       isIdle: targetOrBoxChildren.every(t => t.data(NodeAttr.isIdle)),
       isInaccessible: target.data(NodeAttr.isInaccessible),
-      isOutOfMesh: target.data(!NodeAttr.isAmbientNamespace || NodeAttr.hasMissingSC),
+      isOutOfMesh: target.data(NodeAttr.isOutOfMesh),
       isOutside: target.data(NodeAttr.isOutside),
       isServiceEntry: target.data(NodeAttr.isServiceEntry),
       namespace: target.data(NodeAttr.namespace),
