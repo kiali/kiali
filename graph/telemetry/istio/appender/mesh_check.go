@@ -6,6 +6,7 @@ import (
 )
 
 const MeshCheckAppenderName = "meshCheck"
+const SidecarsCheckAppenderName = "sidecarCheck"
 
 // MeshCheckAppender flags nodes whose backing workloads are missing at least one Envoy sidecar. Note that
 // a node with no backing workloads is not flagged.
