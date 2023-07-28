@@ -122,20 +122,25 @@ export class IstioStatusComponent extends React.Component<Props> {
       const icons = this.props.icons ? { ...defaultIcons, ...this.props.icons } : defaultIcons;
       const iconColor = this.tooltipColor();
       let Icon: React.ComponentClass<SVGIconProps> = ResourcesFullIcon;
+      let dataTestID: string = 'istio-status';
 
       if (iconColor === PFColors.Danger) {
         Icon = icons.ErrorIcon;
+        dataTestID = dataTestID + '-danger';
       } else if (iconColor === PFColors.Warning) {
         Icon = icons.WarningIcon;
+        dataTestID = dataTestID + '-warning';
       } else if (iconColor === PFColors.Info) {
         Icon = icons.InfoIcon;
+        dataTestID = dataTestID + '-info';
       } else if (iconColor === PFColors.Success) {
         Icon = icons.HealthyIcon;
+        dataTestID = dataTestID + '-success';
       }
 
       return (
         <Tooltip position={TooltipPosition.left} enableFlip={true} content={this.tooltipContent()} maxWidth={'25rem'}>
-          <Icon color={iconColor} style={{ verticalAlign: '-0.2em', marginRight: -8 }} />
+          <Icon color={iconColor} style={{ verticalAlign: '-0.2em', marginRight: -8 }} data-test={dataTestID} />
         </Tooltip>
       );
     }
