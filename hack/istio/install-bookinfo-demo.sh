@@ -27,7 +27,7 @@ DELETE_BOOKINFO="false"
 MINIKUBE_PROFILE="minikube"
 ARCH="amd64"
 WAIT_TIMEOUT="0" # can be things like "60s" or "30m"
-WAIPOINT="false"
+WAYPOINT="false"
 
 AMBIENT_ENABLED="false" # the script will set this to true only if Ambient is enabled and no sidecars are injected
 
@@ -92,9 +92,9 @@ while [[ $# -gt 0 ]]; do
       shift;
       ;;
     -w|--waypoint)
-          WAIPOINT="$2"
-          shift;shift
-          ;;
+      WAYPOINT="$2"
+      shift;shift
+      ;;
     -wt|--wait-timeout)
       WAIT_TIMEOUT="$2"
       shift;shift
@@ -183,13 +183,12 @@ if [ "${AUTO_INJECTION}" == "false" -a "${MANUAL_INJECTION}" == "false" ]; then
     if [ "${n}" == "ztunnel" ]; then
       AMBIENT_ENABLED="true"
       break
-    else
-      if [ "${WAYPOINT}" == "true" ]; then
-        echo "Waypoint proxy cannot be installed as Ambient is not enabled."
-        exit 1
-      fi
     fi
   done
+  if [ "${AMBIENT_ENABLED}" == "false" ] && [ "${WAYPOINT}" == "true" ]; then
+   echo "Waypoint proxy cannot be installed as Ambient is not enabled."
+   exit 1
+  fi
 fi
 
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
@@ -370,6 +369,16 @@ $CLIENT_EXE get pods -n ${NAMESPACE}
 if [ "${AMBIENT_ENABLED}" == "true" ]; then
   echo "Sidecar injection was not performed. Ambient support will be enabled."
   ${CLIENT_EXE} label namespace ${NAMESPACE} istio.io/dataplane-mode=ambient
+    # It could also be applied to service account
+    if [ "${WAYPOINT}" == "true" ] && [ "${AMBIENT_ENABLED}" == "true" ]; then
+      # Verify Gateway API
+      echo "Verify if Istio API is installed"
+      $CLIENT_EXE get crd gateways.gateway.networking.k8s.io &> /dev/null || \
+        { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v0.6.2" | $CLIENT_EXE apply -f -; }
+      # Create Waypoint proxy
+      echo "Create Waypoint proxy"
+      ${ISTIOCTL} x waypoint apply -n ${NAMESPACE}
+    fi
 else
   if [ "${AUTO_INJECTION}" == "false" -a "${MANUAL_INJECTION}" == "false" ]; then
     echo "WARNING! Sidecar injection was not performed and there is no Ambient support. This demo may not work until sidecars are injected."
@@ -456,16 +465,6 @@ spec:
        - cluster.local/ns/${NAMESPACE}/sa/default
        - cluster.local/ns/${ISTIO_NAMESPACE}/sa/istio-ingressgateway-service-account
 AUTHPOLICY
-      # It could also be applied to service account
-      if [ "${WAYPOINT}" == "true" ]; then
-        # Verify Gateway API
-        echo "Verify if Istio API is installed"
-        $CLIENT_EXE get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-          { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v0.6.2" | $CLIENT_EXE apply -f -; }
-        # Create Waypoint proxy
-        echo "Create Waypoint proxy"
-        ${ISTIOCTL} x waypoint apply -n ${NAMESPACE}
-      fi
     fi
   fi
 fi
