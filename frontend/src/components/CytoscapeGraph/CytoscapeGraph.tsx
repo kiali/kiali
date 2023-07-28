@@ -114,8 +114,8 @@ export interface GraphNodeTapEvent {
   aggregateValue?: string;
   app: string;
   cluster?: string;
-  hasMissingA: boolean;
-  hasMissingSC: boolean;
+  isAmbient: boolean;
+  isOutOfMesh: boolean;
   isBox?: string;
   isInaccessible: boolean;
   isOutside: boolean;
