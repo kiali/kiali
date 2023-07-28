@@ -729,7 +729,6 @@ export const TopologyContent: React.FC<{
         />
       }
     >
-      )
       <VisualizationSurface data-test="visualization-surface" state={{}} />
     </TopologyView>
   );
