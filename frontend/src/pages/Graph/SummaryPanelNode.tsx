@@ -383,7 +383,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
         )}
         {isOutOfMesh && serverConfig.ambientEnabled && (
           <div>
-            <KialiIcon.MissingSidecar />
+            <KialiIcon.OutOfMesh />
             <span style={{ paddingLeft: '4px' }}>Out of Mesh</span>
           </div>
         )}
