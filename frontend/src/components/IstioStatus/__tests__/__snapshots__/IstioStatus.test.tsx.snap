@@ -26,6 +26,7 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
 >
   <ResourcesFullIcon
     color="var(--pf-global--warning-color--100)"
+    data-test="istio-status-warning"
     noVerticalAlign={false}
     size="sm"
     style={
@@ -64,6 +65,7 @@ exports[`When both core and addon component have problems any component is in no
 >
   <ResourcesFullIcon
     color="var(--pf-global--danger-color--100)"
+    data-test="istio-status-danger"
     noVerticalAlign={false}
     size="sm"
     style={
@@ -102,6 +104,7 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
 >
   <ResourcesFullIcon
     color="var(--pf-global--danger-color--100)"
+    data-test="istio-status-danger"
     noVerticalAlign={false}
     size="sm"
     style={
@@ -140,6 +143,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
 >
   <ResourcesFullIcon
     color="var(--pf-global--warning-color--100)"
+    data-test="istio-status-warning"
     noVerticalAlign={false}
     size="sm"
     style={
@@ -188,6 +192,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
 >
   <ResourcesFullIcon
     color="var(--pf-global--danger-color--100)"
+    data-test="istio-status-danger"
     noVerticalAlign={false}
     size="sm"
     style={
@@ -226,6 +231,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
 >
   <ResourcesFullIcon
     color="var(--pf-global--danger-color--100)"
+    data-test="istio-status-danger"
     noVerticalAlign={false}
     size="sm"
     style={
@@ -259,6 +265,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
 >
   <ResourcesFullIcon
     color="var(--pf-global--info-color--100)"
+    data-test="istio-status-info"
     noVerticalAlign={false}
     size="sm"
     style={
@@ -292,6 +299,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
 >
   <ResourcesFullIcon
     color="var(--pf-global--info-color--100)"
+    data-test="istio-status-info"
     noVerticalAlign={false}
     size="sm"
     style={
