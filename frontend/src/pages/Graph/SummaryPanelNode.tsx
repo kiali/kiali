@@ -334,7 +334,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       isDead,
       isGateway,
       isK8sGatewayAPI,
-      outOfMesh
+      isOutOfMesh
     } = nodeData;
     const hasTrafficScenario =
       hasRequestRouting ||
@@ -375,13 +375,13 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
             <span style={{ paddingLeft: '4px' }}>Has Mirroring{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
           </div>
         )}
-        {outOfMesh && !serverConfig.ambientEnabled && (
+        {isOutOfMesh && !serverConfig.ambientEnabled && (
           <div>
             <KialiIcon.MissingSidecar />
             <span style={{ paddingLeft: '4px' }}>Has Missing Sidecar</span>
           </div>
         )}
-        {outOfMesh && serverConfig.ambientEnabled && (
+        {isOutOfMesh && serverConfig.ambientEnabled && (
           <div>
             <KialiIcon.MissingSidecar />
             <span style={{ paddingLeft: '4px' }}>Out of Mesh</span>
