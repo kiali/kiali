@@ -2,6 +2,7 @@ package appender
 
 import (
 	"context"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 )

@@ -115,9 +115,9 @@ export interface GraphNodeTapEvent {
   app: string;
   cluster?: string;
   isAmbient: boolean;
-  isOutOfMesh: boolean;
   isBox?: string;
   isInaccessible: boolean;
+  isOutOfMesh: boolean;
   isOutside: boolean;
   isServiceEntry: boolean;
   isIdle: boolean;
