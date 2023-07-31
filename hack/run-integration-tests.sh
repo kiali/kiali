@@ -81,11 +81,12 @@ elif [ "${TEST_SUITE}" == "backend-multi-cluster" ]; then
 elif [ "${TEST_SUITE}" == "frontend" ]; then
   "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token
   
+  ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
   # Install demo apps
-  "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl"
+  "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" -g "${ISTIO_INGRESS_IP}"
 
   # Get Kiali URL
-  KIALI_URL="http://$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')/kiali"
+  KIALI_URL="http://${ISTIO_INGRESS_IP}/kiali"
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
   # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722

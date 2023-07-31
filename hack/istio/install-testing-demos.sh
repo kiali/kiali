@@ -116,7 +116,7 @@ if [ "${DELETE_DEMOS}" != "true" ]; then
 
   else
     gateway_yaml=""
-    if [ -v "${GATEWAY_HOST}" ]; then 
+    if [ -v GATEWAY_HOST ]; then
       gateway_yaml=$(mktemp)
       cat << EOF > "${gateway_yaml}"
 apiVersion: networking.istio.io/v1alpha3
