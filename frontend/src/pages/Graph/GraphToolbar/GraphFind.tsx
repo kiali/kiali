@@ -1002,6 +1002,9 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
       case 'sc':
       case 'sidecar':
         return { target: 'node', selector: isNegation ? `[?${NodeAttr.isOutOfMesh}]` : `[^${NodeAttr.isOutOfMesh}]` };
+      case 'om':
+      case 'outofmesh':
+        return { target: 'node', selector: isNegation ? `[^${NodeAttr.isOutOfMesh}]` : `[?${NodeAttr.isOutOfMesh}]` };
       case 'tcpts':
       case 'tcptrafficshifting':
         return {

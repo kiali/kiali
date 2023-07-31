@@ -37,7 +37,7 @@ import { PeerAuthentication } from '../../types/IstioObjects';
 import { useServiceDetailForGraphNode } from '../../hooks/services';
 import { useKialiSelector } from '../../hooks/redux';
 import { groupMenuStyle } from 'styles/DropdownStyles';
-import {serverConfig} from "../../config";
+import { serverConfig } from '../../config';
 
 const summaryNodeActionsStyle = kialiStyle({
   $nest: {
