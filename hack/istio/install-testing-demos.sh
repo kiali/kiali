@@ -23,6 +23,7 @@ MINIKUBE_PROFILE="minikube"
 : ${ARCH:=amd64}
 : ${DELETE_DEMOS:=false}
 : ${ENABLE_INJECTION:=true}
+: ${GATEWAY_HOST:="")}
 ISTIO_NAMESPACE="istio-system"
 
 while [ $# -gt 0 ]; do
