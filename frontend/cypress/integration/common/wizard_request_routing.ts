@@ -1,223 +1,190 @@
-import {And, Before, Given, When} from "@badeball/cypress-cucumber-preprocessor";
+import { And, Before, Given, When } from '@badeball/cypress-cucumber-preprocessor';
 
-const url = "/console";
+const url = '/console';
 
 Before(() => {
-    // Forcing to not stop cypress on unexpected errors not related to the tests.
-    // There are some random failures due timeouts/loadtime/framework that throws some error in the browser.
-    // After reviewing the tests failures, those are unrelated to the app, so,
-    // it needs this event to not fail the CI action due some "slow" action or similar.
-    // This is something to review in future iterations when tests are solid, but I haven't found a better way to
-    // solve this issue.
-    cy.on("uncaught:exception", (err, runnable, promise) => {
-        // when the exception originated from an unhandled promise
-        // rejection, the promise is provided as a third argument
-        // you can turn off failing the test in this case
-        if (promise) {
-            return false
-        }
-        // we still want to ensure there are no other unexpected
-        // errors, so we let them fail the test
-    });
+  // Forcing to not stop cypress on unexpected errors not related to the tests.
+  // There are some random failures due timeouts/loadtime/framework that throws some error in the browser.
+  // After reviewing the tests failures, those are unrelated to the app, so,
+  // it needs this event to not fail the CI action due some "slow" action or similar.
+  // This is something to review in future iterations when tests are solid, but I haven't found a better way to
+  // solve this issue.
+  cy.on('uncaught:exception', (err, runnable, promise) => {
+    // when the exception originated from an unhandled promise
+    // rejection, the promise is provided as a third argument
+    // you can turn off failing the test in this case
+    if (promise) {
+      return false;
+    }
+    // we still want to ensure there are no other unexpected
+    // errors, so we let them fail the test
+  });
 });
 
 Given('user opens the namespace {string} and {string} service details page', (namespace: string, service: string) => {
-    // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
-    cy.visit(url + '/namespaces/' + namespace + '/services/' + service + '?refresh=0');
+  // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
+  cy.visit(url + '/namespaces/' + namespace + '/services/' + service + '?refresh=0');
 });
 
 When('user clicks in the {string} actions', (action: string) => {
-    let actionId = '';
-    switch (action) {
-        case 'Request Routing':
-            actionId = 'request_routing';
-            break;
-        case 'K8s Gateway API Routing':
-            actionId = 'k8s_request_routing';
-            break;
-        case 'Delete Traffic Routing':
-            actionId = 'delete_traffic_routing';
-            break;
-    }
-    it('spinner should disappear', { retries: 3 }, () => {
-        cy.get('#loading_kiali_spinner')
-            .should('not.exist');
-    });
-    cy.get('button[data-test="wizard-actions"]')
-        .should('exist')
-        .click()
-        .get('#loading_kiali_spinner')
-        .should('not.exist');
+  let actionId = '';
+  switch (action) {
+    case 'Request Routing':
+      actionId = 'request_routing';
+      break;
+    case 'K8s Gateway API Routing':
+      actionId = 'k8s_request_routing';
+      break;
+    case 'Delete Traffic Routing':
+      actionId = 'delete_traffic_routing';
+      break;
+  }
+  it('spinner should disappear', { retries: 3 }, () => {
+    cy.get('#loading_kiali_spinner').should('not.exist');
+  });
+  cy.get('button[data-test="wizard-actions"]')
+    .should('exist')
+    .click()
+    .get('#loading_kiali_spinner')
+    .should('not.exist');
 
-    cy.get('button[data-test="' + actionId + '"]')
-        .should('exist')
-        .click()
-        .get('#loading_kiali_spinner')
-        .should('not.exist');
+  cy.get('button[data-test="' + actionId + '"]')
+    .should('exist')
+    .click()
+    .get('#loading_kiali_spinner')
+    .should('not.exist');
 });
 
 And('user sees the {string} wizard', (title: string) => {
-    cy.get('div[aria-label="' + title + '"]');
+  cy.get('div[aria-label="' + title + '"]');
 });
 
 And('user clicks in the {string} tab', (tab: string) => {
-    cy.get('button[data-test="' + tab +'"]')
-        .click();
+  cy.get('button[data-test="' + tab + '"]').click();
 });
 
 And('user clicks in the {string} request matching dropdown', (select: string) => {
-    cy.get('button[data-test="requestmatching-header-toggle"]')
-        .click();
+  cy.get('button[data-test="requestmatching-header-toggle"]').click();
 
-    cy.get('button[data-test="requestmatching-header-' + select + '"]')
-        .click();
+  cy.get('button[data-test="requestmatching-header-' + select + '"]').click();
 });
 
 And('user clicks in the {string} request filtering dropdown', (select: string) => {
-    cy.get('button[data-test="filtering-type-toggle"]')
-        .click();
+  cy.get('button[data-test="filtering-type-toggle"]').click();
 
-    cy.get('button[data-test="filtering-type-' + select + '"]')
-        .click();
+  cy.get('button[data-test="filtering-type-' + select + '"]').click();
 });
 
 And('user types {string} in the matching header input', (header: string) => {
-    cy.get('input[id="header-name-id"]')
-        .type(header);
+  cy.get('input[id="header-name-id"]').type(header);
 });
 
 And('user types {string} in the filtering header input', (header: string) => {
-    cy.get('input[id="filter-header-name-id"]')
-        .type(header);
+  cy.get('input[id="filter-header-name-id"]').type(header);
 });
 
 And('user clicks in the {string} match value dropdown', (value: string) => {
-    cy.get('button[data-test="requestmatching-match-toggle"]')
-        .click();
+  cy.get('button[data-test="requestmatching-match-toggle"]').click();
 
-    cy.get('button[data-test="requestmatching-match-' + value + '"]')
-        .click();
+  cy.get('button[data-test="requestmatching-match-' + value + '"]').click();
 });
 
 And('user types {string} in the match value input', (value: string) => {
-    cy.get('input[id="match-value-id"]')
-        .type(value);
+  cy.get('input[id="match-value-id"]').type(value);
 });
 
 And('user adds a match', () => {
-    cy.get('button[data-test="add-match"]')
-        .click();
+  cy.get('button[data-test="add-match"]').click();
 });
 
 And('user adds a filter', () => {
-    cy.get('button[data-test="add-filter"]')
-        .click();
+  cy.get('button[data-test="add-filter"]').click();
 });
 
 And('user types {string} traffic weight in the {string} workload', (weight: string, workload: string) => {
-    cy.get('input[data-test="input-slider-' + workload + '"]')
-        .type(weight);
+  cy.get('input[data-test="input-slider-' + workload + '"]').type(weight);
 });
 
 And('user adds a route', () => {
-    cy.get('button[data-test="add-route"]')
-        .click();
+  cy.get('button[data-test="add-route"]').click();
 });
 
 And('user clicks in {string} matching selected', (match: string) => {
-   cy.get('span[data-test="' + match + '"]')
-       .children()
-       .first()         // div wrapper
-       .children()
-       .first()         // button
-       .click();
+  cy.get('span[data-test="' + match + '"]')
+    .children()
+    .first() // div wrapper
+    .children()
+    .first() // button
+    .click();
 });
 
 And('user previews the configuration', () => {
-    cy.get('button[data-test="preview"]')
-        .click();
+  cy.get('button[data-test="preview"]').click();
 });
 
 And('user creates the configuration', () => {
-    cy.get('button[data-test="create"]')
-        .click();
+  cy.get('button[data-test="create"]').click();
 
-    cy.get('button[data-test="confirm-create"]')
-        .click()
-    it('spinner should disappear', { retries: 3 }, () => {
-        cy.get('#loading_kiali_spinner')
-            .should('not.exist');
-    });
+  cy.get('button[data-test="confirm-create"]').click();
+  it('spinner should disappear', { retries: 3 }, () => {
+    cy.get('#loading_kiali_spinner').should('not.exist');
+  });
 });
 
 And('user updates the configuration', () => {
-    cy.get('button[data-test="update"]')
-        .click();
+  cy.get('button[data-test="update"]').click();
 
-    cy.get('button[data-test="confirm-update"]')
-        .click()
-    it('spinner should disappear', { retries: 3 }, () => {
-        cy.get('#loading_kiali_spinner')
-            .should('not.exist');
-    });
+  cy.get('button[data-test="confirm-update"]').click();
+  it('spinner should disappear', { retries: 3 }, () => {
+    cy.get('#loading_kiali_spinner').should('not.exist');
+  });
 });
 
 And('user confirms delete the configuration', () => {
-    cy.get('button[data-test="confirm-delete"]')
-        .click()
-    it('spinner should disappear', { retries: 3 }, () => {
-        cy.get('#loading_kiali_spinner')
-            .should('not.exist');
-    });
+  cy.get('button[data-test="confirm-delete"]').click();
+  it('spinner should disappear', { retries: 3 }, () => {
+    cy.get('#loading_kiali_spinner').should('not.exist');
+  });
 });
 
 And('user sees the {string} {string} {string} reference', (namespace: string, name: string, type: string) => {
-    cy.get('a[data-test="' + type + '-' + namespace + '-' + name + '"]');
+  cy.get('a[data-test="' + type + '-' + namespace + '-' + name + '"]');
 });
 
 And('user clicks in the {string} {string} {string} reference', (namespace: string, name: string, type: string) => {
-    cy.get('a[data-test="' + type + '-' + namespace + '-' + name + '"]')
-        .click();
+  cy.get('a[data-test="' + type + '-' + namespace + '-' + name + '"]').click();
 
-    let expectedURl = '';
-    switch (type) {
-        case 'destinationrule':
-            expectedURl = '/namespaces/' + namespace + '/istio/destinationrules/' + name;
-            break;
-        case 'service':
-            expectedURl = '/namespaces/' + namespace + '/services/' + name;
-            break;
-        case 'virtualservice':
-            expectedURl = '/namespaces/' + namespace + '/istio/virtualservices/' + name;
-            break;
-    }
+  let expectedURl = '';
+  switch (type) {
+    case 'destinationrule':
+      expectedURl = '/namespaces/' + namespace + '/istio/destinationrules/' + name;
+      break;
+    case 'service':
+      expectedURl = '/namespaces/' + namespace + '/services/' + name;
+      break;
+    case 'virtualservice':
+      expectedURl = '/namespaces/' + namespace + '/istio/virtualservices/' + name;
+      break;
+  }
 
-    cy.location('pathname')
-        .should('include', expectedURl);
+  cy.location('pathname').should('include', expectedURl);
 });
 
 And('user sees the {string} regex in the editor', (regexContent: string) => {
-    const re = new RegExp(regexContent);
-    cy.get('.ace_content')
-        .invoke('text')
-        .should('match', re);
+  const re = new RegExp(regexContent);
+  cy.get('.ace_content').invoke('text').should('match', re);
 });
 
 And('user clicks on {string} Advanced Options', (action: string) => {
-    cy.get('div[id="' + action.toLowerCase() + '_advanced_options"]').prev()
-        .click();
+  cy.get('div[id="' + action.toLowerCase() + '_advanced_options"]')
+    .prev()
+    .click();
 });
 
 And('user clicks on Add Gateway', () => {
-    cy.get('input[id="advanced-gwSwitch"]').next()
-        .click();
+  cy.get('input[id="advanced-gwSwitch"]').next().click();
 });
 
 And('user selects Create Gateway', () => {
-    cy.get('input[id="createGateway"]')
-        .click();
-});
-
-And('user sees warning icon in ACE editor', () => {
-    cy.get('.ace_warning')
+  cy.get('input[id="createGateway"]').click();
 });
