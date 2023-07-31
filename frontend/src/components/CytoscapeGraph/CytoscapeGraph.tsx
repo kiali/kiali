@@ -82,7 +82,7 @@ type CytoscapeGraphProps = {
   setUpdateTime?: (val: TimeInMilliseconds) => void;
   showIdleEdges: boolean;
   showIdleNodes: boolean;
-  showMissingSidecars: boolean;
+  showOutOfMesh: boolean;
   showOperationNodes: boolean;
   showRank: boolean;
   showSecurity: boolean;
@@ -206,7 +206,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       this.props.namespaceLayout !== nextProps.namespaceLayout ||
       this.props.compressOnHide !== nextProps.compressOnHide ||
       this.props.rankBy !== nextProps.rankBy ||
-      this.props.showMissingSidecars !== nextProps.showMissingSidecars ||
+      this.props.showOutOfMesh !== nextProps.showOutOfMesh ||
       this.props.showRank !== nextProps.showRank ||
       this.props.showTrafficAnimation !== nextProps.showTrafficAnimation ||
       this.props.showVirtualServices !== nextProps.showVirtualServices ||
@@ -816,7 +816,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       forceLabels: false,
       graphType: this.props.graphData.fetchParams.graphType,
       homeCluster: homeCluster?.name || CLUSTER_DEFAULT,
-      showOutOfMesh: this.props.showMissingSidecars,
+      showOutOfMesh: this.props.showOutOfMesh,
       showSecurity: this.props.showSecurity,
       showVirtualServices: this.props.showVirtualServices,
       trafficRates: this.props.graphData.fetchParams.trafficRates

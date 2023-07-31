@@ -30,7 +30,7 @@ export const INITIAL_GRAPH_STATE: GraphState = {
     showIdleEdges: false,
     showIdleNodes: false,
     showLegend: false,
-    showMissingSidecars: true,
+    showOutOfMesh: true,
     showOperationNodes: false,
     showRank: false,
     showSecurity: false,
@@ -168,7 +168,7 @@ export const GraphDataStateReducer = (state: GraphState = INITIAL_GRAPH_STATE, a
     case getType(GraphToolbarActions.toggleGraphMissingSidecars):
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
-          showMissingSidecars: !state.toolbarState.showMissingSidecars
+          showOutOfMesh: !state.toolbarState.showOutOfMesh
         })
       });
     case getType(GraphToolbarActions.toggleGraphSecurity):

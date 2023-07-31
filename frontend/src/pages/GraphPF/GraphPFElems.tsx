@@ -99,7 +99,7 @@ export type GraphPFSettings = {
   activeNamespaces: Namespace[];
   edgeLabels: EdgeLabelMode[];
   graphType: GraphType;
-  showMissingSidecars: boolean;
+  showOutOfMesh: boolean;
   showSecurity: boolean;
   showVirtualServices: boolean;
   trafficRates: TrafficRate[];
@@ -170,7 +170,7 @@ export const setNodeAttachments = (node: Node<NodeModel>, settings: GraphPFSetti
   const data = node.getData() as NodeData;
   const attachments = [] as React.ReactNode[];
 
-  if (settings.showMissingSidecars && data.isOutOfMesh) {
+  if (settings.showOutOfMesh && data.isOutOfMesh) {
     attachments.push(getDecorator(node, TopologyQuadrant.lowerRight, badgeMap.get('MS')!));
   }
   if (data.hasWorkloadEntry) {

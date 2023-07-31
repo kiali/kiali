@@ -28,7 +28,7 @@ describe('GraphDataState', () => {
         showLegend: false,
         showIdleEdges: false,
         showIdleNodes: false,
-        showMissingSidecars: true,
+        showOutOfMesh: true,
         showOperationNodes: false,
         showRank: false,
         showSecurity: false,

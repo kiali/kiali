@@ -103,7 +103,7 @@ export const TopologyContent: React.FC<{
   onReady: (controller: any) => void;
   setLayout: (val: LayoutName) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
-  showMissingSidecars: boolean;
+  showOutOfMesh: boolean;
   showSecurity: boolean;
   showTrafficAnimation: boolean;
   showVirtualServices: boolean;
@@ -123,7 +123,7 @@ export const TopologyContent: React.FC<{
   setEdgeMode,
   setLayout: setLayoutName,
   setUpdateTime,
-  showMissingSidecars,
+  showOutOfMesh,
   showSecurity,
   showTrafficAnimation,
   showVirtualServices,
@@ -137,12 +137,12 @@ export const TopologyContent: React.FC<{
       activeNamespaces: graphData.fetchParams.namespaces,
       edgeLabels: edgeLabels,
       graphType: graphData.fetchParams.graphType,
-      showMissingSidecars: showMissingSidecars,
+      showOutOfMesh: showOutOfMesh,
       showSecurity: showSecurity,
       showVirtualServices: showVirtualServices,
       trafficRates: graphData.fetchParams.trafficRates
     } as GraphPFSettings;
-  }, [graphData.fetchParams, edgeLabels, showMissingSidecars, showSecurity, showVirtualServices]);
+  }, [graphData.fetchParams, edgeLabels, showOutOfMesh, showSecurity, showVirtualServices]);
 
   //
   // SelectedIds State
@@ -747,7 +747,7 @@ export const GraphPF: React.FC<{
   setEdgeMode: (edgeMode: EdgeMode) => void;
   setLayout: (layout: Layout) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
-  showMissingSidecars: boolean;
+  showOutOfMesh: boolean;
   showSecurity: boolean;
   showTrafficAnimation: boolean;
   showVirtualServices: boolean;
@@ -766,7 +766,7 @@ export const GraphPF: React.FC<{
   setEdgeMode,
   setLayout,
   setUpdateTime,
-  showMissingSidecars,
+  showOutOfMesh,
   showSecurity,
   showTrafficAnimation,
   showVirtualServices,
@@ -849,7 +849,7 @@ export const GraphPF: React.FC<{
         setEdgeMode={setEdgeMode}
         setLayout={setLayoutByName}
         setUpdateTime={setUpdateTime}
-        showMissingSidecars={showMissingSidecars}
+        showOutOfMesh={showOutOfMesh}
         showSecurity={showSecurity}
         showTrafficAnimation={showTrafficAnimation}
         showVirtualServices={showVirtualServices}

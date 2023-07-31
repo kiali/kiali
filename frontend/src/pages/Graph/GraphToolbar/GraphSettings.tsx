@@ -37,7 +37,7 @@ type ReduxProps = {
   setRankBy: (rankBy: RankMode[]) => void;
   showIdleEdges: boolean;
   showIdleNodes: boolean;
-  showMissingSidecars: boolean;
+  showOutOfMesh: boolean;
   showOperationNodes: boolean;
   showRank: boolean;
   showSecurity: boolean;
@@ -98,8 +98,8 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     );
     this.handleURLBool(
       URLParam.GRAPH_BADGE_SIDECAR,
-      INITIAL_GRAPH_STATE.toolbarState.showMissingSidecars,
-      props.showMissingSidecars,
+      INITIAL_GRAPH_STATE.toolbarState.showOutOfMesh,
+      props.showOutOfMesh,
       props.toggleGraphMissingSidecars
     );
     this.handleURLBool(
@@ -194,9 +194,9 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     );
     this.alignURLBool(
       URLParam.GRAPH_BADGE_SIDECAR,
-      INITIAL_GRAPH_STATE.toolbarState.showMissingSidecars,
-      prev.showMissingSidecars,
-      this.props.showMissingSidecars
+      INITIAL_GRAPH_STATE.toolbarState.showOutOfMesh,
+      prev.showOutOfMesh,
+      this.props.showOutOfMesh
     );
     this.alignURLBool(
       URLParam.GRAPH_BADGE_VS,
@@ -308,7 +308,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       rankBy: rankLabels,
       showIdleEdges,
       showIdleNodes,
-      showMissingSidecars,
+      showOutOfMesh,
       showOperationNodes,
       showSecurity,
       showServiceNodes,
@@ -602,7 +602,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     const badgeOptions: DisplayOptionType[] = [
       {
         id: 'filterSidecars',
-        isChecked: showMissingSidecars,
+        isChecked: showOutOfMesh,
         labelText: 'Missing Sidecars',
         onChange: toggleGraphMissingSidecars
       },
@@ -922,7 +922,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   edgeLabels: edgeLabelsSelector(state),
   showIdleEdges: state.graph.toolbarState.showIdleEdges,
   showIdleNodes: state.graph.toolbarState.showIdleNodes,
-  showMissingSidecars: state.graph.toolbarState.showMissingSidecars,
+  showOutOfMesh: state.graph.toolbarState.showOutOfMesh,
   showOperationNodes: state.graph.toolbarState.showOperationNodes,
   rankBy: state.graph.toolbarState.rankBy,
   showRank: state.graph.toolbarState.showRank,

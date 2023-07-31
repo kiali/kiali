@@ -110,9 +110,9 @@ describe('Parse find value test', () => {
     // @ts-ignore
     expect(instance.parseValue('root')).toEqual('node[?isRoot]');
     // @ts-ignore
-    expect(instance.parseValue('sidecar')).toEqual('node[^hasMissingSC]');
+    expect(instance.parseValue('sidecar')).toEqual('node[^isOutOfMesh]');
     // @ts-ignore
-    expect(instance.parseValue('sc')).toEqual('node[^hasMissingSC]');
+    expect(instance.parseValue('sc')).toEqual('node[^isOutOfMesh]');
     // @ts-ignore
     expect(instance.parseValue('tcptrafficshifting')).toEqual('node[?hasTCPTrafficShifting]');
     // @ts-ignore
