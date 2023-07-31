@@ -9,6 +9,9 @@ import (
 	"github.com/kiali/kiali/config/dashboards"
 )
 
+const AmbientLabel = "istio.io/dataplane-mode"
+const AmbientValue = "ambient"
+
 // A Namespace provide a scope for names
 // This type is used to describe a set of objects.
 //
@@ -25,6 +28,11 @@ type Namespace struct {
 	// example:  east
 	// required: true
 	Cluster string `json:"cluster"`
+
+	// If has the Ambient annotations
+	//
+	// required: true
+	IsAmbient bool `json:"isAmbient"`
 
 	// Creation date of the namespace.
 	// There is no need to export this through the API. So, this is
@@ -64,6 +72,9 @@ func CastNamespace(ns core_v1.Namespace, cluster string) Namespace {
 	// Parse only annotations used by Kiali
 	if da, ok := ns.Annotations[dashboards.DashboardTemplateAnnotation]; ok {
 		namespace.Annotations[dashboards.DashboardTemplateAnnotation] = da
+	}
+	if ns.Labels[AmbientLabel] == AmbientValue {
+		namespace.IsAmbient = true
 	}
 	return namespace
 }

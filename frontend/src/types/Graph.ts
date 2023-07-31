@@ -572,7 +572,7 @@ export const NodeAttr = {
   httpInNoResponse: 'httpInNoResponse',
   httpOut: 'httpOut',
   id: 'id',
-  isAmbientNamespace: 'isAmbientNamespace',
+  isAmbient: 'isAmbient',
   isBox: 'isBox',
   isDead: 'isDead',
   isIdle: 'isIdle',

@@ -157,6 +157,33 @@ func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
 	}
 }
 
+func TestAppWithAmbientIsFlagged(t *testing.T) {
+	trafficMap := buildAppTrafficMap()
+	businessLayer := setupSidecarsCheckWorkloads(t, []apps_v1.Deployment{}, buildFakeWorkloadPodsAmbient())
+
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+
+	a := MeshCheckAppender{
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			config.DefaultClusterID: &graph.AccessibleNamespace{
+				Cluster:           config.DefaultClusterID,
+				CreationTimestamp: time.Now(),
+				Name:              "testNamespace",
+			}}}
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+
+	for _, node := range trafficMap {
+		flag, ok := node.Metadata[graph.IsOutOfMesh].(bool)
+		assert.False(t, ok)
+		assert.False(t, flag)
+		flagAmbient, okAmbient := node.Metadata[graph.IsAmbient].(bool)
+		assert.True(t, okAmbient)
+		assert.True(t, flagAmbient)
+	}
+}
+
 func TestServicesAreAlwaysValid(t *testing.T) {
 	trafficMap := buildServiceTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, []apps_v1.Deployment{}, []core_v1.Pod{})
@@ -261,6 +288,14 @@ func buildFakeWorkloadPodsNoSidecar() []core_v1.Pod {
 
 	podList := buildFakeWorkloadPods()
 	podList[0].ObjectMeta.Annotations[istioAnnotation] = "{}"
+
+	return podList
+}
+
+func buildFakeWorkloadPodsAmbient() []core_v1.Pod {
+
+	podList := buildFakeWorkloadPodsNoSidecar()
+	podList[0].ObjectMeta.Annotations["ambient.istio.io/redirection"] = "enabled"
 
 	return podList
 }

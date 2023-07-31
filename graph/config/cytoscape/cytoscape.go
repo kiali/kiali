@@ -640,7 +640,8 @@ func generateBoxCompoundNodes(box map[string][]*NodeData, nodes *[]*NodeWrapper,
 			}
 
 			// assign each member node to the compound parent
-			nd.IsOutside = false // TODO: this is probably unecessarily noisy
+			nd.IsOutOfMesh = false // TODO: this is probably unecessarily noisy
+			nd.IsAmbient = false
 			nd.IsInaccessible = false
 			nd.IsOutside = false
 
