@@ -108,26 +108,8 @@ setup_kind_singlecluster() {
   local istio_ingress_gateway_ip
   istio_ingress_gateway_ip="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
 
-  # TODO: Include the istio ingress gateway ip in the bookinfo host so that the traffic generator can reach it.
-
-  # Separate Gateway and VirtualService for Kiali
+  # Re-use bookinfo gateway but have a separate VirtualService for Kiali
   kubectl apply -f - <<EOF
-apiVersion: networking.istio.io/v1alpha3
-kind: Gateway
-metadata:
-  name: kiali-gateway
-  namespace: istio-system
-spec:
-  selector:
-    istio: ingressgateway
-  servers:
-  - port:
-      number: 80
-      name: http
-      protocol: HTTP
-    hosts:
-    - "${istio_ingress_gateway_ip}"
----
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
@@ -135,7 +117,7 @@ metadata:
   namespace: istio-system
 spec:
   gateways:
-  - kiali-gateway
+  - bookinfo/bookinfo-gateway
   hosts:
   - "${istio_ingress_gateway_ip}"
   http:

@@ -40,6 +40,10 @@ while [ $# -gt 0 ]; do
       DELETE_DEMOS="$2"
       shift;shift
       ;;
+    -g|--gateway-host)
+      GATEWAY_HOST="$2"
+      shift;shift
+      ;;
     -mp|--minikube-profile)
       MINIKUBE_PROFILE="$2"
       shift;shift
@@ -54,6 +58,7 @@ Valid command line arguments:
   -a|--arch <amd64|ppc64le|s390x>: Images for given arch will be used (default: amd64).
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: if 'true' demos will be deleted; otherwise, they will be installed
+  -g|--gateway-host: host to use for the ingress gateway
   -mp|--minikube-profile <name>: If using minikube, this is the minikube profile name (default: minikube).
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
   -h|--help: this text
@@ -109,9 +114,10 @@ if [ "${DELETE_DEMOS}" != "true" ]; then
     "${SCRIPT_DIR}/install-sleep-demo.sh" 
 
   else
-    istio_ingress=$(kubectl get svc -n istio-system istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-    gateway_yaml=$(mktemp)
-    cat << EOF > "${gateway_yaml}"
+    gateway_yaml=""
+    if [ -v "${GATEWAY_HOST}" ]; then 
+      gateway_yaml=$(mktemp)
+      cat << EOF > "${gateway_yaml}"
 apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
 metadata:
@@ -125,7 +131,7 @@ spec:
       name: http
       protocol: HTTP
     hosts:
-    - "${istio_ingress}"
+    - "${GATEWAY_HOST}"
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
@@ -133,7 +139,7 @@ metadata:
   name: bookinfo
 spec:
   hosts:
-  - "${istio_ingress}"
+  - "${GATEWAY_HOST}"
   gateways:
   - bookinfo-gateway
   http:
@@ -154,8 +160,9 @@ spec:
         port:
           number: 9080
 EOF
+    fi
     echo "Deploying bookinfo demo..."
-    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -mp ${MINIKUBE_PROFILE} -tg -in ${ISTIO_NAMESPACE} -a ${ARCH} -g ${gateway_yaml}
+    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -mp ${MINIKUBE_PROFILE} -tg -in ${ISTIO_NAMESPACE} -a ${ARCH} ${gateway_yaml:+-g ${gateway_yaml}}
 
     echo "Deploying error rates demo..."
     "${SCRIPT_DIR}/install-error-rates-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH}

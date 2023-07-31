@@ -52,10 +52,12 @@ infomsg "Running ${TEST_SUITE} integration tests"
 if [ "${TEST_SUITE}" == "backend" ]; then
   "${SCRIPT_DIR}"/setup-kind-in-ci.sh
 
+  ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+
   # Install demo apps
-  "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl"
+  "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" -g "${ISTIO_INGRESS_IP}"
   
-  URL="http://$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')/kiali"
+  URL="http://${ISTIO_INGRESS_IP}/kiali"
   echo "kiali_url=$URL"
   export URL
 
@@ -69,7 +71,8 @@ elif [ "${TEST_SUITE}" == "backend-multi-cluster" ]; then
   "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "true"
   
   # Get Kiali URL
-  URL="http://$(kubectl --context kind-east get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')/kiali"
+  ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+  URL="http://${ISTIO_INGRESS_IP}/kiali"
   echo "kiali_url=$URL"
   export URL
 

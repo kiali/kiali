@@ -415,7 +415,6 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
     else
       echo "Failed to get minikube ip. If you are using minikube, make sure it is up and your profile is defined properly (--minikube-profile option)"
       echo "Will try to get the ingressgateway IP in case you are running 'kind' and we can access it directly."
-      # TODO: Fix bookinfo VS to include kind ip:port in hosts field.
       INGRESS_HOST=$($CLIENT_EXE get service -n ${ISTIO_NAMESPACE} istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
       INGRESS_PORT="80"
       INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
