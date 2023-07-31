@@ -3,7 +3,7 @@
 ##############################################################################
 # start-kind.sh
 #
-# Starts up kind instances for each of the 2 clusters.
+# Starts up a kind instance with a metallb load balancer.
 #
 # For setting up the LB, see: https://kind.sigs.k8s.io/docs/user/loadbalancer
 #

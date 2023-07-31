@@ -78,15 +78,6 @@ jobs:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
-  # TODO: Add multi-cluster backend tests.
-  # integration_tests_backend_multicluster:
-  #   name: Run backend multicluster integration tests
-  #   uses: ./.github/workflows/integration-tests-backend-multicluster.yml
-  #   needs: [initialize, build_backend, build_frontend]
-  #   with:
-  #     target_branch: ${{ needs.initialize.outputs.target-branch }}
-  #     build_branch: ${{ needs.initialize.outputs.build-branch }}
-
   integration_tests_frontend_multicluster:
     name: Run frontend multicluster integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster.yml

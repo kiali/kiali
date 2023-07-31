@@ -171,6 +171,13 @@ EOF
     "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl
   fi
 
+  if [ -v "${GATEWAY_HOST}" ]; then
+    # Assume that the '*' is used for hosts if the gateway host is not specified.
+    # Some front-end tests have conflicts with the wildcard host in the bookinfo-gateway. Patch it with the host resolved for the traffic generator.
+    ISTIO_INGRESS_HOST=$(${CLIENT_EXE} get cm -n bookinfo traffic-generator-config -o jsonpath='{.data.route}' | sed 's|.*//\([^\:]*\).*/.*|\1|')
+    ${CLIENT_EXE} patch VirtualService bookinfo -n bookinfo --type json -p "[{\"op\": \"replace\", \"path\": \"/spec/hosts/0\", \"value\": \"${ISTIO_INGRESS_HOST}\"}]"
+  fi
+
   for namespace in bookinfo alpha beta
   do
     wait_for_workloads "${namespace}"
