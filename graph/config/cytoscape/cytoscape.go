@@ -117,6 +117,7 @@ type NodeData struct {
 	IsGateway             *GWInfo             `json:"isGateway,omitempty"`             // Istio ingress/egress gateway information
 	IsIdle                bool                `json:"isIdle,omitempty"`                // true | false
 	IsInaccessible        bool                `json:"isInaccessible,omitempty"`        // true if the node exists in an inaccessible namespace
+	IsK8sGatewayAPI       bool                `json:"isK8sGatewayAPI,omitempty"`       // true (object is auto-generated from K8s API Gateway) | false
 	IsOutside             bool                `json:"isOutside,omitempty"`             // true | false
 	IsRoot                bool                `json:"isRoot,omitempty"`                // true | false
 	IsServiceEntry        *graph.SEInfo       `json:"isServiceEntry,omitempty"`        // set static service entry information
@@ -321,6 +322,8 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 			nd.IsGateway = &GWInfo{
 				GatewayAPIInfo: GWInfoIngress{Hostnames: configuredHostnames},
 			}
+
+			nd.IsK8sGatewayAPI = true
 		}
 
 		// node may have a circuit breaker
@@ -371,6 +374,10 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 
 		if val, ok := n.Metadata[graph.HasRequestTimeout]; ok {
 			nd.HasRequestTimeout = val.(bool)
+		}
+
+		if val, ok := n.Metadata[graph.IsK8sGatewayAPI]; ok {
+			nd.IsK8sGatewayAPI = val.(bool)
 		}
 
 		// node may have destination service info

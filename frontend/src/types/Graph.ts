@@ -398,6 +398,7 @@ export interface GraphNodeData {
       hostnames?: string[];
     };
   };
+  isK8sGatewayAPI?: boolean;
   isMisconfigured?: string;
   isOutside?: boolean;
   isRoot?: boolean;

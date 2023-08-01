@@ -315,6 +315,10 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     }
   };
 
+  private renderK8sGatewayAPI(isK8sGatewayAPI?: boolean) {
+    return isK8sGatewayAPI ? ' (K8s GW API)' : '';
+  }
+
   // TODO:(see https://github.com/kiali/kiali-design/issues/63) If we want to show an icon for SE uncomment below
   private renderBadgeSummary = (nodeData: DecoratedGraphNodeData) => {
     const {
@@ -328,7 +332,8 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       hasTrafficShifting,
       hasVS,
       isDead,
-      isGateway
+      isGateway,
+      isK8sGatewayAPI
     } = nodeData;
     const hasTrafficScenario =
       hasRequestRouting ||
@@ -351,14 +356,14 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
         {hasCB && (
           <div>
             <KialiIcon.CircuitBreaker />
-            <span style={{ paddingLeft: '4px' }}>Has Circuit Breaker</span>
+            <span style={{ paddingLeft: '4px' }}>Has Circuit Breaker{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
           </div>
         )}
         {hasVS && !hasTrafficScenario && (
           <>
             <div>
               <KialiIcon.VirtualService />
-              <span style={{ paddingLeft: '4px' }}>Has Virtual Service</span>
+              <span style={{ paddingLeft: '4px' }}>Has Virtual Service{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
             </div>
             {shouldRenderVsHostnames && this.renderVsHostnames(nodeData)}
           </>
@@ -366,7 +371,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
         {hasMirroring && (
           <div>
             <KialiIcon.Mirroring />
-            <span style={{ paddingLeft: '4px' }}>Has Mirroring</span>
+            <span style={{ paddingLeft: '4px' }}>Has Mirroring{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
           </div>
         )}
         {hasMissingSC && (
@@ -387,7 +392,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
           <>
             <div>
               <KialiIcon.RequestRouting />
-              <span style={{ paddingLeft: '4px' }}>Has Request Routing</span>
+              <span style={{ paddingLeft: '4px' }}>Has Request Routing{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
             </div>
             {shouldRenderVsHostnames && this.renderVsHostnames(nodeData)}
           </>
@@ -395,32 +400,34 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
         {hasFaultInjection && (
           <div>
             <KialiIcon.FaultInjection />
-            <span style={{ paddingLeft: '4px' }}>Has Fault Injection</span>
+            <span style={{ paddingLeft: '4px' }}>Has Fault Injection{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
           </div>
         )}
         {hasTrafficShifting && (
           <div>
             <KialiIcon.TrafficShifting />
-            <span style={{ paddingLeft: '4px' }}>Has Traffic Shifting</span>
+            <span style={{ paddingLeft: '4px' }}>Has Traffic Shifting{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
           </div>
         )}
         {hasTCPTrafficShifting && (
           <div>
             <KialiIcon.TrafficShifting />
-            <span style={{ paddingLeft: '4px' }}>Has TCP Traffic Shifting</span>
+            <span style={{ paddingLeft: '4px' }}>
+              Has TCP Traffic Shifting{this.renderK8sGatewayAPI(isK8sGatewayAPI)}
+            </span>
           </div>
         )}
         {hasRequestTimeout && (
           <div>
             <KialiIcon.RequestTimeout />
-            <span style={{ paddingLeft: '4px' }}>Has Request Timeout</span>
+            <span style={{ paddingLeft: '4px' }}>Has Request Timeout{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
           </div>
         )}
         {isGateway && (
           <>
             <div>
               <KialiIcon.Gateway />
-              <span style={{ paddingLeft: '4px' }}>Is Gateway</span>
+              <span style={{ paddingLeft: '4px' }}>Is Gateway{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
             </div>
             {shouldRenderGatewayHostnames && this.renderGatewayHostnames(nodeData)}
           </>
