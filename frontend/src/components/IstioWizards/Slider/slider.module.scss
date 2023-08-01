@@ -1,6 +1,6 @@
 .style {
   :global {
-    /* Extracted from Bootstrap CSS. Don't modify these styles */
+    /* Slider CSS styles extracted from bootstrap-slider-without-jquery library (v10.0.0) */
     .slider {
       display: inline-block;
       vertical-align: middle;
@@ -258,7 +258,7 @@
       opacity: 1;
     }
 
-    /* Slider tooltip */
+    /* Tooltip CSS styles extracted from bootstrap library (v3.4.1) */
     .tooltip {
       position: absolute;
       z-index: 1070;

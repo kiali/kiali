@@ -121,7 +121,7 @@ export const globalStyle = kialiStyle({
       overflow: 'visible !important'
     },
 
-    // Table styles from bootstrap
+    /* Table CSS styles extracted from bootstrap library (v3.4.1) */
     '.table': {
       width: '100%',
       maxWidth: '100%',
@@ -152,7 +152,7 @@ export const globalStyle = kialiStyle({
       }
     },
 
-    // Panel graph styles from bootstrap
+    /* Panel graph CSS styles extracted from bootstrap library (v3.4.1) */
     '.panel': {
       marginBottom: '23px',
       backgroundColor: '#fff',
