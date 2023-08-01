@@ -26,11 +26,14 @@ import (
 type KialiCache interface {
 	GetKubeCaches() map[string]KubeCache
 	GetKubeCache(cluster string) (KubeCache, error)
+
 	// GetClusters returns the list of clusters that the cache knows about.
 	// This gets set by the mesh service.
 	GetClusters() []kubernetes.Cluster
+
 	// SetClusters sets the list of clusters that the cache knows about.
 	SetClusters([]kubernetes.Cluster)
+
 	// Embedded for backward compatibility for business methods that just use one cluster.
 	// All business methods should eventually use the multi-cluster cache.
 	// Instead of using the interface directly for kube objects, use the GetKubeCache() method.
@@ -209,3 +212,6 @@ func (c *kialiCacheImpl) SetClusters(clusters []kubernetes.Cluster) {
 	c.clusterLock.Lock()
 	c.clusters = clusters
 }
+
+// Interface guard for kiali cache impl
+var _ KialiCache = (*kialiCacheImpl)(nil)

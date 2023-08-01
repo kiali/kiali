@@ -186,9 +186,6 @@ type Cluster struct {
 	// IsKialiHome specifies if this cluster is hosting this Kiali instance (and the observed Mesh Control Plane)
 	IsKialiHome bool `json:"isKialiHome"`
 
-	// IsGatewayToNamespace specifies the PILOT_SCOPE_GATEWAY_TO_NAMESPACE environment variable in Control PLane
-	IsGatewayToNamespace bool `json:"isGatewayToNamespace"`
-
 	// KialiInstances is the list of Kialis discovered in the cluster.
 	KialiInstances []KialiInstance `json:"kialiInstances"`
 

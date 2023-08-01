@@ -54,3 +54,18 @@ func IstiodCanariesStatus(w http.ResponseWriter, r *http.Request) {
 	irt, _ := business.Mesh.CanaryUpgradeStatus()
 	RespondWithJSON(w, http.StatusOK, irt)
 }
+
+func GetMesh(w http.ResponseWriter, r *http.Request) {
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	mesh, err := business.Mesh.GetMesh(r.Context())
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, mesh)
+}

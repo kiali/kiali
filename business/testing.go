@@ -8,6 +8,8 @@ package business
 import (
 	"testing"
 
+	"golang.org/x/exp/slices"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
@@ -75,4 +77,14 @@ func NewTestingCache(t *testing.T, k8s kubernetes.ClientInterface, conf config.C
 func NewTestingCacheWithFactory(t *testing.T, cf kubernetes.ClientFactory, conf config.Config) cache.KialiCache {
 	t.Helper()
 	return newTestingCache(t, cf, conf)
+}
+
+// FindOrFail will find an element in a slice or fail the test.
+func FindOrFail[T any](t *testing.T, s []T, f func(T) bool) T {
+	t.Helper()
+	idx := slices.IndexFunc(s, f)
+	if idx == -1 {
+		t.Fatal("Element not in slice")
+	}
+	return s[idx]
 }

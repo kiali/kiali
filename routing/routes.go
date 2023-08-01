@@ -980,6 +980,27 @@ func NewRoutes() (r *Routes) {
 			handlers.ConfigValidationSummary,
 			true,
 		},
+		// swagger:route GET /mesh mesh configuration
+		// ---
+		// Get Mesh status and configuration
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      200: meshResponse
+		//      400: badRequestError
+		//      500: internalError
+		//
+		{
+			"Mesh",
+			"GET",
+			"/api/mesh",
+			handlers.GetMesh,
+			true,
+		},
 		// swagger:route GET /mesh/tls tls meshTls
 		// ---
 		// Get TLS status for the whole mesh
@@ -1099,7 +1120,6 @@ func NewRoutes() (r *Routes) {
 		//      200: graphResponse
 		//
 		{
-
 			"GraphAggregate",
 			"GET",
 			"/api/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/graph",
@@ -1121,7 +1141,6 @@ func NewRoutes() (r *Routes) {
 		//      200: graphResponse
 		//
 		{
-
 			"GraphAggregateByService",
 			"GET",
 			"/api/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/{service}/graph",
@@ -1143,7 +1162,6 @@ func NewRoutes() (r *Routes) {
 		//      200: graphResponse
 		//
 		{
-
 			"GraphAppVersion",
 			"GET",
 			"/api/namespaces/{namespace}/applications/{app}/versions/{version}/graph",
