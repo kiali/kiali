@@ -65,15 +65,15 @@ const replaySliderStyle = kialiStyle({
   $nest: {
     '.slider': {
       $nest: {
+        '.slider-selection.tick-slider-selection': {
+          background: 'var(--pf-global--active-color--300)' // should match PFColors.Replay
+        },
+
         '.tooltip': {
           pointerEvents: 'none',
           paddingRight: '175px'
         }
       }
-    },
-
-    '.slider-selection': {
-      background: 'var(--pf-global--active-color--300)' // should match PFColors.Replay
     }
   }
 });

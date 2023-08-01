@@ -51,7 +51,7 @@ export class GraphSecondaryMasthead extends React.PureComponent<GraphSecondaryMa
     const graphTypeKey: string = _.findKey(GraphType, val => val === this.props.graphType)!;
 
     return (
-      <SecondaryMasthead title={false}>
+      <SecondaryMasthead>
         <div className={mastheadStyle}>
           <NamespaceDropdown disabled={this.props.isNodeGraph} />
           <span className={vrStyle} />

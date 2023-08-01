@@ -5,6 +5,7 @@ import { AuthStrategy } from '../../types/Auth';
 import { LoginSession } from '../../store/Store';
 import { authenticationConfig } from '../../config/AuthenticationConfig';
 import { PFColors } from 'components/Pf/PfColors';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type SessionTimeoutProps = {
   onLogout: () => void;
@@ -13,6 +14,12 @@ type SessionTimeoutProps = {
   show: boolean;
   timeOutCountDown: number;
 };
+
+const sessionTimeoutStyle = kialiStyle({
+  marginBottom: '25px',
+  fontSize: '21px',
+  lineHeight: 1.4
+});
 
 export class SessionTimeout extends React.Component<SessionTimeoutProps, {}> {
   render() {
@@ -30,7 +37,7 @@ export class SessionTimeout extends React.Component<SessionTimeoutProps, {}> {
         <span>
           <WarningTriangleIcon size={'xl'} color={PFColors.Warning} />
         </span>
-        <span style={{ float: 'right', width: '80%' }} className={'lead'}>
+        <span style={{ float: 'right', width: '80%' }} className={sessionTimeoutStyle}>
           {this.textForAuthStrategy(authenticationConfig.strategy)}
         </span>
       </Modal>

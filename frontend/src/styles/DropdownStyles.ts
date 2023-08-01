@@ -29,6 +29,7 @@ const itemStyle: NestedCSSProperties = {
   whiteSpace: 'nowrap',
   margin: 0,
   padding: '6px 16px',
+  display: 'inline-block',
   $nest: {
     '& > div > input.pf-c-radio__input': {
       margin: '1px 0 0 0'

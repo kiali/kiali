@@ -23,7 +23,7 @@ Date.prototype.toLocaleStringWithConditionalDate = function () {
 };
 
 // Adding global styles and CSS variables to body element
-document.body.classList.add(cssVariables.kiali);
+document.body.classList.add(cssVariables.style);
 document.body.classList.add(globalStyle);
 
 ReactDOM.render(<App />, document.getElementById('root') as HTMLElement);

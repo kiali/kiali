@@ -105,19 +105,17 @@ Integration testing is done with cypress. More information can be found link:./c
 
 === Styling
 https://www.patternfly.org/[PatternFly] is the main UI components framework. It defines style based on SASS preprocessor.
-All Patternfly build assets are copied to `src`.
-Any React component may have its related SCSS file (such as `App.scss` - this one includes all PatternFly Sass along with
-PatternFly React Sass extensions).
-Once Sass compiles, the resulting CSS can be found next to its SCSS counterpart (ex: `src/app/App.css`).
+All Patternfly build assets are imported from patternfly library.
 
-To compile CSS, run:
-[source,shell]
-----
-yarn build-css
-----
+Kiali uses two ways to add custom styles to any React component:
 
-Note:
-Only static assets which are `import` 'ed into your application will be included in your resulting build output.
+1. https://typestyle.github.io/[Typestyle]: Define dynamic styling with Typescript in a declarative, conflict-free and reusable way
+
+2. https://github.com/css-modules/css-modules[CSS Modules]: CSS file in which all class names and animation names are scoped locally.
+
+All styles defined by these two approaches are scoped to their respective component, providing encapsulation without affecting any styling defined outside of the component.
+
+Recommended option in Kiali is Typestyle since it provides more flexibility and utilities than CSS modules. In case of big CSS styles (e.g. slider component) or definition of CSS variables (not supported by Typestyle), then CSS modules is the preferred method.
 
 === Style Code Guide
 

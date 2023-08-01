@@ -152,7 +152,6 @@ class SpanTableComponent extends React.Component<Props, State> {
         actionResolver={this.actionResolver}
         sortBy={{ index: this.state.sortIndex, direction: this.state.sortDirection }}
         onSort={(_event, index, sortDirection) => this.setState({ sortIndex: index, sortDirection: sortDirection })}
-        // This style is declared on _overrides.scss
         className="table"
         rowWrapper={p => <RowWrapper {...p} className={(p.row as any).className} />}
       >
