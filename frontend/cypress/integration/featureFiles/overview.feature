@@ -13,11 +13,13 @@ Feature: Kiali Overview page
     Given user is at administrator perspective
     And user is at the "overview" page
 
+  @smoke
   @overview-page
   Scenario: See "alpha" and "beta" namespaces
     Then user sees the "alpha" namespace card
     And user sees the "beta" namespace card
 
+  @smoke
   @overview-page
   Scenario: Doesn't see a "bad" namespace
     Then user doesn't see the "bad" namespace card
@@ -124,6 +126,7 @@ Feature: Kiali Overview page
   Scenario: The canary upgrade information is not present when there is no canary configured
     Then the user sees no information related to canary upgrades
 
+  @smoke
   @error-rates-app
   @overview-page
   Scenario: The Istio panel should be visible in the control panel

@@ -7,6 +7,7 @@ Feature: Workload logs tab
   Background:
     Given user is at administrator perspective
 
+  @smoke
   @bookinfo-app
   Scenario: The logs tab should show the logs of a pod
     Given I am on the "productpage-v1" workload detail page of the "bookinfo" namespace

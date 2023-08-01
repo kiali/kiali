@@ -8,11 +8,13 @@ Feature: Kiali Workload Details page
     Given user is at administrator perspective
     And user is at the details page for the "workload" "bookinfo/details-v1"
 
+  @smoke
   @workload-details
   @bookinfo-app
   Scenario: See details for workload
     Then user sees details information for workload
 
+  @smoke
   @workload-details
   @bookinfo-app
   Scenario: See minigraph for workload.

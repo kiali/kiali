@@ -8,7 +8,6 @@ Feature: Kiali logout
 
   @smoke
   Scenario: Kiali logout successfully
-
     And user clicks on admin
     And user logout successfully
     Then user verify the logout

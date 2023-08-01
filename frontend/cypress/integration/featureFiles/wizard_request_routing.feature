@@ -5,6 +5,7 @@ Feature: Service Details Wizard: Request Routing
   Background:
     Given user is at administrator perspective
 
+  @smoke
   @wizard-request-routing
   @bookinfo-app
   Scenario: Create a Request Routing scenario

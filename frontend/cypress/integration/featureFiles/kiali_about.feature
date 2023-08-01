@@ -8,7 +8,6 @@ Feature: Kiali help about verify
 
   @smoke
   Scenario: Open Kiali about page
-
     And user clicks on Help Button
     And user clicks on About Button
     Then user see Kiali brand

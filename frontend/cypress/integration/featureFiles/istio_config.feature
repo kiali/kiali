@@ -10,6 +10,7 @@ Feature: Kiali Istio Config page
     And user is at the "istio" list page
     And user selects the "bookinfo" namespace
 
+  @smoke
   @bookinfo-app
   Scenario: See all Istio Config objects in the bookinfo namespace.
     Then user sees all the Istio Config objects in the bookinfo namespace
@@ -18,6 +19,7 @@ Feature: Kiali Istio Config page
     And user sees Type information for Istio objects
     And user sees Configuration information for Istio objects
 
+  @smoke
   @bookinfo-app
   Scenario: See all Istio Config toggles
     Then user sees all the Istio Config toggles

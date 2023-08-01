@@ -6,6 +6,7 @@ Feature: Kiali Services page
     Given user is at administrator perspective
     And user is at the "services" list page
 
+  @smoke
   @services-page
   @bookinfo-app
   Scenario: See services table with correct info
@@ -22,6 +23,7 @@ Feature: Kiali Services page
     And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/virtualservices/bookinfo"
     And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/gateways/bookinfo-gateway"
 
+  @smoke
   @services-page
   Scenario: See all Services toggles
     Then user sees all the Services toggles
