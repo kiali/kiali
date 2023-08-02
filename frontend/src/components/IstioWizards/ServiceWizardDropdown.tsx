@@ -87,16 +87,21 @@ class ServiceWizardDropdownComponent extends React.Component<Props, State> {
   private appLabelName = serverConfig.istioLabels.appLabelName;
   private versionLabelName = serverConfig.istioLabels.versionLabelName;
 
-  hasSidecarWorkloads = (): boolean => {
-    let hasSidecarWorkloads = false;
+  hasMeshWorkloads = (): boolean => {
+    let hasMeshWorkloads = false;
     for (let i = 0; i < this.props.workloads.length; i++) {
       if (this.props.workloads[i].istioSidecar) {
         // At least one workload with sidecar
-        hasSidecarWorkloads = true;
+        hasMeshWorkloads = true;
+        break;
+      }
+      // Check for Ambient if in Ambient Mesh
+      if (serverConfig.ambientEnabled && this.props.workloads[i].istioAmbient) {
+        hasMeshWorkloads = true;
         break;
       }
     }
-    return hasSidecarWorkloads;
+    return hasMeshWorkloads;
   };
 
   hideConfirmDelete = () => {
@@ -231,12 +236,12 @@ class ServiceWizardDropdownComponent extends React.Component<Props, State> {
   };
 
   render() {
-    const hasSidecarWorkloads = this.hasSidecarWorkloads();
-    const toolTipMsgActions = !hasSidecarWorkloads
+    const hasMeshWorkloads = this.hasMeshWorkloads();
+    const toolTipMsgActions = !hasMeshWorkloads
       ? 'There are not Workloads with sidecar for this service'
       : 'There are not Workloads with ' + this.appLabelName + ' and ' + this.versionLabelName + ' labels';
     const validWorkloads = this.getValidWorkloads();
-    const validActions = hasSidecarWorkloads && validWorkloads;
+    const validActions = hasMeshWorkloads && validWorkloads;
 
     const dropdown = (
       <Dropdown
@@ -255,7 +260,7 @@ class ServiceWizardDropdownComponent extends React.Component<Props, State> {
     );
     return (
       <>
-        {!hasSidecarWorkloads
+        {!hasMeshWorkloads
           ? this.renderTooltip('tooltip_wizard_actions', TooltipPosition.top, toolTipMsgActions, dropdown)
           : dropdown}
         <WizardAnnotations
