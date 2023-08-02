@@ -4,7 +4,7 @@ infomsg() {
   echo "[INFO] ${1}"
 }
 
-TEST_SUITE="all"
+TEST_SUITE="backend"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -12,8 +12,8 @@ while [[ $# -gt 0 ]]; do
   case $key in
     -ts|--test-suite)
       TEST_SUITE="${2}"
-      if [ "${TEST_SUITE}" != "backend" -a "${TEST_SUITE}" != "frontend" -a "${TEST_SUITE}" != "backend-multi-cluster" -a "${TEST_SUITE}" != "frontend-multi-cluster" ]; then
-        echo "--test-suite option must be one of 'backend', 'frontend', 'backend-multi-cluster', 'frontend-multi-cluster', or 'all'"
+      if [ "${TEST_SUITE}" != "backend" -a "${TEST_SUITE}" != "frontend" -a "${TEST_SUITE}" != "frontend-multi-cluster" ]; then
+        echo "--test-suite option must be one of 'backend', 'frontend', or 'frontend-multi-cluster'"
         exit 1
       fi
       shift;shift
@@ -23,7 +23,7 @@ while [[ $# -gt 0 ]]; do
 Valid command line arguments:
   -ts|--test-suite <backend|frontend|backend-multi-cluster|frontend-multi-cluster|all>
     Which test suite to run.
-    Default: all
+    Default: backend
   -h|--help:
        this message
 HELPMSG
@@ -48,6 +48,15 @@ set -e
 # Determine where this script is and make it the cwd
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
+ensureCypressInstalled() {
+  cd "${SCRIPT_DIR}"/../frontend
+  if ! yarn cypress --help &> /dev/null; then
+    echo "cypress binary was not detected in your PATH. Did you install the frontend directory? Before running the frontend tests you must run 'make build-ui'."
+    exit 1
+  fi
+  cd -
+}
+
 infomsg "Running ${TEST_SUITE} integration tests"
 if [ "${TEST_SUITE}" == "backend" ]; then
   "${SCRIPT_DIR}"/setup-kind-in-ci.sh
@@ -67,18 +76,8 @@ if [ "${TEST_SUITE}" == "backend" ]; then
   # Run backend integration tests
   cd "${SCRIPT_DIR}"/../tests/integration/tests
   go test -v
-elif [ "${TEST_SUITE}" == "backend-multi-cluster" ]; then
-  "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "true"
-  
-  # Get Kiali URL
-  ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
-  URL="http://${ISTIO_INGRESS_IP}/kiali"
-  echo "kiali_url=$URL"
-  export URL
-
-  cd "${SCRIPT_DIR}"/../tests/integration/tests
-  go test -v
 elif [ "${TEST_SUITE}" == "frontend" ]; then
+  ensureCypressInstalled
   "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token
   
   ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
@@ -98,6 +97,7 @@ elif [ "${TEST_SUITE}" == "frontend" ]; then
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run
 elif [ "${TEST_SUITE}" == "frontend-multi-cluster" ]; then
+  ensureCypressInstalled
   "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "true"
 
   # Get Kiali URL
