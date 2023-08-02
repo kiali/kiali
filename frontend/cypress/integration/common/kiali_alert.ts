@@ -8,7 +8,7 @@ Then(`user should see no Istio Components Status`, () => {
     }
   }).as('istioStatus');
 
-  cy.request('GET', '/api/istio/status')
+  cy.get('#refresh_button').click();
   cy.wait('@istioStatus');
   cy.waitForReact();
   cy.get('[data-test="istio-status-danger"]',{ timeout: 1000 }).should('not.exist');
