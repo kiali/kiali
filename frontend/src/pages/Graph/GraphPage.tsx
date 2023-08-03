@@ -632,7 +632,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       return;
     }
 
-    if (event.isOutOfMesh && !event.isAmbient) {
+    if (event.isOutOfMesh) {
       AlertUtils.add(
         `A node with a missing sidecar provides no node-specific telemetry and can not provide a node detail graph.`,
         undefined,
