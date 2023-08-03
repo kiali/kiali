@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as d3 from 'd3';
 import { observer } from 'mobx-react';
 import { polygonHull } from 'd3-polygon';
 import * as _ from 'lodash';
@@ -33,6 +34,7 @@ import {
 // to reimplement the rendered element.  This supports the following customizations:
 //   element.data.isHighlighted?: boolean         // adds highlight effects based on hover
 //   element.data.isUnhighlighted?: boolean       // adds unhighlight effects based on hover
+//   [NodeLabel] isHover                          // adds "raise" logic to bring label to the top
 //   show scaled label on hover (when showLabel is false)
 //
 // If we could contribute all of these customizations for PFT then we may be able to avoid this "BaseGroupExpanded" component and
@@ -209,6 +211,18 @@ const BaseGroupExpandedComponent: React.FunctionComponent<BaseGroupExpandedProps
     canDrop && dropTarget && 'pf-m-drop-target'
   );
 
+  // This raises the node above other nodes to ensure that when hovered the user can see the node information, if it
+  // was occluded.  Especially to handle for label overlap.  The approach is heavy-handed, and fragile, but I'm not
+  // savvy enough to make it better. It basically searches works up to the node based on the css class name, and then
+  // "knows" it needs to go one level higher to reach the proper grouping.
+  const raise = e => {
+    let target = e.target;
+    while (d3.select(target).attr('class') !== 'pf-topology__group') {
+      target = target.parentNode;
+    }
+    d3.select(target.parentNode).raise();
+  };
+
   const data = element.getData();
   const scale = element.getGraph().getScale();
   const labelScale = isHover && !showLabel ? Math.max(1, 1 / scale) : 1;
@@ -228,7 +242,7 @@ const BaseGroupExpandedComponent: React.FunctionComponent<BaseGroupExpandedProps
         </g>
       </Layer>
       {(showLabel || isHover) && (
-        <g transform={`scale(${isHover ? labelScale : 1})`}>
+        <g transform={`scale(${isHover ? labelScale : 1})`} onMouseEnter={raise}>
           <NodeLabel
             className={styles.topologyGroupLabel}
             x={labelLocation.current[0] * labelPositionScale}

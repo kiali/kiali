@@ -36,8 +36,8 @@ export const layoutFactory: LayoutFactory = (type: string, graph: Graph): Layout
       });
     default:
       return new DagreLayout(graph, {
-        linkDistance: 30,
-        nodeDistance: 20,
+        linkDistance: 40,
+        nodeDistance: 25,
         marginx: undefined,
         marginy: undefined,
         ranker: 'network-simplex',
