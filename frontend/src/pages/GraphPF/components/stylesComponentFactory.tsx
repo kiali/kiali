@@ -24,6 +24,7 @@ import { NamespaceActions } from 'actions/NamespaceAction';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
 import { history } from '../../../app/History';
 import { GraphNodeDoubleTapEvent } from 'components/CytoscapeGraph/CytoscapeGraph';
+import { serverConfig } from '../../../config';
 
 type ContextMenuOptionPF = ContextMenuOption & {
   altClickHandler?: (node: GraphElement) => void;
@@ -99,7 +100,7 @@ const handleDoubleTap = (doubleTapNode: GraphElement) => {
   }
 
   if (dtNodeData.isOutOfMesh) {
-    if (!dtNodeData.isAmbient) {
+    if (!serverConfig.ambientEnabled) {
       AlertUtils.add(
         `A node with a missing sidecar provides no node-specific telemetry and can not provide a node detail graph.`,
         undefined,

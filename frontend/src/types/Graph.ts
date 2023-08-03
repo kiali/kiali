@@ -382,7 +382,6 @@ export interface GraphNodeData {
   };
   hasWorkloadEntry?: WEInfo[];
   healthData?: GraphNodeHealthData;
-  isAmbient?: boolean;
   isBox?: string;
   isDead?: boolean;
   isIdle?: boolean;
