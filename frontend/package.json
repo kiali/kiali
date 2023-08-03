@@ -1,6 +1,7 @@
 {
   "name": "@kiali/kiali-ui",
   "version": "1.72.0",
+  "proxy": "http://localhost:4000",
   "description": "React UI for [Kiali](https://github.com/kiali/kiali).",
   "keywords": [
     "istio service mesh",
@@ -55,12 +56,12 @@
     "prettier": "prettier --write \"{src/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\""
   },
   "dependencies": {
-    "@patternfly/patternfly": "4.224.2",
-    "@patternfly/react-charts": "6.94.18",
-    "@patternfly/react-core": "4.276.6",
-    "@patternfly/react-table": "4.112.39",
-    "@patternfly/react-tokens": "4.94.6",
-    "@patternfly/react-topology": "4.91.27",
+    "@patternfly/patternfly": "5.0.0",
+    "@patternfly/react-charts": "7.0.0",
+    "@patternfly/react-core": "5.0.0",
+    "@patternfly/react-table": "5.0.0",
+    "@patternfly/react-tokens": "5.0.0",
+    "@patternfly/react-topology": "5.0.0",
     "axios": "^0.21.4",
     "bootstrap-slider-without-jquery": "10.0.0",
     "cy-node-html-label": "2.0.0",
@@ -141,7 +142,7 @@
     "postcss": "^8.4.12"
   },
   "engines": {
-    "node": "^14.17.0",
+    "node": ">=14.17.0",
     "npm": ">=6.0.0 ",
     "yarn": ">=1.0.0 "
   },
