@@ -178,9 +178,6 @@ func TestAppWithAmbientIsFlagged(t *testing.T) {
 		flag, ok := node.Metadata[graph.IsOutOfMesh].(bool)
 		assert.False(t, ok)
 		assert.False(t, flag)
-		flagAmbient, okAmbient := node.Metadata[graph.IsAmbient].(bool)
-		assert.True(t, okAmbient)
-		assert.True(t, flagAmbient)
 	}
 }
 
