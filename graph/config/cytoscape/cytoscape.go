@@ -111,7 +111,6 @@ type NodeData struct {
 	HasTrafficShifting    bool                `json:"hasTrafficShifting,omitempty"`    // true (vs has traffic shifting) | false
 	HasVS                 *VSInfo             `json:"hasVS,omitempty"`                 // it can be empty if there is a VS without hostnames
 	HasWorkloadEntry      []graph.WEInfo      `json:"hasWorkloadEntry,omitempty"`      // static workload entry information | empty if there are no workload entries
-	IsAmbient             bool                `json:"isAmbient,omitempty"`             // If the node is in Ambient namespace
 	IsBox                 string              `json:"isBox,omitempty"`                 // set for NodeTypeBox, current values: [ 'app', 'cluster', 'namespace' ]
 	IsDead                bool                `json:"isDead,omitempty"`                // true (has no pods) | false
 	IsGateway             *GWInfo             `json:"isGateway,omitempty"`             // Istio ingress/egress gateway information
@@ -346,11 +345,6 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// set mesh checks, if available
 		if val, ok := n.Metadata[graph.IsOutOfMesh]; ok {
 			nd.IsOutOfMesh = val.(bool)
-		}
-
-		// set mesh checks, if available
-		if val, ok := n.Metadata[graph.IsAmbient]; ok {
-			nd.IsAmbient = val.(bool)
 		}
 
 		// check if node is on another namespace
@@ -641,7 +635,6 @@ func generateBoxCompoundNodes(box map[string][]*NodeData, nodes *[]*NodeWrapper,
 
 			// assign each member node to the compound parent
 			nd.IsOutOfMesh = false // TODO: this is probably unecessarily noisy
-			nd.IsAmbient = false
 			nd.IsInaccessible = false
 			nd.IsOutside = false
 
@@ -661,7 +654,6 @@ func generateBoxCompoundNodes(box map[string][]*NodeData, nodes *[]*NodeWrapper,
 						}
 					}
 					nd.IsOutOfMesh = nd.IsOutOfMesh || n.IsOutOfMesh
-					nd.IsAmbient = nd.IsAmbient || n.IsAmbient
 					nd.IsInaccessible = nd.IsInaccessible || n.IsInaccessible
 					nd.IsOutside = nd.IsOutside || n.IsOutside
 				}

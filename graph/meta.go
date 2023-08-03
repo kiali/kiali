@@ -29,7 +29,6 @@ const (
 	HasRequestTimeout     MetadataKey = "hasRequestTimeout"
 	HasVS                 MetadataKey = "hasVS"
 	HasWorkloadEntry      MetadataKey = "hasWorkloadEntry"
-	IsAmbient             MetadataKey = "isAmbient"
 	IsDead                MetadataKey = "isDead"
 	IsEgressCluster       MetadataKey = "isEgressCluster"  // PassthroughCluster or BlackHoleCluster
 	IsEgressGateway       MetadataKey = "isEgressGateway"  // Identifies a node that is an Istio egress gateway

@@ -92,9 +92,6 @@ func (a *MeshCheckAppender) applyMeshChecks(trafficMap graph.TrafficMap, globalI
 			n.Metadata[graph.IsOutOfMesh] = true
 		}
 
-		if hasIstioAmbient {
-			n.Metadata[graph.IsAmbient] = true
-		}
 	}
 }
 
