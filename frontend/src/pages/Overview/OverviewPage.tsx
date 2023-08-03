@@ -1,7 +1,6 @@
 import * as React from 'react';
 import {
   Card,
-  CardActions,
   CardBody,
   CardHeader,
   CardHeaderMain,
@@ -129,6 +128,11 @@ const cardNamespaceNameLongStyle = kialiStyle({
   textOverflow: 'ellipsis',
   verticalAlign: 'middle',
   whiteSpace: 'nowrap'
+});
+
+const actionsStyle = kialiStyle({
+  margin: '0 0.5em 10px 0.5em',
+  width: 300
 });
 
 export enum Show {
@@ -901,6 +905,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       return <OverviewNamespaceActions key={'namespaceAction_' + i} namespace={ns.name} actions={actions} />;
     });
     const hiddenColumns = isMultiCluster() ? ([] as string[]) : ['cluster'];
+    
     return (
       <>
         <OverviewToolbar
@@ -955,7 +960,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                           !this.props.istioAPIEnabled && !this.hasCanaryUpgradeConfigured() ? { height: '96%' } : {}
                         }
                       >
-                        <CardHeader>
+                        <CardHeader actions={{className: actionsStyle ,actions: namespaceActions[i]}}>
                           <CardHeaderMain style={{ width: '85%' }}>
                             <Title headingLevel="h5" size={TitleSizes.lg}>
                               <span
@@ -995,10 +1000,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                                   )}
                               </span>
                             </Title>
-                          </CardHeaderMain>
-                          <CardActions style={{ width: '15%', textAlign: 'right', display: 'block' }}>
-                            {namespaceActions[i]}
-                          </CardActions>
+                          </CardHeaderMain>                          
                         </CardHeader>
                         <CardBody>
                           {isMultiCluster() && ns.cluster && (

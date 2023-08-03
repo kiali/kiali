@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { CardActions, CardHeader, CardTitle, Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core';
+import { CardHeader, CardTitle, Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { FormattedTraceInfo, fullIDStyle } from './FormattedTraceInfo';
 import { history } from 'app/History';
@@ -48,11 +48,9 @@ const JaegerTraceTitleComponent = (props: Props) => {
     );
   }
   const [toggled, setToggled] = React.useState(false);
-
-  return (
-    <CardHeader>
-      <CardActions>
-        <span>
+  const cardActions = (
+    <>
+      <span>
           {`${props.formattedTrace.relativeDate()} | ${props.formattedTrace.absTime()} (${props.formattedTrace.fromNow()})`}
         </span>
         <Dropdown
@@ -64,7 +62,11 @@ const JaegerTraceTitleComponent = (props: Props) => {
           position={'right'}
           style={{ top: 3 }}
         />
-      </CardActions>
+    </>
+  );
+
+  return (
+    <CardHeader actions={{actions: cardActions}}>      
       <CardTitle>
         <span>{`${props.formattedTrace.name()} `}</span>
         <span className={fullIDStyle}>{props.formattedTrace.fullID()}</span>

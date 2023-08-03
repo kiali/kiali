@@ -3,7 +3,6 @@ import { IstioConfigItem } from '../../types/IstioConfigList';
 import { cellWidth, ICell, IRow, Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
 import {
   Card,
-  CardActions,
   CardBody,
   CardHeader,
   CardTitle,
@@ -107,7 +106,6 @@ export class IstioConfigCard extends React.Component<Props> {
     return (
       <Card isCompact={true} id={'IstioConfigCard'}>
         <CardHeader>
-          <CardActions />
           <CardTitle style={{ float: 'left' }}>Istio Config</CardTitle>
         </CardHeader>
         <CardBody>

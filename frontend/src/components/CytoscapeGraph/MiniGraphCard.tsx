@@ -2,7 +2,6 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import {
   Card,
-  CardActions,
   CardBody,
   CardHeader,
   CardTitle,
@@ -110,24 +109,29 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     const intervalTitle =
       rangeEnd > 0 ? toRangeString(rangeStart, rangeEnd, { second: '2-digit' }, { second: '2-digit' }) : 'Loading';
 
+    const cardActions = (
+      <>
+          <KioskElement>
+            <ToolbarItem>
+              <TimeDurationIndicator onClick={this.toggleTimeOptionsVisibility} isDuration={true} />
+            </ToolbarItem>
+          </KioskElement>
+          <Dropdown
+            toggle={<KebabToggle onToggle={this.onGraphActionsToggle} />}
+            dropdownItems={graphCardActions}
+            isPlain
+            isOpen={this.state.isKebabOpen}
+            position={'right'}
+          />
+      </>
+    );
+
     return (
       <>
         <Card style={{ height: '100%' }} id={'MiniGraphCard'} data-test="mini-graph">
-          <CardHeader>
-            <CardActions>
-              <KioskElement>
-                <ToolbarItem>
-                  <TimeDurationIndicator onClick={this.toggleTimeOptionsVisibility} isDuration={true} />
-                </ToolbarItem>
-              </KioskElement>
-              <Dropdown
-                toggle={<KebabToggle onToggle={this.onGraphActionsToggle} />}
-                dropdownItems={graphCardActions}
-                isPlain
-                isOpen={this.state.isKebabOpen}
-                position={'right'}
-              />
-            </CardActions>
+          <CardHeader
+            actions={{actions: cardActions}}
+          >
             <CardTitle style={{ float: 'left' }}>{intervalTitle}</CardTitle>
           </CardHeader>
           <CardBody>

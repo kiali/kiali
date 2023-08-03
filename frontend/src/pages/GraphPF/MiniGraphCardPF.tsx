@@ -2,7 +2,6 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import {
   Card,
-  CardActions,
   CardBody,
   CardHeader,
   CardTitle,
@@ -112,13 +111,9 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
     const rangeStart: TimeInMilliseconds = rangeEnd - this.props.dataSource.graphDuration * 1000;
     const intervalTitle =
       rangeEnd > 0 ? toRangeString(rangeStart, rangeEnd, { second: '2-digit' }, { second: '2-digit' }) : 'Loading';
-
-    return (
+    const cardActions = (
       <>
-        <Card style={{ height: '100%' }} id={'MiniGraphCard'} data-test="mini-graph">
-          <CardHeader>
-            <CardActions>
-              <KioskElement>
+            <KioskElement>
                 <ToolbarItem>
                   <TimeDurationIndicator onClick={this.toggleTimeOptionsVisibility} isDuration={true} />
                 </ToolbarItem>
@@ -130,7 +125,12 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
                 isOpen={this.state.isKebabOpen}
                 position={'right'}
               />
-            </CardActions>
+          </>
+    );
+    return (
+      <>
+        <Card style={{ height: '100%' }} id={'MiniGraphCard'} data-test="mini-graph">
+          <CardHeader actions={{actions: cardActions}}>            
             <CardTitle style={{ float: 'left' }}>{intervalTitle}</CardTitle>
           </CardHeader>
           <CardBody>
