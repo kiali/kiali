@@ -3,7 +3,7 @@ import * as ReactDOM from 'react-dom';
 import { App } from './app/App';
 import { globalStyle } from 'styles/GlobalStyle';
 import cssVariables from './styles/variables.module.scss';
-import '@patternfly/patternfly/patternfly.css';
+import '@patternfly/patternfly/dist/patternfly.css';
 import 'tippy.js/dist/tippy.css';
 import 'tippy.js/dist/themes/light-border.css';
 import 'react-datepicker/dist/react-datepicker.css';
