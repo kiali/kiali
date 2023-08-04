@@ -6,7 +6,6 @@ Feature: Kiali Services page
     Given user is at administrator perspective
     And user is at the "services" list page
 
-  @smoke
   @services-page
   @bookinfo-app
   Scenario: See services table with correct info
@@ -28,6 +27,7 @@ Feature: Kiali Services page
   Scenario: See all Services toggles
     Then user sees all the Services toggles
 
+  @smoke
   @services-page
   Scenario: Toggle Services configuration toggle
     When user "unchecks" toggle "configuration"

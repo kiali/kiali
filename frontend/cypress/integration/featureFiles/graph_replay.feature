@@ -5,7 +5,6 @@ Feature: Kiali Graph page - Replay
   Background:
     Given user is at administrator perspective
 
-@smoke
 @error-rates-app
 @graph-page-replay
 Scenario: Graph alpha and beta namespaces

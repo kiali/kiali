@@ -10,13 +10,11 @@ Feature: Kiali App Details page
     Given user is at administrator perspective
     And user is at the details page for the "app" "bookinfo/details"
 
-  @smoke
   @app-details-page
   @bookinfo-app
   Scenario: See details for app.
     Then user sees details information for app
 
-  @smoke
   @app-details-page
   @bookinfo-app
   Scenario: See app minigraph for details app.

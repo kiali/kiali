@@ -5,7 +5,6 @@ Feature: Service Details Wizard: K8s Gateway API Routing
   Background:
     Given user is at administrator perspective
 
-  @smoke
   @gateway-api
   @wizard-k8s-routing
   @bookinfo-app

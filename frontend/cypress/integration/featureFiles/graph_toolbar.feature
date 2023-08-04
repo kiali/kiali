@@ -10,7 +10,6 @@ Feature: Kiali Graph page - Toolbar (various)
 # NOTE: Graph Find/Hide has its own test script
 # NOTE: Graph Replay has its own test script
 
-@smoke
 @error-rates-app
 @graph-page-toolbar
 Scenario: Graph alpha namespace with query params

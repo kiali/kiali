@@ -126,7 +126,6 @@ Feature: Kiali Overview page
   Scenario: The canary upgrade information is not present when there is no canary configured
     Then the user sees no information related to canary upgrades
 
-  @smoke
   @error-rates-app
   @overview-page
   Scenario: The Istio panel should be visible in the control panel

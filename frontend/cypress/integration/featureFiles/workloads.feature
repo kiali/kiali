@@ -6,7 +6,6 @@ Feature: Kiali Workloads page
     Given user is at administrator perspective
     And user is at the "workloads" list page
 
-  @smoke
   @workloads-page
   @bookinfo-app
   Scenario: See workloads table with correct info
@@ -22,7 +21,6 @@ Feature: Kiali Workloads page
     And the "Type" column on the "details-v1" row has the text "Deployment"
     And the "Details" column on the "details-v1" row is empty
 
-  @smoke
   @workloads-page
   @bookinfo-app
   Scenario: See all Workloads toggles

@@ -8,7 +8,6 @@ Feature: Kiali Apps List page
     And user is at the "applications" list page
     And user selects the "bookinfo" namespace
 
-  @smoke
   @apps-page
   @bookinfo-app
   Scenario: See all Apps objects in the bookinfo namespace.

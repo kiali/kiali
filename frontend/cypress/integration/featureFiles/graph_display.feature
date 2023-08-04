@@ -9,7 +9,6 @@ Feature: Kiali Graph page - Display menu
   # NOTE: Operation nodes has its own test script
   # NOTE: Traffic animation, missing sidecars, virtual service, and idle edge options are nominally tested
 
-  @smoke
   @error-rates-app
   @graph-page-display
   Scenario: Graph no namespaces
@@ -17,7 +16,6 @@ Feature: Kiali Graph page - Display menu
     Then user sees no namespace selected
 
   # gamma will only show nodes when idle-nodes is enabled
-  @smoke
   @error-rates-app
   @graph-page-display
   Scenario: Graph gamma namespaces
@@ -38,7 +36,6 @@ Feature: Kiali Graph page - Display menu
     When user "disables" "idle nodes" option
     Then user sees empty graph
 
-  @smoke
   @error-rates-app
   @graph-page-display
   Scenario: Graph alpha and beta namespaces
@@ -46,7 +43,6 @@ Feature: Kiali Graph page - Display menu
     Then user sees the "alpha" namespace
     And user sees the "beta" namespace
 
-  @smoke
   @error-rates-app
   @graph-page-display
   Scenario: User clicks Display Menu

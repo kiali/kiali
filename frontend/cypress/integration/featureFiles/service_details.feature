@@ -7,7 +7,6 @@ Feature: Kiali Service Details page
     Given user is at administrator perspective
     And user is at the details page for the "service" "bookinfo/productpage"
 
-  @smoke
   @service-details-page
   @bookinfo-app
   Scenario: See details for productpage
@@ -17,7 +16,6 @@ Feature: Kiali Service Details page
     Then sd::user sees a list with content "Traces"
     Then sd::user sees the actions button
 
-  @smoke
   @service-details-page
   @bookinfo-app
   Scenario: See details for service
@@ -25,7 +23,6 @@ Feature: Kiali Service Details page
     Then sd::user sees Network card
     Then sd::user sees Istio Config
 
-  @smoke
   @service-details-page
   @bookinfo-app
   Scenario: See service minigraph for details app.
