@@ -247,9 +247,11 @@ cd $KIALI_SOURCES/kiali/hack
 ./run-kiali.sh
 ----
 
-=== Running Cypress tests
+=== Running integration tests
 
-Integration testing is done with cypress. More information can be found link:./frontend/cypress/README.md[here].
+There are two sets of integration tests. The first are backend tests that test the Kiali API directly. These can be found at link:./tests/integration/README.md[backend tests]. The second are frontend Cypress tests that test Kiali through the browser. These can be found at link:./frontend/cypress/README.md[frontend tests].
+
+Both tests are run as part of the CI pipeline. If you'd like to run these same tests locally, you can use link:./hack/run-integration-tests.sh[this script] to setup your local environment and run the integration tests. Or these tests can be run against any live environment that meets the following requirements.
 
 Requirements:
 - Istio

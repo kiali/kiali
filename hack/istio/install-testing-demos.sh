@@ -23,6 +23,7 @@ MINIKUBE_PROFILE="minikube"
 : ${ARCH:=amd64}
 : ${DELETE_DEMOS:=false}
 : ${ENABLE_INJECTION:=true}
+: ${GATEWAY_HOST:="")}
 ISTIO_NAMESPACE="istio-system"
 
 while [ $# -gt 0 ]; do
@@ -40,6 +41,10 @@ while [ $# -gt 0 ]; do
       DELETE_DEMOS="$2"
       shift;shift
       ;;
+    -g|--gateway-host)
+      GATEWAY_HOST="$2"
+      shift;shift
+      ;;
     -mp|--minikube-profile)
       MINIKUBE_PROFILE="$2"
       shift;shift
@@ -54,6 +59,7 @@ Valid command line arguments:
   -a|--arch <amd64|ppc64le|s390x>: Images for given arch will be used (default: amd64).
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: if 'true' demos will be deleted; otherwise, they will be installed
+  -g|--gateway-host: host to use for the ingress gateway
   -mp|--minikube-profile <name>: If using minikube, this is the minikube profile name (default: minikube).
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
   -h|--help: this text
@@ -109,8 +115,55 @@ if [ "${DELETE_DEMOS}" != "true" ]; then
     "${SCRIPT_DIR}/install-sleep-demo.sh" 
 
   else
+    gateway_yaml=""
+    if [ -v GATEWAY_HOST ]; then
+      gateway_yaml=$(mktemp)
+      cat << EOF > "${gateway_yaml}"
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: bookinfo-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 8080
+      name: http
+      protocol: HTTP
+    hosts:
+    - "${GATEWAY_HOST}"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: bookinfo
+spec:
+  hosts:
+  - "${GATEWAY_HOST}"
+  gateways:
+  - bookinfo-gateway
+  http:
+  - match:
+    - uri:
+        exact: /productpage
+    - uri:
+        prefix: /static
+    - uri:
+        exact: /login
+    - uri:
+        exact: /logout
+    - uri:
+        prefix: /api/v1/products
+    route:
+    - destination:
+        host: productpage
+        port:
+          number: 9080
+EOF
+    fi
     echo "Deploying bookinfo demo..."
-    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -mp ${MINIKUBE_PROFILE} -tg -in ${ISTIO_NAMESPACE} -a ${ARCH}
+    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -mp ${MINIKUBE_PROFILE} -tg -in ${ISTIO_NAMESPACE} -a ${ARCH} ${gateway_yaml:+-g ${gateway_yaml}}
 
     echo "Deploying error rates demo..."
     "${SCRIPT_DIR}/install-error-rates-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH}
@@ -119,9 +172,12 @@ if [ "${DELETE_DEMOS}" != "true" ]; then
     "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl
   fi
 
-  # Some front-end tests have conflicts with the wildcard host in the bookinfo-gateway. Patch it with the host resolved for the traffic generator.
-  ISTIO_INGRESS_HOST=$(${CLIENT_EXE} get cm -n bookinfo traffic-generator-config -o jsonpath='{.data.route}' | sed 's|.*//\([^\:]*\).*/.*|\1|')
-  ${CLIENT_EXE} patch VirtualService bookinfo -n bookinfo --type json -p "[{\"op\": \"replace\", \"path\": \"/spec/hosts/0\", \"value\": \"${ISTIO_INGRESS_HOST}\"}]"
+  if [ -v "${GATEWAY_HOST}" ]; then
+    # Assume that the '*' is used for hosts if the gateway host is not specified.
+    # Some front-end tests have conflicts with the wildcard host in the bookinfo-gateway. Patch it with the host resolved for the traffic generator.
+    ISTIO_INGRESS_HOST=$(${CLIENT_EXE} get cm -n bookinfo traffic-generator-config -o jsonpath='{.data.route}' | sed 's|.*//\([^\:]*\).*/.*|\1|')
+    ${CLIENT_EXE} patch VirtualService bookinfo -n bookinfo --type json -p "[{\"op\": \"replace\", \"path\": \"/spec/hosts/0\", \"value\": \"${ISTIO_INGRESS_HOST}\"}]"
+  fi
 
   for namespace in bookinfo alpha beta
   do

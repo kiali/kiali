@@ -53,6 +53,10 @@ Use this to access the Kiali UI that is installed locally in `minikube` or `kind
 
 * `link:purge-kiali-from-cluster.sh[]`
 
+Sets up the environment for the integration tests and runs them. This is the same setup that is used by the CI system.
+
+* `link:run-integration-tests.sh[]`
+
 Removes all remnants of Kiali and Kiali Operator from a cluster.
 
 * `link:run-kiali.sh[]`
@@ -64,6 +68,10 @@ Runs Kiali on the local machine while having it connect to a remote k8s cluster.
 Runs the suite of molecule tests on a running OpenShift or `minikube` cluster.
 
 * `link:run-prometheus.sh[]`
+
+Starts a kind cluster with metallb as a load balancer implementation.
+
+* `link:start-kind.sh[]`
 
 Runs a local Prometheus in docker and scrapes the Kiali server and operator that is running in an OpenShift cluster.
 

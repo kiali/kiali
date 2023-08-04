@@ -12,6 +12,9 @@ helpmsg() {
   cat <<HELP
 This script will run setup a KinD cluster for testing Kiali against a real environment in CI.
 Options:
+-a|--auth-strategy <anonymous|token>
+    Auth stategy to use for Kiali.
+    Default: anonymous
 -dorp|--docker-or-podman <docker|podman>
     What to use when building images.
     Default: docker
@@ -20,6 +23,9 @@ Options:
     This option is ignored if -ii is false.
     If not specified, the latest version of Istio is installed.
     Default: <the latest release>
+-mc|--multicluster <true|false>
+    Whether to set up a multicluster environment.
+    Default: false
 HELP
 }
 
@@ -27,9 +33,11 @@ HELP
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+    -a|--auth-strategy)           AUTH_STRATEGY="$2";         shift;shift; ;;
     -dorp|--docker-or-podman)     DORP="$2";                  shift;shift; ;;
     -h|--help)                    helpmsg;                    exit 1       ;;
     -iv|--istio-version)          ISTIO_VERSION="$2";         shift;shift; ;;
+    -mc|--multicluster)           MULTICLUSTER="$2";          shift;shift; ;;
     *) echo "Unknown argument: [$key]. Aborting."; helpmsg; exit 1 ;;
   esac
 done
@@ -38,8 +46,9 @@ done
 set -e
 
 # set up some of our defaults
-DORP="${DORP:-docker}"
 AUTH_STRATEGY="${AUTH_STRATEGY:-anonymous}"
+DORP="${DORP:-docker}"
+MULTICLUSTER="${MULTICLUSTER:-false}"
 
 # Defaults the branch to master unless it is already set
 TARGET_BRANCH="${TARGET_BRANCH:-master}"
@@ -56,15 +65,17 @@ KIND_NODE_IMAGE=""
 if [ "${ISTIO_VERSION}" == "1.13.0" ]; then
   KIND_NODE_IMAGE="kindest/node:v1.23.4@sha256:0e34f0d0fd448aa2f2819cfd74e99fe5793a6e4938b328f657c8e3f81ee0dfb9"
 else
-  KIND_NODE_IMAGE="kindest/node:v1.24.15@sha256:24473777a1eef985dc405c23ab9f4daddb1352ca23db60b75de9e7c408096491"
+  KIND_NODE_IMAGE="kindest/node:v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72"
 fi
 
 # print out our settings for debug purposes
 cat <<EOM
 === SETTINGS ===
+AUTH_STRATEGY="$AUTH_STRATEGY
 DORP=$DORP
 ISTIO_VERSION=$ISTIO_VERSION
 KIND_NODE_IMAGE=$KIND_NODE_IMAGE
+MULTICLUSTER=$MULTICLUSTER
 TARGET_BRANCH=$TARGET_BRANCH
 === SETTINGS ===
 EOM
@@ -74,32 +85,8 @@ which kubectl > /dev/null || (infomsg "kubectl executable is missing"; exit 1)
 which kind > /dev/null || (infomsg "kind executable is missing"; exit 1)
 which "${DORP}" > /dev/null || (infomsg "[$DORP] is not in the PATH"; exit 1)
 
-NODE_IMAGE_LINE=""
-if [ -n "${KIND_NODE_IMAGE}" ]; then
-  NODE_IMAGE_LINE="image: ${KIND_NODE_IMAGE}"
-fi
-infomsg "Kind cluster to be created with name [ci]"
-cat <<EOF | kind create cluster --name ci --config -
-kind: Cluster
-apiVersion: kind.x-k8s.io/v1alpha4
-nodes:
-  - role: control-plane
-    ${NODE_IMAGE_LINE}
-  - role: worker
-    ${NODE_IMAGE_LINE}
-EOF
-
-# When a new cluster is created, kind automagically sets the kube context.
-
-infomsg "Create Kind LoadBalancer via MetalLB"
-lb_addr_range="255.70-255.84"
-
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.5/config/manifests/metallb-native.yaml
-
-subnet=$(${DORP} network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}')
-subnet_trimmed=$(echo "${subnet}" | sed -E 's/([0-9]+\.[0-9]+)\.[0-9]+\..*/\1/')
-first_ip="${subnet_trimmed}.$(echo "${lb_addr_range}" | cut -d '-' -f 1)"
-last_ip="${subnet_trimmed}.$(echo "${lb_addr_range}" | cut -d '-' -f 2)"
+HELM_CHARTS_DIR="$(mktemp -d)"
+SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 
 if [ -n "${ISTIO_VERSION}" ]; then
   DOWNLOAD_ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
@@ -108,74 +95,106 @@ fi
 infomsg "Downloading istio"
 hack/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
 
-kubectl rollout status deployment controller -n metallb-system
+setup_kind_singlecluster() {
+  "${SCRIPT_DIR}"/start-kind.sh --name ci --image "${KIND_NODE_IMAGE}" 
 
-cat <<LBCONFIGMAP | kubectl apply -f -
-apiVersion: metallb.io/v1beta1
-kind: IPAddressPool
+  infomsg "Installing istio"
+  # Apparently you can't set the requests to zero for the proxy so just setting them to some really low number.
+  hack/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true"
+
+  infomsg "Pushing the images into the cluster..."
+  make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
+
+  local istio_ingress_gateway_ip
+  istio_ingress_gateway_ip="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+
+  # Re-use bookinfo gateway but have a separate VirtualService for Kiali
+  kubectl apply -f - <<EOF
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
 metadata:
-  namespace: metallb-system
-  name: config
+  name: kiali
+  namespace: istio-system
 spec:
-  addresses:
-  - ${first_ip}-${last_ip}
-LBCONFIGMAP
+  gateways:
+  - bookinfo/bookinfo-gateway
+  hosts:
+  - "${istio_ingress_gateway_ip}"
+  http:
+  - match:
+    - uri:
+        prefix: /kiali
+    route:
+    - destination:
+        host: kiali
+        port:
+          number: 20001
+EOF
 
-cat <<LBCONFIGMAP | kubectl apply -f -
-apiVersion: metallb.io/v1beta1
-kind: L2Advertisement
-metadata:
-  namespace: metallb-system
-  name: l2config
-spec:
-  ipAddressPools:
-  - config
-LBCONFIGMAP
+  infomsg "Cloning kiali helm-charts..."
+  git clone --single-branch --branch "${TARGET_BRANCH}" https://github.com/kiali/helm-charts.git "${HELM_CHARTS_DIR}"
+  make -C "${HELM_CHARTS_DIR}" build-helm-charts
 
-infomsg "Installing istio"
-# Apparently you can't set the requests to zero for the proxy so just setting them to some really low number.
-hack/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true"
-  
-infomsg "Pushing the images into the cluster..."
-make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
+  HELM="${HELM_CHARTS_DIR}/_output/helm-install/helm"
 
-infomsg "Cloning kiali helm-charts..."
-git clone --single-branch --branch "${TARGET_BRANCH}" https://github.com/kiali/helm-charts.git helm-charts
-make -C helm-charts build-helm-charts
+  infomsg "Using helm: $(ls -l ${HELM})"
+  infomsg "$(${HELM} version)"
 
-HELM="helm-charts/_output/helm-install/helm"
+  infomsg "Installing kiali server via Helm"
+  infomsg "Chart to be installed: $(ls -1 ${HELM_CHARTS_DIR}/_output/charts/kiali-server-*.tgz)"
+  # The grafana and tracing urls need to be set for backend e2e tests
+  # but they don't need to be accessible outside the cluster.
+  # Need a single dashboard set for grafana.
+  ${HELM} install \
+    --namespace istio-system \
+    --wait \
+    --set auth.strategy="${AUTH_STRATEGY}" \
+    --set deployment.logger.log_level="trace" \
+    --set deployment.image_name=kiali/kiali \
+    --set deployment.image_version=dev \
+    --set deployment.image_pull_policy="Never" \
+    --set external_services.grafana.url="http://grafana.istio-system:3000" \
+    --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard" \
+    --set external_services.tracing.url="http://tracing.istio-system:16685/jaeger" \
+    --set health_config.rate[0].kind="service" \
+    --set health_config.rate[0].name="y-server" \
+    --set health_config.rate[0].namespace="alpha" \
+    --set health_config.rate[0].tolerance[0].code="5xx" \
+    --set health_config.rate[0].tolerance[0].degraded=2 \
+    --set health_config.rate[0].tolerance[0].failure=100 \
+    kiali-server \
+    "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
+}
 
-infomsg "Using helm: $(ls -l ${HELM})"
-infomsg "$(${HELM} version)"
+setup_kind_multicluster() {
+  if [ -n "${ISTIO_VERSION}" ]; then
+    DOWNLOAD_ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
+  fi
 
-infomsg "Installing kiali server via Helm"
-infomsg "Chart to be installed: $(ls -1 helm-charts/_output/charts/kiali-server-*.tgz)"
-# The grafana and tracing urls need to be set for backend e2e tests
-# but they don't need to be accessible outside the cluster.
-# Need a single dashboard set for grafana.
-${HELM} install \
-  --namespace istio-system \
-  --set auth.strategy="${AUTH_STRATEGY}" \
-  --set deployment.logger.log_level="trace" \
-  --set deployment.service_type="LoadBalancer" \
-  --set deployment.image_name=kiali/kiali \
-  --set deployment.image_version=dev \
-  --set deployment.image_pull_policy="Never" \
-  --set external_services.grafana.url="http://grafana.istio-system:3000" \
-  --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard" \
-  --set external_services.tracing.url="http://tracing.istio-system:16685/jaeger" \
-  --set health_config.rate[0].kind="service" \
-  --set health_config.rate[0].name="y-server" \
-  --set health_config.rate[0].namespace="alpha" \
-  --set health_config.rate[0].tolerance[0].code="5xx" \
-  --set health_config.rate[0].tolerance[0].degraded=2 \
-  --set health_config.rate[0].tolerance[0].failure=100 \
-  kiali-server \
-  helm-charts/_output/charts/kiali-server-*.tgz
+  infomsg "Downloading istio"
+  hack/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
 
-# Create the citest service account whose token will be used to log into Kiali
-infomsg "Installing the test ServiceAccount with read-write permissions"
-for o in role rolebinding serviceaccount; do ${HELM} template --show-only "templates/${o}.yaml" --namespace=istio-system --set deployment.instance_name=citest --set auth.strategy=anonymous kiali-server helm-charts/_output/charts/kiali-server-*.tgz; done | kubectl apply -f -
+  infomsg "Kind cluster to be created with name [ci]"
+  local script_dir 
+  script_dir="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+  local output_dir
+  output_dir="${script_dir}/../_output"
+  # use the Istio release that was last downloaded (that's the -t option to ls)
+  local istio_dir
+  istio_dir=$(ls -dt1 ${output_dir}/istio-* | head -n1)
+  hack/istio/multicluster/install-primary-remote.sh --manage-kind true -dorp docker --istio-dir "${istio_dir}"
+  hack/istio/multicluster/deploy-kiali.sh --manage-kind true -dorp docker -kas anonymous
+}
+
+if [ "${MULTICLUSTER}" == "true" ]; then
+  setup_kind_multicluster
+else
+  setup_kind_singlecluster
+  # Create the citest service account whose token will be used to log into Kiali
+  infomsg "Installing the test ServiceAccount with read-write permissions"
+  for o in role rolebinding serviceaccount; do ${HELM} template --show-only "templates/${o}.yaml" --namespace=istio-system --set deployment.instance_name=citest --set auth.strategy=anonymous kiali-server "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz; done | kubectl apply -f -
+fi
+
 
 # Unfortunately kubectl rollout status fails if the resource does not exist yet.
 for (( i=1; i<=60; i++ ))
@@ -204,7 +223,11 @@ do
   infomsg "Waiting for kiali pod to be ready"
   infomsg "Kiali pod status:"
   # Show status info of kiali pod. yq is used to parse out just the status info.
-  kubectl get pods -l app=kiali -n istio-system -o yaml | yq '.items[0].status'
+  if command -v yq &> /dev/null; then
+    kubectl get pods -l app=kiali -n istio-system -o yaml | yq '.items[0].status'
+  else
+    kubectl get pods -l app=kiali -n istio-system -o yaml
+  fi
   sleep 10
 done
 

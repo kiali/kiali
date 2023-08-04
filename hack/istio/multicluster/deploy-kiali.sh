@@ -137,14 +137,23 @@ EOF
   local helm_auth_flags="${auth_flags[*]}"
 
   # use the latest published server helm chart (if using dev images, it is up to the user to make sure this chart works with the dev image)
-  helm upgrade --install                                       \
-    ${helm_args}                                               \
-    --namespace ${ISTIO_NAMESPACE}                             \
-    ${helm_auth_flags}                                         \
-    --set deployment.logger.log_level="debug"                  \
-    --set deployment.ingress.enabled="${ingress_enabled_flag}" \
-    --repo https://kiali.org/helm-charts                       \
-    kiali-server                                               \
+  helm upgrade --install                                                           \
+    ${helm_args}                                                                   \
+    --namespace ${ISTIO_NAMESPACE}                                                 \
+    ${helm_auth_flags}                                                             \
+    --set deployment.logger.log_level="debug"                                      \
+    --set external_services.grafana.url="http://grafana.istio-system:3000"         \
+    --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard"      \
+    --set external_services.tracing.url="http://tracing.istio-system:16685/jaeger" \
+    --set health_config.rate[0].kind="service"                                     \
+    --set health_config.rate[0].name="y-server"                                    \
+    --set health_config.rate[0].namespace="alpha"                                  \
+    --set health_config.rate[0].tolerance[0].code="5xx"                            \
+    --set health_config.rate[0].tolerance[0].degraded=2                            \
+    --set health_config.rate[0].tolerance[0].failure=100                           \
+    --set deployment.ingress.enabled="${ingress_enabled_flag}"                     \
+    --repo https://kiali.org/helm-charts                                           \
+    kiali-server                                                                   \
     ${KIALI_SERVER_HELM_CHARTS}
 }
 

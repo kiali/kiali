@@ -4,20 +4,20 @@ on:
   # Run on master and release branches
   push:
     branches:
-    - master
-    - v*.*
+      - master
+      - v*.*
     paths-ignore:
-      - 'design/**'
-      - '**/*.md'
-      - '**/*.adoc'
+      - "design/**"
+      - "**/*.md"
+      - "**/*.adoc"
   pull_request:
     branches:
-    - master
-    - v*.*
+      - master
+      - v*.*
     paths-ignore:
-      - 'design/**'
-      - '**/*.md'
-      - '**/*.adoc'
+      - "design/**"
+      - "**/*.md"
+      - "**/*.adoc"
 
 jobs:
   initialize:
@@ -46,12 +46,14 @@ jobs:
           echo "build-branch -> ${{ github.base_ref }}"
         id: branch-pr
         if: ${{ github.base_ref }}
+
   build_backend:
     name: Build backend
     uses: ./.github/workflows/build-backend.yml
     needs: [initialize]
     with:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
+
   build_frontend:
     name: Build frontend
     uses: ./.github/workflows/build-frontend.yml
@@ -71,6 +73,14 @@ jobs:
   integration_tests_frontend:
     name: Run frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend.yml
+    needs: [initialize, build_backend, build_frontend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_multicluster:
+    name: Run frontend multicluster integration tests
+    uses: ./.github/workflows/integration-tests-frontend-multicluster.yml
     needs: [initialize, build_backend, build_frontend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}

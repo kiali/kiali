@@ -65,10 +65,9 @@ Feature: Service Details Wizard: Request Routing
 
   @wizard-request-routing
   @bookinfo-app
-  Scenario: See a Gateway generated with warning
+  Scenario: See a Gateway generated
     When user clicks in the "Istio Config" table "G" badge "reviews-gateway" name row link
     Then user sees the "kind: Gateway" regex in the editor
-    And user sees warning icon in ACE editor
 
   ## @wizard-request-routing
   @bookinfo-app

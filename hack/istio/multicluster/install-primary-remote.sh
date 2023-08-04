@@ -23,7 +23,29 @@ fi
 # Start up two kind instances if requested
 if [ "${MANAGE_KIND}" == "true" ]; then
   echo "Starting kind instances"
-  source ${SCRIPT_DIR}/start-kind.sh
+  
+  # If a specific version of Istio hasn't been provided, try and guess the right one
+  # based on the Kiali branch being tested (TARGET_BRANCH) and the compatibility matrices:
+  # https://kiali.io/docs/installation/installation-guide/prerequisites/
+  # https://istio.io/latest/docs/releases/supported-releases/
+  if [ "${TARGET_BRANCH:-""}" == "v1.48" ]; then
+    ISTIO_VERSION="1.13.0"
+  else
+    ISTIO_VERSION=""
+  fi
+
+  KIND_NODE_IMAGE=""
+  if [ "${ISTIO_VERSION}" == "1.13.0" ]; then
+    KIND_NODE_IMAGE="kindest/node:v1.23.4@sha256:0e34f0d0fd448aa2f2819cfd74e99fe5793a6e4938b328f657c8e3f81ee0dfb9"
+  else
+    KIND_NODE_IMAGE="kindest/node:v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72"
+  fi
+
+  echo "==== START KIND FOR CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
+  "${SCRIPT_DIR}"/../../start-kind.sh --name "${CLUSTER1_NAME}" --load-balancer-range "255.70-255.84" --image "${KIND_NODE_IMAGE}"
+
+  echo "==== START KIND FOR CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
+  "${SCRIPT_DIR}"/../../start-kind.sh --name "${CLUSTER2_NAME}" --load-balancer-range "255.85-255.98" --image "${KIND_NODE_IMAGE}"
 fi
 
 # Setup the certificates
@@ -35,7 +57,7 @@ switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
 ${CLIENT_EXE} label namespace ${ISTIO_NAMESPACE} topology.istio.io/network=${NETWORK1_ID}
 
 ISTIO_INSTALL_SCRIPT="${SCRIPT_DIR}/../install-istio-via-istioctl.sh"
-${ISTIO_INSTALL_SCRIPT} --client-exe-path ${CLIENT_EXE} --cluster-name ${CLUSTER1_NAME} --istioctl ${ISTIOCTL} --istio-dir ${ISTIO_DIR} --mesh-id ${MESH_ID} --namespace ${ISTIO_NAMESPACE} --network ${NETWORK1_ID} --set values.pilot.env.EXTERNAL_ISTIOD=true 
+${ISTIO_INSTALL_SCRIPT} --client-exe-path ${CLIENT_EXE} --cluster-name ${CLUSTER1_NAME} --istioctl ${ISTIOCTL} --istio-dir ${ISTIO_DIR} --mesh-id ${MESH_ID} --namespace ${ISTIO_NAMESPACE} --network ${NETWORK1_ID} --set values.pilot.env.EXTERNAL_ISTIOD=true --k8s-gateway-api-enabled true
 
 GEN_GATEWAY_SCRIPT="${ISTIO_DIR}/samples/multicluster/gen-eastwest-gateway.sh"
 ${GEN_GATEWAY_SCRIPT} --mesh ${MESH_ID} --cluster ${CLUSTER1_NAME} --network ${NETWORK1_ID} | ${ISTIOCTL} --context=${CLUSTER1_CONTEXT} install -y -f -

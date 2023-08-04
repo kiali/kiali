@@ -136,3 +136,9 @@ Feature: Kiali Overview page
   Scenario: The control plane metrics should be present
     Then user sees the memory chart
     And user sees the cpu chart
+
+  @overview-page
+  @multi-cluster
+  Scenario: See "bookinfo" in "east" and "west" clusters
+    Then user sees the "bookinfo" namespace card in cluster "east"
+    And user sees the "bookinfo" namespace card in cluster "west"

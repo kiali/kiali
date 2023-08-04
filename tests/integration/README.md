@@ -43,6 +43,9 @@ You can use the following to help setup the environment if you do not already ha
         * Run `make -e CLUSTER_TYPE=minikube build build-ui cluster-push operator-create kiali-create`
         * If your Minikube profile name is not the default `minikube`, you must also pass in the env var `-e MINIKUBE_PROFILE="<your profile name>"`
 
+* `hack/run-integration-tests.sh`
+    * Does all the work for you by setting up a local kind cluster and running the test suite against that enviornment.
+
 ## Run the integration tests
 
 ### OpenShift
