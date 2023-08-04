@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as d3 from 'd3';
 import { observer } from 'mobx-react';
 import { css } from '@patternfly/react-styles';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
@@ -45,6 +46,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 //   [Node] element.data.isHighlighted?: boolean         // adds highlight effects based on hover
 //   [Node] element.data.isUnhighlighted?: boolean       // adds unhighlight effects based on hover
 //   [Node] element.data.hasSpans?: Span[]               // adds trace overlay
+//   [NodeLabel] isHover                                 // adds "raise" logic to bring label to the top
 //
 // If we could contribute all of these customizations for PFT then we may be able to avoid this "BaseNode" component and
 // just use "DefaultNode" directly.
@@ -318,6 +320,18 @@ const BaseNodeComponent: React.FunctionComponent<BaseNodeProps> = ({
     strokeOpacity: OverlayOpacity
   });
 
+  // This raises the node above other nodes to ensure that when hovered the user can see the node information, if it
+  // was occluded.  Especially to handle for label overlap.  The approach is heavy-handed, and fragile, but I'm not
+  // savvy enough to make it better. It basically searches works up to the node based on the css class name, and then
+  // "knows" it needs to go two levels higher to reach the proper grouping.
+  const raise = e => {
+    let target = e.target;
+    while (!d3.select(target).attr('class')?.startsWith('pf-topology__node ')) {
+      target = target.parentNode;
+    }
+    d3.select(target.parentNode.parentNode).raise();
+  };
+
   const data = element.getData();
   return (
     <g
@@ -344,7 +358,7 @@ const BaseNodeComponent: React.FunctionComponent<BaseNodeProps> = ({
           />
         )}
         {showLabel && (label || element.getLabel()) && (
-          <g transform={`scale(${labelScale})`}>
+          <g transform={`scale(${labelScale})`} onMouseEnter={raise}>
             <NodeLabel
               className={css(styles.topologyNodeLabel, labelClassName)}
               x={(nodeLabelPosition === LabelPosition.right ? width + 8 : width / 2) * labelPositionScale}

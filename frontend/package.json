@@ -68,6 +68,7 @@
     "cytoscape": "3.15.5",
     "cytoscape-canvas": "3.0.1",
     "cytoscape-popper": "1.0.7",
+    "d3": "^5.16.0",
     "dagre": "0.8.5",
     "deep-freeze": "0.0.1",
     "eventemitter3": "4.0.7",
