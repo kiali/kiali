@@ -7,7 +7,7 @@ import {
   CardTitle,
   Dropdown,
   DropdownItem,
-  KebabToggle,
+  MenuToggle,
   ToolbarItem
 } from '@patternfly/react-core';
 import { history } from '../../app/History';
@@ -30,6 +30,7 @@ import { TimeDurationModal } from '../Time/TimeDurationModal';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { KioskElement } from '../Kiosk/KioskElement';
 import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
+import EllipsisVIcon from '@patternfly/react-icons/dist/esm/icons/ellipsis-v-icon';
 
 const initGraphContainerStyle = kialiStyle({ width: '100%', height: '100%' });
 
@@ -111,27 +112,29 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
 
     const cardActions = (
       <>
-          <KioskElement>
-            <ToolbarItem>
-              <TimeDurationIndicator onClick={this.toggleTimeOptionsVisibility} isDuration={true} />
-            </ToolbarItem>
-          </KioskElement>
-          <Dropdown
-            toggle={<KebabToggle onToggle={this.onGraphActionsToggle} />}
-            dropdownItems={graphCardActions}
-            isPlain
-            isOpen={this.state.isKebabOpen}
-            position={'right'}
-          />
+        <KioskElement>
+          <ToolbarItem>
+            <TimeDurationIndicator onClick={this.toggleTimeOptionsVisibility} isDuration={true} />
+          </ToolbarItem>
+        </KioskElement>
+        <Dropdown
+          toggle={
+            <MenuToggle aria-label="plain kebab" variant="plain" onClick={() => this.onGraphActionsToggle}>
+              <EllipsisVIcon />
+            </MenuToggle>
+          }
+          dropdownItems={graphCardActions}
+          isPlain
+          isOpen={this.state.isKebabOpen}
+          position={'right'}
+        />
       </>
     );
 
     return (
       <>
         <Card style={{ height: '100%' }} id={'MiniGraphCard'} data-test="mini-graph">
-          <CardHeader
-            actions={{actions: cardActions}}
-          >
+          <CardHeader actions={{ actions: cardActions }}>
             <CardTitle style={{ float: 'left' }}>{intervalTitle}</CardTitle>
           </CardHeader>
           <CardBody>

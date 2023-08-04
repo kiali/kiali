@@ -1,11 +1,12 @@
 import * as React from 'react';
-import { CardHeader, CardTitle, Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core';
+import { CardHeader, CardTitle, Dropdown, DropdownItem, MenuToggle } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { FormattedTraceInfo, fullIDStyle } from './FormattedTraceInfo';
 import { history } from 'app/History';
 import { KialiAppState } from '../../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../../Kiosk/KioskActions';
+import EllipsisVIcon from '@patternfly/react-icons/dist/esm/icons/ellipsis-v-icon';
 
 type ReduxProps = {
   kiosk: string;
@@ -51,22 +52,26 @@ const JaegerTraceTitleComponent = (props: Props) => {
   const cardActions = (
     <>
       <span>
-          {`${props.formattedTrace.relativeDate()} | ${props.formattedTrace.absTime()} (${props.formattedTrace.fromNow()})`}
-        </span>
-        <Dropdown
-          toggle={<KebabToggle onToggle={() => setToggled(!toggled)} />}
-          data-test="trace-details-kebab"
-          dropdownItems={links}
-          isPlain={true}
-          isOpen={toggled}
-          position={'right'}
-          style={{ top: 3 }}
-        />
+        {`${props.formattedTrace.relativeDate()} | ${props.formattedTrace.absTime()} (${props.formattedTrace.fromNow()})`}
+      </span>
+      <Dropdown
+        toggle={
+          <MenuToggle aria-label="plain kebab" variant="plain" onClick={() => setToggled(!toggled)}>
+            <EllipsisVIcon />
+          </MenuToggle>
+        }
+        data-test="trace-details-kebab"
+        dropdownItems={links}
+        isPlain={true}
+        isOpen={toggled}
+        position={'right'}
+        style={{ top: 3 }}
+      />
     </>
   );
 
   return (
-    <CardHeader actions={{actions: cardActions}}>      
+    <CardHeader actions={{ actions: cardActions }}>
       <CardTitle>
         <span>{`${props.formattedTrace.name()} `}</span>
         <span className={fullIDStyle}>{props.formattedTrace.fullID()}</span>
