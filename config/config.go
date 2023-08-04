@@ -448,7 +448,14 @@ type CertificatesInformationIndicators struct {
 
 // Clustering defines configuration around multi-cluster functionality.
 type Clustering struct {
-	EnableExecProvider bool `yaml:"enable_exec_provider,omitempty" json:"enable_exec_provider"`
+	EnableExecProvider bool       `yaml:"enable_exec_provider,omitempty" json:"enable_exec_provider"`
+	KialiURLs          []KialiURL `yaml:"kiali_urls,omitempty" json:"kialiURLs,omitempty"`
+}
+
+// KialiURL defines a cluster name to URL map.
+type KialiURL struct {
+	ClusterName string `yaml:"cluster_name,omitempty"`
+	URL         string `yaml:"url,omitempty"`
 }
 
 // KialiFeatureFlags available from the CR
