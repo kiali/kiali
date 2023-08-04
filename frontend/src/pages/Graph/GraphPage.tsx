@@ -127,8 +127,8 @@ type ReduxProps = {
   showIdleEdges: boolean;
   showIdleNodes: boolean;
   showLegend: boolean;
-  showMissingSidecars: boolean;
   showOperationNodes: boolean;
+  showOutOfMesh: boolean;
   showRank: boolean;
   showSecurity: boolean;
   showServiceNodes: boolean;
@@ -632,7 +632,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       return;
     }
 
-    if (event.hasMissingSC) {
+    if (event.isOutOfMesh) {
       AlertUtils.add(
         `A node with a missing sidecar provides no node-specific telemetry and can not provide a node detail graph.`,
         undefined,
@@ -885,7 +885,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   showIdleEdges: state.graph.toolbarState.showIdleEdges,
   showIdleNodes: state.graph.toolbarState.showIdleNodes,
   showLegend: state.graph.toolbarState.showLegend,
-  showMissingSidecars: state.graph.toolbarState.showMissingSidecars,
+  showOutOfMesh: state.graph.toolbarState.showOutOfMesh,
   showOperationNodes: state.graph.toolbarState.showOperationNodes,
   showRank: state.graph.toolbarState.showRank,
   showSecurity: state.graph.toolbarState.showSecurity,

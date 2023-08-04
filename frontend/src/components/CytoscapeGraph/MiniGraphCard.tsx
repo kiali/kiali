@@ -160,8 +160,8 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
                 refreshInterval={0}
                 setRankResult={undefined}
                 showIdleEdges={false}
-                showMissingSidecars={true}
                 showOperationNodes={false}
+                showOutOfMesh={true}
                 showRank={false}
                 showSecurity={true}
                 showServiceNodes={true}

@@ -34,14 +34,14 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 				requestedAppenders[IdleNodeAppenderName] = true
 			case IstioAppenderName:
 				requestedAppenders[IstioAppenderName] = true
+			case MeshCheckAppenderName, SidecarsCheckAppenderName:
+				requestedAppenders[MeshCheckAppenderName] = true
 			case ResponseTimeAppenderName:
 				requestedAppenders[ResponseTimeAppenderName] = true
 			case SecurityPolicyAppenderName:
 				requestedAppenders[SecurityPolicyAppenderName] = true
 			case ServiceEntryAppenderName:
 				requestedAppenders[ServiceEntryAppenderName] = true
-			case SidecarsCheckAppenderName:
-				requestedAppenders[SidecarsCheckAppenderName] = true
 			case ThroughputAppenderName:
 				requestedAppenders[ThroughputAppenderName] = true
 			case WorkloadEntryAppenderName:
@@ -180,8 +180,8 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 		}
 		appenders = append(appenders, a)
 	}
-	if _, ok := requestedAppenders[SidecarsCheckAppenderName]; ok || o.Appenders.All {
-		a := SidecarsCheckAppender{
+	if _, ok := requestedAppenders[MeshCheckAppenderName]; ok || o.Appenders.All {
+		a := MeshCheckAppender{
 			AccessibleNamespaces: o.AccessibleNamespaces,
 		}
 		appenders = append(appenders, a)

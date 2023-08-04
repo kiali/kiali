@@ -82,7 +82,7 @@ type CytoscapeGraphProps = {
   setUpdateTime?: (val: TimeInMilliseconds) => void;
   showIdleEdges: boolean;
   showIdleNodes: boolean;
-  showMissingSidecars: boolean;
+  showOutOfMesh: boolean;
   showOperationNodes: boolean;
   showRank: boolean;
   showSecurity: boolean;
@@ -114,9 +114,9 @@ export interface GraphNodeTapEvent {
   aggregateValue?: string;
   app: string;
   cluster?: string;
-  hasMissingSC: boolean;
   isBox?: string;
   isInaccessible: boolean;
+  isOutOfMesh: boolean;
   isOutside: boolean;
   isServiceEntry: boolean;
   isIdle: boolean;
@@ -205,7 +205,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       this.props.namespaceLayout !== nextProps.namespaceLayout ||
       this.props.compressOnHide !== nextProps.compressOnHide ||
       this.props.rankBy !== nextProps.rankBy ||
-      this.props.showMissingSidecars !== nextProps.showMissingSidecars ||
+      this.props.showOutOfMesh !== nextProps.showOutOfMesh ||
       this.props.showRank !== nextProps.showRank ||
       this.props.showTrafficAnimation !== nextProps.showTrafficAnimation ||
       this.props.showVirtualServices !== nextProps.showVirtualServices ||
@@ -348,10 +348,10 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       aggregateValue: target.data(NodeAttr.aggregateValue),
       app: target.data(NodeAttr.app),
       cluster: target.data(NodeAttr.cluster),
-      hasMissingSC: targetOrBoxChildren.every(t => t.data(NodeAttr.hasMissingSC)),
       isBox: target.data(NodeAttr.isBox),
       isIdle: targetOrBoxChildren.every(t => t.data(NodeAttr.isIdle)),
       isInaccessible: target.data(NodeAttr.isInaccessible),
+      isOutOfMesh: target.data(NodeAttr.isOutOfMesh),
       isOutside: target.data(NodeAttr.isOutside),
       isServiceEntry: target.data(NodeAttr.isServiceEntry),
       namespace: target.data(NodeAttr.namespace),
@@ -814,7 +814,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       forceLabels: false,
       graphType: this.props.graphData.fetchParams.graphType,
       homeCluster: homeCluster?.name || CLUSTER_DEFAULT,
-      showMissingSidecars: this.props.showMissingSidecars,
+      showOutOfMesh: this.props.showOutOfMesh,
       showSecurity: this.props.showSecurity,
       showVirtualServices: this.props.showVirtualServices,
       trafficRates: this.props.graphData.fetchParams.trafficRates

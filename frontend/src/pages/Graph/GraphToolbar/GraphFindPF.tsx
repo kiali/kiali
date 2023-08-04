@@ -1037,7 +1037,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
         };
       case 'sc':
       case 'sidecar':
-        return { target: 'node', selector: { prop: NodeAttr.hasMissingSC, op: isNegation ? 'falsy' : 'truthy' } };
+        return { target: 'node', selector: { prop: NodeAttr.isOutOfMesh, op: isNegation ? 'falsy' : 'truthy' } };
       case 'tcpts':
       case 'tcptrafficshifting':
         return {

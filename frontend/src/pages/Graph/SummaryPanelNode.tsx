@@ -37,6 +37,7 @@ import { PeerAuthentication } from '../../types/IstioObjects';
 import { useServiceDetailForGraphNode } from '../../hooks/services';
 import { useKialiSelector } from '../../hooks/redux';
 import { groupMenuStyle } from 'styles/DropdownStyles';
+import { serverConfig } from '../../config';
 
 const summaryNodeActionsStyle = kialiStyle({
   $nest: {
@@ -325,7 +326,6 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       hasCB,
       hasFaultInjection,
       hasMirroring,
-      hasMissingSC,
       hasRequestRouting,
       hasRequestTimeout,
       hasTCPTrafficShifting,
@@ -333,7 +333,8 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       hasVS,
       isDead,
       isGateway,
-      isK8sGatewayAPI
+      isK8sGatewayAPI,
+      isOutOfMesh
     } = nodeData;
     const hasTrafficScenario =
       hasRequestRouting ||
@@ -374,10 +375,16 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
             <span style={{ paddingLeft: '4px' }}>Has Mirroring{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
           </div>
         )}
-        {hasMissingSC && (
+        {isOutOfMesh && !serverConfig.ambientEnabled && (
           <div>
-            <KialiIcon.MissingSidecar />
+            <KialiIcon.OutOfMesh />
             <span style={{ paddingLeft: '4px' }}>Has Missing Sidecar</span>
+          </div>
+        )}
+        {isOutOfMesh && serverConfig.ambientEnabled && (
+          <div>
+            <KialiIcon.OutOfMesh />
+            <span style={{ paddingLeft: '4px' }}>Out of Mesh</span>
           </div>
         )}
         {isDead && (

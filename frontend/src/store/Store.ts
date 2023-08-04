@@ -69,7 +69,7 @@ export interface GraphToolbarState {
   showIdleEdges: boolean;
   showIdleNodes: boolean;
   showLegend: boolean;
-  showMissingSidecars: boolean;
+  showOutOfMesh: boolean;
   showOperationNodes: boolean;
   showRank: boolean;
   showSecurity: boolean;

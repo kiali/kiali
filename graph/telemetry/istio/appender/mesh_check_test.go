@@ -25,7 +25,7 @@ func TestWorkloadSidecarsPasses(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := SidecarsCheckAppender{
+	a := MeshCheckAppender{
 		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
 			config.DefaultClusterID: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
@@ -35,7 +35,7 @@ func TestWorkloadSidecarsPasses(t *testing.T) {
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
-		_, ok := node.Metadata[graph.HasMissingSC].(bool)
+		_, ok := node.Metadata[graph.IsOutOfMesh].(bool)
 		assert.False(t, ok)
 	}
 }
@@ -48,7 +48,7 @@ func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := SidecarsCheckAppender{
+	a := MeshCheckAppender{
 		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
 			config.DefaultClusterID: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
@@ -58,7 +58,7 @@ func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
-		flag, ok := node.Metadata[graph.HasMissingSC].(bool)
+		flag, ok := node.Metadata[graph.IsOutOfMesh].(bool)
 		assert.True(t, ok)
 		assert.True(t, flag)
 	}
@@ -72,7 +72,7 @@ func TestInaccessibleWorkload(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := SidecarsCheckAppender{
+	a := MeshCheckAppender{
 		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
 			config.DefaultClusterID: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
@@ -82,7 +82,7 @@ func TestInaccessibleWorkload(t *testing.T) {
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
-		_, ok := node.Metadata[graph.HasMissingSC].(bool)
+		_, ok := node.Metadata[graph.IsOutOfMesh].(bool)
 		assert.False(t, ok)
 	}
 }
@@ -95,7 +95,7 @@ func TestAppNoPodsPasses(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := SidecarsCheckAppender{
+	a := MeshCheckAppender{
 		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
 			config.DefaultClusterID: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
@@ -105,7 +105,7 @@ func TestAppNoPodsPasses(t *testing.T) {
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
-		_, ok := node.Metadata[graph.HasMissingSC].(bool)
+		_, ok := node.Metadata[graph.IsOutOfMesh].(bool)
 		assert.False(t, ok)
 	}
 }
@@ -118,7 +118,7 @@ func TestAppSidecarsPasses(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := SidecarsCheckAppender{
+	a := MeshCheckAppender{
 		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
 			config.DefaultClusterID: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
@@ -128,7 +128,7 @@ func TestAppSidecarsPasses(t *testing.T) {
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
-		_, ok := node.Metadata[graph.HasMissingSC].(bool)
+		_, ok := node.Metadata[graph.IsOutOfMesh].(bool)
 		assert.False(t, ok)
 	}
 }
@@ -141,7 +141,7 @@ func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := SidecarsCheckAppender{
+	a := MeshCheckAppender{
 		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
 			config.DefaultClusterID: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
@@ -151,9 +151,33 @@ func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
-		flag, ok := node.Metadata[graph.HasMissingSC].(bool)
+		flag, ok := node.Metadata[graph.IsOutOfMesh].(bool)
 		assert.True(t, ok)
 		assert.True(t, flag)
+	}
+}
+
+func TestAppWithAmbientIsFlagged(t *testing.T) {
+	trafficMap := buildAppTrafficMap()
+	businessLayer := setupSidecarsCheckWorkloads(t, []apps_v1.Deployment{}, buildFakeWorkloadPodsAmbient())
+
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+
+	a := MeshCheckAppender{
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			config.DefaultClusterID: &graph.AccessibleNamespace{
+				Cluster:           config.DefaultClusterID,
+				CreationTimestamp: time.Now(),
+				Name:              "testNamespace",
+			}}}
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+
+	for _, node := range trafficMap {
+		flag, ok := node.Metadata[graph.IsOutOfMesh].(bool)
+		assert.False(t, ok)
+		assert.False(t, flag)
 	}
 }
 
@@ -165,7 +189,7 @@ func TestServicesAreAlwaysValid(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := SidecarsCheckAppender{
+	a := MeshCheckAppender{
 		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
 			config.DefaultClusterID: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
@@ -175,7 +199,7 @@ func TestServicesAreAlwaysValid(t *testing.T) {
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
-		_, ok := node.Metadata[graph.HasMissingSC].(bool)
+		_, ok := node.Metadata[graph.IsOutOfMesh].(bool)
 		assert.False(t, ok)
 	}
 }
@@ -261,6 +285,14 @@ func buildFakeWorkloadPodsNoSidecar() []core_v1.Pod {
 
 	podList := buildFakeWorkloadPods()
 	podList[0].ObjectMeta.Annotations[istioAnnotation] = "{}"
+
+	return podList
+}
+
+func buildFakeWorkloadPodsAmbient() []core_v1.Pod {
+
+	podList := buildFakeWorkloadPodsNoSidecar()
+	podList[0].ObjectMeta.Annotations["ambient.istio.io/redirection"] = "enabled"
 
 	return podList
 }

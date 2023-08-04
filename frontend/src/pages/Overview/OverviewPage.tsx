@@ -243,6 +243,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             return {
               name: ns.name,
               cluster: ns.cluster,
+              isAmbient: ns.isAmbient,
               status: previous ? previous.status : undefined,
               tlsStatus: previous ? previous.tlsStatus : undefined,
               metrics: previous ? previous.metrics : undefined,
@@ -990,9 +991,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                                 {serverConfig.ambientEnabled &&
                                   ns.name !== serverConfig.istioNamespace &&
                                   ns.labels &&
-                                  ns.labels['istio.io/dataplane-mode'] === 'ambient' && (
-                                    <AmbientBadge tooltip={true}></AmbientBadge>
-                                  )}
+                                  ns.isAmbient && <AmbientBadge tooltip={true}></AmbientBadge>}
                               </span>
                             </Title>
                           </CardHeaderMain>

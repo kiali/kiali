@@ -5,40 +5,41 @@ import (
 	"github.com/kiali/kiali/graph"
 )
 
+const MeshCheckAppenderName = "meshCheck"
 const SidecarsCheckAppenderName = "sidecarsCheck"
 
-// SidecarsCheckAppender flags nodes whose backing workloads are missing at least one Envoy sidecar. Note that
+// MeshCheckAppender flags nodes whose backing workloads are missing at least one Envoy sidecar. Note that
 // a node with no backing workloads is not flagged.
-// Name: sidecarsCheck
-type SidecarsCheckAppender struct {
+// Name: meshCheck
+type MeshCheckAppender struct {
 	AccessibleNamespaces graph.AccessibleNamespaces
 }
 
 // Name implements Appender
-func (a SidecarsCheckAppender) Name() string {
-	return SidecarsCheckAppenderName
+func (a MeshCheckAppender) Name() string {
+	return MeshCheckAppenderName
 }
 
 // IsFinalizer implements Appender
-func (a SidecarsCheckAppender) IsFinalizer() bool {
+func (a MeshCheckAppender) IsFinalizer() bool {
 	return false
 }
 
 // AppendGraph implements Appender
-func (a SidecarsCheckAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a MeshCheckAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
 
-	a.applySidecarsChecks(trafficMap, globalInfo, namespaceInfo)
+	a.applyMeshChecks(trafficMap, globalInfo, namespaceInfo)
 }
 
-func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a *MeshCheckAppender) applyMeshChecks(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	for _, n := range trafficMap {
 		// skip if we already determined there is a missing sidecar. we can process the same
 		// node multiple times because to ensure we check every node (missing sidecars indicate missing
 		// telemetry so we need to check nodes when we can, regardless of namespace)
-		if n.Metadata[graph.HasMissingSC] == true {
+		if n.Metadata[graph.IsOutOfMesh] == true {
 			continue
 		}
 
@@ -61,10 +62,12 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 		// if there are no workloads/pods we don't flag it as missing sidecars.  No pods means
 		// no missing sidecars.  (In most cases this means it was flagged as dead, and handled above)
 		hasIstioSidecar := true
+		hasIstioAmbient := true
 		switch n.NodeType {
 		case graph.NodeTypeWorkload:
 			if workload, found := getWorkload(n.Cluster, n.Namespace, n.Workload, globalInfo); found {
 				hasIstioSidecar = workload.IstioSidecar
+				hasIstioAmbient = workload.IstioAmbient
 			}
 		case graph.NodeTypeApp:
 			workloads := getAppWorkloads(n.Cluster, n.Namespace, n.App, n.Version, globalInfo)
@@ -72,6 +75,11 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 				for _, workload := range workloads {
 					if !workload.IstioSidecar {
 						hasIstioSidecar = false
+					}
+					if !workload.IstioAmbient {
+						hasIstioAmbient = false
+					}
+					if !hasIstioSidecar && !hasIstioAmbient {
 						break
 					}
 				}
@@ -80,14 +88,15 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 			continue
 		}
 
-		if !hasIstioSidecar {
-			n.Metadata[graph.HasMissingSC] = true
+		if !hasIstioSidecar && !hasIstioAmbient {
+			n.Metadata[graph.IsOutOfMesh] = true
 		}
+
 	}
 }
 
 // namespaceOk returns true if the namespace in question is the current appender namespace or any of the graph namespaces
-func (a *SidecarsCheckAppender) namespaceOK(namespace string, namespaceInfo *graph.AppenderNamespaceInfo) bool {
+func (a *MeshCheckAppender) namespaceOK(namespace string, namespaceInfo *graph.AppenderNamespaceInfo) bool {
 	if namespace == namespaceInfo.Namespace {
 		return true
 	}
