@@ -1,8 +1,9 @@
 import * as React from 'react';
-import { cellWidth, ICell, Table, TableHeader, TableBody } from '@patternfly/react-table';
+import { Table, Tbody, Thead, Tr, Th, Td } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../Pf/PfColors';
 import {
+  Bullseye,
   EmptyState,
   EmptyStateBody,
   EmptyStateVariant,
@@ -92,46 +93,39 @@ export class Rules extends React.Component<Props> {
   };
 
   render() {
-    // TODO: Casting 'as any' because @patternfly/react-table@2.22.19 has a typing bug. Remove the casting when PF fixes it.
-    // https://github.com/patternfly/patternfly-next/issues/2373
-    const headerCells: ICell[] = [
-      {
-        title: 'Rule order',
-        transforms: [cellWidth(10) as any],
-        props: {}
-      },
-      {
-        title: 'Request Matching',
-        props: {}
-      },
-      {
-        title: 'Route To',
-        props: {}
-      }
-    ];
-
-    let isValid: boolean = true;
     const matchAll: number = this.matchAllIndex(this.props.rules);
-    const routeRules =
-      this.props.rules.length > 0
-        ? this.props.rules.map((rule, order) => {
-            isValid = matchAll === -1 || order <= matchAll;
-            return {
-              cells: [
-                <>{order + 1}</>,
-                <>
+
+    return (
+      <>
+        Route Rules
+        {wizardTooltip(ROUTE_RULES_TOOLTIP)}
+        <Table
+          aria-label="Rules Created"
+          // @ts-ignore
+          actionResolver={this.actionResolver}
+        >
+          <Thead>
+            <Th width={10}>Rule order</Th>
+            <Th>Request Matching</Th>
+            <Th>Route To</Th>
+          </Thead>
+          <Tbody>
+            {this.props.rules.map((rule, order) => (
+              <Tr key={`Rule_${order}`}>
+                <Td>{order + 1}</Td>
+                <Td>
                   {rule.matches.length === 0
                     ? 'Any request'
                     : rule.matches.map((match, i) => <div key={'match_' + i}>{match}</div>)}
-                  {!isValid && (
+                  {!(matchAll === -1 || order <= matchAll) && (
                     <div className={validationStyle}>
                       Match 'Any request' is defined in a previous rule.
                       <br />
                       This rule is not accessible.
                     </div>
                   )}
-                </>,
-                <>
+                </Td>
+                <Td>
                   <div key={'ww_' + order}>
                     {rule.workloadWeights
                       .filter(wk => !wk.mirrored)
@@ -178,16 +172,13 @@ export class Rules extends React.Component<Props> {
                       {rule.retries.attempts} attempts with timeout ({rule.timeout})
                     </div>
                   )}
-                </>
-              ]
-            };
-          })
-        : [
-            {
-              key: 'rowEmpty',
-              cells: [
-                {
-                  title: (
+                </Td>
+              </Tr>
+            ))}
+            {this.props.rules.length === 0 && (
+              <Tr key={'rowsEmpty'}>
+                <Td colSpan={3}>
+                  <Bullseye>
                     <EmptyState variant={EmptyStateVariant.full}>
                       <Title headingLevel="h5" size={TitleSizes.lg}>
                         No Route Rules defined
@@ -196,26 +187,11 @@ export class Rules extends React.Component<Props> {
                         A Request Routing scenario needs at least a Route Rule
                       </EmptyStateBody>
                     </EmptyState>
-                  ),
-                  props: { colSpan: 3 }
-                }
-              ]
-            }
-          ];
-
-    return (
-      <>
-        Route Rules
-        {wizardTooltip(ROUTE_RULES_TOOLTIP)}
-        <Table
-          aria-label="Rules Created"
-          cells={headerCells}
-          rows={routeRules}
-          // @ts-ignore
-          actionResolver={this.actionResolver}
-        >
-          <TableHeader />
-          <TableBody />
+                  </Bullseye>
+                </Td>
+              </Tr>
+            )}
+          </Tbody>
         </Table>
       </>
     );

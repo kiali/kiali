@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Rule } from './RuleBuilder';
-import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
+import { Table, Tbody, Thead, Tr, Th, Td } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../components/Pf/PfColors';
 
@@ -9,28 +9,6 @@ type Props = {
   ruleList: Rule[];
   onRemoveRule: (index: number) => void;
 };
-
-const headerCells: ICell[] = [
-  {
-    title: 'From',
-    transforms: [cellWidth(40) as any],
-    props: {}
-  },
-  {
-    title: 'To',
-    transforms: [cellWidth(40) as any],
-    props: {}
-  },
-  {
-    title: 'When',
-    transforms: [cellWidth(40) as any],
-    props: {}
-  },
-  {
-    title: '',
-    props: {}
-  }
-];
 
 const rulesPadding = kialiStyle({
   paddingLeft: 10
@@ -44,82 +22,6 @@ const noRulesStyle = kialiStyle({
 });
 
 export class RuleList extends React.Component<Props> {
-  rows = () => {
-    return this.props.ruleList.map((rule, i) => {
-      return {
-        key: 'rule' + i,
-        cells: [
-          <>
-            {rule.from.length > 0 && (
-              <>
-                <>
-                  {rule.from.map((fromItem, i) => {
-                    const keys = Object.keys(fromItem);
-                    return (
-                      <div id={'from' + i} className={rulesPadding}>
-                        <span style={{ marginRight: 20 }}>source:</span>
-                        {keys.map((k, j) => {
-                          return (
-                            <span id={'fromField' + i + '_' + j}>
-                              <b>{k}</b>: [{fromItem[k].join(',')}]{j < keys.length - 1 ? ' and ' : ''}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    );
-                  })}
-                </>
-              </>
-            )}
-          </>,
-          <>
-            {rule.to.length > 0 && (
-              <>
-                {rule.to.map((toItem, i) => {
-                  const keys = Object.keys(toItem);
-                  return (
-                    <div id={'to' + i} className={rulesPadding}>
-                      <span style={{ marginRight: 20 }}>operation:</span>
-                      {keys.map((k, j) => {
-                        return (
-                          <span id={'toItem' + i + '_' + j}>
-                            <b>{k}</b>: [{toItem[k].join(',')}]{j < keys.length - 1 ? ' and ' : ''}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-              </>
-            )}
-          </>,
-          <>
-            {rule.when.length > 0 && (
-              <>
-                {rule.when.map((whenItem, i) => {
-                  return (
-                    <div id={'when' + i} className={rulesPadding}>
-                      <span>
-                        <b>key</b>: [{whenItem.key}]
-                      </span>
-                      <span style={{ marginLeft: 5 }}>
-                        <b>values:</b> [{whenItem.values ? whenItem.values.join(',') : ''}]
-                      </span>
-                      <span style={{ marginLeft: 5 }}>
-                        <b>notValues:</b> [{whenItem.notValues ? whenItem.notValues.join(',') : ''}]
-                      </span>
-                    </div>
-                  );
-                })}
-              </>
-            )}
-          </>,
-          <></>
-        ]
-      };
-    });
-  };
-
   // @ts-ignore
   actionResolver = (rowData, { rowIndex }) => {
     const removeAction = {
@@ -139,13 +41,89 @@ export class RuleList extends React.Component<Props> {
       <>
         <Table
           aria-label="Source Builder"
-          cells={headerCells}
-          rows={this.rows()}
           // @ts-ignore
           actionResolver={this.actionResolver}
         >
-          <TableHeader />
-          <TableBody />
+          <Thead>
+            <Tr>
+              <Th width={40}>From</Th>
+              <Th width={40}>To</Th>
+              <Th width={40}>When</Th>
+              <Th />
+            </Tr>
+          </Thead>
+          <Tbody>
+            {this.props.ruleList.map((rule, i) => (
+              <Tr key={`rule${i}`}>
+                <Td>
+                  {rule.from.length > 0 && (
+                    <>
+                      <>
+                        {rule.from.map((fromItem, i) => {
+                          const keys = Object.keys(fromItem);
+                          return (
+                            <div id={'from' + i} className={rulesPadding}>
+                              <span style={{ marginRight: 20 }}>source:</span>
+                              {keys.map((k, j) => {
+                                return (
+                                  <span id={'fromField' + i + '_' + j}>
+                                    <b>{k}</b>: [{fromItem[k].join(',')}]{j < keys.length - 1 ? ' and ' : ''}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          );
+                        })}
+                      </>
+                    </>
+                  )}
+                </Td>
+                <Td>
+                  {rule.to.length > 0 && (
+                    <>
+                      {rule.to.map((toItem, i) => {
+                        const keys = Object.keys(toItem);
+                        return (
+                          <div id={'to' + i} className={rulesPadding}>
+                            <span style={{ marginRight: 20 }}>operation:</span>
+                            {keys.map((k, j) => {
+                              return (
+                                <span id={'toItem' + i + '_' + j}>
+                                  <b>{k}</b>: [{toItem[k].join(',')}]{j < keys.length - 1 ? ' and ' : ''}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        );
+                      })}
+                    </>
+                  )}
+                </Td>
+                <Td>
+                  {rule.when.length > 0 && (
+                    <>
+                      {rule.when.map((whenItem, i) => {
+                        return (
+                          <div id={'when' + i} className={rulesPadding}>
+                            <span>
+                              <b>key</b>: [{whenItem.key}]
+                            </span>
+                            <span style={{ marginLeft: 5 }}>
+                              <b>values:</b> [{whenItem.values ? whenItem.values.join(',') : ''}]
+                            </span>
+                            <span style={{ marginLeft: 5 }}>
+                              <b>notValues:</b> [{whenItem.notValues ? whenItem.notValues.join(',') : ''}]
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </>
+                  )}
+                </Td>
+                <Td />
+              </Tr>
+            ))}
+          </Tbody>
         </Table>
         {this.props.ruleList.length === 0 && <div className={noRulesStyle}>{noRulesMessage}</div>}
       </>

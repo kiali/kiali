@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
+import { Table, Tbody, Thead, Tr, Th, Td } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../components/Pf/PfColors';
 // Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
@@ -7,18 +7,6 @@ import { Button, ButtonVariant, FormGroup, Switch, TextInputBase as TextInput } 
 import { isSidecarHostValid } from '../../utils/IstioConfigUtils';
 import { PlusCircleIcon } from '@patternfly/react-icons';
 import { isValid } from 'utils/Common';
-
-const headerCells: ICell[] = [
-  {
-    title: 'Egress Host',
-    transforms: [cellWidth(60) as any],
-    props: {}
-  },
-  {
-    title: '',
-    props: {}
-  }
-];
 
 const noEgressHostsStyle = kialiStyle({
   marginTop: 15,
@@ -168,46 +156,6 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
     );
   };
 
-  rows() {
-    return this.state.egressHosts
-      .map((eHost, i) => ({
-        key: 'eH' + i,
-        cells: [<>{eHost.host}</>, '']
-      }))
-      .concat([
-        {
-          key: 'eHNew',
-          cells: [
-            <>
-              <TextInput
-                value={this.state.addEgressHost.host}
-                type="text"
-                id="addEgressHost"
-                key="addEgressHost"
-                aria-describedby="add egress host"
-                name="addHost"
-                onChange={this.onAddHost}
-                validated={isValid(this.state.validEgressHost)}
-              />
-              {!this.state.validEgressHost && (
-                <div key="hostsHelperText" className={noEgressHostsStyle}>
-                  {hostsHelperText}
-                </div>
-              )}
-            </>,
-            <>
-              <Button
-                variant={ButtonVariant.link}
-                icon={<PlusCircleIcon />}
-                isDisabled={!this.state.validEgressHost}
-                onClick={this.onAddEgressHost}
-              />
-            </>
-          ]
-        }
-      ]);
-  }
-
   render() {
     return (
       <>
@@ -248,13 +196,50 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
         <FormGroup label="Egress" fieldId="egressHostTable">
           <Table
             aria-label="Egress Hosts"
-            cells={headerCells}
-            rows={this.rows()}
             // @ts-ignore
             actionResolver={this.actionResolver}
           >
-            <TableHeader />
-            <TableBody />
+            <Thead>
+              <Tr>
+                <Th width={60}>Egress Host</Th>
+                <Th />
+              </Tr>
+            </Thead>
+            <Tbody>
+              {this.state.egressHosts.map((eHost, i) => (
+                <Tr key={`eH${i}`}>
+                  <Td>{eHost.host}</Td>
+                  <Td />
+                </Tr>
+              ))}
+              <Tr key="eHNew">
+                <Td>
+                  <TextInput
+                    value={this.state.addEgressHost.host}
+                    type="text"
+                    id="addEgressHost"
+                    key="addEgressHost"
+                    aria-describedby="add egress host"
+                    name="addHost"
+                    onChange={this.onAddHost}
+                    validated={isValid(this.state.validEgressHost)}
+                  />
+                  {!this.state.validEgressHost && (
+                    <div key="hostsHelperText" className={noEgressHostsStyle}>
+                      {hostsHelperText}
+                    </div>
+                  )}
+                </Td>
+                <Td>
+                  <Button
+                    variant={ButtonVariant.link}
+                    icon={<PlusCircleIcon />}
+                    isDisabled={!this.state.validEgressHost}
+                    onClick={this.onAddEgressHost}
+                  />
+                </Td>
+              </Tr>
+            </Tbody>
           </Table>
           {this.state.egressHosts.length === 0 && (
             <div className={noEgressHostsStyle}>Sidecar has no Egress Hosts Defined</div>

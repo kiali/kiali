@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Condition } from './ConditionBuilder';
-import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
+import { Table, Tbody, Thead, Tr, Th, Td } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../../components/Pf/PfColors';
 
@@ -8,18 +8,6 @@ type Props = {
   conditionList: Condition[];
   onRemoveCondition: (index: number) => void;
 };
-
-const headerCells: ICell[] = [
-  {
-    title: 'Additional Conditions of a Request',
-    transforms: [cellWidth(100) as any],
-    props: {}
-  },
-  {
-    title: '',
-    props: {}
-  }
-];
 
 const noConditionsStyle = kialiStyle({
   marginTop: 10,
@@ -29,30 +17,6 @@ const noConditionsStyle = kialiStyle({
 });
 
 export class ConditionList extends React.Component<Props> {
-  rows = () => {
-    return this.props.conditionList.map((condition, i) => {
-      return {
-        key: 'condition' + i,
-        cells: [
-          <>
-            <b>key: </b> [{condition.key}]<br />
-            {condition.values && (
-              <>
-                <b>values: </b> [{condition.values.join(',')}]<br />
-              </>
-            )}
-            {condition.notValues && (
-              <>
-                <b>notValues: </b> [{condition.notValues.join(',')}]<br />
-              </>
-            )}
-          </>,
-          <></>
-        ]
-      };
-    });
-  };
-
   // @ts-ignore
   actionResolver = (rowData, { rowIndex }) => {
     const removeAction = {
@@ -70,13 +34,35 @@ export class ConditionList extends React.Component<Props> {
       <>
         <Table
           aria-label="Condition Builder"
-          cells={headerCells}
-          rows={this.rows()}
           // @ts-ignore
           actionResolver={this.actionResolver}
         >
-          <TableHeader />
-          <TableBody />
+          <Thead>
+            <Tr>
+              <Th width={100}>Additional Conditions of a Request</Th>
+              <Th />
+            </Tr>
+          </Thead>
+          <Tbody>
+            {this.props.conditionList.map((condition, i) => (
+              <Tr key={`condition${i}`}>
+                <Td>
+                  <b>key: </b> [{condition.key}]<br />
+                  {condition.values && (
+                    <>
+                      <b>values: </b> [{condition.values.join(',')}]<br />
+                    </>
+                  )}
+                  {condition.notValues && (
+                    <>
+                      <b>notValues: </b> [{condition.notValues.join(',')}]<br />
+                    </>
+                  )}
+                </Td>
+                <Td />
+              </Tr>
+            ))}
+          </Tbody>
         </Table>
         {this.props.conditionList.length === 0 && <div className={noConditionsStyle}>No Conditions Defined</div>}
       </>

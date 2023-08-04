@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ICell, ISortBy, SortByDirection, Table, TableBody, TableHeader } from '@patternfly/react-table';
+import { ICell, ISortBy, SortByDirection, Table, Tbody, Thead, Td, Tr, Th } from '@patternfly/react-table';
 import { ClusterSummaryTable, ClusterTable } from './ClusterTable';
 import { RouteSummaryTable, RouteTable } from './RouteTable';
 import { ListenerSummaryTable, ListenerTable } from './ListenerTable';
@@ -76,15 +76,23 @@ export function SummaryTableRenderer<T extends SummaryTable>() {
               <div className={kialiStyle({ position: 'fixed', right: '60px' })}>{this.props.writer.tooltip()}</div>
             </>
           </StatefulFilters>
-          <Table
-            aria-label="Sortable Table"
-            cells={this.props.writer.head()}
-            rows={this.props.writer.rows()}
-            sortBy={this.props.writer.sortBy()}
-            onSort={this.onSort}
-          >
-            <TableHeader />
-            <TableBody />
+          <Table aria-label="Sortable Table">
+            <Thead>
+              <Tr>
+                {this.props.writer.head().map(cell => (
+                  <Th>{cell.title}</Th>
+                ))}
+              </Tr>
+            </Thead>
+            <Tbody>
+              {this.props.writer.rows().map((row, i) => (
+                <Tr key={`row_${i}`}>
+                  {row.map(cell => (
+                    <Td>{cell}</Td>
+                  ))}
+                </Tr>
+              ))}
+            </Tbody>
           </Table>
         </>
       );

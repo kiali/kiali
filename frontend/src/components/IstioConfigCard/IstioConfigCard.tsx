@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { IstioConfigItem } from '../../types/IstioConfigList';
-import { cellWidth, ICell, IRow, Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
+import { cellWidth, ICell, Table, Tbody, Thead, Td, Tr, Th, TableVariant } from '@patternfly/react-table';
 import {
+  Bullseye,
   Card,
   CardBody,
   CardHeader,
@@ -32,25 +33,6 @@ export class IstioConfigCard extends React.Component<Props> {
     return [{ title: 'Name' }, { title: 'Status', transforms: [cellWidth(10) as any] }];
   }
 
-  noIstioConfig(): IRow[] {
-    return [
-      {
-        cells: [
-          {
-            title: (
-              <EmptyState variant={EmptyStateVariant.small} className={emtpytStyle}>
-                <EmptyStateBody className={emtpytStyle} data-test="istio-config-empty">
-                  No Istio Config found for {this.props.name}
-                </EmptyStateBody>
-              </EmptyState>
-            ),
-            props: { colSpan: 2 }
-          }
-        ]
-      }
-    ];
-  }
-
   overviewLink(item: IstioConfigItem) {
     return (
       <IstioObjectLink name={item.name} namespace={item.namespace || ''} cluster={item.cluster} type={item.type}>
@@ -59,11 +41,23 @@ export class IstioConfigCard extends React.Component<Props> {
     );
   }
 
-  rows(): IRow[] {
+  rows(): React.ReactNode {
     if (this.props.items.length === 0) {
-      return this.noIstioConfig();
+      return (
+        <Tr>
+          <Td colSpan={2}>
+            <Bullseye>
+              <EmptyState variant={EmptyStateVariant.sm} className={emtpytStyle}>
+                <EmptyStateBody className={emtpytStyle} data-test="istio-config-empty">
+                  No Istio Config found for {this.props.name}
+                </EmptyStateBody>
+              </EmptyState>
+            </Bullseye>
+          </Td>
+        </Tr>
+      );
     }
-    let rows: IRow[] = [];
+    let rows: React.ReactNode[] = [];
     this.props.items
       .sort((a: IstioConfigItem, b: IstioConfigItem) => {
         if (a.type < b.type) {
@@ -75,27 +69,23 @@ export class IstioConfigCard extends React.Component<Props> {
         }
       })
       .map((item, itemIdx) => {
-        rows.push({
-          cells: [
-            {
-              title: (
-                <span>
-                  <PFBadge badge={IstioTypes[item.type].badge} position={TooltipPosition.top} />
-                  {this.overviewLink(item)}
-                </span>
-              )
-            },
-            {
-              title: (
-                <ValidationObjectSummary
-                  id={itemIdx + '-config-validation'}
-                  validations={item.validation ? [item.validation] : []}
-                  style={{ verticalAlign: '-0.5em' }}
-                />
-              )
-            }
-          ]
-        });
+        rows.push(
+          <Tr key={itemIdx}>
+            <Td>
+              <span>
+                <PFBadge badge={IstioTypes[item.type].badge} position={TooltipPosition.top} />
+                {this.overviewLink(item)}
+              </span>
+            </Td>
+            <Td>
+              <ValidationObjectSummary
+                id={itemIdx + '-config-validation'}
+                validations={item.validation ? [item.validation] : []}
+                style={{ verticalAlign: '-0.5em' }}
+              />
+            </Td>
+          </Tr>
+        );
         return rows;
       });
 
@@ -109,15 +99,14 @@ export class IstioConfigCard extends React.Component<Props> {
           <CardTitle style={{ float: 'left' }}>Istio Config</CardTitle>
         </CardHeader>
         <CardBody>
-          <Table
-            variant={TableVariant.compact}
-            aria-label={'list_istio_config'}
-            cells={this.columns()}
-            rows={this.rows()}
-            className="table"
-          >
-            <TableHeader />
-            <TableBody />
+          <Table variant={TableVariant.compact} aria-label={'list_istio_config'} className="table">
+            <Thead>
+              <Tr>
+                <Th>Name</Th>
+                <Th width={10}>Status</Th>
+              </Tr>
+            </Thead>
+            <Tbody>{this.rows()}</Tbody>
           </Table>
         </CardBody>
       </Card>

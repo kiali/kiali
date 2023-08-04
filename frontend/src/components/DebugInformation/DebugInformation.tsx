@@ -18,7 +18,7 @@ import {
 import { aceOptions } from '../../types/IstioConfigDetails';
 import AceEditor from 'react-ace';
 import { ParameterizedTabs } from '../Tab/Tabs';
-import { ICell, Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
+import { Table, Tbody, Thead, Td, Th, Tr, TableVariant } from '@patternfly/react-table';
 import { AuthConfig } from '../../types/Auth';
 import { authenticationConfig } from '../../config/AuthenticationConfig';
 import { basicTabStyle } from 'styles/TabStyles';
@@ -181,10 +181,6 @@ class DebugInformationComponent extends React.PureComponent<DebugInformationProp
     return text;
   }
 
-  private columns = (): ICell[] => {
-    return [{ title: 'Configuration' }, { title: 'Value' }];
-  };
-
   private getRows() {
     var conf: string[][] = [];
 
@@ -199,14 +195,28 @@ class DebugInformationComponent extends React.PureComponent<DebugInformationProp
   }
 
   private renderTabs() {
+    const columns = ['Configuration', 'Value'];
     const kialiConfig = (
       <Tab eventKey={0} title="Kiali Config" key="kialiConfig">
         <span></span>
 
         <CopyToClipboard onCopy={this.copyCallback} text={this.getRows()} options={copyToClipboardOptions}>
-          <Table header={<></>} variant={TableVariant.compact} cells={this.columns()} rows={this.getRows()}>
-            <TableHeader />
-            <TableBody />
+          <Table variant={TableVariant.compact}>
+            <Thead>
+              <Tr>
+                {columns.map(c => (
+                  <Th>{c}</Th>
+                ))}
+              </Tr>
+            </Thead>
+            <Tbody>
+              {this.getRows().map((keyValue, rowIndex) => (
+                <Tr key={rowIndex}>
+                  <Td>{keyValue[0]}</Td>
+                  <Td>{keyValue[1]}</Td>
+                </Tr>
+              ))}
+            </Tbody>
           </Table>
         </CopyToClipboard>
       </Tab>

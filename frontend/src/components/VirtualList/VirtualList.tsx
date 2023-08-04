@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Table, TableHeader, TableGridBreakpoint } from '@patternfly/react-table';
+import { Table, Thead, Tr, Th, TableGridBreakpoint } from '@patternfly/react-table';
 import { HistoryManager, URLParam } from '../../app/History';
 import { config, RenderResource, Resource } from './Config';
 import { VirtualItem } from './VirtualItem';
@@ -158,8 +158,14 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     return (
       <div className={virtualListStyle}>
         {childrenWithProps}
-        <Table {...tableProps} sortBy={sortBy} onSort={this.onSort}>
-          <TableHeader />
+        <Table {...tableProps} onSort={this.onSort}>
+          <Thead>
+            <Tr>
+              {tableProps.cells.map(cell => (
+                <Th>{cell.title}</Th>
+              ))}
+            </Tr>
+          </Thead>
           <tbody>
             {this.props.rows.length > 0 ? (
               rowItems

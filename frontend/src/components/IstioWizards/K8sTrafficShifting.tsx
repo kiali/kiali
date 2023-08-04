@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { cellWidth, ICell, Table, TableHeader, TableBody } from '@patternfly/react-table';
+import { Table, Tbody, Thead, Tr, Th, Td } from '@patternfly/react-table';
 import { Slider } from './Slider/Slider';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Button, ButtonVariant, TooltipPosition } from '@patternfly/react-core';
@@ -94,60 +94,47 @@ export class K8sTrafficShifting extends React.Component<Props, State> {
   };
 
   render() {
-    // TODO: Casting 'as any' because @patternfly/react-table@2.22.19 has a typing bug. Remove the casting when PF fixes it.
-    // https://github.com/patternfly/patternfly-next/issues/2373
-    const serviceCells: ICell[] = [
-      {
-        title: 'Destination Service',
-        transforms: [cellWidth(30) as any],
-        props: {}
-      },
-      {
-        title: 'Traffic Weight',
-        transforms: [cellWidth(70) as any],
-        props: {}
-      }
-    ];
-    const servicesRows = this.state.backendRefs.map(service => {
-      return {
-        cells: [
-          <>
-            <div>
-              <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
-              {service.name}
-            </div>
-          </>,
-          // This <> wrapper is needed by Slider
-          <>
-            <Slider
-              id={'slider-' + service.name}
-              key={'slider-' + service.name}
-              tooltip={true}
-              input={true}
-              inputFormat=""
-              value={service.weight}
-              min={0}
-              max={100}
-              maxLimit={100}
-              onSlide={value => {
-                this.onWeight(service.name, value as number);
-              }}
-              onSlideStop={value => {
-                this.onWeight(service.name, value as number);
-              }}
-              locked={false}
-              showLock={false}
-              mirrored={false}
-            />
-          </>
-        ]
-      };
-    });
     return (
       <>
-        <Table cells={serviceCells} rows={servicesRows} aria-label="weighted routing">
-          <TableHeader />
-          <TableBody />
+        <Table aria-label="weighted routing">
+          <Thead>
+            <Tr>
+              <Th width={30}>Destination Service</Th>
+              <Th width={70}>Traffic Weight</Th>
+            </Tr>
+          </Thead>
+          <Tbody>
+            {this.state.backendRefs.map((service, i) => (
+              <Tr key={`backenrf_${i}`}>
+                <Td>
+                  <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
+                  {service.name}
+                </Td>
+                <Td>
+                  <Slider
+                    id={'slider-' + service.name}
+                    key={'slider-' + service.name}
+                    tooltip={true}
+                    input={true}
+                    inputFormat=""
+                    value={service.weight}
+                    min={0}
+                    max={100}
+                    maxLimit={100}
+                    onSlide={value => {
+                      this.onWeight(service.name, value as number);
+                    }}
+                    onSlideStop={value => {
+                      this.onWeight(service.name, value as number);
+                    }}
+                    locked={false}
+                    showLock={false}
+                    mirrored={false}
+                  />
+                </Td>
+              </Tr>
+            ))}
+          </Tbody>
         </Table>
         {this.props.subServices.length > 1 && (
           <div className={evenlyButtonStyle}>

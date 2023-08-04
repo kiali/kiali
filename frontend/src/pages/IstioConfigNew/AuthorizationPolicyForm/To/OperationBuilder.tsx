@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
+import { Table, Tbody, Thead, Tr, Th, Td } from '@patternfly/react-table';
 // Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
 import {
   Button,
@@ -33,23 +33,6 @@ const INIT_OPERATION_FIELDS = [
   'paths',
   'notPaths'
 ].sort();
-
-const headerCells: ICell[] = [
-  {
-    title: 'Operation Field',
-    transforms: [cellWidth(20) as any],
-    props: {}
-  },
-  {
-    title: 'Values',
-    transforms: [cellWidth(80) as any],
-    props: {}
-  },
-  {
-    title: '',
-    props: {}
-  }
-];
 
 export class OperationBuilder extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -132,65 +115,60 @@ export class OperationBuilder extends React.Component<Props, State> {
     return [];
   };
 
-  rows = () => {
-    const operatorRows = Object.keys(this.state.operation).map((operationField, i) => {
-      return {
-        key: 'operationKey' + i,
-        cells: [<>{operationField}</>, <>{this.state.operation[operationField].join(',')}</>, <></>]
-      };
-    });
-    if (this.state.operationFields.length > 0) {
-      return operatorRows.concat([
-        {
-          key: 'operationKeyNew',
-          cells: [
-            <>
-              <FormSelect
-                value={this.state.newOperationField}
-                id="addNewOperationField"
-                name="addNewOperationField"
-                onChange={this.onAddNewOperationField}
-              >
-                {this.state.operationFields.map((option, index) => (
-                  <FormSelectOption isDisabled={false} key={'operation' + index} value={option} label={option} />
-                ))}
-              </FormSelect>
-            </>,
-            <>
-              <TextInput
-                value={this.state.newValues}
-                type="text"
-                id="addNewValues"
-                key="addNewValues"
-                aria-describedby="add new operation values"
-                name="addNewValues"
-                onChange={this.onAddNewValues}
-              />
-            </>,
-            <>
-              {this.state.operationFields.length > 0 && (
-                <Button variant={ButtonVariant.link} icon={<PlusCircleIcon />} onClick={this.onAddOperation} />
-              )}
-            </>
-          ]
-        }
-      ]);
-    }
-    return operatorRows;
-  };
-
   render() {
     return (
       <>
         <Table
           aria-label="Operation Builder"
-          cells={headerCells}
-          rows={this.rows()}
           // @ts-ignore
           actionResolver={this.actionResolver}
         >
-          <TableHeader />
-          <TableBody />
+          <Thead>
+            <Tr>
+              <Th width={20}>Operation Field</Th>
+              <Th width={80}>Values</Th>
+              <Th />
+            </Tr>
+          </Thead>
+          <Tbody>
+            {Object.keys(this.state.operation).map((operationField, i) => (
+              <Tr key={`operationKey${i}`}>
+                <Td>{operationField}</Td>
+                <Td>{this.state.operation[operationField].join(',')}</Td>
+                <Td></Td>
+              </Tr>
+            ))}
+            {this.state.operationFields.length > 0 && (
+              <Tr key={'operationKeyNew'}>
+                <Td>
+                  <FormSelect
+                    value={this.state.newOperationField}
+                    id="addNewOperationField"
+                    name="addNewOperationField"
+                    onChange={this.onAddNewOperationField}
+                  >
+                    {this.state.operationFields.map((option, index) => (
+                      <FormSelectOption isDisabled={false} key={'operation' + index} value={option} label={option} />
+                    ))}
+                  </FormSelect>
+                </Td>
+                <Td>
+                  <TextInput
+                    value={this.state.newValues}
+                    type="text"
+                    id="addNewValues"
+                    key="addNewValues"
+                    aria-describedby="add new operation values"
+                    name="addNewValues"
+                    onChange={this.onAddNewValues}
+                  />
+                </Td>
+                <Td>
+                  <Button variant={ButtonVariant.link} icon={<PlusCircleIcon />} onClick={this.onAddOperation} />
+                </Td>
+              </Tr>
+            )}
+          </Tbody>
         </Table>
         <Button
           variant={ButtonVariant.link}

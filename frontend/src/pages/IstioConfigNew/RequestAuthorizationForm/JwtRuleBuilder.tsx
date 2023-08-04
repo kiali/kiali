@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { JWTHeader, JWTRule } from '../../../types/IstioObjects';
-import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
+import { Table, Tbody, Thead, Tr, Th, Td } from '@patternfly/react-table';
 import { Button, ButtonVariant, FormSelect, FormSelectOption } from '@patternfly/react-core';
 import { PlusCircleIcon } from '@patternfly/react-icons';
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
@@ -29,23 +29,6 @@ const INIT_JWT_RULE_FIELDS = [
   'outputPayloadToHeader',
   'forwardOriginalToken'
 ].sort();
-
-const headerCells: ICell[] = [
-  {
-    title: 'JWT Rule Field',
-    transforms: [cellWidth(30) as any],
-    props: {}
-  },
-  {
-    title: 'Values',
-    transforms: [cellWidth(70) as any],
-    props: {}
-  },
-  {
-    title: '',
-    props: {}
-  }
-];
 
 const noValidStyle = kialiStyle({
   color: PFColors.Red100
@@ -227,82 +210,77 @@ export class JwtRuleBuilder extends React.Component<Props, State> {
     return this.state.jwtRule.issuer ? this.state.jwtRule.issuer.length > 0 : false;
   };
 
-  rows = () => {
-    const jwtRuleRows = Object.keys(this.state.jwtRule).map((jwtField, i) => {
-      return {
-        key: 'jwtField' + i,
-        cells: [<>{jwtField}</>, <>{formatJwtField(jwtField, this.state.jwtRule)}</>, <></>]
-      };
-    });
-    if (this.state.jwtRuleFields.length > 0) {
-      const [isJwtFieldValid, validText] = this.isJwtFieldValid();
-      return jwtRuleRows.concat([
-        {
-          key: 'jwtFieldKeyNew',
-          cells: [
-            <>
-              <FormSelect
-                value={this.state.newJwtField}
-                id="addNewJwtField"
-                name="addNewJwtField"
-                onChange={this.onAddJwtField}
-              >
-                {this.state.jwtRuleFields.map((option, index) => (
-                  <FormSelectOption isDisabled={false} key={'jwt' + index} value={option} label={option} />
-                ))}
-              </FormSelect>
-            </>,
-            <>
-              <TextInput
-                value={this.state.newValues}
-                type="text"
-                id="addNewValues"
-                key="addNewValues"
-                aria-describedby="add new source values"
-                name="addNewValues"
-                onChange={this.onAddNewValues}
-              />
-              {this.state.newJwtField === 'fromHeaders' && (
-                <div key="fromHeadersHelperText">
-                  List of header locations from which JWT is expected. <br />
-                  I.e. "x-jwt-assertion: Bearer ,Authorization: Bearer "
-                </div>
-              )}
-              {!isJwtFieldValid && (
-                <div key="hostsHelperText" className={noValidStyle}>
-                  {validText}
-                </div>
-              )}
-            </>,
-            <>
-              {this.state.jwtRuleFields.length > 0 && (
-                <Button
-                  variant={ButtonVariant.link}
-                  icon={<PlusCircleIcon />}
-                  onClick={this.onUpdateJwtRule}
-                  isDisabled={!isJwtFieldValid}
-                />
-              )}
-            </>
-          ]
-        }
-      ]);
-    }
-    return jwtRuleRows;
-  };
-
   render() {
+    const [isJwtFieldValid, validText] = this.isJwtFieldValid();
     return (
       <>
         <Table
           aria-label="JWT Rule Builder"
-          cells={headerCells}
-          rows={this.rows()}
           // @ts-ignore
           actionResolver={this.actionResolver}
         >
-          <TableHeader />
-          <TableBody />
+          <Thead>
+            <Tr>
+              <Th width={30}>JWT Rule Field</Th>
+              <Th width={70}>Values</Th>
+              <Th />
+            </Tr>
+          </Thead>
+          <Tbody>
+            {Object.keys(this.state.jwtRule).map((jwtField, i) => (
+              <Tr key={`jwtField${i}`}>
+                <Td>{jwtField}</Td>
+                <Td>{formatJwtField(jwtField, this.state.jwtRule)}</Td>
+                <Td />
+              </Tr>
+            ))}
+            {this.state.jwtRuleFields.length > 0 && (
+              <Tr key="jwtFieldKeyNew">
+                <Td>
+                  <FormSelect
+                    value={this.state.newJwtField}
+                    id="addNewJwtField"
+                    name="addNewJwtField"
+                    onChange={this.onAddJwtField}
+                  >
+                    {this.state.jwtRuleFields.map((option, index) => (
+                      <FormSelectOption isDisabled={false} key={'jwt' + index} value={option} label={option} />
+                    ))}
+                  </FormSelect>
+                </Td>
+                <Td>
+                  <TextInput
+                    value={this.state.newValues}
+                    type="text"
+                    id="addNewValues"
+                    key="addNewValues"
+                    aria-describedby="add new source values"
+                    name="addNewValues"
+                    onChange={this.onAddNewValues}
+                  />
+                  {this.state.newJwtField === 'fromHeaders' && (
+                    <div key="fromHeadersHelperText">
+                      List of header locations from which JWT is expected. <br />
+                      I.e. "x-jwt-assertion: Bearer ,Authorization: Bearer "
+                    </div>
+                  )}
+                  {!isJwtFieldValid && (
+                    <div key="hostsHelperText" className={noValidStyle}>
+                      {validText}
+                    </div>
+                  )}
+                </Td>
+                <Td>
+                  <Button
+                    variant={ButtonVariant.link}
+                    icon={<PlusCircleIcon />}
+                    onClick={this.onUpdateJwtRule}
+                    isDisabled={!isJwtFieldValid}
+                  />
+                </Td>
+              </Tr>
+            )}
+          </Tbody>
         </Table>
         <Button
           variant={ButtonVariant.link}

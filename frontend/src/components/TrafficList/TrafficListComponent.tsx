@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import { IRow, sortable, SortByDirection, Table, TableBody, TableHeader, cellWidth } from '@patternfly/react-table';
+import { SortByDirection, Table, Tbody, Thead, Tr, Th, Td } from '@patternfly/react-table';
 import { Link } from 'react-router-dom';
 import { TrafficItem, TrafficNode, TrafficDirection } from './TrafficDetails';
 import * as FilterComponent from '../FilterList/FilterComponent';
@@ -43,43 +43,6 @@ type TrafficListComponentProps = ReduxProps &
 
 type TrafficListComponentState = FilterComponent.State<TrafficListItem>;
 
-const columns = (isMultiCluster: boolean): any[] => {
-  const cols = [
-    {
-      title: 'Status',
-      transforms: [sortable, cellWidth(15)]
-    },
-    {
-      title: 'Name',
-      transforms: [sortable, cellWidth(30)]
-    },
-    {
-      title: 'Rate',
-      transforms: [sortable, cellWidth(10)]
-    },
-    {
-      title: 'Percent Success',
-      transforms: [sortable, cellWidth(20)]
-    },
-    {
-      title: 'Protocol',
-      transforms: [sortable, cellWidth(15)]
-    },
-    {
-      title: 'Actions'
-    }
-  ];
-
-  if (isMultiCluster) {
-    cols.splice(2, 0, {
-      title: 'Cluster',
-      transforms: [sortable, cellWidth(15)]
-    });
-  }
-
-  return cols;
-};
-
 function LockIcon(props) {
   const msg = props.mTLS ? props.mTLS + ' % of mTLS traffic' : 'mTLS is disabled';
   return (
@@ -95,6 +58,20 @@ function LockIcon(props) {
 // Style constants
 const containerPadding = kialiStyle({ padding: '20px' });
 const lockIconStyle = kialiStyle({ marginLeft: '5px' });
+
+const cols = (
+  <Thead>
+    <Tr>
+      <Th width={15}>Status</Th>
+      <Th width={30}>Name</Th>
+      {isMultiCluster() && <Th width={15}>Cluster</Th>}
+      <Th width={10}>Rate</Th>
+      <Th width={20}>Percent Success</Th>
+      <Th width={15}>Protocol</Th>
+      <Th>Actions</Th>
+    </Tr>
+  </Thead>
+);
 
 class TrafficList extends FilterComponent.Component<
   TrafficListComponentProps,
@@ -126,7 +103,6 @@ class TrafficList extends FilterComponent.Component<
   }
 
   render() {
-    const cols = columns(isMultiCluster());
     const inboundRows = this.rows('inbound');
     const outboundRows = this.rows('outbound');
     const hasInbound = inboundRows.length > 0;
@@ -142,9 +118,9 @@ class TrafficList extends FilterComponent.Component<
             {hasInbound ? '' : 'No '} Inbound Traffic
           </Title>
           {hasInbound && (
-            <Table aria-label="Sortable Table" cells={cols} onSort={this.onSort} rows={inboundRows} sortBy={sortBy}>
-              <TableHeader />
-              <TableBody />
+            <Table aria-label="Sortable Table" onSort={this.onSort} sortBy={sortBy}>
+              {cols}
+              <Tbody>{inboundRows}</Tbody>
             </Table>
           )}
         </div>
@@ -153,9 +129,9 @@ class TrafficList extends FilterComponent.Component<
             {hasOutbound ? '' : 'No '} Outbound Traffic
           </Title>
           {hasOutbound && (
-            <Table aria-label="Sortable Table" cells={cols} onSort={this.onSort} rows={outboundRows} sortBy={sortBy}>
-              <TableHeader />
-              <TableBody />
+            <Table aria-label="Sortable Table" onSort={this.onSort} sortBy={sortBy}>
+              {cols}
+              <Tbody>{outboundRows}</Tbody>
             </Table>
           )}
         </div>
@@ -254,7 +230,7 @@ class TrafficList extends FilterComponent.Component<
   };
 
   // Helper used to build the table content.
-  rows = (direction: TrafficDirection): IRow[] => {
+  rows = (direction: TrafficDirection): React.ReactNode[] => {
     const parentKiosk = isParentKiosk(this.props.kiosk);
     return this.state.listItems
       .filter(i => i.direction === direction)
@@ -262,9 +238,9 @@ class TrafficList extends FilterComponent.Component<
         const name = item.node.name;
         const links = this.getLinks(item);
 
-        var irow: IRow = {
-          cells: [
-            <>
+        return (
+          <Tr key={`row_${direction}_${i}`}>
+            <Td>
               <Tooltip
                 key={`tt_status_${i}`}
                 position={TooltipPosition.top}
@@ -272,8 +248,8 @@ class TrafficList extends FilterComponent.Component<
               >
                 {createTooltipIcon(createIcon(item.healthStatus.status, 'sm'))}
               </Tooltip>
-            </>,
-            <>
+            </Td>
+            <Td>
               <PFBadge badge={item.badge} position={TooltipPosition.top} keyValue={`tt_badge_${i}`} />
               {!!links.detail ? (
                 parentKiosk ? (
@@ -295,14 +271,20 @@ class TrafficList extends FilterComponent.Component<
               ) : (
                 name
               )}
-            </>,
-            <>{item.trafficRate}</>,
-            <>{item.trafficPercentSuccess}</>,
-            <>
+            </Td>
+            {isMultiCluster() && (
+              <Td>
+                <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} />
+                {item.cluster}
+              </Td>
+            )}
+            <Td>{item.trafficRate}</Td>
+            <Td>{item.trafficPercentSuccess}</Td>
+            <Td>
               {item.protocol}
               <LockIcon mTLS={item.mTLS}></LockIcon>
-            </>,
-            <>
+            </Td>
+            <Td>
               {!!links.metrics &&
                 (parentKiosk ? (
                   <Link
@@ -320,24 +302,9 @@ class TrafficList extends FilterComponent.Component<
                     View metrics
                   </Link>
                 ))}
-            </>
-          ]
-        };
-
-        if (isMultiCluster()) {
-          if (irow.cells) {
-            irow.cells.splice(
-              2,
-              0,
-              <>
-                <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} />
-                {item.cluster}
-              </>
-            );
-          }
-        }
-
-        return irow;
+            </Td>
+          </Tr>
+        );
       });
   };
 

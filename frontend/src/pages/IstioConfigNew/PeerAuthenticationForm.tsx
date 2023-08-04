@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Button, ButtonVariant, FormGroup, FormSelect, FormSelectOption, Switch } from '@patternfly/react-core';
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
 import { PeerAuthenticationMutualTLSMode } from '../../types/IstioObjects';
-import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
+import { Table, Tbody, Thead, Tr, Th, Td } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../components/Pf/PfColors';
 import { PlusCircleIcon } from '@patternfly/react-icons';
@@ -12,23 +12,6 @@ const noPortMtlsStyle = kialiStyle({
   marginTop: 15,
   color: PFColors.Red100
 });
-
-const headerCells: ICell[] = [
-  {
-    title: 'Port Number',
-    transforms: [cellWidth(20) as any],
-    props: {}
-  },
-  {
-    title: 'Mutual TLS Mode',
-    transforms: [cellWidth(20) as any],
-    props: {}
-  },
-  {
-    title: '',
-    props: {}
-  }
-];
 
 type Props = {
   peerAuthentication: PeerAuthenticationState;
@@ -243,56 +226,6 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
     return [];
   };
 
-  rows() {
-    return this.props.peerAuthentication.portLevelMtls
-      .map((pmtls, i) => ({
-        key: 'portMtls' + i,
-        cells: [<>{pmtls.port}</>, <>{pmtls.mtls}</>, '']
-      }))
-      .concat([
-        {
-          key: 'pmtlsNew',
-          cells: [
-            <>
-              <TextInput
-                value={this.state.addNewPortMtls.port}
-                id="addPortNumber"
-                aria-describedby="add port number"
-                name="addPortNumber"
-                onChange={this.onAddPortNumber}
-                validated={isValid(
-                  this.state.addNewPortMtls.port.length > 0 && !isNaN(Number(this.state.addNewPortMtls.port))
-                )}
-              />
-            </>,
-            <>
-              <FormSelect
-                value={this.state.addNewPortMtls.mtls}
-                id="addPortMtlsMode"
-                name="addPortMtlsMode"
-                onChange={this.onAddPortMtlsMode}
-              >
-                {Object.keys(PeerAuthenticationMutualTLSMode).map((option, index) => (
-                  <FormSelectOption key={'p' + index} value={option} label={option} />
-                ))}
-              </FormSelect>
-            </>,
-            <>
-              <Button
-                id="addServerBtn"
-                variant={ButtonVariant.link}
-                icon={<PlusCircleIcon />}
-                isDisabled={
-                  this.state.addNewPortMtls.port.length === 0 || isNaN(Number(this.state.addNewPortMtls.port))
-                }
-                onClick={this.onAddPortMtls}
-              />
-            </>
-          ]
-        }
-      ]);
-  }
-
   render() {
     return (
       <>
@@ -343,13 +276,62 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
           <FormGroup label="Port Level MTLS" fieldId="portMtlsList">
             <Table
               aria-label="Port Level MTLS"
-              cells={headerCells}
-              rows={this.rows()}
               // @ts-ignore
               actionResolver={this.actionResolver}
             >
-              <TableHeader />
-              <TableBody />
+              <Thead>
+                <Tr>
+                  <Th width={20}>Port Number</Th>
+                  <Th width={20}>Mutual TLS Mode</Th>
+                  <Th />
+                </Tr>
+              </Thead>
+              <Tbody>
+                {this.props.peerAuthentication.portLevelMtls.map((pmtls, i) => (
+                  <Tr key={`portMtls${i}`}>
+                    <Td>{pmtls.port}</Td>
+                    <Td>{pmtls.mtls}</Td>
+                    <Td />
+                  </Tr>
+                ))}
+                <Tr key={'pmtlsNew'}>
+                  <Td>
+                    <TextInput
+                      value={this.state.addNewPortMtls.port}
+                      id="addPortNumber"
+                      aria-describedby="add port number"
+                      name="addPortNumber"
+                      onChange={this.onAddPortNumber}
+                      validated={isValid(
+                        this.state.addNewPortMtls.port.length > 0 && !isNaN(Number(this.state.addNewPortMtls.port))
+                      )}
+                    />
+                  </Td>
+                  <Td>
+                    <FormSelect
+                      value={this.state.addNewPortMtls.mtls}
+                      id="addPortMtlsMode"
+                      name="addPortMtlsMode"
+                      onChange={this.onAddPortMtlsMode}
+                    >
+                      {Object.keys(PeerAuthenticationMutualTLSMode).map((option, index) => (
+                        <FormSelectOption key={'p' + index} value={option} label={option} />
+                      ))}
+                    </FormSelect>
+                  </Td>
+                  <Td>
+                    <Button
+                      id="addServerBtn"
+                      variant={ButtonVariant.link}
+                      icon={<PlusCircleIcon />}
+                      isDisabled={
+                        this.state.addNewPortMtls.port.length === 0 || isNaN(Number(this.state.addNewPortMtls.port))
+                      }
+                      onClick={this.onAddPortMtls}
+                    />
+                  </Td>
+                </Tr>
+              </Tbody>
             </Table>
             {this.props.peerAuthentication.portLevelMtls.length === 0 && (
               <div className={noPortMtlsStyle}>PeerAuthentication has no Port Mutual TLS defined</div>

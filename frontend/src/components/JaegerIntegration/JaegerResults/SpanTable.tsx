@@ -12,14 +12,17 @@ import {
 } from '@patternfly/react-core';
 import {
   Table,
-  TableHeader,
-  TableBody,
+  Tbody,
+  Thead,
+  ThProps,
+  Tr,
+  Th,
+  Td,
   TableVariant,
   RowWrapper,
   sortable,
   SortByDirection,
   ICell,
-  IRow,
   IActionsResolver,
   IRowData,
   IExtraRowData,
@@ -142,22 +145,39 @@ class SpanTableComponent extends React.Component<Props, State> {
     }
   }
 
+  getSortParams = (columnIndex: number): ThProps['sort'] => ({
+    sortBy: {
+      index: this.state.sortIndex,
+      direction: this.state.sortDirection,
+      defaultDirection: 'asc' // starting sort direction when first sorting a column. Defaults to 'asc'
+    },
+    onSort: (_event, index, direction) => {
+      this.setState({ sortIndex: index, sortDirection: direction });
+    },
+    columnIndex
+  });
+
   render() {
     return (
       <Table
         variant={TableVariant.compact}
         aria-label={'list_spans'}
-        cells={cells}
-        rows={this.rows()}
         actionResolver={this.actionResolver}
         sortBy={{ index: this.state.sortIndex, direction: this.state.sortDirection }}
         onSort={(_event, index, sortDirection) => this.setState({ sortIndex: index, sortDirection: sortDirection })}
         className="table"
         rowWrapper={p => <RowWrapper {...p} className={(p.row as any).className} />}
       >
-        <TableHeader />
+        <Thead>
+          <Tr>
+            <Th sort={this.getSortParams(0)}>Timeline</Th>
+            <Th sort={this.getSortParams(1)}>App / Workload</Th>
+            <Th>Summary</Th>
+            <Th sort={this.getSortParams(3)}>Statistics</Th>
+          </Tr>
+        </Thead>
         {this.props.items.length > 0 ? (
-          <TableBody />
+          <Tbody>{this.rows()}</Tbody>
         ) : (
           <tbody>
             <tr>
@@ -181,7 +201,7 @@ class SpanTableComponent extends React.Component<Props, State> {
     this.props.loadMetricsStats(queries, false);
   }
 
-  private rows = (): IRow[] => {
+  private rows = (): React.ReactNode[] => {
     const compare = cells[this.state.sortIndex].compare;
     const sorted = compare
       ? this.props.items.sort(this.state.sortDirection === SortByDirection.asc ? compare : (a, b) => compare(b, a))
@@ -190,13 +210,13 @@ class SpanTableComponent extends React.Component<Props, State> {
     return sorted.map(item => this.buildRow(item));
   };
 
-  private buildRow = (item: RichSpanData): IRow => {
+  private buildRow = (item: RichSpanData): React.ReactNode => {
     const isExpanded = this.isExpanded(item.spanID);
     const isSpan = item.spanID === getSpanId();
 
-    return {
-      cells: [
-        <>
+    return (
+      <Tr key={`span_${item.spanID}`} className={getClassName(item.tags.some(isErrorTag), isSpan)}>
+        <Td>
           <Button
             key={`${item.spanID}-duration`}
             style={{ padding: '6px 4px 6px 0' }}
@@ -206,14 +226,12 @@ class SpanTableComponent extends React.Component<Props, State> {
             {isExpanded ? <AngleDownIcon /> : <AngleRightIcon />}
           </Button>
           {formatDuration(item.relativeStartTime)}
-        </>,
-        this.OriginCell(item),
-        this.SummaryCell(item),
-        this.StatsCell(item)
-      ] as React.ReactNode[],
-      className: getClassName(item.tags.some(isErrorTag), isSpan),
-      item: item
-    };
+        </Td>
+        <Td>{this.OriginCell(item)}</Td>
+        <Td>{this.SummaryCell(item)}</Td>
+        <Td>{this.StatsCell(item)}</Td>
+      </Tr>
+    );
   };
 
   private actionResolver: IActionsResolver = (

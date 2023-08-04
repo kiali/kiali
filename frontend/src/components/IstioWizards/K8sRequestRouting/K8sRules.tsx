@@ -1,8 +1,9 @@
 import * as React from 'react';
-import { cellWidth, ICell, Table, TableHeader, TableBody } from '@patternfly/react-table';
+import { Table, Tbody, Thead, Tr, Th, Td } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../Pf/PfColors';
 import {
+  Bullseye,
   EmptyState,
   EmptyStateBody,
   EmptyStateVariant,
@@ -88,55 +89,46 @@ export class K8sRules extends React.Component<Props> {
   };
 
   render() {
-    // TODO: Casting 'as any' because @patternfly/react-table@2.22.19 has a typing bug. Remove the casting when PF fixes it.
-    // https://github.com/patternfly/patternfly-next/issues/2373
-    const headerCells: ICell[] = [
-      {
-        title: 'Rule order',
-        transforms: [cellWidth(10) as any],
-        props: {}
-      },
-      {
-        title: 'Request Matching',
-        props: {}
-      },
-      {
-        title: 'Route Filtering',
-        props: {}
-      },
-      {
-        title: 'Route To',
-        props: {}
-      }
-    ];
-
-    let isValid: boolean = true;
     const matchAll: number = this.matchAllIndex(this.props.k8sRules);
-    const routeRules =
-      this.props.k8sRules.length > 0
-        ? this.props.k8sRules.map((rule, order) => {
-            isValid = matchAll === -1 || order <= matchAll;
-            return {
-              cells: [
-                <>{order + 1}</>,
-                <>
+    return (
+      <>
+        Route K8sRules
+        {wizardTooltip(ROUTE_RULES_TOOLTIP)}
+        <Table
+          aria-label="K8sRules Created"
+          // @ts-ignore
+          actionResolver={this.actionResolver}
+        >
+          <Thead>
+            <Tr>
+              <Th width={10}>Rule order</Th>
+              <Th>Request Matching</Th>
+              <Th>Route Filtering</Th>
+              <Th>Route To</Th>
+            </Tr>
+          </Thead>
+          <Tbody>
+            {this.props.k8sRules.map((rule, order) => (
+              <Tr key={`k8srule_${order}`}>
+                <Td>{order + 1}</Td>
+                <Td>
                   {!rule.matches || rule.matches.length === 0
                     ? 'Any request'
                     : rule.matches.map((match, i) => <div key={'match_' + i}>{match}</div>)}
-                  {!isValid && (
+                  {!(matchAll === -1 || order <= matchAll) && (
                     <div className={validationStyle}>
                       Match 'Any request' is defined in a previous rule.
                       <br />
                       This rule is not accessible.
                     </div>
                   )}
-                </>,
-                <>
+                </Td>
+                <Td>
                   {!rule.filters || rule.filters.length === 0
                     ? 'No Request Filter'
                     : rule.filters.map((filter, i) => <div key={'filter_' + i}>{filter}</div>)}
-                </>,
-                <>
+                </Td>
+                <Td>
                   <div key={'br_' + order}>
                     {rule.backendRefs &&
                       rule.backendRefs.map((bRef, i) => {
@@ -148,16 +140,13 @@ export class K8sRules extends React.Component<Props> {
                         );
                       })}
                   </div>
-                </>
-              ]
-            };
-          })
-        : [
-            {
-              key: 'rowEmpty',
-              cells: [
-                {
-                  title: (
+                </Td>
+              </Tr>
+            ))}
+            {this.props.k8sRules.length === 0 && (
+              <Tr key={'nok8srules'}>
+                <Td colSpan={3}>
+                  <Bullseye>
                     <EmptyState variant={EmptyStateVariant.full}>
                       <Title headingLevel="h5" size={TitleSizes.lg}>
                         No K8s Route Rules defined
@@ -166,26 +155,11 @@ export class K8sRules extends React.Component<Props> {
                         A Request Routing scenario needs at least a Route Rule
                       </EmptyStateBody>
                     </EmptyState>
-                  ),
-                  props: { colSpan: 3 }
-                }
-              ]
-            }
-          ];
-
-    return (
-      <>
-        Route K8sRules
-        {wizardTooltip(ROUTE_RULES_TOOLTIP)}
-        <Table
-          aria-label="K8sRules Created"
-          cells={headerCells}
-          rows={routeRules}
-          // @ts-ignore
-          actionResolver={this.actionResolver}
-        >
-          <TableHeader />
-          <TableBody />
+                  </Bullseye>
+                </Td>
+              </Tr>
+            )}
+          </Tbody>
         </Table>
       </>
     );

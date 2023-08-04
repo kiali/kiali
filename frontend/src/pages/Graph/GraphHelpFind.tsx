@@ -1,7 +1,7 @@
 import * as React from 'react';
 import ReactResizeDetector from 'react-resize-detector';
 import { Tab, Popover, PopoverPosition } from '@patternfly/react-core';
-import { ICell, Table, TableBody, TableHeader, TableVariant, cellWidth } from '@patternfly/react-table';
+import { Table, Tbody, Thead, Tr, Th, Td, TableVariant } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 
@@ -75,58 +75,93 @@ export class GraphHelpFind extends React.Component<GraphHelpFindProps> {
               <textarea className={`${prefaceStyle}`} readOnly={true} value={preface} />
               <SimpleTabs id="graph_find_help_tabs" defaultTab={0} style={{ width: contentWidth }}>
                 <Tab style={tabFont} eventKey={0} title="Examples">
-                  <Table
-                    header={<></>}
-                    variant={TableVariant.compact}
-                    cells={this.exampleColumns()}
-                    rows={this.exampleRows()}
-                  >
-                    <TableHeader />
-                    <TableBody />
+                  <Table variant={TableVariant.compact}>
+                    <Thead>
+                      <Tr>
+                        <Th>Expression</Th>
+                        <Th>Description</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {this.exampleRows().map((row, index) => (
+                        <Tr key={`exampleRow_${index}`}>
+                          <Td>{row[0]}</Td>
+                          <Td>{row[1]}</Td>
+                        </Tr>
+                      ))}
+                    </Tbody>
                   </Table>
                 </Tab>
                 <Tab style={tabFont} eventKey={1} title="Nodes">
-                  <Table
-                    header={<></>}
-                    variant={TableVariant.compact}
-                    cells={this.nodeColumns()}
-                    rows={this.nodeRows()}
-                  >
-                    <TableHeader />
-                    <TableBody />
+                  <Table variant={TableVariant.compact}>
+                    <Thead>
+                      <Tr>
+                        <Th>Expression</Th>
+                        <Th>Notes</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {this.nodeRows().map((row, index) => (
+                        <Tr key={`nodeRow_${index}`}>
+                          <Td>{row[0]}</Td>
+                          <Td>{row[1]}</Td>
+                        </Tr>
+                      ))}
+                    </Tbody>
                   </Table>
                 </Tab>
                 <Tab style={tabFont} eventKey={2} title="Edges">
-                  <Table
-                    header={<></>}
-                    variant={TableVariant.compact}
-                    cells={this.edgeColumns()}
-                    rows={this.edgeRows()}
-                  >
-                    <TableHeader />
-                    <TableBody />
+                  <Table variant={TableVariant.compact}>
+                    <Thead>
+                      <Tr>
+                        <Th>Expression</Th>
+                        <Th>Notes</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {this.edgeRows().map((row, index) => (
+                        <Tr key={`edgeRow_${index}`}>
+                          <Td>{row[0]}</Td>
+                          <Td>{row[1]}</Td>
+                        </Tr>
+                      ))}
+                    </Tbody>
                   </Table>
                 </Tab>
                 <Tab style={tabFont} eventKey={3} title="Operators">
-                  <Table
-                    header={<></>}
-                    variant={TableVariant.compact}
-                    cells={this.operatorColumns()}
-                    rows={this.operatorRows()}
-                  >
-                    <TableHeader />
-                    <TableBody />
+                  <Table variant={TableVariant.compact}>
+                    <Thead>
+                      <Tr>
+                        <Th>Operator</Th>
+                        <Th>Description</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {this.operatorRows().map((row, index) => (
+                        <Tr key={`operatorRow_${index}`}>
+                          <Td>{row[0]}</Td>
+                          <Td>{row[1]}</Td>
+                        </Tr>
+                      ))}
+                    </Tbody>
                   </Table>
                 </Tab>
                 <Tab style={tabFont} eventKey={4} title="Usage Notes">
-                  <Table
-                    header={<></>}
-                    variant={TableVariant.compact}
-                    cells={this.noteColumns()}
-                    rows={this.noteRows()}
-                  >
-                    <TableHeader />
-                    <TableBody />
+                  <Table variant={TableVariant.compact}>
+                    <Thead>
+                      <Tr>
+                        <Th width={10} className={kialiStyle({ textAlign: 'left' })}>
+                          Usage Note
+                        </Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {this.noteRows().map((row, index) => (
+                        <Tr key={`noteRow_${index}`}>
+                          <Td>{row[0]}</Td>
+                        </Tr>
+                      ))}
+                    </Tbody>
                   </Table>
                 </Tab>
               </SimpleTabs>
@@ -139,9 +174,6 @@ export class GraphHelpFind extends React.Component<GraphHelpFindProps> {
     );
   }
 
-  private edgeColumns = (): ICell[] => {
-    return [{ title: 'Expression' }, { title: 'Notes' }];
-  };
   private edgeRows = (): string[][] => {
     return [
       ['destprincipal <op> <principal>'],
@@ -161,9 +193,6 @@ export class GraphHelpFind extends React.Component<GraphHelpFindProps> {
     ];
   };
 
-  private exampleColumns = (): ICell[] => {
-    return [{ title: 'Expression' }, { title: 'Description' }];
-  };
   private exampleRows = (): string[][] => {
     return [
       ['label:region', `nodes with the 'region' label. This tests for label existence, the label value is ignored.`],
@@ -192,9 +221,6 @@ export class GraphHelpFind extends React.Component<GraphHelpFindProps> {
     ];
   };
 
-  private nodeColumns = (): ICell[] => {
-    return [{ title: 'Expression' }, { title: 'Notes' }];
-  };
   private nodeRows = (): string[][] => {
     return [
       ['app <op> <appName>', 'tests against canonical service'],
@@ -232,9 +258,6 @@ export class GraphHelpFind extends React.Component<GraphHelpFindProps> {
     ];
   };
 
-  private noteColumns = (): ICell[] => {
-    return [{ title: 'Usage Note', transforms: [cellWidth(10) as any], props: { style: { align: 'text-left' } } }];
-  };
   private noteRows = (): string[][] => {
     return [
       ['Press Tab key to autocomplete operands.'],
@@ -253,9 +276,6 @@ export class GraphHelpFind extends React.Component<GraphHelpFindProps> {
     ];
   };
 
-  private operatorColumns = (): ICell[] => {
-    return [{ title: 'Operator' }, { title: 'Description' }];
-  };
   private operatorRows = (): string[][] => {
     return [
       ['! | not <unary expression>', `negation`],

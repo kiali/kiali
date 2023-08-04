@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { EmptyState, EmptyStateBody, EmptyStateVariant, Title, TitleSizes, Tooltip } from '@patternfly/react-core';
 import { StarIcon } from '@patternfly/react-icons';
-import { cellWidth, sortable, SortByDirection, Table, TableBody, TableHeader } from '@patternfly/react-table';
+import { SortByDirection, Table, Tbody, Thead, Tr, Th, Td } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
@@ -16,28 +16,6 @@ export const MeshPage: React.FunctionComponent = () => {
   const [sortBy, setSortBy] = React.useState({ index: 0, direction: SortByDirection.asc });
 
   const containerPadding = kialiStyle({ padding: '20px' });
-  const columns = [
-    {
-      title: 'Cluster Name',
-      transforms: [sortable, cellWidth(20)]
-    },
-    {
-      title: 'Network',
-      transforms: [sortable, cellWidth(10)]
-    },
-    {
-      title: 'Kiali',
-      transforms: [cellWidth(20)]
-    },
-    {
-      title: 'API Endpoint',
-      transforms: [sortable, cellWidth(20)]
-    },
-    {
-      title: 'Secret name',
-      transforms: [sortable, cellWidth(30)]
-    }
-  ];
 
   function buildKialiInstancesColumn(cluster): React.ReactNode {
     if (!cluster.kialiInstances || cluster.kialiInstances.length === 0) {
@@ -77,18 +55,17 @@ export const MeshPage: React.FunctionComponent = () => {
     const sortedList = Array.from(meshClustersList).sort((a, b) =>
       a[sortByAttr].localeCompare(b[sortByAttr], undefined, { sensitivity: 'base' })
     );
-
-    const tableRows = sortedList.map(cluster => ({
-      cells: [
-        <>
+    const tableRows = sortedList.map((cluster, _clusterIndex) => (
+      <Tr key={`cluster_${_clusterIndex}`}>
+        <Td>
           {cluster.isKialiHome ? <StarIcon /> : null} {cluster.name}
-        </>,
-        cluster.network,
-        <>{buildKialiInstancesColumn(cluster)}</>,
-        cluster.apiEndpoint,
-        cluster.secretName
-      ]
-    }));
+        </Td>
+        <Td>{cluster.network}</Td>
+        <Td>{buildKialiInstancesColumn(cluster)}</Td>
+        <Td>{cluster.apiEndpoint}</Td>
+        <Td>{cluster.secretName}</Td>
+      </Tr>
+    ));
 
     return sortBy.direction === SortByDirection.asc ? tableRows : tableRows.reverse();
   }
@@ -124,9 +101,17 @@ export const MeshPage: React.FunctionComponent = () => {
       </div>
       <RenderContent>
         <div className={containerPadding}>
-          <Table aria-label="Sortable Table" cells={columns} onSort={onSortHandler} rows={clusterRows} sortBy={sortBy}>
-            <TableHeader />
-            <TableBody />
+          <Table aria-label="Sortable Table" onSort={onSortHandler} sortBy={sortBy}>
+            <Thead>
+              <Tr>
+                <Th width={20}>Cluster Name</Th>
+                <Th width={10}>Network</Th>
+                <Th width={20}>Kiali</Th>
+                <Th width={20}>API Endpoint</Th>
+                <Th width={30}>Secret name</Th>
+              </Tr>
+            </Thead>
+            <Tbody>{clusterRows}</Tbody>
           </Table>
           {clusterRows.length === 0 ? (
             <EmptyState variant={EmptyStateVariant.full}>

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
+import { Table, Thead, Tbody, Tr, Th, Td } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../../components/Pf/PfColors';
 
@@ -7,18 +7,6 @@ type Props = {
   fromList: { [key: string]: string[] }[];
   onRemoveFrom: (index: number) => void;
 };
-
-const headerCells: ICell[] = [
-  {
-    title: 'Source Matches of a Request',
-    transforms: [cellWidth(100) as any],
-    props: {}
-  },
-  {
-    title: '',
-    props: {}
-  }
-];
 
 const noSourceStyle = kialiStyle({
   marginTop: 10,
@@ -28,27 +16,6 @@ const noSourceStyle = kialiStyle({
 });
 
 export class SourceList extends React.Component<Props> {
-  rows = () => {
-    return this.props.fromList.map((source, i) => {
-      return {
-        key: 'fromSource' + i,
-        cells: [
-          <>
-            Rules
-            {Object.keys(source).map((field, j) => {
-              return (
-                <div key={'sourceField_' + field + '_' + i + '_' + j}>
-                  <b>{field}</b>: [{source[field].join(',')}]<br />
-                </div>
-              );
-            })}
-          </>,
-          <></>
-        ]
-      };
-    });
-  };
-
   // @ts-ignore
   actionResolver = (rowData, { rowIndex }) => {
     const removeAction = {
@@ -66,13 +33,31 @@ export class SourceList extends React.Component<Props> {
       <>
         <Table
           aria-label="Source Builder"
-          cells={headerCells}
-          rows={this.rows()}
           // @ts-ignore
           actionResolver={this.actionResolver}
         >
-          <TableHeader />
-          <TableBody />
+          <Thead>
+            <Tr>
+              <Th width={100}>Source Matches of a Request</Th>
+              <Th />
+            </Tr>
+          </Thead>
+          <Tbody>
+            {this.props.fromList.map((source, i) => (
+              <Tr key={i}>
+                <Td>
+                  Rules
+                  {Object.keys(source).map((field, j) => {
+                    return (
+                      <div key={'sourceField_' + field + '_' + i + '_' + j}>
+                        <b>{field}</b>: [{source[field].join(',')}]<br />
+                      </div>
+                    );
+                  })}
+                </Td>
+              </Tr>
+            ))}
+          </Tbody>
         </Table>
         {this.props.fromList.length === 0 && <div className={noSourceStyle}>No Source Matches Defined</div>}
       </>

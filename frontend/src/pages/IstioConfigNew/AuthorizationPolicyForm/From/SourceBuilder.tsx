@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
+import { Table, Tbody, Thead, Tr, Th, Td } from '@patternfly/react-table';
 // Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
 import {
   Button,
@@ -41,23 +41,6 @@ const INIT_SOURCE_FIELDS = [
 const noSourceStyle = kialiStyle({
   color: PFColors.Red100
 });
-
-const headerCells: ICell[] = [
-  {
-    title: 'Source Field',
-    transforms: [cellWidth(20) as any],
-    props: {}
-  },
-  {
-    title: 'Values',
-    transforms: [cellWidth(80) as any],
-    props: {}
-  },
-  {
-    title: '',
-    props: {}
-  }
-];
 
 export class SourceBuilder extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -155,78 +138,72 @@ export class SourceBuilder extends React.Component<Props, State> {
     return [];
   };
 
-  rows = () => {
-    const [isValidSource, invalidText] = this.isValidSource();
-
-    const sourceRows = Object.keys(this.state.source).map((sourceField, i) => {
-      return {
-        key: 'sourceKey' + i,
-        cells: [<>{sourceField}</>, <>{this.state.source[sourceField].join(',')}</>, <></>]
-      };
-    });
-    if (this.state.sourceFields.length > 0) {
-      return sourceRows.concat([
-        {
-          key: 'sourceKeyNew',
-          cells: [
-            <>
-              <FormSelect
-                value={this.state.newSourceField}
-                id="addNewSourceField"
-                name="addNewSourceField"
-                onChange={this.onAddNewSourceField}
-              >
-                {this.state.sourceFields.map((option, index) => (
-                  <FormSelectOption isDisabled={false} key={'source' + index} value={option} label={option} />
-                ))}
-              </FormSelect>
-            </>,
-            <>
-              <TextInput
-                value={this.state.newValues}
-                type="text"
-                id="addNewValues"
-                key="addNewValues"
-                aria-describedby="add new source values"
-                name="addNewValues"
-                onChange={this.onAddNewValues}
-                validated={isValid(isValidSource)}
-              />
-              {!isValidSource && (
-                <div key="hostsHelperText" className={noSourceStyle}>
-                  {invalidText}
-                </div>
-              )}
-            </>,
-            <>
-              {this.state.sourceFields.length > 0 && (
-                <Button
-                  variant={ButtonVariant.link}
-                  icon={<PlusCircleIcon />}
-                  onClick={this.onAddSource}
-                  isDisabled={!isValidSource}
-                />
-              )}
-            </>
-          ]
-        }
-      ]);
-    }
-    return sourceRows;
-  };
-
   render() {
+    const [isValidSource, invalidText] = this.isValidSource();
     return (
       <>
         <Table
           aria-label="Source Builder"
-          cells={headerCells}
-          rows={this.rows()}
           // @ts-ignore
           actionResolver={this.actionResolver}
         >
-          <TableHeader />
-          <TableBody />
+          <Thead>
+            <Tr>
+              <Th width={20}>Source Field</Th>
+              <Th width={80}>Values</Th>
+              <Th />
+            </Tr>
+          </Thead>
+          <Tbody>
+            {Object.keys(this.state.source).map((sourceField, i) => (
+              <Tr key={`sourceKey${i}`}>
+                <Td>{sourceField}</Td>
+                <Td>{this.state.source[sourceField].join(',')}</Td>
+                <Td></Td>
+              </Tr>
+            ))}
+            {this.state.sourceFields.length > 0 && (
+              <Tr key="sourceKeyNew">
+                <Td>
+                  <FormSelect
+                    value={this.state.newSourceField}
+                    id="addNewSourceField"
+                    name="addNewSourceField"
+                    onChange={this.onAddNewSourceField}
+                  >
+                    {this.state.sourceFields.map((option, index) => (
+                      <FormSelectOption isDisabled={false} key={'source' + index} value={option} label={option} />
+                    ))}
+                  </FormSelect>
+                </Td>
+                <Td>
+                  <TextInput
+                    value={this.state.newValues}
+                    type="text"
+                    id="addNewValues"
+                    key="addNewValues"
+                    aria-describedby="add new source values"
+                    name="addNewValues"
+                    onChange={this.onAddNewValues}
+                    validated={isValid(isValidSource)}
+                  />
+                  {!isValidSource && (
+                    <div key="hostsHelperText" className={noSourceStyle}>
+                      {invalidText}
+                    </div>
+                  )}
+                </Td>
+                <Td>
+                  <Button
+                    variant={ButtonVariant.link}
+                    icon={<PlusCircleIcon />}
+                    onClick={this.onAddSource}
+                    isDisabled={!isValidSource}
+                  />
+                </Td>
+              </Tr>
+            )}
+          </Tbody>
         </Table>
         <Button
           variant={ButtonVariant.link}
