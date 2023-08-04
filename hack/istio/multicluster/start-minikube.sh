@@ -125,7 +125,8 @@ ingress:
   hostname: ${KEYCLOAK_HOSTNAME}
   annotations:
     kubernetes.io/ingress.class: nginx
-  tls: true
+  tls:
+    enabled: true
   extraTls:
   - hosts:
     - ${KEYCLOAK_HOSTNAME}
