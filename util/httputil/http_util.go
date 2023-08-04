@@ -188,8 +188,18 @@ func GuessKialiURL(r *http.Request) string {
 	port := strconv.Itoa(cfg.Server.Port)
 	host := cfg.Server.WebFQDN
 
+	log.Infof("GuessKialiURL!!! Default values chema: %v host: %v port:%v webroot:%v webport:%v", schema, host, port, cfg.Server.WebRoot, cfg.Server.WebPort)
 	isDefaultPort := false
 	if r != nil {
+		// Add the request string
+		log.Infof("GuessKialiURL!!! Request method:%v url:%v proto:%v host:%v", r.Method, r.URL, r.Proto, r.Host)
+		for name, headers := range r.Header {
+			name = strings.ToLower(name)
+			for _, h := range headers {
+				log.Infof("GuessKialiURL!!! Header %v: %v", name, h)
+			}
+		}
+
 		// Guess the schema. If there is a value in configuration, it always takes priority.
 		if schema == "" {
 			if fwdSchema, ok := r.Header["X-Forwarded-Proto"]; ok && len(fwdSchema) == 1 {
@@ -220,15 +230,17 @@ func GuessKialiURL(r *http.Request) string {
 		// priority, because this is the port where the pod is listening, which may
 		// be mapped to another public port via the Service/Ingress. So, HTTP headers
 		// take priority.
-		if cfg.Server.WebPort != "" {
-			port = cfg.Server.WebPort
-		} else if fwdPort, ok := r.Header["X-Forwarded-Port"]; ok && len(fwdPort) == 1 {
-			port = fwdPort[0]
-		} else if len(r.URL.Host) != 0 {
-			if len(r.URL.Port()) != 0 {
-				port = r.URL.Port()
-			} else {
-				isDefaultPort = true
+		if port == "" {
+			if cfg.Server.WebPort != "" {
+				port = cfg.Server.WebPort
+			} else if fwdPort, ok := r.Header["X-Forwarded-Port"]; ok && len(fwdPort) == 1 {
+				port = fwdPort[0]
+			} else if len(r.URL.Host) != 0 {
+				if len(r.URL.Port()) != 0 {
+					port = r.URL.Port()
+				} else {
+					isDefaultPort = true
+				}
 			}
 		}
 	}
@@ -250,7 +262,7 @@ func GuessKialiURL(r *http.Request) string {
 	}
 
 	guessedKialiURL = strings.TrimRight(guessedKialiURL, "/")
-	log.Tracef("Guessed Kiali URL=%v", guessedKialiURL)
+	log.Infof("Guessed Kiali URL=%v", guessedKialiURL)
 
 	return guessedKialiURL
 }
