@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Server, ServerForm } from '../../../types/IstioObjects';
-import { cellWidth, Tbody, Td, Th, Thead, Tr, TableComposable } from '@patternfly/react-table';
+import { cellWidth, Tbody, Td, Th, Thead, Tr, Table } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../components/Pf/PfColors';
 import { Button, ButtonVariant } from '@patternfly/react-core';
@@ -113,7 +113,7 @@ export class ServerList extends React.Component<Props> {
   render() {
     return (
       <>
-        <TableComposable aria-label="Server List">
+        <Table aria-label="Server List">
           <Thead>
             <Tr>
               {headerCells.map(e => (
@@ -144,7 +144,7 @@ export class ServerList extends React.Component<Props> {
               </Td>
             </Tr>
           </Tbody>
-        </TableComposable>
+        </Table>
         {this.props.serverList.length === 0 && <div className={noServerStyle}>No Servers defined</div>}
       </>
     );

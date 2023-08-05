@@ -40,7 +40,7 @@ export class ListenerBuilder extends React.Component<Props> {
     return isK8sGatewayHostValid(host);
   };
 
-  onAddHostname = (value: string, _) => {
+  onAddHostname = (_event, value: string) => {
     const l = this.props.listener;
     l.hostname = value.trim();
 
@@ -52,35 +52,35 @@ export class ListenerBuilder extends React.Component<Props> {
     });
   };
 
-  onAddPort = (value: string, _) => {
+  onAddPort = (_event, value: string) => {
     const l = this.props.listener;
     l.port = value.trim();
 
     this.props.onChange(l, this.props.index);
   };
 
-  onAddName = (value: string, _) => {
+  onAddName = (_event, value: string) => {
     const l = this.props.listener;
     l.name = value.trim();
 
     this.props.onChange(l, this.props.index);
   };
 
-  onAddProtocol = (value: string, _) => {
+  onAddProtocol = (_event, value: string) => {
     const l = this.props.listener;
     l.protocol = value.trim();
 
     this.props.onChange(l, this.props.index);
   };
 
-  onAddFrom = (value: string, _) => {
+  onAddFrom = (_event, value: string) => {
     const l = this.props.listener;
     l.from = value.trim();
 
     this.props.onChange(l, this.props.index);
   };
 
-  onAddSelectorLabels = (value: string, _) => {
+  onAddSelectorLabels = (_event, value: string) => {
     const l = this.props.listener;
     l.sSelectorLabels = value.trim();
 

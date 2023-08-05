@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { DropdownGroup, DropdownItem, DropdownSeparator, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { DropdownGroup, DropdownItem, DropdownSeparator } from '@patternfly/react-core/deprecated';
 import { serverConfig } from 'config';
 import { DestinationRule, getWizardUpdateLabel, K8sHTTPRoute, VirtualService } from 'types/IstioObjects';
 import { canDelete, ResourcePermissions } from 'types/Permissions';

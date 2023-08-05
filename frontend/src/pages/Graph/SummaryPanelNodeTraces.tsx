@@ -159,7 +159,7 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
             label="Use graph refresh"
             className={checkboxStyle}
             isChecked={this.state.useGraphRefresh}
-            onChange={checked => this.setState({ useGraphRefresh: checked })}
+            onChange={(_event, checked) => this.setState({ useGraphRefresh: checked })}
           />
           <Button
             id="manual-refresh"
@@ -180,7 +180,7 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
                 <SimpleListItem
                   key={'trace_' + trace.traceID}
                   onClick={() => this.onClickTrace(trace)}
-                  isCurrent={trace.traceID === currentID}
+                  isActive={trace.traceID === currentID}
                 >
                   <TraceListItem trace={trace} />
                 </SimpleListItem>

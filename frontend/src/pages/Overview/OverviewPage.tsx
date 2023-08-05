@@ -1,10 +1,8 @@
 import * as React from 'react';
 import {
   Card,
-  CardActions,
   CardBody,
   CardHeader,
-  CardHeaderMain,
   EmptyState,
   EmptyStateBody,
   EmptyStateVariant,
@@ -14,7 +12,8 @@ import {
   Title,
   TitleSizes,
   Tooltip,
-  TooltipPosition
+  TooltipPosition,
+  EmptyStateHeader
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { AxiosError } from 'axios';
@@ -956,48 +955,49 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                           !this.props.istioAPIEnabled && !this.hasCanaryUpgradeConfigured() ? { height: '96%' } : {}
                         }
                       >
-                        <CardHeader>
-                          <CardHeaderMain style={{ width: '85%' }}>
-                            <Title headingLevel="h5" size={TitleSizes.lg}>
-                              <span
-                                className={isLongNs ? cardNamespaceNameLongStyle : cardNamespaceNameNormalStyle}
-                                title={ns.name}
-                              >
-                                {ns.name}
-                                {ns.name === serverConfig.istioNamespace && (
-                                  <ControlPlaneBadge cluster={ns.cluster}></ControlPlaneBadge>
-                                )}
-                                {ns.name !== serverConfig.istioNamespace &&
-                                  this.hasCanaryUpgradeConfigured() &&
-                                  this.state.canaryUpgradeStatus?.migratedNamespaces.includes(ns.name) && (
-                                    <ControlPlaneVersionBadge
-                                      version={this.state.canaryUpgradeStatus.upgradeVersion}
-                                      isCanary={true}
-                                    ></ControlPlaneVersionBadge>
+                        <CardHeader
+                          actions={{ actions: <>{namespaceActions[i]}</>, hasNoOffset: false, className: undefined }}
+                        >
+                          {
+                            <>
+                              <Title headingLevel="h5" size={TitleSizes.lg}>
+                                <span
+                                  className={isLongNs ? cardNamespaceNameLongStyle : cardNamespaceNameNormalStyle}
+                                  title={ns.name}
+                                >
+                                  {ns.name}
+                                  {ns.name === serverConfig.istioNamespace && (
+                                    <ControlPlaneBadge cluster={ns.cluster}></ControlPlaneBadge>
                                   )}
-                                {ns.name !== serverConfig.istioNamespace &&
-                                  this.hasCanaryUpgradeConfigured() &&
-                                  this.state.canaryUpgradeStatus?.pendingNamespaces.includes(ns.name) && (
-                                    <ControlPlaneVersionBadge
-                                      version={this.state.canaryUpgradeStatus.currentVersion}
-                                      isCanary={false}
-                                    ></ControlPlaneVersionBadge>
+                                  {ns.name !== serverConfig.istioNamespace &&
+                                    this.hasCanaryUpgradeConfigured() &&
+                                    this.state.canaryUpgradeStatus?.migratedNamespaces.includes(ns.name) && (
+                                      <ControlPlaneVersionBadge
+                                        version={this.state.canaryUpgradeStatus.upgradeVersion}
+                                        isCanary={true}
+                                      ></ControlPlaneVersionBadge>
+                                    )}
+                                  {ns.name !== serverConfig.istioNamespace &&
+                                    this.hasCanaryUpgradeConfigured() &&
+                                    this.state.canaryUpgradeStatus?.pendingNamespaces.includes(ns.name) && (
+                                      <ControlPlaneVersionBadge
+                                        version={this.state.canaryUpgradeStatus.currentVersion}
+                                        isCanary={false}
+                                      ></ControlPlaneVersionBadge>
+                                    )}
+                                  {ns.name === serverConfig.istioNamespace && !this.props.istioAPIEnabled && (
+                                    <Label style={{ marginLeft: 10 }} color={'orange'} isCompact>
+                                      Istio API disabled
+                                    </Label>
                                   )}
-                                {ns.name === serverConfig.istioNamespace && !this.props.istioAPIEnabled && (
-                                  <Label style={{ marginLeft: 10 }} color={'orange'} isCompact>
-                                    Istio API disabled
-                                  </Label>
-                                )}
-                                {serverConfig.ambientEnabled &&
-                                  ns.name !== serverConfig.istioNamespace &&
-                                  ns.labels &&
-                                  ns.isAmbient && <AmbientBadge tooltip={true}></AmbientBadge>}
-                              </span>
-                            </Title>
-                          </CardHeaderMain>
-                          <CardActions style={{ width: '15%', textAlign: 'right', display: 'block' }}>
-                            {namespaceActions[i]}
-                          </CardActions>
+                                  {serverConfig.ambientEnabled &&
+                                    ns.name !== serverConfig.istioNamespace &&
+                                    ns.labels &&
+                                    ns.isAmbient && <AmbientBadge tooltip={true}></AmbientBadge>}
+                                </span>
+                              </Title>
+                            </>
+                          }
                         </CardHeader>
                         <CardBody>
                           {isMultiCluster() && ns.cluster && (
@@ -1091,9 +1091,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           </RenderComponentScroll>
         ) : (
           <EmptyState className={emptyStateStyle} variant={EmptyStateVariant.full}>
-            <Title headingLevel="h5" size={TitleSizes.lg} style={{ marginTop: '50px' }}>
-              No unfiltered namespaces
-            </Title>
+            <EmptyStateHeader titleText="No unfiltered namespaces" headingLevel="h5" />
             <EmptyStateBody>
               Either all namespaces are being filtered or the user has no permission to access namespaces.
             </EmptyStateBody>

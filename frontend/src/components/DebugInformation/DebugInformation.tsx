@@ -18,7 +18,8 @@ import {
 import { aceOptions } from '../../types/IstioConfigDetails';
 import AceEditor from 'react-ace';
 import { ParameterizedTabs } from '../Tab/Tabs';
-import { ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
+import { ICell } from '@patternfly/react-table';
+import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
 import { AuthConfig } from '../../types/Auth';
 import { authenticationConfig } from '../../config/AuthenticationConfig';
 import { basicTabStyle } from 'styles/TabStyles';

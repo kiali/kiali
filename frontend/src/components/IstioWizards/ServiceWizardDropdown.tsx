@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Dropdown, DropdownPosition, DropdownToggle, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Dropdown, DropdownPosition, DropdownToggle } from '@patternfly/react-core/deprecated';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import {
   DestinationRule,
@@ -248,7 +249,10 @@ class ServiceWizardDropdownComponent extends React.Component<Props, State> {
         position={DropdownPosition.right}
         onSelect={this.onActionsSelect}
         toggle={
-          <DropdownToggle onToggle={this.onActionsToggle} data-test="wizard-actions">
+          <DropdownToggle
+            onToggle={(_event, isOpen: boolean) => this.onActionsToggle(isOpen)}
+            data-test="wizard-actions"
+          >
             Actions
           </DropdownToggle>
         }

@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { cellWidth, ICell, Table, TableHeader, TableBody } from '@patternfly/react-table';
+import { cellWidth, ICell } from '@patternfly/react-table';
+import { Table, TableHeader, TableBody } from '@patternfly/react-table/deprecated';
 import { Slider } from './Slider/Slider';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Button, ButtonVariant, TooltipPosition } from '@patternfly/react-core';

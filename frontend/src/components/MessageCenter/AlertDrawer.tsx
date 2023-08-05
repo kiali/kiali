@@ -1,7 +1,6 @@
 import * as React from 'react';
 import {
   Card,
-  CardActions,
   CardHeader,
   CardTitle,
   Button,
@@ -90,21 +89,29 @@ class AlertDrawerComponent extends React.PureComponent<AlertDrawerProps> {
     return (
       !this.props.isHidden && (
         <Card className={drawer} hidden={this.props.isHidden}>
-          <CardHeader className={AlertDrawerComponent.head}>
-            <CardActions>
-              {this.props.isExpanded ? (
-                <Button id="alert_drawer_collapse" variant={ButtonVariant.plain} onClick={this.props.expandDrawer}>
-                  <KialiIcon.AngleDoubleRight />
-                </Button>
-              ) : (
-                <Button id="alert_drawer_expand" variant={ButtonVariant.plain} onClick={this.props.expandDrawer}>
-                  <KialiIcon.AngleDoubleLeft />
-                </Button>
-              )}
-              <Button id="alert_drawer_close" variant={ButtonVariant.plain} onClick={this.props.hideDrawer}>
-                <CloseIcon />
-              </Button>
-            </CardActions>
+          <CardHeader
+            actions={{
+              actions: (
+                <>
+                  {this.props.isExpanded ? (
+                    <Button id="alert_drawer_collapse" variant={ButtonVariant.plain} onClick={this.props.expandDrawer}>
+                      <KialiIcon.AngleDoubleRight />
+                    </Button>
+                  ) : (
+                    <Button id="alert_drawer_expand" variant={ButtonVariant.plain} onClick={this.props.expandDrawer}>
+                      <KialiIcon.AngleDoubleLeft />
+                    </Button>
+                  )}
+                  <Button id="alert_drawer_close" variant={ButtonVariant.plain} onClick={this.props.hideDrawer}>
+                    <CloseIcon />
+                  </Button>
+                </>
+              ),
+              hasNoOffset: false,
+              className: undefined
+            }}
+            className={AlertDrawerComponent.head}
+          >
             <CardTitle>{this.props.title}</CardTitle>
           </CardHeader>
           <CardBody className={AlertDrawerComponent.body}>

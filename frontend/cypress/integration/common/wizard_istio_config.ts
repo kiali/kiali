@@ -144,7 +144,7 @@ Then('{string} should not be referenced anymore', (gateway: string) => {
 
 Then('{string} details information for service entry {string} can be seen',(host: string, name: string)=>{
   cy.get('#ServiceDescriptionCard').within(() => {
-    cy.get('#pfbadge-ES').parent().parent().contains(host); 
+    cy.get('#pfbadge-ES').parent().parent().parent().contains(host); 
   });
   cy.get('#IstioConfigCard').within(() => {
     cy.get('#pfbadge-SE').parent().parent().contains(name); 

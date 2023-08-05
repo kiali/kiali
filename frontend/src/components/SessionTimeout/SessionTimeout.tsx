@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Modal, Button, ButtonVariant } from '@patternfly/react-core';
+import { Modal, Button, ButtonVariant, Icon } from '@patternfly/react-core';
 import { WarningTriangleIcon } from '@patternfly/react-icons';
 import { AuthStrategy } from '../../types/Auth';
 import { LoginSession } from '../../store/Store';
@@ -35,7 +35,9 @@ export class SessionTimeout extends React.Component<SessionTimeoutProps, {}> {
     return (
       <Modal isOpen={this.props.show} onClose={defaultAction} actions={buttons} title={'Session Timeout'} width={'40%'}>
         <span>
-          <WarningTriangleIcon size={'xl'} color={PFColors.Warning} />
+          <Icon size="xl" color={PFColors.Warning}>
+            <WarningTriangleIcon />
+          </Icon>
         </span>
         <span style={{ float: 'right', width: '80%' }} className={sessionTimeoutStyle}>
           {this.textForAuthStrategy(authenticationConfig.strategy)}

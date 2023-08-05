@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Tr } from '@patternfly/react-table';
 import { Resource, IstioTypes, hasHealth, RenderResource } from './Config';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { Health } from '../../types/Health';
@@ -62,10 +63,10 @@ export class VirtualItem extends React.Component<VirtualItemProps, VirtualItemSt
       key = 'VirtualItem_Ns' + item.namespace + '_' + item.type + '_' + item.name;
     }
     return (
-      <tr style={style} className={className} role="row" key={key} data-test={key}>
+      <Tr style={style} className={className} role="row" key={key} data-test={key}>
         {this.renderDetails(item, this.state.health)}
         {this.props.action && actionRenderer(key, this.props.action)}
-      </tr>
+      </Tr>
     );
   }
 }

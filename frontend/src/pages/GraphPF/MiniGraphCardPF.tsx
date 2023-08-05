@@ -1,16 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import {
-  Card,
-  CardActions,
-  CardBody,
-  CardHeader,
-  CardTitle,
-  Dropdown,
-  DropdownItem,
-  KebabToggle,
-  ToolbarItem
-} from '@patternfly/react-core';
+import { Card, CardBody, CardHeader, CardTitle, ToolbarItem } from '@patternfly/react-core';
+import { Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core/deprecated';
 import { Edge, EdgeModel, Node, NodeModel } from '@patternfly/react-topology';
 import { URLParam, history } from '../../app/History';
 import { GraphDataSource } from '../../services/GraphDataSource';
@@ -116,21 +107,28 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
     return (
       <>
         <Card style={{ height: '100%' }} id={'MiniGraphCard'} data-test="mini-graph">
-          <CardHeader>
-            <CardActions>
-              <KioskElement>
-                <ToolbarItem>
-                  <TimeDurationIndicator onClick={this.toggleTimeOptionsVisibility} isDuration={true} />
-                </ToolbarItem>
-              </KioskElement>
-              <Dropdown
-                toggle={<KebabToggle onToggle={this.onGraphActionsToggle} />}
-                dropdownItems={graphCardActions}
-                isPlain
-                isOpen={this.state.isKebabOpen}
-                position={'right'}
-              />
-            </CardActions>
+          <CardHeader
+            actions={{
+              actions: (
+                <>
+                  <KioskElement>
+                    <ToolbarItem>
+                      <TimeDurationIndicator onClick={this.toggleTimeOptionsVisibility} isDuration={true} />
+                    </ToolbarItem>
+                  </KioskElement>
+                  <Dropdown
+                    toggle={<KebabToggle onToggle={(_event, isOpen: boolean) => this.onGraphActionsToggle(isOpen)} />}
+                    dropdownItems={graphCardActions}
+                    isPlain
+                    isOpen={this.state.isKebabOpen}
+                    position={'right'}
+                  />
+                </>
+              ),
+              hasNoOffset: false,
+              className: undefined
+            }}
+          >
             <CardTitle style={{ float: 'left' }}>{intervalTitle}</CardTitle>
           </CardHeader>
           <CardBody>

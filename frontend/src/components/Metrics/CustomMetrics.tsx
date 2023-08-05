@@ -10,8 +10,7 @@ import {
   Checkbox,
   EmptyState,
   EmptyStateVariant,
-  Title,
-  TitleSizes
+  EmptyStateHeader
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { serverConfig } from '../../config/ServerConfig';
@@ -79,7 +78,7 @@ const fullHeightStyle = kialiStyle({
 // For some reason checkbox as a ToolbarItem needs to be tweaked
 const toolbarInputStyle = kialiStyle({
   $nest: {
-    '&.pf-c-check input[type=checkbox]': {
+    '&.pf-v5-c-check input[type=checkbox]': {
       marginTop: '2px'
     }
   }
@@ -227,10 +226,8 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
   renderFetchMetrics = title => {
     return (
       <div className={emptyStyle}>
-        <EmptyState variant={EmptyStateVariant.small}>
-          <Title headingLevel="h5" size={TitleSizes.lg}>
-            {title}
-          </Title>
+        <EmptyState variant={EmptyStateVariant.sm}>
+          <EmptyStateHeader titleText={<>{title}</>} headingLevel="h5" />
         </EmptyState>
       </div>
     );
@@ -320,14 +317,14 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
             <ToolbarItem>
               <MetricsRawAggregation onChanged={this.onRawAggregationChanged} />
             </ToolbarItem>
-            <ToolbarItem>
+            <ToolbarItem style={{marginTop: '6px'}}>
               <Checkbox
                 className={toolbarInputStyle}
                 id={`spans-show-`}
                 isChecked={this.state.showSpans}
                 key={`spans-show-chart`}
                 label="Spans"
-                onChange={checked => this.onSpans(checked)}
+                onChange={(_event, checked) => this.onSpans(checked)}
               />
             </ToolbarItem>
             <KioskElement>

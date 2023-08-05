@@ -143,7 +143,7 @@ class TourStopComponent extends React.PureComponent<TourStopProps> {
     }
   };
 
-  private shouldClose = () => {
+  private shouldClose = _ => {
     this.props.endTour();
   };
 
@@ -190,7 +190,7 @@ class TourStopComponent extends React.PureComponent<TourStopProps> {
               isVisible={true}
               onHidden={this.onHidden}
               position={info.position}
-              shouldClose={this.shouldClose}
+              shouldClose={(_event, _) => this.shouldClose(_)}
             >
               <>{children}</>
             </Popover>

@@ -1,4 +1,5 @@
-import { Radio, Dropdown, DropdownToggle, Checkbox, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Radio, Checkbox, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Dropdown, DropdownToggle } from '@patternfly/react-core/deprecated';
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
@@ -280,7 +281,11 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     return (
       <Dropdown
         toggle={
-          <DropdownToggle id="display-settings" isDisabled={this.props.disabled} onToggle={this.onToggle}>
+          <DropdownToggle
+            id="display-settings"
+            isDisabled={this.props.disabled}
+            onToggle={(_event, isOpen) => this.onToggle(isOpen)}
+          >
             Display
           </DropdownToggle>
         }
@@ -695,7 +700,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                   key={edgeLabelOption.id}
                   label={edgeLabelOption.labelText}
                   name="edgeLabelOptions"
-                  onChange={this.toggleEdgeLabelMode}
+                  onChange={(event, _) => this.toggleEdgeLabelMode(_, event)}
                   value={edgeLabelOption.id}
                 />
               </label>
@@ -723,7 +728,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           isDisabled={this.props.disabled || edgeLabelOption.isDisabled || rtOption.isDisabled}
                           label={rtOption.labelText}
                           name="rtOptions"
-                          onChange={this.toggleEdgeLabelResponseTimeMode}
+                          onChange={(event, _) => this.toggleEdgeLabelResponseTimeMode(_, event)}
                           style={{ paddingLeft: '5px' }}
                           value={rtOption.id}
                         />
@@ -756,7 +761,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           isDisabled={this.props.disabled || edgeLabelOption.isDisabled || throughputOption.isDisabled}
                           label={throughputOption.labelText}
                           name="throughputOptions"
-                          onChange={this.toggleEdgeLabelThroughputMode}
+                          onChange={(event, _) => this.toggleEdgeLabelThroughputMode(_, event)}
                           style={{ paddingLeft: '5px' }}
                           value={throughputOption.id}
                         />

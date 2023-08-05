@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Address } from '../../../types/IstioObjects';
-import { cellWidth, TableComposable, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
+import { cellWidth, Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { PlusCircleIcon } from '@patternfly/react-icons';
@@ -64,7 +64,7 @@ export class AddressList extends React.Component<Props> {
   render() {
     return (
       <>
-        <TableComposable aria-label="Address List">
+        <Table aria-label="Address List">
           <Thead>
             <Tr>
               {headerCells.map(e => (
@@ -94,7 +94,7 @@ export class AddressList extends React.Component<Props> {
               </Td>
             </Tr>
           </Tbody>
-        </TableComposable>
+        </Table>
         {this.props.addressList.length === 0 && <div className={noAddressStyle}>No Addresses defined</div>}
       </>
     );

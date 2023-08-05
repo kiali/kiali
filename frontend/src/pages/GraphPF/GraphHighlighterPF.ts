@@ -21,7 +21,7 @@
 //
 
 import { Edge, Node } from '@patternfly/react-topology';
-import { Controller, GraphElement } from '@patternfly/react-topology/src/types';
+import { Controller, GraphElement } from '@patternfly/react-topology/dist/esm/types';
 import { BoxByType, NodeAttr } from 'types/Graph';
 import { ancestors, NodeData, predecessors, successors } from './GraphPFElems';
 

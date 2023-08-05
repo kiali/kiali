@@ -1,12 +1,6 @@
 import * as React from 'react';
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownPosition,
-  DropdownToggle,
-  Tooltip,
-  TooltipPosition
-} from '@patternfly/react-core';
+import { Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Dropdown, DropdownItem, DropdownPosition, DropdownToggle } from '@patternfly/react-core/deprecated';
 import { serverConfig } from '../../config';
 import { Workload } from '../../types/Workload';
 import {
@@ -253,7 +247,9 @@ export class WorkloadWizardDropdown extends React.Component<Props, State> {
         data-test="workload-actions-dropdown"
         position={DropdownPosition.right}
         onSelect={this.onActionsSelect}
-        toggle={<DropdownToggle onToggle={this.onActionsToggle}>Actions</DropdownToggle>}
+        toggle={
+          <DropdownToggle onToggle={(_event, isOpen: boolean) => this.onActionsToggle(isOpen)}>Actions</DropdownToggle>
+        }
         isOpen={this.state.isActionsOpen}
         dropdownItems={this.renderDropdownItems()}
         disabled={!validActions}

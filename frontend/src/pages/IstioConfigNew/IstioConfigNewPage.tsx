@@ -4,7 +4,17 @@ import { activeClustersSelector, activeNamespacesSelector, namespacesPerClusterS
 import { connect } from 'react-redux';
 import { Namespace } from '../../types/Namespace';
 import { MeshCluster } from '../../types/Mesh';
-import { ActionGroup, Button, ButtonVariant, Form, FormGroup, TextInput } from '@patternfly/react-core';
+import {
+  ActionGroup,
+  Button,
+  ButtonVariant,
+  Form,
+  FormGroup,
+  FormHelperText,
+  HelperText,
+  HelperTextItem,
+  TextInput
+} from '@patternfly/react-core';
 import { RenderContent } from '../../components/Nav/Page';
 import { kialiStyle } from 'styles/StyleUtils';
 import { GatewayForm, GATEWAY, GATEWAYS, GatewayState, initGateway, isGatewayStateValid } from './GatewayForm';
@@ -224,7 +234,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     }
   };
 
-  onNameChange = (value, _) => {
+  onNameChange = (_event, value) => {
     this.setState({
       name: value
     });
@@ -452,33 +462,29 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
         </div>
         <RenderContent>
           <Form className={formPadding} isHorizontal={true}>
-            <FormGroup
-              label="Namespaces"
-              isRequired={true}
-              fieldId="namespaces"
-              helperTextInvalid={'An Istio Config resource needs at least one namespace selected'}
-              validated={isValid(isNamespacesValid)}
-            >
+            <FormGroup label="Namespaces" isRequired={true} fieldId="namespaces">
               <NamespaceDropdown disabled={false} />
+              {!isValid(isNamespacesValid) && (
+                <FormHelperText>
+                  <HelperText>
+                    <HelperTextItem>An Istio Config resource needs at least one namespace selected</HelperTextItem>
+                  </HelperText>
+                </FormHelperText>
+              )}
             </FormGroup>
             {isMultiCluster && (
-              <FormGroup
-                label="Clusters"
-                isRequired={true}
-                fieldId="clusters"
-                helperTextInvalid={'An Istio Config resource needs at least one cluster selected'}
-                validated={isValid(isClustersValid)}
-              >
+              <FormGroup label="Clusters" isRequired={true} fieldId="clusters">
                 <ClusterDropdown />
+                {!isValid(isClustersValid) && (
+                  <FormHelperText>
+                    <HelperText>
+                      <HelperTextItem>An Istio Config resource needs at least one cluster selected</HelperTextItem>
+                    </HelperText>
+                  </FormHelperText>
+                )}
               </FormGroup>
             )}
-            <FormGroup
-              label="Name"
-              isRequired={true}
-              fieldId="name"
-              helperTextInvalid={'A valid ' + this.props.objectType + ' name is required'}
-              validated={isValid(isNameValid)}
-            >
+            <FormGroup label="Name" isRequired={true} fieldId="name">
               <TextInput
                 value={this.state.name}
                 isRequired={true}
@@ -489,6 +495,13 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
                 onChange={this.onNameChange}
                 validated={isValid(isNameValid)}
               />
+              {!isValid(isNameValid) && (
+                <FormHelperText>
+                  <HelperText>
+                    <HelperTextItem>{`A valid ${this.props.objectType} name is required`}</HelperTextItem>
+                  </HelperText>
+                </FormHelperText>
+              )}
             </FormGroup>
             {this.props.objectType === AUTHORIZACION_POLICY && (
               <AuthorizationPolicyForm

@@ -66,10 +66,9 @@ export class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModa
       <AboutModal
         isOpen={this.state.showModal}
         onClose={this.close}
-        productName=""
         brandImageSrc={kialiLogo}
         brandImageAlt="Kiali Logo"
-        noAboutModalBoxContentContainer={true}
+        productName="Kiali"
       >
         <TextContent className={textContentStyle}>
           <TextList component="dl">

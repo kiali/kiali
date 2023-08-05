@@ -102,7 +102,7 @@ And('user adds a filter', () => {
 });
 
 And('user types {string} traffic weight in the {string} workload', (weight: string, workload: string) => {
-  cy.get('input[data-test="input-slider-' + workload + '"]').type(weight);
+  cy.get('input[data-test="input-slider-' + workload + '"]').type(weight, {force: true});
 });
 
 And('user adds a route', () => {

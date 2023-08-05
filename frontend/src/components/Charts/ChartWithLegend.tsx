@@ -375,7 +375,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
               width: this.state.width,
               height: chartHeight,
               top: -(chartHeight + LEGEND_HEIGHT),
-              background: 'var(--pf-global--BackgroundColor--dark-100)',
+              background: 'var(--pf-v5-global--BackgroundColor--dark-100)',
               opacity: 0.7,
               overflow: 'auto'
             }}

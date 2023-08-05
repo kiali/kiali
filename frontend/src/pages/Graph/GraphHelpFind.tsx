@@ -1,7 +1,8 @@
 import * as React from 'react';
 import ReactResizeDetector from 'react-resize-detector';
 import { Tab, Popover, PopoverPosition } from '@patternfly/react-core';
-import { ICell, Table, TableBody, TableHeader, TableVariant, cellWidth } from '@patternfly/react-table';
+import { ICell, TableVariant, cellWidth } from '@patternfly/react-table';
+import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
 import { kialiStyle } from 'styles/StyleUtils';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { PFColors } from 'components/Pf/PfColors';

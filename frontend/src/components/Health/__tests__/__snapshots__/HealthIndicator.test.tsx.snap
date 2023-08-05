@@ -3,7 +3,7 @@
 exports[`HealthIndicator proxy status section renders the degraded workloads 1`] = `
 <Tooltip
   aria-label="Health indicator"
-  className="kiali_fr7mrqt"
+  className="kiali_f1gl57f9"
   content={
     <div>
       <strong>
@@ -19,7 +19,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                     Object {
                       "status": Object {
                         "class": "icon-degraded",
-                        "color": "var(--pf-global--warning-color--100)",
+                        "color": "var(--pf-v5-global--warning-color--100)",
                         "icon": [Function],
                         "name": "Degraded",
                         "priority": 3,
@@ -29,7 +29,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                   ],
                   "status": Object {
                     "class": "icon-degraded",
-                    "color": "var(--pf-global--warning-color--100)",
+                    "color": "var(--pf-v5-global--warning-color--100)",
                     "icon": [Function],
                     "name": "Degraded",
                     "priority": 3,
@@ -41,7 +41,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                     Object {
                       "status": Object {
                         "class": "icon-na",
-                        "color": "var(--pf-global--Color--200)",
+                        "color": "var(--pf-v5-global--Color--200)",
                         "icon": [Function],
                         "name": "No health information",
                         "priority": 0,
@@ -52,7 +52,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                     Object {
                       "status": Object {
                         "class": "icon-na",
-                        "color": "var(--pf-global--Color--200)",
+                        "color": "var(--pf-v5-global--Color--200)",
                         "icon": [Function],
                         "name": "No health information",
                         "priority": 0,
@@ -63,7 +63,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                   ],
                   "status": Object {
                     "class": "icon-na",
-                    "color": "var(--pf-global--Color--200)",
+                    "color": "var(--pf-v5-global--Color--200)",
                     "icon": [Function],
                     "name": "No health information",
                     "priority": 0,
@@ -74,7 +74,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
               "statusConfig": Object {
                 "status": Object {
                   "class": "icon-na",
-                  "color": "var(--pf-global--Color--200)",
+                  "color": "var(--pf-v5-global--Color--200)",
                   "icon": [Function],
                   "name": "No health information",
                   "priority": 0,
@@ -97,12 +97,12 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
   position="auto"
 >
   <span>
-    <ExclamationTriangleIcon
-      className="icon-degraded"
-      color="var(--pf-global--warning-color--100)"
-      noVerticalAlign={false}
-      size="sm"
-    />
+    <Icon
+      className="icon-degraded kiali_fpjhxhv"
+      size="md"
+    >
+      <ExclamationTriangleIcon />
+    </Icon>
   </span>
 </Tooltip>
 `;
@@ -110,7 +110,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
 exports[`HealthIndicator renders healthy 1`] = `
 <Tooltip
   aria-label="Health indicator"
-  className="kiali_fr7mrqt"
+  className="kiali_f1gl57f9"
   content={
     <div>
       <strong>
@@ -126,7 +126,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                     Object {
                       "status": Object {
                         "class": "icon-healthy",
-                        "color": "var(--pf-global--success-color--100)",
+                        "color": "var(--pf-v5-global--success-color--100)",
                         "icon": [Function],
                         "name": "Healthy",
                         "priority": 1,
@@ -136,7 +136,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                     Object {
                       "status": Object {
                         "class": "icon-healthy",
-                        "color": "var(--pf-global--success-color--100)",
+                        "color": "var(--pf-v5-global--success-color--100)",
                         "icon": [Function],
                         "name": "Healthy",
                         "priority": 1,
@@ -146,7 +146,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                   ],
                   "status": Object {
                     "class": "icon-healthy",
-                    "color": "var(--pf-global--success-color--100)",
+                    "color": "var(--pf-v5-global--success-color--100)",
                     "icon": [Function],
                     "name": "Healthy",
                     "priority": 1,
@@ -158,7 +158,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                     Object {
                       "status": Object {
                         "class": "icon-na",
-                        "color": "var(--pf-global--Color--200)",
+                        "color": "var(--pf-v5-global--Color--200)",
                         "icon": [Function],
                         "name": "No health information",
                         "priority": 0,
@@ -169,7 +169,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                     Object {
                       "status": Object {
                         "class": "icon-na",
-                        "color": "var(--pf-global--Color--200)",
+                        "color": "var(--pf-v5-global--Color--200)",
                         "icon": [Function],
                         "name": "No health information",
                         "priority": 0,
@@ -180,7 +180,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                   ],
                   "status": Object {
                     "class": "icon-na",
-                    "color": "var(--pf-global--Color--200)",
+                    "color": "var(--pf-v5-global--Color--200)",
                     "icon": [Function],
                     "name": "No health information",
                     "priority": 0,
@@ -191,7 +191,7 @@ exports[`HealthIndicator renders healthy 1`] = `
               "statusConfig": Object {
                 "status": Object {
                   "class": "icon-na",
-                  "color": "var(--pf-global--Color--200)",
+                  "color": "var(--pf-v5-global--Color--200)",
                   "icon": [Function],
                   "name": "No health information",
                   "priority": 0,
@@ -214,12 +214,12 @@ exports[`HealthIndicator renders healthy 1`] = `
   position="auto"
 >
   <span>
-    <CheckCircleIcon
-      className="icon-healthy"
-      color="var(--pf-global--success-color--100)"
-      noVerticalAlign={false}
-      size="sm"
-    />
+    <Icon
+      className="icon-healthy kiali_f1iy6moq"
+      size="md"
+    >
+      <CheckCircleIcon />
+    </Icon>
   </span>
 </Tooltip>
 `;

@@ -1,6 +1,13 @@
 import * as React from 'react';
 // Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
-import { FormGroup, Switch, TextInputBase as TextInput } from '@patternfly/react-core';
+import {
+  FormGroup,
+  FormHelperText,
+  HelperText,
+  HelperTextItem,
+  Switch,
+  TextInputBase as TextInput
+} from '@patternfly/react-core';
 import { ServerList } from './GatewayForm/ServerList';
 import { MAX_PORT, Server, ServerForm, ServerTLSSettings, MIN_PORT } from '../../types/IstioObjects';
 import { isValid } from 'utils/Common';
@@ -76,7 +83,7 @@ export class GatewayForm extends React.Component<Props, GatewayState> {
     this.setState(this.props.gateway);
   }
 
-  addWorkloadLabels = (value: string, _) => {
+  addWorkloadLabels = (_event, value: string) => {
     if (value.length === 0) {
       this.setState(
         {
@@ -140,13 +147,7 @@ export class GatewayForm extends React.Component<Props, GatewayState> {
           />
         </FormGroup>
         {this.state.addWorkloadSelector && (
-          <FormGroup
-            fieldId="workloadLabels"
-            label="Labels"
-            helperText="One or more labels to select a workload where the Gateway is applied."
-            helperTextInvalid="Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma."
-            validated={isValid(this.state.workloadSelectorValid)}
-          >
+          <FormGroup fieldId="workloadLabels" label="Labels">
             <TextInput
               id="gwHosts"
               name="gwHosts"
@@ -155,6 +156,15 @@ export class GatewayForm extends React.Component<Props, GatewayState> {
               onChange={this.addWorkloadLabels}
               validated={isValid(this.state.workloadSelectorValid)}
             />
+            <FormHelperText>
+              <HelperText>
+                <HelperTextItem>
+                  {isValid(this.state.workloadSelectorValid)
+                    ? 'One or more labels to select a workload where the Gateway is applied.'
+                    : 'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'}
+                </HelperTextItem>
+              </HelperText>
+            </FormHelperText>
           </FormGroup>
         )}
         <FormGroup label="Server List" fieldId="gwServerList" isRequired={true}>

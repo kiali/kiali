@@ -1,5 +1,5 @@
 import React from 'react';
-import { Switch } from '@patternfly/react-core';
+import { Button, Icon, Tooltip } from '@patternfly/react-core';
 import { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
 import { KIALI_THEME, PF_THEME_DARK, Theme } from 'types/Common';
@@ -27,14 +27,25 @@ export const ThemeSwitchComponent = (props: ThemeSwitchProps) => {
     document.dispatchEvent(refreshTick);
   };
 
+  const darkTheme = props.theme === Theme.DARK;
+
   return (
-    <Switch
-      id="theme-switch"
-      label={'Dark Theme'}
-      labelOff={'Dark Theme'}
-      isChecked={props.theme === Theme.DARK}
-      onChange={handleTheme}
-    />
+    <>
+      <Tooltip position="bottom" content={<>{`${darkTheme ? 'Enable' : 'Disable'} Light Mode`}</>}>
+        <Button variant={darkTheme ? 'secondary' : 'primary'} onClick={handleTheme}>
+          <Icon>
+            <i className="fas fa-sun" />
+          </Icon>
+        </Button>
+      </Tooltip>
+      <Tooltip position="bottom" content={<>{`${darkTheme ? 'Disable' : 'Enable'} Dark Mode`}</>}>
+        <Button variant={darkTheme ? 'primary' : 'secondary'} onClick={handleTheme}>
+          <Icon>
+            <i className="fas fa-moon" />
+          </Icon>
+        </Button>
+      </Tooltip>
+    </>
   );
 };
 

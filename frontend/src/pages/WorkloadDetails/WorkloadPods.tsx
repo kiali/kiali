@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { ObjectValidation, Pod } from '../../types/IstioObjects';
-import { cellWidth, ICell, IRow, Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
+import { cellWidth, ICell, IRow, TableVariant } from '@patternfly/react-table';
+import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
 import {
   Card,
   CardBody,
@@ -65,7 +66,7 @@ export class WorkloadPods extends React.Component<WorkloadPodsProps> {
         cells: [
           {
             title: (
-              <EmptyState variant={EmptyStateVariant.small} className={emptyStyle}>
+              <EmptyState variant={EmptyStateVariant.sm} className={emptyStyle}>
                 <EmptyStateBody className={emptyStyle}>No Pods in workload {this.props.workload}</EmptyStateBody>
               </EmptyState>
             ),

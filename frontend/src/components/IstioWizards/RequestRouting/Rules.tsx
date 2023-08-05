@@ -1,14 +1,14 @@
 import * as React from 'react';
-import { cellWidth, ICell, Table, TableHeader, TableBody } from '@patternfly/react-table';
+import { cellWidth, ICell } from '@patternfly/react-table';
+import { Table, TableHeader, TableBody } from '@patternfly/react-table/deprecated';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../Pf/PfColors';
 import {
   EmptyState,
   EmptyStateBody,
   EmptyStateVariant,
-  Title,
-  TitleSizes,
-  TooltipPosition
+  TooltipPosition,
+  EmptyStateHeader
 } from '@patternfly/react-core';
 import { WorkloadWeight } from '../TrafficShifting';
 import { Abort, Delay, HTTPRetry } from '../../../types/IstioObjects';
@@ -189,9 +189,7 @@ export class Rules extends React.Component<Props> {
                 {
                   title: (
                     <EmptyState variant={EmptyStateVariant.full}>
-                      <Title headingLevel="h5" size={TitleSizes.lg}>
-                        No Route Rules defined
-                      </Title>
+                      <EmptyStateHeader titleText="No Route Rules defined" headingLevel="h5" />
                       <EmptyStateBody className={noRulesStyle}>
                         A Request Routing scenario needs at least a Route Rule
                       </EmptyStateBody>

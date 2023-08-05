@@ -2,10 +2,6 @@ import * as React from 'react';
 import {
   Button,
   ButtonVariant,
-  Dropdown,
-  DropdownItem,
-  DropdownPosition,
-  DropdownToggle,
   Modal,
   ModalVariant,
   Text,
@@ -13,6 +9,7 @@ import {
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
+import { Dropdown, DropdownItem, DropdownPosition, DropdownToggle } from '@patternfly/react-core/deprecated';
 import { serverConfig } from '../../config';
 
 type Props = {
@@ -84,7 +81,11 @@ export class IstioActionDropdown extends React.Component<Props, State> {
       <>
         <Dropdown
           id="actions"
-          toggle={<DropdownToggle onToggle={this.onToggle}>Actions</DropdownToggle>}
+          toggle={
+            <DropdownToggle onToggle={(_event, dropdownState: boolean) => this.onToggle(dropdownState)}>
+              Actions
+            </DropdownToggle>
+          }
           onSelect={this.onSelect}
           position={DropdownPosition.right}
           isOpen={this.state.dropdownOpen}

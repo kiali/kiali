@@ -11,7 +11,7 @@ And('user clicks on admin', () => {
 And('user logout successfully', () => {
     if (auth_strategy === 'openshift') {
         cy.intercept('api/logout').as('logout')
-        cy.get('.pf-c-dropdown__menu-item').click()
+        cy.get('.pf-v5-c-dropdown__menu-item').click()
     }
 })
 
