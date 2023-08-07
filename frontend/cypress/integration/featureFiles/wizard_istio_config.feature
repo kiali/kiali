@@ -233,6 +233,28 @@ Feature: Kiali Istio Config page
     And user types "8080" in the "addTargetPort1" input
     Then the preview button should be disabled
 
+  @wizard-istio-config
+  @bookinfo-app
+  Scenario: Create a ServiceEntry and view the service detail page of the external service associated 
+    When user deletes service named "myservice3" and the resource is no longer available
+    And user clicks in the "ServiceEntry" Istio config actions
+    And user sees the "Create ServiceEntry" config wizard
+    And user types "myservice3" in the "name" input
+    And user types "host.com" in the "hosts" input
+    And user opens the "Add Port" submenu
+    Then the "addPortNumber0" input should be empty
+    And user types "8080" in the "addPortNumber0" input
+    And user types "foobar" in the "addPortName0" input
+    And user types "8080" in the "addTargetPort0" input
+    And user previews the configuration
+    And user creates the istio config
+    Then the "ServiceEntry" "myservice3" should be listed in "bookinfo" namespace
+    When user is at the "services" page
+    And the "host.com" row is visible
+    And the "Name" column on the "host.com" row has a link ending in "/namespaces/bookinfo/services/host.com"
+    And the "Details" column on the "host.com" row has a link ending in "/namespaces/bookinfo/istio/serviceentries/myservice3"
+    When user is at the details page for the "service" "bookinfo/host.com"
+    Then "host.com" details information for service entry "myservice3" can be seen
 
   @gateway-api
   @wizard-istio-config
