@@ -21,7 +21,7 @@ export const menuEntryStyle = kialiStyle({
 export const titleStyle = kialiStyle({
   padding: '8px 16px 2px 16px',
   fontWeight: 700,
-  color: PFColors.Black600
+  color: PFColors.Color200
 });
 
 const itemStyle: NestedCSSProperties = {

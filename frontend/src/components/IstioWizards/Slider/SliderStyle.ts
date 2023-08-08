@@ -1,29 +1,25 @@
+import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 
 export const sliderStyle = kialiStyle({
   display: 'flex',
   alignItems: 'center',
   $nest: {
-    '*': {
-      marginRight: '10px',
-      $nest: {
-        '&:last-child': {
-          margin: 0
-        }
-      }
-    },
     '.slider': {
       width: 'auto',
-      flex: '1 1 100%'
+      flex: '1 1 100%',
+      marginRight: '10px'
     },
+
     '.slider-handle': {
       width: '16px',
       height: '16px',
-      border: '1px solid #bbb'
+      border: `1px solid ${PFColors.BorderColor200}`
     },
+
     '.slider-tick': {
       backgroundColor: 'transparent !important',
-      backgroundImage: 'radial-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3) 2px, transparent 0) !important',
+      backgroundImage: `radial-gradient(${PFColors.Color200}, ${PFColors.Color200} 2px, transparent 0) !important`,
       '-webkit-box-shadow': 'none',
       boxShadow: 'none'
     },

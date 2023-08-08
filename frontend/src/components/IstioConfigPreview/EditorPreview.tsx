@@ -66,12 +66,11 @@ export class EditorPreviewComponent extends React.Component<Props, State> {
   };
 
   render() {
-    const ace_theme = this.props.theme === Theme.Light ? 'eclipse' : 'twilight';
     return (
       <AceEditor
         ref={this.aceEditorRef}
         mode="yaml"
-        theme={ace_theme}
+        theme={this.props.theme === Theme.DARK ? 'twilight' : 'eclipse'}
         onChange={value => this.onChange(value)}
         height={'275px  '}
         width={'100%'}

@@ -7,15 +7,13 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../Pf/PfColors';
 import { Button, ButtonVariant, EmptyState, EmptyStateBody, EmptyStateIcon, Title } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
-import { bgDarkSoft } from 'styles/ThemeStyle';
-import { Theme } from 'types/Common';
 
 const containerStyle = kialiStyle({ marginLeft: 0, marginRight: 0 });
 const containerPadding = kialiStyle({ padding: '0 20px 0 20px' });
-const containerGray = kialiStyle({ background: PFColors.Black150 });
+const containerGray = kialiStyle({ background: PFColors.BackgroundColor200 });
 const containerError = kialiStyle({ height: 'calc(100vh - 76px)' });
 
-export class RenderPage extends React.Component<{ isGraph: boolean; theme: string }> {
+export class RenderPage extends React.Component<{ isGraph: boolean }> {
   renderPaths(paths: Path[]) {
     return paths.map((item, index) => {
       return <Route key={index} path={item.path} component={item.component} render={item.render} />;
@@ -48,14 +46,6 @@ export class RenderPage extends React.Component<{ isGraph: boolean; theme: strin
         </SwitchErrorBoundary>
       </div>
     );
-    return (
-      <>
-        {!this.props.isGraph ? (
-          <div className={this.props.theme === Theme.Light ? containerGray : bgDarkSoft}>{component}</div>
-        ) : (
-          component
-        )}
-      </>
-    );
+    return <>{!this.props.isGraph ? <div className={containerGray}>{component}</div> : component}</>;
   }
 }

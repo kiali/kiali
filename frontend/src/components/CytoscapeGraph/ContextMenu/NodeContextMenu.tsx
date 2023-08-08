@@ -44,7 +44,7 @@ const contextMenuHeader = kialiStyle({
 });
 
 const contextMenuSubTitle = kialiStyle({
-  color: PFColors.Black600,
+  color: PFColors.Color200,
   fontWeight: 700,
   paddingTop: 2,
   paddingBottom: 4
@@ -54,14 +54,20 @@ const contextMenuItem = kialiStyle({
   textDecoration: 'none',
   $nest: {
     '&:hover': {
-      backgroundColor: PFColors.Black200,
+      backgroundColor: PFColors.BackgroundColor200,
       color: PFColors.Blue400
     }
   }
 });
 
 const contextMenuItemLink = kialiStyle({
-  color: PFColors.Black900
+  color: PFColors.Color100
+});
+
+const hrStyle = kialiStyle({
+  border: 0,
+  borderTop: `1px solid ${PFColors.BorderColor100}`,
+  margin: '8px 0 5px 0'
 });
 
 type Props = NodeContextMenuProps & ReduxProps;
@@ -216,7 +222,7 @@ export function NodeContextMenuComponent(props: Props) {
     // Otherwise, the item should be disabled
     if (!enabledItem) {
       return (
-        <div key={eventKey} className={contextMenuItem} style={{ color: '#d2d2d2' }}>
+        <div key={eventKey} className={contextMenuItem} style={{ color: PFColors.Color200 }}>
           <Tooltip position={TooltipPosition.left} content={<>{getDropdownItemTooltipMessage()}</>}>
             <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>{WIZARD_TITLES[eventKey]}</div>
           </Tooltip>
@@ -244,7 +250,7 @@ export function NodeContextMenuComponent(props: Props) {
       !hasServiceDetailsTrafficRouting(serviceDetails) /*|| props.isDisabled*/
     ) {
       return (
-        <div className={contextMenuItem} style={{ color: '#d2d2d2' }}>
+        <div className={contextMenuItem} style={{ color: PFColors.Color200 }}>
           <Tooltip position={TooltipPosition.left} content={<>{getDropdownItemTooltipMessage()}</>}>
             <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>Delete Traffic Routing</div>
           </Tooltip>
@@ -271,7 +277,7 @@ export function NodeContextMenuComponent(props: Props) {
     if (isServiceDetailsLoading) {
       return (
         <>
-          <hr style={{ margin: '8px 0 5px 0' }} />
+          <hr className={hrStyle} />
           <div className={contextMenuSubTitle}>Actions</div>
           <div className={contextMenuItem}>
             <Spinner isSVG={true} size="md" aria-label="Loading actions..." />
@@ -283,10 +289,10 @@ export function NodeContextMenuComponent(props: Props) {
     if (serviceDetails) {
       return (
         <>
-          <hr style={{ margin: '8px 0 5px 0' }} />
+          <hr className={hrStyle} />
           <div className={contextMenuSubTitle}>{updateLabel === '' ? 'Create' : 'Update'}</div>
           {SERVICE_WIZARD_ACTIONS.map(eventKey => renderWizardActionItem(eventKey))}
-          <hr style={{ margin: '8px 0 5px 0' }} />
+          <hr className={hrStyle} />
           {renderDeleteTrafficRoutingItem()}
         </>
       );
@@ -312,7 +318,7 @@ export function NodeContextMenuComponent(props: Props) {
     return (
       <div className={contextMenu} data-test="graph-node-context-menu">
         {renderHeader()}
-        <hr style={{ margin: '8px 0 5px 0' }} />
+        <hr className={hrStyle} />
         {menuOptions}
         {renderWizardsItems()}
       </div>

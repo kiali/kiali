@@ -33,7 +33,6 @@ interface IstioConfigListPageState extends FilterComponent.State<IstioConfigItem
 interface IstioConfigListPageProps extends FilterComponent.Props<IstioConfigItem> {
   activeNamespaces: Namespace[];
   istioAPIEnabled: boolean;
-  theme: string;
 }
 
 class IstioConfigListPageComponent extends FilterComponent.Component<
@@ -204,12 +203,10 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
 
     return (
       <>
-        <div style={{ backgroundColor: '#fff' }}>
-          <DefaultSecondaryMasthead
-            rightToolbar={<RefreshButton key={'Refresh'} handleRefresh={this.updateListItems} />}
-            actionsToolbar={<IstioActionsNamespaceDropdown />}
-          />
-        </div>
+        <DefaultSecondaryMasthead
+          rightToolbar={<RefreshButton key={'Refresh'} handleRefresh={this.updateListItems} />}
+          actionsToolbar={<IstioActionsNamespaceDropdown />}
+        />
         <RenderContent>
           <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} type="istio">
             <StatefulFilters
@@ -217,7 +214,6 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
               initialToggles={this.props.istioAPIEnabled ? this.initialToggles : undefined}
               onFilterChange={this.onFilterChange}
               onToggleChange={this.props.istioAPIEnabled ? this.onFilterChange : undefined}
-              theme={this.props.theme}
             />
           </VirtualList>
         </RenderContent>
@@ -228,8 +224,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
 
 const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state),
-  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
-  theme: state.globalState.theme
+  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
 });
 
 export const IstioConfigListPage = connect(mapStateToProps, null)(IstioConfigListPageComponent);

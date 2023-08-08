@@ -38,7 +38,7 @@ import { useServiceDetailForGraphNode } from '../../hooks/services';
 import { useKialiSelector } from '../../hooks/redux';
 import { groupMenuStyle } from 'styles/DropdownStyles';
 import { serverConfig } from '../../config';
-import { getGraphBackgroundStyle } from 'styles/ThemeStyle';
+import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 
 const summaryNodeActionsStyle = kialiStyle({
   $nest: {
@@ -173,11 +173,9 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       }
     }
 
-    const bgStyle = getGraphBackgroundStyle(this.props.theme);
-
     return (
-      <div ref={this.mainDivRef} className={classes('panel', 'panel-default', summaryPanel)} style={bgStyle}>
-        <div className={'panel-heading'} style={bgStyle}>
+      <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
+        <div className={panelHeadingStyle}>
           {getTitle(nodeType)}
           <div>
             <span>
@@ -289,7 +287,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
 
   private renderTrafficOnly() {
     return (
-      <div className="panel-body">
+      <div className={panelBodyStyle}>
         <SummaryPanelNodeTraffic {...this.props} />
       </div>
     );

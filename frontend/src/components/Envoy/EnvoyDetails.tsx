@@ -42,7 +42,6 @@ import {
 } from '../../pages/WorkloadDetails/WorkloadDetailsPage';
 import { istioAceEditorStyle } from 'styles/AceEditorStyle';
 import { Theme, TimeInMilliseconds } from '../../types/Common';
-import { bgDarkMedium, bgLight } from 'styles/ThemeStyle';
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
@@ -284,17 +283,11 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     if (!envoyMetricsDashboardRef) {
       filteredEnvoyTabs = envoyTabs.slice(0, envoyTabs.length - 1);
     }
-    const ace_theme = this.props.theme === Theme.Light ? 'eclipse' : 'twilight';
 
     const tabs = filteredEnvoyTabs.map((value, index) => {
       const title = value.charAt(0).toUpperCase() + value.slice(1);
       return (
-        <Tab
-          className={this.props.theme === Theme.Light ? bgLight : bgDarkMedium}
-          key={'tab_' + value}
-          eventKey={index}
-          title={title}
-        >
+        <Tab key={'tab_' + value} eventKey={index} title={title}>
           <Card className={fullHeightStyle}>
             <CardBody>
               {this.showEditor() ? (
@@ -326,7 +319,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                   <AceEditor
                     ref={this.aceEditorRef}
                     mode="yaml"
-                    theme={ace_theme}
+                    theme={this.props.theme === Theme.DARK ? 'twilight' : 'eclipse'}
                     width={'100%'}
                     height={height.toString() + 'px'}
                     className={istioAceEditorStyle}

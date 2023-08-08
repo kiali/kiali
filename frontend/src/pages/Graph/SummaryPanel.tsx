@@ -19,9 +19,9 @@ import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions'
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { PeerAuthentication } from '../../types/IstioObjects';
 import { FocusNode } from 'pages/GraphPF/GraphPF';
-import { Theme } from '../../types/Common';
 import { classes } from 'typestyle';
-import { bgDark, bgDarkSoft, bgLight } from 'styles/ThemeStyle';
+import { panelBodyStyle, panelStyle } from './SummaryPanelStyle';
+import { PFColors } from 'components/Pf/PfColors';
 
 type SummaryPanelState = {
   isVisible: boolean;
@@ -41,13 +41,13 @@ type MainSummaryPanelPropType = SummaryPanelPropType & {
     gateways: string[],
     peerAuths: PeerAuthentication[]
   ) => void;
-  theme: string;
 };
 
 const mainStyle = kialiStyle({
   fontSize: 'var(--graph-side-panel--font-size)',
   padding: '0',
-  position: 'relative'
+  position: 'relative',
+  backgroundColor: PFColors.BackgroundColor100
 });
 
 const expandedStyle = kialiStyle({ height: '100%' });
@@ -56,7 +56,7 @@ const expandedHalfStyle = kialiStyle({ height: '50%' });
 
 const collapsedStyle = kialiStyle({
   $nest: {
-    '& > .panel': {
+    ['& > .' + panelStyle]: {
       display: 'none'
     }
   }
@@ -70,7 +70,8 @@ const summaryPanelBottomSplit = kialiStyle({
 });
 
 const toggleSidePanelStyle = kialiStyle({
-  border: '1px #ddd solid',
+  border: `1px solid ${PFColors.BorderColor100}`,
+  backgroundColor: PFColors.BackgroundColor100,
   borderRadius: '3px',
   bottom: 0,
   cursor: 'pointer',
@@ -110,11 +111,8 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
     return (
       <TourStop info={[GraphTourStops.Graph, GraphTourStops.ContextualMenu, GraphTourStops.SidePanel]}>
         <div id="graph-side-panel" className={mainStyle}>
-          <div className={classes(mainTopStyle, this.props.theme === Theme.Light ? bgLight : bgDark)}>
-            <div
-              className={classes(toggleSidePanelStyle, this.props.theme === Theme.Light ? bgLight : bgDarkSoft)}
-              onClick={this.togglePanel}
-            >
+          <div className={mainTopStyle}>
+            <div className={classes(toggleSidePanelStyle)} onClick={this.togglePanel}>
               {this.state.isVisible ? (
                 <>
                   <KialiIcon.AngleDoubleDown /> Hide
@@ -128,8 +126,8 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
             {this.getSummaryPanel(this.props.data)}
           </div>
           {this.props.jaegerState.selectedTrace && this.state.isVisible && (
-            <div className={`panel panel-default ${summaryPanelBottomSplit}`}>
-              <div className="panel-body">
+            <div className={classes(panelStyle, summaryPanelBottomSplit)}>
+              <div className={panelBodyStyle}>
                 <SummaryPanelTraceDetails
                   data={this.props.data}
                   graphType={this.props.graphType}
@@ -168,7 +166,6 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
                 rateInterval={this.props.rateInterval}
                 step={this.props.step}
                 trafficRates={this.props.trafficRates}
-                theme={this.props.theme}
               />
             );
           case 'cluster':
@@ -184,7 +181,6 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
                 rateInterval={this.props.rateInterval}
                 step={this.props.step}
                 trafficRates={this.props.trafficRates}
-                theme={this.props.theme}
               />
             );
           case 'namespace':
@@ -200,7 +196,6 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
                 rateInterval={this.props.rateInterval}
                 step={this.props.step}
                 trafficRates={this.props.trafficRates}
-                theme={this.props.theme}
               />
             );
           default:
@@ -222,7 +217,6 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
             rateInterval={this.props.rateInterval}
             step={this.props.step}
             trafficRates={this.props.trafficRates}
-            theme={this.props.theme}
           />
         );
       case 'node':
@@ -239,7 +233,6 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
             queryTime={this.props.queryTime}
             step={this.props.step}
             trafficRates={this.props.trafficRates}
-            theme={this.props.theme}
           />
         );
       default:
@@ -256,8 +249,7 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
 
 const mapStateToProps = (state: KialiAppState) => ({
   jaegerState: state.jaegerState,
-  kiosk: state.globalState.kiosk,
-  theme: state.globalState.theme
+  kiosk: state.globalState.kiosk
 });
 
 export const SummaryPanel = connect(mapStateToProps)(SummaryPanelComponent);

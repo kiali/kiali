@@ -28,8 +28,8 @@ import { getOptions, clickHandler } from 'components/CytoscapeGraph/ContextMenu/
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { edgesIn, edgesOut, select, selectAnd, selectOr } from 'pages/GraphPF/GraphPFElems';
 import { kialiStyle } from 'styles/StyleUtils';
-import { getGraphBackgroundStyle } from 'styles/ThemeStyle';
 import { classes } from 'typestyle';
+import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 
 const summaryAppBoxActionsStyle = kialiStyle({
   $nest: {
@@ -166,11 +166,9 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
       </DropdownGroup>
     ];
 
-    const bgStyle = getGraphBackgroundStyle(this.props.theme);
-
     return (
-      <div ref={this.mainDivRef} className={classes('panel', 'panel-default', summaryPanel)} style={bgStyle}>
-        <div className={'panel-heading'} style={bgStyle}>
+      <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
+        <div className={panelHeadingStyle}>
           {getTitle('Application')}
           <span>
             <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />
@@ -197,7 +195,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
             {workloadList.length > 0 && <div> {workloadList}</div>}
           </div>
         </div>
-        <div className="panel-body">
+        <div className={panelBodyStyle}>
           {hasGrpc && isGrpcRequests && (
             <>
               {this.renderGrpcRequests(appBox, isPF)}

@@ -477,8 +477,6 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     const helpAnnotations = parseHelpAnnotations(yamlSource, helpMessages);
     helpAnnotations.forEach(ha => editorValidations.annotations.push(ha));
 
-    const ace_theme = this.props.theme === Theme.Light ? 'eclipse' : 'twilight';
-
     const panelContent = (
       <DrawerPanelContent>
         <DrawerHead>
@@ -518,7 +516,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
         <AceEditor
           ref={this.aceEditorRef}
           mode="yaml"
-          theme={ace_theme}
+          theme={this.props.theme === Theme.DARK ? 'twilight' : 'eclipse'}
           onChange={this.onEditorChange}
           height={`calc(var(--kiali-yaml-editor-height) + ${isParentKiosk(this.props.kiosk) ? '100px' : '0px'})`}
           width={'100%'}
@@ -612,7 +610,6 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
             activeTab={this.state.currentTab}
             mountOnEnter={false}
             unmountOnExit={true}
-            theme={this.props.theme}
           >
             <Tab key="istio-yaml" title={`YAML ${this.state.isModified ? ' * ' : ''}`} eventKey={0}>
               <RenderComponentScroll>{this.renderEditor()}</RenderComponentScroll>

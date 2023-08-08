@@ -34,7 +34,7 @@ export class SpanDetails extends React.Component<Props, State> {
     const filters = spanFilters(this.props.items);
     const filteredItems = runFilters(this.props.items, filters, this.state.activeFilters);
     return (
-      <Card isCompact style={{ border: '1px solid #e6e6e6' }}>
+      <Card isCompact>
         <CardBody>
           <StatefulFilters initialFilters={filters} onFilterChange={active => this.setState({ activeFilters: active })}>
             <TraceLabels

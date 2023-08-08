@@ -3,7 +3,10 @@ import { Alert, Button, ButtonVariant } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { isKioskMode } from '../utils/SearchParamUtils';
 
-import kialiTitle from '../assets/img/logo-lightbkg.svg';
+import kialiLogoLight from '../assets/img/logo-lightbkg.svg';
+import kialiLogoDark from '../assets/img/logo-alt.svg';
+import { PF_THEME_DARK, Theme } from 'types/Common';
+import { getKialiTheme } from 'utils/ThemeUtils';
 
 type initializingScreenProps = {
   errorMsg?: string;
@@ -54,13 +57,18 @@ const centerVerticalHorizontalStyle = kialiStyle({
 export const InitializingScreen: React.FC<initializingScreenProps> = (props: initializingScreenProps) => {
   const errorDiv = React.createRef<HTMLDivElement>();
 
-  if (document.body && isKioskMode()) {
+  if (isKioskMode()) {
     document.body.classList.add('kiosk');
+  }
+
+  const theme = getKialiTheme();
+  if (theme === Theme.DARK) {
+    document.documentElement.classList.add(PF_THEME_DARK);
   }
 
   return (
     <div data-test="loading-screen" className={centerVerticalHorizontalStyle}>
-      <img alt="Kiali Logo" src={kialiTitle} width="200" />
+      <img alt="Kiali Logo" src={theme === Theme.DARK ? kialiLogoDark : kialiLogoLight} width="200" />
       {props.errorMsg ? (
         <div ref={errorDiv} className={defaultErrorStyle}>
           <Alert variant="danger" title={props.errorMsg} />

@@ -51,7 +51,6 @@ interface ServiceDetailsProps {
   duration: DurationInSeconds;
   jaegerInfo?: JaegerInfo;
   lastRefreshAt: TimeInMilliseconds;
-  theme: string;
 }
 
 const tabName = 'tab';
@@ -280,7 +279,6 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
             activeTab={this.state.currentTab}
             mountOnEnter={true}
             unmountOnExit={true}
-            theme={this.props.theme}
           >
             {this.renderTabs()}
           </ParameterizedTabs>
@@ -292,8 +290,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
 
 const mapStateToProps = (state: KialiAppState) => ({
   jaegerInfo: state.jaegerState.info,
-  duration: durationSelector(state),
-  theme: state.globalState.theme
+  duration: durationSelector(state)
 });
 
 export const ServiceDetailsPage = connectRefresh(connect(mapStateToProps)(ServiceDetailsPageComponent));

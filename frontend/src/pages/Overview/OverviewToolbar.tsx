@@ -10,7 +10,7 @@ import * as FilterHelper from '../../components/FilterList/FilterHelper';
 import { ToolbarDropdown } from '../../components/ToolbarDropdown/ToolbarDropdown';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector, refreshIntervalSelector } from '../../store/Selectors';
-import { IntervalInMilliseconds, DurationInSeconds, Theme } from '../../types/Common';
+import { IntervalInMilliseconds, DurationInSeconds } from '../../types/Common';
 import { SortField } from '../../types/SortFilters';
 import { NamespaceInfo } from './NamespaceInfo';
 import * as Sorts from './Sorts';
@@ -19,13 +19,11 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
 import { KialiDispatch } from '../../types/Redux';
 import { RefreshNotifier } from '../../components/Refresh/RefreshNotifier';
-import { bgDark, bgLight } from 'styles/ThemeStyle';
-import { classes } from 'typestyle';
+import { PFColors } from 'components/Pf/PfColors';
 
 type ReduxProps = {
   duration: DurationInSeconds;
   refreshInterval: IntervalInMilliseconds;
-  theme: string;
   setRefreshInterval: (refresh: IntervalInMilliseconds) => void;
 };
 
@@ -65,8 +63,9 @@ const sortTypes = (function () {
   return o;
 })();
 
-const containerPadding = kialiStyle({
-  padding: '0px 20px 0px 20px'
+const containerStyle = kialiStyle({
+  padding: '0px 20px 0px 20px',
+  backgroundColor: PFColors.BackgroundColor100
 });
 
 const containerFlex = kialiStyle({
@@ -194,7 +193,6 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
       <StatefulFilters
         initialFilters={Filters.availableFilters}
         onFilterChange={this.props.onRefresh}
-        theme={this.props.theme}
         ref={this.props.statefulFilterRef}
       >
         {this.props.displayMode !== OverviewDisplayMode.LIST && (
@@ -284,7 +282,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
       </div>
     );
     return (
-      <div className={classes(containerPadding, this.props.theme === Theme.Light ? bgLight : bgDark)}>
+      <div className={containerStyle}>
         <div className={containerFlex}>
           <div className={filterToolbarStyle}>{filterToolbar}</div>
           <div className={rightToolbarStyle}>
@@ -299,8 +297,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  refreshInterval: refreshIntervalSelector(state),
-  theme: state.globalState.theme
+  refreshInterval: refreshIntervalSelector(state)
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => {

@@ -39,7 +39,6 @@ type ReduxProps = {
   duration: DurationInSeconds;
   jaegerInfo?: JaegerInfo;
   timeRange: TimeRange;
-  theme: string;
 };
 
 type AppDetailsProps = ReduxProps & {
@@ -265,7 +264,6 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
             activeTab={this.state.currentTab}
             mountOnEnter={true}
             unmountOnExit={true}
-            theme={this.props.theme}
           >
             {this.renderTabs()}
           </ParameterizedTabs>
@@ -278,8 +276,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
   jaegerInfo: state.jaegerState.info,
-  timeRange: timeRangeSelector(state),
-  theme: state.globalState.theme
+  timeRange: timeRangeSelector(state)
 });
 
 export const AppDetailsPage = connectRefresh(connect(mapStateToProps)(AppDetails));

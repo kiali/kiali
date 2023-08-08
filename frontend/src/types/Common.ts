@@ -19,9 +19,9 @@ export enum HTTP_VERBS {
 export const PF_THEME_DARK = 'pf-theme-dark';
 export const KIALI_THEME = 'kiali-theme';
 
-export enum Theme {
-  Light = 'Light',
-  Dark = 'Dark'
+export const enum Theme {
+  LIGHT = 'Light',
+  DARK = 'Dark'
 }
 
 export type TargetKind = 'app' | 'service' | 'workload';

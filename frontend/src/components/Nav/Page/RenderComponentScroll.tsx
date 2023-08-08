@@ -19,7 +19,7 @@ interface State {
 }
 
 export class RenderComponentScroll extends React.Component<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     this.state = { height: 0 };
   }
@@ -50,10 +50,7 @@ export class RenderComponentScroll extends React.Component<Props, State> {
 
   render() {
     return (
-      <div
-        style={{ height: this.state.height, overflowY: 'auto', padding: '20px' }}
-        className={this.props.className ? this.props.className : undefined}
-      >
+      <div style={{ height: this.state.height, overflowY: 'auto', padding: '20px' }} className={this.props.className}>
         {this.props.children}
       </div>
     );

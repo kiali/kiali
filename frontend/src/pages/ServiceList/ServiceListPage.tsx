@@ -30,7 +30,6 @@ type ServiceListPageState = FilterComponent.State<ServiceListItem>;
 type ReduxProps = {
   duration: DurationInSeconds;
   activeNamespaces: Namespace[];
-  theme: string;
 };
 
 type ServiceListPageProps = ReduxProps & FilterComponent.Props<ServiceListItem>;
@@ -178,13 +177,11 @@ class ServiceListPageComponent extends FilterComponent.Component<
     return (
       <>
         <RefreshNotifier onTick={this.updateListItems} />
-        <div style={{ backgroundColor: '#fff' }}>
-          <DefaultSecondaryMasthead
-            rightToolbar={
-              <TimeDurationComponent key={'DurationDropdown'} id="service-list-duration-dropdown" disabled={false} />
-            }
-          />
-        </div>
+        <DefaultSecondaryMasthead
+          rightToolbar={
+            <TimeDurationComponent key={'DurationDropdown'} id="service-list-duration-dropdown" disabled={false} />
+          }
+        />
         <RenderContent>
           <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} type="services">
             <StatefulFilters
@@ -192,7 +189,6 @@ class ServiceListPageComponent extends FilterComponent.Component<
               initialToggles={this.initialToggles}
               onFilterChange={this.onFilterChange}
               onToggleChange={this.onFilterChange}
-              theme={this.props.theme}
             />
           </VirtualList>
         </RenderContent>
@@ -203,8 +199,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
 
 const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state),
-  duration: durationSelector(state),
-  theme: state.globalState.theme
+  duration: durationSelector(state)
 });
 
 export const ServiceListPage = connect(mapStateToProps)(ServiceListPageComponent);

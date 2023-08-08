@@ -35,7 +35,6 @@ import { labelFilter } from './CommonFilters';
 import { history, HistoryManager } from 'app/History';
 import { serverConfig } from 'config';
 import { PFColors } from '../Pf/PfColors';
-import { Theme } from 'types/Common';
 
 var classNames = require('classnames');
 
@@ -49,16 +48,14 @@ const toolbarStyle = kialiStyle({
   }
 });
 
-const backgroundStyle = kialiStyle({
-  backgroundColor: '#ededed'
-});
-
-const backgroundStyleDark = kialiStyle({
-  backgroundColor: PFColors.Black700
-});
-
 const bottomPadding = kialiStyle({
   paddingBottom: 'var(--pf-global--spacer--md)'
+});
+
+const formSelectStyle = kialiStyle({
+  width: 'auto',
+  borderColor: PFColors.BorderColorLight100,
+  backgroundColor: PFColors.BackgroundColor200
 });
 
 export interface StatefulFiltersProps {
@@ -68,7 +65,6 @@ export interface StatefulFiltersProps {
   onFilterChange: (active: ActiveFiltersInfo) => void;
   onToggleChange?: (active: ActiveTogglesInfo) => void;
   ref?: React.RefObject<StatefulFilters>;
-  theme?: string;
 }
 
 interface StatefulFiltersState {
@@ -148,7 +144,11 @@ export class Toggles {
   };
 }
 
-const dividerStyle = kialiStyle({ borderRight: '1px solid #d1d1d1;', padding: '10px', display: 'inherit' });
+const dividerStyle = kialiStyle({
+  borderRight: `1px solid ${PFColors.ColorLight300}`,
+  padding: '10px',
+  display: 'inherit'
+});
 const paddingStyle = kialiStyle({ padding: '10px' });
 
 export class StatefulFilters extends React.Component<StatefulFiltersProps, StatefulFiltersState> {
@@ -375,7 +375,6 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
           onChange={this.updateCurrentValue}
           onKeyPress={e => this.onValueKeyPress(e)}
           style={{ width: 'auto' }}
-          className={this.props.theme === Theme.Light ? backgroundStyle : backgroundStyleDark}
         />
       );
     }
@@ -449,8 +448,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                         value={currentFilterType.category}
                         aria-label="filter_select_type"
                         onChange={this.selectFilterType}
-                        style={{ width: 'auto', borderColor: '#bbb' }}
-                        className={this.props.theme === Theme.Light ? backgroundStyle : backgroundStyleDark}
+                        className={formSelectStyle}
                       >
                         {filterOptions}
                       </FormSelect>

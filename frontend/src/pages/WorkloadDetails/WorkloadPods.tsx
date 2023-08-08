@@ -19,6 +19,7 @@ import { KialiIcon } from '../../config/KialiIcon';
 import { LocalTime } from '../../components/Time/LocalTime';
 import { Labels } from '../../components/Label/Labels';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
+import { tableStyle } from 'styles/TableStyle';
 
 type WorkloadPodsProps = {
   namespace: string;
@@ -178,7 +179,7 @@ export class WorkloadPods extends React.Component<WorkloadPodsProps> {
             aria-label={'list_workloads_pods'}
             cells={this.columns()}
             rows={this.rows()}
-            className="table"
+            className={tableStyle}
           >
             <TableHeader />
             <TableBody />

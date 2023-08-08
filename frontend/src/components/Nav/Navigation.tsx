@@ -29,7 +29,6 @@ type PropsType = RouteComponentProps & {
   navCollapsed: boolean;
   setNavCollapsed: (collapse: boolean) => void;
   jaegerUrl?: string;
-  theme: string;
 };
 
 type NavigationState = {
@@ -138,7 +137,7 @@ export class NavigationComponent extends React.Component<PropsType, NavigationSt
       <Page header={masthead} sidebar={Sidebar} onPageResize={this.onPageResize}>
         <MessageCenter drawerTitle="Message Center" />
         <PageSection className={flexBoxColumnStyle} variant="light">
-          <RenderPage isGraph={this.isGraph()} theme={this.props.theme} />
+          <RenderPage isGraph={this.isGraph()} />
         </PageSection>
       </Page>
     );
@@ -147,8 +146,7 @@ export class NavigationComponent extends React.Component<PropsType, NavigationSt
 
 const mapStateToProps = (state: KialiAppState) => ({
   navCollapsed: state.userSettings.interface.navCollapse,
-  jaegerUrl: state.jaegerState.info && state.jaegerState.info.url ? state.jaegerState.info.url : undefined,
-  theme: state.globalState.theme
+  jaegerUrl: state.jaegerState.info && state.jaegerState.info.url ? state.jaegerState.info.url : undefined
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({

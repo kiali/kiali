@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { TabProps, Tabs } from '@patternfly/react-core';
 import { history } from '../../app/History';
-import { Theme } from 'types/Common';
-import { bgDark, bgLight } from 'styles/ThemeStyle';
+import { kialiStyle } from 'styles/StyleUtils';
+import { PFColors } from 'components/Pf/PfColors';
 import { classes } from 'typestyle';
 
 type TabsProps = {
@@ -16,12 +16,15 @@ type TabsProps = {
   tabName?: string;
   unmountOnExit?: boolean;
   className?: string;
-  theme?: string;
 };
 
 export const activeTab = (tabName: string, defaultTab: string): string => {
   return new URLSearchParams(history.location.search).get(tabName) || defaultTab;
 };
+
+const tabStyle = kialiStyle({
+  backgroundColor: PFColors.BackgroundColor100
+});
 
 export class ParameterizedTabs extends React.Component<TabsProps> {
   private indexMap: { [key: number]: string };
@@ -100,7 +103,7 @@ export class ParameterizedTabs extends React.Component<TabsProps> {
     return (
       <Tabs
         id={this.props.id}
-        className={classes(this.props.className, this.props.theme === Theme.Light ? bgLight : bgDark)}
+        className={classes(this.props.className, tabStyle)}
         activeKey={this.activeIndex()}
         onSelect={(_, ek) => {
           if (!this.isLinkTab(ek as number)) {

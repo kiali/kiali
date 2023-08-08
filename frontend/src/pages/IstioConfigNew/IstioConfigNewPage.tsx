@@ -77,7 +77,6 @@ type Props = {
   activeNamespaces: Namespace[];
   activeClusters: MeshCluster[];
   namespacesPerCluster?: Map<string, string[]>;
-  theme: string;
 };
 
 type State = {
@@ -451,7 +450,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
         <div>
           <DefaultSecondaryMasthead showClusterSelector={false} hideNamespaceSelector={true} />
         </div>
-        <RenderContent theme={this.props.theme}>
+        <RenderContent>
           <Form className={formPadding} isHorizontal={true}>
             <FormGroup
               label="Namespaces"
@@ -557,8 +556,7 @@ const mapStateToProps = (state: KialiAppState) => {
   return {
     activeClusters: activeClustersSelector(state),
     activeNamespaces: activeNamespacesSelector(state),
-    namespacesPerCluster: namespacesPerClusterSelector(state),
-    theme: state.globalState.theme
+    namespacesPerCluster: namespacesPerClusterSelector(state)
   };
 };
 

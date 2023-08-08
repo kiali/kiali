@@ -43,8 +43,7 @@ describe('SummaryPanelNodeComponent', () => {
       trafficRates: [],
       gateways: null,
       peerAuthentications: null,
-      serviceDetails: null,
-      theme: ''
+      serviceDetails: null
     };
 
     serverConfig.clusters = {

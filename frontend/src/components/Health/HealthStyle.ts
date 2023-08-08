@@ -1,3 +1,4 @@
+import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 
 export const healthIndicatorStyle = kialiStyle({
@@ -10,7 +11,7 @@ export const healthIndicatorStyle = kialiStyle({
     '.pf-c-content ul': {
       marginBottom: 'var(--pf-c-content--ul--MarginTop)',
       marginTop: 0,
-      color: '#fff'
+      color: PFColors.Color100
     }
   }
 });

@@ -27,7 +27,6 @@ type AppListPageState = FilterComponent.State<AppListItem>;
 type ReduxProps = {
   duration: DurationInSeconds;
   activeNamespaces: Namespace[];
-  theme: string;
 };
 
 type AppListPageProps = ReduxProps & FilterComponent.Props<AppListItem>;
@@ -132,13 +131,11 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
     return (
       <>
         <RefreshNotifier onTick={this.updateListItems} />
-        <div style={{ backgroundColor: '#fff' }}>
-          <DefaultSecondaryMasthead
-            rightToolbar={
-              <TimeDurationComponent key={'DurationDropdown'} id="app-list-duration-dropdown" disabled={false} />
-            }
-          />
-        </div>
+        <DefaultSecondaryMasthead
+          rightToolbar={
+            <TimeDurationComponent key={'DurationDropdown'} id="app-list-duration-dropdown" disabled={false} />
+          }
+        />
         <RenderContent>
           <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} type="applications">
             <StatefulFilters
@@ -146,7 +143,6 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
               initialToggles={this.initialToggles}
               onFilterChange={this.onFilterChange}
               onToggleChange={this.onFilterChange}
-              theme={this.props.theme}
             />
           </VirtualList>
         </RenderContent>
@@ -157,8 +153,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
 
 const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state),
-  duration: durationSelector(state),
-  theme: state.globalState.theme
+  duration: durationSelector(state)
 });
 
 export const AppListPage = connect(mapStateToProps)(AppListPageComponent);

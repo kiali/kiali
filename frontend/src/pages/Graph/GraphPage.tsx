@@ -5,13 +5,7 @@ import { connect } from 'react-redux';
 import FlexView from 'react-flexview';
 import { kialiStyle } from 'styles/StyleUtils';
 import { history } from '../../app/History';
-import {
-  DurationInSeconds,
-  IntervalInMilliseconds,
-  Theme,
-  TimeInMilliseconds,
-  TimeInSeconds
-} from '../../types/Common';
+import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
 import { MessageType } from '../../types/MessageCenter';
 import { Namespace } from '../../types/Namespace';
 import {
@@ -86,7 +80,6 @@ import { deleteServiceTrafficRouting } from 'services/Api';
 import { canCreate, canUpdate } from '../../types/Permissions';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { triggerRefresh } from '../../hooks/refresh';
-import { bgDark, bgLight } from 'styles/ThemeStyle';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 export type GraphURLPathProps = {
@@ -200,7 +193,10 @@ const kioskContainerStyle = kialiStyle({
 });
 
 const cytoscapeGraphContainerStyle = kialiStyle({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
-const cytoscapeGraphWrapperDivStyle = kialiStyle({ position: 'relative', backgroundColor: PFColors.Black200 });
+const cytoscapeGraphWrapperDivStyle = kialiStyle({
+  position: 'relative',
+  backgroundColor: PFColors.BackgroundColor200
+});
 const cytoscapeToolbarWrapperDivStyle = kialiStyle({
   position: 'absolute',
   bottom: '5px',
@@ -218,6 +214,10 @@ const graphTimeRange = kialiStyle({
 
 const replayBackground = kialiStyle({
   backgroundColor: PFColors.Replay
+});
+
+const graphBackground = kialiStyle({
+  backgroundColor: PFColors.BackgroundColor100
 });
 
 const graphLegendStyle = kialiStyle({
@@ -477,9 +477,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
               )}
               {isReady && (
                 <Chip
-                  className={`${graphTimeRange} ${
-                    this.props.replayActive ? replayBackground : this.props.theme === Theme.Light ? bgLight : bgDark
-                  }`}
+                  className={`${graphTimeRange} ${this.props.replayActive ? replayBackground : graphBackground}`}
                   isReadOnly={true}
                 >
                   {this.props.replayActive && <Badge style={{ marginRight: '4px' }} isRead={true}>{`Replay`}</Badge>}

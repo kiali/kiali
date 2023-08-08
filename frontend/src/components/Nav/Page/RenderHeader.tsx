@@ -4,11 +4,13 @@ import { BreadcrumbView } from '../../BreadcrumbView/BreadcrumbView';
 import { KialiAppState } from '../../../store/Store';
 import { connect } from 'react-redux';
 import { isKiosk } from '../../Kiosk/KioskActions';
-import { bgDark, bgLight } from 'styles/ThemeStyle';
-import { Theme } from 'types/Common';
-import { classes } from 'typestyle';
+import { PFColors } from 'components/Pf/PfColors';
 
-const containerPadding = kialiStyle({ padding: '0 20px 28px 20px' });
+const containerStyle = kialiStyle({
+  padding: '0 20px 28px 20px',
+  backgroundColor: PFColors.BackgroundColor100
+});
+
 // This magic style tries to adjust Breadcrumb with Namespace selector
 // to give impression that both components are placed in the same location
 const breadcrumbMargin = kialiStyle({ padding: '10px 0 4px 0' });
@@ -25,16 +27,13 @@ const rightToolbarStyle = kialiStyle({
 const actionsToolbarStyle = kialiStyle({
   float: 'right',
   padding: '0px 20px 22px 5px',
-  marginTop: '-16px'
-});
-
-const borderBottom = kialiStyle({
-  borderBottom: '1px solid #d2d2d2'
+  marginTop: '-16px',
+  backgroundColor: PFColors.BackgroundColor100,
+  borderBottom: `1px solid ${PFColors.BorderColor100}`
 });
 
 type ReduxProps = {
   kiosk: string;
-  theme: string;
 };
 
 type RenderHeaderProps = ReduxProps & {
@@ -52,37 +51,25 @@ class RenderHeaderComponent extends React.Component<RenderHeaderProps> {
     // On kiosk mode, it should be hidden
     return isKiosk(this.props.kiosk) ? null : (
       <>
-        <div className={classes(containerPadding, this.props.theme === Theme.Light ? bgLight : bgDark)}>
+        <div className={containerStyle}>
           {this.props.location && (
-            <>
-              <div className={breadcrumbMargin}>
-                <div className={breadcrumbStyle}>
-                  <BreadcrumbView location={this.props.location} />
-                  {this.props.rightToolbar && <div className={rightToolbarStyle}>{this.props.rightToolbar}</div>}
-                </div>
+            <div className={breadcrumbMargin}>
+              <div className={breadcrumbStyle}>
+                <BreadcrumbView location={this.props.location} />
+                {this.props.rightToolbar && <div className={rightToolbarStyle}>{this.props.rightToolbar}</div>}
               </div>
-            </>
+            </div>
           )}
           {this.props.children}
         </div>
-        {this.props.actionsToolbar && (
-          <div
-            className={classes(
-              actionsToolbarStyle,
-              this.props.theme === Theme.Light ? `${bgLight} ${borderBottom}` : bgDark
-            )}
-          >
-            {this.props.actionsToolbar}
-          </div>
-        )}
+        {this.props.actionsToolbar && <div className={actionsToolbarStyle}>{this.props.actionsToolbar}</div>}
       </>
     );
   }
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  kiosk: state.globalState.kiosk,
-  theme: state.globalState.theme
+  kiosk: state.globalState.kiosk
 });
 
 export const RenderHeader = connect(mapStateToProps)(RenderHeaderComponent);

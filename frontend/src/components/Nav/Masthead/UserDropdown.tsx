@@ -14,6 +14,7 @@ import { connect } from 'react-redux';
 import * as API from '../../../services/Api';
 import { store } from '../../../store/ConfigStore';
 import { GlobalActions } from '../../../actions/GlobalActions';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type UserProps = {
   session?: LoginSession;
@@ -30,6 +31,14 @@ type UserState = {
   isDropdownOpen: boolean;
   isSessionTimeoutDismissed: boolean;
 };
+
+const dropdownStyle = kialiStyle({
+  $nest: {
+    button: {
+      padding: 0
+    }
+  }
+});
 
 class UserDropdownComponent extends React.Component<UserProps, UserState> {
   constructor(props: UserProps) {
@@ -97,15 +106,19 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
   };
 
   handleTheme = () => {
-    if (this.props.theme === Theme.Light) {
+    if (this.props.theme === Theme.LIGHT) {
       document.documentElement.classList.add(PF_THEME_DARK);
-      store.dispatch(GlobalActions.setTheme(Theme.Dark));
-      localStorage.setItem(KIALI_THEME, Theme.Dark);
+      store.dispatch(GlobalActions.setTheme(Theme.DARK));
+      localStorage.setItem(KIALI_THEME, Theme.DARK);
     } else {
       document.documentElement.classList.remove(PF_THEME_DARK);
-      store.dispatch(GlobalActions.setTheme(Theme.Light));
-      localStorage.setItem(KIALI_THEME, Theme.Light);
+      store.dispatch(GlobalActions.setTheme(Theme.LIGHT));
+      localStorage.setItem(KIALI_THEME, Theme.LIGHT);
     }
+
+    // Refresh page to load new theme (certain components are not reloaded like cytoscape graph)
+    const refreshTick = new CustomEvent('refreshTick', { detail: Date.now() });
+    document.dispatchEvent(refreshTick);
   };
 
   extendSession = (session: LoginSession) => {
@@ -139,7 +152,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
           </DropdownItem>
         )}
         <DropdownItem key={'theme_update'} onClick={this.handleTheme}>
-          {this.props.theme === Theme.Light ? Theme.Dark : Theme.Light} theme
+          {this.props.theme === Theme.DARK ? Theme.LIGHT : Theme.DARK} theme
         </DropdownItem>
       </>
     );
@@ -154,6 +167,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
         />
         {this.props.session && (
           <Dropdown
+            className={dropdownStyle}
             isPlain={true}
             position="right"
             onSelect={this.onDropdownSelect}

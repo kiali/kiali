@@ -36,6 +36,7 @@ const initGraphContainerStyle = kialiStyle({ width: '100%', height: '100%' });
 
 type ReduxProps = {
   kiosk: string;
+  theme: string;
 };
 
 type MiniGraphCardProps = ReduxProps & {
@@ -169,6 +170,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
                 showIdleNodes={false}
                 showVirtualServices={true}
                 summaryData={null}
+                theme={this.props.theme}
               />
             </div>
           </CardBody>
@@ -331,7 +333,8 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
 }
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
-  kiosk: state.globalState.kiosk
+  kiosk: state.globalState.kiosk,
+  theme: state.globalState.theme
 });
 
 export const MiniGraphCard = connect(mapStateToProps)(MiniGraphCardComponent);

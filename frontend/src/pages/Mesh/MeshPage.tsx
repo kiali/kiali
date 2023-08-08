@@ -10,16 +10,10 @@ import { RefreshButton } from '../../components/Refresh/RefreshButton';
 import { getClusters } from '../../services/Api';
 import { MeshClusters } from '../../types/Mesh';
 import { addError } from '../../utils/AlertUtils';
-import { KialiAppState } from '../../store/Store';
-import { useSelector } from 'react-redux';
-import { Theme } from '../../types/Common';
-import { classes } from 'typestyle';
-import { bgDark, bgLight } from 'styles/ThemeStyle';
 
 export const MeshPage: React.FunctionComponent = () => {
   const [meshClustersList, setMeshClustersList] = React.useState(null as MeshClusters | null);
   const [sortBy, setSortBy] = React.useState({ index: 0, direction: SortByDirection.asc });
-  const theme = useSelector((state: KialiAppState) => state.globalState.theme);
 
   const containerPadding = kialiStyle({ padding: '20px' });
   const columns = [
@@ -122,14 +116,12 @@ export const MeshPage: React.FunctionComponent = () => {
 
   return (
     <>
-      <div className={theme === Theme.Light ? bgLight : bgDark}>
-        <DefaultSecondaryMasthead
-          hideNamespaceSelector={true}
-          rightToolbar={<RefreshButton key={'Refresh'} handleRefresh={fetchMeshClusters} />}
-        />
-      </div>
+      <DefaultSecondaryMasthead
+        hideNamespaceSelector={true}
+        rightToolbar={<RefreshButton key={'Refresh'} handleRefresh={fetchMeshClusters} />}
+      />
       <RenderContent>
-        <div className={classes(containerPadding, theme === Theme.Light ? bgLight : bgDark)}>
+        <div className={containerPadding}>
           <Table aria-label="Sortable Table" cells={columns} onSort={onSortHandler} rows={clusterRows} sortBy={sortBy}>
             <TableHeader />
             <TableBody />

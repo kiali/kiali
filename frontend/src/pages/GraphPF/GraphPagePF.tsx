@@ -3,13 +3,7 @@ import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import FlexView from 'react-flexview';
 import { kialiStyle } from 'styles/StyleUtils';
-import {
-  DurationInSeconds,
-  IntervalInMilliseconds,
-  Theme,
-  TimeInMilliseconds,
-  TimeInSeconds
-} from '../../types/Common';
+import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
 import { Namespace } from '../../types/Namespace';
 import {
   GraphEvent,
@@ -79,7 +73,6 @@ import { GraphData } from 'pages/Graph/GraphPage';
 import { GraphPF, FocusNode } from './GraphPF';
 import * as CytoscapeGraphUtils from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { Controller } from '@patternfly/react-topology';
-import { bgDark, bgLight } from 'styles/ThemeStyle';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 export type GraphURLPathProps = {
@@ -143,7 +136,6 @@ type ReduxProps = {
   toggleIdleNodes: () => void;
   toggleLegend: () => void;
   updateSummary: (event: GraphEvent) => void;
-  theme: string;
 };
 
 export type GraphPagePropsPF = Partial<GraphURLPathProps> &
@@ -185,7 +177,7 @@ const kioskContainerStyle = kialiStyle({
 });
 
 const graphContainerStyle = kialiStyle({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
-const graphWrapperDivStyle = kialiStyle({ position: 'relative', backgroundColor: PFColors.Black200 });
+const graphWrapperDivStyle = kialiStyle({ position: 'relative', backgroundColor: PFColors.BackgroundColor200 });
 
 const graphTimeRange = kialiStyle({
   position: 'absolute',
@@ -197,6 +189,10 @@ const graphTimeRange = kialiStyle({
 
 const replayBackground = kialiStyle({
   backgroundColor: PFColors.Replay
+});
+
+const graphBackground = kialiStyle({
+  backgroundColor: PFColors.BackgroundColor100
 });
 
 const graphLegendStyle = kialiStyle({
@@ -458,9 +454,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
               )}
               {isReady && (
                 <Chip
-                  className={`${graphTimeRange} ${
-                    this.props.replayActive ? replayBackground : this.props.theme === Theme.Light ? bgLight : bgDark
-                  }`}
+                  className={`${graphTimeRange} ${this.props.replayActive ? replayBackground : graphBackground}`}
                   isReadOnly={true}
                 >
                   {this.props.replayActive && <Badge style={{ marginRight: '4px' }} isRead={true}>{`Replay`}</Badge>}
@@ -763,8 +757,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   showVirtualServices: state.graph.toolbarState.showVirtualServices,
   summaryData: state.graph.summaryData,
   trace: state.jaegerState?.selectedTrace,
-  trafficRates: trafficRatesSelector(state),
-  theme: state.globalState.theme
+  trafficRates: trafficRatesSelector(state)
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({

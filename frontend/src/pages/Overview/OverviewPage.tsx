@@ -55,7 +55,7 @@ import { switchType } from './OverviewHelper';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
 import { ValidationSummary } from '../../components/Validations/ValidationSummary';
-import { DurationInSeconds, IntervalInMilliseconds, Theme } from 'types/Common';
+import { DurationInSeconds, IntervalInMilliseconds } from 'types/Common';
 import { Paths, isMultiCluster, serverConfig } from '../../config';
 import { PFColors } from '../../components/Pf/PfColors';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
@@ -79,23 +79,19 @@ import { ControlPlaneVersionBadge } from './ControlPlaneVersionBadge';
 import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 
-const gridStyleCompact = (theme: string) => {
-  return kialiStyle({
-    backgroundColor: theme === Theme.Light ? '#f5f5f5' : PFColors.Black500,
-    paddingBottom: '20px',
-    marginTop: '0px'
-  });
-};
+const gridStyleCompact = kialiStyle({
+  backgroundColor: PFColors.BackgroundColor200,
+  paddingBottom: '20px',
+  marginTop: '0px'
+});
 
-const gridStyleList = (theme: string) => {
-  return kialiStyle({
-    backgroundColor: theme === Theme.Light ? '#f5f5f5' : PFColors.Black500,
-    // The VirtualTable component has a different style than cards
-    // We need to adjust the grid style if we are on compact vs list view
-    padding: '0 !important',
-    marginTop: '0px'
-  });
-};
+const gridStyleList = kialiStyle({
+  backgroundColor: PFColors.BackgroundColor200,
+  // The VirtualTable component has a different style than cards
+  // We need to adjust the grid style if we are on compact vs list view
+  padding: '0 !important',
+  marginTop: '0px'
+});
 
 const cardGridStyle = kialiStyle({
   textAlign: 'center',
@@ -168,7 +164,6 @@ type ReduxProps = {
   minTLS: string;
   navCollapse: boolean;
   refreshInterval: IntervalInMilliseconds;
-  theme: string;
 };
 
 type OverviewProps = ReduxProps & {};
@@ -919,11 +914,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         />
         {filteredNamespaces.length > 0 ? (
           <RenderComponentScroll
-            className={
-              this.state.displayMode === OverviewDisplayMode.LIST
-                ? gridStyleList(this.props.theme)
-                : gridStyleCompact(this.props.theme)
-            }
+            className={this.state.displayMode === OverviewDisplayMode.LIST ? gridStyleList : gridStyleCompact}
           >
             {this.state.displayMode === OverviewDisplayMode.LIST ? (
               <VirtualList
@@ -1099,16 +1090,14 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             )}
           </RenderComponentScroll>
         ) : (
-          <div style={{ backgroundColor: '#f5f5f5' }}>
-            <EmptyState className={emptyStateStyle} variant={EmptyStateVariant.full}>
-              <Title headingLevel="h5" size={TitleSizes.lg} style={{ marginTop: '50px' }}>
-                No unfiltered namespaces
-              </Title>
-              <EmptyStateBody>
-                Either all namespaces are being filtered or the user has no permission to access namespaces.
-              </EmptyStateBody>
-            </EmptyState>
-          </div>
+          <EmptyState className={emptyStateStyle} variant={EmptyStateVariant.full}>
+            <Title headingLevel="h5" size={TitleSizes.lg} style={{ marginTop: '50px' }}>
+              No unfiltered namespaces
+            </Title>
+            <EmptyStateBody>
+              Either all namespaces are being filtered or the user has no permission to access namespaces.
+            </EmptyStateBody>
+          </EmptyState>
         )}
         <OverviewTrafficPolicies
           opTarget={this.state.opTarget}
@@ -1301,8 +1290,7 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   meshStatus: meshWideMTLSStatusSelector(state),
   minTLS: minTLSVersionSelector(state),
   navCollapse: state.userSettings.interface.navCollapse,
-  refreshInterval: refreshIntervalSelector(state),
-  theme: state.globalState.theme
+  refreshInterval: refreshIntervalSelector(state)
 });
 
 export const OverviewPage = connect(mapStateToProps)(OverviewPageComponent);

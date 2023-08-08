@@ -5,15 +5,12 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from '../../config/KialiIcon';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
-import { bgDark, bgLight } from 'styles/ThemeStyle';
-import { classes } from 'typestyle';
-import { Theme } from 'types/Common';
+import { PFColors } from 'components/Pf/PfColors';
 
 const titles = ['applications', 'istio', 'istio/new', 'mesh', 'services', 'workloads'];
 
 type ReduxProps = {
   istioAPIEnabled: boolean;
-  theme: string;
 };
 
 type Props = ReduxProps & {
@@ -23,8 +20,9 @@ type Props = ReduxProps & {
   showClusterSelector?: boolean;
 };
 
-const mainPadding = kialiStyle({
-  padding: '10px 20px 10px 20px'
+const containerStyle = kialiStyle({
+  padding: '10px 20px 10px 20px',
+  backgroundColor: PFColors.BackgroundColor100
 });
 
 const flexStyle = kialiStyle({
@@ -81,7 +79,7 @@ class DefaultSecondaryMastheadComponent extends React.Component<Props> {
   render() {
     const { title, disabled } = this.showTitle();
     return (
-      <div className={classes(mainPadding, this.props.theme === Theme.Light ? bgLight : bgDark)}>
+      <div className={containerStyle}>
         <div className={flexStyle}>
           <div>{this.props.hideNamespaceSelector === true ? null : <NamespaceDropdown disabled={disabled} />}</div>
           {this.props.rightToolbar && <div className={rightToolbarStyle}>{this.props.rightToolbar}</div>}
@@ -96,8 +94,7 @@ class DefaultSecondaryMastheadComponent extends React.Component<Props> {
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
-  theme: state.globalState.theme
+  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
 });
 
 export const DefaultSecondaryMasthead = connect(mapStateToProps)(DefaultSecondaryMastheadComponent);

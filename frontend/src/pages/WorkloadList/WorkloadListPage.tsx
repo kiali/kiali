@@ -30,7 +30,6 @@ type WorkloadListPageState = FilterComponent.State<WorkloadListItem>;
 type ReduxProps = {
   duration: DurationInSeconds;
   activeNamespaces: Namespace[];
-  theme: string;
 };
 
 type WorkloadListPageProps = ReduxProps & FilterComponent.Props<WorkloadListItem>;
@@ -169,13 +168,11 @@ class WorkloadListPageComponent extends FilterComponent.Component<
     return (
       <>
         <RefreshNotifier onTick={this.updateListItems} />
-        <div style={{ backgroundColor: '#fff' }}>
-          <DefaultSecondaryMasthead
-            rightToolbar={
-              <TimeDurationComponent key={'DurationDropdown'} id="workload-list-duration-dropdown" disabled={false} />
-            }
-          />
-        </div>
+        <DefaultSecondaryMasthead
+          rightToolbar={
+            <TimeDurationComponent key={'DurationDropdown'} id="workload-list-duration-dropdown" disabled={false} />
+          }
+        />
         <RenderContent>
           <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} type="workloads">
             <StatefulFilters
@@ -183,7 +180,6 @@ class WorkloadListPageComponent extends FilterComponent.Component<
               initialToggles={this.initialToggles}
               onFilterChange={this.onFilterChange}
               onToggleChange={this.onFilterChange}
-              theme={this.props.theme}
             />
           </VirtualList>
         </RenderContent>
@@ -194,8 +190,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
 
 const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state),
-  duration: durationSelector(state),
-  theme: state.globalState.theme
+  duration: durationSelector(state)
 });
 
 export const WorkloadListPage = connect(mapStateToProps)(WorkloadListPageComponent);

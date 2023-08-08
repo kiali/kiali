@@ -143,25 +143,29 @@ export class Slider extends React.Component<Props, State> {
       paddingLeft: 0,
       paddingRight: 0,
       marginLeft: 0,
-      marginRight: 5
+      marginRight: '5px'
     });
+
     const inputStyle = kialiStyle({
       width: '3em',
       textAlign: 'center',
       marginLeft: 0,
       marginRight: 0
     });
+
     const rightButtonStyle = kialiStyle({
       width: '20px',
       paddingLeft: 0,
       paddingRight: 0,
-      marginLeft: 5,
-      marginRight: 5
+      marginLeft: '5px',
+      marginRight: '5px'
     });
+
     const pinButtonStyle = kialiStyle({
-      paddingLeft: 8,
-      paddingRight: 8
+      paddingLeft: '8px',
+      paddingRight: '8px'
     });
+
     const LockIcon = (
       <Tooltip
         position={TooltipPosition.top}
@@ -184,6 +188,7 @@ export class Slider extends React.Component<Props, State> {
           className={pinButtonStyle}
           variant={this.props.mirrored ? ButtonVariant.primary : ButtonVariant.secondary}
           onClick={() => this.props.onMirror(!this.props.mirrored)}
+          style={{ marginRight: '10px' }}
         >
           <MigrationIcon />
         </Button>
@@ -220,7 +225,7 @@ export class Slider extends React.Component<Props, State> {
               >
                 <PlusIcon />
               </Button>
-              <InputGroupText>{this.props.inputFormat}</InputGroupText>
+              <InputGroupText style={{ marginRight: '10px' }}>{this.props.inputFormat}</InputGroupText>
             </>
           )}
           {this.props.showMirror ? MirrorIcon : <></>}

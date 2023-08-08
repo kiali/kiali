@@ -18,11 +18,13 @@ import {
 import { aceOptions } from '../../types/IstioConfigDetails';
 import AceEditor from 'react-ace';
 import { ParameterizedTabs } from '../Tab/Tabs';
-import { ICell, Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
+import { ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
 import { AuthConfig } from '../../types/Auth';
 import { authenticationConfig } from '../../config/AuthenticationConfig';
 import { basicTabStyle } from 'styles/TabStyles';
 import { istioAceEditorStyle } from 'styles/AceEditorStyle';
+import { Theme } from 'types/Common';
+import { kialiStyle } from 'styles/StyleUtils';
 
 enum CopyStatus {
   NOT_COPIED, // We haven't copied the current output
@@ -79,6 +81,15 @@ const tabIndex: { [tab: string]: number } = {
   kialiConfig: 0,
   additionalState: 1
 };
+
+const tableStyle = kialiStyle({
+  tableLayout: 'fixed',
+  $nest: {
+    'tr > *:first-child': {
+      width: '30%'
+    }
+  }
+});
 
 class DebugInformationComponent extends React.PureComponent<DebugInformationProps, DebugInformationState> {
   aceEditorRef: React.RefObject<AceEditor>;
@@ -201,16 +212,16 @@ class DebugInformationComponent extends React.PureComponent<DebugInformationProp
   private renderTabs() {
     const kialiConfig = (
       <Tab eventKey={0} title="Kiali Config" key="kialiConfig">
-        <span></span>
-
         <CopyToClipboard onCopy={this.copyCallback} text={this.getRows()} options={copyToClipboardOptions}>
-          <Table header={<></>} variant={TableVariant.compact} cells={this.columns()} rows={this.getRows()}>
+          <Table className={tableStyle} cells={this.columns()} rows={this.getRows()}>
             <TableHeader />
             <TableBody />
           </Table>
         </CopyToClipboard>
       </Tab>
     );
+
+    const theme = this.props.appState.globalState.theme;
 
     const additionalState = (
       <Tab eventKey={1} title="Additional State" key="additionalState">
@@ -223,7 +234,7 @@ class DebugInformationComponent extends React.PureComponent<DebugInformationProp
           <AceEditor
             ref={this.aceEditorRef}
             mode="yaml"
-            theme="eclipse"
+            theme={theme === Theme.DARK ? 'twilight' : 'eclipse'}
             width={'100%'}
             className={istioAceEditorStyle}
             wrapEnabled={true}
@@ -246,7 +257,7 @@ class DebugInformationComponent extends React.PureComponent<DebugInformationProp
 
     return (
       <Modal
-        variant={ModalVariant.small}
+        variant={ModalVariant.medium}
         isOpen={this.state.show}
         onClose={this.close}
         title="Debug information"

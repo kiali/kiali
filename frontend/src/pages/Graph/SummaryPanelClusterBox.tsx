@@ -16,7 +16,7 @@ import {
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { KialiPageLink } from 'components/Link/KialiPageLink';
 import { descendents, edgesIn, edgesInOut, edgesOut, elems, select } from 'pages/GraphPF/GraphPFElems';
-import { getGraphBackgroundStyle } from 'styles/ThemeStyle';
+import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 
 type SummaryPanelClusterBoxState = {
   clusterBox: any;
@@ -36,7 +36,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     margin: 0,
     minWidth: summaryPanelWidth,
     overflowY: 'auto' as 'auto',
-    backgroundColor: PFColors.White,
+    backgroundColor: PFColors.BackgroundColor100,
     width: summaryPanelWidth
   };
 
@@ -89,11 +89,9 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     const tooltipOutboundRef = React.createRef();
     const tooltipTotalRef = React.createRef();
 
-    const bgStyle = getGraphBackgroundStyle(this.props.theme);
-
     return (
-      <div className="panel panel-default" style={SummaryPanelClusterBox.panelStyle}>
-        <div className={'panel-heading'} style={bgStyle}>
+      <div className={panelStyle} style={SummaryPanelClusterBox.panelStyle}>
+        <div className={panelHeadingStyle}>
           {getTitle('Cluster')}
           {this.renderCluster(cluster)}
           {this.renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
