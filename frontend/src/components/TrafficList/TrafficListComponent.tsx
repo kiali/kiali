@@ -19,6 +19,7 @@ import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { isMultiCluster } from 'config';
 import { virtualItemLinkStyle } from 'components/VirtualList/VirtualListStyle';
+import { getParamsSeparator } from '../../utils/SearchParamUtils';
 
 export interface TrafficListItem {
   direction: TrafficDirection;
@@ -351,7 +352,7 @@ class TrafficList extends FilterComponent.Component<
     }?clusterName=${item.node.cluster}`;
 
     const metricsDirection = item.direction === 'inbound' ? 'in_metrics' : 'out_metrics';
-    let metrics = `${history.location.pathname}?tab=${metricsDirection}`;
+    let metrics = `${history.location.pathname}${getParamsSeparator(history.location.pathname)}tab=${metricsDirection}`;
 
     switch (item.node.type) {
       case NodeType.APP:
@@ -375,7 +376,7 @@ class TrafficList extends FilterComponent.Component<
             metrics += `&${URLParam.BY_LABELS}=${encodeURIComponent('destination_service_name=' + item.node.name)}`;
           } else {
             // Services have only one metrics tab.
-            metrics = `${detail}?tab=metrics`;
+            metrics = `${detail}${getParamsSeparator(detail)}tab=metrics`;
           }
         }
         break;
@@ -386,7 +387,7 @@ class TrafficList extends FilterComponent.Component<
         // user is redirected to the "opposite" metrics. When looking at certain item, if traffic is *inbound*
         // from a certain workload, that traffic is reflected in the *outbound* metrics of the workload (and vice-versa).
         const inverseMetricsDirection = item.direction === 'inbound' ? 'out_metrics' : 'in_metrics';
-        metrics = `${detail}?tab=${inverseMetricsDirection}`;
+        metrics = `${detail}${getParamsSeparator(detail)}tab=${inverseMetricsDirection}`;
         break;
       default:
         metrics = '';

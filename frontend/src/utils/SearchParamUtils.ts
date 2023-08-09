@@ -48,3 +48,7 @@ export const setTraceId = (traceId?: string) => {
     HistoryManager.deleteParam(URLParam.JAEGER_TRACE_ID);
   }
 };
+
+export const getParamsSeparator = (url: string): string => {
+  return url.includes('?') ? '&' : '?';
+};
