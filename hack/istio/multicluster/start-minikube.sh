@@ -109,6 +109,8 @@ start_minikube "${CLUSTER1_NAME}" "70-84" "--extra-config=apiserver.oidc-issuer-
 # Wait for ingress to become ready before deploying keycloak since keycloak relies on it.
 ${CLIENT_EXE} rollout status deployment/ingress-nginx-controller -n ingress-nginx
 
+# Note the specific image for keycloak. There are issues with 22+ that are not yet resolved.
+# See: https://github.com/kiali/kiali/issues/6455.
 helm upgrade --install --wait --timeout 15m \
   --namespace keycloak --create-namespace \
   --repo https://charts.bitnami.com/bitnami keycloak keycloak \
@@ -119,6 +121,8 @@ auth:
   adminPassword: admin
   managementUser: manager
   managementPassword: manager
+image:
+  tag: 21.1.2-debian-11-r4
 proxyAddressForwarding: true
 ingress:
   enabled: true
