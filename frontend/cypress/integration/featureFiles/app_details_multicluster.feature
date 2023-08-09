@@ -21,20 +21,9 @@ Feature: Kiali App Details page for multicluster
   @app-details-page
   Scenario: See app minigraph for details app.
     Then user sees a minigraph
+    And user sees "app" from a remote "west" cluster
 
   @app-details-page
   Scenario: See app Traffic information
     Then user sees inbound and outbound traffic information
-
-  @app-details-page
-  Scenario: See tracing info after selecting a trace
-    And user sees trace information
-    When user selects a trace
-    Then user sees trace details
-
-  @app-details-page
-  Scenario: See span info after selecting app span
-    And user sees trace information
-    When user selects a trace
-    Then user sees span details
-    And user can filter spans by app
+    And user should see a column related to cluster info

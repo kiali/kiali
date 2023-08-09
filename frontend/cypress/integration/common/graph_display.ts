@@ -341,7 +341,6 @@ And('user sees the {string} namespace deployed across the {string} and {string} 
     .should('have.length', '1')
     .getCurrentState()
     .then(state => {
-      console.log(state.cy.nodes);
       assert.equal(state.cy.nodes(`[isBox="cluster"][cluster="${cluster1}"]`).length, 1);
       assert.equal(state.cy.nodes(`[isBox="namespace"][cluster="${cluster2}"]`).length, 1);
       assert.equal(state.cy.nodes(`[isBox="namespace"][cluster="${cluster1}"][namespace="${ns}"]`).length, 1);

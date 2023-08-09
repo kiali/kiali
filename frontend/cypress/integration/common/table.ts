@@ -76,13 +76,12 @@ And('user filters for istio type {string}', (istioType: string) => {
 });
 
 // checkCol
-// This func assumes:
-//
-// 1. There is only 1 table on the screen.
-//
-// Be aware of these assumptions when using this func.
-export function colExists(colName: string, exists: boolean) {
-  return cy.get(`th[data-label="${colName}"]`).should(exists ? 'exist' : 'not.exist');
+export function colExists(colName: string, exists: boolean, numberOfTables?:number) {
+  if (numberOfTables === undefined){
+    numberOfTables = 1;
+  }
+  return cy.get(`th[data-label="${colName}"]`).should(exists ? 'exist' : 'not.exist')
+  .and('have.length',`${numberOfTables}`);
 }
 
 // getColWithRowText will find the column matching the unique row text and column header name.
