@@ -13,7 +13,7 @@ Feature: Kiali App Details page
   @app-details-page
   @bookinfo-app
   Scenario: See details for app.
-    Then user sees details information for app
+    Then user sees details information for the "details" app
 
   @app-details-page
   @bookinfo-app

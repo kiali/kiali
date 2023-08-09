@@ -142,3 +142,4 @@ Feature: Kiali Overview page
   Scenario: See "bookinfo" in "east" and "west" clusters
     Then user sees the "bookinfo" namespace card in cluster "east"
     And user sees the "bookinfo" namespace card in cluster "west"
+    And Istio config should not be available for the "west" "bookinfo" 

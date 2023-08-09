@@ -232,3 +232,11 @@ And('user sees the {string} label in the {string} namespace card', (label: strin
     .contains(label)
     .should('be.visible');
 });
+
+And("Istio config should not be available for the {string} {string}",(cluster: string, ns: string) => {
+  cy.get('article[data-test^="' + ns + '"]')
+    .contains(cluster).parent().then((card)=>{
+      cy.wrap(card).contains("Istio config").parent().contains("N/A");
+    })
+
+})
