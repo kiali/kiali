@@ -23,7 +23,6 @@ import { SummaryTableBuilder } from './tables/BaseTable';
 import { Namespace } from 'types/Namespace';
 import { kialiStyle } from 'styles/StyleUtils';
 import AceEditor from 'react-ace';
-import 'ace-builds/src-noconflict/theme-twilight';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ToolbarDropdown } from 'components/ToolbarDropdown/ToolbarDropdown';
 import { activeTab } from '../../components/Tab/Tabs';
@@ -42,9 +41,6 @@ import {
 } from '../../pages/WorkloadDetails/WorkloadDetailsPage';
 import { istioAceEditorStyle } from 'styles/AceEditorStyle';
 import { Theme, TimeInMilliseconds } from '../../types/Common';
-
-// Enables the search box for the ACEeditor
-require('ace-builds/src-noconflict/ext-searchbox');
 
 const resources: string[] = ['clusters', 'listeners', 'routes', 'bootstrap', 'config', 'metrics'];
 

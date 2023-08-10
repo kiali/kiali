@@ -35,8 +35,7 @@ import { labelFilter } from './CommonFilters';
 import { history, HistoryManager } from 'app/History';
 import { serverConfig } from 'config';
 import { PFColors } from '../Pf/PfColors';
-
-var classNames = require('classnames');
+import { classes } from 'typestyle';
 
 const toolbarStyle = kialiStyle({
   padding: 0,
@@ -390,7 +389,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                 child && (
                   <ToolbarItem
                     key={'toolbar_statefulFilters_' + index}
-                    className={classNames(
+                    className={classes(
                       'pf-u-mr-md',
                       index === (this.props.children as Array<any>).length - 1 ? paddingStyle : dividerStyle
                     )}
@@ -479,8 +478,8 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
             {!this.props.childrenFirst && this.renderChildren()}
             {hasActiveFilters && (
               <ToolbarGroup>
-                <ToolbarItem className={classNames('pf-u-mr-md')}>
-                  <span className={classNames(paddingStyle)}>Label Operation</span>
+                <ToolbarItem className={'pf-u-mr-md'}>
+                  <span className={paddingStyle}>Label Operation</span>
                   <FormSelect
                     value={activeFilters.op}
                     onChange={value =>

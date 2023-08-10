@@ -42,10 +42,10 @@ import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelSty
 
 const summaryNodeActionsStyle = kialiStyle({
   $nest: {
-    '.pf-c-dropdown__toggle': {
+    '& .pf-c-dropdown__toggle': {
       fontSize: 'var(--graph-side-panel--font-size)'
     },
-    '.pf-c-dropdown__menu-item': {
+    '& .pf-c-dropdown__menu-item': {
       fontSize: 'var(--graph-side-panel--font-size)'
     }
   }

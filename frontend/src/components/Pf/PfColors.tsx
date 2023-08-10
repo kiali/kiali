@@ -37,7 +37,7 @@ export enum PFColors {
   LightGreen500 = 'var(--pf-global--palette--light-green-500)',
   Orange400 = 'var(--pf-global--palette--orange-400)',
   Purple100 = 'var(--pf-global--palette--purple-100)',
-  Purple200 = 'var(--pf-global--palette--purple-100)',
+  Purple200 = 'var(--pf-global--palette--purple-200)',
   Purple500 = 'var(--pf-global--palette--purple-500)',
   Red100 = 'var(--pf-global--palette--red-100)',
   Red200 = 'var(--pf-global--palette--red-200)',
@@ -49,6 +49,7 @@ export enum PFColors {
   ActiveText = 'var(--pf-global--primary-color--200)',
   Badge = 'var(--pf-global--palette--blue-300)',
   Replay = 'var(--pf-global--active-color--300)',
+  Link = 'var(--pf-global--link--Color)',
 
   // Health/Alert colors https://www.patternfly.org/v4/design-guidelines/styles/colors
   Danger = 'var(--pf-global--danger-color--100)',

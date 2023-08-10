@@ -46,6 +46,7 @@ export class RenderPage extends React.Component<{ isGraph: boolean }> {
         </SwitchErrorBoundary>
       </div>
     );
+
     return <>{!this.props.isGraph ? <div className={containerGray}>{component}</div> : component}</>;
   }
 }

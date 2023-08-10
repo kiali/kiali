@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Dropdown, DropdownItem, DropdownToggle } from '@patternfly/react-core';
 import { SessionTimeout } from '../../SessionTimeout/SessionTimeout';
 import { config } from '../../../config';
-import { KIALI_THEME, MILLISECONDS, PF_THEME_DARK, Theme } from '../../../types/Common';
+import { MILLISECONDS } from '../../../types/Common';
 import { Timer } from 'globals';
 import { KialiAppState, LoginSession } from '../../../store/Store';
 import { authenticationConfig } from '../../../config/AuthenticationConfig';
@@ -12,13 +12,10 @@ import { KialiDispatch } from 'types/Redux';
 import { LoginThunkActions } from '../../../actions/LoginThunkActions';
 import { connect } from 'react-redux';
 import * as API from '../../../services/Api';
-import { store } from '../../../store/ConfigStore';
-import { GlobalActions } from '../../../actions/GlobalActions';
 import { kialiStyle } from 'styles/StyleUtils';
 
 type UserProps = {
   session?: LoginSession;
-  theme: string;
   logout: () => void;
   extendSession: (session: LoginSession) => void;
 };
@@ -34,7 +31,7 @@ type UserState = {
 
 const dropdownStyle = kialiStyle({
   $nest: {
-    button: {
+    '& button': {
       padding: 0
     }
   }
@@ -105,22 +102,6 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
     }
   };
 
-  handleTheme = () => {
-    if (this.props.theme === Theme.LIGHT) {
-      document.documentElement.classList.add(PF_THEME_DARK);
-      store.dispatch(GlobalActions.setTheme(Theme.DARK));
-      localStorage.setItem(KIALI_THEME, Theme.DARK);
-    } else {
-      document.documentElement.classList.remove(PF_THEME_DARK);
-      store.dispatch(GlobalActions.setTheme(Theme.LIGHT));
-      localStorage.setItem(KIALI_THEME, Theme.LIGHT);
-    }
-
-    // Refresh page to load new theme (certain components are not reloaded like cytoscape graph)
-    const refreshTick = new CustomEvent('refreshTick', { detail: Date.now() });
-    document.dispatchEvent(refreshTick);
-  };
-
   extendSession = (session: LoginSession) => {
     this.props.extendSession(session);
     this.setState({ showSessionTimeOut: false });
@@ -144,17 +125,9 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
       authenticationConfig.strategy !== AuthStrategy.anonymous && authenticationConfig.strategy !== AuthStrategy.header;
 
     const userDropdownItems = (
-      <>
-        {' '}
-        {canLogout && (
-          <DropdownItem key={'user_logout_option'} onClick={this.handleLogout} isDisabled={!canLogout}>
-            Logout
-          </DropdownItem>
-        )}
-        <DropdownItem key={'theme_update'} onClick={this.handleTheme}>
-          {this.props.theme === Theme.DARK ? Theme.LIGHT : Theme.DARK} theme
-        </DropdownItem>
-      </>
+      <DropdownItem key={'user_logout_option'} onClick={this.handleLogout} isDisabled={!canLogout}>
+        Logout
+      </DropdownItem>
     );
     return (
       <>
@@ -165,7 +138,8 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
           show={this.state.showSessionTimeOut && !this.state.isSessionTimeoutDismissed}
           timeOutCountDown={this.state.timeCountDownSeconds}
         />
-        {this.props.session && (
+        {this.props.session && !canLogout && <>{this.props.session.username}</>}
+        {this.props.session && canLogout && (
           <Dropdown
             className={dropdownStyle}
             isPlain={true}
@@ -195,8 +169,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  session: state.authentication.session,
-  theme: state.globalState.theme
+  session: state.authentication.session
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({

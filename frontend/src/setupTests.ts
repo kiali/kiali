@@ -10,4 +10,25 @@ window.SVGPathElement = function () {};
 window.customElements = function () {};
 window.customElements.define = function () {};
 
+// Mock local storage
+const localStorageMock = (() => {
+  var store = {};
+  return {
+    getItem: function (key: string) {
+      return store[key];
+    },
+    setItem: function (key: string, value: unknown) {
+      store[key] = String(value);
+    },
+    clear: function () {
+      store = {};
+    },
+    removeItem: function (key: string) {
+      delete store[key];
+    }
+  };
+})();
+
+Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+
 Enzyme.configure({ adapter: new Adapter() });

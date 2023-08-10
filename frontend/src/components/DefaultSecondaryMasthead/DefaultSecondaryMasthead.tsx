@@ -22,7 +22,8 @@ type Props = ReduxProps & {
 
 const containerStyle = kialiStyle({
   padding: '10px 20px 10px 20px',
-  backgroundColor: PFColors.BackgroundColor100
+  backgroundColor: PFColors.BackgroundColor100,
+  borderBottom: `1px solid ${PFColors.BorderColor100}`
 });
 
 const flexStyle = kialiStyle({

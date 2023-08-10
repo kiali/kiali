@@ -55,7 +55,7 @@ const contextMenuItem = kialiStyle({
   $nest: {
     '&:hover': {
       backgroundColor: PFColors.BackgroundColor200,
-      color: PFColors.Blue400
+      color: PFColors.Link
     }
   }
 });

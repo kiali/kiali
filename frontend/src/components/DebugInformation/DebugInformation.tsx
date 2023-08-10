@@ -85,7 +85,7 @@ const tabIndex: { [tab: string]: number } = {
 const tableStyle = kialiStyle({
   tableLayout: 'fixed',
   $nest: {
-    'tr > *:first-child': {
+    '& tr > *:first-child': {
       width: '30%'
     }
   }

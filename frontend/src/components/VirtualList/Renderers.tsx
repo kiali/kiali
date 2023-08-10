@@ -36,7 +36,6 @@ import { ControlPlaneBadge } from 'pages/Overview/ControlPlaneBadge';
 import { NamespaceStatuses } from 'pages/Overview/NamespaceStatuses';
 import { isGateway, isWaypoint } from '../../helpers/LabelFilterHelper';
 import { KialiIcon } from '../../config/KialiIcon';
-import { virtualItemLinkStyle } from './VirtualListStyle';
 
 // Links
 
@@ -239,7 +238,7 @@ export const item: Renderer<TResource> = (item: TResource, config: Resource, bad
   return (
     <td role="gridcell" key={'VirtuaItem_Item_' + item.namespace + '_' + item.name} style={{ verticalAlign: 'middle' }}>
       <PFBadge badge={serviceBadge} position={TooltipPosition.top} />
-      <Link key={key} to={getLink(item, config)} className={virtualItemLinkStyle}>
+      <Link key={key} to={getLink(item, config)}>
         {item.name}
       </Link>
     </td>

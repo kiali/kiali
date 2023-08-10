@@ -62,6 +62,7 @@ class RenderHeaderComponent extends React.Component<RenderHeaderProps> {
           )}
           {this.props.children}
         </div>
+
         {this.props.actionsToolbar && <div className={actionsToolbarStyle}>{this.props.actionsToolbar}</div>}
       </>
     );

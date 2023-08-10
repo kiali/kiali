@@ -65,7 +65,8 @@ const sortTypes = (function () {
 
 const containerStyle = kialiStyle({
   padding: '0px 20px 0px 20px',
-  backgroundColor: PFColors.BackgroundColor100
+  backgroundColor: PFColors.BackgroundColor100,
+  borderBottom: `1px solid ${PFColors.BorderColor100}`
 });
 
 const containerFlex = kialiStyle({

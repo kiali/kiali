@@ -14,7 +14,7 @@ export const istioAceEditorStyle = kialiStyle({
   border: `1px solid ${PFColors.BorderColor200}`,
   fontSize: 'var(--kiali-global--font-size) !important',
   $nest: {
-    'div.ace_gutter-cell.ace_info': {
+    '& div.ace_gutter-cell.ace_info': {
       backgroundImage: 'none',
       $nest: {
         '&::before': {

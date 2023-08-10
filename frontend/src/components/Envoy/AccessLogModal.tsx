@@ -48,7 +48,7 @@ const descriptionStyle = kialiStyle({
   backgroundColor: PFColors.BackgroundColor200,
   padding: '15px 20px',
   $nest: {
-    dt: {
+    '& dt': {
       fontWeight: 'bold'
     }
   }

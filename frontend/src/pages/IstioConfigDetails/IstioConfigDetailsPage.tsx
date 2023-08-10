@@ -4,9 +4,6 @@ import { aceOptions, IstioConfigDetails, IstioConfigId, safeDumpOptions } from '
 import * as AlertUtils from '../../utils/AlertUtils';
 import * as API from '../../services/Api';
 import AceEditor from 'react-ace';
-import 'ace-builds/src-noconflict/mode-yaml';
-import 'ace-builds/src-noconflict/theme-eclipse';
-import 'ace-builds/src-noconflict/theme-twilight';
 import {
   HelpMessage,
   ObjectReference,
@@ -58,9 +55,6 @@ import { connect } from 'react-redux';
 import { basicTabStyle } from 'styles/TabStyles';
 import { istioAceEditorStyle } from 'styles/AceEditorStyle';
 import { Theme } from 'types/Common';
-
-// Enables the search box for the ACEeditor
-require('ace-builds/src-noconflict/ext-searchbox');
 
 const rightToolbarStyle = kialiStyle({
   zIndex: 500

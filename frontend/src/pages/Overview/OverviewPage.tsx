@@ -1121,7 +1121,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     const labelsLength = ns.labels ? `${Object.entries(ns.labels).length}` : 'No';
     const labelContent = ns.labels ? (
       <div
-        style={{ color: PFColors.Blue400, textAlign: 'left', cursor: 'pointer' }}
+        style={{ color: PFColors.Link, textAlign: 'left', cursor: 'pointer' }}
         onClick={() => this.setDisplayMode(OverviewDisplayMode.LIST)}
       >
         <Tooltip
