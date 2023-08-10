@@ -87,6 +87,8 @@ DEFAULT_LOCAL_REMOTE_PORTS_TRACING="16686:16686"
 DEFAULT_LOG_LEVEL="info"
 DEFAULT_REBOOTABLE="true"
 DEFAULT_TMP_ROOT_DIR="/tmp"
+DEFAULT_TRACING_APP="jaeger"
+DEFAULT_TRACING_SERVICE="tracing"
 
 # Process command line options
 
@@ -114,6 +116,9 @@ while [[ $# -gt 0 ]]; do
     -pu|--prometheus-url)        PROMETHEUS_URL="$2";                shift;shift ;;
     -r|--rebootable)             REBOOTABLE="$2";                    shift;shift ;;
     -trd|--tmp-root-dir)         TMP_ROOT_DIR="$2";                  shift;shift ;;
+    -tr|--tracing-app)           TRACING_APP="$2";                   shift;shift ;;
+    -ts|--tracing-service)       TRACING_SERVICE="$2";               shift;shift ;;
+    -tn|--tracing-namespace)     TRACING_NAMESPACE="$2";             shift;shift ;;
     -tu|--tracing-url)           TRACING_URL="$2";                   shift;shift ;;
     -ucd|--ui-console-dir)       UI_CONSOLE_DIR="$2";                shift;shift ;;
     -h|--help )
@@ -224,6 +229,15 @@ Valid options:
   -trd|--tmp-root-dir)
       Where temporary files and directories will be created.
       Default: ${DEFAULT_TMP_ROOT_DIR}
+  -tr|--tracing-app)
+      Tracing backend. Jaeger, tempo-query-frontend
+      Default: ${DEFAULT_TRACING_APP}
+  -ts|--tracing-service)
+      Tracing service. tracing, tempo-query-frontend, ...
+      Default: ${DEFAULT_TRACING_SERVICE}
+  -tn|--tracing-namespace)
+      Tracing backend namespace
+      Default: ${DEFAULT_ISTIO_NAMESPACE}
   -tu|--tracing-url
       The URL that can be used to query the exposed Tracing service. You must have exposed Tracing
       to external clients outside of the cluster - that external URL is what this value should be.
@@ -263,6 +277,9 @@ LOCAL_REMOTE_PORTS_TRACING="${LOCAL_REMOTE_PORTS_TRACING:-${DEFAULT_LOCAL_REMOTE
 LOG_LEVEL="${LOG_LEVEL:-${DEFAULT_LOG_LEVEL}}"
 REBOOTABLE="${REBOOTABLE:-${DEFAULT_REBOOTABLE}}"
 TMP_ROOT_DIR="${TMP_ROOT_DIR:-${DEFAULT_TMP_ROOT_DIR}}"
+TRACING_APP="${TRACING_APP:-${DEFAULT_TRACING_APP}}"
+TRACING_SERVICE="${TRACING_SERVICE:-${DEFAULT_TRACING_SERVICE}}"
+TRACING_NAMESPACE="${TRACING_NAMESPACE:-${ISTIO_NAMESPACE}}"
 
 # these are the env vars required by the Kiali server itself
 KUBERNETES_SERVICE_HOST="${API_PROXY_HOST}"
@@ -404,18 +421,18 @@ fi
 PORT_FORWARD_DEPLOYMENT_TRACING=""
 if [ -z "${TRACING_URL:-}" ]; then
   if [ "${IS_OPENSHIFT}" == "true" ]; then
-    trac_host="$(${CLIENT_EXE} get route -n ${ISTIO_NAMESPACE} tracing -o jsonpath='{.spec.host}')"
+    trac_host="$(${CLIENT_EXE} get route -n ${TRACING_NAMESPACE} ${TRACING_SERVICE} -o jsonpath='{.spec.host}')"
     if [ "$?" != "0" -o -z "${trac_host}" ]; then
-      trac_host="$(${CLIENT_EXE} get route -n ${ISTIO_NAMESPACE} jaeger -o jsonpath='{.spec.host}')"
+      trac_host="$(${CLIENT_EXE} get route -n ${TRACING_NAMESPACE} ${TRACING_APP} -o jsonpath='{.spec.host}')"
     fi
     if [ "$?" != "0" -o -z "${trac_host}" ]; then
-      PORT_FORWARD_DEPLOYMENT_TRACING="$(${CLIENT_EXE} get deployment -n ${ISTIO_NAMESPACE} jaeger -o name)"
+      PORT_FORWARD_DEPLOYMENT_TRACING="$(${CLIENT_EXE} get deployment -n ${TRACING_NAMESPACE} ${TRACING_APP} -o name)"
       if [ "$?" != "0" -o -z "${PORT_FORWARD_DEPLOYMENT_TRACING}" ]; then
         errormsg "Cannot auto-discover Tracing on OpenShift. You must specify the Tracing URL via --tracing-url"
         exit 1
       else
         warnmsg "Cannot auto-discover Tracing on OpenShift. If you exposed it, you can specify the Tracing URL via --tracing-url. For now, this session will attempt to port-forward to it."
-        trac_remote_port="$(${CLIENT_EXE} get service -n ${ISTIO_NAMESPACE} tracing -o jsonpath='{.spec.ports[0].targetPort}')"
+        trac_remote_port="$(${CLIENT_EXE} get service -n ${TRACING_NAMESPACE} ${TRACING_SERVICE} -o jsonpath='{.spec.ports[0].targetPort}')"
         if [ "$?" != "0" -o -z "${trac_remote_port}" ]; then
           warnmsg "Cannot auto-discover Tracing port on OpenShift. If you exposed it, you can specify the Tracing URL via --tracing-url. For now, this session will attempt to port-forward to it."
         else
@@ -429,13 +446,17 @@ if [ -z "${TRACING_URL:-}" ]; then
       TRACING_URL="http://${trac_host}"
     fi
   else
-    PORT_FORWARD_DEPLOYMENT_TRACING="$(${CLIENT_EXE} get deployment -n ${ISTIO_NAMESPACE} jaeger -o name)"
+    PORT_FORWARD_DEPLOYMENT_TRACING="$(${CLIENT_EXE} get deployment -n ${TRACING_NAMESPACE} ${TRACING_APP} -o name)"
     if [ "$?" != "0" -o -z "${PORT_FORWARD_DEPLOYMENT_TRACING}" ]; then
       errormsg "Cannot auto-discover Tracing on Kubernetes. You must specify the Tracing URL via --tracing-url"
       exit 1
     else
       warnmsg "Cannot auto-discover Tracing on Kubernetes. If you exposed it, you can specify the Tracing URL via --tracing-url. For now, this session will attempt to port-forward to it."
-      trac_remote_port="$(${CLIENT_EXE} get service -n ${ISTIO_NAMESPACE} tracing -o jsonpath='{.spec.ports[0].targetPort}')"
+      if [[ "$TRACING_SERVICE" == *"tempo"* ]]; then
+        trac_remote_port="$(${CLIENT_EXE} get service -n ${TRACING_NAMESPACE} ${TRACING_SERVICE} -o jsonpath='{.spec.ports[3].port}')"
+      else
+        trac_remote_port="$(${CLIENT_EXE} get service -n ${TRACING_NAMESPACE} ${TRACING_SERVICE} -o jsonpath='{.spec.ports[0].targetPort}')"
+      fi
       if [ "$?" != "0" -o -z "${trac_remote_port}" ]; then
         warnmsg "Cannot auto-discover Tracing port on Kubernetes. If you exposed it, you can specify the Tracing URL via --tracing-url. For now, this session will attempt to port-forward to it."
       else
@@ -522,6 +543,9 @@ echo "LOG_LEVEL=$LOG_LEVEL"
 echo "PROMETHEUS_URL=$PROMETHEUS_URL"
 echo "REBOOTABLE=$REBOOTABLE"
 echo "TMP_ROOT_DIR=$TMP_ROOT_DIR"
+echo "TRACING_APP=$TRACING_APP"
+echo "TRACING_SERVICE=$TRACING_SERVICE"
+echo "TRACING_NAMESPACE=$TRACING_NAMESPACE"
 echo "TRACING_URL=$TRACING_URL"
 echo "UI_CONSOLE_DIR=$UI_CONSOLE_DIR"
 
@@ -680,7 +704,12 @@ start_port_forward_component() {
     else
       startmsg "The port-forward to ${COMPONENT_NAME} is being started on [${EXPECTED_URL}]"
       set -m
-      (while true; do ${CLIENT_EXE} port-forward -n ${ISTIO_NAMESPACE} ${PORT_FORWARD_DEPLOYMENT} --address=127.0.0.1 ${LOCAL_REMOTE_PORTS} > /dev/null; warnmsg "${COMPONENT_NAME} port-forward died - restarting on [${EXPECTED_URL}]"; sleep 1; done) &
+      if [ ${COMPONENT_NAME} == "Tracing" ]; then
+        NS=${TRACING_NAMESPACE}
+      else
+        NS=${ISTIO_NAMESPACE}
+      fi
+      (while true; do ${CLIENT_EXE} port-forward -n ${NS} ${PORT_FORWARD_DEPLOYMENT} --address=127.0.0.1 ${LOCAL_REMOTE_PORTS} > /dev/null; warnmsg "${COMPONENT_NAME} port-forward died - restarting on [${EXPECTED_URL}]"; sleep 1; done) &
       set +m
       local childpid="$!"
       printf -v "${PORT_FORWARD_JOB_VARNAME}" "$(jobs -lr | grep "${childpid}" | sed 's/.*\[\([0-9]\+\)\].*/\1/')"
