@@ -191,8 +191,12 @@ export const getNamespaceTls = (namespace: string, cluster?: string) => {
   return newRequest<TLSStatus>(HTTP_VERBS.GET, urls.namespaceTls(namespace), queryParams, {});
 };
 
-export const getNamespaceValidations = (namespace: string) => {
-  return newRequest<ValidationStatus>(HTTP_VERBS.GET, urls.namespaceValidations(namespace), {}, {});
+export const getNamespaceValidations = (namespace: string, cluster?: string) => {
+  const queryParams: any = {};
+  if (cluster) {
+    queryParams.clusterName = cluster;
+  }
+  return newRequest<ValidationStatus>(HTTP_VERBS.GET, urls.namespaceValidations(namespace), queryParams, {});
 };
 
 export const updateNamespace = (namespace: string, jsonPatch: string, cluster?: string): Promise<Response<string>> => {
