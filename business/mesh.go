@@ -335,6 +335,7 @@ func (in *MeshService) discoverKiali(ctx context.Context, clusterName string, r 
 			for _, cfgurl := range config.Get().KialiFeatureFlags.Clustering.KialiURLs {
 				if cfgurl.ClusterName == clusterName {
 					kiali.Url = cfgurl.URL
+					break
 				}
 			}
 		}
