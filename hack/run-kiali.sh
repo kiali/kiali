@@ -704,7 +704,7 @@ start_port_forward_component() {
     else
       startmsg "The port-forward to ${COMPONENT_NAME} is being started on [${EXPECTED_URL}]"
       set -m
-      if [ ${COMPONENT_NAME} == "Tracing" ]; then
+      if [ "${COMPONENT_NAME}" == "Tracing" ]; then
         NS=${TRACING_NAMESPACE}
       else
         NS=${ISTIO_NAMESPACE}
