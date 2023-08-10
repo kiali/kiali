@@ -139,7 +139,8 @@ func NewOptions(r *net_http.Request) Options {
 	var queryTime int64
 	appenders := RequestedAppenders{All: true}
 	boxBy := params.Get("boxBy")
-	cluster := params.Get("cluster")
+	// @TODO requires refactoring to use clusterNameFromQuery
+	cluster := params.Get("clusterName")
 	configVendor := params.Get("configVendor")
 	durationString := params.Get("duration")
 	graphType := params.Get("graphType")
