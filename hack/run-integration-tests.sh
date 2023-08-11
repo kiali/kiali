@@ -116,7 +116,7 @@ if [ "${TEST_SUITE}" == "backend" ]; then
 
   # Run backend integration tests
   cd "${SCRIPT_DIR}"/../tests/integration/tests
-  go test -v
+  go test -v -failfast
 elif [ "${TEST_SUITE}" == "frontend" ]; then
   ensureCypressInstalled
   "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token
