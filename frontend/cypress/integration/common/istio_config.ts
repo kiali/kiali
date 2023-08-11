@@ -217,6 +217,13 @@ Given(
   }
 );
 
+Given(
+  'there is not a {string} VirtualService in the {string} namespace',
+  function (vsName: string, namespace: string) {
+    cy.exec(`kubectl delete VirtualService ${vsName} -n ${namespace}`, { failOnNonZeroExit: false });
+  }
+);
+
 Given('the DestinationRule enables mTLS', function () {
   cy.exec(
     `kubectl patch DestinationRule ${this.targetDestinationRule} -n ${this.targetNamespace} --type=merge -p '{"spec":{"trafficPolicy":{"tls": {"mode": "ISTIO_MUTUAL"}} }}'`

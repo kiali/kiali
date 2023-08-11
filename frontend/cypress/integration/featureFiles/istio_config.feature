@@ -95,6 +95,7 @@ Feature: Kiali Istio Config page
   @crd-validation
   @bookinfo-app
   Scenario: KIA0104 validation
+    Given there is not a "bookinfo" VirtualService in the "bookinfo" namespace
     Given a "foo" AuthorizationPolicy in the "bookinfo" namespace
     And the AuthorizationPolicy has a to-operation rule with "missing.hostname" host
     When the user refreshes the list page
