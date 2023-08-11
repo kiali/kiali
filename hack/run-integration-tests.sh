@@ -5,6 +5,7 @@ infomsg() {
 }
 
 TEST_SUITE="backend"
+SETUP_ONLY="false"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -18,12 +19,23 @@ while [[ $# -gt 0 ]]; do
       fi
       shift;shift
       ;;
+    -so|--setup-only)
+      SETUP_ONLY="${2}"
+      if [ "${SETUP_ONLY}" != "true" -a "${SETUP_ONLY}" != "false" ]; then
+        echo "--setup-only option must be one of 'true' or 'false'"
+        exit 1
+      fi
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
-  -ts|--test-suite <backend|frontend|backend-multi-cluster|frontend-multi-cluster|all>
+  -ts|--test-suite <backend|frontend|frontend-multi-cluster>
     Which test suite to run.
     Default: backend
+  -so|--setup-only <true|false>
+    If true, only setup the test environment and exit without running the tests.
+    Default: false 
   -h|--help:
        this message
 HELPMSG
@@ -39,6 +51,7 @@ done
 # print out our settings for debug purposes
 cat <<EOM
 === SETTINGS ===
+SETUP_ONLY=$SETUP_ONLY
 TEST_SUITE=$TEST_SUITE
 === SETTINGS ===
 EOM
@@ -57,6 +70,31 @@ ensureCypressInstalled() {
   cd -
 }
 
+ensureKialiServerReady() {
+  local KIALI_URL="$1"
+
+  infomsg "Waiting for Kiali server pods to be healthy"
+  kubectl rollout status deployment/kiali -n istio-system --timeout=120s
+
+  # Ensure the server is responding to health checks externally.
+  # It can take a minute for the Kube service and ingress to sync
+  # and wire up the endpoints.
+  infomsg "Waiting for Kiali server to respond externally to health checks"
+  local start_time=$(date +%s)
+  local end_time=$((start_time + 30))
+  while true; do
+    if curl -k -s --fail "${KIALI_URL}/healthz"; then
+      break
+    fi
+    local now=$(date +%s)
+    if [ "${now}" -gt "${end_time}" ]; then
+      echo "Timed out waiting for Kiali server to respond to health checks"
+      exit 1
+    fi
+    sleep 1
+  done
+}
+
 infomsg "Running ${TEST_SUITE} integration tests"
 if [ "${TEST_SUITE}" == "backend" ]; then
   "${SCRIPT_DIR}"/setup-kind-in-ci.sh
@@ -65,17 +103,20 @@ if [ "${TEST_SUITE}" == "backend" ]; then
 
   # Install demo apps
   "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" -g "${ISTIO_INGRESS_IP}"
-  
+
   URL="http://${ISTIO_INGRESS_IP}/kiali"
   echo "kiali_url=$URL"
   export URL
 
-  # Ensure kiali pods are healthy before running tests
-  kubectl wait --for=condition=Ready pods -l app.kubernetes.io/name=kiali -n istio-system
+  ensureKialiServerReady "${URL}"
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
 
   # Run backend integration tests
   cd "${SCRIPT_DIR}"/../tests/integration/tests
-  go test -v
+  go test -v -failfast
 elif [ "${TEST_SUITE}" == "frontend" ]; then
   ensureCypressInstalled
   "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token
@@ -91,8 +132,11 @@ elif [ "${TEST_SUITE}" == "frontend" ]; then
   # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
   export CYPRESS_VIDEO=false
   
-  # Ensure kiali pods are healthy before running tests
-  kubectl wait --for=condition=Ready pods -l app.kubernetes.io/name=kiali -n istio-system
+  ensureKialiServerReady "${KIALI_URL}"
+  
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
   
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run
@@ -106,6 +150,12 @@ elif [ "${TEST_SUITE}" == "frontend-multi-cluster" ]; then
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
   # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
   export CYPRESS_VIDEO=false
+  
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  ensureKialiServerReady "${KIALI_URL}"
 
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:multi-cluster

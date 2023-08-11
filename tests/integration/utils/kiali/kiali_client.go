@@ -92,9 +92,11 @@ type MetricsJson struct {
 
 var client = *NewKialiClient()
 
-const BOOKINFO = "bookinfo"
-const ASSETS = "tests/integration/assets"
-const TIMEOUT = 10 * time.Second
+const (
+	BOOKINFO = "bookinfo"
+	ASSETS   = "tests/integration/assets"
+	TIMEOUT  = 10 * time.Second
+)
 
 func NewKialiClient() (c *KialiClient) {
 	c = &KialiClient{
@@ -127,7 +129,7 @@ func NewKialiClient() (c *KialiClient) {
 }
 
 func (c *KialiClient) KialiAuthStrategy() (string, error) {
-	body, _, _, err := httputil.HttpGet(c.kialiURL+"/api/auth/info", c.GetAuth(), TIMEOUT, nil, nil)
+	body, _, _, err := httpGETWithRetry(c.kialiURL+"/api/auth/info", c.GetAuth(), TIMEOUT, nil, nil)
 	if err == nil {
 		authStrategy := new(AuthStrategy)
 		err = json.Unmarshal(body, &authStrategy)
@@ -142,7 +144,7 @@ func (c *KialiClient) KialiAuthStrategy() (string, error) {
 }
 
 func KialiStatus() (bool, int, error) {
-	_, code, _, err := httputil.HttpGet(client.kialiURL+"/api/istio/status", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	_, code, _, err := httpGETWithRetry(client.kialiURL+"/api/istio/status", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		return true, code, nil
 	} else {
@@ -180,7 +182,7 @@ func (c *KialiClient) GetCookies() (bool, []*http.Cookie) {
 }
 
 func KialiConfig() (*handlers.PublicConfig, int, error) {
-	body, code, _, err := httputil.HttpGet(client.kialiURL+"/api/config", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, code, _, err := httpGETWithRetry(client.kialiURL+"/api/config", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		response := new(handlers.PublicConfig)
 		err = json.Unmarshal(body, &response)
@@ -195,7 +197,7 @@ func KialiConfig() (*handlers.PublicConfig, int, error) {
 }
 
 func Namespaces() (*models.Namespaces, int, error) {
-	body, code, _, err := httputil.HttpGet(fmt.Sprintf("%s/api/namespaces", client.kialiURL), client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, code, _, err := httpGETWithRetry(fmt.Sprintf("%s/api/namespaces", client.kialiURL), client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		response := new(models.Namespaces)
 		err = json.Unmarshal(body, &response)
@@ -212,7 +214,7 @@ func Namespaces() (*models.Namespaces, int, error) {
 func NamespaceWorkloadHealth(namespace string, params map[string]string) (*models.NamespaceWorkloadHealth, int, error) {
 	params["type"] = "workload"
 	url := fmt.Sprintf("%s/api/namespaces/%s/health?%s", client.kialiURL, namespace, ParamsAsString(params))
-	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
 	if err == nil {
 		health := new(models.NamespaceWorkloadHealth)
 		err = json.Unmarshal(body, &health)
@@ -229,7 +231,7 @@ func NamespaceWorkloadHealth(namespace string, params map[string]string) (*model
 func NamespaceAppHealth(namespace string, params map[string]string) (*models.NamespaceAppHealth, int, error) {
 	params["type"] = "app"
 	url := fmt.Sprintf("%s/api/namespaces/%s/health?%s", client.kialiURL, namespace, ParamsAsString(params))
-	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
 	if err == nil {
 		health := new(models.NamespaceAppHealth)
 		err = json.Unmarshal(body, &health)
@@ -246,7 +248,7 @@ func NamespaceAppHealth(namespace string, params map[string]string) (*models.Nam
 func NamespaceServiceHealth(namespace string, params map[string]string) (*models.NamespaceServiceHealth, int, error) {
 	params["type"] = "service"
 	url := fmt.Sprintf("%s/api/namespaces/%s/health?%s", client.kialiURL, namespace, ParamsAsString(params))
-	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
 	if err == nil {
 		health := new(models.NamespaceServiceHealth)
 		err = json.Unmarshal(body, &health)
@@ -261,7 +263,7 @@ func NamespaceServiceHealth(namespace string, params map[string]string) (*models
 }
 
 func ApplicationsList(namespace string) (*models.AppList, error) {
-	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/apps", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, _, _, err := httpGETWithRetry(client.kialiURL+"/api/namespaces/"+namespace+"/apps", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		appList := new(models.AppList)
 		err = json.Unmarshal(body, &appList)
@@ -276,7 +278,7 @@ func ApplicationsList(namespace string) (*models.AppList, error) {
 }
 
 func ApplicationDetails(name, namespace string) (*models.App, int, error) {
-	body, code, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/apps/"+name+"?health=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, code, _, err := httpGETWithRetry(client.kialiURL+"/api/namespaces/"+namespace+"/apps/"+name+"?health=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		app := new(models.App)
 		err = json.Unmarshal(body, &app)
@@ -291,7 +293,7 @@ func ApplicationDetails(name, namespace string) (*models.App, int, error) {
 }
 
 func ServicesList(namespace string) (*ServiceListJson, error) {
-	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/services", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, _, _, err := httpGETWithRetry(client.kialiURL+"/api/namespaces/"+namespace+"/services", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		serviceList := new(ServiceListJson)
 		err = json.Unmarshal(body, &serviceList)
@@ -306,7 +308,7 @@ func ServicesList(namespace string) (*ServiceListJson, error) {
 }
 
 func ServiceDetails(name, namespace string) (*ServiceDetailsJson, int, error) {
-	body, code, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/services/"+name+"?validate=true&health=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, code, _, err := httpGETWithRetry(client.kialiURL+"/api/namespaces/"+namespace+"/services/"+name+"?validate=true&health=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		service := new(ServiceDetailsJson)
 		err = json.Unmarshal(body, &service)
@@ -321,7 +323,7 @@ func ServiceDetails(name, namespace string) (*ServiceDetailsJson, int, error) {
 }
 
 func Traces(objectType, name, namespace string) (*jaeger.JaegerResponse, int, error) {
-	body, code, _, err := httputil.HttpGet(fmt.Sprintf("%s/api/namespaces/%s/%s/%s/traces?startMicros=%d&tags=&limit=100", client.kialiURL, namespace, objectType, name, TimeSince()), client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, code, _, err := httpGETWithRetry(fmt.Sprintf("%s/api/namespaces/%s/%s/%s/traces?startMicros=%d&tags=&limit=100", client.kialiURL, namespace, objectType, name, TimeSince()), client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	log.Debugf("Traces response: %s", body)
 	if err == nil {
 		traces := new(jaeger.JaegerResponse)
@@ -337,7 +339,7 @@ func Traces(objectType, name, namespace string) (*jaeger.JaegerResponse, int, er
 }
 
 func Spans(objectType, name, namespace string) ([]jaeger.JaegerSpan, int, error) {
-	body, code, _, err := httputil.HttpGet(fmt.Sprintf("%s/api/namespaces/%s/%s/%s/spans?startMicros=%d&tags=&limit=100", client.kialiURL, namespace, objectType, name, TimeSince()), client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, code, _, err := httpGETWithRetry(fmt.Sprintf("%s/api/namespaces/%s/%s/%s/spans?startMicros=%d&tags=&limit=100", client.kialiURL, namespace, objectType, name, TimeSince()), client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		spans := []jaeger.JaegerSpan{}
 		err = json.Unmarshal(body, &spans)
@@ -352,7 +354,7 @@ func Spans(objectType, name, namespace string) ([]jaeger.JaegerSpan, int, error)
 }
 
 func WorkloadsList(namespace string) (*WorkloadListJson, error) {
-	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/workloads", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, _, _, err := httpGETWithRetry(client.kialiURL+"/api/namespaces/"+namespace+"/workloads", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		wlList := new(WorkloadListJson)
 		err = json.Unmarshal(body, &wlList)
@@ -367,7 +369,7 @@ func WorkloadsList(namespace string) (*WorkloadListJson, error) {
 }
 
 func WorkloadDetails(name, namespace string) (*WorkloadJson, int, error) {
-	body, code, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/workloads/"+name+"?validate=true&health=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, code, _, err := httpGETWithRetry(client.kialiURL+"/api/namespaces/"+namespace+"/workloads/"+name+"?validate=true&health=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		wl := new(WorkloadJson)
 		err = json.Unmarshal(body, &wl)
@@ -382,7 +384,7 @@ func WorkloadDetails(name, namespace string) (*WorkloadJson, int, error) {
 }
 
 func IstioConfigs() (IstioConfigMapJson, error) {
-	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/istio/config?validate=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, _, _, err := httpGETWithRetry(client.kialiURL+"/api/istio/config?validate=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		configsMap := new(IstioConfigMapJson)
 		err = json.Unmarshal(body, &configsMap)
@@ -397,7 +399,7 @@ func IstioConfigs() (IstioConfigMapJson, error) {
 }
 
 func IstioConfigsList(namespace string) (*IstioConfigListJson, error) {
-	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/istio?validate=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, _, _, err := httpGETWithRetry(client.kialiURL+"/api/namespaces/"+namespace+"/istio?validate=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		configList := new(IstioConfigListJson)
 		err = json.Unmarshal(body, &configList)
@@ -412,7 +414,7 @@ func IstioConfigsList(namespace string) (*IstioConfigListJson, error) {
 }
 
 func IstioConfigDetails(namespace, name, configType string) (*models.IstioConfigDetails, int, error) {
-	body, code, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/istio/"+configType+"/"+name+"?validate=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, code, _, err := httpGETWithRetry(client.kialiURL+"/api/namespaces/"+namespace+"/istio/"+configType+"/"+name+"?validate=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		config := new(models.IstioConfigDetails)
 		err = json.Unmarshal(body, &config)
@@ -427,7 +429,7 @@ func IstioConfigDetails(namespace, name, configType string) (*models.IstioConfig
 }
 
 func IstioConfigPermissions(namespace string) (*models.IstioConfigPermissions, error) {
-	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/istio/permissions?namespaces="+namespace, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, _, _, err := httpGETWithRetry(client.kialiURL+"/api/istio/permissions?namespaces="+namespace, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		perms := new(models.IstioConfigPermissions)
 		err = json.Unmarshal(body, &perms)
@@ -442,7 +444,7 @@ func IstioConfigPermissions(namespace string) (*models.IstioConfigPermissions, e
 }
 
 func IstioPermissions() (*models.IstioConfigPermissions, int, error) {
-	body, code, _, err := httputil.HttpGet(client.kialiURL+"/api/istio/permissions", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, code, _, err := httpGETWithRetry(client.kialiURL+"/api/istio/permissions", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		perms := new(models.IstioConfigPermissions)
 		err = json.Unmarshal(body, &perms)
@@ -458,7 +460,7 @@ func IstioPermissions() (*models.IstioConfigPermissions, int, error) {
 
 func Graph(params map[string]string) (*cytoscape.Config, int, error) {
 	url := fmt.Sprintf("%s/api/namespaces/graph?%s", client.kialiURL, ParamsAsString(params))
-	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		graph := new(cytoscape.Config)
 		err = json.Unmarshal(body, &graph)
@@ -474,7 +476,7 @@ func Graph(params map[string]string) (*cytoscape.Config, int, error) {
 
 func ObjectGraph(objectType, graphType, name, namespace string) (*cytoscape.Config, int, error) {
 	url := fmt.Sprintf("%s/api/namespaces/%s/%s/%s/graph?duration=60s&graphType=%s", client.kialiURL, namespace, objectType, name, graphType)
-	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		graph := new(cytoscape.Config)
 		err = json.Unmarshal(body, &graph)
@@ -490,7 +492,7 @@ func ObjectGraph(objectType, graphType, name, namespace string) (*cytoscape.Conf
 
 func AppVersionGraph(graphType, name, version, namespace string) (*cytoscape.Config, int, error) {
 	url := fmt.Sprintf("%s/api/namespaces/%s/applications/%s/versions/%s/graph?duration=60s&graphType=%s", client.kialiURL, namespace, name, version, graphType)
-	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		graph := new(cytoscape.Config)
 		err = json.Unmarshal(body, &graph)
@@ -506,7 +508,7 @@ func AppVersionGraph(graphType, name, version, namespace string) (*cytoscape.Con
 
 func NamespaceMetrics(namespace string, params map[string]string) (*MetricsJson, error) {
 	url := fmt.Sprintf("%s/api/namespaces/%s/metrics?%s", client.kialiURL, namespace, ParamsAsString(params))
-	body, _, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, _, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		metrics := new(MetricsJson)
 		err = json.Unmarshal(body, &metrics)
@@ -522,7 +524,7 @@ func NamespaceMetrics(namespace string, params map[string]string) (*MetricsJson,
 
 func ObjectMetrics(namespace, service, objectType string, params map[string]string) (*MetricsJson, error) {
 	url := fmt.Sprintf("%s/api/namespaces/%s/%s/%s/metrics?%s", client.kialiURL, namespace, objectType, service, ParamsAsString(params))
-	body, _, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, _, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		metrics := new(MetricsJson)
 		err = json.Unmarshal(body, &metrics)
@@ -539,7 +541,7 @@ func ObjectMetrics(namespace, service, objectType string, params map[string]stri
 
 func ObjectDashboard(namespace, name, objectType string) (*models.MonitoringDashboard, error) {
 	url := fmt.Sprintf("%s/api/namespaces/%s/%s/%s/dashboard", client.kialiURL, namespace, objectType, name)
-	body, _, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, _, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		response := new(models.MonitoringDashboard)
 		// tests are checking only common response for different object types, ignore the error
@@ -552,7 +554,7 @@ func ObjectDashboard(namespace, name, objectType string) (*models.MonitoringDash
 
 func MeshTls() (*models.MTLSStatus, int, error) {
 	url := fmt.Sprintf("%s/api/mesh/tls", client.kialiURL)
-	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		status := new(models.MTLSStatus)
 		err = json.Unmarshal(body, &status)
@@ -568,7 +570,7 @@ func MeshTls() (*models.MTLSStatus, int, error) {
 
 func NamespaceTls(namespace string) (*models.MTLSStatus, int, error) {
 	url := fmt.Sprintf("%s/api/namespaces/%s/tls", client.kialiURL, namespace)
-	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		status := new(models.MTLSStatus)
 		err = json.Unmarshal(body, &status)
@@ -584,7 +586,7 @@ func NamespaceTls(namespace string) (*models.MTLSStatus, int, error) {
 
 func Jaeger() (*models.JaegerInfo, int, error) {
 	url := fmt.Sprintf("%s/api/jaeger", client.kialiURL)
-	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		status := new(models.JaegerInfo)
 		err = json.Unmarshal(body, &status)
@@ -600,7 +602,7 @@ func Jaeger() (*models.JaegerInfo, int, error) {
 
 func Grafana() (*models.GrafanaInfo, int, error) {
 	url := fmt.Sprintf("%s/api/grafana", client.kialiURL)
-	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		status := new(models.GrafanaInfo)
 		err = json.Unmarshal(body, &status)
@@ -616,7 +618,7 @@ func Grafana() (*models.GrafanaInfo, int, error) {
 
 func IstioApiEnabled() (bool, error) {
 	url := fmt.Sprintf("%s/api/status", client.kialiURL)
-	body, _, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, _, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 
 	if err == nil {
 		status := new(status.StatusInfo)
@@ -646,7 +648,7 @@ func FirstPodName(name, namespace string) (string, error) {
 
 func PodLogs(name, namespace string, params map[string]string) (*business.PodLog, error) {
 	url := fmt.Sprintf("%s/api/namespaces/%s/pods/%s/logs?sinceTime=%d&%s", client.kialiURL, namespace, name, TimeSinceSeconds(), ParamsAsString(params))
-	body, _, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, _, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		logs := new(business.PodLog)
 		err = json.Unmarshal(body, &logs)
