@@ -36,6 +36,7 @@ Make sure you have the following tools:
 * The link:http://golang.org/doc/install[Go Programming Language]
 ** Currently, Kiali releases are built using a specific minimum version of Go as declared in the link:https://github.com/kiali/kiali/blob/master/Makefile#L31[Makefile]. Although Kiali may build correctly using other versions of Go, it's suggested to use the version that the Makefile uses for your own development to ensure replicatable builds.
 * link:http://git-scm.com/book/en/v2/Getting-Started-Installing-Git[git]
+* gcc
 * link:https://docs.docker.com/installation/[Docker] or link:https://podman.io[Podman]
 ** If you are using `podman` declare the environment variable `DORP=podman`.
 * link:https://nodejs.org[NodeJS] (Node.js >= 12.22.0 && <16 with the NPM command)
