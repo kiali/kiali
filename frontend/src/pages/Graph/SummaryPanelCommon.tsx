@@ -5,8 +5,8 @@ import { IstioMetricsOptions, Reporter, Direction } from '../../types/MetricsOpt
 import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
 import { Response } from '../../services/Api';
-import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
+import { PFColors } from 'components/Pf/PfColors';
 
 export enum NodeMetricType {
   APP = 1,
@@ -21,14 +21,9 @@ export const summaryBodyTabs = kialiStyle({
   padding: '10px 15px 0 15px'
 });
 
-export const summaryHeader: React.CSSProperties = {
-  backgroundColor: PFColors.White
-};
-
 export const summaryPanelWidth = '25em';
 
 export const summaryPanel = kialiStyle({
-  backgroundColor: PFColors.White,
   fontSize: 'var(--graph-side-panel--font-size)',
   height: '100%',
   margin: 0,
@@ -49,8 +44,14 @@ export const summaryTitle = kialiStyle({
   textAlign: 'left'
 });
 
+const hrStyle = kialiStyle({
+  border: 0,
+  borderTop: `1px solid ${PFColors.BorderColor100}`,
+  margin: '10px 0'
+});
+
 export const hr = () => {
-  return <hr style={{ margin: '10px 0' }} />;
+  return <hr className={hrStyle} />;
 };
 
 export const shouldRefreshData = (prevProps: SummaryPanelPropType, nextProps: SummaryPanelPropType) => {

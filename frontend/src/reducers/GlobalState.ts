@@ -7,7 +7,8 @@ import { getType } from 'typesafe-actions';
 export const INITIAL_GLOBAL_STATE: GlobalState = {
   loadingCounter: 0,
   isPageVisible: true,
-  kiosk: ''
+  kiosk: '',
+  theme: ''
 };
 
 // This Reducer allows changes to the 'globalState' portion of Redux Store
@@ -24,6 +25,9 @@ export const GlobalStateReducer = (state: GlobalState = INITIAL_GLOBAL_STATE, ac
     case getType(GlobalActions.setKiosk):
       const kiosk = action.payload;
       return updateState(state, { kiosk: kiosk });
+    case getType(GlobalActions.setTheme):
+      const theme = action.payload;
+      return updateState(state, { theme: theme });
     default:
       return state;
   }

@@ -43,7 +43,7 @@ const renderHeatMap = (item: RichSpanData, stats: StatsWithIntervalIndex[], isCo
       displayMode={isCompact ? 'compact' : 'normal'}
       colorMap={HeatMap.HealthColorMap}
       dataRange={{ from: -10, to: 10 }}
-      colorUndefined={PFColors.Black200}
+      colorUndefined={PFColors.ColorLight200}
       valueFormat={v => (v > 0 ? '+' : '') + _round(v, 1)}
       tooltip={(x, y, v) => {
         // Build explanation tooltip
@@ -112,7 +112,7 @@ export const renderTraceHeatMap = (matrix: StatsMatrix, isCompact: boolean) => {
       displayMode={isCompact ? 'compact' : 'normal'}
       colorMap={HeatMap.HealthColorMap}
       dataRange={{ from: -10, to: 10 }}
-      colorUndefined={PFColors.Black200}
+      colorUndefined={PFColors.ColorLight200}
       valueFormat={v => (v > 0 ? '+' : '') + _round(v, 1)}
       tooltip={(x, y, v) => {
         // Build explanation tooltip

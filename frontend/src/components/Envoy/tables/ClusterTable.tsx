@@ -230,7 +230,7 @@ export class ClusterTable implements SummaryTable {
           </div>
         }
       >
-        <KialiIcon.Help className={kialiStyle({ width: '14px', height: '14px', color: PFColors.Blue400 })} />
+        <KialiIcon.Help className={kialiStyle({ width: '14px', height: '14px', color: PFColors.Info })} />
       </Tooltip>
     );
   };

@@ -21,7 +21,6 @@ import {
   hr,
   renderNoTraffic,
   NodeMetricType,
-  summaryHeader,
   summaryBodyTabs,
   summaryPanel,
   summaryFont,
@@ -39,6 +38,8 @@ import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { Direction } from 'types/MetricsOptions';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Edge } from '@patternfly/react-topology';
+import { classes } from 'typestyle';
+import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 
 type SummaryPanelEdgeMetricsState = {
   rates: Datapoint[];
@@ -143,7 +144,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
 
     const SecurityBlock = () => {
       return (
-        <div className="panel-heading" style={summaryHeader}>
+        <div className={panelHeadingStyle}>
           {isMtls && this.renderMTLSSummary(mTLSPercentage)}
           {hasPrincipals && (
             <>
@@ -163,8 +164,8 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     };
 
     return (
-      <div ref={this.mainDivRef} className={`panel panel-default ${summaryPanel}`}>
-        <div className="panel-heading" style={summaryHeader}>
+      <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
+        <div className={panelHeadingStyle}>
           {getTitle(`Edge (${prettyProtocol(protocol)})`)}
           {renderBadgedLink(sourceData, undefined, 'From:  ')}
           {renderBadgedLink(destData, undefined, 'To:        ')}
@@ -240,7 +241,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
             {this.renderCharts(edge, isGrpc, isHttp, isTcp, isRequests, isPF)}
           </div>
         )}
-        {!isGrpc && !isHttp && !isTcp && <div className="panel-body">{renderNoTraffic()}</div>}
+        {!isGrpc && !isHttp && !isTcp && <div className={panelBodyStyle}>{renderNoTraffic()}</div>}
       </div>
     );
   }

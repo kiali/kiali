@@ -19,6 +19,9 @@ import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions'
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { PeerAuthentication } from '../../types/IstioObjects';
 import { FocusNode } from 'pages/GraphPF/GraphPF';
+import { classes } from 'typestyle';
+import { panelBodyStyle, panelStyle } from './SummaryPanelStyle';
+import { PFColors } from 'components/Pf/PfColors';
 
 type SummaryPanelState = {
   isVisible: boolean;
@@ -43,7 +46,8 @@ type MainSummaryPanelPropType = SummaryPanelPropType & {
 const mainStyle = kialiStyle({
   fontSize: 'var(--graph-side-panel--font-size)',
   padding: '0',
-  position: 'relative'
+  position: 'relative',
+  backgroundColor: PFColors.BackgroundColor100
 });
 
 const expandedStyle = kialiStyle({ height: '100%' });
@@ -52,7 +56,7 @@ const expandedHalfStyle = kialiStyle({ height: '50%' });
 
 const collapsedStyle = kialiStyle({
   $nest: {
-    '& > .panel': {
+    ['& > .' + panelStyle]: {
       display: 'none'
     }
   }
@@ -66,8 +70,8 @@ const summaryPanelBottomSplit = kialiStyle({
 });
 
 const toggleSidePanelStyle = kialiStyle({
-  backgroundColor: 'white',
-  border: '1px #ddd solid',
+  border: `1px solid ${PFColors.BorderColor100}`,
+  backgroundColor: PFColors.BackgroundColor100,
   borderRadius: '3px',
   bottom: 0,
   cursor: 'pointer',
@@ -108,7 +112,7 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
       <TourStop info={[GraphTourStops.Graph, GraphTourStops.ContextualMenu, GraphTourStops.SidePanel]}>
         <div id="graph-side-panel" className={mainStyle}>
           <div className={mainTopStyle}>
-            <div className={toggleSidePanelStyle} onClick={this.togglePanel}>
+            <div className={classes(toggleSidePanelStyle)} onClick={this.togglePanel}>
               {this.state.isVisible ? (
                 <>
                   <KialiIcon.AngleDoubleDown /> Hide
@@ -122,8 +126,8 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
             {this.getSummaryPanel(this.props.data)}
           </div>
           {this.props.jaegerState.selectedTrace && this.state.isVisible && (
-            <div className={`panel panel-default ${summaryPanelBottomSplit}`}>
-              <div className="panel-body">
+            <div className={classes(panelStyle, summaryPanelBottomSplit)}>
+              <div className={panelBodyStyle}>
                 <SummaryPanelTraceDetails
                   data={this.props.data}
                   graphType={this.props.graphType}

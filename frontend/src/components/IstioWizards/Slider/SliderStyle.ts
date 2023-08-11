@@ -1,35 +1,31 @@
+import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 
 export const sliderStyle = kialiStyle({
   display: 'flex',
   alignItems: 'center',
   $nest: {
-    '*': {
-      marginRight: '10px',
-      $nest: {
-        '&:last-child': {
-          margin: 0
-        }
-      }
-    },
-    '.slider': {
+    '& .slider': {
       width: 'auto',
-      flex: '1 1 100%'
+      flex: '1 1 100%',
+      marginRight: '10px'
     },
-    '.slider-handle': {
+
+    '& .slider-handle': {
+      cursor: 'pointer',
       width: '16px',
-      height: '16px',
-      border: '1px solid #bbb'
+      height: '16px'
     },
-    '.slider-tick': {
+
+    '& .slider-tick': {
       backgroundColor: 'transparent !important',
-      backgroundImage: 'radial-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3) 2px, transparent 0) !important',
+      backgroundImage: `radial-gradient(${PFColors.Color200}, ${PFColors.Color200} 2px, transparent 0) !important`,
       '-webkit-box-shadow': 'none',
       boxShadow: 'none'
     },
 
     // Make sure slider tooltips are below datepicker popper but above secondary masthead
-    '.tooltip': {
+    '& .tooltip': {
       zIndex: 10
     }
   }
@@ -37,8 +33,12 @@ export const sliderStyle = kialiStyle({
 
 export const sliderMirroredStyle = kialiStyle({
   $nest: {
-    '.slider .slider-track .slider-selection': {
-      backgroundImage: 'linear-gradient(to bottom, #703fec 0%, #7144e7 100%)'
+    '& .slider': {
+      $nest: {
+        '& .slider-handle, & .slider-track .slider-selection': {
+          backgroundColor: PFColors.Purple500
+        }
+      }
     }
   }
 });

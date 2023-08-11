@@ -34,8 +34,8 @@ import { arrayEquals } from 'utils/Common';
 import { labelFilter } from './CommonFilters';
 import { history, HistoryManager } from 'app/History';
 import { serverConfig } from 'config';
-
-var classNames = require('classnames');
+import { PFColors } from '../Pf/PfColors';
+import { classes } from 'typestyle';
 
 const toolbarStyle = kialiStyle({
   padding: 0,
@@ -49,6 +49,12 @@ const toolbarStyle = kialiStyle({
 
 const bottomPadding = kialiStyle({
   paddingBottom: 'var(--pf-global--spacer--md)'
+});
+
+const formSelectStyle = kialiStyle({
+  width: 'auto',
+  borderColor: PFColors.BorderColorLight100,
+  backgroundColor: PFColors.BackgroundColor200
 });
 
 export interface StatefulFiltersProps {
@@ -137,7 +143,11 @@ export class Toggles {
   };
 }
 
-const dividerStyle = kialiStyle({ borderRight: '1px solid #d1d1d1;', padding: '10px', display: 'inherit' });
+const dividerStyle = kialiStyle({
+  borderRight: `1px solid ${PFColors.ColorLight300}`,
+  padding: '10px',
+  display: 'inherit'
+});
 const paddingStyle = kialiStyle({ padding: '10px' });
 
 export class StatefulFilters extends React.Component<StatefulFiltersProps, StatefulFiltersState> {
@@ -379,7 +389,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                 child && (
                   <ToolbarItem
                     key={'toolbar_statefulFilters_' + index}
-                    className={classNames(
+                    className={classes(
                       'pf-u-mr-md',
                       index === (this.props.children as Array<any>).length - 1 ? paddingStyle : dividerStyle
                     )}
@@ -437,7 +447,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                         value={currentFilterType.category}
                         aria-label="filter_select_type"
                         onChange={this.selectFilterType}
-                        style={{ width: 'auto', backgroundColor: '#ededed', borderColor: '#bbb' }}
+                        className={formSelectStyle}
                       >
                         {filterOptions}
                       </FormSelect>
@@ -468,8 +478,8 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
             {!this.props.childrenFirst && this.renderChildren()}
             {hasActiveFilters && (
               <ToolbarGroup>
-                <ToolbarItem className={classNames('pf-u-mr-md')}>
-                  <span className={classNames(paddingStyle)}>Label Operation</span>
+                <ToolbarItem className={'pf-u-mr-md'}>
+                  <span className={paddingStyle}>Label Operation</span>
                   <FormSelect
                     value={activeFilters.op}
                     onChange={value =>

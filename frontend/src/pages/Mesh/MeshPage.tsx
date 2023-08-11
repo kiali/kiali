@@ -116,12 +116,10 @@ export const MeshPage: React.FunctionComponent = () => {
 
   return (
     <>
-      <div style={{ backgroundColor: '#fff' }}>
-        <DefaultSecondaryMasthead
-          hideNamespaceSelector={true}
-          rightToolbar={<RefreshButton key={'Refresh'} handleRefresh={fetchMeshClusters} />}
-        />
-      </div>
+      <DefaultSecondaryMasthead
+        hideNamespaceSelector={true}
+        rightToolbar={<RefreshButton key={'Refresh'} handleRefresh={fetchMeshClusters} />}
+      />
       <RenderContent>
         <div className={containerPadding}>
           <Table aria-label="Sortable Table" cells={columns} onSort={onSortHandler} rows={clusterRows} sortBy={sortBy}>

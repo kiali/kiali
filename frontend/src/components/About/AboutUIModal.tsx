@@ -31,7 +31,7 @@ const iconStyle = kialiStyle({
 
 const textContentStyle = kialiStyle({
   $nest: {
-    'dt, dd': {
+    '& dt, & dd': {
       lineHeight: 1.667
     }
   }

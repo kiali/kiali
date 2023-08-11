@@ -1,5 +1,6 @@
 import { summaryTitle } from 'pages/Graph/SummaryPanelCommon';
 import * as React from 'react';
+import { tableStyle } from 'styles/TableStyle';
 import { renderRateChartHttp, renderRateChartGrpc } from './RateChart';
 
 type RateTableGrpcPropType = {
@@ -24,7 +25,7 @@ export class RateTableGrpc extends React.Component<RateTableGrpcPropType, {}> {
     return (
       <div>
         <div className={summaryTitle}>{title}</div>
-        <table className="table">
+        <table className={tableStyle}>
           <thead>
             <tr>
               <th>Total</th>
@@ -76,9 +77,9 @@ export class RateTableHttp extends React.Component<RateTableHttpPropType, {}> {
     return (
       <div>
         <div className={summaryTitle}>{this.props.title}</div>
-        <table className="table" style={{ marginBottom: '0' }}>
+        <table className={tableStyle} style={{ marginBottom: '0' }}>
           <thead>
-            <tr style={{ backgroundColor: 'white' }}>
+            <tr>
               <th>Total</th>
               <th>%Success</th>
               <th>%Error</th>
@@ -105,7 +106,7 @@ export class RateTableTcp extends React.Component<RateTableTcpPropType, {}> {
     return (
       <div>
         <div className={summaryTitle}>{title}</div>
-        <table className="table">
+        <table className={tableStyle}>
           <thead>
             <tr>
               <th>Total</th>

@@ -19,7 +19,7 @@ const innerWidth = flyoutWidth - 2 * flyoutMargin;
 const innerHeight = flyoutHeight - 2 * flyoutMargin;
 
 const tooltipStyle = kialiStyle({
-  color: PFColors.Black100,
+  color: PFColors.ColorLight100,
   width: innerWidth,
   height: innerHeight
 });

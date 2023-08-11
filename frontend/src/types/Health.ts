@@ -123,7 +123,7 @@ export const HEALTHY: Status = {
 };
 export const NA: Status = {
   name: 'No health information',
-  color: PFColors.Black600,
+  color: PFColors.Color200,
   priority: 0,
   icon: UnknownIcon,
   class: 'icon-na'

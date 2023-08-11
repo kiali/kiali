@@ -8,6 +8,7 @@ import { EmptyGraphLayout } from '../EmptyGraphLayout';
 import { decorateGraphData } from '../../../store/Selectors/GraphData';
 import { GraphDataSource } from '../../../services/GraphDataSource';
 import { toSafeCyFieldName } from '../CytoscapeGraphUtils';
+import { Theme } from 'types/Common';
 
 jest.mock('../../../services/Api');
 
@@ -95,6 +96,7 @@ describe('CytoscapeGraph component test', () => {
           showVirtualServices={true}
           summaryData={null}
           toggleIdleNodes={() => undefined}
+          theme={Theme.LIGHT}
         />
       );
 

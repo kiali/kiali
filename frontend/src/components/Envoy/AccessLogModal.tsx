@@ -3,6 +3,7 @@ import { Button, ButtonVariant, Modal, Split, SplitItem } from '@patternfly/reac
 import { kialiStyle } from 'styles/StyleUtils';
 import { AccessLog } from 'types/IstioObjects';
 import { PFColors } from 'components/Pf/PfColors';
+import { classes } from 'typestyle';
 
 export interface AccessLogModalProps {
   accessLog: AccessLog;
@@ -36,8 +37,21 @@ const prefaceStyle = kialiStyle({
 
 const splitStyle = kialiStyle({
   overflow: 'auto',
-  overflowY: 'auto',
   width: '50%'
+});
+
+const contentStyle = kialiStyle({
+  marginRight: '10px'
+});
+
+const descriptionStyle = kialiStyle({
+  backgroundColor: PFColors.BackgroundColor200,
+  padding: '15px 20px',
+  $nest: {
+    '& dt': {
+      fontWeight: 'bold'
+    }
+  }
 });
 
 type AccessLogModalState = {
@@ -67,15 +81,13 @@ export class AccessLogModal extends React.Component<AccessLogModalProps, AccessL
         isOpen={true}
         onClose={this.props.onClose}
       >
-        <div style={{ height: '100%' }}>
+        <div style={{ height: '85%' }}>
           <div className={prefaceStyle}>{this.props.accessLogMessage} </div>
           <Split style={{ height: '100%' }}>
-            <SplitItem className={splitStyle} style={{ overflow: 'auto', marginRight: '10px' }}>
+            <SplitItem className={classes(splitStyle, contentStyle)}>
               {this.accessLogContent(this.props.accessLog)}
             </SplitItem>
-            <SplitItem className={splitStyle} style={{ overflow: 'auto', backgroundColor: PFColors.Black150 }}>
-              {this.state.description}
-            </SplitItem>
+            <SplitItem className={classes(splitStyle, descriptionStyle)}>{this.state.description}</SplitItem>
           </Split>
         </div>
       </Modal>
@@ -196,7 +208,7 @@ export class AccessLogModal extends React.Component<AccessLogModalProps, AccessL
               <p>
                 Local address of the downstream connection. If the address is an IP address it includes both address and
                 port. If the original connection was redirected by iptables REDIRECT, this represents the original
-                destination address restored by the
+                destination address restored by the{' '}
                 <a
                   className="reference internal"
                   href="/docs/envoy/latest/configuration/listeners/listener_filters/original_dst_filter#config-listener-filters-original-dst"
@@ -222,7 +234,7 @@ export class AccessLogModal extends React.Component<AccessLogModalProps, AccessL
               <div className="admonition note">
                 <p className="admonition-title">Note</p>
                 <p>
-                  This may not be the physical remote address of the peer if the address has been inferred from
+                  This may not be the physical remote address of the peer if the address has been inferred from{' '}
                   <a
                     className="reference internal"
                     href="/docs/envoy/latest/configuration/listeners/listener_filters/proxy_protocol#config-listener-filters-proxy-protocol"
@@ -524,7 +536,7 @@ export class AccessLogModal extends React.Component<AccessLogModalProps, AccessL
                     </li>
                     <li>
                       <p>
-                        <strong>IH</strong>: The request was rejected because it set an invalid value for a
+                        <strong>IH</strong>: The request was rejected because it set an invalid value for a{' '}
                         <a
                           className="reference internal"
                           href="/docs/envoy/latest/api-v3/extensions/filters/http/router/v3/router.proto#envoy-v3-api-field-extensions-filters-http-router-v3-router-strict-check-headers"

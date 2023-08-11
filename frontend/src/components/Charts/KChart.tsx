@@ -17,6 +17,7 @@ import { ChartWithLegend, LEGEND_HEIGHT, MIN_HEIGHT, MIN_HEIGHT_YAXIS } from './
 import { BrushHandlers } from './Container';
 import { defaultIconStyle, KialiIcon } from '../../config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
+import { PFColors } from 'components/Pf/PfColors';
 
 type KChartProps<T extends LineInfo> = {
   chart: ChartModel;
@@ -223,8 +224,8 @@ export class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, 
           overflow: 'hidden',
           height: chartHeight > MIN_HEIGHT_YAXIS ? chartHeight - LEGEND_HEIGHT : chartHeight,
           textAlign: 'center',
-          borderLeft: '2px solid #ECEFF1',
-          borderBottom: '2px solid #ECEFF1'
+          borderLeft: `2px solid ${PFColors.ColorLight200}`,
+          borderBottom: `2px solid ${PFColors.ColorLight200}`
         }}
       >
         <EmptyState variant={EmptyStateVariant.small} className={emptyStyle}>
@@ -249,7 +250,9 @@ export class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, 
       >
         <EmptyState variant={EmptyStateVariant.small} className={emptyStyle}>
           {this.props.isMaximized && (
-            <EmptyStateIcon icon={() => <ErrorCircleOIcon style={{ color: '#cc0000' }} width={32} height={32} />} />
+            <EmptyStateIcon
+              icon={() => <ErrorCircleOIcon style={{ color: PFColors.Danger }} width={32} height={32} />}
+            />
           )}
           <EmptyStateBody className={emptyStyle}>
             An error occured while fetching this metric:

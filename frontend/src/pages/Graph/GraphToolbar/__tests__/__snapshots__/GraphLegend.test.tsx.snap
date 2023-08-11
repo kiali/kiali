@@ -2,7 +2,7 @@
 
 exports[`GraphLegend test should render correctly 1`] = `
 <div
-  className="kiali_fsg7me4"
+  className="kiali_f1okxayf"
   data-test="graph-legend"
   style={
     Object {

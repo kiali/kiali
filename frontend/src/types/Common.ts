@@ -16,6 +16,14 @@ export enum HTTP_VERBS {
   PUT = 'put'
 }
 
+export const PF_THEME_DARK = 'pf-theme-dark';
+export const KIALI_THEME = 'kiali-theme';
+
+export const enum Theme {
+  LIGHT = 'Light',
+  DARK = 'Dark'
+}
+
 export type TargetKind = 'app' | 'service' | 'workload';
 
 export const MILLISECONDS = 1000;

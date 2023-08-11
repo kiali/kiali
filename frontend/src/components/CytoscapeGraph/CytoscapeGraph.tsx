@@ -93,6 +93,7 @@ type CytoscapeGraphProps = {
   toggleIdleNodes: () => void;
   trace?: JaegerTrace;
   updateSummary?: (event: GraphEvent) => void;
+  theme: string;
 };
 
 // This is a Cypress test hook. Cypress-react-selector can access the react node state, and so
@@ -316,6 +317,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
             contextMenuNodeComponent={this.props.contextMenuNodeComponent}
             onDeleteTrafficRouting={this.props.onDeleteTrafficRouting}
             onLaunchWizard={this.props.onLaunchWizard}
+            theme={this.props.theme}
           />
           <CytoscapeReactWrapper ref={e => this.setCytoscapeReactWrapperRef(e)} />
         </EmptyGraphLayout>

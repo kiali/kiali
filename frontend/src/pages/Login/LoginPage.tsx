@@ -20,6 +20,8 @@ import { authenticationConfig, kialiLogo } from '../../config';
 import { LoginThunkActions } from '../../actions/LoginThunkActions';
 import { isAuthStrategyOAuth } from '../../config/AuthenticationConfig';
 import { KialiDispatch } from '../../types/Redux';
+import { kialiStyle } from 'styles/StyleUtils';
+import { PFColors } from 'components/Pf/PfColors';
 
 type LoginProps = {
   status: LoginStatus;
@@ -41,6 +43,12 @@ type LoginState = {
   showHelperText: boolean;
   errorInput?: string;
 };
+
+// Ensure dark background for login page.
+const loginStyle = kialiStyle({
+  backgroundColor: PFColors.Black1000,
+  backgroundImage: 'none'
+});
 
 export class LoginPageComponent extends React.Component<LoginProps, LoginState> {
   static contextTypes = {
@@ -261,6 +269,7 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
         footerListItems={listItem}
         textContent="Service mesh management for Istio."
         loginTitle="Log in Kiali"
+        className={loginStyle}
       >
         {loginPane}
       </LoginNext>

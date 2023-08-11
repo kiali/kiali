@@ -39,11 +39,8 @@ import {
   tabName as workloadTabName,
   defaultTab as workloadDefaultTab
 } from '../../pages/WorkloadDetails/WorkloadDetailsPage';
-import { TimeInMilliseconds } from '../../types/Common';
 import { istioAceEditorStyle } from 'styles/AceEditorStyle';
-
-// Enables the search box for the ACEeditor
-require('ace-builds/src-noconflict/ext-searchbox');
+import { Theme, TimeInMilliseconds } from '../../types/Common';
 
 const resources: string[] = ['clusters', 'listeners', 'routes', 'bootstrap', 'config', 'metrics'];
 
@@ -67,6 +64,7 @@ type EnvoyDetailsProps = ReduxProps & {
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
   workload: Workload;
+  theme: string;
 };
 
 type EnvoyDetailsState = {
@@ -281,10 +279,11 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     if (!envoyMetricsDashboardRef) {
       filteredEnvoyTabs = envoyTabs.slice(0, envoyTabs.length - 1);
     }
+
     const tabs = filteredEnvoyTabs.map((value, index) => {
       const title = value.charAt(0).toUpperCase() + value.slice(1);
       return (
-        <Tab style={{ backgroundColor: 'white' }} key={'tab_' + value} eventKey={index} title={title}>
+        <Tab key={'tab_' + value} eventKey={index} title={title}>
           <Card className={fullHeightStyle}>
             <CardBody>
               {this.showEditor() ? (
@@ -316,7 +315,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                   <AceEditor
                     ref={this.aceEditorRef}
                     mode="yaml"
-                    theme="eclipse"
+                    theme={this.props.theme === Theme.DARK ? 'twilight' : 'eclipse'}
                     width={'100%'}
                     height={height.toString() + 'px'}
                     className={istioAceEditorStyle}
@@ -376,7 +375,8 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
 
 const mapStateToProps = (state: KialiAppState) => ({
   kiosk: state.globalState.kiosk,
-  namespaces: namespaceItemsSelector(state)!
+  namespaces: namespaceItemsSelector(state)!,
+  theme: state.globalState.theme
 });
 
 export const EnvoyDetails = connect(mapStateToProps)(EnvoyDetailsComponent);
