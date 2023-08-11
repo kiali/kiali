@@ -70,6 +70,31 @@ ensureCypressInstalled() {
   cd -
 }
 
+ensureKialiServerReady() {
+  local KIALI_URL="$1"
+
+  infomsg "Waiting for Kiali server pods to be healthy"
+  kubectl rollout status deployment/kiali -n istio-system --timeout=120s
+
+  # Ensure the server is responding to health checks externally.
+  # It can take a minute for the Kube service and ingress to sync
+  # and wire up the endpoints.
+  infomsg "Waiting for Kiali server to respond externally to health checks"
+  local start_time=$(date +%s)
+  local end_time=$((start_time + 30))
+  while true; do
+    if curl -k -s --fail "${KIALI_URL}/healthz"; then
+      break
+    fi
+    local now=$(date +%s)
+    if [ "${now}" -gt "${end_time}" ]; then
+      echo "Timed out waiting for Kiali server to respond to health checks"
+      exit 1
+    fi
+    sleep 1
+  done
+}
+
 infomsg "Running ${TEST_SUITE} integration tests"
 if [ "${TEST_SUITE}" == "backend" ]; then
   "${SCRIPT_DIR}"/setup-kind-in-ci.sh
@@ -78,13 +103,12 @@ if [ "${TEST_SUITE}" == "backend" ]; then
 
   # Install demo apps
   "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" -g "${ISTIO_INGRESS_IP}"
-  
+
   URL="http://${ISTIO_INGRESS_IP}/kiali"
   echo "kiali_url=$URL"
   export URL
 
-  # Ensure kiali pods are healthy before running tests
-  kubectl wait --for=condition=Ready pods -l app.kubernetes.io/name=kiali -n istio-system
+  ensureKialiServerReady "${URL}"
 
   if [ "${SETUP_ONLY}" == "true" ]; then
     exit 0
@@ -108,8 +132,7 @@ elif [ "${TEST_SUITE}" == "frontend" ]; then
   # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
   export CYPRESS_VIDEO=false
   
-  # Ensure kiali pods are healthy before running tests
-  kubectl wait --for=condition=Ready pods -l app.kubernetes.io/name=kiali -n istio-system
+  ensureKialiServerReady "${KIALI_URL}"
   
   if [ "${SETUP_ONLY}" == "true" ]; then
     exit 0
@@ -131,6 +154,8 @@ elif [ "${TEST_SUITE}" == "frontend-multi-cluster" ]; then
   if [ "${SETUP_ONLY}" == "true" ]; then
     exit 0
   fi
+
+  ensureKialiServerReady "${KIALI_URL}"
 
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:multi-cluster
