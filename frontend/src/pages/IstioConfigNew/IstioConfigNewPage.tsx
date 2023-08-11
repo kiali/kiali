@@ -447,7 +447,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     const isFormValid = isNameValid && isNamespacesValid && isClustersValid && this.isIstioFormValid();
     return (
       <>
-        <div style={{ backgroundColor: '#fff' }}>
+        <div>
           <DefaultSecondaryMasthead showClusterSelector={false} hideNamespaceSelector={true} />
         </div>
         <RenderContent>

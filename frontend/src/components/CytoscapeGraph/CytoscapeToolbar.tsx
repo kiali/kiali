@@ -56,7 +56,7 @@ const activeButtonStyle = kialiStyle({
 });
 
 const buttonStyle = {
-  backgroundColor: PFColors.White,
+  backgroundColor: PFColors.BackgroundColor100,
   margin: '2px 4px',
   padding: '2px 6px 4px 6px'
 };

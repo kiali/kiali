@@ -18,7 +18,6 @@ import {
   shouldRefreshData,
   getFirstDatapoints,
   summaryFont,
-  summaryHeader,
   summaryBodyTabs,
   hr,
   getDatapoints,
@@ -32,11 +31,11 @@ import { CancelablePromise, makeCancelablePromise } from '../../utils/Cancelable
 import { KialiIcon } from 'config/KialiIcon';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { ValidationStatus } from 'types/IstioObjects';
-import { PFColors } from '../../components/Pf/PfColors';
 import { ValidationSummary } from 'components/Validations/ValidationSummary';
 import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { descendents, edgesIn, edgesInOut, edgesOut, elems, select, selectOr } from 'pages/GraphPF/GraphPFElems';
+import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 
 type SummaryPanelNamespaceBoxMetricsState = {
   grpcRequestIn: Datapoint[];
@@ -114,7 +113,6 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     margin: 0,
     minWidth: summaryPanelWidth,
     overflowY: 'auto' as 'auto',
-    backgroundColor: PFColors.White,
     width: summaryPanelWidth
   };
 
@@ -188,8 +186,8 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     const tooltipTotalRef = React.createRef();
 
     return (
-      <div className="panel panel-default" style={SummaryPanelNamespaceBox.panelStyle}>
-        <div className="panel-heading" style={summaryHeader}>
+      <div className={panelStyle} style={SummaryPanelNamespaceBox.panelStyle}>
+        <div className={panelHeadingStyle}>
           {getTitle('Namespace')}
           {this.renderNamespace(namespace)}
           <br />

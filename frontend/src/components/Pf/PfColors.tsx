@@ -11,10 +11,12 @@
 // Colors used by Kiali for CSS styling
 export enum PFColors {
   Black100 = 'var(--pf-global--palette--black-100)',
-  Black150 = 'var(--pf-global--palette--black-150)', // use instead of GrayBackground
+  Black150 = 'var(--pf-global--palette--black-150)',
   Black200 = 'var(--pf-global--palette--black-200)',
+  Black300 = 'var(--pf-global--palette--black-300)',
+  Black400 = 'var(--pf-global--palette--black-400)',
   Black500 = 'var(--pf-global--palette--black-500)',
-  Black600 = 'var(--pf-global--palette--black-600)', // use instead of Gray
+  Black600 = 'var(--pf-global--palette--black-600)',
   Black700 = 'var(--pf-global--palette--black-700)',
   Black800 = 'var(--pf-global--palette--black-800)',
   Black900 = 'var(--pf-global--palette--black-900)',
@@ -35,7 +37,7 @@ export enum PFColors {
   LightGreen500 = 'var(--pf-global--palette--light-green-500)',
   Orange400 = 'var(--pf-global--palette--orange-400)',
   Purple100 = 'var(--pf-global--palette--purple-100)',
-  Purple200 = 'var(--pf-global--palette--purple-100)',
+  Purple200 = 'var(--pf-global--palette--purple-200)',
   Purple500 = 'var(--pf-global--palette--purple-500)',
   Red100 = 'var(--pf-global--palette--red-100)',
   Red200 = 'var(--pf-global--palette--red-200)',
@@ -47,19 +49,38 @@ export enum PFColors {
   ActiveText = 'var(--pf-global--primary-color--200)',
   Badge = 'var(--pf-global--palette--blue-300)',
   Replay = 'var(--pf-global--active-color--300)',
+  Link = 'var(--pf-global--link--Color)',
 
   // Health/Alert colors https://www.patternfly.org/v4/design-guidelines/styles/colors
   Danger = 'var(--pf-global--danger-color--100)',
   Info = 'var(--pf-global--info-color--100)',
   InfoBackground = 'var(--pf-global--info-color--200)',
-  Success = '#3e8635', // TODO: PF var is wrong, use var when fixed 'var(--pf-global--success-color--100)',
+  Success = 'var(--pf-global--success-color--100)',
   SuccessBackground = 'var(--pf-global--success-color--200)',
   Warning = 'var(--pf-global--warning-color--100)',
 
   // chart-specific color values, for rates charts where 4xx is really Danger not Warning
   ChartDanger = 'var(--pf-global--danger-color--300)',
   ChartOther = 'var(--pf-global--palette-black-1000)',
-  ChartWarning = 'var(--pf-global--danger-color--100)'
+  ChartWarning = 'var(--pf-global--danger-color--100)',
+
+  // PF background colors (compatible with dark mode)
+  BackgroundColor100 = 'var(--pf-global--BackgroundColor--100)',
+  BackgroundColor150 = 'var(--pf-global--BackgroundColor--150)',
+  BackgroundColor200 = 'var(--pf-global--BackgroundColor--200)',
+
+  // PF standard colors (compatible with dark mode)
+  Color100 = 'var(--pf-global--Color--100)',
+  Color200 = 'var(--pf-global--Color--200)',
+  ColorLight100 = 'var(--pf-global--Color--light-100)',
+  ColorLight200 = 'var(--pf-global--Color--light-200)',
+  ColorLight300 = 'var(--pf-global--Color--light-300)',
+
+  // PF border colors (compatible with dark mode)
+  BorderColor100 = 'var(--pf-global--BorderColor--100)',
+  BorderColor200 = 'var(--pf-global--BorderColor--200)',
+  BorderColor300 = 'var(--pf-global--BorderColor--300)',
+  BorderColorLight100 = 'var(--pf-global--BorderColor--light-100)'
 }
 
 // The hex string value of the PF CSS variable
@@ -71,6 +92,7 @@ export type PFColorValues = {
   Black150: PFColorVal;
   Black200: PFColorVal;
   Black300: PFColorVal;
+  Black400: PFColorVal;
   Black500: PFColorVal;
   Black600: PFColorVal;
   Black700: PFColorVal;
@@ -78,6 +100,8 @@ export type PFColorValues = {
   Blue50: PFColorVal;
   Blue300: PFColorVal;
   Blue600: PFColorVal;
+  Red50: PFColorVal;
+  Orange50: PFColorVal;
   Gold400: PFColorVal;
   Green400: PFColorVal;
   Purple200: PFColorVal;
@@ -87,6 +111,18 @@ export type PFColorValues = {
   Danger: PFColorVal;
   Success: PFColorVal;
   Warning: PFColorVal;
+
+  // PF colors (compatible with dark mode)
+  BackgroundColor100: PFColorVal;
+  BackgroundColor200: PFColorVal;
+  BackgroundColor300: PFColorVal;
+
+  Color100: PFColorVal;
+  Color200: PFColorVal;
+
+  BorderColor100: PFColorVal;
+  BorderColor200: PFColorVal;
+  BorderColor300: PFColorVal;
 };
 
 export let PFColorVals: PFColorValues;
@@ -98,6 +134,7 @@ export const setPFColorVals = (element: Element) => {
     Black150: getComputedStyle(element).getPropertyValue('--pf-global--palette--black-150'),
     Black200: getComputedStyle(element).getPropertyValue('--pf-global--palette--black-200'),
     Black300: getComputedStyle(element).getPropertyValue('--pf-global--palette--black-300'),
+    Black400: getComputedStyle(element).getPropertyValue('--pf-global--palette--black-400'),
     Black500: getComputedStyle(element).getPropertyValue('--pf-global--palette--black-500'),
     Black600: getComputedStyle(element).getPropertyValue('--pf-global--palette--black-600'),
     Black700: getComputedStyle(element).getPropertyValue('--pf-global--palette--black-700'),
@@ -105,6 +142,8 @@ export const setPFColorVals = (element: Element) => {
     Blue50: getComputedStyle(element).getPropertyValue('--pf-global--palette--blue-50'),
     Blue300: getComputedStyle(element).getPropertyValue('--pf-global--palette--blue-300'),
     Blue600: getComputedStyle(element).getPropertyValue('--pf-global--palette--blue-600'),
+    Red50: getComputedStyle(element).getPropertyValue('--pf-global--palette--red-50'),
+    Orange50: getComputedStyle(element).getPropertyValue('--pf-global--palette--orange-50'),
     Gold400: getComputedStyle(element).getPropertyValue('--pf-global--palette--gold-400'),
     Green400: getComputedStyle(element).getPropertyValue('--pf-global--palette--green-400'),
     Purple200: getComputedStyle(element).getPropertyValue('--pf-global--palette--purple-200'),
@@ -112,7 +151,19 @@ export const setPFColorVals = (element: Element) => {
 
     // status color values used by kiali
     Danger: getComputedStyle(element).getPropertyValue('--pf-global--danger-color--100'),
-    Success: '#3E8635', // TODO: PF var is wrong, use var when fixed 'var(--pf-global--success-color--100)',
-    Warning: getComputedStyle(element).getPropertyValue('--pf-global--warning-color--100')
+    Success: getComputedStyle(element).getPropertyValue('--pf-global--success-color--100'),
+    Warning: getComputedStyle(element).getPropertyValue('--pf-global--warning-color--100'),
+
+    // PF colors (compatible with dark mode)
+    BackgroundColor100: getComputedStyle(element).getPropertyValue('--pf-global--BackgroundColor--100'),
+    BackgroundColor200: getComputedStyle(element).getPropertyValue('--pf-global--BackgroundColor--200'),
+    BackgroundColor300: getComputedStyle(element).getPropertyValue('--pf-global--BackgroundColor--300'),
+
+    Color100: getComputedStyle(element).getPropertyValue('--pf-global--Color--100'),
+    Color200: getComputedStyle(element).getPropertyValue('--pf-global--Color--200'),
+
+    BorderColor100: getComputedStyle(element).getPropertyValue('--pf-global--BorderColor--100'),
+    BorderColor200: getComputedStyle(element).getPropertyValue('--pf-global--BorderColor--200'),
+    BorderColor300: getComputedStyle(element).getPropertyValue('--pf-global--BorderColor--300')
   };
 };

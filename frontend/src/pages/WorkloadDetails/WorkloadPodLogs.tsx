@@ -175,7 +175,7 @@ const toolbarInputStyle = kialiStyle({
   }
 });
 
-const logsBackground = (enabled: boolean) => ({ backgroundColor: enabled ? PFColors.Black1000 : 'gray' });
+const logsBackground = (enabled: boolean) => ({ backgroundColor: enabled ? PFColors.Black1000 : PFColors.Black500 });
 const logsHeight = (showToolbar: boolean, fullscreen: boolean, kiosk: string, showMaxLinesWarning: boolean) => {
   const toolbarHeight = showToolbar ? '0px' : '49px';
   const maxLinesWarningHeight = showMaxLinesWarning ? '27px' : '0px';
@@ -521,17 +521,20 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
         </div>
       );
     }
+
     const le = e.logEntry!;
+    const messageColor = le.color! ?? PFColors.Color200;
+
     return !le.accessLog ? (
       <div key={`le-d-${index}`} style={{ height: '22px', lineHeight: '22px', paddingLeft: '10px', ...style }}>
-        <p key={`le-${index}`} style={{ color: le.color!, fontSize: '12px' }}>
+        <p key={`le-${index}`} style={{ color: messageColor, fontSize: '12px' }}>
           {this.entryToString(e)}
         </p>
       </div>
     ) : (
       <div key={`al-${index}`} style={{ height: '22px', lineHeight: '22px', paddingLeft: '10px', ...style }}>
         {this.state.showTimestamps && (
-          <span key={`al-s-${index}`} style={{ color: le.color!, fontSize: '12px', marginRight: '5px' }}>
+          <span key={`al-s-${index}`} style={{ color: messageColor, fontSize: '12px', marginRight: '5px' }}>
             {formatDate(le.timestamp)}
           </span>
         )}
@@ -555,12 +558,12 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
               this.addAccessLogModal(le.message, le.accessLog!);
             }}
           >
-            <KialiIcon.Info key={`al-i-${index}`} className={alInfoIcon} color={le.color!} />
+            <KialiIcon.Info key={`al-i-${index}`} className={alInfoIcon} color={messageColor} />
           </Button>
         </Tooltip>
         <p
           key={`al-p-${index}`}
-          style={{ color: le.color!, fontSize: '12px', verticalAlign: 'center', display: 'inline-block' }}
+          style={{ color: messageColor, fontSize: '12px', verticalAlign: 'center', display: 'inline-block' }}
         >
           {le.message}
         </p>

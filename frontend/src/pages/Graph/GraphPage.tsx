@@ -141,6 +141,7 @@ type ReduxProps = {
   toggleIdleNodes: () => void;
   toggleLegend: () => void;
   updateSummary: (event: GraphEvent) => void;
+  theme: string;
 };
 
 export type GraphPageProps = Partial<GraphURLPathProps> &
@@ -192,7 +193,10 @@ const kioskContainerStyle = kialiStyle({
 });
 
 const cytoscapeGraphContainerStyle = kialiStyle({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
-const cytoscapeGraphWrapperDivStyle = kialiStyle({ position: 'relative', backgroundColor: PFColors.Black200 });
+const cytoscapeGraphWrapperDivStyle = kialiStyle({
+  position: 'relative',
+  backgroundColor: PFColors.BackgroundColor200
+});
 const cytoscapeToolbarWrapperDivStyle = kialiStyle({
   position: 'absolute',
   bottom: '5px',
@@ -205,16 +209,15 @@ const graphTimeRange = kialiStyle({
   top: '10px',
   left: '10px',
   width: 'auto',
-  zIndex: 2,
-  backgroundColor: PFColors.White
-});
-
-const whiteBackground = kialiStyle({
-  backgroundColor: PFColors.White
+  zIndex: 2
 });
 
 const replayBackground = kialiStyle({
   backgroundColor: PFColors.Replay
+});
+
+const graphBackground = kialiStyle({
+  backgroundColor: PFColors.BackgroundColor100
 });
 
 const graphLegendStyle = kialiStyle({
@@ -474,7 +477,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
               )}
               {isReady && (
                 <Chip
-                  className={`${graphTimeRange} ${this.props.replayActive ? replayBackground : whiteBackground}`}
+                  className={`${graphTimeRange} ${this.props.replayActive ? replayBackground : graphBackground}`}
                   isReadOnly={true}
                 >
                   {this.props.replayActive && <Badge style={{ marginRight: '4px' }} isRead={true}>{`Replay`}</Badge>}
@@ -895,7 +898,8 @@ const mapStateToProps = (state: KialiAppState) => ({
   summaryData: state.graph.summaryData,
   trace: state.jaegerState?.selectedTrace,
   trafficRates: trafficRatesSelector(state),
-  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
+  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
+  theme: state.globalState.theme
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({

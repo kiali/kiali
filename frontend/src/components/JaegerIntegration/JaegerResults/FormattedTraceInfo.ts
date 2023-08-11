@@ -5,13 +5,13 @@ import { PFColors } from 'components/Pf/PfColors';
 import { formatDuration, formatRelativeDate, isErrorTag } from 'utils/tracing/TracingHelper';
 
 export const shortIDStyle = kialiStyle({
-  color: PFColors.Black600,
+  color: PFColors.Color200,
   padding: 4,
   fontSize: 12
 });
 
 export const fullIDStyle = kialiStyle({
-  color: PFColors.Black600,
+  color: PFColors.Color200,
   paddingLeft: 10,
   fontSize: 14
 });

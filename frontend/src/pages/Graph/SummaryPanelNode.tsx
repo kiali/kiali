@@ -9,7 +9,7 @@ import {
   renderHealth
 } from './SummaryLink';
 import { DecoratedGraphNodeData, DestService, NodeType, RankResult, SummaryPanelPropType } from '../../types/Graph';
-import { getTitle, summaryBodyTabs, summaryFont, summaryHeader, summaryPanel } from './SummaryPanelCommon';
+import { getTitle, summaryBodyTabs, summaryFont, summaryPanel } from './SummaryPanelCommon';
 import { decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { clickHandler, getOptions } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
@@ -38,13 +38,14 @@ import { useServiceDetailForGraphNode } from '../../hooks/services';
 import { useKialiSelector } from '../../hooks/redux';
 import { groupMenuStyle } from 'styles/DropdownStyles';
 import { serverConfig } from '../../config';
+import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 
 const summaryNodeActionsStyle = kialiStyle({
   $nest: {
-    '.pf-c-dropdown__toggle': {
+    '& .pf-c-dropdown__toggle': {
       fontSize: 'var(--graph-side-panel--font-size)'
     },
-    '.pf-c-dropdown__menu-item': {
+    '& .pf-c-dropdown__menu-item': {
       fontSize: 'var(--graph-side-panel--font-size)'
     }
   }
@@ -173,8 +174,8 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     }
 
     return (
-      <div ref={this.mainDivRef} className={`panel panel-default ${summaryPanel}`}>
-        <div className="panel-heading" style={summaryHeader}>
+      <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
+        <div className={panelHeadingStyle}>
           {getTitle(nodeType)}
           <div>
             <span>
@@ -286,7 +287,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
 
   private renderTrafficOnly() {
     return (
-      <div className="panel-body">
+      <div className={panelBodyStyle}>
         <SummaryPanelNodeTraffic {...this.props} />
       </div>
     );

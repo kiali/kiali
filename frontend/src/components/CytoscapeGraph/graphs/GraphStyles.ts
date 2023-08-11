@@ -132,7 +132,7 @@ const hostsList = kialiStyle({
   textAlign: 'initial',
   marginTop: 2,
   paddingTop: 2,
-  borderTop: `1px solid ${PFColors.Black600}`
+  borderTop: `1px solid ${PFColors.Color200}`
 });
 
 const labelDefault = kialiStyle({
@@ -180,8 +180,8 @@ export class GraphStyles {
     NodeColorFillBoxCluster = PFColorVals.Black300;
     NodeColorFillBoxNamespace = PFColorVals.Black100;
     NodeColorFillHover = PFColorVals.Blue50;
-    NodeColorFillHoverDegraded = '#fdf2e5'; // roughly an Orange50 if it were defined
-    NodeColorFillHoverFailure = '#ffe6e6'; // very close to Red50 if we want to change
+    NodeColorFillHoverDegraded = PFColorVals.Orange50;
+    NodeColorFillHoverFailure = PFColorVals.Red50;
   };
 
   static options() {

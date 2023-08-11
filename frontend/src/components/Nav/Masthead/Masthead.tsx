@@ -9,6 +9,7 @@ import { PfSpinner } from '../../PfSpinner';
 import { UserDropdown } from './UserDropdown';
 import { HelpDropdown } from './HelpDropdown';
 import { MessageCenterTrigger } from '../../../components/MessageCenter/MessageCenterTrigger';
+import { ThemeSwitch } from 'components/ThemeSwitch/ThemeSwitch';
 
 export class MastheadItems extends React.Component {
   render() {
@@ -30,6 +31,9 @@ export class MastheadItems extends React.Component {
                     </Label>
                   </Tooltip>
                 )}
+              </FlexItem>
+              <FlexItem style={{ marginLeft: '1rem' }}>
+                <ThemeSwitch />
               </FlexItem>
               <FlexItem>
                 <IstioStatus cluster={homeCluster?.name} />

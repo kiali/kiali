@@ -1,6 +1,7 @@
 import { CubesIcon } from '@patternfly/react-icons';
 import { Node, observer, ScaleDetailsLevel, ShapeProps, WithSelectionProps } from '@patternfly/react-topology';
 import useDetailsLevel from '@patternfly/react-topology/dist/esm/hooks/useDetailsLevel';
+import { PFColors } from 'components/Pf/PfColors';
 import React from 'react';
 import { BaseGroup } from '../components/group';
 
@@ -45,7 +46,7 @@ const StyleGroupComponent: React.FC<StyleGroupProps> = ({
 
     return (
       <g transform={`translate(${(collapsedWidth - iconSize) / 2}, ${(collapsedHeight - iconSize) / 2})`}>
-        <Component style={{ color: '#393F44' }} width={iconSize} height={iconSize} />
+        <Component style={{ color: PFColors.Color200 }} width={iconSize} height={iconSize} />
       </g>
     );
   };

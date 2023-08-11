@@ -80,13 +80,13 @@ import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 
 const gridStyleCompact = kialiStyle({
-  backgroundColor: '#f5f5f5',
+  backgroundColor: PFColors.BackgroundColor200,
   paddingBottom: '20px',
   marginTop: '0px'
 });
 
 const gridStyleList = kialiStyle({
-  backgroundColor: '#f5f5f5',
+  backgroundColor: PFColors.BackgroundColor200,
   // The VirtualTable component has a different style than cards
   // We need to adjust the grid style if we are on compact vs list view
   padding: '0 !important',
@@ -1090,16 +1090,14 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             )}
           </RenderComponentScroll>
         ) : (
-          <div style={{ backgroundColor: '#f5f5f5' }}>
-            <EmptyState className={emptyStateStyle} variant={EmptyStateVariant.full}>
-              <Title headingLevel="h5" size={TitleSizes.lg} style={{ marginTop: '50px' }}>
-                No unfiltered namespaces
-              </Title>
-              <EmptyStateBody>
-                Either all namespaces are being filtered or the user has no permission to access namespaces.
-              </EmptyStateBody>
-            </EmptyState>
-          </div>
+          <EmptyState className={emptyStateStyle} variant={EmptyStateVariant.full}>
+            <Title headingLevel="h5" size={TitleSizes.lg} style={{ marginTop: '50px' }}>
+              No unfiltered namespaces
+            </Title>
+            <EmptyStateBody>
+              Either all namespaces are being filtered or the user has no permission to access namespaces.
+            </EmptyStateBody>
+          </EmptyState>
         )}
         <OverviewTrafficPolicies
           opTarget={this.state.opTarget}
@@ -1123,7 +1121,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     const labelsLength = ns.labels ? `${Object.entries(ns.labels).length}` : 'No';
     const labelContent = ns.labels ? (
       <div
-        style={{ color: PFColors.Blue400, textAlign: 'left', cursor: 'pointer' }}
+        style={{ color: PFColors.Link, textAlign: 'left', cursor: 'pointer' }}
         onClick={() => this.setDisplayMode(OverviewDisplayMode.LIST)}
       >
         <Tooltip

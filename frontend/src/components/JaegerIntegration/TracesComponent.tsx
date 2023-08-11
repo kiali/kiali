@@ -238,6 +238,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
 
   render() {
     const jaegerURL = this.getJaegerUrl();
+
     return (
       <>
         <RenderComponentScroll>

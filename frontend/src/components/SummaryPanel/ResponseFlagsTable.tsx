@@ -3,6 +3,7 @@ import _ from 'lodash';
 import { Responses } from '../../types/Graph';
 import { responseFlags } from '../../utils/ResponseFlags';
 import { summaryTitle } from 'pages/Graph/SummaryPanelCommon';
+import { tableStyle } from 'styles/TableStyle';
 
 type ResponseFlagsTableProps = {
   responses: Responses;
@@ -21,7 +22,7 @@ export class ResponseFlagsTable extends React.PureComponent<ResponseFlagsTablePr
     return (
       <>
         <div className={summaryTitle}>{this.props.title}</div>
-        <table className="table">
+        <table className={tableStyle}>
           <thead>
             <tr key="table-header">
               <th>Code</th>

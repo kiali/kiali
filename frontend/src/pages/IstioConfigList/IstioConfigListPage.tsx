@@ -203,12 +203,10 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
 
     return (
       <>
-        <div style={{ backgroundColor: '#fff' }}>
-          <DefaultSecondaryMasthead
-            rightToolbar={<RefreshButton key={'Refresh'} handleRefresh={this.updateListItems} />}
-            actionsToolbar={<IstioActionsNamespaceDropdown />}
-          />
-        </div>
+        <DefaultSecondaryMasthead
+          rightToolbar={<RefreshButton key={'Refresh'} handleRefresh={this.updateListItems} />}
+          actionsToolbar={<IstioActionsNamespaceDropdown />}
+        />
         <RenderContent>
           <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} type="istio">
             <StatefulFilters
