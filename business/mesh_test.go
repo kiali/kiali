@@ -618,8 +618,8 @@ func TestGetMeshMultipleRevisions(t *testing.T) {
 			Name:      "istiod-1-18",
 			Namespace: "istio-system",
 			Labels: map[string]string{
-				"app":                     "istiod",
-				models.IstioRevisionLabel: "1-18-0",
+				"app":                       "istiod",
+				business.IstioRevisionLabel: "1-18-0",
 			},
 		},
 	}
@@ -628,8 +628,8 @@ func TestGetMeshMultipleRevisions(t *testing.T) {
 			Name:      "istiod-1-19",
 			Namespace: "istio-system",
 			Labels: map[string]string{
-				"app":                     "istiod",
-				models.IstioRevisionLabel: "1-19-0",
+				"app":                       "istiod",
+				business.IstioRevisionLabel: "1-19-0",
 			},
 		},
 	}
@@ -718,7 +718,7 @@ trustDomain: cluster.local
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
 			Name:        "istio-system",
 			Labels:      map[string]string{"istio-injection": "enabled"},
-			Annotations: map[string]string{models.IstioControlPlaneClustersLabel: conf.KubernetesConfig.ClusterName},
+			Annotations: map[string]string{business.IstioControlPlaneClustersLabel: conf.KubernetesConfig.ClusterName},
 		}},
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
 	)
