@@ -5,6 +5,7 @@ infomsg() {
 }
 
 TEST_SUITE="backend"
+SETUP_ONLY="false"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -18,12 +19,23 @@ while [[ $# -gt 0 ]]; do
       fi
       shift;shift
       ;;
+    -so|--setup-only)
+      SETUP_ONLY="${2}"
+      if [ "${SETUP_ONLY}" != "true" -a "${SETUP_ONLY}" != "false" ]; then
+        echo "--setup-only option must be one of 'true' or 'false'"
+        exit 1
+      fi
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
-  -ts|--test-suite <backend|frontend|backend-multi-cluster|frontend-multi-cluster|all>
+  -ts|--test-suite <backend|frontend|frontend-multi-cluster>
     Which test suite to run.
     Default: backend
+  -so|--setup-only <true|false>
+    If true, only setup the test environment and exit without running the tests.
+    Default: false 
   -h|--help:
        this message
 HELPMSG
@@ -39,6 +51,7 @@ done
 # print out our settings for debug purposes
 cat <<EOM
 === SETTINGS ===
+SETUP_ONLY=$SETUP_ONLY
 TEST_SUITE=$TEST_SUITE
 === SETTINGS ===
 EOM
@@ -73,6 +86,10 @@ if [ "${TEST_SUITE}" == "backend" ]; then
   # Ensure kiali pods are healthy before running tests
   kubectl wait --for=condition=Ready pods -l app.kubernetes.io/name=kiali -n istio-system
 
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
   # Run backend integration tests
   cd "${SCRIPT_DIR}"/../tests/integration/tests
   go test -v
@@ -94,6 +111,10 @@ elif [ "${TEST_SUITE}" == "frontend" ]; then
   # Ensure kiali pods are healthy before running tests
   kubectl wait --for=condition=Ready pods -l app.kubernetes.io/name=kiali -n istio-system
   
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+  
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run
 elif [ "${TEST_SUITE}" == "frontend-multi-cluster" ]; then
@@ -106,6 +127,10 @@ elif [ "${TEST_SUITE}" == "frontend-multi-cluster" ]; then
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
   # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
   export CYPRESS_VIDEO=false
+  
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
 
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:multi-cluster
