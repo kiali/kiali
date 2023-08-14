@@ -330,16 +330,14 @@ func (in *MeshService) discoverKiali(ctx context.Context, clusterName string, r 
 	for _, d := range services {
 		kiali := convertKialiServiceToInstance(&d)
 		// If URL is already populated (because of an annotation), trust that because it's user configuration.
-		// If empty, check Kiali URL configured per cluster name.
-		if kiali.Url == "" {
-			for _, cfgurl := range config.Get().KialiFeatureFlags.Clustering.KialiURLs {
-				if cfgurl.ClusterName == clusterName {
-					kiali.Url = cfgurl.URL
-					break
-				}
+		// But if Kiali URL configured per cluster name, instance name and namespace, then use that URL.
+		for _, cfgurl := range config.Get().KialiFeatureFlags.Clustering.KialiURLs {
+			if cfgurl.ClusterName == clusterName && cfgurl.InstanceName == kiali.ServiceName && cfgurl.Namespace == kiali.Namespace {
+				kiali.Url = cfgurl.URL
+				break
 			}
 		}
-		// If still empty, only guess ourselves on our own cluster.
+		// If URL is still empty, only guess ourselves on our own cluster.
 		if kiali.Url == "" && clusterName == in.conf.KubernetesConfig.ClusterName {
 			kiali.Url = httputil.GuessKialiURL(r)
 		}
