@@ -51,12 +51,23 @@ func TracerName() string {
 
 // InitTracer initalizes a TracerProvider that exports to jaeger.
 // This will panic if there's an error in setup.
+
 func InitTracer(collectorURL string) *sdktrace.TracerProvider {
-	exporter, err := getExporter(collectorURL)
+
+	var exporter sdktrace.SpanExporter
+	var err error
+	// TODO: Make a clientFactory
+	if config.Get().ExternalServices.Tracing.Client == "jaeger" {
+		exporter, err = jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(collectorURL)))
+	} else {
+		// since v1.35.0 you can run Jaeger as an OTLP endpoint and for trace visualization
+		client := otlptracehttp.NewClient()
+		exporter, err = otlptrace.New(context.TODO(), client)
+	}
+
 	if err != nil {
 		panic(err)
 	}
-
 	tp := sdktrace.NewTracerProvider(
 		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(config.Get().Server.Observability.Tracing.SamplingRate))),
 		sdktrace.WithBatcher(exporter),

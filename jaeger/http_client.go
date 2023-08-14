@@ -17,7 +17,8 @@ import (
 
 func getAppTracesHTTP(client http.Client, baseURL *url.URL, namespace, app string, q models.TracingQuery) (response *JaegerResponse, err error) {
 	url := *baseURL
-	url.Path = path.Join(url.Path, "/api/traces")
+	//url.Path = path.Join(url.Path, "/api/traces")
+	url.Path = path.Join(url.Path, "/querier/api/traces")
 	jaegerServiceName := buildJaegerServiceName(namespace, app)
 	prepareQuery(&url, jaegerServiceName, q)
 	r, err := queryTracesHTTP(client, &url)
@@ -29,7 +30,9 @@ func getAppTracesHTTP(client http.Client, baseURL *url.URL, namespace, app strin
 
 func getTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (*JaegerSingleTrace, error) {
 	u := *endpoint
-	u.Path = path.Join(u.Path, "/api/traces/"+traceID)
+	// /querier/api/traces/<traceid>?mode=xxxx&blockStart=0000&blockEnd=FFFF&start=<start>&end=<end>
+	// u.Path = path.Join(u.Path, "/api/traces/"+traceID)
+	u.Path = path.Join(u.Path, "/querier/api/traces/"+traceID)
 	resp, code, reqError := makeRequest(client, u.String(), nil)
 	if reqError != nil {
 		log.Errorf("Jaeger query error: %s [code: %d, URL: %v]", reqError, code, u)

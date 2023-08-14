@@ -203,6 +203,7 @@ type GrafanaVariablesConfig struct {
 // TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
 	Auth                 Auth              `yaml:"auth"`
+	Client               string            `yaml:"client"`  // jaeger | otel
 	Enabled              bool              `yaml:"enabled"` // Enable Jaeger in Kiali
 	InClusterURL         string            `yaml:"in_cluster_url"`
 	IsCore               bool              `yaml:"is_core,omitempty"`
@@ -658,6 +659,7 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
+				Client:               "otel",
 				Enabled:              true,
 				InClusterURL:         "http://tracing.istio-system:16685/jaeger",
 				IsCore:               false,
