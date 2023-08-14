@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Tab, Tooltip } from '@patternfly/react-core';
 import { Node } from '@patternfly/react-topology';
 import { kialiStyle } from 'styles/StyleUtils';
-import { summaryFont, summaryHeader, summaryBodyTabs, summaryPanelWidth, getTitle } from './SummaryPanelCommon';
+import { summaryFont, summaryBodyTabs, summaryPanelWidth, getTitle } from './SummaryPanelCommon';
 import { RateTableGrpc, RateTableHttp, RateTableTcp } from 'components/SummaryPanel/RateTable';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { PFColors } from 'components/Pf/PfColors';
@@ -16,6 +16,7 @@ import {
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { KialiPageLink } from 'components/Link/KialiPageLink';
 import { descendents, edgesIn, edgesInOut, edgesOut, elems, select } from 'pages/GraphPF/GraphPFElems';
+import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 
 type SummaryPanelClusterBoxState = {
   clusterBox: any;
@@ -35,7 +36,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     margin: 0,
     minWidth: summaryPanelWidth,
     overflowY: 'auto' as 'auto',
-    backgroundColor: PFColors.White,
+    backgroundColor: PFColors.BackgroundColor100,
     width: summaryPanelWidth
   };
 
@@ -89,8 +90,8 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     const tooltipTotalRef = React.createRef();
 
     return (
-      <div className="panel panel-default" style={SummaryPanelClusterBox.panelStyle}>
-        <div className="panel-heading" style={summaryHeader}>
+      <div className={panelStyle} style={SummaryPanelClusterBox.panelStyle}>
+        <div className={panelHeadingStyle}>
           {getTitle('Cluster')}
           {this.renderCluster(cluster)}
           {this.renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}

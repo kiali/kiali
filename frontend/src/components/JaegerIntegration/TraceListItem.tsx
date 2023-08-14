@@ -28,11 +28,11 @@ const errorStyle = kialiStyle({
 });
 
 const secondaryLeftStyle = kialiStyle({
-  color: PFColors.Black600
+  color: PFColors.Color200
 });
 
 const secondaryRightStyle = kialiStyle({
-  color: PFColors.Black600,
+  color: PFColors.Color200,
   float: 'right'
 });
 

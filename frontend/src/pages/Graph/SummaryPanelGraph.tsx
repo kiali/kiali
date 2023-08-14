@@ -24,21 +24,20 @@ import {
   shouldRefreshData,
   summaryBodyTabs,
   summaryFont,
-  summaryHeader,
   summaryPanelWidth
 } from './SummaryPanelCommon';
 import { Datapoint, IstioMetricsMap, Labels } from '../../types/Metrics';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise, PromisesRegistry } from '../../utils/CancelablePromises';
 import { KialiIcon } from 'config/KialiIcon';
-import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { ValidationStatus } from 'types/IstioObjects';
 import { Namespace } from 'types/Namespace';
 import { ValidationSummary } from 'components/Validations/ValidationSummary';
-import { PFColors } from '../../components/Pf/PfColors';
 import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { edgesIn, edgesOut, elems, leafNodes, NodeData, select } from 'pages/GraphPF/GraphPFElems';
+import { SimpleTabs } from 'components/Tab/SimpleTabs';
+import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 
 type SummaryPanelGraphMetricsState = {
   grpcRequestIn: Datapoint[];
@@ -119,7 +118,6 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     margin: 0,
     minWidth: summaryPanelWidth,
     overflowY: 'auto' as 'auto',
-    backgroundColor: PFColors.White,
     width: summaryPanelWidth
   };
 
@@ -223,8 +221,8 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     const tooltipTotalRef = React.createRef();
 
     return (
-      <div id="summary-panel-graph" className="panel panel-default" style={SummaryPanelGraph.panelStyle}>
-        <div id="summary-panel-graph-heading" className="panel-heading" style={summaryHeader}>
+      <div id="summary-panel-graph" className={panelStyle} style={SummaryPanelGraph.panelStyle}>
+        <div id="summary-panel-graph-heading" className={panelHeadingStyle}>
           {getTitle('Current Graph')}
           {this.renderNamespacesSummary()}
           <br />

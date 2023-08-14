@@ -21,7 +21,7 @@ import { history } from './History';
 import { NamespaceActions } from 'actions/NamespaceAction';
 import { Namespace } from 'types/Namespace';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
-import { DurationInSeconds, IntervalInMilliseconds } from 'types/Common';
+import { DurationInSeconds, IntervalInMilliseconds, PF_THEME_DARK, Theme } from 'types/Common';
 import { config } from 'config';
 import { store } from 'store/ConfigStore';
 import { toGrpcRate, toHttpRate, toTcpRate, TrafficRate } from 'types/Graph';
@@ -29,6 +29,7 @@ import { GraphToolbarActions } from 'actions/GraphToolbarActions';
 import { StatusState, StatusKey } from 'types/StatusState';
 import { PromisesRegistry } from '../utils/CancelablePromises';
 import { GlobalActions } from '../actions/GlobalActions';
+import { getKialiTheme } from 'utils/ThemeUtils';
 
 interface AuthenticationControllerReduxProps {
   addMessage: (content: string, detail: string, groupId?: string, msgType?: MessageType, showNotif?: boolean) => void;
@@ -296,13 +297,19 @@ class AuthenticationControllerComponent extends React.Component<
   }
 
   private setDocLayout = () => {
-    if (document.body) {
-      const isKiosk = isKioskMode();
-      if (isKiosk) {
-        document.body.classList.add('kiosk');
-      }
-      store.dispatch(GlobalActions.setKiosk(getKioskMode()));
+    // Set theme from browser cache
+    const theme = getKialiTheme();
+    if (theme === Theme.DARK) {
+      document.documentElement.classList.add(PF_THEME_DARK);
     }
+    store.dispatch(GlobalActions.setTheme(theme));
+
+    // Set Kiosk mode
+    const isKiosk = isKioskMode();
+    if (isKiosk) {
+      document.body.classList.add('kiosk');
+    }
+    store.dispatch(GlobalActions.setKiosk(getKioskMode()));
   };
 
   private processServerStatus = (status: StatusState) => {

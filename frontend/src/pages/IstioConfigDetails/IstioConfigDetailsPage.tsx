@@ -4,8 +4,6 @@ import { aceOptions, IstioConfigDetails, IstioConfigId, safeDumpOptions } from '
 import * as AlertUtils from '../../utils/AlertUtils';
 import * as API from '../../services/Api';
 import AceEditor from 'react-ace';
-import 'ace-builds/src-noconflict/mode-yaml';
-import 'ace-builds/src-noconflict/theme-eclipse';
 import {
   HelpMessage,
   ObjectReference,
@@ -56,9 +54,7 @@ import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { basicTabStyle } from 'styles/TabStyles';
 import { istioAceEditorStyle } from 'styles/AceEditorStyle';
-
-// Enables the search box for the ACEeditor
-require('ace-builds/src-noconflict/ext-searchbox');
+import { Theme } from 'types/Common';
 
 const rightToolbarStyle = kialiStyle({
   zIndex: 500
@@ -93,6 +89,7 @@ interface IstioConfigDetailsProps {
   istioConfigId: IstioConfigId;
   kiosk: string;
   istioAPIEnabled: boolean;
+  theme: string;
 }
 
 class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetailsProps, IstioConfigDetailsState> {
@@ -513,7 +510,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
         <AceEditor
           ref={this.aceEditorRef}
           mode="yaml"
-          theme="eclipse"
+          theme={this.props.theme === Theme.DARK ? 'twilight' : 'eclipse'}
           onChange={this.onEditorChange}
           height={`calc(var(--kiali-yaml-editor-height) + ${isParentKiosk(this.props.kiosk) ? '100px' : '0px'})`}
           width={'100%'}
@@ -636,7 +633,8 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
 
 const mapStateToProps = (state: KialiAppState) => ({
   kiosk: state.globalState.kiosk,
-  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
+  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
+  theme: state.globalState.theme
 });
 
 export const IstioConfigDetailsPage = connect(mapStateToProps)(IstioConfigDetailsPageComponent);

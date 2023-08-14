@@ -82,7 +82,7 @@ export class HealthDetails extends React.PureComponent<Props, {}> {
         {
           <>
             {item.title + (item.text && item.text.length > 0 ? ': ' : '')}{' '}
-            {config && <InfoAltIcon color={PFColors.Black600} />}
+            {config && <InfoAltIcon color={PFColors.Color200} />}
           </>
         }
         {item.text}

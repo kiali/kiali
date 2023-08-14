@@ -44,6 +44,10 @@ while [[ $# -gt 0 ]]; do
       KIALI_SRC_HOME="$2"
       shift;shift
       ;;
+    -ke|--kind-exe)
+      KIND="$2"
+      shift;shift
+      ;;
     -kn|--kind-name)
       KIND_NAME="$2"
       shift;shift
@@ -105,6 +109,7 @@ $0 [option...] command
 -hcr|--helm-charts-repo  Location of the helm charts git repo. (default: ../helm-charts)
 -jxf|--junit-xml-file    Location of the JUnit XML results file; set to "" to not output this file. (default: results.xml in the --test-logs-dir)
 -ksh|--kiali_src-home    Location of the Kiali source code, the makefiles, and operator/molecule tests. (default: ..)
+-ke|--kind-exe           If cluster type is 'kind' you can specify the kind executable to use via this option.
 -kn|--kind-name          If cluster type is 'kind' you can specify the cluster name that is in use via this option.
 -me|--minikube-exe       If cluster type is 'minikube' you can specify the minikube executable that should be used.
 -mp|--minikube-profile   If cluster type is 'minikube' you can specify the profile that is in use via this option.
@@ -237,6 +242,7 @@ echo TEST_CLIENT_EXE="$TEST_CLIENT_EXE"
 echo COLOR="$COLOR"
 echo MINIKUBE_EXE="$MINIKUBE_EXE"
 echo MINIKUBE_PROFILE="$MINIKUBE_PROFILE"
+echo KIND="$KIND"
 echo KIND_NAME="$KIND_NAME"
 echo HELM_CHARTS_REPO="$HELM_CHARTS_REPO"
 echo CI="$CI"
@@ -375,8 +381,9 @@ if [ ! -z "${MINIKUBE_EXE}" ]; then
   export MINIKUBE="${MINIKUBE_EXE}"
 fi
 
-# the user may have specified a specific KinD cluster name to use - export this so make knows about it
+# the user may have specified a specific KinD cluster name and/or executable to use - export these so make knows about them
 export KIND_NAME
+export KIND
 
 # build the latest Helm Chart
 echo

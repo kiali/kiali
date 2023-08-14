@@ -1,3 +1,4 @@
+import { PFColors } from 'components/Pf/PfColors';
 import { NestedCSSProperties } from 'typestyle/lib/types';
 import { kialiStyle } from './StyleUtils';
 
@@ -10,10 +11,10 @@ export const istioAceEditorStyle = kialiStyle({
   '--kiali-yaml-editor-height': 'calc(var(--kiali-details-pages-tab-content-height) - 170px)',
   position: 'relative',
   minHeight: '200px',
-  border: '1px solid #8b8d8f',
+  border: `1px solid ${PFColors.BorderColor200}`,
   fontSize: 'var(--kiali-global--font-size) !important',
   $nest: {
-    'div.ace_gutter-cell.ace_info': {
+    '& div.ace_gutter-cell.ace_info': {
       backgroundImage: 'none',
       $nest: {
         '&::before': {
@@ -39,5 +40,5 @@ export const istioValidationWarningStyle = kialiStyle({
 
 export const istioValidationInfoStyle = kialiStyle({
   position: 'absolute',
-  background: '#d1d1d1'
+  background: PFColors.ColorLight300
 });

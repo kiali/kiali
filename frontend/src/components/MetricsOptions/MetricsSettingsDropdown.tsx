@@ -21,7 +21,6 @@ import {
   retrieveMetricsSettings
 } from 'components/Metrics/Helper';
 import { titleStyle } from 'styles/DropdownStyles';
-import { PFColors } from '../Pf/PfColors';
 import { PromLabel } from 'types/Metrics';
 import { KialiIcon } from 'config/KialiIcon';
 import { classes } from 'typestyle';
@@ -204,9 +203,9 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
         toggle={<DropdownToggle onToggle={this.onToggle}>Metrics Settings</DropdownToggle>}
         isOpen={this.state.isOpen}
       >
-        {/* TODO: Remove the class="pf-c-dropdown__menu-item" attribute which is fixing a sizing issue in PF.
+        {/* Adding class="pf-c-dropdown__menu-item" to fix a sizing issue in PF.
          * https://github.com/patternfly/patternfly-react/issues/3156 */}
-        <div style={{ paddingLeft: '10px', backgroundColor: PFColors.White }} className="pf-c-dropdown__menu-item">
+        <div style={{ paddingLeft: '10px' }} className="pf-c-dropdown__menu-item">
           {hasLabels && this.renderBulkSelector()}
           {hasLabels && this.renderLabelOptions()}
           {hasHistograms && this.renderHistogramOptions()}

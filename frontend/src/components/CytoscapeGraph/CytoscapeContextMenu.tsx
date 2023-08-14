@@ -11,6 +11,7 @@ import { store } from '../../store/ConfigStore';
 import { history } from '../../app/History';
 import { getOptions } from './ContextMenu/NodeContextMenu';
 import { WizardAction, WizardMode } from '../IstioWizards/WizardActions';
+import { Theme } from 'types/Common';
 
 export type EdgeContextMenuProps = DecoratedGraphEdgeData & ContextMenuProps;
 export type EdgeContextMenuComponentType = React.ComponentType<EdgeContextMenuProps>;
@@ -41,6 +42,7 @@ type Props = {
     gateways: string[],
     peerAuths: PeerAuthentication[]
   ) => void;
+  theme: string;
 };
 
 type TippyInstance = Instance;
@@ -160,7 +162,7 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
         multiple: false,
         sticky: true,
         interactive: true,
-        theme: 'light-border',
+        theme: this.props.theme === Theme.DARK ? '' : 'light-border',
         size: 'large',
         distance: this.tippyDistance(target)
       }

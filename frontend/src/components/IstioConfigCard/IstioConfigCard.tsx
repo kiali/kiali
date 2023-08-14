@@ -17,6 +17,7 @@ import { IstioTypes } from '../VirtualList/Config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFBadge } from '../Pf/PfBadges';
 import { IstioObjectLink } from '../Link/IstioObjectLink';
+import { tableStyle } from 'styles/TableStyle';
 
 type Props = {
   name: string;
@@ -116,7 +117,7 @@ export class IstioConfigCard extends React.Component<Props> {
             aria-label={'list_istio_config'}
             cells={this.columns()}
             rows={this.rows()}
-            className="table"
+            className={tableStyle}
           >
             <TableHeader />
             <TableBody />

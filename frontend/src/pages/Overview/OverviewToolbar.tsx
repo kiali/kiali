@@ -16,10 +16,10 @@ import { NamespaceInfo } from './NamespaceInfo';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
 import { kialiStyle } from 'styles/StyleUtils';
-import { PFColors } from '../../components/Pf/PfColors';
 import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
 import { KialiDispatch } from '../../types/Redux';
 import { RefreshNotifier } from '../../components/Refresh/RefreshNotifier';
+import { PFColors } from 'components/Pf/PfColors';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -63,9 +63,10 @@ const sortTypes = (function () {
   return o;
 })();
 
-const containerPadding = kialiStyle({
-  backgroundColor: PFColors.White,
-  padding: '0px 20px 0px 20px'
+const containerStyle = kialiStyle({
+  padding: '0px 20px 0px 20px',
+  backgroundColor: PFColors.BackgroundColor100,
+  borderBottom: `1px solid ${PFColors.BorderColor100}`
 });
 
 const containerFlex = kialiStyle({
@@ -282,7 +283,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
       </div>
     );
     return (
-      <div className={containerPadding}>
+      <div className={containerStyle}>
         <div className={containerFlex}>
           <div className={filterToolbarStyle}>{filterToolbar}</div>
           <div className={rightToolbarStyle}>

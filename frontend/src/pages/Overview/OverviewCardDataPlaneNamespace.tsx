@@ -30,7 +30,7 @@ export class OverviewCardDataPlaneNamespace extends React.Component<Props, {}> {
 
     if (showMetrics(this.props.metrics)) {
       if (this.props.metrics && this.props.metrics.length > 0) {
-        const data = toVCLine(this.props.metrics[0].datapoints, 'ops (Total)', PFColors.Blue400);
+        const data = toVCLine(this.props.metrics[0].datapoints, 'ops (Total)', PFColors.Info);
         series.push(data);
       }
 

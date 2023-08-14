@@ -10,7 +10,7 @@ import { KialiIcon } from 'config/KialiIcon';
 
 const containerStyle = kialiStyle({ marginLeft: 0, marginRight: 0 });
 const containerPadding = kialiStyle({ padding: '0 20px 0 20px' });
-const containerGray = kialiStyle({ background: PFColors.Black150 });
+const containerGray = kialiStyle({ background: PFColors.BackgroundColor200 });
 const containerError = kialiStyle({ height: 'calc(100vh - 76px)' });
 
 export class RenderPage extends React.Component<{ isGraph: boolean }> {
@@ -46,6 +46,7 @@ export class RenderPage extends React.Component<{ isGraph: boolean }> {
         </SwitchErrorBoundary>
       </div>
     );
+
     return <>{!this.props.isGraph ? <div className={containerGray}>{component}</div> : component}</>;
   }
 }

@@ -23,6 +23,7 @@ Visibility.change((_e, state) => {
     store.dispatch(GlobalActions.setPageVisibilityHidden());
   }
 });
+
 if (Visibility.hidden()) {
   store.dispatch(GlobalActions.setPageVisibilityHidden());
 } else {

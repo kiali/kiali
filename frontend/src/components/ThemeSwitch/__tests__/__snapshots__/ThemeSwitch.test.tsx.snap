@@ -1,0 +1,27 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ThemeSwitch renders dark theme 1`] = `
+<Switch
+  aria-label=""
+  id="theme-switch"
+  isChecked={true}
+  isDisabled={false}
+  isReversed={false}
+  label="Dark Theme"
+  labelOff="Dark Theme"
+  onChange={[Function]}
+/>
+`;
+
+exports[`ThemeSwitch renders light theme 1`] = `
+<Switch
+  aria-label=""
+  id="theme-switch"
+  isChecked={false}
+  isDisabled={false}
+  isReversed={false}
+  label="Dark Theme"
+  labelOff="Dark Theme"
+  onChange={[Function]}
+/>
+`;

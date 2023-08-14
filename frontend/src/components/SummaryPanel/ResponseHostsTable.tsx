@@ -4,6 +4,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { Responses } from '../../types/Graph';
 import { Tooltip } from '@patternfly/react-core';
 import { summaryTitle } from 'pages/Graph/SummaryPanelCommon';
+import { tableStyle } from 'styles/TableStyle';
 
 type ResponseHostsTableProps = {
   responses: Responses;
@@ -32,7 +33,7 @@ export class ResponseHostsTable extends React.PureComponent<ResponseHostsTablePr
         {rows.length > 0 ? (
           <>
             <div className={summaryTitle}>{this.props.title}</div>
-            <table className="table" style={{ tableLayout: 'fixed', width: '100%' }}>
+            <table className={tableStyle} style={{ tableLayout: 'fixed', width: '100%' }}>
               <thead>
                 <tr key="table-header">
                   <th style={{ width: '18%' }}>Code</th>

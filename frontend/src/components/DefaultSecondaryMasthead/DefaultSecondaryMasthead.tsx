@@ -5,6 +5,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from '../../config/KialiIcon';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
+import { PFColors } from 'components/Pf/PfColors';
 
 const titles = ['applications', 'istio', 'istio/new', 'mesh', 'services', 'workloads'];
 
@@ -19,8 +20,10 @@ type Props = ReduxProps & {
   showClusterSelector?: boolean;
 };
 
-const mainPadding = kialiStyle({
-  padding: '10px 20px 10px 20px'
+const containerStyle = kialiStyle({
+  padding: '10px 20px 10px 20px',
+  backgroundColor: PFColors.BackgroundColor100,
+  borderBottom: `1px solid ${PFColors.BorderColor100}`
 });
 
 const flexStyle = kialiStyle({
@@ -40,7 +43,7 @@ const actionsToolbarStyle = kialiStyle({
 class DefaultSecondaryMastheadComponent extends React.Component<Props> {
   showTitle() {
     let path = window.location.pathname;
-    path = path.substr(path.lastIndexOf('/console') + '/console'.length + 1);
+    path = path.substring(path.lastIndexOf('/console') + '/console'.length + 1);
     if (titles.some(t => path.startsWith(t))) {
       let title = path.charAt(0).toUpperCase() + path.slice(1);
       let disabled = false;
@@ -77,7 +80,7 @@ class DefaultSecondaryMastheadComponent extends React.Component<Props> {
   render() {
     const { title, disabled } = this.showTitle();
     return (
-      <div className={mainPadding}>
+      <div className={containerStyle}>
         <div className={flexStyle}>
           <div>{this.props.hideNamespaceSelector === true ? null : <NamespaceDropdown disabled={disabled} />}</div>
           {this.props.rightToolbar && <div className={rightToolbarStyle}>{this.props.rightToolbar}</div>}

@@ -177,13 +177,11 @@ class ServiceListPageComponent extends FilterComponent.Component<
     return (
       <>
         <RefreshNotifier onTick={this.updateListItems} />
-        <div style={{ backgroundColor: '#fff' }}>
-          <DefaultSecondaryMasthead
-            rightToolbar={
-              <TimeDurationComponent key={'DurationDropdown'} id="service-list-duration-dropdown" disabled={false} />
-            }
-          />
-        </div>
+        <DefaultSecondaryMasthead
+          rightToolbar={
+            <TimeDurationComponent key={'DurationDropdown'} id="service-list-duration-dropdown" disabled={false} />
+          }
+        />
         <RenderContent>
           <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} type="services">
             <StatefulFilters

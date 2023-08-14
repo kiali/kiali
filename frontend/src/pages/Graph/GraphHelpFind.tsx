@@ -4,6 +4,7 @@ import { Tab, Popover, PopoverPosition } from '@patternfly/react-core';
 import { ICell, Table, TableBody, TableHeader, TableVariant, cellWidth } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
+import { PFColors } from 'components/Pf/PfColors';
 
 export interface GraphHelpFindProps {
   onClose: () => void;
@@ -34,8 +35,8 @@ export class GraphHelpFind extends React.Component<GraphHelpFindProps> {
     });
     const prefaceStyle = kialiStyle({
       fontSize: '12px',
-      color: '#fff',
-      backgroundColor: '#003145',
+      color: PFColors.ColorLight100,
+      backgroundColor: PFColors.Blue600,
       width: contentWidth,
       height: '80px',
       padding: '5px',

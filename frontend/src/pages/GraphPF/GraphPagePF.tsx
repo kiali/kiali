@@ -177,23 +177,22 @@ const kioskContainerStyle = kialiStyle({
 });
 
 const graphContainerStyle = kialiStyle({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
-const graphWrapperDivStyle = kialiStyle({ position: 'relative', backgroundColor: PFColors.Black200 });
+const graphWrapperDivStyle = kialiStyle({ position: 'relative', backgroundColor: PFColors.BackgroundColor200 });
 
 const graphTimeRange = kialiStyle({
   position: 'absolute',
   top: '10px',
   left: '10px',
   width: 'auto',
-  zIndex: 2,
-  backgroundColor: PFColors.White
-});
-
-const whiteBackground = kialiStyle({
-  backgroundColor: PFColors.White
+  zIndex: 2
 });
 
 const replayBackground = kialiStyle({
   backgroundColor: PFColors.Replay
+});
+
+const graphBackground = kialiStyle({
+  backgroundColor: PFColors.BackgroundColor100
 });
 
 const graphLegendStyle = kialiStyle({
@@ -455,7 +454,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
               )}
               {isReady && (
                 <Chip
-                  className={`${graphTimeRange} ${this.props.replayActive ? replayBackground : whiteBackground}`}
+                  className={`${graphTimeRange} ${this.props.replayActive ? replayBackground : graphBackground}`}
                   isReadOnly={true}
                 >
                   {this.props.replayActive && <Badge style={{ marginRight: '4px' }} isRead={true}>{`Replay`}</Badge>}

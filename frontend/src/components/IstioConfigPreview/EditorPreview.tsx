@@ -5,12 +5,16 @@ import AceEditor from 'react-ace';
 import { aceOptions } from '../../types/IstioConfigDetails';
 import { YAMLException } from 'js-yaml';
 import { istioAceEditorStyle, istioValidationErrorStyle } from 'styles/AceEditorStyle';
+import { Theme } from '../../types/Common';
+import { KialiAppState } from '../../store/Store';
+import { connect } from 'react-redux';
 
 type PolicyItem = AuthorizationPolicy | Sidecar;
 
 interface Props {
   yaml: string;
   onChange: (obj) => void;
+  theme: string;
 }
 
 interface State {
@@ -18,7 +22,7 @@ interface State {
   parsedValidations: AceValidations;
 }
 
-export class EditorPreview extends React.Component<Props, State> {
+export class EditorPreviewComponent extends React.Component<Props, State> {
   aceEditorRef: React.RefObject<AceEditor>;
   constructor(props: Props) {
     super(props);
@@ -66,7 +70,7 @@ export class EditorPreview extends React.Component<Props, State> {
       <AceEditor
         ref={this.aceEditorRef}
         mode="yaml"
-        theme="eclipse"
+        theme={this.props.theme === Theme.DARK ? 'twilight' : 'eclipse'}
         onChange={value => this.onChange(value)}
         height={'275px  '}
         width={'100%'}
@@ -80,3 +84,11 @@ export class EditorPreview extends React.Component<Props, State> {
     );
   }
 }
+
+const mapStateToProps = (state: KialiAppState) => {
+  return {
+    theme: state.globalState.theme
+  };
+};
+
+export const EditorPreview = connect(mapStateToProps)(EditorPreviewComponent);

@@ -1,13 +1,16 @@
 import React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
-import { PFColors } from '../../Pf/PfColors';
 import { BreadcrumbView } from '../../BreadcrumbView/BreadcrumbView';
 import { KialiAppState } from '../../../store/Store';
 import { connect } from 'react-redux';
 import { isKiosk } from '../../Kiosk/KioskActions';
+import { PFColors } from 'components/Pf/PfColors';
 
-const containerPadding = kialiStyle({ padding: '0 20px 28px 20px' });
-const containerWhite = kialiStyle({ backgroundColor: PFColors.White });
+const containerStyle = kialiStyle({
+  padding: '0 20px 28px 20px',
+  backgroundColor: PFColors.BackgroundColor100
+});
+
 // This magic style tries to adjust Breadcrumb with Namespace selector
 // to give impression that both components are placed in the same location
 const breadcrumbMargin = kialiStyle({ padding: '10px 0 4px 0' });
@@ -23,10 +26,10 @@ const rightToolbarStyle = kialiStyle({
 
 const actionsToolbarStyle = kialiStyle({
   float: 'right',
-  backgroundColor: '#fff',
   padding: '0px 20px 22px 5px',
   marginTop: '-16px',
-  borderBottom: '1px solid #d2d2d2'
+  backgroundColor: PFColors.BackgroundColor100,
+  borderBottom: `1px solid ${PFColors.BorderColor100}`
 });
 
 type ReduxProps = {
@@ -48,19 +51,18 @@ class RenderHeaderComponent extends React.Component<RenderHeaderProps> {
     // On kiosk mode, it should be hidden
     return isKiosk(this.props.kiosk) ? null : (
       <>
-        <div className={`${containerPadding} ${containerWhite}`}>
+        <div className={containerStyle}>
           {this.props.location && (
-            <>
-              <div className={breadcrumbMargin}>
-                <div className={breadcrumbStyle}>
-                  <BreadcrumbView location={this.props.location} />
-                  {this.props.rightToolbar && <div className={rightToolbarStyle}>{this.props.rightToolbar}</div>}
-                </div>
+            <div className={breadcrumbMargin}>
+              <div className={breadcrumbStyle}>
+                <BreadcrumbView location={this.props.location} />
+                {this.props.rightToolbar && <div className={rightToolbarStyle}>{this.props.rightToolbar}</div>}
               </div>
-            </>
+            </div>
           )}
           {this.props.children}
         </div>
+
         {this.props.actionsToolbar && <div className={actionsToolbarStyle}>{this.props.actionsToolbar}</div>}
       </>
     );

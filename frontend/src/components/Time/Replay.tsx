@@ -63,13 +63,13 @@ export const replayBorder = kialiStyle({
  */
 const replaySliderStyle = kialiStyle({
   $nest: {
-    '.slider': {
+    '& .slider': {
       $nest: {
-        '.slider-selection.tick-slider-selection': {
+        '& .slider-selection.tick-slider-selection': {
           background: 'var(--pf-global--active-color--300)' // should match PFColors.Replay
         },
 
-        '.tooltip': {
+        '& .tooltip': {
           pointerEvents: 'none',
           paddingRight: '175px'
         }

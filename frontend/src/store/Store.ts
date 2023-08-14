@@ -35,6 +35,7 @@ export interface GlobalState {
   readonly loadingCounter: number;
   readonly isPageVisible: boolean;
   readonly kiosk: string;
+  readonly theme: string;
 }
 
 export interface ClusterState {
