@@ -5,7 +5,7 @@ Feature: Kiali Service Details page
 
   Background:
     Given user is at administrator perspective
-    And user is at the details page for the "service" "bookinfo/productpage"
+    And user is at the details page for the "service" "bookinfo/productpage" located in the "" cluster
 
   @service-details-page
   @bookinfo-app
@@ -74,3 +74,17 @@ Feature: Kiali Service Details page
     When user sees a minigraph
     And user chooses the "Show node graph" option
     Then the graph type is disabled
+
+  @multi-cluster
+  @service-details-page
+  Scenario: See details for service
+    Then sd::user sees "productpage" details information for service "v1"
+    And sd::user sees Network card
+    And sd::user sees Istio Config
+    And cluster badge for "east" cluster should be visible
+
+  @multi-cluster
+  @service-details-page
+  Scenario: See service Traffic information
+    Then sd::user sees inbound and outbound traffic information
+    And user should see a column related to cluster info

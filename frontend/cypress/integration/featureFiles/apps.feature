@@ -109,3 +109,9 @@ Feature: Kiali Apps List page
     And user selects the "alpha" namespace
     Then the application should be listed as "degraded"
     And the health status of the application should be "Degraded"
+
+  @apps-page
+  @multi-cluster
+  Scenario: The column related to cluster name should be visible
+    Then the "Cluster" column "appears" 
+    

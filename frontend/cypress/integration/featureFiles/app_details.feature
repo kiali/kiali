@@ -8,7 +8,7 @@ Feature: Kiali App Details page
 
   Background:
     Given user is at administrator perspective
-    And user is at the details page for the "app" "bookinfo/details"
+    And user is at the details page for the "app" "bookinfo/details" located in the "" cluster
 
   @app-details-page
   @bookinfo-app

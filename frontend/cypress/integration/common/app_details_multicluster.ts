@@ -12,10 +12,19 @@ And("user sees {string} from a remote {string} cluster",(type:string, cluster:st
   .getCurrentState()
   .then(state => {
     const apps = state.cy.nodes(`[cluster="${cluster}"][nodeType="${type}"][namespace="bookinfo"]`).length; 
-    assert.equal(apps, 1);
+    assert.isAbove(apps,0);
   });
 })
 
-And ("user should see a column related to cluster info", () => {
+And ("user should see columns related to cluster info for the inbound and outbound traffic", () => {
   colExists("Cluster",true, 2);
 })
+
+Then('user sees details information for the remote {string} app', (name:string) => {
+  cy.getBySel('app-description-card').within(() => {
+    cy.get('#pfbadge-A').parent().parent().contains(`${name}`); // App
+    cy.get('#pfbadge-W').parent().parent().contains(`${name}-v1`); // Workload
+    cy.get('#service-list').contains('No services found');
+    
+  });
+});

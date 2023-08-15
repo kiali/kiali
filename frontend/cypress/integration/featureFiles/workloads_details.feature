@@ -6,7 +6,7 @@ Feature: Kiali Workload Details page
 
   Background:
     Given user is at administrator perspective
-    And user is at the details page for the "workload" "bookinfo/details-v1"
+    And user is at the details page for the "workload" "bookinfo/details-v1" located in the "" cluster
 
   @workload-details
   @bookinfo-app
