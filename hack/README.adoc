@@ -53,11 +53,21 @@ Use this to access the Kiali UI that is installed locally in `minikube` or `kind
 
 * `link:purge-kiali-from-cluster.sh[]`
 
-Sets up the environment for the integration tests and runs them. This is the same setup that is used by the CI system.
+Removes all remnants of Kiali and Kiali Operator from a cluster.
 
 * `link:run-integration-tests.sh[]`
 
-Removes all remnants of Kiali and Kiali Operator from a cluster.
+Sets up the environment for the integration tests and runs them. This is the same setup that is used by the CI system.
+
+NOTE: When running the multi-cluster tests locally, it might be necessary to
+edit some kernel settings to allow for the kind clusters to be created.
+
+The following settings added to your `/etc/sysctl.d/local.conf` file
+should work but YMMV depending on your system:
+```bash
+fs.inotify.max_user_watches=524288
+fs.inotify.max_user_instances=512
+```
 
 * `link:run-kiali.sh[]`
 
