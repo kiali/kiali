@@ -17,7 +17,7 @@ export CYPRESS_PASSWD=<value>                 # no defaults
 export CYPRESS_AUTH_PROVIDER=<value>          # defaults to my_htpasswd_provider
 ```
 
-Tests can be run with the cypress browser:
+Tests for single cluster setup can be run with the cypress browser:
 
 ```bash
 yarn cypress
@@ -27,6 +27,18 @@ or in headless mode:
 
 ```bash
 yarn cypress:run
+```
+\
+Multi-cluster related tests can be run using:
+
+```bash
+yarn cypress:mc
+```
+
+or in headless mode:
+
+```bash
+yarn cypress:run:multi-cluster
 ```
 
 ### Running tests in a container
