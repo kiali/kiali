@@ -16,7 +16,9 @@ export default defineConfig({
   env: {
     'cypress-react-selector': {
       root: '#root'
-    }
+    },
+    omitFiltered: true,
+    filterSpecs: true
   },
   e2e: {
     baseUrl: 'http://localhost:3000',
