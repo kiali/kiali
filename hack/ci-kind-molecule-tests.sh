@@ -5,7 +5,15 @@
 #
 
 infomsg() {
-  echo "[INFO] ${1}"
+  if [ -z "${1}" ]; then
+    echo
+  else
+    if [ "${1}" == "-n" ]; then
+      echo -n "[INFO] ${2}"
+    else
+      echo "[INFO] ${1}"
+    fi
+  fi
 }
 
 helpmsg() {
@@ -478,9 +486,9 @@ if [ "${OLM_ENABLED}" == "true" ]; then
   infomsg "Waiting for Kiali CRD to be established."
   ${CLIENT_EXE} wait --for condition=established --timeout=300s crd kialis.kiali.io
 
-  infomsg "Configuring the Kiali operator to allow ad hoc images and ad hoc namespaces."
+  infomsg "Configuring the Kiali operator to allow ad hoc images, ad hoc namespaces, and changes to security context."
   operator_namespace="$(${CLIENT_EXE} get deployments --all-namespaces  | grep kiali-operator | cut -d ' ' -f 1)"
-  for env_name in ALLOW_AD_HOC_KIALI_NAMESPACE ALLOW_AD_HOC_KIALI_IMAGE; do
+  for env_name in ALLOW_AD_HOC_KIALI_NAMESPACE ALLOW_AD_HOC_KIALI_IMAGE ALLOW_SECURITY_CONTEXT_OVERRIDE; do
     ${CLIENT_EXE} -n ${operator_namespace} patch $(${CLIENT_EXE} -n ${operator_namespace} get csv -o name | grep kiali) --type=json -p "[{'op':'replace','path':"/spec/install/spec/deployments/0/spec/template/spec/containers/0/env/$(${CLIENT_EXE} -n ${operator_namespace} get $(${CLIENT_EXE} -n ${operator_namespace} get csv -o name | grep kiali) -o jsonpath='{.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[*].name}' | tr ' ' '\n' | cat --number | grep ${env_name} | cut -f 1 | xargs echo -n | cat - <(echo "-1") | bc)/value",'value':"\"true\""}]"
   done
   sleep 5
