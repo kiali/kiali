@@ -86,20 +86,8 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
   }
 
   componentDidUpdate(prevProps: ServiceDetailsProps, _prevState: ServiceDetailsState) {
-    const cluster = HistoryManager.getClusterName();
-    if (cluster && cluster !== this.state.cluster) {
-      // when linking from one cluster's service to another cluster's service, cluster in state should be changed
-      // keeping the rest of state attributes, as they will be reloaded anyway
-      // @TODO in case of multi-cluster validations, attributes will be reused
-      this.state = {
-        currentTab: this.state.currentTab,
-        cluster: cluster,
-        gateways: this.state.gateways,
-        k8sGateways: this.state.k8sGateways,
-        validations: this.state.validations,
-        peerAuthentications: this.state.peerAuthentications
-      };
-    }
+    // when linking from one cluster's service to another cluster's service, cluster in state should be changed
+    const cluster = HistoryManager.getClusterName() || this.state.cluster;
     const currentTab = activeTab(tabName, defaultTab);
     if (
       prevProps.serviceId.namespace !== this.props.serviceId.namespace ||
@@ -108,27 +96,23 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
       prevProps.lastRefreshAt !== this.props.lastRefreshAt
     ) {
       if (currentTab === 'info') {
-        this.fetchService();
+        this.fetchService(cluster);
       }
-      if (currentTab !== this.state.currentTab) {
+      if (currentTab !== this.state.currentTab || cluster !== this.state.cluster) {
         this.setState({ currentTab: currentTab });
       }
     }
   }
 
-  private fetchService = () => {
+  private fetchService = (cluster?: string) => {
+    if (!cluster) {
+      cluster = this.state.cluster;
+    }
     this.promises.cancelAll();
     this.promises
       .register(
         'gateways',
-        API.getAllIstioConfigs(
-          [this.props.serviceId.namespace],
-          ['gateways', 'k8sgateways'],
-          false,
-          '',
-          '',
-          this.state.cluster
-        )
+        API.getAllIstioConfigs([this.props.serviceId.namespace], ['gateways', 'k8sgateways'], false, '', '', cluster)
       )
       .then(response => {
         const gws: Gateway[] = [];
@@ -149,7 +133,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
       this.props.serviceId.namespace,
       this.props.serviceId.service,
       true,
-      this.state.cluster,
+      cluster,
       this.props.duration
     )
       .then(results => {
@@ -167,7 +151,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         this.setState({ error: msg });
       });
 
-    API.getAllIstioConfigs([this.props.serviceId.namespace], ['peerauthentications'], false, '', '', this.state.cluster)
+    API.getAllIstioConfigs([this.props.serviceId.namespace], ['peerauthentications'], false, '', '', cluster)
       .then(results => {
         this.setState({
           peerAuthentications: results.data[this.props.serviceId.namespace].peerAuthentications

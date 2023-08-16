@@ -75,11 +75,8 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
   }
 
   componentDidUpdate(prevProps: WorkloadDetailsPageProps) {
-    const cluster = HistoryManager.getClusterName();
-    if (cluster && cluster !== this.state.cluster) {
-      // when linking from one cluster's workload to another cluster's workload, cluster in state should be changed
-      this.state = { currentTab: this.state.currentTab, cluster: cluster };
-    }
+    // when linking from one cluster's workload to another cluster's workload, cluster in state should be changed
+    const cluster = HistoryManager.getClusterName() || this.state.cluster;
     const currentTab = activeTab(tabName, defaultTab);
     if (
       this.props.workloadId.namespace !== prevProps.workloadId.namespace ||
@@ -89,14 +86,14 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       this.props.duration !== prevProps.duration
     ) {
       if (currentTab === 'info' || currentTab === 'logs' || currentTab === 'envoy') {
-        this.fetchWorkload().then(() => {
-          if (currentTab !== this.state.currentTab) {
-            this.setState({ currentTab: currentTab, cluster: this.state.cluster });
+        this.fetchWorkload(cluster).then(() => {
+          if (currentTab !== this.state.currentTab || cluster !== this.state.cluster) {
+            this.setState({ currentTab: currentTab, cluster: cluster });
           }
         });
       } else {
-        if (currentTab !== this.state.currentTab) {
-          this.setState({ currentTab: currentTab, cluster: this.state.cluster });
+        if (currentTab !== this.state.currentTab || cluster !== this.state.cluster) {
+          this.setState({ currentTab: currentTab, cluster: cluster });
         }
       }
     }
@@ -104,13 +101,16 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     //HistoryManager.setParam(URLParam.CLUSTER, this.state.cluster);
   }
 
-  private fetchWorkload = async () => {
+  private fetchWorkload = async (cluster?: string) => {
+    if (!cluster) {
+      cluster = this.state.cluster;
+    }
     const params: { [key: string]: string } = {
       validate: 'true',
       rateInterval: String(this.props.duration) + 's',
       health: 'true'
     };
-    await API.getWorkload(this.props.workloadId.namespace, this.props.workloadId.workload, params, this.state.cluster)
+    await API.getWorkload(this.props.workloadId.namespace, this.props.workloadId.workload, params, cluster)
       .then(details => {
         this.setState({
           workload: details.data,
