@@ -417,6 +417,12 @@ The Kiali project will periodically upgrade to a newer version of Go. These are 
 4. Run `make clean build build-ui test` to ensure everything builds correctly. If any problems occur, obviously you must fix them.
 5. Commit the changes to your working branch, create a PR, and make sure everything builds and works before merging the PR.
 
+=== Procedure to check and update patternfly versions
+
+1. Launch command `npx npm-check-updates -t latest -f '/^@patternfly/'`
+2. Launch `yarn install` to update the yarn.lock
+3. Add to the commit package.json and yarn.lock
+
 === Running the UI outside the cluster
 
 When developing the http://github.com/kiali/kiali/frontend[Kiali UI] you will find it useful to run it outside of the cluster to make it easier to update the UI code and see the changes without having to re-deploy. The preferred approach for this is to use the _proxy_ feature of React. The process is described https://github.com/kiali/kiali/blob/master/frontend/README.adoc#developing[here]. Alternatively, you can use the `make -e YARN_START_URL=<url> yarn-start` command where `<url>` is to the Kiali backend.
