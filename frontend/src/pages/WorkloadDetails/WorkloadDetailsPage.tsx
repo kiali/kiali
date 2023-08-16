@@ -27,7 +27,7 @@ import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
 import { ErrorMsg } from '../../types/ErrorMsg';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { isWaypoint } from '../../helpers/LabelFilterHelper';
-import { history } from 'app/History';
+import { history, HistoryManager } from 'app/History';
 import { basicTabStyle } from 'styles/TabStyles';
 
 type WorkloadDetailsState = {
@@ -66,8 +66,7 @@ var nextTabIndex = 6;
 class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPageProps, WorkloadDetailsState> {
   constructor(props: WorkloadDetailsPageProps) {
     super(props);
-    const urlParams = new URLSearchParams(history.location.search);
-    const cluster = urlParams.get('clusterName') || undefined;
+    const cluster = HistoryManager.getClusterName();
     this.state = { currentTab: activeTab(tabName, defaultTab), cluster: cluster };
   }
 
@@ -76,6 +75,11 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
   }
 
   componentDidUpdate(prevProps: WorkloadDetailsPageProps) {
+    const cluster = HistoryManager.getClusterName();
+    if (cluster && cluster !== this.state.cluster) {
+      // when linking from one cluster's workload to another cluster's workload, cluster in state should be changed
+      this.state = { currentTab: this.state.currentTab, cluster: cluster };
+    }
     const currentTab = activeTab(tabName, defaultTab);
     if (
       this.props.workloadId.namespace !== prevProps.workloadId.namespace ||

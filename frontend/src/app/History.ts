@@ -150,6 +150,13 @@ export class HistoryManager {
     }
   };
 
+  static getClusterName = (urlParams?: URLSearchParams): string | undefined => {
+    if (!urlParams) {
+      urlParams = new URLSearchParams(history.location.search);
+    }
+    return urlParams.get(URLParam.CLUSTERNAME) || undefined;
+  };
+
   static getDuration = (urlParams?: URLSearchParams): number | undefined => {
     const duration = HistoryManager.getNumericParam(URLParam.DURATION, urlParams);
     if (duration) {

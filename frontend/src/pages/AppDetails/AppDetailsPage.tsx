@@ -22,7 +22,7 @@ import { RenderHeader } from '../../components/Nav/Page/RenderHeader';
 import { ErrorMsg } from '../../types/ErrorMsg';
 import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
-import { history } from 'app/History';
+import { history, HistoryManager } from 'app/History';
 import { basicTabStyle } from 'styles/TabStyles';
 
 type AppDetailsState = {
@@ -61,8 +61,7 @@ const nextTabIndex = 5;
 class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   constructor(props: AppDetailsProps) {
     super(props);
-    const urlParams = new URLSearchParams(history.location.search);
-    const cluster = urlParams.get('clusterName') || undefined;
+    const cluster = HistoryManager.getClusterName();
     this.state = { currentTab: activeTab(tabName, defaultTab), cluster: cluster };
   }
 
@@ -71,6 +70,11 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   }
 
   componentDidUpdate(prevProps: AppDetailsProps) {
+    const cluster = HistoryManager.getClusterName();
+    if (cluster && cluster !== this.state.cluster) {
+      // when linking from one cluster's app to another cluster's app, cluster in state should be changed
+      this.state = { currentTab: this.state.currentTab, cluster: cluster };
+    }
     const currentTab = activeTab(tabName, defaultTab);
     if (
       this.props.appId.namespace !== prevProps.appId.namespace ||

@@ -31,7 +31,7 @@ import { RenderHeader } from '../../components/Nav/Page/RenderHeader';
 import { ErrorMsg } from '../../types/ErrorMsg';
 import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
-import { history } from 'app/History';
+import { history, HistoryManager } from 'app/History';
 import { durationSelector } from 'store/Selectors';
 import { basicTabStyle } from 'styles/TabStyles';
 
@@ -69,8 +69,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
 
   constructor(props: ServiceDetailsProps) {
     super(props);
-    const urlParams = new URLSearchParams(history.location.search);
-    const cluster = urlParams.get('clusterName') || undefined;
+    const cluster = HistoryManager.getClusterName();
     this.state = {
       // Because null is not the same as undefined and urlParams.get(...) returns null.
       cluster: cluster,
@@ -87,6 +86,20 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
   }
 
   componentDidUpdate(prevProps: ServiceDetailsProps, _prevState: ServiceDetailsState) {
+    const cluster = HistoryManager.getClusterName();
+    if (cluster && cluster !== this.state.cluster) {
+      // when linking from one cluster's service to another cluster's service, cluster in state should be changed
+      // keeping the rest of state attributes, as they will be reloaded anyway
+      // @TODO in case of multi-cluster validations, attributes will be reused
+      this.state = {
+        currentTab: this.state.currentTab,
+        cluster: cluster,
+        gateways: this.state.gateways,
+        k8sGateways: this.state.k8sGateways,
+        validations: this.state.validations,
+        peerAuthentications: this.state.peerAuthentications
+      };
+    }
     const currentTab = activeTab(tabName, defaultTab);
     if (
       prevProps.serviceId.namespace !== this.props.serviceId.namespace ||
