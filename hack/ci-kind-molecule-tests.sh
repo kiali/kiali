@@ -5,7 +5,15 @@
 #
 
 infomsg() {
-  echo "[INFO] ${1}"
+  if [ -z "${1}" ]; then
+    echo
+  else
+    if [ "${1}" == "-n" ]; then
+      echo -n "[INFO] ${2}"
+    else
+      echo "[INFO] ${1}"
+    fi
+  fi
 }
 
 helpmsg() {
@@ -394,11 +402,13 @@ EOF
   # TODO the above if-stmt assumes podman works with KinD which it doesn't - we always use docker for KinD, so use docker to inspect network
   subnet=$(docker network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}')
 
+  infomsg "Wait for MetalLB controller to be ready"
+  ${CLIENT_EXE} rollout status deployment controller -n metallb-system
+
   subnet_trimmed=$(echo ${subnet} | sed -E 's/([0-9]+\.[0-9]+)\.[0-9]+\..*/\1/')
   first_ip="${subnet_trimmed}.$(echo "${lb_addr_range}" | cut -d '-' -f 1)"
   last_ip="${subnet_trimmed}.$(echo "${lb_addr_range}" | cut -d '-' -f 2)"
   infomsg "LoadBalancer IP Address pool: ${first_ip}-${last_ip}"
-  ${CLIENT_EXE} rollout status deployment controller -n metallb-system
   cat <<LB1 | ${CLIENT_EXE} apply -f -
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
@@ -423,15 +433,6 @@ fi
 
 if [ "${USE_DEV_IMAGES}" == "true" ]; then
   infomsg "Dev images are to be tested. Will prepare them now."
-
-  # TODO: Remove this patch command. It's needed because of an ongoing reconciliation issue in KinD.
-  # TODO: See: https://github.com/operator-framework/operator-sdk/issues/5319
-  patch -i - operator/build/Dockerfile << EOF
-2c2
-< FROM quay.io/openshift/origin-ansible-operator:\${OPERATOR_BASE_IMAGE_VERSION}
----
-> FROM quay.io/operator-framework/ansible-operator:v1.13.0
-EOF
 
   infomsg "Building dev image (backend and frontend)..."
   make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="${DORP}" clean build test build-ui
@@ -478,9 +479,9 @@ if [ "${OLM_ENABLED}" == "true" ]; then
   infomsg "Waiting for Kiali CRD to be established."
   ${CLIENT_EXE} wait --for condition=established --timeout=300s crd kialis.kiali.io
 
-  infomsg "Configuring the Kiali operator to allow ad hoc images and ad hoc namespaces."
+  infomsg "Configuring the Kiali operator to allow ad hoc images, ad hoc namespaces, and changes to security context."
   operator_namespace="$(${CLIENT_EXE} get deployments --all-namespaces  | grep kiali-operator | cut -d ' ' -f 1)"
-  for env_name in ALLOW_AD_HOC_KIALI_NAMESPACE ALLOW_AD_HOC_KIALI_IMAGE; do
+  for env_name in ALLOW_AD_HOC_KIALI_NAMESPACE ALLOW_AD_HOC_KIALI_IMAGE ALLOW_SECURITY_CONTEXT_OVERRIDE; do
     ${CLIENT_EXE} -n ${operator_namespace} patch $(${CLIENT_EXE} -n ${operator_namespace} get csv -o name | grep kiali) --type=json -p "[{'op':'replace','path':"/spec/install/spec/deployments/0/spec/template/spec/containers/0/env/$(${CLIENT_EXE} -n ${operator_namespace} get $(${CLIENT_EXE} -n ${operator_namespace} get csv -o name | grep kiali) -o jsonpath='{.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[*].name}' | tr ' ' '\n' | cat --number | grep ${env_name} | cut -f 1 | xargs echo -n | cat - <(echo "-1") | bc)/value",'value':"\"true\""}]"
   done
   sleep 5
