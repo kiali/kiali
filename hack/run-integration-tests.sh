@@ -38,6 +38,13 @@ Valid command line arguments:
     Default: false 
   -h|--help:
        this message
+
+NOTE: When running the multi-cluster tests locally, it might be necessary to
+edit some kernel settings to allow for the kind clusters to be created.
+
+The following settings added to your sysctl config file should work (the filename will be something like '/etc/sysctl.d/local.conf' - refer to your operating system 'man sysctl' docs to determine which file should be changed):
+fs.inotify.max_user_watches=524288
+fs.inotify.max_user_instances=512
 HELPMSG
       exit 1
       ;;
