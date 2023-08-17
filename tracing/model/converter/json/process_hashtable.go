@@ -16,9 +16,8 @@
 package json
 
 import (
+	"github.com/kiali/kiali/tracing/model"
 	"strconv"
-
-	"github.com/kiali/kiali/jaeger/model"
 )
 
 type processHashtable struct {

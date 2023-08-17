@@ -15,14 +15,14 @@
 
 // Cloned from github.com/jaegertracing/jaeger/
 
-//nolint
+// nolint
 package json
 
 import (
+	"github.com/kiali/kiali/tracing/model"
+	"github.com/kiali/kiali/tracing/model/json"
 	"strings"
 
-	"github.com/kiali/kiali/jaeger/model"
-	"github.com/kiali/kiali/jaeger/model/json"
 	"github.com/kiali/kiali/log"
 )
 

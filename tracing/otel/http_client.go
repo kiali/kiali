@@ -1,38 +1,37 @@
-package jaeger
+package otel
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/tracing/model"
 	"io"
 	"net/http"
 	"net/url"
 	"path"
 	"strconv"
 	"strings"
-	"time"
-
-	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/models"
 )
 
-func getAppTracesHTTP(client http.Client, baseURL *url.URL, namespace, app string, q models.TracingQuery) (response *JaegerResponse, err error) {
+type OtelHTTPClient struct {
+}
+
+func (oc OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, namespace, app string, q models.TracingQuery) (response *model.TracingResponse, err error) {
 	url := *baseURL
-	//url.Path = path.Join(url.Path, "/api/traces")
-	url.Path = path.Join(url.Path, "/querier/api/traces")
-	jaegerServiceName := buildJaegerServiceName(namespace, app)
-	prepareQuery(&url, jaegerServiceName, q)
+	url.Path = path.Join(url.Path, "/api/search")
+	tracingServiceName := buildJaegerServiceName(namespace, app)
+	prepareQuery(&url, tracingServiceName, q)
 	r, err := queryTracesHTTP(client, &url)
 	if r != nil {
-		r.JaegerServiceName = jaegerServiceName
+		r.TracingServiceName = tracingServiceName
 	}
 	return r, err
 }
 
-func getTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (*JaegerSingleTrace, error) {
+func (oc OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (*model.TracingSingleTrace, error) {
 	u := *endpoint
-	// /querier/api/traces/<traceid>?mode=xxxx&blockStart=0000&blockEnd=FFFF&start=<start>&end=<end>
-	// u.Path = path.Join(u.Path, "/api/traces/"+traceID)
-	u.Path = path.Join(u.Path, "/querier/api/traces/"+traceID)
+	u.Path = path.Join(u.Path, "/api/search"+traceID)
 	resp, code, reqError := makeRequest(client, u.String(), nil)
 	if reqError != nil {
 		log.Errorf("Jaeger query error: %s [code: %d, URL: %v]", reqError, code, u)
@@ -47,22 +46,22 @@ func getTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (
 		return nil, err
 	}
 	if len(response.Data) == 0 {
-		return &JaegerSingleTrace{Errors: response.Errors}, nil
+		return &model.TracingSingleTrace{Errors: response.Errors}, nil
 	}
-	return &JaegerSingleTrace{
+	return &model.TracingSingleTrace{
 		Data:   response.Data[0],
 		Errors: response.Errors,
 	}, nil
 }
 
-func getServiceStatusHTTP(client http.Client, baseURL *url.URL) (bool, error) {
+func (oc OtelHTTPClient) GetServiceStatusHTTP(client http.Client, baseURL *url.URL) (bool, error) {
 	url := *baseURL
 	url.Path = path.Join(url.Path, "/api/services")
 	_, _, reqError := makeRequest(client, url.String(), nil)
 	return reqError == nil, reqError
 }
 
-func queryTracesHTTP(client http.Client, u *url.URL) (*JaegerResponse, error) {
+func queryTracesHTTP(client http.Client, u *url.URL) (*model.TracingResponse, error) {
 	// HTTP and GRPC requests co-exist, but when minDuration is present, for HTTP it requires a unit (ms)
 	// https://github.com/kiali/kiali/issues/3939
 	minDuration := u.Query().Get("minDuration")
@@ -74,13 +73,13 @@ func queryTracesHTTP(client http.Client, u *url.URL) (*JaegerResponse, error) {
 	resp, code, reqError := makeRequest(client, u.String(), nil)
 	if reqError != nil {
 		log.Errorf("Jaeger query error: %s [code: %d, URL: %v]", reqError, code, u)
-		return &JaegerResponse{}, reqError
+		return &model.TracingResponse{}, reqError
 	}
 	return unmarshal(resp, u)
 }
 
-func unmarshal(r []byte, u *url.URL) (*JaegerResponse, error) {
-	var response JaegerResponse
+func unmarshal(r []byte, u *url.URL) (*model.TracingResponse, error) {
+	var response model.TracingResponse
 	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
 		log.Errorf("Error unmarshalling Jaeger response: %s [URL: %v]", errMarshal, u)
 		return nil, errMarshal
@@ -88,27 +87,33 @@ func unmarshal(r []byte, u *url.URL) (*JaegerResponse, error) {
 	return &response, nil
 }
 
-func prepareQuery(u *url.URL, jaegerServiceName string, query models.TracingQuery) {
+func prepareQuery(u *url.URL, tracingServiceName string, query models.TracingQuery) {
 	q := url.Values{}
-	q.Set("service", jaegerServiceName)
-	q.Set("start", fmt.Sprintf("%d", query.Start.Unix()*time.Second.Microseconds()))
-	q.Set("end", fmt.Sprintf("%d", query.End.Unix()*time.Second.Microseconds()))
-	if len(query.Tags) > 0 {
-		// Tags must be json encoded
-		tags, err := json.Marshal(query.Tags)
-		if err != nil {
-			log.Errorf("Jager query: error while marshalling tags to json: %v", err)
-		}
-		q.Set("tags", string(tags))
-	}
+	//q.Set("tags", tracingServiceName)
+	//q.Set("start", fmt.Sprintf("%d", query.Start.Unix()))
+	//q.Set("end", fmt.Sprintf("%d", query.End.Unix()))
+	q.Set("tags", "root.service.name="+tracingServiceName+" startTimeUnixNano="+fmt.Sprintf("%d", query.Start.Unix()))
+	//query.Tags["root.service.name"] = tracingServiceName
+	//query.Tags["startTimeUnixNano"] = fmt.Sprintf("%d", query.Start.Unix()*time.Second.Nanoseconds())
+	//query.Tags["root.service.name"] = tracingServiceName
+	/*
+		if len(query.Tags) > 0 {
+			// Tags must be json encoded
+			tags, err := json.Marshal(query.Tags)
+			if err != nil {
+				log.Errorf("Jager query: error while marshalling tags to json: %v", err)
+			}
+			q.Set("tags", string(tags))
+		} */
 	if query.MinDuration > 0 {
-		q.Set("minDuration", fmt.Sprintf("%d", query.MinDuration.Microseconds()))
+		q.Set("minDuration", fmt.Sprintf("%d", query.MinDuration.Seconds()))
 	}
 	if query.Limit > 0 {
 		q.Set("limit", strconv.Itoa(query.Limit))
 	}
 	u.RawQuery = q.Encode()
-	log.Debugf("Prepared Jaeger query: %v", u)
+	//log.Debugf("Prepared Jaeger query: %v", u)
+	log.Infof("Prepared Jaeger query: %v", u)
 }
 
 func makeRequest(client http.Client, endpoint string, body io.Reader) (response []byte, status int, err error) {

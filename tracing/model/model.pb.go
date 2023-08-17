@@ -150,9 +150,9 @@ type KeyValue struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Key      string    `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	VType    ValueType `protobuf:"varint,2,opt,name=v_type,json=vType,proto3,enum=jaeger.api_v2.ValueType" json:"v_type,omitempty"`
-	VStr     string    `protobuf:"bytes,3,opt,name=v_str,json=vStr,proto3" json:"v_str,omitempty"`
+	Key   string    `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	VType ValueType `protobuf:"varint,2,opt,name=v_type,json=vType,proto3,enum=jaeger.api_v2.ValueType" json:"v_type,omitempty"`
+	VStr  string    `protobuf:"bytes,3,opt,name=v_str,json=vStr,proto3" json:"v_str,omitempty"`
 	VBool    bool      `protobuf:"varint,4,opt,name=v_bool,json=vBool,proto3" json:"v_bool,omitempty"`
 	VInt64   int64     `protobuf:"varint,5,opt,name=v_int64,json=vInt64,proto3" json:"v_int64,omitempty"`
 	VFloat64 float64   `protobuf:"fixed64,6,opt,name=v_float64,json=vFloat64,proto3" json:"v_float64,omitempty"`
@@ -420,15 +420,15 @@ type Span struct {
 
 	TraceId       []byte                 `protobuf:"bytes,1,opt,name=trace_id,json=traceId,proto3" json:"trace_id,omitempty"`
 	SpanId        []byte                 `protobuf:"bytes,2,opt,name=span_id,json=spanId,proto3" json:"span_id,omitempty"`
-	OperationName string                 `protobuf:"bytes,3,opt,name=operation_name,json=operationName,proto3" json:"operation_name,omitempty"`
-	References    []*SpanRef             `protobuf:"bytes,4,rep,name=references,proto3" json:"references,omitempty"`
-	Flags         uint32                 `protobuf:"varint,5,opt,name=flags,proto3" json:"flags,omitempty"`
+	OperationName string               `protobuf:"bytes,3,opt,name=operation_name,json=operationName,proto3" json:"operation_name,omitempty"`
+	References    []*SpanRef           `protobuf:"bytes,4,rep,name=references,proto3" json:"references,omitempty"`
+	Flags         uint32               `protobuf:"varint,5,opt,name=flags,proto3" json:"flags,omitempty"`
 	StartTime     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
-	Duration      *durationpb.Duration   `protobuf:"bytes,7,opt,name=duration,proto3" json:"duration,omitempty"`
-	Tags          []*KeyValue            `protobuf:"bytes,8,rep,name=tags,proto3" json:"tags,omitempty"`
-	Logs          []*Log                 `protobuf:"bytes,9,rep,name=logs,proto3" json:"logs,omitempty"`
-	Process       *Process               `protobuf:"bytes,10,opt,name=process,proto3" json:"process,omitempty"`
-	ProcessId     string                 `protobuf:"bytes,11,opt,name=process_id,json=processId,proto3" json:"process_id,omitempty"`
+	Duration      *durationpb.Duration `protobuf:"bytes,7,opt,name=duration,proto3" json:"duration,omitempty"`
+	Tags          []*KeyValue          `protobuf:"bytes,8,rep,name=tags,proto3" json:"tags,omitempty"`
+	Logs          []*Log               `protobuf:"bytes,9,rep,name=logs,proto3" json:"logs,omitempty"`
+	Process       *Process             `protobuf:"bytes,10,opt,name=process,proto3" json:"process,omitempty"`
+	ProcessId     string               `protobuf:"bytes,11,opt,name=process_id,json=processId,proto3" json:"process_id,omitempty"`
 	Warnings      []string               `protobuf:"bytes,12,rep,name=warnings,proto3" json:"warnings,omitempty"`
 }
 

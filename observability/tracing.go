@@ -61,8 +61,17 @@ func InitTracer(collectorURL string) *sdktrace.TracerProvider {
 		exporter, err = jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(collectorURL)))
 	} else {
 		// since v1.35.0 you can run Jaeger as an OTLP endpoint and for trace visualization
-		client := otlptracehttp.NewClient()
-		exporter, err = otlptrace.New(context.TODO(), client)
+		client := otlptracehttp.NewClient(otlptracehttp.WithEndpoint(jaegerURL),
+			otlptracehttp.WithInsecure(),
+			otlptracehttp.WithRetry(otlptracehttp.RetryConfig{
+				Enabled:         true,
+				InitialInterval: 1 * time.Nanosecond,
+				MaxInterval:     1 * time.Nanosecond,
+				// Never stop retry of retry-able status.
+				MaxElapsedTime: 0,
+			}))
+		ctx := context.Background()
+		exporter, err = otlptrace.New(ctx, client)
 	}
 
 	if err != nil {

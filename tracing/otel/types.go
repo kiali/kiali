@@ -1,7 +1,7 @@
-package jaeger
+package otel
 
 import (
-	jaegerModels "github.com/kiali/kiali/jaeger/model/json"
+	jaegerModels "github.com/kiali/kiali/tracing/model/json"
 )
 
 type structuredError struct {

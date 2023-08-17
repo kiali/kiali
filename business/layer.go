@@ -1,10 +1,11 @@
 package business
 
 import (
+	"github.com/kiali/kiali/tracing"
+	"github.com/kiali/kiali/tracing/jaeger"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/jaeger"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
@@ -110,10 +111,10 @@ func Get(authInfo *api.AuthInfo) (*Layer, error) {
 	}
 
 	// Create Jaeger client
-	jaegerLoader := func() (jaeger.ClientInterface, error) {
+	jaegerLoader := func() (tracing.ClientInterface, error) {
 		var err error
 		if jaegerClient == nil {
-			jaegerClient, err = jaeger.NewClient(authInfo.Token)
+			jaegerClient, err = tracing.NewClient(authInfo.Token)
 			if err != nil {
 				jaegerClient = nil
 			}

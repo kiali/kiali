@@ -1,11 +1,11 @@
 package main
 
 import (
-	jaegerModels "github.com/kiali/kiali/jaeger/model/json"
+	"github.com/kiali/kiali/tracing/model"
+	jaegerModels "github.com/kiali/kiali/tracing/model/json"
 
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/graph/config/cytoscape"
-	"github.com/kiali/kiali/jaeger"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/status"
@@ -649,7 +649,7 @@ type ErrorTracesResponse struct {
 // swagger:response spansResponse
 type SpansResponse struct {
 	// in:body
-	Body []jaeger.JaegerSpan
+	Body []model.TracingSpan
 }
 
 // Listing all the information related to a workload
