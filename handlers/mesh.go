@@ -1,6 +1,11 @@
 package handlers
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/kiali/kiali/config"
+)
 
 // GetClusters writes to the HTTP response a JSON document with the
 // list of clusters that are part of the mesh when multi-cluster is enabled. If
@@ -59,6 +64,15 @@ func GetMesh(w http.ResponseWriter, r *http.Request) {
 	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	conf := config.Get()
+
+	// Ensure user has access to the istio system namespace on the home cluster at least.
+	// There is no access check in GetMesh.
+	if _, err := business.Namespace.GetClusterNamespace(r.Context(), conf.IstioNamespace, conf.KubernetesConfig.ClusterName); err != nil {
+		RespondWithError(w, http.StatusForbidden, fmt.Sprintf("Unable to access '%s' namespace. You need access to this to get mesh info. Error: %s ", conf.IstioNamespace, err))
 		return
 	}
 

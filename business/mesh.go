@@ -121,11 +121,6 @@ func (in *MeshService) GetMesh(ctx context.Context) (*Mesh, error) {
 	)
 	defer end()
 
-	// Ensure user has access to the istio system namespace on the home cluster at least.
-	if _, err := in.namespaceService.GetClusterNamespace(ctx, in.conf.IstioNamespace, in.conf.KubernetesConfig.ClusterName); err != nil {
-		return nil, err
-	}
-
 	clusters, err := in.GetClusters(nil)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get mesh clusters: %w", err)
