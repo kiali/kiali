@@ -1,3 +1,4 @@
+@sidecar-injection
 Feature: Controlling sidecar injection
     In Istio, at installation it is possible to set a default policy for automatic sidecar
     injection. In addition to the default policy, automatic sidecar injection can be
