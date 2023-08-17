@@ -55,8 +55,9 @@ type ControlPlane struct {
 	// Can be empty when it's the default revision.
 	Revision string
 
-	// External indicates if the controlplane is external.
-	External bool
+	// ManagesExternal indicates if the controlplane manages an external cluster.
+	// It could also manage the cluster that it is running on.
+	ManagesExternal bool
 
 	// Config
 	Config ControlPlaneConfiguration
@@ -182,7 +183,7 @@ func (in *MeshService) GetMesh(ctx context.Context) (*Mesh, error) {
 					for _, env := range istiod.Spec.Template.Spec.Containers[0].Env {
 						switch {
 						case envVarIsSet(IstiodExternalEnvKey, env):
-							controlPlane.External = true
+							controlPlane.ManagesExternal = true
 						case envVarIsSet(IstiodScopeGatewayEnvKey, env):
 							controlPlane.Config.IsGatewayToNamespace = true
 						}
@@ -209,15 +210,16 @@ func (in *MeshService) GetMesh(ctx context.Context) (*Mesh, error) {
 			// First check for '*' which means all controlplane clusters that are part of the mesh
 			// and can managed external controlplanes will be able to manage this remote cluster.
 			if controlClusters == "*" {
-				for _, cp := range mesh.ControlPlanes {
-					if cp.External {
-						cp.ManagedClusters = append(cp.ManagedClusters, cluster)
+				for idx := range mesh.ControlPlanes {
+					if mesh.ControlPlanes[idx].ManagesExternal {
+						mesh.ControlPlanes[idx].ManagedClusters = append(mesh.ControlPlanes[idx].ManagedClusters, cluster)
 					}
 				}
 			} else {
-				for _, controlPlaneCluster := range strings.Split(controlClusters, ",") {
+				for _, controlPlaneClusterName := range strings.Split(controlClusters, ",") {
 					for idx := range mesh.ControlPlanes {
-						if mesh.ControlPlanes[idx].Cluster.Name == controlPlaneCluster {
+						if controlPlane := mesh.ControlPlanes[idx]; controlPlane.ManagesExternal &&
+							controlPlane.Cluster.Name == controlPlaneClusterName {
 							mesh.ControlPlanes[idx].ManagedClusters = append(mesh.ControlPlanes[idx].ManagedClusters, cluster)
 						}
 					}
