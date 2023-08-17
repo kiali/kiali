@@ -62,8 +62,12 @@ Sets up the environment for the integration tests and runs them. This is the sam
 NOTE: When running the multi-cluster tests locally, it might be necessary to
 edit some kernel settings to allow for the kind clusters to be created.
 
-The following settings added to your `/etc/sysctl.d/local.conf` file
-should work but YMMV depending on your system:
+These commands will set the kernel settings temporarily. After a reboot, your system will revert back to its original settings:
+```bash
+sudo sysctl fs.inotify.max_user_watches=524288
+sudo sysctl fs.inotify.max_user_instances=512
+```
+If you wish to make these settings permanent, the following lines added to your sysctl configuration file should work (depending on your operating system, this configuration file can be something like `/etc/sysctl.d/local.conf`, `/etc/sysctl.conf`, or something else. Refer to the `man sysctl` docs for details):
 ```bash
 fs.inotify.max_user_watches=524288
 fs.inotify.max_user_instances=512
