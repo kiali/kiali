@@ -23,7 +23,7 @@ import {
 import { IstioActionDropdown } from '../../components/IstioActions/IstioActionsDropdown';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { IstioActionButtons } from '../../components/IstioActions/IstioActionsButtons';
-import { history } from '../../app/History';
+import { history, HistoryManager } from '../../app/History';
 import { Paths } from '../../config';
 import { MessageType } from '../../types/MessageCenter';
 import { getIstioObject, mergeJsonPatch } from '../../utils/IstioConfigUtils';
@@ -100,8 +100,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
 
   constructor(props: IstioConfigDetailsProps) {
     super(props);
-    const urlParams = new URLSearchParams(history.location.search);
-    const cluster = urlParams.get('clusterName') || undefined;
+    const cluster = HistoryManager.getClusterName();
     this.state = {
       cluster: cluster,
       isModified: false,

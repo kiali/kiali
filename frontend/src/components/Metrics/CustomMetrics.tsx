@@ -15,7 +15,7 @@ import {
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { serverConfig } from '../../config/ServerConfig';
-import { history, URLParam } from '../../app/History';
+import { history, HistoryManager, URLParam } from '../../app/History';
 import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
 import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange } from '../../types/Common';
@@ -106,8 +106,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
     const settings = MetricsHelper.retrieveMetricsSettings();
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
-    const urlParams = new URLSearchParams(history.location.search);
-    const cluster = urlParams.get('clusterName') || undefined;
+    const cluster = HistoryManager.getClusterName();
     this.state = {
       cluster: cluster,
       isTimeOptionsOpen: false,

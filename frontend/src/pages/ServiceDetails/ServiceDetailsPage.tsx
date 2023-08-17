@@ -31,7 +31,7 @@ import { RenderHeader } from '../../components/Nav/Page/RenderHeader';
 import { ErrorMsg } from '../../types/ErrorMsg';
 import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
-import { history } from 'app/History';
+import { history, HistoryManager } from 'app/History';
 import { durationSelector } from 'store/Selectors';
 import { basicTabStyle } from 'styles/TabStyles';
 
@@ -69,8 +69,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
 
   constructor(props: ServiceDetailsProps) {
     super(props);
-    const urlParams = new URLSearchParams(history.location.search);
-    const cluster = urlParams.get('clusterName') || undefined;
+    const cluster = HistoryManager.getClusterName();
     this.state = {
       // Because null is not the same as undefined and urlParams.get(...) returns null.
       cluster: cluster,
@@ -87,6 +86,8 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
   }
 
   componentDidUpdate(prevProps: ServiceDetailsProps, _prevState: ServiceDetailsState) {
+    // when linking from one cluster's service to another cluster's service, cluster in state should be changed
+    const cluster = HistoryManager.getClusterName() || this.state.cluster;
     const currentTab = activeTab(tabName, defaultTab);
     if (
       prevProps.serviceId.namespace !== this.props.serviceId.namespace ||
@@ -95,27 +96,23 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
       prevProps.lastRefreshAt !== this.props.lastRefreshAt
     ) {
       if (currentTab === 'info') {
-        this.fetchService();
+        this.fetchService(cluster);
       }
-      if (currentTab !== this.state.currentTab) {
+      if (currentTab !== this.state.currentTab || cluster !== this.state.cluster) {
         this.setState({ currentTab: currentTab });
       }
     }
   }
 
-  private fetchService = () => {
+  private fetchService = (cluster?: string) => {
+    if (!cluster) {
+      cluster = this.state.cluster;
+    }
     this.promises.cancelAll();
     this.promises
       .register(
         'gateways',
-        API.getAllIstioConfigs(
-          [this.props.serviceId.namespace],
-          ['gateways', 'k8sgateways'],
-          false,
-          '',
-          '',
-          this.state.cluster
-        )
+        API.getAllIstioConfigs([this.props.serviceId.namespace], ['gateways', 'k8sgateways'], false, '', '', cluster)
       )
       .then(response => {
         const gws: Gateway[] = [];
@@ -136,7 +133,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
       this.props.serviceId.namespace,
       this.props.serviceId.service,
       true,
-      this.state.cluster,
+      cluster,
       this.props.duration
     )
       .then(results => {
@@ -154,7 +151,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         this.setState({ error: msg });
       });
 
-    API.getAllIstioConfigs([this.props.serviceId.namespace], ['peerauthentications'], false, '', '', this.state.cluster)
+    API.getAllIstioConfigs([this.props.serviceId.namespace], ['peerauthentications'], false, '', '', cluster)
       .then(results => {
         this.setState({
           peerAuthentications: results.data[this.props.serviceId.namespace].peerAuthentications

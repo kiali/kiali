@@ -22,7 +22,7 @@ import { RenderHeader } from '../../components/Nav/Page/RenderHeader';
 import { ErrorMsg } from '../../types/ErrorMsg';
 import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
-import { history } from 'app/History';
+import { history, HistoryManager } from 'app/History';
 import { basicTabStyle } from 'styles/TabStyles';
 
 type AppDetailsState = {
@@ -61,8 +61,7 @@ const nextTabIndex = 5;
 class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   constructor(props: AppDetailsProps) {
     super(props);
-    const urlParams = new URLSearchParams(history.location.search);
-    const cluster = urlParams.get('clusterName') || undefined;
+    const cluster = HistoryManager.getClusterName();
     this.state = { currentTab: activeTab(tabName, defaultTab), cluster: cluster };
   }
 
@@ -71,6 +70,8 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   }
 
   componentDidUpdate(prevProps: AppDetailsProps) {
+    // when linking from one cluster's app to another cluster's app, cluster in state should be changed
+    const cluster = HistoryManager.getClusterName() || this.state.cluster;
     const currentTab = activeTab(tabName, defaultTab);
     if (
       this.props.appId.namespace !== prevProps.appId.namespace ||
@@ -80,17 +81,20 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
       this.props.duration !== prevProps.duration
     ) {
       if (currentTab === 'info') {
-        this.fetchApp();
+        this.fetchApp(cluster);
       }
-      if (currentTab !== this.state.currentTab) {
-        this.setState({ currentTab: currentTab });
+      if (currentTab !== this.state.currentTab || cluster !== this.state.cluster) {
+        this.setState({ currentTab: currentTab, cluster: cluster });
       }
     }
   }
 
-  private fetchApp = () => {
+  private fetchApp = (cluster?: string) => {
+    if (!cluster) {
+      cluster = this.state.cluster;
+    }
     const params: { [key: string]: string } = { rateInterval: String(this.props.duration) + 's', health: 'true' };
-    API.getApp(this.props.appId.namespace, this.props.appId.app, params, this.state.cluster)
+    API.getApp(this.props.appId.namespace, this.props.appId.app, params, cluster)
       .then(details => {
         this.setState({
           app: details.data,
