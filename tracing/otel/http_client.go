@@ -6,6 +6,7 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/model"
+	jaegerModels "github.com/kiali/kiali/tracing/model/json"
 	"io"
 	"net/http"
 	"net/url"
@@ -41,7 +42,7 @@ func (oc OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.UR
 	if len(resp) == 0 {
 		return nil, nil
 	}
-	response, err := unmarshal(resp, &u)
+	response, err := unmarshal(resp, &u, "")
 	if err != nil {
 		return nil, err
 	}
@@ -75,16 +76,28 @@ func queryTracesHTTP(client http.Client, u *url.URL) (*model.TracingResponse, er
 		log.Errorf("Jaeger query error: %s [code: %d, URL: %v]", reqError, code, u)
 		return &model.TracingResponse{}, reqError
 	}
-	return unmarshal(resp, u)
+	return unmarshal(resp, u, "")
 }
 
-func unmarshal(r []byte, u *url.URL) (*model.TracingResponse, error) {
-	var response model.TracingResponse
+func unmarshal(r []byte, u *url.URL, service string) (*model.TracingResponse, error) {
+	var response model.OTelTracingResponse
 	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
 		log.Errorf("Error unmarshalling Jaeger response: %s [URL: %v]", errMarshal, u)
 		return nil, errMarshal
 	}
-	return &response, nil
+
+	return convertTraces(&response, service), nil
+}
+
+func convertTraces(traces *model.OTelTracingResponse, service string) *model.TracingResponse {
+	var response model.TracingResponse
+	for _, trace := range traces.Traces {
+		i, _ := strconv.ParseInt(trace.TraceID, 10, 64)
+		t := jaegerModels.Trace{TraceID: jaegerModels.TraceID(i)}
+		response.Data = append(response.Data, t)
+	}
+	response.TracingServiceName = service
+	return &response
 }
 
 func prepareQuery(u *url.URL, tracingServiceName string, query models.TracingQuery) {
@@ -92,7 +105,7 @@ func prepareQuery(u *url.URL, tracingServiceName string, query models.TracingQue
 	//q.Set("tags", tracingServiceName)
 	//q.Set("start", fmt.Sprintf("%d", query.Start.Unix()))
 	//q.Set("end", fmt.Sprintf("%d", query.End.Unix()))
-	q.Set("tags", "root.service.name="+tracingServiceName+" startTimeUnixNano="+fmt.Sprintf("%d", query.Start.Unix()))
+	q.Set("tags", "service.name="+tracingServiceName)
 	//query.Tags["root.service.name"] = tracingServiceName
 	//query.Tags["startTimeUnixNano"] = fmt.Sprintf("%d", query.Start.Unix()*time.Second.Nanoseconds())
 	//query.Tags["root.service.name"] = tracingServiceName

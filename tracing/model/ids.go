@@ -15,7 +15,7 @@
 
 // Cloned from github.com/jaegertracing/jaeger/
 
-//nolint
+// nolint
 package model
 
 import (
