@@ -112,7 +112,7 @@ Feature: Kiali Apps List page
 
   @apps-page
   @multi-cluster
-  @to-be-implemented
+  @skip
   Scenario: The column related to cluster name should be visible
     Then the "Cluster" column "appears" 
     

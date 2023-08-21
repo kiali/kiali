@@ -243,7 +243,7 @@ Feature: Kiali Graph page - Display menu
     And the "service nodes" option should "not be checked" and "enabled"
     And the "operation nodes" option should "be checked" and "enabled"
 
-  @to-be-implemented
+  @skip
   @multi-cluster
   Scenario: Graph bookinfo namespace for the multi-cluster setup
     When user graphs "bookinfo" namespaces

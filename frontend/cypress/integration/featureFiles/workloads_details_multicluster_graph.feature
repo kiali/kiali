@@ -1,5 +1,5 @@
 @multi-cluster
-@to-be-implemented
+@skip
 @workloads-details
 Feature: Kiali Workloads Details page for multicluster
 

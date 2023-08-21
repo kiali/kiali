@@ -1,5 +1,5 @@
 @multi-cluster
-@to-be-implemented
+@skip
 Feature: Kiali Workload Details page
 
   On the Workload Details page, the user should see the details of a workload located in a remote cluster, as well as

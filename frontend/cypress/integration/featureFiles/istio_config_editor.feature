@@ -17,7 +17,7 @@ Feature: Kiali Istio Config editor page
     Then user can see istio config editor
 
   @multi-cluster 
-  @to-be-implemented
+  @skip
   Scenario: Filter Istio Config editor objects by Valid configuration
     When the user filters by "Config" for "Valid"
     And user sees "bookinfo-gateway"

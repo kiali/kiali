@@ -75,7 +75,7 @@ Feature: Kiali Istio Config page
     Then the user can create a "Sidecar" Istio object
 
   @multi-cluster
-  @to-be-implemented 
+  @skip 
   Scenario: See all Istio Config objects in the bookinfo namespace in the multi-cluster environment.
     Then the "Cluster" column "appears"
     And user sees all the Istio Config objects from both clusters in the bookinfo namespace

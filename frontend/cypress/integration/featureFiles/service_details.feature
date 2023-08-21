@@ -76,7 +76,7 @@ Feature: Kiali Service Details page
     Then the graph type is disabled
 
   @multi-cluster
-  @to-be-implemented
+  @skip
   @service-details-page
   Scenario: See details for service
     Then sd::user sees "productpage" details information for service "v1"
@@ -85,7 +85,7 @@ Feature: Kiali Service Details page
     And cluster badge for "east" cluster should be visible
 
   @multi-cluster
-  @to-be-implemented
+  @skip
   @service-details-page
   Scenario: See service Traffic information
     Then sd::user sees inbound and outbound traffic information
