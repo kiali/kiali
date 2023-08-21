@@ -15,3 +15,14 @@ Feature: Kiali Istio Config editor page
     And user sees "bookinfo"
     And user clicks in "Name" column on the "bookinfo" text
     Then user can see istio config editor
+
+  @multi-cluster 
+  @to-be-implemented
+  Scenario: Filter Istio Config editor objects by Valid configuration
+    When the user filters by "Config" for "Valid"
+    And user sees "bookinfo-gateway"
+    And user sees "bookinfo"
+    And user clicks in "Name" column on the "bookinfo" text
+    Then user can see istio config editor
+    And cluster badge for "east" cluster should be visible
+    

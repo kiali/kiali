@@ -74,6 +74,16 @@ Feature: Kiali Istio Config page
   Scenario: Ability to create a Sidecar object
     Then the user can create a "Sidecar" Istio object
 
+  @multi-cluster
+  @to-be-implemented 
+  Scenario: See all Istio Config objects in the bookinfo namespace in the multi-cluster environment.
+    Then the "Cluster" column "appears"
+    And user sees all the Istio Config objects from both clusters in the bookinfo namespace
+    And user sees Name information for Istio objects
+    And user sees Namespace information for Istio objects
+    And user sees Type information for Istio objects
+    And user sees Configuration information for Istio objects 
+
   @crd-validation
   @bookinfo-app
   Scenario: KIA0101 validation
