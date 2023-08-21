@@ -150,7 +150,7 @@ EOF
     --wait \
     --set auth.strategy="${AUTH_STRATEGY}" \
     --set deployment.logger.log_level="trace" \
-    --set deployment.image_name=kiali/kiali \
+    --set deployment.image_name=localhost/kiali/kiali \
     --set deployment.image_version=dev \
     --set deployment.image_pull_policy="Never" \
     --set external_services.grafana.url="http://grafana.istio-system:3000" \

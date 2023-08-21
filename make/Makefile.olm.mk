@@ -11,7 +11,7 @@ OLM_INDEX_NAME ?= ${OLM_IMAGE_ORG}/kiali-operator-index
 OLM_BUNDLE_PACKAGE ?= kiali
 
 OLM_INDEX_BASE_IMAGE ?= quay.io/openshift/origin-operator-registry:4.11
-OPM_VERSION ?= 1.25.0
+OPM_VERSION ?= 1.28.0
 
 # which OLM to install (for olm-install target)
 OLM_VERSION ?= latest
@@ -25,8 +25,14 @@ else ifeq ($(CLUSTER_TYPE),openshift)
 	@$(eval CLUSTER_OLM_BUNDLE_NAME ?= ${CLUSTER_REPO}/${OLM_BUNDLE_NAME})
 	@$(eval CLUSTER_OLM_INDEX_NAME ?= ${CLUSTER_REPO}/${OLM_INDEX_NAME})
 	@$(eval CLUSTER_INTERNAL_OLM_INDEX_NAME ?= ${CLUSTER_REPO_INTERNAL}/${OLM_INDEX_NAME})
+else ifeq ($(CLUSTER_TYPE),kind)
+	@if [ "${DORP}" != "docker" ]; then echo "Today you must use DORP=docker to use the OLM targets with a Kind cluster." && exit 1; fi
+	@if [ -z "${CLUSTER_REPO}" ]; then echo "The Kind cluster does not appear to have an externally accessible image registry. You cannot use the OLM targets without this." && exit 1; fi
+	@$(eval CLUSTER_OLM_BUNDLE_NAME ?= ${CLUSTER_REPO}/${OLM_BUNDLE_NAME})
+	@$(eval CLUSTER_OLM_INDEX_NAME ?= ${CLUSTER_REPO}/${OLM_INDEX_NAME})
+	@$(eval CLUSTER_INTERNAL_OLM_INDEX_NAME ?= ${CLUSTER_REPO_INTERNAL}/${OLM_INDEX_NAME})
 else
-	@echo "ERROR: CLUSTER_TYPE [${CLUSTER_TYPE}] is not supported - must be one of: openshift, minikube"
+	@echo "ERROR: unknown CLUSTER_TYPE [${CLUSTER_TYPE}] - must be one of: openshift, minikube, kind"
 	@exit 1
 endif
 
@@ -76,16 +82,29 @@ build-olm-bundle: .prepare-olm-cluster-names .determine-olm-bundle-version
 	  sed -i "s/\$${CREATED_AT}/Created-By-Kiali-Makefile/g" $${csv} ;\
 	  sed -i "s|\$${KIALI_OPERATOR_REGISTRY}|${CLUSTER_OPERATOR_INTERNAL_NAME}:${OPERATOR_CONTAINER_VERSION}|g" $${csv} ;\
 	)
-	${DORP} build -f ${OUTDIR}/bundle/bundle.Dockerfile -t ${CLUSTER_OLM_BUNDLE_NAME}:${BUNDLE_VERSION}
+	${DORP} build ${OUTDIR}/bundle -f ${OUTDIR}/bundle/bundle.Dockerfile -t ${CLUSTER_OLM_BUNDLE_NAME}:${BUNDLE_VERSION}
 
 ## cluster-push-olm-bundle: Builds then pushes the OLM bundle container image to a remote cluster
 cluster-push-olm-bundle: build-olm-bundle
+ifeq ($(CLUSTER_TYPE),kind)
+	@echo Pushing OLM bundle to kind cluster: ${CLUSTER_OLM_BUNDLE_NAME}:${BUNDLE_VERSION}
+	@rm -f /tmp/kiali-cluster-push-bundle.tar
+	${DORP} save -o /tmp/kiali-cluster-push-bundle.tar ${CLUSTER_OLM_BUNDLE_NAME}:${BUNDLE_VERSION}
+	${KIND} load image-archive /tmp/kiali-cluster-push-bundle.tar --name ${KIND_NAME}
+	@# If there is an external repo used by Kind, push it there, too, so opm render can see it
+ifeq ($(DORP),docker)
+	@if [ -n "${CLUSTER_REPO}" ]; then docker push ${CLUSTER_OLM_BUNDLE_NAME}:${BUNDLE_VERSION}; fi
+else
+	@if [ -n "${CLUSTER_REPO}" ]; then podman push --tls-verify=false ${CLUSTER_OLM_BUNDLE_NAME}:${BUNDLE_VERSION}; fi
+endif
+else
 ifeq ($(DORP),docker)
 	@echo Pushing OLM bundle image to remote cluster using docker: ${CLUSTER_OLM_BUNDLE_NAME}:${BUNDLE_VERSION}
 	docker push ${CLUSTER_OLM_BUNDLE_NAME}:${BUNDLE_VERSION}
 else
 	@echo Pushing OLM bundle image to remote cluster using podman: ${CLUSTER_OLM_BUNDLE_NAME}:${BUNDLE_VERSION}
 	podman push --tls-verify=false ${CLUSTER_OLM_BUNDLE_NAME}:${BUNDLE_VERSION}
+endif
 endif
 
 ## build-olm-index: Pushes the OLM bundle then generates the OLM index
@@ -114,6 +133,18 @@ build-olm-index: .ensure-opm-exists cluster-push-olm-bundle
 
 ## cluster-push-olm-index: Pushes the OLM bundle and then builds and pushes the OLM index to the cluster
 cluster-push-olm-index: build-olm-index
+ifeq ($(CLUSTER_TYPE),kind)
+	@echo Pushing olm index to kind cluster: ${CLUSTER_OLM_INDEX_NAME}:${BUNDLE_VERSION}
+	@rm -f /tmp/kiali-cluster-push-index.tar
+	${DORP} save -o /tmp/kiali-cluster-push-index.tar ${CLUSTER_OLM_INDEX_NAME}:${BUNDLE_VERSION}
+	${KIND} load image-archive /tmp/kiali-cluster-push-index.tar --name ${KIND_NAME}
+	@# If there is an external repo used by Kind, push it there, too
+ifeq ($(DORP),docker)
+	@if [ -n "${CLUSTER_REPO}" ]; then docker push ${CLUSTER_OLM_INDEX_NAME}:${BUNDLE_VERSION}; fi
+else
+	@if [ -n "${CLUSTER_REPO}" ]; then podman push --tls-verify=false ${CLUSTER_OLM_INDEX_NAME}:${BUNDLE_VERSION}; fi
+endif
+else
 ifeq ($(DORP),docker)
 	@echo Pushing OLM index image to remote cluster using docker: ${CLUSTER_OLM_INDEX_NAME}:${BUNDLE_VERSION}
 	docker push ${CLUSTER_OLM_INDEX_NAME}:${BUNDLE_VERSION}
@@ -121,13 +152,14 @@ else
 	@echo Pushing OLM index image to remote cluster using podman: ${CLUSTER_OLM_INDEX_NAME}:${BUNDLE_VERSION}
 	podman push --tls-verify=false ${CLUSTER_OLM_INDEX_NAME}:${BUNDLE_VERSION}
 endif
+endif
 
 .determine-olm-operators-namespace:
 	@$(eval OLM_OPERATORS_NAMESPACE ?= $(shell if [[ "${OC}" = *"oc" ]]; then echo 'openshift-operators'; else echo 'operators'; fi))
 	@$(eval OPERATOR_NAMESPACE = ${OLM_OPERATORS_NAMESPACE})
 	@echo "Using OLM requires that the OPERATOR_NAMESPACE be set to [${OPERATOR_NAMESPACE}]"
 
-.generate-catalog-source: .prepare-olm-cluster-names .determine-olm-bundle-version .prepare-operator-pull-secret
+.generate-catalog-source: .prepare-olm-cluster-names .determine-olm-bundle-version .determine-olm-operators-namespace .prepare-operator-pull-secret
 	@mkdir -p "${OUTDIR}"
 	@echo "apiVersion: operators.coreos.com/v1alpha1" >  ${OUTDIR}/kiali-catalogsource.yaml
 	@echo "kind: CatalogSource"                       >> ${OUTDIR}/kiali-catalogsource.yaml

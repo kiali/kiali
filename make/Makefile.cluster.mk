@@ -48,17 +48,15 @@
 	 fi
 
 .prepare-kind: .ensure-oc-exists .ensure-kind-exists
-	@$(eval CLUSTER_REPO_INTERNAL ?= localhost)
-	@$(eval CLUSTER_REPO ?= )
-	@$(eval CLUSTER_KIALI_TAG ?= ${CONTAINER_NAME}:${CONTAINER_VERSION})
-	@$(eval CLUSTER_OPERATOR_TAG ?= ${OPERATOR_CONTAINER_NAME}:${OPERATOR_CONTAINER_VERSION})
-ifeq ($(DORP),docker)
-	@$(eval CLUSTER_KIALI_INTERNAL_NAME ?= ${CONTAINER_NAME})
-	@$(eval CLUSTER_OPERATOR_INTERNAL_NAME ?= ${OPERATOR_CONTAINER_NAME})
-else
-	@$(eval CLUSTER_KIALI_INTERNAL_NAME ?= localhost/${CONTAINER_NAME})
-	@$(eval CLUSTER_OPERATOR_INTERNAL_NAME ?= localhost/${OPERATOR_CONTAINER_NAME})
-endif
+	@# If there is a docker process running with the name "kind-registry" assume it is used for the Kind cluster image registry.
+	@# "kind-registry" is the name start-kind.sh uses.
+	@# If no registry is found, the repo is just "" (it isn't accessible outside of KinD) - you must load the archive directly into Kind.
+	@$(eval CLUSTER_REPO ?= $(shell hostport="$$(${DORP} ps -f name=kind-registry --format '{{.Ports}}' 2>/dev/null | sed -E 's/(.*)->.*/\1/' | sed -E 's/127.0.0.1/localhost/')"; echo "$${hostport:-}"))
+	@$(eval CLUSTER_REPO_INTERNAL ?= ${CLUSTER_REPO})
+	@$(eval CLUSTER_KIALI_INTERNAL_NAME ?= $(shell if [ -z "${CLUSTER_REPO}" ]; then echo "localhost/${CONTAINER_NAME}"; else echo "${CLUSTER_REPO}/${CONTAINER_NAME}"; fi))
+	@$(eval CLUSTER_KIALI_TAG ?= ${CLUSTER_KIALI_INTERNAL_NAME}:${CONTAINER_VERSION})
+	@$(eval CLUSTER_OPERATOR_INTERNAL_NAME ?= $(shell if [ -z "${CLUSTER_REPO}" ]; then echo "localhost/${OPERATOR_CONTAINER_NAME}"; else echo "${CLUSTER_REPO}/${OPERATOR_CONTAINER_NAME}"; fi))
+	@$(eval CLUSTER_OPERATOR_TAG ?= ${CLUSTER_OPERATOR_INTERNAL_NAME}:${OPERATOR_CONTAINER_VERSION})
 
 .prepare-local: .ensure-oc-exists
 	@$(eval CLUSTER_KIALI_INTERNAL_NAME ?= ${CONTAINER_NAME})
@@ -204,14 +202,15 @@ cluster-build: cluster-build-operator cluster-build-kiali
 ## cluster-push-operator: Pushes Kiali operator container image to a remote cluster
 cluster-push-operator: cluster-build-operator
 ifeq ($(CLUSTER_TYPE),kind)
-ifeq ($(DORP),docker)
-	@echo Pushing Kiali operator image via docker to kind cluster: ${CLUSTER_OPERATOR_TAG}
-	${KIND} load docker-image --name ${KIND_NAME} ${CLUSTER_OPERATOR_TAG}
-else
-	@echo Pushing Kiali operator image via podman to kind cluster: ${CLUSTER_OPERATOR_TAG}
+	@echo Pushing Kiali operator image to kind cluster: ${CLUSTER_OPERATOR_TAG}
 	@rm -f /tmp/kiali-cluster-push-operator.tar
-	podman save -o /tmp/kiali-cluster-push-operator.tar ${CLUSTER_OPERATOR_TAG}
+	${DORP} save -o /tmp/kiali-cluster-push-operator.tar ${CLUSTER_OPERATOR_TAG}
 	${KIND} load image-archive /tmp/kiali-cluster-push-operator.tar --name ${KIND_NAME}
+	@# If there is an external repo used by Kind, push it there, too, so it can be loaded from there
+ifeq ($(DORP),docker)
+	@if [ -n "${CLUSTER_REPO}" ]; then docker push ${CLUSTER_OPERATOR_TAG}; fi
+else
+	@if [ -n "${CLUSTER_REPO}" ]; then podman push --tls-verify=false ${CLUSTER_OPERATOR_TAG}; fi
 endif
 else
 ifeq ($(DORP),docker)
@@ -226,14 +225,15 @@ endif
 ## cluster-push-kiali: Pushes Kiali image to a remote cluster
 cluster-push-kiali: cluster-build-kiali
 ifeq ($(CLUSTER_TYPE),kind)
-ifeq ($(DORP),docker)
-	@echo Pushing Kiali image via docker to kind cluster: ${CLUSTER_KIALI_TAG}
-	${KIND} load docker-image --name ${KIND_NAME} ${CLUSTER_KIALI_TAG}
-else
-	@echo Pushing Kiali image via podman to kind cluster: ${CLUSTER_KIALI_TAG}
+	@echo Pushing Kiali image to kind cluster: ${CLUSTER_KIALI_TAG}
 	@rm -f /tmp/kiali-cluster-push-kiali.tar
-	podman save -o /tmp/kiali-cluster-push-kiali.tar ${CLUSTER_KIALI_TAG}
+	${DORP} save -o /tmp/kiali-cluster-push-kiali.tar ${CLUSTER_KIALI_TAG}
 	${KIND} load image-archive /tmp/kiali-cluster-push-kiali.tar --name ${KIND_NAME}
+	@# If there is an external repo used by Kind, push it there, too, so it can be loaded from there
+ifeq ($(DORP),docker)
+	@if [ -n "${CLUSTER_REPO}" ]; then docker push ${CLUSTER_KIALI_TAG}; fi
+else
+	@if [ -n "${CLUSTER_REPO}" ]; then podman push --tls-verify=false ${CLUSTER_KIALI_TAG}; fi
 endif
 else
 ifeq ($(DORP),docker)
