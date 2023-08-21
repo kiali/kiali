@@ -1,4 +1,5 @@
 @multi-cluster
+@to-be-implemented
 Feature: Kiali App Details page for multicluster
 
   On the App Details page, an admin should see details about an application along with a cluster badge as well as

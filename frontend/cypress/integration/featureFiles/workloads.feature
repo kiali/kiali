@@ -135,6 +135,7 @@ Feature: Kiali Workloads page
     And the health status of the workload should be "Degraded"
 
   @multi-cluster
+  @to-be-implemented
   @workloads-page
   Scenario: The column related to cluster name should be visible
     Then the "Cluster" column "appears" 

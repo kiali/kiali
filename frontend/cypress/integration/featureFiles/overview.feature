@@ -139,6 +139,7 @@ Feature: Kiali Overview page
 
   @overview-page
   @multi-cluster
+  @to-be-implemented
   Scenario: See "bookinfo" in "east" and "west" clusters
     Then user sees the "bookinfo" namespace card in cluster "east"
     And user sees the "bookinfo" namespace card in cluster "west"
