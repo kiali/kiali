@@ -335,18 +335,6 @@ And('the {string} option should {string} and {string}', (option:string, optionSt
   cy.get('div#graph-display-menu').find(`input#${option}`).should(optionState.replaceAll(' ','.')).and(`be.${checkState}`);
 });
 
-And('user sees the {string} namespace deployed across the {string} and {string} cluster',(ns:string, cluster1:string, cluster2:string)=>{
-  cy.waitForReact();
-  cy.getReact('CytoscapeGraph')
-    .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
-      assert.equal(state.cy.nodes(`[isBox="cluster"][cluster="${cluster1}"]`).length, 1);
-      assert.equal(state.cy.nodes(`[isBox="namespace"][cluster="${cluster2}"]`).length, 1);
-      assert.equal(state.cy.nodes(`[isBox="namespace"][cluster="${cluster1}"][namespace="${ns}"]`).length, 1);
-    });
-})
-
 function validateInput(option: string, action: string) {
   if (action.startsWith('appear')) {
     cy.get('div#graph-display-menu')
