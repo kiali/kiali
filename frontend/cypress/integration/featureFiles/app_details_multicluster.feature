@@ -6,9 +6,6 @@ Feature: Kiali App Details page for multicluster
   a minigraph for traffic going to and originating from the application. We should also be able to navigate to a
   a remote cluster, if an app of one is present on the graph. 
   In addition, there should be tabs for viewing application specific traffic, including a new cluster.
-  #  column inbound/outbound metrics,
-  # and traces. The traces tab should show trace details about the selected trace. The spans tab
-  # should show span details about the selected trace.
 
   Background:
     Given user is at administrator perspective
@@ -55,3 +52,15 @@ Feature: Kiali App Details page for multicluster
     When user selects a trace
     Then user sees span details
     And user can filter spans by app
+
+  @app-details-page
+  Scenario Outline: User should be able to navigate through the graph to remotely located apps, services and workloads
+    When user is at the details page for the "app" "bookinfo/productpage" located in the "east" cluster
+    And user clicks on the "reviews" <type> from the "west" cluster visible in the graph
+    Then user is at the details page for the <type> <url> located in the "west" cluster
+
+  Examples: 
+    | <type> | <url> |
+    | app | bookinfo/reviews | 
+    | service | bookinfo/reviews |
+    | workload | bookinfo/reviews-v3 |
