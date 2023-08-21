@@ -313,7 +313,8 @@ func (in *MeshService) discoverKiali(ctx context.Context, clusterName string, r 
 	kubeCache, err := in.kialiCache.GetKubeCache(clusterName)
 	if err != nil {
 		log.Warningf("Discovery for Kiali instances in cluster [%s] failed. Unable to find kube cache for cluster [%s]", clusterName, clusterName)
-		return nil
+		// But still the Kiali instance can be configured to show the instance and the URL in Mesh page
+		return in.appendKialiInstancesFromConfig([]kubernetes.KialiInstance{}, clusterName)
 	}
 
 	// The operator and the helm charts set this fixed label. It's also
@@ -323,7 +324,8 @@ func (in *MeshService) discoverKiali(ctx context.Context, clusterName string, r 
 	services, err := kubeCache.GetServices("", kialiAppLabel)
 	if err != nil {
 		log.Warningf("Discovery for Kiali instances in cluster [%s] failed: %s", clusterName, err.Error())
-		return nil
+		// But still the Kiali instance can be configured to show the instance and the URL in Mesh page
+		return in.appendKialiInstancesFromConfig([]kubernetes.KialiInstance{}, clusterName)
 	}
 
 	var instances []kubernetes.KialiInstance
@@ -343,7 +345,34 @@ func (in *MeshService) discoverKiali(ctx context.Context, clusterName string, r 
 		}
 		instances = append(instances, kiali)
 	}
+	// Read the rest of Kiali instances configured
+	instances = in.appendKialiInstancesFromConfig(instances, clusterName)
+	return instances
+}
 
+// appendKialiInstancesFromConfig appends the rest of Kiali instances which are configured in KialiFeatureFlags.Clustering.KialiURLs into existing list of instances.
+func (in *MeshService) appendKialiInstancesFromConfig(instances []kubernetes.KialiInstance, clusterName string) []kubernetes.KialiInstance {
+	for _, cfgurl := range config.Get().KialiFeatureFlags.Clustering.KialiURLs {
+		if cfgurl.ClusterName != clusterName {
+			continue
+		}
+		found := false
+		for _, kiali := range instances {
+			if cfgurl.InstanceName == kiali.ServiceName && cfgurl.Namespace == kiali.Namespace {
+				found = true
+				// skip already appended instance
+				break
+			}
+		}
+		// When configured Kiali is not found, still show that instance.
+		if !found {
+			instances = append(instances, kubernetes.KialiInstance{
+				ServiceName: cfgurl.InstanceName,
+				Namespace:   cfgurl.Namespace,
+				Url:         cfgurl.URL,
+			})
+		}
+	}
 	return instances
 }
 
