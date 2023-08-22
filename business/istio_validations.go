@@ -594,15 +594,16 @@ func (in *IstioValidationsService) fetchRegistryServices(rValue *[]*kubernetes.R
 }
 
 func (in *IstioValidationsService) isGatewayToNamespace() bool {
-	clusters, err := in.businessLayer.Mesh.GetClusters(nil)
+	mesh, err := in.businessLayer.Mesh.GetMesh(context.TODO())
 	if err != nil {
-		log.Errorf("Error fetching clusters: %s", err)
+		log.Errorf("Error getting mesh config: %s", err)
 		return false
 	}
 
-	for _, cluster := range clusters {
-		if cluster.IsKialiHome {
-			return cluster.IsGatewayToNamespace
+	// TODO: Multi-primary support
+	for _, controlPlane := range mesh.ControlPlanes {
+		if controlPlane.Cluster.IsKialiHome {
+			return controlPlane.Config.IsGatewayToNamespace
 		}
 	}
 

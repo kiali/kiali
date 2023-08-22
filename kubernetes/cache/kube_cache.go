@@ -21,6 +21,7 @@ import (
 	istiotelem_v1alpha1_listers "istio.io/client-go/pkg/listers/telemetry/v1alpha1"
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/informers"
 	apps_v1_listers "k8s.io/client-go/listers/apps/v1"
@@ -70,6 +71,7 @@ type KubeCache interface {
 	GetDaemonSets(namespace string) ([]apps_v1.DaemonSet, error)
 	GetDaemonSet(namespace, name string) (*apps_v1.DaemonSet, error)
 	GetDeployments(namespace string) ([]apps_v1.Deployment, error)
+	GetDeploymentsWithSelector(namespace string, labelSelector string) ([]apps_v1.Deployment, error)
 	GetDeployment(namespace, name string) (*apps_v1.Deployment, error)
 	GetEndpoints(namespace, name string) (*core_v1.Endpoints, error)
 	GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error)
@@ -619,6 +621,33 @@ func (c *kubeCache) GetDeployments(namespace string) ([]apps_v1.Deployment, erro
 	return retDeployments, nil
 }
 
+func (c *kubeCache) GetDeploymentsWithSelector(namespace string, labelSelector string) ([]apps_v1.Deployment, error) {
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
+
+	selector, err := labels.ConvertSelectorToLabelsMap(labelSelector)
+	if err != nil {
+		return nil, err
+	}
+
+	deployments, err := c.getCacheLister(namespace).deploymentLister.Deployments(namespace).List(selector.AsSelector())
+	if err != nil {
+		return nil, err
+	}
+	log.Tracef("[Kiali Cache] Get [resource: Deployment] for [namespace: %s] = %d", namespace, len(deployments))
+
+	retDeployments := []apps_v1.Deployment{}
+	for _, deployment := range deployments {
+		// Do not modify what is returned by the lister since that is shared and will cause data races.
+		d := deployment.DeepCopy()
+		d.Kind = kubernetes.DeploymentType
+		retDeployments = append(retDeployments, *d)
+	}
+	return retDeployments, nil
+}
+
 func (c *kubeCache) GetDeployment(namespace, name string) (*apps_v1.Deployment, error) {
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
 	// but it won't prevent other routines from reading from the lister.
@@ -696,7 +725,14 @@ func (c *kubeCache) GetServices(namespace string, selectorLabels map[string]stri
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	services, err := c.getCacheLister(namespace).serviceLister.Services(namespace).List(labels.Set(selectorLabels).AsSelector())
+
+	var services []*core_v1.Service
+	var err error
+	if namespace == metav1.NamespaceAll {
+		services, err = c.getCacheLister(namespace).serviceLister.List(labels.Set(selectorLabels).AsSelector())
+	} else {
+		services, err = c.getCacheLister(namespace).serviceLister.Services(namespace).List(labels.Set(selectorLabels).AsSelector())
+	}
 	if err != nil {
 		return nil, err
 	}

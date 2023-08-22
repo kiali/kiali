@@ -177,6 +177,12 @@ type IstioMeshConfig struct {
 	DisableMixerHttpReports bool                    `yaml:"disableMixerHttpReports,omitempty"`
 	DiscoverySelectors      []*metav1.LabelSelector `yaml:"discoverySelectors,omitempty"`
 	EnableAutoMtls          *bool                   `yaml:"enableAutoMtls,omitempty"`
+	MeshMTLS                struct {
+		MinProtocolVersion string `yaml:"minProtocolVersion"`
+	} `yaml:"meshMtls"`
+	DefaultConfig struct {
+		MeshId string `yaml:"meshId"`
+	} `yaml:"defaultConfig" json:"defaultConfig"`
 }
 
 // MTLSDetails is a wrapper to group all Istio objects related to non-local mTLS configurations

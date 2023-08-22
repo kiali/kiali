@@ -5,20 +5,230 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"gopkg.in/yaml.v2"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/util/httputil"
 )
+
+const (
+	IstiodExternalEnvKey           = "EXTERNAL_ISTIOD"
+	IstiodScopeGatewayEnvKey       = "PILOT_SCOPE_GATEWAY_TO_NAMESPACE"
+	IstioInjectionLabel            = "istio-injection"
+	IstioRevisionLabel             = "istio.io/rev"
+	IstioControlPlaneClustersLabel = "topology.istio.io/controlPlaneClusters"
+)
+
+// Mesh is one or more controlplanes (primaries) managing a dataplane across one or more clusters.
+// There can be multiple primaries on a single cluster when istio revisions are used. A single
+// primary can also manage multiple clusters (primary-remote deployment).
+type Mesh struct {
+	// ControlPlanes that share the same mesh ID.
+	ControlPlanes []ControlPlane
+
+	// ID is the ID of the mesh.
+	ID *string
+}
+
+// ControlPlane manages the dataplane for one or more kube clusters.
+// It's expected to manage the cluster that it is deployed in.
+// It has configuration for all the clusters/namespaces associated with it.
+type ControlPlane struct {
+	// Cluster the kube cluster that the controlplane is running on.
+	Cluster *kubernetes.Cluster
+
+	// ManagedClusters are the clusters that this controlplane manages.
+	// This could include the cluster that the controlplane is running on.
+	ManagedClusters []*kubernetes.Cluster
+
+	// Revision is the revision of the controlplane.
+	// Can be empty when it's the default revision.
+	Revision string
+
+	// ManagesExternal indicates if the controlplane manages an external cluster.
+	// It could also manage the cluster that it is running on.
+	ManagesExternal bool
+
+	// Config
+	Config ControlPlaneConfiguration
+}
+
+// ControlPlaneConfiguration is the configuration for the controlplane and any associated dataplanes.
+type ControlPlaneConfiguration struct {
+	// IsGatewayToNamespace specifies the PILOT_SCOPE_GATEWAY_TO_NAMESPACE environment variable in Control Plane
+	// This is not currently used by the frontend so excluding it from the API response.
+	IsGatewayToNamespace bool `json:"-"`
+
+	// OutboundTrafficPolicy is the outbound traffic policy for the controlplane.
+	OutboundTrafficPolicy models.OutboundPolicy
+
+	// Network is the name of the network that the controlplane is using.
+	Network string
+
+	// IstioMeshConfig comes from the istio configmap.
+	kubernetes.IstioMeshConfig
+}
+
+// gets the mesh configuration for a controlplane from a variety of sources.
+func getControlPlaneConfiguration(kubeCache cache.KubeCache, namespace string, name string) (*ControlPlaneConfiguration, error) {
+	cfg, err := kubeCache.GetConfigMap(namespace, name)
+	if err != nil {
+		return nil, err
+	}
+
+	istioConfigMapInfo, err := kubernetes.GetIstioConfigMap(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ControlPlaneConfiguration{
+		IstioMeshConfig: *istioConfigMapInfo,
+	}, nil
+}
+
+// isRemoteCluster determines if the cluster has a controlplane or if it's a remote cluster without one.
+func (in *MeshService) isRemoteCluster(cluster string) (bool, error) {
+	istioNamespace, err := in.namespaceService.GetClusterNamespace(context.TODO(), in.conf.IstioNamespace, cluster)
+	if err != nil {
+		return false, err
+	}
+
+	// TODO: Is checking for this annotation the only way to tell if something is a remote cluster?
+	// Are there other things we should check like the webhooks?
+	if _, hasAnnotation := istioNamespace.Annotations[IstioControlPlaneClustersLabel]; hasAnnotation {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+// GetMesh gathers information about the mesh and controlplanes running in the mesh
+// from various sources e.g. istio configmap, istiod deployment envvars, etc.
+func (in *MeshService) GetMesh(ctx context.Context) (*Mesh, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "GetMesh",
+		observability.Attribute("package", "business"),
+	)
+	defer end()
+
+	clusters, err := in.GetClusters(nil)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get mesh clusters: %w", err)
+	}
+
+	mesh := &Mesh{}
+	var remoteClusters []*kubernetes.Cluster
+	for _, cluster := range clusters {
+		cluster := cluster
+		kubeCache, err := in.kialiCache.GetKubeCache(cluster.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		if isRemoteCluster, err := in.isRemoteCluster(cluster.Name); err != nil {
+			return nil, err
+		} else if isRemoteCluster {
+			log.Debugf("Cluster [%s] is a remote cluster. Skipping adding a controlplane.", cluster.Name)
+			remoteClusters = append(remoteClusters, &cluster)
+		} else {
+			// Not a remote cluster so add controlplane(s)
+			// It must be a primary.
+			istiods, err := kubeCache.GetDeploymentsWithSelector(in.conf.IstioNamespace, "app=istiod")
+			if err != nil {
+				return nil, err
+			}
+
+			for _, istiod := range istiods {
+				log.Debugf("Found controlplane [%s/%s] on cluster [%s].", istiod.Name, istiod.Namespace, cluster.Name)
+				controlPlane := ControlPlane{
+					Cluster:  &cluster,
+					Revision: istiod.Labels[IstioRevisionLabel],
+				}
+
+				configMapName := in.conf.ExternalServices.Istio.ConfigMapName
+				if revLabel := istiod.Labels[IstioRevisionLabel]; revLabel != "default" && revLabel != "" {
+					configMapName = configMapName + "-" + revLabel
+				}
+
+				controlPlaneConfig, err := getControlPlaneConfiguration(kubeCache, istiod.Namespace, configMapName)
+				if err != nil {
+					return nil, err
+				}
+				controlPlane.Config = *controlPlaneConfig
+
+				// Kiali only supports a single mesh. All controlplanes should share the same mesh id.
+				// Otherwise this is an error.
+				if mesh.ID == nil {
+					mesh.ID = &controlPlane.Config.DefaultConfig.MeshId
+				} else if *mesh.ID != controlPlane.Config.DefaultConfig.MeshId {
+					return nil, fmt.Errorf("multiple mesh ids found: [%s] and [%s]", *mesh.ID, controlPlane.Config.DefaultConfig.MeshId)
+				}
+
+				if containers := istiod.Spec.Template.Spec.Containers; len(containers) > 0 {
+					for _, env := range istiod.Spec.Template.Spec.Containers[0].Env {
+						switch {
+						case envVarIsSet(IstiodExternalEnvKey, env):
+							controlPlane.ManagesExternal = true
+						case envVarIsSet(IstiodScopeGatewayEnvKey, env):
+							controlPlane.Config.IsGatewayToNamespace = true
+						}
+					}
+				}
+
+				// Assume this controlplane also manages the cluster it is deployed on.
+				controlPlane.ManagedClusters = append(controlPlane.ManagedClusters, &cluster)
+				mesh.ControlPlanes = append(mesh.ControlPlanes, controlPlane)
+			}
+		}
+	}
+
+	// We don't have access to the istio secrets so can't use that to determine what
+	// clusters the primaries are connected to. We may be able to use the '/debug/clusterz' endpoint.
+	for _, cluster := range remoteClusters {
+		namespace, err := in.namespaceService.GetClusterNamespace(ctx, in.conf.IstioNamespace, cluster.Name)
+		if err != nil {
+			log.Errorf("unable to process remote clusters for cluster [%s]. Err: %s", cluster.Name, err)
+			continue
+		}
+
+		if controlClusters := namespace.Annotations[IstioControlPlaneClustersLabel]; controlClusters != "" {
+			// First check for '*' which means all controlplane clusters that are part of the mesh
+			// and can managed external controlplanes will be able to manage this remote cluster.
+			if controlClusters == "*" {
+				for idx := range mesh.ControlPlanes {
+					if mesh.ControlPlanes[idx].ManagesExternal {
+						mesh.ControlPlanes[idx].ManagedClusters = append(mesh.ControlPlanes[idx].ManagedClusters, cluster)
+					}
+				}
+			} else {
+				for _, controlPlaneClusterName := range strings.Split(controlClusters, ",") {
+					for idx := range mesh.ControlPlanes {
+						if controlPlane := mesh.ControlPlanes[idx]; controlPlane.ManagesExternal &&
+							controlPlane.Cluster.Name == controlPlaneClusterName {
+							mesh.ControlPlanes[idx].ManagedClusters = append(mesh.ControlPlanes[idx].ManagedClusters, cluster)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return mesh, nil
+}
+
+func envVarIsSet(key string, env core_v1.EnvVar) bool {
+	return env.Name == key && env.Value == "true"
+}
 
 const (
 	AllowAny = "ALLOW_ANY"
@@ -32,7 +242,7 @@ type MeshService struct {
 	homeClusterSAClient kubernetes.ClientInterface
 	kialiCache          cache.KialiCache
 	kialiSAClients      map[string]kubernetes.ClientInterface
-	layer               *Layer
+	namespaceService    NamespaceService
 }
 
 type meshTrafficPolicyConfig struct {
@@ -42,13 +252,13 @@ type meshTrafficPolicyConfig struct {
 }
 
 // NewMeshService initializes a new MeshService structure with the given k8s clients.
-func NewMeshService(kialiSAClients map[string]kubernetes.ClientInterface, cache cache.KialiCache, layer *Layer, conf config.Config) MeshService {
+func NewMeshService(kialiSAClients map[string]kubernetes.ClientInterface, cache cache.KialiCache, namespaceService NamespaceService, conf config.Config) MeshService {
 	return MeshService{
 		conf:                conf,
 		homeClusterSAClient: kialiSAClients[conf.KubernetesConfig.ClusterName],
 		kialiCache:          cache,
 		kialiSAClients:      kialiSAClients,
-		layer:               layer,
+		namespaceService:    namespaceService,
 	}
 }
 
@@ -77,15 +287,6 @@ func (in *MeshService) GetClusters(r *http.Request) ([]kubernetes.Cluster, error
 
 		if cluster == in.conf.KubernetesConfig.ClusterName {
 			meshCluster.IsKialiHome = true
-			// The "cluster_id" is set in an environment variable of
-			// the "istiod" deployment. Let's try to fetch it.
-			// TODO: Support multi-primary instead of using home cluster.
-			_, gatewayToNamespace, err := kubernetes.ClusterInfoFromIstiod(in.conf, in.homeClusterSAClient)
-			if err != nil {
-				// We didn't find it. This may mean that Istio is not setup with multi-cluster enabled.
-				return nil, err
-			}
-			meshCluster.IsGatewayToNamespace = gatewayToNamespace
 		}
 		clusters = append(clusters, meshCluster)
 	}
@@ -107,30 +308,26 @@ func convertKialiServiceToInstance(svc *core_v1.Service) kubernetes.KialiInstanc
 	}
 }
 
-// findKialiInNamespace tries to find a Kiali installation certain namespace of a cluster.
-// The clientSet argument should be an already initialized REST client to the API server of the
-// cluster. The namespace argument specifies the namespace where a Kiali instance will be looked for.
-// The clusterName argument is for logging purposes only.
+// discoverKiali tries to find a Kiali installation on the cluster.
 func (in *MeshService) discoverKiali(ctx context.Context, clusterName string, r *http.Request) []kubernetes.KialiInstance {
-	// Not using the cache since it doesn't support cross cluster querying. Perhaps it should.
-	client, ok := in.kialiSAClients[clusterName]
-	if !ok {
-		log.Warningf("Discovery for Kiali instances in cluster [%s] failed. Unable to find SA client for cluster [%s]", clusterName, clusterName)
-
+	kubeCache, err := in.kialiCache.GetKubeCache(clusterName)
+	if err != nil {
+		log.Warningf("Discovery for Kiali instances in cluster [%s] failed. Unable to find kube cache for cluster [%s]", clusterName, clusterName)
 		return nil
 	}
 
 	// The operator and the helm charts set this fixed label. It's also
 	// present in the Istio addon manifest of Kiali.
-	kialiAppLabel := "app.kubernetes.io/part-of=kiali"
-	services, err := client.Kube().CoreV1().Services(metav1.NamespaceAll).List(ctx, metav1.ListOptions{LabelSelector: kialiAppLabel})
+	kialiAppLabel := map[string]string{"app.kubernetes.io/part-of": "kiali"}
+	// TODO: This will fail if cluster wide mode is not enabled.
+	services, err := kubeCache.GetServices("", kialiAppLabel)
 	if err != nil {
 		log.Warningf("Discovery for Kiali instances in cluster [%s] failed: %s", clusterName, err.Error())
 		return nil
 	}
 
 	var instances []kubernetes.KialiInstance
-	for _, d := range services.Items {
+	for _, d := range services {
 		kiali := convertKialiServiceToInstance(&d)
 		// If URL is already populated (because of an annotation), trust that because it's user configuration.
 		// Only guess ourselves on our own cluster.
@@ -143,10 +340,10 @@ func (in *MeshService) discoverKiali(ctx context.Context, clusterName string, r 
 	return instances
 }
 
-// resolveNetwork tries to resolve the NETWORK_ID (as know by the Control Plane) of the
+// resolveNetwork tries to resolve the NETWORK_ID (as known by the Control Plane) of the
 // cluster that can be accessed using the provided kubeconfig data.
 // Also, it's assumed that the control plane on the remote cluster is hosted in the same
-// namespace as in Kiali's Home cluster. clusterName argument is only for logging purposes.
+// namespace as in Kiali's Home cluster.
 //
 // No errors are returned because we don't want to block processing of other clusters if
 // one fails. So, errors are only logged to let processing continue.
@@ -206,17 +403,10 @@ func (in *MeshService) resolveNetwork(clusterName string) string {
 
 		network = typedNetworkConfig
 	} else {
-		// Remote cluster
-		remoteClientSet, ok := in.kialiSAClients[clusterName]
-		if !ok {
-			log.Warningf("Cannot find a remote client on cluster [%s]: no client set", clusterName)
-			return ""
-		}
-
 		// Let's assume that the istio namespace has the same name on all clusters in the mesh.
-		istioNamespace, getNsErr := remoteClientSet.GetNamespace(in.conf.IstioNamespace)
-		if getNsErr != nil {
-			log.Warningf("Cannot describe the [%s] namespace on cluster [%s]: %v", in.conf.IstioNamespace, clusterName, getNsErr)
+		istioNamespace, err := in.namespaceService.GetClusterNamespace(context.TODO(), in.conf.IstioNamespace, clusterName)
+		if err != nil {
+			log.Warningf("Cannot describe the [%s] namespace on cluster [%s]: %v", in.conf.IstioNamespace, clusterName, err)
 			return ""
 		}
 
@@ -337,6 +527,6 @@ func (in *MeshService) CanaryUpgradeStatus() (*models.CanaryUpgradeStatus, error
 
 // Checks if a cluster exist
 func (in *MeshService) IsValidCluster(cluster string) bool {
-	_, exists := in.layer.k8sClients[cluster]
+	_, exists := in.kialiSAClients[cluster]
 	return exists
 }

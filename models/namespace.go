@@ -5,12 +5,12 @@ import (
 
 	osproject_v1 "github.com/openshift/api/project/v1"
 	core_v1 "k8s.io/api/core/v1"
-
-	"github.com/kiali/kiali/config/dashboards"
 )
 
-const AmbientLabel = "istio.io/dataplane-mode"
-const AmbientValue = "ambient"
+const (
+	AmbientLabel = "istio.io/dataplane-mode"
+	AmbientValue = "ambient"
+)
 
 // A Namespace provide a scope for names
 // This type is used to describe a set of objects.
@@ -68,11 +68,8 @@ func CastNamespace(ns core_v1.Namespace, cluster string) Namespace {
 	namespace.Cluster = cluster
 	namespace.CreationTimestamp = ns.CreationTimestamp.Time
 	namespace.Labels = ns.Labels
-	namespace.Annotations = make(map[string]string)
-	// Parse only annotations used by Kiali
-	if da, ok := ns.Annotations[dashboards.DashboardTemplateAnnotation]; ok {
-		namespace.Annotations[dashboards.DashboardTemplateAnnotation] = da
-	}
+	namespace.Annotations = ns.Annotations
+
 	if ns.Labels[AmbientLabel] == AmbientValue {
 		namespace.IsAmbient = true
 	}
@@ -94,11 +91,8 @@ func CastProject(p osproject_v1.Project, cluster string) Namespace {
 	namespace.Cluster = cluster
 	namespace.CreationTimestamp = p.CreationTimestamp.Time
 	namespace.Labels = p.Labels
-	namespace.Annotations = make(map[string]string)
-	// Parse only annotations used by Kiali
-	if da, ok := p.Annotations[dashboards.DashboardTemplateAnnotation]; ok {
-		namespace.Annotations[dashboards.DashboardTemplateAnnotation] = da
-	}
+	namespace.Annotations = p.Annotations
+
 	return namespace
 }
 
