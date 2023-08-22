@@ -140,7 +140,61 @@ Feature: Kiali Overview page
   @overview-page
   @multi-cluster
   @skip
+  Scenario: The badge for local cluster should be visible
+    Then user sees the "east" cluster badge in the Kiali header 
+
+  @overview-page
+  @multi-cluster
+  @skip
+  Scenario: Namespace dropdown should not contain duplicates
+    When user opens the namespace dropdown
+    Then user should see no duplicate namespaces
+
+  @overview-page
+  @multi-cluster
+  @skip
+  Scenario: Istio panels for both clusters should be visible in the control panel
+    Then user sees the "istio-system" namespace card in cluster "east"
+    And user sees the "istio-system" namespace card in cluster "west"
+    And user sees the "Control plane" label in both "istio-system" namespace cards
+    And user sees the "Outbound policy" label in both "istio-system" namespace cards
+    And the toggle on the right side of both "istio-system" namespace cards exists
+    And the toggle should contain links to other parts of the app
+    And Istio config should not be available for the "west" "istio-system" 
+
+  @overview-page
+  @multi-cluster
+  @skip
   Scenario: See "bookinfo" in "east" and "west" clusters
     Then user sees the "bookinfo" namespace card in cluster "east"
     And user sees the "bookinfo" namespace card in cluster "west"
     And Istio config should not be available for the "west" "bookinfo" 
+
+  @overview-page
+  @multi-cluster
+  @skip
+  Scenario: The healthy status of a logical mesh application is reported in the overview of a remote cluster namespace
+    Given a healthy application in the "west" cluster
+    When I fetch the overview of the "west" cluster
+    Then there should be a "healthy" application indicator in the "bookinfo" namespace in the "west" cluster
+    And the "healthy" application indicator should list the application
+
+  @overview-page
+  @multi-cluster
+  @skip
+  Scenario: The idle status of a logical mesh application is reported in the overview of a remote cluster namespace
+    Given an idle application in the cluster
+    When I fetch the overview of the cluster
+    Then there should be a "idle" application indicator in the "bookinfo" namespace in the "west" cluster
+    And the "idle" application indicator should list the application
+
+  #this scenario refers to a bug (https://github.com/kiali/kiali/issues/6504) which is not resolved at the time of writing the scenario
+  @overview-page
+  @multi-cluster
+  @skip
+  Scenario: The new Cluster column should be visible and sortable when changing to list view
+    When user clicks in the "LIST" view
+    Then the "Cluster" column appears
+    And user sorts by "Cluster" desc
+    Then the list is sorted by "Cluster" desc
+ 
