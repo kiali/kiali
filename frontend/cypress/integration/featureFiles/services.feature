@@ -131,3 +131,8 @@ Feature: Kiali Services page
     When user selects the "alpha" namespace
     Then the service should be listed as "degraded"
     And the health status of the service should be "Degraded"
+
+  @services-page
+  @multi-cluster
+  Scenario: The column related to cluster name should be visible
+    Then the "Cluster" column "appears"

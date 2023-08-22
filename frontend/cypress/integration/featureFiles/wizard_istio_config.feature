@@ -253,7 +253,7 @@ Feature: Kiali Istio Config page
     And the "host.com" row is visible
     And the "Name" column on the "host.com" row has a link ending in "/namespaces/bookinfo/services/host.com"
     And the "Details" column on the "host.com" row has a link ending in "/namespaces/bookinfo/istio/serviceentries/myservice3"
-    When user is at the details page for the "service" "bookinfo/host.com"
+    When user is at the details page for the "service" "bookinfo/host.com" located in the "" cluster
     Then "host.com" details information for service entry "myservice3" can be seen
 
   @gateway-api
