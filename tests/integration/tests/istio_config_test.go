@@ -4,7 +4,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/tests/integration/utils"
@@ -12,136 +12,136 @@ import (
 )
 
 func TestIstioConfigList(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	filePath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/bookinfo-k8sgateways.yaml")
 	defer utils.DeleteFile(filePath, utils.BOOKINFO)
-	assert.True(utils.ApplyFile(filePath, utils.BOOKINFO))
+	require.True(utils.ApplyFile(filePath, utils.BOOKINFO))
 
 	configList, err := utils.IstioConfigsList(utils.BOOKINFO)
 
-	assert.Nil(err)
-	assertConfigs(*configList, assert)
+	require.Nil(err)
+	requireConfigs(*configList, require)
 }
 
 func TestIstioConfigs(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	filePath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/bookinfo-k8sgateways.yaml")
 	defer utils.DeleteFile(filePath, utils.BOOKINFO)
-	assert.True(utils.ApplyFile(filePath, utils.BOOKINFO))
+	require.True(utils.ApplyFile(filePath, utils.BOOKINFO))
 	configMap, err := utils.IstioConfigs()
 
-	assert.Nil(err)
-	assert.NotEmpty(configMap)
-	assertConfigs(*configMap["bookinfo"], assert)
+	require.Nil(err)
+	require.NotEmpty(configMap)
+	requireConfigs(*configMap["bookinfo"], require)
 }
 
-func assertConfigs(configList utils.IstioConfigListJson, assert *assert.Assertions) {
-	assert.NotEmpty(configList)
-	assert.NotNil(configList.IstioValidations)
-	assert.Equal(utils.BOOKINFO, configList.Namespace.Name)
+func requireConfigs(configList utils.IstioConfigListJson, require *require.Assertions) {
+	require.NotEmpty(configList)
+	require.NotNil(configList.IstioValidations)
+	require.Equal(utils.BOOKINFO, configList.Namespace.Name)
 
-	assert.NotNil(configList.DestinationRules)
+	require.NotNil(configList.DestinationRules)
 	for _, dr := range configList.DestinationRules {
-		assert.True(dr.Namespace == configList.Namespace.Name)
-		assert.NotNil(dr.Name)
+		require.True(dr.Namespace == configList.Namespace.Name)
+		require.NotNil(dr.Name)
 	}
-	assert.NotNil(configList.VirtualServices)
+	require.NotNil(configList.VirtualServices)
 	for _, vs := range configList.VirtualServices {
-		assert.True(vs.Namespace == configList.Namespace.Name)
-		assert.NotNil(vs.Name)
+		require.True(vs.Namespace == configList.Namespace.Name)
+		require.NotNil(vs.Name)
 	}
-	assert.NotNil(configList.PeerAuthentications)
+	require.NotNil(configList.PeerAuthentications)
 	for _, pa := range configList.PeerAuthentications {
-		assert.True(pa.Namespace == configList.Namespace.Name)
-		assert.NotNil(pa.Name)
+		require.True(pa.Namespace == configList.Namespace.Name)
+		require.NotNil(pa.Name)
 	}
-	assert.NotNil(configList.ServiceEntries)
+	require.NotNil(configList.ServiceEntries)
 	for _, se := range configList.ServiceEntries {
-		assert.True(se.Namespace == configList.Namespace.Name)
-		assert.NotNil(se.Name)
+		require.True(se.Namespace == configList.Namespace.Name)
+		require.NotNil(se.Name)
 	}
-	assert.NotNil(configList.Sidecars)
+	require.NotNil(configList.Sidecars)
 	for _, sc := range configList.Sidecars {
-		assert.True(sc.Namespace == configList.Namespace.Name)
-		assert.NotNil(sc.Name)
+		require.True(sc.Namespace == configList.Namespace.Name)
+		require.NotNil(sc.Name)
 	}
-	assert.NotNil(configList.AuthorizationPolicies)
+	require.NotNil(configList.AuthorizationPolicies)
 	for _, ap := range configList.AuthorizationPolicies {
-		assert.True(ap.Namespace == configList.Namespace.Name)
-		assert.NotNil(ap.Name)
+		require.True(ap.Namespace == configList.Namespace.Name)
+		require.NotNil(ap.Name)
 	}
-	assert.NotNil(configList.Gateways)
+	require.NotNil(configList.Gateways)
 	for _, gw := range configList.Gateways {
-		assert.True(gw.Namespace == configList.Namespace.Name)
-		assert.NotNil(gw.Name)
+		require.True(gw.Namespace == configList.Namespace.Name)
+		require.NotNil(gw.Name)
 	}
-	assert.NotNil(configList.K8sGateways)
+	require.NotNil(configList.K8sGateways)
 	for _, gw := range configList.K8sGateways {
-		assert.True(gw.Namespace == configList.Namespace.Name)
-		assert.NotNil(gw.Name)
+		require.True(gw.Namespace == configList.Namespace.Name)
+		require.NotNil(gw.Name)
 	}
-	assert.NotNil(configList.K8sHTTPRoutes)
+	require.NotNil(configList.K8sHTTPRoutes)
 	for _, gw := range configList.K8sHTTPRoutes {
-		assert.True(gw.Namespace == configList.Namespace.Name)
-		assert.NotNil(gw.Name)
+		require.True(gw.Namespace == configList.Namespace.Name)
+		require.NotNil(gw.Name)
 	}
-	assert.NotNil(configList.RequestAuthentications)
+	require.NotNil(configList.RequestAuthentications)
 	for _, ra := range configList.RequestAuthentications {
-		assert.True(ra.Namespace == configList.Namespace.Name)
-		assert.NotNil(ra.Name)
+		require.True(ra.Namespace == configList.Namespace.Name)
+		require.NotNil(ra.Name)
 	}
-	assert.NotNil(configList.WorkloadEntries)
+	require.NotNil(configList.WorkloadEntries)
 	for _, we := range configList.WorkloadEntries {
-		assert.True(we.Namespace == configList.Namespace.Name)
-		assert.NotNil(we.Name)
+		require.True(we.Namespace == configList.Namespace.Name)
+		require.NotNil(we.Name)
 	}
-	assert.NotNil(configList.WorkloadGroups)
+	require.NotNil(configList.WorkloadGroups)
 	for _, wg := range configList.WorkloadGroups {
-		assert.True(wg.Namespace == configList.Namespace.Name)
-		assert.NotNil(wg.Name)
+		require.True(wg.Namespace == configList.Namespace.Name)
+		require.NotNil(wg.Name)
 	}
-	assert.NotNil(configList.EnvoyFilters)
+	require.NotNil(configList.EnvoyFilters)
 	for _, ef := range configList.EnvoyFilters {
-		assert.True(ef.Namespace == configList.Namespace.Name)
-		assert.NotNil(ef.Name)
+		require.True(ef.Namespace == configList.Namespace.Name)
+		require.NotNil(ef.Name)
 	}
 }
 
 func TestIstioConfigDetails(t *testing.T) {
 	name := "bookinfo"
-	assert := assert.New(t)
+	require := require.New(t)
 	config, _, err := utils.IstioConfigDetails(utils.BOOKINFO, name, kubernetes.VirtualServices)
 
-	assert.Nil(err)
-	assert.NotNil(config)
-	assert.Equal(kubernetes.VirtualServices, config.ObjectType)
-	assert.Equal(utils.BOOKINFO, config.Namespace.Name)
-	assert.NotNil(config.VirtualService)
-	assert.Equal(name, config.VirtualService.Name)
-	assert.Equal(utils.BOOKINFO, config.VirtualService.Namespace)
-	assert.NotNil(config.IstioReferences)
-	assert.NotNil(config.IstioValidation)
-	assert.Equal(name, config.IstioValidation.Name)
-	assert.Equal("virtualservice", config.IstioValidation.ObjectType)
+	require.Nil(err)
+	require.NotNil(config)
+	require.Equal(kubernetes.VirtualServices, config.ObjectType)
+	require.Equal(utils.BOOKINFO, config.Namespace.Name)
+	require.NotNil(config.VirtualService)
+	require.Equal(name, config.VirtualService.Name)
+	require.Equal(utils.BOOKINFO, config.VirtualService.Namespace)
+	require.NotNil(config.IstioReferences)
+	require.NotNil(config.IstioValidation)
+	require.Equal(name, config.IstioValidation.Name)
+	require.Equal("virtualservice", config.IstioValidation.ObjectType)
 	if !config.IstioValidation.Valid {
-		assert.NotEmpty(config.IstioValidation.References)
+		require.NotEmpty(config.IstioValidation.References)
 	}
 }
 
 func TestIstioConfigInvalidName(t *testing.T) {
 	name := "invalid"
-	assert := assert.New(t)
+	require := require.New(t)
 	config, code, _ := utils.IstioConfigDetails(utils.BOOKINFO, name, kubernetes.VirtualServices)
-	assert.NotEqual(200, code)
-	assert.Empty(config)
+	require.NotEqual(200, code)
+	require.Empty(config)
 }
 
 func TestIstioConfigPermissions(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	perms, err := utils.IstioConfigPermissions(utils.BOOKINFO)
 
-	assert.Nil(err)
-	assert.NotEmpty(perms)
-	assert.NotEmpty((*perms)[utils.BOOKINFO])
-	assert.NotEmpty((*(*perms)[utils.BOOKINFO])["authorizationpolicies"])
+	require.Nil(err)
+	require.NotEmpty(perms)
+	require.NotEmpty((*perms)[utils.BOOKINFO])
+	require.NotEmpty((*(*perms)[utils.BOOKINFO])["authorizationpolicies"])
 }
