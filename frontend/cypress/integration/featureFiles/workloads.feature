@@ -133,3 +133,9 @@ Feature: Kiali Workloads page
     When user selects the "alpha" namespace
     Then the workload should be listed as "degraded"
     And the health status of the workload should be "Degraded"
+
+  @multi-cluster
+  @skip
+  @workloads-page
+  Scenario: The column related to cluster name should be visible
+    Then the "Cluster" column "appears" 
