@@ -1,5 +1,5 @@
 import { Bullseye, Spinner } from '@patternfly/react-core';
-import { LongArrowAltRightIcon, TopologyIcon } from '@patternfly/react-icons';
+import { LongArrowAltRightIcon, TopologyIcon, MapIcon } from '@patternfly/react-icons';
 import {
   Controller,
   createTopologyControlButtons,
@@ -108,6 +108,7 @@ export const TopologyContent: React.FC<{
   showTrafficAnimation: boolean;
   showVirtualServices: boolean;
   trace?: JaegerTrace;
+  toggleLegend?: () => void;
   updateSummary: (graphEvent: GraphEvent) => void;
 }> = ({
   controller,
@@ -128,6 +129,7 @@ export const TopologyContent: React.FC<{
   showTrafficAnimation,
   showVirtualServices,
   trace,
+  toggleLegend,
   updateSummary
 }) => {
   const [updateModelTime, setUpdateModelTime] = React.useState(0);
@@ -238,16 +240,16 @@ export const TopologyContent: React.FC<{
   // layoutPosition Change  handling
   //
   /*
-  const onLayoutPositionChange = React.useCallback(() => {
-    if (controller && controller.hasGraph()) {
-      //hide popovers on pan / zoom
-      const popover = document.querySelector('[aria-labelledby="popover-decorator-header"]');
-      if (popover) {
-        (popover as HTMLElement).style.display = 'none';
+    const onLayoutPositionChange = React.useCallback(() => {
+      if (controller && controller.hasGraph()) {
+        //hide popovers on pan / zoom
+        const popover = document.querySelector('[aria-labelledby="popover-decorator-header"]');
+        if (popover) {
+          (popover as HTMLElement).style.display = 'none';
+        }
       }
-    }
-  }, [controller]);
-  */
+    }, [controller]);
+    */
 
   //
   // Set detail levels for graph (control zoom-sensitive labels)
@@ -616,6 +618,7 @@ export const TopologyContent: React.FC<{
   useEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
 
   console.debug(`Render Topology hasGraph=${controller.hasGraph()}`);
+
   return isMiniGraph ? (
     <TopologyView data-test="topology-view-pf">
       <VisualizationSurface data-test="visualization-surface" state={{}} />
@@ -724,7 +727,12 @@ export const TopologyContent: React.FC<{
               }
             },
             //TODO: enable legend with display icons and colors
-            legend: false
+            legend: true,
+            legendIcon: <MapIcon />,
+            legendTip: 'Legend',
+            legendCallback: () => {
+              if (toggleLegend) toggleLegend();
+            }
           })}
         />
       }
@@ -752,6 +760,7 @@ export const GraphPF: React.FC<{
   showTrafficAnimation: boolean;
   showVirtualServices: boolean;
   trace?: JaegerTrace;
+  toggleLegend?: () => void;
   updateSummary: (graphEvent: GraphEvent) => void;
 }> = ({
   edgeLabels,
@@ -771,6 +780,7 @@ export const GraphPF: React.FC<{
   showTrafficAnimation,
   showVirtualServices,
   trace,
+  toggleLegend,
   updateSummary
 }) => {
   //create controller on startup and register factories
@@ -854,6 +864,7 @@ export const GraphPF: React.FC<{
         showTrafficAnimation={showTrafficAnimation}
         showVirtualServices={showVirtualServices}
         trace={trace}
+        toggleLegend={toggleLegend}
         updateSummary={updateSummary}
       />
     </VisualizationProvider>
