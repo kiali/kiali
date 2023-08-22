@@ -14,7 +14,7 @@ import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { isGateway, isWaypoint } from '../../helpers/LabelFilterHelper';
-import { serverConfig } from '../../config';
+import { isMultiCluster, serverConfig } from '../../config';
 import { Workload } from '../../types/Workload';
 import { healthIndicatorStyle } from 'components/Health/HealthStyle';
 
@@ -61,7 +61,7 @@ const infoStyle = kialiStyle({
 class DetailDescriptionComponent extends React.Component<Props> {
   private renderAppItem(namespace: string, appName: string) {
     let href = '/namespaces/' + namespace + '/applications/' + appName;
-    if (this.props.cluster) {
+    if (this.props.cluster && isMultiCluster()) {
       href = href + '?clusterName=' + this.props.cluster;
     }
     const link = isParentKiosk(this.props.kiosk) ? (
@@ -88,7 +88,7 @@ class DetailDescriptionComponent extends React.Component<Props> {
 
   private renderServiceItem(namespace: string, serviceName: string) {
     let href = '/namespaces/' + namespace + '/services/' + serviceName;
-    if (this.props.cluster) {
+    if (this.props.cluster && isMultiCluster()) {
       href = href + '?clusterName=' + this.props.cluster;
     }
     const link = isParentKiosk(this.props.kiosk) ? (
@@ -143,7 +143,7 @@ class DetailDescriptionComponent extends React.Component<Props> {
 
   private renderWorkloadItem(workload: AppWorkload) {
     let href = '/namespaces/' + this.props.namespace + '/workloads/' + workload.workloadName;
-    if (this.props.cluster) {
+    if (this.props.cluster && isMultiCluster()) {
       href = href + '?clusterName=' + this.props.cluster;
     }
     const link = isParentKiosk(this.props.kiosk) ? (
@@ -197,7 +197,7 @@ class DetailDescriptionComponent extends React.Component<Props> {
     }
     if (workload) {
       let href = '/namespaces/' + this.props.namespace + '/workloads/' + workload.workloadName;
-      if (this.props.cluster) {
+      if (this.props.cluster && isMultiCluster()) {
         href = href + '?clusterName=' + this.props.cluster;
       }
       const link = isParentKiosk(this.props.kiosk) ? (

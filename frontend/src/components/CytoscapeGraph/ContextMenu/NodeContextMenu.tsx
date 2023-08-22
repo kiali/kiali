@@ -10,7 +10,7 @@ import { BoxByType, DecoratedGraphNodeData, NodeType } from 'types/Graph';
 import { JaegerInfo } from 'types/JaegerInfo';
 import { durationSelector } from 'store/Selectors';
 import { KialiAppState } from 'store/Store';
-import { Paths, serverConfig } from 'config';
+import { isMultiCluster, Paths, serverConfig } from 'config';
 import { NodeContextMenuProps } from '../CytoscapeContextMenu';
 import { getTitle } from 'pages/Graph/SummaryPanelCommon';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
@@ -377,7 +377,7 @@ const getOptionsFromLinkParams = (linkParams: LinkParams, jaegerInfo?: JaegerInf
   const { namespace, type, name, cluster } = linkParams;
   let detailsPageUrl = `/namespaces/${namespace}/${type}/${name}`;
   let concat = '?';
-  if (cluster) {
+  if (cluster && isMultiCluster()) {
     detailsPageUrl += '?clusterName=' + cluster;
     concat = '&';
   }

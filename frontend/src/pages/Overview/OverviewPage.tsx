@@ -422,7 +422,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
     return Promise.all(
       chunk.map(nsInfo => {
-        if (nsInfo.cluster) {
+        if (nsInfo.cluster && isMultiCluster()) {
           options.clusterName = nsInfo.cluster;
         }
         return API.getNamespaceMetrics(nsInfo.name, options).then(rs => {

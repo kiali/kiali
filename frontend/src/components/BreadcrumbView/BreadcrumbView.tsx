@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Paths } from '../../config';
+import { isMultiCluster, Paths } from '../../config';
 import { Link } from 'react-router-dom';
 import { Breadcrumb, BreadcrumbItem } from '@patternfly/react-core';
 import { FilterSelected } from '../Filters/StatefulFilters';
@@ -87,7 +87,7 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadCum
 
   getItemPage = () => {
     let path = `/namespaces/${this.state.namespace}/${this.state.pathItem}/${this.state.item}`;
-    if (this.state.cluster) {
+    if (this.state.cluster && isMultiCluster()) {
       path += `?clusterName=${this.state.cluster}`;
     }
     return path;
