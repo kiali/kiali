@@ -37,6 +37,11 @@ const (
 	GRPC  = "grpc"
 )
 
+const (
+	JAEGER = "jaeger"
+	OTEL   = "otel"
+)
+
 // EndFunc ends a span if one is started. Otherwise does nothing.
 type EndFunc func()
 
@@ -139,57 +144,62 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 	tracingOpt := config.Get().Server.Observability.Tracing
 
 	// Jaeger collector
-	if tracingOpt.JaegerCollector.Enabled {
+	if tracingOpt.CollectorType == JAEGER {
 		log.Debugf("Creating Jaeger collector with URL %s", collectorURL)
 		exporter, err = jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(collectorURL)))
 		return exporter, err
 	} else {
-		// OpenTelemetry collector
-		if tracingOpt.OTelCollector.Protocol == HTTP || tracingOpt.OTelCollector.Protocol == HTTPS {
-			tracingOptions := otlptracehttp.WithRetry(otlptracehttp.RetryConfig{
-				Enabled:         true,
-				InitialInterval: 1 * time.Nanosecond,
-				MaxInterval:     1 * time.Nanosecond,
-				// Never stop retry of retry-able status.
-				MaxElapsedTime: 0,
-			})
-			var client otlptrace.Client
+		if tracingOpt.CollectorType == OTEL {
+			// OpenTelemetry collector
+			if tracingOpt.Otel.Protocol == HTTP || tracingOpt.Otel.Protocol == HTTPS {
+				tracingOptions := otlptracehttp.WithRetry(otlptracehttp.RetryConfig{
+					Enabled:         true,
+					InitialInterval: 1 * time.Nanosecond,
+					MaxInterval:     1 * time.Nanosecond,
+					// Never stop retry of retry-able status.
+					MaxElapsedTime: 0,
+				})
+				var client otlptrace.Client
 
-			if tracingOpt.OTelCollector.Protocol == HTTP {
-				log.Debugf("Creating OpenTelemetry collector with URL http://%s", collectorURL)
+				if tracingOpt.Otel.Protocol == HTTP {
+					log.Debugf("Creating OpenTelemetry collector with URL http://%s", collectorURL)
 
-				client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(collectorURL),
-					otlptracehttp.WithInsecure(),
-					tracingOptions,
-				)
-			} else {
-				log.Debugf("Creating OpenTelemetry collector with URL https://%s", collectorURL)
+					client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(collectorURL),
+						otlptracehttp.WithInsecure(),
+						tracingOptions,
+					)
+				} else {
+					log.Debugf("Creating OpenTelemetry collector with URL https://%s", collectorURL)
 
-				client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(collectorURL),
-					tracingOptions,
-				)
-			}
+					client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(collectorURL),
+						tracingOptions,
+					)
+				}
 
-			ctx := context.Background()
-			exporter, err := otlptrace.New(ctx, client)
-			return exporter, err
-		} else {
-			if tracingOpt.OTelCollector.Protocol == GRPC {
-				log.Debugf("Creating OpenTelemetry grpc collector with URL %s", collectorURL)
 				ctx := context.Background()
-				ctx, cancel := context.WithTimeout(ctx, time.Second)
-				defer cancel()
-
-				// TODO: Support TLS
-				exporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(),
-					otlptracegrpc.WithEndpoint(collectorURL),
-					otlptracegrpc.WithDialOption(grpc.WithBlock()),
-				)
-
+				exporter, err := otlptrace.New(ctx, client)
 				return exporter, err
 			} else {
-				return nil, errors.New("Error in configuration options getting the observability exporter")
+				if tracingOpt.Otel.Protocol == GRPC {
+					log.Debugf("Creating OpenTelemetry grpc collector with URL %s", collectorURL)
+					ctx := context.Background()
+					ctx, cancel := context.WithTimeout(ctx, time.Second)
+					defer cancel()
+
+					// TODO: Support TLS
+					exporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(),
+						otlptracegrpc.WithEndpoint(collectorURL),
+						otlptracegrpc.WithDialOption(grpc.WithBlock()),
+					)
+
+					return exporter, err
+				} else {
+					return nil, errors.New("Error in configuration options getting the observability exporter")
+				}
 			}
+		} else {
+			return nil, errors.New("Error in configuration options getting the observability exporter")
 		}
+
 	}
 }

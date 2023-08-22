@@ -90,24 +90,18 @@ type Metrics struct {
 	Port    int  `yaml:"port,omitempty"`
 }
 
-// Jaeger collector configuration for tracing
-type JaegerCollector struct {
-	Enabled bool `yaml:"enabled,omitempty"`
-}
-
 // OpenTelemetry collector configuration for tracing
-type OTelCollector struct {
-	Enabled  bool   `yaml:"enabled,omitempty"`
+type OtelCollector struct {
 	Protocol string `yaml:"protocol,omitempty"` // http or https or grp
 }
 
 // Tracing provides tracing configuration for the Kiali server.
 type Tracing struct {
-	CollectorURL    string          `yaml:"collector_url,omitempty"` // Endpoint for Kiali server traces
-	Enabled         bool            `yaml:"enabled,omitempty"`
-	JaegerCollector JaegerCollector `yaml:"jaeger_collector,omitempty"`
-	OTelCollector   OTelCollector   `yaml:"otel_collector,omitempty"`
-	Port            int             `yaml:"port,omitempty"`
+	CollectorType string        `yaml:"collector_type,omitempty"` // Possible values "otel" or "jaeger"
+	CollectorURL  string        `yaml:"collector_url,omitempty"`  // Endpoint for Kiali server traces
+	Enabled       bool          `yaml:"enabled,omitempty"`
+	Otel          OtelCollector `yaml:"otel,omitempty"`
+	Port          int           `yaml:"port,omitempty"`
 	// Sampling rate for Kiali server traces. >= 1.0 always samples and <= 0 never samples.
 	SamplingRate float64 `yaml:"sampling_rate,omitempty"`
 }
@@ -768,13 +762,10 @@ func NewConfig() (c *Config) {
 					Port:    9090,
 				},
 				Tracing: Tracing{
-					CollectorURL: "http://jaeger-collector.istio-system:14268/api/traces",
-					Enabled:      false,
-					JaegerCollector: JaegerCollector{
-						Enabled: false,
-					},
-					OTelCollector: OTelCollector{
-						Enabled:  false,
+					CollectorType: "jaeger",
+					CollectorURL:  "http://jaeger-collector.istio-system:14268/api/traces",
+					Enabled:       false,
+					Otel: OtelCollector{
 						Protocol: "http",
 					},
 					// Sample half of traces.
