@@ -5,7 +5,6 @@ package observability
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -194,11 +193,12 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 
 					return exporter, err
 				} else {
-					return nil, errors.New(fmt.Sprintf("Error in configuration options getting the observability exporter. Invalid otel.protocol [%v].", tracingOpt.Otel.Protocol))
+
+					return nil, fmt.Errorf("Error in configuration options getting the observability exporter. Invalid otel.protocol [%v].", tracingOpt.Otel.Protocol)
 				}
 			}
 		} else {
-			return nil, errors.New(fmt.Sprintf("Error in configuration options getting the observability exporter. Invalid collector type [%v].", tracingOpt.CollectorType))
+			return nil, fmt.Errorf("Error in configuration options getting the observability exporter. Invalid collector type [%v].", tracingOpt.CollectorType)
 		}
 
 	}
