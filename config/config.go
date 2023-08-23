@@ -101,7 +101,6 @@ type Tracing struct {
 	CollectorURL  string        `yaml:"collector_url,omitempty"`  // Endpoint for Kiali server traces
 	Enabled       bool          `yaml:"enabled,omitempty"`
 	Otel          OtelCollector `yaml:"otel,omitempty"`
-	Port          int           `yaml:"port,omitempty"`
 	// Sampling rate for Kiali server traces. >= 1.0 always samples and <= 0 never samples.
 	SamplingRate float64 `yaml:"sampling_rate,omitempty"`
 }
