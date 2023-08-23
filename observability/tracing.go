@@ -198,7 +198,7 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 				}
 			}
 		} else {
-			return nil, errors.New("Error in configuration options getting the observability exporter")
+			return nil, errors.New("Error in configuration options getting the observability exporter. Invalid collector type [%v].", tracingOpt.CollectorType)
 		}
 
 	}
