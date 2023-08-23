@@ -3,6 +3,7 @@ export interface Namespace {
   cluster?: string;
   isAmbient?: boolean;
   labels?: { [key: string]: string };
+  annotations?: { [key: string]: string };
 }
 
 export const namespaceFromString = (namespace: string) => ({ name: namespace });

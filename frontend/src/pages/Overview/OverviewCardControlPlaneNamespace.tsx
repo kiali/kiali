@@ -15,6 +15,8 @@ export const infoStyle = kialiStyle({
   margin: '0px 0px -1px 4px'
 });
 
+const controlPlaneAnnotation = 'topology.istio.io/controlPlaneClusters';
+
 type ControlPlaneProps = {
   pilotLatency?: Metric[];
   istiodContainerMemory?: Metric[];
@@ -24,6 +26,13 @@ type ControlPlaneProps = {
   duration: DurationInSeconds;
   istiodResourceThresholds?: IstiodResourceThresholds;
 };
+
+export function isRemoteCluster(annotations?: { [key: string]: string }): boolean {
+  if (annotations && annotations[controlPlaneAnnotation]) {
+    return true;
+  }
+  return false;
+}
 
 function showMetrics(metrics: Metric[] | undefined): boolean {
   // show metrics if metrics exists and some values at least are not zero

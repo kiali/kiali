@@ -3,9 +3,12 @@ import * as React from 'react';
 import { IstioStatusInline } from '../../components/IstioStatus/IstioStatusInline';
 import { serverConfig } from '../../config';
 import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
+import { RemoteClusterBadge } from './RemoteClusterBadge';
+import { isRemoteCluster } from './OverviewCardControlPlaneNamespace';
 
 type Props = {
   cluster?: string;
+  annotations?: { [key: string]: string };
 };
 
 export class ControlPlaneBadge extends React.Component<Props> {
@@ -15,6 +18,7 @@ export class ControlPlaneBadge extends React.Component<Props> {
         <Label style={{ marginLeft: 5 }} color="green" isCompact>
           Control plane
         </Label>
+        {isRemoteCluster(this.props.annotations) && <RemoteClusterBadge />}
         {serverConfig.ambientEnabled && <AmbientBadge tooltip={true}></AmbientBadge>}{' '}
         <IstioStatusInline cluster={this.props.cluster} />
       </>
