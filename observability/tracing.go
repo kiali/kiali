@@ -194,7 +194,7 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 
 					return exporter, err
 				} else {
-					return nil, errors.New("Error in configuration options getting the observability exporter")
+					return nil, errors.New("Error in configuration options getting the observability exporter. Invalid otel.protocol [%v].", tracingOpt.Otel.Protocol)
 				}
 			}
 		} else {
