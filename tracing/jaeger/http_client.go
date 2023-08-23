@@ -25,6 +25,7 @@ func (jc JaegerHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL
 	jaegerServiceName := buildJaegerServiceName(namespace, app)
 	prepareQuery(&url, jaegerServiceName, q)
 	r, err := queryTracesHTTP(client, &url)
+
 	if r != nil {
 		r.TracingServiceName = jaegerServiceName
 	}

@@ -7,6 +7,8 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/model"
 	jaegerModels "github.com/kiali/kiali/tracing/model/json"
+	otelModels "github.com/kiali/kiali/tracing/otel/model/json"
+	"go.opentelemetry.io/otel/trace"
 	"io"
 	"net/http"
 	"net/url"
@@ -23,7 +25,7 @@ func (oc OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, 
 	url.Path = path.Join(url.Path, "/api/search")
 	tracingServiceName := buildJaegerServiceName(namespace, app)
 	prepareQuery(&url, tracingServiceName, q)
-	r, err := queryTracesHTTP(client, &url)
+	r, err := oc.queryTracesHTTP(client, &url)
 	if r != nil {
 		r.TracingServiceName = tracingServiceName
 	}
@@ -32,7 +34,8 @@ func (oc OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, 
 
 func (oc OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (*model.TracingSingleTrace, error) {
 	u := *endpoint
-	u.Path = path.Join(u.Path, "/api/search"+traceID)
+	//u.Path = path.Join(u.Path, "/api/search"+traceID)
+	u.Path = "/api/traces/" + traceID
 	resp, code, reqError := makeRequest(client, u.String(), nil)
 	if reqError != nil {
 		log.Errorf("Jaeger query error: %s [code: %d, URL: %v]", reqError, code, u)
@@ -42,7 +45,10 @@ func (oc OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.UR
 	if len(resp) == 0 {
 		return nil, nil
 	}
-	response, err := unmarshal(resp, &u, "")
+	responseOtel, _ := unmarshalSingleTrace(resp, &u)
+
+	trace, _ := TraceIDFromString(traceID)
+	response, err := convertSingleTrace(responseOtel, trace, "")
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +68,7 @@ func (oc OtelHTTPClient) GetServiceStatusHTTP(client http.Client, baseURL *url.U
 	return reqError == nil, reqError
 }
 
-func queryTracesHTTP(client http.Client, u *url.URL) (*model.TracingResponse, error) {
+func (oc OtelHTTPClient) queryTracesHTTP(client http.Client, u *url.URL) (*model.TracingResponse, error) {
 	// HTTP and GRPC requests co-exist, but when minDuration is present, for HTTP it requires a unit (ms)
 	// https://github.com/kiali/kiali/issues/3939
 	minDuration := u.Query().Get("minDuration")
@@ -76,28 +82,73 @@ func queryTracesHTTP(client http.Client, u *url.URL) (*model.TracingResponse, er
 		log.Errorf("Jaeger query error: %s [code: %d, URL: %v]", reqError, code, u)
 		return &model.TracingResponse{}, reqError
 	}
-	return unmarshal(resp, u, "")
+	response, _ := unmarshal(resp, u)
+
+	return oc.convertTraces(response, "", client, u)
 }
 
-func unmarshal(r []byte, u *url.URL, service string) (*model.TracingResponse, error) {
+func unmarshal(r []byte, u *url.URL) (*model.OTelTracingResponse, error) {
 	var response model.OTelTracingResponse
 	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
 		log.Errorf("Error unmarshalling Jaeger response: %s [URL: %v]", errMarshal, u)
 		return nil, errMarshal
 	}
 
-	return convertTraces(&response, service), nil
+	return &response, nil
 }
 
-func convertTraces(traces *model.OTelTracingResponse, service string) *model.TracingResponse {
+func unmarshalSingleTrace(r []byte, u *url.URL) (*otelModels.Data, error) {
+	var response otelModels.Data
+	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
+		log.Errorf("Error unmarshalling Jaeger response: %s [URL: %v]", errMarshal, u)
+		return nil, errMarshal
+	}
+
+	return &response, nil
+}
+
+func (oc OtelHTTPClient) convertTraces(traces *model.OTelTracingResponse, service string, client http.Client, endpoint *url.URL) (*model.TracingResponse, error) {
 	var response model.TracingResponse
 	for _, trace := range traces.Traces {
-		i, _ := strconv.ParseInt(trace.TraceID, 10, 64)
-		t := jaegerModels.Trace{TraceID: jaegerModels.TraceID(i)}
-		response.Data = append(response.Data, t)
+		singleTrace, _ := oc.GetTraceDetailHTTP(client, endpoint, trace.TraceID)
+		//t := jaegerModels.Trace{TraceID: jaegerModels.TraceID(i)}
+		response.Data = append(response.Data, singleTrace.Data)
 	}
 	response.TracingServiceName = service
-	return &response
+	return &response, nil
+}
+
+// convertSingleTrace
+func convertSingleTrace(traces *otelModels.Data, id trace.TraceID, service string) (*model.TracingResponse, error) {
+	var response model.TracingResponse
+	var jaegerModel jaegerModels.Trace
+
+	jaegerModel.TraceID = convertId(id)
+	jaegerModel.Spans = convertSpans(traces.Batches[0].ScopeSpans[0].Spans)
+	response.Data = append(response.Data, jaegerModel)
+
+	response.TracingServiceName = service
+	return &response, nil
+}
+
+// convertID
+func convertId(id trace.TraceID) jaegerModels.TraceID {
+	return jaegerModels.TraceID(id.String())
+}
+
+// convertID
+func convertSpanId(id trace.SpanID) jaegerModels.SpanID {
+	return jaegerModels.SpanID(id.String())
+}
+
+// convertSpans
+func convertSpans(spans []otelModels.Span) []jaegerModels.Span {
+	var toRet []jaegerModels.Span
+	for _, span := range spans {
+		jaegerSpan := jaegerModels.Span{TraceID: convertId(span.TraceID), SpanID: convertSpanId(span.SpanID)}
+		toRet = append(toRet, jaegerSpan)
+	}
+	return toRet
 }
 
 func prepareQuery(u *url.URL, tracingServiceName string, query models.TracingQuery) {
@@ -147,4 +198,11 @@ func makeRequest(client http.Client, endpoint string, body io.Reader) (response 
 	response, err = io.ReadAll(resp.Body)
 	status = resp.StatusCode
 	return
+}
+
+// TraceIDFromString creates a TraceID from a hexadecimal string
+func TraceIDFromString(s string) (trace.TraceID, error) {
+
+	l, _ := strconv.ParseUint(s, 10, 16)
+	return trace.TraceID{byte(l)}, nil
 }
