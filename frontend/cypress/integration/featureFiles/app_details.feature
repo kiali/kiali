@@ -1,5 +1,6 @@
 @app-details
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
+
 Feature: Kiali App Details page
 
   On the App Details page, an admin should see details about an application as well as

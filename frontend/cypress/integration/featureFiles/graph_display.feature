@@ -1,5 +1,6 @@
-@graph_display
+@graph-display
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
+
 Feature: Kiali Graph page - Display menu
 
   User opens the Graph page and manipulates the "error-rates" demo
@@ -198,7 +199,7 @@ Feature: Kiali Graph page - Display menu
     And the display menu has default settings
 
   @error-rates-app
-  Scenario: User observes some options not being clickable when switching to Service graph 
+  Scenario: User observes some options not being clickable when switching to Service graph
     When user "disables" "service nodes" option
     And user "enables" "operation nodes" option
     And user selects "SERVICE" graph type

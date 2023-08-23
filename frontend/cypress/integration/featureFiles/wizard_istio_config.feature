@@ -1,4 +1,6 @@
-@istio-page
+@wizard-istio-config
+# don't change first line of this file - the tag is used for the test scripts to identify the test suite
+
 Feature: Kiali Istio Config page
 
   On the Istio Config page, an admin should see all the Istio Config objects.
@@ -11,7 +13,6 @@ Feature: Kiali Istio Config page
     And user selects the "bookinfo" namespace
 
   @gateway-api
-  @wizard-istio-config
   @bookinfo-app
   Scenario: Create a K8s Gateway scenario
     When user deletes k8sgateway named "k8sapigateway" and the resource is no longer available
@@ -27,7 +28,6 @@ Feature: Kiali Istio Config page
     And user creates the istio config
     Then the "K8sGateway" "k8sapigateway" should be listed in "bookinfo" namespace
 
-  @wizard-istio-config
   @bookinfo-app
   Scenario: Try to create a Gateway with no name
     When user clicks in the "Gateway" Istio config actions
@@ -36,7 +36,6 @@ Feature: Kiali Istio Config page
     And the "name" input should display a warning
     And the preview button should be disabled
 
-  @wizard-istio-config
   @bookinfo-app
   Scenario: Try to create a Gateway with invalid name
     When user clicks in the "Gateway" Istio config actions
@@ -45,7 +44,6 @@ Feature: Kiali Istio Config page
     Then the "name" input should display a warning
     And the preview button should be disabled
 
-  @wizard-istio-config
   @bookinfo-app
   Scenario: Create a Gateway scenario and check that Gateway with the same name cannot be created
     When user deletes gateway named "mygateway" and the resource is no longer available
@@ -72,7 +70,6 @@ Feature: Kiali Istio Config page
     And user creates the istio config
     Then an error message "Could not create Istio Gateway objects" is displayed
 
-  @wizard-istio-config
   @bookinfo-app
   Scenario: Try to create a Gateway with negative port number
     When user clicks in the "Gateway" Istio config actions
@@ -85,7 +82,6 @@ Feature: Kiali Istio Config page
     Then the preview button should be disabled
     And the "addPortNumber0" input should display a warning
 
-  @wizard-istio-config
   @bookinfo-app
   Scenario: Try to create a Gateway with invalid port number
     When user clicks in the "Gateway" Istio config actions
@@ -98,7 +94,6 @@ Feature: Kiali Istio Config page
     Then the preview button should be disabled
     And the "addPortNumber0" input should display a warning
 
-  @wizard-istio-config
   @bookinfo-app
   Scenario: Try to insert letters in the port field
     When user clicks in the "Gateway" Istio config actions
@@ -112,7 +107,6 @@ Feature: Kiali Istio Config page
     And the "addPortNumber0" input should display a warning
 
 
-  @wizard-istio-config
   @bookinfo-app
   Scenario: Try to create a Gateway without filling the inputs related to TLS
     When user clicks in the "Gateway" Istio config actions
@@ -130,7 +124,6 @@ Feature: Kiali Istio Config page
     And the "private-key" input should display a warning
     And the preview button should be disabled
 
-  @wizard-istio-config
   @bookinfo-app
   Scenario: Create a Gateway with TLS
     When user deletes gateway named "mygatewaywithtls" and the resource is no longer available
@@ -149,7 +142,6 @@ Feature: Kiali Istio Config page
     And user creates the istio config
     Then the "Gateway" "mygatewaywithtls" should be listed in "bookinfo" namespace
 
-  @wizard-istio-config
   @bookinfo-app
   Scenario: Try to create a ServiceEntry with empty fields
     When user clicks in the "ServiceEntry" Istio config actions
@@ -161,7 +153,6 @@ Feature: Kiali Istio Config page
     And the "ServiceEntry has no Ports defined" message should be displayed
     And the preview button should be disabled
 
-  @wizard-istio-config
   @bookinfo-app
   Scenario: Try to create a ServiceEntry with invalid name and host specified
     When user clicks in the "ServiceEntry" Istio config actions
@@ -172,7 +163,6 @@ Feature: Kiali Istio Config page
     And the "hosts" input should display a warning
     And the preview button should be disabled
 
-  @wizard-istio-config
   @bookinfo-app
   Scenario: Try to create a ServiceEntry without ports specified
     When user deletes service named "myservice" and the resource is no longer available
@@ -183,7 +173,6 @@ Feature: Kiali Istio Config page
     And the "ServiceEntry has no Ports defined" message should be displayed
     And the preview button should be disabled
 
-  @wizard-istio-config
   @bookinfo-app
   Scenario: Try to create a ServiceEntry with empty ports specified
     When user clicks in the "ServiceEntry" Istio config actions
@@ -199,7 +188,6 @@ Feature: Kiali Istio Config page
     And the "addTargetPort0" input should not display a warning
     And the preview button should be disabled
 
-  @wizard-istio-config
   @bookinfo-app
   Scenario: Create a ServiceEntry with ports specified
     When user deletes service named "myservice2" and the resource is no longer available
@@ -216,7 +204,6 @@ Feature: Kiali Istio Config page
     And user creates the istio config
     Then the "ServiceEntry" "myservice2" should be listed in "bookinfo" namespace
 
-  @wizard-istio-config
   @bookinfo-app
   Scenario: Try to create duplicate port specifications on a ServiceEntry
     When user clicks in the "ServiceEntry" Istio config actions
@@ -233,9 +220,8 @@ Feature: Kiali Istio Config page
     And user types "8080" in the "addTargetPort1" input
     Then the preview button should be disabled
 
-  @wizard-istio-config
   @bookinfo-app
-  Scenario: Create a ServiceEntry and view the service detail page of the external service associated 
+  Scenario: Create a ServiceEntry and view the service detail page of the external service associated
     When user deletes service named "myservice3" and the resource is no longer available
     And user clicks in the "ServiceEntry" Istio config actions
     And user sees the "Create ServiceEntry" config wizard
@@ -257,7 +243,6 @@ Feature: Kiali Istio Config page
     Then "host.com" details information for service entry "myservice3" can be seen
 
   @gateway-api
-  @wizard-istio-config
   @bookinfo-app
   Scenario: Create multiple K8s Gateways with colliding hostnames and port combinations and check for a reference. Then delete one of them and the reference should be gone.
     When user deletes k8sgateway named "gatewayapi-1" and the resource is no longer available

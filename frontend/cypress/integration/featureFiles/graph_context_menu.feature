@@ -1,5 +1,6 @@
-@graph_context_menu
+@graph-context-menu
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
+
 Feature: Kiali Graph page - Context menu actions
 
   User opens the Graph page and opens the context menu of graph nodes.
@@ -22,9 +23,9 @@ Feature: Kiali Graph page - Context menu actions
     Then user should see the "<action>" wizard
 
     Examples:
-      | action                |
-      | traffic_shifting      |
-      | tcp_traffic_shifting  |
-      | request_routing       |
-      | fault_injection       |
-      | request_timeouts      |
+      | action               |
+      | traffic_shifting     |
+      | tcp_traffic_shifting |
+      | request_routing      |
+      | fault_injection      |
+      | request_timeouts     |

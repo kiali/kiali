@@ -1,4 +1,4 @@
-@app_details_multicluster
+@app-details-multi-cluster
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 @multi-cluster
 @skip
@@ -6,7 +6,7 @@ Feature: Kiali App Details page for multicluster
 
   On the App Details page, an admin should see details about an application along with a cluster badge as well as
   a minigraph for traffic going to and originating from the application. We should also be able to navigate to a
-  a remote cluster, if an app of one is present on the graph. 
+  a remote cluster, if an app of one is present on the graph.
   In addition, there should be tabs for viewing application specific traffic, including a new cluster.
 
   Background:
@@ -61,8 +61,8 @@ Feature: Kiali App Details page for multicluster
     And user clicks on the "reviews" <type> from the "west" cluster visible in the graph
     Then user is at the details page for the <type> <url> located in the "west" cluster
 
-  Examples: 
-    | <type> | <url> |
-    | app | bookinfo/reviews | 
-    | service | bookinfo/reviews |
-    | workload | bookinfo/reviews-v3 |
+    Examples:
+      | <type>   | <url>               |
+      | app      | bookinfo/reviews    |
+      | service  | bookinfo/reviews    |
+      | workload | bookinfo/reviews-v3 |

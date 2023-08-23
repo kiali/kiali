@@ -1,4 +1,6 @@
-@istio-page
+@istio-config
+# don't change first line of this file - the tag is used for the test scripts to identify the test suite
+
 Feature: Kiali Istio Config page
 
   On the Istio Config page, an admin should see all the Istio Config objects.
@@ -75,14 +77,14 @@ Feature: Kiali Istio Config page
     Then the user can create a "Sidecar" Istio object
 
   @multi-cluster
-  @skip 
+  @skip
   Scenario: See all Istio Config objects in the bookinfo namespace in the multi-cluster environment.
     Then the "Cluster" column "appears"
     And user sees all the Istio Config objects from both clusters in the bookinfo namespace
     And user sees Name information for Istio objects
     And user sees Namespace information for Istio objects
     And user sees Type information for Istio objects
-    And user sees Configuration information for Istio objects 
+    And user sees Configuration information for Istio objects
 
   @crd-validation
   @bookinfo-app

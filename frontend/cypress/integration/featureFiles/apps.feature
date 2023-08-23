@@ -1,5 +1,6 @@
 @apps
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
+
 Feature: Kiali Apps List page
 
   On the Apps list page, an admin should see all the applications in the bookinfo namespace.
@@ -102,5 +103,4 @@ Feature: Kiali Apps List page
   @multi-cluster
   @skip
   Scenario: The column related to cluster name should be visible
-    Then the "Cluster" column "appears" 
-    
+    Then the "Cluster" column "appears"
