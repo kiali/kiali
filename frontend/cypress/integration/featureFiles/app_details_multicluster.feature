@@ -1,3 +1,5 @@
+@app_details_multicluster
+# don't change first line of this file - the tag is used for the test scripts to identify the test suite
 @multi-cluster
 @skip
 Feature: Kiali App Details page for multicluster
