@@ -11,9 +11,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/tracing/model"
+	"github.com/kiali/kiali/tracing/jaeger/model"
 )
 
 type JaegerHTTPClient struct {
@@ -22,7 +23,7 @@ type JaegerHTTPClient struct {
 func (jc JaegerHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, namespace, app string, q models.TracingQuery) (response *model.TracingResponse, err error) {
 	url := *baseURL
 	url.Path = path.Join(url.Path, "/api/traces")
-	jaegerServiceName := buildJaegerServiceName(namespace, app)
+	jaegerServiceName := BuildTracingServiceName(namespace, app)
 	prepareQuery(&url, jaegerServiceName, q)
 	r, err := queryTracesHTTP(client, &url)
 
@@ -132,4 +133,12 @@ func makeRequest(client http.Client, endpoint string, body io.Reader) (response 
 	response, err = io.ReadAll(resp.Body)
 	status = resp.StatusCode
 	return
+}
+
+func BuildTracingServiceName(namespace, app string) string {
+	conf := config.Get()
+	if conf.ExternalServices.Tracing.NamespaceSelector {
+		return app + "." + namespace
+	}
+	return app
 }

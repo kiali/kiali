@@ -2,10 +2,6 @@ package business
 
 import (
 	"context"
-	"github.com/kiali/kiali/tracing"
-	jaeger2 "github.com/kiali/kiali/tracing/jaeger"
-	"github.com/kiali/kiali/tracing/model"
-	jaegerModels "github.com/kiali/kiali/tracing/model/json"
 	"strings"
 	"sync"
 	"time"
@@ -13,6 +9,9 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
+	"github.com/kiali/kiali/tracing"
+	"github.com/kiali/kiali/tracing/jaeger/model"
+	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 )
 
 type (
@@ -23,11 +22,11 @@ type (
 type JaegerService struct {
 	loader        JaegerLoader
 	loaderErr     error
-	jaeger        jaeger2.ClientInterface
+	jaeger        tracing.ClientInterface
 	businessLayer *Layer
 }
 
-func (in *JaegerService) client() (jaeger2.ClientInterface, error) {
+func (in *JaegerService) client() (tracing.ClientInterface, error) {
 	if in.jaeger != nil {
 		return in.jaeger, nil
 	} else if in.loaderErr != nil {

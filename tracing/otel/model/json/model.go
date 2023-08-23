@@ -1,7 +1,5 @@
 package json
 
-import "go.opentelemetry.io/otel/trace"
-
 // OTEL
 
 type ValueString struct {
@@ -23,15 +21,15 @@ type Status struct {
 }
 
 type Span struct {
-	TraceID           trace.TraceID `json:"traceId"`
-	SpanID            trace.SpanID  `json:"spanId"`
-	Name              string        `json:"name"`
-	Kind              string        `json:"kind"`
-	StartTimeUnixNano string        `json:"startTimeUnixNano"`
-	EndTimeUnixNano   string        `json:"endTimeUnixNano"`
-	Attributes        []Attribute   `json:"attributes"`
-	Events            []Event       `json:"events"`
-	Status            Status        `json:"status"`
+	TraceID           string      `json:"traceId"`
+	SpanID            string      `json:"spanId"`
+	Name              string      `json:"name"`
+	Kind              string      `json:"kind"`
+	StartTimeUnixNano string      `json:"startTimeUnixNano"`
+	EndTimeUnixNano   string      `json:"endTimeUnixNano"`
+	Attributes        []Attribute `json:"attributes"`
+	Events            []Event     `json:"events"`
+	Status            Status      `json:"status"`
 }
 
 type ScopeSpan struct {

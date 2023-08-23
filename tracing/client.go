@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/kiali/kiali/tracing/tempo"
 	"io"
 	"net"
 	"net/http"
@@ -21,10 +22,9 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger"
-	"github.com/kiali/kiali/tracing/model"
-	jsonConv "github.com/kiali/kiali/tracing/model/converter/json"
-	jsonModel "github.com/kiali/kiali/tracing/model/json"
-	"github.com/kiali/kiali/tracing/otel"
+	"github.com/kiali/kiali/tracing/jaeger/model"
+	jsonConv "github.com/kiali/kiali/tracing/jaeger/model/converter/json"
+	jsonModel "github.com/kiali/kiali/tracing/jaeger/model/json"
 	"github.com/kiali/kiali/util/grpcutil"
 	"github.com/kiali/kiali/util/httputil"
 )
@@ -79,7 +79,7 @@ func NewClient(token string) (*Client, error) {
 		if cfg.ExternalServices.Tracing.Client == "jaeger" {
 			httpTracingClient = jaeger.JaegerHTTPClient{}
 		} else {
-			httpTracingClient = otel.OtelHTTPClient{}
+			httpTracingClient = tempo.OtelHTTPClient{}
 		}
 
 		if cfgTracing.UseGRPC {
@@ -137,7 +137,7 @@ func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*m
 	if in.grpcClient == nil {
 		return in.httpTracingClient.GetAppTracesHTTP(in.httpClient, in.baseURL, namespace, app, q)
 	}
-	jaegerServiceName := buildJaegerServiceName(namespace, app)
+	jaegerServiceName := jaeger.BuildTracingServiceName(namespace, app)
 	findTracesRQ := &model.FindTracesRequest{
 		Query: &model.TraceQueryParameters{
 			ServiceName:  jaegerServiceName,
@@ -275,12 +275,4 @@ func readSpansStream(stream SpansStreamer) (map[model.TraceID]*model.Trace, erro
 		}
 	}
 	return tracesMap, nil
-}
-
-func buildJaegerServiceName(namespace, app string) string {
-	conf := config.Get()
-	if conf.ExternalServices.Tracing.NamespaceSelector {
-		return app + "." + namespace
-	}
-	return app
 }

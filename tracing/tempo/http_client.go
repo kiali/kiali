@@ -1,20 +1,23 @@
-package otel
+package tempo
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/tracing/model"
-	jaegerModels "github.com/kiali/kiali/tracing/model/json"
-	otelModels "github.com/kiali/kiali/tracing/otel/model/json"
-	"go.opentelemetry.io/otel/trace"
 	"io"
 	"net/http"
 	"net/url"
 	"path"
 	"strconv"
 	"strings"
+
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/tracing/jaeger/model"
+	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
+	otel "github.com/kiali/kiali/tracing/otel/model"
+	converter "github.com/kiali/kiali/tracing/otel/model/converter"
+	otelModels "github.com/kiali/kiali/tracing/otel/model/json"
 )
 
 type OtelHTTPClient struct {
@@ -23,7 +26,7 @@ type OtelHTTPClient struct {
 func (oc OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, namespace, app string, q models.TracingQuery) (response *model.TracingResponse, err error) {
 	url := *baseURL
 	url.Path = path.Join(url.Path, "/api/search")
-	tracingServiceName := buildJaegerServiceName(namespace, app)
+	tracingServiceName := buildTracingServiceName(namespace, app)
 	prepareQuery(&url, tracingServiceName, q)
 	r, err := oc.queryTracesHTTP(client, &url)
 	if r != nil {
@@ -38,7 +41,7 @@ func (oc OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.UR
 	u.Path = "/api/traces/" + traceID
 	resp, code, reqError := makeRequest(client, u.String(), nil)
 	if reqError != nil {
-		log.Errorf("Jaeger query error: %s [code: %d, URL: %v]", reqError, code, u)
+		log.Errorf("API Tempo query error: %s [code: %d, URL: %v]", reqError, code, u)
 		return nil, reqError
 	}
 	// Jaeger would return "200 OK" when trace is not found, with an empty response
@@ -47,8 +50,7 @@ func (oc OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.UR
 	}
 	responseOtel, _ := unmarshalSingleTrace(resp, &u)
 
-	trace, _ := TraceIDFromString(traceID)
-	response, err := convertSingleTrace(responseOtel, trace, "")
+	response, err := convertSingleTrace(responseOtel, traceID, "")
 	if err != nil {
 		return nil, err
 	}
@@ -87,8 +89,8 @@ func (oc OtelHTTPClient) queryTracesHTTP(client http.Client, u *url.URL) (*model
 	return oc.convertTraces(response, "", client, u)
 }
 
-func unmarshal(r []byte, u *url.URL) (*model.OTelTracingResponse, error) {
-	var response model.OTelTracingResponse
+func unmarshal(r []byte, u *url.URL) (*otel.TracingResponse, error) {
+	var response otel.TracingResponse
 	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
 		log.Errorf("Error unmarshalling Jaeger response: %s [URL: %v]", errMarshal, u)
 		return nil, errMarshal
@@ -100,14 +102,14 @@ func unmarshal(r []byte, u *url.URL) (*model.OTelTracingResponse, error) {
 func unmarshalSingleTrace(r []byte, u *url.URL) (*otelModels.Data, error) {
 	var response otelModels.Data
 	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
-		log.Errorf("Error unmarshalling Jaeger response: %s [URL: %v]", errMarshal, u)
+		log.Errorf("Error unmarshalling Tempo API Single trace response: %s [URL: %v]", errMarshal, u)
 		return nil, errMarshal
 	}
 
 	return &response, nil
 }
 
-func (oc OtelHTTPClient) convertTraces(traces *model.OTelTracingResponse, service string, client http.Client, endpoint *url.URL) (*model.TracingResponse, error) {
+func (oc OtelHTTPClient) convertTraces(traces *otel.TracingResponse, service string, client http.Client, endpoint *url.URL) (*model.TracingResponse, error) {
 	var response model.TracingResponse
 	for _, trace := range traces.Traces {
 		singleTrace, _ := oc.GetTraceDetailHTTP(client, endpoint, trace.TraceID)
@@ -119,36 +121,19 @@ func (oc OtelHTTPClient) convertTraces(traces *model.OTelTracingResponse, servic
 }
 
 // convertSingleTrace
-func convertSingleTrace(traces *otelModels.Data, id trace.TraceID, service string) (*model.TracingResponse, error) {
+func convertSingleTrace(traces *otelModels.Data, id string, service string) (*model.TracingResponse, error) {
 	var response model.TracingResponse
 	var jaegerModel jaegerModels.Trace
 
-	jaegerModel.TraceID = convertId(id)
-	jaegerModel.Spans = convertSpans(traces.Batches[0].ScopeSpans[0].Spans)
+	jaegerModel.TraceID = converter.ConvertId(id)
+	if traces != nil {
+		jaegerModel.Spans = converter.ConvertSpans(traces.Batches[0].ScopeSpans[0].Spans)
+	}
+
 	response.Data = append(response.Data, jaegerModel)
 
 	response.TracingServiceName = service
 	return &response, nil
-}
-
-// convertID
-func convertId(id trace.TraceID) jaegerModels.TraceID {
-	return jaegerModels.TraceID(id.String())
-}
-
-// convertID
-func convertSpanId(id trace.SpanID) jaegerModels.SpanID {
-	return jaegerModels.SpanID(id.String())
-}
-
-// convertSpans
-func convertSpans(spans []otelModels.Span) []jaegerModels.Span {
-	var toRet []jaegerModels.Span
-	for _, span := range spans {
-		jaegerSpan := jaegerModels.Span{TraceID: convertId(span.TraceID), SpanID: convertSpanId(span.SpanID)}
-		toRet = append(toRet, jaegerSpan)
-	}
-	return toRet
 }
 
 func prepareQuery(u *url.URL, tracingServiceName string, query models.TracingQuery) {
@@ -176,8 +161,7 @@ func prepareQuery(u *url.URL, tracingServiceName string, query models.TracingQue
 		q.Set("limit", strconv.Itoa(query.Limit))
 	}
 	u.RawQuery = q.Encode()
-	//log.Debugf("Prepared Jaeger query: %v", u)
-	log.Infof("Prepared Jaeger query: %v", u)
+	log.Debugf("Prepared Jaeger query: %v", u)
 }
 
 func makeRequest(client http.Client, endpoint string, body io.Reader) (response []byte, status int, err error) {
@@ -200,9 +184,10 @@ func makeRequest(client http.Client, endpoint string, body io.Reader) (response 
 	return
 }
 
-// TraceIDFromString creates a TraceID from a hexadecimal string
-func TraceIDFromString(s string) (trace.TraceID, error) {
-
-	l, _ := strconv.ParseUint(s, 10, 16)
-	return trace.TraceID{byte(l)}, nil
+func buildTracingServiceName(namespace, app string) string {
+	conf := config.Get()
+	if conf.ExternalServices.Tracing.NamespaceSelector {
+		return app + "." + namespace
+	}
+	return app
 }
