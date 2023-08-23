@@ -344,9 +344,10 @@ class TrafficList extends FilterComponent.Component<
       return { detail: '', metrics: '' };
     }
 
-    const detail = `/namespaces/${item.node.namespace}/${this.nodeTypeToType(item.node.type, true)}/${
-      item.node.name
-    }?clusterName=${item.node.cluster}`;
+    let detail = `/namespaces/${item.node.namespace}/${this.nodeTypeToType(item.node.type, true)}/${item.node.name}`;
+    if (item.node.cluster && isMultiCluster()) {
+      detail += `?clusterName=${item.node.cluster}`;
+    }
 
     const metricsDirection = item.direction === 'inbound' ? 'in_metrics' : 'out_metrics';
     let metrics = `${history.location.pathname}${getParamsSeparator(history.location.pathname)}tab=${metricsDirection}`;
