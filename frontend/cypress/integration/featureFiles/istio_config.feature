@@ -86,6 +86,14 @@ Feature: Kiali Istio Config page
     And user sees Type information for Istio objects
     And user sees Configuration information for Istio objects
 
+  @skip
+  @multi-cluster
+  Scenario: Sort list by cluster column
+    When user sorts the list by "Cluster" "asc"
+    Then the list is sorted by "Cluster" "asc"
+    When user sorts the list by "Cluster" "desc"
+    Then the list is sorted by "Cluster" "desc"
+
   @crd-validation
   @bookinfo-app
   Scenario: KIA0101 validation

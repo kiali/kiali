@@ -123,6 +123,19 @@ Feature: Kiali Workloads page
     And the health status of the workload should be "Degraded"
 
   @multi-cluster
-  @skip
+  @workloads-page
   Scenario: The column related to cluster name should be visible
-    Then the "Cluster" column "appears"
+    When user selects the "bookinfo" namespace
+    Then the "Cluster" column "appears" 
+    And an entry for "east" cluster should be in the table
+    And an entry for "west" cluster should be in the table
+
+  @workloads-page
+  @skip
+  @multi-cluster
+  Scenario: Sort list by cluster column
+    When user selects the "bookinfo" namespace
+    And user sorts the list by "Cluster" "asc"
+    Then the list is sorted by "Cluster"Okay, Google just told me that I've created a chat room regarding the plugin meeting. I must've clicked something on Okay, Google just told me that I've created a chat room regarding the plugin meeting. I must've clicked something on  "asc"
+    When user sorts the list by "Cluster" "desc"
+    Then the list is sorted by "Cluster" "desc"

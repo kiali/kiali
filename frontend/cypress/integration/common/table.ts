@@ -198,3 +198,9 @@ export function checkHealthStatusInTable(
   cy.get(`[data-test=VirtualItem_Ns${selector}] td:first-child span`).trigger('mouseenter');
   cy.get(`[aria-label='Health indicator'] strong`).should('contain.text', healthStatus);
 }
+
+And("an entry for {string} cluster should be in the table", (cluster:string) =>{
+  cy.get('tbody').within(() => {
+    cy.get('tr > td:nth-child(4)').contains(cluster).should('have.length.above',0);
+  });
+});

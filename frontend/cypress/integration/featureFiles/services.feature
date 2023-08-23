@@ -122,4 +122,25 @@ Feature: Kiali Services page
 
   @multi-cluster
   Scenario: The column related to cluster name should be visible
+    When user selects the "bookinfo" namespace
     Then the "Cluster" column "appears"
+    And an entry for "east" cluster should be in the table
+    And an entry for "west" cluster should be in the table
+
+  # inspired by this: https://github.com/kiali/kiali/pull/5998#pullrequestreview-1383754665
+  @services-page
+  @skip
+  @multi-cluster
+  Scenario: Services from both clusters should have a validation
+    When user selects the "bookinfo" namespace
+    Then all of the default "bookinfo" services from both clusters should be "healthy" 
+
+  @services-page
+  @skip
+  @multi-cluster
+  Scenario: Sort list by cluster column
+    When user selects the "bookinfo" namespace
+    And user sorts the list by "Cluster" "asc"
+    Then the list is sorted by "Cluster" "asc"
+    When user sorts the list by "Cluster" "desc"
+    Then the list is sorted by "Cluster" "desc"

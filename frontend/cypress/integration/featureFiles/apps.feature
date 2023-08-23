@@ -101,6 +101,17 @@ Feature: Kiali Apps List page
     And the health status of the application should be "Degraded"
 
   @multi-cluster
-  @skip
   Scenario: The column related to cluster name should be visible
-    Then the "Cluster" column "appears"
+    Then the "Cluster" column "appears" 
+    And an entry for "east" cluster should be in the table
+    And an entry for "west" cluster should be in the table
+    
+  @apps-page
+  @skip
+  @multi-cluster
+  Scenario: Sort list by cluster column
+    When user sorts the list by "Cluster" "asc"
+    Then the list is sorted by "Cluster" "asc"
+    When user sorts the list by "Cluster" "desc"
+    Then the list is sorted by "Cluster" "desc"
+    
