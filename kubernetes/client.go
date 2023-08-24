@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"context"
+	"sync"
 
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -71,6 +72,9 @@ type K8SClient struct {
 	gatewayapi   gatewayapiclient.Interface
 	isIstioAPI   *bool
 	clusterInfo  ClusterInfo
+
+	// mutex to acquire if you want to access or modify any field in K8SClient concurrently
+	rwMutex sync.RWMutex
 
 	// Separated out for testing purposes
 	getPodPortForwarderFunc func(namespace, name, portMap string) (httputil.PortForwarder, error)

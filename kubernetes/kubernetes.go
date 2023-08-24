@@ -200,6 +200,8 @@ func (in *K8SClient) GetProjects(labelSelector string) ([]osproject_v1.Project, 
 }
 
 func (in *K8SClient) IsOpenShift() bool {
+	in.rwMutex.Lock()
+	defer in.rwMutex.Unlock()
 	if in.isOpenShift == nil {
 		isOpenShift := false
 		_, err := in.k8s.Discovery().RESTClient().Get().AbsPath("/apis/project.openshift.io").Do(in.ctx).Raw()
@@ -212,6 +214,8 @@ func (in *K8SClient) IsOpenShift() bool {
 }
 
 func (in *K8SClient) IsGatewayAPI() bool {
+	in.rwMutex.Lock()
+	defer in.rwMutex.Unlock()
 	if in.GatewayAPI() == nil {
 		return false
 	}
@@ -230,6 +234,8 @@ func (in *K8SClient) IsGatewayAPI() bool {
 
 // Is IstioAPI checks whether Istio API is installed or not
 func (in *K8SClient) IsIstioAPI() bool {
+	in.rwMutex.Lock()
+	defer in.rwMutex.Unlock()
 	if in.Istio() == nil {
 		return false
 	}
