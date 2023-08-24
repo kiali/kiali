@@ -61,7 +61,7 @@ export const legendData: GraphLegendItem[] = [
     data: [
       { label: 'Normal', icon: nodeColorNormalImage },
       { label: 'Warn', icon: nodeColorWarningImage },
-      { label: 'Danger', icon: nodeColorDangerImage },
+      { label: 'Unhealthy', icon: nodeColorDangerImage },
       { label: 'Idle', icon: nodeColorIdleImage }
     ]
   },

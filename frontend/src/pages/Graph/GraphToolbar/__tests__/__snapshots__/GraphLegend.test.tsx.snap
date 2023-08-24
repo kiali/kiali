@@ -188,14 +188,14 @@ exports[`GraphLegend test should render correctly 1`] = `
               className="kiali_f1irbq61"
             >
               <img
-                alt="Danger"
+                alt="Unhealthy"
                 src="node-color-danger.svg"
               />
             </span>
             <span
               className="kiali_fgzdi7m"
             >
-              Danger
+              Unhealthy
             </span>
           </div>
           <div
