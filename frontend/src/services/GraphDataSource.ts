@@ -18,6 +18,7 @@ import * as API from './Api';
 import { decorateGraphData } from '../store/Selectors/GraphData';
 import EventEmitter from 'eventemitter3';
 import { createSelector } from 'reselect';
+import { isMultiCluster } from '../config';
 
 export const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
 const PROMISE_KEY = 'CURRENT_REQUEST';
@@ -267,7 +268,7 @@ export class GraphDataSource {
       }
     });
 
-    if (fetchParams.node?.cluster) {
+    if (fetchParams.node?.cluster && isMultiCluster()) {
       restParams.clusterName = fetchParams.node.cluster;
     }
 

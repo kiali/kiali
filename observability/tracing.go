@@ -11,18 +11,34 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 )
 
 const (
 	// TracingService is the name of the kiali tracer service.
 	TracingService = "kiali"
+)
+
+const (
+	HTTP  = "http"
+	HTTPS = "https"
+	GRPC  = "grpc"
+)
+
+const (
+	JAEGER = "jaeger"
+	OTEL   = "otel"
 )
 
 // EndFunc ends a span if one is started. Otherwise does nothing.
@@ -35,8 +51,8 @@ func TracerName() string {
 
 // InitTracer initalizes a TracerProvider that exports to jaeger.
 // This will panic if there's an error in setup.
-func InitTracer(jaegerURL string) *sdktrace.TracerProvider {
-	exporter, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(jaegerURL)))
+func InitTracer(collectorURL string) *sdktrace.TracerProvider {
+	exporter, err := getExporter(collectorURL)
 	if err != nil {
 		panic(err)
 	}
@@ -116,4 +132,74 @@ func StartSpan(ctx context.Context, funcName string, attrs ...attribute.KeyValue
 	}
 
 	return ctx, func() {}
+}
+
+// getExporter returns the exporter based on the configuration options
+// Jaeger collector, OpenTelemetry using http or grpc
+func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
+	var exporter sdktrace.SpanExporter
+	var err error
+
+	tracingOpt := config.Get().Server.Observability.Tracing
+
+	// Jaeger collector
+	if tracingOpt.CollectorType == JAEGER {
+		log.Debugf("Creating Jaeger collector with URL %s", collectorURL)
+		exporter, err = jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(collectorURL)))
+		return exporter, err
+	} else {
+		if tracingOpt.CollectorType == OTEL {
+			// OpenTelemetry collector
+			if tracingOpt.Otel.Protocol == HTTP || tracingOpt.Otel.Protocol == HTTPS {
+				tracingOptions := otlptracehttp.WithRetry(otlptracehttp.RetryConfig{
+					Enabled:         true,
+					InitialInterval: 1 * time.Nanosecond,
+					MaxInterval:     1 * time.Nanosecond,
+					// Never stop retry of retry-able status.
+					MaxElapsedTime: 0,
+				})
+				var client otlptrace.Client
+
+				if tracingOpt.Otel.Protocol == HTTP {
+					log.Debugf("Creating OpenTelemetry collector with URL http://%s", collectorURL)
+
+					client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(collectorURL),
+						otlptracehttp.WithInsecure(),
+						tracingOptions,
+					)
+				} else {
+					log.Debugf("Creating OpenTelemetry collector with URL https://%s", collectorURL)
+
+					client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(collectorURL),
+						tracingOptions,
+					)
+				}
+
+				ctx := context.Background()
+				exporter, err := otlptrace.New(ctx, client)
+				return exporter, err
+			} else {
+				if tracingOpt.Otel.Protocol == GRPC {
+					log.Debugf("Creating OpenTelemetry grpc collector with URL %s", collectorURL)
+					ctx := context.Background()
+					ctx, cancel := context.WithTimeout(ctx, time.Second)
+					defer cancel()
+
+					// TODO: Support TLS
+					exporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(),
+						otlptracegrpc.WithEndpoint(collectorURL),
+						otlptracegrpc.WithDialOption(grpc.WithBlock()),
+					)
+
+					return exporter, err
+				} else {
+
+					return nil, fmt.Errorf("Error in configuration options getting the observability exporter. Invalid otel.protocol [%v].", tracingOpt.Otel.Protocol)
+				}
+			}
+		} else {
+			return nil, fmt.Errorf("Error in configuration options getting the observability exporter. Invalid collector type [%v].", tracingOpt.CollectorType)
+		}
+
+	}
 }
