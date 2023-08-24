@@ -31,6 +31,7 @@ import { TimeDurationModal } from '../Time/TimeDurationModal';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { KioskElement } from '../Kiosk/KioskElement';
 import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
+import { isMultiCluster } from '../../config';
 
 const initGraphContainerStyle = kialiStyle({ width: '100%', height: '100%' });
 
@@ -234,7 +235,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
 
     let href = `/namespaces/${e.namespace}/${resourceType}s/${resource}`;
 
-    if (e.cluster) {
+    if (e.cluster && isMultiCluster()) {
       href = href + '?clusterName=' + e.cluster;
     }
 

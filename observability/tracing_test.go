@@ -12,6 +12,10 @@ import (
 
 func TestInitTracer(t *testing.T) {
 	assert := assert.New(t)
+	cfg := config.Get()
+	cfg.Server.Observability.Tracing.CollectorType = "jaeger"
+	config.Set(cfg)
+
 	defer func() {
 		err := recover()
 		assert.Nil(err)
@@ -21,12 +25,20 @@ func TestInitTracer(t *testing.T) {
 }
 
 func TestStop(t *testing.T) {
+	cfg := config.Get()
+	cfg.Server.Observability.Tracing.CollectorType = "jaeger"
+	config.Set(cfg)
+
 	tp := observability.InitTracer("jaegerURL")
 	observability.StopTracer(tp)
 }
 
 func TestStopWithNil(t *testing.T) {
 	assert := assert.New(t)
+	cfg := config.Get()
+	cfg.Server.Observability.Tracing.CollectorType = "jaeger"
+	config.Set(cfg)
+
 	defer func() {
 		err := recover()
 		assert.Nil(err)
@@ -71,6 +83,7 @@ func TestStartSpan(t *testing.T) {
 	assert := assert.New(t)
 	cfg := config.Get()
 	cfg.Server.Observability.Tracing.Enabled = true
+	cfg.Server.Observability.Tracing.CollectorType = "jaeger"
 	config.Set(cfg)
 
 	ctx := context.Background()
