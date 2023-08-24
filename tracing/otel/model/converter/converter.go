@@ -1,6 +1,9 @@
 package converter
 
 import (
+	"strconv"
+
+	"github.com/kiali/kiali/log"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 	otelModels "github.com/kiali/kiali/tracing/otel/model/json"
 )
@@ -16,11 +19,64 @@ func convertSpanId(id string) jaegerModels.SpanID {
 }
 
 // ConvertSpans
-func ConvertSpans(spans []otelModels.Span) []jaegerModels.Span {
+// https://opentelemetry.io/docs/specs/otel/trace/sdk_exporters/jaeger
+func ConvertSpans(spans []otelModels.Span, serviceName string) []jaegerModels.Span {
 	var toRet []jaegerModels.Span
 	for _, span := range spans {
-		jaegerSpan := jaegerModels.Span{TraceID: ConvertId(span.TraceID), SpanID: convertSpanId(span.SpanID)}
+
+		startTime, err := strconv.ParseUint(span.StartTimeUnixNano, 10, 64)
+		if err != nil {
+			log.Errorf("Error converting start time. Skipping trace")
+			continue
+		}
+
+		duration, err := getDuration(span.EndTimeUnixNano, span.StartTimeUnixNano)
+		if err != nil {
+			log.Errorf("Error converting start time. Skipping trace")
+			continue
+		}
+
+		jaegerSpan := jaegerModels.Span{
+			TraceID:   ConvertId(span.TraceID),
+			SpanID:    convertSpanId(span.SpanID),
+			Duration:  duration,
+			StartTime: startTime / 1000,
+			// No more mapped data
+			Flags:         0,
+			OperationName: span.Name,
+			References:    []jaegerModels.Reference{},
+			Tags:          convertAttributes(span.Attributes),
+			Logs:          []jaegerModels.Log{},
+			ProcessID:     "",
+			Process:       &jaegerModels.Process{Tags: []jaegerModels.KeyValue{}, ServiceName: serviceName},
+			Warnings:      []string{},
+		}
+
 		toRet = append(toRet, jaegerSpan)
 	}
 	return toRet
+}
+
+func getDuration(end string, start string) (uint64, error) {
+	endInt, err := strconv.ParseUint(end, 10, 64)
+	if err != nil {
+		log.Error("Error converting end date %s", err.Error())
+		return 0, err
+	}
+	startInt, err := strconv.ParseUint(start, 10, 64)
+	if err != nil {
+		log.Error("Error converting end date %s", err.Error())
+		return 0, err
+	}
+	// nano to micro
+	return (endInt - startInt) / 1000, nil
+}
+
+func convertAttributes(attributes []otelModels.Attribute) []jaegerModels.KeyValue {
+	var tags []jaegerModels.KeyValue
+	for _, atb := range attributes {
+		tag := jaegerModels.KeyValue{Key: atb.Key, Value: atb.Value.StringValue}
+		tags = append(tags, tag)
+	}
+	return tags
 }

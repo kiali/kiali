@@ -127,7 +127,10 @@ func convertSingleTrace(traces *otelModels.Data, id string, service string) (*mo
 
 	jaegerModel.TraceID = converter.ConvertId(id)
 	if traces != nil {
-		jaegerModel.Spans = converter.ConvertSpans(traces.Batches[0].ScopeSpans[0].Spans)
+		serviceName := getServiceName(traces.Batches[0].Resource.Attributes)
+		jaegerModel.Spans = converter.ConvertSpans(traces.Batches[0].ScopeSpans[0].Spans, serviceName)
+		jaegerModel.Processes = map[jaegerModels.ProcessID]jaegerModels.Process{}
+		jaegerModel.Warnings = []string{}
 	}
 
 	response.Data = append(response.Data, jaegerModel)
@@ -182,6 +185,15 @@ func makeRequest(client http.Client, endpoint string, body io.Reader) (response 
 	response, err = io.ReadAll(resp.Body)
 	status = resp.StatusCode
 	return
+}
+
+func getServiceName(attributes []otelModels.Attribute) string {
+	for _, attb := range attributes {
+		if attb.Key == "service.name" {
+			return attb.Value.StringValue
+		}
+	}
+	return ""
 }
 
 func buildTracingServiceName(namespace, app string) string {

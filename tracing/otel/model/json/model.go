@@ -17,7 +17,6 @@ type Event struct {
 }
 
 type Status struct {
-	// Puedes agregar campos aquí si es necesario
 }
 
 type Span struct {
