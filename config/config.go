@@ -90,10 +90,17 @@ type Metrics struct {
 	Port    int  `yaml:"port,omitempty"`
 }
 
+// OpenTelemetry collector configuration for tracing
+type OtelCollector struct {
+	Protocol string `yaml:"protocol,omitempty"` // http or https or grp
+}
+
 // Tracing provides tracing configuration for the Kiali server.
 type Tracing struct {
-	CollectorURL string `yaml:"collector_url,omitempty"` // Endpoint for Kiali server traces
-	Enabled      bool   `yaml:"enabled,omitempty"`
+	CollectorType string        `yaml:"collector_type,omitempty"` // Possible values "otel" or "jaeger"
+	CollectorURL  string        `yaml:"collector_url,omitempty"`  // Endpoint for Kiali server traces
+	Enabled       bool          `yaml:"enabled,omitempty"`
+	Otel          OtelCollector `yaml:"otel,omitempty"`
 	// Sampling rate for Kiali server traces. >= 1.0 always samples and <= 0 never samples.
 	SamplingRate float64 `yaml:"sampling_rate,omitempty"`
 }
@@ -448,7 +455,16 @@ type CertificatesInformationIndicators struct {
 
 // Clustering defines configuration around multi-cluster functionality.
 type Clustering struct {
-	EnableExecProvider bool `yaml:"enable_exec_provider,omitempty" json:"enable_exec_provider"`
+	EnableExecProvider bool       `yaml:"enable_exec_provider,omitempty" json:"enable_exec_provider"`
+	KialiURLs          []KialiURL `yaml:"kiali_urls,omitempty" json:"kiali_urls,omitempty"`
+}
+
+// KialiURL defines a cluster name, namespace and instance name properties to URL.
+type KialiURL struct {
+	ClusterName  string `yaml:"cluster_name,omitempty"`
+	InstanceName string `yaml:"instance_name,omitempty"`
+	Namespace    string `yaml:"namespace,omitempty"`
+	URL          string `yaml:"url,omitempty"`
 }
 
 // KialiFeatureFlags available from the CR
@@ -745,8 +761,12 @@ func NewConfig() (c *Config) {
 					Port:    9090,
 				},
 				Tracing: Tracing{
-					CollectorURL: "http://jaeger-collector.istio-system:14268/api/traces",
-					Enabled:      false,
+					CollectorType: "jaeger",
+					CollectorURL:  "http://jaeger-collector.istio-system:14268/api/traces",
+					Enabled:       false,
+					Otel: OtelCollector{
+						Protocol: "http",
+					},
 					// Sample half of traces.
 					SamplingRate: 0.5,
 				},

@@ -73,7 +73,7 @@ export function SummaryTableRenderer<T extends SummaryTable>() {
                 label={this.props.pod}
                 options={this.props.pods.sort()}
               />
-              <div className={kialiStyle({ position: 'fixed', right: '60px' })}>{this.props.writer.tooltip()}</div>
+              <div className={kialiStyle({ position: 'absolute', right: '60px' })}>{this.props.writer.tooltip()}</div>
             </>
           </StatefulFilters>
           <Table
