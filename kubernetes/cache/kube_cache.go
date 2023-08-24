@@ -21,7 +21,6 @@ import (
 	istiotelem_v1alpha1_listers "istio.io/client-go/pkg/listers/telemetry/v1alpha1"
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/informers"
 	apps_v1_listers "k8s.io/client-go/listers/apps/v1"
@@ -726,13 +725,8 @@ func (c *kubeCache) GetServices(namespace string, selectorLabels map[string]stri
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 
-	var services []*core_v1.Service
-	var err error
-	if namespace == metav1.NamespaceAll {
-		services, err = c.getCacheLister(namespace).serviceLister.List(labels.Set(selectorLabels).AsSelector())
-	} else {
-		services, err = c.getCacheLister(namespace).serviceLister.Services(namespace).List(labels.Set(selectorLabels).AsSelector())
-	}
+	services, err := c.getCacheLister(namespace).serviceLister.Services(namespace).List(labels.Set(selectorLabels).AsSelector())
+
 	if err != nil {
 		return nil, err
 	}
