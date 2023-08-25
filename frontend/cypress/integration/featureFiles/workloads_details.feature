@@ -49,7 +49,6 @@ Feature: Kiali Workload Details page
     When the user filters by "Port" with value "9080" on the "Clusters" tab
     Then the user sees clusters expected information
 
-
   @requestTimeout(30000)
   @responseTimeout(30000)
   @bookinfo-app
