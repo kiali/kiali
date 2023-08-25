@@ -1,3 +1,6 @@
+@app-details
+# don't change first line of this file - the tag is used for the test scripts to identify the test suite
+
 Feature: Kiali App Details page
 
   On the App Details page, an admin should see details about an application as well as
@@ -10,39 +13,32 @@ Feature: Kiali App Details page
     Given user is at administrator perspective
     And user is at the details page for the "app" "bookinfo/details" located in the "" cluster
 
-  @app-details-page
   @bookinfo-app
   Scenario: See details for app.
     Then user sees details information for the "details" app
 
-  @app-details-page
   @bookinfo-app
   Scenario: See app minigraph for details app.
     Then user sees a minigraph
 
-  @app-details-page
   @bookinfo-app
   Scenario: See app Traffic information
     Then user sees inbound and outbound traffic information
 
-  @app-details-page
   @bookinfo-app
   Scenario: See Inbound Metrics
     Then user sees inbound metrics information
 
-  @app-details-page
   @bookinfo-app
   Scenario: See Outbound Metrics
     Then user sees outbound metrics information
 
-  @app-details-page
   @bookinfo-app
   Scenario: See tracing info after selecting a trace
     And user sees trace information
     When user selects a trace
     Then user sees trace details
 
-  @app-details-page
   @bookinfo-app
   Scenario: See span info after selecting app span
     And user sees trace information

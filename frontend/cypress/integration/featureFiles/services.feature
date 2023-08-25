@@ -1,3 +1,6 @@
+@services
+# don't change first line of this file - the tag is used for the test scripts to identify the test suite
+
 Feature: Kiali Services page
 
   User opens the Services page and sees the bookinfo namespaces
@@ -6,7 +9,6 @@ Feature: Kiali Services page
     Given user is at administrator perspective
     And user is at the "services" list page
 
-  @services-page
   @bookinfo-app
   Scenario: See services table with correct info
     When user selects the "bookinfo" namespace
@@ -22,18 +24,15 @@ Feature: Kiali Services page
     And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/virtualservices/bookinfo"
     And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/gateways/bookinfo-gateway"
 
-  @services-page
   Scenario: See all Services toggles
     Then user sees all the Services toggles
 
-  @services-page
   Scenario: Toggle Services configuration toggle
     When user "unchecks" toggle "configuration"
     Then the "Configuration" column "disappears"
     When user "checks" toggle "configuration"
     Then the "Configuration" column "appears"
 
-  @services-page
   @bookinfo-app
   Scenario: Filter services table by Service Name
     When user selects the "bookinfo" namespace
@@ -42,7 +41,6 @@ Feature: Kiali Services page
     Then user sees "productpage" in the table
     And table length should be 1
 
-  @services-page
   @bookinfo-app
   Scenario: Filter services table by Service Type
     When user selects the "bookinfo" namespace
@@ -50,7 +48,6 @@ Feature: Kiali Services page
     And user filters for service type "External"
     Then user sees "nothing" in the table
 
-  @services-page
   @bookinfo-app
   Scenario: Filter services table by sidecar
     When user selects the "bookinfo" namespace
@@ -58,7 +55,6 @@ Feature: Kiali Services page
     And user filters for sidecar "Present"
     Then user sees "something" in the table
 
-  @services-page
   @bookinfo-app
   Scenario: Filter services table by Istio Type
     When user selects the "bookinfo" namespace
@@ -67,7 +63,6 @@ Feature: Kiali Services page
     Then user sees "productpage" in the table
     And table length should be 1
 
-  @services-page
   @bookinfo-app
   Scenario: Filter services table by health
     When user selects the "bookinfo" namespace
@@ -76,7 +71,6 @@ Feature: Kiali Services page
     Then user sees "something" in the table
     And user should only see healthy services in the table
 
-  @services-page
   @bookinfo-app
   Scenario: Filter services table by label
     When user selects the "bookinfo" namespace
@@ -85,7 +79,6 @@ Feature: Kiali Services page
     Then user sees "productpage" in the table
     And table length should be 1
 
-  @services-page
   @bookinfo-app
   Scenario: Filter services table by label click
     When user selects the "bookinfo" namespace
@@ -93,7 +86,6 @@ Feature: Kiali Services page
     Then user sees "productpage" in the table
     And table length should be 1
 
-  @services-page
   @bookinfo-app
   Scenario: Filter and unfilter services table by label click
     When user selects the "bookinfo" namespace
@@ -101,14 +93,12 @@ Feature: Kiali Services page
     And user clicks "app=productpage" label
     Then table length should exceed 1
 
-  @services-page
   @bookinfo-app
   Scenario: The healthy status of a service is reported in the list of services
     Given a service in the cluster with a healthy amount of traffic
     When user selects the "bookinfo" namespace
     Then the service should be listed as "healthy"
 
-  @services-page
   @sleep-app
   Scenario: The idle status of a service is reported in the list of services
     Given a service in the cluster with no traffic
@@ -117,7 +107,6 @@ Feature: Kiali Services page
     And the health status of the service should be "No health information"
 
   @error-rates-app
-  @services-page
   Scenario: The failing status of a service is reported in the list of services
     Given a service in the mesh with a failing amount of traffic
     When user selects the "alpha" namespace
@@ -125,14 +114,12 @@ Feature: Kiali Services page
     And the health status of the service should be "Failure"
 
   @error-rates-app
-  @services-page
   Scenario: The degraded status of a service is reported in the list of services
     Given a service in the mesh with a degraded amount of traffic
     When user selects the "alpha" namespace
     Then the service should be listed as "degraded"
     And the health status of the service should be "Degraded"
 
-  @services-page
   @multi-cluster
   Scenario: The column related to cluster name should be visible
     Then the "Cluster" column "appears"

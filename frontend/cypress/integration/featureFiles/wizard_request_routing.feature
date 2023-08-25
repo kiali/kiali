@@ -1,3 +1,6 @@
+@wizard-request-routing
+# don't change first line of this file - the tag is used for the test scripts to identify the test suite
+
 Feature: Service Details Wizard: Request Routing
 
   User navigates to the service details page and open the Kiali Wizard to generate a Request Routing scenario.
@@ -5,7 +8,6 @@ Feature: Service Details Wizard: Request Routing
   Background:
     Given user is at administrator perspective
 
-  @wizard-request-routing
   @bookinfo-app
   Scenario: Create a Request Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
@@ -29,7 +31,6 @@ Feature: Service Details Wizard: Request Routing
     And user creates the configuration
     Then user sees the "Istio Config" table with 2 rows
 
-  @wizard-request-routing
   @bookinfo-app
   Scenario: See a DestinationRule generated
     When user clicks in the "Istio Config" table "DR" badge "reviews" name row link
@@ -40,7 +41,6 @@ Feature: Service Details Wizard: Request Routing
     And user sees the "bookinfo" "reviews-v3" "workload" reference
     And user sees the "bookinfo" "reviews" "virtualservice" reference
 
-  @wizard-request-routing
   @bookinfo-app
   Scenario: See a VirtualService generated
     When user clicks in the "bookinfo" "reviews" "virtualservice" reference
@@ -49,7 +49,6 @@ Feature: Service Details Wizard: Request Routing
     And user sees the "bookinfo" "reviews" "destinationrule" reference
     And user sees the "end-user:[\n ]*exact: jason" regex in the editor
 
-  @wizard-request-routing
   @bookinfo-app
   Scenario: Update a Request Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
@@ -63,14 +62,12 @@ Feature: Service Details Wizard: Request Routing
     And user updates the configuration
     Then user sees the "Istio Config" table with 3 rows
 
-  @wizard-request-routing
   @bookinfo-app
   Scenario: See a Gateway generated
     When user clicks in the "Istio Config" table "G" badge "reviews-gateway" name row link
     Then user sees the "kind: Gateway" regex in the editor
 
-  ## @wizard-request-routing
-  @bookinfo-app
+  ##   @bookinfo-app
   Scenario: Delete the Request Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
     And user clicks in the "Delete Traffic Routing" actions
