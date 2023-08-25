@@ -320,7 +320,10 @@ func (in *MeshService) discoverKiali(ctx context.Context, clusterName string, r 
 	// The operator and the helm charts set this fixed label. It's also
 	// present in the Istio addon manifest of Kiali.
 	kialiAppLabel := map[string]string{"app.kubernetes.io/part-of": "kiali"}
-	// TODO: This will fail if cluster wide mode is not enabled.
+	// TODO: getting services will fail spectacularly if cluster wide mode is not enabled - only call when in cluster-wide mode
+	if !config.Get().Deployment.ClusterWideAccess {
+		return in.appendKialiInstancesFromConfig([]kubernetes.KialiInstance{}, clusterName)
+	}
 	services, err := kubeCache.GetServices("", kialiAppLabel)
 	if err != nil {
 		log.Warningf("Discovery for Kiali instances in cluster [%s] failed: %s", clusterName, err.Error())
