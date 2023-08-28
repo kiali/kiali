@@ -106,7 +106,6 @@ Feature: Kiali Apps List page
     And an entry for "east" cluster should be in the table
     And an entry for "west" cluster should be in the table
     
-  @apps-page
   @skip
   @multi-cluster
   Scenario: Sort list by cluster column

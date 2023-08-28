@@ -128,14 +128,12 @@ Feature: Kiali Services page
     And an entry for "west" cluster should be in the table
 
   # inspired by this: https://github.com/kiali/kiali/pull/5998#pullrequestreview-1383754665
-  @services-page
   @skip
   @multi-cluster
   Scenario: Services from both clusters should have a validation
     When user selects the "bookinfo" namespace
     Then all of the default "bookinfo" services from both clusters should be "healthy" 
 
-  @services-page
   @skip
   @multi-cluster
   Scenario: Sort list by cluster column

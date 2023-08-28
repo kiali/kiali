@@ -123,14 +123,12 @@ Feature: Kiali Workloads page
     And the health status of the workload should be "Degraded"
 
   @multi-cluster
-  @workloads-page
   Scenario: The column related to cluster name should be visible
     When user selects the "bookinfo" namespace
     Then the "Cluster" column "appears" 
     And an entry for "east" cluster should be in the table
     And an entry for "west" cluster should be in the table
 
-  @workloads-page
   @skip
   @multi-cluster
   Scenario: Sort list by cluster column
