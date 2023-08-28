@@ -728,7 +728,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		}
 	}()
 
-	// CononJobs are fetched only when included
+	// CronJobs are fetched only when included
 	go func() {
 		defer wg.Done()
 
