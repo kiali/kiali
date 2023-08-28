@@ -3,34 +3,34 @@ package tests
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/kiali/kiali/tests/integration/utils"
 )
 
 func TestAppDashboard(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	name := "details"
-	assertDashboards("apps", utils.BOOKINFO, name, assert)
+	requireDashboards("apps", utils.BOOKINFO, name, require)
 }
 
 func TestServiceDashboard(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	name := "details"
-	assertDashboards("services", utils.BOOKINFO, name, assert)
+	requireDashboards("services", utils.BOOKINFO, name, require)
 }
 
 func TestWorkloadDashboard(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	name := "details-v1"
-	assertDashboards("workloads", utils.BOOKINFO, name, assert)
+	requireDashboards("workloads", utils.BOOKINFO, name, require)
 }
 
-func assertDashboards(objectType, namespace, name string, assert *assert.Assertions) {
+func requireDashboards(objectType, namespace, name string, require *require.Assertions) {
 	dashboard, err := utils.ObjectDashboard(namespace, name, objectType)
 
-	assert.Nil(err)
-	assert.NotNil(dashboard)
-	assert.NotEmpty(dashboard.Charts)
-	assert.NotEmpty(dashboard.Aggregations)
+	require.Nil(err)
+	require.NotNil(dashboard)
+	require.NotEmpty(dashboard.Charts)
+	require.NotEmpty(dashboard.Aggregations)
 }

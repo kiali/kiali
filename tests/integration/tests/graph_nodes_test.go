@@ -4,29 +4,28 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/util/wait"
-
-	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/tests/integration/utils"
 )
 
 func TestAppGraph(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	name := "details"
 	graphType := "app"
-	assertGraphConfig("applications", graphType, utils.BOOKINFO, name, assert)
+	requireGraphConfig("applications", graphType, utils.BOOKINFO, name, require)
 }
 
 func TestAppVersionGraph(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	name := "details"
 	graphType := "app"
-	assertGraphConfig("applications", graphType, utils.BOOKINFO, name, assert)
+	requireGraphConfig("applications", graphType, utils.BOOKINFO, name, require)
 }
 
 func TestVersionedAppGraph(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	name := "ratings"
 	graphType := "versionedApp"
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
@@ -34,67 +33,67 @@ func TestVersionedAppGraph(t *testing.T) {
 		if statusCode != 200 {
 			return false, err
 		}
-		assert.Equal(config.GraphType, graphType)
-		assert.NotNil(config.Elements)
+		require.Equal(config.GraphType, graphType)
+		require.NotNil(config.Elements)
 		return len(config.Elements.Nodes) > 0 && len(config.Elements.Edges) > 0, nil
 	})
-	assert.Nil(pollErr, "Graph elements should contains Nodes and Edges")
+	require.Nil(pollErr, "Graph elements should contains Nodes and Edges")
 }
 
 func TestAppGraphEmpty(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	name := "detailswrong"
 	graphType := "app"
-	assertEmptyGraphConfig("applications", graphType, utils.BOOKINFO, name, assert)
+	requireEmptyGraphConfig("applications", graphType, utils.BOOKINFO, name, require)
 }
 
 func TestServiceGraph(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	name := "details"
 	graphType := "versionedApp"
-	assertGraphConfig("services", graphType, utils.BOOKINFO, name, assert)
+	requireGraphConfig("services", graphType, utils.BOOKINFO, name, require)
 }
 
 func TestServiceGraphEmpty(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	name := "detailswrong"
 	graphType := "workload"
-	assertEmptyGraphConfig("services", graphType, utils.BOOKINFO, name, assert)
+	requireEmptyGraphConfig("services", graphType, utils.BOOKINFO, name, require)
 }
 
 func TestWorkloadGraph(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	name := "details-v1"
 	graphType := "workload"
-	assertGraphConfig("workloads", graphType, utils.BOOKINFO, name, assert)
+	requireGraphConfig("workloads", graphType, utils.BOOKINFO, name, require)
 }
 
 func TestWorkloadGraphEmpty(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	name := "reviews-wrong"
 	graphType := "workload"
-	assertEmptyGraphConfig("workloads", graphType, utils.BOOKINFO, name, assert)
+	requireEmptyGraphConfig("workloads", graphType, utils.BOOKINFO, name, require)
 }
 
-func assertGraphConfig(objectType, graphType, namespace, name string, assert *assert.Assertions) {
+func requireGraphConfig(objectType, graphType, namespace, name string, require *require.Assertions) {
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
 		config, statusCode, err := utils.ObjectGraph(objectType, graphType, name, namespace)
 		if statusCode != 200 {
 			return false, err
 		}
-		assert.Equal(config.GraphType, graphType)
-		assert.NotNil(config.Elements)
+		require.Equal(config.GraphType, graphType)
+		require.NotNil(config.Elements)
 		return len(config.Elements.Nodes) > 0 && len(config.Elements.Edges) > 0, nil
 	})
-	assert.Nil(pollErr, "Graph elements should contains Nodes and Edges")
+	require.Nil(pollErr, "Graph elements should contains Nodes and Edges")
 }
 
-func assertEmptyGraphConfig(objectType, graphType, namespace, name string, assert *assert.Assertions) {
+func requireEmptyGraphConfig(objectType, graphType, namespace, name string, require *require.Assertions) {
 	config, statusCode, err := utils.ObjectGraph(objectType, graphType, name, namespace)
-	assert.Equal(200, statusCode)
-	assert.Nil(err)
-	assert.Equal(config.GraphType, graphType)
-	assert.NotNil(config.Elements)
-	assert.Empty(config.Elements.Nodes)
-	assert.Empty(config.Elements.Edges)
+	require.Equal(200, statusCode)
+	require.Nil(err)
+	require.Equal(config.GraphType, graphType)
+	require.NotNil(config.Elements)
+	require.Empty(config.Elements.Nodes)
+	require.Empty(config.Elements.Edges)
 }

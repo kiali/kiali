@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/kubernetes"
 
@@ -49,7 +48,6 @@ func update_istio_api_enabled(t *testing.T, value bool, kubeClientSet kubernetes
 
 	// Restart Kiali pod to pick up the new config.
 	require.NoError(restartKialiPod(ctx, kubeClientSet, kialiNamespace, false, podName))
-
 }
 
 func TestNoIstiod(t *testing.T) {
@@ -61,16 +59,16 @@ func TestNoIstiod(t *testing.T) {
 	t.Run("ServicesListNoRegistryServices", servicesListNoRegistryServices)
 	t.Run("NoProxyStatus", noProxyStatus)
 	t.Run("istioStatus", istioStatus)
-	//t.Run("emptyValidations", emptyValidations)
+	// t.Run("emptyValidations", emptyValidations)
 }
 
 func servicesListNoRegistryServices(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	serviceList, err := utils.ServicesList(utils.BOOKINFO)
 
-	assert.Nil(err)
-	assert.NotEmpty(serviceList)
-	assert.True(len(serviceList.Services) >= 4)
+	require.Nil(err)
+	require.NotEmpty(serviceList)
+	require.True(len(serviceList.Services) >= 4)
 	sl := len(serviceList.Services)
 
 	// Deploy an external service entry
@@ -82,14 +80,14 @@ func servicesListNoRegistryServices(t *testing.T) {
 
 	// The service result should be the same
 	serviceList2, err3 := utils.ServicesList(utils.BOOKINFO)
-	assert.True(len(serviceList2.Services) == sl)
+	require.True(len(serviceList2.Services) == sl)
 	if err3 != nil {
 		log.Errorf("Failed to execute command: %s", applySe)
 	}
 
 	// Now, create a Service Entry (Part of th
-	assert.NotNil(serviceList.Validations)
-	assert.Equal(utils.BOOKINFO, serviceList.Namespace.Name)
+	require.NotNil(serviceList.Validations)
+	require.Equal(utils.BOOKINFO, serviceList.Namespace.Name)
 
 	// Cleanup
 	rmSe := ocCommand + " delete -f ../assets/bookinfo-service-entry-external.yaml"
@@ -101,44 +99,44 @@ func servicesListNoRegistryServices(t *testing.T) {
 
 func noProxyStatus(t *testing.T) {
 	name := "details-v1"
-	assert := assert.New(t)
+	require := require.New(t)
 	wl, _, err := utils.WorkloadDetails(name, utils.BOOKINFO)
 
-	assert.Nil(err)
-	assert.NotNil(wl)
-	assert.Equal(name, wl.Name)
-	assert.Equal("Deployment", wl.Type)
-	assert.NotNil(wl.Pods)
+	require.Nil(err)
+	require.NotNil(wl)
+	require.Equal(name, wl.Name)
+	require.Equal("Deployment", wl.Type)
+	require.NotNil(wl.Pods)
 	for _, pod := range wl.Pods {
-		assert.NotEmpty(pod.Status)
-		assert.NotEmpty(pod.Name)
-		assert.Empty(pod.ProxyStatus)
+		require.NotEmpty(pod.Status)
+		require.NotEmpty(pod.Name)
+		require.Empty(pod.ProxyStatus)
 	}
 }
 
 /*
 func emptyValidations(t *testing.T) {
 	name := "bookinfo-gateway"
-	assert := assert.New(t)
+	require := require.New(t)
 
 	config, err := getConfigForNamespace(utils.BOOKINFO, name, k8s.Gateways)
 
-	assert.Nil(err)
-	assert.NotNil(config)
-	assert.Equal(k8s.Gateways, config.ObjectType)
-	assert.Equal(utils.BOOKINFO, config.Namespace.Name)
-	assert.NotNil(config.Gateway)
-	assert.Equal(name, config.Gateway.Name)
-	assert.Equal(utils.BOOKINFO, config.Gateway.Namespace)
-	assert.Nil(config.IstioValidation)
-	assert.Nil(config.IstioReferences)
+	require.Nil(err)
+	require.NotNil(config)
+	require.Equal(k8s.Gateways, config.ObjectType)
+	require.Equal(utils.BOOKINFO, config.Namespace.Name)
+	require.NotNil(config.Gateway)
+	require.Equal(name, config.Gateway.Name)
+	require.Equal(utils.BOOKINFO, config.Gateway.Namespace)
+	require.Nil(config.IstioValidation)
+	require.Nil(config.IstioReferences)
 }
 */
 
 func istioStatus(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 
 	isEnabled, err := utils.IstioApiEnabled()
-	assert.Nil(err)
-	assert.False(isEnabled)
+	require.Nil(err)
+	require.False(isEnabled)
 }

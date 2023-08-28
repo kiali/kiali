@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/kiali/kiali/tests/integration/utils"
@@ -14,64 +14,64 @@ import (
 )
 
 func TestWorkloadsList(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	wlList, err := utils.WorkloadsList(utils.BOOKINFO)
 
-	assert.Nil(err)
-	assert.NotEmpty(wlList)
+	require.Nil(err)
+	require.NotEmpty(wlList)
 	for _, wl := range wlList.Workloads {
-		assert.NotEmpty(wl.Name)
-		assert.NotNil(wl.Health)
-		assert.NotNil(wl.Labels)
+		require.NotEmpty(wl.Name)
+		require.NotNil(wl.Health)
+		require.NotNil(wl.Labels)
 		if !strings.Contains(wl.Name, "traffic-generator") {
-			assert.True(wl.IstioSidecar)
-			assert.NotNil(wl.IstioReferences)
+			require.True(wl.IstioSidecar)
+			require.NotNil(wl.IstioReferences)
 		}
 	}
-	assert.NotNil(wlList.Validations)
-	assert.Equal(utils.BOOKINFO, wlList.Namespace.Name)
+	require.NotNil(wlList.Validations)
+	require.Equal(utils.BOOKINFO, wlList.Namespace.Name)
 }
 
 func TestWorkloadDetails(t *testing.T) {
 	name := "details-v1"
-	assert := assert.New(t)
+	require := require.New(t)
 	wl, _, err := utils.WorkloadDetails(name, utils.BOOKINFO)
 
-	assert.Nil(err)
-	assert.NotNil(wl)
-	assert.Equal(name, wl.Name)
-	assert.Equal("Deployment", wl.Type)
-	assert.NotNil(wl.Pods)
+	require.Nil(err)
+	require.NotNil(wl)
+	require.Equal(name, wl.Name)
+	require.Equal("Deployment", wl.Type)
+	require.NotNil(wl.Pods)
 	for _, pod := range wl.Pods {
-		assert.NotEmpty(pod.Status)
-		assert.NotEmpty(pod.Name)
+		require.NotEmpty(pod.Status)
+		require.NotEmpty(pod.Name)
 
 	}
-	assert.NotEmpty(wl.Services)
+	require.NotEmpty(wl.Services)
 	for _, wl := range wl.Services {
-		assert.Equal(utils.BOOKINFO, wl.Namespace)
+		require.Equal(utils.BOOKINFO, wl.Namespace)
 	}
-	assert.NotEmpty(wl.Runtimes)
-	assert.NotEmpty(wl.Validations)
-	assert.NotEmpty(wl.Workload.Health)
-	assert.NotNil(wl.Workload.Health)
-	assert.NotNil(wl.Workload.Health.WorkloadStatus)
-	assert.Contains(wl.Workload.Health.WorkloadStatus.Name, name)
-	assert.NotNil(wl.Workload.Health.Requests)
-	assert.NotNil(wl.Workload.Health.Requests.Outbound)
-	assert.NotNil(wl.Workload.Health.Requests.Inbound)
+	require.NotEmpty(wl.Runtimes)
+	require.NotEmpty(wl.Validations)
+	require.NotEmpty(wl.Workload.Health)
+	require.NotNil(wl.Workload.Health)
+	require.NotNil(wl.Workload.Health.WorkloadStatus)
+	require.Contains(wl.Workload.Health.WorkloadStatus.Name, name)
+	require.NotNil(wl.Workload.Health.Requests)
+	require.NotNil(wl.Workload.Health.Requests.Outbound)
+	require.NotNil(wl.Workload.Health.Requests.Inbound)
 }
 
 func TestWorkloadDetailsInvalidName(t *testing.T) {
 	name := "invalid"
-	assert := assert.New(t)
+	require := require.New(t)
 	app, code, _ := utils.WorkloadDetails(name, utils.BOOKINFO)
-	assert.NotEqual(200, code)
-	assert.Empty(app)
+	require.NotEqual(200, code)
+	require.Empty(app)
 }
 
 func TestDiscoverWorkload(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
 	workloadsPath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/bookinfo-workloads.yaml")
 	extraWorkloads := map[string]string{
 		"details-v2": "Pod",
@@ -79,11 +79,11 @@ func TestDiscoverWorkload(t *testing.T) {
 	}
 
 	defer utils.DeleteFile(workloadsPath, utils.BOOKINFO)
-	assert.True(utils.ApplyFile(workloadsPath, utils.BOOKINFO))
+	require.True(utils.ApplyFile(workloadsPath, utils.BOOKINFO))
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
 		wlList, err := utils.WorkloadsList(utils.BOOKINFO)
-		assert.Nil(err)
-		assert.NotNil(wlList)
+		require.Nil(err)
+		require.NotNil(wlList)
 		foundWorkloads := 0
 		for _, wl := range wlList.Workloads {
 			for k, v := range extraWorkloads {
@@ -97,5 +97,5 @@ func TestDiscoverWorkload(t *testing.T) {
 		}
 		return false, nil
 	})
-	assert.Nil(pollErr)
+	require.Nil(pollErr)
 }
