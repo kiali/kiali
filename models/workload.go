@@ -453,6 +453,12 @@ func (workload *Workload) HasIstioAmbient() bool {
 	if len(workload.Pods) == 0 {
 		return false
 	}
+
+	// For VMs Istio uses Labels instead of Annotations
+	if workload.Labels[AmbientAnnotation] == AmbientAnnotationEnabled {
+		return true
+	}
+
 	// All pods in a deployment should be the same
 	if workload.Type == "Deployment" {
 		return workload.Pods[0].AmbientEnabled()
