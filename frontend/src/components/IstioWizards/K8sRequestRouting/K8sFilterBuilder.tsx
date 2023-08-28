@@ -1,13 +1,6 @@
 import * as React from 'react';
-import {
-  Button,
-  Dropdown,
-  DropdownToggle,
-  DropdownItem,
-  InputGroup,
-  TextInput,
-  ButtonVariant
-} from '@patternfly/react-core';
+import { Button, InputGroup, TextInput, ButtonVariant, InputGroupItem } from '@patternfly/react-core';
+import { Dropdown, DropdownToggle, DropdownItem } from '@patternfly/react-core/deprecated';
 import { ServiceOverview } from '../../../types/ServiceList';
 import { getServicePort } from '../../../types/ServiceInfo';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -120,28 +113,30 @@ export class K8sFilterBuilder extends React.Component<Props, State> {
     const renderFilterOptions: string[] = allOptions[this.props.filterType];
     return (
       <InputGroup>
-        <Dropdown
-          toggle={
-            <DropdownToggle onToggle={this.onFilterTypeToggle} data-test={'filtering-type-toggle'}>
-              {this.props.filterType}
-            </DropdownToggle>
-          }
-          isOpen={this.state.isFilterDropdown}
-          dropdownItems={filterOptions.map((mode, index) => (
-            <DropdownItem
-              key={mode + '_' + index}
-              value={mode}
-              component="button"
-              onClick={() => {
-                this.props.onSelectFilterType(mode);
-                this.onFilterTypeToggle();
-              }}
-              data-test={'filtering-type-' + mode}
-            >
-              {mode}
-            </DropdownItem>
-          ))}
-        />
+        <InputGroupItem>
+          <Dropdown
+            toggle={
+              <DropdownToggle onToggle={this.onFilterTypeToggle} data-test={'filtering-type-toggle'}>
+                {this.props.filterType}
+              </DropdownToggle>
+            }
+            isOpen={this.state.isFilterDropdown}
+            dropdownItems={filterOptions.map((mode, index) => (
+              <DropdownItem
+                key={mode + '_' + index}
+                value={mode}
+                component="button"
+                onClick={() => {
+                  this.props.onSelectFilterType(mode);
+                  this.onFilterTypeToggle();
+                }}
+                data-test={'filtering-type-' + mode}
+              >
+                {mode}
+              </DropdownItem>
+            ))}
+          />
+        </InputGroupItem>
         {(this.props.filterType === REQ_MOD || this.props.filterType === RESP_MOD) && (
           <Dropdown
             toggle={
@@ -170,7 +165,7 @@ export class K8sFilterBuilder extends React.Component<Props, State> {
           <TextInput
             id="filter-header-name-id"
             value={this.props.headerName}
-            onChange={this.props.onHeaderNameChange}
+            onChange={(_, value) => this.props.onHeaderNameChange(value)}
             placeholder="Header name..."
           />
         )}
@@ -179,7 +174,7 @@ export class K8sFilterBuilder extends React.Component<Props, State> {
             <TextInput
               id="filter-header-value-id"
               value={this.props.headerValue}
-              onChange={this.props.onHeaderValueChange}
+              onChange={(_, value) => this.props.onHeaderValueChange(value)}
               placeholder="Header Value..."
             />
           )}
@@ -211,7 +206,7 @@ export class K8sFilterBuilder extends React.Component<Props, State> {
           <TextInput
             id="hostname"
             value={this.props.hostName}
-            onChange={this.props.onHostNameChange}
+            onChange={(_, value) => this.props.onHostNameChange(value)}
             placeholder="Hostname..."
           />
         )}
@@ -219,7 +214,7 @@ export class K8sFilterBuilder extends React.Component<Props, State> {
           <TextInput
             id="portValue"
             value={this.props.portValue}
-            onChange={this.props.onPortValueChange}
+            onChange={(_, value) => this.props.onPortValueChange(value)}
             placeholder="Port..."
           />
         )}
@@ -272,14 +267,16 @@ export class K8sFilterBuilder extends React.Component<Props, State> {
             ))}
           />
         )}
-        <Button
-          variant={ButtonVariant.secondary}
-          isDisabled={!this.props.isValid}
-          onClick={this.props.onAddFilter}
-          data-test="add-filter"
-        >
-          Add Filter
-        </Button>
+        <InputGroupItem>
+          <Button
+            variant={ButtonVariant.secondary}
+            isDisabled={!this.props.isValid}
+            onClick={this.props.onAddFilter}
+            data-test="add-filter"
+          >
+            Add Filter
+          </Button>
+        </InputGroupItem>
       </InputGroup>
     );
   }

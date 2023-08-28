@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Dropdown, DropdownItem, DropdownToggle } from '@patternfly/react-core';
+import { Dropdown, DropdownItem, DropdownToggle } from '@patternfly/react-core/deprecated';
 import { SessionTimeout } from '../../SessionTimeout/SessionTimeout';
 import { config } from '../../../config';
 import { MILLISECONDS } from '../../../types/Common';
@@ -147,7 +147,10 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
             onSelect={this.onDropdownSelect}
             isOpen={isDropdownOpen}
             toggle={
-              <DropdownToggle id={'user-dropdown-toggle'} onToggle={this.onDropdownToggle}>
+              <DropdownToggle
+                id={'user-dropdown-toggle'}
+                onToggle={(_event, isDropdownOpen) => this.onDropdownToggle(isDropdownOpen)}
+              >
                 {this.props.session.username}
               </DropdownToggle>
             }

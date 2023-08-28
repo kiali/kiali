@@ -37,7 +37,7 @@ describe('HealthIndicator', () => {
     let wrapper = shallow(<HealthIndicator id="svc" health={health} />);
     expect(shallowToJson(wrapper)).toMatchSnapshot();
     let html = wrapper.html();
-    expect(html).toContain(shallow(createIcon(HEALTHY, 'sm')).html());
+    expect(html).toContain(shallow(createIcon(HEALTHY, 'md')).html());
   });
 
   it('renders workloads degraded', () => {
@@ -54,7 +54,7 @@ describe('HealthIndicator', () => {
 
     let wrapper = shallow(<HealthIndicator id="svc" health={health} />);
     let html = wrapper.html();
-    expect(html).toContain(shallow(createIcon(DEGRADED, 'sm')).html());
+    expect(html).toContain(shallow(createIcon(DEGRADED, 'md')).html());
   });
 
   it('renders some scaled down workload', () => {
@@ -71,7 +71,7 @@ describe('HealthIndicator', () => {
 
     let wrapper = shallow(<HealthIndicator id="svc" health={health} />);
     let html = wrapper.html();
-    expect(html).toContain(shallow(createIcon(NOT_READY, 'sm')).html());
+    expect(html).toContain(shallow(createIcon(NOT_READY, 'md')).html());
   });
 
   it('renders all workloads down', () => {
@@ -88,7 +88,7 @@ describe('HealthIndicator', () => {
 
     let wrapper = mount(<HealthIndicator id="svc" health={health} />);
     let html = wrapper.html();
-    expect(html).toContain(mount(createIcon(NOT_READY, 'sm')).html());
+    expect(html).toContain(mount(createIcon(NOT_READY, 'md')).html());
   });
 
   it('renders error rate failure', () => {
@@ -106,7 +106,7 @@ describe('HealthIndicator', () => {
 
     let wrapper = shallow(<HealthIndicator id="svc" health={health} />);
     let html = wrapper.html();
-    expect(html).toContain(shallow(createIcon(FAILURE, 'sm')).html());
+    expect(html).toContain(shallow(createIcon(FAILURE, 'md')).html());
   });
 
   describe('proxy status section', () => {
@@ -129,7 +129,7 @@ describe('HealthIndicator', () => {
 
       let wrapper = shallow(<HealthIndicator id="svc" health={health} />);
       let html = wrapper.html();
-      expect(html).toContain(shallow(createIcon(DEGRADED, 'sm')).html());
+      expect(html).toContain(shallow(createIcon(DEGRADED, 'md')).html());
       expect(shallowToJson(wrapper)).toMatchSnapshot();
     });
   });

@@ -1,9 +1,19 @@
 import * as React from 'react';
 import { MAX_PORT, MIN_PORT, Port, ServiceEntrySpec } from '../../types/IstioObjects';
-import { Button, ButtonVariant, FormGroup, FormSelect, FormSelectOption } from '@patternfly/react-core';
+import {
+  Button,
+  ButtonVariant,
+  FormGroup,
+  FormHelperText,
+  FormSelect,
+  FormSelectOption,
+  HelperText,
+  HelperTextItem
+} from '@patternfly/react-core';
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
 import { isGatewayHostValid } from '../../utils/IstioConfigUtils';
-import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
+import { cellWidth, ICell } from '@patternfly/react-table';
+import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
 import { PlusCircleIcon, TrashIcon } from '@patternfly/react-icons';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../components/Pf/PfColors';
@@ -146,7 +156,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     return isValid;
   };
 
-  onAddHosts = (value: string, _) => {
+  onAddHosts = (_event, value: string) => {
     const hosts = value.trim().length === 0 ? [] : value.split(',').map(host => host.trim());
     this.setState(
       prevState => {
@@ -160,7 +170,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     );
   };
 
-  onAddLocation = (value: string, _) => {
+  onAddLocation = (_event, value: string) => {
     this.setState(
       prevState => {
         prevState.serviceEntry.location = value;
@@ -172,7 +182,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     );
   };
 
-  onAddResolution = (value: string, _) => {
+  onAddResolution = (_event, value: string) => {
     this.setState(
       prevState => {
         prevState.serviceEntry.resolution = value;
@@ -184,7 +194,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     );
   };
 
-  onAddPortNumber = (value: string, e: FormEvent) => {
+  onAddPortNumber = (e: FormEvent, value: string) => {
     const formPorts = this.state.formPorts;
     const eName = e.currentTarget.getAttribute('name') !== null ? e.currentTarget.getAttribute('name') : '0';
     // @ts-ignore
@@ -206,7 +216,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     );
   };
 
-  onAddPortName = (value: string, e: FormEvent) => {
+  onAddPortName = (e: FormEvent, value: string) => {
     const formPorts = this.state.formPorts;
     const eName = e.currentTarget.getAttribute('name') !== null ? e.currentTarget.getAttribute('name') : '0';
     // @ts-ignore
@@ -228,7 +238,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     );
   };
 
-  onAddPortProtocol = (value: string, e: FormEvent) => {
+  onAddPortProtocol = (e: FormEvent, value: string) => {
     const formPorts = this.state.formPorts;
     const eName = e.currentTarget.getAttribute('name') !== null ? e.currentTarget.getAttribute('name') : '0';
     // @ts-ignore
@@ -250,7 +260,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     );
   };
 
-  onAddTargetPort = (value: string, e: FormEvent) => {
+  onAddTargetPort = (e: FormEvent, value: string) => {
     const formPorts = this.state.formPorts;
     const eName = e.currentTarget.getAttribute('name') !== null ? e.currentTarget.getAttribute('name') : '0';
     // @ts-ignore
@@ -395,14 +405,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
   render() {
     return (
       <>
-        <FormGroup
-          label="Hosts"
-          isRequired={true}
-          fieldId="hosts"
-          helperText="The hosts associated with the ServiceEntry."
-          helperTextInvalid="Invalid hosts for this ServiceEntry. Enter one or more hosts separated by comma."
-          validated={isValid(this.state.validHosts)}
-        >
+        <FormGroup label="Hosts" isRequired={true} fieldId="hosts">
           <TextInput
             value={this.state.serviceEntry.hosts?.join(',')}
             isRequired={true}
@@ -413,6 +416,15 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
             onChange={this.onAddHosts}
             validated={isValid(this.state.validHosts)}
           />
+          <FormHelperText>
+            <HelperText>
+              <HelperTextItem>
+                {isValid(this.state.validHosts)
+                  ? 'The hosts associated with the ServiceEntry.'
+                  : 'Invalid hosts for this ServiceEntry. Enter one or more hosts separated by comma.'}
+              </HelperTextItem>
+            </HelperText>
+          </FormHelperText>
         </FormGroup>
         <FormGroup label="Location" isRequired={true} fieldId="location">
           <FormSelect

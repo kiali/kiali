@@ -18,17 +18,10 @@ exports[`Overview page renders initial layout 1`] = `
     className="kiali_fu1tihc"
     variant="full"
   >
-    <Title
+    <EmptyStateHeader
       headingLevel="h5"
-      size="lg"
-      style={
-        Object {
-          "marginTop": "50px",
-        }
-      }
-    >
-      No unfiltered namespaces
-    </Title>
+      titleText="No unfiltered namespaces"
+    />
     <EmptyStateBody>
       Either all namespaces are being filtered or the user has no permission to access namespaces.
     </EmptyStateBody>

@@ -4,8 +4,8 @@ export const globalStyle = kialiStyle({
   height: '100%',
   margin: 0,
   padding: 0,
-  // TODO: possible change to --pf-global--FontFamily--redhat-updated--sans-serif
-  fontFamily: 'var(--pf-global--FontFamily--sans-serif)',
+  // TODO: possible change to --pf-v5-global--FontFamily--redhat-updated--sans-serif
+  fontFamily: 'var(--pf-v5-global--FontFamily--text)',
   fontSize: '14px',
   overflow: 'hidden',
   $nest: {
@@ -40,7 +40,7 @@ export const globalStyle = kialiStyle({
     /**
      * Remove global page padding by default
      */
-    '& .pf-c-page__main-section': {
+    '& .pf-v5-c-page__main-section': {
       padding: 0,
       height: '100%',
       overflowY: 'hidden'
@@ -49,7 +49,7 @@ export const globalStyle = kialiStyle({
     /**
      * Drawer panels should have less z-index than dropdowns
      */
-    '& .pf-c-drawer__panel': {
+    '& .pf-v5-c-drawer__panel': {
       zIndex: 199
     },
 
@@ -67,13 +67,13 @@ export const globalStyle = kialiStyle({
     /**
      * Padding for table rows
      */
-    '& .pf-c-table:not(.table) tr > *': {
+    '& .pf-v5-c-table:not(.table) tr > *': {
       fontSize: 'var(--kiali-global--font-size)',
       paddingBottom: '8px',
       paddingTop: '8px'
     },
 
-    '& .pf-c-chart svg': {
+    '& .pf-v5-c-chart svg': {
       overflow: 'visible !important'
     }
   }

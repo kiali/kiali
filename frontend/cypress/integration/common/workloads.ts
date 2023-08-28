@@ -1,5 +1,5 @@
 import { And, Given, Then } from '@badeball/cypress-cucumber-preprocessor';
-import { checkHealthIndicatorInTable, checkHealthStatusInTable, colExists } from './table';
+import { checkHealthIndicatorInTable, checkHealthStatusInTable, colExists, hasAtLeastOneClass } from './table';
 
 function activateFilter(state: string) {
   //decided to pause the refresh, because I'm intercepting the very same request that is used for the timed refresh
@@ -39,7 +39,7 @@ Given('a degraded workload in the mesh', function () {
 
 And('user filters for workload type {string}', (workloadType: string) => {
   cy.get('select[aria-label="filter_select_type"]')
-    .parent()
+    .parent().parent()
     .within(() => {
       cy.get('button').click();
       cy.get(`button[label="${workloadType}"]`).click();
@@ -60,8 +60,8 @@ Then('user sees {string} in workloads table', (workload: string) => {
 
 And('user should only see healthy workloads in workloads table', () => {
   cy.get('tbody').within(() => {
-    cy.get('svg[class=icon-healthy]').should('be.visible');
-    cy.get('svg[class=icon-unhealthy], svg[class=icon-degraded], svg[class=icon-na]').should('not.exist');
+    cy.get('span[class*="icon-healthy"]').should('be.visible')
+    cy.get('span[class*="icon-unhealthy"],span[class*="icon-degraded"],span[class*="icon-na"]').should('not.exist')
   });
 });
 

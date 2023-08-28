@@ -3,16 +3,8 @@ import { connect } from 'react-redux';
 import { KialiDispatch } from 'types/Redux';
 import _ from 'lodash';
 import { kialiStyle } from 'styles/StyleUtils';
-import {
-  Button,
-  Dropdown,
-  DropdownToggle,
-  TextInput,
-  Tooltip,
-  DropdownToggleCheckbox,
-  Divider,
-  Badge
-} from '@patternfly/react-core';
+import { Button, TextInput, Tooltip, Divider, Badge } from '@patternfly/react-core';
+import { Dropdown, DropdownToggle, DropdownToggleCheckbox } from '@patternfly/react-core/deprecated';
 import { KialiAppState } from '../store/Store';
 import { activeNamespacesSelector, namespaceFilterSelector, namespaceItemsSelector } from '../store/Selectors';
 import { NamespaceActions } from '../actions/NamespaceAction';
@@ -165,7 +157,7 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
             name="namespace-filter"
             placeholder="Filter by Name..."
             value={this.props.filter}
-            onChange={this.onFilterChange}
+            onChange={(_event, value: string) => this.onFilterChange(value)}
           />
           {hasFilter && (
             <Tooltip key="ot_clear_namespace_filter" position="top" content="Clear Filter by Name">
@@ -225,7 +217,7 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
             <DropdownToggle
               data-test="namespace-dropdown"
               id="namespace-selector"
-              onToggle={this.onToggle}
+              onToggle={(_event, isOpen) => this.onToggle(isOpen)}
               isDisabled={this.props.disabled}
             >
               {this.namespaceButtonText()}

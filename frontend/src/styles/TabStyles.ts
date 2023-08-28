@@ -3,11 +3,11 @@ import { kialiStyle } from './StyleUtils';
 
 export const basicTabStyle = kialiStyle({
   $nest: {
-    '& .pf-c-tabs__list': {
+    '& .pf-v5-c-tabs__list': {
       marginLeft: '20px'
     },
 
-    '& .pf-c-tab-content': {
+    '& .pf-v5-c-tab-content': {
       overflowY: 'auto',
       height: '600px'
     }
@@ -16,7 +16,7 @@ export const basicTabStyle = kialiStyle({
 
 export const traceTabStyle = kialiStyle({
   $nest: {
-    '& .pf-c-tabs__list': {
+    '& .pf-v5-c-tabs__list': {
       backgroundColor: PFColors.BackgroundColor100,
       borderBottom: `1px solid ${PFColors.BorderColor100}`
     }

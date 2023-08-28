@@ -7,9 +7,9 @@ const NAMESPACE = 'bookinfo';
 
 Then('user sees details information for the {string} app', (name:string) => {
   cy.getBySel('app-description-card').within(() => {
-    cy.get('#pfbadge-A').parent().parent().contains(`${name}`); // App
-    cy.get('#pfbadge-W').parent().parent().contains(`${name}-v1`); // Workload
-    cy.get('#pfbadge-S').parent().parent().contains(`${name}`); // Service
+    cy.get('#pfbadge-A').parent().parent().parent().contains('details'); // App
+    cy.get('#pfbadge-W').parent().parent().parent().contains('details-v1'); // Workload
+    cy.get('#pfbadge-S').parent().parent().parent().contains('details'); // Service
   });
 });
 

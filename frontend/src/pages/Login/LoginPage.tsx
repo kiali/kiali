@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import {
   ActionGroup,
   Alert,
+  AlertVariant,
   Button,
   ButtonVariant,
   Form,
@@ -109,15 +110,13 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
       }
     }
   };
-  renderMessage = (
-    message: React.ReactNode | undefined,
-    type: 'success' | 'danger' | 'warning' | 'info' | 'default' | undefined,
-    key: string
-  ) => {
+  renderMessage = (message: React.ReactNode | undefined, type: AlertVariant, key: string) => {
     if (!message) {
       return '';
     }
-    const variant = type ?? (this.props.status === LoginStatus.error || this.state.filledInputs ? 'danger' : 'warning');
+    const variant: AlertVariant =
+      type ??
+      (this.props.status === LoginStatus.error || this.state.filledInputs ? AlertVariant.danger : AlertVariant.warning);
     return <Alert key={key} variant={variant} isInline={true} isPlain={true} title={message} />;
   };
 
@@ -129,10 +128,10 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
     if (urlParams.get('error')) {
       if (urlParams.get('error_description')) {
         console.warn(`Authentication error_description: ${urlParams.get('error_description')}`);
-        messagesArray.push(this.renderMessage(`Authentication failed!`, 'danger', 'idp-err'));
+        messagesArray.push(this.renderMessage(`Authentication failed!`, AlertVariant.danger, 'idp-err'));
       } else {
         console.warn(`Authentication error: ${urlParams.get('error')}`);
-        messagesArray.push(this.renderMessage(`Authentication failed.`, 'danger', 'idp-err'));
+        messagesArray.push(this.renderMessage(`Authentication failed.`, AlertVariant.danger, 'idp-err'));
       }
     }
   };
@@ -140,18 +139,22 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
   getHelperMessage = () => {
     const messages: any[] = [];
     if (this.state.showHelperText) {
-      messages.push(this.renderMessage(this.state.errorInput, undefined, 'helperText'));
+      messages.push(this.renderMessage(this.state.errorInput, AlertVariant.custom, 'helperText'));
     }
     if (this.props.status === LoginStatus.expired) {
       messages.push(
-        this.renderMessage('Your session has expired or was terminated in another window.', 'warning', 'sessionExpired')
+        this.renderMessage(
+          'Your session has expired or was terminated in another window.',
+          AlertVariant.warning,
+          'sessionExpired'
+        )
       );
     }
     if (this.props.status === LoginStatus.error) {
       messages.push(this.props.message);
     }
     if (this.props.postLoginErrorMsg) {
-      messages.push(this.renderMessage(this.props.postLoginErrorMsg, undefined, 'postLoginError'));
+      messages.push(this.renderMessage(this.props.postLoginErrorMsg, AlertVariant.custom, 'postLoginError'));
     }
 
     // Get error messages passed on the URL (authorization code flow of OAuth/OpenId)
@@ -171,7 +174,7 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
     // Only log the openid_error since we cannot guarantee it is not spoofed. We only show a generic error message in the UI.
     if (urlParams.get('openid_error')) {
       console.warn(`Authentication openid_error: ${urlParams.get('openid_error')}`);
-      messages.push(this.renderMessage(`OpenID authentication failed.`, 'danger', 'openid-err'));
+      messages.push(this.renderMessage(`OpenID authentication failed.`, AlertVariant.danger, 'openid-err'));
     }
 
     return messages;
@@ -221,14 +224,14 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
     if (authenticationConfig.strategy === AuthStrategy.token) {
       loginPane = (
         <Form data-test="login-form">
-          <FormHelperText
-            isError={!this.state.isValidToken || this.props.status === LoginStatus.error}
-            isHidden={!this.state.showHelperText && this.props.message === '' && messages.length === 0}
-          >
-            {messages}
-          </FormHelperText>
+          <FormHelperText>{messages}</FormHelperText>
           <FormGroup fieldId="token" label="Token" isRequired={true}>
-            <TextInput id="token" type="password" onChange={this.handlePasswordChange} isRequired={true} />
+            <TextInput
+              id="token"
+              type="password"
+              onChange={(_event, passwordValue) => this.handlePasswordChange(passwordValue)}
+              isRequired={true}
+            />
           </FormGroup>
           <ActionGroup>
             <Button
@@ -246,12 +249,7 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
     } else {
       loginPane = (
         <Form data-test="login-form">
-          <FormHelperText
-            isError={this.props.status === LoginStatus.error}
-            isHidden={this.props.status !== LoginStatus.error && this.props.message === '' && messages.length === 0}
-          >
-            {messages}
-          </FormHelperText>
+          <FormHelperText>{messages}</FormHelperText>
           <ActionGroup>
             <Button type="submit" onClick={this.handleSubmit} style={{ width: '100%' }} variant={ButtonVariant.primary}>
               {loginLabel}

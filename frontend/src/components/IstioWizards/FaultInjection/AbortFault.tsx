@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { FormGroup, Switch, TextInput } from '@patternfly/react-core';
+import { FormGroup, FormHelperText, HelperText, HelperTextItem, Switch, TextInput } from '@patternfly/react-core';
 import { Abort } from '../../../types/IstioObjects';
 import { HTTP_ABORT_TOOLTIP, wizardTooltip } from '../WizardHelp';
 import { isValid } from 'utils/Common';
@@ -28,16 +28,12 @@ export class AbortFault extends React.Component<Props> {
           <span>{wizardTooltip(HTTP_ABORT_TOOLTIP)}</span>
         </FormGroup>
         {this.props.aborted && (
-          <FormGroup
-            label="Abort Percentage"
-            fieldId="abort-percentage"
-            helperText="Percentage of requests to be aborted with the error code provided."
-          >
+          <FormGroup label="Abort Percentage" fieldId="abort-percentage">
             <TextInput
               value={this.props.abort.percentage?.value}
               id="abort-percentage"
               name="abort-percentage"
-              onChange={value => {
+              onChange={(_event, value) => {
                 let newValue = Number(value || 0);
                 newValue = Number.isNaN(newValue) ? 0 : newValue;
                 newValue = newValue < 0 ? 0 : newValue > 100 ? 100 : newValue;
@@ -49,22 +45,21 @@ export class AbortFault extends React.Component<Props> {
                 });
               }}
             />
+            <FormHelperText>
+              <HelperText>
+                <HelperTextItem>Percentage of requests to be aborted with the error code provided.</HelperTextItem>
+              </HelperText>
+            </FormHelperText>
           </FormGroup>
         )}
         {this.props.aborted && (
-          <FormGroup
-            label="HTTP Status Code"
-            fieldId="abort-status-code"
-            helperText={httpStatusMsg}
-            helperTextInvalid={httpStatusMsg}
-            validated={isValid(this.props.isValid)}
-          >
+          <FormGroup label="HTTP Status Code" fieldId="abort-status-code">
             <TextInput
               value={this.props.abort.httpStatus}
               id="abort-status-code"
               name="abort-status-code"
               validated={isValid(this.props.isValid)}
-              onChange={value => {
+              onChange={(_event, value) => {
                 let newValue = Number(value || 0);
                 newValue = Number.isNaN(newValue) ? 0 : newValue;
                 this.props.onAbort(this.props.aborted, {
@@ -73,6 +68,11 @@ export class AbortFault extends React.Component<Props> {
                 });
               }}
             />
+            <FormHelperText>
+              <HelperText>
+                <HelperTextItem>{isValid(this.props.isValid) ? httpStatusMsg : httpStatusMsg}</HelperTextItem>
+              </HelperText>
+            </FormHelperText>
           </FormGroup>
         )}
       </>

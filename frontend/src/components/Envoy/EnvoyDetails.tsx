@@ -290,7 +290,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                 <div className={fullHeightStyle}>
                   <div style={{ marginBottom: '20px' }}>
                     <div key="service-icon" className={iconStyle}>
-                      <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
+                      <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top}/>
                     </div>
                     <ToolbarDropdown
                       id="envoy_pods_list"

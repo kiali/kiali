@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { IstioConfigItem } from '../../types/IstioConfigList';
-import { cellWidth, ICell, IRow, Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
+import { cellWidth, ICell, IRow, TableVariant } from '@patternfly/react-table';
+import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
 import {
   Card,
-  CardActions,
   CardBody,
   CardHeader,
   CardTitle,
@@ -40,7 +40,7 @@ export class IstioConfigCard extends React.Component<Props> {
         cells: [
           {
             title: (
-              <EmptyState variant={EmptyStateVariant.small} className={emtpytStyle}>
+              <EmptyState variant={EmptyStateVariant.sm} className={emtpytStyle}>
                 <EmptyStateBody className={emtpytStyle} data-test="istio-config-empty">
                   No Istio Config found for {this.props.name}
                 </EmptyStateBody>
@@ -107,8 +107,7 @@ export class IstioConfigCard extends React.Component<Props> {
   render() {
     return (
       <Card isCompact={true} id={'IstioConfigCard'}>
-        <CardHeader>
-          <CardActions />
+        <CardHeader actions={{ actions: <></>, hasNoOffset: false, className: undefined }}>
           <CardTitle style={{ float: 'left' }}>Istio Config</CardTitle>
         </CardHeader>
         <CardBody>

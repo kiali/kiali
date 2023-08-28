@@ -1,4 +1,4 @@
-import { Dropdown, DropdownToggle, DropdownItem } from '@patternfly/react-core';
+import { Dropdown, DropdownToggle, DropdownItem } from '@patternfly/react-core/deprecated';
 import * as React from 'react';
 import { KialiIcon } from 'config/KialiIcon';
 import { serverConfig } from 'config';
@@ -17,8 +17,7 @@ const dropdown = kialiStyle({
   minWidth: '20px',
   width: '20px',
   paddingLeft: '5px',
-  paddingRight: 0,
-  bottom: '0.5px'
+  paddingRight: 0
 });
 
 export class GraphFindOptions extends React.PureComponent<GraphFindOptionsProps, GraphFindOptionsState> {
@@ -44,7 +43,7 @@ export class GraphFindOptions extends React.PureComponent<GraphFindOptionsProps,
             data-test={`${this.props.kind}-options-dropdown`}
             className={dropdown}
             toggleIndicator={null}
-            onToggle={this.onToggle}
+            onToggle={(_event, isOpen) => this.onToggle(isOpen)}
           >
             <KialiIcon.AngleDown />
           </DropdownToggle>

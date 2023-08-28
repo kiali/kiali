@@ -2,7 +2,7 @@ import * as React from 'react';
 import { AboutUIModal } from '../../About/AboutUIModal';
 import { KialiAppState } from '../../../store/Store';
 import { DebugInformation } from '../../../components/DebugInformation/DebugInformation';
-import { Dropdown, DropdownToggle, DropdownItem } from '@patternfly/react-core';
+import { Dropdown, DropdownToggle, DropdownItem } from '@patternfly/react-core/deprecated';
 import { QuestionCircleIcon } from '@patternfly/react-icons/';
 import { connect } from 'react-redux';
 import { isUpstream } from '../../UpstreamDetector/UpstreamDetector';
@@ -77,7 +77,7 @@ class HelpDropdownComponent extends React.Component<HelpDropdownProps, HelpDropd
     const Toggle = (
       <DropdownToggle
         toggleIndicator={null}
-        onToggle={this.onDropdownToggle}
+        onToggle={(_event, isDropdownOpen) => this.onDropdownToggle(isDropdownOpen)}
         aria-label="Help"
         style={{ marginTop: 3, verticalAlign: '-0.1em' }}
       >

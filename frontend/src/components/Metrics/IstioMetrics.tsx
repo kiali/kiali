@@ -74,7 +74,7 @@ const fullHeightStyle = kialiStyle({
 // For some reason checkbox as a ToolbarItem needs to be tweaked
 const toolbarInputStyle = kialiStyle({
   $nest: {
-    '&.pf-c-check input[type=checkbox]': {
+    '&.pf-v5-c-check input[type=checkbox]': {
       marginTop: '2px'
     }
   }
@@ -361,24 +361,24 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
                 reporter={this.options.reporter}
               />
             </ToolbarItem>
-            <ToolbarItem>
+            <ToolbarItem style={{marginTop: '10px'}}>
               <Checkbox
                 className={toolbarInputStyle}
                 id={`spans-show-`}
                 isChecked={this.state.showSpans}
                 key={`spans-show-chart`}
                 label="Spans"
-                onChange={checked => this.onSpans(checked)}
+                onChange={(_event, checked) => this.onSpans(checked)}
               />
             </ToolbarItem>
-            <ToolbarItem>
+            <ToolbarItem style={{marginTop: '10px'}}>
               <Checkbox
                 className={toolbarInputStyle}
                 id={`trendlines-show-`}
                 isChecked={this.state.showTrendlines}
                 key={`trendlines-show-chart`}
                 label="Trendlines"
-                onChange={checked => this.onTrendlines(checked)}
+                onChange={(_event, checked) => this.onTrendlines(checked)}
               />
             </ToolbarItem>
             <ToolbarItem style={{ marginLeft: 'auto', paddingRight: '20px' }}>

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { FormGroup, Switch, TextInput } from '@patternfly/react-core';
+import { FormGroup, FormHelperText, HelperText, HelperTextItem, Switch, TextInput } from '@patternfly/react-core';
 import { Delay } from '../../../types/IstioObjects';
 import { HTTP_DELAY_TOOLTIP, wizardTooltip } from '../WizardHelp';
 import { isValid } from 'utils/Common';
@@ -28,17 +28,13 @@ export class DelayFault extends React.Component<DelayFaultProps> {
           <span>{wizardTooltip(HTTP_DELAY_TOOLTIP)}</span>
         </FormGroup>
         {this.props.delayed && (
-          <FormGroup
-            label="Delay Percentage"
-            fieldId="delay-percentage"
-            helperText="Percentage of requests on which the delay will be injected."
-          >
+          <FormGroup label="Delay Percentage" fieldId="delay-percentage">
             <TextInput
               value={this.props.delay.percentage?.value}
               type="text"
               id="delay-percentage"
               name="delay-percentage"
-              onChange={value => {
+              onChange={(_event, value) => {
                 let newValue = Number(value || 0);
                 newValue = Number.isNaN(newValue) ? 0 : newValue;
                 newValue = newValue < 0 ? 0 : newValue > 100 ? 100 : newValue;
@@ -50,28 +46,32 @@ export class DelayFault extends React.Component<DelayFaultProps> {
                 });
               }}
             />
+            <FormHelperText>
+              <HelperText>
+                <HelperTextItem>Percentage of requests on which the delay will be injected.</HelperTextItem>
+              </HelperText>
+            </FormHelperText>
           </FormGroup>
         )}
         {this.props.delayed && (
-          <FormGroup
-            label="Fixed Delay"
-            fieldId="fixed-delay"
-            helperText={fixedDelayedMsg}
-            helperTextInvalid={fixedDelayedMsg}
-            validated={isValid(this.props.isValid)}
-          >
+          <FormGroup label="Fixed Delay" fieldId="fixed-delay">
             <TextInput
               value={this.props.delay.fixedDelay}
               id="fixed-delay"
               name="fixed-delay"
               validated={isValid(this.props.isValid)}
-              onChange={value =>
+              onChange={(_event, value) =>
                 this.props.onDelay(this.props.delayed, {
                   percentage: this.props.delay.percentage,
                   fixedDelay: value
                 })
               }
             />
+            <FormHelperText>
+              <HelperText>
+                <HelperTextItem>{fixedDelayedMsg}</HelperTextItem>
+              </HelperText>
+            </FormHelperText>
           </FormGroup>
         )}
       </>

@@ -1,9 +1,10 @@
 import * as React from 'react';
-import { Table, TableHeader, TableGridBreakpoint } from '@patternfly/react-table';
+import { TableGridBreakpoint } from '@patternfly/react-table';
+import { Table, TableHeader } from '@patternfly/react-table/deprecated';
 import { HistoryManager, URLParam } from '../../app/History';
 import { config, RenderResource, Resource } from './Config';
 import { VirtualItem } from './VirtualItem';
-import { EmptyState, EmptyStateBody, EmptyStateVariant, Title, TitleSizes } from '@patternfly/react-core';
+import { EmptyState, EmptyStateBody, EmptyStateVariant, EmptyStateHeader } from '@patternfly/react-core';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
@@ -168,9 +169,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
                 <td colSpan={tableProps.cells.length}>
                   {this.props.activeNamespaces.length > 0 ? (
                     <EmptyState variant={EmptyStateVariant.full}>
-                      <Title headingLevel="h5" size={TitleSizes.lg}>
-                        No {typeDisplay} found
-                      </Title>
+                      <EmptyStateHeader titleText={<>No {typeDisplay} found</>} headingLevel="h5" />
                       <EmptyStateBody>
                         No {typeDisplay} in namespace
                         {this.props.activeNamespaces.length === 1
@@ -180,9 +179,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
                     </EmptyState>
                   ) : (
                     <EmptyState variant={EmptyStateVariant.full}>
-                      <Title headingLevel="h5" size={TitleSizes.lg}>
-                        No namespace is selected
-                      </Title>
+                      <EmptyStateHeader titleText="No namespace is selected" headingLevel="h5" />
                       <EmptyStateBody>
                         There is currently no namespace selected, please select one using the Namespace selector.
                       </EmptyStateBody>

@@ -17,7 +17,7 @@ export class MastheadItems extends React.Component {
       <>
         <PfSpinner />
         <Toolbar>
-          <ToolbarItem>
+          <ToolbarItem style={{ marginLeft: 'auto' }}>
             <Flex>
               <FlexItem align={{ default: 'alignRight' }}>
                 {homeCluster?.name && (

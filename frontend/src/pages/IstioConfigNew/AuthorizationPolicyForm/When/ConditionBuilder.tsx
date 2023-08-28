@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
+import { cellWidth, ICell } from '@patternfly/react-table';
+import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
 // Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
 import { Button, ButtonVariant, TextInputBase as TextInput } from '@patternfly/react-core';
 import { PlusCircleIcon } from '@patternfly/react-icons';
@@ -70,7 +71,7 @@ export class ConditionBuilder extends React.Component<Props, State> {
     };
   }
 
-  onAddNewConditionKey = (key: string, _) => {
+  onAddNewConditionKey = (_, key: string) => {
     this.setState(prevState => {
       prevState.condition.key = key;
       return {
@@ -79,7 +80,7 @@ export class ConditionBuilder extends React.Component<Props, State> {
     });
   };
 
-  onAddNewValues = (value: string, _) => {
+  onAddNewValues = (_event, value: string) => {
     this.setState(prevState => {
       prevState.condition.values = value.length === 0 ? [] : value.split(',');
       return {
@@ -88,7 +89,7 @@ export class ConditionBuilder extends React.Component<Props, State> {
     });
   };
 
-  onAddNewNotValues = (notValues: string, _) => {
+  onAddNewNotValues = (_, notValues: string) => {
     this.setState(prevState => {
       prevState.condition.notValues = notValues.length === 0 ? [] : notValues.split(',');
       return {

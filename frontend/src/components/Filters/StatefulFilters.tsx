@@ -3,18 +3,15 @@ import {
   Checkbox,
   FormSelect,
   FormSelectOption,
-  Select,
-  SelectOption,
-  SelectVariant,
   TextInput,
   TextInputTypes,
   Toolbar,
   ToolbarGroup,
   ToolbarItem,
-  SelectOptionObject,
   ToolbarContent,
   ToolbarFilter
 } from '@patternfly/react-core';
+import { Select, SelectOption, SelectVariant, SelectOptionObject } from '@patternfly/react-core/deprecated';
 import {
   ActiveFilter,
   ActiveFiltersInfo,
@@ -39,20 +36,19 @@ import { classes } from 'typestyle';
 
 const toolbarStyle = kialiStyle({
   padding: 0,
-  rowGap: 'var(--pf-global--spacer--md)',
+  rowGap: 'var(--pf-v5-global--spacer--md)',
   $nest: {
-    '& > .pf-c-toolbar__content': {
+    '& > .pf-v5-c-toolbar__content': {
       paddingLeft: 0
     }
   }
 });
 
 const bottomPadding = kialiStyle({
-  paddingBottom: 'var(--pf-global--spacer--md)'
+  paddingBottom: 'var(--pf-v5-global--spacer--md)'
 });
 
 const formSelectStyle = kialiStyle({
-  width: 'auto',
   borderColor: PFColors.BorderColorLight100,
   backgroundColor: PFColors.BackgroundColor200
 });
@@ -325,7 +321,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
         <Select
           value="default"
           onSelect={this.filterValueAheadSelected}
-          onToggle={this.onToggle}
+          onToggle={(_event, isOpen) => this.onToggle(isOpen)}
           variant={SelectVariant.typeahead}
           isOpen={this.state.isOpen}
           aria-label="filter_select_value"
@@ -342,7 +338,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
       return (
         <FormSelect
           value="default"
-          onChange={this.filterValueSelected}
+          onChange={(_event, valueId: string | SelectOptionObject) => this.filterValueSelected(valueId)}
           aria-label="filter_select_value"
           style={{ width: 'auto' }}
         >
@@ -371,7 +367,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
           value={currentValue}
           aria-label="filter_input_value"
           placeholder={currentFilterType.placeholder}
-          onChange={this.updateCurrentValue}
+          onChange={(_event, value) => this.updateCurrentValue(value)}
           onKeyPress={e => this.onValueKeyPress(e)}
           style={{ width: 'auto' }}
         />
@@ -446,7 +442,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                       <FormSelect
                         value={currentFilterType.category}
                         aria-label="filter_select_type"
-                        onChange={this.selectFilterType}
+                        onChange={(_event, value: string) => this.selectFilterType(value)}
                         className={formSelectStyle}
                       >
                         {filterOptions}
@@ -469,7 +465,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                         isChecked={Toggles.checked.get(t.name)}
                         label={t.label}
                         name={t.name}
-                        onChange={this.onCheckboxChange}
+                        onChange={(event, checked: boolean) => this.onCheckboxChange(checked, event)}
                       />
                     </ToolbarItem>
                   );
@@ -482,7 +478,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                   <span className={paddingStyle}>Label Operation</span>
                   <FormSelect
                     value={activeFilters.op}
-                    onChange={value =>
+                    onChange={(_event, value) =>
                       this.updateActiveFilters({
                         filters: this.state.activeFilters.filters,
                         op: value as LabelOperation

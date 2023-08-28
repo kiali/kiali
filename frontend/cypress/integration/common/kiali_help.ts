@@ -16,5 +16,5 @@ When('user clicks on the {string} button', (title: string) => {
 });
 
 Then('user sees the {string} modal', (title: string) => {
-  cy.get('h1.pf-c-modal-box__title').contains(title).should('be.visible');
+  cy.get('h1.pf-v5-c-modal-box__title').contains(title).should('be.visible');
 });

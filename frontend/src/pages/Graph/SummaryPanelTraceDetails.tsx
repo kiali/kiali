@@ -2,7 +2,8 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { kialiStyle } from 'styles/StyleUtils';
-import { Tooltip, Button, ButtonVariant, pluralize, SelectOption } from '@patternfly/react-core';
+import { Tooltip, Button, ButtonVariant, Icon, pluralize } from '@patternfly/react-core';
+import { SelectOption } from '@patternfly/react-core/deprecated';
 import {
   InfoAltIcon,
   CloseIcon,
@@ -204,7 +205,10 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
             <>
               <br />
               <a href={jaegerTraceURL} target="_blank" rel="noopener noreferrer">
-                Show in Tracing <ExternalLinkAltIcon size="sm" />
+                Show in Tracing{' '}
+                <Icon size="sm">
+                  <ExternalLinkAltIcon />
+                </Icon>
               </a>
             </>
           )}

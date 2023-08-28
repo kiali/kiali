@@ -234,19 +234,19 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
               id="tooltip-inbound"
               content="Traffic entering from traffic sources."
               entryDelay={1250}
-              reference={tooltipInboundRef}
+              triggerRef={tooltipInboundRef}
             />
             <Tooltip
               id="tooltip-outbound"
               content="Traffic exiting the requested namespaces."
               entryDelay={1250}
-              reference={tooltipOutboundRef}
+              triggerRef={tooltipOutboundRef}
             />
             <Tooltip
               id="tooltip-total"
               content="All inbound, outbound and traffic within the requested namespaces."
               entryDelay={1250}
-              reference={tooltipTotalRef}
+              triggerRef={tooltipTotalRef}
             />
             <Tab style={summaryFont} title="Inbound" eventKey={0} ref={tooltipInboundRef}>
               <div style={summaryFont}>

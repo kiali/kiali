@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { CardActions, CardHeader, CardTitle, Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core';
+import { CardHeader, CardTitle } from '@patternfly/react-core';
+import { Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core/deprecated';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { FormattedTraceInfo, fullIDStyle } from './FormattedTraceInfo';
 import { history } from 'app/History';
@@ -50,21 +51,28 @@ const JaegerTraceTitleComponent = (props: Props) => {
   const [toggled, setToggled] = React.useState(false);
 
   return (
-    <CardHeader>
-      <CardActions>
-        <span>
-          {`${props.formattedTrace.relativeDate()} | ${props.formattedTrace.absTime()} (${props.formattedTrace.fromNow()})`}
-        </span>
-        <Dropdown
-          toggle={<KebabToggle onToggle={() => setToggled(!toggled)} />}
-          data-test="trace-details-kebab"
-          dropdownItems={links}
-          isPlain={true}
-          isOpen={toggled}
-          position={'right'}
-          style={{ top: 3 }}
-        />
-      </CardActions>
+    <CardHeader
+      actions={{
+        actions: (
+          <>
+            <span>
+              {`${props.formattedTrace.relativeDate()} | ${props.formattedTrace.absTime()} (${props.formattedTrace.fromNow()})`}
+            </span>
+            <Dropdown
+              toggle={<KebabToggle onToggle={() => setToggled(!toggled)} />}
+              data-test="trace-details-kebab"
+              dropdownItems={links}
+              isPlain={true}
+              isOpen={toggled}
+              position={'right'}
+              style={{ top: 3 }}
+            />
+          </>
+        ),
+        hasNoOffset: false,
+        className: undefined
+      }}
+    >
       <CardTitle>
         <span>{`${props.formattedTrace.name()} `}</span>
         <span className={fullIDStyle}>{props.formattedTrace.fullID()}</span>

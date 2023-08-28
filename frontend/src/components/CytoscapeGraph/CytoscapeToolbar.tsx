@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as Cy from 'cytoscape';
-import { Button, ButtonVariant, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Button, ButtonVariant, Icon, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import {
   LongArrowAltRightIcon,
   ExpandArrowsAltIcon,
@@ -321,7 +321,9 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
                 style={buttonStyle}
                 variant={ButtonVariant.plain}
               >
-                <MapIcon className={this.props.showLegend ? activeButtonStyle : undefined} size="sm" />
+                <Icon className={this.props.showLegend ? activeButtonStyle : undefined} size="sm">
+                  <MapIcon />
+                </Icon>
               </Button>
             </Tooltip>
           </div>

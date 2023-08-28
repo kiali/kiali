@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Form, FormGroup, TextInput } from '@patternfly/react-core';
+import { Form, FormGroup, FormHelperText, HelperText, HelperTextItem, TextInput } from '@patternfly/react-core';
 import { GatewaySelectorState } from './GatewaySelector';
 import { isValid } from 'utils/Common';
 type Props = {
@@ -34,23 +34,26 @@ export class VirtualServiceHosts extends React.Component<Props> {
     const vsHosts = this.props.vsHosts.length > 0 ? this.props.vsHosts.join(',') : '';
     return (
       <Form isHorizontal={true}>
-        <FormGroup
-          label="VirtualService Hosts"
-          fieldId="advanced-vshosts"
-          validated={isValid(this.isVirtualServiceHostsValid(this.props.vsHosts))}
-          helperText="The destination hosts to which traffic is being sent. Enter one or multiple hosts separated by comma."
-          helperTextInvalid={"VirtualService Host '*' wildcard not allowed on mesh gateway."}
-        >
+        <FormGroup label="VirtualService Hosts" fieldId="advanced-vshosts">
           <TextInput
             value={vsHosts}
             id="advanced-vshosts"
             name="advanced-vshosts"
-            onChange={value => {
+            onChange={(_event, value) => {
               const vsHosts = value.split(',');
               const isValid = this.isVirtualServiceHostsValid(vsHosts);
               this.props.onVsHostsChange(isValid, vsHosts);
             }}
           />
+          <FormHelperText>
+            <HelperText>
+              <HelperTextItem>
+                {isValid(this.isVirtualServiceHostsValid(this.props.vsHosts))
+                  ? 'The destination hosts to which traffic is being sent. Enter one or multiple hosts separated by comma.'
+                  : "VirtualService Host '*' wildcard not allowed on mesh gateway."}
+              </HelperTextItem>
+            </HelperText>
+          </FormHelperText>
         </FormGroup>
       </Form>
     );

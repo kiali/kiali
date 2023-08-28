@@ -14,8 +14,7 @@ interface Props {
 }
 
 const infoStyle = kialiStyle({
-  margin: '0px 5px 2px 5px',
-  verticalAlign: '-5px !important'
+  margin: '0px 5px 2px 5px'
 });
 
 export class MetricsReporter extends React.Component<Props> {

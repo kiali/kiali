@@ -6,8 +6,8 @@ import {
   EmptyStateBody,
   EmptyStateIcon,
   EmptyStateVariant,
-  Title,
-  TitleSizes
+  EmptyStateHeader,
+  EmptyStateFooter
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import * as _ from 'lodash';
@@ -84,31 +84,28 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
   render() {
     if (this.props.isError) {
       return (
-        <EmptyState id="empty-graph-error" variant={EmptyStateVariant.large} className={emptyStateStyle}>
-          <EmptyStateIcon icon={KialiIcon.Error} />
-          <Title headingLevel="h5" size={TitleSizes.lg}>
-            Error loading Graph
-          </Title>
+        <EmptyState id="empty-graph-error" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
+          <EmptyStateHeader
+            titleText="Error loading Graph"
+            icon={<EmptyStateIcon icon={KialiIcon.Error} />}
+            headingLevel="h5"
+          />
           <EmptyStateBody>{this.props.error}</EmptyStateBody>
         </EmptyState>
       );
     }
     if (this.props.isLoading) {
       return (
-        <EmptyState id="empty-graph-is-loading" variant={EmptyStateVariant.large} className={emptyStateStyle}>
-          <Title headingLevel="h5" size={TitleSizes.lg}>
-            Loading Graph
-          </Title>
+        <EmptyState id="empty-graph-is-loading" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
+          <EmptyStateHeader titleText="Loading Graph" headingLevel="h5" />
         </EmptyState>
       );
     }
 
     if (this.props.namespaces.length === 0) {
       return (
-        <EmptyState id="empty-graph-no-namespace" variant={EmptyStateVariant.large} className={emptyStateStyle}>
-          <Title headingLevel="h5" size={TitleSizes.lg}>
-            No namespace is selected
-          </Title>
+        <EmptyState id="empty-graph-no-namespace" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
+          <EmptyStateHeader titleText="No namespace is selected" headingLevel="h5" />
           <EmptyStateBody>
             There is currently no namespace selected, please select one using the Namespace selector.
           </EmptyStateBody>
@@ -120,10 +117,8 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
 
     if (isGraphEmpty && !this.props.isMiniGraph) {
       return (
-        <EmptyState id="empty-graph" variant={EmptyStateVariant.large} className={emptyStateStyle}>
-          <Title headingLevel="h5" size={TitleSizes.lg}>
-            Empty Graph
-          </Title>
+        <EmptyState id="empty-graph" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
+          <EmptyStateHeader titleText="Empty Graph" headingLevel="h5" />
           <EmptyStateBody>
             There is currently no graph available for {this.namespacesText()}. This could either mean there is no
             service mesh available for {this.props.namespaces.length === 1 ? 'this namespace' : 'these namespaces'} or
@@ -135,22 +130,22 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
               <> You can enable 'Idle Nodes' to display service mesh nodes that have yet to see any request traffic.</>
             )}
           </EmptyStateBody>
-          <Button
-            onClick={this.props.showIdleNodes ? this.props.action : this.props.toggleIdleNodes}
-            variant={ButtonVariant.primary}
-          >
-            {(this.props.showIdleNodes && <>Refresh</>) || <>Display idle nodes</>}
-          </Button>
+          <EmptyStateFooter>
+            <Button
+              onClick={this.props.showIdleNodes ? this.props.action : this.props.toggleIdleNodes}
+              variant={ButtonVariant.primary}
+            >
+              {(this.props.showIdleNodes && <>Refresh</>) || <>Display idle nodes</>}
+            </Button>
+          </EmptyStateFooter>
         </EmptyState>
       );
     }
 
     if (isGraphEmpty && this.props.isMiniGraph) {
       return (
-        <EmptyState id="empty-mini-graph" variant={EmptyStateVariant.large} className={emptyStateStyle}>
-          <Title headingLevel="h5" size={TitleSizes.lg}>
-            Empty Graph
-          </Title>
+        <EmptyState id="empty-mini-graph" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
+          <EmptyStateHeader titleText="Empty Graph" headingLevel="h5" />
           <EmptyStateBody>No graph traffic for the time period.</EmptyStateBody>
         </EmptyState>
       );

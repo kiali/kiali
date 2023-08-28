@@ -42,14 +42,14 @@ export class AddressBuilder extends React.Component<Props, State> {
     };
   }
 
-  onAddValue = (value: string) => {
+  onAddValue = (_event, value: string) => {
     const l = this.props.address;
     l.value = value.trim();
 
     this.props.onChange(l, this.props.index);
   };
 
-  onAddType = (value: string, _) => {
+  onAddType = (_event, value: string) => {
     const l = this.props.address;
     l.type = value.trim();
 

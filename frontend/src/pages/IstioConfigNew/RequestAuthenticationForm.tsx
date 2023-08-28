@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { FormGroup, Switch } from '@patternfly/react-core';
+import { FormGroup, FormHelperText, HelperText, HelperTextItem, Switch } from '@patternfly/react-core';
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
 import { JWTRule } from '../../types/IstioObjects';
 import { JwtRuleBuilder } from './RequestAuthorizationForm/JwtRuleBuilder';
@@ -57,7 +57,7 @@ export class RequestAuthenticationForm extends React.Component<Props, RequestAut
     this.props.onChange(this.state);
   };
 
-  onChangeWorkloadSelector = () => {
+  onChangeWorkloadSelector = (_event, _: boolean) => {
     this.setState(
       prevState => {
         return {
@@ -68,7 +68,7 @@ export class RequestAuthenticationForm extends React.Component<Props, RequestAut
     );
   };
 
-  onChangeJwtRules = () => {
+  onChangeJwtRules = (_event, _: boolean) => {
     this.setState(
       prevState => {
         return {
@@ -79,7 +79,7 @@ export class RequestAuthenticationForm extends React.Component<Props, RequestAut
     );
   };
 
-  addWorkloadLabels = (value: string, _) => {
+  addWorkloadLabels = (_event, value: string) => {
     if (value.length === 0) {
       this.setState(
         {
@@ -156,13 +156,7 @@ export class RequestAuthenticationForm extends React.Component<Props, RequestAut
           />
         </FormGroup>
         {this.state.addWorkloadSelector && (
-          <FormGroup
-            fieldId="workloadLabels"
-            label="Labels"
-            helperText="One or more labels to select a workload where the RequestAuthentication is applied."
-            helperTextInvalid="Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma."
-            validated={isValid(this.state.workloadSelectorValid)}
-          >
+          <FormGroup fieldId="workloadLabels" label="Labels">
             <TextInput
               id="gwHosts"
               name="gwHosts"
@@ -171,6 +165,15 @@ export class RequestAuthenticationForm extends React.Component<Props, RequestAut
               onChange={this.addWorkloadLabels}
               validated={isValid(this.state.workloadSelectorValid)}
             />
+            <FormHelperText>
+              <HelperText>
+                <HelperTextItem>
+                  {isValid(this.state.workloadSelectorValid)
+                    ? 'One or more labels to select a workload where the RequestAuthentication is applied.'
+                    : 'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'}
+                </HelperTextItem>
+              </HelperText>
+            </FormHelperText>
           </FormGroup>
         )}
         <FormGroup label="JWT Rules" fieldId="addJWTRules">

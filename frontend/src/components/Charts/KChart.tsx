@@ -228,7 +228,7 @@ export class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, 
           borderBottom: `2px solid ${PFColors.ColorLight200}`
         }}
       >
-        <EmptyState variant={EmptyStateVariant.small} className={emptyStyle}>
+        <EmptyState variant={EmptyStateVariant.sm} className={emptyStyle}>
           {this.props.isMaximized && <EmptyStateIcon icon={CubesIcon} />}
           <EmptyStateBody className={emptyStyle}>No data available</EmptyStateBody>
         </EmptyState>
@@ -248,7 +248,7 @@ export class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, 
           textAlign: 'center'
         }}
       >
-        <EmptyState variant={EmptyStateVariant.small} className={emptyStyle}>
+        <EmptyState variant={EmptyStateVariant.sm} className={emptyStyle}>
           {this.props.isMaximized && (
             <EmptyStateIcon
               icon={() => <ErrorCircleOIcon style={{ color: PFColors.Danger }} width={32} height={32} />}

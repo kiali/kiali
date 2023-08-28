@@ -1,14 +1,6 @@
 import * as React from 'react';
-import {
-  Checkbox,
-  Divider,
-  Dropdown,
-  DropdownToggle,
-  DropdownToggleCheckbox,
-  Radio,
-  Tooltip,
-  TooltipPosition
-} from '@patternfly/react-core';
+import { Checkbox, Divider, Radio, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Dropdown, DropdownToggle, DropdownToggleCheckbox } from '@patternfly/react-core/deprecated';
 import { kialiStyle } from 'styles/StyleUtils';
 import isEqual from 'lodash/isEqual';
 
@@ -200,7 +192,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     }
     return (
       <Dropdown
-        toggle={<DropdownToggle onToggle={this.onToggle}>Metrics Settings</DropdownToggle>}
+        toggle={<DropdownToggle onToggle={(_event, isOpen) => this.onToggle(isOpen)}>Metrics Settings</DropdownToggle>}
         isOpen={this.state.isOpen}
       >
         {/* Adding class="pf-c-dropdown__menu-item" to fix a sizing issue in PF.
@@ -247,7 +239,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
                   <Radio
                     isChecked={lblObj.values[val]}
                     id={val}
-                    onChange={_ => this.onLabelsFiltersChanged(promName, val, true, true)}
+                    onChange={(_event, _) => this.onLabelsFiltersChanged(promName, val, true, true)}
                     label={prettyLabelValues(promName, val)}
                     name={val}
                     value={val}
@@ -257,7 +249,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
                     <Checkbox
                       id={val}
                       isChecked={lblObj.values[val]}
-                      onChange={checked => this.onLabelsFiltersChanged(promName, val, checked, false)}
+                      onChange={(_event, checked) => this.onLabelsFiltersChanged(promName, val, checked, false)}
                       label={prettyLabelValues(promName, val)}
                     />
                   </label>
@@ -272,7 +264,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
               id={lblObj.displayName}
               label={lblObj.displayName}
               isChecked={lblObj.checked}
-              onChange={checked => this.onGroupingChanged(promName, checked)}
+              onChange={(_event, checked) => this.onGroupingChanged(promName, checked)}
             />
           </label>
           {labelsHTML}
@@ -302,7 +294,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
             id="histo_avg"
             isChecked={this.state.showAverage && this.props.hasHistogramsAverage}
             isDisabled={!this.props.hasHistogramsAverage}
-            onChange={checked => this.onHistogramAverageChanged(checked)}
+            onChange={(_event, checked) => this.onHistogramAverageChanged(checked)}
             label="Average"
           />
         </label>
@@ -317,7 +309,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
                 id={o}
                 isChecked={checked && this.props.hasHistogramsPercentiles}
                 isDisabled={!this.props.hasHistogramsPercentiles}
-                onChange={checked => this.onHistogramOptionsChanged(o, checked)}
+                onChange={(_event, checked) => this.onHistogramOptionsChanged(o, checked)}
                 label={`Quantile ${o}`}
               />
             </label>

@@ -11,7 +11,7 @@ import {
   Title,
   TitleSizes
 } from '@patternfly/react-core';
-import { TableComposable, Tbody, Th, Thead, Tr } from '@patternfly/react-table';
+import { Table, Tbody, Th, Thead, Tr } from '@patternfly/react-table';
 import { KialiIcon } from 'config/KialiIcon';
 
 interface Props {
@@ -120,7 +120,7 @@ export class WizardAnnotations extends React.Component<Props, State> {
                   key === '' || Object.values(this.state.annotations).filter(arr => arr[0] === key).length > 1
                 }
                 id={'annotationInputForKey_' + index}
-                onChange={newKey => this.changeAnnotation([newKey, value], index)}
+                onChange={(_event, newKey) => this.changeAnnotation([newKey, value], index)}
                 placeholder={'Key'}
                 type="text"
                 value={key}
@@ -130,7 +130,7 @@ export class WizardAnnotations extends React.Component<Props, State> {
               <TextInput
                 aria-invalid={value === ''}
                 id={'annotationInputForValue_' + index}
-                onChange={v => this.changeAnnotation([key, v], index)}
+                onChange={(_event, v) => this.changeAnnotation([key, v], index)}
                 placeholder={'Value'}
                 type="text"
                 value={value}
@@ -192,7 +192,7 @@ export class WizardAnnotations extends React.Component<Props, State> {
           aria-describedby="modal-custom-header-description"
           footer={footer}
         >
-          <TableComposable variant={'compact'}>
+          <Table variant={'compact'}>
             <Thead>
               <Tr>
                 <Th>Key</Th>
@@ -201,7 +201,7 @@ export class WizardAnnotations extends React.Component<Props, State> {
               </Tr>
             </Thead>
             <Tbody>{this.generateInput()}</Tbody>
-          </TableComposable>
+          </Table>
           <Button
             variant="link"
             icon={<KialiIcon.AddMore />}

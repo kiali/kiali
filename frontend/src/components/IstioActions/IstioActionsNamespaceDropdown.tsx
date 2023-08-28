@@ -1,5 +1,11 @@
 import * as React from 'react';
-import { Dropdown, DropdownGroup, DropdownItem, DropdownPosition, DropdownToggle } from '@patternfly/react-core';
+import {
+  Dropdown,
+  DropdownGroup,
+  DropdownItem,
+  DropdownPosition,
+  DropdownToggle
+} from '@patternfly/react-core/deprecated';
 import { history } from '../../app/History';
 import { serverConfig } from '../../config';
 import { NEW_ISTIO_RESOURCE } from '../../pages/IstioConfigNew/IstioConfigNewPage';
@@ -71,7 +77,10 @@ export class IstioActionsNamespaceDropdown extends React.Component<Props, State>
         data-test="actions-dropdown"
         id="actions"
         toggle={
-          <DropdownToggle onToggle={this.onToggle} data-test="config-actions-dropdown">
+          <DropdownToggle
+            onToggle={(_event, dropdownState: boolean) => this.onToggle(dropdownState)}
+            data-test="config-actions-dropdown"
+          >
             Actions
           </DropdownToggle>
         }
