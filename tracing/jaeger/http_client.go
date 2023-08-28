@@ -101,7 +101,7 @@ func prepareQuery(u *url.URL, jaegerServiceName string, query models.TracingQuer
 		// Tags must be json encoded
 		tags, err := json.Marshal(query.Tags)
 		if err != nil {
-			log.Errorf("Jager query: error while marshalling tags to json: %v", err)
+			log.Errorf("Jaeger query: error while marshalling tags to json: %v", err)
 		}
 		q.Set("tags", string(tags))
 	}

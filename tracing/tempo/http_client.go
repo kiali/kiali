@@ -37,7 +37,6 @@ func (oc OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, 
 
 func (oc OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (*model.TracingSingleTrace, error) {
 	u := *endpoint
-	//u.Path = path.Join(u.Path, "/api/search"+traceID)
 	u.Path = "/api/traces/" + traceID
 	resp, code, reqError := makeRequest(client, u.String(), nil)
 	if reqError != nil {
@@ -65,8 +64,11 @@ func (oc OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.UR
 
 func (oc OtelHTTPClient) GetServiceStatusHTTP(client http.Client, baseURL *url.URL) (bool, error) {
 	url := *baseURL
-	url.Path = path.Join(url.Path, "/api/services")
-	_, _, reqError := makeRequest(client, url.String(), nil)
+	url.Path = path.Join(url.Path, "/status/services")
+	_, status, reqError := makeRequest(client, url.String(), nil)
+	if status != 200 {
+		return false, fmt.Errorf("Error %s getting status services", status)
+	}
 	return reqError == nil, reqError
 }
 
@@ -113,7 +115,6 @@ func (oc OtelHTTPClient) convertTraces(traces *otel.TracingResponse, service str
 	var response model.TracingResponse
 	for _, trace := range traces.Traces {
 		singleTrace, _ := oc.GetTraceDetailHTTP(client, endpoint, trace.TraceID)
-		//t := jaegerModels.Trace{TraceID: jaegerModels.TraceID(i)}
 		response.Data = append(response.Data, singleTrace.Data)
 	}
 	response.TracingServiceName = service
@@ -128,7 +129,9 @@ func convertSingleTrace(traces *otelModels.Data, id string, service string) (*mo
 	jaegerModel.TraceID = converter.ConvertId(id)
 	if traces != nil {
 		serviceName := getServiceName(traces.Batches[0].Resource.Attributes)
-		jaegerModel.Spans = converter.ConvertSpans(traces.Batches[0].ScopeSpans[0].Spans, serviceName)
+		for _, batch := range traces.Batches {
+			jaegerModel.Spans = append(jaegerModel.Spans, converter.ConvertSpans(batch.ScopeSpans[0].Spans, serviceName)...)
+		}
 		jaegerModel.Processes = map[jaegerModels.ProcessID]jaegerModels.Process{}
 		jaegerModel.Warnings = []string{}
 	}
@@ -141,24 +144,19 @@ func convertSingleTrace(traces *otelModels.Data, id string, service string) (*mo
 
 func prepareQuery(u *url.URL, tracingServiceName string, query models.TracingQuery) {
 	q := url.Values{}
-	//q.Set("tags", tracingServiceName)
-	//q.Set("start", fmt.Sprintf("%d", query.Start.Unix()))
-	//q.Set("end", fmt.Sprintf("%d", query.End.Unix()))
+	q.Set("start", fmt.Sprintf("%d", query.Start.Unix()))
+	q.Set("end", fmt.Sprintf("%d", query.End.Unix()))
 	q.Set("tags", "service.name="+tracingServiceName)
-	//query.Tags["root.service.name"] = tracingServiceName
-	//query.Tags["startTimeUnixNano"] = fmt.Sprintf("%d", query.Start.Unix()*time.Second.Nanoseconds())
-	//query.Tags["root.service.name"] = tracingServiceName
-	/*
-		if len(query.Tags) > 0 {
-			// Tags must be json encoded
-			tags, err := json.Marshal(query.Tags)
-			if err != nil {
-				log.Errorf("Jager query: error while marshalling tags to json: %v", err)
-			}
-			q.Set("tags", string(tags))
-		} */
+	if len(query.Tags) > 0 {
+		// Tags must be json encoded
+		tags, err := json.Marshal(query.Tags)
+		if err != nil {
+			log.Errorf("Jager query: error while marshalling tags to json: %v", err)
+		}
+		q.Set("tags", string(tags))
+	}
 	if query.MinDuration > 0 {
-		q.Set("minDuration", fmt.Sprintf("%d", query.MinDuration.Seconds()))
+		log.Infof("minDuration not supported in API")
 	}
 	if query.Limit > 0 {
 		q.Set("limit", strconv.Itoa(query.Limit))
