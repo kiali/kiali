@@ -70,7 +70,7 @@ func (oc OtelHTTPClient) GetServiceStatusHTTP(client http.Client, baseURL *url.U
 	url.Path = path.Join(url.Path, "/status/services")
 	_, status, reqError := makeRequest(client, url.String(), nil)
 	if status != 200 {
-		return false, fmt.Errorf("Error %s getting status services", status)
+		return false, fmt.Errorf("Error %d getting status services", status)
 	}
 	return reqError == nil, reqError
 }

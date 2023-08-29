@@ -3,8 +3,6 @@ package business
 import (
 	"context"
 	"errors"
-	"github.com/kiali/kiali/tracing/jaeger"
-	"github.com/kiali/kiali/tracing/jaeger/jaegertest"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -23,6 +21,8 @@ import (
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/tracing"
+	"github.com/kiali/kiali/tracing/jaeger/jaegertest"
 )
 
 type addOnsSetup struct {
@@ -777,16 +777,16 @@ func assertNotPresent(assert *assert.Assertions, icsl kubernetes.IstioComponentS
 	assert.False(componentFound)
 }
 
-func mockJaeger() (jaeger.ClientInterface, error) {
+func mockJaeger() (tracing.ClientInterface, error) {
 	j := new(jaegertest.JaegerClientMock)
 	j.On("GetServiceStatus").Return(true, nil)
-	return jaeger.ClientInterface(j), nil
+	return tracing.ClientInterface(j), nil
 }
 
-func mockFailingJaeger() (jaeger.ClientInterface, error) {
+func mockFailingJaeger() (tracing.ClientInterface, error) {
 	j := new(jaegertest.JaegerClientMock)
 	j.On("GetServiceStatus").Return(false, errors.New("error connecting with jaeger service"))
-	return jaeger.ClientInterface(j), nil
+	return tracing.ClientInterface(j), nil
 }
 
 // func newFakeIstiodConnector()
