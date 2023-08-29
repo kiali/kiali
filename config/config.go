@@ -200,16 +200,22 @@ type GrafanaVariablesConfig struct {
 	Workload  string `yaml:"workload" json:"workload,omitempty"`
 }
 
+// Tempo Config
+type TempoConfig struct {
+	Datasource string `yaml:"datasource"`
+}
+
 // TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
 	Auth                 Auth              `yaml:"auth"`
-	Client               string            `yaml:"client"`  // jaeger | otel
 	Enabled              bool              `yaml:"enabled"` // Enable Jaeger in Kiali
 	InClusterURL         string            `yaml:"in_cluster_url"`
 	IsCore               bool              `yaml:"is_core,omitempty"`
+	Provider             string            `yaml:"client"` // jaeger | tempo
 	NamespaceSelector    bool              `yaml:"namespace_selector"`
 	QueryScope           map[string]string `yaml:"query_scope,omitempty"`
 	QueryTimeout         int               `yaml:"query_timeout,omitempty"`
+	Tempo                TempoConfig       `yaml:"tempo,omitempty"`
 	URL                  string            `yaml:"url"`
 	UseGRPC              bool              `yaml:"use_grpc"`
 	WhiteListIstioSystem []string          `yaml:"whitelist_istio_system"`
@@ -659,11 +665,14 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				Client:               "otel",
-				Enabled:              true,
-				InClusterURL:         "http://tracing.istio-system:16685/jaeger",
-				IsCore:               false,
-				NamespaceSelector:    true,
+				Enabled:           true,
+				InClusterURL:      "http://tracing.istio-system:16685/jaeger",
+				IsCore:            false,
+				Provider:          "tempo",
+				NamespaceSelector: true,
+				Tempo: TempoConfig{
+					Datasource: "Tempo",
+				},
 				QueryScope:           map[string]string{},
 				QueryTimeout:         5,
 				URL:                  "",

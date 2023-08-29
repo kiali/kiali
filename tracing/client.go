@@ -29,6 +29,10 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
+const (
+	JAEGER = "jaeger"
+)
+
 // ClientInterface for mocks (only mocked function are necessary here)
 type ClientInterface interface {
 	GetAppTraces(ns, app string, query models.TracingQuery) (traces *model.TracingResponse, err error)
@@ -76,7 +80,7 @@ func NewClient(token string) (*Client, error) {
 			return nil, errParse
 		}
 
-		if cfg.ExternalServices.Tracing.Client == "jaeger" {
+		if cfg.ExternalServices.Tracing.Provider == JAEGER {
 			httpTracingClient = jaeger.JaegerHTTPClient{}
 		} else {
 			httpTracingClient = tempo.OtelHTTPClient{}
