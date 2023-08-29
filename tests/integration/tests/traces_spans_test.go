@@ -2,12 +2,12 @@ package tests
 
 import (
 	"fmt"
-	"github.com/kiali/kiali/tracing/model"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/kiali/kiali/tests/integration/utils/kiali"
+	"github.com/kiali/kiali/tracing/jaeger/model"
 )
 
 func TestServiceTraces(t *testing.T) {

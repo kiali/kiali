@@ -3,7 +3,6 @@ package kiali
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kiali/kiali/tracing/model"
 	"net/http"
 	"net/url"
 	"os"
@@ -17,6 +16,7 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/status"
+	"github.com/kiali/kiali/tracing/jaeger/model"
 	"github.com/kiali/kiali/util/httputil"
 )
 
