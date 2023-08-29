@@ -12,6 +12,12 @@ Feature: Kiali Istio Config page
     And user is at the "istio" page
     And user selects the "bookinfo" namespace
 
+  @bookinfo-app
+  Scenario: Dropdown for cluster selection should not be visible in single cluster setup
+    When user clicks in the "Gateway" Istio config actions
+    Then user sees the "Create Gateway" config wizard
+    And user does not see a dropdown for cluster selection
+
   @gateway-api
   @bookinfo-app
   Scenario: Create a K8s Gateway scenario
