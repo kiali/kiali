@@ -1,10 +1,10 @@
 package business
 
 import (
-	"github.com/kiali/kiali/tracing/model"
-	jaegerModels "github.com/kiali/kiali/tracing/model/json"
 	"testing"
 
+	"github.com/kiali/kiali/tracing/jaeger/model"
+	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -1,12 +1,12 @@
 package jaegertest
 
 import (
-	"github.com/kiali/kiali/tracing/model"
 	"time"
 
 	"github.com/stretchr/testify/mock"
 
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/tracing/jaeger/model"
 )
 
 type JaegerClientMock struct {
