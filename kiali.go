@@ -34,6 +34,7 @@ import (
 	"os/signal"
 	"regexp"
 	"strings"
+	"syscall"
 
 	"k8s.io/client-go/rest"
 
@@ -124,7 +125,7 @@ func waitForTermination() {
 	doneChan := make(chan bool)
 
 	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, os.Interrupt)
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		for range signalChan {
 			log.Info("Termination Signal Received")
