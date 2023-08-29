@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/kiali/kiali/tracing/tempo"
 	"io"
 	"net"
 	"net/http"
@@ -25,6 +24,7 @@ import (
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	jsonConv "github.com/kiali/kiali/tracing/jaeger/model/converter/json"
 	jsonModel "github.com/kiali/kiali/tracing/jaeger/model/json"
+	"github.com/kiali/kiali/tracing/tempo"
 	"github.com/kiali/kiali/util/grpcutil"
 	"github.com/kiali/kiali/util/httputil"
 )
