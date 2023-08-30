@@ -122,13 +122,18 @@ export const login = async (
 
   const proxyUrl = getAPIProxy();
 
-  return axios({
+  const axiosRequest = {
     method: HTTP_VERBS.POST,
     url: proxyUrl ? `${proxyUrl}/${urls.authenticate}` : urls.authenticate,
     headers: getHeaders(proxyUrl),
-    auth: basicAuth(request.username, request.password),
     data: params
-  });
+  };
+
+  if (request.username !== '' || request.password !== '') {
+    axiosRequest['auth'] = basicAuth(request.username, request.password);
+  }
+
+  return axios(axiosRequest);
 };
 
 export const logout = () => {
