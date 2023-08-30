@@ -3,7 +3,6 @@ package business
 import (
 	"context"
 	"errors"
-	"github.com/kiali/kiali/tracing/tracingtest"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -23,6 +22,7 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing"
+	"github.com/kiali/kiali/tracing/tracingtest"
 )
 
 type addOnsSetup struct {

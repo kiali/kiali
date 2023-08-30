@@ -3,9 +3,10 @@ package converter
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 	otelModels "github.com/kiali/kiali/tracing/otel/model/json"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestConvertId(t *testing.T) {
