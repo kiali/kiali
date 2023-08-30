@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { FormGroup, Switch, TextInput } from '@patternfly/react-core';
+import { FormGroup, FormHelperText, HelperText, HelperTextItem, Switch, TextInput } from '@patternfly/react-core';
 import { HTTPRetry } from '../../../types/IstioObjects';
 import { HTTP_RETRY_TOOLTIP, wizardTooltip } from '../WizardHelp';
 import { isValid } from 'utils/Common';
@@ -29,13 +29,13 @@ export class RouteRetry extends React.Component<RouteRetryProps> {
         </FormGroup>
         {this.props.isRetry && (
           <>
-            <FormGroup label="Attempts" fieldId="attempts" helperText="Number of retries for a given request.">
+            <FormGroup label="Attempts" fieldId="attempts">
               <TextInput
                 value={this.props.retries.attempts}
                 type="text"
                 id="attempts"
                 name="attempts"
-                onChange={value => {
+                onChange={(_event, value) => {
                   let newValue = Number(value || 0);
                   newValue = Number.isNaN(newValue) ? 0 : newValue;
                   this.props.onRetry(this.props.isRetry, {
@@ -45,20 +45,19 @@ export class RouteRetry extends React.Component<RouteRetryProps> {
                   });
                 }}
               />
+              <FormHelperText>
+                <HelperText>
+                  <HelperTextItem>Number of retries for a given request.</HelperTextItem>
+                </HelperText>
+              </FormHelperText>
             </FormGroup>
-            <FormGroup
-              label="Per Try Timeout"
-              fieldId="pre-try-timeout"
-              helperText={tryTimeoutMsg}
-              helperTextInvalid={tryTimeoutMsg}
-              validated={isValid(this.props.isValidRetry)}
-            >
+            <FormGroup label="Per Try Timeout" fieldId="pre-try-timeout">
               <TextInput
                 value={this.props.retries.perTryTimeout}
                 id="pre-try-timeout"
                 name="pre-try-timeout"
                 validated={isValid(this.props.isValidRetry)}
-                onChange={value =>
+                onChange={(_event, value) =>
                   this.props.onRetry(this.props.isRetry, {
                     attempts: this.props.retries.attempts,
                     perTryTimeout: value,
@@ -66,6 +65,11 @@ export class RouteRetry extends React.Component<RouteRetryProps> {
                   })
                 }
               />
+              <FormHelperText>
+                <HelperText>
+                  <HelperTextItem>{isValid(this.props.isValidRetry) ? tryTimeoutMsg : tryTimeoutMsg}</HelperTextItem>
+                </HelperText>
+              </FormHelperText>
             </FormGroup>
           </>
         )}

@@ -2,7 +2,7 @@
 
 exports[`GraphLegend test should render correctly 1`] = `
 <div
-  className="kiali_f1okxayf"
+  className="kiali_fwdhk2f"
   data-test="graph-legend"
   style={
     Object {
@@ -27,11 +27,7 @@ exports[`GraphLegend test should render correctly 1`] = `
           onClick={[MockFunction]}
           variant="plain"
         >
-          <CloseIcon
-            color="currentColor"
-            noVerticalAlign={false}
-            size="sm"
-          />
+          <CloseIcon />
         </Button>
       </Tooltip>
     </span>
@@ -188,14 +184,14 @@ exports[`GraphLegend test should render correctly 1`] = `
               className="kiali_f1irbq61"
             >
               <img
-                alt="Danger"
+                alt="Unhealthy"
                 src="node-color-danger.svg"
               />
             </span>
             <span
               className="kiali_fgzdi7m"
             >
-              Danger
+              Unhealthy
             </span>
           </div>
           <div

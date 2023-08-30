@@ -7,13 +7,10 @@ import {
   EmptyState,
   EmptyStateBody,
   EmptyStateVariant,
-  Title,
-  TitleSizes
+  EmptyStateHeader,
+  Icon
 } from '@patternfly/react-core';
 import {
-  Table,
-  TableHeader,
-  TableBody,
   TableVariant,
   RowWrapper,
   sortable,
@@ -26,6 +23,7 @@ import {
   IAction,
   ISeparator
 } from '@patternfly/react-table';
+import { Table, TableHeader, TableBody } from '@patternfly/react-table/deprecated';
 import { compareNullable } from 'components/FilterList/FilterHelper';
 import { MetricsStats } from 'types/Metrics';
 import { KialiAppState } from 'store/Store';
@@ -72,16 +70,16 @@ type SortableCell<T> = ICell & {
 };
 
 const dangerErrorStyle = kialiStyle({
-  borderLeft: '3px solid var(--pf-global--danger-color--100)'
+  borderLeft: '3px solid var(--pf-v5-global--danger-color--100)'
 });
 
 const selectedErrorStyle = kialiStyle({
-  borderRight: '3px solid var(--pf-global--info-color--100)',
-  borderLeft: '3px solid var(--pf-global--danger-color--100)'
+  borderRight: '3px solid var(--pf-v5-global--info-color--100)',
+  borderLeft: '3px solid var(--pf-v5-global--danger-color--100)'
 });
 
 const selectedStyle = kialiStyle({
-  borderRight: '3px solid var(--pf-global--info-color--100)'
+  borderRight: '3px solid var(--pf-v5-global--info-color--100)'
 });
 
 const rowKebabStyle = kialiStyle({
@@ -164,9 +162,7 @@ class SpanTableComponent extends React.Component<Props, State> {
             <tr>
               <td colSpan={cells.length}>
                 <EmptyState variant={EmptyStateVariant.full}>
-                  <Title headingLevel="h5" size={TitleSizes.lg}>
-                    No spans found
-                  </Title>
+                  <EmptyStateHeader titleText="No spans found" headingLevel="h5" />
                   <EmptyStateBody>No spans match the current filters</EmptyStateBody>
                 </EmptyState>
               </td>
@@ -406,7 +402,9 @@ class SpanTableComponent extends React.Component<Props, State> {
       <>
         {item.info.hasError && (
           <div key={`${key}-err`}>
-            <ExclamationCircleIcon key={`${key}-err-ic`} color={PFColors.Danger} />{' '}
+            <Icon key={`${key}-err-ic`} color={PFColors.Danger}>
+              <ExclamationCircleIcon />
+            </Icon>{' '}
             <strong key={`${key}-err-msg`}>This span reported an error</strong>
           </div>
         )}
@@ -414,7 +412,11 @@ class SpanTableComponent extends React.Component<Props, State> {
           <strong key={`${key}-op-title`}>Operation: </strong>
           {flag ? (
             <span key={`${key}-op-name`}>
-              {item.operationName} ({flag} <ExclamationCircleIcon key={`${key}-dan-ic`} color={PFColors.Danger} />)
+              {item.operationName} ({flag}{' '}
+              <Icon key={`${key}-dan-ic`} color={PFColors.Danger}>
+                <ExclamationCircleIcon />
+              </Icon>
+              )
             </span>
           ) : (
             <span key={`${key}-op-name`}>{item.operationName}</span>

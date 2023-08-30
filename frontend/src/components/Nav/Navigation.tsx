@@ -14,7 +14,8 @@ import {
   PageSection,
   PageSidebar,
   PageToggleButton,
-  ButtonVariant
+  ButtonVariant,
+  PageSidebarBody
 } from '@patternfly/react-core';
 import { BarsIcon } from '@patternfly/react-icons';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -112,8 +113,8 @@ export class NavigationComponent extends React.Component<PropsType, NavigationSt
           <PageToggleButton
             variant={ButtonVariant.plain}
             aria-label="Kiali navigation"
-            isNavOpen={isNavOpen}
-            onNavToggle={isMobileView ? this.onNavToggleMobile : this.onNavToggleDesktop}
+            isSidebarOpen={isNavOpen}
+            onSidebarToggle={isMobileView ? this.onNavToggleMobile : this.onNavToggleDesktop}
           >
             <BarsIcon />
           </PageToggleButton>
@@ -131,10 +132,18 @@ export class NavigationComponent extends React.Component<PropsType, NavigationSt
 
     const menu = <Menu isNavOpen={isNavOpen} location={this.props.location} jaegerUrl={this.props.jaegerUrl} />;
 
-    const Sidebar = <PageSidebar style={{ width: '210px' }} nav={menu} isNavOpen={isNavOpen} />;
+    const Sidebar = (
+      <PageSidebar style={{ width: '210px' }} isSidebarOpen={isNavOpen}>
+        <PageSidebarBody>{menu}</PageSidebarBody>
+      </PageSidebar>
+    );
 
     return (
-      <Page header={masthead} sidebar={Sidebar} onPageResize={this.onPageResize}>
+      <Page
+        header={masthead}
+        sidebar={Sidebar}
+        onPageResize={(_, { mobileView, windowSize }) => this.onPageResize({ mobileView, windowSize })}
+      >
         <MessageCenter drawerTitle="Message Center" />
         <PageSection className={flexBoxColumnStyle} variant="light">
           <RenderPage isGraph={this.isGraph()} />

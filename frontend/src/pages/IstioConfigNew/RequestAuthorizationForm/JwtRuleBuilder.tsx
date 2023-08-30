@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { JWTHeader, JWTRule } from '../../../types/IstioObjects';
-import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
+import { cellWidth, ICell } from '@patternfly/react-table';
+import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
 import { Button, ButtonVariant, FormSelect, FormSelectOption } from '@patternfly/react-core';
 import { PlusCircleIcon } from '@patternfly/react-icons';
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
@@ -101,13 +102,13 @@ export class JwtRuleBuilder extends React.Component<Props, State> {
     };
   }
 
-  onAddJwtField = (value: string, _) => {
+  onAddJwtField = (_event, value: string) => {
     this.setState({
       newJwtField: value
     });
   };
 
-  onAddNewValues = (value: string, _) => {
+  onAddNewValues = (_event, value: string) => {
     this.setState({
       newValues: value
     });

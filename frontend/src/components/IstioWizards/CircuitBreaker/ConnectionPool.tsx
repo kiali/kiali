@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { FormGroup, Switch, TextInput } from '@patternfly/react-core';
+import { FormGroup, FormHelperText, HelperText, HelperTextItem, Switch, TextInput } from '@patternfly/react-core';
 import { ConnectionPoolSettings } from '../../../types/IstioObjects';
 import { CONNECTION_POOL_TOOLTIP, wizardTooltip } from '../WizardHelp';
 
@@ -24,16 +24,12 @@ export class ConnectionPool extends React.Component<Props> {
           <span>{wizardTooltip(CONNECTION_POOL_TOOLTIP)}</span>
         </FormGroup>
         {this.props.isConnectionPool && (
-          <FormGroup
-            label="Max Connections"
-            fieldId="maxConnections"
-            helperText="Maximum number of HTTP1 /TCP connections to a destination host"
-          >
+          <FormGroup label="Max Connections" fieldId="maxConnections">
             <TextInput
               value={this.props.connectionPool.tcp?.maxConnections}
               id="maxConnections"
               name="maxConnections"
-              onChange={value => {
+              onChange={(_event, value) => {
                 let newValue = Number(value || 0);
                 newValue = Number.isNaN(newValue) ? 0 : newValue;
                 const cp = this.props.connectionPool;
@@ -44,19 +40,20 @@ export class ConnectionPool extends React.Component<Props> {
                 this.props.onConnectionPool(this.props.isConnectionPool, cp);
               }}
             />
+            <FormHelperText>
+              <HelperText>
+                <HelperTextItem>Maximum number of HTTP1 /TCP connections to a destination host</HelperTextItem>
+              </HelperText>
+            </FormHelperText>
           </FormGroup>
         )}
         {this.props.isConnectionPool && (
-          <FormGroup
-            label="HTTP1 Max Pending Requests"
-            fieldId="http1MaxPendingRequests"
-            helperText="Maximum number of pending HTTP requests to a destination."
-          >
+          <FormGroup label="HTTP1 Max Pending Requests" fieldId="http1MaxPendingRequests">
             <TextInput
               value={this.props.connectionPool.http?.http1MaxPendingRequests}
               id="http1MaxPendingRequests"
               name="http1MaxPendingRequests"
-              onChange={value => {
+              onChange={(_event, value) => {
                 let newValue = Number(value || 0);
                 newValue = Number.isNaN(newValue) ? 0 : newValue;
                 const cp = this.props.connectionPool;
@@ -67,6 +64,11 @@ export class ConnectionPool extends React.Component<Props> {
                 this.props.onConnectionPool(this.props.isConnectionPool, cp);
               }}
             />
+            <FormHelperText>
+              <HelperText>
+                <HelperTextItem>Maximum number of pending HTTP requests to a destination.</HelperTextItem>
+              </HelperText>
+            </FormHelperText>
           </FormGroup>
         )}
       </>

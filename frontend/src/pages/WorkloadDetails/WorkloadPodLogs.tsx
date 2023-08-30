@@ -15,13 +15,15 @@ import {
   TooltipPosition,
   Form,
   FormGroup,
+  Checkbox
+} from '@patternfly/react-core';
+import {
   Dropdown,
   DropdownItem,
   KebabToggle,
   DropdownGroup,
-  DropdownSeparator,
-  Checkbox
-} from '@patternfly/react-core';
+  DropdownSeparator
+} from '@patternfly/react-core/deprecated';
 import memoize from 'micro-memoize';
 import { AutoSizer, List } from 'react-virtualized';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -145,6 +147,7 @@ const alInfoIcon = kialiStyle({
 
 const infoIcons = kialiStyle({
   marginLeft: '0.5em',
+  marginTop: '30%',
   width: '24px'
 });
 
@@ -169,7 +172,7 @@ const logsDisplay = kialiStyle({
 // For some reason checkbox as a ToolbarItem needs to be tweaked
 const toolbarInputStyle = kialiStyle({
   $nest: {
-    '&.pf-c-check input[type=checkbox]': {
+    '&.pf-v5-c-check input[type=checkbox]': {
       marginTop: '2px'
     }
   }
@@ -300,7 +303,9 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                     {this.state.showToolbar && (
                       <Toolbar style={{ padding: 0, width: '100%' }}>
                         <ToolbarGroup style={{ margin: 0, marginRight: '5px' }}>
-                          <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
+                          <ToolbarItem>
+                            <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} style={{marginTop: '30%'}}/>
+                          </ToolbarItem>
                           <ToolbarItem>
                             <ToolbarDropdown
                               id={'wpl_pods'}
@@ -320,7 +325,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                               autoComplete="on"
                               type="text"
                               onKeyPress={this.checkSubmitShow}
-                              onChange={this.updateShow}
+                              onChange={(_event, val) => this.updateShow(val)}
                               defaultValue={this.state.showLogValue}
                               aria-label="show log text"
                               placeholder="Show..."
@@ -340,7 +345,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                               autoComplete="on"
                               type="text"
                               onKeyPress={this.checkSubmitHide}
-                              onChange={this.updateHide}
+                              onChange={(_event, val) => this.updateHide(val)}
                               defaultValue={this.state.hideLogValue}
                               aria-label="hide log text"
                               placeholder="Hide..."
@@ -354,15 +359,17 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                             )}
                             {this.state.showError && <div style={{ color: 'red' }}>{this.state.showError}</div>}
                             {this.state.hideError && <div style={{ color: 'red' }}>{this.state.hideError}</div>}
-                            <Tooltip
-                              key="show_hide_log_help"
-                              position="top"
-                              content="Show only, or Hide all, matching log entries. Match by case-sensitive substring (default) or regular expression (as set in the kebab menu)."
-                            >
-                              <KialiIcon.Info className={infoIcons} />
-                            </Tooltip>
+                            <ToolbarItem>
+                              <Tooltip
+                                key="show_hide_log_help"
+                                position="top"
+                                content="Show only, or Hide all, matching log entries. Match by case-sensitive substring (default) or regular expression (as set in the kebab menu)."
+                              >
+                                <KialiIcon.Info className={infoIcons} />
+                              </Tooltip>
+                            </ToolbarItem>
                           </ToolbarItem>
-                          <ToolbarItem>
+                          <ToolbarItem style={{marginTop: '10px'}}>
                             <Checkbox
                               className={toolbarInputStyle}
                               id="log-spans"
@@ -377,7 +384,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                                   spans
                                 </span>
                               }
-                              onChange={checked => this.toggleSpans(checked)}
+                              onChange={(_event, checked) => this.toggleSpans(checked)}
                             />
                           </ToolbarItem>
                           <ToolbarItem style={{ marginLeft: 'auto' }}>
@@ -657,7 +664,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             <ToolbarItem>
               <Dropdown
                 style={{ width: '20px' }}
-                toggle={<KebabToggle onToggle={this.setKebabOpen} />}
+                toggle={<KebabToggle onToggle={(_event, kebabOpen: boolean) => this.setKebabOpen(kebabOpen)} />}
                 dropdownItems={kebabActions}
                 isPlain
                 isOpen={this.state.kebabOpen}

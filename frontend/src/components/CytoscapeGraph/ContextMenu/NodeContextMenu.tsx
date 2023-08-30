@@ -280,7 +280,7 @@ export function NodeContextMenuComponent(props: Props) {
           <hr className={hrStyle} />
           <div className={contextMenuSubTitle}>Actions</div>
           <div className={contextMenuItem}>
-            <Spinner isSVG={true} size="md" aria-label="Loading actions..." />
+            <Spinner size="md" aria-label="Loading actions..." />
           </div>
         </>
       );

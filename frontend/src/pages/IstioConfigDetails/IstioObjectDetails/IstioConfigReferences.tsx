@@ -47,25 +47,25 @@ export class IstioConfigReferences extends React.Component<IstioConfigReferences
           <StackItem>No references found for this object.</StackItem>
         )}
         {this.serviceReferencesExists() &&
-          this.props.serviceReferences.map(reference => {
+          this.props.serviceReferences.map((reference, sRef) => {
             return (
-              <StackItem>
+              <StackItem key={`serviceReferenceExist_${sRef}`}>
                 <ServiceLink name={reference.name} namespace={reference.namespace} cluster={this.props.cluster} />
               </StackItem>
             );
           })}
         {this.workloadReferencesExists() &&
-          this.props.workloadReferences.map(reference => {
+          this.props.workloadReferences.map((reference, wRef) => {
             return (
-              <StackItem>
+              <StackItem key={`workloadReferenceExist_${wRef}`}>
                 <WorkloadLink name={reference.name} namespace={reference.namespace} cluster={this.props.cluster} />
               </StackItem>
             );
           })}
         {this.objectReferencesExists() &&
-          this.props.objectReferences.map(reference => {
+          this.props.objectReferences.map((reference, iRef) => {
             return (
-              <StackItem>
+              <StackItem key={`objectReferenceExist_${iRef}`}>
                 <ReferenceIstioObjectLink
                   name={reference.name}
                   namespace={reference.namespace}

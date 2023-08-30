@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Select, SelectOptionObject, SelectProps } from '@patternfly/react-core';
+import { Select, SelectOptionObject, SelectProps } from '@patternfly/react-core/deprecated';
 
 type Props = Omit<Omit<Omit<SelectProps, 'isOpen'>, 'onSelect'>, 'onToggle'> & {
   onSelect?: (selection: string | SelectOptionObject) => void;
@@ -11,7 +11,7 @@ export const SimplerSelect = (props: Props) => {
   return (
     <Select
       {...props}
-      onToggle={isOpen => {
+      onToggle={(_event, isOpen) => {
         if (props.onToggle) {
           props.onToggle(isOpen);
         }

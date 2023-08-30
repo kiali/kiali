@@ -85,6 +85,17 @@ export function colExists(colName: string, exists: boolean) {
   return cy.get(`th[data-label="${colName}"]`).should(exists ? 'exist' : 'not.exist');
 }
 
+// hasAtLeastOneClass will check if the element has that class/classes.
+// This func makes a couple assumptions:
+//
+// 1. The classes expected
+export const hasAtLeastOneClass = (expectedClasses) => {
+  return ($el) => {
+    const classList = Array.from($el[0].classList); 
+    return expectedClasses.some(expectedClass => classList.includes(expectedClass));
+  }
+}
+
 // getColWithRowText will find the column matching the unique row text and column header name.
 // This func makes a couple assumptions:
 //
@@ -160,7 +171,7 @@ When('user clicks in the {string} table {string} badge {string} name row link', 
       break;
   }
   cy.get('table[aria-label="' + tableId + '"]').within(() => {
-    cy.contains('span', badge).siblings().first().click();
+    cy.contains('div', badge).siblings().first().click();
   });
 });
 
@@ -183,7 +194,7 @@ export function checkHealthIndicatorInTable(
   const selector = targetType
     ? `${targetNamespace}_${targetType}_${targetRowItemName}`
     : `${targetNamespace}_${targetRowItemName}`;
-  cy.get(`[data-test=VirtualItem_Ns${selector}] svg[class=icon-${healthStatus}]`).should('exist');
+  cy.get(`tr[data-test=VirtualItem_Ns${selector}]`).find('span').filter(`.icon-${healthStatus}`).should('exist');
 }
 
 export function checkHealthStatusInTable(
@@ -195,6 +206,6 @@ export function checkHealthStatusInTable(
   const selector = targetType
     ? `${targetNamespace}_${targetType}_${targetRowItemName}`
     : `${targetNamespace}_${targetRowItemName}`;
-  cy.get(`[data-test=VirtualItem_Ns${selector}] td:first-child span`).trigger('mouseenter');
+  cy.get(`[data-test=VirtualItem_Ns${selector}] td:first-child span[class=pf-v5-c-icon__content]`).trigger('mouseenter');
   cy.get(`[aria-label='Health indicator'] strong`).should('contain.text', healthStatus);
 }

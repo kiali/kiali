@@ -23,7 +23,13 @@ import { Reporter } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { KialiIcon } from 'config/KialiIcon';
 import { decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
-import { Dropdown, DropdownPosition, DropdownItem, KebabToggle, DropdownGroup } from '@patternfly/react-core';
+import {
+  Dropdown,
+  DropdownPosition,
+  DropdownItem,
+  KebabToggle,
+  DropdownGroup
+} from '@patternfly/react-core/deprecated';
 import { getOptions, clickHandler } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { edgesIn, edgesOut, select, selectAnd, selectOr } from 'pages/GraphPF/GraphPFElems';
@@ -33,10 +39,10 @@ import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelSty
 
 const summaryAppBoxActionsStyle = kialiStyle({
   $nest: {
-    '& .pf-c-dropdown__toggle': {
+    '& .pf-v5-c-dropdown__toggle': {
       fontSize: 'var(--graph-side-panel--font-size)'
     },
-    '& .pf-c-dropdown__menu-item': {
+    '& .pf-v5-c-dropdown__menu-item': {
       fontSize: 'var(--graph-side-panel--font-size)'
     }
   }
@@ -183,7 +189,12 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
                 isPlain={true}
                 position={DropdownPosition.right}
                 style={{ float: 'right' }}
-                toggle={<KebabToggle id="summary-appbox-kebab" onToggle={this.onToggleActions} />}
+                toggle={
+                  <KebabToggle
+                    id="summary-appbox-kebab"
+                    onToggle={(_event, isExpanded) => this.onToggleActions(isExpanded)}
+                  />
+                }
               />
             )}
             {renderBadgedLink(nodeData)}

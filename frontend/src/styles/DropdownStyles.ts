@@ -6,18 +6,18 @@ export const containerStyle = kialiStyle({
   overflow: 'auto'
 });
 
-// this emulates Select component .pf-c-select__menu
+// this emulates Select component .pf-v5-c-select__menu
 export const menuStyle = kialiStyle({
   fontSize: 'var(--kiali-global--font-size)'
 });
 
-// this emulates Select component .pf-c-select__menu but w/o cursor manipulation
+// this emulates Select component .pf-v5-c-select__menu but w/o cursor manipulation
 export const menuEntryStyle = kialiStyle({
   display: 'inline-block',
   width: '100%'
 });
 
-// this emulates Select component .pf-c-select__menu-group-title but with less bottom padding to conserve space
+// this emulates Select component .pf-v5-c-select__menu-group-title but with less bottom padding to conserve space
 export const titleStyle = kialiStyle({
   padding: '8px 16px 2px 16px',
   fontWeight: 700,
@@ -31,19 +31,19 @@ const itemStyle: NestedCSSProperties = {
   padding: '6px 16px',
   display: 'inline-block',
   $nest: {
-    '& > div > input.pf-c-radio__input': {
+    '& > div > input.pf-v5-c-radio__input': {
       margin: '1px 0 0 0'
     },
-    '& > div > input.pf-c-check__input': {
+    '& > div > input.pf-v5-c-check__input': {
       margin: '1px 0 0 0'
     }
   }
 };
 
-// this emulates Select component .pf-c-select__menu-item but with less vertical padding to conserve space
+// this emulates Select component .pf-v5-c-select__menu-item but with less vertical padding to conserve space
 export const itemStyleWithoutInfo = kialiStyle(itemStyle);
 
-// this emulates Select component .pf-c-select__menu-item but with less vertical padding to conserve space
+// this emulates Select component .pf-v5-c-select__menu-item but with less vertical padding to conserve space
 export const itemStyleWithInfo = kialiStyle({
   ...itemStyle,
   padding: '6px 0px 6px 16px'

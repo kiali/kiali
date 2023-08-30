@@ -116,23 +116,23 @@ When('I fetch the overview of the cluster', function () {
 });
 
 Then(`user sees the {string} namespace card`, (ns: string) => {
-  cy.get(`article[data-test^="${ns}"]`);
+  cy.get(`div[data-test^="${ns}"]`);
 });
 
 Then(`user sees the {string} namespace card in cluster {string}`, (ns: string, cluster: string) => {
   // TODO: Incorporate cluster into existing namespace checks with cluster+ns as data-test-id.
-  cy.get(`article[data-test^="${ns}"]`).contains(cluster).should('exist').and('length', 1);
+  cy.get(`div[data-test^="${ns}"]`).contains(cluster).should('exist').and('length', 1);
 });
 
 Then(`user doesn't see the {string} namespace card`, ns => {
-  cy.get('article[data-test^="' + ns + '"]').should('not.exist');
+  cy.get('div[data-test^="' + ns + '"]').should('not.exist');
 });
 
 Then(`user sees a {string} {string} namespace`, (view, ns: string) => {
   if (view === 'LIST') {
     cy.get('td[role="gridcell"]').contains(ns);
   } else {
-    cy.get('article[data-test="' + ns + '-' + view + '"]');
+    cy.get('div[data-test="' + ns + '-' + view + '"]');
   }
 });
 
@@ -149,12 +149,12 @@ Then(`user sees the {string} namespace with {string}`, (ns, type) => {
       innerType = 'service';
       break;
   }
-  cy.get('article[data-test^="' + ns + '"]').find('[data-test="overview-type-' + innerType + '"]');
+  cy.get('div[data-test^="' + ns + '"]').find('[data-test="overview-type-' + innerType + '"]');
 });
 
 Then(`user sees the {string} namespace list`, (nslist: string) => {
   const nss = nslist.split(',');
-  cy.get('article')
+  cy.get('div[data-ouia-component-type="PF5/Card"]')
     .should('have.length', nss.length)
     .each(($a, i) => {
       expect($a.attr('data-test')).includes(nss[i]);
@@ -162,7 +162,7 @@ Then(`user sees the {string} namespace list`, (nslist: string) => {
 });
 
 Then(`user sees the {string} namespace with {string} traffic {string}`, (ns, direction, duration) => {
-  cy.get('article[data-test^="' + ns + '"]').find(
+  cy.get('div[data-test^="' + ns + '"]').find(
     'div[data-test="sparkline-' + direction + '-duration-' + duration + '"]'
   );
 });
@@ -177,8 +177,8 @@ And('user sees the cpu chart', () => {
 
 Then('there should be a {string} application indicator in the namespace', function (healthStatus: string) {
   cy.get(
-    `[data-test=${this.targetNamespace}-EXPAND] [data-test=overview-app-health] svg[class=icon-${healthStatus}]`
-  ).should('exist');
+    `[data-test=${this.targetNamespace}-EXPAND] [data-test=overview-app-health]`).find('span').filter(`.icon-${healthStatus}`)
+  .should('exist');
 });
 
 Then('the {string} application indicator should list the application', function (healthStatus: string) {
@@ -188,11 +188,11 @@ Then('the {string} application indicator should list the application', function 
   }
 
   cy.get(
-    `[data-test=${this.targetNamespace}-EXPAND] [data-test=overview-app-health] svg[class=icon-${healthStatus}]`
-  ).trigger('mouseenter');
+    `[data-test=${this.targetNamespace}-EXPAND] [data-test=overview-app-health]`).find('span').filter(`.icon-${healthStatus}`)
+  .trigger('mouseenter');
   cy.get(
-    `[aria-label='Overview status'] [data-test=${this.targetNamespace}-${healthIndicatorStatusKey}-${this.targetApp}] svg[class=icon-${healthStatus}]`
-  ).should('exist');
+    `[aria-label='Overview status'] [data-test=${this.targetNamespace}-${healthIndicatorStatusKey}-${this.targetApp}]`).find('span').filter(`.icon-${healthStatus}`)
+    .should('exist');
   cy.get(
     `[aria-label='Overview status'] [data-test=${this.targetNamespace}-${healthIndicatorStatusKey}-${this.targetApp}]`
   ).should('contain.text', this.targetApp);
@@ -205,7 +205,7 @@ When('user hovers over the MinTLS locker', view => {
 
 Then('the toggle on the right side of the {string} namespace card exists', (ns: string) => {
   ensureKialiFinishedLoading();
-  cy.get('article[data-test^="' + ns + '"]').should('exist');
+  cy.get('div[data-test^="' + ns + '"]').should('exist');
 });
 
 Then('the user sees the certificates information', view => {
@@ -228,7 +228,7 @@ Then('the user sees information related to canary upgrades', view => {
 
 And('user sees the {string} label in the {string} namespace card', (label: string, ns: string) => {
   cy.log(label);
-  cy.get('article[data-test^="' + ns + '"]')
+  cy.get('div[data-test^="' + ns + '"]')
     .contains(label)
     .should('be.visible');
 });

@@ -7,12 +7,9 @@ exports[`IstioComponentStatus renders error icon when core component is not foun
 >
   <SplitItem>
     <ExclamationCircleIcon
-      color="currentColor"
-      noVerticalAlign={false}
-      size="sm"
       style={
         Object {
-          "color": "var(--pf-global--danger-color--100)",
+          "color": "var(--pf-v5-global--danger-color--100)",
           "marginTop": 5,
         }
       }
@@ -36,12 +33,9 @@ exports[`IstioComponentStatus renders error icon when core component is not runn
 >
   <SplitItem>
     <ExclamationCircleIcon
-      color="currentColor"
-      noVerticalAlign={false}
-      size="sm"
       style={
         Object {
-          "color": "var(--pf-global--danger-color--100)",
+          "color": "var(--pf-v5-global--danger-color--100)",
           "marginTop": 5,
         }
       }
@@ -65,12 +59,9 @@ exports[`IstioComponentStatus renders minus icon when addon component is not rea
 >
   <SplitItem>
     <MinusCircleIcon
-      color="currentColor"
-      noVerticalAlign={false}
-      size="sm"
       style={
         Object {
-          "color": "var(--pf-global--info-color--100)",
+          "color": "var(--pf-v5-global--info-color--100)",
           "marginTop": 5,
         }
       }
@@ -94,12 +85,9 @@ exports[`IstioComponentStatus renders minus icon when core component is not read
 >
   <SplitItem>
     <MinusCircleIcon
-      color="currentColor"
-      noVerticalAlign={false}
-      size="sm"
       style={
         Object {
-          "color": "var(--pf-global--info-color--100)",
+          "color": "var(--pf-v5-global--info-color--100)",
           "marginTop": 5,
         }
       }
@@ -123,12 +111,9 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
 >
   <SplitItem>
     <CheckCircleIcon
-      color="currentColor"
-      noVerticalAlign={false}
-      size="sm"
       style={
         Object {
-          "color": "var(--pf-global--success-color--100)",
+          "color": "var(--pf-v5-global--success-color--100)",
           "marginTop": 5,
         }
       }
@@ -150,12 +135,9 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
 >
   <SplitItem>
     <CheckCircleIcon
-      color="currentColor"
-      noVerticalAlign={false}
-      size="sm"
       style={
         Object {
-          "color": "var(--pf-global--success-color--100)",
+          "color": "var(--pf-v5-global--success-color--100)",
           "marginTop": 5,
         }
       }
@@ -177,12 +159,9 @@ exports[`IstioComponentStatus renders warning icon when core component is not fo
 >
   <SplitItem>
     <ExclamationTriangleIcon
-      color="currentColor"
-      noVerticalAlign={false}
-      size="sm"
       style={
         Object {
-          "color": "var(--pf-global--warning-color--100)",
+          "color": "var(--pf-v5-global--warning-color--100)",
           "marginTop": 5,
         }
       }
@@ -206,12 +185,9 @@ exports[`IstioComponentStatus renders warning icon when core component is not ru
 >
   <SplitItem>
     <ExclamationTriangleIcon
-      color="currentColor"
-      noVerticalAlign={false}
-      size="sm"
       style={
         Object {
-          "color": "var(--pf-global--warning-color--100)",
+          "color": "var(--pf-v5-global--warning-color--100)",
           "marginTop": 5,
         }
       }

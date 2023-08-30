@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Checkbox, Dropdown, DropdownToggle, Radio, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Checkbox, Radio, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Dropdown, DropdownToggle } from '@patternfly/react-core/deprecated';
 import { infoStyle, itemStyleWithoutInfo, menuStyle, titleStyle } from 'styles/DropdownStyles';
 import { HistoryManager, URLParam } from 'app/History';
 import { KialiIcon } from 'config/KialiIcon';
@@ -88,7 +89,11 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
     return (
       <Dropdown
         toggle={
-          <DropdownToggle id={'traces-display-settings'} isDisabled={this.props.disabled} onToggle={this.onToggle}>
+          <DropdownToggle
+            id={'traces-display-settings'}
+            isDisabled={this.props.disabled}
+            onToggle={(_event, isOpen) => this.onToggle(isOpen)}
+          >
             Display
           </DropdownToggle>
         }
@@ -138,7 +143,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
                   name={'percentiles' + item.id}
                   isChecked={item.id === this.state.percentile || (item.id === 'all' && !this.state.percentile)}
                   label={label}
-                  onChange={checked => this.onPercentileChanged(item.id, checked)}
+                  onChange={(_event, checked) => this.onPercentileChanged(item.id, checked)}
                   value={item.id}
                 />
               </label>
@@ -153,7 +158,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
               name="errors-only"
               isChecked={this.state.errorsOnly}
               label="Show only traces with errors"
-              onChange={this.onErrorsOnlyChanged}
+              onChange={(_event, checked: boolean) => this.onErrorsOnlyChanged(checked)}
               value="errors-only"
             />
           </label>
@@ -187,7 +192,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
                 name={'limit-' + limit}
                 isChecked={this.state.limit === limit}
                 label={String(limit)}
-                onChange={checked => this.onLimitChanged(limit, checked)}
+                onChange={(_event, checked) => this.onLimitChanged(limit, checked)}
                 value={String(limit)}
               />
             </label>

@@ -3,7 +3,7 @@ import { Provider } from 'react-redux';
 import { mount, shallow } from 'enzyme';
 import screenfull, { Screenfull } from 'screenfull';
 import { WorkloadPodLogsComponent } from '../WorkloadPodLogs';
-import { Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core';
+import { Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core/deprecated';
 import { store } from '../../../store/ConfigStore';
 
 const defaultProps = () => ({

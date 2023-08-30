@@ -8,12 +8,12 @@ import { kialiStyle } from 'styles/StyleUtils';
 
 /**
  * PF4 adds a wrapper for the label content
- * And the label color is override by .pf-c-label__content
+ * And the label color is override by .pf-v5-c-label__content
  * And there are not styles with the color white
  */
 const whiteLabelStyle = kialiStyle({
   $nest: {
-    '& > .pf-c-label__content': {
+    '& > .pf-v5-c-label__content': {
       color: PFColors.Color100
     }
   }

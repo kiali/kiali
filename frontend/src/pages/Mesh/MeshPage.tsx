@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { EmptyState, EmptyStateBody, EmptyStateVariant, Title, TitleSizes, Tooltip } from '@patternfly/react-core';
+import { EmptyState, EmptyStateBody, EmptyStateVariant, Tooltip, EmptyStateHeader } from '@patternfly/react-core';
 import { StarIcon } from '@patternfly/react-icons';
-import { cellWidth, sortable, SortByDirection, Table, TableBody, TableHeader } from '@patternfly/react-table';
+import { cellWidth, sortable, SortByDirection } from '@patternfly/react-table';
+import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
 import { kialiStyle } from 'styles/StyleUtils';
 
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
@@ -128,9 +129,7 @@ export const MeshPage: React.FunctionComponent = () => {
           </Table>
           {clusterRows.length === 0 ? (
             <EmptyState variant={EmptyStateVariant.full}>
-              <Title headingLevel="h2" size={TitleSizes.lg}>
-                No Clusters
-              </Title>
+              <EmptyStateHeader titleText="No Clusters" headingLevel="h2" />
               <EmptyStateBody>No clusters were discovered in your mesh.</EmptyStateBody>
             </EmptyState>
           ) : null}

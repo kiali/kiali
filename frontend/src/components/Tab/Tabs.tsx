@@ -26,6 +26,8 @@ const tabStyle = kialiStyle({
   backgroundColor: PFColors.BackgroundColor100
 });
 
+type TabElement = React.ReactElement<TabProps, React.JSXElementConstructor<TabProps>>;
+
 export class ParameterizedTabs extends React.Component<TabsProps> {
   private indexMap: { [key: number]: string };
   private tabLinks: { [key: number]: string };
@@ -113,7 +115,9 @@ export class ParameterizedTabs extends React.Component<TabsProps> {
         mountOnEnter={this.props.mountOnEnter === undefined ? true : this.props.mountOnEnter}
         unmountOnExit={this.props.unmountOnExit === undefined ? true : this.props.unmountOnExit}
       >
-        {this.props.children}
+        {!Array.isArray(this.props.children)
+          ? (this.props.children as TabElement)
+          : this.props.children.map(child => child)}
       </Tabs>
     );
   }

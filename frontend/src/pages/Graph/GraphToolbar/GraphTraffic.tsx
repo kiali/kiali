@@ -1,4 +1,5 @@
-import { Radio, Dropdown, DropdownToggle, Checkbox, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Radio, Checkbox, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Dropdown, DropdownToggle } from '@patternfly/react-core/deprecated';
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { KialiDispatch } from 'types/Redux';
@@ -62,7 +63,11 @@ class GraphTrafficComponent extends React.PureComponent<GraphTrafficProps, Graph
     return (
       <Dropdown
         toggle={
-          <DropdownToggle id="graph-traffic-dropdown" isDisabled={this.props.disabled} onToggle={this.onToggle}>
+          <DropdownToggle
+            id="graph-traffic-dropdown"
+            isDisabled={this.props.disabled}
+            onToggle={(_event, isOpen) => this.onToggle(isOpen)}
+          >
             Traffic
           </DropdownToggle>
         }
@@ -209,7 +214,7 @@ class GraphTrafficComponent extends React.PureComponent<GraphTrafficProps, Graph
                   isChecked={trafficRateOption.isChecked}
                   isDisabled={this.props.disabled}
                   label={trafficRateOption.labelText}
-                  onChange={this.toggleTrafficRate}
+                  onChange={(event, _) => this.toggleTrafficRate(_, event)}
                   value={trafficRateOption.id}
                 />
               </label>
@@ -238,7 +243,7 @@ class GraphTrafficComponent extends React.PureComponent<GraphTrafficProps, Graph
                           isChecked={grpcOption.isChecked}
                           isDisabled={this.props.disabled}
                           label={grpcOption.labelText}
-                          onChange={this.toggleTrafficRateGrpc}
+                          onChange={(event, _) => this.toggleTrafficRateGrpc(_, event)}
                           value={grpcOption.id}
                         />
                       </label>
@@ -271,7 +276,7 @@ class GraphTrafficComponent extends React.PureComponent<GraphTrafficProps, Graph
                           isChecked={httpOption.isChecked}
                           isDisabled={this.props.disabled}
                           label={httpOption.labelText}
-                          onChange={this.toggleTrafficRateHttp}
+                          onChange={(event, _) => this.toggleTrafficRateHttp(_, event)}
                           value={httpOption.id}
                         />
                       </label>
@@ -304,7 +309,7 @@ class GraphTrafficComponent extends React.PureComponent<GraphTrafficProps, Graph
                           isChecked={tcpOption.isChecked}
                           isDisabled={this.props.disabled}
                           label={tcpOption.labelText}
-                          onChange={this.toggleTrafficRateTcp}
+                          onChange={(event, _) => this.toggleTrafficRateTcp(_, event)}
                           value={tcpOption.id}
                         />
                       </label>

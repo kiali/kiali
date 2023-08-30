@@ -1,5 +1,17 @@
 import * as React from 'react';
-import { Button, Tooltip, ButtonVariant, TextInput, Form } from '@patternfly/react-core';
+import {
+  Button,
+  ButtonVariant,
+  TextInput,
+  Tooltip,
+  Form,
+  FormHelperText,
+  Grid,
+  HelperText,
+  HelperTextItem,
+  FormGroup,
+  GridItem
+} from '@patternfly/react-core';
 import { Controller, Graph, GraphElement } from '@patternfly/react-topology';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
@@ -88,8 +100,7 @@ const buttonClearStyle = kialiStyle({
   minWidth: '20px',
   width: '20px',
   paddingLeft: '5px',
-  paddingRight: '5px',
-  bottom: '0.5px'
+  paddingRight: '5px'
 });
 
 const operands: string[] = [
@@ -275,81 +286,111 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
   render() {
     return (
       <TourStop info={GraphTourStops.Find}>
-        <Form style={{ float: 'left' }} isHorizontal={true}>
-          <span className={thinGroupStyle}>
-            <TextInput
-              id="graph_find"
-              name="graph_find"
-              ref={ref => {
-                this.findInputRef = ref;
-              }}
-              style={{ ...inputWidth }}
-              type="text"
-              autoComplete="on"
-              validated={isValid(this.state.findInputValue ? !this.state.findError : undefined)}
-              onChange={this.updateFind}
-              defaultValue={this.state.findInputValue}
-              onKeyDownCapture={this.checkSpecialKeyFind}
-              placeholder="Find..."
-            />
-            <GraphFindOptions kind="find" onSelect={this.updateFindOption} />
-            {this.props.findValue && (
-              <Tooltip key="ot_clear_find" position="top" content="Clear Find...">
-                <Button className={buttonClearStyle} variant={ButtonVariant.control} onClick={() => this.setFind('')}>
-                  <KialiIcon.Close />
-                </Button>
-              </Tooltip>
-            )}
-            <TextInput
-              id="graph_hide"
-              name="graph_hide"
-              ref={ref => {
-                this.hideInputRef = ref;
-              }}
-              style={{ ...inputWidth }}
-              autoComplete="on"
-              validated={isValid(this.state.hideInputValue ? !this.state.hideError : undefined)}
-              type="text"
-              onChange={this.updateHide}
-              defaultValue={this.state.hideInputValue}
-              onKeyDownCapture={this.checkSpecialKeyHide}
-              placeholder="Hide..."
-            />
-            <GraphFindOptions kind="hide" onSelect={this.updateHideOption} />
-            {this.props.hideValue && (
-              <Tooltip key="ot_clear_hide" position="top" content="Clear Hide...">
-                <Button className={buttonClearStyle} variant={ButtonVariant.control} onClick={() => this.setHide('')}>
-                  <KialiIcon.Close />
-                </Button>
-              </Tooltip>
-            )}
-            {this.props.showFindHelp ? (
-              <GraphHelpFind onClose={this.toggleFindHelp}>
-                <Button
-                  data-test="graph-find-hide-help-button"
-                  variant={ButtonVariant.link}
-                  style={{ paddingLeft: '6px' }}
-                  onClick={this.toggleFindHelp}
-                >
-                  <KialiIcon.Info className={defaultIconStyle} />
-                </Button>
-              </GraphHelpFind>
-            ) : (
-              <Tooltip key={'ot_graph_find_help'} position="top" content="Find/Hide Help...">
-                <Button
-                  data-test="graph-find-hide-help-button"
-                  variant={ButtonVariant.link}
-                  style={{ paddingLeft: '6px' }}
-                  onClick={this.toggleFindHelp}
-                >
-                  <KialiIcon.Info className={defaultIconStyle} />
-                </Button>
-              </Tooltip>
-            )}
-            {this.state.findError && <div style={{ color: 'red' }}>{this.state.findError}</div>}
-            {this.state.hideError && <div style={{ color: 'red' }}>{this.state.hideError}</div>}
-          </span>
+        <Form className={thinGroupStyle}>
+          <Grid md={12}>
+            <GridItem span={5}>
+              <FormGroup>
+                <TextInput
+                  id="graph_find"
+                  name="graph_find"
+                  ref={ref => {
+                    this.findInputRef = ref;
+                  }}
+                  style={{ ...inputWidth }}
+                  type="text"
+                  autoComplete="on"
+                  validated={isValid(this.state.findInputValue ? !this.state.findError : undefined)}
+                  onChange={(_event, val) => this.updateFind(val)}
+                  defaultValue={this.state.findInputValue}
+                  onKeyDownCapture={this.checkSpecialKeyFind}
+                  placeholder="Find..."
+                />
+                {this.state.findError && (
+                  <FormHelperText>
+                    <HelperText>
+                      <HelperTextItem variant={'error'}>{this.state.findError}</HelperTextItem>
+                    </HelperText>
+                  </FormHelperText>
+                )}
+              </FormGroup>
+            </GridItem>
+            <GridItem span={1}>
+              <FormGroup>
+                <GraphFindOptions kind="find" onSelect={this.updateFindOption} />
+                {this.props.findValue && (
+                  <Tooltip key="ot_clear_find" position="top" content="Clear Find...">
+                    <Button
+                      className={buttonClearStyle}
+                      variant={ButtonVariant.control}
+                      onClick={() => this.setFind('')}
+                    >
+                      <KialiIcon.Close />
+                    </Button>
+                  </Tooltip>
+                )}
+              </FormGroup>
+            </GridItem>
+            <GridItem span={5}>
+              <FormGroup>
+                <TextInput
+                  id="graph_hide"
+                  name="graph_hide"
+                  ref={ref => {
+                    this.hideInputRef = ref;
+                  }}
+                  style={{ ...inputWidth }}
+                  autoComplete="on"
+                  validated={isValid(this.state.hideInputValue ? !this.state.hideError : undefined)}
+                  type="text"
+                  onChange={(_event, val) => this.updateHide(val)}
+                  defaultValue={this.state.hideInputValue}
+                  onKeyDownCapture={this.checkSpecialKeyHide}
+                  placeholder="Hide..."
+                />
+                {this.state.hideError && (
+                  <FormHelperText>
+                    <HelperText>
+                      <HelperTextItem variant={'error'}>{this.state.hideError}</HelperTextItem>
+                    </HelperText>
+                  </FormHelperText>
+                )}
+              </FormGroup>
+            </GridItem>
+            <GridItem span={1}>
+              <GraphFindOptions kind="hide" onSelect={this.updateHideOption} />
+              {this.props.hideValue && (
+                <Tooltip key="ot_clear_hide" position="top" content="Clear Hide...">
+                  <Button className={buttonClearStyle} variant={ButtonVariant.control} onClick={() => this.setHide('')}>
+                    <KialiIcon.Close />
+                  </Button>
+                </Tooltip>
+              )}
+            </GridItem>
+          </Grid>
         </Form>
+        {this.props.showFindHelp ? (
+          <GraphHelpFind onClose={this.toggleFindHelp}>
+            <Button
+              data-test="graph-find-hide-help-button"
+              variant={ButtonVariant.link}
+              style={{ paddingLeft: '6px' }}
+              onClick={this.toggleFindHelp}
+            >
+              <KialiIcon.Info className={defaultIconStyle} />
+            </Button>
+          </GraphHelpFind>
+        ) : (
+          <Tooltip key={'ot_graph_find_help'} position="top" content="Find/Hide Help...">
+            <Button
+              data-test="graph-find-hide-help-button"
+              variant={ButtonVariant.link}
+              style={{ paddingLeft: '6px' }}
+              onClick={this.toggleFindHelp}
+            >
+              <KialiIcon.Info className={defaultIconStyle} />
+            </Button>
+          </Tooltip>
+        )}
       </TourStop>
     );
   }

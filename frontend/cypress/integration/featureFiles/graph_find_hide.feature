@@ -1,8 +1,10 @@
+@graph-page-find-hide
+# don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
-Feature: Kiali Graph page - Find/Hide 
+Feature: Kiali Graph page - Find/Hide
 
   User opens the Graph page and manipulates the "error-rates" demo.
-  The find/hide feature lets the user either highlight or hide nodes 
+  The find/hide feature lets the user either highlight or hide nodes
   on the graph that match the query expression. Some preset queries
   allow the user to easily get started using find/hide and a help
   section describes in more detail how to use find/hide.
@@ -12,34 +14,29 @@ Feature: Kiali Graph page - Find/Hide
     And user graphs "alpha,beta" namespaces
 
   @error-rates-app
-  @graph-page-find-hide
   Scenario: Find unhealthy workloads
     Then user sees nothing highlighted on the graph
     When user finds unhealthy workloads
     Then user sees unhealthy workloads highlighted on the graph
 
   @error-rates-app
-  @graph-page-find-hide
   Scenario: Hide unhealthy workloads
     When user hides unhealthy workloads
     Then user sees no unhealthy workloads on the graph
 
   @error-rates-app
-  @graph-page-find-hide
   Scenario: Use preset find option to filter workloads
     Then user sees preset find options
     When user selects the preset the find option "Find: unhealthy nodes"
     Then user sees unhealthy workloads highlighted on the graph
-  
+
   @error-rates-app
-  @graph-page-find-hide
   Scenario: Use preset hide option to filter workloads
     Then user sees preset hide options
     When user selects the preset hide option "Hide: healthy nodes"
     Then user sees no healthy workloads on the graph
 
   @error-rates-app
-  @graph-page-find-hide
   Scenario: Show Graph Find/Hide help menu
     When user seeks help for find and hide
     Then user sees the help menu
@@ -50,7 +47,6 @@ Feature: Kiali Graph page - Find/Hide
     And the help menu has info on "Usage Notes"
 
   @error-rates-app
-  @graph-page-find-hide
   Scenario: Filling the find form with nonsense
     When user fills "hello world" in find and submits
-    Then user sees the "Find: No valid operator found in expression" message 
+    Then user sees the "Find: No valid operator found in expression" message

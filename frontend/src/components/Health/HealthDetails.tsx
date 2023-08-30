@@ -3,7 +3,7 @@ import * as H from '../../types/Health';
 import { createIcon } from './Helper';
 import { InfoAltIcon } from '@patternfly/react-icons';
 import { PFColors } from '../Pf/PfColors';
-import { Title, TitleSizes } from '@patternfly/react-core';
+import { Icon, Title, TitleSizes } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 
 interface Props {
@@ -82,7 +82,11 @@ export class HealthDetails extends React.PureComponent<Props, {}> {
         {
           <>
             {item.title + (item.text && item.text.length > 0 ? ': ' : '')}{' '}
-            {config && <InfoAltIcon color={PFColors.Color200} />}
+            {config && (
+              <Icon color={PFColors.Color200}>
+                <InfoAltIcon />
+              </Icon>
+            )}
           </>
         }
         {item.text}

@@ -4,7 +4,7 @@ exports[`#LoginPage render correctly should render LoginPage 1`] = `
 <LoginPage
   brandImgAlt="Kiali logo"
   brandImgSrc="logo-alt.svg"
-  className="kiali_flcv218"
+  className="kiali_f25vqgy"
   footerListItems={
     <React.Fragment>
       <ListItem>
@@ -30,10 +30,7 @@ exports[`#LoginPage render correctly should render LoginPage 1`] = `
   <Form
     data-test="login-form"
   >
-    <FormHelperText
-      isError={false}
-      isHidden={false}
-    />
+    <FormHelperText />
     <FormGroup
       fieldId="token"
       isRequired={true}

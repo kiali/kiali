@@ -1,3 +1,6 @@
+@graph-context-menu
+# don't change first line of this file - the tag is used for the test scripts to identify the test suite
+
 Feature: Kiali Graph page - Context menu actions
 
   User opens the Graph page and opens the context menu of graph nodes.
@@ -5,7 +8,6 @@ Feature: Kiali Graph page - Context menu actions
   Background:
     Given user is at administrator perspective
 
-  @graph-page-context
   @bookinfo-app
   Scenario: Actions in context menu for service node with existing traffic routing
     When user graphs "bookinfo" namespaces
@@ -13,7 +15,6 @@ Feature: Kiali Graph page - Context menu actions
     And user clicks the "delete-traffic-routing" item of the context menu
     Then user should see the confirmation dialog to delete all traffic routing
 
-  @graph-page-context
   @bookinfo-app
   Scenario Outline: Ability to launch <action> wizard from graph context menu
     When user graphs "bookinfo" namespaces
@@ -22,9 +23,9 @@ Feature: Kiali Graph page - Context menu actions
     Then user should see the "<action>" wizard
 
     Examples:
-      | action                |
-      | traffic_shifting      |
-      | tcp_traffic_shifting  |
-      | request_routing       |
-      | fault_injection       |
-      | request_timeouts      |
+      | action               |
+      | traffic_shifting     |
+      | tcp_traffic_shifting |
+      | request_routing      |
+      | fault_injection      |
+      | request_timeouts     |

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { EmptyState, EmptyStateBody, EmptyStateVariant, Tab, Title, TitleSizes } from '@patternfly/react-core';
+import { EmptyState, EmptyStateBody, EmptyStateVariant, Tab, EmptyStateHeader } from '@patternfly/react-core';
 import * as API from '../../services/Api';
 import { Workload, WorkloadId } from '../../types/Workload';
 import { WorkloadInfo } from './WorkloadInfo';
@@ -179,9 +179,10 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
             />
           ) : (
             <EmptyState variant={EmptyStateVariant.full}>
-              <Title headingLevel="h5" size={TitleSizes.lg}>
-                No logs for Workload {this.props.workloadId.workload}
-              </Title>
+              <EmptyStateHeader
+                titleText={<>No logs for Workload{this.props.workloadId.workload}</>}
+                headingLevel="h5"
+              />
               <EmptyStateBody>There are no logs to display because the workload has no pods.</EmptyStateBody>
             </EmptyState>
           )}

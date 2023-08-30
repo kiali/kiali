@@ -1,9 +1,19 @@
 import * as React from 'react';
-import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
+import { cellWidth, ICell } from '@patternfly/react-table';
+import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../components/Pf/PfColors';
 // Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
-import { Button, ButtonVariant, FormGroup, Switch, TextInputBase as TextInput } from '@patternfly/react-core';
+import {
+  Button,
+  ButtonVariant,
+  FormGroup,
+  FormHelperText,
+  HelperText,
+  HelperTextItem,
+  Switch,
+  TextInputBase as TextInput
+} from '@patternfly/react-core';
 import { isSidecarHostValid } from '../../utils/IstioConfigUtils';
 import { PlusCircleIcon } from '@patternfly/react-icons';
 import { isValid } from 'utils/Common';
@@ -103,7 +113,7 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
     return [];
   };
 
-  onAddHost = (value: string, _) => {
+  onAddHost = (_event, value: string) => {
     const host = value.trim();
     this.setState({
       addEgressHost: {
@@ -128,7 +138,7 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
     );
   };
 
-  addWorkloadLabels = (value: string, _) => {
+  addWorkloadLabels = (_event, value: string) => {
     if (value.length === 0) {
       this.setState(
         {
@@ -228,13 +238,7 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
           />
         </FormGroup>
         {this.state.addWorkloadSelector && (
-          <FormGroup
-            fieldId="workloadLabels"
-            label="Labels"
-            helperText="One or more labels to select a workload where the Sidecar is applied."
-            helperTextInvalid="Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma."
-            validated={isValid(this.state.workloadSelectorValid)}
-          >
+          <FormGroup fieldId="workloadLabels" label="Labels">
             <TextInput
               id="gwHosts"
               name="gwHosts"
@@ -243,6 +247,15 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
               onChange={this.addWorkloadLabels}
               validated={isValid(this.state.workloadSelectorValid)}
             />
+            <FormHelperText>
+              <HelperText>
+                <HelperTextItem>
+                  {isValid(this.state.workloadSelectorValid)
+                    ? 'One or more labels to select a workload where the Sidecar is applied.'
+                    : 'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'}
+                </HelperTextItem>
+              </HelperText>
+            </FormHelperText>
           </FormGroup>
         )}
         <FormGroup label="Egress" fieldId="egressHostTable">

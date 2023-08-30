@@ -1,6 +1,17 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { Form, FormGroup, FormSelect, FormSelectOption, Radio, Switch, TextInput } from '@patternfly/react-core';
+import {
+  Form,
+  FormGroup,
+  FormHelperText,
+  FormSelect,
+  FormSelectOption,
+  HelperText,
+  HelperTextItem,
+  Radio,
+  Switch,
+  TextInput
+} from '@patternfly/react-core';
 import { MTLSStatuses, nsWideMTLSStatus, TLSStatus } from '../../types/TLSStatus';
 import { KialiAppState } from '../../store/Store';
 import { meshWideMTLSStatusSelector } from '../../store/Selectors';
@@ -420,14 +431,10 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
     const isValidLB = this.isValidLB(this.state);
     return (
       <Form isHorizontal={true}>
-        <FormGroup
-          label="TLS"
-          fieldId="advanced-tls"
-          helperText="TLS related settings for connections to the upstream service."
-        >
+        <FormGroup label="TLS" fieldId="advanced-tls">
           <FormSelect
             value={this.state.mtlsMode}
-            onChange={(mtlsMode: string) => this.onFormChange(TrafficPolicyForm.TLS, mtlsMode)}
+            onChange={(_event, mtlsMode: string) => this.onFormChange(TrafficPolicyForm.TLS, mtlsMode)}
             id="advanced-tls"
             name="advanced-tls"
           >
@@ -435,39 +442,48 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
               <FormSelectOption key={mode} value={mode} label={mode} />
             ))}
           </FormSelect>
+          <FormHelperText>
+            <HelperText>
+              <HelperTextItem>TLS related settings for connections to the upstream service.</HelperTextItem>
+            </HelperText>
+          </FormHelperText>
         </FormGroup>
         {this.state.mtlsMode === MUTUAL && (
           <>
-            <FormGroup
-              label="Client Certificate"
-              fieldId="clientCertificate"
-              validated={isValid(this.state.clientCertificate.length > 0)}
-              helperTextInvalid="Client Certificate must be non empty"
-            >
+            <FormGroup label="Client Certificate" fieldId="clientCertificate">
               <TextInput
                 value={this.state.clientCertificate}
-                onChange={value => this.onFormChange(TrafficPolicyForm.TLS_CLIENT_CERTIFICATE, value)}
+                onChange={(_event, value) => this.onFormChange(TrafficPolicyForm.TLS_CLIENT_CERTIFICATE, value)}
                 id="clientCertificate"
                 name="clientCertificate"
               />
+              {!isValid(this.state.clientCertificate.length > 0) && (
+                <FormHelperText>
+                  <HelperText>
+                    <HelperTextItem>Client Certificate must be non empty</HelperTextItem>
+                  </HelperText>
+                </FormHelperText>
+              )}
             </FormGroup>
-            <FormGroup
-              label="Private Key"
-              fieldId="privateKey"
-              validated={isValid(this.state.privateKey.length > 0)}
-              helperTextInvalid="Private Key must be non empty"
-            >
+            <FormGroup label="Private Key" fieldId="privateKey">
               <TextInput
                 value={this.state.privateKey}
-                onChange={value => this.onFormChange(TrafficPolicyForm.TLS_PRIVATE_KEY, value)}
+                onChange={(_event, value) => this.onFormChange(TrafficPolicyForm.TLS_PRIVATE_KEY, value)}
                 id="privateKey"
                 name="privateKey"
               />
+              {!isValid(this.state.privateKey.length > 0) && (
+                <FormHelperText>
+                  <HelperText>
+                    <HelperTextItem>Private Key must be non empty</HelperTextItem>
+                  </HelperText>
+                </FormHelperText>
+              )}
             </FormGroup>
             <FormGroup label="CA Certificates" fieldId="caCertificates">
               <TextInput
                 value={this.state.caCertificates}
-                onChange={value => this.onFormChange(TrafficPolicyForm.TLS_CA_CERTIFICATES, value)}
+                onChange={(_event, value) => this.onFormChange(TrafficPolicyForm.TLS_CA_CERTIFICATES, value)}
                 id="caCertificates"
                 name="caCertificates"
               />
@@ -488,7 +504,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
           <FormGroup fieldId="advanced-pa-mode" label="Mode">
             <FormSelect
               value={this.state.peerAuthnSelector.mode}
-              onChange={(mode: string) => this.onFormChange(TrafficPolicyForm.PA_MODE, mode)}
+              onChange={(_event, mode: string) => this.onFormChange(TrafficPolicyForm.PA_MODE, mode)}
               id="trafficPolicy-pa-mode"
               name="trafficPolicy-pa-mode"
             >
@@ -532,7 +548,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
               <FormGroup fieldId="advanced-loadbalancer" label="LoadBalancer">
                 <FormSelect
                   value={this.state.loadBalancer.simple}
-                  onChange={(simple: string) => this.onFormChange(TrafficPolicyForm.LB_SIMPLE, simple)}
+                  onChange={(_event, simple: string) => this.onFormChange(TrafficPolicyForm.LB_SIMPLE, simple)}
                   id="trafficPolicy-lb"
                   name="trafficPolicy-lb"
                 >
@@ -577,13 +593,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
               </FormGroup>
             )}
             {!this.state.simpleLB && this.state.consistentHashType === ConsistentHashType.HTTP_HEADER_NAME && (
-              <FormGroup
-                label="HTTP Header Name"
-                fieldId="httpHeaderName"
-                validated={isValid(isValidLB)}
-                disabled={!this.state.addLoadBalancer}
-                helperTextInvalid="HTTP Header Name must be non empty"
-              >
+              <FormGroup label="HTTP Header Name" fieldId="httpHeaderName" disabled={!this.state.addLoadBalancer}>
                 <TextInput
                   value={
                     this.state.loadBalancer.consistentHash && this.state.loadBalancer.consistentHash.httpHeaderName
@@ -592,19 +602,21 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
                   }
                   id="httpHeaderName"
                   name="httpHeaderName"
-                  onChange={value => this.onFormChange(TrafficPolicyForm.LB_HTTP_HEADER_NAME, value)}
+                  onChange={(_event, value) => this.onFormChange(TrafficPolicyForm.LB_HTTP_HEADER_NAME, value)}
                   validated={isValid(isValidLB)}
                 />
+                {!isValid(isValidLB) && (
+                  <FormHelperText>
+                    <HelperText>
+                      <HelperTextItem>HTTP Header Name must be non empty</HelperTextItem>
+                    </HelperText>
+                  </FormHelperText>
+                )}
               </FormGroup>
             )}
             {!this.state.simpleLB && this.state.consistentHashType === ConsistentHashType.HTTP_COOKIE && (
               <>
-                <FormGroup
-                  label="HTTP Cookie Name"
-                  fieldId="httpCookieName"
-                  validated={isValid(isValidLB)}
-                  disabled={!this.state.addLoadBalancer}
-                >
+                <FormGroup label="HTTP Cookie Name" fieldId="httpCookieName" disabled={!this.state.addLoadBalancer}>
                   <TextInput
                     value={
                       this.state.loadBalancer.consistentHash && this.state.loadBalancer.consistentHash.httpCookie
@@ -613,18 +625,11 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
                     }
                     id="httpCookieName"
                     name="httpCookieName"
-                    onChange={value => this.onFormChange(TrafficPolicyForm.LB_HTTP_COOKIE_NAME, value)}
+                    onChange={(_event, value) => this.onFormChange(TrafficPolicyForm.LB_HTTP_COOKIE_NAME, value)}
                     validated={isValid(isValidLB)}
                   />
                 </FormGroup>
-                <FormGroup
-                  label="HTTP Cookie TTL"
-                  fieldId="httpCookieTtl"
-                  validated={isValid(isValidLB)}
-                  disabled={!this.state.addLoadBalancer}
-                  helperText="TTL is expressed in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc)."
-                  helperTextInvalid="HTTP Cookie Name must be non empty and TTL must be expressed in in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc)."
-                >
+                <FormGroup label="HTTP Cookie TTL" fieldId="httpCookieTtl" disabled={!this.state.addLoadBalancer}>
                   <TextInput
                     value={
                       this.state.loadBalancer.consistentHash && this.state.loadBalancer.consistentHash.httpCookie
@@ -633,9 +638,18 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
                     }
                     id="httpCookieTtl"
                     name="httpCookieTtl"
-                    onChange={value => this.onFormChange(TrafficPolicyForm.LB_HTTP_COOKIE_TTL, value)}
+                    onChange={(_event, value) => this.onFormChange(TrafficPolicyForm.LB_HTTP_COOKIE_TTL, value)}
                     validated={isValid(isValidLB)}
                   />
+                  <FormHelperText>
+                    <HelperText>
+                      <HelperTextItem>
+                        {isValid(isValidLB)
+                          ? 'TTL is expressed in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).'
+                          : 'HTTP Cookie Name must be non empty and TTL must be expressed in in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).'}
+                      </HelperTextItem>
+                    </HelperText>
+                  </FormHelperText>
                 </FormGroup>
               </>
             )}

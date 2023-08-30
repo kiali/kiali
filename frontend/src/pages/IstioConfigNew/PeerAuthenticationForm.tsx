@@ -1,8 +1,19 @@
 import * as React from 'react';
-import { Button, ButtonVariant, FormGroup, FormSelect, FormSelectOption, Switch } from '@patternfly/react-core';
+import {
+  Button,
+  ButtonVariant,
+  FormGroup,
+  FormSelect,
+  FormSelectOption,
+  FormHelperText,
+  HelperText,
+  HelperTextItem,
+  Switch
+} from '@patternfly/react-core';
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
 import { PeerAuthenticationMutualTLSMode } from '../../types/IstioObjects';
-import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
+import { cellWidth, ICell } from '@patternfly/react-table';
+import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../components/Pf/PfColors';
 import { PlusCircleIcon } from '@patternfly/react-icons';
@@ -101,7 +112,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
     });
   }
 
-  onChangeWorkloadSelector = () => {
+  onChangeWorkloadSelector = (_event, _: boolean) => {
     this.setState(
       prevState => {
         return {
@@ -112,7 +123,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
     );
   };
 
-  onChangeAddPortMtls = () => {
+  onChangeAddPortMtls = (_event, _: boolean) => {
     this.setState(
       prevState => {
         return {
@@ -123,7 +134,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
     );
   };
 
-  addWorkloadLabels = (value: string, _) => {
+  addWorkloadLabels = (_event, value: string) => {
     if (value.length === 0) {
       this.setState(
         {
@@ -167,7 +178,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
     this.props.onChange(this.state);
   };
 
-  onMutualTlsChange = (value, _) => {
+  onMutualTlsChange = (_event, value) => {
     this.setState(
       {
         mtls: value
@@ -176,7 +187,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
     );
   };
 
-  onAddPortNumber = (value: string, _) => {
+  onAddPortNumber = (_event, value: string) => {
     this.setState(
       prevState => {
         return {
@@ -190,7 +201,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
     );
   };
 
-  onAddPortMtlsMode = (value: string, _) => {
+  onAddPortMtlsMode = (_event, value: string) => {
     this.setState(
       prevState => {
         return {
@@ -306,13 +317,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
           />
         </FormGroup>
         {this.state.addWorkloadSelector && (
-          <FormGroup
-            fieldId="workloadLabels"
-            label="Labels"
-            helperText="One or more labels to select a workload where the PeerAuthentication is applied."
-            helperTextInvalid="Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma."
-            validated={isValid(this.state.workloadSelectorValid)}
-          >
+          <FormGroup fieldId="workloadLabels" label="Labels">
             <TextInput
               id="gwHosts"
               name="gwHosts"
@@ -321,6 +326,15 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
               onChange={this.addWorkloadLabels}
               validated={isValid(this.state.workloadSelectorValid)}
             />
+            <FormHelperText>
+              <HelperText>
+                <HelperTextItem>
+                  {isValid(this.state.workloadSelectorValid)
+                    ? 'One or more labels to select a workload where the PeerAuthentication is applied.'
+                    : 'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'}
+                </HelperTextItem>
+              </HelperText>
+            </FormHelperText>
           </FormGroup>
         )}
         <FormGroup label="Mutual TLS Mode" fieldId="mutualTls">

@@ -5,7 +5,14 @@ import { pathRoutes, defaultRoute } from '../../routes';
 import { Path } from '../../types/Routes';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../Pf/PfColors';
-import { Button, ButtonVariant, EmptyState, EmptyStateBody, EmptyStateIcon, Title } from '@patternfly/react-core';
+import {
+  Button,
+  ButtonVariant,
+  EmptyState,
+  EmptyStateBody,
+  EmptyStateIcon,
+  EmptyStateHeader
+} from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 
 const containerStyle = kialiStyle({ marginLeft: 0, marginRight: 0 });
@@ -25,13 +32,14 @@ export class RenderPage extends React.Component<{ isGraph: boolean }> {
       <div className={`${containerStyle} ${this.props.isGraph && containerPadding}`}>
         <SwitchErrorBoundary
           fallBackComponent={() => (
-            <EmptyState className={containerError} variant="large">
-              <EmptyStateIcon icon={KialiIcon.Error} />
-              <Title headingLevel="h1" size="2xl">
-                Something went wrong
-              </Title>
+            <EmptyState className={containerError} variant="lg">
+              <EmptyStateHeader
+                titleText="Something went wrong"
+                icon={<EmptyStateIcon icon={KialiIcon.Error} />}
+                headingLevel="h1"
+              />
               <EmptyStateBody>
-                <p style={{ marginBottom: 'var(--pf-global--spacer--lg)' }}>
+                <p style={{ marginBottom: 'var(--pf-v5-global--spacer--lg)' }}>
                   Sorry, there was a problem. Try a refresh or navigate to a different page.
                 </p>
                 <Button variant={ButtonVariant.primary} onClick={() => history.back()}>

@@ -1,16 +1,8 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { style } from 'typestyle';
-import {
-  Button,
-  Dropdown,
-  DropdownToggle,
-  TextInput,
-  Tooltip,
-  DropdownToggleCheckbox,
-  Divider,
-  Badge
-} from '@patternfly/react-core';
+import { Button, TextInput, Tooltip, Divider, Badge } from '@patternfly/react-core';
+import { Dropdown, DropdownToggle, DropdownToggleCheckbox } from '@patternfly/react-core/deprecated';
 import { activeClustersSelector, clusterFilterSelector } from '../../store/Selectors';
 import { ClusterActions } from '../../actions/ClusterAction';
 import { MeshCluster } from '../../types/Mesh';
@@ -125,7 +117,7 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
             name="cluster-filter"
             placeholder="Filter by Name..."
             value={this.props.filter}
-            onChange={this.onFilterChange}
+            onChange={(_event, value: string) => this.onFilterChange(value)}
           />
           {hasFilter && (
             <Tooltip key="ot_clear_cluster_filter" position="top" content="Clear Filter by Name">
@@ -182,7 +174,11 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
       return (
         <Dropdown
           toggle={
-            <DropdownToggle data-test="cluster-dropdown" id="cluster-selector" onToggle={this.onToggle}>
+            <DropdownToggle
+              data-test="cluster-dropdown"
+              id="cluster-selector"
+              onToggle={(_event, isOpen) => this.onToggle(isOpen)}
+            >
               {this.clusterButtonText()}
             </DropdownToggle>
           }

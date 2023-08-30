@@ -1,3 +1,6 @@
+@workloads
+# don't change first line of this file - the tag is used for the test scripts to identify the test suite
+
 Feature: Kiali Workloads page
 
   User opens the Workloads page and sees the bookinfo workloads.
@@ -6,7 +9,6 @@ Feature: Kiali Workloads page
     Given user is at administrator perspective
     And user is at the "workloads" list page
 
-  @workloads-page
   @bookinfo-app
   Scenario: See workloads table with correct info
     When user selects the "bookinfo" namespace
@@ -21,12 +23,10 @@ Feature: Kiali Workloads page
     And the "Type" column on the "details-v1" row has the text "Deployment"
     And the "Details" column on the "details-v1" row is empty
 
-  @workloads-page
   @bookinfo-app
   Scenario: See all Workloads toggles
     Then user sees all the Apps toggles
 
-  @workloads-page
   @bookinfo-app
   Scenario: Toggle Workloads health toggle
     When user "unchecks" toggle "health"
@@ -34,7 +34,6 @@ Feature: Kiali Workloads page
     When user "checks" toggle "health"
     Then the "Health" column "appears"
 
-  @workloads-page
   @bookinfo-app
   Scenario: Filter workloads table by Workloads Name
     When user selects the "bookinfo" namespace
@@ -43,7 +42,6 @@ Feature: Kiali Workloads page
     Then user sees "details-v1" in the table
     And table length should be 1
 
-  @workloads-page
   @bookinfo-app
   Scenario: Filter workloads table by Workloads Type
     When user selects the "bookinfo" namespace
@@ -51,7 +49,6 @@ Feature: Kiali Workloads page
     And user filters for workload type "StatefulSet"
     Then user sees "no workloads" in workloads table
 
-  @workloads-page
   @bookinfo-app
   Scenario: Filter workloads table by sidecar
     When user selects the "bookinfo" namespace
@@ -59,7 +56,6 @@ Feature: Kiali Workloads page
     And user filters for sidecar "Present"
     Then user sees "workloads" in workloads table
 
-  @workloads-page
   @bookinfo-app
   Scenario: Filter workloads table by Istio Type
     When user selects the "bookinfo" namespace
@@ -67,7 +63,6 @@ Feature: Kiali Workloads page
     And user filters for istio type "VirtualService"
     Then user sees "no workloads" in workloads table
 
-  @workloads-page
   @bookinfo-app
   Scenario: Filter workloads table by health
     When user selects the "bookinfo" namespace
@@ -76,7 +71,6 @@ Feature: Kiali Workloads page
     Then user sees "workloads" in workloads table
     And user should only see healthy workloads in workloads table
 
-  @workloads-page
   @bookinfo-app
   Scenario: Filter workloads table by App Label
     When user selects the "bookinfo" namespace
@@ -85,7 +79,6 @@ Feature: Kiali Workloads page
     Then user sees "workloads" in workloads table
     And user should only see workloads with the "app" label
 
-  @workloads-page
   @bookinfo-app
   Scenario: Filter workloads table by Version Label
     When user selects the "bookinfo" namespace
@@ -94,7 +87,6 @@ Feature: Kiali Workloads page
     Then user sees "workloads" in workloads table
     And user should only see workloads with the "version" label
 
-  @workloads-page
   @bookinfo-app
   Scenario: Filter workloads table by label
     When user selects the "bookinfo" namespace
@@ -103,14 +95,12 @@ Feature: Kiali Workloads page
     Then user sees "details-v1" in the table
     And table length should be 1
 
-  @workloads-page
   @bookinfo-app
   Scenario: The healthy status of a workload is reported in the list of workloads
     Given a healthy workload in the cluster
     When user selects the "bookinfo" namespace
     Then the workload should be listed as "healthy"
 
-  @workloads-page
   @sleep-app
   Scenario: The idle status of a workload is reported in the list of workloads
     Given an idle workload in the cluster
@@ -119,7 +109,6 @@ Feature: Kiali Workloads page
     And the health status of the workload should be "Not Ready"
 
   @error-rates-app
-  @workloads-page
   Scenario: The failing status of a workload is reported in the list of workloads
     Given a failing workload in the mesh
     When user selects the "alpha" namespace
@@ -127,7 +116,6 @@ Feature: Kiali Workloads page
     And the health status of the workload should be "Failure"
 
   @error-rates-app
-  @workloads-page
   Scenario: The degraded status of a workload is reported in the list of workloads
     Given a degraded workload in the mesh
     When user selects the "alpha" namespace
@@ -136,6 +124,5 @@ Feature: Kiali Workloads page
 
   @multi-cluster
   @skip
-  @workloads-page
   Scenario: The column related to cluster name should be visible
-    Then the "Cluster" column "appears" 
+    Then the "Cluster" column "appears"

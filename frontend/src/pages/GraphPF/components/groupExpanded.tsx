@@ -4,7 +4,7 @@ import { observer } from 'mobx-react';
 import { polygonHull } from 'd3-polygon';
 import * as _ from 'lodash';
 import { css } from '@patternfly/react-styles';
-import styles from '@patternfly/react-styles/css/components/Topology/topology-components';
+import styles from '@patternfly/react-topology/dist/js/css/topology-components';
 import CollapseIcon from '@patternfly/react-icons/dist/esm/icons/compress-alt-icon';
 import {
   CollapsibleGroupProps,

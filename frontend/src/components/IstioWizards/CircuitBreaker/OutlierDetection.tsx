@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { FormGroup, Switch, TextInput } from '@patternfly/react-core';
+import { FormGroup, FormHelperText, HelperText, HelperTextItem, Switch, TextInput } from '@patternfly/react-core';
 import { OutlierDetection as OutlierDetectionProps } from '../../../types/IstioObjects';
 import { OUTLIER_DETECTION_TOOLTIP, wizardTooltip } from '../WizardHelp';
 
@@ -24,16 +24,12 @@ export class OutlierDetection extends React.Component<Props> {
           <span>{wizardTooltip(OUTLIER_DETECTION_TOOLTIP)}</span>
         </FormGroup>
         {this.props.isOutlierDetection && (
-          <FormGroup
-            label="Consecutive Errors"
-            fieldId="consecutiveErrors"
-            helperText="Number of errors before a host is ejected from the connection pool."
-          >
+          <FormGroup label="Consecutive Errors" fieldId="consecutiveErrors">
             <TextInput
               value={this.props.outlierDetection.consecutiveErrors}
               id="consecutiveErrors"
               name="consecutiveErrors"
-              onChange={value => {
+              onChange={(_event, value) => {
                 let newValue = Number(value || 0);
                 newValue = Number.isNaN(newValue) ? 0 : newValue;
                 const od = this.props.outlierDetection;
@@ -41,6 +37,11 @@ export class OutlierDetection extends React.Component<Props> {
                 this.props.onOutlierDetection(this.props.isOutlierDetection, od);
               }}
             />
+            <FormHelperText>
+              <HelperText>
+                <HelperTextItem>Number of errors before a host is ejected from the connection pool.</HelperTextItem>
+              </HelperText>
+            </FormHelperText>
           </FormGroup>
         )}
       </>

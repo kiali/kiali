@@ -5,7 +5,7 @@ exports[`lists all the components grouped 1`] = `
   className="istioStatus"
   style={
     Object {
-      "color": "var(--pf-global--palette--white)",
+      "color": "var(--pf-v5-global--palette--white)",
     }
   }
 >

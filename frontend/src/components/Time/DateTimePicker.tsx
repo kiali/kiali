@@ -12,8 +12,8 @@ const pickerStyle = kialiStyle({
 const calendarStyle = kialiStyle({
   $nest: {
     '&.react-datepicker': {
-      fontFamily: 'var(--pf-global--FontFamily--sans-serif)',
-      fontSize: 'var(--pf-global--FontSize--md)'
+      fontFamily: 'var(--pf-v5-global--FontFamily--text)',
+      fontSize: 'var(--pf-v5-global--FontSize--md)'
     },
 
     // provide more space for time container given bigger font

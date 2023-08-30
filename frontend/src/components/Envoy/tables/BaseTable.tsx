@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { ICell, ISortBy, SortByDirection, Table, TableBody, TableHeader } from '@patternfly/react-table';
+import { ICell, ISortBy, SortByDirection } from '@patternfly/react-table';
+import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
 import { ClusterSummaryTable, ClusterTable } from './ClusterTable';
 import { RouteSummaryTable, RouteTable } from './RouteTable';
 import { ListenerSummaryTable, ListenerTable } from './ListenerTable';

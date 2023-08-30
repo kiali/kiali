@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { cellWidth, TableComposable, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
+import { cellWidth, Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../components/Pf/PfColors';
 import { Button, ButtonVariant } from '@patternfly/react-core';
@@ -165,7 +165,7 @@ export class ListenerList extends React.Component<Props, ListenerListState> {
   render() {
     return (
       <>
-        <TableComposable aria-label="Listener List">
+        <Table aria-label="Listener List">
           <Thead>
             <Tr>
               {headerCells.map(e => (
@@ -196,7 +196,7 @@ export class ListenerList extends React.Component<Props, ListenerListState> {
               </Td>
             </Tr>
           </Tbody>
-        </TableComposable>
+        </Table>
         {this.props.listenersForm.length === 0 && <div className={noListenerStyle}>No Listeners defined</div>}
       </>
     );

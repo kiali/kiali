@@ -31,7 +31,7 @@ export class HealthIndicator extends React.PureComponent<Props, HealthState> {
   render() {
     if (this.props.health) {
       // HealthIndicator will render always in SMALL mode
-      const icon = createIcon(this.state.globalStatus, 'sm');
+      const icon = createIcon(this.state.globalStatus, 'md');
       return (
         <Tooltip
           aria-label={'Health indicator'}

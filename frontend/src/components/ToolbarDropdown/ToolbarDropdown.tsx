@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Select, SelectOption, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Select, SelectOption } from '@patternfly/react-core/deprecated';
 import { kialiStyle } from 'styles/StyleUtils';
 
 const widthAuto = kialiStyle({
@@ -7,10 +8,11 @@ const widthAuto = kialiStyle({
 });
 
 const dropdownTitle = kialiStyle({
-  fontSize: 'var(--pf-global--FontSize--md)', // valueOf --pf-c-select__toggle--FontSize
+  fontSize: 'var(--pf-v5-global--FontSize--md)', // valueOf --pf-v5-c-select__toggle--FontSize
   // @ts-ignore
-  fontWeight: 'var(--pf-global--FontSize--normal)', // valueOf --pf-c-select__toggle--FontWeigt
-  marginRight: '10px'
+  fontWeight: 'var(--pf-v5-global--FontSize--normal)', // valueOf --pf-v5-c-select__toggle--FontWeigt
+  marginRight: '10px',
+  marginTop: '6px'
 });
 
 type ToolbarDropdownProps = {
@@ -74,7 +76,7 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
         id={this.props.id}
         data-test={this.props.id}
         toggleId={this.props.id + '-toggle'}
-        onToggle={this.onToggle}
+        onToggle={(_event, isOpen: boolean) => this.onToggle(isOpen)}
         isOpen={isOpen}
         aria-labelledby={this.props.id}
         isDisabled={this.props.disabled}

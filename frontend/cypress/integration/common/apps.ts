@@ -5,12 +5,13 @@
 */
 
 import { And, Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import {
-  getColWithRowText,
-  ensureObjectsInTable,
+import { 
   checkHealthIndicatorInTable,
   checkHealthStatusInTable,
-  colExists
+  colExists,
+  ensureObjectsInTable,
+  getColWithRowText,
+  hasAtLeastOneClass  
 } from './table';
 import { openTab } from './transition';
 
@@ -33,7 +34,7 @@ Then('user sees trace details', () => {
 
 When('user selects a trace', () => {
   const tracingDotQuery =
-    '[style*="fill: var(--pf-global--palette--blue-200)"][style*="stroke: var(--pf-chart-scatter--data--stroke--Color, transparent)"]';
+    '[style*="fill: var(--pf-v5-global--palette--blue-200)"][style*="stroke: var(--pf-v5-chart-scatter--data--stroke--Color, transparent)"]';
   cy.getBySel('jaeger-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
 });
 
@@ -62,10 +63,9 @@ When('I fetch the list of applications', function () {
   cy.visit('/console/applications?refresh=0');
 });
 
-And('user sees Health information for Apps', () => {
-  getColWithRowText(APP, 'Health').find(
-    'svg[class=icon-healthy], svg[class=icon-unhealthy], svg[class=icon-degraded], svg[class=icon-na]'
-  );
+And('user sees Health information for Apps', () => {  
+  getColWithRowText(APP, 'Health').find('span')
+    .filter('.pf-v5-c-icon').should('satisfy',hasAtLeastOneClass(['icon-healthy','icon-unhealthy','icon-degraded','icon-na']))
 });
 
 Then('user sees all the Apps in the bookinfo namespace', () => {
@@ -111,7 +111,7 @@ And('user only sees the apps with the {string} name in the {string} namespace', 
 // going to be healthy when the test is run but at least some of them should be.
 Then('user only sees healthy apps', () => {
   cy.get('tbody').within(() => {
-    cy.get('tr').find('svg[class=icon-healthy]');
+    cy.get('tr').find('span').filter('.pf-v5-c-icon').should('satisfy',hasAtLeastOneClass(['icon-healthy']))
   });
 });
 

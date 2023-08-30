@@ -37,7 +37,7 @@ export class SimpleTabs extends React.Component<SimpleTabsProps, SimpleTabsState
         mountOnEnter={this.props.mountOnEnter === undefined ? true : this.props.mountOnEnter}
         unmountOnExit={this.props.unmountOnExit === undefined ? true : this.props.unmountOnExit}
       >
-        {this.props.children}
+        {!Array.isArray(this.props.children) ? <>{this.props.children}</> : this.props.children.map(child => child)}
       </Tabs>
     );
   }

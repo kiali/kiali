@@ -25,10 +25,8 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
   position="left"
 >
   <ResourcesFullIcon
-    color="var(--pf-global--warning-color--100)"
+    color="var(--pf-v5-global--warning-color--100)"
     data-test="istio-status-warning"
-    noVerticalAlign={false}
-    size="sm"
     style={
       Object {
         "marginRight": -8,
@@ -64,10 +62,8 @@ exports[`When both core and addon component have problems any component is in no
   position="left"
 >
   <ResourcesFullIcon
-    color="var(--pf-global--danger-color--100)"
+    color="var(--pf-v5-global--danger-color--100)"
     data-test="istio-status-danger"
-    noVerticalAlign={false}
-    size="sm"
     style={
       Object {
         "marginRight": -8,
@@ -103,10 +99,8 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
   position="left"
 >
   <ResourcesFullIcon
-    color="var(--pf-global--danger-color--100)"
+    color="var(--pf-v5-global--danger-color--100)"
     data-test="istio-status-danger"
-    noVerticalAlign={false}
-    size="sm"
     style={
       Object {
         "marginRight": -8,
@@ -142,10 +136,8 @@ exports[`When there are not-ready components mixed with other not healthy compon
   position="left"
 >
   <ResourcesFullIcon
-    color="var(--pf-global--warning-color--100)"
+    color="var(--pf-v5-global--warning-color--100)"
     data-test="istio-status-warning"
-    noVerticalAlign={false}
-    size="sm"
     style={
       Object {
         "marginRight": -8,
@@ -191,10 +183,8 @@ exports[`When there are not-ready components mixed with other not healthy compon
   position="left"
 >
   <ResourcesFullIcon
-    color="var(--pf-global--danger-color--100)"
+    color="var(--pf-v5-global--danger-color--100)"
     data-test="istio-status-danger"
-    noVerticalAlign={false}
-    size="sm"
     style={
       Object {
         "marginRight": -8,
@@ -230,10 +220,8 @@ exports[`When there are not-ready components mixed with other not healthy compon
   position="left"
 >
   <ResourcesFullIcon
-    color="var(--pf-global--danger-color--100)"
+    color="var(--pf-v5-global--danger-color--100)"
     data-test="istio-status-danger"
-    noVerticalAlign={false}
-    size="sm"
     style={
       Object {
         "marginRight": -8,
@@ -264,10 +252,8 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
   position="left"
 >
   <ResourcesFullIcon
-    color="var(--pf-global--info-color--100)"
+    color="var(--pf-v5-global--info-color--100)"
     data-test="istio-status-info"
-    noVerticalAlign={false}
-    size="sm"
     style={
       Object {
         "marginRight": -8,
@@ -298,10 +284,8 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
   position="left"
 >
   <ResourcesFullIcon
-    color="var(--pf-global--info-color--100)"
+    color="var(--pf-v5-global--info-color--100)"
     data-test="istio-status-info"
-    noVerticalAlign={false}
-    size="sm"
     style={
       Object {
         "marginRight": -8,

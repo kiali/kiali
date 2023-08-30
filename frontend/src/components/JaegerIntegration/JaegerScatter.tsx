@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { KialiDispatch } from 'types/Redux';
 import { ChartScatter } from '@patternfly/react-charts';
-import { Title, EmptyState, EmptyStateVariant, EmptyStateBody, TitleSizes } from '@patternfly/react-core';
+import { EmptyState, EmptyStateVariant, EmptyStateBody, EmptyStateHeader } from '@patternfly/react-core';
 import { JaegerError, JaegerTrace } from '../../types/JaegerInfo';
 import { PFColors } from '../Pf/PfColors';
 import { evalTimeRange } from 'types/Common';
@@ -61,10 +61,8 @@ class JaegerScatterComponent extends React.Component<JaegerScatterProps> {
   renderFetchEmpty = (title, msg) => {
     return (
       <div className={emptyStyle}>
-        <EmptyState variant={EmptyStateVariant.small}>
-          <Title headingLevel="h5" size={TitleSizes.lg}>
-            {title}
-          </Title>
+        <EmptyState variant={EmptyStateVariant.sm}>
+          <EmptyStateHeader titleText={<>{title}</>} headingLevel="h5" />
           <EmptyStateBody>{msg}</EmptyStateBody>
         </EmptyState>
       </div>

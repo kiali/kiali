@@ -31,7 +31,7 @@ export class LabelFilters extends React.Component<LabelFiltersProps, { sortOpera
           value={this.props.value}
           aria-label={'filter_input_label_key'}
           placeholder={'Set Label'}
-          onChange={value => this.props.onChange(value)}
+          onChange={(_event, value) => this.props.onChange(value)}
           onKeyPress={e => this.onkeyPress(e)}
           style={{ width: 'auto' }}
         />

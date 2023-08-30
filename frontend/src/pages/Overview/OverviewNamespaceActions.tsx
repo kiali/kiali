@@ -1,13 +1,12 @@
 import * as React from 'react';
+import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import {
   Dropdown,
   DropdownGroup,
   DropdownItem,
   DropdownSeparator,
-  KebabToggle,
-  Tooltip,
-  TooltipPosition
-} from '@patternfly/react-core';
+  KebabToggle
+} from '@patternfly/react-core/deprecated';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { groupMenuStyle } from 'styles/DropdownStyles';
 
@@ -117,7 +116,7 @@ export class OverviewNamespaceActions extends React.Component<Props, State> {
     });
     return (
       <Dropdown
-        toggle={<KebabToggle onToggle={this.onKebabToggle} />}
+        toggle={<KebabToggle onToggle={(_event, isOpen: boolean) => this.onKebabToggle(isOpen)} />}
         dropdownItems={namespaceActions}
         isPlain={true}
         isOpen={this.state.isKebabOpen}

@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
+import { cellWidth, ICell } from '@patternfly/react-table';
+import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
 // Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
 import {
   Button,
@@ -62,13 +63,13 @@ export class OperationBuilder extends React.Component<Props, State> {
     };
   }
 
-  onAddNewOperationField = (value: string, _) => {
+  onAddNewOperationField = (_event, value: string) => {
     this.setState({
       newOperationField: value
     });
   };
 
-  onAddNewValues = (value: string, _) => {
+  onAddNewValues = (_event, value: string) => {
     this.setState({
       newValues: value
     });

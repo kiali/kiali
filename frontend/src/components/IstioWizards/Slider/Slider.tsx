@@ -213,7 +213,7 @@ export class Slider extends React.Component<Props, State> {
                 id="slider-text"
                 aria-label="slider-text"
                 value={this.state.value}
-                onChange={this.onInputChange}
+                onChange={(_event, value: string | number) => this.onInputChange(value)}
                 isDisabled={this.props.locked}
                 data-test={'input-' + this.props.id}
               />

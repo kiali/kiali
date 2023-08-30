@@ -3,8 +3,11 @@ import {
   Checkbox,
   Form,
   FormGroup,
+  FormHelperText,
   FormSelect,
   FormSelectOption,
+  HelperText,
+  HelperTextItem,
   Radio,
   Switch,
   TextInput
@@ -171,11 +174,7 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
         </FormGroup>
         {this.state.addGateway && (
           <>
-            <FormGroup
-              fieldId="includeMesh"
-              validated={isValid(this.isMeshGatewayValid())}
-              helperTextInvalid={"VirtualService Host '*' wildcard not allowed on mesh gateway."}
-            >
+            <FormGroup fieldId="includeMesh">
               <Checkbox
                 id="includeMesh"
                 label={
@@ -187,6 +186,13 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
                 isChecked={this.state.addMesh}
                 onChange={() => this.onFormChange(GatewayForm.MESH, '')}
               />
+              {!isValid(this.isMeshGatewayValid()) && (
+                <FormHelperText>
+                  <HelperText>
+                    <HelperTextItem>VirtualService Host '*' wildcard not allowed on mesh gateway.</HelperTextItem>
+                  </HelperText>
+                </FormHelperText>
+              )}
             </FormGroup>
             <FormGroup fieldId="selectGateway">
               <Radio
@@ -213,7 +219,7 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
                     id="selectGateway"
                     value={this.state.selectedGateway}
                     isDisabled={!this.state.addGateway || this.state.newGateway || this.props.gateways.length === 0}
-                    onChange={(gw: string) => this.onFormChange(GatewayForm.GATEWAY_SELECTED, gw)}
+                    onChange={(_event, gw: string) => this.onFormChange(GatewayForm.GATEWAY_SELECTED, gw)}
                   >
                     {this.props.gateways.map(gw => (
                       <FormSelectOption key={gw} value={gw} label={gw} />
@@ -232,24 +238,27 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
                     type="number"
                     isDisabled={!this.state.addGateway || !this.state.newGateway}
                     value={this.state.port}
-                    onChange={value => this.onFormChange(GatewayForm.PORT, value)}
+                    onChange={(_event, value) => this.onFormChange(GatewayForm.PORT, value)}
                   />
                 </FormGroup>
-                <FormGroup
-                  fieldId="gwHosts"
-                  label="Gateway Hosts"
-                  helperText="One or more hosts exposed by this gateway. Enter one or multiple hosts separated by comma."
-                  helperTextInvalid="Gateway hosts should be specified using FQDN format or '*' wildcard."
-                  validated={isValid(this.state.gwHostsValid)}
-                >
+                <FormGroup fieldId="gwHosts" label="Gateway Hosts">
                   <TextInput
                     id="gwHosts"
                     name="gwHosts"
                     isDisabled={!this.state.addGateway || !this.state.newGateway}
                     value={this.state.gwHosts}
-                    onChange={value => this.onFormChange(GatewayForm.GW_HOSTS, value)}
+                    onChange={(_event, value) => this.onFormChange(GatewayForm.GW_HOSTS, value)}
                     validated={isValid(this.state.gwHostsValid)}
                   />
+                  <FormHelperText>
+                    <HelperText>
+                      <HelperTextItem>
+                        {isValid(this.state.gwHostsValid)
+                          ? 'One or more hosts exposed by this gateway. Enter one or multiple hosts separated by comma.'
+                          : "Gateway hosts should be specified using FQDN format or '*' wildcard."}
+                      </HelperTextItem>
+                    </HelperText>
+                  </FormHelperText>
                 </FormGroup>
               </>
             )}

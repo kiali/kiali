@@ -1,5 +1,14 @@
 import * as React from 'react';
-import { FormGroup, FormSelect, FormSelectOption, Switch, TextInputBase as TextInput } from '@patternfly/react-core';
+import {
+  FormGroup,
+  FormHelperText,
+  FormSelect,
+  FormSelectOption,
+  HelperText,
+  HelperTextItem,
+  Switch,
+  TextInputBase as TextInput
+} from '@patternfly/react-core';
 import { RuleBuilder, Rule } from './AuthorizationPolicyForm/RuleBuilder';
 import { RuleList } from './AuthorizationPolicyForm/RuleList';
 import { isValid } from 'utils/Common';
@@ -69,7 +78,7 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
     });
   }
 
-  onRulesFormChange = (value, _) => {
+  onRulesFormChange = (_event, value) => {
     this.setState(
       {
         policy: value
@@ -78,7 +87,7 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
     );
   };
 
-  onChangeWorkloadSelector = () => {
+  onChangeWorkloadSelector = (_event, _) => {
     this.setState(
       prevState => {
         return {
@@ -89,7 +98,7 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
     );
   };
 
-  addWorkloadLabels = (value: string, _) => {
+  addWorkloadLabels = (_event, value: string) => {
     if (value.length === 0) {
       this.setState(
         {
@@ -129,7 +138,7 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
     );
   };
 
-  onActionChange = (value, _) => {
+  onActionChange = (_event, value) => {
     this.setState(
       {
         action: value
@@ -169,12 +178,17 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
   render() {
     return (
       <>
-        <FormGroup label="Policy" fieldId="rules-form" helperText={HELPER_TEXT[this.state.policy]}>
+        <FormGroup label="Policy" fieldId="rules-form">
           <FormSelect value={this.state.policy} onChange={this.onRulesFormChange} id="rules-form" name="rules-form">
             {rulesFormValues.map((option, index) => (
               <FormSelectOption key={index} value={option} label={option} />
             ))}
           </FormSelect>
+          <FormHelperText>
+            <HelperText>
+              <HelperTextItem>{HELPER_TEXT[this.state.policy]}</HelperTextItem>
+            </HelperText>
+          </FormHelperText>
         </FormGroup>
         {this.state.policy === RULES && (
           <FormGroup label="Workload Selector" fieldId="workloadSelectorSwitch">
@@ -188,13 +202,7 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
           </FormGroup>
         )}
         {this.state.addWorkloadSelector && (
-          <FormGroup
-            fieldId="workloadLabels"
-            label="Labels"
-            helperText="One or more labels to select a workload where the AuthorizationPolicy is applied."
-            helperTextInvalid="Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma."
-            validated={isValid(this.state.workloadSelectorValid)}
-          >
+          <FormGroup fieldId="workloadLabels" label="Labels">
             <TextInput
               id="gwHosts"
               name="gwHosts"
@@ -203,6 +211,15 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
               onChange={this.addWorkloadLabels}
               validated={isValid(this.state.workloadSelectorValid)}
             />
+            <FormHelperText>
+              <HelperText>
+                <HelperTextItem>
+                  {isValid(this.state.workloadSelectorValid)
+                    ? 'One or more labels to select a workload where the AuthorizationPolicy is applied.'
+                    : 'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'}
+                </HelperTextItem>
+              </HelperText>
+            </FormHelperText>
           </FormGroup>
         )}
         {this.state.policy === RULES && (

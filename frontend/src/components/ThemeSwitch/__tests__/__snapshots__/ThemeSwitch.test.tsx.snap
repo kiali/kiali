@@ -1,27 +1,87 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`ThemeSwitch renders dark theme 1`] = `
-<Switch
-  aria-label=""
-  id="theme-switch"
-  isChecked={true}
-  isDisabled={false}
-  isReversed={false}
-  label="Dark Theme"
-  labelOff="Dark Theme"
-  onChange={[Function]}
-/>
+<Fragment>
+  <Tooltip
+    content={
+      <React.Fragment>
+        Enable Light Mode
+      </React.Fragment>
+    }
+    position="bottom"
+  >
+    <Button
+      onClick={[Function]}
+      variant="secondary"
+    >
+      <Icon>
+        <i
+          className="fas fa-sun"
+        />
+      </Icon>
+    </Button>
+  </Tooltip>
+  <Tooltip
+    content={
+      <React.Fragment>
+        Disable Dark Mode
+      </React.Fragment>
+    }
+    position="bottom"
+  >
+    <Button
+      onClick={[Function]}
+      variant="primary"
+    >
+      <Icon>
+        <i
+          className="fas fa-moon"
+        />
+      </Icon>
+    </Button>
+  </Tooltip>
+</Fragment>
 `;
 
 exports[`ThemeSwitch renders light theme 1`] = `
-<Switch
-  aria-label=""
-  id="theme-switch"
-  isChecked={false}
-  isDisabled={false}
-  isReversed={false}
-  label="Dark Theme"
-  labelOff="Dark Theme"
-  onChange={[Function]}
-/>
+<Fragment>
+  <Tooltip
+    content={
+      <React.Fragment>
+        Disable Light Mode
+      </React.Fragment>
+    }
+    position="bottom"
+  >
+    <Button
+      onClick={[Function]}
+      variant="primary"
+    >
+      <Icon>
+        <i
+          className="fas fa-sun"
+        />
+      </Icon>
+    </Button>
+  </Tooltip>
+  <Tooltip
+    content={
+      <React.Fragment>
+        Enable Dark Mode
+      </React.Fragment>
+    }
+    position="bottom"
+  >
+    <Button
+      onClick={[Function]}
+      variant="secondary"
+    >
+      <Icon>
+        <i
+          className="fas fa-moon"
+        />
+      </Icon>
+    </Button>
+  </Tooltip>
+</Fragment>
 `;

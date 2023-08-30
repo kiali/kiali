@@ -6,7 +6,7 @@ import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import CheckCircleIcon from '@patternfly/react-icons/dist/esm/icons/check-circle-icon';
 import ExclamationCircleIcon from '@patternfly/react-icons/dist/esm/icons/exclamation-circle-icon';
 import ExclamationTriangleIcon from '@patternfly/react-icons/dist/esm/icons/exclamation-triangle-icon';
-import styles from '@patternfly/react-styles/css/components/Topology/topology-components';
+import styles from '@patternfly/react-topology/dist/js/css/topology-components';
 import {
   NodeShadows,
   DEFAULT_DECORATOR_RADIUS,

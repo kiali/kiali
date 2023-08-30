@@ -1,14 +1,14 @@
 import * as React from 'react';
-import { cellWidth, ICell, Table, TableHeader, TableBody } from '@patternfly/react-table';
+import { cellWidth, ICell } from '@patternfly/react-table';
+import { Table, TableHeader, TableBody } from '@patternfly/react-table/deprecated';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../Pf/PfColors';
 import {
   EmptyState,
   EmptyStateBody,
   EmptyStateVariant,
-  Title,
-  TitleSizes,
-  TooltipPosition
+  TooltipPosition,
+  EmptyStateHeader
 } from '@patternfly/react-core';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ROUTE_RULES_TOOLTIP, wizardTooltip } from '../WizardHelp';
@@ -159,9 +159,7 @@ export class K8sRules extends React.Component<Props> {
                 {
                   title: (
                     <EmptyState variant={EmptyStateVariant.full}>
-                      <Title headingLevel="h5" size={TitleSizes.lg}>
-                        No K8s Route Rules defined
-                      </Title>
+                      <EmptyStateHeader titleText="No K8s Route Rules defined" headingLevel="h5" />
                       <EmptyStateBody className={noRulesStyle}>
                         A Request Routing scenario needs at least a Route Rule
                       </EmptyStateBody>

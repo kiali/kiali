@@ -13,15 +13,14 @@ import { getTitle, summaryBodyTabs, summaryFont, summaryPanel } from './SummaryP
 import { decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { clickHandler, getOptions } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
+import { ExpandableSection, Tab } from '@patternfly/react-core';
 import {
   Dropdown,
   DropdownGroup,
   DropdownItem,
   DropdownPosition,
-  ExpandableSection,
-  KebabToggle,
-  Tab
-} from '@patternfly/react-core';
+  KebabToggle
+} from '@patternfly/react-core/deprecated';
 import { SummaryPanelNodeTraffic } from './SummaryPanelNodeTraffic';
 import { SummaryPanelNodeTraces } from './SummaryPanelNodeTraces';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
@@ -42,10 +41,10 @@ import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelSty
 
 const summaryNodeActionsStyle = kialiStyle({
   $nest: {
-    '& .pf-c-dropdown__toggle': {
+    '& .pf-v5-c-dropdown__toggle': {
       fontSize: 'var(--graph-side-panel--font-size)'
     },
-    '& .pf-c-dropdown__menu-item': {
+    '& .pf-v5-c-dropdown__menu-item': {
       fontSize: 'var(--graph-side-panel--font-size)'
     }
   }
@@ -191,7 +190,9 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
                   isPlain={true}
                   position={DropdownPosition.right}
                   style={{ float: 'right' }}
-                  toggle={<KebabToggle id="summary-node-kebab" onToggle={this.onToggleActions} />}
+                  toggle={
+                    <KebabToggle id="summary-node-kebab" onToggle={(_event, isOpen) => this.onToggleActions(isOpen)} />
+                  }
                 />
               )}
               {renderBadgedLink(nodeData)}
