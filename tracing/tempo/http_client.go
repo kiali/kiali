@@ -45,7 +45,7 @@ func (oc OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.UR
 		log.Errorf("API Tempo query error: %s [code: %d, URL: %v]", reqError, code, u)
 		return nil, reqError
 	}
-	// Jaeger would return "200 OK" when trace is not found, with an empty response
+	// Tempo would return "200 OK" when trace is not found, with an empty response
 	if len(resp) == 0 {
 		return nil, nil
 	}
@@ -87,7 +87,7 @@ func (oc OtelHTTPClient) queryTracesHTTP(client http.Client, u *url.URL) (*model
 	}
 	resp, code, reqError := makeRequest(client, u.String(), nil)
 	if reqError != nil {
-		log.Errorf("Jaeger query error: %s [code: %d, URL: %v]", reqError, code, u)
+		log.Errorf("Tempo API query error: %s [code: %d, URL: %v]", reqError, code, u)
 		return &model.TracingResponse{}, reqError
 	}
 	response, _ := unmarshal(resp, u)
@@ -115,7 +115,7 @@ func (oc OtelHTTPClient) getTracesDetails(traces *otel.TracingResponse, client h
 func unmarshal(r []byte, u *url.URL) (*otel.TracingResponse, error) {
 	var response otel.TracingResponse
 	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
-		log.Errorf("Error unmarshalling Jaeger response: %s [URL: %v]", errMarshal, u)
+		log.Errorf("Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, u)
 		return nil, errMarshal
 	}
 
@@ -175,7 +175,7 @@ func prepareQuery(u *url.URL, tracingServiceName string, query models.TracingQue
 		q.Set("limit", strconv.Itoa(query.Limit))
 	}
 	u.RawQuery = q.Encode()
-	log.Debugf("Prepared Jaeger query: %v", u)
+	log.Debugf("Prepared Tempo API query: %v", u)
 }
 
 func makeRequest(client http.Client, endpoint string, body io.Reader) (response []byte, status int, err error) {

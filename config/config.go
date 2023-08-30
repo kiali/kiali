@@ -206,7 +206,7 @@ type TracingConfig struct {
 	Enabled              bool              `yaml:"enabled"` // Enable Jaeger in Kiali
 	InClusterURL         string            `yaml:"in_cluster_url"`
 	IsCore               bool              `yaml:"is_core,omitempty"`
-	Provider             string            `yaml:"client"` // jaeger | tempo
+	Provider             string            `yaml:"provider"` // jaeger | tempo
 	NamespaceSelector    bool              `yaml:"namespace_selector"`
 	QueryScope           map[string]string `yaml:"query_scope,omitempty"`
 	QueryTimeout         int               `yaml:"query_timeout,omitempty"`
@@ -662,7 +662,7 @@ func NewConfig() (c *Config) {
 				Enabled:              true,
 				InClusterURL:         "http://tracing.istio-system:16685/jaeger",
 				IsCore:               false,
-				Provider:             "tempo",
+				Provider:             "jaeger",
 				NamespaceSelector:    true,
 				QueryScope:           map[string]string{},
 				QueryTimeout:         5,

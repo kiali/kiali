@@ -31,6 +31,7 @@ import (
 
 const (
 	JAEGER = "jaeger"
+	TEMPO  = "tempo"
 )
 
 // ClientInterface for mocks (only mocked function are necessary here)
@@ -111,14 +112,15 @@ func NewClient(token string) (*Client, error) {
 				return nil, err
 			}
 			address := fmt.Sprintf("%s:%s", u.Hostname(), port)
-			log.Tracef("Jaeger GRPC client info: address=%s, auth.type=%s", address, auth.Type)
+			log.Tracef("%s GRPC client info: address=%s, auth.type=%s", cfgTracing.Provider, address, auth.Type)
+
 			conn, err := grpc.Dial(address, opts...)
 			if err != nil {
 				log.Errorf("Error while establishing GRPC connection: %v", err)
 				return nil, err
 			}
 			client := model.NewQueryServiceClient(conn)
-			log.Infof("Create Jaeger GRPC client %s", address)
+			log.Infof("Create %s GRPC client %s", cfgTracing.Provider, address)
 			return &Client{httpTracingClient: httpTracingClient, grpcClient: client, ctx: ctx}, nil
 		} else {
 			// Legacy HTTP client
