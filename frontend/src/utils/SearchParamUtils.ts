@@ -41,6 +41,10 @@ export const getTraceId = () => {
   return new URLSearchParams(window.location.search).get(URLParam.JAEGER_TRACE_ID) || undefined;
 };
 
+export const getClusterName = () => {
+  return new URLSearchParams(window.location.search).get(URLParam.CLUSTERNAME) || undefined;
+};
+
 export const setTraceId = (traceId?: string) => {
   if (traceId) {
     HistoryManager.setParam(URLParam.JAEGER_TRACE_ID, traceId);

@@ -34,6 +34,11 @@ const buildCommonQueryParams = (params: GraphUrlParams): string => {
   q += `&${URLParam.DURATION}=${params.duration}`;
   q += `&${URLParam.GRAPH_OPERATION_NODES}=${params.showOperationNodes}`;
   q += `&${URLParam.REFRESH_INTERVAL}=${params.refreshInterval}`;
+
+  if (params.node && params.node.cluster) {
+    q += `&${URLParam.CLUSTERNAME}=${params.node?.cluster}`;
+  }
+
   return q;
 };
 
