@@ -12,13 +12,19 @@ Feature: Kiali Workload Details page
 
   Background:
     Given user is at administrator perspective
-    And user is at the details page for the "workload" "bookinfo/reviews-v3" located in the "west" cluster
+    And user is at the details page for the "workload" "bookinfo/reviews-v2" located in the "west" cluster
 
   Scenario: See details for workload
     Then user sees details information for workload
+    And cluster badge for "west" cluster should be visible
 
   Scenario: See minigraph for workload.
     Then user sees a minigraph
+    And user sees "service" from a remote "west" cluster
+
+  Scenario: Minigraph should not be visible for a service, which is not deployed in specific cluster.
+    And user is at the details page for the "workload" "bookinfo/details-v1" located in the "west" cluster
+    Then user does not see a minigraph
 
   Scenario: See workload traffic information
     Then user sees workload inbound and outbound traffic information

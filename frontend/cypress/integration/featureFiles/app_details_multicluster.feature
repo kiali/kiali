@@ -20,13 +20,18 @@ Feature: Kiali App Details page for multicluster
 
   @app-details-page
   Scenario: See app minigraph for details app.
-    And user is at the details page for the "app" "bookinfo/productpage" located in the "west" cluster
+    And user is at the details page for the "app" "bookinfo/reviews" located in the "west" cluster
     Then user sees a minigraph
     And user sees "app" from a remote "west" cluster
 
   @app-details-page
+  Scenario: Minigraph should not be visible for app, which is not deployed in specific cluster.
+    And user is at the details page for the "app" "bookinfo/details" located in the "west" cluster
+    Then user does not see a minigraph
+
+  @app-details-page
   Scenario: See app Traffic information
-    And user is at the details page for the "app" "bookinfo/productpage" located in the "west" cluster
+    And user is at the details page for the "app" "bookinfo/reviews" located in the "west" cluster
     Then user sees inbound and outbound traffic information
     And user should see columns related to cluster info for the inbound and outbound traffic
 
@@ -42,14 +47,14 @@ Feature: Kiali App Details page for multicluster
 
   @app-details-page
   Scenario: See tracing info after selecting a trace
-    And user is at the details page for the "app" "bookinfo/productpage" located in the "west" cluster
+    And user is at the details page for the "app" "bookinfo/reviews" located in the "west" cluster
     And user sees trace information
     When user selects a trace
     Then user sees trace details
 
   @app-details-page
   Scenario: See span info after selecting app span
-    And user is at the details page for the "app" "bookinfo/productpage" located in the "west" cluster
+    And user is at the details page for the "app" "bookinfo/reviews" located in the "west" cluster
     And user sees trace information
     When user selects a trace
     Then user sees span details

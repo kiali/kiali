@@ -20,11 +20,16 @@ Feature: Kiali Service Details page for remote cluster
     And user sees "service" from a remote "west" cluster
 
   @skip
+  Scenario: Minigraph should not be visible for a service, which is not deployed in specific cluster.
+    And user is at the details page for the "service" "bookinfo/details" located in the "west" cluster
+    Then user does not see a minigraph
+
+  @skip
   Scenario: See service Traffic information
     Then sd::user sees inbound and outbound traffic information
     And user should see a column related to cluster info
 
-  Scenario: See Inbound Metrics for productspage service details
+  Scenario: See Inbound Metrics for ratings service details
     Then sd::user sees "Request volume" graph
     Then sd::user sees "Request duration" graph
     Then sd::user sees "Request size" graph
@@ -38,10 +43,10 @@ Feature: Kiali Service Details page for remote cluster
     Then sd::user sees "TCP received" graph
     Then sd::user sees "TCP sent" graph
 
-  Scenario: See Graph data for productspage service details Inbound Metrics graphs
+  Scenario: See Graph data for ratings service details Inbound Metrics graphs
     Then sd::user does not see No data message in the "Request volume" graph
 
-  Scenario: See graph traces for productspage service details
+  Scenario: See graph traces for ratings service details
     And user sees trace information
     When user selects a trace
     Then user sees trace details
