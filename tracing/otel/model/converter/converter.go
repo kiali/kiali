@@ -45,7 +45,7 @@ func ConvertSpans(spans []otelModels.Span, serviceName string) []jaegerModels.Sp
 			Flags:         0,
 			OperationName: span.Name,
 			References:    []jaegerModels.Reference{},
-			Tags:          convertAttributes(span.Attributes),
+			Tags:          convertAttributes(span.Attributes, span.Status),
 			Logs:          []jaegerModels.Log{},
 			ProcessID:     "",
 			Process:       &jaegerModels.Process{Tags: []jaegerModels.KeyValue{}, ServiceName: serviceName},
@@ -72,10 +72,15 @@ func getDuration(end string, start string) (uint64, error) {
 	return (endInt - startInt) / 1000, nil
 }
 
-func convertAttributes(attributes []otelModels.Attribute) []jaegerModels.KeyValue {
+func convertAttributes(attributes []otelModels.Attribute, status otelModels.Status) []jaegerModels.KeyValue {
 	var tags []jaegerModels.KeyValue
 	for _, atb := range attributes {
-		tag := jaegerModels.KeyValue{Key: atb.Key, Value: atb.Value.StringValue}
+		tag := jaegerModels.KeyValue{Key: atb.Key, Value: atb.Value.StringValue, Type: "string"}
+		tags = append(tags, tag)
+	}
+	// When Span Status is set to ERROR, an error span tag MUST be added with the Boolean value of true
+	if status.Code == "STATUS_CODE_ERROR" {
+		tag := jaegerModels.KeyValue{Key: "error", Value: true, Type: "bool"}
 		tags = append(tags, tag)
 	}
 	return tags

@@ -17,6 +17,7 @@ type Event struct {
 }
 
 type Status struct {
+	Code string `json:"code"`
 }
 
 type Span struct {

@@ -200,11 +200,6 @@ type GrafanaVariablesConfig struct {
 	Workload  string `yaml:"workload" json:"workload,omitempty"`
 }
 
-// Tempo Config
-type TempoConfig struct {
-	Datasource string `yaml:"datasource"`
-}
-
 // TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
 	Auth                 Auth              `yaml:"auth"`
@@ -215,7 +210,6 @@ type TracingConfig struct {
 	NamespaceSelector    bool              `yaml:"namespace_selector"`
 	QueryScope           map[string]string `yaml:"query_scope,omitempty"`
 	QueryTimeout         int               `yaml:"query_timeout,omitempty"`
-	Tempo                TempoConfig       `yaml:"tempo,omitempty"`
 	URL                  string            `yaml:"url"`
 	UseGRPC              bool              `yaml:"use_grpc"`
 	WhiteListIstioSystem []string          `yaml:"whitelist_istio_system"`
@@ -665,14 +659,11 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				Enabled:           true,
-				InClusterURL:      "http://tracing.istio-system:16685/jaeger",
-				IsCore:            false,
-				Provider:          "tempo",
-				NamespaceSelector: true,
-				Tempo: TempoConfig{
-					Datasource: "Tempo",
-				},
+				Enabled:              true,
+				InClusterURL:         "http://tracing.istio-system:16685/jaeger",
+				IsCore:               false,
+				Provider:             "tempo",
+				NamespaceSelector:    true,
 				QueryScope:           map[string]string{},
 				QueryTimeout:         5,
 				URL:                  "",
