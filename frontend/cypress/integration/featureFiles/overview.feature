@@ -141,6 +141,7 @@ Feature: Kiali Overview page
     And the toggle on the right side of both "istio-system" namespace cards exists
     And the toggle should contain links to other parts of the app
     And Istio config should not be available for the "west" "istio-system" 
+    And health should be different for "east" and "west" "istio-system"
 
   @multi-cluster
   @skip
@@ -148,6 +149,7 @@ Feature: Kiali Overview page
     Then user sees the "bookinfo" namespace card in cluster "east"
     And user sees the "bookinfo" namespace card in cluster "west"
     And Istio config should not be available for the "west" "bookinfo" 
+    And health should be different for "east" and "west" "bookinfo"
 
   @multi-cluster
   @skip
