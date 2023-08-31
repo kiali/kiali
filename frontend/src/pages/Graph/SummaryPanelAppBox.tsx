@@ -36,6 +36,7 @@ import { edgesIn, edgesOut, select, selectAnd, selectOr } from 'pages/GraphPF/Gr
 import { kialiStyle } from 'styles/StyleUtils';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
+import { isMultiCluster } from 'config';
 
 const summaryAppBoxActionsStyle = kialiStyle({
   $nest: {
@@ -172,13 +173,32 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
       </DropdownGroup>
     ];
 
+    const firstBadge = isMultiCluster ? (
+      <>
+        <PFBadge badge={PFBadges.Cluster} size="sm" style={{ marginBottom: '2px' }} />
+        {nodeData.cluster}
+      </>
+    ) : (
+      <>
+        <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />
+        {nodeData.namespace}
+      </>
+    );
+    const secondBadge = isMultiCluster ? (
+      <div>
+        <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />
+        {nodeData.namespace}
+      </div>
+    ) : (
+      <></>
+    );
+
     return (
       <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
         <div className={panelHeadingStyle}>
           {getTitle('Application')}
           <span>
-            <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />
-            {nodeData.namespace}
+            {firstBadge}
             {options.length > 0 && (
               <Dropdown
                 dropdownItems={items}
@@ -197,6 +217,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
                 }
               />
             )}
+            {secondBadge}
             {renderBadgedLink(nodeData)}
             {renderHealth(nodeData.health)}
           </span>
