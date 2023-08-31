@@ -219,3 +219,5 @@ Feature: Kiali Graph page - Display menu
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
     And user sees the "bookinfo" namespace deployed across the "east" and "west" cluster
+    And nodes should contain name of the "east" cluster in their links
+    And nodes should contain name of the "west" cluster in their links
