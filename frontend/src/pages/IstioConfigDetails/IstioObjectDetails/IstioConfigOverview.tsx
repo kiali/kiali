@@ -127,7 +127,7 @@ export class IstioConfigOverview extends React.Component<IstioConfigOverviewProp
           </Title>
         </StackItem>
         <StackItem>
-          {isMultiCluster() && (
+          {isMultiCluster && (
             <div key="cluster-icon">
               <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {this.props.cluster}
             </div>

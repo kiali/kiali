@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Spinner, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
-
 import { history } from 'app/History';
 import { BoxByType, DecoratedGraphNodeData, NodeType } from 'types/Graph';
 import { JaegerInfo } from 'types/JaegerInfo';
@@ -377,7 +376,7 @@ const getOptionsFromLinkParams = (linkParams: LinkParams, jaegerInfo?: JaegerInf
   const { namespace, type, name, cluster } = linkParams;
   let detailsPageUrl = `/namespaces/${namespace}/${type}/${name}`;
   let concat = '?';
-  if (cluster && isMultiCluster()) {
+  if (cluster && isMultiCluster) {
     detailsPageUrl += '?clusterName=' + cluster;
     concat = '&';
   }

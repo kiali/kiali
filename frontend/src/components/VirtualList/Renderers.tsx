@@ -42,7 +42,7 @@ import { KialiIcon } from '../../config/KialiIcon';
 const getLink = (item: TResource, config: Resource, query?: string) => {
   let url = config.name === 'istio' ? getIstioLink(item) : `/namespaces/${item.namespace}/${config.name}/${item.name}`;
 
-  if (item.cluster && isMultiCluster() && !url.includes('cluster')) {
+  if (item.cluster && isMultiCluster && !url.includes('cluster')) {
     if (url.includes('?')) {
       url = url + '&clusterName=' + item.cluster;
     } else {

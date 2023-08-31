@@ -421,7 +421,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
     return Promise.all(
       chunk.map(nsInfo => {
-        if (nsInfo.cluster && isMultiCluster()) {
+        if (nsInfo.cluster && isMultiCluster) {
           options.clusterName = nsInfo.cluster;
         }
         return API.getNamespaceMetrics(nsInfo.name, options).then(rs => {
@@ -900,7 +900,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       const actions = this.getNamespaceActions(ns);
       return <OverviewNamespaceActions key={'namespaceAction_' + i} namespace={ns.name} actions={actions} />;
     });
-    const hiddenColumns = isMultiCluster() ? ([] as string[]) : ['cluster'];
+    const hiddenColumns = isMultiCluster ? ([] as string[]) : ['cluster'];
     return (
       <>
         <OverviewToolbar
@@ -1000,7 +1000,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                           }
                         </CardHeader>
                         <CardBody>
-                          {isMultiCluster() && ns.cluster && (
+                          {isMultiCluster && ns.cluster && (
                             <div style={{ textAlign: 'left', paddingBottom: 3 }}>
                               <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} />
                               {ns.cluster}
