@@ -132,7 +132,7 @@ export type PFColorValues = {
 export let PFColorVals: PFColorValues;
 
 /*
-  Subtract color from var
+  Extract color from var
   Input : var(--pf-v5-global--palette--black-100)
   Output:  --pf-v5-global--palette--black-100
 
