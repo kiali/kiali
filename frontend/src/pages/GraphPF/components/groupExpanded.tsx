@@ -217,10 +217,14 @@ const BaseGroupExpandedComponent: React.FunctionComponent<BaseGroupExpandedProps
   // "knows" it needs to go one level higher to reach the proper grouping.
   const raise = e => {
     let target = e.target;
-    while (d3.select(target).attr('class') !== 'pf-topology__group') {
-      target = target.parentNode;
+    try {
+      while (d3.select(target).attr('class') !== 'pf-topology__group') {
+        target = target.parentNode;
+      }
+      d3.select(target.parentNode).raise();
+    } catch (err) {
+      // ignore when this logic doesn't work and travels too far up the chain
     }
-    d3.select(target.parentNode).raise();
   };
 
   const data = element.getData();
