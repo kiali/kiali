@@ -5,6 +5,9 @@ import screenfull, { Screenfull } from 'screenfull';
 import { WorkloadPodLogsComponent } from '../WorkloadPodLogs';
 import { Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core/deprecated';
 import { store } from '../../../store/ConfigStore';
+import axios from 'axios';
+import axiosMockAdapter from 'axios-mock-adapter';
+import MockAdapter from 'axios-mock-adapter';
 
 const defaultProps = () => ({
   kiosk: '',
@@ -28,6 +31,17 @@ const defaultProps = () => ({
 });
 
 describe('WorkloadPodLogsComponent', () => {
+  let axiosMock: MockAdapter;
+
+  beforeAll(() => {
+    // Mock axios just to avoid any network trip.
+    axiosMock = new axiosMockAdapter(axios);
+  });
+
+  afterAll(() => {
+    axiosMock.restore();
+  });
+
   beforeEach(() => {
     jest.mock('screenfull');
 
@@ -36,14 +50,19 @@ describe('WorkloadPodLogsComponent', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    axiosMock.reset();
   });
 
   it('renders', () => {
+    axiosMock.onGet('api/namespaces/namespace/pods/testingpod/logs').reply(200, {});
+
     const wrapper = shallow(<WorkloadPodLogsComponent {...defaultProps()} />);
     expect(wrapper.exists()).toBeTruthy();
   });
 
   it('renders a kebab toggle dropdown', () => {
+    axiosMock.onGet('api/namespaces/namespace/pods/testingpod/logs').reply(200, {});
+
     const wrapper = shallow(<WorkloadPodLogsComponent {...defaultProps()} />);
     const kebabDropdownWrapper = wrapper
       .find(Dropdown)
@@ -53,6 +72,8 @@ describe('WorkloadPodLogsComponent', () => {
   });
 
   it('renders a log level action in the kebab', () => {
+    axiosMock.onGet('api/namespaces/namespace/pods/testingpod/logs').reply(200, {});
+
     // using 'mount' since the dropdowns are children of the kebab
     const wrapper = mount(
       <Provider store={store}>
@@ -69,6 +90,8 @@ describe('WorkloadPodLogsComponent', () => {
   });
 
   it('does not render log level actions in the kebab when proxy not present', () => {
+    axiosMock.onGet('api/namespaces/namespace/pods/testingpod/logs').reply(200, {});
+
     let props = defaultProps();
     props.pods[0].istioContainers = [];
     const wrapper = mount(
@@ -86,6 +109,8 @@ describe('WorkloadPodLogsComponent', () => {
   });
 
   it('calls set log level when action selected', () => {
+    axiosMock.onGet('api/namespaces/namespace/pods/testingpod/logs').reply(200, {});
+
     const api = require('../../../services/Api');
     const spy = jest.spyOn(api, 'setPodEnvoyProxyLogLevel');
 
