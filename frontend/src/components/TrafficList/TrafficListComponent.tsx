@@ -127,7 +127,7 @@ class TrafficList extends FilterComponent.Component<
   }
 
   render() {
-    const cols = columns(isMultiCluster());
+    const cols = columns(isMultiCluster);
     const inboundRows = this.rows('inbound');
     const outboundRows = this.rows('outbound');
     const hasInbound = inboundRows.length > 0;
@@ -323,7 +323,7 @@ class TrafficList extends FilterComponent.Component<
           ]
         };
 
-        if (isMultiCluster()) {
+        if (isMultiCluster) {
           if (irow.cells) {
             irow.cells.splice(
               2,
@@ -346,7 +346,7 @@ class TrafficList extends FilterComponent.Component<
     }
 
     let detail = `/namespaces/${item.node.namespace}/${this.nodeTypeToType(item.node.type, true)}/${item.node.name}`;
-    if (item.node.cluster && isMultiCluster()) {
+    if (item.node.cluster && isMultiCluster) {
       detail += `?clusterName=${item.node.cluster}`;
     }
 

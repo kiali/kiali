@@ -184,7 +184,7 @@ export class WorkloadDescription extends React.Component<WorkloadDescriptionProp
                 />
               )}
           </Title>
-          {this.props.workload?.cluster && isMultiCluster() && (
+          {this.props.workload?.cluster && isMultiCluster && (
             <div key="cluster-icon" className={iconStyle}>
               <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {this.props.workload.cluster}
             </div>

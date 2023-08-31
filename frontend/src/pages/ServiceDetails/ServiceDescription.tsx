@@ -172,7 +172,7 @@ export class ServiceDescription extends React.Component<ServiceInfoDescriptionPr
               />
             </span>
           </Title>
-          {this.props.serviceDetails?.cluster && isMultiCluster() && (
+          {this.props.serviceDetails?.cluster && isMultiCluster && (
             <div key="cluster-icon" className={iconStyle}>
               <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {this.props.serviceDetails.cluster}
             </div>
