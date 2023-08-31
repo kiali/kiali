@@ -158,7 +158,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
   }
 
   render() {
-    const hiddenColumns = isMultiCluster() ? ([] as string[]) : ['cluster'];
+    const hiddenColumns = isMultiCluster ? ([] as string[]) : ['cluster'];
     Toggles.getToggles().forEach((v, k) => {
       if (!v) {
         hiddenColumns.push(k);

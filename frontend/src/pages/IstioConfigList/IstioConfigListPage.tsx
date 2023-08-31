@@ -101,7 +101,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
 
     if (namespacesSelected.length !== 0) {
       this.setState({ listItems: [] });
-      if (isMultiCluster()) {
+      if (isMultiCluster) {
         for (let cluster in serverConfig.clusters) {
           this.fetchConfigs(
             namespacesSelected,
@@ -190,7 +190,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
   }
 
   render() {
-    const hiddenColumns = isMultiCluster() ? ([] as string[]) : ['cluster'];
+    const hiddenColumns = isMultiCluster ? ([] as string[]) : ['cluster'];
     if (this.props.istioAPIEnabled) {
       Toggles.getToggles().forEach((v, k) => {
         if (!v) {

@@ -128,7 +128,8 @@ computeValidDurations(serverConfig);
 export { serverConfig };
 
 let homeCluster = getHomeCluster(serverConfig);
-export { homeCluster };
+let isMultiCluster = isMC();
+export { homeCluster, isMultiCluster };
 
 export const toValidDuration = (duration: number): number => {
   // Check if valid
@@ -155,6 +156,7 @@ export const setServerConfig = (cfg: ServerConfig) => {
   computeValidDurations(serverConfig);
 
   homeCluster = getHomeCluster(serverConfig);
+  isMultiCluster = isMC();
 };
 
 export const isIstioNamespace = (namespace: string): boolean => {
@@ -164,6 +166,15 @@ export const isIstioNamespace = (namespace: string): boolean => {
   return false;
 };
 
-export function isMultiCluster(): boolean {
+export const isHomeCluster = (cluster: string): boolean => {
+  return !isMultiCluster || cluster === homeCluster?.name;
+};
+
+// Return true if the cluster is configured for this Kiali instance
+export const isConfiguredCluster = (cluster: string): boolean => {
+  return Object.keys(serverConfig.clusters).includes(cluster);
+};
+
+function isMC(): boolean {
   return Object.keys(serverConfig.clusters).length > 1;
 }

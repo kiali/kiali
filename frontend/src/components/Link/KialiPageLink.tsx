@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
-import { homeCluster, serverConfig } from '../../config';
+import { serverConfig } from '../../config';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
+import { isConfiguredCluster, isHomeCluster } from 'config/ServerConfig';
 
 type ReduxProps = {
   kiosk: string;
@@ -18,9 +19,8 @@ type KialiPageLinkProps = ReduxProps & {
 
 class KialiPageLinkComponent extends React.Component<KialiPageLinkProps> {
   render() {
-    // Without a cluster, simply render a local link
-    // If cluster is specified, and it's the home cluster, render a local link.
-    if (!this.props.cluster || homeCluster?.name !== '' || this.props.cluster === homeCluster?.name) {
+    // If not a remote cluster, simply render a local link
+    if (!this.props.cluster || isHomeCluster(this.props.cluster)) {
       if (isParentKiosk(this.props.kiosk)) {
         return (
           <Link
@@ -36,8 +36,25 @@ class KialiPageLinkComponent extends React.Component<KialiPageLinkProps> {
       }
     }
 
-    // If it's a remote cluster, check if there is an accessible Kiali on that cluster.
-    // If there is, render an external link. Else, render plain text.
+    // If it's a cluster configured for this Kiali instance
+    if (isConfiguredCluster(this.props.cluster)) {
+      const href = `${this.props.href}?clusterName=${encodeURIComponent(this.props.cluster!)}`;
+      if (isParentKiosk(this.props.kiosk)) {
+        return (
+          <Link
+            to={''}
+            onClick={() => {
+              kioskContextMenuAction(href);
+            }}
+            children={this.props.children}
+          />
+        );
+      } else {
+        return <Link to={href}>{this.props.children}</Link>;
+      }
+    }
+
+    // If it's a cluster on which there is a remote Kiali, render an external link. Else, render plain text.
     const clusterInfo = serverConfig.clusters[this.props.cluster];
     const kialiInstance = clusterInfo?.kialiInstances?.find(instance => instance.url.length !== 0);
 
