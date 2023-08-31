@@ -326,10 +326,14 @@ const BaseNodeComponent: React.FunctionComponent<BaseNodeProps> = ({
   // "knows" it needs to go two levels higher to reach the proper grouping.
   const raise = e => {
     let target = e.target;
-    while (!d3.select(target).attr('class')?.startsWith('pf-topology__node ')) {
-      target = target.parentNode;
+    try {
+      while (!d3.select(target).attr('class')?.startsWith('pf-topology__node ')) {
+        target = target.parentNode;
+      }
+      d3.select(target.parentNode.parentNode).raise();
+    } catch (err) {
+      // ignore when this logic doesn't work and travels too far up the chain
     }
-    d3.select(target.parentNode.parentNode).raise();
   };
 
   const data = element.getData();
