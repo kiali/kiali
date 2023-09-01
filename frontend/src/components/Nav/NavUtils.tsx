@@ -37,7 +37,7 @@ const buildCommonQueryParams = (params: GraphUrlParams): string => {
   q += `&${URLParam.REFRESH_INTERVAL}=${params.refreshInterval}`;
 
   if (params.node && params.node.cluster && isMultiCluster) {
-    q += `&${URLParam.CLUSTERNAME}=${params.node?.cluster}`;
+    q += `&${URLParam.CLUSTERNAME}=${encodeURIComponent(params.node?.cluster)}`;
   }
 
   return q;
