@@ -108,8 +108,19 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
         : expandedStyle
       : collapsedStyle;
 
+    let tourStops = [GraphTourStops.SidePanel];
+    const summary: SummaryData = this.props.data;
+
+    if (summary.isPF) {
+      tourStops.unshift(GraphTourStops.GraphPF);
+      tourStops.unshift(GraphTourStops.ContextualMenuPF);
+    } else {
+      tourStops.unshift(GraphTourStops.Graph);
+      tourStops.unshift(GraphTourStops.ContextualMenu);
+    }
+
     return (
-      <TourStop info={[GraphTourStops.Graph, GraphTourStops.ContextualMenu, GraphTourStops.SidePanel]}>
+      <TourStop info={tourStops}>
         <div id="graph-side-panel" className={mainStyle}>
           <div className={mainTopStyle}>
             <div className={classes(toggleSidePanelStyle)} onClick={this.togglePanel}>
