@@ -3,6 +3,7 @@ import { DurationInSeconds, IntervalInMilliseconds } from '../../types/Common';
 import { Namespace } from '../../types/Namespace';
 import { URLParam } from '../../app/History';
 import { getKioskMode, isKioskMode } from '../../utils/SearchParamUtils';
+import { isMultiCluster } from 'config';
 
 export type GraphUrlParams = {
   activeNamespaces: Namespace[];
@@ -35,7 +36,7 @@ const buildCommonQueryParams = (params: GraphUrlParams): string => {
   q += `&${URLParam.GRAPH_OPERATION_NODES}=${params.showOperationNodes}`;
   q += `&${URLParam.REFRESH_INTERVAL}=${params.refreshInterval}`;
 
-  if (params.node && params.node.cluster) {
+  if (params.node && params.node.cluster && isMultiCluster) {
     q += `&${URLParam.CLUSTERNAME}=${params.node?.cluster}`;
   }
 
