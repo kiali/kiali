@@ -24,6 +24,7 @@ Feature: Kiali App Details page
   @bookinfo-app
   Scenario: See app Traffic information
     Then user sees inbound and outbound traffic information
+    And the "Cluster" column "disappears"
 
   @bookinfo-app
   Scenario: See Inbound Metrics

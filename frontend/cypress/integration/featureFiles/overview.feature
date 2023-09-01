@@ -34,6 +34,7 @@ Feature: Kiali Overview page
   Scenario: Select the LIST view
     When user clicks in the "LIST" view
     Then user sees a "LIST" "beta" namespace
+    And the "Cluster" column "disappears"
 
   Scenario: Filter by namespace
     When user filters "alpha" namespace

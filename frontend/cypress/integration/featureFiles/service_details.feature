@@ -31,6 +31,7 @@ Feature: Kiali Service Details page
   @bookinfo-app
   Scenario: See service Traffic information
     Then sd::user sees inbound and outbound traffic information
+    And the "Cluster" column "disappears"
 
   @bookinfo-app
   Scenario: See Inbound Metrics for productspage service details

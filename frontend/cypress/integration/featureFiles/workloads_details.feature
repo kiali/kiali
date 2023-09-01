@@ -22,6 +22,7 @@ Feature: Kiali Workload Details page
   @bookinfo-app
   Scenario: See workload traffic information
     Then user sees workload inbound and outbound traffic information
+    And the "Cluster" column "disappears"
 
   @bookinfo-app
   Scenario: See workload Inbound Metrics

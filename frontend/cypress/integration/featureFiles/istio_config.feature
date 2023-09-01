@@ -15,6 +15,7 @@ Feature: Kiali Istio Config page
   @bookinfo-app
   Scenario: See all Istio Config objects in the bookinfo namespace.
     Then user sees all the Istio Config objects in the bookinfo namespace
+    And the "Cluster" column "disappears"
     And user sees Name information for Istio objects
     And user sees Namespace information for Istio objects
     And user sees Type information for Istio objects
