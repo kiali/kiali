@@ -99,7 +99,7 @@
     "tippy.js": "3.4.1",
     "typesafe-actions": "^4.2.1",
     "typestyle": "^2.4.0",
-    "victory": "36.3.0",
+    "victory": "^36.6.11",
     "visibilityjs": "2.0.2"
   },
   "devDependencies": {
