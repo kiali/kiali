@@ -26,7 +26,7 @@ jobs:
       go_version: ${{ env.go_version }}
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         ref: ${{ github.ref_name }}
 
@@ -206,7 +206,7 @@ jobs:
       GO_VERSION: ${{ needs.initialize.outputs.go_version }}
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         ref: ${{ github.ref_name }}
 
