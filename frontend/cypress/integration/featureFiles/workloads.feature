@@ -134,6 +134,6 @@ Feature: Kiali Workloads page
   Scenario: Sort list by cluster column
     When user selects the "bookinfo" namespace
     And user sorts the list by "Cluster" "asc"
-    Then the list is sorted by "Cluster"Okay, Google just told me that I've created a chat room regarding the plugin meeting. I must've clicked something on Okay, Google just told me that I've created a chat room regarding the plugin meeting. I must've clicked something on  "asc"
+    Then the list is sorted by "Cluster" "asc"
     When user sorts the list by "Cluster" "desc"
     Then the list is sorted by "Cluster" "desc"
