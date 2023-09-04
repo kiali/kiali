@@ -17,6 +17,7 @@ Feature: Kiali Istio Config editor page
     And user sees "bookinfo"
     And user clicks in "Name" column on the "bookinfo" text
     Then user can see istio config editor
+    But no cluster badge for the "Istio config" should be visible
 
   @multi-cluster
   @skip

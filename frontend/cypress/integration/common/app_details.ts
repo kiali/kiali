@@ -1,4 +1,4 @@
-import { And, Then } from '@badeball/cypress-cucumber-preprocessor';
+import { And, Then, But } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
 import { openTab } from './transition';
 
@@ -63,4 +63,15 @@ And('user can filter spans by app', () => {
   // TODO: Assert that something has opened after clicking. There is currently
   // a bug where the kebab doesn't do anything when clicked.
   getCellsForCol(4).first().click();
+});
+
+But('no cluster badge for the {string} should be visible',(type:string) => {
+  if (type === 'Istio config'){
+    cy.get('#pfbadge-C').should('not.exist');
+  }
+  else{
+    cy.get(`#${type[0].toUpperCase() + type.slice(1)}DescriptionCard`).within(($article)=>{
+      cy.get('#pfbadge-C').should('not.exist');
+    });
+  }
 });

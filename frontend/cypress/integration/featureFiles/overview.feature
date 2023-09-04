@@ -18,7 +18,9 @@ Feature: Kiali Overview page
 
   Scenario: See "alpha" and "beta" namespaces
     Then user sees the "alpha" namespace card
+    And user does not see any cluster badge in the "alpha" namespace card
     And user sees the "beta" namespace card
+    And user does not see any cluster badge in the "beta" namespace card
 
   Scenario: Doesn't see a "bad" namespace
     Then user doesn't see the "bad" namespace card
@@ -113,6 +115,7 @@ Feature: Kiali Overview page
   @error-rates-app
   Scenario: The Istio panel should be visible in the control panel
     Then user sees the "istio-system" namespace card
+    And user does not see any cluster badge in the "istio-system" namespace card
     And user sees the "Control plane" label in the "istio-system" namespace card
     And user sees the "Outbound policy" label in the "istio-system" namespace card
     Then the toggle on the right side of the "istio-system" namespace card exists
