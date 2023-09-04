@@ -14,6 +14,7 @@ Feature: Kiali Workload Details page
   @bookinfo-app
   Scenario: See details for workload
     Then user sees details information for workload
+    But no cluster badge for the "workload" should be visible
 
   @bookinfo-app
   Scenario: See minigraph for workload.

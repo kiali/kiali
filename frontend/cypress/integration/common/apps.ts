@@ -4,7 +4,7 @@
   pages since these are all similar.
 */
 
-import { And, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { And, Then, When, But } from '@badeball/cypress-cucumber-preprocessor';
 import { 
   checkHealthIndicatorInTable,
   checkHealthStatusInTable,
@@ -155,3 +155,8 @@ Then('user may only see {string}', (sees: string) => {
   });
 });
 
+But('no cluster badge for the {string} should be visible',(type:string) => {
+  cy.get(`#${type[0].toUpperCase() + type.slice(1)}DescriptionCard`).within(($article)=>{
+    cy.get('#pfbadge-C').should('not.exist');
+  })
+});
