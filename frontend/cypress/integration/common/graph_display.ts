@@ -335,6 +335,20 @@ And('the {string} option should {string} and {string}', (option:string, optionSt
   cy.get('div#graph-display-menu').find(`input#${option}`).should(optionState.replaceAll(' ','.')).and(`be.${checkState}`);
 });
 
+
+And('only a single cluster box should be visible',() =>{
+  cy.waitForReact();
+  cy.getReact('CytoscapeGraph')
+    .should('have.length', '1')
+    .getCurrentState()
+    .then(state => {
+      const clusterBoxes = state.cy.nodes(`[isBox = "cluster"]`).length;
+      assert.equal(clusterBoxes, 0);
+      const namespaceBoxes = state.cy.nodes(`[isBox = "namespace"][namespace = "bookinfo"]`).length;
+      assert.equal(namespaceBoxes, 1);
+    });
+});
+
 function validateInput(option: string, action: string) {
   if (action.startsWith('appear')) {
     cy.get('div#graph-display-menu')

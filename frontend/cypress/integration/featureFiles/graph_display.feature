@@ -213,6 +213,20 @@ Feature: Kiali Graph page - Display menu
     And the "service nodes" option should "not be checked" and "enabled"
     And the "operation nodes" option should "be checked" and "enabled"
 
+  @bookinfo-app
+  Scenario Outline: Multiple cluster boxes should not be visible in the graph
+    When user graphs "bookinfo" namespaces
+    And user resets to factory default
+    And user selects "<type>" graph type
+    Then user sees the "bookinfo" namespace
+    And only a single cluster box should be visible
+    Examples:
+      | type         |
+      | APP          |
+      | SERVICE      |
+      | VERSIONED_APP|
+      | WORKLOAD     |
+
   @skip
   @multi-cluster
   Scenario: Graph bookinfo namespace for the multi-cluster setup
