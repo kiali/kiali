@@ -226,7 +226,7 @@ type IstioConfig struct {
 	ComponentStatuses                 ComponentStatuses   `yaml:"component_status,omitempty"`
 	ConfigMapName                     string              `yaml:"config_map_name,omitempty"`
 	EnvoyAdminLocalPort               int                 `yaml:"envoy_admin_local_port,omitempty"`
-	GatewayAPIClassName               string              `yaml:"gateway_api_class_name,omitempty"`
+	GatewayAPIClasses                 []GatewayAPIClass   `yaml:"gateway_api_classes,omitempty"`
 	IstioAPIEnabled                   bool                `yaml:"istio_api_enabled"`
 	IstioCanaryRevision               IstioCanaryRevision `yaml:"istio_canary_revision,omitempty"`
 	IstioIdentityDomain               string              `yaml:"istio_identity_domain,omitempty"`
@@ -255,6 +255,11 @@ type ComponentStatus struct {
 	IsCore    bool   `yaml:"is_core,omitempty"`
 	IsProxy   bool   `yaml:"is_proxy,omitempty"`
 	Namespace string `yaml:"namespace,omitempty"`
+}
+
+type GatewayAPIClass struct {
+	Name      string `yaml:"name,omitempty"`
+	ClassName string `yaml:"class_name,omitempty"`
 }
 
 // ExternalServices holds configurations for other systems that Kiali depends on
@@ -625,7 +630,11 @@ func NewConfig() (c *Config) {
 				IstiodPodMonitoringPort:           15014,
 				RootNamespace:                     "istio-system",
 				UrlServiceVersion:                 "http://istiod.istio-system:15014/version",
-				GatewayAPIClassName:               "istio",
+				GatewayAPIClasses: []GatewayAPIClass{
+					{
+						Name: "Istio", ClassName: "istio",
+					},
+				},
 			},
 			Prometheus: PrometheusConfig{
 				Auth: Auth{
