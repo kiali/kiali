@@ -55,6 +55,7 @@ And('user is at the details page for the {string} {string} located in the {strin
   ensureKialiFinishedLoading();
 });
 
+// A simple function to check whether the DOM (or a subset of DOM has the cluster parameter in its links). This is related to multi-cluster testing.
 export function clusterParameterExists(present:boolean){
   var exist:string = '';
   if (!present){

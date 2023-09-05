@@ -9,7 +9,6 @@ Feature: Kiali Graph page - Context menu actions
     Given user is at administrator perspective
 
   @bookinfo-app
-  # @multi-cluster
   Scenario: Actions in context menu for service node with existing traffic routing
     When user graphs "bookinfo" namespaces
     And user opens the context menu of the "productpage" service node
