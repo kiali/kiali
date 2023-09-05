@@ -304,7 +304,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                       <Toolbar style={{ padding: 0, width: '100%' }}>
                         <ToolbarGroup style={{ margin: 0, marginRight: '5px' }}>
                           <ToolbarItem>
-                            <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} style={{marginTop: '30%'}}/>
+                            <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} style={{ marginTop: '30%' }} />
                           </ToolbarItem>
                           <ToolbarItem>
                             <ToolbarDropdown
@@ -369,7 +369,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                               </Tooltip>
                             </ToolbarItem>
                           </ToolbarItem>
-                          <ToolbarItem style={{marginTop: '10px'}}>
+                          <ToolbarItem style={{ marginTop: '10px' }}>
                             <Checkbox
                               className={toolbarInputStyle}
                               id="log-spans"
@@ -1037,7 +1037,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           this.setState({ loadingLogs: false });
           return;
         }
-        const errorMsg = error.response && error.response.data.error ? error.response.data.error : error.message;
+        const errorMsg = error.response?.data?.error || error.message;
         const now = Date.now();
         this.setState({
           loadingLogs: false,
