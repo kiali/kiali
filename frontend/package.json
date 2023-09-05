@@ -100,10 +100,6 @@
     "visibilityjs": "2.0.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.22.15",
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@babel/plugin-syntax-flow": "^7.22.5",
-    "@babel/plugin-transform-react-jsx": "^7.22.15",
     "@badeball/cypress-cucumber-preprocessor": "^12.2.0",
     "@cypress/browserify-preprocessor": "3.0.2",
     "@types/cytoscape": "3.14.0",
@@ -139,6 +135,10 @@
     "typescript": "4.6.4"
   },
   "resolutions": {
+    "@babel/core": "^7.22.15",
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@babel/plugin-syntax-flow": "^7.22.5",
+    "@babel/plugin-transform-react-jsx": "^7.22.15",
     "async": "^3.2.2",
     "json-schema": "^0.4.0",
     "minimist": "^1.2.6",
