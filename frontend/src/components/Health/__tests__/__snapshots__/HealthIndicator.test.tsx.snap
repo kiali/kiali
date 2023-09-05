@@ -3,7 +3,7 @@
 exports[`HealthIndicator proxy status section renders the degraded workloads 1`] = `
 <Tooltip
   aria-label="Health indicator"
-  className="kiali_f1gl57f9"
+  className="kiali_f1icezv7"
   content={
     <div>
       <strong>
@@ -98,7 +98,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
 >
   <span>
     <Icon
-      className="icon-degraded kiali_fpjhxhv"
+      className="icon-degraded kiali_frkkrth"
       size="md"
     >
       <ExclamationTriangleIcon />
@@ -110,7 +110,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
 exports[`HealthIndicator renders healthy 1`] = `
 <Tooltip
   aria-label="Health indicator"
-  className="kiali_f1gl57f9"
+  className="kiali_f1icezv7"
   content={
     <div>
       <strong>
@@ -215,7 +215,7 @@ exports[`HealthIndicator renders healthy 1`] = `
 >
   <span>
     <Icon
-      className="icon-healthy kiali_f1iy6moq"
+      className="icon-healthy kiali_f1r5cf3w"
       size="md"
     >
       <CheckCircleIcon />
