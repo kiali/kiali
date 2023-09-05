@@ -1018,7 +1018,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
           this.setState({ loadingLogs: false });
           return;
         }
-        const errorMsg = error.response && error.response.data.error ? error.response.data.error : error.message;
+        const errorMsg = error.response?.data?.error || error.message;
         const now = Date.now();
         this.setState({
           loadingLogs: false,
