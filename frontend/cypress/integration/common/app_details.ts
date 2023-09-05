@@ -1,6 +1,7 @@
 import { And, Then, But } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
 import { openTab } from './transition';
+import { clusterParameterExists } from './navigation';
 
 const APP = 'details';
 const NAMESPACE = 'bookinfo';
@@ -10,6 +11,7 @@ Then('user sees details information for the {string} app', (name:string) => {
     cy.get('#pfbadge-A').parent().parent().parent().contains('details'); // App
     cy.get('#pfbadge-W').parent().parent().parent().contains('details-v1'); // Workload
     cy.get('#pfbadge-S').parent().parent().parent().contains('details'); // Service
+    clusterParameterExists(false);
   });
 });
 
@@ -68,6 +70,11 @@ And('user can filter spans by app', () => {
 But('no cluster badge for the {string} should be visible',(type:string) => {
   if (type === 'Istio config'){
     cy.get('#pfbadge-C').should('not.exist');
+  }
+  else if (type === 'graph side panel'){
+    cy.get('#graph-side-panel').within(($div) => {
+      cy.get('#pfbadge-C').should('not.exist');
+    });
   }
   else{
     cy.get(`#${type[0].toUpperCase() + type.slice(1)}DescriptionCard`).within(($article)=>{

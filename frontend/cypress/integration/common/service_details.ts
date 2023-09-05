@@ -1,4 +1,5 @@
 import { Then, And } from '@badeball/cypress-cucumber-preprocessor';
+import { clusterParameterExists } from './navigation';
 
 function openTab(tab: string) {
   cy.get('.pf-v5-c-tabs__list').should('be.visible').contains(tab).click();
@@ -22,6 +23,7 @@ Then('sd::user sees {string} details information for service {string}', (name: s
       .parent()
       .parent()
       .contains(name + '-' + version); // Workload
+    clusterParameterExists(false);
   });
 });
 
