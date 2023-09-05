@@ -479,15 +479,19 @@ if [ "${OLM_ENABLED}" == "true" ]; then
   infomsg "Waiting for Kiali CRD to be established."
   ${CLIENT_EXE} wait --for condition=established --timeout=300s crd kialis.kiali.io
 
+  infomsg "Waiting for deployments to start up in the operators namespace."
+  ${CLIENT_EXE} wait --for condition=available --timeout=300s --all --namespace operators deployments
+
   infomsg "Configuring the Kiali operator to allow ad hoc images, ad hoc namespaces, and changes to security context."
   operator_namespace="$(${CLIENT_EXE} get deployments --all-namespaces  | grep kiali-operator | cut -d ' ' -f 1)"
+  infomsg "Kiali operator namespace: [${operator_namespace}]"
   for env_name in ALLOW_AD_HOC_KIALI_NAMESPACE ALLOW_AD_HOC_KIALI_IMAGE ALLOW_SECURITY_CONTEXT_OVERRIDE; do
     ${CLIENT_EXE} -n ${operator_namespace} patch $(${CLIENT_EXE} -n ${operator_namespace} get csv -o name | grep kiali) --type=json -p "[{'op':'replace','path':"/spec/install/spec/deployments/0/spec/template/spec/containers/0/env/$(${CLIENT_EXE} -n ${operator_namespace} get $(${CLIENT_EXE} -n ${operator_namespace} get csv -o name | grep kiali) -o jsonpath='{.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[*].name}' | tr ' ' '\n' | cat --number | grep ${env_name} | cut -f 1 | xargs echo -n | cat - <(echo "-1") | bc)/value",'value':"\"true\""}]"
   done
   sleep 5
 
   infomsg "Waiting for the Kiali Operator to be ready."
-  ${CLIENT_EXE} wait -n ${operator_namespace} --for=condition=ready --timeout=300s $(${CLIENT_EXE} get pod -n ${operator_namespace} -l app.kubernetes.io/name=kiali-operator -o name)
+  ${CLIENT_EXE} wait --for condition=available --timeout=300s -n ${operator_namespace} deployments kiali-operator
 fi
 
 if [ "${OPERATOR_INSTALLER}" != "skip" ]; then
