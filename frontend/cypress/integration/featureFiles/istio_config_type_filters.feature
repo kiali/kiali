@@ -10,7 +10,7 @@ Feature: Kiali Istio Config page
     Given user is at administrator perspective
     And user is at the "istio" page
     And user selects the "istio-system" namespace
-    And user filters by "Istio Type"
+    And user filters by "Type"
     And no filters are active
 
   Scenario: Fill the input form with nonsense

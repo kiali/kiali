@@ -66,12 +66,8 @@ And('user filters for name {string}', (name: string) => {
   cy.get('input[aria-label="filter_input_value"]').type(`${name}{enter}`);
 });
 
-When('user filters by {string} istio type', (istioType: string) => {
-  cy.get('select[aria-label="filter_select_type"]').select('istiotype');
-});
-
-And('user filters for istio type {string}', (istioType: string) => {
-  cy.get('input[placeholder="Filter by Istio Type"]').type(`${istioType}{enter}`);
+And('user filters for istio config type {string}', (istioType: string) => {
+  cy.get('input[placeholder="Filter by Istio Config Type"]').type(`${istioType}{enter}`);
   cy.get(`button[label="${istioType}"]`).should('be.visible').click();
 });
 
@@ -89,12 +85,12 @@ export function colExists(colName: string, exists: boolean) {
 // This func makes a couple assumptions:
 //
 // 1. The classes expected
-export const hasAtLeastOneClass = (expectedClasses) => {
-  return ($el) => {
-    const classList = Array.from($el[0].classList); 
+export const hasAtLeastOneClass = expectedClasses => {
+  return $el => {
+    const classList = Array.from($el[0].classList);
     return expectedClasses.some(expectedClass => classList.includes(expectedClass));
-  }
-}
+  };
+};
 
 // getColWithRowText will find the column matching the unique row text and column header name.
 // This func makes a couple assumptions:
@@ -206,7 +202,9 @@ export function checkHealthStatusInTable(
   const selector = targetType
     ? `${targetNamespace}_${targetType}_${targetRowItemName}`
     : `${targetNamespace}_${targetRowItemName}`;
-  cy.get(`[data-test=VirtualItem_Ns${selector}] td:first-child span[class=pf-v5-c-icon__content]`).trigger('mouseenter');
+  cy.get(`[data-test=VirtualItem_Ns${selector}] td:first-child span[class=pf-v5-c-icon__content]`).trigger(
+    'mouseenter'
+  );
   cy.get(`[aria-label='Health indicator'] strong`).should('contain.text', healthStatus);
 }
 
