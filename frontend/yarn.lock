@@ -2738,7 +2738,7 @@
     lodash "^4.17.19"
     tslib "^2.5.0"
 
-"@patternfly/react-tokens@5.0.0", "@patternfly/react-tokens@^5.0.0":
+"@patternfly/react-tokens@^5.0.0":
   version "5.0.0"
   resolved "https://registry.npmjs.org/@patternfly/react-tokens/-/react-tokens-5.0.0.tgz#8e2698d32d5353359e713312687a6b08ead0080b"
   integrity sha512-to2CXIZ6WTuzBcjLZ+nXi5LhnYkSIDu3RBMRZwrplmECOoUWv87CC+2T0EVxtASRtpQfikjD2PDKMsif5i0BxQ==
