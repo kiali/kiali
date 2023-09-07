@@ -5,6 +5,7 @@ import (
 
 	"github.com/kiali/kiali/log"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
+	otel "github.com/kiali/kiali/tracing/otel/model"
 	otelModels "github.com/kiali/kiali/tracing/otel/model/json"
 )
 
@@ -57,6 +58,36 @@ func ConvertSpans(spans []otelModels.Span, serviceName string) []jaegerModels.Sp
 	return toRet
 }
 
+func ConvertSpanSet(span otel.Span, serviceName string, traceId string) []jaegerModels.Span {
+	var toRet []jaegerModels.Span
+
+	startTime, err := strconv.ParseUint(span.StartTimeUnixNano, 10, 64)
+	if err != nil {
+		log.Errorf("Error converting start time. Skipping trace")
+	}
+	duration, err := strconv.ParseUint(span.DurationNanos, 10, 64)
+
+	jaegerSpan := jaegerModels.Span{
+		TraceID:   ConvertId(traceId),
+		SpanID:    convertSpanId(span.SpanID),
+		Duration:  duration / 1000, // Provided in ns, Jaeger uses ms
+		StartTime: startTime / 1000,
+		// No more mapped data
+		Flags: 0,
+		//OperationName: span.Name,
+		References: []jaegerModels.Reference{},
+		Tags:       convertAttributes(span.Attributes, span.Status),
+		Logs:       []jaegerModels.Log{},
+		ProcessID:  "",
+		Process:    &jaegerModels.Process{Tags: []jaegerModels.KeyValue{}, ServiceName: serviceName},
+		Warnings:   []string{},
+	}
+
+	toRet = append(toRet, jaegerSpan)
+
+	return toRet
+}
+
 func getDuration(end string, start string) (uint64, error) {
 	endInt, err := strconv.ParseUint(end, 10, 64)
 	if err != nil {
@@ -75,8 +106,13 @@ func getDuration(end string, start string) (uint64, error) {
 func convertAttributes(attributes []otelModels.Attribute, status otelModels.Status) []jaegerModels.KeyValue {
 	var tags []jaegerModels.KeyValue
 	for _, atb := range attributes {
-		tag := jaegerModels.KeyValue{Key: atb.Key, Value: atb.Value.StringValue, Type: "string"}
-		tags = append(tags, tag)
+		if atb.Key == "status" && atb.Value.StringValue == "error" {
+			tag := jaegerModels.KeyValue{Key: "error", Value: true, Type: "bool"}
+			tags = append(tags, tag)
+		} else {
+			tag := jaegerModels.KeyValue{Key: atb.Key, Value: atb.Value.StringValue, Type: "string"}
+			tags = append(tags, tag)
+		}
 	}
 	// When Span Status is set to ERROR, an error span tag MUST be added with the Boolean value of true
 	if status.Code == "STATUS_CODE_ERROR" {

@@ -28,7 +28,7 @@ func (oc OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, 
 	url := *baseURL
 	url.Path = path.Join(url.Path, "/api/search")
 	tracingServiceName := buildTracingServiceName(namespace, app)
-	prepareQuery(&url, tracingServiceName, q)
+	prepareTraceQL(&url, tracingServiceName, q)
 	r, err := oc.queryTracesHTTP(client, &url)
 	if r != nil {
 		r.TracingServiceName = tracingServiceName
@@ -91,7 +91,26 @@ func (oc OtelHTTPClient) queryTracesHTTP(client http.Client, u *url.URL) (*model
 		return &model.TracingResponse{}, reqError
 	}
 	response, _ := unmarshal(resp, u)
-	return oc.getTracesDetails(response, client, u)
+
+	return oc.transformTrace(response)
+}
+
+// transformTrace processes every trace ID and make a request to get all the spans for that trace
+func (oc OtelHTTPClient) transformTrace(traces *otel.Traces) (*model.TracingResponse, error) {
+	var response model.TracingResponse
+	serviceName := ""
+
+	for _, trace := range traces.Traces {
+		serviceName = getServiceName(trace.SpanSet.Spans[0].Attributes)
+		batchTrace, err := convertBatchTrace(trace, serviceName)
+		if err != nil {
+			log.Errorf("Error getting trace detail for %s: %s", trace.TraceID, err.Error())
+		} else {
+			response.Data = append(response.Data, batchTrace)
+		}
+	}
+	response.TracingServiceName = serviceName
+	return &response, nil
 }
 
 // getTracesDetails processes every trace ID and make a request to get all the spans for that trace
@@ -112,8 +131,8 @@ func (oc OtelHTTPClient) getTracesDetails(traces *otel.TracingResponse, client h
 	return &response, nil
 }
 
-func unmarshal(r []byte, u *url.URL) (*otel.TracingResponse, error) {
-	var response otel.TracingResponse
+func unmarshal(r []byte, u *url.URL) (*otel.Traces, error) {
+	var response otel.Traces
 	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
 		log.Errorf("Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, u)
 		return nil, errMarshal
@@ -132,7 +151,22 @@ func unmarshalSingleTrace(r []byte, u *url.URL) (*otelModels.Data, error) {
 	return &response, nil
 }
 
-// convertSingleTrace
+// convertBatchTrace Convert a trace returned by TraceQL query into a jaeger Trace
+func convertBatchTrace(trace otel.Trace, serviceName string) (jaegerModels.Trace, error) {
+
+	var jaegerModel jaegerModels.Trace
+
+	jaegerModel.TraceID = converter.ConvertId(trace.TraceID)
+	for _, span := range trace.SpanSet.Spans {
+		jaegerModel.Spans = append(jaegerModel.Spans, converter.ConvertSpanSet(span, serviceName, trace.TraceID)...)
+	}
+	jaegerModel.Processes = map[jaegerModels.ProcessID]jaegerModels.Process{}
+	jaegerModel.Warnings = []string{}
+
+	return jaegerModel, nil
+}
+
+// convertSingleTrace Convert a single trace returned by
 func convertSingleTrace(traces *otelModels.Data, id string) (*model.TracingResponse, error) {
 	var response model.TracingResponse
 	var jaegerModel jaegerModels.Trace
@@ -155,6 +189,7 @@ func convertSingleTrace(traces *otelModels.Data, id string) (*model.TracingRespo
 	return &response, nil
 }
 
+// prepareQuery will be useful in case the query does not use TraceQL
 func prepareQuery(u *url.URL, tracingServiceName string, query models.TracingQuery) {
 	q := url.Values{}
 	q.Set("start", fmt.Sprintf("%d", query.Start.Unix()))
@@ -168,6 +203,29 @@ func prepareQuery(u *url.URL, tracingServiceName string, query models.TracingQue
 		}
 		q.Set("tags", string(tags))
 	}
+	if query.MinDuration > 0 {
+		q.Set("minDuration", fmt.Sprintf("%dms", query.MinDuration.Milliseconds()))
+	}
+	if query.Limit > 0 {
+		q.Set("limit", strconv.Itoa(query.Limit))
+	}
+	u.RawQuery = q.Encode()
+	log.Debugf("Prepared Tempo API query: %v", u)
+}
+
+// prepareTraceQL returns a query in TraceQL format
+func prepareTraceQL(u *url.URL, tracingServiceName string, query models.TracingQuery) {
+	q := url.Values{}
+	q.Set("start", fmt.Sprintf("%d", query.Start.Unix()))
+	q.Set("end", fmt.Sprintf("%d", query.End.Unix()))
+	traceQL := "{.service.name=\"" + tracingServiceName + "\" && .node_id =~ \".*\" "
+	if query.Tags["error"] == "true" {
+		traceQL += " && status=error "
+	} else {
+		traceQL += " && (status=error || status=unset || status=ok) "
+	}
+	traceQL += " }"
+	q.Set("q", traceQL)
 	if query.MinDuration > 0 {
 		q.Set("minDuration", fmt.Sprintf("%dms", query.MinDuration.Milliseconds()))
 	}
