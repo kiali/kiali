@@ -217,12 +217,9 @@ Given(
   }
 );
 
-Given(
-  'there is not a {string} VirtualService in the {string} namespace',
-  function (vsName: string, namespace: string) {
-    cy.exec(`kubectl delete VirtualService ${vsName} -n ${namespace}`, { failOnNonZeroExit: false });
-  }
-);
+Given('there is not a {string} VirtualService in the {string} namespace', function (vsName: string, namespace: string) {
+  cy.exec(`kubectl delete VirtualService ${vsName} -n ${namespace}`, { failOnNonZeroExit: false });
+});
 
 Given('the DestinationRule enables mTLS', function () {
   cy.exec(
@@ -361,9 +358,13 @@ And('the user filters by {string} for {string}', (filter: string, filterValue: s
   if (filter === 'Istio Name') {
     cy.get('select[aria-label="filter_select_type"]').select(filter);
     cy.get('input[aria-label="filter_input_value"]').type(`${filterValue}{enter}`);
-  } else if (filter === 'Istio Type') {
-    cy.get('select[aria-label="filter_select_type"]').select('Istio Type');
-    cy.get('input[placeholder="Filter by Istio Type"]').type(`${filterValue}{enter}`);
+  } else if (filter === 'Type') {
+    cy.get('select[aria-label="filter_select_type"]').select('Type');
+    cy.get('input[placeholder="Filter by Type"]').type(`${filterValue}{enter}`);
+    cy.get(`button[label="${filterValue}"]`).should('be.visible').click();
+  } else if (filter === 'Istio Config Type') {
+    cy.get('select[aria-label="filter_select_type"]').select('Istio Config Type');
+    cy.get('input[placeholder="Filter by Istio Config Type"]').type(`${filterValue}{enter}`);
     cy.get(`button[label="${filterValue}"]`).should('be.visible').click();
   } else if (filter === 'Config') {
     cy.get('select[aria-label="filter_select_type"]').select(filter);

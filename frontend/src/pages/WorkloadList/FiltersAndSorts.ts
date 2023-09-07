@@ -22,7 +22,7 @@ import { hasMissingSidecar } from '../../components/VirtualList/Config';
 import { TextInputTypes } from '@patternfly/react-core';
 import { filterByLabel } from '../../helpers/LabelFilterHelper';
 import { calculateErrorRate } from '../../types/ErrorRate';
-import { istioTypeFilter } from '../IstioConfigList/FiltersAndSorts';
+import { istioConfigTypeFilter } from '../IstioConfigList/FiltersAndSorts';
 import { compareObjectReferences } from '../AppList/FiltersAndSorts';
 import { serverConfig } from 'config';
 
@@ -276,8 +276,8 @@ const workloadTypeFilter: FilterType = {
 export const availableFilters: FilterType[] = [
   workloadNameFilter,
   workloadTypeFilter,
+  istioConfigTypeFilter,
   istioSidecarFilter,
-  istioTypeFilter,
   healthFilter,
   appLabelFilter,
   versionLabelFilter,
@@ -352,7 +352,7 @@ export const filterBy = (items: WorkloadListItem[], filters: ActiveFiltersInfo):
     return filterByHealth(ret, healthSelected);
   }
 
-  const istioTypeSelected = getFilterSelectedValues(istioTypeFilter, filters);
+  const istioTypeSelected = getFilterSelectedValues(istioConfigTypeFilter, filters);
   if (istioTypeSelected.length > 0) {
     return filterByIstioType(ret, istioTypeSelected);
   }

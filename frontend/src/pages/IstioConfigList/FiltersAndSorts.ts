@@ -89,9 +89,10 @@ export const istioNameFilter: FilterType = {
   filterValues: []
 };
 
+// Used when Istio Config is implied
 export const istioTypeFilter: FilterType = {
-  category: 'Istio Type',
-  placeholder: 'Filter by Istio Type',
+  category: 'Type',
+  placeholder: 'Filter by Type',
   filterType: AllFilterTypes.typeAhead,
   action: FILTER_ACTION_APPEND,
   filterValues: [
@@ -156,6 +157,13 @@ export const istioTypeFilter: FilterType = {
       title: 'WorkloadGroup'
     }
   ]
+};
+
+// Used when Istio Config should be explicit
+export const istioConfigTypeFilter = {
+  ...istioTypeFilter,
+  category: 'Istio Config Type',
+  placeholder: 'Filter by Istio Config Type'
 };
 
 export const configValidationFilter: FilterType = {

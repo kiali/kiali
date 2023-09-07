@@ -6,7 +6,7 @@ function optionCheck(name: string) {
 }
 
 When('user types {string} into the input', (input: string) => {
-  cy.get('input[placeholder="Filter by Istio Type"]').type(input);
+  cy.get('input[placeholder="Filter by Type"]').type(input);
 });
 
 Then('the {string} phrase is displayed', (phrase: string) => {
@@ -72,9 +72,9 @@ When('multiple filters are chosen', () => {
       objects: 'authorizationpolicies,destinationrules'
     }
   }).as('multipleFilters');
-  cy.get('input[placeholder="Filter by Istio Type"]').type('AuthorizationPolicy{enter}');
+  cy.get('input[placeholder="Filter by Type"]').type('AuthorizationPolicy{enter}');
   cy.get(`button[label="AuthorizationPolicy"]`).should('be.visible').click();
-  cy.get('input[placeholder="Filter by Istio Type"]').type('DestinationRule{enter}');
+  cy.get('input[placeholder="Filter by Type"]').type('DestinationRule{enter}');
   cy.get(`button[label="DestinationRule"]`).should('be.visible').click();
 });
 
@@ -83,7 +83,7 @@ Then('multiple filters are active', () => {
 });
 
 When('a type filter {string} is applied', (category: string) => {
-  cy.get('input[placeholder="Filter by Istio Type"]').type(`${category}{enter}`);
+  cy.get('input[placeholder="Filter by Type"]').type(`${category}{enter}`);
   cy.get(`button[label="${category}"]`).should('be.visible').click();
 });
 
@@ -106,16 +106,19 @@ Then('the filter {string} should be visible only once', (category: string) => {
 });
 
 When('user chooses {int} type filters', (count: number) => {
-  cy.get('select[aria-label="filter_select_type"]').select('Istio Type');
+  cy.get('select[aria-label="filter_select_type"]').select('Type');
   for (let i = 1; i <= count; i++) {
-    cy.get('input[placeholder="Filter by Istio Type"]').click();
+    cy.get('input[placeholder="Filter by Type"]').click();
     cy.get(`[data-test=istio-type-dropdown] > :nth-child(${i})`).should('be.visible').click();
     cy.get('#loading_kiali_spinner').should('not.exist');
   }
 });
 
 And('user clicks the cross on one of them', () => {
-  cy.get('#filter-selection > :nth-child(2)').find('[data-ouia-component-type="PF5/Button" data-ouia-component-id="close"]').first().click();
+  cy.get('#filter-selection > :nth-child(2)')
+    .find('[data-ouia-component-type="PF5/Button" data-ouia-component-id="close"]')
+    .first()
+    .click();
 });
 
 Then('{int} filters should be visible', (count: number) => {
