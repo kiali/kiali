@@ -14,7 +14,7 @@ import {
 import { hasMissingSidecar } from '../../components/VirtualList/Config';
 import { TextInputTypes } from '@patternfly/react-core';
 import { filterByLabel } from '../../helpers/LabelFilterHelper';
-import { istioTypeFilter } from '../IstioConfigList/FiltersAndSorts';
+import { istioConfigTypeFilter } from '../IstioConfigList/FiltersAndSorts';
 import { ObjectReference } from '../../types/IstioObjects';
 import { serverConfig } from 'config';
 
@@ -118,8 +118,8 @@ const appNameFilter: FilterType = {
 
 export const availableFilters: FilterType[] = [
   appNameFilter,
+  istioConfigTypeFilter,
   istioSidecarFilter,
-  istioTypeFilter,
   healthFilter,
   labelFilter
 ];
@@ -177,7 +177,7 @@ export const filterBy = (
     return filterByHealth(ret, healthSelected);
   }
 
-  const istioTypeSelected = getFilterSelectedValues(istioTypeFilter, filters);
+  const istioTypeSelected = getFilterSelectedValues(istioConfigTypeFilter, filters);
   if (istioTypeSelected.length > 0) {
     return filterByIstioType(ret, istioTypeSelected);
   }

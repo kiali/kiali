@@ -51,8 +51,8 @@ Feature: Kiali Apps List page
     Then user may only see "kiali-traffic-generator"
 
   @bookinfo-app
-  Scenario: Filter Apps by Istio Type
-    When the user filters by "Istio Type" for "VirtualService"
+  Scenario: Filter Apps by Istio Config Type
+    When the user filters by "Istio Config Type" for "VirtualService"
     Then user only sees "productpage"
 
   @bookinfo-app

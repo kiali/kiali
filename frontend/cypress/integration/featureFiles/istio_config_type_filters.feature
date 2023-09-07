@@ -10,7 +10,7 @@ Feature: Kiali Istio Config page
     Given user is at administrator perspective
     And user is at the "istio" page
     And user selects the "istio-system" namespace
-    And user filters by "Istio Type"
+    And user filters by "Type"
     And no filters are active
 
   Scenario: Fill the input form with nonsense
@@ -19,11 +19,11 @@ Feature: Kiali Istio Config page
     And no filters are active
 
   Scenario: Filters should be available in the dropdown
-    When user expands the "Filter by Istio Type" dropdown
+    When user expands the "Filter by Type" dropdown
     Then user can see the filter options
 
   Scenario: Single filter should be usable
-    When chosen from the "Filter by Istio Type" dropdown
+    When chosen from the "Filter by Type" dropdown
     Then the filter is applied
 
   Scenario: Multiple filters should be usable
