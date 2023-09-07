@@ -37,7 +37,7 @@ Feature: Kiali Istio Config page
     Then user only sees "bookinfo-gateway"
 
   @bookinfo-app
-  Scenario: Filter Istio Config objects by Istio Type
+  Scenario: Filter Istio Config objects by Type
     When the user filters by "Type" for "Gateway"
     Then only "Gateways" are visible in the "bookinfo" namespace
 

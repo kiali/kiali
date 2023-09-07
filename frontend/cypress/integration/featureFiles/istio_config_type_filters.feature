@@ -19,11 +19,11 @@ Feature: Kiali Istio Config page
     And no filters are active
 
   Scenario: Filters should be available in the dropdown
-    When user expands the "Filter by Istio Type" dropdown
+    When user expands the "Filter by Type" dropdown
     Then user can see the filter options
 
   Scenario: Single filter should be usable
-    When chosen from the "Filter by Istio Type" dropdown
+    When chosen from the "Filter by Type" dropdown
     Then the filter is applied
 
   Scenario: Multiple filters should be usable
