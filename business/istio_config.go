@@ -1175,6 +1175,10 @@ func (in *IstioConfigService) IsGatewayAPI(cluster string) bool {
 	return in.userClients[cluster].IsGatewayAPI()
 }
 
+func (in *IstioConfigService) GatewayAPIClasses() []config.GatewayAPIClass {
+	return kubernetes.GatewayAPIClasses()
+}
+
 // Check if istio Ambient profile was enabled
 // ATM it is defined in the istio-cni-config configmap
 func (in *IstioConfigService) IsAmbientEnabled() bool {

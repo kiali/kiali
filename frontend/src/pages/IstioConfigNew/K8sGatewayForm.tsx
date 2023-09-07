@@ -1,11 +1,12 @@
 import * as React from 'react';
 // Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
-import { FormGroup } from '@patternfly/react-core';
+import { FormGroup, FormSelect, FormSelectOption } from '@patternfly/react-core';
 import { AddressList } from './GatewayForm/AddressList';
 import { Address, Listener, MAX_PORT, MIN_PORT } from '../../types/IstioObjects';
 import { ListenerList } from './GatewayForm/ListenerList';
 import { isValidHostname, isValidName } from './GatewayForm/ListenerBuilder';
 import { isValidAddress } from './GatewayForm/AddressBuilder';
+import { serverConfig } from '../../config';
 
 export const K8SGATEWAY = 'K8sGateway';
 export const K8SGATEWAYS = 'k8sgateways';
@@ -17,6 +18,7 @@ type Props = {
 
 // Gateway and Sidecar states are consolidated in the parent page
 export type K8sGatewayState = {
+  gatewayClass: string;
   listeners: Listener[];
   addresses: Address[];
   validHosts: boolean;
@@ -24,6 +26,7 @@ export type K8sGatewayState = {
 };
 
 export const initK8sGateway = (): K8sGatewayState => ({
+  gatewayClass: serverConfig.gatewayAPIClasses[0].className,
   listeners: [],
   addresses: [],
   validHosts: false,
@@ -83,9 +86,32 @@ export class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
     this.setState({ addresses: addresses }, () => this.props.onChange(this.state));
   };
 
+  onChangeGatewayClass = (_event, value) => {
+    this.setState(
+      {
+        gatewayClass: value
+      },
+      () => this.props.onChange(this.state)
+    );
+  };
+
   render() {
     return (
       <>
+        {serverConfig.gatewayAPIClasses.length > 1 && (
+          <FormGroup label="Gateway Class" fieldId="gatewayClass">
+            <FormSelect
+              value={this.state.gatewayClass}
+              onChange={this.onChangeGatewayClass}
+              id="gatewayClass"
+              name="gatewayClass"
+            >
+              {serverConfig.gatewayAPIClasses.map((option, index) => (
+                <FormSelectOption key={index} value={option.className} label={option.name} />
+              ))}
+            </FormSelect>
+          </FormGroup>
+        )}
         <FormGroup label="Listeners" fieldId="listener" isRequired={true}>
           <ListenerList
             onChange={this.onChangeListener}

@@ -898,3 +898,16 @@ func ClusterInfoFromIstiod(conf config.Config, k8s ClientInterface) (string, boo
 
 	return clusterName, gatewayToNamespace, nil
 }
+
+func GatewayAPIClasses() []config.GatewayAPIClass {
+	result := []config.GatewayAPIClass{}
+	for _, gwClass := range config.Get().ExternalServices.Istio.GatewayAPIClasses {
+		if gwClass.ClassName != "" && gwClass.Name != "" {
+			result = append(result, gwClass)
+		}
+	}
+	if len(result) == 0 {
+		result = append(result, config.GatewayAPIClass{Name: "Istio", ClassName: "istio"})
+	}
+	return result
+}

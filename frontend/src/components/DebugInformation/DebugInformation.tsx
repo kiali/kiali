@@ -64,6 +64,7 @@ const propsToShow = [
   'authStrategy',
   'clusters',
   'gatewayAPIEnabled',
+  'gatewayAPIClasses',
   'istioConfigMap',
   'istioIdentityDomain',
   'istioNamespace',

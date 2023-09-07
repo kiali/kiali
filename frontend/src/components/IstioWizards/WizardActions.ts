@@ -1842,7 +1842,7 @@ export const buildK8sGateway = (name: string, namespace: string, state: K8sGatew
     },
     spec: {
       // Default for istio scenarios, user may change it editing YAML
-      gatewayClassName: 'istio',
+      gatewayClassName: state.gatewayClass,
       listeners: state.listeners.map(s => ({
         name: s.name,
         port: s.port,

@@ -162,11 +162,8 @@ func FilterSupportedGateways(gateways []*networking_v1beta1.Gateway) []*networki
 
 func FilterSupportedK8sGateways(gateways []*k8s_networking_v1beta1.Gateway) []*k8s_networking_v1beta1.Gateway {
 	var gatewayAPIClassNames = map[string]string{}
-	for _, gwClass := range config.Get().ExternalServices.Istio.GatewayAPIClasses {
+	for _, gwClass := range GatewayAPIClasses() {
 		gatewayAPIClassNames[gwClass.ClassName] = gwClass.Name
-	}
-	if len(gatewayAPIClassNames) == 0 {
-		gatewayAPIClassNames["istio"] = "Istio"
 	}
 	filtered := []*k8s_networking_v1beta1.Gateway{}
 	for _, gw := range gateways {

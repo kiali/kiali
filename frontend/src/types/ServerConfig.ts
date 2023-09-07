@@ -66,6 +66,11 @@ interface KialiFeatureFlags {
   uiDefaults: UIDefaults;
 }
 
+export interface GatewayAPIClass {
+  name: string;
+  className: string;
+}
+
 // Not based exactly on Kiali configuration but rather whether things like prometheus config
 // allow for certain Kiali features. True means the feature is crippled, false means supported.
 export interface KialiCrippledFeatures {
@@ -121,6 +126,7 @@ export interface ServerConfig {
   clusters: { [key: string]: MeshCluster };
   deployment: DeploymentConfig;
   gatewayAPIEnabled: boolean;
+  gatewayAPIClasses: GatewayAPIClass[];
   healthConfig: HealthConfig;
   installationTag?: string;
   istioAnnotations: IstioAnnotations;

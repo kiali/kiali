@@ -7,6 +7,7 @@ export const healthConfig = {
   ambientEnabled: false,
   clusters: {},
   gatewayAPIEnabled: false,
+  gatewayAPIClasses: [],
   logLevel: '',
   kialiFeatureFlags: {
     certificatesInformationIndicators: {

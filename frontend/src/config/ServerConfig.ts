@@ -61,6 +61,7 @@ const defaultServerConfig: ComputedServerConfig = {
   clusters: {},
   durations: {},
   gatewayAPIEnabled: false,
+  gatewayAPIClasses: [],
   logLevel: '',
   healthConfig: {
     rate: []
