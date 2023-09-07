@@ -36,7 +36,7 @@
   "scripts": {
     "build": "if [ \"${KIALI_ENV}\" = \"production\" ]; then npm run build:prod; else npm run build:dev; fi",
     "build:dev": "sh -ac '. ./.env.upstream; npm run lint && npm run build:kiali'",
-    "build:kiali": "CI=false REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) GENERATE_SOURCEMAP=false EXTEND_ESLINT=true react-scripts --openssl-legacy-provider build --profile",
+    "build:kiali": "REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) GENERATE_SOURCEMAP=false EXTEND_ESLINT=true react-scripts --openssl-legacy-provider build --profile",
     "build:prod": "sh -ac '. ./.env.downstream; npm run build:kiali'",
     "precypress:run:junit": "npm run cypress:delete:reports",
     "cypress": "cypress open -e TAGS=\"not @multi-cluster\"",
@@ -57,10 +57,10 @@
     "prettier": "prettier --write \"{src/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\""
   },
   "dependencies": {
-    "@patternfly/patternfly": "5.0.2",
-    "@patternfly/react-charts": "7.0.0",
-    "@patternfly/react-core": "5.0.0",
-    "@patternfly/react-table": "5.0.0",
+    "@patternfly/patternfly": "5.0.4",
+    "@patternfly/react-charts": "7.0.1",
+    "@patternfly/react-core": "5.0.1",
+    "@patternfly/react-table": "5.0.1",
     "@patternfly/react-topology": "5.0.0",
     "axios": "^0.21.4",
     "bootstrap-slider-without-jquery": "10.0.0",
