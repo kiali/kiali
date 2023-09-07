@@ -69,7 +69,6 @@
     "cytoscape": "3.15.5",
     "cytoscape-canvas": "3.0.1",
     "cytoscape-popper": "1.0.7",
-    "d3": "^5.16.0",
     "dagre": "0.8.5",
     "deep-freeze": "0.0.1",
     "eventemitter3": "4.0.7",
@@ -99,7 +98,6 @@
     "tippy.js": "3.4.1",
     "typesafe-actions": "^4.2.1",
     "typestyle": "^2.4.0",
-    "victory": "^36.6.11",
     "visibilityjs": "2.0.2"
   },
   "devDependencies": {

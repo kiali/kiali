@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { VictoryVoronoiContainer, createContainer } from 'victory';
+import { VictoryVoronoiContainer } from 'victory-voronoi-container';
+import { createContainer } from 'victory-create-container';
 import { DomainTuple } from 'victory-core';
 import { VictoryVoronoiContainerProps } from 'victory-voronoi-container';
 import { VictoryBrushContainerProps } from 'victory-brush-container';
