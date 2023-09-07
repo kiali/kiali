@@ -36,7 +36,7 @@
   "scripts": {
     "build": "if [ \"${KIALI_ENV}\" = \"production\" ]; then npm run build:prod; else npm run build:dev; fi",
     "build:dev": "sh -ac '. ./.env.upstream; npm run lint && npm run build:kiali'",
-    "build:kiali": "CI=false REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) GENERATE_SOURCEMAP=false EXTEND_ESLINT=true react-scripts build --profile",
+    "build:kiali": "CI=false REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) GENERATE_SOURCEMAP=false EXTEND_ESLINT=true react-scripts --openssl-legacy-provider build --profile",
     "build:prod": "sh -ac '. ./.env.downstream; npm run build:kiali'",
     "precypress:run:junit": "npm run cypress:delete:reports",
     "cypress": "cypress open -e TAGS=\"not @multi-cluster\"",
@@ -51,9 +51,9 @@
     "lintfix": "eslint --ext js,ts,tsx --fix src",
     "start": "if [ \"${KIALI_ENV}\" = \"production\" ]; then npm run start:prod; else npm run start:dev; fi",
     "start:dev": "sh -ac '. ./.env.upstream; npm run start:kiali'",
-    "start:kiali": "REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) react-scripts start",
+    "start:kiali": "REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) react-scripts --openssl-legacy-provider start",
     "start:prod": "sh -ac '. ./.env.downstream; npm run start:kiali'",
-    "test": "tsc -p . && TEST_RUNNER=1 react-scripts test --env=jsdom __tests__ --transformIgnorePatterns 'node_modules/(?!my-library-dir)/'",
+    "test": "tsc -p . && TEST_RUNNER=1 react-scripts --openssl-legacy-provider test --env=jsdom __tests__ --transformIgnorePatterns 'node_modules/(?!my-library-dir)/'",
     "prettier": "prettier --write \"{src/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\""
   },
   "dependencies": {
@@ -145,9 +145,8 @@
     "postcss": "^8.4.12"
   },
   "engines": {
-    "node": "^14.17.0 || >= 16.0.0",
-    "npm": ">=6.0.0 ",
-    "yarn": ">=1.0.0 "
+    "node": ">=18.0.0",
+    "yarn": ">=1.0.0"
   },
   "husky": {
     "hooks": {
