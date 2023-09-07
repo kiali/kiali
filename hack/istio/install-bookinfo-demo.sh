@@ -268,11 +268,12 @@ seLinuxContext:
   type: RunAsAny
 supplementalGroups:
   type: RunAsAny
+priority: 9
 users:
 - "system:serviceaccount:${NAMESPACE}:bookinfo-details"
 - "system:serviceaccount:${NAMESPACE}:bookinfo-productpage"
 - "system:serviceaccount:${NAMESPACE}:bookinfo-ratings"
-- "system:serviceaccount:${NAMESPACE}:bookinfo-ratings=v2"
+- "system:serviceaccount:${NAMESPACE}:bookinfo-ratings-v2"
 - "system:serviceaccount:${NAMESPACE}:bookinfo-reviews"
 - "system:serviceaccount:${NAMESPACE}:default"
 SCC

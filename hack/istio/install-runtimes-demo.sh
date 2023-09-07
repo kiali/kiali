@@ -34,6 +34,7 @@ seLinuxContext:
   type: RunAsAny
 supplementalGroups:
   type: RunAsAny
+priority: 9
 users:
 - "system:serviceaccount:${NAME}:default"
 - "system:serviceaccount:${NAME}:${NAME}"

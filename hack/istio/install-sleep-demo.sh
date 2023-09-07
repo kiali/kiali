@@ -120,6 +120,7 @@ seLinuxContext:
   type: RunAsAny
 supplementalGroups:
   type: RunAsAny
+priority: 9
 users:
 - "system:serviceaccount:sleep:default"
 - "system:serviceaccount:sleep:sleep"

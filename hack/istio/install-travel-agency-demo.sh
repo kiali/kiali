@@ -189,6 +189,7 @@ seLinuxContext:
   type: RunAsAny
 supplementalGroups:
   type: RunAsAny
+priority: 9
 users:
 - "system:serviceaccount:${NAMESPACE_AGENCY}:default"
 - "system:serviceaccount:${NAMESPACE_PORTAL}:default"
