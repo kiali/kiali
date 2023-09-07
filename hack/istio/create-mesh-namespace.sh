@@ -154,6 +154,7 @@ seLinuxContext:
   type: RunAsAny
 supplementalGroups:
   type: RunAsAny
+priority: 9
 users:${USERS}
 SCC
 fi

@@ -214,6 +214,7 @@ seLinuxContext:
   type: RunAsAny
 supplementalGroups:
   type: RunAsAny
+priority: 9
 users:
 - "system:serviceaccount:${NAMESPACE_ALPHA}:default"
 - "system:serviceaccount:${NAMESPACE_BETA}:default"

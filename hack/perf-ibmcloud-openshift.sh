@@ -185,6 +185,7 @@ seLinuxContext:
   type: RunAsAny
 supplementalGroups:
   type: RunAsAny
+priority: 9
 users:
 - "system:serviceaccount:prometheus:prometheus-alertmanager"
 - "system:serviceaccount:prometheus:prometheus-kube-state-metrics"
@@ -352,6 +353,7 @@ seLinuxContext:
   type: RunAsAny
 supplementalGroups:
   type: RunAsAny
+priority: 9
 users:
 ${SCC_SERVICE_ACCOUNTS}
 SCC
