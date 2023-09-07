@@ -161,13 +161,16 @@ func FilterSupportedGateways(gateways []*networking_v1beta1.Gateway) []*networki
 }
 
 func FilterSupportedK8sGateways(gateways []*k8s_networking_v1beta1.Gateway) []*k8s_networking_v1beta1.Gateway {
-	var gatewayAPIClassName = config.Get().ExternalServices.Istio.GatewayAPIClassName
-	if gatewayAPIClassName == "" {
-		gatewayAPIClassName = "istio"
+	var gatewayAPIClassNames = map[string]string{}
+	for _, gwClass := range config.Get().ExternalServices.Istio.GatewayAPIClasses {
+		gatewayAPIClassNames[gwClass.ClassName] = gwClass.Name
+	}
+	if len(gatewayAPIClassNames) == 0 {
+		gatewayAPIClassNames["istio"] = "Istio"
 	}
 	filtered := []*k8s_networking_v1beta1.Gateway{}
 	for _, gw := range gateways {
-		if string(gw.Spec.GatewayClassName) == gatewayAPIClassName {
+		if _, exist := gatewayAPIClassNames[string(gw.Spec.GatewayClassName)]; exist {
 			filtered = append(filtered, gw)
 		}
 	}
