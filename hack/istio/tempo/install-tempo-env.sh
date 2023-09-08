@@ -135,7 +135,7 @@ spec:
 EOF
 
 
-  echo "${SCRIPT_DIR}"
+  echo "Script Directory: ${SCRIPT_DIR}"
 
   if [ "${INSTALL_ISTIO}" == "true" ]; then
     echo -e "Installing istio \n"
