@@ -964,7 +964,7 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
               }
             },
             spec: {
-              gatewayClassName: 'istio',
+              gatewayClassName: wState.k8sGateway.gatewayClass,
               listeners: [
                 {
                   name: 'default',

@@ -14,6 +14,7 @@ import {
 import { GATEWAY_TOOLTIP, wizardTooltip } from './WizardHelp';
 import { isValid } from 'utils/Common';
 import { isK8sGatewayHostValid } from '../../utils/IstioConfigUtils';
+import { serverConfig } from '../../config';
 
 type Props = {
   serviceName: string;
@@ -30,6 +31,7 @@ export type K8sGatewaySelectorState = {
   gwHostsValid: boolean;
   newGateway: boolean;
   selectedGateway: string;
+  gatewayClass: string;
   // @TODO add Mesh is not supported yet
   addMesh: boolean;
   port: number;
@@ -53,6 +55,7 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
       newGateway: props.k8sGateways.length === 0,
       selectedGateway:
         props.k8sGateways.length > 0 ? (props.gateway !== '' ? props.gateway : props.k8sGateways[0]) : '',
+      gatewayClass: serverConfig.gatewayAPIClasses[0].className,
       addMesh: false,
       port: 80
     };
@@ -120,6 +123,15 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
     return this.state.gwHostsValid;
   };
 
+  onChangeGatewayClass = (_event, value) => {
+    this.setState(
+      {
+        gatewayClass: value
+      },
+      () => this.props.onGatewayChange(this.isGatewayValid(), this.state)
+    );
+  };
+
   render() {
     return (
       <Form isHorizontal={true}>
@@ -174,6 +186,20 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
             )}
             {this.state.newGateway && (
               <>
+                {serverConfig.gatewayAPIClasses.length > 1 && (
+                  <FormGroup label="Gateway Class" fieldId="gatewayClass">
+                    <FormSelect
+                      value={this.state.gatewayClass}
+                      onChange={this.onChangeGatewayClass}
+                      id="gatewayClass"
+                      name="gatewayClass"
+                    >
+                      {serverConfig.gatewayAPIClasses.map((option, index) => (
+                        <FormSelectOption key={index} value={option.className} label={option.name} />
+                      ))}
+                    </FormSelect>
+                  </FormGroup>
+                )}
                 <FormGroup fieldId="gwPort" label="Port">
                   <TextInput
                     id="gwPort"
