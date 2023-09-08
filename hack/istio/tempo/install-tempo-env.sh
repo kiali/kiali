@@ -142,7 +142,7 @@ EOF
     ${SCRIPT_DIR}/../install-istio-via-istioctl.sh -c ${CLIENT_EXE} -a "prometheus grafana" -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-smm-distributor.tempo:9411"
   fi
 
-  if [ "${INSTALL_ISTIO}" == "true" ]; then
+  if [ "${INSTALL_KIALI}" == "true" ]; then
     OUTPUT_DIR="${OUTPUT_DIR:-${SCRIPT_DIR}/../../../_output}"
     ISTIO_DIR=$(ls -dt1 ${OUTPUT_DIR}/istio-* | head -n1)
     echo ${ISTIO_DIR}
