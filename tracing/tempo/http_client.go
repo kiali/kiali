@@ -113,24 +113,6 @@ func (oc OtelHTTPClient) transformTrace(traces *otel.Traces) (*model.TracingResp
 	return &response, nil
 }
 
-// getTracesDetails processes every trace ID and make a request to get all the spans for that trace
-func (oc OtelHTTPClient) getTracesDetails(traces *otel.TracingResponse, client http.Client, endpoint *url.URL) (*model.TracingResponse, error) {
-	var response model.TracingResponse
-	serviceName := ""
-
-	for _, trace := range traces.Traces {
-		singleTrace, err := oc.GetTraceDetailHTTP(client, endpoint, trace.TraceID)
-		serviceName = singleTrace.Data.Spans[0].Process.ServiceName // Should be the same for all
-		if err != nil {
-			log.Errorf("Error getting trace detail for %s: %s", trace.TraceID, err.Error())
-		} else {
-			response.Data = append(response.Data, singleTrace.Data)
-		}
-	}
-	response.TracingServiceName = serviceName
-	return &response, nil
-}
-
 func unmarshal(r []byte, u *url.URL) (*otel.Traces, error) {
 	var response otel.Traces
 	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
@@ -187,30 +169,6 @@ func convertSingleTrace(traces *otelModels.Data, id string) (*model.TracingRespo
 
 	response.TracingServiceName = serviceName
 	return &response, nil
-}
-
-// prepareQuery will be useful in case the query does not use TraceQL
-func prepareQuery(u *url.URL, tracingServiceName string, query models.TracingQuery) {
-	q := url.Values{}
-	q.Set("start", fmt.Sprintf("%d", query.Start.Unix()))
-	q.Set("end", fmt.Sprintf("%d", query.End.Unix()))
-	q.Set("tags", "service.name="+tracingServiceName)
-	if len(query.Tags) > 0 {
-		// Tags must be json encoded
-		var tags string
-		for tag, value := range query.Tags {
-			tags = tags + tag + "=" + value + " "
-		}
-		q.Set("tags", string(tags))
-	}
-	if query.MinDuration > 0 {
-		q.Set("minDuration", fmt.Sprintf("%dms", query.MinDuration.Milliseconds()))
-	}
-	if query.Limit > 0 {
-		q.Set("limit", strconv.Itoa(query.Limit))
-	}
-	u.RawQuery = q.Encode()
-	log.Debugf("Prepared Tempo API query: %v", u)
 }
 
 // prepareTraceQL returns a query in TraceQL format

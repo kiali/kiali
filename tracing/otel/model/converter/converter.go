@@ -63,9 +63,12 @@ func ConvertSpanSet(span otel.Span, serviceName string, traceId string) []jaeger
 
 	startTime, err := strconv.ParseUint(span.StartTimeUnixNano, 10, 64)
 	if err != nil {
-		log.Errorf("Error converting start time. Skipping trace")
+		log.Errorf("Error converting start time.")
 	}
 	duration, err := strconv.ParseUint(span.DurationNanos, 10, 64)
+	if err != nil {
+		log.Errorf("Error converting duration.")
+	}
 
 	jaegerSpan := jaegerModels.Span{
 		TraceID:   ConvertId(traceId),
