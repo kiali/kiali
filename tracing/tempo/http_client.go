@@ -29,7 +29,8 @@ func (oc OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, 
 	url.Path = path.Join(url.Path, "/api/search")
 	tracingServiceName := buildTracingServiceName(namespace, app)
 	prepareTraceQL(&url, tracingServiceName, q)
-	r, err := oc.queryTracesHTTP(client, &url)
+	r, err := oc.queryTracesHTTP(client, &url, q.Tags["error"])
+
 	if r != nil {
 		r.TracingServiceName = tracingServiceName
 	}
@@ -76,7 +77,7 @@ func (oc OtelHTTPClient) GetServiceStatusHTTP(client http.Client, baseURL *url.U
 }
 
 // queryTracesHTTP
-func (oc OtelHTTPClient) queryTracesHTTP(client http.Client, u *url.URL) (*model.TracingResponse, error) {
+func (oc OtelHTTPClient) queryTracesHTTP(client http.Client, u *url.URL, error string) (*model.TracingResponse, error) {
 	// HTTP and GRPC requests co-exist, but when minDuration is present, for HTTP it requires a unit (ms)
 	// https://github.com/kiali/kiali/issues/3939
 	minDuration := u.Query().Get("minDuration")
@@ -92,16 +93,21 @@ func (oc OtelHTTPClient) queryTracesHTTP(client http.Client, u *url.URL) (*model
 	}
 	response, _ := unmarshal(resp, u)
 
-	return oc.transformTrace(response)
+	return oc.transformTrace(response, error)
 }
 
 // transformTrace processes every trace ID and make a request to get all the spans for that trace
-func (oc OtelHTTPClient) transformTrace(traces *otel.Traces) (*model.TracingResponse, error) {
+func (oc OtelHTTPClient) transformTrace(traces *otel.Traces, error string) (*model.TracingResponse, error) {
 	var response model.TracingResponse
 	serviceName := ""
 
 	for _, trace := range traces.Traces {
 		serviceName = getServiceName(trace.SpanSet.Spans[0].Attributes)
+		if error == "true" {
+			if !hasErrors(trace) {
+				continue
+			}
+		}
 		batchTrace, err := convertBatchTrace(trace, serviceName)
 		if err != nil {
 			log.Errorf("Error getting trace detail for %s: %s", trace.TraceID, err.Error())
@@ -177,11 +183,8 @@ func prepareTraceQL(u *url.URL, tracingServiceName string, query models.TracingQ
 	q.Set("start", fmt.Sprintf("%d", query.Start.Unix()))
 	q.Set("end", fmt.Sprintf("%d", query.End.Unix()))
 	traceQL := "{.service.name=\"" + tracingServiceName + "\" && .node_id =~ \".*\" "
-	if query.Tags["error"] == "true" {
-		traceQL += " && status=error "
-	} else {
-		traceQL += " && (status=error || status=unset || status=ok) "
-	}
+	// Status error are filtered when processing
+	traceQL += " && (status=error || status=unset || status=ok) " // Small "hack" to get all the traces
 	traceQL += " }"
 	q.Set("q", traceQL)
 	if query.MinDuration > 0 {
@@ -212,6 +215,20 @@ func makeRequest(client http.Client, endpoint string, body io.Reader) (response 
 	response, err = io.ReadAll(resp.Body)
 	status = resp.StatusCode
 	return
+}
+
+func hasErrors(trace otel.Trace) bool {
+	for _, span := range trace.SpanSet.Spans {
+		for _, atb := range span.Attributes {
+			if atb.Key == "status" && atb.Value.StringValue == "error" {
+				return true
+			}
+		}
+		if span.Status.Code == "STATUS_CODE_ERROR" {
+			return true
+		}
+	}
+	return false
 }
 
 func getServiceName(attributes []otelModels.Attribute) string {
