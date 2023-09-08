@@ -71,7 +71,6 @@ export enum PFColors {
   BackgroundColor100 = 'var(--pf-v5-global--BackgroundColor--100)',
   BackgroundColor150 = 'var(--pf-v5-global--BackgroundColor--150)',
   BackgroundColor200 = 'var(--pf-v5-global--BackgroundColor--200)',
-  BackgroundColor300 = 'var(--pf-v5-global--BackgroundColor--300)',
 
   // PF standard colors (compatible with dark mode)
   Color100 = 'var(--pf-v5-global--Color--100)',
@@ -119,7 +118,6 @@ export type PFColorValues = {
   // PF colors (compatible with dark mode)
   BackgroundColor100: PFColorVal;
   BackgroundColor200: PFColorVal;
-  BackgroundColor300: PFColorVal;
 
   Color100: PFColorVal;
   Color200: PFColorVal;
@@ -172,7 +170,6 @@ export const setPFColorVals = (element: Element) => {
     // PF colors (compatible with dark mode)
     BackgroundColor100: getComputedStyle(element).getPropertyValue(getColor(PFColors.BackgroundColor100)),
     BackgroundColor200: getComputedStyle(element).getPropertyValue(getColor(PFColors.BackgroundColor200)),
-    BackgroundColor300: getComputedStyle(element).getPropertyValue(getColor(PFColors.BackgroundColor300)),
 
     Color100: getComputedStyle(element).getPropertyValue(getColor(PFColors.Color100)),
     Color200: getComputedStyle(element).getPropertyValue(getColor(PFColors.Color200)),
