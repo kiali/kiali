@@ -479,6 +479,10 @@ if [ "${OLM_ENABLED}" == "true" ]; then
   infomsg "Waiting for Kiali CRD to be established."
   ${CLIENT_EXE} wait --for condition=established --timeout=300s crd kialis.kiali.io
 
+  infomsg -n "Waiting for operator to be created."
+  timeout 1h bash -c 'until [ -n "$(${CLIENT_EXE} get --namespace operators -o name deployments)" ]; do echo -n "." ; sleep 2; done'
+  infomsg
+
   infomsg "Waiting for deployments to start up in the operators namespace."
   ${CLIENT_EXE} wait --for condition=available --timeout=300s --all --namespace operators deployments
 
