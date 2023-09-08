@@ -41,6 +41,10 @@ while [[ $# -gt 0 ]]; do
       INSTALL_ISTIO="$2"
       shift;shift
       ;;
+    -ik|--install-kiali)
+      INSTALL_KIALI="$2"
+      shift;shift
+      ;;
     -t|--tempo-ns)
       TEMPO_NS="$2"
       shift;shift
@@ -58,6 +62,8 @@ Valid command line arguments:
        If bookinfo should be installed. true by default.
   -ii|--install-istio:
        If istio should be installed. true by default.
+  -ik|--install-kiali:
+       If Kiali should be installed. true by default.
   -t|--tempo-ns:
        Tempo namespace. Tempo by default.
   -h|--help:
@@ -83,7 +89,7 @@ if [ "${DELETE_TEMPO}" == "true" ]; then
   ${CLIENT_EXE} delete -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
   ${CLIENT_EXE} delete -f https://github.com/grafana/tempo-operator/releases/latest/download/tempo-operator.yaml
   ${CLIENT_EXE} delete secret -n ${TEMPO_NS} tempostack-dev-minio
-  ${CLIENT_EXE} delete TempoStack smm -n ${TEMPO_NS}
+  ${CLIENT_EXE} delete TempoStack cr -n ${TEMPO_NS}
   ${CLIENT_EXE} delete ns ${TEMPO_NS}
   if [ "${DELETE_ALL}" == "true" ]; then
     ${SCRIPT_DIR}/../install-istio-via-istioctl.sh -c ${CLIENT_EXE} -di true
@@ -116,7 +122,7 @@ else
 apiVersion: tempo.grafana.com/v1alpha1
 kind: TempoStack
 metadata:
-  name: smm
+  name: cr
 spec:
   storageSize: 1Gi
   storage:
@@ -139,7 +145,7 @@ EOF
 
   if [ "${INSTALL_ISTIO}" == "true" ]; then
     echo -e "Installing istio \n"
-    ${SCRIPT_DIR}/../install-istio-via-istioctl.sh -c ${CLIENT_EXE} -a "prometheus grafana" -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-smm-distributor.tempo:9411"
+    ${SCRIPT_DIR}/../install-istio-via-istioctl.sh -c ${CLIENT_EXE} -a "prometheus grafana" -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
   fi
 
   if [ "${INSTALL_KIALI}" == "true" ]; then
@@ -155,6 +161,6 @@ EOF
   fi
 
   echo -e "Installation finished. You can port forward the services with: \n"
-  echo "./run-kiali.sh -pg 13000:3000 -pp 19090:9090 -pt 3200:3200 -app 8080 -es false -iu http://127.0.0.1:15014 -tr tempo-smm-query-frontend -ts tempo-smm-query-frontend -tn tempo"
+  echo "./run-kiali.sh -pg 13000:3000 -pp 19090:9090 -pt 3200:3200 -app 8080 -es false -iu http://127.0.0.1:15014 -tr tempo-cr-query-frontend -ts tempo-cr-query-frontend -tn tempo"
 
 fi
