@@ -145,7 +145,7 @@ EOF
   if [ "${INSTALL_KIALI}" == "true" ]; then
     OUTPUT_DIR="${OUTPUT_DIR:-${SCRIPT_DIR}/../../../_output}"
     ISTIO_DIR=$(ls -dt1 ${OUTPUT_DIR}/istio-* | head -n1)
-    echo ${ISTIO_DIR}
+    echo "Istio directory where the Kiali addon yaml should be found: ${ISTIO_DIR}"
     ${CLIENT_EXE} apply -f ${ISTIO_DIR}/samples/addons/kiali.yaml
   fi
 
