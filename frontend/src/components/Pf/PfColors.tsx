@@ -21,6 +21,7 @@ export enum PFColors {
   Black800 = 'var(--pf-v5-global--palette--black-800)',
   Black900 = 'var(--pf-v5-global--palette--black-900)',
   Black1000 = 'var(--pf-v5-global--palette--black-1000)',
+  Blue50 = 'var(--pf-v5-global--palette--blue-50)',
   Blue200 = 'var(--pf-v5-global--palette--blue-200)',
   Blue300 = 'var(--pf-v5-global--palette--blue-300)',
   Blue400 = 'var(--pf-v5-global--palette--blue-400)',
@@ -35,10 +36,12 @@ export enum PFColors {
   LightBlue400 = 'var(--pf-v5-global--palette--light-blue-400)',
   LightGreen400 = 'var(--pf-v5-global--palette--light-green-400)',
   LightGreen500 = 'var(--pf-v5-global--palette--light-green-500)',
+  Orange50 = 'var(--pf-v5-global--palette--orange-50)',
   Orange400 = 'var(--pf-v5-global--palette--orange-400)',
   Purple100 = 'var(--pf-v5-global--palette--purple-100)',
   Purple200 = 'var(--pf-v5-global--palette--purple-200)',
   Purple500 = 'var(--pf-v5-global--palette--purple-500)',
+  Red50 = 'var(--pf-v5-global--palette--red-50)',
   Red100 = 'var(--pf-v5-global--palette--red-100)',
   Red200 = 'var(--pf-v5-global--palette--red-200)',
   Red500 = 'var(--pf-v5-global--palette--red-500)',
@@ -115,7 +118,6 @@ export type PFColorValues = {
   // PF colors (compatible with dark mode)
   BackgroundColor100: PFColorVal;
   BackgroundColor200: PFColorVal;
-  BackgroundColor300: PFColorVal;
 
   Color100: PFColorVal;
   Color200: PFColorVal;
@@ -127,43 +129,53 @@ export type PFColorValues = {
 
 export let PFColorVals: PFColorValues;
 
+/*
+  Extract color from var
+  Input : var(--pf-v5-global--palette--black-100)
+  Output:  --pf-v5-global--palette--black-100
+
+  - In case there is not var then return the same input
+*/
+const getColor = (val: string) => {
+  return val.indexOf('var(') === 0 ? val.split('(').pop()!.split(')')[0] : val;
+};
+
 export const setPFColorVals = (element: Element) => {
   PFColorVals = {
     // color values used by kiali
-    Black100: getComputedStyle(element).getPropertyValue('--pf-v5-global--palette--black-100'),
-    Black150: getComputedStyle(element).getPropertyValue('--pf-v5-global--palette--black-150'),
-    Black200: getComputedStyle(element).getPropertyValue('--pf-v5-global--palette--black-200'),
-    Black300: getComputedStyle(element).getPropertyValue('--pf-v5-global--palette--black-300'),
-    Black400: getComputedStyle(element).getPropertyValue('--pf-v5-global--palette--black-400'),
-    Black500: getComputedStyle(element).getPropertyValue('--pf-v5-global--palette--black-500'),
-    Black600: getComputedStyle(element).getPropertyValue('--pf-v5-global--palette--black-600'),
-    Black700: getComputedStyle(element).getPropertyValue('--pf-v5-global--palette--black-700'),
-    Black1000: getComputedStyle(element).getPropertyValue('--pf-v5-global--palette--black-1000'),
-    Blue50: getComputedStyle(element).getPropertyValue('--pf-v5-global--palette--blue-50'),
-    Blue300: getComputedStyle(element).getPropertyValue('--pf-v5-global--palette--blue-300'),
-    Blue600: getComputedStyle(element).getPropertyValue('--pf-v5-global--palette--blue-600'),
-    Red50: getComputedStyle(element).getPropertyValue('--pf-v5-global--palette--red-50'),
-    Orange50: getComputedStyle(element).getPropertyValue('--pf-v5-global--palette--orange-50'),
-    Gold400: getComputedStyle(element).getPropertyValue('--pf-v5-global--palette--gold-400'),
-    Green400: getComputedStyle(element).getPropertyValue('--pf-v5-global--palette--green-400'),
-    Purple200: getComputedStyle(element).getPropertyValue('--pf-v5-global--palette--purple-200'),
-    White: getComputedStyle(element).getPropertyValue('--pf-v5-global--palette--white'),
+    Black100: getComputedStyle(element).getPropertyValue(getColor(PFColors.Black100)),
+    Black150: getComputedStyle(element).getPropertyValue(getColor(PFColors.Black150)),
+    Black200: getComputedStyle(element).getPropertyValue(getColor(PFColors.Black200)),
+    Black300: getComputedStyle(element).getPropertyValue(getColor(PFColors.Black300)),
+    Black400: getComputedStyle(element).getPropertyValue(getColor(PFColors.Black400)),
+    Black500: getComputedStyle(element).getPropertyValue(getColor(PFColors.Black500)),
+    Black600: getComputedStyle(element).getPropertyValue(getColor(PFColors.Black600)),
+    Black700: getComputedStyle(element).getPropertyValue(getColor(PFColors.Black700)),
+    Black1000: getComputedStyle(element).getPropertyValue(getColor(PFColors.Black1000)),
+    Blue50: getComputedStyle(element).getPropertyValue(getColor(PFColors.Blue50)),
+    Blue300: getComputedStyle(element).getPropertyValue(getColor(PFColors.Blue300)),
+    Blue600: getComputedStyle(element).getPropertyValue(getColor(PFColors.Blue600)),
+    Red50: getComputedStyle(element).getPropertyValue(getColor(PFColors.Red50)),
+    Orange50: getComputedStyle(element).getPropertyValue(getColor(PFColors.Orange50)),
+    Gold400: getComputedStyle(element).getPropertyValue(getColor(PFColors.Gold400)),
+    Green400: getComputedStyle(element).getPropertyValue(getColor(PFColors.Green400)),
+    Purple200: getComputedStyle(element).getPropertyValue(getColor(PFColors.Purple200)),
+    White: getComputedStyle(element).getPropertyValue(getColor(PFColors.White)),
 
     // status color values used by kiali
-    Danger: getComputedStyle(element).getPropertyValue('--pf-v5-global--danger-color--100'),
-    Success: getComputedStyle(element).getPropertyValue('--pf-v5-global--success-color--100'),
-    Warning: getComputedStyle(element).getPropertyValue('--pf-v5-global--warning-color--100'),
+    Danger: getComputedStyle(element).getPropertyValue(getColor(PFColors.Danger)),
+    Success: getComputedStyle(element).getPropertyValue(getColor(PFColors.Success)),
+    Warning: getComputedStyle(element).getPropertyValue(getColor(PFColors.Warning)),
 
     // PF colors (compatible with dark mode)
-    BackgroundColor100: getComputedStyle(element).getPropertyValue('--pf-v5-global--BackgroundColor--100'),
-    BackgroundColor200: getComputedStyle(element).getPropertyValue('--pf-v5-global--BackgroundColor--200'),
-    BackgroundColor300: getComputedStyle(element).getPropertyValue('--pf-v5-global--BackgroundColor--300'),
+    BackgroundColor100: getComputedStyle(element).getPropertyValue(getColor(PFColors.BackgroundColor100)),
+    BackgroundColor200: getComputedStyle(element).getPropertyValue(getColor(PFColors.BackgroundColor200)),
 
-    Color100: getComputedStyle(element).getPropertyValue('--pf-v5-global--Color--100'),
-    Color200: getComputedStyle(element).getPropertyValue('--pf-v5-global--Color--200'),
+    Color100: getComputedStyle(element).getPropertyValue(getColor(PFColors.Color100)),
+    Color200: getComputedStyle(element).getPropertyValue(getColor(PFColors.Color200)),
 
-    BorderColor100: getComputedStyle(element).getPropertyValue('--pf-v5-global--BorderColor--100'),
-    BorderColor200: getComputedStyle(element).getPropertyValue('--pf-v5-global--BorderColor--200'),
-    BorderColor300: getComputedStyle(element).getPropertyValue('--pf-v5-global--BorderColor--300')
+    BorderColor100: getComputedStyle(element).getPropertyValue(getColor(PFColors.BorderColor100)),
+    BorderColor200: getComputedStyle(element).getPropertyValue(getColor(PFColors.BorderColor200)),
+    BorderColor300: getComputedStyle(element).getPropertyValue(getColor(PFColors.BorderColor300))
   };
 };
