@@ -74,13 +74,19 @@ deploy_kiali() {
   fi
 
   if [ "${KIALI_USE_DEV_IMAGE}" == "true" ]; then
-    local image_to_tag="quay.io/kiali/kiali:dev"
-    local image_to_push="${minikube_ip}:5000/kiali/kiali:dev"
-    echo "Tagging the dev image [${image_to_tag}] -> [${image_to_push}]..."
-    ${DORP} tag ${image_to_tag} ${image_to_push}
-    echo "Pushing the dev image [${image_to_push}] to the cluster [${cluster_name}]..."
-    ${DORP} push --tls-verify=false ${image_to_push}
-    helm_args="--set deployment.image_name=localhost:5000/kiali/kiali --set deployment.image_version=dev ${helm_args}"
+    if [ "${MANAGE_KIND}" == "true" ]; then
+      echo "Pushing the images into the cluster..."
+      make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="${cluster_name}" cluster-push-kiali
+      helm_args='--set deployment.image_pull_policy="Never" ${helm_args}' 
+    else
+      local image_to_tag="quay.io/kiali/kiali:dev"
+      local image_to_push="${minikube_ip}:5000/kiali/kiali:dev"
+      echo "Tagging the dev image [${image_to_tag}] -> [${image_to_push}]..."
+      ${DORP} tag ${image_to_tag} ${image_to_push}
+      echo "Pushing the dev image [${image_to_push}] to the cluster [${cluster_name}]..."
+      ${DORP} push --tls-verify=false ${image_to_push}
+    fi
+    helm_args="--set deployment.image_name=localhost/kiali/kiali --set deployment.image_version=dev ${helm_args}"
   fi
 
 
@@ -136,6 +142,7 @@ EOF
 
   local helm_auth_flags="${auth_flags[*]}"
 
+  
   # use the latest published server helm chart (if using dev images, it is up to the user to make sure this chart works with the dev image)
   helm upgrade --install                                                           \
     ${helm_args}                                                                   \
@@ -154,7 +161,7 @@ EOF
     --set deployment.ingress.enabled="${ingress_enabled_flag}"                     \
     --repo https://kiali.org/helm-charts                                           \
     kiali-server                                                                   \
-    ${KIALI_SERVER_HELM_CHARTS}
+    "${KIALI_SERVER_HELM_CHARTS}"
 }
 
 echo "==== DEPLOY KIALI TO CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT} (keycloak is at ${CLUSTER1_NAME})"
