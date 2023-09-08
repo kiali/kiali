@@ -12,7 +12,7 @@ spec:
   resources:
     # This is the request for storage. Should be available in the cluster.
     requests:
-      storage: 5Gi
+      storage: 1Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
