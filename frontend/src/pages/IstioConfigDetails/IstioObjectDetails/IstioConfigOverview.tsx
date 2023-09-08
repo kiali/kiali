@@ -25,7 +25,8 @@ import { IstioStatusMessageList } from './IstioStatusMessageList';
 import { KioskElement } from '../../../components/Kiosk/KioskElement';
 import { PFColors } from '../../../components/Pf/PfColors';
 import { GetIstioObjectUrl } from '../../../components/Link/IstioObjectLink';
-import { homeCluster, isMultiCluster } from '../../../config';
+import { homeCluster, isMultiCluster, serverConfig } from '../../../config';
+import { CLUSTER_DEFAULT } from 'types/Graph';
 
 interface IstioConfigOverviewProps {
   istioObjectDetails: IstioConfigDetails;
