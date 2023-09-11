@@ -7,6 +7,7 @@ const initialState: JaegerState = {
     integration: false,
     url: '',
     namespaceSelector: true,
+    provider: 'jaeger',
     whiteListIstioSystem: []
   }
 };
@@ -30,6 +31,7 @@ describe('JaegerState reducer', () => {
           enabled: true,
           integration: true,
           namespaceSelector: true,
+          provider: 'jaeger',
           whiteListIstioSystem: []
         })
       )
