@@ -22,3 +22,5 @@ export type Tag = {
   type: string;
   value: any;
 };
+
+export const TEMPO = 'tempo';

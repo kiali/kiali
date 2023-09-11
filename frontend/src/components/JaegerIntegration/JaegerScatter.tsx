@@ -17,6 +17,7 @@ import { averageSpanDuration, buildQueriesFromSpans } from 'utils/tracing/TraceS
 import { kialiStyle } from 'styles/StyleUtils';
 import { MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsThunkActions } from 'actions/MetricsStatsThunkActions';
+import { TEMPO } from '../../types/Tracing';
 
 interface JaegerScatterProps {
   duration: number;
@@ -28,6 +29,7 @@ interface JaegerScatterProps {
   showSpansAverage: boolean;
   traces: JaegerTrace[];
   cluster?: string;
+  provider?: string;
 }
 
 const ONE_MILLISECOND = 1000000;
@@ -99,7 +101,8 @@ class JaegerScatterComponent extends React.Component<JaegerScatterProps> {
         color: isSelected ? PFColors.Blue500 : PFColors.Blue200,
         unit: 'seconds',
         trace: trace,
-        size: Math.min(MAXIMAL_SIZE, trace.spans.length + MINIMAL_SIZE)
+        // For Tempo integration, it is not possible to return all the traces, so put a fixed size so item is not resized on click
+        size: this.props.provider == TEMPO ? 6 : Math.min(MAXIMAL_SIZE, trace.spans.length + MINIMAL_SIZE)
       };
       if (traceError) {
         traceItem.color = isSelected ? PFColors.Red500 : PFColors.Red200;
@@ -119,7 +122,6 @@ class JaegerScatterComponent extends React.Component<JaegerScatterProps> {
       color: (({ datum }) => datum.color) as any,
       legendItem: makeLegend('Error Traces', PFColors.Red200)
     };
-
     return this.props.errorFetchTraces && this.props.errorFetchTraces.length > 0 ? (
       this.renderFetchEmpty('Error fetching traces', this.props.errorFetchTraces![0].msg)
     ) : this.props.traces.length > 0 ? (
@@ -185,7 +187,8 @@ class JaegerScatterComponent extends React.Component<JaegerScatterProps> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  selectedTrace: state.jaegerState.selectedTrace
+  selectedTrace: state.jaegerState.selectedTrace,
+  provider: state.jaegerState.info?.provider
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({

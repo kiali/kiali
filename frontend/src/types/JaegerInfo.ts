@@ -10,6 +10,7 @@ export interface JaegerInfo {
   url: string;
   namespaceSelector: boolean;
   whiteListIstioSystem: string[];
+  provider: string;
 }
 
 export type KeyValuePair = {

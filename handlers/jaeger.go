@@ -22,6 +22,7 @@ func GetJaegerInfo(w http.ResponseWriter, r *http.Request) {
 		info = models.JaegerInfo{
 			Enabled:              true,
 			Integration:          jaegerConfig.InClusterURL != "",
+			Provider:             jaegerConfig.Provider,
 			URL:                  jaegerConfig.URL,
 			NamespaceSelector:    jaegerConfig.NamespaceSelector,
 			WhiteListIstioSystem: jaegerConfig.WhiteListIstioSystem,
