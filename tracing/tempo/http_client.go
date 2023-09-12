@@ -148,6 +148,7 @@ func convertBatchTrace(trace otel.Trace, serviceName string) (jaegerModels.Trace
 	for _, span := range trace.SpanSet.Spans {
 		jaegerModel.Spans = append(jaegerModel.Spans, converter.ConvertSpanSet(span, serviceName, trace.TraceID)...)
 	}
+	jaegerModel.Matched = trace.SpanSet.Matched
 	jaegerModel.Processes = map[jaegerModels.ProcessID]jaegerModels.Process{}
 	jaegerModel.Warnings = []string{}
 
@@ -166,6 +167,7 @@ func convertSingleTrace(traces *otelModels.Data, id string) (*model.TracingRespo
 		for _, batch := range traces.Batches {
 			jaegerModel.Spans = append(jaegerModel.Spans, converter.ConvertSpans(batch.ScopeSpans[0].Spans, serviceName)...)
 		}
+		jaegerModel.Matched = len(jaegerModel.Spans)
 		jaegerModel.Processes = map[jaegerModels.ProcessID]jaegerModels.Process{}
 		jaegerModel.Warnings = []string{}
 
@@ -183,9 +185,9 @@ func prepareTraceQL(u *url.URL, tracingServiceName string, query models.TracingQ
 	q.Set("start", fmt.Sprintf("%d", query.Start.Unix()))
 	q.Set("end", fmt.Sprintf("%d", query.End.Unix()))
 	traceQL := "{.service.name=\"" + tracingServiceName + "\" && .node_id =~ \".*\" "
-	// Status error are filtered when processing
-	traceQL += " && (status=error || status=unset || status=ok) " // Small "hack" to get all the traces
-	traceQL += " }"
+	// Status error is filtered when processing
+	traceQL += " && (status=error || status=unset || status=ok) " // Small "hack" to get all the status
+	traceQL += " } && { }"                                        // With && {} 'matched' returned the total number of the traces (From v 2.2)
 	q.Set("q", traceQL)
 	if query.MinDuration > 0 {
 		q.Set("minDuration", fmt.Sprintf("%dms", query.MinDuration.Milliseconds()))

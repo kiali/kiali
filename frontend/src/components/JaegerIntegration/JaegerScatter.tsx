@@ -102,7 +102,7 @@ class JaegerScatterComponent extends React.Component<JaegerScatterProps> {
         unit: 'seconds',
         trace: trace,
         // For Tempo integration, it is not possible to return all the traces, so put a fixed size so item is not resized on click
-        size: this.props.provider === TEMPO ? 6 : Math.min(MAXIMAL_SIZE, trace.spans.length + MINIMAL_SIZE)
+        size: this.props.provider === TEMPO ? trace.matched : Math.min(MAXIMAL_SIZE, trace.spans.length + MINIMAL_SIZE)
       };
       if (traceError) {
         traceItem.color = isSelected ? PFColors.Red500 : PFColors.Red200;

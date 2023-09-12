@@ -238,7 +238,8 @@ export function transformTraceData(data: TraceData<SpanData>, cluster?: string):
     processes: data.processes,
     duration: traceEndTime - traceStartTime,
     startTime: traceStartTime,
-    endTime: traceEndTime
+    endTime: traceEndTime,
+    matched: data.matched
   };
 }
 
