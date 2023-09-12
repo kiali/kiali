@@ -325,6 +325,11 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "This workload is not covered by any authorization policy",
 		Severity: WarningSeverity,
 	},
+	"k8sgateways.gatewayclassnotfound": {
+		Code:     "KIA1504",
+		Message:  "K8s GatewayClass not found",
+		Severity: ErrorSeverity,
+	},
 	"k8sgateways.multimatch.listener": {
 		Code:     "KIA1501",
 		Message:  "More than one K8s Gateway for the same host port combination",

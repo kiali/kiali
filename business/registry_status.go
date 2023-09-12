@@ -89,6 +89,12 @@ func filterRegistryConfiguration(registryStatus *kubernetes.RegistryStatus, crit
 		}
 	}
 
+	for _, gwcl := range registryStatus.Configuration.K8sGatewayClasses {
+		if gwcl.Namespace == criteria.Namespace {
+			filtered.K8sGatewayClasses = append(filtered.K8sGatewayClasses, gwcl)
+		}
+	}
+
 	for _, gw := range registryStatus.Configuration.K8sGateways {
 		if gw.Namespace == criteria.Namespace {
 			filtered.K8sGateways = append(filtered.K8sGateways, gw)

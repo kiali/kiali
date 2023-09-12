@@ -72,8 +72,8 @@ export const serverRateConfig = {
   authStrategy: '',
   ambientEnabled: false,
   clusters: {},
-  gatewayAPIEnabled: false,
   gatewayAPIClasses: [],
+  gatewayAPIEnabled: false,
   logLevel: '',
   kialiFeatureFlags: {
     certificatesInformationIndicators: {

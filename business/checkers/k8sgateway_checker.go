@@ -10,8 +10,9 @@ import (
 const K8sGatewayCheckerType = "k8sgateway"
 
 type K8sGatewayChecker struct {
-	K8sGateways []*k8s_networking_v1beta1.Gateway
-	Cluster     string
+	K8sGateways    []*k8s_networking_v1beta1.Gateway
+	GatewayClasses []*k8s_networking_v1beta1.GatewayClass
+	Cluster        string
 }
 
 // Check runs checks for the all namespaces actions as well as for the single namespace validations
@@ -34,6 +35,10 @@ func (g K8sGatewayChecker) runSingleChecks(gw *k8s_networking_v1beta1.Gateway) m
 	enabledCheckers := []Checker{
 		k8sgateways.StatusChecker{
 			K8sGateway: gw,
+		},
+		k8sgateways.GatewayClassChecker{
+			K8sGateway:     gw,
+			GatewayClasses: g.GatewayClasses,
 		},
 	}
 
