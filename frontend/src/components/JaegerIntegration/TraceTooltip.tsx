@@ -58,7 +58,9 @@ class TraceLabel extends React.Component<LabelProps> {
               {formatDuration(this.props.trace.duration)}
               <br />
               {`${pluralize(
-                this.props.provider === TEMPO ? this.props.trace.matched : this.props.trace.spans.length,
+                this.props.provider === TEMPO && this.props.trace.matched
+                  ? this.props.trace.matched
+                  : this.props.trace.spans.length,
                 'span'
               )}, avg=${avgSpanDuration ? formatDuration(avgSpanDuration) : 'n/a'}`}
             </div>

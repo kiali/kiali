@@ -109,7 +109,7 @@ export type JaegerTrace = TraceData<RichSpanData> & {
   endTime: number;
   startTime: number;
   traceName: string;
-  matched: number;
+  matched?: number;
   services: { name: string; numberOfSpans: number }[];
 };
 
