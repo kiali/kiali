@@ -146,7 +146,6 @@ EOF
   # but they don't need to be accessible outside the cluster.
   # Need a single dashboard set for grafana.
   ${HELM} install \
-    --debug \
     --namespace istio-system \
     --wait \
     --set auth.strategy="${AUTH_STRATEGY}" \

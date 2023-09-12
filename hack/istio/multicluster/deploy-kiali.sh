@@ -27,11 +27,11 @@ if ! which helm; then
 fi
 
 deploy_kiali() {
-  local helm_args=""
+  local helm_args=()
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     helm_args="--disable-openapi-validation"
     if [ "${KIALI_USE_DEV_IMAGE}" == "true" ]; then
-      echo "'--kiali-use-dev-image true' is only supported with minikube today - will not install Kiali"
+      echo "'--kiali-use-dev-image true' is not supported with Openshift today - will not install Kiali"
       return 1
     fi
   fi
@@ -40,8 +40,8 @@ deploy_kiali() {
   local web_fqdn="${2}"
   local web_schema="${3}"
   local keycloak_cluster_name="${4}"
-  [ ! -z "${web_fqdn}" ] && helm_args="--set server.web_fqdn=${web_fqdn} ${helm_args}"
-  [ ! -z "${web_schema}" ] && helm_args="--set server.web_schema=${web_schema} ${helm_args}"
+  [ ! -z "${web_fqdn}" ] && helm_args+=("--set server.web_fqdn=${web_fqdn}")
+  [ ! -z "${web_schema}" ] && helm_args+=("--set server.web_schema=${web_schema}")
 
   # Setting this as an array so things expand correctly.
   local auth_flags=()
@@ -77,7 +77,7 @@ deploy_kiali() {
     if [ "${MANAGE_KIND}" == "true" ]; then
       echo "Pushing the images into the cluster..."
       make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="${cluster_name}" cluster-push-kiali
-      helm_args='--set deployment.image_pull_policy="Never" ${helm_args}' 
+      helm_args+=('--set deployment.image_pull_policy="Never"')
     else
       local image_to_tag="quay.io/kiali/kiali:dev"
       local image_to_push="${minikube_ip}:5000/kiali/kiali:dev"
@@ -86,7 +86,7 @@ deploy_kiali() {
       echo "Pushing the dev image [${image_to_push}] to the cluster [${cluster_name}]..."
       ${DORP} push --tls-verify=false ${image_to_push}
     fi
-    helm_args="--set deployment.image_name=localhost/kiali/kiali --set deployment.image_version=dev ${helm_args}"
+    helm_args+=("--set deployment.image_name=localhost/kiali/kiali --set deployment.image_version=dev")
   fi
 
 
@@ -141,28 +141,29 @@ EOF
   fi
 
   local helm_auth_flags="${auth_flags[*]}"
-
   
-  # use the latest published server helm chart (if using dev images, it is up to the user to make sure this chart works with the dev image)
-  helm upgrade --install                                                           \
-    ${helm_args}                                                                   \
-    --namespace ${ISTIO_NAMESPACE}                                                 \
-    ${helm_auth_flags}                                                             \
-    --set deployment.logger.log_level="debug"                                      \
-    --set external_services.grafana.url="http://grafana.istio-system:3000"         \
-    --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard"      \
-    --set external_services.tracing.url="http://tracing.istio-system:16685/jaeger" \
-    --set health_config.rate[0].kind="service"                                     \
-    --set health_config.rate[0].name="y-server"                                    \
-    --set health_config.rate[0].namespace="alpha"                                  \
-    --set health_config.rate[0].tolerance[0].code="5xx"                            \
-    --set health_config.rate[0].tolerance[0].degraded=2                            \
-    --set health_config.rate[0].tolerance[0].failure=100                           \
-    --set deployment.ingress.enabled="${ingress_enabled_flag}"                     \
-    --repo https://kiali.org/helm-charts                                           \
-    kiali-server                                                                   \
-    "${KIALI_SERVER_HELM_CHARTS}"
+  helm_command='helm upgrade --install
+    ${helm_args[@]}
+    --namespace ${ISTIO_NAMESPACE}
+    ${helm_auth_flags}
+    --set deployment.logger.log_level="debug"
+    --set external_services.grafana.url="http://grafana.istio-system:3000"
+    --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard"
+    --set external_services.tracing.url="http://tracing.istio-system:16685/jaeger"
+    --set health_config.rate[0].kind="service"
+    --set health_config.rate[0].name="y-server"
+    --set health_config.rate[0].namespace="alpha"
+    --set health_config.rate[0].tolerance[0].code="5xx"
+    --set health_config.rate[0].tolerance[0].degraded=2
+    --set health_config.rate[0].tolerance[0].failure=100
+    --set deployment.ingress.enabled="${ingress_enabled_flag}"
+    --repo https://kiali.org/helm-charts
+    kiali-server
+    ${KIALI_SERVER_HELM_CHARTS}'
+
+  eval $helm_command
 }
+
 
 echo "==== DEPLOY KIALI TO CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT} (keycloak is at ${CLUSTER1_NAME})"
 switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
