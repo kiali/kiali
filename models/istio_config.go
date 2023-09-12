@@ -29,7 +29,7 @@ type IstioConfigList struct {
 	WasmPlugins      []*extentions_v1alpha1.WasmPlugin     `json:"wasmPlugins"`
 	Telemetries      []*v1alpha1.Telemetry                 `json:"telemetries"`
 
-	K8sGatewayClasses []*k8s_networking_v1beta1.GatewayClass `json:"k8sGatewayClasses"`
+	K8sGatewayClasses []*k8s_networking_v1beta1.GatewayClass `json:"-"`
 	K8sGateways       []*k8s_networking_v1beta1.Gateway      `json:"k8sGateways"`
 	K8sHTTPRoutes     []*k8s_networking_v1beta1.HTTPRoute    `json:"k8sHTTPRoutes"`
 
