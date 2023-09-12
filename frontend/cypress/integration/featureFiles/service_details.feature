@@ -23,6 +23,7 @@ Feature: Kiali Service Details page
     Then sd::user sees "productpage" details information for service "v1"
     Then sd::user sees Network card
     Then sd::user sees Istio Config
+    But no cluster badge for the "service" should be visible
 
   @bookinfo-app
   Scenario: See service minigraph for details app.
@@ -31,6 +32,7 @@ Feature: Kiali Service Details page
   @bookinfo-app
   Scenario: See service Traffic information
     Then sd::user sees inbound and outbound traffic information
+    And the "Cluster" column "disappears"
 
   @bookinfo-app
   Scenario: See Inbound Metrics for productspage service details

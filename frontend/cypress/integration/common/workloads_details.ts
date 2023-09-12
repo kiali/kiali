@@ -1,5 +1,6 @@
 import { When, And, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
+import { clusterParameterExists } from './navigation';
 
 function openTab(tab: string) {
   cy.get('#basic-tabs').should('be.visible').contains(tab).click();
@@ -14,6 +15,7 @@ Then('user sees details information for workload', () => {
     cy.get('#pfbadge-A').parent().parent().parent().contains('details'); // App
     cy.get('#pfbadge-W').parent().parent().parent().contains('details-v1'); // Workload
     cy.get('#pfbadge-S').parent().parent().parent().contains('details'); // Service
+    clusterParameterExists(false);
   });
 });
 

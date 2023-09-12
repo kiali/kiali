@@ -103,6 +103,10 @@ And('user closes the success notification',()=>{
   cy.get('[aria-label^="Close Success alert: alert: Istio Gateway created"]').click();
 });
 
+And('user does not see a dropdown for cluster selection',()=>{
+  cy.get('[data-test="cluster-dropdown"]').should("not.exist");
+});
+
 Then('the {string} {string} should be listed in {string} namespace', function (
   type: string,
   name: string,

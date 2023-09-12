@@ -4,7 +4,7 @@
   pages since these are all similar.
 */
 
-import { And, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { And, Then, When} from '@badeball/cypress-cucumber-preprocessor';
 import { 
   checkHealthIndicatorInTable,
   checkHealthStatusInTable,
@@ -154,4 +154,3 @@ Then('user may only see {string}', (sees: string) => {
     });
   });
 });
-

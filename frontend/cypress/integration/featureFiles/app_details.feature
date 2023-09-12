@@ -16,6 +16,7 @@ Feature: Kiali App Details page
   @bookinfo-app
   Scenario: See details for app.
     Then user sees details information for the "details" app
+    But no cluster badge for the "app" should be visible
 
   @bookinfo-app
   Scenario: See app minigraph for details app.
@@ -24,6 +25,7 @@ Feature: Kiali App Details page
   @bookinfo-app
   Scenario: See app Traffic information
     Then user sees inbound and outbound traffic information
+    And the "Cluster" column "disappears"
 
   @bookinfo-app
   Scenario: See Inbound Metrics

@@ -19,6 +19,7 @@ Feature: Kiali Apps List page
     And user sees Namespace information for Apps
     And user sees Labels information for Apps
     And user sees Details information for Apps
+    And the "Cluster" column "disappears"
 
   @bookinfo-app
   Scenario: See all Apps toggles

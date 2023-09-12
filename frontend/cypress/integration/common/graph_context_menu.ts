@@ -1,4 +1,5 @@
-import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Then, When, And } from '@badeball/cypress-cucumber-preprocessor';
+import { clusterParameterExists } from './navigation';
 
 When('user opens the context menu of the {string} service node', function (svcName: string) {
   cy.waitForReact();
@@ -30,3 +31,13 @@ Then('user should see the confirmation dialog to delete all traffic routing', fu
 Then('user should see the {string} wizard', function (wizardKey: string) {
   cy.get(`[data-test=${wizardKey}_modal]`).should('exist');
 });
+
+And('user should see {string} cluster parameter in links in the context menu',(exists:string)=>{
+  var present:boolean = true;
+  if (exists === 'no'){
+    present = false;
+  }
+  cy.get(`[data-test="graph-node-context-menu"]`).within(() => {
+    clusterParameterExists(present);
+  });
+})
