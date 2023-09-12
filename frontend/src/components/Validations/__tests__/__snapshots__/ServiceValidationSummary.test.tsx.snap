@@ -17,7 +17,7 @@ exports[`ServiceValidationSummary renders error icon when all components are val
         Service validation result
       </Text>
       <div
-        className="kiali_fe0pf1n"
+        className="kiali_fljtil"
       >
         <div>
           1 error found
@@ -51,7 +51,7 @@ exports[`ServiceValidationSummary renders error icon when all components are val
         Service validation result
       </Text>
       <div
-        className="kiali_fe0pf1n"
+        className="kiali_fljtil"
       >
         <div>
           1 error found
@@ -88,7 +88,7 @@ exports[`ServiceValidationSummary renders success icon when all components are v
         Service validation result
       </Text>
       <div
-        className="kiali_fe0pf1n"
+        className="kiali_fljtil"
       >
         <div>
           No issues found
@@ -122,7 +122,7 @@ exports[`ServiceValidationSummary renders warning icon when all components are v
         Service validation result
       </Text>
       <div
-        className="kiali_fe0pf1n"
+        className="kiali_fljtil"
       >
         <div>
           1 warning found
@@ -156,7 +156,7 @@ exports[`ServiceValidationSummary renders warning icon when all components are v
         Service validation result
       </Text>
       <div
-        className="kiali_fe0pf1n"
+        className="kiali_fljtil"
       >
         <div>
           2 warnings found

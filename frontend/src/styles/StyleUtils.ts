@@ -10,6 +10,12 @@ const cssPrefix = process.env.CSS_PREFIX ?? 'kiali';
 export const kialiStyle = (styleProps: NestedCSSProperties) => {
   return style({
     $debugName: cssPrefix,
-    ...styleProps
+    $nest: {
+      // Increase specificity to make kiali style more relevant within CSS cascade
+      // https://typestyle.github.io/#/advanced/concept-ordering-pseudo-classes
+      '&&&': {
+        ...styleProps
+      }
+    }
   });
 };

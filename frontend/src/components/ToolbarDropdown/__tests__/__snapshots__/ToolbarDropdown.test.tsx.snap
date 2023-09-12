@@ -3,7 +3,7 @@
 exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
 <Fragment>
   <span
-    className="kiali_fzb2262"
+    className="kiali_f7slljw"
   >
     graph_filter_interval_duration
   </span>
@@ -13,7 +13,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
     aria-label="graph_filter_interval_duration"
     aria-labelledby="graph_filter_interval_duration"
     chipGroupComponent={null}
-    className="kiali_fhxf3qu"
+    className="kiali_f13qzac0"
     clearSelectionsAriaLabel="Clear all"
     createText="Create"
     customBadgeText={null}
@@ -263,7 +263,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
 exports[`ToolbarDropdown Render correctly all dropdowns 2`] = `
 <Fragment>
   <span
-    className="kiali_fzb2262"
+    className="kiali_f7slljw"
   >
     metrics_filter_poll_interval
   </span>
@@ -273,7 +273,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 2`] = `
     aria-label="metrics_filter_poll_interval"
     aria-labelledby="metrics_filter_poll_interval"
     chipGroupComponent={null}
-    className="kiali_fhxf3qu"
+    className="kiali_f13qzac0"
     clearSelectionsAriaLabel="Clear all"
     createText="Create"
     customBadgeText={null}
@@ -499,7 +499,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 2`] = `
 exports[`ToolbarDropdown Render correctly all dropdowns 3`] = `
 <Fragment>
   <span
-    className="kiali_fzb2262"
+    className="kiali_f7slljw"
   >
     graph_filter_layouts
   </span>
@@ -509,7 +509,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 3`] = `
     aria-label="graph_filter_layouts"
     aria-labelledby="graph_filter_layouts"
     chipGroupComponent={null}
-    className="kiali_fhxf3qu"
+    className="kiali_f13qzac0"
     clearSelectionsAriaLabel="Clear all"
     createText="Create"
     customBadgeText={null}
@@ -639,7 +639,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 3`] = `
 exports[`ToolbarDropdown Render dropdowns correctly with controlled values and labels 1`] = `
 <Fragment>
   <span
-    className="kiali_fzb2262"
+    className="kiali_f7slljw"
   >
     graph_filter_interval_duration
   </span>
@@ -649,7 +649,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     aria-label="graph_filter_interval_duration"
     aria-labelledby="graph_filter_interval_duration"
     chipGroupComponent={null}
-    className="kiali_fhxf3qu"
+    className="kiali_f13qzac0"
     clearSelectionsAriaLabel="Clear all"
     createText="Create"
     customBadgeText={null}
@@ -899,7 +899,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
 exports[`ToolbarDropdown Render dropdowns correctly with controlled values and labels 2`] = `
 <Fragment>
   <span
-    className="kiali_fzb2262"
+    className="kiali_f7slljw"
   >
     metrics_filter_poll_interval
   </span>
@@ -909,7 +909,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     aria-label="metrics_filter_poll_interval"
     aria-labelledby="metrics_filter_poll_interval"
     chipGroupComponent={null}
-    className="kiali_fhxf3qu"
+    className="kiali_f13qzac0"
     clearSelectionsAriaLabel="Clear all"
     createText="Create"
     customBadgeText={null}
@@ -1135,7 +1135,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
 exports[`ToolbarDropdown Render dropdowns correctly with controlled values and labels 3`] = `
 <Fragment>
   <span
-    className="kiali_fzb2262"
+    className="kiali_f7slljw"
   >
     graph_filter_layouts
   </span>
@@ -1145,7 +1145,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     aria-label="graph_filter_layouts"
     aria-labelledby="graph_filter_layouts"
     chipGroupComponent={null}
-    className="kiali_fhxf3qu"
+    className="kiali_f13qzac0"
     clearSelectionsAriaLabel="Clear all"
     createText="Create"
     customBadgeText={null}

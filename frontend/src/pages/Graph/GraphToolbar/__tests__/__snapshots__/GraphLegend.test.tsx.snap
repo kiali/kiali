@@ -2,7 +2,7 @@
 
 exports[`GraphLegend test should render correctly 1`] = `
 <div
-  className="kiali_f1okxayf"
+  className="kiali_fb7sq29"
   data-test="graph-legend"
   style={
     Object {
@@ -11,13 +11,13 @@ exports[`GraphLegend test should render correctly 1`] = `
   }
 >
   <div
-    className="kiali_fsgo6a1 kiali_f1bv0l2s"
+    className="kiali_fxa4sy7 kiali_f1mm2w2a"
   >
     <span>
       Legend
     </span>
     <span
-      className="kiali_f1blspom"
+      className="kiali_fj2dqxs"
     >
       <Tooltip
         content="Close Legend"
@@ -37,23 +37,23 @@ exports[`GraphLegend test should render correctly 1`] = `
     </span>
   </div>
   <div
-    className="kiali_f6nw80o"
+    className="kiali_fu2odq6"
   >
     <div>
       <div
-        className="kiali_f10krlro"
+        className="kiali_fzj1afm"
       >
         <div
-          className="kiali_fng0jlu"
+          className="kiali_f14iq4pw"
           key="Node Shapes"
         >
           Node Shapes
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="node.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Workload"
@@ -61,17 +61,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Workload
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="app.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="App"
@@ -79,17 +79,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               App
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="aggregate.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Operation"
@@ -97,17 +97,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Operation
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="service.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Service"
@@ -115,17 +115,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Service
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="service-entry.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Service Entry"
@@ -133,23 +133,23 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Service Entry
             </span>
           </div>
         </div>
         <div
-          className="kiali_fng0jlu"
+          className="kiali_f14iq4pw"
           key="Node Colors"
         >
           Node Colors
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="node-color-normal.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Normal"
@@ -157,17 +157,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Normal
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="node-color-warning.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Warn"
@@ -175,17 +175,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Warn
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="node-color-danger.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Unhealthy"
@@ -193,17 +193,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Unhealthy
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="node-color-idle.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Idle"
@@ -211,23 +211,23 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Idle
             </span>
           </div>
         </div>
         <div
-          className="kiali_fng0jlu"
+          className="kiali_f14iq4pw"
           key="Node Background"
         >
           Node Background
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="external-namespace.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Unselected Namespace"
@@ -235,17 +235,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Unselected Namespace
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="restricted-namespace.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Restricted / External"
@@ -253,23 +253,23 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Restricted / External
             </span>
           </div>
         </div>
         <div
-          className="kiali_fng0jlu"
+          className="kiali_f14iq4pw"
           key="Edges"
         >
           Edges
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="edge-danger.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Failure"
@@ -277,17 +277,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Failure
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="edge-warn.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Degraded"
@@ -295,17 +295,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Degraded
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="edge-success.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Healthy"
@@ -313,17 +313,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Healthy
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="edge-tcp.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="TCP Connection"
@@ -331,17 +331,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               TCP Connection
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="edge-idle.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Idle"
@@ -349,17 +349,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Idle
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="mtls-badge.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="mTLS (badge)"
@@ -367,23 +367,23 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               mTLS (badge)
             </span>
           </div>
         </div>
         <div
-          className="kiali_fng0jlu"
+          className="kiali_f14iq4pw"
           key="Traffic Animation"
         >
           Traffic Animation
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="traffic-normal-request.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Normal Request"
@@ -391,17 +391,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Normal Request
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="traffic-failed-request.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Failed Request"
@@ -409,17 +409,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Failed Request
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="traffic-tcp.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="TCP Traffic"
@@ -427,23 +427,23 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               TCP Traffic
             </span>
           </div>
         </div>
         <div
-          className="kiali_fng0jlu"
+          className="kiali_f14iq4pw"
           key="Node Badges"
         >
           Node Badges
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="node-badge-circuit-breaker.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Circuit Breaker"
@@ -451,17 +451,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Circuit Breaker
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="node-badge-fault-injection.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Fault Injection"
@@ -469,17 +469,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Fault Injection
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="node-badge-gateways.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Gateway"
@@ -487,17 +487,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Gateway
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="node-badge-mirroring.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Mirroring"
@@ -505,17 +505,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Mirroring
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="node-badge-missing-sidecar.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Missing Sidecar"
@@ -523,17 +523,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Missing Sidecar
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="node-badge-request-timeout.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Request Timeout"
@@ -541,17 +541,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Request Timeout
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="node-badge-traffic-shifting.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Traffic Shifting / TCP Traffic Shifting"
@@ -559,17 +559,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Traffic Shifting / TCP Traffic Shifting
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="node-badge-traffic-source.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Traffic Source"
@@ -577,17 +577,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Traffic Source
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="node-badge-virtual-services.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Virtual Service / Request Routing"
@@ -595,17 +595,17 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Virtual Service / Request Routing
             </span>
           </div>
           <div
-            className="kiali_f13es1gb"
+            className="kiali_fasfm8t"
             key="node-badge-workload-entry.svg"
           >
             <span
-              className="kiali_f1irbq61"
+              className="kiali_fzoxfwf"
             >
               <img
                 alt="Workload Entry"
@@ -613,7 +613,7 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="kiali_fgzdi7m"
+              className="kiali_f7pgfh0"
             >
               Workload Entry
             </span>
