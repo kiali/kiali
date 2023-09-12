@@ -31,6 +31,7 @@ export type GatewaySelectorState = {
   gwHostsValid: boolean;
   newGateway: boolean;
   selectedGateway: string;
+  gatewayClass: string;
   addMesh: boolean;
   port: number;
 };
@@ -53,6 +54,7 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
       gwHostsValid: true,
       newGateway: props.gateways.length === 0,
       selectedGateway: props.gateways.length > 0 ? (props.gateway !== '' ? props.gateway : props.gateways[0]) : '',
+      gatewayClass: '',
       addMesh: props.isMesh,
       port: 80
     };

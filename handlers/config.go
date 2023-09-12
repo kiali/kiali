@@ -48,6 +48,7 @@ type PublicConfig struct {
 	Clusters             map[string]kubernetes.Cluster `json:"clusters,omitempty"`
 	Deployment           DeploymentConfig              `json:"deployment,omitempty"`
 	GatewayAPIEnabled    bool                          `json:"gatewayAPIEnabled,omitempty"`
+	GatewayAPIClasses    []config.GatewayAPIClass      `json:"gatewayAPIClasses,omitempty"`
 	HealthConfig         config.HealthConfig           `json:"healthConfig,omitempty"`
 	InstallationTag      string                        `json:"installationTag,omitempty"`
 	IstioAnnotations     IstioAnnotations              `json:"istioAnnotations,omitempty"`
@@ -111,6 +112,7 @@ func Config(w http.ResponseWriter, r *http.Request) {
 		// @TODO hardcoded home cluster
 		publicConfig.GatewayAPIEnabled = layer.IstioConfig.IsGatewayAPI(config.KubernetesConfig.ClusterName)
 		publicConfig.AmbientEnabled = layer.IstioConfig.IsAmbientEnabled()
+		publicConfig.GatewayAPIClasses = layer.IstioConfig.GatewayAPIClasses()
 
 		// Fetch the list of all clusters in the mesh
 		// One usage of this data is to cross-link Kiali instances, when possible.

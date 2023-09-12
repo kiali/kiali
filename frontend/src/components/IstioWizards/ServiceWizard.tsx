@@ -248,6 +248,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         gwHostsValid: false,
         newGateway: false,
         selectedGateway: '',
+        gatewayClass: '',
         addMesh: false,
         port: 80
       };
@@ -257,6 +258,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         gwHostsValid: false,
         newGateway: false,
         selectedGateway: '',
+        gatewayClass: '',
         addMesh: false,
         port: 80
       };

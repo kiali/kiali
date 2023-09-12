@@ -258,8 +258,8 @@ type ComponentStatus struct {
 }
 
 type GatewayAPIClass struct {
-	Name      string `yaml:"name,omitempty"`
-	ClassName string `yaml:"class_name,omitempty"`
+	Name      string `yaml:"name,omitempty" json:"name,omitempty"`
+	ClassName string `yaml:"class_name,omitempty" json:"className,omitempty"`
 }
 
 // ExternalServices holds configurations for other systems that Kiali depends on
