@@ -11,7 +11,6 @@ import { renderTraceHeatMap } from './JaegerResults/StatsComparison';
 import { PFColors } from 'components/Pf/PfColors';
 import { HookedChartTooltip, HookedTooltipProps } from 'components/Charts/CustomTooltip';
 import { formatDuration } from 'utils/tracing/TracingHelper';
-import { TEMPO } from '../../types/Tracing';
 
 const flyoutWidth = 280;
 const flyoutHeight = 130;
@@ -57,12 +56,9 @@ class TraceLabel extends React.Component<LabelProps> {
             <div>
               {formatDuration(this.props.trace.duration)}
               <br />
-              {`${pluralize(
-                this.props.provider === TEMPO && this.props.trace.matched
-                  ? this.props.trace.matched
-                  : this.props.trace.spans.length,
-                'span'
-              )}, avg=${avgSpanDuration ? formatDuration(avgSpanDuration) : 'n/a'}`}
+              {`${pluralize(this.props.trace.spans.length, 'span')}, avg=${
+                avgSpanDuration ? formatDuration(avgSpanDuration) : 'n/a'
+              }`}
             </div>
           </div>
         </div>

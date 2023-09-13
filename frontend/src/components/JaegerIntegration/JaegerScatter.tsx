@@ -59,6 +59,7 @@ const emptyStyle = kialiStyle({
 class JaegerScatterComponent extends React.Component<JaegerScatterProps> {
   isLoading = false;
   nextToLoad?: JaegerTrace = undefined;
+  seletedTraceMatched: number | undefined;
 
   renderFetchEmpty = (title, msg) => {
     return (
@@ -70,6 +71,7 @@ class JaegerScatterComponent extends React.Component<JaegerScatterProps> {
       </div>
     );
   };
+
   render() {
     const tracesRaw: Datapoint[] = [];
     const tracesError: Datapoint[] = [];
@@ -91,6 +93,21 @@ class JaegerScatterComponent extends React.Component<JaegerScatterProps> {
       const isSelected = this.props.selectedTrace && trace.traceID === this.props.selectedTrace.traceID;
       const traceError = trace.spans.filter(sp => sp.tags.some(isErrorTag)).length > 0;
       const value = this.props.showSpansAverage ? averageSpanDuration(trace) || 0 : trace.duration;
+
+      var size;
+      if (this.props.provider === TEMPO) {
+        // The query to get the spans in Tempo does not return all of them,
+        // This is to avoid the resize of the circle
+        if (this.props.selectedTrace?.traceID === trace.traceID) {
+          size = this.seletedTraceMatched;
+          trace.matched = this.seletedTraceMatched;
+        } else {
+          size = trace.matched;
+        }
+      } else {
+        size = Math.min(MAXIMAL_SIZE, trace.spans.length + MINIMAL_SIZE);
+      }
+
       const traceItem = {
         x: new Date(trace.startTime / 1000),
         y: value / ONE_MILLISECOND,
@@ -101,8 +118,7 @@ class JaegerScatterComponent extends React.Component<JaegerScatterProps> {
         color: isSelected ? PFColors.Blue500 : PFColors.Blue200,
         unit: 'seconds',
         trace: trace,
-        // For Tempo integration, it is not possible to return all the traces, so put a fixed size so item is not resized on click
-        size: this.props.provider === TEMPO ? trace.matched : Math.min(MAXIMAL_SIZE, trace.spans.length + MINIMAL_SIZE)
+        size: size
       };
       if (traceError) {
         traceItem.color = isSelected ? PFColors.Red500 : PFColors.Red200;
@@ -154,6 +170,10 @@ class JaegerScatterComponent extends React.Component<JaegerScatterProps> {
 
   private loadTraceTooltipMetrics(trace: JaegerTrace) {
     this.isLoading = true;
+    if (trace.traceID !== this.props.selectedTrace?.traceID) {
+      this.seletedTraceMatched = trace.matched;
+    }
+
     const queries = buildQueriesFromSpans(trace.spans, true);
 
     this.props
