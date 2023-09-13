@@ -511,7 +511,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
           mode="yaml"
           theme={this.props.theme === Theme.DARK ? 'twilight' : 'eclipse'}
           onChange={this.onEditorChange}
-          height={`calc(var(--kiali-yaml-editor-height) + ${isParentKiosk(this.props.kiosk) ? '100px' : '0px'})`}
+          height={`calc(var(--kiali-yaml-editor-height)`}
           width={'100%'}
           className={istioAceEditorStyle}
           wrapEnabled={true}

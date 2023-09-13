@@ -72,7 +72,7 @@ export class EditorPreviewComponent extends React.Component<Props, State> {
         mode="yaml"
         theme={this.props.theme === Theme.DARK ? 'twilight' : 'eclipse'}
         onChange={value => this.onChange(value)}
-        height={'275px  '}
+        height={'275px'}
         width={'100%'}
         className={istioAceEditorStyle}
         wrapEnabled={true}
