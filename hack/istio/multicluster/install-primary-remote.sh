@@ -100,7 +100,7 @@ if [ "${MANAGE_KIND}" == "true" ]; then
     CLUSTER2_CONTAINER_IP=$(${CLIENT_EXE} get nodes "${CLUSTER2_NAME}"-control-plane --context "${CLUSTER2_CONTEXT}" -o jsonpath='{.status.addresses[?(@.type == "InternalIP")].address}')
     SERVER_FLAG="--server=https://${CLUSTER2_CONTAINER_IP}:6443"
 fi
-${ISTIOCTL} x create-remote-secret --context=${CLUSTER2_CONTEXT} --name=${CLUSTER2_NAME} ${SERVER_FLAG} | ${CLIENT_EXE} apply -f - --context="${CLUSTER1_CONTEXT}"
+${ISTIOCTL} create-remote-secret --context=${CLUSTER2_CONTEXT} --name=${CLUSTER2_NAME} ${SERVER_FLAG} | ${CLIENT_EXE} apply -f - --context="${CLUSTER1_CONTEXT}"
 
 ${GEN_GATEWAY_SCRIPT} --mesh ${MESH_ID} --cluster ${CLUSTER2_NAME} --network ${NETWORK2_ID} | ${ISTIOCTL} --context=${CLUSTER2_CONTEXT} install -y -f -
 

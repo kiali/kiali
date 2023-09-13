@@ -522,7 +522,7 @@ Follow these steps:
 3: Create a remote secret in the Control Plane, using the Data Plane ServiceAccount you just created. This allows the Control Plane to read from and modify the Data Plane
 [source,shell]
 ----
-istioctl x create-remote-secret --service-account kiali-service-account --context=$DataPlane --name kiali | kubectl apply -n istio-system --context=$ControlPlane -f -
+istioctl create-remote-secret --service-account kiali-service-account --context=$DataPlane --name kiali | kubectl apply -n istio-system --context=$ControlPlane -f -
 ----
 
 4: You will now run Kiali in the Control Plane. You need to add the remote secret to the Kiali Deployment by specifying a Volume and VolumeMount. When Kiali sees */kiali-remote-secret/kiali* it will use the remote cluster's API server instead of the local API server
