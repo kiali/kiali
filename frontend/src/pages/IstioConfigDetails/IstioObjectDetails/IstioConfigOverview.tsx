@@ -25,7 +25,8 @@ import { IstioStatusMessageList } from './IstioStatusMessageList';
 import { KioskElement } from '../../../components/Kiosk/KioskElement';
 import { PFColors } from '../../../components/Pf/PfColors';
 import { GetIstioObjectUrl } from '../../../components/Link/IstioObjectLink';
-import { homeCluster, isMultiCluster } from '../../../config';
+import { homeCluster, isMultiCluster, serverConfig } from '../../../config';
+import { CLUSTER_DEFAULT } from 'types/Graph';
 
 interface IstioConfigOverviewProps {
   istioObjectDetails: IstioConfigDetails;
@@ -108,9 +109,14 @@ export class IstioConfigOverview extends React.Component<IstioConfigOverviewProp
 
     let urlInKiali = '';
     if (istioObject !== undefined && istioObject.metadata.namespace !== undefined && istioObject.kind !== undefined) {
-      // here a "/console" is required as external link is used
+      const clusterInfo = serverConfig.clusters[this.props.cluster ?? homeCluster?.name ?? CLUSTER_DEFAULT];
+      const kialiInstance = clusterInfo?.kialiInstances?.find(instance => instance.url.length !== 0);
+
+      // Set the kiali url from kialiInstance info (here a "/console" is required as external link is used)
+      const kialiUrl = `${kialiInstance?.url ?? ''}/console`;
+
       urlInKiali =
-        '/console' +
+        kialiUrl +
         GetIstioObjectUrl(
           istioObject.metadata.name,
           istioObject.metadata.namespace,
