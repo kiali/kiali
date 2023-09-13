@@ -174,6 +174,10 @@ setup_kind_multicluster() {
   infomsg "Downloading istio"
   hack/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
 
+  infomsg "Cloning kiali helm-charts..."
+  git clone --single-branch --branch "${TARGET_BRANCH}" https://github.com/kiali/helm-charts.git "${HELM_CHARTS_DIR}"
+  make -C "${HELM_CHARTS_DIR}" build-helm-charts
+
   infomsg "Kind cluster to be created with name [ci]"
   local script_dir 
   script_dir="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
@@ -183,7 +187,7 @@ setup_kind_multicluster() {
   local istio_dir
   istio_dir=$(ls -dt1 ${output_dir}/istio-* | head -n1)
   hack/istio/multicluster/install-primary-remote.sh --manage-kind true -dorp docker --istio-dir "${istio_dir}"
-  hack/istio/multicluster/deploy-kiali.sh --manage-kind true -dorp docker -kas anonymous
+  hack/istio/multicluster/deploy-kiali.sh --manage-kind true -dorp docker -kas anonymous -kudi true -kshc "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
 }
 
 if [ "${MULTICLUSTER}" == "true" ]; then
