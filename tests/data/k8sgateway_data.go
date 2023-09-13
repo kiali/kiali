@@ -65,6 +65,16 @@ func CreateEmptyK8sGateway(name, namespace string) *k8s_networking_v1beta1.Gatew
 	return &gw
 }
 
+func CreateEmptyK8sGatewayClass(name, namespace string) *k8s_networking_v1beta1.GatewayClass {
+	gc := k8s_networking_v1beta1.GatewayClass{}
+	gc.Name = name
+	gc.Namespace = namespace
+
+	gc.Kind = kubernetes.K8sGatewayClassType
+	gc.APIVersion = kubernetes.K8sApiNetworkingVersionV1Beta1
+	return &gc
+}
+
 func AddListenerToK8sGateway(listener k8s_networking_v1beta1.Listener, gw *k8s_networking_v1beta1.Gateway) *k8s_networking_v1beta1.Gateway {
 	gw.Spec.Listeners = append(gw.Spec.Listeners, listener)
 	return gw

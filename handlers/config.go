@@ -47,8 +47,8 @@ type PublicConfig struct {
 	AmbientEnabled       bool                          `json:"ambientEnabled,omitempty"`
 	Clusters             map[string]kubernetes.Cluster `json:"clusters,omitempty"`
 	Deployment           DeploymentConfig              `json:"deployment,omitempty"`
-	GatewayAPIEnabled    bool                          `json:"gatewayAPIEnabled,omitempty"`
 	GatewayAPIClasses    []config.GatewayAPIClass      `json:"gatewayAPIClasses,omitempty"`
+	GatewayAPIEnabled    bool                          `json:"gatewayAPIEnabled,omitempty"`
 	HealthConfig         config.HealthConfig           `json:"healthConfig,omitempty"`
 	InstallationTag      string                        `json:"installationTag,omitempty"`
 	IstioAnnotations     IstioAnnotations              `json:"istioAnnotations,omitempty"`

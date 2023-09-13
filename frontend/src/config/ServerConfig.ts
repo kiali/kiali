@@ -60,8 +60,8 @@ const defaultServerConfig: ComputedServerConfig = {
   authStrategy: '',
   clusters: {},
   durations: {},
-  gatewayAPIEnabled: false,
   gatewayAPIClasses: [],
+  gatewayAPIEnabled: false,
   logLevel: '',
   healthConfig: {
     rate: []

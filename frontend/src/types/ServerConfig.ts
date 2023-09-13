@@ -125,8 +125,8 @@ export interface ServerConfig {
   authStrategy: string;
   clusters: { [key: string]: MeshCluster };
   deployment: DeploymentConfig;
-  gatewayAPIEnabled: boolean;
   gatewayAPIClasses: GatewayAPIClass[];
+  gatewayAPIEnabled: boolean;
   healthConfig: HealthConfig;
   installationTag?: string;
   istioAnnotations: IstioAnnotations;

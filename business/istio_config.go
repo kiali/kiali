@@ -44,6 +44,7 @@ type IstioConfigCriteria struct {
 	Namespace                     string
 	Cluster                       string
 	IncludeGateways               bool
+	IncludeK8sGatewayClasses      bool
 	IncludeK8sGateways            bool
 	IncludeK8sHTTPRoutes          bool
 	IncludeVirtualServices        bool
@@ -68,6 +69,8 @@ func (icc IstioConfigCriteria) Include(resource string) bool {
 	switch resource {
 	case kubernetes.Gateways:
 		return icc.IncludeGateways
+	case kubernetes.K8sGatewayClasses:
+		return icc.IncludeK8sGatewayClasses
 	case kubernetes.K8sGateways:
 		return icc.IncludeK8sGateways
 	case kubernetes.K8sHTTPRoutes:
@@ -138,8 +141,9 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		WasmPlugins:      []*extentions_v1alpha1.WasmPlugin{},
 		Telemetries:      []*v1alpha1.Telemetry{},
 
-		K8sGateways:   []*k8s_networking_v1beta1.Gateway{},
-		K8sHTTPRoutes: []*k8s_networking_v1beta1.HTTPRoute{},
+		K8sGatewayClasses: []*k8s_networking_v1beta1.GatewayClass{},
+		K8sGateways:       []*k8s_networking_v1beta1.Gateway{},
+		K8sHTTPRoutes:     []*k8s_networking_v1beta1.HTTPRoute{},
 
 		AuthorizationPolicies:  []*security_v1beta1.AuthorizationPolicy{},
 		PeerAuthentications:    []*security_v1beta1.PeerAuthentication{},
@@ -172,6 +176,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		istioConfigList.DestinationRules = append(istioConfigList.DestinationRules, singleClusterConfigList.DestinationRules...)
 		istioConfigList.EnvoyFilters = append(istioConfigList.EnvoyFilters, singleClusterConfigList.EnvoyFilters...)
 		istioConfigList.Gateways = append(istioConfigList.Gateways, singleClusterConfigList.Gateways...)
+		istioConfigList.K8sGatewayClasses = append(istioConfigList.K8sGatewayClasses, singleClusterConfigList.K8sGatewayClasses...)
 		istioConfigList.K8sGateways = append(istioConfigList.K8sGateways, singleClusterConfigList.K8sGateways...)
 		istioConfigList.K8sHTTPRoutes = append(istioConfigList.K8sHTTPRoutes, singleClusterConfigList.K8sHTTPRoutes...)
 		istioConfigList.VirtualServices = append(istioConfigList.VirtualServices, singleClusterConfigList.VirtualServices...)
@@ -249,8 +254,9 @@ func (in *IstioConfigService) getIstioConfigListForCluster(ctx context.Context, 
 		WasmPlugins:      []*extentions_v1alpha1.WasmPlugin{},
 		Telemetries:      []*v1alpha1.Telemetry{},
 
-		K8sGateways:   []*k8s_networking_v1beta1.Gateway{},
-		K8sHTTPRoutes: []*k8s_networking_v1beta1.HTTPRoute{},
+		K8sGatewayClasses: []*k8s_networking_v1beta1.GatewayClass{},
+		K8sGateways:       []*k8s_networking_v1beta1.Gateway{},
+		K8sHTTPRoutes:     []*k8s_networking_v1beta1.HTTPRoute{},
 
 		AuthorizationPolicies:  []*security_v1beta1.AuthorizationPolicy{},
 		PeerAuthentications:    []*security_v1beta1.PeerAuthentication{},
@@ -286,6 +292,9 @@ func (in *IstioConfigService) getIstioConfigListForCluster(ctx context.Context, 
 		}
 		if criteria.Include(kubernetes.Gateways) {
 			istioConfigList.Gateways = kubernetes.FilterSupportedGateways(registryConfiguration.Gateways)
+		}
+		if criteria.Include(kubernetes.K8sGatewayClasses) {
+			istioConfigList.K8sGatewayClasses = registryConfiguration.K8sGatewayClasses
 		}
 		if criteria.Include(kubernetes.K8sGateways) {
 			istioConfigList.K8sGateways = kubernetes.FilterSupportedK8sGateways(registryConfiguration.K8sGateways)
@@ -360,10 +369,10 @@ func (in *IstioConfigService) getIstioConfigListForCluster(ctx context.Context, 
 		workloadSelector = criteria.WorkloadSelector
 	}
 
-	errChan := make(chan error, 15)
+	errChan := make(chan error, 16)
 
 	var wg sync.WaitGroup
-	wg.Add(15)
+	wg.Add(16)
 
 	go func(ctx context.Context, errChan chan error) {
 		defer wg.Done()
@@ -401,6 +410,17 @@ func (in *IstioConfigService) getIstioConfigListForCluster(ctx context.Context, 
 					istioConfigList.Gateways = kubernetes.FilterGatewaysBySelector(workloadSelector, istioConfigList.Gateways)
 				}
 			} else {
+				errChan <- err
+			}
+		}
+	}(ctx, errChan)
+
+	go func(ctx context.Context, errChan chan error) {
+		defer wg.Done()
+		if userClient.IsGatewayAPI() && criteria.Include(kubernetes.K8sGatewayClasses) {
+			var err error
+			istioConfigList.K8sGatewayClasses, err = kubeCache.GetK8sGatewayClasses(criteria.Namespace, criteria.LabelSelector)
+			if err != nil {
 				errChan <- err
 			}
 		}
@@ -1349,6 +1369,7 @@ func ParseIstioConfigCriteria(cluster, namespace, objects, labelSelector, worklo
 	defaultInclude := objects == ""
 	criteria := IstioConfigCriteria{}
 	criteria.IncludeGateways = defaultInclude
+	criteria.IncludeK8sGatewayClasses = defaultInclude
 	criteria.IncludeK8sGateways = defaultInclude
 	criteria.IncludeK8sHTTPRoutes = defaultInclude
 	criteria.IncludeVirtualServices = defaultInclude
@@ -1383,6 +1404,9 @@ func ParseIstioConfigCriteria(cluster, namespace, objects, labelSelector, worklo
 	types := strings.Split(objects, ",")
 	if checkType(types, kubernetes.Gateways) {
 		criteria.IncludeGateways = true
+	}
+	if checkType(types, kubernetes.K8sGatewayClasses) {
+		criteria.IncludeK8sGatewayClasses = true
 	}
 	if checkType(types, kubernetes.K8sGateways) {
 		criteria.IncludeK8sGateways = true
