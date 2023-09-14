@@ -55,9 +55,7 @@ export interface Response<T> {
  * API Proxy defined by the platform is added before url request
  * This environment variable is not defined in standalone Kiali application
  */
-const getAPIProxy = (): string | null => {
-  return process.env.API_PROXY ?? null;
-};
+const apiProxy = process.env.API_PROXY ?? null;
 
 /** API URLs */
 
@@ -69,8 +67,8 @@ const loginHeaders = config.login.headers;
 
 /**  Helpers to Requests */
 
-const getHeaders = (proxyUrl: string | null) => {
-  if (proxyUrl) {
+const getHeaders = () => {
+  if (apiProxy) {
     return { 'Content-Type': 'application/x-www-form-urlencoded' };
   } else {
     return { ...loginHeaders };
@@ -78,8 +76,8 @@ const getHeaders = (proxyUrl: string | null) => {
 };
 
 /** Create content type correctly for a given request type */
-const getHeadersWithMethod = (method: HTTP_VERBS, proxyUrl: string | null) => {
-  let allHeaders = getHeaders(proxyUrl);
+const getHeadersWithMethod = (method: HTTP_VERBS) => {
+  let allHeaders = getHeaders();
   if (method === HTTP_VERBS.PATCH) {
     allHeaders['Content-Type'] = 'application/json';
   }
@@ -92,13 +90,11 @@ const basicAuth = (username: UserName, password: Password) => {
 };
 
 const newRequest = <P>(method: HTTP_VERBS, url: string, queryParams: any, data: any) => {
-  const proxyUrl = getAPIProxy();
-
   return axios.request<P>({
     method: method,
-    url: proxyUrl ? `${proxyUrl}/${url}` : url,
+    url: apiProxy ? `${apiProxy}/${url}` : url,
     data: data,
-    headers: getHeadersWithMethod(method, proxyUrl),
+    headers: getHeadersWithMethod(method),
     params: queryParams
   });
 };
@@ -120,12 +116,10 @@ export const login = async (
   const params = new URLSearchParams();
   params.append('token', request.token);
 
-  const proxyUrl = getAPIProxy();
-
   const axiosRequest = {
     method: HTTP_VERBS.POST,
-    url: proxyUrl ? `${proxyUrl}/${urls.authenticate}` : urls.authenticate,
-    headers: getHeaders(proxyUrl),
+    url: apiProxy ? `${apiProxy}/${urls.authenticate}` : urls.authenticate,
+    headers: getHeaders(),
     data: params
   };
 
