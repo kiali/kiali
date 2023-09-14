@@ -70,17 +70,3 @@ Feature: Kiali Service Details page
     When user sees a minigraph
     And user chooses the "Show node graph" option
     Then the graph type is disabled
-
-  @multi-cluster
-  @skip
-  Scenario: See details for service
-    Then sd::user sees "productpage" details information for service "v1"
-    And sd::user sees Network card
-    And sd::user sees Istio Config
-    And cluster badge for "east" cluster should be visible
-
-  @multi-cluster
-  @skip
-  Scenario: See service Traffic information
-    Then sd::user sees inbound and outbound traffic information
-    And user should see a column related to cluster info
