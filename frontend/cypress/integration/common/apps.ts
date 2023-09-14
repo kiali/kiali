@@ -13,10 +13,12 @@ import {
   getColWithRowText,
   hasAtLeastOneClass  
 } from './table';
-import { openTab } from './transition';
+import { openTab, ensureKialiFinishedLoading } from './transition';
 
 // Choosing a random bookinfo app to test with.
 const APP = 'details';
+const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT')
+const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT')
 
 Then('user sees trace information', () => {
   openTab('Traces');
@@ -64,7 +66,8 @@ When('I fetch the list of applications', function () {
 });
 
 When('user opens the namespace dropdown', () =>{
-  cy.get('[data-test="namespace-dropdown"').click();
+  cy.intercept(Cypress.config('baseUrl') + `/api/namespaces/`).as('getNamespaces');
+  cy.get('[data-test="namespace-dropdown"]').click();
 });
 
 And('user sees Health information for Apps', () => {  
@@ -159,6 +162,9 @@ Then('user may only see {string}', (sees: string) => {
   });
 });
 
-Then('user should see no duplicate namespaces', () => { 
-  cy.get('#namespace-list-item[default]').parent()
+Then('user should see no duplicate namespaces', () => {
+  cy.exec(`kubectl get namespaces bookinfo --context ${CLUSTER1_CONTEXT}`);
+  cy.exec(`kubectl get namespaces bookinfo --context ${CLUSTER2_CONTEXT}`);
+  cy.get('[data-test="namespace-dropdown"]').siblings().contains('bookinfo')
+  .should('be.visible').and('have.length',1);
 });

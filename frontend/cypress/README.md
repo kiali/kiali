@@ -17,6 +17,13 @@ export CYPRESS_PASSWD=<value>                 # no defaults
 export CYPRESS_AUTH_PROVIDER=<value>          # defaults to my_htpasswd_provider
 ```
 
+When running the Cypress tests for multi-cluster, both contexts for the kubectl/oc command must be specified. 
+
+```bash
+export CYPRESS_CLUSTER1_CONTEXT=<value>       # context of the primary cluster with Kiali installed
+export CYPRESS_CLUSTER2_CONTEXT=<value>       # context of the remote cluster 
+```
+
 Tests for single cluster setup can be run with the cypress browser:
 
 ```bash
