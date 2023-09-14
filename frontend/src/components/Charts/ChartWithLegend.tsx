@@ -10,7 +10,8 @@ import {
   ChartLegend,
   ChartLine
 } from '@patternfly/react-charts';
-import { VictoryBoxPlot, VictoryPortal } from 'victory';
+import { VictoryPortal } from 'victory-core';
+import { VictoryBoxPlot } from 'victory-box-plot';
 import { format as d3Format } from 'd3-format';
 import { getFormatter, getUnit } from 'utils/Formatter';
 import { VCLines, LegendItem, LineInfo, RichDataPoint, RawOrBucket, VCDataPoint } from 'types/VictoryChartInfo';
