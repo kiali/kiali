@@ -125,15 +125,8 @@ Feature: Kiali Overview page
     And user sees the cpu chart
 
   @multi-cluster
-  @skip
   Scenario: The badge for local cluster should be visible
     Then user sees the "east" cluster badge in the Kiali header 
-
-  @multi-cluster
-  @skip
-  Scenario: Namespace dropdown should not contain duplicates
-    When user opens the namespace dropdown
-    Then user should see no duplicate namespaces
 
   @multi-cluster
   @skip

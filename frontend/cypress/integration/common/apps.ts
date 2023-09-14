@@ -63,6 +63,10 @@ When('I fetch the list of applications', function () {
   cy.visit('/console/applications?refresh=0');
 });
 
+When('user opens the namespace dropdown', () =>{
+  cy.get('[data-test="namespace-dropdown"').click();
+});
+
 And('user sees Health information for Apps', () => {  
   getColWithRowText(APP, 'Health').find('span')
     .filter('.pf-v5-c-icon').should('satisfy',hasAtLeastOneClass(['icon-healthy','icon-unhealthy','icon-degraded','icon-na']))
@@ -153,4 +157,8 @@ Then('user may only see {string}', (sees: string) => {
       }
     });
   });
+});
+
+Then('user should see no duplicate namespaces', () => { 
+  cy.get('#namespace-list-item[default]').parent()
 });

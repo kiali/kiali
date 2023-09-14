@@ -229,6 +229,10 @@ Then('the user sees information related to canary upgrades', view => {
   cy.get('[data-test="canary-upgrade"]').should('exist');
 });
 
+Then('user sees the {string} cluster badge in the Kiali header', (name:string) =>{
+  cy.get('[data-test="cluster-icon"]').contains(name).should('be.visible');
+});
+
 And('user sees the {string} label in the {string} namespace card', (label: string, ns: string) => {
   cy.log(label);
   cy.get('div[data-test^="' + ns + '"]')
