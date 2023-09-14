@@ -15,9 +15,9 @@ const EMBEDDED_PADDING = 42;
  * By default, Kiali hides the global scrollbar and fixes the height for some pages to force the scrollbar to appear
  * Hiding global scrollbar is not possible when Kiali is embedded in other application (like Openshift Console)
  * In these cases height is not fixed to avoid multiple scrollbars (https://github.com/kiali/kiali/issues/6601)
- * This environment variable is not defined in standalone Kiali application (default value is true)
+ * GLOBAL_SCROLLBAR environment variable is not defined in standalone Kiali application (value is always false)
  */
-const renderScrollbar = process.env.RENDER_SCROLLBAR ?? 'true';
+const globalScrollbar = process.env.GLOBAL_SCROLLBAR ?? 'false';
 
 const componentStyle = kialiStyle({
   padding: '20px'
@@ -65,7 +65,8 @@ export class RenderComponentScroll extends React.Component<Props, State> {
   render() {
     let scrollStyle = {};
 
-    if (renderScrollbar === 'true') {
+    // If there is no global scrollbar, height is fixed to force the scrollbar to appear in the component
+    if (globalScrollbar === 'false') {
       scrollStyle = { height: this.state.height, overflowY: 'auto' };
     }
 
