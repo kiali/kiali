@@ -250,11 +250,10 @@ type RegistryEndpoint struct {
 	IstioServiceEndpointShards
 }
 
-// IstioEndpointShards is a helper struct to fetch the /debug/endpointz results before parsing it to the Kiali's service model.
+// IstioServiceEndpointShards is a helper struct to fetch the /debug/endpointz results before parsing it to the Kiali's service model.
 // Not all fields from /debug/endpointz are mapped, only those needed by Kiali.
 // There may be differences between Istio versions to be addressed case by case in the mapping.
 // See: https://github.com/istio/istio/blob/be3ca0bbb3f06f4151d6353a37bb91e20cfd811c/pilot/pkg/model/endpointshards.go#L39-L47
-
 type IstioServiceEndpointShards map[string]EndpointShards
 type EndpointShards map[string]struct {
 	Shards map[ShardKey][]EndpointShard `json:"Shards,omitempty"`

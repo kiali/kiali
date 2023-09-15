@@ -31,9 +31,16 @@ func (endpoint *Endpoint) Parse(s core_v1.EndpointSubset) {
 
 func filterRegistryEndpointTLSName(rEs []*kubernetes.RegistryEndpoint, portName string, portNumber uint32) (string, string) {
 	for _, ep := range rEs {
-		for _, iEp := range ep.Endpoints {
-			if iEp.ServicePort.Name == portName && iEp.ServicePort.Port == portNumber {
-				return iEp.ServicePort.Protocol, iEp.Endpoint.TLSMode
+		for _, iEp := range ep.IstioServiceEndpointShards {
+			for _, shards := range iEp {
+				for _, shard := range shards.Shards {
+					for _, ep := range shard {
+						if ep.ServicePortName == portName && ep.EndpointPort == portNumber {
+							// assumes ServicePortName is the protocol. Istio 1.20 doesn't provide protocol info anymore in /debug/endpointz
+							return ep.ServicePortName, ep.TLSMode
+						}
+					}
+				}
 			}
 		}
 	}
