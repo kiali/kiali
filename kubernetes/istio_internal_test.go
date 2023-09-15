@@ -287,8 +287,8 @@ func TestParseRegistryEndpoints(t *testing.T) {
 	assert.NoError(err2)
 	assert.NotNil(registry)
 
-	assert.Equal(101, len(registry))
-	assert.Equal("*.msn.com:http-port", registry[0].Service)
+	assert.Equal(69, len(registry[0].IstioServiceEndpointShards))
+	assert.Equal("http", registry[0].IstioServiceEndpointShards["music.electronic-shop.svc.cluster.local"]["electronic-shop"].Shards[ShardKey{"Kubernetes", "Kubernetes"}][0].ServicePortName)
 }
 
 func TestRegistryServices(t *testing.T) {

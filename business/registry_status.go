@@ -174,10 +174,16 @@ func filterRegistryEndpoints(registryStatus *kubernetes.RegistryStatus, criteria
 	if criteria.Namespace != "" && criteria.ServiceName != "" {
 		for _, rEndpoint := range registryStatus.Endpoints {
 			// External ServiceEntries don't have endpoints in the Istio Registry
-			if rEndpoint.Endpoints != nil {
-				for _, innerEndpoint := range rEndpoint.Endpoints {
-					if innerEndpoint.Service.Attributes.Namespace == criteria.Namespace && innerEndpoint.Service.Attributes.Name == criteria.ServiceName {
-						filteredRegistryEndpoints = append(filteredRegistryEndpoints, rEndpoint)
+			if rEndpoint.IstioServiceEndpointShards != nil {
+				for serviceName, innerEndpoint := range rEndpoint.IstioServiceEndpointShards {
+					for _, shards := range innerEndpoint {
+						for _, shardArray := range shards.Shards {
+							for _, shard := range shardArray {
+								if shard.Namespace == criteria.Namespace && serviceName == criteria.ServiceName {
+									filteredRegistryEndpoints = append(filteredRegistryEndpoints, rEndpoint)
+								}
+							}
+						}
 					}
 				}
 			}
