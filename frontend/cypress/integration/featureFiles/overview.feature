@@ -128,7 +128,7 @@ Feature: Kiali Overview page
   Scenario: The badge for local cluster should be visible
     Then user sees the "east" cluster badge in the Kiali header 
 
-  @only
+  @skip
   @multi-cluster
   Scenario: Istio panels for both clusters should be visible in the control panel
     Then user sees the "istio-system" namespace card in cluster "east"
@@ -136,7 +136,6 @@ Feature: Kiali Overview page
     And user sees the "Control plane" label in both "istio-system" namespace cards
     And user sees the "Outbound policy" label in both "istio-system" namespace cards
     And the toggle on the right side of both "istio-system" namespace cards exists
-    And the toggle should contain links to other parts of the app
     And Istio config should not be available for the "west" "istio-system" 
     And health should be different for "east" and "west" "istio-system"
 

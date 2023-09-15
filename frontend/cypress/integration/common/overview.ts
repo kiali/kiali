@@ -233,6 +233,26 @@ Then('user sees the {string} cluster badge in the Kiali header', (name:string) =
   cy.get('[data-test="cluster-icon"]').contains(name).should('be.visible');
 });
 
+And('user sees the {string} label in both {string} namespace cards', (label:string, ns:string) => {
+  cy.get(`[data-test="CardItem_${ns}_east"]`).contains(label).should('be.visible');
+  cy.get(`[data-test="CardItem_${ns}_west"]`).contains(label).should('be.visible');
+})
+
+And('the toggle on the right side of both {string} namespace cards exists', (ns:string) => {
+  ensureKialiFinishedLoading();
+  cy.get(`[data-test="CardItem_${ns}_east"]`).find('[aria-label="Actions"]').should('exist');
+  cy.get(`[data-test="CardItem_${ns}_west"]`).find('[aria-label="Actions"]').should('exist');
+});
+
+And('Istio config should not be available for the {string} {string}', (cluster:string, ns:string) => {
+  cy.get(`[data-test="CardItem_${ns}_${cluster}"]`).contains('Istio config').siblings().contains('N/A');
+}); 
+
+// And('health should be different for {string} and {string} {string}', (cluster1:string, cluster2:string, ns:string) => {
+//   cy.get(`[data-test="CardItem_${ns}_east"]`).find('[aria-label="Actions"]').should('exist');
+//   cy.get(`[data-test="CardItem_${ns}_west"]`).find('[aria-label="Actions"]').should('exist');
+// })
+
 And('user sees the {string} label in the {string} namespace card', (label: string, ns: string) => {
   cy.log(label);
   cy.get('div[data-test^="' + ns + '"]')

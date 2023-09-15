@@ -952,6 +952,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                           : md
                       }
                       key={'CardItem_' + ns.name + ns.cluster}
+                      data-test={'CardItem_' + ns.name + '_' + ns.cluster}
                       style={{ margin: '0px 5px 0 5px' }}
                     >
                       <Card
