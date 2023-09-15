@@ -510,6 +510,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
           type={this.state.wizardsData.wizardType}
           update={this.state.wizardsData.updateMode}
           namespace={this.state.wizardsData.namespace}
+          cluster={this.state.wizardsData.serviceDetails?.service?.cluster || ''}
           serviceName={this.state.wizardsData.serviceDetails?.service?.name || ''}
           workloads={this.state.wizardsData.serviceDetails?.workloads || []}
           subServices={this.state.wizardsData.serviceDetails?.subServices || []}
