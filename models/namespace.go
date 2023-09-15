@@ -5,11 +5,8 @@ import (
 
 	osproject_v1 "github.com/openshift/api/project/v1"
 	core_v1 "k8s.io/api/core/v1"
-)
 
-const (
-	AmbientLabel = "istio.io/dataplane-mode"
-	AmbientValue = "ambient"
+	"github.com/kiali/kiali/config"
 )
 
 // A Namespace provide a scope for names
@@ -63,6 +60,8 @@ func CastNamespaceCollection(ns []core_v1.Namespace, cluster string) []Namespace
 }
 
 func CastNamespace(ns core_v1.Namespace, cluster string) Namespace {
+	istioLabels := config.Get().IstioLabels
+
 	namespace := Namespace{}
 	namespace.Name = ns.Name
 	namespace.Cluster = cluster
@@ -70,7 +69,7 @@ func CastNamespace(ns core_v1.Namespace, cluster string) Namespace {
 	namespace.Labels = ns.Labels
 	namespace.Annotations = ns.Annotations
 
-	if ns.Labels[AmbientLabel] == AmbientValue {
+	if ns.Labels[istioLabels.AmbientNamespaceLabel] == istioLabels.AmbientNamespaceLabelValue {
 		namespace.IsAmbient = true
 	}
 	return namespace

@@ -284,10 +284,12 @@ func (lt *LoginToken) Obfuscate() {
 
 // IstioLabels holds configuration about the labels required by Istio
 type IstioLabels struct {
-	AppLabelName       string `yaml:"app_label_name,omitempty" json:"appLabelName"`
-	InjectionLabelName string `yaml:"injection_label,omitempty" json:"injectionLabelName"`
-	InjectionLabelRev  string `yaml:"injection_label_rev,omitempty" json:"injectionLabelRev"`
-	VersionLabelName   string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
+	AmbientNamespaceLabel      string `yaml:"ambient_namespace_label,omitempty" json:"appLabelName"`
+	AmbientNamespaceLabelValue string `yaml:"ambient_namespace_label_value,omitempty" json:"appLabelName"`
+	AppLabelName               string `yaml:"app_label_name,omitempty" json:"appLabelName"`
+	InjectionLabelName         string `yaml:"injection_label,omitempty" json:"injectionLabelName"`
+	InjectionLabelRev          string `yaml:"injection_label_rev,omitempty" json:"injectionLabelRev"`
+	VersionLabelName           string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
 }
 
 // AdditionalDisplayItem holds some display-related configuration, like which annotations are to be displayed
@@ -672,10 +674,12 @@ func NewConfig() (c *Config) {
 			},
 		},
 		IstioLabels: IstioLabels{
-			AppLabelName:       "app",
-			InjectionLabelName: "istio-injection",
-			InjectionLabelRev:  "istio.io/rev",
-			VersionLabelName:   "version",
+			AmbientNamespaceLabel:      "istio.io/dataplane-mode",
+			AmbientNamespaceLabelValue: "ambient",
+			AppLabelName:               "app",
+			InjectionLabelName:         "istio-injection",
+			InjectionLabelRev:          "istio.io/rev",
+			VersionLabelName:           "version",
 		},
 		KialiFeatureFlags: KialiFeatureFlags{
 			CertificatesInformationIndicators: CertificatesInformationIndicators{

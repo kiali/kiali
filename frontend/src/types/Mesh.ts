@@ -16,3 +16,9 @@ export interface KialiInstance {
 }
 
 export type MeshClusters = MeshCluster[];
+
+// Internal Ambient Mesh indicators
+export const AmbientAnnotation = 'ambient.istio.io/redirection';
+export const AmbientAnnotationEnabled = 'enabled';
+export const WaypointLabel = 'gateway.istio.io/managed';
+export const WaypointLabelValue = 'istio.io-mesh-controller';

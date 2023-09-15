@@ -19,6 +19,7 @@ import { history, URLParam } from '../../app/History';
 import { MiniGraphCard } from '../../components/CytoscapeGraph/MiniGraphCard';
 import { IstioConfigCard } from '../../components/IstioConfigCard/IstioConfigCard';
 import { MiniGraphCardPF } from 'pages/GraphPF/MiniGraphCardPF';
+import { AmbientAnnotation, AmbientAnnotationEnabled, WaypointLabel, WaypointLabelValue } from '../../types/Mesh';
 
 type WorkloadInfoProps = {
   duration: DurationInSeconds;
@@ -141,9 +142,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
 
     const validations: Validations = {};
     const isWaypoint =
-      serverConfig.ambientEnabled === true &&
-      workload.labels &&
-      workload.labels['gateway.istio.io/managed'] === 'istio.io-mesh-controller';
+      serverConfig.ambientEnabled === true && workload.labels && workload.labels[WaypointLabel] === WaypointLabelValue;
 
     if (workload.pods.length > 0) {
       validations.pod = {};
@@ -160,7 +159,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
               if (
                 !(
                   serverConfig.ambientEnabled === true &&
-                  (pod.annotations ? pod.annotations['ambient.istio.io/redirection'] === 'enabled' : false)
+                  (pod.annotations ? pod.annotations[AmbientAnnotation] === AmbientAnnotationEnabled : false)
                 )
               ) {
                 validations.pod[pod.name].checks.push(noIstiosidecar);

@@ -4,11 +4,12 @@ import { Label, Tooltip, TooltipPosition } from '@patternfly/react-core';
 type AmbientLabelProps = {
   tooltip: boolean;
   style?: React.CSSProperties;
+  message?: string;
 };
 
 export class AmbientBadge extends React.Component<AmbientLabelProps, {}> {
   render() {
-    const msg = 'Istio Ambient profile is detected.';
+    const msg = this.props.message ? this.props.message : 'Istio Ambient ztunnel detected in the Control plane';
 
     const tooltipContent = (
       <div style={{ textAlign: 'left' }}>
