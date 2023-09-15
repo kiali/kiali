@@ -1,7 +1,8 @@
 package kubernetes
 
 import (
-	"time"
+	"fmt"
+	"strings"
 
 	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
@@ -246,39 +247,56 @@ type RegistryConfiguration struct {
 
 type RegistryEndpoint struct {
 	pilot string
-	IstioEndpoint
+	IstioServiceEndpointShards
 }
 
-type IstioEndpoint struct {
-	Service   string `json:"svc"`
-	Endpoints []struct {
-		Service     IstioService `json:"service,omitempty"`
-		ServicePort struct {
-			Name     string `json:"name,omitempty"`
-			Port     uint32 `json:"port,omitempty"`
-			Protocol string `json:"protocol,omitempty"`
-		} `json:"servicePort,omitempty"`
-		Endpoint struct {
-			Labels          map[string]string `json:"Labels,omitempty"`
-			Address         string            `json:"Address,omitempty"`
-			ServicePortName string            `json:"ServicePortName,omitempty"`
-			// EnvoyEndpoint is not mapped into the model
-			ServiceAccount string `json:"ServiceAccount,omitempty"`
-			Network        string `json:"Network,omitempty"`
-			Locality       struct {
-				Label     string `json:"Label,omitempty"`
-				ClusterID string `json:"ClusterID,omitempty"`
-			} `json:"Locality,omitempty"`
-			EndpointPort uint32 `json:"EndpointPort,omitempty"`
-			LbWeight     uint32 `json:"LbWeight,omitempty"`
-			TLSMode      string `json:"TLSMode,omitempty"`
-			Namespace    string `json:"Namespace,omitempty"`
-			WorkloadName string `json:"WorkloadName,omitempty"`
-			HostName     string `json:"HostName,omitempty"`
-			SubDomain    string `json:"SubDomain,omitempty"`
-			// TunnelAbility and DiscoverabilityPolicy are not mapped into the model
-		} `json:"endpoint"`
-	} `json:"ep"`
+// IstioEndpointShards is a helper struct to fetch the /debug/endpointz results before parsing it to the Kiali's service model.
+// Not all fields from /debug/endpointz are mapped, only those needed by Kiali.
+// There may be differences between Istio versions to be addressed case by case in the mapping.
+// See: https://github.com/istio/istio/blob/be3ca0bbb3f06f4151d6353a37bb91e20cfd811c/pilot/pkg/model/endpointshards.go#L39-L47
+
+type IstioServiceEndpointShards map[string]EndpointShards
+type EndpointShards map[string]struct {
+	Shards map[ShardKey][]EndpointShard `json:"Shards,omitempty"`
+}
+type EndpointShard struct {
+	Labels          map[string]string `json:"Labels,omitempty"`
+	Address         string            `json:"Address,omitempty"`
+	ServicePortName string            `json:"ServicePortName,omitempty"`
+	Locality        struct {
+		Label     string `json:"Label,omitempty"`
+		ClusterID string `json:"ClusterID,omitempty"`
+	} `json:"Locality,omitempty"`
+	EndpointPort uint32 `json:"EndpointPort,omitempty"`
+	TLSMode      string `json:"TLSMode,omitempty"`
+	Namespace    string `json:"Namespace,omitempty"`
+	HostName     string `json:"HostName,omitempty"`
+}
+
+// ShardKey is the key for EndpointShards made of a key with the format "provider/cluster"
+type ShardKey struct {
+	Provider string
+	Cluster  string
+}
+
+func (sk *ShardKey) String() string {
+	return fmt.Sprintf("%s/%s", sk.Provider, sk.Cluster)
+}
+
+// MarshalText implements the TextMarshaler interface (for json key usage)
+func (sk *ShardKey) MarshalText() (text []byte, err error) {
+	return []byte(sk.String()), nil
+}
+
+// UnmarshalText implements the TextMarshaler interface (for json key usage)
+func (sk *ShardKey) UnmarshalText(text []byte) error {
+	providerCluster := strings.Split(string(text), "/")
+	if len(providerCluster) != 2 {
+		return fmt.Errorf("ShardKey is not of the form provider/cluster [%v]", string(text))
+	}
+	sk.Provider = providerCluster[0]
+	sk.Cluster = providerCluster[1]
+	return nil
 }
 
 type RegistryService struct {
@@ -300,8 +318,6 @@ type IstioService struct {
 		Name            string            `json:"Name,omitempty"`
 		Namespace       string            `json:"Namespace,omitempty"`
 		Labels          map[string]string `json:"Labels,omitempty"`
-		// UID is present in Istio 1.11.x but not in 1.12.x
-		UID string `json:"UID,omitempty"`
 		// ExportTo key values:
 		// ".":		Private implies namespace local config
 		// "*":		Public implies config is visible to all
@@ -316,26 +332,13 @@ type IstioService struct {
 		Port     int    `json:"port"`
 		Protocol string `json:"protocol,omitempty"`
 	} `json:"ports"`
-	ServiceAccounts []string  `json:"serviceAccounts,omitempty"`
-	CreationTime    time.Time `json:"creationTime,omitempty"`
-	Hostname        string    `json:"hostname"`
-	// Address is present in Istio 1.11.x but not in 1.12.x
-	Address              string `json:"address,omitempty"`
-	AutoAllocatedAddress string `json:"autoAllocatedAddress,omitempty"`
+	Hostname string `json:"hostname"`
 	// ClusterVIPs defined in Istio 1.11.x
 	ClusterVIPs11 map[string]string `json:"cluster-vips,omitempty"`
 	// ClusterVIPs defined in Istio 1.12.x
 	ClusterVIPs12 struct {
 		Addresses map[string][]string `json:"Addresses,omitempty"`
 	} `json:"clusterVIPs,omitempty"`
-	// Resolution values, as the debug endpoint doesn't perform a conversion
-	// 0:	ClientSideLB
-	// 1:   DNSLB
-	// 2:   Passthrough
-	Resolution   int  `json:"Resolution,omitempty"`
-	MeshExternal bool `json:"MeshExternal,omitempty"`
-	// ResourceVersion attribute is not mapped into the model
-	// Kiali won't use it yet and it is only present on Istio 1.12.x
 }
 
 type RegistryStatus struct {
