@@ -66,12 +66,8 @@ And('user filters for name {string}', (name: string) => {
   cy.get('input[aria-label="filter_input_value"]').type(`${name}{enter}`);
 });
 
-When('user filters by {string} istio type', (istioType: string) => {
-  cy.get('select[aria-label="filter_select_type"]').select('istiotype');
-});
-
-And('user filters for istio type {string}', (istioType: string) => {
-  cy.get('input[placeholder="Filter by Istio Type"]').type(`${istioType}{enter}`);
+And('user filters for istio config type {string}', (istioType: string) => {
+  cy.get('input[placeholder="Filter by Istio Config Type"]').type(`${istioType}{enter}`);
   cy.get(`button[label="${istioType}"]`).should('be.visible').click();
 });
 

@@ -57,10 +57,10 @@ Feature: Kiali Workloads page
     Then user sees "workloads" in workloads table
 
   @bookinfo-app
-  Scenario: Filter workloads table by Istio Type
+  Scenario: Filter workloads table by Istio Config Type
     When user selects the "bookinfo" namespace
-    And user selects filter "Istio Type"
-    And user filters for istio type "VirtualService"
+    And user selects filter "Istio Config Type"
+    And user filters for istio config type "VirtualService"
     Then user sees "no workloads" in workloads table
 
   @bookinfo-app

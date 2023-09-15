@@ -56,10 +56,10 @@ Feature: Kiali Services page
     Then user sees "something" in the table
 
   @bookinfo-app
-  Scenario: Filter services table by Istio Type
+  Scenario: Filter services table by Istio Config Type
     When user selects the "bookinfo" namespace
-    And user selects filter "Istio Type"
-    And user filters for istio type "VirtualService"
+    And user selects filter "Istio Config Type"
+    And user filters for istio config type "VirtualService"
     Then user sees "productpage" in the table
     And table length should be 1
 
