@@ -426,16 +426,17 @@ func ParseRegistryEndpoints(endpoints map[string][]byte) ([]*RegistryEndpoint, e
 		if isRegistryLoaded {
 			break
 		}
-		var eps []*RegistryEndpoint
+		var eps IstioServiceEndpointShards
 		err := json.Unmarshal(endpoint, &eps)
 		if err != nil {
 			log.Errorf("Error parsing RegistryEndpoints results: %s", err)
 			return nil, err
 		}
-		for _, ep := range eps {
-			ep.pilot = pilot
+		re := RegistryEndpoint{
+			pilot:                      pilot,
+			IstioServiceEndpointShards: eps,
 		}
-		fullRegistryEndpoints = append(fullRegistryEndpoints, eps...)
+		fullRegistryEndpoints = append(fullRegistryEndpoints, &re)
 		if len(eps) > 0 {
 			isRegistryLoaded = true
 		}
