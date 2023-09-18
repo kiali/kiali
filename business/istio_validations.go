@@ -269,7 +269,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	case kubernetes.K8sGateways:
 		// Validations on K8sGateways
 		objectCheckers = []ObjectChecker{
-			checkers.K8sGatewayChecker{K8sGateways: istioConfigList.K8sGateways},
+			checkers.K8sGatewayChecker{K8sGateways: istioConfigList.K8sGateways, GatewayClasses: in.businessLayer.IstioConfig.GatewayAPIClasses()},
 		}
 		referenceChecker = references.K8sGatewayReferences{K8sGateways: istioConfigList.K8sGateways, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes}
 	case kubernetes.K8sHTTPRoutes:
