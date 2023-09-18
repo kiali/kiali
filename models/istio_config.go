@@ -29,9 +29,8 @@ type IstioConfigList struct {
 	WasmPlugins      []*extentions_v1alpha1.WasmPlugin     `json:"wasmPlugins"`
 	Telemetries      []*v1alpha1.Telemetry                 `json:"telemetries"`
 
-	K8sGatewayClasses []*k8s_networking_v1beta1.GatewayClass `json:"-"`
-	K8sGateways       []*k8s_networking_v1beta1.Gateway      `json:"k8sGateways"`
-	K8sHTTPRoutes     []*k8s_networking_v1beta1.HTTPRoute    `json:"k8sHTTPRoutes"`
+	K8sGateways   []*k8s_networking_v1beta1.Gateway   `json:"k8sGateways"`
+	K8sHTTPRoutes []*k8s_networking_v1beta1.HTTPRoute `json:"k8sHTTPRoutes"`
 
 	AuthorizationPolicies  []*security_v1beta.AuthorizationPolicy   `json:"authorizationPolicies"`
 	PeerAuthentications    []*security_v1beta.PeerAuthentication    `json:"peerAuthentications"`
@@ -206,7 +205,6 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 			filtered[ns].DestinationRules = []*networking_v1beta1.DestinationRule{}
 			filtered[ns].EnvoyFilters = []*networking_v1alpha3.EnvoyFilter{}
 			filtered[ns].Gateways = []*networking_v1beta1.Gateway{}
-			filtered[ns].K8sGatewayClasses = []*k8s_networking_v1beta1.GatewayClass{}
 			filtered[ns].K8sGateways = []*k8s_networking_v1beta1.Gateway{}
 			filtered[ns].K8sHTTPRoutes = []*k8s_networking_v1beta1.HTTPRoute{}
 			filtered[ns].VirtualServices = []*networking_v1beta1.VirtualService{}
@@ -235,12 +233,6 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 		for _, gw := range configList.Gateways {
 			if gw.Namespace == ns {
 				filtered[ns].Gateways = append(filtered[ns].Gateways, gw)
-			}
-		}
-
-		for _, gwc := range configList.K8sGatewayClasses {
-			if gwc.Namespace == ns {
-				filtered[ns].K8sGatewayClasses = append(filtered[ns].K8sGatewayClasses, gwc)
 			}
 		}
 
@@ -331,7 +323,6 @@ func (configList IstioConfigList) MergeConfigs(ns IstioConfigList) IstioConfigLi
 	configList.EnvoyFilters = append(configList.EnvoyFilters, ns.EnvoyFilters...)
 	configList.Gateways = append(configList.Gateways, ns.Gateways...)
 	configList.AuthorizationPolicies = append(configList.AuthorizationPolicies, ns.AuthorizationPolicies...)
-	configList.K8sGatewayClasses = append(configList.K8sGatewayClasses, ns.K8sGatewayClasses...)
 	configList.K8sGateways = append(configList.K8sGateways, ns.K8sGateways...)
 	configList.K8sHTTPRoutes = append(configList.K8sHTTPRoutes, ns.K8sHTTPRoutes...)
 	configList.PeerAuthentications = append(configList.PeerAuthentications, ns.PeerAuthentications...)
