@@ -16,6 +16,7 @@
 # CLIENT_EXE_NAME must be either "oc" or "kubectl"
 ADDONS="prometheus grafana jaeger"
 CLIENT_EXE_NAME="oc"
+CLIENT_EXE=""
 CLUSTER_NAME=""
 CONFIG_PROFILE="" # see "istioctl profile list" for valid values. See: https://istio.io/docs/setup/additional-setup/config-profiles/
 DELETE_ISTIO="false"
@@ -252,7 +253,7 @@ HELPMSG
   esac
 done
 
-if [ "${CLIENT_EXE}" = "" ]; then
+if [ "${CLIENT_EXE}" == "" ]; then
   CLIENT_EXE=`which "${CLIENT_EXE_NAME}"`
   if [ "$?" = "0" ]; then
     echo "The cluster client executable is found here: ${CLIENT_EXE}"
@@ -262,9 +263,19 @@ if [ "${CLIENT_EXE}" = "" ]; then
   fi
 fi
 
+# Determine if we are running with OpenShift or not
+
+if ${CLIENT_EXE} api-versions | grep --quiet "route.openshift.io"; then
+  IS_OPENSHIFT="true"
+  echo "You are connecting to an OpenShift cluster"
+else
+  IS_OPENSHIFT="false"
+  echo "You are connecting to a (non-OpenShift) Kubernetes cluster"
+fi
+
 # default the config profile according to the cluster type
 if [ -z "${CONFIG_PROFILE}" ]; then
-  if [[ "${CLIENT_EXE}" = *"oc" ]]; then
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
     CONFIG_PROFILE="openshift"
   else
     CONFIG_PROFILE="demo"
@@ -315,7 +326,7 @@ fi
 echo "istioctl is found here: ${ISTIOCTL}"
 
 # If OpenShift, install CNI
-if [[ "${CLIENT_EXE}" = *"oc" ]]; then
+if [ "${IS_OPENSHIFT}" == "true" ]; then
   # If on OpenShift but not using openshift profile, do some extra things. To support Istio 1.10 and earlier.
   if [ "${CONFIG_PROFILE}" != "openshift" ]; then
     CNI_OPTIONS="--set components.cni.enabled=true --set components.cni.namespace=kube-system --set values.cni.cniBinDir=/var/lib/cni/bin --set values.cni.cniConfDir=/etc/cni/multus/net.d --set values.cni.chained=false --set values.cni.cniConfFileName=istio-cni.conf --set values.sidecarInjectorWebhook.injectedAnnotations.k8s\.v1\.cni\.cncf\.io/networks=istio-cni"
@@ -330,13 +341,35 @@ if [ "${DELETE_ISTIO}" != "true" ]; then
   # If OpenShift, we need to do some additional things - see:
   #   https://istio.io/latest/docs/setup/platform-setup/openshift/
   echo Creating the control plane namespace: ${NAMESPACE}
-  if [[ "${CLIENT_EXE}" = *"oc" ]]; then
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
     if ! ${CLIENT_EXE} get namespace ${NAMESPACE}; then
       ${CLIENT_EXE} new-project ${NAMESPACE}
     fi
 
-    echo Performing additional commands for OpenShift
-    ${CLIENT_EXE} adm policy add-scc-to-group anyuid system:serviceaccounts:${NAMESPACE}
+    echo "Creating SCC for OpenShift"
+    cat <<SCC | ${CLIENT_EXE} apply -f -
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: istio-openshift-scc
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+fsGroup:
+  type: RunAsAny
+allowPrivilegedContainer: true
+seccompProfiles:
+- '*'
+priority: 9
+groups:
+- "system:serviceaccount:${NAMESPACE}"
+users:
+- "system:serviceaccount:${NAMESPACE}:prometheus"
+- "system:serviceaccount:${NAMESPACE}:grafana"
+SCC
   else
     if ! ${CLIENT_EXE} get namespace ${NAMESPACE}; then
       ${CLIENT_EXE} create namespace ${NAMESPACE}
@@ -359,7 +392,7 @@ if [ "${NAMESPACE}" != "istio-system" ]; then
   # see https://github.com/istio/istio/issues/30897 for these settings
   CUSTOM_NAMESPACE_OPTIONS="--set namespace=${NAMESPACE}"
   CUSTOM_NAMESPACE_OPTIONS="${CUSTOM_NAMESPACE_OPTIONS} --set values.global.istioNamespace=${NAMESPACE}"
-  if [[ "${CLIENT_EXE}" = *"oc" ]]; then
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
     # If on OpenShift but not using openshift profile, do some extra things. To support Istio 1.10 and earlier.
     if [ "${CONFIG_PROFILE}" != "openshift" ]; then
       CNI_OPTIONS="${CNI_OPTIONS} --set values.cni.excludeNamespaces[0]=${NAMESPACE}"
@@ -415,7 +448,9 @@ if [ "${DELETE_ISTIO}" == "true" ]; then
   else
     ${ISTIOCTL} manifest generate --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY} | ${CLIENT_EXE} delete --ignore-not-found=true -f -
   fi
-  if [[ "${CLIENT_EXE}" = *"oc" ]]; then
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    echo "Deleting SCC on OpenShift"
+    ${CLIENT_EXE} delete scc istio-openshift-scc
     echo "===== IMPORTANT ====="
     echo "For each namespace in the mesh, run these commands to remove previously created resources:"
     echo "  oc -n <target-namespace> delete network-attachment-definition istio-cni"
@@ -463,7 +498,7 @@ else
   fi
 
   # Do some OpenShift specific things
-  if [[ "${CLIENT_EXE}" = *"oc" ]]; then
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
     if [ "${ISTIO_INGRESSGATEWAY_ENABLED}" == "true" ]; then
       ${CLIENT_EXE} -n ${NAMESPACE} expose svc/istio-ingressgateway --port=http2
     else
