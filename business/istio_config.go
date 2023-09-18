@@ -360,10 +360,10 @@ func (in *IstioConfigService) getIstioConfigListForCluster(ctx context.Context, 
 		workloadSelector = criteria.WorkloadSelector
 	}
 
-	errChan := make(chan error, 16)
+	errChan := make(chan error, 15)
 
 	var wg sync.WaitGroup
-	wg.Add(16)
+	wg.Add(15)
 
 	go func(ctx context.Context, errChan chan error) {
 		defer wg.Done()
