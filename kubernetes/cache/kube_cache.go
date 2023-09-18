@@ -102,7 +102,6 @@ type KubeCache interface {
 	GetTelemetry(namespace, name string) (*v1alpha1.Telemetry, error)
 	GetTelemetries(namespace, labelSelector string) ([]*v1alpha1.Telemetry, error)
 
-	GetK8sGatewayClasses(namespace, labelSelector string) ([]*gatewayapi_v1beta1.GatewayClass, error)
 	GetK8sGateway(namespace, name string) (*gatewayapi_v1beta1.Gateway, error)
 	GetK8sGateways(namespace, labelSelector string) ([]*gatewayapi_v1beta1.Gateway, error)
 	GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1beta1.HTTPRoute, error)
@@ -137,7 +136,6 @@ type cacheLister struct {
 	destinationRuleLister istionet_v1beta1_listers.DestinationRuleLister
 	envoyFilterLister     istionet_v1alpha3_listers.EnvoyFilterLister
 	gatewayLister         istionet_v1beta1_listers.GatewayLister
-	k8sgatewayClassLister k8s_v1beta1_listers.GatewayClassLister
 	k8sgatewayLister      k8s_v1beta1_listers.GatewayLister
 	k8shttprouteLister    k8s_v1beta1_listers.HTTPRouteLister
 	peerAuthnLister       istiosec_v1beta1_listers.PeerAuthenticationLister
@@ -486,13 +484,6 @@ func (c *kubeCache) createGatewayInformers(namespace string) gateway.SharedInfor
 		_, err = sharedInformers.Gateway().V1beta1().HTTPRoutes().Informer().AddEventHandler(c.registryRefreshHandler)
 		if err != nil {
 			log.Errorf("[Kiali Cache] Error adding Handler to Informer HTTPRoutes : %s", err.Error())
-		}
-
-		lister.k8sgatewayClassLister = sharedInformers.Gateway().V1beta1().GatewayClasses().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1beta1().GatewayClasses().Informer().HasSynced)
-		_, err = sharedInformers.Gateway().V1beta1().GatewayClasses().Informer().AddEventHandler(c.registryRefreshHandler)
-		if err != nil {
-			log.Errorf("[Kiali Cache] Error adding Handler to Informer GatewayClasses: %s", err.Error())
 		}
 	}
 	return sharedInformers
@@ -1386,60 +1377,6 @@ func (c *kubeCache) GetTelemetries(namespace, labelSelector string) ([]*v1alpha1
 	}
 
 	return retT, nil
-}
-
-func (c *kubeCache) GetK8sGatewayClass(namespace, name string) (*gatewayapi_v1beta1.GatewayClass, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
-		return nil, err
-	}
-
-	// Read lock will prevent the cache from being refreshed while we are reading from the lister
-	// but it won't prevent other routines from reading from the lister.
-	defer c.cacheLock.RUnlock()
-	c.cacheLock.RLock()
-	g, err := c.getCacheLister(namespace).k8sgatewayClassLister.Get(name)
-	if err != nil {
-		return nil, err
-	}
-
-	retG := g.DeepCopy()
-	retG.Kind = kubernetes.K8sGatewayClassType
-	return retG, nil
-}
-
-func (c *kubeCache) GetK8sGatewayClasses(namespace, labelSelector string) ([]*gatewayapi_v1beta1.GatewayClass, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
-		return nil, err
-	}
-
-	selector, err := labels.Parse(labelSelector)
-	if err != nil {
-		return nil, err
-	}
-
-	// Read lock will prevent the cache from being refreshed while we are reading from the lister
-	// but it won't prevent other routines from reading from the lister.
-	defer c.cacheLock.RUnlock()
-	c.cacheLock.RLock()
-	g, err := c.getCacheLister(namespace).k8sgatewayClassLister.List(selector)
-	if err != nil {
-		return nil, err
-	}
-
-	// Lister returns nil when there are no results but callers of the cache expect an empty array
-	// so keeping the behavior the same since it matters for json marshalling.
-	if g == nil {
-		return []*gatewayapi_v1beta1.GatewayClass{}, nil
-	}
-
-	var retG []*gatewayapi_v1beta1.GatewayClass
-	for _, w := range g {
-		gg := w.DeepCopy()
-		gg.Kind = kubernetes.K8sGatewayClassType
-		retG = append(retG, gg)
-	}
-
-	return retG, nil
 }
 
 func (c *kubeCache) GetK8sGateway(namespace, name string) (*gatewayapi_v1beta1.Gateway, error) {

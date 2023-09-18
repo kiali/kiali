@@ -3,8 +3,6 @@ package k8sgateways
 import (
 	"testing"
 
-	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
-
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/config"
@@ -12,14 +10,19 @@ import (
 	"github.com/kiali/kiali/tests/data"
 )
 
-func TestCorrectK8sGatewayClass(t *testing.T) {
+func TestCorrectGatewayAPIClass(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
 	assert := assert.New(t)
 
 	k8sgwObject := data.CreateEmptyK8sGateway("validgateway", "test")
-	k8sgwClasses := []*k8s_networking_v1beta1.GatewayClass{data.CreateEmptyK8sGatewayClass("istio", "default")}
+	k8sgwClasses := []config.GatewayAPIClass{
+		{
+			Name:      "Istio",
+			ClassName: "istio",
+		},
+	}
 
 	k8sgws := GatewayClassChecker{K8sGateway: k8sgwObject, GatewayClasses: k8sgwClasses}
 
@@ -29,14 +32,19 @@ func TestCorrectK8sGatewayClass(t *testing.T) {
 	assert.Empty(check)
 }
 
-func TestIncorrectK8sGatewayClass(t *testing.T) {
+func TestIncorrectGatewayAPIClass(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
 	assert := assert.New(t)
 
 	k8sgwObject := data.CreateEmptyK8sGateway("validgateway", "test")
-	k8sgwClasses := []*k8s_networking_v1beta1.GatewayClass{data.CreateEmptyK8sGatewayClass("another", "default")}
+	k8sgwClasses := []config.GatewayAPIClass{
+		{
+			Name:      "istio",
+			ClassName: "wrong",
+		},
+	}
 
 	k8sgws := GatewayClassChecker{K8sGateway: k8sgwObject, GatewayClasses: k8sgwClasses}
 
@@ -44,6 +52,6 @@ func TestIncorrectK8sGatewayClass(t *testing.T) {
 
 	assert.False(isValid)
 	assert.NotEmpty(check)
-	assert.Equal("K8s GatewayClass not found", check[0].Message)
+	assert.Equal("Gateway API Class not found in Kiali configuration", check[0].Message)
 	assert.Equal(models.ErrorSeverity, check[0].Severity)
 }
