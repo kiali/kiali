@@ -278,6 +278,7 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
           type={this.state.wizardType}
           update={this.state.updateMode}
           namespace={this.props.namespace}
+          cluster={this.props.cluster}
           serviceName={this.props.serviceDetails?.service?.name || ''}
           workloads={this.props.serviceDetails?.workloads || []}
           subServices={this.props.serviceDetails?.subServices || []}
