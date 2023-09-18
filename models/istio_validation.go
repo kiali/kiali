@@ -327,7 +327,7 @@ var checkDescriptors = map[string]IstioCheck{
 	},
 	"k8sgateways.gatewayclassnotfound": {
 		Code:     "KIA1504",
-		Message:  "K8s GatewayClass not found",
+		Message:  "Gateway API Class not found in Kiali configuration",
 		Severity: ErrorSeverity,
 	},
 	"k8sgateways.multimatch.listener": {

@@ -457,9 +457,8 @@ func ParseRegistryConfig(config map[string][]byte) (*RegistryConfiguration, erro
 		Telemetries:      []*v1alpha1.Telemetry{},
 
 		// K8s Networking Gateways
-		K8sGatewayClasses: []*k8s_networking_v1beta1.GatewayClass{},
-		K8sGateways:       []*k8s_networking_v1beta1.Gateway{},
-		K8sHTTPRoutes:     []*k8s_networking_v1beta1.HTTPRoute{},
+		K8sGateways:   []*k8s_networking_v1beta1.Gateway{},
+		K8sHTTPRoutes: []*k8s_networking_v1beta1.HTTPRoute{},
 
 		AuthorizationPolicies:  []*security_v1beta1.AuthorizationPolicy{},
 		PeerAuthentications:    []*security_v1beta1.PeerAuthentication{},
@@ -484,7 +483,7 @@ func ParseRegistryConfig(config map[string][]byte) (*RegistryConfiguration, erro
 				if mItem, ok := iItem.(map[string]interface{}); ok {
 					kind := mItem["kind"].(string)
 					switch kind {
-					case "DestinationRule", "EnvoyFilter", "Gateway", "ServiceEntry", "Sidecar", "VirtualService", "WorkloadEntry", "WorkloadGroup", "AuthorizationPolicy", "PeerAuthentication", "RequestAuthentication", "WasmPlugin", "Telemetry", "HTTPRoute", "GatewayClass":
+					case "DestinationRule", "EnvoyFilter", "Gateway", "ServiceEntry", "Sidecar", "VirtualService", "WorkloadEntry", "WorkloadGroup", "AuthorizationPolicy", "PeerAuthentication", "RequestAuthentication", "WasmPlugin", "Telemetry", "HTTPRoute":
 						bItem, err := json.Marshal(iItem)
 						rbItem := bytes.NewReader(bItem)
 						bDec := json.NewDecoder(rbItem)
@@ -531,13 +530,6 @@ func ParseRegistryConfig(config map[string][]byte) (*RegistryConfiguration, erro
 								log.Errorf("Error parsing RegistryConfig results for K8sHTTPRoutes: %s", err)
 							}
 							registry.K8sHTTPRoutes = append(registry.K8sHTTPRoutes, route)
-						case "GatewayClass":
-							var gc *k8s_networking_v1beta1.GatewayClass
-							err := bDec.Decode(&gc)
-							if err != nil {
-								log.Errorf("Error parsing RegistryConfig results for K8sGatewayClasses: %s", err)
-							}
-							registry.K8sGatewayClasses = append(registry.K8sGatewayClasses, gc)
 						case "ServiceEntry":
 							var se *networking_v1beta1.ServiceEntry
 							err := bDec.Decode(&se)
