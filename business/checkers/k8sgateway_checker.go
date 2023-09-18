@@ -4,6 +4,7 @@ import (
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/business/checkers/k8sgateways"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 )
 
@@ -11,7 +12,7 @@ const K8sGatewayCheckerType = "k8sgateway"
 
 type K8sGatewayChecker struct {
 	K8sGateways    []*k8s_networking_v1beta1.Gateway
-	GatewayClasses []*k8s_networking_v1beta1.GatewayClass
+	GatewayClasses []config.GatewayAPIClass
 	Cluster        string
 }
 

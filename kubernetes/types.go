@@ -63,9 +63,6 @@ const (
 
 	// K8s Networking
 
-	K8sGatewayClasses   = "gatewayclasses"
-	K8sGatewayClassType = "GatewayClass"
-
 	K8sGateways    = "k8sgateways"
 	K8sGatewayType = "K8sGateway"
 	// K8sActualGatewayType There is a naming conflict between Istio and K8s Gateways, keeping here an actual type to show in YAML editor
@@ -146,9 +143,8 @@ var (
 		Telemetries:      TelemetryType,
 
 		// K8s Networking Gateways
-		K8sGatewayClasses: K8sGatewayClassType,
-		K8sGateways:       K8sGatewayType,
-		K8sHTTPRoutes:     K8sHTTPRouteType,
+		K8sGateways:   K8sGatewayType,
+		K8sHTTPRoutes: K8sHTTPRouteType,
 
 		// Security
 		AuthorizationPolicies:  AuthorizationPoliciesType,
@@ -168,9 +164,8 @@ var (
 		WasmPlugins:      ExtensionGroupVersionV1Alpha1.Group,
 		Telemetries:      TelemetryGroupV1Alpha1.Group,
 
-		K8sGatewayClasses: K8sNetworkingGroupVersionV1Beta1.Group,
-		K8sGateways:       K8sNetworkingGroupVersionV1Beta1.Group,
-		K8sHTTPRoutes:     K8sNetworkingGroupVersionV1Beta1.Group,
+		K8sGateways:   K8sNetworkingGroupVersionV1Beta1.Group,
+		K8sHTTPRoutes: K8sNetworkingGroupVersionV1Beta1.Group,
 
 		AuthorizationPolicies:  SecurityGroupVersion.Group,
 		PeerAuthentications:    SecurityGroupVersion.Group,
@@ -240,9 +235,8 @@ type RegistryConfiguration struct {
 	Telemetries      []*v1alpha1.Telemetry
 
 	// K8s Networking Gateways
-	K8sGatewayClasses []*k8s_networking_v1beta1.GatewayClass
-	K8sGateways       []*k8s_networking_v1beta1.Gateway
-	K8sHTTPRoutes     []*k8s_networking_v1beta1.HTTPRoute
+	K8sGateways   []*k8s_networking_v1beta1.Gateway
+	K8sHTTPRoutes []*k8s_networking_v1beta1.HTTPRoute
 
 	// Security
 	AuthorizationPolicies  []*security_v1beta.AuthorizationPolicy
