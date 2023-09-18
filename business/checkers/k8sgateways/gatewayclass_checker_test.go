@@ -17,7 +17,12 @@ func TestCorrectGatewayAPIClass(t *testing.T) {
 	assert := assert.New(t)
 
 	k8sgwObject := data.CreateEmptyK8sGateway("validgateway", "test")
-	k8sgwClasses := []config.GatewayAPIClass{config.GatewayAPIClass{"Istio", "istio"}}
+	k8sgwClasses := []config.GatewayAPIClass{
+		{
+			Name:      "Istio",
+			ClassName: "istio",
+		},
+	}
 
 	k8sgws := GatewayClassChecker{K8sGateway: k8sgwObject, GatewayClasses: k8sgwClasses}
 
@@ -34,7 +39,12 @@ func TestIncorrectGatewayAPIClass(t *testing.T) {
 	assert := assert.New(t)
 
 	k8sgwObject := data.CreateEmptyK8sGateway("validgateway", "test")
-	k8sgwClasses := []config.GatewayAPIClass{config.GatewayAPIClass{"istio", "wrong"}}
+	k8sgwClasses := []config.GatewayAPIClass{
+		{
+			Name:      "istio",
+			ClassName: "wrong",
+		},
+	}
 
 	k8sgws := GatewayClassChecker{K8sGateway: k8sgwObject, GatewayClasses: k8sgwClasses}
 
