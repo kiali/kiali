@@ -319,7 +319,7 @@ const BaseNodeComponent: React.FunctionComponent<BaseNodeProps> = ({
   const UnhighlightOpacity = 0.1;
 
   const flashAnimation = keyframes({
-    '0%': { strokeWidth: 40 },
+    '0%': { strokeWidth: OverlayWidth },
     '100%': { strokeWidth: 0 }
   });
 
