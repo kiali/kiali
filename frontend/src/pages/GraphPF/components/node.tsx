@@ -38,15 +38,16 @@ import {
 } from '@patternfly/react-topology/dist/esm/components/nodes/NodeShadows';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
+import { keyframes } from 'typestyle';
 
 // This is a copy of PFT DefaultNode (v4.68.3), then modified.  I don't see a better way to really
 // do this because DefaultNode doesn't really seem itself extensible and to add certain behavior you have
 // to reimplement the rendered element.  This supports the following customizations:
-//   [Node] element.data.isFind?: boolean                // adds graph-find overlay
-//   [Node] element.data.isHighlighted?: boolean         // adds highlight effects based on hover
-//   [Node] element.data.isUnhighlighted?: boolean       // adds unhighlight effects based on hover
-//   [Node] element.data.hasSpans?: Span[]               // adds trace overlay
-//   [NodeLabel] isHover                                 // adds "raise" logic to bring label to the top
+//   [Node] isFind?: boolean                // adds graph-find overlay
+//   [Node] isUnhighlighted?: boolean       // adds unhighlight effects based on hover
+//   [Node] hasSpans?: Span[]               // adds trace overlay
+//   [Node] isFocused?: boolean             // adds focus overlay
+//   [NodeLabel] isHover                    // adds "raise" logic to bring label to the top
 //
 // If we could contribute all of these customizations for PFT then we may be able to avoid this "BaseNode" component and
 // just use "DefaultNode" directly.
@@ -72,6 +73,10 @@ type BaseNodeProps = {
   element: Node;
   droppable?: boolean;
   hover?: boolean;
+  isFocused?: boolean;
+  isFind?: boolean;
+  hasSpans?: boolean;
+  isUnhighlighted?: boolean;
   canDrop?: boolean;
   dragging?: boolean;
   edgeDragging?: boolean;
@@ -119,6 +124,10 @@ const BaseNodeComponent: React.FunctionComponent<BaseNodeProps> = ({
   hover,
   scaleNode,
   showLabel = true,
+  isFocused,
+  isFind,
+  hasSpans,
+  isUnhighlighted,
   label,
   secondaryLabel,
   labelClassName,
@@ -304,9 +313,23 @@ const BaseNodeComponent: React.FunctionComponent<BaseNodeProps> = ({
 
   const ColorFind = PFColors.Gold400;
   const ColorSpan = PFColors.Purple200;
+  const ColorFocus = PFColors.Blue400;
   const OverlayOpacity = 0.3;
   const OverlayWidth = 40;
   const UnhighlightOpacity = 0.1;
+
+  const colorAnimationName = keyframes({
+    '0%': { strokeWidth: 40 },
+    '100%': { strokeWidth: 0 }
+  });
+
+  const focusOverlayStyle = kialiStyle({
+    stroke: ColorFocus,
+    strokeOpacity: OverlayOpacity,
+    animationDuration: '1s',
+    animationName: colorAnimationName,
+    animationIterationCount: 3
+  });
 
   const findOverlayStyle = kialiStyle({
     strokeWidth: OverlayWidth,
@@ -336,20 +359,22 @@ const BaseNodeComponent: React.FunctionComponent<BaseNodeProps> = ({
     }
   };
 
-  const data = element.getData();
   return (
     <g
       className={groupClassName}
-      style={!!data.isUnhighlighted ? { opacity: UnhighlightOpacity } : {}}
+      style={isUnhighlighted ? { opacity: UnhighlightOpacity } : {}}
       transform={`${scaleNode ? `translate(${translateX}, ${translateY})` : ''} scale(${nodeScale})`}
     >
       <NodeShadows />
       <g ref={refs} onClick={onSelect} onContextMenu={onContextMenu}>
-        {ShapeComponent && !!data.hasSpans && (
+        {ShapeComponent && hasSpans && (
           <ShapeComponent className={traceOverlayStyle} element={element} width={width} height={height} />
         )}
-        {ShapeComponent && !!data.isFind && (
+        {ShapeComponent && isFind && (
           <ShapeComponent className={findOverlayStyle} element={element} width={width} height={height} />
+        )}
+        {ShapeComponent && isFocused && (
+          <ShapeComponent className={focusOverlayStyle} element={element} width={width} height={height} />
         )}
         {ShapeComponent && (
           <ShapeComponent
