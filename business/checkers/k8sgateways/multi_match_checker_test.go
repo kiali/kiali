@@ -23,10 +23,11 @@ func TestCorrectK8sGateways(t *testing.T) {
 
 	vals := MultiMatchChecker{
 		K8sGateways: k8sgws,
+		Cluster:     config.DefaultClusterID,
 	}.Check()
 
 	assert.Empty(vals)
-	_, ok := vals[models.IstioValidationKey{ObjectType: "k8sgateway", Namespace: "test", Name: "validk8sgateway"}]
+	_, ok := vals[models.IstioValidationKey{ObjectType: "k8sgateway", Namespace: "test", Name: "validk8sgateway", Cluster: config.DefaultClusterID}]
 	assert.False(ok)
 }
 
@@ -46,17 +47,18 @@ func TestDuplicateListenersCheckError(t *testing.T) {
 
 	vals := MultiMatchChecker{
 		K8sGateways: k8sgws,
+		Cluster:     config.DefaultClusterID,
 	}.Check()
 
 	assert.NotEmpty(vals)
 	assert.Equal(2, len(vals))
-	validation, ok := vals[models.IstioValidationKey{ObjectType: "k8sgateway", Namespace: "test", Name: "validk8sgateway2"}]
+	validation, ok := vals[models.IstioValidationKey{ObjectType: "k8sgateway", Namespace: "test", Name: "validk8sgateway2", Cluster: config.DefaultClusterID}]
 	assert.True(ok)
 	assert.NotNil(validation)
 	assert.True(validation.Valid)
 	assert.Greater(len(validation.Checks), 0)
 
-	secValidation, ok := vals[models.IstioValidationKey{ObjectType: "k8sgateway", Namespace: "test", Name: "validk8sgateway"}]
+	secValidation, ok := vals[models.IstioValidationKey{ObjectType: "k8sgateway", Namespace: "test", Name: "validk8sgateway", Cluster: config.DefaultClusterID}]
 	assert.True(ok)
 	assert.NotNil(secValidation)
 	assert.True(secValidation.Valid)
@@ -83,6 +85,7 @@ func TestDuplicateListenersCheckOk(t *testing.T) {
 
 	vals := MultiMatchChecker{
 		K8sGateways: k8sgws,
+		Cluster:     config.DefaultClusterID,
 	}.Check()
 
 	assert.Empty(vals)
@@ -106,17 +109,18 @@ func TestDuplicateAddresssCheckError(t *testing.T) {
 
 	vals := MultiMatchChecker{
 		K8sGateways: k8sgws,
+		Cluster:     config.DefaultClusterID,
 	}.Check()
 
 	assert.NotEmpty(vals)
 	assert.Equal(2, len(vals))
-	validation, ok := vals[models.IstioValidationKey{ObjectType: "k8sgateway", Namespace: "test", Name: "validk8sgateway2"}]
+	validation, ok := vals[models.IstioValidationKey{ObjectType: "k8sgateway", Namespace: "test", Name: "validk8sgateway2", Cluster: config.DefaultClusterID}]
 	assert.True(ok)
 	assert.NotNil(validation)
 	assert.True(validation.Valid)
 	assert.Greater(len(validation.Checks), 0)
 
-	secValidation, ok := vals[models.IstioValidationKey{ObjectType: "k8sgateway", Namespace: "test", Name: "validk8sgateway"}]
+	secValidation, ok := vals[models.IstioValidationKey{ObjectType: "k8sgateway", Namespace: "test", Name: "validk8sgateway", Cluster: config.DefaultClusterID}]
 	assert.True(ok)
 	assert.NotNil(secValidation)
 	assert.True(secValidation.Valid)
@@ -145,6 +149,7 @@ func TestDuplicateAddresssCheckOk(t *testing.T) {
 
 	vals := MultiMatchChecker{
 		K8sGateways: k8sgws,
+		Cluster:     config.DefaultClusterID,
 	}.Check()
 
 	assert.Empty(vals)
@@ -167,6 +172,7 @@ func TestUniqueListenerOk(t *testing.T) {
 
 	vals := MultiMatchChecker{
 		K8sGateways: k8sgws,
+		Cluster:     config.DefaultClusterID,
 	}.Check()
 
 	assert.Empty(vals)
@@ -189,11 +195,12 @@ func TestUniqueListenerDuplicate(t *testing.T) {
 
 	vals := MultiMatchChecker{
 		K8sGateways: k8sgws,
+		Cluster:     config.DefaultClusterID,
 	}.Check()
 
 	assert.NotEmpty(vals)
 	assert.Equal(1, len(vals))
-	validation, ok := vals[models.IstioValidationKey{ObjectType: "k8sgateway", Namespace: "test", Name: "k8sgateway"}]
+	validation, ok := vals[models.IstioValidationKey{ObjectType: "k8sgateway", Namespace: "test", Name: "k8sgateway", Cluster: config.DefaultClusterID}]
 	assert.True(ok)
 	assert.Greater(len(validation.Checks), 0)
 

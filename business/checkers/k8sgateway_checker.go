@@ -21,6 +21,7 @@ func (g K8sGatewayChecker) Check() models.IstioValidations {
 	// Multinamespace checkers
 	validations := k8sgateways.MultiMatchChecker{
 		K8sGateways: g.K8sGateways,
+		Cluster:     g.Cluster,
 	}.Check()
 
 	for _, gw := range g.K8sGateways {

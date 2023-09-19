@@ -9,6 +9,7 @@ import (
 )
 
 type MultiMatchChecker struct {
+	Cluster     string
 	K8sGateways []*k8s_networking_v1beta1.Gateway
 }
 
@@ -29,7 +30,7 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 			duplicate, collidingGateways := m.findMatchIP(address, g.Name)
 			if duplicate {
 				// The above is referenced by each one below..
-				currentHostValidation := createError(gatewayRuleName, "k8sgateways.multimatch.ip", gatewayNamespace, "spec/addresses/value", collidingGateways)
+				currentHostValidation := createError(gatewayRuleName, "k8sgateways.multimatch.ip", gatewayNamespace, m.Cluster, "spec/addresses/value", collidingGateways)
 				validations = validations.MergeValidations(currentHostValidation)
 			}
 		}
@@ -40,13 +41,13 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 			// Find in a different k8s GW
 			if duplicate {
 				// The above is referenced by each one below..
-				currentHostValidation := createError(gatewayRuleName, "k8sgateways.multimatch.listener", gatewayNamespace, fmt.Sprintf("spec/listeners[%d]/hostname", index), collidingGateways)
+				currentHostValidation := createError(gatewayRuleName, "k8sgateways.multimatch.listener", gatewayNamespace, m.Cluster, fmt.Sprintf("spec/listeners[%d]/hostname", index), collidingGateways)
 				validations = validations.MergeValidations(currentHostValidation)
 			}
 			// Check for unique listeners in the GW
 			for i, l := range g.Spec.Listeners {
 				if listener.Name != l.Name && l.Hostname != nil && listener.Hostname != nil && *listener.Hostname == *l.Hostname && listener.Port == l.Port && listener.Protocol == l.Protocol {
-					currentHostValidation := createError(gatewayRuleName, "k8sgateways.unique.listener", gatewayNamespace, fmt.Sprintf("spec/listeners[%d]/name", i), nil)
+					currentHostValidation := createError(gatewayRuleName, "k8sgateways.unique.listener", gatewayNamespace, m.Cluster, fmt.Sprintf("spec/listeners[%d]/name", i), nil)
 					validations = validations.MergeValidations(currentHostValidation)
 				}
 			}
@@ -57,8 +58,8 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 }
 
 // Create validation error for k8sgateway object
-func createError(gatewayRuleName string, ruleCode string, namespace string, path string, references []models.IstioValidationKey) models.IstioValidations {
-	key := models.IstioValidationKey{Name: gatewayRuleName, Namespace: namespace, ObjectType: K8sGatewayCheckerType}
+func createError(gatewayRuleName string, ruleCode string, namespace string, cluster string, path string, references []models.IstioValidationKey) models.IstioValidations {
+	key := models.IstioValidationKey{Name: gatewayRuleName, Namespace: namespace, ObjectType: K8sGatewayCheckerType, Cluster: cluster}
 	checks := models.Build(ruleCode, path)
 	rrValidation := &models.IstioValidation{
 		Name:       gatewayRuleName,
