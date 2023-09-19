@@ -412,7 +412,6 @@ export const TopologyContent: React.FC<{
             case 'edge':
             case 'node':
               eModel.data = { ...e.getData(), ...eModel.data };
-
               break;
             case 'group':
               eModel.data = { ...e.getData(), ...eModel.data };
