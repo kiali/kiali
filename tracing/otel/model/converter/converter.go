@@ -58,7 +58,7 @@ func ConvertSpans(spans []otelModels.Span, serviceName string) []jaegerModels.Sp
 	return toRet
 }
 
-func ConvertSpanSet(span otel.Span, serviceName string, traceId string) []jaegerModels.Span {
+func ConvertSpanSet(span otel.Span, serviceName string, traceId string, rootName string) []jaegerModels.Span {
 	var toRet []jaegerModels.Span
 
 	startTime, err := strconv.ParseUint(span.StartTimeUnixNano, 10, 64)
@@ -78,12 +78,13 @@ func ConvertSpanSet(span otel.Span, serviceName string, traceId string) []jaeger
 		// No more mapped data
 		Flags: 0,
 		//OperationName: span.Name,
-		References: []jaegerModels.Reference{},
-		Tags:       convertAttributes(span.Attributes, span.Status),
-		Logs:       []jaegerModels.Log{},
-		ProcessID:  "",
-		Process:    &jaegerModels.Process{Tags: []jaegerModels.KeyValue{}, ServiceName: serviceName},
-		Warnings:   []string{},
+		References:    []jaegerModels.Reference{},
+		Tags:          convertAttributes(span.Attributes, span.Status),
+		Logs:          []jaegerModels.Log{},
+		OperationName: rootName,
+		ProcessID:     "",
+		Process:       &jaegerModels.Process{Tags: []jaegerModels.KeyValue{}, ServiceName: serviceName},
+		Warnings:      []string{},
 	}
 
 	toRet = append(toRet, jaegerSpan)

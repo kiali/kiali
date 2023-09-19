@@ -146,7 +146,7 @@ func convertBatchTrace(trace otel.Trace, serviceName string) (jaegerModels.Trace
 
 	jaegerModel.TraceID = converter.ConvertId(trace.TraceID)
 	for _, span := range trace.SpanSet.Spans {
-		jaegerModel.Spans = append(jaegerModel.Spans, converter.ConvertSpanSet(span, serviceName, trace.TraceID)...)
+		jaegerModel.Spans = append(jaegerModel.Spans, converter.ConvertSpanSet(span, serviceName, trace.TraceID, trace.RootTraceName)...)
 	}
 	jaegerModel.Matched = trace.SpanSet.Matched
 	jaegerModel.Processes = map[jaegerModels.ProcessID]jaegerModels.Process{}
@@ -155,7 +155,7 @@ func convertBatchTrace(trace otel.Trace, serviceName string) (jaegerModels.Trace
 	return jaegerModel, nil
 }
 
-// convertSingleTrace Convert a single trace returned by
+// convertSingleTrace Convert a single trace returned by the TraceQL search endpoint
 func convertSingleTrace(traces *otelModels.Data, id string) (*model.TracingResponse, error) {
 	var response model.TracingResponse
 	var jaegerModel jaegerModels.Trace
