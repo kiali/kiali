@@ -14,8 +14,8 @@ export const sortFields: SortField<IstioConfigItem>[] = [
     }
   },
   {
-    id: 'istiotype',
-    title: 'Istio Type',
+    id: 'type',
+    title: 'Type',
     isNumeric: false,
     param: 'it',
     compare: (a: IstioConfigItem, b: IstioConfigItem) => {
