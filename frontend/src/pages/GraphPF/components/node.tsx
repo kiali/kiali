@@ -318,7 +318,7 @@ const BaseNodeComponent: React.FunctionComponent<BaseNodeProps> = ({
   const OverlayWidth = 40;
   const UnhighlightOpacity = 0.1;
 
-  const colorAnimationName = keyframes({
+  const flashAnimation = keyframes({
     '0%': { strokeWidth: 40 },
     '100%': { strokeWidth: 0 }
   });
@@ -327,7 +327,7 @@ const BaseNodeComponent: React.FunctionComponent<BaseNodeProps> = ({
     stroke: ColorFocus,
     strokeOpacity: OverlayOpacity,
     animationDuration: '1s',
-    animationName: colorAnimationName,
+    animationName: flashAnimation,
     animationIterationCount: 3
   });
 
