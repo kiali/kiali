@@ -360,13 +360,13 @@ supplementalGroups:
   type: RunAsAny
 fsGroup:
   type: RunAsAny
-allowPrivilegedContainer: true
 seccompProfiles:
 - '*'
 priority: 9
-groups:
-- "system:serviceaccount:${NAMESPACE}"
 users:
+- "system:serviceaccount:${NAMESPACE}:istiod"
+- "system:serviceaccount:${NAMESPACE}:istio-ingressgateway-service-account"
+- "system:serviceaccount:${NAMESPACE}:istio-egressgateway-service-account"
 - "system:serviceaccount:${NAMESPACE}:prometheus"
 - "system:serviceaccount:${NAMESPACE}:grafana"
 SCC
