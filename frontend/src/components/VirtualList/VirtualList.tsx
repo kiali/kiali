@@ -83,7 +83,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     if (direction) {
       HistoryManager.setParam(URLParam.DIRECTION, direction);
     }
-    HistoryManager.setParam(URLParam.SORT, String(this.state.conf.columns[index].param));
+    HistoryManager.setParam(URLParam.SORT, String(this.state.columns[index].param));
     this.props.sort && this.props.sort(FilterHelper.currentSortField(Sorts.sortFields), direction === 'asc');
   };
 
@@ -102,7 +102,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
         info => !this.props.hiddenColumns || !this.props.hiddenColumns.includes(info.column.toLowerCase())
       );
       columns = filteredColumns.map(info => {
-        let config = { title: info.column, renderer: info.renderer };
+        let config = { param: info.param, title: info.column, renderer: info.renderer };
         if (info.transforms) {
           config['transforms'] = info.transforms;
         }
