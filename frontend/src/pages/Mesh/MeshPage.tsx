@@ -69,8 +69,11 @@ const MeshPageComponent: React.FunctionComponent<Props> = (props: Props) => {
     return cluster.kialiInstances.map(instance => {
       if (instance.url.length !== 0) {
         return (
-          <Tooltip content={`Go to this Kiali instance: ${instance.url}`}>
-            <p key={cluster.name + '/' + instance.namespace + '/' + instance.serviceName}>
+          <Tooltip
+            key={cluster.name + '/' + instance.namespace + '/' + instance.serviceName}
+            content={`Go to this Kiali instance: ${instance.url}`}
+          >
+            <p>
               <img alt="Kiali Icon" src={kialiIcon} className={iconStyle} />
               <a href={instance.url} target="_blank" rel="noopener noreferrer">
                 {instance.namespace} {' / '} {instance.serviceName}

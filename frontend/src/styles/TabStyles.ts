@@ -14,7 +14,7 @@ export const basicTabStyle = kialiStyle({
   }
 });
 
-export const traceTabStyle = kialiStyle({
+export const subTabStyle = kialiStyle({
   $nest: {
     '& .pf-v5-c-tabs__list': {
       backgroundColor: PFColors.BackgroundColor100,
