@@ -20,7 +20,10 @@ install_istio() {
   if [ ! -z "${ISTIO_TAG}" ]; then
     local image_tag_arg="--image-tag ${ISTIO_TAG}"
   fi
-  "${ISTIO_INSTALL_SCRIPT}" ${image_tag_arg:-} --client-exe-path "${CLIENT_EXE}" --cluster-name "${clustername}" --istioctl "${ISTIOCTL}" --istio-dir "${ISTIO_DIR}" --mesh-id "${MESH_ID}" --namespace "${ISTIO_NAMESPACE}" --network "${network}"
+  if [ ! -z "${ISTIO_HUB}" ]; then
+    local image_hub_arg="--image-hub ${ISTIO_HUB}"
+  fi
+  "${ISTIO_INSTALL_SCRIPT}" ${image_tag_arg:-} ${image_hub_arg:-} --client-exe-path "${CLIENT_EXE}" --cluster-name "${clustername}" --istioctl "${ISTIOCTL}" --istio-dir "${ISTIO_DIR}" --mesh-id "${MESH_ID}" --namespace "${ISTIO_NAMESPACE}" --network "${network}"
   if [ "$?" != "0" ]; then
     echo "Failed to install Istio on cluster [${clustername}]"
     exit 1
@@ -33,6 +36,9 @@ create_crossnetwork_gateway() {
 
   # create the gateway
   local image_hub_arg="--set hub=gcr.io/istio-release"
+  if [ ! -z "${ISTIO_HUB}" -a "${ISTIO_HUB}" != "default" ]; then
+    image_hub_arg="--set hub=${ISTIO_HUB}"
+  fi
   if [ ! -z "${ISTIO_TAG}" ]; then
     local image_tag_arg="--set tag=${ISTIO_TAG}"
   fi

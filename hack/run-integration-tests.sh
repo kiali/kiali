@@ -4,6 +4,7 @@ infomsg() {
   echo "[INFO] ${1}"
 }
 
+ISTIO_VERSION=""
 TEST_SUITE="backend"
 SETUP_ONLY="false"
 
@@ -11,6 +12,10 @@ SETUP_ONLY="false"
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+    -iv|--istio-version)
+      ISTIO_VERSION="${2}"
+      shift;shift
+      ;;
     -ts|--test-suite)
       TEST_SUITE="${2}"
       if [ "${TEST_SUITE}" != "backend" -a "${TEST_SUITE}" != "frontend" -a "${TEST_SUITE}" != "frontend-multi-cluster" ]; then
@@ -30,14 +35,17 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
+  -iv|--istio-version <version>
+    Which Istio version to test with. For releases, specify "#.#.#". For dev builds, specify in the form "#.#-dev"
+    Default: The latest release
   -ts|--test-suite <backend|frontend|frontend-multi-cluster>
     Which test suite to run.
     Default: backend
   -so|--setup-only <true|false>
     If true, only setup the test environment and exit without running the tests.
-    Default: false 
+    Default: false
   -h|--help:
-       this message
+    This message
 
 NOTE: When running the multi-cluster tests locally, it might be necessary to
 edit some kernel settings to allow for the kind clusters to be created.
@@ -58,12 +66,19 @@ done
 # print out our settings for debug purposes
 cat <<EOM
 === SETTINGS ===
+ISTIO_VERSION=$ISTIO_VERSION
 SETUP_ONLY=$SETUP_ONLY
 TEST_SUITE=$TEST_SUITE
 === SETTINGS ===
 EOM
 
 set -e
+
+if [ -n "${ISTIO_VERSION}" ]; then
+  ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
+else
+  ISTIO_VERSION_ARG=""
+fi
 
 # Determine where this script is and make it the cwd
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
@@ -104,7 +119,7 @@ ensureKialiServerReady() {
 
 infomsg "Running ${TEST_SUITE} integration tests"
 if [ "${TEST_SUITE}" == "backend" ]; then
-  "${SCRIPT_DIR}"/setup-kind-in-ci.sh
+  "${SCRIPT_DIR}"/setup-kind-in-ci.sh ${ISTIO_VERSION_ARG}
 
   ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
 
@@ -126,8 +141,8 @@ if [ "${TEST_SUITE}" == "backend" ]; then
   go test -v -failfast
 elif [ "${TEST_SUITE}" == "frontend" ]; then
   ensureCypressInstalled
-  "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token
-  
+  "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${ISTIO_VERSION_ARG}
+
   ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
   # Install demo apps
   "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" -g "${ISTIO_INGRESS_IP}"
@@ -138,18 +153,18 @@ elif [ "${TEST_SUITE}" == "frontend" ]; then
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
   # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
   export CYPRESS_VIDEO=false
-  
+
   ensureKialiServerReady "${KIALI_URL}"
-  
+
   if [ "${SETUP_ONLY}" == "true" ]; then
     exit 0
   fi
-  
+
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run
 elif [ "${TEST_SUITE}" == "frontend-multi-cluster" ]; then
   ensureCypressInstalled
-  "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "true"
+  "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "true" ${ISTIO_VERSION_ARG}
 
   # Get Kiali URL
   KIALI_URL="http://$(kubectl --context kind-east get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')/kiali"
@@ -157,7 +172,7 @@ elif [ "${TEST_SUITE}" == "frontend-multi-cluster" ]; then
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
   # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
   export CYPRESS_VIDEO=false
-  
+
   if [ "${SETUP_ONLY}" == "true" ]; then
     exit 0
   fi
