@@ -6,11 +6,11 @@ import { KIALI_THEME, PF_THEME_DARK, Theme } from 'types/Common';
 import { GlobalActions } from 'actions/GlobalActions';
 import { store } from 'store/ConfigStore';
 
-type ThemeSwitchProps = {
+type Props = {
   theme: string;
 };
 
-export const ThemeSwitchComponent = (props: ThemeSwitchProps) => {
+export const ThemeSwitchComponent = (props: Props) => {
   const handleTheme = () => {
     if (props.theme === Theme.LIGHT) {
       document.documentElement.classList.add(PF_THEME_DARK);

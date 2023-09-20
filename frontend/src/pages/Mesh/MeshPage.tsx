@@ -9,14 +9,33 @@ import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasth
 import { RenderContent } from '../../components/Nav/Page';
 import { RefreshButton } from '../../components/Refresh/RefreshButton';
 import { getClusters } from '../../services/Api';
-import { MeshClusters } from '../../types/Mesh';
+import { MeshClusters, MeshCluster } from '../../types/Mesh';
 import { addError } from '../../utils/AlertUtils';
+import { kialiIconDark, kialiIconLight } from 'config';
+import { KialiAppState } from 'store/Store';
+import { connect } from 'react-redux';
+import { Theme } from 'types/Common';
 
-export const MeshPage: React.FunctionComponent = () => {
+const iconStyle = kialiStyle({
+  width: '25px',
+  marginRight: '10px',
+  marginTop: '-2px'
+});
+
+const containerPadding = kialiStyle({ padding: '20px' });
+
+type Props = {
+  theme: string;
+};
+
+const MeshPageComponent: React.FunctionComponent<Props> = (props: Props) => {
   const [meshClustersList, setMeshClustersList] = React.useState(null as MeshClusters | null);
   const [sortBy, setSortBy] = React.useState({ index: 0, direction: SortByDirection.asc });
 
-  const containerPadding = kialiStyle({ padding: '20px' });
+  React.useEffect(() => {
+    fetchMeshClusters();
+  }, []);
+
   const columns = [
     {
       title: 'Cluster Name',
@@ -40,17 +59,19 @@ export const MeshPage: React.FunctionComponent = () => {
     }
   ];
 
-  function buildKialiInstancesColumn(cluster): React.ReactNode {
+  const buildKialiInstancesColumn = (cluster: MeshCluster, theme: string): React.ReactNode => {
     if (!cluster.kialiInstances || cluster.kialiInstances.length === 0) {
       return 'N / A';
     }
+
+    const kialiIcon = theme === Theme.DARK ? kialiIconDark : kialiIconLight;
 
     return cluster.kialiInstances.map(instance => {
       if (instance.url.length !== 0) {
         return (
           <Tooltip content={`Go to this Kiali instance: ${instance.url}`}>
             <p key={cluster.name + '/' + instance.namespace + '/' + instance.serviceName}>
-              <img alt="kiali-icon" src="kiali_icon_lightbkg_16px.png" />{' '}
+              <img alt="Kiali Icon" src={kialiIcon} className={iconStyle} />
               <a href={instance.url} target="_blank" rel="noopener noreferrer">
                 {instance.namespace} {' / '} {instance.serviceName}
               </a>
@@ -60,15 +81,15 @@ export const MeshPage: React.FunctionComponent = () => {
       } else {
         return (
           <p key={cluster.name + '/' + instance.namespace + '/' + instance.serviceName}>
-            <img alt="kiali-icon" src="kiali_icon_lightbkg_16px.png" />{' '}
+            <img alt="Kiali Icon" src={kialiIcon} className={iconStyle} />
             {`${instance.namespace} / ${instance.serviceName}`}
           </p>
         );
       }
     });
-  }
+  };
 
-  function buildTableRows() {
+  const buildTableRows = React.useCallback(() => {
     if (meshClustersList === null) {
       return [];
     }
@@ -85,16 +106,16 @@ export const MeshPage: React.FunctionComponent = () => {
           {cluster.isKialiHome ? <StarIcon /> : null} {cluster.name}
         </>,
         cluster.network,
-        <>{buildKialiInstancesColumn(cluster)}</>,
+        <>{buildKialiInstancesColumn(cluster, props.theme)}</>,
         cluster.apiEndpoint,
         cluster.secretName
       ]
     }));
 
     return sortBy.direction === SortByDirection.asc ? tableRows : tableRows.reverse();
-  }
+  }, [meshClustersList, sortBy, props.theme]);
 
-  async function fetchMeshClusters() {
+  const fetchMeshClusters = async () => {
     try {
       const meshClusters = await getClusters();
       setMeshClustersList(meshClusters.data);
@@ -103,17 +124,13 @@ export const MeshPage: React.FunctionComponent = () => {
         addError('Could not fetch the list of clusters that are part of the mesh.', e);
       }
     }
-  }
+  };
 
-  function onSortHandler(_event, index, direction) {
+  function onSortHandler(_event: React.MouseEvent, index: number, direction: SortByDirection) {
     setSortBy({ index, direction });
   }
 
-  const clusterRows = React.useMemo(buildTableRows, [meshClustersList, sortBy]);
-
-  React.useEffect(() => {
-    fetchMeshClusters();
-  }, []);
+  const clusterRows = buildTableRows();
 
   return (
     <>
@@ -138,3 +155,11 @@ export const MeshPage: React.FunctionComponent = () => {
     </>
   );
 };
+
+const mapStateToProps = (state: KialiAppState) => {
+  return {
+    theme: state.globalState.theme
+  };
+};
+
+export const MeshPage = connect(mapStateToProps)(MeshPageComponent);

@@ -11,7 +11,7 @@ import {
   Alert
 } from '@patternfly/react-core';
 import { ExternalServiceInfo, Status, StatusKey } from '../../types/StatusState';
-import { config, kialiLogo } from '../../config';
+import { config, kialiLogoDark } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
 
@@ -66,7 +66,7 @@ export class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModa
       <AboutModal
         isOpen={this.state.showModal}
         onClose={this.close}
-        brandImageSrc={kialiLogo}
+        brandImageSrc={kialiLogoDark}
         brandImageAlt="Kiali Logo"
         productName="Kiali"
       >

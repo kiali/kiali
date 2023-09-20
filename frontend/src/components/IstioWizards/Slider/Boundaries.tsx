@@ -1,7 +1,7 @@
 // Clone of Slider component to workaround issue https://github.com/patternfly/patternfly-react/issues/1221
 import React from 'react';
 import { sliderMirroredStyle, sliderStyle } from './SliderStyle';
-import sliderCss from './slider.module.scss';
+import sliderCss from './Slider.module.scss';
 import { classes } from 'typestyle';
 
 type BoundariesProps = {
