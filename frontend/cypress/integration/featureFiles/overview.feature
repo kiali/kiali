@@ -128,7 +128,6 @@ Feature: Kiali Overview page
   Scenario: The badge for local cluster should be visible
     Then user sees the "east" cluster badge in the Kiali header 
 
-  @skip
   @multi-cluster
   Scenario: Istio panels for both clusters should be visible in the control panel
     Then user sees the "istio-system" namespace card in cluster "east"
@@ -140,7 +139,6 @@ Feature: Kiali Overview page
     And health should be different for "east" and "west" "istio-system"
 
   @multi-cluster
-  @skip
   Scenario: See "bookinfo" in "east" and "west" clusters
     Then user sees the "bookinfo" namespace card in cluster "east"
     And user sees the "bookinfo" namespace card in cluster "west"

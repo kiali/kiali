@@ -1,6 +1,10 @@
 import { Before, Given, Then, When, And } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 
+
+const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT')
+const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT')
+
 Before(() => {
   // Focing to not stop cypress on unexpected errors not related to the tests.
   // There are some random failures due timeouts/loadtime/framework that throws some error in the browser.
@@ -248,10 +252,20 @@ And('Istio config should not be available for the {string} {string}', (cluster:s
   cy.get(`[data-test="CardItem_${ns}_${cluster}"]`).contains('Istio config').siblings().contains('N/A');
 }); 
 
-// And('health should be different for {string} and {string} {string}', (cluster1:string, cluster2:string, ns:string) => {
-//   cy.get(`[data-test="CardItem_${ns}_east"]`).find('[aria-label="Actions"]').should('exist');
-//   cy.get(`[data-test="CardItem_${ns}_west"]`).find('[aria-label="Actions"]').should('exist');
-// })
+And('health should be different for {string} and {string} {string}', (cluster1:string, cluster2:string, ns:string) => {
+  if (ns == 'bookinfo'){
+      cy.get(`[data-test="CardItem_${ns}_${cluster1}"]`).find('[data-test="overview-type-app"]').contains(`5 app`);
+      cy.get(`[data-test="CardItem_${ns}_${cluster2}"]`).find('[data-test="overview-type-app"]').contains(`4 app`);
+  }
+  else {
+    cy.exec(`kubectl get pods -n ${ns} -l app --context ${CLUSTER1_CONTEXT} --no-headers | wc -l`).then((result) => {
+      cy.get(`[data-test="CardItem_${ns}_${cluster1}"]`).find('[data-test="overview-type-app"]').contains(`${result.stdout} app`);
+    });
+    cy.exec(`kubectl get pods -n ${ns} -l app --context ${CLUSTER2_CONTEXT} --no-headers | wc -l`).then((result) => {
+      cy.get(`[data-test="CardItem_${ns}_${cluster2}"]`).find('[data-test="overview-type-app"]').contains(`${result.stdout} app`);
+    });
+  }
+})
 
 And('user sees the {string} label in the {string} namespace card', (label: string, ns: string) => {
   cy.log(label);
