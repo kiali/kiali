@@ -435,15 +435,11 @@ export const TopologyContent: React.FC<{
 
       let focusNodeId = getFocusSelector();
       if (focusNodeId) {
-        nodes.forEach(n => {
-          if (n.getId() === focusNodeId) {
-            const data = n.getData() as NodeData;
-            data.isFocused = true;
-            n.setData(data);
-          }
-        });
+        const focusNode = nodes.find(n => n.getId() === focusNodeId);
+        if (focusNode) {
+          focusNode.setData({ ...(focusNode.getData() as NodeData), isFocused: true });
+        }
         unsetFocusSelector();
-        focusNodeId = undefined;
       }
 
       // pre-select node if provided
