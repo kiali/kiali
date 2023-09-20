@@ -11,6 +11,7 @@ import { renderTraceHeatMap } from './JaegerResults/StatsComparison';
 import { PFColors } from 'components/Pf/PfColors';
 import { HookedChartTooltip, HookedTooltipProps } from 'components/Charts/CustomTooltip';
 import { formatDuration } from 'utils/tracing/TracingHelper';
+import { TEMPO } from '../../types/Tracing';
 
 const flyoutWidth = 280;
 const flyoutHeight = 130;
@@ -52,7 +53,13 @@ class TraceLabel extends React.Component<LabelProps> {
           <div className={titleStyle}>{this.props.trace.traceName || '(Missing root span)'}</div>
           <br />
           <div className={contentStyle}>
-            <div className={leftStyle}>{hasStats ? renderTraceHeatMap(this.props.statsMatrix!, true) : 'n/a'}</div>
+            <div className={leftStyle}>
+              {hasStats
+                ? renderTraceHeatMap(this.props.statsMatrix!, true)
+                : this.props.provider === TEMPO
+                ? '(Click to load)'
+                : 'n/a'}
+            </div>
             <div>
               {formatDuration(this.props.trace.duration)}
               <br />
