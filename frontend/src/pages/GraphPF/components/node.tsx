@@ -329,7 +329,7 @@ const BaseNodeComponent: React.FunctionComponent<BaseNodeProps> = ({
     stroke: ColorFocus,
     strokeOpacity: OverlayOpacity,
     animationDuration: '1s',
-    animationName: flashAnimation,
+    animationName: focusAnimation,
     animationIterationCount: 3
   });
 
