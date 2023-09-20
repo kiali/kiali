@@ -20,8 +20,8 @@ const (
 )
 
 type IstioAnnotations struct {
-	ambientAnnotation        string `json:"ambientAnnotation,omitempty"`
-	ambientAnnotationEnabled string `json:"ambientAnnotationEnabled,omitempty"`
+	AmbientAnnotation        string `json:"ambientAnnotation,omitempty"`
+	AmbientAnnotationEnabled string `json:"ambientAnnotationEnabled,omitempty"`
 	IstioInjectionAnnotation string `json:"istioInjectionAnnotation,omitempty"`
 }
 
@@ -82,8 +82,8 @@ func Config(w http.ResponseWriter, r *http.Request) {
 		},
 		InstallationTag: conf.InstallationTag,
 		IstioAnnotations: IstioAnnotations{
-			ambientAnnotation:        config.AmbientAnnotation,
-			ambientAnnotationEnabled: config.AmbientAnnotationEnabled,
+			AmbientAnnotation:        config.AmbientAnnotation,
+			AmbientAnnotationEnabled: config.AmbientAnnotationEnabled,
 			IstioInjectionAnnotation: conf.ExternalServices.Istio.IstioInjectionAnnotation,
 		},
 		HealthConfig:        conf.HealthConfig,
