@@ -162,8 +162,8 @@ const BaseNodeComponent: React.FunctionComponent<BaseNodeProps> = ({
   contextMenuOpen,
   // Customizations
   hasSpans,
-  isFocused,
   isFind,
+  isFocused,
   isUnhighlighted
 }) => {
   const [hovered, hoverRef] = useHover();
