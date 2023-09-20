@@ -113,4 +113,3 @@ Feature: Service Details Wizard: Request Routing
     And user clicks in the "Delete Traffic Routing" actions
     And user confirms delete the configuration
     Then user sees the "Istio Config" table with empty message
-    
