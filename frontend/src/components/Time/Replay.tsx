@@ -9,7 +9,7 @@ import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 't
 import { ToolbarDropdown } from 'components/ToolbarDropdown/ToolbarDropdown';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { Slider } from 'components/IstioWizards/Slider/Slider';
-import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
+import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { toString } from './Utils';
 import { serverConfig } from 'config';
@@ -276,9 +276,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
           content={`Set ${this.state.isCustomStartTime ? 'simple' : 'custom'} start time`}
         >
           <Button className={isCustomStyle} variant={ButtonVariant.control} onClick={this.toggleCustomStartTime}>
-            <KialiIcon.UserClock
-              className={this.state.isCustomStartTime ? `${defaultIconStyle} ${isCustomActiveStyle}` : defaultIconStyle}
-            />
+            <KialiIcon.UserClock className={this.state.isCustomStartTime ? isCustomActiveStyle : ''} />
           </Button>
         </Tooltip>
         <span className={sliderStyle}>

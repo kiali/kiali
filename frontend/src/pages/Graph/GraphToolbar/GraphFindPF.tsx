@@ -22,7 +22,7 @@ import { GraphHelpFind } from '../../../pages/Graph/GraphHelpFind';
 import * as CytoscapeGraphUtils from '../../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { EdgeLabelMode, NodeType, Layout, EdgeMode, NodeAttr, EdgeAttr } from '../../../types/Graph';
 import * as AlertUtils from '../../../utils/AlertUtils';
-import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
+import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
@@ -376,7 +376,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
               style={{ paddingLeft: '6px' }}
               onClick={this.toggleFindHelp}
             >
-              <KialiIcon.Info className={defaultIconStyle} />
+              <KialiIcon.Info />
             </Button>
           </GraphHelpFind>
         ) : (
@@ -387,7 +387,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
               style={{ paddingLeft: '6px' }}
               onClick={this.toggleFindHelp}
             >
-              <KialiIcon.Info className={defaultIconStyle} />
+              <KialiIcon.Info />
             </Button>
           </Tooltip>
         )}

@@ -38,7 +38,7 @@ import { NamespaceActions } from '../../../actions/NamespaceAction';
 import { GraphActions } from '../../../actions/GraphActions';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import { TourStop } from 'components/Tour/TourStop';
-import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
+import { KialiIcon } from 'config/KialiIcon';
 import { Replay } from 'components/Time/Replay';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { GraphSecondaryMasthead } from './GraphSecondaryMasthead';
@@ -199,7 +199,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
               <ToolbarItem style={{ margin: 0 }}>
                 <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content={'Back to full graph'}>
                   <Button variant={ButtonVariant.link} onClick={this.handleNamespaceReturn}>
-                    <KialiIcon.Back className={defaultIconStyle} />
+                    <KialiIcon.Back />
                   </Button>
                 </Tooltip>
               </ToolbarItem>
@@ -230,7 +230,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
                     style={{ paddingLeft: '6px', paddingRight: '0px' }}
                     onClick={this.props.onToggleHelp}
                   >
-                    <KialiIcon.Help className={defaultIconStyle} />
+                    <KialiIcon.Help />
                   </Button>
                 </TourStop>
               </Tooltip>

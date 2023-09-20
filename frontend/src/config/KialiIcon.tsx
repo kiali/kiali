@@ -36,6 +36,7 @@ import {
   LockOpenIcon,
   MigrationIcon,
   MinusCircleIcon,
+  MoonIcon,
   OkIcon,
   OnRunningIcon,
   OutlinedClockIcon,
@@ -51,6 +52,7 @@ import {
   ShareAltIcon,
   SortAmountDownAltIcon,
   StopIcon,
+  SunIcon,
   TopologyIcon,
   UnknownIcon,
   UserClockIcon,
@@ -59,10 +61,6 @@ import {
 } from '@patternfly/react-icons';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Icon } from '@patternfly/react-core';
-
-export const defaultIconStyle = kialiStyle({
-  // nothing special
-});
 
 const iconStyle = kialiStyle({
   width: '10px'
@@ -105,6 +103,7 @@ export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } =
   InProgressIcon: (props: IconProps) => conversorIconProps(props, <InProgressIcon />),
   LocalTime: (props: IconProps) => conversorIconProps(props, <GlobeAmericasIcon />),
   Mirroring: (props: IconProps) => conversorIconProps(props, <MigrationIcon />),
+  Moon: (props: IconProps) => conversorIconProps(props, <MoonIcon />),
   MoreLegend: (props: IconProps) => conversorIconProps(props, <EllipsisHIcon />),
   MtlsLock: (props: IconProps) => conversorIconProps(props, <LockIcon />),
   MtlsUnlock: (props: IconProps) => conversorIconProps(props, <LockOpenIcon />),
@@ -124,6 +123,7 @@ export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } =
   Save: (props: IconProps) => conversorIconProps(props, <SaveIcon />),
   Services: (props: IconProps) => conversorIconProps(props, <ServiceIcon />),
   Stop: (props: IconProps) => conversorIconProps(props, <StopIcon />),
+  Sun: (props: IconProps) => conversorIconProps(props, <SunIcon />),
   Topology: (props: IconProps) => conversorIconProps(props, <TopologyIcon />),
   TrafficShifting: (props: IconProps) => conversorIconProps(props, <ShareAltIcon />),
   Unknown: (props: IconProps) => conversorIconProps(props, <UnknownIcon />),

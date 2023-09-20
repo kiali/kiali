@@ -6,7 +6,7 @@ import { KialiAppState } from 'store/Store';
 import { durationSelector, replayActiveSelector } from 'store/Selectors';
 import { DurationInSeconds } from 'types/Common';
 import { Tooltip, TooltipPosition, Button, ButtonVariant } from '@patternfly/react-core';
-import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
+import { KialiIcon } from 'config/KialiIcon';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
@@ -39,7 +39,7 @@ class TimeDurationComp extends React.PureComponent<TimeControlsProps> {
               style={{ padding: '1px 6px 0 0' }}
               onClick={this.onToggleReplay}
             >
-              <KialiIcon.History className={defaultIconStyle} />
+              <KialiIcon.History />
             </Button>
           </Tooltip>
         )}
@@ -62,7 +62,7 @@ class TimeDurationComp extends React.PureComponent<TimeControlsProps> {
             onClick={this.onToggleReplay}
           >
             <span>
-              <KialiIcon.Close className={defaultIconStyle} />
+              <KialiIcon.Close />
               {`  Close Replay`}
             </span>
           </Button>

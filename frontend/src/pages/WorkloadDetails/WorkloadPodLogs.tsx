@@ -35,7 +35,7 @@ import { ToolbarDropdown } from '../../components/ToolbarDropdown/ToolbarDropdow
 import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange, TimeInSeconds } from '../../types/Common';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
-import { KialiIcon, defaultIconStyle } from '../../config/KialiIcon';
+import { KialiIcon } from '../../config/KialiIcon';
 import screenfull, { Screenfull } from 'screenfull';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
@@ -640,7 +640,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
               <Tooltip key="copy_logs" position="top" content="Copy logs to clipboard">
                 <CopyToClipboard text={this.entriesToString(this.state.entries)}>
                   <Button variant={ButtonVariant.link} isInline>
-                    <KialiIcon.Copy className={defaultIconStyle} />
+                    <KialiIcon.Copy />
                   </Button>
                 </CopyToClipboard>
               </Tooltip>
@@ -653,7 +653,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                   isDisabled={!this.hasEntries(this.state.entries)}
                   isInline
                 >
-                  <KialiIcon.Expand className={defaultIconStyle} />
+                  <KialiIcon.Expand />
                 </Button>
               </Tooltip>
             </ToolbarItem>

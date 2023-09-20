@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Button, ButtonVariant, Popover, PopoverPosition, TextInput } from '@patternfly/react-core';
-import { defaultIconStyle, KialiIcon } from '../../config/KialiIcon';
+import { KialiIcon } from '../../config/KialiIcon';
 
 interface LabelFiltersProps {
   onChange: (value: any) => void;
@@ -57,7 +57,7 @@ export class LabelFilters extends React.Component<LabelFiltersProps, { sortOpera
           }
         >
           <Button variant={ButtonVariant.link} style={{ paddingLeft: '6px' }}>
-            <KialiIcon.Help className={defaultIconStyle} />
+            <KialiIcon.Help />
           </Button>
         </Popover>
       </>

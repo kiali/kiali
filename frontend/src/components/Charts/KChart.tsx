@@ -15,7 +15,7 @@ import { VCLines, RawOrBucket, RichDataPoint, LineInfo } from 'types/VictoryChar
 import { Overlay } from 'types/Overlay';
 import { ChartWithLegend, LEGEND_HEIGHT, MIN_HEIGHT, MIN_HEIGHT_YAXIS } from './ChartWithLegend';
 import { BrushHandlers } from './Container';
-import { defaultIconStyle, KialiIcon } from '../../config/KialiIcon';
+import { KialiIcon } from '../../config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 
@@ -143,7 +143,7 @@ export class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, 
           {this.props.onToggleMaximized && (
             <div style={maximizeButtonStyle}>
               <Button variant={ButtonVariant.link} onClick={this.props.onToggleMaximized} isInline>
-                <KialiIcon.Expand className={defaultIconStyle} />
+                <KialiIcon.Expand />
               </Button>
             </div>
           )}
