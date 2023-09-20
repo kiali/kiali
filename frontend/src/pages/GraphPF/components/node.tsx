@@ -104,8 +104,8 @@ type BaseNodeProps = {
   getShapeDecoratorCenter?: (quadrant: TopologyQuadrant, node: Node) => { x: number; y: number };
   // Customizations
   hasSpans?: boolean;
-  isFocused?: boolean;
   isFind?: boolean;
+  isFocused?: boolean;
   isUnhighlighted?: boolean;
 } & Partial<
   WithSelectionProps &
