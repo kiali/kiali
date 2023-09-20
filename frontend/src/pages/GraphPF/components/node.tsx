@@ -73,10 +73,6 @@ type BaseNodeProps = {
   element: Node;
   droppable?: boolean;
   hover?: boolean;
-  isFocused?: boolean;
-  isFind?: boolean;
-  hasSpans?: boolean;
-  isUnhighlighted?: boolean;
   canDrop?: boolean;
   dragging?: boolean;
   edgeDragging?: boolean;
@@ -106,6 +102,11 @@ type BaseNodeProps = {
   onStatusDecoratorClick?: (event: React.MouseEvent<SVGGElement, MouseEvent>, element: GraphElement) => void;
   getCustomShape?: (node: Node) => React.FunctionComponent<ShapeProps>;
   getShapeDecoratorCenter?: (quadrant: TopologyQuadrant, node: Node) => { x: number; y: number };
+  // Customizations
+  hasSpans?: boolean;
+  isFocused?: boolean;
+  isFind?: boolean;
+  isUnhighlighted?: boolean;
 } & Partial<
   WithSelectionProps &
     WithDragNodeProps &
@@ -124,10 +125,6 @@ const BaseNodeComponent: React.FunctionComponent<BaseNodeProps> = ({
   hover,
   scaleNode,
   showLabel = true,
-  isFocused,
-  isFind,
-  hasSpans,
-  isUnhighlighted,
   label,
   secondaryLabel,
   labelClassName,
@@ -162,7 +159,12 @@ const BaseNodeComponent: React.FunctionComponent<BaseNodeProps> = ({
   onHideCreateConnector,
   onShowCreateConnector,
   onContextMenu,
-  contextMenuOpen
+  contextMenuOpen,
+  // Customizations
+  hasSpans,
+  isFocused,
+  isFind,
+  isUnhighlighted
 }) => {
   const [hovered, hoverRef] = useHover();
   const status = nodeStatus || element.getNodeStatus();
@@ -312,8 +314,8 @@ const BaseNodeComponent: React.FunctionComponent<BaseNodeProps> = ({
   }, [element, nodeScale, scaleNode]);
 
   const ColorFind = PFColors.Gold400;
-  const ColorSpan = PFColors.Purple200;
   const ColorFocus = PFColors.Blue400;
+  const ColorSpan = PFColors.Purple200;
   const OverlayOpacity = 0.3;
   const OverlayWidth = 40;
   const UnhighlightOpacity = 0.1;
