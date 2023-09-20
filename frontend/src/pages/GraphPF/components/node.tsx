@@ -44,9 +44,9 @@ import { keyframes } from 'typestyle';
 // do this because DefaultNode doesn't really seem itself extensible and to add certain behavior you have
 // to reimplement the rendered element.  This supports the following customizations:
 //   [Node] isFind?: boolean                // adds graph-find overlay
+//   [Node] isFocused?: boolean             // adds focus overlay
 //   [Node] isUnhighlighted?: boolean       // adds unhighlight effects based on hover
 //   [Node] hasSpans?: Span[]               // adds trace overlay
-//   [Node] isFocused?: boolean             // adds focus overlay
 //   [NodeLabel] isHover                    // adds "raise" logic to bring label to the top
 //
 // If we could contribute all of these customizations for PFT then we may be able to avoid this "BaseNode" component and
