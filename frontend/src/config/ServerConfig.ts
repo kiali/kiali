@@ -71,6 +71,8 @@ const defaultServerConfig: ComputedServerConfig = {
   },
   installationTag: 'Kiali Console',
   istioAnnotations: {
+    ambientAnnotation: 'ambient.istio.io/redirection',
+    ambientAnnotationEnabled: 'enabled',
     istioInjectionAnnotation: 'sidecar.istio.io/inject'
   },
   istioCanaryRevision: {
@@ -80,6 +82,8 @@ const defaultServerConfig: ComputedServerConfig = {
   istioIdentityDomain: 'svc.cluster.local',
   istioNamespace: 'istio-system',
   istioLabels: {
+    ambientWaypointLabel: 'gateway.istio.io/managed',
+    ambientWaypointLabelValue: 'istio.io-mesh-controller',
     appLabelName: 'app',
     injectionLabelName: 'istio-injection',
     injectionLabelRev: 'istio.io/rev',

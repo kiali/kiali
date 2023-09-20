@@ -20,6 +20,8 @@ const (
 )
 
 type IstioAnnotations struct {
+	ambientAnnotation        string `json:"ambientAnnotation,omitempty"`
+	ambientAnnotationEnabled string `json:"ambientAnnotationEnabled,omitempty"`
 	IstioInjectionAnnotation string `json:"istioInjectionAnnotation,omitempty"`
 }
 
@@ -70,29 +72,31 @@ func Config(w http.ResponseWriter, r *http.Request) {
 	// Note that determine the Prometheus config at request time because it is not
 	// guaranteed to remain the same during the Kiali lifespan.
 	promConfig := getPrometheusConfig()
-	config := config.Get()
+	conf := config.Get()
 	publicConfig := PublicConfig{
-		AccessibleNamespaces: config.Deployment.AccessibleNamespaces,
-		AuthStrategy:         config.Auth.Strategy,
+		AccessibleNamespaces: conf.Deployment.AccessibleNamespaces,
+		AuthStrategy:         conf.Auth.Strategy,
 		Clusters:             make(map[string]kubernetes.Cluster),
 		Deployment: DeploymentConfig{
-			ViewOnlyMode: config.Deployment.ViewOnlyMode,
+			ViewOnlyMode: conf.Deployment.ViewOnlyMode,
 		},
-		InstallationTag: config.InstallationTag,
+		InstallationTag: conf.InstallationTag,
 		IstioAnnotations: IstioAnnotations{
-			IstioInjectionAnnotation: config.ExternalServices.Istio.IstioInjectionAnnotation,
+			ambientAnnotation:        config.AmbientAnnotation,
+			ambientAnnotationEnabled: config.AmbientAnnotationEnabled,
+			IstioInjectionAnnotation: conf.ExternalServices.Istio.IstioInjectionAnnotation,
 		},
-		HealthConfig:        config.HealthConfig,
-		IstioStatusEnabled:  config.ExternalServices.Istio.ComponentStatuses.Enabled,
-		IstioIdentityDomain: config.ExternalServices.Istio.IstioIdentityDomain,
-		IstioNamespace:      config.IstioNamespace,
-		IstioLabels:         config.IstioLabels,
-		IstioConfigMap:      config.ExternalServices.Istio.ConfigMapName,
+		HealthConfig:        conf.HealthConfig,
+		IstioStatusEnabled:  conf.ExternalServices.Istio.ComponentStatuses.Enabled,
+		IstioIdentityDomain: conf.ExternalServices.Istio.IstioIdentityDomain,
+		IstioNamespace:      conf.IstioNamespace,
+		IstioLabels:         conf.IstioLabels,
+		IstioConfigMap:      conf.ExternalServices.Istio.ConfigMapName,
 		IstioCanaryRevision: IstioCanaryRevision{
-			Current: config.ExternalServices.Istio.IstioCanaryRevision.Current,
-			Upgrade: config.ExternalServices.Istio.IstioCanaryRevision.Upgrade,
+			Current: conf.ExternalServices.Istio.IstioCanaryRevision.Current,
+			Upgrade: conf.ExternalServices.Istio.IstioCanaryRevision.Upgrade,
 		},
-		KialiFeatureFlags: config.KialiFeatureFlags,
+		KialiFeatureFlags: conf.KialiFeatureFlags,
 		LogLevel:          log.GetLogLevel(),
 		Prometheus: PrometheusConfig{
 			GlobalScrapeInterval: promConfig.GlobalScrapeInterval,
@@ -110,7 +114,7 @@ func Config(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// @TODO hardcoded home cluster
-		publicConfig.GatewayAPIEnabled = layer.IstioConfig.IsGatewayAPI(config.KubernetesConfig.ClusterName)
+		publicConfig.GatewayAPIEnabled = layer.IstioConfig.IsGatewayAPI(conf.KubernetesConfig.ClusterName)
 		publicConfig.AmbientEnabled = layer.IstioConfig.IsAmbientEnabled()
 		publicConfig.GatewayAPIClasses = layer.IstioConfig.GatewayAPIClasses()
 

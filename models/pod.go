@@ -149,7 +149,7 @@ func isIstioProxy(pod *core_v1.Pod, container *core_v1.Container, conf *config.C
 }
 
 func isIstioAmbient(pod *core_v1.Pod) bool {
-	return pod.ObjectMeta.Annotations[AmbientAnnotation] == AmbientAnnotationEnabled
+	return pod.ObjectMeta.Annotations[config.AmbientAnnotation] == config.AmbientAnnotationEnabled
 }
 
 func lookupImage(containerName string, containers []core_v1.Container) string {
@@ -213,12 +213,12 @@ func (pods Pods) HasAnyAmbient() bool {
 
 // AmbientEnabled returns true if the pod is labeled as ambient-type
 func (pod *Pod) AmbientEnabled() bool {
-	return pod.Annotations[AmbientAnnotation] == AmbientAnnotationEnabled
+	return pod.Annotations[config.AmbientAnnotation] == config.AmbientAnnotationEnabled
 }
 
 // IsWaypoint returns true if the pod is a waypoint proxy
 func (pod *Pod) IsWaypoint() bool {
-	return pod.Labels[WaypointLabel] == WaypointLabelValue
+	return pod.Labels[config.WaypointLabel] == config.WaypointLabelValue
 }
 
 // HasNativeSidecar returns true if the pod has istio-proxy init containers

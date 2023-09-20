@@ -2,9 +2,9 @@ import * as React from 'react';
 import { Label, Tooltip, TooltipPosition } from '@patternfly/react-core';
 
 type AmbientLabelProps = {
-  tooltip: boolean;
-  style?: React.CSSProperties;
   message?: string;
+  style?: React.CSSProperties;
+  tooltip: boolean;
 };
 
 export class AmbientBadge extends React.Component<AmbientLabelProps, {}> {

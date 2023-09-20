@@ -60,6 +60,13 @@ const (
 	DefaultClusterID = "Kubernetes"
 )
 
+const (
+	AmbientAnnotation        = "ambient.istio.io/redirection"
+	AmbientAnnotationEnabled = "enabled"
+	WaypointLabel            = "gateway.istio.io/managed"
+	WaypointLabelValue       = "istio.io-mesh-controller"
+)
+
 // FeatureName is the enum type used for named features that can be disabled via KialiFeatureFlags.DisabledFeatures
 type FeatureName string
 
@@ -286,6 +293,8 @@ func (lt *LoginToken) Obfuscate() {
 type IstioLabels struct {
 	AmbientNamespaceLabel      string `yaml:"ambient_namespace_label,omitempty" json:"ambientNamespaceLabel"`
 	AmbientNamespaceLabelValue string `yaml:"ambient_namespace_label_value,omitempty" json:"ambientNamespaceLabelValue"`
+	AmbientWaypointLabel       string `yaml:"ambient_waypoint_label,omitempty" json:"ambientWaypointLabel"`
+	AmbientWaypointLabelValue  string `yaml:"ambient_waypoint_label_value,omitempty" json:"ambientWaypointLabelValue"`
 	AppLabelName               string `yaml:"app_label_name,omitempty" json:"appLabelName"`
 	InjectionLabelName         string `yaml:"injection_label,omitempty" json:"injectionLabelName"`
 	InjectionLabelRev          string `yaml:"injection_label_rev,omitempty" json:"injectionLabelRev"`
@@ -676,6 +685,8 @@ func NewConfig() (c *Config) {
 		IstioLabels: IstioLabels{
 			AmbientNamespaceLabel:      "istio.io/dataplane-mode",
 			AmbientNamespaceLabelValue: "ambient",
+			AmbientWaypointLabel:       WaypointLabel,
+			AmbientWaypointLabelValue:  WaypointLabelValue,
 			AppLabelName:               "app",
 			InjectionLabelName:         "istio-injection",
 			InjectionLabelRev:          "istio.io/rev",

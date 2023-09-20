@@ -71,6 +71,8 @@ export const healthConfig = {
   },
   installationTag: 'Kiali Console',
   istioAnnotations: {
+    ambientAnnotation: 'ambient.istio.io/redirection',
+    ambientAnnotationEnabled: 'enabled',
     istioInjectionAnnotation: ''
   },
   istioCanaryRevision: {
@@ -80,6 +82,8 @@ export const healthConfig = {
   istioIdentityDomain: 'svc.cluster.local',
   istioNamespace: 'istio-system',
   istioLabels: {
+    ambientWaypointLabel: 'gateway.istio.io/managed',
+    ambientWaypointLabelValue: 'istio.io-mesh-controller',
     appLabelName: 'app',
     injectionLabelName: 'istio-injection',
     injectionLabelRev: 'istio.io/rev',
