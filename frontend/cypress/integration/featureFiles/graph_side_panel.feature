@@ -7,10 +7,10 @@ Feature: Kiali Graph page - Side panel menu actions
 
   Background:
     Given user is at administrator perspective
+    When user graphs "bookinfo" namespaces
 
   @bookinfo-app
   Scenario: Actions in kebab menu of the side panel for a service node with existing traffic routing
-    When user graphs "bookinfo" namespaces
     And user clicks the "productpage" service node
     And no cluster badge for the "graph side panel" should be visible
     And user opens the kebab menu of the graph side panel
@@ -19,7 +19,6 @@ Feature: Kiali Graph page - Side panel menu actions
 
   @bookinfo-app
   Scenario Outline: Ability to launch <action> wizard from graph side panel
-    When user graphs "bookinfo" namespaces
     And user clicks the "reviews" service node
     And no cluster badge for the "graph side panel" should be visible
     And user opens the kebab menu of the graph side panel
@@ -37,7 +36,6 @@ Feature: Kiali Graph page - Side panel menu actions
   @skip
   @multi-cluster
   Scenario: Actions in kebab menu of the side panel for a service node with existing traffic routing
-    When user graphs "bookinfo" namespaces
     And there is a traffic routing for the "reviews" service present
     And user clicks the "reviews" service node
     And the side panel links should contain a parameter related to cluster name
@@ -48,7 +46,6 @@ Feature: Kiali Graph page - Side panel menu actions
   @skip
   @multi-cluster
   Scenario Outline: Ability to launch <action> wizard from graph side panel
-    When user graphs "bookinfo" namespaces
     And user clicks the "ratings" service node
     And user opens the kebab menu of the graph side panel
     And user clicks the "<action>" item of the kebab menu of the graph side panel
@@ -61,3 +58,16 @@ Feature: Kiali Graph page - Side panel menu actions
       | request_routing      |
       | fault_injection      |
       | request_timeouts     |
+
+  @skip
+  @remote-istio-crds
+  @multi-cluster 
+  Scenario: Actions in context menu for a remote service node with existing traffic routing
+    And there is no traffic routing for the "ratings" service present
+    And user opens the context menu of the "ratings" service node
+    And user clicks the "request_routing" action of the context menu
+    Then user should see the "request_routing" wizard
+    And user previews the configuration
+    And user creates the configuration
+    And user is at the "istio" list page
+    Then a traffic routing for "ratings" should be located in the west cluster
