@@ -320,7 +320,7 @@ const BaseNodeComponent: React.FunctionComponent<BaseNodeProps> = ({
   const OverlayWidth = 40;
   const UnhighlightOpacity = 0.1;
 
-  const flashAnimation = keyframes({
+  const focusAnimation = keyframes({
     '0%': { strokeWidth: OverlayWidth },
     '100%': { strokeWidth: 0 }
   });
