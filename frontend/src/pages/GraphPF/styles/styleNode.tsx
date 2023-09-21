@@ -59,6 +59,10 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
     return newData;
   }, [data, detailsLevel]);
 
+  if (data.isFocused) {
+    element.setData({ ...data, isFocused: false });
+  }
+
   return (
     <g ref={hoverRef as any}>
       <BaseNode

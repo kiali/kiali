@@ -47,7 +47,7 @@ import { GraphToolbarActions } from '../../actions/GraphToolbarActions';
 import { PFColors } from 'components/Pf/PfColors';
 import { TourActions } from 'actions/TourActions';
 import { arrayEquals } from 'utils/Common';
-import { isKioskMode, getFocusSelector, unsetFocusSelector, getTraceId, getClusterName } from 'utils/SearchParamUtils';
+import { isKioskMode, getFocusSelector, getTraceId, getClusterName } from 'utils/SearchParamUtils';
 import { Badge, Chip } from '@patternfly/react-core';
 import { toRangeString } from 'components/Time/Utils';
 import { replayBorder } from 'components/Time/Replay';
@@ -393,11 +393,6 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
       GraphPagePFComponent.isNodeChanged(prev.node, curr.node)
     ) {
       this.loadGraphDataFromBackend();
-    }
-
-    if (!!this.focusNode) {
-      this.focusNode = undefined;
-      unsetFocusSelector();
     }
 
     if (

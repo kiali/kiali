@@ -40,6 +40,9 @@ type BaseGroupProps = {
   badgeBorderColor?: string;
   badgeClassName?: string;
   badgeLocation?: BadgeLocation;
+  // Customizations
+  isFocused?: boolean;
+  isUnhighlighted?: boolean;
 } & Partial<CollapsibleGroupProps & WithSelectionProps & WithDndDropProps & WithDragNodeProps & WithContextMenuProps>;
 
 const BaseGroupComponent: React.FunctionComponent<BaseGroupProps> = ({
