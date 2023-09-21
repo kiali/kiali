@@ -29,11 +29,21 @@ Given('a healthy application in the cluster', function () {
   this.targetApp = 'productpage';
 });
 
+Given('a healthy application in the remote cluster', function () {
+  this.targetNamespace = 'bookinfo';
+  this.targetApp = 'ratings';
+});
+
 Given('an idle application in the cluster', function () {
   this.targetNamespace = 'sleep';
   this.targetApp = 'sleep';
 
   cy.exec('kubectl scale -n sleep --replicas=0 deployment/sleep');
+});
+
+Given('an idle application in the remote cluster', function () {
+  this.targetNamespace = 'bookinfo';
+  this.targetApp = 'reviews';
 });
 
 Given('a failing application in the mesh', function () {
@@ -184,6 +194,12 @@ Then('there should be a {string} application indicator in the namespace', functi
     .should('exist');
 });
 
+Then('there should be a {string} application indicator in the namespace in the {string} cluster', function (healthStatus: string, cluster:string) {
+  cy.get(
+    `[data-test=CardItem_${this.targetNamespace}_${cluster}] [data-test=overview-app-health]`).find('span').filter(`.icon-${healthStatus}`)
+  .should('exist');
+});
+
 Then('the {string} application indicator should list the application', function (healthStatus: string) {
   let healthIndicatorStatusKey = healthStatus;
   if (healthStatus === 'idle') {
@@ -199,6 +215,23 @@ Then('the {string} application indicator should list the application', function 
   )
     .find('span')
     .filter(`.icon-${healthStatus}`)
+    .should('exist');
+  cy.get(
+    `[aria-label='Overview status'] [data-test=${this.targetNamespace}-${healthIndicatorStatusKey}-${this.targetApp}]`
+  ).should('contain.text', this.targetApp);
+});
+
+Then('the {string} application indicator for the {string} cluster should list the application', function (healthStatus: string, cluster:string) {
+  let healthIndicatorStatusKey = healthStatus;
+  if (healthStatus === 'idle') {
+    healthIndicatorStatusKey = 'not-ready';
+  }
+
+  cy.get(
+    `[data-test=CardItem_${this.targetNamespace}_${cluster}] [data-test=overview-app-health]`).find('span').filter(`.icon-${healthStatus}`)
+  .trigger('mouseenter');
+  cy.get(
+    `[aria-label='Overview status'] [data-test=${this.targetNamespace}-${healthIndicatorStatusKey}-${this.targetApp}]`).find('span').filter(`.icon-${healthStatus}`)
     .should('exist');
   cy.get(
     `[aria-label='Overview status'] [data-test=${this.targetNamespace}-${healthIndicatorStatusKey}-${this.targetApp}]`

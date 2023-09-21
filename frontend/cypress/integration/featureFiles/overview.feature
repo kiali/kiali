@@ -146,20 +146,18 @@ Feature: Kiali Overview page
     And health should be different for "east" and "west" "bookinfo"
 
   @multi-cluster
-  @skip
   Scenario: The healthy status of a logical mesh application is reported in the overview of a remote cluster namespace
-    Given a healthy application in the "west" cluster
-    When I fetch the overview of the "west" cluster
-    Then there should be a "healthy" application indicator in the "bookinfo" namespace in the "west" cluster
-    And the "healthy" application indicator should list the application
+    Given a healthy application in the remote cluster
+    When I fetch the overview of the cluster
+    Then there should be a "healthy" application indicator in the namespace in the "west" cluster
+    And the "healthy" application indicator for the "west" cluster should list the application
 
   @multi-cluster
-  @skip
   Scenario: The idle status of a logical mesh application is reported in the overview of a remote cluster namespace
-    Given an idle application in the cluster
+    Given an idle application in the remote cluster
     When I fetch the overview of the cluster
-    Then there should be a "idle" application indicator in the "bookinfo" namespace in the "west" cluster
-    And the "idle" application indicator should list the application
+    Then there should be a "idle" application indicator in the namespace in the "west" cluster
+    And the "idle" application indicator for the "west" cluster should list the application
 
   #this scenario refers to a bug (https://github.com/kiali/kiali/issues/6504) which is not resolved at the time of writing the scenario
   @multi-cluster
