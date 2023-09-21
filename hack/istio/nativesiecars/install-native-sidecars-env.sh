@@ -67,7 +67,7 @@ done
 SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
 
 if [ "${DELETE_ALL}" == "true" ]; then
-  echo -e "Deleting cluster \n"
+  echo "Deleting cluster"
   kind delete cluster --name sidecars
 else
   echo -e "Creating a cluster in kind with native sidecars \n"
