@@ -70,7 +70,7 @@ if [ "${DELETE_ALL}" == "true" ]; then
   echo "Deleting cluster"
   kind delete cluster --name sidecars
 else
-  echo -e "Creating a cluster in kind with native sidecars \n"
+  echo "Creating a cluster in kind with native sidecars"
   cat <<EOF | kind create cluster --name sidecars --image gcr.io/istio-testing/kind-node:v1.28.0 --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
