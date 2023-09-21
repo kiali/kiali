@@ -63,7 +63,9 @@ type BaseGroupExpandedProps = {
   labelIconClass?: string; // Icon to show in label
   labelIcon?: string;
   labelIconPadding?: number;
+  // Customizations
   isFocused?: boolean;
+  isUnhighlighted?: boolean;
 } & Partial<CollapsibleGroupProps & WithDragNodeProps & WithSelectionProps & WithDndDropProps & WithContextMenuProps>;
 
 type PointWithSize = [number, number, number];
@@ -120,7 +122,9 @@ const BaseGroupExpandedComponent: React.FunctionComponent<BaseGroupExpandedProps
   labelIcon,
   labelIconPadding,
   onCollapseChange,
-  isFocused
+  // Customizations
+  isFocused,
+  isUnhighlighted
 }) => {
   const [hovered, hoverRef] = useHover();
   const [labelHover, labelHoverRef] = useHover();
@@ -231,7 +235,6 @@ const BaseGroupExpandedComponent: React.FunctionComponent<BaseGroupExpandedProps
     }
   };
 
-  const data = element.getData();
   const scale = element.getGraph().getScale();
   const labelScale = isHover && !showLabel ? Math.max(1, 1 / scale) : 1;
   const labelPositionScale = isHover && !showLabel ? Math.min(1, scale) : 1;
@@ -251,7 +254,7 @@ const BaseGroupExpandedComponent: React.FunctionComponent<BaseGroupExpandedProps
       onContextMenu={onContextMenu}
       onClick={onSelect}
       className={groupClassName}
-      style={!!data.isUnhighlighted ? { opacity: UnhighlightOpacity } : {}}
+      style={!!isUnhighlighted ? { opacity: UnhighlightOpacity } : {}}
     >
       <Layer id={GROUPS_LAYER}>
         <g ref={refs} onContextMenu={onContextMenu} onClick={onSelect} className={innerGroupClassName}>
