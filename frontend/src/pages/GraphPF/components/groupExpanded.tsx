@@ -34,8 +34,8 @@ import { keyframes } from 'typestyle';
 // This is a copy of PFT DefaultGroupExpanded (v4.68.3), then modified.  I don't see a better way to really
 // do this because DefaultGroupExpanded doesn't really seem itself extensible and to add certain behavior you have
 // to reimplement the rendered element.  This supports the following customizations:
-//   element.data.isHighlighted?: boolean         // adds highlight effects based on hover
-//   element.data.isUnhighlighted?: boolean       // adds unhighlight effects based on hover
+//   [Group] isFocused?: boolean             // adds focus overlay
+//   [Group] isUnhighlighted?: boolean       // adds unhighlight effects based on hover
 //   [NodeLabel] isHover                          // adds "raise" logic to bring label to the top
 //   show scaled label on hover (when showLabel is false)
 //
@@ -243,7 +243,7 @@ const BaseGroupExpandedComponent: React.FunctionComponent<BaseGroupExpandedProps
   const OverlayOpacity = 0.3;
   const OverlayWidth = 40;
 
-  const flashAnimation = keyframes({
+  const focusAnimation = keyframes({
     '0%': { strokeWidth: OverlayWidth },
     '100%': { strokeWidth: 0 }
   });
@@ -267,7 +267,7 @@ const BaseGroupExpandedComponent: React.FunctionComponent<BaseGroupExpandedProps
                 stroke: ColorFocus,
                 strokeOpacity: OverlayOpacity,
                 animationDuration: '1s',
-                animationName: flashAnimation,
+                animationName: focusAnimation,
                 animationIterationCount: 3
               }}
             />
