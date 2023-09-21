@@ -35,6 +35,7 @@ Feature: Kiali Graph page - Context menu actions
   Scenario: Actions in context menu for a remote service node with existing traffic routing
     And there is a traffic routing for the "reviews" service present
     And user opens the context menu of the "reviews" service node
+    And user should see "" cluster parameter in links in the context menu
     And user clicks the "delete-traffic-routing" item of the context menu
     Then user should see the confirmation dialog to delete all traffic routing
 
