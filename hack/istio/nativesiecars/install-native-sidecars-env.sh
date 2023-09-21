@@ -81,7 +81,7 @@ EOF
   echo "Script Directory: ${SCRIPT_DIR}"
 
   if [ "${INSTALL_ISTIO}" == "true" ]; then
-    echo -e "Installing istio with values.pilot.env.ENABLE_NATIVE_SIDECARS=true option \n"
+    echo "Installing istio with values.pilot.env.ENABLE_NATIVE_SIDECARS=true option"
     ${SCRIPT_DIR}/../install-istio-via-istioctl.sh -c ${CLIENT_EXE} -a "prometheus grafana jaeger" -nsc true
   fi
 
