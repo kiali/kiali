@@ -42,6 +42,9 @@ Feature: Kiali Graph page - Side panel menu actions
     And user opens the kebab menu of the graph side panel
     And user clicks the "delete_traffic_routing" item of the kebab menu of the graph side panel
     Then user should see the confirmation dialog to delete all traffic routing
+    And when user chooses to delete the routing
+    And user is at the "istio" list page
+    Then no traffic routing for "reviews" should be located in the west cluster
 
   @skip
   @multi-cluster

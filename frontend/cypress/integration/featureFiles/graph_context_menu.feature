@@ -38,6 +38,9 @@ Feature: Kiali Graph page - Context menu actions
     And user should see "" cluster parameter in links in the context menu
     And user clicks the "delete-traffic-routing" item of the context menu
     Then user should see the confirmation dialog to delete all traffic routing
+    And when user chooses to delete the routing
+    And user is at the "istio" list page
+    Then no traffic routing for "reviews" should be located in the west cluster
 
   @skip
   @multi-cluster 
