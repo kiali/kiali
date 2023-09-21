@@ -97,7 +97,7 @@ EOF
     ${SCRIPT_DIR}/../install-bookinfo-demo.sh -c ${CLIENT_EXE} -tg
   fi
 
-  echo -e "Installation finished. You can port forward the services with: \n"
+  echo "Installation finished. You can port forward the services with:"
   echo "./run-kiali.sh -pg 13000:3000 -pp 19090:9090 -app 8080 -es false -iu http://127.0.0.1:15014"
 
 fi
