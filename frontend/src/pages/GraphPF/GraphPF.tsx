@@ -66,6 +66,7 @@ import { HistoryManager, URLParam } from 'app/History';
 import { tcpTimerConfig, timerConfig } from 'components/CytoscapeGraph/TrafficAnimation/AnimationTimerConfig';
 import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
+import { getFocusSelector, unsetFocusSelector } from 'utils/SearchParamUtils';
 
 let initialLayout = false;
 let requestFit = false;
@@ -94,7 +95,6 @@ export const TopologyContent: React.FC<{
   controller: Controller;
   edgeLabels: EdgeLabelMode[];
   edgeMode: EdgeMode;
-  focusNode?: FocusNode;
   graphData: GraphData;
   setEdgeMode: (edgeMode: EdgeMode) => void;
   highlighter: GraphHighlighterPF;
@@ -242,16 +242,16 @@ export const TopologyContent: React.FC<{
   // layoutPosition Change  handling
   //
   /*
-      const onLayoutPositionChange = React.useCallback(() => {
-        if (controller && controller.hasGraph()) {
-          //hide popovers on pan / zoom
-          const popover = document.querySelector('[aria-labelledby="popover-decorator-header"]');
-          if (popover) {
-            (popover as HTMLElement).style.display = 'none';
+        const onLayoutPositionChange = React.useCallback(() => {
+          if (controller && controller.hasGraph()) {
+            //hide popovers on pan / zoom
+            const popover = document.querySelector('[aria-labelledby="popover-decorator-header"]');
+            if (popover) {
+              (popover as HTMLElement).style.display = 'none';
+            }
           }
-        }
-      }, [controller]);
-      */
+        }, [controller]);
+        */
 
   //
   // Set detail levels for graph (control zoom-sensitive labels)
@@ -432,6 +432,15 @@ export const TopologyContent: React.FC<{
 
       // set decorators
       nodes.forEach(n => setNodeAttachments(n, graphSettings));
+
+      let focusNodeId = getFocusSelector();
+      if (focusNodeId) {
+        const focusNode = nodes.find(n => n.getId() === focusNodeId);
+        if (focusNode) {
+          focusNode.setData({ ...(focusNode.getData() as NodeData), isFocused: true });
+        }
+        unsetFocusSelector();
+      }
 
       // pre-select node if provided
       const graphNode = graphData.fetchParams.node;
@@ -770,7 +779,6 @@ export const GraphPF: React.FC<{
 }> = ({
   edgeLabels,
   edgeMode,
-  focusNode,
   graphData,
   isMiniGraph,
   layout,
@@ -853,7 +861,6 @@ export const GraphPF: React.FC<{
         controller={controller}
         edgeLabels={edgeLabels}
         edgeMode={edgeMode}
-        focusNode={focusNode}
         graphData={graphData}
         highlighter={highlighter!}
         isMiniGraph={isMiniGraph}

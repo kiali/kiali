@@ -28,12 +28,14 @@ import {
   NodeShape,
   hullPath
 } from '@patternfly/react-topology';
+import { PFColors } from 'components/Pf/PfColors';
+import { keyframes } from 'typestyle';
 
 // This is a copy of PFT DefaultGroupExpanded (v4.68.3), then modified.  I don't see a better way to really
 // do this because DefaultGroupExpanded doesn't really seem itself extensible and to add certain behavior you have
 // to reimplement the rendered element.  This supports the following customizations:
-//   element.data.isHighlighted?: boolean         // adds highlight effects based on hover
-//   element.data.isUnhighlighted?: boolean       // adds unhighlight effects based on hover
+//   [Group] isFocused?: boolean             // adds focus overlay
+//   [Group] isUnhighlighted?: boolean       // adds unhighlight effects based on hover
 //   [NodeLabel] isHover                          // adds "raise" logic to bring label to the top
 //   show scaled label on hover (when showLabel is false)
 //
@@ -61,6 +63,9 @@ type BaseGroupExpandedProps = {
   labelIconClass?: string; // Icon to show in label
   labelIcon?: string;
   labelIconPadding?: number;
+  // Customizations
+  isFocused?: boolean;
+  isUnhighlighted?: boolean;
 } & Partial<CollapsibleGroupProps & WithDragNodeProps & WithSelectionProps & WithDndDropProps & WithContextMenuProps>;
 
 type PointWithSize = [number, number, number];
@@ -116,7 +121,10 @@ const BaseGroupExpandedComponent: React.FunctionComponent<BaseGroupExpandedProps
   labelIconClass,
   labelIcon,
   labelIconPadding,
-  onCollapseChange
+  onCollapseChange,
+  // Customizations
+  isFocused,
+  isUnhighlighted
 }) => {
   const [hovered, hoverRef] = useHover();
   const [labelHover, labelHoverRef] = useHover();
@@ -227,10 +235,18 @@ const BaseGroupExpandedComponent: React.FunctionComponent<BaseGroupExpandedProps
     }
   };
 
-  const data = element.getData();
   const scale = element.getGraph().getScale();
   const labelScale = isHover && !showLabel ? Math.max(1, 1 / scale) : 1;
   const labelPositionScale = isHover && !showLabel ? Math.min(1, scale) : 1;
+
+  const ColorFocus = PFColors.Blue400;
+  const OverlayOpacity = 0.3;
+  const OverlayWidth = 40;
+
+  const focusAnimation = keyframes({
+    '0%': { strokeWidth: OverlayWidth },
+    '100%': { strokeWidth: 0 }
+  });
 
   return (
     <g
@@ -238,10 +254,24 @@ const BaseGroupExpandedComponent: React.FunctionComponent<BaseGroupExpandedProps
       onContextMenu={onContextMenu}
       onClick={onSelect}
       className={groupClassName}
-      style={!!data.isUnhighlighted ? { opacity: UnhighlightOpacity } : {}}
+      style={!!isUnhighlighted ? { opacity: UnhighlightOpacity } : {}}
     >
       <Layer id={GROUPS_LAYER}>
         <g ref={refs} onContextMenu={onContextMenu} onClick={onSelect} className={innerGroupClassName}>
+          {isFocused && (
+            <path
+              ref={outlineRef as any}
+              className={styles.topologyGroupBackground}
+              d={pathRef.current}
+              style={{
+                stroke: ColorFocus,
+                strokeOpacity: OverlayOpacity,
+                animationDuration: '1s',
+                animationName: focusAnimation,
+                animationIterationCount: 3
+              }}
+            />
+          )}
           <path ref={outlineRef as any} className={styles.topologyGroupBackground} d={pathRef.current} />
         </g>
       </Layer>

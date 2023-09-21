@@ -40,6 +40,10 @@ const StyleGroupComponent: React.FC<StyleGroupProps> = ({
     return newData;
   }, [data]);
 
+  if (data.isFocused) {
+    element.setData({ ...data, isFocused: false });
+  }
+
   const renderIcon = (): React.ReactNode => {
     const iconSize = Math.min(collapsedWidth, collapsedHeight) - ICON_PADDING * 2;
     const Component = CubesIcon;

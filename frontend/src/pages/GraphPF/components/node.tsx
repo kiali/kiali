@@ -38,15 +38,16 @@ import {
 } from '@patternfly/react-topology/dist/esm/components/nodes/NodeShadows';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
+import { keyframes } from 'typestyle';
 
 // This is a copy of PFT DefaultNode (v4.68.3), then modified.  I don't see a better way to really
 // do this because DefaultNode doesn't really seem itself extensible and to add certain behavior you have
 // to reimplement the rendered element.  This supports the following customizations:
-//   [Node] element.data.isFind?: boolean                // adds graph-find overlay
-//   [Node] element.data.isHighlighted?: boolean         // adds highlight effects based on hover
-//   [Node] element.data.isUnhighlighted?: boolean       // adds unhighlight effects based on hover
-//   [Node] element.data.hasSpans?: Span[]               // adds trace overlay
-//   [NodeLabel] isHover                                 // adds "raise" logic to bring label to the top
+//   [Node] isFind?: boolean                // adds graph-find overlay
+//   [Node] isFocused?: boolean             // adds focus overlay
+//   [Node] isUnhighlighted?: boolean       // adds unhighlight effects based on hover
+//   [Node] hasSpans?: Span[]               // adds trace overlay
+//   [NodeLabel] isHover                    // adds "raise" logic to bring label to the top
 //
 // If we could contribute all of these customizations for PFT then we may be able to avoid this "BaseNode" component and
 // just use "DefaultNode" directly.
@@ -101,6 +102,11 @@ type BaseNodeProps = {
   onStatusDecoratorClick?: (event: React.MouseEvent<SVGGElement, MouseEvent>, element: GraphElement) => void;
   getCustomShape?: (node: Node) => React.FunctionComponent<ShapeProps>;
   getShapeDecoratorCenter?: (quadrant: TopologyQuadrant, node: Node) => { x: number; y: number };
+  // Customizations
+  hasSpans?: boolean;
+  isFind?: boolean;
+  isFocused?: boolean;
+  isUnhighlighted?: boolean;
 } & Partial<
   WithSelectionProps &
     WithDragNodeProps &
@@ -153,7 +159,12 @@ const BaseNodeComponent: React.FunctionComponent<BaseNodeProps> = ({
   onHideCreateConnector,
   onShowCreateConnector,
   onContextMenu,
-  contextMenuOpen
+  contextMenuOpen,
+  // Customizations
+  hasSpans,
+  isFind,
+  isFocused,
+  isUnhighlighted
 }) => {
   const [hovered, hoverRef] = useHover();
   const status = nodeStatus || element.getNodeStatus();
@@ -303,10 +314,24 @@ const BaseNodeComponent: React.FunctionComponent<BaseNodeProps> = ({
   }, [element, nodeScale, scaleNode]);
 
   const ColorFind = PFColors.Gold400;
+  const ColorFocus = PFColors.Blue400;
   const ColorSpan = PFColors.Purple200;
   const OverlayOpacity = 0.3;
   const OverlayWidth = 40;
   const UnhighlightOpacity = 0.1;
+
+  const focusAnimation = keyframes({
+    '0%': { strokeWidth: OverlayWidth },
+    '100%': { strokeWidth: 0 }
+  });
+
+  const focusOverlayStyle = kialiStyle({
+    stroke: ColorFocus,
+    strokeOpacity: OverlayOpacity,
+    animationDuration: '1s',
+    animationName: focusAnimation,
+    animationIterationCount: 3
+  });
 
   const findOverlayStyle = kialiStyle({
     strokeWidth: OverlayWidth,
@@ -336,20 +361,22 @@ const BaseNodeComponent: React.FunctionComponent<BaseNodeProps> = ({
     }
   };
 
-  const data = element.getData();
   return (
     <g
       className={groupClassName}
-      style={!!data.isUnhighlighted ? { opacity: UnhighlightOpacity } : {}}
+      style={isUnhighlighted ? { opacity: UnhighlightOpacity } : {}}
       transform={`${scaleNode ? `translate(${translateX}, ${translateY})` : ''} scale(${nodeScale})`}
     >
       <NodeShadows />
       <g ref={refs} onClick={onSelect} onContextMenu={onContextMenu}>
-        {ShapeComponent && !!data.hasSpans && (
+        {ShapeComponent && hasSpans && (
           <ShapeComponent className={traceOverlayStyle} element={element} width={width} height={height} />
         )}
-        {ShapeComponent && !!data.isFind && (
+        {ShapeComponent && isFind && (
           <ShapeComponent className={findOverlayStyle} element={element} width={width} height={height} />
+        )}
+        {ShapeComponent && isFocused && (
+          <ShapeComponent className={focusOverlayStyle} element={element} width={width} height={height} />
         )}
         {ShapeComponent && (
           <ShapeComponent
