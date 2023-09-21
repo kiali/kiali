@@ -260,17 +260,13 @@ const BaseGroupExpandedComponent: React.FunctionComponent<BaseGroupExpandedProps
               ref={outlineRef as any}
               className={styles.topologyGroupBackground}
               d={pathRef.current}
-              style={
-                !!isFocused
-                  ? {
-                      stroke: ColorFocus,
-                      strokeOpacity: OverlayOpacity,
-                      animationDuration: '1s',
-                      animationName: flashAnimation,
-                      animationIterationCount: 3
-                    }
-                  : {}
-              }
+              style={{
+                stroke: ColorFocus,
+                strokeOpacity: OverlayOpacity,
+                animationDuration: '1s',
+                animationName: flashAnimation,
+                animationIterationCount: 3
+              }}
             />
           )}
           <path ref={outlineRef as any} className={styles.topologyGroupBackground} d={pathRef.current} />
