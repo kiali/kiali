@@ -155,7 +155,7 @@ while [[ $# -gt 0 ]]; do
       if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
         ENABLE_NATIVE_SIDECARS="$2"
       else
-        echo "ERROR: The --nsc flag must be 'true' or 'false'"
+        echo "ERROR: The --native-sidecars flag must be 'true' or 'false'"
         exit 1
       fi
       shift;shift
