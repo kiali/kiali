@@ -9,6 +9,10 @@ on:
       build_branch:
         required: true
         type: string
+      istio_version:
+        required: false
+        type: string
+        default: ""
 
 env:
   TARGET_BRANCH: ${{ inputs.target_branch }}
@@ -48,7 +52,7 @@ jobs:
           path: frontend/build
 
       - name: Run backend integration tests
-        run: hack/run-integration-tests.sh --test-suite backend
+        run: hack/run-integration-tests.sh --test-suite backend $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
 
       - name: Get debug info when integration tests fail
         if: failure()
