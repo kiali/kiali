@@ -255,7 +255,7 @@ const BaseGroupExpandedComponent: React.FunctionComponent<BaseGroupExpandedProps
     >
       <Layer id={GROUPS_LAYER}>
         <g ref={refs} onContextMenu={onContextMenu} onClick={onSelect} className={innerGroupClassName}>
-          {!!isFocused && (
+          {isFocused && (
             <path
               ref={outlineRef as any}
               className={styles.topologyGroupBackground}
