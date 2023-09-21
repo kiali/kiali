@@ -54,6 +54,13 @@ DORP="${DORP:-podman}"
 # The namespace where Istio will be found - this namespace must be the same on both clusters
 ISTIO_NAMESPACE="istio-system"
 
+# If you want to pull Istio images from a different image repository than what the hack script
+# will tell Istio to pull from, then set that hub name here. If you set this to "default",
+# the images will come from the repo that the Istio distro pulls from.
+# Suffice it to say, this setting is needed to avoid docker.io (and its throttling behavior) for
+# Istio production releases but allows you to run with Istio dev builds (set this to "default" for dev builds).
+ISTIO_HUB=""
+
 # If you want to override the tag that istioctl will use for the container images it pulls, set this.
 # (note: needed this because openshift requires a dev build of istioctl but we still want the released images.
 # See: https://github.com/kiali/kiali/pull/3713#issuecomment-809920379)
@@ -199,6 +206,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -in|--istio-namespace)
       ISTIO_NAMESPACE="$2"
+      shift;shift
+      ;;
+    -ih|--istio-hub)
+      ISTIO_HUB="$2"
       shift;shift
       ;;
     -it|--istio-tag)
@@ -490,6 +501,7 @@ export BOOKINFO_ENABLED \
        IS_OPENSHIFT \
        ISTIO_DIR \
        ISTIO_NAMESPACE \
+       ISTIO_HUB \
        ISTIO_TAG \
        KIALI_AUTH_STRATEGY \
        KIALI_CREATE_REMOTE_CLUSTER_SECRETS \
@@ -525,6 +537,7 @@ DORP=$DORP
 IS_OPENSHIFT=$IS_OPENSHIFT
 ISTIO_DIR=$ISTIO_DIR
 ISTIO_NAMESPACE=$ISTIO_NAMESPACE
+ISTIO_HUB=$ISTIO_HUB
 ISTIO_TAG=$ISTIO_TAG
 KIALI_AUTH_STRATEGY=$KIALI_AUTH_STRATEGY
 KIALI_CREATE_REMOTE_CLUSTER_SECRETS=$KIALI_CREATE_REMOTE_CLUSTER_SECRETS
