@@ -167,6 +167,10 @@ const logsDisplay = kialiStyle({
   width: '100%'
 });
 
+const iconStyle = kialiStyle({
+  marginLeft: '6px'
+});
+
 const logsBackground = (enabled: boolean) => ({ backgroundColor: enabled ? PFColors.Black1000 : PFColors.Black500 });
 const logsHeight = (showToolbar: boolean, fullscreen: boolean, showMaxLinesWarning: boolean) => {
   const toolbarHeight = showToolbar ? '0px' : '49px';
@@ -630,6 +634,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                 <CopyToClipboard text={this.entriesToString(this.state.entries)}>
                   <Button variant={ButtonVariant.link} isInline>
                     <KialiIcon.Copy />
+                    <span className={iconStyle}>Copy</span>
                   </Button>
                 </CopyToClipboard>
               </Tooltip>
@@ -643,6 +648,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                   isInline
                 >
                   <KialiIcon.Expand />
+                  <span className={iconStyle}>Expand</span>
                 </Button>
               </Tooltip>
             </ToolbarItem>
