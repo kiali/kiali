@@ -50,7 +50,7 @@ Feature: Kiali Istio Config page
   # We can test for both the CRDs being and not being present in the remote cluster, but some order of execution
   # using the Gherkin tags is necessary. We don't want the suite to install/remove the CRDs and restart the 
   # Kiali pod multiple times during a single run.
-  Scenario: Try to Create a Gateway in both clusters without Istio CRDs present in the remote cluster 
+  Scenario: Try to Create a Gateway in both clusters with Istio CRDs present in the remote cluster 
     When user deletes gateway named "bookinfo-gateway-mc" and the resource is no longer available in any cluster
     And Istio CRDs are "" present in the "west" cluster
     And user selects the "bookinfo" namespace
