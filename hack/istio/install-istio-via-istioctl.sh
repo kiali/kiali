@@ -20,6 +20,7 @@ CLIENT_EXE=""
 CLUSTER_NAME=""
 CONFIG_PROFILE="" # see "istioctl profile list" for valid values. See: https://istio.io/docs/setup/additional-setup/config-profiles/
 DELETE_ISTIO="false"
+ENABLE_NATIVE_SIDECARS="false"
 PURGE_UNINSTALL="true"
 ISTIOCTL=
 ISTIO_DIR=
@@ -150,6 +151,15 @@ while [[ $# -gt 0 ]]; do
       NETWORK="$2"
       shift;shift
       ;;
+    -nsc|--native-sidecars)
+      if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
+        ENABLE_NATIVE_SIDECARS="$2"
+      else
+        echo "ERROR: The --nsc flag must be 'true' or 'false'"
+        exit 1
+      fi
+      shift;shift
+      ;;
     -rr|--reduce-resources)
       if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
         REDUCE_RESOURCES="$2"
@@ -233,6 +243,9 @@ Valid command line arguments:
   -net|--network <network>:
        Installs istio as part of network with the given name.
        Default: unset
+  -nsc|--native-sidecars (true|false):
+       Indicate if you want native sidecars enabled.
+       Default: false
   -rr|--reduce-resources (true|false):
        When true some Istio components (such as the sidecar proxies) will be given
        a smaller amount of resources (CPU and memory) which will allow you
@@ -335,6 +348,8 @@ fi
 
 MTLS_OPTIONS="--set values.meshConfig.enableAutoMtls=${MTLS}"
 
+NATIVE_SIDECARS_OPTIONS="--set values.pilot.env.ENABLE_NATIVE_SIDECARS=${ENABLE_NATIVE_SIDECARS}"
+
 # When installing Istio (i.e. not deleting it) perform some preparation steps
 if [ "${DELETE_ISTIO}" != "true" ]; then
   # Create the istio-system namespace
@@ -414,6 +429,7 @@ for s in \
    "${IMAGE_HUB_OPTION}" \
    "${IMAGE_TAG_OPTION}" \
    "${MTLS_OPTIONS}" \
+   "${NATIVE_SIDECARS_OPTIONS}" \
    "${CUSTOM_NAMESPACE_OPTIONS}" \
    "--set values.gateways.istio-egressgateway.enabled=${ISTIO_EGRESSGATEWAY_ENABLED}" \
    "--set values.gateways.istio-ingressgateway.enabled=${ISTIO_INGRESSGATEWAY_ENABLED}" \

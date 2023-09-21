@@ -14,6 +14,7 @@ type Pods []*Pod
 
 const AmbientAnnotation = "ambient.istio.io/redirection"
 const WaypointLabel = "gateway.istio.io/managed"
+const IstioProxy = "istio-proxy"
 
 // Pod holds a subset of v1.Pod data that is meaningful in Kiali
 type Pod struct {
@@ -134,7 +135,7 @@ func isIstioProxy(pod *core_v1.Pod, container *core_v1.Container, conf *config.C
 	if pod.Namespace != conf.IstioNamespace {
 		return false
 	}
-	if container.Name == "istio-proxy" {
+	if container.Name == IstioProxy {
 		return true
 	}
 	for _, c := range conf.ExternalServices.Istio.ComponentStatuses.Components {
@@ -191,9 +192,9 @@ func (pods Pods) HasAnyIstioSidecar() bool {
 	return false
 }
 
-// HasIstioSidecar returns true if the pod has an Istio proxy sidecar
+// HasIstioSidecar returns true if the pod has an Istio proxy sidecar in containers or in init containers
 func (pod Pod) HasIstioSidecar() bool {
-	return len(pod.IstioContainers) > 0
+	return len(pod.IstioContainers) > 0 || pod.HasNativeSidecar()
 }
 
 // HasAnyAmbient check each pod individually and returns true if any of them is labeled with the Ambient annotation
@@ -216,6 +217,16 @@ func (pod *Pod) AmbientEnabled() bool {
 // IsWaypoint returns true if the pod is a waypoint proxy
 func (pod *Pod) IsWaypoint() bool {
 	return pod.Labels[WaypointLabel] == "istio.io-mesh-controller"
+}
+
+// HasNativeSidecar returns true if the pod has istio-proxy init containers
+func (pod *Pod) HasNativeSidecar() bool {
+	for _, c := range pod.IstioInitContainers {
+		if c.Name == IstioProxy {
+			return true
+		}
+	}
+	return false
 }
 
 // SyncedPodsCount returns the number of Pods with its proxy synced
