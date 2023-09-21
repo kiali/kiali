@@ -93,7 +93,7 @@ EOF
   fi
 
   if [ "${INSTALL_BOOKINFO}" == "true" ]; then
-    echo -e "Installing bookinfo \n"
+    echo "Installing bookinfo"
     ${SCRIPT_DIR}/../install-bookinfo-demo.sh -c ${CLIENT_EXE} -tg
   fi
 
