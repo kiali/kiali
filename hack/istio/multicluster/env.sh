@@ -324,6 +324,8 @@ Valid command line arguments:
   -gr|--gateway-required <bool>: If a gateway is required to cross between networks, set this to true
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
+  -ih|--istio-hub <hub>: If you want to override the image hub used by istioctl (where the images are found),
+                         set this to the hub name, or "default" to use the default image locations.
   -it|--istio-tag <tag>: If you want to override the image tag used by istioctl, set this to the tag name.
   -kas|--kiali-auth-strategy <openid|anonymous>: The authentication strategy to use for Kiali (Default: openid)
   -kcrcs|--kiali-create-remote-cluster-secrets <bool>: Create remote cluster secrets for kiali remote cluster access.
