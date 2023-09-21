@@ -2751,7 +2751,7 @@
     lodash "^4.17.19"
     tslib "^2.0.0"
 
-"@patternfly/react-tokens@4.94.6", "@patternfly/react-tokens@^4.94.6":
+"@patternfly/react-tokens@^4.94.6":
   version "4.94.6"
   resolved "https://registry.yarnpkg.com/@patternfly/react-tokens/-/react-tokens-4.94.6.tgz#47c715721ad3dd315a523f352ba1a0de2b03f0bc"
   integrity sha512-tm7C6nat+uKMr1hrapis7hS3rN9cr41tpcCKhx6cod6FLU8KwF2Yt5KUxakhIOCEcE/M/EhXhAw/qejp8w0r7Q==
