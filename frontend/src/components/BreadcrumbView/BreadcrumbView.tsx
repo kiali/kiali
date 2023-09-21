@@ -13,13 +13,13 @@ interface BreadCumbViewProps {
   };
 }
 
-interface BreadCumbViewState {
-  namespace: string;
+interface BreadcrumbViewState {
   cluster?: string;
-  itemName: string;
-  item: string;
-  pathItem: string;
   istioType?: string;
+  item: string;
+  itemName: string;
+  namespace: string;
+  pathItem: string;
 }
 
 const ItemNames = {
@@ -32,7 +32,7 @@ const ItemNames = {
 const IstioName = 'Istio Config';
 const namespaceRegex = /namespaces\/([a-z0-9-]+)\/([\w-.]+)\/([\w-.*]+)(\/([\w-.]+))?(\/([\w-.]+))?/;
 
-export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadCumbViewState> {
+export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadcrumbViewState> {
   static capitalize = (str: string) => {
     return str.charAt(0).toUpperCase() + str.slice(1);
   };
@@ -47,29 +47,26 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadCum
     this.state = this.updateItem();
   }
 
-  updateItem = () => {
-    let regex = namespaceRegex;
-    let extension = false;
-    const match = this.props.location.pathname.match(regex) || [];
+  updateItem = (): BreadcrumbViewState => {
+    const match = this.props.location.pathname.match(namespaceRegex) || [];
     const ns = match[1];
     const page = Paths[match[2].toUpperCase()];
     const istioType = match[3];
     const urlParams = new URLSearchParams(this.props.location.search);
     let itemName = page !== 'istio' ? match[3] : match[5];
     return {
-      namespace: ns,
       cluster: HistoryManager.getClusterName(urlParams),
-      pathItem: page,
+      istioType: istioType,
       item: itemName,
       itemName: ItemNames[page],
-      istioType: istioType,
-      extension: extension
+      namespace: ns,
+      pathItem: page
     };
   };
 
   componentDidUpdate(
     prevProps: Readonly<BreadCumbViewProps>,
-    _prevState: Readonly<BreadCumbViewState>,
+    _prevState: Readonly<BreadcrumbViewState>,
     _snapshot?: any
   ): void {
     if (prevProps.location !== this.props.location) {
@@ -120,7 +117,7 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadCum
         {isIstio && (
           <BreadcrumbItem>
             <Link
-              to={`/${pathItem}?namespaces=${namespace}&istiotype=${dicIstioType[this.state.istioType || '']}`}
+              to={`/${pathItem}?namespaces=${namespace}&type=${dicIstioType[this.state.istioType || '']}`}
               onClick={this.cleanFilters}
             >
               {istioType ? BreadcrumbView.istioType(istioType) : istioType}
