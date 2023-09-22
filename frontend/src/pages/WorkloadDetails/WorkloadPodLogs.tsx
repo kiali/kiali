@@ -167,15 +167,6 @@ const logsDisplay = kialiStyle({
   width: '100%'
 });
 
-// For some reason checkbox as a ToolbarItem needs to be tweaked
-const toolbarInputStyle = kialiStyle({
-  $nest: {
-    '&.pf-v5-c-check input[type=checkbox]': {
-      marginTop: '2px'
-    }
-  }
-});
-
 const logsBackground = (enabled: boolean) => ({ backgroundColor: enabled ? PFColors.Black1000 : PFColors.Black500 });
 const logsHeight = (showToolbar: boolean, fullscreen: boolean, showMaxLinesWarning: boolean) => {
   const toolbarHeight = showToolbar ? '0px' : '49px';
@@ -367,7 +358,6 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                           </ToolbarItem>
                           <ToolbarItem style={{ marginTop: '10px' }}>
                             <Checkbox
-                              className={toolbarInputStyle}
                               id="log-spans"
                               isChecked={this.state.showSpans}
                               label={
@@ -440,7 +430,6 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           {this.state.containerOptions!.map((c, i) => {
             return (
               <Checkbox
-                className={toolbarInputStyle}
                 id={`container-${c.displayName}`}
                 key={`c-d-${i}`}
                 isChecked={c.isSelected}

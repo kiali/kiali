@@ -30,8 +30,8 @@ type WorkloadPodsProps = {
 };
 
 const emptyStyle = kialiStyle({
-  padding: '0 0 0 0',
-  margin: '0 0 0 0'
+  padding: 0,
+  margin: 0
 });
 
 const resourceListStyle = kialiStyle({

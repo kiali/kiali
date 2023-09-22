@@ -33,7 +33,7 @@ export const globalStyle = kialiStyle({
     },
 
     '& input[type=checkbox], & input[type=radio]': {
-      margin: '4px 0 0',
+      alignSelf: 'center',
       lineHeight: 'normal'
     },
 

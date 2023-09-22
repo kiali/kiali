@@ -75,15 +75,6 @@ const fullHeightStyle = kialiStyle({
   height: '100%'
 });
 
-// For some reason checkbox as a ToolbarItem needs to be tweaked
-const toolbarInputStyle = kialiStyle({
-  $nest: {
-    '&.pf-v5-c-check input[type=checkbox]': {
-      marginTop: '2px'
-    }
-  }
-});
-
 const emptyStyle = kialiStyle({
   display: 'flex',
   justifyContent: 'center',
@@ -317,9 +308,8 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
             <ToolbarItem>
               <MetricsRawAggregation onChanged={this.onRawAggregationChanged} />
             </ToolbarItem>
-            <ToolbarItem style={{marginTop: '6px'}}>
+            <ToolbarItem style={{ marginTop: '6px' }}>
               <Checkbox
-                className={toolbarInputStyle}
                 id={`spans-show-`}
                 isChecked={this.state.showSpans}
                 key={`spans-show-chart`}

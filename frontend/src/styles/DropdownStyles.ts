@@ -29,15 +29,7 @@ const itemStyle: NestedCSSProperties = {
   whiteSpace: 'nowrap',
   margin: 0,
   padding: '6px 16px',
-  display: 'inline-block',
-  $nest: {
-    '& > div > input.pf-v5-c-radio__input': {
-      margin: '1px 0 0 0'
-    },
-    '& > div > input.pf-v5-c-check__input': {
-      margin: '1px 0 0 0'
-    }
-  }
+  display: 'inline-block'
 };
 
 // this emulates Select component .pf-v5-c-select__menu-item but with less vertical padding to conserve space
