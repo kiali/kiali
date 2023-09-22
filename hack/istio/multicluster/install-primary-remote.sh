@@ -58,10 +58,10 @@ ${CLIENT_EXE} label namespace ${ISTIO_NAMESPACE} topology.istio.io/network=${NET
 
 ISTIO_INSTALL_SCRIPT="${SCRIPT_DIR}/../install-istio-via-istioctl.sh"
 if [ ! -z "${ISTIO_TAG}" ]; then
-  local image_tag_arg="--image-tag ${ISTIO_TAG}"
+  image_tag_arg="--image-tag ${ISTIO_TAG}"
 fi
 if [ ! -z "${ISTIO_HUB}" ]; then
-  local image_hub_arg="--image-hub ${ISTIO_HUB}"
+  image_hub_arg="--image-hub ${ISTIO_HUB}"
 fi
 ${ISTIO_INSTALL_SCRIPT} ${image_tag_arg:-} ${image_hub_arg:-} --client-exe-path ${CLIENT_EXE} --cluster-name ${CLUSTER1_NAME} --istioctl ${ISTIOCTL} --istio-dir ${ISTIO_DIR} --mesh-id ${MESH_ID} --namespace ${ISTIO_NAMESPACE} --network ${NETWORK1_ID} --set values.pilot.env.EXTERNAL_ISTIOD=true --k8s-gateway-api-enabled true
 

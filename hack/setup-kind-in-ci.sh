@@ -200,7 +200,10 @@ setup_kind_multicluster() {
   # use the Istio release that was last downloaded (that's the -t option to ls)
   local istio_dir
   istio_dir=$(ls -dt1 ${output_dir}/istio-* | head -n1)
-  hack/istio/multicluster/install-primary-remote.sh --manage-kind true -dorp docker --istio-dir "${istio_dir}"
+  if [[ "${ISTIO_VERSION}" == *-dev ]]; then
+    local hub_arg="--istio-hub default"
+  fi
+  hack/istio/multicluster/install-primary-remote.sh --manage-kind true -dorp docker --istio-dir "${istio_dir}" ${hub_arg:-}
   hack/istio/multicluster/deploy-kiali.sh --manage-kind true -dorp docker -kas anonymous -kudi true -kshc "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
 }
 
