@@ -74,10 +74,6 @@ type ParsedExpression = {
   selector: string;
 };
 
-const inputWidth = {
-  width: 'var(--graph-find-input--width)'
-};
-
 // reduce toolbar padding from 20px to 10px to save space
 const thinGroupStyle = kialiStyle({
   paddingLeft: '10px',
@@ -94,7 +90,7 @@ const buttonClearStyle = kialiStyle({
 
 const findHideHelpStyle = kialiStyle({
   paddingLeft: 0,
-  marginLeft: '-15px'
+  marginLeft: '-5px'
 });
 
 const operands: string[] = [
@@ -310,7 +306,6 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
                   ref={ref => {
                     this.findInputRef = ref;
                   }}
-                  style={{ ...inputWidth }}
                   type="text"
                   autoComplete="on"
                   validated={isValid(this.state.findInputValue ? !this.state.findError : undefined)}
@@ -352,7 +347,6 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
                   ref={ref => {
                     this.hideInputRef = ref;
                   }}
-                  style={{ ...inputWidth }}
                   autoComplete="on"
                   validated={isValid(this.state.hideInputValue ? !this.state.hideError : undefined)}
                   type="text"
