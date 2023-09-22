@@ -103,6 +103,11 @@ const buttonClearStyle = kialiStyle({
   paddingRight: '5px'
 });
 
+const findHideHelpStyle = kialiStyle({
+  paddingLeft: 0,
+  marginLeft: '-15px'
+});
+
 const operands: string[] = [
   '%grpcerr',
   '%grpctraffic',
@@ -373,7 +378,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
             <Button
               data-test="graph-find-hide-help-button"
               variant={ButtonVariant.link}
-              style={{ paddingLeft: '6px' }}
+              className={findHideHelpStyle}
               onClick={this.toggleFindHelp}
             >
               <KialiIcon.Info />
@@ -384,7 +389,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
             <Button
               data-test="graph-find-hide-help-button"
               variant={ButtonVariant.link}
-              style={{ paddingLeft: '6px' }}
+              className={findHideHelpStyle}
               onClick={this.toggleFindHelp}
             >
               <KialiIcon.Info />
