@@ -46,14 +46,14 @@ func printOperator(operator interface{}) string {
 	case "tempo.Subquery":
 		queryString = fmt.Sprintf("{ %s }", printOperator(operator.(Subquery).trace))
 	case "tempo.Group":
-		queryString = fmt.Sprintf("( ")
+		queryString = "( "
 		for i, op := range operator.(Group).group {
 			queryString += fmt.Sprintf(" %s ", printOperator(op))
 			if i < len(operator.(Group).group)-1 {
 				queryString += fmt.Sprintf(" %s ", operator.(Group).operand)
 			}
 		}
-		queryString += fmt.Sprintf(")")
+		queryString += ")"
 	case "tempo.TraceQL":
 		if operator.(TraceQL).operator1 != nil {
 			if reflect.TypeOf(operator.(TraceQL).operator2).String() == "string" {
