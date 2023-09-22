@@ -58,11 +58,11 @@ const darkButtonStyle = kialiStyle({
   }
 });
 
-type Props = {
+type ThemeSwitchProps = {
   theme: string;
 };
 
-export const ThemeSwitchComponent = (props: Props) => {
+export const ThemeSwitchComponent = (props: ThemeSwitchProps) => {
   const darkTheme = props.theme === Theme.DARK;
 
   const handleTheme = () => {
