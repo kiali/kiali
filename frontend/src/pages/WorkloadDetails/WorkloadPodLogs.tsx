@@ -48,7 +48,6 @@ import moment from 'moment';
 import { formatDuration } from 'utils/tracing/TracingHelper';
 import { infoStyle } from 'styles/DropdownStyles';
 import { isValid } from 'utils/Common';
-import { isKiosk } from '../../components/Kiosk/KioskActions';
 import { KioskElement } from '../../components/Kiosk/KioskElement';
 import { TimeDurationModal } from '../../components/Time/TimeDurationModal';
 import { TimeDurationIndicator } from '../../components/Time/TimeDurationIndicator';
@@ -59,7 +58,6 @@ const proxyContainerColor = PFColors.Gold400;
 const spanColor = PFColors.Cyan300;
 
 type ReduxProps = {
-  kiosk: string;
   timeRange: TimeRange;
 };
 
@@ -176,15 +174,13 @@ const toolbarInputStyle = kialiStyle({
 });
 
 const logsBackground = (enabled: boolean) => ({ backgroundColor: enabled ? PFColors.Black1000 : PFColors.Black500 });
-const logsHeight = (showToolbar: boolean, fullscreen: boolean, kiosk: string, showMaxLinesWarning: boolean) => {
+const logsHeight = (showToolbar: boolean, fullscreen: boolean, showMaxLinesWarning: boolean) => {
   const toolbarHeight = showToolbar ? '0px' : '49px';
   const maxLinesWarningHeight = showMaxLinesWarning ? '27px' : '0px';
   return {
     height: fullscreen
       ? `calc(100vh - 130px + ${toolbarHeight} - ${maxLinesWarningHeight})`
-      : `calc(var(--kiali-details-pages-tab-content-height) - ${
-          !isKiosk(kiosk) ? '155px' : '0px'
-        } + ${toolbarHeight} - ${maxLinesWarningHeight})`
+      : `calc(var(--kiali-details-pages-tab-content-height) - 155px + ${toolbarHeight} - ${maxLinesWarningHeight})`
   };
 };
 
@@ -295,7 +291,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           {this.state.containerOptions && (
             <Grid key="logs" id="logs" style={{ height: '100%' }}>
               <GridItem span={12}>
-                <Card style={{ height: '100%' }}>
+                <Card>
                   <CardBody>
                     {this.state.showToolbar && (
                       <Toolbar style={{ padding: 0, width: '100%' }}>
@@ -690,7 +686,6 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             ...logsHeight(
               this.state.showToolbar,
               this.state.fullscreen,
-              this.props.kiosk,
               this.state.linesTruncatedContainers.length > 0
             ),
             ...logsBackground(this.hasEntries(this.state.entries))
@@ -1080,7 +1075,6 @@ const formatDate = (timestamp: string): string => {
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    kiosk: state.globalState.kiosk,
     timeRange: timeRangeSelector(state)
   };
 };
