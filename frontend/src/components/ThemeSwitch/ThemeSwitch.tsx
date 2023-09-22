@@ -16,9 +16,6 @@ const iconStyle = kialiStyle({
 
 const buttonStyle = kialiStyle({
   $nest: {
-    '&.pf-m-secondary::after': {
-      border: `1px solid ${PFColors.Color400}`
-    },
     '&.pf-m-primary': {
       backgroundColor: PFColors.Blue400,
       $nest: {
@@ -26,6 +23,9 @@ const buttonStyle = kialiStyle({
           border: `1px solid ${PFColors.Blue200}`
         }
       }
+    },
+    '&.pf-m-secondary::after': {
+      border: `1px solid ${PFColors.Color400}`
     }
   }
 });
@@ -62,7 +62,7 @@ type ThemeSwitchProps = {
   theme: string;
 };
 
-export const ThemeSwitchComponent = (props: ThemeSwitchProps) => {
+export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwitchProps) => {
   const darkTheme = props.theme === Theme.DARK;
 
   const handleTheme = () => {

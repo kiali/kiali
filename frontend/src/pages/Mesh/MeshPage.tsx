@@ -24,11 +24,11 @@ const iconStyle = kialiStyle({
 
 const containerPadding = kialiStyle({ padding: '20px' });
 
-type Props = {
+type MeshPageProps = {
   theme: string;
 };
 
-const MeshPageComponent: React.FunctionComponent<Props> = (props: Props) => {
+const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPageProps) => {
   const [meshClustersList, setMeshClustersList] = React.useState(null as MeshClusters | null);
   const [sortBy, setSortBy] = React.useState({ index: 0, direction: SortByDirection.asc });
 
@@ -92,7 +92,7 @@ const MeshPageComponent: React.FunctionComponent<Props> = (props: Props) => {
     });
   };
 
-  const buildTableRows = React.useCallback(() => {
+  const buildTableRows = () => {
     if (meshClustersList === null) {
       return [];
     }
@@ -116,7 +116,7 @@ const MeshPageComponent: React.FunctionComponent<Props> = (props: Props) => {
     }));
 
     return sortBy.direction === SortByDirection.asc ? tableRows : tableRows.reverse();
-  }, [meshClustersList, sortBy, props.theme]);
+  };
 
   const fetchMeshClusters = async () => {
     try {
@@ -129,11 +129,11 @@ const MeshPageComponent: React.FunctionComponent<Props> = (props: Props) => {
     }
   };
 
-  function onSortHandler(_event: React.MouseEvent, index: number, direction: SortByDirection) {
+  const onSortHandler = (_event: React.MouseEvent, index: number, direction: SortByDirection) => {
     setSortBy({ index, direction });
-  }
+  };
 
-  const clusterRows = buildTableRows();
+  const clusterRows = React.useMemo(buildTableRows, [meshClustersList, sortBy, props.theme]);
 
   return (
     <>
