@@ -184,11 +184,21 @@ func prepareTraceQL(u *url.URL, tracingServiceName string, query models.TracingQ
 	q := url.Values{}
 	q.Set("start", fmt.Sprintf("%d", query.Start.Unix()))
 	q.Set("end", fmt.Sprintf("%d", query.End.Unix()))
-	traceQL := "{.service.name=\"" + tracingServiceName + "\" && .node_id =~ \".*\" "
-	// Status error is filtered when processing
-	traceQL += " && (status=error || status=unset || status=ok) " // Small "hack" to get all the status
-	traceQL += " } && { }"                                        // With && {} 'matched' returned the total number of the traces (From v 2.2)
-	q.Set("q", traceQL)
+	queryPart1 := TraceQL{operator1: ".service.name", operand: EQUAL, operator2: tracingServiceName}
+	queryPart2 := TraceQL{operator1: ".node_id", operand: REGEX, operator2: ".*"}
+	queryPart := TraceQL{operator1: queryPart1, operand: AND, operator2: queryPart2}
+
+	group1 := TraceQL{operator1: "status", operand: EQUAL, operator2: unquoted("error")}
+	group2 := TraceQL{operator1: "status", operand: EQUAL, operator2: unquoted("unset")}
+	group3 := TraceQL{operator1: "status", operand: EQUAL, operator2: unquoted("ok")}
+	groupQL := []TraceQL{group1, group2, group3}
+	group := Group{group: groupQL, operand: OR}
+
+	subquery := TraceQL{operator1: queryPart, operand: AND, operator2: group}
+	trace := TraceQL{operator1: Subquery{subquery}, operand: AND, operator2: Subquery{}}
+	queryQL := trace.getQuery()
+
+	q.Set("q", queryQL)
 	if query.MinDuration > 0 {
 		q.Set("minDuration", fmt.Sprintf("%dms", query.MinDuration.Milliseconds()))
 	}
