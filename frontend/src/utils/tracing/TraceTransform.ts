@@ -211,7 +211,7 @@ export function transformTraceData(data: TraceData<SpanData>, cluster?: string):
     }
     const { serviceName } = span.process;
     svcCounts[serviceName] = (svcCounts[serviceName] || 0) + 1;
-    if (!span.references || !span.references.length) {
+    if ((!span.references || !span.references.length) && traceName === '') {
       traceName = span.operationName;
     }
     span.relativeStartTime = span.startTime - traceStartTime;
