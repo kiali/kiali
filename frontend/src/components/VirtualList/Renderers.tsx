@@ -200,6 +200,7 @@ export const status: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
         <OverviewCardSparklineCharts
           key={ns.name}
           name={ns.name}
+          annotations={ns.annotations}
           duration={FilterHelper.currentDuration()}
           direction={OverviewToolbar.currentDirectionType()}
           metrics={ns.metrics}
@@ -217,7 +218,9 @@ export const nsItem: Renderer<NamespaceInfo> = (ns: NamespaceInfo, _config: Reso
     <td role="gridcell" key={'VirtuaItem_NamespaceItem_' + ns.name} style={{ verticalAlign: 'middle' }}>
       <PFBadge badge={badge} />
       {ns.name}
-      {ns.name === serverConfig.istioNamespace && <ControlPlaneBadge cluster={ns.cluster} />}
+      {ns.name === serverConfig.istioNamespace && (
+        <ControlPlaneBadge cluster={ns.cluster} annotations={ns.annotations} />
+      )}
     </td>
   );
 };

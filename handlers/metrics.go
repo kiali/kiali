@@ -172,6 +172,12 @@ func NamespaceMetrics(w http.ResponseWriter, r *http.Request) {
 
 // getServiceMetrics (mock-friendly version)
 func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier) {
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 	cluster := clusterNameFromQuery(r.URL.Query())
@@ -185,7 +191,7 @@ func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 
 	params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace}
 
-	err := extractIstioMetricsQueryParams(r, &params, oldestNs)
+	err = extractIstioMetricsQueryParams(r, &params, oldestNs)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
@@ -197,7 +203,7 @@ func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 		return
 	}
 
-	if namespace == config.Get().IstioNamespace {
+	if isRemoteCluster, _ := business.Mesh.IsRemoteCluster(cluster); !isRemoteCluster && namespace == config.Get().IstioNamespace {
 		controlPlaneMetrics, err := metricsService.GetControlPlaneMetrics(params, nil)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())

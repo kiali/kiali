@@ -1,6 +1,7 @@
 import { serverConfig } from 'config';
 import { SortField } from '../../types/SortFilters';
 import { NamespaceInfo } from './NamespaceInfo';
+import { isRemoteCluster } from './OverviewCardControlPlaneNamespace';
 
 export const sortFields: SortField<NamespaceInfo>[] = [
   {
@@ -112,6 +113,13 @@ export const sortFunc = (allNamespaces: NamespaceInfo[], sortField: SortField<Na
   var sortedNamespaces = allNamespaces
     .filter(ns => ns.name !== serverConfig.istioNamespace)
     .sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
+  // remote cluster control planes should be listed after primary
+  var remoteControlPlanes = allNamespaces.filter(
+    ns => ns.name === serverConfig.istioNamespace && isRemoteCluster(ns.annotations)
+  );
 
-  return allNamespaces.filter(ns => ns.name === serverConfig.istioNamespace).concat(sortedNamespaces);
+  return allNamespaces
+    .filter(ns => ns.name === serverConfig.istioNamespace && !isRemoteCluster(ns.annotations))
+    .concat(remoteControlPlanes)
+    .concat(sortedNamespaces);
 };

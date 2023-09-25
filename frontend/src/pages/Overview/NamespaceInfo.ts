@@ -14,6 +14,7 @@ export type NamespaceInfo = {
   metrics?: Metric[];
   errorMetrics?: Metric[];
   labels?: { [key: string]: string };
+  annotations?: { [key: string]: string };
   controlPlaneMetrics?: ControlPlaneMetricsMap;
   isAmbient?: boolean;
 };

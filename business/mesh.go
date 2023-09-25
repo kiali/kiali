@@ -96,8 +96,8 @@ func getControlPlaneConfiguration(kubeCache cache.KubeCache, namespace string, n
 	}, nil
 }
 
-// isRemoteCluster determines if the cluster has a controlplane or if it's a remote cluster without one.
-func (in *MeshService) isRemoteCluster(cluster string) (bool, error) {
+// IsRemoteCluster determines if the cluster has a controlplane or if it's a remote cluster without one.
+func (in *MeshService) IsRemoteCluster(cluster string) (bool, error) {
 	istioNamespace, err := in.namespaceService.GetClusterNamespace(context.TODO(), in.conf.IstioNamespace, cluster)
 	if err != nil {
 		return false, err
@@ -135,7 +135,7 @@ func (in *MeshService) GetMesh(ctx context.Context) (*Mesh, error) {
 			return nil, err
 		}
 
-		if isRemoteCluster, err := in.isRemoteCluster(cluster.Name); err != nil {
+		if isRemoteCluster, err := in.IsRemoteCluster(cluster.Name); err != nil {
 			return nil, err
 		} else if isRemoteCluster {
 			log.Debugf("Cluster [%s] is a remote cluster. Skipping adding a controlplane.", cluster.Name)

@@ -77,6 +77,7 @@ import { CanaryUpgradeProgress } from './CanaryUpgradeProgress';
 import { ControlPlaneVersionBadge } from './ControlPlaneVersionBadge';
 import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
+import { isRemoteCluster } from './OverviewCardControlPlaneNamespace';
 
 const gridStyleCompact = kialiStyle({
   backgroundColor: PFColors.BackgroundColor200,
@@ -249,6 +250,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
               errorMetrics: previous ? previous.errorMetrics : undefined,
               validations: previous ? previous.validations : undefined,
               labels: ns.labels,
+              annotations: ns.annotations,
               controlPlaneMetrics: previous ? previous.controlPlaneMetrics : undefined
             };
           });
@@ -890,6 +892,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
   render() {
     const sm = this.state.displayMode === OverviewDisplayMode.COMPACT ? 3 : 6;
     const md = this.state.displayMode === OverviewDisplayMode.COMPACT ? 3 : 4;
+    const rlg = 4;
     const lg = 12;
     const filteredNamespaces = FilterHelper.runFilters(
       this.state.namespaces,
@@ -934,14 +937,18 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                         ns.name === serverConfig.istioNamespace &&
                         this.state.displayMode === OverviewDisplayMode.EXPAND &&
                         (this.props.istioAPIEnabled || this.hasCanaryUpgradeConfigured())
-                          ? lg
+                          ? isRemoteCluster(ns.annotations)
+                            ? rlg
+                            : lg
                           : sm
                       }
                       md={
                         ns.name === serverConfig.istioNamespace &&
                         this.state.displayMode === OverviewDisplayMode.EXPAND &&
                         (this.props.istioAPIEnabled || this.hasCanaryUpgradeConfigured())
-                          ? lg
+                          ? isRemoteCluster(ns.annotations)
+                            ? rlg
+                            : lg
                           : md
                       }
                       key={'CardItem_' + ns.name + ns.cluster}
@@ -967,7 +974,10 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                                 >
                                   {ns.name}
                                   {ns.name === serverConfig.istioNamespace && (
-                                    <ControlPlaneBadge cluster={ns.cluster}></ControlPlaneBadge>
+                                    <ControlPlaneBadge
+                                      cluster={ns.cluster}
+                                      annotations={ns.annotations}
+                                    ></ControlPlaneBadge>
                                   )}
                                   {ns.name !== serverConfig.istioNamespace &&
                                     this.hasCanaryUpgradeConfigured() &&
@@ -1007,6 +1017,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                             </div>
                           )}
                           {ns.name === serverConfig.istioNamespace &&
+                            !isRemoteCluster(ns.annotations) &&
                             this.state.displayMode === OverviewDisplayMode.EXPAND && (
                               <Grid>
                                 <GridItem md={this.props.istioAPIEnabled || this.hasCanaryUpgradeConfigured() ? 3 : 6}>
@@ -1061,6 +1072,35 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                                   </GridItem>
                                 )}
                               </Grid>
+                            )}
+                          {ns.name === serverConfig.istioNamespace &&
+                            isRemoteCluster(ns.annotations) &&
+                            this.state.displayMode === OverviewDisplayMode.EXPAND && (
+                              <div>
+                                {this.renderLabels(ns)}
+
+                                <div style={{ textAlign: 'left' }}>
+                                  <div style={{ display: 'inline-block', width: '125px' }}>Istio config</div>
+                                  {ns.tlsStatus && (
+                                    <span>
+                                      <NamespaceMTLSStatus status={ns.tlsStatus.status} />
+                                    </span>
+                                  )}
+                                  {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(ns) : 'N/A'}
+                                </div>
+                                {this.renderStatus(ns)}
+                                {this.state.displayMode === OverviewDisplayMode.EXPAND && (
+                                  <TLSInfo
+                                    certificatesInformationIndicators={
+                                      serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled
+                                    }
+                                    version={this.props.minTLS}
+                                  ></TLSInfo>
+                                )}
+                                {this.state.displayMode === OverviewDisplayMode.EXPAND && (
+                                  <div style={{ height: 110 }} />
+                                )}
+                              </div>
                             )}
                           {((ns.name !== serverConfig.istioNamespace &&
                             this.state.displayMode === OverviewDisplayMode.EXPAND) ||
@@ -1157,6 +1197,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         <OverviewCardSparklineCharts
           key={ns.name}
           name={ns.name}
+          annotations={ns.annotations}
           duration={FilterHelper.currentDuration()}
           direction={this.state.direction}
           metrics={ns.metrics}
