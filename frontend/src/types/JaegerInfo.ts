@@ -101,7 +101,7 @@ export type TraceData<S extends SpanData> = {
   processes: Record<string, Process>;
   traceID: string;
   spans: S[];
-  matched?: number;
+  matched?: number; // Tempo returns the number of total spans matched
 };
 
 export type JaegerTrace = TraceData<RichSpanData> & {
@@ -109,7 +109,7 @@ export type JaegerTrace = TraceData<RichSpanData> & {
   endTime: number;
   startTime: number;
   traceName: string;
-  matched?: number;
+  matched?: number; // Tempo returns the number of total spans matched
   services: { name: string; numberOfSpans: number }[];
 };
 

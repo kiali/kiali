@@ -28,7 +28,7 @@ type Span struct {
 
 type SpanSet struct {
 	Spans   []Span `json:"spans"`
-	Matched int    `json:"matched"`
+	Matched int    `json:"matched"` // Tempo returns the number of total spans matched in this field
 }
 
 type Trace struct {
