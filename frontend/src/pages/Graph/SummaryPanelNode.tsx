@@ -37,7 +37,7 @@ import { PeerAuthentication } from '../../types/IstioObjects';
 import { useServiceDetailForGraphNode } from '../../hooks/services';
 import { useKialiSelector } from '../../hooks/redux';
 import { groupMenuStyle } from 'styles/DropdownStyles';
-import { serverConfig } from '../../config';
+import { isMultiCluster, serverConfig } from '../../config';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 
 const summaryNodeActionsStyle = kialiStyle({
@@ -173,14 +173,33 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       }
     }
 
+    const firstBadge = isMultiCluster ? (
+      <>
+        <PFBadge badge={PFBadges.Cluster} size="sm" style={{ marginBottom: '2px' }} />
+        {nodeData.cluster}
+      </>
+    ) : (
+      <>
+        <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />
+        {nodeData.namespace}
+      </>
+    );
+    const secondBadge = isMultiCluster ? (
+      <div>
+        <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />
+        {nodeData.namespace}
+      </div>
+    ) : (
+      <></>
+    );
+
     return (
       <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
         <div className={panelHeadingStyle}>
           {getTitle(nodeType)}
           <div>
             <span>
-              <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />
-              {nodeData.namespace}
+              {firstBadge}
               {options.length > 0 && (
                 <Dropdown
                   dropdownItems={items}
@@ -194,6 +213,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
                   toggle={<KebabToggle id="summary-node-kebab" onToggle={this.onToggleActions} />}
                 />
               )}
+              {secondBadge}
               {renderBadgedLink(nodeData)}
               {renderHealth(nodeData.health)}
             </span>

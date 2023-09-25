@@ -121,7 +121,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
   }
 
   render() {
-    const hiddenColumns = isMultiCluster() ? ([] as string[]) : ['cluster'];
+    const hiddenColumns = isMultiCluster ? ([] as string[]) : ['cluster'];
     Toggles.getToggles().forEach((v, k) => {
       if (!v) {
         hiddenColumns.push(k);
