@@ -62,6 +62,7 @@ export type NodeData = DecoratedGraphNodeData & {
   component?: React.ReactNode;
   icon?: React.ReactNode;
   isFind?: boolean;
+  isFocused?: boolean;
   isHighlighted?: boolean;
   isSelected?: boolean;
   isUnhighlighted?: boolean;
