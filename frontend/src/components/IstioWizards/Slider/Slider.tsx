@@ -147,7 +147,7 @@ export class Slider extends React.Component<Props, State> {
     });
 
     const inputStyle = kialiStyle({
-      width: '3em',
+      width: '3rem',
       textAlign: 'center',
       marginLeft: 0,
       marginRight: 0
@@ -188,7 +188,7 @@ export class Slider extends React.Component<Props, State> {
           className={pinButtonStyle}
           variant={this.props.mirrored ? ButtonVariant.primary : ButtonVariant.secondary}
           onClick={() => this.props.onMirror(!this.props.mirrored)}
-          style={{ marginRight: '10px' }}
+          style={{ marginLeft: '10px', marginRight: '10px' }}
         >
           <MigrationIcon />
         </Button>
@@ -225,7 +225,7 @@ export class Slider extends React.Component<Props, State> {
               >
                 <PlusIcon />
               </Button>
-              <InputGroupText style={{ marginRight: '10px' }}>{this.props.inputFormat}</InputGroupText>
+              <InputGroupText>{this.props.inputFormat}</InputGroupText>
             </>
           )}
           {this.props.showMirror ? MirrorIcon : <></>}

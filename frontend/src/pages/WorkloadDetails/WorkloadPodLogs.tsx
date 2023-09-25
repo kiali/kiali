@@ -35,7 +35,7 @@ import { ToolbarDropdown } from '../../components/ToolbarDropdown/ToolbarDropdow
 import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange, TimeInSeconds } from '../../types/Common';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
-import { KialiIcon, defaultIconStyle } from '../../config/KialiIcon';
+import { KialiIcon } from '../../config/KialiIcon';
 import screenfull, { Screenfull } from 'screenfull';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
@@ -165,15 +165,6 @@ const logsDisplay = kialiStyle({
   resize: 'none',
   whiteSpace: 'pre',
   width: '100%'
-});
-
-// For some reason checkbox as a ToolbarItem needs to be tweaked
-const toolbarInputStyle = kialiStyle({
-  $nest: {
-    '&.pf-v5-c-check input[type=checkbox]': {
-      marginTop: '2px'
-    }
-  }
 });
 
 const logsBackground = (enabled: boolean) => ({ backgroundColor: enabled ? PFColors.Black1000 : PFColors.Black500 });
@@ -365,9 +356,8 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                               </Tooltip>
                             </ToolbarItem>
                           </ToolbarItem>
-                          <ToolbarItem style={{ marginTop: '10px' }}>
+                          <ToolbarItem style={{ alignSelf: 'center' }}>
                             <Checkbox
-                              className={toolbarInputStyle}
                               id="log-spans"
                               isChecked={this.state.showSpans}
                               label={
@@ -440,7 +430,6 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           {this.state.containerOptions!.map((c, i) => {
             return (
               <Checkbox
-                className={toolbarInputStyle}
                 id={`container-${c.displayName}`}
                 key={`c-d-${i}`}
                 isChecked={c.isSelected}
@@ -640,7 +629,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
               <Tooltip key="copy_logs" position="top" content="Copy logs to clipboard">
                 <CopyToClipboard text={this.entriesToString(this.state.entries)}>
                   <Button variant={ButtonVariant.link} isInline>
-                    <KialiIcon.Copy className={defaultIconStyle} />
+                    <KialiIcon.Copy />
                   </Button>
                 </CopyToClipboard>
               </Tooltip>
@@ -653,7 +642,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                   isDisabled={!this.hasEntries(this.state.entries)}
                   isInline
                 >
-                  <KialiIcon.Expand className={defaultIconStyle} />
+                  <KialiIcon.Expand />
                 </Button>
               </Tooltip>
             </ToolbarItem>

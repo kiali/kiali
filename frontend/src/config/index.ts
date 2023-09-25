@@ -9,7 +9,10 @@ import { config } from './Config';
 import { icons } from './Icons';
 
 // Logos
-import kialiLogo from '../assets/img/logo-alt.svg';
+import kialiLogoLight from '../assets/img/logo-lightbkg.svg';
+import kialiLogoDark from '../assets/img/logo-darkbkg.svg';
+import kialiIconLight from '../assets/img/icon-lightbkg.svg';
+import kialiIconDark from '../assets/img/icon-darkbkg.svg';
 
 // Paths
 import { Paths } from './Paths';
@@ -27,7 +30,10 @@ export {
   icons,
   homeCluster,
   isMultiCluster,
-  kialiLogo,
+  kialiLogoLight,
+  kialiLogoDark,
+  kialiIconLight,
+  kialiIconDark,
   serverConfig,
   jaegerQuery
 };

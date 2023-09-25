@@ -4,7 +4,7 @@ import { bindActionCreators } from 'redux';
 import { KialiDispatch } from 'types/Redux';
 import { connect } from 'react-redux';
 import { Tooltip, Button, ButtonVariant } from '@patternfly/react-core';
-import { defaultIconStyle, KialiIcon } from 'config/KialiIcon';
+import { KialiIcon } from 'config/KialiIcon';
 
 type ReduxProps = {
   resetSettings: () => void;
@@ -28,7 +28,7 @@ class GraphResetComponent extends React.Component<GraphResetProps, GraphResetSta
           variant={ButtonVariant.link}
           onClick={() => this.onReset()}
         >
-          <KialiIcon.ResetSettings className={defaultIconStyle} />
+          <KialiIcon.ResetSettings />
         </Button>
       </Tooltip>
     );

@@ -1,87 +1,65 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`ThemeSwitch renders dark theme 1`] = `
-<Fragment>
-  <Tooltip
-    content={
-      <React.Fragment>
-        Enable Light Mode
-      </React.Fragment>
-    }
-    position="bottom"
-  >
+<Tooltip
+  content={
+    <React.Fragment>
+      Switch to Light Mode
+    </React.Fragment>
+  }
+  position="bottom"
+>
+  <div>
     <Button
+      className="kiali_f17jn9du kiali_fj999mp"
       onClick={[Function]}
       variant="secondary"
     >
-      <Icon>
-        <i
-          className="fas fa-sun"
-        />
-      </Icon>
+      <Sun
+        className="kiali_fb78s7m"
+      />
     </Button>
-  </Tooltip>
-  <Tooltip
-    content={
-      <React.Fragment>
-        Disable Dark Mode
-      </React.Fragment>
-    }
-    position="bottom"
-  >
     <Button
+      className="kiali_f17jn9du kiali_fxx0nx6"
       onClick={[Function]}
       variant="primary"
     >
-      <Icon>
-        <i
-          className="fas fa-moon"
-        />
-      </Icon>
+      <Moon
+        className="kiali_fb78s7m"
+      />
     </Button>
-  </Tooltip>
-</Fragment>
+  </div>
+</Tooltip>
 `;
 
 exports[`ThemeSwitch renders light theme 1`] = `
-<Fragment>
-  <Tooltip
-    content={
-      <React.Fragment>
-        Disable Light Mode
-      </React.Fragment>
-    }
-    position="bottom"
-  >
+<Tooltip
+  content={
+    <React.Fragment>
+      Switch to Dark Mode
+    </React.Fragment>
+  }
+  position="bottom"
+>
+  <div>
     <Button
+      className="kiali_f17jn9du kiali_fj999mp"
       onClick={[Function]}
       variant="primary"
     >
-      <Icon>
-        <i
-          className="fas fa-sun"
-        />
-      </Icon>
+      <Sun
+        className="kiali_fb78s7m"
+      />
     </Button>
-  </Tooltip>
-  <Tooltip
-    content={
-      <React.Fragment>
-        Enable Dark Mode
-      </React.Fragment>
-    }
-    position="bottom"
-  >
     <Button
+      className="kiali_f17jn9du kiali_fxx0nx6"
       onClick={[Function]}
       variant="secondary"
     >
-      <Icon>
-        <i
-          className="fas fa-moon"
-        />
-      </Icon>
+      <Moon
+        className="kiali_fb78s7m"
+      />
     </Button>
-  </Tooltip>
-</Fragment>
+  </div>
+</Tooltip>
 `;

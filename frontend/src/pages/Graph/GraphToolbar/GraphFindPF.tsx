@@ -22,7 +22,7 @@ import { GraphHelpFind } from '../../../pages/Graph/GraphHelpFind';
 import * as CytoscapeGraphUtils from '../../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { EdgeLabelMode, NodeType, Layout, EdgeMode, NodeAttr, EdgeAttr } from '../../../types/Graph';
 import * as AlertUtils from '../../../utils/AlertUtils';
-import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
+import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
@@ -85,10 +85,6 @@ type ParsedExpression = {
   selector: SelectExp | SelectAnd | SelectOr;
 };
 
-const inputWidth = {
-  width: 'var(--graph-find-input--width)'
-};
-
 // reduce toolbar padding from 20px to 10px to save space
 const thinGroupStyle = kialiStyle({
   paddingLeft: '10px',
@@ -101,6 +97,11 @@ const buttonClearStyle = kialiStyle({
   width: '20px',
   paddingLeft: '5px',
   paddingRight: '5px'
+});
+
+const findHideHelpStyle = kialiStyle({
+  paddingLeft: 0,
+  marginLeft: '-5px'
 });
 
 const operands: string[] = [
@@ -296,7 +297,6 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
                   ref={ref => {
                     this.findInputRef = ref;
                   }}
-                  style={{ ...inputWidth }}
                   type="text"
                   autoComplete="on"
                   validated={isValid(this.state.findInputValue ? !this.state.findError : undefined)}
@@ -338,7 +338,6 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
                   ref={ref => {
                     this.hideInputRef = ref;
                   }}
-                  style={{ ...inputWidth }}
                   autoComplete="on"
                   validated={isValid(this.state.hideInputValue ? !this.state.hideError : undefined)}
                   type="text"
@@ -373,10 +372,10 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
             <Button
               data-test="graph-find-hide-help-button"
               variant={ButtonVariant.link}
-              style={{ paddingLeft: '6px' }}
+              className={findHideHelpStyle}
               onClick={this.toggleFindHelp}
             >
-              <KialiIcon.Info className={defaultIconStyle} />
+              <KialiIcon.Info />
             </Button>
           </GraphHelpFind>
         ) : (
@@ -384,10 +383,10 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
             <Button
               data-test="graph-find-hide-help-button"
               variant={ButtonVariant.link}
-              style={{ paddingLeft: '6px' }}
+              className={findHideHelpStyle}
               onClick={this.toggleFindHelp}
             >
-              <KialiIcon.Info className={defaultIconStyle} />
+              <KialiIcon.Info />
             </Button>
           </Tooltip>
         )}

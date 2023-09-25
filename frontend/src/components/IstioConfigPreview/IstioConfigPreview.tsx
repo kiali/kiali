@@ -22,7 +22,7 @@ import {
 } from 'types/IstioObjects';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { kialiStyle } from 'styles/StyleUtils';
-import { KialiIcon, defaultIconStyle } from '../../config/KialiIcon';
+import { KialiIcon } from '../../config/KialiIcon';
 import { safeDumpOptions } from '../../types/IstioConfigDetails';
 import { jsYaml } from '../../types/AceValidations';
 import { EditResources } from './EditResources';
@@ -211,7 +211,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
               <Tooltip content={<>Copy all resources</>}>
                 <CopyToClipboard text={this.trafficToText()}>
                   <Button variant={ButtonVariant.link} aria-label="Copy" isInline>
-                    <KialiIcon.Copy className={defaultIconStyle} />
+                    <KialiIcon.Copy />
                   </Button>
                 </CopyToClipboard>
               </Tooltip>
@@ -225,7 +225,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
                   className={kialiStyle({ marginLeft: '0.5em' })}
                   onClick={() => this.downloadTraffic()}
                 >
-                  <KialiIcon.Download className={defaultIconStyle} />
+                  <KialiIcon.Download />
                 </Button>
               </Tooltip>
             </ToolbarItem>

@@ -26,7 +26,7 @@ import AceEditor from 'react-ace';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ToolbarDropdown } from 'components/ToolbarDropdown/ToolbarDropdown';
 import { activeTab } from '../../components/Tab/Tabs';
-import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
+import { KialiIcon } from 'config/KialiIcon';
 import { aceOptions } from 'types/IstioConfigDetails';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { RenderComponentScroll } from 'components/Nav/Page';
@@ -41,6 +41,7 @@ import {
 } from '../../pages/WorkloadDetails/WorkloadDetailsPage';
 import { istioAceEditorStyle } from 'styles/AceEditorStyle';
 import { Theme, TimeInMilliseconds } from '../../types/Common';
+import { subTabStyle } from 'styles/TabStyles';
 
 const resources: string[] = ['clusters', 'listeners', 'routes', 'bootstrap', 'config', 'metrics'];
 
@@ -290,7 +291,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                 <div className={fullHeightStyle}>
                   <div style={{ marginBottom: '20px' }}>
                     <div key="service-icon" className={iconStyle}>
-                      <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top}/>
+                      <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
                     </div>
                     <ToolbarDropdown
                       id="envoy_pods_list"
@@ -307,7 +308,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                         text={this.editorContent()}
                       >
                         <Button variant={ButtonVariant.link} isInline>
-                          <KialiIcon.Copy className={defaultIconStyle} />
+                          <KialiIcon.Copy />
                         </Button>
                       </CopyToClipboard>
                     </Tooltip>
@@ -359,6 +360,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
           <GridItem span={12}>
             <Tabs
               id="envoy-details"
+              className={subTabStyle}
               activeKey={this.state.activeKey}
               onSelect={this.envoyHandleTabClick}
               mountOnEnter={true}
