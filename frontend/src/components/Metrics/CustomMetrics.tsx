@@ -308,7 +308,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
             <ToolbarItem>
               <MetricsRawAggregation onChanged={this.onRawAggregationChanged} />
             </ToolbarItem>
-            <ToolbarItem style={{ marginTop: '6px' }}>
+            <ToolbarItem style={{ alignSelf: 'center' }}>
               <Checkbox
                 id={`spans-show-`}
                 isChecked={this.state.showSpans}

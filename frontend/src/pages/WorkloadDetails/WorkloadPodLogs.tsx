@@ -356,7 +356,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                               </Tooltip>
                             </ToolbarItem>
                           </ToolbarItem>
-                          <ToolbarItem style={{ marginTop: '10px' }}>
+                          <ToolbarItem style={{ alignSelf: 'center' }}>
                             <Checkbox
                               id="log-spans"
                               isChecked={this.state.showSpans}

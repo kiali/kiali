@@ -352,7 +352,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
                 reporter={this.options.reporter}
               />
             </ToolbarItem>
-            <ToolbarItem style={{ marginTop: '10px' }}>
+            <ToolbarItem style={{ alignSelf: 'center' }}>
               <Checkbox
                 id={`spans-show-`}
                 isChecked={this.state.showSpans}
@@ -361,7 +361,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
                 onChange={(_event, checked) => this.onSpans(checked)}
               />
             </ToolbarItem>
-            <ToolbarItem style={{ marginTop: '10px' }}>
+            <ToolbarItem style={{ alignSelf: 'center' }}>
               <Checkbox
                 id={`trendlines-show-`}
                 isChecked={this.state.showTrendlines}

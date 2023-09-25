@@ -32,11 +32,6 @@ export const globalStyle = kialiStyle({
       verticalAlign: 'middle'
     },
 
-    '& input[type=checkbox], & input[type=radio]': {
-      alignSelf: 'center',
-      lineHeight: 'normal'
-    },
-
     /**
      * Remove global page padding by default
      */
