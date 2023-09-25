@@ -95,7 +95,7 @@ func ConvertSpanSet(span otel.Span, serviceName string, traceId string, rootName
 func getDuration(end string, start string) (uint64, error) {
 	endInt, err := strconv.ParseUint(end, 10, 64)
 	if err != nil {
-		log.Error("Error converting end date %s", err.Error())
+		log.Errorf("Error converting end date: %s", err.Error())
 		return 0, err
 	}
 	startInt, err := strconv.ParseUint(start, 10, 64)
