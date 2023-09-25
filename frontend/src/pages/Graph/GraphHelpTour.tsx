@@ -10,6 +10,13 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
     position: PopoverPosition.left,
     distance: 250
   },
+  ContextualMenuPF: {
+    name: 'Contextual Menu',
+    description:
+      'Right-click a node to see the contextual menu with links to details, traffic, inbound/outbound metrics and node graph.',
+    position: PopoverPosition.left,
+    distance: 250
+  },
   Display: {
     name: 'Display',
     description:
@@ -26,6 +33,12 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
     name: 'Graph',
     description:
       "Click on a node or edge to see its summary and emphasize its end-to-end paths. Double-click a node to see a graph focused on that node.\nDouble-click an 'external namespace' node to navigate directly to the namespace in the node's text label. Shift-Drag to quickly zoom in.",
+    position: PopoverPosition.left,
+    distance: 250
+  },
+  GraphPF: {
+    name: 'Graph',
+    description: 'Click on a node or edge to see its summary and emphasize its end-to-end paths.',
     position: PopoverPosition.left,
     distance: 250
   },
@@ -87,6 +100,24 @@ export const GraphTour: TourInfo = {
     GraphTourStops.TimeRange,
     GraphTourStops.Graph,
     GraphTourStops.ContextualMenu,
+    GraphTourStops.SidePanel,
+    GraphTourStops.Layout,
+    GraphTourStops.Legend
+  ]
+};
+
+export const GraphTourPF: TourInfo = {
+  name: 'GraphTour',
+  stops: [
+    GraphTourStops.Shortcuts,
+    GraphTourStops.Namespaces,
+    GraphTourStops.GraphTraffic,
+    GraphTourStops.GraphType,
+    GraphTourStops.Display,
+    GraphTourStops.Find,
+    GraphTourStops.TimeRange,
+    GraphTourStops.GraphPF,
+    GraphTourStops.ContextualMenuPF,
     GraphTourStops.SidePanel,
     GraphTourStops.Layout,
     GraphTourStops.Legend

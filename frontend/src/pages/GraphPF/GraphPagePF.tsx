@@ -57,7 +57,7 @@ import { GraphThunkActions } from '../../actions/GraphThunkActions';
 import { JaegerTrace } from 'types/JaegerInfo';
 import { KialiDispatch } from 'types/Redux';
 import { JaegerThunkActions } from 'actions/JaegerThunkActions';
-import { GraphTour } from 'pages/Graph/GraphHelpTour';
+import { GraphTourPF } from 'pages/Graph/GraphHelpTour';
 import { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
 import { ServiceWizard } from 'components/IstioWizards/ServiceWizard';
 import { ServiceDetailsInfo } from 'types/ServiceInfo';
@@ -681,8 +681,8 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
     if (this.props.activeTour) {
       this.props.endTour();
     } else {
-      const firstStop = getNextTourStop(GraphTour, -1, 'forward');
-      this.props.startTour({ info: GraphTour, stop: firstStop });
+      const firstStop = getNextTourStop(GraphTourPF, -1, 'forward');
+      this.props.startTour({ info: GraphTourPF, stop: firstStop });
     }
   };
 
