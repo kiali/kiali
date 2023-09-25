@@ -33,7 +33,7 @@ func ConvertSpans(spans []otelModels.Span, serviceName string) []jaegerModels.Sp
 
 		duration, err := getDuration(span.EndTimeUnixNano, span.StartTimeUnixNano)
 		if err != nil {
-			log.Errorf("Error converting start time. Skipping trace")
+			log.Errorf("Error converting duration. Skipping trace")
 			continue
 		}
 
