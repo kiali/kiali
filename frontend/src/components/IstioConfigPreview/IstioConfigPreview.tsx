@@ -68,6 +68,10 @@ interface State {
 
 const separator = '\n---\n\n';
 
+const iconStyle = kialiStyle({
+  marginLeft: '6px'
+});
+
 export class IstioConfigPreview extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -212,6 +216,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
                 <CopyToClipboard text={this.trafficToText()}>
                   <Button variant={ButtonVariant.link} aria-label="Copy" isInline>
                     <KialiIcon.Copy />
+                    <span className={iconStyle}>Copy</span>
                   </Button>
                 </CopyToClipboard>
               </Tooltip>
@@ -226,6 +231,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
                   onClick={() => this.downloadTraffic()}
                 >
                   <KialiIcon.Download />
+                  <span className={iconStyle}>Download</span>
                 </Button>
               </Tooltip>
             </ToolbarItem>

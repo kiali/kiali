@@ -50,6 +50,10 @@ const iconStyle = kialiStyle({
   paddingTop: '5px'
 });
 
+const copyStyle = kialiStyle({
+  marginLeft: '6px'
+});
+
 const envoyTabs = ['clusters', 'listeners', 'routes', 'bootstrap', 'config', 'metrics'];
 const tabName = 'envoyTab';
 const defaultTab = 'clusters';
@@ -309,6 +313,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                       >
                         <Button variant={ButtonVariant.link} isInline>
                           <KialiIcon.Copy />
+                          <span className={copyStyle}>Copy</span>
                         </Button>
                       </CopyToClipboard>
                     </Tooltip>
