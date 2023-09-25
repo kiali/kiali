@@ -100,7 +100,7 @@ func getDuration(end string, start string) (uint64, error) {
 	}
 	startInt, err := strconv.ParseUint(start, 10, 64)
 	if err != nil {
-		log.Error("Error converting end date %s", err.Error())
+		log.Errorf("Error converting start date: %s", err.Error())
 		return 0, err
 	}
 	// nano to micro
