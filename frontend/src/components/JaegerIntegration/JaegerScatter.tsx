@@ -94,19 +94,20 @@ class JaegerScatterComponent extends React.Component<JaegerScatterProps> {
       const traceError = trace.spans.filter(sp => sp.tags.some(isErrorTag)).length > 0;
       const value = this.props.showSpansAverage ? averageSpanDuration(trace) || 0 : trace.duration;
 
-      var size;
+      let spansLength;
       if (this.props.provider === TEMPO) {
         // The query to get the spans in Tempo does not return all of them,
         // This is to avoid the resize of the circle
         if (this.props.selectedTrace?.traceID === trace.traceID) {
-          size = this.seletedTraceMatched;
+          spansLength = this.seletedTraceMatched;
           trace.matched = this.seletedTraceMatched;
         } else {
-          size = trace.matched;
+          spansLength = trace.matched;
         }
       } else {
-        size = Math.min(MAXIMAL_SIZE, trace.spans.length + MINIMAL_SIZE);
+        spansLength = trace.spans.length;
       }
+      const size = Math.min(MAXIMAL_SIZE, spansLength + MINIMAL_SIZE);
 
       const traceItem = {
         x: new Date(trace.startTime / 1000),
