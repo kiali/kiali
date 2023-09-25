@@ -194,6 +194,13 @@ func prepareTraceQL(u *url.URL, tracingServiceName string, query models.TracingQ
 	groupQL := []TraceQL{group1, group2, group3}
 	group := Group{group: groupQL, operand: OR}
 
+	if len(query.Tags) > 0 {
+		for k, v := range query.Tags {
+			tag := TraceQL{operator1: "." + k, operand: EQUAL, operator2: v}
+			queryPart = TraceQL{operator1: queryPart, operand: AND, operator2: tag}
+		}
+	}
+
 	subquery := TraceQL{operator1: queryPart, operand: AND, operator2: group}
 	trace := TraceQL{operator1: Subquery{subquery}, operand: AND, operator2: Subquery{}}
 	queryQL := trace.getQuery()
