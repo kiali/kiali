@@ -2,20 +2,17 @@ import * as React from 'react';
 import { Label, Tooltip, TooltipPosition } from '@patternfly/react-core';
 
 type AmbientLabelProps = {
-  message?: string;
   style?: React.CSSProperties;
-  tooltip: boolean;
+  tooltip: string;
 };
 
 export class AmbientBadge extends React.Component<AmbientLabelProps, {}> {
   render() {
-    const msg = this.props.message ? this.props.message : 'Istio Ambient ztunnel detected in the Control plane';
-
     const tooltipContent = (
       <div style={{ textAlign: 'left' }}>
         <>
           <div>
-            {msg}
+            {this.props.tooltip}
             <br />
           </div>
         </>
@@ -28,7 +25,7 @@ export class AmbientBadge extends React.Component<AmbientLabelProps, {}> {
         </Label>
         {!this.props.tooltip && (
           <span style={{ marginLeft: '8px' }}>
-            {msg}
+            {this.props.tooltip}
             <Tooltip key={`tooltip_ambient_label`} position={TooltipPosition.top} content={tooltipContent}>
               <Label style={{ marginLeft: 5 }} color="blue" isCompact>
                 Ambient
@@ -38,12 +35,10 @@ export class AmbientBadge extends React.Component<AmbientLabelProps, {}> {
         )}
       </span>
     );
-    return this.props.tooltip ? (
+    return (
       <Tooltip key={`tooltip_ambient_label`} position={TooltipPosition.right} content={tooltipContent}>
         {iconComponent}
       </Tooltip>
-    ) : (
-      iconComponent
     );
   }
 }
