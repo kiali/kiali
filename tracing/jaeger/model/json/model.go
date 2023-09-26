@@ -54,6 +54,7 @@ type Trace struct {
 	Spans     []Span                `json:"spans"`
 	Processes map[ProcessID]Process `json:"processes"`
 	Warnings  []string              `json:"warnings"`
+	Matched   int                   `json:"matched"`
 }
 
 // Span is a span denoting a piece of work in some infrastructure

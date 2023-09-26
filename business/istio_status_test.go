@@ -17,12 +17,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/jaeger"
-	"github.com/kiali/kiali/jaeger/jaegertest"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/tracing"
+	"github.com/kiali/kiali/tracing/tracingtest"
 )
 
 type addOnsSetup struct {
@@ -777,16 +777,16 @@ func assertNotPresent(assert *assert.Assertions, icsl kubernetes.IstioComponentS
 	assert.False(componentFound)
 }
 
-func mockJaeger() (jaeger.ClientInterface, error) {
-	j := new(jaegertest.JaegerClientMock)
+func mockJaeger() (tracing.ClientInterface, error) {
+	j := new(tracingtest.TracingClientMock)
 	j.On("GetServiceStatus").Return(true, nil)
-	return jaeger.ClientInterface(j), nil
+	return tracing.ClientInterface(j), nil
 }
 
-func mockFailingJaeger() (jaeger.ClientInterface, error) {
-	j := new(jaegertest.JaegerClientMock)
+func mockFailingJaeger() (tracing.ClientInterface, error) {
+	j := new(tracingtest.TracingClientMock)
 	j.On("GetServiceStatus").Return(false, errors.New("error connecting with jaeger service"))
-	return jaeger.ClientInterface(j), nil
+	return tracing.ClientInterface(j), nil
 }
 
 // func newFakeIstiodConnector()

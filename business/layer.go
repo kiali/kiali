@@ -4,11 +4,11 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/jaeger"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/tracing"
 )
 
 // Layer is a container for fast access to inner services.
@@ -38,7 +38,7 @@ type Layer struct {
 // Global clientfactory and prometheus clients.
 var (
 	clientFactory    kubernetes.ClientFactory
-	jaegerClient     jaeger.ClientInterface
+	jaegerClient     tracing.ClientInterface
 	kialiCache       cache.KialiCache
 	prometheusClient prometheus.ClientInterface
 )
@@ -110,10 +110,10 @@ func Get(authInfo *api.AuthInfo) (*Layer, error) {
 	}
 
 	// Create Jaeger client
-	jaegerLoader := func() (jaeger.ClientInterface, error) {
+	jaegerLoader := func() (tracing.ClientInterface, error) {
 		var err error
 		if jaegerClient == nil {
-			jaegerClient, err = jaeger.NewClient(authInfo.Token)
+			jaegerClient, err = tracing.NewClient(authInfo.Token)
 			if err != nil {
 				jaegerClient = nil
 			}

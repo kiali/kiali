@@ -187,7 +187,11 @@ export function transformTraceData(data: TraceData<SpanData>, cluster?: string):
     } else {
       spanIdCounts.set(spanID, 1);
     }
-    span.process = data.processes[processID];
+    // For otel format traces
+    if (typeof data.processes[processID] !== 'undefined') {
+      span.process = data.processes[processID];
+    }
+
     spanMap.set(spanID, transformSpanData(span, cluster));
   }
   // tree is necessary to sort the spans, so children follow parents, and
@@ -207,7 +211,7 @@ export function transformTraceData(data: TraceData<SpanData>, cluster?: string):
     }
     const { serviceName } = span.process;
     svcCounts[serviceName] = (svcCounts[serviceName] || 0) + 1;
-    if (!span.references || !span.references.length) {
+    if ((!span.references || !span.references.length) && traceName === '') {
       traceName = span.operationName;
     }
     span.relativeStartTime = span.startTime - traceStartTime;
@@ -234,7 +238,8 @@ export function transformTraceData(data: TraceData<SpanData>, cluster?: string):
     processes: data.processes,
     duration: traceEndTime - traceStartTime,
     startTime: traceStartTime,
-    endTime: traceEndTime
+    endTime: traceEndTime,
+    matched: data.matched
   };
 }
 
@@ -248,12 +253,14 @@ export const transformSpanData = (span: Span, cluster?: string): RichSpanData =>
   span.warnings = span.warnings.concat(tagsInfo.warnings);
   const { type, info } = extractSpanInfo(span);
   const workloadNs = getWorkloadFromSpan(span);
+
   const split = span.process.serviceName.split('.');
   const app = split[0];
   const namespace = workloadNs ? workloadNs.namespace : split.length > 1 ? split[1] : undefined;
   if (!namespace) {
     console.warn('Could not determine span namespace');
   }
+
   const linkToApp = namespace ? '/namespaces/' + namespace + '/applications/' + app : undefined;
   const linkToWorkload = workloadNs
     ? '/namespaces/' + workloadNs.namespace + '/workloads/' + workloadNs.workload

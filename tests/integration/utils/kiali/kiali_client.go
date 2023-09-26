@@ -13,10 +13,10 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph/config/cytoscape"
 	"github.com/kiali/kiali/handlers"
-	"github.com/kiali/kiali/jaeger"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/status"
+	"github.com/kiali/kiali/tracing/jaeger/model"
 	"github.com/kiali/kiali/util/httputil"
 )
 
@@ -322,11 +322,11 @@ func ServiceDetails(name, namespace string) (*ServiceDetailsJson, int, error) {
 	}
 }
 
-func Traces(objectType, name, namespace string) (*jaeger.JaegerResponse, int, error) {
+func Traces(objectType, name, namespace string) (*model.TracingResponse, int, error) {
 	body, code, _, err := httpGETWithRetry(fmt.Sprintf("%s/api/namespaces/%s/%s/%s/traces?startMicros=%d&tags=&limit=100", client.kialiURL, namespace, objectType, name, TimeSince()), client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	log.Debugf("Traces response: %s", body)
 	if err == nil {
-		traces := new(jaeger.JaegerResponse)
+		traces := new(model.TracingResponse)
 		err = json.Unmarshal(body, &traces)
 		if err == nil {
 			return traces, code, nil
@@ -338,10 +338,10 @@ func Traces(objectType, name, namespace string) (*jaeger.JaegerResponse, int, er
 	}
 }
 
-func Spans(objectType, name, namespace string) ([]jaeger.JaegerSpan, int, error) {
+func Spans(objectType, name, namespace string) ([]model.TracingSpan, int, error) {
 	body, code, _, err := httpGETWithRetry(fmt.Sprintf("%s/api/namespaces/%s/%s/%s/spans?startMicros=%d&tags=&limit=100", client.kialiURL, namespace, objectType, name, TimeSince()), client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
-		spans := []jaeger.JaegerSpan{}
+		spans := []model.TracingSpan{}
 		err = json.Unmarshal(body, &spans)
 		if err == nil {
 			return spans, code, nil

@@ -11,24 +11,31 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/tracing/jaeger/model"
 )
 
-func getAppTracesHTTP(client http.Client, baseURL *url.URL, namespace, app string, q models.TracingQuery) (response *JaegerResponse, err error) {
+type JaegerHTTPClient struct {
+}
+
+func (jc JaegerHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, namespace, app string, q models.TracingQuery) (response *model.TracingResponse, err error) {
 	url := *baseURL
 	url.Path = path.Join(url.Path, "/api/traces")
-	jaegerServiceName := buildJaegerServiceName(namespace, app)
+	jaegerServiceName := BuildTracingServiceName(namespace, app)
 	prepareQuery(&url, jaegerServiceName, q)
 	r, err := queryTracesHTTP(client, &url)
+
 	if r != nil {
-		r.JaegerServiceName = jaegerServiceName
+		r.TracingServiceName = jaegerServiceName
 	}
 	return r, err
 }
 
-func getTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (*JaegerSingleTrace, error) {
+func (jc JaegerHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (*model.TracingSingleTrace, error) {
 	u := *endpoint
+	// /querier/api/traces/<traceid>?mode=xxxx&blockStart=0000&blockEnd=FFFF&start=<start>&end=<end>
 	u.Path = path.Join(u.Path, "/api/traces/"+traceID)
 	resp, code, reqError := makeRequest(client, u.String(), nil)
 	if reqError != nil {
@@ -44,22 +51,22 @@ func getTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (
 		return nil, err
 	}
 	if len(response.Data) == 0 {
-		return &JaegerSingleTrace{Errors: response.Errors}, nil
+		return &model.TracingSingleTrace{Errors: response.Errors}, nil
 	}
-	return &JaegerSingleTrace{
+	return &model.TracingSingleTrace{
 		Data:   response.Data[0],
 		Errors: response.Errors,
 	}, nil
 }
 
-func getServiceStatusHTTP(client http.Client, baseURL *url.URL) (bool, error) {
+func (jc JaegerHTTPClient) GetServiceStatusHTTP(client http.Client, baseURL *url.URL) (bool, error) {
 	url := *baseURL
 	url.Path = path.Join(url.Path, "/api/services")
 	_, _, reqError := makeRequest(client, url.String(), nil)
 	return reqError == nil, reqError
 }
 
-func queryTracesHTTP(client http.Client, u *url.URL) (*JaegerResponse, error) {
+func queryTracesHTTP(client http.Client, u *url.URL) (*model.TracingResponse, error) {
 	// HTTP and GRPC requests co-exist, but when minDuration is present, for HTTP it requires a unit (ms)
 	// https://github.com/kiali/kiali/issues/3939
 	minDuration := u.Query().Get("minDuration")
@@ -71,13 +78,13 @@ func queryTracesHTTP(client http.Client, u *url.URL) (*JaegerResponse, error) {
 	resp, code, reqError := makeRequest(client, u.String(), nil)
 	if reqError != nil {
 		log.Errorf("Jaeger query error: %s [code: %d, URL: %v]", reqError, code, u)
-		return &JaegerResponse{}, reqError
+		return &model.TracingResponse{}, reqError
 	}
 	return unmarshal(resp, u)
 }
 
-func unmarshal(r []byte, u *url.URL) (*JaegerResponse, error) {
-	var response JaegerResponse
+func unmarshal(r []byte, u *url.URL) (*model.TracingResponse, error) {
+	var response model.TracingResponse
 	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
 		log.Errorf("Error unmarshalling Jaeger response: %s [URL: %v]", errMarshal, u)
 		return nil, errMarshal
@@ -94,7 +101,7 @@ func prepareQuery(u *url.URL, jaegerServiceName string, query models.TracingQuer
 		// Tags must be json encoded
 		tags, err := json.Marshal(query.Tags)
 		if err != nil {
-			log.Errorf("Jager query: error while marshalling tags to json: %v", err)
+			log.Errorf("Jaeger query: error while marshalling tags to json: %v", err)
 		}
 		q.Set("tags", string(tags))
 	}
@@ -126,4 +133,12 @@ func makeRequest(client http.Client, endpoint string, body io.Reader) (response 
 	response, err = io.ReadAll(resp.Body)
 	status = resp.StatusCode
 	return
+}
+
+func BuildTracingServiceName(namespace, app string) string {
+	conf := config.Get()
+	if conf.ExternalServices.Tracing.NamespaceSelector {
+		return app + "." + namespace
+	}
+	return app
 }

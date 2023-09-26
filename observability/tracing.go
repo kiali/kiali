@@ -51,12 +51,14 @@ func TracerName() string {
 
 // InitTracer initalizes a TracerProvider that exports to jaeger.
 // This will panic if there's an error in setup.
+
 func InitTracer(collectorURL string) *sdktrace.TracerProvider {
+
 	exporter, err := getExporter(collectorURL)
+
 	if err != nil {
 		panic(err)
 	}
-
 	tp := sdktrace.NewTracerProvider(
 		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(config.Get().Server.Observability.Tracing.SamplingRate))),
 		sdktrace.WithBatcher(exporter),

@@ -4,13 +4,15 @@ import { pluralize } from '@patternfly/react-core';
 import { ChartCursorFlyout, ChartLabelProps } from '@patternfly/react-charts';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiAppState } from 'store/Store';
-import { averageSpanDuration, reduceMetricsStats, StatsMatrix } from 'utils/tracing/TraceStats';
+import { averageSpanDuration, reduceMetricsStats } from 'utils/tracing/TraceStats';
 import { JaegerLineInfo } from './JaegerScatter';
 import { JaegerTrace } from 'types/JaegerInfo';
 import { renderTraceHeatMap } from './JaegerResults/StatsComparison';
 import { PFColors } from 'components/Pf/PfColors';
 import { HookedChartTooltip, HookedTooltipProps } from 'components/Charts/CustomTooltip';
 import { formatDuration } from 'utils/tracing/TracingHelper';
+import { TEMPO } from '../../types/Tracing';
+import { MetricsStats } from '../../types/Metrics';
 
 const flyoutWidth = 280;
 const flyoutHeight = 130;
@@ -34,28 +36,61 @@ const contentStyle = kialiStyle({ width: '100%', height: '100%' });
 const leftStyle = kialiStyle({ width: '35%', height: '100%', float: 'left' });
 
 type LabelProps = ChartLabelProps & {
-  trace: JaegerTrace;
-  statsMatrix?: StatsMatrix;
   isStatsMatrixComplete: boolean;
+  provider?: string;
+  trace: JaegerTrace;
+  selectedTrace?: JaegerTrace;
+  metricsStats?: Map<string, MetricsStats>;
+};
+
+const textStyle: React.CSSProperties = {
+  fontStyle: 'italic',
+  fontSize: 'x-small'
 };
 
 class TraceLabel extends React.Component<LabelProps> {
+  private traceUpdated = true;
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.selectedTrace !== this.props.selectedTrace) {
+      this.traceUpdated = true;
+      this.forceUpdate();
+    } else {
+      if (this.traceUpdated) {
+        this.traceUpdated = false;
+      }
+    }
+  }
+
   render() {
+    const trace = this.props.selectedTrace && this.traceUpdated ? this.props.selectedTrace : this.props.trace;
+    const { matrix } = this.props.metricsStats
+      ? reduceMetricsStats(trace, this.props.metricsStats, true)
+      : { matrix: undefined };
+
     const left = flyoutMargin + (this.props.x || 0) - flyoutWidth / 2;
     const top = flyoutMargin + (this.props.y || 0) - flyoutHeight / 2;
-    const avgSpanDuration = averageSpanDuration(this.props.trace);
-    const hasStats = this.props.statsMatrix && this.props.statsMatrix.some(sub => sub.some(v => v !== undefined));
+    const avgSpanDuration = averageSpanDuration(trace);
+    const hasStats = matrix && matrix.some(sub => sub.some(v => v !== undefined));
     return (
       <foreignObject width={innerWidth} height={innerHeight} x={left} y={top}>
         <div className={tooltipStyle}>
-          <div className={titleStyle}>{this.props.trace.traceName || '(Missing root span)'}</div>
+          <div className={titleStyle}>{trace.traceName || '(Missing root span)'}</div>
           <br />
           <div className={contentStyle}>
-            <div className={leftStyle}>{hasStats ? renderTraceHeatMap(this.props.statsMatrix!, true) : 'n/a'}</div>
+            <div className={leftStyle}>
+              {hasStats ? (
+                renderTraceHeatMap(matrix!, true)
+              ) : this.props.provider === TEMPO ? (
+                <div style={textStyle}>(Incomplete data. Click to load)</div>
+              ) : (
+                'n/a'
+              )}
+            </div>
             <div>
-              {formatDuration(this.props.trace.duration)}
+              {formatDuration(trace.duration)}
               <br />
-              {`${pluralize(this.props.trace.spans.length, 'span')}, avg=${
+              {`${pluralize(trace.spans.length, 'span')}, avg=${
                 avgSpanDuration ? formatDuration(avgSpanDuration) : 'n/a'
               }`}
             </div>
@@ -67,10 +102,11 @@ class TraceLabel extends React.Component<LabelProps> {
 }
 
 const mapStateToProps = (state: KialiAppState, props: any) => {
-  const { matrix, isComplete } = reduceMetricsStats(props.trace, state.metricsStats.data, true);
   return {
-    statsMatrix: matrix,
-    isStatsMatrixComplete: isComplete
+    metricsStats: state.metricsStats.data,
+    trace: props.trace,
+    provider: state.jaegerState.info?.provider,
+    selectedTrace: state.jaegerState.selectedTrace
   };
 };
 

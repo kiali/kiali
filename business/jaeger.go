@@ -6,26 +6,27 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kiali/kiali/jaeger"
-	jaegerModels "github.com/kiali/kiali/jaeger/model/json"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
+	"github.com/kiali/kiali/tracing"
+	"github.com/kiali/kiali/tracing/jaeger/model"
+	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 )
 
 type (
-	JaegerLoader = func() (jaeger.ClientInterface, error)
+	JaegerLoader = func() (tracing.ClientInterface, error)
 	SpanFilter   = func(span *jaegerModels.Span) bool
 )
 
 type JaegerService struct {
 	loader        JaegerLoader
 	loaderErr     error
-	jaeger        jaeger.ClientInterface
+	jaeger        tracing.ClientInterface
 	businessLayer *Layer
 }
 
-func (in *JaegerService) client() (jaeger.ClientInterface, error) {
+func (in *JaegerService) client() (tracing.ClientInterface, error) {
 	if in.jaeger != nil {
 		return in.jaeger, nil
 	} else if in.loaderErr != nil {
@@ -35,17 +36,17 @@ func (in *JaegerService) client() (jaeger.ClientInterface, error) {
 	return in.jaeger, in.loaderErr
 }
 
-func (in *JaegerService) getFilteredSpans(ns, app string, query models.TracingQuery, filter SpanFilter) ([]jaeger.JaegerSpan, error) {
+func (in *JaegerService) getFilteredSpans(ns, app string, query models.TracingQuery, filter SpanFilter) ([]model.TracingSpan, error) {
 	r, err := in.GetAppTraces(ns, app, query)
 	if err != nil {
-		return []jaeger.JaegerSpan{}, err
+		return []model.TracingSpan{}, err
 	}
 	spans := tracesToSpans(app, r, filter)
 	return spans, nil
 }
 
-func mergeResponses(dest *jaeger.JaegerResponse, src *jaeger.JaegerResponse) {
-	dest.JaegerServiceName = src.JaegerServiceName
+func mergeResponses(dest *model.TracingResponse, src *model.TracingResponse) {
+	dest.TracingServiceName = src.TracingServiceName
 	dest.Errors = append(dest.Errors, src.Errors...)
 	traceIds := make(map[jaegerModels.TraceID]bool)
 	for _, prev := range dest.Data {
@@ -59,11 +60,11 @@ func mergeResponses(dest *jaeger.JaegerResponse, src *jaeger.JaegerResponse) {
 	}
 }
 
-func (in *JaegerService) GetAppSpans(ns, app string, query models.TracingQuery) ([]jaeger.JaegerSpan, error) {
+func (in *JaegerService) GetAppSpans(ns, app string, query models.TracingQuery) ([]model.TracingSpan, error) {
 	return in.getFilteredSpans(ns, app, query, nil /*no post-filtering for apps*/)
 }
 
-func (in *JaegerService) GetServiceSpans(ctx context.Context, ns, service string, query models.TracingQuery) ([]jaeger.JaegerSpan, error) {
+func (in *JaegerService) GetServiceSpans(ctx context.Context, ns, service string, query models.TracingQuery) ([]model.TracingSpan, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetServiceSpans",
 		observability.Attribute("package", "business"),
@@ -96,7 +97,7 @@ func operationSpanFilter(ns, service string) SpanFilter {
 	}
 }
 
-func (in *JaegerService) GetWorkloadSpans(ctx context.Context, ns, workload string, query models.TracingQuery) ([]jaeger.JaegerSpan, error) {
+func (in *JaegerService) GetWorkloadSpans(ctx context.Context, ns, workload string, query models.TracingQuery) ([]model.TracingSpan, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetWorkloadSpans",
 		observability.Attribute("package", "business"),
@@ -120,7 +121,7 @@ func wkdSpanFilter(ns, workload string) SpanFilter {
 	}
 }
 
-func (in *JaegerService) GetAppTraces(ns, app string, query models.TracingQuery) (*jaeger.JaegerResponse, error) {
+func (in *JaegerService) GetAppTraces(ns, app string, query models.TracingQuery) (*model.TracingResponse, error) {
 	client, err := in.client()
 	if err != nil {
 		return nil, err
@@ -149,7 +150,7 @@ func (in *JaegerService) GetAppTraces(ns, app string, query models.TracingQuery)
 // the number of desired traces.  It depends on the number of services backing the app. For example, if there are 2 services for the
 // app, if evenly distributed, a query limit of 20 may return only 10 traces.  The ratio is typically not as bad as it is with
 // GetWorkloadTraces.
-func (in *JaegerService) GetServiceTraces(ctx context.Context, ns, service string, query models.TracingQuery) (*jaeger.JaegerResponse, error) {
+func (in *JaegerService) GetServiceTraces(ctx context.Context, ns, service string, query models.TracingQuery) (*model.TracingResponse, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetServiceTraces",
 		observability.Attribute("package", "business"),
@@ -193,7 +194,7 @@ func (in *JaegerService) GetServiceTraces(ctx context.Context, ns, service strin
 // a subset of the traces may actually involve the requested workload.  Callers may need to upwardly adjust TracingQuery.Limit to get back
 // the number of desired traces.  It depends on the number of workloads backing the app. For example, if there are 5 workloads for the
 // app, if evenly distributed, a query limit of 25 may return only 5 traces.
-func (in *JaegerService) GetWorkloadTraces(ctx context.Context, ns, workload string, query models.TracingQuery) (*jaeger.JaegerResponse, error) {
+func (in *JaegerService) GetWorkloadTraces(ctx context.Context, ns, workload string, query models.TracingQuery) (*model.TracingResponse, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetWorkloadTraces",
 		observability.Attribute("package", "business"),
@@ -222,7 +223,7 @@ func (in *JaegerService) GetWorkloadTraces(ctx context.Context, ns, workload str
 	return r, err
 }
 
-func (in *JaegerService) getAppTracesSlicedInterval(ns, app string, query models.TracingQuery) (*jaeger.JaegerResponse, error) {
+func (in *JaegerService) getAppTracesSlicedInterval(ns, app string, query models.TracingQuery) (*model.TracingResponse, error) {
 	client, err := in.client()
 	if err != nil {
 		return nil, err
@@ -237,7 +238,7 @@ func (in *JaegerService) getAppTracesSlicedInterval(ns, app string, query models
 	duration := diff / time.Duration(nSlices)
 
 	type tracesChanResult struct {
-		resp *jaeger.JaegerResponse
+		resp *model.TracingResponse
 		err  error
 	}
 	tracesChan := make(chan tracesChanResult, nSlices)
@@ -258,7 +259,7 @@ func (in *JaegerService) getAppTracesSlicedInterval(ns, app string, query models
 	wg.Wait()
 	// All slices are fetched, close channel
 	close(tracesChan)
-	merged := &jaeger.JaegerResponse{}
+	merged := &model.TracingResponse{}
 	for r := range tracesChan {
 		if r.err != nil {
 			err = r.err
@@ -269,7 +270,7 @@ func (in *JaegerService) getAppTracesSlicedInterval(ns, app string, query models
 	return merged, err
 }
 
-func (in *JaegerService) GetJaegerTraceDetail(traceID string) (trace *jaeger.JaegerSingleTrace, err error) {
+func (in *JaegerService) GetJaegerTraceDetail(traceID string) (trace *model.TracingSingleTrace, err error) {
 	client, err := in.client()
 	if err != nil {
 		return nil, err
@@ -333,13 +334,13 @@ func spanMatchesWorkload(span *jaegerModels.Span, namespace, workload string) bo
 	return false
 }
 
-func tracesToSpans(app string, r *jaeger.JaegerResponse, filter SpanFilter) []jaeger.JaegerSpan {
-	spans := []jaeger.JaegerSpan{}
+func tracesToSpans(app string, r *model.TracingResponse, filter SpanFilter) []model.TracingSpan {
+	spans := []model.TracingSpan{}
 	for _, trace := range r.Data {
 		// First, get the desired processes for our service
 		processes := make(map[jaegerModels.ProcessID]jaegerModels.Process)
 		for pId, process := range trace.Processes {
-			if process.ServiceName == app || process.ServiceName == r.JaegerServiceName {
+			if process.ServiceName == app || process.ServiceName == r.TracingServiceName {
 				processes[pId] = process
 			}
 		}
@@ -348,7 +349,7 @@ func tracesToSpans(app string, r *jaeger.JaegerResponse, filter SpanFilter) []ja
 			if p, ok := processes[span.ProcessID]; ok {
 				span.Process = &p
 				if filter == nil || filter(&span) {
-					spans = append(spans, jaeger.JaegerSpan{
+					spans = append(spans, model.TracingSpan{
 						Span:      span,
 						TraceSize: len(trace.Spans),
 					})

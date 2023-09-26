@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/kiali/kiali/jaeger"
 	"github.com/kiali/kiali/tests/integration/utils/kiali"
+	"github.com/kiali/kiali/tracing/jaeger/model"
 )
 
 func TestServiceTraces(t *testing.T) {
@@ -85,7 +85,7 @@ func TestWrongNamespaceSpans(t *testing.T) {
 	require.Empty(spans)
 }
 
-func assertTraces(traces *jaeger.JaegerResponse, statusCode int, err error, require *require.Assertions) {
+func assertTraces(traces *model.TracingResponse, statusCode int, err error, require *require.Assertions) {
 	if statusCode == 200 {
 		require.NoError(err)
 		require.NotNil(traces)
@@ -103,7 +103,7 @@ func assertTraces(traces *jaeger.JaegerResponse, statusCode int, err error, requ
 	}
 }
 
-func assertSpans(spans []jaeger.JaegerSpan, statusCode int, err error, require *require.Assertions) {
+func assertSpans(spans []model.TracingSpan, statusCode int, err error, require *require.Assertions) {
 	if statusCode == 200 {
 		require.NoError(err)
 		require.NotNil(spans)

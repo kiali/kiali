@@ -17,6 +17,7 @@ import { averageSpanDuration, buildQueriesFromSpans } from 'utils/tracing/TraceS
 import { kialiStyle } from 'styles/StyleUtils';
 import { MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsThunkActions } from 'actions/MetricsStatsThunkActions';
+import { TEMPO } from '../../types/Tracing';
 
 interface JaegerScatterProps {
   duration: number;
@@ -28,6 +29,7 @@ interface JaegerScatterProps {
   showSpansAverage: boolean;
   traces: JaegerTrace[];
   cluster?: string;
+  provider?: string;
 }
 
 const ONE_MILLISECOND = 1000000;
@@ -57,6 +59,7 @@ const emptyStyle = kialiStyle({
 class JaegerScatterComponent extends React.Component<JaegerScatterProps> {
   isLoading = false;
   nextToLoad?: JaegerTrace = undefined;
+  seletedTraceMatched: number | undefined;
 
   renderFetchEmpty = (title, msg) => {
     return (
@@ -68,6 +71,7 @@ class JaegerScatterComponent extends React.Component<JaegerScatterProps> {
       </div>
     );
   };
+
   render() {
     const tracesRaw: Datapoint[] = [];
     const tracesError: Datapoint[] = [];
@@ -89,6 +93,22 @@ class JaegerScatterComponent extends React.Component<JaegerScatterProps> {
       const isSelected = this.props.selectedTrace && trace.traceID === this.props.selectedTrace.traceID;
       const traceError = trace.spans.filter(sp => sp.tags.some(isErrorTag)).length > 0;
       const value = this.props.showSpansAverage ? averageSpanDuration(trace) || 0 : trace.duration;
+
+      let spansLength;
+      if (this.props.provider === TEMPO) {
+        // The query to get the spans in Tempo does not return all of them,
+        // This is to avoid the resize of the circle
+        if (this.props.selectedTrace?.traceID === trace.traceID) {
+          spansLength = this.seletedTraceMatched;
+          trace.matched = this.seletedTraceMatched;
+        } else {
+          spansLength = trace.matched;
+        }
+      } else {
+        spansLength = trace.spans.length;
+      }
+      const size = Math.min(MAXIMAL_SIZE, spansLength + MINIMAL_SIZE);
+
       const traceItem = {
         x: new Date(trace.startTime / 1000),
         y: value / ONE_MILLISECOND,
@@ -99,7 +119,7 @@ class JaegerScatterComponent extends React.Component<JaegerScatterProps> {
         color: isSelected ? PFColors.Blue500 : PFColors.Blue200,
         unit: 'seconds',
         trace: trace,
-        size: Math.min(MAXIMAL_SIZE, trace.spans.length + MINIMAL_SIZE)
+        size: size
       };
       if (traceError) {
         traceItem.color = isSelected ? PFColors.Red500 : PFColors.Red200;
@@ -119,7 +139,6 @@ class JaegerScatterComponent extends React.Component<JaegerScatterProps> {
       color: (({ datum }) => datum.color) as any,
       legendItem: makeLegend('Error Traces', PFColors.Red200)
     };
-
     return this.props.errorFetchTraces && this.props.errorFetchTraces.length > 0 ? (
       this.renderFetchEmpty('Error fetching traces', this.props.errorFetchTraces![0].msg)
     ) : this.props.traces.length > 0 ? (
@@ -152,6 +171,10 @@ class JaegerScatterComponent extends React.Component<JaegerScatterProps> {
 
   private loadTraceTooltipMetrics(trace: JaegerTrace) {
     this.isLoading = true;
+    if (trace.traceID !== this.props.selectedTrace?.traceID) {
+      this.seletedTraceMatched = trace.matched;
+    }
+
     const queries = buildQueriesFromSpans(trace.spans, true);
 
     this.props
@@ -185,7 +208,8 @@ class JaegerScatterComponent extends React.Component<JaegerScatterProps> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  selectedTrace: state.jaegerState.selectedTrace
+  selectedTrace: state.jaegerState.selectedTrace,
+  provider: state.jaegerState.info?.provider
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
