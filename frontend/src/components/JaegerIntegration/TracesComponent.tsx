@@ -227,9 +227,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     const range = getTimeRangeMicros();
 
     if (this.props.provider === TEMPO) {
-      let url = `${tracingUrl}/explore?left={"queries":[{"datasource":{"type":"tempo"}}]}`;
-      // TODO Add end or tags
-      return url;
+      return `${tracingUrl}/explore?left={"queries":[{"datasource":{"type":"tempo"},"queryType":"nativeSearch","serviceName":"${this.state.targetApp}"}]}`;
     }
 
     let url = `${tracingUrl}/search?service=${this.state.targetApp}&start=${range.from}&limit=${this.state.querySettings.limit}`;
