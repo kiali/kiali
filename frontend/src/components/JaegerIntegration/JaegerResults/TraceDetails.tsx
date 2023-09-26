@@ -28,6 +28,7 @@ import { renderTraceHeatMap } from './StatsComparison';
 import { HeatMap } from 'components/HeatMap/HeatMap';
 import { formatDuration, sameSpans } from 'utils/tracing/TracingHelper';
 import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
+import { TEMPO } from '../../../types/Tracing';
 
 type ReduxProps = {
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean, cluster?: string) => void;
@@ -36,7 +37,7 @@ type ReduxProps = {
 
 type Props = ReduxProps & {
   isStatsMatrixComplete: boolean;
-  jaegerURL: string;
+  tracingURL?: string;
   namespace: string;
   otherTraces: JaegerTrace[];
   statsMatrix?: StatsMatrix;
@@ -44,6 +45,7 @@ type Props = ReduxProps & {
   targetKind: TargetKind;
   trace?: JaegerTrace;
   cluster?: string;
+  provider?: string;
 };
 
 interface State {}
@@ -168,7 +170,7 @@ class TraceDetailsComponent extends React.Component<Props, State> {
   };
 
   render() {
-    const { trace, otherTraces, jaegerURL } = this.props;
+    const { trace, otherTraces } = this.props;
     if (!trace) {
       return null;
     }
@@ -178,8 +180,8 @@ class TraceDetailsComponent extends React.Component<Props, State> {
     const avgSpanDuration = averageSpanDuration(trace);
     const similarTraces = otherTraces.filter(t => t.traceID !== trace.traceID && isSimilarTrace(t, trace));
     const comparisonLink =
-      this.props.jaegerURL && similarTraces.length > 0
-        ? `${this.props.jaegerURL}/trace/${trace.traceID}...${similarTraces[0].traceID}?cohort=${
+      this.props.tracingURL && this.props.provider !== TEMPO && similarTraces.length > 0
+        ? `${this.props.tracingURL}/trace/${trace.traceID}...${similarTraces[0].traceID}?cohort=${
             trace.traceID
           }${similarTraces
             .slice(0, 10)
@@ -191,7 +193,7 @@ class TraceDetailsComponent extends React.Component<Props, State> {
       <Card isCompact>
         <JaegerTraceTitle
           formattedTrace={formattedTrace}
-          externalURL={jaegerURL ? `${jaegerURL}/trace/${trace.traceID}` : undefined}
+          externalURL={this.props.tracingURL?.replace('TRACEID', trace.traceID)}
           graphURL={this.getGraphURL(trace.traceID)}
           comparisonURL={comparisonLink}
         />

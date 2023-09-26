@@ -44,11 +44,13 @@ import { history } from 'app/History';
 import { AngleDownIcon, AngleRightIcon, ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { isParentKiosk, kioskContextMenuAction } from '../../Kiosk/KioskActions';
 import { tableStyle } from 'styles/TableStyle';
+import { TEMPO } from '../../../types/Tracing';
 
 type ReduxProps = {
   kiosk: string;
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) => void;
   metricsStats: Map<string, MetricsStats>;
+  provider?: string;
 };
 
 type Props = ReduxProps & {
@@ -56,6 +58,7 @@ type Props = ReduxProps & {
   items: RichSpanData[];
   namespace: string;
   cluster?: string;
+  traceID: string;
 };
 
 interface State {
@@ -305,7 +308,8 @@ class SpanTableComponent extends React.Component<Props, State> {
 
     let tracingActions: IAction[] = [];
     if (this.props.externalURL) {
-      const spanLink = `${this.props.externalURL}/trace/${item.traceID}?uiFind=${item.spanID}`;
+      const traceURL = this.props.externalURL?.replace('TRACEID', this.props.traceID);
+      const spanLink = this.props.provider === TEMPO ? traceURL : `${traceURL}?uiFind=${item.spanID}`;
       tracingActions = [
         {
           isDisabled: true,
@@ -577,7 +581,8 @@ class SpanTableComponent extends React.Component<Props, State> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   kiosk: state.globalState.kiosk,
-  metricsStats: state.metricsStats.data
+  metricsStats: state.metricsStats.data,
+  provider: state.jaegerState.info?.provider
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({

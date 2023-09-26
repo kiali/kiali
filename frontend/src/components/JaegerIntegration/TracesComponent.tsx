@@ -22,12 +22,16 @@ import { MetricsStatsResult } from 'types/Metrics';
 import { getSpanId } from 'utils/SearchParamUtils';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { subTabStyle } from 'styles/TabStyles';
+import { TEMPO } from 'types/Tracing';
+import { ExternalServiceInfo } from '../../types/StatusState';
 
 type ReduxProps = {
+  externalServices: ExternalServiceInfo[];
   namespaceSelector: boolean;
   selectedTrace?: JaegerTrace;
   timeRange: TimeRange;
   urlJaeger: string;
+  provider?: string;
 };
 
 type TracesProps = ReduxProps & {
@@ -206,13 +210,29 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     this.setState(newState as TracesState);
   };
 
-  private getJaegerUrl = () => {
-    if (this.props.urlJaeger === '' || !this.state.targetApp) {
+  private getBaseTracingUrl = () => {
+    if (this.props.provider === TEMPO) {
+      return this.getGrafanaUrl()?.url;
+    } else {
+      return this.props.urlJaeger;
+    }
+  };
+
+  private getTracingUrl = () => {
+    const tracingUrl = this.getBaseTracingUrl();
+
+    if (tracingUrl === '' || !this.state.targetApp) {
       return undefined;
     }
-
     const range = getTimeRangeMicros();
-    let url = `${this.props.urlJaeger}/search?service=${this.state.targetApp}&start=${range.from}&limit=${this.state.querySettings.limit}`;
+
+    if (this.props.provider === TEMPO) {
+      let url = `${tracingUrl}/explore?left={"queries":[{"datasource":{"type":"tempo"}}]}`;
+      // TODO Add end or tags
+      return url;
+    }
+
+    let url = `${tracingUrl}/search?service=${this.state.targetApp}&start=${range.from}&limit=${this.state.querySettings.limit}`;
     if (range.to) {
       url += `&end=${range.to}`;
     }
@@ -221,6 +241,22 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
       url += `&tags=${tags}`;
     }
     return url;
+  };
+
+  private getTraceDetailURL = () => {
+    const tracingUrl = this.getBaseTracingUrl();
+    if (!tracingUrl) {
+      return undefined;
+    }
+    if (this.props.provider === TEMPO) {
+      return `${tracingUrl}/explore?left={"queries":[{"datasource":{"type":"tempo"},"queryType":"traceql","query":"TRACEID"}]}`;
+    } else {
+      return `${tracingUrl}/trace/TRACEID`;
+    }
+  };
+
+  private getGrafanaUrl = () => {
+    return this.props.externalServices.find(service => service.name === 'Grafana');
   };
 
   private onQuerySettingsChanged = (settings: QuerySettings) => {
@@ -237,7 +273,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
   };
 
   render() {
-    const jaegerURL = this.getJaegerUrl();
+    const jaegerURL = this.getTracingUrl();
 
     return (
       <>
@@ -300,17 +336,19 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                     namespace={this.props.namespace}
                     target={this.props.target}
                     targetKind={this.props.targetKind}
-                    jaegerURL={this.props.urlJaeger}
+                    tracingURL={this.getTraceDetailURL()}
                     otherTraces={this.state.traces}
                     cluster={this.props.cluster ? this.props.cluster : ''}
+                    provider={this.props.provider}
                   />
                 </Tab>
                 <Tab eventKey={spansDetailsTab} title="Span Details">
                   <SpanDetails
                     namespace={this.props.namespace}
                     target={this.props.target}
-                    externalURL={this.props.urlJaeger}
+                    externalURL={this.getTraceDetailURL()}
                     items={this.props.selectedTrace.spans}
+                    traceID={this.props.selectedTrace.traceID}
                     cluster={this.props.cluster ? this.props.cluster : ''}
                   />
                 </Tab>
@@ -333,8 +371,10 @@ const mapStateToProps = (state: KialiAppState) => {
   return {
     timeRange: timeRangeSelector(state),
     urlJaeger: state.jaegerState.info ? state.jaegerState.info.url : '',
+    externalServices: state.statusState.externalServices,
     namespaceSelector: state.jaegerState.info ? state.jaegerState.info.namespaceSelector : true,
-    selectedTrace: state.jaegerState.selectedTrace
+    selectedTrace: state.jaegerState.selectedTrace,
+    provider: state.jaegerState.info?.provider
   };
 };
 
