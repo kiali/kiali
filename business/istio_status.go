@@ -16,6 +16,8 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
+const istioEastWestGateway = "istio-eastwestgateway"
+
 // SvcService deals with fetching istio/kubernetes services related content and convert to kiali model
 type IstioStatusService struct {
 	userClients   map[string]kubernetes.ClientInterface
@@ -142,6 +144,11 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload) (kubern
 	statusComponents := istioCoreComponents()
 	isc := kubernetes.IstioComponentStatus{}
 	cf := map[string]bool{}
+
+	// eastwest gateway is checked in multicluster
+	if _, ok := statusComponents[istioEastWestGateway]; !ok && len(iss.userClients) > 1 {
+		statusComponents[istioEastWestGateway] = true
+	}
 
 	// Map workloads there by app name
 	for _, workload := range workloads {
