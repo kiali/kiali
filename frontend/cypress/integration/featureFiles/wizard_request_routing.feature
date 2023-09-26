@@ -74,3 +74,42 @@ Feature: Service Details Wizard: Request Routing
     And user confirms delete the configuration
     Then user sees the "Istio Config" table with empty message
 
+  @skip
+  @multi-cluster
+  @remote-istio-crds
+  Scenario: Create a Request Routing scenario in a remote cluster
+    When user is at the details page for the "service" "bookinfo/ratings" located in the "west" cluster
+    And user clicks in the "Request Routing" actions
+    And user sees the "Create Request Routing" wizard
+    And user clicks in the "Request Matching" tab
+    And user adds a route
+    And user previews the configuration
+    And user creates the configuration
+    Then user sees the "Istio Config" table generated objects located in the "west" cluster
+    
+
+  @skip
+  @multi-cluster
+  @remote-istio-crds
+  Scenario: Update a Request Routing scenario
+    When user deletes gateway named "ratings-gateway" and the resource is no longer available in any cluster
+    And user is at the details page for the "service" "bookinfo/ratings" located in the "west" cluster
+    And user clicks in the "Request Routing" actions
+    And user sees the "Update Request Routing" wizard
+    And user clicks on "Show" Advanced Options
+    And user clicks in the "Gateways" tab
+    And user clicks on Add Gateway
+    And user selects Create Gateway
+    And user previews the configuration
+    And user updates the configuration
+    Then user sees the "Istio Config" table generated "ratings" objects located in the "west" cluster
+    And the "Gateway" "ratings-gateway" should be listed in "west" "bookinfo" namespace 
+
+  @skip
+  @multi-cluster
+  @remote-istio-crds
+  Scenario: Delete the Request Routing scenario
+    When user is at the details page for the "service" "bookinfo/ratings" located in the "west" cluster
+    And user clicks in the "Delete Traffic Routing" actions
+    And user confirms delete the configuration
+    Then user sees the "Istio Config" table with empty message
