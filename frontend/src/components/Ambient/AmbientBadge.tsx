@@ -23,16 +23,6 @@ export class AmbientBadge extends React.Component<AmbientLabelProps, {}> {
         <Label style={{ marginLeft: 5 }} color="blue" isCompact>
           Ambient
         </Label>
-        {!this.props.tooltip && (
-          <span style={{ marginLeft: '8px' }}>
-            {this.props.tooltip}
-            <Tooltip key={`tooltip_ambient_label`} position={TooltipPosition.top} content={tooltipContent}>
-              <Label style={{ marginLeft: 5 }} color="blue" isCompact>
-                Ambient
-              </Label>
-            </Tooltip>
-          </span>
-        )}
       </span>
     );
     return (
