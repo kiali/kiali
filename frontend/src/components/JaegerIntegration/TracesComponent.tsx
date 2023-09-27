@@ -28,31 +28,31 @@ import { ExternalServiceInfo } from '../../types/StatusState';
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
   namespaceSelector: boolean;
+  provider?: string;
   selectedTrace?: JaegerTrace;
   timeRange: TimeRange;
   urlJaeger: string;
-  provider?: string;
 };
 
 type TracesProps = ReduxProps & {
+  cluster?: string;
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
-  cluster?: string;
   target: string;
   targetKind: TargetKind;
 };
 
 interface TracesState {
+  activeTab: number;
+  displaySettings: DisplaySettings;
   isTimeOptionsOpen: boolean;
+  jaegerErrors: JaegerError[];
+  querySettings: QuerySettings;
+  targetApp?: string;
+  toolbarDisabled: boolean;
+  traces: JaegerTrace[];
   url: string;
   width: number;
-  querySettings: QuerySettings;
-  displaySettings: DisplaySettings;
-  traces: JaegerTrace[];
-  jaegerErrors: JaegerError[];
-  targetApp?: string;
-  activeTab: number;
-  toolbarDisabled: boolean;
 }
 
 const traceDetailsTab = 0;
@@ -221,7 +221,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
   private getTracingUrl = () => {
     const tracingUrl = this.getBaseTracingUrl();
 
-    if (tracingUrl === '' || !this.state.targetApp) {
+    if (tracingUrl === '' || !tracingUrl || !this.state.targetApp) {
       return undefined;
     }
     const range = getTimeRangeMicros();

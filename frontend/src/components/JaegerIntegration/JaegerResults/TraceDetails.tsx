@@ -36,16 +36,16 @@ type ReduxProps = {
 };
 
 type Props = ReduxProps & {
+  cluster?: string;
   isStatsMatrixComplete: boolean;
-  tracingURL?: string;
   namespace: string;
   otherTraces: JaegerTrace[];
+  provider?: string;
   statsMatrix?: StatsMatrix;
   target: string;
   targetKind: TargetKind;
   trace?: JaegerTrace;
-  cluster?: string;
-  provider?: string;
+  tracingURL?: string;
 };
 
 interface State {}
@@ -193,7 +193,7 @@ class TraceDetailsComponent extends React.Component<Props, State> {
       <Card isCompact>
         <JaegerTraceTitle
           formattedTrace={formattedTrace}
-          externalURL={this.props.tracingURL?.replace('TRACEID', trace.traceID)}
+          externalURL={this.props.tracingURL ? this.props.tracingURL.replace('TRACEID', trace.traceID) : undefined}
           graphURL={this.getGraphURL(trace.traceID)}
           comparisonURL={comparisonLink}
         />
