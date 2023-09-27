@@ -1770,7 +1770,7 @@ func (in *WorkloadService) getWaypointForWorkload(ctx context.Context, namespace
 	var workloadslist []models.Workload
 	// Get service Account name for each pod from the workload
 	for _, wk := range wlist {
-		if wk.Labels[models.WaypointLabel] == "istio.io-mesh-controller" {
+		if wk.Labels[config.WaypointLabel] == "istio.io-mesh-controller" {
 			for _, pod := range wk.Pods {
 				if pod.Labels["istio.io/gateway-name"] == "namespace" {
 					workloadslist = append(workloadslist, *wk)
@@ -1803,7 +1803,7 @@ func (in *WorkloadService) listWaypointWorkloadsForSA(ctx context.Context, names
 	var workloadslist []models.Workload
 	// Get service Account name for each pod from the workload
 	for _, workload := range wlist {
-		if workload.Labels[models.WaypointLabel] != "istio.io-mesh-controller" {
+		if workload.Labels[config.WaypointLabel] != "istio.io-mesh-controller" {
 			for _, pod := range workload.Pods {
 				if pod.ServiceAccountName == sa {
 					workloadslist = append(workloadslist, *workload)
@@ -1826,7 +1826,7 @@ func (in *WorkloadService) listWaypointWorkloadsForNamespace(ctx context.Context
 	var workloadslist []models.Workload
 	// Get service Account name for each pod from the workload
 	for _, workload := range wlist {
-		if workload.Labels[models.WaypointLabel] != "istio.io-mesh-controller" {
+		if workload.Labels[config.WaypointLabel] != "istio.io-mesh-controller" {
 			workloadslist = append(workloadslist, *workload)
 		}
 	}

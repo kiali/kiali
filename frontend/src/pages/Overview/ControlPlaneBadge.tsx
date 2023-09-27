@@ -19,7 +19,9 @@ export class ControlPlaneBadge extends React.Component<Props> {
           Control plane
         </Label>
         {isRemoteCluster(this.props.annotations) && <RemoteClusterBadge />}
-        {serverConfig.ambientEnabled && <AmbientBadge tooltip={true}></AmbientBadge>}{' '}
+        {serverConfig.ambientEnabled && (
+          <AmbientBadge tooltip={'Istio Ambient ztunnel detected in the Control plane'}></AmbientBadge>
+        )}{' '}
         <IstioStatusInline cluster={this.props.cluster} />
       </>
     );

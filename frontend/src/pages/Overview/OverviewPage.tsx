@@ -1003,7 +1003,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                                   {serverConfig.ambientEnabled &&
                                     ns.name !== serverConfig.istioNamespace &&
                                     ns.labels &&
-                                    ns.isAmbient && <AmbientBadge tooltip={true}></AmbientBadge>}
+                                    ns.isAmbient && (
+                                      <AmbientBadge tooltip={'labeled as part of Ambient Mesh'}></AmbientBadge>
+                                    )}
                                 </span>
                               </Title>
                             </>

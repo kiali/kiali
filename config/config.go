@@ -60,6 +60,13 @@ const (
 	DefaultClusterID = "Kubernetes"
 )
 
+const (
+	AmbientAnnotation        = "ambient.istio.io/redirection"
+	AmbientAnnotationEnabled = "enabled"
+	WaypointLabel            = "gateway.istio.io/managed"
+	WaypointLabelValue       = "istio.io-mesh-controller"
+)
+
 // FeatureName is the enum type used for named features that can be disabled via KialiFeatureFlags.DisabledFeatures
 type FeatureName string
 
@@ -284,10 +291,14 @@ func (lt *LoginToken) Obfuscate() {
 
 // IstioLabels holds configuration about the labels required by Istio
 type IstioLabels struct {
-	AppLabelName       string `yaml:"app_label_name,omitempty" json:"appLabelName"`
-	InjectionLabelName string `yaml:"injection_label,omitempty" json:"injectionLabelName"`
-	InjectionLabelRev  string `yaml:"injection_label_rev,omitempty" json:"injectionLabelRev"`
-	VersionLabelName   string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
+	AmbientNamespaceLabel      string
+	AmbientNamespaceLabelValue string
+	AmbientWaypointLabel       string
+	AmbientWaypointLabelValue  string
+	AppLabelName               string `yaml:"app_label_name,omitempty" json:"appLabelName"`
+	InjectionLabelName         string `yaml:"injection_label,omitempty" json:"injectionLabelName"`
+	InjectionLabelRev          string `yaml:"injection_label_rev,omitempty" json:"injectionLabelRev"`
+	VersionLabelName           string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
 }
 
 // AdditionalDisplayItem holds some display-related configuration, like which annotations are to be displayed
@@ -672,10 +683,14 @@ func NewConfig() (c *Config) {
 			},
 		},
 		IstioLabels: IstioLabels{
-			AppLabelName:       "app",
-			InjectionLabelName: "istio-injection",
-			InjectionLabelRev:  "istio.io/rev",
-			VersionLabelName:   "version",
+			AmbientNamespaceLabel:      "istio.io/dataplane-mode",
+			AmbientNamespaceLabelValue: "ambient",
+			AmbientWaypointLabel:       WaypointLabel,
+			AmbientWaypointLabelValue:  WaypointLabelValue,
+			AppLabelName:               "app",
+			InjectionLabelName:         "istio-injection",
+			InjectionLabelRev:          "istio.io/rev",
+			VersionLabelName:           "version",
 		},
 		KialiFeatureFlags: KialiFeatureFlags{
 			CertificatesInformationIndicators: CertificatesInformationIndicators{

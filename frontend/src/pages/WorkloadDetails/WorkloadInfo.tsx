@@ -139,11 +139,13 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
       path: ''
     };
 
+    const istioLabels = serverConfig.istioLabels;
+    const istioAnnotations = serverConfig.istioAnnotations;
     const validations: Validations = {};
     const isWaypoint =
-      serverConfig.ambientEnabled === true &&
+      serverConfig.ambientEnabled &&
       workload.labels &&
-      workload.labels['gateway.istio.io/managed'] === 'istio.io-mesh-controller';
+      workload.labels[istioLabels.ambientWaypointLabel] === istioLabels.ambientWaypointLabelValue;
 
     if (workload.pods.length > 0) {
       validations.pod = {};
@@ -159,8 +161,10 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
             if (!pod.istioContainers || pod.istioContainers.length === 0) {
               if (
                 !(
-                  serverConfig.ambientEnabled === true &&
-                  (pod.annotations ? pod.annotations['ambient.istio.io/redirection'] === 'enabled' : false)
+                  serverConfig.ambientEnabled &&
+                  (pod.annotations
+                    ? pod.annotations[istioAnnotations.ambientAnnotation] === istioAnnotations.ambientAnnotationEnabled
+                    : false)
                 )
               ) {
                 validations.pod[pod.name].checks.push(noIstiosidecar);
