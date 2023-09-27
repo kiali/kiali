@@ -2,8 +2,8 @@ import * as React from 'react';
 import { MenuToggle, MenuToggleElement, Select, SelectProps } from '@patternfly/react-core';
 
 type SimplerSelectProps = Omit<Omit<Omit<Omit<SelectProps, 'isOpen'>, 'onSelect'>, 'onOpenChange'>, 'toggle'> & {
-  onSelect?: (value?: string | number) => void;
   onOpenChange?: (isOpen: boolean) => void;
+  onSelect?: (value?: string | number) => void;
 };
 
 export const SimplerSelect: React.FC<SimplerSelectProps> = (props: SimplerSelectProps) => {
@@ -20,6 +20,8 @@ export const SimplerSelect: React.FC<SimplerSelectProps> = (props: SimplerSelect
       {...props}
       toggle={toggle}
       onOpenChange={isOpen => {
+        setIsOpen(isOpen);
+
         if (props.onOpenChange) {
           props.onOpenChange(isOpen);
         }

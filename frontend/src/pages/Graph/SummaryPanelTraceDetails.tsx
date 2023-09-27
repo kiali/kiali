@@ -184,7 +184,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
                   <SelectList>
                     {spans.map(s => {
                       return (
-                        <SelectOption value={s.spanID}>
+                        <SelectOption key={s.spanID} value={s.spanID}>
                           <>
                             <div>{s.operationName}</div>
                             <div>(t + {formatDuration(s.relativeStartTime)})</div>
