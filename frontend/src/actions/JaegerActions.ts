@@ -1,10 +1,10 @@
 import { ActionType, createAction, createStandardAction } from 'typesafe-actions';
 import { ActionKeys } from './ActionKeys';
-import { JaegerInfo, JaegerTrace } from 'types/JaegerInfo';
+import { TracingInfo, JaegerTrace } from 'types/TracingInfo';
 
 // synchronous action creators
 export const JaegerActions = {
-  setInfo: createStandardAction(ActionKeys.JAEGER_SET_INFO)<JaegerInfo | null>(),
+  setInfo: createStandardAction(ActionKeys.JAEGER_SET_INFO)<TracingInfo | null>(),
   setTrace: createAction(ActionKeys.JAEGER_SET_TRACE, resolve => (trace?: JaegerTrace) =>
     resolve({ selectedTrace: trace })
   )

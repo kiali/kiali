@@ -2,12 +2,12 @@ import { updateState } from '../utils/Reducer';
 import { KialiAppAction } from '../actions/KialiAppAction';
 import { getType } from 'typesafe-actions';
 import { JaegerActions } from '../actions/JaegerActions';
-import { JaegerInfo, JaegerTrace } from 'types/JaegerInfo';
+import { TracingInfo, JaegerTrace } from 'types/TracingInfo';
 
 export const INITIAL_JAEGER_STATE: JaegerState = {};
 
 export type JaegerState = {
-  info?: JaegerInfo;
+  info?: TracingInfo;
   selectedTrace?: JaegerTrace;
 };
 

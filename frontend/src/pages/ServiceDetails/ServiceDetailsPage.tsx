@@ -9,8 +9,8 @@ import { KialiAppState } from '../../store/Store';
 import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
 import { ParameterizedTabs, activeTab } from '../../components/Tab/Tabs';
 import { ServiceInfo } from './ServiceInfo';
-import { TracesComponent } from 'components/JaegerIntegration/TracesComponent';
-import { JaegerInfo } from 'types/JaegerInfo';
+import { TracesComponent } from 'components/TracingIntegration/TracesComponent';
+import { TracingInfo } from 'types/TracingInfo';
 import { TrafficDetails } from 'components/TrafficList/TrafficDetails';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
@@ -49,7 +49,7 @@ type ServiceDetailsState = {
 interface ServiceDetailsProps {
   serviceId: ServiceId;
   duration: DurationInSeconds;
-  jaegerInfo?: JaegerInfo;
+  jaegerInfo?: TracingInfo;
   lastRefreshAt: TimeInMilliseconds;
 }
 
@@ -286,7 +286,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerInfo: state.jaegerState.info,
+  jaegerInfo: state.tracingState.info,
   duration: durationSelector(state)
 });
 

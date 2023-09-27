@@ -19,7 +19,7 @@ type Props = ReduxProps & {
   comparisonURL?: string;
 };
 
-const JaegerTraceTitleComponent = (props: Props) => {
+const TracingTraceTitleComponent = (props: Props) => {
   const links = [
     <DropdownItem
       key="view_on_graph"
@@ -87,4 +87,4 @@ const mapStateToProps = (state: KialiAppState) => {
   };
 };
 
-export const JaegerTraceTitle = connect(mapStateToProps)(JaegerTraceTitleComponent);
+export const TracingTraceTitle = connect(mapStateToProps)(TracingTraceTitleComponent);

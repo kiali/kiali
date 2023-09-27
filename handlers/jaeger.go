@@ -14,7 +14,7 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-// Get JaegerInfo provides the Jaeger URL and other info
+// Get TracingInfo provides the Jaeger URL and other info
 func GetJaegerInfo(w http.ResponseWriter, r *http.Request) {
 	jaegerConfig := config.Get().ExternalServices.Tracing
 	var info models.JaegerInfo

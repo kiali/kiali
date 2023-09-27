@@ -39,7 +39,7 @@ import { Namespace } from 'types/Namespace';
 import _ from 'lodash';
 import { PFColors } from 'components/Pf/PfColors';
 import { getEdgeHealth } from 'types/ErrorRate/GraphEdgeStatus';
-import { Span } from 'types/JaegerInfo';
+import { Span } from 'types/TracingInfo';
 import { Tooltip } from '@patternfly/react-core';
 import { IconType } from 'config/Icons';
 

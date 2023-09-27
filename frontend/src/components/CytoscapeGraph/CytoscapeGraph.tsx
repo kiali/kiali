@@ -22,7 +22,7 @@ import {
   UNKNOWN,
   NodeAttr
 } from '../../types/Graph';
-import { JaegerTrace } from 'types/JaegerInfo';
+import { JaegerTrace } from 'types/TracingInfo';
 import { Namespace } from '../../types/Namespace';
 import { addInfo } from 'utils/AlertUtils';
 import { angleBetweenVectors, squaredDistance, normalize } from '../../utils/MathUtils';

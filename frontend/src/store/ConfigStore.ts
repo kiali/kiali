@@ -91,7 +91,7 @@ const initialStore: KialiAppState = {
   messageCenter: INITIAL_MESSAGE_CENTER_STATE,
   graph: INITIAL_GRAPH_STATE,
   userSettings: INITIAL_USER_SETTINGS_STATE,
-  jaegerState: INITIAL_JAEGER_STATE,
+  tracingState: INITIAL_JAEGER_STATE,
   meshTLSStatus: INITIAL_MESH_TLS_STATE,
   metricsStats: INITIAL_METRICS_STATS_STATE,
   istioStatus: INITIAL_ISTIO_STATUS_STATE,

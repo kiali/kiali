@@ -149,7 +149,7 @@ export interface KialiAppState {
   istioStatus: ComponentStatus[];
   istioCertsInfo: CertsInfo[];
   /** Jaeger Settings */
-  jaegerState: JaegerState;
+  tracingState: JaegerState;
   meshTLSStatus: TLSStatus;
   messageCenter: MessageCenterState;
   metricsStats: MetricsStatsState;

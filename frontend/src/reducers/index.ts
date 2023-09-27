@@ -24,7 +24,7 @@ export const rootReducer = combineReducers<KialiAppState, KialiAppAction>({
   graph: GraphDataStateReducer,
   istioStatus: IstioStatusStateReducer,
   istioCertsInfo: IstioCertsInfoStateReducer,
-  jaegerState: JaegerStateReducer,
+  tracingState: JaegerStateReducer,
   meshTLSStatus: MeshTlsStateReducer,
   messageCenter: MessageCenterReducer,
   metricsStats: MetricsStatsStateReducer,

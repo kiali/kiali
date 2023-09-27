@@ -13,8 +13,8 @@ import { DurationInSeconds, TimeInMilliseconds, TimeRange } from '../../types/Co
 import { KialiAppState } from '../../store/Store';
 import { durationSelector, timeRangeSelector } from '../../store/Selectors';
 import { ParameterizedTabs, activeTab } from '../../components/Tab/Tabs';
-import { JaegerInfo } from '../../types/JaegerInfo';
-import { TracesComponent } from '../../components/JaegerIntegration/TracesComponent';
+import { TracingInfo } from '../../types/TracingInfo';
+import { TracesComponent } from '../../components/TracingIntegration/TracesComponent';
 import { TrafficDetails } from 'components/TrafficList/TrafficDetails';
 import { TimeControl } from '../../components/Time/TimeControl';
 import { AppHealth } from 'types/Health';
@@ -37,7 +37,7 @@ type AppDetailsState = {
 
 type ReduxProps = {
   duration: DurationInSeconds;
-  jaegerInfo?: JaegerInfo;
+  jaegerInfo?: TracingInfo;
   timeRange: TimeRange;
 };
 
@@ -279,7 +279,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  jaegerInfo: state.jaegerState.info,
+  jaegerInfo: state.tracingState.info,
   timeRange: timeRangeSelector(state)
 });
 

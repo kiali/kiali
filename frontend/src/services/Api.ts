@@ -30,7 +30,7 @@ import {
   CanaryUpgradeStatus
 } from '../types/IstioObjects';
 import { ComponentStatus, IstiodResourceThresholds } from '../types/IstioStatus';
-import { JaegerInfo, JaegerResponse, JaegerSingleResponse } from '../types/JaegerInfo';
+import { TracingInfo, JaegerResponse, JaegerSingleResponse } from '../types/TracingInfo';
 import { MeshClusters } from '../types/Mesh';
 import { DashboardQuery, IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
 import { IstioMetricsMap, MetricsStatsResult } from '../types/Metrics';
@@ -523,7 +523,7 @@ export const getGrafanaInfo = () => {
 };
 
 export const getJaegerInfo = () => {
-  return newRequest<JaegerInfo>(HTTP_VERBS.GET, urls.jaeger, {}, {});
+  return newRequest<TracingInfo>(HTTP_VERBS.GET, urls.jaeger, {}, {});
 };
 
 export const getAppTraces = (namespace: string, app: string, params: TracingQuery, cluster?: string) => {

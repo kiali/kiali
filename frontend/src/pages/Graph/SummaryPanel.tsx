@@ -259,7 +259,7 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerState: state.jaegerState,
+  jaegerState: state.tracingState,
   kiosk: state.globalState.kiosk
 });
 

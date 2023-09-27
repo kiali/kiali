@@ -4,13 +4,13 @@ import { KialiDispatch } from 'types/Redux';
 import _round from 'lodash/round';
 import { Button, ButtonVariant, Card, CardBody, Grid, GridItem, Tooltip } from '@patternfly/react-core';
 import { InfoAltIcon, WarningTriangleIcon } from '@patternfly/react-icons';
-import { JaegerTrace, RichSpanData } from 'types/JaegerInfo';
-import { JaegerTraceTitle } from './JaegerTraceTitle';
+import { JaegerTrace, RichSpanData } from 'types/TracingInfo';
+import { TracingTraceTitle } from './TracingTraceTitle';
 import { GraphType, NodeType } from 'types/Graph';
 import { FormattedTraceInfo, shortIDStyle } from './FormattedTraceInfo';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiAppState } from 'store/Store';
-import { JaegerThunkActions } from 'actions/JaegerThunkActions';
+import { TracingThunkActions } from 'actions/TracingThunkActions';
 import { getTraceId } from 'utils/SearchParamUtils';
 import { average } from 'utils/MathUtils';
 import {
@@ -191,7 +191,7 @@ class TraceDetailsComponent extends React.Component<Props, State> {
 
     return (
       <Card isCompact>
-        <JaegerTraceTitle
+        <TracingTraceTitle
           formattedTrace={formattedTrace}
           externalURL={this.props.tracingURL ? this.props.tracingURL.replace('TRACEID', trace.traceID) : undefined}
           graphURL={this.getGraphURL(trace.traceID)}
@@ -252,22 +252,22 @@ class TraceDetailsComponent extends React.Component<Props, State> {
 }
 
 const mapStateToProps = (state: KialiAppState) => {
-  if (state.jaegerState.selectedTrace) {
-    const { matrix, isComplete } = reduceMetricsStats(state.jaegerState.selectedTrace, state.metricsStats.data, false);
+  if (state.tracingState.selectedTrace) {
+    const { matrix, isComplete } = reduceMetricsStats(state.tracingState.selectedTrace, state.metricsStats.data, false);
     return {
-      trace: state.jaegerState.selectedTrace,
+      trace: state.tracingState.selectedTrace,
       statsMatrix: matrix,
       isStatsMatrixComplete: isComplete
     };
   }
   return {
-    trace: state.jaegerState.selectedTrace,
+    trace: state.tracingState.selectedTrace,
     isStatsMatrixComplete: false
   };
 };
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
-  setTraceId: (cluster?: string, traceId?: string) => dispatch(JaegerThunkActions.setTraceId(cluster, traceId)),
+  setTraceId: (cluster?: string, traceId?: string) => dispatch(TracingThunkActions.setTraceId(cluster, traceId)),
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) =>
     dispatch(MetricsStatsThunkActions.load(queries, isCompact))
 });

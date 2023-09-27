@@ -513,7 +513,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
 }
 
 export function SummaryPanelNode(props: SummaryPanelNodeProps) {
-  const jaegerState = useKialiSelector(state => state.jaegerState);
+  const jaegerState = useKialiSelector(state => state.tracingState);
   const kiosk = useKialiSelector(state => state.globalState.kiosk);
   const rankResult = useKialiSelector(state => state.graph.rankResult);
   const showRank = useKialiSelector(state => state.graph.toolbarState.showRank);

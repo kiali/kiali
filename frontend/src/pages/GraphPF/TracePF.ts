@@ -1,5 +1,5 @@
 import { Controller, Edge, Node } from '@patternfly/react-topology';
-import { JaegerTrace, Span } from 'types/JaegerInfo';
+import { JaegerTrace, Span } from 'types/TracingInfo';
 import { NodeType, GraphType, SEInfo, NodeAttr } from 'types/Graph';
 import {
   getAppFromSpan,

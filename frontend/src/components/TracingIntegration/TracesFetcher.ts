@@ -1,6 +1,6 @@
 import * as API from 'services/Api';
 import * as AlertUtils from 'utils/AlertUtils';
-import { JaegerTrace, JaegerError } from 'types/JaegerInfo';
+import { JaegerTrace, TracingError } from 'types/TracingInfo';
 import { TracingQuery } from 'types/Tracing';
 import { TargetKind } from 'types/Common';
 import { getTimeRangeMicros } from 'utils/tracing/TracingHelper';
@@ -21,7 +21,7 @@ export class TracesFetcher {
 
   constructor(
     private onChange: (traces: JaegerTrace[], jaegerServiceName: string) => void,
-    private onErrors: (err: JaegerError[]) => void
+    private onErrors: (err: TracingError[]) => void
   ) {}
 
   fetch = (o: FetchOptions, oldTraces: JaegerTrace[]) => {

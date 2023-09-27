@@ -5,9 +5,9 @@ import { ChartCursorFlyout, ChartLabelProps } from '@patternfly/react-charts';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiAppState } from 'store/Store';
 import { averageSpanDuration, reduceMetricsStats } from 'utils/tracing/TraceStats';
-import { JaegerLineInfo } from './JaegerScatter';
-import { JaegerTrace } from 'types/JaegerInfo';
-import { renderTraceHeatMap } from './JaegerResults/StatsComparison';
+import { JaegerLineInfo } from './TracingScatter';
+import { JaegerTrace } from 'types/TracingInfo';
+import { renderTraceHeatMap } from './TracingResults/StatsComparison';
 import { PFColors } from 'components/Pf/PfColors';
 import { HookedChartTooltip, HookedTooltipProps } from 'components/Charts/CustomTooltip';
 import { formatDuration } from 'utils/tracing/TracingHelper';
@@ -105,8 +105,8 @@ const mapStateToProps = (state: KialiAppState, props: any) => {
   return {
     metricsStats: state.metricsStats.data,
     trace: props.trace,
-    provider: state.jaegerState.info?.provider,
-    selectedTrace: state.jaegerState.selectedTrace
+    provider: state.tracingState.info?.provider,
+    selectedTrace: state.tracingState.selectedTrace
   };
 };
 

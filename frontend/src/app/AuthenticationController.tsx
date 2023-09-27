@@ -15,7 +15,7 @@ import { getKioskMode, isKioskMode } from '../utils/SearchParamUtils';
 import * as AlertUtils from '../utils/AlertUtils';
 import { setServerConfig, serverConfig, humanDurations } from '../config/ServerConfig';
 import { AuthStrategy } from '../types/Auth';
-import { JaegerInfo } from '../types/JaegerInfo';
+import { TracingInfo } from '../types/TracingInfo';
 import { LoginActions } from '../actions/LoginActions';
 import { history } from './History';
 import { NamespaceActions } from 'actions/NamespaceAction';
@@ -39,7 +39,7 @@ interface AuthenticationControllerReduxProps {
   landingRoute?: string;
   setActiveNamespaces: (namespaces: Namespace[]) => void;
   setDuration: (duration: DurationInSeconds) => void;
-  setJaegerInfo: (jaegerInfo: JaegerInfo | null) => void;
+  setJaegerInfo: (jaegerInfo: TracingInfo | null) => void;
   setLandingRoute: (route: string | undefined) => void;
   setNamespaces: (namespaces: Namespace[], receivedAt: Date) => void;
   setRefreshInterval: (interval: IntervalInMilliseconds) => void;

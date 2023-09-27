@@ -8,7 +8,7 @@ import {
   OpenTracingHTTPInfo,
   OpenTracingTCPInfo,
   Span
-} from 'types/JaegerInfo';
+} from 'types/TracingInfo';
 import { retrieveTimeRange } from 'components/Time/TimeRangeHelper';
 import { guardTimeRange, durationToBounds, DurationInSeconds } from 'types/Common';
 import { spansSort } from './TraceTransform';

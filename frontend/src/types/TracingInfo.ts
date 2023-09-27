@@ -4,7 +4,7 @@
 
 import { Target } from './MetricsOptions';
 
-export interface JaegerInfo {
+export interface TracingInfo {
   enabled: boolean;
   integration: boolean;
   url: string;
@@ -113,7 +113,7 @@ export type JaegerTrace = TraceData<RichSpanData> & {
   services: { name: string; numberOfSpans: number }[];
 };
 
-export type JaegerError = {
+export type TracingError = {
   code?: number;
   msg: string;
   traceID?: string;
@@ -121,11 +121,11 @@ export type JaegerError = {
 
 export type JaegerResponse = {
   data: JaegerTrace[] | null;
-  errors: JaegerError[];
+  errors: TracingError[];
   jaegerServiceName: string;
 };
 
 export type JaegerSingleResponse = {
   data: JaegerTrace | null;
-  errors: JaegerError[];
+  errors: TracingError[];
 };

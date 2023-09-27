@@ -12,15 +12,15 @@ import {
   MapMarkerIcon
 } from '@patternfly/react-icons';
 import { URLParam } from '../../app/History';
-import { JaegerTrace, RichSpanData, EnvoySpanInfo, OpenTracingHTTPInfo, OpenTracingTCPInfo } from 'types/JaegerInfo';
+import { JaegerTrace, RichSpanData, EnvoySpanInfo, OpenTracingHTTPInfo, OpenTracingTCPInfo } from 'types/TracingInfo';
 import { KialiAppState } from 'store/Store';
-import { JaegerThunkActions } from 'actions/JaegerThunkActions';
+import { TracingThunkActions } from 'actions/TracingThunkActions';
 import { GraphActions } from 'actions/GraphActions';
 import { PFColors } from 'components/Pf/PfColors';
 import { findChildren, findParent, formatDuration } from 'utils/tracing/TracingHelper';
 import { decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { FocusAnimation } from 'components/CytoscapeGraph/FocusAnimation';
-import { FormattedTraceInfo, shortIDStyle } from 'components/JaegerIntegration/JaegerResults/FormattedTraceInfo';
+import { FormattedTraceInfo, shortIDStyle } from 'components/TracingIntegration/TracingResults/FormattedTraceInfo';
 import { SimplerSelect } from 'components/SimplerSelect';
 import { summaryFont, summaryTitle } from './SummaryPanelCommon';
 import { NodeParamsType, GraphType, SummaryData, NodeAttr } from 'types/Graph';
@@ -447,7 +447,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
-  close: () => dispatch(JaegerThunkActions.setTraceId('', undefined)),
+  close: () => dispatch(TracingThunkActions.setTraceId('', undefined)),
   setNode: bindActionCreators(GraphActions.setNode, dispatch)
 });
 

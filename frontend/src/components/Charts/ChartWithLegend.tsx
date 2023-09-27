@@ -50,7 +50,7 @@ type Props<T extends RichDataPoint, O extends LineInfo> = {
   unit: string;
   xAxis?: XAxisType;
   labelComponent?: React.ReactElement<ChartTooltipProps>;
-  // The JaegerScatter component needs a flag to indicate that the trace datapoint needs a mouse pointer
+  // The TracingScatter component needs a flag to indicate that the trace datapoint needs a mouse pointer
   // It could be detected indirectly, but it's complicated and less clear, a new optional flag simplifies this logic
   pointer?: boolean;
 };

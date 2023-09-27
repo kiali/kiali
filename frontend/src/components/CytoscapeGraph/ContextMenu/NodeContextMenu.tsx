@@ -6,7 +6,7 @@ import { Spinner, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { history } from 'app/History';
 import { BoxByType, DecoratedGraphNodeData, NodeType } from 'types/Graph';
-import { JaegerInfo } from 'types/JaegerInfo';
+import { TracingInfo } from 'types/TracingInfo';
 import { durationSelector } from 'store/Selectors';
 import { KialiAppState } from 'store/Store';
 import { isMultiCluster, Paths, serverConfig } from 'config';
@@ -25,7 +25,7 @@ import { getServiceDetailsUpdateLabel, hasServiceDetailsTrafficRouting } from '.
 
 type ReduxProps = {
   duration: DurationInSeconds;
-  jaegerInfo?: JaegerInfo;
+  jaegerInfo?: TracingInfo;
   kiosk: string;
   updateTime: TimeInMilliseconds;
 };
@@ -363,7 +363,7 @@ export const clickHandler = (o: ContextMenuOption, kiosk: string) => {
   }
 };
 
-export const getOptions = (node: DecoratedGraphNodeData, jaegerInfo?: JaegerInfo): ContextMenuOption[] => {
+export const getOptions = (node: DecoratedGraphNodeData, jaegerInfo?: TracingInfo): ContextMenuOption[] => {
   const linkParams = getLinkParamsForNode(node);
   if (!linkParams) {
     return [];
@@ -371,7 +371,7 @@ export const getOptions = (node: DecoratedGraphNodeData, jaegerInfo?: JaegerInfo
   return getOptionsFromLinkParams(linkParams, jaegerInfo);
 };
 
-const getOptionsFromLinkParams = (linkParams: LinkParams, jaegerInfo?: JaegerInfo): ContextMenuOption[] => {
+const getOptionsFromLinkParams = (linkParams: LinkParams, jaegerInfo?: TracingInfo): ContextMenuOption[] => {
   let options: ContextMenuOption[] = [];
   const { namespace, type, name, cluster } = linkParams;
   let detailsPageUrl = `/namespaces/${namespace}/${type}/${name}`;
@@ -414,7 +414,7 @@ const getOptionsFromLinkParams = (linkParams: LinkParams, jaegerInfo?: JaegerInf
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
   updateTime: state.graph.updateTime,
-  jaegerInfo: state.jaegerState.info,
+  jaegerInfo: state.tracingState.info,
   kiosk: state.globalState.kiosk
 });
 
