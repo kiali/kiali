@@ -1253,9 +1253,9 @@ func NewRoutes() (r *Routes) {
 			handlers.GetGrafanaInfo,
 			true,
 		},
-		// swagger:route GET /jaeger integrations jaegerInfo
+		// swagger:route GET /tracing integrations tracingInfo
 		// ---
-		// Get the jaeger URL and other descriptors
+		// Get the tracing URL and other descriptors
 		//
 		//     Produces:
 		//     - application/json
@@ -1265,13 +1265,13 @@ func NewRoutes() (r *Routes) {
 		// responses:
 		//      404: notFoundError
 		//      406: notAcceptableError
-		//      200: jaegerInfoResponse
+		//      200: tracingInfoResponse
 		//
 		{
-			"JaegerURL",
+			"TracingURL",
 			"GET",
-			"/api/jaeger",
-			handlers.GetJaegerInfo,
+			"/api/tracing",
+			handlers.GetTracingInfo,
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/pods/{pod} pods podDetails

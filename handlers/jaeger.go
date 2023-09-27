@@ -15,7 +15,7 @@ import (
 )
 
 // Get TracingInfo provides the Jaeger URL and other info
-func GetJaegerInfo(w http.ResponseWriter, r *http.Request) {
+func GetTracingInfo(w http.ResponseWriter, r *http.Request) {
 	jaegerConfig := config.Get().ExternalServices.Tracing
 	var info models.JaegerInfo
 	if jaegerConfig.Enabled {

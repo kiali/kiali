@@ -523,7 +523,7 @@ export const getGrafanaInfo = () => {
 };
 
 export const getJaegerInfo = () => {
-  return newRequest<TracingInfo>(HTTP_VERBS.GET, urls.jaeger, {}, {});
+  return newRequest<TracingInfo>(HTTP_VERBS.GET, urls.tracing, {}, {});
 };
 
 export const getAppTraces = (namespace: string, app: string, params: TracingQuery, cluster?: string) => {

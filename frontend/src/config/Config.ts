@@ -133,7 +133,7 @@ const conf = {
       istioConfigUpdate: (namespace: string, objectType: string, object: string) =>
         `api/namespaces/${namespace}/istio/${objectType}/${object}`,
       istioPermissions: 'api/istio/permissions',
-      jaeger: 'api/jaeger',
+      tracing: 'api/tracing',
       appTraces: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/traces`,
       serviceTraces: (namespace: string, svc: string) => `api/namespaces/${namespace}/services/${svc}/traces`,
       workloadTraces: (namespace: string, wkd: string) => `api/namespaces/${namespace}/workloads/${wkd}/traces`,

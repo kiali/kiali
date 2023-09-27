@@ -6,7 +6,7 @@ export enum Paths {
   AGGREGATES = 'aggregates',
   APPLICATIONS = 'applications',
   ISTIO = 'istio',
-  JAEGER = 'jaeger',
+  TRACING = 'tracing',
   MESH = 'mesh',
   SERVICES = 'services',
   SERVICEENTRIES = 'istio/serviceentries',
