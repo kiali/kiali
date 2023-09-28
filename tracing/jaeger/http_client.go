@@ -86,7 +86,7 @@ func queryTracesHTTP(client http.Client, u *url.URL) (*model.TracingResponse, er
 func unmarshal(r []byte, u *url.URL) (*model.TracingResponse, error) {
 	var response model.TracingResponse
 	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
-		log.Errorf("Error unmarshalling Tracing response: %s [URL: %v]", errMarshal, u)
+		log.Errorf("Error unmarshalling Jaeger response: %s [URL: %v]", errMarshal, u)
 		return nil, errMarshal
 	}
 	return &response, nil
