@@ -39,6 +39,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/controller"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
@@ -111,7 +112,7 @@ func main() {
 	}
 
 	log.Info("Initializing Kiali Cache")
-	cache, err := cache.NewKialiCache(clientFactory, *cfg)
+	cache, err := cache.NewKialiCache(clientFactory.GetSAClients(), *cfg)
 	if err != nil {
 		log.Fatalf("Error initializing Kiali Cache. Details: %s", err)
 	}
@@ -170,6 +171,15 @@ func main() {
 		log.Fatal(err)
 	}
 	server.Start()
+
+	// Needs to be started after the server so that the cache is started because the controllers use the cache.
+	layer, err := business.NewLayerWithSAClients(cfg, cache, prom, tracingClient, cpm, clientFactory.GetSAClients())
+	if err != nil {
+		log.Fatalf("Error creating business layer: %s", err)
+	}
+	if err := controller.Start(ctx, clientFactory, cache, &layer.Validations); err != nil {
+		log.Fatalf("Error creating validations controller: %s", err)
+	}
 
 	// wait forever, or at least until we are told to exit
 	waitForTermination()

@@ -74,36 +74,54 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var istioConfigValidations models.IstioValidations
+
 	if includeValidations {
-		// We don't filter by service and workload when calling validations, because certain validations require fetching all types to get the correct errors
-		if namespace == "" {
-			// when namespace is empty, validations should be done per namespaces to apply exportTo configs
-			loadedNamespaces, _ := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
-			istioConfig.IstioValidations = models.IstioValidations{}
-			for _, ns := range loadedNamespaces {
-				nsValidations, nsErr := business.Validations.GetValidations(r.Context(), cluster, ns.Name, "", "")
-				if nsErr != nil {
-					handleErrorResponse(w, nsErr)
-					return
-				}
-				istioConfig.IstioValidations.MergeValidations(nsValidations)
-			}
-		} else {
-			// when namespace is provided, do validations for that namespace only
-			// this option is not called from Kiali UI
-			// @TODO consider exportTo namespaces
-			istioConfig.IstioValidations, err = business.Validations.GetValidations(r.Context(), cluster, namespace, "", "")
-			if err != nil {
-				handleErrorResponse(w, err)
-				return
-			}
+		istioConfigValidations, err = business.Validations.GetValidations(r.Context(), cluster)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Error while getting validations: "+err.Error())
+			return
+		}
+
+		// We don't filter by objects when calling validations, because certain validations require fetching all types to get the correct errors
+		if len(parsedTypes) > 0 {
+			istioConfigValidations = istioConfigValidations.FilterByTypes(parsedTypes)
+		}
+	}
+
+	istioConfig := models.IstioConfigList{}
+
+	// This can result on an error when IstioAPI is disabled, so filter here
+	// Even if all namespaces are not accessible, but the IstioAPI is enabled, still use the Istio Registry by AllNamespaces=true
+	// In Ambient mode ExportTo is ignored, so proceed per namespace
+	if criteria.AllNamespaces && !config.Get().AllNamespacesAccessible() && !config.Get().ExternalServices.Istio.IstioAPIEnabled || (business.IstioConfig.IsAmbientEnabled(cluster) && len(nss) > 0) {
+		criteria.AllNamespaces = false
+		for _, ns := range nss {
+			criteria.Namespace = ns
+			istioConfigNs, _ := business.IstioConfig.GetIstioConfigList(r.Context(), criteria)
+			istioConfig = istioConfig.MergeConfigs(istioConfigNs)
 		}
 		if len(parsedTypes) > 0 {
 			istioConfig.IstioValidations = istioConfig.IstioValidations.FilterByTypes(parsedTypes)
 		}
 	}
 
-	RespondWithAPIResponse(w, http.StatusOK, istioConfig)
+	if includeValidations {
+		// Add validation results to the IstioConfigList once they're available (previously done in the UI layer)
+		istioConfig.IstioValidations = istioConfigValidations
+	}
+
+	if err != nil {
+		handleErrorResponse(w, err)
+		return
+	}
+
+	if len(nss) > 0 {
+		// From allNamespaces load only requested ones
+		RespondWithJSON(w, http.StatusOK, istioConfig.FilterIstioConfigs(nss))
+	} else {
+		RespondWithJSON(w, http.StatusOK, istioConfig)
+	}
 }
 
 func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {

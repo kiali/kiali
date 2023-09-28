@@ -70,7 +70,7 @@ build-system-test: go-check
 	  -o ${GOPATH}/bin/kiali -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH} -X main.goVersion=${GO_ACTUAL_VERSION}"
 
 ## test: Run tests, excluding third party tests under vendor and frontend. Runs `go test` internally
-test:
+test: .ensure-envtest-bin-dir-exists
 	@echo Running tests, excluding third party tests under vendor
 	${GO} test ${GO_TEST_FLAGS} $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/ -e /tests/integration/)
 
@@ -97,3 +97,15 @@ lint-install:
 # doc.go is ommited for linting, because it generates lots of warnings.
 lint:
 	golangci-lint run -c ./.github/workflows/config/.golangci.yml
+
+# Assuming here that if the bin dir exists then the tools also exist inside of it.
+.ensure-envtest-bin-dir-exists: .ensure-envtest-exists
+	@if [ ! -d "${OUTDIR}/k8s" ]; then \
+		setup-envtest use --bin-dir "${OUTDIR}"; \
+	fi
+
+## Download setup-envtest locally if necessary.
+.ensure-envtest-exists:
+	@if [ ! -x envtest ]; then \
+	  ${GO} install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest; \
+	fi

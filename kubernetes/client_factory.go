@@ -205,7 +205,7 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 
 	var newClient ClientInterface
 	if cluster == cf.homeCluster {
-		client, err := newClientWithRemoteClusterInfo(&config, nil)
+		client, err := NewClientWithRemoteClusterInfo(&config, nil)
 		if err != nil {
 			log.Errorf("Error creating client for cluster %s: %s", cluster, err.Error())
 			return nil, err
@@ -234,7 +234,7 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 		remoteConfig.BearerToken = authInfo.Token
 		remoteConfig.BearerTokenFile = ""
 
-		newClient, err = newClientWithRemoteClusterInfo(remoteConfig, &clusterInfo)
+		newClient, err = NewClientWithRemoteClusterInfo(remoteConfig, &clusterInfo)
 		if err != nil {
 			log.Errorf("Error getting remote client for cluster [%s]. Err: %s", cluster, err.Error())
 			return nil, err
@@ -259,7 +259,7 @@ func (cf *clientFactory) newSAClient(remoteClusterInfo *RemoteClusterInfo) (*K8S
 		return nil, err
 	}
 
-	client, err := newClientWithRemoteClusterInfo(config, remoteClusterInfo)
+	client, err := NewClientWithRemoteClusterInfo(config, remoteClusterInfo)
 	if err != nil {
 		return nil, err
 	}

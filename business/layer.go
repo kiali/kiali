@@ -123,8 +123,9 @@ func newLayer(
 	temporaryLayer.RegistryStatus = RegistryStatusService{kialiCache: cache}
 	temporaryLayer.TLS = TLSService{discovery: discovery, userClients: userClients, kialiCache: cache, businessLayer: temporaryLayer}
 	temporaryLayer.Svc = SvcService{config: *conf, kialiCache: cache, businessLayer: temporaryLayer, prom: prom, userClients: userClients}
-	temporaryLayer.Validations = IstioValidationsService{discovery: discovery, userClients: userClients, businessLayer: temporaryLayer}
-	temporaryLayer.Workload = *NewWorkloadService(userClients, prom, cache, temporaryLayer, conf, grafana)
+	temporaryLayer.TokenReview = NewTokenReview(userClients[homeClusterName])
+	temporaryLayer.Workload = *NewWorkloadService(userClients, prom, cache, temporaryLayer, conf)
+	temporaryLayer.Validations = NewValidationsService(&temporaryLayer.IstioConfig, cache, &temporaryLayer.Mesh, &temporaryLayer.Namespace, &temporaryLayer.Svc, userClients, &temporaryLayer.Workload)
 
 	temporaryLayer.Tracing = NewTracingService(conf, traceClient, &temporaryLayer.Svc, &temporaryLayer.Workload)
 	temporaryLayer.IstioStatus = NewIstioStatusService(conf, kialiSAClients[homeClusterName], userClients, &temporaryLayer.Tracing, &temporaryLayer.Workload, discovery)
@@ -152,4 +153,13 @@ func NewLayer(
 
 	kialiSAClients := cf.GetSAClients()
 	return newLayer(userClients, kialiSAClients, prom, traceClient, cache, conf, grafana, discovery, cpm), nil
+}
+
+// NewLayer creates the business layer using the passed k8sClients and prom clients.
+// Note that the client passed here should *not* be the Kiali ServiceAccount client.
+// It should be the user client based on the logged in user's token.
+// TODO: Remove this when the services in the business layer are no longer coupled
+// to the business layer and can be used separately.
+func NewLayerWithSAClients(conf *config.Config, cache cache.KialiCache, prom prometheus.ClientInterface, traceClient tracing.ClientInterface, cpm ControlPlaneMonitor, saClients map[string]kubernetes.ClientInterface) (*Layer, error) {
+	return newLayer(saClients, saClients, prom, traceClient, cache, cpm, conf), nil
 }

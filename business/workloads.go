@@ -435,7 +435,7 @@ func (in *WorkloadService) UpdateWorkload(ctx context.Context, cluster string, n
 	// Cache is stopped after a Create/Update/Delete operation to force a refresh.
 	// Refresh once after all the updates have gone through since Update Workload will update
 	// every single workload type of that matches name/namespace and we only want to refresh once.
-	cache, err := kialiCache.GetKubeCache(cluster)
+	cache, err := in.cache.GetKubeCache(cluster)
 	if err != nil {
 		return nil, err
 	}
