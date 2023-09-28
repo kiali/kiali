@@ -14,7 +14,7 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-// Get TracingInfo provides the Jaeger URL and other info
+// Get TracingInfo provides the Tracing URL and other info
 func GetTracingInfo(w http.ResponseWriter, r *http.Request) {
 	jaegerConfig := config.Get().ExternalServices.Tracing
 	var info models.JaegerInfo
@@ -52,7 +52,7 @@ func AppTraces(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	traces, err := business.Jaeger.GetAppTraces(namespace, app, q)
+	traces, err := business.Tracing.GetAppTraces(namespace, app, q)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
@@ -74,7 +74,7 @@ func ServiceTraces(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	traces, err := business.Jaeger.GetServiceTraces(r.Context(), namespace, service, q)
+	traces, err := business.Tracing.GetServiceTraces(r.Context(), namespace, service, q)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
@@ -97,7 +97,7 @@ func WorkloadTraces(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	traces, err := business.Jaeger.GetWorkloadTraces(r.Context(), namespace, workload, q)
+	traces, err := business.Tracing.GetWorkloadTraces(r.Context(), namespace, workload, q)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
@@ -121,7 +121,7 @@ func ErrorTraces(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, "Cannot parse parameter 'duration': "+err.Error())
 		return
 	}
-	traces, err := business.Jaeger.GetErrorTraces(namespace, app, time.Second*time.Duration(conv))
+	traces, err := business.Tracing.GetErrorTraces(namespace, app, time.Second*time.Duration(conv))
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
@@ -137,7 +137,7 @@ func TraceDetails(w http.ResponseWriter, r *http.Request) {
 	}
 	params := mux.Vars(r)
 	traceID := params["traceID"]
-	trace, err := business.Jaeger.GetJaegerTraceDetail(traceID)
+	trace, err := business.Tracing.GetTraceDetail(traceID)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
@@ -150,7 +150,7 @@ func TraceDetails(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, trace)
 }
 
-// AppSpans is the API handler to fetch Jaeger spans of a specific app
+// AppSpans is the API handler to fetch Tracing spans of a specific app
 func AppSpans(w http.ResponseWriter, r *http.Request) {
 	business, err := getBusiness(r)
 	if err != nil {
@@ -167,7 +167,7 @@ func AppSpans(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	spans, err := business.Jaeger.GetAppSpans(namespace, app, q)
+	spans, err := business.Tracing.GetAppSpans(namespace, app, q)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
@@ -176,7 +176,7 @@ func AppSpans(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, spans)
 }
 
-// ServiceSpans is the API handler to fetch Jaeger spans of a specific service
+// ServiceSpans is the API handler to fetch Tracing spans of a specific service
 func ServiceSpans(w http.ResponseWriter, r *http.Request) {
 	business, err := getBusiness(r)
 	if err != nil {
@@ -193,7 +193,7 @@ func ServiceSpans(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	spans, err := business.Jaeger.GetServiceSpans(r.Context(), namespace, service, q)
+	spans, err := business.Tracing.GetServiceSpans(r.Context(), namespace, service, q)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
@@ -202,7 +202,7 @@ func ServiceSpans(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, spans)
 }
 
-// WorkloadSpans is the API handler to fetch Jaeger spans of a specific workload
+// WorkloadSpans is the API handler to fetch Tracing spans of a specific workload
 func WorkloadSpans(w http.ResponseWriter, r *http.Request) {
 	business, err := getBusiness(r)
 	if err != nil {
@@ -219,7 +219,7 @@ func WorkloadSpans(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	spans, err := business.Jaeger.GetWorkloadSpans(r.Context(), namespace, workload, q)
+	spans, err := business.Tracing.GetWorkloadSpans(r.Context(), namespace, workload, q)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return

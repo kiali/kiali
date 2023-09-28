@@ -20,7 +20,7 @@ type Layer struct {
 	IstioConfig      IstioConfigService
 	IstioStatus      IstioStatusService
 	IstioCerts       IstioCertsService
-	Jaeger           JaegerService
+	Tracing          TracingService
 	Mesh             MeshService
 	Namespace        NamespaceService
 	OpenshiftOAuth   OpenshiftOAuthService
@@ -38,7 +38,7 @@ type Layer struct {
 // Global clientfactory and prometheus clients.
 var (
 	clientFactory    kubernetes.ClientFactory
-	jaegerClient     tracing.ClientInterface
+	tracingClient    tracing.ClientInterface
 	kialiCache       cache.KialiCache
 	prometheusClient prometheus.ClientInterface
 )
@@ -109,20 +109,20 @@ func Get(authInfo *api.AuthInfo) (*Layer, error) {
 		prometheusClient = prom
 	}
 
-	// Create Jaeger client
-	jaegerLoader := func() (tracing.ClientInterface, error) {
+	// Create Tracing client
+	tracingLoader := func() (tracing.ClientInterface, error) {
 		var err error
-		if jaegerClient == nil {
-			jaegerClient, err = tracing.NewClient(authInfo.Token)
+		if tracingClient == nil {
+			tracingClient, err = tracing.NewClient(authInfo.Token)
 			if err != nil {
-				jaegerClient = nil
+				tracingClient = nil
 			}
 		}
-		return jaegerClient, err
+		return tracingClient, err
 	}
 
 	kialiSAClient := clientFactory.GetSAClients()
-	return NewWithBackends(userClients, kialiSAClient, prometheusClient, jaegerLoader), nil
+	return NewWithBackends(userClients, kialiSAClient, prometheusClient, tracingLoader), nil
 }
 
 // SetWithBackends allows for specifying the ClientFactory and Prometheus clients to be used.
@@ -135,7 +135,7 @@ func SetWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterfac
 // NewWithBackends creates the business layer using the passed k8sClients and prom clients.
 // Note that the client passed here should *not* be the Kiali ServiceAccount client.
 // It should be the user client based on the logged in user's token.
-func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAClients map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, jaegerClient JaegerLoader) *Layer {
+func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAClients map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, tracingClient TracingLoader) *Layer {
 	temporaryLayer := &Layer{}
 	conf := config.Get()
 
@@ -146,7 +146,7 @@ func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAC
 	temporaryLayer.IstioConfig = IstioConfigService{config: *conf, userClients: userClients, kialiCache: kialiCache, businessLayer: temporaryLayer}
 	temporaryLayer.IstioStatus = IstioStatusService{userClients: userClients, businessLayer: temporaryLayer}
 	temporaryLayer.IstioCerts = IstioCertsService{k8s: userClients[homeClusterName], businessLayer: temporaryLayer}
-	temporaryLayer.Jaeger = JaegerService{loader: jaegerClient, businessLayer: temporaryLayer}
+	temporaryLayer.Tracing = TracingService{loader: tracingClient, businessLayer: temporaryLayer}
 	temporaryLayer.Namespace = NewNamespaceService(userClients, kialiSAClients, kialiCache, *conf)
 	temporaryLayer.Mesh = NewMeshService(kialiSAClients, kialiCache, temporaryLayer.Namespace, *conf)
 	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: userClients[homeClusterName], kialiSAClient: kialiSAClients[homeClusterName]}
