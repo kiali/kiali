@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-type TracingInfo struct {
+type JaegerInfo struct {
 	Enabled              bool     `json:"enabled"`
 	Integration          bool     `json:"integration"`
 	Provider             string   `json:"provider"`

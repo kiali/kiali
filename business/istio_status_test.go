@@ -206,7 +206,7 @@ func TestGrafanaWorking(t *testing.T) {
 
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
+	assertNotPresent(assert, icsl, "jaeger")
 	assertNotPresent(assert, icsl, "custom dashboards")
 }
 
@@ -249,7 +249,7 @@ func TestGrafanaDisabled(t *testing.T) {
 
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
+	assertNotPresent(assert, icsl, "jaeger")
 	assertNotPresent(assert, icsl, "custom dashboards")
 }
 
@@ -299,7 +299,7 @@ func TestGrafanaNotWorking(t *testing.T) {
 
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentUnreachable, false)
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
+	assertNotPresent(assert, icsl, "jaeger")
 	assertNotPresent(assert, icsl, "custom dashboards")
 }
 
@@ -328,7 +328,7 @@ func TestFailingTracingService(t *testing.T) {
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
 	assertNotPresent(assert, icsl, "custom dashboards")
-	assertComponent(assert, icsl, "tracing", kubernetes.ComponentUnreachable, false)
+	assertComponent(assert, icsl, "jaeger", kubernetes.ComponentUnreachable, false)
 }
 
 func TestOverriddenUrls(t *testing.T) {
@@ -353,7 +353,7 @@ func TestOverriddenUrls(t *testing.T) {
 
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
+	assertNotPresent(assert, icsl, "jaeger")
 	assertNotPresent(assert, icsl, "custom dashboards")
 }
 
@@ -383,7 +383,7 @@ func TestCustomDashboardsMainPrometheus(t *testing.T) {
 
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
+	assertNotPresent(assert, icsl, "jaeger")
 	assertNotPresent(assert, icsl, "custom dashboards")
 }
 
@@ -436,7 +436,7 @@ func TestDefaults(t *testing.T) {
 	assertNotPresent(assert, icsl, "istiod")
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
+	assertNotPresent(assert, icsl, "jaeger")
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
@@ -485,7 +485,7 @@ func TestNonDefaults(t *testing.T) {
 	assertNotPresent(assert, icsl, "istiod")
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
+	assertNotPresent(assert, icsl, "jaeger")
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
@@ -532,7 +532,7 @@ func TestIstiodNotReady(t *testing.T) {
 	// Don't return kubernetes.ComponentHealthy deployments
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
+	assertNotPresent(assert, icsl, "jaeger")
 	assertNotPresent(assert, icsl, "istiod-x3v1kn0l-terminating")
 	assertNotPresent(assert, icsl, "istiod-x3v1kn1l-terminating")
 
@@ -595,7 +595,7 @@ func TestIstiodUnreachable(t *testing.T) {
 	// Don't return kubernetes.ComponentHealthy deployments
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
+	assertNotPresent(assert, icsl, "jaeger")
 	assertNotPresent(assert, icsl, "istiod-x3v1kn0l-terminating")
 	assertNotPresent(assert, icsl, "istiod-x3v1kn1l-terminating")
 
@@ -649,7 +649,7 @@ func TestCustomizedAppLabel(t *testing.T) {
 	assertNotPresent(assert, icsl, "istiod")
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
+	assertNotPresent(assert, icsl, "jaeger")
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
@@ -700,7 +700,7 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 	assertNotPresent(assert, icsl, "istiod")
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
+	assertNotPresent(assert, icsl, "jaeger")
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
@@ -747,7 +747,7 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 	assertNotPresent(assert, icsl, "istiod")
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
+	assertNotPresent(assert, icsl, "jaeger")
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
@@ -785,7 +785,7 @@ func mockJaeger() (tracing.ClientInterface, error) {
 
 func mockFailingJaeger() (tracing.ClientInterface, error) {
 	j := new(tracingtest.TracingClientMock)
-	j.On("GetServiceStatus").Return(false, errors.New("error connecting with tracing service"))
+	j.On("GetServiceStatus").Return(false, errors.New("error connecting with jaeger service"))
 	return tracing.ClientInterface(j), nil
 }
 
@@ -935,7 +935,7 @@ func addonAddMockUrls(baseUrl string, conf *config.Config, overrideUrl bool) *co
 	conf.ExternalServices.Grafana.IsCore = false
 
 	conf.ExternalServices.Tracing.Enabled = true
-	conf.ExternalServices.Tracing.InClusterURL = baseUrl + "/tracing/mock"
+	conf.ExternalServices.Tracing.InClusterURL = baseUrl + "/jaeger/mock"
 	conf.ExternalServices.Tracing.IsCore = false
 
 	conf.ExternalServices.Prometheus.URL = baseUrl + "/prometheus/mock"
