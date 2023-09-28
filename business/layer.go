@@ -20,7 +20,7 @@ type Layer struct {
 	IstioConfig      IstioConfigService
 	IstioStatus      IstioStatusService
 	IstioCerts       IstioCertsService
-	Jaeger           JaegerService
+	Jaeger           TracingService
 	Mesh             MeshService
 	Namespace        NamespaceService
 	OpenshiftOAuth   OpenshiftOAuthService
@@ -135,7 +135,7 @@ func SetWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterfac
 // NewWithBackends creates the business layer using the passed k8sClients and prom clients.
 // Note that the client passed here should *not* be the Kiali ServiceAccount client.
 // It should be the user client based on the logged in user's token.
-func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAClients map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, jaegerClient JaegerLoader) *Layer {
+func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAClients map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, jaegerClient TracingLoader) *Layer {
 	temporaryLayer := &Layer{}
 	conf := config.Get()
 
@@ -146,7 +146,7 @@ func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAC
 	temporaryLayer.IstioConfig = IstioConfigService{config: *conf, userClients: userClients, kialiCache: kialiCache, businessLayer: temporaryLayer}
 	temporaryLayer.IstioStatus = IstioStatusService{userClients: userClients, businessLayer: temporaryLayer}
 	temporaryLayer.IstioCerts = IstioCertsService{k8s: userClients[homeClusterName], businessLayer: temporaryLayer}
-	temporaryLayer.Jaeger = JaegerService{loader: jaegerClient, businessLayer: temporaryLayer}
+	temporaryLayer.Jaeger = TracingService{loader: jaegerClient, businessLayer: temporaryLayer}
 	temporaryLayer.Namespace = NewNamespaceService(userClients, kialiSAClients, kialiCache, *conf)
 	temporaryLayer.Mesh = NewMeshService(kialiSAClients, kialiCache, temporaryLayer.Namespace, *conf)
 	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: userClients[homeClusterName], kialiSAClient: kialiSAClients[homeClusterName]}

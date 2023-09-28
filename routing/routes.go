@@ -1271,7 +1271,7 @@ func NewRoutes() (r *Routes) {
 			"JaegerURL",
 			"GET",
 			"/api/jaeger",
-			handlers.GetJaegerInfo,
+			handlers.GetTracingInfo,
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/pods/{pod} pods podDetails

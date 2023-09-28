@@ -14,22 +14,22 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-// Get JaegerInfo provides the Jaeger URL and other info
-func GetJaegerInfo(w http.ResponseWriter, r *http.Request) {
-	jaegerConfig := config.Get().ExternalServices.Tracing
-	var info models.JaegerInfo
-	if jaegerConfig.Enabled {
-		info = models.JaegerInfo{
+// Get TracingInfo provides the Jaeger URL and other info
+func GetTracingInfo(w http.ResponseWriter, r *http.Request) {
+	tracingConfig := config.Get().ExternalServices.Tracing
+	var info models.TracingInfo
+	if tracingConfig.Enabled {
+		info = models.TracingInfo{
 			Enabled:              true,
-			Integration:          jaegerConfig.InClusterURL != "",
-			Provider:             jaegerConfig.Provider,
-			URL:                  jaegerConfig.URL,
-			NamespaceSelector:    jaegerConfig.NamespaceSelector,
-			WhiteListIstioSystem: jaegerConfig.WhiteListIstioSystem,
+			Integration:          tracingConfig.InClusterURL != "",
+			Provider:             tracingConfig.Provider,
+			URL:                  tracingConfig.URL,
+			NamespaceSelector:    tracingConfig.NamespaceSelector,
+			WhiteListIstioSystem: tracingConfig.WhiteListIstioSystem,
 		}
 	} else {
 		// 0-values would work, but let's be explicit
-		info = models.JaegerInfo{
+		info = models.TracingInfo{
 			Enabled:     false,
 			Integration: false,
 			URL:         "",
@@ -137,7 +137,7 @@ func TraceDetails(w http.ResponseWriter, r *http.Request) {
 	}
 	params := mux.Vars(r)
 	traceID := params["traceID"]
-	trace, err := business.Jaeger.GetJaegerTraceDetail(traceID)
+	trace, err := business.Jaeger.GetTraceDetail(traceID)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
