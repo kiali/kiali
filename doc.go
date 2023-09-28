@@ -700,7 +700,7 @@ type GrafanaInfoResponse struct {
 	Body models.GrafanaInfo
 }
 
-// Return all the descriptor data related to Jaeger
+// Return all the descriptor data related to Tracing
 // swagger:response jaegerInfoResponse
 type JaegerInfoResponse struct {
 	// in: body

@@ -73,7 +73,7 @@ func ConvertSpanSet(span otel.Span, serviceName string, traceId string, rootName
 	jaegerSpan := jaegerModels.Span{
 		TraceID:   ConvertId(traceId),
 		SpanID:    convertSpanId(span.SpanID),
-		Duration:  duration / 1000, // Provided in ns, Jaeger uses ms
+		Duration:  duration / 1000, // Provided in ns, Tracing uses ms
 		StartTime: startTime / 1000,
 		// No more mapped data
 		Flags: 0,

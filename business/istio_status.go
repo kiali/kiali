@@ -274,7 +274,7 @@ func (iss *IstioStatusService) getTracingStatus(name string, enabled bool, isCor
 		return
 	}
 
-	if accessible, err := iss.businessLayer.Jaeger.GetStatus(); !accessible {
+	if accessible, err := iss.businessLayer.Tracing.GetStatus(); !accessible {
 		log.Errorf("Error fetching availability of the tracing service: %v", err)
 		staChan <- kubernetes.IstioComponentStatus{
 			kubernetes.ComponentStatus{
