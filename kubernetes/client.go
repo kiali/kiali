@@ -96,7 +96,7 @@ func (client *K8SClient) ClusterInfo() ClusterInfo {
 	return client.clusterInfo
 }
 
-func newClientWithRemoteClusterInfo(config *rest.Config, remoteClusterInfo *RemoteClusterInfo) (*K8SClient, error) {
+func NewClientWithRemoteClusterInfo(config *rest.Config, remoteClusterInfo *RemoteClusterInfo) (*K8SClient, error) {
 	client, err := newClientFromConfig(config)
 	if err != nil {
 		return nil, err

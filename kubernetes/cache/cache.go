@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
@@ -34,6 +36,9 @@ type KialiCache interface {
 	// SetClusters sets the list of clusters that the cache knows about.
 	SetClusters([]kubernetes.Cluster)
 
+	// SetValidations caches validations for a cluster/namespace.
+	Validations() store.Store[models.IstioValidationKey, *models.IstioValidation]
+
 	// Embedded for backward compatibility for business methods that just use one cluster.
 	// All business methods should eventually use the multi-cluster cache.
 	// Instead of using the interface directly for kube objects, use the GetKubeCache() method.
@@ -42,6 +47,8 @@ type KialiCache interface {
 	RegistryStatusCache
 	ProxyStatusCache
 	NamespacesCache
+
+	IsAmbientEnabled(cluster string) bool
 }
 
 // namespaceCache caches namespaces according to their token.
@@ -52,12 +59,15 @@ type namespaceCache struct {
 }
 
 type kialiCacheImpl struct {
+	ambientEnabled        *bool
+	ambientLastUpdateTime *time.Time
+
 	// Embedded for backward compatibility for business methods that just use one cluster.
 	// All business methods should eventually use the multi-cluster cache.
 	// TODO: Get rid of embedding.
 	KubeCache
 
-	clientFactory kubernetes.ClientFactory
+	conf config.Config
 	// Maps a cluster name to a KubeCache
 	kubeCache              map[string]KubeCache
 	refreshDuration        time.Duration
@@ -65,27 +75,31 @@ type kialiCacheImpl struct {
 	tokenNamespaces        map[string]namespaceCache // TODO: Another option can be define here the namespaces by token/cluster
 	tokenNamespaceDuration time.Duration
 	// ProxyStatusStore stores the proxy status and should be key'd off cluster + namespace + pod.
-	proxyStatusStore store.Store[*kubernetes.ProxyStatus]
+	proxyStatusStore store.Store[string, *kubernetes.ProxyStatus]
 	// RegistryStatusStore stores the registry status and should be key'd off of the cluster name.
-	registryStatusStore store.Store[*kubernetes.RegistryStatus]
+	registryStatusStore store.Store[string, *kubernetes.RegistryStatus]
+
+	// validations key'd by the validation key
+	validations store.Store[models.IstioValidationKey, *models.IstioValidation]
 
 	// Info about the kube clusters that the cache knows about.
 	clusters    []kubernetes.Cluster
 	clusterLock sync.RWMutex
 }
 
-func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config) (KialiCache, error) {
+func NewKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, cfg config.Config) (KialiCache, error) {
 	kialiCacheImpl := kialiCacheImpl{
-		clientFactory:          clientFactory,
+		conf:                   cfg,
 		kubeCache:              make(map[string]KubeCache),
 		refreshDuration:        time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second,
 		tokenNamespaces:        make(map[string]namespaceCache),
 		tokenNamespaceDuration: time.Duration(cfg.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second,
-		proxyStatusStore:       store.New[*kubernetes.ProxyStatus](),
-		registryStatusStore:    store.New[*kubernetes.RegistryStatus](),
+		validations:            store.New[models.IstioValidationKey, *models.IstioValidation](),
+		proxyStatusStore:       store.New[string, *kubernetes.ProxyStatus](),
+		registryStatusStore:    store.New[string, *kubernetes.RegistryStatus](),
 	}
 
-	for cluster, client := range clientFactory.GetSAClients() {
+	for cluster, client := range kialiSAClients {
 		cache, err := NewKubeCache(client, cfg)
 		if err != nil {
 			log.Errorf("[Kiali Cache] Error creating kube cache for cluster: [%s]. Err: %v", cluster, err)
@@ -149,6 +163,44 @@ func (c *kialiCacheImpl) SetClusters(clusters []kubernetes.Cluster) {
 	defer c.clusterLock.Unlock()
 	c.clusterLock.Lock()
 	c.clusters = clusters
+}
+
+func (c *kialiCacheImpl) Validations() store.Store[models.IstioValidationKey, *models.IstioValidation] {
+	return c.validations
+}
+
+// Check if istio Ambient profile was enabled
+// ATM it is defined in the istio-cni-config configmap
+func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
+	currentTime := time.Now()
+	if in.ambientLastUpdateTime == nil {
+		in.ambientLastUpdateTime = new(time.Time)
+		in.ambientLastUpdateTime = &currentTime
+	}
+
+	if in.ambientEnabled == nil || currentTime.Sub(*in.ambientLastUpdateTime) > time.Minute {
+		in.ambientEnabled = new(bool)
+		kubeCache, err := in.GetKubeCache(cluster)
+		if err != nil {
+			log.Debugf("Unable to get kube cache when checking for ambient profile: %s", err)
+			return false
+		}
+
+		_, err = kubeCache.GetDaemonSet(in.conf.IstioNamespace, "ztunnel")
+		if err != nil {
+			if kubeerrors.IsNotFound(err) {
+				log.Debugf("No ztunnel found in istio namespace: %s ", err.Error())
+			} else {
+				log.Debugf("Error checking for ztunnel in istio namespace: %s", err.Error())
+			}
+			return false
+		}
+
+		*in.ambientEnabled = true
+		in.ambientLastUpdateTime = &currentTime
+	}
+
+	return *in.ambientEnabled
 }
 
 // Interface guard for kiali cache impl

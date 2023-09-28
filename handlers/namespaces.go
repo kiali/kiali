@@ -52,12 +52,12 @@ func NamespaceValidationSummary(w http.ResponseWriter, r *http.Request) {
 	// If cluster is not set, is because we need a unified validations view (E.g. in the Summary graph)
 	clusters, _ := business.Mesh.GetClusters()
 	if len(clusters) == 1 {
-		istioConfigValidationResults, errValidations = business.Validations.GetValidations(r.Context(), cluster, namespace, "", "")
+		istioConfigValidationResults, errValidations = business.Validations.GetValidationsForNamespace(r.Context(), cluster, namespace)
 	} else {
 		for _, cl := range clusters {
 			_, errNs := business.Namespace.GetClusterNamespace(r.Context(), namespace, cl.Name)
 			if errNs == nil {
-				clusterIstioConfigValidationResults, _ := business.Validations.GetValidations(r.Context(), cl.Name, namespace, "", "")
+				clusterIstioConfigValidationResults, _ := business.Validations.GetValidationsForNamespace(r.Context(), cl.Name, namespace)
 				istioConfigValidationResults = istioConfigValidationResults.MergeValidations(clusterIstioConfigValidationResults)
 			}
 		}
@@ -98,7 +98,7 @@ func ConfigValidationSummary(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	istioConfigValidationResults, errValidations := business.Validations.GetValidations(r.Context(), cluster, "", "", "")
+	istioConfigValidationResults, errValidations := business.Validations.GetValidations(r.Context(), cluster)
 	if errValidations != nil {
 		log.Error(errValidations)
 		RespondWithError(w, http.StatusInternalServerError, errValidations.Error())

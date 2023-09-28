@@ -6,26 +6,33 @@ import (
 
 // NotFoundError is returned when a key is not found in the store.
 type NotFoundError struct {
-	Key string
+	Key any
 }
 
 func (e *NotFoundError) Error() string {
-	return fmt.Sprintf("key \"%s\" not found in store", e.Key)
+	return fmt.Sprintf("key \"%#v\" not found in store", e.Key)
 }
 
 // Store is a generic key value store. Implementations should be safe for concurrent use.
-// It is basically just a map with a lock. Does not yet implement Set so we don't have to
-// worry about this thing growing without bound.
-type Store[T any] interface {
+// It is basically just a map with a lock.
+type Store[K comparable, V any] interface {
 	// Get returns the value associated with the given key or an error.
-	Get(key string) (T, error)
+	Get(key K) (V, error)
+	// Set associates the given value with the given key. It will overwrite any existing value
+	// or create a new entry if the key does not exist.
+	Set(key K, value V)
+	// Items returns a copy of the store's contents.
+	Items() map[K]V
 	// Replace replaces the contents of the store with the given map.
-	Replace(map[string]T)
+	Replace(map[K]V)
+	// Version returns the current version of the store. The version is incremented every time the store is modified.
+	// It can be used to detect changes to the store.
+	Version() uint
 }
 
 // New returns a new store safe for concurrent use.
-func New[T any]() Store[T] {
-	return &threadSafeStore[T]{data: make(map[string]T)}
+func New[K comparable, V any]() Store[K, V] {
+	return &threadSafeStore[K, V]{data: make(map[K]V)}
 }
 
 // Interface guard to ensure NotFoundError implements the error interface.

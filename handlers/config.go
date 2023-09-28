@@ -116,8 +116,8 @@ func Config(w http.ResponseWriter, r *http.Request) {
 
 		// @TODO hardcoded home cluster
 		publicConfig.GatewayAPIEnabled = layer.IstioConfig.IsGatewayAPI(conf.KubernetesConfig.ClusterName)
-		publicConfig.AmbientEnabled = layer.IstioConfig.IsAmbientEnabled()
-		publicConfig.GatewayAPIClasses = layer.IstioConfig.GatewayAPIClasses()
+		publicConfig.AmbientEnabled = layer.IstioConfig.IsAmbientEnabled(conf.KubernetesConfig.ClusterName)
+		publicConfig.GatewayAPIClasses = layer.IstioConfig.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
 
 		// Fetch the list of all clusters in the mesh
 		// One usage of this data is to cross-link Kiali instances, when possible.

@@ -18,11 +18,8 @@ func TestNoHomeClusterReturnsError(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	client := kubetest.NewFakeK8sClient()
-	clientFactory := kubetest.NewK8SClientFactoryMock(client)
-	clientFactory.SetClients(map[string]kubernetes.ClientInterface{"nothomecluster": client})
-
-	_, err := NewKialiCache(clientFactory, *conf)
+	clients := map[string]kubernetes.ClientInterface{"nothomecluster": kubetest.NewFakeK8sClient()}
+	_, err := NewKialiCache(clients, *conf)
 	require.Error(err, "no home cluster should return an error")
 }
 
@@ -36,13 +33,12 @@ func TestKubeCacheCreatedPerClient(t *testing.T) {
 	deploymentCluster2 := &apps_v1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "deployment2", Namespace: "test"}}
 	client := kubetest.NewFakeK8sClient(ns, deploymentCluster1)
 	client2 := kubetest.NewFakeK8sClient(ns, deploymentCluster2)
-	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
-	clientFactory.SetClients(map[string]kubernetes.ClientInterface{
+	saClients := map[string]kubernetes.ClientInterface{
 		conf.KubernetesConfig.ClusterName: client,
 		"cluster2":                        client2,
-	})
+	}
 
-	kialiCache, err := NewKialiCache(clientFactory, *conf)
+	kialiCache, err := NewKialiCache(saClients, *conf)
 	require.NoError(err)
 	defer kialiCache.Stop()
 
@@ -63,4 +59,15 @@ func TestKubeCacheCreatedPerClient(t *testing.T) {
 
 	_, err = kialiCache.GetKubeCache("cluster3")
 	require.Error(err)
+}
+
+func TestValidationsSetByConstructor(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+
+	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
+	cache, err := NewKialiCache(clients, *conf)
+	require.NoError(err)
+
+	require.NotNil(cache.Validations())
 }

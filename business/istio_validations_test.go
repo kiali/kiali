@@ -31,7 +31,11 @@ func TestGetNamespaceValidations(t *testing.T) {
 	vs := mockCombinedValidationService(t, fakeIstioConfigList(),
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
 
-	validations, err := vs.GetValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "", "")
+	validations, err := vs.CreateValidations(context.Background(), conf.KubernetesConfig.ClusterName)
+	require.NoError(err)
+	vs.kialiCache.Validations().Replace(validations)
+
+	validations, err = vs.GetValidations(context.TODO(), conf.KubernetesConfig.ClusterName)
 	require.NoError(err)
 	require.NotEmpty(validations)
 	assert.True(validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
@@ -46,7 +50,12 @@ func TestGetAllValidations(t *testing.T) {
 	vs := mockCombinedValidationService(t, fakeIstioConfigList(),
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
 
-	validations, _ := vs.GetValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "", "", "")
+	validations, err := vs.CreateValidations(context.Background(), conf.KubernetesConfig.ClusterName)
+	require.NoError(err)
+	vs.kialiCache.Validations().Replace(validations)
+
+	validations, err = vs.GetValidations(context.TODO(), conf.KubernetesConfig.ClusterName)
+	require.NoError(err)
 	require.NotEmpty(validations)
 	assert.True(validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
 }
@@ -70,7 +79,8 @@ func TestGatewayValidation(t *testing.T) {
 	conf.Deployment.ClusterWideAccess = true
 	kubernetes.SetConfig(t, *conf)
 
-	v := mockMultiNamespaceGatewaysValidationService(t, *conf)
+	objs := mockMultiNamespaceGateways()
+	v := fakeValidationMeshService(t, *conf, objs...)
 	validations, _, _ := v.GetIstioObjectValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "gateways", "first")
 	assert.NotEmpty(validations)
 }
@@ -142,7 +152,15 @@ func TestGatewayValidationScopesToNamespaceWhenGatewayToNamespaceSet(t *testing.
 		},
 	}
 
-	v := mockMultiNamespaceGatewaysValidationService(t, *conf, revConfigMap, injectorConfigMap, istioSystemNamespace, istiod_1_19_0, gatewayDeployment)
+	objs := []runtime.Object{
+		revConfigMap,
+		injectorConfigMap,
+		istioSystemNamespace,
+		istiod_1_19_0,
+		gatewayDeployment,
+	}
+	objs = append(objs, mockMultiNamespaceGateways()...)
+	v := fakeValidationMeshService(t, *conf, objs...)
 	validations, _, err := v.GetIstioObjectValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "gateways", "first")
 	require.NoError(err)
 	require.Len(validations, 1)
@@ -176,7 +194,8 @@ func TestFilterExportToNamespacesVS(t *testing.T) {
 	currentIstioObjects = append(currentIstioObjects, vs3toall)
 	vs3towrong := loadVirtualService("vs_bookinfo3_to_wrong.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, vs3towrong)
-	v := mockEmptyValidationService(t)
+	objs := mockEmpty(t, conf)
+	v := fakeValidationMeshService(t, *conf, objs...)
 	filteredVSs := v.filterVSExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo", "", currentIstioObjects)
 	var expectedVS []*networking_v1beta1.VirtualService
 	expectedVS = append(expectedVS, vs1tothis)
@@ -195,9 +214,6 @@ func TestFilterExportToNamespacesVS(t *testing.T) {
 }
 
 func TestAmbientFilterExportToNamespacesVS(t *testing.T) {
-	// skip as businessLayer.IstioConfigService state is not reset from test to test
-	// this test pass when running alone
-	t.SkipNow()
 	assert := assert.New(t)
 	conf := config.NewConfig()
 	config.Set(conf)
@@ -217,7 +233,8 @@ func TestAmbientFilterExportToNamespacesVS(t *testing.T) {
 	currentIstioObjects = append(currentIstioObjects, vs3toall)
 	vs3towrong := loadVirtualService("vs_bookinfo3_to_wrong.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, vs3towrong)
-	v := mockAmbientValidationService(t)
+	objects := mockAmbient(t, conf)
+	v := fakeValidationMeshService(t, *conf, objects...)
 	filteredVSs := v.filterVSExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo", IsAmbient: true}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo2", "", currentIstioObjects)
 	var expectedVS []*networking_v1beta1.VirtualService
 	expectedVS = append(expectedVS, vs2tothis)
@@ -255,7 +272,8 @@ func TestFilterExportToNamespacesDR(t *testing.T) {
 	currentIstioObjects = append(currentIstioObjects, dr3toall)
 	dr3towrong := loadDestinationRule("dr_bookinfo3_to_wrong.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, dr3towrong)
-	v := mockEmptyValidationService(t)
+	objs := mockEmpty(t, conf)
+	v := fakeValidationMeshService(t, *conf, objs...)
 	filteredDRs := v.filterDRExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo", "", currentIstioObjects)
 	var expectedDR []*networking_v1beta1.DestinationRule
 	expectedDR = append(expectedDR, dr1tothis)
@@ -274,9 +292,6 @@ func TestFilterExportToNamespacesDR(t *testing.T) {
 }
 
 func TestAmbientFilterExportToNamespacesDR(t *testing.T) {
-	// skip as businessLayer.IstioConfigService state is not reset from test to test
-	// this test pass when running alone
-	t.SkipNow()
 	assert := assert.New(t)
 	conf := config.NewConfig()
 	config.Set(conf)
@@ -296,7 +311,8 @@ func TestAmbientFilterExportToNamespacesDR(t *testing.T) {
 	currentIstioObjects = append(currentIstioObjects, dr3toall)
 	dr3towrong := loadDestinationRule("dr_bookinfo3_to_wrong.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, dr3towrong)
-	v := mockAmbientValidationService(t)
+	objects := mockAmbient(t, conf)
+	v := fakeValidationMeshService(t, *conf, objects...)
 	filteredDRs := v.filterDRExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo", IsAmbient: true}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo2", "", currentIstioObjects)
 	var expectedDR []*networking_v1beta1.DestinationRule
 	expectedDR = append(expectedDR, dr2tothis)
@@ -334,7 +350,8 @@ func TestFilterExportToNamespacesSE(t *testing.T) {
 	currentIstioObjects = append(currentIstioObjects, se3toall)
 	se3towrong := loadServiceEntry("se_bookinfo3_to_wrong.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, se3towrong)
-	v := mockEmptyValidationService(t)
+	objs := mockEmpty(t, conf)
+	v := fakeValidationMeshService(t, *conf, objs...)
 	filteredSEs := v.filterSEExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo", "", currentIstioObjects)
 	var expectedSE []*networking_v1beta1.ServiceEntry
 	expectedSE = append(expectedSE, se1tothis)
@@ -353,9 +370,6 @@ func TestFilterExportToNamespacesSE(t *testing.T) {
 }
 
 func TestAmbientFilterExportToNamespacesSE(t *testing.T) {
-	// skip as businessLayer.IstioConfigService state is not reset from test to test
-	// this test pass when running alone
-	t.SkipNow()
 	assert := assert.New(t)
 	conf := config.NewConfig()
 	config.Set(conf)
@@ -375,7 +389,8 @@ func TestAmbientFilterExportToNamespacesSE(t *testing.T) {
 	currentIstioObjects = append(currentIstioObjects, se3toall)
 	se3towrong := loadServiceEntry("se_bookinfo3_to_wrong.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, se3towrong)
-	v := mockAmbientValidationService(t)
+	objects := mockAmbient(t, conf)
+	v := fakeValidationMeshService(t, *conf, objects...)
 	filteredSEs := v.filterSEExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo", IsAmbient: true}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo2", "", currentIstioObjects)
 	var expectedSE []*networking_v1beta1.ServiceEntry
 	expectedSE = append(expectedSE, se2tothis)
@@ -428,7 +443,73 @@ func TestGetVSReferencesNotExisting(t *testing.T) {
 	assert.Nil(references)
 }
 
-func mockMultiNamespaceGatewaysValidationService(t *testing.T, cfg config.Config, objects ...runtime.Object) IstioValidationsService {
+func TestValidatingSingleObjectUpdatesList(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	vs := mockCombinedValidationService(t, fakeIstioConfigList(),
+		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
+
+	v, err := vs.userClients[conf.KubernetesConfig.ClusterName].Istio().NetworkingV1beta1().VirtualServices("test").Get(context.Background(), "product-vs", meta_v1.GetOptions{})
+	require.NoError(err)
+
+	validations, err := vs.CreateValidations(context.Background(), conf.KubernetesConfig.ClusterName)
+	require.NoError(err)
+	vs.kialiCache.Validations().Replace(validations)
+
+	currentValidations, err := vs.GetValidations(context.Background(), conf.KubernetesConfig.ClusterName)
+	require.NoError(err)
+
+	key := models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}
+	require.True(currentValidations[key].Valid)
+
+	v.Spec.Gateways = []string{"nonexistant"}
+	_, err = vs.userClients[conf.KubernetesConfig.ClusterName].Istio().NetworkingV1beta1().VirtualServices("test").Update(context.Background(), v, meta_v1.UpdateOptions{})
+	require.NoError(err)
+
+	updatedValidations, _, err := vs.GetIstioObjectValidations(context.Background(), conf.KubernetesConfig.ClusterName, "test", "virtualservices", "product-vs")
+	require.NoError(err)
+	require.False(updatedValidations[key].Valid)
+
+	validations, err = vs.GetValidations(context.Background(), conf.KubernetesConfig.ClusterName)
+	require.NoError(err)
+	require.NotEmpty(validations)
+	assert.False(validations[key].Valid)
+}
+
+func fakeValidationMeshService(t *testing.T, cfg config.Config, objects ...runtime.Object) IstioValidationsService {
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	cache := SetupBusinessLayer(t, k8s, cfg)
+
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[cfg.KubernetesConfig.ClusterName] = k8s
+	namespace := NewNamespaceService(k8sclients, k8sclients, cache, cfg)
+	mesh := NewMeshService(k8sclients, cache, namespace, cfg)
+	layer := NewWithBackends(k8sclients, k8sclients, nil, nil)
+	return NewValidationsService(&layer.IstioConfig, cache, &mesh, &namespace, &layer.Svc, k8sclients, &layer.Workload)
+}
+
+func fakeValidationMeshServiceWithRegistryStatus(t *testing.T, cfg config.Config, services []string, objects ...runtime.Object) IstioValidationsService {
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	cache := SetupBusinessLayer(t, k8s, cfg)
+	conf := config.NewConfig()
+	cache.SetRegistryStatus(map[string]*kubernetes.RegistryStatus{
+		conf.KubernetesConfig.ClusterName: {
+			Services: data.CreateFakeMultiRegistryServices(services, "test", "*"),
+		},
+	})
+
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[cfg.KubernetesConfig.ClusterName] = k8s
+	namespace := NewNamespaceService(k8sclients, k8sclients, cache, cfg)
+	mesh := NewMeshService(k8sclients, cache, namespace, cfg)
+	layer := NewWithBackends(k8sclients, k8sclients, nil, nil)
+	return NewValidationsService(&layer.IstioConfig, cache, &mesh, &namespace, &layer.Svc, k8sclients, &layer.Workload)
+}
+
+func mockMultiNamespaceGateways() []runtime.Object {
 	fakeIstioObjects := []runtime.Object{
 		&core_v1.ConfigMap{ObjectMeta: meta_v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
 	}
@@ -451,22 +532,17 @@ func mockMultiNamespaceGatewaysValidationService(t *testing.T, cfg config.Config
 		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
 	}
 
-	fakeIstioObjects = append(fakeIstioObjects, objects...)
 	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(getGateway("first", "test"))...)
 	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(getGateway("second", "test2"))...)
 
-	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
-	SetupBusinessLayer(t, k8s, cfg)
-
-	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[cfg.KubernetesConfig.ClusterName] = k8s
-	return IstioValidationsService{userClients: k8sclients, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
+	return fakeIstioObjects
 }
 
 func mockCombinedValidationService(t *testing.T, istioConfigList *models.IstioConfigList, services []string, namespace string, podList *core_v1.PodList) IstioValidationsService {
 	fakeIstioObjects := []runtime.Object{
 		&core_v1.ConfigMap{ObjectMeta: meta_v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
 		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "wrong"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
 	}
 	for _, p := range fakeMeshPolicies() {
 		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
@@ -497,22 +573,10 @@ func mockCombinedValidationService(t *testing.T, istioConfigList *models.IstioCo
 	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(istioConfigList.WorkloadEntries)...)
 	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(istioConfigList.RequestAuthentications)...)
 
-	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
-
-	conf := config.NewConfig()
-	cache := SetupBusinessLayer(t, k8s, *conf)
-	cache.SetRegistryStatus(map[string]*kubernetes.RegistryStatus{
-		conf.KubernetesConfig.ClusterName: {
-			Services: data.CreateFakeMultiRegistryServices(services, "test", "*"),
-		},
-	})
-
-	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	return IstioValidationsService{userClients: k8sclients, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
+	return fakeValidationMeshServiceWithRegistryStatus(t, *config.NewConfig(), services, fakeIstioObjects...)
 }
 
-func mockAmbientValidationService(t *testing.T) IstioValidationsService {
+func mockAmbient(t *testing.T, conf *config.Config) []runtime.Object {
 	objects := []runtime.Object{
 		fakeDaemonSetWithStatus("istio-ingressgateway", map[string]string{"app": "istio-ingressgateway", "istio": "ingressgateway"}, unhealthyDaemonSetStatus),
 		fakeDaemonSetWithStatus("ztunnel", map[string]string{"app": "ztunnel"}, unhealthyDaemonSetStatus),
@@ -520,9 +584,8 @@ func mockAmbientValidationService(t *testing.T) IstioValidationsService {
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
-	k8s, _, _ := mockAddOnsCalls(t, objects, true, false)
+	mockAddOnsCalls(t, objects, true, false)
 
-	conf := config.Get()
 	conf.IstioLabels.AppLabelName = "app.kubernetes.io/name"
 	conf.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
 		Enabled: true,
@@ -532,26 +595,19 @@ func mockAmbientValidationService(t *testing.T) IstioValidationsService {
 			{AppLabel: "istio-ingressgateway", IsCore: false},
 		},
 	}
-	config.Set(conf)
 
-	// Set global cache var
-	SetupBusinessLayer(t, k8s, *conf)
-
-	clients := make(map[string]kubernetes.ClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	return IstioValidationsService{userClients: clients, businessLayer: NewWithBackends(clients, clients, nil, nil)}
+	return objects
 }
 
-func mockEmptyValidationService(t *testing.T) IstioValidationsService {
+func mockEmpty(t *testing.T, conf *config.Config) []runtime.Object {
 	objects := []runtime.Object{
 		fakeDaemonSetWithStatus("istio-ingressgateway", map[string]string{"app": "istio-ingressgateway", "istio": "ingressgateway"}, unhealthyDaemonSetStatus),
 		fakeDeploymentWithStatus("istio-egressgateway", map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"}, unhealthyStatus),
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
-	k8s, _, _ := mockAddOnsCalls(t, objects, true, false)
+	mockAddOnsCalls(t, objects, true, false)
 
-	conf := config.Get()
 	conf.IstioLabels.AppLabelName = "app.kubernetes.io/name"
 	conf.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
 		Enabled: true,
@@ -563,12 +619,7 @@ func mockEmptyValidationService(t *testing.T) IstioValidationsService {
 	}
 	config.Set(conf)
 
-	// Set global cache var
-	SetupBusinessLayer(t, k8s, *conf)
-
-	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[config.Get().KubernetesConfig.ClusterName] = k8s
-	return IstioValidationsService{userClients: k8sclients, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
+	return objects
 }
 
 func fakeEmptyIstioConfigList() *models.IstioConfigList {

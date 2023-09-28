@@ -142,7 +142,7 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			istioConfigValidations, errValidations = business.Validations.GetValidations(r.Context(), cluster, namespace, service, "")
+			istioConfigValidations, errValidations = business.Validations.GetValidationsForService(r.Context(), cluster, namespace, service)
 		}()
 	}
 
@@ -210,7 +210,7 @@ func ServiceUpdate(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			istioConfigValidations, errValidations = business.Validations.GetValidations(r.Context(), cluster, namespace, service, "")
+			istioConfigValidations, errValidations = business.Validations.GetValidationsForService(r.Context(), cluster, namespace, service)
 		}()
 	}
 

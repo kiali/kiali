@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"sync"
 
 	"github.com/gorilla/mux"
 
@@ -76,36 +75,17 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 
 	var istioConfigValidations models.IstioValidations
 
-	wg := sync.WaitGroup{}
 	if includeValidations {
-		wg.Add(1)
-		go func(namespace string, istioConfigValidations *models.IstioValidations, err *error) {
-			defer wg.Done()
-			istioConfigValidationResults := models.IstioValidations{}
-			var errValidations error
-			// We don't filter by service and workload when calling validations, because certain validations require fetching all types to get the correct errors
-			// when namespace is empty, validaions should be done per all namespaces to apply object filters
-			if namespace == "" && len(nss) > 0 {
-				for _, ns := range nss {
-					nsValidations, nsErr := business.Validations.GetValidations(r.Context(), cluster, ns, "", "")
-					if nsErr == nil {
-						istioConfigValidationResults = istioConfigValidationResults.MergeValidations(nsValidations)
-					} else {
-						errValidations = nsErr
-					}
-				}
-			} else {
-				istioConfigValidationResults, errValidations = business.Validations.GetValidations(r.Context(), cluster, namespace, "", "")
-			}
-			if errValidations != nil && *err == nil {
-				*err = errValidations
-			} else {
-				if len(parsedTypes) > 0 {
-					istioConfigValidationResults = istioConfigValidationResults.FilterByTypes(parsedTypes)
-				}
-				*istioConfigValidations = istioConfigValidationResults
-			}
-		}(namespace, &istioConfigValidations, &err)
+		istioConfigValidations, err = business.Validations.GetValidations(r.Context(), cluster)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Error while getting validations: "+err.Error())
+			return
+		}
+
+		// We don't filter by objects when calling validations, because certain validations require fetching all types to get the correct errors
+		if len(parsedTypes) > 0 {
+			istioConfigValidations = istioConfigValidations.FilterByTypes(parsedTypes)
+		}
 	}
 
 	istioConfig := models.IstioConfigList{}
@@ -113,7 +93,7 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 	// This can result on an error when IstioAPI is disabled, so filter here
 	// Even if all namespaces are not accessible, but the IstioAPI is enabled, still use the Istio Registry by AllNamespaces=true
 	// In Ambient mode ExportTo is ignored, so proceed per namespace
-	if criteria.AllNamespaces && !config.Get().AllNamespacesAccessible() && !config.Get().ExternalServices.Istio.IstioAPIEnabled || (business.IstioConfig.IsAmbientEnabled() && len(nss) > 0) {
+	if criteria.AllNamespaces && !config.Get().AllNamespacesAccessible() && !config.Get().ExternalServices.Istio.IstioAPIEnabled || (business.IstioConfig.IsAmbientEnabled(cluster) && len(nss) > 0) {
 		criteria.AllNamespaces = false
 		for _, ns := range nss {
 			criteria.Namespace = ns
@@ -126,7 +106,6 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 
 	if includeValidations {
 		// Add validation results to the IstioConfigList once they're available (previously done in the UI layer)
-		wg.Wait()
 		istioConfig.IstioValidations = istioConfigValidations
 	}
 

@@ -58,8 +58,10 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 	p := workloadParams{}
 	p.extract(r)
 
-	criteria := business.WorkloadCriteria{Namespace: p.Namespace, IncludeHealth: p.IncludeHealth,
-		IncludeIstioResources: p.IncludeIstioResources, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
+	criteria := business.WorkloadCriteria{
+		Namespace: p.Namespace, IncludeHealth: p.IncludeHealth,
+		IncludeIstioResources: p.IncludeIstioResources, RateInterval: p.RateInterval, QueryTime: p.QueryTime,
+	}
 
 	// Get business layer
 	businessLayer, err := getBusiness(r)
@@ -103,9 +105,11 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 	p := workloadParams{}
 	p.extract(r)
 
-	criteria := business.WorkloadCriteria{Namespace: p.Namespace, WorkloadName: p.WorkloadName,
+	criteria := business.WorkloadCriteria{
+		Namespace: p.Namespace, WorkloadName: p.WorkloadName,
 		WorkloadType: p.WorkloadType, IncludeIstioResources: true, IncludeServices: true, IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval,
-		QueryTime: p.QueryTime, Cluster: p.ClusterName}
+		QueryTime: p.QueryTime, Cluster: p.ClusterName,
+	}
 
 	// Get business layer
 	business, err := getBusiness(r)
@@ -127,7 +131,7 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			istioConfigValidations, errValidations = business.Validations.GetValidations(r.Context(), criteria.Cluster, criteria.Namespace, "", criteria.WorkloadName)
+			istioConfigValidations, errValidations = business.Validations.GetValidationsForWorkload(r.Context(), criteria.Cluster, criteria.Namespace, criteria.WorkloadName)
 		}()
 	}
 
@@ -196,7 +200,7 @@ func WorkloadUpdate(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			istioConfigValidations, errValidations = business.Validations.GetValidations(r.Context(), cluster, namespace, "", workload)
+			istioConfigValidations, errValidations = business.Validations.GetValidationsForWorkload(r.Context(), cluster, namespace, workload)
 		}()
 	}
 
