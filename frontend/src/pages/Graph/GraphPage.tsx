@@ -80,6 +80,7 @@ import { deleteServiceTrafficRouting } from 'services/Api';
 import { canCreate, canUpdate } from '../../types/Permissions';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { triggerRefresh } from '../../hooks/refresh';
+import { isMultiCluster } from 'config';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 export type GraphURLPathProps = {
@@ -738,7 +739,10 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     } else {
       urlNodeType = 'applications';
     }
-    const detailsPageUrl = makeAppDetailsPageUrl(targetNode.namespace.name, urlNodeType, name);
+    let detailsPageUrl = makeAppDetailsPageUrl(targetNode.namespace.name, urlNodeType, name);
+    if (targetNode.cluster && isMultiCluster) {
+      detailsPageUrl = detailsPageUrl + '?clusterName=' + targetNode.cluster;
+    }
     if (isParentKiosk(this.props.kiosk)) {
       kioskContextMenuAction(detailsPageUrl);
     } else {

@@ -24,7 +24,7 @@ import { NamespaceActions } from 'actions/NamespaceAction';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
 import { history } from '../../../app/History';
 import { GraphNodeDoubleTapEvent } from 'components/CytoscapeGraph/CytoscapeGraph';
-import { serverConfig } from '../../../config';
+import { isMultiCluster, serverConfig } from '../../../config';
 
 type ContextMenuOptionPF = ContextMenuOption & {
   altClickHandler?: (node: GraphElement) => void;
@@ -212,8 +212,10 @@ const handleDoubleTapSameNode = (targetNode: NodeParamsType) => {
   } else {
     urlNodeType = 'applications';
   }
-  const detailsPageUrl = makeAppDetailsPageUrl(targetNode.namespace.name, urlNodeType, name);
-  // todo deal with kiosk
+  let detailsPageUrl = makeAppDetailsPageUrl(targetNode.namespace.name, urlNodeType, name);
+  if (targetNode.cluster && isMultiCluster) {
+    detailsPageUrl = detailsPageUrl + '?clusterName=' + targetNode.cluster;
+  } // todo deal with kiosk
   //if (isParentKiosk(this.props.kiosk)) {
   //  kioskContextMenuAction(detailsPageUrl);
   //} else {
