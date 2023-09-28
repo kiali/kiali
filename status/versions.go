@@ -66,7 +66,7 @@ func getVersions() {
 	if config.Get().ExternalServices.Tracing.Enabled {
 		components = append(components, jaegerVersion)
 	} else {
-		log.Debugf("Tracing is disabled in Kiali by configuration")
+		log.Debugf("Jaeger is disabled in Kiali by configuration")
 	}
 
 	for _, comp := range components {
@@ -234,7 +234,7 @@ func jaegerVersion() (*ExternalServiceInfo, error) {
 		return nil, nil
 	}
 	product := ExternalServiceInfo{}
-	product.Name = "Tracing"
+	product.Name = "Jaeger"
 	product.Url = jaegerConfig.URL
 
 	return &product, nil

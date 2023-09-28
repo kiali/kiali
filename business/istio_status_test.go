@@ -244,7 +244,7 @@ func TestGrafanaDisabled(t *testing.T) {
 	// No request performed to Grafana endpoint
 	assert.Zero(*grafanaCalls)
 
-	// Requests to Tracing and Prometheus performed once
+	// Requests to Jaeger and Prometheus performed once
 	assert.Equal(1, *promCalls)
 
 	assertNotPresent(assert, icsl, "grafana")

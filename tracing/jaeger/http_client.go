@@ -39,10 +39,10 @@ func (jc JaegerHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.
 	u.Path = path.Join(u.Path, "/api/traces/"+traceID)
 	resp, code, reqError := makeRequest(client, u.String(), nil)
 	if reqError != nil {
-		log.Errorf("Tracing query error: %s [code: %d, URL: %v]", reqError, code, u)
+		log.Errorf("Jaeger query error: %s [code: %d, URL: %v]", reqError, code, u)
 		return nil, reqError
 	}
-	// Tracing would return "200 OK" when trace is not found, with an empty response
+	// Jaeger would return "200 OK" when trace is not found, with an empty response
 	if len(resp) == 0 {
 		return nil, nil
 	}
@@ -77,7 +77,7 @@ func queryTracesHTTP(client http.Client, u *url.URL) (*model.TracingResponse, er
 	}
 	resp, code, reqError := makeRequest(client, u.String(), nil)
 	if reqError != nil {
-		log.Errorf("Tracing query error: %s [code: %d, URL: %v]", reqError, code, u)
+		log.Errorf("Jaeger query error: %s [code: %d, URL: %v]", reqError, code, u)
 		return &model.TracingResponse{}, reqError
 	}
 	return unmarshal(resp, u)
@@ -86,7 +86,7 @@ func queryTracesHTTP(client http.Client, u *url.URL) (*model.TracingResponse, er
 func unmarshal(r []byte, u *url.URL) (*model.TracingResponse, error) {
 	var response model.TracingResponse
 	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
-		log.Errorf("Error unmarshalling Tracing response: %s [URL: %v]", errMarshal, u)
+		log.Errorf("Error unmarshalling Jaeger response: %s [URL: %v]", errMarshal, u)
 		return nil, errMarshal
 	}
 	return &response, nil
@@ -101,7 +101,7 @@ func prepareQuery(u *url.URL, jaegerServiceName string, query models.TracingQuer
 		// Tags must be json encoded
 		tags, err := json.Marshal(query.Tags)
 		if err != nil {
-			log.Errorf("Tracing query: error while marshalling tags to json: %v", err)
+			log.Errorf("Jaeger query: error while marshalling tags to json: %v", err)
 		}
 		q.Set("tags", string(tags))
 	}
@@ -112,7 +112,7 @@ func prepareQuery(u *url.URL, jaegerServiceName string, query models.TracingQuer
 		q.Set("limit", strconv.Itoa(query.Limit))
 	}
 	u.RawQuery = q.Encode()
-	log.Debugf("Prepared Tracing query: %v", u)
+	log.Debugf("Prepared Jaeger query: %v", u)
 }
 
 func makeRequest(client http.Client, endpoint string, body io.Reader) (response []byte, status int, err error) {

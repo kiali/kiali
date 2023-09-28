@@ -137,16 +137,16 @@ func StartSpan(ctx context.Context, funcName string, attrs ...attribute.KeyValue
 }
 
 // getExporter returns the exporter based on the configuration options
-// Tracing collector, OpenTelemetry using http or grpc
+// Jaeger collector, OpenTelemetry using http or grpc
 func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 	var exporter sdktrace.SpanExporter
 	var err error
 
 	tracingOpt := config.Get().Server.Observability.Tracing
 
-	// Tracing collector
+	// Jaeger collector
 	if tracingOpt.CollectorType == JAEGER {
-		log.Debugf("Creating Tracing collector with URL %s", collectorURL)
+		log.Debugf("Creating Jaeger collector with URL %s", collectorURL)
 		exporter, err = jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(collectorURL)))
 		return exporter, err
 	} else {

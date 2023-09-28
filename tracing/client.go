@@ -49,7 +49,7 @@ type HTTPClientInterface interface {
 	GetServiceStatusHTTP(client http.Client, baseURL *url.URL) (bool, error)
 }
 
-// Client for Tracing API.
+// Client for Jaeger API.
 type Client struct {
 	ClientInterface
 	httpTracingClient HTTPClientInterface
@@ -77,7 +77,7 @@ func NewClient(token string) (*Client, error) {
 			u, errParse = url.Parse(cfgTracing.URL)
 		}
 		if errParse != nil {
-			log.Errorf("Error parsing Tracing URL: %s", errParse)
+			log.Errorf("Error parsing Jaeger URL: %s", errParse)
 			return nil, errParse
 		}
 
@@ -124,14 +124,14 @@ func NewClient(token string) (*Client, error) {
 			return &Client{httpTracingClient: httpTracingClient, grpcClient: client, ctx: ctx}, nil
 		} else {
 			// Legacy HTTP client
-			log.Tracef("Using legacy HTTP client for Tracing: url=%v, auth.type=%s", u, auth.Type)
+			log.Tracef("Using legacy HTTP client for Jaeger: url=%v, auth.type=%s", u, auth.Type)
 			timeout := time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout) * time.Second
 			transport, err := httputil.CreateTransport(&auth, &http.Transport{}, timeout, nil)
 			if err != nil {
 				return nil, err
 			}
 			client := http.Client{Transport: transport, Timeout: timeout}
-			log.Infof("Create Tracing HTTP client %s", u)
+			log.Infof("Create Jaeger HTTP client %s", u)
 			return &Client{httpTracingClient: httpTracingClient, httpClient: client, baseURL: u, ctx: ctx}, nil
 		}
 
@@ -159,7 +159,7 @@ func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*m
 
 	stream, err := in.grpcClient.FindTraces(ctx, findTracesRQ)
 	if err != nil {
-		err = fmt.Errorf("GetAppTraces, Tracing GRPC client error: %v", err)
+		err = fmt.Errorf("GetAppTraces, Jaeger GRPC client error: %v", err)
 		log.Error(err.Error())
 		return nil, err
 	}
@@ -201,7 +201,7 @@ func (in *Client) GetTraceDetail(strTraceID string) (*model.TracingSingleTrace, 
 
 	stream, err := in.grpcClient.GetTrace(ctx, getTraceRQ)
 	if err != nil {
-		return nil, fmt.Errorf("GetTraceDetail, Tracing GRPC client error: %v", err)
+		return nil, fmt.Errorf("GetTraceDetail, Jaeger GRPC client error: %v", err)
 	}
 	tracesMap, err := readSpansStream(stream)
 	if err != nil {
@@ -258,17 +258,17 @@ func readSpansStream(stream SpansStreamer) (map[model.TraceID]*model.Trace, erro
 	for received, err := stream.Recv(); err != io.EOF; received, err = stream.Recv() {
 		if err != nil {
 			if status.Code(err) == codes.DeadlineExceeded {
-				log.Trace("Tracing GRPC client timeout")
+				log.Trace("Jaeger GRPC client timeout")
 				break
 			}
 			log.Errorf("jaeger GRPC client, stream error: %v", err)
-			return nil, fmt.Errorf("Tracing GRPC client, stream error: %v", err)
+			return nil, fmt.Errorf("Jaeger GRPC client, stream error: %v", err)
 		}
 		for i, span := range received.Spans {
 			traceId := model.TraceID{}
 			err := traceId.Unmarshal(span.TraceId)
 			if err != nil {
-				log.Errorf("Tracing TraceId unmarshall error: %v", err)
+				log.Errorf("Jaeger TraceId unmarshall error: %v", err)
 				continue
 			}
 			if trace, ok := tracesMap[traceId]; ok {
