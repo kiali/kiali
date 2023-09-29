@@ -80,6 +80,23 @@ done
 
 SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
 
+if [ "${CLIENT_EXE}" == "" ]; then
+  CLIENT_EXE=`which "${CLIENT_EXE_NAME}"`
+  if [ "$?" = "0" ]; then
+    echo "The cluster client executable is found here: ${CLIENT_EXE}"
+  else
+    echo "ERROR: You must install the cluster client ${CLIENT_EXE_NAME} in your PATH before you can continue."
+    exit 1
+  fi
+fi
+
+IS_OPENSHIFT="false"
+if [[ "${CLIENT_EXE}" = *"oc" ]]; then
+  IS_OPENSHIFT="true"
+fi
+
+echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
+
 if [ "${DELETE_ALL}" == "true" ]; then
   DELETE_TEMPO="true"
 fi
@@ -90,7 +107,13 @@ if [ "${DELETE_TEMPO}" == "true" ]; then
   ${CLIENT_EXE} delete -f https://github.com/grafana/tempo-operator/releases/latest/download/tempo-operator.yaml
   ${CLIENT_EXE} delete secret -n ${TEMPO_NS} tempostack-dev-minio
   ${CLIENT_EXE} delete TempoStack cr -n ${TEMPO_NS}
-  ${CLIENT_EXE} delete ns ${TEMPO_NS}
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    $CLIENT_EXE delete project ${TEMPO_NS}
+    $CLIENT_EXE delete ns ${TEMPO_NS}
+  else
+    ${CLIENT_EXE} delete ns ${TEMPO_NS}
+  fi
+
   if [ "${DELETE_ALL}" == "true" ]; then
     ${SCRIPT_DIR}/../install-istio-via-istioctl.sh -c ${CLIENT_EXE} -di true
     ${SCRIPT_DIR}/../install-bookinfo-demo.sh -c ${CLIENT_EXE} -db true
@@ -106,7 +129,12 @@ else
   echo -e "Waiting for Tempo operator to be ready... \n"
   $CLIENT_EXE wait pods --all -n tempo-operator-system --for=condition=Ready --timeout=5m
 
-  ${CLIENT_EXE} create namespace ${TEMPO_NS}
+  # If OpenShift, we need to do some additional things
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    $CLIENT_EXE new-project ${TEMPO_NS}
+  else
+    $CLIENT_EXE create namespace ${TEMPO_NS}
+  fi
 
   echo -e "Installing minio and create secret \n"
   ${CLIENT_EXE} apply --namespace ${TEMPO_NS} -f ${SCRIPT_DIR}/minio.yaml
@@ -158,6 +186,11 @@ EOF
   if [ "${INSTALL_BOOKINFO}" == "true" ]; then
     echo -e "Installing bookinfo \n"
     ${SCRIPT_DIR}/../install-bookinfo-demo.sh -c ${CLIENT_EXE} -tg
+  fi
+
+  # If OpenShift, we need to do some additional things
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    $CLIENT_EXE expose svc/tempo-cr-query-frontend -n ${TEMPO_NS}
   fi
 
   echo -e "Installation finished. You can port forward the services with: \n"
