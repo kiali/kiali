@@ -52,8 +52,8 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
 
   public static retrieveDisplaySettings(): DisplaySettings {
     const spansAverage =
-      HistoryManager.getParam(URLParam.JAEGER_SHOW_SPANS_AVG) ||
-      sessionStorage.getItem(URLParam.JAEGER_SHOW_SPANS_AVG) ||
+      HistoryManager.getParam(URLParam.TRACING_SHOW_SPANS_AVG) ||
+      sessionStorage.getItem(URLParam.TRACING_SHOW_SPANS_AVG) ||
       'false';
     return {
       showSpansAverage: spansAverage === 'true'
@@ -62,16 +62,16 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
 
   public static retrieveQuerySettings(): QuerySettings {
     const limit =
-      HistoryManager.getParam(URLParam.JAEGER_LIMIT_TRACES) ||
-      sessionStorage.getItem(URLParam.JAEGER_LIMIT_TRACES) ||
+      HistoryManager.getParam(URLParam.TRACING_LIMIT_TRACES) ||
+      sessionStorage.getItem(URLParam.TRACING_LIMIT_TRACES) ||
       '100';
     const errorsOnly =
-      HistoryManager.getParam(URLParam.JAEGER_ERRORS_ONLY) ||
-      sessionStorage.getItem(URLParam.JAEGER_ERRORS_ONLY) ||
+      HistoryManager.getParam(URLParam.TRACING_ERRORS_ONLY) ||
+      sessionStorage.getItem(URLParam.TRACING_ERRORS_ONLY) ||
       'false';
     const percentile =
-      HistoryManager.getParam(URLParam.JAEGER_PERCENTILE) ||
-      sessionStorage.getItem(URLParam.JAEGER_PERCENTILE) ||
+      HistoryManager.getParam(URLParam.TRACING_PERCENTILE) ||
+      sessionStorage.getItem(URLParam.TRACING_PERCENTILE) ||
       undefined;
     return {
       errorsOnly: errorsOnly === 'true',
@@ -229,25 +229,25 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
 
   private onPercentileChanged = (id: string, checked: boolean) => {
     if (checked) {
-      this.saveValue(URLParam.JAEGER_PERCENTILE, id);
+      this.saveValue(URLParam.TRACING_PERCENTILE, id);
       this.setState({ percentile: id }, () => this.props.onQuerySettingsChanged(this.state));
     }
   };
 
   private onErrorsOnlyChanged = (checked: boolean) => {
-    this.saveValue(URLParam.JAEGER_ERRORS_ONLY, String(checked));
+    this.saveValue(URLParam.TRACING_ERRORS_ONLY, String(checked));
     this.setState({ errorsOnly: checked }, () => this.props.onQuerySettingsChanged(this.state));
   };
 
   private onLimitChanged = (limit: number, checked: boolean) => {
     if (checked) {
-      this.saveValue(URLParam.JAEGER_LIMIT_TRACES, String(limit));
+      this.saveValue(URLParam.TRACING_LIMIT_TRACES, String(limit));
       this.setState({ limit: limit }, () => this.props.onQuerySettingsChanged(this.state));
     }
   };
 
   private onValueAxisChanged = (showSpansAverage: boolean) => {
-    this.saveValue(URLParam.JAEGER_SHOW_SPANS_AVG, String(showSpansAverage));
+    this.saveValue(URLParam.TRACING_SHOW_SPANS_AVG, String(showSpansAverage));
     this.setState({ showSpansAverage: showSpansAverage }, () => this.props.onDisplaySettingsChanged(this.state));
   };
 

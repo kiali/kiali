@@ -110,7 +110,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
           : nodeData.service
           ? `/services/${nodeData.service}`
           : `/applications/${nodeData.app!}`) +
-        `?tab=traces&${URLParam.JAEGER_TRACE_ID}=${this.props.trace.traceID}`
+        `?tab=traces&${URLParam.TRACING_TRACE_ID}=${this.props.trace.traceID}`
       : undefined;
     const jaegerTraceURL = GetTraceDetailURL(
       this.props.provider,
@@ -230,7 +230,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
             : nodeData.service
             ? `/services/${nodeData.service}`
             : `/applications/${nodeData.app!}`) +
-          `?tab=traces&${URLParam.JAEGER_TRACE_ID}=${this.props.trace.traceID}&${URLParam.JAEGER_SPAN_ID}=${span.spanID}`
+          `?tab=traces&${URLParam.TRACING_TRACE_ID}=${this.props.trace.traceID}&${URLParam.TRACING_SPAN_ID}=${span.spanID}`
       : undefined;
   }
 

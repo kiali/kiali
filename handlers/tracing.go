@@ -17,9 +17,9 @@ import (
 // Get TracingInfo provides the Tracing URL and other info
 func GetTracingInfo(w http.ResponseWriter, r *http.Request) {
 	jaegerConfig := config.Get().ExternalServices.Tracing
-	var info models.JaegerInfo
+	var info models.TracingInfo
 	if jaegerConfig.Enabled {
-		info = models.JaegerInfo{
+		info = models.TracingInfo{
 			Enabled:              true,
 			Integration:          jaegerConfig.InClusterURL != "",
 			Provider:             jaegerConfig.Provider,
@@ -29,7 +29,7 @@ func GetTracingInfo(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		// 0-values would work, but let's be explicit
-		info = models.JaegerInfo{
+		info = models.TracingInfo{
 			Enabled:     false,
 			Integration: false,
 			URL:         "",

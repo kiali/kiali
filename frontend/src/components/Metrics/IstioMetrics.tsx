@@ -244,7 +244,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
           ? 'services'
           : 'workloads';
       history.push(
-        `/namespaces/${this.props.namespace}/${domain}/${this.props.object}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${traceId}&${URLParam.JAEGER_SPAN_ID}=${spanId}`
+        `/namespaces/${this.props.namespace}/${domain}/${this.props.object}?tab=traces&${URLParam.TRACING_TRACE_ID}=${traceId}&${URLParam.TRACING_SPAN_ID}=${spanId}`
       );
     }
   };

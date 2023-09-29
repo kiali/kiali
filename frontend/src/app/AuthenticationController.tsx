@@ -5,7 +5,7 @@ import { authenticationConfig, isAuthStrategyOAuth } from '../config/Authenticat
 import { KialiAppState, LoginStatus } from '../store/Store';
 import * as API from '../services/Api';
 import { HelpDropdownActions } from '../actions/HelpDropdownActions';
-import { JaegerActions } from '../actions/JaegerActions';
+import { TracingActions } from '../actions/TracingActions';
 import { LoginThunkActions } from '../actions/LoginThunkActions';
 import { MessageCenterActions } from '../actions/MessageCenterActions';
 import { MessageType } from '../types/MessageCenter';
@@ -338,7 +338,7 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   checkCredentials: () => dispatch(LoginThunkActions.checkCredentials()),
   setActiveNamespaces: bindActionCreators(NamespaceActions.setActiveNamespaces, dispatch),
   setDuration: bindActionCreators(UserSettingsActions.setDuration, dispatch),
-  setJaegerInfo: bindActionCreators(JaegerActions.setInfo, dispatch),
+  setJaegerInfo: bindActionCreators(TracingActions.setInfo, dispatch),
   setLandingRoute: bindActionCreators(LoginActions.setLandingRoute, dispatch),
   setNamespaces: bindActionCreators(NamespaceActions.receiveList, dispatch),
   setRefreshInterval: bindActionCreators(UserSettingsActions.setRefreshInterval, dispatch),

@@ -1,5 +1,5 @@
 import { JaegerStateReducer, JaegerState } from '../JaegerState';
-import { JaegerActions } from '../../actions/JaegerActions';
+import { TracingActions } from '../../actions/TracingActions';
 
 const initialState: JaegerState = {
   info: {
@@ -26,7 +26,7 @@ describe('JaegerState reducer', () => {
     expect(
       JaegerStateReducer(
         initialState,
-        JaegerActions.setInfo({
+        TracingActions.setInfo({
           url: url,
           enabled: true,
           integration: true,

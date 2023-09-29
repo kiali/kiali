@@ -199,7 +199,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
       const traceId = datum.traceId;
       const spanId = datum.spanId;
       history.push(
-        `/namespaces/${this.props.namespace}/applications/${this.props.app}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${traceId}&${URLParam.JAEGER_SPAN_ID}=${spanId}`
+        `/namespaces/${this.props.namespace}/applications/${this.props.app}?tab=traces&${URLParam.TRACING_TRACE_ID}=${traceId}&${URLParam.TRACING_SPAN_ID}=${spanId}`
       );
     }
   };

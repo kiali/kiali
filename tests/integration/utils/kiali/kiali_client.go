@@ -584,11 +584,11 @@ func NamespaceTls(namespace string) (*models.MTLSStatus, int, error) {
 	}
 }
 
-func Jaeger() (*models.JaegerInfo, int, error) {
-	url := fmt.Sprintf("%s/api/jaeger", client.kialiURL)
+func Tracing() (*models.TracingInfo, int, error) {
+	url := fmt.Sprintf("%s/api/tracing", client.kialiURL)
 	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
-		status := new(models.JaegerInfo)
+		status := new(models.TracingInfo)
 		err = json.Unmarshal(body, &status)
 		if err == nil {
 			return status, code, nil
