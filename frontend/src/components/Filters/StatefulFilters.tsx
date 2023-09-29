@@ -294,10 +294,10 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
   };
 
   filterValueSelected = (valueId?: string | number) => {
-    const { currentFilterType, currentValue } = this.state;
+    const { currentFilterType } = this.state;
     const filterValue = currentFilterType.filterValues.find(filter => filter.id === valueId);
 
-    if (filterValue && filterValue.id !== currentValue && !this.isActive(currentFilterType, filterValue.title)) {
+    if (filterValue && !this.isActive(currentFilterType, filterValue.title)) {
       this.filterAdded(currentFilterType, filterValue.title);
     }
 
@@ -430,15 +430,15 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
           toggle={toggle}
           isOpen={this.state.isOpen}
           aria-label="filter_select_value"
-          data-test="istio-type-dropdown"
         >
-          <SelectList>
+          <SelectList data-test="istio-type-dropdown">
             {currentFilterType.filterValues.length > 0 ? (
               currentFilterType.filterValues.map((filter, index) => (
                 <SelectOption
                   key={'filter_' + index}
                   value={filter.id}
                   isFocused={this.state.focusedItemIndex === index}
+                  label={filter.title}
                 >
                   {filter.title}
                 </SelectOption>
@@ -453,6 +453,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
       );
     } else if (currentFilterType.filterType === AllFilterTypes.select) {
       return (
+        //TODO: Replace by Select component when https://github.com/patternfly/patternfly-react/issues/9698 is fixed
         <FormSelect
           value="default"
           onChange={(_event, valueId: string) => this.filterValueSelected(valueId)}

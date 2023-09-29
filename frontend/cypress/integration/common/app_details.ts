@@ -6,7 +6,7 @@ import { clusterParameterExists } from './navigation';
 const APP = 'details';
 const NAMESPACE = 'bookinfo';
 
-Then('user sees details information for the {string} app', (name:string) => {
+Then('user sees details information for the {string} app', (name: string) => {
   cy.getBySel('app-description-card').within(() => {
     cy.get('#pfbadge-A').parent().parent().parent().contains('details'); // App
     cy.get('#pfbadge-W').parent().parent().parent().contains('details-v1'); // Workload
@@ -58,7 +58,7 @@ Then('user sees outbound metrics information', () => {
 And('user can filter spans by app', () => {
   cy.get('select[aria-label="filter_select_type"]').select('App');
   cy.get('input[placeholder="Filter by App"]').type('productpage{enter}');
-  cy.get('button[label="productpage"]').should('be.visible').click();
+  cy.get('li[label="productpage"]').should('be.visible').children('button').click();
   getCellsForCol('App / Workload').each($cell => {
     cy.wrap($cell).contains('productpage');
   });
@@ -67,17 +67,15 @@ And('user can filter spans by app', () => {
   getCellsForCol(4).first().click();
 });
 
-But('no cluster badge for the {string} should be visible',(type:string) => {
-  if (type === 'Istio config'){
+But('no cluster badge for the {string} should be visible', (type: string) => {
+  if (type === 'Istio config') {
     cy.get('#pfbadge-C').should('not.exist');
-  }
-  else if (type === 'graph side panel'){
-    cy.get('#graph-side-panel').within(($div) => {
+  } else if (type === 'graph side panel') {
+    cy.get('#graph-side-panel').within($div => {
       cy.get('#pfbadge-C').should('not.exist');
     });
-  }
-  else{
-    cy.get(`#${type[0].toUpperCase() + type.slice(1)}DescriptionCard`).within(($article)=>{
+  } else {
+    cy.get(`#${type[0].toUpperCase() + type.slice(1)}DescriptionCard`).within($article => {
       cy.get('#pfbadge-C').should('not.exist');
     });
   }

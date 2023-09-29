@@ -48,6 +48,7 @@ export const ToolbarDropdown: React.FC<ToolbarDropdownProps> = (props: ToolbarDr
 
   const toggle = (toggleRef: React.Ref<MenuToggleElement>) => (
     <MenuToggle
+      id={`${props.id}-toggle`}
       ref={toggleRef}
       onClick={onToggleClick}
       isExpanded={isOpen}

@@ -58,7 +58,7 @@ When('chosen from the {string} dropdown', (placeholder: string) => {
     }
   }).as('filterActive');
   cy.get(`input[placeholder="${placeholder}"]`).type('AuthorizationPolicy{enter}');
-  cy.get(`button[label="AuthorizationPolicy"]`).should('be.visible').click();
+  cy.get(`li[label="AuthorizationPolicy"]`).should('be.visible').click();
 });
 
 Then('the filter is applied', () => {
@@ -73,9 +73,9 @@ When('multiple filters are chosen', () => {
     }
   }).as('multipleFilters');
   cy.get('input[placeholder="Filter by Type"]').type('AuthorizationPolicy{enter}');
-  cy.get(`button[label="AuthorizationPolicy"]`).should('be.visible').click();
+  cy.get(`li[label="AuthorizationPolicy"]`).should('be.visible').click();
   cy.get('input[placeholder="Filter by Type"]').type('DestinationRule{enter}');
-  cy.get(`button[label="DestinationRule"]`).should('be.visible').click();
+  cy.get(`li[label="DestinationRule"]`).should('be.visible').click();
 });
 
 Then('multiple filters are active', () => {
@@ -84,7 +84,7 @@ Then('multiple filters are active', () => {
 
 When('a type filter {string} is applied', (category: string) => {
   cy.get('input[placeholder="Filter by Type"]').type(`${category}{enter}`);
-  cy.get(`button[label="${category}"]`).should('be.visible').click();
+  cy.get(`li[label="${category}"]`).should('be.visible').click();
 });
 
 And('user clicks the cross next to the {string}', (category: string) => {

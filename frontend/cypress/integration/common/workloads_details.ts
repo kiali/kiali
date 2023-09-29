@@ -65,7 +65,7 @@ Then('user sees workload outbound metrics information', () => {
 And('user can filter spans by workload', () => {
   cy.get('select[aria-label="filter_select_type"]').select('Workload');
   cy.get('input[placeholder="Filter by Workload"]').type('details-v1{enter}');
-  cy.get('button[label="details-v1"]').should('be.visible').click();
+  cy.get('li[label="details-v1"]').should('be.visible').click();
   getCellsForCol('App / Workload').each($cell => {
     cy.wrap($cell).contains('details-v1');
   });

@@ -91,7 +91,8 @@ const timeToolbarStyle = kialiStyle({
 const actionsToolbarStyle = kialiStyle({
   paddingTop: '17px',
   display: 'flex',
-  justifyContent: 'end'
+  justifyContent: 'end',
+  alignItems: 'center'
 });
 
 const typeSelectStyle = kialiStyle({
