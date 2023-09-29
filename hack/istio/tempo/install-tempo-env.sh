@@ -9,7 +9,7 @@
 #
 ##############################################################################
 
-CLIENT_EXE="kubectl"
+CLIENT_EXE="oc"
 DELETE_ALL="false"
 DELETE_TEMPO="false"
 INSTALL_BOOKINFO="true"
@@ -53,7 +53,7 @@ while [[ $# -gt 0 ]]; do
       cat <<HELPMSG
 Valid command line arguments:
   -c|--client:
-       client exe. Just kubectl is supported at the moment.
+       client exe. kubectl and oc are supported. oc by default.
   -da|--delete-all:
        Delete tempo and all the components installed (Including Istio, Kiali & bookinfo).
   -dt|--delete-tempo:
