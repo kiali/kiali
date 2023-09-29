@@ -1,27 +1,65 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`ThemeSwitch renders dark theme 1`] = `
-<Switch
-  aria-label=""
-  id="theme-switch"
-  isChecked={true}
-  isDisabled={false}
-  isReversed={false}
-  label="Dark Theme"
-  labelOff="Dark Theme"
-  onChange={[Function]}
-/>
+<Tooltip
+  content={
+    <React.Fragment>
+      Switch to Light Mode
+    </React.Fragment>
+  }
+  position="bottom"
+>
+  <div>
+    <Button
+      className="kiali_f17jn9du kiali_fj999mp"
+      onClick={[Function]}
+      variant="secondary"
+    >
+      <Sun
+        className="kiali_fb78s7m"
+      />
+    </Button>
+    <Button
+      className="kiali_f17jn9du kiali_fxx0nx6"
+      onClick={[Function]}
+      variant="primary"
+    >
+      <Moon
+        className="kiali_fb78s7m"
+      />
+    </Button>
+  </div>
+</Tooltip>
 `;
 
 exports[`ThemeSwitch renders light theme 1`] = `
-<Switch
-  aria-label=""
-  id="theme-switch"
-  isChecked={false}
-  isDisabled={false}
-  isReversed={false}
-  label="Dark Theme"
-  labelOff="Dark Theme"
-  onChange={[Function]}
-/>
+<Tooltip
+  content={
+    <React.Fragment>
+      Switch to Dark Mode
+    </React.Fragment>
+  }
+  position="bottom"
+>
+  <div>
+    <Button
+      className="kiali_f17jn9du kiali_fj999mp"
+      onClick={[Function]}
+      variant="primary"
+    >
+      <Sun
+        className="kiali_fb78s7m"
+      />
+    </Button>
+    <Button
+      className="kiali_f17jn9du kiali_fxx0nx6"
+      onClick={[Function]}
+      variant="secondary"
+    >
+      <Moon
+        className="kiali_fb78s7m"
+      />
+    </Button>
+  </div>
+</Tooltip>
 `;

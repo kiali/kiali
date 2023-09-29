@@ -3,6 +3,7 @@ import { shallowToJson } from 'enzyme-to-json';
 import { mount, shallow } from 'enzyme';
 import { ThemeSwitchComponent } from '../ThemeSwitch';
 import { KIALI_THEME, PF_THEME_DARK, Theme } from 'types/Common';
+import { Button } from '@patternfly/react-core';
 
 describe('ThemeSwitch renders', () => {
   it('light theme', () => {
@@ -23,16 +24,16 @@ describe('ThemeSwitch renders', () => {
 describe('ThemeSwitch changes', () => {
   it('to dark theme', () => {
     const wrapper = mount(<ThemeSwitchComponent theme={Theme.LIGHT} />);
-    var checkbox = () => wrapper.find('input');
-    checkbox().simulate('change', { target: { checked: true } });
+    var buttonLight = () => wrapper.find(Button).at(0);
+    buttonLight().simulate('click');
     expect(document.documentElement.classList.contains(PF_THEME_DARK)).toBe(true);
     expect(window.localStorage.getItem(KIALI_THEME)).toBe(Theme.DARK);
   });
 
   it('to light theme', () => {
     const wrapper = mount(<ThemeSwitchComponent theme={Theme.DARK} />);
-    var checkbox = () => wrapper.find('input');
-    checkbox().simulate('change', { target: { checked: false } });
+    var buttonDark = () => wrapper.find(Button).at(1);
+    buttonDark().simulate('click');
     expect(document.documentElement.classList.contains(PF_THEME_DARK)).toBe(false);
     expect(window.localStorage.getItem(KIALI_THEME)).toBe(Theme.LIGHT);
   });

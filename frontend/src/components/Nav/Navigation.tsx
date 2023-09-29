@@ -19,7 +19,7 @@ import {
 import { BarsIcon } from '@patternfly/react-icons';
 import { kialiStyle } from 'styles/StyleUtils';
 import { MessageCenter } from '../../components/MessageCenter/MessageCenter';
-import { homeCluster, kialiLogo, serverConfig } from '../../config';
+import { homeCluster, kialiLogoDark, serverConfig } from '../../config';
 import { KialiAppState } from '../../store/Store';
 import { UserSettingsThunkActions } from '../../actions/UserSettingsThunkActions';
 import { Menu } from './Menu';
@@ -120,7 +120,7 @@ export class NavigationComponent extends React.Component<PropsType, NavigationSt
         </MastheadToggle>
         <MastheadMain>
           <MastheadBrand component={props => <Link {...props} to="#" />}>
-            <img src={kialiLogo} alt="Kiali Logo" />
+            <img src={kialiLogoDark} alt="Kiali Logo" />
           </MastheadBrand>
         </MastheadMain>
         <MastheadContent style={{ height: '76px' }}>

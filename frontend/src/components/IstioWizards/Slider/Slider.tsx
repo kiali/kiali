@@ -147,7 +147,7 @@ export class Slider extends React.Component<Props, State> {
     });
 
     const inputStyle = kialiStyle({
-      width: '3em',
+      width: '3rem',
       textAlign: 'center',
       marginLeft: 0,
       marginRight: 0
