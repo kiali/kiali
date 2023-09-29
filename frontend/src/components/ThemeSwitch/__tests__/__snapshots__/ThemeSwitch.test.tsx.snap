@@ -11,21 +11,21 @@ exports[`ThemeSwitch renders dark theme 1`] = `
 >
   <div>
     <Button
-      className="kiali_f17jn9du kiali_fj999mp"
+      className="kiali_fu6nkss kiali_fj999mp"
       onClick={[Function]}
       variant="secondary"
     >
       <Sun
-        className="kiali_fb78s7m"
+        className="kiali_ft7uynw"
       />
     </Button>
     <Button
-      className="kiali_f17jn9du kiali_fxx0nx6"
+      className="kiali_fu6nkss kiali_fxx0nx6"
       onClick={[Function]}
       variant="primary"
     >
       <Moon
-        className="kiali_fb78s7m"
+        className="kiali_ft7uynw"
       />
     </Button>
   </div>
@@ -43,21 +43,21 @@ exports[`ThemeSwitch renders light theme 1`] = `
 >
   <div>
     <Button
-      className="kiali_f17jn9du kiali_fj999mp"
+      className="kiali_fu6nkss kiali_fj999mp"
       onClick={[Function]}
       variant="primary"
     >
       <Sun
-        className="kiali_fb78s7m"
+        className="kiali_ft7uynw"
       />
     </Button>
     <Button
-      className="kiali_f17jn9du kiali_fxx0nx6"
+      className="kiali_fu6nkss kiali_fxx0nx6"
       onClick={[Function]}
       variant="secondary"
     >
       <Moon
-        className="kiali_fb78s7m"
+        className="kiali_ft7uynw"
       />
     </Button>
   </div>
