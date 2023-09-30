@@ -1,9 +1,6 @@
 package kubernetes
 
 import (
-	"fmt"
-	"strings"
-
 	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -245,57 +242,9 @@ type RegistryConfiguration struct {
 	RequestAuthentications []*security_v1beta.RequestAuthentication
 }
 
+// TODO MAZZ DELETEME
 type RegistryEndpoint struct {
-	pilot string
-	IstioServiceEndpointShards
-}
-
-// IstioServiceEndpointShards is a helper struct to fetch the /debug/endpointz results before parsing it to the Kiali's service model.
-// Not all fields from /debug/endpointz are mapped, only those needed by Kiali.
-// There may be differences between Istio versions to be addressed case by case in the mapping.
-// See: https://github.com/istio/istio/blob/be3ca0bbb3f06f4151d6353a37bb91e20cfd811c/pilot/pkg/model/endpointshards.go#L39-L47
-type IstioServiceEndpointShards map[string]EndpointShards
-type EndpointShards map[string]struct {
-	Shards map[ShardKey][]EndpointShard `json:"Shards,omitempty"`
-}
-type EndpointShard struct {
-	Labels          map[string]string `json:"Labels,omitempty"`
-	Address         string            `json:"Address,omitempty"`
-	ServicePortName string            `json:"ServicePortName,omitempty"`
-	Locality        struct {
-		Label     string `json:"Label,omitempty"`
-		ClusterID string `json:"ClusterID,omitempty"`
-	} `json:"Locality,omitempty"`
-	EndpointPort uint32 `json:"EndpointPort,omitempty"`
-	TLSMode      string `json:"TLSMode,omitempty"`
-	Namespace    string `json:"Namespace,omitempty"`
-	HostName     string `json:"HostName,omitempty"`
-}
-
-// ShardKey is the key for EndpointShards made of a key with the format "provider/cluster"
-type ShardKey struct {
-	Provider string
-	Cluster  string
-}
-
-func (sk *ShardKey) String() string {
-	return fmt.Sprintf("%s/%s", sk.Provider, sk.Cluster)
-}
-
-// MarshalText implements the TextMarshaler interface (for json key usage)
-func (sk *ShardKey) MarshalText() (text []byte, err error) {
-	return []byte(sk.String()), nil
-}
-
-// UnmarshalText implements the TextMarshaler interface (for json key usage)
-func (sk *ShardKey) UnmarshalText(text []byte) error {
-	providerCluster := strings.Split(string(text), "/")
-	if len(providerCluster) != 2 {
-		return fmt.Errorf("ShardKey is not of the form provider/cluster [%v]", string(text))
-	}
-	sk.Provider = providerCluster[0]
-	sk.Cluster = providerCluster[1]
-	return nil
+	mazz string
 }
 
 type RegistryService struct {

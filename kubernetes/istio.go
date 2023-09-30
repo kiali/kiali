@@ -418,26 +418,20 @@ func ParseRegistryServices(registries map[string][]byte) ([]*RegistryService, er
 	return fullRegistryServices, nil
 }
 
+// TODO MAZZ DELETEME
 func ParseRegistryEndpoints(endpoints map[string][]byte) ([]*RegistryEndpoint, error) {
 	var fullRegistryEndpoints []*RegistryEndpoint
 	isRegistryLoaded := false
-	for pilot, endpoint := range endpoints {
+	for pilot, _ := range endpoints {
 		// skip reading registry endpoints multiple times in a case of multiple istiod pods
 		if isRegistryLoaded {
 			break
 		}
-		var eps IstioServiceEndpointShards
-		err := json.Unmarshal(endpoint, &eps)
-		if err != nil {
-			log.Errorf("Error parsing RegistryEndpoints results: %s", err)
-			return nil, err
-		}
 		re := RegistryEndpoint{
-			pilot:                      pilot,
-			IstioServiceEndpointShards: eps,
+			mazz: "mazz-" + pilot,
 		}
 		fullRegistryEndpoints = append(fullRegistryEndpoints, &re)
-		if len(eps) > 0 {
+		if len(endpoints) > 0 {
 			isRegistryLoaded = true
 		}
 	}

@@ -272,25 +272,6 @@ func TestParseRegistryConfig(t *testing.T) {
 	assert.Equal(12, len(registry.AuthorizationPolicies))
 }
 
-func TestParseRegistryEndpoints(t *testing.T) {
-	assert := assert.New(t)
-
-	endpointz := "../tests/data/registry/registry-endpointz.json"
-	bEndpointz, err := os.ReadFile(endpointz)
-	assert.NoError(err)
-
-	rEndpoints := map[string][]byte{
-		"istiod1": bEndpointz,
-	}
-
-	registry, err2 := ParseRegistryEndpoints(rEndpoints)
-	assert.NoError(err2)
-	assert.NotNil(registry)
-
-	assert.Equal(69, len(registry[0].IstioServiceEndpointShards))
-	assert.Equal("http", registry[0].IstioServiceEndpointShards["music.electronic-shop.svc.cluster.local"]["electronic-shop"].Shards[ShardKey{"Kubernetes", "Kubernetes"}][0].ServicePortName)
-}
-
 func TestRegistryServices(t *testing.T) {
 	assert := assert.New(t)
 

@@ -163,32 +163,9 @@ func filterRegistryConfiguration(registryStatus *kubernetes.RegistryStatus, crit
 	return &filtered
 }
 
+// TODO MAZZ DELETEME
 func filterRegistryEndpoints(registryStatus *kubernetes.RegistryStatus, criteria RegistryCriteria) []*kubernetes.RegistryEndpoint {
 	var filteredRegistryEndpoints []*kubernetes.RegistryEndpoint
-	if registryStatus == nil {
-		return filteredRegistryEndpoints
-	}
-	if criteria.AllNamespaces {
-		return registryStatus.Endpoints
-	}
-	if criteria.Namespace != "" && criteria.ServiceName != "" {
-		for _, rEndpoint := range registryStatus.Endpoints {
-			// External ServiceEntries don't have endpoints in the Istio Registry
-			if rEndpoint.IstioServiceEndpointShards != nil {
-				for serviceName, innerEndpoint := range rEndpoint.IstioServiceEndpointShards {
-					for _, shards := range innerEndpoint {
-						for _, shardArray := range shards.Shards {
-							for _, shard := range shardArray {
-								if shard.Namespace == criteria.Namespace && serviceName == criteria.ServiceName {
-									filteredRegistryEndpoints = append(filteredRegistryEndpoints, rEndpoint)
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
 	return filteredRegistryEndpoints
 }
 
