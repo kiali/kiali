@@ -45,10 +45,11 @@ type ReduxProps = {
 type MiniGraphCardProps = ReduxProps & {
   dataSource: GraphDataSource;
   graphContainerStyle?: string;
+  serviceDetails?: ServiceDetailsInfo | null;
+
   onDeleteTrafficRouting?: (key: string) => void;
   onEdgeTap?: (e: GraphEdgeTapEvent) => void;
   onLaunchWizard?: (key: WizardAction, mode: WizardMode) => void;
-  serviceDetails?: ServiceDetailsInfo | null;
 };
 
 type MiniGraphCardState = {
@@ -130,7 +131,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
                     toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
                       <MenuToggle
                         ref={toggleRef}
-                        aria-label="kebab dropdown toggle"
+                        aria-label="Actions"
                         variant="plain"
                         onClick={() => this.onGraphActionsToggle(!this.state.isKebabOpen)}
                         isExpanded={this.state.isKebabOpen}

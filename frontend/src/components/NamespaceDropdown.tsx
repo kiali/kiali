@@ -33,6 +33,7 @@ type ReduxProps = {
   activeNamespaces: Namespace[];
   filter: string;
   namespaces: Namespace[];
+
   refresh: () => void;
   setFilter: (filter: string) => void;
   setActiveNamespaces: (namespaces: Namespace[]) => void;
@@ -40,6 +41,7 @@ type ReduxProps = {
 
 type NamespaceDropdownProps = ReduxProps & {
   disabled: boolean;
+
   clearAll: () => void;
 };
 

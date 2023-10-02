@@ -37,6 +37,9 @@ const secondLevelStyle = kialiStyle({ marginLeft: 18 });
 const spacerStyle = kialiStyle({ height: '1em' });
 const titleLabelStyle = kialiStyle({ paddingLeft: 0, marginBottom: '5px', fontSize: 'small' });
 const labelStyle = kialiStyle({ display: 'inline-block' });
+const dividerStyle = kialiStyle({
+  paddingTop: '0.5rem'
+});
 
 export class MetricsSettingsDropdown extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -223,7 +226,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
           }}
         ></DropdownToggleCheckbox>
         <span className={checkboxSelectAllStyle}>Select all metric/label filters</span>
-        <Divider style={{ paddingTop: '5px' }} />
+        <Divider className={dividerStyle} />
       </div>
     );
   }
