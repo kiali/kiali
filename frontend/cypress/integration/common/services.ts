@@ -1,5 +1,11 @@
 import { And, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { checkHealthIndicatorInTable, checkHealthStatusInTable, colExists, getColWithRowText, hasAtLeastOneClass } from './table';
+import {
+  checkHealthIndicatorInTable,
+  checkHealthStatusInTable,
+  colExists,
+  getColWithRowText,
+  hasAtLeastOneClass
+} from './table';
 import { ensureKialiFinishedLoading } from './transition';
 
 Given('a service in the cluster with a healthy amount of traffic', function () {
@@ -27,16 +33,19 @@ And('the {string} row is visible', (row: string) => {
 });
 
 And('the health column on the {string} row has a health icon', (row: string) => {
-  getColWithRowText(row, 'Health').find('span')
-  .filter('.pf-v5-c-icon').should('satisfy',hasAtLeastOneClass(['icon-healthy','icon-unhealthy','icon-degraded','icon-na']))
+  getColWithRowText(row, 'Health')
+    .find('span')
+    .filter('.pf-v5-c-icon')
+    .should('satisfy', hasAtLeastOneClass(['icon-healthy', 'icon-unhealthy', 'icon-degraded', 'icon-na']));
 });
 
 And('user filters for service type {string}', (serviceType: string) => {
   cy.get('select[aria-label="filter_select_type"]')
-    .parent().parent()
+    .parent()
+    .parent()
     .within(() => {
       cy.get('button').click();
-      cy.get('button[label="External"]').click();
+      cy.get(`li[label="${serviceType}"]`).find('button').click();
     });
 });
 

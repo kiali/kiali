@@ -68,7 +68,7 @@ And('user filters for name {string}', (name: string) => {
 
 And('user filters for istio config type {string}', (istioType: string) => {
   cy.get('input[placeholder="Filter by Istio Config Type"]').type(`${istioType}{enter}`);
-  cy.get(`li[label="${istioType}"]`).should('be.visible').click();
+  cy.get(`li[label="${istioType}"]`).should('be.visible').find('button').click();
 });
 
 // checkCol

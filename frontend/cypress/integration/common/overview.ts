@@ -107,7 +107,7 @@ When(`user selects {string} traffic direction`, direction => {
       innerId = 'inbound';
       break;
   }
-  cy.get('button#direction-type').click().get('#loading_kiali_spinner').should('not.exist');
+  cy.get('button#direction-type-toggle').click().get('#loading_kiali_spinner').should('not.exist');
   cy.get(`button[id="${innerId}"]`).click().get('#loading_kiali_spinner').should('not.exist');
 });
 

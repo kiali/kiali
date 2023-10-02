@@ -83,5 +83,5 @@ And('user chooses the {string} option', (title: string) => {
 });
 
 Then('the graph type is disabled', () => {
-  cy.get('button[aria-label="Options menu"]').should('be.disabled');
+  cy.get('button#graph_type_dropdown-toggle').should('be.disabled');
 });

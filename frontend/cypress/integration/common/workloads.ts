@@ -43,7 +43,7 @@ And('user filters for workload type {string}', (workloadType: string) => {
     .parent()
     .within(() => {
       cy.get('button').click();
-      cy.get(`li[label="${workloadType}"]`).click();
+      cy.get(`li[label="${workloadType}"]`).find('button').click();
     });
 });
 
