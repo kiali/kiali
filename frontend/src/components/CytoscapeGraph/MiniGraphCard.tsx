@@ -1,7 +1,17 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { Card, CardBody, CardHeader, CardTitle, ToolbarItem } from '@patternfly/react-core';
-import { Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core/deprecated';
+import {
+  Card,
+  CardBody,
+  CardHeader,
+  CardTitle,
+  Dropdown,
+  DropdownItem,
+  DropdownList,
+  MenuToggle,
+  MenuToggleElement,
+  ToolbarItem
+} from '@patternfly/react-core';
 import { history } from '../../app/History';
 import { GraphDataSource } from '../../services/GraphDataSource';
 import { DecoratedGraphElements, EdgeMode, GraphType, NodeType } from '../../types/Graph';
@@ -23,6 +33,7 @@ import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { KioskElement } from '../Kiosk/KioskElement';
 import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
 import { isMultiCluster } from '../../config';
+import { KialiIcon } from 'config/KialiIcon';
 
 const initGraphContainerStyle = kialiStyle({ width: '100%', height: '100%' });
 
@@ -116,12 +127,23 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
                     </ToolbarItem>
                   </KioskElement>
                   <Dropdown
-                    toggle={<KebabToggle onToggle={(_event, isOpen: boolean) => this.onGraphActionsToggle(isOpen)} />}
-                    dropdownItems={graphCardActions}
-                    isPlain
+                    toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                      <MenuToggle
+                        ref={toggleRef}
+                        aria-label="kebab dropdown toggle"
+                        variant="plain"
+                        onClick={() => this.onGraphActionsToggle(!this.state.isKebabOpen)}
+                        isExpanded={this.state.isKebabOpen}
+                      >
+                        <KialiIcon.KebabToggle />
+                      </MenuToggle>
+                    )}
                     isOpen={this.state.isKebabOpen}
-                    position={'right'}
-                  />
+                    onOpenChange={(isOpen: boolean) => this.onGraphActionsToggle(isOpen)}
+                    popperProps={{ position: 'right' }}
+                  >
+                    <DropdownList>{graphCardActions}</DropdownList>
+                  </Dropdown>
                 </>
               ),
               hasNoOffset: false,
