@@ -242,11 +242,6 @@ type RegistryConfiguration struct {
 	RequestAuthentications []*security_v1beta.RequestAuthentication
 }
 
-// TODO MAZZ DELETEME
-type RegistryEndpoint struct {
-	mazz string
-}
-
 type RegistryService struct {
 	pilot string
 	IstioService
@@ -291,7 +286,6 @@ type IstioService struct {
 
 type RegistryStatus struct {
 	Configuration *RegistryConfiguration
-	Endpoints     []*RegistryEndpoint
 	Services      []*RegistryService
 }
 

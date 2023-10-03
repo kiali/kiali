@@ -172,9 +172,11 @@ func (s *ServiceDetails) SetEndpoints(eps *core_v1.Endpoints) {
 	(&s.Endpoints).Parse(eps)
 }
 
-func (s *ServiceDetails) SetRegistryEndpoints(rEps []*kubernetes.RegistryEndpoint) {
-	for i, p := range s.Service.Ports {
-		istioProtocol, istioMtls := filterRegistryEndpointTLSName(rEps, p.Name, uint32(p.Port))
+// TODO MAZZ NEED TO GET PROTOCOL AND TLSMODE HERE
+func (s *ServiceDetails) SetRegistryEndpoints() {
+	for i, _ := range s.Service.Ports {
+		istioProtocol := "mazz-protocol"
+		istioMtls := "istio"
 		if istioProtocol != "" && istioMtls != "" {
 			s.Service.Ports[i].IstioProtocol = istioProtocol
 			s.Service.Ports[i].TLSMode = istioMtls

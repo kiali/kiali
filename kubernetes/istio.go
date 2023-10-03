@@ -90,7 +90,6 @@ type IstioClientInterface interface {
 	GetConfigDump(namespace, podName string) (*ConfigDump, error)
 	SetProxyLogLevel(namespace, podName, level string) error
 	GetRegistryConfiguration() (*RegistryConfiguration, error)
-	GetRegistryEndpoints() ([]*RegistryEndpoint, error)
 	GetRegistryServices() ([]*RegistryService, error)
 }
 
@@ -298,29 +297,6 @@ func (in *K8SClient) GetRegistryServices() ([]*RegistryService, error) {
 	return ParseRegistryServices(result)
 }
 
-func (in *K8SClient) GetRegistryEndpoints() ([]*RegistryEndpoint, error) {
-	const endpointzPath = "/debug/endpointz"
-	var result map[string][]byte
-
-	if externalConf := config.Get().ExternalServices.Istio.Registry; externalConf != nil {
-		url := joinURL(externalConf.IstiodURL, endpointzPath)
-		r, err := getRequest(url)
-		if err != nil {
-			log.Errorf("Failed to get Istiod info from remote endpoint %s error: %s", endpointzPath, err)
-			return nil, err
-		}
-		result = map[string][]byte{"remote": r}
-	} else {
-		debugStatus, err := in.getIstiodDebugStatus(endpointzPath)
-		if err != nil {
-			log.Tracef("Failed to call Istiod endpoint %s error: %s", endpointzPath, err)
-			return nil, err
-		}
-		result = debugStatus
-	}
-	return ParseRegistryEndpoints(result)
-}
-
 func (in *K8SClient) GetRegistryConfiguration() (*RegistryConfiguration, error) {
 	const configzPath = "/debug/configz"
 	var result map[string][]byte
@@ -416,26 +392,6 @@ func ParseRegistryServices(registries map[string][]byte) ([]*RegistryService, er
 		}
 	}
 	return fullRegistryServices, nil
-}
-
-// TODO MAZZ DELETEME
-func ParseRegistryEndpoints(endpoints map[string][]byte) ([]*RegistryEndpoint, error) {
-	var fullRegistryEndpoints []*RegistryEndpoint
-	isRegistryLoaded := false
-	for pilot, _ := range endpoints {
-		// skip reading registry endpoints multiple times in a case of multiple istiod pods
-		if isRegistryLoaded {
-			break
-		}
-		re := RegistryEndpoint{
-			mazz: "mazz-" + pilot,
-		}
-		fullRegistryEndpoints = append(fullRegistryEndpoints, &re)
-		if len(endpoints) > 0 {
-			isRegistryLoaded = true
-		}
-	}
-	return fullRegistryEndpoints, nil
 }
 
 func ParseRegistryConfig(config map[string][]byte) (*RegistryConfiguration, error) {

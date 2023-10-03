@@ -2,8 +2,6 @@ package models
 
 import (
 	core_v1 "k8s.io/api/core/v1"
-
-	"github.com/kiali/kiali/kubernetes"
 )
 
 type Endpoints []Endpoint
@@ -27,9 +25,4 @@ func (endpoints *Endpoints) Parse(es *core_v1.Endpoints) {
 func (endpoint *Endpoint) Parse(s core_v1.EndpointSubset) {
 	(&endpoint.Ports).ParseEndpointPorts(s.Ports)
 	(&endpoint.Addresses).Parse(s.Addresses)
-}
-
-// TODO MAZZ FIND PROTOCOL AND TLS SETTINGS (used only in ServiceNetwork.tsx on the frontend)
-func filterRegistryEndpointTLSName(rEs []*kubernetes.RegistryEndpoint, portName string, portNumber uint32) (string, string) {
-	return "mazz-protocol", "istio"
 }
