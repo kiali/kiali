@@ -58,6 +58,38 @@ interface TracesState {
 const traceDetailsTab = 0;
 const spansDetailsTab = 1;
 
+function GetGrafanaUrl(externalServices: ExternalServiceInfo[]) {
+  return externalServices.find(service => service.name === 'Grafana');
+}
+
+function GetBaseTracingUrl(
+  provider: string | undefined,
+  urlJaeger: string | undefined,
+  externalServices: ExternalServiceInfo[]
+) {
+  if (provider === TEMPO) {
+    return GetGrafanaUrl(externalServices)?.url;
+  } else {
+    return urlJaeger;
+  }
+}
+
+export function GetTraceDetailURL(
+  provider: string | undefined,
+  urlJaeger: string | undefined,
+  externalServices: ExternalServiceInfo[]
+) {
+  const tracingUrl = GetBaseTracingUrl(provider, urlJaeger, externalServices);
+  if (!tracingUrl) {
+    return undefined;
+  }
+  if (provider === TEMPO) {
+    return `${tracingUrl}/explore?left={"queries":[{"datasource":{"type":"tempo"},"queryType":"traceql","query":"TRACEID"}]}`;
+  } else {
+    return `${tracingUrl}/trace/TRACEID`;
+  }
+}
+
 class TracesComp extends React.Component<TracesProps, TracesState> {
   private fetcher: TracesFetcher;
   private percentilesPromise: Promise<Map<string, number>>;
@@ -210,16 +242,8 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     this.setState(newState as TracesState);
   };
 
-  private getBaseTracingUrl = () => {
-    if (this.props.provider === TEMPO) {
-      return this.getGrafanaUrl()?.url;
-    } else {
-      return this.props.urlJaeger;
-    }
-  };
-
   private getTracingUrl = () => {
-    const tracingUrl = this.getBaseTracingUrl();
+    const tracingUrl = GetBaseTracingUrl(this.props.provider, this.props.urlJaeger, this.props.externalServices);
 
     if (tracingUrl === '' || !tracingUrl || !this.state.targetApp) {
       return undefined;
@@ -239,22 +263,6 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
       url += `&tags=${tags}`;
     }
     return url;
-  };
-
-  private getTraceDetailURL = () => {
-    const tracingUrl = this.getBaseTracingUrl();
-    if (!tracingUrl) {
-      return undefined;
-    }
-    if (this.props.provider === TEMPO) {
-      return `${tracingUrl}/explore?left={"queries":[{"datasource":{"type":"tempo"},"queryType":"traceql","query":"TRACEID"}]}`;
-    } else {
-      return `${tracingUrl}/trace/TRACEID`;
-    }
-  };
-
-  private getGrafanaUrl = () => {
-    return this.props.externalServices.find(service => service.name === 'Grafana');
   };
 
   private onQuerySettingsChanged = (settings: QuerySettings) => {
@@ -334,7 +342,11 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                     namespace={this.props.namespace}
                     target={this.props.target}
                     targetKind={this.props.targetKind}
-                    tracingURL={this.getTraceDetailURL()}
+                    tracingURL={GetTraceDetailURL(
+                      this.props.provider,
+                      this.props.urlJaeger,
+                      this.props.externalServices
+                    )}
                     otherTraces={this.state.traces}
                     cluster={this.props.cluster ? this.props.cluster : ''}
                     provider={this.props.provider}
@@ -344,7 +356,11 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                   <SpanDetails
                     namespace={this.props.namespace}
                     target={this.props.target}
-                    externalURL={this.getTraceDetailURL()}
+                    externalURL={GetTraceDetailURL(
+                      this.props.provider,
+                      this.props.urlJaeger,
+                      this.props.externalServices
+                    )}
                     items={this.props.selectedTrace.spans}
                     traceID={this.props.selectedTrace.traceID}
                     cluster={this.props.cluster ? this.props.cluster : ''}
