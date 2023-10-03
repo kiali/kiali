@@ -184,7 +184,7 @@ elif [ "${TEST_SUITE}" == "frontend" ]; then
   export CYPRESS_VIDEO=false
 
   ensureKialiServerReady "${KIALI_URL}"
-  ensureTracesReady "${KIALI_URL}"
+  ensureKialiTracesReady "${KIALI_URL}"
 
   if [ "${SETUP_ONLY}" == "true" ]; then
     exit 0
