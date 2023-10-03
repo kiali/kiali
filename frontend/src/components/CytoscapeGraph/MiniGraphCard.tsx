@@ -53,15 +53,15 @@ type MiniGraphCardProps = ReduxProps & {
 };
 
 type MiniGraphCardState = {
+  graphData: DecoratedGraphElements;
   isKebabOpen: boolean;
   isTimeOptionsOpen: boolean;
-  graphData: DecoratedGraphElements;
 };
 
 class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGraphCardState> {
   private cytoscapeGraphRef: any;
 
-  constructor(props) {
+  constructor(props: MiniGraphCardProps) {
     super(props);
     this.cytoscapeGraphRef = React.createRef();
     this.state = { isKebabOpen: false, isTimeOptionsOpen: false, graphData: props.dataSource.graphData };

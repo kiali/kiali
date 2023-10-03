@@ -11,11 +11,10 @@ import {
   ModalVariant,
   Text,
   TextVariants,
-  Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
 import { serverConfig } from '../../config';
-import { kialiStyle } from 'styles/StyleUtils';
+import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 
 type IstioActionDropdownProps = {
   canDelete: boolean;
@@ -25,18 +24,13 @@ type IstioActionDropdownProps = {
   onDelete: () => void;
 };
 
-const optionDisabledStyle = kialiStyle({
-  cursor: 'not-allowed',
-  $nest: {
-    '& button': {
-      pointerEvents: 'none'
-    }
-  }
-});
-
 export const IstioActionDropdown: React.FC<IstioActionDropdownProps> = (props: IstioActionDropdownProps) => {
   const [showConfirmModal, setShowConfirmModal] = React.useState<boolean>(false);
   const [dropdownOpen, setDropdownOpen] = React.useState<boolean>(false);
+
+  const onSelect = () => {
+    setDropdownOpen(!dropdownOpen);
+  };
 
   const onToggle = (dropdownState: boolean) => {
     setDropdownOpen(dropdownState);
@@ -55,19 +49,6 @@ export const IstioActionDropdown: React.FC<IstioActionDropdownProps> = (props: I
     props.onDelete();
   };
 
-  const renderTooltip = (
-    key: string,
-    position: TooltipPosition,
-    msg: string,
-    child: React.ReactElement
-  ): JSX.Element => {
-    return (
-      <Tooltip key={'tooltip_' + key} position={position} content={<>{msg}</>}>
-        <div className={optionDisabledStyle}>{child}</div>
-      </Tooltip>
-    );
-  };
-
   const objectName = props.objectKind ?? 'Istio object';
 
   const deleteAction = (
@@ -77,7 +58,7 @@ export const IstioActionDropdown: React.FC<IstioActionDropdownProps> = (props: I
   );
 
   const deleteActionWrapper = serverConfig.deployment.viewOnlyMode
-    ? renderTooltip('delete', TooltipPosition.left, 'User does not have permission', deleteAction)
+    ? renderDisabledDropdownOption('delete', TooltipPosition.left, 'User does not have permission', deleteAction)
     : deleteAction;
 
   return (
@@ -91,6 +72,7 @@ export const IstioActionDropdown: React.FC<IstioActionDropdownProps> = (props: I
         )}
         isOpen={dropdownOpen}
         onOpenChange={(isOpen: boolean) => onToggle(isOpen)}
+        onSelect={onSelect}
         popperProps={{ position: 'right' }}
       >
         <DropdownList>{[deleteActionWrapper]}</DropdownList>

@@ -1,7 +1,17 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { Card, CardBody, CardHeader, CardTitle, ToolbarItem } from '@patternfly/react-core';
-import { Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core/deprecated';
+import {
+  Card,
+  CardBody,
+  CardHeader,
+  CardTitle,
+  Dropdown,
+  DropdownItem,
+  DropdownList,
+  MenuToggle,
+  MenuToggleElement,
+  ToolbarItem
+} from '@patternfly/react-core';
 import { Edge, EdgeModel, Node, NodeModel } from '@patternfly/react-topology';
 import { URLParam, history } from '../../app/History';
 import { GraphDataSource } from '../../services/GraphDataSource';
@@ -27,9 +37,11 @@ import { bindActionCreators } from 'redux';
 import { GraphActions } from 'actions/GraphActions';
 import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
 import { NodeData, elems, selectAnd } from './GraphPFElems';
+import { KialiIcon } from 'config/KialiIcon';
 
 type ReduxProps = {
   kiosk: string;
+
   onReady: (controller: any) => void;
   setEdgeMode: (edgeMode: EdgeMode) => void;
   setLayout: (layout: Layout) => void;
@@ -39,19 +51,20 @@ type ReduxProps = {
 
 type MiniGraphCardPropsPF = ReduxProps & {
   dataSource: GraphDataSource;
+  serviceDetails?: ServiceDetailsInfo | null;
+
   onDeleteTrafficRouting?: (key: string) => void;
   onLaunchWizard?: (key: WizardAction, mode: WizardMode) => void;
-  serviceDetails?: ServiceDetailsInfo | null;
 };
 
 type MiniGraphCardState = {
+  graphData: DecoratedGraphElements;
   isKebabOpen: boolean;
   isTimeOptionsOpen: boolean;
-  graphData: DecoratedGraphElements;
 };
 
 class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, MiniGraphCardState> {
-  constructor(props) {
+  constructor(props: MiniGraphCardPropsPF) {
     super(props);
     this.state = { isKebabOpen: false, isTimeOptionsOpen: false, graphData: props.dataSource.graphData };
   }
@@ -117,12 +130,23 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
                     </ToolbarItem>
                   </KioskElement>
                   <Dropdown
-                    toggle={<KebabToggle onToggle={(_event, isOpen: boolean) => this.onGraphActionsToggle(isOpen)} />}
-                    dropdownItems={graphCardActions}
-                    isPlain
+                    toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                      <MenuToggle
+                        ref={toggleRef}
+                        aria-label="Actions"
+                        variant="plain"
+                        onClick={() => this.onGraphActionsToggle(!this.state.isKebabOpen)}
+                        isExpanded={this.state.isKebabOpen}
+                      >
+                        <KialiIcon.KebabToggle />
+                      </MenuToggle>
+                    )}
                     isOpen={this.state.isKebabOpen}
-                    position={'right'}
-                  />
+                    onOpenChange={(isOpen: boolean) => this.onGraphActionsToggle(isOpen)}
+                    popperProps={{ position: 'right' }}
+                  >
+                    <DropdownList>{graphCardActions}</DropdownList>
+                  </Dropdown>
                 </>
               ),
               hasNoOffset: false,

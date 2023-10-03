@@ -2,13 +2,14 @@ import { And, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 
 When('user clicks in the {string} Istio config actions', (action: string) => {
-  cy.get('button[data-test="config-actions-dropdown"]')
+  cy.get('button[data-test="actions-dropdown-toggle"]')
     .should('be.visible')
     .click()
     .get('#loading_kiali_spinner')
     .should('not.exist');
 
-  cy.get('a[data-test="create_' + action + '"]')
+  cy.get('li[data-test="create_' + action + '"]')
+    .find('button')
     .should('be.visible')
     .click()
     .get('#loading_kiali_spinner')
@@ -20,18 +21,17 @@ When('viewing the detail for {string}', (object: string) => {
   cy.get('a').contains(object).should('be.visible').click();
 });
 
-
-When ('user deletes k8sgateway named {string} and the resource is no longer available',(name:string) =>{
+When('user deletes k8sgateway named {string} and the resource is no longer available', (name: string) => {
   cy.exec(`kubectl delete gateways.gateway.networking.k8s.io ${name} -n bookinfo`, { failOnNonZeroExit: false });
   ensureKialiFinishedLoading();
 });
 
-When ('user deletes gateway named {string} and the resource is no longer available',(name:string) =>{
+When('user deletes gateway named {string} and the resource is no longer available', (name: string) => {
   cy.exec(`kubectl delete gateway.networking.istio.io ${name} -n bookinfo`, { failOnNonZeroExit: false });
   ensureKialiFinishedLoading();
 });
 
-When ('user deletes service named {string} and the resource is no longer available',(name:string) =>{
+When('user deletes service named {string} and the resource is no longer available', (name: string) => {
   cy.exec(`kubectl delete serviceEntries ${name} -n bookinfo`, { failOnNonZeroExit: false });
   ensureKialiFinishedLoading();
 });
@@ -99,12 +99,12 @@ And('choosing to delete it', () => {
   cy.get('#pf-modal-part-2').find('button').contains('Delete').should('be.visible').click();
 });
 
-And('user closes the success notification',()=>{
+And('user closes the success notification', () => {
   cy.get('[aria-label^="Close Success alert: alert: Istio Gateway created"]').click();
 });
 
-And('user does not see a dropdown for cluster selection',()=>{
-  cy.get('[data-test="cluster-dropdown"]').should("not.exist");
+And('user does not see a dropdown for cluster selection', () => {
+  cy.get('[data-test="cluster-dropdown"]').should('not.exist');
 });
 
 Then('the {string} {string} should be listed in {string} namespace', function (
@@ -146,11 +146,11 @@ Then('{string} should not be referenced anymore', (gateway: string) => {
   cy.get(`a[data-test="k8sgateway-bookinfo-${gateway}"]`).should('not.exist');
 });
 
-Then('{string} details information for service entry {string} can be seen',(host: string, name: string)=>{
+Then('{string} details information for service entry {string} can be seen', (host: string, name: string) => {
   cy.get('#ServiceDescriptionCard').within(() => {
-    cy.get('#pfbadge-ES').parent().parent().parent().contains(host); 
+    cy.get('#pfbadge-ES').parent().parent().parent().contains(host);
   });
   cy.get('#IstioConfigCard').within(() => {
-    cy.get('#pfbadge-SE').parent().parent().contains(name); 
+    cy.get('#pfbadge-SE').parent().parent().contains(name);
   });
-})
+});

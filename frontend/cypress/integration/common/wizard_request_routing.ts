@@ -42,13 +42,14 @@ When('user clicks in the {string} actions', (action: string) => {
   it('spinner should disappear', { retries: 3 }, () => {
     cy.get('#loading_kiali_spinner').should('not.exist');
   });
-  cy.get('button[data-test="wizard-actions"]')
+  cy.get('button[data-test="actions-dropdown-toggle"]')
     .should('exist')
     .click()
     .get('#loading_kiali_spinner')
     .should('not.exist');
 
-  cy.get('button[data-test="' + actionId + '"]')
+  cy.get('li[data-test="' + actionId + '"]')
+    .find('button')
     .should('exist')
     .click()
     .get('#loading_kiali_spinner')
@@ -102,7 +103,7 @@ And('user adds a filter', () => {
 });
 
 And('user types {string} traffic weight in the {string} workload', (weight: string, workload: string) => {
-  cy.get('input[data-test="input-slider-' + workload + '"]').type(weight, {force: true});
+  cy.get('input[data-test="input-slider-' + workload + '"]').type(weight, { force: true });
 });
 
 And('user adds a route', () => {

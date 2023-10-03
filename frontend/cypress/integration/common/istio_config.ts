@@ -408,7 +408,7 @@ Then('user sees {string}', (sees: string) => {
 });
 
 Then('the user can create a {string} Istio object', (object: string) => {
-  cy.getBySel('actions-dropdown').click();
+  cy.get('button[data-test="actions-dropdown-toggle"]').click();
   cy.getBySel('actions-dropdown').within(() => {
     cy.contains(object).click();
   });
@@ -422,14 +422,14 @@ Then('the user can create a {string} K8s Istio object', (object: string) => {
     const gatewayAPIEnabled = response.body.gatewayAPIEnabled;
 
     if (gatewayAPIEnabled) {
-      cy.getBySel('actions-dropdown').click();
+      cy.get('button[data-test="actions-dropdown-toggle"]').click();
       cy.getBySel('actions-dropdown').within(() => {
         cy.contains(object).click();
       });
       const page = `/istio/new/${object}`;
       cy.url().should('include', page);
     } else {
-      cy.getBySel('actions-dropdown').click();
+      cy.get('button[data-test="actions-dropdown-toggle"]').click();
       cy.getBySel('actions-dropdown').within(() => {
         cy.get(object).should('not.exist');
       });

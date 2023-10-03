@@ -21,6 +21,10 @@ type ActionItem = {
 export const IstioActionsNamespaceDropdown: React.FC = () => {
   const [dropdownOpen, setDropdownOpen] = React.useState<boolean>(false);
 
+  const onSelect = () => {
+    setDropdownOpen(!dropdownOpen);
+  };
+
   const onToggle = (dropdownState: boolean) => {
     setDropdownOpen(dropdownState);
   };
@@ -62,7 +66,7 @@ export const IstioActionsNamespaceDropdown: React.FC = () => {
         <MenuToggle
           ref={toggleRef}
           onClick={() => onToggle(!dropdownOpen)}
-          data-test="config-actions-dropdown"
+          data-test="actions-dropdown-toggle"
           isExpanded={dropdownOpen}
         >
           Actions
@@ -70,6 +74,7 @@ export const IstioActionsNamespaceDropdown: React.FC = () => {
       )}
       isOpen={dropdownOpen}
       onOpenChange={(isOpen: boolean) => onToggle(isOpen)}
+      onSelect={onSelect}
       popperProps={{ position: 'right' }}
     >
       <DropdownList>{dropdownItems}</DropdownList>

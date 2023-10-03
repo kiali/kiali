@@ -13,14 +13,16 @@ import { getTitle, summaryBodyTabs, summaryFont, summaryPanel } from './SummaryP
 import { decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { clickHandler, getOptions } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
-import { ExpandableSection, Tab } from '@patternfly/react-core';
 import {
   Dropdown,
   DropdownGroup,
   DropdownItem,
-  DropdownPosition,
-  KebabToggle
-} from '@patternfly/react-core/deprecated';
+  DropdownList,
+  ExpandableSection,
+  MenuToggle,
+  MenuToggleElement,
+  Tab
+} from '@patternfly/react-core';
 import { SummaryPanelNodeTraffic } from './SummaryPanelNodeTraffic';
 import { SummaryPanelNodeTraces } from './SummaryPanelNodeTraces';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
@@ -38,17 +40,6 @@ import { useKialiSelector } from '../../hooks/redux';
 import { groupMenuStyle } from 'styles/DropdownStyles';
 import { isMultiCluster, serverConfig } from '../../config';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
-
-const summaryNodeActionsStyle = kialiStyle({
-  $nest: {
-    '& .pf-v5-c-dropdown__toggle': {
-      fontSize: 'var(--graph-side-panel--font-size)'
-    },
-    '& .pf-v5-c-dropdown__menu-item': {
-      fontSize: 'var(--graph-side-panel--font-size)'
-    }
-  }
-});
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -80,9 +71,10 @@ export type SummaryPanelNodeProps = Omit<SummaryPanelPropType, 'kiosk'> & {
 export type SummaryPanelNodeComponentProps = ReduxProps &
   SummaryPanelNodeProps & {
     gateways: string[] | null;
-    onKebabToggled?: (isOpen: boolean) => void;
     peerAuthentications: PeerAuthentication[] | null;
     serviceDetails: ServiceDetailsInfo | null | undefined;
+
+    onKebabToggled?: (isOpen: boolean) => void;
   };
 
 const expandableSectionStyle = kialiStyle({
@@ -201,18 +193,26 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
               {firstBadge}
               {options.length > 0 && (
                 <Dropdown
-                  dropdownItems={items}
                   id="summary-node-actions"
-                  className={summaryNodeActionsStyle}
-                  isGrouped={true}
+                  toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                    <MenuToggle
+                      ref={toggleRef}
+                      id="summary-node-kebab"
+                      aria-label="Actions"
+                      variant="plain"
+                      onClick={() => this.onToggleActions(!this.state.isActionOpen)}
+                      isExpanded={this.state.isActionOpen}
+                      style={{ float: 'right' }}
+                    >
+                      <KialiIcon.KebabToggle />
+                    </MenuToggle>
+                  )}
                   isOpen={this.state.isActionOpen}
-                  isPlain={true}
-                  position={DropdownPosition.right}
-                  style={{ float: 'right' }}
-                  toggle={
-                    <KebabToggle id="summary-node-kebab" onToggle={(_event, isOpen) => this.onToggleActions(isOpen)} />
-                  }
-                />
+                  onOpenChange={(isOpen: boolean) => this.onToggleActions(isOpen)}
+                  popperProps={{ position: 'right', enableFlip: true }}
+                >
+                  <DropdownList>{items}</DropdownList>
+                </Dropdown>
               )}
               {secondBadge}
               {renderBadgedLink(nodeData)}

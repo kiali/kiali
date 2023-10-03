@@ -15,15 +15,15 @@ import {
   TooltipPosition,
   Form,
   FormGroup,
-  Checkbox
-} from '@patternfly/react-core';
-import {
-  Dropdown,
+  Checkbox,
   DropdownItem,
-  KebabToggle,
-  DropdownGroup,
-  DropdownSeparator
-} from '@patternfly/react-core/deprecated';
+  Divider,
+  MenuGroup,
+  Dropdown,
+  MenuToggleElement,
+  MenuToggle,
+  DropdownList
+} from '@patternfly/react-core';
 import memoize from 'micro-memoize';
 import { AutoSizer, List } from 'react-virtualized';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -583,8 +583,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       );
     });
     const dropdownGroupLabel = (
-      // nowrap is needed for the info icon to appear on same line as the label text
-      <div style={{ whiteSpace: 'nowrap' }}>
+      <h1 className="pf-v5-c-menu__group-title">
         Set Proxy Log Level
         <Tooltip
           position={TooltipPosition.right}
@@ -602,7 +601,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
         >
           <KialiIcon.Info className={infoStyle} />
         </Tooltip>
-      </div>
+      </h1>
     );
 
     const kebabActions = [
@@ -615,10 +614,10 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       <DropdownItem key="toggleTimestamps" onClick={this.toggleShowTimestamps}>
         {`${this.state.showTimestamps ? 'Remove' : 'Show'} Timestamps`}
       </DropdownItem>,
-      <DropdownSeparator key="logLevelSeparator" />,
-      <DropdownGroup label={dropdownGroupLabel} key="setLogLevels">
+      <Divider key="logLevelSeparator" />,
+      <MenuGroup key="setLogLevels" label={dropdownGroupLabel}>
         {hasProxyContainer && logDropDowns}
-      </DropdownGroup>
+      </MenuGroup>
     ];
 
     const logEntries = this.state.entries
@@ -654,13 +653,24 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             </ToolbarItem>
             <ToolbarItem>
               <Dropdown
-                style={{ width: '20px' }}
-                toggle={<KebabToggle onToggle={(_event, kebabOpen: boolean) => this.setKebabOpen(kebabOpen)} />}
-                dropdownItems={kebabActions}
-                isPlain
+                toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                  <MenuToggle
+                    ref={toggleRef}
+                    aria-label="Actions"
+                    variant="plain"
+                    onClick={() => this.setKebabOpen(!this.state.kebabOpen)}
+                    isExpanded={this.state.kebabOpen}
+                    style={{ float: 'right' }}
+                  >
+                    <KialiIcon.KebabToggle />
+                  </MenuToggle>
+                )}
                 isOpen={this.state.kebabOpen}
-                position={'right'}
-              />
+                onOpenChange={(isOpen: boolean) => this.setKebabOpen(isOpen)}
+                popperProps={{ position: 'right' }}
+              >
+                <DropdownList>{kebabActions}</DropdownList>
+              </Dropdown>
             </ToolbarItem>
           </ToolbarGroup>
         </Toolbar>

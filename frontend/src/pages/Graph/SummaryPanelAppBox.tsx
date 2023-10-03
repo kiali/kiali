@@ -23,31 +23,20 @@ import { Reporter } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { KialiIcon } from 'config/KialiIcon';
 import { decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
-import {
-  Dropdown,
-  DropdownPosition,
-  DropdownItem,
-  KebabToggle,
-  DropdownGroup
-} from '@patternfly/react-core/deprecated';
 import { getOptions, clickHandler } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { edgesIn, edgesOut, select, selectAnd, selectOr } from 'pages/GraphPF/GraphPFElems';
-import { kialiStyle } from 'styles/StyleUtils';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { isMultiCluster } from 'config';
-
-const summaryAppBoxActionsStyle = kialiStyle({
-  $nest: {
-    '& .pf-v5-c-dropdown__toggle': {
-      fontSize: 'var(--graph-side-panel--font-size)'
-    },
-    '& .pf-v5-c-dropdown__menu-item': {
-      fontSize: 'var(--graph-side-panel--font-size)'
-    }
-  }
-});
+import {
+  Dropdown,
+  DropdownGroup,
+  DropdownItem,
+  DropdownList,
+  MenuToggle,
+  MenuToggleElement
+} from '@patternfly/react-core';
 
 type SummaryPanelAppBoxMetricsState = {
   grpcRequestIn: Datapoint[];
@@ -201,21 +190,26 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
             {firstBadge}
             {options.length > 0 && (
               <Dropdown
-                dropdownItems={items}
                 id="summary-appbox-actions"
-                className={summaryAppBoxActionsStyle}
-                isGrouped={true}
-                isOpen={this.state.isOpen}
-                isPlain={true}
-                position={DropdownPosition.right}
-                style={{ float: 'right' }}
-                toggle={
-                  <KebabToggle
+                toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                  <MenuToggle
+                    ref={toggleRef}
                     id="summary-appbox-kebab"
-                    onToggle={(_event, isExpanded) => this.onToggleActions(isExpanded)}
-                  />
-                }
-              />
+                    aria-label="Actions"
+                    variant="plain"
+                    onClick={() => this.onToggleActions(!this.state.isOpen)}
+                    isExpanded={this.state.isOpen}
+                    style={{ float: 'right' }}
+                  >
+                    <KialiIcon.KebabToggle />
+                  </MenuToggle>
+                )}
+                isOpen={this.state.isOpen}
+                onOpenChange={(isOpen: boolean) => this.onToggleActions(isOpen)}
+                popperProps={{ position: 'right' }}
+              >
+                <DropdownList>{items}</DropdownList>
+              </Dropdown>
             )}
             {secondBadge}
             {renderBadgedLink(nodeData)}
