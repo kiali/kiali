@@ -172,18 +172,6 @@ func (s *ServiceDetails) SetEndpoints(eps *core_v1.Endpoints) {
 	(&s.Endpoints).Parse(eps)
 }
 
-// TODO MAZZ NEED TO GET PROTOCOL AND TLSMODE HERE
-func (s *ServiceDetails) SetRegistryEndpoints() {
-	for i, _ := range s.Service.Ports {
-		istioProtocol := "mazz-protocol"
-		istioMtls := "istio"
-		if istioProtocol != "" && istioMtls != "" {
-			s.Service.Ports[i].IstioProtocol = istioProtocol
-			s.Service.Ports[i].TLSMode = istioMtls
-		}
-	}
-}
-
 func (s *ServiceDetails) SetPods(pods []core_v1.Pod) {
 	mPods := Pods{}
 	mPods.Parse(pods)
