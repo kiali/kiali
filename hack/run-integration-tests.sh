@@ -145,7 +145,7 @@ elif [ "${TEST_SUITE}" == "frontend" ]; then
 
   ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
   # Install demo apps
-  "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" -g "${ISTIO_INGRESS_IP}"
+  "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" -g "${ISTIO_INGRESS_IP}" -bt "5m"
 
   # Get Kiali URL
   KIALI_URL="http://${ISTIO_INGRESS_IP}/kiali"

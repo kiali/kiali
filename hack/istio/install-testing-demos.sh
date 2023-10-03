@@ -25,12 +25,17 @@ MINIKUBE_PROFILE="minikube"
 : ${ENABLE_INJECTION:=true}
 : ${GATEWAY_HOST:="")}
 ISTIO_NAMESPACE="istio-system"
+BOOKINFO_TIMEOUT="0"
 
 while [ $# -gt 0 ]; do
   key="$1"
   case $key in
     -a|--arch)
       ARCH="$2"
+      shift;shift
+      ;;
+    -bt|--bookinfo-timeout)
+      BOOKINFO_TIMEOUT="$2"
       shift;shift
       ;;
     -c|--client)
@@ -57,6 +62,7 @@ while [ $# -gt 0 ]; do
       cat <<HELPMSG
 Valid command line arguments:
   -a|--arch <amd64|ppc64le|s390x>: Images for given arch will be used (default: amd64).
+  -bt|--bookinfo-timeout: wait timeout for Bookinfo application. Can be in the format "60s" or "30m". 0 by default.
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: if 'true' demos will be deleted; otherwise, they will be installed
   -g|--gateway-host: host to use for the ingress gateway
@@ -163,7 +169,7 @@ spec:
 EOF
     fi
     echo "Deploying bookinfo demo..."
-    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -mp ${MINIKUBE_PROFILE} -tg -in ${ISTIO_NAMESPACE} -a ${ARCH} ${gateway_yaml:+-g ${gateway_yaml}} -wt 5m
+    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -mp ${MINIKUBE_PROFILE} -tg -in ${ISTIO_NAMESPACE} -a ${ARCH} ${gateway_yaml:+-g ${gateway_yaml}} -wt ${BOOKINFO_TIMEOUT}
 
     echo "Deploying error rates demo..."
     "${SCRIPT_DIR}/install-error-rates-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH}
