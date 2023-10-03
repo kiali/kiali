@@ -15,18 +15,18 @@ import * as API from '../../../services/Api';
 import { kialiStyle } from 'styles/StyleUtils';
 
 type UserProps = {
-  session?: LoginSession;
-  logout: () => void;
   extendSession: (session: LoginSession) => void;
+  logout: () => void;
+  session?: LoginSession;
 };
 
 type UserState = {
-  showSessionTimeOut: boolean;
-  timeCountDownSeconds: number;
   checkSessionTimerId?: Timer;
-  timeLeftTimerId?: Timer;
   isDropdownOpen: boolean;
   isSessionTimeoutDismissed: boolean;
+  showSessionTimeOut: boolean;
+  timeCountDownSeconds: number;
+  timeLeftTimerId?: Timer;
 };
 
 const dropdownStyle = kialiStyle({

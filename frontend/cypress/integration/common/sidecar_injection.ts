@@ -302,7 +302,7 @@ When('I remove override configuration for sidecar injection in the namespace', f
 function switchWorkloadSidecarInjection(enableOrDisable) {
   cy.visit(`/console/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?refresh=0`);
   cy.get('button[data-test="workload-actions-dropdown-toggle"]').should('be.visible').click();
-  cy.get(`button[data-test=${enableOrDisable}_auto_injection]`).should('be.visible').click();
+  cy.get(`li[data-test=${enableOrDisable}_auto_injection]`).find('button').should('be.visible').click();
   ensureKialiFinishedLoading();
 }
 

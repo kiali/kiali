@@ -18,18 +18,18 @@ import { KialiIcon } from 'config/KialiIcon';
 import { classes } from 'typestyle';
 
 interface Props {
-  onChanged: (state: MetricsSettings) => void;
-  onLabelsFiltersChanged: (labelsFilters: LabelsSettings) => void;
   direction: string;
   hasHistograms: boolean;
   hasHistogramsAverage: boolean;
   hasHistogramsPercentiles: boolean;
   labelsSettings: LabelsSettings;
+  onChanged: (state: MetricsSettings) => void;
+  onLabelsFiltersChanged: (labelsFilters: LabelsSettings) => void;
 }
 
 type State = MetricsSettings & {
-  isOpen: boolean;
   allSelected: boolean;
+  isOpen: boolean;
 };
 
 const checkboxSelectAllStyle = kialiStyle({ marginLeft: 10 });

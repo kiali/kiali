@@ -24,8 +24,8 @@ import {
 } from 'styles/DropdownStyles';
 
 type ReduxProps = {
-  trafficRates: TrafficRate[];
   setTrafficRates: (trafficRates: TrafficRate[]) => void;
+  trafficRates: TrafficRate[];
 };
 
 type GraphTrafficProps = ReduxProps & {

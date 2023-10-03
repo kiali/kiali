@@ -23,10 +23,9 @@ type Props = {
   isDisabled?: boolean;
   istioPermissions: ResourcePermissions;
   k8sHTTPRoutes: K8sHTTPRoute[];
-  virtualServices: VirtualService[];
-
   onAction?: (key: WizardAction, mode: WizardMode) => void;
   onDelete?: (key: string) => void;
+  virtualServices: VirtualService[];
 };
 
 const optionDisabledStyle = kialiStyle({

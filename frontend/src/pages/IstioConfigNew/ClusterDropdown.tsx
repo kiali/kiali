@@ -29,7 +29,6 @@ type ReduxProps = {
   activeClusters: MeshCluster[];
   clusters: MeshCluster[];
   filter: string;
-
   setActiveClusters: (clusters: MeshCluster[]) => void;
   setFilter: (filter: string) => void;
 };

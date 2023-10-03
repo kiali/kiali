@@ -48,6 +48,7 @@ type Props = ReduxProps & {
   k8sGateways: string[];
   k8sHTTPRoutes: K8sHTTPRoute[];
   namespace: string;
+  onChange: () => void;
   peerAuthentications: PeerAuthentication[];
   readOnly: boolean;
   serviceName: string;
@@ -56,8 +57,6 @@ type Props = ReduxProps & {
   tlsStatus?: TLSStatus;
   virtualServices: VirtualService[];
   workloads: WorkloadOverview[];
-
-  onChange: () => void;
 };
 
 const appLabelName = serverConfig.istioLabels.appLabelName;
@@ -210,6 +209,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
       toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
         <MenuToggle
           ref={toggleRef}
+          id="actions-toggle"
           onClick={() => onActionsToggle(!isActionsOpen)}
           data-test="actions-dropdown-toggle"
           isExpanded={isActionsOpen}

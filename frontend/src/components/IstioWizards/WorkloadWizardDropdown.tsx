@@ -20,10 +20,9 @@ import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 
 interface Props {
   namespace: string;
+  onChange: () => void;
   workload: Workload;
   statusState: StatusState;
-
-  onChange: () => void;
 }
 
 export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
@@ -198,6 +197,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
       toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
         <MenuToggle
           ref={toggleRef}
+          id="actions-toggle"
           onClick={() => onActionsToggle(!isActionsOpen)}
           data-test="workload-actions-dropdown-toggle"
           isExpanded={isActionsOpen}

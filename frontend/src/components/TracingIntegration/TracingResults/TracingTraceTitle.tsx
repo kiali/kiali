@@ -70,9 +70,9 @@ const TracingTraceTitleComponent: React.FC<Props> = (props: Props) => {
               {`${props.formattedTrace.relativeDate()} | ${props.formattedTrace.absTime()} (${props.formattedTrace.fromNow()})`}
             </span>
             <Dropdown
-              data-test="trace-details-kebab"
               toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
                 <MenuToggle
+                  data-test="trace-details-kebab"
                   ref={toggleRef}
                   aria-label="Actions"
                   variant="plain"

@@ -14,8 +14,8 @@ import {
 } from '@patternfly/react-core';
 
 type ActionItem = {
-  name: string;
   action: JSX.Element;
+  name: string;
 };
 
 export const IstioActionsNamespaceDropdown: React.FC = () => {
@@ -65,6 +65,7 @@ export const IstioActionsNamespaceDropdown: React.FC = () => {
       toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
         <MenuToggle
           ref={toggleRef}
+          id="actions-toggle"
           onClick={() => onToggle(!dropdownOpen)}
           data-test="actions-dropdown-toggle"
           isExpanded={dropdownOpen}

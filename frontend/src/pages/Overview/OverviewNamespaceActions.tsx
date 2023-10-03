@@ -15,14 +15,13 @@ import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 import { KialiIcon } from 'config/KialiIcon';
 
 export type OverviewNamespaceAction = {
+  action?: (namespace: string) => void;
   children?: OverviewNamespaceAction[];
   isDisabled?: boolean;
   isExternal?: boolean;
   isGroup: boolean;
   isSeparator: boolean;
   title?: string;
-
-  action?: (namespace: string) => void;
 };
 
 type Props = {

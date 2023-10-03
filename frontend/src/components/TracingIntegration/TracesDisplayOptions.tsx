@@ -6,9 +6,9 @@ import { HistoryManager, URLParam } from 'app/History';
 import { KialiIcon } from 'config/KialiIcon';
 
 export interface QuerySettings {
-  percentile?: string;
   errorsOnly: boolean;
   limit: number;
+  percentile?: string;
 }
 
 export interface DisplaySettings {

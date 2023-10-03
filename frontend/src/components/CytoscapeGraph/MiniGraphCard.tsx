@@ -45,11 +45,10 @@ type ReduxProps = {
 type MiniGraphCardProps = ReduxProps & {
   dataSource: GraphDataSource;
   graphContainerStyle?: string;
-  serviceDetails?: ServiceDetailsInfo | null;
-
   onDeleteTrafficRouting?: (key: string) => void;
   onEdgeTap?: (e: GraphEdgeTapEvent) => void;
   onLaunchWizard?: (key: WizardAction, mode: WizardMode) => void;
+  serviceDetails?: ServiceDetailsInfo | null;
 };
 
 type MiniGraphCardState = {

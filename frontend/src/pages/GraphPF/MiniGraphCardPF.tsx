@@ -41,7 +41,6 @@ import { KialiIcon } from 'config/KialiIcon';
 
 type ReduxProps = {
   kiosk: string;
-
   onReady: (controller: any) => void;
   setEdgeMode: (edgeMode: EdgeMode) => void;
   setLayout: (layout: Layout) => void;
@@ -51,10 +50,9 @@ type ReduxProps = {
 
 type MiniGraphCardPropsPF = ReduxProps & {
   dataSource: GraphDataSource;
-  serviceDetails?: ServiceDetailsInfo | null;
-
   onDeleteTrafficRouting?: (key: string) => void;
   onLaunchWizard?: (key: WizardAction, mode: WizardMode) => void;
+  serviceDetails?: ServiceDetailsInfo | null;
 };
 
 type MiniGraphCardState = {

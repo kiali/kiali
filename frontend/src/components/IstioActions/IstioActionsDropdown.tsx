@@ -20,7 +20,6 @@ type IstioActionDropdownProps = {
   canDelete: boolean;
   objectKind?: string;
   objectName: string;
-
   onDelete: () => void;
 };
 
@@ -66,7 +65,12 @@ export const IstioActionDropdown: React.FC<IstioActionDropdownProps> = (props: I
       <Dropdown
         id="actions"
         toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-          <MenuToggle ref={toggleRef} onClick={() => onToggle(!dropdownOpen)} isExpanded={dropdownOpen}>
+          <MenuToggle
+            ref={toggleRef}
+            id="actions-toggle"
+            onClick={() => onToggle(!dropdownOpen)}
+            isExpanded={dropdownOpen}
+          >
             Actions
           </MenuToggle>
         )}
