@@ -1,6 +1,7 @@
 import * as React from 'react';
 import * as API from '../../services/Api';
 import {
+  Button,
   Card,
   CardBody,
   CardHeader,
@@ -92,7 +93,13 @@ const IstioCertsInfoComponent: React.FC<IstioCertsInfoProps> = (props: IstioCert
   };
 
   return (
-    <Modal variant={ModalVariant.small} isOpen={props.isOpen} onClose={props.onClose} title="Certificates information">
+    <Modal
+      variant={ModalVariant.small}
+      isOpen={props.isOpen}
+      onClose={props.onClose}
+      title="Certificates information"
+      actions={[<Button onClick={close}>Close</Button>]}
+    >
       {certsError && <p style={{ color: PFColors.Danger }}>An error occurred getting certificates information</p>}
       <ul>
         {props.certsInfo &&

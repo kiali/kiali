@@ -29,7 +29,6 @@ import { kialiStyle } from 'styles/StyleUtils';
 import ReactAce from 'react-ace/lib/ace';
 import { classes } from 'typestyle';
 import { usePreviousValue } from 'utils/ReactUtils';
-import { KialiIcon } from 'config/KialiIcon';
 
 enum CopyStatus {
   NOT_COPIED, // We haven't copied the current output
@@ -107,11 +106,6 @@ const tabStyle = kialiStyle({
       marginLeft: 0
     }
   }
-});
-
-const iconStyle = kialiStyle({
-  marginLeft: '6px',
-  marginRight: '6px'
 });
 
 const DebugInformationComponent: React.FC<DebugInformationProps> = (props: DebugInformationProps) => {
@@ -281,15 +275,12 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
       onClose={props.onClose}
       title="Debug information"
       actions={[
+        <Button onClick={close}>Close</Button>,
         <CopyToClipboard onCopy={copyCallback} text={getCopyText()} options={copyToClipboardOptions}>
-          <Button className={iconStyle} variant={ButtonVariant.link} isInline>
-            <KialiIcon.Copy />
-            <span className={iconStyle}>Copy</span>
-          </Button>
+          <Button variant={ButtonVariant.secondary}>Copy</Button>
         </CopyToClipboard>,
-        <Button className={iconStyle} onClick={download} variant={ButtonVariant.link} isInline>
-          <KialiIcon.Download />
-          <span className={iconStyle}>Download</span>
+        <Button variant={ButtonVariant.secondary} onClick={download}>
+          Download
         </Button>
       ]}
     >
