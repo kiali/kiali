@@ -90,9 +90,12 @@ if [ "${CLIENT_EXE}" == "" ]; then
   fi
 fi
 
-IS_OPENSHIFT="false"
-if [[ "${CLIENT_EXE}" = *"oc" ]]; then
+if ${CLIENT_EXE} api-versions | grep --quiet "route.openshift.io"; then
   IS_OPENSHIFT="true"
+  echo "You are connecting to an OpenShift cluster"
+else
+  IS_OPENSHIFT="false"
+  echo "You are connecting to a (non-OpenShift) Kubernetes cluster"
 fi
 
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
