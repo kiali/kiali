@@ -22,37 +22,73 @@ import { MetricsStatsResult } from 'types/Metrics';
 import { getSpanId } from 'utils/SearchParamUtils';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { subTabStyle } from 'styles/TabStyles';
+import { TEMPO } from 'types/Tracing';
+import { ExternalServiceInfo } from '../../types/StatusState';
 
 type ReduxProps = {
+  externalServices: ExternalServiceInfo[];
   namespaceSelector: boolean;
+  provider?: string;
   selectedTrace?: JaegerTrace;
   timeRange: TimeRange;
   urlJaeger: string;
 };
 
 type TracesProps = ReduxProps & {
+  cluster?: string;
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
-  cluster?: string;
   target: string;
   targetKind: TargetKind;
 };
 
 interface TracesState {
+  activeTab: number;
+  displaySettings: DisplaySettings;
   isTimeOptionsOpen: boolean;
+  jaegerErrors: JaegerError[];
+  querySettings: QuerySettings;
+  targetApp?: string;
+  toolbarDisabled: boolean;
+  traces: JaegerTrace[];
   url: string;
   width: number;
-  querySettings: QuerySettings;
-  displaySettings: DisplaySettings;
-  traces: JaegerTrace[];
-  jaegerErrors: JaegerError[];
-  targetApp?: string;
-  activeTab: number;
-  toolbarDisabled: boolean;
 }
 
 const traceDetailsTab = 0;
 const spansDetailsTab = 1;
+
+function GetGrafanaUrl(externalServices: ExternalServiceInfo[]) {
+  return externalServices.find(service => service.name === 'Grafana');
+}
+
+function GetBaseTracingUrl(
+  provider: string | undefined,
+  urlJaeger: string | undefined,
+  externalServices: ExternalServiceInfo[]
+) {
+  if (provider === TEMPO) {
+    return GetGrafanaUrl(externalServices)?.url;
+  } else {
+    return urlJaeger;
+  }
+}
+
+export function GetTraceDetailURL(
+  provider: string | undefined,
+  urlJaeger: string | undefined,
+  externalServices: ExternalServiceInfo[]
+) {
+  const tracingUrl = GetBaseTracingUrl(provider, urlJaeger, externalServices);
+  if (!tracingUrl) {
+    return undefined;
+  }
+  if (provider === TEMPO) {
+    return `${tracingUrl}/explore?left={"queries":[{"datasource":{"type":"tempo"},"queryType":"traceql","query":"TRACEID"}]}`;
+  } else {
+    return `${tracingUrl}/trace/TRACEID`;
+  }
+}
 
 class TracesComp extends React.Component<TracesProps, TracesState> {
   private fetcher: TracesFetcher;
@@ -206,13 +242,19 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     this.setState(newState as TracesState);
   };
 
-  private getJaegerUrl = () => {
-    if (this.props.urlJaeger === '' || !this.state.targetApp) {
+  private getTracingUrl = () => {
+    const tracingUrl = GetBaseTracingUrl(this.props.provider, this.props.urlJaeger, this.props.externalServices);
+
+    if (tracingUrl === '' || !tracingUrl || !this.state.targetApp) {
       return undefined;
     }
-
     const range = getTimeRangeMicros();
-    let url = `${this.props.urlJaeger}/search?service=${this.state.targetApp}&start=${range.from}&limit=${this.state.querySettings.limit}`;
+
+    if (this.props.provider === TEMPO) {
+      return `${tracingUrl}/explore?left={"queries":[{"datasource":{"type":"tempo"},"queryType":"nativeSearch","serviceName":"${this.state.targetApp}"}]}`;
+    }
+
+    let url = `${tracingUrl}/search?service=${this.state.targetApp}&start=${range.from}&limit=${this.state.querySettings.limit}`;
     if (range.to) {
       url += `&end=${range.to}`;
     }
@@ -237,7 +279,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
   };
 
   render() {
-    const jaegerURL = this.getJaegerUrl();
+    const jaegerURL = this.getTracingUrl();
 
     return (
       <>
@@ -300,17 +342,27 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                     namespace={this.props.namespace}
                     target={this.props.target}
                     targetKind={this.props.targetKind}
-                    jaegerURL={this.props.urlJaeger}
+                    tracingURL={GetTraceDetailURL(
+                      this.props.provider,
+                      this.props.urlJaeger,
+                      this.props.externalServices
+                    )}
                     otherTraces={this.state.traces}
                     cluster={this.props.cluster ? this.props.cluster : ''}
+                    provider={this.props.provider}
                   />
                 </Tab>
                 <Tab eventKey={spansDetailsTab} title="Span Details">
                   <SpanDetails
                     namespace={this.props.namespace}
                     target={this.props.target}
-                    externalURL={this.props.urlJaeger}
+                    externalURL={GetTraceDetailURL(
+                      this.props.provider,
+                      this.props.urlJaeger,
+                      this.props.externalServices
+                    )}
                     items={this.props.selectedTrace.spans}
+                    traceID={this.props.selectedTrace.traceID}
                     cluster={this.props.cluster ? this.props.cluster : ''}
                   />
                 </Tab>
@@ -333,8 +385,10 @@ const mapStateToProps = (state: KialiAppState) => {
   return {
     timeRange: timeRangeSelector(state),
     urlJaeger: state.jaegerState.info ? state.jaegerState.info.url : '',
+    externalServices: state.statusState.externalServices,
     namespaceSelector: state.jaegerState.info ? state.jaegerState.info.namespaceSelector : true,
-    selectedTrace: state.jaegerState.selectedTrace
+    selectedTrace: state.jaegerState.selectedTrace,
+    provider: state.jaegerState.info?.provider
   };
 };
 

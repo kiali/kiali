@@ -32,10 +32,14 @@ import { Visualization, Node } from '@patternfly/react-topology';
 import { elems, selectAnd } from 'pages/GraphPF/GraphPFElems';
 import { FocusNode } from 'pages/GraphPF/GraphPF';
 import { GraphSelectorBuilder } from './GraphSelector';
+import { GetTraceDetailURL } from '../../components/JaegerIntegration/TracesComponent';
+import { ExternalServiceInfo } from '../../types/StatusState';
 
 type ReduxProps = {
   close: () => void;
+  externalServices: ExternalServiceInfo[];
   kiosk: string;
+  provider: string | undefined;
   setNode: (node?: NodeParamsType) => void;
 };
 
@@ -108,9 +112,11 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
           : `/applications/${nodeData.app!}`) +
         `?tab=traces&${URLParam.JAEGER_TRACE_ID}=${this.props.trace.traceID}`
       : undefined;
-    const jaegerTraceURL = this.props.jaegerURL
-      ? `${this.props.jaegerURL}/trace/${this.props.trace.traceID}`
-      : undefined;
+    const jaegerTraceURL = GetTraceDetailURL(
+      this.props.provider,
+      this.props.jaegerURL,
+      this.props.externalServices
+    )?.replace('TRACEID', this.props.trace.traceID);
     const info = new FormattedTraceInfo(this.props.trace);
     const title = (
       <span className={nameStyle}>
@@ -435,7 +441,9 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  kiosk: state.globalState.kiosk
+  externalServices: state.statusState.externalServices,
+  kiosk: state.globalState.kiosk,
+  provider: state.jaegerState.info?.provider
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({

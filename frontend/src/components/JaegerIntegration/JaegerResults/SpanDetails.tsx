@@ -15,6 +15,7 @@ interface Props {
   cluster?: string;
   target: string;
   externalURL?: string;
+  traceID: string;
 }
 
 interface State {
@@ -48,6 +49,7 @@ export class SpanDetails extends React.Component<Props, State> {
             namespace={this.props.namespace}
             externalURL={this.props.externalURL}
             cluster={this.props.cluster}
+            traceID={this.props.traceID}
           />
         </CardBody>
       </Card>
