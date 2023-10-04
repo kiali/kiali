@@ -217,7 +217,7 @@ export class WizardAnnotations extends React.Component<Props, State> {
             }}
             isInline
           >
-            <span>Add more</span>
+            <span style={{ marginLeft: '3px' }}>Add more</span>
           </Button>
           {this.state.validation.length > 0 && (
             <Alert variant="danger" isInline isExpandable title="An error occurred">
