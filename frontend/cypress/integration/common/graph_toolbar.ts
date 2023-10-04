@@ -52,30 +52,30 @@ When('user enables {string} traffic', protocol => {
 });
 
 When('user clicks graph duration menu', () => {
-  cy.get('button[aria-labelledby^="time_range_duration"]').click();
+  cy.get('button#time_range_duration-toggle').click();
 });
 
 When(`user selects graph duration {string}`, duration => {
-  cy.get('button[aria-labelledby^="time_range_duration"]').click();
-  cy.get(`li#${duration}`).children('button').click();
+  cy.get('button#time_range_duration-toggle').click();
+  cy.get(`button#${duration}`).click();
   cy.get('#loading_kiali_spinner').should('not.exist');
 });
 
 When('user clicks graph refresh menu', () => {
-  cy.get('button[aria-labelledby^="time_range_refresh"]').click();
+  cy.get('button#time_range_refresh-toggle').click();
 });
 
 When(`user selects graph refresh {string}`, refresh => {
-  cy.get('button[aria-labelledby^="time_range_refresh"]').click();
-  cy.get(`li[id="${refresh}"]`).children('button').click().get('#loading_kiali_spinner').should('not.exist');
+  cy.get('button#time_range_refresh-toggle').click();
+  cy.get(`button[id="${refresh}"]`).click().get('#loading_kiali_spinner').should('not.exist');
 });
 
 When('user selects {string} graph type', graphType => {
   cy.get('button#graph_type_dropdown-toggle')
     .click()
     .parent()
-    .find('ul#graph_type_dropdown')
-    .find(`li#${graphType}`)
+    .find('div#graph_type_dropdown')
+    .find(`button#${graphType}`)
     .click();
   cy.get('#loading_kiali_spinner').should('not.exist');
 });
@@ -130,7 +130,7 @@ Then(`user does not see any traffic`, () => {
 
 Then('user sees graph duration menu', () => {
   cy.get('button#time_range_duration-toggle').invoke('attr', 'aria-expanded').should('eq', 'true');
-  cy.get('ul#time_range_duration').within(() => {
+  cy.get('div#time_range_duration').within(() => {
     cy.request('GET', '/api/config').should(response => {
       expect(response.status).to.equal(200);
       const scrapeInterval = response.body.prometheus.globalScrapeInterval;
@@ -138,27 +138,27 @@ Then('user sees graph duration menu', () => {
       expect(scrapeInterval).within(15, 60);
       expect(retention).gte(21600);
 
-      cy.get('li').should('have.length.within', 7, 11);
+      cy.get('button').should('have.length.within', 7, 11);
       if (scrapeInterval < 60) {
-        cy.get('li#60').should('exist');
+        cy.get('button#60').should('exist');
       } else {
-        cy.get('li#60').should('not.exist');
+        cy.get('button#60').should('not.exist');
       }
-      cy.get('li#120').should('exist');
-      cy.get('li#300').should('exist');
-      cy.get('li#600').should('exist');
-      cy.get('li#1800').should('exist');
-      cy.get('li#3600').should('exist');
-      cy.get('li#10800').should('exist');
-      cy.get('li#21600').should('exist');
+      cy.get('button#120').should('exist');
+      cy.get('button#300').should('exist');
+      cy.get('button#600').should('exist');
+      cy.get('button#1800').should('exist');
+      cy.get('button#3600').should('exist');
+      cy.get('button#10800').should('exist');
+      cy.get('button#21600').should('exist');
       if (retention > 21600) {
-        cy.get('li#43200').should('exist');
-        cy.get('li#86400').should('exist');
-        cy.get('li#604800').should('exist');
+        cy.get('button#43200').should('exist');
+        cy.get('button#86400').should('exist');
+        cy.get('button#604800').should('exist');
       } else {
-        cy.get('li#43200').should('not.exist');
-        cy.get('li#86400').should('not.exist');
-        cy.get('li#604800').should('not.exist');
+        cy.get('button#43200').should('not.exist');
+        cy.get('button#86400').should('not.exist');
+        cy.get('button#604800').should('not.exist');
       }
     });
   });
@@ -169,20 +169,23 @@ Then('user does not see graph duration menu', () => {
 });
 
 Then('user sees selected graph duration {string}', duration => {
-  cy.get('button[aria-labelledby^="time_range_duration"]').find('span').contains(duration).should('exist');
+  cy.get('button#time_range_duration-toggle')
+    .find('span[class*="pf-v5-c-menu-toggle__text"]')
+    .contains(duration)
+    .should('exist');
 });
 
 Then('user sees graph refresh menu', refresh => {
   cy.get('button#time_range_refresh-toggle').invoke('attr', 'aria-expanded').should('eq', 'true');
-  cy.get('ul#time_range_refresh').within(() => {
-    cy.get('li').should('have.length', 7);
-    cy.get('li#0').should('exist');
-    cy.get('li#10000').should('exist');
-    cy.get('li#15000').should('exist');
-    cy.get('li#30000').should('exist');
-    cy.get('li#60000').should('exist');
-    cy.get('li#300000').should('exist');
-    cy.get('li#900000').should('exist');
+  cy.get('div#time_range_refresh').within(() => {
+    cy.get('button').should('have.length', 7);
+    cy.get('button#0').should('exist');
+    cy.get('button#10000').should('exist');
+    cy.get('button#15000').should('exist');
+    cy.get('button#30000').should('exist');
+    cy.get('button#60000').should('exist');
+    cy.get('button#300000').should('exist');
+    cy.get('button#900000').should('exist');
   });
 });
 
@@ -191,7 +194,10 @@ Then('user does not see graph refresh menu', () => {
 });
 
 Then('user sees selected graph refresh {string}', refresh => {
-  cy.get('button[aria-labelledby^="time_range_refresh"]').find('span').contains(refresh).should('exist');
+  cy.get('button#time_range_refresh-toggle')
+    .find('span[class*="pf-v5-c-menu-toggle__text"]')
+    .contains(refresh)
+    .should('exist');
 });
 
 Then('user sees a {string} graph', graphType => {

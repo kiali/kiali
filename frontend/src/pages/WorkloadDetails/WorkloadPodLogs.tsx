@@ -381,7 +381,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                               label={MaxLinesOptions[this.state.maxLines]}
                               options={MaxLinesOptions}
                               tooltip={'Truncate after N log lines'}
-                              classNameSelect={toolbarTail}
+                              className={toolbarTail}
                             />
                           </ToolbarItem>
                           <KioskElement>

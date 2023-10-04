@@ -78,8 +78,8 @@ When(`user selects Health for {string}`, type => {
       innerId = 'service';
       break;
   }
-  cy.get('button[aria-labelledby^="overview-type"]').click().get('#loading_kiali_spinner').should('not.exist');
-  cy.get(`li[id="${innerId}"]`).children('button').click().get('#loading_kiali_spinner').should('not.exist');
+  cy.get('button#overview-type-toggle').click().get('#loading_kiali_spinner').should('not.exist');
+  cy.get(`button[id="${innerId}"]`).click().get('#loading_kiali_spinner').should('not.exist');
 });
 
 When(`user sorts by name desc`, () => {
@@ -93,8 +93,8 @@ When(`user selects {string} time range`, interval => {
       innerId = '600';
       break;
   }
-  cy.get('button[aria-labelledby^="time_range_duration"]').click().get('#loading_kiali_spinner').should('not.exist');
-  cy.get(`li[id="${innerId}"]`).children('button').click().get('#loading_kiali_spinner').should('not.exist');
+  cy.get('button#time_range_duration-toggle').click().get('#loading_kiali_spinner').should('not.exist');
+  cy.get(`button[id="${innerId}"]`).click().get('#loading_kiali_spinner').should('not.exist');
 });
 
 When(`user selects {string} traffic direction`, direction => {
@@ -107,8 +107,8 @@ When(`user selects {string} traffic direction`, direction => {
       innerId = 'inbound';
       break;
   }
-  cy.get('button[aria-labelledby^="direction-type"]').click().get('#loading_kiali_spinner').should('not.exist');
-  cy.get(`li[id="${innerId}"]`).children('button').click().get('#loading_kiali_spinner').should('not.exist');
+  cy.get('button#direction-type-toggle').click().get('#loading_kiali_spinner').should('not.exist');
+  cy.get(`button[id="${innerId}"]`).click().get('#loading_kiali_spinner').should('not.exist');
 });
 
 When('I fetch the overview of the cluster', function () {
@@ -162,9 +162,7 @@ Then(`user sees the {string} namespace list`, (nslist: string) => {
 });
 
 Then(`user sees the {string} namespace with {string} traffic {string}`, (ns, direction, duration) => {
-  cy.get('div[data-test^="' + ns + '"]').find(
-    'div[data-test="sparkline-' + direction + '-duration-' + duration + '"]'
-  );
+  cy.get('div[data-test^="' + ns + '"]').find('div[data-test="sparkline-' + direction + '-duration-' + duration + '"]');
 });
 
 Then('user sees the memory chart', () => {
@@ -176,9 +174,10 @@ And('user sees the cpu chart', () => {
 });
 
 Then('there should be a {string} application indicator in the namespace', function (healthStatus: string) {
-  cy.get(
-    `[data-test=${this.targetNamespace}-EXPAND] [data-test=overview-app-health]`).find('span').filter(`.icon-${healthStatus}`)
-  .should('exist');
+  cy.get(`[data-test=${this.targetNamespace}-EXPAND] [data-test=overview-app-health]`)
+    .find('span')
+    .filter(`.icon-${healthStatus}`)
+    .should('exist');
 });
 
 Then('the {string} application indicator should list the application', function (healthStatus: string) {
@@ -187,11 +186,15 @@ Then('the {string} application indicator should list the application', function 
     healthIndicatorStatusKey = 'not-ready';
   }
 
+  cy.get(`[data-test=${this.targetNamespace}-EXPAND] [data-test=overview-app-health]`)
+    .find('span')
+    .filter(`.icon-${healthStatus}`)
+    .trigger('mouseenter');
   cy.get(
-    `[data-test=${this.targetNamespace}-EXPAND] [data-test=overview-app-health]`).find('span').filter(`.icon-${healthStatus}`)
-  .trigger('mouseenter');
-  cy.get(
-    `[aria-label='Overview status'] [data-test=${this.targetNamespace}-${healthIndicatorStatusKey}-${this.targetApp}]`).find('span').filter(`.icon-${healthStatus}`)
+    `[aria-label='Overview status'] [data-test=${this.targetNamespace}-${healthIndicatorStatusKey}-${this.targetApp}]`
+  )
+    .find('span')
+    .filter(`.icon-${healthStatus}`)
     .should('exist');
   cy.get(
     `[aria-label='Overview status'] [data-test=${this.targetNamespace}-${healthIndicatorStatusKey}-${this.targetApp}]`
@@ -233,8 +236,8 @@ And('user sees the {string} label in the {string} namespace card', (label: strin
     .should('be.visible');
 });
 
-And ('user does not see any cluster badge in the {string} namespace card',(ns:string) => {
-  cy.get(`[data-test="${ns}-EXPAND"]`).within(($card)=>{
+And('user does not see any cluster badge in the {string} namespace card', (ns: string) => {
+  cy.get(`[data-test="${ns}-EXPAND"]`).within($card => {
     cy.get('#pfbadge-C').should('not.exist');
-  })
+  });
 });

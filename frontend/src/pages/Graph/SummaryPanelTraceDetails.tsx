@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Tooltip, Button, ButtonVariant, Icon, pluralize } from '@patternfly/react-core';
-import { SelectOption } from '@patternfly/react-core/deprecated';
+import { SelectList, SelectOption } from '@patternfly/react-core';
 import {
   InfoAltIcon,
   CloseIcon,
@@ -65,26 +65,18 @@ const nameStyle = kialiStyle({
 });
 
 const pStyle = kialiStyle({
-  paddingTop: 9
+  paddingTop: '10px',
+  $nest: {
+    '& button': {
+      fontSize: 'var(--graph-side-panel--font-size)',
+      paddingTop: '5px',
+      paddingBottom: '5px'
+    }
+  }
 });
 
 const spanSelectStyle = kialiStyle({
-  $nest: {
-    '& > button': {
-      fontSize: 'var(--graph-side-panel--font-size)',
-      paddingTop: 3,
-      paddingBottom: 3
-    },
-    '& > ul': {
-      maxWidth: '100%',
-      overflowY: 'hidden'
-    },
-    '& > ul > li > button': {
-      fontSize: 'var(--graph-side-panel--font-size)',
-      paddingTop: 3,
-      paddingBottom: 3
-    }
-  }
+  maxWidth: '100%'
 });
 
 class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
@@ -183,19 +175,24 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
               <div>
                 <strong>{pluralize(spans.length, 'span')}</strong> on this node
                 <SimplerSelect
-                  selections={currentSpan?.operationName}
+                  selected={currentSpan?.operationName}
                   className={spanSelectStyle}
                   onSelect={key => {
                     this.setState({ selectedSpanID: key as string });
                   }}
                 >
-                  {spans.map(s => {
-                    return (
-                      <SelectOption key={s.spanID} value={s.spanID}>
-                        {s.operationName} (t + {formatDuration(s.relativeStartTime)})
-                      </SelectOption>
-                    );
-                  })}
+                  <SelectList>
+                    {spans.map(s => {
+                      return (
+                        <SelectOption key={s.spanID} value={s.spanID}>
+                          <>
+                            <div>{s.operationName}</div>
+                            <div>(t + {formatDuration(s.relativeStartTime)})</div>
+                          </>
+                        </SelectOption>
+                      );
+                    })}
+                  </SelectList>
                 </SimplerSelect>
               </div>
             </div>

@@ -1,26 +1,35 @@
 import * as React from 'react';
-import { Select, SelectOptionObject, SelectProps } from '@patternfly/react-core/deprecated';
+import { MenuToggle, MenuToggleElement, Select, SelectProps } from '@patternfly/react-core';
 
-type Props = Omit<Omit<Omit<SelectProps, 'isOpen'>, 'onSelect'>, 'onToggle'> & {
-  onSelect?: (selection: string | SelectOptionObject) => void;
-  onToggle?: (isOpen: boolean) => void;
+type SimplerSelectProps = Omit<Omit<Omit<Omit<SelectProps, 'isOpen'>, 'onSelect'>, 'onOpenChange'>, 'toggle'> & {
+  onOpenChange?: (isOpen: boolean) => void;
+  onSelect?: (value?: string | number) => void;
 };
 
-export const SimplerSelect = (props: Props) => {
-  const [isOpen, setExpanded] = React.useState(false);
+export const SimplerSelect: React.FC<SimplerSelectProps> = (props: SimplerSelectProps) => {
+  const [isOpen, setIsOpen] = React.useState(false);
+
+  const toggle = (toggleRef: React.Ref<MenuToggleElement>) => (
+    <MenuToggle ref={toggleRef} onClick={() => setIsOpen(!isOpen)} isExpanded={isOpen}>
+      {props.selected}
+    </MenuToggle>
+  );
+
   return (
     <Select
       {...props}
-      onToggle={(_event, isOpen) => {
-        if (props.onToggle) {
-          props.onToggle(isOpen);
+      toggle={toggle}
+      onOpenChange={isOpen => {
+        setIsOpen(isOpen);
+
+        if (props.onOpenChange) {
+          props.onOpenChange(isOpen);
         }
-        setExpanded(isOpen);
       }}
-      onSelect={(_, selection, isPlaceholder) => {
-        setExpanded(false);
-        if (!isPlaceholder && props.onSelect) {
-          props.onSelect(selection);
+      onSelect={(_event?: React.MouseEvent<Element, MouseEvent>, value?: string | number) => {
+        setIsOpen(false);
+        if (props.onSelect) {
+          props.onSelect(value);
         }
       }}
       isOpen={isOpen}

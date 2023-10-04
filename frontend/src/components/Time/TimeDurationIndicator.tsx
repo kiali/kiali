@@ -23,8 +23,7 @@ interface Props {
 }
 
 const infoStyle = kialiStyle({
-  margin: '0px 5px 2px 5px',
-  verticalAlign: '-5px !important'
+  margin: '0px 5px 2px 5px'
 });
 
 class TimeDurationIndicatorComponent extends React.PureComponent<Props> {

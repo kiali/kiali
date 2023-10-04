@@ -249,6 +249,8 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
       now - (serverConfig.prometheus.storageTsdbRetention! * 1000 + this.state.replayWindow.interval)
     );
 
+    const dropdownOptions = this.state.isCustomStartTime ? replayIntervals : replayLastIntervals;
+
     return (
       <div className={`${replayStyle} ${replayBorder}`}>
         {this.state.isCustomStartTime && (
@@ -266,8 +268,8 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
           id={'replay-interval'}
           handleSelect={key => this.setReplayInterval(Number(key))}
           value={String(this.state.replayWindow.interval)}
-          label={replayIntervals[this.state.replayWindow.interval]}
-          options={this.state.isCustomStartTime ? replayIntervals : replayLastIntervals}
+          label={dropdownOptions[this.state.replayWindow.interval]}
+          options={dropdownOptions}
           tooltip="Replay length"
         />
         <Tooltip

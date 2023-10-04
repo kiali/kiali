@@ -91,11 +91,12 @@ const timeToolbarStyle = kialiStyle({
 const actionsToolbarStyle = kialiStyle({
   paddingTop: '17px',
   display: 'flex',
-  justifyContent: 'end'
+  justifyContent: 'end',
+  alignItems: 'center'
 });
 
 const typeSelectStyle = kialiStyle({
-  paddingRight: '6px'
+  marginRight: '6px'
 });
 
 export type OverviewType = keyof typeof overviewTypes;
@@ -204,7 +205,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
               id="sort_selector"
               handleSelect={this.changeSortField}
               value={this.state.sortField.id}
-              label={sortTypes[this.state.overviewType]}
+              label={sortTypes[this.state.sortField.id]}
               options={sortTypes}
               data-sort-field={this.state.sortField.id}
             />
@@ -231,7 +232,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
         <ToolbarDropdown
           id="overview-type"
           disabled={false}
-          classNameSelect={typeSelectStyle}
+          className={typeSelectStyle}
           handleSelect={this.updateOverviewType}
           nameDropdown="Health for"
           value={this.state.overviewType}

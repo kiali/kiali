@@ -68,7 +68,7 @@ And('user filters for name {string}', (name: string) => {
 
 And('user filters for istio config type {string}', (istioType: string) => {
   cy.get('input[placeholder="Filter by Istio Config Type"]').type(`${istioType}{enter}`);
-  cy.get(`button[label="${istioType}"]`).should('be.visible').click();
+  cy.get(`li[label="${istioType}"]`).should('be.visible').find('button').click();
 });
 
 // checkCol
@@ -208,8 +208,8 @@ export function checkHealthStatusInTable(
   cy.get(`[aria-label='Health indicator'] strong`).should('contain.text', healthStatus);
 }
 
-And("an entry for {string} cluster should be in the table", (cluster:string) =>{
+And('an entry for {string} cluster should be in the table', (cluster: string) => {
   cy.get('tbody').within(() => {
-    cy.get('tr > td:nth-child(4)').contains(cluster).should('have.length.above',0);
+    cy.get('tr > td:nth-child(4)').contains(cluster).should('have.length.above', 0);
   });
 });

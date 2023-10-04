@@ -4,8 +4,8 @@ import { checkHealthIndicatorInTable, checkHealthStatusInTable, colExists, hasAt
 function activateFilter(state: string) {
   //decided to pause the refresh, because I'm intercepting the very same request that is used for the timed refresh
 
-  cy.get('button[aria-labelledby^="time_range_refresh"]').click();
-  cy.get(`li[id="0"`).children('button').click().get('#loading_kiali_spinner').should('not.exist');
+  cy.get('button#time_range_refresh-toggle').click();
+  cy.get('button[id="0"]').click().get('#loading_kiali_spinner').should('not.exist');
   cy.intercept({
     pathname: '**/api/namespaces/bookinfo/workloads',
     query: {
@@ -39,10 +39,11 @@ Given('a degraded workload in the mesh', function () {
 
 And('user filters for workload type {string}', (workloadType: string) => {
   cy.get('select[aria-label="filter_select_type"]')
-    .parent().parent()
+    .parent()
+    .parent()
     .within(() => {
       cy.get('button').click();
-      cy.get(`button[label="${workloadType}"]`).click();
+      cy.get(`li[label="${workloadType}"]`).find('button').click();
     });
 });
 
@@ -60,8 +61,8 @@ Then('user sees {string} in workloads table', (workload: string) => {
 
 And('user should only see healthy workloads in workloads table', () => {
   cy.get('tbody').within(() => {
-    cy.get('span[class*="icon-healthy"]').should('be.visible')
-    cy.get('span[class*="icon-unhealthy"],span[class*="icon-degraded"],span[class*="icon-na"]').should('not.exist')
+    cy.get('span[class*="icon-healthy"]').should('be.visible');
+    cy.get('span[class*="icon-unhealthy"],span[class*="icon-degraded"],span[class*="icon-na"]').should('not.exist');
   });
 });
 

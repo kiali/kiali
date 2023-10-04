@@ -89,8 +89,10 @@ export const isParentKiosk = (kiosk: string): boolean => {
 
 // Message has no format, parent should parse it for its needs
 const sendParentMessage = (msg: string): void => {
-  // Kiosk parameter will capture the parent target when kiosk !== "true"
+  // Kiosk parameter will send the parent target when kiosk !== "true"
   // this will enable parent communication
   const targetOrigin = store.getState().globalState.kiosk;
-  window.top?.postMessage(msg, targetOrigin);
+  if (isParentKiosk(targetOrigin)) {
+    window.top?.postMessage(msg, targetOrigin);
+  }
 };

@@ -20,54 +20,42 @@ type ReduxProps = {
 };
 
 type DurationDropdownProps = ReduxProps & {
-  id: string;
   disabled?: boolean;
+  id: string;
+  nameDropdown?: string;
+  prefix?: string;
+  suffix?: string;
   tooltip?: string;
   tooltipPosition?: TooltipPosition;
-  menuAppendTo?: HTMLElement | (() => HTMLElement) | 'parent' | 'inline';
-  nameDropdown?: string;
-  suffix?: string;
-  prefix?: string;
 };
 
-class DurationDropdownComp extends React.Component<DurationDropdownProps> {
-  render() {
-    const durations = humanDurations(serverConfig, this.props.prefix, this.props.suffix);
-
-    return (
-      <ToolbarDropdown
-        id={this.props.id}
-        disabled={this.props.disabled}
-        handleSelect={key => this.updateDurationInterval(Number(key))}
-        value={String(this.props.duration)}
-        label={durations[this.props.duration]}
-        options={durations}
-        tooltip={this.props.tooltip}
-        tooltipPosition={this.props.tooltipPosition}
-        nameDropdown={this.props.nameDropdown}
-        menuAppendTo={this.props.menuAppendTo}
-      />
-    );
-  }
-
-  private updateDurationInterval = (duration: number) => {
-    this.props.setDuration(duration); // notify redux of the change
+export const DurationDropdownComponent: React.FC<DurationDropdownProps> = (props: DurationDropdownProps) => {
+  const updateDurationInterval = (duration: number) => {
+    props.setDuration(duration); // notify redux of the change
 
     if (isKioskMode()) {
       kioskDurationAction(duration);
     }
   };
-}
 
-const withDurations = DurationDropdownComponent => {
-  return (props: DurationDropdownProps) => {
-    return (
-      <DurationDropdownComponent durations={humanDurations(serverConfig, props.prefix, props.suffix)} {...props} />
-    );
-  };
+  const durations = humanDurations(serverConfig, props.prefix, props.suffix);
+
+  return (
+    <ToolbarDropdown
+      id={props.id}
+      disabled={props.disabled}
+      handleSelect={key => updateDurationInterval(Number(key))}
+      value={String(props.duration)}
+      label={durations[props.duration]}
+      options={durations}
+      tooltip={props.tooltip}
+      tooltipPosition={props.tooltipPosition}
+      nameDropdown={props.nameDropdown}
+    />
+  );
 };
 
-const withURLAwareness = DurationDropdownComponent => {
+const withURLAwareness = (DurationDropdownComponent: React.FC<DurationDropdownProps>) => {
   return class extends React.Component<DurationDropdownProps> {
     constructor(props: DurationDropdownProps) {
       super(props);
@@ -76,7 +64,7 @@ const withURLAwareness = DurationDropdownComponent => {
       if (urlDuration !== undefined && urlDuration !== props.duration) {
         props.setDuration(urlDuration);
       }
-      HistoryManager.setParam(URLParam.DURATION, String(this.props.duration));
+      HistoryManager.setParam(URLParam.DURATION, String(props.duration));
     }
 
     componentDidUpdate() {
@@ -98,7 +86,6 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
     setDuration: bindActionCreators(UserSettingsActions.setDuration, dispatch)
   };
 };
-export const DurationDropdownComponent = withDurations(DurationDropdownComp);
 
 export const DurationDropdown = connect(
   mapStateToProps,
