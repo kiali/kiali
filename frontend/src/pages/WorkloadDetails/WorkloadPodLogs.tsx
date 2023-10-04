@@ -64,11 +64,11 @@ type ReduxProps = {
 };
 
 export type WorkloadPodLogsProps = ReduxProps & {
+  cluster?: string;
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
   pods: Pod[];
   workload: string;
-  cluster?: string;
 };
 
 type ContainerOption = {

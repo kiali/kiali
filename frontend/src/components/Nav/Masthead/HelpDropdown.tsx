@@ -12,8 +12,8 @@ import { IstioCertsInfo } from 'components/IstioCertsInfo/IstioCertsInfo';
 import { kialiStyle } from 'styles/StyleUtils';
 
 type HelpDropdownProps = {
-  status: Status;
   externalServices: ExternalServiceInfo[];
+  status: Status;
   warningMessages: string[];
 };
 

@@ -68,18 +68,18 @@ type ReduxProps = {
 type EnvoyDetailsProps = ReduxProps & {
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
-  workload: Workload;
   theme: string;
+  workload: Workload;
 };
 
 type EnvoyDetailsState = {
-  config: EnvoyProxyDump;
-  pod: Pod;
-  tableSortBy: ResourceSorts;
-  fetch: boolean;
-  tabHeight: number;
   activeKey: number;
+  config: EnvoyProxyDump;
+  fetch: boolean;
+  pod: Pod;
   resource: string;
+  tabHeight: number;
+  tableSortBy: ResourceSorts;
 };
 
 const fullHeightStyle = kialiStyle({

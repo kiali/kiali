@@ -41,29 +41,29 @@ export type IstioConfigItem =
   | VirtualService;
 
 export interface ConfigPreviewItem {
+  items: IstioConfigItem[];
   title: string;
   type: string;
-  items: IstioConfigItem[];
 }
 
 interface Props {
-  isOpen: boolean;
-  ns: string;
-  title?: string;
   actions?: any;
   disableAction?: boolean;
+  isOpen: boolean;
   items: ConfigPreviewItem[];
-  opTarget: string;
+  ns: string;
   onClose: () => void;
   onKeyPress?: (e: any) => void;
   onConfirm: (items: ConfigPreviewItem[]) => void;
+  opTarget: string;
+  title?: string;
 }
 
 interface State {
   items: ConfigPreviewItem[];
-  newIstioPage: boolean;
   mainTab: string;
   modalOpen: boolean;
+  newIstioPage: boolean;
 }
 
 const separator = '\n---\n\n';

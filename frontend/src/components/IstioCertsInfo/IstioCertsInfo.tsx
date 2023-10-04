@@ -29,13 +29,13 @@ import { connectRefresh } from '../Refresh/connectRefresh';
 import { kialiStyle } from 'styles/StyleUtils';
 
 type ReduxProps = {
-  setIstioCertsInfo: (istioCertsInfo: CertsInfo[]) => void;
   certsInfo: CertsInfo[];
+  setIstioCertsInfo: (istioCertsInfo: CertsInfo[]) => void;
 };
 
 type IstioCertsInfoProps = ReduxProps & {
-  lastRefreshAt: TimeInMilliseconds;
   isOpen: boolean;
+  lastRefreshAt: TimeInMilliseconds;
   onClose: () => void;
 };
 
