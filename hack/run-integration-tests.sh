@@ -117,6 +117,35 @@ ensureKialiServerReady() {
   done
 }
 
+ensureKialiTracesReady() {
+  local KIALI_URL="$1"
+
+  infomsg "Waiting for Kiali to have traces"
+  local start_time=$(date +%s)
+  local end_time=$((start_time + 60))
+
+  # Get traces from the last 5m
+  local traces_date=$((($(date +%s) - 300) * 1000))
+  local trace_url="${KIALI_URL}/api/namespaces/bookinfo/workloads/productpage-v1/traces?startMicros=${traces_date}&tags=&limit=100"
+  while true; do
+    result=$(curl "$url" \
+        -H 'Accept: application/json, text/plain, */*' \
+        -H 'Content-Type: application/json' | jq -r '.data')
+
+    if [ "$result" == "[]" ]; then
+      local now=$(date +%s)
+      if [ "${now}" -gt "${end_time}" ]; then
+        echo "Timed out waiting for Kiali to get any trace"
+        break
+      fi
+      sleep 1
+    else
+      break
+    fi
+
+  done
+}
+
 infomsg "Running ${TEST_SUITE} integration tests"
 if [ "${TEST_SUITE}" == "backend" ]; then
   "${SCRIPT_DIR}"/setup-kind-in-ci.sh ${ISTIO_VERSION_ARG}
@@ -155,6 +184,7 @@ elif [ "${TEST_SUITE}" == "frontend" ]; then
   export CYPRESS_VIDEO=false
 
   ensureKialiServerReady "${KIALI_URL}"
+  ensureKialiTracesReady "${KIALI_URL}"
 
   if [ "${SETUP_ONLY}" == "true" ]; then
     exit 0
