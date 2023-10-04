@@ -1,7 +1,7 @@
-import { JaegerStateReducer, JaegerState } from '../JaegerState';
+import { TracingStateReducer, TracingState } from '../TracingState';
 import { TracingActions } from '../../actions/TracingActions';
 
-const initialState: JaegerState = {
+const initialState: TracingState = {
   info: {
     enabled: false,
     integration: false,
@@ -12,8 +12,8 @@ const initialState: JaegerState = {
   }
 };
 
-describe('JaegerState reducer', () => {
-  let expectedState: JaegerState;
+describe('TracingState reducer', () => {
+  let expectedState: TracingState;
   beforeEach(() => {
     expectedState = initialState;
   });
@@ -24,7 +24,7 @@ describe('JaegerState reducer', () => {
     expectedState.info!.integration = true;
     expectedState.info!.url = url;
     expect(
-      JaegerStateReducer(
+      TracingStateReducer(
         initialState,
         TracingActions.setInfo({
           url: url,

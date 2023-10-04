@@ -63,7 +63,7 @@ export class NavigationComponent extends React.Component<PropsType, NavigationSt
     }
   };
 
-  goTojaeger() {
+  goTotracing() {
     window.open(this.props.jaegerUrl, '_blank');
   }
 

@@ -12,7 +12,7 @@ export const TracingThunkActions = {
     setURLTraceId(traceId);
     return (dispatch: KialiDispatch) => {
       if (traceId) {
-        API.getJaegerTrace(traceId)
+        API.getTrace(traceId)
           .then(response => {
             if (response.data.data) {
               const trace = transformTraceData(response.data.data, cluster);

@@ -119,13 +119,13 @@ export type TracingError = {
   traceID?: string;
 };
 
-export type JaegerResponse = {
+export type TracingResponse = {
   data: JaegerTrace[] | null;
   errors: TracingError[];
-  jaegerServiceName: string;
+  tracingServiceName: string;
 };
 
-export type JaegerSingleResponse = {
+export type TracingSingleResponse = {
   data: JaegerTrace | null;
   errors: TracingError[];
 };

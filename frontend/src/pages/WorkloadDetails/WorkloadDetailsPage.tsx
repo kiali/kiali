@@ -40,8 +40,8 @@ type WorkloadDetailsState = {
 
 type ReduxProps = {
   duration: DurationInSeconds;
-  jaegerInfo?: TracingInfo;
   statusState: StatusState;
+  tracingInfo?: TracingInfo;
 };
 
 type WorkloadDetailsPageProps = ReduxProps & {
@@ -221,7 +221,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     );
     tabsArray.push(outTab);
 
-    if (this.props.jaegerInfo && this.props.jaegerInfo.enabled && this.props.jaegerInfo.integration) {
+    if (this.props.tracingInfo && this.props.tracingInfo.enabled && this.props.tracingInfo.integration) {
       tabsArray.push(
         <Tab eventKey={5} title="Traces" key="Traces">
           <TracesComponent
@@ -371,8 +371,8 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  jaegerInfo: state.tracingState.info,
-  statusState: state.statusState
+  statusState: state.statusState,
+  tracingInfo: state.tracingState.info
 });
 
 export const WorkloadDetailsPage = connectRefresh(connect(mapStateToProps)(WorkloadDetailsPageComponent));

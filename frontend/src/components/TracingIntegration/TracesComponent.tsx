@@ -234,10 +234,10 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     return minDurations;
   };
 
-  private onTracesUpdated = (traces: JaegerTrace[], jaegerServiceName: string) => {
+  private onTracesUpdated = (traces: JaegerTrace[], tracingServiceName: string) => {
     const newState: Partial<TracesState> = { traces: traces, tracingErrors: undefined, toolbarDisabled: false };
-    if (this.state.targetApp === undefined && jaegerServiceName) {
-      newState.targetApp = jaegerServiceName;
+    if (this.state.targetApp === undefined && tracingServiceName) {
+      newState.targetApp = tracingServiceName;
     }
     this.setState(newState as TracesState);
   };

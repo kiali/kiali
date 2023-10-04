@@ -49,7 +49,7 @@ type ServiceDetailsState = {
 interface ServiceDetailsProps {
   serviceId: ServiceId;
   duration: DurationInSeconds;
-  jaegerInfo?: TracingInfo;
+  tracingInfo?: TracingInfo;
   lastRefreshAt: TimeInMilliseconds;
 }
 
@@ -204,7 +204,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
 
     const tabsArray: JSX.Element[] = [overTab, trafficTab, inTab];
 
-    if (this.props.jaegerInfo && this.props.jaegerInfo.enabled && this.props.jaegerInfo.integration) {
+    if (this.props.tracingInfo && this.props.tracingInfo.enabled && this.props.tracingInfo.integration) {
       tabsArray.push(
         <Tab eventKey={3} title="Traces" key="Traces">
           <TracesComponent
@@ -286,8 +286,8 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerInfo: state.tracingState.info,
-  duration: durationSelector(state)
+  duration: durationSelector(state),
+  tracingInfo: state.tracingState.info
 });
 
 export const ServiceDetailsPage = connectRefresh(connect(mapStateToProps)(ServiceDetailsPageComponent));

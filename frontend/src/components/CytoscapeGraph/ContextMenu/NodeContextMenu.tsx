@@ -25,7 +25,7 @@ import { getServiceDetailsUpdateLabel, hasServiceDetailsTrafficRouting } from '.
 
 type ReduxProps = {
   duration: DurationInSeconds;
-  jaegerInfo?: TracingInfo;
+  tracingInfo?: TracingInfo;
   kiosk: string;
   updateTime: TimeInMilliseconds;
 };
@@ -306,7 +306,7 @@ export function NodeContextMenuComponent(props: Props) {
     // That would lead to an empty menu. Here, we assume that whoever is the host/parent component,
     // that component won't render this context menu in case this menu would be blank. So, here
     // it's simply assumed that the context menu will look good.
-    const options: ContextMenuOption[] = getOptionsFromLinkParams(linkParams, props.jaegerInfo);
+    const options: ContextMenuOption[] = getOptionsFromLinkParams(linkParams, props.tracingInfo);
     const menuOptions = (
       <>
         <div className={contextMenuSubTitle}>Show</div>
@@ -363,15 +363,15 @@ export const clickHandler = (o: ContextMenuOption, kiosk: string) => {
   }
 };
 
-export const getOptions = (node: DecoratedGraphNodeData, jaegerInfo?: TracingInfo): ContextMenuOption[] => {
+export const getOptions = (node: DecoratedGraphNodeData, tracingInfo?: TracingInfo): ContextMenuOption[] => {
   const linkParams = getLinkParamsForNode(node);
   if (!linkParams) {
     return [];
   }
-  return getOptionsFromLinkParams(linkParams, jaegerInfo);
+  return getOptionsFromLinkParams(linkParams, tracingInfo);
 };
 
-const getOptionsFromLinkParams = (linkParams: LinkParams, jaegerInfo?: TracingInfo): ContextMenuOption[] => {
+const getOptionsFromLinkParams = (linkParams: LinkParams, tracingInfo?: TracingInfo): ContextMenuOption[] => {
   let options: ContextMenuOption[] = [];
   const { namespace, type, name, cluster } = linkParams;
   let detailsPageUrl = `/namespaces/${namespace}/${type}/${name}`;
@@ -394,13 +394,13 @@ const getOptionsFromLinkParams = (linkParams: LinkParams, jaegerInfo?: TracingIn
     if (type !== Paths.SERVICES) {
       options.push({ text: 'Outbound Metrics', url: `${detailsPageUrl}${concat}tab=out_metrics` });
     }
-    if (type === Paths.APPLICATIONS && jaegerInfo && jaegerInfo.enabled) {
-      if (jaegerInfo.integration) {
+    if (type === Paths.APPLICATIONS && tracingInfo && tracingInfo.enabled) {
+      if (tracingInfo.integration) {
         options.push({ text: 'Traces', url: `${detailsPageUrl}${concat}tab=traces` });
-      } else if (jaegerInfo.url) {
+      } else if (tracingInfo.url) {
         options.push({
           text: 'Show Traces',
-          url: getJaegerURL(namespace, jaegerInfo.namespaceSelector, jaegerInfo.url, name),
+          url: getJaegerURL(namespace, tracingInfo.namespaceSelector, tracingInfo.url, name),
           external: true,
           target: '_blank'
         });
@@ -414,7 +414,7 @@ const getOptionsFromLinkParams = (linkParams: LinkParams, jaegerInfo?: TracingIn
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
   updateTime: state.graph.updateTime,
-  jaegerInfo: state.tracingState.info,
+  tracingInfo: state.tracingState.info,
   kiosk: state.globalState.kiosk
 });
 

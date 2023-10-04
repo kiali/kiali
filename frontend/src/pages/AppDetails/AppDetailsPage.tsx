@@ -37,7 +37,7 @@ type AppDetailsState = {
 
 type ReduxProps = {
   duration: DurationInSeconds;
-  jaegerInfo?: TracingInfo;
+  tracingInfo?: TracingInfo;
   timeRange: TimeRange;
 };
 
@@ -197,8 +197,8 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     const tabsArray: JSX.Element[] = [overTab, trafficTab, inTab, outTab];
 
     // Conditional Traces tab
-    if (this.props.jaegerInfo && this.props.jaegerInfo.enabled) {
-      if (this.props.jaegerInfo.integration) {
+    if (this.props.tracingInfo && this.props.tracingInfo.enabled) {
+      if (this.props.tracingInfo.integration) {
         tabsArray.push(
           <Tab eventKey={4} style={{ textAlign: 'center' }} title={'Traces'} key={tracesTabName}>
             <TracesComponent
@@ -211,13 +211,13 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           </Tab>
         );
       } else {
-        const service = this.props.jaegerInfo.namespaceSelector
+        const service = this.props.tracingInfo.namespaceSelector
           ? this.props.appId.app + '.' + this.props.appId.namespace
           : this.props.appId.app;
         tabsArray.push(
           <Tab
             eventKey={4}
-            href={this.props.jaegerInfo.url + `/search?service=${service}`}
+            href={this.props.tracingInfo.url + `/search?service=${service}`}
             target="_blank"
             title={
               <>
@@ -279,8 +279,8 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  jaegerInfo: state.tracingState.info,
-  timeRange: timeRangeSelector(state)
+  timeRange: timeRangeSelector(state),
+  tracingInfo: state.tracingState.info
 });
 
 export const AppDetailsPage = connectRefresh(connect(mapStateToProps)(AppDetails));
