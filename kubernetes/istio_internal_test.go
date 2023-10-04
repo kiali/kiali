@@ -64,8 +64,6 @@ func istiodTestServer(t *testing.T) *httptest.Server {
 		switch r.URL.Path {
 		case "/debug/configz":
 			file = "../tests/data/registry/registry-configz.json"
-		case "/debug/endpointz":
-			file = "../tests/data/registry/registry-endpointz.json"
 		case "/debug/registryz":
 			file = "../tests/data/registry/registry-registryz.json"
 		case "/debug/syncz":
@@ -272,25 +270,6 @@ func TestParseRegistryConfig(t *testing.T) {
 	assert.Equal(12, len(registry.AuthorizationPolicies))
 }
 
-func TestParseRegistryEndpoints(t *testing.T) {
-	assert := assert.New(t)
-
-	endpointz := "../tests/data/registry/registry-endpointz.json"
-	bEndpointz, err := os.ReadFile(endpointz)
-	assert.NoError(err)
-
-	rEndpoints := map[string][]byte{
-		"istiod1": bEndpointz,
-	}
-
-	registry, err2 := ParseRegistryEndpoints(rEndpoints)
-	assert.NoError(err2)
-	assert.NotNil(registry)
-
-	assert.Equal(101, len(registry))
-	assert.Equal("*.msn.com:http-port", registry[0].Service)
-}
-
 func TestRegistryServices(t *testing.T) {
 	assert := assert.New(t)
 
@@ -359,58 +338,6 @@ func TestGetRegistryConfigExternalBadResponse(t *testing.T) {
 
 	k8sClient := &K8SClient{}
 	_, err := k8sClient.GetRegistryConfiguration()
-	assert.Error(err)
-}
-
-func TestGetRegistryEndpoints(t *testing.T) {
-	assert := assert.New(t)
-
-	testServer := istiodTestServer(t)
-	setPortPool(t, testServer.URL)
-
-	k8sClient := &K8SClient{
-		k8s: fake.NewSimpleClientset(runningIstiodPod()),
-		getPodPortForwarderFunc: func(namespace, name, portMap string) (httputil.PortForwarder, error) {
-			return &fakePortForwarder{}, nil
-		},
-	}
-
-	_, err := k8sClient.GetRegistryEndpoints()
-	assert.NoError(err)
-}
-
-func TestGetRegistryEndpointsExternal(t *testing.T) {
-	assert := assert.New(t)
-
-	testServer := istiodTestServer(t)
-
-	conf := config.Get()
-	conf.ExternalServices.Istio.Registry = &config.RegistryConfig{
-		IstiodURL: testServer.URL,
-	}
-	setConfig(t, *conf)
-
-	k8sClient := &K8SClient{}
-	_, err := k8sClient.GetRegistryEndpoints()
-	assert.NoError(err)
-}
-
-func TestGetRegistryEndpointsExternalBadResponse(t *testing.T) {
-	assert := assert.New(t)
-
-	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusUnauthorized)
-	}))
-	t.Cleanup(testServer.Close)
-
-	conf := config.Get()
-	conf.ExternalServices.Istio.Registry = &config.RegistryConfig{
-		IstiodURL: testServer.URL,
-	}
-	setConfig(t, *conf)
-
-	k8sClient := &K8SClient{}
-	_, err := k8sClient.GetRegistryEndpoints()
 	assert.Error(err)
 }
 

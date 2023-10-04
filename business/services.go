@@ -484,7 +484,6 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 	}
 
 	var eps *core_v1.Endpoints
-	var rEps []*kubernetes.RegistryEndpoint
 	var pods []core_v1.Pod
 	var hth models.ServiceHealth
 	var istioConfigList models.IstioConfigList
@@ -536,23 +535,6 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 				}
 			}()
 		}
-	}
-
-	if in.config.ExternalServices.Istio.IstioAPIEnabled {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			var err2 error
-			criteria := RegistryCriteria{
-				Namespace:   namespace,
-				ServiceName: service,
-			}
-			rEps, err2 = in.businessLayer.RegistryStatus.GetRegistryEndpoints(criteria)
-			if err2 != nil {
-				log.Errorf("Error fetching Registry Endpoints namespace %s and service %s: %s", namespace, service, err2)
-				errChan <- err2
-			}
-		}()
 	}
 
 	wg.Add(1)
@@ -682,7 +664,6 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		s.SetIstioSidecar(wo)
 	}
 	s.SetEndpoints(eps)
-	s.SetRegistryEndpoints(rEps)
 	s.IstioPermissions = models.ResourcePermissions{
 		Create: vsCreate,
 		Update: vsUpdate,

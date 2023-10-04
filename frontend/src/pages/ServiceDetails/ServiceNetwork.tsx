@@ -165,21 +165,7 @@ export class ServiceNetwork extends React.Component<Props> {
                               </Tooltip>
                             ) : undefined}
                           </div>
-                          <div>
-                            ({port.protocol}
-                            {port.istioProtocol !== '' && <>,{port.istioProtocol}</>}){' '}
-                            <span style={{ marginLeft: '5px' }}>
-                              {port.tlsMode === 'istio' ? (
-                                <>
-                                  <KialiIcon.MtlsLock /> mTLS
-                                </>
-                              ) : (
-                                <>
-                                  <KialiIcon.MtlsUnlock /> No mTLS{' '}
-                                </>
-                              )}
-                            </span>
-                          </div>
+                          <div>({port.protocol})</div>
                         </div>
                       );
                     })}
