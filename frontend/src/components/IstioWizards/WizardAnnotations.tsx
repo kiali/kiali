@@ -13,19 +13,25 @@ import {
 } from '@patternfly/react-core';
 import { Table, Tbody, Th, Thead, Tr } from '@patternfly/react-table';
 import { KialiIcon } from 'config/KialiIcon';
+import { kialiStyle } from 'styles/StyleUtils';
 
 interface Props {
   annotations: { [key: string]: string };
+  canEdit: boolean;
   onChange: (annotations) => void;
   onClose: () => void;
   showAnotationsWizard: boolean;
-  canEdit: boolean;
 }
 
 interface State {
   annotations: Map<number, [string, string]>;
   validation: string[];
 }
+
+const addMoreStyle = kialiStyle({
+  marginTop: '0.5rem',
+  marginLeft: '1rem'
+});
 
 export class WizardAnnotations extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -204,12 +210,14 @@ export class WizardAnnotations extends React.Component<Props, State> {
           </Table>
           <Button
             variant="link"
+            className={addMoreStyle}
             icon={<KialiIcon.AddMore />}
             onClick={() => {
               this.addMore();
             }}
+            isInline
           >
-            Add more
+            <span>Add more</span>
           </Button>
           {this.state.validation.length > 0 && (
             <Alert variant="danger" isInline isExpandable title="An error occurred">

@@ -30,11 +30,12 @@ const modalStyle = kialiStyle({
 });
 
 const iconStyle = kialiStyle({
-  marginRight: '10px'
+  marginTop: '1rem',
+  marginRight: '0.5rem'
 });
 
 const websiteStyle = kialiStyle({
-  paddingLeft: 0
+  marginRight: '2rem'
 });
 
 const textContentStyle = kialiStyle({
@@ -87,6 +88,7 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
           href={config.about.website.url}
           variant={ButtonVariant.link}
           target="_blank"
+          isInline
         >
           <KialiIcon.Website className={iconStyle} />
           {config.about.website.linkText}
@@ -100,7 +102,7 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
   const renderProjectLink = () => {
     if (config?.about?.project) {
       return (
-        <Button component="a" href={config.about.project.url} variant={ButtonVariant.link} target="_blank">
+        <Button component="a" href={config.about.project.url} variant={ButtonVariant.link} target="_blank" isInline>
           <KialiIcon.Repository className={iconStyle} />
           {config.about.project.linkText}
         </Button>
