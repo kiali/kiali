@@ -1,7 +1,6 @@
 @app-details-multi-cluster
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 @multi-cluster
-@skip
 Feature: Kiali App Details page for multicluster
 
   On the App Details page, an admin should see details about an application along with a cluster badge as well as
@@ -12,6 +11,7 @@ Feature: Kiali App Details page for multicluster
     Given user is at administrator perspective
     And user is at the details page for the "app" "bookinfo/reviews" located in the "west" cluster
 
+  @skip
   Scenario: See details for app.
     Then user sees details information for the remote "reviews" app
     And the description card should contain a reference to workload
