@@ -26,6 +26,9 @@ import { basicTabStyle } from 'styles/TabStyles';
 import { istioAceEditorStyle } from 'styles/AceEditorStyle';
 import { Theme } from 'types/Common';
 import { kialiStyle } from 'styles/StyleUtils';
+import ReactAce from 'react-ace/lib/ace';
+import { classes } from 'typestyle';
+import { usePreviousValue } from 'utils/ReactUtils';
 
 enum CopyStatus {
   NOT_COPIED, // We haven't copied the current output
@@ -35,14 +38,8 @@ enum CopyStatus {
 
 type DebugInformationProps = {
   appState: KialiAppState;
-  ref: React.RefObject<any>;
-};
-
-type DebugInformationState = {
-  config: Object;
-  copyStatus: CopyStatus;
-  currentTab: string;
-  show: boolean;
+  isOpen: boolean;
+  onClose: () => void;
 };
 
 type DebugInformationData = {
@@ -84,6 +81,16 @@ const tabIndex: { [tab: string]: number } = {
   additionalState: 1
 };
 
+const modalStyle = kialiStyle({
+  overflowY: 'hidden',
+  $nest: {
+    '& .pf-v5-c-tab-content': {
+      height: '525px',
+      overflowY: 'auto'
+    }
+  }
+});
+
 const tableStyle = kialiStyle({
   tableLayout: 'fixed',
   $nest: {
@@ -93,66 +100,77 @@ const tableStyle = kialiStyle({
   }
 });
 
-class DebugInformationComponent extends React.PureComponent<DebugInformationProps, DebugInformationState> {
-  aceEditorRef: React.RefObject<AceEditor>;
-  kialiConfig = {};
+const tabStyle = kialiStyle({
+  $nest: {
+    '&& .pf-v5-c-tabs__list': {
+      marginLeft: 0
+    }
+  }
+});
 
-  constructor(props: DebugInformationProps) {
-    super(props);
-    this.aceEditorRef = React.createRef();
+const DebugInformationComponent: React.FC<DebugInformationProps> = (props: DebugInformationProps) => {
+  const [config, setConfig] = React.useState({});
+  const [copyStatus, setCopyStatus] = React.useState(CopyStatus.NOT_COPIED);
+  const [currentTab, setCurrentTab] = React.useState(defaultTab);
+
+  const aceEditorRef = React.useRef<ReactAce | null>(null);
+
+  React.useEffect(() => {
+    let kialiConfig = {};
 
     for (const key in serverConfig) {
       if (propsToShow.includes(key)) {
         if (typeof serverConfig[key] === 'string') {
-          this.kialiConfig[key] = serverConfig[key];
+          kialiConfig[key] = serverConfig[key];
         } else {
-          this.kialiConfig[key] = JSON.stringify(serverConfig[key]);
+          kialiConfig[key] = JSON.stringify(serverConfig[key]);
         }
       }
     }
     // Order config items
-    this.kialiConfig = Object.keys(this.kialiConfig)
+    kialiConfig = Object.keys(kialiConfig)
       .sort()
       .reduce((obj, key) => {
-        obj[key] = this.kialiConfig[key];
+        obj[key] = kialiConfig[key];
         return obj;
       }, {});
 
-    this.state = { show: false, copyStatus: CopyStatus.NOT_COPIED, currentTab: defaultTab, config: this.kialiConfig };
-  }
+    setConfig(kialiConfig);
+  }, []);
 
-  open = () => {
-    this.setState({ copyStatus: CopyStatus.NOT_COPIED, currentTab: defaultTab, show: true });
+  const prevAppState = usePreviousValue(props.appState);
+
+  React.useEffect(() => {
+    if (prevAppState !== props.appState && copyStatus === CopyStatus.COPIED) {
+      setCopyStatus(CopyStatus.OLD_COPY);
+    }
+  }, [prevAppState, props.appState, copyStatus]);
+
+  React.useEffect(() => {
+    if (props.isOpen) {
+      setCopyStatus(CopyStatus.NOT_COPIED);
+      setCurrentTab(defaultTab);
+    }
+  }, [props.isOpen]);
+
+  const copyCallback = (_text: string, result: boolean) => {
+    setCopyStatus(result ? CopyStatus.COPIED : CopyStatus.NOT_COPIED);
   };
 
-  close = () => {
-    this.setState({ show: false });
-  };
-
-  copyCallback = (_text: string, result: boolean) => {
-    this.setState({ copyStatus: result ? CopyStatus.COPIED : CopyStatus.NOT_COPIED });
-  };
-
-  download = () => {
+  const download = () => {
     const element = document.createElement('a');
-    const file = new Blob([this.getCopyText()], { type: 'text/plain' });
+    const file = new Blob([getCopyText()], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
-    element.download = `debug_${this.state.currentTab === 'kialiConfig' ? 'kiali_config' : 'additional_state'}.json`;
+    element.download = `debug_${currentTab === 'kialiConfig' ? 'kiali_config' : 'additional_state'}.json`;
     document.body.appendChild(element); // Required for this to work in FireFox
     element.click();
   };
 
-  hideAlert = () => {
-    this.setState({ copyStatus: CopyStatus.NOT_COPIED });
+  const hideAlert = () => {
+    setCopyStatus(CopyStatus.NOT_COPIED);
   };
 
-  componentDidUpdate(prevProps: DebugInformationProps, _prevState: DebugInformationState) {
-    if (this.props.appState !== prevProps.appState && this.state.copyStatus === CopyStatus.COPIED) {
-      this.setState({ copyStatus: CopyStatus.OLD_COPY });
-    }
-  }
-
-  parseConfig = (key: string, value: any) => {
+  const parseConfig = (key: string, value: any) => {
     // We have to patch some runtime properties  we don't want to serialize
     if (propsToPatch.includes(key)) {
       return null;
@@ -161,7 +179,7 @@ class DebugInformationComponent extends React.PureComponent<DebugInformationProp
   };
 
   // Properties shown in Kiali Config are not shown again in Additional State
-  filterDebugInformation = (info: any) => {
+  const filterDebugInformation = (info: any) => {
     if (info !== null) {
       for (const [key] of Object.entries(info)) {
         if (propsToShow.includes(key)) {
@@ -173,35 +191,32 @@ class DebugInformationComponent extends React.PureComponent<DebugInformationProp
     return info;
   };
 
-  renderDebugInformation() {
+  const renderDebugInformation = () => {
     let debugInformation: DebugInformationData = {
       backendConfigs: {
         authenticationConfig: authenticationConfig,
         computedServerConfig: serverConfig
       },
       currentURL: window.location.href,
-      reduxState: this.props.appState
+      reduxState: props.appState
     };
-    debugInformation = this.filterDebugInformation(debugInformation);
-    return beautify(debugInformation, this.parseConfig, 2);
-  }
+    debugInformation = filterDebugInformation(debugInformation);
+    return beautify(debugInformation, parseConfig, 2);
+  };
 
-  getCopyText(): string {
-    const text =
-      this.state.currentTab === 'kialiConfig'
-        ? JSON.stringify(this.state.config, null, 2)
-        : this.renderDebugInformation();
+  const getCopyText = (): string => {
+    const text = currentTab === 'kialiConfig' ? JSON.stringify(config, null, 2) : renderDebugInformation();
     return text;
-  }
+  };
 
-  private columns = (): ICell[] => {
+  const columns = (): ICell[] => {
     return [{ title: 'Configuration' }, { title: 'Value' }];
   };
 
-  private getRows() {
+  const getRows = () => {
     var conf: string[][] = [];
 
-    for (const [k, v] of Object.entries(this.state.config)) {
+    for (const [k, v] of Object.entries(config)) {
       if (typeof v !== 'string') {
         conf.push([k, JSON.stringify(v)]);
       } else {
@@ -209,13 +224,13 @@ class DebugInformationComponent extends React.PureComponent<DebugInformationProp
       }
     }
     return conf;
-  }
+  };
 
-  private renderTabs() {
+  const renderTabs = () => {
     const kialiConfig = (
       <Tab eventKey={0} title="Kiali Config" key="kialiConfig">
-        <CopyToClipboard onCopy={this.copyCallback} text={this.getRows()} options={copyToClipboardOptions}>
-          <Table className={tableStyle} cells={this.columns()} rows={this.getRows()}>
+        <CopyToClipboard onCopy={copyCallback} text={getRows()} options={copyToClipboardOptions}>
+          <Table className={tableStyle} cells={columns()} rows={getRows()}>
             <TableHeader />
             <TableBody />
           </Table>
@@ -223,18 +238,14 @@ class DebugInformationComponent extends React.PureComponent<DebugInformationProp
       </Tab>
     );
 
-    const theme = this.props.appState.globalState.theme;
+    const theme = props.appState.globalState.theme;
 
     const additionalState = (
       <Tab eventKey={1} title="Additional State" key="additionalState">
         <span>Please include this information when opening a bug:</span>
-        <CopyToClipboard
-          onCopy={this.copyCallback}
-          text={this.renderDebugInformation()}
-          options={copyToClipboardOptions}
-        >
+        <CopyToClipboard onCopy={copyCallback} text={renderDebugInformation()} options={copyToClipboardOptions}>
           <AceEditor
-            ref={this.aceEditorRef}
+            ref={aceEditorRef}
             mode="yaml"
             theme={theme === Theme.DARK ? 'twilight' : 'eclipse'}
             width={'100%'}
@@ -242,7 +253,7 @@ class DebugInformationComponent extends React.PureComponent<DebugInformationProp
             wrapEnabled={true}
             readOnly={true}
             setOptions={aceOptions || { foldStyle: 'markbegin' }}
-            value={this.renderDebugInformation()}
+            value={renderDebugInformation()}
           />
         </CopyToClipboard>
       </Tab>
@@ -250,67 +261,68 @@ class DebugInformationComponent extends React.PureComponent<DebugInformationProp
 
     const tabsArray: JSX.Element[] = [kialiConfig, additionalState];
     return tabsArray;
+  };
+
+  if (!props.isOpen) {
+    return null;
   }
 
-  render() {
-    if (!this.state.show) {
-      return null;
-    }
-
-    return (
-      <Modal
-        variant={ModalVariant.medium}
-        isOpen={this.state.show}
-        onClose={this.close}
-        title="Debug information"
-        actions={[
-          <Button onClick={this.close}>Close</Button>,
-          <CopyToClipboard onCopy={this.copyCallback} text={this.getCopyText()} options={copyToClipboardOptions}>
-            <Button variant={ButtonVariant.primary}>Copy</Button>
-          </CopyToClipboard>,
-          <Button onClick={this.download}>Download</Button>
-        ]}
+  return (
+    <Modal
+      className={modalStyle}
+      variant={ModalVariant.medium}
+      isOpen={props.isOpen}
+      onClose={props.onClose}
+      title="Debug information"
+      actions={[
+        <Button onClick={close}>Close</Button>,
+        <CopyToClipboard onCopy={copyCallback} text={getCopyText()} options={copyToClipboardOptions}>
+          <Button variant={ButtonVariant.secondary}>Copy</Button>
+        </CopyToClipboard>,
+        <Button variant={ButtonVariant.secondary} onClick={download}>
+          Download
+        </Button>
+      ]}
+    >
+      {copyStatus === CopyStatus.COPIED && (
+        <Alert
+          style={{ marginBottom: '20px' }}
+          title="Debug information has been copied to your clipboard."
+          variant={AlertVariant.success}
+          isInline={true}
+          actionClose={<AlertActionCloseButton onClose={hideAlert} />}
+        />
+      )}
+      {copyStatus === CopyStatus.OLD_COPY && (
+        <Alert
+          style={{ marginBottom: '20px' }}
+          title="Debug information was copied to your clipboard, but is outdated now. It could be caused by new data received by auto refresh timers."
+          variant={AlertVariant.warning}
+          isInline={true}
+          actionClose={<AlertActionCloseButton onClose={hideAlert} />}
+        />
+      )}
+      <ParameterizedTabs
+        id="basic-tabs"
+        className={classes(basicTabStyle, tabStyle)}
+        onSelect={tabValue => {
+          setCurrentTab(tabValue);
+          hideAlert();
+        }}
+        tabMap={tabIndex}
+        defaultTab={defaultTab}
+        activeTab={currentTab}
+        mountOnEnter={true}
+        unmountOnExit={true}
       >
-        {this.state.copyStatus === CopyStatus.COPIED && (
-          <Alert
-            style={{ marginBottom: '20px' }}
-            title="Debug information has been copied to your clipboard."
-            variant={AlertVariant.success}
-            isInline={true}
-            actionClose={<AlertActionCloseButton onClose={this.hideAlert} />}
-          />
-        )}
-        {this.state.copyStatus === CopyStatus.OLD_COPY && (
-          <Alert
-            style={{ marginBottom: '20px' }}
-            title="Debug information was copied to your clipboard, but is outdated now. It could be caused by new data received by auto refresh timers."
-            variant={AlertVariant.warning}
-            isInline={true}
-            actionClose={<AlertActionCloseButton onClose={this.hideAlert} />}
-          />
-        )}
-        <ParameterizedTabs
-          id="basic-tabs"
-          className={basicTabStyle}
-          onSelect={tabValue => {
-            this.setState({ currentTab: tabValue });
-            this.hideAlert();
-          }}
-          tabMap={tabIndex}
-          defaultTab={defaultTab}
-          activeTab={this.state.currentTab}
-          mountOnEnter={true}
-          unmountOnExit={true}
-        >
-          {this.renderTabs()}
-        </ParameterizedTabs>
-      </Modal>
-    );
-  }
-}
+        {renderTabs()}
+      </ParameterizedTabs>
+    </Modal>
+  );
+};
 
 const mapStateToProps = (state: KialiAppState) => ({
   appState: state
 });
 
-export const DebugInformation = connect(mapStateToProps, null, null, { forwardRef: true })(DebugInformationComponent);
+export const DebugInformation = connect(mapStateToProps)(DebugInformationComponent);

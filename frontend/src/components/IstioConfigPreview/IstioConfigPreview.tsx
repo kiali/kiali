@@ -41,32 +41,36 @@ export type IstioConfigItem =
   | VirtualService;
 
 export interface ConfigPreviewItem {
+  items: IstioConfigItem[];
   title: string;
   type: string;
-  items: IstioConfigItem[];
 }
 
 interface Props {
-  isOpen: boolean;
-  ns: string;
-  title?: string;
   actions?: any;
   disableAction?: boolean;
+  isOpen: boolean;
   items: ConfigPreviewItem[];
-  opTarget: string;
+  ns: string;
   onClose: () => void;
   onKeyPress?: (e: any) => void;
   onConfirm: (items: ConfigPreviewItem[]) => void;
+  opTarget: string;
+  title?: string;
 }
 
 interface State {
   items: ConfigPreviewItem[];
-  newIstioPage: boolean;
   mainTab: string;
   modalOpen: boolean;
+  newIstioPage: boolean;
 }
 
 const separator = '\n---\n\n';
+
+const iconStyle = kialiStyle({
+  marginLeft: '6px'
+});
 
 export class IstioConfigPreview extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -212,6 +216,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
                 <CopyToClipboard text={this.trafficToText()}>
                   <Button variant={ButtonVariant.link} aria-label="Copy" isInline>
                     <KialiIcon.Copy />
+                    <span className={iconStyle}>Copy</span>
                   </Button>
                 </CopyToClipboard>
               </Tooltip>
@@ -226,6 +231,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
                   onClick={() => this.downloadTraffic()}
                 >
                   <KialiIcon.Download />
+                  <span className={iconStyle}>Download</span>
                 </Button>
               </Tooltip>
             </ToolbarItem>

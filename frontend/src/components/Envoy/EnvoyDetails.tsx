@@ -50,6 +50,10 @@ const iconStyle = kialiStyle({
   paddingTop: '5px'
 });
 
+const copyStyle = kialiStyle({
+  marginLeft: '6px'
+});
+
 const envoyTabs = ['clusters', 'listeners', 'routes', 'bootstrap', 'config', 'metrics'];
 const tabName = 'envoyTab';
 const defaultTab = 'clusters';
@@ -64,18 +68,18 @@ type ReduxProps = {
 type EnvoyDetailsProps = ReduxProps & {
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
-  workload: Workload;
   theme: string;
+  workload: Workload;
 };
 
 type EnvoyDetailsState = {
-  config: EnvoyProxyDump;
-  pod: Pod;
-  tableSortBy: ResourceSorts;
-  fetch: boolean;
-  tabHeight: number;
   activeKey: number;
+  config: EnvoyProxyDump;
+  fetch: boolean;
+  pod: Pod;
   resource: string;
+  tabHeight: number;
+  tableSortBy: ResourceSorts;
 };
 
 const fullHeightStyle = kialiStyle({
@@ -309,6 +313,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                       >
                         <Button variant={ButtonVariant.link} isInline>
                           <KialiIcon.Copy />
+                          <span className={copyStyle}>Copy</span>
                         </Button>
                       </CopyToClipboard>
                     </Tooltip>

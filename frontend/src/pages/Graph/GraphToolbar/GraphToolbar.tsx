@@ -45,6 +45,7 @@ import { GraphSecondaryMasthead } from './GraphSecondaryMasthead';
 import { INITIAL_USER_SETTINGS_STATE } from 'reducers/UserSettingsState';
 import { GraphReset } from './GraphReset';
 import { GraphFindPF } from './GraphFindPF';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
@@ -53,10 +54,6 @@ type ReduxProps = {
   node?: NodeParamsType;
   rankBy: RankMode[];
   replayActive: boolean;
-  showIdleNodes: boolean;
-  summaryData: SummaryData | null;
-  trafficRates: TrafficRate[];
-
   setActiveNamespaces: (activeNamespaces: Namespace[]) => void;
   setEdgeLabels: (edgeLabels: EdgeLabelMode[]) => void;
   setGraphType: (graphType: GraphType) => void;
@@ -64,7 +61,10 @@ type ReduxProps = {
   setNode: (node?: NodeParamsType) => void;
   setRankBy: (rankLabels: RankMode[]) => void;
   setTrafficRates: (rates: TrafficRate[]) => void;
+  showIdleNodes: boolean;
+  summaryData: SummaryData | null;
   toggleReplayActive: () => void;
+  trafficRates: TrafficRate[];
 };
 
 type GraphToolbarProps = ReduxProps & {
@@ -75,6 +75,11 @@ type GraphToolbarProps = ReduxProps & {
   isPF?: boolean;
   onToggleHelp: () => void;
 };
+
+const helpStyle = kialiStyle({
+  marginRight: '0.5rem',
+  alignSelf: 'center'
+});
 
 class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
   static contextTypes = {
@@ -221,16 +226,18 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
               </ToolbarItem>
             )}
 
-            <ToolbarItem style={{ marginLeft: 'auto' }}>
+            <ToolbarItem style={{ marginLeft: 'auto', alignSelf: 'center' }}>
               <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content="Shortcuts and tips...">
                 <TourStop info={GraphTourStops.Shortcuts}>
                   <Button
                     id="graph-tour"
                     variant={ButtonVariant.link}
-                    style={{ paddingLeft: '6px', paddingRight: '0px' }}
+                    className={helpStyle}
                     onClick={this.props.onToggleHelp}
+                    isInline
                   >
                     <KialiIcon.Help />
+                    <span style={{ marginLeft: '5px' }}>Help</span>
                   </Button>
                 </TourStop>
               </Tooltip>
