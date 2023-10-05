@@ -142,7 +142,7 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
                 <SummaryPanelTraceDetails
                   data={this.props.data}
                   graphType={this.props.graphType}
-                  jaegerURL={this.props.tracingState.info?.url}
+                  tracingURL={this.props.tracingState.info?.url}
                   onFocus={this.props.onFocus}
                   trace={this.props.tracingState.selectedTrace}
                 />

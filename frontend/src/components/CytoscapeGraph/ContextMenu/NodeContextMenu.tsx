@@ -340,8 +340,8 @@ export function NodeContextMenuComponent(props: Props) {
   return renderFullContextMenu(linkParams);
 }
 
-const getJaegerURL = (namespace: string, namespaceSelector: boolean, jaegerURL: string, name?: string): string => {
-  return `${jaegerURL}/search?service=${name}${namespaceSelector ? `.${namespace}` : ''}`;
+const getTracingURL = (namespace: string, namespaceSelector: boolean, tracingURL: string, name?: string): string => {
+  return `${tracingURL}/search?service=${name}${namespaceSelector ? `.${namespace}` : ''}`;
 };
 
 export type ContextMenuOption = {
@@ -400,7 +400,7 @@ const getOptionsFromLinkParams = (linkParams: LinkParams, tracingInfo?: TracingI
       } else if (tracingInfo.url) {
         options.push({
           text: 'Show Traces',
-          url: getJaegerURL(namespace, tracingInfo.namespaceSelector, tracingInfo.url, name),
+          url: getTracingURL(namespace, tracingInfo.namespaceSelector, tracingInfo.url, name),
           external: true,
           target: '_blank'
         });

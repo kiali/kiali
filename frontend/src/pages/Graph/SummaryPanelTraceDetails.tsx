@@ -46,7 +46,7 @@ type ReduxProps = {
 type Props = ReduxProps & {
   data: SummaryData;
   graphType: GraphType;
-  jaegerURL?: string;
+  tracingURL?: string;
   onFocus?: (focusNode: FocusNode) => void;
   trace: JaegerTrace;
 };
@@ -114,7 +114,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
       : undefined;
     const jaegerTraceURL = GetTraceDetailURL(
       this.props.provider,
-      this.props.jaegerURL,
+      this.props.tracingURL,
       this.props.externalServices
     )?.replace('TRACEID', this.props.trace.traceID);
     const info = new FormattedTraceInfo(this.props.trace);
