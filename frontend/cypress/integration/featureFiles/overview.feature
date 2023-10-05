@@ -16,48 +16,57 @@ Feature: Kiali Overview page
     Given user is at administrator perspective
     And user is at the "overview" page
 
+  @error-rates-app
   Scenario: See "alpha" and "beta" namespaces
     Then user sees the "alpha" namespace card
     And user does not see any cluster badge in the "alpha" namespace card
     And user sees the "beta" namespace card
     And user does not see any cluster badge in the "beta" namespace card
 
+  @smoke
   Scenario: Doesn't see a "bad" namespace
     Then user doesn't see the "bad" namespace card
 
+  @error-rates-app
   Scenario: Select the COMPACT view
     When user clicks in the "COMPACT" view
     Then user sees a "COMPACT" "alpha" namespace
 
+  @error-rates-app
   Scenario: Select the EXPAND view
     When user clicks in the "EXPAND" view
     Then user sees a "EXPAND" "beta" namespace
 
+  @error-rates-app
   Scenario: Select the LIST view
     When user clicks in the "LIST" view
     Then user sees a "LIST" "beta" namespace
     And the "Cluster" column "disappears"
 
+  @error-rates-app
   Scenario: Filter by namespace
     When user filters "alpha" namespace
     Then user sees the "alpha" namespace card
     And user doesn't see the "beta" namespace card
 
-
+  @error-rates-app
   Scenario: Sort by name
     When user filters "alpha" namespace
     And user filters "beta" namespace
     And user sorts by name desc
     Then user sees the "beta,alpha" namespace list
 
+  @error-rates-app
   Scenario: Health for Apps
     When user selects Health for "Apps"
     Then user sees the "alpha" namespace with "Applications"
 
+  @error-rates-app
   Scenario: Health for Workloads
     When user selects Health for "Workloads"
     Then user sees the "alpha" namespace with "Workloads"
 
+  @error-rates-app
   Scenario: Health for Services
     When user selects Health for "Services"
     Then user sees the "alpha" namespace with "Services"
@@ -102,17 +111,17 @@ Feature: Kiali Overview page
     Then there should be a "degraded" application indicator in the namespace
     And the "degraded" application indicator should list the application
 
-  @error-rates-app
+  @smoke
   Scenario: The minimum TLS version is visible in the control plane
     When user hovers over the MinTLS locker
     Then the user sees the certificates information
     And the minimum TLS version
 
-  @error-rates-app
+  @smoke
   Scenario: The canary upgrade information is not present when there is no canary configured
     Then the user sees no information related to canary upgrades
 
-  @error-rates-app
+  @smoke
   Scenario: The Istio panel should be visible in the control panel
     Then user sees the "istio-system" namespace card
     And user does not see any cluster badge in the "istio-system" namespace card
@@ -120,6 +129,7 @@ Feature: Kiali Overview page
     And user sees the "Outbound policy" label in the "istio-system" namespace card
     Then the toggle on the right side of the "istio-system" namespace card exists
 
+  @smoke
   Scenario: The control plane metrics should be present
     Then user sees the memory chart
     And user sees the cpu chart
