@@ -669,7 +669,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       >
         <div id="graph-display-menu" className={menuStyle} style={{ width: '15em' }}>
           <div style={{ marginTop: '10px' }}>
-            <span className={titleStyle} style={{ position: 'relative', bottom: '3px', paddingRight: 0 }}>
+            <span className={titleStyle} style={{ paddingRight: 0 }}>
               Show Edge Labels
             </span>
             <Tooltip

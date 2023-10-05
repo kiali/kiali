@@ -4,8 +4,7 @@ import { KialiIcon } from '../../config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 
 const infoStyle = kialiStyle({
-  margin: '0px 0px 2px 10px',
-  verticalAlign: '-5px !important'
+  marginLeft: '0.5rem'
 });
 
 const importantTooltip = kialiStyle({

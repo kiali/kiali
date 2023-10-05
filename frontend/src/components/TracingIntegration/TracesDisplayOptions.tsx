@@ -1,6 +1,14 @@
 import * as React from 'react';
-import { Checkbox, Radio, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { Dropdown, DropdownToggle } from '@patternfly/react-core/deprecated';
+import {
+  Checkbox,
+  Dropdown,
+  DropdownList,
+  MenuToggle,
+  MenuToggleElement,
+  Radio,
+  Tooltip,
+  TooltipPosition
+} from '@patternfly/react-core';
 import { infoStyle, itemStyleWithoutInfo, menuStyle, titleStyle } from 'styles/DropdownStyles';
 import { HistoryManager, URLParam } from 'app/History';
 import { KialiIcon } from 'config/KialiIcon';
@@ -88,18 +96,20 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
     const { isOpen } = this.state;
     return (
       <Dropdown
-        toggle={
-          <DropdownToggle
+        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+          <MenuToggle
+            ref={toggleRef}
             id={'traces-display-settings'}
-            isDisabled={this.props.disabled}
-            onToggle={(_event, isOpen) => this.onToggle(isOpen)}
+            onClick={() => this.onToggle(!isOpen)}
+            isExpanded={isOpen}
           >
             Display
-          </DropdownToggle>
-        }
+          </MenuToggle>
+        )}
         isOpen={isOpen}
+        onOpenChange={(isOpen: boolean) => this.onToggle(isOpen)}
       >
-        {this.getPopoverContent()}
+        <DropdownList>{this.getPopoverContent()}</DropdownList>
       </Dropdown>
     );
   }
@@ -107,8 +117,8 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
   private getPopoverContent() {
     return (
       <div id="traces-display-menu" className={menuStyle}>
-        <div style={{ marginTop: '10px' }}>
-          <span className={titleStyle} style={{ position: 'relative', bottom: '3px', paddingRight: 0 }}>
+        <div style={{ marginTop: '0.5rem' }}>
+          <span className={titleStyle} style={{ paddingRight: 0 }}>
             Filter by percentile
           </span>
           <Tooltip
@@ -164,7 +174,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
           </label>
         </div>
         <div style={{ marginTop: '10px' }}>
-          <span className={titleStyle} style={{ position: 'relative', bottom: '3px', paddingRight: 0 }}>
+          <span className={titleStyle} style={{ paddingRight: 0 }}>
             Limit per query
           </span>
           <Tooltip
