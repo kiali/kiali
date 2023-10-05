@@ -49,8 +49,10 @@ OPERATOR_QUAY_TAG ?= ${OPERATOR_QUAY_NAME}:${OPERATOR_CONTAINER_VERSION}
 
 # Where the control plane is
 ISTIO_NAMESPACE ?= istio-system
-# Declares the namespace/project where the objects are to be deployed.
+# Declares the namespace/project where the Kiali objects are to be deployed.
 NAMESPACE ?= ${ISTIO_NAMESPACE}
+# Declares the namespace/project where the OSSM Console objects are to be deployed.
+OSSMCONSOLE_NAMESPACE ?= ossmconsole
 
 # Local arch details needed when downloading tools
 OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
@@ -120,6 +122,7 @@ OPERATOR_WATCH_NAMESPACE ?= \"\"
 OPERATOR_INSTALL_KIALI ?= false
 OPERATOR_ALLOW_AD_HOC_KIALI_NAMESPACE ?= true
 OPERATOR_ALLOW_AD_HOC_KIALI_IMAGE ?= true
+OPERATOR_ALLOW_AD_HOC_OSSMCONSOLE_IMAGE ?= true
 ifeq ($(OPERATOR_WATCH_NAMESPACE),\"\")
 OPERATOR_INSTALL_KIALI_CR_NAMESPACE ?= ${OPERATOR_NAMESPACE}
 else
@@ -155,6 +158,8 @@ KIALI_CR_FILE ?= ${ROOTDIR}/operator/deploy/kiali/kiali_cr_dev_servicemesh.yaml
 else
 KIALI_CR_FILE ?= ${ROOTDIR}/operator/deploy/kiali/kiali_cr_dev.yaml
 endif
+
+OSSMCONSOLE_CR_FILE ?= ${ROOTDIR}/operator/deploy/ossmconsole/ossmconsole_cr_dev.yaml
 
 # When ensuring the helm chart repo exists, by default the make infrastructure will pull the latest code from git.
 # If you do not want this to happen (i.e. if you want to retain the local copies of your helm charts), set this to false.
