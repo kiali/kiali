@@ -127,8 +127,9 @@ ensureKialiTracesReady() {
   # Get traces from the last 5m
   local traces_date=$((($(date +%s) - 300) * 1000))
   local trace_url="${KIALI_URL}/api/namespaces/bookinfo/workloads/productpage-v1/traces?startMicros=${traces_date}&tags=&limit=100"
+  infomsg "Traces url: ${trace_url}"
   while true; do
-    result=$(curl "$url" \
+    result=$(curl "$trace_url" \
         -H 'Accept: application/json, text/plain, */*' \
         -H 'Content-Type: application/json' | jq -r '.data')
 
