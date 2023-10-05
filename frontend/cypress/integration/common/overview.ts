@@ -312,3 +312,11 @@ And('user does not see any cluster badge in the {string} namespace card', (ns: s
     cy.get('#pfbadge-C').should('not.exist');
   });
 });
+
+And('user sees the {string} label in the {string} {string} namespace card',(label:string, cluster:string, ns:string) =>{
+  cy.get(`[data-test="CardItem_${ns}_${cluster}"]`).contains(label).should('be.visible');
+});
+
+And('user does not see the {string} label in the {string} {string} namespace card',(label:string, cluster:string, ns:string) =>{
+  cy.get(`[data-test="CardItem_${ns}_${cluster}"]`).contains(label).should('not.exist');
+});
