@@ -3,7 +3,7 @@
 exports[`#LoginPage render correctly should render LoginPage 1`] = `
 <LoginPage
   brandImgAlt="Kiali logo"
-  brandImgSrc="logo-alt.svg"
+  brandImgSrc="logo-darkbkg.svg"
   className="kiali_fs857ca"
   footerListItems={
     <React.Fragment>

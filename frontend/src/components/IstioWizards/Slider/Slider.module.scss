@@ -125,11 +125,7 @@
       padding-left: 0;
       padding-right: 3.2px;
     }
-    .slider.slider-disabled .slider-handle {
-      background-color: var(--pf-global--Color--light-300);
-    }
-    .slider.slider-disabled .slider-track {
-      background-color: var(--pf-global--BackgroundColor--200);
+    .slider.slider-disabled .slider-selection {
       cursor: not-allowed;
     }
     .slider input {

@@ -47,7 +47,7 @@
     .react-datepicker-popper[data-placement^='bottom'] .react-datepicker__triangle,
     .react-datepicker-popper[data-placement^='bottom'] .react-datepicker__triangle::before {
       border-top: none;
-      border-bottom-color: var(--pf-global--BorderColor--300);
+      border-bottom-color: var(--pf-global--BackgroundColor--200);
     }
 
     .react-datepicker-popper[data-placement^='bottom'] .react-datepicker__triangle::before {
@@ -357,7 +357,7 @@
       .react-datepicker-time__input-container
       .react-datepicker-time__input
       input[type='time'] {
-      -moz-appearance: textfield;
+      appearance: textfield;
     }
 
     .react-datepicker__input-time-container .react-datepicker-time__input-container .react-datepicker-time__delimiter {

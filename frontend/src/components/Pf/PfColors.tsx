@@ -80,7 +80,11 @@ export enum PFColors {
   BorderColor100 = 'var(--pf-global--BorderColor--100)',
   BorderColor200 = 'var(--pf-global--BorderColor--200)',
   BorderColor300 = 'var(--pf-global--BorderColor--300)',
-  BorderColorLight100 = 'var(--pf-global--BorderColor--light-100)'
+  BorderColorLight100 = 'var(--pf-global--BorderColor--light-100)',
+
+  // PF colors suitable for dark backgrounds (don't change in Dark mode)
+  Color300 = 'var(--pf-global--Color--300)',
+  Color400 = 'var(--pf-global--Color--400)'
 }
 
 // The hex string value of the PF CSS variable
@@ -123,6 +127,10 @@ export type PFColorValues = {
   BorderColor100: PFColorVal;
   BorderColor200: PFColorVal;
   BorderColor300: PFColorVal;
+
+  // PF colors for dark backgrounds (don't change in dark mode)
+  Color300: PFColorVal;
+  Color400: PFColorVal;
 };
 
 export let PFColorVals: PFColorValues;
@@ -164,6 +172,10 @@ export const setPFColorVals = (element: Element) => {
 
     BorderColor100: getComputedStyle(element).getPropertyValue('--pf-global--BorderColor--100'),
     BorderColor200: getComputedStyle(element).getPropertyValue('--pf-global--BorderColor--200'),
-    BorderColor300: getComputedStyle(element).getPropertyValue('--pf-global--BorderColor--300')
+    BorderColor300: getComputedStyle(element).getPropertyValue('--pf-global--BorderColor--300'),
+
+    // PF colors for dark backgrounds (don't change in dark mode)
+    Color300: getComputedStyle(element).getPropertyValue('--pf-global--BorderColor--300'),
+    Color400: getComputedStyle(element).getPropertyValue('--pf-global--BorderColor--400')
   };
 };

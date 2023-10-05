@@ -41,6 +41,7 @@ import {
 } from '../../pages/WorkloadDetails/WorkloadDetailsPage';
 import { istioAceEditorStyle } from 'styles/AceEditorStyle';
 import { Theme, TimeInMilliseconds } from '../../types/Common';
+import { subTabStyle } from 'styles/TabStyles';
 
 const resources: string[] = ['clusters', 'listeners', 'routes', 'bootstrap', 'config', 'metrics'];
 
@@ -359,6 +360,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
           <GridItem span={12}>
             <Tabs
               id="envoy-details"
+              className={subTabStyle}
               activeKey={this.state.activeKey}
               onSelect={this.envoyHandleTabClick}
               mountOnEnter={true}

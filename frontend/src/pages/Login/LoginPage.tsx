@@ -16,7 +16,7 @@ import {
 } from '@patternfly/react-core';
 import { KialiAppState, LoginSession, LoginStatus } from '../../store/Store';
 import { AuthStrategy } from '../../types/Auth';
-import { authenticationConfig, kialiLogo } from '../../config';
+import { authenticationConfig, kialiLogoDark } from '../../config';
 import { LoginThunkActions } from '../../actions/LoginThunkActions';
 import { isAuthStrategyOAuth } from '../../config/AuthenticationConfig';
 import { KialiDispatch } from '../../types/Redux';
@@ -264,7 +264,7 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
     return (
       <LoginNext
         footerListVariants={ListVariant.inline}
-        brandImgSrc={kialiLogo}
+        brandImgSrc={kialiLogoDark}
         brandImgAlt="Kiali logo"
         footerListItems={listItem}
         textContent="Service mesh management for Istio."

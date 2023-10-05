@@ -8,14 +8,33 @@ import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasth
 import { RenderContent } from '../../components/Nav/Page';
 import { RefreshButton } from '../../components/Refresh/RefreshButton';
 import { getClusters } from '../../services/Api';
-import { MeshClusters } from '../../types/Mesh';
+import { MeshCluster, MeshClusters } from '../../types/Mesh';
 import { addError } from '../../utils/AlertUtils';
+import { connect } from 'react-redux';
+import { KialiAppState } from 'store/Store';
+import { Theme } from 'types/Common';
+import { kialiIconDark, kialiIconLight } from 'config';
 
-export const MeshPage: React.FunctionComponent = () => {
+const iconStyle = kialiStyle({
+  width: '25px',
+  marginRight: '10px',
+  marginTop: '-2px'
+});
+
+const containerPadding = kialiStyle({ padding: '20px' });
+
+type MeshPageProps = {
+  theme: string;
+};
+
+export const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPageProps) => {
   const [meshClustersList, setMeshClustersList] = React.useState(null as MeshClusters | null);
   const [sortBy, setSortBy] = React.useState({ index: 0, direction: SortByDirection.asc });
 
-  const containerPadding = kialiStyle({ padding: '20px' });
+  React.useEffect(() => {
+    fetchMeshClusters();
+  }, []);
+
   const columns = [
     {
       title: 'Cluster Name',
@@ -39,17 +58,22 @@ export const MeshPage: React.FunctionComponent = () => {
     }
   ];
 
-  function buildKialiInstancesColumn(cluster): React.ReactNode {
+  function buildKialiInstancesColumn(cluster: MeshCluster, theme: string): React.ReactNode {
     if (!cluster.kialiInstances || cluster.kialiInstances.length === 0) {
       return 'N / A';
     }
 
+    const kialiIcon = theme === Theme.DARK ? kialiIconDark : kialiIconLight;
+
     return cluster.kialiInstances.map(instance => {
       if (instance.url.length !== 0) {
         return (
-          <Tooltip content={`Go to this Kiali instance: ${instance.url}`}>
-            <p key={cluster.name + '/' + instance.namespace + '/' + instance.serviceName}>
-              <img alt="kiali-icon" src="kiali_icon_lightbkg_16px.png" />{' '}
+          <Tooltip
+            key={cluster.name + '/' + instance.namespace + '/' + instance.serviceName}
+            content={`Go to this Kiali instance: ${instance.url}`}
+          >
+            <p>
+              <img alt="Kiali Icon" src={kialiIcon} className={iconStyle} />
               <a href={instance.url} target="_blank" rel="noopener noreferrer">
                 {instance.namespace} {' / '} {instance.serviceName}
               </a>
@@ -59,7 +83,7 @@ export const MeshPage: React.FunctionComponent = () => {
       } else {
         return (
           <p key={cluster.name + '/' + instance.namespace + '/' + instance.serviceName}>
-            <img alt="kiali-icon" src="kiali_icon_lightbkg_16px.png" />{' '}
+            <img alt="Kiali Icon" src={kialiIcon} className={iconStyle} />
             {`${instance.namespace} / ${instance.serviceName}`}
           </p>
         );
@@ -84,7 +108,7 @@ export const MeshPage: React.FunctionComponent = () => {
           {cluster.isKialiHome ? <StarIcon /> : null} {cluster.name}
         </>,
         cluster.network,
-        <>{buildKialiInstancesColumn(cluster)}</>,
+        <>{buildKialiInstancesColumn(cluster, props.theme)}</>,
         cluster.apiEndpoint,
         cluster.secretName
       ]
@@ -108,11 +132,7 @@ export const MeshPage: React.FunctionComponent = () => {
     setSortBy({ index, direction });
   }
 
-  const clusterRows = React.useMemo(buildTableRows, [meshClustersList, sortBy]);
-
-  React.useEffect(() => {
-    fetchMeshClusters();
-  }, []);
+  const clusterRows = React.useMemo(buildTableRows, [meshClustersList, sortBy, props.theme]);
 
   return (
     <>
@@ -139,3 +159,11 @@ export const MeshPage: React.FunctionComponent = () => {
     </>
   );
 };
+
+const mapStateToProps = (state: KialiAppState) => {
+  return {
+    theme: state.globalState.theme
+  };
+};
+
+export const MeshPage = connect(mapStateToProps)(MeshPageComponent);

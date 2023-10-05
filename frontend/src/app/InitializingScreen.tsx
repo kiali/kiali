@@ -3,8 +3,7 @@ import { Alert, Button, ButtonVariant } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { isKioskMode } from '../utils/SearchParamUtils';
 
-import kialiLogoLight from '../assets/img/logo-lightbkg.svg';
-import kialiLogoDark from '../assets/img/logo-alt.svg';
+import { kialiLogoDark, kialiLogoLight } from 'config';
 import { PF_THEME_DARK, Theme } from 'types/Common';
 import { getKialiTheme } from 'utils/ThemeUtils';
 
