@@ -16,16 +16,16 @@ import (
 
 // Get TracingInfo provides the Tracing URL and other info
 func GetTracingInfo(w http.ResponseWriter, r *http.Request) {
-	jaegerConfig := config.Get().ExternalServices.Tracing
+	tracingConfig := config.Get().ExternalServices.Tracing
 	var info models.TracingInfo
-	if jaegerConfig.Enabled {
+	if tracingConfig.Enabled {
 		info = models.TracingInfo{
 			Enabled:              true,
-			Integration:          jaegerConfig.InClusterURL != "",
-			Provider:             jaegerConfig.Provider,
-			URL:                  jaegerConfig.URL,
-			NamespaceSelector:    jaegerConfig.NamespaceSelector,
-			WhiteListIstioSystem: jaegerConfig.WhiteListIstioSystem,
+			Integration:          tracingConfig.InClusterURL != "",
+			Provider:             tracingConfig.Provider,
+			URL:                  tracingConfig.URL,
+			NamespaceSelector:    tracingConfig.NamespaceSelector,
+			WhiteListIstioSystem: tracingConfig.WhiteListIstioSystem,
 		}
 	} else {
 		// 0-values would work, but let's be explicit
