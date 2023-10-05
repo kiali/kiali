@@ -300,7 +300,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                   </ToolbarItem>
                   {tracingURL && (
                     <ToolbarItem>
-                      <Tooltip content={<>Open Chart in Jaeger UI</>}>
+                      <Tooltip content={<>Open Chart in {this.props.provider} UI</>}>
                         <a href={tracingURL} target="_blank" rel="noopener noreferrer" style={{ marginLeft: '10px' }}>
                           View in Tracing <ExternalLinkAltIcon />
                         </a>
@@ -382,12 +382,12 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    timeRange: timeRangeSelector(state),
-    urlTracing: state.tracingState.info ? state.tracingState.info.url : '',
     externalServices: state.statusState.externalServices,
     namespaceSelector: state.tracingState.info ? state.tracingState.info.namespaceSelector : true,
+    provider: state.tracingState.info?.provider,
     selectedTrace: state.tracingState.selectedTrace,
-    provider: state.tracingState.info?.provider
+    timeRange: timeRangeSelector(state),
+    urlTracing: state.tracingState.info ? state.tracingState.info.url : ''
   };
 };
 

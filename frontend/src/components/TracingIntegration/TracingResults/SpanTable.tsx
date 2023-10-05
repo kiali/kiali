@@ -582,7 +582,7 @@ class SpanTableComponent extends React.Component<Props, State> {
 const mapStateToProps = (state: KialiAppState) => ({
   kiosk: state.globalState.kiosk,
   metricsStats: state.metricsStats.data,
-  provider: state.jaegerState.info?.provider
+  provider: state.tracingState.info?.provider
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({

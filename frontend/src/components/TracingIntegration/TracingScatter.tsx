@@ -142,7 +142,7 @@ class TracingScatterComponent extends React.Component<TracingScatterProps> {
     return this.props.errorFetchTraces && this.props.errorFetchTraces.length > 0 ? (
       this.renderFetchEmpty('Error fetching traces', this.props.errorFetchTraces![0].msg)
     ) : this.props.traces.length > 0 ? (
-      <div data-test="jaeger-scatterplot" className={tracingChartStyle}>
+      <div data-test="tracing-scatterplot" className={tracingChartStyle}>
         <div style={{ marginTop: 20 }}>
           <ChartWithLegend<Datapoint, JaegerLineInfo>
             data={[successTraces, errorTraces]}

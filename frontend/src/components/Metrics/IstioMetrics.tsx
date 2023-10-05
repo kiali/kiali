@@ -59,7 +59,7 @@ type IstioMetricsProps = ObjectId &
   };
 
 type ReduxProps = {
-  jaegerIntegration: boolean;
+  tracingIntegration: boolean;
   timeRange: TimeRange;
   refreshInterval: IntervalInMilliseconds;
   setTimeRange: (range: TimeRange) => void;
@@ -140,7 +140,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
 
   private refresh = () => {
     this.fetchMetrics();
-    if (this.props.jaegerIntegration) {
+    if (this.props.tracingIntegration) {
       this.spanOverlay.fetch({
         namespace: this.props.namespace,
         cluster: this.props.cluster,
@@ -401,7 +401,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    jaegerIntegration: state.tracingState.info ? state.tracingState.info.integration : false,
+    tracingIntegration: state.tracingState.info ? state.tracingState.info.integration : false,
     timeRange: timeRangeSelector(state),
     refreshInterval: refreshIntervalSelector(state)
   };

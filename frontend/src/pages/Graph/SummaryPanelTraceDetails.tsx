@@ -32,7 +32,7 @@ import { Visualization, Node } from '@patternfly/react-topology';
 import { elems, selectAnd } from 'pages/GraphPF/GraphPFElems';
 import { FocusNode } from 'pages/GraphPF/GraphPF';
 import { GraphSelectorBuilder } from './GraphSelector';
-import { GetTraceDetailURL } from '../../components/JaegerIntegration/TracesComponent';
+import { GetTraceDetailURL } from '../../components/TracingIntegration/TracesComponent';
 import { ExternalServiceInfo } from '../../types/StatusState';
 
 type ReduxProps = {
@@ -443,7 +443,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
 const mapStateToProps = (state: KialiAppState) => ({
   externalServices: state.statusState.externalServices,
   kiosk: state.globalState.kiosk,
-  provider: state.jaegerState.info?.provider
+  provider: state.tracingState.info?.provider
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
