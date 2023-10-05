@@ -12,7 +12,7 @@ Feature: Kiali Graph page - Display menu
   # NOTE: Operation nodes has its own test script
   # NOTE: Traffic animation, missing sidecars, virtual service, and idle edge options are nominally tested
 
-  @error-rates-app
+  @smoke
   Scenario: Graph no namespaces
     When user graphs "" namespaces
     Then user sees no namespace selected
