@@ -129,7 +129,7 @@ ensureKialiTracesReady() {
   local trace_url="${KIALI_URL}/api/namespaces/bookinfo/workloads/productpage-v1/traces?startMicros=${traces_date}&tags=&limit=100"
   infomsg "Traces url: ${trace_url}"
   while true; do
-    result=$(curl "$trace_url" \
+    result=$(curl -k -s --fail "$trace_url" \
         -H 'Accept: application/json, text/plain, */*' \
         -H 'Content-Type: application/json' | jq -r '.data')
 
