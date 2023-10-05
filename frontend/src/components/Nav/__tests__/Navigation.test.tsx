@@ -15,7 +15,7 @@ describe('Masthead Navigation', () => {
         match={{ url: url, params: {}, path: '/overview', isExact: true }}
         navCollapsed={false}
         setNavCollapsed={() => {}}
-        jaegerUrl={''}
+        tracingUrl={''}
       />
     ).dive();
     expect(wrapper.find('Masthead').props().role).toEqual('kiali_header');

@@ -64,9 +64,9 @@ func getVersions() {
 	}
 
 	if config.Get().ExternalServices.Tracing.Enabled {
-		components = append(components, jaegerVersion)
+		components = append(components, tracingVersion)
 	} else {
-		log.Debugf("Jaeger is disabled in Kiali by configuration")
+		log.Debugf("Tracing is disabled in Kiali by configuration")
 	}
 
 	for _, comp := range components {
@@ -227,15 +227,15 @@ type p8sResponseVersion struct {
 	Revision string `json:"revision"`
 }
 
-func jaegerVersion() (*ExternalServiceInfo, error) {
-	jaegerConfig := config.Get().ExternalServices.Tracing
+func tracingVersion() (*ExternalServiceInfo, error) {
+	tracingConfig := config.Get().ExternalServices.Tracing
 
-	if !jaegerConfig.Enabled {
+	if !tracingConfig.Enabled {
 		return nil, nil
 	}
 	product := ExternalServiceInfo{}
-	product.Name = "Jaeger"
-	product.Url = jaegerConfig.URL
+	product.Name = tracingConfig.Provider
+	product.Url = tracingConfig.URL
 
 	return &product, nil
 }

@@ -5,15 +5,15 @@ import { SyncAltIcon } from '@patternfly/react-icons';
 import { kialiStyle } from 'styles/StyleUtils';
 
 import { KialiAppState } from 'store/Store';
-import { JaegerThunkActions } from 'actions/JaegerThunkActions';
+import { TracingThunkActions } from 'actions/TracingThunkActions';
 import { history } from '../../app/History';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
-import { JaegerTrace } from 'types/JaegerInfo';
+import { JaegerTrace } from 'types/TracingInfo';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { TracingQuery } from 'types/Tracing';
 import { TimeInSeconds } from 'types/Common';
-import { TraceListItem } from 'components/JaegerIntegration/TraceListItem';
+import { TraceListItem } from 'components/TracingIntegration/TraceListItem';
 import { summaryFont } from './SummaryPanelCommon';
 import { DecoratedGraphNodeData } from 'types/Graph';
 import { transformTraceData } from 'utils/tracing/TraceTransform';
@@ -207,11 +207,11 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   kiosk: state.globalState.kiosk,
-  selectedTrace: state.jaegerState.selectedTrace
+  selectedTrace: state.tracingState.selectedTrace
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
-  setTraceId: (cluster?: string, traceId?: string) => dispatch(JaegerThunkActions.setTraceId(cluster, traceId))
+  setTraceId: (cluster?: string, traceId?: string) => dispatch(TracingThunkActions.setTraceId(cluster, traceId))
 });
 
 export const SummaryPanelNodeTraces = connect(mapStateToProps, mapDispatchToProps)(SummaryPanelNodeTracesComponent);

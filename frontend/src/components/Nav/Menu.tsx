@@ -33,7 +33,7 @@ const ExternalLink = ({ href, name }) => (
 type MenuProps = {
   isNavOpen: boolean;
   location: any;
-  jaegerUrl?: string;
+  tracingUrl?: string;
 };
 
 type MenuState = {
@@ -90,8 +90,8 @@ export class Menu extends React.Component<MenuProps, MenuState> {
       .map(item => {
         if (item.title === 'Distributed Tracing') {
           return (
-            this.props.jaegerUrl && (
-              <ExternalLink key={item.to} href={this.props.jaegerUrl} name="Distributed Tracing" />
+            this.props.tracingUrl && (
+              <ExternalLink key={item.to} href={this.props.tracingUrl} name="Distributed Tracing" />
             )
           );
         }

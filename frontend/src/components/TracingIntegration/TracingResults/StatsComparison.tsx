@@ -5,7 +5,7 @@ import { HeatMap } from 'components/HeatMap/HeatMap';
 import { MetricsStats } from 'types/Metrics';
 import { PFColors } from 'components/Pf/PfColors';
 import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
-import { EnvoySpanInfo, RichSpanData } from 'types/JaegerInfo';
+import { EnvoySpanInfo, RichSpanData } from 'types/TracingInfo';
 import {
   compactStatsIntervals,
   statsIntervals,

@@ -1,6 +1,6 @@
 import * as API from 'services/Api';
 import * as AlertUtils from 'utils/AlertUtils';
-import { JaegerTrace, JaegerError } from 'types/JaegerInfo';
+import { JaegerTrace, TracingError } from 'types/TracingInfo';
 import { TracingQuery } from 'types/Tracing';
 import { TargetKind } from 'types/Common';
 import { getTimeRangeMicros } from 'utils/tracing/TracingHelper';
@@ -20,8 +20,8 @@ export class TracesFetcher {
   private lastFetchMicros: number | undefined = undefined;
 
   constructor(
-    private onChange: (traces: JaegerTrace[], jaegerServiceName: string) => void,
-    private onErrors: (err: JaegerError[]) => void
+    private onChange: (traces: JaegerTrace[], tracingServiceName: string) => void,
+    private onErrors: (err: TracingError[]) => void
   ) {}
 
   fetch = (o: FetchOptions, oldTraces: JaegerTrace[]) => {
@@ -62,7 +62,7 @@ export class TracesFetcher {
         if (traces.length > 0) {
           this.lastFetchMicros = Math.max(...traces.map(s => s.startTime));
         }
-        this.onChange(traces, response.data.jaegerServiceName);
+        this.onChange(traces, response.data.tracingServiceName);
         if (response.data.errors && response.data.errors.length > 0) {
           this.onErrors(response.data.errors);
         }

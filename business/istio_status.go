@@ -214,7 +214,7 @@ func (iss *IstioStatusService) getAddonComponentStatus() kubernetes.IstioCompone
 
 	go getAddonStatus("prometheus", true, extServices.Prometheus.IsCore, &extServices.Prometheus.Auth, extServices.Prometheus.URL, extServices.Prometheus.HealthCheckUrl, staChan, &wg)
 	go getAddonStatus("grafana", extServices.Grafana.Enabled, extServices.Grafana.IsCore, &extServices.Grafana.Auth, extServices.Grafana.InClusterURL, extServices.Grafana.HealthCheckUrl, staChan, &wg)
-	go iss.getTracingStatus("jaeger", extServices.Tracing.Enabled, extServices.Tracing.IsCore, staChan, &wg)
+	go iss.getTracingStatus("tracing", extServices.Tracing.Enabled, extServices.Tracing.IsCore, staChan, &wg)
 
 	// Custom dashboards may use the main Prometheus config
 	customProm := extServices.CustomDashboards.Prometheus
@@ -274,7 +274,7 @@ func (iss *IstioStatusService) getTracingStatus(name string, enabled bool, isCor
 		return
 	}
 
-	if accessible, err := iss.businessLayer.Jaeger.GetStatus(); !accessible {
+	if accessible, err := iss.businessLayer.Tracing.GetStatus(); !accessible {
 		log.Errorf("Error fetching availability of the tracing service: %v", err)
 		staChan <- kubernetes.IstioComponentStatus{
 			kubernetes.ComponentStatus{

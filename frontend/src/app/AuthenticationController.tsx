@@ -5,7 +5,7 @@ import { authenticationConfig, isAuthStrategyOAuth } from '../config/Authenticat
 import { KialiAppState, LoginStatus } from '../store/Store';
 import * as API from '../services/Api';
 import { HelpDropdownActions } from '../actions/HelpDropdownActions';
-import { JaegerActions } from '../actions/JaegerActions';
+import { TracingActions } from '../actions/TracingActions';
 import { LoginThunkActions } from '../actions/LoginThunkActions';
 import { MessageCenterActions } from '../actions/MessageCenterActions';
 import { MessageType } from '../types/MessageCenter';
@@ -15,7 +15,7 @@ import { getKioskMode, isKioskMode } from '../utils/SearchParamUtils';
 import * as AlertUtils from '../utils/AlertUtils';
 import { setServerConfig, serverConfig, humanDurations } from '../config/ServerConfig';
 import { AuthStrategy } from '../types/Auth';
-import { JaegerInfo } from '../types/JaegerInfo';
+import { TracingInfo } from '../types/TracingInfo';
 import { LoginActions } from '../actions/LoginActions';
 import { history } from './History';
 import { NamespaceActions } from 'actions/NamespaceAction';
@@ -39,7 +39,7 @@ interface AuthenticationControllerReduxProps {
   landingRoute?: string;
   setActiveNamespaces: (namespaces: Namespace[]) => void;
   setDuration: (duration: DurationInSeconds) => void;
-  setJaegerInfo: (jaegerInfo: JaegerInfo | null) => void;
+  setTracingInfo: (tracingInfo: TracingInfo | null) => void;
   setLandingRoute: (route: string | undefined) => void;
   setNamespaces: (namespaces: Namespace[], receivedAt: Date) => void;
   setRefreshInterval: (interval: IntervalInMilliseconds) => void;
@@ -182,13 +182,13 @@ class AuthenticationControllerComponent extends React.Component<
         .catch(error => {
           AlertUtils.addError('Error fetching server status.', error, 'default', MessageType.WARNING);
         });
-      const getJaegerInfoPromise = this.promises
-        .register('getJaegerInfo', API.getJaegerInfo())
-        .then(response => this.props.setJaegerInfo(response.data))
+      const getTracingInfoPromise = this.promises
+        .register('getTracingInfo', API.getTracingInfo())
+        .then(response => this.props.setTracingInfo(response.data))
         .catch(error => {
-          this.props.setJaegerInfo(null);
+          this.props.setTracingInfo(null);
           AlertUtils.addError(
-            'Could not fetch Jaeger info. Turning off Jaeger integration.',
+            'Could not fetch Tracing info. Turning off Tracing integration.',
             error,
             'default',
             MessageType.INFO
@@ -197,7 +197,7 @@ class AuthenticationControllerComponent extends React.Component<
       const getNamespaces = this.promises.register('getNamespaces', API.getNamespaces());
       const getServerConfig = this.promises.register('getServerConfig', API.getServerConfig());
 
-      const configs = await Promise.all([getNamespaces, getServerConfig, getStatusPromise, getJaegerInfoPromise]);
+      const configs = await Promise.all([getNamespaces, getServerConfig, getStatusPromise, getTracingInfoPromise]);
 
       this.props.setNamespaces(configs[0].data, new Date());
       setServerConfig(configs[1].data);
@@ -338,10 +338,10 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   checkCredentials: () => dispatch(LoginThunkActions.checkCredentials()),
   setActiveNamespaces: bindActionCreators(NamespaceActions.setActiveNamespaces, dispatch),
   setDuration: bindActionCreators(UserSettingsActions.setDuration, dispatch),
-  setJaegerInfo: bindActionCreators(JaegerActions.setInfo, dispatch),
   setLandingRoute: bindActionCreators(LoginActions.setLandingRoute, dispatch),
   setNamespaces: bindActionCreators(NamespaceActions.receiveList, dispatch),
   setRefreshInterval: bindActionCreators(UserSettingsActions.setRefreshInterval, dispatch),
+  setTracingInfo: bindActionCreators(TracingActions.setInfo, dispatch),
   setTrafficRates: bindActionCreators(GraphToolbarActions.setTrafficRates, dispatch),
   statusRefresh: bindActionCreators(HelpDropdownActions.statusRefresh, dispatch)
 });

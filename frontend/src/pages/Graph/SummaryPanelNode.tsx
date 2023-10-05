@@ -24,7 +24,7 @@ import {
 import { SummaryPanelNodeTraffic } from './SummaryPanelNodeTraffic';
 import { SummaryPanelNodeTraces } from './SummaryPanelNodeTraces';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
-import { JaegerState } from 'reducers/JaegerState';
+import { TracingState } from 'reducers/TracingState';
 import { classes } from 'typestyle';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
@@ -59,10 +59,10 @@ const defaultState: SummaryPanelNodeState = {
 };
 
 type ReduxProps = {
-  jaegerState: JaegerState;
   kiosk: string;
   rankResult: RankResult;
   showRank: boolean;
+  tracingState: TracingState;
 };
 
 export type SummaryPanelNodeProps = Omit<SummaryPanelPropType, 'kiosk'> & {
@@ -138,9 +138,9 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     const shouldRenderTraces =
       !isServiceEntry &&
       !nodeData.isInaccessible &&
-      this.props.jaegerState.info &&
-      this.props.jaegerState.info.enabled &&
-      this.props.jaegerState.info.integration;
+      this.props.tracingState.info &&
+      this.props.tracingState.info.enabled &&
+      this.props.tracingState.info.integration;
 
     const options = getOptions(nodeData);
     const items = [
@@ -513,7 +513,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
 }
 
 export function SummaryPanelNode(props: SummaryPanelNodeProps) {
-  const jaegerState = useKialiSelector(state => state.jaegerState);
+  const tracingState = useKialiSelector(state => state.tracingState);
   const kiosk = useKialiSelector(state => state.globalState.kiosk);
   const rankResult = useKialiSelector(state => state.graph.rankResult);
   const showRank = useKialiSelector(state => state.graph.toolbarState.showRank);
@@ -536,7 +536,7 @@ export function SummaryPanelNode(props: SummaryPanelNodeProps) {
 
   return (
     <SummaryPanelNodeComponent
-      jaegerState={jaegerState}
+      tracingState={tracingState}
       kiosk={kiosk}
       rankResult={rankResult}
       showRank={showRank}

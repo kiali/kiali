@@ -1,4 +1,4 @@
-import { EnvoySpanInfo, JaegerTrace, RichSpanData } from 'types/JaegerInfo';
+import { EnvoySpanInfo, JaegerTrace, RichSpanData } from 'types/TracingInfo';
 import { MetricsStats } from 'types/Metrics';
 import { genStatsKey, MetricsStatsQuery, statsQueryToKey } from 'types/MetricsOptions';
 import { average } from '../MathUtils';

@@ -17,7 +17,7 @@ import { INITIAL_MESSAGE_CENTER_STATE } from '../reducers/MessageCenter';
 import { INITIAL_STATUS_STATE } from '../reducers/HelpDropdownState';
 import { INITIAL_NAMESPACE_STATE } from '../reducers/NamespaceState';
 import { INITIAL_CLUSTER_STATE } from '../reducers/ClusterState';
-import { INITIAL_JAEGER_STATE } from '../reducers/JaegerState';
+import { INITIAL_TRACING_STATE } from '../reducers/TracingState';
 import { INITIAL_MESH_TLS_STATE } from '../reducers/MeshTlsState';
 import { INITIAL_TOUR_STATE } from '../reducers/TourState';
 import { INITIAL_ISTIO_STATUS_STATE } from '../reducers/IstioStatusState';
@@ -61,7 +61,7 @@ const userSettingsPersitFilter = whitelistInputWithInitialState(
 const persistConfig = {
   key: persistKey,
   storage: storage,
-  whitelist: ['authentication', 'graph', 'jaegerState', 'namespaces', 'statusState', 'userSettings'],
+  whitelist: ['authentication', 'graph', 'tracingState', 'namespaces', 'statusState', 'userSettings'],
   transforms: [authenticationPersistFilter, graphPersistFilter, namespacePersistFilter, userSettingsPersitFilter]
 };
 
@@ -91,7 +91,7 @@ const initialStore: KialiAppState = {
   messageCenter: INITIAL_MESSAGE_CENTER_STATE,
   graph: INITIAL_GRAPH_STATE,
   userSettings: INITIAL_USER_SETTINGS_STATE,
-  jaegerState: INITIAL_JAEGER_STATE,
+  tracingState: INITIAL_TRACING_STATE,
   meshTLSStatus: INITIAL_MESH_TLS_STATE,
   metricsStats: INITIAL_METRICS_STATS_STATE,
   istioStatus: INITIAL_ISTIO_STATUS_STATE,

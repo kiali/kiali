@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Label, pluralize } from '@patternfly/react-core';
 
 import { PFColors } from 'components/Pf/PfColors';
-import { Span } from 'types/JaegerInfo';
+import { Span } from 'types/TracingInfo';
 import { isErrorTag } from 'utils/tracing/TracingHelper';
 import { kialiStyle } from 'styles/StyleUtils';
 

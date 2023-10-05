@@ -29,7 +29,7 @@ import { MetricsStats } from 'types/Metrics';
 import { KialiAppState } from 'store/Store';
 import { MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsThunkActions } from 'actions/MetricsStatsThunkActions';
-import { EnvoySpanInfo, OpenTracingHTTPInfo, OpenTracingTCPInfo, RichSpanData } from 'types/JaegerInfo';
+import { EnvoySpanInfo, OpenTracingHTTPInfo, OpenTracingTCPInfo, RichSpanData } from 'types/TracingInfo';
 import { sameSpans } from 'utils/tracing/TracingHelper';
 import { buildQueriesFromSpans } from 'utils/tracing/TraceStats';
 import { getParamsSeparator, getSpanId } from '../../../utils/SearchParamUtils';
@@ -582,7 +582,7 @@ class SpanTableComponent extends React.Component<Props, State> {
 const mapStateToProps = (state: KialiAppState) => ({
   kiosk: state.globalState.kiosk,
   metricsStats: state.metricsStats.data,
-  provider: state.jaegerState.info?.provider
+  provider: state.tracingState.info?.provider
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({

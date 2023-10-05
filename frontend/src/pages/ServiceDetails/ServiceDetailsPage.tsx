@@ -9,8 +9,8 @@ import { KialiAppState } from '../../store/Store';
 import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
 import { ParameterizedTabs, activeTab } from '../../components/Tab/Tabs';
 import { ServiceInfo } from './ServiceInfo';
-import { TracesComponent } from 'components/JaegerIntegration/TracesComponent';
-import { JaegerInfo } from 'types/JaegerInfo';
+import { TracesComponent } from 'components/TracingIntegration/TracesComponent';
+import { TracingInfo } from 'types/TracingInfo';
 import { TrafficDetails } from 'components/TrafficList/TrafficDetails';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
@@ -49,7 +49,7 @@ type ServiceDetailsState = {
 interface ServiceDetailsProps {
   serviceId: ServiceId;
   duration: DurationInSeconds;
-  jaegerInfo?: JaegerInfo;
+  tracingInfo?: TracingInfo;
   lastRefreshAt: TimeInMilliseconds;
 }
 
@@ -204,7 +204,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
 
     const tabsArray: JSX.Element[] = [overTab, trafficTab, inTab];
 
-    if (this.props.jaegerInfo && this.props.jaegerInfo.enabled && this.props.jaegerInfo.integration) {
+    if (this.props.tracingInfo && this.props.tracingInfo.enabled && this.props.tracingInfo.integration) {
       tabsArray.push(
         <Tab eventKey={3} title="Traces" key="Traces">
           <TracesComponent
@@ -286,8 +286,8 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerInfo: state.jaegerState.info,
-  duration: durationSelector(state)
+  duration: durationSelector(state),
+  tracingInfo: state.tracingState.info
 });
 
 export const ServiceDetailsPage = connectRefresh(connect(mapStateToProps)(ServiceDetailsPageComponent));

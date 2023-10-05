@@ -24,7 +24,7 @@ import { TLSStatus } from '../types/TLSStatus';
 import { StatusState } from '../types/StatusState';
 import { TourInfo } from 'components/Tour/TourStop';
 import { ComponentStatus } from '../types/IstioStatus';
-import { JaegerState } from 'reducers/JaegerState';
+import { TracingState } from 'reducers/TracingState';
 import { MetricsStatsState } from 'reducers/MetricsStatsState';
 import { CertsInfo } from 'types/CertsInfo';
 import { MeshCluster } from '../types/Mesh';
@@ -148,14 +148,14 @@ export interface KialiAppState {
   graph: GraphState;
   istioStatus: ComponentStatus[];
   istioCertsInfo: CertsInfo[];
-  /** Jaeger Settings */
-  jaegerState: JaegerState;
+  /** Tracing Settings */
   meshTLSStatus: TLSStatus;
   messageCenter: MessageCenterState;
   metricsStats: MetricsStatsState;
   namespaces: NamespaceState;
   statusState: StatusState;
   tourState: TourState;
+  tracingState: TracingState;
   /** User Settings */
   userSettings: UserSettings;
 }

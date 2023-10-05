@@ -751,7 +751,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
   private gotoSpan = (span: Span) => {
     const link =
       `/namespaces/${this.props.namespace}/workloads/${this.props.workload}` +
-      `?tab=traces&${URLParam.JAEGER_TRACE_ID}=${span.traceID}&${URLParam.JAEGER_SPAN_ID}=${span.spanID}`;
+      `?tab=traces&${URLParam.TRACING_TRACE_ID}=${span.traceID}&${URLParam.TRACING_SPAN_ID}=${span.spanID}`;
     history.push(link);
   };
 

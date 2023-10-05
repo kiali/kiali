@@ -1,4 +1,4 @@
-import { JaegerTrace } from '../../../types/JaegerInfo';
+import { JaegerTrace } from '../../../types/TracingInfo';
 import moment from 'moment';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';

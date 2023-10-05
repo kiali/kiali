@@ -6,7 +6,7 @@ import { Spinner, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { history } from 'app/History';
 import { BoxByType, DecoratedGraphNodeData, NodeType } from 'types/Graph';
-import { JaegerInfo } from 'types/JaegerInfo';
+import { TracingInfo } from 'types/TracingInfo';
 import { durationSelector } from 'store/Selectors';
 import { KialiAppState } from 'store/Store';
 import { isMultiCluster, Paths, serverConfig } from 'config';
@@ -25,7 +25,7 @@ import { getServiceDetailsUpdateLabel, hasServiceDetailsTrafficRouting } from '.
 
 type ReduxProps = {
   duration: DurationInSeconds;
-  jaegerInfo?: JaegerInfo;
+  tracingInfo?: TracingInfo;
   kiosk: string;
   updateTime: TimeInMilliseconds;
 };
@@ -306,7 +306,7 @@ export function NodeContextMenuComponent(props: Props) {
     // That would lead to an empty menu. Here, we assume that whoever is the host/parent component,
     // that component won't render this context menu in case this menu would be blank. So, here
     // it's simply assumed that the context menu will look good.
-    const options: ContextMenuOption[] = getOptionsFromLinkParams(linkParams, props.jaegerInfo);
+    const options: ContextMenuOption[] = getOptionsFromLinkParams(linkParams, props.tracingInfo);
     const menuOptions = (
       <>
         <div className={contextMenuSubTitle}>Show</div>
@@ -340,8 +340,8 @@ export function NodeContextMenuComponent(props: Props) {
   return renderFullContextMenu(linkParams);
 }
 
-const getJaegerURL = (namespace: string, namespaceSelector: boolean, jaegerURL: string, name?: string): string => {
-  return `${jaegerURL}/search?service=${name}${namespaceSelector ? `.${namespace}` : ''}`;
+const getTracingURL = (namespace: string, namespaceSelector: boolean, tracingURL: string, name?: string): string => {
+  return `${tracingURL}/search?service=${name}${namespaceSelector ? `.${namespace}` : ''}`;
 };
 
 export type ContextMenuOption = {
@@ -363,15 +363,15 @@ export const clickHandler = (o: ContextMenuOption, kiosk: string) => {
   }
 };
 
-export const getOptions = (node: DecoratedGraphNodeData, jaegerInfo?: JaegerInfo): ContextMenuOption[] => {
+export const getOptions = (node: DecoratedGraphNodeData, tracingInfo?: TracingInfo): ContextMenuOption[] => {
   const linkParams = getLinkParamsForNode(node);
   if (!linkParams) {
     return [];
   }
-  return getOptionsFromLinkParams(linkParams, jaegerInfo);
+  return getOptionsFromLinkParams(linkParams, tracingInfo);
 };
 
-const getOptionsFromLinkParams = (linkParams: LinkParams, jaegerInfo?: JaegerInfo): ContextMenuOption[] => {
+const getOptionsFromLinkParams = (linkParams: LinkParams, tracingInfo?: TracingInfo): ContextMenuOption[] => {
   let options: ContextMenuOption[] = [];
   const { namespace, type, name, cluster } = linkParams;
   let detailsPageUrl = `/namespaces/${namespace}/${type}/${name}`;
@@ -394,13 +394,13 @@ const getOptionsFromLinkParams = (linkParams: LinkParams, jaegerInfo?: JaegerInf
     if (type !== Paths.SERVICES) {
       options.push({ text: 'Outbound Metrics', url: `${detailsPageUrl}${concat}tab=out_metrics` });
     }
-    if (type === Paths.APPLICATIONS && jaegerInfo && jaegerInfo.enabled) {
-      if (jaegerInfo.integration) {
+    if (type === Paths.APPLICATIONS && tracingInfo && tracingInfo.enabled) {
+      if (tracingInfo.integration) {
         options.push({ text: 'Traces', url: `${detailsPageUrl}${concat}tab=traces` });
-      } else if (jaegerInfo.url) {
+      } else if (tracingInfo.url) {
         options.push({
           text: 'Show Traces',
-          url: getJaegerURL(namespace, jaegerInfo.namespaceSelector, jaegerInfo.url, name),
+          url: getTracingURL(namespace, tracingInfo.namespaceSelector, tracingInfo.url, name),
           external: true,
           target: '_blank'
         });
@@ -414,7 +414,7 @@ const getOptionsFromLinkParams = (linkParams: LinkParams, jaegerInfo?: JaegerInf
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
   updateTime: state.graph.updateTime,
-  jaegerInfo: state.jaegerState.info,
+  tracingInfo: state.tracingState.info,
   kiosk: state.globalState.kiosk
 });
 

@@ -7,7 +7,7 @@ import { SummaryPanelAppBox } from './SummaryPanelAppBox';
 import { SummaryPanelPropType, BoxByType, SummaryData, NodeAttr } from '../../types/Graph';
 import { KialiIcon } from 'config/KialiIcon';
 import { SummaryPanelNode } from './SummaryPanelNode';
-import { JaegerState } from 'reducers/JaegerState';
+import { TracingState } from 'reducers/TracingState';
 import { SummaryPanelTraceDetails } from './SummaryPanelTraceDetails';
 import { KialiAppState } from 'store/Store';
 import { SummaryPanelClusterBox } from './SummaryPanelClusterBox';
@@ -29,7 +29,6 @@ type SummaryPanelState = {
 
 type MainSummaryPanelPropType = SummaryPanelPropType & {
   isPageVisible: boolean;
-  jaegerState: JaegerState;
   kiosk: string;
   onDeleteTrafficRouting?: (key: string, serviceDetails: ServiceDetailsInfo) => void;
   onFocus?: (focusNode: FocusNode) => void;
@@ -41,6 +40,7 @@ type MainSummaryPanelPropType = SummaryPanelPropType & {
     gateways: string[],
     peerAuths: PeerAuthentication[]
   ) => void;
+  tracingState: TracingState;
 };
 
 const mainStyle = kialiStyle({
@@ -103,7 +103,7 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
     }
 
     const mainTopStyle = this.state.isVisible
-      ? this.props.jaegerState.selectedTrace
+      ? this.props.tracingState.selectedTrace
         ? expandedHalfStyle
         : expandedStyle
       : collapsedStyle;
@@ -136,15 +136,15 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
             </div>
             {this.getSummaryPanel(this.props.data)}
           </div>
-          {this.props.jaegerState.selectedTrace && this.state.isVisible && (
+          {this.props.tracingState.selectedTrace && this.state.isVisible && (
             <div className={classes(panelStyle, summaryPanelBottomSplit)}>
               <div className={panelBodyStyle}>
                 <SummaryPanelTraceDetails
                   data={this.props.data}
                   graphType={this.props.graphType}
-                  jaegerURL={this.props.jaegerState.info?.url}
+                  tracingURL={this.props.tracingState.info?.url}
                   onFocus={this.props.onFocus}
-                  trace={this.props.jaegerState.selectedTrace}
+                  trace={this.props.tracingState.selectedTrace}
                 />
               </div>
             </div>
@@ -259,8 +259,8 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerState: state.jaegerState,
-  kiosk: state.globalState.kiosk
+  kiosk: state.globalState.kiosk,
+  tracingState: state.tracingState
 });
 
 export const SummaryPanel = connect(mapStateToProps)(SummaryPanelComponent);
