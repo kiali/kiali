@@ -14,7 +14,7 @@ DELETE_ALL="false"
 DELETE_TEMPO="false"
 INSTALL_BOOKINFO="true"
 INSTALL_ISTIO="true"
-INSTALL_KIALI="true"
+INSTALL_KIALI="false"
 TEMPO_NS="tempo"
 
 # process command line args
@@ -22,7 +22,7 @@ while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
     -c|--client)
-      CLIENT_EXE="$2"
+      CLIENT_EXE_NAME="$2"
       shift;shift
       ;;
     -da|--delete-all)
@@ -80,14 +80,12 @@ done
 
 SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
 
-if [ "${CLIENT_EXE}" == "" ]; then
-  CLIENT_EXE=`which "${CLIENT_EXE_NAME}"`
-  if [ "$?" = "0" ]; then
-    echo "The cluster client executable is found here: ${CLIENT_EXE}"
-  else
-    echo "ERROR: You must install the cluster client ${CLIENT_EXE_NAME} in your PATH before you can continue."
-    exit 1
-  fi
+CLIENT_EXE=`which ${CLIENT_EXE_NAME}`
+if [ "$?" = "0" ]; then
+  echo "The cluster client executable is found here: ${CLIENT_EXE}"
+else
+  echo "You must install the cluster client ${CLIENT_EXE_NAME} in your PATH before you can continue"
+  exit 1
 fi
 
 if ${CLIENT_EXE} api-versions | grep --quiet "route.openshift.io"; then
