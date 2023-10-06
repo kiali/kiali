@@ -1,5 +1,13 @@
-import { Radio, Checkbox, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { Dropdown, DropdownToggle } from '@patternfly/react-core/deprecated';
+import {
+  Radio,
+  Checkbox,
+  Tooltip,
+  TooltipPosition,
+  Dropdown,
+  DropdownList,
+  MenuToggleElement,
+  MenuToggle
+} from '@patternfly/react-core';
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { KialiDispatch } from 'types/Redux';
@@ -32,54 +40,26 @@ type GraphTrafficProps = ReduxProps & {
   disabled: boolean;
 };
 
-type GraphTrafficState = { isOpen: boolean };
-
 interface TrafficRateOptionType {
-  id: string;
   disabled?: boolean;
-  labelText: string;
+  id: string;
   isChecked: boolean;
+  labelText: string;
   onChange?: () => void;
   tooltip?: React.ReactNode;
 }
 
 const marginBottom = 20;
 
-class GraphTrafficComponent extends React.PureComponent<GraphTrafficProps, GraphTrafficState> {
-  constructor(props: GraphTrafficProps) {
-    super(props);
-    this.state = {
-      isOpen: false
-    };
-  }
+const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficProps) => {
+  const [isOpen, setIsOpen] = React.useState<boolean>(false);
 
-  private onToggle = isOpen => {
-    this.setState({
-      isOpen
-    });
+  const onToggle = (isOpen: boolean) => {
+    setIsOpen(isOpen);
   };
 
-  render() {
-    return (
-      <Dropdown
-        toggle={
-          <DropdownToggle
-            id="graph-traffic-dropdown"
-            isDisabled={this.props.disabled}
-            onToggle={(_event, isOpen) => this.onToggle(isOpen)}
-          >
-            Traffic
-          </DropdownToggle>
-        }
-        isOpen={this.state.isOpen}
-      >
-        {this.getPopoverContent()}
-      </Dropdown>
-    );
-  }
-
-  private getPopoverContent() {
-    const trafficRates = this.props.trafficRates;
+  const getPopoverContent = () => {
+    const trafficRates = props.trafficRates;
 
     const trafficRateOptions: TrafficRateOptionType[] = [
       {
@@ -212,9 +192,9 @@ class GraphTrafficComponent extends React.PureComponent<GraphTrafficProps, Graph
                   id={trafficRateOption.id}
                   name="trafficRateOptions"
                   isChecked={trafficRateOption.isChecked}
-                  isDisabled={this.props.disabled}
+                  isDisabled={props.disabled}
                   label={trafficRateOption.labelText}
-                  onChange={(event, _) => this.toggleTrafficRate(_, event)}
+                  onChange={(event, _) => toggleTrafficRate(_, event)}
                   value={trafficRateOption.id}
                 />
               </label>
@@ -241,9 +221,9 @@ class GraphTrafficComponent extends React.PureComponent<GraphTrafficProps, Graph
                           style={{ paddingLeft: '5px' }}
                           name="grpcOptions"
                           isChecked={grpcOption.isChecked}
-                          isDisabled={this.props.disabled}
+                          isDisabled={props.disabled}
                           label={grpcOption.labelText}
-                          onChange={(event, _) => this.toggleTrafficRateGrpc(_, event)}
+                          onChange={(event, _) => toggleTrafficRateGrpc(_, event)}
                           value={grpcOption.id}
                         />
                       </label>
@@ -274,9 +254,9 @@ class GraphTrafficComponent extends React.PureComponent<GraphTrafficProps, Graph
                           style={{ paddingLeft: '5px' }}
                           name="httpOptions"
                           isChecked={httpOption.isChecked}
-                          isDisabled={this.props.disabled}
+                          isDisabled={props.disabled}
                           label={httpOption.labelText}
-                          onChange={(event, _) => this.toggleTrafficRateHttp(_, event)}
+                          onChange={(event, _) => toggleTrafficRateHttp(_, event)}
                           value={httpOption.id}
                         />
                       </label>
@@ -307,9 +287,9 @@ class GraphTrafficComponent extends React.PureComponent<GraphTrafficProps, Graph
                           style={{ paddingLeft: '5px' }}
                           name="tcpOptions"
                           isChecked={tcpOption.isChecked}
-                          isDisabled={this.props.disabled}
+                          isDisabled={props.disabled}
                           label={tcpOption.labelText}
-                          onChange={(event, _) => this.toggleTrafficRateTcp(_, event)}
+                          onChange={(event, _) => toggleTrafficRateTcp(_, event)}
                           value={tcpOption.id}
                         />
                       </label>
@@ -331,61 +311,81 @@ class GraphTrafficComponent extends React.PureComponent<GraphTrafficProps, Graph
         </div>
       </BoundingClientAwareComponent>
     );
-  }
+  };
 
-  private toggleTrafficRate = (_, event) => {
+  const toggleTrafficRate = (_, event) => {
     const rate = event.target.value as TrafficRate;
-    if (this.props.trafficRates.includes(rate)) {
+    if (props.trafficRates.includes(rate)) {
       let newRates;
       switch (rate) {
         case TrafficRate.GRPC_GROUP:
-          newRates = this.props.trafficRates.filter(r => !isGrpcRate(r));
+          newRates = props.trafficRates.filter(r => !isGrpcRate(r));
           break;
         case TrafficRate.HTTP_GROUP:
-          newRates = this.props.trafficRates.filter(r => !isHttpRate(r));
+          newRates = props.trafficRates.filter(r => !isHttpRate(r));
           break;
         case TrafficRate.TCP_GROUP:
-          newRates = this.props.trafficRates.filter(r => !isTcpRate(r));
+          newRates = props.trafficRates.filter(r => !isTcpRate(r));
           break;
         default:
-          newRates = this.props.trafficRates.filter(r => r !== rate);
+          newRates = props.trafficRates.filter(r => r !== rate);
       }
-      this.props.setTrafficRates(newRates);
+      props.setTrafficRates(newRates);
     } else {
       switch (rate) {
         case TrafficRate.GRPC_GROUP:
-          this.props.setTrafficRates([...this.props.trafficRates, rate, TrafficRate.GRPC_REQUEST]);
+          props.setTrafficRates([...props.trafficRates, rate, TrafficRate.GRPC_REQUEST]);
           break;
         case TrafficRate.HTTP_GROUP:
-          this.props.setTrafficRates([...this.props.trafficRates, rate, TrafficRate.HTTP_REQUEST]);
+          props.setTrafficRates([...props.trafficRates, rate, TrafficRate.HTTP_REQUEST]);
           break;
         case TrafficRate.TCP_GROUP:
-          this.props.setTrafficRates([...this.props.trafficRates, rate, TrafficRate.TCP_SENT]);
+          props.setTrafficRates([...props.trafficRates, rate, TrafficRate.TCP_SENT]);
           break;
         default:
-          this.props.setTrafficRates([...this.props.trafficRates, rate]);
+          props.setTrafficRates([...props.trafficRates, rate]);
       }
     }
   };
 
-  private toggleTrafficRateGrpc = (_, event) => {
+  const toggleTrafficRateGrpc = (_, event) => {
     const rate = event.target.value as TrafficRate;
-    const newRates = this.props.trafficRates.filter(r => !isGrpcRate(r));
-    this.props.setTrafficRates([...newRates, TrafficRate.GRPC_GROUP, rate]);
+    const newRates = props.trafficRates.filter(r => !isGrpcRate(r));
+    props.setTrafficRates([...newRates, TrafficRate.GRPC_GROUP, rate]);
   };
 
-  private toggleTrafficRateHttp = (_, event) => {
+  const toggleTrafficRateHttp = (_, event) => {
     const rate = event.target.value as TrafficRate;
-    const newRates = this.props.trafficRates.filter(r => !isHttpRate(r));
-    this.props.setTrafficRates([...newRates, TrafficRate.HTTP_GROUP, rate]);
+    const newRates = props.trafficRates.filter(r => !isHttpRate(r));
+    props.setTrafficRates([...newRates, TrafficRate.HTTP_GROUP, rate]);
   };
 
-  private toggleTrafficRateTcp = (_, event) => {
+  const toggleTrafficRateTcp = (_, event) => {
     const rate = event.target.value as TrafficRate;
-    const newRates = this.props.trafficRates.filter(r => !isTcpRate(r));
-    this.props.setTrafficRates([...newRates, TrafficRate.TCP_GROUP, rate]);
+    const newRates = props.trafficRates.filter(r => !isTcpRate(r));
+    props.setTrafficRates([...newRates, TrafficRate.TCP_GROUP, rate]);
   };
-}
+
+  return (
+    <Dropdown
+      toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+        <MenuToggle
+          ref={toggleRef}
+          id="graph-traffic-dropdown"
+          isDisabled={props.disabled}
+          onClick={() => onToggle(!isOpen)}
+          isExpanded={isOpen}
+        >
+          Traffic
+        </MenuToggle>
+      )}
+      isOpen={isOpen}
+      onOpenChange={(isOpen: boolean) => onToggle(isOpen)}
+    >
+      <DropdownList>{getPopoverContent()}</DropdownList>
+    </Dropdown>
+  );
+};
 
 // Allow Redux to map sections of our global app state to our props
 const mapStateToProps = (state: KialiAppState) => ({

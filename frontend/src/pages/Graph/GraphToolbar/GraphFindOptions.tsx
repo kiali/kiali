@@ -1,83 +1,68 @@
-import { Dropdown, DropdownToggle, DropdownItem } from '@patternfly/react-core/deprecated';
 import * as React from 'react';
-import { KialiIcon } from 'config/KialiIcon';
 import { serverConfig } from 'config';
 import { kialiStyle } from 'styles/StyleUtils';
+import { Dropdown, DropdownItem, DropdownList, MenuToggle, MenuToggleElement } from '@patternfly/react-core';
 
 type FindKind = 'find' | 'hide';
 
 type GraphFindOptionsProps = {
   kind: FindKind;
-  onSelect: (expression) => void;
+  onSelect: (expression: string) => void;
 };
 
-type GraphFindOptionsState = { isOpen: boolean };
-
-const dropdown = kialiStyle({
-  minWidth: '20px',
-  width: '20px',
-  paddingLeft: '5px',
-  paddingRight: 0
+const menuToggleStyle = kialiStyle({
+  paddingRight: 0,
+  $nest: {
+    '& .pf-v5-c-menu-toggle__controls': {
+      paddingLeft: 0
+    }
+  }
 });
 
-export class GraphFindOptions extends React.PureComponent<GraphFindOptionsProps, GraphFindOptionsState> {
-  options: React.ReactFragment[];
+export const GraphFindOptions: React.FC<GraphFindOptionsProps> = (props: GraphFindOptionsProps) => {
+  const [isOpen, setIsOpen] = React.useState<boolean>(false);
+  const [options, setOptions] = React.useState<React.ReactNode[]>([]);
 
-  constructor(props: GraphFindOptionsProps) {
-    super(props);
+  React.useEffect(() => {
+    setOptions(getOptionItems(props.kind));
+  }, [props.kind]);
 
-    this.options = this.getOptionItems(props.kind);
-
-    this.state = {
-      isOpen: false
-    };
-  }
-
-  render() {
-    return (
-      <Dropdown
-        key={`graph-${this.props.kind}-presets`}
-        id={`graph-${this.props.kind}-presets`}
-        toggle={
-          <DropdownToggle
-            data-test={`${this.props.kind}-options-dropdown`}
-            className={dropdown}
-            toggleIndicator={null}
-            onToggle={(_event, isOpen) => this.onToggle(isOpen)}
-          >
-            <KialiIcon.AngleDown />
-          </DropdownToggle>
-        }
-        isOpen={this.state.isOpen}
-        dropdownItems={this.options}
-        onSelect={this.close}
-      ></Dropdown>
-    );
-  }
-
-  private close = () => {
-    this.setState({
-      isOpen: false
-    });
-  };
-
-  private getOptionItems = (kind: FindKind): React.ReactFragment[] => {
+  const getOptionItems = (kind: FindKind): React.ReactFragment[] => {
     const options =
       kind === 'find'
         ? serverConfig.kialiFeatureFlags.uiDefaults.graph.findOptions
         : serverConfig.kialiFeatureFlags.uiDefaults.graph.hideOptions;
     return options.map(o => {
       return (
-        <DropdownItem key={o.description} onClick={() => this.props.onSelect(o.expression)}>
+        <DropdownItem key={o.description} onClick={() => props.onSelect(o.expression)}>
           {o.description}
         </DropdownItem>
       );
     });
   };
 
-  private onToggle = isOpen => {
-    this.setState({
-      isOpen
-    });
+  const onToggle = (isOpen: boolean) => {
+    setIsOpen(isOpen);
   };
-}
+
+  return (
+    <Dropdown
+      key={`graph-${props.kind}-presets`}
+      id={`graph-${props.kind}-presets`}
+      toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+        <MenuToggle
+          ref={toggleRef}
+          className={menuToggleStyle}
+          data-test={`${props.kind}-options-dropdown`}
+          onClick={() => onToggle(!isOpen)}
+          isExpanded={isOpen}
+        />
+      )}
+      isOpen={isOpen}
+      onOpenChange={(isOpen: boolean) => onToggle(isOpen)}
+      popperProps={{ position: 'right' }}
+    >
+      <DropdownList>{options}</DropdownList>
+    </Dropdown>
+  );
+};

@@ -62,6 +62,7 @@ import {
 } from '@patternfly/react-icons';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Icon } from '@patternfly/react-core';
+import { classes } from 'typestyle';
 
 const iconStyle = kialiStyle({
   width: '10px'
@@ -148,8 +149,8 @@ const conversorIconProps = (props: IconProps, icon: JSX.Element, colorIcon?: str
     ? kialiStyle({
         color: colorI
       })
-    : undefined;
-  return <Icon className={`${props.className} ${classNameIcon}`}>{icon}</Icon>;
+    : '';
+  return <Icon className={classes(props.className, classNameIcon)}>{icon}</Icon>;
 };
 
 // createTooltipIcon wraps the icon in a span element. Tooltip child elements that are

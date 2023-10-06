@@ -7,7 +7,8 @@ import { store } from '../../../store/ConfigStore';
 import axios from 'axios';
 import axiosMockAdapter from 'axios-mock-adapter';
 import MockAdapter from 'axios-mock-adapter';
-import { Dropdown, DropdownItem, MenuToggle } from '@patternfly/react-core';
+import { Dropdown, DropdownItem } from '@patternfly/react-core';
+import { KialiIcon } from 'config/KialiIcon';
 
 const defaultProps = () => ({
   kiosk: '',
@@ -71,7 +72,7 @@ describe('WorkloadPodLogsComponent', () => {
     );
 
     expect(wrapper.find(Dropdown).exists()).toBeTruthy();
-    expect(wrapper.find(MenuToggle).exists()).toBeTruthy();
+    expect(wrapper.find(KialiIcon.KebabToggle).exists()).toBeTruthy();
   });
 
   it('renders a log level action in the kebab', () => {
@@ -83,7 +84,7 @@ describe('WorkloadPodLogsComponent', () => {
         <WorkloadPodLogsComponent {...defaultProps()} />
       </Provider>
     );
-    wrapper.find(MenuToggle).find('button').simulate('click');
+    wrapper.find(KialiIcon.KebabToggle).simulate('click');
     expect(
       wrapper
         .find(DropdownItem)
@@ -102,7 +103,7 @@ describe('WorkloadPodLogsComponent', () => {
         <WorkloadPodLogsComponent {...props} />
       </Provider>
     );
-    wrapper.find(MenuToggle).find('button').simulate('click');
+    wrapper.find(KialiIcon.KebabToggle).simulate('click');
     expect(
       wrapper
         .find(DropdownItem)
@@ -122,7 +123,7 @@ describe('WorkloadPodLogsComponent', () => {
         <WorkloadPodLogsComponent {...defaultProps()} />
       </Provider>
     );
-    wrapper.find(MenuToggle).find('button').simulate('click');
+    wrapper.find(KialiIcon.KebabToggle).simulate('click');
     wrapper
       .find(DropdownItem)
       .findWhere(n => n.key() === 'setLogLevelDebug')

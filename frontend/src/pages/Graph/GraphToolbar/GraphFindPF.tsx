@@ -53,19 +53,18 @@ type ReduxProps = {
   hideValue: string;
   layout: Layout;
   namespaceLayout: Layout;
+  setEdgeLabels: (vals: EdgeLabelMode[]) => void;
+  setFindValue: (val: string) => void;
+  setHideValue: (val: string) => void;
   showFindHelp: boolean;
   showIdleNodes: boolean;
   showRank: boolean;
   showSecurity: boolean;
-  updateTime: TimeInMilliseconds;
-
-  setEdgeLabels: (vals: EdgeLabelMode[]) => void;
-  setFindValue: (val: string) => void;
-  setHideValue: (val: string) => void;
   toggleFindHelp: () => void;
   toggleGraphSecurity: () => void;
   toggleIdleNodes: () => void;
   toggleRank: () => void;
+  updateTime: TimeInMilliseconds;
 };
 
 type GraphFindProps = ReduxProps & {
@@ -81,27 +80,35 @@ type GraphFindState = {
 };
 
 type ParsedExpression = {
-  target: 'node' | 'edge';
   selector: SelectExp | SelectAnd | SelectOr;
+  target: 'node' | 'edge';
 };
 
-// reduce toolbar padding from 20px to 10px to save space
 const thinGroupStyle = kialiStyle({
-  paddingLeft: '10px',
-  paddingRight: '10px'
+  paddingLeft: '0.75rem'
 });
 
-// styles for clear button
 const buttonClearStyle = kialiStyle({
-  minWidth: '20px',
-  width: '20px',
-  paddingLeft: '5px',
-  paddingRight: '5px'
+  paddingLeft: '0.75rem',
+  paddingRight: '0.75rem'
 });
 
 const findHideHelpStyle = kialiStyle({
-  paddingLeft: 0,
-  marginLeft: '-5px'
+  paddingLeft: '0.25rem',
+  paddingRight: '0.25rem'
+});
+
+const gridStyle = kialiStyle({
+  display: 'flex'
+});
+
+const graphFindStyle = kialiStyle({
+  marginRight: '0.75rem',
+  $nest: {
+    '& > .pf-v5-c-form__group-control': {
+      display: 'flex'
+    }
+  }
 });
 
 const operands: string[] = [
@@ -288,7 +295,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
     return (
       <TourStop info={GraphTourStops.Find}>
         <Form className={thinGroupStyle}>
-          <Grid md={12}>
+          <Grid md={12} className={gridStyle}>
             <GridItem span={5}>
               <FormGroup>
                 <TextInput
@@ -315,7 +322,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
               </FormGroup>
             </GridItem>
             <GridItem span={1}>
-              <FormGroup>
+              <FormGroup className={graphFindStyle}>
                 <GraphFindOptions kind="find" onSelect={this.updateFindOption} />
                 {this.props.findValue && (
                   <Tooltip key="ot_clear_find" position="top" content="Clear Find...">
@@ -356,14 +363,20 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
               </FormGroup>
             </GridItem>
             <GridItem span={1}>
-              <GraphFindOptions kind="hide" onSelect={this.updateHideOption} />
-              {this.props.hideValue && (
-                <Tooltip key="ot_clear_hide" position="top" content="Clear Hide...">
-                  <Button className={buttonClearStyle} variant={ButtonVariant.control} onClick={() => this.setHide('')}>
-                    <KialiIcon.Close />
-                  </Button>
-                </Tooltip>
-              )}
+              <FormGroup className={graphFindStyle}>
+                <GraphFindOptions kind="hide" onSelect={this.updateHideOption} />
+                {this.props.hideValue && (
+                  <Tooltip key="ot_clear_hide" position="top" content="Clear Hide...">
+                    <Button
+                      className={buttonClearStyle}
+                      variant={ButtonVariant.control}
+                      onClick={() => this.setHide('')}
+                    >
+                      <KialiIcon.Close />
+                    </Button>
+                  </Tooltip>
+                )}
+              </FormGroup>
             </GridItem>
           </Grid>
         </Form>

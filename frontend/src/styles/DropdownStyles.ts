@@ -38,7 +38,7 @@ export const itemStyleWithoutInfo = kialiStyle(itemStyle);
 // this emulates Select component .pf-v5-c-select__menu-item but with less vertical padding to conserve space
 export const itemStyleWithInfo = kialiStyle({
   ...itemStyle,
-  padding: '0.5rem 0 0.5rem 1rem'
+  padding: '0.375rem 0 0.375rem 1rem'
 });
 
 export const infoStyle = kialiStyle({

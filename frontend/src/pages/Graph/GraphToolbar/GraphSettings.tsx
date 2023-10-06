@@ -1,5 +1,13 @@
-import { Radio, Checkbox, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { Dropdown, DropdownToggle } from '@patternfly/react-core/deprecated';
+import {
+  Radio,
+  Checkbox,
+  Tooltip,
+  TooltipPosition,
+  Dropdown,
+  DropdownList,
+  MenuToggleElement,
+  MenuToggle
+} from '@patternfly/react-core';
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
@@ -280,23 +288,25 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
   render() {
     return (
       <Dropdown
-        toggle={
-          <DropdownToggle
-            id="display-settings"
+        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+          <MenuToggle
+            ref={toggleRef}
+            onClick={() => this.onToggle(!this.state.isOpen)}
+            isExpanded={this.state.isOpen}
             isDisabled={this.props.disabled}
-            onToggle={(_event, isOpen) => this.onToggle(isOpen)}
           >
             Display
-          </DropdownToggle>
-        }
+          </MenuToggle>
+        )}
         isOpen={this.state.isOpen}
+        onOpenChange={(isOpen: boolean) => this.onToggle(isOpen)}
       >
-        {this.getMenuOptions()}
+        <DropdownList>{this.getMenuOptions()}</DropdownList>
       </Dropdown>
     );
   }
 
-  private onToggle = isOpen => {
+  private onToggle = (isOpen: boolean) => {
     this.setState({
       isOpen
     });
