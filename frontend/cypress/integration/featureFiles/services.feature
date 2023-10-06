@@ -24,9 +24,11 @@ Feature: Kiali Services page
     And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/virtualservices/bookinfo"
     And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/gateways/bookinfo-gateway"
 
+  @smoke
   Scenario: See all Services toggles
     Then user sees all the Services toggles
 
+  @smoke
   Scenario: Toggle Services configuration toggle
     When user "unchecks" toggle "configuration"
     Then the "Configuration" column "disappears"
