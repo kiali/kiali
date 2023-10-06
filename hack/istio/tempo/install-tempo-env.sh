@@ -9,7 +9,7 @@
 #
 ##############################################################################
 
-CLIENT_EXE="oc"
+CLIENT_EXE_NAME="oc"
 DELETE_ALL="false"
 DELETE_TEMPO="false"
 INSTALL_BOOKINFO="true"
