@@ -20,26 +20,27 @@ const menuToggleStyle = kialiStyle({
 });
 
 export const GraphFindOptions: React.FC<GraphFindOptionsProps> = (props: GraphFindOptionsProps) => {
+  const { kind, onSelect } = props;
   const [isOpen, setIsOpen] = React.useState<boolean>(false);
   const [options, setOptions] = React.useState<React.ReactNode[]>([]);
 
   React.useEffect(() => {
-    setOptions(getOptionItems(props.kind));
-  }, [props.kind]);
+    const getOptionItems = (kind: FindKind): React.ReactFragment[] => {
+      const options =
+        kind === 'find'
+          ? serverConfig.kialiFeatureFlags.uiDefaults.graph.findOptions
+          : serverConfig.kialiFeatureFlags.uiDefaults.graph.hideOptions;
+      return options.map(o => {
+        return (
+          <DropdownItem key={o.description} onClick={() => onSelect(o.expression)}>
+            {o.description}
+          </DropdownItem>
+        );
+      });
+    };
 
-  const getOptionItems = (kind: FindKind): React.ReactFragment[] => {
-    const options =
-      kind === 'find'
-        ? serverConfig.kialiFeatureFlags.uiDefaults.graph.findOptions
-        : serverConfig.kialiFeatureFlags.uiDefaults.graph.hideOptions;
-    return options.map(o => {
-      return (
-        <DropdownItem key={o.description} onClick={() => props.onSelect(o.expression)}>
-          {o.description}
-        </DropdownItem>
-      );
-    });
-  };
+    setOptions(getOptionItems(kind));
+  }, [kind, onSelect]);
 
   const onToggle = (isOpen: boolean) => {
     setIsOpen(isOpen);
@@ -47,13 +48,13 @@ export const GraphFindOptions: React.FC<GraphFindOptionsProps> = (props: GraphFi
 
   return (
     <Dropdown
-      key={`graph-${props.kind}-presets`}
-      id={`graph-${props.kind}-presets`}
+      key={`graph-${kind}-presets`}
+      id={`graph-${kind}-presets`}
       toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
         <MenuToggle
           ref={toggleRef}
           className={menuToggleStyle}
-          data-test={`${props.kind}-options-dropdown`}
+          data-test={`${kind}-options-dropdown`}
           onClick={() => onToggle(!isOpen)}
           isExpanded={isOpen}
         />
