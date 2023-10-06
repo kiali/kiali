@@ -137,7 +137,7 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
     ? `${props.status[StatusKey.MESH_NAME]} ${props.status[StatusKey.MESH_VERSION] || ''}`
     : 'Unknown';
 
-  const filteredServices = props.externalServices.filter(element => element.name != TEMPO);
+  const filteredServices = props.externalServices.filter(element => element.name !== TEMPO);
   const componentList = filteredServices.map(externalService => renderComponent(externalService));
   const tempoComponent = renderTempo(props.externalServices);
 
