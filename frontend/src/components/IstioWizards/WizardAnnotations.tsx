@@ -57,8 +57,12 @@ export class WizardAnnotations extends React.Component<Props, State> {
   };
 
   removeAnnotation = (k: number) => {
-    const annotations = this.state.annotations;
-    annotations.delete(k);
+    const annotations = new Map<number, [string, string]>();
+    const condition = (key: number) => key !== k;
+    let index = 0;
+    Array.from(this.state.annotations.entries())
+      .filter(([key, _]) => condition(key))
+      .map(([_, [key, value]]: [number, [string, string]]) => annotations.set(index++, [key, value]));
     this.setState({ annotations });
   };
 
