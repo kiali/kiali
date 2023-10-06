@@ -25,9 +25,11 @@ Feature: Kiali Services page
     And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/gateways/bookinfo-gateway"
     And the "Cluster" column "disappears"
 
+  @smoke
   Scenario: See all Services toggles
     Then user sees all the Services toggles
 
+  @smoke
   Scenario: Toggle Services configuration toggle
     When user "unchecks" toggle "configuration"
     Then the "Configuration" column "disappears"
