@@ -194,6 +194,7 @@ EOF
   # If OpenShift, we need to do some additional things
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     $CLIENT_EXE expose svc/tempo-cr-query-frontend -n ${TEMPO_NS}
+    $CLIENT_EXE expose svc/grafana -n istio-system
   fi
 
   echo -e "Installation finished. You can port forward the services with: \n"
