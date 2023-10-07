@@ -229,7 +229,7 @@ func IstioConfigDelete(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
 	}
-	err = business.IstioConfig.DeleteIstioConfigDetail(cluster, namespace, objectType, object)
+	err = business.IstioConfig.DeleteIstioConfigDetail(r.Context(), cluster, namespace, objectType, object)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
@@ -265,7 +265,7 @@ func IstioConfigUpdate(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
 	}
 	jsonPatch := string(body)
-	updatedConfigDetails, err := business.IstioConfig.UpdateIstioConfigDetail(cluster, namespace, objectType, object, jsonPatch)
+	updatedConfigDetails, err := business.IstioConfig.UpdateIstioConfigDetail(r.Context(), cluster, namespace, objectType, object, jsonPatch)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
@@ -301,7 +301,7 @@ func IstioConfigCreate(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, "Create request could not be read: "+err.Error())
 	}
 
-	createdConfigDetails, err := business.IstioConfig.CreateIstioConfigDetail(cluster, namespace, objectType, body)
+	createdConfigDetails, err := business.IstioConfig.CreateIstioConfigDetail(r.Context(), cluster, namespace, objectType, body)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return

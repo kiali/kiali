@@ -130,7 +130,9 @@ func mockAddOnsCalls(t *testing.T, objects []runtime.Object, isIstioReachable bo
 	objects = append(objects, &osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}})
 
 	// Mock k8s api calls
-	k8s := mockDeploymentCall(objects, isIstioReachable)
+	mockDeploymentCall(objects, isIstioReachable)
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	k8s.OpenShift = true
 	routes := mockAddOnCalls(defaultAddOnCalls(&grafanaCalls, &prometheusCalls))
 	httpServer := mockServer(t, routes)
 
@@ -266,7 +268,7 @@ func TestGrafanaNotWorking(t *testing.T) {
 			}),
 	}
 	objects = append(objects, &osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}})
-	k8s := mockDeploymentCall(objects, true)
+	mockDeploymentCall(objects, true)
 	addOnsStetup := defaultAddOnCalls(&grafanaCalls, &prometheusCalls)
 	addOnsStetup["grafana"] = addOnsSetup{
 		Url:        "/grafana/mock",
@@ -279,6 +281,9 @@ func TestGrafanaNotWorking(t *testing.T) {
 	// Adapt the AddOns URLs to the mock Server
 	conf := addonAddMockUrls(httpServer.URL, config.NewConfig(), false)
 	config.Set(conf)
+
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	k8s.OpenShift = true
 
 	// Set global cache var
 	SetupBusinessLayer(t, k8s, *conf)
@@ -563,8 +568,6 @@ func TestIstiodUnreachable(t *testing.T) {
 	}
 	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objects, false, false)
 
-	k8s = &fakeIstiodConnecter{k8s, istioStatus}
-
 	conf := config.Get()
 	conf.IstioLabels.AppLabelName = "app.kubernetes.io/name"
 	conf.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
@@ -579,6 +582,7 @@ func TestIstiodUnreachable(t *testing.T) {
 
 	// Set global cache var
 	SetupBusinessLayer(t, k8s, *conf)
+	WithControlPlaneMonitor(&FakeControlPlaneMonitor{status: istioStatus})
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
@@ -788,21 +792,8 @@ func mockFailingJaeger() (tracing.ClientInterface, error) {
 	return tracing.ClientInterface(j), nil
 }
 
-// func newFakeIstiodConnector()
-type fakeIstiodConnecter struct {
-	kubernetes.ClientInterface
-	status kubernetes.IstioComponentStatus
-}
-
-func (in *fakeIstiodConnecter) CanConnectToIstiod() (kubernetes.IstioComponentStatus, error) {
-	return in.status, nil
-}
-
 // Setup K8S api call to fetch Pods
-func mockDeploymentCall(objects []runtime.Object, isIstioReachable bool) kubernetes.ClientInterface {
-	k8s := kubetest.NewFakeK8sClient(objects...)
-	k8s.OpenShift = true
-
+func mockDeploymentCall(objects []runtime.Object, isIstioReachable bool) {
 	var istioStatus kubernetes.IstioComponentStatus
 	if !isIstioReachable {
 		for _, obj := range objects {
@@ -819,7 +810,7 @@ func mockDeploymentCall(objects []runtime.Object, isIstioReachable bool) kuberne
 		}
 	}
 
-	return &fakeIstiodConnecter{k8s, istioStatus}
+	WithControlPlaneMonitor(&FakeControlPlaneMonitor{status: istioStatus})
 }
 
 func fakeDeploymentWithStatus(name string, labels map[string]string, status apps_v1.DeploymentStatus) *apps_v1.Deployment {

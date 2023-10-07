@@ -145,8 +145,8 @@ func TestGetWorkloadListFromReplicationControllers(t *testing.T) {
 	k8s.OpenShift = true
 	SetupBusinessLayer(t, k8s, *config.NewConfig())
 	svc := setupWorkloadService(k8s, config.NewConfig())
+	svc.excludedWorkloads = map[string]bool{}
 
-	excludedWorkloads = map[string]bool{}
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
@@ -184,8 +184,8 @@ func TestGetWorkloadListFromDeploymentConfigs(t *testing.T) {
 	k8s.OpenShift = true
 	SetupBusinessLayer(t, k8s, *config.NewConfig())
 	svc := setupWorkloadService(k8s, config.NewConfig())
+	svc.excludedWorkloads = map[string]bool{}
 
-	excludedWorkloads = map[string]bool{}
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
@@ -223,8 +223,8 @@ func TestGetWorkloadListFromStatefulSets(t *testing.T) {
 	k8s.OpenShift = true
 	SetupBusinessLayer(t, k8s, *config.NewConfig())
 	svc := setupWorkloadService(k8s, config.NewConfig())
+	svc.excludedWorkloads = map[string]bool{}
 
-	excludedWorkloads = map[string]bool{}
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
@@ -262,8 +262,8 @@ func TestGetWorkloadListFromDaemonSets(t *testing.T) {
 	k8s.OpenShift = true
 	SetupBusinessLayer(t, k8s, *config.NewConfig())
 	svc := setupWorkloadService(k8s, config.NewConfig())
+	svc.excludedWorkloads = map[string]bool{}
 
-	excludedWorkloads = map[string]bool{}
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
@@ -394,6 +394,7 @@ func TestGetWorkloadFromDeployment(t *testing.T) {
 	// Disabling CustomDashboards on Workload details testing
 	conf := config.NewConfig()
 	conf.ExternalServices.CustomDashboards.Enabled = false
+	kubernetes.SetConfig(t, *conf)
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
@@ -408,7 +409,7 @@ func TestGetWorkloadFromDeployment(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
+	SetupBusinessLayer(t, k8s, *conf)
 	svc := setupWorkloadService(k8s, conf)
 
 	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details-v1", WorkloadType: "", IncludeServices: false}
@@ -426,8 +427,10 @@ func TestGetWorkloadWithInvalidWorkloadType(t *testing.T) {
 	require := require.New(t)
 
 	// Disabling CustomDashboards on Workload details testing
+	// otherwise this adds 10s to the test due to an http timeout.
 	conf := config.NewConfig()
 	conf.ExternalServices.CustomDashboards.Enabled = false
+	kubernetes.SetConfig(t, *conf)
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
@@ -444,7 +447,7 @@ func TestGetWorkloadWithInvalidWorkloadType(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
+	SetupBusinessLayer(t, k8s, *conf)
 	svc := setupWorkloadService(k8s, conf)
 
 	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details-v1", WorkloadType: "invalid", IncludeServices: false}
@@ -462,8 +465,10 @@ func TestGetWorkloadFromPods(t *testing.T) {
 	require := require.New(t)
 
 	// Disabling CustomDashboards on Workload details testing
+	// otherwise this adds 10s to the test due to an http timeout.
 	conf := config.NewConfig()
 	conf.ExternalServices.CustomDashboards.Enabled = false
+	kubernetes.SetConfig(t, *conf)
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
@@ -479,7 +484,7 @@ func TestGetWorkloadFromPods(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
+	SetupBusinessLayer(t, k8s, *conf)
 	svc := setupWorkloadService(k8s, conf)
 
 	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "custom-controller", WorkloadType: "", IncludeServices: false}
@@ -701,8 +706,10 @@ func TestDuplicatedControllers(t *testing.T) {
 	require := require.New(t)
 
 	// Disabling CustomDashboards on Workload details testing
+	// otherwise this adds 10s to the test due to an http timeout.
 	conf := config.NewConfig()
 	conf.ExternalServices.CustomDashboards.Enabled = false
+	kubernetes.SetConfig(t, *conf)
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
@@ -727,11 +734,13 @@ func TestDuplicatedControllers(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
+	SetupBusinessLayer(t, k8s, *conf)
 	svc := setupWorkloadService(k8s, conf)
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
-	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
+	workloadList, err := svc.GetWorkloadList(context.TODO(), criteria)
+	require.NoError(err)
+
 	workloads := workloadList.Workloads
 
 	criteria = WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "duplicated-v1", WorkloadType: "", IncludeServices: false}

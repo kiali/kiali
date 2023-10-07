@@ -33,12 +33,13 @@ func TestGetNamespaceValidations(t *testing.T) {
 
 	validations, err := vs.GetValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "", "")
 	require.NoError(err)
-	assert.NotEmpty(validations)
+	require.NotEmpty(validations)
 	assert.True(validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
 }
 
 func TestGetAllValidations(t *testing.T) {
 	assert := assert.New(t)
+	require := require.New(t)
 	conf := config.NewConfig()
 	config.Set(conf)
 
@@ -46,7 +47,7 @@ func TestGetAllValidations(t *testing.T) {
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
 
 	validations, _ := vs.GetValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "", "", "")
-	assert.NotEmpty(validations)
+	require.NotEmpty(validations)
 	assert.True(validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
 }
 
@@ -296,13 +297,16 @@ func mockCombinedValidationService(t *testing.T, istioConfigList *models.IstioCo
 
 	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
 
-	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
-	cache.SetRegistryStatus(&kubernetes.RegistryStatus{
-		Services: data.CreateFakeMultiRegistryServices(services, "test", "*"),
+	conf := config.NewConfig()
+	cache := SetupBusinessLayer(t, k8s, *conf)
+	cache.SetRegistryStatus(map[string]*kubernetes.RegistryStatus{
+		conf.KubernetesConfig.ClusterName: {
+			Services: data.CreateFakeMultiRegistryServices(services, "test", "*"),
+		},
 	})
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[config.Get().KubernetesConfig.ClusterName] = k8s
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	return IstioValidationsService{userClients: k8sclients, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 }
 

@@ -85,7 +85,7 @@ func TestParseRegistryServices(t *testing.T) {
 	rServices := map[string][]byte{
 		"istiod1": bServicesz,
 	}
-	registryServices, err2 := kubernetes.ParseRegistryServices(rServices)
+	registryServices, err2 := parseRegistryServices(rServices)
 	assert.NoError(err2)
 
 	assert.Equal(3, len(registryServices))
@@ -113,7 +113,7 @@ func TestFilterLocalIstioRegistry(t *testing.T) {
 	rServices := map[string][]byte{
 		"istiod1": bServicesz,
 	}
-	registryServices, err2 := kubernetes.ParseRegistryServices(rServices)
+	registryServices, err2 := parseRegistryServices(rServices)
 	assert.NoError(err2)
 
 	assert.Equal(true, filterIstioServiceByClusterId("istio-east", registryServices[0]))

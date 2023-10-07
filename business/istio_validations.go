@@ -86,10 +86,6 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, 
 		wg.Add(1)
 	}
 
-	if istioApiEnabled {
-		wg.Add(1)
-	}
-
 	// We fetch without target service as some validations will require full-namespace details
 	go in.fetchIstioConfigList(ctx, &istioConfigList, &mtlsDetails, &rbacDetails, cluster, namespace, errChan, &wg)
 
@@ -106,8 +102,8 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, 
 	}
 
 	if istioApiEnabled {
-		// @TODO registry services for remote cluster
-		go in.fetchRegistryServices(&registryServices, errChan, &wg)
+		criteria := RegistryCriteria{AllNamespaces: true, Cluster: cluster}
+		registryServices = in.businessLayer.RegistryStatus.GetRegistryServices(criteria)
 	}
 
 	wg.Wait()
@@ -197,16 +193,13 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	// Get all the Istio objects from a Namespace and all gateways from every namespace
 	wg.Add(3)
 
-	if istioApiEnabled {
-		wg.Add(1)
-	}
-
 	go in.fetchIstioConfigList(ctx, &istioConfigList, &mtlsDetails, &rbacDetails, cluster, namespace, errChan, &wg)
 	go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, cluster, &namespaces, errChan, &wg)
 	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, cluster, errChan, &wg)
 
 	if istioApiEnabled {
-		go in.fetchRegistryServices(&registryServices, errChan, &wg)
+		criteria := RegistryCriteria{AllNamespaces: true, Cluster: cluster}
+		registryServices = in.businessLayer.RegistryStatus.GetRegistryServices(criteria)
 	}
 
 	wg.Wait()
@@ -570,20 +563,6 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 		errChan <- err
 	} else {
 		mtlsDetails.EnabledAutoMtls = icm.GetEnableAutoMtls()
-	}
-}
-
-func (in *IstioValidationsService) fetchRegistryServices(rValue *[]*kubernetes.RegistryService, errChan chan error, wg *sync.WaitGroup) {
-	defer wg.Done()
-	criteria := RegistryCriteria{AllNamespaces: true}
-	registryServices, err := in.businessLayer.RegistryStatus.GetRegistryServices(criteria)
-	if err != nil {
-		select {
-		case errChan <- err:
-		default:
-		}
-	} else {
-		*rValue = registryServices
 	}
 }
 

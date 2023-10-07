@@ -176,6 +176,7 @@ export const ensureObjectsInTable = (...names: string[]) => {
   });
 };
 
+// Only works for a single cluster.
 export const checkHealthIndicatorInTable = (
   targetNamespace: string,
   targetType: string | null,
@@ -186,7 +187,20 @@ export const checkHealthIndicatorInTable = (
     ? `${targetNamespace}_${targetType}_${targetRowItemName}`
     : `${targetNamespace}_${targetRowItemName}`;
 
-  cy.get(`tr[data-test=VirtualItem_Ns${selector}]`).find('span').filter(`.icon-${healthStatus}`).should('exist');
+  // cy.getBySel(`VirtualItem_Ns${selector}]`).find('span').filter(`.icon-${healthStatus}`).should('exist');
+  // Fetch the cluster info from /api/clusters
+  // TODO: Move this somewhere else since other tests will most likely need this info as well.
+  // VirtualItem_Clustercluster-default_Nsbookinfo_details
+  // VirtualItem_Clustercluster-default_Nsbookinfo_productpage
+  cy.request('/api/clusters').then(response => {
+    cy.wrap(response.isOkStatusCode).should('be.true');
+    cy.wrap(response.body).should('have.length', 1);
+    const cluster = response.body[0].name;
+    cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${selector}`)
+      .find('span')
+      .filter(`.icon-${healthStatus}`)
+      .should('exist');
+  });
 };
 
 export const checkHealthStatusInTable = (
@@ -199,11 +213,16 @@ export const checkHealthStatusInTable = (
     ? `${targetNamespace}_${targetType}_${targetRowItemName}`
     : `${targetNamespace}_${targetRowItemName}`;
 
-  cy.get(`[data-test=VirtualItem_Ns${selector}] td:first-child span[class=pf-v5-c-icon__content]`).trigger(
-    'mouseenter'
-  );
+  cy.request('/api/clusters').then(response => {
+    cy.wrap(response.isOkStatusCode).should('be.true');
+    cy.wrap(response.body).should('have.length', 1);
+    const cluster = response.body[0].name;
+    cy.get(
+      `[data-test=VirtualItem_Cluster${cluster}_Ns${selector}] td:first-child span[class=pf-v5-c-icon__content]`
+    ).trigger('mouseenter');
 
-  cy.get(`[aria-label='Health indicator'] strong`).should('contain.text', healthStatus);
+    cy.get(`[aria-label='Health indicator'] strong`).should('contain.text', healthStatus);
+  });
 };
 
 And('an entry for {string} cluster should be in the table', (cluster: string) => {

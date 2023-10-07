@@ -58,11 +58,12 @@ export class VirtualItem extends React.Component<VirtualItemProps, VirtualItemSt
 
   render() {
     const { style, className, item } = this.props;
-    let key = `VirtualItem_${'namespace' in item ? `Ns${item.namespace}_${item.name}` : item.name}`;
+    const cluster = item.cluster ? `_Cluster${item.cluster}` : '';
+    const namespace = 'namespace' in item ? `_Ns${item.namespace}` : '';
+    const type = 'type' in item ? `_${item.type}` : '';
+    // End result looks like: VirtualItem_Clusterwest_Nsbookinfo_gateway_bookinfo-gateway
 
-    if ('type' in item) {
-      key = `VirtualItem_Ns${item.namespace}_${item.type}_${item.name}`;
-    }
+    const key = `VirtualItem${cluster}${namespace}${type}_${item.name}`;
 
     return (
       <Tr style={style} className={className} role="row" key={key} data-test={key}>

@@ -242,14 +242,24 @@ When('I visit the overview page', function () {
   cy.contains('Inbound traffic', { matchCase: false }); // Make sure data finished loading, so avoid broken tests because of a re-render
 });
 
+// Only works for single cluster.
 When('I override the default automatic sidecar injection policy in the namespace to enabled', function () {
   cy.request('GET', '/api/status').should(response => {
     expect(response.status).to.equal(200);
 
-    cy.get('[data-test=overview-type-LIST]').should('be.visible').click();
-    cy.get(`[data-test=VirtualItem_${this.targetNamespace}] button[aria-label=Actions]`).should('be.visible').click();
-    cy.get(`[data-test=enable-${this.targetNamespace}-namespace-sidecar-injection]`).should('be.visible').click();
-    cy.get('[data-test=confirm-traffic-policies]').should('be.visible').click();
+    cy.request('/api/clusters').then(response => {
+      cy.wrap(response.isOkStatusCode).should('be.true');
+      cy.wrap(response.body).should('have.length', 1);
+      const cluster = response.body[0].name;
+
+      cy.getBySel('overview-type-LIST').should('be.visible').click();
+      cy.get(`[data-test=VirtualItem_Cluster${cluster}_${this.targetNamespace}] button[aria-label=Actions]`)
+        .should('be.visible')
+        .click();
+      cy.getBySel(`enable-${this.targetNamespace}-namespace-sidecar-injection`).should('be.visible').click();
+      cy.getBySel('confirm-traffic-policies').should('be.visible').click();
+    });
+
     ensureKialiFinishedLoading();
   });
 });
@@ -260,13 +270,21 @@ When(
     cy.request('GET', '/api/status').should(response => {
       expect(response.status).to.equal(200);
 
-      cy.get('[data-test=overview-type-LIST]').should('be.visible').click();
-      cy.get(`[data-test=VirtualItem_${this.targetNamespace}] button[aria-label=Actions]`).should('be.visible').click();
-      cy.get(`[data-test=${enabledOrDisabled}-${this.targetNamespace}-namespace-sidecar-injection]`)
-        .should('be.visible')
-        .click();
-      cy.get('[data-test=confirm-traffic-policies]').should('be.visible').click();
-      ensureKialiFinishedLoading();
+      cy.request('/api/clusters').then(response => {
+        cy.wrap(response.isOkStatusCode).should('be.true');
+        cy.wrap(response.body).should('have.length', 1);
+        const cluster = response.body[0].name;
+
+        cy.getBySel('overview-type-LIST').should('be.visible').click();
+        cy.get(`[data-test=VirtualItem_Cluster${cluster}_${this.targetNamespace}] button[aria-label=Actions]`)
+          .should('be.visible')
+          .click();
+        cy.getBySel(`${enabledOrDisabled}-${this.targetNamespace}-namespace-sidecar-injection`)
+          .should('be.visible')
+          .click();
+        cy.getBySel('confirm-traffic-policies').should('be.visible').click();
+        ensureKialiFinishedLoading();
+      });
     });
   }
 );
@@ -275,11 +293,19 @@ When('I remove override configuration for sidecar injection in the namespace', f
   cy.request('GET', '/api/status').should(response => {
     expect(response.status).to.equal(200);
 
-    cy.get('[data-test=overview-type-LIST]').should('be.visible').click();
-    cy.get(`[data-test=VirtualItem_${this.targetNamespace}] button[aria-label=Actions]`).should('be.visible').click();
-    cy.get(`[data-test=remove-${this.targetNamespace}-namespace-sidecar-injection]`).should('be.visible').click();
-    cy.get('[data-test=confirm-traffic-policies]').should('be.visible').click();
-    ensureKialiFinishedLoading();
+    cy.request('/api/clusters').then(response => {
+      cy.wrap(response.isOkStatusCode).should('be.true');
+      cy.wrap(response.body).should('have.length', 1);
+      const cluster = response.body[0].name;
+
+      cy.getBySel('overview-type-LIST').should('be.visible').click();
+      cy.get(`[data-test=VirtualItem_Cluster${cluster}_${this.targetNamespace}] button[aria-label=Actions]`)
+        .should('be.visible')
+        .click();
+      cy.getBySel(`remove-${this.targetNamespace}-namespace-sidecar-injection`).should('be.visible').click();
+      cy.getBySel('confirm-traffic-policies').should('be.visible').click();
+      ensureKialiFinishedLoading();
+    });
   });
 });
 
@@ -309,16 +335,29 @@ Then('I should see the override annotation for sidecar injection in the namespac
     expect(response.status).to.equal(200);
     const expectation = 'exist';
 
-    cy.get(`[data-test=VirtualItem_${this.targetNamespace}]`)
-      .contains(`istio-injection=${enabled}`)
-      .should(expectation);
+    cy.request('/api/clusters').then(response => {
+      cy.wrap(response.isOkStatusCode).should('be.true');
+      cy.wrap(response.body).should('have.length', 1);
+      const cluster = response.body[0].name;
+      cy.getBySel(`VirtualItem_Cluster${cluster}_${this.targetNamespace}`)
+        .contains(`istio-injection=${enabled}`)
+        .should(expectation);
+    });
   });
 });
 
 Then('I should see no override annotation for sidecar injection in the namespace', function () {
   cy.request('GET', '/api/status').should(response => {
     expect(response.status).to.equal(200);
-    cy.get(`[data-test=VirtualItem_${this.targetNamespace}]`).contains(`istio-injection`).should('not.exist');
+    cy.request('/api/clusters').then(response => {
+      cy.wrap(response.isOkStatusCode).should('be.true');
+      cy.wrap(response.body).should('have.length', 1);
+      const cluster = response.body[0].name;
+
+      cy.getBySel(`VirtualItem_Cluster${cluster}_${this.targetNamespace}`)
+        .contains(`istio-injection`)
+        .should('not.exist');
+    });
   });
 });
 

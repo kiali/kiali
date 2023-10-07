@@ -54,8 +54,17 @@ func ServiceList(w http.ResponseWriter, r *http.Request) {
 	p := serviceListParams{}
 	p.extract(r)
 
-	criteria := business.ServiceCriteria{Namespace: p.Namespace, IncludeHealth: p.IncludeHealth,
-		IncludeIstioResources: p.IncludeIstioResources, IncludeOnlyDefinitions: p.IncludeOnlyDefinitions, RateInterval: "", QueryTime: p.QueryTime}
+	criteria := business.ServiceCriteria{
+		// Purposefully leaving cluster out of Criteria because the frontend doesn't
+		// yet send the cluster param and the business service will iterate over all
+		// clusters if a cluster criteria is not provided which is what we want.
+		Namespace:              p.Namespace,
+		IncludeHealth:          p.IncludeHealth,
+		IncludeIstioResources:  p.IncludeIstioResources,
+		IncludeOnlyDefinitions: p.IncludeOnlyDefinitions,
+		RateInterval:           "",
+		QueryTime:              p.QueryTime,
+	}
 
 	// Get business layer
 	business, err := getBusiness(r)

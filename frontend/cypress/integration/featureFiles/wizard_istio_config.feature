@@ -1,7 +1,7 @@
 @wizard-istio-config
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
-Feature: Kiali Istio Config page
+Feature: Kiali Istio Config wizard
 
   On the Istio Config page, an admin should see all the Istio Config objects.
   The admin should be able to filter for the Istio Config objects they are looking for

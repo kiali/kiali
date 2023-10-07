@@ -35,12 +35,18 @@ import (
 )
 
 func NewWorkloadService(userClients map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, cache cache.KialiCache, layer *Layer, config *config.Config) *WorkloadService {
+	excludedWorkloads := make(map[string]bool)
+	for _, w := range config.KubernetesConfig.ExcludeWorkloads {
+		excludedWorkloads[w] = true
+	}
+
 	return &WorkloadService{
-		businessLayer: layer,
-		cache:         cache,
-		config:        config,
-		prom:          prom,
-		userClients:   userClients,
+		businessLayer:     layer,
+		cache:             cache,
+		config:            config,
+		excludedWorkloads: excludedWorkloads,
+		prom:              prom,
+		userClients:       userClients,
 	}
 }
 
@@ -51,9 +57,10 @@ type WorkloadService struct {
 	// The global kiali cache. This should be passed into the workload service rather than created inside of it.
 	cache cache.KialiCache
 	// The global kiali config.
-	config      *config.Config
-	prom        prometheus.ClientInterface
-	userClients map[string]kubernetes.ClientInterface
+	config            *config.Config
+	excludedWorkloads map[string]bool
+	prom              prometheus.ClientInterface
+	userClients       map[string]kubernetes.ClientInterface
 }
 
 type WorkloadCriteria struct {
@@ -98,24 +105,20 @@ type LogOptions struct {
 	core_v1.PodLogOptions
 }
 
-var (
-	excludedWorkloads map[string]bool
+// Matches an ISO8601 full date
+var severityRegexp = regexp.MustCompile(`(?i)ERROR|WARN|DEBUG|TRACE`)
 
-	// Matches an ISO8601 full date
-	severityRegexp = regexp.MustCompile(`(?i)ERROR|WARN|DEBUG|TRACE`)
-)
-
-func isWorkloadIncluded(workload string) bool {
-	if excludedWorkloads == nil {
+func (in *WorkloadService) isWorkloadIncluded(workload string) bool {
+	if in.excludedWorkloads == nil {
 		return true
 	}
-	return !excludedWorkloads[workload]
+	return !in.excludedWorkloads[workload]
 }
 
 // isWorkloadValid returns true if it is a known workload type and it is not configured as excluded
-func isWorkloadValid(workloadType string) bool {
+func (in *WorkloadService) isWorkloadValid(workloadType string) bool {
 	_, knownWorkloadType := controllerOrder[workloadType]
-	return knownWorkloadType && isWorkloadIncluded(workloadType)
+	return knownWorkloadType && in.isWorkloadIncluded(workloadType)
 }
 
 // @TODO do validations per cluster
@@ -148,7 +151,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		Validations: models.IstioValidations{},
 	}
 	var ws models.Workloads
-	//var authpolicies []*security_v1beta1.AuthorizationPolicy
+	// var authpolicies []*security_v1beta1.AuthorizationPolicy
 	var err error
 
 	nFetches := 1
@@ -689,7 +692,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		defer wg.Done()
 
 		var err error
-		if isWorkloadIncluded(kubernetes.ReplicationControllerType) {
+		if in.isWorkloadIncluded(kubernetes.ReplicationControllerType) {
 			// No Cache for ReplicationControllers
 			repcon, err = userClient.GetReplicationControllers(namespace)
 			if err != nil {
@@ -704,7 +707,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		defer wg.Done()
 
 		var err error
-		if userClient.IsOpenShift() && isWorkloadIncluded(kubernetes.DeploymentConfigType) {
+		if userClient.IsOpenShift() && in.isWorkloadIncluded(kubernetes.DeploymentConfigType) {
 			// No cache for DeploymentConfigs
 			depcon, err = userClient.GetDeploymentConfigs(namespace)
 			if err != nil {
@@ -719,7 +722,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		defer wg.Done()
 
 		var err error
-		if isWorkloadIncluded(kubernetes.StatefulSetType) {
+		if in.isWorkloadIncluded(kubernetes.StatefulSetType) {
 			fulset, err = kubeCache.GetStatefulSets(namespace)
 			if err != nil {
 				log.Errorf("Error fetching StatefulSets per namespace %s: %s", namespace, err)
@@ -733,7 +736,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		defer wg.Done()
 
 		var err error
-		if isWorkloadIncluded(kubernetes.CronJobType) {
+		if in.isWorkloadIncluded(kubernetes.CronJobType) {
 			// No cache for Cronjobs
 			conjbs, err = userClient.GetCronJobs(namespace)
 			if err != nil {
@@ -748,7 +751,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		defer wg.Done()
 
 		var err error
-		if isWorkloadIncluded(kubernetes.JobType) {
+		if in.isWorkloadIncluded(kubernetes.JobType) {
 			// No cache for Jobs
 			jbs, err = userClient.GetJobs(namespace)
 			if err != nil {
@@ -763,7 +766,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		defer wg.Done()
 
 		var err error
-		if isWorkloadIncluded(kubernetes.DaemonSetType) {
+		if in.isWorkloadIncluded(kubernetes.DaemonSetType) {
 			daeset, err = kialiCache.GetDaemonSets(namespace)
 			if err != nil {
 				log.Errorf("Error fetching DaemonSets per namespace %s: %s", namespace, err)
@@ -784,7 +787,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 	for _, pod := range pods {
 		if len(pod.OwnerReferences) != 0 {
 			for _, ref := range pod.OwnerReferences {
-				if ref.Controller != nil && *ref.Controller && isWorkloadIncluded(ref.Kind) {
+				if ref.Controller != nil && *ref.Controller && in.isWorkloadIncluded(ref.Kind) {
 					if _, exist := controllers[ref.Name]; !exist {
 						controllers[ref.Name] = ref.Kind
 					} else {
@@ -822,7 +825,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 						if _, exist := controllers[ref.Name]; !exist {
 							// For valid owner controllers, delete the child ReplicaSet and add the parent controller,
 							// otherwise (for custom controllers), defer to the replica set.
-							if isWorkloadValid(ref.Kind) {
+							if in.isWorkloadValid(ref.Kind) {
 								controllers[ref.Name] = ref.Kind
 								delete(controllers, controllerName)
 							} else {
@@ -1271,7 +1274,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		}
 
 		var err error
-		if isWorkloadIncluded(kubernetes.ReplicationControllerType) {
+		if in.isWorkloadIncluded(kubernetes.ReplicationControllerType) {
 			// No cache for ReplicationControllers
 			repcon, err = client.GetReplicationControllers(criteria.Namespace)
 			if err != nil {
@@ -1290,7 +1293,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		}
 
 		var err error
-		if client.IsOpenShift() && isWorkloadIncluded(kubernetes.DeploymentConfigType) {
+		if client.IsOpenShift() && in.isWorkloadIncluded(kubernetes.DeploymentConfigType) {
 			// No cache for deploymentConfigs
 			depcon, err = client.GetDeploymentConfig(criteria.Namespace, criteria.WorkloadName)
 			if err != nil {
@@ -1308,7 +1311,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		}
 
 		var err error
-		if isWorkloadIncluded(kubernetes.StatefulSetType) {
+		if in.isWorkloadIncluded(kubernetes.StatefulSetType) {
 			fulset, err = kialiCache.GetStatefulSet(criteria.Namespace, criteria.WorkloadName)
 			if err != nil {
 				fulset = nil
@@ -1325,7 +1328,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		}
 
 		var err error
-		if isWorkloadIncluded(kubernetes.CronJobType) {
+		if in.isWorkloadIncluded(kubernetes.CronJobType) {
 			// No cache for CronJobs
 			conjbs, err = client.GetCronJobs(criteria.Namespace)
 			if err != nil {
@@ -1344,7 +1347,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		}
 
 		var err error
-		if isWorkloadIncluded(kubernetes.JobType) {
+		if in.isWorkloadIncluded(kubernetes.JobType) {
 			// No cache for Jobs
 			jbs, err = client.GetJobs(criteria.Namespace)
 			if err != nil {
@@ -1363,7 +1366,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		}
 
 		var err error
-		if isWorkloadIncluded(kubernetes.DaemonSetType) {
+		if in.isWorkloadIncluded(kubernetes.DaemonSetType) {
 			ds, err = kialiCache.GetDaemonSet(criteria.Namespace, criteria.WorkloadName)
 			if err != nil {
 				ds = nil
@@ -1384,7 +1387,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	for _, pod := range pods {
 		if len(pod.OwnerReferences) != 0 {
 			for _, ref := range pod.OwnerReferences {
-				if ref.Controller != nil && *ref.Controller && isWorkloadIncluded(ref.Kind) {
+				if ref.Controller != nil && *ref.Controller && in.isWorkloadIncluded(ref.Kind) {
 					if _, exist := controllers[ref.Name]; !exist {
 						controllers[ref.Name] = ref.Kind
 					} else {
@@ -1422,7 +1425,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 						// For valid owner controllers, delete the child ReplicaSet and add the parent controller,
 						// otherwise (for custom controllers), defer to the replica set.
 						if _, exist := controllers[ref.Name]; !exist {
-							if isWorkloadValid(ref.Kind) {
+							if in.isWorkloadValid(ref.Kind) {
 								controllers[ref.Name] = ref.Kind
 								delete(controllers, controllerName)
 							} else {
@@ -1880,7 +1883,7 @@ func (in *WorkloadService) updateWorkload(ctx context.Context, cluster string, n
 		go func(wkType string) {
 			defer wg.Done()
 			var err error
-			if isWorkloadIncluded(wkType) {
+			if in.isWorkloadIncluded(wkType) {
 				err = userClient.UpdateWorkload(namespace, workloadName, wkType, jsonPatch, patchType)
 			}
 			if err != nil {

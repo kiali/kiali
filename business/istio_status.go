@@ -16,10 +16,19 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
+func NewIstioStatusService(userClients map[string]kubernetes.ClientInterface, businessLayer *Layer, cpm ControlPlaneMonitor) IstioStatusService {
+	return IstioStatusService{
+		userClients:         userClients,
+		businessLayer:       businessLayer,
+		controlPlaneMonitor: cpm,
+	}
+}
+
 // SvcService deals with fetching istio/kubernetes services related content and convert to kiali model
 type IstioStatusService struct {
-	userClients   map[string]kubernetes.ClientInterface
-	businessLayer *Layer
+	userClients         map[string]kubernetes.ClientInterface
+	businessLayer       *Layer
+	controlPlaneMonitor ControlPlaneMonitor
 }
 
 func (iss *IstioStatusService) GetStatus(ctx context.Context, cluster string) (kubernetes.IstioComponentStatus, error) {
@@ -43,7 +52,7 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context, cluster string) (k
 
 func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, cluster string) (kubernetes.IstioComponentStatus, error) {
 	// Fetching workloads from component namespaces
-	workloads, err := iss.getComponentNamespacesWorkloads(ctx)
+	workloads, err := iss.getComponentNamespacesWorkloads(ctx, cluster)
 	if err != nil {
 		return kubernetes.IstioComponentStatus{}, err
 	}
@@ -58,7 +67,7 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 		return kubernetes.IstioComponentStatus{}, fmt.Errorf("Cluster %s doesn't exist ", cluster)
 	}
 
-	istiodStatus, err := k8s.CanConnectToIstiod()
+	istiodStatus, err := iss.controlPlaneMonitor.CanConnectToIstiod(k8s)
 	if err != nil {
 		return kubernetes.IstioComponentStatus{}, err
 	}
@@ -66,7 +75,7 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 	return deploymentStatus.Merge(istiodStatus), nil
 }
 
-func (iss *IstioStatusService) getComponentNamespacesWorkloads(ctx context.Context) ([]*models.Workload, error) {
+func (iss *IstioStatusService) getComponentNamespacesWorkloads(ctx context.Context, cluster string) ([]*models.Workload, error) {
 	var wg sync.WaitGroup
 
 	nss := map[string]bool{}
@@ -86,7 +95,7 @@ func (iss *IstioStatusService) getComponentNamespacesWorkloads(ctx context.Conte
 				defer wg.Done()
 				var wls models.Workloads
 				var err error
-				wls, err = iss.businessLayer.Workload.fetchWorkloads(ctx, n, "")
+				wls, err = iss.businessLayer.Workload.fetchWorkloadsFromCluster(ctx, cluster, n, "")
 				wliChan <- wls
 				errChan <- err
 			}(ctx, n, wlChan, errChan)

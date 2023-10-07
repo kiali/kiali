@@ -531,27 +531,28 @@ func TestDeleteIstioConfigDetails(t *testing.T) {
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache}
+	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache, controlPlaneMonitor: poller}
 
-	err := configService.DeleteIstioConfigDetail(conf.KubernetesConfig.ClusterName, "test", "virtualservices", "reviews-to-delete")
+	err := configService.DeleteIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", "virtualservices", "reviews-to-delete")
 	assert.Nil(err)
 }
 
 func TestUpdateIstioConfigDetails(t *testing.T) {
 	assert := assert.New(t)
+	require := require.New(t)
 	k8s := kubetest.NewFakeK8sClient(data.CreateEmptyVirtualService("reviews-to-update", "test", []string{"reviews"}))
 	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
 	conf := config.Get()
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache}
+	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache, controlPlaneMonitor: poller}
 
-	updatedVirtualService, err := configService.UpdateIstioConfigDetail(conf.KubernetesConfig.ClusterName, "test", "virtualservices", "reviews-to-update", "{}")
+	updatedVirtualService, err := configService.UpdateIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", "virtualservices", "reviews-to-update", "{}")
+	require.NoError(err)
 	assert.Equal("test", updatedVirtualService.Namespace.Name)
 	assert.Equal("virtualservices", updatedVirtualService.ObjectType)
 	assert.Equal("reviews-to-update", updatedVirtualService.VirtualService.Name)
-	assert.Nil(err)
 }
 
 func TestCreateIstioConfigDetails(t *testing.T) {
@@ -562,9 +563,9 @@ func TestCreateIstioConfigDetails(t *testing.T) {
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache}
+	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache, controlPlaneMonitor: poller}
 
-	createVirtualService, err := configService.CreateIstioConfigDetail(conf.KubernetesConfig.ClusterName, "test", "virtualservices", []byte("{}"))
+	createVirtualService, err := configService.CreateIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", "virtualservices", []byte("{}"))
 	assert.Equal("test", createVirtualService.Namespace.Name)
 	assert.Equal("virtualservices", createVirtualService.ObjectType)
 	// Name is now encoded in the payload of the virtualservice so, it modifies this test

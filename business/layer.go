@@ -6,7 +6,6 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/tracing"
 )
@@ -15,24 +14,23 @@ import (
 // A business layer is created per token/user. Any data that
 // needs to be saved across layers is saved in the Kiali Cache.
 type Layer struct {
-	App              AppService
-	Health           HealthService
-	IstioConfig      IstioConfigService
-	IstioStatus      IstioStatusService
-	IstioCerts       IstioCertsService
-	Tracing          TracingService
-	Mesh             MeshService
-	Namespace        NamespaceService
-	OpenshiftOAuth   OpenshiftOAuthService
-	ProxyLogging     ProxyLoggingService
-	ProxyStatus      ProxyStatusService
-	RegistryStatus   RegistryStatusService
-	RegistryStatuses map[string]RegistryStatusService // Key is the cluster name
-	Svc              SvcService
-	TLS              TLSService
-	TokenReview      TokenReviewService
-	Validations      IstioValidationsService
-	Workload         WorkloadService
+	App            AppService
+	Health         HealthService
+	IstioConfig    IstioConfigService
+	IstioStatus    IstioStatusService
+	IstioCerts     IstioCertsService
+	Tracing        TracingService
+	Mesh           MeshService
+	Namespace      NamespaceService
+	OpenshiftOAuth OpenshiftOAuthService
+	ProxyLogging   ProxyLoggingService
+	ProxyStatus    ProxyStatusService
+	RegistryStatus RegistryStatusService
+	Svc            SvcService
+	TLS            TLSService
+	TokenReview    TokenReviewService
+	Validations    IstioValidationsService
+	Workload       WorkloadService
 }
 
 // Global clientfactory and prometheus clients.
@@ -41,43 +39,15 @@ var (
 	tracingClient    tracing.ClientInterface
 	kialiCache       cache.KialiCache
 	prometheusClient prometheus.ClientInterface
+	poller           ControlPlaneMonitor
 )
 
-// sets the global kiali cache var.
-func initKialiCache() error {
-	conf := config.Get()
-
-	if excludedWorkloads == nil {
-		excludedWorkloads = make(map[string]bool)
-		for _, w := range conf.KubernetesConfig.ExcludeWorkloads {
-			excludedWorkloads[w] = true
-		}
-	}
-
-	userClient, err := kubernetes.GetClientFactory()
-	if err != nil {
-		log.Errorf("Failed to create client factory. Err: %s", err)
-		return err
-	}
-	clientFactory = userClient
-
-	log.Infof("Initializing Kiali Cache")
-
-	cache, err := cache.NewKialiCache(clientFactory, *conf)
-	if err != nil {
-		log.Errorf("Error initializing Kiali Cache. Details: %s", err)
-		return err
-	}
-
+// Start sets the globals necessary for the business layer.
+// TODO: Refactor out global vars.
+func Start(cf kubernetes.ClientFactory, controlPlaneMonitor ControlPlaneMonitor, cache cache.KialiCache) {
+	clientFactory = cf
 	kialiCache = cache
-
-	return nil
-}
-
-// Start initializes the Kiali Cache and sets the
-// globals necessary for the business layer.
-func Start() error {
-	return initKialiCache()
+	poller = controlPlaneMonitor
 }
 
 // Get the business.Layer
@@ -132,8 +102,8 @@ func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAC
 	// TODO: Modify the k8s argument to other services to pass the whole k8s map if needed
 	temporaryLayer.App = AppService{prom: prom, userClients: userClients, businessLayer: temporaryLayer}
 	temporaryLayer.Health = HealthService{prom: prom, businessLayer: temporaryLayer, userClients: userClients}
-	temporaryLayer.IstioConfig = IstioConfigService{config: *conf, userClients: userClients, kialiCache: kialiCache, businessLayer: temporaryLayer}
-	temporaryLayer.IstioStatus = IstioStatusService{userClients: userClients, businessLayer: temporaryLayer}
+	temporaryLayer.IstioConfig = IstioConfigService{config: *conf, userClients: userClients, kialiCache: kialiCache, businessLayer: temporaryLayer, controlPlaneMonitor: poller}
+	temporaryLayer.IstioStatus = NewIstioStatusService(userClients, temporaryLayer, poller)
 	temporaryLayer.IstioCerts = IstioCertsService{k8s: userClients[homeClusterName], businessLayer: temporaryLayer}
 	temporaryLayer.Tracing = TracingService{loader: tracingClient, businessLayer: temporaryLayer}
 	temporaryLayer.Namespace = NewNamespaceService(userClients, kialiSAClients, kialiCache, *conf)
@@ -142,22 +112,12 @@ func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAC
 	temporaryLayer.ProxyStatus = ProxyStatusService{kialiSAClients: kialiSAClients, kialiCache: kialiCache, businessLayer: temporaryLayer}
 	// Out of order because it relies on ProxyStatus
 	temporaryLayer.ProxyLogging = ProxyLoggingService{userClients: userClients, proxyStatus: &temporaryLayer.ProxyStatus}
-	temporaryLayer.RegistryStatus = RegistryStatusService{k8s: userClients[homeClusterName], businessLayer: temporaryLayer}
+	temporaryLayer.RegistryStatus = RegistryStatusService{kialiCache: kialiCache}
 	temporaryLayer.TLS = TLSService{userClients: userClients, kialiCache: kialiCache, businessLayer: temporaryLayer}
 	temporaryLayer.Svc = SvcService{config: *conf, kialiCache: kialiCache, businessLayer: temporaryLayer, prom: prom, userClients: userClients}
 	temporaryLayer.TokenReview = NewTokenReview(userClients[homeClusterName])
 	temporaryLayer.Validations = IstioValidationsService{userClients: userClients, businessLayer: temporaryLayer}
 	temporaryLayer.Workload = *NewWorkloadService(userClients, prom, kialiCache, temporaryLayer, conf)
 
-	registryStatuses := make(map[string]RegistryStatusService)
-	for name, client := range userClients {
-		registryStatuses[name] = RegistryStatusService{k8s: client, businessLayer: temporaryLayer}
-	}
-	temporaryLayer.RegistryStatuses = registryStatuses
-
 	return temporaryLayer
-}
-
-func Stop() {
-	kialiCache.Stop()
 }

@@ -1,9 +1,8 @@
 import { Before, Given, Then, When, And } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 
-
-const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT')
-const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT')
+const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
+const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
 
 Before(() => {
   // Focing to not stop cypress on unexpected errors not related to the tests.
@@ -195,10 +194,14 @@ Then('there should be a {string} application indicator in the namespace', functi
     .should('exist');
 });
 
-Then('there should be a {string} application indicator in the namespace in the {string} cluster', function (healthStatus: string, cluster:string) {
-  cy.get(
-    `[data-test=CardItem_${this.targetNamespace}_${cluster}] [data-test=overview-app-health]`).find('span').filter(`.icon-${healthStatus}`)
-  .should('exist');
+Then('there should be a {string} application indicator in the namespace in the {string} cluster', function (
+  healthStatus: string,
+  cluster: string
+) {
+  cy.get(`[data-test=CardItem_${this.targetNamespace}_${cluster}] [data-test=overview-app-health]`)
+    .find('span')
+    .filter(`.icon-${healthStatus}`)
+    .should('exist');
 });
 
 Then('the {string} application indicator should list the application', function (healthStatus: string) {
@@ -222,17 +225,24 @@ Then('the {string} application indicator should list the application', function 
   ).should('contain.text', this.targetApp);
 });
 
-Then('the {string} application indicator for the {string} cluster should list the application', function (healthStatus: string, cluster:string) {
+Then('the {string} application indicator for the {string} cluster should list the application', function (
+  healthStatus: string,
+  cluster: string
+) {
   let healthIndicatorStatusKey = healthStatus;
   if (healthStatus === 'idle') {
     healthIndicatorStatusKey = 'not-ready';
   }
 
+  cy.get(`[data-test=CardItem_${this.targetNamespace}_${cluster}] [data-test=overview-app-health]`)
+    .find('span')
+    .filter(`.icon-${healthStatus}`)
+    .trigger('mouseenter');
   cy.get(
-    `[data-test=CardItem_${this.targetNamespace}_${cluster}] [data-test=overview-app-health]`).find('span').filter(`.icon-${healthStatus}`)
-  .trigger('mouseenter');
-  cy.get(
-    `[aria-label='Overview status'] [data-test=${this.targetNamespace}-${healthIndicatorStatusKey}-${this.targetApp}]`).find('span').filter(`.icon-${healthStatus}`)
+    `[aria-label='Overview status'] [data-test=${this.targetNamespace}-${healthIndicatorStatusKey}-${this.targetApp}]`
+  )
+    .find('span')
+    .filter(`.icon-${healthStatus}`)
     .should('exist');
   cy.get(
     `[aria-label='Overview status'] [data-test=${this.targetNamespace}-${healthIndicatorStatusKey}-${this.targetApp}]`
@@ -267,39 +277,45 @@ Then('the user sees information related to canary upgrades', view => {
   cy.get('[data-test="canary-upgrade"]').should('exist');
 });
 
-Then('user sees the {string} cluster badge in the Kiali header', (name:string) =>{
+Then('user sees the {string} cluster badge in the Kiali header', (name: string) => {
   cy.get('[data-test="cluster-icon"]').contains(name).should('be.visible');
 });
 
-And('user sees the {string} label in both {string} namespace cards', (label:string, ns:string) => {
+And('user sees the {string} label in both {string} namespace cards', (label: string, ns: string) => {
   cy.get(`[data-test="CardItem_${ns}_east"]`).contains(label).should('be.visible');
   cy.get(`[data-test="CardItem_${ns}_west"]`).contains(label).should('be.visible');
-})
+});
 
-And('the toggle on the right side of both {string} namespace cards exists', (ns:string) => {
+And('the toggle on the right side of both {string} namespace cards exists', (ns: string) => {
   ensureKialiFinishedLoading();
   cy.get(`[data-test="CardItem_${ns}_east"]`).find('[aria-label="Actions"]').should('exist');
   cy.get(`[data-test="CardItem_${ns}_west"]`).find('[aria-label="Actions"]').should('exist');
 });
 
-And('Istio config should not be available for the {string} {string}', (cluster:string, ns:string) => {
+And('Istio config should not be available for the {string} {string}', (cluster: string, ns: string) => {
   cy.get(`[data-test="CardItem_${ns}_${cluster}"]`).contains('Istio config').siblings().contains('N/A');
-}); 
+});
 
-And('health should be different for {string} and {string} {string}', (cluster1:string, cluster2:string, ns:string) => {
-  if (ns == 'bookinfo'){
+And(
+  'health should be different for {string} and {string} {string}',
+  (cluster1: string, cluster2: string, ns: string) => {
+    if (ns == 'bookinfo') {
       cy.get(`[data-test="CardItem_${ns}_${cluster1}"]`).find('[data-test="overview-type-app"]').contains(`5 app`);
       cy.get(`[data-test="CardItem_${ns}_${cluster2}"]`).find('[data-test="overview-type-app"]').contains(`4 app`);
+    } else {
+      cy.exec(`kubectl get pods -n ${ns} -l app --context ${CLUSTER1_CONTEXT} --no-headers | wc -l`).then(result => {
+        cy.get(`[data-test="CardItem_${ns}_${cluster1}"]`)
+          .find('[data-test="overview-type-app"]')
+          .contains(`${result.stdout} app`);
+      });
+      cy.exec(`kubectl get pods -n ${ns} -l app --context ${CLUSTER2_CONTEXT} --no-headers | wc -l`).then(result => {
+        cy.get(`[data-test="CardItem_${ns}_${cluster2}"]`)
+          .find('[data-test="overview-type-app"]')
+          .contains(`${result.stdout} app`);
+      });
+    }
   }
-  else {
-    cy.exec(`kubectl get pods -n ${ns} -l app --context ${CLUSTER1_CONTEXT} --no-headers | wc -l`).then((result) => {
-      cy.get(`[data-test="CardItem_${ns}_${cluster1}"]`).find('[data-test="overview-type-app"]').contains(`${result.stdout} app`);
-    });
-    cy.exec(`kubectl get pods -n ${ns} -l app --context ${CLUSTER2_CONTEXT} --no-headers | wc -l`).then((result) => {
-      cy.get(`[data-test="CardItem_${ns}_${cluster2}"]`).find('[data-test="overview-type-app"]').contains(`${result.stdout} app`);
-    });
-  }
-})
+);
 
 And('user sees the {string} label in the {string} namespace card', (label: string, ns: string) => {
   cy.log(label);
@@ -314,21 +330,29 @@ And('user does not see any cluster badge in the {string} namespace card', (ns: s
   });
 });
 
-And('user sees the {string} label in the {string} {string} namespace card',(label:string, cluster:string, ns:string) =>{
-  cy.get(`[data-test="CardItem_${ns}_${cluster}"]`).contains(label).should('be.visible');
-});
+And(
+  'user sees the {string} label in the {string} {string} namespace card',
+  (label: string, cluster: string, ns: string) => {
+    cy.get(`[data-test="CardItem_${ns}_${cluster}"]`).contains(label).should('be.visible');
+  }
+);
 
-And('user does not see the {string} label in the {string} {string} namespace card',(label:string, cluster:string, ns:string) =>{
-  cy.get(`[data-test="CardItem_${ns}_${cluster}"]`).contains(label).should('not.exist');
-});
+And(
+  'user does not see the {string} label in the {string} {string} namespace card',
+  (label: string, cluster: string, ns: string) => {
+    cy.get(`[data-test="CardItem_${ns}_${cluster}"]`).contains(label).should('not.exist');
+  }
+);
 
-And('cluster badges for {string} and {string} cluster are visible in the LIST view', (cluster1:string, cluster2:string) =>{
-  cy.get('[data-test="VirtualItem_bookinfo"]').find('#pfbadge-C').should('have.length',2);
-  cy.get('[data-test="VirtualItem_bookinfo"]').contains('east').should('be.visible');
-  cy.get('[data-test="VirtualItem_bookinfo"]').contains('west').should('be.visible');
-});
+And(
+  'cluster badges for {string} and {string} cluster are visible in the LIST view',
+  (cluster1: string, cluster2: string) => {
+    cy.getBySel(`VirtualItem_Cluster${cluster1}_bookinfo`).contains(cluster1).should('be.visible');
+    cy.getBySel(`VirtualItem_Cluster${cluster2}_bookinfo`).contains(cluster2).should('be.visible');
+  }
+);
 
-And('Control Plane metrics should be visible',() => {
-  cy.get('[data-test="VirtualItem_istio-system"]').find('[data-test="cpu-chart"]');
-  cy.get('[data-test="VirtualItem_istio-system"]').find('[data-test="memory-chart"]');
+And('Control Plane metrics should be visible for cluster {string}', (cluster: string) => {
+  cy.getBySel(`VirtualItem_Cluster${cluster}_istio-system`).find('[data-test="cpu-chart"]');
+  cy.getBySel(`VirtualItem_Cluster${cluster}_istio-system`).find('[data-test="memory-chart"]');
 });
