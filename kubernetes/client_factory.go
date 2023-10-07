@@ -219,10 +219,10 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 		}
 
 		// Replace the Kiali SA token with the user's auth token.
-		// In anonymous mode and when OpenID RBAC is disabled use the Kiali SA token
-		// since these modes don't have a user token.
-		if (cfg.Auth.Strategy != kialiConfig.AuthStrategyAnonymous) ||
-			(cfg.Auth.Strategy == kialiConfig.AuthStrategyOpenId && cfg.Auth.OpenId.DisableRBAC) {
+		// Only if we are not in an anonymous mode
+		// and if we don't use OpenID with RBAC is disable.
+		if !(cfg.Auth.Strategy == kialiConfig.AuthStrategyAnonymous) &&
+			!(cfg.Auth.Strategy == kialiConfig.AuthStrategyOpenId && cfg.Auth.OpenId.DisableRBAC) {
 			remoteConfig.BearerToken = authInfo.Token
 		}
 
