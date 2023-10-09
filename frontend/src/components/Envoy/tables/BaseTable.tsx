@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { ICell, ISortBy, SortByDirection } from '@patternfly/react-table';
-import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
+import { ISortBy, SortByDirection, Table, Tbody, Td, Th, Thead, ThProps, Tr } from '@patternfly/react-table';
 import { ClusterSummaryTable, ClusterTable } from './ClusterTable';
 import { RouteSummaryTable, RouteTable } from './RouteTable';
 import { ListenerSummaryTable, ListenerTable } from './ListenerTable';
@@ -15,12 +14,12 @@ import { TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 
 export interface SummaryTable {
-  head: () => ICell[];
-  rows: () => (string | number | JSX.Element)[][];
-  resource: () => string;
-  sortBy: () => ISortBy;
-  setSorting: (columnIndex: number, direction: 'asc' | 'desc') => void;
   availableFilters: () => FilterType[];
+  head: () => ThProps[];
+  resource: () => string;
+  rows: () => (string | number | JSX.Element)[][];
+  setSorting: (columnIndex: number, direction: 'asc' | 'desc') => void;
+  sortBy: () => ISortBy;
   tooltip: () => React.ReactNode;
 }
 
@@ -30,12 +29,12 @@ const iconStyle = kialiStyle({
 
 export function SummaryTableRenderer<T extends SummaryTable>() {
   interface SummaryTableProps<T> {
-    writer: T;
-    sortBy: ISortBy;
     onSort: (resource: string, columnIndex: number, sortByDirection: SortByDirection) => void;
     pod: string;
     pods: string[];
     setPod: (pod: string) => void;
+    sortBy: ISortBy;
+    writer: T;
   }
 
   type SummaryTableState = {
@@ -43,18 +42,25 @@ export function SummaryTableRenderer<T extends SummaryTable>() {
   };
 
   return class SummaryTable extends React.Component<SummaryTableProps<T>, SummaryTableState> {
-    onSort = (_: React.MouseEvent, columnIndex: number, sortByDirection: SortByDirection) => {
-      this.props.writer.setSorting(columnIndex, sortByDirection);
-      this.props.onSort(this.props.writer.resource(), columnIndex, sortByDirection);
-    };
-
     onFilterApplied = (activeFilter: ActiveFiltersInfo) => {
       this.setState({
         activeFilters: activeFilter
       });
     };
 
+    getSortParams = (columnIndex: number): ThProps['sort'] => ({
+      sortBy: this.props.writer.sortBy(),
+      onSort: (_event: React.MouseEvent, columnIndex: number, sortByDirection: SortByDirection) => {
+        this.props.writer.setSorting(columnIndex, sortByDirection);
+        this.props.onSort(this.props.writer.resource(), columnIndex, sortByDirection);
+      },
+      columnIndex
+    });
+
     render() {
+      const columns = this.props.writer.head();
+      const rows = this.props.writer.rows();
+
       return (
         <>
           <StatefulFilters
@@ -74,18 +80,30 @@ export function SummaryTableRenderer<T extends SummaryTable>() {
                 label={this.props.pod}
                 options={this.props.pods.sort()}
               />
-              <div className={kialiStyle({ position: 'absolute', right: '60px' })}>{this.props.writer.tooltip()}</div>
+              <div className={kialiStyle({ position: 'absolute', right: '0.25rem' })}>
+                {this.props.writer.tooltip()}
+              </div>
             </>
           </StatefulFilters>
-          <Table
-            aria-label="Sortable Table"
-            cells={this.props.writer.head()}
-            rows={this.props.writer.rows()}
-            sortBy={this.props.writer.sortBy()}
-            onSort={this.onSort}
-          >
-            <TableHeader />
-            <TableBody />
+          <Table aria-label="Sortable Table">
+            <Thead>
+              <Tr>
+                {columns.map((column, index) => (
+                  <Th sort={this.getSortParams(index)} info={column.info}>
+                    {column.title}
+                  </Th>
+                ))}
+              </Tr>
+            </Thead>
+            <Tbody>
+              {rows.map((row, index) => (
+                <Tr key={`row_${index}`}>
+                  {row.map((value, index) => (
+                    <Td dataLabel={columns[index].title}>{value}</Td>
+                  ))}
+                </Tr>
+              ))}
+            </Tbody>
           </Table>
         </>
       );

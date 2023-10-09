@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { SummaryTable, SummaryTableRenderer } from './BaseTable';
-import { ICell, ISortBy, sortable, SortByDirection } from '@patternfly/react-table';
+import { ISortBy, SortByDirection, ThProps } from '@patternfly/react-table';
 import { ClusterSummary } from '../../../types/IstioObjects';
 import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '../../../types/Filters';
 import { SortField } from '../../../types/SortFilters';
@@ -13,12 +13,12 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { isParentKiosk } from '../../Kiosk/KioskActions';
 
 export class ClusterTable implements SummaryTable {
-  summaries: ClusterSummary[];
-  sortingIndex: number;
-  sortingDirection: 'asc' | 'desc';
-  namespaces: Namespace[] | undefined;
-  namespace: string;
   kiosk: string;
+  namespace: string;
+  namespaces: Namespace[] | undefined;
+  sortingDirection: 'asc' | 'desc';
+  sortingIndex: number;
+  summaries: ClusterSummary[];
 
   constructor(summaries: ClusterSummary[], sortBy: ISortBy, namespaces: Namespace[], namespace: string, kiosk: string) {
     this.summaries = summaries;
@@ -173,37 +173,42 @@ export class ClusterTable implements SummaryTable {
     );
   };
 
-  head = (): ICell[] => {
+  head = (): ThProps[] => {
     return [
       {
         title: 'Service FQDN',
-        transforms: [sortable],
-        header: { info: { tooltip: <>Fully Qualified Domain Name</> } }
+        info: { tooltip: <>Fully Qualified Domain Name</> }
       },
-      { title: 'Port', transforms: [sortable] },
-      { title: 'Subset', transforms: [sortable] },
+      {
+        title: 'Port'
+      },
+      {
+        title: 'Subset'
+      },
       {
         title: 'Direction',
-        transforms: [sortable],
-        header: {
-          info: {
-            tooltip: (
-              <ul className={kialiStyle({ textAlign: 'left' })}>
-                <li>
-                  <b>inbound</b>: The inbound cluster events are the events that come into a node. These cluster events
-                  come from another node and enter other nodes.
-                </li>
-                <li>
-                  <b>outbound</b>: The outbound cluster events are the events that go out of a node. These cluster
-                  events are produced and sent from a node to other nodes.
-                </li>
-              </ul>
-            )
-          }
+        info: {
+          tooltip: (
+            <ul className={kialiStyle({ textAlign: 'left' })}>
+              <li>
+                <b>inbound</b>: The inbound cluster events are the events that come into a node. These cluster events
+                come from another node and enter other nodes.
+              </li>
+              <li>
+                <b>outbound</b>: The outbound cluster events are the events that go out of a node. These cluster events
+                are produced and sent from a node to other nodes.
+              </li>
+            </ul>
+          )
         }
       },
-      { title: 'Type', transforms: [sortable], header: { info: { tooltip: this.render_cluster_type() } } },
-      { title: 'DestinationRule', transforms: [sortable] }
+      {
+        title: 'Type',
+        info: { tooltip: this.render_cluster_type() }
+      },
+      {
+        title: 'DestinationRule'
+      }
     ];
   };
 

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { SummaryTable, SummaryTableRenderer } from './BaseTable';
-import { ICell, ISortBy, sortable } from '@patternfly/react-table';
+import { ISortBy, ThProps } from '@patternfly/react-table';
 import { ListenerSummary } from '../../../types/IstioObjects';
 import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '../../../types/Filters';
 import { SortField } from '../../../types/SortFilters';
@@ -12,13 +12,13 @@ import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 
 export class ListenerTable implements SummaryTable {
-  summaries: ListenerSummary[];
-  sortingIndex: number;
-  sortingDirection: 'asc' | 'desc';
-  namespaces: Namespace[];
   namespace: string;
-  workload: string | undefined;
+  namespaces: Namespace[];
   routeLinkHandler: () => void;
+  sortingDirection: 'asc' | 'desc';
+  sortingIndex: number;
+  summaries: ListenerSummary[];
+  workload: string | undefined;
 
   constructor(
     summaries: ListenerSummary[],
@@ -128,37 +128,35 @@ export class ListenerTable implements SummaryTable {
     ];
   };
 
-  head = (): ICell[] => {
+  head = (): ThProps[] => {
     return [
       {
         title: 'Address',
-        transforms: [sortable],
-        header: {
-          info: {
-            tooltip: (
-              <div className={kialiStyle({ textAlign: 'left' })}>
-                The address that the listener should listen on. In general, the address must be unique, though that is
-                governed by the bind rules of the OS
-              </div>
-            )
-          }
+        info: {
+          tooltip: (
+            <div className={kialiStyle({ textAlign: 'left' })}>
+              The address that the listener should listen on. In general, the address must be unique, though that is
+              governed by the bind rules of the OS
+            </div>
+          )
         }
       },
-      { title: 'Port', transforms: [sortable] },
-      { title: 'Match', transforms: [sortable] },
+      {
+        title: 'Port'
+      },
+      {
+        title: 'Match'
+      },
       {
         title: 'Destination',
-        transforms: [sortable],
-        header: {
-          info: {
-            tooltip: (
-              <div className={kialiStyle({ textAlign: 'left' })}>
-                Original destination listener filter reads the SO_ORIGINAL_DST socket option set when a connection has
-                been redirected by an iptables REDIRECT target, or by an iptables TPROXY target in combination with
-                setting the listener’s transparent option
-              </div>
-            )
-          }
+        info: {
+          tooltip: (
+            <div className={kialiStyle({ textAlign: 'left' })}>
+              Original destination listener filter reads the SO_ORIGINAL_DST socket option set when a connection has
+              been redirected by an iptables REDIRECT target, or by an iptables TPROXY target in combination with
+              setting the listener’s transparent option
+            </div>
+          )
         }
       }
     ];

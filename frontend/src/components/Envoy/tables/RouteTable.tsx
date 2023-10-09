@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { SummaryTable, SummaryTableRenderer } from './BaseTable';
-import { ICell, ISortBy, sortable } from '@patternfly/react-table';
+import { ISortBy, ThProps } from '@patternfly/react-table';
 import { RouteSummary } from '../../../types/IstioObjects';
 import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '../../../types/Filters';
 import { SortField } from '../../../types/SortFilters';
@@ -13,12 +13,12 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { isParentKiosk } from '../../Kiosk/KioskActions';
 
 export class RouteTable implements SummaryTable {
-  summaries: RouteSummary[];
-  sortingIndex: number;
-  sortingDirection: 'asc' | 'desc';
-  namespaces: Namespace[];
-  namespace: string;
   kiosk: string;
+  namespace: string;
+  namespaces: Namespace[];
+  sortingDirection: 'asc' | 'desc';
+  sortingIndex: number;
+  summaries: RouteSummary[];
 
   constructor(summaries: RouteSummary[], sortBy: ISortBy, namespaces: Namespace[], namespace: string, kiosk: string) {
     this.summaries = summaries;
@@ -102,36 +102,34 @@ export class RouteTable implements SummaryTable {
     ];
   };
 
-  head(): ICell[] {
+  head(): ThProps[] {
     return [
-      { title: 'Name', transforms: [sortable] },
+      {
+        title: 'Name'
+      },
       {
         title: 'Domains',
-        transforms: [sortable],
-        header: {
-          info: {
-            tooltip: (
-              <div className={kialiStyle({ textAlign: 'left' })}>
-                Envoy will be matched this domain to this virtual host.
-              </div>
-            )
-          }
+        info: {
+          tooltip: (
+            <div className={kialiStyle({ textAlign: 'left' })}>
+              Envoy will be matched this domain to this virtual host.
+            </div>
+          )
         }
       },
       {
         title: 'Match',
-        transforms: [sortable],
-        header: {
-          info: {
-            tooltip: (
-              <div className={kialiStyle({ textAlign: 'left' })}>
-                The match tree to use when resolving route actions for incoming requests
-              </div>
-            )
-          }
+        info: {
+          tooltip: (
+            <div className={kialiStyle({ textAlign: 'left' })}>
+              The match tree to use when resolving route actions for incoming requests
+            </div>
+          )
         }
       },
-      { title: 'Virtual Service', transforms: [sortable] }
+      {
+        title: 'Virtual Service'
+      }
     ];
   }
 

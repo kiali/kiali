@@ -18,7 +18,7 @@ import {
 import { aceOptions } from '../../types/IstioConfigDetails';
 import AceEditor from 'react-ace';
 import { ParameterizedTabs } from '../Tab/Tabs';
-import { Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
+import { Table, Tbody, Td, Th, Thead, ThProps, Tr } from '@patternfly/react-table';
 import { AuthConfig } from '../../types/Auth';
 import { authenticationConfig } from '../../config/AuthenticationConfig';
 import { basicTabStyle } from 'styles/TabStyles';
@@ -208,10 +208,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
     return text;
   };
 
-  const columnNames = {
-    config: 'Configuration',
-    value: 'Value'
-  };
+  const columns: ThProps[] = [{ title: 'Configuration' }, { title: 'Value' }];
 
   const getRows = () => {
     var conf: string[][] = [];
@@ -227,6 +224,8 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
     return conf;
   };
 
+  const rows = getRows();
+
   const renderTabs = () => {
     const kialiConfig = (
       <Tab eventKey={0} title="Kiali Config" key="kialiConfig">
@@ -234,15 +233,17 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
           <Table className={tableStyle}>
             <Thead>
               <Tr>
-                <Th>{columnNames.config}</Th>
-                <Th>{columnNames.value}</Th>
+                {columns.map(column => (
+                  <Th>{column.title}</Th>
+                ))}
               </Tr>
             </Thead>
             <Tbody>
-              {getRows().map((row, index) => (
+              {rows.map((row, index) => (
                 <Tr key={`row_${index}`}>
-                  <Td dataLabel={columnNames.config}>{row[0]}</Td>
-                  <Td dataLabel={columnNames.value}>{row[1]}</Td>
+                  {row.map((value, index) => (
+                    <Td dataLabel={columns[index].title}>{value}</Td>
+                  ))}
                 </Tr>
               ))}
             </Tbody>

@@ -47,11 +47,18 @@ const resources: string[] = ['clusters', 'listeners', 'routes', 'bootstrap', 'co
 
 const iconStyle = kialiStyle({
   display: 'inline-block',
-  paddingTop: '5px'
+  alignSelf: 'center'
 });
 
-const copyStyle = kialiStyle({
-  marginLeft: '6px'
+const copyButtonStyle = kialiStyle({
+  float: 'right',
+  marginRight: '0.5rem',
+  marginTop: '1rem',
+  $nest: {
+    '& > span': {
+      marginLeft: '0.375rem'
+    }
+  }
 });
 
 const envoyTabs = ['clusters', 'listeners', 'routes', 'bootstrap', 'config', 'metrics'];
@@ -293,7 +300,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
             <CardBody>
               {this.showEditor() ? (
                 <div className={fullHeightStyle}>
-                  <div style={{ marginBottom: '20px' }}>
+                  <div style={{ marginBottom: '1.25rem' }}>
                     <div key="service-icon" className={iconStyle}>
                       <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
                     </div>
@@ -306,14 +313,10 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                       options={this.props.workload.pods.map((pod: Pod) => pod.name).sort()}
                     />
                     <Tooltip key="copy_config" position="top" content="Copy config dump to clipboard">
-                      <CopyToClipboard
-                        style={{ float: 'right', marginTop: '15px' }}
-                        onCopy={this.onCopyToClipboard}
-                        text={this.editorContent()}
-                      >
-                        <Button variant={ButtonVariant.link} isInline>
+                      <CopyToClipboard onCopy={this.onCopyToClipboard} text={this.editorContent()}>
+                        <Button variant={ButtonVariant.link} className={copyButtonStyle} isInline>
                           <KialiIcon.Copy />
-                          <span className={copyStyle}>Copy</span>
+                          <span>Copy</span>
                         </Button>
                       </CopyToClipboard>
                     </Tooltip>
