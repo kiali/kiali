@@ -91,6 +91,7 @@ const HelpDropdownComponent: React.FC<HelpDropdownProps> = (props: HelpDropdownP
           <MenuToggle
             ref={toggleRef}
             className={menuToggleStyle}
+            data-test="about-help-button"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             aria-label="Help"
             variant="plain"
@@ -99,7 +100,6 @@ const HelpDropdownComponent: React.FC<HelpDropdownProps> = (props: HelpDropdownP
             <QuestionCircleIcon />
           </MenuToggle>
         )}
-        data-test="about-help-button"
         isOpen={isDropdownOpen}
         popperProps={{ position: 'right' }}
         onOpenChange={(isOpen: boolean) => setIsDropdownOpen(isOpen)}
