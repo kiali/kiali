@@ -114,12 +114,17 @@ func getDuration(end string, start string) (uint64, error) {
 	return (endInt - startInt) / 1000, nil
 }
 
-func convertReferences(traceId jaegerModels.TraceID, spanId jaegerModels.SpanID) []jaegerModels.Reference {
+func convertReferences(traceId jaegerModels.TraceID, parentSpanId jaegerModels.SpanID) []jaegerModels.Reference {
 	var references []jaegerModels.Reference
+	
+	if parentSpanId == "" {
+		return references
+	}
+
 	var ref = jaegerModels.Reference{
 		RefType: jaegerModels.ReferenceType("CHILD_OF"),
 		TraceID: traceId,
-		SpanID:  spanId,
+		SpanID:  parentSpanId,
 	}
 
 	references = append(references, ref)
