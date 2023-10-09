@@ -85,7 +85,7 @@ We provide a few unsupported scripts that can help to get started:
 
 * You can use the link:hack/crc-openshift.sh[`crc-openshift.sh`] script to create an OpenShift cluster on your local machine.
 * If you are familiar to minikube, you may try the link:hack/k8s-minikube.sh[`k8s-minikube.sh`] script. It has the option to install Dex which is useful if you want to test with OpenID.
-* You can also use link:https://kind.sigs.k8s.io/[kind], use link:hack/setup-kind-in-ci.sh[`start-kind.sh `] script to create a single node KinD cluster with metallb enabled for testing Kiali against a real environment.
+* You can also use link:https://kind.sigs.k8s.io/[kind], use link:hack/setup-kind-in-ci.sh[`start-kind.sh`] script to create a single node KinD cluster with metallb enabled for testing Kiali against a real environment.
 * Finally, the link:hack/istio/install-istio-via-istioctl.sh[`install-istio-via-istioctl.sh`] and the link:hack/istio/install-bookinfo-demo.sh[`install-bookinfo-demo.sh`] scripts can assist into installing Istio and the Bookinfo sample application in your cluster, respectively. You can try running these scripts without any arguments.
 
 These scripts are written to rely on the minimum dependencies as possible and will try to download any required tools.
