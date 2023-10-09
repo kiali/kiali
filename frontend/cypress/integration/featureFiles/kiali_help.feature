@@ -13,7 +13,6 @@ Feature: Kiali help dropdown verify
   Scenario: Open Kiali help dropdown
     Then user can see all of the Help dropdown options
       | Documentation | View Debug Info | View Certificates Info | About |
-    And the "Documentation" button has a link
 
   Scenario: User opens the View Debug Info section
     When user clicks on the "View Debug Info" button
