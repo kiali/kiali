@@ -35,6 +35,7 @@ import { INITIAL_GRAPH_STATE } from 'reducers/GraphDataState';
 import { KialiDispatch } from 'types/Redux';
 import { KialiCrippledFeatures } from 'types/ServerConfig';
 import { getCrippledFeatures } from 'services/Api';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type ReduxProps = {
   boxByCluster: boolean;
@@ -85,6 +86,11 @@ interface DisplayOptionType {
 
 const marginBottom = 20;
 
+const menuOptionStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center'
+});
+
 class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, GraphSettingsState> {
   constructor(props: GraphSettingsProps) {
     super(props);
@@ -99,66 +105,77 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       props.showTrafficAnimation,
       props.toggleTrafficAnimation
     );
+
     this.handleURLBool(
       URLParam.GRAPH_BADGE_SECURITY,
       INITIAL_GRAPH_STATE.toolbarState.showSecurity,
       props.showSecurity,
       props.toggleGraphSecurity
     );
+
     this.handleURLBool(
       URLParam.GRAPH_BADGE_SIDECAR,
       INITIAL_GRAPH_STATE.toolbarState.showOutOfMesh,
       props.showOutOfMesh,
       props.toggleGraphMissingSidecars
     );
+
     this.handleURLBool(
       URLParam.GRAPH_BADGE_VS,
       INITIAL_GRAPH_STATE.toolbarState.showVirtualServices,
       props.showVirtualServices,
       props.toggleGraphVirtualServices
     );
+
     this.handleURLBool(
       URLParam.GRAPH_BOX_CLUSTER,
       INITIAL_GRAPH_STATE.toolbarState.boxByCluster,
       props.boxByCluster,
       props.toggleBoxByCluster
     );
+
     this.handleURLBool(
       URLParam.GRAPH_BOX_NAMESPACE,
       INITIAL_GRAPH_STATE.toolbarState.boxByNamespace,
       props.boxByNamespace,
       props.toggleBoxByNamespace
     );
+
     this.handleURLBool(
       URLParam.GRAPH_COMPRESS_ON_HIDE,
       INITIAL_GRAPH_STATE.toolbarState.compressOnHide,
       props.compressOnHide,
       props.toggleCompressOnHide
     );
+
     this.handleURLBool(
       URLParam.GRAPH_IDLE_EDGES,
       INITIAL_GRAPH_STATE.toolbarState.showIdleEdges,
       props.showIdleEdges,
       props.toggleIdleEdges
     );
+
     this.handleURLBool(
       URLParam.GRAPH_IDLE_NODES,
       INITIAL_GRAPH_STATE.toolbarState.showIdleNodes,
       props.showIdleNodes,
       props.toggleIdleNodes
     );
+
     this.handleURLBool(
       URLParam.GRAPH_OPERATION_NODES,
       INITIAL_GRAPH_STATE.toolbarState.showOperationNodes,
       props.showOperationNodes,
       props.toggleOperationNodes
     );
+
     this.handleURLBool(
       URLParam.GRAPH_RANK,
       INITIAL_GRAPH_STATE.toolbarState.showRank,
       props.showRank,
       props.toggleRank
     );
+
     this.handleURLBool(
       URLParam.GRAPH_SERVICE_NODES,
       INITIAL_GRAPH_STATE.toolbarState.showServiceNodes,
@@ -171,6 +188,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     getCrippledFeatures().then(response => {
       const crippledFeatures = response.data;
       this.setState({ crippledFeatures: response.data });
+
       // strip away any invalid edge options from the url
       if (
         (crippledFeatures.responseTime || crippledFeatures.responseTimePercentiles) &&
@@ -178,6 +196,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       ) {
         this.props.setEdgeLabels(this.props.edgeLabels.filter(l => !isResponseTimeMode(l)));
       }
+
       if (
         (crippledFeatures.requestSize && this.props.edgeLabels.includes(EdgeLabelMode.THROUGHPUT_REQUEST)) ||
         (crippledFeatures.responseSize && this.props.edgeLabels.includes(EdgeLabelMode.THROUGHPUT_RESPONSE))
@@ -195,66 +214,77 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       prev.showTrafficAnimation,
       this.props.showTrafficAnimation
     );
+
     this.alignURLBool(
       URLParam.GRAPH_BADGE_SECURITY,
       INITIAL_GRAPH_STATE.toolbarState.showSecurity,
       prev.showSecurity,
       this.props.showSecurity
     );
+
     this.alignURLBool(
       URLParam.GRAPH_BADGE_SIDECAR,
       INITIAL_GRAPH_STATE.toolbarState.showOutOfMesh,
       prev.showOutOfMesh,
       this.props.showOutOfMesh
     );
+
     this.alignURLBool(
       URLParam.GRAPH_BADGE_VS,
       INITIAL_GRAPH_STATE.toolbarState.showVirtualServices,
       prev.showVirtualServices,
       this.props.showVirtualServices
     );
+
     this.alignURLBool(
       URLParam.GRAPH_BOX_CLUSTER,
       INITIAL_GRAPH_STATE.toolbarState.boxByCluster,
       prev.boxByCluster,
       this.props.boxByCluster
     );
+
     this.alignURLBool(
       URLParam.GRAPH_BOX_NAMESPACE,
       INITIAL_GRAPH_STATE.toolbarState.boxByNamespace,
       prev.boxByNamespace,
       this.props.boxByNamespace
     );
+
     this.alignURLBool(
       URLParam.GRAPH_COMPRESS_ON_HIDE,
       INITIAL_GRAPH_STATE.toolbarState.compressOnHide,
       prev.compressOnHide,
       this.props.compressOnHide
     );
+
     this.alignURLBool(
       URLParam.GRAPH_IDLE_EDGES,
       INITIAL_GRAPH_STATE.toolbarState.showIdleEdges,
       prev.showIdleEdges,
       this.props.showIdleEdges
     );
+
     this.alignURLBool(
       URLParam.GRAPH_IDLE_NODES,
       INITIAL_GRAPH_STATE.toolbarState.showIdleNodes,
       prev.showIdleNodes,
       this.props.showIdleNodes
     );
+
     this.alignURLBool(
       URLParam.GRAPH_OPERATION_NODES,
       INITIAL_GRAPH_STATE.toolbarState.showOperationNodes,
       prev.showOperationNodes,
       this.props.showOperationNodes
     );
+
     this.alignURLBool(
       URLParam.GRAPH_RANK,
       INITIAL_GRAPH_STATE.toolbarState.showRank,
       prev.showRank,
       this.props.showRank
     );
+
     this.alignURLBool(
       URLParam.GRAPH_SERVICE_NODES,
       INITIAL_GRAPH_STATE.toolbarState.showServiceNodes,
@@ -265,6 +295,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
 
   private handleURLBool = (param: URLParam, paramDefault: boolean, reduxValue: boolean, reduxToggle: () => void) => {
     const urlValue = HistoryManager.getBooleanParam(param);
+
     if (urlValue !== undefined) {
       if (urlValue !== reduxValue) {
         reduxToggle();
@@ -278,6 +309,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     if (prev === curr) {
       return;
     }
+
     if (curr === paramDefault) {
       HistoryManager.deleteParam(param, true);
     } else {
@@ -678,7 +710,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         maxHeight={{ type: PropertyType.VIEWPORT_HEIGHT_MINUS_TOP, margin: marginBottom }}
       >
         <div id="graph-display-menu" className={menuStyle} style={{ width: '15em' }}>
-          <div style={{ marginTop: '10px' }}>
+          <div style={{ marginTop: '0.5rem' }}>
             <span className={titleStyle} style={{ paddingRight: 0 }}>
               Show Edge Labels
             </span>
@@ -697,6 +729,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
               <KialiIcon.Info className={infoStyle} />
             </Tooltip>
           </div>
+
           {edgeLabelOptions.map((edgeLabelOption: DisplayOptionType) => (
             <div key={edgeLabelOption.id} className={menuEntryStyle}>
               <label
@@ -714,6 +747,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                   value={edgeLabelOption.id}
                 />
               </label>
+
               {!!edgeLabelOption.tooltip && (
                 <Tooltip
                   key={`tooltip_${edgeLabelOption.id}`}
@@ -723,6 +757,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                   <KialiIcon.Info className={infoStyle} />
                 </Tooltip>
               )}
+
               {edgeLabelOption.id === EdgeLabelMode.RESPONSE_TIME_GROUP && responseTimeOptions.some(o => o.isChecked) && (
                 <div>
                   {responseTimeOptions.map((rtOption: DisplayOptionType) => (
@@ -730,7 +765,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                       <label
                         key={rtOption.id}
                         className={!!rtOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
-                        style={{ paddingLeft: '35px' }}
+                        style={{ paddingLeft: '2rem' }}
                       >
                         <Radio
                           id={rtOption.id}
@@ -739,10 +774,11 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           label={rtOption.labelText}
                           name="rtOptions"
                           onChange={(event, _) => this.toggleEdgeLabelResponseTimeMode(_, event)}
-                          style={{ paddingLeft: '5px' }}
+                          style={{ paddingLeft: '0.25rem' }}
                           value={rtOption.id}
                         />
                       </label>
+
                       {!!rtOption.tooltip && (
                         <Tooltip
                           key={`tooltip_${rtOption.id}`}
@@ -756,6 +792,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                   ))}
                 </div>
               )}
+
               {edgeLabelOption.id === EdgeLabelMode.THROUGHPUT_GROUP && throughputOptions.some(o => o.isChecked) && (
                 <div>
                   {throughputOptions.map((throughputOption: DisplayOptionType) => (
@@ -763,7 +800,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                       <label
                         key={throughputOption.id}
                         className={!!throughputOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
-                        style={{ paddingLeft: '35px' }}
+                        style={{ paddingLeft: '2rem' }}
                       >
                         <Radio
                           id={throughputOption.id}
@@ -772,10 +809,11 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           label={throughputOption.labelText}
                           name="throughputOptions"
                           onChange={(event, _) => this.toggleEdgeLabelThroughputMode(_, event)}
-                          style={{ paddingLeft: '5px' }}
+                          style={{ paddingLeft: '0.5rem' }}
                           value={throughputOption.id}
                         />
                       </label>
+
                       {!!throughputOption.tooltip && (
                         <Tooltip
                           key={`tooltip_${throughputOption.id}`}
@@ -793,7 +831,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
           ))}
           <div className={titleStyle}>Show</div>
           {visibilityOptions.map((item: DisplayOptionType) => (
-            <div key={item.id} style={{ display: 'inline-block' }}>
+            <div key={item.id} className={menuOptionStyle}>
               <label key={item.id} className={!!item.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}>
                 <Checkbox
                   id={item.id}
@@ -803,11 +841,13 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                   onChange={item.onChange}
                 />
               </label>
+
               {!!item.tooltip && (
                 <Tooltip key={`tooltip_${item.id}`} position={TooltipPosition.right} content={item.tooltip}>
                   <KialiIcon.Info className={infoStyle} />
                 </Tooltip>
               )}
+
               {item.id === 'rank' && rank && (
                 <div>
                   {scoringOptions.map((scoringOption: DisplayOptionType) => (
@@ -815,7 +855,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                       <label
                         key={scoringOption.id}
                         className={!!scoringOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
-                        style={{ paddingLeft: '35px' }}
+                        style={{ paddingLeft: '2rem' }}
                       >
                         <Checkbox
                           id={scoringOption.id}
@@ -824,10 +864,11 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           label={scoringOption.labelText}
                           name="scoringOptions"
                           onChange={scoringOption.onChange}
-                          style={{ paddingLeft: '5px' }}
+                          style={{ paddingLeft: '0.25rem' }}
                           value={scoringOption.id}
                         />
                       </label>
+
                       {!!scoringOption.tooltip && (
                         <Tooltip
                           key={`tooltip_${scoringOption.id}`}
@@ -843,9 +884,10 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
               )}
             </div>
           ))}
+
           <div className={titleStyle}>Show Badges</div>
           {badgeOptions.map((item: DisplayOptionType) => (
-            <div key={item.id} style={{ display: 'inline-block' }}>
+            <div key={item.id} className={menuOptionStyle}>
               <label key={item.id} className={!!item.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}>
                 <Checkbox
                   id={item.id}
@@ -855,6 +897,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                   onChange={item.onChange}
                 />
               </label>
+
               {!!item.tooltip && (
                 <Tooltip key={`tooltip_${item.id}`} position={TooltipPosition.right} content={item.tooltip}>
                   <KialiIcon.Info className={infoStyle} />
@@ -869,8 +912,10 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
 
   private toggleEdgeLabelMode = (_, event) => {
     const mode = event.target.value as EdgeLabelMode;
+
     if (this.props.edgeLabels.includes(mode)) {
-      let newEdgeLabels;
+      let newEdgeLabels: EdgeLabelMode[];
+
       switch (mode) {
         case EdgeLabelMode.RESPONSE_TIME_GROUP:
           newEdgeLabels = this.props.edgeLabels.filter(l => !isResponseTimeMode(l));
@@ -881,6 +926,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         default:
           newEdgeLabels = this.props.edgeLabels.filter(l => l !== mode);
       }
+
       this.props.setEdgeLabels(newEdgeLabels);
     } else {
       switch (mode) {

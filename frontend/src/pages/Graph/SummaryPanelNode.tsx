@@ -37,7 +37,7 @@ import { ServiceWizardActionsDropdownGroup } from 'components/IstioWizards/Servi
 import { PeerAuthentication } from '../../types/IstioObjects';
 import { useServiceDetailForGraphNode } from '../../hooks/services';
 import { useKialiSelector } from '../../hooks/redux';
-import { groupMenuStyle } from 'styles/DropdownStyles';
+import { groupMenuStyle, kebabToggleStyle } from 'styles/DropdownStyles';
 import { isMultiCluster, serverConfig } from '../../config';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 
@@ -78,10 +78,10 @@ export type SummaryPanelNodeComponentProps = ReduxProps &
 
 const expandableSectionStyle = kialiStyle({
   fontSize: 'var(--graph-side-panel--font-size)',
-  paddingLeft: '1em',
+  paddingLeft: '1rem',
   $nest: {
     '& > div': {
-      marginLeft: '2em',
+      marginLeft: '2rem',
       marginTop: '0 !important',
       $nest: {
         '& div': {
@@ -165,18 +165,18 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
 
     const firstBadge = isMultiCluster ? (
       <>
-        <PFBadge badge={PFBadges.Cluster} size="sm" style={{ marginBottom: '2px' }} />
+        <PFBadge badge={PFBadges.Cluster} size="sm" style={{ marginBottom: '0.125rem' }} />
         {nodeData.cluster}
       </>
     ) : (
       <>
-        <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />
+        <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '0.125rem' }} />
         {nodeData.namespace}
       </>
     );
     const secondBadge = isMultiCluster ? (
       <div>
-        <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />
+        <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '0.125rem' }} />
         {nodeData.namespace}
       </div>
     ) : (
@@ -197,6 +197,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
                     <MenuToggle
                       ref={toggleRef}
                       id="summary-node-kebab"
+                      className={kebabToggleStyle}
                       aria-label="Actions"
                       variant="plain"
                       onClick={() => this.onToggleActions(!this.state.isActionOpen)}
@@ -316,7 +317,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
   private renderWithTabs(nodeData: DecoratedGraphNodeData) {
     return (
       <div className={summaryBodyTabs}>
-        <SimpleTabs id="graph_summary_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
+        <SimpleTabs id="graph_summary_tabs" defaultTab={0} style={{ paddingBottom: '0.5rem' }}>
           <Tab style={summaryFont} title="Traffic" eventKey={0}>
             <div style={summaryFont}>
               <SummaryPanelNodeTraffic {...this.props} />
@@ -330,8 +331,9 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     );
   }
 
-  private onToggleActions = isOpen => {
+  private onToggleActions = (isOpen: boolean) => {
     this.setState({ isActionOpen: isOpen });
+
     if (this.props.onKebabToggled) {
       this.props.onKebabToggled(isOpen);
     }
@@ -374,18 +376,22 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     const shouldRenderVsHostnames = nodeData.hasVS?.hostnames !== undefined && nodeData.hasVS?.hostnames.length !== 0;
     const shouldRenderRank = this.props.showRank;
     return (
-      <div style={{ marginTop: '10px', marginBottom: '10px' }}>
+      <div style={{ marginTop: '0.5rem', marginBottom: '0.5rem' }}>
         {hasCB && (
           <div>
             <KialiIcon.CircuitBreaker />
-            <span style={{ paddingLeft: '4px' }}>Has Circuit Breaker{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
+            <span style={{ paddingLeft: '0.25rem' }}>
+              Has Circuit Breaker{this.renderK8sGatewayAPI(isK8sGatewayAPI)}
+            </span>
           </div>
         )}
         {hasVS && !hasTrafficScenario && (
           <>
             <div>
               <KialiIcon.VirtualService />
-              <span style={{ paddingLeft: '4px' }}>Has Virtual Service{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
+              <span style={{ paddingLeft: '0.25rem' }}>
+                Has Virtual Service{this.renderK8sGatewayAPI(isK8sGatewayAPI)}
+              </span>
             </div>
             {shouldRenderVsHostnames && this.renderVsHostnames(nodeData)}
           </>
@@ -393,34 +399,36 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
         {hasMirroring && (
           <div>
             <KialiIcon.Mirroring />
-            <span style={{ paddingLeft: '4px' }}>Has Mirroring{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
+            <span style={{ paddingLeft: '0.25rem' }}>Has Mirroring{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
           </div>
         )}
         {isOutOfMesh && !serverConfig.ambientEnabled && (
           <div>
             <KialiIcon.OutOfMesh />
-            <span style={{ paddingLeft: '4px' }}>Has Missing Sidecar</span>
+            <span style={{ paddingLeft: '0.25rem' }}>Has Missing Sidecar</span>
           </div>
         )}
         {isOutOfMesh && serverConfig.ambientEnabled && (
           <div>
             <KialiIcon.OutOfMesh />
-            <span style={{ paddingLeft: '4px' }}>Out of Mesh</span>
+            <span style={{ paddingLeft: '0.25rem' }}>Out of Mesh</span>
           </div>
         )}
         {isDead && (
           <div>
-            <span style={{ marginRight: '5px' }}>
+            <span style={{ marginRight: '0.25rem' }}>
               <KialiIcon.Info />
             </span>
-            <span style={{ paddingLeft: '4px' }}>Has No Running Pods</span>
+            <span style={{ paddingLeft: '0.25rem' }}>Has No Running Pods</span>
           </div>
         )}
         {hasRequestRouting && (
           <>
             <div>
               <KialiIcon.RequestRouting />
-              <span style={{ paddingLeft: '4px' }}>Has Request Routing{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
+              <span style={{ paddingLeft: '0.25rem' }}>
+                Has Request Routing{this.renderK8sGatewayAPI(isK8sGatewayAPI)}
+              </span>
             </div>
             {shouldRenderVsHostnames && this.renderVsHostnames(nodeData)}
           </>
@@ -428,19 +436,23 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
         {hasFaultInjection && (
           <div>
             <KialiIcon.FaultInjection />
-            <span style={{ paddingLeft: '4px' }}>Has Fault Injection{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
+            <span style={{ paddingLeft: '0.25rem' }}>
+              Has Fault Injection{this.renderK8sGatewayAPI(isK8sGatewayAPI)}
+            </span>
           </div>
         )}
         {hasTrafficShifting && (
           <div>
             <KialiIcon.TrafficShifting />
-            <span style={{ paddingLeft: '4px' }}>Has Traffic Shifting{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
+            <span style={{ paddingLeft: '0.25rem' }}>
+              Has Traffic Shifting{this.renderK8sGatewayAPI(isK8sGatewayAPI)}
+            </span>
           </div>
         )}
         {hasTCPTrafficShifting && (
           <div>
             <KialiIcon.TrafficShifting />
-            <span style={{ paddingLeft: '4px' }}>
+            <span style={{ paddingLeft: '0.25rem' }}>
               Has TCP Traffic Shifting{this.renderK8sGatewayAPI(isK8sGatewayAPI)}
             </span>
           </div>
@@ -448,14 +460,16 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
         {hasRequestTimeout && (
           <div>
             <KialiIcon.RequestTimeout />
-            <span style={{ paddingLeft: '4px' }}>Has Request Timeout{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
+            <span style={{ paddingLeft: '0.25rem' }}>
+              Has Request Timeout{this.renderK8sGatewayAPI(isK8sGatewayAPI)}
+            </span>
           </div>
         )}
         {isGateway && (
           <>
             <div>
               <KialiIcon.Gateway />
-              <span style={{ paddingLeft: '4px' }}>Is Gateway{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
+              <span style={{ paddingLeft: '0.25rem' }}>Is Gateway{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
             </div>
             {shouldRenderGatewayHostnames && this.renderGatewayHostnames(nodeData)}
           </>
@@ -463,7 +477,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
         {shouldRenderRank && (
           <div>
             <KialiIcon.Rank />
-            <span style={{ paddingLeft: '4px' }}>
+            <span style={{ paddingLeft: '0.25rem' }}>
               Rank: {nodeData.rank !== undefined ? `${nodeData.rank} / ${this.props.rankResult.upperBound}` : 'N/A'}
             </span>
           </div>

@@ -82,10 +82,13 @@ const HelpDropdownComponent: React.FC<HelpDropdownProps> = (props: HelpDropdownP
         isOpen={isAboutModalOpen}
         onClose={() => setIsAboutModalOpen(false)}
       />
+
       <DebugInformation isOpen={isDebugInformationOpen} onClose={() => setIsDebugInformationOpen(false)} />
+
       {serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled && (
         <IstioCertsInfo isOpen={isCertsInformationOpen} onClose={() => setIsCertsInformationOpen(false)} />
       )}
+
       <Dropdown
         toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
           <MenuToggle

@@ -81,6 +81,7 @@ export const IstioActionDropdown: React.FC<IstioActionDropdownProps> = (props: I
       >
         <DropdownList>{[deleteActionWrapper]}</DropdownList>
       </Dropdown>
+
       <Modal
         title="Confirm Delete"
         variant={ModalVariant.small}

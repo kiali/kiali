@@ -10,7 +10,7 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
-import { groupMenuStyle } from 'styles/DropdownStyles';
+import { groupMenuStyle, kebabToggleStyle } from 'styles/DropdownStyles';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 import { KialiIcon } from 'config/KialiIcon';
 
@@ -40,6 +40,7 @@ export const OverviewNamespaceActions: React.FC<Props> = (props: Props) => {
     if (action.isSeparator) {
       return <Divider key={'separator_' + i} />;
     }
+
     if (action.isGroup && action.children) {
       return (
         <DropdownGroup
@@ -79,6 +80,7 @@ export const OverviewNamespaceActions: React.FC<Props> = (props: Props) => {
           {action.title} {!!action.isExternal ? <ExternalLinkAltIcon /> : undefined}
         </DropdownItem>
       );
+
       return action.isDisabled
         ? renderDisabledDropdownOption(
             'tooltip_action_' + i,
@@ -88,13 +90,16 @@ export const OverviewNamespaceActions: React.FC<Props> = (props: Props) => {
           )
         : item;
     }
+
     return undefined;
   });
+
   return (
     <Dropdown
       toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
         <MenuToggle
           ref={toggleRef}
+          className={kebabToggleStyle}
           aria-label="Actions"
           variant="plain"
           onClick={() => onKebabToggle(!isKebabOpen)}

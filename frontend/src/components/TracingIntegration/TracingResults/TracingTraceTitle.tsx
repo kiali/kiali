@@ -15,6 +15,7 @@ import { KialiAppState } from '../../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../../Kiosk/KioskActions';
 import { KialiIcon } from 'config/KialiIcon';
+import { kebabToggleStyle } from 'styles/DropdownStyles';
 
 type ReduxProps = {
   kiosk: string;
@@ -74,6 +75,7 @@ const TracingTraceTitleComponent: React.FC<Props> = (props: Props) => {
                 <MenuToggle
                   data-test="trace-details-kebab"
                   ref={toggleRef}
+                  className={kebabToggleStyle}
                   aria-label="Actions"
                   variant="plain"
                   onClick={() => setIsKebabOpen(!isKebabOpen)}

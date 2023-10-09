@@ -46,7 +46,7 @@ type ClusterDropdownState = {
 const optionBulkStyle = kialiStyle({
   marginLeft: '0.5rem',
   position: 'relative',
-  top: 8
+  top: '0.5rem'
 });
 
 const optionStyle = kialiStyle({ marginLeft: '1.0rem' });
@@ -56,7 +56,7 @@ const optionLabelStyle = kialiStyle({ marginLeft: '0.5rem' });
 const headerStyle = kialiStyle({
   margin: '0.5rem',
   marginTop: 0,
-  width: 300
+  width: '300px'
 });
 
 const marginBottom = 20;
@@ -77,6 +77,7 @@ const closeButtonStyle = kialiStyle({
 export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdownProps, ClusterDropdownState> {
   constructor(props: ClusterDropdownProps) {
     super(props);
+
     this.state = {
       isBulkSelectorOpen: false,
       isOpen: false,
@@ -127,6 +128,7 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
 
   private getHeader() {
     const hasFilter = !!this.props.filter;
+
     return (
       <div className={headerStyle}>
         <span style={{ display: 'flex' }}>
@@ -158,6 +160,7 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
         map[cluster.name] = cluster.name;
         return map;
       }, {});
+
       const clusters = this.filtered().map((cluster: MeshCluster) => (
         <div
           className={optionStyle}
@@ -185,6 +188,7 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
         </>
       );
     }
+
     return <div className={optionStyle}>No clusters found</div>;
   }
 
@@ -222,6 +226,7 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
       this.props.setActiveClusters(this.state.selectedClusters);
       this.clearFilter();
     }
+
     this.setState({
       isOpen
     });

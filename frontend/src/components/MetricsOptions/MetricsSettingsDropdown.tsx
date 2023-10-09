@@ -79,6 +79,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     let initLabelSettings = changeDirection ? settings.labelsSettings : new Map();
     const stateLabelsSettings = changeDirection ? initLabelSettings : this.state.labelsSettings;
     const labelsSettings = combineLabelsSettings(this.props.labelsSettings, stateLabelsSettings);
+
     if (!isEqual(stateLabelsSettings, labelsSettings) || changeDirection) {
       this.setState(prevState => {
         return {
@@ -97,6 +98,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
 
   onGroupingChanged = (label: PromLabel, checked: boolean) => {
     const objLbl = this.state.labelsSettings.get(label);
+
     if (objLbl) {
       objLbl.checked = checked;
     }
@@ -117,6 +119,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
   onLabelsFiltersChanged = (label: PromLabel, value: string, checked: boolean, singleSelection: boolean) => {
     const newValues = mergeLabelFilter(this.state.labelsSettings, label, value, checked, singleSelection);
     this.updateLabelsSettingsURL(newValues);
+
     this.setState({ labelsSettings: newValues }, () => {
       this.props.onLabelsFiltersChanged(newValues);
       this.checkSelected();
@@ -127,6 +130,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     // E.g.: bylbl=version=v1,v2,v4
     const urlParams = new URLSearchParams(history.location.search);
     urlParams.delete(URLParam.BY_LABELS);
+
     labelsSettings.forEach((lbl, name) => {
       if (lbl.checked) {
         const filters = Object.keys(lbl.values)
@@ -139,6 +143,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
         }
       }
     });
+
     history.replace(history.location.pathname + '?' + urlParams.toString());
   };
 
@@ -196,9 +201,11 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
   render() {
     const hasHistograms = this.props.hasHistograms;
     const hasLabels = this.state.labelsSettings.size > 0;
+
     if (!hasHistograms && !hasLabels) {
       return null;
     }
+
     return (
       <Dropdown
         toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
@@ -290,6 +297,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
         </div>
       );
     });
+
     return (
       <>
         <label className={classes(titleLabelStyle, titleStyle, labelStyle)}>Show metrics by:</label>
@@ -332,6 +340,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
         );
       })
     );
+
     return (
       <>
         <label className={classes(titleLabelStyle, titleStyle, labelStyle)} style={{ paddingRight: '0.5rem' }}>

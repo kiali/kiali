@@ -167,6 +167,7 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
 
   private getHeader() {
     const hasFilter = !!this.props.filter;
+
     return (
       <div className={headerStyle}>
         <span style={{ display: 'flex' }}>

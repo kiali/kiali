@@ -105,6 +105,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
 
   const onAction = (key: string) => {
     const updateLabel = getWizardUpdateLabel(props.virtualServices, props.k8sHTTPRoutes);
+
     switch (key) {
       case WIZARD_REQUEST_ROUTING:
       case WIZARD_FAULT_INJECTION:
@@ -148,6 +149,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
   const onDelete = () => {
     setIsDeleting(true);
     hideConfirmDelete();
+
     deleteServiceTrafficRouting(
       props.virtualServices,
       DestinationRuleC.fromDrArray(props.destinationRules),
@@ -182,6 +184,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
 
   const onChangeAnnotations = (annotations: { [key: string]: string }) => {
     const jsonInjectionPatch = buildAnnotationPatch(annotations);
+
     API.updateService(props.namespace, props.serviceName, jsonInjectionPatch, 'json', props.cluster)
       .then(_ => {
         AlertUtils.add('Service ' + props.serviceName + ' updated', 'default', MessageType.SUCCESS);
@@ -199,6 +202,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
   const toolTipMsgActions = !hasMeshWorkloads
     ? 'There are not Workloads with sidecar for this service'
     : 'There are not Workloads with ' + appLabelName + ' and ' + versionLabelName + ' labels';
+
   const validWorkloads = getValidWorkloads();
   const validActions = hasMeshWorkloads && validWorkloads;
 
@@ -231,6 +235,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
       {!hasMeshWorkloads
         ? renderDisabledDropdownOption('tooltip_wizard_actions', TooltipPosition.top, toolTipMsgActions, dropdown)
         : dropdown}
+
       <WizardAnnotations
         showAnotationsWizard={showAnnotationsWizard}
         onChange={annotations => onChangeAnnotations(annotations)}
@@ -238,6 +243,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
         annotations={props.annotations}
         canEdit={serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode}
       />
+
       <ServiceWizard
         show={showWizard}
         type={wizardType}
@@ -258,6 +264,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
         onClose={onClose}
         istioAPIEnabled={props.istioAPIEnabled}
       />
+
       <ConfirmDeleteTrafficRoutingModal
         destinationRules={DestinationRuleC.fromDrArray(props.destinationRules)}
         virtualServices={props.virtualServices}

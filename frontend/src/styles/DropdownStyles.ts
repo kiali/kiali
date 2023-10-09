@@ -28,7 +28,7 @@ const itemStyle: NestedCSSProperties = {
   alignItems: 'center',
   whiteSpace: 'nowrap',
   margin: 0,
-  padding: '0.5rem 1rem',
+  padding: '0.375rem 1rem',
   display: 'inline-block'
 };
 
@@ -42,9 +42,14 @@ export const itemStyleWithInfo = kialiStyle({
 });
 
 export const infoStyle = kialiStyle({
-  marginLeft: '0.5rem'
+  marginLeft: '0.375rem'
 });
 
 export const groupMenuStyle = kialiStyle({
   textAlign: 'left'
+});
+
+export const kebabToggleStyle = kialiStyle({
+  paddingLeft: '0.5rem',
+  paddingRight: '0.5rem'
 });

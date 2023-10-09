@@ -34,6 +34,7 @@ import { KioskElement } from '../Kiosk/KioskElement';
 import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
 import { isMultiCluster } from '../../config';
 import { KialiIcon } from 'config/KialiIcon';
+import { kebabToggleStyle } from 'styles/DropdownStyles';
 
 const initGraphContainerStyle = kialiStyle({ width: '100%', height: '100%' });
 
@@ -62,6 +63,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
 
   constructor(props: MiniGraphCardProps) {
     super(props);
+
     this.cytoscapeGraphRef = React.createRef();
     this.state = { isKebabOpen: false, isTimeOptionsOpen: false, graphData: props.dataSource.graphData };
   }
@@ -126,10 +128,12 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
                       <TimeDurationIndicator onClick={this.toggleTimeOptionsVisibility} isDuration={true} />
                     </ToolbarItem>
                   </KioskElement>
+
                   <Dropdown
                     toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
                       <MenuToggle
                         ref={toggleRef}
+                        className={kebabToggleStyle}
                         aria-label="Actions"
                         variant="plain"
                         onClick={() => this.onGraphActionsToggle(!this.state.isKebabOpen)}

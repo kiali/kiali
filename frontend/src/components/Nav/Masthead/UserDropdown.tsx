@@ -37,6 +37,7 @@ const dropdownStyle = kialiStyle({
 class UserDropdownComponent extends React.Component<UserProps, UserState> {
   constructor(props: UserProps) {
     super(props);
+
     this.state = {
       showSessionTimeOut: false,
       timeCountDownSeconds: this.timeLeft() / MILLISECONDS,
@@ -49,6 +50,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
     const checkSessionTimerId = setInterval(() => {
       this.checkSession();
     }, 3000);
+
     const timeLeftTimerId = setInterval(() => {
       this.setState({ timeCountDownSeconds: this.timeLeft() / MILLISECONDS });
     }, 1000);
@@ -63,6 +65,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
     if (this.state.checkSessionTimerId) {
       clearInterval(this.state.checkSessionTimerId);
     }
+
     if (this.state.timeLeftTimerId) {
       clearInterval(this.state.timeLeftTimerId);
     }

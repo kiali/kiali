@@ -37,6 +37,7 @@ import {
   MenuToggle,
   MenuToggleElement
 } from '@patternfly/react-core';
+import { kebabToggleStyle } from 'styles/DropdownStyles';
 
 type SummaryPanelAppBoxMetricsState = {
   grpcRequestIn: Datapoint[];
@@ -120,6 +121,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
         this.mainDivRef.current.scrollTop = 0;
       }
     }
+
     if (shouldRefreshData(prevProps, this.props)) {
       this.updateCharts(this.props);
     }
@@ -164,18 +166,18 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
 
     const firstBadge = isMultiCluster ? (
       <>
-        <PFBadge badge={PFBadges.Cluster} size="sm" style={{ marginBottom: '2px' }} />
+        <PFBadge badge={PFBadges.Cluster} size="sm" style={{ marginBottom: '0.125rem' }} />
         {nodeData.cluster}
       </>
     ) : (
       <>
-        <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />
+        <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '0.125rem' }} />
         {nodeData.namespace}
       </>
     );
     const secondBadge = isMultiCluster ? (
       <div>
-        <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />
+        <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '0.125rem' }} />
         {nodeData.namespace}
       </div>
     ) : (
@@ -195,6 +197,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
                   <MenuToggle
                     ref={toggleRef}
                     id="summary-appbox-kebab"
+                    className={kebabToggleStyle}
                     aria-label="Actions"
                     variant="plain"
                     onClick={() => this.onToggleActions(!this.state.isOpen)}
@@ -384,6 +387,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
 
         const metricsOut = responses[0].data;
         const metricsIn = responses[1].data;
+
         this.setState({
           loading: false,
           grpcRequestErrIn: getDatapoints(metricsIn.request_error_count, comparator, Protocol.GRPC),
@@ -424,11 +428,13 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     if (!namespace) {
       return false;
     }
+
     for (const ns of this.props.namespaces) {
       if (ns.name === namespace) {
         return true;
       }
     }
+
     return false;
   };
 
@@ -449,17 +455,17 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
       });
 
     return (
-      <div style={{ marginTop: '10px', marginBottom: '10px' }}>
+      <div style={{ marginTop: '0.5rem', marginBottom: '0.5rem' }}>
         {hasCB && (
           <div>
             <KialiIcon.CircuitBreaker />
-            <span style={{ paddingLeft: '4px' }}>Has Circuit Breaker</span>
+            <span style={{ paddingLeft: '0.25rem' }}>Has Circuit Breaker</span>
           </div>
         )}
         {hasVS && (
           <div>
             <KialiIcon.VirtualService />
-            <span style={{ paddingLeft: '4px' }}>Has Virtual Service</span>
+            <span style={{ paddingLeft: '0.25rem' }}>Has Virtual Service</span>
           </div>
         )}
       </div>
@@ -481,17 +487,17 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     });
 
     return (
-      <div style={{ marginTop: '10px', marginBottom: '10px' }}>
+      <div style={{ marginTop: '0.5rem', marginBottom: '0.5rem' }}>
         {hasCB && (
           <div>
             <KialiIcon.CircuitBreaker />
-            <span style={{ paddingLeft: '4px' }}>Has Circuit Breaker</span>
+            <span style={{ paddingLeft: '0.25rem' }}>Has Circuit Breaker</span>
           </div>
         )}
         {hasVS && (
           <div>
             <KialiIcon.VirtualService />
-            <span style={{ paddingLeft: '4px' }}>Has Virtual Service</span>
+            <span style={{ paddingLeft: '0.25rem' }}>Has Virtual Service</span>
           </div>
         )}
       </div>
@@ -559,6 +565,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     const validChildren = appBox.children(
       `node[nodeType != "${NodeType.SERVICE}"][nodeType != "${NodeType.AGGREGATE}"]`
     );
+
     const inbound = getAccumulatedTrafficRateHttp(validChildren.incomers('edge'));
     const outbound = getAccumulatedTrafficRateHttp(validChildren.edgesTo('*'));
 
@@ -588,6 +595,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
       { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE },
       { prop: NodeAttr.nodeType, op: '!=', val: NodeType.AGGREGATE }
     ]);
+
     const inbound = getAccumulatedTrafficRateHttp(edgesIn(validChildren as Node[]), true);
     const outbound = getAccumulatedTrafficRateHttp(edgesOut(validChildren as Node[]), true);
 
@@ -765,6 +773,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     const serviceList: any[] = [];
 
     const appBoxChildren = appBox.getAllNodeChildren();
+
     select(appBoxChildren, { prop: NodeAttr.nodeType, val: NodeType.SERVICE }).forEach((serviceNode, i) => {
       const serviceNodeData = serviceNode.getData();
       serviceList.push(renderBadgedLink(serviceNodeData, NodeType.SERVICE));
@@ -804,6 +813,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     const workloadList: any[] = [];
 
     const appBoxChildren = appBox.getAllNodeChildren();
+
     select(appBoxChildren, { prop: NodeAttr.workload, op: 'truthy' }).forEach(node => {
       const nodeData = node.getData();
       workloadList.push(renderBadgedLink(nodeData, NodeType.WORKLOAD));
@@ -820,6 +830,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     if (isPF) {
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
       const notServices = select(appBoxChildren, { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE });
+
       return (
         selectOr(notServices, [
           [{ prop: NodeAttr.grpcIn, op: '>', val: 0 }],
@@ -834,6 +845,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
   private hasGrpcIn = (appBox, isPF: boolean): boolean => {
     if (isPF) {
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
+
       return (
         selectAnd(appBoxChildren, [
           { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE },
@@ -848,6 +860,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
   private hasGrpcOut = (appBox, isPF: boolean): boolean => {
     if (isPF) {
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
+
       return (
         selectAnd(appBoxChildren, [
           { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE },
@@ -862,6 +875,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     if (isPF) {
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
       const notServices = select(appBoxChildren, { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE });
+
       return (
         selectOr(notServices, [
           [{ prop: NodeAttr.httpIn, op: '>', val: 0 }],
@@ -875,6 +889,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
   private hasHttpIn = (appBox, isPF: boolean): boolean => {
     if (isPF) {
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
+
       return (
         selectAnd(appBoxChildren, [
           { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE },
@@ -888,6 +903,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
   private hasHttpOut = (appBox, isPF: boolean): boolean => {
     if (isPF) {
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
+
       return (
         selectAnd(appBoxChildren, [
           { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE },
@@ -902,6 +918,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     if (isPF) {
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
       const notServices = select(appBoxChildren, { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE });
+
       return (
         selectOr(notServices, [
           [{ prop: NodeAttr.tcpIn, op: '>', val: 0 }],
@@ -915,6 +932,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
   private hasTcpIn = (appBox, isPF: boolean): boolean => {
     if (isPF) {
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
+
       return (
         selectAnd(appBoxChildren, [
           { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE },
@@ -928,6 +946,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
   private hasTcpOut = (appBox, isPF: boolean): boolean => {
     if (isPF) {
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
+
       return (
         selectAnd(appBoxChildren, [
           { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE },

@@ -68,10 +68,12 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
 
   const actionItems = SERVICE_WIZARD_ACTIONS.map(eventKey => {
     const isGatewayAPIEnabled = eventKey === WIZARD_K8S_REQUEST_ROUTING ? serverConfig.gatewayAPIEnabled : true;
+
     const enabledItem =
       isGatewayAPIEnabled &&
       !props.isDisabled &&
       (!hasTrafficRouting() || (hasTrafficRouting() && updateLabel === eventKey));
+
     const wizardItem = (
       <DropdownItem
         key={eventKey}
@@ -122,6 +124,7 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
   actionItems.push(<Divider className={dividerStyle} key="actions_separator" />);
 
   const deleteDisabled = !canDelete(props.istioPermissions) || !hasTrafficRouting() || props.isDisabled;
+
   let deleteDropdownItem = (
     <DropdownItem
       key={DELETE_TRAFFIC_ROUTING}
@@ -151,6 +154,8 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
   }
 
   actionItems.push(deleteDropdownItem);
+
   const label = updateLabel === '' ? 'Create' : 'Update';
+
   return <DropdownGroup key={`group_${label}`} label={label} className={groupMenuStyle} children={actionItems} />;
 };

@@ -198,6 +198,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                   value={trafficRateOption.id}
                 />
               </label>
+
               {!!trafficRateOption.tooltip && (
                 <Tooltip
                   key={`tooltip_${trafficRateOption.id}`}
@@ -207,6 +208,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                   <KialiIcon.Info className={infoStyle} />
                 </Tooltip>
               )}
+
               {trafficRateOption.id === TrafficRate.GRPC_GROUP && grpcOptions.some(o => o.isChecked) && (
                 <div>
                   {grpcOptions.map((grpcOption: TrafficRateOptionType) => (
@@ -214,11 +216,11 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                       <label
                         key={grpcOption.id}
                         className={!!grpcOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
-                        style={{ paddingLeft: '35px' }}
+                        style={{ paddingLeft: '2rem' }}
                       >
                         <Radio
                           id={grpcOption.id}
-                          style={{ paddingLeft: '5px' }}
+                          style={{ paddingLeft: '0.25rem' }}
                           name="grpcOptions"
                           isChecked={grpcOption.isChecked}
                           isDisabled={props.disabled}
@@ -240,6 +242,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                   ))}
                 </div>
               )}
+
               {trafficRateOption.id === TrafficRate.HTTP_GROUP && httpOptions.some(o => o.isChecked) && (
                 <div>
                   {httpOptions.map((httpOption: TrafficRateOptionType) => (
@@ -247,11 +250,11 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                       <label
                         key={httpOption.id}
                         className={!!httpOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
-                        style={{ paddingLeft: '35px' }}
+                        style={{ paddingLeft: '2rem' }}
                       >
                         <Radio
                           id={httpOption.id}
-                          style={{ paddingLeft: '5px' }}
+                          style={{ paddingLeft: '0.25rem' }}
                           name="httpOptions"
                           isChecked={httpOption.isChecked}
                           isDisabled={props.disabled}
@@ -260,6 +263,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                           value={httpOption.id}
                         />
                       </label>
+
                       {!!httpOption.tooltip && (
                         <Tooltip
                           key={`tooltip_${httpOption.id}`}
@@ -273,6 +277,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                   ))}
                 </div>
               )}
+
               {trafficRateOption.id === TrafficRate.TCP_GROUP && tcpOptions.some(o => o.isChecked) && (
                 <div>
                   {tcpOptions.map((tcpOption: TrafficRateOptionType) => (
@@ -280,11 +285,11 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                       <label
                         key={tcpOption.id}
                         className={!!tcpOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
-                        style={{ paddingLeft: '35px' }}
+                        style={{ paddingLeft: '2rem' }}
                       >
                         <Radio
                           id={tcpOption.id}
-                          style={{ paddingLeft: '5px' }}
+                          style={{ paddingLeft: '0.25rem' }}
                           name="tcpOptions"
                           isChecked={tcpOption.isChecked}
                           isDisabled={props.disabled}
@@ -315,8 +320,10 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
 
   const toggleTrafficRate = (_, event) => {
     const rate = event.target.value as TrafficRate;
+
     if (props.trafficRates.includes(rate)) {
-      let newRates;
+      let newRates: TrafficRate[];
+
       switch (rate) {
         case TrafficRate.GRPC_GROUP:
           newRates = props.trafficRates.filter(r => !isGrpcRate(r));
@@ -330,6 +337,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
         default:
           newRates = props.trafficRates.filter(r => r !== rate);
       }
+
       props.setTrafficRates(newRates);
     } else {
       switch (rate) {

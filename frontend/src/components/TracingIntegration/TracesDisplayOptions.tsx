@@ -52,6 +52,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
 
   constructor(props: Props) {
     super(props);
+
     const displaySettings = TracesDisplayOptions.retrieveDisplaySettings();
     const querySettings = TracesDisplayOptions.retrieveQuerySettings();
     this.state = { ...displaySettings, ...querySettings, isOpen: false };
@@ -63,6 +64,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
       HistoryManager.getParam(URLParam.TRACING_SHOW_SPANS_AVG) ||
       sessionStorage.getItem(URLParam.TRACING_SHOW_SPANS_AVG) ||
       'false';
+
     return {
       showSpansAverage: spansAverage === 'true'
     };
@@ -73,14 +75,17 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
       HistoryManager.getParam(URLParam.TRACING_LIMIT_TRACES) ||
       sessionStorage.getItem(URLParam.TRACING_LIMIT_TRACES) ||
       '100';
+
     const errorsOnly =
       HistoryManager.getParam(URLParam.TRACING_ERRORS_ONLY) ||
       sessionStorage.getItem(URLParam.TRACING_ERRORS_ONLY) ||
       'false';
+
     const percentile =
       HistoryManager.getParam(URLParam.TRACING_PERCENTILE) ||
       sessionStorage.getItem(URLParam.TRACING_PERCENTILE) ||
       undefined;
+
     return {
       errorsOnly: errorsOnly === 'true',
       limit: Number(limit),
@@ -94,6 +99,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
 
   render() {
     const { isOpen } = this.state;
+
     return (
       <Dropdown
         toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
@@ -137,6 +143,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
             <KialiIcon.Info className={infoStyle} />
           </Tooltip>
         </div>
+
         {percentilesOptions.map(item => {
           let label = item.labelText;
           if (this.computedPercentiles) {
@@ -160,6 +167,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
             </div>
           );
         })}
+
         <div className={titleStyle}>Errors</div>
         <div>
           <label className={itemStyleWithoutInfo}>
@@ -173,7 +181,8 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
             />
           </label>
         </div>
-        <div style={{ marginTop: '10px' }}>
+
+        <div style={{ marginTop: '0.5rem' }}>
           <span className={titleStyle} style={{ paddingRight: 0 }}>
             Limit per query
           </span>
@@ -194,6 +203,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
             <KialiIcon.Info className={infoStyle} />
           </Tooltip>
         </div>
+
         {[20, 100, 500, 1000].map(limit => (
           <div key={'limit-' + limit}>
             <label key={'limit-' + limit} className={itemStyleWithoutInfo}>
@@ -208,6 +218,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
             </label>
           </div>
         ))}
+
         <div className={titleStyle}>Value axis</div>
         <div>
           <label className={itemStyleWithoutInfo}>

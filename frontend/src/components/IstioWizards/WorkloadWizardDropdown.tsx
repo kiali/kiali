@@ -75,6 +75,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
 
   const onChangeAnnotations = (annotations: { [key: string]: string }) => {
     const jsonInjectionPatch = buildAnnotationPatch(annotations);
+
     API.updateWorkload(
       props.namespace,
       props.workload.name,
@@ -97,6 +98,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
 
   const renderDropdownItems = (): JSX.Element[] => {
     const items: JSX.Element[] = [];
+
     if (serverConfig.kialiFeatureFlags.istioInjectionAction) {
       const enableAction = (
         <DropdownItem
@@ -109,6 +111,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
           Enable Auto Injection
         </DropdownItem>
       );
+
       const enableActionWrapper = serverConfig.deployment.viewOnlyMode
         ? renderDisabledDropdownOption(
             'enable_auto_injection',
@@ -129,6 +132,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
           Disable Auto Injection
         </DropdownItem>
       );
+
       const disableActionWrapper = serverConfig.deployment.viewOnlyMode
         ? renderDisabledDropdownOption(
             'disable_auto_injection',
@@ -149,6 +153,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
           Remove Auto Injection
         </DropdownItem>
       );
+
       const removeActionWrapper = serverConfig.deployment.viewOnlyMode
         ? renderDisabledDropdownOption(
             'remove_auto_injection',
@@ -169,6 +174,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
         items.push(props.workload.istioSidecar ? disableActionWrapper : enableActionWrapper);
       }
     }
+
     if (props.workload.type === 'Deployment') {
       const annotationsAction = (
         <DropdownItem
@@ -190,6 +196,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
 
   const dropdownItems = renderDropdownItems();
   const validActions = dropdownItems.length > 0;
+
   const dropdown = (
     <Dropdown
       data-test="workload-actions-dropdown"
