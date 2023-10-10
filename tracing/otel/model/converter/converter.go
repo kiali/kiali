@@ -53,6 +53,19 @@ func ConvertSpans(spans []otelModels.Span, serviceName string) []jaegerModels.Sp
 			Warnings:      []string{},
 		}
 
+		// This is how Jaeger reports it
+		// Used to determine the envoy direction
+		atb_val := ""
+		if span.Kind == "SPAN_KIND_CLIENT" {
+			atb_val = "client"
+		} else if span.Kind == "SPAN_KIND_SERVER" {
+			atb_val = "server"
+		}
+		if atb_val != "" {
+			atb := jaegerModels.KeyValue{Key: "span.kind", Value: atb_val, Type: "string"}
+			jaegerSpan.Tags = append(jaegerSpan.Tags, atb)
+		}
+
 		toRet = append(toRet, jaegerSpan)
 	}
 	return toRet
