@@ -1,15 +1,15 @@
 import * as React from 'react';
 import { IstioConfigItem } from '../../types/IstioConfigList';
-import { cellWidth, ICell, IRow, TableVariant } from '@patternfly/react-table';
-import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
+import { IRow, IRowCell, Table, TableVariant, Tbody, Td, Th, Thead, ThProps, Tr } from '@patternfly/react-table';
 import {
   Card,
   CardBody,
   CardHeader,
-  CardTitle,
   EmptyState,
   EmptyStateBody,
   EmptyStateVariant,
+  Title,
+  TitleSizes,
   TooltipPosition
 } from '@patternfly/react-core';
 import { ValidationObjectSummary } from '../Validations/ValidationObjectSummary';
@@ -19,54 +19,48 @@ import { PFBadge } from '../Pf/PfBadges';
 import { IstioObjectLink } from '../Link/IstioObjectLink';
 import { tableStyle } from 'styles/TableStyle';
 
-type Props = {
-  name: string;
+type IstioConfigCardProps = {
   items: IstioConfigItem[];
+  name: string;
 };
 
 const emtpytStyle = kialiStyle({
-  padding: '0 0 0 0',
-  margin: '0 0 0 0'
+  padding: '0',
+  margin: '0'
 });
 
-export class IstioConfigCard extends React.Component<Props> {
-  columns(): ICell[] {
-    return [{ title: 'Name' }, { title: 'Status', transforms: [cellWidth(10) as any] }];
-  }
+export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConfigCardProps) => {
+  const columns: ThProps[] = [{ title: 'Name' }, { title: 'Status', width: 10 }];
 
-  noIstioConfig(): IRow[] {
-    return [
+  const noIstioConfig: IRow = {
+    cells: [
       {
-        cells: [
-          {
-            title: (
-              <EmptyState variant={EmptyStateVariant.sm} className={emtpytStyle}>
-                <EmptyStateBody className={emtpytStyle} data-test="istio-config-empty">
-                  No Istio Config found for {this.props.name}
-                </EmptyStateBody>
-              </EmptyState>
-            ),
-            props: { colSpan: 2 }
-          }
-        ]
+        title: (
+          <EmptyState variant={EmptyStateVariant.sm} className={emtpytStyle}>
+            <EmptyStateBody className={emtpytStyle} data-test="istio-config-empty">
+              No Istio Config found for {props.name}
+            </EmptyStateBody>
+          </EmptyState>
+        ),
+        props: { colSpan: 2 }
       }
-    ];
-  }
+    ]
+  };
 
-  overviewLink(item: IstioConfigItem) {
+  const overviewLink = (item: IstioConfigItem) => {
     return (
       <IstioObjectLink name={item.name} namespace={item.namespace || ''} cluster={item.cluster} type={item.type}>
         {item.name}
       </IstioObjectLink>
     );
-  }
+  };
 
-  rows(): IRow[] {
-    if (this.props.items.length === 0) {
-      return this.noIstioConfig();
-    }
-    let rows: IRow[] = [];
-    this.props.items
+  let rows: IRow[] = [];
+
+  if (props.items.length === 0) {
+    rows = [noIstioConfig];
+  } else {
+    rows = props.items
       .sort((a: IstioConfigItem, b: IstioConfigItem) => {
         if (a.type < b.type) {
           return -1;
@@ -77,13 +71,13 @@ export class IstioConfigCard extends React.Component<Props> {
         }
       })
       .map((item, itemIdx) => {
-        rows.push({
+        return {
           cells: [
             {
               title: (
                 <span>
                   <PFBadge badge={IstioTypes[item.type].badge} position={TooltipPosition.top} />
-                  {this.overviewLink(item)}
+                  {overviewLink(item)}
                 </span>
               )
             },
@@ -97,32 +91,39 @@ export class IstioConfigCard extends React.Component<Props> {
               )
             }
           ]
-        });
-        return rows;
+        };
       });
-
-    return rows;
   }
 
-  render() {
-    return (
-      <Card isCompact={true} id={'IstioConfigCard'}>
-        <CardHeader actions={{ actions: <></>, hasNoOffset: false, className: undefined }}>
-          <CardTitle style={{ float: 'left' }}>Istio Config</CardTitle>
-        </CardHeader>
-        <CardBody>
-          <Table
-            variant={TableVariant.compact}
-            aria-label={'list_istio_config'}
-            cells={this.columns()}
-            rows={this.rows()}
-            className={tableStyle}
-          >
-            <TableHeader />
-            <TableBody />
-          </Table>
-        </CardBody>
-      </Card>
-    );
-  }
-}
+  return (
+    <Card isCompact={true} id={'IstioConfigCard'}>
+      <CardHeader actions={{ actions: <></>, hasNoOffset: false }}>
+        <Title headingLevel="h3" size={TitleSizes.lg}>
+          Istio Config
+        </Title>
+      </CardHeader>
+      <CardBody>
+        <Table variant={TableVariant.compact} aria-label={'list_istio_config'} className={tableStyle}>
+          <Thead>
+            <Tr>
+              {columns.map(column => (
+                <Th width={column.width}>{column.title}</Th>
+              ))}
+            </Tr>
+          </Thead>
+          <Tbody>
+            {rows.map((row, index) => (
+              <Tr key={`row_${index}`}>
+                {(row.cells as IRowCell[])?.map((cell, index) => (
+                  <Td dataLabel={columns[index].title} colSpan={cell.props?.colSpan}>
+                    {cell.title}
+                  </Td>
+                ))}
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
+      </CardBody>
+    </Card>
+  );
+};

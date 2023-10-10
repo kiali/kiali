@@ -88,7 +88,7 @@ export class ServiceNetwork extends React.Component<Props> {
     return (
       <Card isCompact={true} id={'ServiceNetworkCard'}>
         <CardHeader>
-          <Title headingLevel="h3" size={TitleSizes['2xl']}>
+          <Title headingLevel="h3" size={TitleSizes['xl']}>
             Network
           </Title>
         </CardHeader>
