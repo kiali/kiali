@@ -14,7 +14,7 @@ func ConvertId(id string) jaegerModels.TraceID {
 	return jaegerModels.TraceID(id)
 }
 
-// convertID
+// convertSpanId
 func convertSpanId(id string) jaegerModels.SpanID {
 	return jaegerModels.SpanID(id)
 }
@@ -116,7 +116,7 @@ func getDuration(end string, start string) (uint64, error) {
 
 func convertReferences(traceId jaegerModels.TraceID, parentSpanId jaegerModels.SpanID) []jaegerModels.Reference {
 	var references []jaegerModels.Reference
-	
+
 	if parentSpanId == "" {
 		return references
 	}
