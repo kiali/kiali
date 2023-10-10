@@ -78,7 +78,7 @@ func TestServiceEntryLabelsNotMatch(t *testing.T) {
 }
 
 func TestK8sGatewaysAddressesError(t *testing.T) {
-	name := "gatewayapi"
+	name := "gatewayapiaddr"
 	require := require.New(t)
 	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-k8sgateways-addresses.yaml")
 	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
@@ -107,7 +107,7 @@ func TestK8sGatewaysAddressesError(t *testing.T) {
 }
 
 func TestK8sGatewaysListenersError(t *testing.T) {
-	name := "gatewayapi"
+	name := "gatewayapilnr"
 	require := require.New(t)
 	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-k8sgateways-listeners.yaml")
 	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
