@@ -42,6 +42,7 @@ type Props<T extends RichDataPoint, O extends LineInfo> = {
   sizeRatio?: number;
   moreChartProps?: ChartProps;
   onClick?: (datum: RawOrBucket<O>) => void;
+  onMouseOver?: (datum: RawOrBucket<O>) => void;
   onTooltipClose?: (datum: RawOrBucket<O>) => void;
   onTooltipOpen?: (datum: RawOrBucket<O>) => void;
   brushHandlers?: BrushHandlers;
@@ -169,6 +170,19 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
           onClick: () => {
             if (this.hoveredItem) {
               this.props.onClick!(this.hoveredItem as RawOrBucket<O>);
+            }
+            return [];
+          }
+        }
+      });
+    }
+    if (this.props.onMouseOver) {
+      events.push({
+        target: 'parent',
+        eventHandlers: {
+          onMouseOver: () => {
+            if (this.hoveredItem) {
+              this.props.onMouseOver!(this.hoveredItem as RawOrBucket<O>);
             }
             return [];
           }
