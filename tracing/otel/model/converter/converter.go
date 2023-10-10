@@ -58,10 +58,8 @@ func ConvertSpans(spans []otelModels.Span, serviceName string) []jaegerModels.Sp
 		atb_val := ""
 		if span.Kind == "SPAN_KIND_CLIENT" {
 			atb_val = "client"
-		} else {
-			if span.Kind == "SPAN_KIND_SERVER" {
-				atb_val = "server"
-			}
+		} else if span.Kind == "SPAN_KIND_SERVER" {
+			atb_val = "server"
 		}
 		if atb_val != "" {
 			atb := jaegerModels.KeyValue{Key: "span.kind", Value: atb_val, Type: "string"}
