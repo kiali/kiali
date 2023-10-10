@@ -10,8 +10,8 @@ Then('sd::user sees a list with content {string}', (tab: string) => {
 });
 
 Then('sd::user sees the actions button', () => {
-  cy.getBySel('wizard-actions').should('be.visible').click();
-  cy.getBySel('wizard-actions').siblings().contains('Request Routing');
+  cy.getBySel('service-actions-toggle').should('be.visible').click();
+  cy.getBySel('service-actions-dropdown').contains('Request Routing');
 });
 
 Then('sd::user sees {string} details information for service {string}', (name: string, version: string) => {

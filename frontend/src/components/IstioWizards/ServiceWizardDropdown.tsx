@@ -208,14 +208,14 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
 
   const dropdown = (
     <Dropdown
-      data-test="actions-dropdown"
+      data-test="service-actions-dropdown"
       id="actions"
       toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
         <MenuToggle
           ref={toggleRef}
           id="actions-toggle"
           onClick={() => onActionsToggle(!isActionsOpen)}
-          data-test="actions-dropdown-toggle"
+          data-test="service-actions-toggle"
           isExpanded={isActionsOpen}
           isDisabled={!validActions}
         >

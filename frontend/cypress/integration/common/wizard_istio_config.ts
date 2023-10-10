@@ -2,7 +2,7 @@ import { And, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 
 When('user clicks in the {string} Istio config actions', (action: string) => {
-  cy.get('button[data-test="actions-dropdown-toggle"]')
+  cy.get('button[data-test="istio-actions-toggle"]')
     .should('be.visible')
     .click()
     .get('#loading_kiali_spinner')

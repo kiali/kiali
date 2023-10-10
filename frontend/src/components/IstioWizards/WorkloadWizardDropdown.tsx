@@ -206,7 +206,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
           ref={toggleRef}
           id="actions-toggle"
           onClick={() => onActionsToggle(!isActionsOpen)}
-          data-test="workload-actions-dropdown-toggle"
+          data-test="workload-actions-toggle"
           isExpanded={isActionsOpen}
           isDisabled={!validActions}
         >

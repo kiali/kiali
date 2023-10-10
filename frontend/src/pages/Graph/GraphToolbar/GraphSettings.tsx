@@ -323,6 +323,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
           <MenuToggle
             ref={toggleRef}
+            id="display-settings"
             onClick={() => this.onToggle(!this.state.isOpen)}
             isExpanded={this.state.isOpen}
             isDisabled={this.props.disabled}
@@ -330,6 +331,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
             Display
           </MenuToggle>
         )}
+        id="graph-display-menu"
         isOpen={this.state.isOpen}
         onOpenChange={(isOpen: boolean) => this.onToggle(isOpen)}
       >

@@ -31,7 +31,8 @@ Then('user sees trace information', () => {
 
 Then('user sees trace details', () => {
   cy.getBySel('trace-details-tabs').should('be.visible');
-  cy.getBySel('trace-details-kebab').click().contains('View on Graph');
+  cy.getBySel('trace-details-kebab').click();
+  cy.getBySel('trace-details-dropdown').contains('View on Graph');
 });
 
 When('user selects a trace', () => {

@@ -42,7 +42,7 @@ When('user clicks in the {string} actions', (action: string) => {
   it('spinner should disappear', { retries: 3 }, () => {
     cy.get('#loading_kiali_spinner').should('not.exist');
   });
-  cy.get('button[data-test="actions-dropdown-toggle"]')
+  cy.get('button[data-test="service-actions-toggle"]')
     .should('exist')
     .click()
     .get('#loading_kiali_spinner')
@@ -67,13 +67,17 @@ And('user clicks in the {string} tab', (tab: string) => {
 And('user clicks in the {string} request matching dropdown', (select: string) => {
   cy.get('button[data-test="requestmatching-header-toggle"]').click();
 
-  cy.get('button[data-test="requestmatching-header-' + select + '"]').click();
+  cy.get('li[data-test="requestmatching-header-' + select + '"]')
+    .find('button')
+    .click();
 });
 
 And('user clicks in the {string} request filtering dropdown', (select: string) => {
   cy.get('button[data-test="filtering-type-toggle"]').click();
 
-  cy.get('button[data-test="filtering-type-' + select + '"]').click();
+  cy.get('li[data-test="filtering-type-' + select + '"]')
+    .find('button')
+    .click();
 });
 
 And('user types {string} in the matching header input', (header: string) => {
@@ -87,7 +91,9 @@ And('user types {string} in the filtering header input', (header: string) => {
 And('user clicks in the {string} match value dropdown', (value: string) => {
   cy.get('button[data-test="requestmatching-match-toggle"]').click();
 
-  cy.get('button[data-test="requestmatching-match-' + value + '"]').click();
+  cy.get('li[data-test="requestmatching-match-' + value + '"]')
+    .find('button')
+    .click();
 });
 
 And('user types {string} in the match value input', (value: string) => {

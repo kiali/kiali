@@ -60,14 +60,14 @@ export const IstioActionsNamespaceDropdown: React.FC = () => {
 
   return (
     <Dropdown
-      data-test="actions-dropdown"
+      data-test="istio-actions-dropdown"
       id="actions"
       toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
         <MenuToggle
           ref={toggleRef}
           id="actions-toggle"
           onClick={() => onToggle(!dropdownOpen)}
-          data-test="actions-dropdown-toggle"
+          data-test="istio-actions-toggle"
           isExpanded={dropdownOpen}
         >
           Actions

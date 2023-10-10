@@ -85,6 +85,7 @@ const TracingTraceTitleComponent: React.FC<Props> = (props: Props) => {
                 </MenuToggle>
               )}
               isOpen={isKebabOpen}
+              data-test="trace-details-dropdown"
               onOpenChange={(isOpen: boolean) => setIsKebabOpen(isOpen)}
               popperProps={{ position: 'right' }}
             >
