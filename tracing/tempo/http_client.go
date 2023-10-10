@@ -159,12 +159,13 @@ func convertBatchTrace(trace otel.Trace, serviceName string) (jaegerModels.Trace
 func convertSingleTrace(traces *otelModels.Data, id string) (*model.TracingResponse, error) {
 	var response model.TracingResponse
 	var jaegerModel jaegerModels.Trace
-	serviceName := ""
+	tracingServiceName := ""
 
 	jaegerModel.TraceID = converter.ConvertId(id)
 	if traces != nil {
-		serviceName = getServiceName(traces.Batches[0].Resource.Attributes)
+		tracingServiceName = getServiceName(traces.Batches[0].Resource.Attributes)
 		for _, batch := range traces.Batches {
+			serviceName := getServiceName(batch.Resource.Attributes)
 			jaegerModel.Spans = append(jaegerModel.Spans, converter.ConvertSpans(batch.ScopeSpans[0].Spans, serviceName)...)
 		}
 		jaegerModel.Matched = len(jaegerModel.Spans)
@@ -175,7 +176,7 @@ func convertSingleTrace(traces *otelModels.Data, id string) (*model.TracingRespo
 
 	response.Data = append(response.Data, jaegerModel)
 
-	response.TracingServiceName = serviceName
+	response.TracingServiceName = tracingServiceName
 	return &response, nil
 }
 

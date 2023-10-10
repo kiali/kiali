@@ -14,7 +14,7 @@ func ConvertId(id string) jaegerModels.TraceID {
 	return jaegerModels.TraceID(id)
 }
 
-// convertID
+// convertSpanId
 func convertSpanId(id string) jaegerModels.SpanID {
 	return jaegerModels.SpanID(id)
 }
@@ -37,15 +37,19 @@ func ConvertSpans(spans []otelModels.Span, serviceName string) []jaegerModels.Sp
 			continue
 		}
 
+		jaegerTraceId := ConvertId(span.TraceID)
+		jaegerSpanId := convertSpanId(span.SpanID)
+		parentSpanId := convertSpanId(span.ParentSpanId)
+
 		jaegerSpan := jaegerModels.Span{
-			TraceID:   ConvertId(span.TraceID),
-			SpanID:    convertSpanId(span.SpanID),
+			TraceID:   jaegerTraceId,
+			SpanID:    jaegerSpanId,
 			Duration:  duration,
 			StartTime: startTime / 1000,
 			// No more mapped data
 			Flags:         0,
 			OperationName: span.Name,
-			References:    []jaegerModels.Reference{},
+			References:    convertReferences(jaegerTraceId, parentSpanId),
 			Tags:          convertAttributes(span.Attributes, span.Status),
 			Logs:          []jaegerModels.Log{},
 			ProcessID:     "",
@@ -83,9 +87,12 @@ func ConvertSpanSet(span otel.Span, serviceName string, traceId string, rootName
 		log.Errorf("Error converting duration.")
 	}
 
+	jaegerTraceId := ConvertId(traceId)
+	jaegerSpanId := convertSpanId(span.SpanID)
+
 	jaegerSpan := jaegerModels.Span{
-		TraceID:   ConvertId(traceId),
-		SpanID:    convertSpanId(span.SpanID),
+		TraceID:   jaegerTraceId,
+		SpanID:    jaegerSpanId,
 		Duration:  duration / 1000, // Provided in ns, Jaeger uses ms
 		StartTime: startTime / 1000,
 		// No more mapped data
@@ -118,6 +125,23 @@ func getDuration(end string, start string) (uint64, error) {
 	}
 	// nano to micro
 	return (endInt - startInt) / 1000, nil
+}
+
+func convertReferences(traceId jaegerModels.TraceID, parentSpanId jaegerModels.SpanID) []jaegerModels.Reference {
+	var references []jaegerModels.Reference
+
+	if parentSpanId == "" {
+		return references
+	}
+
+	var ref = jaegerModels.Reference{
+		RefType: jaegerModels.ReferenceType("CHILD_OF"),
+		TraceID: traceId,
+		SpanID:  parentSpanId,
+	}
+
+	references = append(references, ref)
+	return references
 }
 
 func convertAttributes(attributes []otelModels.Attribute, status otelModels.Status) []jaegerModels.KeyValue {
