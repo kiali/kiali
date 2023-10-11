@@ -17,6 +17,7 @@ export const TracingThunkActions = {
             if (response.data.data) {
               const trace = transformTraceData(response.data.data, cluster);
               if (trace) {
+                trace.loaded = true;
                 dispatch(TracingActions.setTrace(trace));
               }
             }

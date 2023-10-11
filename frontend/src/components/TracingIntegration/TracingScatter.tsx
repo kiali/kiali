@@ -149,8 +149,7 @@ class TracingScatterComponent extends React.Component<TracingScatterProps> {
             fill={true}
             unit="seconds"
             seriesComponent={<ChartScatter />}
-            onMouseOver={dp => this.props.setTraceId(this.props.cluster, dp.trace.traceID, dp.trace.isLoaded)}
-            // onClick={dp => this.props.setTraceId(this.props.cluster, dp.trace.traceID)}
+            onClick={dp => this.props.setTraceId(this.props.cluster, dp.trace.traceID)}
             onTooltipClose={dp => this.onTooltipClose(dp.trace)}
             onTooltipOpen={dp => this.onTooltipOpen(dp.trace)}
             labelComponent={<TraceTooltip />}
