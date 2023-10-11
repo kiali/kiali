@@ -3,12 +3,10 @@ import _ from 'lodash';
 import { Responses } from '../../types/Graph';
 import { responseFlags } from '../../utils/ResponseFlags';
 import { summaryTitle } from 'pages/Graph/SummaryPanelCommon';
-import { Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
-import { tableStyle } from 'styles/TableStyle';
+import { Table, TableVariant, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
-import { classes } from 'typestyle';
 
-const responseTableStyle = kialiStyle({
+const tableStyle = kialiStyle({
   $nest: {
     '& tbody > tr:last-child': {
       borderBottom: 0
@@ -54,7 +52,7 @@ export const ResponseFlagsTable: React.FC<ResponseFlagsTableProps> = (props: Res
     <>
       <div className={summaryTitle}>{props.title}</div>
 
-      <Table className={classes(tableStyle, responseTableStyle)}>
+      <Table variant={TableVariant.compact} className={tableStyle}>
         <Thead>
           <Tr key="table-header">
             <Th textCenter>Code</Th>

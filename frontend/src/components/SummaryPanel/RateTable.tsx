@@ -1,16 +1,11 @@
-import { Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
+import { Table, TableVariant, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { summaryTitle } from 'pages/Graph/SummaryPanelCommon';
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { renderRateChartHttp, renderRateChartGrpc } from './RateChart';
 
 const tableStyle = kialiStyle({
-  marginBottom: '0.5rem',
-  $nest: {
-    '& thead > tr': {
-      borderBottomWidth: '0.125rem'
-    }
-  }
+  marginBottom: '0.5rem'
 });
 
 type RateTableGrpcPropType = {
@@ -91,7 +86,7 @@ export const RateTableHttp: React.FC<RateTableHttpPropType> = (props: RateTableH
     <div>
       <div className={summaryTitle}>{props.title}</div>
 
-      <Table className={tableStyle}>
+      <Table variant={TableVariant.compact} className={tableStyle}>
         <Thead>
           <Tr>
             <Th textCenter>Total</Th>

@@ -30,7 +30,6 @@ const resourceListStyle = kialiStyle({
 
 const infoStyle = kialiStyle({
   marginLeft: '0.25rem'
-  // verticalAlign: '-3px !important'
 });
 
 export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetworkProps) => {

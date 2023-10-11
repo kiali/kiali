@@ -12,18 +12,20 @@ import {
 } from '@patternfly/react-core';
 import {
   TableVariant,
-  RowWrapper,
-  sortable,
   SortByDirection,
-  ICell,
   IRow,
-  IActionsResolver,
   IRowData,
-  IExtraRowData,
   IAction,
-  ISeparator
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Td,
+  ThProps,
+  Th,
+  IRowCell,
+  ActionsColumn
 } from '@patternfly/react-table';
-import { Table, TableHeader, TableBody } from '@patternfly/react-table/deprecated';
 import { compareNullable } from 'components/FilterList/FilterHelper';
 import { MetricsStats } from 'types/Metrics';
 import { KialiAppState } from 'store/Store';
@@ -43,7 +45,6 @@ import { renderMetricsComparison } from './StatsComparison';
 import { history } from 'app/History';
 import { AngleDownIcon, AngleRightIcon, ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { isParentKiosk, kioskContextMenuAction } from '../../Kiosk/KioskActions';
-import { tableStyle } from 'styles/TableStyle';
 import { TEMPO } from '../../../types/Tracing';
 
 type ReduxProps = {
@@ -54,10 +55,10 @@ type ReduxProps = {
 };
 
 type Props = ReduxProps & {
+  cluster?: string;
   externalURL?: string;
   items: RichSpanData[];
   namespace: string;
-  cluster?: string;
   traceID: string;
 };
 
@@ -68,8 +69,9 @@ interface State {
   sortIndex: number;
 }
 
-type SortableCell<T> = ICell & {
+type SortableTh<T> = ThProps & {
   compare?: (a: T, b: T) => number;
+  sortable: boolean;
 };
 
 const dangerErrorStyle = kialiStyle({
@@ -92,31 +94,31 @@ const rowKebabStyle = kialiStyle({
 });
 
 const linkStyle = kialiStyle({
-  fontSize: 14
+  fontSize: '14px'
 });
 
 const getClassName = (isError: boolean, isSpan: boolean): string | undefined => {
   return isSpan ? (isError ? selectedErrorStyle : selectedStyle) : isError ? dangerErrorStyle : undefined;
 };
 
-const cells: SortableCell<RichSpanData>[] = [
+const columns: SortableTh<RichSpanData>[] = [
   {
     title: 'Timeline',
-    transforms: [sortable],
+    sortable: true,
     compare: (a, b) => a.startTime - b.startTime
   },
   {
     title: 'App / Workload',
-    transforms: [sortable],
+    sortable: true,
     compare: (a, b) => compareNullable(a.workload, b.workload, (a2, b2) => a2.localeCompare(b2))
   },
   {
     title: 'Summary',
-    transforms: []
+    sortable: false
   },
   {
     title: 'Statistics',
-    transforms: [sortable],
+    sortable: true,
     compare: (a, b) => a.duration - b.duration
   }
 ];
@@ -145,36 +147,54 @@ class SpanTableComponent extends React.Component<Props, State> {
   }
 
   render() {
+    const rows = this.rows();
+
     return (
-      <Table
-        variant={TableVariant.compact}
-        aria-label={'list_spans'}
-        cells={cells}
-        rows={this.rows()}
-        actionResolver={this.actionResolver}
-        sortBy={{ index: this.state.sortIndex, direction: this.state.sortDirection }}
-        onSort={(_event, index, sortDirection) => this.setState({ sortIndex: index, sortDirection: sortDirection })}
-        className={tableStyle}
-        rowWrapper={p => <RowWrapper {...p} className={(p.row as any).className} />}
-      >
-        <TableHeader />
-        {this.props.items.length > 0 ? (
-          <TableBody />
-        ) : (
-          <tbody>
-            <tr>
-              <td colSpan={cells.length}>
+      <Table variant={TableVariant.compact} aria-label={'list_spans'}>
+        <Thead>
+          <Tr>
+            {columns.map((column, index) => (
+              <Th sort={this.getSortParams(index)}>{column.title}</Th>
+            ))}
+          </Tr>
+        </Thead>
+
+        <Tbody>
+          {this.props.items.length > 0 ? (
+            rows.map((row, index) => (
+              <Tr key={`row_${index}`} className={row.className}>
+                {(row.cells as IRowCell[])?.map((cell, index) => (
+                  <Td dataLabel={columns[index].title}>{cell}</Td>
+                ))}
+                <Td isActionCell>
+                  <ActionsColumn items={this.actionResolver(row)} />
+                </Td>
+              </Tr>
+            ))
+          ) : (
+            <Tr>
+              <Td colSpan={columns.length}>
                 <EmptyState variant={EmptyStateVariant.full}>
                   <EmptyStateHeader titleText="No spans found" headingLevel="h5" />
                   <EmptyStateBody>No spans match the current filters</EmptyStateBody>
                 </EmptyState>
-              </td>
-            </tr>
-          </tbody>
-        )}
+              </Td>
+            </Tr>
+          )}
+        </Tbody>
       </Table>
     );
   }
+
+  private getSortParams = (columnIndex: number): ThProps['sort'] => {
+    return columns[columnIndex].sortable
+      ? {
+          sortBy: { index: this.state.sortIndex, direction: this.state.sortDirection },
+          onSort: (_event, index, sortDirection) => this.setState({ sortIndex: index, sortDirection: sortDirection }),
+          columnIndex
+        }
+      : undefined;
+  };
 
   private fetchComparisonMetrics(items: RichSpanData[]) {
     const queries = buildQueriesFromSpans(items, false);
@@ -182,7 +202,7 @@ class SpanTableComponent extends React.Component<Props, State> {
   }
 
   private rows = (): IRow[] => {
-    const compare = cells[this.state.sortIndex].compare;
+    const compare = columns[this.state.sortIndex].compare;
     const sorted = compare
       ? this.props.items.sort(this.state.sortDirection === SortByDirection.asc ? compare : (a, b) => compare(b, a))
       : this.props.items;
@@ -207,8 +227,8 @@ class SpanTableComponent extends React.Component<Props, State> {
           </Button>
           {formatDuration(item.relativeStartTime)}
         </>,
-        this.OriginCell(item),
-        this.SummaryCell(item),
+        this.originCell(item),
+        this.summaryCell(item),
         this.StatsCell(item)
       ] as React.ReactNode[],
       className: getClassName(item.tags.some(isErrorTag), isSpan),
@@ -216,10 +236,7 @@ class SpanTableComponent extends React.Component<Props, State> {
     };
   };
 
-  private actionResolver: IActionsResolver = (
-    rowData: IRowData,
-    _extraData: IExtraRowData
-  ): (IAction | ISeparator)[] => {
+  private actionResolver = (rowData: IRowData): IAction[] => {
     const item = rowData.item;
     const parentKiosk = isParentKiosk(this.props.kiosk);
     const appActions: IAction[] = [
@@ -234,8 +251,8 @@ class SpanTableComponent extends React.Component<Props, State> {
       },
       {
         title: 'Inbound Metrics',
-        onClick: (_event, _rowId, rowData, _extra) => {
-          const href = rowData.item.linkToApp + getParamsSeparator(rowData.item.linkToApp) + 'tab=in_metrics';
+        onClick: () => {
+          const href = item.linkToApp + getParamsSeparator(rowData.item.linkToApp) + 'tab=in_metrics';
           if (parentKiosk) {
             kioskContextMenuAction(href);
           } else {
@@ -245,8 +262,8 @@ class SpanTableComponent extends React.Component<Props, State> {
       },
       {
         title: 'Outbound Metrics',
-        onClick: (_event, _rowId, rowData, _extra) => {
-          const href = rowData.item.linkToApp + getParamsSeparator(rowData.item.linkToApp) + 'tab=out_metrics';
+        onClick: () => {
+          const href = item.linkToApp + getParamsSeparator(rowData.item.linkToApp) + 'tab=out_metrics';
           if (parentKiosk) {
             kioskContextMenuAction(href);
           } else {
@@ -270,8 +287,8 @@ class SpanTableComponent extends React.Component<Props, State> {
         },
         {
           title: 'Logs',
-          onClick: (_event, _rowId, rowData, _extra) => {
-            const href = rowData.item.linkToWorkload + '?tab=logs';
+          onClick: () => {
+            const href = item.linkToWorkload + '?tab=logs';
             if (parentKiosk) {
               kioskContextMenuAction(href);
             } else {
@@ -281,9 +298,8 @@ class SpanTableComponent extends React.Component<Props, State> {
         },
         {
           title: 'Inbound Metrics',
-          onClick: (_event, _rowId, rowData, _extra) => {
-            const href =
-              rowData.item.linkToWorkload + getParamsSeparator(rowData.item.linkToWorkload) + 'tab=in_metrics';
+          onClick: () => {
+            const href = item.linkToWorkload + getParamsSeparator(rowData.item.linkToWorkload) + 'tab=in_metrics';
             if (parentKiosk) {
               kioskContextMenuAction(href);
             } else {
@@ -293,9 +309,8 @@ class SpanTableComponent extends React.Component<Props, State> {
         },
         {
           title: 'Outbound Metrics',
-          onClick: (_event, _rowId, rowData, _extra) => {
-            const href =
-              rowData.item.linkToWorkload + getParamsSeparator(rowData.item.linkToWorkload) + 'tab=out_metrics';
+          onClick: () => {
+            const href = item.linkToWorkload + getParamsSeparator(rowData.item.linkToWorkload) + 'tab=out_metrics';
             if (parentKiosk) {
               kioskContextMenuAction(href);
             } else {
@@ -321,7 +336,7 @@ class SpanTableComponent extends React.Component<Props, State> {
               More span details <ExternalLinkAltIcon />
             </span>
           ),
-          onClick: (_event, _rowId, _rowData, _extra) => window.open(spanLink, '_blank')
+          onClick: () => window.open(spanLink, '_blank')
         }
       ];
     }
@@ -343,7 +358,7 @@ class SpanTableComponent extends React.Component<Props, State> {
     this.setState({ expandedSpans: this.state.expandedSpans });
   };
 
-  private OriginCell = (item: RichSpanData): React.ReactNode => {
+  private originCell = (item: RichSpanData): React.ReactNode => {
     const parentKiosk = isParentKiosk(this.props.kiosk);
     const key = `${item.spanID}-origin`;
     return (
@@ -399,7 +414,7 @@ class SpanTableComponent extends React.Component<Props, State> {
     );
   };
 
-  private SummaryCell = (item: RichSpanData): React.ReactNode => {
+  private summaryCell = (item: RichSpanData): React.ReactNode => {
     const flag = (item.info as EnvoySpanInfo).responseFlags;
     const key = `${item.spanID}-summary`;
     return (

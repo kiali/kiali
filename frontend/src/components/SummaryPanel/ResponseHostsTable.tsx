@@ -4,12 +4,10 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { Responses } from '../../types/Graph';
 import { summaryTitle } from 'pages/Graph/SummaryPanelCommon';
 import { Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
-import { tableStyle } from 'styles/TableStyle';
-import { classes } from 'typestyle';
 
-const hostTableStyle = kialiStyle({
+const tableStyle = kialiStyle({
   $nest: {
-    '&& tr > *': {
+    '& tr > *': {
       paddingLeft: 0,
       paddingRight: 0
     },
@@ -54,7 +52,7 @@ export const ResponseHostsTable: React.FC<ResponseHostsTableProps> = (props: Res
         <>
           <div className={summaryTitle}>{props.title}</div>
 
-          <Table className={classes(tableStyle, hostTableStyle)}>
+          <Table className={tableStyle}>
             <Thead>
               <Tr>
                 <Th width={20} textCenter>

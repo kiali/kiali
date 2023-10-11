@@ -17,7 +17,6 @@ import { IstioTypes } from '../VirtualList/Config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFBadge } from '../Pf/PfBadges';
 import { IstioObjectLink } from '../Link/IstioObjectLink';
-import { tableStyle } from 'styles/TableStyle';
 
 type IstioConfigCardProps = {
   items: IstioConfigItem[];
@@ -102,7 +101,7 @@ export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConf
         </Title>
       </CardHeader>
       <CardBody>
-        <Table variant={TableVariant.compact} aria-label={'list_istio_config'} className={tableStyle}>
+        <Table variant={TableVariant.compact} aria-label={'list_istio_config'}>
           <Thead>
             <Tr>
               {columns.map(column => (

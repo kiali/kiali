@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { ObjectValidation, Pod } from '../../types/IstioObjects';
-import { cellWidth, ICell, IRow, TableVariant } from '@patternfly/react-table';
-import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
+import { IRow, IRowCell, Table, TableVariant, Tbody, Td, Th, Thead, ThProps, Tr } from '@patternfly/react-table';
 import {
   Card,
   CardBody,
@@ -20,13 +19,12 @@ import { KialiIcon } from '../../config/KialiIcon';
 import { LocalTime } from '../../components/Time/LocalTime';
 import { Labels } from '../../components/Label/Labels';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
-import { tableStyle } from 'styles/TableStyle';
 
 type WorkloadPodsProps = {
   namespace: string;
-  workload: string;
   pods: Pod[];
   validations: { [key: string]: ObjectValidation };
+  workload: string;
 };
 
 const emptyStyle = kialiStyle({
@@ -35,7 +33,7 @@ const emptyStyle = kialiStyle({
 });
 
 const resourceListStyle = kialiStyle({
-  margin: '0px 0 11px 0',
+  margin: '0 0 0.75rem 0',
   $nest: {
     '& > ul > li > span': {
       float: 'left',
@@ -46,50 +44,44 @@ const resourceListStyle = kialiStyle({
 });
 
 const infoStyle = kialiStyle({
-  margin: '0px 5px 2px 10px',
-  verticalAlign: '-4px !important'
+  marginLeft: '0.5rem'
 });
 
 const iconStyle = kialiStyle({
-  display: 'inline-block',
-  verticalAlign: '2px !important'
+  display: 'inline-block'
 });
 
-export class WorkloadPods extends React.Component<WorkloadPodsProps> {
-  columns(): ICell[] {
-    return [{ title: 'Name' }, { title: 'Status', transforms: [cellWidth(10) as any] }];
-  }
+export const WorkloadPods: React.FC<WorkloadPodsProps> = (props: WorkloadPodsProps) => {
+  const columns: ThProps[] = [{ title: 'Name' }, { title: 'Status', width: 10 }];
 
-  noPods(): IRow[] {
-    return [
+  const noPods: IRow = {
+    cells: [
       {
-        cells: [
-          {
-            title: (
-              <EmptyState variant={EmptyStateVariant.sm} className={emptyStyle}>
-                <EmptyStateBody className={emptyStyle}>No Pods in workload {this.props.workload}</EmptyStateBody>
-              </EmptyState>
-            ),
-            props: { colSpan: 2 }
-          }
-        ]
+        title: (
+          <EmptyState variant={EmptyStateVariant.sm} className={emptyStyle}>
+            <EmptyStateBody className={emptyStyle}>No Pods in workload {props.workload}</EmptyStateBody>
+          </EmptyState>
+        ),
+        props: { colSpan: 2 }
       }
-    ];
-  }
+    ]
+  };
 
-  rows(): IRow[] {
-    if ((this.props.pods || []).length === 0) {
-      return this.noPods();
-    }
+  let rows: IRow[] = [];
+  const pods = props.pods ?? [];
 
-    let rows: IRow[] = [];
-    (this.props.pods || [])
+  if (pods.length === 0) {
+    rows = [noPods];
+  } else {
+    rows = pods
       .sort((p1: Pod, p2: Pod) => (p1.name < p2.name ? -1 : 1))
       .map((pod, _podIdx) => {
         let validation: ObjectValidation = {} as ObjectValidation;
-        if (this.props.validations[pod.name]) {
-          validation = this.props.validations[pod.name];
+
+        if (props.validations[pod.name]) {
+          validation = props.validations[pod.name];
         }
+
         const podProperties = (
           <div key="properties-list" className={resourceListStyle}>
             <ul style={{ listStyleType: 'none' }}>
@@ -133,7 +125,7 @@ export class WorkloadPods extends React.Component<WorkloadPodsProps> {
           </div>
         );
 
-        rows.push({
+        return {
           cells: [
             {
               title: (
@@ -159,34 +151,39 @@ export class WorkloadPods extends React.Component<WorkloadPodsProps> {
               )
             }
           ]
-        });
-        return rows;
+        };
       });
-
-    return rows;
   }
 
-  render() {
-    return (
-      <Card isCompact={true} id={'WorkloadPodsCard'}>
-        <CardHeader>
-          <Title headingLevel="h5" size={TitleSizes.lg}>
-            Pods
-          </Title>
-        </CardHeader>
-        <CardBody>
-          <Table
-            variant={TableVariant.compact}
-            aria-label={'list_workloads_pods'}
-            cells={this.columns()}
-            rows={this.rows()}
-            className={tableStyle}
-          >
-            <TableHeader />
-            <TableBody />
-          </Table>
-        </CardBody>
-      </Card>
-    );
-  }
-}
+  return (
+    <Card isCompact={true} id={'WorkloadPodsCard'}>
+      <CardHeader>
+        <Title headingLevel="h5" size={TitleSizes.lg}>
+          Pods
+        </Title>
+      </CardHeader>
+      <CardBody>
+        <Table variant={TableVariant.compact} aria-label={'list_workloads_pods'}>
+          <Thead>
+            <Tr>
+              {columns.map(column => (
+                <Th width={column.width}>{column.title}</Th>
+              ))}
+            </Tr>
+          </Thead>
+          <Tbody>
+            {rows.map((row, index) => (
+              <Tr key={`row_${index}`}>
+                {(row.cells as IRowCell[])?.map((cell, index) => (
+                  <Td dataLabel={columns[index].title} colSpan={cell.props?.colSpan}>
+                    {cell.title}
+                  </Td>
+                ))}
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
+      </CardBody>
+    </Card>
+  );
+};
