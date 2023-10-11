@@ -255,13 +255,13 @@ const mapStateToProps = (state: KialiAppState) => {
   if (state.tracingState.selectedTrace) {
     const { matrix, isComplete } = reduceMetricsStats(state.tracingState.selectedTrace, state.metricsStats.data, false);
     return {
-      trace: state.tracingState.selectedTrace,
+      trace: state.tracingState.tabTrace,
       statsMatrix: matrix,
       isStatsMatrixComplete: isComplete
     };
   }
   return {
-    trace: state.tracingState.selectedTrace,
+    trace: state.tracingState.tabTrace,
     isStatsMatrixComplete: false
   };
 };
