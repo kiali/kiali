@@ -259,10 +259,11 @@ type ComponentStatuses struct {
 }
 
 type ComponentStatus struct {
-	AppLabel  string `yaml:"app_label,omitempty"`
-	IsCore    bool   `yaml:"is_core,omitempty"`
-	IsProxy   bool   `yaml:"is_proxy,omitempty"`
-	Namespace string `yaml:"namespace,omitempty"`
+	AppLabel       string `yaml:"app_label,omitempty"`
+	IsCore         bool   `yaml:"is_core,omitempty"`
+	IsProxy        bool   `yaml:"is_proxy,omitempty"`
+	IsMultiCluster bool   `yaml:"is_multicluster,omitempty"`
+	Namespace      string `yaml:"namespace,omitempty"`
 }
 
 type GatewayAPIClass struct {
