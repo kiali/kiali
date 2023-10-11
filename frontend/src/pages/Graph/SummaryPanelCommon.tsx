@@ -18,7 +18,7 @@ export enum NodeMetricType {
 }
 
 export const summaryBodyTabs = kialiStyle({
-  padding: '10px 15px 0 15px'
+  padding: '0.5rem 1rem 0 1rem'
 });
 
 export const summaryPanelWidth = '25em';
@@ -40,14 +40,24 @@ export const summaryFont: React.CSSProperties = {
 
 export const summaryTitle = kialiStyle({
   fontWeight: 'bolder',
-  marginBottom: '5px',
+  marginTop: '0.25rem',
+  marginBottom: '0.25rem',
   textAlign: 'left'
+});
+
+export const noTrafficStyle = kialiStyle({
+  marginTop: '0.25rem',
+  $nest: {
+    '& .pf-v5-c-icon': {
+      marginRight: '0.25rem'
+    }
+  }
 });
 
 const hrStyle = kialiStyle({
   border: 0,
   borderTop: `1px solid ${PFColors.BorderColor100}`,
-  margin: '10px 0'
+  margin: '0.5rem 0'
 });
 
 export const hr = () => {
@@ -175,11 +185,9 @@ export const getDatapoints = (
 
 export const renderNoTraffic = (protocol?: string) => {
   return (
-    <>
-      <div>
-        <KialiIcon.Info /> No {protocol ? protocol : ''} traffic logged.
-      </div>
-    </>
+    <div className={noTrafficStyle}>
+      <KialiIcon.Info /> No {protocol ? protocol : ''} traffic logged.
+    </div>
   );
 };
 

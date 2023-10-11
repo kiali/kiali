@@ -86,7 +86,6 @@ export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConf
                 <ValidationObjectSummary
                   id={itemIdx + '-config-validation'}
                   validations={item.validation ? [item.validation] : []}
-                  style={{ verticalAlign: '-0.5em' }}
                 />
               )
             }

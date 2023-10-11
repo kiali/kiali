@@ -62,10 +62,9 @@ export const globalStyle = kialiStyle({
     /**
      * Padding for table rows
      */
-    '& .pf-v5-c-table:not(.table) tr > *': {
-      fontSize: 'var(--kiali-global--font-size)',
-      paddingBottom: '8px',
-      paddingTop: '8px'
+    '& .pf-v5-c-table tr > *': {
+      paddingBottom: '0.5rem',
+      paddingTop: '0.5rem'
     },
 
     '& .pf-v5-c-chart svg': {

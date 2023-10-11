@@ -39,28 +39,29 @@ type State = {
 const tracesLimit = 15;
 
 const refreshDivStyle = kialiStyle({
-  display: 'inline-flex',
-  width: '100%'
+  display: 'flex',
+  alignItems: 'center',
+  width: '100%',
+  marginTop: '0.5rem',
+  marginBottom: '0.5rem'
 });
 
 const checkboxStyle = kialiStyle({
-  paddingBottom: 10,
   $nest: {
     '& > label': {
       fontSize: 'var(--graph-side-panel--font-size)',
-      paddingTop: '4px'
+      paddingTop: '0.25rem'
     }
   }
 });
 
 const refreshButtonStyle = kialiStyle({
-  padding: '2px 10px',
-  margin: '5px 0 5px auto',
-  top: -4
+  padding: '0.125rem 0.5rem',
+  marginLeft: 'auto'
 });
 
 const dividerStyle = kialiStyle({
-  paddingBottom: '3px'
+  paddingBottom: '0.25rem'
 });
 
 class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
@@ -152,7 +153,7 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
     const currentID = this.props.selectedTrace?.traceID;
 
     return (
-      <div style={{ marginBottom: 8 }}>
+      <div style={{ marginBottom: '0.5rem' }}>
         <div className={refreshDivStyle}>
           <Checkbox
             id="use-graph-refresh"
@@ -174,7 +175,7 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
         </div>
         <Divider className={dividerStyle} />
         {this.state.traces.length > 0 && (
-          <SimpleList style={{ marginBottom: 8 }} aria-label="Traces list">
+          <SimpleList style={{ marginBottom: '0.5rem' }} aria-label="Traces list">
             {this.state.traces.map(trace => {
               return (
                 <SimpleListItem

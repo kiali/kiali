@@ -21,6 +21,7 @@ import {
   getFirstDatapoints,
   getTitle,
   hr,
+  noTrafficStyle,
   shouldRefreshData,
   summaryBodyTabs,
   summaryFont,
@@ -251,9 +252,9 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
             <Tab style={summaryFont} title="Inbound" eventKey={0} ref={tooltipInboundRef}>
               <div style={summaryFont}>
                 {grpcIn.rate === 0 && httpIn.rate === 0 && tcpIn.rate === 0 && (
-                  <>
+                  <div className={noTrafficStyle}>
                     <KialiIcon.Info /> No inbound traffic.
-                  </>
+                  </div>
                 )}
                 {grpcIn.rate > 0 && isGrpcRequests && (
                   <RateTableGrpc
@@ -283,9 +284,9 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
             <Tab style={summaryFont} title="Outbound" eventKey={1} ref={tooltipOutboundRef}>
               <div style={summaryFont}>
                 {grpcOut.rate === 0 && httpOut.rate === 0 && tcpOut.rate === 0 && (
-                  <>
+                  <div className={noTrafficStyle}>
                     <KialiIcon.Info /> No outbound traffic.
-                  </>
+                  </div>
                 )}
                 {grpcOut.rate > 0 && (
                   <RateTableGrpc
@@ -315,9 +316,9 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
             <Tab style={summaryFont} title="Total" eventKey={2} ref={tooltipTotalRef}>
               <div style={summaryFont}>
                 {grpcTotal.rate === 0 && httpTotal.rate === 0 && tcpTotal.rate === 0 && (
-                  <>
+                  <div className={noTrafficStyle}>
                     <KialiIcon.Info /> No traffic.
-                  </>
+                  </div>
                 )}
                 {grpcTotal.rate > 0 && (
                   <RateTableGrpc

@@ -3,7 +3,18 @@ import _ from 'lodash';
 import { Responses } from '../../types/Graph';
 import { responseFlags } from '../../utils/ResponseFlags';
 import { summaryTitle } from 'pages/Graph/SummaryPanelCommon';
+import { Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { tableStyle } from 'styles/TableStyle';
+import { kialiStyle } from 'styles/StyleUtils';
+import { classes } from 'typestyle';
+
+const responseTableStyle = kialiStyle({
+  $nest: {
+    '& tbody > tr:last-child': {
+      borderBottom: 0
+    }
+  }
+});
 
 type ResponseFlagsTableProps = {
   responses: Responses;
@@ -17,34 +28,8 @@ interface Row {
   val: string;
 }
 
-export class ResponseFlagsTable extends React.PureComponent<ResponseFlagsTableProps> {
-  render() {
-    return (
-      <>
-        <div className={summaryTitle}>{this.props.title}</div>
-        <table className={tableStyle}>
-          <thead>
-            <tr key="table-header">
-              <th>Code</th>
-              <th>Flags</th>
-              <th>% Req</th>
-            </tr>
-          </thead>
-          <tbody>
-            {this.getRows(this.props.responses).map(row => (
-              <tr key={row.key}>
-                <td>{row.code}</td>
-                <td title={this.getTitle(row.flags)}>{row.flags}</td>
-                <td>{row.val}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </>
-    );
-  }
-
-  private getRows = (responses: Responses): Row[] => {
+export const ResponseFlagsTable: React.FC<ResponseFlagsTableProps> = (props: ResponseFlagsTableProps) => {
+  const getRows = (responses: Responses): Row[] => {
     const rows: Row[] = [];
     _.keys(responses).forEach(code => {
       _.keys(responses[code].flags).forEach(f => {
@@ -54,7 +39,7 @@ export class ResponseFlagsTable extends React.PureComponent<ResponseFlagsTablePr
     return rows;
   };
 
-  private getTitle = (flags: string): string => {
+  const getTitle = (flags: string): string => {
     return flags
       .split(',')
       .map(flagToken => {
@@ -64,4 +49,35 @@ export class ResponseFlagsTable extends React.PureComponent<ResponseFlagsTablePr
       })
       .join('\n');
   };
-}
+
+  return (
+    <>
+      <div className={summaryTitle}>{props.title}</div>
+
+      <Table className={classes(tableStyle, responseTableStyle)}>
+        <Thead>
+          <Tr key="table-header">
+            <Th textCenter>Code</Th>
+            <Th textCenter>Flags</Th>
+            <Th textCenter>% Req</Th>
+          </Tr>
+        </Thead>
+        <Tbody>
+          {getRows(props.responses).map(row => (
+            <Tr key={row.key}>
+              <Td dataLabel="Code" textCenter>
+                {row.code}
+              </Td>
+              <Td dataLabel="Flags" title={getTitle(row.flags)} textCenter>
+                {row.flags}
+              </Td>
+              <Td dataLabel="% Req" textCenter>
+                {row.val}
+              </Td>
+            </Tr>
+          ))}
+        </Tbody>
+      </Table>
+    </>
+  );
+};
