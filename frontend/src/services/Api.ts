@@ -30,7 +30,7 @@ import {
   CanaryUpgradeStatus
 } from '../types/IstioObjects';
 import { ComponentStatus, IstiodResourceThresholds } from '../types/IstioStatus';
-import { JaegerInfo, JaegerResponse, JaegerSingleResponse } from '../types/JaegerInfo';
+import { TracingInfo, TracingResponse, TracingSingleResponse } from '../types/TracingInfo';
 import { MeshClusters } from '../types/Mesh';
 import { DashboardQuery, IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
 import { IstioMetricsMap, MetricsStatsResult } from '../types/Metrics';
@@ -522,8 +522,8 @@ export const getGrafanaInfo = () => {
   return newRequest<GrafanaInfo>(HTTP_VERBS.GET, urls.grafana, {}, {});
 };
 
-export const getJaegerInfo = () => {
-  return newRequest<JaegerInfo>(HTTP_VERBS.GET, urls.jaeger, {}, {});
+export const getTracingInfo = () => {
+  return newRequest<TracingInfo>(HTTP_VERBS.GET, urls.tracing, {}, {});
 };
 
 export const getAppTraces = (namespace: string, app: string, params: TracingQuery, cluster?: string) => {
@@ -531,7 +531,7 @@ export const getAppTraces = (namespace: string, app: string, params: TracingQuer
   if (cluster) {
     queryParams.clusterName = cluster;
   }
-  return newRequest<JaegerResponse>(HTTP_VERBS.GET, urls.appTraces(namespace, app), queryParams, {});
+  return newRequest<TracingResponse>(HTTP_VERBS.GET, urls.appTraces(namespace, app), queryParams, {});
 };
 
 export const getServiceTraces = (namespace: string, service: string, params: TracingQuery, cluster?: string) => {
@@ -539,7 +539,7 @@ export const getServiceTraces = (namespace: string, service: string, params: Tra
   if (cluster) {
     queryParams.clusterName = cluster;
   }
-  return newRequest<JaegerResponse>(HTTP_VERBS.GET, urls.serviceTraces(namespace, service), queryParams, {});
+  return newRequest<TracingResponse>(HTTP_VERBS.GET, urls.serviceTraces(namespace, service), queryParams, {});
 };
 
 export const getWorkloadTraces = (namespace: string, workload: string, params: TracingQuery, cluster?: string) => {
@@ -547,15 +547,15 @@ export const getWorkloadTraces = (namespace: string, workload: string, params: T
   if (cluster) {
     queryParams.clusterName = cluster;
   }
-  return newRequest<JaegerResponse>(HTTP_VERBS.GET, urls.workloadTraces(namespace, workload), queryParams, {});
+  return newRequest<TracingResponse>(HTTP_VERBS.GET, urls.workloadTraces(namespace, workload), queryParams, {});
 };
 
-export const getJaegerErrorTraces = (namespace: string, service: string, duration: DurationInSeconds) => {
-  return newRequest<number>(HTTP_VERBS.GET, urls.jaegerErrorTraces(namespace, service), { duration: duration }, {});
+export const getErrorTraces = (namespace: string, service: string, duration: DurationInSeconds) => {
+  return newRequest<number>(HTTP_VERBS.GET, urls.tracingErrorTraces(namespace, service), { duration: duration }, {});
 };
 
-export const getJaegerTrace = (idTrace: string) => {
-  return newRequest<JaegerSingleResponse>(HTTP_VERBS.GET, urls.jaegerTrace(idTrace), {}, {});
+export const getTrace = (idTrace: string) => {
+  return newRequest<TracingSingleResponse>(HTTP_VERBS.GET, urls.tracingTrace(idTrace), {}, {});
 };
 
 export const getGraphElements = (params: any) => {

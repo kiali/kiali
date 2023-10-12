@@ -30,6 +30,7 @@ type Span struct {
 	Attributes        []Attribute `json:"attributes"`
 	Events            []Event     `json:"events"`
 	Status            Status      `json:"status"`
+	ParentSpanId      string      `json:"parentSpanId"`
 }
 
 type ScopeSpan struct {

@@ -64,8 +64,8 @@ type CustomMetricsProps = RouteComponentProps<{}> & {
 };
 
 type ReduxProps = {
-  jaegerIntegration: boolean;
   timeRange: TimeRange;
+  tracingIntegration: boolean;
   setTimeRange: (range: TimeRange) => void;
 };
 
@@ -145,7 +145,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
 
   private refresh = () => {
     this.fetchMetrics();
-    if (this.props.jaegerIntegration) {
+    if (this.props.tracingIntegration) {
       this.spanOverlay.fetch({
         namespace: this.props.namespace,
         cluster: this.state.cluster,
@@ -199,7 +199,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
       const traceId = datum.traceId;
       const spanId = datum.spanId;
       history.push(
-        `/namespaces/${this.props.namespace}/applications/${this.props.app}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${traceId}&${URLParam.JAEGER_SPAN_ID}=${spanId}`
+        `/namespaces/${this.props.namespace}/applications/${this.props.app}?tab=traces&${URLParam.TRACING_TRACE_ID}=${traceId}&${URLParam.TRACING_SPAN_ID}=${spanId}`
       );
     }
   };
@@ -353,8 +353,8 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    jaegerIntegration: state.jaegerState.info ? state.jaegerState.info.integration : false,
-    timeRange: timeRangeSelector(state)
+    timeRange: timeRangeSelector(state),
+    tracingIntegration: state.tracingState.info ? state.tracingState.info.integration : false
   };
 };
 

@@ -2,9 +2,9 @@ import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { pluralize, Tooltip } from '@patternfly/react-core';
 
-import { JaegerTrace } from '../../types/JaegerInfo';
+import { JaegerTrace } from '../../types/TracingInfo';
 import { PFColors } from 'components/Pf/PfColors';
-import { FormattedTraceInfo, shortIDStyle } from './JaegerResults/FormattedTraceInfo';
+import { FormattedTraceInfo, shortIDStyle } from './TracingResults/FormattedTraceInfo';
 
 interface Props {
   trace: JaegerTrace;

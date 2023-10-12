@@ -37,7 +37,7 @@ import {
   Protocol,
   UNKNOWN
 } from 'types/Graph';
-import { JaegerTrace } from 'types/JaegerInfo';
+import { JaegerTrace } from 'types/TracingInfo';
 import { stylesComponentFactory } from './components/stylesComponentFactory';
 import { elementFactory } from './elements/elementFactory';
 import {

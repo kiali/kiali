@@ -1735,7 +1735,7 @@ export const buildGraphAuthorizationPolicy = (namespace: string, graph: GraphDef
       ) {
         const ap: AuthorizationPolicy = {
           kind: 'AuthorizationPolicy',
-          apiVersion: ISTIO_NETWORKING_VERSION,
+          apiVersion: ISTIO_SECURITY_VERSION,
           metadata: {
             name: node.data.workload,
             namespace: namespace,

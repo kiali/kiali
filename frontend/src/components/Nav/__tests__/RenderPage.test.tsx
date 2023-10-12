@@ -21,7 +21,7 @@ describe('RenderPage isGraph prop', () => {
         match={{ url: '', params: {}, path: '/graph', isExact: true }}
         navCollapsed={false}
         setNavCollapsed={() => {}}
-        jaegerUrl={''}
+        tracingUrl={''}
       />
     ).dive();
     expect(wrapper.find('RenderPage').prop('isGraph')).toEqual(true);
@@ -42,7 +42,7 @@ describe('RenderPage isGraph prop', () => {
         match={{ url: '', params: {}, path: '/overview', isExact: true }}
         navCollapsed={false}
         setNavCollapsed={() => {}}
-        jaegerUrl={''}
+        tracingUrl={''}
       />
     ).dive();
     expect(wrapper.find('RenderPage').prop('isGraph')).toEqual(false);

@@ -210,7 +210,7 @@ type GrafanaVariablesConfig struct {
 // TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
 	Auth                 Auth              `yaml:"auth"`
-	Enabled              bool              `yaml:"enabled"` // Enable Jaeger in Kiali
+	Enabled              bool              `yaml:"enabled"` // Enable Tracing in Kiali
 	InClusterURL         string            `yaml:"in_cluster_url"`
 	IsCore               bool              `yaml:"is_core,omitempty"`
 	Provider             string            `yaml:"provider"` // jaeger | tempo
@@ -259,10 +259,11 @@ type ComponentStatuses struct {
 }
 
 type ComponentStatus struct {
-	AppLabel  string `yaml:"app_label,omitempty"`
-	IsCore    bool   `yaml:"is_core,omitempty"`
-	IsProxy   bool   `yaml:"is_proxy,omitempty"`
-	Namespace string `yaml:"namespace,omitempty"`
+	AppLabel       string `yaml:"app_label,omitempty"`
+	IsCore         bool   `yaml:"is_core,omitempty"`
+	IsProxy        bool   `yaml:"is_proxy,omitempty"`
+	IsMultiCluster bool   `yaml:"is_multicluster,omitempty"`
+	Namespace      string `yaml:"namespace,omitempty"`
 }
 
 type GatewayAPIClass struct {

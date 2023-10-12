@@ -3,11 +3,11 @@ import { connect } from 'react-redux';
 import { KialiDispatch } from 'types/Redux';
 import { ChartScatter } from '@patternfly/react-charts';
 import { EmptyState, EmptyStateVariant, EmptyStateBody, EmptyStateHeader } from '@patternfly/react-core';
-import { JaegerError, JaegerTrace } from '../../types/JaegerInfo';
+import { TracingError, JaegerTrace } from '../../types/TracingInfo';
 import { PFColors } from '../Pf/PfColors';
 import { evalTimeRange } from 'types/Common';
 import { KialiAppState } from 'store/Store';
-import { JaegerThunkActions } from 'actions/JaegerThunkActions';
+import { TracingThunkActions } from 'actions/TracingThunkActions';
 import { LineInfo, makeLegend, VCDataPoint } from 'types/VictoryChartInfo';
 import { ChartWithLegend } from 'components/Charts/ChartWithLegend';
 import { durationSelector } from '../../store/Selectors';
@@ -19,9 +19,9 @@ import { MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsThunkActions } from 'actions/MetricsStatsThunkActions';
 import { TEMPO } from '../../types/Tracing';
 
-interface JaegerScatterProps {
+interface TracingScatterProps {
   duration: number;
-  errorFetchTraces?: JaegerError[];
+  errorFetchTraces?: TracingError[];
   errorTraces?: boolean;
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) => Promise<any>;
   selectedTrace?: JaegerTrace;
@@ -39,7 +39,7 @@ const MAXIMAL_SIZE = 30;
 export type JaegerLineInfo = LineInfo & { trace: JaegerTrace };
 type Datapoint = VCDataPoint & JaegerLineInfo;
 
-const jaegerChartStyle = kialiStyle({
+const tracingChartStyle = kialiStyle({
   paddingTop: 15,
   paddingLeft: 25,
   paddingRight: 25,
@@ -56,7 +56,7 @@ const emptyStyle = kialiStyle({
   textAlign: 'center'
 });
 
-class JaegerScatterComponent extends React.Component<JaegerScatterProps> {
+class TracingScatterComponent extends React.Component<TracingScatterProps> {
   isLoading = false;
   nextToLoad?: JaegerTrace = undefined;
   seletedTraceMatched: number | undefined;
@@ -142,7 +142,7 @@ class JaegerScatterComponent extends React.Component<JaegerScatterProps> {
     return this.props.errorFetchTraces && this.props.errorFetchTraces.length > 0 ? (
       this.renderFetchEmpty('Error fetching traces', this.props.errorFetchTraces![0].msg)
     ) : this.props.traces.length > 0 ? (
-      <div data-test="jaeger-scatterplot" className={jaegerChartStyle}>
+      <div data-test="tracing-scatterplot" className={tracingChartStyle}>
         <div style={{ marginTop: 20 }}>
           <ChartWithLegend<Datapoint, JaegerLineInfo>
             data={[successTraces, errorTraces]}
@@ -208,14 +208,14 @@ class JaegerScatterComponent extends React.Component<JaegerScatterProps> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  selectedTrace: state.jaegerState.selectedTrace,
-  provider: state.jaegerState.info?.provider
+  selectedTrace: state.tracingState.selectedTrace,
+  provider: state.tracingState.info?.provider
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) =>
     dispatch(MetricsStatsThunkActions.load(queries, isCompact)),
-  setTraceId: (cluster?: string, traceId?: string) => dispatch(JaegerThunkActions.setTraceId(cluster, traceId))
+  setTraceId: (cluster?: string, traceId?: string) => dispatch(TracingThunkActions.setTraceId(cluster, traceId))
 });
 
-export const JaegerScatter = connect(mapStateToProps, mapDispatchToProps)(JaegerScatterComponent);
+export const TracingScatter = connect(mapStateToProps, mapDispatchToProps)(TracingScatterComponent);

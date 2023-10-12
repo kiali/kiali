@@ -8,11 +8,11 @@ import { RenderComponentScroll } from '../Nav/Page';
 import { KioskElement } from '../Kiosk/KioskElement';
 import { TimeDurationModal } from '../Time/TimeDurationModal';
 import { KialiAppState } from 'store/Store';
-import { JaegerError, JaegerTrace } from 'types/JaegerInfo';
-import { TraceDetails } from './JaegerResults/TraceDetails';
-import { JaegerScatter } from './JaegerScatter';
+import { TracingError, JaegerTrace } from 'types/TracingInfo';
+import { TraceDetails } from './TracingResults/TraceDetails';
+import { TracingScatter } from './TracingScatter';
 import { TracesFetcher, FetchOptions } from './TracesFetcher';
-import { SpanDetails } from './JaegerResults/SpanDetails';
+import { SpanDetails } from './TracingResults/SpanDetails';
 import { isEqualTimeRange, TargetKind, TimeInMilliseconds, TimeRange } from 'types/Common';
 import { timeRangeSelector } from 'store/Selectors';
 import { getTimeRangeMicros } from 'utils/tracing/TracingHelper';
@@ -31,7 +31,7 @@ type ReduxProps = {
   provider?: string;
   selectedTrace?: JaegerTrace;
   timeRange: TimeRange;
-  urlJaeger: string;
+  urlTracing: string;
 };
 
 type TracesProps = ReduxProps & {
@@ -46,11 +46,11 @@ interface TracesState {
   activeTab: number;
   displaySettings: DisplaySettings;
   isTimeOptionsOpen: boolean;
-  jaegerErrors: JaegerError[];
   querySettings: QuerySettings;
   targetApp?: string;
   toolbarDisabled: boolean;
   traces: JaegerTrace[];
+  tracingErrors: TracingError[];
   url: string;
   width: number;
 }
@@ -64,22 +64,22 @@ function GetGrafanaUrl(externalServices: ExternalServiceInfo[]) {
 
 function GetBaseTracingUrl(
   provider: string | undefined,
-  urlJaeger: string | undefined,
+  urlTracing: string | undefined,
   externalServices: ExternalServiceInfo[]
 ) {
   if (provider === TEMPO) {
     return GetGrafanaUrl(externalServices)?.url;
   } else {
-    return urlJaeger;
+    return urlTracing;
   }
 }
 
 export function GetTraceDetailURL(
   provider: string | undefined,
-  urlJaeger: string | undefined,
+  urlTracing: string | undefined,
   externalServices: ExternalServiceInfo[]
 ) {
-  const tracingUrl = GetBaseTracingUrl(provider, urlJaeger, externalServices);
+  const tracingUrl = GetBaseTracingUrl(provider, urlTracing, externalServices);
   if (!tracingUrl) {
     return undefined;
   }
@@ -107,7 +107,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
       querySettings: TracesDisplayOptions.retrieveQuerySettings(),
       displaySettings: TracesDisplayOptions.retrieveDisplaySettings(),
       traces: [],
-      jaegerErrors: [],
+      tracingErrors: [],
       targetApp: targetApp,
       activeTab: getSpanId() ? spansDetailsTab : traceDetailsTab,
       toolbarDisabled: false
@@ -117,7 +117,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
       // (consider it's probably a temporary failure)
       // Note that the error message is anyway displayed in the notifications component, so it's not going unnoticed
       if (this.state.traces.length === 0) {
-        this.setState({ jaegerErrors: errors, toolbarDisabled: true });
+        this.setState({ tracingErrors: errors, toolbarDisabled: true });
       }
     });
     // This establishes the percentile-based filtering levels
@@ -234,16 +234,16 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     return minDurations;
   };
 
-  private onTracesUpdated = (traces: JaegerTrace[], jaegerServiceName: string) => {
-    const newState: Partial<TracesState> = { traces: traces, jaegerErrors: undefined, toolbarDisabled: false };
-    if (this.state.targetApp === undefined && jaegerServiceName) {
-      newState.targetApp = jaegerServiceName;
+  private onTracesUpdated = (traces: JaegerTrace[], tracingServiceName: string) => {
+    const newState: Partial<TracesState> = { traces: traces, tracingErrors: undefined, toolbarDisabled: false };
+    if (this.state.targetApp === undefined && tracingServiceName) {
+      newState.targetApp = tracingServiceName;
     }
     this.setState(newState as TracesState);
   };
 
   private getTracingUrl = () => {
-    const tracingUrl = GetBaseTracingUrl(this.props.provider, this.props.urlJaeger, this.props.externalServices);
+    const tracingUrl = GetBaseTracingUrl(this.props.provider, this.props.urlTracing, this.props.externalServices);
 
     if (tracingUrl === '' || !tracingUrl || !this.state.targetApp) {
       return undefined;
@@ -279,8 +279,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
   };
 
   render() {
-    const jaegerURL = this.getTracingUrl();
-
+    const tracingURL = this.getTracingUrl();
     return (
       <>
         <RenderComponentScroll>
@@ -299,10 +298,10 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                   <ToolbarItem style={{ marginLeft: 'auto' }}>
                     {/*Blank item used as a separator do shift the following ToolbarItems to the right*/}
                   </ToolbarItem>
-                  {jaegerURL && (
+                  {tracingURL && (
                     <ToolbarItem>
-                      <Tooltip content={<>Open Chart in Jaeger UI</>}>
-                        <a href={jaegerURL} target="_blank" rel="noopener noreferrer" style={{ marginLeft: '10px' }}>
+                      <Tooltip content={<>Open Chart in {this.props.provider} UI</>}>
+                        <a href={tracingURL} target="_blank" rel="noopener noreferrer" style={{ marginLeft: '10px' }}>
                           View in Tracing <ExternalLinkAltIcon />
                         </a>
                       </Tooltip>
@@ -315,10 +314,10 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                   </KioskElement>
                 </ToolbarGroup>
               </Toolbar>
-              <JaegerScatter
+              <TracingScatter
                 showSpansAverage={this.state.displaySettings.showSpansAverage}
                 traces={this.state.traces}
-                errorFetchTraces={this.state.jaegerErrors}
+                errorFetchTraces={this.state.tracingErrors}
                 errorTraces={true}
                 cluster={this.props.cluster ? this.props.cluster : ''} // TODO: Test single cluster
               />
@@ -344,7 +343,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                     targetKind={this.props.targetKind}
                     tracingURL={GetTraceDetailURL(
                       this.props.provider,
-                      this.props.urlJaeger,
+                      this.props.urlTracing,
                       this.props.externalServices
                     )}
                     otherTraces={this.state.traces}
@@ -358,7 +357,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                     target={this.props.target}
                     externalURL={GetTraceDetailURL(
                       this.props.provider,
-                      this.props.urlJaeger,
+                      this.props.urlTracing,
                       this.props.externalServices
                     )}
                     items={this.props.selectedTrace.spans}
@@ -383,12 +382,12 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    timeRange: timeRangeSelector(state),
-    urlJaeger: state.jaegerState.info ? state.jaegerState.info.url : '',
     externalServices: state.statusState.externalServices,
-    namespaceSelector: state.jaegerState.info ? state.jaegerState.info.namespaceSelector : true,
-    selectedTrace: state.jaegerState.selectedTrace,
-    provider: state.jaegerState.info?.provider
+    namespaceSelector: state.tracingState.info ? state.tracingState.info.namespaceSelector : true,
+    provider: state.tracingState.info?.provider,
+    selectedTrace: state.tracingState.selectedTrace,
+    timeRange: timeRangeSelector(state),
+    urlTracing: state.tracingState.info ? state.tracingState.info.url : ''
   };
 };
 

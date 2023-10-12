@@ -1,5 +1,5 @@
 import _isEqual from 'lodash/isEqual';
-import { KeyValuePair, Span, SpanData, JaegerTrace, TraceData, RichSpanData } from 'types/JaegerInfo';
+import { KeyValuePair, Span, SpanData, JaegerTrace, TraceData, RichSpanData } from 'types/TracingInfo';
 import { extractSpanInfo, getWorkloadFromSpan } from './TracingHelper';
 
 class TreeNode {

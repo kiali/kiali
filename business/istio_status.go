@@ -129,11 +129,11 @@ func getComponentNamespaces() []string {
 	return nss
 }
 
-func istioCoreComponents() map[string]bool {
-	components := map[string]bool{}
+func istioCoreComponents() map[string]config.ComponentStatus {
+	components := map[string]config.ComponentStatus{}
 	cs := config.Get().ExternalServices.Istio.ComponentStatuses
 	for _, c := range cs.Components {
-		components[c.AppLabel] = c.IsCore
+		components[c.AppLabel] = c
 	}
 	return components
 }
@@ -142,6 +142,7 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload) (kubern
 	statusComponents := istioCoreComponents()
 	isc := kubernetes.IstioComponentStatus{}
 	cf := map[string]bool{}
+	mcf := map[string]int{}
 
 	// Map workloads there by app name
 	for _, workload := range workloads {
@@ -150,20 +151,25 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload) (kubern
 			continue
 		}
 
-		isCore, found := statusComponents[appLabel]
+		stat, found := statusComponents[appLabel]
 		if !found {
 			continue
 		}
 
-		// Component found
-		cf[appLabel] = true
+		if stat.IsMultiCluster {
+			mcf[appLabel]++
+		} else {
+			// Component found
+			cf[appLabel] = true
+			// @TODO when components exists on remote clusters only but config not marked multicluster
+		}
 
 		if status := GetWorkloadStatus(*workload); status != kubernetes.ComponentHealthy {
 			// Check status
 			isc = append(isc, kubernetes.ComponentStatus{
 				Name:   workload.Name,
 				Status: status,
-				IsCore: isCore,
+				IsCore: stat.IsCore,
 			},
 			)
 		}
@@ -171,14 +177,16 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload) (kubern
 
 	// Add missing deployments
 	componentNotFound := 0
-	for comp, isCore := range statusComponents {
+	for comp, stat := range statusComponents {
 		if _, found := cf[comp]; !found {
-			componentNotFound += 1
-			isc = append(isc, kubernetes.ComponentStatus{
-				Name:   comp,
-				Status: kubernetes.ComponentNotFound,
-				IsCore: isCore,
-			})
+			if number, mfound := mcf[comp]; !mfound || number < len(iss.userClients) { // multicluster components should exist on all clusters
+				componentNotFound += 1
+				isc = append(isc, kubernetes.ComponentStatus{
+					Name:   comp,
+					Status: kubernetes.ComponentNotFound,
+					IsCore: stat.IsCore,
+				})
+			}
 		}
 	}
 
@@ -214,7 +222,7 @@ func (iss *IstioStatusService) getAddonComponentStatus() kubernetes.IstioCompone
 
 	go getAddonStatus("prometheus", true, extServices.Prometheus.IsCore, &extServices.Prometheus.Auth, extServices.Prometheus.URL, extServices.Prometheus.HealthCheckUrl, staChan, &wg)
 	go getAddonStatus("grafana", extServices.Grafana.Enabled, extServices.Grafana.IsCore, &extServices.Grafana.Auth, extServices.Grafana.InClusterURL, extServices.Grafana.HealthCheckUrl, staChan, &wg)
-	go iss.getTracingStatus("jaeger", extServices.Tracing.Enabled, extServices.Tracing.IsCore, staChan, &wg)
+	go iss.getTracingStatus("tracing", extServices.Tracing.Enabled, extServices.Tracing.IsCore, staChan, &wg)
 
 	// Custom dashboards may use the main Prometheus config
 	customProm := extServices.CustomDashboards.Prometheus
@@ -274,7 +282,7 @@ func (iss *IstioStatusService) getTracingStatus(name string, enabled bool, isCor
 		return
 	}
 
-	if accessible, err := iss.businessLayer.Jaeger.GetStatus(); !accessible {
+	if accessible, err := iss.businessLayer.Tracing.GetStatus(); !accessible {
 		log.Errorf("Error fetching availability of the tracing service: %v", err)
 		staChan <- kubernetes.IstioComponentStatus{
 			kubernetes.ComponentStatus{

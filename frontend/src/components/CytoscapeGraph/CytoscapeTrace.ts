@@ -1,5 +1,5 @@
 import * as Cy from 'cytoscape';
-import { JaegerTrace, Span } from 'types/JaegerInfo';
+import { JaegerTrace, Span } from 'types/TracingInfo';
 import { NodeType, GraphType, SEInfo, NodeAttr } from 'types/Graph';
 import {
   getAppFromSpan,

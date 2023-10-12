@@ -114,8 +114,8 @@ describe.skip('#Test Methods return a Promise', () => {
     evaluatePromise(result);
   });
 
-  it('#getJaegerInfo', () => {
-    const result = API.getJaegerInfo();
+  it('#getTracingInfo', () => {
+    const result = API.getTracingInfo();
     evaluatePromise(result);
   });
 

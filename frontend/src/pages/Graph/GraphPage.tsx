@@ -63,9 +63,9 @@ import { replayBorder } from 'components/Time/Replay';
 import { GraphDataSource, FetchParams, EMPTY_GRAPH_DATA } from '../../services/GraphDataSource';
 import { NamespaceActions } from '../../actions/NamespaceAction';
 import { GraphThunkActions } from '../../actions/GraphThunkActions';
-import { JaegerTrace } from 'types/JaegerInfo';
+import { JaegerTrace } from 'types/TracingInfo';
 import { KialiDispatch } from 'types/Redux';
-import { JaegerThunkActions } from 'actions/JaegerThunkActions';
+import { TracingThunkActions } from 'actions/TracingThunkActions';
 import { GraphTour } from 'pages/Graph/GraphHelpTour';
 import { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
 import { EdgeContextMenu } from 'components/CytoscapeGraph/ContextMenu/EdgeContextMenu';
@@ -902,7 +902,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   showTrafficAnimation: state.graph.toolbarState.showTrafficAnimation,
   showVirtualServices: state.graph.toolbarState.showVirtualServices,
   summaryData: state.graph.summaryData,
-  trace: state.jaegerState?.selectedTrace,
+  trace: state.tracingState?.selectedTrace,
   trafficRates: trafficRatesSelector(state),
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
   theme: state.globalState.theme
@@ -916,7 +916,7 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setGraphDefinition: bindActionCreators(GraphActions.setGraphDefinition, dispatch),
   setNode: bindActionCreators(GraphActions.setNode, dispatch),
   setRankResult: bindActionCreators(GraphActions.setRankResult, dispatch),
-  setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.setTraceId('', traceId)),
+  setTraceId: (traceId?: string) => dispatch(TracingThunkActions.setTraceId('', traceId)),
   setUpdateTime: (val: TimeInMilliseconds) => dispatch(GraphActions.setUpdateTime(val)),
   startTour: bindActionCreators(TourActions.startTour, dispatch),
   toggleIdleNodes: bindActionCreators(GraphToolbarActions.toggleIdleNodes, dispatch),

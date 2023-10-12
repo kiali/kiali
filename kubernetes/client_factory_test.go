@@ -221,6 +221,101 @@ func TestClientCreatedWithClusterInfo(t *testing.T) {
 	assert.Contains(userClients[conf.KubernetesConfig.ClusterName].ClusterInfo().Name, conf.KubernetesConfig.ClusterName)
 }
 
+func TestClientCreatedWithAuthStrategyAnonymous(t *testing.T) {
+	// Create a fake cluster info file.
+	// Ensure client gets created with this.
+	// For AuthStrategyAnonymous ensure newClient for remote cluster has token from remote config.
+	require := require.New(t)
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyAnonymous
+
+	config.Set(conf)
+
+	const testClusterName = "TestRemoteCluster"
+	const testUserToken = "TestUserToken"
+
+	createTestRemoteClusterSecret(t, testClusterName, remoteClusterYAML)
+	clientFactory := NewTestingClientFactory(t)
+
+	// Create a single initial test clients
+	authInfo := api.NewAuthInfo()
+	authInfo.Token = testUserToken
+
+	// User clients
+	userClients, err := clientFactory.GetClients(authInfo)
+	require.NoError(err)
+
+	require.Contains(userClients, testClusterName)
+	assert.Equal(testClusterName, userClients[testClusterName].ClusterInfo().Name)
+	assert.Equal(userClients[testClusterName].GetToken(), "token")
+	assert.NotEqual(userClients[testClusterName].GetToken(), testUserToken)
+}
+
+func TestClientCreatedWithAuthStrategyOpenIdAndDisableRBAC(t *testing.T) {
+	// Create a fake cluster info file.
+	// Ensure client gets created with this.
+	// For AuthStrategyOpenId and DisableRBAC ensure newClient for remote cluster has token from remote config.
+	require := require.New(t)
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenId
+	conf.Auth.OpenId.DisableRBAC = true
+
+	config.Set(conf)
+
+	const testClusterName = "TestRemoteCluster"
+	const testUserToken = "TestUserToken"
+	createTestRemoteClusterSecret(t, testClusterName, remoteClusterYAML)
+	clientFactory := NewTestingClientFactory(t)
+
+	// Create a single initial test clients
+	authInfo := api.NewAuthInfo()
+	authInfo.Token = testUserToken
+
+	// User clients
+	userClients, err := clientFactory.GetClients(authInfo)
+	require.NoError(err)
+
+	require.Contains(userClients, testClusterName)
+	assert.Equal(userClients[testClusterName].GetToken(), "token")
+	assert.NotEqual(userClients[testClusterName].GetToken(), testUserToken)
+}
+
+func TestClientCreatedWithAuthStrategyOpenIdAndDisableRBACFalse(t *testing.T) {
+	// Create a fake cluster info file.
+	// Ensure client gets created with this.
+	// For AuthStrategyOpenId and DisableRBAC is off ensure newClient for remote cluster has user token.
+	require := require.New(t)
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenId
+	conf.Auth.OpenId.DisableRBAC = false
+
+	config.Set(conf)
+
+	const testClusterName = "TestRemoteCluster"
+	const testUserToken = "TestUserToken"
+	createTestRemoteClusterSecret(t, testClusterName, remoteClusterYAML)
+	clientFactory := NewTestingClientFactory(t)
+
+	// Create a single initial test clients
+	authInfo := api.NewAuthInfo()
+	authInfo.Token = testUserToken
+
+	// User clients
+	userClients, err := clientFactory.GetClients(authInfo)
+	require.NoError(err)
+
+	require.Contains(userClients, testClusterName)
+	assert.Equal(testClusterName, userClients[testClusterName].ClusterInfo().Name)
+	assert.Equal(userClients[testClusterName].GetToken(), testUserToken)
+	assert.NotEqual(userClients[testClusterName].GetToken(), "token")
+}
+
 func TestSAClientCreatedWithExecProvider(t *testing.T) {
 	// by default, ExecProvider support should be disabled
 	cases := map[string]struct {

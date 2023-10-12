@@ -73,7 +73,7 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
     const additionalInfo = additionalComponentInfoContent(externalService);
     return (
       <React.Fragment key={name}>
-        <TextListItem component="dt">{name}</TextListItem>
+        <TextListItem component="dt">{name.charAt(0).toUpperCase() + name.slice(1)}</TextListItem>
         <TextListItem component="dd">{additionalInfo}</TextListItem>
       </React.Fragment>
     );

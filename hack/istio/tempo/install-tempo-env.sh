@@ -9,12 +9,12 @@
 #
 ##############################################################################
 
-CLIENT_EXE="kubectl"
+CLIENT_EXE_NAME="oc"
 DELETE_ALL="false"
 DELETE_TEMPO="false"
 INSTALL_BOOKINFO="true"
 INSTALL_ISTIO="true"
-INSTALL_KIALI="true"
+INSTALL_KIALI="false"
 TEMPO_NS="tempo"
 
 # process command line args
@@ -22,7 +22,7 @@ while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
     -c|--client)
-      CLIENT_EXE="$2"
+      CLIENT_EXE_NAME="$2"
       shift;shift
       ;;
     -da|--delete-all)
@@ -53,7 +53,7 @@ while [[ $# -gt 0 ]]; do
       cat <<HELPMSG
 Valid command line arguments:
   -c|--client:
-       client exe. Just kubectl is supported at the moment.
+       client exe. kubectl and oc are supported. oc by default.
   -da|--delete-all:
        Delete tempo and all the components installed (Including Istio, Kiali & bookinfo).
   -dt|--delete-tempo:
@@ -80,6 +80,24 @@ done
 
 SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
 
+CLIENT_EXE=`which ${CLIENT_EXE_NAME}`
+if [ "$?" = "0" ]; then
+  echo "The cluster client executable is found here: ${CLIENT_EXE}"
+else
+  echo "You must install the cluster client ${CLIENT_EXE_NAME} in your PATH before you can continue"
+  exit 1
+fi
+
+if ${CLIENT_EXE} api-versions | grep --quiet "route.openshift.io"; then
+  IS_OPENSHIFT="true"
+  echo "You are connecting to an OpenShift cluster"
+else
+  IS_OPENSHIFT="false"
+  echo "You are connecting to a (non-OpenShift) Kubernetes cluster"
+fi
+
+echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
+
 if [ "${DELETE_ALL}" == "true" ]; then
   DELETE_TEMPO="true"
 fi
@@ -90,7 +108,13 @@ if [ "${DELETE_TEMPO}" == "true" ]; then
   ${CLIENT_EXE} delete -f https://github.com/grafana/tempo-operator/releases/latest/download/tempo-operator.yaml
   ${CLIENT_EXE} delete secret -n ${TEMPO_NS} tempostack-dev-minio
   ${CLIENT_EXE} delete TempoStack cr -n ${TEMPO_NS}
-  ${CLIENT_EXE} delete ns ${TEMPO_NS}
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    $CLIENT_EXE delete project ${TEMPO_NS}
+    $CLIENT_EXE delete ns ${TEMPO_NS}
+  else
+    ${CLIENT_EXE} delete ns ${TEMPO_NS}
+  fi
+
   if [ "${DELETE_ALL}" == "true" ]; then
     ${SCRIPT_DIR}/../install-istio-via-istioctl.sh -c ${CLIENT_EXE} -di true
     ${SCRIPT_DIR}/../install-bookinfo-demo.sh -c ${CLIENT_EXE} -db true
@@ -106,7 +130,12 @@ else
   echo -e "Waiting for Tempo operator to be ready... \n"
   $CLIENT_EXE wait pods --all -n tempo-operator-system --for=condition=Ready --timeout=5m
 
-  ${CLIENT_EXE} create namespace ${TEMPO_NS}
+  # If OpenShift, we need to do some additional things
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    $CLIENT_EXE new-project ${TEMPO_NS}
+  else
+    $CLIENT_EXE create namespace ${TEMPO_NS}
+  fi
 
   echo -e "Installing minio and create secret \n"
   ${CLIENT_EXE} apply --namespace ${TEMPO_NS} -f ${SCRIPT_DIR}/minio.yaml
@@ -160,7 +189,15 @@ EOF
     ${SCRIPT_DIR}/../install-bookinfo-demo.sh -c ${CLIENT_EXE} -tg
   fi
 
+  # If OpenShift, we need to do some additional things
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    $CLIENT_EXE expose svc/tempo-cr-query-frontend -n ${TEMPO_NS}
+    $CLIENT_EXE expose svc/grafana -n istio-system
+  fi
+
   echo -e "Installation finished. You can port forward the services with: \n"
-  echo "./run-kiali.sh -pg 13000:3000 -pp 19090:9090 -pt 3200:3200 -app 8080 -es false -iu http://127.0.0.1:15014 -tr tempo-cr-query-frontend -ts tempo-cr-query-frontend -tn tempo"
+  if [ "${IS_OPENSHIFT}" != "true" ]; then
+    echo "./run-kiali.sh -pg 13000:3000 -pp 19090:9090 -pt 3200:3200 -app 8080 -es false -iu http://127.0.0.1:15014 -tr tempo-cr-query-frontend -ts tempo-cr-query-frontend -tn tempo"
+  fi
 
 fi

@@ -14,8 +14,8 @@ import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector } from '../../store/Selectors';
 import { ParameterizedTabs, activeTab } from '../../components/Tab/Tabs';
-import { TracesComponent } from 'components/JaegerIntegration/TracesComponent';
-import { JaegerInfo } from 'types/JaegerInfo';
+import { TracesComponent } from 'components/TracingIntegration/TracesComponent';
+import { TracingInfo } from 'types/TracingInfo';
 import { TrafficDetails } from 'components/TrafficList/TrafficDetails';
 import { WorkloadWizardDropdown } from '../../components/IstioWizards/WorkloadWizardDropdown';
 import { TimeControl } from '../../components/Time/TimeControl';
@@ -40,8 +40,8 @@ type WorkloadDetailsState = {
 
 type ReduxProps = {
   duration: DurationInSeconds;
-  jaegerInfo?: JaegerInfo;
   statusState: StatusState;
+  tracingInfo?: TracingInfo;
 };
 
 type WorkloadDetailsPageProps = ReduxProps & {
@@ -221,7 +221,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     );
     tabsArray.push(outTab);
 
-    if (this.props.jaegerInfo && this.props.jaegerInfo.enabled && this.props.jaegerInfo.integration) {
+    if (this.props.tracingInfo && this.props.tracingInfo.enabled && this.props.tracingInfo.integration) {
       tabsArray.push(
         <Tab eventKey={5} title="Traces" key="Traces">
           <TracesComponent
@@ -371,8 +371,8 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  jaegerInfo: state.jaegerState.info,
-  statusState: state.statusState
+  statusState: state.statusState,
+  tracingInfo: state.tracingState.info
 });
 
 export const WorkloadDetailsPage = connectRefresh(connect(mapStateToProps)(WorkloadDetailsPageComponent));

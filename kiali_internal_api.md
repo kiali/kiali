@@ -3032,7 +3032,7 @@ Status: OK
    
   
 
-[JaegerInfo](#jaeger-info)
+[TracingInfo](#jaeger-info)
 
 ##### <span id="jaeger-info-404"></span> 404 - A NotFoundError is the error message that is generated when server could not find what was requested.
 Status: Not Found
@@ -9061,7 +9061,7 @@ generation is still in progress.  See https://istio.io/latest/docs/reference/con
 
 [interface{}](#interface)
 
-### <span id="jaeger-info"></span> JaegerInfo
+### <span id="jaeger-info"></span> TracingInfo
 
 
   

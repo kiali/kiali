@@ -416,7 +416,7 @@ func NewRoutes() (r *Routes) {
 		},
 		// swagger:route GET /namespaces/{namespace}/apps/{app}/spans traces appSpans
 		// ---
-		// Endpoint to get Jaeger spans for a given app
+		// Endpoint to get Tracing spans for a given app
 		//
 		//		Produces:
 		//		- application/json
@@ -435,7 +435,7 @@ func NewRoutes() (r *Routes) {
 		},
 		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/spans traces workloadSpans
 		// ---
-		// Endpoint to get Jaeger spans for a given workload
+		// Endpoint to get Tracing spans for a given workload
 		//
 		//		Produces:
 		//		- application/json
@@ -454,7 +454,7 @@ func NewRoutes() (r *Routes) {
 		},
 		// swagger:route GET /namespaces/{namespace}/services/{service}/spans traces serviceSpans
 		// ---
-		// Endpoint to get Jaeger spans for a given service
+		// Endpoint to get Tracing spans for a given service
 		//
 		//		Produces:
 		//		- application/json
@@ -1253,9 +1253,9 @@ func NewRoutes() (r *Routes) {
 			handlers.GetGrafanaInfo,
 			true,
 		},
-		// swagger:route GET /jaeger integrations jaegerInfo
+		// swagger:route GET /tracing integrations tracingInfo
 		// ---
-		// Get the jaeger URL and other descriptors
+		// Get the tracing URL and other descriptors
 		//
 		//     Produces:
 		//     - application/json
@@ -1265,13 +1265,13 @@ func NewRoutes() (r *Routes) {
 		// responses:
 		//      404: notFoundError
 		//      406: notAcceptableError
-		//      200: jaegerInfoResponse
+		//      200: tracingInfoResponse
 		//
 		{
-			"JaegerURL",
+			"TracingURL",
 			"GET",
-			"/api/jaeger",
-			handlers.GetJaegerInfo,
+			"/api/tracing",
+			handlers.GetTracingInfo,
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/pods/{pod} pods podDetails

@@ -29,7 +29,7 @@ import { Link } from 'react-router-dom';
 type PropsType = RouteComponentProps & {
   navCollapsed: boolean;
   setNavCollapsed: (collapse: boolean) => void;
-  jaegerUrl?: string;
+  tracingUrl?: string;
 };
 
 type NavigationState = {
@@ -63,8 +63,8 @@ export class NavigationComponent extends React.Component<PropsType, NavigationSt
     }
   };
 
-  goTojaeger() {
-    window.open(this.props.jaegerUrl, '_blank');
+  goTotracing() {
+    window.open(this.props.tracingUrl, '_blank');
   }
 
   componentDidMount() {
@@ -130,7 +130,7 @@ export class NavigationComponent extends React.Component<PropsType, NavigationSt
       </Masthead>
     );
 
-    const menu = <Menu isNavOpen={isNavOpen} location={this.props.location} jaegerUrl={this.props.jaegerUrl} />;
+    const menu = <Menu isNavOpen={isNavOpen} location={this.props.location} tracingUrl={this.props.tracingUrl} />;
 
     const Sidebar = (
       <PageSidebar style={{ width: '210px' }} isSidebarOpen={isNavOpen}>
@@ -155,7 +155,7 @@ export class NavigationComponent extends React.Component<PropsType, NavigationSt
 
 const mapStateToProps = (state: KialiAppState) => ({
   navCollapsed: state.userSettings.interface.navCollapse,
-  jaegerUrl: state.jaegerState.info && state.jaegerState.info.url ? state.jaegerState.info.url : undefined
+  tracingUrl: state.tracingState.info && state.tracingState.info.url ? state.tracingState.info.url : undefined
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({

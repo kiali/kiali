@@ -5,13 +5,13 @@
 */
 
 import { And, Then, When} from '@badeball/cypress-cucumber-preprocessor';
-import { 
+import {
   checkHealthIndicatorInTable,
   checkHealthStatusInTable,
   colExists,
   ensureObjectsInTable,
   getColWithRowText,
-  hasAtLeastOneClass  
+  hasAtLeastOneClass
 } from './table';
 import { openTab } from './transition';
 
@@ -22,11 +22,11 @@ const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT')
 
 Then('user sees trace information', () => {
   openTab('Traces');
-  cy.getBySel('jaeger-scatterplot');
+  cy.getBySel('tracing-scatterplot');
   // Ensures a trace hasn't been clicked on yet.
   cy.getBySel('trace-details-tabs').should('not.exist');
   // Ensures traces have loaded.
-  cy.getBySel('jaeger-scatterplot').contains('Traces');
+  cy.getBySel('tracing-scatterplot').contains('Traces');
 });
 
 Then('user sees trace details', () => {
@@ -37,7 +37,7 @@ Then('user sees trace details', () => {
 When('user selects a trace', () => {
   const tracingDotQuery =
     '[style*="fill: var(--pf-v5-global--palette--blue-200)"][style*="stroke: var(--pf-v5-chart-scatter--data--stroke--Color, transparent)"]';
-  cy.getBySel('jaeger-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
+  cy.getBySel('tracing-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
 });
 
 And('user sees span details', () => {

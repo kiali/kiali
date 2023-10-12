@@ -25,7 +25,7 @@ describe('SummaryPanelNodeComponent', () => {
       data: (destServices?) => (destServices ? [] : nodeData)
     };
     defaultProps = {
-      jaegerState: {},
+      tracingState: {},
       data: {
         summaryType: 'node',
         summaryTarget: target

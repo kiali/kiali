@@ -12,15 +12,15 @@ import {
   MapMarkerIcon
 } from '@patternfly/react-icons';
 import { URLParam } from '../../app/History';
-import { JaegerTrace, RichSpanData, EnvoySpanInfo, OpenTracingHTTPInfo, OpenTracingTCPInfo } from 'types/JaegerInfo';
+import { JaegerTrace, RichSpanData, EnvoySpanInfo, OpenTracingHTTPInfo, OpenTracingTCPInfo } from 'types/TracingInfo';
 import { KialiAppState } from 'store/Store';
-import { JaegerThunkActions } from 'actions/JaegerThunkActions';
+import { TracingThunkActions } from 'actions/TracingThunkActions';
 import { GraphActions } from 'actions/GraphActions';
 import { PFColors } from 'components/Pf/PfColors';
 import { findChildren, findParent, formatDuration } from 'utils/tracing/TracingHelper';
 import { decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { FocusAnimation } from 'components/CytoscapeGraph/FocusAnimation';
-import { FormattedTraceInfo, shortIDStyle } from 'components/JaegerIntegration/JaegerResults/FormattedTraceInfo';
+import { FormattedTraceInfo, shortIDStyle } from 'components/TracingIntegration/TracingResults/FormattedTraceInfo';
 import { SimplerSelect } from 'components/SimplerSelect';
 import { summaryFont, summaryTitle } from './SummaryPanelCommon';
 import { NodeParamsType, GraphType, SummaryData, NodeAttr } from 'types/Graph';
@@ -32,7 +32,7 @@ import { Visualization, Node } from '@patternfly/react-topology';
 import { elems, selectAnd } from 'pages/GraphPF/GraphPFElems';
 import { FocusNode } from 'pages/GraphPF/GraphPF';
 import { GraphSelectorBuilder } from './GraphSelector';
-import { GetTraceDetailURL } from '../../components/JaegerIntegration/TracesComponent';
+import { GetTraceDetailURL } from '../../components/TracingIntegration/TracesComponent';
 import { ExternalServiceInfo } from '../../types/StatusState';
 
 type ReduxProps = {
@@ -46,7 +46,7 @@ type ReduxProps = {
 type Props = ReduxProps & {
   data: SummaryData;
   graphType: GraphType;
-  jaegerURL?: string;
+  tracingURL?: string;
   onFocus?: (focusNode: FocusNode) => void;
   trace: JaegerTrace;
 };
@@ -110,11 +110,11 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
           : nodeData.service
           ? `/services/${nodeData.service}`
           : `/applications/${nodeData.app!}`) +
-        `?tab=traces&${URLParam.JAEGER_TRACE_ID}=${this.props.trace.traceID}`
+        `?tab=traces&${URLParam.TRACING_TRACE_ID}=${this.props.trace.traceID}`
       : undefined;
     const jaegerTraceURL = GetTraceDetailURL(
       this.props.provider,
-      this.props.jaegerURL,
+      this.props.tracingURL,
       this.props.externalServices
     )?.replace('TRACEID', this.props.trace.traceID);
     const info = new FormattedTraceInfo(this.props.trace);
@@ -230,7 +230,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
             : nodeData.service
             ? `/services/${nodeData.service}`
             : `/applications/${nodeData.app!}`) +
-          `?tab=traces&${URLParam.JAEGER_TRACE_ID}=${this.props.trace.traceID}&${URLParam.JAEGER_SPAN_ID}=${span.spanID}`
+          `?tab=traces&${URLParam.TRACING_TRACE_ID}=${this.props.trace.traceID}&${URLParam.TRACING_SPAN_ID}=${span.spanID}`
       : undefined;
   }
 
@@ -443,11 +443,11 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
 const mapStateToProps = (state: KialiAppState) => ({
   externalServices: state.statusState.externalServices,
   kiosk: state.globalState.kiosk,
-  provider: state.jaegerState.info?.provider
+  provider: state.tracingState.info?.provider
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
-  close: () => dispatch(JaegerThunkActions.setTraceId('', undefined)),
+  close: () => dispatch(TracingThunkActions.setTraceId('', undefined)),
   setNode: bindActionCreators(GraphActions.setNode, dispatch)
 });
 
