@@ -17,7 +17,7 @@ Feature: Kiali App Details page for multicluster
     And the description card should contain a reference to workload
     And the description card should contain a reference to service
     And links in the description card should contain a reference to a "west" cluster
-    And cluster badge for "west" cluster should be visible
+    And cluster badge for "west" cluster should be visible in the "App" description card
 
   Scenario: See app minigraph for details app.
     Then user sees a minigraph
@@ -28,10 +28,10 @@ Feature: Kiali App Details page for multicluster
     And user should see columns related to cluster info for the inbound and outbound traffic
 
   Scenario: See Inbound Metrics
-    Then user sees inbound metrics information
+    Then user sees "Inbound" metrics information for the remote "reviews" "app"
 
   Scenario: See Outbound Metrics
-    Then user sees outbound metrics information
+    Then user sees "Outbound" metrics information for the remote "reviews" "app"
 
   Scenario: See tracing info after selecting a trace
     And user sees trace information

@@ -2,7 +2,6 @@
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
 @multi-cluster
-@skip
 Feature: Kiali Workload Details page
 
   On the Workload Details page, the user should see the details of a workload located in a remote cluster, as well as
@@ -14,26 +13,27 @@ Feature: Kiali Workload Details page
     Given user is at administrator perspective
     And user is at the details page for the "workload" "bookinfo/reviews-v2" located in the "west" cluster
 
+  @skip
   Scenario: See details for workload
     Then user sees details information for workload
     And the description card should contain a reference to application
     And the description card should contain a reference to service
     And links in the description card should contain a reference to a "west" cluster
-    And cluster badge for "west" cluster should be visible
+    And cluster badge for "west" cluster should be visible in the "Workload" description card
 
   Scenario: See minigraph for workload.
     Then user sees a minigraph
     And user sees "service" from a remote "west" cluster
 
   Scenario: See workload traffic information
-    Then user sees workload inbound and outbound traffic information
+    Then user sees workload inbound and outbound traffic information for the remote workload
     And user should see columns related to cluster info for the inbound and outbound traffic
 
   Scenario: See workload Inbound Metrics
-    Then user sees workload inbound metrics information
+    Then user sees "Inbound" metrics information for the remote "reviews-v2" "workload"
 
   Scenario: See workload Outbound Metrics
-    Then user sees workload outbound metrics information
+    Then user sees "Outbound" metrics information for the remote "reviews-v2" "workload"
 
   Scenario: See workload span info after selecting a span
     And user sees trace information
