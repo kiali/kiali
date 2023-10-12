@@ -13,7 +13,7 @@ import {
   getColWithRowText,
   hasAtLeastOneClass  
 } from './table';
-import { openTab, ensureKialiFinishedLoading } from './transition';
+import { openTab } from './transition';
 
 // Choosing a random bookinfo app to test with.
 const APP = 'details';

@@ -129,7 +129,7 @@ Feature: Kiali Overview page
     Then user sees the "east" cluster badge in the Kiali header 
 
   @multi-cluster
-  Scenario: Istio panels for both clusters should be visible in the control panel
+  Scenario: Istio panels for both clusters should be visible and have the control panel label
     Then user sees the "istio-system" namespace card in cluster "east"
     And user sees the "istio-system" namespace card in cluster "west"
     And user sees the "Control plane" label in both "istio-system" namespace cards
