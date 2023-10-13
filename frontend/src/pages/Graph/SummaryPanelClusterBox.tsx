@@ -14,9 +14,12 @@ import {
   getAccumulatedTrafficRateTcp
 } from 'utils/TrafficRate';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { KialiPageLink } from 'components/Link/KialiPageLink';
 import { descendents, edgesIn, edgesInOut, edgesOut, elems, select } from 'pages/GraphPF/GraphPFElems';
 import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
+import { kialiIconDark, kialiIconLight, serverConfig } from '../../config';
+import { KialiInstance } from '../../types/Mesh';
+import { getKialiTheme } from 'utils/ThemeUtils';
+import { Theme } from '../../types/Common';
 
 type SummaryPanelClusterBoxState = {
   clusterBox: any;
@@ -28,6 +31,11 @@ const defaultState: SummaryPanelClusterBoxState = {
 
 const topologyStyle = kialiStyle({
   margin: '0 1em'
+});
+
+const kialiIconStyle = kialiStyle({
+  width: '15px',
+  marginRight: '5px'
 });
 
 export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType, SummaryPanelClusterBoxState> {
@@ -57,6 +65,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     const data = isPF ? clusterBox.getData() : clusterBox.data();
     const boxed = isPF ? descendents(clusterBox) : clusterBox.descendants();
     const cluster = data[NodeAttr.cluster];
+    const kialiInstances = serverConfig.clusters[cluster] ? serverConfig.clusters[cluster].kialiInstances : [];
 
     let numSvc;
     let numWorkloads;
@@ -93,7 +102,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
       <div className={panelStyle} style={SummaryPanelClusterBox.panelStyle}>
         <div className={panelHeadingStyle}>
           {getTitle('Cluster')}
-          {this.renderCluster(cluster)}
+          {this.renderCluster(cluster, kialiInstances)}
           {this.renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
         </div>
         <div className={summaryBodyTabs}>
@@ -302,18 +311,40 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     };
   };
 
-  private renderCluster = (cluster: string) => {
+  private renderCluster = (cluster: string, kialiInstances: KialiInstance[]) => {
     return (
       <React.Fragment key={cluster}>
-        <span>
-          <PFBadge badge={PFBadges.Cluster} size="sm" style={{ marginBottom: '2px' }} />
-          <KialiPageLink href="/" cluster={cluster}>
-            {cluster}
-          </KialiPageLink>{' '}
-        </span>
+        <PFBadge badge={PFBadges.Cluster} size="sm" style={{ marginBottom: '2px' }} />
+        {cluster}
         <br />
+        {this.renderKialiLinks(kialiInstances)}
       </React.Fragment>
     );
+  };
+
+  private renderKialiLinks = (kialiInstances: KialiInstance[]) => {
+    const kialiIcon = getKialiTheme() === Theme.DARK ? kialiIconDark : kialiIconLight;
+    return kialiInstances.map(instance => {
+      if (instance.url.length !== 0) {
+        return (
+          <span>
+            <img alt="Kiali Icon" src={kialiIcon} className={kialiIconStyle} />
+            <a href={instance.url} target="_blank" rel="noopener noreferrer">
+              {instance.namespace} {' / '} {instance.serviceName}
+            </a>
+            <br />
+          </span>
+        );
+      } else {
+        return (
+          <span>
+            <img alt="Kiali Icon" src={kialiIcon} className={kialiIconStyle} />
+            {instance.namespace + ' / ' + instance.serviceName}
+            <br />
+          </span>
+        );
+      }
+    });
   };
 
   private renderTopologySummary = (
