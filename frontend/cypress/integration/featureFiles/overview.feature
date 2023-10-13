@@ -125,30 +125,22 @@ Feature: Kiali Overview page
     And user sees the cpu chart
 
   @multi-cluster
-  @skip
   Scenario: The badge for local cluster should be visible
     Then user sees the "east" cluster badge in the Kiali header 
 
   @multi-cluster
-  @skip
-  Scenario: Namespace dropdown should not contain duplicates
-    When user opens the namespace dropdown
-    Then user should see no duplicate namespaces
-
-  @multi-cluster
-  @skip
-  Scenario: Istio panels for both clusters should be visible in the control panel
+  Scenario: Istio panels for both clusters should be visible and have the control panel label
     Then user sees the "istio-system" namespace card in cluster "east"
     And user sees the "istio-system" namespace card in cluster "west"
     And user sees the "Control plane" label in both "istio-system" namespace cards
-    And user sees the "Outbound policy" label in both "istio-system" namespace cards
+    And user sees the "Remote Cluster" label in the "west" "istio-system" namespace card
+    And user sees the "Outbound policy" label in the "east" "istio-system" namespace card
+    And user does not see the "Outbound policy" label in the "west" "istio-system" namespace card
     And the toggle on the right side of both "istio-system" namespace cards exists
-    And the toggle should contain links to other parts of the app
     And Istio config should not be available for the "west" "istio-system" 
     And health should be different for "east" and "west" "istio-system"
 
   @multi-cluster
-  @skip
   Scenario: See "bookinfo" in "east" and "west" clusters
     Then user sees the "bookinfo" namespace card in cluster "east"
     And user sees the "bookinfo" namespace card in cluster "west"
@@ -156,20 +148,18 @@ Feature: Kiali Overview page
     And health should be different for "east" and "west" "bookinfo"
 
   @multi-cluster
-  @skip
   Scenario: The healthy status of a logical mesh application is reported in the overview of a remote cluster namespace
-    Given a healthy application in the "west" cluster
-    When I fetch the overview of the "west" cluster
-    Then there should be a "healthy" application indicator in the "bookinfo" namespace in the "west" cluster
-    And the "healthy" application indicator should list the application
+    Given a healthy application in the remote cluster
+    When I fetch the overview of the cluster
+    Then there should be a "healthy" application indicator in the namespace in the "west" cluster
+    And the "healthy" application indicator for the "west" cluster should list the application
 
   @multi-cluster
-  @skip
   Scenario: The idle status of a logical mesh application is reported in the overview of a remote cluster namespace
-    Given an idle application in the cluster
+    Given an idle application in the remote cluster
     When I fetch the overview of the cluster
-    Then there should be a "idle" application indicator in the "bookinfo" namespace in the "west" cluster
-    And the "idle" application indicator should list the application
+    Then there should be a "idle" application indicator in the namespace in the "west" cluster
+    And the "idle" application indicator for the "west" cluster should list the application
 
   #this scenario refers to a bug (https://github.com/kiali/kiali/issues/6504) which is not resolved at the time of writing the scenario
   @multi-cluster

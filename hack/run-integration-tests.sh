@@ -200,6 +200,8 @@ elif [ "${TEST_SUITE}" == "frontend-multi-cluster" ]; then
   # Get Kiali URL
   KIALI_URL="http://$(kubectl --context kind-east get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')/kiali"
   export CYPRESS_BASE_URL="${KIALI_URL}"
+  export CYPRESS_CLUSTER1_CONTEXT="kind-east"
+  export CYPRESS_CLUSTER2_CONTEXT="kind-west"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
   # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
   export CYPRESS_VIDEO=false

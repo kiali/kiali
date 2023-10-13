@@ -1,6 +1,10 @@
 import { Before, Given, Then, When, And } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 
+
+const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT')
+const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT')
+
 Before(() => {
   // Focing to not stop cypress on unexpected errors not related to the tests.
   // There are some random failures due timeouts/loadtime/framework that throws some error in the browser.
@@ -25,11 +29,21 @@ Given('a healthy application in the cluster', function () {
   this.targetApp = 'productpage';
 });
 
+Given('a healthy application in the remote cluster', function () {
+  this.targetNamespace = 'bookinfo';
+  this.targetApp = 'ratings';
+});
+
 Given('an idle application in the cluster', function () {
   this.targetNamespace = 'sleep';
   this.targetApp = 'sleep';
 
   cy.exec('kubectl scale -n sleep --replicas=0 deployment/sleep');
+});
+
+Given('an idle application in the remote cluster', function () {
+  this.targetNamespace = 'bookinfo';
+  this.targetApp = 'reviews';
 });
 
 Given('a failing application in the mesh', function () {
@@ -180,6 +194,12 @@ Then('there should be a {string} application indicator in the namespace', functi
     .should('exist');
 });
 
+Then('there should be a {string} application indicator in the namespace in the {string} cluster', function (healthStatus: string, cluster:string) {
+  cy.get(
+    `[data-test=CardItem_${this.targetNamespace}_${cluster}] [data-test=overview-app-health]`).find('span').filter(`.icon-${healthStatus}`)
+  .should('exist');
+});
+
 Then('the {string} application indicator should list the application', function (healthStatus: string) {
   let healthIndicatorStatusKey = healthStatus;
   if (healthStatus === 'idle') {
@@ -195,6 +215,23 @@ Then('the {string} application indicator should list the application', function 
   )
     .find('span')
     .filter(`.icon-${healthStatus}`)
+    .should('exist');
+  cy.get(
+    `[aria-label='Overview status'] [data-test=${this.targetNamespace}-${healthIndicatorStatusKey}-${this.targetApp}]`
+  ).should('contain.text', this.targetApp);
+});
+
+Then('the {string} application indicator for the {string} cluster should list the application', function (healthStatus: string, cluster:string) {
+  let healthIndicatorStatusKey = healthStatus;
+  if (healthStatus === 'idle') {
+    healthIndicatorStatusKey = 'not-ready';
+  }
+
+  cy.get(
+    `[data-test=CardItem_${this.targetNamespace}_${cluster}] [data-test=overview-app-health]`).find('span').filter(`.icon-${healthStatus}`)
+  .trigger('mouseenter');
+  cy.get(
+    `[aria-label='Overview status'] [data-test=${this.targetNamespace}-${healthIndicatorStatusKey}-${this.targetApp}]`).find('span').filter(`.icon-${healthStatus}`)
     .should('exist');
   cy.get(
     `[aria-label='Overview status'] [data-test=${this.targetNamespace}-${healthIndicatorStatusKey}-${this.targetApp}]`
@@ -229,6 +266,40 @@ Then('the user sees information related to canary upgrades', view => {
   cy.get('[data-test="canary-upgrade"]').should('exist');
 });
 
+Then('user sees the {string} cluster badge in the Kiali header', (name:string) =>{
+  cy.get('[data-test="cluster-icon"]').contains(name).should('be.visible');
+});
+
+And('user sees the {string} label in both {string} namespace cards', (label:string, ns:string) => {
+  cy.get(`[data-test="CardItem_${ns}_east"]`).contains(label).should('be.visible');
+  cy.get(`[data-test="CardItem_${ns}_west"]`).contains(label).should('be.visible');
+})
+
+And('the toggle on the right side of both {string} namespace cards exists', (ns:string) => {
+  ensureKialiFinishedLoading();
+  cy.get(`[data-test="CardItem_${ns}_east"]`).find('[aria-label="Actions"]').should('exist');
+  cy.get(`[data-test="CardItem_${ns}_west"]`).find('[aria-label="Actions"]').should('exist');
+});
+
+And('Istio config should not be available for the {string} {string}', (cluster:string, ns:string) => {
+  cy.get(`[data-test="CardItem_${ns}_${cluster}"]`).contains('Istio config').siblings().contains('N/A');
+}); 
+
+And('health should be different for {string} and {string} {string}', (cluster1:string, cluster2:string, ns:string) => {
+  if (ns == 'bookinfo'){
+      cy.get(`[data-test="CardItem_${ns}_${cluster1}"]`).find('[data-test="overview-type-app"]').contains(`5 app`);
+      cy.get(`[data-test="CardItem_${ns}_${cluster2}"]`).find('[data-test="overview-type-app"]').contains(`4 app`);
+  }
+  else {
+    cy.exec(`kubectl get pods -n ${ns} -l app --context ${CLUSTER1_CONTEXT} --no-headers | wc -l`).then((result) => {
+      cy.get(`[data-test="CardItem_${ns}_${cluster1}"]`).find('[data-test="overview-type-app"]').contains(`${result.stdout} app`);
+    });
+    cy.exec(`kubectl get pods -n ${ns} -l app --context ${CLUSTER2_CONTEXT} --no-headers | wc -l`).then((result) => {
+      cy.get(`[data-test="CardItem_${ns}_${cluster2}"]`).find('[data-test="overview-type-app"]').contains(`${result.stdout} app`);
+    });
+  }
+})
+
 And('user sees the {string} label in the {string} namespace card', (label: string, ns: string) => {
   cy.log(label);
   cy.get('div[data-test^="' + ns + '"]')
@@ -240,4 +311,12 @@ And('user does not see any cluster badge in the {string} namespace card', (ns: s
   cy.get(`[data-test="${ns}-EXPAND"]`).within($card => {
     cy.get('#pfbadge-C').should('not.exist');
   });
+});
+
+And('user sees the {string} label in the {string} {string} namespace card',(label:string, cluster:string, ns:string) =>{
+  cy.get(`[data-test="CardItem_${ns}_${cluster}"]`).contains(label).should('be.visible');
+});
+
+And('user does not see the {string} label in the {string} {string} namespace card',(label:string, cluster:string, ns:string) =>{
+  cy.get(`[data-test="CardItem_${ns}_${cluster}"]`).contains(label).should('not.exist');
 });

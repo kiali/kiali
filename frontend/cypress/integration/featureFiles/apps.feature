@@ -106,6 +106,11 @@ Feature: Kiali Apps List page
     Then the "Cluster" column "appears" 
     And an entry for "east" cluster should be in the table
     And an entry for "west" cluster should be in the table
+
+  @multi-cluster
+  Scenario: Namespace dropdown should not contain duplicates
+    When user opens the namespace dropdown
+    Then user should see no duplicate namespaces
     
   @skip
   @multi-cluster
