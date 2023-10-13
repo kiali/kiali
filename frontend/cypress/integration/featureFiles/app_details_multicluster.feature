@@ -14,6 +14,8 @@ Feature: Kiali App Details page for multicluster
 
   Scenario: See details for app.
     Then user sees details information for the remote "reviews" app
+    And the description card should contain a reference to workload
+    And the description card should contain a reference to service
     And links in the description card should contain a reference to a "west" cluster
     And cluster badge for "west" cluster should be visible
 

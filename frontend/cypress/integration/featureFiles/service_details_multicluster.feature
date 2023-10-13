@@ -12,6 +12,8 @@ Feature: Kiali Service Details page for remote cluster
 
   Scenario: See details for remote service
     Then sd::user sees "ratings" details information for service "v1"
+    And the description card should contain a reference to application
+    And the description card should contain a reference to workload
     And links in the description card should contain a reference to a "west" cluster
     And cluster badge for "west" cluster should be visible
 

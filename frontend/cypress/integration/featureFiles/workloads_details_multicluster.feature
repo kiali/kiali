@@ -16,6 +16,8 @@ Feature: Kiali Workload Details page
 
   Scenario: See details for workload
     Then user sees details information for workload
+    And the description card should contain a reference to application
+    And the description card should contain a reference to service
     And links in the description card should contain a reference to a "west" cluster
     And cluster badge for "west" cluster should be visible
 
