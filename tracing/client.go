@@ -2,8 +2,13 @@ package tracing
 
 import (
 	"context"
+	"crypto/tls"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"github.com/kiali/kiali/util/grpcutil"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"io"
 	"net"
 	"net/http"
@@ -25,7 +30,6 @@ import (
 	jsonConv "github.com/kiali/kiali/tracing/jaeger/model/converter/json"
 	jsonModel "github.com/kiali/kiali/tracing/jaeger/model/json"
 	"github.com/kiali/kiali/tracing/tempo"
-	"github.com/kiali/kiali/util/grpcutil"
 	"github.com/kiali/kiali/util/httputil"
 )
 
@@ -59,6 +63,20 @@ type Client struct {
 	ctx               context.Context
 }
 
+type basicAuth struct {
+	Header string
+}
+
+func (c *basicAuth) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
+	return map[string]string{
+		"Authorization": c.Header,
+	}, nil
+}
+
+func (c *basicAuth) RequireTransportSecurity() bool {
+	return true
+}
+
 func NewClient(token string) (*Client, error) {
 	cfg := config.Get()
 	cfgTracing := cfg.ExternalServices.Tracing
@@ -87,40 +105,50 @@ func NewClient(token string) (*Client, error) {
 			httpTracingClient = tempo.OtelHTTPClient{}
 		}
 
+		port := u.Port()
+		if port == "" {
+			p, _ := net.LookupPort("tcp", u.Scheme)
+			port = strconv.Itoa(p)
+		}
+		opts, err := grpcutil.GetAuthDialOptions(u.Scheme == "https", &auth)
+		if err != nil {
+			log.Errorf("Error while building GRPC dial options: %v", err)
+			return nil, err
+		}
+		address := fmt.Sprintf("%s:%s", u.Hostname(), port)
+		log.Tracef("%s GRPC client info: address=%s, auth.type=%s", cfgTracing.Provider, address, auth.Type)
+
 		if cfgTracing.UseGRPC {
-			// GRPC client
-
-			// Note: jaeger-query does not have built-in secured communication, at the moment it is only achieved through reverse proxies (cf https://github.com/jaegertracing/jaeger/issues/1718).
-			// When using the GRPC client, if a proxy is used it has to support GRPC.
-			// Basic and Token auth are in theory implemented for the GRPC client (see package grpcutil) but were not tested because openshift's oauth-proxy doesn't support GRPC at the time.
-			// Leaving some commented-out code below -- perhaps useful, perhaps not -- to consider when testing secured GRPC.
-			// if auth.Token != "" {
-			// 	requestMetadata := metadata.New(map[string]string{
-			// 		spanstore.BearerTokenKey: auth.Token,
-			// 	})
-			// 	ctx = metadata.NewOutgoingContext(ctx, requestMetadata)
-			// }
-
-			port := u.Port()
-			if port == "" {
-				p, _ := net.LookupPort("tcp", u.Scheme)
-				port = strconv.Itoa(p)
+			var client model.QueryServiceClient
+			if cfgTracing.Provider == TEMPO {
+				var dialOps []grpc.DialOption
+				if cfgTracing.Auth.Type == "basic" {
+					dialOps = append(dialOps, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
+					dialOps = append(dialOps, grpc.WithPerRPCCredentials(&basicAuth{
+						Header: fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", cfgTracing.Auth.Username, cfgTracing.Auth.Password)))),
+					}))
+				} else {
+					dialOps = append(dialOps, grpc.WithTransportCredentials(insecure.NewCredentials()))
+				}
+				clientConn, _ := grpc.Dial(u.Hostname(), dialOps...)
+				client = tempo.NewTempoServiceClient(*clientConn)
+			} else {
+				// Note: jaeger-query does not have built-in secured communication, at the moment it is only achieved through reverse proxies (cf https://github.com/jaegertracing/jaeger/issues/1718).
+				// When using the GRPC client, if a proxy is used it has to support GRPC.
+				// Basic and Token auth are in theory implemented for the GRPC client (see package grpcutil) but were not tested because openshift's oauth-proxy doesn't support GRPC at the time.
+				// Leaving some commented-out code below -- perhaps useful, perhaps not -- to consider when testing secured GRPC.
+				// if auth.Token != "" {
+				// 	requestMetadata := metadata.New(map[string]string{
+				// 		spanstore.BearerTokenKey: auth.Token,
+				// 	})
+				// 	ctx = metadata.NewOutgoingContext(ctx, requestMetadata)
+				// }
+				conn, err := grpc.Dial(address, opts...)
+				if err != nil {
+					client = model.NewQueryServiceClient(conn)
+					log.Infof("Create %s GRPC client %s", cfgTracing.Provider, address)
+				}
 			}
-			opts, err := grpcutil.GetAuthDialOptions(u.Scheme == "https", &auth)
-			if err != nil {
-				log.Errorf("Error while building GRPC dial options: %v", err)
-				return nil, err
-			}
-			address := fmt.Sprintf("%s:%s", u.Hostname(), port)
-			log.Tracef("%s GRPC client info: address=%s, auth.type=%s", cfgTracing.Provider, address, auth.Type)
-
-			conn, err := grpc.Dial(address, opts...)
-			if err != nil {
-				log.Errorf("Error while establishing GRPC connection: %v", err)
-				return nil, err
-			}
-			client := model.NewQueryServiceClient(conn)
-			log.Infof("Create %s GRPC client %s", cfgTracing.Provider, address)
 			return &Client{httpTracingClient: httpTracingClient, grpcClient: client, ctx: ctx}, nil
 		} else {
 			// Legacy HTTP client
