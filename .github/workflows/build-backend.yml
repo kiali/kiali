@@ -24,6 +24,7 @@ jobs:
           # is consistently fast.
           cache: true
           cache-dependency-path: go.sum
+          check-latest: true
       - name: Lint Install
         run: make lint-install
 
