@@ -140,6 +140,8 @@ func parsePortAndHostnames(serverDef *api_networking_v1beta1.Server) []Host {
 // findMatch uses a linear search with regexp to check for matching gateway host + port combinations. If this becomes a bottleneck for performance, replace with a graph or trie algorithm.
 func (m MultiMatchChecker) findMatch(host Host, selector string) (bool, []Host) {
 	duplicates := make([]Host, 0)
+	conf := config.Get()
+
 	for groupSelector, hostGroup := range m.existingList {
 		if groupSelector != selector {
 			continue
@@ -151,7 +153,7 @@ func (m MultiMatchChecker) findMatch(host Host, selector string) (bool, []Host) 
 				if h.Port == host.Port {
 					// wildcardMatches will always match unless SkipWildcardGatewayHosts is set 'true'
 					if host.Hostname == wildCardMatch || h.Hostname == wildCardMatch {
-						if !config.Get().KialiFeatureFlags.Validations.SkipWildcardGatewayHosts {
+						if !conf.KialiFeatureFlags.Validations.SkipWildcardGatewayHosts {
 							duplicates = append(duplicates, host)
 							duplicates = append(duplicates, h)
 						}
