@@ -22,7 +22,7 @@ jobs:
           go-version-file: go.mod
           # The builtin cache feature ensures that installing golangci-lint
           # is consistently fast.
-          cache: true
+          cache: false
           cache-dependency-path: go.sum
       - name: Lint Install
         run: make lint-install
