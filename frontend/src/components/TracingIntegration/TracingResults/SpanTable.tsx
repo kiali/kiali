@@ -158,11 +158,11 @@ class SpanTableComponent extends React.Component<Props, State> {
       this.setState({ sortIndex: index, sortDirection: sortDirection });
 
     return (
-      <Table variant={TableVariant.compact} aria-label={'list_spans'} className={tableStyle}>
+      <Table variant={TableVariant.compact} aria-label="list_spans" className={tableStyle}>
         <Thead>
           <Tr>
             {columns.map((column, index) => (
-              <Th width={column.width} sort={getSortParams(column, index, sortBy, onSort)}>
+              <Th key={`column_${index}`} width={column.width} sort={getSortParams(column, index, sortBy, onSort)}>
                 {column.title}
               </Th>
             ))}

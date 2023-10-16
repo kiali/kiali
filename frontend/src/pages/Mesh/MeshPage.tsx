@@ -153,7 +153,9 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
             <Thead>
               <Tr>
                 {columns.map((column, index) => (
-                  <Th sort={getSortParams(column, index, sortBy, onSortHandler)}>{column.title}</Th>
+                  <Th key={`column_${index}`} sort={getSortParams(column, index, sortBy, onSortHandler)}>
+                    {column.title}
+                  </Th>
                 ))}
               </Tr>
             </Thead>

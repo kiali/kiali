@@ -142,8 +142,10 @@ export class K8sTrafficShifting extends React.Component<Props, State> {
         <Table aria-label="weighted routing">
           <Thead>
             <Tr>
-              {columns.map(column => (
-                <Th width={column.width}>{column.title}</Th>
+              {columns.map((column, index) => (
+                <Th key={`column_${index}`} width={column.width}>
+                  {column.title}
+                </Th>
               ))}
             </Tr>
           </Thead>

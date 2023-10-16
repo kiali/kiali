@@ -104,8 +104,10 @@ export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConf
         <Table variant={TableVariant.compact} aria-label={'list_istio_config'}>
           <Thead>
             <Tr>
-              {columns.map(column => (
-                <Th width={column.width}>{column.title}</Th>
+              {columns.map((column, index) => (
+                <Th key={`column_${index}`} width={column.width}>
+                  {column.title}
+                </Th>
               ))}
             </Tr>
           </Thead>

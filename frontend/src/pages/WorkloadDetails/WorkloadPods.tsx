@@ -166,8 +166,10 @@ export const WorkloadPods: React.FC<WorkloadPodsProps> = (props: WorkloadPodsPro
         <Table variant={TableVariant.compact} aria-label={'list_workloads_pods'}>
           <Thead>
             <Tr>
-              {columns.map(column => (
-                <Th width={column.width}>{column.title}</Th>
+              {columns.map((column, index) => (
+                <Th key={`column_${index}`} width={column.width}>
+                  {column.title}
+                </Th>
               ))}
             </Tr>
           </Thead>

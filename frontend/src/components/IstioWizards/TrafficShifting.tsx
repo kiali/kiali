@@ -301,8 +301,10 @@ export class TrafficShifting extends React.Component<Props, State> {
         <Table aria-label="weighted routing">
           <Thead>
             <Tr>
-              {workloadColumns.map(column => (
-                <Th width={column.width}>{column.title}</Th>
+              {workloadColumns.map((column, index) => (
+                <Th key={`column_${index}`} width={column.width}>
+                  {column.title}
+                </Th>
               ))}
             </Tr>
           </Thead>
@@ -322,8 +324,10 @@ export class TrafficShifting extends React.Component<Props, State> {
           <Table aria-label="mirrors">
             <Thead>
               <Tr>
-                {mirrorColumns.map(column => (
-                  <Th width={column.width}>{column.title}</Th>
+                {mirrorColumns.map((column, index) => (
+                  <Th key={`column_${index}`} width={column.width}>
+                    {column.title}
+                  </Th>
                 ))}
               </Tr>
             </Thead>

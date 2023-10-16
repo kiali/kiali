@@ -89,7 +89,7 @@ export function SummaryTableRenderer<T extends SummaryTable>() {
             <Thead>
               <Tr>
                 {columns.map((column, index) => (
-                  <Th sort={this.getSortParams(index)} info={column.info}>
+                  <Th key={`column_${index}`} sort={this.getSortParams(index)} info={column.info}>
                     {column.title}
                   </Th>
                 ))}

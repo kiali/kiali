@@ -1,6 +1,17 @@
 import * as React from 'react';
-import { cellWidth, ICell } from '@patternfly/react-table';
-import { Table, TableHeader, TableBody } from '@patternfly/react-table/deprecated';
+import {
+  IRow,
+  IAction,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Td,
+  Th,
+  IRowCell,
+  ActionsColumn,
+  ThProps
+} from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../Pf/PfColors';
 import {
@@ -20,31 +31,31 @@ export enum MOVE_TYPE {
 }
 
 export type K8sRule = {
-  matches: string[];
-  filters: string[];
   backendRefs: K8sRouteBackendRef[];
+  filters: string[];
+  matches: string[];
 };
 
-type Props = {
+type K8sRuleProps = {
   k8sRules: K8sRule[];
-  onRemoveRule: (index: number) => void;
   onMoveRule: (index: number, move: MOVE_TYPE) => void;
+  onRemoveRule: (index: number) => void;
 };
 
 const validationStyle = kialiStyle({
-  marginTop: 15,
+  marginTop: '0.75rem',
   color: PFColors.Red100
 });
 
 const noRulesStyle = kialiStyle({
-  marginTop: 15,
+  marginTop: '0.75rem',
   color: PFColors.Red100,
   textAlign: 'center',
   width: '100%'
 });
 
-export class K8sRules extends React.Component<Props> {
-  matchAllIndex = (k8sRules: K8sRule[]): number => {
+export const K8sRules: React.FC<K8sRuleProps> = (props: K8sRuleProps) => {
+  const matchAllIndex = (k8sRules: K8sRule[]): number => {
     let matchAll: number = -1;
     for (let index = 0; index < k8sRules.length; index++) {
       const rule = k8sRules[index];
@@ -56,87 +67,94 @@ export class K8sRules extends React.Component<Props> {
     return matchAll;
   };
 
-  // @ts-ignore
-  actionResolver = (rowData, { rowIndex }) => {
+  const actionResolver = (rowIndex: number): IAction[] => {
     const removeAction = {
       title: 'Remove Rule',
-      // @ts-ignore
-      onClick: (event, rowIndex, rowData, extraData) => this.props.onRemoveRule(rowIndex)
-    };
-    const moveUpAction = {
-      title: 'Move Up',
-      // @ts-ignore
-      onClick: (event, rowIndex, rowData, extraData) => this.props.onMoveRule(rowIndex, MOVE_TYPE.UP)
-    };
-    const moveDownAction = {
-      title: 'Move Down',
-      // @ts-ignore
-      onClick: (event, rowIndex, rowData, extraData) => this.props.onMoveRule(rowIndex, MOVE_TYPE.DOWN)
+      onClick: () => props.onRemoveRule(rowIndex)
     };
 
-    const actions: any[] = [];
-    if (this.props.k8sRules.length > 0) {
+    const moveUpAction = {
+      title: 'Move Up',
+      onClick: () => props.onMoveRule(rowIndex, MOVE_TYPE.UP)
+    };
+
+    const moveDownAction = {
+      title: 'Move Down',
+      onClick: () => props.onMoveRule(rowIndex, MOVE_TYPE.DOWN)
+    };
+
+    const actions: IAction[] = [];
+
+    if (props.k8sRules.length > 0) {
       actions.push(removeAction);
     }
+
     if (rowIndex > 0) {
       actions.push(moveUpAction);
     }
-    if (rowIndex + 1 < this.props.k8sRules.length) {
+
+    if (rowIndex + 1 < props.k8sRules.length) {
       actions.push(moveDownAction);
     }
+
     return actions;
   };
 
-  render() {
-    // TODO: Casting 'as any' because @patternfly/react-table@2.22.19 has a typing bug. Remove the casting when PF fixes it.
-    // https://github.com/patternfly/patternfly-next/issues/2373
-    const headerCells: ICell[] = [
-      {
-        title: 'Rule order',
-        transforms: [cellWidth(10) as any],
-        props: {}
-      },
-      {
-        title: 'Request Matching',
-        props: {}
-      },
-      {
-        title: 'Route Filtering',
-        props: {}
-      },
-      {
-        title: 'Route To',
-        props: {}
-      }
-    ];
+  const columns: ThProps[] = [
+    {
+      title: 'Rule order',
+      width: 10
+    },
+    {
+      title: 'Request Matching'
+    },
+    {
+      title: 'Route Filtering'
+    },
+    {
+      title: 'Route To'
+    }
+  ];
 
-    let isValid: boolean = true;
-    const matchAll: number = this.matchAllIndex(this.props.k8sRules);
-    const routeRules =
-      this.props.k8sRules.length > 0
-        ? this.props.k8sRules.map((rule, order) => {
-            isValid = matchAll === -1 || order <= matchAll;
-            return {
-              cells: [
-                <>{order + 1}</>,
-                <>
-                  {!rule.matches || rule.matches.length === 0
-                    ? 'Any request'
-                    : rule.matches.map((match, i) => <div key={'match_' + i}>{match}</div>)}
-                  {!isValid && (
-                    <div className={validationStyle}>
-                      Match 'Any request' is defined in a previous rule.
-                      <br />
-                      This rule is not accessible.
-                    </div>
-                  )}
-                </>,
-                <>
-                  {!rule.filters || rule.filters.length === 0
-                    ? 'No Request Filter'
-                    : rule.filters.map((filter, i) => <div key={'filter_' + i}>{filter}</div>)}
-                </>,
-                <>
+  let isValid: boolean = true;
+
+  const matchAll: number = matchAllIndex(props.k8sRules);
+
+  const routeRules: IRow[] =
+    props.k8sRules.length > 0
+      ? props.k8sRules.map((rule, order) => {
+          isValid = matchAll === -1 || order <= matchAll;
+
+          return {
+            cells: [
+              { title: <>{order + 1}</> },
+              {
+                title: (
+                  <>
+                    {!rule.matches || rule.matches.length === 0
+                      ? 'Any request'
+                      : rule.matches.map((match, i) => <div key={'match_' + i}>{match}</div>)}
+                    {!isValid && (
+                      <div className={validationStyle}>
+                        Match 'Any request' is defined in a previous rule.
+                        <br />
+                        This rule is not accessible.
+                      </div>
+                    )}
+                  </>
+                )
+              },
+              {
+                title: (
+                  <>
+                    {!rule.filters || rule.filters.length === 0
+                      ? 'No Request Filter'
+                      : rule.filters.map((filter, i) => <div key={'filter_' + i}>{filter}</div>)}
+                  </>
+                )
+              },
+              {
+                title: (
                   <div key={'br_' + order}>
                     {rule.backendRefs &&
                       rule.backendRefs.map((bRef, i) => {
@@ -148,44 +166,62 @@ export class K8sRules extends React.Component<Props> {
                         );
                       })}
                   </div>
-                </>
-              ]
-            };
-          })
-        : [
-            {
-              key: 'rowEmpty',
-              cells: [
-                {
-                  title: (
-                    <EmptyState variant={EmptyStateVariant.full}>
-                      <EmptyStateHeader titleText="No K8s Route Rules defined" headingLevel="h5" />
-                      <EmptyStateBody className={noRulesStyle}>
-                        A Request Routing scenario needs at least a Route Rule
-                      </EmptyStateBody>
-                    </EmptyState>
-                  ),
-                  props: { colSpan: 3 }
-                }
-              ]
-            }
-          ];
+                )
+              }
+            ]
+          };
+        })
+      : [
+          {
+            key: 'rowEmpty',
+            cells: [
+              {
+                title: (
+                  <EmptyState variant={EmptyStateVariant.full}>
+                    <EmptyStateHeader titleText="No K8s Route Rules defined" headingLevel="h5" />
+                    <EmptyStateBody className={noRulesStyle}>
+                      A Request Routing scenario needs at least a Route Rule
+                    </EmptyStateBody>
+                  </EmptyState>
+                ),
+                props: { colSpan: 3 }
+              }
+            ]
+          }
+        ];
 
-    return (
-      <>
-        Route K8sRules
-        {wizardTooltip(ROUTE_RULES_TOOLTIP)}
-        <Table
-          aria-label="K8sRules Created"
-          cells={headerCells}
-          rows={routeRules}
-          // @ts-ignore
-          actionResolver={this.actionResolver}
-        >
-          <TableHeader />
-          <TableBody />
-        </Table>
-      </>
-    );
-  }
-}
+  return (
+    <>
+      Route K8sRules
+      {wizardTooltip(ROUTE_RULES_TOOLTIP)}
+      <Table aria-label="K8sRules Created">
+        <Thead>
+          <Tr>
+            {columns.map((column, index) => (
+              <Th key={`column_${index}`} width={column.width}>
+                {column.title}
+              </Th>
+            ))}
+          </Tr>
+        </Thead>
+
+        <Tbody>
+          {routeRules.map((row, index) => (
+            <Tr key={`row_${index}`} className={row.className}>
+              {(row.cells as IRowCell[])?.map((cell, index) => (
+                <Td dataLabel={columns[index].title} colSpan={cell.props?.colSpan}>
+                  {cell.title}
+                </Td>
+              ))}
+              {row.key !== 'rowEmpty' && (
+                <Td isActionCell>
+                  <ActionsColumn items={actionResolver(index)} />
+                </Td>
+              )}
+            </Tr>
+          ))}
+        </Tbody>
+      </Table>
+    </>
+  );
+};
