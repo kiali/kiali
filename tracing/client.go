@@ -171,7 +171,11 @@ func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*m
 	if in.grpcClient == nil {
 		return in.httpTracingClient.GetAppTracesHTTP(in.httpClient, in.baseURL, namespace, app, q)
 	}
-	jaegerServiceName := jaeger.BuildTracingServiceName(namespace, app)
+	else {
+		jaegerServiceName := jaeger.BuildTracingServiceName(namespace, app)
+		return in.grpcClient.FindTraces(jaegerServiceName, q)
+	}
+
 	findTracesRQ := &model.FindTracesRequest{
 		Query: &model.TraceQueryParameters{
 			ServiceName:  jaegerServiceName,
