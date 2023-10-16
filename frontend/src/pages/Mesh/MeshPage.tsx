@@ -146,34 +146,35 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
         hideNamespaceSelector={true}
         rightToolbar={<RefreshButton key={'Refresh'} handleRefresh={fetchMeshClusters} />}
       />
+
       <RenderContent>
         <div className={containerStyle}>
+          <Table aria-label="Sortable Table">
+            <Thead>
+              <Tr>
+                {columns.map((column, index) => (
+                  <Th sort={getSortParams(column, index, sortBy, onSortHandler)}>{column.title}</Th>
+                ))}
+              </Tr>
+            </Thead>
+
+            <Tbody>
+              {clusterRows.map((row, index) => (
+                <Tr key={`row_${index}`}>
+                  {(row.cells as IRowCell[])?.map((cell, index) => (
+                    <Td dataLabel={columns[index].title}>{cell}</Td>
+                  ))}
+                </Tr>
+              ))}
+            </Tbody>
+          </Table>
+
           {clusterRows.length === 0 ? (
             <EmptyState variant={EmptyStateVariant.full}>
               <EmptyStateHeader titleText="No Clusters" headingLevel="h2" />
               <EmptyStateBody>No clusters were discovered in your mesh.</EmptyStateBody>
             </EmptyState>
-          ) : (
-            <Table aria-label="Sortable Table">
-              <Thead>
-                <Tr>
-                  {columns.map((column, index) => (
-                    <Th sort={getSortParams(column, index, sortBy, onSortHandler)}>{column.title}</Th>
-                  ))}
-                </Tr>
-              </Thead>
-
-              <Tbody>
-                {clusterRows.map((row, index) => (
-                  <Tr key={`row_${index}`}>
-                    {(row.cells as IRowCell[])?.map((cell, index) => (
-                      <Td dataLabel={columns[index].title}>{cell}</Td>
-                    ))}
-                  </Tr>
-                ))}
-              </Tbody>
-            </Table>
-          )}
+          ) : null}
         </div>
       </RenderContent>
     </>
