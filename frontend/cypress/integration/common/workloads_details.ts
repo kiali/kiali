@@ -69,9 +69,9 @@ And('user can filter spans by workload', () => {
   getCellsForCol('App / Workload').each($cell => {
     cy.wrap($cell).contains('details-v1');
   });
-  // TODO: Assert that something has opened after clicking. There is currently
-  // a bug where the kebab doesn't do anything when clicked.
   getCellsForCol(4).first().click();
+  // Check that kebab menu is opened
+  cy.get('ul[role="menu"]').should('be.visible');
 });
 
 When(

@@ -21,7 +21,6 @@ import {
   Tbody,
   Tr,
   Td,
-  ThProps,
   Th,
   IRowCell,
   ActionsColumn
@@ -46,6 +45,7 @@ import { history } from 'app/History';
 import { AngleDownIcon, AngleRightIcon, ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { isParentKiosk, kioskContextMenuAction } from '../../Kiosk/KioskActions';
 import { TEMPO } from '../../../types/Tracing';
+import { SortableTh, getSortParams } from 'utils/TableUtils';
 
 type ReduxProps = {
   kiosk: string;
@@ -69,11 +69,6 @@ interface State {
   sortIndex: number;
 }
 
-type SortableTh<T> = ThProps & {
-  compare?: (a: T, b: T) => number;
-  sortable: boolean;
-};
-
 const dangerErrorStyle = kialiStyle({
   borderLeft: '3px solid var(--pf-v5-global--danger-color--100)'
 });
@@ -87,14 +82,23 @@ const selectedStyle = kialiStyle({
   borderRight: '3px solid var(--pf-v5-global--info-color--100)'
 });
 
-const rowKebabStyle = kialiStyle({
-  paddingLeft: 0,
-  textAlign: 'left',
-  whiteSpace: 'nowrap'
+const tableStyle = kialiStyle({
+  $nest: {
+    '&& tbody > tr > td': {
+      paddingTop: '0.25rem',
+      paddingBottom: '0.75rem',
+      $nest: {
+        '& .pf-v5-c-menu-toggle': {
+          verticalAlign: '-0.25rem'
+        }
+      }
+    }
+  }
 });
 
-const linkStyle = kialiStyle({
-  fontSize: '14px'
+const expandButtonStyle = kialiStyle({
+  padding: '0.25rem',
+  paddingLeft: 0
 });
 
 const getClassName = (isError: boolean, isSpan: boolean): string | undefined => {
@@ -149,12 +153,16 @@ class SpanTableComponent extends React.Component<Props, State> {
   render() {
     const rows = this.rows();
 
+    const sortBy = { index: this.state.sortIndex, direction: this.state.sortDirection };
+    const onSort = (_event: React.MouseEvent, index: number, sortDirection: SortByDirection) =>
+      this.setState({ sortIndex: index, sortDirection: sortDirection });
+
     return (
-      <Table variant={TableVariant.compact} aria-label={'list_spans'}>
+      <Table variant={TableVariant.compact} aria-label={'list_spans'} className={tableStyle}>
         <Thead>
           <Tr>
             {columns.map((column, index) => (
-              <Th sort={this.getSortParams(index)}>{column.title}</Th>
+              <Th sort={getSortParams(column, index, sortBy, onSort)}>{column.title}</Th>
             ))}
           </Tr>
         </Thead>
@@ -186,16 +194,6 @@ class SpanTableComponent extends React.Component<Props, State> {
     );
   }
 
-  private getSortParams = (columnIndex: number): ThProps['sort'] => {
-    return columns[columnIndex].sortable
-      ? {
-          sortBy: { index: this.state.sortIndex, direction: this.state.sortDirection },
-          onSort: (_event, index, sortDirection) => this.setState({ sortIndex: index, sortDirection: sortDirection }),
-          columnIndex
-        }
-      : undefined;
-  };
-
   private fetchComparisonMetrics(items: RichSpanData[]) {
     const queries = buildQueriesFromSpans(items, false);
     this.props.loadMetricsStats(queries, false);
@@ -219,7 +217,7 @@ class SpanTableComponent extends React.Component<Props, State> {
         <>
           <Button
             key={`${item.spanID}-duration`}
-            style={{ padding: '6px 4px 6px 0' }}
+            className={expandButtonStyle}
             variant={ButtonVariant.link}
             onClick={() => this.toggleExpanded(item.spanID)}
           >
@@ -242,12 +240,7 @@ class SpanTableComponent extends React.Component<Props, State> {
     const appActions: IAction[] = [
       {
         isDisabled: true,
-        title: (
-          <h1
-            className={`pf-c-dropdown__group-title ${rowKebabStyle}`}
-            aria-hidden="true"
-          >{`Application (${item.app})`}</h1>
-        )
+        title: <h1 aria-hidden="true">{`Application (${item.app})`}</h1>
       },
       {
         title: 'Inbound Metrics',
@@ -278,12 +271,7 @@ class SpanTableComponent extends React.Component<Props, State> {
       workloadActions = [
         {
           isDisabled: true,
-          title: (
-            <h1
-              className={`pf-c-dropdown__group-title ${rowKebabStyle}`}
-              aria-hidden="true"
-            >{`Workload (${item.workload})`}</h1>
-          )
+          title: <h1 aria-hidden="true">{`Workload (${item.workload})`}</h1>
         },
         {
           title: 'Logs',
@@ -328,11 +316,11 @@ class SpanTableComponent extends React.Component<Props, State> {
       tracingActions = [
         {
           isDisabled: true,
-          title: <h1 className={`pf-c-dropdown__group-title ${rowKebabStyle}`} aria-hidden="true">{`Tracing`}</h1>
+          title: <h1 aria-hidden="true">{`Tracing`}</h1>
         },
         {
           title: (
-            <span className={linkStyle}>
+            <span>
               More span details <ExternalLinkAltIcon />
             </span>
           ),

@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { EmptyState, EmptyStateBody, EmptyStateVariant, Tooltip, EmptyStateHeader } from '@patternfly/react-core';
 import { StarIcon } from '@patternfly/react-icons';
-import { cellWidth, sortable, SortByDirection } from '@patternfly/react-table';
-import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
+import { IRowCell, SortByDirection, Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
@@ -15,14 +14,15 @@ import { kialiIconDark, kialiIconLight } from 'config';
 import { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
 import { Theme } from 'types/Common';
+import { SortableTh, getSortParams } from 'utils/TableUtils';
 
 const iconStyle = kialiStyle({
-  width: '25px',
-  marginRight: '10px',
-  marginTop: '-2px'
+  width: '1.5rem',
+  marginRight: '0.5rem',
+  marginTop: '-0.125rem'
 });
 
-const containerPadding = kialiStyle({ padding: '20px' });
+const containerStyle = kialiStyle({ padding: '1.25rem' });
 
 type MeshPageProps = {
   theme: string;
@@ -36,26 +36,31 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
     fetchMeshClusters();
   }, []);
 
-  const columns = [
+  const columns: SortableTh<MeshCluster>[] = [
     {
       title: 'Cluster Name',
-      transforms: [sortable, cellWidth(20)]
+      width: 20,
+      sortable: true
     },
     {
       title: 'Network',
-      transforms: [sortable, cellWidth(10)]
+      width: 10,
+      sortable: true
     },
     {
       title: 'Kiali',
-      transforms: [cellWidth(20)]
+      width: 20,
+      sortable: false
     },
     {
       title: 'API Endpoint',
-      transforms: [sortable, cellWidth(20)]
+      width: 20,
+      sortable: true
     },
     {
       title: 'Secret name',
-      transforms: [sortable, cellWidth(30)]
+      width: 30,
+      sortable: true
     }
   ];
 
@@ -103,7 +108,7 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
       a[sortByAttr].localeCompare(b[sortByAttr], undefined, { sensitivity: 'base' })
     );
 
-    const tableRows = sortedList.map(cluster => ({
+    const tableRows = sortedList.map((cluster: MeshCluster) => ({
       cells: [
         <>
           {cluster.isKialiHome ? <StarIcon /> : null} {cluster.name}
@@ -142,17 +147,33 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
         rightToolbar={<RefreshButton key={'Refresh'} handleRefresh={fetchMeshClusters} />}
       />
       <RenderContent>
-        <div className={containerPadding}>
-          <Table aria-label="Sortable Table" cells={columns} onSort={onSortHandler} rows={clusterRows} sortBy={sortBy}>
-            <TableHeader />
-            <TableBody />
-          </Table>
+        <div className={containerStyle}>
           {clusterRows.length === 0 ? (
             <EmptyState variant={EmptyStateVariant.full}>
               <EmptyStateHeader titleText="No Clusters" headingLevel="h2" />
               <EmptyStateBody>No clusters were discovered in your mesh.</EmptyStateBody>
             </EmptyState>
-          ) : null}
+          ) : (
+            <Table aria-label="Sortable Table">
+              <Thead>
+                <Tr>
+                  {columns.map((column, index) => (
+                    <Th sort={getSortParams(column, index, sortBy, onSortHandler)}>{column.title}</Th>
+                  ))}
+                </Tr>
+              </Thead>
+
+              <Tbody>
+                {clusterRows.map((row, index) => (
+                  <Tr key={`row_${index}`}>
+                    {(row.cells as IRowCell[])?.map((cell, index) => (
+                      <Td dataLabel={columns[index].title}>{cell}</Td>
+                    ))}
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          )}
         </div>
       </RenderContent>
     </>

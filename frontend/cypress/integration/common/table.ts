@@ -127,7 +127,7 @@ export function getColWithRowText(rowSearchText: string, colName: string) {
 // the cells 'app1' and 'app2'.
 export function getCellsForCol(column: string | Number) {
   if (typeof column === 'number') {
-    return cy.get(`td[data-key="${column}"]`);
+    return cy.get('td').eq(column);
   }
   return cy.get(`td[data-label="${column}"]`);
 }
