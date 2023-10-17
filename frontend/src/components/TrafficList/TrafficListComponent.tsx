@@ -156,6 +156,7 @@ class TrafficList extends FilterComponent.Component<
                   {cols.map((column, index) => (
                     <Th
                       key={`column_${index}`}
+                      dataLabel={column.title}
                       sort={getSortParams(column, index, sortBy, this.onSort)}
                       width={column.width}
                     >
@@ -187,6 +188,7 @@ class TrafficList extends FilterComponent.Component<
                   {cols.map((column, index) => (
                     <Th
                       key={`column_${index}`}
+                      dataLabel={column.title}
                       sort={getSortParams(column, index, sortBy, this.onSort)}
                       width={column.width}
                     >

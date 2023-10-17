@@ -169,7 +169,7 @@ export class ListenerList extends React.Component<Props, ListenerListState> {
           <Thead>
             <Tr>
               {headerCells.map(e => (
-                <Th>{e.title}</Th>
+                <Th dataLabel={e.title}>{e.title}</Th>
               ))}
             </Tr>
           </Thead>

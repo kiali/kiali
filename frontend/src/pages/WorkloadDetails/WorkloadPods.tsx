@@ -167,7 +167,7 @@ export const WorkloadPods: React.FC<WorkloadPodsProps> = (props: WorkloadPodsPro
           <Thead>
             <Tr>
               {columns.map((column, index) => (
-                <Th key={`column_${index}`} width={column.width}>
+                <Th key={`column_${index}`} dataLabel={column.title} width={column.width}>
                   {column.title}
                 </Th>
               ))}

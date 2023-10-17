@@ -162,7 +162,12 @@ class SpanTableComponent extends React.Component<Props, State> {
         <Thead>
           <Tr>
             {columns.map((column, index) => (
-              <Th key={`column_${index}`} width={column.width} sort={getSortParams(column, index, sortBy, onSort)}>
+              <Th
+                key={`column_${index}`}
+                dataLabel={column.title}
+                width={column.width}
+                sort={getSortParams(column, index, sortBy, onSort)}
+              >
                 {column.title}
               </Th>
             ))}

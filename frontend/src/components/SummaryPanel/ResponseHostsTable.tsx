@@ -55,13 +55,13 @@ export const ResponseHostsTable: React.FC<ResponseHostsTableProps> = (props: Res
           <Table className={tableStyle}>
             <Thead>
               <Tr>
-                <Th width={20} textCenter>
+                <Th dataLabel="Code" width={20} textCenter>
                   Code
                 </Th>
-                <Th width={50} textCenter>
+                <Th dataLabel="Host" width={50} textCenter>
                   Host
                 </Th>
-                <Th width={30} textCenter>
+                <Th dataLabel="% Req" width={30} textCenter>
                   % Req
                 </Th>
               </Tr>

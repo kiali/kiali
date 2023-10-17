@@ -200,7 +200,7 @@ export class ServerBuilder extends React.Component<Props, State> {
               <Thead>
                 <Tr>
                   {portHeader.map(e => (
-                    <Th>{e.title}</Th>
+                    <Th dataLabel={e.title}>{e.title}</Th>
                   ))}
                 </Tr>
               </Thead>

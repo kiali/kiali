@@ -172,6 +172,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
               {columns.map((column, index) => (
                 <Th
                   key={`column_${index}`}
+                  dataLabel={column.title}
                   sort={getSortParams(column, index, sortBy, this.onSort)}
                   width={column.width}
                   textCenter={column.textCenter}

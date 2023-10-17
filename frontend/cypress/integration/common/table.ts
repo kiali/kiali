@@ -85,10 +85,10 @@ export function colExists(colName: string, exists: boolean) {
 // This func makes a couple assumptions:
 //
 // 1. The classes expected
-export const hasAtLeastOneClass = expectedClasses => {
-  return $el => {
+export const hasAtLeastOneClass = (expectedClasses: string[]) => {
+  return ($el: HTMLElement[]) => {
     const classList = Array.from($el[0].classList);
-    return expectedClasses.some(expectedClass => classList.includes(expectedClass));
+    return expectedClasses.some((expectedClass: string) => classList.includes(expectedClass));
   };
 };
 
@@ -100,20 +100,7 @@ export const hasAtLeastOneClass = expectedClasses => {
 //
 // Be aware of these assumptions when using this func.
 export function getColWithRowText(rowSearchText: string, colName: string) {
-  // Get all the table headers and find the index of their col.
-  return cy.get(`th[data-label="${colName}"]`).then($th => {
-    // Get the col number
-    const colNum = $th.attr('data-key');
-    expect(colNum).to.not.be.empty;
-
-    cy.log(`Looking in column named: ${colName} at index: ${colNum}`);
-
-    return cy
-      .get('tbody')
-      .contains('tr', rowSearchText)
-      .find('td')
-      .then($cols => $cols[colNum]);
-  });
+  return cy.get('tbody').contains('tr', rowSearchText).find(`td[data-label="${colName}"]`);
 }
 
 // getCellsForCol returns every cell matching the table header name or

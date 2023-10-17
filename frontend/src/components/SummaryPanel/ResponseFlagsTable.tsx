@@ -55,9 +55,15 @@ export const ResponseFlagsTable: React.FC<ResponseFlagsTableProps> = (props: Res
       <Table variant={TableVariant.compact} className={tableStyle}>
         <Thead>
           <Tr key="table-header">
-            <Th textCenter>Code</Th>
-            <Th textCenter>Flags</Th>
-            <Th textCenter>% Req</Th>
+            <Th dataLabel="Code" textCenter>
+              Code
+            </Th>
+            <Th dataLabel="Flags" textCenter>
+              Flags
+            </Th>
+            <Th dataLabel="% Req" textCenter>
+              % Req
+            </Th>
           </Tr>
         </Thead>
         <Tbody>

@@ -234,7 +234,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
             <Thead>
               <Tr>
                 {columns.map(column => (
-                  <Th>{column.title}</Th>
+                  <Th dataLabel={column.title}>{column.title}</Th>
                 ))}
               </Tr>
             </Thead>

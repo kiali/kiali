@@ -105,7 +105,7 @@ export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConf
           <Thead>
             <Tr>
               {columns.map((column, index) => (
-                <Th key={`column_${index}`} width={column.width}>
+                <Th key={`column_${index}`} dataLabel={column.title} width={column.width}>
                   {column.title}
                 </Th>
               ))}

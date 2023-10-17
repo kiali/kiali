@@ -638,10 +638,10 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
               <Table className={tableStyle}>
                 <Thead>
                   <Tr className="row-odd">
-                    <Th width={30} className="head">
+                    <Th dataLabel="Specifier" width={30} className="head">
                       <p>Specifier</p>
                     </Th>
-                    <Th width={70} className="head">
+                    <Th dataLabel="Explanation" width={70} className="head">
                       <p>Explanation</p>
                     </Th>
                   </Tr>

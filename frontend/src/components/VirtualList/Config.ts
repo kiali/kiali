@@ -51,7 +51,7 @@ const tlsStatus: ResourceType<NamespaceInfo> = {
   name: 'TLS',
   param: 'tls',
   title: 'TLS',
-  sortable: false,
+  sortable: true,
   width: 10,
   renderer: Renderers.tls
 };

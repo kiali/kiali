@@ -155,6 +155,7 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
                 {columns.map((column, index) => (
                   <Th
                     key={`column_${index}`}
+                    dataLabel={column.title}
                     sort={getSortParams(column, index, sortBy, onSortHandler)}
                     width={column.width}
                   >

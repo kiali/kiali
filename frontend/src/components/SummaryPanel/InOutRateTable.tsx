@@ -35,9 +35,15 @@ export const InOutRateTableGrpc: React.FC<InOutRateTableGrpcPropType> = (props: 
         <Thead>
           <Tr>
             <Th />
-            <Th textCenter>Total</Th>
-            <Th textCenter>%Success</Th>
-            <Th textCenter>%Error</Th>
+            <Th dataLabel="Total" textCenter>
+              Total
+            </Th>
+            <Th dataLabel="%Success" textCenter>
+              %Success
+            </Th>
+            <Th dataLabel="%Error" textCenter>
+              %Error
+            </Th>
           </Tr>
         </Thead>
         <Tbody>
@@ -120,9 +126,15 @@ export const InOutRateTableHttp: React.FC<InOutRateTableHttpPropType> = (props: 
         <Thead>
           <Tr>
             <Th />
-            <Th textCenter>Total</Th>
-            <Th textCenter>%Success</Th>
-            <Th textCenter>%Error</Th>
+            <Th dataLabel="Total" textCenter>
+              Total
+            </Th>
+            <Th dataLabel="%Success" textCenter>
+              %Success
+            </Th>
+            <Th dataLabel="%Error" textCenter>
+              %Error
+            </Th>
           </Tr>
         </Thead>
         <Tbody>

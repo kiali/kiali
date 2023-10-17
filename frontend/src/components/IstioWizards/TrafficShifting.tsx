@@ -302,7 +302,7 @@ export class TrafficShifting extends React.Component<Props, State> {
           <Thead>
             <Tr>
               {workloadColumns.map((column, index) => (
-                <Th key={`column_${index}`} width={column.width}>
+                <Th key={`column_${index}`} dataLabel={column.title} width={column.width}>
                   {column.title}
                 </Th>
               ))}
@@ -325,7 +325,7 @@ export class TrafficShifting extends React.Component<Props, State> {
             <Thead>
               <Tr>
                 {mirrorColumns.map((column, index) => (
-                  <Th key={`column_${index}`} width={column.width}>
+                  <Th key={`column_${index}`} dataLabel={column.title} width={column.width}>
                     {column.title}
                   </Th>
                 ))}

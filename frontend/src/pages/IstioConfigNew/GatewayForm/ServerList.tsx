@@ -117,7 +117,7 @@ export class ServerList extends React.Component<Props> {
           <Thead>
             <Tr>
               {headerCells.map(e => (
-                <Th>{e.title}</Th>
+                <Th dataLabel={e.title}>{e.title}</Th>
               ))}
             </Tr>
           </Thead>

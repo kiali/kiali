@@ -152,8 +152,8 @@ export class WizardAnnotations extends React.Component<Props, State> {
           </Tr>
         ) : (
           <Tr>
-            <Th>{key}</Th>
-            <Th>{value}</Th>
+            <Th dataLabel={key}>{key}</Th>
+            <Th dataLabel={value}>{value}</Th>
           </Tr>
         )
       )
@@ -205,8 +205,8 @@ export class WizardAnnotations extends React.Component<Props, State> {
           <Table variant={'compact'}>
             <Thead>
               <Tr>
-                <Th>Key</Th>
-                <Th>Value</Th>
+                <Th dataLabel="Key">Key</Th>
+                <Th dataLabel="Value">Value</Th>
                 {this.props.canEdit && <Th></Th>}
               </Tr>
             </Thead>

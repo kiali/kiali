@@ -33,9 +33,15 @@ export const RateTableGrpc: React.FC<RateTableGrpcPropType> = (props: RateTableG
       <Table>
         <Thead>
           <Tr>
-            <Th textCenter>Total</Th>
-            <Th textCenter>%Success</Th>
-            <Th textCenter>%Error</Th>
+            <Th dataLabel="Total" textCenter>
+              Total
+            </Th>
+            <Th dataLabel="%Success" textCenter>
+              %Success
+            </Th>
+            <Th dataLabel="%Error" textCenter>
+              %Error
+            </Th>
           </Tr>
         </Thead>
         <Tbody>
@@ -89,9 +95,15 @@ export const RateTableHttp: React.FC<RateTableHttpPropType> = (props: RateTableH
       <Table variant={TableVariant.compact} className={tableStyle}>
         <Thead>
           <Tr>
-            <Th textCenter>Total</Th>
-            <Th textCenter>%Success</Th>
-            <Th textCenter>%Error</Th>
+            <Th dataLabel="Total" textCenter>
+              Total
+            </Th>
+            <Th dataLabel="%Success" textCenter>
+              %Success
+            </Th>
+            <Th dataLabel="%Error" textCenter>
+              %Error
+            </Th>
           </Tr>
         </Thead>
         <Tbody>
@@ -124,9 +136,15 @@ export const RateTableTcp: React.FC<RateTableTcpPropType> = (props: RateTableTcp
       <Table>
         <Thead>
           <Tr>
-            <Th textCenter>Total</Th>
-            <Th textCenter>%Success</Th>
-            <Th textCenter>%Error</Th>
+            <Th dataLabel="Total" textCenter>
+              Total
+            </Th>
+            <Th dataLabel="%Success" textCenter>
+              %Success
+            </Th>
+            <Th dataLabel="%Error" textCenter>
+              %Error
+            </Th>
           </Tr>
         </Thead>
         <Tbody>
