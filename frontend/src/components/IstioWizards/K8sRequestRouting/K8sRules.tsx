@@ -57,13 +57,16 @@ const noRulesStyle = kialiStyle({
 export const K8sRules: React.FC<K8sRuleProps> = (props: K8sRuleProps) => {
   const matchAllIndex = (k8sRules: K8sRule[]): number => {
     let matchAll: number = -1;
+
     for (let index = 0; index < k8sRules.length; index++) {
       const rule = k8sRules[index];
+
       if (!rule.matches || rule.matches.length === 0) {
         matchAll = index;
         break;
       }
     }
+
     return matchAll;
   };
 

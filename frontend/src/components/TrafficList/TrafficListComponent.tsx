@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import { IRow, sortable, SortByDirection, cellWidth } from '@patternfly/react-table';
-import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
+import { IRow, SortByDirection, Thead, Tr, Th, Tbody, Td, IRowCell, Table } from '@patternfly/react-table';
 import { Link } from 'react-router-dom';
 import { TrafficItem, TrafficNode, TrafficDirection } from './TrafficDetails';
 import * as FilterComponent from '../FilterList/FilterComponent';
@@ -20,17 +19,18 @@ import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { isMultiCluster } from 'config';
 import { getParamsSeparator } from '../../utils/SearchParamUtils';
+import { getSortParams, SortableTh } from 'utils/TableUtils';
 
 export interface TrafficListItem {
+  badge: PFBadgeType;
+  cluster?: string;
   direction: TrafficDirection;
   healthStatus: ThresholdStatus;
-  badge: PFBadgeType;
+  mTLS?: number;
   node: TrafficNode;
   protocol: string;
-  mTLS?: number;
-  trafficRate: string;
   trafficPercentSuccess: string;
-  cluster?: string;
+  trafficRate: string;
 }
 
 type ReduxProps = {
@@ -44,44 +44,51 @@ type TrafficListComponentProps = ReduxProps &
 
 type TrafficListComponentState = FilterComponent.State<TrafficListItem>;
 
-const columns = (isMultiCluster: boolean): any[] => {
-  const cols = [
+const columns = (isMultiCluster: boolean): SortableTh<TrafficListItem>[] => {
+  const cols: SortableTh<TrafficListItem>[] = [
     {
       title: 'Status',
-      transforms: [sortable, cellWidth(15)]
+      sortable: true,
+      width: 15
     },
     {
       title: 'Name',
-      transforms: [sortable, cellWidth(30)]
+      sortable: true,
+      width: 30
     },
     {
       title: 'Rate',
-      transforms: [sortable, cellWidth(10)]
+      sortable: true,
+      width: 10
     },
     {
       title: 'Percent Success',
-      transforms: [sortable, cellWidth(20)]
+      sortable: true,
+      width: 20
     },
     {
       title: 'Protocol',
-      transforms: [sortable, cellWidth(15)]
+      sortable: true,
+      width: 15
     },
     {
-      title: 'Actions'
+      title: 'Actions',
+      sortable: false
     }
   ];
 
   if (isMultiCluster) {
     cols.splice(2, 0, {
       title: 'Cluster',
-      transforms: [sortable, cellWidth(15)]
+      sortable: true,
+      width: 15
     });
   }
 
   return cols;
 };
 
-function LockIcon(props) {
+function LockIcon(props: { mTLS: number | undefined }) {
   const msg = props.mTLS ? props.mTLS + ' % of mTLS traffic' : 'mTLS is disabled';
   return (
     <Tooltip position={TooltipPosition.top} content={msg}>
@@ -94,8 +101,8 @@ function LockIcon(props) {
 }
 
 // Style constants
-const containerPadding = kialiStyle({ padding: '20px' });
-const lockIconStyle = kialiStyle({ marginLeft: '5px' });
+const containerStyle = kialiStyle({ padding: '1.25rem' });
+const lockIconStyle = kialiStyle({ marginLeft: '0.25rem' });
 
 class TrafficList extends FilterComponent.Component<
   TrafficListComponentProps,
@@ -138,25 +145,65 @@ class TrafficList extends FilterComponent.Component<
 
     return (
       <>
-        <div className={containerPadding}>
+        <div className={containerStyle}>
           <Title headingLevel="h5" size={TitleSizes.lg}>
             {hasInbound ? '' : 'No '} Inbound Traffic
           </Title>
           {hasInbound && (
-            <Table aria-label="Sortable Table" cells={cols} onSort={this.onSort} rows={inboundRows} sortBy={sortBy}>
-              <TableHeader />
-              <TableBody />
+            <Table aria-label="Sortable Table">
+              <Thead>
+                <Tr>
+                  {cols.map((column, index) => (
+                    <Th
+                      key={`column_${index}`}
+                      sort={getSortParams(column, index, sortBy, this.onSort)}
+                      width={column.width}
+                    >
+                      {column.title}
+                    </Th>
+                  ))}
+                </Tr>
+              </Thead>
+              <Tbody>
+                {inboundRows.map((row, index) => (
+                  <Tr key={`row_${index}`}>
+                    {(row.cells as IRowCell[])?.map((cell, index) => (
+                      <Td dataLabel={cols[index].title}>{cell}</Td>
+                    ))}
+                  </Tr>
+                ))}
+              </Tbody>
             </Table>
           )}
         </div>
-        <div className={containerPadding}>
+        <div className={containerStyle}>
           <Title headingLevel="h5" size={TitleSizes.lg}>
             {hasOutbound ? '' : 'No '} Outbound Traffic
           </Title>
           {hasOutbound && (
-            <Table aria-label="Sortable Table" cells={cols} onSort={this.onSort} rows={outboundRows} sortBy={sortBy}>
-              <TableHeader />
-              <TableBody />
+            <Table aria-label="Sortable Table">
+              <Thead>
+                <Tr>
+                  {cols.map((column, index) => (
+                    <Th
+                      key={`column_${index}`}
+                      sort={getSortParams(column, index, sortBy, this.onSort)}
+                      width={column.width}
+                    >
+                      {column.title}
+                    </Th>
+                  ))}
+                </Tr>
+              </Thead>
+              <Tbody>
+                {outboundRows.map((row, index) => (
+                  <Tr key={`row_${index}`}>
+                    {(row.cells as IRowCell[])?.map((cell, index) => (
+                      <Td dataLabel={cols[index].title}>{cell}</Td>
+                    ))}
+                  </Tr>
+                ))}
+              </Tbody>
             </Table>
           )}
         </div>
@@ -179,11 +226,12 @@ class TrafficList extends FilterComponent.Component<
   }
 
   // Helper used for Table to sort handlers based on index column == field
-  onSort = (_event, index, sortDirection) => {
+  onSort = (_event: React.MouseEvent, index: number, sortDirection: SortByDirection) => {
     // Map the column index to the correct sortField index (currently ordered with the same indexes)
     let sortField = sortFields[index];
 
     const isSortAscending = sortDirection === SortByDirection.asc;
+
     if (sortField.id !== this.state.currentSortField.id || isSortAscending !== this.state.isSortAscending) {
       this.updateSort(sortField, isSortAscending);
     }
@@ -192,6 +240,7 @@ class TrafficList extends FilterComponent.Component<
   trafficToListItems(trafficItems: TrafficItem[]) {
     const listItems = trafficItems.map(ti => {
       let badge: PFBadgeType;
+
       switch (ti.node.type) {
         case NodeType.APP:
           badge = PFBadges.App;
@@ -202,6 +251,7 @@ class TrafficList extends FilterComponent.Component<
         default:
           badge = PFBadges.Workload;
       }
+
       const item: TrafficListItem = {
         direction: ti.direction,
         badge: badge,
@@ -212,6 +262,7 @@ class TrafficList extends FilterComponent.Component<
         cluster: ti.node.cluster,
         ...this.getTraffic(ti.traffic)
       };
+
       return item;
     });
 
@@ -232,6 +283,7 @@ class TrafficList extends FilterComponent.Component<
     let rps = '0';
     let percentError = '0';
     let unit = 'rps';
+
     if (hasProtocolTraffic(traffic)) {
       switch (traffic.protocol) {
         case 'http':
@@ -257,6 +309,7 @@ class TrafficList extends FilterComponent.Component<
   // Helper used to build the table content.
   rows = (direction: TrafficDirection): IRow[] => {
     const parentKiosk = isParentKiosk(this.props.kiosk);
+
     return this.state.listItems
       .filter(i => i.direction === direction)
       .map((item, i) => {
@@ -346,6 +399,7 @@ class TrafficList extends FilterComponent.Component<
     }
 
     let detail = `/namespaces/${item.node.namespace}/${this.nodeTypeToType(item.node.type, true)}/${item.node.name}`;
+
     if (item.node.cluster && isMultiCluster) {
       detail += `?clusterName=${item.node.cluster}`;
     }
