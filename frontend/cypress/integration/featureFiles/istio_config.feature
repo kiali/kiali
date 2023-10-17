@@ -132,6 +132,14 @@ Feature: Kiali Istio Config page
     Then the "foo" "DestinationRule" of the "sleep" namespace should have a "warning"
 
   @crd-validation
+  Scenario: KIA0301 wildcard validation
+    Given there is a "foo" Gateway on "bookinfo" namespace for "productpage.local" hosts on HTTP port 80 with "app=productpage" labels selector
+    And there is a "foo" Gateway on "sleep" namespace for "*" hosts on HTTP port 80 with "app=productpage" labels selector
+    When user selects the "sleep" namespace
+    Then the "foo" "Gateway" of the "bookinfo" namespace should have a "warning"
+    And the "foo" "Gateway" of the "sleep" namespace should have a "warning"
+
+  @crd-validation
   Scenario: KIA0301 validation
     Given there is a "foo" Gateway on "bookinfo" namespace for "productpage.local" hosts on HTTP port 80 with "app=productpage" labels selector
     And there is a "foo" Gateway on "sleep" namespace for "productpage.local" hosts on HTTP port 80 with "app=productpage" labels selector
