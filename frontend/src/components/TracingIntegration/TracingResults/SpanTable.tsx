@@ -7,8 +7,7 @@ import {
   EmptyState,
   EmptyStateBody,
   EmptyStateVariant,
-  EmptyStateHeader,
-  Icon
+  EmptyStateHeader
 } from '@patternfly/react-core';
 import {
   TableVariant,
@@ -35,17 +34,15 @@ import { sameSpans } from 'utils/tracing/TracingHelper';
 import { buildQueriesFromSpans } from 'utils/tracing/TraceStats';
 import { getParamsSeparator, getSpanId } from '../../../utils/SearchParamUtils';
 import { kialiStyle } from 'styles/StyleUtils';
-import { ExclamationCircleIcon } from '@patternfly/react-icons';
 import { formatDuration, isErrorTag } from 'utils/tracing/TracingHelper';
 import { Link } from 'react-router-dom';
-import { PFColors } from 'components/Pf/PfColors';
 import { responseFlags } from 'utils/ResponseFlags';
 import { renderMetricsComparison } from './StatsComparison';
 import { history } from 'app/History';
-import { AngleDownIcon, AngleRightIcon, ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { isParentKiosk, kioskContextMenuAction } from '../../Kiosk/KioskActions';
 import { TEMPO } from '../../../types/Tracing';
 import { SortableTh, getSortParams } from 'utils/TableUtils';
+import { KialiIcon } from 'config/KialiIcon';
 
 type ReduxProps = {
   kiosk: string;
@@ -99,6 +96,14 @@ const tableStyle = kialiStyle({
 const expandButtonStyle = kialiStyle({
   padding: '0.25rem',
   paddingLeft: 0
+});
+
+const linkIconStyle = kialiStyle({
+  marginLeft: '0.25rem'
+});
+
+const errorIconStyle = kialiStyle({
+  marginRight: '0.25rem'
 });
 
 const getClassName = (isError: boolean, isSpan: boolean): string | undefined => {
@@ -179,7 +184,9 @@ class SpanTableComponent extends React.Component<Props, State> {
             rows.map((row, index) => (
               <Tr key={`row_${index}`} className={row.className}>
                 {(row.cells as IRowCell[])?.map((cell, index) => (
-                  <Td dataLabel={columns[index].title}>{cell}</Td>
+                  <Td key={`cell_${index}`} dataLabel={columns[index].title}>
+                    {cell}
+                  </Td>
                 ))}
                 <Td isActionCell>
                   <ActionsColumn items={this.actionResolver(row)} />
@@ -228,7 +235,7 @@ class SpanTableComponent extends React.Component<Props, State> {
             variant={ButtonVariant.link}
             onClick={() => this.toggleExpanded(item.spanID)}
           >
-            {isExpanded ? <AngleDownIcon /> : <AngleRightIcon />}
+            {isExpanded ? <KialiIcon.AngleDown /> : <KialiIcon.AngleRight />}
           </Button>
           {formatDuration(item.relativeStartTime)}
         </>,
@@ -274,6 +281,7 @@ class SpanTableComponent extends React.Component<Props, State> {
     ];
 
     let workloadActions: IAction[] = [];
+
     if (item.linkToWorkload) {
       workloadActions = [
         {
@@ -317,6 +325,7 @@ class SpanTableComponent extends React.Component<Props, State> {
     }
 
     let tracingActions: IAction[] = [];
+
     if (this.props.externalURL) {
       const traceURL = this.props.externalURL?.replace('TRACEID', this.props.traceID);
       const spanLink = this.props.provider === TEMPO ? traceURL : `${traceURL}?uiFind=${item.spanID}`;
@@ -328,7 +337,7 @@ class SpanTableComponent extends React.Component<Props, State> {
         {
           title: (
             <span>
-              More span details <ExternalLinkAltIcon />
+              More span details <KialiIcon.ExternalLink className={linkIconStyle} />
             </span>
           ),
           onClick: () => window.open(spanLink, '_blank')
@@ -356,6 +365,7 @@ class SpanTableComponent extends React.Component<Props, State> {
   private originCell = (item: RichSpanData): React.ReactNode => {
     const parentKiosk = isParentKiosk(this.props.kiosk);
     const key = `${item.spanID}-origin`;
+
     return (
       <>
         <strong key={`${key}-app`}>Application: </strong>
@@ -378,7 +388,9 @@ class SpanTableComponent extends React.Component<Props, State> {
             </Link>
           ))) ||
           item.app}
+
         <br key={`${key}-br`} />
+
         <strong key={`${key}-wl`}>Workload: </strong>
         {(item.linkToWorkload &&
           (parentKiosk ? (
@@ -399,6 +411,7 @@ class SpanTableComponent extends React.Component<Props, State> {
             </Link>
           ))) ||
           'unknown'}
+
         {this.isExpanded(item.spanID) && (
           <div key={`${key}-expanded-br-1`}>
             <strong key={`${key}-expanded-pod`}>Pod: </strong>
@@ -412,34 +425,32 @@ class SpanTableComponent extends React.Component<Props, State> {
   private summaryCell = (item: RichSpanData): React.ReactNode => {
     const flag = (item.info as EnvoySpanInfo).responseFlags;
     const key = `${item.spanID}-summary`;
+
     return (
       <>
         {item.info.hasError && (
           <div key={`${key}-err`}>
-            <Icon key={`${key}-err-ic`} color={PFColors.Danger}>
-              <ExclamationCircleIcon />
-            </Icon>{' '}
+            <KialiIcon.ExclamationCircle key={`${key}-err-ic`} className={errorIconStyle} />
             <strong key={`${key}-err-msg`}>This span reported an error</strong>
           </div>
         )}
+
         <div key={`${key}-op`}>
           <strong key={`${key}-op-title`}>Operation: </strong>
           {flag ? (
             <span key={`${key}-op-name`}>
-              {item.operationName} ({flag}{' '}
-              <Icon key={`${key}-dan-ic`} color={PFColors.Danger}>
-                <ExclamationCircleIcon />
-              </Icon>
-              )
+              {item.operationName} ({flag} <KialiIcon.ExclamationCircle key={`${key}-dan-ic`} />)
             </span>
           ) : (
             <span key={`${key}-op-name`}>{item.operationName}</span>
           )}
         </div>
+
         <div key={`${key}-comp`}>
           <strong key={`${key}-comp=-title`}>Component: </strong>
           {item.component}
         </div>
+
         {this.isExpanded(item.spanID) &&
           ((item.type === 'envoy' && this.renderEnvoySummary(item)) ||
             (item.type === 'http' && this.renderHTTPSummary(item)) ||
@@ -454,8 +465,10 @@ class SpanTableComponent extends React.Component<Props, State> {
     let rqLabel = 'Request';
     let peerLink: JSX.Element | undefined = undefined;
     const key = `${item.spanID}-summary-envoy`;
+
     if (info.direction === 'inbound') {
       rqLabel = 'Received request';
+
       if (info.peer) {
         peerLink = (
           <>
@@ -479,6 +492,7 @@ class SpanTableComponent extends React.Component<Props, State> {
       }
     } else if (info.direction === 'outbound') {
       rqLabel = 'Sent request';
+
       if (info.peer) {
         peerLink = (
           <React.Fragment key={`${key}-out`}>
@@ -504,10 +518,12 @@ class SpanTableComponent extends React.Component<Props, State> {
         );
       }
     }
+
     const rsDetails: string[] = [];
     if (info.statusCode) {
       rsDetails.push(String(info.statusCode));
     }
+
     let flagInfo: string | undefined = undefined;
     if (info.responseFlags) {
       rsDetails.push(info.responseFlags);
@@ -525,6 +541,7 @@ class SpanTableComponent extends React.Component<Props, State> {
             {info.method} {info.url}
           </span>
         </div>
+
         <div key={`${key}-status`}>
           <strong key={`${key}-status-title`}>Response status: </strong>
           <span key={`${key}-status-val`}>{rsDetails.join(', ')}</span>
@@ -539,6 +556,7 @@ class SpanTableComponent extends React.Component<Props, State> {
     const rqLabel =
       info.direction === 'inbound' ? 'Received request' : info.direction === 'outbound' ? 'Sent request' : 'Request';
     const key = `${item.spanID}-summary-http`;
+
     return (
       <React.Fragment key={key}>
         <div key={`${key}-req`}>
@@ -547,6 +565,7 @@ class SpanTableComponent extends React.Component<Props, State> {
             {info.method} {info.url}
           </span>
         </div>
+
         {info.statusCode && (
           <div key={`${key}-code`}>
             <strong key={`${key}-code-title`}>Response status: </strong>
@@ -560,6 +579,7 @@ class SpanTableComponent extends React.Component<Props, State> {
   private renderTCPSummary = (item: RichSpanData) => {
     const info = item.info as OpenTracingTCPInfo;
     const key = `${item.spanID}-summary-tcp`;
+
     return (
       <React.Fragment key={key}>
         {info.topic && (
@@ -574,12 +594,14 @@ class SpanTableComponent extends React.Component<Props, State> {
 
   private StatsCell = (item: RichSpanData): React.ReactNode => {
     const key = `${item.spanID}-stats`;
+
     return (
       <div key={key}>
         <div key={`${key}-dur-div`}>
           <strong key={`${key}-dur-title`}>Duration: </strong>
           {formatDuration(item.duration)}
         </div>
+
         {item.type === 'envoy' &&
           renderMetricsComparison(item, !this.isExpanded(item.spanID), this.props.metricsStats, () =>
             this.fetchComparisonMetrics([item])

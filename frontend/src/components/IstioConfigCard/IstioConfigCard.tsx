@@ -115,7 +115,7 @@ export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConf
             {rows.map((row, index) => (
               <Tr key={`row_${index}`}>
                 {(row.cells as IRowCell[])?.map((cell, index) => (
-                  <Td dataLabel={columns[index].title} colSpan={cell.props?.colSpan}>
+                  <Td key={`cell_${index}`} dataLabel={columns[index].title} colSpan={cell.props?.colSpan}>
                     {cell.title}
                   </Td>
                 ))}

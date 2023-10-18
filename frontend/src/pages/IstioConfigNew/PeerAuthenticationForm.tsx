@@ -12,53 +12,50 @@ import {
 } from '@patternfly/react-core';
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
 import { PeerAuthenticationMutualTLSMode } from '../../types/IstioObjects';
-import { cellWidth, ICell } from '@patternfly/react-table';
-import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
+import { IRow, IRowCell, Table, Tbody, Td, Th, Thead, ThProps, Tr } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../components/Pf/PfColors';
-import { PlusCircleIcon } from '@patternfly/react-icons';
 import { isValid } from 'utils/Common';
 
+import { KialiIcon } from 'config/KialiIcon';
+
 const noPortMtlsStyle = kialiStyle({
-  marginTop: 15,
+  marginTop: '1rem',
   color: PFColors.Red100
 });
 
-const headerCells: ICell[] = [
+const columns: ThProps[] = [
   {
     title: 'Port Number',
-    transforms: [cellWidth(20) as any],
-    props: {}
+    width: 20
   },
   {
     title: 'Mutual TLS Mode',
-    transforms: [cellWidth(20) as any],
-    props: {}
+    width: 20
   },
   {
-    title: '',
-    props: {}
+    title: ''
   }
 ];
 
 type Props = {
-  peerAuthentication: PeerAuthenticationState;
   onChange: (peerAuthentication: PeerAuthenticationState) => void;
+  peerAuthentication: PeerAuthenticationState;
 };
 
 export type PortMtls = {
-  port: string;
   mtls: string;
+  port: string;
 };
 
 export type PeerAuthenticationState = {
-  workloadSelector: string;
+  addNewPortMtls: PortMtls;
+  addPortMtls: boolean;
+  addWorkloadSelector: boolean;
   mtls: string;
   portLevelMtls: PortMtls[];
-  addWorkloadSelector: boolean;
+  workloadSelector: string;
   workloadSelectorValid: boolean;
-  addPortMtls: boolean;
-  addNewPortMtls: PortMtls;
 };
 
 export const PEER_AUTHENTICATION = 'PeerAuthentication';
@@ -148,23 +145,28 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
     value = value.trim();
     const labels: string[] = value.split(',');
     let isValid = true;
+
     // Some smoke validation rules for the labels
     for (let i = 0; i < labels.length; i++) {
       const label = labels[i];
+
       if (label.indexOf('=') < 0) {
         isValid = false;
         break;
       }
+
       const splitLabel: string[] = label.split('=');
       if (splitLabel.length !== 2) {
         isValid = false;
         break;
       }
+
       if (splitLabel[0].trim().length === 0 || splitLabel[1].trim().length === 0) {
         isValid = false;
         break;
       }
     }
+
     this.setState(
       {
         workloadSelectorValid: isValid,
@@ -231,78 +233,66 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
     );
   };
 
-  // @ts-ignore
-  actionResolver = (rowData, { rowIndex }) => {
-    const removeAction = {
-      title: 'Remove Port MTLS',
-      // @ts-ignore
-      onClick: (event, rowIndex, rowData, extraData) => {
-        this.setState(
-          prevState => {
-            prevState.portLevelMtls.splice(rowIndex, 1);
-            return {
-              portLevelMtls: prevState.portLevelMtls
-            };
-          },
-          () => this.onPeerAuthenticationChange()
-        );
-      }
-    };
-    if (rowIndex < this.props.peerAuthentication.portLevelMtls.length) {
-      return [removeAction];
-    }
-    return [];
+  onRemovePortMtls = (rowIndex: number) => {
+    this.setState(
+      prevState => {
+        prevState.portLevelMtls.splice(rowIndex, 1);
+        return {
+          portLevelMtls: prevState.portLevelMtls
+        };
+      },
+      () => this.onPeerAuthenticationChange()
+    );
   };
 
-  rows() {
+  rows = (): IRow[] => {
     return this.props.peerAuthentication.portLevelMtls
-      .map((pmtls, i) => ({
-        key: 'portMtls' + i,
-        cells: [<>{pmtls.port}</>, <>{pmtls.mtls}</>, '']
+      .map((pmtls, index) => ({
+        cells: [
+          <>{pmtls.port}</>,
+          <>{pmtls.mtls}</>,
+          <Button
+            id="removePortMtlsBtn"
+            variant={ButtonVariant.link}
+            icon={<KialiIcon.Delete />}
+            onClick={() => this.onRemovePortMtls(index)}
+          />
+        ]
       }))
       .concat([
         {
-          key: 'pmtlsNew',
           cells: [
-            <>
-              <TextInput
-                value={this.state.addNewPortMtls.port}
-                id="addPortNumber"
-                aria-describedby="add port number"
-                name="addPortNumber"
-                onChange={this.onAddPortNumber}
-                validated={isValid(
-                  this.state.addNewPortMtls.port.length > 0 && !isNaN(Number(this.state.addNewPortMtls.port))
-                )}
-              />
-            </>,
-            <>
-              <FormSelect
-                value={this.state.addNewPortMtls.mtls}
-                id="addPortMtlsMode"
-                name="addPortMtlsMode"
-                onChange={this.onAddPortMtlsMode}
-              >
-                {Object.keys(PeerAuthenticationMutualTLSMode).map((option, index) => (
-                  <FormSelectOption key={'p' + index} value={option} label={option} />
-                ))}
-              </FormSelect>
-            </>,
-            <>
-              <Button
-                id="addServerBtn"
-                variant={ButtonVariant.link}
-                icon={<PlusCircleIcon />}
-                isDisabled={
-                  this.state.addNewPortMtls.port.length === 0 || isNaN(Number(this.state.addNewPortMtls.port))
-                }
-                onClick={this.onAddPortMtls}
-              />
-            </>
+            <TextInput
+              value={this.state.addNewPortMtls.port}
+              id="addPortNumber"
+              aria-describedby="add port number"
+              name="addPortNumber"
+              onChange={this.onAddPortNumber}
+              validated={isValid(
+                this.state.addNewPortMtls.port.length > 0 && !isNaN(Number(this.state.addNewPortMtls.port))
+              )}
+            />,
+            <FormSelect
+              value={this.state.addNewPortMtls.mtls}
+              id="addPortMtlsMode"
+              name="addPortMtlsMode"
+              onChange={this.onAddPortMtlsMode}
+            >
+              {Object.keys(PeerAuthenticationMutualTLSMode).map((option, index) => (
+                <FormSelectOption key={'p' + index} value={option} label={option} />
+              ))}
+            </FormSelect>,
+            <Button
+              id="addPortMtlsBtn"
+              variant={ButtonVariant.link}
+              icon={<KialiIcon.AddMore />}
+              isDisabled={this.state.addNewPortMtls.port.length === 0 || isNaN(Number(this.state.addNewPortMtls.port))}
+              onClick={this.onAddPortMtls}
+            />
           ]
         }
       ]);
-  }
+  };
 
   render() {
     return (
@@ -355,19 +345,33 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
         </FormGroup>
         {this.state.addPortMtls && (
           <FormGroup label="Port Level MTLS" fieldId="portMtlsList">
-            <Table
-              aria-label="Port Level MTLS"
-              cells={headerCells}
-              rows={this.rows()}
-              // @ts-ignore
-              actionResolver={this.actionResolver}
-            >
-              <TableHeader />
-              <TableBody />
+            <Table aria-label="Port Level MTLS">
+              <Thead>
+                <Tr>
+                  {columns.map((column, index) => (
+                    <Th key={`column_${index}`} dataLabel={column.title} width={column.width}>
+                      {column.title}
+                    </Th>
+                  ))}
+                </Tr>
+              </Thead>
+              <Tbody>
+                {this.rows().map((row, index) => (
+                  <Tr key={`row_${index}`}>
+                    {(row.cells as IRowCell[])?.map((cell, index) => (
+                      <Td key={`cell_${index}`} dataLabel={columns[index].title}>
+                        {cell}
+                      </Td>
+                    ))}
+                  </Tr>
+                ))}
+              </Tbody>
             </Table>
+
             {this.props.peerAuthentication.portLevelMtls.length === 0 && (
               <div className={noPortMtlsStyle}>PeerAuthentication has no Port Mutual TLS defined</div>
             )}
+
             {!this.state.addWorkloadSelector && (
               <div className={noPortMtlsStyle}>Port Mutual TLS requires a Workload Selector</div>
             )}

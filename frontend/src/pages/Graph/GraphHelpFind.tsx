@@ -188,7 +188,9 @@ export const GraphHelpFind: React.FC<GraphHelpFindProps> = (props: GraphHelpFind
           {rows.map((row, index) => (
             <Tr key={`row_${index}`}>
               {(row as IRowCell[])?.map((cell, index) => (
-                <Td dataLabel={columns[index].title}>{cell}</Td>
+                <Td key={`cell_${index}`} dataLabel={columns[index].title}>
+                  {cell}
+                </Td>
               ))}
             </Tr>
           ))}

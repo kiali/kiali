@@ -212,7 +212,7 @@ export const K8sRules: React.FC<K8sRuleProps> = (props: K8sRuleProps) => {
           {routeRules.map((row, index) => (
             <Tr key={`row_${index}`} className={row.className}>
               {(row.cells as IRowCell[])?.map((cell, index) => (
-                <Td dataLabel={columns[index].title} colSpan={cell.props?.colSpan}>
+                <Td key={`cell_${index}`} dataLabel={columns[index].title} colSpan={cell.props?.colSpan}>
                   {cell.title}
                 </Td>
               ))}

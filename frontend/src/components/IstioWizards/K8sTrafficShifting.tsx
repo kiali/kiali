@@ -3,10 +3,10 @@ import { Table, Thead, Tbody, Tr, Td, Th, IRowCell, ThProps } from '@patternfly/
 import { Slider } from './Slider/Slider';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Button, ButtonVariant, TooltipPosition } from '@patternfly/react-core';
-import { EqualizerIcon } from '@patternfly/react-icons';
 import { getDefaultBackendRefs } from './WizardActions';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ServiceOverview } from '../../types/ServiceList';
+import { KialiIcon } from 'config/KialiIcon';
 
 type Props = {
   initRefs: K8sRouteBackendRef[];
@@ -154,7 +154,9 @@ export class K8sTrafficShifting extends React.Component<Props, State> {
             {rows.map((row, index) => (
               <Tr key={`row_${index}`}>
                 {(row.cells as IRowCell[])?.map((cell, index) => (
-                  <Td dataLabel={columns[index].title}>{cell}</Td>
+                  <Td key={`cell_${index}`} dataLabel={columns[index].title}>
+                    {cell}
+                  </Td>
                 ))}
               </Tr>
             ))}
@@ -163,7 +165,7 @@ export class K8sTrafficShifting extends React.Component<Props, State> {
 
         {this.props.subServices.length > 1 && (
           <div className={evenlyButtonStyle}>
-            <Button variant={ButtonVariant.link} icon={<EqualizerIcon />} onClick={() => this.resetState()}>
+            <Button variant={ButtonVariant.link} icon={<KialiIcon.Equalizer />} onClick={() => this.resetState()}>
               Evenly distribute traffic
             </Button>
           </div>

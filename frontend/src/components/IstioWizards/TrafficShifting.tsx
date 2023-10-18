@@ -5,9 +5,9 @@ import { WorkloadOverview } from '../../types/ServiceInfo';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../Pf/PfColors';
 import { Button, ButtonVariant, TooltipPosition } from '@patternfly/react-core';
-import { EqualizerIcon } from '@patternfly/react-icons';
 import { getDefaultWeights } from './WizardActions';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
+import { KialiIcon } from 'config/KialiIcon';
 
 type Props = {
   initWeights: WorkloadWeight[];
@@ -313,7 +313,9 @@ export class TrafficShifting extends React.Component<Props, State> {
             {workloadRows.map((row, index) => (
               <Tr key={`row_${index}`}>
                 {(row.cells as IRowCell[])?.map((cell, index) => (
-                  <Td dataLabel={workloadColumns[index].title}>{cell}</Td>
+                  <Td key={`cell_${index}`} dataLabel={workloadColumns[index].title}>
+                    {cell}
+                  </Td>
                 ))}
               </Tr>
             ))}
@@ -336,7 +338,9 @@ export class TrafficShifting extends React.Component<Props, State> {
               {mirrorRows.map((row, index) => (
                 <Tr key={`row_${index}`}>
                   {(row.cells as IRowCell[])?.map((cell, index) => (
-                    <Td dataLabel={mirrorColumns[index].title}>{cell}</Td>
+                    <Td key={`cell_${index}`} dataLabel={mirrorColumns[index].title}>
+                      {cell}
+                    </Td>
                   ))}
                 </Tr>
               ))}
@@ -346,7 +350,7 @@ export class TrafficShifting extends React.Component<Props, State> {
 
         {this.props.workloads.length > 1 && (
           <div className={evenlyButtonStyle}>
-            <Button variant={ButtonVariant.link} icon={<EqualizerIcon />} onClick={() => this.resetState()}>
+            <Button variant={ButtonVariant.link} icon={<KialiIcon.Equalizer />} onClick={() => this.resetState()}>
               Evenly distribute traffic
             </Button>{' '}
           </div>

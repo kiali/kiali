@@ -241,8 +241,10 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
             <Tbody>
               {rows.map((row, index) => (
                 <Tr key={`row_${index}`}>
-                  {row.map((value, index) => (
-                    <Td dataLabel={columns[index].title}>{value}</Td>
+                  {row.map((cell, index) => (
+                    <Td key={`cell_${index}`} dataLabel={columns[index].title}>
+                      {cell}
+                    </Td>
                   ))}
                 </Tr>
               ))}

@@ -169,7 +169,9 @@ class TrafficList extends FilterComponent.Component<
                 {inboundRows.map((row, index) => (
                   <Tr key={`row_${index}`}>
                     {(row.cells as IRowCell[])?.map((cell, index) => (
-                      <Td dataLabel={cols[index].title}>{cell}</Td>
+                      <Td key={`cell_${index}`} dataLabel={cols[index].title}>
+                        {cell}
+                      </Td>
                     ))}
                   </Tr>
                 ))}
@@ -201,7 +203,9 @@ class TrafficList extends FilterComponent.Component<
                 {outboundRows.map((row, index) => (
                   <Tr key={`row_${index}`}>
                     {(row.cells as IRowCell[])?.map((cell, index) => (
-                      <Td dataLabel={cols[index].title}>{cell}</Td>
+                      <Td key={`cell_${index}`} dataLabel={cols[index].title}>
+                        {cell}
+                      </Td>
                     ))}
                   </Tr>
                 ))}
