@@ -70,7 +70,7 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
   };
 
   const renderTempo = (externalServices: ExternalServiceInfo[]) => {
-    const tempoService = externalServices.find(service => service.name === 'tempo');
+    const tempoService = externalServices.find(service => service.name === TEMPO);
     const grafanaService = externalServices.find(service => service.name === 'Grafana');
 
     if (tempoService && grafanaService && grafanaService.url) {
