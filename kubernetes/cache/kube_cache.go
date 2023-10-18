@@ -720,6 +720,7 @@ func (c *kubeCache) GetStatefulSet(namespace, name string) (*apps_v1.StatefulSet
 	return retSet, nil
 }
 
+// GetServices returns list of services filtered by Spec.Selector instead of Metadata.Labels
 func (c *kubeCache) GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error) {
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
 	// but it won't prevent other routines from reading from the lister.
@@ -729,21 +730,27 @@ func (c *kubeCache) GetServices(namespace string, selectorLabels map[string]stri
 	var services []*core_v1.Service
 	var err error
 	if namespace == metav1.NamespaceAll {
-		services, err = c.getCacheLister(namespace).serviceLister.List(labels.Set(selectorLabels).AsSelector())
+		services, err = c.getCacheLister(namespace).serviceLister.List(labels.Everything())
 	} else {
-		services, err = c.getCacheLister(namespace).serviceLister.Services(namespace).List(labels.Set(selectorLabels).AsSelector())
+		services, err = c.getCacheLister(namespace).serviceLister.Services(namespace).List(labels.Everything())
 	}
 	if err != nil {
 		return nil, err
 	}
 	log.Tracef("[Kiali Cache] Get [resource: Service] for [namespace: %s] = %d", namespace, len(services))
 
+	selector := labels.Set(selectorLabels)
 	retServices := []core_v1.Service{}
 	for _, service := range services {
-		// Do not modify what is returned by the lister since that is shared and will cause data races.
-		svc := service.DeepCopy()
-		svc.Kind = kubernetes.ServiceType
-		retServices = append(retServices, *svc)
+		svcSelector := labels.Set(service.Spec.Selector).AsSelector()
+		// selector match is done after listing all services, similar to registry reading
+		// empty selector is loading all services, or match the service selector
+		if selector.AsSelector().Empty() || (!svcSelector.Empty() && svcSelector.Matches(selector)) {
+			// Do not modify what is returned by the lister since that is shared and will cause data races.
+			svc := service.DeepCopy()
+			svc.Kind = kubernetes.ServiceType
+			retServices = append(retServices, *svc)
+		}
 	}
 	return retServices, nil
 }

@@ -87,6 +87,11 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 				Name:      "kiali-service",
 				Namespace: "foo",
 			},
+			Spec: core_v1.ServiceSpec{
+				Selector: map[string]string{
+					"app.kubernetes.io/part-of": "kiali",
+				},
+			},
 		},
 	}
 
@@ -158,6 +163,11 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 			},
 			Name:      "kiali-service",
 			Namespace: conf.IstioNamespace,
+		},
+		Spec: core_v1.ServiceSpec{
+			Selector: map[string]string{
+				"app.kubernetes.io/part-of": "kiali",
+			},
 		},
 	}
 
@@ -264,6 +274,11 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 			},
 			Name:      "kiali-service",
 			Namespace: "foo",
+		},
+		Spec: core_v1.ServiceSpec{
+			Selector: map[string]string{
+				"app.kubernetes.io/part-of": "kiali",
+			},
 		},
 	}
 
