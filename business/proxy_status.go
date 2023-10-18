@@ -68,7 +68,7 @@ func (in *ProxyStatusService) GetConfigDumpResourceEntries(cluster, namespace, p
 		return nil, err
 	}
 
-	namespaces, err := in.businessLayer.Namespace.GetNamespaces(context.TODO())
+	namespaces, err := in.businessLayer.Namespace.GetClusterNamespaces(context.TODO(), cluster)
 	if err != nil {
 		return nil, err
 	}
