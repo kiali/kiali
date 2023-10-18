@@ -15,6 +15,7 @@ import { ExternalServiceInfo, Status, StatusKey } from '../../types/StatusState'
 import { config, kialiLogoDark } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
+import { TEMPO } from '../../types/Tracing';
 
 type AboutUIModalProps = {
   externalServices: ExternalServiceInfo[];
@@ -66,6 +67,18 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
         {version} {url}
       </>
     );
+  };
+
+  const renderTempo = (externalServices: ExternalServiceInfo[]) => {
+    const tempoService = externalServices.find(service => service.name === TEMPO);
+    const grafanaService = externalServices.find(service => service.name === 'Grafana');
+
+    if (tempoService && grafanaService && grafanaService.url) {
+      tempoService.url = `${grafanaService.url}/explore?left={"queries":[{"datasource":{"type":"tempo"},"queryType":"nativeSearch"}]}`;
+      return renderComponent(tempoService);
+    } else {
+      return <></>;
+    }
   };
 
   const renderComponent = (externalService: ExternalServiceInfo) => {
@@ -124,6 +137,10 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
     ? `${props.status[StatusKey.MESH_NAME]} ${props.status[StatusKey.MESH_VERSION] || ''}`
     : 'Unknown';
 
+  const filteredServices = props.externalServices.filter(element => element.name !== TEMPO);
+  const componentList = filteredServices.map(externalService => renderComponent(externalService));
+  const tempoComponent = renderTempo(props.externalServices);
+
   return (
     <AboutModal
       backgroundImageSrc={kialiIconAbout}
@@ -163,7 +180,10 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
         <Title headingLevel="h3" size={TitleSizes.xl} style={{ padding: '20px 0px 20px' }}>
           Components
         </Title>
-        <TextList component="dl">{props.externalServices && props.externalServices.map(renderComponent)}</TextList>
+        <TextList component="dl">
+          {componentList}
+          {tempoComponent}
+        </TextList>
         {renderWebsiteLink()}
         {renderProjectLink()}
       </TextContent>
