@@ -74,7 +74,6 @@ DEFAULT_API_PROXY_HOST="127.0.0.1"
 DEFAULT_API_PROXY_PORT="8001"
 DEFAULT_CLIENT_EXE="kubectl"
 DEFAULT_COPY_CLUSTER_SECRETS="true"
-DEFAULT_CLUSTER_NAME="Kubernetes"
 DEFAULT_ENABLE_SERVER="true"
 DEFAULT_ISTIO_NAMESPACE="istio-system"
 DEFAULT_ISTIOD_URL="http://127.0.0.1:15014/version"
@@ -155,7 +154,7 @@ Valid options:
       Default: ${DEFAULT_CLIENT_EXE}
   -cn|--cluster-name)
       The name of the cluster as defined by the Istio infrastructure.
-      Default: ${DEFAULT_CLUSTER_NAME}
+      Default: <not defined>
   -es|--enable-server
       When 'true', this script will start the server and manage its lifecycle.
       When 'false' this script will do nothing to start or stop the server.
@@ -270,8 +269,8 @@ done
 
 API_PROXY_HOST="${API_PROXY_HOST:-${DEFAULT_API_PROXY_HOST}}"
 API_PROXY_PORT="${API_PROXY_PORT:-${DEFAULT_API_PROXY_PORT}}"
+CLUSTER_NAME="${CLUSTER_NAME:-}"
 COPY_CLUSTER_SECRETS="${COPY_CLUSTER_SECRETS:-${DEFAULT_COPY_CLUSTER_SECRETS}}"
-CLUSTER_NAME="${CLUSTER_NAME:-${DEFAULT_CLUSTER_NAME}}"
 ENABLE_SERVER="${ENABLE_SERVER:-${DEFAULT_ENABLE_SERVER}}"
 ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-${DEFAULT_ISTIO_NAMESPACE}}"
 KIALI_CONFIG_TEMPLATE_FILE="${KIALI_CONFIG_TEMPLATE_FILE:-${DEFAULT_KIALI_CONFIG_TEMPLATE_FILE}}"
@@ -590,8 +589,16 @@ cat ${KIALI_CONFIG_TEMPLATE_FILE} | \
   TRACING_URL=${TRACING_URL} \
   UI_CONSOLE_DIR=${UI_CONSOLE_DIR}   \
   REMOTE_SECRET_PATH=${REMOTE_SECRET_PATH} \
-  CLUSTER_NAME=${CLUSTER_NAME} \
   envsubst > ${KIALI_CONFIG_FILE}
+
+# Set kubernetes_config.cluster_name only if the user told us to configure a specific cluster name
+if [ -n "${CLUSTER_NAME}" ]; then
+  cat << EOM >> ${KIALI_CONFIG_FILE}
+
+kubernetes_config:
+  cluster_name: "${CLUSTER_NAME}"
+EOM
+fi
 
 # Kiali wants the UI Console in a directory called "console" under its cwd
 
