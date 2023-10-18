@@ -8,9 +8,9 @@ import {
   FormHelperText,
   HelperText,
   HelperTextItem,
-  Switch
+  Switch,
+  TextInput
 } from '@patternfly/react-core';
-import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
 import { PeerAuthenticationMutualTLSMode } from '../../types/IstioObjects';
 import { IRow, IRowCell, Table, Tbody, Td, Th, Thead, ThProps, Tr } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -62,16 +62,16 @@ export const PEER_AUTHENTICATION = 'PeerAuthentication';
 export const PEER_AUTHENTICATIONS = 'peerauthentications';
 
 export const initPeerAuthentication = (): PeerAuthenticationState => ({
-  workloadSelector: '',
-  mtls: PeerAuthenticationMutualTLSMode.UNSET,
-  portLevelMtls: [],
-  addWorkloadSelector: false,
-  workloadSelectorValid: false,
-  addPortMtls: false,
   addNewPortMtls: {
     port: '',
     mtls: PeerAuthenticationMutualTLSMode.UNSET
-  }
+  },
+  addPortMtls: false,
+  addWorkloadSelector: false,
+  mtls: PeerAuthenticationMutualTLSMode.UNSET,
+  portLevelMtls: [],
+  workloadSelector: '',
+  workloadSelectorValid: false
 });
 
 export const isPeerAuthenticationStateValid = (pa: PeerAuthenticationState): boolean => {
@@ -248,6 +248,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
   rows = (): IRow[] => {
     return this.props.peerAuthentication.portLevelMtls
       .map((pmtls, index) => ({
+        key: 'portMtls' + index,
         cells: [
           <>{pmtls.port}</>,
           <>{pmtls.mtls}</>,
@@ -261,6 +262,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
       }))
       .concat([
         {
+          key: 'pmtlsNew',
           cells: [
             <TextInput
               value={this.state.addNewPortMtls.port}
@@ -306,6 +308,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
             onChange={this.onChangeWorkloadSelector}
           />
         </FormGroup>
+
         {this.state.addWorkloadSelector && (
           <FormGroup fieldId="workloadLabels" label="Labels">
             <TextInput
@@ -316,6 +319,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
               onChange={this.addWorkloadLabels}
               validated={isValid(this.state.workloadSelectorValid)}
             />
+
             <FormHelperText>
               <HelperText>
                 <HelperTextItem>
@@ -327,6 +331,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
             </FormHelperText>
           </FormGroup>
         )}
+
         <FormGroup label="Mutual TLS Mode" fieldId="mutualTls">
           <FormSelect value={this.state.mtls} onChange={this.onMutualTlsChange} id="mutualTls" name="rules-form">
             {Object.keys(PeerAuthenticationMutualTLSMode).map((option, index) => (
@@ -334,6 +339,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
             ))}
           </FormSelect>
         </FormGroup>
+
         <FormGroup label="Port Mutual TLS" fieldId="addPortMtls">
           <Switch
             id="addPortMtls"
@@ -343,6 +349,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
             onChange={this.onChangeAddPortMtls}
           />
         </FormGroup>
+
         {this.state.addPortMtls && (
           <FormGroup label="Port Level MTLS" fieldId="portMtlsList">
             <Table aria-label="Port Level MTLS">
@@ -357,7 +364,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
               </Thead>
               <Tbody>
                 {this.rows().map((row, index) => (
-                  <Tr key={`row_${index}`}>
+                  <Tr key={row.key ?? `row_${index}`}>
                     {(row.cells as IRowCell[])?.map((cell, index) => (
                       <Td key={`cell_${index}`} dataLabel={columns[index].title}>
                         {cell}

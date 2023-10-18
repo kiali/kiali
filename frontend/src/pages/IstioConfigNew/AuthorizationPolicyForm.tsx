@@ -7,7 +7,7 @@ import {
   HelperText,
   HelperTextItem,
   Switch,
-  TextInputBase as TextInput
+  TextInput
 } from '@patternfly/react-core';
 import { RuleBuilder, Rule } from './AuthorizationPolicyForm/RuleBuilder';
 import { RuleList } from './AuthorizationPolicyForm/RuleList';

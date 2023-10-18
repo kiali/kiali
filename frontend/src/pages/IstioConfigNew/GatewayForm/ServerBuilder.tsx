@@ -7,9 +7,9 @@ import {
   FormSelect,
   FormSelectOption,
   HelperText,
-  HelperTextItem
+  HelperTextItem,
+  TextInput
 } from '@patternfly/react-core';
-import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
 import { Table, Tbody, Td, Th, Thead, ThProps, Tr } from '@patternfly/react-table';
 import { isGatewayHostValid } from '../../../utils/IstioConfigUtils';
 import { ServerForm } from '../../../types/IstioObjects';

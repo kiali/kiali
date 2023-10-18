@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { cellWidth, ICell } from '@patternfly/react-table';
 import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
-// Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
-import { Button, ButtonVariant, TextInputBase as TextInput } from '@patternfly/react-core';
+import { Button, ButtonVariant, TextInput } from '@patternfly/react-core';
 import { PlusCircleIcon } from '@patternfly/react-icons';
 import { isValidRequestHeaderName, isValidRequestAuthClaimName } from '../../../../helpers/ValidationHelpers';
 import { kialiStyle } from 'styles/StyleUtils';

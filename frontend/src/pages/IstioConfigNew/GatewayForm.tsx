@@ -1,13 +1,5 @@
 import * as React from 'react';
-// Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
-import {
-  FormGroup,
-  FormHelperText,
-  HelperText,
-  HelperTextItem,
-  Switch,
-  TextInputBase as TextInput
-} from '@patternfly/react-core';
+import { FormGroup, FormHelperText, HelperText, HelperTextItem, Switch, TextInput } from '@patternfly/react-core';
 import { ServerList } from './GatewayForm/ServerList';
 import { MAX_PORT, Server, ServerForm, ServerTLSSettings, MIN_PORT } from '../../types/IstioObjects';
 import { isValid } from 'utils/Common';

@@ -1,5 +1,4 @@
 import * as React from 'react';
-// Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
 import { FormGroup, FormSelect, FormSelectOption } from '@patternfly/react-core';
 import { AddressList } from './GatewayForm/AddressList';
 import { Address, Listener, MAX_PORT, MIN_PORT } from '../../types/IstioObjects';

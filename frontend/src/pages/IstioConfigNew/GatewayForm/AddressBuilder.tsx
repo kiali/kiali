@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { Button, ButtonVariant, FormSelect, FormSelectOption } from '@patternfly/react-core';
-import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
+import { Button, ButtonVariant, FormSelect, FormSelectOption, TextInput } from '@patternfly/react-core';
 import { Td, Tr } from '@patternfly/react-table';
 import { TrashIcon } from '@patternfly/react-icons';
 import { Address } from '../../../types/IstioObjects';

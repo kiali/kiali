@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { FormGroup, FormHelperText, HelperText, HelperTextItem, Switch } from '@patternfly/react-core';
-import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
+import { FormGroup, FormHelperText, HelperText, HelperTextItem, Switch, TextInput } from '@patternfly/react-core';
 import { JWTRule } from '../../types/IstioObjects';
 import { JwtRuleBuilder } from './RequestAuthorizationForm/JwtRuleBuilder';
 import { JwtRuleList } from './RequestAuthorizationForm/JwtRuleList';
