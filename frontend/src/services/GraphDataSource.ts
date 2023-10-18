@@ -310,17 +310,25 @@ export class GraphDataSource {
 
   // Some helpers
 
-  public fetchForApp = (duration: DurationInSeconds, namespace: string, app: string) => {
-    const params = this.fetchForAppParams(duration, namespace, app);
+  public fetchForApp = (duration: DurationInSeconds, namespace: string, app: string, cluster?: string) => {
+    const params = this.fetchForAppParams(duration, namespace, app, cluster);
     params.showSecurity = true;
     this.fetchGraphData(params);
   };
 
-  public fetchForAppParams = (duration: DurationInSeconds, namespace: string, app: string): FetchParams => {
+  public fetchForAppParams = (
+    duration: DurationInSeconds,
+    namespace: string,
+    app: string,
+    cluster?: string
+  ): FetchParams => {
     const params = GraphDataSource.defaultFetchParams(duration, namespace);
     params.graphType = GraphType.APP;
     params.node!.nodeType = NodeType.APP;
     params.node!.app = app;
+    if (cluster) {
+      params.node!.cluster = cluster;
+    }
     return params;
   };
 
