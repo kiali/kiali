@@ -131,10 +131,11 @@ $0 [option...] command
                          Default: false
 -udefi|--use-default-images
                          If true (and --use-dev-images is 'false') no specific image name or version will be specified in
-                         the Kiali CRs that are created by the molecule tests. In other words, spec.deployment.image_name and
-                         spec.deployment.image_version will be empty strings. This means the Kial server image that will be deployed
-                         in the tests will be determined by the operator defaults. This is useful when testing with a specific
-                         spec.version (--spec-version) and you want the operator to install the default server image for that version.
+                         the CRs that are created by the molecule tests. In other words, spec.deployment.image_name and
+                         spec.deployment.image_version will be empty strings. This means the Kial server image and the OSSMC image
+                         that will be deployed in the tests will be determined by the operator defaults.
+                         This is useful when testing with a specific spec.version (--spec-version) and you want the operator
+                         to install the default server image for that version.
                          Default: false
 HELPMSG
       exit 1
