@@ -59,11 +59,11 @@ class TraceLabel extends React.Component<LabelProps> {
       this.props.trace.loaded = true;
       this.props.setTraceId('', this.props.trace.traceID);
     }
-    if (prevProps.selectedTrace !== this.props.selectedTrace) {
+    if (prevProps.selectedTrace && prevProps.selectedTrace !== this.props.selectedTrace) {
       this.traceUpdated = true;
       this.forceUpdate();
     } else {
-      if (this.traceUpdated) {
+      if (this.traceUpdated && this.props.selectedTrace) {
         this.traceUpdated = false;
       }
     }
