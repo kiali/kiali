@@ -334,7 +334,8 @@ func (a IstioAppender) decorateGateways(trafficMap graph.TrafficMap, globalInfo 
 	if len(ingressNodeMapping) != 0 || len(egressNodeMapping) != 0 {
 		gatewaysCrds := a.getIstioGatewayResources(globalInfo)
 
-		for cluster, gwCrds := range gatewaysCrds {
+		for accessibleNamespaceKey, gwCrds := range gatewaysCrds {
+			cluster := strings.Split(accessibleNamespaceKey, ":")[0]
 			for _, gwCrd := range gwCrds {
 				decorateMatchingGateways(cluster, gwCrd, ingressNodeMapping, graph.IsIngressGateway)
 				decorateMatchingGateways(cluster, gwCrd, egressNodeMapping, graph.IsEgressGateway)
@@ -346,7 +347,8 @@ func (a IstioAppender) decorateGateways(trafficMap graph.TrafficMap, globalInfo 
 	if len(gatewayAPINodeMapping) != 0 {
 		gatewaysCrds := a.getGatewayAPIResources(globalInfo)
 
-		for cluster, gwCrds := range gatewaysCrds {
+		for accessibleNamespaceKey, gwCrds := range gatewaysCrds {
+			cluster := strings.Split(accessibleNamespaceKey, ":")[0]
 			for _, gwCrd := range gwCrds {
 				decorateMatchingAPIGateways(cluster, gwCrd, gatewayAPINodeMapping, graph.IsGatewayAPI)
 			}

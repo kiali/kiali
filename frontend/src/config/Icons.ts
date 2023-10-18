@@ -61,7 +61,7 @@ const mutIcons = {
       type: 'fa'
     } as IconType,
     gateway: {
-      className: 'pf-icon pf-icon-globe-route',
+      className: 'pf-v5-pficon pf-v5-pficon-globe-route',
       icon: GlobeRouteIcon,
       name: 'globe-route',
       text: 'Gateway',
