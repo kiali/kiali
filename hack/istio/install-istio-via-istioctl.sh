@@ -436,6 +436,7 @@ for s in \
    "--set values.global.meshID=${MESH_ID}" \
    "--set values.global.multiCluster.clusterName=${CLUSTER_NAME}" \
    "--set values.global.network=${NETWORK}" \
+   "--set values.meshConfig.defaultConfig.tracing.sampling=100.00" \
    "--set values.meshConfig.accessLogFile=/dev/stdout" \
    "${CNI_OPTIONS}" \
    "${REDUCE_RESOURCES_OPTIONS}" \
