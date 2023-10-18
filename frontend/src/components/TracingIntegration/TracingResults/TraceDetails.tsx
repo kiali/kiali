@@ -46,6 +46,7 @@ type Props = ReduxProps & {
   targetKind: TargetKind;
   trace?: JaegerTrace;
   tracingURL?: string;
+  tabTraceID?: string;
 };
 
 interface State {}
@@ -73,6 +74,16 @@ class TraceDetailsComponent extends React.Component<Props, State> {
     if (this.props.trace && !sameSpans(prevProps.trace?.spans || [], this.props.trace.spans)) {
       this.fetchComparisonMetrics(this.props.trace.spans);
     }
+  }
+
+  shouldComponentUpdate(nextProps, _) {
+    if (
+      nextProps.isStatsMatrixComplete !== this.props.isStatsMatrixComplete ||
+      nextProps.tabTraceID !== this.props.tabTraceID
+    ) {
+      return true;
+    }
+    return false;
   }
 
   private fetchComparisonMetrics(spans: RichSpanData[]) {
@@ -252,16 +263,16 @@ class TraceDetailsComponent extends React.Component<Props, State> {
 }
 
 const mapStateToProps = (state: KialiAppState) => {
-  if (state.tracingState.selectedTrace) {
-    const { matrix, isComplete } = reduceMetricsStats(state.tracingState.selectedTrace, state.metricsStats.data, false);
+  if (state.tracingState.tabTrace) {
+    const { matrix, isComplete } = reduceMetricsStats(state.tracingState.tabTrace, state.metricsStats.data, false);
     return {
-      trace: state.tracingState.selectedTrace,
+      trace: state.tracingState.tabTrace,
       statsMatrix: matrix,
       isStatsMatrixComplete: isComplete
     };
   }
   return {
-    trace: state.tracingState.selectedTrace,
+    trace: state.tracingState.tabTrace,
     isStatsMatrixComplete: false
   };
 };

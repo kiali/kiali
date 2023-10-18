@@ -15,7 +15,7 @@ interface Props {
   cluster?: string;
   target: string;
   externalURL?: string;
-  traceID: string;
+  traceID?: string;
 }
 
 interface State {
@@ -44,13 +44,15 @@ export class SpanDetails extends React.Component<Props, State> {
               oneline={true}
             />
           </StatefulFilters>
-          <SpanTable
-            items={filteredItems}
-            namespace={this.props.namespace}
-            externalURL={this.props.externalURL}
-            cluster={this.props.cluster}
-            traceID={this.props.traceID}
-          />
+          {this.props.traceID && (
+            <SpanTable
+              items={filteredItems}
+              namespace={this.props.namespace}
+              externalURL={this.props.externalURL}
+              cluster={this.props.cluster}
+              traceID={this.props.traceID}
+            />
+          )}
         </CardBody>
       </Card>
     );
