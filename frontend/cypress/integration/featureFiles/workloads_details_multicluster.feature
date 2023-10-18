@@ -13,12 +13,9 @@ Feature: Kiali Workload Details page
     Given user is at administrator perspective
     And user is at the details page for the "workload" "bookinfo/reviews-v2" located in the "west" cluster
 
-  @skip
   Scenario: See details for workload
-    Then user sees details information for workload
-    And the description card should contain a reference to application
-    And the description card should contain a reference to service
-    And links in the description card should contain a reference to a "west" cluster
+    Then user sees details information for a remote workload
+    And links in the "Workload" description card should contain a reference to a "west" cluster
     And cluster badge for "west" cluster should be visible in the "Workload" description card
 
   Scenario: See minigraph for workload.

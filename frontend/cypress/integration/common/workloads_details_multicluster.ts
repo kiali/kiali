@@ -1,8 +1,17 @@
-import { When, And, Then } from '@badeball/cypress-cucumber-preprocessor';
+import { Then } from '@badeball/cypress-cucumber-preprocessor';
+import { clusterParameterExists } from './navigation';
 
 function openTab(tab: string) {
   cy.get('#basic-tabs').should('be.visible').contains(tab).click();
 }
+Then('user sees details information for a remote workload', () => {
+  cy.getBySel('workload-description-card').within(() => {
+    cy.get('#pfbadge-A').parent().parent().parent().contains('reviews'); // App
+    cy.get('#pfbadge-W').parent().parent().parent().contains('reviews-v2'); // Workload
+    cy.get('#pfbadge-S').parent().parent().parent().contains('reviews'); // Service
+    clusterParameterExists(true);
+  });
+});
 
 Then('user sees workload inbound and outbound traffic information for the remote workload', () => {
   openTab('Traffic');

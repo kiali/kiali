@@ -11,7 +11,7 @@ Feature: Kiali Service Details page for remote cluster
 
   Scenario: See details for remote service
     Then sd::user sees "ratings" details information for the remote service "v1"
-    And links in the description card should contain a reference to a "west" cluster
+    And links in the "Service" description card should contain a reference to a "west" cluster
     And cluster badge for "west" cluster should be visible in the "Service" description card
 
   Scenario: See service minigraph for details app.

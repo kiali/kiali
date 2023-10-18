@@ -32,12 +32,12 @@ Then('sd::user sees inbound and outbound traffic information for the remote serv
   });
 });
 
-And('links in the description card should contain a reference to a {string} cluster',(cluster:string) => {
-  cy.get('#ServiceDescriptionCard').within(() => {
+And('links in the {string} description card should contain a reference to a {string} cluster',(type:string, cluster:string) => {
+  cy.get(`#${type}DescriptionCard`).within(() => {
     cy.get('a').each(($el, index, $list) =>{
       cy.wrap($el)
       .should('have.attr', 'href')
-      .and('include', 'clusterName=');
+      .and('include', `clusterName=${cluster}`);
     });
   })
 });
