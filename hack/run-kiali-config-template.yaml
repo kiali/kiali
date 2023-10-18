@@ -42,6 +42,9 @@ external_services:
     in_cluster_url: "${TRACING_URL}"
     url: "${TRACING_URL}"
 
+kubernetes_config:
+  cluster_name: "${CLUSTER_NAME}"
+
 login_token:
   signing_key: "notsecure"
 
