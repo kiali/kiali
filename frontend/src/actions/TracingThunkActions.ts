@@ -30,6 +30,7 @@ export const TracingThunkActions = {
               setURLTraceId(undefined);
             }
             dispatch(TracingActions.setTrace(undefined));
+            dispatch(TracingActions.tabTrace(undefined));
             AlertUtils.addMessage({
               ...AlertUtils.extractAxiosError('Could not fetch trace', error),
               showNotification: false
@@ -37,6 +38,7 @@ export const TracingThunkActions = {
           });
       } else {
         dispatch(TracingActions.setTrace(undefined));
+        dispatch(TracingActions.tabTrace(undefined));
       }
     };
   }
