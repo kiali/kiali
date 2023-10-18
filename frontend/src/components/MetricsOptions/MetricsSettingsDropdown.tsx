@@ -1,9 +1,17 @@
 import * as React from 'react';
-import { Checkbox, Divider, Radio, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { Dropdown, DropdownToggle, DropdownToggleCheckbox } from '@patternfly/react-core/deprecated';
+import {
+  Checkbox,
+  Divider,
+  Dropdown,
+  DropdownList,
+  MenuToggle,
+  MenuToggleElement,
+  Radio,
+  Tooltip,
+  TooltipPosition
+} from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import isEqual from 'lodash/isEqual';
-
 import { history, URLParam } from '../../app/History';
 import { MetricsSettings, Quantiles, allQuantiles, LabelsSettings } from './MetricsSettings';
 import {
@@ -12,31 +20,32 @@ import {
   combineLabelsSettings,
   retrieveMetricsSettings
 } from 'components/Metrics/Helper';
-import { titleStyle } from 'styles/DropdownStyles';
+import { itemStyleWithoutInfo, titleStyle } from 'styles/DropdownStyles';
 import { PromLabel } from 'types/Metrics';
 import { KialiIcon } from 'config/KialiIcon';
 import { classes } from 'typestyle';
 
 interface Props {
-  onChanged: (state: MetricsSettings) => void;
-  onLabelsFiltersChanged: (labelsFilters: LabelsSettings) => void;
   direction: string;
   hasHistograms: boolean;
   hasHistogramsAverage: boolean;
   hasHistogramsPercentiles: boolean;
   labelsSettings: LabelsSettings;
+  onChanged: (state: MetricsSettings) => void;
+  onLabelsFiltersChanged: (labelsFilters: LabelsSettings) => void;
 }
 
 type State = MetricsSettings & {
-  isOpen: boolean;
   allSelected: boolean;
+  isOpen: boolean;
 };
 
-const checkboxSelectAllStyle = kialiStyle({ marginLeft: 10 });
-const secondLevelStyle = kialiStyle({ marginLeft: 18 });
-const spacerStyle = kialiStyle({ height: '1em' });
-const titleLabelStyle = kialiStyle({ paddingLeft: 0, marginBottom: '5px', fontSize: 'small' });
+const checkboxSelectAllStyle = kialiStyle({ marginLeft: '0.5rem' });
+const secondLevelStyle = kialiStyle({ marginLeft: '1rem' });
+const spacerStyle = kialiStyle({ height: '0.5rem' });
+const titleLabelStyle = kialiStyle({ marginBottom: '0.5rem', fontSize: 'small' });
 const labelStyle = kialiStyle({ display: 'inline-block' });
+const checkboxStyle = kialiStyle({ marginLeft: '1rem' });
 
 export class MetricsSettingsDropdown extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -70,6 +79,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     let initLabelSettings = changeDirection ? settings.labelsSettings : new Map();
     const stateLabelsSettings = changeDirection ? initLabelSettings : this.state.labelsSettings;
     const labelsSettings = combineLabelsSettings(this.props.labelsSettings, stateLabelsSettings);
+
     if (!isEqual(stateLabelsSettings, labelsSettings) || changeDirection) {
       this.setState(prevState => {
         return {
@@ -88,6 +98,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
 
   onGroupingChanged = (label: PromLabel, checked: boolean) => {
     const objLbl = this.state.labelsSettings.get(label);
+
     if (objLbl) {
       objLbl.checked = checked;
     }
@@ -108,6 +119,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
   onLabelsFiltersChanged = (label: PromLabel, value: string, checked: boolean, singleSelection: boolean) => {
     const newValues = mergeLabelFilter(this.state.labelsSettings, label, value, checked, singleSelection);
     this.updateLabelsSettingsURL(newValues);
+
     this.setState({ labelsSettings: newValues }, () => {
       this.props.onLabelsFiltersChanged(newValues);
       this.checkSelected();
@@ -118,6 +130,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     // E.g.: bylbl=version=v1,v2,v4
     const urlParams = new URLSearchParams(history.location.search);
     urlParams.delete(URLParam.BY_LABELS);
+
     labelsSettings.forEach((lbl, name) => {
       if (lbl.checked) {
         const filters = Object.keys(lbl.values)
@@ -130,6 +143,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
         }
       }
     });
+
     history.replace(history.location.pathname + '?' + urlParams.toString());
   };
 
@@ -187,21 +201,26 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
   render() {
     const hasHistograms = this.props.hasHistograms;
     const hasLabels = this.state.labelsSettings.size > 0;
+
     if (!hasHistograms && !hasLabels) {
       return null;
     }
+
     return (
       <Dropdown
-        toggle={<DropdownToggle onToggle={(_event, isOpen) => this.onToggle(isOpen)}>Metrics Settings</DropdownToggle>}
+        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+          <MenuToggle ref={toggleRef} onClick={() => this.onToggle(!this.state.isOpen)} isExpanded={this.state.isOpen}>
+            Metrics Settings
+          </MenuToggle>
+        )}
         isOpen={this.state.isOpen}
+        onOpenChange={(isOpen: boolean) => this.onToggle(isOpen)}
       >
-        {/* Adding class="pf-c-dropdown__menu-item" to fix a sizing issue in PF.
-         * https://github.com/patternfly/patternfly-react/issues/3156 */}
-        <div style={{ paddingLeft: '10px' }} className="pf-c-dropdown__menu-item">
+        <DropdownList>
           {hasLabels && this.renderBulkSelector()}
           {hasLabels && this.renderLabelOptions()}
           {hasHistograms && this.renderHistogramOptions()}
-        </div>
+        </DropdownList>
       </Dropdown>
     );
   }
@@ -209,27 +228,30 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
   renderBulkSelector(): JSX.Element {
     return (
       <div>
-        <DropdownToggleCheckbox
-          id="bulk-select-id"
-          key="bulk-select-key"
-          aria-label="Select all metric/label filters"
-          isChecked={this.state.allSelected}
-          onClick={() => {
-            if (this.state.allSelected) {
-              this.onBulkNone();
-            } else {
-              this.onBulkAll();
-            }
-          }}
-        ></DropdownToggleCheckbox>
-        <span className={checkboxSelectAllStyle}>Select all metric/label filters</span>
-        <Divider style={{ paddingTop: '5px' }} />
+        <div className={itemStyleWithoutInfo}>
+          <Checkbox
+            id="bulk-select-id"
+            key="bulk-select-key"
+            aria-label="Select all metric/label filters"
+            isChecked={this.state.allSelected}
+            onChange={() => {
+              if (this.state.allSelected) {
+                this.onBulkNone();
+              } else {
+                this.onBulkAll();
+              }
+            }}
+          />
+          <span className={checkboxSelectAllStyle}>Select all metric/label filters</span>
+        </div>
+        <Divider />
       </div>
     );
   }
 
   renderLabelOptions(): JSX.Element {
     const displayGroupingLabels: any[] = [];
+
     this.state.labelsSettings.forEach((lblObj, promName) => {
       const labelsHTML =
         lblObj.checked && lblObj.values
@@ -239,15 +261,17 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
                   <Radio
                     isChecked={lblObj.values[val]}
                     id={val}
+                    className={checkboxStyle}
                     onChange={(_event, _) => this.onLabelsFiltersChanged(promName, val, true, true)}
                     label={prettyLabelValues(promName, val)}
                     name={val}
                     value={val}
                   />
                 ) : (
-                  <label className={labelStyle}>
+                  <label>
                     <Checkbox
                       id={val}
+                      className={checkboxStyle}
                       isChecked={lblObj.values[val]}
                       onChange={(_event, checked) => this.onLabelsFiltersChanged(promName, val, checked, false)}
                       label={prettyLabelValues(promName, val)}
@@ -257,11 +281,13 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
               </div>
             ))
           : null;
+
       displayGroupingLabels.push(
         <div key={'groupings_' + promName}>
-          <label className={labelStyle}>
+          <label>
             <Checkbox
               id={lblObj.displayName}
+              className={checkboxStyle}
               label={lblObj.displayName}
               isChecked={lblObj.checked}
               onChange={(_event, checked) => this.onGroupingChanged(promName, checked)}
@@ -271,6 +297,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
         </div>
       );
     });
+
     return (
       <>
         <label className={classes(titleLabelStyle, titleStyle, labelStyle)}>Show metrics by:</label>
@@ -281,17 +308,12 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
   }
 
   renderHistogramOptions(): JSX.Element {
-    // Prettier removes the parenthesis introducing JSX
-    // prettier-ignore
-    const infoStyle = kialiStyle({
-      margin: '8px 5px -1px 2px'
-    });
-
     const displayHistogramOptions = [
       <div key="histo_avg">
-        <label className={labelStyle}>
+        <label>
           <Checkbox
             id="histo_avg"
+            className={checkboxStyle}
             isChecked={this.state.showAverage && this.props.hasHistogramsAverage}
             isDisabled={!this.props.hasHistogramsAverage}
             onChange={(_event, checked) => this.onHistogramAverageChanged(checked)}
@@ -304,9 +326,10 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
         const checked = this.state.showQuantiles.includes(o);
         return (
           <div key={'histo_' + idx}>
-            <label className={labelStyle}>
+            <label>
               <Checkbox
                 id={o}
+                className={checkboxStyle}
                 isChecked={checked && this.props.hasHistogramsPercentiles}
                 isDisabled={!this.props.hasHistogramsPercentiles}
                 onChange={(_event, checked) => this.onHistogramOptionsChanged(o, checked)}
@@ -317,9 +340,10 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
         );
       })
     );
+
     return (
       <>
-        <label className={classes(titleLabelStyle, titleStyle, labelStyle)} style={{ paddingRight: '4px' }}>
+        <label className={classes(titleLabelStyle, titleStyle, labelStyle)} style={{ paddingRight: '0.5rem' }}>
           Histograms:
         </label>
         <Tooltip
@@ -334,7 +358,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
             </div>
           }
         >
-          <KialiIcon.Info className={infoStyle} />
+          <KialiIcon.Info />
         </Tooltip>
 
         {displayHistogramOptions}

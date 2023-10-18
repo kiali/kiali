@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { Dropdown, DropdownItem, DropdownToggle } from '@patternfly/react-core/deprecated';
 import { SessionTimeout } from '../../SessionTimeout/SessionTimeout';
 import { config } from '../../../config';
 import { MILLISECONDS } from '../../../types/Common';
@@ -13,33 +12,32 @@ import { LoginThunkActions } from '../../../actions/LoginThunkActions';
 import { connect } from 'react-redux';
 import * as API from '../../../services/Api';
 import { kialiStyle } from 'styles/StyleUtils';
+import { Dropdown, DropdownItem, DropdownList, MenuToggle, MenuToggleElement } from '@patternfly/react-core';
 
 type UserProps = {
-  session?: LoginSession;
-  logout: () => void;
   extendSession: (session: LoginSession) => void;
+  logout: () => void;
+  session?: LoginSession;
 };
 
 type UserState = {
-  showSessionTimeOut: boolean;
-  timeCountDownSeconds: number;
   checkSessionTimerId?: Timer;
-  timeLeftTimerId?: Timer;
   isDropdownOpen: boolean;
   isSessionTimeoutDismissed: boolean;
+  showSessionTimeOut: boolean;
+  timeCountDownSeconds: number;
+  timeLeftTimerId?: Timer;
 };
 
 const dropdownStyle = kialiStyle({
-  $nest: {
-    '& button': {
-      padding: 0
-    }
-  }
+  paddingLeft: 0,
+  paddingRight: 0
 });
 
 class UserDropdownComponent extends React.Component<UserProps, UserState> {
   constructor(props: UserProps) {
     super(props);
+
     this.state = {
       showSessionTimeOut: false,
       timeCountDownSeconds: this.timeLeft() / MILLISECONDS,
@@ -47,10 +45,12 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
       isDropdownOpen: false
     };
   }
+
   componentDidMount() {
     const checkSessionTimerId = setInterval(() => {
       this.checkSession();
     }, 3000);
+
     const timeLeftTimerId = setInterval(() => {
       this.setState({ timeCountDownSeconds: this.timeLeft() / MILLISECONDS });
     }, 1000);
@@ -65,6 +65,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
     if (this.state.checkSessionTimerId) {
       clearInterval(this.state.checkSessionTimerId);
     }
+
     if (this.state.timeLeftTimerId) {
       clearInterval(this.state.timeLeftTimerId);
     }
@@ -121,6 +122,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
 
   render() {
     const { isDropdownOpen } = this.state;
+
     const canLogout =
       authenticationConfig.strategy !== AuthStrategy.anonymous && authenticationConfig.strategy !== AuthStrategy.header;
 
@@ -129,6 +131,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
         Logout
       </DropdownItem>
     );
+
     return (
       <>
         <SessionTimeout
@@ -138,25 +141,31 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
           show={this.state.showSessionTimeOut && !this.state.isSessionTimeoutDismissed}
           timeOutCountDown={this.state.timeCountDownSeconds}
         />
+
         {this.props.session && !canLogout && <>{this.props.session.username}</>}
+
         {this.props.session && canLogout && (
           <Dropdown
-            className={dropdownStyle}
-            isPlain={true}
-            position="right"
-            onSelect={this.onDropdownSelect}
-            isOpen={isDropdownOpen}
-            toggle={
-              <DropdownToggle
-                id={'user-dropdown-toggle'}
-                onToggle={(_event, isDropdownOpen) => this.onDropdownToggle(isDropdownOpen)}
+            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+              <MenuToggle
+                ref={toggleRef}
+                className={dropdownStyle}
+                variant="plainText"
+                onClick={() => this.onDropdownToggle(!isDropdownOpen)}
+                isExpanded={isDropdownOpen}
               >
-                {this.props.session.username}
-              </DropdownToggle>
-            }
-            dropdownItems={[userDropdownItems]}
-          />
+                {this.props.session?.username}
+              </MenuToggle>
+            )}
+            isOpen={isDropdownOpen}
+            onSelect={this.onDropdownSelect}
+            popperProps={{ position: 'right' }}
+            onOpenChange={(isOpen: boolean) => this.onDropdownToggle(isOpen)}
+          >
+            <DropdownList>{[userDropdownItems]}</DropdownList>
+          </Dropdown>
         )}
+
         {authenticationConfig.strategy === AuthStrategy.openshift && authenticationConfig.logoutEndpoint && (
           <form id="openshiftlogout" action={authenticationConfig.logoutEndpoint} method="post">
             <input type="hidden" name="then" value={authenticationConfig.logoutRedirect} />

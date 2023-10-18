@@ -4,7 +4,7 @@
   pages since these are all similar.
 */
 
-import { And, Then, When} from '@badeball/cypress-cucumber-preprocessor';
+import { And, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import {
   checkHealthIndicatorInTable,
   checkHealthStatusInTable,
@@ -17,8 +17,8 @@ import { openTab } from './transition';
 
 // Choosing a random bookinfo app to test with.
 const APP = 'details';
-const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT')
-const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT')
+const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
+const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
 
 Then('user sees trace information', () => {
   openTab('Traces');
@@ -31,7 +31,8 @@ Then('user sees trace information', () => {
 
 Then('user sees trace details', () => {
   cy.getBySel('trace-details-tabs').should('be.visible');
-  cy.getBySel('trace-details-kebab').click().contains('View on Graph');
+  cy.getBySel('trace-details-kebab').click();
+  cy.getBySel('trace-details-dropdown').contains('View on Graph');
 });
 
 When('user selects a trace', () => {
@@ -65,14 +66,16 @@ When('I fetch the list of applications', function () {
   cy.visit('/console/applications?refresh=0');
 });
 
-When('user opens the namespace dropdown', () =>{
+When('user opens the namespace dropdown', () => {
   cy.intercept(Cypress.config('baseUrl') + `/api/namespaces/`).as('getNamespaces');
   cy.get('[data-test="namespace-dropdown"]').click();
 });
 
-And('user sees Health information for Apps', () => {  
-  getColWithRowText(APP, 'Health').find('span')
-    .filter('.pf-v5-c-icon').should('satisfy',hasAtLeastOneClass(['icon-healthy','icon-unhealthy','icon-degraded','icon-na']))
+And('user sees Health information for Apps', () => {
+  getColWithRowText(APP, 'Health')
+    .find('span')
+    .filter('.pf-v5-c-icon')
+    .should('satisfy', hasAtLeastOneClass(['icon-healthy', 'icon-unhealthy', 'icon-degraded', 'icon-na']));
 });
 
 Then('user sees all the Apps in the bookinfo namespace', () => {
@@ -118,7 +121,10 @@ And('user only sees the apps with the {string} name in the {string} namespace', 
 // going to be healthy when the test is run but at least some of them should be.
 Then('user only sees healthy apps', () => {
   cy.get('tbody').within(() => {
-    cy.get('tr').find('span').filter('.pf-v5-c-icon').should('satisfy',hasAtLeastOneClass(['icon-healthy']))
+    cy.get('tr')
+      .find('span')
+      .filter('.pf-v5-c-icon')
+      .should('satisfy', hasAtLeastOneClass(['icon-healthy']));
   });
 });
 
@@ -165,6 +171,5 @@ Then('user may only see {string}', (sees: string) => {
 Then('user should see no duplicate namespaces', () => {
   cy.exec(`kubectl get namespaces bookinfo --context ${CLUSTER1_CONTEXT}`);
   cy.exec(`kubectl get namespaces bookinfo --context ${CLUSTER2_CONTEXT}`);
-  cy.get('[data-test="namespace-dropdown"]').siblings().contains('bookinfo')
-  .should('be.visible').and('have.length',1);
+  cy.get('[data-test="namespace-dropdown"]').siblings().contains('bookinfo').should('be.visible').and('have.length', 1);
 });

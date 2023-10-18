@@ -1,11 +1,21 @@
 import * as React from 'react';
-import { Button, InputGroup, TextInput, ButtonVariant, InputGroupItem } from '@patternfly/react-core';
-import { Dropdown, DropdownToggle, DropdownItem } from '@patternfly/react-core/deprecated';
+import {
+  Button,
+  InputGroup,
+  TextInput,
+  ButtonVariant,
+  InputGroupItem,
+  Dropdown,
+  DropdownList,
+  DropdownItem,
+  MenuToggleElement,
+  MenuToggle
+} from '@patternfly/react-core';
 import { ServiceOverview } from '../../../types/ServiceList';
 import { getServicePort } from '../../../types/ServiceInfo';
 import { kialiStyle } from 'styles/StyleUtils';
 
-type Props = {
+type K8sFilterBuilderProps = {
   filterType: string;
   headerOp: string;
   headerName: string;
@@ -27,14 +37,6 @@ type Props = {
   serviceOp: string;
   statusCodeOp: string;
   subServices: ServiceOverview[];
-};
-
-type State = {
-  isFilterDropdown: boolean;
-  isHeaderDropdown: boolean;
-  isSchemeDropdown: boolean;
-  isStatusCodeDropdown: boolean;
-  isServiceDropdown: boolean;
 };
 
 export const REQ_MOD = 'requestHeaderModifier';
@@ -63,221 +65,237 @@ const allOptions = {
   [RESP_MOD]: [SET, ADD, REMOVE]
 };
 
-const serviceStyle = kialiStyle({
-  width: '100%'
+const addFilterStyle = kialiStyle({
+  marginLeft: 'auto'
 });
 
-export class K8sFilterBuilder extends React.Component<Props, State> {
-  constructor(props) {
-    super(props);
-    this.state = {
-      isFilterDropdown: false,
-      isHeaderDropdown: false,
-      isSchemeDropdown: false,
-      isStatusCodeDropdown: false,
-      isServiceDropdown: false
-    };
-  }
+export const K8sFilterBuilder: React.FC<K8sFilterBuilderProps> = (props: K8sFilterBuilderProps) => {
+  const [isFilterDropdown, setIsFilterDropdown] = React.useState<boolean>(false);
+  const [isHeaderDropdown, setIsHeaderDropdown] = React.useState<boolean>(false);
+  const [isSchemeDropdown, setIsSchemeDropdown] = React.useState<boolean>(false);
+  const [isStatusCodeDropdown, setIsStatusCodeDropdown] = React.useState<boolean>(false);
+  const [isServiceDropdown, setIsServiceDropdown] = React.useState<boolean>(false);
 
-  onFilterTypeToggle = () => {
-    this.setState({
-      isFilterDropdown: !this.state.isFilterDropdown
-    });
-  };
+  const renderFilterOptions: string[] = allOptions[props.filterType];
 
-  onHeaderOpToggle = () => {
-    this.setState({
-      isHeaderDropdown: !this.state.isHeaderDropdown
-    });
-  };
-
-  onSchemeOpToggle = () => {
-    this.setState({
-      isSchemeDropdown: !this.state.isSchemeDropdown
-    });
-  };
-
-  onStatusCodeOpToggle = () => {
-    this.setState({
-      isStatusCodeDropdown: !this.state.isStatusCodeDropdown
-    });
-  };
-
-  onServiceOpToggle = () => {
-    this.setState({
-      isServiceDropdown: !this.state.isServiceDropdown
-    });
-  };
-
-  render() {
-    const renderFilterOptions: string[] = allOptions[this.props.filterType];
-    return (
-      <InputGroup>
-        <InputGroupItem>
-          <Dropdown
-            toggle={
-              <DropdownToggle onToggle={this.onFilterTypeToggle} data-test={'filtering-type-toggle'}>
-                {this.props.filterType}
-              </DropdownToggle>
-            }
-            isOpen={this.state.isFilterDropdown}
-            dropdownItems={filterOptions.map((mode, index) => (
+  return (
+    <InputGroup>
+      <InputGroupItem>
+        <Dropdown
+          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+            <MenuToggle
+              ref={toggleRef}
+              onClick={() => setIsFilterDropdown(!isFilterDropdown)}
+              data-test={'filtering-type-toggle'}
+              isExpanded={isFilterDropdown}
+            >
+              {props.filterType}
+            </MenuToggle>
+          )}
+          isOpen={isFilterDropdown}
+          onOpenChange={(isOpen: boolean) => setIsFilterDropdown(isOpen)}
+        >
+          <DropdownList>
+            {filterOptions.map((mode, index) => (
               <DropdownItem
                 key={mode + '_' + index}
                 value={mode}
                 component="button"
                 onClick={() => {
-                  this.props.onSelectFilterType(mode);
-                  this.onFilterTypeToggle();
+                  props.onSelectFilterType(mode);
+                  setIsFilterDropdown(!isFilterDropdown);
                 }}
                 data-test={'filtering-type-' + mode}
               >
                 {mode}
               </DropdownItem>
             ))}
-          />
-        </InputGroupItem>
-        {(this.props.filterType === REQ_MOD || this.props.filterType === RESP_MOD) && (
-          <Dropdown
-            toggle={
-              <DropdownToggle onToggle={this.onHeaderOpToggle} data-test={'header-type-toggle'}>
-                {this.props.headerOp}
-              </DropdownToggle>
-            }
-            isOpen={this.state.isHeaderDropdown}
-            dropdownItems={renderFilterOptions.map((op, index) => (
+          </DropdownList>
+        </Dropdown>
+      </InputGroupItem>
+
+      {(props.filterType === REQ_MOD || props.filterType === RESP_MOD) && (
+        <Dropdown
+          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+            <MenuToggle
+              ref={toggleRef}
+              onClick={() => setIsHeaderDropdown(!isHeaderDropdown)}
+              data-test={'header-type-toggle'}
+              isExpanded={isHeaderDropdown}
+            >
+              {props.headerOp}
+            </MenuToggle>
+          )}
+          isOpen={isHeaderDropdown}
+          onOpenChange={(isOpen: boolean) => setIsHeaderDropdown(isOpen)}
+        >
+          <DropdownList>
+            {renderFilterOptions.map((op, index) => (
               <DropdownItem
                 key={op + '_' + index}
                 value={op}
                 component="button"
                 onClick={() => {
-                  this.props.onSelectHeaderOp(op);
-                  this.onHeaderOpToggle();
+                  props.onSelectHeaderOp(op);
+                  setIsHeaderDropdown(!isHeaderDropdown);
                 }}
                 data-test={'header-type-' + op}
               >
                 {op}
               </DropdownItem>
             ))}
-          />
-        )}
-        {(this.props.filterType === REQ_MOD || this.props.filterType === RESP_MOD) && (
-          <TextInput
-            id="filter-header-name-id"
-            value={this.props.headerName}
-            onChange={(_, value) => this.props.onHeaderNameChange(value)}
-            placeholder="Header name..."
-          />
-        )}
-        {(this.props.filterType === REQ_MOD || this.props.filterType === RESP_MOD) &&
-          this.props.headerOp !== REMOVE && (
-            <TextInput
-              id="filter-header-value-id"
-              value={this.props.headerValue}
-              onChange={(_, value) => this.props.onHeaderValueChange(value)}
-              placeholder="Header Value..."
-            />
+          </DropdownList>
+        </Dropdown>
+      )}
+
+      {(props.filterType === REQ_MOD || props.filterType === RESP_MOD) && (
+        <TextInput
+          id="filter-header-name-id"
+          value={props.headerName}
+          onChange={(_, value) => props.onHeaderNameChange(value)}
+          placeholder="Header name..."
+        />
+      )}
+
+      {(props.filterType === REQ_MOD || props.filterType === RESP_MOD) && props.headerOp !== REMOVE && (
+        <TextInput
+          id="filter-header-value-id"
+          value={props.headerValue}
+          onChange={(_, value) => props.onHeaderValueChange(value)}
+          placeholder="Header Value..."
+        />
+      )}
+
+      {props.filterType === REQ_RED && (
+        <Dropdown
+          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+            <MenuToggle
+              ref={toggleRef}
+              onClick={() => setIsSchemeDropdown(!isSchemeDropdown)}
+              data-test={'scheme-toggle'}
+              isExpanded={isSchemeDropdown}
+            >
+              {props.schemeOp}
+            </MenuToggle>
           )}
-        {this.props.filterType === REQ_RED && (
-          <Dropdown
-            toggle={
-              <DropdownToggle onToggle={this.onSchemeOpToggle} data-test={'scheme-toggle'}>
-                {this.props.schemeOp}
-              </DropdownToggle>
-            }
-            isOpen={this.state.isSchemeDropdown}
-            dropdownItems={schemeOptions.map((op, index) => (
+          isOpen={isSchemeDropdown}
+          onOpenChange={(isOpen: boolean) => setIsSchemeDropdown(isOpen)}
+        >
+          <DropdownList>
+            {schemeOptions.map((op, index) => (
               <DropdownItem
                 key={op + '_' + index}
                 value={op}
                 component="button"
                 onClick={() => {
-                  this.props.onSelectSchemeOp(op);
-                  this.onSchemeOpToggle();
+                  props.onSelectSchemeOp(op);
+                  setIsSchemeDropdown(!isSchemeDropdown);
                 }}
                 data-test={'scheme-' + op}
               >
                 {op}
               </DropdownItem>
             ))}
-          />
-        )}
-        {this.props.filterType === REQ_RED && (
-          <TextInput
-            id="hostname"
-            value={this.props.hostName}
-            onChange={(_, value) => this.props.onHostNameChange(value)}
-            placeholder="Hostname..."
-          />
-        )}
-        {this.props.filterType === REQ_RED && (
-          <TextInput
-            id="portValue"
-            value={this.props.portValue}
-            onChange={(_, value) => this.props.onPortValueChange(value)}
-            placeholder="Port..."
-          />
-        )}
-        {this.props.filterType === REQ_RED && (
-          <Dropdown
-            toggle={
-              <DropdownToggle onToggle={this.onStatusCodeOpToggle} data-test={'status-code'}>
-                {this.props.statusCodeOp}
-              </DropdownToggle>
-            }
-            isOpen={this.state.isStatusCodeDropdown}
-            dropdownItems={statusOptions.map((op, index) => (
+          </DropdownList>
+        </Dropdown>
+      )}
+
+      {props.filterType === REQ_RED && (
+        <TextInput
+          id="hostname"
+          value={props.hostName}
+          onChange={(_, value) => props.onHostNameChange(value)}
+          placeholder="Hostname..."
+        />
+      )}
+
+      {props.filterType === REQ_RED && (
+        <TextInput
+          id="portValue"
+          value={props.portValue}
+          onChange={(_, value) => props.onPortValueChange(value)}
+          placeholder="Port..."
+        />
+      )}
+
+      {props.filterType === REQ_RED && (
+        <Dropdown
+          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+            <MenuToggle
+              ref={toggleRef}
+              onClick={() => setIsStatusCodeDropdown(!isStatusCodeDropdown)}
+              data-test={'status-code'}
+              isExpanded={isStatusCodeDropdown}
+            >
+              {props.statusCodeOp}
+            </MenuToggle>
+          )}
+          isOpen={isStatusCodeDropdown}
+          onOpenChange={(isOpen: boolean) => setIsStatusCodeDropdown(isOpen)}
+        >
+          <DropdownList>
+            {statusOptions.map((op, index) => (
               <DropdownItem
                 key={op + '_' + index}
                 value={op}
                 component="button"
                 onClick={() => {
-                  this.props.onSelectStatusCodeOp(op);
-                  this.onStatusCodeOpToggle();
+                  props.onSelectStatusCodeOp(op);
+                  setIsStatusCodeDropdown(!isStatusCodeDropdown);
                 }}
                 data-test={'status-code-' + op}
               >
                 {op}
               </DropdownItem>
             ))}
-          />
-        )}
-        {this.props.filterType === REQ_MIR && (
-          <Dropdown
-            className={serviceStyle}
-            toggle={
-              <DropdownToggle onToggle={this.onServiceOpToggle} data-test={'service'}>
-                {this.props.serviceOp}
-              </DropdownToggle>
-            }
-            isOpen={this.state.isServiceDropdown}
-            dropdownItems={this.props.subServices.map((so, index) => (
+          </DropdownList>
+        </Dropdown>
+      )}
+
+      {props.filterType === REQ_MIR && (
+        <Dropdown
+          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+            <MenuToggle
+              ref={toggleRef}
+              onClick={() => setIsServiceDropdown(!isServiceDropdown)}
+              data-test={'service'}
+              isExpanded={isServiceDropdown}
+            >
+              {props.serviceOp}
+            </MenuToggle>
+          )}
+          isOpen={isServiceDropdown}
+          onOpenChange={(isOpen: boolean) => setIsServiceDropdown(isOpen)}
+        >
+          <DropdownList>
+            {props.subServices.map((so, index) => (
               <DropdownItem
                 key={so.name + '_' + index}
                 value={so.name + ':' + getServicePort(so.ports)}
                 component="button"
                 onClick={() => {
-                  this.props.onSelectServiceOp(so.name + ':' + getServicePort(so.ports));
-                  this.onServiceOpToggle();
+                  props.onSelectServiceOp(so.name + ':' + getServicePort(so.ports));
+                  setIsServiceDropdown(!isServiceDropdown);
                 }}
                 data-test={'service-' + so.name}
               >
                 {so.name + ':' + getServicePort(so.ports)}
               </DropdownItem>
             ))}
-          />
-        )}
-        <InputGroupItem>
-          <Button
-            variant={ButtonVariant.secondary}
-            isDisabled={!this.props.isValid}
-            onClick={this.props.onAddFilter}
-            data-test="add-filter"
-          >
-            Add Filter
-          </Button>
-        </InputGroupItem>
-      </InputGroup>
-    );
-  }
-}
+          </DropdownList>
+        </Dropdown>
+      )}
+
+      <InputGroupItem className={addFilterStyle}>
+        <Button
+          variant={ButtonVariant.secondary}
+          isDisabled={!props.isValid}
+          onClick={props.onAddFilter}
+          data-test="add-filter"
+        >
+          Add Filter
+        </Button>
+      </InputGroupItem>
+    </InputGroup>
+  );
+};

@@ -3,11 +3,12 @@ import { Provider } from 'react-redux';
 import { mount, shallow } from 'enzyme';
 import screenfull, { Screenfull } from 'screenfull';
 import { WorkloadPodLogsComponent } from '../WorkloadPodLogs';
-import { Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core/deprecated';
 import { store } from '../../../store/ConfigStore';
 import axios from 'axios';
 import axiosMockAdapter from 'axios-mock-adapter';
 import MockAdapter from 'axios-mock-adapter';
+import { Dropdown, DropdownItem } from '@patternfly/react-core';
+import { KialiIcon } from 'config/KialiIcon';
 
 const defaultProps = () => ({
   kiosk: '',
@@ -63,24 +64,27 @@ describe('WorkloadPodLogsComponent', () => {
   it('renders a kebab toggle dropdown', () => {
     axiosMock.onGet('api/namespaces/namespace/pods/testingpod/logs').reply(200, {});
 
-    const wrapper = shallow(<WorkloadPodLogsComponent {...defaultProps()} />);
-    const kebabDropdownWrapper = wrapper
-      .find(Dropdown)
-      .findWhere(n => n.prop('toggle') && n.prop('toggle').type === KebabToggle);
-    expect(wrapper.find(Dropdown).exists()).toBeTruthy();
-    expect(kebabDropdownWrapper.exists()).toBeTruthy();
-  });
-
-  it('renders a log level action in the kebab', () => {
-    axiosMock.onGet('api/namespaces/namespace/pods/testingpod/logs').reply(200, {});
-
-    // using 'mount' since the dropdowns are children of the kebab
+    // using 'mount' since the kebab toggle is children of the dropdown
     const wrapper = mount(
       <Provider store={store}>
         <WorkloadPodLogsComponent {...defaultProps()} />
       </Provider>
     );
-    wrapper.find(KebabToggle).find('button').simulate('click');
+
+    expect(wrapper.find(Dropdown).exists()).toBeTruthy();
+    expect(wrapper.find(KialiIcon.KebabToggle).exists()).toBeTruthy();
+  });
+
+  it('renders a log level action in the kebab', () => {
+    axiosMock.onGet('api/namespaces/namespace/pods/testingpod/logs').reply(200, {});
+
+    // using 'mount' since the dropdown items are children of the dropdown
+    const wrapper = mount(
+      <Provider store={store}>
+        <WorkloadPodLogsComponent {...defaultProps()} />
+      </Provider>
+    );
+    wrapper.find(KialiIcon.KebabToggle).simulate('click');
     expect(
       wrapper
         .find(DropdownItem)
@@ -99,7 +103,7 @@ describe('WorkloadPodLogsComponent', () => {
         <WorkloadPodLogsComponent {...props} />
       </Provider>
     );
-    wrapper.find(KebabToggle).find('button').simulate('click');
+    wrapper.find(KialiIcon.KebabToggle).simulate('click');
     expect(
       wrapper
         .find(DropdownItem)
@@ -119,10 +123,11 @@ describe('WorkloadPodLogsComponent', () => {
         <WorkloadPodLogsComponent {...defaultProps()} />
       </Provider>
     );
-    wrapper.find(KebabToggle).find('button').simulate('click');
+    wrapper.find(KialiIcon.KebabToggle).simulate('click');
     wrapper
       .find(DropdownItem)
       .findWhere(n => n.key() === 'setLogLevelDebug')
+      .find('button')
       .simulate('click');
     expect(spy).toHaveBeenCalled();
   });

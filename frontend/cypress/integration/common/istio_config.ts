@@ -408,8 +408,8 @@ Then('user sees {string}', (sees: string) => {
 });
 
 Then('the user can create a {string} Istio object', (object: string) => {
-  cy.getBySel('actions-dropdown').click();
-  cy.getBySel('actions-dropdown').within(() => {
+  cy.get('button[data-test="istio-actions-toggle"]').click();
+  cy.getBySel('istio-actions-dropdown').within(() => {
     cy.contains(object).click();
   });
   const page = `/istio/new/${object}`;
@@ -422,15 +422,15 @@ Then('the user can create a {string} K8s Istio object', (object: string) => {
     const gatewayAPIEnabled = response.body.gatewayAPIEnabled;
 
     if (gatewayAPIEnabled) {
-      cy.getBySel('actions-dropdown').click();
-      cy.getBySel('actions-dropdown').within(() => {
+      cy.get('button[data-test="istio-actions-toggle"]').click();
+      cy.getBySel('istio-actions-dropdown').within(() => {
         cy.contains(object).click();
       });
       const page = `/istio/new/${object}`;
       cy.url().should('include', page);
     } else {
-      cy.getBySel('actions-dropdown').click();
-      cy.getBySel('actions-dropdown').within(() => {
+      cy.get('button[data-test="istio-actions-toggle"]').click();
+      cy.getBySel('istio-actions-dropdown').within(() => {
         cy.get(object).should('not.exist');
       });
     }
