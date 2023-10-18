@@ -324,7 +324,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
               />
             </CardBody>
           </Card>
-          {this.props.tabTrace && (
+          {this.props.tabTrace && this.props.selectedTrace && (
             <div
               style={{
                 marginTop: 25
