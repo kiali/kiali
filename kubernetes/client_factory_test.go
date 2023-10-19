@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"context"
 	_ "embed"
 	"encoding/base64"
 	"fmt"
@@ -468,4 +469,86 @@ func TestClientCreatedWithProxyInfo(t *testing.T) {
 	client = clientFactory.GetSAClient(cfg.KubernetesConfig.ClusterName)
 	require.NotEqual(cfg.Auth.OpenId.ApiProxy, client.ClusterInfo().ClientConfig.Host)
 	require.NotEqual(proxyCAData, client.ClusterInfo().ClientConfig.CAData)
+}
+
+func TestNewClientFactoryClosesRecycleWhenCTXCancelled(t *testing.T) {
+	require := require.New(t)
+
+	// Create the remote secret so that the "in cluster" config is not used.
+	// Otherwise the "in cluster" config looks for some env vars that are not present.
+	const testClusterName = "TestRemoteCluster"
+	filename := createTestRemoteClusterSecret(t, testClusterName, remoteClusterYAML)
+
+	cfg := config.NewConfig()
+	cfg.Deployment.RemoteSecretPath = filename
+	SetConfig(t, *cfg)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	f, err := NewClientFactory(ctx, *cfg)
+	t.Cleanup(func() {
+		KialiTokenForHomeCluster = "" // Need to reset this global because other tests depend on it being empty.
+	})
+	require.NoError(err)
+	factory := f.(*clientFactory)
+
+	cancel()
+
+	select {
+	case <-time.After(200 * time.Millisecond):
+		require.Fail("recycleChan should have been closed")
+	case <-factory.recycleChan:
+	}
+}
+
+func TestNewClientFactoryDoesNotSetGlobalClientFactory(t *testing.T) {
+	require := require.New(t)
+
+	// Make sure global is nil before test begins
+	if factory != nil {
+		factory = nil
+	}
+
+	// Create the remote secret so that the "in cluster" config is not used.
+	// Otherwise the "in cluster" config looks for some env vars that are not present.
+	const testClusterName = "TestRemoteCluster"
+	filename := createTestRemoteClusterSecret(t, testClusterName, remoteClusterYAML)
+
+	cfg := config.NewConfig()
+	cfg.Deployment.RemoteSecretPath = filename
+	SetConfig(t, *cfg)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	_, err := NewClientFactory(ctx, *cfg)
+	t.Cleanup(func() {
+		KialiTokenForHomeCluster = "" // Need to reset this global because other tests depend on it being empty.
+	})
+	require.NoError(err)
+
+	require.Nil(factory)
+}
+
+func TestClientFactoryReturnsSAClientWhenConfigClusterNameIsEmpty(t *testing.T) {
+	require := require.New(t)
+
+	// Create the remote secret so that the "in cluster" config is not used.
+	// Otherwise the "in cluster" config looks for some env vars that are not present.
+	const testClusterName = "TestRemoteCluster"
+	filename := createTestRemoteClusterSecret(t, testClusterName, remoteClusterYAML)
+
+	cfg := config.NewConfig()
+	cfg.Deployment.RemoteSecretPath = filename
+	cfg.KubernetesConfig.ClusterName = ""
+	SetConfig(t, *cfg)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	clientFactory, err := NewClientFactory(ctx, *cfg)
+	t.Cleanup(func() {
+		KialiTokenForHomeCluster = "" // Need to reset this global because other tests depend on it being empty.
+	})
+	require.NoError(err)
+
+	require.NotNil(clientFactory.GetSAHomeClusterClient())
 }
