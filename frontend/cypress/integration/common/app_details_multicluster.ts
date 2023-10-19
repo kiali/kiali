@@ -44,6 +44,29 @@ Then('user sees outbound metrics information', () => {
     });
 });
 
+Then('user does not see any inbound and outbound traffic information',() => {
+  openTab('Traffic');
+  cy.get('h5').contains('No Inbound Traffic');
+  cy.get('h5').contains('No Outbound Traffic');
+});
+
+Then('user does not see {string} metrics information for the remote {string} {string}', (metrics:string, name:string, type:string) => {
+  cy.intercept(Cypress.config('baseUrl') + `/api/namespaces/bookinfo/${type}s/${name}/dashboard*`).as('fetchMetrics');
+  openTab(`${metrics} Metrics`);
+  cy.wait('@fetchMetrics');
+  cy.waitForReact(1000, '#root');
+  cy.getReact('IstioMetricsComponent', { props: { 'data-test': `${metrics.toLowerCase()}-metrics-component` } })
+    // HOCs can match the component name. This filters the HOCs for just the bare component.
+    // TODO Kchart empty state components
+    .then(
+      (metricsComponents: any) => metricsComponents.filter(component => component.name === 'IstioMetricsComponent')[0]
+    )
+    .getCurrentState()
+    .then(state => {
+      cy.wrap(state.dashboard).should('be.empty');
+    });
+});
+
 And("user sees {string} from a remote {string} cluster",(type:string, cluster:string) => {
   cy.waitForReact();
   cy.getReact('CytoscapeGraph')

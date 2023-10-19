@@ -9,35 +9,65 @@ Feature: Kiali App Details page for multicluster
 
   Background:
     Given user is at administrator perspective
-    And user is at the details page for the "app" "bookinfo/reviews" located in the "west" cluster
 
   Scenario: See details for app.
+    And user is at the details page for the "app" "bookinfo/reviews" located in the "west" cluster
     Then user sees details information for the remote "reviews" app
     And links in the "App" description card should contain a reference to a "west" cluster
     And cluster badge for "west" cluster should be visible in the "App" description card
 
   Scenario: See app minigraph for details app.
+    And user is at the details page for the "app" "bookinfo/reviews" located in the "west" cluster
     Then user sees a minigraph
     And user sees "app" from a remote "west" cluster
 
   Scenario: See app Traffic information
+    And user is at the details page for the "app" "bookinfo/reviews" located in the "west" cluster
     Then user sees inbound and outbound traffic information
     And user should see columns related to cluster info for the inbound and outbound traffic
 
   Scenario: See Inbound Metrics
+    And user is at the details page for the "app" "bookinfo/reviews" located in the "west" cluster
     Then user sees "Inbound" metrics information for the remote "reviews" "app"
 
   Scenario: See Outbound Metrics
+    And user is at the details page for the "app" "bookinfo/reviews" located in the "west" cluster
     Then user sees "Outbound" metrics information for the remote "reviews" "app"
 
   Scenario: See tracing info after selecting a trace
+    And user is at the details page for the "app" "bookinfo/reviews" located in the "west" cluster
     And user sees trace information
     And user sees tracing warning
     When user selects a trace
     Then user sees trace details
 
   Scenario: See span info after selecting app span
+    And user is at the details page for the "app" "bookinfo/reviews" located in the "west" cluster
     And user sees trace information
     When user selects a trace
     Then user sees span details
     And user can filter spans by app
+
+  Scenario: See details for app, which is not deployed in the specific cluster.
+    And user is at the details page for the "app" "bookinfo/ratings" located in the "east" cluster
+    And links in the "App" description card should contain a reference to a "east" cluster
+    And cluster badge for "east" cluster should be visible in the "App" description card
+    And user does not see a minigraph
+
+  Scenario: See no app Traffic information for app, which is not deployed in the specific cluster.
+    And user is at the details page for the "app" "bookinfo/ratings" located in the "east" cluster
+    Then user does not see any inbound and outbound traffic information
+
+  Scenario: See no Inbound Metrics for app, which is not deployed in the specific cluster. 
+    And user is at the details page for the "app" "bookinfo/ratings" located in the "east" cluster
+    Then user does not see "Inbound" metrics information for the remote "ratings" "app"
+
+  Scenario: See no Outbound Metrics for app, which is not deployed in the specific cluster. 
+    And user is at the details page for the "app" "bookinfo/ratings" located in the "east" cluster
+    Then user does not see "Outbound" metrics information for the remote "ratings" "app"
+
+  # skipped until https://github.com/kiali/kiali/issues/6710 gets resolved
+  @skip
+  Scenario: See no tracing info for an app, which is not deployed in the specific cluster
+    And user is at the details page for the "app" "bookinfo/ratings" located in the "east" cluster
+    And user does not see any traces
