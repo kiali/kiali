@@ -23,7 +23,7 @@ type TempoGRPCClient struct {
 
 func (jc TempoGRPCClient) FindTraces(ctx context.Context, serviceName string, q models.TracingQuery) (response *model.TracingResponse, err error) {
 
-	var sr *tempopb.SearchRequest
+	sr := &tempopb.SearchRequest{}
 	sr.Start = uint32(q.Start.Unix())
 	sr.End = uint32(q.End.Unix())
 	sr.Tags = q.Tags

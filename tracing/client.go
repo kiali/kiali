@@ -6,15 +6,15 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/kiali/kiali/tracing/tempo/tempopb"
-	"github.com/kiali/kiali/util/grpcutil"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/insecure"
 	"net"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -22,8 +22,9 @@ import (
 	"github.com/kiali/kiali/tracing/jaeger"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	"github.com/kiali/kiali/tracing/tempo"
+	"github.com/kiali/kiali/tracing/tempo/tempopb"
+	"github.com/kiali/kiali/util/grpcutil"
 	"github.com/kiali/kiali/util/httputil"
-	"google.golang.org/grpc"
 )
 
 const (
@@ -39,14 +40,14 @@ type ClientInterface interface {
 	GetServiceStatus() (available bool, err error)
 }
 
-// HTTPClientInterface for mocks (only mocked function are necessary here)
+// HTTPClientInterface
 type HTTPClientInterface interface {
 	GetAppTracesHTTP(client http.Client, baseURL *url.URL, namespace, app string, q models.TracingQuery) (response *model.TracingResponse, err error)
 	GetTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (*model.TracingSingleTrace, error)
 	GetServiceStatusHTTP(client http.Client, baseURL *url.URL) (bool, error)
 }
 
-// GRPCClientInterface for mocks (only mocked function are necessary here)
+// GRPCClientInterface
 type GRPCClientInterface interface {
 	FindTraces(context context.Context, app string, q models.TracingQuery) (response *model.TracingResponse, err error)
 	GetTrace(context context.Context, traceID string) (*model.TracingSingleTrace, error)
@@ -130,7 +131,7 @@ func NewClient(token string) (*Client, error) {
 				} else {
 					dialOps = append(dialOps, grpc.WithTransportCredentials(insecure.NewCredentials()))
 				}
-				clientConn, _ := grpc.Dial(u.Hostname(), dialOps...)
+				clientConn, _ := grpc.Dial(address, dialOps...)
 				clientTempo := tempopb.NewStreamingQuerierClient(clientConn)
 				client = tempo.TempoGRPCClient{Cc: clientTempo}
 			} else {
