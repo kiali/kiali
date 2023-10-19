@@ -8,7 +8,7 @@ import * as AlertUtils from '../../utils/AlertUtils';
 import { IstioMetrics } from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { CustomMetrics } from '../../components/Metrics/CustomMetrics';
-import { serverConfig } from '../../config/ServerConfig';
+import { isHomeCluster, serverConfig } from '../../config/ServerConfig';
 import { WorkloadPodLogs } from './WorkloadPodLogs';
 import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
@@ -221,7 +221,12 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     );
     tabsArray.push(outTab);
 
-    if (this.props.tracingInfo && this.props.tracingInfo.enabled && this.props.tracingInfo.integration) {
+    if (
+      this.props.tracingInfo &&
+      this.props.tracingInfo.enabled &&
+      this.props.tracingInfo.integration &&
+      isHomeCluster(this.state.cluster ? this.state.cluster : '')
+    ) {
       tabsArray.push(
         <Tab eventKey={5} title="Traces" key="Traces">
           <TracesComponent

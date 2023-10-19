@@ -34,6 +34,7 @@ import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { history, HistoryManager } from 'app/History';
 import { durationSelector } from 'store/Selectors';
 import { basicTabStyle } from 'styles/TabStyles';
+import { isHomeCluster } from '../../config/ServerConfig';
 
 type ServiceDetailsState = {
   cluster?: string;
@@ -204,7 +205,12 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
 
     const tabsArray: JSX.Element[] = [overTab, trafficTab, inTab];
 
-    if (this.props.tracingInfo && this.props.tracingInfo.enabled && this.props.tracingInfo.integration) {
+    if (
+      this.props.tracingInfo &&
+      this.props.tracingInfo.enabled &&
+      this.props.tracingInfo.integration &&
+      isHomeCluster(this.state.cluster ? this.state.cluster : '')
+    ) {
       tabsArray.push(
         <Tab eventKey={3} title="Traces" key="Traces">
           <TracesComponent

@@ -24,6 +24,7 @@ import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { history, HistoryManager } from 'app/History';
 import { basicTabStyle } from 'styles/TabStyles';
+import { isHomeCluster } from '../../config/ServerConfig';
 
 type AppDetailsState = {
   app?: App;
@@ -197,7 +198,11 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     const tabsArray: JSX.Element[] = [overTab, trafficTab, inTab, outTab];
 
     // Conditional Traces tab
-    if (this.props.tracingInfo && this.props.tracingInfo.enabled) {
+    if (
+      this.props.tracingInfo &&
+      this.props.tracingInfo.enabled &&
+      isHomeCluster(this.state.cluster ? this.state.cluster : '')
+    ) {
       if (this.props.tracingInfo.integration) {
         tabsArray.push(
           <Tab eventKey={4} style={{ textAlign: 'center' }} title={'Traces'} key={tracesTabName}>
