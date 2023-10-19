@@ -100,6 +100,7 @@ while [[ $# -gt 0 ]]; do
     -c|--config)                 KIALI_CONFIG_TEMPLATE_FILE="$2";    shift;shift ;;
     -ccs|--copy-cluster-secrets) COPY_CLUSTER_SECRETS="$2";          shift;shift ;;
     -ce|--client-exe)            CLIENT_EXE="$2";                    shift;shift ;;
+    -cn|--cluster-name)          CLUSTER_NAME="$2";                  shift;shift ;;
     -es|--enable-server)         ENABLE_SERVER="$2";                 shift;shift ;;
     -gu|--grafana-url)           GRAFANA_URL="$2";                   shift;shift ;;
     -in|--istio-namespace)       ISTIO_NAMESPACE="$2";               shift;shift ;;
@@ -151,6 +152,9 @@ Valid options:
   -ce|--client-exe
       Cluster client executable - must refer to 'oc' or 'kubectl'.
       Default: ${DEFAULT_CLIENT_EXE}
+  -cn|--cluster-name)
+      The name of the cluster as defined by the Istio infrastructure.
+      Default: <not defined>
   -es|--enable-server
       When 'true', this script will start the server and manage its lifecycle.
       When 'false' this script will do nothing to start or stop the server.
@@ -265,6 +269,7 @@ done
 
 API_PROXY_HOST="${API_PROXY_HOST:-${DEFAULT_API_PROXY_HOST}}"
 API_PROXY_PORT="${API_PROXY_PORT:-${DEFAULT_API_PROXY_PORT}}"
+CLUSTER_NAME="${CLUSTER_NAME:-}"
 COPY_CLUSTER_SECRETS="${COPY_CLUSTER_SECRETS:-${DEFAULT_COPY_CLUSTER_SECRETS}}"
 ENABLE_SERVER="${ENABLE_SERVER:-${DEFAULT_ENABLE_SERVER}}"
 ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-${DEFAULT_ISTIO_NAMESPACE}}"
@@ -524,6 +529,7 @@ infomsg "===== SETTINGS ====="
 echo "API_PROXY_HOST=$API_PROXY_HOST"
 echo "API_PROXY_PORT=$API_PROXY_PORT"
 echo "CLIENT_EXE=$CLIENT_EXE"
+echo "CLUSTER_NAME=$CLUSTER_NAME"
 echo "COPY_CLUSTER_SECRETS=$COPY_CLUSTER_SECRETS"
 echo "ENABLE_SERVER=$ENABLE_SERVER"
 echo "GRAFANA_URL=$GRAFANA_URL"
@@ -584,6 +590,15 @@ cat ${KIALI_CONFIG_TEMPLATE_FILE} | \
   UI_CONSOLE_DIR=${UI_CONSOLE_DIR}   \
   REMOTE_SECRET_PATH=${REMOTE_SECRET_PATH} \
   envsubst > ${KIALI_CONFIG_FILE}
+
+# Set kubernetes_config.cluster_name only if the user told us to configure a specific cluster name
+if [ -n "${CLUSTER_NAME}" ]; then
+  cat << EOM >> ${KIALI_CONFIG_FILE}
+
+kubernetes_config:
+  cluster_name: "${CLUSTER_NAME}"
+EOM
+fi
 
 # Kiali wants the UI Console in a directory called "console" under its cwd
 
