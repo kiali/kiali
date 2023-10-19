@@ -100,7 +100,7 @@ if [ -n "${ISTIO_VERSION}" ]; then
 fi
 
 infomsg "Downloading istio"
-hack/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
+"${SCRIPT_DIR}"/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
 
 setup_kind_singlecluster() {
   "${SCRIPT_DIR}"/start-kind.sh --name ci --image "${KIND_NODE_IMAGE}"
@@ -110,7 +110,7 @@ setup_kind_singlecluster() {
     local hub_arg="--image-hub default"
   fi
   # Apparently you can't set the requests to zero for the proxy so just setting them to some really low number.
-  hack/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true" ${hub_arg:-}
+  "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true" ${hub_arg:-}
 
   infomsg "Pushing the images into the cluster..."
   make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
@@ -186,7 +186,7 @@ setup_kind_multicluster() {
   fi
 
   infomsg "Downloading istio"
-  hack/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
+  "${SCRIPT_DIR}"/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
 
   infomsg "Cloning kiali helm-charts..."
   git clone --single-branch --branch "${TARGET_BRANCH}" https://github.com/kiali/helm-charts.git "${HELM_CHARTS_DIR}"
@@ -203,8 +203,8 @@ setup_kind_multicluster() {
   if [[ "${ISTIO_VERSION}" == *-dev ]]; then
     local hub_arg="--istio-hub default"
   fi
-  hack/istio/multicluster/install-primary-remote.sh --manage-kind true -dorp docker --istio-dir "${istio_dir}" ${hub_arg:-}
-  hack/istio/multicluster/deploy-kiali.sh --manage-kind true -dorp docker -kas anonymous -kudi true -kshc "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
+  "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --manage-kind true -dorp docker --istio-dir "${istio_dir}" ${hub_arg:-}
+  "${SCRIPT_DIR}"/istio/multicluster/deploy-kiali.sh --manage-kind true -dorp docker -kas anonymous -kudi true -kshc "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
 }
 
 if [ "${MULTICLUSTER}" == "true" ]; then
