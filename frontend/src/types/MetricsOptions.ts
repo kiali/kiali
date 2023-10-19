@@ -17,7 +17,6 @@ export interface DashboardQuery extends MetricsQuery {
   additionalLabels?: string;
   workload?: string;
   workloadType?: string;
-  clusterName?: string;
 }
 
 export type Aggregator = 'sum' | 'avg' | 'min' | 'max' | 'stddev' | 'stdvar';
