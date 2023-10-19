@@ -477,7 +477,6 @@ func TestNewClientFactoryClosesRecycleWhenCTXCancelled(t *testing.T) {
 	// Create the remote secret so that the "in cluster" config is not used.
 	// Otherwise the "in cluster" config looks for some env vars that are not present.
 	const testClusterName = "TestRemoteCluster"
-	const testUserToken = "TestUserToken"
 	filename := createTestRemoteClusterSecret(t, testClusterName, remoteClusterYAML)
 
 	cfg := config.NewConfig()
@@ -513,7 +512,6 @@ func TestNewClientFactoryDoesNotSetGlobalClientFactory(t *testing.T) {
 	// Create the remote secret so that the "in cluster" config is not used.
 	// Otherwise the "in cluster" config looks for some env vars that are not present.
 	const testClusterName = "TestRemoteCluster"
-	const testUserToken = "TestUserToken"
 	filename := createTestRemoteClusterSecret(t, testClusterName, remoteClusterYAML)
 
 	cfg := config.NewConfig()
@@ -537,7 +535,6 @@ func TestClientFactoryReturnsSAClientWhenConfigClusterNameIsEmpty(t *testing.T) 
 	// Create the remote secret so that the "in cluster" config is not used.
 	// Otherwise the "in cluster" config looks for some env vars that are not present.
 	const testClusterName = "TestRemoteCluster"
-	const testUserToken = "TestUserToken"
 	filename := createTestRemoteClusterSecret(t, testClusterName, remoteClusterYAML)
 
 	cfg := config.NewConfig()
