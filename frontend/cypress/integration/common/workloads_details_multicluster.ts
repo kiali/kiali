@@ -19,3 +19,7 @@ Then('user sees workload inbound and outbound traffic information for the remote
   cy.contains('No Inbound Traffic').should('not.exist');
   cy.contains('No Outbound Traffic').should('not.exist');
 });
+
+Then('the envoy tab should not be visible',() => {
+  cy.get('#basic-tabs').contains('Envoy').should('not.exist');
+});

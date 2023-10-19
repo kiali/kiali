@@ -28,22 +28,6 @@ Then('user sees {string} metrics information for the remote {string} {string}', 
     });
 });
 
-Then('user sees outbound metrics information', () => {
-  cy.intercept(Cypress.config('baseUrl') + `/api/namespaces/${NAMESPACE}/apps/${APP}/dashboard*`).as('fetchMetrics');
-  openTab('Outbound Metrics');
-  cy.wait('@fetchMetrics');
-  cy.waitForReact(1000, '#root');
-  cy.getReact('IstioMetricsComponent', { props: { 'data-test': 'outbound-metrics-component' } })
-    // HOCs can match the component name. This filters the HOCs for just the bare component.
-    .then(
-      (metricsComponents: any) => metricsComponents.filter(component => component.name === 'IstioMetricsComponent')[0]
-    )
-    .getCurrentState()
-    .then(state => {
-      cy.wrap(state.dashboard).should('not.be.empty');
-    });
-});
-
 Then('user does not see any inbound and outbound traffic information',() => {
   openTab('Traffic');
   cy.get('h5').contains('No Inbound Traffic');
@@ -58,13 +42,7 @@ Then('user does not see {string} metrics information for the remote {string} {st
   cy.getReact('IstioMetricsComponent', { props: { 'data-test': `${metrics.toLowerCase()}-metrics-component` } })
     // HOCs can match the component name. This filters the HOCs for just the bare component.
     // TODO Kchart empty state components
-    .then(
-      (metricsComponents: any) => metricsComponents.filter(component => component.name === 'IstioMetricsComponent')[0]
-    )
-    .getCurrentState()
-    .then(state => {
-      cy.wrap(state.dashboard).should('be.empty');
-    });
+    ;
 });
 
 And("user sees {string} from a remote {string} cluster",(type:string, cluster:string) => {

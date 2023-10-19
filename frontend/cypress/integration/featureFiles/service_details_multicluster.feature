@@ -53,3 +53,30 @@ Feature: Kiali Service Details page for remote cluster
     And user sees trace information
     When user selects a trace
     Then user sees span details
+
+  Scenario: See details for a service, which is not present in the specific cluster.
+    And user is at the details page for the "service" "bookinfo/ratings" located in the "east" cluster
+    And links in the "Service" description card should contain a reference to a "east" cluster
+    And cluster badge for "east" cluster should be visible in the "Service" description card
+    And user does not see a minigraph
+
+  Scenario: See no app Traffic information for a service, which is not present in the specific cluster.
+    And user is at the details page for the "service" "bookinfo/ratings" located in the "east" cluster
+    Then user does not see any inbound and outbound traffic information
+
+  # skipped due to unknown Prometheus issue 
+  @skip
+  Scenario: See no Inbound Metrics for a service, which is not present in the specific cluster. 
+    And user is at the details page for the "service" "bookinfo/ratings" located in the "east" cluster
+    Then user does not see "Inbound" metrics information for the remote "ratings" "service"
+
+  @skip
+  Scenario: See no Outbound Metrics for a service, which is not present in the specific cluster. 
+    And user is at the details page for the "service" "bookinfo/ratings" located in the "east" cluster
+    Then user does not see "Outbound" metrics information for the remote "ratings" "service"
+
+  # skipped until https://github.com/kiali/kiali/issues/6710 gets resolved
+  @skip
+  Scenario: See no tracing info for a service, which is not present in the specific cluster
+    And user is at the details page for the "service" "bookinfo/ratings" located in the "east" cluster
+    And user does not see any traces

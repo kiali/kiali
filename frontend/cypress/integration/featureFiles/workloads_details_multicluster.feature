@@ -61,3 +61,34 @@ Feature: Kiali Workload Details page
 
   Scenario: See Envoy metrics for a workload
     Then the user sees the metrics tab
+
+  Scenario: See details for a workload, which is not present in the specific cluster.
+    And user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "east" cluster
+    And links in the "Workload" description card should contain a reference to a "east" cluster
+    And cluster badge for "east" cluster should be visible in the "Workload" description card
+    And user does not see a minigraph
+
+  Scenario: See no app Traffic information for a workload, which is not present in the specific cluster.
+    And user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "east" cluster
+    Then user does not see any inbound and outbound traffic information
+
+  # skipped due to unknown Prometheus issue 
+  @skip
+  Scenario: See no Inbound Metrics for a workload, which is not present in the specific cluster. 
+    And user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "east" cluster
+    Then user does not see "Inbound" metrics information for the remote "ratings-v1" "workload"
+
+  @skip
+  Scenario: See no Outbound Metrics for a workload, which is not present in the specific cluster. 
+    And user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "east" cluster
+    Then user does not see "Outbound" metrics information for the remote "ratings-v1" "workload"
+
+  # skipped until https://github.com/kiali/kiali/issues/6710 gets resolved
+  @skip
+  Scenario: See no tracing info for a workload, which is not present in the specific cluster
+    And user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "east" cluster
+    And user does not see any traces
+
+  Scenario: Envoy tab should not be visible for a workload, which is not present in specific cluster
+    And user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "east" cluster
+    Then the envoy tab should not be visible

@@ -48,21 +48,24 @@ Feature: Kiali App Details page for multicluster
     Then user sees span details
     And user can filter spans by app
 
-  Scenario: See details for app, which is not deployed in the specific cluster.
+  Scenario: See details for an app, which is not deployed in the specific cluster.
     And user is at the details page for the "app" "bookinfo/ratings" located in the "east" cluster
     And links in the "App" description card should contain a reference to a "east" cluster
     And cluster badge for "east" cluster should be visible in the "App" description card
     And user does not see a minigraph
 
-  Scenario: See no app Traffic information for app, which is not deployed in the specific cluster.
+  Scenario: See no app Traffic information for an app, which is not deployed in the specific cluster.
     And user is at the details page for the "app" "bookinfo/ratings" located in the "east" cluster
     Then user does not see any inbound and outbound traffic information
 
-  Scenario: See no Inbound Metrics for app, which is not deployed in the specific cluster. 
+  # skipped due to unknown Prometheus issue 
+  @skip
+  Scenario: See no Inbound Metrics for an app, which is not deployed in the specific cluster. 
     And user is at the details page for the "app" "bookinfo/ratings" located in the "east" cluster
     Then user does not see "Inbound" metrics information for the remote "ratings" "app"
 
-  Scenario: See no Outbound Metrics for app, which is not deployed in the specific cluster. 
+  @skip
+  Scenario: See no Outbound Metrics for an app, which is not deployed in the specific cluster. 
     And user is at the details page for the "app" "bookinfo/ratings" located in the "east" cluster
     Then user does not see "Outbound" metrics information for the remote "ratings" "app"
 
