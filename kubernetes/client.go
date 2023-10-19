@@ -142,7 +142,7 @@ func getConfigForLocalCluster() (*rest.Config, error) {
 	}
 }
 
-// NewClientFromConfig creates a new client to the Kubernetes and Istio APIs.
+// newClientFromConfig creates a new client to the Kubernetes and Istio APIs.
 // It takes the assumption that Istio is deployed into the cluster.
 // It hides the access to Kubernetes/Openshift credentials.
 // It hides the low level use of the API of Kubernetes and Istio, it should be considered as an implementation detail.

@@ -531,7 +531,7 @@ func TestNewClientFactoryDoesNotSetGlobalClientFactory(t *testing.T) {
 	require.Nil(factory)
 }
 
-func TestClientFactoryReturnsSAClientWithEmptyClusterName(t *testing.T) {
+func TestClientFactoryReturnsSAClientWhenConfigClusterNameIsEmpty(t *testing.T) {
 	require := require.New(t)
 
 	// Create the remote secret so that the "in cluster" config is not used.
