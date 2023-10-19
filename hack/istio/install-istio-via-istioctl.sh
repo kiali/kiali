@@ -426,9 +426,8 @@ if [ "${REDUCE_RESOURCES}" == "true" ]; then
 fi
 
 if [ "${CLUSTER_NAME}" != "" ]; then
-     CLUSTER_NAME_OPTION=" \
-       --set values.global.multiCluster.clusterName=${CLUSTER_NAME}"
-   fi
+  CLUSTER_NAME_OPTION="--set values.global.multiCluster.clusterName=${CLUSTER_NAME}"
+fi
 
 for s in \
    "${IMAGE_HUB_OPTION}" \
