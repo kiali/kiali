@@ -425,16 +425,21 @@ if [ "${REDUCE_RESOURCES}" == "true" ]; then
     --set components.pilot.k8s.resources.requests.memory=1Mi"
 fi
 
+if [ "${CLUSTER_NAME}" != "" ]; then
+     CLUSTER_NAME_OPTION=" \
+       --set values.global.multiCluster.clusterName=${CLUSTER_NAME}"
+   fi
+
 for s in \
    "${IMAGE_HUB_OPTION}" \
    "${IMAGE_TAG_OPTION}" \
    "${MTLS_OPTIONS}" \
    "${NATIVE_SIDECARS_OPTIONS}" \
+   "${CLUSTER_NAME_OPTION}" \
    "${CUSTOM_NAMESPACE_OPTIONS}" \
    "--set values.gateways.istio-egressgateway.enabled=${ISTIO_EGRESSGATEWAY_ENABLED}" \
    "--set values.gateways.istio-ingressgateway.enabled=${ISTIO_INGRESSGATEWAY_ENABLED}" \
    "--set values.global.meshID=${MESH_ID}" \
-   "--set values.global.multiCluster.clusterName=${CLUSTER_NAME}" \
    "--set values.global.network=${NETWORK}" \
    "--set values.meshConfig.defaultConfig.tracing.sampling=100.00" \
    "--set values.meshConfig.accessLogFile=/dev/stdout" \
