@@ -260,6 +260,7 @@ func updateConfigWithIstioInfo() {
 		homeCluster = config.DefaultClusterID
 	}
 
+	log.Debugf("Auto-detected the istio cluster name to be [%s]. Updating the kiali config", homeCluster)
 	conf.KubernetesConfig.ClusterName = homeCluster
 	config.Set(&conf)
 }
