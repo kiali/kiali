@@ -1,20 +1,21 @@
 import { TargetKind } from './Common';
 
 export interface MetricsQuery {
-  rateInterval?: string;
-  rateFunc?: string;
-  queryTime?: number;
-  duration?: number;
-  step?: number;
-  quantiles?: string[];
   avg?: boolean;
   byLabels?: string[];
+  duration?: number;
+  quantiles?: string[];
+  queryTime?: number;
+  rateFunc?: string;
+  rateInterval?: string;
+  step?: number;
 }
 
 export interface DashboardQuery extends MetricsQuery {
-  rawDataAggregator?: Aggregator;
-  labelsFilters?: string;
   additionalLabels?: string;
+  cluster?: string;
+  labelsFilters?: string;
+  rawDataAggregator?: Aggregator;
   workload?: string;
   workloadType?: string;
 }
@@ -26,17 +27,16 @@ export interface IstioMetricsOptions extends MetricsQuery {
   filters?: string[];
   requestProtocol?: string;
   reporter: Reporter;
-  clusterName?: string;
 }
 
 export type Reporter = 'source' | 'destination' | 'both';
 export type Direction = 'inbound' | 'outbound';
 
 export interface Target {
-  namespace: string;
-  name: string;
-  kind: TargetKind;
   cluster?: string;
+  kind: TargetKind;
+  name: string;
+  namespace: string;
 }
 
 export interface MetricsStatsQuery {

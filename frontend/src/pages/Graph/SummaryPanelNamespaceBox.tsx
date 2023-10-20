@@ -610,28 +610,34 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     }
 
     if (filters.length > 0) {
-      promiseIn = API.getNamespaceMetrics(namespace, {
-        byLabels: ['request_protocol'], // ignored by prom if it doesn't exist
-        cluster: cluster,
-        direction: 'inbound',
-        duration: props.duration,
-        filters: filters,
-        queryTime: props.queryTime,
-        rateInterval: props.rateInterval,
-        reporter: 'destination',
-        step: props.step
-      } as IstioMetricsOptions);
-      promiseOut = API.getNamespaceMetrics(namespace, {
-        byLabels: ['request_protocol'], // ignored by prom if it doesn't exist
-        cluster: cluster,
-        direction: 'outbound',
-        duration: props.duration,
-        filters: filters,
-        queryTime: props.queryTime,
-        rateInterval: props.rateInterval,
-        reporter: 'source',
-        step: props.step
-      } as IstioMetricsOptions);
+      promiseIn = API.getNamespaceMetrics(
+        namespace,
+        {
+          byLabels: ['request_protocol'], // ignored by prom if it doesn't exist
+          direction: 'inbound',
+          duration: props.duration,
+          filters: filters,
+          queryTime: props.queryTime,
+          rateInterval: props.rateInterval,
+          reporter: 'destination',
+          step: props.step
+        } as IstioMetricsOptions,
+        cluster
+      );
+      promiseOut = API.getNamespaceMetrics(
+        namespace,
+        {
+          byLabels: ['request_protocol'], // ignored by prom if it doesn't exist
+          direction: 'outbound',
+          duration: props.duration,
+          filters: filters,
+          queryTime: props.queryTime,
+          rateInterval: props.rateInterval,
+          reporter: 'source',
+          step: props.step
+        } as IstioMetricsOptions,
+        cluster
+      );
     }
 
     this.metricsPromise = makeCancelablePromise(Promise.all([promiseIn, promiseOut]));

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { EmptyState, EmptyStateBody, EmptyStateVariant, Tab, EmptyStateHeader } from '@patternfly/react-core';
 import * as API from '../../services/Api';
-import { Workload, WorkloadId } from '../../types/Workload';
+import { Workload, WorkloadId, WorkloadQuery } from '../../types/Workload';
 import { WorkloadInfo } from './WorkloadInfo';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { IstioMetrics } from '../../components/Metrics/IstioMetrics';
@@ -105,9 +105,9 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     if (!cluster) {
       cluster = this.state.cluster;
     }
-    const params: { [key: string]: string } = {
+    const params: WorkloadQuery = {
       validate: 'true',
-      rateInterval: String(this.props.duration) + 's',
+      rateInterval: `${String(this.props.duration)}s`,
       health: 'true'
     };
     await API.getWorkload(this.props.workloadId.namespace, this.props.workloadId.workload, params, cluster)

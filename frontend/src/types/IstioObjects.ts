@@ -247,6 +247,18 @@ export interface PodLogs {
   linesTruncated?: boolean;
 }
 
+export interface PodLogsQuery {
+  container?: string;
+  duration?: string;
+  isProxy?: boolean;
+  maxLines?: number;
+  sinceTime?: number;
+}
+
+export interface LogLevelQuery {
+  level: string;
+}
+
 export interface EnvoyProxyDump {
   configDump?: EnvoyConfigDump;
   bootstrap?: BootstrapSummary;

@@ -3,7 +3,7 @@ import * as FilterHelper from '../../components/FilterList/FilterHelper';
 import { RenderContent } from '../../components/Nav/Page';
 import * as WorkloadListFilters from './FiltersAndSorts';
 import * as FilterComponent from '../../components/FilterList/FilterComponent';
-import { WorkloadListItem, WorkloadNamespaceResponse } from '../../types/Workload';
+import { WorkloadListItem, WorkloadListQuery, WorkloadNamespaceResponse } from '../../types/Workload';
 import { DurationInSeconds } from '../../types/Common';
 import { Namespace } from '../../types/Namespace';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
@@ -131,8 +131,8 @@ class WorkloadListPageComponent extends FilterComponent.Component<
       return API.getWorkloads(namespace, {
         health: health,
         istioResources: istioResources,
-        rateInterval: String(rateInterval) + 's'
-      });
+        rateInterval: `${String(rateInterval)}s`
+      } as WorkloadListQuery);
     });
     this.promises
       .registerAll('workloads', workloadsConfigPromises)

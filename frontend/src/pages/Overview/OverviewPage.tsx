@@ -348,7 +348,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       });
   }
 
-  fetchHealthChunk(chunk: NamespaceInfo[], duration: DurationInSeconds, type: OverviewType) {
+  async fetchHealthChunk(chunk: NamespaceInfo[], duration: DurationInSeconds, type: OverviewType) {
     const apiFunc = switchType(
       type,
       API.getNamespaceAppHealth,
@@ -356,7 +356,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       API.getNamespaceWorkloadHealth
     );
     return Promise.all(
-      chunk.map(nsInfo => {
+      chunk.map(async nsInfo => {
         const healthPromise: Promise<NamespaceAppHealth | NamespaceWorkloadHealth | NamespaceServiceHealth> = apiFunc(
           nsInfo.name,
           duration,
@@ -422,11 +422,14 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     };
 
     return Promise.all(
-      chunk.map(nsInfo => {
+      chunk.map(async nsInfo => {
+        let clusterParam: string | undefined;
+
         if (nsInfo.cluster && isMultiCluster) {
-          options.clusterName = nsInfo.cluster;
+          clusterParam = nsInfo.cluster;
         }
-        return API.getNamespaceMetrics(nsInfo.name, options).then(rs => {
+
+        return API.getNamespaceMetrics(nsInfo.name, options, clusterParam).then(rs => {
           nsInfo.metrics = rs.data.request_count;
           nsInfo.errorMetrics = rs.data.request_error_count;
           if (nsInfo.name === serverConfig.istioNamespace) {

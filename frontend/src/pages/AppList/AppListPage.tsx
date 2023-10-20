@@ -4,7 +4,7 @@ import { RenderContent } from '../../components/Nav/Page';
 import * as AppListFilters from './FiltersAndSorts';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import * as FilterComponent from '../../components/FilterList/FilterComponent';
-import { AppListItem } from '../../types/AppList';
+import { AppListItem, AppListQuery } from '../../types/AppList';
 import { DurationInSeconds } from '../../types/Common';
 import { Namespace } from '../../types/Namespace';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
@@ -96,8 +96,8 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
       return API.getApps(namespace, {
         health: health,
         istioResources: istioResources,
-        rateInterval: String(rateInterval) + 's'
-      });
+        rateInterval: `${String(rateInterval)}s`
+      } as AppListQuery);
     });
     this.promises
       .registerAll('apps', appsPromises)

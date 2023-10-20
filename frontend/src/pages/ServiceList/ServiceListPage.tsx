@@ -3,7 +3,7 @@ import * as FilterHelper from '../../components/FilterList/FilterHelper';
 import { RenderContent } from '../../components/Nav/Page';
 import * as ServiceListFilters from './FiltersAndSorts';
 import * as FilterComponent from '../../components/FilterList/FilterComponent';
-import { ServiceList, ServiceListItem } from '../../types/ServiceList';
+import { ServiceList, ServiceListItem, ServiceListQuery } from '../../types/ServiceList';
 import { DurationInSeconds } from '../../types/Common';
 import { Namespace } from '../../types/Namespace';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
@@ -131,9 +131,9 @@ class ServiceListPageComponent extends FilterComponent.Component<
       API.getServices(ns, {
         health: health,
         istioResources: istioResources,
-        rateInterval: String(rateInterval) + 's',
+        rateInterval: `${String(rateInterval)}s`,
         onlyDefinitions: onlyDefinitions
-      })
+      } as ServiceListQuery)
     );
 
     this.promises

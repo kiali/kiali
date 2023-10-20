@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { Tab } from '@patternfly/react-core';
 import * as API from '../../services/Api';
-import { App, AppId } from '../../types/App';
+import { App, AppId, AppQuery } from '../../types/App';
 import { AppInfo } from './AppInfo';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { IstioMetrics } from '../../components/Metrics/IstioMetrics';
@@ -93,7 +93,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     if (!cluster) {
       cluster = this.state.cluster;
     }
-    const params: { [key: string]: string } = { rateInterval: String(this.props.duration) + 's', health: 'true' };
+    const params: AppQuery = { rateInterval: `${String(this.props.duration)}s`, health: 'true' };
     API.getApp(this.props.appId.namespace, this.props.appId.app, params, cluster)
       .then(details => {
         this.setState({
