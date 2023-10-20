@@ -55,6 +55,8 @@ operator
 # Do not commit helm-charts code to this repo
 helm-charts
 
+# Ignore ansible if a dev has installed it under kiali for convenience
+ansible
 
 ############################################
 #                FRONTEND                  #
