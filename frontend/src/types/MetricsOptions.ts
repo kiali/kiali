@@ -13,7 +13,6 @@ export interface MetricsQuery {
 
 export interface DashboardQuery extends MetricsQuery {
   additionalLabels?: string;
-  cluster?: string;
   labelsFilters?: string;
   rawDataAggregator?: Aggregator;
   workload?: string;
