@@ -417,8 +417,17 @@ export const getWorkloadDashboard = (
   return newRequest<DashboardModel>(HTTP_VERBS.GET, urls.workloadDashboard(namespace, workload), queryParams, {});
 };
 
-export const getCustomDashboard = (ns: string, tpl: string, params: DashboardQuery) => {
-  return newRequest<DashboardModel>(HTTP_VERBS.GET, urls.customDashboard(ns, tpl), params, {});
+export const getCustomDashboard = (
+  ns: string,
+  tpl: string,
+  params: DashboardQuery,
+  cluster?: string
+) => {
+  const queryParams: any = { ...params };
+  if (cluster) {
+    queryParams.clusterName = cluster;
+  }
+  return newRequest<DashboardModel>(HTTP_VERBS.GET, urls.customDashboard(ns, tpl), queryParams, {});
 };
 
 export const getNamespaceAppHealth = (
