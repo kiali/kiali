@@ -61,12 +61,12 @@ export class AddressBuilder extends React.Component<Props, State> {
         <Td>
           <FormSelect
             value={this.props.address.type}
-            id={'addType' + this.props.index}
+            id={`addType_${this.props.index}`}
             name="addType"
             onChange={this.onAddType}
           >
             {addressTypes.map((option, index) => (
-              <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
+              <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
             ))}
           </FormSelect>
         </Td>
@@ -74,7 +74,7 @@ export class AddressBuilder extends React.Component<Props, State> {
           <TextInput
             value={this.props.address.value}
             type="text"
-            id={'addValue' + this.props.index}
+            id={`addValue_${this.props.index}`}
             aria-describedby="add value"
             name="addVale"
             onChange={this.onAddValue}

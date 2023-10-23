@@ -72,7 +72,7 @@ export const formatJwtField = (jwtField: string, jwtRule: JWTRule): string => {
         ? jwtRule.fromHeaders
             .map(header => {
               if (header.prefix) {
-                return header.name + ': ' + header.prefix;
+                return `${header.name}: ${header.prefix}`;
               } else {
                 return header.name;
               }
@@ -84,7 +84,7 @@ export const formatJwtField = (jwtField: string, jwtRule: JWTRule): string => {
     case 'outputPayloadToHeader':
       return jwtRule.outputPayloadToHeader ? jwtRule.outputPayloadToHeader : '';
     case 'forwardOriginalToken':
-      return jwtRule.forwardOriginalToken ? '' + jwtRule.forwardOriginalToken : 'false';
+      return jwtRule.forwardOriginalToken ? `${jwtRule.forwardOriginalToken}` : 'false';
     default:
   }
   return '';
@@ -230,7 +230,7 @@ export class JwtRuleBuilder extends React.Component<Props, State> {
   rows = () => {
     const jwtRuleRows = Object.keys(this.state.jwtRule).map((jwtField, i) => {
       return {
-        key: 'jwtField' + i,
+        key: `jwtField_${i}`,
         cells: [<>{jwtField}</>, <>{formatJwtField(jwtField, this.state.jwtRule)}</>, <></>]
       };
     });
@@ -248,7 +248,7 @@ export class JwtRuleBuilder extends React.Component<Props, State> {
                 onChange={this.onAddJwtField}
               >
                 {this.state.jwtRuleFields.map((option, index) => (
-                  <FormSelectOption isDisabled={false} key={'jwt' + index} value={option} label={option} />
+                  <FormSelectOption isDisabled={false} key={`jwt_${index}`} value={option} label={option} />
                 ))}
               </FormSelect>
             </>,

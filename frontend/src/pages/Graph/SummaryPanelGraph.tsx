@@ -475,7 +475,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
         warnings={validation.warnings}
       >
         <ValidationSummary
-          id={'ns-val-' + ns}
+          id={`ns-val-${ns}`}
           errors={validation.errors}
           warnings={validation.warnings}
           objectCount={validation.objectCount}

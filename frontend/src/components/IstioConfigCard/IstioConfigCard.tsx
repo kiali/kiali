@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { IstioConfigItem } from '../../types/IstioConfigList';
-import { IRow, IRowCell, Table, TableVariant, Tbody, Td, Th, Thead, ThProps, Tr } from '@patternfly/react-table';
+import { IRow, TableVariant, ThProps } from '@patternfly/react-table';
 import {
   Card,
   CardBody,
@@ -17,6 +17,7 @@ import { IstioTypes } from '../VirtualList/Config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFBadge } from '../Pf/PfBadges';
 import { IstioObjectLink } from '../Link/IstioObjectLink';
+import { SimpleTable } from 'components/SimpleTable';
 
 type IstioConfigCardProps = {
   items: IstioConfigItem[];
@@ -83,7 +84,7 @@ export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConf
             {
               title: (
                 <ValidationObjectSummary
-                  id={itemIdx + '-config-validation'}
+                  id={`${itemIdx}-config-validation`}
                   validations={item.validation ? [item.validation] : []}
                 />
               )
@@ -101,28 +102,7 @@ export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConf
         </Title>
       </CardHeader>
       <CardBody>
-        <Table variant={TableVariant.compact} aria-label={'list_istio_config'}>
-          <Thead>
-            <Tr>
-              {columns.map((column, index) => (
-                <Th key={`column_${index}`} dataLabel={column.title} width={column.width}>
-                  {column.title}
-                </Th>
-              ))}
-            </Tr>
-          </Thead>
-          <Tbody>
-            {rows.map((row, index) => (
-              <Tr key={`row_${index}`}>
-                {(row.cells as IRowCell[])?.map((cell, index) => (
-                  <Td key={`cell_${index}`} dataLabel={columns[index].title} colSpan={cell.props?.colSpan}>
-                    {cell.title}
-                  </Td>
-                ))}
-              </Tr>
-            ))}
-          </Tbody>
-        </Table>
+        <SimpleTable label="list_istio_config" columns={columns} rows={rows} variant={TableVariant.compact} />
       </CardBody>
     </Card>
   );

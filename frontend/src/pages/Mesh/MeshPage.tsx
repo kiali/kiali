@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { EmptyState, EmptyStateBody, EmptyStateVariant, Tooltip, EmptyStateHeader } from '@patternfly/react-core';
 import { StarIcon } from '@patternfly/react-icons';
-import { IRowCell, SortByDirection, Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
+import { SortByDirection } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
@@ -14,7 +14,7 @@ import { kialiIconDark, kialiIconLight } from 'config';
 import { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
 import { Theme } from 'types/Common';
-import { SortableTh, getSortParams } from 'utils/TableUtils';
+import { SimpleTable, SortableTh } from 'components/SimpleTable';
 
 const iconStyle = kialiStyle({
   width: '1.5rem',
@@ -36,7 +36,7 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
     fetchMeshClusters();
   }, []);
 
-  const columns: SortableTh<MeshCluster>[] = [
+  const columns: SortableTh[] = [
     {
       title: 'Cluster Name',
       width: 20,
@@ -75,7 +75,7 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
       if (instance.url.length !== 0) {
         return (
           <Tooltip
-            key={cluster.name + '/' + instance.namespace + '/' + instance.serviceName}
+            key={`${cluster.name}/${instance.namespace}/${instance.serviceName}`}
             content={`Go to this Kiali instance: ${instance.url}`}
           >
             <p>
@@ -88,7 +88,7 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
         );
       } else {
         return (
-          <p key={cluster.name + '/' + instance.namespace + '/' + instance.serviceName}>
+          <p key={`${cluster.name}/${instance.namespace}/${instance.serviceName}`}>
             <img alt="Kiali Icon" src={kialiIcon} className={iconStyle} />
             {`${instance.namespace} / ${instance.serviceName}`}
           </p>
@@ -149,31 +149,13 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
 
       <RenderContent>
         <div className={containerStyle}>
-          <Table aria-label="Sortable Table">
-            <Thead>
-              <Tr>
-                {columns.map((column, index) => (
-                  <Th
-                    key={`column_${index}`}
-                    dataLabel={column.title}
-                    sort={getSortParams(column, index, sortBy, onSortHandler)}
-                    width={column.width}
-                  >
-                    {column.title}
-                  </Th>
-                ))}
-              </Tr>
-            </Thead>
-            <Tbody>
-              {clusterRows.map((row, index) => (
-                <Tr key={`row_${index}`}>
-                  {(row.cells as IRowCell[])?.map((cell, index) => (
-                    <Td dataLabel={columns[index].title}>{cell}</Td>
-                  ))}
-                </Tr>
-              ))}
-            </Tbody>
-          </Table>
+          <SimpleTable
+            label="Sortable Table"
+            columns={columns}
+            rows={clusterRows}
+            sortBy={sortBy}
+            onSort={onSortHandler}
+          />
 
           {clusterRows.length === 0 ? (
             <EmptyState variant={EmptyStateVariant.full}>

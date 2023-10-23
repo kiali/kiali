@@ -154,7 +154,7 @@ export class SourceBuilder extends React.Component<Props, State> {
 
     const sourceRows = Object.keys(this.state.source).map((sourceField, i) => {
       return {
-        key: 'sourceKey' + i,
+        key: `sourceKey_${i}`,
         cells: [<>{sourceField}</>, <>{this.state.source[sourceField].join(',')}</>, <></>]
       };
     });
@@ -171,7 +171,7 @@ export class SourceBuilder extends React.Component<Props, State> {
                 onChange={this.onAddNewSourceField}
               >
                 {this.state.sourceFields.map((option, index) => (
-                  <FormSelectOption isDisabled={false} key={'source' + index} value={option} label={option} />
+                  <FormSelectOption isDisabled={false} key={`source_${index}`} value={option} label={option} />
                 ))}
               </FormSelect>
             </>,

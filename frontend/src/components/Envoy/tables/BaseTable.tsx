@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ISortBy, SortByDirection, Table, Tbody, Td, Th, Thead, ThProps, Tr } from '@patternfly/react-table';
+import { ISortBy, SortByDirection, ThProps } from '@patternfly/react-table';
 import { ClusterSummaryTable, ClusterTable } from './ClusterTable';
 import { RouteSummaryTable, RouteTable } from './RouteTable';
 import { ListenerSummaryTable, ListenerTable } from './ListenerTable';
@@ -12,6 +12,7 @@ import { ToolbarDropdown } from '../../ToolbarDropdown/ToolbarDropdown';
 import { PFBadge, PFBadges } from '../../Pf/PfBadges';
 import { TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
+import { SimpleTable } from 'components/SimpleTable';
 
 export interface SummaryTable {
   availableFilters: () => FilterType[];
@@ -48,14 +49,10 @@ export function SummaryTableRenderer<T extends SummaryTable>() {
       });
     };
 
-    getSortParams = (columnIndex: number): ThProps['sort'] => ({
-      sortBy: this.props.writer.sortBy(),
-      onSort: (_event: React.MouseEvent, columnIndex: number, sortByDirection: SortByDirection) => {
-        this.props.writer.setSorting(columnIndex, sortByDirection);
-        this.props.onSort(this.props.writer.resource(), columnIndex, sortByDirection);
-      },
-      columnIndex
-    });
+    onSort = (_event: React.MouseEvent, columnIndex: number, sortByDirection: SortByDirection) => {
+      this.props.writer.setSorting(columnIndex, sortByDirection);
+      this.props.onSort(this.props.writer.resource(), columnIndex, sortByDirection);
+    };
 
     render() {
       const columns = this.props.writer.head();
@@ -85,33 +82,14 @@ export function SummaryTableRenderer<T extends SummaryTable>() {
               </div>
             </>
           </StatefulFilters>
-          <Table aria-label="Sortable Table">
-            <Thead>
-              <Tr>
-                {columns.map((column, index) => (
-                  <Th
-                    key={`column_${index}`}
-                    dataLabel={column.title}
-                    sort={this.getSortParams(index)}
-                    info={column.info}
-                  >
-                    {column.title}
-                  </Th>
-                ))}
-              </Tr>
-            </Thead>
-            <Tbody>
-              {rows.map((row, index) => (
-                <Tr key={`row_${index}`}>
-                  {row.map((cell, index) => (
-                    <Td key={`cell_${index}`} dataLabel={columns[index].title}>
-                      {cell}
-                    </Td>
-                  ))}
-                </Tr>
-              ))}
-            </Tbody>
-          </Table>
+
+          <SimpleTable
+            label="Sortable Table"
+            columns={columns}
+            rows={rows}
+            sortBy={this.props.writer.sortBy()}
+            onSort={this.onSort}
+          />
         </>
       );
     }

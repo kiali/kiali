@@ -1,10 +1,11 @@
 import * as React from 'react';
 import ReactResizeDetector from 'react-resize-detector';
 import { Tab, Popover, PopoverPosition } from '@patternfly/react-core';
-import { ThProps, IRow, Thead, Tr, Th, Tbody, Td, IRowCell, Table } from '@patternfly/react-table';
+import { ThProps, IRow } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { PFColors } from 'components/Pf/PfColors';
+import { SimpleTable } from 'components/SimpleTable';
 
 export interface GraphHelpFindProps {
   children: React.ReactNode;
@@ -172,38 +173,15 @@ export const GraphHelpFind: React.FC<GraphHelpFindProps> = (props: GraphHelpFind
     ['<=', `less than or equals`]
   ];
 
-  const getTable = (columns: ThProps[], rows: IRow[]): React.ReactNode => {
-    return (
-      <Table>
-        <Thead>
-          <Tr>
-            {columns.map((column, index) => (
-              <Th key={`column_${index}`} dataLabel={column.title} width={column.width}>
-                {column.title}
-              </Th>
-            ))}
-          </Tr>
-        </Thead>
-        <Tbody>
-          {rows.map((row, index) => (
-            <Tr key={`row_${index}`}>
-              {(row as IRowCell[])?.map((cell, index) => (
-                <Td key={`cell_${index}`} dataLabel={columns[index].title}>
-                  {cell}
-                </Td>
-              ))}
-            </Tr>
-          ))}
-        </Tbody>
-      </Table>
-    );
+  const getTable = (label: string, columns: ThProps[], rows: IRow[]): React.ReactNode => {
+    return <SimpleTable label={label} columns={columns} rows={rows} />;
   };
 
-  const exampleTable = getTable(exampleColumns, exampleRows);
-  const nodeTable = getTable(nodeColumns, nodeRows);
-  const edgeTable = getTable(edgeColumns, edgeRows);
-  const operatorTable = getTable(operatorColumns, operatorRows);
-  const noteTable = getTable(noteColumns, noteRows);
+  const exampleTable = getTable('Example Table', exampleColumns, exampleRows);
+  const nodeTable = getTable('Node Table', nodeColumns, nodeRows);
+  const edgeTable = getTable('Edge Table', edgeColumns, edgeRows);
+  const operatorTable = getTable('Operator Table', operatorColumns, operatorRows);
+  const noteTable = getTable('Note Table', noteColumns, noteRows);
 
   return (
     <>

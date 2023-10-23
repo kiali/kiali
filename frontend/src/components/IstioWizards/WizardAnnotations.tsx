@@ -11,7 +11,7 @@ import {
   Title,
   TitleSizes
 } from '@patternfly/react-core';
-import { Table, Tbody, Th, Thead, Tr } from '@patternfly/react-table';
+import { IRow, Table, TableVariant, Tbody, Th, Thead, Tr } from '@patternfly/react-table';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 
@@ -118,18 +118,19 @@ export class WizardAnnotations extends React.Component<Props, State> {
     this.setState({ annotations: this.convertAnnotationsToMap(), validation: [] });
   };
 
-  generateInput = (): JSX.Element[] => {
-    const rows: JSX.Element[] = [];
+  generateInput = (): IRow[] => {
+    const rows: IRow[] = [];
+
     Array.from(this.state.annotations.entries()).map(([index, [key, value]]: [number, [string, string]]) =>
       rows.push(
         this.props.canEdit ? (
-          <Tr key={'edit_annotation_for_' + index}>
+          <Tr key={`edit_annotation_for_${index}`}>
             <Th width={40}>
               <TextInput
                 aria-invalid={
                   key === '' || Object.values(this.state.annotations).filter(arr => arr[0] === key).length > 1
                 }
-                id={'annotationInputForKey_' + index}
+                id={`annotationInputForKey_${index}`}
                 onChange={(_event, newKey) => this.changeAnnotation([newKey, value], index)}
                 placeholder={'Key'}
                 type="text"
@@ -139,7 +140,7 @@ export class WizardAnnotations extends React.Component<Props, State> {
             <Th width={40}>
               <TextInput
                 aria-invalid={value === ''}
-                id={'annotationInputForValue_' + index}
+                id={`annotationInputForValue_${index}`}
                 onChange={(_event, v) => this.changeAnnotation([key, v], index)}
                 placeholder={'Value'}
                 type="text"
@@ -158,6 +159,7 @@ export class WizardAnnotations extends React.Component<Props, State> {
         )
       )
     );
+
     return rows;
   };
 
@@ -202,7 +204,7 @@ export class WizardAnnotations extends React.Component<Props, State> {
           aria-describedby="modal-custom-header-description"
           footer={footer}
         >
-          <Table variant={'compact'}>
+          <Table variant={TableVariant.compact}>
             <Thead>
               <Tr>
                 <Th dataLabel="Key">Key</Th>
@@ -221,13 +223,13 @@ export class WizardAnnotations extends React.Component<Props, State> {
             }}
             isInline
           >
-            <span style={{ marginLeft: '3px' }}>Add more</span>
+            <span style={{ marginLeft: '0.25rem' }}>Add more</span>
           </Button>
           {this.state.validation.length > 0 && (
             <Alert variant="danger" isInline isExpandable title="An error occurred">
               <List isPlain>
                 {this.state.validation.map((message, i) => (
-                  <ListItem key={'Message_' + i}>{message}</ListItem>
+                  <ListItem key={`Message_${i}`}>{message}</ListItem>
                 ))}
               </List>
             </Alert>

@@ -9,21 +9,7 @@ import {
   EmptyStateVariant,
   EmptyStateHeader
 } from '@patternfly/react-core';
-import {
-  TableVariant,
-  SortByDirection,
-  IRow,
-  IRowData,
-  IAction,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Td,
-  Th,
-  IRowCell,
-  ActionsColumn
-} from '@patternfly/react-table';
+import { SortByDirection, IRow, IRowData, IAction, TableVariant } from '@patternfly/react-table';
 import { compareNullable } from 'components/FilterList/FilterHelper';
 import { MetricsStats } from 'types/Metrics';
 import { KialiAppState } from 'store/Store';
@@ -41,8 +27,8 @@ import { renderMetricsComparison } from './StatsComparison';
 import { history } from 'app/History';
 import { isParentKiosk, kioskContextMenuAction } from '../../Kiosk/KioskActions';
 import { TEMPO } from '../../../types/Tracing';
-import { SortableTh, getSortParams } from 'utils/TableUtils';
 import { KialiIcon } from 'config/KialiIcon';
+import { SimpleTable, SortableTh } from 'components/SimpleTable';
 
 type ReduxProps = {
   kiosk: string;
@@ -64,6 +50,10 @@ interface State {
   openKebab?: string;
   sortDirection: SortByDirection;
   sortIndex: number;
+}
+
+interface SortableCompareTh<T> extends SortableTh {
+  compare?: (a: T, b: T) => number;
 }
 
 const dangerErrorStyle = kialiStyle({
@@ -110,7 +100,7 @@ const getClassName = (isError: boolean, isSpan: boolean): string | undefined => 
   return isSpan ? (isError ? selectedErrorStyle : selectedStyle) : isError ? dangerErrorStyle : undefined;
 };
 
-const columns: SortableTh<RichSpanData>[] = [
+const columns: SortableCompareTh<RichSpanData>[] = [
   {
     title: 'Timeline',
     sortable: true,
@@ -162,49 +152,25 @@ class SpanTableComponent extends React.Component<Props, State> {
     const onSort = (_event: React.MouseEvent, index: number, sortDirection: SortByDirection) =>
       this.setState({ sortIndex: index, sortDirection: sortDirection });
 
-    return (
-      <Table variant={TableVariant.compact} aria-label="list_spans" className={tableStyle}>
-        <Thead>
-          <Tr>
-            {columns.map((column, index) => (
-              <Th
-                key={`column_${index}`}
-                dataLabel={column.title}
-                width={column.width}
-                sort={getSortParams(column, index, sortBy, onSort)}
-              >
-                {column.title}
-              </Th>
-            ))}
-          </Tr>
-        </Thead>
+    const emptyState = (
+      <EmptyState variant={EmptyStateVariant.full}>
+        <EmptyStateHeader titleText="No spans found" headingLevel="h5" />
+        <EmptyStateBody>No spans match the current filters</EmptyStateBody>
+      </EmptyState>
+    );
 
-        <Tbody>
-          {this.props.items.length > 0 ? (
-            rows.map((row, index) => (
-              <Tr key={`row_${index}`} className={row.className}>
-                {(row.cells as IRowCell[])?.map((cell, index) => (
-                  <Td key={`cell_${index}`} dataLabel={columns[index].title}>
-                    {cell}
-                  </Td>
-                ))}
-                <Td isActionCell>
-                  <ActionsColumn items={this.actionResolver(row)} />
-                </Td>
-              </Tr>
-            ))
-          ) : (
-            <Tr>
-              <Td colSpan={columns.length}>
-                <EmptyState variant={EmptyStateVariant.full}>
-                  <EmptyStateHeader titleText="No spans found" headingLevel="h5" />
-                  <EmptyStateBody>No spans match the current filters</EmptyStateBody>
-                </EmptyState>
-              </Td>
-            </Tr>
-          )}
-        </Tbody>
-      </Table>
+    return (
+      <SimpleTable
+        label="list_spans"
+        className={tableStyle}
+        columns={columns}
+        rows={rows}
+        emptyState={emptyState}
+        onSort={onSort}
+        sortBy={sortBy}
+        actionResolver={this.actionResolver}
+        variant={TableVariant.compact}
+      />
     );
   }
 
@@ -259,7 +225,7 @@ class SpanTableComponent extends React.Component<Props, State> {
       {
         title: 'Inbound Metrics',
         onClick: () => {
-          const href = item.linkToApp + getParamsSeparator(rowData.item.linkToApp) + 'tab=in_metrics';
+          const href = `${item.linkToApp}${getParamsSeparator(rowData.item.linkToApp)}tab=in_metrics`;
           if (parentKiosk) {
             kioskContextMenuAction(href);
           } else {
@@ -270,7 +236,7 @@ class SpanTableComponent extends React.Component<Props, State> {
       {
         title: 'Outbound Metrics',
         onClick: () => {
-          const href = item.linkToApp + getParamsSeparator(rowData.item.linkToApp) + 'tab=out_metrics';
+          const href = `${item.linkToApp}${getParamsSeparator(rowData.item.linkToApp)}tab=out_metrics`;
           if (parentKiosk) {
             kioskContextMenuAction(href);
           } else {
@@ -291,7 +257,7 @@ class SpanTableComponent extends React.Component<Props, State> {
         {
           title: 'Logs',
           onClick: () => {
-            const href = item.linkToWorkload + '?tab=logs';
+            const href = `${item.linkToWorkload}?tab=logs`;
             if (parentKiosk) {
               kioskContextMenuAction(href);
             } else {
@@ -302,7 +268,7 @@ class SpanTableComponent extends React.Component<Props, State> {
         {
           title: 'Inbound Metrics',
           onClick: () => {
-            const href = item.linkToWorkload + getParamsSeparator(rowData.item.linkToWorkload) + 'tab=in_metrics';
+            const href = `${item.linkToWorkload}${getParamsSeparator(rowData.item.linkToWorkload)}tab=in_metrics`;
             if (parentKiosk) {
               kioskContextMenuAction(href);
             } else {
@@ -313,7 +279,7 @@ class SpanTableComponent extends React.Component<Props, State> {
         {
           title: 'Outbound Metrics',
           onClick: () => {
-            const href = item.linkToWorkload + getParamsSeparator(rowData.item.linkToWorkload) + 'tab=out_metrics';
+            const href = `${item.linkToWorkload}${getParamsSeparator(rowData.item.linkToWorkload)}tab=out_metrics`;
             if (parentKiosk) {
               kioskContextMenuAction(href);
             } else {
@@ -478,14 +444,14 @@ class SpanTableComponent extends React.Component<Props, State> {
                 to={''}
                 onClick={() => {
                   if (info.peer) {
-                    kioskContextMenuAction('/namespaces/' + info.peer.namespace + '/workloads/' + info.peer.name);
+                    kioskContextMenuAction(`/namespaces/${info.peer.namespace}/workloads/${info.peer.name}`);
                   }
                 }}
               >
                 {info.peer.name}
               </Link>
             ) : (
-              <Link to={'/namespaces/' + info.peer.namespace + '/workloads/' + info.peer.name}>{info.peer.name}</Link>
+              <Link to={`/namespaces/${info.peer.namespace}/workloads/${info.peer.name}`}>{info.peer.name}</Link>
             )}
           </>
         );
@@ -503,14 +469,14 @@ class SpanTableComponent extends React.Component<Props, State> {
                 to={''}
                 onClick={() => {
                   if (info.peer) {
-                    kioskContextMenuAction('/namespaces/' + info.peer.namespace + '/services/' + info.peer.name);
+                    kioskContextMenuAction(`/namespaces/${info.peer.namespace}/services/${info.peer.name}`);
                   }
                 }}
               >
                 {info.peer.name}
               </Link>
             ) : (
-              <Link key={`${key}-out-link`} to={'/namespaces/' + info.peer.namespace + '/services/' + info.peer.name}>
+              <Link key={`${key}-out-link`} to={`/namespaces/${info.peer.namespace}/services/${info.peer.name}`}>
                 {info.peer.name}
               </Link>
             )}

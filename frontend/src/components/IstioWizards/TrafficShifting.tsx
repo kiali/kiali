@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Table, Thead, Tbody, Tr, Td, Th, IRowCell, ThProps } from '@patternfly/react-table';
+import { ThProps } from '@patternfly/react-table';
 import { Slider } from './Slider/Slider';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -8,6 +8,7 @@ import { Button, ButtonVariant, TooltipPosition } from '@patternfly/react-core';
 import { getDefaultWeights } from './WizardActions';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { KialiIcon } from 'config/KialiIcon';
+import { SimpleTable } from 'components/SimpleTable';
 
 type Props = {
   initWeights: WorkloadWeight[];
@@ -223,8 +224,8 @@ export class TrafficShifting extends React.Component<Props, State> {
               {workload.name}
             </div>,
             <Slider
-              id={'slider-' + workload.name}
-              key={'slider-' + workload.name}
+              id={`slider-${workload.name}`}
+              key={`slider-${workload.name}`}
               tooltip={true}
               input={true}
               inputFormat="%"
@@ -270,8 +271,8 @@ export class TrafficShifting extends React.Component<Props, State> {
               {workload.name}
             </div>,
             <Slider
-              id={'slider-' + workload.name}
-              key={'slider-' + workload.name}
+              id={`slider-${workload.name}`}
+              key={`slider-${workload.name}`}
               tooltip={true}
               input={true}
               inputFormat="%"
@@ -298,55 +299,9 @@ export class TrafficShifting extends React.Component<Props, State> {
 
     return (
       <>
-        <Table aria-label="weighted routing">
-          <Thead>
-            <Tr>
-              {workloadColumns.map((column, index) => (
-                <Th key={`column_${index}`} dataLabel={column.title} width={column.width}>
-                  {column.title}
-                </Th>
-              ))}
-            </Tr>
-          </Thead>
+        <SimpleTable label="weighted routing" columns={workloadColumns} rows={workloadRows} />
 
-          <Tbody>
-            {workloadRows.map((row, index) => (
-              <Tr key={`row_${index}`}>
-                {(row.cells as IRowCell[])?.map((cell, index) => (
-                  <Td key={`cell_${index}`} dataLabel={workloadColumns[index].title}>
-                    {cell}
-                  </Td>
-                ))}
-              </Tr>
-            ))}
-          </Tbody>
-        </Table>
-
-        {mirrorRows.length > 0 && (
-          <Table aria-label="mirrors">
-            <Thead>
-              <Tr>
-                {mirrorColumns.map((column, index) => (
-                  <Th key={`column_${index}`} dataLabel={column.title} width={column.width}>
-                    {column.title}
-                  </Th>
-                ))}
-              </Tr>
-            </Thead>
-
-            <Tbody>
-              {mirrorRows.map((row, index) => (
-                <Tr key={`row_${index}`}>
-                  {(row.cells as IRowCell[])?.map((cell, index) => (
-                    <Td key={`cell_${index}`} dataLabel={mirrorColumns[index].title}>
-                      {cell}
-                    </Td>
-                  ))}
-                </Tr>
-              ))}
-            </Tbody>
-          </Table>
-        )}
+        {mirrorRows.length > 0 && <SimpleTable label="mirrors" columns={mirrorColumns} rows={mirrorRows} />}
 
         {this.props.workloads.length > 1 && (
           <div className={evenlyButtonStyle}>

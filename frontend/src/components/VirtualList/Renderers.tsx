@@ -45,17 +45,17 @@ const getLink = (item: TResource, config: Resource, query?: string) => {
 
   if (item.cluster && isMultiCluster && !url.includes('cluster')) {
     if (url.includes('?')) {
-      url = url + '&clusterName=' + item.cluster;
+      url = `${url}&clusterName=${item.cluster}`;
     } else {
-      url = url + '?clusterName=' + item.cluster;
+      url = `${url}?clusterName=${item.cluster}`;
     }
   }
 
   if (query) {
     if (url.includes('?')) {
-      url = url + '&' + query;
+      url = `${url}&${query}`;
     } else {
-      url = url + '?' + query;
+      url = `${url}?${query}`;
     }
   }
 
@@ -71,7 +71,7 @@ const getIstioLink = (item: TResource) => {
 // Cells
 export const actionRenderer = (key: string, action: JSX.Element) => {
   return (
-    <Td role="gridcell" key={'VirtuaItem_Action_' + key} style={{ verticalAlign: 'middle' }}>
+    <Td role="gridcell" key={`VirtuaItem_Action_${key}`} style={{ verticalAlign: 'middle' }}>
       {action}
     </Td>
   );
@@ -94,7 +94,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
     <Td
       role="gridcell"
       dataLabel="Details"
-      key={'VirtuaItem_Details_' + item.namespace + '_' + item.name}
+      key={`VirtuaItem_Details_${item.namespace}_${item.name}`}
       style={{ verticalAlign: 'middle', whiteSpace: 'nowrap' }}
     >
       <ul>
@@ -157,7 +157,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
 
 export const tls: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
   return (
-    <Td role="gridcell" dataLabel="TLS" key={'VirtualItem_tls_' + ns.name} style={{ verticalAlign: 'middle' }}>
+    <Td role="gridcell" dataLabel="TLS" key={`VirtualItem_tls_${ns.name}`} style={{ verticalAlign: 'middle' }}>
       {ns.tlsStatus ? <NamespaceMTLSStatus status={ns.tlsStatus.status} /> : undefined}
     </Td>
   );
@@ -174,7 +174,7 @@ export const istioConfig: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
     <Td
       role="gridcell"
       dataLabel="Config"
-      key={'VirtuaItem_IstioConfig_' + ns.name}
+      key={`VirtuaItem_IstioConfig_${ns.name}`}
       style={{ verticalAlign: 'middle' }}
     >
       <ValidationSummaryLink
@@ -184,7 +184,7 @@ export const istioConfig: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
         warnings={validations.warnings}
       >
         <ValidationSummary
-          id={'ns-val-' + ns.name}
+          id={`ns-val-${ns.name}`}
           errors={validations.errors}
           warnings={validations.warnings}
           objectCount={validations.objectCount}
@@ -201,13 +201,13 @@ export const status: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
       <Td
         role="gridcell"
         dataLabel="Status"
-        key={'VirtuaItem_Status_' + ns.name}
+        key={`VirtuaItem_Status_${ns.name}`}
         textCenter
         style={{ verticalAlign: 'middle' }}
       >
         {ns.status && (
           <NamespaceStatuses
-            key={ns.name}
+            key={`${ns.name}_status`}
             name={ns.name}
             status={ns.status}
             type={OverviewToolbar.currentOverviewType()}
@@ -215,7 +215,7 @@ export const status: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
         )}
 
         <OverviewCardSparklineCharts
-          key={ns.name}
+          key={`${ns.name}_chart`}
           name={ns.name}
           annotations={ns.annotations}
           duration={FilterHelper.currentDuration()}
@@ -228,7 +228,7 @@ export const status: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
     );
   }
 
-  return <Td role="gridcell" dataLabel="Status" key={'VirtuaItem_Status_' + ns.name} />;
+  return <Td role="gridcell" dataLabel="Status" key={`VirtuaItem_Status_${ns.name}`} />;
 };
 
 export const nsItem: Renderer<NamespaceInfo> = (ns: NamespaceInfo, _config: Resource, badge: PFBadgeType) => {
@@ -236,7 +236,7 @@ export const nsItem: Renderer<NamespaceInfo> = (ns: NamespaceInfo, _config: Reso
     <Td
       role="gridcell"
       dataLabel="Namespace"
-      key={'VirtuaItem_NamespaceItem_' + ns.name}
+      key={`VirtuaItem_NamespaceItem_${ns.name}`}
       style={{ verticalAlign: 'middle' }}
     >
       <PFBadge badge={badge} />
@@ -249,7 +249,7 @@ export const nsItem: Renderer<NamespaceInfo> = (ns: NamespaceInfo, _config: Reso
 };
 
 export const item: Renderer<TResource> = (item: TResource, config: Resource, badge: PFBadgeType) => {
-  const key = 'link_definition_' + config.name + '_' + item.namespace + '_' + item.name;
+  const key = `link_definition_${config.name}_${item.namespace}_${item.name}`;
   let serviceBadge = badge;
 
   if (item['serviceRegistry']) {
@@ -267,7 +267,7 @@ export const item: Renderer<TResource> = (item: TResource, config: Resource, bad
     <Td
       role="gridcell"
       dataLabel="Name"
-      key={'VirtuaItem_Item_' + item.namespace + '_' + item.name}
+      key={`VirtuaItem_Item_${item.namespace}_${item.name}`}
       style={{ verticalAlign: 'middle' }}
     >
       <PFBadge badge={serviceBadge} position={TooltipPosition.top} />
@@ -284,7 +284,7 @@ export const cluster: Renderer<TResource> = (item: TResource) => {
     <Td
       role="gridcell"
       dataLabel="Cluster"
-      key={'VirtuaItem_Cluster_' + item.cluster}
+      key={`VirtuaItem_Cluster_${item.cluster}`}
       style={{ verticalAlign: 'middle' }}
     >
       <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.top} />
@@ -298,7 +298,7 @@ export const namespace: Renderer<TResource> = (item: TResource) => {
     <Td
       role="gridcell"
       dataLabel="Namespace"
-      key={'VirtuaItem_Namespace_' + item.namespace + '_' + item.name}
+      key={`VirtuaItem_Namespace_${item.namespace}_${item.name}`}
       style={{ verticalAlign: 'middle' }}
     >
       <PFBadge badge={PFBadges.Namespace} position={TooltipPosition.top} />
@@ -347,7 +347,7 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
     <Td
       role="gridcell"
       dataLabel="Labels"
-      key={'VirtuaItem_Labels_' + ('namespace' in item && `${item.namespace}_`) + item.name}
+      key={`VirtuaItem_Labels_${'namespace' in item && `${item.namespace}_`}${item.name}`}
       style={{ verticalAlign: 'middle' }}
     >
       {item.labels &&
@@ -362,7 +362,7 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
 
           const labelComponent = (
             <Label
-              key={'label_' + i}
+              key={`label_${i}`}
               name={key}
               value={value}
               style={{ cursor: isExactlyLabelFilter || !labelAct ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}
@@ -378,7 +378,7 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
 
           return statefulFilter ? (
             <Tooltip
-              key={'Tooltip_Label_' + key + '_' + value}
+              key={`Tooltip_Label_${key}_${value}`}
               content={
                 labelAct ? (
                   isExactlyLabelFilter ? (
@@ -406,7 +406,7 @@ export const health: Renderer<TResource> = (item: TResource, __: Resource, _: PF
     <Td
       role="gridcell"
       dataLabel="Health"
-      key={'VirtuaItem_Health_' + item.namespace + '_' + item.name}
+      key={`VirtuaItem_Health_${item.namespace}_${item.name}`}
       style={{ verticalAlign: 'middle' }}
     >
       {health && <HealthIndicator id={item.name} health={health} />}
@@ -419,7 +419,7 @@ export const workloadType: Renderer<WorkloadListItem> = (item: WorkloadListItem)
     <Td
       role="gridcell"
       dataLabel="Type"
-      key={'VirtuaItem_WorkloadType_' + item.namespace + '_' + item.name}
+      key={`VirtuaItem_WorkloadType_${item.namespace}_${item.name}`}
       style={{ verticalAlign: 'middle' }}
     >
       {item.type}
@@ -435,7 +435,7 @@ export const istioType: Renderer<IstioConfigItem> = (item: IstioConfigItem) => {
     <Td
       role="gridcell"
       dataLabel="Type"
-      key={'VirtuaItem_IstioType_' + item.namespace + '_' + item.name}
+      key={`VirtuaItem_IstioType_${item.namespace}_${item.name}`}
       style={{ verticalAlign: 'middle' }}
     >
       {object.name}
@@ -452,13 +452,13 @@ export const istioConfiguration: Renderer<IstioConfigItem> = (item: IstioConfigI
     <Td
       role="gridcell"
       dataLabel="Configuration"
-      key={'VirtuaItem_Conf_' + item.namespace + '_' + item.name}
+      key={`VirtuaItem_Conf_${item.namespace}_${item.name}`}
       style={{ verticalAlign: 'middle' }}
     >
       {validation ? (
         <Link to={`${getLink(item, config, linkQuery)}`}>
           <ValidationObjectSummary
-            id={item.name + '-config-validation'}
+            id={`${item.name}-config-validation`}
             validations={[validation]}
             reconciledCondition={reconciledCondition}
           />
@@ -478,12 +478,12 @@ export const serviceConfiguration: Renderer<ServiceListItem> = (item: ServiceLis
     <Td
       role="gridcell"
       dataLabel="Configuration"
-      key={'VirtuaItem_Conf_' + item.namespace + '_' + item.name}
+      key={`VirtuaItem_Conf_${item.namespace}_${item.name}`}
       style={{ verticalAlign: 'middle' }}
     >
       {validation ? (
         <Link to={`${getLink(item, config, linkQuery)}`}>
-          <ValidationServiceSummary id={item.name + '-service-validation'} validations={[validation]} />
+          <ValidationServiceSummary id={`${item.name}-service-validation`} validations={[validation]} />
         </Link>
       ) : (
         <>N/A</>

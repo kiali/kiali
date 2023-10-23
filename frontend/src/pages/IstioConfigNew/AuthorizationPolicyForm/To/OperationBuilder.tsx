@@ -129,7 +129,7 @@ export class OperationBuilder extends React.Component<Props, State> {
   rows = () => {
     const operatorRows = Object.keys(this.state.operation).map((operationField, i) => {
       return {
-        key: 'operationKey' + i,
+        key: `operationKey_${i}`,
         cells: [<>{operationField}</>, <>{this.state.operation[operationField].join(',')}</>, <></>]
       };
     });
@@ -146,7 +146,7 @@ export class OperationBuilder extends React.Component<Props, State> {
                 onChange={this.onAddNewOperationField}
               >
                 {this.state.operationFields.map((option, index) => (
-                  <FormSelectOption isDisabled={false} key={'operation' + index} value={option} label={option} />
+                  <FormSelectOption isDisabled={false} key={`operation_${index}`} value={option} label={option} />
                 ))}
               </FormSelect>
             </>,

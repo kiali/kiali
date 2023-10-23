@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Table, Thead, Tbody, Tr, Td, Th, IRowCell, ThProps } from '@patternfly/react-table';
+import { ThProps } from '@patternfly/react-table';
 import { Slider } from './Slider/Slider';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Button, ButtonVariant, TooltipPosition } from '@patternfly/react-core';
@@ -7,6 +7,7 @@ import { getDefaultBackendRefs } from './WizardActions';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ServiceOverview } from '../../types/ServiceList';
 import { KialiIcon } from 'config/KialiIcon';
+import { SimpleTable } from 'components/SimpleTable';
 
 type Props = {
   initRefs: K8sRouteBackendRef[];
@@ -114,8 +115,8 @@ export class K8sTrafficShifting extends React.Component<Props, State> {
             {service.name}
           </div>,
           <Slider
-            id={'slider-' + service.name}
-            key={'slider-' + service.name}
+            id={`slider-${service.name}`}
+            key={`slider-${service.name}`}
             tooltip={true}
             input={true}
             inputFormat=""
@@ -139,29 +140,7 @@ export class K8sTrafficShifting extends React.Component<Props, State> {
 
     return (
       <>
-        <Table aria-label="weighted routing">
-          <Thead>
-            <Tr>
-              {columns.map((column, index) => (
-                <Th key={`column_${index}`} dataLabel={column.title} width={column.width}>
-                  {column.title}
-                </Th>
-              ))}
-            </Tr>
-          </Thead>
-
-          <Tbody>
-            {rows.map((row, index) => (
-              <Tr key={`row_${index}`}>
-                {(row.cells as IRowCell[])?.map((cell, index) => (
-                  <Td key={`cell_${index}`} dataLabel={columns[index].title}>
-                    {cell}
-                  </Td>
-                ))}
-              </Tr>
-            ))}
-          </Tbody>
-        </Table>
+        <SimpleTable label="weighted routing" columns={columns} rows={rows} />
 
         {this.props.subServices.length > 1 && (
           <div className={evenlyButtonStyle}>

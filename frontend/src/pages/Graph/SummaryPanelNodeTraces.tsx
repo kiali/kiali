@@ -179,7 +179,7 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
             {this.state.traces.map(trace => {
               return (
                 <SimpleListItem
-                  key={'trace_' + trace.traceID}
+                  key={`trace_${trace.traceID}`}
                   onClick={() => this.onClickTrace(trace)}
                   isActive={trace.traceID === currentID}
                 >

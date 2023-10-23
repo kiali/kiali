@@ -12,12 +12,13 @@ import {
   TextInput
 } from '@patternfly/react-core';
 import { PeerAuthenticationMutualTLSMode } from '../../types/IstioObjects';
-import { IRow, IRowCell, Table, Tbody, Td, Th, Thead, ThProps, Tr } from '@patternfly/react-table';
+import { IRow, ThProps } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../components/Pf/PfColors';
 import { isValid } from 'utils/Common';
 
 import { KialiIcon } from 'config/KialiIcon';
+import { SimpleTable } from 'components/SimpleTable';
 
 const noPortMtlsStyle = kialiStyle({
   marginTop: '1rem',
@@ -248,7 +249,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
   rows = (): IRow[] => {
     return this.props.peerAuthentication.portLevelMtls
       .map((pmtls, index) => ({
-        key: 'portMtls' + index,
+        key: `portMtls_${index}`,
         cells: [
           <>{pmtls.port}</>,
           <>{pmtls.mtls}</>,
@@ -281,7 +282,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
               onChange={this.onAddPortMtlsMode}
             >
               {Object.keys(PeerAuthenticationMutualTLSMode).map((option, index) => (
-                <FormSelectOption key={'p' + index} value={option} label={option} />
+                <FormSelectOption key={`p_${index}`} value={option} label={option} />
               ))}
             </FormSelect>,
             <Button
@@ -352,28 +353,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
 
         {this.state.addPortMtls && (
           <FormGroup label="Port Level MTLS" fieldId="portMtlsList">
-            <Table aria-label="Port Level MTLS">
-              <Thead>
-                <Tr>
-                  {columns.map((column, index) => (
-                    <Th key={`column_${index}`} dataLabel={column.title} width={column.width}>
-                      {column.title}
-                    </Th>
-                  ))}
-                </Tr>
-              </Thead>
-              <Tbody>
-                {this.rows().map((row, index) => (
-                  <Tr key={row.key ?? `row_${index}`}>
-                    {(row.cells as IRowCell[])?.map((cell, index) => (
-                      <Td key={`cell_${index}`} dataLabel={columns[index].title}>
-                        {cell}
-                      </Td>
-                    ))}
-                  </Tr>
-                ))}
-              </Tbody>
-            </Table>
+            <SimpleTable label="Port Level MTLS" columns={columns} rows={this.rows()} />
 
             {this.props.peerAuthentication.portLevelMtls.length === 0 && (
               <div className={noPortMtlsStyle}>PeerAuthentication has no Port Mutual TLS defined</div>

@@ -139,7 +139,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     }
   }
 
-  envoyHandleTabClick = (_event, tabIndex) => {
+  envoyHandleTabClick = (_event: React.MouseEvent, tabIndex: string | number) => {
     const resourceIdx: number = +tabIndex;
     const targetResource: string = resources[resourceIdx];
     if (targetResource !== this.state.resource) {
@@ -147,13 +147,13 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
         config: {},
         fetch: true,
         resource: targetResource,
-        activeKey: tabIndex
+        activeKey: resourceIdx
       });
       const mainTab = new URLSearchParams(history.location.search).get(workloadTabName) || workloadDefaultTab;
       const urlParams = new URLSearchParams(history.location.search);
       urlParams.set(tabName, targetResource);
       urlParams.set(workloadTabName, mainTab);
-      history.push(history.location.pathname + '?' + urlParams.toString());
+      history.push(`${history.location.pathname}?${urlParams.toString()}`);
     }
   };
 
@@ -293,9 +293,9 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     }
 
     const tabs = filteredEnvoyTabs.map((value, index) => {
-      const title = value.charAt(0).toUpperCase() + value.slice(1);
+      const title = `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
       return (
-        <Tab key={'tab_' + value} eventKey={index} title={title}>
+        <Tab key={`tab_${value}`} eventKey={index} title={title}>
           <Card className={fullHeightStyle}>
             <CardBody>
               {this.showEditor() ? (
@@ -326,7 +326,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                     mode="yaml"
                     theme={this.props.theme === Theme.DARK ? 'twilight' : 'eclipse'}
                     width={'100%'}
-                    height={height.toString() + 'px'}
+                    height={`${height.toString()}px`}
                     className={istioAceEditorStyle}
                     wrapEnabled={true}
                     readOnly={true}

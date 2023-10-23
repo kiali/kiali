@@ -339,7 +339,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
         return (
           <span>
             <img alt="Kiali Icon" src={kialiIcon} className={kialiIconStyle} />
-            {instance.namespace + ' / ' + instance.serviceName}
+            {`${instance.namespace} / ${instance.serviceName}`}
             <br />
           </span>
         );

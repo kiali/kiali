@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import { IRow, SortByDirection, Thead, Tr, Th, Tbody, Td, IRowCell, Table } from '@patternfly/react-table';
+import { IRow, SortByDirection } from '@patternfly/react-table';
 import { Link } from 'react-router-dom';
 import { TrafficItem, TrafficNode, TrafficDirection } from './TrafficDetails';
 import * as FilterComponent from '../FilterList/FilterComponent';
@@ -19,7 +19,7 @@ import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { isMultiCluster } from 'config';
 import { getParamsSeparator } from '../../utils/SearchParamUtils';
-import { getSortParams, SortableTh } from 'utils/TableUtils';
+import { SimpleTable, SortableTh } from 'components/SimpleTable';
 
 export interface TrafficListItem {
   badge: PFBadgeType;
@@ -44,8 +44,8 @@ type TrafficListComponentProps = ReduxProps &
 
 type TrafficListComponentState = FilterComponent.State<TrafficListItem>;
 
-const columns = (isMultiCluster: boolean): SortableTh<TrafficListItem>[] => {
-  const cols: SortableTh<TrafficListItem>[] = [
+const columns = (isMultiCluster: boolean): SortableTh[] => {
+  const cols: SortableTh[] = [
     {
       title: 'Status',
       sortable: true,
@@ -89,7 +89,7 @@ const columns = (isMultiCluster: boolean): SortableTh<TrafficListItem>[] => {
 };
 
 function LockIcon(props: { mTLS: number | undefined }) {
-  const msg = props.mTLS ? props.mTLS + ' % of mTLS traffic' : 'mTLS is disabled';
+  const msg = props.mTLS ? `${props.mTLS} % of mTLS traffic` : 'mTLS is disabled';
   return (
     <Tooltip position={TooltipPosition.top} content={msg}>
       <>
@@ -150,33 +150,13 @@ class TrafficList extends FilterComponent.Component<
             {hasInbound ? '' : 'No '} Inbound Traffic
           </Title>
           {hasInbound && (
-            <Table aria-label="Sortable Table">
-              <Thead>
-                <Tr>
-                  {cols.map((column, index) => (
-                    <Th
-                      key={`column_${index}`}
-                      dataLabel={column.title}
-                      sort={getSortParams(column, index, sortBy, this.onSort)}
-                      width={column.width}
-                    >
-                      {column.title}
-                    </Th>
-                  ))}
-                </Tr>
-              </Thead>
-              <Tbody>
-                {inboundRows.map((row, index) => (
-                  <Tr key={`row_${index}`}>
-                    {(row.cells as IRowCell[])?.map((cell, index) => (
-                      <Td key={`cell_${index}`} dataLabel={cols[index].title}>
-                        {cell}
-                      </Td>
-                    ))}
-                  </Tr>
-                ))}
-              </Tbody>
-            </Table>
+            <SimpleTable
+              label="Sortable Table"
+              columns={cols}
+              rows={inboundRows}
+              sortBy={sortBy}
+              onSort={this.onSort}
+            />
           )}
         </div>
         <div className={containerStyle}>
@@ -184,33 +164,13 @@ class TrafficList extends FilterComponent.Component<
             {hasOutbound ? '' : 'No '} Outbound Traffic
           </Title>
           {hasOutbound && (
-            <Table aria-label="Sortable Table">
-              <Thead>
-                <Tr>
-                  {cols.map((column, index) => (
-                    <Th
-                      key={`column_${index}`}
-                      dataLabel={column.title}
-                      sort={getSortParams(column, index, sortBy, this.onSort)}
-                      width={column.width}
-                    >
-                      {column.title}
-                    </Th>
-                  ))}
-                </Tr>
-              </Thead>
-              <Tbody>
-                {outboundRows.map((row, index) => (
-                  <Tr key={`row_${index}`}>
-                    {(row.cells as IRowCell[])?.map((cell, index) => (
-                      <Td key={`cell_${index}`} dataLabel={cols[index].title}>
-                        {cell}
-                      </Td>
-                    ))}
-                  </Tr>
-                ))}
-              </Tbody>
-            </Table>
+            <SimpleTable
+              label="Sortable Table"
+              columns={cols}
+              rows={outboundRows}
+              sortBy={sortBy}
+              onSort={this.onSort}
+            />
           )}
         </div>
       </>
@@ -417,14 +377,14 @@ class TrafficList extends FilterComponent.Component<
       case NodeType.APP:
         // All metrics tabs can filter by remote app. No need to switch context.
         const side = item.direction === 'inbound' ? 'source' : 'destination';
-        metrics += `&${URLParam.BY_LABELS}=${encodeURIComponent(side + '_canonical_service=' + item.node.name)}`;
+        metrics += `&${URLParam.BY_LABELS}=${encodeURIComponent(`${side}_canonical_service=${item.node.name}`)}`;
         break;
       case NodeType.SERVICE:
         if (item.node.isServiceEntry) {
           // Service Entries should be only destination nodes. So, don't build a link if direction is inbound.
           if (item.direction !== 'inbound' && item.node.destServices && item.node.destServices.length > 0) {
             const svcHosts = item.node.destServices.map(item => item.name).join(',');
-            metrics += `&${URLParam.BY_LABELS}=${encodeURIComponent('destination_service_name=' + svcHosts)}`;
+            metrics += `&${URLParam.BY_LABELS}=${encodeURIComponent(`destination_service_name=${svcHosts}`)}`;
           } else {
             metrics = '';
           }
@@ -432,7 +392,7 @@ class TrafficList extends FilterComponent.Component<
           // Filter by remote service only available in the Outbound Metrics tab. For inbound traffic,
           // switch context to the service details page.
           if (item.direction === 'outbound') {
-            metrics += `&${URLParam.BY_LABELS}=${encodeURIComponent('destination_service_name=' + item.node.name)}`;
+            metrics += `&${URLParam.BY_LABELS}=${encodeURIComponent(`destination_service_name=${item.node.name}`)}`;
           } else {
             // Services have only one metrics tab.
             metrics = `${detail}${getParamsSeparator(detail)}tab=metrics`;

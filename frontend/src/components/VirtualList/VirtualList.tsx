@@ -2,6 +2,8 @@ import * as React from 'react';
 import {
   Caption,
   IRow,
+  ISortBy,
+  OnSort,
   SortByDirection,
   Table,
   TableGridBreakpoint,
@@ -9,6 +11,7 @@ import {
   Td,
   Th,
   Thead,
+  ThProps,
   Tr
 } from '@patternfly/react-table';
 import { HistoryManager, URLParam } from '../../app/History';
@@ -25,11 +28,15 @@ import * as FilterHelper from '../FilterList/FilterHelper';
 import * as Sorts from '../../pages/Overview/Sorts';
 import { StatefulFilters } from '../Filters/StatefulFilters';
 import { kialiStyle } from 'styles/StyleUtils';
-import { getSortParams } from 'utils/TableUtils';
+import { SortableTh } from 'components/SimpleTable';
 
 const virtualListStyle = kialiStyle({
   padding: '1.25rem',
   marginBottom: '1.25rem'
+});
+
+const emptyStyle = kialiStyle({
+  borderBottom: 0
 });
 
 // ******************************
@@ -132,6 +139,21 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     return columns;
   };
 
+  private getSortParams = (
+    column: SortableTh,
+    index: number,
+    sortBy: ISortBy,
+    onSort: OnSort
+  ): ThProps['sort'] | undefined => {
+    return column.sortable
+      ? {
+          sortBy: sortBy,
+          onSort: onSort,
+          columnIndex: index
+        }
+      : undefined;
+  };
+
   render() {
     const { rows } = this.props;
     const { sortBy, columns, conf } = this.state;
@@ -150,7 +172,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     const rowItems: IRow[] = rows.map((row, index) => {
       return (
         <VirtualItem
-          key={'vItem' + index}
+          key={`vItem_${index}`}
           item={row}
           index={index}
           columns={this.state.columns}
@@ -173,7 +195,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
                 <Th
                   key={`column_${index}`}
                   dataLabel={column.title}
-                  sort={getSortParams(column, index, sortBy, this.onSort)}
+                  sort={this.getSortParams(column, index, sortBy, this.onSort)}
                   width={column.width}
                   textCenter={column.textCenter}
                 >
@@ -186,7 +208,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
             {this.props.rows.length > 0 ? (
               rowItems
             ) : (
-              <Tr>
+              <Tr className={emptyStyle}>
                 <Td colSpan={columns.length}>
                   {this.props.activeNamespaces.length > 0 ? (
                     <EmptyState variant={EmptyStateVariant.full}>

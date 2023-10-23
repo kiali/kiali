@@ -141,7 +141,7 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
         <TextInput
           value={props.server.number}
           type="text"
-          id={'addPortNumber' + props.index}
+          id={`addPortNumber_${props.index}`}
           aria-describedby="add port number"
           name="addPortNumber"
           onChange={onAddPortNumber}
@@ -149,11 +149,11 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
         />
       </Td>
 
-      <Td style={{ padding: '0 10px 0 0' }}>
+      <Td style={{ padding: '0 0.5rem 0 0' }}>
         <TextInput
           value={props.server.name}
           type="text"
-          id={'addPortName' + props.index}
+          id={`addPortName_${props.index}`}
           aria-describedby="add port name"
           name="addPortName"
           onChange={onAddPortName}
@@ -161,15 +161,15 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
         />
       </Td>
 
-      <Td style={{ padding: '0 10px 0 0' }}>
+      <Td style={{ padding: '0 0.5rem 0 0' }}>
         <FormSelect
           value={props.server.protocol}
-          id={'addPortProtocol' + props.index}
+          id={`addPortProtocol_${props.index}`}
           name="addPortProtocol"
           onChange={onAddPortProtocol}
         >
           {protocols.map((option, index) => (
-            <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
+            <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
           ))}
         </FormSelect>
       </Td>
@@ -186,7 +186,7 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
             value={props.server.hosts.join(',')}
             isRequired={true}
             type="text"
-            id={'hosts' + props.index}
+            id={`hosts_${props.index}`}
             aria-describedby="hosts"
             name="hosts"
             onChange={onAddHosts}
@@ -203,7 +203,7 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
           </FormHelperText>
         </FormGroup>
 
-        <FormGroup label="Port" isRequired={true} fieldId="server-port" style={{ padding: '10px 0' }}>
+        <FormGroup label="Port" isRequired={true} fieldId="server-port" style={{ padding: '0.5rem 0' }}>
           <Table aria-label="Port Level MTLS" className={tableStyle}>
             <Thead>
               <Tr>
@@ -219,10 +219,10 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
         </FormGroup>
 
         {showTls && (
-          <FormGroup label="TLS Mode" isRequired={true} fieldId="addTlsMode" style={{ margin: '10px 0' }}>
+          <FormGroup label="TLS Mode" isRequired={true} fieldId="addTlsMode" style={{ margin: '0.5rem 0' }}>
             <FormSelect value={props.server.tlsMode} id="addTlsMode" name="addTlsMode" onChange={onAddTlsMode}>
               {tlsModes.map((option, index) => (
-                <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
+                <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
               ))}
             </FormSelect>
           </FormGroup>
@@ -232,7 +232,7 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
           <>
             <FormGroup
               label="Server Certificate"
-              style={{ margin: '10px 0' }}
+              style={{ margin: '0.5rem 0' }}
               isRequired={true}
               fieldId="server-certificate"
             >
@@ -258,7 +258,7 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
               )}
             </FormGroup>
 
-            <FormGroup label="Private Key" isRequired={true} fieldId="private-key" style={{ margin: '10px 0' }}>
+            <FormGroup label="Private Key" isRequired={true} fieldId="private-key" style={{ margin: '0.5rem 0' }}>
               <TextInput
                 value={props.server.tlsPrivateKey}
                 isRequired={true}
@@ -282,7 +282,7 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
         )}
 
         {showTls && props.server.tlsMode === 'MUTUAL' && (
-          <FormGroup label="CA Certificate" style={{ margin: '10px 0' }} isRequired={true} fieldId="ca-certificate">
+          <FormGroup label="CA Certificate" style={{ margin: '0.5rem 0' }} isRequired={true} fieldId="ca-certificate">
             <TextInput
               value={props.server.tlsCaCertificate}
               isRequired={true}

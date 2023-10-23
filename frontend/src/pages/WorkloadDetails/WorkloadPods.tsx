@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { ObjectValidation, Pod } from '../../types/IstioObjects';
-import { IRow, IRowCell, Table, TableVariant, Tbody, Td, Th, Thead, ThProps, Tr } from '@patternfly/react-table';
+import { IRow, TableVariant, ThProps } from '@patternfly/react-table';
 import {
   Card,
   CardBody,
@@ -19,6 +19,7 @@ import { KialiIcon } from '../../config/KialiIcon';
 import { LocalTime } from '../../components/Time/LocalTime';
 import { Labels } from '../../components/Label/Labels';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
+import { SimpleTable } from 'components/SimpleTable';
 
 type WorkloadPodsProps = {
   namespace: string;
@@ -95,7 +96,7 @@ export const WorkloadPods: React.FC<WorkloadPodsProps> = (props: WorkloadPodsPro
                 <span>Created By</span>
                 <div style={{ display: 'inline-block' }}>
                   {pod.createdBy && pod.createdBy.length > 0
-                    ? pod.createdBy.map(ref => ref.name + ' (' + ref.kind + ')').join(', ')
+                    ? pod.createdBy.map(ref => `${ref.name} (${ref.kind})`).join(', ')
                     : 'Not found'}
                 </div>
               </li>
@@ -163,28 +164,7 @@ export const WorkloadPods: React.FC<WorkloadPodsProps> = (props: WorkloadPodsPro
         </Title>
       </CardHeader>
       <CardBody>
-        <Table variant={TableVariant.compact} aria-label={'list_workloads_pods'}>
-          <Thead>
-            <Tr>
-              {columns.map((column, index) => (
-                <Th key={`column_${index}`} dataLabel={column.title} width={column.width}>
-                  {column.title}
-                </Th>
-              ))}
-            </Tr>
-          </Thead>
-          <Tbody>
-            {rows.map((row, index) => (
-              <Tr key={`row_${index}`}>
-                {(row.cells as IRowCell[])?.map((cell, index) => (
-                  <Td dataLabel={columns[index].title} colSpan={cell.props?.colSpan}>
-                    {cell.title}
-                  </Td>
-                ))}
-              </Tr>
-            ))}
-          </Tbody>
-        </Table>
+        <SimpleTable label="list_workloads_pods" columns={columns} rows={rows} variant={TableVariant.compact} />
       </CardBody>
     </Card>
   );

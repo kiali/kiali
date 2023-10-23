@@ -12,12 +12,13 @@ import {
   TextInput
 } from '@patternfly/react-core';
 import { isGatewayHostValid } from '../../utils/IstioConfigUtils';
-import { Table, Thead, Tbody, Tr, Th, Td, ThProps, IRow, IRowCell } from '@patternfly/react-table';
+import { ThProps, IRow } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../components/Pf/PfColors';
 import { isValid } from 'utils/Common';
 import { FormEvent } from 'react';
 import { KialiIcon } from 'config/KialiIcon';
+import { SimpleTable } from 'components/SimpleTable';
 
 export const SERVICE_ENTRY = 'ServiceEntry';
 export const SERVICE_ENTRIES = 'serviceentries';
@@ -326,11 +327,11 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
   rows = (): IRow[] => {
     return (this.state.formPorts || [])
       .map((p, i) => ({
-        key: 'portNew' + i,
+        key: `portNew_${i}`,
         cells: [
           <TextInput
             value={p.number}
-            id={'addPortNumber' + i}
+            id={`addPortNumber_${i}`}
             aria-describedby="add port number"
             name={i.toString()}
             placeholder="80"
@@ -339,7 +340,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
           />,
           <TextInput
             value={p.name}
-            id={'addPortName' + i}
+            id={`addPortName_${i}`}
             aria-describedby="add port name"
             name={i.toString()}
             onChange={this.onAddPortName}
@@ -347,24 +348,24 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
           />,
           <FormSelect
             value={p.protocol}
-            id={'addPortProtocol' + i}
+            id={`addPortProtocol_${i}`}
             name={i.toString()}
             onChange={this.onAddPortProtocol}
           >
             {protocols.map((option, index) => (
-              <FormSelectOption key={'p' + index} value={option} label={option} />
+              <FormSelectOption key={`p_${index}`} value={option} label={option} />
             ))}
           </FormSelect>,
           <TextInput
             value={p.targetPort}
-            id={'addTargetPort' + i}
+            id={`addTargetPort_${i}`}
             aria-describedby="add target port"
             name={i.toString()}
             onChange={this.onAddTargetPort}
             validated={isValid(isValidTargetPort(p.targetPort))}
           />,
           <Button
-            id={'deleteBtn' + i}
+            id={`deleteBtn_${i}`}
             variant={ButtonVariant.link}
             icon={<KialiIcon.Trash />}
             style={{ padding: 0 }}
@@ -427,35 +428,13 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
             onChange={this.onAddLocation}
           >
             {location.map((option, index) => (
-              <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
+              <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
             ))}
           </FormSelect>
         </FormGroup>
 
         <FormGroup label="Ports" fieldId="ports" isRequired={true}>
-          <Table aria-label="Ports">
-            <Thead>
-              <Tr>
-                {columns.map((column, index) => (
-                  <Th key={`column_${index}`} dataLabel={column.title} width={column.width}>
-                    {column.title}
-                  </Th>
-                ))}
-              </Tr>
-            </Thead>
-
-            <Tbody>
-              {this.rows().map((row, index) => (
-                <Tr key={row.key ?? `row_${index}`}>
-                  {(row.cells as IRowCell[])?.map((cell, index) => (
-                    <Td key={`cell_${index}`} dataLabel={columns[index].title}>
-                      {cell}
-                    </Td>
-                  ))}
-                </Tr>
-              ))}
-            </Tbody>
-          </Table>
+          <SimpleTable label="Ports" columns={columns} rows={this.rows()} />
 
           {(!this.state.serviceEntry.ports || this.state.serviceEntry.ports.length === 0) && (
             <div className={noPortsStyle}>ServiceEntry has no Ports defined</div>
@@ -470,7 +449,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
             onChange={this.onAddResolution}
           >
             {resolution.map((option, index) => (
-              <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
+              <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
             ))}
           </FormSelect>
         </FormGroup>

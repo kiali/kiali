@@ -18,7 +18,7 @@ import {
 import { aceOptions } from '../../types/IstioConfigDetails';
 import AceEditor from 'react-ace';
 import { ParameterizedTabs } from '../Tab/Tabs';
-import { Table, Tbody, Td, Th, Thead, ThProps, Tr } from '@patternfly/react-table';
+import { ThProps } from '@patternfly/react-table';
 import { AuthConfig } from '../../types/Auth';
 import { authenticationConfig } from '../../config/AuthenticationConfig';
 import { basicTabStyle } from 'styles/TabStyles';
@@ -28,6 +28,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import ReactAce from 'react-ace/lib/ace';
 import { classes } from 'typestyle';
 import { usePreviousValue } from 'utils/ReactUtils';
+import { SimpleTable } from 'components/SimpleTable';
 
 enum CopyStatus {
   NOT_COPIED, // We haven't copied the current output
@@ -61,14 +62,14 @@ const propsToShow = [
   'clusters',
   'gatewayAPIClasses',
   'gatewayAPIEnabled',
+  'istioAnnotationsAction',
+  'istioCanaryRevision',
   'istioConfigMap',
   'istioIdentityDomain',
+  'istioInjectionAction',
   'istioNamespace',
   'istioStatusEnabled',
-  'logLevel',
-  'istioCanaryRevision',
-  'istioAnnotationsAction',
-  'istioInjectionAction'
+  'logLevel'
 ];
 
 const propsToPatch = ['cyRef', 'summaryTarget', 'token', 'username'];
@@ -230,26 +231,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
     const kialiConfig = (
       <Tab eventKey={0} title="Kiali Config" key="kialiConfig">
         <CopyToClipboard onCopy={copyCallback} text={getRows()} options={copyToClipboardOptions}>
-          <Table className={tableStyle}>
-            <Thead>
-              <Tr>
-                {columns.map(column => (
-                  <Th dataLabel={column.title}>{column.title}</Th>
-                ))}
-              </Tr>
-            </Thead>
-            <Tbody>
-              {rows.map((row, index) => (
-                <Tr key={`row_${index}`}>
-                  {row.map((cell, index) => (
-                    <Td key={`cell_${index}`} dataLabel={columns[index].title}>
-                      {cell}
-                    </Td>
-                  ))}
-                </Tr>
-              ))}
-            </Tbody>
-          </Table>
+          <SimpleTable label="Debug Information" className={tableStyle} columns={columns} rows={rows} />
         </CopyToClipboard>
       </Tab>
     );

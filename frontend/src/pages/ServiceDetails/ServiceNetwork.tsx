@@ -38,7 +38,7 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
   };
 
   const getPortChecks = (portId: number): ObjectCheck[] => {
-    return props.validations ? props.validations.checks.filter(c => c.path === 'spec/ports[' + portId + ']') : [];
+    return props.validations ? props.validations.checks.filter(c => c.path === `spec/ports[${portId}]`) : [];
   };
 
   const hasIssue = (portId: number): boolean => {
@@ -114,7 +114,7 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
                 <div style={{ display: 'inline-block' }}>
                   {(props.serviceDetails.endpoints || []).map((endpoint, i) => {
                     return (endpoint.addresses || []).map((address, u) => (
-                      <div key={'endpoint_' + i + '_address_' + u}>
+                      <div key={`endpoint_${i}_address_${u}`}>
                         {address.name !== '' ? (
                           <Tooltip
                             position={TooltipPosition.right}
@@ -144,7 +144,7 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
                 <div style={{ display: 'inline-block' }}>
                   {(props.serviceDetails.service.ports || []).map((port, i) => {
                     return (
-                      <div key={'port_' + i}>
+                      <div key={`port_${i}`}>
                         <div>
                           <span style={{ marginRight: '10px' }}>
                             {port.name} {port.port}
@@ -180,7 +180,7 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
                 >
                   {getHostnames(props.serviceDetails.virtualServices).map((hostname, i) => {
                     return (
-                      <div key={'hostname_' + i}>
+                      <div key={`hostname_${i}`}>
                         <Tooltip
                           position={TooltipPosition.right}
                           content={

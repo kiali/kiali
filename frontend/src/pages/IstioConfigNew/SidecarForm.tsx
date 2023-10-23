@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Table, Thead, Tbody, Tr, Th, Td, IRow, IRowCell, ThProps } from '@patternfly/react-table';
+import { IRow, ThProps } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../components/Pf/PfColors';
 import {
@@ -15,6 +15,7 @@ import {
 import { isSidecarHostValid } from '../../utils/IstioConfigUtils';
 import { isValid } from 'utils/Common';
 import { KialiIcon } from 'config/KialiIcon';
+import { SimpleTable } from 'components/SimpleTable';
 
 const columns: ThProps[] = [
   {
@@ -172,7 +173,7 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
   rows = (): IRow[] => {
     return this.state.egressHosts
       .map((eHost, index) => ({
-        key: 'eH' + index,
+        key: `eH_${index}`,
         cells: [
           <>{eHost.host}</>,
           <Button
@@ -259,29 +260,7 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
         )}
 
         <FormGroup label="Egress" fieldId="egressHostTable">
-          <Table aria-label="Egress Hosts">
-            <Thead>
-              <Tr>
-                {columns.map((column, index) => (
-                  <Th key={`column_${index}`} dataLabel={column.title} width={column.width}>
-                    {column.title}
-                  </Th>
-                ))}
-              </Tr>
-            </Thead>
-
-            <Tbody>
-              {this.rows().map((row, index) => (
-                <Tr key={row.key ?? `row_${index}`}>
-                  {(row.cells as IRowCell[])?.map((cell, index) => (
-                    <Td key={`cell_${index}`} dataLabel={columns[index].title}>
-                      {cell}
-                    </Td>
-                  ))}
-                </Tr>
-              ))}
-            </Tbody>
-          </Table>
+          <SimpleTable label="Egress Hosts" columns={columns} rows={this.rows()} />
 
           {this.state.egressHosts.length === 0 && (
             <div className={noEgressHostsStyle}>Sidecar has no Egress Hosts Defined</div>
