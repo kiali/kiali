@@ -53,7 +53,7 @@ Valid command line arguments:
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: either 'true' or 'false'. If 'true' the travel agency demo will be deleted, not installed.
   -ei|--enable-injection: either 'true' or 'false' (default is true). If 'true' auto-inject proxies for the workloads.
-  -eo|--enable-operation-metrics: either 'true' or 'false' (default is false). Only works on Istio 1.10 installed in istio-system.
+  -eo|--enable-operation-metrics: either 'true' or 'false' (default is false).
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
   -s|--source: demo file source. For example: file:///home/me/demos Default: https://raw.githubusercontent.com/kiali/demos/master
   -sg|--show-gui: do not install anything, but bring up the travel agency GUI in a browser window
@@ -216,193 +216,80 @@ if [ "${ENABLE_OPERATION_METRICS}" != "true" ]; then
   exit 0
 fi
 
-# This only works if you have Istio 1.10 installed, and it is in istio-system namespace.
-${CLIENT_EXE} -n istio-system get envoyfilter stats-filter-1.10 -o yaml > stats-filter-1.10.yaml
-cat <<EOF | patch -o - | ${CLIENT_EXE} -n istio-system apply -f - && rm stats-filter-1.10.yaml
---- stats-filter-1.10.yaml	2021-01-13 11:54:58.238566005 -0500
-+++ stats-filter-1.10.yaml.new	2021-01-13 12:13:12.710918344 -0500
-@@ -117,6 +117,18 @@
-                           "source_cluster": "downstream_peer.cluster_id",
-                           "destination_cluster": "node.metadata['CLUSTER_ID']"
-                         }
-+                      },
-+                      {
-+                        "name": "requests_total",
-+                        "dimensions": {
-+                          "request_operation": "istio_operationId"
-+                        }
-+                      },
-+                      {
-+                        "name": "request_duration_milliseconds",
-+                        "dimensions": {
-+                          "request_operation": "istio_operationId"
-+                        }
-                       }
-                     ]
-                   }
-EOF
-
-cat <<EOF | ${CLIENT_EXE} -n istio-system apply -f -
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
+cat <<OPMET | ${CLIENT_EXE} -n ${ISTIO_NAMESPACE} apply -f -
+apiVersion: extensions.istio.io/v1alpha1
+kind: WasmPlugin
 metadata:
-  name: attribgen-travelagency
+  name: attribgen-travelagency-travels
 spec:
-  configPatches:
-  - applyTo: HTTP_FILTER
-    match:
-      context: SIDECAR_INBOUND
-      listener:
-        filterChain:
-          filter:
-            name: "envoy.filters.network.http_connection_manager"
-            subFilter:
-              name: istio.stats
-      proxy:
-        proxyVersion: 1\.10.*
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: istio.attributegen
-        typed_config:
-          '@type': type.googleapis.com/udpa.type.v1.TypedStruct
-          type_url: type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
-          value:
-            config:
-              configuration:
-                '@type': type.googleapis.com/google.protobuf.StringValue
-                value: |
-                  {
-                    "attributes": [
-                      {
-                        "output_attribute": "istio_operationId",
-                        "match": [
-                          {
-                            "value": "TravelQuote",
-                            "condition": "request.url_path.matches('^/travels/[[:alpha:]]+$') && request.method == 'GET'"
-                          },
-                          {
-                            "value": "ListCities",
-                            "condition": "request.url_path.matches('^/travels$') && request.method == 'GET'"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-              vm_config:
-                code:
-                  local:
-                    inline_string: envoy.wasm.attributegen
-                runtime: envoy.wasm.runtime.null
-  workloadSelector:
-    labels:
+  selector:
+    matchLabels:
       app: travels
+  url: https://storage.googleapis.com/istio-build/proxy/attributegen-359dcd3a19f109c50e97517fe6b1e2676e870c4d.wasm
+  imagePullPolicy: Always
+  phase: AUTHN
+  pluginConfig:
+    attributes:
+    - output_attribute: "istio_operationId"
+      match:
+        - value: "TravelQuote"
+          condition: "request.url_path.matches('^/travels/[[:alpha:]]+$') && request.method == 'GET'"
+        - value: "ListCities"
+          condition: "request.url_path.matches('^/travels$') && request.method == 'GET'"
 ---
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
+apiVersion: extensions.istio.io/v1alpha1
+kind: WasmPlugin
 metadata:
   name: attribgen-travelagency-hotels
 spec:
-  workloadSelector:
-    labels:
+  selector:
+    matchLabels:
       app: hotels
-  configPatches:
-  - applyTo: HTTP_FILTER
-    match:
-      context: SIDECAR_INBOUND
-      proxy:
-        proxyVersion: '1\.10.*'
-      listener:
-        filterChain:
-          filter:
-            name: "envoy.filters.network.http_connection_manager"
-            subFilter:
-              name: "istio.stats"
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: istio.attributegen
-        typed_config:
-          "@type": type.googleapis.com/udpa.type.v1.TypedStruct
-          type_url: type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
-          value:
-            config:
-              configuration:
-                '@type': type.googleapis.com/google.protobuf.StringValue
-                value: |
-                  {
-                    "attributes": [
-                      {
-                        "output_attribute": "istio_operationId",
-                        "match": [
-                          {
-                            "value": "New",
-                            "condition": "request.headers['user'] == 'new'"
-                          },
-                          {
-                            "value": "Registered",
-                            "condition": "request.headers['user'] != 'new'"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-              vm_config:
-                runtime: envoy.wasm.runtime.null
-                code:
-                  local: { inline_string: "envoy.wasm.attributegen" }
+  url: https://storage.googleapis.com/istio-build/proxy/attributegen-359dcd3a19f109c50e97517fe6b1e2676e870c4d.wasm
+  imagePullPolicy: Always
+  phase: AUTHN
+  pluginConfig:
+    attributes:
+    - output_attribute: "istio_operationId"
+      match:
+        - value: "New"
+          condition: "request.headers['user'] == 'new'"
+        - value: "Registered"
+          condition: "request.headers['user'] != 'new'"
 ---
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
+apiVersion: extensions.istio.io/v1alpha1
+kind: WasmPlugin
 metadata:
   name: attribgen-travelagency-cars
 spec:
-  workloadSelector:
-    labels:
+  selector:
+    matchLabels:
       app: cars
-  configPatches:
-  - applyTo: HTTP_FILTER
-    match:
-      context: SIDECAR_INBOUND
-      proxy:
-        proxyVersion: '1\.10.*'
-      listener:
-        filterChain:
-          filter:
-            name: "envoy.filters.network.http_connection_manager"
-            subFilter:
-              name: "istio.stats"
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: istio.attributegen
-        typed_config:
-          "@type": type.googleapis.com/udpa.type.v1.TypedStruct
-          type_url: type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
-          value:
-            config:
-              configuration:
-                '@type': type.googleapis.com/google.protobuf.StringValue
-                value: |
-                  {
-                    "attributes": [
-                      {
-                        "output_attribute": "istio_operationId",
-                        "match": [
-                          {
-                            "value": "New",
-                            "condition": "request.headers['user'] == 'new'"
-                          },
-                          {
-                            "value": "Registered",
-                            "condition": "request.headers['user'] != 'new'"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-              vm_config:
-                runtime: envoy.wasm.runtime.null
-                code:
-                  local: { inline_string: "envoy.wasm.attributegen" }
-EOF
+  url: https://storage.googleapis.com/istio-build/proxy/attributegen-359dcd3a19f109c50e97517fe6b1e2676e870c4d.wasm
+  imagePullPolicy: Always
+  phase: AUTHN
+  pluginConfig:
+    attributes:
+    - output_attribute: "istio_operationId"
+      match:
+        - value: "New"
+          condition: "request.headers['user'] == 'new'"
+        - value: "Registered"
+          condition: "request.headers['user'] != 'new'"
+---
+apiVersion: telemetry.istio.io/v1alpha1
+kind: Telemetry
+metadata:
+  name: custom-tags
+spec:
+  metrics:
+    - overrides:
+        - match:
+            metric: REQUEST_COUNT
+            mode: CLIENT_AND_SERVER
+          tagOverrides:
+            request_operation:
+              value: istio_operationId
+      providers:
+        - name: prometheus
+OPMET
