@@ -510,7 +510,7 @@ export const getNamespaceServiceHealth = async (
   };
 
   if (duration) {
-    params.rateInterval = `${String(duration)}s}`;
+    params.rateInterval = `${String(duration)}s`;
   }
   if (queryTime) {
     params.queryTime = String(queryTime);
@@ -545,7 +545,7 @@ export const getNamespaceWorkloadHealth = async (
   };
 
   if (duration) {
-    params.rateInterval = `${String(duration)}s}`;
+    params.rateInterval = `${String(duration)}s`;
   }
   if (queryTime) {
     params.queryTime = String(queryTime);
