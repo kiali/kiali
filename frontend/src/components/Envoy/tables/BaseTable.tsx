@@ -55,9 +55,6 @@ export function SummaryTableRenderer<T extends SummaryTable>() {
     };
 
     render() {
-      const columns = this.props.writer.head();
-      const rows = this.props.writer.rows();
-
       return (
         <>
           <StatefulFilters
@@ -84,9 +81,9 @@ export function SummaryTableRenderer<T extends SummaryTable>() {
           </StatefulFilters>
 
           <SimpleTable
-            label="Sortable Table"
-            columns={columns}
-            rows={rows}
+            label="Summary Table"
+            columns={this.props.writer.head()}
+            rows={this.props.writer.rows()}
             sortBy={this.props.writer.sortBy()}
             onSort={this.onSort}
           />
@@ -111,12 +108,12 @@ export const SummaryTableBuilder = (
   switch (resource) {
     case 'clusters':
       writerComp = ClusterSummaryTable;
-      writerProps = new ClusterTable(config.clusters || [], sortBy['clusters'], namespaces, namespace, kiosk);
+      writerProps = new ClusterTable(config.clusters ?? [], sortBy['clusters'], namespaces, namespace, kiosk);
       break;
     case 'listeners':
       writerComp = ListenerSummaryTable;
       writerProps = new ListenerTable(
-        config.listeners || [],
+        config.listeners ?? [],
         sortBy['listeners'],
         namespaces,
         namespace,
@@ -126,7 +123,7 @@ export const SummaryTableBuilder = (
       break;
     case 'routes':
       writerComp = RouteSummaryTable;
-      writerProps = new RouteTable(config.routes || [], sortBy['routes'], namespaces, namespace, kiosk);
+      writerProps = new RouteTable(config.routes ?? [], sortBy['routes'], namespaces, namespace, kiosk);
       break;
   }
   return [writerComp, writerProps];

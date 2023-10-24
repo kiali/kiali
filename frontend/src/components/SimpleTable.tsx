@@ -16,7 +16,6 @@ import {
   OnSort,
   ThProps
 } from '@patternfly/react-table';
-import { kialiStyle } from 'styles/StyleUtils';
 
 export interface SortableTh extends ThProps {
   sortable: boolean;
@@ -34,10 +33,6 @@ interface SimpleTableProps {
   sortBy?: ISortBy;
   variant?: TableVariant;
 }
-
-const emptyStyle = kialiStyle({
-  borderBottom: 0
-});
 
 export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps) => {
   const getSortParams = (column: SortableTh | ThProps, index: number): ThProps['sort'] | undefined => {
@@ -108,7 +103,7 @@ export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps)
         ) : (
           <>
             {props.emptyState && (
-              <Tr className={emptyStyle}>
+              <Tr>
                 <Td colSpan={props.columns.length}>{props.emptyState}</Td>
               </Tr>
             )}

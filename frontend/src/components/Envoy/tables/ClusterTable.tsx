@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { SummaryTable, SummaryTableRenderer } from './BaseTable';
-import { ISortBy, SortByDirection, ThProps } from '@patternfly/react-table';
+import { ISortBy, SortByDirection } from '@patternfly/react-table';
 import { ClusterSummary } from '../../../types/IstioObjects';
 import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '../../../types/Filters';
 import { SortField } from '../../../types/SortFilters';
@@ -11,6 +11,7 @@ import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { isParentKiosk } from '../../Kiosk/KioskActions';
+import { SortableTh } from 'components/SimpleTable';
 
 export class ClusterTable implements SummaryTable {
   kiosk: string;
@@ -22,8 +23,8 @@ export class ClusterTable implements SummaryTable {
 
   constructor(summaries: ClusterSummary[], sortBy: ISortBy, namespaces: Namespace[], namespace: string, kiosk: string) {
     this.summaries = summaries;
-    this.sortingIndex = sortBy.index || 0;
-    this.sortingDirection = sortBy.direction || SortByDirection.asc;
+    this.sortingIndex = sortBy.index ?? 0;
+    this.sortingDirection = sortBy.direction ?? SortByDirection.asc;
     this.namespaces = namespaces;
     this.namespace = namespace;
     this.kiosk = kiosk;
@@ -173,20 +174,24 @@ export class ClusterTable implements SummaryTable {
     );
   };
 
-  head = (): ThProps[] => {
+  head = (): SortableTh[] => {
     return [
       {
         title: 'Service FQDN',
+        sortable: true,
         info: { tooltip: <>Fully Qualified Domain Name</> }
       },
       {
-        title: 'Port'
+        title: 'Port',
+        sortable: true
       },
       {
-        title: 'Subset'
+        title: 'Subset',
+        sortable: true
       },
       {
         title: 'Direction',
+        sortable: true,
         info: {
           tooltip: (
             <ul className={kialiStyle({ textAlign: 'left' })}>
@@ -204,10 +209,12 @@ export class ClusterTable implements SummaryTable {
       },
       {
         title: 'Type',
+        sortable: true,
         info: { tooltip: this.render_cluster_type() }
       },
       {
-        title: 'DestinationRule'
+        title: 'DestinationRule',
+        sortable: true
       }
     ];
   };
@@ -222,7 +229,7 @@ export class ClusterTable implements SummaryTable {
   sortBy = (): ISortBy => {
     return {
       index: this.sortingIndex,
-      direction: this.sortingDirection || 'asc'
+      direction: this.sortingDirection ?? 'asc'
     };
   };
 
@@ -250,6 +257,7 @@ export class ClusterTable implements SummaryTable {
         const sortField = this.sortFields().find((value: SortField<ClusterSummary>): boolean => {
           return value.id === this.sortFields()[this.sortingIndex].id;
         });
+
         return this.sortingDirection === 'asc' ? sortField!.compare(a, b) : sortField!.compare(b, a);
       })
       .map((value: ClusterSummary): (string | number | JSX.Element)[] => {

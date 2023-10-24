@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { SummaryTable, SummaryTableRenderer } from './BaseTable';
-import { ISortBy, ThProps } from '@patternfly/react-table';
+import { ISortBy } from '@patternfly/react-table';
 import { ListenerSummary } from '../../../types/IstioObjects';
 import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '../../../types/Filters';
 import { SortField } from '../../../types/SortFilters';
@@ -10,6 +10,7 @@ import { Tooltip } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
+import { SortableTh } from 'components/SimpleTable';
 
 export class ListenerTable implements SummaryTable {
   namespace: string;
@@ -29,8 +30,8 @@ export class ListenerTable implements SummaryTable {
     routeLinkHandler: () => void
   ) {
     this.summaries = summaries;
-    this.sortingIndex = sortBy.index || 0;
-    this.sortingDirection = sortBy.direction || 'asc';
+    this.sortingIndex = sortBy.index ?? 0;
+    this.sortingDirection = sortBy.direction ?? 'asc';
     this.namespaces = namespaces;
     this.namespace = namespace;
     this.workload = workload;
@@ -128,10 +129,11 @@ export class ListenerTable implements SummaryTable {
     ];
   };
 
-  head = (): ThProps[] => {
+  head = (): SortableTh[] => {
     return [
       {
         title: 'Address',
+        sortable: true,
         info: {
           tooltip: (
             <div className={kialiStyle({ textAlign: 'left' })}>
@@ -142,13 +144,16 @@ export class ListenerTable implements SummaryTable {
         }
       },
       {
-        title: 'Port'
+        title: 'Port',
+        sortable: true
       },
       {
-        title: 'Match'
+        title: 'Match',
+        sortable: true
       },
       {
         title: 'Destination',
+        sortable: true,
         info: {
           tooltip: (
             <div className={kialiStyle({ textAlign: 'left' })}>
@@ -200,6 +205,7 @@ export class ListenerTable implements SummaryTable {
         const sortField = this.sortFields().find((value: SortField<ListenerSummary>): boolean => {
           return value.id === this.sortFields()[this.sortingIndex].id;
         });
+
         return this.sortingDirection === 'asc' ? sortField!.compare(a, b) : sortField!.compare(b, a);
       })
       .map((summary: ListenerSummary) => {

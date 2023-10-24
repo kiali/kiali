@@ -32,77 +32,62 @@ const emtpytStyle = kialiStyle({
 export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConfigCardProps) => {
   const columns: ThProps[] = [{ title: 'Name' }, { title: 'Status', width: 10 }];
 
-  const noIstioConfig: IRow = {
-    cells: [
-      {
-        title: (
-          <EmptyState variant={EmptyStateVariant.sm} className={emtpytStyle}>
-            <EmptyStateBody className={emtpytStyle} data-test="istio-config-empty">
-              No Istio Config found for {props.name}
-            </EmptyStateBody>
-          </EmptyState>
-        ),
-        props: { colSpan: 2 }
-      }
-    ]
-  };
+  const noIstioConfig = (
+    <EmptyState variant={EmptyStateVariant.sm} className={emtpytStyle}>
+      <EmptyStateBody className={emtpytStyle} data-test="istio-config-empty">
+        No Istio Config found for {props.name}
+      </EmptyStateBody>
+    </EmptyState>
+  );
 
   const overviewLink = (item: IstioConfigItem) => {
     return (
-      <IstioObjectLink name={item.name} namespace={item.namespace || ''} cluster={item.cluster} type={item.type}>
+      <IstioObjectLink name={item.name} namespace={item.namespace ?? ''} cluster={item.cluster} type={item.type}>
         {item.name}
       </IstioObjectLink>
     );
   };
 
-  let rows: IRow[] = [];
-
-  if (props.items.length === 0) {
-    rows = [noIstioConfig];
-  } else {
-    rows = props.items
-      .sort((a: IstioConfigItem, b: IstioConfigItem) => {
-        if (a.type < b.type) {
-          return -1;
-        } else if (a.type > b.type) {
-          return 1;
-        } else {
-          return a.name < b.name ? -1 : 1;
-        }
-      })
-      .map((item, itemIdx) => {
-        return {
-          cells: [
-            {
-              title: (
-                <span>
-                  <PFBadge badge={IstioTypes[item.type].badge} position={TooltipPosition.top} />
-                  {overviewLink(item)}
-                </span>
-              )
-            },
-            {
-              title: (
-                <ValidationObjectSummary
-                  id={`${itemIdx}-config-validation`}
-                  validations={item.validation ? [item.validation] : []}
-                />
-              )
-            }
-          ]
-        };
-      });
-  }
+  const rows: IRow[] = props.items
+    .sort((a: IstioConfigItem, b: IstioConfigItem) => {
+      if (a.type < b.type) {
+        return -1;
+      } else if (a.type > b.type) {
+        return 1;
+      } else {
+        return a.name < b.name ? -1 : 1;
+      }
+    })
+    .map((item, itemIdx) => {
+      return {
+        cells: [
+          <span>
+            <PFBadge badge={IstioTypes[item.type].badge} position={TooltipPosition.top} />
+            {overviewLink(item)}
+          </span>,
+          <ValidationObjectSummary
+            id={`${itemIdx}-config-validation`}
+            validations={item.validation ? [item.validation] : []}
+          />
+        ]
+      };
+    });
 
   return (
-    <Card isCompact={true} id={'IstioConfigCard'}>
+    <Card isCompact={true} id="IstioConfigCard">
       <CardHeader actions={{ actions: <></>, hasNoOffset: false }}>
         <Title headingLevel="h3" size={TitleSizes.lg}>
           Istio Config
         </Title>
       </CardHeader>
       <CardBody>
-        <SimpleTable label="list_istio_config" columns={columns} rows={rows} variant={TableVariant.compact} />
+        <SimpleTable
+          label="list_istio_config"
+          columns={columns}
+          rows={rows}
+          variant={TableVariant.compact}
+          emptyState={noIstioConfig}
+        />
       </CardBody>
     </Card>
   );

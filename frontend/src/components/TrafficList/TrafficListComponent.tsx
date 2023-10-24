@@ -282,7 +282,7 @@ class TrafficList extends FilterComponent.Component<
         const name = item.node.name;
         const links = this.getLinks(item);
 
-        var irow: IRow = {
+        let irow: IRow = {
           cells: [
             <>
               <Tooltip

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { SummaryTable, SummaryTableRenderer } from './BaseTable';
-import { ISortBy, ThProps } from '@patternfly/react-table';
+import { ISortBy } from '@patternfly/react-table';
 import { RouteSummary } from '../../../types/IstioObjects';
 import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '../../../types/Filters';
 import { SortField } from '../../../types/SortFilters';
@@ -11,6 +11,7 @@ import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { isParentKiosk } from '../../Kiosk/KioskActions';
+import { SortableTh } from 'components/SimpleTable';
 
 export class RouteTable implements SummaryTable {
   kiosk: string;
@@ -22,8 +23,8 @@ export class RouteTable implements SummaryTable {
 
   constructor(summaries: RouteSummary[], sortBy: ISortBy, namespaces: Namespace[], namespace: string, kiosk: string) {
     this.summaries = summaries;
-    this.sortingIndex = sortBy.index || 0;
-    this.sortingDirection = sortBy.direction || 'asc';
+    this.sortingIndex = sortBy.index ?? 0;
+    this.sortingDirection = sortBy.direction ?? 'asc';
     this.namespaces = namespaces;
     this.namespace = namespace;
     this.kiosk = kiosk;
@@ -102,13 +103,15 @@ export class RouteTable implements SummaryTable {
     ];
   };
 
-  head(): ThProps[] {
+  head(): SortableTh[] {
     return [
       {
-        title: 'Name'
+        title: 'Name',
+        sortable: true
       },
       {
         title: 'Domains',
+        sortable: true,
         info: {
           tooltip: (
             <div className={kialiStyle({ textAlign: 'left' })}>
@@ -119,6 +122,7 @@ export class RouteTable implements SummaryTable {
       },
       {
         title: 'Match',
+        sortable: true,
         info: {
           tooltip: (
             <div className={kialiStyle({ textAlign: 'left' })}>
@@ -128,7 +132,8 @@ export class RouteTable implements SummaryTable {
         }
       },
       {
-        title: 'Virtual Service'
+        title: 'Virtual Service',
+        sortable: true
       }
     ];
   }
@@ -171,6 +176,7 @@ export class RouteTable implements SummaryTable {
         const sortField = this.sortFields().find((value: SortField<RouteSummary>): boolean => {
           return value.id === this.sortFields()[this.sortingIndex].id;
         });
+
         return this.sortingDirection === 'asc' ? sortField!.compare(a, b) : sortField!.compare(b, a);
       })
       .map((summary: RouteSummary): (string | number | JSX.Element)[] => {

@@ -149,7 +149,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
         resource: targetResource,
         activeKey: resourceIdx
       });
-      const mainTab = new URLSearchParams(history.location.search).get(workloadTabName) || workloadDefaultTab;
+      const mainTab = new URLSearchParams(history.location.search).get(workloadTabName) ?? workloadDefaultTab;
       const urlParams = new URLSearchParams(history.location.search);
       urlParams.set(tabName, targetResource);
       urlParams.set(workloadTabName, mainTab);
@@ -243,7 +243,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
   };
 
   getEnvoyMetricsDashboardRef = (): DashboardRef | undefined => {
-    var envoyDashboardRef: DashboardRef | undefined = undefined;
+    let envoyDashboardRef: DashboardRef | undefined = undefined;
     this.props.workload.runtimes.forEach(runtime => {
       runtime.dashboardRefs.forEach(dashboardRef => {
         if (dashboardRef.template === 'envoy') {
@@ -330,7 +330,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                     className={istioAceEditorStyle}
                     wrapEnabled={true}
                     readOnly={true}
-                    setOptions={aceOptions || { foldStyle: 'markbegin' }}
+                    setOptions={aceOptions ?? { foldStyle: 'markbegin' }}
                     value={this.editorContent()}
                   />
                 </div>

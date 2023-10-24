@@ -46,7 +46,7 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
   };
 
   const getHostnames = (virtualServices: VirtualService[]): HostnameInfo[] => {
-    var hostnames: HostnameInfo[] = [];
+    let hostnames: HostnameInfo[] = [];
 
     virtualServices.forEach(vs => {
       vs.spec.hosts?.forEach(host => {
@@ -71,7 +71,7 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
     });
 
     // If there is a wildcard, then it will display only one, the first match
-    for (var hostnameInfo of hostnames) {
+    for (let hostnameInfo of hostnames) {
       if (hostnameInfo.hostname === '*') {
         return [hostnameInfo];
       }

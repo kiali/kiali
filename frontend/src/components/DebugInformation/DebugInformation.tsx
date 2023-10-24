@@ -159,7 +159,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
 
   const download = () => {
     const element = document.createElement('a');
-    const file = new Blob([getCopyText()], { type: 'text/plain' });
+    const file = new Blob([copyText], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
     element.download = `debug_${currentTab === 'kialiConfig' ? 'kiali_config' : 'additional_state'}.json`;
     document.body.appendChild(element); // Required for this to work in FireFox
@@ -175,6 +175,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
     if (propsToPatch.includes(key)) {
       return null;
     }
+
     return value;
   };
 
@@ -191,46 +192,37 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
     return info;
   };
 
-  const renderDebugInformation = () => {
-    let debugInformation: DebugInformationData = {
-      backendConfigs: {
-        authenticationConfig: authenticationConfig,
-        computedServerConfig: serverConfig
-      },
-      currentURL: window.location.href,
-      reduxState: props.appState
-    };
-    debugInformation = filterDebugInformation(debugInformation);
-    return beautify(debugInformation, parseConfig, 2);
+  let debugInformation: DebugInformationData = {
+    backendConfigs: {
+      authenticationConfig: authenticationConfig,
+      computedServerConfig: serverConfig
+    },
+    currentURL: window.location.href,
+    reduxState: props.appState
   };
 
-  const getCopyText = (): string => {
-    const text = currentTab === 'kialiConfig' ? JSON.stringify(config, null, 2) : renderDebugInformation();
-    return text;
-  };
+  debugInformation = filterDebugInformation(debugInformation);
+
+  const debugInformationText = beautify(debugInformation, parseConfig, 2);
+
+  const copyText = currentTab === 'kialiConfig' ? JSON.stringify(config, null, 2) : debugInformationText;
 
   const columns: ThProps[] = [{ title: 'Configuration' }, { title: 'Value' }];
 
-  const getRows = () => {
-    var conf: string[][] = [];
+  let rows: string[][] = [];
 
-    for (const [k, v] of Object.entries(config)) {
-      if (typeof v !== 'string') {
-        conf.push([k, JSON.stringify(v)]);
-      } else {
-        conf.push([k, v]);
-      }
+  for (const [k, v] of Object.entries(config)) {
+    if (typeof v !== 'string') {
+      rows.push([k, JSON.stringify(v)]);
+    } else {
+      rows.push([k, v]);
     }
-
-    return conf;
-  };
-
-  const rows = getRows();
+  }
 
   const renderTabs = () => {
     const kialiConfig = (
       <Tab eventKey={0} title="Kiali Config" key="kialiConfig">
-        <CopyToClipboard onCopy={copyCallback} text={getRows()} options={copyToClipboardOptions}>
+        <CopyToClipboard onCopy={copyCallback} text={rows} options={copyToClipboardOptions}>
           <SimpleTable label="Debug Information" className={tableStyle} columns={columns} rows={rows} />
         </CopyToClipboard>
       </Tab>
@@ -241,17 +233,17 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
     const additionalState = (
       <Tab eventKey={1} title="Additional State" key="additionalState">
         <span>Please include this information when opening a bug:</span>
-        <CopyToClipboard onCopy={copyCallback} text={renderDebugInformation()} options={copyToClipboardOptions}>
+        <CopyToClipboard onCopy={copyCallback} text={debugInformationText} options={copyToClipboardOptions}>
           <AceEditor
             ref={aceEditorRef}
             mode="yaml"
             theme={theme === Theme.DARK ? 'twilight' : 'eclipse'}
-            width={'100%'}
+            width="100%"
             className={istioAceEditorStyle}
             wrapEnabled={true}
             readOnly={true}
             setOptions={aceOptions || { foldStyle: 'markbegin' }}
-            value={renderDebugInformation()}
+            value={debugInformationText}
           />
         </CopyToClipboard>
       </Tab>
@@ -274,7 +266,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
       title="Debug information"
       actions={[
         <Button onClick={close}>Close</Button>,
-        <CopyToClipboard onCopy={copyCallback} text={getCopyText()} options={copyToClipboardOptions}>
+        <CopyToClipboard onCopy={copyCallback} text={copyText} options={copyToClipboardOptions}>
           <Button variant={ButtonVariant.secondary}>Copy</Button>
         </CopyToClipboard>,
         <Button variant={ButtonVariant.secondary} onClick={download}>
