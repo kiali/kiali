@@ -94,7 +94,7 @@ export class ListenerBuilder extends React.Component<Props> {
           <TextInput
             value={this.props.listener.name}
             type="text"
-            id={'addName' + this.props.index}
+            id={`addName_ ${this.props.index}`}
             aria-describedby="add name"
             onChange={this.onAddName}
             validated={isValid(isValidName(this.props.listener.name))}
@@ -104,7 +104,7 @@ export class ListenerBuilder extends React.Component<Props> {
           <TextInput
             value={this.props.listener.hostname}
             type="text"
-            id={'addHostname' + this.props.index}
+            id={`addHostname_${this.props.index}`}
             aria-describedby="add hostname"
             name="addHostname"
             onChange={this.onAddHostname}
@@ -115,7 +115,7 @@ export class ListenerBuilder extends React.Component<Props> {
           <TextInput
             value={this.props.listener.port}
             type="text"
-            id={'addPort' + this.props.index}
+            id={`addPort_${this.props.index}`}
             placeholder="80"
             aria-describedby="add port"
             name="addPortNumber"
@@ -126,30 +126,30 @@ export class ListenerBuilder extends React.Component<Props> {
         <Td>
           <FormSelect
             value={this.props.listener.protocol}
-            id={'addPortProtocol' + this.props.index}
+            id={`addPortProtocol_${this.props.index}`}
             name="addPortProtocol"
             onChange={this.onAddProtocol}
           >
             {protocols.map((option, index) => (
-              <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
+              <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
             ))}
           </FormSelect>
         </Td>
         <Td>
           <FormSelect
             value={this.props.listener.from}
-            id={'addFrom' + this.props.index}
+            id={`addFrom_${this.props.index}`}
             name="addFrom"
             onChange={this.onAddFrom}
           >
             {allowedRoutes.map((option, index) => (
-              <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
+              <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
             ))}
           </FormSelect>
         </Td>
         <Td>
           <TextInput
-            id={'addSelectorLabels' + this.props.index}
+            id={`addSelectorLabels_${this.props.index}`}
             name="addSelectorLabels"
             onChange={this.onAddSelectorLabels}
             validated={isValid(isValidSelector(this.props.listener.sSelectorLabels))}
@@ -157,7 +157,7 @@ export class ListenerBuilder extends React.Component<Props> {
         </Td>
         <Td>
           <Button
-            id={'deleteBtn' + this.props.index}
+            id={`deleteBtn_${this.props.index}`}
             variant={ButtonVariant.link}
             icon={<TrashIcon />}
             style={{ padding: 0 }}

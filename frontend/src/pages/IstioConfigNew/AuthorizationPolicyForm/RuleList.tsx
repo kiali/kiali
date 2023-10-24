@@ -1,9 +1,11 @@
 import * as React from 'react';
 import { Rule } from './RuleBuilder';
-import { IAction, IRow, IRowData, ThProps } from '@patternfly/react-table';
+import { IRow, ThProps } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../components/Pf/PfColors';
 import { SimpleTable } from 'components/SimpleTable';
+import { Button, ButtonVariant } from '@patternfly/react-core';
+import { KialiIcon } from 'config/KialiIcon';
 
 type RuleListProps = {
   action: string;
@@ -107,31 +109,19 @@ export const RuleList: React.FC<RuleListProps> = (props: RuleListProps) => {
             </>
           )}
         </>,
-        <></>
+        <Button
+          id="removeRuleBtn"
+          variant={ButtonVariant.link}
+          icon={<KialiIcon.Delete />}
+          onClick={() => props.onRemoveRule(i)}
+        />
       ]
     };
   });
-
-  const actionResolver = (_rowData: IRowData, rowIndex: number): IAction[] => {
-    return [
-      {
-        title: 'Remove Rule',
-        onClick: () => props.onRemoveRule(rowIndex)
-      }
-    ];
-  };
 
   const noRulesMessage = props.action === 'DENY' ? ' DENY action requires at least one Rule' : 'No Rules Defined.';
 
   const emptyState = <div className={noRulesStyle}>{noRulesMessage}</div>;
 
-  return (
-    <SimpleTable
-      label="Source Builder"
-      columns={columns}
-      rows={rows}
-      actionResolver={actionResolver}
-      emptyState={emptyState}
-    />
-  );
+  return <SimpleTable label="Rule List" columns={columns} rows={rows} emptyState={emptyState} />;
 };

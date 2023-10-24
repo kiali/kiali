@@ -1,18 +1,18 @@
 import * as React from 'react';
-import { cellWidth, ICell } from '@patternfly/react-table';
-import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
+import { ThProps } from '@patternfly/react-table';
 import { Button, ButtonVariant, TextInput } from '@patternfly/react-core';
-import { PlusCircleIcon } from '@patternfly/react-icons';
 import { isValidRequestHeaderName, isValidRequestAuthClaimName } from '../../../../helpers/ValidationHelpers';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../../components/Pf/PfColors';
 import { isValidIp } from '../../../../utils/IstioConfigUtils';
 import { isValid } from 'utils/Common';
+import { SimpleTable } from 'components/SimpleTable';
+import { KialiIcon } from 'config/KialiIcon';
 
 export type Condition = {
   key: string;
-  values?: string[];
   notValues?: string[];
+  values?: string[];
 };
 
 type Props = {
@@ -23,21 +23,18 @@ type State = {
   condition: Condition;
 };
 
-const headerCells: ICell[] = [
+const columns: ThProps[] = [
   {
     title: 'Condition Key',
-    transforms: [cellWidth(30) as any],
-    props: {}
+    width: 30
   },
   {
     title: 'Values',
-    transforms: [cellWidth(30) as any],
-    props: {}
+    width: 30
   },
   {
     title: 'Not Values',
-    transforms: [cellWidth(30) as any],
-    props: {}
+    width: 30
   }
 ];
 
@@ -134,11 +131,14 @@ export class ConditionBuilder extends React.Component<Props, State> {
   isValidCondition = (): [boolean, boolean, boolean, string] => {
     const key = this.state.condition.key;
     const isValidKey = this.isValidKey(key);
+
     if (!isValidKey) {
       return [false, true, true, 'Condition Key not supported'];
     }
+
     const values = this.state.condition.values;
     const notValues = this.state.condition.notValues;
+
     if ((!values || values.length === 0) && (!notValues || notValues.length === 0)) {
       return [true, false, false, 'Values and NotValues cannot be empty'];
     }
@@ -151,6 +151,7 @@ export class ConditionBuilder extends React.Component<Props, State> {
       const notValuesValid = notValues ? !notValues.some(value => !isValidIp(value)) : true;
       return [true, valuesValid, notValuesValid, 'Not valid IP'];
     }
+
     return [true, true, true, ''];
   };
 
@@ -170,6 +171,7 @@ export class ConditionBuilder extends React.Component<Props, State> {
               onChange={this.onAddNewConditionKey}
               validated={isValid(validKey)}
             />
+
             {!validKey && (
               <div key="hostsHelperText" className={noValidKeyStyle}>
                 {validText}
@@ -186,6 +188,7 @@ export class ConditionBuilder extends React.Component<Props, State> {
               name="addNewConditionValues"
               onChange={this.onAddNewValues}
             />
+
             {!validValues && (
               <div key="hostsHelperText" className={noValidKeyStyle}>
                 {validText}
@@ -202,6 +205,7 @@ export class ConditionBuilder extends React.Component<Props, State> {
               name="addNewNotValues"
               onChange={this.onAddNewNotValues}
             />
+
             {!validNotValues && (
               <div key="hostsHelperText" className={noValidKeyStyle}>
                 {validText}
@@ -216,19 +220,18 @@ export class ConditionBuilder extends React.Component<Props, State> {
   render() {
     const [validKey, validValues, validNotValues, validText] = this.isValidCondition();
     const validCondition = validKey && validValues && validNotValues;
+
     return (
       <>
-        <Table
-          aria-label="Condition Builder"
-          cells={headerCells}
+        <SimpleTable
+          label="Condition Builder"
+          columns={columns}
           rows={this.rows(validKey, validValues, validNotValues, validText)}
-        >
-          <TableHeader />
-          <TableBody />
-        </Table>
+        />
+
         <Button
           variant={ButtonVariant.link}
-          icon={<PlusCircleIcon />}
+          icon={<KialiIcon.AddMore />}
           isDisabled={!validCondition}
           onClick={this.onAddConditionToList}
         >

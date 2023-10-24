@@ -26,10 +26,10 @@ Feature: Kiali Istio Config page
     And user sees the "Create K8sGateway" config wizard
     And user adds listener
     And user types "k8sapigateway" in the "name" input
-    And user types "listener" in the "addName0" input
-    And user checks validation of the hostname "addHostname0" input
-    And user types "website.com" in the "addHostname0" input
-    And user types "8080" in the "addPort0" input
+    And user types "listener" in the "addName_0" input
+    And user checks validation of the hostname "addHostname_0" input
+    And user types "website.com" in the "addHostname_0" input
+    And user types "8080" in the "addPort_0" input
     And user previews the configuration
     And user creates the istio config
     Then the "K8sGateway" "k8sapigateway" should be listed in "bookinfo" namespace
@@ -58,9 +58,9 @@ Feature: Kiali Istio Config page
     And user types "mygateway" in the "name" input
     And user adds a server to a server list
     Then the preview button should be disabled
-    And user types "website.com" in the "hosts0" input
-    And user types "8080" in the "addPortNumber0" input
-    And user types "foobar" in the "addPortName0" input
+    And user types "website.com" in the "hosts_0" input
+    And user types "8080" in the "addPortNumber_0" input
+    And user types "foobar" in the "addPortName_0" input
     And user previews the configuration
     And user creates the istio config
     Then the "Gateway" "mygateway" should be listed in "bookinfo" namespace
@@ -69,9 +69,9 @@ Feature: Kiali Istio Config page
     And user sees the "Create Gateway" config wizard
     And user types "mygateway" in the "name" input
     And user adds a server to a server list
-    And user types "website.com" in the "hosts0" input
-    And user types "8080" in the "addPortNumber0" input
-    And user types "foobar" in the "addPortName0" input
+    And user types "website.com" in the "hosts_0" input
+    And user types "8080" in the "addPortNumber_0" input
+    And user types "foobar" in the "addPortName_0" input
     And user previews the configuration
     And user creates the istio config
     Then an error message "Could not create Istio Gateway objects" is displayed
@@ -82,11 +82,11 @@ Feature: Kiali Istio Config page
     And user sees the "Create Gateway" config wizard
     And user types "mygateway2" in the "name" input
     And user adds a server to a server list
-    And user types "website.com" in the "hosts0" input
-    And user types "-8080" in the "addPortNumber0" input
-    And user types "foobar" in the "addPortName0" input
+    And user types "website.com" in the "hosts_0" input
+    And user types "-8080" in the "addPortNumber_0" input
+    And user types "foobar" in the "addPortName_0" input
     Then the preview button should be disabled
-    And the "addPortNumber0" input should display a warning
+    And the "addPortNumber_0" input should display a warning
 
   @bookinfo-app
   Scenario: Try to create a Gateway with invalid port number
@@ -94,11 +94,11 @@ Feature: Kiali Istio Config page
     And user sees the "Create Gateway" config wizard
     And user types "mygateway2" in the "name" input
     And user adds a server to a server list
-    And user types "website.com" in the "hosts0" input
-    And user types "65536" in the "addPortNumber0" input
-    And user types "foobar" in the "addPortName0" input
+    And user types "website.com" in the "hosts_0" input
+    And user types "65536" in the "addPortNumber_0" input
+    And user types "foobar" in the "addPortName_0" input
     Then the preview button should be disabled
-    And the "addPortNumber0" input should display a warning
+    And the "addPortNumber_0" input should display a warning
 
   @bookinfo-app
   Scenario: Try to insert letters in the port field
@@ -106,11 +106,11 @@ Feature: Kiali Istio Config page
     And user sees the "Create Gateway" config wizard
     And user types "mygateway2" in the "name" input
     And user adds a server to a server list
-    And user types "website.com" in the "hosts0" input
-    And user types "lorem ipsum" in the "addPortNumber0" input
-    And user types "foobar" in the "addPortName0" input
+    And user types "website.com" in the "hosts_0" input
+    And user types "lorem ipsum" in the "addPortNumber_0" input
+    And user types "foobar" in the "addPortName_0" input
     Then the preview button should be disabled
-    And the "addPortNumber0" input should display a warning
+    And the "addPortNumber_0" input should display a warning
 
 
   @bookinfo-app
@@ -119,10 +119,10 @@ Feature: Kiali Istio Config page
     And user sees the "Create Gateway" config wizard
     And user types "mygatewaywithtls" in the "name" input
     And user adds a server to a server list
-    And user types "website.com" in the "hosts0" input
-    And user types "8080" in the "addPortNumber0" input
-    And user types "foobar" in the "addPortName0" input
-    And user chooses "TLS" mode from the "addPortProtocol0" select
+    And user types "website.com" in the "hosts_0" input
+    And user types "8080" in the "addPortNumber_0" input
+    And user types "foobar" in the "addPortName_0" input
+    And user chooses "TLS" mode from the "addPortProtocol_0" select
     And user chooses "SIMPLE" mode from the "addTlsMode" select
     Then the "server-certificate" input should be empty
     And the "server-certificate" input should display a warning
@@ -137,10 +137,10 @@ Feature: Kiali Istio Config page
     And user sees the "Create Gateway" config wizard
     And user types "mygatewaywithtls" in the "name" input
     And user adds a server to a server list
-    And user types "website.com" in the "hosts0" input
-    And user types "8080" in the "addPortNumber0" input
-    And user types "foobar" in the "addPortName0" input
-    And user chooses "TLS" mode from the "addPortProtocol0" select
+    And user types "website.com" in the "hosts_0" input
+    And user types "8080" in the "addPortNumber_0" input
+    And user types "foobar" in the "addPortName_0" input
+    And user chooses "TLS" mode from the "addPortProtocol_0" select
     And user chooses "SIMPLE" mode from the "addTlsMode" select
     And user types "foo" in the "server-certificate" input
     And user types "bar" in the "private-key" input
@@ -186,12 +186,12 @@ Feature: Kiali Istio Config page
     And user types "myservice" in the "name" input
     And user types "website.com" in the "hosts" input
     And user opens the "Add Port" submenu
-    Then the "addPortNumber0" input should be empty
-    And the "addPortNumber0" input should display a warning
-    And the "addPortName0" input should be empty
-    And the "addPortName0" input should display a warning
-    And the "addTargetPort0" input should be empty
-    And the "addTargetPort0" input should not display a warning
+    Then the "addPortNumber_0" input should be empty
+    And the "addPortNumber_0" input should display a warning
+    And the "addPortName_0" input should be empty
+    And the "addPortName_0" input should display a warning
+    And the "addTargetPort_0" input should be empty
+    And the "addTargetPort_0" input should not display a warning
     And the preview button should be disabled
 
   @bookinfo-app
@@ -202,10 +202,10 @@ Feature: Kiali Istio Config page
     And user types "myservice2" in the "name" input
     And user types "website.com,website2.com" in the "hosts" input
     And user opens the "Add Port" submenu
-    Then the "addPortNumber0" input should be empty
-    And user types "8080" in the "addPortNumber0" input
-    And user types "foobar" in the "addPortName0" input
-    And user types "8080" in the "addTargetPort0" input
+    Then the "addPortNumber_0" input should be empty
+    And user types "8080" in the "addPortNumber_0" input
+    And user types "foobar" in the "addPortName_0" input
+    And user types "8080" in the "addTargetPort_0" input
     And user previews the configuration
     And user creates the istio config
     Then the "ServiceEntry" "myservice2" should be listed in "bookinfo" namespace
@@ -217,13 +217,13 @@ Feature: Kiali Istio Config page
     And user types "myservice2" in the "name" input
     And user types "website.com,website2.com" in the "hosts" input
     And user opens the "Add Port" submenu
-    And user types "8080" in the "addPortNumber0" input
-    And user types "foobar" in the "addPortName0" input
-    And user types "8080" in the "addTargetPort0" input
+    And user types "8080" in the "addPortNumber_0" input
+    And user types "foobar" in the "addPortName_0" input
+    And user types "8080" in the "addTargetPort_0" input
     And user opens the "Add Port" submenu
-    And user types "8080" in the "addPortNumber1" input
-    And user types "foobar" in the "addPortName1" input
-    And user types "8080" in the "addTargetPort1" input
+    And user types "8080" in the "addPortNumber_1" input
+    And user types "foobar" in the "addPortName_1" input
+    And user types "8080" in the "addTargetPort_1" input
     Then the preview button should be disabled
 
   @bookinfo-app
@@ -234,10 +234,10 @@ Feature: Kiali Istio Config page
     And user types "myservice3" in the "name" input
     And user types "host.com" in the "hosts" input
     And user opens the "Add Port" submenu
-    Then the "addPortNumber0" input should be empty
-    And user types "8080" in the "addPortNumber0" input
-    And user types "foobar" in the "addPortName0" input
-    And user types "8080" in the "addTargetPort0" input
+    Then the "addPortNumber_0" input should be empty
+    And user types "8080" in the "addPortNumber_0" input
+    And user types "foobar" in the "addPortName_0" input
+    And user types "8080" in the "addTargetPort_0" input
     And user previews the configuration
     And user creates the istio config
     Then the "ServiceEntry" "myservice3" should be listed in "bookinfo" namespace
@@ -257,9 +257,9 @@ Feature: Kiali Istio Config page
     And user sees the "Create K8sGateway" config wizard
     And user adds listener
     And user types "gatewayapi-1" in the "name" input
-    And user types "default" in the "addName0" input
-    And user types "bookinfo-istio-system.apps.ocp4-kqe1.maistra.upshift.redhat.com" in the "addHostname0" input
-    And user types "80" in the "addPort0" input
+    And user types "default" in the "addName_0" input
+    And user types "bookinfo-istio-system.apps.ocp4-kqe1.maistra.upshift.redhat.com" in the "addHostname_0" input
+    And user types "80" in the "addPort_0" input
     And user adds a hostname
     And user chooses "Hostname" mode from the "addType0" select
     And user types "google.com" in the "addValue0" input
@@ -269,9 +269,9 @@ Feature: Kiali Istio Config page
     And user sees the "Create K8sGateway" config wizard
     And user adds listener
     And user types "gatewayapi-2" in the "name" input
-    And user types "default" in the "addName0" input
-    And user types "bookinfo-istio-system.apps.ocp4-kqe1.maistra.upshift.redhat.com" in the "addHostname0" input
-    And user types "80" in the "addPort0" input
+    And user types "default" in the "addName_0" input
+    And user types "bookinfo-istio-system.apps.ocp4-kqe1.maistra.upshift.redhat.com" in the "addHostname_0" input
+    And user types "80" in the "addPort_0" input
     And user adds a hostname
     And user chooses "Hostname" mode from the "addType0" select
     And user types "google.com" in the "addValue0" input

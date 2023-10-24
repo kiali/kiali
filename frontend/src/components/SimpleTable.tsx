@@ -56,6 +56,22 @@ export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps)
     return thSort;
   };
 
+  const getActionToggle = (row: IRow, rowIndex: number) => {
+    if (props.actionResolver) {
+      const actionItems = props.actionResolver(row, rowIndex);
+
+      if (actionItems.length > 0) {
+        return (
+          <Td isActionCell>
+            <ActionsColumn items={actionItems} />
+          </Td>
+        );
+      }
+    }
+
+    return undefined;
+  };
+
   return (
     <Table aria-label={props.label} variant={props.variant} className={props.className}>
       <Thead>
@@ -86,11 +102,7 @@ export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps)
                   {cell.title ?? cell}
                 </Td>
               ))}
-              {props.actionResolver && (
-                <Td isActionCell>
-                  <ActionsColumn items={props.actionResolver(row, rowIndex)} />
-                </Td>
-              )}
+              {getActionToggle(row, rowIndex)}
             </Tr>
           ))
         ) : (
