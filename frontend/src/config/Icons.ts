@@ -43,37 +43,6 @@ const mutIcons = {
       text: 'Circuit Breaker',
       type: 'fa'
     } as IconType,
-    faultInjection: {
-      ascii: '\uf05e ',
-      className: 'fa fa-ban',
-      icon: BanIcon,
-      name: 'ban',
-      text: 'Fault Injection',
-      type: 'fa'
-    } as IconType,
-    gateway: {
-      className: 'pf-v5-pficon pf-v5-pficon-globe-route',
-      icon: GlobeRouteIcon,
-      name: 'globe-route',
-      text: 'Gateway',
-      type: 'pf'
-    } as IconType,
-    mirroring: {
-      className: 'pf-v5-pficon pf-v5-pficon-migration',
-      icon: MigrationIcon,
-      name: 'migration',
-      text: 'Mirroring',
-      type: 'pf'
-    } as IconType,
-    missingAuthPolicy: {
-      ascii: '\ue946 ',
-      className: 'pf-v5-pficon pf-v5-pficon-security',
-      color: 'red',
-      icon: SecurityIcon,
-      name: 'security',
-      text: 'Missing Auth Policy',
-      type: 'pf'
-    } as IconType,
     missingLabel: {
       ascii: '\uE932',
       className: 'fa fa-wrench',
@@ -83,9 +52,40 @@ const mutIcons = {
       text: 'Missing Label',
       type: 'fa'
     } as IconType,
+    faultInjection: {
+      ascii: '\uf05e ',
+      className: 'fa fa-ban',
+      icon: BanIcon,
+      name: 'ban',
+      text: 'Fault Injection',
+      type: 'fa'
+    } as IconType,
+    gateway: {
+      className: 'pf-icon pf-icon-globe-route',
+      icon: GlobeRouteIcon,
+      name: 'globe-route',
+      text: 'Gateway',
+      type: 'pf'
+    } as IconType,
+    mirroring: {
+      className: 'pf-icon pf-icon-migration',
+      icon: MigrationIcon,
+      name: 'migration',
+      text: 'Mirroring',
+      type: 'pf'
+    } as IconType,
+    missingAuthPolicy: {
+      ascii: '\ue946 ',
+      className: 'pf-icon pf-icon-security',
+      color: 'red',
+      icon: SecurityIcon,
+      name: 'security',
+      text: 'Missing Auth Policy',
+      type: 'pf'
+    } as IconType,
     missingSidecar: {
       ascii: '\ue915 ',
-      className: 'pf-v5-pficon pf-v5-pficon-blueprint',
+      className: 'pf-icon pf-icon-blueprint',
       color: 'red',
       icon: BlueprintIcon,
       name: 'blueprint',
@@ -94,7 +94,7 @@ const mutIcons = {
     } as IconType,
     mtls: {
       ascii: '\ue923 ',
-      className: 'pf-v5-pficon pf-v5-pficon-locked',
+      className: 'pf-icon pf-icon-locked',
       icon: LockedIcon,
       name: 'locked',
       text: 'mTLS',
@@ -142,7 +142,7 @@ const mutIcons = {
     } as IconType,
     workloadEntry: {
       ascii: '\uf126 ',
-      className: 'pf-v5-pficon pf-v5-pficon-virtual-machine',
+      className: 'pf-icon pf-icon-virtual-machine',
       icon: VirtualMachineIcon,
       name: 'virtual-machine',
       text: 'Workload Entry',
