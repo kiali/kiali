@@ -261,8 +261,8 @@ Feature: Kiali Istio Config page
     And user types "bookinfo-istio-system.apps.ocp4-kqe1.maistra.upshift.redhat.com" in the "addHostname_0" input
     And user types "80" in the "addPort_0" input
     And user adds a hostname
-    And user chooses "Hostname" mode from the "addType0" select
-    And user types "google.com" in the "addValue0" input
+    And user chooses "Hostname" mode from the "addType_0" select
+    And user types "google.com" in the "addValue_0" input
     And user previews the configuration
     And user creates the istio config
     And user clicks in the "K8sGateway" Istio config actions
@@ -273,8 +273,8 @@ Feature: Kiali Istio Config page
     And user types "bookinfo-istio-system.apps.ocp4-kqe1.maistra.upshift.redhat.com" in the "addHostname_0" input
     And user types "80" in the "addPort_0" input
     And user adds a hostname
-    And user chooses "Hostname" mode from the "addType0" select
-    And user types "google.com" in the "addValue0" input
+    And user chooses "Hostname" mode from the "addType_0" select
+    And user types "google.com" in the "addValue_0" input
     And user previews the configuration
     And user creates the istio config
     Then the "K8sGateway" "gatewayapi-1" should be listed in "bookinfo" namespace
