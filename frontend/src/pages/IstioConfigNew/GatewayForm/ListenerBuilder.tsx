@@ -94,7 +94,7 @@ export class ListenerBuilder extends React.Component<Props> {
           <TextInput
             value={this.props.listener.name}
             type="text"
-            id={`addName_ ${this.props.index}`}
+            id={`addName_${this.props.index}`}
             aria-describedby="add name"
             onChange={this.onAddName}
             validated={isValid(isValidName(this.props.listener.name))}
