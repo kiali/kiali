@@ -94,7 +94,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     };
   }
 
-  onSort = (_event: React.MouseEvent, index: number, direction: SortByDirection) => {
+  onSort = (_event: React.MouseEvent, index: number, direction: SortByDirection): void => {
     this.setState({
       sortBy: {
         index,
@@ -204,6 +204,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
               ))}
             </Tr>
           </Thead>
+
           <Tbody>
             {this.props.rows.length > 0 ? (
               rowItems

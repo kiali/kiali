@@ -17,7 +17,7 @@ type SimpleTabsProps = {
 export const SimpleTabs: React.FC<SimpleTabsProps> = (props: SimpleTabsProps) => {
   const [activeTab, setActiveTab] = React.useState<string | number>(props.defaultTab);
 
-  const handleTabSelect = (_event: React.MouseEvent, index: string | number) => {
+  const handleTabSelect = (_event: React.MouseEvent, index: string | number): void => {
     setActiveTab(index);
   };
 

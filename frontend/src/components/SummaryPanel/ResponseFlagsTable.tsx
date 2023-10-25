@@ -34,6 +34,7 @@ export const ResponseFlagsTable: React.FC<ResponseFlagsTableProps> = (props: Res
         rows.push({ key: `${code} ${f}`, code: code, flags: f, val: responses[code].flags[f] });
       });
     });
+
     return rows;
   };
 
@@ -47,6 +48,8 @@ export const ResponseFlagsTable: React.FC<ResponseFlagsTableProps> = (props: Res
       })
       .join('\n');
   };
+
+  const rows = getRows(props.responses);
 
   return (
     <>
@@ -66,8 +69,9 @@ export const ResponseFlagsTable: React.FC<ResponseFlagsTableProps> = (props: Res
             </Th>
           </Tr>
         </Thead>
+
         <Tbody>
-          {getRows(props.responses).map(row => (
+          {rows.map(row => (
             <Tr key={row.key}>
               <Td dataLabel="Code" textCenter>
                 {row.code}

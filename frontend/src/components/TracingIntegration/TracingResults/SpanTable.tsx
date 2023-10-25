@@ -9,7 +9,7 @@ import {
   EmptyStateVariant,
   EmptyStateHeader
 } from '@patternfly/react-core';
-import { SortByDirection, IRow, IRowData, IAction, TableVariant } from '@patternfly/react-table';
+import { SortByDirection, IRow, IRowData, IAction, TableVariant, ISortBy, OnSort } from '@patternfly/react-table';
 import { compareNullable } from 'components/FilterList/FilterHelper';
 import { MetricsStats } from 'types/Metrics';
 import { KialiAppState } from 'store/Store';
@@ -146,13 +146,11 @@ class SpanTableComponent extends React.Component<Props, State> {
   }
 
   render() {
-    const rows = this.rows();
-
-    const sortBy = { index: this.state.sortIndex, direction: this.state.sortDirection };
-    const onSort = (_event: React.MouseEvent, index: number, sortDirection: SortByDirection) =>
+    const sortBy: ISortBy = { index: this.state.sortIndex, direction: this.state.sortDirection };
+    const onSort: OnSort = (_event: React.MouseEvent, index: number, sortDirection: SortByDirection) =>
       this.setState({ sortIndex: index, sortDirection: sortDirection });
 
-    const emptyState = (
+    const emptyState: React.ReactNode = (
       <EmptyState variant={EmptyStateVariant.full}>
         <EmptyStateHeader titleText="No spans found" headingLevel="h5" />
         <EmptyStateBody>No spans match the current filters</EmptyStateBody>
@@ -164,7 +162,7 @@ class SpanTableComponent extends React.Component<Props, State> {
         label="list_spans"
         className={tableStyle}
         columns={columns}
-        rows={rows}
+        rows={this.rows()}
         emptyState={emptyState}
         onSort={onSort}
         sortBy={sortBy}
@@ -174,7 +172,7 @@ class SpanTableComponent extends React.Component<Props, State> {
     );
   }
 
-  private fetchComparisonMetrics(items: RichSpanData[]) {
+  private fetchComparisonMetrics(items: RichSpanData[]): void {
     const queries = buildQueriesFromSpans(items, false);
     this.props.loadMetricsStats(queries, false);
   }
@@ -207,8 +205,8 @@ class SpanTableComponent extends React.Component<Props, State> {
         </>,
         this.originCell(item),
         this.summaryCell(item),
-        this.StatsCell(item)
-      ] as React.ReactNode[],
+        this.statsCell(item)
+      ],
       className: getClassName(item.tags.some(isErrorTag), isSpan),
       item: item
     };
@@ -425,7 +423,7 @@ class SpanTableComponent extends React.Component<Props, State> {
     );
   };
 
-  private renderEnvoySummary = (item: RichSpanData) => {
+  private renderEnvoySummary = (item: RichSpanData): React.ReactNode => {
     const parentKiosk = isParentKiosk(this.props.kiosk);
     const info = item.info as EnvoySpanInfo;
     let rqLabel = 'Request';
@@ -517,7 +515,7 @@ class SpanTableComponent extends React.Component<Props, State> {
     );
   };
 
-  private renderHTTPSummary = (item: RichSpanData) => {
+  private renderHTTPSummary = (item: RichSpanData): React.ReactNode => {
     const info = item.info as OpenTracingHTTPInfo;
     const rqLabel =
       info.direction === 'inbound' ? 'Received request' : info.direction === 'outbound' ? 'Sent request' : 'Request';
@@ -542,7 +540,7 @@ class SpanTableComponent extends React.Component<Props, State> {
     );
   };
 
-  private renderTCPSummary = (item: RichSpanData) => {
+  private renderTCPSummary = (item: RichSpanData): React.ReactNode => {
     const info = item.info as OpenTracingTCPInfo;
     const key = `${item.spanID}-summary-tcp`;
 
@@ -558,7 +556,7 @@ class SpanTableComponent extends React.Component<Props, State> {
     );
   };
 
-  private StatsCell = (item: RichSpanData): React.ReactNode => {
+  private statsCell = (item: RichSpanData): React.ReactNode => {
     const key = `${item.spanID}-stats`;
 
     return (

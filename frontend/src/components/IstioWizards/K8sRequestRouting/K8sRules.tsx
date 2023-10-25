@@ -112,7 +112,7 @@ export const K8sRules: React.FC<K8sRuleProps> = (props: K8sRuleProps) => {
 
   const matchAll: number = matchAllIndex(props.k8sRules);
 
-  const emptyState = (
+  const emptyState: React.ReactNode = (
     <EmptyState variant={EmptyStateVariant.full}>
       <EmptyStateHeader titleText="No K8s Route Rules defined" headingLevel="h5" />
       <EmptyStateBody className={noRulesStyle}>A Request Routing scenario needs at least a Route Rule</EmptyStateBody>
@@ -124,47 +124,35 @@ export const K8sRules: React.FC<K8sRuleProps> = (props: K8sRuleProps) => {
 
     return {
       cells: [
-        { title: <>{order + 1}</> },
-        {
-          title: (
-            <>
-              {!rule.matches || rule.matches.length === 0
-                ? 'Any request'
-                : rule.matches.map((match, i) => <div key={`match_${i}`}>{match}</div>)}
-              {!isValid && (
-                <div className={validationStyle}>
-                  Match 'Any request' is defined in a previous rule.
-                  <br />
-                  This rule is not accessible.
-                </div>
-              )}
-            </>
-          )
-        },
-        {
-          title: (
-            <>
-              {!rule.filters || rule.filters.length === 0
-                ? 'No Request Filter'
-                : rule.filters.map((filter, i) => <div key={`filter_${i}`}>{filter}</div>)}
-            </>
-          )
-        },
-        {
-          title: (
-            <div key={`br_${order}`}>
-              {rule.backendRefs &&
-                rule.backendRefs.map((bRef, i) => {
-                  return (
-                    <div key={`br_${order}_${bRef.name}_${i}`}>
-                      <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
-                      {bRef.name} ({bRef.weight}% routed traffic)
-                    </div>
-                  );
-                })}
+        <>{order + 1}</>,
+        <>
+          {!rule.matches || rule.matches.length === 0
+            ? 'Any request'
+            : rule.matches.map((match, i) => <div key={`match_${i}`}>{match}</div>)}
+          {!isValid && (
+            <div className={validationStyle}>
+              Match 'Any request' is defined in a previous rule.
+              <br />
+              This rule is not accessible.
             </div>
-          )
-        }
+          )}
+        </>,
+        <>
+          {!rule.filters || rule.filters.length === 0
+            ? 'No Request Filter'
+            : rule.filters.map((filter, i) => <div key={`filter_${i}`}>{filter}</div>)}
+        </>,
+        <div key={`br_${order}`}>
+          {rule.backendRefs &&
+            rule.backendRefs.map((bRef, i) => {
+              return (
+                <div key={`br_${order}_${bRef.name}_${i}`}>
+                  <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
+                  {bRef.name} ({bRef.weight}% routed traffic)
+                </div>
+              );
+            })}
+        </div>
       ]
     };
   });

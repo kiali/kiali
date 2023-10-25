@@ -18,7 +18,7 @@ import {
 import { aceOptions } from '../../types/IstioConfigDetails';
 import AceEditor from 'react-ace';
 import { ParameterizedTabs } from '../Tab/Tabs';
-import { ThProps } from '@patternfly/react-table';
+import { IRow, ThProps } from '@patternfly/react-table';
 import { AuthConfig } from '../../types/Auth';
 import { authenticationConfig } from '../../config/AuthenticationConfig';
 import { basicTabStyle } from 'styles/TabStyles';
@@ -153,11 +153,11 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
     }
   }, [props.isOpen]);
 
-  const copyCallback = (_text: string, result: boolean) => {
+  const copyCallback = (_text: string, result: boolean): void => {
     setCopyStatus(result ? CopyStatus.COPIED : CopyStatus.NOT_COPIED);
   };
 
-  const download = () => {
+  const download = (): void => {
     const element = document.createElement('a');
     const file = new Blob([copyText], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
@@ -166,11 +166,11 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
     element.click();
   };
 
-  const hideAlert = () => {
+  const hideAlert = (): void => {
     setCopyStatus(CopyStatus.NOT_COPIED);
   };
 
-  const parseConfig = (key: string, value: any) => {
+  const parseConfig = (key: string, value: string): string | null => {
     // We have to patch some runtime properties  we don't want to serialize
     if (propsToPatch.includes(key)) {
       return null;
@@ -180,7 +180,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
   };
 
   // Properties shown in Kiali Config are not shown again in Additional State
-  const filterDebugInformation = (info: any) => {
+  const filterDebugInformation = (info: DebugInformationData): DebugInformationData => {
     if (info !== null) {
       for (const [key] of Object.entries(info)) {
         if (propsToShow.includes(key)) {
@@ -189,6 +189,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
         }
       }
     }
+
     return info;
   };
 
@@ -209,17 +210,17 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
 
   const columns: ThProps[] = [{ title: 'Configuration' }, { title: 'Value' }];
 
-  let rows: string[][] = [];
+  let rows: IRow[] = [];
 
   for (const [k, v] of Object.entries(config)) {
     if (typeof v !== 'string') {
-      rows.push([k, JSON.stringify(v)]);
+      rows.push({ cells: [k, JSON.stringify(v)] });
     } else {
-      rows.push([k, v]);
+      rows.push({ cells: [k, v] });
     }
   }
 
-  const renderTabs = () => {
+  const renderTabs = (): React.ReactNode[] => {
     const kialiConfig = (
       <Tab eventKey={0} title="Kiali Config" key="kialiConfig">
         <CopyToClipboard onCopy={copyCallback} text={rows} options={copyToClipboardOptions}>
@@ -249,8 +250,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
       </Tab>
     );
 
-    const tabsArray: JSX.Element[] = [kialiConfig, additionalState];
-    return tabsArray;
+    return [kialiConfig, additionalState];
   };
 
   if (!props.isOpen) {
@@ -265,11 +265,15 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
       onClose={props.onClose}
       title="Debug information"
       actions={[
-        <Button onClick={close}>Close</Button>,
-        <CopyToClipboard onCopy={copyCallback} text={copyText} options={copyToClipboardOptions}>
+        <Button key="close" onClick={close}>
+          Close
+        </Button>,
+
+        <CopyToClipboard key="copy" onCopy={copyCallback} text={copyText} options={copyToClipboardOptions}>
           <Button variant={ButtonVariant.secondary}>Copy</Button>
         </CopyToClipboard>,
-        <Button variant={ButtonVariant.secondary} onClick={download}>
+
+        <Button key="download" variant={ButtonVariant.secondary} onClick={download}>
           Download
         </Button>
       ]}
@@ -283,6 +287,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
           actionClose={<AlertActionCloseButton onClose={hideAlert} />}
         />
       )}
+
       {copyStatus === CopyStatus.OLD_COPY && (
         <Alert
           style={{ marginBottom: '20px' }}
@@ -292,6 +297,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
           actionClose={<AlertActionCloseButton onClose={hideAlert} />}
         />
       )}
+
       <ParameterizedTabs
         id="basic-tabs"
         className={classes(basicTabStyle, tabStyle)}

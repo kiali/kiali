@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ThProps } from '@patternfly/react-table';
+import { IRow, ThProps } from '@patternfly/react-table';
 import { Button, ButtonVariant, FormSelect, FormSelectOption, TextInput } from '@patternfly/react-core';
 import { SimpleTable } from 'components/SimpleTable';
 import { KialiIcon } from 'config/KialiIcon';
@@ -53,19 +53,19 @@ export class OperationBuilder extends React.Component<Props, State> {
     };
   }
 
-  onAddNewOperationField = (_event, value: string) => {
+  onAddNewOperationField = (_event: React.FormEvent<HTMLSelectElement>, value: string): void => {
     this.setState({
       newOperationField: value
     });
   };
 
-  onAddNewValues = (_event, value: string) => {
+  onAddNewValues = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
     this.setState({
       newValues: value
     });
   };
 
-  onAddOperation = () => {
+  onAddOperation = (): void => {
     this.setState(prevState => {
       const i = prevState.operationFields.indexOf(prevState.newOperationField);
 
@@ -84,7 +84,7 @@ export class OperationBuilder extends React.Component<Props, State> {
     });
   };
 
-  onAddOperationToList = () => {
+  onAddOperationToList = (): void => {
     const toItem = this.state.operation;
     this.setState(
       {
@@ -99,7 +99,7 @@ export class OperationBuilder extends React.Component<Props, State> {
     );
   };
 
-  onRemoveOperation = (removeOperationField: string) => {
+  onRemoveOperation = (removeOperationField: string): void => {
     this.setState(prevState => {
       prevState.operationFields.push(removeOperationField);
       delete prevState.operation[removeOperationField];
@@ -114,7 +114,7 @@ export class OperationBuilder extends React.Component<Props, State> {
     });
   };
 
-  rows = () => {
+  rows = (): IRow[] => {
     const operatorRows = Object.keys(this.state.operation).map((operationField, i) => {
       return {
         key: `operationKey_${i}`,
@@ -136,29 +136,26 @@ export class OperationBuilder extends React.Component<Props, State> {
         {
           key: 'operationKeyNew',
           cells: [
-            <>
-              <FormSelect
-                value={this.state.newOperationField}
-                id="addNewOperationField"
-                name="addNewOperationField"
-                onChange={this.onAddNewOperationField}
-              >
-                {this.state.operationFields.map((option, index) => (
-                  <FormSelectOption isDisabled={false} key={`operation_${index}`} value={option} label={option} />
-                ))}
-              </FormSelect>
-            </>,
-            <>
-              <TextInput
-                value={this.state.newValues}
-                type="text"
-                id="addNewValues"
-                key="addNewValues"
-                aria-describedby="add new operation values"
-                name="addNewValues"
-                onChange={this.onAddNewValues}
-              />
-            </>,
+            <FormSelect
+              value={this.state.newOperationField}
+              id="addNewOperationField"
+              name="addNewOperationField"
+              onChange={this.onAddNewOperationField}
+            >
+              {this.state.operationFields.map((option, index) => (
+                <FormSelectOption isDisabled={false} key={`operation_${index}`} value={option} label={option} />
+              ))}
+            </FormSelect>,
+
+            <TextInput
+              value={this.state.newValues}
+              type="text"
+              id="addNewValues"
+              key="addNewValues"
+              aria-describedby="add new operation values"
+              name="addNewValues"
+              onChange={this.onAddNewValues}
+            />,
             <>
               {this.state.operationFields.length > 0 && (
                 <Button variant={ButtonVariant.link} icon={<KialiIcon.AddMore />} onClick={this.onAddOperation} />

@@ -40,7 +40,7 @@ import { Td } from '@patternfly/react-table';
 
 // Links
 
-const getLink = (item: TResource, config: Resource, query?: string) => {
+const getLink = (item: TResource, config: Resource, query?: string): string => {
   let url = config.name === 'istio' ? getIstioLink(item) : `/namespaces/${item.namespace}/${config.name}/${item.name}`;
 
   if (item.cluster && isMultiCluster && !url.includes('cluster')) {
@@ -62,14 +62,14 @@ const getLink = (item: TResource, config: Resource, query?: string) => {
   return url;
 };
 
-const getIstioLink = (item: TResource) => {
+const getIstioLink = (item: TResource): string => {
   const type = item['type'];
 
   return GetIstioObjectUrl(item.name, item.namespace, type, item.cluster);
 };
 
 // Cells
-export const actionRenderer = (key: string, action: JSX.Element) => {
+export const actionRenderer = (key: string, action: JSX.Element): React.ReactNode => {
   return (
     <Td role="gridcell" key={`VirtuaItem_Action_${key}`} style={{ verticalAlign: 'middle' }}>
       {action}
@@ -128,7 +128,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
               <PFBadge badge={PFBadges[ir.objectType]} position={TooltipPosition.top} />
               <IstioObjectLink
                 name={ir.name}
-                namespace={ir.namespace || ''}
+                namespace={ir.namespace ?? ''}
                 cluster={item.cluster}
                 type={ir.objectType.toLowerCase()}
               >
@@ -307,7 +307,7 @@ export const namespace: Renderer<TResource> = (item: TResource) => {
   );
 };
 
-const labelActivate = (filters: ActiveFilter[], key: string, value: string, id: string) => {
+const labelActivate = (filters: ActiveFilter[], key: string, value: string, id: string): boolean => {
   return filters.some(filter => {
     if (filter.category === id) {
       if (filter.value.includes('=')) {

@@ -7,7 +7,6 @@ import {
   Th,
   Td,
   IRow,
-  IRowCell,
   TableVariant,
   IAction,
   ActionsColumn,
@@ -51,7 +50,7 @@ export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps)
     return thSort;
   };
 
-  const getActionToggle = (row: IRow, rowIndex: number) => {
+  const getActionToggle = (row: IRow, rowIndex: number): React.ReactNode => {
     if (props.actionResolver) {
       const actionItems = props.actionResolver(row, rowIndex);
 
@@ -84,19 +83,17 @@ export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps)
           ))}
         </Tr>
       </Thead>
+
       <Tbody>
         {props.rows.length > 0 ? (
           props.rows.map((row, rowIndex) => (
             <Tr key={row.key ?? `row_${rowIndex}`} className={row.className}>
-              {((row.cells as IRowCell[]) ?? row)?.map((cell, colIndex) => (
-                <Td
-                  key={cell.props?.key ?? `cell_${rowIndex}_${colIndex}`}
-                  dataLabel={props.columns[colIndex].title}
-                  colSpan={cell.props?.colSpan}
-                >
-                  {cell.title ?? cell}
+              {row.cells?.map((cell: React.ReactNode, colIndex: number) => (
+                <Td key={`cell_${rowIndex}_${colIndex}`} dataLabel={props.columns[colIndex].title}>
+                  {cell}
                 </Td>
               ))}
+
               {getActionToggle(row, rowIndex)}
             </Tr>
           ))

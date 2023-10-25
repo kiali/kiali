@@ -59,7 +59,7 @@ export class K8sTrafficShifting extends React.Component<Props, State> {
     this.resetState();
   }
 
-  resetState = () => {
+  resetState = (): void => {
     if (this.props.subServices.length === 0) {
       return;
     }
@@ -77,7 +77,7 @@ export class K8sTrafficShifting extends React.Component<Props, State> {
     );
   };
 
-  onWeight = (serviceName: string, newWeight: number) => {
+  onWeight = (serviceName: string, newWeight: number): void => {
     this.setState(
       prevState => {
         // Set new weight; remember rest of the nodes
@@ -114,6 +114,7 @@ export class K8sTrafficShifting extends React.Component<Props, State> {
             <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
             {service.name}
           </div>,
+
           <Slider
             id={`slider-${service.name}`}
             key={`slider-${service.name}`}

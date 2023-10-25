@@ -88,8 +88,9 @@ const columns = (isMultiCluster: boolean): SortableTh[] => {
   return cols;
 };
 
-function LockIcon(props: { mTLS: number | undefined }) {
+const LockIcon = (props: { mTLS: number | undefined }) => {
   const msg = props.mTLS ? `${props.mTLS} % of mTLS traffic` : 'mTLS is disabled';
+
   return (
     <Tooltip position={TooltipPosition.top} content={msg}>
       <>
@@ -98,7 +99,7 @@ function LockIcon(props: { mTLS: number | undefined }) {
       </>
     </Tooltip>
   );
-}
+};
 
 // Style constants
 const containerStyle = kialiStyle({ padding: '1.25rem' });
@@ -123,10 +124,11 @@ class TrafficList extends FilterComponent.Component<
     this.sortItemList(this.state.listItems, this.state.currentSortField, this.state.isSortAscending);
   }
 
-  componentDidUpdate(prevProps: TrafficListComponentProps, _prevState: TrafficListComponentState, _snapshot: any) {
+  componentDidUpdate(prevProps: TrafficListComponentProps) {
     // we only care about new TrafficItems, sorting is managed locally after initial render
     if (prevProps.trafficItems !== this.props.trafficItems) {
       const listItems = this.trafficToListItems(this.props.trafficItems);
+
       this.setState({
         listItems: this.sortItemList(listItems, this.state.currentSortField, this.state.isSortAscending)
       });
@@ -149,6 +151,7 @@ class TrafficList extends FilterComponent.Component<
           <Title headingLevel="h5" size={TitleSizes.lg}>
             {hasInbound ? '' : 'No '} Inbound Traffic
           </Title>
+
           {hasInbound && (
             <SimpleTable
               label="Sortable Table"
@@ -159,10 +162,12 @@ class TrafficList extends FilterComponent.Component<
             />
           )}
         </div>
+
         <div className={containerStyle}>
           <Title headingLevel="h5" size={TitleSizes.lg}>
             {hasOutbound ? '' : 'No '} Outbound Traffic
           </Title>
+
           {hasOutbound && (
             <SimpleTable
               label="Sortable Table"
@@ -192,7 +197,7 @@ class TrafficList extends FilterComponent.Component<
   }
 
   // Helper used for Table to sort handlers based on index column == field
-  onSort = (_event: React.MouseEvent, index: number, sortDirection: SortByDirection) => {
+  onSort = (_event: React.MouseEvent, index: number, sortDirection: SortByDirection): void => {
     // Map the column index to the correct sortField index (currently ordered with the same indexes)
     let sortField = sortFields[index];
 
@@ -245,7 +250,7 @@ class TrafficList extends FilterComponent.Component<
     return { value: 0, status: NA };
   };
 
-  private getTraffic = (traffic: ProtocolTraffic): { trafficRate; trafficPercentSuccess } => {
+  private getTraffic = (traffic: ProtocolTraffic): { trafficRate: string; trafficPercentSuccess: string } => {
     let rps = '0';
     let percentError = '0';
     let unit = 'rps';
@@ -284,15 +289,13 @@ class TrafficList extends FilterComponent.Component<
 
         let irow: IRow = {
           cells: [
-            <>
-              <Tooltip
-                key={`tt_status_${i}`}
-                position={TooltipPosition.top}
-                content={<>Traffic Status: {item.healthStatus.status.name}</>}
-              >
-                {createTooltipIcon(createIcon(item.healthStatus.status, 'sm'))}
-              </Tooltip>
-            </>,
+            <Tooltip
+              key={`tt_status_${i}`}
+              position={TooltipPosition.top}
+              content={<>Traffic Status: {item.healthStatus.status.name}</>}
+            >
+              {createTooltipIcon(createIcon(item.healthStatus.status, 'sm'))}
+            </Tooltip>,
             <>
               <PFBadge badge={item.badge} position={TooltipPosition.top} keyValue={`tt_badge_${i}`} />
               {!!links.detail ? (
@@ -359,7 +362,7 @@ class TrafficList extends FilterComponent.Component<
       });
   };
 
-  private getLinks = (item: TrafficListItem) => {
+  private getLinks = (item: TrafficListItem): { detail: string; metrics: string } => {
     if (item.node.isInaccessible) {
       return { detail: '', metrics: '' };
     }
@@ -427,7 +430,7 @@ class TrafficList extends FilterComponent.Component<
   };
 }
 
-const mapStateToProps = (state: KialiAppState) => {
+const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {
     kiosk: state.globalState.kiosk
   };

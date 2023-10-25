@@ -14,10 +14,9 @@ type ServerListProps = {
 };
 
 const noServerStyle = kialiStyle({
-  marginTop: '0.5rem',
+  marginTop: '0.25rem',
   color: PFColors.Red100,
-  textAlign: 'center',
-  width: '100%'
+  textAlign: 'center'
 });
 
 const columns: ThProps[] = [
@@ -30,12 +29,12 @@ const columns: ThProps[] = [
 ];
 
 const addServerStyle = kialiStyle({
-  marginLeft: 0,
-  paddingLeft: 0
+  marginLeft: '0.5rem',
+  marginTop: '0.5rem'
 });
 
 export const ServerList: React.FC<ServerListProps> = (props: ServerListProps) => {
-  const onAddServer = () => {
+  const onAddServer = (): void => {
     const newServerForm: ServerForm = {
       hosts: [],
       number: '',
@@ -65,7 +64,7 @@ export const ServerList: React.FC<ServerListProps> = (props: ServerListProps) =>
     props.onChange(s, sf);
   };
 
-  const onRemoveServer = (index: number) => {
+  const onRemoveServer = (index: number): void => {
     const serverList = props.serverList;
     serverList.splice(index, 1);
 
@@ -75,12 +74,13 @@ export const ServerList: React.FC<ServerListProps> = (props: ServerListProps) =>
     props.onChange(serverList, serverForm);
   };
 
-  const onChange = (serverForm: ServerForm, i: number) => {
+  const onChange = (serverForm: ServerForm, i: number): void => {
     const serversForm = props.serverForm;
     serversForm[i] = serverForm;
 
     const servers = props.serverList;
     const newServer = createNewServer(serverForm);
+
     if (typeof newServer !== 'undefined') {
       servers[i] = newServer;
     }
@@ -88,7 +88,7 @@ export const ServerList: React.FC<ServerListProps> = (props: ServerListProps) =>
     props.onChange(servers, serversForm);
   };
 
-  const createNewServer = (serverForm: ServerForm) => {
+  const createNewServer = (serverForm: ServerForm): Server | undefined => {
     if (serverForm.hosts.length === 0) return;
     if (serverForm.number.length === 0 || isNaN(Number(serverForm.number))) return;
     if (serverForm.name.length === 0) return;
@@ -106,6 +106,7 @@ export const ServerList: React.FC<ServerListProps> = (props: ServerListProps) =>
             }
           : undefined
     };
+
     return server;
   };
 
@@ -122,33 +123,37 @@ export const ServerList: React.FC<ServerListProps> = (props: ServerListProps) =>
           </Tr>
         </Thead>
         <Tbody>
-          {props.serverForm.map((server, index) => (
-            <ServerBuilder
-              key={`server_builder_${index}`}
-              server={server}
-              onRemoveServer={onRemoveServer}
-              index={index}
-              onChange={onChange}
-            ></ServerBuilder>
-          ))}
-
-          <Tr>
-            <Td>
-              <Button
-                name="addServer"
-                variant={ButtonVariant.link}
-                icon={<KialiIcon.AddMore />}
-                onClick={onAddServer}
-                className={addServerStyle}
-              >
-                Add Server to Servers List
-              </Button>
-            </Td>
-          </Tr>
+          {props.serverForm.length > 0 ? (
+            <>
+              {props.serverForm.map((server, index) => (
+                <ServerBuilder
+                  key={`server_builder_${index}`}
+                  server={server}
+                  onRemoveServer={onRemoveServer}
+                  index={index}
+                  onChange={onChange}
+                ></ServerBuilder>
+              ))}
+            </>
+          ) : (
+            <Tr>
+              <Td colSpan={columns.length}>
+                <div className={noServerStyle}>No Servers defined</div>
+              </Td>
+            </Tr>
+          )}
         </Tbody>
       </Table>
 
-      {props.serverList.length === 0 && <div className={noServerStyle}>No Servers defined</div>}
+      <Button
+        name="addServer"
+        variant={ButtonVariant.link}
+        icon={<KialiIcon.AddMore />}
+        onClick={onAddServer}
+        className={addServerStyle}
+      >
+        Add Server to Servers List
+      </Button>
     </>
   );
 };

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ThProps } from '@patternfly/react-table';
+import { IRow, ThProps } from '@patternfly/react-table';
 import { Button, ButtonVariant, TextInput } from '@patternfly/react-core';
 import { isValidRequestHeaderName, isValidRequestAuthClaimName } from '../../../../helpers/ValidationHelpers';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -67,7 +67,7 @@ export class ConditionBuilder extends React.Component<Props, State> {
     };
   }
 
-  onAddNewConditionKey = (_, key: string) => {
+  onAddNewConditionKey = (_event: React.FormEvent<HTMLInputElement>, key: string): void => {
     this.setState(prevState => {
       prevState.condition.key = key;
       return {
@@ -76,7 +76,7 @@ export class ConditionBuilder extends React.Component<Props, State> {
     });
   };
 
-  onAddNewValues = (_event, value: string) => {
+  onAddNewValues = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
     this.setState(prevState => {
       prevState.condition.values = value.length === 0 ? [] : value.split(',');
       return {
@@ -85,7 +85,7 @@ export class ConditionBuilder extends React.Component<Props, State> {
     });
   };
 
-  onAddNewNotValues = (_, notValues: string) => {
+  onAddNewNotValues = (_event: React.FormEvent<HTMLInputElement>, notValues: string): void => {
     this.setState(prevState => {
       prevState.condition.notValues = notValues.length === 0 ? [] : notValues.split(',');
       return {
@@ -94,7 +94,7 @@ export class ConditionBuilder extends React.Component<Props, State> {
     });
   };
 
-  onAddConditionToList = () => {
+  onAddConditionToList = (): void => {
     const conditionItem = this.state.condition;
     this.setState(
       {
@@ -155,7 +155,7 @@ export class ConditionBuilder extends React.Component<Props, State> {
     return [true, true, true, ''];
   };
 
-  rows = (validKey: boolean, validValues: boolean, validNotValues: boolean, validText: string) => {
+  rows = (validKey: boolean, validValues: boolean, validNotValues: boolean, validText: string): IRow[] => {
     return [
       {
         key: 'conditionKeyNew',

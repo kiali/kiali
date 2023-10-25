@@ -41,42 +41,50 @@ export const JwtRuleList: React.FC<JwtRuleListProps> = (props: JwtRuleListProps)
               <b>issuer</b>: [{formatJwtField('issuer', jwtRule)}]
             </div>
           ) : undefined}
+
           {jwtRule.audiences ? (
             <div>
               <b>audiences</b>: [{formatJwtField('audiences', jwtRule)}]
             </div>
           ) : undefined}
+
           {jwtRule.jwks ? (
             <div>
               <b>jwks</b>: [{formatJwtField('jwks', jwtRule)}]
             </div>
           ) : undefined}
+
           {jwtRule.jwksUri ? (
             <div>
               <b>jwksUri</b>: [{formatJwtField('jwksUri', jwtRule)}]
             </div>
           ) : undefined}
+
           {jwtRule.fromHeaders ? (
             <div>
               <b>fromHeaders</b>: [{formatJwtField('fromHeaders', jwtRule)}]
             </div>
           ) : undefined}
+
           {jwtRule.fromParams ? (
             <div>
               <b>fromParams</b>: [{formatJwtField('fromParams', jwtRule)}]
             </div>
           ) : undefined}
+
           {jwtRule.outputPayloadToHeader ? (
             <div>
               <b>outputPayloadToHeader</b>: [{formatJwtField('outputPayloadToHeader', jwtRule)}]
             </div>
           ) : undefined}
+
           {jwtRule.forwardOriginalToken !== undefined ? (
             <div>
               <b>forwardOriginalToken</b>: [{formatJwtField('forwardOriginalToken', jwtRule)}]
             </div>
           ) : undefined}
         </>,
+
         <Button
           id="removeToOperationBtn"
           variant={ButtonVariant.link}

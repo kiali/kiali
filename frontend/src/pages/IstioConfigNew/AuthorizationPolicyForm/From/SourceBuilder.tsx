@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ThProps } from '@patternfly/react-table';
+import { IRow, ThProps } from '@patternfly/react-table';
 import { Button, ButtonVariant, FormSelect, FormSelectOption, TextInput } from '@patternfly/react-core';
 import { isValidIp } from '../../../../utils/IstioConfigUtils';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -61,19 +61,19 @@ export class SourceBuilder extends React.Component<Props, State> {
     };
   }
 
-  onAddNewSourceField = (_event, value: string) => {
+  onAddNewSourceField = (_event: React.FormEvent<HTMLSelectElement>, value: string): void => {
     this.setState({
       newSourceField: value
     });
   };
 
-  onAddNewValues = (_event, value: string) => {
+  onAddNewValues = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
     this.setState({
       newValues: value
     });
   };
 
-  onAddSource = () => {
+  onAddSource = (): void => {
     this.setState(prevState => {
       const i = prevState.sourceFields.indexOf(prevState.newSourceField);
 
@@ -92,7 +92,7 @@ export class SourceBuilder extends React.Component<Props, State> {
     });
   };
 
-  onAddSourceFromList = () => {
+  onAddSourceFromList = (): void => {
     const fromItem = this.state.source;
 
     this.setState(
@@ -127,7 +127,7 @@ export class SourceBuilder extends React.Component<Props, State> {
     return [true, ''];
   };
 
-  onRemoveSource = (removeSourceField: string) => {
+  onRemoveSource = (removeSourceField: string): void => {
     this.setState(prevState => {
       prevState.sourceFields.push(removeSourceField);
       delete prevState.source[removeSourceField];
@@ -142,7 +142,7 @@ export class SourceBuilder extends React.Component<Props, State> {
     });
   };
 
-  rows = () => {
+  rows = (): IRow[] => {
     const [isValidSource, invalidText] = this.isValidSource();
 
     const sourceRows = Object.keys(this.state.source).map((sourceField, i) => {
@@ -166,18 +166,16 @@ export class SourceBuilder extends React.Component<Props, State> {
         {
           key: 'sourceKeyNew',
           cells: [
-            <>
-              <FormSelect
-                value={this.state.newSourceField}
-                id="addNewSourceField"
-                name="addNewSourceField"
-                onChange={this.onAddNewSourceField}
-              >
-                {this.state.sourceFields.map((option, index) => (
-                  <FormSelectOption isDisabled={false} key={`source_${index}`} value={option} label={option} />
-                ))}
-              </FormSelect>
-            </>,
+            <FormSelect
+              value={this.state.newSourceField}
+              id="addNewSourceField"
+              name="addNewSourceField"
+              onChange={this.onAddNewSourceField}
+            >
+              {this.state.sourceFields.map((option, index) => (
+                <FormSelectOption isDisabled={false} key={`source_${index}`} value={option} label={option} />
+              ))}
+            </FormSelect>,
             <>
               <TextInput
                 value={this.state.newValues}

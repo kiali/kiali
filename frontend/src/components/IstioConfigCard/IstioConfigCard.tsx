@@ -32,7 +32,7 @@ const emtpytStyle = kialiStyle({
 export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConfigCardProps) => {
   const columns: ThProps[] = [{ title: 'Name' }, { title: 'Status', width: 10 }];
 
-  const noIstioConfig = (
+  const noIstioConfig: React.ReactNode = (
     <EmptyState variant={EmptyStateVariant.sm} className={emtpytStyle}>
       <EmptyStateBody className={emtpytStyle} data-test="istio-config-empty">
         No Istio Config found for {props.name}
@@ -40,7 +40,7 @@ export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConf
     </EmptyState>
   );
 
-  const overviewLink = (item: IstioConfigItem) => {
+  const overviewLink = (item: IstioConfigItem): React.ReactNode => {
     return (
       <IstioObjectLink name={item.name} namespace={item.namespace ?? ''} cluster={item.cluster} type={item.type}>
         {item.name}
@@ -80,6 +80,7 @@ export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConf
           Istio Config
         </Title>
       </CardHeader>
+
       <CardBody>
         <SimpleTable
           label="list_istio_config"

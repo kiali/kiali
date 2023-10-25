@@ -189,69 +189,69 @@ const istioType: ResourceType<IstioConfigItem> = {
   renderer: Renderers.istioType
 };
 
-type istioConfigType = {
+type IstioConfigType = {
   badge: PFBadgeType;
   name: string;
   url: string;
 };
 
-export const IstioTypes = {
-  adapter: { name: 'Adapter', url: 'adapters', badge: PFBadges.Adapter } as istioConfigType,
+export const IstioTypes: { [type: string]: IstioConfigType } = {
+  adapter: { name: 'Adapter', url: 'adapters', badge: PFBadges.Adapter },
   attributemanifest: {
     name: 'AttributeManifest',
     url: 'attributemanifests',
     badge: PFBadges.AttributeManifest
-  } as istioConfigType,
+  },
   authorizationpolicy: {
     name: 'AuthorizationPolicy',
     url: 'authorizationpolicies',
     badge: PFBadges.AuthorizationPolicy
-  } as istioConfigType,
+  },
   clusterrbacconfig: {
     name: 'ClusterRbacConfig',
     url: 'clusterrbacconfigs',
     badge: PFBadges.ClusterRBACConfig
-  } as istioConfigType,
+  },
   destinationrule: {
     name: 'DestinationRule',
     url: 'destinationrules',
     badge: PFBadges.DestinationRule
-  } as istioConfigType,
-  envoyfilter: { name: 'EnvoyFilter', url: 'envoyfilters', badge: PFBadges.EnvoyFilter } as istioConfigType,
-  gateway: { name: 'Gateway', url: 'gateways', badge: PFBadges.Gateway } as istioConfigType,
-  handler: { name: 'Handler', url: 'handlers', badge: PFBadges.Handler } as istioConfigType,
-  httproute: { name: 'HTTPRoute', url: 'k8shttproutes', badge: PFBadges.HTTPRoute } as istioConfigType,
-  instance: { name: 'Instance', url: 'instances', badge: PFBadges.Instance } as istioConfigType,
-  k8sgateway: { name: 'Gateway (K8s)', url: 'k8sgateways', badge: PFBadges.K8sGateway } as istioConfigType,
-  k8shttproute: { name: 'HTTPRoute (K8s)', url: 'k8shttproutes', badge: PFBadges.K8sHTTPRoute } as istioConfigType,
-  meshpolicy: { name: 'MeshPolicy', url: 'meshpolicies', badge: PFBadges.MeshPolicy } as istioConfigType,
+  },
+  envoyfilter: { name: 'EnvoyFilter', url: 'envoyfilters', badge: PFBadges.EnvoyFilter },
+  gateway: { name: 'Gateway', url: 'gateways', badge: PFBadges.Gateway },
+  handler: { name: 'Handler', url: 'handlers', badge: PFBadges.Handler },
+  httproute: { name: 'HTTPRoute', url: 'k8shttproutes', badge: PFBadges.HTTPRoute },
+  instance: { name: 'Instance', url: 'instances', badge: PFBadges.Instance },
+  k8sgateway: { name: 'Gateway (K8s)', url: 'k8sgateways', badge: PFBadges.K8sGateway },
+  k8shttproute: { name: 'HTTPRoute (K8s)', url: 'k8shttproutes', badge: PFBadges.K8sHTTPRoute },
+  meshpolicy: { name: 'MeshPolicy', url: 'meshpolicies', badge: PFBadges.MeshPolicy },
   peerauthentication: {
     name: 'PeerAuthentication',
     url: 'peerauthentications',
     badge: PFBadges.PeerAuthentication
-  } as istioConfigType,
-  policy: { name: 'Policy', url: 'policies', badge: PFBadges.Policy } as istioConfigType,
-  rbacconfig: { name: 'RbacConfig', url: 'rbacconfigs', badge: PFBadges.RBACConfig } as istioConfigType,
+  },
+  policy: { name: 'Policy', url: 'policies', badge: PFBadges.Policy },
+  rbacconfig: { name: 'RbacConfig', url: 'rbacconfigs', badge: PFBadges.RBACConfig },
   requestauthentication: {
     name: 'RequestAuthentication',
     url: 'requestauthentications',
     badge: PFBadges.RequestAuthentication
-  } as istioConfigType,
-  rule: { name: 'Rule', url: 'rules', badge: PFBadges.Rule } as istioConfigType,
-  serviceentry: { name: 'ServiceEntry', url: 'serviceentries', badge: PFBadges.ServiceEntry } as istioConfigType,
-  servicerole: { name: 'ServiceRole', url: 'serviceroles', icon: PFBadges.ServiceRole },
+  },
+  rule: { name: 'Rule', url: 'rules', badge: PFBadges.Rule },
+  serviceentry: { name: 'ServiceEntry', url: 'serviceentries', badge: PFBadges.ServiceEntry },
+  servicerole: { name: 'ServiceRole', url: 'serviceroles', badge: PFBadges.ServiceRole },
   servicerolebinding: {
     name: 'ServiceRoleBinding',
     url: 'servicerolebindings',
     badge: PFBadges.ServiceRoleBinding
-  } as istioConfigType,
-  sidecar: { name: 'Sidecar', url: 'sidecars', badge: PFBadges.Sidecar } as istioConfigType,
-  telemetry: { name: 'Telemetry', url: 'telemetries', badge: PFBadges.Telemetry } as istioConfigType,
-  template: { name: 'Template', url: 'templates', badge: PFBadges.Template } as istioConfigType,
-  virtualservice: { name: 'VirtualService', url: 'virtualservices', badge: PFBadges.VirtualService } as istioConfigType,
-  wasmplugin: { name: 'WasmPlugin', url: 'wasmplugins', badge: PFBadges.WasmPlugin } as istioConfigType,
-  workloadentry: { name: 'WorkloadEntry', url: 'workloadentries', badge: PFBadges.WorkloadEntry } as istioConfigType,
-  workloadgroup: { name: 'WorkloadGroup', url: 'workloadgroups', badge: PFBadges.WorkloadGroup } as istioConfigType
+  },
+  sidecar: { name: 'Sidecar', url: 'sidecars', badge: PFBadges.Sidecar },
+  telemetry: { name: 'Telemetry', url: 'telemetries', badge: PFBadges.Telemetry },
+  template: { name: 'Template', url: 'templates', badge: PFBadges.Template },
+  virtualservice: { name: 'VirtualService', url: 'virtualservices', badge: PFBadges.VirtualService },
+  wasmplugin: { name: 'WasmPlugin', url: 'wasmplugins', badge: PFBadges.WasmPlugin },
+  workloadentry: { name: 'WorkloadEntry', url: 'workloadentries', badge: PFBadges.WorkloadEntry },
+  workloadgroup: { name: 'WorkloadGroup', url: 'workloadgroups', badge: PFBadges.WorkloadGroup }
 };
 
 export type Resource = {
@@ -290,7 +290,15 @@ const istio: Resource = {
   columns: [istioItem, namespace, cluster, istioType, istioObjectConfiguration]
 };
 
-const conf = {
+type Config = {
+  applications: Resource;
+  istio: Resource;
+  overview: Resource;
+  services: Resource;
+  workloads: Resource;
+};
+
+const conf: Config = {
   applications: applications,
   workloads: workloads,
   overview: namespaces,
@@ -298,4 +306,4 @@ const conf = {
   istio: istio
 };
 
-export const config = deepFreeze(conf) as typeof conf;
+export const config: Config = deepFreeze(conf);

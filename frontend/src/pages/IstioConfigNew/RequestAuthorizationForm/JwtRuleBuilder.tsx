@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { JWTHeader, JWTRule } from '../../../types/IstioObjects';
-import { ThProps } from '@patternfly/react-table';
+import { IRow, ThProps } from '@patternfly/react-table';
 import { Button, ButtonVariant, FormSelect, FormSelectOption, TextInput } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../components/Pf/PfColors';
@@ -99,19 +99,19 @@ export class JwtRuleBuilder extends React.Component<Props, State> {
     };
   }
 
-  onAddJwtField = (_event, value: string) => {
+  onAddJwtField = (_event: React.FormEvent<HTMLSelectElement>, value: string): void => {
     this.setState({
       newJwtField: value
     });
   };
 
-  onAddNewValues = (_event, value: string) => {
+  onAddNewValues = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
     this.setState({
       newValues: value
     });
   };
 
-  onUpdateJwtRule = () => {
+  onUpdateJwtRule = (): void => {
     this.setState(prevState => {
       const i = prevState.jwtRuleFields.indexOf(prevState.newJwtField);
 
@@ -173,7 +173,7 @@ export class JwtRuleBuilder extends React.Component<Props, State> {
     });
   };
 
-  onAddJwtRuleToList = () => {
+  onAddJwtRuleToList = (): void => {
     const oldJwtRule = this.state.jwtRule;
     this.setState(
       {
@@ -186,7 +186,7 @@ export class JwtRuleBuilder extends React.Component<Props, State> {
     );
   };
 
-  onRemoveJwtRule = (removeJwtRuleField: string) => {
+  onRemoveJwtRule = (removeJwtRuleField: string): void => {
     this.setState(prevState => {
       prevState.jwtRuleFields.push(removeJwtRuleField);
       delete prevState.jwtRule[removeJwtRuleField];
@@ -219,7 +219,7 @@ export class JwtRuleBuilder extends React.Component<Props, State> {
     return this.state.jwtRule.issuer ? this.state.jwtRule.issuer.length > 0 : false;
   };
 
-  rows = () => {
+  rows = (): IRow[] => {
     const jwtRuleRows = Object.keys(this.state.jwtRule).map((jwtField, i) => {
       return {
         key: `jwtField_${i}`,
@@ -291,6 +291,7 @@ export class JwtRuleBuilder extends React.Component<Props, State> {
         }
       ]);
     }
+
     return jwtRuleRows;
   };
 

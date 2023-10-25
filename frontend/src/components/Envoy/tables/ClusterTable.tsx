@@ -66,7 +66,7 @@ export class ClusterTable implements SummaryTable {
     ];
   };
 
-  filterMethods = (): { [filter_id: string]: (ClusterSummary, ActiveFilter) => boolean } => {
+  filterMethods = (): { [filter_id: string]: (entry: ClusterSummary, filter: ActiveFilter) => boolean } => {
     return {
       FQDN: (entry: ClusterSummary, filter: ActiveFilter): boolean => {
         return [entry.service_fqdn.service, entry.service_fqdn.namespace, entry.service_fqdn.cluster]
@@ -221,7 +221,7 @@ export class ClusterTable implements SummaryTable {
 
   resource = (): string => 'clusters';
 
-  setSorting = (columnIndex: number, direction: 'asc' | 'desc') => {
+  setSorting = (columnIndex: number, direction: 'asc' | 'desc'): void => {
     this.sortingIndex = columnIndex;
     this.sortingDirection = direction;
   };

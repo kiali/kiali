@@ -71,7 +71,7 @@ export class ListenerTable implements SummaryTable {
     ];
   };
 
-  filterMethods = (): { [filter_id: string]: (summary, activeFilter) => boolean } => {
+  filterMethods = (): { [filter_id: string]: (entry: ListenerSummary, filter: ActiveFilter) => boolean } => {
     return {
       Address: (entry: ListenerSummary, filter: ActiveFilter): boolean => {
         return entry.address.includes(filter.value);
@@ -169,7 +169,7 @@ export class ListenerTable implements SummaryTable {
 
   resource = (): string => 'listeners';
 
-  setSorting = (columnIndex: number, direction: 'asc' | 'desc') => {
+  setSorting = (columnIndex: number, direction: 'asc' | 'desc'): void => {
     this.sortingDirection = direction;
     this.sortingIndex = columnIndex;
   };

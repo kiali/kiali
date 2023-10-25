@@ -35,6 +35,7 @@ export const SpanDetails: React.FC<SpanDetailsProps> = (props: SpanDetailsProps)
             oneline={true}
           />
         </StatefulFilters>
+
         {props.traceID && (
           <SpanTable
             items={filteredItems}

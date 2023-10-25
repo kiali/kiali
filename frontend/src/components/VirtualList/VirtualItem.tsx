@@ -46,13 +46,13 @@ export class VirtualItem extends React.Component<VirtualItemProps, VirtualItemSt
     this.promises.cancelAll();
   }
 
-  renderDetails = (item: RenderResource, health?: Health) => {
+  renderDetails = (item: RenderResource, health?: Health): React.ReactNode => {
     return this.props.columns
       .filter(object => !!object.renderer)
       .map(object => object.renderer(item, this.props.config, this.getBadge(), health, this.props.statefulFilterProps));
   };
 
-  getBadge = () => {
+  getBadge = (): React.ReactNode => {
     return this.props.config.name !== 'istio' ? this.props.config.badge : IstioTypes[this.props.item['type']].badge;
   };
 

@@ -79,7 +79,7 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
     </div>
   );
 
-  const accessLogContent = (al: AccessLog): any => {
+  const accessLogContent = (al: AccessLog): React.ReactNode => {
     return (
       <div style={{ textAlign: 'left' }}>
         {accessLogField('authority', al.authority)}
@@ -110,7 +110,7 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
     );
   };
 
-  const accessLogField = (key: string, val: string): any => {
+  const accessLogField = (key: string, val: string): React.ReactNode => {
     return (
       <>
         <Button key={key} className={fieldStyle} variant={ButtonVariant.link} onClick={() => handleClick(key)}>
@@ -122,7 +122,7 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
     );
   };
 
-  const handleClick = (alFieldName: string) => {
+  const handleClick = (alFieldName: string): void => {
     setDescription(getDescription(alFieldName));
   };
 

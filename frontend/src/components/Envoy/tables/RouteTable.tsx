@@ -49,7 +49,7 @@ export class RouteTable implements SummaryTable {
     ];
   };
 
-  filterMethods = (): { [filter_id: string]: (ClusterSummary, ActiveFilter) => boolean } => {
+  filterMethods = (): { [filter_id: string]: (entry: RouteSummary, filter: ActiveFilter) => boolean } => {
     return {
       Name: (entry: RouteSummary, filter: ActiveFilter): boolean => {
         return entry.name.toString().includes(filter.value);
@@ -140,7 +140,7 @@ export class RouteTable implements SummaryTable {
 
   resource = (): string => 'routes';
 
-  setSorting = (columnIndex: number, direction: 'asc' | 'desc') => {
+  setSorting = (columnIndex: number, direction: 'asc' | 'desc'): void => {
     this.sortingDirection = direction;
     this.sortingIndex = columnIndex;
   };

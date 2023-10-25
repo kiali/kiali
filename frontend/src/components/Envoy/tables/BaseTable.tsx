@@ -28,7 +28,7 @@ const iconStyle = kialiStyle({
   display: 'inline-block'
 });
 
-export function SummaryTableRenderer<T extends SummaryTable>() {
+export const SummaryTableRenderer = <T extends SummaryTable>() => {
   interface SummaryTableProps<T> {
     onSort: (resource: string, columnIndex: number, sortByDirection: SortByDirection) => void;
     pod: string;
@@ -43,13 +43,13 @@ export function SummaryTableRenderer<T extends SummaryTable>() {
   };
 
   return class SummaryTable extends React.Component<SummaryTableProps<T>, SummaryTableState> {
-    onFilterApplied = (activeFilter: ActiveFiltersInfo) => {
+    onFilterApplied = (activeFilter: ActiveFiltersInfo): void => {
       this.setState({
         activeFilters: activeFilter
       });
     };
 
-    onSort = (_event: React.MouseEvent, columnIndex: number, sortByDirection: SortByDirection) => {
+    onSort = (_event: React.MouseEvent, columnIndex: number, sortByDirection: SortByDirection): void => {
       this.props.writer.setSorting(columnIndex, sortByDirection);
       this.props.onSort(this.props.writer.resource(), columnIndex, sortByDirection);
     };
@@ -91,7 +91,7 @@ export function SummaryTableRenderer<T extends SummaryTable>() {
       );
     }
   };
-}
+};
 
 export const SummaryTableBuilder = (
   resource: string,

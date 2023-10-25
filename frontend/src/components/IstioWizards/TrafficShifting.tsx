@@ -55,7 +55,7 @@ export class TrafficShifting extends React.Component<Props, State> {
     this.resetState();
   }
 
-  resetState = () => {
+  resetState = (): void => {
     if (this.props.workloads.length === 0) {
       return;
     }
@@ -73,7 +73,7 @@ export class TrafficShifting extends React.Component<Props, State> {
     );
   };
 
-  onWeight = (workloadName: string, newWeight: number) => {
+  onWeight = (workloadName: string, newWeight: number): void => {
     this.setState(
       prevState => {
         const nodeId: number[] = [];
@@ -122,7 +122,7 @@ export class TrafficShifting extends React.Component<Props, State> {
     );
   };
 
-  onLock = (workloadName: string, locked: boolean) => {
+  onLock = (workloadName: string, locked: boolean): void => {
     this.setState(prevState => {
       let maxWeights = 100;
       for (let i = 0; i < prevState.workloads.length; i++) {
@@ -149,7 +149,7 @@ export class TrafficShifting extends React.Component<Props, State> {
     });
   };
 
-  onMirror = (workloadName: string, mirrored: boolean) => {
+  onMirror = (workloadName: string, mirrored: boolean): void => {
     this.setState(
       prevState => {
         const nodeId: number[] = [];
@@ -223,6 +223,7 @@ export class TrafficShifting extends React.Component<Props, State> {
               <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
               {workload.name}
             </div>,
+
             <Slider
               id={`slider-${workload.name}`}
               key={`slider-${workload.name}`}
@@ -270,6 +271,7 @@ export class TrafficShifting extends React.Component<Props, State> {
               <PFBadge badge={PFBadges.MirroredWorkload} position={TooltipPosition.top} />
               {workload.name}
             </div>,
+
             <Slider
               id={`slider-${workload.name}`}
               key={`slider-${workload.name}`}
@@ -310,6 +312,7 @@ export class TrafficShifting extends React.Component<Props, State> {
             </Button>{' '}
           </div>
         )}
+
         {this.props.showValid && !isValid && <div className={validationStyle}>{MSG_WEIGHTS_NOT_VALID}</div>}
       </>
     );

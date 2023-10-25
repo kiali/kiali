@@ -41,6 +41,7 @@ export const ResponseHostsTable: React.FC<ResponseHostsTableProps> = (props: Res
         rows.push({ key: `${code} ${h}`, code: code, host: h, val: responses[code].hosts[h] });
       });
     });
+
     return rows;
   };
 
@@ -66,6 +67,7 @@ export const ResponseHostsTable: React.FC<ResponseHostsTableProps> = (props: Res
                 </Th>
               </Tr>
             </Thead>
+
             <Tbody>
               {rows.map(row => (
                 <Tr key={row.key}>

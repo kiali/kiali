@@ -10,13 +10,14 @@ import {
   HelperTextItem,
   TextInput
 } from '@patternfly/react-core';
-import { Table, Tbody, Td, Th, Thead, ThProps, Tr } from '@patternfly/react-table';
+import { IRow, Td, ThProps, Tr } from '@patternfly/react-table';
 import { isGatewayHostValid } from '../../../utils/IstioConfigUtils';
 import { ServerForm } from '../../../types/IstioObjects';
 import { isValid } from 'utils/Common';
 import { isValidPort } from './ListenerBuilder';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
+import { SimpleTable } from 'components/SimpleTable';
 
 type ServerBuilderProps = {
   index: number;
@@ -79,65 +80,65 @@ const deleteButtonStyle = kialiStyle({
 });
 
 export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilderProps) => {
-  const onAddHosts = (_event: React.FormEvent<HTMLInputElement>, value: string) => {
+  const onAddHosts = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
     const server = props.server;
     server.hosts = value.trim().length === 0 ? [] : value.split(',').map(host => host.trim());
 
     props.onChange(server, props.index);
   };
 
-  const onAddPortNumber = (_event: React.FormEvent<HTMLInputElement>, value: string) => {
+  const onAddPortNumber = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
     const server = props.server;
     server.number = value.trim();
 
     props.onChange(server, props.index);
   };
 
-  const onAddPortName = (_event: React.FormEvent<HTMLInputElement>, value: string) => {
+  const onAddPortName = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
     const server = props.server;
     server.name = value.trim();
 
     props.onChange(server, props.index);
   };
 
-  const onAddPortProtocol = (_event: React.FormEvent<HTMLSelectElement>, value: string) => {
+  const onAddPortProtocol = (_event: React.FormEvent<HTMLSelectElement>, value: string): void => {
     const server = props.server;
     server.protocol = value.trim();
 
     props.onChange(server, props.index);
   };
 
-  const onAddTlsMode = (_event: React.FormEvent<HTMLSelectElement>, value: string) => {
+  const onAddTlsMode = (_event: React.FormEvent<HTMLSelectElement>, value: string): void => {
     const server = props.server;
     server.tlsMode = value.trim();
 
     props.onChange(server, props.index);
   };
 
-  const onAddTlsServerCertificate = (_event: React.FormEvent<HTMLInputElement>, value: string) => {
+  const onAddTlsServerCertificate = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
     const server = props.server;
     server.tlsServerCertificate = value.trim();
 
     props.onChange(server, props.index);
   };
 
-  const onAddTlsPrivateKey = (_event: React.FormEvent<HTMLInputElement>, value: string) => {
+  const onAddTlsPrivateKey = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
     const server = props.server;
     server.tlsPrivateKey = value.trim();
 
     props.onChange(server, props.index);
   };
 
-  const onAddTlsCaCertificate = (_event: React.FormEvent<HTMLInputElement>, value: string) => {
+  const onAddTlsCaCertificate = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
     const server = props.server;
     server.tlsCaCertificate = value.trim();
 
     props.onChange(server, props.index);
   };
 
-  const portRows = (
-    <Tr>
-      <Td>
+  const portRows: IRow[] = [
+    {
+      cells: [
         <TextInput
           value={props.server.number}
           type="text"
@@ -146,10 +147,8 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
           name="addPortNumber"
           onChange={onAddPortNumber}
           validated={isValid(isValidPort(props.server.number))}
-        />
-      </Td>
+        />,
 
-      <Td style={{ padding: '0 0.5rem 0 0' }}>
         <TextInput
           value={props.server.name}
           type="text"
@@ -158,10 +157,8 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
           name="addPortName"
           onChange={onAddPortName}
           validated={isValid(props.server.name.length > 0)}
-        />
-      </Td>
+        />,
 
-      <Td style={{ padding: '0 0.5rem 0 0' }}>
         <FormSelect
           value={props.server.protocol}
           id={`addPortProtocol_${props.index}`}
@@ -172,9 +169,9 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
             <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
           ))}
         </FormSelect>
-      </Td>
-    </Tr>
-  );
+      ]
+    }
+  ];
 
   const showTls = props.server.protocol === 'HTTPS' || props.server.protocol === 'TLS';
 
@@ -192,6 +189,7 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
             onChange={onAddHosts}
             validated={isValid(areValidHosts(props.server.hosts))}
           />
+
           <FormHelperText>
             <HelperText>
               <HelperTextItem>
@@ -204,18 +202,7 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
         </FormGroup>
 
         <FormGroup label="Port" isRequired={true} fieldId="server-port" style={{ padding: '0.5rem 0' }}>
-          <Table aria-label="Port Level MTLS" className={tableStyle}>
-            <Thead>
-              <Tr>
-                {columns.map((column, index) => (
-                  <Th key={`column_${index}`} dataLabel={column.title} width={column.width}>
-                    {column.title}
-                  </Th>
-                ))}
-              </Tr>
-            </Thead>
-            <Tbody>{portRows}</Tbody>
-          </Table>
+          <SimpleTable label="Port Level MTLS" className={tableStyle} columns={columns} rows={portRows} />
         </FormGroup>
 
         {showTls && (

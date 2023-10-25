@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ThProps } from '@patternfly/react-table';
+import { IRow, ThProps } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../../components/Pf/PfColors';
 import { SimpleTable } from 'components/SimpleTable';
@@ -28,7 +28,7 @@ const noSourceStyle = kialiStyle({
 });
 
 export const SourceList: React.FC<SourceListProps> = (props: SourceListProps) => {
-  const rows = props.fromList.map((source, i) => {
+  const rows: IRow[] = props.fromList.map((source, i) => {
     return {
       key: `fromSource_${i}`,
       cells: [

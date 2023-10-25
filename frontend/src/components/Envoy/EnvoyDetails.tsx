@@ -70,12 +70,12 @@ export type ResourceSorts = { [resource: string]: ISortBy };
 type ReduxProps = {
   kiosk: string;
   namespaces: Namespace[];
+  theme: string;
 };
 
 type EnvoyDetailsProps = ReduxProps & {
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
-  theme: string;
   workload: Workload;
 };
 
@@ -131,17 +131,20 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
 
   componentDidUpdate(_prevProps: EnvoyDetailsProps, prevState: EnvoyDetailsState) {
     const currentTabIndex = envoyTabs.indexOf(activeTab(tabName, defaultTab));
+
     if (this.state.pod.name !== prevState.pod.name || this.state.resource !== prevState.resource) {
       this.fetchContent();
+
       if (currentTabIndex !== this.state.activeKey) {
         this.setState({ activeKey: currentTabIndex });
       }
     }
   }
 
-  envoyHandleTabClick = (_event: React.MouseEvent, tabIndex: string | number) => {
+  envoyHandleTabClick = (_event: React.MouseEvent, tabIndex: string | number): void => {
     const resourceIdx: number = +tabIndex;
     const targetResource: string = resources[resourceIdx];
+
     if (targetResource !== this.state.resource) {
       this.setState({
         config: {},
@@ -149,6 +152,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
         resource: targetResource,
         activeKey: resourceIdx
       });
+
       const mainTab = new URLSearchParams(history.location.search).get(workloadTabName) ?? workloadDefaultTab;
       const urlParams = new URLSearchParams(history.location.search);
       urlParams.set(tabName, targetResource);
@@ -157,7 +161,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     }
   };
 
-  fetchEnvoyProxyResourceEntries = (resource: string) => {
+  fetchEnvoyProxyResourceEntries = (resource: string): void => {
     API.getPodEnvoyProxyResourceEntries(
       this.props.namespace,
       this.state.pod.name,
@@ -175,7 +179,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
       });
   };
 
-  fetchEnvoyProxy = () => {
+  fetchEnvoyProxy = (): void => {
     API.getPodEnvoyProxy(this.props.namespace, this.state.pod.name, this.props.workload.cluster)
       .then(resultEnvoyProxy => {
         this.setState({
@@ -188,7 +192,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
       });
   };
 
-  fetchContent = () => {
+  fetchContent = (): void => {
     if (this.state.fetch === true) {
       if (this.state.resource === 'config') {
         this.fetchEnvoyProxy();
@@ -198,9 +202,10 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     }
   };
 
-  setPod = (podName: string) => {
+  setPod = (podName: string): void => {
     const podIdx: number = +podName;
     const targetPod: Pod = this.sortedPods()[podIdx];
+
     if (targetPod.name !== this.state.pod.name) {
       this.setState({
         config: {},
@@ -214,7 +219,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     return this.props.workload.pods.sort((p1: Pod, p2: Pod) => (p1.name >= p2.name ? 1 : -1));
   };
 
-  onSort = (tab: string, index: number, direction: SortByDirection) => {
+  onSort = (tab: string, index: number, direction: SortByDirection): void => {
     if (this.state.tableSortBy[tab].index !== index || this.state.tableSortBy[tab].direction !== direction) {
       let tableSortBy = this.state.tableSortBy;
       tableSortBy[tab].index = index;
@@ -225,20 +230,21 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     }
   };
 
-  editorContent = () => JSON.stringify(this.state.config, null, '  ');
+  editorContent = (): string => JSON.stringify(this.state.config, null, '  ');
 
-  onCopyToClipboard = (_text: string, _result: boolean) => {
+  onCopyToClipboard = (_text: string, _result: boolean): void => {
     const editor = this.aceEditorRef.current!['editor'];
+
     if (editor) {
       editor.selectAll();
     }
   };
 
-  showEditor = () => {
+  showEditor = (): boolean => {
     return this.state.resource === 'config' || this.state.resource === 'bootstrap';
   };
 
-  showMetrics = () => {
+  showMetrics = (): boolean => {
     return this.state.resource === 'metrics';
   };
 
@@ -254,11 +260,11 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     return envoyDashboardRef;
   };
 
-  isLoadingConfig = () => {
+  isLoadingConfig = (): boolean => {
     return Object.keys(this.state.config).length < 1;
   };
 
-  onRouteLinkClick = () => {
+  onRouteLinkClick = (): void => {
     this.setState({
       config: {},
       fetch: true,
@@ -281,6 +287,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
       this.props.kiosk,
       this.props.workload.name
     );
+
     const SummaryWriterComp = builder[0];
     const summaryWriter = builder[1];
     const height = this.state.tabHeight - 226;
@@ -288,12 +295,14 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     const version = this.props.workload.labels[serverConfig.istioLabels.versionLabelName];
     const envoyMetricsDashboardRef = this.getEnvoyMetricsDashboardRef();
     let filteredEnvoyTabs = envoyTabs;
+
     if (!envoyMetricsDashboardRef) {
       filteredEnvoyTabs = envoyTabs.slice(0, envoyTabs.length - 1);
     }
 
     const tabs = filteredEnvoyTabs.map((value, index) => {
       const title = `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+
       return (
         <Tab key={`tab_${value}`} eventKey={index} title={title}>
           <Card className={fullHeightStyle}>
@@ -304,6 +313,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                     <div key="service-icon" className={iconStyle}>
                       <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
                     </div>
+
                     <ToolbarDropdown
                       id="envoy_pods_list"
                       tooltip="Display envoy config for the selected pod"
@@ -312,6 +322,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                       label={this.state.pod.name}
                       options={this.props.workload.pods.map((pod: Pod) => pod.name).sort()}
                     />
+
                     <Tooltip key="copy_config" position="top" content="Copy config dump to clipboard">
                       <CopyToClipboard onCopy={this.onCopyToClipboard} text={this.editorContent()}>
                         <Button variant={ButtonVariant.link} className={copyButtonStyle} isInline>
@@ -321,6 +332,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                       </CopyToClipboard>
                     </Tooltip>
                   </div>
+
                   <AceEditor
                     ref={this.aceEditorRef}
                     mode="yaml"
@@ -383,7 +395,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
   }
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   kiosk: state.globalState.kiosk,
   namespaces: namespaceItemsSelector(state)!,
   theme: state.globalState.theme

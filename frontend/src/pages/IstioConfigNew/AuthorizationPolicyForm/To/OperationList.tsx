@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ThProps } from '@patternfly/react-table';
+import { IRow, ThProps } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../../components/Pf/PfColors';
 import { Button, ButtonVariant } from '@patternfly/react-core';
@@ -28,7 +28,7 @@ const noOperationsStyle = kialiStyle({
 });
 
 export const OperationList: React.FC<OperationListProps> = (props: OperationListProps) => {
-  const rows = props.toList.map((operation, i) => {
+  const rows: IRow[] = props.toList.map((operation, i) => {
     return {
       key: `toOperation_${i}`,
       cells: [

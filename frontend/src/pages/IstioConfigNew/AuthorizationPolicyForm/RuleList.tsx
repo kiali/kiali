@@ -51,9 +51,11 @@ export const RuleList: React.FC<RuleListProps> = (props: RuleListProps) => {
             <>
               {rule.from.map((fromItem, i) => {
                 const keys = Object.keys(fromItem);
+
                 return (
                   <div id={`from_${i}`} className={rulesStyle}>
                     <span style={{ marginRight: '1.25rem' }}>source:</span>
+
                     {keys.map((k, j) => {
                       return (
                         <span id={`fromField_${i}_${j}`}>
@@ -72,9 +74,11 @@ export const RuleList: React.FC<RuleListProps> = (props: RuleListProps) => {
             <>
               {rule.to.map((toItem, i) => {
                 const keys = Object.keys(toItem);
+
                 return (
                   <div id={`to_${i}`} className={rulesStyle}>
                     <span style={{ marginRight: '1.25rem' }}>operation:</span>
+
                     {keys.map((k, j) => {
                       return (
                         <span id={`toItem_${i}_${j}`}>
@@ -97,9 +101,11 @@ export const RuleList: React.FC<RuleListProps> = (props: RuleListProps) => {
                     <span>
                       <b>key</b>: [{whenItem.key}]
                     </span>
+
                     <span style={{ marginLeft: '0.25rem' }}>
                       <b>values:</b> [{whenItem.values ? whenItem.values.join(',') : ''}]
                     </span>
+
                     <span style={{ marginLeft: '0.25rem' }}>
                       <b>notValues:</b> [{whenItem.notValues ? whenItem.notValues.join(',') : ''}]
                     </span>
