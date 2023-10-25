@@ -64,13 +64,10 @@ Feature: Kiali Service Details page for remote cluster
     And user is at the details page for the "service" "bookinfo/ratings" located in the "east" cluster
     Then user does not see any inbound and outbound traffic information
 
-  # skipped due to unknown Prometheus issue 
-  @skip
   Scenario: See no Inbound Metrics for a service, which is not present in the specific cluster. 
     And user is at the details page for the "service" "bookinfo/ratings" located in the "east" cluster
     Then user does not see "Inbound" metrics information for the remote "ratings" "service"
 
-  @skip
   Scenario: See no Outbound Metrics for a service, which is not present in the specific cluster. 
     And user is at the details page for the "service" "bookinfo/ratings" located in the "east" cluster
     Then user does not see "Outbound" metrics information for the remote "ratings" "service"
