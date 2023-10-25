@@ -197,6 +197,9 @@ elif [ "${TEST_SUITE}" == "frontend-multi-cluster" ]; then
   ensureCypressInstalled
   "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "true" ${ISTIO_VERSION_ARG}
 
+  kubectl rollout status deployment prometheus -n istio-system --context kind-east
+  kubectl rollout status deployment prometheus -n istio-system --context kind-west
+
   # Get Kiali URL
   KIALI_URL="http://$(kubectl --context kind-east get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')/kiali"
   export CYPRESS_BASE_URL="${KIALI_URL}"
