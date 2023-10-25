@@ -146,6 +146,17 @@ wait_for_workloads () {
   done
 }
 
+# Restarts deployments in the specified namespace
+restart_deployments () {
+  local namespace=$1
+  local workloads=$(${CLIENT_EXE} get deployments -n $namespace -o jsonpath='{.items[*].metadata.name}')
+  for workload in ${workloads}
+  do
+    echo "Restarting deployment: '${workload}'"
+    ${CLIENT_EXE} rollout restart deployment "${workload}" -n "${namespace}"
+  done
+}
+
 if [ "${DELETE_DEMOS}" != "true" ]; then
 
   # Installed demos should be the exact same for both environments.
@@ -174,6 +185,11 @@ if [ "${DELETE_DEMOS}" != "true" ]; then
   for namespace in bookinfo alpha beta
   do
     wait_for_workloads "${namespace}"
+    # this is to be sure all pods will be started with a side car when enabled
+    restart_deployments "${namespace}"
+    wait_for_workloads "${namespace}"
+    # we should see all demo app pods to have 2 containers here if we enabled the injenction
+    ${CLIENT_EXE} get pods -n "${namespace}"
   done
 
 else
