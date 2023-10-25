@@ -306,7 +306,7 @@ export class GraphDataSource {
     if (fetchParams.node) {
       this.fetchDataForNode(restParams, cluster);
     } else {
-      this.fetchDataForNamespaces(restParams, cluster);
+      this.fetchDataForNamespaces(restParams);
     }
   };
 
@@ -492,10 +492,10 @@ export class GraphDataSource {
     this.eventEmitter.emit(eventName, ...args);
   };
 
-  private fetchDataForNamespaces = (restParams: GraphElementsQuery, cluster?: string) => {
+  private fetchDataForNamespaces = (restParams: GraphElementsQuery) => {
     restParams.namespaces = this.fetchParameters.namespaces.map(namespace => namespace.name).join(',');
 
-    this.promiseRegistry.register(PROMISE_KEY, API.getGraphElements(restParams, cluster)).then(
+    this.promiseRegistry.register(PROMISE_KEY, API.getGraphElements(restParams)).then(
       response => {
         const responseData: any = response.data;
         this.graphElements = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;

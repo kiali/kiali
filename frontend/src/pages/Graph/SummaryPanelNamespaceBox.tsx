@@ -26,7 +26,6 @@ import {
 } from './SummaryPanelCommon';
 import { Response } from '../../services/Api';
 import { IstioMetricsMap, Datapoint, Labels } from '../../types/Metrics';
-import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { KialiIcon } from 'config/KialiIcon';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
@@ -621,7 +620,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
           rateInterval: props.rateInterval,
           reporter: 'destination',
           step: props.step
-        } as IstioMetricsOptions,
+        },
         cluster
       );
       promiseOut = API.getNamespaceMetrics(
@@ -635,7 +634,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
           rateInterval: props.rateInterval,
           reporter: 'source',
           step: props.step
-        } as IstioMetricsOptions,
+        },
         cluster
       );
     }

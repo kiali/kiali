@@ -466,7 +466,7 @@ export const getCustomDashboard = (ns: string, tpl: string, params: DashboardQue
   return newRequest<DashboardModel>(HTTP_VERBS.GET, urls.customDashboard(ns, tpl), queryParams, {});
 };
 
-export const getNamespaceAppHealth = async (
+export const getNamespaceAppHealth = (
   namespace: string,
   duration: DurationInSeconds,
   cluster?: string,
@@ -609,16 +609,13 @@ export const getTrace = (idTrace: string) => {
   return newRequest<TracingSingleResponse>(HTTP_VERBS.GET, urls.tracingTrace(idTrace), {}, {});
 };
 
-export const getGraphElements = (params: GraphElementsQuery, cluster?: string) => {
-  const queryParams: QueryParams<GraphElementsQuery> = { ...params };
-  if (cluster) {
-    queryParams.clusterName = cluster;
-  }
-  return newRequest<GraphDefinition>(HTTP_VERBS.GET, urls.namespacesGraphElements, queryParams, {});
+export const getGraphElements = (params: GraphElementsQuery) => {
+  return newRequest<GraphDefinition>(HTTP_VERBS.GET, urls.namespacesGraphElements, params, {});
 };
 
 export const getNodeGraphElements = (node: NodeParamsType, params: GraphElementsQuery, cluster?: string) => {
   const queryParams: QueryParams<GraphElementsQuery> = { ...params };
+
   if (cluster) {
     queryParams.clusterName = cluster;
   }
