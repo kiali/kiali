@@ -48,7 +48,8 @@ export interface MetricsStatsQuery {
   target: Target;
 }
 
-export const statsQueryToKey = (q: MetricsStatsQuery) => genStatsKey(q.target, q.peerTarget, q.direction, q.interval);
+export const statsQueryToKey = (q: MetricsStatsQuery): string =>
+  genStatsKey(q.target, q.peerTarget, q.direction, q.interval);
 
 // !! genStatsKey HAS to mirror backend's models.MetricsStatsQuery#GenKey in models/metrics.go
 export const genStatsKey = (target: Target, peer: Target | undefined, direction: string, interval: string): string => {

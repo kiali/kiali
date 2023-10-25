@@ -59,7 +59,7 @@ export interface WorkloadHealthResponse {
 
 export const TRAFFICSTATUS = 'Traffic Status';
 
-const createTrafficTitle = (time: string) => {
+const createTrafficTitle = (time: string): string => {
   return `${TRAFFICSTATUS} (Last ${time})`;
 };
 
@@ -337,7 +337,7 @@ interface HealthContext {
 }
 
 export class ServiceHealth extends Health {
-  public static fromJson = (ns: string, srv: string, json: any, ctx: HealthContext) =>
+  public static fromJson = (ns: string, srv: string, json: any, ctx: HealthContext): ServiceHealth =>
     new ServiceHealth(ns, srv, json.requests, ctx);
 
   private static computeItems(ns: string, srv: string, requests: RequestHealth, ctx: HealthContext): HealthConfig {
@@ -388,7 +388,7 @@ export class ServiceHealth extends Health {
 }
 
 export class AppHealth extends Health {
-  public static fromJson = (ns: string, app: string, json: any, ctx: HealthContext) =>
+  public static fromJson = (ns: string, app: string, json: any, ctx: HealthContext): AppHealth =>
     new AppHealth(ns, app, json.workloadStatuses, json.requests, ctx);
 
   private static computeItems(
@@ -405,9 +405,11 @@ export class AppHealth extends Health {
       const children: HealthSubItem[] = workloadStatuses.map(d => {
         const status = ratioCheck(d.availableReplicas, d.currentReplicas, d.desiredReplicas, d.syncedProxies);
         let proxyMessage = '';
+
         if (d.syncedProxies >= 0) {
           proxyMessage = proxyStatusMessage(d.syncedProxies, d.desiredReplicas);
         }
+
         return {
           text: `${d.name}: ${d.availableReplicas} / ${d.desiredReplicas}${proxyMessage}`,
           status: status
@@ -415,6 +417,7 @@ export class AppHealth extends Health {
       });
 
       const podsStatus = children.map(i => i.status).reduce((prev, cur) => mergeStatus(prev, cur), NA);
+
       const item: HealthItem = {
         title: POD_STATUS,
         status: podsStatus,
@@ -462,7 +465,7 @@ export class AppHealth extends Health {
 }
 
 export class WorkloadHealth extends Health {
-  public static fromJson = (ns: string, workload: string, json: any, ctx: HealthContext) =>
+  public static fromJson = (ns: string, workload: string, json: any, ctx: HealthContext): WorkloadHealth =>
     new WorkloadHealth(ns, workload, json.workloadStatus, json.requests, ctx);
 
   private static computeItems(
@@ -483,6 +486,7 @@ export class WorkloadHealth extends Health {
         workloadStatus.desiredReplicas,
         workloadStatus.syncedProxies
       );
+
       const item: HealthItem = {
         title: POD_STATUS,
         status: podsStatus,
@@ -493,6 +497,7 @@ export class WorkloadHealth extends Health {
           }
         ]
       };
+
       if (podsStatus !== NA && podsStatus !== HEALTHY) {
         item.children = [
           {

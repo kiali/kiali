@@ -81,8 +81,8 @@ import { isRemoteCluster } from './OverviewCardControlPlaneNamespace';
 
 const gridStyleCompact = kialiStyle({
   backgroundColor: PFColors.BackgroundColor200,
-  paddingBottom: '20px',
-  marginTop: '0px'
+  paddingBottom: '1.25rem',
+  marginTop: 0
 });
 
 const gridStyleList = kialiStyle({
@@ -90,26 +90,26 @@ const gridStyleList = kialiStyle({
   // The VirtualTable component has a different style than cards
   // We need to adjust the grid style if we are on compact vs list view
   padding: '0 !important',
-  marginTop: '0px'
+  marginTop: 0
 });
 
 const cardGridStyle = kialiStyle({
   textAlign: 'center',
-  marginTop: '0px',
-  marginBottom: '10px'
+  marginTop: 0,
+  marginBottom: '0.5rem'
 });
 
 const cardControlPlaneGridStyle = kialiStyle({
   textAlign: 'center',
-  marginTop: '0px',
-  marginBottom: '10px'
+  marginTop: 0,
+  marginBottom: '0.5rem'
 });
 
 const emptyStateStyle = kialiStyle({
   height: '300px',
-  marginRight: 5,
-  marginBottom: 10,
-  marginTop: 10
+  marginRight: '0.25rem',
+  marginBottom: '0.5rem',
+  marginTop: '0.5rem'
 });
 
 const cardNamespaceNameNormalStyle = kialiStyle({
@@ -140,19 +140,19 @@ export enum Show {
 }
 
 type State = {
-  namespaces: NamespaceInfo[];
-  type: OverviewType;
+  canaryUpgradeStatus?: CanaryUpgradeStatus;
+  clusterTarget?: string;
   direction: DirectionType;
   displayMode: OverviewDisplayMode;
-  showTrafficPoliciesModal: boolean;
-  kind: string;
-  nsTarget: string;
-  clusterTarget?: string;
-  opTarget: string;
   grafanaLinks: ExternalLink[];
   istiodResourceThresholds: IstiodResourceThresholds;
+  kind: string;
+  namespaces: NamespaceInfo[];
+  nsTarget: string;
+  opTarget: string;
   outboundPolicyMode: OutboundTrafficPolicy;
-  canaryUpgradeStatus?: CanaryUpgradeStatus;
+  showTrafficPoliciesModal: boolean;
+  type: OverviewType;
 };
 
 type ReduxProps = {
@@ -171,12 +171,14 @@ type OverviewProps = ReduxProps & {};
 export class OverviewPageComponent extends React.Component<OverviewProps, State> {
   private sFOverviewToolbar: React.RefObject<StatefulFilters> = React.createRef();
   private promises = new PromisesRegistry();
+
   // Grafana promise is only invoked by componentDidMount() no need to repeat it on componentDidUpdate()
   static grafanaInfoPromise: Promise<GrafanaInfo | undefined> | undefined;
 
   constructor(props: OverviewProps) {
     super(props);
     const display = HistoryManager.getParam(URLParam.DISPLAY_MODE);
+
     this.state = {
       namespaces: [],
       type: OverviewToolbar.currentOverviewType(),
@@ -211,11 +213,11 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     this.promises.cancelAll();
   }
 
-  sortFields() {
+  sortFields(): SortField<NamespaceInfo>[] {
     return Sorts.sortFields;
   }
 
-  getStartDisplayMode = (isCompact: boolean) => {
+  getStartDisplayMode = (isCompact: boolean): number => {
     // Check if there is a displayMode option
     const historyDisplayMode = HistoryManager.getParam(URLParam.DISPLAY_MODE);
     if (historyDisplayMode) {
@@ -226,7 +228,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     return isCompact ? OverviewDisplayMode.COMPACT : OverviewDisplayMode.EXPAND;
   };
 
-  load = () => {
+  load = (): void => {
     this.promises.cancelAll();
     this.promises
       .register('namespaces', API.getNamespaces())
@@ -234,6 +236,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         const nameFilters = FilterSelected.getSelected().filters.filter(
           f => f.category === Filters.nameFilter.category
         );
+
         const allNamespaces: NamespaceInfo[] = namespacesResponse.data
           .filter(ns => {
             return nameFilters.length === 0 || nameFilters.some(f => ns.name.includes(f.value));
@@ -254,6 +257,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
               controlPlaneMetrics: previous ? previous.controlPlaneMetrics : undefined
             };
           });
+
         const isAscending = FilterHelper.isCurrentSortAscending();
         const sortField = FilterHelper.currentSortField(Sorts.sortFields);
         const type = OverviewToolbar.currentOverviewType();
@@ -294,8 +298,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       });
   };
 
-  fetchHealth(isAscending: boolean, sortField: SortField<NamespaceInfo>, type: OverviewType) {
+  fetchHealth(isAscending: boolean, sortField: SortField<NamespaceInfo>, type: OverviewType): void {
     const duration = FilterHelper.currentDuration();
+
     // debounce async for back-pressure, ten by ten
     _.chunk(this.state.namespaces, 10).forEach(chunk => {
       this.promises
@@ -303,9 +308,11 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         .then(() => {
           this.setState(prevState => {
             let newNamespaces = prevState.namespaces.slice();
+
             if (sortField.id === 'health') {
               newNamespaces = Sorts.sortFunc(newNamespaces, sortField, isAscending);
             }
+
             return { namespaces: newNamespaces };
           });
         })
@@ -313,20 +320,23 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           if (error.isCanceled) {
             return;
           }
+
           this.handleAxiosError('Could not fetch health', error);
         });
     });
   }
 
-  fetchGrafanaInfo() {
+  fetchGrafanaInfo(): void {
     if (!OverviewPageComponent.grafanaInfoPromise) {
       OverviewPageComponent.grafanaInfoPromise = API.getGrafanaInfo().then(response => {
         if (response.status === 204) {
           return undefined;
         }
+
         return response.data;
       });
     }
+
     OverviewPageComponent.grafanaInfoPromise
       .then(grafanaInfo => {
         if (grafanaInfo) {
@@ -348,13 +358,14 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       });
   }
 
-  async fetchHealthChunk(chunk: NamespaceInfo[], duration: DurationInSeconds, type: OverviewType) {
+  async fetchHealthChunk(chunk: NamespaceInfo[], duration: DurationInSeconds, type: OverviewType): Promise<void> {
     const apiFunc = switchType(
       type,
       API.getNamespaceAppHealth,
       API.getNamespaceServiceHealth,
       API.getNamespaceWorkloadHealth
     );
+
     return Promise.all(
       chunk.map(async nsInfo => {
         const healthPromise: Promise<NamespaceAppHealth | NamespaceWorkloadHealth | NamespaceServiceHealth> = apiFunc(
@@ -362,6 +373,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           duration,
           nsInfo.cluster
         );
+
         return healthPromise.then(rs => ({ health: rs, nsInfo: nsInfo }));
       })
     )
@@ -378,6 +390,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           Object.keys(result.health).forEach(item => {
             const health: Health = result.health[item];
             const status = health.getGlobalStatus();
+
             if (status === FAILURE) {
               nsStatus.inError.push(item);
             } else if (status === DEGRADED) {
@@ -390,13 +403,14 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
               nsStatus.notAvailable.push(item);
             }
           });
+
           result.nsInfo.status = nsStatus;
         });
       })
       .catch(err => this.handleAxiosError('Could not fetch health', err));
   }
 
-  fetchMetrics(direction: DirectionType) {
+  fetchMetrics(direction: DirectionType): void {
     const duration = FilterHelper.currentDuration();
     // debounce async for back-pressure, ten by ten
     _.chunk(this.state.namespaces, 10).forEach(chunk => {
@@ -410,7 +424,11 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     });
   }
 
-  fetchMetricsChunk(chunk: NamespaceInfo[], duration: number, direction: DirectionType) {
+  async fetchMetricsChunk(
+    chunk: NamespaceInfo[],
+    duration: number,
+    direction: DirectionType
+  ): Promise<NamespaceInfo[] | void> {
     const rateParams = computePrometheusRateParams(duration, 10);
     const options: IstioMetricsOptions = {
       filters: ['request_count', 'request_error_count'],
@@ -463,9 +481,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     });
   }
 
-  fetchTLSChunk(chunk: NamespaceInfo[]) {
+  async fetchTLSChunk(chunk: NamespaceInfo[]): Promise<void> {
     return Promise.all(
-      chunk.map(nsInfo => {
+      chunk.map(async (nsInfo: NamespaceInfo) => {
         return API.getNamespaceTls(nsInfo.name, nsInfo.cluster).then(rs => ({ status: rs.data, nsInfo: nsInfo }));
       })
     )
@@ -481,7 +499,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       .catch(err => this.handleAxiosError('Could not fetch TLS status', err));
   }
 
-  fetchValidations(isAscending: boolean, sortField: SortField<NamespaceInfo>) {
+  fetchValidations(isAscending: boolean, sortField: SortField<NamespaceInfo>): void {
     const uniqueClusters = new Set<string>();
 
     this.state.namespaces.forEach(namespace => {
@@ -498,22 +516,25 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         .then(() => {
           this.setState(prevState => {
             let newNamespaces = prevState.namespaces.slice();
+
             if (sortField.id === 'validations') {
               newNamespaces = Sorts.sortFunc(newNamespaces, sortField, isAscending);
             }
+
             return { namespaces: newNamespaces };
           });
         });
     });
   }
 
-  fetchValidationResultForCluster(namespaces: NamespaceInfo[], cluster: string) {
+  async fetchValidationResultForCluster(namespaces: NamespaceInfo[], cluster: string): Promise<void> {
     return Promise.all([API.getConfigValidations(cluster), API.getAllIstioConfigs([], [], false, '', '', cluster)])
       .then(results => {
         namespaces.forEach(nsInfo => {
           if (nsInfo.cluster && nsInfo.cluster === cluster && results[0].data[nsInfo.cluster]) {
             nsInfo.validations = results[0].data[nsInfo.cluster][nsInfo.name];
           }
+
           if (nsInfo.cluster && nsInfo.cluster === cluster) {
             nsInfo.istioConfig = results[1].data[nsInfo.name];
           }
@@ -522,7 +543,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       .catch(err => this.handleAxiosError('Could not fetch validations status', err));
   }
 
-  fetchOutboundTrafficPolicyMode() {
+  fetchOutboundTrafficPolicyMode(): void {
     API.getOutboundTrafficPolicyMode()
       .then(response => {
         this.setState({ outboundPolicyMode: { mode: response.data.mode } });
@@ -532,7 +553,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       });
   }
 
-  fetchCanariesStatus() {
+  fetchCanariesStatus(): void {
     API.getCanaryUpgradeStatus()
       .then(response => {
         this.setState({
@@ -549,7 +570,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       });
   }
 
-  fetchIstiodResourceThresholds() {
+  fetchIstiodResourceThresholds(): void {
     API.getIstiodResourceThresholds()
       .then(response => {
         this.setState({ istiodResourceThresholds: response.data });
@@ -559,18 +580,19 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       });
   }
 
-  handleAxiosError(message: string, error: AxiosError) {
+  handleAxiosError(message: string, error: AxiosError): void {
     FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
   }
 
-  sort = (sortField: SortField<NamespaceInfo>, isAscending: boolean) => {
+  sort = (sortField: SortField<NamespaceInfo>, isAscending: boolean): void => {
     const sorted = Sorts.sortFunc(this.state.namespaces, sortField, isAscending);
     this.setState({ namespaces: sorted });
   };
 
-  setDisplayMode = (mode: OverviewDisplayMode) => {
+  setDisplayMode = (mode: OverviewDisplayMode): void => {
     this.setState({ displayMode: mode });
     HistoryManager.setParam(URLParam.DISPLAY_MODE, String(mode));
+
     if (mode === OverviewDisplayMode.EXPAND) {
       // Load metrics
       this.fetchMetrics(this.state.direction);
@@ -588,27 +610,29 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     );
   };
 
-  show = (showType: Show, namespace: string, graphType: string) => {
+  show = (showType: Show, namespace: string, graphType: string): void => {
     let destination = '';
+
     switch (showType) {
       case Show.GRAPH:
         destination = `/graph/namespaces?namespaces=${namespace}&graphType=${graphType}`;
         break;
       case Show.APPLICATIONS:
-        destination = `/${Paths.APPLICATIONS}?namespaces=` + namespace;
+        destination = `/${Paths.APPLICATIONS}?namespaces=${namespace}`;
         break;
       case Show.WORKLOADS:
-        destination = `/${Paths.WORKLOADS}?namespaces=` + namespace;
+        destination = `/${Paths.WORKLOADS}?namespaces=${namespace}`;
         break;
       case Show.SERVICES:
-        destination = `/${Paths.SERVICES}?namespaces=` + namespace;
+        destination = `/${Paths.SERVICES}?namespaces=${namespace}`;
         break;
       case Show.ISTIO_CONFIG:
-        destination = `/${Paths.ISTIO}?namespaces=` + namespace;
+        destination = `/${Paths.ISTIO}?namespaces=${namespace}`;
         break;
       default:
       // Nothing to do on default case
     }
+
     history.push(destination);
   };
 
@@ -708,6 +732,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
               clusterTarget: nsInfo.cluster
             })
         };
+
         const disableAction = {
           'data-test': `disable-${nsInfo.name}-namespace-sidecar-injection`,
           isGroup: false,
@@ -722,6 +747,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
               clusterTarget: nsInfo.cluster
             })
         };
+
         const removeAction = {
           'data-test': `remove-${nsInfo.name}-namespace-sidecar-injection`,
           isGroup: false,
@@ -736,6 +762,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
               clusterTarget: nsInfo.cluster
             })
         };
+
         if (
           nsInfo.labels &&
           ((nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
@@ -765,10 +792,11 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           isGroup: false,
           isSeparator: true
         });
+
         const upgradeAction = {
           isGroup: false,
           isSeparator: false,
-          title: 'Upgrade to ' + serverConfig.istioCanaryRevision.upgrade + ' revision',
+          title: `Upgrade to ${serverConfig.istioCanaryRevision.upgrade} revision`,
           action: (ns: string) =>
             this.setState({
               opTarget: 'upgrade',
@@ -778,10 +806,11 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
               clusterTarget: nsInfo.cluster
             })
         };
+
         const downgradeAction = {
           isGroup: false,
           isSeparator: false,
-          title: 'Downgrade to ' + serverConfig.istioCanaryRevision.current + ' revision',
+          title: `Downgrade to ${serverConfig.istioCanaryRevision.current} revision`,
           action: (ns: string) =>
             this.setState({
               opTarget: 'current',
@@ -791,6 +820,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
               clusterTarget: nsInfo.cluster
             })
         };
+
         if (
           nsInfo.labels &&
           ((nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] &&
@@ -808,11 +838,12 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         }
       }
 
-      const aps = nsInfo.istioConfig?.authorizationPolicies || [];
+      const aps = nsInfo.istioConfig?.authorizationPolicies ?? [];
+
       const addAuthorizationAction = {
         isGroup: false,
         isSeparator: false,
-        title: (aps.length === 0 ? 'Create ' : 'Update') + ' Traffic Policies',
+        title: `${aps.length === 0 ? 'Create ' : 'Update'} Traffic Policies`,
         action: (ns: string) => {
           this.setState({
             opTarget: aps.length === 0 ? 'create' : 'update',
@@ -823,6 +854,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           });
         }
       };
+
       const removeAuthorizationAction = {
         isGroup: false,
         isSeparator: false,
@@ -836,12 +868,15 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             clusterTarget: nsInfo.cluster
           })
       };
+
       if (this.props.istioAPIEnabled) {
         namespaceActions.push({
           isGroup: false,
           isSeparator: true
         });
+
         namespaceActions.push(addAuthorizationAction);
+
         if (aps.length > 0) {
           namespaceActions.push(removeAuthorizationAction);
         }
@@ -852,6 +887,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         isGroup: false,
         isSeparator: true
       });
+
       this.state.grafanaLinks.forEach(link => {
         const grafanaDashboard = {
           isGroup: false,
@@ -863,6 +899,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             this.load();
           }
         };
+
         namespaceActions.push(grafanaDashboard);
       });
     }
@@ -870,7 +907,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     return namespaceActions;
   };
 
-  hideTrafficManagement = () => {
+  hideTrafficManagement = (): void => {
     this.setState({
       showTrafficPoliciesModal: false,
       nsTarget: '',
@@ -897,16 +934,20 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     const md = this.state.displayMode === OverviewDisplayMode.COMPACT ? 3 : 4;
     const rlg = 4;
     const lg = 12;
+
     const filteredNamespaces = FilterHelper.runFilters(
       this.state.namespaces,
       Filters.availableFilters,
       FilterSelected.getSelected()
     );
+
     const namespaceActions = filteredNamespaces.map((ns, i) => {
       const actions = this.getNamespaceActions(ns);
-      return <OverviewNamespaceActions key={'namespaceAction_' + i} namespace={ns.name} actions={actions} />;
+      return <OverviewNamespaceActions key={`namespaceAction_${i}`} namespace={ns.name} actions={actions} />;
     });
-    const hiddenColumns = isMultiCluster ? ([] as string[]) : ['cluster'];
+
+    const hiddenColumns = isMultiCluster ? [] : ['cluster'];
+
     return (
       <>
         <OverviewToolbar
@@ -954,14 +995,14 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                             : lg
                           : md
                       }
-                      key={'CardItem_' + ns.name + ns.cluster}
-                      data-test={'CardItem_' + ns.name + '_' + ns.cluster}
-                      style={{ margin: '0px 5px 0 5px' }}
+                      key={`CardItem_${ns.name}_${ns.cluster}`}
+                      data-test={`CardItem_${ns.name}_${ns.cluster}`}
+                      style={{ margin: '0 0.25rem' }}
                     >
                       <Card
                         isCompact={true}
                         className={ns.name === serverConfig.istioNamespace ? cardControlPlaneGridStyle : cardGridStyle}
-                        data-test={ns.name + '-' + OverviewDisplayMode[this.state.displayMode]}
+                        data-test={`${ns.name}-${OverviewDisplayMode[this.state.displayMode]}`}
                         style={
                           !this.props.istioAPIEnabled && !this.hasCanaryUpgradeConfigured() ? { height: '96%' } : {}
                         }
@@ -983,6 +1024,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                                       annotations={ns.annotations}
                                     ></ControlPlaneBadge>
                                   )}
+
                                   {ns.name !== serverConfig.istioNamespace &&
                                     this.hasCanaryUpgradeConfigured() &&
                                     this.state.canaryUpgradeStatus?.migratedNamespaces.includes(ns.name) && (
@@ -991,6 +1033,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                                         isCanary={true}
                                       ></ControlPlaneVersionBadge>
                                     )}
+
                                   {ns.name !== serverConfig.istioNamespace &&
                                     this.hasCanaryUpgradeConfigured() &&
                                     this.state.canaryUpgradeStatus?.pendingNamespaces.includes(ns.name) && (
@@ -999,16 +1042,18 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                                         isCanary={false}
                                       ></ControlPlaneVersionBadge>
                                     )}
+
                                   {ns.name === serverConfig.istioNamespace && !this.props.istioAPIEnabled && (
-                                    <Label style={{ marginLeft: 10 }} color={'orange'} isCompact>
+                                    <Label style={{ marginLeft: '0.25rem' }} color="orange" isCompact>
                                       Istio API disabled
                                     </Label>
                                   )}
+
                                   {serverConfig.ambientEnabled &&
                                     ns.name !== serverConfig.istioNamespace &&
                                     ns.labels &&
                                     ns.isAmbient && (
-                                      <AmbientBadge tooltip={'labeled as part of Ambient Mesh'}></AmbientBadge>
+                                      <AmbientBadge tooltip="labeled as part of Ambient Mesh"></AmbientBadge>
                                     )}
                                 </span>
                               </Title>
@@ -1031,13 +1076,16 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
                                   <div style={{ textAlign: 'left' }}>
                                     <div style={{ display: 'inline-block', width: '125px' }}>Istio config</div>
+
                                     {ns.tlsStatus && (
                                       <span>
                                         <NamespaceMTLSStatus status={ns.tlsStatus.status} />
                                       </span>
                                     )}
+
                                     {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(ns) : 'N/A'}
                                   </div>
+
                                   {ns.status && (
                                     <NamespaceStatuses
                                       key={ns.name}
@@ -1046,12 +1094,14 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                                       type={this.state.type}
                                     />
                                   )}
+
                                   {this.state.displayMode === OverviewDisplayMode.EXPAND && (
                                     <ControlPlaneNamespaceStatus
                                       outboundTrafficPolicy={this.state.outboundPolicyMode}
                                       namespace={ns}
                                     ></ControlPlaneNamespaceStatus>
                                   )}
+
                                   {this.state.displayMode === OverviewDisplayMode.EXPAND && (
                                     <TLSInfo
                                       certificatesInformationIndicators={
@@ -1061,6 +1111,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                                     ></TLSInfo>
                                   )}
                                 </GridItem>
+
                                 {ns.name === serverConfig.istioNamespace && (
                                   <GridItem md={9}>
                                     <Grid>
@@ -1069,6 +1120,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                                           <CanaryUpgradeProgress canaryUpgradeStatus={this.state.canaryUpgradeStatus} />
                                         </GridItem>
                                       )}
+
                                       {this.props.istioAPIEnabled === true && (
                                         <GridItem md={this.hasCanaryUpgradeConfigured() ? 8 : 12}>
                                           {this.renderCharts(ns)}
@@ -1087,14 +1139,18 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
                                 <div style={{ textAlign: 'left' }}>
                                   <div style={{ display: 'inline-block', width: '125px' }}>Istio config</div>
+
                                   {ns.tlsStatus && (
                                     <span>
                                       <NamespaceMTLSStatus status={ns.tlsStatus.status} />
                                     </span>
                                   )}
+
                                   {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(ns) : 'N/A'}
                                 </div>
+
                                 {this.renderStatus(ns)}
+
                                 {this.state.displayMode === OverviewDisplayMode.EXPAND && (
                                   <TLSInfo
                                     certificatesInformationIndicators={
@@ -1103,11 +1159,13 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                                     version={this.props.minTLS}
                                   ></TLSInfo>
                                 )}
+
                                 {this.state.displayMode === OverviewDisplayMode.EXPAND && (
-                                  <div style={{ height: 110 }} />
+                                  <div style={{ height: '110px' }} />
                                 )}
                               </div>
                             )}
+
                           {((ns.name !== serverConfig.istioNamespace &&
                             this.state.displayMode === OverviewDisplayMode.EXPAND) ||
                             this.state.displayMode === OverviewDisplayMode.COMPACT) && (
@@ -1116,6 +1174,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
                               <div style={{ textAlign: 'left' }}>
                                 <div style={{ display: 'inline-block', width: '125px' }}>Istio config</div>
+
                                 {ns.tlsStatus && (
                                   <span>
                                     <NamespaceMTLSStatus status={ns.tlsStatus.status} />
@@ -1123,7 +1182,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                                 )}
                                 {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(ns) : 'N/A'}
                               </div>
+
                               {this.renderStatus(ns)}
+
                               {this.state.displayMode === OverviewDisplayMode.EXPAND && this.renderCharts(ns)}
                             </div>
                           )}
@@ -1143,6 +1204,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             </EmptyStateBody>
           </EmptyState>
         )}
+
         <OverviewTrafficPolicies
           opTarget={this.state.opTarget}
           isOpen={this.state.showTrafficPoliciesModal}
@@ -1169,13 +1231,13 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         onClick={() => this.setDisplayMode(OverviewDisplayMode.LIST)}
       >
         <Tooltip
-          aria-label={'Labels list'}
+          aria-label="Labels list"
           position={TooltipPosition.right}
           enableFlip={true}
           distance={5}
           content={
             <ul>
-              {Object.entries(ns.labels || []).map(([key, value]) => (
+              {Object.entries(ns.labels ?? []).map(([key, value]) => (
                 <li key={key}>
                   {key}={value}
                 </li>
@@ -1191,6 +1253,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     ) : (
       <div style={{ textAlign: 'left' }}>No labels</div>
     );
+
     return labelContent;
   }
 
@@ -1213,7 +1276,8 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         />
       );
     }
-    return <div style={{ height: 70 }} />;
+
+    return <div style={{ height: '70px' }} />;
   }
 
   renderIstioConfigStatus(ns: NamespaceInfo): JSX.Element {
@@ -1230,7 +1294,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         warnings={validations.warnings}
       >
         <ValidationSummary
-          id={'ns-val-' + ns.name}
+          id={`ns-val-${ns.name}`}
           errors={validations.errors}
           warnings={validations.warnings}
           objectCount={validations.objectCount}
@@ -1252,26 +1316,30 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         ns.status.notAvailable.length +
         ns.status.inNotReady.length;
     }
+
     let text: string;
+
     if (nbItems === 1) {
       text = switchType(this.state.type, '1 application', '1 service', '1 workload');
     } else {
-      text = nbItems + switchType(this.state.type, ' applications', ' services', ' workloads');
+      text = `${nbItems}${switchType(this.state.type, ' applications', ' services', ' workloads')}`;
     }
+
     const mainLink = (
       <div
         style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}
-        data-test={'overview-type-' + this.state.type}
+        data-test={`overview-type-${this.state.type}`}
       >
         {text}
       </div>
     );
+
     if (nbItems === ns.status?.notAvailable.length) {
       return (
         <div style={{ textAlign: 'left' }}>
           <span>
             {mainLink}
-            <div style={{ display: 'inline-block', marginLeft: '5px' }}>N/A</div>
+            <div style={{ display: 'inline-block', marginLeft: '0.25rem' }}>N/A</div>
           </span>
         </div>
       );
@@ -1282,37 +1350,41 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         <div style={{ textAlign: 'left' }}>
           <span>
             {mainLink}
+
             <div style={{ display: 'inline-block' }} data-test="overview-app-health">
               {ns.status && ns.status.inNotReady.length > 0 && (
                 <OverviewStatus
-                  id={name + '-not-ready'}
+                  id={`${name}-not-ready`}
                   namespace={name}
                   status={NOT_READY}
                   items={ns.status.inNotReady}
                   targetPage={targetPage}
                 />
               )}
+
               {ns.status && ns.status.inError.length > 0 && (
                 <OverviewStatus
-                  id={name + '-failure'}
+                  id={`${name}-failure`}
                   namespace={name}
                   status={FAILURE}
                   items={ns.status.inError}
                   targetPage={targetPage}
                 />
               )}
+
               {ns.status && ns.status.inWarning.length > 0 && (
                 <OverviewStatus
-                  id={name + '-degraded'}
+                  id={`${name}-degraded`}
                   namespace={name}
                   status={DEGRADED}
                   items={ns.status.inWarning}
                   targetPage={targetPage}
                 />
               )}
+
               {ns.status && ns.status.inSuccess.length > 0 && (
                 <OverviewStatus
-                  id={name + '-healthy'}
+                  id={`${name}-healthy`}
                   namespace={name}
                   status={HEALTHY}
                   items={ns.status.inSuccess}

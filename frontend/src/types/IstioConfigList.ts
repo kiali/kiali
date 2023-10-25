@@ -16,7 +16,8 @@ import {
   Validations,
   VirtualService,
   WorkloadEntry,
-  WorkloadGroup
+  WorkloadGroup,
+  IstioObject
 } from './IstioObjects';
 import { ResourcePermissions } from './Permissions';
 
@@ -137,7 +138,7 @@ export function validationKey(name: string, namespace?: string): string {
   }
 }
 
-const includeName = (name: string, names: string[]) => {
+const includeName = (name: string, names: string[]): boolean => {
   for (let i = 0; i < names.length; i++) {
     if (name.includes(names[i])) {
       return true;
@@ -210,7 +211,7 @@ export const filterByConfigValidation = (unfiltered: IstioConfigItem[], configFi
 export const toIstioItems = (istioConfigList: IstioConfigList, cluster?: string): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
 
-  const hasValidations = (type: string, name: string, namespace: string) =>
+  const hasValidations = (type: string, name: string, namespace?: string) =>
     istioConfigList.validations[type] && istioConfigList.validations[type][validationKey(name, namespace)];
 
   const nonItems = ['validations', 'permissions', 'namespace', 'cluster'];
@@ -223,7 +224,7 @@ export const toIstioItems = (istioConfigList: IstioConfigList, cluster?: string)
 
     const typeNameProto = dicIstioType[field.toLowerCase()]; // ex. serviceEntries -> ServiceEntry
     const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
-    const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
+    const entryName = `${typeNameProto.charAt(0).toLowerCase()}${typeNameProto.slice(1)}`;
 
     let entries = istioConfigList[field];
     if (entries && !(entries instanceof Array)) {
@@ -235,7 +236,7 @@ export const toIstioItems = (istioConfigList: IstioConfigList, cluster?: string)
       return;
     }
 
-    entries.forEach(entry => {
+    entries.forEach((entry: IstioObject) => {
       const item = {
         namespace: istioConfigList.namespace.name,
         cluster: cluster,
@@ -266,14 +267,14 @@ export const vsToIstioItems = (
 
   const typeNameProto = dicIstioType['virtualservices']; // ex. serviceEntries -> ServiceEntry
   const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
-  const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
+  const entryName = `${typeNameProto.charAt(0).toLowerCase()}${typeNameProto.slice(1)}`;
 
   vss.forEach(vs => {
     const vKey = validationKey(vs.metadata.name, vs.metadata.namespace);
 
     const item = {
       cluster: cluster,
-      namespace: vs.metadata.namespace || '',
+      namespace: vs.metadata.namespace ?? '',
       type: typeName,
       name: vs.metadata.name,
       creationTimestamp: vs.metadata.creationTimestamp,
@@ -298,14 +299,14 @@ export const drToIstioItems = (
 
   const typeNameProto = dicIstioType['destinationrules']; // ex. serviceEntries -> ServiceEntry
   const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
-  const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
+  const entryName = `${typeNameProto.charAt(0).toLowerCase()}${typeNameProto.slice(1)}`;
 
   drs.forEach(dr => {
     const vKey = validationKey(dr.metadata.name, dr.metadata.namespace);
 
     const item = {
       cluster: cluster,
-      namespace: dr.metadata.namespace || '',
+      namespace: dr.metadata.namespace ?? '',
       type: typeName,
       name: dr.metadata.name,
       creationTimestamp: dr.metadata.creationTimestamp,
@@ -332,12 +333,12 @@ export const gwToIstioItems = (
 
   const typeNameProto = dicIstioType['gateways']; // ex. serviceEntries -> ServiceEntry
   const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
-  const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
+  const entryName = `${typeNameProto.charAt(0).toLowerCase()}${typeNameProto.slice(1)}`;
 
   vss.forEach(vs => {
     vs.spec.gateways?.forEach(vsGatewayName => {
       if (vsGatewayName.indexOf('/') < 0) {
-        vsGateways.add(vs.metadata.namespace + '/' + vsGatewayName);
+        vsGateways.add(`${vs.metadata.namespace}/${vsGatewayName}`);
       } else {
         vsGateways.add(vsGatewayName);
       }
@@ -345,12 +346,12 @@ export const gwToIstioItems = (
   });
 
   gws.forEach(gw => {
-    if (vsGateways.has(gw.metadata.namespace + '/' + gw.metadata.name)) {
+    if (vsGateways.has(`${gw.metadata.namespace}/${gw.metadata.name}`)) {
       const vKey = validationKey(gw.metadata.name, gw.metadata.namespace);
 
       const item = {
         cluster: cluster,
-        namespace: gw.metadata.namespace || '',
+        namespace: gw.metadata.namespace ?? '',
         type: typeName,
         name: gw.metadata.name,
         creationTimestamp: gw.metadata.creationTimestamp,
@@ -378,25 +379,25 @@ export const k8sGwToIstioItems = (
 
   const typeNameProto = dicIstioType['k8sgateways']; // ex. serviceEntries -> ServiceEntry
   const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
-  const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
+  const entryName = `${typeNameProto.charAt(0).toLowerCase()}${typeNameProto.slice(1)}`;
 
   k8srs.forEach(k8sr => {
     k8sr.spec.parentRefs?.forEach(parentRef => {
       if (!parentRef.namespace) {
-        k8sGateways.add(k8sr.metadata.namespace + '/' + parentRef.name);
+        k8sGateways.add(`${k8sr.metadata.namespace}/${parentRef.name}`);
       } else {
-        k8sGateways.add(parentRef.namespace + '/' + parentRef.name);
+        k8sGateways.add(`${parentRef.namespace}/${parentRef.name}`);
       }
     });
   });
 
   gws.forEach(gw => {
-    if (k8sGateways.has(gw.metadata.namespace + '/' + gw.metadata.name)) {
+    if (k8sGateways.has(`${gw.metadata.namespace}/${gw.metadata.name}`)) {
       const vKey = validationKey(gw.metadata.name, gw.metadata.namespace);
 
       const item = {
         cluster: cluster,
-        namespace: gw.metadata.namespace || '',
+        namespace: gw.metadata.namespace ?? '',
         type: typeName,
         name: gw.metadata.name,
         creationTimestamp: gw.metadata.creationTimestamp,
@@ -418,14 +419,14 @@ export const seToIstioItems = (see: ServiceEntry[], validations: Validations, cl
 
   const typeNameProto = dicIstioType['serviceentries']; // ex. serviceEntries -> ServiceEntry
   const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
-  const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
+  const entryName = `${typeNameProto.charAt(0).toLowerCase()}${typeNameProto.slice(1)}`;
 
   see.forEach(se => {
     const vKey = validationKey(se.metadata.name, se.metadata.namespace);
 
     const item = {
       cluster: cluster,
-      namespace: se.metadata.namespace || '',
+      namespace: se.metadata.namespace ?? '',
       type: typeName,
       name: se.metadata.name,
       creationTimestamp: se.metadata.creationTimestamp,
@@ -450,14 +451,14 @@ export const k8sHTTPRouteToIstioItems = (
 
   const typeNameProto = dicIstioType['k8shttproutes']; // ex. serviceEntries -> ServiceEntry
   const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
-  const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
+  const entryName = `${typeNameProto.charAt(0).toLowerCase()}${typeNameProto.slice(1)}`;
 
   routes.forEach(route => {
     const vKey = validationKey(route.metadata.name, route.metadata.namespace);
 
     const item = {
       cluster: cluster,
-      namespace: route.metadata.namespace || '',
+      namespace: route.metadata.namespace ?? '',
       type: typeName,
       name: route.metadata.name,
       creationTimestamp: route.metadata.creationTimestamp,

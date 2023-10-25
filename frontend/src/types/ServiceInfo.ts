@@ -91,9 +91,9 @@ export interface ServiceUpdateQuery {
   patchType?: string;
 }
 
-export function getServiceDetailsUpdateLabel(serviceDetails: ServiceDetailsInfo | null) {
-  return getWizardUpdateLabel(serviceDetails?.virtualServices || null, serviceDetails?.k8sHTTPRoutes || null);
-}
+export const getServiceDetailsUpdateLabel = (serviceDetails: ServiceDetailsInfo | null): string => {
+  return getWizardUpdateLabel(serviceDetails?.virtualServices ?? null, serviceDetails?.k8sHTTPRoutes ?? null);
+};
 
 export function hasServiceDetailsTrafficRouting(serviceDetails: ServiceDetailsInfo | null): boolean;
 
@@ -118,8 +118,8 @@ export function hasServiceDetailsTrafficRouting(
 
   if ('length' in serviceDetailsOrVsList) {
     virtualServicesList = serviceDetailsOrVsList;
-    destinationRulesList = drList || [];
-    httpRoutesList = routeList || [];
+    destinationRulesList = drList ?? [];
+    httpRoutesList = routeList ?? [];
   } else {
     virtualServicesList = serviceDetailsOrVsList.virtualServices;
     destinationRulesList = serviceDetailsOrVsList.destinationRules;
@@ -168,7 +168,7 @@ export const validationToHealth = (severity: ValidationTypes): Status => {
   return status;
 };
 
-const numberOfChecks = (type: ValidationTypes, object: ObjectValidation) =>
+const numberOfChecks = (type: ValidationTypes, object: ObjectValidation): number =>
   (object && object.checks ? object.checks : []).filter(i => i.severity === type).length;
 
 export const validationToSeverity = (object: ObjectValidation): ValidationTypes => {
@@ -201,8 +201,10 @@ export function getServiceWizardLabel(serviceDetails: Service): string {
 
 export function getServicePort(ports: { [key: string]: number }): number {
   let port = 80;
+
   if (ports) {
     port = Object.values(ports)[0];
   }
+
   return port;
 }

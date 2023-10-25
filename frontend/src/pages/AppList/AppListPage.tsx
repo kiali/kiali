@@ -4,7 +4,7 @@ import { RenderContent } from '../../components/Nav/Page';
 import * as AppListFilters from './FiltersAndSorts';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import * as FilterComponent from '../../components/FilterList/FilterComponent';
-import { AppListItem, AppListQuery } from '../../types/AppList';
+import { AppListItem } from '../../types/AppList';
 import { DurationInSeconds } from '../../types/Common';
 import { Namespace } from '../../types/Namespace';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
@@ -25,8 +25,8 @@ import { isMultiCluster } from '../../config';
 type AppListPageState = FilterComponent.State<AppListItem>;
 
 type ReduxProps = {
-  duration: DurationInSeconds;
   activeNamespaces: Namespace[];
+  duration: DurationInSeconds;
 };
 
 type AppListPageProps = ReduxProps & FilterComponent.Props<AppListItem>;
@@ -39,6 +39,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
     super(props);
     const prevCurrentSortField = FilterHelper.currentSortField(AppListFilters.sortFields);
     const prevIsSortAscending = FilterHelper.isCurrentSortAscending();
+
     this.state = {
       listItems: [],
       currentSortField: prevCurrentSortField,
@@ -53,6 +54,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
   componentDidUpdate(prevProps: AppListPageProps) {
     const prevCurrentSortField = FilterHelper.currentSortField(AppListFilters.sortFields);
     const prevIsSortAscending = FilterHelper.isCurrentSortAscending();
+
     if (
       !namespaceEquals(this.props.activeNamespaces, prevProps.activeNamespaces) ||
       this.props.duration !== prevProps.duration ||
@@ -63,6 +65,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
         currentSortField: prevCurrentSortField,
         isSortAscending: prevIsSortAscending
       });
+
       this.updateListItems();
     }
   }
@@ -77,11 +80,12 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
     return AppListFilters.sortAppsItems(items, sortField, isAscending);
   }
 
-  updateListItems() {
+  updateListItems(): void {
     this.promises.cancelAll();
     const activeFilters: ActiveFiltersInfo = FilterSelected.getSelected();
     const activeToggles: ActiveTogglesInfo = Toggles.getToggles();
     const namespacesSelected = this.props.activeNamespaces.map(item => item.name);
+
     if (namespacesSelected.length !== 0) {
       this.fetchApps(namespacesSelected, activeFilters, activeToggles, this.props.duration);
     } else {
@@ -89,7 +93,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
     }
   }
 
-  fetchApps(namespaces: string[], filters: ActiveFiltersInfo, toggles: ActiveTogglesInfo, rateInterval: number) {
+  fetchApps(namespaces: string[], filters: ActiveFiltersInfo, toggles: ActiveTogglesInfo, rateInterval: number): void {
     const appsPromises = namespaces.map(namespace => {
       const health = toggles.get('health') ? 'true' : 'false';
       const istioResources = toggles.get('istioResources') ? 'true' : 'false';
@@ -97,8 +101,9 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
         health: health,
         istioResources: istioResources,
         rateInterval: `${String(rateInterval)}s`
-      } as AppListQuery);
+      });
     });
+
     this.promises
       .registerAll('apps', appsPromises)
       .then(responses => {
@@ -122,6 +127,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
 
   render() {
     const hiddenColumns = isMultiCluster ? ([] as string[]) : ['cluster'];
+
     Toggles.getToggles().forEach((v, k) => {
       if (!v) {
         hiddenColumns.push(k);

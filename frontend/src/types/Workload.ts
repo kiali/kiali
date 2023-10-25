@@ -85,8 +85,8 @@ export interface WorkloadQuery {
 }
 
 export interface WorkloadUpdateQuery {
-  type: string;
   patchType?: string;
+  type: string;
 }
 
 export interface WorkloadListItem extends WorkloadOverview {

@@ -136,7 +136,7 @@ export class GraphDataSource {
     this._isError = this._isLoading = false;
   }
 
-  public fetchGraphData = (fetchParams: FetchParams) => {
+  public fetchGraphData = (fetchParams: FetchParams): void => {
     const previousFetchParams = this.fetchParameters;
 
     // Copy fetch parameters to a local attribute
@@ -310,17 +310,17 @@ export class GraphDataSource {
     }
   };
 
-  public on: OnEvents = (eventName: any, callback: any) => {
+  public on: OnEvents = (eventName: any, callback: any): void => {
     this.eventEmitter.on(eventName, callback);
   };
 
-  public removeListener: OnEvents = (eventName: any, callback: any) => {
+  public removeListener: OnEvents = (eventName: any, callback: any): void => {
     this.eventEmitter.removeListener(eventName, callback);
   };
 
   // Some helpers
 
-  public fetchForApp = (duration: DurationInSeconds, namespace: string, app: string, cluster?: string) => {
+  public fetchForApp = (duration: DurationInSeconds, namespace: string, app: string, cluster?: string): void => {
     const params = this.fetchForAppParams(duration, namespace, app, cluster);
     params.showSecurity = true;
     this.fetchGraphData(params);
@@ -344,7 +344,12 @@ export class GraphDataSource {
     return params;
   };
 
-  public fetchForVersionedApp = (duration: DurationInSeconds, namespace: string, app: string, cluster?: string) => {
+  public fetchForVersionedApp = (
+    duration: DurationInSeconds,
+    namespace: string,
+    app: string,
+    cluster?: string
+  ): void => {
     const params = this.fetchForVersionedAppParams(duration, namespace, app, cluster);
     params.showSecurity = true;
     this.fetchGraphData(params);
@@ -378,7 +383,12 @@ export class GraphDataSource {
     return params;
   };
 
-  public fetchForWorkload = (duration: DurationInSeconds, namespace: string, workload: string, cluster?: string) => {
+  public fetchForWorkload = (
+    duration: DurationInSeconds,
+    namespace: string,
+    workload: string,
+    cluster?: string
+  ): void => {
     const params = this.fetchForWorkloadParams(duration, namespace, workload, cluster);
     params.showSecurity = true;
     this.fetchGraphData(params);
@@ -412,7 +422,12 @@ export class GraphDataSource {
     return params;
   };
 
-  public fetchForService = (duration: DurationInSeconds, namespace: string, service: string, cluster?: string) => {
+  public fetchForService = (
+    duration: DurationInSeconds,
+    namespace: string,
+    service: string,
+    cluster?: string
+  ): void => {
     const params = this.fetchForServiceParams(duration, namespace, service, cluster);
     params.showSecurity = true;
     this.fetchGraphData(params);
@@ -446,7 +461,7 @@ export class GraphDataSource {
     return params;
   };
 
-  public fetchForNamespace = (duration: DurationInSeconds, namespace: string) => {
+  public fetchForNamespace = (duration: DurationInSeconds, namespace: string): void => {
     const params = this.fetchForNamespaceParams(duration, namespace);
     this.fetchGraphData(params);
   };
@@ -488,11 +503,11 @@ export class GraphDataSource {
     };
   }
 
-  private emit: EmitEvents = (eventName: any, ...args) => {
+  private emit: EmitEvents = (eventName: string, ...args: unknown[]) => {
     this.eventEmitter.emit(eventName, ...args);
   };
 
-  private fetchDataForNamespaces = (restParams: GraphElementsQuery) => {
+  private fetchDataForNamespaces = (restParams: GraphElementsQuery): void => {
     restParams.namespaces = this.fetchParameters.namespaces.map(namespace => namespace.name).join(',');
 
     this.promiseRegistry.register(PROMISE_KEY, API.getGraphElements(restParams)).then(
@@ -527,7 +542,7 @@ export class GraphDataSource {
     );
   };
 
-  private fetchDataForNode = (restParams: GraphElementsQuery, cluster?: string) => {
+  private fetchDataForNode = (restParams: GraphElementsQuery, cluster?: string): void => {
     this.promiseRegistry
       .register(PROMISE_KEY, API.getNodeGraphElements(this.fetchParameters.node!, restParams, cluster))
       .then(
