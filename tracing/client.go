@@ -144,7 +144,7 @@ func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*m
 		return in.httpTracingClient.GetAppTracesHTTP(in.httpClient, in.baseURL, namespace, app, q)
 	}
 	jaegerServiceName := jaeger.BuildTracingServiceName(namespace, app)
-	findTracesRQ := &model.FindTracesRequest{
+	findTracesRQ := model.FindTracesRequest{
 		Query: &model.TraceQueryParameters{
 			ServiceName:  jaegerServiceName,
 			StartTimeMin: timestamppb.New(q.Start),
@@ -154,20 +154,35 @@ func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*m
 			SearchDepth:  int32(q.Limit),
 		},
 	}
-	ctx, cancel := context.WithTimeout(in.ctx, time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout)*time.Second)
-	defer cancel()
+	var tracesMap map[model.TraceID]*model.Trace
+	var err error
+	if q.Cluster != "" {
+		var tagsCL = q.Tags
+		tagsCL["cluster"] = q.Cluster
+		findTracesRQMC := model.FindTracesRequest{
+			Query: &model.TraceQueryParameters{
+				ServiceName:  jaegerServiceName,
+				StartTimeMin: timestamppb.New(q.Start),
+				StartTimeMax: timestamppb.New(q.End),
+				Tags:         q.Tags,
+				DurationMin:  durationpb.New(q.MinDuration),
+				SearchDepth:  int32(q.Limit),
+			},
+		}
+		tracesMap, err = in.queryTraces(findTracesRQMC)
+		if err != nil || len(tracesMap) == 0 {
+			// show warning to user that cannot query by cluster
+			// query second time without cluster filter
+			tracesMap, err = in.queryTraces(findTracesRQ)
+		}
+	} else {
+		tracesMap, err = in.queryTraces(findTracesRQ)
+	}
 
-	stream, err := in.grpcClient.FindTraces(ctx, findTracesRQ)
 	if err != nil {
-		err = fmt.Errorf("GetAppTraces, Tracing GRPC client error: %v", err)
-		log.Error(err.Error())
 		return nil, err
 	}
 
-	tracesMap, err := readSpansStream(stream)
-	if err != nil {
-		return nil, err
-	}
 	r := model.TracingResponse{
 		Data:               []jsonModel.Trace{},
 		TracingServiceName: jaegerServiceName,
@@ -178,6 +193,22 @@ func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*m
 	}
 
 	return &r, nil
+}
+
+func (in *Client) queryTraces(findTracesRQ model.FindTracesRequest) (map[model.TraceID]*model.Trace, error) {
+	ctx, cancel := context.WithTimeout(in.ctx, time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout)*time.Second)
+	defer cancel()
+
+	stream, err := in.grpcClient.FindTraces(ctx, &findTracesRQ)
+	if err != nil {
+		err = fmt.Errorf("GetAppTraces, Tracing GRPC client error: %v", err)
+		log.Error(err.Error())
+		return nil, err
+	}
+
+	tracesMap, err := readSpansStream(stream)
+
+	return tracesMap, err
 }
 
 // GetTraceDetail fetches a specific trace from its ID

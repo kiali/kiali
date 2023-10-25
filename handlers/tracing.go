@@ -233,7 +233,7 @@ func readQuery(values url.Values) (models.TracingQuery, error) {
 		End:     time.Now(),
 		Limit:   100,
 		Tags:    make(map[string]string),
-		Cluster: clusterNameFromQuery(values),
+		Cluster: values.Get("clusterName"), // should not get default cluster
 	}
 
 	if v := values.Get("startMicros"); v != "" {
