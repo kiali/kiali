@@ -29,7 +29,9 @@ const (
 )
 
 func TestServicesHealthConfigPasses(t *testing.T) {
-	config.Set(config.NewConfig())
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
+	config.Set(conf)
 	trafficMap := buildServiceTrafficMap()
 	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
 
@@ -206,7 +208,9 @@ func TestHealthDataPresent200SvcWk(t *testing.T) {
 func TestHealthDataPresent200500WkSvc(t *testing.T) {
 	assert := assert.New(t)
 
-	config.Set(config.NewConfig())
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
+	config.Set(conf)
 	svcNodes := buildServiceTrafficMap()
 	appNodes := buildAppTrafficMap()
 	wkNodes := buildWorkloadTrafficMap()
@@ -264,7 +268,9 @@ func TestHealthDataPresent200500WkSvc(t *testing.T) {
 func TestHealthDataPresentToApp(t *testing.T) {
 	assert := assert.New(t)
 
-	config.Set(config.NewConfig())
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
+	config.Set(conf)
 	svcNodes := buildServiceTrafficMap()
 	appNodes := buildAppTrafficMap()
 	wkNodes := buildWorkloadTrafficMap()
@@ -316,7 +322,9 @@ func TestHealthDataPresentToApp(t *testing.T) {
 func TestHealthDataPresentFromApp(t *testing.T) {
 	assert := assert.New(t)
 
-	config.Set(config.NewConfig())
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
+	config.Set(conf)
 	svcNodes := buildServiceTrafficMap()
 	appNodes := buildAppTrafficMap()
 	wkNodes := buildWorkloadTrafficMap()
@@ -372,7 +380,9 @@ func TestHealthDataPresentFromApp(t *testing.T) {
 func TestHealthDataBadResponses(t *testing.T) {
 	assert := assert.New(t)
 
-	config.Set(config.NewConfig())
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
+	config.Set(conf)
 	svcNodes := buildServiceTrafficMap()
 	appNodes := buildAppTrafficMap()
 	wkNodes := buildWorkloadTrafficMap()
@@ -428,7 +438,9 @@ func TestHealthDataBadResponses(t *testing.T) {
 func TestIdleNodesHaveHealthData(t *testing.T) {
 	assert := assert.New(t)
 
-	config.Set(config.NewConfig())
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
+	config.Set(conf)
 	trafficMap := make(graph.TrafficMap)
 	idleNode, _ := graph.NewNode("cluster-default", "testNamespace", "svc", "", "", "", "v1", graph.GraphTypeVersionedApp)
 	trafficMap[idleNode.ID] = idleNode
@@ -478,6 +490,8 @@ func TestErrorCausesPanic(t *testing.T) {
 	var k8s kubernetes.ClientInterface = kubetest.NewFakeK8sClient(objects...)
 
 	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
+	config.Set(conf)
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 	cache := business.NewTestingCache(t, k8s, *conf)
@@ -534,6 +548,8 @@ func TestMultiClusterHealthConfig(t *testing.T) {
 	}
 
 	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
+	config.Set(conf)
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	conf.KubernetesConfig.ClusterName = "east"
 	config.Set(conf)
@@ -610,6 +626,8 @@ func setupHealthConfig(t *testing.T, services []core_v1.Service, deployments []a
 	k8s := kubetest.NewFakeK8sClient(objects...)
 
 	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
+	config.Set(conf)
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 	business.SetupBusinessLayer(t, k8s, *conf)
