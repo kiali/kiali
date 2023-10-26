@@ -4,6 +4,7 @@ import { TableDefinition } from 'cypress-cucumber-preprocessor';
 Then(`user sees a table with headings`, (tableHeadings: TableDefinition) => {
   const headings = tableHeadings.raw()[0];
   cy.get('table');
+
   headings.forEach(heading => {
     cy.get(`th[data-label="${heading}"]`);
   });
@@ -77,9 +78,9 @@ And('user filters for istio config type {string}', (istioType: string) => {
 // 1. There is only 1 table on the screen.
 //
 // Be aware of these assumptions when using this func.
-export function colExists(colName: string, exists: boolean) {
+export const colExists = (colName: string, exists: boolean) => {
   return cy.get(`th[data-label="${colName}"]`).should(exists ? 'exist' : 'not.exist');
-}
+};
 
 // hasAtLeastOneClass will check if the element has that class/classes.
 // This func makes a couple assumptions:
@@ -99,9 +100,9 @@ export const hasAtLeastOneClass = (expectedClasses: string[]) => {
 // 2. There is only 1 table on the screen.
 //
 // Be aware of these assumptions when using this func.
-export function getColWithRowText(rowSearchText: string, colName: string) {
+export const getColWithRowText = (rowSearchText: string, colName: string) => {
   return cy.get('tbody').contains('tr', rowSearchText).find(`td[data-label="${colName}"]`);
-}
+};
 
 // getCellsForCol returns every cell matching the table header name or
 // the table header index. Example:
@@ -112,21 +113,23 @@ export function getColWithRowText(rowSearchText: string, colName: string) {
 //
 // getCellsForCol('Name') or getCellsForCol(0) would both return
 // the cells 'app1' and 'app2'.
-export function getCellsForCol(column: string | Number) {
+export const getCellsForCol = (column: string | Number) => {
   if (typeof column === 'number') {
     return cy.get('td').eq(column);
   }
   return cy.get(`td[data-label="${column}"]`);
-}
+};
 
 Then('user sees the {string} table with {int} rows', (tableName: string, numRows: number) => {
   let tableId = '';
+
   switch (tableName) {
     case 'Istio Config':
       tableId = 'list_istio_config';
       break;
   }
-  cy.get('table[aria-label="' + tableId + '"]').within(() => {
+
+  cy.get(`table[aria-label="${tableId}"]`).within(() => {
     cy.get('tbody').within(() => {
       cy.get('tr').should('have.length', numRows);
     });
@@ -136,64 +139,72 @@ Then('user sees the {string} table with {int} rows', (tableName: string, numRows
 // Note that we can't count the rows on this case, as empty tables add a row with the message
 Then('user sees the {string} table with empty message', (tableName: string) => {
   let tableId = '';
+
   switch (tableName) {
     case 'Istio Config':
       tableId = 'list_istio_config';
       break;
   }
-  cy.get('table[aria-label="' + tableId + '"]').within(() => {
+
+  cy.get(`table[aria-label="${tableId}"]`).within(() => {
     cy.get('[data-test="istio-config-empty"]');
   });
 });
 
 When('user clicks in the {string} table {string} badge {string} name row link', (tableName, badge, name) => {
   let tableId = '';
+
   switch (tableName) {
     case 'Istio Config':
       tableId = 'list_istio_config';
       break;
   }
-  cy.get('table[aria-label="' + tableId + '"]').within(() => {
+
+  cy.get(`table[aria-label="${tableId}"]`).within(() => {
     cy.contains('div', badge).siblings().first().click();
   });
 });
 
 // ensureObjectsInTable name can represent apps, istio config, objects, services etc.
-export function ensureObjectsInTable(...names: string[]) {
+export const ensureObjectsInTable = (...names: string[]) => {
   cy.get('tbody').within(() => {
     cy.get('tr').should('have.length.at.least', names.length);
+
     names.forEach(name => {
       cy.get('tr').contains(name);
     });
   });
-}
+};
 
-export function checkHealthIndicatorInTable(
+export const checkHealthIndicatorInTable = (
   targetNamespace: string,
   targetType: string | null,
   targetRowItemName: string,
   healthStatus: string
-) {
+) => {
   const selector = targetType
     ? `${targetNamespace}_${targetType}_${targetRowItemName}`
     : `${targetNamespace}_${targetRowItemName}`;
+
   cy.get(`tr[data-test=VirtualItem_Ns${selector}]`).find('span').filter(`.icon-${healthStatus}`).should('exist');
-}
+};
 
-export function checkHealthStatusInTable(
+export const checkHealthStatusInTable = (
   targetNamespace: string,
   targetType: string | null,
   targetRowItemName: string,
   healthStatus: string
-) {
+) => {
   const selector = targetType
     ? `${targetNamespace}_${targetType}_${targetRowItemName}`
     : `${targetNamespace}_${targetRowItemName}`;
+
   cy.get(`[data-test=VirtualItem_Ns${selector}] td:first-child span[class=pf-v5-c-icon__content]`).trigger(
     'mouseenter'
   );
+
   cy.get(`[aria-label='Health indicator'] strong`).should('contain.text', healthStatus);
-}
+};
 
 And('an entry for {string} cluster should be in the table', (cluster: string) => {
   cy.get('tbody').within(() => {

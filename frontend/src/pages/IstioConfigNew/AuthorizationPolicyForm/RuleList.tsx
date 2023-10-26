@@ -127,7 +127,7 @@ export const RuleList: React.FC<RuleListProps> = (props: RuleListProps) => {
 
   const noRulesMessage = props.action === 'DENY' ? ' DENY action requires at least one Rule' : 'No Rules Defined.';
 
-  const emptyState = <div className={noRulesStyle}>{noRulesMessage}</div>;
+  const noRules = <div className={noRulesStyle}>{noRulesMessage}</div>;
 
-  return <SimpleTable label="Rule List" columns={columns} rows={rows} emptyState={emptyState} />;
+  return <SimpleTable label="Rule List" columns={columns} rows={rows} emptyState={noRules} />;
 };

@@ -99,13 +99,13 @@ export class JwtRuleBuilder extends React.Component<Props, State> {
     };
   }
 
-  onAddJwtField = (_event: React.FormEvent<HTMLSelectElement>, value: string): void => {
+  onAddJwtField = (_event: React.FormEvent, value: string): void => {
     this.setState({
       newJwtField: value
     });
   };
 
-  onAddNewValues = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
+  onAddNewValues = (_event: React.FormEvent, value: string): void => {
     this.setState({
       newValues: value
     });

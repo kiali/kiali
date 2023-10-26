@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { EmptyState, EmptyStateBody, EmptyStateVariant, Tooltip, EmptyStateHeader } from '@patternfly/react-core';
 import { StarIcon } from '@patternfly/react-icons';
-import { SortByDirection } from '@patternfly/react-table';
+import { IRow, SortByDirection } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
@@ -97,7 +97,7 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
     });
   };
 
-  const buildTableRows = () => {
+  const buildTableRows = (): IRow[] => {
     if (meshClustersList === null) {
       return [];
     }
@@ -123,7 +123,7 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
     return sortBy.direction === SortByDirection.asc ? tableRows : tableRows.reverse();
   };
 
-  const fetchMeshClusters = async () => {
+  const fetchMeshClusters = async (): Promise<void> => {
     try {
       const meshClusters = await getClusters();
       setMeshClustersList(meshClusters.data);
@@ -134,7 +134,7 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
     }
   };
 
-  const onSortHandler = (_event: React.MouseEvent, index: number, direction: SortByDirection) => {
+  const onSortHandler = (_event: React.MouseEvent, index: number, direction: SortByDirection): void => {
     setSortBy({ index, direction });
   };
 

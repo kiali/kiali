@@ -61,13 +61,13 @@ export class SourceBuilder extends React.Component<Props, State> {
     };
   }
 
-  onAddNewSourceField = (_event: React.FormEvent<HTMLSelectElement>, value: string): void => {
+  onAddNewSourceField = (_event: React.FormEvent, value: string): void => {
     this.setState({
       newSourceField: value
     });
   };
 
-  onAddNewValues = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
+  onAddNewValues = (_event: React.FormEvent, value: string): void => {
     this.setState({
       newValues: value
     });

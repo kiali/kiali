@@ -53,13 +53,13 @@ export class OperationBuilder extends React.Component<Props, State> {
     };
   }
 
-  onAddNewOperationField = (_event: React.FormEvent<HTMLSelectElement>, value: string): void => {
+  onAddNewOperationField = (_event: React.FormEvent, value: string): void => {
     this.setState({
       newOperationField: value
     });
   };
 
-  onAddNewValues = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
+  onAddNewValues = (_event: React.FormEvent, value: string): void => {
     this.setState({
       newValues: value
     });
@@ -86,6 +86,7 @@ export class OperationBuilder extends React.Component<Props, State> {
 
   onAddOperationToList = (): void => {
     const toItem = this.state.operation;
+
     this.setState(
       {
         operationFields: Object.assign([], INIT_OPERATION_FIELDS),

@@ -16,7 +16,6 @@ import { ThProps, IRow } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../components/Pf/PfColors';
 import { isValid } from 'utils/Common';
-import { FormEvent } from 'react';
 import { KialiIcon } from 'config/KialiIcon';
 import { SimpleTable } from 'components/SimpleTable';
 
@@ -91,7 +90,7 @@ export const initServiceEntry = (): ServiceEntryState => ({
   validHosts: false
 });
 
-const isValidPort = (ports: FormPort[]) => {
+const isValidPort = (ports: FormPort[]): boolean => {
   return ports.every(
     (p, i) =>
       isValidName(p.name) &&
@@ -101,7 +100,7 @@ const isValidPort = (ports: FormPort[]) => {
   );
 };
 
-const noDuplicatePortNames = (name: string, index: number, ports: FormPort[]) => {
+const noDuplicatePortNames = (name: string, index: number, ports: FormPort[]): boolean => {
   return ports.every((p, i) => (i !== index ? p.name !== name : true));
 };
 
@@ -154,7 +153,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     return isValid;
   };
 
-  onAddHosts = (_event, value: string) => {
+  onAddHosts = (_event: React.FormEvent, value: string): void => {
     const hosts = value.trim().length === 0 ? [] : value.split(',').map(host => host.trim());
 
     this.setState(
@@ -169,7 +168,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     );
   };
 
-  onAddLocation = (_event, value: string) => {
+  onAddLocation = (_event: React.FormEvent, value: string): void => {
     this.setState(
       prevState => {
         prevState.serviceEntry.location = value;
@@ -181,7 +180,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     );
   };
 
-  onAddResolution = (_event, value: string) => {
+  onAddResolution = (_event: React.FormEvent, value: string): void => {
     this.setState(
       prevState => {
         prevState.serviceEntry.resolution = value;
@@ -193,9 +192,9 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     );
   };
 
-  onAddPortNumber = (e: FormEvent, value: string) => {
+  onAddPortNumber = (event: React.FormEvent, value: string): void => {
     const formPorts = this.state.formPorts;
-    const eName = e.currentTarget.getAttribute('name') !== null ? e.currentTarget.getAttribute('name') : '0';
+    const eName = event.currentTarget.getAttribute('name') !== null ? event.currentTarget.getAttribute('name') : '0';
     const i = parseInt(eName!);
     formPorts[i].number = value;
 
@@ -215,9 +214,9 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     );
   };
 
-  onAddPortName = (e: FormEvent, value: string) => {
+  onAddPortName = (event: React.FormEvent, value: string): void => {
     const formPorts = this.state.formPorts;
-    const eName = e.currentTarget.getAttribute('name') !== null ? e.currentTarget.getAttribute('name') : '0';
+    const eName = event.currentTarget.getAttribute('name') !== null ? event.currentTarget.getAttribute('name') : '0';
     const i = parseInt(eName!);
     formPorts[i].name = value;
 
@@ -237,9 +236,9 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     );
   };
 
-  onAddPortProtocol = (e: FormEvent, value: string) => {
+  onAddPortProtocol = (event: React.FormEvent, value: string): void => {
     const formPorts = this.state.formPorts;
-    const eName = e.currentTarget.getAttribute('name') !== null ? e.currentTarget.getAttribute('name') : '0';
+    const eName = event.currentTarget.getAttribute('name') !== null ? event.currentTarget.getAttribute('name') : '0';
     const i = parseInt(eName!);
     formPorts[i].protocol = value;
 
@@ -259,9 +258,9 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     );
   };
 
-  onAddTargetPort = (e: FormEvent, value: string) => {
+  onAddTargetPort = (event: React.FormEvent, value: string): void => {
     const formPorts = this.state.formPorts;
-    const eName = e.currentTarget.getAttribute('name') !== null ? e.currentTarget.getAttribute('name') : '0';
+    const eName = event.currentTarget.getAttribute('name') !== null ? event.currentTarget.getAttribute('name') : '0';
     const i = parseInt(eName!);
     formPorts[i].targetPort = value;
 
@@ -281,7 +280,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     );
   };
 
-  checkDefined = (index: number) => {
+  checkDefined = (index: number): ServiceEntrySpec => {
     const se = this.state.serviceEntry;
 
     if (typeof se.ports !== 'undefined' && typeof se.ports[index] === 'undefined') {
@@ -296,7 +295,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     return se;
   };
 
-  onAddNewPort = () => {
+  onAddNewPort = (): void => {
     const newPort: FormPort = {
       name: '',
       protocol: protocols[0],
@@ -315,7 +314,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     );
   };
 
-  handleDelete = (_: any, index: number) => {
+  handleDelete = (_event: React.MouseEvent, index: number): void => {
     const state = this.state.formPorts;
     state.splice(index, 1);
     const se = this.state.serviceEntry;
@@ -325,7 +324,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
   };
 
   rows = (): IRow[] => {
-    return (this.state.formPorts || [])
+    return (this.state.formPorts ?? [])
       .map((p, i) => ({
         key: `portNew_${i}`,
         cells: [
@@ -338,6 +337,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
             onChange={this.onAddPortNumber}
             validated={isValid(isValidPortNumber(p.number))}
           />,
+
           <TextInput
             value={p.name}
             id={`addPortName_${i}`}
@@ -346,6 +346,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
             onChange={this.onAddPortName}
             validated={isValid(isValidName(p.name) && noDuplicatePortNames(p.name, i, this.state.formPorts))}
           />,
+
           <FormSelect
             value={p.protocol}
             id={`addPortProtocol_${i}`}
@@ -356,6 +357,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
               <FormSelectOption key={`p_${index}`} value={option} label={option} />
             ))}
           </FormSelect>,
+
           <TextInput
             value={p.targetPort}
             id={`addTargetPort_${i}`}
@@ -364,6 +366,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
             onChange={this.onAddTargetPort}
             validated={isValid(isValidTargetPort(p.targetPort))}
           />,
+
           <Button
             id={`deleteBtn_${i}`}
             variant={ButtonVariant.link}

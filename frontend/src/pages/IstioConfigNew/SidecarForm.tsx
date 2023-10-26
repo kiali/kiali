@@ -87,7 +87,7 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
     this.setState(this.props.sidecar);
   }
 
-  onAddHost = (_event: React.FormEvent<HTMLInputElement>, value: string) => {
+  onAddHost = (_event: React.FormEvent, value: string): void => {
     const host = value.trim();
 
     this.setState({
@@ -98,10 +98,11 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
     });
   };
 
-  onAddEgressHost = () => {
+  onAddEgressHost = (): void => {
     this.setState(
       prevState => {
         prevState.egressHosts.push(this.state.addEgressHost);
+
         return {
           egressHosts: prevState.egressHosts,
           addEgressHost: {
@@ -113,10 +114,11 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
     );
   };
 
-  onRemoveEgressHost = (rowIndex: number) => {
+  onRemoveEgressHost = (rowIndex: number): void => {
     this.setState(
       prevState => {
         prevState.egressHosts.splice(rowIndex, 1);
+
         return {
           egressHosts: prevState.egressHosts
         };
@@ -125,7 +127,7 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
     );
   };
 
-  addWorkloadLabels = (_event: React.FormEvent<HTMLInputElement>, value: string) => {
+  addWorkloadLabels = (_event: React.FormEvent, value: string): void => {
     if (value.length === 0) {
       this.setState(
         {
@@ -151,6 +153,7 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
       }
 
       const splitLabel: string[] = label.split('=');
+
       if (splitLabel.length !== 2) {
         isValid = false;
         break;
@@ -161,6 +164,7 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
         break;
       }
     }
+
     this.setState(
       {
         workloadSelectorValid: isValid,

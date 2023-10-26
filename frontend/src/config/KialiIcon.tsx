@@ -141,7 +141,7 @@ export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } =
   Workloads: (props: IconProps) => conversorIconProps(props, <BundleIcon />)
 };
 
-const conversorIconProps = (props: IconProps, icon: JSX.Element, colorIcon?: string): React.ReactElement => {
+const conversorIconProps = (props: IconProps, icon: React.ReactNode, colorIcon?: string): React.ReactElement => {
   const colorI = props.color || colorIcon;
   const classNameIcon = colorI
     ? kialiStyle({

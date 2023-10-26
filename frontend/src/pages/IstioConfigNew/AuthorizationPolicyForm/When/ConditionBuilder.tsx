@@ -67,7 +67,7 @@ export class ConditionBuilder extends React.Component<Props, State> {
     };
   }
 
-  onAddNewConditionKey = (_event: React.FormEvent<HTMLInputElement>, key: string): void => {
+  onAddNewConditionKey = (_event: React.FormEvent, key: string): void => {
     this.setState(prevState => {
       prevState.condition.key = key;
       return {
@@ -76,7 +76,7 @@ export class ConditionBuilder extends React.Component<Props, State> {
     });
   };
 
-  onAddNewValues = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
+  onAddNewValues = (_event: React.FormEvent, value: string): void => {
     this.setState(prevState => {
       prevState.condition.values = value.length === 0 ? [] : value.split(',');
       return {
@@ -85,7 +85,7 @@ export class ConditionBuilder extends React.Component<Props, State> {
     });
   };
 
-  onAddNewNotValues = (_event: React.FormEvent<HTMLInputElement>, notValues: string): void => {
+  onAddNewNotValues = (_event: React.FormEvent, notValues: string): void => {
     this.setState(prevState => {
       prevState.condition.notValues = notValues.length === 0 ? [] : notValues.split(',');
       return {
@@ -112,18 +112,23 @@ export class ConditionBuilder extends React.Component<Props, State> {
     if (key.length === 0) {
       return false;
     }
+
     if (conditionFixedKeys.includes(key)) {
       return true;
     }
+
     if (key.startsWith('request.headers')) {
       return isValidRequestHeaderName(key);
     }
+
     if (key.startsWith('experimental.envoy.filters.')) {
       return true;
     }
+
     if (key.startsWith('request.auth.claims[')) {
       return isValidRequestAuthClaimName(key);
     }
+
     return false;
   };
 
@@ -145,9 +150,7 @@ export class ConditionBuilder extends React.Component<Props, State> {
 
     if (conditionIpAddressKeys.includes(key)) {
       // If some value is not an IP, then is not valid
-      // @ts-ignore
       const valuesValid = values ? !values.some(value => !isValidIp(value)) : true;
-      // @ts-ignore
       const notValuesValid = notValues ? !notValues.some(value => !isValidIp(value)) : true;
       return [true, valuesValid, notValuesValid, 'Not valid IP'];
     }

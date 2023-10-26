@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ISortBy, SortByDirection, ThProps } from '@patternfly/react-table';
+import { IRow, ISortBy, SortByDirection, ThProps } from '@patternfly/react-table';
 import { ClusterSummaryTable, ClusterTable } from './ClusterTable';
 import { RouteSummaryTable, RouteTable } from './RouteTable';
 import { ListenerSummaryTable, ListenerTable } from './ListenerTable';
@@ -18,7 +18,7 @@ export interface SummaryTable {
   availableFilters: () => FilterType[];
   head: () => ThProps[];
   resource: () => string;
-  rows: () => (string | number | JSX.Element)[][];
+  rows: () => IRow[];
   setSorting: (columnIndex: number, direction: 'asc' | 'desc') => void;
   sortBy: () => ISortBy;
   tooltip: () => React.ReactNode;
@@ -28,7 +28,7 @@ const iconStyle = kialiStyle({
   display: 'inline-block'
 });
 
-export const SummaryTableRenderer = <T extends SummaryTable>() => {
+export function SummaryTableRenderer<T extends SummaryTable>() {
   interface SummaryTableProps<T> {
     onSort: (resource: string, columnIndex: number, sortByDirection: SortByDirection) => void;
     pod: string;
@@ -43,15 +43,15 @@ export const SummaryTableRenderer = <T extends SummaryTable>() => {
   };
 
   return class SummaryTable extends React.Component<SummaryTableProps<T>, SummaryTableState> {
+    onSort = (_event: React.MouseEvent, columnIndex: number, sortByDirection: SortByDirection): void => {
+      this.props.writer.setSorting(columnIndex, sortByDirection);
+      this.props.onSort(this.props.writer.resource(), columnIndex, sortByDirection);
+    };
+
     onFilterApplied = (activeFilter: ActiveFiltersInfo): void => {
       this.setState({
         activeFilters: activeFilter
       });
-    };
-
-    onSort = (_event: React.MouseEvent, columnIndex: number, sortByDirection: SortByDirection): void => {
-      this.props.writer.setSorting(columnIndex, sortByDirection);
-      this.props.onSort(this.props.writer.resource(), columnIndex, sortByDirection);
     };
 
     render() {
@@ -66,6 +66,7 @@ export const SummaryTableRenderer = <T extends SummaryTable>() => {
               <div key="service-icon" className={iconStyle}>
                 <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
               </div>
+
               <ToolbarDropdown
                 id="envoy_pods_list"
                 tooltip="Display envoy config for the selected pod"
@@ -74,6 +75,7 @@ export const SummaryTableRenderer = <T extends SummaryTable>() => {
                 label={this.props.pod}
                 options={this.props.pods.sort()}
               />
+
               <div className={kialiStyle({ position: 'absolute', right: '0.25rem' })}>
                 {this.props.writer.tooltip()}
               </div>
@@ -91,7 +93,7 @@ export const SummaryTableRenderer = <T extends SummaryTable>() => {
       );
     }
   };
-};
+}
 
 export const SummaryTableBuilder = (
   resource: string,
@@ -126,5 +128,6 @@ export const SummaryTableBuilder = (
       writerProps = new RouteTable(config.routes ?? [], sortBy['routes'], namespaces, namespace, kiosk);
       break;
   }
+
   return [writerComp, writerProps];
 };

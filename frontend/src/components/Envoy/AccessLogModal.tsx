@@ -73,7 +73,7 @@ const tableStyle = kialiStyle({
 });
 
 export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogModalProps) => {
-  const [description, setDescription] = React.useState<React.ReactFragment>(
+  const [description, setDescription] = React.useState<React.ReactNode>(
     <div style={{ width: '100%', textAlign: 'center' }}>
       <dt>Click Field Name for Description</dt>
     </div>
@@ -126,7 +126,7 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
     setDescription(getDescription(alFieldName));
   };
 
-  const getDescription = (alFieldName: string): React.ReactFragment => {
+  const getDescription = (alFieldName: string): React.ReactNode => {
     console.log(`fetch docs(${alFieldName})`);
     switch (alFieldName) {
       case 'authority':

@@ -95,7 +95,7 @@ export const JwtRuleList: React.FC<JwtRuleListProps> = (props: JwtRuleListProps)
     };
   });
 
-  const emptyState = <div className={noJWTRulesStyle}>No JWT Rules Defined</div>;
+  const noJWTRules = <div className={noJWTRulesStyle}>No JWT Rules Defined</div>;
 
-  return <SimpleTable label="JWT Rules List" columns={columns} rows={rows} emptyState={emptyState} />;
+  return <SimpleTable label="JWT Rules List" columns={columns} rows={rows} emptyState={noJWTRules} />;
 };

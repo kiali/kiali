@@ -40,6 +40,7 @@ export const AddressList: React.FC<AddressListProps> = (props: AddressListProps)
       type: 'IPAddress',
       value: ''
     };
+
     const l = props.addressList;
     l.push(newAddress);
 
@@ -72,6 +73,7 @@ export const AddressList: React.FC<AddressListProps> = (props: AddressListProps)
             ))}
           </Tr>
         </Thead>
+
         <Tbody>
           {props.addressList.length > 0 ? (
             <>

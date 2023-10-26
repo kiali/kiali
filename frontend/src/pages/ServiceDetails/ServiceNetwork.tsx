@@ -33,7 +33,7 @@ const infoStyle = kialiStyle({
 });
 
 export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetworkProps) => {
-  const getPortOver = (portId: number) => {
+  const getPortOver = (portId: number): React.ReactNode => {
     return <ValidationList checks={getPortChecks(portId)} />;
   };
 
@@ -81,7 +81,7 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
   };
 
   return (
-    <Card isCompact={true} id={'ServiceNetworkCard'}>
+    <Card isCompact={true} id="ServiceNetworkCard">
       <CardHeader>
         <Title headingLevel="h3" size={TitleSizes['xl']}>
           Network
@@ -112,8 +112,8 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
               <li>
                 <span>Endpoints</span>
                 <div style={{ display: 'inline-block' }}>
-                  {(props.serviceDetails.endpoints || []).map((endpoint, i) => {
-                    return (endpoint.addresses || []).map((address, u) => (
+                  {(props.serviceDetails.endpoints ?? []).map((endpoint, i) => {
+                    return (endpoint.addresses ?? []).map((address, u) => (
                       <div key={`endpoint_${i}_address_${u}`}>
                         {address.name !== '' ? (
                           <Tooltip
@@ -142,7 +142,7 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
               <li>
                 <span>Ports</span>
                 <div style={{ display: 'inline-block' }}>
-                  {(props.serviceDetails.service.ports || []).map((port, i) => {
+                  {(props.serviceDetails.service.ports ?? []).map((port, i) => {
                     return (
                       <div key={`port_${i}`}>
                         <div>

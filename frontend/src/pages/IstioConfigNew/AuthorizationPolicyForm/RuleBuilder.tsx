@@ -56,6 +56,7 @@ export class RuleBuilder extends React.Component<Props, State> {
   onAddFrom = (source: { [key: string]: string[] }): void => {
     this.setState(prevState => {
       prevState.fromList.push(source);
+
       return {
         fromList: prevState.fromList
       };
@@ -65,6 +66,7 @@ export class RuleBuilder extends React.Component<Props, State> {
   onRemoveFrom = (index: number): void => {
     this.setState(prevState => {
       prevState.fromList.splice(index, 1);
+
       return {
         fromList: prevState.fromList
       };
@@ -74,6 +76,7 @@ export class RuleBuilder extends React.Component<Props, State> {
   onAddTo = (operation: { [key: string]: string[] }): void => {
     this.setState(prevState => {
       prevState.toList.push(operation);
+
       return {
         toList: prevState.toList
       };
@@ -83,6 +86,7 @@ export class RuleBuilder extends React.Component<Props, State> {
   onRemoveTo = (index: number): void => {
     this.setState(prevState => {
       prevState.toList.splice(index, 1);
+
       return {
         toList: prevState.toList
       };
@@ -92,6 +96,7 @@ export class RuleBuilder extends React.Component<Props, State> {
   onAddCondition = (condition: Condition): void => {
     this.setState(prevState => {
       prevState.conditionList.push(condition);
+
       return {
         conditionList: prevState.conditionList
       };
@@ -101,6 +106,7 @@ export class RuleBuilder extends React.Component<Props, State> {
   onRemoveCondition = (index: number): void => {
     this.setState(prevState => {
       prevState.conditionList.splice(index, 1);
+
       return {
         conditionList: prevState.conditionList
       };
@@ -137,8 +143,8 @@ export class RuleBuilder extends React.Component<Props, State> {
         <FormGroup label="From" fieldId="addFromSwitch">
           <Switch
             id="addFromSwitch"
-            label={' '}
-            labelOff={' '}
+            label=" "
+            labelOff=" "
             isChecked={this.state.addFromSwitch}
             onChange={() => {
               this.setState(prevState => ({
@@ -163,8 +169,8 @@ export class RuleBuilder extends React.Component<Props, State> {
         <FormGroup label="To" fieldId="addToSwitch">
           <Switch
             id="addToSwitch"
-            label={' '}
-            labelOff={' '}
+            label=" "
+            labelOff=" "
             isChecked={this.state.addToSwitch}
             onChange={() => {
               this.setState(prevState => ({
@@ -189,8 +195,8 @@ export class RuleBuilder extends React.Component<Props, State> {
         <FormGroup label="When" fieldId="addWhenSwitch">
           <Switch
             id="addWhenSwitch"
-            label={' '}
-            labelOff={' '}
+            label=" "
+            labelOff=" "
             isChecked={this.state.addWhenSwitch}
             onChange={() => {
               this.setState(prevState => ({

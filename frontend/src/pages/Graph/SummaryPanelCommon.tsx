@@ -21,7 +21,7 @@ export const summaryBodyTabs = kialiStyle({
   padding: '0.5rem 1rem 0 1rem'
 });
 
-export const summaryPanelWidth = '25em';
+export const summaryPanelWidth = '350px';
 
 export const summaryPanel = kialiStyle({
   fontSize: 'var(--graph-side-panel--font-size)',
@@ -64,7 +64,7 @@ export const hr = () => {
   return <hr className={hrStyle} />;
 };
 
-export const shouldRefreshData = (prevProps: SummaryPanelPropType, nextProps: SummaryPanelPropType) => {
+export const shouldRefreshData = (prevProps: SummaryPanelPropType, nextProps: SummaryPanelPropType): boolean => {
   return (
     // Verify the time of the last request
     prevProps.queryTime !== nextProps.queryTime ||
@@ -138,16 +138,18 @@ export const getNodeMetrics = (
   }
 };
 
-export const mergeMetricsResponses = (
+export const mergeMetricsResponses = async (
   promises: Promise<Response<M.IstioMetricsMap>>[]
 ): Promise<Response<M.IstioMetricsMap>> => {
   return Promise.all(promises).then(responses => {
     const metrics: M.IstioMetricsMap = {};
+
     responses.forEach(r => {
       Object.keys(r.data).forEach(k => {
         metrics[k] = r.data[k];
       });
     });
+
     return {
       data: metrics
     };
@@ -164,14 +166,17 @@ export const getDatapoints = (
   protocol?: Protocol
 ): M.Datapoint[] => {
   let dpsMap = new Map<number, M.Datapoint>();
+
   if (metrics) {
     for (let i = 0; i < metrics.length; ++i) {
       const ts = metrics[i];
+
       if (comparator(ts.labels, protocol)) {
         // Sum values, because several metrics can satisfy the comparator
         // E.g. with multiple active namespaces and node being an outsider, we need to sum datapoints for every active namespace
         ts.datapoints.forEach(dp => {
           const val = Number(dp[1]);
+
           if (!isNaN(val)) {
             const current = dpsMap.get(dp[0]);
             dpsMap.set(dp[0], current ? [dp[0], current[1] + val] : [dp[0], val]);
@@ -180,10 +185,11 @@ export const getDatapoints = (
       }
     }
   }
+
   return Array.from(dpsMap.values());
 };
 
-export const renderNoTraffic = (protocol?: string) => {
+export const renderNoTraffic = (protocol?: string): React.ReactNode => {
   return (
     <div className={noTrafficStyle}>
       <KialiIcon.Info /> No {protocol ? protocol : ''} traffic logged.
@@ -191,7 +197,7 @@ export const renderNoTraffic = (protocol?: string) => {
   );
 };
 
-export const getTitle = (title: string): React.ReactFragment => {
+export const getTitle = (title: string): React.ReactNode => {
   switch (title) {
     case NodeType.AGGREGATE:
       title = 'Operation';

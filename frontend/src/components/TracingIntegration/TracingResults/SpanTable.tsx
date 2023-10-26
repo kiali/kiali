@@ -150,7 +150,7 @@ class SpanTableComponent extends React.Component<Props, State> {
     const onSort: OnSort = (_event: React.MouseEvent, index: number, sortDirection: SortByDirection) =>
       this.setState({ sortIndex: index, sortDirection: sortDirection });
 
-    const emptyState: React.ReactNode = (
+    const noSpans: React.ReactNode = (
       <EmptyState variant={EmptyStateVariant.full}>
         <EmptyStateHeader titleText="No spans found" headingLevel="h5" />
         <EmptyStateBody>No spans match the current filters</EmptyStateBody>
@@ -163,7 +163,7 @@ class SpanTableComponent extends React.Component<Props, State> {
         className={tableStyle}
         columns={columns}
         rows={this.rows()}
-        emptyState={emptyState}
+        emptyState={noSpans}
         onSort={onSort}
         sortBy={sortBy}
         actionResolver={this.actionResolver}

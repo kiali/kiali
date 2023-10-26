@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { SummaryTable, SummaryTableRenderer } from './BaseTable';
-import { ISortBy } from '@patternfly/react-table';
+import { IRow, ISortBy } from '@patternfly/react-table';
 import { RouteSummary } from '../../../types/IstioObjects';
 import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '../../../types/Filters';
 import { SortField } from '../../../types/SortFilters';
@@ -166,7 +166,7 @@ export class RouteTable implements SummaryTable {
     );
   };
 
-  rows(): (string | number | JSX.Element)[][] {
+  rows(): IRow[] {
     const parentKiosk = isParentKiosk(this.kiosk);
     return this.summaries
       .filter((value: RouteSummary) => {
@@ -179,14 +179,18 @@ export class RouteTable implements SummaryTable {
 
         return this.sortingDirection === 'asc' ? sortField!.compare(a, b) : sortField!.compare(b, a);
       })
-      .map((summary: RouteSummary): (string | number | JSX.Element)[] => {
-        return [
-          summary.name,
-          serviceLink(summary.domains, this.namespaces, this.namespace, true, parentKiosk),
-          summary.match,
-          istioConfigLink(summary.virtual_service, 'virtualservice')
-        ];
-      });
+      .map(
+        (summary: RouteSummary): IRow => {
+          return {
+            cells: [
+              summary.name,
+              serviceLink(summary.domains, this.namespaces, this.namespace, true, parentKiosk),
+              summary.match,
+              istioConfigLink(summary.virtual_service, 'virtualservice')
+            ]
+          };
+        }
+      );
   }
 }
 

@@ -112,7 +112,7 @@ export const K8sRules: React.FC<K8sRuleProps> = (props: K8sRuleProps) => {
 
   const matchAll: number = matchAllIndex(props.k8sRules);
 
-  const emptyState: React.ReactNode = (
+  const noK8sRules: React.ReactNode = (
     <EmptyState variant={EmptyStateVariant.full}>
       <EmptyStateHeader titleText="No K8s Route Rules defined" headingLevel="h5" />
       <EmptyStateBody className={noRulesStyle}>A Request Routing scenario needs at least a Route Rule</EmptyStateBody>
@@ -166,7 +166,7 @@ export const K8sRules: React.FC<K8sRuleProps> = (props: K8sRuleProps) => {
         columns={columns}
         rows={routeRules}
         actionResolver={actionResolver}
-        emptyState={emptyState}
+        emptyState={noK8sRules}
       />
     </>
   );

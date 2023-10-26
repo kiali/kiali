@@ -21,12 +21,12 @@ export const PodStatus: React.FC<PodStatusProps> = (props: PodStatusProps) => {
   };
 
   if (showTooltip()) {
-    const severityIcon = () => {
+    const severityIcon = (): Status => {
       const validationSeverity: Status = validationToHealth(highestSeverity(props.checks || []));
       return mergeStatus(proxyStatusSeverity, validationSeverity);
     };
 
-    const tooltipContent = (
+    const tooltipContent: React.ReactNode = (
       <>
         <ProxyStatusList status={props.proxyStatus} />
         <ValidationStack checks={props.checks} />
@@ -34,7 +34,7 @@ export const PodStatus: React.FC<PodStatusProps> = (props: PodStatusProps) => {
     );
 
     return (
-      <Tooltip aria-label={'Pod Status'} position={TooltipPosition.auto} enableFlip={true} content={tooltipContent}>
+      <Tooltip aria-label="Pod Status" position={TooltipPosition.auto} enableFlip={true} content={tooltipContent}>
         <span>{createIcon(severityIcon(), 'md')}</span>
       </Tooltip>
     );

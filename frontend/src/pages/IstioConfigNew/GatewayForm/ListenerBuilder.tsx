@@ -36,42 +36,42 @@ export const isValidSelector = (selector: string): boolean => {
 };
 
 export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerBuilderProps) => {
-  const onAddHostname = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
+  const onAddHostname = (_event: React.FormEvent, value: string): void => {
     const l = props.listener;
     l.hostname = value.trim();
 
     props.onChange(l, props.index);
   };
 
-  const onAddPort = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
+  const onAddPort = (_event: React.FormEvent, value: string): void => {
     const l = props.listener;
     l.port = value.trim();
 
     props.onChange(l, props.index);
   };
 
-  const onAddName = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
+  const onAddName = (_event: React.FormEvent, value: string): void => {
     const l = props.listener;
     l.name = value.trim();
 
     props.onChange(l, props.index);
   };
 
-  const onAddProtocol = (_event: React.FormEvent<HTMLSelectElement>, value: string): void => {
+  const onAddProtocol = (_event: React.FormEvent, value: string): void => {
     const l = props.listener;
     l.protocol = value.trim();
 
     props.onChange(l, props.index);
   };
 
-  const onAddFrom = (_event: React.FormEvent<HTMLSelectElement>, value: string): void => {
+  const onAddFrom = (_event: React.FormEvent, value: string): void => {
     const l = props.listener;
     l.from = value.trim();
 
     props.onChange(l, props.index);
   };
 
-  const onAddSelectorLabels = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
+  const onAddSelectorLabels = (_event: React.FormEvent, value: string): void => {
     const l = props.listener;
     l.sSelectorLabels = value.trim();
 

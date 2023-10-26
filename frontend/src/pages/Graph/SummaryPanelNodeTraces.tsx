@@ -67,14 +67,16 @@ const dividerStyle = kialiStyle({
 class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
   private promises = new PromisesRegistry();
 
-  static getDerivedStateFromProps(props: Props, state: State) {
+  static getDerivedStateFromProps(props: Props, state: State): State {
     // Update the selected trace within list because it may have more up-to-date data after being selected hence fetched again
     if (props.selectedTrace) {
       const index = state.traces.findIndex(t => t.traceID === props.selectedTrace!.traceID);
+
       if (index >= 0) {
         state.traces[index] = props.selectedTrace;
       }
     }
+
     return state;
   }
 
@@ -103,19 +105,23 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
     this.promises.cancelAll();
   }
 
-  private loadTraces() {
+  private loadTraces(): void {
     // Convert seconds to microseconds
     const params: TracingQuery = {
       startMicros: this.props.queryTime * 1000000,
       limit: tracesLimit
     };
+
     const d = this.props.nodeData;
+
     const promise = d.workload
       ? API.getWorkloadTraces(d.namespace, d.workload, params, d.cluster)
       : d.service
       ? API.getServiceTraces(d.namespace, d.service, params, d.cluster)
       : API.getAppTraces(d.namespace, d.app!, params, d.cluster);
+
     this.promises.cancelAll();
+
     this.promises
       .register('traces', promise)
       .then(response => {
@@ -124,10 +130,12 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
               .map(trace => transformTraceData(trace, this.props.nodeData.cluster))
               .filter(trace => trace !== null) as JaegerTrace[])
           : [];
+
         if (this.props.selectedTrace && !traces.some(t => t.traceID === this.props.selectedTrace!.traceID)) {
           // Put selected trace back in list
           traces.push(this.props.selectedTrace);
         }
+
         this.setState({ traces: traces });
       })
       .catch(error => {
@@ -135,7 +143,7 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
       });
   }
 
-  private onClickTrace(trace: JaegerTrace) {
+  private onClickTrace(trace: JaegerTrace): void {
     if (this.props.selectedTrace?.traceID === trace.traceID) {
       // Deselect
       this.props.setTraceId(this.props.nodeData.cluster, undefined);
@@ -146,10 +154,12 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
 
   render() {
     const d = this.props.nodeData;
+
     const tracesDetailsURL =
       `/namespaces/${d.namespace}` +
       (d.workload ? `/workloads/${d.workload}` : d.service ? `/services/${d.service}` : `/applications/${d.app!}`) +
       '?tab=traces';
+
     const currentID = this.props.selectedTrace?.traceID;
 
     return (
@@ -162,6 +172,7 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
             isChecked={this.state.useGraphRefresh}
             onChange={(_event, checked) => this.setState({ useGraphRefresh: checked })}
           />
+
           <Button
             id="manual-refresh"
             isDisabled={this.state.useGraphRefresh}
@@ -173,7 +184,9 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
             <SyncAltIcon />
           </Button>
         </div>
+
         <Divider className={dividerStyle} />
+
         {this.state.traces.length > 0 && (
           <SimpleList style={{ marginBottom: '0.5rem' }} aria-label="Traces list">
             {this.state.traces.map(trace => {
@@ -189,6 +202,7 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
             })}
           </SimpleList>
         )}
+
         <Button
           style={summaryFont}
           onClick={() => {

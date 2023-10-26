@@ -52,7 +52,7 @@ export const SourceList: React.FC<SourceListProps> = (props: SourceListProps) =>
     };
   });
 
-  const emptyState = <div className={noSourceStyle}>No Source Matches Defined</div>;
+  const noSources = <div className={noSourceStyle}>No Source Matches Defined</div>;
 
-  return <SimpleTable label="Source List" columns={columns} rows={rows} emptyState={emptyState} />;
+  return <SimpleTable label="Source List" columns={columns} rows={rows} emptyState={noSources} />;
 };

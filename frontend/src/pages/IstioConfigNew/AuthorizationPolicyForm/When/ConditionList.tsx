@@ -56,7 +56,7 @@ export const ConditionList: React.FC<ConditionListProps> = (props: ConditionList
     };
   });
 
-  const emptyState = <div className={noConditionsStyle}>No Conditions Defined</div>;
+  const noConditions = <div className={noConditionsStyle}>No Conditions Defined</div>;
 
-  return <SimpleTable label="Condition List" columns={columns} rows={rows} emptyState={emptyState} />;
+  return <SimpleTable label="Condition List" columns={columns} rows={rows} emptyState={noConditions} />;
 };

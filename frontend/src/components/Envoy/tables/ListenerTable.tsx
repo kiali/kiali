@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { SummaryTable, SummaryTableRenderer } from './BaseTable';
-import { ISortBy } from '@patternfly/react-table';
+import { IRow, ISortBy } from '@patternfly/react-table';
 import { ListenerSummary } from '../../../types/IstioObjects';
 import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '../../../types/Filters';
 import { SortField } from '../../../types/SortFilters';
@@ -196,7 +196,7 @@ export class ListenerTable implements SummaryTable {
     );
   };
 
-  rows(): (string | number | JSX.Element)[][] {
+  rows(): IRow[] {
     return this.summaries
       .filter((value: ListenerSummary) => {
         return defaultFilter(value, this.filterMethods());
@@ -208,14 +208,18 @@ export class ListenerTable implements SummaryTable {
 
         return this.sortingDirection === 'asc' ? sortField!.compare(a, b) : sortField!.compare(b, a);
       })
-      .map((summary: ListenerSummary) => {
-        return [
-          summary.address,
-          summary.port,
-          summary.match,
-          routeLink(summary.destination, this.namespace, this.workload, this.routeLinkHandler)
-        ];
-      });
+      .map(
+        (summary: ListenerSummary): IRow => {
+          return {
+            cells: [
+              summary.address,
+              summary.port,
+              summary.match,
+              routeLink(summary.destination, this.namespace, this.workload, this.routeLinkHandler)
+            ]
+          };
+        }
+      );
   }
 }
 

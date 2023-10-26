@@ -80,56 +80,56 @@ const deleteButtonStyle = kialiStyle({
 });
 
 export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilderProps) => {
-  const onAddHosts = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
+  const onAddHosts = (_event: React.FormEvent, value: string): void => {
     const server = props.server;
     server.hosts = value.trim().length === 0 ? [] : value.split(',').map(host => host.trim());
 
     props.onChange(server, props.index);
   };
 
-  const onAddPortNumber = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
+  const onAddPortNumber = (_event: React.FormEvent, value: string): void => {
     const server = props.server;
     server.number = value.trim();
 
     props.onChange(server, props.index);
   };
 
-  const onAddPortName = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
+  const onAddPortName = (_event: React.FormEvent, value: string): void => {
     const server = props.server;
     server.name = value.trim();
 
     props.onChange(server, props.index);
   };
 
-  const onAddPortProtocol = (_event: React.FormEvent<HTMLSelectElement>, value: string): void => {
+  const onAddPortProtocol = (_event: React.FormEvent, value: string): void => {
     const server = props.server;
     server.protocol = value.trim();
 
     props.onChange(server, props.index);
   };
 
-  const onAddTlsMode = (_event: React.FormEvent<HTMLSelectElement>, value: string): void => {
+  const onAddTlsMode = (_event: React.FormEvent, value: string): void => {
     const server = props.server;
     server.tlsMode = value.trim();
 
     props.onChange(server, props.index);
   };
 
-  const onAddTlsServerCertificate = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
+  const onAddTlsServerCertificate = (_event: React.FormEvent, value: string): void => {
     const server = props.server;
     server.tlsServerCertificate = value.trim();
 
     props.onChange(server, props.index);
   };
 
-  const onAddTlsPrivateKey = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
+  const onAddTlsPrivateKey = (_event: React.FormEvent, value: string): void => {
     const server = props.server;
     server.tlsPrivateKey = value.trim();
 
     props.onChange(server, props.index);
   };
 
-  const onAddTlsCaCertificate = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
+  const onAddTlsCaCertificate = (_event: React.FormEvent, value: string): void => {
     const server = props.server;
     server.tlsCaCertificate = value.trim();
 

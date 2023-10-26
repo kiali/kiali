@@ -113,7 +113,7 @@ export const Rules: React.FC<RulesProps> = (props: RulesProps) => {
 
   const matchAll: number = matchAllIndex(props.rules);
 
-  const emptyState: React.ReactNode = (
+  const noRules: React.ReactNode = (
     <EmptyState variant={EmptyStateVariant.full}>
       <EmptyStateHeader titleText="No Route Rules defined" headingLevel="h5" />
       <EmptyStateBody className={noRulesStyle}>A Request Routing scenario needs at least a Route Rule</EmptyStateBody>
@@ -212,7 +212,7 @@ export const Rules: React.FC<RulesProps> = (props: RulesProps) => {
         columns={columns}
         rows={routeRules}
         actionResolver={actionResolver}
-        emptyState={emptyState}
+        emptyState={noRules}
       />
     </>
   );

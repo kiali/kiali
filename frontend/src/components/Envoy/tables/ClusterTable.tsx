@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { SummaryTable, SummaryTableRenderer } from './BaseTable';
-import { ISortBy, SortByDirection } from '@patternfly/react-table';
+import { IRow, ISortBy, SortByDirection } from '@patternfly/react-table';
 import { ClusterSummary } from '../../../types/IstioObjects';
 import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '../../../types/Filters';
 import { SortField } from '../../../types/SortFilters';
@@ -247,7 +247,7 @@ export class ClusterTable implements SummaryTable {
     );
   };
 
-  rows(): (string | number | JSX.Element)[][] {
+  rows(): IRow[] {
     const parentKiosk = isParentKiosk(this.kiosk);
     return this.summaries
       .filter((value: ClusterSummary): boolean => {
@@ -260,16 +260,20 @@ export class ClusterTable implements SummaryTable {
 
         return this.sortingDirection === 'asc' ? sortField!.compare(a, b) : sortField!.compare(b, a);
       })
-      .map((value: ClusterSummary): (string | number | JSX.Element)[] => {
-        return [
-          serviceLink(value.service_fqdn, this.namespaces, this.namespace, false, parentKiosk),
-          value.port,
-          value.subset,
-          value.direction,
-          value.type,
-          istioConfigLink(value.destination_rule, 'destinationrule')
-        ];
-      });
+      .map(
+        (value: ClusterSummary): IRow => {
+          return {
+            cells: [
+              serviceLink(value.service_fqdn, this.namespaces, this.namespace, false, parentKiosk),
+              value.port,
+              value.subset,
+              value.direction,
+              value.type,
+              istioConfigLink(value.destination_rule, 'destinationrule')
+            ]
+          };
+        }
+      );
   }
 }
 

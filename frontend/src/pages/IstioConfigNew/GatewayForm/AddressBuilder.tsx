@@ -28,14 +28,14 @@ export const isValidAddress = (address: Address): boolean => {
 export const addressTypes = ['IPAddress', 'Hostname'];
 
 export const AddressBuilder: React.FC<AddressBuilderProps> = (props: AddressBuilderProps) => {
-  const onAddValue = (_event: React.FormEvent<HTMLInputElement>, value: string): void => {
+  const onAddValue = (_event: React.FormEvent, value: string): void => {
     const l = props.address;
     l.value = value.trim();
 
     props.onChange(l, props.index);
   };
 
-  const onAddType = (_event: React.FormEvent<HTMLSelectElement>, value: string): void => {
+  const onAddType = (_event: React.FormEvent, value: string): void => {
     const l = props.address;
     l.type = value.trim();
 

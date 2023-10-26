@@ -51,7 +51,7 @@ export const OperationList: React.FC<OperationListProps> = (props: OperationList
     };
   });
 
-  const emptyState = <div className={noOperationsStyle}>No Operations Defined</div>;
+  const noOperations = <div className={noOperationsStyle}>No Operations Defined</div>;
 
-  return <SimpleTable label="Operation List" columns={columns} rows={rows} emptyState={emptyState} />;
+  return <SimpleTable label="Operation List" columns={columns} rows={rows} emptyState={noOperations} />;
 };
