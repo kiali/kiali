@@ -79,7 +79,7 @@ export const Rules: React.FC<RulesProps> = (props: RulesProps) => {
       onClick: () => props.onMoveRule(rowIndex, MOVE_TYPE.DOWN)
     };
 
-    const actions: any[] = [];
+    const actions: IAction[] = [];
 
     if (props.rules.length > 0) {
       actions.push(removeAction);
@@ -125,80 +125,72 @@ export const Rules: React.FC<RulesProps> = (props: RulesProps) => {
 
     return {
       cells: [
-        { title: <>{order + 1}</> },
-        {
-          title: (
-            <>
-              {rule.matches.length === 0
-                ? 'Any request'
-                : rule.matches.map((match, i) => <div key={`match_${i}`}>{match}</div>)}
-              {!isValid && (
-                <div className={validationStyle}>
-                  Match 'Any request' is defined in a previous rule.
-                  <br />
-                  This rule is not accessible.
-                </div>
-              )}
-            </>
-          )
-        },
-        {
-          title: (
-            <>
-              <div key={`ww_${order}`}>
-                {rule.workloadWeights
-                  .filter(wk => !wk.mirrored)
-                  .map((wk, i) => {
-                    return (
-                      <div key={`wk_${order}_${wk.name}_${i}`}>
-                        <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
-                        {wk.name} ({wk.weight}% routed traffic)
-                      </div>
-                    );
-                  })}
+        <>{order + 1}</>,
+        <>
+          {rule.matches.length === 0
+            ? 'Any request'
+            : rule.matches.map((match, i) => <div key={`match_${i}`}>{match}</div>)}
+          {!isValid && (
+            <div className={validationStyle}>
+              Match 'Any request' is defined in a previous rule.
+              <br />
+              This rule is not accessible.
+            </div>
+          )}
+        </>,
+        <>
+          <div key={`ww_${order}`}>
+            {rule.workloadWeights
+              .filter(wk => !wk.mirrored)
+              .map((wk, i) => {
+                return (
+                  <div key={`wk_${order}_${wk.name}_${i}`}>
+                    <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
+                    {wk.name} ({wk.weight}% routed traffic)
+                  </div>
+                );
+              })}
 
-                {rule.workloadWeights
-                  .filter(wk => wk.mirrored)
-                  .map((wk, i) => {
-                    return (
-                      <div key={`wk_mirrored_${order}_${wk.name}_${i}`}>
-                        <PFBadge badge={PFBadges.MirroredWorkload} position={TooltipPosition.top} />
-                        {wk.name} ({wk.weight}% mirrored traffic)
-                      </div>
-                    );
-                  })}
-              </div>
+            {rule.workloadWeights
+              .filter(wk => wk.mirrored)
+              .map((wk, i) => {
+                return (
+                  <div key={`wk_mirrored_${order}_${wk.name}_${i}`}>
+                    <PFBadge badge={PFBadges.MirroredWorkload} position={TooltipPosition.top} />
+                    {wk.name} ({wk.weight}% mirrored traffic)
+                  </div>
+                );
+              })}
+          </div>
 
-              {rule.delay && (
-                <div key={`delay_${order}`}>
-                  <PFBadge badge={PFBadges.FaultInjectionDelay} position={TooltipPosition.top} />
-                  {rule.delay.percentage?.value}% requests delayed ({rule.delay.fixedDelay})
-                </div>
-              )}
+          {rule.delay && (
+            <div key={`delay_${order}`}>
+              <PFBadge badge={PFBadges.FaultInjectionDelay} position={TooltipPosition.top} />
+              {rule.delay.percentage?.value}% requests delayed ({rule.delay.fixedDelay})
+            </div>
+          )}
 
-              {rule.abort && (
-                <div key={`abort_${order}`}>
-                  <PFBadge badge={PFBadges.FaultInjectionAbort} position={TooltipPosition.top} />
-                  {rule.abort.percentage?.value}% requests aborted (HTTP Status {rule.abort.httpStatus})
-                </div>
-              )}
+          {rule.abort && (
+            <div key={`abort_${order}`}>
+              <PFBadge badge={PFBadges.FaultInjectionAbort} position={TooltipPosition.top} />
+              {rule.abort.percentage?.value}% requests aborted (HTTP Status {rule.abort.httpStatus})
+            </div>
+          )}
 
-              {rule.timeout && (
-                <div key={`timeout_${order}`}>
-                  <PFBadge badge={PFBadges.RequestTimeout} position={TooltipPosition.top} />
-                  timeout ({rule.timeout})
-                </div>
-              )}
+          {rule.timeout && (
+            <div key={`timeout_${order}`}>
+              <PFBadge badge={PFBadges.RequestTimeout} position={TooltipPosition.top} />
+              timeout ({rule.timeout})
+            </div>
+          )}
 
-              {rule.retries && (
-                <div key={`retries_${order}`}>
-                  <PFBadge badge={PFBadges.RequestRetry} position={TooltipPosition.top} />
-                  {rule.retries.attempts} attempts with timeout ({rule.timeout})
-                </div>
-              )}
-            </>
-          )
-        }
+          {rule.retries && (
+            <div key={`retries_${order}`}>
+              <PFBadge badge={PFBadges.RequestRetry} position={TooltipPosition.top} />
+              {rule.retries.attempts} attempts with timeout ({rule.timeout})
+            </div>
+          )}
+        </>
       ]
     };
   });
