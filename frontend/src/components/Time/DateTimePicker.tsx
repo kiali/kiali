@@ -32,12 +32,10 @@ const calendarStyle = kialiStyle({
   }
 });
 
-// Make sure datepicker popper rises above other inflated z-index elements
-// - secondaryMasthead currently at 10
 const popperStyle = kialiStyle({
   $nest: {
     '&.react-datepicker-popper': {
-      zIndex: 11
+      zIndex: 100
     }
   }
 });
