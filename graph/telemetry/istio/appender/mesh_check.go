@@ -1,8 +1,6 @@
 package appender
 
 import (
-	"fmt"
-
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 )
@@ -99,7 +97,7 @@ func (a *MeshCheckAppender) applyMeshChecks(trafficMap graph.TrafficMap, globalI
 
 // nodeOK returns true if we have access to its workload info
 func (a *MeshCheckAppender) nodeOK(node *graph.Node, namespaceInfo *graph.AppenderNamespaceInfo) bool {
-	key := fmt.Sprintf("%s:%s", node.Cluster, node.Namespace)
+	key := graph.GetClusterSensitiveKey(node.Cluster, node.Namespace)
 	_, ok := a.AccessibleNamespaces[key]
 	return ok
 }

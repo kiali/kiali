@@ -1,7 +1,6 @@
 package appender
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -187,7 +186,7 @@ func TestServiceEntry(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
-	key := fmt.Sprintf("%s:%s", config.DefaultClusterID, "testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
@@ -305,7 +304,7 @@ func TestServiceEntryExportAll(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
-	key := fmt.Sprintf("%s:%s", config.DefaultClusterID, "testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
@@ -417,7 +416,7 @@ func TestServiceEntryExportNamespaceFound(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
-	key := fmt.Sprintf("%s:%s", config.DefaultClusterID, "testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
@@ -529,7 +528,7 @@ func TestServiceEntryExportDefinitionNamespace(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
-	key := fmt.Sprintf("%s:%s", config.DefaultClusterID, "testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
@@ -641,7 +640,7 @@ func TestServiceEntryExportNamespaceNotFound(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
-	key := fmt.Sprintf("%s:%s", config.DefaultClusterID, "testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
@@ -737,7 +736,7 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("namespace")
-	key := fmt.Sprintf("%s:%s", config.DefaultClusterID, "testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	a := ServiceEntryAppender{
 		AccessibleNamespaces: graph.AccessibleNamespaces{
@@ -878,7 +877,7 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
-	key := fmt.Sprintf("%s:%s", config.DefaultClusterID, "testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
@@ -1007,7 +1006,7 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("otherNamespace")
-	key := fmt.Sprintf("%s:%s", config.DefaultClusterID, "testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
@@ -1117,7 +1116,7 @@ func TestServiceEntryMultipleEdges(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
-	key := fmt.Sprintf("%s:%s", config.DefaultClusterID, "testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{

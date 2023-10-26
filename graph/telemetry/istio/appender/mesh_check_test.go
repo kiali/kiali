@@ -1,7 +1,6 @@
 package appender
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -25,10 +24,10 @@ func TestWorkloadSidecarsPasses(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
-	key := fmt.Sprintf("%s:%s", config.DefaultClusterID, "testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	a := MeshCheckAppender{
-		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+		AccessibleNamespaces: map[graph.ClusterSensitiveKey]*graph.AccessibleNamespace{
 			key: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
@@ -49,10 +48,10 @@ func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
-	key := fmt.Sprintf("%s:%s", config.DefaultClusterID, "testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	a := MeshCheckAppender{
-		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+		AccessibleNamespaces: map[graph.ClusterSensitiveKey]*graph.AccessibleNamespace{
 			key: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
@@ -74,10 +73,10 @@ func TestInaccessibleWorkload(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
-	key := fmt.Sprintf("%s:%s", config.DefaultClusterID, "testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	a := MeshCheckAppender{
-		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+		AccessibleNamespaces: map[graph.ClusterSensitiveKey]*graph.AccessibleNamespace{
 			key: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
@@ -98,10 +97,10 @@ func TestAppNoPodsPasses(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
-	key := fmt.Sprintf("%s:%s", config.DefaultClusterID, "testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	a := MeshCheckAppender{
-		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+		AccessibleNamespaces: map[graph.ClusterSensitiveKey]*graph.AccessibleNamespace{
 			key: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
@@ -122,10 +121,10 @@ func TestAppSidecarsPasses(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
-	key := fmt.Sprintf("%s:%s", config.DefaultClusterID, "testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	a := MeshCheckAppender{
-		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+		AccessibleNamespaces: map[graph.ClusterSensitiveKey]*graph.AccessibleNamespace{
 			key: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
@@ -146,10 +145,10 @@ func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
-	key := fmt.Sprintf("%s:%s", config.DefaultClusterID, "testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	a := MeshCheckAppender{
-		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+		AccessibleNamespaces: map[graph.ClusterSensitiveKey]*graph.AccessibleNamespace{
 			key: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
@@ -171,10 +170,10 @@ func TestAppWithAmbientIsFlagged(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
-	key := fmt.Sprintf("%s:%s", config.DefaultClusterID, "testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	a := MeshCheckAppender{
-		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+		AccessibleNamespaces: map[graph.ClusterSensitiveKey]*graph.AccessibleNamespace{
 			key: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
@@ -196,10 +195,10 @@ func TestServicesAreAlwaysValid(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
-	key := fmt.Sprintf("%s:%s", config.DefaultClusterID, "testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	a := MeshCheckAppender{
-		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+		AccessibleNamespaces: map[graph.ClusterSensitiveKey]*graph.AccessibleNamespace{
 			key: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
