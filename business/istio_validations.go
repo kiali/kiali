@@ -563,9 +563,9 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 	var istioConfig *core_v1.ConfigMap
 	var err error
 	if IsNamespaceCached(cfg.IstioNamespace) {
-		istioConfig, err = kialiCache.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
+		istioConfig, err = kialiCache.GetConfigMap(cfg.IstioNamespace, IstioConfigMapName(*cfg, ""))
 	} else {
-		istioConfig, err = userClient.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
+		istioConfig, err = userClient.GetConfigMap(cfg.IstioNamespace, IstioConfigMapName(*cfg, ""))
 	}
 	if err != nil {
 		errChan <- err

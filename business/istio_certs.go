@@ -103,7 +103,7 @@ func (ics *IstioCertsService) getCertificateFromSecret(secretName, certName stri
 func (ics *IstioCertsService) getCertsConfigFromIstioConfigMap() ([]certConfig, error) {
 	cfg := config.Get()
 
-	istioConfigMap, err := ics.k8s.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
+	istioConfigMap, err := ics.k8s.GetConfigMap(cfg.IstioNamespace, IstioConfigMapName(*cfg, ""))
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +163,7 @@ func (ics *IstioCertsService) getChironCertificates(certsConfig []certConfig) ([
 func (ics *IstioCertsService) GetTlsMinVersion() (string, error) {
 	cfg := config.Get()
 
-	istioConfigMap, err := ics.k8s.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
+	istioConfigMap, err := ics.k8s.GetConfigMap(cfg.IstioNamespace, IstioConfigMapName(*cfg, ""))
 	if err != nil {
 		return "N/A", err
 	}

@@ -485,7 +485,7 @@ func (in *MeshService) resolveNetwork(clusterName string) string {
 
 func (in *MeshService) OutboundTrafficPolicy() (*models.OutboundPolicy, error) {
 	otp := models.OutboundPolicy{Mode: "ALLOW_ANY"}
-	istioConfig, err := in.kialiCache.GetConfigMap(in.conf.IstioNamespace, in.conf.ExternalServices.Istio.ConfigMapName)
+	istioConfig, err := in.kialiCache.GetConfigMap(in.conf.IstioNamespace, IstioConfigMapName(in.conf, ""))
 	if err != nil {
 		return nil, err
 	}
