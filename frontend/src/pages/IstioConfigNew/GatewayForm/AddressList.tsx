@@ -98,6 +98,7 @@ export const AddressList: React.FC<AddressListProps> = (props: AddressListProps)
       </Table>
 
       <Button
+        name="addAddress"
         variant={ButtonVariant.link}
         icon={<KialiIcon.AddMore />}
         onClick={onAddAddress}
