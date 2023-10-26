@@ -66,7 +66,7 @@ Feature: Kiali Service Details page for remote cluster
 
   Scenario: See no Inbound Metrics for a service, which is not present in the specific cluster. 
     And user is at the details page for the "service" "bookinfo/ratings" located in the "east" cluster
-    Then user does not see "Inbound" metrics information for the remote "ratings" "service"
+    Then user does not see "Inbound" metrics information for the "east" "ratings" "service"
 
   # skipped until https://github.com/kiali/kiali/issues/6710 gets resolved
   @skip
