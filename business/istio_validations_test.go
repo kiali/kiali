@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -67,9 +68,90 @@ func TestGatewayValidation(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	v := mockMultiNamespaceGatewaysValidationService(t)
+	v := mockMultiNamespaceGatewaysValidationService(t, *conf)
 	validations, _, _ := v.GetIstioObjectValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "gateways", "first")
 	assert.NotEmpty(validations)
+}
+
+// TestGatewayValidationScopesToNamespaceWhenGatewayToNamespaceSet this test ensures that gateway validation
+// scopes the gateway workload checker to the namespace of the gateway when PILOT_SCOPE_GATEWAY_TO_NAMESPACE
+// is set to true on the istiod deployment.
+func TestGatewayValidationScopesToNamespaceWhenGatewayToNamespaceSet(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	const (
+		istioConfigMapName                = "istio-1-19-0"
+		istioSidecarInjectorConfigMapName = "istio-sidecar-injector-1-19-0"
+		istiodDeploymentName              = "istiod-1-19-0"
+	)
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.ConfigMapName = istioConfigMapName
+	conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName = istioSidecarInjectorConfigMapName
+	conf.ExternalServices.Istio.IstiodDeploymentName = istiodDeploymentName
+	config.Set(conf)
+	revConfigMap := &core_v1.ConfigMap{ObjectMeta: meta_v1.ObjectMeta{Name: istioConfigMapName, Namespace: "istio-system"}}
+	injectorConfigMap := &core_v1.ConfigMap{ObjectMeta: meta_v1.ObjectMeta{Name: istioSidecarInjectorConfigMapName, Namespace: "istio-system"}}
+	istioSystemNamespace := &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}}
+
+	istiod_1_19_0 := &apps_v1.Deployment{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      istiodDeploymentName,
+			Namespace: "istio-system",
+			Labels: map[string]string{
+				IstioRevisionLabel: "1-19-0",
+				"app":              "istiod",
+			},
+		},
+		Spec: apps_v1.DeploymentSpec{
+			Template: core_v1.PodTemplateSpec{
+				Spec: core_v1.PodSpec{
+					Containers: []core_v1.Container{
+						{
+							Env: []core_v1.EnvVar{
+								{
+									Name:  "PILOT_SCOPE_GATEWAY_TO_NAMESPACE",
+									Value: "true",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// The gateway workload is in a different namespace than the Gateway object.
+	gatewayDeployment := &apps_v1.Deployment{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "istio-ingressgateway",
+			Namespace: "istio-system",
+			Labels: map[string]string{
+				"app": "real", // Matches the gateway label selector
+			},
+		},
+		Spec: apps_v1.DeploymentSpec{
+			Template: core_v1.PodTemplateSpec{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Labels: map[string]string{
+						"app": "real", // Matches the gateway label selector
+					},
+				},
+			},
+		},
+	}
+
+	v := mockMultiNamespaceGatewaysValidationService(t, *conf, revConfigMap, injectorConfigMap, istioSystemNamespace, istiod_1_19_0, gatewayDeployment)
+	validations, _, err := v.GetIstioObjectValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "gateways", "first")
+	require.NoError(err)
+	require.Len(validations, 1)
+	key := models.IstioValidationKey{
+		ObjectType: "gateway",
+		Name:       "first",
+		Namespace:  "test",
+	}
+	// Even though the workload is reference properly, because of the PILOT_SCOPE_GATEWAY_TO_NAMESPACE
+	// the gateway should be marked as invalid.
+	assert.False(validations[key].Valid)
 }
 
 func TestFilterExportToNamespacesVS(t *testing.T) {
@@ -142,7 +224,7 @@ func TestGetVSReferencesNotExisting(t *testing.T) {
 	assert.Nil(references)
 }
 
-func mockMultiNamespaceGatewaysValidationService(t *testing.T) IstioValidationsService {
+func mockMultiNamespaceGatewaysValidationService(t *testing.T, cfg config.Config, objects ...runtime.Object) IstioValidationsService {
 	fakeIstioObjects := []runtime.Object{
 		&core_v1.ConfigMap{ObjectMeta: meta_v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
 	}
@@ -165,8 +247,10 @@ func mockMultiNamespaceGatewaysValidationService(t *testing.T) IstioValidationsS
 		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
 	}
 
+	fakeIstioObjects = append(fakeIstioObjects, objects...)
+
 	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
-	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
+	cache := SetupBusinessLayer(t, k8s, cfg)
 	cache.SetRegistryStatus(&kubernetes.RegistryStatus{
 		Configuration: &kubernetes.RegistryConfiguration{
 			Gateways: append(getGateway("first", "test"), getGateway("second", "test2")...),
@@ -174,7 +258,7 @@ func mockMultiNamespaceGatewaysValidationService(t *testing.T) IstioValidationsS
 	})
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[config.Get().KubernetesConfig.ClusterName] = k8s
+	k8sclients[cfg.KubernetesConfig.ClusterName] = k8s
 	return IstioValidationsService{userClients: k8sclients, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 }
 

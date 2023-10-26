@@ -155,10 +155,7 @@ func (in *MeshService) GetMesh(ctx context.Context) (*Mesh, error) {
 					Revision: istiod.Labels[IstioRevisionLabel],
 				}
 
-				configMapName := in.conf.ExternalServices.Istio.ConfigMapName
-				if revLabel := istiod.Labels[IstioRevisionLabel]; revLabel != "default" && revLabel != "" {
-					configMapName = configMapName + "-" + revLabel
-				}
+				configMapName := IstioConfigMapName(in.conf, controlPlane.Revision)
 
 				controlPlaneConfig, err := getControlPlaneConfiguration(kubeCache, istiod.Namespace, configMapName)
 				if err != nil {
@@ -224,6 +221,26 @@ func (in *MeshService) GetMesh(ctx context.Context) (*Mesh, error) {
 	}
 
 	return mesh, nil
+}
+
+// IstioConfigMapName guesses the istio configmap name.
+func IstioConfigMapName(conf config.Config, revision string) string {
+	// If the config map name is explicitly set and it's not the default value, we should always use that.
+	// Note that this means that the revision is ignored and every controlplane
+	// will use this configmap regardless of which configmap actually corresponds
+	// to the revision.
+	if conf.ExternalServices.Istio.ConfigMapName != "" && conf.ExternalServices.Istio.ConfigMapName != "istio" {
+		return conf.ExternalServices.Istio.ConfigMapName
+	}
+
+	// If the revision is set, we should use the revisioned configmap name
+	// otherwise the hardcoded 'istio' value is used.
+	configMapName := "istio" // As of 1.19 this is hardcoded in the helm charts.
+	if revision != "default" && revision != "" {
+		configMapName = configMapName + "-" + revision
+	}
+
+	return configMapName
 }
 
 func envVarIsSet(key string, env core_v1.EnvVar) bool {
@@ -468,7 +485,7 @@ func (in *MeshService) resolveNetwork(clusterName string) string {
 
 func (in *MeshService) OutboundTrafficPolicy() (*models.OutboundPolicy, error) {
 	otp := models.OutboundPolicy{Mode: "ALLOW_ANY"}
-	istioConfig, err := in.kialiCache.GetConfigMap(in.conf.IstioNamespace, in.conf.ExternalServices.Istio.ConfigMapName)
+	istioConfig, err := in.kialiCache.GetConfigMap(in.conf.IstioNamespace, IstioConfigMapName(in.conf, ""))
 	if err != nil {
 		return nil, err
 	}
