@@ -27,6 +27,7 @@ spec:
     name: "$(${CLIENT_EXE} get smcp -n ${ISTIO_NAMESPACE} -o jsonpath='{.items[0].metadata.name}' )"
 EOM
     # let's wait for smmr to be Ready before enabling sidecar injection
+    sleep 5
     ${CLIENT_EXE} wait --for condition=Ready -n ${ISTIO_NAMESPACE} smmr/default --timeout 300s
   fi
 
