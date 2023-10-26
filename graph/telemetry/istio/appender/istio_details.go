@@ -2,7 +2,6 @@ package appender
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -183,10 +182,10 @@ NODES:
 // For example, service injection has this problem.
 func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, serviceLists map[string]*models.ServiceList) {
 	// build map for quick lookup
-	svcMap := map[string]models.ServiceOverview{}
+	svcMap := map[graph.ClusterSensitiveKey]models.ServiceOverview{}
 	for cluster, serviceList := range serviceLists {
 		for _, sd := range serviceList.Services {
-			svcMap[fmt.Sprintf("%s:%s", cluster, sd.Name)] = sd
+			svcMap[graph.GetClusterSensitiveKey(cluster, sd.Name)] = sd
 		}
 	}
 
@@ -209,7 +208,7 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo
 							hostToTest = hostSplitted[0]
 						}
 
-						if svc, found := svcMap[fmt.Sprintf("%s:%s", n.Cluster, hostToTest)]; found {
+						if svc, found := svcMap[graph.GetClusterSensitiveKey(n.Cluster, hostToTest)]; found {
 							if app, ok := svc.Labels[appLabelName]; ok {
 								n.App = app
 							}
@@ -223,7 +222,7 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo
 					continue
 				}
 
-				if svc, found := svcMap[fmt.Sprintf("%s:%s", n.Cluster, n.Service)]; !found {
+				if svc, found := svcMap[graph.GetClusterSensitiveKey(n.Cluster, n.Service)]; !found {
 					log.Debugf("Service not found, may not apply app label correctly for [%s:%s]", n.Namespace, n.Service)
 					continue
 				} else if app, ok := svc.Labels[appLabelName]; ok {

@@ -276,7 +276,7 @@ func getServiceList(cluster, namespace string, gi *graph.AppenderGlobalInfo) *mo
 		gi.Vendor[serviceListKey] = serviceListMap
 	}
 
-	key := fmt.Sprintf("%s:%s", cluster, namespace)
+	key := graph.GetClusterSensitiveKey(cluster, namespace)
 	if serviceList, ok := serviceListMap[key]; ok {
 		return serviceList
 	}
@@ -335,7 +335,7 @@ func getWorkloadList(cluster, namespace string, gi *graph.AppenderGlobalInfo) *m
 		gi.Vendor[workloadListKey] = workloadListMap
 	}
 
-	key := fmt.Sprintf("%s:%s", cluster, namespace)
+	key := graph.GetClusterSensitiveKey(cluster, namespace)
 	if workloadList, ok := workloadListMap[key]; ok {
 		return workloadList
 	}

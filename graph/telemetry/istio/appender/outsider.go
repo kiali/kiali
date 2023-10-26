@@ -1,8 +1,6 @@
 package appender
 
 import (
-	"fmt"
-
 	"github.com/kiali/kiali/graph"
 )
 
@@ -78,10 +76,7 @@ func isOutside(n *graph.Node, namespaces map[string]graph.NamespaceInfo) bool {
 }
 
 func isInaccessible(n *graph.Node, accessibleNamespaces graph.AccessibleNamespaces) bool {
-	key := fmt.Sprintf("%s:%s", n.Cluster, n.Namespace)
-	if _, found := accessibleNamespaces[key]; !found {
-		return true
-	} else {
-		return false
-	}
+	key := graph.GetClusterSensitiveKey(n.Cluster, n.Namespace)
+	_, found := accessibleNamespaces[key]
+	return !found
 }

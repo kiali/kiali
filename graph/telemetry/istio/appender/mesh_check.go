@@ -36,15 +36,15 @@ func (a MeshCheckAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *
 
 func (a *MeshCheckAppender) applyMeshChecks(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	for _, n := range trafficMap {
-		// skip if we already determined there is a missing sidecar. we can process the same
-		// node multiple times because to ensure we check every node (missing sidecars indicate missing
-		// telemetry so we need to check nodes when we can, regardless of namespace)
+		// skip if we've already determined the node is out-of-mesh. we may process the same
+		// node multiple times to ensure we check every node (e.g. missing sidecars indicate missing
+		// telemetry and so we need to check nodes when we can, regardless of namespace)
 		if n.Metadata[graph.IsOutOfMesh] == true {
 			continue
 		}
 
-		// skip if the node's namespace is outside of the accessible namespaces
-		if !a.namespaceOK(n.Namespace, namespaceInfo) {
+		// skip if the node is not in an accessible namespace, we can't do the checking
+		if !a.nodeOK(n, namespaceInfo) {
 			continue
 		}
 
@@ -95,15 +95,9 @@ func (a *MeshCheckAppender) applyMeshChecks(trafficMap graph.TrafficMap, globalI
 	}
 }
 
-// namespaceOk returns true if the namespace in question is the current appender namespace or any of the graph namespaces
-func (a *MeshCheckAppender) namespaceOK(namespace string, namespaceInfo *graph.AppenderNamespaceInfo) bool {
-	if namespace == namespaceInfo.Namespace {
-		return true
-	}
-	for _, ns := range a.AccessibleNamespaces {
-		if namespace == ns.Name {
-			return true
-		}
-	}
-	return false
+// nodeOK returns true if we have access to its workload info
+func (a *MeshCheckAppender) nodeOK(node *graph.Node, namespaceInfo *graph.AppenderNamespaceInfo) bool {
+	key := graph.GetClusterSensitiveKey(node.Cluster, node.Namespace)
+	_, ok := a.AccessibleNamespaces[key]
+	return ok
 }
