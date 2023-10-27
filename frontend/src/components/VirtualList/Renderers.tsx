@@ -69,7 +69,7 @@ const getIstioLink = (item: TResource): string => {
 };
 
 // Cells
-export const actionRenderer = (key: string, action: JSX.Element): React.ReactNode => {
+export const actionRenderer = (key: string, action: React.ReactNode): React.ReactNode => {
   return (
     <Td role="gridcell" key={`VirtuaItem_Action_${key}`} style={{ verticalAlign: 'middle' }}>
       {action}

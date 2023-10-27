@@ -301,9 +301,11 @@ export class TrafficShifting extends React.Component<Props, State> {
 
     return (
       <>
-        <SimpleTable label="weighted routing" columns={workloadColumns} rows={workloadRows} />
+        <SimpleTable label="Weighted routing" columns={workloadColumns} rows={workloadRows} verticalAlign="middle" />
 
-        {mirrorRows.length > 0 && <SimpleTable label="mirrors" columns={mirrorColumns} rows={mirrorRows} />}
+        {mirrorRows.length > 0 && (
+          <SimpleTable label="Mirrors" columns={mirrorColumns} rows={mirrorRows} verticalAlign="middle" />
+        )}
 
         {this.props.workloads.length > 1 && (
           <div className={evenlyButtonStyle}>

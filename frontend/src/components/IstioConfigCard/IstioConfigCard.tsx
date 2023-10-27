@@ -25,8 +25,8 @@ type IstioConfigCardProps = {
 };
 
 const emtpytStyle = kialiStyle({
-  padding: '0',
-  margin: '0'
+  padding: 0,
+  margin: 0
 });
 
 export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConfigCardProps) => {
@@ -83,7 +83,7 @@ export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConf
 
       <CardBody>
         <SimpleTable
-          label="list_istio_config"
+          label="Istio Config List"
           columns={columns}
           rows={rows}
           variant={TableVariant.compact}

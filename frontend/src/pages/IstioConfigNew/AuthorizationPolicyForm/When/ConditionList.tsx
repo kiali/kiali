@@ -23,7 +23,6 @@ const columns: ThProps[] = [
 ];
 
 const noConditionsStyle = kialiStyle({
-  marginTop: '0.25rem',
   color: PFColors.Red100,
   textAlign: 'center'
 });

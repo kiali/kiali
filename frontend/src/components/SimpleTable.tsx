@@ -15,6 +15,7 @@ import {
   OnSort,
   ThProps
 } from '@patternfly/react-table';
+import { kialiStyle } from 'styles/StyleUtils';
 
 export interface SortableTh extends ThProps {
   sortable: boolean;
@@ -31,9 +32,14 @@ interface SimpleTableProps {
   sort?: (columnIndex: number) => ThProps['sort'];
   sortBy?: ISortBy;
   variant?: TableVariant;
+  verticalAlign?: string;
 }
 
 export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps) => {
+  const tdStyle = kialiStyle({
+    verticalAlign: props.verticalAlign ?? 'baseline'
+  });
+
   const getSortParams = (column: SortableTh | ThProps, index: number): ThProps['sort'] | undefined => {
     let thSort: ThProps['sort'] | undefined;
 
@@ -56,7 +62,7 @@ export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps)
 
       if (actionItems.length > 0) {
         return (
-          <Td isActionCell>
+          <Td className={tdStyle} isActionCell>
             <ActionsColumn items={actionItems} />
           </Td>
         );
@@ -89,7 +95,7 @@ export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps)
           props.rows.map((row, rowIndex) => (
             <Tr key={row.key ?? `row_${rowIndex}`} className={row.className}>
               {row.cells?.map((cell: React.ReactNode, colIndex: number) => (
-                <Td key={`cell_${rowIndex}_${colIndex}`} dataLabel={props.columns[colIndex].title}>
+                <Td key={`cell_${rowIndex}_${colIndex}`} dataLabel={props.columns[colIndex].title} className={tdStyle}>
                   {cell}
                 </Td>
               ))}

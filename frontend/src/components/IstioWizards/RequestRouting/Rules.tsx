@@ -197,14 +197,18 @@ export const Rules: React.FC<RulesProps> = (props: RulesProps) => {
 
   return (
     <>
-      Route Rules
-      {wizardTooltip(ROUTE_RULES_TOOLTIP)}
+      <div>
+        <span>Route Rules</span>
+        {wizardTooltip(ROUTE_RULES_TOOLTIP)}
+      </div>
+
       <SimpleTable
         label="Rules Created"
         columns={columns}
         rows={routeRules}
         actionResolver={actionResolver}
         emptyState={noRules}
+        verticalAlign="middle"
       />
     </>
   );

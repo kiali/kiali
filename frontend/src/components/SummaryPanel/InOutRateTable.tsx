@@ -20,8 +20,8 @@ type InOutRateTableGrpcPropType = {
 
 export const InOutRateTableGrpc: React.FC<InOutRateTableGrpcPropType> = (props: InOutRateTableGrpcPropType) => {
   // for the table and graph
-  const inErrRate = props.inRateGrpcErr + props.inRateNR;
-  const outErrRate = props.outRateGrpcErr + props.outRateNR;
+  const inErrRate: number = props.inRateGrpcErr + props.inRateNR;
+  const outErrRate: number = props.outRateGrpcErr + props.outRateNR;
   const percentErrIn: number = props.inRate === 0 ? 0 : (inErrRate / props.inRate) * 100;
   const percentErrOut: number = props.outRate === 0 ? 0 : (outErrRate / props.outRate) * 100;
   const percentOkIn: number = 100 - percentErrIn;

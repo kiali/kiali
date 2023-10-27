@@ -150,7 +150,7 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
       <RenderContent>
         <div className={containerStyle}>
           <SimpleTable
-            label="Sortable Table"
+            label="Mesh Clusters"
             columns={columns}
             rows={clusterRows}
             sortBy={sortBy}

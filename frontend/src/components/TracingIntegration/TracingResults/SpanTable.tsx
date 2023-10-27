@@ -159,7 +159,7 @@ class SpanTableComponent extends React.Component<Props, State> {
 
     return (
       <SimpleTable
-        label="list_spans"
+        label="Span List"
         className={tableStyle}
         columns={columns}
         rows={this.rows()}

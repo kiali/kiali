@@ -141,7 +141,7 @@ export class K8sTrafficShifting extends React.Component<Props, State> {
 
     return (
       <>
-        <SimpleTable label="weighted routing" columns={columns} rows={rows} />
+        <SimpleTable label="Weighted Routing" columns={columns} rows={rows} verticalAlign="middle" />
 
         {this.props.subServices.length > 1 && (
           <div className={evenlyButtonStyle}>

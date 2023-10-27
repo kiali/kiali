@@ -16,7 +16,6 @@ import { IRow, ThProps } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../components/Pf/PfColors';
 import { isValid } from 'utils/Common';
-
 import { KialiIcon } from 'config/KialiIcon';
 import { SimpleTable } from 'components/SimpleTable';
 
@@ -275,6 +274,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
                 this.state.addNewPortMtls.port.length > 0 && !isNaN(Number(this.state.addNewPortMtls.port))
               )}
             />,
+
             <FormSelect
               value={this.state.addNewPortMtls.mtls}
               id="addPortMtlsMode"
@@ -285,6 +285,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
                 <FormSelectOption key={`p_${index}`} value={option} label={option} />
               ))}
             </FormSelect>,
+
             <Button
               id="addPortMtlsBtn"
               variant={ButtonVariant.link}

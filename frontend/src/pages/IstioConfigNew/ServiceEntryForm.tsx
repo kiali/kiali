@@ -62,6 +62,11 @@ const noPortsStyle = kialiStyle({
   color: PFColors.Red100
 });
 
+const addPortsStyle = kialiStyle({
+  marginLeft: '0.5rem',
+  marginTop: '0.25rem'
+});
+
 type Props = {
   onChange: (serviceEntry: ServiceEntryState) => void;
   serviceEntry: ServiceEntryState;
@@ -324,77 +329,57 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
   };
 
   rows = (): IRow[] => {
-    return (this.state.formPorts ?? [])
-      .map((p, i) => ({
-        key: `portNew_${i}`,
-        cells: [
-          <TextInput
-            value={p.number}
-            id={`addPortNumber_${i}`}
-            aria-describedby="add port number"
-            name={i.toString()}
-            placeholder="80"
-            onChange={this.onAddPortNumber}
-            validated={isValid(isValidPortNumber(p.number))}
-          />,
+    return (this.state.formPorts ?? []).map((p, i) => ({
+      key: `portNew_${i}`,
+      cells: [
+        <TextInput
+          value={p.number}
+          id={`addPortNumber_${i}`}
+          aria-describedby="add port number"
+          name={i.toString()}
+          placeholder="80"
+          onChange={this.onAddPortNumber}
+          validated={isValid(isValidPortNumber(p.number))}
+        />,
 
-          <TextInput
-            value={p.name}
-            id={`addPortName_${i}`}
-            aria-describedby="add port name"
-            name={i.toString()}
-            onChange={this.onAddPortName}
-            validated={isValid(isValidName(p.name) && noDuplicatePortNames(p.name, i, this.state.formPorts))}
-          />,
+        <TextInput
+          value={p.name}
+          id={`addPortName_${i}`}
+          aria-describedby="add port name"
+          name={i.toString()}
+          onChange={this.onAddPortName}
+          validated={isValid(isValidName(p.name) && noDuplicatePortNames(p.name, i, this.state.formPorts))}
+        />,
 
-          <FormSelect
-            value={p.protocol}
-            id={`addPortProtocol_${i}`}
-            name={i.toString()}
-            onChange={this.onAddPortProtocol}
-          >
-            {protocols.map((option, index) => (
-              <FormSelectOption key={`p_${index}`} value={option} label={option} />
-            ))}
-          </FormSelect>,
+        <FormSelect
+          value={p.protocol}
+          id={`addPortProtocol_${i}`}
+          name={i.toString()}
+          onChange={this.onAddPortProtocol}
+        >
+          {protocols.map((option, index) => (
+            <FormSelectOption key={`p_${index}`} value={option} label={option} />
+          ))}
+        </FormSelect>,
 
-          <TextInput
-            value={p.targetPort}
-            id={`addTargetPort_${i}`}
-            aria-describedby="add target port"
-            name={i.toString()}
-            onChange={this.onAddTargetPort}
-            validated={isValid(isValidTargetPort(p.targetPort))}
-          />,
+        <TextInput
+          value={p.targetPort}
+          id={`addTargetPort_${i}`}
+          aria-describedby="add target port"
+          name={i.toString()}
+          onChange={this.onAddTargetPort}
+          validated={isValid(isValidTargetPort(p.targetPort))}
+        />,
 
-          <Button
-            id={`deleteBtn_${i}`}
-            variant={ButtonVariant.link}
-            icon={<KialiIcon.Trash />}
-            style={{ padding: 0 }}
-            onClick={e => this.handleDelete(e, i)}
-          />
-        ]
-      }))
-      .concat([
-        {
-          key: 'portNew',
-          cells: [
-            <>
-              <Button
-                id="addServerBtn"
-                variant={ButtonVariant.link}
-                icon={<KialiIcon.AddMore />}
-                style={{ padding: 0 }}
-                onClick={this.onAddNewPort}
-              >
-                {' '}
-                Add Port
-              </Button>
-            </>
-          ]
-        }
-      ]);
+        <Button
+          id={`deleteBtn_${i}`}
+          variant={ButtonVariant.link}
+          icon={<KialiIcon.Trash />}
+          style={{ padding: 0 }}
+          onClick={e => this.handleDelete(e, i)}
+        />
+      ]
+    }));
   };
 
   render() {
@@ -438,6 +423,16 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
 
         <FormGroup label="Ports" fieldId="ports" isRequired={true}>
           <SimpleTable label="Ports" columns={columns} rows={this.rows()} />
+
+          <Button
+            id="addPortBtn"
+            variant={ButtonVariant.link}
+            icon={<KialiIcon.AddMore />}
+            className={addPortsStyle}
+            onClick={this.onAddNewPort}
+          >
+            Add Port
+          </Button>
 
           {(!this.state.serviceEntry.ports || this.state.serviceEntry.ports.length === 0) && (
             <div className={noPortsStyle}>ServiceEntry has no Ports defined</div>

@@ -17,19 +17,19 @@ type Props = {
 
 // Gateway and Sidecar states are consolidated in the parent page
 export type K8sGatewayState = {
+  addresses: Address[];
   gatewayClass: string;
   listeners: Listener[];
-  addresses: Address[];
-  validHosts: boolean;
   listenersForm: ListenerForm[];
+  validHosts: boolean;
 };
 
 export const initK8sGateway = (): K8sGatewayState => ({
+  addresses: [],
   gatewayClass: serverConfig.gatewayAPIClasses[0].className,
   listeners: [],
-  addresses: [],
-  validHosts: false,
-  listenersForm: []
+  listenersForm: [],
+  validHosts: false
 });
 
 export const isK8sGatewayStateValid = (g: K8sGatewayState): boolean => {
@@ -39,18 +39,18 @@ export const isK8sGatewayStateValid = (g: K8sGatewayState): boolean => {
 };
 
 export type ListenerForm = {
-  isHostValid: boolean;
-  hostname: string;
-  port: string;
-  name: string;
-  protocol: string;
   from: string;
+  hostname: string;
+  isHostValid: boolean;
   isLabelSelectorValid: boolean;
+  name: string;
+  port: string;
+  protocol: string;
   sSelectorLabels: string;
 };
 
-const validListeners = (listeners: Listener[]) => {
-  return listeners.every((e, _) => {
+const validListeners = (listeners: Listener[]): boolean => {
+  return listeners.every((e: Listener) => {
     return (
       isValidName(e.name) &&
       typeof e.port !== 'undefined' &&
@@ -61,8 +61,8 @@ const validListeners = (listeners: Listener[]) => {
   });
 };
 
-const validAddresses = (address: Address[]) => {
-  return address.every((a, _) => {
+const validAddresses = (address: Address[]): boolean => {
+  return address.every((a: Address) => {
     return isValidAddress(a);
   });
 };
@@ -77,15 +77,15 @@ export class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
     this.setState(this.props.k8sGateway);
   }
 
-  onChangeListener = (listeners: Listener[], listenersForm: ListenerForm[]) => {
+  onChangeListener = (listeners: Listener[], listenersForm: ListenerForm[]): void => {
     this.setState({ listeners: listeners, listenersForm: listenersForm }, () => this.props.onChange(this.state));
   };
 
-  onChangeAddress = (addresses: Address[]) => {
+  onChangeAddress = (addresses: Address[]): void => {
     this.setState({ addresses: addresses }, () => this.props.onChange(this.state));
   };
 
-  onChangeGatewayClass = (_event, value) => {
+  onChangeGatewayClass = (_event: React.FormEvent, value: string) => {
     this.setState(
       {
         gatewayClass: value
@@ -111,6 +111,7 @@ export class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
             </FormSelect>
           </FormGroup>
         )}
+
         <FormGroup label="Listeners" fieldId="listener" isRequired={true}>
           <ListenerList
             onChange={this.onChangeListener}
@@ -118,6 +119,7 @@ export class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
             listeners={this.state.listeners}
           />
         </FormGroup>
+
         <FormGroup label="Addresses" fieldId="gwAddressList">
           <AddressList onChange={this.onChangeAddress} addressList={this.state.addresses} />
         </FormGroup>

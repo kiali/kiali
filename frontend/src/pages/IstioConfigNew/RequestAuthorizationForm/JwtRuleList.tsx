@@ -24,10 +24,8 @@ const columns: ThProps[] = [
 ];
 
 const noJWTRulesStyle = kialiStyle({
-  marginTop: 10,
   color: PFColors.Red100,
-  textAlign: 'center',
-  width: '100%'
+  textAlign: 'center'
 });
 
 export const JwtRuleList: React.FC<JwtRuleListProps> = (props: JwtRuleListProps) => {

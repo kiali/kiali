@@ -42,7 +42,7 @@ const prefaceStyle = kialiStyle({
 });
 
 export const GraphHelpFind: React.FC<GraphHelpFindProps> = (props: GraphHelpFindProps) => {
-  // Incrementing mock counter to force a re-render in hooks
+  // Incrementing mock counter to force a re-render in React hooks
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
   const onResize = () => {

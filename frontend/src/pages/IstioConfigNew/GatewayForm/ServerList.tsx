@@ -14,7 +14,6 @@ type ServerListProps = {
 };
 
 const noServerStyle = kialiStyle({
-  marginTop: '0.25rem',
   color: PFColors.Red100,
   textAlign: 'center'
 });
@@ -30,7 +29,7 @@ const columns: ThProps[] = [
 
 const addServerStyle = kialiStyle({
   marginLeft: '0.5rem',
-  marginTop: '0.5rem'
+  marginTop: '0.25rem'
 });
 
 export const ServerList: React.FC<ServerListProps> = (props: ServerListProps) => {

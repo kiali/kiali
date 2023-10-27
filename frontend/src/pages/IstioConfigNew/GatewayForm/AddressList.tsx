@@ -13,14 +13,13 @@ type AddressListProps = {
 };
 
 const noAddressStyle = kialiStyle({
-  marginTop: '0.25rem',
   color: PFColors.Red100,
   textAlign: 'center'
 });
 
 const addAddressStyle = kialiStyle({
   marginLeft: '0.5rem',
-  marginTop: '0.5rem'
+  marginTop: '0.25rem'
 });
 
 const columns: ThProps[] = [

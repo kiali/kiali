@@ -36,7 +36,6 @@ const rulesStyle = kialiStyle({
 });
 
 const noRulesStyle = kialiStyle({
-  marginTop: '0.25rem',
   color: PFColors.Red100,
   textAlign: 'center'
 });

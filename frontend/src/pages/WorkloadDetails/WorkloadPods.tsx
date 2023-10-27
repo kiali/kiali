@@ -150,7 +150,7 @@ export const WorkloadPods: React.FC<WorkloadPodsProps> = (props: WorkloadPodsPro
 
       <CardBody>
         <SimpleTable
-          label="list_workloads_pods"
+          label="Workload Pod List"
           columns={columns}
           rows={rows}
           variant={TableVariant.compact}

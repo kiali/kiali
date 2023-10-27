@@ -22,7 +22,6 @@ const columns: ThProps[] = [
 ];
 
 const noOperationsStyle = kialiStyle({
-  marginTop: '0.25rem',
   color: PFColors.Red100,
   textAlign: 'center'
 });

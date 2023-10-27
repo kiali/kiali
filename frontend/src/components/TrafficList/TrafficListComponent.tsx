@@ -88,14 +88,17 @@ const columns = (isMultiCluster: boolean): SortableTh[] => {
   return cols;
 };
 
-const LockIcon = (props: { mTLS: number | undefined }) => {
+const LockIcon = (props: { mTLS?: number }): React.ReactElement => {
   const msg = props.mTLS ? `${props.mTLS} % of mTLS traffic` : 'mTLS is disabled';
 
   return (
     <Tooltip position={TooltipPosition.top} content={msg}>
       <>
-        {props.mTLS && <KialiIcon.MtlsLock className={lockIconStyle} />}
-        {!props.mTLS && <KialiIcon.MtlsUnlock className={lockIconStyle} />}
+        {props.mTLS ? (
+          <KialiIcon.MtlsLock className={lockIconStyle} />
+        ) : (
+          <KialiIcon.MtlsUnlock className={lockIconStyle} />
+        )}
       </>
     </Tooltip>
   );
@@ -154,7 +157,7 @@ class TrafficList extends FilterComponent.Component<
 
           {hasInbound && (
             <SimpleTable
-              label="Sortable Table"
+              label="Inbound Traffic List"
               columns={cols}
               rows={inboundRows}
               sortBy={sortBy}
@@ -170,7 +173,7 @@ class TrafficList extends FilterComponent.Component<
 
           {hasOutbound && (
             <SimpleTable
-              label="Sortable Table"
+              label="Outbound Traffic List"
               columns={cols}
               rows={outboundRows}
               sortBy={sortBy}
@@ -183,7 +186,7 @@ class TrafficList extends FilterComponent.Component<
   }
 
   // abstract FilterComponent.updateListItems
-  updateListItems() {
+  updateListItems(): void {
     // we don't react to filter changes in this class, so this is a no-op
   }
 
@@ -208,7 +211,7 @@ class TrafficList extends FilterComponent.Component<
     }
   };
 
-  trafficToListItems(trafficItems: TrafficItem[]) {
+  trafficToListItems(trafficItems: TrafficItem[]): TrafficListItem[] {
     const listItems = trafficItems.map(ti => {
       let badge: PFBadgeType;
 
@@ -227,7 +230,7 @@ class TrafficList extends FilterComponent.Component<
         direction: ti.direction,
         badge: badge,
         node: ti.node,
-        protocol: (ti.traffic.protocol || 'N/A').toUpperCase(),
+        protocol: (ti.traffic.protocol ?? 'N/A').toUpperCase(),
         mTLS: ti.mTLS,
         healthStatus: this.getHealthStatus(ti),
         cluster: ti.node.cluster,
@@ -259,11 +262,11 @@ class TrafficList extends FilterComponent.Component<
       switch (traffic.protocol) {
         case 'http':
           rps = traffic.rates.http;
-          percentError = traffic.rates.httpPercentErr || '0';
+          percentError = traffic.rates.httpPercentErr ?? '0';
           break;
         case 'grpc':
           rps = traffic.rates.grpc;
-          percentError = traffic.rates.grpcPercentErr || '0';
+          percentError = traffic.rates.grpcPercentErr ?? '0';
           break;
         case 'tcp':
           rps = traffic.rates.tcp;
@@ -302,7 +305,7 @@ class TrafficList extends FilterComponent.Component<
                 parentKiosk ? (
                   <Link
                     key={`link_d_${item.badge}_${name}`}
-                    to={''}
+                    to=""
                     onClick={() => {
                       kioskContextMenuAction(links.detail);
                     }}
@@ -329,7 +332,7 @@ class TrafficList extends FilterComponent.Component<
                 (parentKiosk ? (
                   <Link
                     key={`link_m_${item.badge}_${name}`}
-                    to={''}
+                    to=""
                     onClick={() => {
                       kioskContextMenuAction(links.metrics);
                     }}

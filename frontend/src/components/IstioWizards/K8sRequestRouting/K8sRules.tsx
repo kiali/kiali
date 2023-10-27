@@ -159,14 +159,18 @@ export const K8sRules: React.FC<K8sRuleProps> = (props: K8sRuleProps) => {
 
   return (
     <>
-      Route K8sRules
-      {wizardTooltip(ROUTE_RULES_TOOLTIP)}
+      <div>
+        <span>Route K8sRules</span>
+        {wizardTooltip(ROUTE_RULES_TOOLTIP)}
+      </div>
+
       <SimpleTable
         label="K8sRules Created"
         columns={columns}
         rows={routeRules}
         actionResolver={actionResolver}
         emptyState={noK8sRules}
+        verticalAlign="middle"
       />
     </>
   );
