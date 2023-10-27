@@ -125,7 +125,7 @@ Then('user sees the {string} table with {int} rows', (tableName: string, numRows
 
   switch (tableName) {
     case 'Istio Config':
-      tableId = 'list_istio_config';
+      tableId = 'Istio Config List';
       break;
   }
 
@@ -142,7 +142,7 @@ Then('user sees the {string} table with empty message', (tableName: string) => {
 
   switch (tableName) {
     case 'Istio Config':
-      tableId = 'list_istio_config';
+      tableId = 'Istio Config List';
       break;
   }
 
@@ -156,7 +156,7 @@ When('user clicks in the {string} table {string} badge {string} name row link', 
 
   switch (tableName) {
     case 'Istio Config':
-      tableId = 'list_istio_config';
+      tableId = 'Istio Config List';
       break;
   }
 
