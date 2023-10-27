@@ -373,6 +373,11 @@ endif
 
 ## run-operator: Runs the Kiali Operator via the ansible-operator locally.
 run-operator: get-ansible-operator crd-create .wait-for-kiali-crd .wait-for-ossmconsole-crd
+ifeq ($(CLUSTER_TYPE),openshift)
+	@$(eval WATCHES_FILE ?= watches-os.yaml)
+else
+	@$(eval WATCHES_FILE ?= watches-k8s.yaml)
+endif
 	@# Make sure we have the collections we need
 	ansible-galaxy collection install -r ${OPERATOR_DIR}/requirements.yml --force-with-deps
 	@# Run the operator directly
@@ -391,4 +396,4 @@ run-operator: get-ansible-operator crd-create .wait-for-kiali-crd .wait-for-ossm
 	POD_NAMESPACE="does-not-exist" \
 	WATCH_NAMESPACE="" \
 	PATH="${PATH}:${OUTDIR}/ansible-operator-install" \
-	ansible-operator run --zap-log-level=debug --leader-election-id=kiali-operator
+	ansible-operator run --zap-log-level=debug --leader-election-id=kiali-operator --watches-file=${WATCHES_FILE}
