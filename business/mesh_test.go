@@ -628,6 +628,34 @@ trustDomain: cluster.local
 	require.Len(mesh.ControlPlanes[0].ManagedClusters, 1)
 }
 
+// Ensure that fetching the configmap configuration won't produce failures due to regression: https://github.com/kiali/kiali/issues/6669
+func TestGetMeshSucceedsEvenWhenFetchingIstioConfigFails(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	kubernetes.SetConfig(t, *conf)
+
+	istiodDeployment := &apps_v1.Deployment{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "istiod",
+			Namespace: "istio-system",
+			Labels:    map[string]string{"app": "istiod"},
+		},
+	}
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		istiodDeployment,
+	)
+
+	business.SetupBusinessLayer(t, k8s, *conf)
+
+	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+	svc := business.NewWithBackends(clients, clients, nil, nil).Mesh
+	mesh, err := svc.GetMesh(context.TODO())
+	require.NoError(err)
+	require.Len(mesh.ControlPlanes, 1)
+	require.Len(mesh.ControlPlanes[0].ManagedClusters, 1)
+}
+
 func TestGetMeshMultipleRevisions(t *testing.T) {
 	istiod_1_18_Deployment := &apps_v1.Deployment{
 		ObjectMeta: v1.ObjectMeta{
@@ -703,18 +731,6 @@ trustDomain: cluster.local
 	})
 	require.True(*controlPlane_1_19.Config.EnableAutoMtls)
 	require.Len(controlPlane_1_19.ManagedClusters, 1)
-
-	// Test for setting the configmap name explicitly due to regression: https://github.com/kiali/kiali/issues/6669
-	conf.ExternalServices.Istio.ConfigMapName = istio_1_19_ConfigMap.Name
-	config.Set(conf)
-	svc = business.NewWithBackends(clients, clients, nil, nil).Mesh
-	mesh, err = svc.GetMesh(context.TODO())
-	require.NoError(err)
-
-	require.Len(mesh.ControlPlanes, 2)
-	// Both controlplanes should set this to true since both will use the 1.19 configmap.
-	require.True(*mesh.ControlPlanes[0].Config.EnableAutoMtls)
-	require.True(*mesh.ControlPlanes[1].Config.EnableAutoMtls)
 }
 
 func TestGetMeshRemoteClusters(t *testing.T) {
@@ -1043,75 +1059,4 @@ func fakeIstiodDeployment(cluster string, manageExternal bool) *apps_v1.Deployme
 		})
 	}
 	return deployment
-}
-
-func TestIstioConfigMapName(t *testing.T) {
-	testCases := map[string]struct {
-		conf     config.Config
-		revision string
-		expected string
-	}{
-		"ConfigMapName is empty and revision is default": {
-			conf: config.Config{
-				ExternalServices: config.ExternalServices{
-					Istio: config.IstioConfig{
-						ConfigMapName: "",
-					},
-				},
-			},
-			revision: "default",
-			expected: "istio",
-		},
-		"ConfigMapName is empty and revision is v1": {
-			conf: config.Config{
-				ExternalServices: config.ExternalServices{
-					Istio: config.IstioConfig{
-						ConfigMapName: "",
-					},
-				},
-			},
-			revision: "v1",
-			expected: "istio-v1",
-		},
-		"ConfigMapName is set and revision is default": {
-			conf: config.Config{
-				ExternalServices: config.ExternalServices{
-					Istio: config.IstioConfig{
-						ConfigMapName: "my-istio-config",
-					},
-				},
-			},
-			revision: "default",
-			expected: "my-istio-config",
-		},
-		"ConfigMapName is set and revision is v2": {
-			conf: config.Config{
-				ExternalServices: config.ExternalServices{
-					Istio: config.IstioConfig{
-						ConfigMapName: "my-istio-config",
-					},
-				},
-			},
-			revision: "v2",
-			expected: "my-istio-config",
-		},
-		"ConfigMapName is set and revision is empty": {
-			conf: config.Config{
-				ExternalServices: config.ExternalServices{
-					Istio: config.IstioConfig{
-						ConfigMapName: "my-istio-config",
-					},
-				},
-			},
-			revision: "",
-			expected: "my-istio-config",
-		},
-	}
-
-	for desc, tc := range testCases {
-		t.Run(desc, func(t *testing.T) {
-			result := business.IstioConfigMapName(tc.conf, tc.revision)
-			assert.Equal(t, tc.expected, result)
-		})
-	}
 }

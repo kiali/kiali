@@ -114,6 +114,8 @@ func (in *MeshService) IsRemoteCluster(cluster string) (bool, error) {
 
 // GetMesh gathers information about the mesh and controlplanes running in the mesh
 // from various sources e.g. istio configmap, istiod deployment envvars, etc.
+// Don't rely on the controlplane configuration being set. This should still
+// come directly from the istio configmap for the time being.
 func (in *MeshService) GetMesh(ctx context.Context) (*Mesh, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetMesh",
@@ -155,20 +157,24 @@ func (in *MeshService) GetMesh(ctx context.Context) (*Mesh, error) {
 					Revision: istiod.Labels[IstioRevisionLabel],
 				}
 
-				configMapName := IstioConfigMapName(in.conf, controlPlane.Revision)
-
+				// Note that nothing is currently using this controlplane configuration so no error is being returned.
+				// TODO: When this configuration is used, auto-detection of the configmap should probably go behind
+				// a feature flag or another config option to avoid breaking existing users.
+				configMapName := guessIstioConfigMapName(controlPlane.Revision)
 				controlPlaneConfig, err := getControlPlaneConfiguration(kubeCache, istiod.Namespace, configMapName)
 				if err != nil {
-					return nil, err
-				}
-				controlPlane.Config = *controlPlaneConfig
+					log.Debugf("Unable to get controlplane config from the istio configmap for controlplane [%s/%s] on cluster [%s]: %s",
+						istiod.Name, istiod.Namespace, cluster.Name, err)
+				} else {
+					controlPlane.Config = *controlPlaneConfig
 
-				// Kiali only supports a single mesh. All controlplanes should share the same mesh id.
-				// Otherwise this is an error.
-				if mesh.ID == nil {
-					mesh.ID = &controlPlane.Config.DefaultConfig.MeshId
-				} else if *mesh.ID != controlPlane.Config.DefaultConfig.MeshId {
-					return nil, fmt.Errorf("multiple mesh ids found: [%s] and [%s]", *mesh.ID, controlPlane.Config.DefaultConfig.MeshId)
+					// Kiali only supports a single mesh. All controlplanes should share the same mesh id.
+					// Otherwise this is an error.
+					if mesh.ID == nil {
+						mesh.ID = &controlPlane.Config.DefaultConfig.MeshId
+					} else if *mesh.ID != controlPlane.Config.DefaultConfig.MeshId {
+						return nil, fmt.Errorf("multiple mesh ids found: [%s] and [%s]", *mesh.ID, controlPlane.Config.DefaultConfig.MeshId)
+					}
 				}
 
 				if containers := istiod.Spec.Template.Spec.Containers; len(containers) > 0 {
@@ -223,16 +229,8 @@ func (in *MeshService) GetMesh(ctx context.Context) (*Mesh, error) {
 	return mesh, nil
 }
 
-// IstioConfigMapName guesses the istio configmap name.
-func IstioConfigMapName(conf config.Config, revision string) string {
-	// If the config map name is explicitly set and it's not the default value, we should always use that.
-	// Note that this means that the revision is ignored and every controlplane
-	// will use this configmap regardless of which configmap actually corresponds
-	// to the revision.
-	if conf.ExternalServices.Istio.ConfigMapName != "" && conf.ExternalServices.Istio.ConfigMapName != "istio" {
-		return conf.ExternalServices.Istio.ConfigMapName
-	}
-
+// guessIstioConfigMapName guesses the istio configmap name.
+func guessIstioConfigMapName(revision string) string {
 	// If the revision is set, we should use the revisioned configmap name
 	// otherwise the hardcoded 'istio' value is used.
 	configMapName := "istio" // As of 1.19 this is hardcoded in the helm charts.
@@ -485,7 +483,7 @@ func (in *MeshService) resolveNetwork(clusterName string) string {
 
 func (in *MeshService) OutboundTrafficPolicy() (*models.OutboundPolicy, error) {
 	otp := models.OutboundPolicy{Mode: "ALLOW_ANY"}
-	istioConfig, err := in.kialiCache.GetConfigMap(in.conf.IstioNamespace, IstioConfigMapName(in.conf, ""))
+	istioConfig, err := in.kialiCache.GetConfigMap(in.conf.IstioNamespace, in.conf.ExternalServices.Istio.ConfigMapName)
 	if err != nil {
 		return nil, err
 	}
