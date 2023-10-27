@@ -20,6 +20,7 @@ Options:
     Default: docker
 -iv|--istio-version <#.#.#>
     The version of Istio you want to install.
+    If you want to run with a dev build of Istio, the value must be something like "#.#-dev".
     This option is ignored if -ii is false.
     If not specified, the latest version of Istio is installed.
     Default: <the latest release>
@@ -57,8 +58,10 @@ TARGET_BRANCH="${TARGET_BRANCH:-master}"
 # based on the Kiali branch being tested (TARGET_BRANCH) and the compatibility matrices:
 # https://kiali.io/docs/installation/installation-guide/prerequisites/
 # https://istio.io/latest/docs/releases/supported-releases/
-if [ "${TARGET_BRANCH}" == "v1.48" ]; then
-  ISTIO_VERSION="1.13.0"
+if [ -z "${ISTIO_VERSION}" ]; then
+  if [ "${TARGET_BRANCH}" == "v1.48" ]; then
+    ISTIO_VERSION="1.13.0"
+  fi
 fi
 
 KIND_NODE_IMAGE=""
@@ -89,18 +92,25 @@ HELM_CHARTS_DIR="$(mktemp -d)"
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 
 if [ -n "${ISTIO_VERSION}" ]; then
-  DOWNLOAD_ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
+  if [[ "${ISTIO_VERSION}" == *-dev ]]; then
+    DOWNLOAD_ISTIO_VERSION_ARG="--dev-istio-version ${ISTIO_VERSION}"
+  else
+    DOWNLOAD_ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
+  fi
 fi
 
 infomsg "Downloading istio"
-hack/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
+"${SCRIPT_DIR}"/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
 
 setup_kind_singlecluster() {
-  "${SCRIPT_DIR}"/start-kind.sh --name ci --image "${KIND_NODE_IMAGE}" 
+  "${SCRIPT_DIR}"/start-kind.sh --name ci --image "${KIND_NODE_IMAGE}"
 
   infomsg "Installing istio"
+  if [[ "${ISTIO_VERSION}" == *-dev ]]; then
+    local hub_arg="--image-hub default"
+  fi
   # Apparently you can't set the requests to zero for the proxy so just setting them to some really low number.
-  hack/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true"
+  "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true" ${hub_arg:-}
 
   infomsg "Pushing the images into the cluster..."
   make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
@@ -168,22 +178,33 @@ EOF
 
 setup_kind_multicluster() {
   if [ -n "${ISTIO_VERSION}" ]; then
-    DOWNLOAD_ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
+    if [[ "${ISTIO_VERSION}" == *-dev ]]; then
+      DOWNLOAD_ISTIO_VERSION_ARG="--dev-istio-version ${ISTIO_VERSION}"
+    else
+      DOWNLOAD_ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
+    fi
   fi
 
   infomsg "Downloading istio"
-  hack/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
+  "${SCRIPT_DIR}"/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
+
+  infomsg "Cloning kiali helm-charts..."
+  git clone --single-branch --branch "${TARGET_BRANCH}" https://github.com/kiali/helm-charts.git "${HELM_CHARTS_DIR}"
+  make -C "${HELM_CHARTS_DIR}" build-helm-charts
 
   infomsg "Kind cluster to be created with name [ci]"
-  local script_dir 
+  local script_dir
   script_dir="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
   local output_dir
   output_dir="${script_dir}/../_output"
   # use the Istio release that was last downloaded (that's the -t option to ls)
   local istio_dir
   istio_dir=$(ls -dt1 ${output_dir}/istio-* | head -n1)
-  hack/istio/multicluster/install-primary-remote.sh --manage-kind true -dorp docker --istio-dir "${istio_dir}"
-  hack/istio/multicluster/deploy-kiali.sh --manage-kind true -dorp docker -kas anonymous
+  if [[ "${ISTIO_VERSION}" == *-dev ]]; then
+    local hub_arg="--istio-hub default"
+  fi
+  "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --manage-kind true -dorp docker --istio-dir "${istio_dir}" ${hub_arg:-}
+  "${SCRIPT_DIR}"/istio/multicluster/deploy-kiali.sh --manage-kind true -dorp docker -kas anonymous -kudi true -kshc "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
 }
 
 if [ "${MULTICLUSTER}" == "true" ]; then
