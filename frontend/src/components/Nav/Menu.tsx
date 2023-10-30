@@ -8,6 +8,8 @@ import { history } from '../../app/History';
 import { navMenuItems } from '../../routes';
 import { homeCluster, serverConfig } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
+import { GetTracingURL } from '../TracingIntegration/TracesComponent';
+import { ExternalServiceInfo } from '../../types/StatusState';
 
 const externalLinkStyle = kialiStyle({
   $nest: {
@@ -33,7 +35,7 @@ const ExternalLink = ({ href, name }) => (
 type MenuProps = {
   isNavOpen: boolean;
   location: any;
-  tracingUrl?: string;
+  externalServices: ExternalServiceInfo[];
 };
 
 type MenuState = {
@@ -74,6 +76,8 @@ export class Menu extends React.Component<MenuProps, MenuState> {
       return isRoute;
     });
 
+    const tracingUrl = GetTracingURL(this.props.externalServices);
+
     return allNavMenuItems
       .filter(item => {
         if (item.title === 'Mesh') {
@@ -89,11 +93,7 @@ export class Menu extends React.Component<MenuProps, MenuState> {
       })
       .map(item => {
         if (item.title === 'Distributed Tracing') {
-          return (
-            this.props.tracingUrl && (
-              <ExternalLink key={item.to} href={this.props.tracingUrl} name="Distributed Tracing" />
-            )
-          );
+          return tracingUrl && <ExternalLink key={item.to} href={tracingUrl} name="Distributed Tracing" />;
         }
 
         let title = item.title;

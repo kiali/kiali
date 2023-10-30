@@ -25,11 +25,13 @@ import { KialiAppState } from '../../store/Store';
 import { UserSettingsThunkActions } from '../../actions/UserSettingsThunkActions';
 import { Menu } from './Menu';
 import { Link } from 'react-router-dom';
+import { ExternalServiceInfo } from '../../types/StatusState';
 
 type PropsType = RouteComponentProps & {
   navCollapsed: boolean;
   setNavCollapsed: (collapse: boolean) => void;
   tracingUrl?: string;
+  externalServices: ExternalServiceInfo[];
 };
 
 type NavigationState = {
@@ -130,7 +132,9 @@ export class NavigationComponent extends React.Component<PropsType, NavigationSt
       </Masthead>
     );
 
-    const menu = <Menu isNavOpen={isNavOpen} location={this.props.location} tracingUrl={this.props.tracingUrl} />;
+    const menu = (
+      <Menu isNavOpen={isNavOpen} location={this.props.location} externalServices={this.props.externalServices} />
+    );
 
     const Sidebar = (
       <PageSidebar style={{ width: '210px' }} isSidebarOpen={isNavOpen}>
@@ -155,7 +159,8 @@ export class NavigationComponent extends React.Component<PropsType, NavigationSt
 
 const mapStateToProps = (state: KialiAppState) => ({
   navCollapsed: state.userSettings.interface.navCollapse,
-  tracingUrl: state.tracingState.info && state.tracingState.info.url ? state.tracingState.info.url : undefined
+  tracingUrl: state.tracingState.info && state.tracingState.info.url ? state.tracingState.info.url : undefined,
+  externalServices: state.statusState.externalServices
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
