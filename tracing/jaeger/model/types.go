@@ -17,6 +17,7 @@ type TracingServices struct {
 type TracingResponse struct {
 	Data               []jaegerModels.Trace `json:"data"`
 	Errors             []structuredError    `json:"errors"`
+	FromAllClusters    bool                 `json:"fromAllClusters"`
 	TracingServiceName string               `json:"tracingServiceName"`
 }
 

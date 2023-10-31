@@ -15,6 +15,7 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model"
+	"github.com/kiali/kiali/util"
 )
 
 type JaegerHTTPClient struct {
@@ -31,6 +32,7 @@ func (jc JaegerHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL
 		// query without cluster tag, warn user that tracing is not configured to use cluster tags
 		prepareQuery(&url, jaegerServiceName, q, false)
 		r, err = queryTracesHTTP(client, &url)
+		r.FromAllClusters = true
 	}
 
 	if r != nil {
@@ -103,7 +105,7 @@ func prepareQuery(u *url.URL, jaegerServiceName string, query models.TracingQuer
 	q.Set("service", jaegerServiceName)
 	q.Set("start", fmt.Sprintf("%d", query.Start.Unix()*time.Second.Microseconds()))
 	q.Set("end", fmt.Sprintf("%d", query.End.Unix()*time.Second.Microseconds()))
-	var tags = query.Tags
+	var tags = util.CopyStringMap(query.Tags)
 
 	if useCluster && query.Cluster != "" {
 		tags["cluster"] = query.Cluster

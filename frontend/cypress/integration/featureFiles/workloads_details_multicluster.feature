@@ -37,6 +37,7 @@ Feature: Kiali Workload Details page
 
   Scenario: See workload span info after selecting a span
     And user sees trace information
+    And user sees tracing warning
     When user selects a trace
     And user sees span details
     And user can filter spans by workload

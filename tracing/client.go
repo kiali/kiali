@@ -25,6 +25,7 @@ import (
 	jsonConv "github.com/kiali/kiali/tracing/jaeger/model/converter/json"
 	jsonModel "github.com/kiali/kiali/tracing/jaeger/model/json"
 	"github.com/kiali/kiali/tracing/tempo"
+	"github.com/kiali/kiali/util"
 	"github.com/kiali/kiali/util/grpcutil"
 	"github.com/kiali/kiali/util/httputil"
 )
@@ -144,6 +145,10 @@ func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*m
 		return in.httpTracingClient.GetAppTracesHTTP(in.httpClient, in.baseURL, namespace, app, q)
 	}
 	jaegerServiceName := jaeger.BuildTracingServiceName(namespace, app)
+	r := model.TracingResponse{
+		Data:               []jsonModel.Trace{},
+		TracingServiceName: jaegerServiceName,
+	}
 	findTracesRQ := model.FindTracesRequest{
 		Query: &model.TraceQueryParameters{
 			ServiceName:  jaegerServiceName,
@@ -157,7 +162,7 @@ func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*m
 	var tracesMap map[model.TraceID]*model.Trace
 	var err error
 	if q.Cluster != "" {
-		var tagsCL = q.Tags
+		var tagsCL = util.CopyStringMap(q.Tags)
 		tagsCL["cluster"] = q.Cluster
 		findTracesRQMC := model.FindTracesRequest{
 			Query: &model.TraceQueryParameters{
@@ -174,6 +179,7 @@ func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*m
 			// show warning to user that cannot query by cluster
 			// query second time without cluster filter
 			tracesMap, err = in.queryTraces(findTracesRQ)
+			r.FromAllClusters = true
 		}
 	} else {
 		tracesMap, err = in.queryTraces(findTracesRQ)
@@ -183,10 +189,6 @@ func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*m
 		return nil, err
 	}
 
-	r := model.TracingResponse{
-		Data:               []jsonModel.Trace{},
-		TracingServiceName: jaegerServiceName,
-	}
 	for _, t := range tracesMap {
 		converted := jsonConv.FromDomain(t)
 		r.Data = append(r.Data, *converted)

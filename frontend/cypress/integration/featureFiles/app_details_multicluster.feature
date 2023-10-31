@@ -35,6 +35,7 @@ Feature: Kiali App Details page for multicluster
 
   Scenario: See tracing info after selecting a trace
     And user sees trace information
+    And user sees tracing warning
     When user selects a trace
     Then user sees trace details
 
