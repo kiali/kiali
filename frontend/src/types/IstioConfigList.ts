@@ -16,117 +16,129 @@ import {
   Validations,
   VirtualService,
   WorkloadEntry,
-  WorkloadGroup
+  WorkloadGroup,
+  IstioObject
 } from './IstioObjects';
 import { ResourcePermissions } from './Permissions';
 
 export interface IstioConfigItem {
-  namespace: string;
+  authorizationPolicy?: AuthorizationPolicy;
   cluster?: string;
-  type: string;
-  name: string;
   creationTimestamp?: string;
-  resourceVersion?: string;
+  destinationRule?: DestinationRule;
+  envoyFilter?: EnvoyFilter;
   gateway?: Gateway;
   k8sGateway?: K8sGateway;
   k8sHTTPRoute?: K8sHTTPRoute;
-  virtualService?: VirtualService;
-  destinationRule?: DestinationRule;
-  serviceEntry?: ServiceEntry;
-  authorizationPolicy?: AuthorizationPolicy;
-  sidecar?: Sidecar;
-  wasmPlugin?: WasmPlugin;
-  telemetry?: Telemetry;
+  name: string;
+  namespace: string;
   peerAuthentication?: PeerAuthentication;
   requestAuthentication?: RequestAuthentication;
+  resourceVersion?: string;
+  serviceEntry?: ServiceEntry;
+  sidecar?: Sidecar;
+  telemetry?: Telemetry;
+  type: string;
+  validation?: ObjectValidation;
+  virtualService?: VirtualService;
+  wasmPlugin?: WasmPlugin;
   workloadEntry?: WorkloadEntry;
   workloadGroup?: WorkloadGroup;
-  envoyFilter?: EnvoyFilter;
-  validation?: ObjectValidation;
+}
+
+export interface IstioConfigList {
+  authorizationPolicies: AuthorizationPolicy[];
+  destinationRules: DestinationRule[];
+  envoyFilters: EnvoyFilter[];
+  gateways: Gateway[];
+  k8sGateways: K8sGateway[];
+  k8sHTTPRoutes: K8sHTTPRoute[];
+  namespace: Namespace;
+  peerAuthentications: PeerAuthentication[];
+  permissions: { [key: string]: ResourcePermissions };
+  requestAuthentications: RequestAuthentication[];
+  serviceEntries: ServiceEntry[];
+  sidecars: Sidecar[];
+  telemetries: Telemetry[];
+  validations: Validations;
+  virtualServices: VirtualService[];
+  wasmPlugins: WasmPlugin[];
+  workloadEntries: WorkloadEntry[];
+  workloadGroups: WorkloadGroup[];
+}
+
+export interface IstioConfigListQuery {
+  labelSelector?: string;
+  objects?: string;
+  validate?: boolean;
+  workloadSelector?: string;
 }
 
 export declare type IstioConfigsMap = { [key: string]: IstioConfigList };
 
-export interface IstioConfigList {
-  namespace: Namespace;
-  gateways: Gateway[];
-  k8sGateways: K8sGateway[];
-  k8sHTTPRoutes: K8sHTTPRoute[];
-  virtualServices: VirtualService[];
-  destinationRules: DestinationRule[];
-  serviceEntries: ServiceEntry[];
-  workloadEntries: WorkloadEntry[];
-  workloadGroups: WorkloadGroup[];
-  envoyFilters: EnvoyFilter[];
-  authorizationPolicies: AuthorizationPolicy[];
-  sidecars: Sidecar[];
-  wasmPlugins: WasmPlugin[];
-  telemetries: Telemetry[];
-  peerAuthentications: PeerAuthentication[];
-  requestAuthentications: RequestAuthentication[];
-  permissions: { [key: string]: ResourcePermissions };
-  validations: Validations;
+export interface IstioConfigsMapQuery extends IstioConfigListQuery {
+  namespaces?: string;
 }
 
 export const dicIstioType = {
-  Sidecar: 'sidecars',
+  AuthorizationPolicy: 'authorizationpolicies',
+  DestinationRule: 'destinationrules',
+  EnvoyFilter: 'envoyfilters',
   Gateway: 'gateways',
   K8sGateway: 'k8sgateways',
   K8sHTTPRoute: 'k8shttproutes',
-  VirtualService: 'virtualservices',
-  DestinationRule: 'destinationrules',
-  ServiceEntry: 'serviceentries',
-  AuthorizationPolicy: 'authorizationpolicies',
   PeerAuthentication: 'peerauthentications',
   RequestAuthentication: 'requestauthentications',
+  ServiceEntry: 'serviceentries',
+  Sidecar: 'sidecars',
+  Telemetry: 'telemetries',
+  VirtualService: 'virtualservices',
+  WasmPlugin: 'wasmPlugins',
   WorkloadEntry: 'workloadentries',
   WorkloadGroup: 'workloadgroups',
-  EnvoyFilter: 'envoyfilters',
-  WasmPlugin: 'wasmPlugins',
-  Telemetry: 'telemetries',
 
+  authorizationpolicies: 'AuthorizationPolicy',
+  destinationrules: 'DestinationRule',
+  envoyfilters: 'EnvoyFilter',
   gateways: 'Gateway',
   k8sgateways: 'K8sGateway',
   k8shttproutes: 'K8sHTTPRoute',
-  virtualservices: 'VirtualService',
-  destinationrules: 'DestinationRule',
-  serviceentries: 'ServiceEntry',
-  authorizationpolicies: 'AuthorizationPolicy',
-  sidecars: 'Sidecar',
   peerauthentications: 'PeerAuthentication',
   requestauthentications: 'RequestAuthentication',
+  serviceentries: 'ServiceEntry',
+  sidecars: 'Sidecar',
+  telemetries: 'Telemetry',
+  virtualservices: 'VirtualService',
+  wasmplugins: 'WasmPlugin',
   workloadentries: 'WorkloadEntry',
   workloadgroups: 'WorkloadGroup',
-  envoyfilters: 'EnvoyFilter',
-  telemetries: 'Telemetry',
-  wasmplugins: 'WasmPlugin',
 
+  authorizationpolicy: 'AuthorizationPolicy',
+  destinationrule: 'DestinationRule',
+  envoyfilter: 'EnvoyFilter',
   gateway: 'Gateway',
   k8sgateway: 'K8sGateway',
   k8shttproute: 'K8sHTTPRoute',
-  virtualservice: 'VirtualService',
-  destinationrule: 'DestinationRule',
-  serviceentry: 'ServiceEntry',
-  authorizationpolicy: 'AuthorizationPolicy',
-  sidecar: 'Sidecar',
-  wasmplugin: 'WasmPlugin',
-  telemetry: 'Telemetry',
   peerauthentication: 'PeerAuthentication',
   requestauthentication: 'RequestAuthentication',
+  serviceentry: 'ServiceEntry',
+  sidecar: 'Sidecar',
+  telemetry: 'Telemetry',
+  virtualservice: 'VirtualService',
+  wasmplugin: 'WasmPlugin',
   workloadentry: 'WorkloadEntry',
-  workloadgroup: 'WorkloadGroup',
-  envoyfilter: 'EnvoyFilter'
+  workloadgroup: 'WorkloadGroup'
 };
 
 export function validationKey(name: string, namespace?: string): string {
   if (namespace !== undefined) {
-    return name + '.' + namespace;
+    return `${name}.${namespace}`;
   } else {
     return name;
   }
 }
 
-const includeName = (name: string, names: string[]) => {
+const includeName = (name: string, names: string[]): boolean => {
   for (let i = 0; i < names.length; i++) {
     if (name.includes(names[i])) {
       return true;
@@ -139,6 +151,7 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
   if (names && names.length === 0) {
     return unfiltered;
   }
+
   return {
     namespace: unfiltered.namespace,
     gateways: unfiltered.gateways.filter(gw => includeName(gw.metadata.name, names)),
@@ -165,12 +178,14 @@ export const filterByConfigValidation = (unfiltered: IstioConfigItem[], configFi
   if (configFilters && configFilters.length === 0) {
     return unfiltered;
   }
+
   const filtered: IstioConfigItem[] = [];
 
   const filterByValid = configFilters.indexOf('Valid') > -1;
   const filterByNotValid = configFilters.indexOf('Not Valid') > -1;
   const filterByNotValidated = configFilters.indexOf('Not Validated') > -1;
   const filterByWarning = configFilters.indexOf('Warning') > -1;
+
   if (filterByValid && filterByNotValid && filterByNotValidated && filterByWarning) {
     return unfiltered;
   }
@@ -189,13 +204,14 @@ export const filterByConfigValidation = (unfiltered: IstioConfigItem[], configFi
       filtered.push(item);
     }
   });
+
   return filtered;
 };
 
 export const toIstioItems = (istioConfigList: IstioConfigList, cluster?: string): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
 
-  const hasValidations = (type: string, name: string, namespace: string) =>
+  const hasValidations = (type: string, name: string, namespace?: string) =>
     istioConfigList.validations[type] && istioConfigList.validations[type][validationKey(name, namespace)];
 
   const nonItems = ['validations', 'permissions', 'namespace', 'cluster'];
@@ -208,7 +224,7 @@ export const toIstioItems = (istioConfigList: IstioConfigList, cluster?: string)
 
     const typeNameProto = dicIstioType[field.toLowerCase()]; // ex. serviceEntries -> ServiceEntry
     const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
-    const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
+    const entryName = `${typeNameProto.charAt(0).toLowerCase()}${typeNameProto.slice(1)}`;
 
     let entries = istioConfigList[field];
     if (entries && !(entries instanceof Array)) {
@@ -220,7 +236,7 @@ export const toIstioItems = (istioConfigList: IstioConfigList, cluster?: string)
       return;
     }
 
-    entries.forEach(entry => {
+    entries.forEach((entry: IstioObject) => {
       const item = {
         namespace: istioConfigList.namespace.name,
         cluster: cluster,
@@ -251,22 +267,25 @@ export const vsToIstioItems = (
 
   const typeNameProto = dicIstioType['virtualservices']; // ex. serviceEntries -> ServiceEntry
   const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
-  const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
+  const entryName = `${typeNameProto.charAt(0).toLowerCase()}${typeNameProto.slice(1)}`;
 
   vss.forEach(vs => {
     const vKey = validationKey(vs.metadata.name, vs.metadata.namespace);
+
     const item = {
       cluster: cluster,
-      namespace: vs.metadata.namespace || '',
+      namespace: vs.metadata.namespace ?? '',
       type: typeName,
       name: vs.metadata.name,
       creationTimestamp: vs.metadata.creationTimestamp,
       resourceVersion: vs.metadata.resourceVersion,
       validation: hasValidations(vKey) ? validations.virtualservice[vKey] : undefined
     };
+
     item[entryName] = vs;
     istioItems.push(item);
   });
+
   return istioItems;
 };
 
@@ -280,22 +299,25 @@ export const drToIstioItems = (
 
   const typeNameProto = dicIstioType['destinationrules']; // ex. serviceEntries -> ServiceEntry
   const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
-  const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
+  const entryName = `${typeNameProto.charAt(0).toLowerCase()}${typeNameProto.slice(1)}`;
 
   drs.forEach(dr => {
     const vKey = validationKey(dr.metadata.name, dr.metadata.namespace);
+
     const item = {
       cluster: cluster,
-      namespace: dr.metadata.namespace || '',
+      namespace: dr.metadata.namespace ?? '',
       type: typeName,
       name: dr.metadata.name,
       creationTimestamp: dr.metadata.creationTimestamp,
       resourceVersion: dr.metadata.resourceVersion,
       validation: hasValidations(vKey) ? validations.destinationrule[vKey] : undefined
     };
+
     item[entryName] = dr;
     istioItems.push(item);
   });
+
   return istioItems;
 };
 
@@ -311,12 +333,12 @@ export const gwToIstioItems = (
 
   const typeNameProto = dicIstioType['gateways']; // ex. serviceEntries -> ServiceEntry
   const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
-  const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
+  const entryName = `${typeNameProto.charAt(0).toLowerCase()}${typeNameProto.slice(1)}`;
 
   vss.forEach(vs => {
     vs.spec.gateways?.forEach(vsGatewayName => {
       if (vsGatewayName.indexOf('/') < 0) {
-        vsGateways.add(vs.metadata.namespace + '/' + vsGatewayName);
+        vsGateways.add(`${vs.metadata.namespace}/${vsGatewayName}`);
       } else {
         vsGateways.add(vsGatewayName);
       }
@@ -324,21 +346,24 @@ export const gwToIstioItems = (
   });
 
   gws.forEach(gw => {
-    if (vsGateways.has(gw.metadata.namespace + '/' + gw.metadata.name)) {
+    if (vsGateways.has(`${gw.metadata.namespace}/${gw.metadata.name}`)) {
       const vKey = validationKey(gw.metadata.name, gw.metadata.namespace);
+
       const item = {
         cluster: cluster,
-        namespace: gw.metadata.namespace || '',
+        namespace: gw.metadata.namespace ?? '',
         type: typeName,
         name: gw.metadata.name,
         creationTimestamp: gw.metadata.creationTimestamp,
         resourceVersion: gw.metadata.resourceVersion,
         validation: hasValidations(vKey) ? validations.gateway[vKey] : undefined
       };
+
       item[entryName] = gw;
       istioItems.push(item);
     }
   });
+
   return istioItems;
 };
 
@@ -354,34 +379,37 @@ export const k8sGwToIstioItems = (
 
   const typeNameProto = dicIstioType['k8sgateways']; // ex. serviceEntries -> ServiceEntry
   const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
-  const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
+  const entryName = `${typeNameProto.charAt(0).toLowerCase()}${typeNameProto.slice(1)}`;
 
   k8srs.forEach(k8sr => {
     k8sr.spec.parentRefs?.forEach(parentRef => {
       if (!parentRef.namespace) {
-        k8sGateways.add(k8sr.metadata.namespace + '/' + parentRef.name);
+        k8sGateways.add(`${k8sr.metadata.namespace}/${parentRef.name}`);
       } else {
-        k8sGateways.add(parentRef.namespace + '/' + parentRef.name);
+        k8sGateways.add(`${parentRef.namespace}/${parentRef.name}`);
       }
     });
   });
 
   gws.forEach(gw => {
-    if (k8sGateways.has(gw.metadata.namespace + '/' + gw.metadata.name)) {
+    if (k8sGateways.has(`${gw.metadata.namespace}/${gw.metadata.name}`)) {
       const vKey = validationKey(gw.metadata.name, gw.metadata.namespace);
+
       const item = {
         cluster: cluster,
-        namespace: gw.metadata.namespace || '',
+        namespace: gw.metadata.namespace ?? '',
         type: typeName,
         name: gw.metadata.name,
         creationTimestamp: gw.metadata.creationTimestamp,
         resourceVersion: gw.metadata.resourceVersion,
         validation: hasValidations(vKey) ? validations.k8sgateway[vKey] : undefined
       };
+
       item[entryName] = gw;
       istioItems.push(item);
     }
   });
+
   return istioItems;
 };
 
@@ -391,22 +419,25 @@ export const seToIstioItems = (see: ServiceEntry[], validations: Validations, cl
 
   const typeNameProto = dicIstioType['serviceentries']; // ex. serviceEntries -> ServiceEntry
   const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
-  const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
+  const entryName = `${typeNameProto.charAt(0).toLowerCase()}${typeNameProto.slice(1)}`;
 
   see.forEach(se => {
     const vKey = validationKey(se.metadata.name, se.metadata.namespace);
+
     const item = {
       cluster: cluster,
-      namespace: se.metadata.namespace || '',
+      namespace: se.metadata.namespace ?? '',
       type: typeName,
       name: se.metadata.name,
       creationTimestamp: se.metadata.creationTimestamp,
       resourceVersion: se.metadata.resourceVersion,
       validation: hasValidations(vKey) ? validations.serviceentry[vKey] : undefined
     };
+
     item[entryName] = se;
     istioItems.push(item);
   });
+
   return istioItems;
 };
 
@@ -420,21 +451,24 @@ export const k8sHTTPRouteToIstioItems = (
 
   const typeNameProto = dicIstioType['k8shttproutes']; // ex. serviceEntries -> ServiceEntry
   const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
-  const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
+  const entryName = `${typeNameProto.charAt(0).toLowerCase()}${typeNameProto.slice(1)}`;
 
   routes.forEach(route => {
     const vKey = validationKey(route.metadata.name, route.metadata.namespace);
+
     const item = {
       cluster: cluster,
-      namespace: route.metadata.namespace || '',
+      namespace: route.metadata.namespace ?? '',
       type: typeName,
       name: route.metadata.name,
       creationTimestamp: route.metadata.creationTimestamp,
       resourceVersion: route.metadata.resourceVersion,
       validation: hasValidations(vKey) ? validations.k8shttproute[vKey] : undefined
     };
+
     item[entryName] = route;
     istioItems.push(item);
   });
+
   return istioItems;
 };

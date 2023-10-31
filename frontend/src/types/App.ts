@@ -3,25 +3,30 @@ import { Runtime } from './Workload';
 import { AppHealthResponse } from '../types/Health';
 
 export interface AppId {
+  app: string;
   cluster?: string;
   namespace: string;
-  app: string;
 }
 
 export interface AppWorkload {
-  workloadName: string;
   istioSidecar: boolean;
   istioAmbient: boolean;
-  serviceAccountNames: string[];
   labels: { [key: string]: string };
+  serviceAccountNames: string[];
+  workloadName: string;
 }
 
 export interface App {
   cluster?: string;
-  namespace: Namespace;
-  name: string;
-  workloads: AppWorkload[];
-  serviceNames: string[];
-  runtimes: Runtime[];
   health: AppHealthResponse;
+  name: string;
+  namespace: Namespace;
+  runtimes: Runtime[];
+  serviceNames: string[];
+  workloads: AppWorkload[];
+}
+
+export interface AppQuery {
+  health: 'true' | 'false';
+  rateInterval: string;
 }
