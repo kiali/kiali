@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 	"time"
-	
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -139,6 +139,9 @@ func convertTraceMD(trace *tempopb.TraceSearchMetadata) *model.Trace {
 func convertID(traceId string) model.TraceID {
 	convertedTrace := model.TraceID{}
 	b := []byte(traceId)
-	convertedTrace.Unmarshal(b)
+	err := convertedTrace.Unmarshal(b)
+	if err != nil {
+		log.Errorf("Error unmarshalling ID: %s", err.Error())
+	}
 	return convertedTrace
 }
