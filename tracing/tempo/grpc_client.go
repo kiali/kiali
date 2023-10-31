@@ -3,18 +3,19 @@ package tempo
 import (
 	"context"
 	"fmt"
-	jsonConv "github.com/kiali/kiali/tracing/jaeger/model/converter/json"
-	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
-	"github.com/kiali/kiali/tracing/tempo/tempopb"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"io"
 	"time"
+	
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model"
+	jsonConv "github.com/kiali/kiali/tracing/jaeger/model/converter/json"
+	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
+	"github.com/kiali/kiali/tracing/tempo/tempopb"
 )
 
 type TempoGRPCClient struct {

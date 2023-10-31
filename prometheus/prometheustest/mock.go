@@ -134,6 +134,11 @@ func (o *PromAPIMock) OnQueryRange(query string, r *prom_v1.Range, ret model.Mat
 	}
 }
 
+func (o *PromAPIMock) WalReplay(ctx context.Context) (prom_v1.WalReplayStatus, error) {
+	args := o.Called(ctx)
+	return args.Get(0).(prom_v1.WalReplayStatus), nil
+}
+
 func singleValueMatrix(ret model.SampleValue) model.Matrix {
 	return model.Matrix{
 		&model.SampleStream{
