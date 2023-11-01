@@ -174,15 +174,15 @@ func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*m
 				SearchDepth:  int32(q.Limit),
 			},
 		}
-		tracesMap, err = in.queryTraces(*findTracesRQMC)
+		tracesMap, err = in.queryTraces(findTracesRQMC)
 		if err != nil || len(tracesMap) == 0 {
 			// show warning to user that cannot query by cluster
 			// query second time without cluster filter
-			tracesMap, err = in.queryTraces(*findTracesRQ)
+			tracesMap, err = in.queryTraces(findTracesRQ)
 			r.FromAllClusters = true
 		}
 	} else {
-		tracesMap, err = in.queryTraces(*findTracesRQ)
+		tracesMap, err = in.queryTraces(findTracesRQ)
 	}
 
 	if err != nil {
@@ -197,11 +197,11 @@ func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*m
 	return &r, nil
 }
 
-func (in *Client) queryTraces(findTracesRQ model.FindTracesRequest) (map[model.TraceID]*model.Trace, error) {
+func (in *Client) queryTraces(findTracesRQ *model.FindTracesRequest) (map[model.TraceID]*model.Trace, error) {
 	ctx, cancel := context.WithTimeout(in.ctx, time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout)*time.Second)
 	defer cancel()
 
-	stream, err := in.grpcClient.FindTraces(ctx, &findTracesRQ)
+	stream, err := in.grpcClient.FindTraces(ctx, findTracesRQ)
 	if err != nil {
 		err = fmt.Errorf("GetAppTraces, Tracing GRPC client error: %v", err)
 		log.Error(err.Error())
