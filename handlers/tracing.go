@@ -233,7 +233,7 @@ func readQuery(values url.Values) (models.TracingQuery, error) {
 		End:     time.Now(),
 		Limit:   100,
 		Tags:    make(map[string]string),
-		Cluster: values.Get("clusterName"), // should not get default cluster
+		Cluster: clusterNameFromQuery(values),
 	}
 
 	if v := values.Get("startMicros"); v != "" {
@@ -275,6 +275,12 @@ func readQuery(values url.Values) (models.TracingQuery, error) {
 
 	for key, value := range config.Get().ExternalServices.Tracing.QueryScope {
 		q.Tags[key] = value
+	}
+
+	// 'cluster' in tags is used to query in tracing by cluster in multi-cluster mode
+	// while 'Cluster' in models.TracingQuery can have default cluster
+	if values.Get("clusterName") != "" {
+		q.Tags["cluster"] = values.Get("clusterName")
 	}
 
 	return q, nil

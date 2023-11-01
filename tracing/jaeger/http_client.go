@@ -25,12 +25,13 @@ func (jc JaegerHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL
 	url := *baseURL
 	url.Path = path.Join(url.Path, "/api/traces")
 	jaegerServiceName := BuildTracingServiceName(namespace, app)
-	prepareQuery(&url, jaegerServiceName, q, true)
+	// if cluster exists in tags, use it
+	prepareQuery(&url, jaegerServiceName, q, false)
 	r, err := queryTracesHTTP(client, &url)
 
 	if r != nil && len(r.Data) == 0 && q.Cluster != "" {
 		// query without cluster tag, warn user that tracing is not configured to use cluster tags
-		prepareQuery(&url, jaegerServiceName, q, false)
+		prepareQuery(&url, jaegerServiceName, q, true)
 		r, err = queryTracesHTTP(client, &url)
 		r.FromAllClusters = true
 	}
@@ -100,15 +101,15 @@ func unmarshal(r []byte, u *url.URL) (*model.TracingResponse, error) {
 	return &response, nil
 }
 
-func prepareQuery(u *url.URL, jaegerServiceName string, query models.TracingQuery, useCluster bool) {
+func prepareQuery(u *url.URL, jaegerServiceName string, query models.TracingQuery, ignoreCluster bool) {
 	q := url.Values{}
 	q.Set("service", jaegerServiceName)
 	q.Set("start", fmt.Sprintf("%d", query.Start.Unix()*time.Second.Microseconds()))
 	q.Set("end", fmt.Sprintf("%d", query.End.Unix()*time.Second.Microseconds()))
 	var tags = util.CopyStringMap(query.Tags)
 
-	if useCluster && query.Cluster != "" {
-		tags["cluster"] = query.Cluster
+	if ignoreCluster {
+		delete(tags, "cluster")
 	}
 	if len(tags) > 0 {
 		// Tags must be json encoded
