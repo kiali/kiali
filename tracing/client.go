@@ -149,7 +149,7 @@ func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*m
 		Data:               []jsonModel.Trace{},
 		TracingServiceName: jaegerServiceName,
 	}
-	findTracesRQ := model.FindTracesRequest{
+	findTracesRQ := &model.FindTracesRequest{
 		Query: &model.TraceQueryParameters{
 			ServiceName:  jaegerServiceName,
 			StartTimeMin: timestamppb.New(q.Start),
@@ -164,25 +164,25 @@ func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*m
 	if q.Cluster != "" {
 		var tagsCL = util.CopyStringMap(q.Tags)
 		tagsCL["cluster"] = q.Cluster
-		findTracesRQMC := model.FindTracesRequest{
+		findTracesRQMC := &model.FindTracesRequest{
 			Query: &model.TraceQueryParameters{
 				ServiceName:  jaegerServiceName,
 				StartTimeMin: timestamppb.New(q.Start),
 				StartTimeMax: timestamppb.New(q.End),
-				Tags:         q.Tags,
+				Tags:         tagsCL,
 				DurationMin:  durationpb.New(q.MinDuration),
 				SearchDepth:  int32(q.Limit),
 			},
 		}
-		tracesMap, err = in.queryTraces(findTracesRQMC)
+		tracesMap, err = in.queryTraces(*findTracesRQMC)
 		if err != nil || len(tracesMap) == 0 {
 			// show warning to user that cannot query by cluster
 			// query second time without cluster filter
-			tracesMap, err = in.queryTraces(findTracesRQ)
+			tracesMap, err = in.queryTraces(*findTracesRQ)
 			r.FromAllClusters = true
 		}
 	} else {
-		tracesMap, err = in.queryTraces(findTracesRQ)
+		tracesMap, err = in.queryTraces(*findTracesRQ)
 	}
 
 	if err != nil {

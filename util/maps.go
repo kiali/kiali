@@ -16,7 +16,7 @@ func RemoveNilValues(root interface{}) {
 func CopyStringMap(originalMap map[string]string) map[string]string {
 	copyMap := make(map[string]string)
 
-	if originalMap == nil || len(originalMap) == 0 {
+	if len(originalMap) == 0 {
 		return copyMap
 	}
 
