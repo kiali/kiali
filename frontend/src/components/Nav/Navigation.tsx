@@ -42,6 +42,14 @@ const flexBoxColumnStyle = kialiStyle({
   flexDirection: 'column'
 });
 
+const pageSidebarStyle = kialiStyle({
+  $nest: {
+    '& .pf-c-page__sidebar-body': {
+      padding: 0
+    }
+  }
+});
+
 export class NavigationComponent extends React.Component<PropsType, NavigationState> {
   static contextTypes = {
     router: () => null
@@ -131,7 +139,9 @@ export class NavigationComponent extends React.Component<PropsType, NavigationSt
 
     const menu = <Menu isNavOpen={isNavOpen} location={this.props.location} jaegerUrl={this.props.jaegerUrl} />;
 
-    const Sidebar = <PageSidebar style={{ width: '210px' }} nav={menu} isNavOpen={isNavOpen} />;
+    const Sidebar = (
+      <PageSidebar className={pageSidebarStyle} style={{ width: '210px' }} nav={menu} isNavOpen={isNavOpen} />
+    );
 
     return (
       <Page header={masthead} sidebar={Sidebar} onPageResize={this.onPageResize}>
