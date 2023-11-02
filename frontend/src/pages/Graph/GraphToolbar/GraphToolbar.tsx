@@ -146,39 +146,51 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
     }
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps: GraphToolbarProps) {
     // ensure redux state and URL are aligned
-    if (this.props.edgeLabels?.length === 0) {
-      HistoryManager.deleteParam(URLParam.GRAPH_EDGE_LABEL, true);
-    } else {
-      HistoryManager.setParam(URLParam.GRAPH_EDGE_LABEL, String(this.props.edgeLabels));
+    if (String(prevProps.edgeLabels) !== String(this.props.edgeLabels)) {
+      if (this.props.edgeLabels?.length === 0) {
+        HistoryManager.deleteParam(URLParam.GRAPH_EDGE_LABEL, true);
+      } else {
+        HistoryManager.setParam(URLParam.GRAPH_EDGE_LABEL, String(this.props.edgeLabels));
+      }
     }
 
-    if (this.props.rankBy?.length === 0) {
-      HistoryManager.deleteParam(URLParam.GRAPH_RANK_BY, true);
-    } else {
-      HistoryManager.setParam(URLParam.GRAPH_RANK_BY, String(this.props.rankBy));
+    if (String(prevProps.rankBy) !== String(this.props.rankBy)) {
+      if (this.props.rankBy?.length === 0) {
+        HistoryManager.deleteParam(URLParam.GRAPH_RANK_BY, true);
+      } else {
+        HistoryManager.setParam(URLParam.GRAPH_RANK_BY, String(this.props.rankBy));
+      }
     }
 
-    if (this.props.activeNamespaces?.length === 0) {
-      HistoryManager.deleteParam(URLParam.NAMESPACES, true);
-    } else {
-      HistoryManager.setParam(URLParam.NAMESPACES, namespacesToString(this.props.activeNamespaces));
+    if (namespacesToString(prevProps.activeNamespaces) !== namespacesToString(this.props.activeNamespaces)) {
+      if (this.props.activeNamespaces?.length === 0) {
+        HistoryManager.deleteParam(URLParam.NAMESPACES, true);
+      } else {
+        HistoryManager.setParam(URLParam.NAMESPACES, namespacesToString(this.props.activeNamespaces));
+      }
     }
 
-    if (this.props.replayActive === INITIAL_USER_SETTINGS_STATE.replayActive) {
-      HistoryManager.deleteParam(URLParam.GRAPH_REPLAY_ACTIVE, true);
-    } else {
-      HistoryManager.setParam(URLParam.GRAPH_REPLAY_ACTIVE, String(this.props.replayActive));
+    if (String(prevProps.replayActive) !== String(this.props.replayActive)) {
+      if (this.props.replayActive === INITIAL_USER_SETTINGS_STATE.replayActive) {
+        HistoryManager.deleteParam(URLParam.GRAPH_REPLAY_ACTIVE, true);
+      } else {
+        HistoryManager.setParam(URLParam.GRAPH_REPLAY_ACTIVE, String(this.props.replayActive));
+      }
     }
 
-    if (this.props.trafficRates?.length === 0) {
-      HistoryManager.deleteParam(URLParam.GRAPH_TRAFFIC, true);
-    } else {
-      HistoryManager.setParam(URLParam.GRAPH_TRAFFIC, String(this.props.trafficRates));
+    if (String(prevProps.trafficRates) !== String(this.props.trafficRates)) {
+      if (this.props.trafficRates?.length === 0) {
+        HistoryManager.deleteParam(URLParam.GRAPH_TRAFFIC, true);
+      } else {
+        HistoryManager.setParam(URLParam.GRAPH_TRAFFIC, String(this.props.trafficRates));
+      }
     }
 
-    HistoryManager.setParam(URLParam.GRAPH_TYPE, String(this.props.graphType));
+    if (prevProps.graphType !== this.props.graphType) {
+      HistoryManager.setParam(URLParam.GRAPH_TYPE, String(this.props.graphType));
+    }
   }
 
   componentWillUnmount() {
@@ -250,7 +262,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
     );
   }
 
-  private handleNamespaceReturn = () => {
+  private handleNamespaceReturn = (): void => {
     const route = this.props.isPF ? 'graphpf' : 'graph';
     if (
       !this.props.summaryData ||
