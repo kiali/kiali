@@ -91,6 +91,23 @@ export function GetTraceDetailURL(
   }
 }
 
+export function GetTracingURL(externalServices: ExternalServiceInfo[]) {
+  const tempoService = externalServices.find(service => service.name === TEMPO);
+  const jaegerService = externalServices.find(service => service.name === 'jaeger');
+  const grafanaService = externalServices.find(service => service.name === 'Grafana');
+
+  if (tempoService) {
+    const tracingUrl = grafanaService?.url;
+    if (!tracingUrl) {
+      return undefined;
+    }
+    return `${tracingUrl}/explore?left={"queries":[{"datasource":{"type":"tempo"},"queryType":"nativeSearch"}]}`;
+  } else {
+    const tracingUrl = jaegerService?.url;
+    return `${tracingUrl}`;
+  }
+}
+
 class TracesComp extends React.Component<TracesProps, TracesState> {
   private fetcher: TracesFetcher;
   private percentilesPromise: Promise<Map<string, number>>;

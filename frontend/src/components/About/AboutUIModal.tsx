@@ -16,6 +16,7 @@ import { config, kialiLogoDark } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { TEMPO } from '../../types/Tracing';
+import { GetTracingURL } from '../TracingIntegration/TracesComponent';
 
 type AboutUIModalProps = {
   externalServices: ExternalServiceInfo[];
@@ -74,7 +75,7 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
     const grafanaService = externalServices.find(service => service.name === 'Grafana');
 
     if (tempoService && grafanaService && grafanaService.url) {
-      tempoService.url = `${grafanaService.url}/explore?left={"queries":[{"datasource":{"type":"tempo"},"queryType":"nativeSearch"}]}`;
+      tempoService.url = GetTracingURL(externalServices);
       return renderComponent(tempoService);
     } else {
       return <></>;
