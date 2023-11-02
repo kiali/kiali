@@ -24,7 +24,11 @@ const externalLinkStyle = kialiStyle({
   }
 });
 
-const ExternalLink = ({ href, name }) => (
+const navListStyle = kialiStyle({
+  padding: 0
+});
+
+const ExternalLink = ({ href, name }: { href: string; name: string }): React.ReactElement => (
   <NavItem isActive={false} key={name}>
     <a className={externalLinkStyle} href={href} target="_blank" rel="noopener noreferrer">
       {name} <ExternalLinkAltIcon style={{ margin: '-4px 0 0 5px' }} />
@@ -33,9 +37,9 @@ const ExternalLink = ({ href, name }) => (
 );
 
 type MenuProps = {
+  externalServices: ExternalServiceInfo[];
   isNavOpen: boolean;
   location: any;
-  externalServices: ExternalServiceInfo[];
 };
 
 type MenuState = {
@@ -63,16 +67,18 @@ export class Menu extends React.Component<MenuProps, MenuState> {
     }
   }
 
-  renderMenuItems = () => {
+  renderMenuItems = (): React.ReactNode => {
     const { location } = this.props;
     const allNavMenuItems = navMenuItems;
     const graphEnableCytoscape = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'pf';
     const graphEnablePatternfly = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'cy';
     const activeMenuItem = allNavMenuItems.find(item => {
       let isRoute = matchPath(location.pathname, { path: item.to, exact: true, strict: false }) ? true : false;
+
       if (!isRoute && item.pathsActive) {
         isRoute = _.filter(item.pathsActive, path => path.test(location.pathname)).length > 0;
       }
+
       return isRoute;
     });
 
@@ -83,12 +89,15 @@ export class Menu extends React.Component<MenuProps, MenuState> {
         if (item.title === 'Mesh') {
           return homeCluster?.name !== undefined;
         }
+
         if (item.title === 'Graph [Cy]') {
           return graphEnableCytoscape;
         }
+
         if (item.title === 'Graph [PF]') {
           return graphEnablePatternfly;
         }
+
         return true;
       })
       .map(item => {
@@ -97,9 +106,11 @@ export class Menu extends React.Component<MenuProps, MenuState> {
         }
 
         let title = item.title;
+
         if (title === 'Graph [Cy]' && !graphEnablePatternfly) {
           title = 'Graph';
         }
+
         if (title === 'Graph [PF]' && !graphEnableCytoscape) {
           title = 'Graph';
         }
@@ -116,8 +127,8 @@ export class Menu extends React.Component<MenuProps, MenuState> {
 
   render() {
     return (
-      <Nav aria-label="Nav" theme={'dark'}>
-        <NavList>{this.renderMenuItems()}</NavList>
+      <Nav aria-label="Nav" theme="dark">
+        <NavList className={navListStyle}>{this.renderMenuItems()}</NavList>
       </Nav>
     );
   }
