@@ -65,7 +65,7 @@ Feature: Kiali Graph page - Side panel menu actions
 
   @skip
   @remote-istio-crds
-  @multi-cluster 
+  @multi-cluster
   Scenario: Actions in context menu for a remote service node with existing traffic routing
     And there is no traffic routing for the "ratings" service present
     And user opens the context menu of the "ratings" service node
@@ -75,3 +75,13 @@ Feature: Kiali Graph page - Side panel menu actions
     And user creates the configuration
     And user is at the "istio" list page
     Then a traffic routing for "ratings" should be located in the west cluster
+
+  @skip
+  @bookinfo-app
+  @multi-cluster
+  Scenario: Show Traces button contains clusterName param
+    And user clicks the "productpage" service node
+    And cluster badge for the "graph side panel" should be visible
+    And user clicks the "Traces" graph summary tab
+    And user clicks the Show Traces button
+    Then user should see cluster parameter in links in the context menu
