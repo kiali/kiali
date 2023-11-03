@@ -17,8 +17,7 @@
 
 apply_network_attachment() {
   NAME=$1
-  if [ "${IS_MAISTRA}" != "true" ]; then
-cat <<NAD | $CLIENT_EXE -n ${NAME} apply -f -
+  cat <<NAD | $CLIENT_EXE -n ${NAME} apply -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
@@ -26,8 +25,7 @@ metadata:
   labels:
    generated-by: mimik
 NAD
-  fi
-    cat <<SCC | $CLIENT_EXE apply -f -
+  cat <<SCC | $CLIENT_EXE apply -f -
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
@@ -102,7 +100,7 @@ Usage:
   1) Run with no args - or -c - to install the topology generator
   2) Run the proxy: CLIENT port-forward svc/topology-generator 8080:8080 -n topology-generator
   3) Go to the app and generate the topology
-  4) Run -g to configure the demo to work on OpenShift along with -n argument. You only need to run this if you are on OpenShift and using upstream Istio (not OSSM).
+  4) Run -g to configure the demo to work on OpenShift along with -n argument.
 HELPMSG
       exit 1
       ;;
@@ -114,10 +112,8 @@ HELPMSG
 done
 
 IS_OPENSHIFT="false"
-IS_MAISTRA="false"
 if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   IS_OPENSHIFT="true"
-  IS_MAISTRA=$([ "$(${CLIENT_EXE} get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
 fi
 
 echo "CLIENT_EXE=${CLIENT_EXE}"
@@ -139,11 +135,7 @@ else
     echo "Deleting the '${TOPO}' app in the '${TOPO}' namespace..."
 
     if [ "${IS_OPENSHIFT}" == "true" ]; then
-      if [ "${IS_MAISTRA}" != "true" ]; then
-        $CLIENT_EXE delete network-attachment-definition istio-cni -n ${TOPO}
-      else
-        $CLIENT_EXE delete smm default -n ${TOPO}
-      fi
+      $CLIENT_EXE delete network-attachment-definition istio-cni -n ${TOPO}
       $CLIENT_EXE delete scc ${TOPO}-scc
 
       ${CLIENT_EXE} delete project ${TOPO}

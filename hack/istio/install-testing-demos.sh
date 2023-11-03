@@ -80,16 +80,13 @@ if [ "${ARCH}" != "ppc64le" ] && [ "${ARCH}" != "s390x" ] && [ "${ARCH}" != "amd
 fi
 
 IS_OPENSHIFT="false"
-IS_MAISTRA="false"
 if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   IS_OPENSHIFT="true"
-  IS_MAISTRA=$([ "$(${CLIENT_EXE} get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
 fi
 
 echo "CLIENT_EXE=${CLIENT_EXE}"
 echo "ARCH=${ARCH}"
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
-echo "IS_MAISTRA=${IS_MAISTRA}"
 
 # Waits for workloads in the specified namespace to be ready
 wait_for_workloads () {

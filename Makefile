@@ -144,20 +144,8 @@ endif
 SERVICE_TYPE ?= ClusterIP
 KIALI_CR_SPEC_VERSION ?= default
 
-# Determine if Maistra/ServiceMesh is deployed. If not, assume we are working with upstream Istio.
-ifeq ($(OC_READY),true)
-IS_MAISTRA ?= $(shell if ${OC} get namespace ${NAMESPACE} -o jsonpath='{.metadata.labels}' 2>/dev/null | grep -q maistra ; then echo "true" ; else echo "false" ; fi)
-else
-IS_MAISTRA ?= false
-endif
-
-# Path to Kiali CR file which is different based on what Istio implementation is deployed (upstream or Maistra)
-# This is used when deploying Kiali via make
-ifeq ($(IS_MAISTRA),true)
-KIALI_CR_FILE ?= ${ROOTDIR}/operator/deploy/kiali/kiali_cr_dev_servicemesh.yaml
-else
+# Path to Kiali CR file. This is used when deploying Kiali via make
 KIALI_CR_FILE ?= ${ROOTDIR}/operator/deploy/kiali/kiali_cr_dev.yaml
-endif
 
 # When creating a OSSMConsole CR, these can customize it
 OSSMCONSOLE_CR_FILE ?= ${ROOTDIR}/operator/deploy/ossmconsole/ossmconsole_cr_dev.yaml

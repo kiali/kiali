@@ -2,25 +2,6 @@
 
 # This creates/deletes a mesh-enabled namespace/project
 
-# Given a namepace, prepare it for inclusion in Maistra's control plane
-# This means:
-# 1. Create a SMM
-prepare_maistra() {
-  local ns="${1}"
-
-  cat <<EOM | ${CLIENT_EXE} apply -f -
-apiVersion: maistra.io/v1
-kind: ServiceMeshMember
-metadata:
-  name: default
-  namespace: ${ns}
-spec:
-  controlPlaneRef:
-    namespace: ${ISTIO_NAMESPACE}
-    name: "$(${CLIENT_EXE} get smcp -n ${ISTIO_NAMESPACE} -o jsonpath='{.items[0].metadata.name}' )"
-EOM
-}
-
 : ${CLIENT_EXE:=oc}
 : ${DELETE_NAMESPACE:=false}
 : ${ENABLE_INJECTION:=true}
@@ -88,24 +69,17 @@ echo SERVICE_ACCOUNTS=${SERVICE_ACCOUNTS}
 [ -z "$NAMESPACE" ] && echo "You must specify --namespace" && exit 1
 
 IS_OPENSHIFT="false"
-IS_MAISTRA="false"
 if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   IS_OPENSHIFT="true"
-  IS_MAISTRA=$([ "$(oc get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
 fi
 
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
-echo "IS_MAISTRA=${IS_MAISTRA}"
 
 # If we are to delete, remove everything and exit immediately after
 if [ "${DELETE_NAMESPACE}" == "true" ]; then
   echo "Deleting namespace ${NAMESPACE}..."
   if [ "${IS_OPENSHIFT}" == "true" ]; then
-    if [ "${IS_MAISTRA}" != "true" ]; then
-      $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE}
-    else
-      $CLIENT_EXE delete smm default -n ${NAMESPACE}
-    fi
+    $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE}
     $CLIENT_EXE delete scc "${NAMESPACE}-scc"
   fi
   ${CLIENT_EXE} delete namespace ${NAMESPACE}
@@ -124,19 +98,13 @@ if [ "${ENABLE_INJECTION}" == "true" ]; then
   ${CLIENT_EXE} label namespace ${NAMESPACE} istio-injection=enabled
 fi
 
-if [ "${IS_MAISTRA}" == "true" ]; then
-  prepare_maistra "${NAMESPACE}"
-fi
-
 if [ "${IS_OPENSHIFT}" == "true" ]; then
-  if [ "${IS_MAISTRA}" != "true" ]; then
-    cat <<NAD | $CLIENT_EXE -n ${NAMESPACE} create -f -
+  cat <<NAD | $CLIENT_EXE -n ${NAMESPACE} create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
 NAD
-  fi
 
   USERS=""
   for sa in ${SERVICE_ACCOUNTS}; do
