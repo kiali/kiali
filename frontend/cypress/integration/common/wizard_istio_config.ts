@@ -8,7 +8,7 @@ When('user clicks in the {string} Istio config actions', (action: string) => {
     .get('#loading_kiali_spinner')
     .should('not.exist');
 
-  cy.get('li[data-test="create_' + action + '"]')
+  cy.get(`li[data-test="create_${action}"]`)
     .find('button')
     .should('be.visible')
     .click()
@@ -45,7 +45,7 @@ And('user adds listener', () => {
 });
 
 And('user adds a hostname', () => {
-  cy.get('[aria-label="Address List"]').find('button').should('be.visible').click();
+  cy.get('button[name="addAddress"]').should('be.visible').click();
 });
 
 And('user types {string} in the {string} input', (value: string, id: string) => {
@@ -63,7 +63,7 @@ And('user checks validation of the hostname {string} input', (id: string) => {
 });
 
 And('user adds a server to a server list', () => {
-  cy.get('[aria-label="Server List"]').find('button').should('be.visible').click();
+  cy.get('button[name="addServer"]').should('be.visible').click();
 });
 
 And('the {string} input should display a warning', (id: string) => {
@@ -76,6 +76,7 @@ And('the {string} input should not display a warning', (id: string) => {
 
 And('user creates the istio config', () => {
   cy.get('button[data-test="create"]').should('be.visible').click();
+
   it('spinner should disappear', { retries: 3 }, () => {
     cy.get('#loading_kiali_spinner').should('not.exist');
   });
@@ -107,21 +108,19 @@ And('user does not see a dropdown for cluster selection', () => {
   cy.get('[data-test="cluster-dropdown"]').should('not.exist');
 });
 
-Then('the {string} {string} should be listed in {string} namespace', function (
-  type: string,
-  name: string,
-  namespace: string
-) {
-  cy.get(`[data-test=VirtualItem_Ns${namespace}_${type.toLowerCase()}_${name}] svg`).should('exist');
-});
+Then(
+  'the {string} {string} should be listed in {string} namespace',
+  (type: string, name: string, namespace: string) => {
+    cy.get(`[data-test=VirtualItem_Ns${namespace}_${type.toLowerCase()}_${name}] svg`).should('exist');
+  }
+);
 
-Then('the {string} {string} should not be listed in {string} namespace', function (
-  type: string,
-  name: string,
-  namespace: string
-) {
-  cy.get(`[data-test=VirtualItem_Ns${namespace}_${type.toLowerCase()}_${name}] svg`).should('not.exist');
-});
+Then(
+  'the {string} {string} should not be listed in {string} namespace',
+  (type: string, name: string, namespace: string) => {
+    cy.get(`[data-test=VirtualItem_Ns${namespace}_${type.toLowerCase()}_${name}] svg`).should('not.exist');
+  }
+);
 
 Then('the preview button should be disabled', () => {
   cy.get('[data-test="preview"').should('be.disabled');
@@ -150,6 +149,7 @@ Then('{string} details information for service entry {string} can be seen', (hos
   cy.get('#ServiceDescriptionCard').within(() => {
     cy.get('#pfbadge-ES').parent().parent().parent().contains(host);
   });
+
   cy.get('#IstioConfigCard').within(() => {
     cy.get('#pfbadge-SE').parent().parent().contains(name);
   });

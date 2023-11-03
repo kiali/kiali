@@ -1,36 +1,36 @@
 import * as React from 'react';
-import { cellWidth, ICell } from '@patternfly/react-table';
-import { Table, TableHeader, TableBody } from '@patternfly/react-table/deprecated';
+import { ThProps } from '@patternfly/react-table';
 import { Slider } from './Slider/Slider';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Button, ButtonVariant, TooltipPosition } from '@patternfly/react-core';
-import { EqualizerIcon } from '@patternfly/react-icons';
 import { getDefaultBackendRefs } from './WizardActions';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ServiceOverview } from '../../types/ServiceList';
+import { KialiIcon } from 'config/KialiIcon';
+import { SimpleTable } from 'components/SimpleTable';
 
 type Props = {
-  subServices: ServiceOverview[];
   initRefs: K8sRouteBackendRef[];
   onChange: (backendRefs: K8sRouteBackendRef[], reset: boolean) => void;
   showValid: boolean;
+  subServices: ServiceOverview[];
 };
 
 export type K8sRouteBackendRef = {
   name: string;
-  weight: number;
   port?: number;
+  weight: number;
 };
 
 export type K8sRouteFilter = {
-  type: string;
   requestHeaderModifier?: K8sHeaderFilter;
+  type: string;
 };
 
 export type K8sHeaderFilter = {
-  set?: K8sHeader[];
   add?: K8sHeader[];
   remove?: string[];
+  set?: K8sHeader[];
 };
 
 export type K8sHeader = {
@@ -59,10 +59,11 @@ export class K8sTrafficShifting extends React.Component<Props, State> {
     this.resetState();
   }
 
-  resetState = () => {
+  resetState = (): void => {
     if (this.props.subServices.length === 0) {
       return;
     }
+
     this.setState(
       prevState => {
         return {
@@ -76,7 +77,7 @@ export class K8sTrafficShifting extends React.Component<Props, State> {
     );
   };
 
-  onWeight = (serviceName: string, newWeight: number) => {
+  onWeight = (serviceName: string, newWeight: number): void => {
     this.setState(
       prevState => {
         // Set new weight; remember rest of the nodes
@@ -95,66 +96,58 @@ export class K8sTrafficShifting extends React.Component<Props, State> {
   };
 
   render() {
-    // TODO: Casting 'as any' because @patternfly/react-table@2.22.19 has a typing bug. Remove the casting when PF fixes it.
-    // https://github.com/patternfly/patternfly-next/issues/2373
-    const serviceCells: ICell[] = [
+    const columns: ThProps[] = [
       {
         title: 'Destination Service',
-        transforms: [cellWidth(30) as any],
-        props: {}
+        width: 30
       },
       {
         title: 'Traffic Weight',
-        transforms: [cellWidth(70) as any],
-        props: {}
+        width: 70
       }
     ];
-    const servicesRows = this.state.backendRefs.map(service => {
+
+    const rows = this.state.backendRefs.map(service => {
       return {
         cells: [
-          <>
-            <div>
-              <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
-              {service.name}
-            </div>
-          </>,
-          // This <> wrapper is needed by Slider
-          <>
-            <Slider
-              id={'slider-' + service.name}
-              key={'slider-' + service.name}
-              tooltip={true}
-              input={true}
-              inputFormat=""
-              value={service.weight}
-              min={0}
-              max={100}
-              maxLimit={100}
-              onSlide={value => {
-                this.onWeight(service.name, value as number);
-              }}
-              onSlideStop={value => {
-                this.onWeight(service.name, value as number);
-              }}
-              locked={false}
-              showLock={false}
-              mirrored={false}
-            />
-          </>
+          <div>
+            <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
+            {service.name}
+          </div>,
+
+          <Slider
+            id={`slider-${service.name}`}
+            key={`slider-${service.name}`}
+            tooltip={true}
+            input={true}
+            inputFormat=""
+            value={service.weight}
+            min={0}
+            max={100}
+            maxLimit={100}
+            onSlide={value => {
+              this.onWeight(service.name, value as number);
+            }}
+            onSlideStop={value => {
+              this.onWeight(service.name, value as number);
+            }}
+            locked={false}
+            showLock={false}
+            mirrored={false}
+          />
         ]
       };
     });
+
     return (
       <>
-        <Table cells={serviceCells} rows={servicesRows} aria-label="weighted routing">
-          <TableHeader />
-          <TableBody />
-        </Table>
+        <SimpleTable label="Weighted Routing" columns={columns} rows={rows} verticalAlign="middle" />
+
         {this.props.subServices.length > 1 && (
           <div className={evenlyButtonStyle}>
-            <Button variant={ButtonVariant.link} icon={<EqualizerIcon />} onClick={() => this.resetState()}>
+            <Button variant={ButtonVariant.link} icon={<KialiIcon.Equalizer />} onClick={() => this.resetState()}>
               Evenly distribute traffic
-            </Button>{' '}
+            </Button>
           </div>
         )}
       </>

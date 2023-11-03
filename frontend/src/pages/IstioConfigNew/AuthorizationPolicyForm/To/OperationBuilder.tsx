@@ -1,27 +1,20 @@
 import * as React from 'react';
-import { cellWidth, ICell } from '@patternfly/react-table';
-import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
-// Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
-import {
-  Button,
-  ButtonVariant,
-  FormSelect,
-  FormSelectOption,
-  TextInputBase as TextInput
-} from '@patternfly/react-core';
-import { PlusCircleIcon } from '@patternfly/react-icons';
+import { IRow, ThProps } from '@patternfly/react-table';
+import { Button, ButtonVariant, FormSelect, FormSelectOption, TextInput } from '@patternfly/react-core';
+import { SimpleTable } from 'components/SimpleTable';
+import { KialiIcon } from 'config/KialiIcon';
 
 type Props = {
   onAddTo: (operation: { [key: string]: string[] }) => void;
 };
 
 type State = {
-  operationFields: string[];
+  newOperationField: string;
+  newValues: string;
   operation: {
     [key: string]: string[];
   };
-  newOperationField: string;
-  newValues: string;
+  operationFields: string[];
 };
 
 const INIT_OPERATION_FIELDS = [
@@ -35,20 +28,17 @@ const INIT_OPERATION_FIELDS = [
   'notPaths'
 ].sort();
 
-const headerCells: ICell[] = [
+const columns: ThProps[] = [
   {
     title: 'Operation Field',
-    transforms: [cellWidth(20) as any],
-    props: {}
+    width: 20
   },
   {
     title: 'Values',
-    transforms: [cellWidth(80) as any],
-    props: {}
+    width: 80
   },
   {
-    title: '',
-    props: {}
+    title: ''
   }
 ];
 
@@ -63,25 +53,28 @@ export class OperationBuilder extends React.Component<Props, State> {
     };
   }
 
-  onAddNewOperationField = (_event, value: string) => {
+  onAddNewOperationField = (_event: React.FormEvent, value: string): void => {
     this.setState({
       newOperationField: value
     });
   };
 
-  onAddNewValues = (_event, value: string) => {
+  onAddNewValues = (_event: React.FormEvent, value: string): void => {
     this.setState({
       newValues: value
     });
   };
 
-  onAddOperation = () => {
+  onAddOperation = (): void => {
     this.setState(prevState => {
       const i = prevState.operationFields.indexOf(prevState.newOperationField);
+
       if (i > -1) {
         prevState.operationFields.splice(i, 1);
       }
+
       prevState.operation[prevState.newOperationField] = prevState.newValues.split(',');
+
       return {
         operationFields: prevState.operationFields,
         operation: prevState.operation,
@@ -91,8 +84,9 @@ export class OperationBuilder extends React.Component<Props, State> {
     });
   };
 
-  onAddOperationToList = () => {
+  onAddOperationToList = (): void => {
     const toItem = this.state.operation;
+
     this.setState(
       {
         operationFields: Object.assign([], INIT_OPERATION_FIELDS),
@@ -106,71 +100,66 @@ export class OperationBuilder extends React.Component<Props, State> {
     );
   };
 
-  // @ts-ignore
-  actionResolver = (rowData, { rowIndex }) => {
-    const removeAction = {
-      title: 'Remove Field',
-      // @ts-ignore
-      onClick: (event, rowIndex, rowData, extraData) => {
-        // Fetch sourceField from rowData, it's a fixed string on children
-        const removeOperationField = rowData.cells[0].props.children.toString();
-        this.setState(prevState => {
-          prevState.operationFields.push(removeOperationField);
-          delete prevState.operation[removeOperationField];
-          const newOperationFields = prevState.operationFields.sort();
-          return {
-            operationFields: newOperationFields,
-            operation: prevState.operation,
-            newOperationField: newOperationFields[0],
-            newValues: ''
-          };
-        });
-      }
-    };
-    if (rowIndex < Object.keys(this.state.operation).length) {
-      return [removeAction];
-    }
-    return [];
-  };
+  onRemoveOperation = (removeOperationField: string): void => {
+    this.setState(prevState => {
+      prevState.operationFields.push(removeOperationField);
+      delete prevState.operation[removeOperationField];
+      const newOperationFields = prevState.operationFields.sort();
 
-  rows = () => {
-    const operatorRows = Object.keys(this.state.operation).map((operationField, i) => {
       return {
-        key: 'operationKey' + i,
-        cells: [<>{operationField}</>, <>{this.state.operation[operationField].join(',')}</>, <></>]
+        operationFields: newOperationFields,
+        operation: prevState.operation,
+        newOperationField: newOperationFields[0],
+        newValues: ''
       };
     });
+  };
+
+  rows = (): IRow[] => {
+    const operatorRows = Object.keys(this.state.operation).map((operationField, i) => {
+      return {
+        key: `operationKey_${i}`,
+        cells: [
+          <>{operationField}</>,
+          <>{this.state.operation[operationField].join(',')}</>,
+          <Button
+            id="removeSourceBtn"
+            variant={ButtonVariant.link}
+            icon={<KialiIcon.Delete />}
+            onClick={() => this.onRemoveOperation(operationField)}
+          />
+        ]
+      };
+    });
+
     if (this.state.operationFields.length > 0) {
       return operatorRows.concat([
         {
           key: 'operationKeyNew',
           cells: [
-            <>
-              <FormSelect
-                value={this.state.newOperationField}
-                id="addNewOperationField"
-                name="addNewOperationField"
-                onChange={this.onAddNewOperationField}
-              >
-                {this.state.operationFields.map((option, index) => (
-                  <FormSelectOption isDisabled={false} key={'operation' + index} value={option} label={option} />
-                ))}
-              </FormSelect>
-            </>,
-            <>
-              <TextInput
-                value={this.state.newValues}
-                type="text"
-                id="addNewValues"
-                key="addNewValues"
-                aria-describedby="add new operation values"
-                name="addNewValues"
-                onChange={this.onAddNewValues}
-              />
-            </>,
+            <FormSelect
+              value={this.state.newOperationField}
+              id="addNewOperationField"
+              name="addNewOperationField"
+              onChange={this.onAddNewOperationField}
+            >
+              {this.state.operationFields.map((option, index) => (
+                <FormSelectOption isDisabled={false} key={`operation_${index}`} value={option} label={option} />
+              ))}
+            </FormSelect>,
+
+            <TextInput
+              value={this.state.newValues}
+              type="text"
+              id="addNewValues"
+              key="addNewValues"
+              aria-describedby="add new operation values"
+              name="addNewValues"
+              onChange={this.onAddNewValues}
+            />,
             <>
               {this.state.operationFields.length > 0 && (
-                <Button variant={ButtonVariant.link} icon={<PlusCircleIcon />} onClick={this.onAddOperation} />
+                <Button variant={ButtonVariant.link} icon={<KialiIcon.AddMore />} onClick={this.onAddOperation} />
               )}
             </>
           ]
@@ -183,19 +172,11 @@ export class OperationBuilder extends React.Component<Props, State> {
   render() {
     return (
       <>
-        <Table
-          aria-label="Operation Builder"
-          cells={headerCells}
-          rows={this.rows()}
-          // @ts-ignore
-          actionResolver={this.actionResolver}
-        >
-          <TableHeader />
-          <TableBody />
-        </Table>
+        <SimpleTable label="Operation Builder" columns={columns} rows={this.rows()} />
+
         <Button
           variant={ButtonVariant.link}
-          icon={<PlusCircleIcon />}
+          icon={<KialiIcon.AddMore />}
           isDisabled={Object.keys(this.state.operation).length === 0}
           onClick={this.onAddOperationToList}
         >

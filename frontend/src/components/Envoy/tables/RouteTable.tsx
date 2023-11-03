@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { SummaryTable, SummaryTableRenderer } from './BaseTable';
-import { ICell, ISortBy, sortable } from '@patternfly/react-table';
+import { IRow, ISortBy } from '@patternfly/react-table';
 import { RouteSummary } from '../../../types/IstioObjects';
 import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '../../../types/Filters';
 import { SortField } from '../../../types/SortFilters';
@@ -11,19 +11,20 @@ import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { isParentKiosk } from '../../Kiosk/KioskActions';
+import { SortableTh } from 'components/SimpleTable';
 
 export class RouteTable implements SummaryTable {
-  summaries: RouteSummary[];
-  sortingIndex: number;
-  sortingDirection: 'asc' | 'desc';
-  namespaces: Namespace[];
-  namespace: string;
   kiosk: string;
+  namespace: string;
+  namespaces: Namespace[];
+  sortingDirection: 'asc' | 'desc';
+  sortingIndex: number;
+  summaries: RouteSummary[];
 
   constructor(summaries: RouteSummary[], sortBy: ISortBy, namespaces: Namespace[], namespace: string, kiosk: string) {
     this.summaries = summaries;
-    this.sortingIndex = sortBy.index || 0;
-    this.sortingDirection = sortBy.direction || 'asc';
+    this.sortingIndex = sortBy.index ?? 0;
+    this.sortingDirection = sortBy.direction ?? 'asc';
     this.namespaces = namespaces;
     this.namespace = namespace;
     this.kiosk = kiosk;
@@ -48,7 +49,7 @@ export class RouteTable implements SummaryTable {
     ];
   };
 
-  filterMethods = (): { [filter_id: string]: (ClusterSummary, ActiveFilter) => boolean } => {
+  filterMethods = (): { [filter_id: string]: (entry: RouteSummary, filter: ActiveFilter) => boolean } => {
     return {
       Name: (entry: RouteSummary, filter: ActiveFilter): boolean => {
         return entry.name.toString().includes(filter.value);
@@ -102,42 +103,44 @@ export class RouteTable implements SummaryTable {
     ];
   };
 
-  head(): ICell[] {
+  head(): SortableTh[] {
     return [
-      { title: 'Name', transforms: [sortable] },
+      {
+        title: 'Name',
+        sortable: true
+      },
       {
         title: 'Domains',
-        transforms: [sortable],
-        header: {
-          info: {
-            tooltip: (
-              <div className={kialiStyle({ textAlign: 'left' })}>
-                Envoy will be matched this domain to this virtual host.
-              </div>
-            )
-          }
+        sortable: true,
+        info: {
+          tooltip: (
+            <div className={kialiStyle({ textAlign: 'left' })}>
+              Envoy will be matched this domain to this virtual host.
+            </div>
+          )
         }
       },
       {
         title: 'Match',
-        transforms: [sortable],
-        header: {
-          info: {
-            tooltip: (
-              <div className={kialiStyle({ textAlign: 'left' })}>
-                The match tree to use when resolving route actions for incoming requests
-              </div>
-            )
-          }
+        sortable: true,
+        info: {
+          tooltip: (
+            <div className={kialiStyle({ textAlign: 'left' })}>
+              The match tree to use when resolving route actions for incoming requests
+            </div>
+          )
         }
       },
-      { title: 'Virtual Service', transforms: [sortable] }
+      {
+        title: 'Virtual Service',
+        sortable: true
+      }
     ];
   }
 
   resource = (): string => 'routes';
 
-  setSorting = (columnIndex: number, direction: 'asc' | 'desc') => {
+  setSorting = (columnIndex: number, direction: 'asc' | 'desc'): void => {
     this.sortingDirection = direction;
     this.sortingIndex = columnIndex;
   };
@@ -163,7 +166,7 @@ export class RouteTable implements SummaryTable {
     );
   };
 
-  rows(): (string | number | JSX.Element)[][] {
+  rows(): IRow[] {
     const parentKiosk = isParentKiosk(this.kiosk);
     return this.summaries
       .filter((value: RouteSummary) => {
@@ -173,16 +176,21 @@ export class RouteTable implements SummaryTable {
         const sortField = this.sortFields().find((value: SortField<RouteSummary>): boolean => {
           return value.id === this.sortFields()[this.sortingIndex].id;
         });
+
         return this.sortingDirection === 'asc' ? sortField!.compare(a, b) : sortField!.compare(b, a);
       })
-      .map((summary: RouteSummary): (string | number | JSX.Element)[] => {
-        return [
-          summary.name,
-          serviceLink(summary.domains, this.namespaces, this.namespace, true, parentKiosk),
-          summary.match,
-          istioConfigLink(summary.virtual_service, 'virtualservice')
-        ];
-      });
+      .map(
+        (summary: RouteSummary): IRow => {
+          return {
+            cells: [
+              summary.name,
+              serviceLink(summary.domains, this.namespaces, this.namespace, true, parentKiosk),
+              summary.match,
+              istioConfigLink(summary.virtual_service, 'virtualservice')
+            ]
+          };
+        }
+      );
   }
 }
 

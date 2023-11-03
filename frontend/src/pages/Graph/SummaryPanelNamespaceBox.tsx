@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Tab, Tooltip } from '@patternfly/react-core';
-import { Node } from '@patternfly/react-topology';
+import { Edge, GraphElement, Node } from '@patternfly/react-topology';
 import { kialiStyle } from 'styles/StyleUtils';
 import { RateTableGrpc, RateTableHttp, RateTableTcp } from '../../components/SummaryPanel/RateTable';
 import { RequestChart, StreamChart } from '../../components/SummaryPanel/RpsChart';
@@ -22,7 +22,8 @@ import {
   hr,
   getDatapoints,
   summaryPanelWidth,
-  getTitle
+  getTitle,
+  noTrafficStyle
 } from './SummaryPanelCommon';
 import { Response } from '../../services/Api';
 import { IstioMetricsMap, Datapoint, Labels } from '../../types/Metrics';
@@ -163,12 +164,13 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     const boxed = isPF ? descendents(namespaceBox) : namespaceBox.descendants();
     const namespace = data[NodeAttr.namespace];
 
-    let numSvc;
-    let numWorkloads;
-    let numEdges;
+    let numSvc: number;
+    let numWorkloads: number;
+    let numEdges: number;
+
     const { numApps, numVersions } = this.countApps(boxed, isPF);
     const { grpcIn, grpcOut, grpcTotal, httpIn, httpOut, httpTotal, isGrpcRequests, tcpIn, tcpOut, tcpTotal } =
-      this.boxTraffic || this.getBoxTraffic();
+      this.boxTraffic ?? this.getBoxTraffic();
 
     if (isPF) {
       numSvc = select(boxed, { prop: NodeAttr.nodeType, val: NodeType.SERVICE }).length;
@@ -219,9 +221,9 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
             <Tab style={summaryFont} title="Inbound" eventKey={0} ref={tooltipInboundRef}>
               <div style={summaryFont}>
                 {grpcIn.rate === 0 && httpIn.rate === 0 && tcpIn.rate === 0 && (
-                  <>
+                  <div className={noTrafficStyle}>
                     <KialiIcon.Info /> No inbound traffic.
-                  </>
+                  </div>
                 )}
 
                 {grpcIn.rate > 0 && (
@@ -255,9 +257,9 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
             <Tab style={summaryFont} title="Outbound" eventKey={1} ref={tooltipOutboundRef}>
               <div style={summaryFont}>
                 {grpcOut.rate === 0 && httpOut.rate === 0 && tcpOut.rate === 0 && (
-                  <>
+                  <div className={noTrafficStyle}>
                     <KialiIcon.Info /> No outbound traffic.
-                  </>
+                  </div>
                 )}
 
                 {grpcOut.rate > 0 && (
@@ -291,9 +293,9 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
             <Tab style={summaryFont} title="Total" eventKey={2} ref={tooltipTotalRef}>
               <div style={summaryFont}>
                 {grpcTotal.rate === 0 && httpTotal.rate === 0 && tcpTotal.rate === 0 && (
-                  <>
+                  <div className={noTrafficStyle}>
                     <KialiIcon.Info /> No traffic.
-                  </>
+                  </div>
                 )}
 
                 {grpcTotal.rate > 0 && (
@@ -315,6 +317,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
                     rateNR={httpTotal.rateNoResponse}
                   />
                 )}
+
                 {tcpTotal.rate > 0 && <RateTableTcp rate={tcpTotal.rate} />}
 
                 <div>
@@ -337,9 +340,9 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     const namespace = data[NodeAttr.namespace];
     const cluster = data[NodeAttr.cluster];
 
-    let inboundEdges;
-    let outboundEdges;
-    let totalEdges;
+    let inboundEdges: Edge[] | any;
+    let outboundEdges: Edge[] | any;
+    let totalEdges: Edge[] | any;
 
     if (isPF) {
       const controller = (namespaceBox as Node).getController();
@@ -387,14 +390,14 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     };
   };
 
-  private countApps = (boxed, isPF: boolean): { numApps: number; numVersions: number } => {
+  private countApps = (boxed: any, isPF: boolean): { numApps: number; numVersions: number } => {
     if (isPF) {
       return this.countAppsPF(boxed);
     }
 
     const appVersions: { [key: string]: Set<string> } = {};
 
-    boxed.filter(`node[nodeType = "${NodeType.APP}"]`).forEach(node => {
+    boxed.filter(`node[nodeType = "${NodeType.APP}"]`).forEach((node: any) => {
       const app = node.data(NodeAttr.app);
 
       if (appVersions[app] === undefined) {
@@ -415,7 +418,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
   private countAppsPF = (boxed: Node[]): { numApps: number; numVersions: number } => {
     const appVersions: { [key: string]: Set<string> } = {};
 
-    select(boxed, { prop: NodeAttr.nodeType, val: NodeType.APP }).forEach(node => {
+    select(boxed, { prop: NodeAttr.nodeType, val: NodeType.APP }).forEach((node: GraphElement) => {
       const data = node.getData();
       const app = data[NodeAttr.app];
 
@@ -480,6 +483,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
           <br />
         </>
       )}
+
       {numSvc > 0 && (
         <>
           <KialiIcon.Services className={topologyStyle} />
@@ -487,6 +491,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
           <br />
         </>
       )}
+
       {numWorkloads > 0 && (
         <>
           <KialiIcon.Workloads className={topologyStyle} />
@@ -494,6 +499,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
           <br />
         </>
       )}
+
       {numEdges > 0 && (
         <>
           <KialiIcon.Topology className={topologyStyle} />
@@ -538,6 +544,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
               dataRps={this.state.grpcRequestIn}
               dataErrors={this.state.grpcRequestErrIn}
             />
+
             <RequestChart
               label="gRPC - Outbound Request Traffic"
               dataRps={this.state.grpcRequestOut}
@@ -554,6 +561,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
               sentRates={this.state.grpcSentIn}
               unit="messages"
             />
+
             <StreamChart
               label="gRPC - Outbound Traffic"
               receivedRates={this.state.grpcReceivedOut}
@@ -570,6 +578,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
               dataRps={this.state.httpRequestIn}
               dataErrors={this.state.httpRequestErrIn}
             />
+
             <RequestChart
               label="HTTP - Outbound Request Traffic"
               dataRps={this.state.httpRequestOut}
@@ -586,6 +595,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
               sentRates={this.state.tcpSentIn}
               unit="bytes"
             />
+
             <StreamChart
               label="TCP - Outbound Traffic"
               receivedRates={this.state.tcpReceivedOut}
@@ -604,6 +614,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     const cluster = isPF
       ? props.data.summaryTarget.getData()[NodeAttr.cluster]
       : props.data.summaryTarget.data(NodeAttr.cluster);
+
     const namespace = isPF
       ? props.data.summaryTarget.getData()[NodeAttr.namespace]
       : props.data.summaryTarget.data(NodeAttr.namespace);
@@ -612,6 +623,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
       this.setState({
         loading: false
       });
+
       return;
     }
 
@@ -634,9 +646,11 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     if (grpcTotal.rate > 0 && !isGrpcRequests) {
       filters.push('grpc_sent', 'grpc_received');
     }
+
     if (httpTotal.rate > 0 || (grpcTotal.rate > 0 && isGrpcRequests)) {
       filters.push('request_count', 'request_error_count');
     }
+
     if (tcpTotal.rate > 0) {
       filters.push('tcp_sent', 'tcp_received');
     }
@@ -721,7 +735,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     this.setState({ loading: true, metricsLoadError: null });
   };
 
-  private updateValidation = (isPF: boolean) => {
+  private updateValidation = (isPF: boolean): void => {
     const namespace = isPF
       ? this.props.data.summaryTarget.getData()[NodeAttr.namespace]
       : this.props.data.summaryTarget.data(NodeAttr.namespace);

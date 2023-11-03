@@ -18,8 +18,7 @@ import {
 import { aceOptions } from '../../types/IstioConfigDetails';
 import AceEditor from 'react-ace';
 import { ParameterizedTabs } from '../Tab/Tabs';
-import { ICell } from '@patternfly/react-table';
-import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
+import { IRow, ThProps } from '@patternfly/react-table';
 import { AuthConfig } from '../../types/Auth';
 import { authenticationConfig } from '../../config/AuthenticationConfig';
 import { basicTabStyle } from 'styles/TabStyles';
@@ -29,6 +28,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import ReactAce from 'react-ace/lib/ace';
 import { classes } from 'typestyle';
 import { usePreviousValue } from 'utils/ReactUtils';
+import { SimpleTable } from 'components/SimpleTable';
 
 enum CopyStatus {
   NOT_COPIED, // We haven't copied the current output
@@ -62,14 +62,14 @@ const propsToShow = [
   'clusters',
   'gatewayAPIClasses',
   'gatewayAPIEnabled',
+  'istioAnnotationsAction',
+  'istioCanaryRevision',
   'istioConfigMap',
   'istioIdentityDomain',
+  'istioInjectionAction',
   'istioNamespace',
   'istioStatusEnabled',
-  'logLevel',
-  'istioCanaryRevision',
-  'istioAnnotationsAction',
-  'istioInjectionAction'
+  'logLevel'
 ];
 
 const propsToPatch = ['cyRef', 'summaryTarget', 'token', 'username'];
@@ -153,33 +153,34 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
     }
   }, [props.isOpen]);
 
-  const copyCallback = (_text: string, result: boolean) => {
+  const copyCallback = (_text: string, result: boolean): void => {
     setCopyStatus(result ? CopyStatus.COPIED : CopyStatus.NOT_COPIED);
   };
 
-  const download = () => {
+  const download = (): void => {
     const element = document.createElement('a');
-    const file = new Blob([getCopyText()], { type: 'text/plain' });
+    const file = new Blob([copyText], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
     element.download = `debug_${currentTab === 'kialiConfig' ? 'kiali_config' : 'additional_state'}.json`;
     document.body.appendChild(element); // Required for this to work in FireFox
     element.click();
   };
 
-  const hideAlert = () => {
+  const hideAlert = (): void => {
     setCopyStatus(CopyStatus.NOT_COPIED);
   };
 
-  const parseConfig = (key: string, value: any) => {
+  const parseConfig = (key: string, value: string): string | null => {
     // We have to patch some runtime properties  we don't want to serialize
     if (propsToPatch.includes(key)) {
       return null;
     }
+
     return value;
   };
 
   // Properties shown in Kiali Config are not shown again in Additional State
-  const filterDebugInformation = (info: any) => {
+  const filterDebugInformation = (info: DebugInformationData): DebugInformationData => {
     if (info !== null) {
       for (const [key] of Object.entries(info)) {
         if (propsToShow.includes(key)) {
@@ -188,52 +189,42 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
         }
       }
     }
+
     return info;
   };
 
-  const renderDebugInformation = () => {
-    let debugInformation: DebugInformationData = {
-      backendConfigs: {
-        authenticationConfig: authenticationConfig,
-        computedServerConfig: serverConfig
-      },
-      currentURL: window.location.href,
-      reduxState: props.appState
-    };
-    debugInformation = filterDebugInformation(debugInformation);
-    return beautify(debugInformation, parseConfig, 2);
+  let debugInformation: DebugInformationData = {
+    backendConfigs: {
+      authenticationConfig: authenticationConfig,
+      computedServerConfig: serverConfig
+    },
+    currentURL: window.location.href,
+    reduxState: props.appState
   };
 
-  const getCopyText = (): string => {
-    const text = currentTab === 'kialiConfig' ? JSON.stringify(config, null, 2) : renderDebugInformation();
-    return text;
-  };
+  debugInformation = filterDebugInformation(debugInformation);
 
-  const columns = (): ICell[] => {
-    return [{ title: 'Configuration' }, { title: 'Value' }];
-  };
+  const debugInformationText = beautify(debugInformation, parseConfig, 2);
 
-  const getRows = () => {
-    var conf: string[][] = [];
+  const copyText = currentTab === 'kialiConfig' ? JSON.stringify(config, null, 2) : debugInformationText;
 
-    for (const [k, v] of Object.entries(config)) {
-      if (typeof v !== 'string') {
-        conf.push([k, JSON.stringify(v)]);
-      } else {
-        conf.push([k, v]);
-      }
+  const columns: ThProps[] = [{ title: 'Configuration' }, { title: 'Value' }];
+
+  let rows: IRow[] = [];
+
+  for (const [k, v] of Object.entries(config)) {
+    if (typeof v !== 'string') {
+      rows.push({ cells: [k, JSON.stringify(v)] });
+    } else {
+      rows.push({ cells: [k, v] });
     }
-    return conf;
-  };
+  }
 
-  const renderTabs = () => {
+  const renderTabs = (): React.ReactNode[] => {
     const kialiConfig = (
       <Tab eventKey={0} title="Kiali Config" key="kialiConfig">
-        <CopyToClipboard onCopy={copyCallback} text={getRows()} options={copyToClipboardOptions}>
-          <Table className={tableStyle} cells={columns()} rows={getRows()}>
-            <TableHeader />
-            <TableBody />
-          </Table>
+        <CopyToClipboard onCopy={copyCallback} text={rows} options={copyToClipboardOptions}>
+          <SimpleTable label="Debug Information" className={tableStyle} columns={columns} rows={rows} />
         </CopyToClipboard>
       </Tab>
     );
@@ -243,24 +234,23 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
     const additionalState = (
       <Tab eventKey={1} title="Additional State" key="additionalState">
         <span>Please include this information when opening a bug:</span>
-        <CopyToClipboard onCopy={copyCallback} text={renderDebugInformation()} options={copyToClipboardOptions}>
+        <CopyToClipboard onCopy={copyCallback} text={debugInformationText} options={copyToClipboardOptions}>
           <AceEditor
             ref={aceEditorRef}
             mode="yaml"
             theme={theme === Theme.DARK ? 'twilight' : 'eclipse'}
-            width={'100%'}
+            width="100%"
             className={istioAceEditorStyle}
             wrapEnabled={true}
             readOnly={true}
             setOptions={aceOptions || { foldStyle: 'markbegin' }}
-            value={renderDebugInformation()}
+            value={debugInformationText}
           />
         </CopyToClipboard>
       </Tab>
     );
 
-    const tabsArray: JSX.Element[] = [kialiConfig, additionalState];
-    return tabsArray;
+    return [kialiConfig, additionalState];
   };
 
   if (!props.isOpen) {
@@ -275,11 +265,15 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
       onClose={props.onClose}
       title="Debug information"
       actions={[
-        <Button onClick={close}>Close</Button>,
-        <CopyToClipboard onCopy={copyCallback} text={getCopyText()} options={copyToClipboardOptions}>
+        <Button key="close" onClick={close}>
+          Close
+        </Button>,
+
+        <CopyToClipboard key="copy" onCopy={copyCallback} text={copyText} options={copyToClipboardOptions}>
           <Button variant={ButtonVariant.secondary}>Copy</Button>
         </CopyToClipboard>,
-        <Button variant={ButtonVariant.secondary} onClick={download}>
+
+        <Button key="download" variant={ButtonVariant.secondary} onClick={download}>
           Download
         </Button>
       ]}
@@ -293,6 +287,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
           actionClose={<AlertActionCloseButton onClose={hideAlert} />}
         />
       )}
+
       {copyStatus === CopyStatus.OLD_COPY && (
         <Alert
           style={{ marginBottom: '20px' }}
@@ -302,6 +297,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
           actionClose={<AlertActionCloseButton onClose={hideAlert} />}
         />
       )}
+
       <ParameterizedTabs
         id="basic-tabs"
         className={classes(basicTabStyle, tabStyle)}

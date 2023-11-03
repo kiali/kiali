@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { EmptyState, EmptyStateBody, EmptyStateVariant, Tooltip, EmptyStateHeader } from '@patternfly/react-core';
 import { StarIcon } from '@patternfly/react-icons';
-import { cellWidth, sortable, SortByDirection } from '@patternfly/react-table';
-import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
+import { IRow, SortByDirection } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
@@ -15,14 +14,15 @@ import { kialiIconDark, kialiIconLight } from 'config';
 import { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
 import { Theme } from 'types/Common';
+import { SimpleTable, SortableTh } from 'components/SimpleTable';
 
 const iconStyle = kialiStyle({
-  width: '25px',
-  marginRight: '10px',
-  marginTop: '-2px'
+  width: '1.5rem',
+  marginRight: '0.5rem',
+  marginTop: '-0.125rem'
 });
 
-const containerPadding = kialiStyle({ padding: '20px' });
+const containerStyle = kialiStyle({ padding: '1.25rem' });
 
 type MeshPageProps = {
   theme: string;
@@ -36,26 +36,31 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
     fetchMeshClusters();
   }, []);
 
-  const columns = [
+  const columns: SortableTh[] = [
     {
       title: 'Cluster Name',
-      transforms: [sortable, cellWidth(20)]
+      width: 20,
+      sortable: true
     },
     {
       title: 'Network',
-      transforms: [sortable, cellWidth(10)]
+      width: 10,
+      sortable: true
     },
     {
       title: 'Kiali',
-      transforms: [cellWidth(20)]
+      width: 20,
+      sortable: false
     },
     {
       title: 'API Endpoint',
-      transforms: [sortable, cellWidth(20)]
+      width: 20,
+      sortable: true
     },
     {
       title: 'Secret name',
-      transforms: [sortable, cellWidth(30)]
+      width: 30,
+      sortable: true
     }
   ];
 
@@ -70,7 +75,7 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
       if (instance.url.length !== 0) {
         return (
           <Tooltip
-            key={cluster.name + '/' + instance.namespace + '/' + instance.serviceName}
+            key={`${cluster.name}/${instance.namespace}/${instance.serviceName}`}
             content={`Go to this Kiali instance: ${instance.url}`}
           >
             <p>
@@ -83,7 +88,7 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
         );
       } else {
         return (
-          <p key={cluster.name + '/' + instance.namespace + '/' + instance.serviceName}>
+          <p key={`${cluster.name}/${instance.namespace}/${instance.serviceName}`}>
             <img alt="Kiali Icon" src={kialiIcon} className={iconStyle} />
             {`${instance.namespace} / ${instance.serviceName}`}
           </p>
@@ -92,7 +97,7 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
     });
   };
 
-  const buildTableRows = () => {
+  const buildTableRows = (): IRow[] => {
     if (meshClustersList === null) {
       return [];
     }
@@ -103,7 +108,7 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
       a[sortByAttr].localeCompare(b[sortByAttr], undefined, { sensitivity: 'base' })
     );
 
-    const tableRows = sortedList.map(cluster => ({
+    const tableRows = sortedList.map((cluster: MeshCluster) => ({
       cells: [
         <>
           {cluster.isKialiHome ? <StarIcon /> : null} {cluster.name}
@@ -118,7 +123,7 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
     return sortBy.direction === SortByDirection.asc ? tableRows : tableRows.reverse();
   };
 
-  const fetchMeshClusters = async () => {
+  const fetchMeshClusters = async (): Promise<void> => {
     try {
       const meshClusters = await getClusters();
       setMeshClustersList(meshClusters.data);
@@ -129,7 +134,7 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
     }
   };
 
-  const onSortHandler = (_event: React.MouseEvent, index: number, direction: SortByDirection) => {
+  const onSortHandler = (_event: React.MouseEvent, index: number, direction: SortByDirection): void => {
     setSortBy({ index, direction });
   };
 
@@ -141,12 +146,17 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
         hideNamespaceSelector={true}
         rightToolbar={<RefreshButton key={'Refresh'} handleRefresh={fetchMeshClusters} />}
       />
+
       <RenderContent>
-        <div className={containerPadding}>
-          <Table aria-label="Sortable Table" cells={columns} onSort={onSortHandler} rows={clusterRows} sortBy={sortBy}>
-            <TableHeader />
-            <TableBody />
-          </Table>
+        <div className={containerStyle}>
+          <SimpleTable
+            label="Mesh Clusters"
+            columns={columns}
+            rows={clusterRows}
+            sortBy={sortBy}
+            onSort={onSortHandler}
+          />
+
           {clusterRows.length === 0 ? (
             <EmptyState variant={EmptyStateVariant.full}>
               <EmptyStateHeader titleText="No Clusters" headingLevel="h2" />

@@ -4,6 +4,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { AccessLog } from 'types/IstioObjects';
 import { PFColors } from 'components/Pf/PfColors';
 import { classes } from 'typestyle';
+import { Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 
 export interface AccessLogModalProps {
   accessLog: AccessLog;
@@ -13,13 +14,17 @@ export interface AccessLogModalProps {
 }
 
 const fieldStyle = kialiStyle({
-  color: PFColors.Gold400,
-  display: 'inline-block'
+  color: PFColors.Orange400,
+  fontWeight: 'bold',
+  paddingLeft: 0,
+  paddingRight: 0
 });
 
 const modalStyle = kialiStyle({
   height: '70%',
-  width: '50%'
+  width: '50%',
+  overflow: 'auto',
+  overflowY: 'hidden'
 });
 
 const prefaceStyle = kialiStyle({
@@ -27,12 +32,11 @@ const prefaceStyle = kialiStyle({
   fontSize: 'var(--kiali-global--font-size)',
   backgroundColor: PFColors.Black1000,
   color: PFColors.Gold400,
-  margin: '10px 10px 15px 10px',
+  marginBottom: '1rem',
   overflow: 'auto',
   resize: 'none',
-  padding: '10px',
-  whiteSpace: 'pre',
-  width: 'calc(100% - 15px)'
+  padding: '0.75rem',
+  whiteSpace: 'pre'
 });
 
 const splitStyle = kialiStyle({
@@ -41,12 +45,13 @@ const splitStyle = kialiStyle({
 });
 
 const contentStyle = kialiStyle({
-  marginRight: '10px'
+  marginLeft: '0.5rem',
+  marginRight: '0.5rem'
 });
 
 const descriptionStyle = kialiStyle({
   backgroundColor: PFColors.BackgroundColor200,
-  padding: '15px 20px',
+  padding: '1rem 1.25rem',
   $nest: {
     '& dt': {
       fontWeight: 'bold'
@@ -54,81 +59,61 @@ const descriptionStyle = kialiStyle({
   }
 });
 
-type AccessLogModalState = {
-  description: React.ReactFragment;
-};
-
-export class AccessLogModal extends React.Component<AccessLogModalProps, AccessLogModalState> {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      description: (
-        <div style={{ width: '100%', textAlign: 'center' }}>
-          <dt>Click Field Name for Description</dt>
-        </div>
-      )
-    };
+const tableStyle = kialiStyle({
+  background: 'transparent',
+  marginBottom: '0.25rem',
+  $nest: {
+    '& tbody tr:last-child': {
+      borderBottom: 0
+    },
+    '& tr > *': {
+      padding: '0.25rem'
+    }
   }
+});
 
-  render() {
-    return (
-      <Modal
-        className={modalStyle}
-        style={{ overflow: 'auto', overflowY: 'hidden' }}
-        disableFocusTrap={true}
-        title="Envoy Access Log Entry"
-        isOpen={true}
-        onClose={this.props.onClose}
-      >
-        <div style={{ height: '85%' }}>
-          <div className={prefaceStyle}>{this.props.accessLogMessage} </div>
-          <Split style={{ height: '100%' }}>
-            <SplitItem className={classes(splitStyle, contentStyle)}>
-              {this.accessLogContent(this.props.accessLog)}
-            </SplitItem>
-            <SplitItem className={classes(splitStyle, descriptionStyle)}>{this.state.description}</SplitItem>
-          </Split>
-        </div>
-      </Modal>
-    );
-  }
+export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogModalProps) => {
+  const [description, setDescription] = React.useState<React.ReactNode>(
+    <div style={{ width: '100%', textAlign: 'center' }}>
+      <dt>Click Field Name for Description</dt>
+    </div>
+  );
 
-  private accessLogContent = (al: AccessLog): any => {
+  const accessLogContent = (al: AccessLog): React.ReactNode => {
     return (
       <div style={{ textAlign: 'left' }}>
-        {this.accessLogField('authority', al.authority)}
-        {this.accessLogField('bytes received', al.bytes_received)}
-        {this.accessLogField('bytes sent', al.bytes_sent)}
-        {this.accessLogField('downstream local', al.downstream_local)}
-        {this.accessLogField('downstream remote', al.downstream_remote)}
-        {this.accessLogField('duration', al.duration)}
-        {this.accessLogField('forwarded for', al.forwarded_for)}
-        {this.accessLogField('method', al.method)}
-        {this.accessLogField('protocol', al.protocol)}
-        {this.accessLogField('request id', al.request_id)}
-        {this.accessLogField('requested server', al.requested_server)}
-        {this.accessLogField('response flags', al.response_flags)}
-        {this.accessLogField('route name', al.route_name)}
-        {this.accessLogField('status code', al.status_code)}
-        {this.accessLogField('tcp service time', al.tcp_service_time)}
-        {this.accessLogField('timestamp', al.timestamp)}
-        {this.accessLogField('upstream cluster', al.upstream_cluster)}
-        {this.accessLogField('upstream failure reason', al.upstream_failure_reason)}
-        {this.accessLogField('upstream local', al.upstream_local)}
-        {this.accessLogField('upstream service', al.upstream_service)}
-        {this.accessLogField('upstream service time', al.upstream_service_time)}
-        {this.accessLogField('uri param', al.uri_param)}
-        {this.accessLogField('uri path', al.uri_path)}
-        {this.accessLogField('user agent', al.user_agent)}
+        {accessLogField('authority', al.authority)}
+        {accessLogField('bytes received', al.bytes_received)}
+        {accessLogField('bytes sent', al.bytes_sent)}
+        {accessLogField('downstream local', al.downstream_local)}
+        {accessLogField('downstream remote', al.downstream_remote)}
+        {accessLogField('duration', al.duration)}
+        {accessLogField('forwarded for', al.forwarded_for)}
+        {accessLogField('method', al.method)}
+        {accessLogField('protocol', al.protocol)}
+        {accessLogField('request id', al.request_id)}
+        {accessLogField('requested server', al.requested_server)}
+        {accessLogField('response flags', al.response_flags)}
+        {accessLogField('route name', al.route_name)}
+        {accessLogField('status code', al.status_code)}
+        {accessLogField('tcp service time', al.tcp_service_time)}
+        {accessLogField('timestamp', al.timestamp)}
+        {accessLogField('upstream cluster', al.upstream_cluster)}
+        {accessLogField('upstream failure reason', al.upstream_failure_reason)}
+        {accessLogField('upstream local', al.upstream_local)}
+        {accessLogField('upstream service', al.upstream_service)}
+        {accessLogField('upstream service time', al.upstream_service_time)}
+        {accessLogField('uri param', al.uri_param)}
+        {accessLogField('uri path', al.uri_path)}
+        {accessLogField('user agent', al.user_agent)}
       </div>
     );
   };
 
-  private accessLogField = (key: string, val: string): any => {
+  const accessLogField = (key: string, val: string): React.ReactNode => {
     return (
       <>
-        <Button key={key} className={fieldStyle} variant={ButtonVariant.link} onClick={() => this.handleClick(key)}>
+        <Button key={key} className={fieldStyle} variant={ButtonVariant.link} onClick={() => handleClick(key)}>
           {key}:&nbsp;
         </Button>
         <span>{val ? val : '-'}</span>
@@ -137,11 +122,11 @@ export class AccessLogModal extends React.Component<AccessLogModalProps, AccessL
     );
   };
 
-  private handleClick = (alFieldName: string) => {
-    this.setState({ description: this.getDescription(alFieldName) });
+  const handleClick = (alFieldName: string): void => {
+    setDescription(getDescription(alFieldName));
   };
 
-  private getDescription = (alFieldName: string): React.ReactFragment => {
+  const getDescription = (alFieldName: string): React.ReactNode => {
     console.log(`fetch docs(${alFieldName})`);
     switch (alFieldName) {
       case 'authority':
@@ -650,36 +635,32 @@ export class AccessLogModal extends React.Component<AccessLogModalProps, AccessL
                 </a>
                 . In addition to that, START_TIME also accepts following specifiers:
               </p>
-              <table className="docutils align-default">
-                <colgroup>
-                  <col style={{ width: '28%' }} />
-                  <col style={{ width: '72%' }} />
-                </colgroup>
-                <thead>
-                  <tr className="row-odd">
-                    <th className="head">
+              <Table className={tableStyle}>
+                <Thead>
+                  <Tr className="row-odd">
+                    <Th dataLabel="Specifier" width={30} className="head">
                       <p>Specifier</p>
-                    </th>
-                    <th className="head">
+                    </Th>
+                    <Th dataLabel="Explanation" width={70} className="head">
                       <p>Explanation</p>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="row-even">
-                    <td>
+                    </Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  <Tr className="row-even">
+                    <Td>
                       <p>
                         <code className="docutils literal notranslate">
                           <span className="pre">%s</span>
                         </code>
                       </p>
-                    </td>
-                    <td>
+                    </Td>
+                    <Td>
                       <p>The number of seconds since the Epoch</p>
-                    </td>
-                  </tr>
-                  <tr className="row-odd">
-                    <td rowSpan={2}>
+                    </Td>
+                  </Tr>
+                  <Tr className="row-odd">
+                    <Td rowSpan={2}>
                       <p>
                         <code className="docutils literal notranslate">
                           <span className="pre">%f</span>
@@ -689,13 +670,13 @@ export class AccessLogModal extends React.Component<AccessLogModalProps, AccessL
                           <span className="pre">%[1-9]f</span>
                         </code>
                       </p>
-                    </td>
-                    <td>
+                    </Td>
+                    <Td>
                       <p>Fractional seconds digits, default is 9 digits (nanosecond)</p>
-                    </td>
-                  </tr>
-                  <tr className="row-even">
-                    <td>
+                    </Td>
+                  </Tr>
+                  <Tr className="row-even">
+                    <Td>
                       <ul className="simple">
                         <li>
                           <p>
@@ -722,10 +703,10 @@ export class AccessLogModal extends React.Component<AccessLogModalProps, AccessL
                           </p>
                         </li>
                       </ul>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                    </Td>
+                  </Tr>
+                </Tbody>
+              </Table>
               <p>Examples of formatting START_TIME is as follows:</p>
               <div className="highlight-none notranslate">
                 <div className="highlight">
@@ -854,4 +835,22 @@ export class AccessLogModal extends React.Component<AccessLogModalProps, AccessL
         return <>No documentation available</>;
     }
   };
-}
+
+  return (
+    <Modal
+      className={modalStyle}
+      disableFocusTrap={true}
+      title="Envoy Access Log Entry"
+      isOpen={true}
+      onClose={props.onClose}
+    >
+      <div style={{ height: '85%' }}>
+        <div className={prefaceStyle}>{props.accessLogMessage} </div>
+        <Split style={{ height: '100%' }}>
+          <SplitItem className={classes(splitStyle, contentStyle)}>{accessLogContent(props.accessLog)}</SplitItem>
+          <SplitItem className={classes(splitStyle, descriptionStyle)}>{description}</SplitItem>
+        </Split>
+      </div>
+    </Modal>
+  );
+};
