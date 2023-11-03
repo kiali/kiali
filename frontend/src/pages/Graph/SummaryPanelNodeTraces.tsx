@@ -6,7 +6,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 
 import { KialiAppState } from 'store/Store';
 import { TracingThunkActions } from 'actions/TracingThunkActions';
-import { history } from '../../app/History';
+import { history, URLParam } from '../../app/History';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { JaegerTrace } from 'types/TracingInfo';
@@ -19,6 +19,7 @@ import { DecoratedGraphNodeData } from 'types/Graph';
 import { transformTraceData } from 'utils/tracing/TraceTransform';
 import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/KioskActions';
 import { KialiDispatch } from '../../types/Redux';
+import { isMultiCluster } from '../../config';
 
 type ReduxProps = {
   kiosk: string;
@@ -158,7 +159,8 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
     const tracesDetailsURL =
       `/namespaces/${d.namespace}` +
       (d.workload ? `/workloads/${d.workload}` : d.service ? `/services/${d.service}` : `/applications/${d.app!}`) +
-      '?tab=traces';
+      '?tab=traces' +
+      (d.cluster && isMultiCluster ? `&${URLParam.CLUSTERNAME}=${encodeURIComponent(d.cluster)}` : '');
 
     const currentID = this.props.selectedTrace?.traceID;
 
