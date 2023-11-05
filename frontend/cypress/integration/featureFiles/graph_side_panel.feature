@@ -83,5 +83,4 @@ Feature: Kiali Graph page - Side panel menu actions
     And user clicks the "productpage" service node
     And cluster badge for the "graph side panel" should be visible
     And user clicks the "Traces" graph summary tab
-    And user clicks the Show Traces button
-    Then user should see cluster parameter in links in the context menu
+    Then user should see "" cluster parameter in links in the traces
