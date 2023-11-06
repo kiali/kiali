@@ -15,6 +15,7 @@ import {
   HelperTextItem,
   TextInput
 } from '@patternfly/react-core';
+import { EditIcon } from '@patternfly/react-icons/dist/esm/icons/edit-icon';
 import { RenderContent } from '../../components/Nav/Page';
 import { kialiStyle } from 'styles/StyleUtils';
 import { GatewayForm, GATEWAY, GATEWAYS, GatewayState, initGateway, isGatewayStateValid } from './GatewayForm';
@@ -81,6 +82,8 @@ import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPre
 import { isValid } from 'utils/Common';
 import { ClusterDropdown } from './ClusterDropdown';
 import { NamespaceDropdown } from '../../components/NamespaceDropdown';
+import { Labels } from '../../components/Label/Labels';
+import { WizardAnnotations } from '../../components/IstioWizards/WizardAnnotations';
 
 type Props = {
   objectType: string;
@@ -90,7 +93,11 @@ type Props = {
 };
 
 type State = {
+  annotations: { [key: string]: string };
   name: string;
+  labels: { [key: string]: string };
+  showAnnotationsWizard: boolean;
+  showLabelsWizard: boolean;
   showPreview: boolean;
   itemsPreview: ConfigPreviewItem[];
   istioPermissions: IstioPermissions;
@@ -104,6 +111,8 @@ type State = {
 };
 
 const formPadding = kialiStyle({ padding: '30px 20px 30px 20px' });
+
+const editIcon = kialiStyle({ padding: '0 0 0 0', marginLeft: '0.35em' });
 
 const DIC = {
   AuthorizationPolicy: AUTHORIZATION_POLICIES,
@@ -127,8 +136,12 @@ export const NEW_ISTIO_RESOURCE = [
 ];
 
 const initState = (): State => ({
+  annotations: {},
   name: '',
   istioPermissions: {},
+  labels: {},
+  showAnnotationsWizard: false,
+  showLabelsWizard: false,
   showPreview: false,
   itemsPreview: [],
   authorizationPolicy: initAuthorizationPolicy(),
@@ -240,6 +253,32 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     });
   };
 
+  onLabelsWizardToggle = (value: boolean) => {
+    this.setState({
+      showLabelsWizard: value
+    });
+  };
+
+  onAddLabels = (value: { [key: string]: string }): void => {
+    this.setState({
+      labels: value,
+      showLabelsWizard: false
+    });
+  };
+
+  onAnnotationsWizardToggle = (value: boolean) => {
+    this.setState({
+      showAnnotationsWizard: value
+    });
+  };
+
+  onAddAnnotations = (value: { [key: string]: string }): void => {
+    this.setState({
+      annotations: value,
+      showAnnotationsWizard: false
+    });
+  };
+
   onIstioResourceCreate = () => {
     if (this.props.activeClusters.length > 0) {
       this.props.activeClusters.forEach(cluster => {
@@ -300,49 +339,93 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
           items.push({
             title: 'Authorization Policy',
             type: 'authorizationpolicy',
-            items: [buildAuthorizationPolicy(this.state.name, ns.name, this.state.authorizationPolicy)]
+            items: [
+              buildAuthorizationPolicy(
+                this.state.annotations,
+                this.state.labels,
+                this.state.name,
+                ns.name,
+                this.state.authorizationPolicy
+              )
+            ]
           });
           break;
         case GATEWAY:
           items.push({
             title: 'Gateway',
             type: 'gateway',
-            items: [buildGateway(this.state.name, ns.name, this.state.gateway)]
+            items: [
+              buildGateway(this.state.annotations, this.state.labels, this.state.name, ns.name, this.state.gateway)
+            ]
           });
           break;
         case K8SGATEWAY:
           items.push({
             title: 'K8sGateway',
             type: 'k8sGateway',
-            items: [buildK8sGateway(this.state.name, ns.name, this.state.k8sGateway)]
+            items: [
+              buildK8sGateway(
+                this.state.annotations,
+                this.state.labels,
+                this.state.name,
+                ns.name,
+                this.state.k8sGateway
+              )
+            ]
           });
           break;
         case PEER_AUTHENTICATION:
           items.push({
             title: 'Peer Authentication',
             type: 'peerauthentication',
-            items: [buildPeerAuthentication(this.state.name, ns.name, this.state.peerAuthentication)]
+            items: [
+              buildPeerAuthentication(
+                this.state.annotations,
+                this.state.labels,
+                this.state.name,
+                ns.name,
+                this.state.peerAuthentication
+              )
+            ]
           });
           break;
         case REQUEST_AUTHENTICATION:
           items.push({
             title: 'Request Authentication',
             type: 'requestauthentication',
-            items: [buildRequestAuthentication(this.state.name, ns.name, this.state.requestAuthentication)]
+            items: [
+              buildRequestAuthentication(
+                this.state.annotations,
+                this.state.labels,
+                this.state.name,
+                ns.name,
+                this.state.requestAuthentication
+              )
+            ]
           });
           break;
         case SERVICE_ENTRY:
           items.push({
             title: 'Service Entry',
             type: 'serviceentry',
-            items: [buildServiceEntry(this.state.name, ns.name, this.state.serviceEntry)]
+            items: [
+              buildServiceEntry(
+                this.state.annotations,
+                this.state.labels,
+                this.state.name,
+                ns.name,
+                this.state.serviceEntry
+              )
+            ]
           });
           break;
         case SIDECAR:
           items.push({
             title: 'Sidecar',
             type: 'sidecar',
-            items: [buildSidecar(this.state.name, ns.name, this.state.sidecar)]
+            items: [
+              buildSidecar(this.state.annotations, this.state.labels, this.state.name, ns.name, this.state.sidecar)
+            ]
           });
           break;
       }
@@ -533,6 +616,48 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
             {this.props.objectType === SIDECAR && (
               <SidecarForm sidecar={this.state.sidecar} onChange={this.onChangeSidecar} />
             )}
+            <FormGroup fieldId="labels" label="Labels">
+              <Labels labels={this.state.labels} />
+              <Button
+                type="button"
+                variant="link"
+                isInline
+                onClick={() => this.onLabelsWizardToggle(true)}
+                data-test={'edit-labels'}
+              >
+                Edit Labels
+                <EditIcon className={editIcon} />
+              </Button>
+              <WizardAnnotations
+                showAnotationsWizard={this.state.showLabelsWizard}
+                header={'labels'}
+                onChange={labels => this.onAddLabels(labels)}
+                onClose={() => this.onLabelsWizardToggle(false)}
+                annotations={this.state.labels}
+                canEdit={true}
+              />
+            </FormGroup>
+            <FormGroup fieldId="annotations" label="Annotations">
+              <Labels labels={this.state.annotations} expanded={false} header={'annotations'} />
+              <Button
+                type="button"
+                variant="link"
+                isInline
+                onClick={() => this.onAnnotationsWizardToggle(true)}
+                data-test={'edit-annotations'}
+              >
+                Edit Annotations
+                <EditIcon className={editIcon} />
+              </Button>
+              <WizardAnnotations
+                showAnotationsWizard={this.state.showAnnotationsWizard}
+                header={'annotations'}
+                onChange={annotations => this.onAddAnnotations(annotations)}
+                onClose={() => this.onAnnotationsWizardToggle(false)}
+                annotations={this.state.annotations}
+                canEdit={true}
+              />
+            </FormGroup>
             <ActionGroup>
               <Button
                 variant={ButtonVariant.primary}
