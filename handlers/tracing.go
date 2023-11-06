@@ -277,5 +277,11 @@ func readQuery(values url.Values) (models.TracingQuery, error) {
 		q.Tags[key] = value
 	}
 
+	// 'cluster' in tags is used to query in tracing by cluster in multi-cluster mode
+	// while 'Cluster' in models.TracingQuery can have default cluster
+	if values.Get("clusterName") != "" {
+		q.Tags["cluster"] = values.Get("clusterName")
+	}
+
 	return q, nil
 }

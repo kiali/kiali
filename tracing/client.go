@@ -25,6 +25,7 @@ import (
 	jsonConv "github.com/kiali/kiali/tracing/jaeger/model/converter/json"
 	jsonModel "github.com/kiali/kiali/tracing/jaeger/model/json"
 	"github.com/kiali/kiali/tracing/tempo"
+	"github.com/kiali/kiali/util"
 	"github.com/kiali/kiali/util/grpcutil"
 	"github.com/kiali/kiali/util/httputil"
 )
@@ -144,6 +145,10 @@ func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*m
 		return in.httpTracingClient.GetAppTracesHTTP(in.httpClient, in.baseURL, namespace, app, q)
 	}
 	jaegerServiceName := jaeger.BuildTracingServiceName(namespace, app)
+	r := model.TracingResponse{
+		Data:               []jsonModel.Trace{},
+		TracingServiceName: jaegerServiceName,
+	}
 	findTracesRQ := &model.FindTracesRequest{
 		Query: &model.TraceQueryParameters{
 			ServiceName:  jaegerServiceName,
@@ -154,6 +159,40 @@ func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*m
 			SearchDepth:  int32(q.Limit),
 		},
 	}
+
+	tracesMap, err := in.queryTraces(findTracesRQ)
+	if err != nil || len(tracesMap) == 0 {
+		// show warning to user that cannot query by cluster
+		// query second time without cluster filter
+		var tags = util.CopyStringMap(q.Tags)
+		delete(tags, "cluster")
+		findTracesRQ = &model.FindTracesRequest{
+			Query: &model.TraceQueryParameters{
+				ServiceName:  jaegerServiceName,
+				StartTimeMin: timestamppb.New(q.Start),
+				StartTimeMax: timestamppb.New(q.End),
+				Tags:         tags,
+				DurationMin:  durationpb.New(q.MinDuration),
+				SearchDepth:  int32(q.Limit),
+			},
+		}
+		tracesMap, err = in.queryTraces(findTracesRQ)
+		r.FromAllClusters = true
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, t := range tracesMap {
+		converted := jsonConv.FromDomain(t)
+		r.Data = append(r.Data, *converted)
+	}
+
+	return &r, nil
+}
+
+func (in *Client) queryTraces(findTracesRQ *model.FindTracesRequest) (map[model.TraceID]*model.Trace, error) {
 	ctx, cancel := context.WithTimeout(in.ctx, time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout)*time.Second)
 	defer cancel()
 
@@ -165,19 +204,8 @@ func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*m
 	}
 
 	tracesMap, err := readSpansStream(stream)
-	if err != nil {
-		return nil, err
-	}
-	r := model.TracingResponse{
-		Data:               []jsonModel.Trace{},
-		TracingServiceName: jaegerServiceName,
-	}
-	for _, t := range tracesMap {
-		converted := jsonConv.FromDomain(t)
-		r.Data = append(r.Data, *converted)
-	}
 
-	return &r, nil
+	return tracesMap, err
 }
 
 // GetTraceDetail fetches a specific trace from its ID

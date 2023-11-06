@@ -39,3 +39,17 @@ func TestRemoveNilValues(t *testing.T) {
 	assert.True(t, k3k1)
 	assert.True(t, k3k3k1)
 }
+
+func TestCopyMap(t *testing.T) {
+	initialMap := map[string]string{
+		"cluster":   "east",
+		"namespace": "bookinfo",
+	}
+	copyMap := CopyStringMap(initialMap)
+
+	initialMap["cluster"] = "west"
+
+	assert.Equal(t, initialMap["cluster"], "west")
+	assert.Equal(t, copyMap["cluster"], "east")
+	assert.Equal(t, copyMap["namespace"], initialMap["namespace"])
+}
