@@ -154,3 +154,19 @@ Then('{string} details information for service entry {string} can be seen', (hos
     cy.get('#pfbadge-SE').parent().parent().contains(name);
   });
 });
+
+And('user clicks on Edit Labels', () => {
+  cy.get('[data-test="edit-labels"]').click();
+});
+
+And('user clicks on Edit Annotations', () => {
+  cy.get('[data-test="edit-annotations"]').click();
+});
+
+And('user adds key {string} and value {string} for and saves', (key: string, value: string) => {
+  cy.get('[data-test="add-more"]').click();
+  cy.get(`input[id="annotationInputForKey_0"]`).type(key);
+  cy.get(`input[id="annotationInputForValue_0"]`).type(value);
+  cy.get('button[data-test="save-button"]').click()
+});
+

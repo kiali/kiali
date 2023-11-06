@@ -18,6 +18,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 interface Props {
   annotations: { [key: string]: string };
   canEdit: boolean;
+  header?: string;
   onChange: (annotations: { [key: string]: string }) => void;
   onClose: () => void;
   showAnotationsWizard: boolean;
@@ -188,14 +189,15 @@ export class WizardAnnotations extends React.Component<Props, State> {
     const header = (
       <>
         <Title id="modal-custom-header-label" headingLevel="h1" size={TitleSizes['2xl']}>
-          {this.props.canEdit ? 'Edit ' : 'View '}annotations
+          {this.props.canEdit ? 'Edit ' : 'View '}
+          {this.props.header ? this.props.header : 'annotations'}
         </Title>
       </>
     );
 
     const footer = (
       <ActionGroup>
-        <Button variant="primary" isDisabled={!this.props.canEdit} onClick={this.onChange}>
+        <Button variant="primary" isDisabled={!this.props.canEdit} onClick={this.onChange} data-test={'save-button'}>
           Save
         </Button>
 
@@ -236,6 +238,7 @@ export class WizardAnnotations extends React.Component<Props, State> {
           <Button
             variant="link"
             className={addMoreStyle}
+            data-test={'add-more'}
             icon={<KialiIcon.AddMore />}
             onClick={() => {
               this.addMore();
