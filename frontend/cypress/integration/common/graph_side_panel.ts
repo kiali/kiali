@@ -1,4 +1,5 @@
-import { When } from '@badeball/cypress-cucumber-preprocessor';
+import { And, When } from '@badeball/cypress-cucumber-preprocessor';
+import { clusterParameterExists } from "./navigation";
 
 When('user clicks the {string} service node', function (svcName: string) {
   cy.waitForReact();
@@ -20,3 +21,17 @@ When('user clicks the {string} item of the kebab menu of the graph side panel', 
     cy.wrap($item).click();
   });
 });
+
+When('user clicks the {string} graph summary tab', function (tab: string) {
+  cy.get('#graph_summary_tabs').should('be.visible').contains(tab).click();
+});
+
+And('user should see {string} cluster parameter in links in the traces',(exists:string)=>{
+  var present:boolean = true;
+  if (exists === 'no'){
+    present = false;
+  }
+  cy.get(`[data-test="show-traces"]`).within(() => {
+    clusterParameterExists(present);
+  });
+})

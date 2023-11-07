@@ -34,6 +34,7 @@ import { FocusNode } from 'pages/GraphPF/GraphPF';
 import { GraphSelectorBuilder } from './GraphSelector';
 import { GetTraceDetailURL } from '../../components/TracingIntegration/TracesComponent';
 import { ExternalServiceInfo } from '../../types/StatusState';
+import { isMultiCluster } from '../../config';
 
 type ReduxProps = {
   close: () => void;
@@ -110,7 +111,8 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
           : nodeData.service
           ? `/services/${nodeData.service}`
           : `/applications/${nodeData.app!}`) +
-        `?tab=traces&${URLParam.TRACING_TRACE_ID}=${this.props.trace.traceID}`
+        `?tab=traces&${URLParam.TRACING_TRACE_ID}=${this.props.trace.traceID}` +
+        (nodeData.cluster && isMultiCluster ? `&${URLParam.CLUSTERNAME}=${encodeURIComponent(nodeData.cluster)}` : '')
       : undefined;
     const jaegerTraceURL = GetTraceDetailURL(
       this.props.provider,
@@ -230,7 +232,8 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
             : nodeData.service
             ? `/services/${nodeData.service}`
             : `/applications/${nodeData.app!}`) +
-          `?tab=traces&${URLParam.TRACING_TRACE_ID}=${this.props.trace.traceID}&${URLParam.TRACING_SPAN_ID}=${span.spanID}`
+          `?tab=traces&${URLParam.TRACING_TRACE_ID}=${this.props.trace.traceID}&${URLParam.TRACING_SPAN_ID}=${span.spanID}` +
+          (span.cluster && isMultiCluster ? `&${URLParam.CLUSTERNAME}=${encodeURIComponent(span.cluster)}` : '')
       : undefined;
   }
 

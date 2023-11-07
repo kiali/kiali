@@ -86,3 +86,17 @@ But('no cluster badge for the {string} should be visible', (type: string) => {
     });
   }
 });
+
+But('cluster badge for the {string} should be visible', (type: string) => {
+  if (type === 'Istio config') {
+    cy.get('#pfbadge-C').should('be.visible');
+  } else if (type === 'graph side panel') {
+    cy.get('#graph-side-panel').within($div => {
+      cy.get('#pfbadge-C').should('be.visible');
+    });
+  } else {
+    cy.get(`#${type[0].toUpperCase()}${type.slice(1)}DescriptionCard`).within($article => {
+      cy.get('#pfbadge-C').should('be.visible');
+    });
+  }
+});
