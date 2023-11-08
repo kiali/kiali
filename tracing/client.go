@@ -37,7 +37,7 @@ type ClientInterface interface {
 
 // HTTPClientInterface for Mocks, also for Tempo or Jaeger
 type HTTPClientInterface interface {
-	GetAppTracesHTTP(client http.Client, baseURL *url.URL, namespace, app string, q models.TracingQuery) (response *model.TracingResponse, err error)
+	GetAppTracesHTTP(client http.Client, baseURL *url.URL, serviceName string, q models.TracingQuery) (response *model.TracingResponse, err error)
 	GetTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (*model.TracingSingleTrace, error)
 	GetServiceStatusHTTP(client http.Client, baseURL *url.URL) (bool, error)
 }
@@ -147,10 +147,10 @@ func NewClient(token string) (*Client, error) {
 
 // GetAppTraces fetches traces of an app
 func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*model.TracingResponse, error) {
+	serviceName := BuildTracingServiceName(namespace, app)
 	if in.grpcClient == nil {
-		return in.httpTracingClient.GetAppTracesHTTP(in.httpClient, in.baseURL, namespace, app, q)
+		return in.httpTracingClient.GetAppTracesHTTP(in.httpClient, in.baseURL, serviceName, q)
 	}
-	serviceName := jaeger.BuildTracingServiceName(namespace, app)
 	return in.grpcClient.FindTraces(in.ctx, serviceName, q)
 
 }
@@ -190,4 +190,12 @@ func (in *Client) GetServiceStatus() (bool, error) {
 	}
 
 	return in.grpcClient.GetServices(in.ctx)
+}
+
+func BuildTracingServiceName(namespace, app string) string {
+	conf := config.Get()
+	if conf.ExternalServices.Tracing.NamespaceSelector {
+		return app + "." + namespace
+	}
+	return app
 }
