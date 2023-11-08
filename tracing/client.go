@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"time"
 
+	"google.golang.org/grpc"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -18,7 +20,6 @@ import (
 	"github.com/kiali/kiali/tracing/tempo"
 	"github.com/kiali/kiali/util/grpcutil"
 	"github.com/kiali/kiali/util/httputil"
-	"google.golang.org/grpc"
 )
 
 const (
