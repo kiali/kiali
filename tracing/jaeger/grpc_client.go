@@ -22,7 +22,7 @@ import (
 )
 
 type JaegerGRPCClient struct {
-	Cc model.QueryServiceClient
+	JaegergRPCClient model.QueryServiceClient
 }
 
 // FindTraces
@@ -91,7 +91,7 @@ func (jc JaegerGRPCClient) GetTrace(ctx context.Context, strTraceID string) (*mo
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
 
-	stream, err := jc.Cc.GetTrace(ctx, getTraceRQ)
+	stream, err := jc.JaegergRPCClient.GetTrace(ctx, getTraceRQ)
 	if err != nil {
 		return nil, fmt.Errorf("GetTraceDetail, Tracing GRPC client error: %v", err)
 	}
@@ -112,7 +112,7 @@ func (jc JaegerGRPCClient) GetServices(ctxSrv context.Context) (bool, error) {
 	ctx, cancel := context.WithTimeout(ctxSrv, 4*time.Second)
 	defer cancel()
 
-	_, err := jc.Cc.GetServices(ctx, &model.GetServicesRequest{})
+	_, err := jc.JaegergRPCClient.GetServices(ctx, &model.GetServicesRequest{})
 	return err == nil, err
 }
 
@@ -121,7 +121,7 @@ func (jc JaegerGRPCClient) queryTraces(ctx context.Context, findTracesRQ *model.
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout)*time.Second)
 	defer cancel()
 
-	stream, err := jc.Cc.FindTraces(ctx, findTracesRQ)
+	stream, err := jc.JaegergRPCClient.FindTraces(ctx, findTracesRQ)
 	if err != nil {
 		err = fmt.Errorf("GetAppTraces, Tracing GRPC client error: %v", err)
 		log.Error(err.Error())

@@ -122,8 +122,8 @@ func NewClient(token string) (*Client, error) {
 					log.Errorf("Error while establishing GRPC connection: %v", errDial)
 					return nil, errDial
 				}
-				cc := model.NewQueryServiceClient(conn)
-				client = jaeger.JaegerGRPCClient{Cc: cc}
+				queryService := model.NewQueryServiceClient(conn)
+				client = jaeger.JaegerGRPCClient{JaegergRPCClient: queryService}
 				log.Infof("Create %s GRPC client %s", cfgTracing.Provider, address)
 
 			}
