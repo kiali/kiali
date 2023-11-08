@@ -3,7 +3,6 @@ package jaeger
 import (
 	"context"
 	"fmt"
-	"github.com/kiali/kiali/util"
 	"io"
 	"time"
 
@@ -19,6 +18,7 @@ import (
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	jsonConv "github.com/kiali/kiali/tracing/jaeger/model/converter/json"
 	jsonModel "github.com/kiali/kiali/tracing/jaeger/model/json"
+	"github.com/kiali/kiali/util"
 )
 
 type JaegerGRPCClient struct {
