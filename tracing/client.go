@@ -64,7 +64,7 @@ func NewClient(token string) (*Client, error) {
 	cfgTracing := cfg.ExternalServices.Tracing
 	var httpTracingClient HTTPClientInterface
 	if !cfgTracing.Enabled {
-		return nil, errors.New("jaeger is not enabled")
+		return nil, errors.New("tracing is not enabled")
 	} else {
 		auth := cfgTracing.Auth
 		if auth.UseKialiToken {
@@ -83,8 +83,6 @@ func NewClient(token string) (*Client, error) {
 
 		if cfg.ExternalServices.Tracing.Provider == JAEGER {
 			httpTracingClient = jaeger.JaegerHTTPClient{}
-		} else {
-			httpTracingClient = tempo.OtelHTTPClient{}
 		}
 
 		if cfgTracing.UseGRPC {
@@ -139,6 +137,12 @@ func NewClient(token string) (*Client, error) {
 			}
 			client := http.Client{Transport: transport, Timeout: timeout}
 			log.Infof("Create Tracing HTTP client %s", u)
+			if cfg.ExternalServices.Tracing.Provider == TEMPO {
+				httpTracingClient, err = tempo.NewOtelClient(client, u)
+				if err != nil {
+					log.Errorf("Error creating HTTP client %s", err.Error())
+				}
+			}
 			return &Client{httpTracingClient: httpTracingClient, httpClient: client, baseURL: u, ctx: ctx}, nil
 		}
 
