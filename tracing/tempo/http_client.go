@@ -49,8 +49,7 @@ func NewOtelClient(client http.Client, baseURL *url.URL) (otelClient *OtelHTTPCl
 func (oc OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, serviceName string, q models.TracingQuery) (response *model.TracingResponse, err error) {
 	url := *baseURL
 	url.Path = path.Join(url.Path, "/api/search")
-	tracingServiceName := buildTracingServiceName(namespace, app)
-	oc.prepareTraceQL(&url, tracingServiceName, q)
+	oc.prepareTraceQL(&url, serviceName, q)
 
 	r, err := oc.queryTracesHTTP(client, &url, q.Tags["error"])
 
