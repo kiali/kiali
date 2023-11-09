@@ -141,6 +141,7 @@ func NewClient(token string) (*Client, error) {
 				httpTracingClient, err = tempo.NewOtelClient(client, u)
 				if err != nil {
 					log.Errorf("Error creating HTTP client %s", err.Error())
+					return nil, err
 				}
 			}
 			return &Client{httpTracingClient: httpTracingClient, httpClient: client, baseURL: u, ctx: ctx}, nil
