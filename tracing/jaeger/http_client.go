@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model"
@@ -21,23 +20,23 @@ import (
 type JaegerHTTPClient struct {
 }
 
-func (jc JaegerHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, namespace, app string, q models.TracingQuery) (response *model.TracingResponse, err error) {
+func (jc JaegerHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, serviceName string, q models.TracingQuery) (response *model.TracingResponse, err error) {
 	url := *baseURL
 	url.Path = path.Join(url.Path, "/api/traces")
-	jaegerServiceName := BuildTracingServiceName(namespace, app)
+
 	// if cluster exists in tags, use it
-	prepareQuery(&url, jaegerServiceName, q, false)
+	prepareQuery(&url, serviceName, q, false)
 	r, err := queryTracesHTTP(client, &url)
 
 	if r != nil && len(r.Data) == 0 && q.Cluster != "" {
 		// query without cluster tag, warn user that tracing is not configured to use cluster tags
-		prepareQuery(&url, jaegerServiceName, q, true)
+		prepareQuery(&url, serviceName, q, true)
 		r, err = queryTracesHTTP(client, &url)
 		r.FromAllClusters = true
 	}
 
 	if r != nil {
-		r.TracingServiceName = jaegerServiceName
+		r.TracingServiceName = serviceName
 	}
 	return r, err
 }
@@ -147,12 +146,4 @@ func makeRequest(client http.Client, endpoint string, body io.Reader) (response 
 	response, err = io.ReadAll(resp.Body)
 	status = resp.StatusCode
 	return
-}
-
-func BuildTracingServiceName(namespace, app string) string {
-	conf := config.Get()
-	if conf.ExternalServices.Tracing.NamespaceSelector {
-		return app + "." + namespace
-	}
-	return app
 }

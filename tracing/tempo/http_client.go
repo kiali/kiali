@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model"
@@ -24,15 +23,14 @@ type OtelHTTPClient struct {
 }
 
 // GetAppTracesHTTP search traces
-func (oc OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, namespace, app string, q models.TracingQuery) (response *model.TracingResponse, err error) {
+func (oc OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, serviceName string, q models.TracingQuery) (response *model.TracingResponse, err error) {
 	url := *baseURL
 	url.Path = path.Join(url.Path, "/api/search")
-	tracingServiceName := buildTracingServiceName(namespace, app)
-	prepareTraceQL(&url, tracingServiceName, q)
+	prepareTraceQL(&url, serviceName, q)
 	r, err := oc.queryTracesHTTP(client, &url, q.Tags["error"])
 
 	if r != nil {
-		r.TracingServiceName = tracingServiceName
+		r.TracingServiceName = serviceName
 	}
 	return r, err
 }
@@ -258,12 +256,4 @@ func getServiceName(attributes []otelModels.Attribute) string {
 		}
 	}
 	return ""
-}
-
-func buildTracingServiceName(namespace, app string) string {
-	conf := config.Get()
-	if conf.ExternalServices.Tracing.NamespaceSelector {
-		return app + "." + namespace
-	}
-	return app
 }
