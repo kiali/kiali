@@ -183,7 +183,9 @@ func prepareTraceQL(u *url.URL, tracingServiceName string, query models.TracingQ
 	q := url.Values{}
 	q.Set("start", fmt.Sprintf("%d", query.Start.Unix()))
 	q.Set("end", fmt.Sprintf("%d", query.End.Unix()))
-	queryPart := TraceQL{operator1: ".service.name", operand: EQUAL, operator2: tracingServiceName}
+	queryPart1 := TraceQL{operator1: ".service.name", operand: EQUAL, operator2: tracingServiceName}
+	queryPart2 := TraceQL{operator1: ".node_id", operand: REGEX, operator2: ".*"}
+	queryPart := TraceQL{operator1: queryPart1, operand: AND, operator2: queryPart2}
 
 	if len(query.Tags) > 0 {
 		for k, v := range query.Tags {
@@ -193,8 +195,9 @@ func prepareTraceQL(u *url.URL, tracingServiceName string, query models.TracingQ
 	}
 
 	selects := []string{"status", ".service_name", ".node_id"}
-	trace := queryPart
-	queryQL := fmt.Sprintf("{ %s } | %s", printOperator(trace), printSelect(selects))
+	trace := TraceQL{operator1: Subquery{queryPart}, operand: AND, operator2: Subquery{}}
+	queryQL := fmt.Sprintf("%s| %s", printOperator(trace), printSelect(selects))
+
 	q.Set("q", queryQL)
 	if query.MinDuration > 0 {
 		q.Set("minDuration", fmt.Sprintf("%dms", query.MinDuration.Milliseconds()))
