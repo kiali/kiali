@@ -3,6 +3,7 @@ package tempo
 import (
 	"fmt"
 	"reflect"
+	"strings"
 )
 
 type operandType string
@@ -31,6 +32,12 @@ type Group struct {
 // Subqueries are {}
 type Subquery struct {
 	trace TraceQL
+}
+
+// Select after they query
+type Select struct {
+	trace  TraceQL
+	fields []string
 }
 
 func (trace TraceQL) getQuery() string {
@@ -75,4 +82,9 @@ func printOperator(operator interface{}) string {
 		queryString = fmt.Sprintf("%s", operator)
 	}
 	return queryString
+}
+
+func printSelect(fields []string) string {
+	selects := strings.Join(fields, ", ")
+	return fmt.Sprintf("select(%s)", selects)
 }
