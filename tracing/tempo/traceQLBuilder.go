@@ -7,7 +7,6 @@ import (
 )
 
 type operandType string
-type unquoted string
 
 const (
 	AND      operandType = "&&"
@@ -32,16 +31,6 @@ type Group struct {
 // Subqueries are {}
 type Subquery struct {
 	trace TraceQL
-}
-
-// Select after they query
-type Select struct {
-	trace  TraceQL
-	fields []string
-}
-
-func (trace TraceQL) getQuery() string {
-	return fmt.Sprintf("%s %s %s", printOperator(trace.operator1), trace.operand, printOperator(trace.operator2))
 }
 
 func printOperator(operator interface{}) string {
