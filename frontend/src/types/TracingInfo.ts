@@ -111,7 +111,6 @@ export type JaegerTrace = TraceData<RichSpanData> & {
   traceName: string;
   matched?: number; // Tempo returns the number of total spans matched
   services: { name: string; numberOfSpans: number }[];
-  loaded?: boolean; // Used for the frontend to prevent to load the trace multiple times
 };
 
 export type TracingError = {

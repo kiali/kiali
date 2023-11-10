@@ -30,7 +30,6 @@ type ReduxProps = {
   namespaceSelector: boolean;
   provider?: string;
   selectedTrace?: JaegerTrace;
-  tabTrace?: JaegerTrace;
   timeRange: TimeRange;
   urlTracing: string;
 };
@@ -341,7 +340,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
               />
             </CardBody>
           </Card>
-          {this.props.tabTrace && this.props.selectedTrace && (
+          {this.props.selectedTrace && (
             <div
               style={{
                 marginTop: 25
@@ -367,7 +366,6 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                     otherTraces={this.state.traces}
                     cluster={this.props.cluster ? this.props.cluster : ''}
                     provider={this.props.provider}
-                    tabTraceID={this.props.tabTrace?.traceID}
                   />
                 </Tab>
                 <Tab eventKey={spansDetailsTab} title="Span Details">
@@ -379,8 +377,8 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                       this.props.urlTracing,
                       this.props.externalServices
                     )}
-                    items={this.props.tabTrace?.spans ? this.props.tabTrace?.spans : []}
-                    traceID={this.props.tabTrace?.traceID}
+                    items={this.props.selectedTrace.spans}
+                    traceID={this.props.selectedTrace.traceID}
                     cluster={this.props.cluster ? this.props.cluster : ''}
                   />
                 </Tab>
@@ -405,7 +403,6 @@ const mapStateToProps = (state: KialiAppState) => {
     namespaceSelector: state.tracingState.info ? state.tracingState.info.namespaceSelector : true,
     provider: state.tracingState.info?.provider,
     selectedTrace: state.tracingState.selectedTrace,
-    tabTrace: state.tracingState.tabTrace,
     timeRange: timeRangeSelector(state),
     urlTracing: state.tracingState.info ? state.tracingState.info.url : ''
   };

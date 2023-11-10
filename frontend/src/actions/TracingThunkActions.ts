@@ -8,7 +8,7 @@ import { setTraceId as setURLTraceId } from 'utils/SearchParamUtils';
 import { transformTraceData } from 'utils/tracing/TraceTransform';
 
 export const TracingThunkActions = {
-  setTraceId: (cluster?: string, traceId?: string, tab?: boolean) => {
+  setTraceId: (cluster?: string, traceId?: string) => {
     setURLTraceId(traceId);
     return (dispatch: KialiDispatch) => {
       if (traceId) {
@@ -17,11 +17,7 @@ export const TracingThunkActions = {
             if (response.data.data) {
               const trace = transformTraceData(response.data.data, cluster);
               if (trace) {
-                trace.loaded = true;
                 dispatch(TracingActions.setTrace(trace));
-                if (tab) {
-                  dispatch(TracingActions.tabTrace(trace));
-                }
               }
             }
           })
@@ -30,7 +26,6 @@ export const TracingThunkActions = {
               setURLTraceId(undefined);
             }
             dispatch(TracingActions.setTrace(undefined));
-            dispatch(TracingActions.tabTrace(undefined));
             AlertUtils.addMessage({
               ...AlertUtils.extractAxiosError('Could not fetch trace', error),
               showNotification: false
@@ -38,7 +33,6 @@ export const TracingThunkActions = {
           });
       } else {
         dispatch(TracingActions.setTrace(undefined));
-        dispatch(TracingActions.tabTrace(undefined));
       }
     };
   }
