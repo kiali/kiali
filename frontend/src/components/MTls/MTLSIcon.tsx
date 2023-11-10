@@ -7,17 +7,17 @@ import hollowIconDark from '../../assets/img/mtls-status-partial-dark.svg';
 
 export { fullIcon, hollowIcon, fullIconDark, hollowIconDark };
 
-type Props = {
+type MTLSIconProps = {
   icon: string;
   iconClassName: string;
-  tooltipText: string;
   tooltipPosition: TooltipPosition;
+  tooltipText: string;
 };
 
 export enum MTLSIconTypes {
   LOCK_FULL = 'LOCK_FULL',
-  LOCK_HOLLOW = 'LOCK_HOLLOW',
   LOCK_FULL_DARK = 'LOCK_FULL_DARK',
+  LOCK_HOLLOW = 'LOCK_HOLLOW',
   LOCK_HOLLOW_DARK = 'LOCK_HOLLOW_DARK'
 }
 
@@ -28,21 +28,10 @@ const nameToSource = new Map<string, string>([
   [MTLSIconTypes.LOCK_HOLLOW_DARK, hollowIconDark]
 ]);
 
-export class MTLSIcon extends React.Component<Props> {
-  render() {
-    return (
-      <Tooltip
-        aria-label={'mTLS status'}
-        position={this.props.tooltipPosition}
-        enableFlip={true}
-        content={this.props.tooltipText}
-      >
-        <img
-          className={this.props.iconClassName}
-          src={nameToSource.get(this.props.icon)}
-          alt={this.props.tooltipPosition}
-        />
-      </Tooltip>
-    );
-  }
-}
+export const MTLSIcon: React.FC<MTLSIconProps> = (props: MTLSIconProps) => {
+  return (
+    <Tooltip aria-label="mTLS status" position={props.tooltipPosition} enableFlip={true} content={props.tooltipText}>
+      <img className={props.iconClassName} src={nameToSource.get(props.icon)} alt={props.tooltipPosition} />
+    </Tooltip>
+  );
+};

@@ -128,10 +128,10 @@ export class ClusterTable implements SummaryTable {
       {
         id: 'type',
         title: 'Type',
-        isNumeric: true,
+        isNumeric: false,
         param: 'type',
         compare: (a, b) => {
-          return a.type - b.type;
+          return a.type.localeCompare(b.type);
         }
       },
       {

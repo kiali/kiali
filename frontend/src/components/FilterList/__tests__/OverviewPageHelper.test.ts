@@ -1,5 +1,5 @@
 import * as FilterHelper from '../FilterHelper';
-import { NamespaceInfo } from '../../../pages/Overview/NamespaceInfo';
+import { NamespaceInfo } from '../../../types/NamespaceInfo';
 import * as Filters from '../../../pages/Overview/Filters';
 import { FilterSelected } from '../../Filters/StatefulFilters';
 

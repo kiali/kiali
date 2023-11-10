@@ -23,7 +23,7 @@ import { activeNamespacesSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import { Namespace } from '../../types/Namespace';
 import { SortField } from '../../types/SortFilters';
-import { NamespaceInfo } from '../../pages/Overview/NamespaceInfo';
+import { NamespaceInfo } from '../../types/NamespaceInfo';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import * as Sorts from '../../pages/Overview/Sorts';
 import { StatefulFilters } from '../Filters/StatefulFilters';

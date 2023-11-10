@@ -42,14 +42,14 @@ import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 
 type SummaryPanelEdgeMetricsState = {
-  rates: Datapoint[];
   errRates: Datapoint[];
-  rtAvg: Datapoint[];
-  rtMed: Datapoint[];
+  rates: Datapoint[];
+  received: Datapoint[];
   rt95: Datapoint[];
   rt99: Datapoint[];
+  rtAvg: Datapoint[];
+  rtMed: Datapoint[];
   sent: Datapoint[];
-  received: Datapoint[];
   unit: ResponseTimeUnit;
 };
 
@@ -60,14 +60,14 @@ type SummaryPanelEdgeState = SummaryPanelEdgeMetricsState & {
 };
 
 const defaultMetricsState: SummaryPanelEdgeMetricsState = {
-  rates: [],
   errRates: [],
-  rtAvg: [],
-  rtMed: [],
+  rates: [],
+  received: [],
   rt95: [],
   rt99: [],
+  rtAvg: [],
+  rtMed: [],
   sent: [],
-  received: [],
   unit: 'ms'
 };
 
@@ -148,14 +148,16 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
           {isMtls && this.renderMTLSSummary(mTLSPercentage)}
           {hasPrincipals && (
             <>
-              <div style={{ padding: '5px 0 2px 0' }}>
+              <div style={{ padding: '0.25rem 0 0.125rem 0' }}>
                 <strong>Principals:</strong>
               </div>
+
               <Tooltip key="tt_src_ppl" position="top" content={`Source principal: ${edgeData.sourcePrincipal}`}>
-                <span className={principalStyle}>{edgeData.sourcePrincipal || 'unknown'}</span>
+                <span className={principalStyle}>{edgeData.sourcePrincipal ?? 'unknown'}</span>
               </Tooltip>
+
               <Tooltip key="tt_src_ppl" position="top" content={`Destination principal: ${edgeData.destPrincipal}`}>
-                <span className={principalStyle}>{edgeData.destPrincipal || 'unknown'}</span>
+                <span className={principalStyle}>{edgeData.destPrincipal ?? 'unknown'}</span>
               </Tooltip>
             </>
           )}
@@ -170,10 +172,12 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
           {renderBadgedLink(sourceData, undefined, 'From:  ')}
           {renderBadgedLink(destData, undefined, 'To:        ')}
         </div>
+
         {hasSecurity && <SecurityBlock />}
+
         {(isHttp || isGrpc) && (
           <div className={summaryBodyTabs}>
-            <SimpleTabs id="edge_summary_rate_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
+            <SimpleTabs id="edge_summary_rate_tabs" defaultTab={0} style={{ paddingBottom: '0.5rem' }}>
               <Tab style={summaryFont} title="Traffic" eventKey={0}>
                 <div style={summaryFont}>
                   {isGrpc && (
@@ -186,6 +190,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
                       />
                     </>
                   )}
+
                   {isHttp && (
                     <>
                       <RateTableHttp
@@ -200,11 +205,12 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
                   )}
                 </div>
               </Tab>
+
               {isRequests && (
                 <Tab style={summaryFont} title="Flags" eventKey={1}>
                   <div style={summaryFont}>
                     <ResponseFlagsTable
-                      title={'Response flags by ' + (isGrpc ? 'GRPC code:' : 'HTTP code:')}
+                      title={`Response flags by ${isGrpc ? 'GRPC code:' : 'HTTP code:'}`}
                       responses={edgeData.responses}
                     />
                   </div>
@@ -213,7 +219,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
               <Tab style={summaryFont} title="Hosts" eventKey={2}>
                 <div style={summaryFont}>
                   <ResponseHostsTable
-                    title={'Hosts by ' + (isGrpc ? 'GRPC code:' : 'HTTP code:')}
+                    title={`Hosts by ${isGrpc ? 'GRPC code:' : 'HTTP code:'}`}
                     responses={edgeData.responses}
                   />
                 </div>
@@ -223,24 +229,29 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
             {this.renderCharts(edge, isGrpc, isHttp, isTcp, isRequests, isPF)}
           </div>
         )}
+
         {isTcp && (
           <div className={summaryBodyTabs}>
-            <SimpleTabs id="edge_summary_flag_hosts_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
+            <SimpleTabs id="edge_summary_flag_hosts_tabs" defaultTab={0} style={{ paddingBottom: '0.5rem' }}>
               <Tab style={summaryFont} eventKey={0} title="Flags">
                 <div style={summaryFont}>
                   <ResponseFlagsTable title="Response flags by code:" responses={edgeData.responses} />
                 </div>
               </Tab>
+
               <Tab style={summaryFont} eventKey={1} title="Hosts">
                 <div style={summaryFont}>
                   <ResponseHostsTable title="Hosts by code:" responses={edgeData.responses} />
                 </div>
               </Tab>
             </SimpleTabs>
+
             {hr()}
+
             {this.renderCharts(edge, isGrpc, isHttp, isTcp, isRequests, isPF)}
           </div>
         )}
+
         {!isGrpc && !isHttp && !isTcp && <div className={panelBodyStyle}>{renderNoTraffic()}</div>}
       </div>
     );
@@ -248,6 +259,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
 
   private getByLabels = (sourceMetricType: NodeMetricType, destMetricType: NodeMetricType) => {
     let label: string;
+
     switch (sourceMetricType) {
       case NodeMetricType.AGGREGATE:
         switch (destMetricType) {
@@ -276,6 +288,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         label = 'source_workload';
         break;
     }
+
     // For special service dest nodes we want to narrow the data to only TS with 'unknown' workloads (see the related
     // comparator in getNodeDatapoints).
     return this.isSpecialServiceDest(destMetricType) ? [label, 'destination_workload'] : [label];
@@ -296,8 +309,10 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
           : false;
       });
     }
+
     let label: string;
     let value: string | undefined;
+
     switch (sourceMetricType) {
       case NodeMetricType.AGGREGATE:
         switch (destMetricType) {
@@ -331,9 +346,11 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         label = 'source_workload';
         value = data.workload;
     }
+
     const comparator = this.isSpecialServiceDest(destMetricType)
       ? (labels: Labels) => labels[label] === value && labels.destination_workload === UNKNOWN
       : (labels: Labels) => labels[label] === value;
+
     return getDatapoints(m, comparator);
   };
 
@@ -384,6 +401,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     const quantiles = ['0.5', '0.95', '0.99'];
 
     let promiseRequests, promiseStream;
+
     if (isHttp || (isGrpc && isRequests)) {
       const reporterRps =
         [NodeType.SERVICE, NodeType.UNKNOWN].includes(sourceData.nodeType) ||
@@ -392,7 +410,9 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         edgeData.isIstio
           ? 'destination'
           : 'source';
+
       const filtersRps = ['request_count', 'request_duration_millis', 'request_error_count'];
+
       promiseRequests = getNodeMetrics(
         metricType,
         metricsNodeData,
@@ -410,7 +430,9 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         [NodeType.AGGREGATE, NodeType.UNKNOWN].includes(sourceData.nodeType) || sourceData.isIstio
           ? 'destination'
           : 'source';
+
       const filters = ['grpc_sent', 'grpc_received'];
+
       promiseStream = getNodeMetrics(
         metricType,
         metricsNodeData,
@@ -428,7 +450,9 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         [NodeType.AGGREGATE, NodeType.UNKNOWN].includes(sourceData.nodeType) || sourceData.isIstio
           ? 'destination'
           : 'source';
+
       const filtersTCP = ['tcp_sent', 'tcp_received'];
+
       promiseStream = getNodeMetrics(
         metricType,
         metricsNodeData,
@@ -441,7 +465,9 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         byLabels
       );
     }
+
     this.metricsPromise = makeCancelablePromise(promiseRequests ? promiseRequests : promiseStream);
+
     this.metricsPromise.promise
       .then(response => {
         const metrics = response.data;
@@ -454,6 +480,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
             otherEndData,
             isDestServiceEntry
           );
+
           errRates = this.getNodeDataPoints(
             metrics.request_error_count,
             sourceMetricType,
@@ -461,7 +488,9 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
             otherEndData,
             isDestServiceEntry
           );
-          const duration = metrics.request_duration_millis || [];
+
+          const duration = metrics.request_duration_millis ?? [];
+
           rtAvg = this.getNodeDataPoints(
             duration.filter(m => m.stat === 'avg'),
             sourceMetricType,
@@ -469,6 +498,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
             otherEndData,
             isDestServiceEntry
           );
+
           rtMed = this.getNodeDataPoints(
             duration.filter(m => m.stat === '0.5'),
             sourceMetricType,
@@ -476,6 +506,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
             otherEndData,
             isDestServiceEntry
           );
+
           rt95 = this.getNodeDataPoints(
             duration.filter(m => m.stat === '0.95'),
             sourceMetricType,
@@ -483,6 +514,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
             otherEndData,
             isDestServiceEntry
           );
+
           rt99 = this.getNodeDataPoints(
             duration.filter(m => m.stat === '0.99'),
             sourceMetricType,
@@ -499,6 +531,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
             otherEndData,
             isDestServiceEntry
           );
+
           received = this.getNodeDataPoints(
             isTcp ? metrics.tcp_received : metrics.grpc_received,
             sourceMetricType,
@@ -526,6 +559,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
           console.debug('SummaryPanelEdge: Ignore fetch error (canceled).');
           return;
         }
+
         const errorMsg = error.response && error.response.data.error ? error.response.data.error : error.message;
         this.setState({
           loading: false,
@@ -558,6 +592,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     }
 
     const destData = isPF ? (edge as Edge).getTarget().getData() : decoratedNodeData(edge.target());
+
     if (destData.isInaccessible) {
       return (
         <>
@@ -588,6 +623,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
           <>
             <RequestChart label={labelRps} dataRps={this.state.rates!} dataErrors={this.state.errRates} />
             {hr()}
+
             <ResponseTimeChart
               label={labelRt}
               rtAvg={this.state.rtAvg}
@@ -657,7 +693,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         {isMtls && (
           <div>
             <KialiIcon.MtlsLock />
-            <span style={{ paddingLeft: '6px' }}>{mtls}</span>
+            <span style={{ paddingLeft: '0.375rem' }}>{mtls}</span>
           </div>
         )}
       </>

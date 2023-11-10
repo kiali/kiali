@@ -15,7 +15,7 @@ import { ServiceListItem } from '../../types/ServiceList';
 import { ActiveFilter } from '../../types/Filters';
 import { renderAPILogo } from '../Logo/Logos';
 import { Health } from '../../types/Health';
-import { NamespaceInfo } from '../../pages/Overview/NamespaceInfo';
+import { NamespaceInfo } from '../../types/NamespaceInfo';
 import { NamespaceMTLSStatus } from '../MTls/NamespaceMTLSStatus';
 import { ValidationSummary } from '../Validations/ValidationSummary';
 import { OverviewCardSparklineCharts } from '../../pages/Overview/OverviewCardSparklineCharts';
@@ -188,6 +188,7 @@ export const istioConfig: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
           errors={validations.errors}
           warnings={validations.warnings}
           objectCount={validations.objectCount}
+          type="istio"
         />
       </ValidationSummaryLink>
     </Td>
@@ -354,7 +355,6 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
         Object.entries(item.labels).map(([key, value], i) => {
           const label = `${key}=${value}`;
           const labelAct = labelActivate(filters.filters, key, value, labelFilt.category);
-          FilterHelper.getFiltersFromURL([labelFilt]).filters.forEach(f => console.log(`filter=|${f.value}|`));
 
           const isExactlyLabelFilter = FilterHelper.getFiltersFromURL([labelFilt]).filters.some(f =>
             f.value.includes(label)

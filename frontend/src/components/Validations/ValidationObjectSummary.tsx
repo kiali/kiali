@@ -5,32 +5,33 @@ import { CSSProperties } from 'react';
 
 interface Props {
   id: string;
-  validations: ObjectValidation[];
   reconciledCondition?: StatusCondition;
   style?: CSSProperties;
+  validations: ObjectValidation[];
 }
 
-export class ValidationObjectSummary extends React.PureComponent<Props> {
-  numberOfChecks = (type: ValidationTypes) => {
+export const ValidationObjectSummary: React.FC<Props> = (props: Props) => {
+  const numberOfChecks = (type: ValidationTypes): number => {
     let numCheck = 0;
-    this.props.validations.forEach(validation => {
+
+    props.validations.forEach(validation => {
       if (validation.checks) {
         numCheck += validation.checks.filter(i => i.severity === type).length;
       }
     });
+
     return numCheck;
   };
 
-  render() {
-    return (
-      <ValidationSummary
-        id={this.props.id}
-        objectCount={1}
-        errors={this.numberOfChecks(ValidationTypes.Error)}
-        warnings={this.numberOfChecks(ValidationTypes.Warning)}
-        reconciledCondition={this.props.reconciledCondition}
-        style={this.props.style}
-      />
-    );
-  }
-}
+  return (
+    <ValidationSummary
+      id={props.id}
+      objectCount={1}
+      errors={numberOfChecks(ValidationTypes.Error)}
+      warnings={numberOfChecks(ValidationTypes.Warning)}
+      reconciledCondition={props.reconciledCondition}
+      style={props.style}
+      type="istio"
+    />
+  );
+};

@@ -58,11 +58,11 @@
     "prettier": "prettier --write \"{src/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\""
   },
   "dependencies": {
-    "@patternfly/patternfly": "5.0.4",
-    "@patternfly/react-charts": "7.0.1",
-    "@patternfly/react-core": "5.0.1",
-    "@patternfly/react-table": "5.0.1",
-    "@patternfly/react-topology": "5.0.0",
+    "@patternfly/patternfly": "^5.1.0",
+    "@patternfly/react-charts": "^7.1.0",
+    "@patternfly/react-core": "^5.1.0",
+    "@patternfly/react-table": "^5.1.0",
+    "@patternfly/react-topology": "^5.1.0",
     "axios": "^0.21.4",
     "bootstrap-slider-without-jquery": "10.0.0",
     "cy-node-html-label": "2.0.0",

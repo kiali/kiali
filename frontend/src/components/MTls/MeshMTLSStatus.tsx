@@ -18,10 +18,10 @@ import { Namespace } from '../../types/Namespace';
 import { connectRefresh } from '../Refresh/connectRefresh';
 
 type ReduxProps = {
-  setMeshTlsStatus: (meshStatus: TLSStatus) => void;
-  namespaces: Namespace[] | undefined;
-  status: string;
   autoMTLSEnabled: boolean;
+  namespaces: Namespace[] | undefined;
+  setMeshTlsStatus: (meshStatus: TLSStatus) => void;
+  status: string;
 };
 
 type Props = ReduxProps & {
@@ -72,6 +72,12 @@ const statusDescriptors = new Map<string, StatusDescriptor>([
   [MTLSStatuses.NOT_ENABLED, emptyDescriptor]
 ]);
 
+const iconStyle = kialiStyle({
+  marginRight: '0.5rem',
+  marginLeft: '0.5rem',
+  width: '0.75rem'
+});
+
 class MeshMTLSStatusComponent extends React.Component<Props> {
   componentDidMount() {
     this.fetchStatus();
@@ -83,7 +89,7 @@ class MeshMTLSStatusComponent extends React.Component<Props> {
     }
   }
 
-  fetchStatus = () => {
+  fetchStatus = (): void => {
     // leaving empty cluster param here, home cluster will be used by default
     API.getMeshTls()
       .then(response => {
@@ -100,31 +106,24 @@ class MeshMTLSStatusComponent extends React.Component<Props> {
       });
   };
 
-  iconStyle() {
-    return kialiStyle({
-      marginRight: 10,
-      marginLeft: 10,
-      width: 13
-    });
-  }
-
-  finalStatus() {
+  finalStatus = (): string => {
     if (this.props.autoMTLSEnabled) {
       if (this.props.status === MTLSStatuses.ENABLED) {
         return MTLSStatuses.ENABLED_DEFAULT;
       }
+
       if (this.props.status === MTLSStatuses.PARTIALLY) {
         return MTLSStatuses.PARTIALLY_DEFAULT;
       }
+
       return MTLSStatuses.AUTO_DEFAULT;
     }
+
     return this.props.status;
-  }
+  };
 
   render() {
-    return (
-      <MTLSStatus className={this.iconStyle()} status={this.finalStatus()} statusDescriptors={statusDescriptors} />
-    );
+    return <MTLSStatus className={iconStyle} status={this.finalStatus()} statusDescriptors={statusDescriptors} />;
   }
 }
 

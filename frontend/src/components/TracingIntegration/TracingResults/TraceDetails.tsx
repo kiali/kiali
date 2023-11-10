@@ -25,7 +25,7 @@ import { TargetKind } from 'types/Common';
 import { MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsThunkActions } from 'actions/MetricsStatsThunkActions';
 import { renderTraceHeatMap } from './StatsComparison';
-import { HeatMap } from 'components/HeatMap/HeatMap';
+import { HeatMap, healthColorMap } from 'components/HeatMap/HeatMap';
 import { formatDuration, sameSpans } from 'utils/tracing/TracingHelper';
 import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
 import { TEMPO } from '../../../types/Tracing';
@@ -42,6 +42,7 @@ type Props = ReduxProps & {
   otherTraces: JaegerTrace[];
   provider?: string;
   statsMatrix?: StatsMatrix;
+  tabTraceID?: string;
   target: string;
   targetKind: TargetKind;
   trace?: JaegerTrace;
@@ -54,12 +55,14 @@ class TraceDetailsComponent extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     const urlTrace = getTraceId();
+
     if (urlTrace && urlTrace !== props.trace?.traceID) {
       props.setTraceId(this.props.cluster, urlTrace);
     } else if (!urlTrace && props.trace) {
       // Remove old stored selected trace
       props.setTraceId(this.props.cluster, undefined);
     }
+
     this.state = { completeMetricsStats: false };
   }
 
@@ -80,7 +83,7 @@ class TraceDetailsComponent extends React.Component<Props, State> {
     this.props.loadMetricsStats(queries, false, this.props.cluster);
   }
 
-  private getGraphURL = (traceID: string) => {
+  private getGraphURL = (traceID: string): string => {
     let graphSelector = new GraphSelectorBuilder().namespace(this.props.namespace);
     let graphType: GraphType = GraphType.APP;
 
@@ -107,14 +110,16 @@ class TraceDetailsComponent extends React.Component<Props, State> {
     similarTraces: JaegerTrace[],
     traceDuration: number,
     avgSpanDuration: number | undefined
-  ) => {
+  ): React.ReactNode => {
     const similarMeanDuration = average(similarTraces, trace => trace.duration);
     const similarSpanDurations = similarTraces
       .map(t => averageSpanDuration(t))
       .filter(d => d !== undefined) as number[];
+
     const similarMeanAvgSpanDuration = average(similarSpanDurations, d => d);
     const genDiff = (a: number | undefined, b: number | undefined) => (a && b ? (a - b) / 1000 : undefined);
     const similarTracesToShow = similarTraces.slice(0, 8);
+
     const similarMatrixHeaders = similarTracesToShow
       .map(t => {
         const info = new FormattedTraceInfo(t);
@@ -129,7 +134,7 @@ class TraceDetailsComponent extends React.Component<Props, State> {
             }
           >
             <Button
-              style={{ paddingLeft: 0, paddingRight: 3, fontSize: '0.7rem' }}
+              style={{ paddingLeft: 0, paddingRight: '0.25rem', fontSize: '0.75rem' }}
               variant={ButtonVariant.link}
               onClick={() => this.props.setTraceId(t.traceID)}
             >
@@ -139,22 +144,24 @@ class TraceDetailsComponent extends React.Component<Props, State> {
         );
       })
       .concat([<>Mean</>]);
+
     const similarMatrix = similarTracesToShow
       .map(t => {
         const avgSpans = averageSpanDuration(t);
         return [genDiff(traceDuration, t.duration), genDiff(avgSpanDuration, avgSpans)];
       })
       .concat([[genDiff(traceDuration, similarMeanDuration), genDiff(avgSpanDuration, similarMeanAvgSpanDuration)]]);
+
     return (
       <HeatMap
         xLabels={similarMatrixHeaders}
         yLabels={[`Full duration`, `Spans average`]}
         data={similarMatrix}
-        displayMode={'large'}
-        colorMap={HeatMap.HealthColorMap}
+        displayMode="large"
+        colorMap={healthColorMap}
         dataRange={{ from: -10, to: 10 }}
         colorUndefined={PFColors.ColorLight200}
-        valueFormat={v => (v > 0 ? '+' : '') + _round(v, 1)}
+        valueFormat={v => `${v > 0 ? '+' : ''}${_round(v, 1)}`}
         tooltip={(x, _, v) => {
           // Build explanation tooltip
           const slowOrFast = v > 0 ? 'slower' : 'faster';
@@ -163,6 +170,7 @@ class TraceDetailsComponent extends React.Component<Props, State> {
             x === similarTracesToShow.length
               ? 'the mean of all similar traces on chart'
               : similarTracesToShow[x].traceID;
+
           return `This trace was ${diff}ms ${slowOrFast} than ${versus}`;
         }}
       />
@@ -171,14 +179,17 @@ class TraceDetailsComponent extends React.Component<Props, State> {
 
   render() {
     const { trace, otherTraces } = this.props;
+
     if (!trace) {
       return null;
     }
+
     const formattedTrace = new FormattedTraceInfo(trace);
 
     // Compute a bunch of stats
     const avgSpanDuration = averageSpanDuration(trace);
     const similarTraces = otherTraces.filter(t => t.traceID !== trace.traceID && isSimilarTrace(t, trace));
+
     const comparisonLink =
       this.props.tracingURL && this.props.provider !== TEMPO && similarTraces.length > 0
         ? `${this.props.tracingURL}/trace/${trace.traceID}...${similarTraces[0].traceID}?cohort=${
@@ -198,16 +209,19 @@ class TraceDetailsComponent extends React.Component<Props, State> {
           comparisonURL={comparisonLink}
         />
         <CardBody>
-          <Grid style={{ marginTop: '20px' }}>
+          <Grid style={{ marginTop: '1.25rem' }}>
             <GridItem span={3}>
               <TraceLabels spans={trace.spans} oneline={false} />
             </GridItem>
+
             <GridItem span={3}>
               <Tooltip content={<>The full trace duration is (trace end time) - (trace start time).</>}>
                 <strong>Full duration: </strong>
               </Tooltip>
+
               {formatDuration(trace.duration)}
               <br />
+
               <Tooltip
                 content={
                   <>
@@ -218,9 +232,11 @@ class TraceDetailsComponent extends React.Component<Props, State> {
               >
                 <strong>Spans average duration: </strong>
               </Tooltip>
+
               {avgSpanDuration ? formatDuration(avgSpanDuration) : 'n/a'}
               <br />
               <br />
+
               {this.props.statsMatrix && (
                 <>
                   <strong>Compared with metrics: </strong>
@@ -233,6 +249,7 @@ class TraceDetailsComponent extends React.Component<Props, State> {
                 </>
               )}
             </GridItem>
+
             <GridItem span={6}>
               <Tooltip content="Traces are identified as similar based on counting the number of spans and the occurrences of operation names. Only traces currently on the chart are processed.">
                 <>
@@ -240,6 +257,7 @@ class TraceDetailsComponent extends React.Component<Props, State> {
                   <br />
                 </>
               </Tooltip>
+
               {similarTraces.length > 0
                 ? this.renderSimilarHeatmap(similarTraces, trace.duration, avgSpanDuration)
                 : 'No similar traces found'}
@@ -254,12 +272,14 @@ class TraceDetailsComponent extends React.Component<Props, State> {
 const mapStateToProps = (state: KialiAppState) => {
   if (state.tracingState.selectedTrace) {
     const { matrix, isComplete } = reduceMetricsStats(state.tracingState.selectedTrace, state.metricsStats.data, false);
+
     return {
       trace: state.tracingState.selectedTrace,
       statsMatrix: matrix,
       isStatsMatrixComplete: isComplete
     };
   }
+
   return {
     trace: state.tracingState.selectedTrace,
     isStatsMatrixComplete: false

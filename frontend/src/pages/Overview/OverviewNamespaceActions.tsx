@@ -38,17 +38,18 @@ export const OverviewNamespaceActions: React.FC<Props> = (props: Props) => {
 
   const namespaceActions = props.actions.map((action, i) => {
     if (action.isSeparator) {
-      return <Divider key={'separator_' + i} />;
+      return <Divider key={`separator_${i}`} />;
     }
 
     if (action.isGroup && action.children) {
       return (
         <DropdownGroup
-          key={'group_' + i}
+          key={`group_${i}`}
           label={action.title}
           className={groupMenuStyle}
           children={action.children.map((subaction, j) => {
-            const itemKey = 'subaction_' + i + '_' + j;
+            const itemKey = `subaction_${i}_${j}`;
+
             const item = (
               <DropdownItem
                 key={itemKey}
@@ -58,9 +59,10 @@ export const OverviewNamespaceActions: React.FC<Props> = (props: Props) => {
                 {subaction.title}
               </DropdownItem>
             );
+
             return subaction.isDisabled
               ? renderDisabledDropdownOption(
-                  'tooltip_' + itemKey,
+                  `tooltip_${itemKey}`,
                   TooltipPosition.left,
                   'User does not have enough permission for this action',
                   item
@@ -72,7 +74,7 @@ export const OverviewNamespaceActions: React.FC<Props> = (props: Props) => {
     } else if (action.title && action.action) {
       const item = (
         <DropdownItem
-          key={'action_' + i}
+          key={`action_${i}`}
           isDisabled={action.isDisabled}
           data-test={action['data-test']}
           onClick={() => (action.action ? action.action(props.namespace) : undefined)}
@@ -83,7 +85,7 @@ export const OverviewNamespaceActions: React.FC<Props> = (props: Props) => {
 
       return action.isDisabled
         ? renderDisabledDropdownOption(
-            'tooltip_action_' + i,
+            `tooltip_action_${i}`,
             TooltipPosition.left,
             'User does not have enough permission for this action',
             item

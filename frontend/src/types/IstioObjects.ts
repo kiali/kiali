@@ -279,7 +279,7 @@ export interface ClusterSummary {
   port: number;
   service_fqdn: Host;
   subset: string;
-  type: number;
+  type: string;
 }
 
 export interface ListenerSummary {

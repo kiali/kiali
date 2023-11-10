@@ -19,10 +19,11 @@ const renderLogo = (
   className?: string
 ): JSX.Element => {
   const logo = logoSet[name];
+
   if (logo) {
-    return <img key={'logo-' + idx} src={logo} alt={name} title={title} className={className} />;
+    return <img key={`logo-${idx}`} src={logo} alt={name} title={title} className={className} />;
   }
-  return <span key={'logo-' + idx}>{name}</span>;
+  return <span key={`logo-${idx}`}>{name}</span>;
 };
 
 // Runtimes
@@ -45,9 +46,9 @@ const apiLogos = {
 };
 
 const iconStyle = kialiStyle({
-  marginTop: -2,
-  marginRight: 6,
-  width: 30
+  marginTop: '-0.125rem',
+  marginRight: '0.5rem',
+  width: '2rem'
 });
 
 export const renderAPILogo = (name: string, title: string | undefined, idx: number): JSX.Element =>

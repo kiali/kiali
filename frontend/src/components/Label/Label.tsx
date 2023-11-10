@@ -14,7 +14,7 @@ const labelStyle = kialiStyle({
   display: 'block',
   float: 'left',
   fontSize: 'var(--kiali-global--font-size)',
-  margin: '0 2px 2px 0',
+  margin: '0 0.125rem 0.125rem 0',
   maxWidth: '100%'
 });
 

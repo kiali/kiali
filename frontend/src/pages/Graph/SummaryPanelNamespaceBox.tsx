@@ -104,7 +104,13 @@ const defaultState: SummaryPanelNamespaceBoxState = {
 };
 
 const topologyStyle = kialiStyle({
-  margin: '0 1em'
+  marginLeft: '0.25rem',
+  marginRight: '0.5rem'
+});
+
+const namespaceStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center'
 });
 
 export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropType, SummaryPanelNamespaceBoxState> {
@@ -191,7 +197,6 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
         <div className={panelHeadingStyle}>
           {getTitle('Namespace')}
           {this.renderNamespace(namespace)}
-          <br />
           {this.renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
         </div>
 
@@ -442,7 +447,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
 
     return (
       <React.Fragment key={ns}>
-        <span>
+        <span className={namespaceStyle}>
           <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '0.125rem' }} />
           {ns}{' '}
           {!!validation && (
@@ -458,6 +463,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
                 warnings={validation.warnings}
                 objectCount={validation.objectCount}
                 style={{ marginLeft: '0.25rem' }}
+                type="istio"
               />
             </ValidationSummaryLink>
           )}

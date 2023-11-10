@@ -6,7 +6,7 @@ import { IstioConfigItem } from '../../types/IstioConfigList';
 import * as Renderers from './Renderers';
 import { Health } from '../../types/Health';
 import { isIstioNamespace } from 'config/ServerConfig';
-import { NamespaceInfo } from '../../pages/Overview/NamespaceInfo';
+import { NamespaceInfo } from '../../types/NamespaceInfo';
 import * as React from 'react';
 import { StatefulFilters } from '../Filters/StatefulFilters';
 import { PFBadges, PFBadgeType } from '../../components/Pf/PfBadges';
@@ -37,12 +37,12 @@ export const noAmbientLabels = (r: SortResource): boolean => {
 };
 
 export type ResourceType<R extends RenderResource> = {
-  title: string;
   name: string;
   param?: string;
   renderer?: Renderer<R>;
   sortable: boolean;
   textCenter?: boolean;
+  title: string;
   width?: 10 | 15 | 20 | 25 | 30 | 35 | 40 | 45 | 50 | 60 | 70 | 80 | 90 | 100;
 };
 
@@ -300,10 +300,10 @@ type Config = {
 
 const conf: Config = {
   applications: applications,
-  workloads: workloads,
+  istio: istio,
   overview: namespaces,
   services: services,
-  istio: istio
+  workloads: workloads
 };
 
 export const config: Config = deepFreeze(conf);

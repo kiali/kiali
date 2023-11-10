@@ -23,7 +23,7 @@ class ValidationSummaryLinkComponent extends React.Component<Props> {
   };
 
   render() {
-    let link: any = <div style={{ display: 'inline-block', marginLeft: '5px' }}>N/A</div>;
+    let link: any = <div style={{ display: 'inline-block' }}>N/A</div>;
 
     if (this.hasIstioObjects()) {
       // Kiosk actions are used when the kiosk specifies a parent,
