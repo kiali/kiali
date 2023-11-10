@@ -145,11 +145,6 @@ func (o *K8SClientMock) IsIstioAPI() bool {
 	return args.Get(0).(bool)
 }
 
-func (o *K8SClientMock) IsMaistraApi() bool {
-	args := o.Called()
-	return args.Get(0).(bool)
-}
-
 func (o *K8SClientMock) GetServerVersion() (*version.Info, error) {
 	args := o.Called()
 	return args.Get(0).(*version.Info), args.Error(1)

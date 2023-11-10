@@ -11,43 +11,8 @@ func TestParseIstioRawVersion(t *testing.T) {
 		version    string
 	}
 
-	// see config.go/[Maistra,Istio]VersionSupported for what versions are supported
+	// see config.go/IstioVersionSupported for what versions are supported
 	versionsToTest := []versionsToTestStruct{
-		{
-			rawVersion: "redhat@redhat-brew.abc.xyz.redhat.com:8888/openshift-istio-tech-preview-0.1.2-1-3a13-Custom",
-			name:       "Maistra Project",
-			version:    "0.1.2",
-		},
-		{
-			rawVersion: "redhat@redhat-brew.abc.xyz.redhat.com:8888/openshift-istio-10.11.12-1-3a13-Custom",
-			name:       "Maistra Project",
-			version:    "10.11.12",
-		},
-		{
-			rawVersion: "redhat@redhat-brew.abc.xyz.redhat.com:8888/openshift-istio-0.0.12-1-3a13-Custom",
-			name:       "Maistra Project",
-			version:    "0.0.12",
-		},
-		{
-			rawVersion: "Maistra_1.1.0-291c5419cf19d2b015e7e5dee970c458fb8f1982-Clean",
-			name:       "Maistra Project",
-			version:    "1.1.0",
-		},
-		{
-			rawVersion: "Maistra_1.1.99-291c5419cf19d2b015e7e5dee970c458fb8f1982-Clean",
-			name:       "Maistra Project",
-			version:    "1.1.99",
-		},
-		{
-			rawVersion: "redhat@redhat-docker.io/maistra-0.1.0-1-3a13-unknown",
-			name:       "Maistra",
-			version:    "0.1.0",
-		},
-		{
-			rawVersion: "redhat@redhat-docker.io/maistra-0.7.0-1-3a13-unknown",
-			name:       "Maistra",
-			version:    "0.7.0",
-		},
 		{
 			rawVersion: "redhat@redhat-docker.io/openshift-service-mesh-1.0.0-1-123454535353-unknown",
 			name:       "OpenShift Service Mesh",
@@ -67,16 +32,6 @@ func TestParseIstioRawVersion(t *testing.T) {
 			rawVersion: "OSSM_1.1.99-291c5419cf19d2b015e7e5dee970c458fb8f1982-Clean",
 			name:       "OpenShift Service Mesh",
 			version:    "1.1.99",
-		},
-		{
-			rawVersion: "foobar-maistra-11.12.13-wotgorilla?",
-			name:       "Maistra",
-			version:    "11.12.13",
-		},
-		{
-			rawVersion: "foobar-maistra-0.0.987-wotgorilla?",
-			name:       "Maistra",
-			version:    "0.0.987",
 		},
 		{
 			rawVersion: "foo-istio-1.2.3-bar",

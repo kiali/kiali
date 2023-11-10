@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/status"
 )
 
 type WorkloadList struct {
@@ -220,9 +219,6 @@ func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *met
 		if exist {
 			if value, err := strconv.ParseBool(annotation); err == nil {
 				if !value {
-					workload.IstioInjectionAnnotation = &value
-				} else if status.IsMaistra() {
-					// annotation value of true is only meaningful in a OSSM/Maistra environment
 					workload.IstioInjectionAnnotation = &value
 				}
 			}
