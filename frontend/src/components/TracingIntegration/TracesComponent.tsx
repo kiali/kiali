@@ -27,6 +27,7 @@ import { ExternalServiceInfo } from '../../types/StatusState';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
+  hoverTrace?: JaegerTrace;
   namespaceSelector: boolean;
   provider?: string;
   selectedTrace?: JaegerTrace;
@@ -154,6 +155,15 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
       const index = traces.findIndex(t => t.traceID === trace.traceID);
       if (index >= 0) {
         traces[index] = this.props.selectedTrace;
+        this.setState({ traces: traces });
+      }
+    }
+    if (this.props.hoverTrace && prevProps.hoverTrace !== this.props.hoverTrace) {
+      const traces = this.state.traces;
+      const trace = this.props.hoverTrace;
+      const index = traces.findIndex(t => t.traceID === trace.traceID);
+      if (index >= 0) {
+        traces[index] = this.props.hoverTrace;
         this.setState({ traces: traces });
       }
     }
@@ -403,6 +413,7 @@ const mapStateToProps = (state: KialiAppState) => {
     namespaceSelector: state.tracingState.info ? state.tracingState.info.namespaceSelector : true,
     provider: state.tracingState.info?.provider,
     selectedTrace: state.tracingState.selectedTrace,
+    hoverTrace: state.tracingState.hoverTrace,
     timeRange: timeRangeSelector(state),
     urlTracing: state.tracingState.info ? state.tracingState.info.url : ''
   };

@@ -25,7 +25,7 @@ interface TracingScatterProps {
   errorTraces?: boolean;
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) => Promise<any>;
   selectedTrace?: JaegerTrace;
-  setTraceId: (cluster?: string, traceId?: string) => void;
+  setTraceId: (cluster?: string, traceId?: string, reload?: boolean) => void;
   showSpansAverage: boolean;
   traces: JaegerTrace[];
   cluster?: string;
@@ -149,7 +149,12 @@ class TracingScatterComponent extends React.Component<TracingScatterProps> {
             fill={true}
             unit="seconds"
             seriesComponent={<ChartScatter />}
-            onClick={dp => this.props.setTraceId(this.props.cluster, dp.trace.traceID)}
+            onClick={dp => this.props.setTraceId(this.props.cluster, dp.trace.traceID, false)}
+            onMouseOver={dp => {
+              if (this.props.provider === TEMPO && !dp.trace.loaded) {
+                this.props.setTraceId(this.props.cluster, dp.trace.traceID, true);
+              }
+            }}
             onTooltipClose={dp => this.onTooltipClose(dp.trace)}
             onTooltipOpen={dp => this.onTooltipOpen(dp.trace)}
             labelComponent={<TraceTooltip />}
@@ -215,7 +220,8 @@ const mapStateToProps = (state: KialiAppState) => ({
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) =>
     dispatch(MetricsStatsThunkActions.load(queries, isCompact)),
-  setTraceId: (cluster?: string, traceId?: string) => dispatch(TracingThunkActions.setTraceId(cluster, traceId))
+  setTraceId: (cluster?: string, traceId?: string, reload?: boolean) =>
+    dispatch(TracingThunkActions.setTraceId(cluster, traceId, reload))
 });
 
 export const TracingScatter = connect(mapStateToProps, mapDispatchToProps)(TracingScatterComponent);

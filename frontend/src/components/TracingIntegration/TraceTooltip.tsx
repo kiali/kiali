@@ -106,7 +106,7 @@ const mapStateToProps = (state: KialiAppState, props: any) => {
     metricsStats: state.metricsStats.data,
     trace: props.trace,
     provider: state.tracingState.info?.provider,
-    selectedTrace: state.tracingState.selectedTrace
+    selectedTrace: state.tracingState.hoverTrace
   };
 };
 
