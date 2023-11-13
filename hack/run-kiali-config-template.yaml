@@ -39,8 +39,10 @@ external_services:
 
   tracing:
     enabled: true
+    provider: "${TRACING_APP}"
     in_cluster_url: "${TRACING_URL}"
     url: "${TRACING_URL}"
+    use_grpc: false
 
 login_token:
   signing_key: "notsecure"
