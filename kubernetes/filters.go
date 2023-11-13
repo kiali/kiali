@@ -8,7 +8,9 @@ import (
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/config"
@@ -596,4 +598,27 @@ func mapWorkloadSelector(workloadSelector string) map[string]string {
 		}
 	}
 	return workloadLabels
+}
+
+// FilterByNamespaces filters a list of runtime.Objects by the provided namespaces.
+// If the object's namespace is not in the provided list of namespaces, the object
+// is filtered out.
+func FilterByNamespaces[T runtime.Object](objects []T, namespaces []string) []T {
+	namespaceSet := make(map[string]bool)
+	for _, ns := range namespaces {
+		namespaceSet[ns] = true
+	}
+
+	filtered := []T{}
+	for _, obj := range objects {
+		o, err := meta.Accessor(obj)
+		if err != nil {
+			return filtered
+		}
+
+		if _, ok := namespaceSet[o.GetNamespace()]; ok {
+			filtered = append(filtered, obj)
+		}
+	}
+	return filtered
 }

@@ -34,7 +34,7 @@ import (
 
 func TestAppMetricsDefault(t *testing.T) {
 	ts, api, k8s := setupAppMetricsEndpoint(t)
-	cache := business.NewTestingCache(t, k8s, *config.NewConfig())
+	cache := cache.NewTestingCache(t, k8s, *config.NewConfig())
 	business.WithKialiCache(cache)
 
 	url := ts.URL + "/api/namespaces/ns/apps/my_app/metrics"
@@ -72,7 +72,7 @@ func TestAppMetricsDefault(t *testing.T) {
 func TestAppMetricsWithParams(t *testing.T) {
 	ts, api, k8s := setupAppMetricsEndpoint(t)
 
-	cache := business.NewTestingCache(t, k8s, *config.NewConfig())
+	cache := cache.NewTestingCache(t, k8s, *config.NewConfig())
 	business.WithKialiCache(cache)
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/apps/my-app/metrics", nil)
@@ -151,7 +151,7 @@ func (c *clientNoPrivileges) GetNamespace(namespace string) (*core_v1.Namespace,
 
 func TestAppMetricsInaccessibleNamespace(t *testing.T) {
 	ts, _, k8s := setupAppMetricsEndpoint(t)
-	cache := &cacheNoPrivileges{business.NewTestingCache(t, k8s, *config.NewConfig())}
+	cache := &cacheNoPrivileges{cache.NewTestingCache(t, k8s, *config.NewConfig())}
 	business.WithKialiCache(cache)
 
 	url := ts.URL + "/api/namespaces/my_namespace/apps/my_app/metrics"

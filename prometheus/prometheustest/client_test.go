@@ -138,9 +138,9 @@ func TestFlags(t *testing.T) {
 }
 
 func mockConfig(api *PromAPIMock, ret prom_v1.ConfigResult) {
-	api.On("Config", mock.AnythingOfType("*context.emptyCtx")).Return(ret, nil)
+	api.On("Config", mock.Anything).Return(ret, nil)
 }
 
 func mockFlags(api *PromAPIMock, ret prom_v1.FlagsResult) {
-	api.On("Flags", mock.AnythingOfType("*context.emptyCtx")).Return(ret, nil)
+	api.On("Flags", mock.Anything).Return(ret, nil)
 }

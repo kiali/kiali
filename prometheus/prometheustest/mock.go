@@ -116,9 +116,9 @@ func (o *PromAPIMock) TSDB(ctx context.Context) (prom_v1.TSDBResult, error) {
 
 func (o *PromAPIMock) OnQueryTime(query string, t *time.Time, ret model.Vector) {
 	if t == nil {
-		o.On("Query", mock.AnythingOfType("*context.emptyCtx"), query, mock.AnythingOfType("time.Time")).Return(ret, nil)
+		o.On("Query", mock.Anything, query, mock.AnythingOfType("time.Time")).Return(ret, nil)
 	} else {
-		o.On("Query", mock.AnythingOfType("*context.emptyCtx"), query, *t).Return(ret, nil)
+		o.On("Query", mock.Anything, query, *t).Return(ret, nil)
 	}
 }
 
@@ -128,9 +128,9 @@ func (o *PromAPIMock) MockTime(query string, ret model.Vector) {
 
 func (o *PromAPIMock) OnQueryRange(query string, r *prom_v1.Range, ret model.Matrix) {
 	if r == nil {
-		o.On("QueryRange", mock.AnythingOfType("*context.emptyCtx"), query, mock.AnythingOfType("v1.Range")).Return(ret, nil)
+		o.On("QueryRange", mock.Anything, query, mock.AnythingOfType("v1.Range")).Return(ret, nil)
 	} else {
-		o.On("QueryRange", mock.AnythingOfType("*context.emptyCtx"), query, *r).Return(ret, nil)
+		o.On("QueryRange", mock.Anything, query, *r).Return(ret, nil)
 	}
 }
 
@@ -219,7 +219,7 @@ func (o *PromAPIMock) AlwaysReturnEmpty() {
 	}
 	o.On(
 		"Query",
-		mock.AnythingOfType("*context.emptyCtx"),
+		mock.Anything,
 		mock.AnythingOfType("string"),
 		mock.AnythingOfType("time.Time"),
 	).Return(model.Vector{}, nil)
@@ -231,7 +231,7 @@ func (o *PromAPIMock) AlwaysReturnEmpty() {
 	}
 	o.On(
 		"QueryRange",
-		mock.AnythingOfType("*context.emptyCtx"),
+		mock.Anything,
 		mock.AnythingOfType("string"),
 		mock.AnythingOfType("v1.Range"),
 	).Return(matrix, nil)
@@ -247,7 +247,7 @@ func (o *PromAPIMock) SpyArgumentsAndReturnEmpty(fn func(args mock.Arguments)) {
 	}
 	o.On(
 		"Query",
-		mock.AnythingOfType("*context.emptyCtx"),
+		mock.Anything,
 		mock.AnythingOfType("string"),
 		mock.AnythingOfType("time.Time"),
 	).Run(fn).Return(model.Vector{}, nil)
@@ -259,7 +259,7 @@ func (o *PromAPIMock) SpyArgumentsAndReturnEmpty(fn func(args mock.Arguments)) {
 	}
 	o.On(
 		"QueryRange",
-		mock.AnythingOfType("*context.emptyCtx"),
+		mock.Anything,
 		mock.AnythingOfType("string"),
 		mock.AnythingOfType("v1.Range"),
 	).Run(fn).Return(matrix, nil)

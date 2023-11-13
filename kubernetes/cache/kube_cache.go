@@ -886,15 +886,28 @@ func (c *kubeCache) GetDestinationRules(namespace, labelSelector string) ([]*net
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	drs, err := c.getCacheLister(namespace).destinationRuleLister.DestinationRules(namespace).List(selector)
-	if err != nil {
-		return nil, err
-	}
 
-	// Lister returns nil when there are no results but callers of the cache expect an empty array
-	// so keeping the behavior the same since it matters for json marshalling.
-	if drs == nil {
-		return []*networking_v1beta1.DestinationRule{}, nil
+	drs := []*networking_v1beta1.DestinationRule{}
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			drs, err = c.clusterCacheLister.destinationRuleLister.List(selector)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				drsNS, err := nsCacheLister.destinationRuleLister.List(selector)
+				if err != nil {
+					return nil, err
+				}
+				drs = append(drs, drsNS...)
+			}
+		}
+	} else {
+		drs, err = c.getCacheLister(namespace).destinationRuleLister.DestinationRules(namespace).List(selector)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Do not modify what is returned by the lister since that is shared and will cause data races.
@@ -941,24 +954,37 @@ func (c *kubeCache) GetEnvoyFilters(namespace, labelSelector string) ([]*network
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	efs, err := c.getCacheLister(namespace).envoyFilterLister.EnvoyFilters(namespace).List(selector)
-	if err != nil {
-		return nil, err
+
+	envoyFilters := []*networking_v1alpha3.EnvoyFilter{}
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			envoyFilters, err = c.clusterCacheLister.envoyFilterLister.List(selector)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				filterNamespaced, err := nsCacheLister.envoyFilterLister.List(selector)
+				if err != nil {
+					return nil, err
+				}
+				envoyFilters = append(envoyFilters, filterNamespaced...)
+			}
+		}
+	} else {
+		envoyFilters, err = c.getCacheLister(namespace).envoyFilterLister.EnvoyFilters(namespace).List(selector)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	// Lister returns nil when there are no results but callers of the cache expect an empty array
-	// so keeping the behavior the same since it matters for json marshalling.
-	if efs == nil {
-		return []*networking_v1alpha3.EnvoyFilter{}, nil
+	var retEnvoyFilters []*networking_v1alpha3.EnvoyFilter
+	for _, ef := range envoyFilters {
+		efCopy := ef.DeepCopy()
+		efCopy.Kind = kubernetes.EnvoyFilterType
+		retEnvoyFilters = append(retEnvoyFilters, efCopy)
 	}
-
-	var retEFs []*networking_v1alpha3.EnvoyFilter
-	for _, ef := range efs {
-		e := ef.DeepCopy()
-		e.Kind = kubernetes.EnvoyFilterType
-		retEFs = append(retEFs, e)
-	}
-	return retEFs, nil
+	return retEnvoyFilters, nil
 }
 
 func (c *kubeCache) GetGateway(namespace, name string) (*networking_v1beta1.Gateway, error) {
@@ -994,15 +1020,28 @@ func (c *kubeCache) GetGateways(namespace, labelSelector string) ([]*networking_
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	gateways, err := c.getCacheLister(namespace).gatewayLister.Gateways(namespace).List(selector)
-	if err != nil {
-		return nil, err
-	}
 
-	// Lister returns nil when there are no results but callers of the cache expect an empty array
-	// so keeping the behavior the same since it matters for json marshalling.
-	if gateways == nil {
-		return []*networking_v1beta1.Gateway{}, nil
+	gateways := []*networking_v1beta1.Gateway{}
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			gateways, err = c.clusterCacheLister.gatewayLister.List(selector)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				gNS, err := nsCacheLister.gatewayLister.List(selector)
+				if err != nil {
+					return nil, err
+				}
+				gateways = append(gateways, gNS...)
+			}
+		}
+	} else {
+		gateways, err = c.getCacheLister(namespace).gatewayLister.Gateways(namespace).List(selector)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var retGateways []*networking_v1beta1.Gateway
@@ -1047,19 +1086,32 @@ func (c *kubeCache) GetServiceEntries(namespace, labelSelector string) ([]*netwo
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	ses, err := c.getCacheLister(namespace).serviceEntryLister.ServiceEntries(namespace).List(selector)
-	if err != nil {
-		return nil, err
-	}
 
-	// Lister returns nil when there are no results but callers of the cache expect an empty array
-	// so keeping the behavior the same since it matters for json marshalling.
-	if ses == nil {
-		return []*networking_v1beta1.ServiceEntry{}, nil
+	serviceEntries := []*networking_v1beta1.ServiceEntry{}
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			serviceEntries, err = c.clusterCacheLister.serviceEntryLister.List(selector)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				serviceEntriesNamespaced, err := nsCacheLister.serviceEntryLister.List(selector)
+				if err != nil {
+					return nil, err
+				}
+				serviceEntries = append(serviceEntries, serviceEntriesNamespaced...)
+			}
+		}
+	} else {
+		serviceEntries, err = c.getCacheLister(namespace).serviceEntryLister.ServiceEntries(namespace).List(selector)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var retSEs []*networking_v1beta1.ServiceEntry
-	for _, se := range ses {
+	for _, se := range serviceEntries {
 		s := se.DeepCopy()
 		s.Kind = kubernetes.ServiceEntryType
 		retSEs = append(retSEs, s)
@@ -1100,15 +1152,28 @@ func (c *kubeCache) GetSidecars(namespace, labelSelector string) ([]*networking_
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	sidecars, err := c.getCacheLister(namespace).sidecarLister.Sidecars(namespace).List(selector)
-	if err != nil {
-		return nil, err
-	}
 
-	// Lister returns nil when there are no results but callers of the cache expect an empty array
-	// so keeping the behavior the same since it matters for json marshalling.
-	if sidecars == nil {
-		return []*networking_v1beta1.Sidecar{}, nil
+	sidecars := []*networking_v1beta1.Sidecar{}
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			sidecars, err = c.clusterCacheLister.sidecarLister.List(selector)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				sidecarsNamespaced, err := nsCacheLister.sidecarLister.List(selector)
+				if err != nil {
+					return nil, err
+				}
+				sidecars = append(sidecars, sidecarsNamespaced...)
+			}
+		}
+	} else {
+		sidecars, err = c.getCacheLister(namespace).sidecarLister.Sidecars(namespace).List(selector)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var retSC []*networking_v1beta1.Sidecar
@@ -1153,15 +1218,28 @@ func (c *kubeCache) GetVirtualServices(namespace, labelSelector string) ([]*netw
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	vs, err := c.getCacheLister(namespace).virtualServiceLister.VirtualServices(namespace).List(selector)
-	if err != nil {
-		return nil, err
-	}
 
-	// Lister returns nil when there are no results but callers of the cache expect an empty array
-	// so keeping the behavior the same since it matters for json marshalling.
-	if vs == nil {
-		return []*networking_v1beta1.VirtualService{}, nil
+	vs := []*networking_v1beta1.VirtualService{}
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			vs, err = c.clusterCacheLister.virtualServiceLister.List(selector)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				vsNS, err := nsCacheLister.virtualServiceLister.List(selector)
+				if err != nil {
+					return nil, err
+				}
+				vs = append(vs, vsNS...)
+			}
+		}
+	} else {
+		vs, err = c.getCacheLister(namespace).virtualServiceLister.VirtualServices(namespace).List(selector)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var retVS []*networking_v1beta1.VirtualService
@@ -1206,19 +1284,32 @@ func (c *kubeCache) GetWorkloadEntries(namespace, labelSelector string) ([]*netw
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	we, err := c.getCacheLister(namespace).workloadEntryLister.WorkloadEntries(namespace).List(selector)
-	if err != nil {
-		return nil, err
-	}
 
-	// Lister returns nil when there are no results but callers of the cache expect an empty array
-	// so keeping the behavior the same since it matters for json marshalling.
-	if we == nil {
-		return []*networking_v1beta1.WorkloadEntry{}, nil
+	workloadEntries := []*networking_v1beta1.WorkloadEntry{}
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			workloadEntries, err = c.clusterCacheLister.workloadEntryLister.List(selector)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				workloadEntriesNamespaced, err := nsCacheLister.workloadEntryLister.List(selector)
+				if err != nil {
+					return nil, err
+				}
+				workloadEntries = append(workloadEntries, workloadEntriesNamespaced...)
+			}
+		}
+	} else {
+		workloadEntries, err = c.getCacheLister(namespace).workloadEntryLister.WorkloadEntries(namespace).List(selector)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var retWE []*networking_v1beta1.WorkloadEntry
-	for _, w := range we {
+	for _, w := range workloadEntries {
 		ww := w.DeepCopy()
 		ww.Kind = kubernetes.WorkloadEntryType
 		retWE = append(retWE, ww)
@@ -1259,19 +1350,32 @@ func (c *kubeCache) GetWorkloadGroups(namespace, labelSelector string) ([]*netwo
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	wg, err := c.getCacheLister(namespace).workloadGroupLister.WorkloadGroups(namespace).List(selector)
-	if err != nil {
-		return nil, err
-	}
 
-	// Lister returns nil when there are no results but callers of the cache expect an empty array
-	// so keeping the behavior the same since it matters for json marshalling.
-	if wg == nil {
-		return []*networking_v1beta1.WorkloadGroup{}, nil
+	workloadGroups := []*networking_v1beta1.WorkloadGroup{}
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			workloadGroups, err = c.clusterCacheLister.workloadGroupLister.List(selector)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				workloadGroupsNamespaced, err := nsCacheLister.workloadGroupLister.List(selector)
+				if err != nil {
+					return nil, err
+				}
+				workloadGroups = append(workloadGroups, workloadGroupsNamespaced...)
+			}
+		}
+	} else {
+		workloadGroups, err = c.getCacheLister(namespace).workloadGroupLister.WorkloadGroups(namespace).List(selector)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var retWG []*networking_v1beta1.WorkloadGroup
-	for _, w := range wg {
+	for _, w := range workloadGroups {
 		ww := w.DeepCopy()
 		ww.Kind = kubernetes.WorkloadGroupType
 		retWG = append(retWG, ww)
@@ -1312,20 +1416,33 @@ func (c *kubeCache) GetWasmPlugins(namespace, labelSelector string) ([]*extentio
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	wp, err := c.getCacheLister(namespace).wasmPluginLister.WasmPlugins(namespace).List(selector)
-	if err != nil {
-		return nil, err
-	}
 
-	// Lister returns nil when there are no results but callers of the cache expect an empty array
-	// so keeping the behavior the same since it matters for json marshalling.
-	if wp == nil {
-		return []*extentions_v1alpha1.WasmPlugin{}, nil
+	wasmPlugins := []*extentions_v1alpha1.WasmPlugin{}
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			wasmPlugins, err = c.clusterCacheLister.wasmPluginLister.List(selector)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				wasmPluginsNamespaced, err := nsCacheLister.wasmPluginLister.List(selector)
+				if err != nil {
+					return nil, err
+				}
+				wasmPlugins = append(wasmPlugins, wasmPluginsNamespaced...)
+			}
+		}
+	} else {
+		wasmPlugins, err = c.getCacheLister(namespace).wasmPluginLister.WasmPlugins(namespace).List(selector)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var retWP []*extentions_v1alpha1.WasmPlugin
-	for _, w := range wp {
-		ww := w.DeepCopy()
+	for _, wp := range wasmPlugins {
+		ww := wp.DeepCopy()
 		ww.Kind = kubernetes.WasmPluginType
 		retWP = append(retWP, ww)
 	}
@@ -1365,25 +1482,37 @@ func (c *kubeCache) GetTelemetries(namespace, labelSelector string) ([]*v1alpha1
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	t, err := c.getCacheLister(namespace).telemetryLister.Telemetries(namespace).List(selector)
-	if err != nil {
-		return nil, err
+
+	telemetries := []*v1alpha1.Telemetry{}
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			telemetries, err = c.clusterCacheLister.telemetryLister.List(selector)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				telemetriesNamespaced, err := nsCacheLister.telemetryLister.List(selector)
+				if err != nil {
+					return nil, err
+				}
+				telemetries = append(telemetries, telemetriesNamespaced...)
+			}
+		}
+	} else {
+		telemetries, err = c.getCacheLister(namespace).telemetryLister.Telemetries(namespace).List(selector)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	// Lister returns nil when there are no results but callers of the cache expect an empty array
-	// so keeping the behavior the same since it matters for json marshalling.
-	if t == nil {
-		return []*v1alpha1.Telemetry{}, nil
-	}
-
-	var retT []*v1alpha1.Telemetry
-	for _, w := range t {
-		tt := w.DeepCopy()
+	var retTelemetries []*v1alpha1.Telemetry
+	for _, t := range telemetries {
+		tt := t.DeepCopy()
 		tt.Kind = kubernetes.TelemetryType
-		retT = append(retT, tt)
+		retTelemetries = append(retTelemetries, tt)
 	}
-
-	return retT, nil
+	return retTelemetries, nil
 }
 
 func (c *kubeCache) GetK8sGateway(namespace, name string) (*gatewayapi_v1beta1.Gateway, error) {
@@ -1419,25 +1548,37 @@ func (c *kubeCache) GetK8sGateways(namespace, labelSelector string) ([]*gatewaya
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	g, err := c.getCacheLister(namespace).k8sgatewayLister.Gateways(namespace).List(selector)
-	if err != nil {
-		return nil, err
+
+	k8sGateways := []*gatewayapi_v1beta1.Gateway{}
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			k8sGateways, err = c.clusterCacheLister.k8sgatewayLister.List(selector)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				gatewaysNamespaced, err := nsCacheLister.k8sgatewayLister.List(selector)
+				if err != nil {
+					return nil, err
+				}
+				k8sGateways = append(k8sGateways, gatewaysNamespaced...)
+			}
+		}
+	} else {
+		k8sGateways, err = c.getCacheLister(namespace).k8sgatewayLister.Gateways(namespace).List(selector)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	// Lister returns nil when there are no results but callers of the cache expect an empty array
-	// so keeping the behavior the same since it matters for json marshalling.
-	if g == nil {
-		return []*gatewayapi_v1beta1.Gateway{}, nil
+	var retK8sGateways []*gatewayapi_v1beta1.Gateway
+	for _, gw := range k8sGateways {
+		ggw := gw.DeepCopy()
+		ggw.Kind = kubernetes.K8sGatewayType
+		retK8sGateways = append(retK8sGateways, ggw)
 	}
-
-	var retG []*gatewayapi_v1beta1.Gateway
-	for _, w := range g {
-		gg := w.DeepCopy()
-		gg.Kind = kubernetes.K8sGatewayType
-		retG = append(retG, gg)
-	}
-
-	return retG, nil
+	return retK8sGateways, nil
 }
 
 func (c *kubeCache) GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1beta1.HTTPRoute, error) {
@@ -1473,25 +1614,37 @@ func (c *kubeCache) GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewa
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	r, err := c.getCacheLister(namespace).k8shttprouteLister.HTTPRoutes(namespace).List(selector)
-	if err != nil {
-		return nil, err
+
+	k8sHTTPRoutes := []*gatewayapi_v1beta1.HTTPRoute{}
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			k8sHTTPRoutes, err = c.clusterCacheLister.k8shttprouteLister.List(selector)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				httpRoutesNamespaced, err := nsCacheLister.k8shttprouteLister.List(selector)
+				if err != nil {
+					return nil, err
+				}
+				k8sHTTPRoutes = append(k8sHTTPRoutes, httpRoutesNamespaced...)
+			}
+		}
+	} else {
+		k8sHTTPRoutes, err = c.getCacheLister(namespace).k8shttprouteLister.HTTPRoutes(namespace).List(selector)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	// Lister returns nil when there are no results but callers of the cache expect an empty array
-	// so keeping the behavior the same since it matters for json marshalling.
-	if r == nil {
-		return []*gatewayapi_v1beta1.HTTPRoute{}, nil
+	var retK8sHTTPRoutes []*gatewayapi_v1beta1.HTTPRoute
+	for _, hr := range k8sHTTPRoutes {
+		hrCopy := hr.DeepCopy()
+		hrCopy.Kind = kubernetes.K8sHTTPRouteType
+		retK8sHTTPRoutes = append(retK8sHTTPRoutes, hrCopy)
 	}
-
-	var retRoutes []*gatewayapi_v1beta1.HTTPRoute
-	for _, w := range r {
-		ww := w.DeepCopy()
-		ww.Kind = kubernetes.K8sHTTPRouteType
-		retRoutes = append(retRoutes, ww)
-	}
-
-	return retRoutes, nil
+	return retK8sHTTPRoutes, nil
 }
 
 func (c *kubeCache) GetAuthorizationPolicy(namespace, name string) (*security_v1beta1.AuthorizationPolicy, error) {
@@ -1527,24 +1680,37 @@ func (c *kubeCache) GetAuthorizationPolicies(namespace, labelSelector string) ([
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	authPolicies, err := c.getCacheLister(namespace).authzLister.AuthorizationPolicies(namespace).List(selector)
-	if err != nil {
-		return nil, err
+
+	authorizationPolicies := []*security_v1beta1.AuthorizationPolicy{}
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			authorizationPolicies, err = c.clusterCacheLister.authzLister.List(selector)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				policiesNamespaced, err := nsCacheLister.authzLister.List(selector)
+				if err != nil {
+					return nil, err
+				}
+				authorizationPolicies = append(authorizationPolicies, policiesNamespaced...)
+			}
+		}
+	} else {
+		authorizationPolicies, err = c.getCacheLister(namespace).authzLister.AuthorizationPolicies(namespace).List(selector)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	// Lister returns nil when there are no results but callers of the cache expect an empty array
-	// so keeping the behavior the same since it matters for json marshalling.
-	if authPolicies == nil {
-		return []*security_v1beta1.AuthorizationPolicy{}, nil
+	var retAuthorizationPolicies []*security_v1beta1.AuthorizationPolicy
+	for _, ap := range authorizationPolicies {
+		apCopy := ap.DeepCopy()
+		apCopy.Kind = kubernetes.AuthorizationPoliciesType
+		retAuthorizationPolicies = append(retAuthorizationPolicies, apCopy)
 	}
-
-	var retAPs []*security_v1beta1.AuthorizationPolicy
-	for _, ap := range authPolicies {
-		a := ap.DeepCopy()
-		a.Kind = kubernetes.AuthorizationPoliciesType
-		retAPs = append(retAPs, a)
-	}
-	return retAPs, nil
+	return retAuthorizationPolicies, nil
 }
 
 func (c *kubeCache) GetPeerAuthentication(namespace, name string) (*security_v1beta1.PeerAuthentication, error) {
@@ -1580,24 +1746,37 @@ func (c *kubeCache) GetPeerAuthentications(namespace, labelSelector string) ([]*
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	peerAuths, err := c.getCacheLister(namespace).peerAuthnLister.PeerAuthentications(namespace).List(selector)
-	if err != nil {
-		return nil, err
+
+	peerAuthentications := []*security_v1beta1.PeerAuthentication{}
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			peerAuthentications, err = c.clusterCacheLister.peerAuthnLister.List(selector)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				authenticationsNamespaced, err := nsCacheLister.peerAuthnLister.List(selector)
+				if err != nil {
+					return nil, err
+				}
+				peerAuthentications = append(peerAuthentications, authenticationsNamespaced...)
+			}
+		}
+	} else {
+		peerAuthentications, err = c.getCacheLister(namespace).peerAuthnLister.PeerAuthentications(namespace).List(selector)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	// Lister returns nil when there are no results but callers of the cache expect an empty array
-	// so keeping the behavior the same since it matters for json marshalling.
-	if peerAuths == nil {
-		return []*security_v1beta1.PeerAuthentication{}, nil
+	var retPeerAuthentications []*security_v1beta1.PeerAuthentication
+	for _, pa := range peerAuthentications {
+		paCopy := pa.DeepCopy()
+		paCopy.Kind = kubernetes.PeerAuthenticationsType
+		retPeerAuthentications = append(retPeerAuthentications, paCopy)
 	}
-
-	var retPAs []*security_v1beta1.PeerAuthentication
-	for _, pa := range peerAuths {
-		p := pa.DeepCopy()
-		p.Kind = kubernetes.PeerAuthenticationsType
-		retPAs = append(retPAs, p)
-	}
-	return retPAs, nil
+	return retPeerAuthentications, nil
 }
 
 func (c *kubeCache) GetRequestAuthentication(namespace, name string) (*security_v1beta1.RequestAuthentication, error) {
@@ -1633,22 +1812,35 @@ func (c *kubeCache) GetRequestAuthentications(namespace, labelSelector string) (
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	reqAuths, err := c.getCacheLister(namespace).requestAuthnLister.RequestAuthentications(namespace).List(selector)
-	if err != nil {
-		return nil, err
+
+	requestAuthentications := []*security_v1beta1.RequestAuthentication{}
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			requestAuthentications, err = c.clusterCacheLister.requestAuthnLister.List(selector)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				authenticationsNamespaced, err := nsCacheLister.requestAuthnLister.List(selector)
+				if err != nil {
+					return nil, err
+				}
+				requestAuthentications = append(requestAuthentications, authenticationsNamespaced...)
+			}
+		}
+	} else {
+		requestAuthentications, err = c.getCacheLister(namespace).requestAuthnLister.RequestAuthentications(namespace).List(selector)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	// Lister returns nil when there are no results but callers of the cache expect an empty array
-	// so keeping the behavior the same since it matters for json marshalling.
-	if reqAuths == nil {
-		return []*security_v1beta1.RequestAuthentication{}, nil
+	var retRequestAuthentications []*security_v1beta1.RequestAuthentication
+	for _, ra := range requestAuthentications {
+		raCopy := ra.DeepCopy()
+		raCopy.Kind = kubernetes.RequestAuthenticationsType
+		retRequestAuthentications = append(retRequestAuthentications, raCopy)
 	}
-
-	var retRAs []*security_v1beta1.RequestAuthentication
-	for _, ra := range reqAuths {
-		r := ra.DeepCopy()
-		r.Kind = kubernetes.RequestAuthenticationsType
-		retRAs = append(retRAs, r)
-	}
-	return retRAs, nil
+	return retRequestAuthentications, nil
 }

@@ -66,7 +66,8 @@ func TestGetIstioObjectValidations(t *testing.T) {
 func TestGatewayValidation(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
-	config.Set(conf)
+	conf.Deployment.ClusterWideAccess = true
+	kubernetes.SetConfig(t, *conf)
 
 	v := mockMultiNamespaceGatewaysValidationService(t, *conf)
 	validations, _, _ := v.GetIstioObjectValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "gateways", "first")
@@ -248,14 +249,11 @@ func mockMultiNamespaceGatewaysValidationService(t *testing.T, cfg config.Config
 	}
 
 	fakeIstioObjects = append(fakeIstioObjects, objects...)
+	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(getGateway("first", "test"))...)
+	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(getGateway("second", "test2"))...)
 
 	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
-	cache := SetupBusinessLayer(t, k8s, cfg)
-	cache.SetRegistryStatus(&kubernetes.RegistryStatus{
-		Configuration: &kubernetes.RegistryConfiguration{
-			Gateways: append(getGateway("first", "test"), getGateway("second", "test2")...),
-		},
-	})
+	SetupBusinessLayer(t, k8s, cfg)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[cfg.KubernetesConfig.ClusterName] = k8s
@@ -288,21 +286,19 @@ func mockCombinedValidationService(t *testing.T, istioConfigList *models.IstioCo
 	for _, p := range fakePods().Items {
 		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
 	}
+	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(istioConfigList.Gateways)...)
+	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(istioConfigList.DestinationRules)...)
+	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(istioConfigList.VirtualServices)...)
+	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(istioConfigList.ServiceEntries)...)
+	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(istioConfigList.Sidecars)...)
+	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(istioConfigList.WorkloadEntries)...)
+	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(istioConfigList.RequestAuthentications)...)
 
 	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
 
 	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
 	cache.SetRegistryStatus(&kubernetes.RegistryStatus{
 		Services: data.CreateFakeMultiRegistryServices(services, "test", "*"),
-		Configuration: &kubernetes.RegistryConfiguration{
-			Gateways:               istioConfigList.Gateways,
-			DestinationRules:       istioConfigList.DestinationRules,
-			VirtualServices:        istioConfigList.VirtualServices,
-			ServiceEntries:         istioConfigList.ServiceEntries,
-			Sidecars:               istioConfigList.Sidecars,
-			WorkloadEntries:        istioConfigList.WorkloadEntries,
-			RequestAuthentications: istioConfigList.RequestAuthentications,
-		},
 	})
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)

@@ -187,7 +187,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 	}
 	factory := kubetest.NewK8SClientFactoryMock(nil)
 	factory.SetClients(clients)
-	business.WithKialiCache(business.NewTestingCacheWithFactory(t, factory, *conf))
+	business.WithKialiCache(cache.NewTestingCacheWithFactory(t, factory, *conf))
 	layer := business.NewWithBackends(clients, clients, nil, nil)
 	meshSvc := layer.Mesh
 
@@ -754,7 +754,7 @@ trustDomain: cluster.local
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s, "remote": remoteClient}
 	factory := kubetest.NewK8SClientFactoryMock(nil)
 	factory.SetClients(clients)
-	business.WithKialiCache(business.NewTestingCacheWithFactory(t, factory, *conf))
+	business.WithKialiCache(cache.NewTestingCacheWithFactory(t, factory, *conf))
 
 	svc := business.NewWithBackends(clients, clients, nil, nil).Mesh
 	mesh, err := svc.GetMesh(context.TODO())
@@ -807,7 +807,7 @@ trustDomain: cluster.local
 	clients := map[string]kubernetes.ClientInterface{"east": eastClient, "remote": remoteClient}
 	factory := kubetest.NewK8SClientFactoryMock(nil)
 	factory.SetClients(clients)
-	business.WithKialiCache(business.NewTestingCacheWithFactory(t, factory, *conf))
+	business.WithKialiCache(cache.NewTestingCacheWithFactory(t, factory, *conf))
 
 	svc := business.NewWithBackends(clients, clients, nil, nil).Mesh
 	mesh, err := svc.GetMesh(context.TODO())
@@ -860,7 +860,7 @@ trustDomain: cluster.local
 	clients := map[string]kubernetes.ClientInterface{"east": eastClient, "remote": remoteClient}
 	factory := kubetest.NewK8SClientFactoryMock(nil)
 	factory.SetClients(clients)
-	business.WithKialiCache(business.NewTestingCacheWithFactory(t, factory, *conf))
+	business.WithKialiCache(cache.NewTestingCacheWithFactory(t, factory, *conf))
 
 	svc := business.NewWithBackends(clients, clients, nil, nil).Mesh
 	mesh, err := svc.GetMesh(context.TODO())
@@ -906,7 +906,7 @@ trustDomain: cluster.local
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: eastClient, "west": westClient}
 	factory := kubetest.NewK8SClientFactoryMock(nil)
 	factory.SetClients(clients)
-	business.WithKialiCache(business.NewTestingCacheWithFactory(t, factory, *conf))
+	business.WithKialiCache(cache.NewTestingCacheWithFactory(t, factory, *conf))
 
 	svc := business.NewWithBackends(clients, clients, nil, nil).Mesh
 	mesh, err := svc.GetMesh(context.TODO())
@@ -982,7 +982,7 @@ trustDomain: cluster.local
 	}
 	factory := kubetest.NewK8SClientFactoryMock(nil)
 	factory.SetClients(clients)
-	business.WithKialiCache(business.NewTestingCacheWithFactory(t, factory, *conf))
+	business.WithKialiCache(cache.NewTestingCacheWithFactory(t, factory, *conf))
 
 	svc := business.NewWithBackends(clients, clients, nil, nil).Mesh
 	mesh, err := svc.GetMesh(context.TODO())

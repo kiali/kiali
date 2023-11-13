@@ -247,29 +247,6 @@ func createPeerAuthn(name, namespace string, mtls *api_security_v1beta1.PeerAuth
 	return pa
 }
 
-func TestParseRegistryConfig(t *testing.T) {
-	assert := assert.New(t)
-
-	configz := "../tests/data/registry/registry-configz.json"
-	bRegistryz, err := os.ReadFile(configz)
-	assert.NoError(err)
-
-	rConfig := map[string][]byte{
-		"istiod1": bRegistryz,
-	}
-	registry, err2 := ParseRegistryConfig(rConfig)
-	assert.NoError(err2)
-	assert.NotNil(registry)
-
-	assert.Equal(2, len(registry.DestinationRules))
-	assert.Equal(12, len(registry.EnvoyFilters))
-	assert.Equal(1, len(registry.Gateways))
-	assert.Equal(1, len(registry.Gateways))
-	assert.Equal(11, len(registry.Sidecars))
-	assert.Equal(3, len(registry.VirtualServices))
-	assert.Equal(12, len(registry.AuthorizationPolicies))
-}
-
 func TestRegistryServices(t *testing.T) {
 	assert := assert.New(t)
 
@@ -287,58 +264,6 @@ func TestRegistryServices(t *testing.T) {
 
 	assert.Equal(79, len(registry))
 	assert.Equal("*.msn.com", registry[0].Attributes.Name)
-}
-
-func TestGetRegistryConfig(t *testing.T) {
-	assert := assert.New(t)
-
-	testServer := istiodTestServer(t)
-	setPortPool(t, testServer.URL)
-
-	k8sClient := &K8SClient{
-		k8s: fake.NewSimpleClientset(runningIstiodPod()),
-		getPodPortForwarderFunc: func(namespace, name, portMap string) (httputil.PortForwarder, error) {
-			return &fakePortForwarder{}, nil
-		},
-	}
-
-	_, err := k8sClient.GetRegistryConfiguration()
-	assert.NoError(err)
-}
-
-func TestGetRegistryConfigExternal(t *testing.T) {
-	assert := assert.New(t)
-
-	testServer := istiodTestServer(t)
-
-	conf := config.Get()
-	conf.ExternalServices.Istio.Registry = &config.RegistryConfig{
-		IstiodURL: testServer.URL,
-	}
-	setConfig(t, *conf)
-
-	k8sClient := &K8SClient{}
-	_, err := k8sClient.GetRegistryConfiguration()
-	assert.NoError(err)
-}
-
-func TestGetRegistryConfigExternalBadResponse(t *testing.T) {
-	assert := assert.New(t)
-
-	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusUnauthorized)
-	}))
-	t.Cleanup(testServer.Close)
-
-	conf := config.Get()
-	conf.ExternalServices.Istio.Registry = &config.RegistryConfig{
-		IstiodURL: testServer.URL,
-	}
-	setConfig(t, *conf)
-
-	k8sClient := &K8SClient{}
-	_, err := k8sClient.GetRegistryConfiguration()
-	assert.Error(err)
 }
 
 func TestGetRegistryServices(t *testing.T) {

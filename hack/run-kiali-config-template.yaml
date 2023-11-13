@@ -19,7 +19,7 @@ auth:
   strategy: "anonymous"
 
 deployment:
-  accessible_namespaces: ["**"]
+  accessible_namespaces: ["bookinfo"]
   remote_secret_path: "${REMOTE_SECRET_PATH}"
 
 external_services:

@@ -494,7 +494,7 @@ func TestErrorCausesPanic(t *testing.T) {
 	config.Set(conf)
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
-	cache := business.NewTestingCache(t, k8s, *conf)
+	cache := cache.NewTestingCache(t, k8s, *conf)
 	const panicErrMsg = "test error! This should cause a panic"
 	cache = &servicesError{cache, panicErrMsg}
 	business.WithKialiCache(cache)
@@ -553,7 +553,7 @@ func TestMultiClusterHealthConfig(t *testing.T) {
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	conf.KubernetesConfig.ClusterName = "east"
 	config.Set(conf)
-	cache := business.NewTestingCacheWithFactory(t, factory, *conf)
+	cache := cache.NewTestingCacheWithFactory(t, factory, *conf)
 	business.WithKialiCache(cache)
 
 	prom := new(prometheustest.PromClientMock)
