@@ -60,6 +60,7 @@ class TracingScatterComponent extends React.Component<TracingScatterProps> {
   isLoading = false;
   nextToLoad?: JaegerTrace = undefined;
   seletedTraceMatched: number | undefined;
+  hoveredId?: string;
 
   renderFetchEmpty = (title, msg) => {
     return (
@@ -151,9 +152,14 @@ class TracingScatterComponent extends React.Component<TracingScatterProps> {
             seriesComponent={<ChartScatter />}
             onClick={dp => this.props.setTraceId(this.props.cluster, dp.trace.traceID, false)}
             onMouseOver={dp => {
-              if (this.props.provider === TEMPO && !dp.trace.loaded) {
-                this.props.setTraceId(this.props.cluster, dp.trace.traceID, true);
-              }
+              this.hoveredId = dp.trace.traceID;
+              let that = this;
+              // Add a small delay to prevent many requests onHover over the chart
+              setTimeout(function () {
+                if (that.hoveredId === dp.trace.traceID && that.props.provider === TEMPO && !dp.trace.loaded) {
+                  that.props.setTraceId(that.props.cluster, dp.trace.traceID, true);
+                }
+              }, 1000);
             }}
             onTooltipClose={dp => this.onTooltipClose(dp.trace)}
             onTooltipOpen={dp => this.onTooltipOpen(dp.trace)}

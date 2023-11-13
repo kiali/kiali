@@ -82,7 +82,7 @@ class TraceLabel extends React.Component<LabelProps> {
               {hasStats ? (
                 renderTraceHeatMap(matrix!, true)
               ) : this.props.provider === TEMPO ? (
-                <div style={textStyle}>(Incomplete data. Click to load)</div>
+                <div style={textStyle}>(Loading trace details)</div>
               ) : (
                 'n/a'
               )}
