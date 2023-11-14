@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
@@ -37,6 +38,10 @@ func (in *TracingService) client() (tracing.ClientInterface, error) {
 }
 
 func (in *TracingService) getFilteredSpans(ns, app string, query models.TracingQuery, filter SpanFilter) ([]model.TracingSpan, error) {
+	// This is info needed for Tempo as it is not in the results by default
+	if config.Get().ExternalServices.Tracing.Provider == tracing.TEMPO {
+		query.Tags["http.method"] = ".*"
+	}
 	r, err := in.GetAppTraces(ns, app, query)
 	if err != nil {
 		return []model.TracingSpan{}, err
@@ -337,25 +342,43 @@ func spanMatchesWorkload(span *jaegerModels.Span, namespace, workload string) bo
 func tracesToSpans(app string, r *model.TracingResponse, filter SpanFilter) []model.TracingSpan {
 	spans := []model.TracingSpan{}
 	for _, trace := range r.Data {
-		// First, get the desired processes for our service
-		processes := make(map[jaegerModels.ProcessID]jaegerModels.Process)
-		for pId, process := range trace.Processes {
-			if process.ServiceName == app || process.ServiceName == r.TracingServiceName {
-				processes[pId] = process
+		// Diferent for Tempo & Jaeger
+		// For Tempo the proccess matched with the service name of the trace batch
+		// So t is already filtered in the query
+		if config.Get().ExternalServices.Tracing.Provider == tracing.TEMPO {
+			// Second, find spans for these processes
+			for _, span := range trace.Spans {
+				if span.Process.ServiceName == r.TracingServiceName {
+					if filter == nil || filter(&span) {
+						spans = append(spans, model.TracingSpan{
+							Span:      span,
+							TraceSize: len(trace.Spans),
+						})
+					}
+				}
 			}
-		}
-		// Second, find spans for these processes
-		for _, span := range trace.Spans {
-			if p, ok := processes[span.ProcessID]; ok {
-				span.Process = &p
-				if filter == nil || filter(&span) {
-					spans = append(spans, model.TracingSpan{
-						Span:      span,
-						TraceSize: len(trace.Spans),
-					})
+		} else {
+			// First, get the desired processes for our service
+			processes := make(map[jaegerModels.ProcessID]jaegerModels.Process)
+			for pId, process := range trace.Processes {
+				if process.ServiceName == app || process.ServiceName == r.TracingServiceName {
+					processes[pId] = process
+				}
+			}
+			// Second, find spans for these processes
+			for _, span := range trace.Spans {
+				if p, ok := processes[span.ProcessID]; ok {
+					span.Process = &p
+					if filter == nil || filter(&span) {
+						spans = append(spans, model.TracingSpan{
+							Span:      span,
+							TraceSize: len(trace.Spans),
+						})
+					}
 				}
 			}
 		}
+
 	}
 	log.Tracef("Found %d spans in the %d traces for app %s", len(spans), len(r.Data), app)
 	return spans
