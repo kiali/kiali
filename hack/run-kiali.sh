@@ -444,7 +444,8 @@ if [ -z "${TRACING_URL:-}" ]; then
           trac_local_port="$(echo ${LOCAL_REMOTE_PORTS_TRACING} | cut -d ':' -f 1)"
           LOCAL_REMOTE_PORTS_TRACING="${trac_local_port}:${trac_remote_port}"
         fi
-        TRACING_URL="http://127.0.0.1:$(echo ${LOCAL_REMOTE_PORTS_TRACING} | cut -d ':' -f 1)"
+        [ ${TRACING_APP} == 'jaeger' ] && TRACING_PREFIX="/jaeger" || TRACING_PREFIX=""
+        TRACING_URL="http://127.0.0.1:$(echo ${LOCAL_REMOTE_PORTS_TRACING} | cut -d ':' -f 1)${TRACING_PREFIX}"
       fi
     else
       infomsg "Auto-discovered OpenShift route that exposes Tracing"
@@ -468,7 +469,8 @@ if [ -z "${TRACING_URL:-}" ]; then
         trac_local_port="$(echo ${LOCAL_REMOTE_PORTS_TRACING} | cut -d ':' -f 1)"
         LOCAL_REMOTE_PORTS_TRACING="${trac_local_port}:${trac_remote_port}"
       fi
-      TRACING_URL="http://127.0.0.1:$(echo ${LOCAL_REMOTE_PORTS_TRACING} | cut -d ':' -f 1)"
+      [ ${TRACING_APP} == 'jaeger' ] && TRACING_PREFIX="/jaeger" || TRACING_PREFIX=""
+      TRACING_URL="http://127.0.0.1:$(echo ${LOCAL_REMOTE_PORTS_TRACING} | cut -d ':' -f 1)${TRACING_PREFIX}"
     fi
   fi
 fi
@@ -586,6 +588,7 @@ cat ${KIALI_CONFIG_TEMPLATE_FILE} | \
   ISTIOD_URL=${ISTIOD_URL} \
   PROMETHEUS_URL=${PROMETHEUS_URL} \
   GRAFANA_URL=${GRAFANA_URL} \
+  TRACING_APP=${TRACING_APP} \
   TRACING_URL=${TRACING_URL} \
   UI_CONSOLE_DIR=${UI_CONSOLE_DIR}   \
   REMOTE_SECRET_PATH=${REMOTE_SECRET_PATH} \
