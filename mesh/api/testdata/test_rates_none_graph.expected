@@ -1,0 +1,244 @@
+{
+  "timestamp": 1523364075,
+  "duration": 600,
+  "graphType": "workload",
+  "elements": {
+    "nodes": [
+      {
+        "data": {
+          "id": "5c254c2d4283491d38650d8fb900475d",
+          "nodeType": "workload",
+          "cluster": "east",
+          "namespace": "bankapp",
+          "workload": "deposit-v1",
+          "app": "deposit",
+          "version": "v1",
+          "destServices": [
+            {
+              "cluster": "east",
+              "namespace": "bankapp",
+              "name": "deposit"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "grpc",
+              "rates": {
+                "grpcIn": "150.00"
+              }
+            }
+          ],
+          "healthData": null,
+          "isInaccessible": true,
+          "isOutside": true
+        }
+      },
+      {
+        "data": {
+          "id": "6fb400654f51831b495b454c7d54839b",
+          "nodeType": "workload",
+          "cluster": "east",
+          "namespace": "bookinfo",
+          "workload": "productpage-v1",
+          "app": "productpage",
+          "version": "v1",
+          "traffic": [
+            {
+              "protocol": "tcp",
+              "rates": {
+                "tcpOut": "93.00"
+              }
+            }
+          ],
+          "healthData": null,
+          "isRoot": true
+        }
+      },
+      {
+        "data": {
+          "id": "57450de070195502d438ad71abdf35a1",
+          "nodeType": "workload",
+          "cluster": "east",
+          "namespace": "bookinfo",
+          "workload": "reviews-v3",
+          "app": "reviews",
+          "version": "v3",
+          "traffic": [
+            {
+              "protocol": "grpc",
+              "rates": {
+                "grpcOut": "150.00"
+              }
+            }
+          ],
+          "healthData": null,
+          "isRoot": true
+        }
+      },
+      {
+        "data": {
+          "id": "25c659622371eeab9ed18ffa7cfd8559",
+          "nodeType": "workload",
+          "cluster": "east",
+          "namespace": "bookinfo",
+          "workload": "tcp-v1",
+          "app": "tcp",
+          "version": "v1",
+          "destServices": [
+            {
+              "cluster": "east",
+              "namespace": "bookinfo",
+              "name": "tcp"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "tcp",
+              "rates": {
+                "tcpIn": "1743.00"
+              }
+            }
+          ],
+          "healthData": null
+        }
+      },
+      {
+        "data": {
+          "id": "d572c98471e1586ae94397b094892b6b",
+          "nodeType": "workload",
+          "cluster": "east",
+          "namespace": "istio-system",
+          "workload": "ingressgateway-unknown",
+          "app": "ingressgateway",
+          "version": "latest",
+          "traffic": [
+            {
+              "protocol": "tcp",
+              "rates": {
+                "tcpOut": "450.00"
+              }
+            }
+          ],
+          "healthData": null,
+          "isInaccessible": true,
+          "isOutside": true,
+          "isRoot": true
+        }
+      },
+      {
+        "data": {
+          "id": "375ab940b56ae7bcf0f89cb1a7af5d44",
+          "nodeType": "unknown",
+          "cluster": "unknown",
+          "namespace": "unknown",
+          "workload": "unknown",
+          "app": "unknown",
+          "version": "unknown",
+          "traffic": [
+            {
+              "protocol": "tcp",
+              "rates": {
+                "tcpOut": "1200.00"
+              }
+            }
+          ],
+          "healthData": null,
+          "isInaccessible": true,
+          "isRoot": true
+        }
+      }
+    ],
+    "edges": [
+      {
+        "data": {
+          "id": "2aa853bff0f7b51700f8167376bcbca1",
+          "source": "375ab940b56ae7bcf0f89cb1a7af5d44",
+          "target": "25c659622371eeab9ed18ffa7cfd8559",
+          "traffic": {
+            "protocol": "tcp",
+            "rates": {
+              "tcp": "1200.00"
+            },
+            "responses": {
+              "-": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "tcp:9080": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "185d2d2e10a3edf9d4f339c43138d4da",
+          "source": "57450de070195502d438ad71abdf35a1",
+          "target": "5c254c2d4283491d38650d8fb900475d",
+          "traffic": {
+            "protocol": "grpc",
+            "rates": {
+              "grpc": "150.00",
+              "grpcPercentReq": "100.0"
+            },
+            "responses": {
+              "-": {
+                "hosts": {
+                  "deposit:9080": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "5755b8a53c856a29e8dc11f4c4287f80",
+          "source": "6fb400654f51831b495b454c7d54839b",
+          "target": "25c659622371eeab9ed18ffa7cfd8559",
+          "traffic": {
+            "protocol": "tcp",
+            "rates": {
+              "tcp": "93.00"
+            },
+            "responses": {
+              "-": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "tcp:9080": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "756de109668dd1ccd0ca9761ff02b6a9",
+          "source": "d572c98471e1586ae94397b094892b6b",
+          "target": "25c659622371eeab9ed18ffa7cfd8559",
+          "traffic": {
+            "protocol": "tcp",
+            "rates": {
+              "tcp": "450.00"
+            },
+            "responses": {
+              "-": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "tcp:9080": "100.0"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

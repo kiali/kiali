@@ -1,0 +1,740 @@
+{
+  "timestamp": 1523364075,
+  "duration": 600,
+  "graphType": "versionedApp",
+  "elements": {
+    "nodes": [
+      {
+        "data": {
+          "id": "a4179cc3fbeb12c5e705434e5f96a550",
+          "nodeType": "box",
+          "cluster": "kukulcan",
+          "namespace": "bookinfo",
+          "app": "reviews",
+          "healthData": null,
+          "isBox": "app"
+        }
+      },
+      {
+        "data": {
+          "id": "26638d48fa3b0c6e020ba3adab8a6346",
+          "nodeType": "box",
+          "cluster": "tzotz",
+          "namespace": "bookinfo",
+          "app": "reviews",
+          "healthData": null,
+          "isBox": "app"
+        }
+      },
+      {
+        "data": {
+          "id": "8223c9ff82446480bb923ba2eb1830ad",
+          "nodeType": "service",
+          "cluster": "kukulcan",
+          "namespace": "bookinfo",
+          "service": "details",
+          "destServices": [
+            {
+              "cluster": "kukulcan",
+              "namespace": "bookinfo",
+              "name": "details"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "100.00",
+                "httpOut": "100.00"
+              }
+            }
+          ],
+          "healthData": null
+        }
+      },
+      {
+        "data": {
+          "id": "35dd7d7d00b0158c382259db7e215f85",
+          "nodeType": "service",
+          "cluster": "kukulcan",
+          "namespace": "bookinfo",
+          "service": "productpage",
+          "destServices": [
+            {
+              "cluster": "kukulcan",
+              "namespace": "bookinfo",
+              "name": "productpage"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "100.00",
+                "httpOut": "100.00"
+              }
+            }
+          ],
+          "healthData": null
+        }
+      },
+      {
+        "data": {
+          "id": "2e9987e0bf83fd259fb7835269a0f15a",
+          "nodeType": "service",
+          "cluster": "kukulcan",
+          "namespace": "bookinfo",
+          "service": "reviews",
+          "destServices": [
+            {
+              "cluster": "kukulcan",
+              "namespace": "bookinfo",
+              "name": "reviews"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "200.00",
+                "httpOut": "200.00"
+              }
+            }
+          ],
+          "healthData": null
+        }
+      },
+      {
+        "data": {
+          "id": "7e7afce01d748d344657e44ac8276565",
+          "nodeType": "app",
+          "cluster": "kukulcan",
+          "namespace": "bookinfo",
+          "workload": "details-v1",
+          "app": "details",
+          "version": "v1",
+          "destServices": [
+            {
+              "cluster": "kukulcan",
+              "namespace": "bookinfo",
+              "name": "details"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "100.00"
+              }
+            }
+          ],
+          "healthData": null
+        }
+      },
+      {
+        "data": {
+          "id": "f4f1d699434797658bb18c22ecbedfe8",
+          "nodeType": "app",
+          "cluster": "kukulcan",
+          "namespace": "bookinfo",
+          "workload": "productpage-v1",
+          "app": "productpage",
+          "version": "v1",
+          "destServices": [
+            {
+              "cluster": "kukulcan",
+              "namespace": "bookinfo",
+              "name": "productpage"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "100.00",
+                "httpOut": "500.00"
+              }
+            }
+          ],
+          "healthData": null
+        }
+      },
+      {
+        "data": {
+          "id": "ac68063b9119896dc912d46037f2d1f7",
+          "parent": "a4179cc3fbeb12c5e705434e5f96a550",
+          "nodeType": "app",
+          "cluster": "kukulcan",
+          "namespace": "bookinfo",
+          "workload": "reviews-v1",
+          "app": "reviews",
+          "version": "v1",
+          "destServices": [
+            {
+              "cluster": "kukulcan",
+              "namespace": "bookinfo",
+              "name": "reviews"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "100.00"
+              }
+            }
+          ],
+          "healthData": null
+        }
+      },
+      {
+        "data": {
+          "id": "adf68fbdb1d9e10652d1e92f36644024",
+          "parent": "a4179cc3fbeb12c5e705434e5f96a550",
+          "nodeType": "app",
+          "cluster": "kukulcan",
+          "namespace": "bookinfo",
+          "workload": "reviews-v2",
+          "app": "reviews",
+          "version": "v2",
+          "destServices": [
+            {
+              "cluster": "kukulcan",
+              "namespace": "bookinfo",
+              "name": "reviews"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "100.00",
+                "httpOut": "100.00"
+              }
+            }
+          ],
+          "healthData": null
+        }
+      },
+      {
+        "data": {
+          "id": "c0c869b3eaf19cfb79d08e71ad2e9289",
+          "nodeType": "app",
+          "cluster": "kukulcan",
+          "namespace": "istio-system",
+          "workload": "istio-ingressgateway",
+          "app": "istio-ingressgateway",
+          "version": "latest",
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpOut": "100.00"
+              }
+            }
+          ],
+          "healthData": null,
+          "isOutside": true,
+          "isRoot": true
+        }
+      },
+      {
+        "data": {
+          "id": "162ab92d639b69c8898dd076bac1269d",
+          "nodeType": "service",
+          "cluster": "tzotz",
+          "namespace": "bookinfo",
+          "service": "ratings",
+          "destServices": [
+            {
+              "cluster": "tzotz",
+              "namespace": "bookinfo",
+              "name": "ratings"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "100.00",
+                "httpOut": "100.00"
+              }
+            }
+          ],
+          "healthData": null
+        }
+      },
+      {
+        "data": {
+          "id": "3524cbbde5cdda22fea787ada9231879",
+          "nodeType": "service",
+          "cluster": "tzotz",
+          "namespace": "bookinfo",
+          "service": "reviews",
+          "destServices": [
+            {
+              "cluster": "tzotz",
+              "namespace": "bookinfo",
+              "name": "reviews"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "200.00",
+                "httpOut": "200.00"
+              }
+            }
+          ],
+          "healthData": null
+        }
+      },
+      {
+        "data": {
+          "id": "a4dbaf34b838d0ade625d37c4a8b990e",
+          "nodeType": "app",
+          "cluster": "tzotz",
+          "namespace": "bookinfo",
+          "workload": "kiali#4488-dest-v1",
+          "app": "kiali#4488-dest",
+          "version": "v1",
+          "destServices": [
+            {
+              "cluster": "tzotz",
+              "namespace": "bookinfo",
+              "name": "PassthroughCluster"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "100.00"
+              }
+            }
+          ],
+          "healthData": null
+        }
+      },
+      {
+        "data": {
+          "id": "a246ad10e3abcc5b72f1d1b7f7ce735b",
+          "nodeType": "app",
+          "cluster": "tzotz",
+          "namespace": "bookinfo",
+          "workload": "kiali#4488-source-v1",
+          "app": "kiali#4488-source",
+          "version": "v1",
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpOut": "100.00"
+              }
+            }
+          ],
+          "healthData": null,
+          "isRoot": true
+        }
+      },
+      {
+        "data": {
+          "id": "91e5b39a176fbba2e97a8fcccb474095",
+          "nodeType": "app",
+          "cluster": "tzotz",
+          "namespace": "bookinfo",
+          "workload": "ratings-v1",
+          "app": "ratings",
+          "version": "v1",
+          "destServices": [
+            {
+              "cluster": "tzotz",
+              "namespace": "bookinfo",
+              "name": "ratings"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "100.00"
+              }
+            }
+          ],
+          "healthData": null
+        }
+      },
+      {
+        "data": {
+          "id": "a531df39c60aee58e01aa6923d4d3cbf",
+          "parent": "26638d48fa3b0c6e020ba3adab8a6346",
+          "nodeType": "app",
+          "cluster": "tzotz",
+          "namespace": "bookinfo",
+          "workload": "reviews-v2",
+          "app": "reviews",
+          "version": "v2",
+          "destServices": [
+            {
+              "cluster": "tzotz",
+              "namespace": "bookinfo",
+              "name": "reviews"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "100.00"
+              }
+            }
+          ],
+          "healthData": null
+        }
+      },
+      {
+        "data": {
+          "id": "4ae40c1b16dedc9cf5f45a9e7e689c07",
+          "parent": "26638d48fa3b0c6e020ba3adab8a6346",
+          "nodeType": "app",
+          "cluster": "tzotz",
+          "namespace": "bookinfo",
+          "workload": "reviews-v3",
+          "app": "reviews",
+          "version": "v3",
+          "destServices": [
+            {
+              "cluster": "tzotz",
+              "namespace": "bookinfo",
+              "name": "reviews"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "100.00"
+              }
+            }
+          ],
+          "healthData": null
+        }
+      }
+    ],
+    "edges": [
+      {
+        "data": {
+          "id": "d796121f0e73c1299dd673168916ebf1",
+          "source": "162ab92d639b69c8898dd076bac1269d",
+          "target": "91e5b39a176fbba2e97a8fcccb474095",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "100.00",
+              "httpPercentReq": "100.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "ratings.bookinfo.svc.cluster.local": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "9b732519781ecc74313910599368f8a8",
+          "source": "2e9987e0bf83fd259fb7835269a0f15a",
+          "target": "ac68063b9119896dc912d46037f2d1f7",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "100.00",
+              "httpPercentReq": "50.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "reviews.bookinfo.svc.cluster.local": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "e25097388c2689ffc285c1cc86b80357",
+          "source": "2e9987e0bf83fd259fb7835269a0f15a",
+          "target": "adf68fbdb1d9e10652d1e92f36644024",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "100.00",
+              "httpPercentReq": "50.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "reviews.bookinfo.svc.cluster.local": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "00279f7c0730fa0b8c304765e5b037fd",
+          "source": "3524cbbde5cdda22fea787ada9231879",
+          "target": "4ae40c1b16dedc9cf5f45a9e7e689c07",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "100.00",
+              "httpPercentReq": "50.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "reviews.bookinfo.svc.cluster.local": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "6634c678a9bc3f31a4bb19f8b89bc60a",
+          "source": "3524cbbde5cdda22fea787ada9231879",
+          "target": "a531df39c60aee58e01aa6923d4d3cbf",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "100.00",
+              "httpPercentReq": "50.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "reviews.bookinfo.svc.cluster.local": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "57afdece2136843371121c02ef75eb1e",
+          "source": "35dd7d7d00b0158c382259db7e215f85",
+          "target": "f4f1d699434797658bb18c22ecbedfe8",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "100.00",
+              "httpPercentReq": "100.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "productpage.bookinfo.svc.cluster.local": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "91dcf4c4f8fa99855f814081779e59e9",
+          "source": "8223c9ff82446480bb923ba2eb1830ad",
+          "target": "7e7afce01d748d344657e44ac8276565",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "100.00",
+              "httpPercentReq": "100.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "details.bookinfo.svc.cluster.local": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "cff7f5ca632018a2a8cc8df280d40d3e",
+          "source": "a246ad10e3abcc5b72f1d1b7f7ce735b",
+          "target": "a4dbaf34b838d0ade625d37c4a8b990e",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "100.00",
+              "httpPercentReq": "100.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "10.2.3.4:8080": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "fa99f34cb5e1a7850f4846e593d77b45",
+          "source": "adf68fbdb1d9e10652d1e92f36644024",
+          "target": "162ab92d639b69c8898dd076bac1269d",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "100.00",
+              "httpPercentReq": "100.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "ratings.bookinfo.svc.cluster.local": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "588e0855da5ef90ae9a12578fb88b69f",
+          "source": "c0c869b3eaf19cfb79d08e71ad2e9289",
+          "target": "35dd7d7d00b0158c382259db7e215f85",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "100.00",
+              "httpPercentReq": "100.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "productpage.bookinfo.svc.cluster.local": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "a98ac89eb35c90065ec52a3e471822e8",
+          "source": "f4f1d699434797658bb18c22ecbedfe8",
+          "target": "2e9987e0bf83fd259fb7835269a0f15a",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "200.00",
+              "httpPercentReq": "40.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "reviews.bookinfo.svc.cluster.local": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "6fc30e17f130a94bfe54c14d6901e5c4",
+          "source": "f4f1d699434797658bb18c22ecbedfe8",
+          "target": "3524cbbde5cdda22fea787ada9231879",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "200.00",
+              "httpPercentReq": "40.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "reviews.bookinfo.svc.cluster.local": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "684d306adf36b5363220fe0bbe7a4762",
+          "source": "f4f1d699434797658bb18c22ecbedfe8",
+          "target": "8223c9ff82446480bb923ba2eb1830ad",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "100.00",
+              "httpPercentReq": "20.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "details.bookinfo.svc.cluster.local": "100.0"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "timestamp": 1523364075,
+  "duration": 600,
+  "graphType": "workload",
+  "elements": {
+    "nodes": [
+      {
+        "data": {
+          "id": "6fb400654f51831b495b454c7d54839b",
+          "nodeType": "workload",
+          "cluster": "east",
+          "namespace": "bookinfo",
+          "workload": "productpage-v1",
+          "app": "productpage",
+          "version": "v1",
+          "destServices": [
+            {
+              "cluster": "east",
+              "namespace": "bookinfo",
+              "name": "productpage"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "100.00"
+              }
+            },
+            {
+              "protocol": "tcp",
+              "rates": {
+                "tcpIn": "31.00"
+              }
+            }
+          ],
+          "healthData": null
+        }
+      },
+      {
+        "data": {
+          "id": "d572c98471e1586ae94397b094892b6b",
+          "nodeType": "workload",
+          "cluster": "east",
+          "namespace": "istio-system",
+          "workload": "ingressgateway-unknown",
+          "app": "ingressgateway",
+          "version": "latest",
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpOut": "100.00"
+              }
+            },
+            {
+              "protocol": "tcp",
+              "rates": {
+                "tcpOut": "31.00"
+              }
+            }
+          ],
+          "healthData": null,
+          "isInaccessible": true,
+          "isOutside": true,
+          "isRoot": true
+        }
+      }
+    ],
+    "edges": [
+      {
+        "data": {
+          "id": "67b56dc45daf5831ba2dec84d8e00717",
+          "source": "d572c98471e1586ae94397b094892b6b",
+          "target": "6fb400654f51831b495b454c7d54839b",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "100.00",
+              "httpPercentReq": "100.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "productpage:9080": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "135198f4764d6763a58885cefbb792ec",
+          "source": "d572c98471e1586ae94397b094892b6b",
+          "target": "6fb400654f51831b495b454c7d54839b",
+          "traffic": {
+            "protocol": "tcp",
+            "rates": {
+              "tcp": "31.00"
+            },
+            "responses": {
+              "-": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "productpage:9080": "100.0"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}
