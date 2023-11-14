@@ -23,49 +23,59 @@ import { OldMeshPage } from 'pages/Mesh/old/OldMeshPage';
  */
 const navMenuItems: MenuItem[] = [
   {
+    id: 'overview',
     title: 'Overview',
     to: '/overview',
     pathsActive: [/^\/overview\/(.*)/]
   },
   {
+    id: 'traffic_graph_cy',
     title: 'Traffic Graph [Cy]',
     to: '/graph/namespaces/',
     pathsActive: [/^\/graph\/(.*)/]
   },
   {
+    id: 'traffic_graph_pf',
     title: 'Traffic Graph [PF]',
     to: '/graphpf/namespaces/',
     pathsActive: [/^\/graphpf\/(.*)/]
   },
   {
+    id: 'applications',
     title: 'Applications',
     to: '/' + Paths.APPLICATIONS,
     pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.APPLICATIONS + '/(.*)')]
   },
   {
+    id: 'workloads',
     title: 'Workloads',
     to: '/' + Paths.WORKLOADS,
     pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.WORKLOADS + '/(.*)')]
   },
   {
+    id: 'services',
     title: 'Services',
     to: '/' + Paths.SERVICES,
     pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.SERVICES + '/(.*)')]
   },
   {
+    id: 'istio',
     title: 'Istio Config',
     to: '/' + Paths.ISTIO,
     pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.ISTIO + '/(.*)'), new RegExp('/' + Paths.ISTIO + '/new/(.*)')]
   },
   {
+    id: 'tracing',
     title: 'Distributed Tracing',
     to: '/tracing'
   },
   {
+    id: 'mesh_graph',
     title: 'Mesh [graph]',
     to: '/mesh'
   },
   {
+    id: 'mesh_classic',
     title: 'Mesh [classic]',
     to: '/oldmesh'
   }

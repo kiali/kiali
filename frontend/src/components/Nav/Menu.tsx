@@ -10,6 +10,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { GetTracingURL } from '../TracingIntegration/TracesComponent';
 import { ExternalServiceInfo } from '../../types/StatusState';
 import { KialiIcon } from 'config/KialiIcon';
+import { WithTranslation, withTranslation } from 'react-i18next';
 
 const externalLinkStyle = kialiStyle({
   $nest: {
@@ -40,7 +41,7 @@ const ExternalLink = ({ href, name }: { href: string; name: string }): React.Rea
   </NavItem>
 );
 
-type MenuProps = {
+type MenuProps = WithTranslation & {
   externalServices: ExternalServiceInfo[];
   isNavOpen: boolean;
   location: any;
@@ -50,7 +51,7 @@ type MenuState = {
   activeItem: string;
 };
 
-export class Menu extends React.Component<MenuProps, MenuState> {
+class MenuComponent extends React.Component<MenuProps, MenuState> {
   static contextTypes = {
     router: () => null
   };
@@ -93,60 +94,60 @@ export class Menu extends React.Component<MenuProps, MenuState> {
 
     return allNavMenuItems
       .filter(item => {
-        if (item.title === 'Mesh [classic]') {
+        if (item.id === 'mesh_classic') {
           return graphEnableMeshClassic && homeCluster?.name !== undefined;
         }
 
-        if (item.title === 'Mesh [graph]') {
+        if (item.id === 'mesh_graph') {
           return graphEnableMeshGraph;
         }
 
-        if (item.title === 'Overview') {
+        if (item.id === 'overview') {
           return !graphEnableMeshOverview;
         }
 
-        if (item.title === 'Traffic Graph [Cy]') {
+        if (item.id === 'traffic_graph_cy') {
           return graphEnableCytoscape;
         }
 
-        if (item.title === 'Traffic Graph [PF]') {
+        if (item.id === 'traffic_graph_pf') {
           return graphEnablePatternfly;
         }
 
         return true;
       })
       .sort((a, b): number => {
-        if (graphEnableMeshOverview && a.title === 'Mesh [graph]') return -1;
-        if (graphEnableMeshOverview && b.title === 'Mesh [graph]') return 1;
+        if (graphEnableMeshOverview && a.id === 'mesh_graph') return -1;
+        if (graphEnableMeshOverview && b.id === 'mesh_graph') return 1;
         return 0;
       })
       .map(item => {
-        if (item.title === 'Distributed Tracing') {
-          return tracingUrl && <ExternalLink key={item.to} href={tracingUrl} name="Distributed Tracing" />;
-        }
-
         let title = item.title;
 
-        if (title === 'Traffic Graph [Cy]' && !graphEnablePatternfly) {
+        if (item.id === 'tracing') {
+          return tracingUrl && <ExternalLink key={item.to} href={tracingUrl} name={this.props.t(title)} />;
+        }
+
+        if (item.id === 'traffic_graph_cy' && !graphEnablePatternfly) {
           title = 'Traffic Graph';
         }
 
-        if (title === 'Traffic Graph [PF]' && !graphEnableCytoscape) {
+        if (item.id === 'traffic_graph_pf' && !graphEnableCytoscape) {
           title = 'Traffic Graph';
         }
 
-        if (title === 'Mesh [classic]') {
+        if (item.id === 'mesh_classic') {
           title = 'Mesh';
         }
 
-        if (title === 'Mesh [graph]') {
+        if (item.id === 'mesh_graph') {
           title = 'Mesh';
         }
 
         return (
           <NavItem isActive={activeMenuItem === item} key={item.to}>
-            <Link id={title} to={item.to} onClick={() => history.push(item.to)}>
-              {title}
+            <Link id={item.id} to={item.to} onClick={() => history.push(item.to)}>
+              {this.props.t(title)}
             </Link>
           </NavItem>
         );
@@ -161,3 +162,5 @@ export class Menu extends React.Component<MenuProps, MenuState> {
     );
   }
 }
+
+export const Menu = withTranslation()(MenuComponent);

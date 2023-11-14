@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallowToJson } from 'enzyme-to-json';
 import { mount, shallow } from 'enzyme';
-import { ThemeSwitchComponent } from '../ThemeSwitch';
+import { ThemeSwitchComponent } from '../Masthead/ThemeSwitch';
 import { KIALI_THEME, PF_THEME_DARK, Theme } from 'types/Common';
 import { Button } from '@patternfly/react-core';
 

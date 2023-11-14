@@ -78,6 +78,7 @@ import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { isRemoteCluster } from './OverviewCardControlPlaneNamespace';
 import { ApiError } from 'types/Api';
+import { WithTranslation, withTranslation } from 'react-i18next';
 
 const gridStyleCompact = kialiStyle({
   backgroundColor: PFColors.BackgroundColor200,
@@ -163,7 +164,7 @@ type ReduxProps = {
   refreshInterval: IntervalInMilliseconds;
 };
 
-type OverviewProps = ReduxProps & {};
+type OverviewProps = WithTranslation & ReduxProps & {};
 
 export class OverviewPageComponent extends React.Component<OverviewProps, State> {
   private sFOverviewToolbar: React.RefObject<StatefulFilters> = React.createRef();
@@ -1256,7 +1257,14 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
   }
 
   renderLabels(ns: NamespaceInfo): JSX.Element {
-    const labelsLength = ns.labels ? `${Object.entries(ns.labels).length}` : 'No';
+    let labelsInfo: string;
+
+    if (ns.labels) {
+      const labelsLength = Object.entries(ns.labels).length;
+      labelsInfo = this.props.t(`{{labels}} label${labelsLength !== 1 ? 's' : ''}`, { labels: labelsLength });
+    } else {
+      labelsInfo = this.props.t('No labels');
+    }
 
     const labelContent = ns.labels ? (
       <div
@@ -1279,12 +1287,12 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           }
         >
           <div id="labels_info" style={{ display: 'inline' }}>
-            {labelsLength} label{labelsLength !== '1' ? 's' : ''}
+            {labelsInfo}
           </div>
         </Tooltip>
       </div>
     ) : (
-      <div style={{ textAlign: 'left' }}>No labels</div>
+      <div style={{ textAlign: 'left' }}>{labelsInfo}</div>
     );
 
     return labelContent;
@@ -1481,4 +1489,4 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   refreshInterval: refreshIntervalSelector(state)
 });
 
-export const OverviewPage = connect(mapStateToProps)(OverviewPageComponent);
+export const OverviewPage = connect(mapStateToProps)(withTranslation()(OverviewPageComponent));
