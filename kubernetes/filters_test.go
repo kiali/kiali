@@ -237,34 +237,6 @@ func CreateFakeRegistryService(host string, namespace string, exportToNamespace 
 	return &registryService
 }
 
-// func TestFilterByNamespaces(t *testing.T) {
-// 	// Define some test objects
-// 	obj1 := &meta_v1.ObjectMeta{Namespace: "ns1"}
-// 	obj2 := &meta_v1.ObjectMeta{Namespace: "ns2"}
-// 	obj3 := &meta_v1.ObjectMeta{Namespace: "ns3"}
-// 	obj4 := &meta_v1.ObjectMeta{Namespace: "ns4"}
-
-// 	// Create a slice of runtime.Objects containing the test objects
-// 	objects := []runtime.Object{obj1, obj2, obj3, obj4}
-
-// 	// Define the namespaces to filter by
-// 	namespaces := []string{"ns1", "ns3"}
-
-// 	// Call the function being tested
-// 	filtered := FilterByNamespaces(objects, namespaces)
-
-// 	// Assert that the filtered slice only contains objects from the specified namespaces
-// 	for _, obj := range filtered {
-// 		o, err := meta.Accessor(obj)
-// 		if err != nil {
-// 			t.Errorf("Error accessing object metadata: %v", err)
-// 		}
-// 		if o.GetNamespace() != "ns1" && o.GetNamespace() != "ns3" {
-// 			t.Errorf("Object from unexpected namespace: %s", o.GetNamespace())
-// 		}
-// 	}
-// }
-
 func TestFilterByNamespaces(t *testing.T) {
 	assert := assert.New(t)
 
@@ -275,12 +247,10 @@ func TestFilterByNamespaces(t *testing.T) {
 	objects := []*networking_v1beta1.DestinationRule{obj1, obj2, obj3}
 	namespaces := []string{"ns1", "ns3"}
 
-	// Test case 1: Valid input
 	filtered := FilterByNamespaces(objects, namespaces)
 	expected := []*networking_v1beta1.DestinationRule{obj1, obj3}
 	assert.EqualValues(expected, filtered)
 
-	// Test case 2: Empty input
 	emptyObjects := []*networking_v1beta1.DestinationRule{}
 	emptyFiltered := FilterByNamespaces(emptyObjects, namespaces)
 	assert.Empty(emptyFiltered)

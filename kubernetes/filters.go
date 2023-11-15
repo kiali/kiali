@@ -612,6 +612,8 @@ func FilterByNamespaces[T runtime.Object](objects []T, namespaces []string) []T 
 	filtered := []T{}
 	for _, obj := range objects {
 		o, err := meta.Accessor(obj)
+		// This shouldn't happen since we are using runtime.Object for T
+		// and all the API objects should implement meta.Object.
 		if err != nil {
 			return filtered
 		}
