@@ -69,20 +69,9 @@ func initKialiCache() error {
 		return err
 	}
 
-	// Seed namespaces when not in cluster wide mode.
-	if !conf.AllNamespacesAccessible() {
-		for _, namespace := range conf.Deployment.AccessibleNamespaces {
-			cache.CheckNamespace(namespace)
-		}
-	}
-
 	kialiCache = cache
 
 	return nil
-}
-
-func IsNamespaceCached(namespace string) bool {
-	return kialiCache.CheckNamespace(namespace)
 }
 
 // Start initializes the Kiali Cache and sets the

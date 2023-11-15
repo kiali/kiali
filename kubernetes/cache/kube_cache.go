@@ -46,10 +46,6 @@ func checkIstioAPIsExist(client kubernetes.ClientInterface) error {
 }
 
 type KubeCache interface {
-	// Control methods
-	// Check if a namespace is listed to be cached; if yes, creates a cache for that namespace
-	CheckNamespace(namespace string) bool
-
 	// Refresh will recreate the necessary cache. If the cache is cluster-scoped the "namespace" argument
 	// is ignored and the whole cache is recreated, otherwise only the namespace-specific cache is updated.
 	Refresh(namespace string)
@@ -190,6 +186,11 @@ func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, ref
 		log.Debug("[Kiali Cache] Using 'namespace' scoped Kiali Cache")
 		c.nsCacheLister = make(map[string]*cacheLister)
 		c.stopNSChans = make(map[string]chan struct{})
+		for _, ns := range cfg.Deployment.AccessibleNamespaces {
+			if err := c.startInformers(ns); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	return c, nil
@@ -233,36 +234,6 @@ func (c *kubeCache) UpdateClient(kialiClient kubernetes.ClientInterface) error {
 	}
 
 	return nil
-}
-
-// CheckNamespace will
-// - Validate if a namespace is included in the cache
-// - Create and initialize a cache
-func (c *kubeCache) CheckNamespace(namespace string) bool {
-	if c.clusterScoped {
-		return true
-	} else if !c.isCached(namespace) {
-		return false
-	}
-
-	var isNSCached bool
-	// Separate func so we can defer
-	func() {
-		c.cacheLock.RLock()
-		defer c.cacheLock.RUnlock()
-		_, isNSCached = c.nsCacheLister[namespace]
-	}()
-
-	if !isNSCached {
-		c.cacheLock.Lock()
-		defer c.cacheLock.Unlock()
-		if err := c.startInformers(namespace); err != nil {
-			log.Errorf("[Kiali Cache] Error starting informers for namespace: %s. Err: %s", namespace, err)
-			return false
-		}
-	}
-
-	return true
 }
 
 // Stop will stop either the cluster wide cache or all of the namespace caches.
