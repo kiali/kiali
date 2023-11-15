@@ -27,17 +27,20 @@ const (
 
 // MetricsType defines all of Kiali's own internal metrics.
 type MetricsType struct {
-	GraphNodes                     *prometheus.GaugeVec
-	GraphGenerationTime            *prometheus.HistogramVec
-	GraphAppenderTime              *prometheus.HistogramVec
-	GraphMarshalTime               *prometheus.HistogramVec
-	APIProcessingTime              *prometheus.HistogramVec
-	PrometheusProcessingTime       *prometheus.HistogramVec
-	KubernetesClients              *prometheus.GaugeVec
 	APIFailures                    *prometheus.CounterVec
+	APIProcessingTime              *prometheus.HistogramVec
 	CheckerProcessingTime          *prometheus.HistogramVec
-	ValidationProcessingTime       *prometheus.HistogramVec
+	GraphAppenderTime              *prometheus.HistogramVec
+	GraphGenerationTime            *prometheus.HistogramVec
+	GraphMarshalTime               *prometheus.HistogramVec
+	GraphNodes                     *prometheus.GaugeVec
+	KubernetesClients              *prometheus.GaugeVec
+	MeshGraphAppenderTime          *prometheus.HistogramVec
+	MeshGraphGenerationTime        *prometheus.HistogramVec
+	MeshGraphMarshalTime           *prometheus.HistogramVec
+	PrometheusProcessingTime       *prometheus.HistogramVec
 	SingleValidationProcessingTime *prometheus.HistogramVec
+	ValidationProcessingTime       *prometheus.HistogramVec
 }
 
 // Metrics contains all of Kiali's own internal metrics.
@@ -241,6 +244,34 @@ func GetGraphMarshalTimePrometheusTimer(graphKind string, graphType string, with
 		labelGraphKind:        graphKind,
 		labelGraphType:        graphType,
 		labelWithServiceNodes: strconv.FormatBool(withServiceNodes),
+	}))
+	return timer
+}
+
+// GetMesgGraphGenerationTimePrometheusTimer returns a timer that can be used to store
+// a value for the mesh graph generation time metric. The timer is ticking immediately
+// when this function returns.
+// Typical usage is as follows:
+//
+//	promtimer := GetMeshGraphGenerationTimePrometheusTimer(...)
+//	defer promtimer.ObserveDuration()
+func GetMeshGraphGenerationTimePrometheusTimer() *prometheus.Timer {
+	timer := prometheus.NewTimer(Metrics.MeshGraphGenerationTime.With(prometheus.Labels{
+		labelGraphKind: "mesh",
+	}))
+	return timer
+}
+
+// GetMeshGraphMarshalTimePrometheusTimer returns a timer that can be used to store
+// a value for the graph marshal time metric. The timer is ticking immediately
+// when this function returns.
+// Typical usage is as follows:
+//
+//	promtimer := GetGraphMarshalTimePrometheusTimer(...)
+//	defer promtimer.ObserveDuration()
+func GetMeshGraphMarshalTimePrometheusTimer() *prometheus.Timer {
+	timer := prometheus.NewTimer(Metrics.MeshGraphMarshalTime.With(prometheus.Labels{
+		labelGraphKind: "mesh",
 	}))
 	return timer
 }

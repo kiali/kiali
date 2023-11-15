@@ -1,4 +1,4 @@
-package meshapi
+package api
 
 import (
 	"bytes"
@@ -40,6 +40,7 @@ func setupMocked(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock)
 
 	k8s := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
 		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
 	)
 
@@ -1235,7 +1236,7 @@ func TestAppGraph(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	fut = graphNamespacesIstio
+	fut = graphMesh
 	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=app&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
