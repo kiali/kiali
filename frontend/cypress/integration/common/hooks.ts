@@ -1,5 +1,8 @@
 import { Before } from '@badeball/cypress-cucumber-preprocessor';
 
+const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
+const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
+
 function install_demoapp(demoapp: string) {
   var namespaces: string = 'bookinfo';
   var deletion: string = `--delete-${demoapp}`;
@@ -84,4 +87,18 @@ Before({ tags: '@error-rates-app' }, async function () {
 
 Before({ tags: '@sleep-app' }, async function () {
   install_demoapp('sleep');
+});
+
+Before({ tags: '@remote-istio-crds'}, async function(){
+  cy.exec(`kubectl get crd --context ${CLUSTER2_CONTEXT} -o=custom-columns=NAME:.metadata.name |  grep -E -i '.(istio|k8s).io$'`,
+    { failOnNonZeroExit: false}).then(result => {
+    if (result.code != 0) {
+      cy.log('Istio CRDs not found on the remote cluster. Enabling it now.');
+      cy.exec(`kubectl apply -f https://raw.githubusercontent.com/istio/istio/master/manifests/charts/base/crds/crd-all.gen.yaml --context ${CLUSTER2_CONTEXT}`)
+        .its('code')
+        .should('eq', 0).then(() => {
+          cy.exec(`kubectl rollout restart deployment/kiali -n istio-system --context ${CLUSTER1_CONTEXT} && kubectl rollout status deployment/kiali -n istio-system --context ${CLUSTER1_CONTEXT}`);
+        });
+    }
+  });
 });

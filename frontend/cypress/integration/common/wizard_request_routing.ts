@@ -1,6 +1,10 @@
-import { And, Before, Given, When } from '@badeball/cypress-cucumber-preprocessor';
+import { And, Before, Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
+import { ensureKialiFinishedLoading } from './transition';
 
 const url = '/console';
+
+const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
+const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
 
 Before(() => {
   // Forcing to not stop cypress on unexpected errors not related to the tests.
@@ -24,6 +28,24 @@ Before(() => {
 Given('user opens the namespace {string} and {string} service details page', (namespace: string, service: string) => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
   cy.visit(url + '/namespaces/' + namespace + '/services/' + service + '?refresh=0');
+});
+
+Given('user opens the namespace {string} and the remote {string} service details page', (namespace: string, service: string) => {
+  cy.visit(url + '/namespaces/' + namespace + '/services/' + service + '?refresh=0&clusterName=west');
+});
+
+When('user deletes Request Routing named {string} and the resource is no longer available in any cluster', (name:string) => {
+  cy.exec(`kubectl delete destinationrules.networking.istio.io ${name} -n bookinfo --context ${CLUSTER1_CONTEXT}`, { failOnNonZeroExit: false });
+  cy.exec(`kubectl delete destinationrules.networking.istio.io ${name} -n bookinfo --context ${CLUSTER2_CONTEXT}`, { failOnNonZeroExit: false });
+  cy.exec(`kubectl delete virtualservices.networking.istio.io ${name} -n bookinfo --context ${CLUSTER1_CONTEXT}`, { failOnNonZeroExit: false });
+  cy.exec(`kubectl delete virtualservices.networking.istio.io ${name} -n bookinfo --context ${CLUSTER2_CONTEXT}`, { failOnNonZeroExit: false });
+  ensureKialiFinishedLoading();
+});
+
+When('user deletes gateway named {string} and the resource is no longer available in any cluster', (name: string) => {
+  cy.exec(`kubectl delete gateway.networking.istio.io ${name} -n bookinfo --context ${CLUSTER1_CONTEXT}`, { failOnNonZeroExit: false });
+  cy.exec(`kubectl delete gateway.networking.istio.io ${name} -n bookinfo --context ${CLUSTER2_CONTEXT}`, { failOnNonZeroExit: false });
+  ensureKialiFinishedLoading();
 });
 
 When('user clicks in the {string} actions', (action: string) => {
@@ -55,6 +77,15 @@ When('user clicks in the {string} actions', (action: string) => {
     .get('#loading_kiali_spinner')
     .should('not.exist');
 });
+
+Then('user sees the generated {string} objects located in the {string} cluster',(svc:string, cluster:string) =>{
+  cy.get(`[data-test="VirtualItem_Nsbookinfo_destinationrule_${svc}"]`).find('[data-label="Cluster"]').contains(cluster);
+  cy.get(`[data-test="VirtualItem_Nsbookinfo_virtualservice_${svc}"]`).find('[data-label="Cluster"]').contains(cluster);
+});
+
+And('the {string} {string} should be listed in {string} {string} namespace', (type:string, svc:string, cluster:string, ns:string) => {
+  cy.get(`[data-test="VirtualItem_Ns${ns}_${type.toLowerCase()}_${svc}"]`).find('[data-label="Cluster"]').contains(cluster);
+})
 
 And('user sees the {string} wizard', (title: string) => {
   cy.get('div[aria-label="' + title + '"]');
