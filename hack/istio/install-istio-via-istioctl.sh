@@ -34,6 +34,7 @@ MTLS="true"
 NAMESPACE="istio-system"
 NETWORK=""
 REDUCE_RESOURCES="false"
+REQUIRE_SCC="false"
 IMAGE_HUB="gcr.io/istio-release"
 IMAGE_TAG="default"
 
@@ -169,6 +170,15 @@ while [[ $# -gt 0 ]]; do
       fi
       shift;shift
       ;;
+    -rs|--require-scc)
+      if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
+        REQUIRE_SCC="$2"
+      else
+        echo "ERROR: The --require-scc flag must be 'true' or 'false'"
+        exit 1
+      fi
+      shift;shift
+      ;;
     -s|--set)
       CUSTOM_INSTALL_SETTINGS="${CUSTOM_INSTALL_SETTINGS} --set $2"
       shift;shift
@@ -250,6 +260,9 @@ Valid command line arguments:
        When true some Istio components (such as the sidecar proxies) will be given
        a smaller amount of resources (CPU and memory) which will allow you
        to run Istio on a cluster that does not have a large amount of resources.
+       Default: false
+  -rs|--require-scc (true|false):
+       Required when running Istio < 1.20 in OpenShift
        Default: false
   -s|--set <name=value>:
        Sets a name/value pair for a custom install setting. Some examples you may want to use:
@@ -360,9 +373,9 @@ if [ "${DELETE_ISTIO}" != "true" ]; then
     if ! ${CLIENT_EXE} get namespace ${NAMESPACE}; then
       ${CLIENT_EXE} new-project ${NAMESPACE}
     fi
-
-    echo "Creating SCC for OpenShift"
-    cat <<SCC | ${CLIENT_EXE} apply -f -
+    if [ "${REQUIRE_SCC}" == "true" ]; then
+      echo "Creating SCC for OpenShift"
+      cat <<SCC | ${CLIENT_EXE} apply -f -
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
@@ -385,6 +398,29 @@ users:
 - "system:serviceaccount:${NAMESPACE}:prometheus"
 - "system:serviceaccount:${NAMESPACE}:grafana"
 SCC
+    else
+      echo "Creating SCC for OpenShift for the Istio addons"
+      cat <<SCC | ${CLIENT_EXE} apply -f -
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: istio-addons-openshift-scc
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+fsGroup:
+  type: RunAsAny
+seccompProfiles:
+- '*'
+priority: 9
+users:
+- "system:serviceaccount:${NAMESPACE}:prometheus"
+- "system:serviceaccount:${NAMESPACE}:grafana"
+SCC
+    fi
   else
     if ! ${CLIENT_EXE} get namespace ${NAMESPACE}; then
       ${CLIENT_EXE} create namespace ${NAMESPACE}
