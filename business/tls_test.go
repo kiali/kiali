@@ -32,7 +32,6 @@ func TestMeshStatusEnabled(t *testing.T) {
 			data.CreateEmptyDestinationRule("test", "default", "*.local"))}
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetNamespaces", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
@@ -61,7 +60,6 @@ func TestMeshStatusEnabledAutoMtls(t *testing.T) {
 
 	k8s := new(kubetest.K8SClientMock)
 
-	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetConfigMap", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.ConfigMap{}, nil)
@@ -89,7 +87,6 @@ func TestMeshStatusPartiallyEnabled(t *testing.T) {
 			data.CreateEmptyDestinationRule("istio-system", "default", "sleep.foo.svc.cluster.local"))}
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetConfigMap", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.ConfigMap{}, nil)
@@ -117,7 +114,6 @@ func TestMeshStatusNotEnabled(t *testing.T) {
 			data.CreateEmptyDestinationRule("istio-system", "default", "sleep.foo.svc.cluster.local"))}
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
@@ -146,7 +142,6 @@ func TestMeshStatusDisabled(t *testing.T) {
 			data.CreateEmptyDestinationRule("istio-system", "default", "*.local"))}
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
@@ -173,7 +168,6 @@ func TestMeshStatusNotEnabledAutoMtls(t *testing.T) {
 	dr := []*networking_v1beta1.DestinationRule{}
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetConfigMap", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.ConfigMap{}, nil)
@@ -304,7 +298,6 @@ func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
 	}
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("GetProjects", mock.AnythingOfType("string")).Return(projects, nil)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&projects[0], nil)
 	k8s.On("GetToken").Return("token")
@@ -338,7 +331,6 @@ func testNamespaceScenario(exStatus string, drs []*networking_v1beta1.Destinatio
 	}
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("GetProjects", mock.AnythingOfType("string")).Return(projects, nil)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&projects[0], nil)
 	k8s.On("GetToken").Return("token")

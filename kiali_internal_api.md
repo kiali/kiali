@@ -8932,7 +8932,6 @@ This type is used for returning a response of IstioConfigList
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
-| IsMaistra | boolean| `bool` | ✓ | | If true, the Istio implementation is a variant of Maistra. |  |
 | IstioAPIEnabled | boolean| `bool` |  | | Is api enabled |  |
 
 

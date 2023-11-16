@@ -315,7 +315,6 @@ func mockEmptyValidationService() IstioValidationsService {
 	k8s.MockIstio()
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("IsMaistraApi").Return(false)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[config.Get().KubernetesConfig.ClusterName] = k8s
 	return IstioValidationsService{userClients: k8sclients, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}

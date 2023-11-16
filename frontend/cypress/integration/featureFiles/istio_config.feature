@@ -324,8 +324,6 @@ Feature: Kiali Istio Config page
 # TODO: KIA06xx and KIA07xx does not appear in Istio Config list page. They appear in Svc/workload lists.
 #   Thus, these validations do not belong to this feature file.
 
-# TODO: KIA0801 is only applicable for Maistra. We don't have an environment to run tests for this one.
-
 # TODO: Apparently, Kiali does not trigger:
 #   KIA0204, KIA0205, KIA0206, KIA0401, KIA0501
 #   It is possible that under the current mTLS defaults these

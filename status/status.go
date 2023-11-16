@@ -24,10 +24,6 @@ const (
 
 // IstioEnvironment describes the Istio implementation environment
 type IstioEnvironment struct {
-	// If true, the Istio implementation is a variant of Maistra.
-	//
-	// required: true
-	IsMaistra bool `json:"isMaistra"`
 	// Is api enabled
 	IstioAPIEnabled bool `json:"istioAPIEnabled"`
 }
@@ -136,26 +132,10 @@ func Get() (status StatusInfo) {
 
 	// we only need to get the IstioEnvironment one time - its content is static and will never change
 	if info.IstioEnvironment == nil {
-		isMaistra := false
-		for _, esi := range info.ExternalServices {
-			if isMaistraExternalService(&esi) {
-				isMaistra = true
-				break
-			}
-		}
 		info.IstioEnvironment = &IstioEnvironment{
-			IsMaistra:       isMaistra,
 			IstioAPIEnabled: cfg.ExternalServices.Istio.IstioAPIEnabled,
 		}
 	}
 
 	return info
-}
-
-// IsMaistra returns true if we are running in a Maistra environment
-func IsMaistra() bool {
-	if info.IstioEnvironment == nil {
-		Get()
-	}
-	return info.IstioEnvironment.IsMaistra
 }

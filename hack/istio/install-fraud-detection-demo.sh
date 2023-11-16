@@ -28,9 +28,9 @@ while [ $# -gt 0 ]; do
       shift;shift
       ;;
     -in|--istio-namespace)
-￼     ISTIO_NAMESPACE="$2"
-￼     shift;shift
-￼     ;;
+      ISTIO_NAMESPACE="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -63,23 +63,16 @@ echo NAMESPACE=${NAMESPACE}
 echo SOURCE=${SOURCE}
 
 IS_OPENSHIFT="false"
-IS_MAISTRA="false"
 if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   IS_OPENSHIFT="true"
-  IS_MAISTRA=$([ "$(oc get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
 fi
 
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
-echo "IS_MAISTRA=${IS_MAISTRA}"
 
 # If we are to delete, remove everything and exit immediately after
 if [ "${DELETE_DEMO}" == "true" ]; then
   if [ "${IS_OPENSHIFT}" == "true" ]; then
-    if [ "${IS_MAISTRA}" != "true" ]; then
-      $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE}
-    else
-      $CLIENT_EXE delete smm default -n ${NAMESPACE}
-    fi
+    $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE}
     $CLIENT_EXE delete scc fraud-detection-scc
   fi
   ${CLIENT_EXE} delete namespace ${NAMESPACE}
@@ -95,14 +88,12 @@ else
 fi
 
 if [ "${IS_OPENSHIFT}" == "true" ]; then
-  if [ "${IS_MAISTRA}" != "true" ]; then
-    cat <<NAD | $CLIENT_EXE -n ${NAMESPACE} create -f -
+  cat <<NAD | $CLIENT_EXE -n ${NAMESPACE} create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
 NAD
-  fi
   cat <<SCC | $CLIENT_EXE apply -f -
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
@@ -134,10 +125,6 @@ ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/fraud-detection/policies.yaml") -n $
 ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/fraud-detection/claims.yaml") -n ${NAMESPACE}
 ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/fraud-detection/insurance.yaml") -n ${NAMESPACE}
 ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/fraud-detection/fraud.yaml") -n ${NAMESPACE}
-
-if [ "${IS_MAISTRA}" == "true" ]; then
-  prepare_maistra "${NAMESPACE}"
-fi
 
 if [ "${IS_OPENSHIFT}" == "true" ]; then
   $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${NAMESPACE}

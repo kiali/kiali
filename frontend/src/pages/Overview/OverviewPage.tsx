@@ -157,7 +157,6 @@ type State = {
 
 type ReduxProps = {
   duration: DurationInSeconds;
-  isMaistra: boolean;
   istioAPIEnabled: boolean;
   kiosk: string;
   meshStatus: string;
@@ -709,11 +708,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     // RBAC allow more fine granularity but Kiali won't check that in detail.
 
     if (serverConfig.istioNamespace !== nsInfo.name) {
-      if (
-        !this.props.isMaistra &&
-        serverConfig.kialiFeatureFlags.istioInjectionAction &&
-        !serverConfig.kialiFeatureFlags.istioUpgradeAction
-      ) {
+      if (serverConfig.kialiFeatureFlags.istioInjectionAction && !serverConfig.kialiFeatureFlags.istioUpgradeAction) {
         namespaceActions.push({
           isGroup: false,
           isSeparator: true
@@ -1401,7 +1396,6 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   duration: durationSelector(state),
-  isMaistra: state.statusState.istioEnvironment.isMaistra,
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
   kiosk: state.globalState.kiosk,
   meshStatus: meshWideMTLSStatusSelector(state),
