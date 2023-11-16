@@ -78,14 +78,13 @@ Feature: Kiali Istio Config page
     Then the user can create a "Sidecar" Istio object
 
   @multi-cluster
-  @skip
+  @remote-istio-crds
   Scenario: See all Istio Config objects in the bookinfo namespace in the multi-cluster environment.
+    And there are Istio config objects created in both clusters
     Then the "Cluster" column "appears"
-    And user sees all the Istio Config objects from both clusters in the bookinfo namespace
-    And user sees Name information for Istio objects
-    And user sees Namespace information for Istio objects
-    And user sees Type information for Istio objects
-    And user sees Configuration information for Istio objects
+    And user sees the Istio Config objects from both clusters in the bookinfo namespace
+    And user sees "Name" information for Istio objects from both clusters
+    And user sees "Configuration" information for Istio objects from both clusters
 
   @skip
   @multi-cluster

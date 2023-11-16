@@ -23,9 +23,6 @@ Feature: Kiali help dropdown verify
     When user clicks on the "View Certificates Info" button
     Then user sees the "Certificates information" modal
 
-  # Even though this test is already implemented, I skipped it.
-  # It will be better to skip this one until our upstream CI is able to build Kiali from the specific PR it is running on. 
-  @skip  
   @multi-cluster
   Scenario: User opens the View Debug Info section for multi-cluster mode
     When user clicks on the "View Debug Info" button

@@ -2,6 +2,9 @@ import { After, And, Given, Then, When } from '@badeball/cypress-cucumber-prepro
 import { colExists, getColWithRowText } from './table';
 import { ensureKialiFinishedLoading } from './transition';
 
+const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
+const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
+
 function labelsStringToJson(labelsString: string) {
   let labelsJson = '';
 
@@ -382,6 +385,32 @@ And('the user filters by {string} for {string}', (filter: string, filterValue: s
     cy.get('select[aria-label="filter_select_type"]').select(filter);
     cy.get('input[aria-label="filter_input_label_key"]').type(`${filterValue}{enter}`);
   }
+});
+
+And('user sees the Istio Config objects from both clusters in the bookinfo namespace',() => {
+  cy.get(`[data-test="VirtualItem_Nsbookinfo_authorizationpolicy_foo-east"]`).find('[data-label="Cluster"]').contains('east');
+  cy.get(`[data-test="VirtualItem_Nsbookinfo_authorizationpolicy_foo-west"]`).find('[data-label="Cluster"]').contains('west');
+});
+
+And('user sees {string} information for Istio objects from both clusters',(column:string) => {
+  getColWithRowText('foo-east', column).within(() => {
+    cy.get(`a[href*="/namespaces/bookinfo/istio/authorizationpolicies/foo-east?clusterName=east"]`).should('be.visible');
+  });
+  getColWithRowText('foo-west', column).within(() => {
+    cy.get(`a[href*="/namespaces/bookinfo/istio/authorizationpolicies/foo-west?clusterName=west"]`).should('be.visible');
+  });
+});
+
+And('user sees Namespace information for Istio objects',() => {});
+And('user sees Type information for Istio objects',() => {});
+And('user sees Configuration information for Istio objects',()=> {});
+
+Then('there are Istio config objects created in both clusters',() => {
+  cy.exec(`kubectl delete AuthorizationPolicy foo-east -n bookinfo --context ${CLUSTER1_CONTEXT}`, { failOnNonZeroExit: false });
+  cy.exec(`kubectl delete AuthorizationPolicy foo-west -n bookinfo --context ${CLUSTER2_CONTEXT}`, { failOnNonZeroExit: false });
+  cy.exec(`echo '${minimalAuthorizationPolicy('foo-east', 'bookinfo')}' | kubectl apply -f - --context ${CLUSTER1_CONTEXT}`);
+  cy.exec(`echo '${minimalAuthorizationPolicy('foo-west', 'bookinfo')}' | kubectl apply -f - --context ${CLUSTER2_CONTEXT}`);
+  ensureKialiFinishedLoading();
 });
 
 Then('user only sees {string}', (sees: string) => {

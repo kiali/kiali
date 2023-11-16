@@ -108,6 +108,18 @@ And('user does not see a dropdown for cluster selection', () => {
   cy.get('[data-test="cluster-dropdown"]').should('not.exist');
 });
 
+And('user selects {string} from the cluster dropdown',(clusters:string)=>{
+  clusters.split(",").forEach((value:string) =>{
+    cy.getBySel('cluster-dropdown').click();
+    cy.get(`input[type="checkbox"][value="${value}"]`).check();
+    cy.getBySel('cluster-dropdown').click();
+  })
+});
+
+And('no danger alert should be visible', () => {
+  cy.get('h4').contains('Danger alert').should('not.exist');
+});
+
 Then(
   'the {string} {string} should be listed in {string} namespace',
   (type: string, name: string, namespace: string) => {
@@ -153,4 +165,8 @@ Then('{string} details information for service entry {string} can be seen', (hos
   cy.get('#IstioConfigCard').within(() => {
     cy.get('#pfbadge-SE').parent().parent().contains(name);
   });
+});
+
+Then('an info message {string} is displayed',(message:string) =>{
+  cy.contains(message).should('be.visible');
 });

@@ -1,4 +1,5 @@
 import { Before } from '@badeball/cypress-cucumber-preprocessor';
+import { ensureKialiFinishedLoading } from './transition';
 
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
 const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
@@ -42,6 +43,7 @@ function install_demoapp(demoapp: string) {
                   }).then(() => {
                     cy.log('Waiting for demoapp to be ready.');
                     cy.exec(`../hack/istio/wait-for-namespace.sh -n ${namespaces}`, { timeout: 400000 });
+                    ensureKialiFinishedLoading();
                   });
                 });
               } else {
