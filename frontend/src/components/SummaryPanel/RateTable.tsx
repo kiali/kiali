@@ -36,11 +36,11 @@ export const RateTableGrpc: React.FC<RateTableGrpcPropType> = (props: RateTableG
             <Th dataLabel="Total" textCenter>
               Total
             </Th>
-            <Th dataLabel="%Success" textCenter>
-              %Success
+            <Th dataLabel="% Success" textCenter>
+              % Success
             </Th>
-            <Th dataLabel="%Error" textCenter>
-              %Error
+            <Th dataLabel="% Error" textCenter>
+              % Error
             </Th>
           </Tr>
         </Thead>
@@ -49,10 +49,10 @@ export const RateTableGrpc: React.FC<RateTableGrpcPropType> = (props: RateTableG
             <Td dataLabel="Total" textCenter>
               {props.rate.toFixed(2)}
             </Td>
-            <Td dataLabel="%Success" textCenter>
+            <Td dataLabel="% Success" textCenter>
               {props.isRequests ? percentOK.toFixed(2) : '-'}
             </Td>
-            <Td dataLabel="%Error" textCenter>
+            <Td dataLabel="% Error" textCenter>
               {props.isRequests ? percentErr.toFixed(2) : '-'}
             </Td>
           </Tr>
@@ -98,11 +98,11 @@ export const RateTableHttp: React.FC<RateTableHttpPropType> = (props: RateTableH
             <Th dataLabel="Total" textCenter>
               Total
             </Th>
-            <Th dataLabel="%Success" textCenter>
-              %Success
+            <Th dataLabel="% Success" textCenter>
+              % Success
             </Th>
-            <Th dataLabel="%Error" textCenter>
-              %Error
+            <Th dataLabel="% Error" textCenter>
+              % Error
             </Th>
           </Tr>
         </Thead>
@@ -111,10 +111,10 @@ export const RateTableHttp: React.FC<RateTableHttpPropType> = (props: RateTableH
             <Td dataLabel="Total" textCenter>
               {props.rate.toFixed(2)}
             </Td>
-            <Td dataLabel="%Success" textCenter>
+            <Td dataLabel="% Success" textCenter>
               {successErr.toFixed(2)}
             </Td>
-            <Td dataLabel="%Error" textCenter>
+            <Td dataLabel="% Error" textCenter>
               {percentErr.toFixed(2)}
             </Td>
           </Tr>
@@ -139,11 +139,11 @@ export const RateTableTcp: React.FC<RateTableTcpPropType> = (props: RateTableTcp
             <Th dataLabel="Total" textCenter>
               Total
             </Th>
-            <Th dataLabel="%Success" textCenter>
-              %Success
+            <Th dataLabel="% Success" textCenter>
+              % Success
             </Th>
-            <Th dataLabel="%Error" textCenter>
-              %Error
+            <Th dataLabel="% Error" textCenter>
+              % Error
             </Th>
           </Tr>
         </Thead>
@@ -152,10 +152,10 @@ export const RateTableTcp: React.FC<RateTableTcpPropType> = (props: RateTableTcp
             <Td dataLabel="Total" textCenter>
               {props.rate.toFixed(2)}
             </Td>
-            <Td dataLabel="%Success" textCenter>
+            <Td dataLabel="% Success" textCenter>
               {'-'}
             </Td>
-            <Td dataLabel="%Error" textCenter>
+            <Td dataLabel="% Error" textCenter>
               {'-'}
             </Td>
           </Tr>

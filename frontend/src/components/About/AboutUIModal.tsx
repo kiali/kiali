@@ -135,7 +135,7 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
   const containerVersion = props.status[StatusKey.KIALI_CONTAINER_VERSION];
 
   const meshVersion = props.status[StatusKey.MESH_NAME]
-    ? `${props.status[StatusKey.MESH_NAME]} ${props.status[StatusKey.MESH_VERSION] || ''}`
+    ? `${props.status[StatusKey.MESH_NAME]} ${props.status[StatusKey.MESH_VERSION] ?? ''}`
     : 'Unknown';
 
   const filteredServices = props.externalServices.filter(element => element.name !== TEMPO);
@@ -154,37 +154,41 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
     >
       <TextContent className={textContentStyle}>
         <TextList component="dl">
-          <TextListItem key={'kiali-name'} component="dt">
+          <TextListItem key="kiali-name" component="dt">
             Kiali
           </TextListItem>
-          <TextListItem key={'kiali-version'} component="dd">
+          <TextListItem key="kiali-version" component="dd">
             {coreVersion!}
           </TextListItem>
-          <TextListItem key={'kiali-container-name'} component="dt">
+          <TextListItem key="kiali-container-name" component="dt">
             Kiali Container
           </TextListItem>
-          <TextListItem key={'kiali-container-version'} component="dd">
+          <TextListItem key="kiali-container-version" component="dd">
             {containerVersion!}
           </TextListItem>
-          <TextListItem key={'service-mesh-name'} component="dt">
+          <TextListItem key="service-mesh-name" component="dt">
             Service Mesh
           </TextListItem>
-          <TextListItem key={'service-mesh-version'} component="dd">
+          <TextListItem key="service-mesh-version" component="dd">
             {meshVersion!}
           </TextListItem>
         </TextList>
       </TextContent>
+
       {props.warningMessages.length > 0 && (
-        <Alert variant="warning" title={props.warningMessages[0]} style={{ marginTop: '1em' }} />
+        <Alert variant="warning" title={props.warningMessages[0]} style={{ marginTop: '1rem' }} />
       )}
+
       <TextContent className={textContentStyle}>
-        <Title headingLevel="h3" size={TitleSizes.xl} style={{ padding: '20px 0px 20px' }}>
+        <Title headingLevel="h3" size={TitleSizes.xl} style={{ padding: '1.25rem 0 1.25rem' }}>
           Components
         </Title>
+
         <TextList component="dl">
           {componentList}
           {tempoComponent}
         </TextList>
+
         {renderWebsiteLink()}
         {renderProjectLink()}
       </TextContent>

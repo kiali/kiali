@@ -34,7 +34,7 @@ export const MissingAuthPolicy: React.FC<MissingAuthPolicyProps> = ({
       {React.createElement(icon, { style: { color: color } })}
 
       {!tooltip && (
-        <span>
+        <span style={{ marginLeft: '0.5rem' }}>
           {text}
 
           <Tooltip

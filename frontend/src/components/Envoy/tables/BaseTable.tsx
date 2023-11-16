@@ -25,7 +25,8 @@ export interface SummaryTable {
 }
 
 const iconStyle = kialiStyle({
-  display: 'inline-block'
+  display: 'inline-block',
+  alignSelf: 'center'
 });
 
 export function SummaryTableRenderer<T extends SummaryTable>() {

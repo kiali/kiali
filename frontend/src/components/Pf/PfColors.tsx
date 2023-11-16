@@ -48,8 +48,7 @@ export enum PFColors {
   White = 'var(--pf-v5-global--palette--white)',
 
   // semantic kiali colors
-  Active = 'var(--pf-v5-global--active-color--400)',
-  ActiveText = 'var(--pf-v5-global--primary-color--200)',
+  Active = 'var(--pf-v5-global--active-color--100)',
   Badge = 'var(--pf-v5-global--palette--blue-300)',
   Replay = 'var(--pf-v5-global--active-color--300)',
   Link = 'var(--pf-v5-global--link--Color)',

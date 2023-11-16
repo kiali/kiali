@@ -21,7 +21,7 @@ type Props = ReduxProps & {
 };
 
 const containerStyle = kialiStyle({
-  padding: '0.75rem 1.25rem 0.75rem 1.25rem',
+  padding: '0.625rem 1.25rem 0.625rem 1.25rem',
   backgroundColor: PFColors.BackgroundColor100,
   borderBottom: `1px solid ${PFColors.BorderColor100}`
 });
@@ -37,7 +37,7 @@ const rightToolbarStyle = kialiStyle({
 
 const actionsToolbarStyle = kialiStyle({
   marginLeft: 'auto',
-  paddingTop: '1rem'
+  paddingTop: '1.25rem'
 });
 
 const DefaultSecondaryMastheadComponent: React.FC<Props> = (props: Props) => {

@@ -83,7 +83,7 @@ export const kialiBadge = kialiStyle({
   lineHeight: '1rem',
   marginRight: '0.25rem',
   minWidth: '1.5em',
-  padding: '0.125rem 0.25rem',
+  padding: '0.075rem 0.25rem',
   textAlign: 'center',
   whiteSpace: 'nowrap'
 });
@@ -98,7 +98,7 @@ export const kialiBadgeSmall = kialiStyle({
   lineHeight: '0.75rem',
   marginRight: '0.25rem',
   minWidth: '1.3em',
-  padding: '0.125rem 0.25rem',
+  padding: '0.075rem 0.25rem',
   textAlign: 'center',
   whiteSpace: 'nowrap'
 });

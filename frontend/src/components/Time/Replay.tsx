@@ -144,7 +144,7 @@ const speedStyle = kialiStyle({
 });
 
 const speedActiveStyle = kialiStyle({
-  color: PFColors.ActiveText,
+  color: PFColors.Active,
   fontWeight: 'bolder'
 });
 

@@ -13,8 +13,7 @@ type MissingLabelProps = {
 };
 
 const infoStyle = kialiStyle({
-  marginLeft: '0.5rem',
-  verticalAlign: '-0.125rem'
+  marginLeft: '0.5rem'
 });
 
 export const MissingLabel: React.FC<MissingLabelProps> = (props: MissingLabelProps) => {

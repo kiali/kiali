@@ -87,7 +87,7 @@ export const Validation: React.FC<ValidationProps> = (props: ValidationProps) =>
   const iconStyle = props.iconStyle ? { ...props.iconStyle } : {};
 
   const defaultStyle: CSSProperties = {
-    verticalAlign: '-0.125em'
+    verticalAlign: '-0.125rem'
   };
 
   Object.assign(iconStyle, severityColor);

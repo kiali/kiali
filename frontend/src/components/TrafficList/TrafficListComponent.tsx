@@ -295,7 +295,7 @@ class TrafficList extends FilterComponent.Component<
               position={TooltipPosition.top}
               content={<>Traffic Status: {item.healthStatus.status.name}</>}
             >
-              {createTooltipIcon(createIcon(item.healthStatus.status, 'sm'))}
+              {createTooltipIcon(createIcon(item.healthStatus.status, 'md'))}
             </Tooltip>,
             <>
               <PFBadge badge={item.badge} position={TooltipPosition.top} keyValue={`tt_badge_${i}`} />

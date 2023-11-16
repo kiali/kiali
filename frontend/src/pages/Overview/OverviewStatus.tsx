@@ -79,7 +79,7 @@ const OverviewStatusComponent: React.FC<Props> = (props: Props) => {
       content={tooltipContent}
       className={healthIndicatorStyle}
     >
-      <div style={{ display: 'inline-block', marginRight: '0.25rem' }}>
+      <div style={{ display: 'inline-block', marginRight: '0.375rem' }}>
         <Link to={`/${props.targetPage}?namespaces=${props.namespace}`} onClick={() => linkAction()}>
           {createIcon(props.status)}
           {` ${length}`}

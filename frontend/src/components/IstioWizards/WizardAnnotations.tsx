@@ -196,7 +196,7 @@ export class WizardAnnotations extends React.Component<Props, State> {
         </Button>
 
         {this.props.canEdit && (
-          <Button variant="link" onClick={this.onClear}>
+          <Button variant="secondary" onClick={this.onClear}>
             Clear
           </Button>
         )}

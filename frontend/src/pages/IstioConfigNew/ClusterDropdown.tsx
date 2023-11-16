@@ -66,7 +66,7 @@ const clusterContainerStyle = kialiStyle({
 });
 
 const dividerStyle = kialiStyle({
-  paddingTop: '0.75rem'
+  paddingTop: '0.625rem'
 });
 
 const closeButtonStyle = kialiStyle({

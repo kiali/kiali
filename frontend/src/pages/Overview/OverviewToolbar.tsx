@@ -77,13 +77,13 @@ const containerFlex = kialiStyle({
 });
 
 const filterToolbarStyle = kialiStyle({
-  paddingTop: '0.75rem'
+  paddingTop: '0.625rem'
 });
 
 const rightToolbarStyle = kialiStyle({
   marginLeft: 'auto',
   height: '118px',
-  padding: '0.75rem 0 0 0'
+  padding: '0.625rem 0 0 0'
 });
 
 const timeToolbarStyle = kialiStyle({

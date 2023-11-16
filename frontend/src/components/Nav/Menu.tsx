@@ -3,13 +3,13 @@ import * as React from 'react';
 import { matchPath } from 'react-router';
 import { Link } from 'react-router-dom';
 import { Nav, NavList, NavItem } from '@patternfly/react-core';
-import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { history } from '../../app/History';
 import { navMenuItems } from '../../routes';
 import { homeCluster, serverConfig } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { GetTracingURL } from '../TracingIntegration/TracesComponent';
 import { ExternalServiceInfo } from '../../types/StatusState';
+import { KialiIcon } from 'config/KialiIcon';
 
 const externalLinkStyle = kialiStyle({
   $nest: {
@@ -28,10 +28,14 @@ const navListStyle = kialiStyle({
   padding: 0
 });
 
+const iconStyle = kialiStyle({
+  marginLeft: '0.5rem'
+});
+
 const ExternalLink = ({ href, name }: { href: string; name: string }): React.ReactElement => (
   <NavItem isActive={false} key={name}>
     <a className={externalLinkStyle} href={href} target="_blank" rel="noopener noreferrer">
-      {name} <ExternalLinkAltIcon style={{ margin: '-4px 0 0 5px' }} />
+      {name} <KialiIcon.ExternalLink className={iconStyle} />
     </a>
   </NavItem>
 );
