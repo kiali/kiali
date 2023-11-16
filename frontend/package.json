@@ -14,6 +14,7 @@
     "*Do not* change this setting if you wish run Kiali under different server root.",
     "Instead update 'web_root' in Kaili config map in OpenShift console."
   ],
+  "proxy": "http://localhost:8000",
   "homepage": "./",
   "bugs": {
     "url": "https://github.com/kiali/kiali/issues"
