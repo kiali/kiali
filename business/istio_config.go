@@ -430,21 +430,21 @@ func (in *IstioConfigService) getIstioConfigListForCluster(ctx context.Context, 
 			namespaceNames = append(namespaceNames, ns.Name)
 		}
 
+		istioConfigList.AuthorizationPolicies = kubernetes.FilterByNamespaces(istioConfigList.AuthorizationPolicies, namespaceNames)
 		istioConfigList.DestinationRules = kubernetes.FilterByNamespaces(istioConfigList.DestinationRules, namespaceNames)
 		istioConfigList.EnvoyFilters = kubernetes.FilterByNamespaces(istioConfigList.EnvoyFilters, namespaceNames)
 		istioConfigList.Gateways = kubernetes.FilterByNamespaces(istioConfigList.Gateways, namespaceNames)
 		istioConfigList.K8sGateways = kubernetes.FilterByNamespaces(istioConfigList.K8sGateways, namespaceNames)
 		istioConfigList.K8sHTTPRoutes = kubernetes.FilterByNamespaces(istioConfigList.K8sHTTPRoutes, namespaceNames)
-		istioConfigList.VirtualServices = kubernetes.FilterByNamespaces(istioConfigList.VirtualServices, namespaceNames)
-		istioConfigList.ServiceEntries = kubernetes.FilterByNamespaces(istioConfigList.ServiceEntries, namespaceNames)
-		istioConfigList.Sidecars = kubernetes.FilterByNamespaces(istioConfigList.Sidecars, namespaceNames)
-		istioConfigList.WorkloadEntries = kubernetes.FilterByNamespaces(istioConfigList.WorkloadEntries, namespaceNames)
-		istioConfigList.WorkloadGroups = kubernetes.FilterByNamespaces(istioConfigList.WorkloadGroups, namespaceNames)
-		istioConfigList.AuthorizationPolicies = kubernetes.FilterByNamespaces(istioConfigList.AuthorizationPolicies, namespaceNames)
 		istioConfigList.PeerAuthentications = kubernetes.FilterByNamespaces(istioConfigList.PeerAuthentications, namespaceNames)
 		istioConfigList.RequestAuthentications = kubernetes.FilterByNamespaces(istioConfigList.RequestAuthentications, namespaceNames)
-		istioConfigList.WasmPlugins = kubernetes.FilterByNamespaces(istioConfigList.WasmPlugins, namespaceNames)
+		istioConfigList.ServiceEntries = kubernetes.FilterByNamespaces(istioConfigList.ServiceEntries, namespaceNames)
+		istioConfigList.Sidecars = kubernetes.FilterByNamespaces(istioConfigList.Sidecars, namespaceNames)
 		istioConfigList.Telemetries = kubernetes.FilterByNamespaces(istioConfigList.Telemetries, namespaceNames)
+		istioConfigList.VirtualServices = kubernetes.FilterByNamespaces(istioConfigList.VirtualServices, namespaceNames)
+		istioConfigList.WasmPlugins = kubernetes.FilterByNamespaces(istioConfigList.WasmPlugins, namespaceNames)
+		istioConfigList.WorkloadEntries = kubernetes.FilterByNamespaces(istioConfigList.WorkloadEntries, namespaceNames)
+		istioConfigList.WorkloadGroups = kubernetes.FilterByNamespaces(istioConfigList.WorkloadGroups, namespaceNames)
 	}
 
 	return istioConfigList, nil

@@ -89,30 +89,12 @@ func (in *RegistryStatusService) checkAndRefresh() error {
 }
 
 func (in *RegistryStatusService) refreshRegistryStatus() (*kubernetes.RegistryStatus, error) {
-	var registryServices []*kubernetes.RegistryService
-
-	var rConfErr, rEndErr, rSvcErr error
-
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-		if registryServices, rSvcErr = in.k8s.GetRegistryServices(); rSvcErr != nil {
-			registryServices, rSvcErr = in.getRegistryServicesUsingKialiSA()
+	registryServices, err := in.k8s.GetRegistryServices()
+	if err != nil {
+		registryServices, err = in.getRegistryServicesUsingKialiSA()
+		if err != nil {
+			return nil, err
 		}
-	}()
-
-	wg.Wait()
-
-	if rConfErr != nil {
-		return nil, rConfErr
-	}
-	if rEndErr != nil {
-		return nil, rEndErr
-	}
-	if rSvcErr != nil {
-		return nil, rSvcErr
 	}
 
 	registryStatus := kubernetes.RegistryStatus{
