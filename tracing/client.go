@@ -6,10 +6,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/kiali/kiali/tracing/tempo/tempopb"
-	"github.com/kiali/kiali/util/grpcutil"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/insecure"
 	"net"
 	"net/http"
 	"net/url"
@@ -17,7 +13,11 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/kiali/kiali/tracing/tempo/tempopb"
+	"github.com/kiali/kiali/util/grpcutil"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"

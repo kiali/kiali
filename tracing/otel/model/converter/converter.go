@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	v1 "github.com/grafana/tempo/pkg/tempopb/common/v1"
+
 	"github.com/kiali/kiali/log"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 	otel "github.com/kiali/kiali/tracing/otel/model"
