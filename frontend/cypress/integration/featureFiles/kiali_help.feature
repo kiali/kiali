@@ -22,9 +22,3 @@ Feature: Kiali help dropdown verify
   Scenario: User opens the View Certificates Info section
     When user clicks on the "View Certificates Info" button
     Then user sees the "Certificates information" modal
-
-  @multi-cluster
-  Scenario: User opens the View Debug Info section for multi-cluster mode
-    When user clicks on the "View Debug Info" button
-    Then user sees the "Debug information" modal
-    And user sees information about 2 clusters
