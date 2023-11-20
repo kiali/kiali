@@ -68,7 +68,7 @@ export const Labels: React.FC<LabelsProps> = (props: LabelsProps) => {
 
   const tooltip = props.tooltipMessage ? (
     <Tooltip
-      key={`tooltip_missing_sidecar`}
+      key="tooltip_missing_sidecar"
       position={TooltipPosition.auto}
       content={<div style={{ textAlign: 'left' }}>{props.tooltipMessage}</div>}
     >

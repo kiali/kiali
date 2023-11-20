@@ -25,7 +25,7 @@ export const AmbientBadge: React.FC<AmbientLabelProps> = (props: AmbientLabelPro
   );
 
   return (
-    <Tooltip key={`tooltip_ambient_label`} position={TooltipPosition.right} content={tooltipContent}>
+    <Tooltip key="tooltip_ambient_label" position={TooltipPosition.right} content={tooltipContent}>
       {iconComponent}
     </Tooltip>
   );

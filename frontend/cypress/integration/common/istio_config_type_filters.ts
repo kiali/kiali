@@ -57,7 +57,7 @@ When('chosen from the {string} dropdown', (placeholder: string) => {
       objects: 'authorizationpolicies'
     }
   }).as('filterActive');
-  cy.get(`input[placeholder="${placeholder}"]`).type('AuthorizationPolicy{enter}');
+  cy.get(`input[placeholder="${placeholder}"]`).type('AuthorizationPolicy');
   cy.get(`li[label="AuthorizationPolicy"]`).should('be.visible').find('button').click();
 });
 
@@ -72,9 +72,9 @@ When('multiple filters are chosen', () => {
       objects: 'authorizationpolicies,destinationrules'
     }
   }).as('multipleFilters');
-  cy.get('input[placeholder="Filter by Type"]').type('AuthorizationPolicy{enter}');
+  cy.get('input[placeholder="Filter by Type"]').type('AuthorizationPolicy');
   cy.get(`li[label="AuthorizationPolicy"]`).should('be.visible').find('button').click();
-  cy.get('input[placeholder="Filter by Type"]').type('DestinationRule{enter}');
+  cy.get('input[placeholder="Filter by Type"]').type('DestinationRule');
   cy.get(`li[label="DestinationRule"]`).should('be.visible').find('button').click();
 });
 
@@ -83,7 +83,7 @@ Then('multiple filters are active', () => {
 });
 
 When('a type filter {string} is applied', (category: string) => {
-  cy.get('input[placeholder="Filter by Type"]').type(`${category}{enter}`);
+  cy.get('input[placeholder="Filter by Type"]').type(`${category}`);
   cy.get(`li[label="${category}"]`).should('be.visible').find('button').click();
 });
 
