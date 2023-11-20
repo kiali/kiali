@@ -2,7 +2,7 @@
 
 exports[`#Badge render correctly with data should render badge 1`] = `
 <Label
-  className="kiali_fr76sfk"
+  className="kiali_fhx35ww"
   isCompact={true}
 >
   app=bookinfo
