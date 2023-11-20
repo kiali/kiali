@@ -17,16 +17,40 @@ import (
 	otel "github.com/kiali/kiali/tracing/otel/model"
 	"github.com/kiali/kiali/tracing/otel/model/converter"
 	otelModels "github.com/kiali/kiali/tracing/otel/model/json"
+	"github.com/kiali/kiali/util"
 )
 
 type OtelHTTPClient struct {
+	ClusterTag bool
+}
+
+// New client
+func NewOtelClient(client http.Client, baseURL *url.URL) (otelClient *OtelHTTPClient, err error) {
+	url := *baseURL
+	url.Path = path.Join(url.Path, "/api/search/tags")
+	r, status, _ := makeRequest(client, url.String(), nil)
+	if status != 200 {
+		return nil, fmt.Errorf("Error %d getting tags", status)
+	}
+	var response otel.TagsResponse
+	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
+		log.Errorf("Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, url)
+		return nil, errMarshal
+	}
+	tags := false
+	if util.InSlice(response.TagNames, "cluster") {
+		tags = true
+	}
+
+	return &OtelHTTPClient{ClusterTag: tags}, nil
 }
 
 // GetAppTracesHTTP search traces
 func (oc OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, serviceName string, q models.TracingQuery) (response *model.TracingResponse, err error) {
 	url := *baseURL
 	url.Path = path.Join(url.Path, "/api/search")
-	prepareTraceQL(&url, serviceName, q)
+	oc.prepareTraceQL(&url, serviceName, q)
+
 	r, err := oc.queryTracesHTTP(client, &url, q.Tags["error"])
 
 	if r != nil {
@@ -179,7 +203,7 @@ func convertSingleTrace(traces *otelModels.Data, id string) (*model.TracingRespo
 }
 
 // prepareTraceQL returns a query in TraceQL format
-func prepareTraceQL(u *url.URL, tracingServiceName string, query models.TracingQuery) {
+func (oc OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, query models.TracingQuery) {
 	q := url.Values{}
 	q.Set("start", fmt.Sprintf("%d", query.Start.Unix()))
 	q.Set("end", fmt.Sprintf("%d", query.End.Unix()))
@@ -195,8 +219,10 @@ func prepareTraceQL(u *url.URL, tracingServiceName string, query models.TracingQ
 
 	if len(query.Tags) > 0 {
 		for k, v := range query.Tags {
-			tag := TraceQL{operator1: "." + k, operand: REGEX, operator2: v}
-			queryPart = TraceQL{operator1: queryPart, operand: AND, operator2: tag}
+			if k != "cluster" && oc.ClusterTag {
+				tag := TraceQL{operator1: "." + k, operand: EQUAL, operator2: v}
+				queryPart = TraceQL{operator1: queryPart, operand: AND, operator2: tag}
+			}
 		}
 	}
 
