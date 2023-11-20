@@ -42,7 +42,6 @@ type Props = ReduxProps & {
   otherTraces: JaegerTrace[];
   provider?: string;
   statsMatrix?: StatsMatrix;
-  tabTraceID?: string;
   target: string;
   targetKind: TargetKind;
   trace?: JaegerTrace;
