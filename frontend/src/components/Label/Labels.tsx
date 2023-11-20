@@ -35,11 +35,11 @@ export const Labels: React.FC<LabelsProps> = (props: LabelsProps) => {
 
   const hasManyLabels = labelKeys.length > SHOW_MORE_TRESHOLD;
 
-  const showItem = (i: number) => {
+  const showItem = (i: number): boolean => {
     return expanded || !hasManyLabels || i < SHOW_MORE_TRESHOLD;
   };
 
-  const expandLabels = () => {
+  const expandLabels = (): void => {
     setExpanded(true);
   };
 
@@ -75,6 +75,7 @@ export const Labels: React.FC<LabelsProps> = (props: LabelsProps) => {
       <KialiIcon.Info className={infoStyle} />
     </Tooltip>
   ) : undefined;
+
   return (
     <div className={labelsContainerStyle}>
       {hasLabels ? [renderLabels, renderMoreLabelsLink] : renderEmptyLabels}

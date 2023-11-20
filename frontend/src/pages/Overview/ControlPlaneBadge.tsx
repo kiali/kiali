@@ -17,11 +17,16 @@ export const ControlPlaneBadge: React.FC<Props> = (props: Props) => {
       <Label style={{ marginLeft: '0.5rem' }} color="green" isCompact>
         Control plane
       </Label>
+
       {isRemoteCluster(props.annotations) && <RemoteClusterBadge />}
+
       {serverConfig.ambientEnabled && (
         <AmbientBadge tooltip="Istio Ambient ztunnel detected in the Control plane"></AmbientBadge>
-      )}{' '}
-      <IstioStatusInline cluster={props.cluster} />
+      )}
+
+      <span style={{ marginLeft: '0.5rem' }}>
+        <IstioStatusInline cluster={props.cluster} />
+      </span>
     </>
   );
 };

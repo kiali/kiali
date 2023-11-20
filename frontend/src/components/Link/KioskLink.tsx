@@ -19,7 +19,7 @@ type KioskLinkItemProps = ReduxProps & KioskLinkProps;
 const KioskLinkItem: React.FC<KioskLinkItemProps> = (props: KioskLinkItemProps) => {
   return isParentKiosk(props.kiosk) ? (
     <Link
-      to={''}
+      to=""
       onClick={() => {
         kioskContextMenuAction(props.href);
       }}

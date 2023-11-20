@@ -11,7 +11,7 @@ import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 
 export const infoStyle = kialiStyle({
-  margin: '0px 0px -0.125rem 0.5rem'
+  margin: '0 0 -0.125rem 0.5rem'
 });
 
 type ReduxProps = {

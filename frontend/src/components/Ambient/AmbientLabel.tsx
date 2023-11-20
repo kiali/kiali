@@ -2,8 +2,8 @@ import * as React from 'react';
 import { Label, Tooltip, TooltipPosition } from '@patternfly/react-core';
 
 type AmbientLabelProps = {
-  tooltip: boolean;
   style?: React.CSSProperties;
+  tooltip: boolean;
   waypoint?: boolean;
 };
 
@@ -14,12 +14,10 @@ export const AmbientLabel: React.FC<AmbientLabelProps> = (props: AmbientLabelPro
 
   const tooltipContent = (
     <div style={{ textAlign: 'left' }}>
-      <>
-        <div>
-          {msg}
-          <br />
-        </div>
-      </>
+      <div>
+        {msg}
+        <br />
+      </div>
     </div>
   );
 

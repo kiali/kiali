@@ -18,6 +18,7 @@ export const HealthIndicator: React.FC<HealthIndicatorProps> = (props: HealthInd
   if (props.health) {
     // HealthIndicator will render always in SMALL mode
     const icon = createIcon(globalStatus, 'md');
+
     return (
       <Tooltip
         aria-label={'Health indicator'}

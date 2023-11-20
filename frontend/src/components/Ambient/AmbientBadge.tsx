@@ -9,12 +9,10 @@ type AmbientLabelProps = {
 export const AmbientBadge: React.FC<AmbientLabelProps> = (props: AmbientLabelProps) => {
   const tooltipContent = (
     <div style={{ textAlign: 'left' }}>
-      <>
-        <div>
-          {props.tooltip}
-          <br />
-        </div>
-      </>
+      <div>
+        {props.tooltip}
+        <br />
+      </div>
     </div>
   );
 
