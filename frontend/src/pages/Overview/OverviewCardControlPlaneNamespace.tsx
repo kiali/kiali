@@ -130,14 +130,14 @@ export const OverviewCardControlPlaneNamespace: React.FC<ControlPlaneProps> = (p
         <Card isPlain>
           <CardBody>
             {showMetrics(memory) && (
-              <Grid data-test="memory-chart" style={{ marginBottom: '1.5rem' }} hasGutter>
+              <Grid data-test="memory-chart" style={{ marginBottom: '1.25rem' }} hasGutter>
                 <GridItem md={2}>
                   <Flex
                     className="pf-u-h-100-on-md"
                     direction={{ md: 'column' }}
                     spaceItems={{ md: 'spaceItemsNone' }}
                     justifyContent={{ md: 'justifyContentCenter' }}
-                    style={{ textAlign: 'right', paddingRight: '1.5rem' }}
+                    style={{ textAlign: 'right', paddingRight: '2rem' }}
                   >
                     <FlexItem>
                       <b>Memory</b>
@@ -186,7 +186,7 @@ export const OverviewCardControlPlaneNamespace: React.FC<ControlPlaneProps> = (p
                     direction={{ md: 'column' }}
                     spaceItems={{ md: 'spaceItemsNone' }}
                     justifyContent={{ md: 'justifyContentCenter' }}
-                    style={{ textAlign: 'right', paddingRight: '1.5rem' }}
+                    style={{ textAlign: 'right', paddingRight: '2rem' }}
                   >
                     <FlexItem>
                       <b>CPU</b>
