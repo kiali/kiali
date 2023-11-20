@@ -3,7 +3,6 @@ package tempo
 import (
 	"context"
 	"fmt"
-	"github.com/kiali/kiali/tracing/otel/model/converter"
 	"io"
 	"time"
 
@@ -15,11 +14,16 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
+	"github.com/kiali/kiali/tracing/otel/model/converter"
 	"github.com/kiali/kiali/tracing/tempo/tempopb"
 )
 
+type TracesMap struct {
+	traceMap map[string]*jaegerModels.Trace
+}
+
 type TempoGRPCClient struct {
-	Cc tempopb.StreamingQuerierClient
+	StreamingClient tempopb.StreamingQuerierClient
 }
 
 func (jc TempoGRPCClient) FindTraces(ctx context.Context, serviceName string, q models.TracingQuery) (response *model.TracingResponse, err error) {
@@ -29,12 +33,35 @@ func (jc TempoGRPCClient) FindTraces(ctx context.Context, serviceName string, q 
 	sr.End = uint32(q.End.Unix())
 	sr.MinDurationMs = uint32(q.MinDuration.Milliseconds())
 	sr.Limit = uint32(q.Limit)
-	//sr.Query = fmt.Sprintf("{.service.name=\"%s\"}", serviceName) // TODO: Check query format
-	sr.Query = fmt.Sprintf("{.service.name=\"%s\" && .node_id =~ \".*\"} && { }", serviceName)
+
+	// Create query
+	queryPart1 := TraceQL{operator1: ".service.name", operand: EQUAL, operator2: serviceName}
+	queryPart2 := TraceQL{operator1: ".node_id", operand: REGEX, operator2: ".*"}
+	queryPart := TraceQL{operator1: queryPart1, operand: AND, operator2: queryPart2}
+
+	group1 := TraceQL{operator1: "status", operand: EQUAL, operator2: unquoted("error")}
+	group2 := TraceQL{operator1: "status", operand: EQUAL, operator2: unquoted("unset")}
+	group3 := TraceQL{operator1: "status", operand: EQUAL, operator2: unquoted("ok")}
+	groupQL := []TraceQL{group1, group2, group3}
+	group := Group{group: groupQL, operand: OR}
+
+	if len(q.Tags) > 0 {
+		for k, v := range q.Tags {
+			tag := TraceQL{operator1: "." + k, operand: EQUAL, operator2: v}
+			queryPart = TraceQL{operator1: queryPart, operand: AND, operator2: tag}
+		}
+	}
+
+	subquery := TraceQL{operator1: queryPart, operand: AND, operator2: group}
+	trace := TraceQL{operator1: Subquery{subquery}, operand: AND, operator2: Subquery{}}
+	queryQL := trace.getQuery()
+	log.Debugf("QueryQL %s", queryQL)
+
+	sr.Query = queryQL
 
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout)*time.Second)
 	defer cancel()
-	stream, err := jc.Cc.Search(ctx, sr)
+	stream, err := jc.StreamingClient.Search(ctx, sr)
 
 	if err != nil {
 		err = fmt.Errorf("GetAppTraces, Tracing GRPC client error: %v", err)
@@ -52,61 +79,28 @@ func (jc TempoGRPCClient) FindTraces(ctx context.Context, serviceName string, q 
 		TracingServiceName: serviceName,
 	}
 
-	/*
-		for _, t := range tracesMap {
-			converted := jsonConv.FromDomain(t)
-			r.Data = append(r.Data, *converted)
-		} */
-
 	return &r, nil
 }
 
-// TODO
+// GetTrace is not implemented by the streaming client
 func (jc TempoGRPCClient) GetTrace(ctx context.Context, strTraceID string) (*model.TracingSingleTrace, error) {
 
-	traceID, err := model.TraceIDFromString(strTraceID)
-	if err != nil {
-		return nil, fmt.Errorf("GetTraceDetail, invalid trace ID: %v", err)
-	}
-	bTraceId := make([]byte, 16)
-	_, err = traceID.MarshalTo(bTraceId)
-	if err != nil {
-		return nil, fmt.Errorf("GetTraceDetail, invalid marshall: %v", err)
-	}
-
-	//getTraceRQ := &model.GetTraceRequest{TraceId: bTraceId}
-
-	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
-	defer cancel()
-
-	/*
-		stream, err := jc.Cc.GetTrace(ctx, getTraceRQ)
-		if err != nil {
-			return nil, fmt.Errorf("GetTraceDetail, Tracing GRPC client error: %v", err)
-		}
-		tracesMap, err := readSpansStream(stream)
-		if err != nil {
-			return nil, err
-		}
-		if trace, ok := tracesMap[traceID]; ok {
-			converted := jsonConv.FromDomain(trace)
-			return &model.TracingSingleTrace{Data: *converted}, nil
-		}
-	*/
-	// Not found
+	log.Errorf("GetTrace is not implemented by the Tempo streaming client")
 	return nil, nil
+
 }
 
-// TODO
+// GetServices Test an empty search to check if the service is available
 func (jc TempoGRPCClient) GetServices(ctx context.Context) (bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
 
-	//_, err := jc.Cc.GetServices(ctx, &model.GetServicesRequest{})
-	//return err == nil, err
-	return true, nil
+	sr := &tempopb.SearchRequest{}
+	_, err := jc.StreamingClient.Search(ctx, sr)
+	return err == nil, err
 }
 
+// processStream
 func processStream(stream tempopb.StreamingQuerier_SearchClient, serviceName string) ([]jaegerModels.Trace, error) {
 
 	tracesMap := []jaegerModels.Trace{}
@@ -130,14 +124,4 @@ func processStream(stream tempopb.StreamingQuerier_SearchClient, serviceName str
 		}
 	}
 	return tracesMap, nil
-}
-
-func convertID(traceId string) model.TraceID {
-	convertedTrace := model.TraceID{}
-	b := []byte(traceId)
-	err := convertedTrace.Unmarshal(b)
-	if err != nil {
-		log.Errorf("Error unmarshalling ID: %s", err.Error())
-	}
-	return convertedTrace
 }

@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	v1 "github.com/grafana/tempo/pkg/tempopb/common/v1"
+	v11 "github.com/grafana/tempo/pkg/tempopb/resource/v1"
 
 	"github.com/kiali/kiali/log"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
@@ -217,4 +218,9 @@ func convertModelAttributes(attributes []*v1.KeyValue) []jaegerModels.KeyValue {
 		}
 	}
 	return tags
+}
+
+func ConvertResource(resourceSpans *v11.Resource) jaegerModels.Span {
+	span := jaegerModels.Span{}
+	return span
 }

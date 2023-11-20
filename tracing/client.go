@@ -16,14 +16,14 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/kiali/kiali/tracing/tempo/tempopb"
-	"github.com/kiali/kiali/util/grpcutil"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	"github.com/kiali/kiali/tracing/tempo"
+	"github.com/kiali/kiali/tracing/tempo/tempopb"
+	"github.com/kiali/kiali/util/grpcutil"
 	"github.com/kiali/kiali/util/httputil"
 )
 
@@ -117,40 +117,27 @@ func NewClient(token string) (*Client, error) {
 		address := fmt.Sprintf("%s:%s", u.Hostname(), port)
 		log.Tracef("%s GRPC client info: address=%s, auth.type=%s", cfgTracing.Provider, address, auth.Type)
 
-		if cfgTracing.UseGRPC {
+		if cfgTracing.UseGRPC && cfgTracing.Provider != TEMPO {
+
 			var client GRPCClientInterface
-			if cfgTracing.Provider == TEMPO {
-				var dialOps []grpc.DialOption
-				if cfgTracing.Auth.Type == "basic" {
-					dialOps = append(dialOps, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
-					dialOps = append(dialOps, grpc.WithPerRPCCredentials(&basicAuth{
-						Header: fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", cfgTracing.Auth.Username, cfgTracing.Auth.Password)))),
-					}))
-				} else {
-					dialOps = append(dialOps, grpc.WithTransportCredentials(insecure.NewCredentials()))
-				}
-				clientConn, _ := grpc.Dial(address, dialOps...)
-				clientTempo := tempopb.NewStreamingQuerierClient(clientConn)
-				client = tempo.TempoGRPCClient{Cc: clientTempo}
-			} else {
-				// Note: jaeger-query does not have built-in secured communication, at the moment it is only achieved through reverse proxies (cf https://github.com/jaegertracing/jaeger/issues/1718).
-				// When using the GRPC client, if a proxy is used it has to support GRPC.
-				// Basic and Token auth are in theory implemented for the GRPC client (see package grpcutil) but were not tested because openshift's oauth-proxy doesn't support GRPC at the time.
-				// Leaving some commented-out code below -- perhaps useful, perhaps not -- to consider when testing secured GRPC.
-				// if auth.Token != "" {
-				// 	requestMetadata := metadata.New(map[string]string{
-				// 		spanstore.BearerTokenKey: auth.Token,
-				// 	})
-				// 	ctx = metadata.NewOutgoingContext(ctx, requestMetadata)
-				// }
-				conn, err := grpc.Dial(address, opts...)
-				if err != nil {
-					cc := model.NewQueryServiceClient(conn)
-					client = jaeger.JaegerGRPCClient{JaegergRPCClient: cc}
-					log.Infof("Create %s GRPC client %s", cfgTracing.Provider, address)
-				}
+			// Note: jaeger-query does not have built-in secured communication, at the moment it is only achieved through reverse proxies (cf https://github.com/jaegertracing/jaeger/issues/1718).
+			// When using the GRPC client, if a proxy is used it has to support GRPC.
+			// Basic and Token auth are in theory implemented for the GRPC client (see package grpcutil) but were not tested because openshift's oauth-proxy doesn't support GRPC at the time.
+			// Leaving some commented-out code below -- perhaps useful, perhaps not -- to consider when testing secured GRPC.
+			// if auth.Token != "" {
+			// 	requestMetadata := metadata.New(map[string]string{
+			// 		spanstore.BearerTokenKey: auth.Token,
+			// 	})
+			// 	ctx = metadata.NewOutgoingContext(ctx, requestMetadata)
+			// }
+			conn, err := grpc.Dial(address, opts...)
+			if err != nil {
+				cc := model.NewQueryServiceClient(conn)
+				client = jaeger.JaegerGRPCClient{JaegergRPCClient: cc}
+				log.Infof("Create %s GRPC client %s", cfgTracing.Provider, address)
 			}
 			return &Client{httpTracingClient: httpTracingClient, grpcClient: client, ctx: ctx}, nil
+
 		} else {
 			// Legacy HTTP client
 			log.Tracef("Using legacy HTTP client for Tracing: url=%v, auth.type=%s", u, auth.Type)
@@ -161,16 +148,27 @@ func NewClient(token string) (*Client, error) {
 			}
 			client := http.Client{Transport: transport, Timeout: timeout}
 			log.Infof("Create Tracing HTTP client %s", u)
-			if cfg.ExternalServices.Tracing.Provider == TEMPO {
-				httpTracingClient, err = tempo.NewOtelClient(client, u)
-				if err != nil {
-					log.Errorf("Error creating HTTP client %s", err.Error())
-					return nil, err
+
+			// At the moment, Tempo uses gRPC stream client just for search
+			// Get a single trace requires the http client
+			if cfgTracing.Provider == TEMPO && cfgTracing.UseGRPC {
+				var dialOps []grpc.DialOption
+				if cfgTracing.Auth.Type == "basic" {
+					dialOps = append(dialOps, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
+					dialOps = append(dialOps, grpc.WithPerRPCCredentials(&basicAuth{
+						Header: fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", cfgTracing.Auth.Username, cfgTracing.Auth.Password)))),
+					}))
+				} else {
+					dialOps = append(dialOps, grpc.WithTransportCredentials(insecure.NewCredentials()))
 				}
+				grpcAddress := fmt.Sprintf("%s:%s", u.Hostname(), cfg.ExternalServices.Tracing.GrpcPort)
+				clientConn, _ := grpc.Dial(grpcAddress, dialOps...)
+				clientStreamTempo := tempopb.NewStreamingQuerierClient(clientConn)
+				streamClient := tempo.TempoGRPCClient{StreamingClient: clientStreamTempo}
+				return &Client{httpTracingClient: httpTracingClient, grpcClient: streamClient, httpClient: client, baseURL: u, ctx: ctx}, nil
 			}
 			return &Client{httpTracingClient: httpTracingClient, httpClient: client, baseURL: u, ctx: ctx}, nil
 		}
-
 	}
 }
 
@@ -186,7 +184,8 @@ func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*m
 
 // GetTraceDetail fetches a specific trace from its ID
 func (in *Client) GetTraceDetail(strTraceID string) (*model.TracingSingleTrace, error) {
-	if in.grpcClient == nil {
+	cfg := config.Get()
+	if in.grpcClient == nil || cfg.ExternalServices.Tracing.Provider == TEMPO {
 		return in.httpTracingClient.GetTraceDetailHTTP(in.httpClient, in.baseURL, strTraceID)
 	}
 	return in.grpcClient.GetTrace(in.ctx, strTraceID)
