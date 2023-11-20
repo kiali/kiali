@@ -8,8 +8,8 @@ export const TracingActions = {
   setTrace: createAction(ActionKeys.TRACING_SET_TRACE, resolve => (trace?: JaegerTrace) =>
     resolve({ selectedTrace: trace })
   ),
-  tabTrace: createAction(ActionKeys.TRACING_SET_TAB_TRACE, resolve => (trace?: JaegerTrace) =>
-    resolve({ tabTrace: trace })
+  setHoverTrace: createAction(ActionKeys.TRACING_SET_HOVER_TRACE, resolve => (trace?: JaegerTrace) =>
+    resolve({ hoverTrace: trace })
   )
 };
 

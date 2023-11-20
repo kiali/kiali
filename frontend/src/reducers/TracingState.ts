@@ -8,8 +8,8 @@ export const INITIAL_TRACING_STATE: TracingState = {};
 
 export type TracingState = {
   info?: TracingInfo;
+  hoverTrace?: JaegerTrace;
   selectedTrace?: JaegerTrace;
-  tabTrace?: JaegerTrace;
 };
 
 export const TracingStateReducer = (
@@ -21,8 +21,8 @@ export const TracingStateReducer = (
       return updateState(state, { info: action.payload ? action.payload : undefined });
     case getType(TracingActions.setTrace):
       return updateState(state, { selectedTrace: action.payload.selectedTrace });
-    case getType(TracingActions.tabTrace):
-      return updateState(state, { tabTrace: action.payload.tabTrace });
+    case getType(TracingActions.setHoverTrace):
+      return updateState(state, { hoverTrace: action.payload.hoverTrace });
     default:
       return state;
   }

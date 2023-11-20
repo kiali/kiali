@@ -25,7 +25,7 @@ interface TracingScatterProps {
   errorTraces?: boolean;
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) => Promise<any>;
   selectedTrace?: JaegerTrace;
-  setTraceId: (cluster?: string, traceId?: string, tab?: boolean) => void;
+  setTraceId: (cluster?: string, traceId?: string, reload?: boolean) => void;
   showSpansAverage: boolean;
   traces: JaegerTrace[];
   cluster?: string;
@@ -60,6 +60,7 @@ class TracingScatterComponent extends React.Component<TracingScatterProps> {
   isLoading = false;
   nextToLoad?: JaegerTrace = undefined;
   seletedTraceMatched: number | undefined;
+  hoveredId?: string;
 
   renderFetchEmpty = (title, msg) => {
     return (
@@ -149,7 +150,17 @@ class TracingScatterComponent extends React.Component<TracingScatterProps> {
             fill={true}
             unit="seconds"
             seriesComponent={<ChartScatter />}
-            onClick={dp => this.props.setTraceId(this.props.cluster, dp.trace.traceID, true)}
+            onClick={dp => this.props.setTraceId(this.props.cluster, dp.trace.traceID, false)}
+            onMouseOver={dp => {
+              this.hoveredId = dp.trace.traceID;
+              let that = this;
+              // Add a small delay to prevent many requests onHover over the chart
+              setTimeout(function () {
+                if (that.hoveredId === dp.trace.traceID && that.props.provider === TEMPO && !dp.trace.loaded) {
+                  that.props.setTraceId(that.props.cluster, dp.trace.traceID, true);
+                }
+              }, 1000);
+            }}
             onTooltipClose={dp => this.onTooltipClose(dp.trace)}
             onTooltipOpen={dp => this.onTooltipOpen(dp.trace)}
             labelComponent={<TraceTooltip />}
@@ -215,8 +226,8 @@ const mapStateToProps = (state: KialiAppState) => ({
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) =>
     dispatch(MetricsStatsThunkActions.load(queries, isCompact)),
-  setTraceId: (cluster?: string, traceId?: string, tab?: boolean) =>
-    dispatch(TracingThunkActions.setTraceId(cluster, traceId, tab))
+  setTraceId: (cluster?: string, traceId?: string, reload?: boolean) =>
+    dispatch(TracingThunkActions.setTraceId(cluster, traceId, reload))
 });
 
 export const TracingScatter = connect(mapStateToProps, mapDispatchToProps)(TracingScatterComponent);

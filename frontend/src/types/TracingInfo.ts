@@ -107,11 +107,11 @@ export type TraceData<S extends SpanData> = {
 export type JaegerTrace = TraceData<RichSpanData> & {
   duration: number;
   endTime: number;
+  loaded?: boolean;
   startTime: number;
   traceName: string;
   matched?: number; // Tempo returns the number of total spans matched
   services: { name: string; numberOfSpans: number }[];
-  loaded?: boolean; // Used for the frontend to prevent to load the trace multiple times
 };
 
 export type TracingError = {

@@ -22,7 +22,6 @@ export const SpanDetails: React.FC<SpanDetailsProps> = (props: SpanDetailsProps)
   const filters = spanFilters(props.items);
 
   const [activeFilters, setActiveFilters] = React.useState<ActiveFiltersInfo>(FilterSelected.init(filters));
-
   const filteredItems = runFilters(props.items, filters, activeFilters);
 
   return (
