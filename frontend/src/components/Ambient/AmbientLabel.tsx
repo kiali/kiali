@@ -12,14 +12,7 @@ const AmbientComponent = 'ztunnel';
 export const AmbientLabel: React.FC<AmbientLabelProps> = (props: AmbientLabelProps) => {
   const msg = 'Component is labeled as part of the Istio Ambient Mesh';
 
-  const tooltipContent = (
-    <div style={{ textAlign: 'left' }}>
-      <div>
-        {msg}
-        <br />
-      </div>
-    </div>
-  );
+  const tooltipContent = <div style={{ textAlign: 'left' }}>{msg}</div>;
 
   const iconComponent = (
     <span style={props.style}>

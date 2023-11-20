@@ -24,9 +24,7 @@ export const ControlPlaneBadge: React.FC<Props> = (props: Props) => {
         <AmbientBadge tooltip="Istio Ambient ztunnel detected in the Control plane"></AmbientBadge>
       )}
 
-      <span style={{ marginLeft: '0.5rem' }}>
-        <IstioStatusInline cluster={props.cluster} />
-      </span>
+      <IstioStatusInline cluster={props.cluster} />
     </>
   );
 };

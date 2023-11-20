@@ -7,21 +7,12 @@ type AmbientLabelProps = {
 };
 
 export const AmbientBadge: React.FC<AmbientLabelProps> = (props: AmbientLabelProps) => {
-  const tooltipContent = (
-    <div style={{ textAlign: 'left' }}>
-      <div>
-        {props.tooltip}
-        <br />
-      </div>
-    </div>
-  );
+  const tooltipContent = <div style={{ textAlign: 'left' }}>{props.tooltip}</div>;
 
   const iconComponent = (
-    <span style={props.style}>
-      <Label style={{ marginLeft: '0.5rem' }} color="blue" isCompact>
-        Ambient
-      </Label>
-    </span>
+    <Label style={{ marginLeft: '0.5rem', ...props.style }} color="blue" isCompact>
+      Ambient
+    </Label>
   );
 
   return (
