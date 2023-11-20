@@ -50,6 +50,8 @@ TARGET_BRANCH="${TARGET_BRANCH:-master}"
 # https://istio.io/latest/docs/releases/supported-releases/
 if [ "${TARGET_BRANCH}" == "v1.48" ]; then
   ISTIO_VERSION="1.13.0"
+elif [ "${TARGET_BRANCH}" == "v1.57" ]; then
+  ISTIO_VERSION="1.15.0"
 fi
 
 KIND_NODE_IMAGE=""
