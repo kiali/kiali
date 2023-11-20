@@ -8,22 +8,24 @@ import (
 )
 
 const (
-	NodeTypeBox       string = "box" // The special "box" node. isBox will be set to "cluster" | "namespace"
-	NodeTypeIstiod    string = "istiod"
-	NodeTypeKiali     string = "kiali"               // The special "box" node. isBox will be set to "app" | "cluster" | "namespace"
-	NodeTypeNamespace string = "namespace"           // The special "aggregate" traffic node
+	NodeTypeCluster   string = "cluster"             // A cluster "box" node
+	NodeTypeInfra     string = "infra"               // Any non-box node of interest
+	NodeTypeNamespace string = "namespace"           // A namespace "box" node
 	TF                string = "2006-01-02 15:04:05" // TF is the TimeFormat for timestamps
 	Unknown           string = "unknown"             // Istio unknown label value
 )
 
 type Node struct {
-	Cluster   string  // Cluster
+	Cluster   string  // cluster name
 	Edges     []*Edge // child nodes
 	ID        string  // unique identifier for the node
 	IsIstiod  bool
 	IsKiali   bool
+	IsProm    bool
+	IsTracing bool
 	Metadata  Metadata // app-specific data
-	Namespace string   // Namespace
+	Name      string   // infra name
+	Namespace string   // namespace name
 	NodeType  string   // Node type
 }
 
@@ -59,26 +61,25 @@ func (tm MeshMap) Edges() []*Edge {
 }
 
 // NewNode constructor
-func NewNode(cluster, namespace string, isIstiod, isKiali bool) (*Node, error) {
-	id, nodeType, err := Id(cluster, namespace, isIstiod, isKiali)
+func NewNode(cluster, namespace, name string) (*Node, error) {
+	id, nodeType, err := Id(cluster, namespace, name)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewNodeExplicit(id, nodeType, cluster, namespace, isIstiod, isKiali), nil
+	return NewNodeExplicit(id, nodeType, cluster, namespace, name), nil
 }
 
 // NewNodeExplicit constructor assigns the specified ID
-func NewNodeExplicit(id, nodeType, cluster, namespace string, isIstiod, isKiali bool) *Node {
+func NewNodeExplicit(id, nodeType, cluster, namespace, name string) *Node {
 	metadata := make(Metadata)
 
 	return &Node{
 		Cluster:   cluster,
 		Edges:     []*Edge{},
 		ID:        id,
-		IsIstiod:  isIstiod,
-		IsKiali:   isKiali,
 		Metadata:  metadata,
+		Name:      name,
 		Namespace: namespace,
 		NodeType:  nodeType,
 	}
@@ -106,14 +107,15 @@ func NewMeshMap() MeshMap {
 }
 
 // Id returns the unique node ID
-func Id(cluster, namespace string, isIstiod, isKiali bool) (id, nodeType string, err error) {
-	// handle workload graph nodes (service graphs are initially processed as workload graphs)
-	if isIstiod {
-		return fmt.Sprintf("istiod_%s_%s", cluster, namespace), NodeTypeIstiod, nil
+func Id(cluster, namespace, name string) (id, nodeType string, err error) {
+	if cluster != "" {
+		if namespace != "" {
+			if name != "" {
+				return fmt.Sprintf("infra_%s_%s_%s", cluster, namespace, name), NodeTypeInfra, nil
+			}
+			return fmt.Sprintf("box_%s_%s", cluster, namespace), NodeTypeNamespace, nil
+		}
+		return fmt.Sprintf("box_%s", cluster), NodeTypeCluster, nil
 	}
-	if isKiali {
-		return fmt.Sprintf("kiali_%s_%s", cluster, namespace), NodeTypeKiali, nil
-	}
-
-	return fmt.Sprintf("ns_%s_%s", cluster, namespace), NodeTypeNamespace, nil
+	return "", "", fmt.Errorf("Failed Mesh ID gen: cluster=[%s] namespace=[%s] name=[%s]", cluster, namespace, name)
 }

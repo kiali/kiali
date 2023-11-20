@@ -5,7 +5,7 @@ package mesh
 import (
 	"context"
 	"fmt"
-	net_http "net/http"
+	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -66,10 +66,11 @@ type Options struct {
 	Appenders            RequestedAppenders // requested appenders, nil if param not supplied
 	ConfigVendor         string
 	Namespaces           NamespaceInfoMap
+	Request              *http.Request // some business API requires the request object
 	ConfigOptions
 }
 
-func NewOptions(r *net_http.Request) Options {
+func NewOptions(r *http.Request) Options {
 	// path variables (0 or more will be set)
 	// vars := mux.Vars(r)
 
@@ -114,6 +115,7 @@ func NewOptions(r *net_http.Request) Options {
 		Appenders:            appenders,
 		Namespaces:           namespaceMap,
 		ConfigVendor:         configVendor,
+		Request:              r,
 		ConfigOptions: ConfigOptions{
 			CommonOptions: CommonOptions{
 				Params: params,

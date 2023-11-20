@@ -42,7 +42,7 @@ func graphMesh(ctx context.Context, business *business.Layer, prom *prometheus.C
 	globalInfo.Business = business
 	globalInfo.Context = ctx
 
-	meshMap := generator.BuildMeshMap(ctx, o.CommonOptions, prom, globalInfo)
+	meshMap := generator.BuildMeshMap(ctx, o, prom, globalInfo)
 	code, config = generateGraph(meshMap, o)
 
 	return code, config
