@@ -33,6 +33,10 @@ const addMoreStyle = kialiStyle({
   marginLeft: '1rem'
 });
 
+const clearButtonStyle = kialiStyle({
+  marginLeft: '0.5rem'
+});
+
 export class WizardAnnotations extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -196,7 +200,7 @@ export class WizardAnnotations extends React.Component<Props, State> {
         </Button>
 
         {this.props.canEdit && (
-          <Button variant="secondary" onClick={this.onClear}>
+          <Button variant="secondary" className={clearButtonStyle} onClick={this.onClear}>
             Clear
           </Button>
         )}
