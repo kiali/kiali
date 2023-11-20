@@ -18,10 +18,6 @@ import (
 	"github.com/kiali/kiali/tracing/tempo/tempopb"
 )
 
-type TracesMap struct {
-	traceMap map[string]*jaegerModels.Trace
-}
-
 type TempoGRPCClient struct {
 	StreamingClient tempopb.StreamingQuerierClient
 }
