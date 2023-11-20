@@ -156,10 +156,10 @@ var IstioConfigHelpMessages = map[string][]IstioConfigHelp{
 		{ObjectField: "spec.template", Message: "Template to be used for the generation of WorkloadEntry resources that belong to this WorkloadGroup."},
 		{ObjectField: "spec.probe", Message: "ReadinessProbe describes the configuration the user must provide for healthchecking on their workload."},
 	},
-	"wasmplugins": { //TODO
+	"wasmplugins": { // TODO
 		{},
 	},
-	"telemetries": { //TODO
+	"telemetries": { // TODO
 		{},
 	},
 	"k8sgateways": {
@@ -168,7 +168,7 @@ var IstioConfigHelpMessages = map[string][]IstioConfigHelp{
 		{ObjectField: "spec.listeners", Message: "Define the hostnames, ports, protocol, termination, TLS settings and which routes can be attached to a listener."},
 		{ObjectField: "spec.addresses", Message: "Define the network addresses requested for this gateway."},
 	},
-	"k8shttproutes": { //TODO
+	"k8shttproutes": { // TODO
 		{ObjectField: "", Message: "Kubernetes Gateway API Configuration Object. HTTPRoute is for multiplexing HTTP or terminated HTTPS connections."},
 	},
 	"internal": {
@@ -318,7 +318,6 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 
 // Merge two config lists. To get configs from different namespaces
 func (configList IstioConfigList) MergeConfigs(ns IstioConfigList) IstioConfigList {
-
 	configList.DestinationRules = append(configList.DestinationRules, ns.DestinationRules...)
 	configList.EnvoyFilters = append(configList.EnvoyFilters, ns.EnvoyFilters...)
 	configList.Gateways = append(configList.Gateways, ns.Gateways...)

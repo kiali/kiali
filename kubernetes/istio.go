@@ -1,7 +1,6 @@
 package kubernetes
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -14,11 +13,8 @@ import (
 	"time"
 
 	api_networking_v1beta1 "istio.io/api/networking/v1beta1"
-	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
-	"istio.io/client-go/pkg/apis/telemetry/v1alpha1"
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -89,7 +85,6 @@ type IstioClientInterface interface {
 	GetProxyStatus() ([]*ProxyStatus, error)
 	GetConfigDump(namespace, podName string) (*ConfigDump, error)
 	SetProxyLogLevel(namespace, podName, level string) error
-	GetRegistryConfiguration() (*RegistryConfiguration, error)
 	GetRegistryServices() ([]*RegistryService, error)
 }
 
@@ -297,29 +292,6 @@ func (in *K8SClient) GetRegistryServices() ([]*RegistryService, error) {
 	return ParseRegistryServices(result)
 }
 
-func (in *K8SClient) GetRegistryConfiguration() (*RegistryConfiguration, error) {
-	const configzPath = "/debug/configz"
-	var result map[string][]byte
-
-	if externalConf := config.Get().ExternalServices.Istio.Registry; externalConf != nil {
-		url := joinURL(externalConf.IstiodURL, configzPath)
-		r, err := getRequest(url)
-		if err != nil {
-			log.Errorf("Failed to get Istiod info from remote endpoint %s error: %s", configzPath, err)
-			return nil, err
-		}
-		result = map[string][]byte{"remote": r}
-	} else {
-		debugStatus, err := in.getIstiodDebugStatus(configzPath)
-		if err != nil {
-			log.Tracef("Failed to call Istiod endpoint %s error: %s", configzPath, err)
-			return nil, err
-		}
-		result = debugStatus
-	}
-	return ParseRegistryConfig(result)
-}
-
 func joinURL(base, path string) string {
 	base = strings.TrimSuffix(base, "/")
 	path = strings.TrimPrefix(path, "/")
@@ -392,175 +364,6 @@ func ParseRegistryServices(registries map[string][]byte) ([]*RegistryService, er
 		}
 	}
 	return fullRegistryServices, nil
-}
-
-func ParseRegistryConfig(config map[string][]byte) (*RegistryConfiguration, error) {
-	registry := RegistryConfiguration{
-		DestinationRules: []*networking_v1beta1.DestinationRule{},
-		EnvoyFilters:     []*networking_v1alpha3.EnvoyFilter{},
-		Gateways:         []*networking_v1beta1.Gateway{},
-		VirtualServices:  []*networking_v1beta1.VirtualService{},
-		ServiceEntries:   []*networking_v1beta1.ServiceEntry{},
-		Sidecars:         []*networking_v1beta1.Sidecar{},
-		WorkloadEntries:  []*networking_v1beta1.WorkloadEntry{},
-		WorkloadGroups:   []*networking_v1beta1.WorkloadGroup{},
-		WasmPlugins:      []*extentions_v1alpha1.WasmPlugin{},
-		Telemetries:      []*v1alpha1.Telemetry{},
-
-		// K8s Networking Gateways
-		K8sGateways:   []*k8s_networking_v1beta1.Gateway{},
-		K8sHTTPRoutes: []*k8s_networking_v1beta1.HTTPRoute{},
-
-		AuthorizationPolicies:  []*security_v1beta1.AuthorizationPolicy{},
-		PeerAuthentications:    []*security_v1beta1.PeerAuthentication{},
-		RequestAuthentications: []*security_v1beta1.RequestAuthentication{},
-	}
-	isRegistryLoaded := false
-	for istiod, bRegistry := range config {
-		// skip reading registry configs multiple times in a case of multiple istiod pods
-		if isRegistryLoaded {
-			break
-		}
-		r := bytes.NewReader(bRegistry)
-		dec := json.NewDecoder(r)
-		var jRegistry interface{}
-		err := dec.Decode(&jRegistry)
-		if err != nil {
-			log.Errorf("Error parsing RegistryConfig results for %s: %s", istiod, err)
-			return nil, err
-		}
-		if ajRegistry, ok := jRegistry.([]interface{}); ok {
-			for _, iItem := range ajRegistry {
-				if mItem, ok := iItem.(map[string]interface{}); ok {
-					kind := mItem["kind"].(string)
-					switch kind {
-					case "DestinationRule", "EnvoyFilter", "Gateway", "ServiceEntry", "Sidecar", "VirtualService", "WorkloadEntry", "WorkloadGroup", "AuthorizationPolicy", "PeerAuthentication", "RequestAuthentication", "WasmPlugin", "Telemetry", "HTTPRoute":
-						bItem, err := json.Marshal(iItem)
-						rbItem := bytes.NewReader(bItem)
-						bDec := json.NewDecoder(rbItem)
-						if err != nil {
-							log.Errorf("Error parsing RegistryConfig results for %s: %s", istiod, err)
-							return nil, err
-						}
-						switch kind {
-						case "DestinationRule":
-							var dr *networking_v1beta1.DestinationRule
-							err := bDec.Decode(&dr)
-							if err != nil {
-								log.Errorf("Error parsing RegistryConfig results for DestinationRule: %s", err)
-							}
-							registry.DestinationRules = append(registry.DestinationRules, dr)
-						case "EnvoyFilter":
-							var ef *networking_v1alpha3.EnvoyFilter
-							err := bDec.Decode(&ef)
-							if err != nil {
-								log.Errorf("Error parsing RegistryConfig results for EnvoyFilter: %s", err)
-							}
-							registry.EnvoyFilters = append(registry.EnvoyFilters, ef)
-						case "Gateway":
-							// It needs to figure out Gateway object type by apiVersion, whether it is Gateway API of Istio Gateway
-							if mItem["apiVersion"] == K8sApiNetworkingVersionV1Beta1 || mItem["apiVersion"] == K8sApiNetworkingVersionV1Alpha2 {
-								var gw k8s_networking_v1beta1.Gateway
-								err := bDec.Decode(&gw)
-								if err != nil {
-									log.Errorf("Error parsing RegistryConfig results for K8sGateways: %s", err)
-								}
-								registry.K8sGateways = append(registry.K8sGateways, &gw)
-							} else {
-								var gw networking_v1beta1.Gateway
-								err := bDec.Decode(&gw)
-								if err != nil {
-									log.Errorf("Error parsing RegistryConfig results for Gateways: %s", err)
-								}
-								registry.Gateways = append(registry.Gateways, &gw)
-							}
-						case "HTTPRoute":
-							var route *k8s_networking_v1beta1.HTTPRoute
-							err := bDec.Decode(&route)
-							if err != nil {
-								log.Errorf("Error parsing RegistryConfig results for K8sHTTPRoutes: %s", err)
-							}
-							registry.K8sHTTPRoutes = append(registry.K8sHTTPRoutes, route)
-						case "ServiceEntry":
-							var se *networking_v1beta1.ServiceEntry
-							err := bDec.Decode(&se)
-							if err != nil {
-								log.Errorf("Error parsing RegistryConfig results for ServiceEntries: %s", err)
-							}
-							registry.ServiceEntries = append(registry.ServiceEntries, se)
-						case "Sidecar":
-							var sc *networking_v1beta1.Sidecar
-							err := bDec.Decode(&sc)
-							if err != nil {
-								log.Errorf("Error parsing RegistryConfig results for Sidecars: %s", err)
-							}
-							registry.Sidecars = append(registry.Sidecars, sc)
-						case "VirtualService":
-							var vs *networking_v1beta1.VirtualService
-							err := bDec.Decode(&vs)
-							if err != nil {
-								log.Errorf("Error parsing RegistryConfig results for VirtualServices: %s", err)
-							}
-							registry.VirtualServices = append(registry.VirtualServices, vs)
-						case "WorkloadEntry":
-							var we *networking_v1beta1.WorkloadEntry
-							err := bDec.Decode(&we)
-							if err != nil {
-								log.Errorf("Error parsing RegistryConfig results for WorkloadEntries: %s", err)
-							}
-							registry.WorkloadEntries = append(registry.WorkloadEntries, we)
-						case "WorkloadGroup":
-							var wg *networking_v1beta1.WorkloadGroup
-							err := bDec.Decode(&wg)
-							if err != nil {
-								log.Errorf("Error parsing RegistryConfig results for WorkloadGroup: %s", err)
-							}
-							registry.WorkloadGroups = append(registry.WorkloadGroups, wg)
-						case "WasmPlugin":
-							var wp *extentions_v1alpha1.WasmPlugin
-							err := bDec.Decode(&wp)
-							if err != nil {
-								log.Errorf("Error parsing RegistryConfig results for WasmPlugin: %s", err)
-							}
-							registry.WasmPlugins = append(registry.WasmPlugins, wp)
-						case "Telemetry":
-							var tm *v1alpha1.Telemetry
-							err := bDec.Decode(&tm)
-							if err != nil {
-								log.Errorf("Error parsing RegistryConfig results for Telemetry: %s", err)
-							}
-							registry.Telemetries = append(registry.Telemetries, tm)
-						case "AuthorizationPolicy":
-							var ap *security_v1beta1.AuthorizationPolicy
-							err := bDec.Decode(&ap)
-							if err != nil {
-								log.Errorf("Error parsing RegistryConfig results for AuthorizationPolicies: %s", err)
-							}
-							registry.AuthorizationPolicies = append(registry.AuthorizationPolicies, ap)
-						case "PeerAuthentication":
-							var pa *security_v1beta1.PeerAuthentication
-							err := bDec.Decode(&pa)
-							if err != nil {
-								log.Errorf("Error parsing RegistryConfig results for PeerAuthentications: %s", err)
-							}
-							registry.PeerAuthentications = append(registry.PeerAuthentications, pa)
-						case "RequestAuthentication":
-							var ra *security_v1beta1.RequestAuthentication
-							err := bDec.Decode(&ra)
-							if err != nil {
-								log.Errorf("Error parsing RegistryConfig results for RequestAuthentication: %s", err)
-							}
-							registry.RequestAuthentications = append(registry.RequestAuthentications, ra)
-						}
-					default:
-						// Kiali only parses the registry configuration that are needed
-					}
-				}
-			}
-		}
-		isRegistryLoaded = true
-	}
-	return &registry, nil
 }
 
 func (in *K8SClient) GetConfigDump(namespace, podName string) (*ConfigDump, error) {

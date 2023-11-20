@@ -189,7 +189,6 @@ func TestGrafanaWorking(t *testing.T) {
 	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objs, b1, b2)
 
 	conf := config.Get()
-	config.Set(conf)
 
 	// Set global cache var
 	SetupBusinessLayer(t, k8s, *conf)

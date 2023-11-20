@@ -7,7 +7,6 @@ import (
 
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
-	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/business/references"
@@ -560,17 +559,12 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 	}
 	cfg := config.Get()
 
-	var istioConfig *core_v1.ConfigMap
-	var err error
-	if IsNamespaceCached(cfg.IstioNamespace) {
-		istioConfig, err = kialiCache.GetConfigMap(cfg.IstioNamespace, IstioConfigMapName(*cfg, ""))
-	} else {
-		istioConfig, err = userClient.GetConfigMap(cfg.IstioNamespace, IstioConfigMapName(*cfg, ""))
-	}
+	istioConfig, err := kialiCache.GetConfigMap(cfg.IstioNamespace, IstioConfigMapName(*cfg, ""))
 	if err != nil {
 		errChan <- err
 		return
 	}
+
 	icm, err := kubernetes.GetIstioConfigMap(istioConfig)
 	if err != nil {
 		errChan <- err

@@ -25,6 +25,7 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/util"
 )
@@ -399,7 +400,7 @@ func TestOpenIdAuthControllerAuthenticatesCorrectlyWithAuthorizationCodeFlow(t *
 	// a successful authentication.
 	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}})
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	cache := business.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
+	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
 	business.WithKialiCache(cache)
 	business.SetWithBackends(mockClientFactory, nil)
 

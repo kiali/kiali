@@ -236,3 +236,22 @@ func CreateFakeRegistryService(host string, namespace string, exportToNamespace 
 
 	return &registryService
 }
+
+func TestFilterByNamespaces(t *testing.T) {
+	assert := assert.New(t)
+
+	obj1 := &networking_v1beta1.DestinationRule{ObjectMeta: meta_v1.ObjectMeta{Namespace: "ns1"}}
+	obj2 := &networking_v1beta1.DestinationRule{ObjectMeta: meta_v1.ObjectMeta{Namespace: "ns2"}}
+	obj3 := &networking_v1beta1.DestinationRule{ObjectMeta: meta_v1.ObjectMeta{Namespace: "ns3"}}
+
+	objects := []*networking_v1beta1.DestinationRule{obj1, obj2, obj3}
+	namespaces := []string{"ns1", "ns3"}
+
+	filtered := FilterByNamespaces(objects, namespaces)
+	expected := []*networking_v1beta1.DestinationRule{obj1, obj3}
+	assert.EqualValues(expected, filtered)
+
+	emptyObjects := []*networking_v1beta1.DestinationRule{}
+	emptyFiltered := FilterByNamespaces(emptyObjects, namespaces)
+	assert.Empty(emptyFiltered)
+}

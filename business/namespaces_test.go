@@ -13,13 +13,14 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 )
 
 // Namespace service setup
 func setupNamespaceService(t *testing.T, k8s kubernetes.ClientInterface, conf *config.Config) NamespaceService {
-	cache := NewTestingCache(t, k8s, *conf)
+	cache := cache.NewTestingCache(t, k8s, *conf)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
@@ -119,7 +120,6 @@ func TestUpdateNamespaces(t *testing.T) {
 
 func TestMultiClusterGetNamespace(t *testing.T) {
 	require := require.New(t)
-	// assert := assert.New(t)
 
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "east"
@@ -139,7 +139,7 @@ func TestMultiClusterGetNamespace(t *testing.T) {
 	clientFactory.SetClients(clients)
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	SetWithBackends(mockClientFactory, nil)
-	cache := newTestingCache(t, clientFactory, *conf)
+	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 
 	nsservice := NewNamespaceService(clients, clients, cache, *conf)
 
@@ -171,7 +171,7 @@ func TestMultiClusterGetNamespaces(t *testing.T) {
 	clientFactory.SetClients(clients)
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	SetWithBackends(mockClientFactory, nil)
-	cache := newTestingCache(t, clientFactory, *conf)
+	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 
 	nsservice := NewNamespaceService(clients, clients, cache, *conf)
 	namespaces, err := nsservice.GetNamespaces(context.TODO())
@@ -204,7 +204,7 @@ func TestGetNamespacesCached(t *testing.T) {
 	clientFactory.SetClients(clients)
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	SetWithBackends(mockClientFactory, nil)
-	cache := newTestingCache(t, clientFactory, *conf)
+	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	cache.SetNamespaces(
 		k8s.GetToken(),
 		// gamma is only cached.
@@ -249,7 +249,7 @@ func TestGetNamespacesForbiddenCached(t *testing.T) {
 	clientFactory.SetClients(clients)
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	SetWithBackends(mockClientFactory, nil)
-	cache := newTestingCache(t, clientFactory, *conf)
+	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	cache.SetNamespaces(
 		k8s.GetToken(),
 		// Bookinfo is cached for the west cluster that the user has access to

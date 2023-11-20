@@ -32,11 +32,19 @@ func SetupBusinessLayer(t *testing.T, k8s kubernetes.ClientInterface, config con
 
 	cf := kubetest.NewK8SClientFactoryMock(k8s)
 
-	cache := newTestingCache(t, cf, config)
+	cache := cache.NewTestingCacheWithFactory(t, cf, config)
 	cache.SetRegistryStatus(&kubernetes.RegistryStatus{})
 
-	setWithBackends(cf, nil, cache)
+	originalClientFactory := clientFactory
+	originalPrometheusClient := prometheusClient
+	originalKialiCache := kialiCache
+	t.Cleanup(func() {
+		clientFactory = originalClientFactory
+		prometheusClient = originalPrometheusClient
+		kialiCache = originalKialiCache
+	})
 
+	setWithBackends(cf, nil, cache)
 	return cache
 }
 
@@ -50,35 +58,6 @@ func WithKialiCache(cache cache.KialiCache) {
 	kialiCache = cache
 }
 
-func newTestingCache(t *testing.T, cf kubernetes.ClientFactory, conf config.Config) cache.KialiCache {
-	t.Helper()
-	// Disabling Istio API for tests. Otherwise the cache will try and poll the Istio endpoint
-	// when the cache is created.
-	conf.ExternalServices.Istio.IstioAPIEnabled = false
-
-	cache, err := cache.NewKialiCache(cf, conf)
-	if err != nil {
-		t.Fatalf("Error creating KialiCache: %v", err)
-	}
-	t.Cleanup(cache.Stop)
-
-	return cache
-}
-
-// NewTestingCache will create a cache for you from the kube client and will cleanup the cache
-// when the test ends.
-func NewTestingCache(t *testing.T, k8s kubernetes.ClientInterface, conf config.Config) cache.KialiCache {
-	t.Helper()
-	cf := kubetest.NewK8SClientFactoryMock(k8s)
-	return newTestingCache(t, cf, conf)
-}
-
-// NewTestingCacheWithFactory allows you to pass in a custom client factory. Good for testing multicluster.
-func NewTestingCacheWithFactory(t *testing.T, cf kubernetes.ClientFactory, conf config.Config) cache.KialiCache {
-	t.Helper()
-	return newTestingCache(t, cf, conf)
-}
-
 // FindOrFail will find an element in a slice or fail the test.
 func FindOrFail[T any](t *testing.T, s []T, f func(T) bool) T {
 	t.Helper()
@@ -87,4 +66,9 @@ func FindOrFail[T any](t *testing.T, s []T, f func(T) bool) T {
 		t.Fatal("Element not in slice")
 	}
 	return s[idx]
+}
+
+// asPtr returns a pointer to the argument.
+func asPtr[T any](t T) *T {
+	return &t
 }

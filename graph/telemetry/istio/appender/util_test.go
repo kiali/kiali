@@ -35,13 +35,13 @@ func setupMockedWithQueryScope(meshId string) (*prometheus.Client, *prometheuste
 func mockQuery(api *prometheustest.PromAPIMock, query string, ret *model.Vector) {
 	api.On(
 		"Query",
-		mock.AnythingOfType("*context.emptyCtx"),
+		mock.Anything,
 		query,
 		mock.AnythingOfType("time.Time"),
 	).Return(*ret, nil)
 	api.On(
 		"Query",
-		mock.AnythingOfType("*context.cancelCtx"),
+		mock.Anything,
 		query,
 		mock.AnythingOfType("time.Time"),
 	).Return(*ret, nil)

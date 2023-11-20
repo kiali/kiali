@@ -235,6 +235,17 @@ func (in *IstioConfigService) getIstioConfigListForCluster(ctx context.Context, 
 	if criteria.Namespace == "" && !criteria.AllNamespaces {
 		return models.IstioConfigList{}, errors.New("GetIstioConfigList needs a non empty Namespace")
 	}
+
+	if criteria.AllNamespaces {
+		criteria.Namespace = meta_v1.NamespaceAll
+	} else {
+		// Check if user has access to the namespace (RBAC) in cache scenarios and/or
+		// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
+		if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, criteria.Namespace, cluster); err != nil {
+			return models.IstioConfigList{}, err
+		}
+	}
+
 	istioConfigList := models.IstioConfigList{
 		Namespace: models.Namespace{Name: criteria.Namespace},
 
@@ -257,79 +268,11 @@ func (in *IstioConfigService) getIstioConfigListForCluster(ctx context.Context, 
 		RequestAuthentications: []*security_v1beta1.RequestAuthentication{},
 	}
 
-	// Use the Istio Registry when AllNamespaces is present
-	// TODO use Istio Registry for Home cluster only now
-	if criteria.AllNamespaces && in.config.ExternalServices.Istio.IstioAPIEnabled && cluster == config.Get().KubernetesConfig.ClusterName {
-		registryCriteria := RegistryCriteria{
-			AllNamespaces: true,
-		}
-		if _, ok := in.businessLayer.RegistryStatuses[cluster]; !ok {
-			return istioConfigList, fmt.Errorf("Registry Cache for Cluster [%s] is not found or is not accessible for Kiali", cluster)
-		}
-		registryStatus := in.businessLayer.RegistryStatuses[cluster]
-		registryConfiguration, err := registryStatus.GetRegistryConfiguration(registryCriteria)
-		if err != nil {
-			return istioConfigList, err
-		}
-		if registryConfiguration == nil {
-			log.Warningf("RegistryConfiguration is nil. This is an unexpected case. Is the Kiali cache disabled ?")
-			return istioConfigList, nil
-		}
-		// AllNamespaces will return an empty namespace
-		istioConfigList.Namespace.Name = ""
-
-		if criteria.Include(kubernetes.DestinationRules) {
-			istioConfigList.DestinationRules = registryConfiguration.DestinationRules
-		}
-		if criteria.Include(kubernetes.EnvoyFilters) {
-			istioConfigList.EnvoyFilters = registryConfiguration.EnvoyFilters
-		}
-		if criteria.Include(kubernetes.Gateways) {
-			istioConfigList.Gateways = kubernetes.FilterSupportedGateways(registryConfiguration.Gateways)
-		}
-		if criteria.Include(kubernetes.K8sGateways) {
-			istioConfigList.K8sGateways = registryConfiguration.K8sGateways
-		}
-		if criteria.Include(kubernetes.K8sHTTPRoutes) {
-			istioConfigList.K8sHTTPRoutes = registryConfiguration.K8sHTTPRoutes
-		}
-		if criteria.Include(kubernetes.VirtualServices) {
-			istioConfigList.VirtualServices = registryConfiguration.VirtualServices
-		}
-		if criteria.Include(kubernetes.ServiceEntries) {
-			istioConfigList.ServiceEntries = registryConfiguration.ServiceEntries
-		}
-		if criteria.Include(kubernetes.Sidecars) {
-			istioConfigList.Sidecars = registryConfiguration.Sidecars
-		}
-		if criteria.Include(kubernetes.WorkloadEntries) {
-			istioConfigList.WorkloadEntries = registryConfiguration.WorkloadEntries
-		}
-		if criteria.Include(kubernetes.WorkloadGroups) {
-			istioConfigList.WorkloadGroups = registryConfiguration.WorkloadGroups
-		}
-		if criteria.Include(kubernetes.WasmPlugins) {
-			istioConfigList.WasmPlugins = registryConfiguration.WasmPlugins
-		}
-		if criteria.Include(kubernetes.Telemetries) {
-			istioConfigList.Telemetries = registryConfiguration.Telemetries
-		}
-		if criteria.Include(kubernetes.AuthorizationPolicies) {
-			istioConfigList.AuthorizationPolicies = registryConfiguration.AuthorizationPolicies
-		}
-		if criteria.Include(kubernetes.PeerAuthentications) {
-			istioConfigList.PeerAuthentications = registryConfiguration.PeerAuthentications
-		}
-		if criteria.Include(kubernetes.RequestAuthentications) {
-			istioConfigList.RequestAuthentications = registryConfiguration.RequestAuthentications
-		}
-
-		return istioConfigList, nil
-	}
-	kubeCache := in.kialiCache.GetKubeCaches()[cluster]
-	if kubeCache == nil {
+	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
+	if err != nil {
 		return istioConfigList, fmt.Errorf("K8s Cache [%s] is not found or is not accessible for Kiali", cluster)
 	}
+
 	userClient := in.userClients[cluster]
 	if userClient == nil {
 		return istioConfigList, fmt.Errorf("K8s Client [%s] is not found or is not accessible for Kiali", cluster)
@@ -340,228 +283,168 @@ func (in *IstioConfigService) getIstioConfigListForCluster(ctx context.Context, 
 		return istioConfigList, nil
 	}
 
-	if !criteria.AllNamespaces {
-		// Check if user has access to the namespace (RBAC) in cache scenarios and/or
-		// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-		if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, criteria.Namespace, cluster); err != nil {
-			return models.IstioConfigList{}, err
-		}
-	} else {
-		clusterWideAccess := config.Get().Deployment.ClusterWideAccess
-		if !clusterWideAccess {
-			log.Debugf("Kiali cannot obtain Istio resources because it does not have cluster-wide-access and does not have access to the Istio API.")
-			return models.IstioConfigList{}, nil
-		}
-	}
-
 	isWorkloadSelector := criteria.WorkloadSelector != ""
 	workloadSelector := ""
 	if isWorkloadSelector {
 		workloadSelector = criteria.WorkloadSelector
 	}
 
-	errChan := make(chan error, 15)
-
-	var wg sync.WaitGroup
-	wg.Add(15)
-
-	go func(ctx context.Context, errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.DestinationRules) {
-			var err error
-			istioConfigList.DestinationRules, err = kubeCache.GetDestinationRules(criteria.Namespace, criteria.LabelSelector)
-			if err != nil {
-				errChan <- err
-			}
-		}
-	}(ctx, errChan)
-
-	go func(ctx context.Context, errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.EnvoyFilters) {
-			var err error
-			istioConfigList.EnvoyFilters, err = kubeCache.GetEnvoyFilters(criteria.Namespace, criteria.LabelSelector)
-			if err == nil {
-				if isWorkloadSelector {
-					istioConfigList.EnvoyFilters = kubernetes.FilterEnvoyFiltersBySelector(workloadSelector, istioConfigList.EnvoyFilters)
-				}
-			} else {
-				errChan <- err
-			}
-		}
-	}(ctx, errChan)
-
-	go func(ctx context.Context, errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.Gateways) {
-			var err error
-			istioConfigList.Gateways, err = kubeCache.GetGateways(criteria.Namespace, criteria.LabelSelector)
-			if err == nil {
-				if isWorkloadSelector {
-					istioConfigList.Gateways = kubernetes.FilterGatewaysBySelector(workloadSelector, istioConfigList.Gateways)
-				}
-			} else {
-				errChan <- err
-			}
-		}
-	}(ctx, errChan)
-
-	go func(ctx context.Context, errChan chan error) {
-		defer wg.Done()
-		if userClient.IsGatewayAPI() && criteria.Include(kubernetes.K8sGateways) {
-			var err error
-			istioConfigList.K8sGateways, err = kubeCache.GetK8sGateways(criteria.Namespace, criteria.LabelSelector)
-			if err != nil {
-				errChan <- err
-			}
-		}
-	}(ctx, errChan)
-
-	go func(ctx context.Context, errChan chan error) {
-		defer wg.Done()
-		if userClient.IsGatewayAPI() && criteria.Include(kubernetes.K8sHTTPRoutes) {
-			var err error
-			istioConfigList.K8sHTTPRoutes, err = kubeCache.GetK8sHTTPRoutes(criteria.Namespace, criteria.LabelSelector)
-			if err != nil {
-				errChan <- err
-			}
-		}
-	}(ctx, errChan)
-
-	go func(ctx context.Context, errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.ServiceEntries) {
-			var err error
-			istioConfigList.ServiceEntries, err = kubeCache.GetServiceEntries(criteria.Namespace, criteria.LabelSelector)
-			if err != nil {
-				errChan <- err
-			}
-		}
-	}(ctx, errChan)
-
-	go func(ctx context.Context, errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.Sidecars) {
-			var err error
-			istioConfigList.Sidecars, err = kubeCache.GetSidecars(criteria.Namespace, criteria.LabelSelector)
-			if err == nil {
-				if isWorkloadSelector {
-					istioConfigList.Sidecars = kubernetes.FilterSidecarsBySelector(workloadSelector, istioConfigList.Sidecars)
-				}
-			} else {
-				errChan <- err
-			}
-		}
-	}(ctx, errChan)
-
-	go func(ctx context.Context, errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.VirtualServices) {
-			var err error
-			istioConfigList.VirtualServices, err = kubeCache.GetVirtualServices(criteria.Namespace, criteria.LabelSelector)
-			if err != nil {
-				errChan <- err
-			}
-		}
-	}(ctx, errChan)
-
-	go func(ctx context.Context, errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.WorkloadEntries) {
-			var err error
-			istioConfigList.WorkloadEntries, err = kubeCache.GetWorkloadEntries(criteria.Namespace, criteria.LabelSelector)
-			if err != nil {
-				errChan <- err
-			}
-		}
-	}(ctx, errChan)
-
-	go func(ctx context.Context, errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.WorkloadGroups) {
-			var err error
-			istioConfigList.WorkloadGroups, err = kubeCache.GetWorkloadGroups(criteria.Namespace, criteria.LabelSelector)
-			if err != nil {
-				errChan <- err
-			}
-		}
-	}(ctx, errChan)
-
-	go func(ctx context.Context, errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.WasmPlugins) {
-			var err error
-			istioConfigList.WasmPlugins, err = kubeCache.GetWasmPlugins(criteria.Namespace, criteria.LabelSelector)
-			if err != nil {
-				errChan <- err
-			}
-		}
-	}(ctx, errChan)
-
-	go func(ctx context.Context, errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.Telemetries) {
-			var err error
-			istioConfigList.Telemetries, err = kubeCache.GetTelemetries(criteria.Namespace, criteria.LabelSelector)
-			if err != nil {
-				errChan <- err
-			}
-		}
-	}(ctx, errChan)
-
-	go func(ctx context.Context, errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.AuthorizationPolicies) {
-			var err error
-			istioConfigList.AuthorizationPolicies, err = kubeCache.GetAuthorizationPolicies(criteria.Namespace, criteria.LabelSelector)
-			if err == nil {
-				if isWorkloadSelector {
-					istioConfigList.AuthorizationPolicies = kubernetes.FilterAuthorizationPoliciesBySelector(workloadSelector, istioConfigList.AuthorizationPolicies)
-				}
-			} else {
-				errChan <- err
-			}
-		}
-	}(ctx, errChan)
-
-	go func(ctx context.Context, errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.PeerAuthentications) {
-			var err error
-			istioConfigList.PeerAuthentications, err = kubeCache.GetPeerAuthentications(criteria.Namespace, criteria.LabelSelector)
-			if err == nil {
-				if isWorkloadSelector {
-					istioConfigList.PeerAuthentications = kubernetes.FilterPeerAuthenticationsBySelector(workloadSelector, istioConfigList.PeerAuthentications)
-				}
-			} else {
-				errChan <- err
-			}
-		}
-	}(ctx, errChan)
-
-	go func(ctx context.Context, errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.RequestAuthentications) {
-			var err error
-			istioConfigList.RequestAuthentications, err = kubeCache.GetRequestAuthentications(criteria.Namespace, criteria.LabelSelector)
-			if err == nil {
-				if isWorkloadSelector {
-					istioConfigList.RequestAuthentications = kubernetes.FilterRequestAuthenticationsBySelector(workloadSelector, istioConfigList.RequestAuthentications)
-				}
-			} else {
-				errChan <- err
-			}
-		}
-	}(ctx, errChan)
-
-	wg.Wait()
-
-	close(errChan)
-	for e := range errChan {
-		if e != nil { // Check that default value wasn't returned
-			err := e // To update the Kiali metric
+	if criteria.Include(kubernetes.DestinationRules) {
+		istioConfigList.DestinationRules, err = kubeCache.GetDestinationRules(criteria.Namespace, criteria.LabelSelector)
+		if err != nil {
 			return models.IstioConfigList{}, err
 		}
+	}
+
+	if criteria.Include(kubernetes.EnvoyFilters) {
+		istioConfigList.EnvoyFilters, err = kubeCache.GetEnvoyFilters(criteria.Namespace, criteria.LabelSelector)
+		if err != nil {
+			return models.IstioConfigList{}, err
+		}
+		if isWorkloadSelector {
+			istioConfigList.EnvoyFilters = kubernetes.FilterEnvoyFiltersBySelector(workloadSelector, istioConfigList.EnvoyFilters)
+		}
+	}
+
+	if criteria.Include(kubernetes.Gateways) {
+		istioConfigList.Gateways, err = kubeCache.GetGateways(criteria.Namespace, criteria.LabelSelector)
+		if err != nil {
+			return models.IstioConfigList{}, err
+		}
+
+		if isWorkloadSelector {
+			istioConfigList.Gateways = kubernetes.FilterGatewaysBySelector(workloadSelector, istioConfigList.Gateways)
+		}
+	}
+
+	if userClient.IsGatewayAPI() && criteria.Include(kubernetes.K8sGateways) {
+		istioConfigList.K8sGateways, err = kubeCache.GetK8sGateways(criteria.Namespace, criteria.LabelSelector)
+		if err != nil {
+			return models.IstioConfigList{}, err
+		}
+	}
+
+	if userClient.IsGatewayAPI() && criteria.Include(kubernetes.K8sHTTPRoutes) {
+		istioConfigList.K8sHTTPRoutes, err = kubeCache.GetK8sHTTPRoutes(criteria.Namespace, criteria.LabelSelector)
+		if err != nil {
+			return models.IstioConfigList{}, err
+		}
+	}
+
+	if criteria.Include(kubernetes.ServiceEntries) {
+		istioConfigList.ServiceEntries, err = kubeCache.GetServiceEntries(criteria.Namespace, criteria.LabelSelector)
+		if err != nil {
+			return models.IstioConfigList{}, err
+		}
+	}
+
+	if criteria.Include(kubernetes.Sidecars) {
+		var err error
+		istioConfigList.Sidecars, err = kubeCache.GetSidecars(criteria.Namespace, criteria.LabelSelector)
+		if err != nil {
+			return models.IstioConfigList{}, err
+		}
+
+		if isWorkloadSelector {
+			istioConfigList.Sidecars = kubernetes.FilterSidecarsBySelector(workloadSelector, istioConfigList.Sidecars)
+		}
+	}
+
+	if criteria.Include(kubernetes.VirtualServices) {
+		istioConfigList.VirtualServices, err = kubeCache.GetVirtualServices(criteria.Namespace, criteria.LabelSelector)
+		if err != nil {
+			return models.IstioConfigList{}, err
+		}
+	}
+
+	if criteria.Include(kubernetes.WorkloadEntries) {
+		istioConfigList.WorkloadEntries, err = kubeCache.GetWorkloadEntries(criteria.Namespace, criteria.LabelSelector)
+		if err != nil {
+			return models.IstioConfigList{}, err
+		}
+	}
+
+	if criteria.Include(kubernetes.WorkloadGroups) {
+		istioConfigList.WorkloadGroups, err = kubeCache.GetWorkloadGroups(criteria.Namespace, criteria.LabelSelector)
+		if err != nil {
+			return models.IstioConfigList{}, err
+		}
+	}
+
+	if criteria.Include(kubernetes.WasmPlugins) {
+		istioConfigList.WasmPlugins, err = kubeCache.GetWasmPlugins(criteria.Namespace, criteria.LabelSelector)
+		if err != nil {
+			return models.IstioConfigList{}, err
+		}
+	}
+
+	if criteria.Include(kubernetes.Telemetries) {
+		istioConfigList.Telemetries, err = kubeCache.GetTelemetries(criteria.Namespace, criteria.LabelSelector)
+		if err != nil {
+			return models.IstioConfigList{}, err
+		}
+	}
+
+	if criteria.Include(kubernetes.AuthorizationPolicies) {
+		istioConfigList.AuthorizationPolicies, err = kubeCache.GetAuthorizationPolicies(criteria.Namespace, criteria.LabelSelector)
+		if err != nil {
+			return models.IstioConfigList{}, err
+		}
+
+		if isWorkloadSelector {
+			istioConfigList.AuthorizationPolicies = kubernetes.FilterAuthorizationPoliciesBySelector(workloadSelector, istioConfigList.AuthorizationPolicies)
+		}
+	}
+
+	if criteria.Include(kubernetes.PeerAuthentications) {
+		istioConfigList.PeerAuthentications, err = kubeCache.GetPeerAuthentications(criteria.Namespace, criteria.LabelSelector)
+		if err != nil {
+			return models.IstioConfigList{}, err
+		}
+
+		if isWorkloadSelector {
+			istioConfigList.PeerAuthentications = kubernetes.FilterPeerAuthenticationsBySelector(workloadSelector, istioConfigList.PeerAuthentications)
+		}
+	}
+
+	if criteria.Include(kubernetes.RequestAuthentications) {
+		istioConfigList.RequestAuthentications, err = kubeCache.GetRequestAuthentications(criteria.Namespace, criteria.LabelSelector)
+		if err != nil {
+			return models.IstioConfigList{}, err
+		}
+
+		if isWorkloadSelector {
+			istioConfigList.RequestAuthentications = kubernetes.FilterRequestAuthenticationsBySelector(workloadSelector, istioConfigList.RequestAuthentications)
+		}
+	}
+
+	if criteria.AllNamespaces {
+		// Filter out namespaces that the user doesn't have access to.
+		namespaces, err := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
+		if err != nil {
+			return models.IstioConfigList{}, err
+		}
+
+		var namespaceNames []string
+		for _, ns := range namespaces {
+			namespaceNames = append(namespaceNames, ns.Name)
+		}
+
+		istioConfigList.AuthorizationPolicies = kubernetes.FilterByNamespaces(istioConfigList.AuthorizationPolicies, namespaceNames)
+		istioConfigList.DestinationRules = kubernetes.FilterByNamespaces(istioConfigList.DestinationRules, namespaceNames)
+		istioConfigList.EnvoyFilters = kubernetes.FilterByNamespaces(istioConfigList.EnvoyFilters, namespaceNames)
+		istioConfigList.Gateways = kubernetes.FilterByNamespaces(istioConfigList.Gateways, namespaceNames)
+		istioConfigList.K8sGateways = kubernetes.FilterByNamespaces(istioConfigList.K8sGateways, namespaceNames)
+		istioConfigList.K8sHTTPRoutes = kubernetes.FilterByNamespaces(istioConfigList.K8sHTTPRoutes, namespaceNames)
+		istioConfigList.PeerAuthentications = kubernetes.FilterByNamespaces(istioConfigList.PeerAuthentications, namespaceNames)
+		istioConfigList.RequestAuthentications = kubernetes.FilterByNamespaces(istioConfigList.RequestAuthentications, namespaceNames)
+		istioConfigList.ServiceEntries = kubernetes.FilterByNamespaces(istioConfigList.ServiceEntries, namespaceNames)
+		istioConfigList.Sidecars = kubernetes.FilterByNamespaces(istioConfigList.Sidecars, namespaceNames)
+		istioConfigList.Telemetries = kubernetes.FilterByNamespaces(istioConfigList.Telemetries, namespaceNames)
+		istioConfigList.VirtualServices = kubernetes.FilterByNamespaces(istioConfigList.VirtualServices, namespaceNames)
+		istioConfigList.WasmPlugins = kubernetes.FilterByNamespaces(istioConfigList.WasmPlugins, namespaceNames)
+		istioConfigList.WorkloadEntries = kubernetes.FilterByNamespaces(istioConfigList.WorkloadEntries, namespaceNames)
+		istioConfigList.WorkloadGroups = kubernetes.FilterByNamespaces(istioConfigList.WorkloadGroups, namespaceNames)
 	}
 
 	return istioConfigList, nil
@@ -709,202 +592,6 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster
 	}
 
 	wg.Wait()
-
-	return istioConfigDetail, err
-}
-
-// GetIstioConfigDetailsFromRegistry returns a specific Istio configuration object from Istio Registry.
-// The returned object is Read only.
-// It uses following parameters:
-// - "namespace": 		namespace where configuration is stored
-// - "objectType":		type of the configuration
-// - "object":			name of the configuration
-func (in *IstioConfigService) GetIstioConfigDetailsFromRegistry(ctx context.Context, cluster, namespace, objectType, object string) (models.IstioConfigDetails, error) {
-	var err error
-
-	istioConfigDetail := models.IstioConfigDetails{}
-	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
-	istioConfigDetail.ObjectType = objectType
-
-	istioConfigDetail.Permissions = models.ResourcePermissions{
-		Create: false,
-		Update: false,
-		Delete: false,
-	}
-
-	registryCriteria := RegistryCriteria{
-		AllNamespaces: true,
-	}
-	if _, ok := in.businessLayer.RegistryStatuses[cluster]; !ok {
-		return istioConfigDetail, fmt.Errorf("Registry Cache for Cluster [%s] is not found or is not accessible for Kiali", cluster)
-	}
-	registryStatus := in.businessLayer.RegistryStatuses[cluster]
-	registryConfiguration, err := registryStatus.GetRegistryConfiguration(registryCriteria)
-	if err != nil {
-		return istioConfigDetail, err
-	}
-	if registryConfiguration == nil {
-		return istioConfigDetail, errors.New("RegistryConfiguration is nil. This is an unexpected case. Is the Kiali cache disabled ?")
-	}
-
-	switch objectType {
-	case kubernetes.DestinationRules:
-		configs := registryConfiguration.DestinationRules
-		for _, cfg := range configs {
-			if cfg.Name == object && cfg.Namespace == namespace {
-				istioConfigDetail.DestinationRule = cfg
-				istioConfigDetail.DestinationRule.Kind = kubernetes.DestinationRuleType
-				istioConfigDetail.DestinationRule.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
-				return istioConfigDetail, nil
-			}
-		}
-	case kubernetes.EnvoyFilters:
-		configs := registryConfiguration.EnvoyFilters
-		for _, cfg := range configs {
-			if cfg.Name == object && cfg.Namespace == namespace {
-				istioConfigDetail.EnvoyFilter = cfg
-				istioConfigDetail.EnvoyFilter.Kind = kubernetes.EnvoyFilterType
-				istioConfigDetail.EnvoyFilter.APIVersion = kubernetes.ApiNetworkingVersionV1Alpha3
-				return istioConfigDetail, nil
-			}
-		}
-	case kubernetes.Gateways:
-		configs := registryConfiguration.Gateways
-		for _, cfg := range configs {
-			if cfg.Name == object && cfg.Namespace == namespace {
-				istioConfigDetail.Gateway = cfg
-				istioConfigDetail.Gateway.Kind = kubernetes.GatewayType
-				istioConfigDetail.Gateway.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
-				return istioConfigDetail, nil
-			}
-		}
-	case kubernetes.K8sGateways:
-		configs := registryConfiguration.K8sGateways
-		for _, cfg := range configs {
-			if cfg.Name == object && cfg.Namespace == namespace {
-				istioConfigDetail.K8sGateway = cfg
-				istioConfigDetail.K8sGateway.Kind = kubernetes.K8sGatewayType
-				istioConfigDetail.K8sGateway.APIVersion = kubernetes.K8sApiNetworkingVersionV1Beta1
-				return istioConfigDetail, nil
-			}
-		}
-	case kubernetes.K8sHTTPRoutes:
-		configs := registryConfiguration.K8sHTTPRoutes
-		for _, cfg := range configs {
-			if cfg.Name == object && cfg.Namespace == namespace {
-				istioConfigDetail.K8sHTTPRoute = cfg
-				istioConfigDetail.K8sHTTPRoute.Kind = kubernetes.K8sHTTPRouteType
-				istioConfigDetail.K8sHTTPRoute.APIVersion = kubernetes.K8sApiNetworkingVersionV1Beta1
-				return istioConfigDetail, nil
-			}
-		}
-	case kubernetes.ServiceEntries:
-		configs := registryConfiguration.ServiceEntries
-		for _, cfg := range configs {
-			if cfg.Name == object && cfg.Namespace == namespace {
-				istioConfigDetail.ServiceEntry = cfg
-				istioConfigDetail.ServiceEntry.Kind = kubernetes.ServiceEntryType
-				istioConfigDetail.ServiceEntry.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
-				return istioConfigDetail, nil
-			}
-		}
-	case kubernetes.Sidecars:
-		configs := registryConfiguration.Sidecars
-		for _, cfg := range configs {
-			if cfg.Name == object && cfg.Namespace == namespace {
-				istioConfigDetail.Sidecar = cfg
-				istioConfigDetail.Sidecar.Kind = kubernetes.SidecarType
-				istioConfigDetail.Sidecar.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
-				return istioConfigDetail, nil
-			}
-		}
-	case kubernetes.VirtualServices:
-		configs := registryConfiguration.VirtualServices
-		for _, cfg := range configs {
-			if cfg.Name == object && cfg.Namespace == namespace {
-				istioConfigDetail.VirtualService = cfg
-				istioConfigDetail.VirtualService.Kind = kubernetes.VirtualServiceType
-				istioConfigDetail.VirtualService.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
-				return istioConfigDetail, nil
-			}
-		}
-	case kubernetes.WorkloadEntries:
-		configs := registryConfiguration.WorkloadEntries
-		for _, cfg := range configs {
-			if cfg.Name == object && cfg.Namespace == namespace {
-				istioConfigDetail.WorkloadEntry = cfg
-				istioConfigDetail.WorkloadEntry.Kind = kubernetes.WorkloadEntryType
-				istioConfigDetail.WorkloadEntry.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
-				return istioConfigDetail, nil
-			}
-		}
-	case kubernetes.WorkloadGroups:
-		configs := registryConfiguration.WorkloadGroups
-		for _, cfg := range configs {
-			if cfg.Name == object && cfg.Namespace == namespace {
-				istioConfigDetail.WorkloadGroup = cfg
-				istioConfigDetail.WorkloadGroup.Kind = kubernetes.WorkloadGroupType
-				istioConfigDetail.WorkloadGroup.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
-				return istioConfigDetail, nil
-			}
-		}
-	case kubernetes.WasmPlugins:
-		configs := registryConfiguration.WasmPlugins
-		for _, cfg := range configs {
-			if cfg.Name == object && cfg.Namespace == namespace {
-				istioConfigDetail.WasmPlugin = cfg
-				istioConfigDetail.WasmPlugin.Kind = kubernetes.WasmPluginType
-				istioConfigDetail.WasmPlugin.APIVersion = kubernetes.ApiExtensionV1Alpha1
-				return istioConfigDetail, nil
-			}
-		}
-	case kubernetes.Telemetries:
-		configs := registryConfiguration.Telemetries
-		for _, cfg := range configs {
-			if cfg.Name == object && cfg.Namespace == namespace {
-				istioConfigDetail.Telemetry = cfg
-				istioConfigDetail.Telemetry.Kind = kubernetes.TelemetryType
-				istioConfigDetail.Telemetry.APIVersion = kubernetes.ApiTelemetryV1Alpha1
-				return istioConfigDetail, nil
-			}
-		}
-	case kubernetes.AuthorizationPolicies:
-		configs := registryConfiguration.AuthorizationPolicies
-		for _, cfg := range configs {
-			if cfg.Name == object && cfg.Namespace == namespace {
-				istioConfigDetail.AuthorizationPolicy = cfg
-				istioConfigDetail.AuthorizationPolicy.Kind = kubernetes.AuthorizationPoliciesType
-				istioConfigDetail.AuthorizationPolicy.APIVersion = kubernetes.ApiSecurityVersion
-				return istioConfigDetail, nil
-			}
-		}
-	case kubernetes.PeerAuthentications:
-		configs := registryConfiguration.PeerAuthentications
-		for _, cfg := range configs {
-			if cfg.Name == object && cfg.Namespace == namespace {
-				istioConfigDetail.PeerAuthentication = cfg
-				istioConfigDetail.PeerAuthentication.Kind = kubernetes.PeerAuthenticationsType
-				istioConfigDetail.PeerAuthentication.APIVersion = kubernetes.ApiSecurityVersion
-				return istioConfigDetail, nil
-			}
-		}
-	case kubernetes.RequestAuthentications:
-		configs := registryConfiguration.RequestAuthentications
-		for _, cfg := range configs {
-			if cfg.Name == object && cfg.Namespace == namespace {
-				istioConfigDetail.RequestAuthentication = cfg
-				istioConfigDetail.RequestAuthentication.Kind = kubernetes.RequestAuthenticationsType
-				istioConfigDetail.RequestAuthentication.APIVersion = kubernetes.ApiSecurityVersion
-				return istioConfigDetail, nil
-			}
-		}
-	default:
-		err = fmt.Errorf("object type not found: %v", objectType)
-	}
-
-	if err == nil {
-		err = errors.New("Object is not found in registry")
-	}
 
 	return istioConfigDetail, err
 }

@@ -7,9 +7,11 @@ import (
 	"github.com/golang/protobuf/ptypes/wrappers"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	api_networking_v1beta1 "istio.io/api/networking/v1beta1"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	auth_v1 "k8s.io/api/authorization/v1"
+	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -608,4 +610,86 @@ func TestFilterIstioObjectsForWorkloadSelector(t *testing.T) {
 	s = "app=my-security"
 	pa := kubernetes.FilterPeerAuthenticationsBySelector(s, istioConfigList.PeerAuthentications)
 	assert.Equal(1, len(pa))
+}
+
+func TestListWithAllNamespacesButNoAccessReturnsEmpty(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheTokenNamespaceDuration = 10000
+	kubernetes.SetConfig(t, *conf)
+	fakeIstioObjects := []runtime.Object{
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
+	}
+	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(fakeGetGateways())...)
+	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
+
+	cache := SetupBusinessLayer(t, k8s, *conf)
+
+	// Set the token and set the namespaces so that when namespace access is checked,
+	// the token namespace cache will be used but will not have the "test" namespace
+	// in it so the list should return empty.
+	k8s.Token = "test"
+	cache.SetNamespaces("test", []models.Namespace{{Name: "nottest"}})
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
+	configService := NewWithBackends(k8sclients, k8sclients, nil, nil).IstioConfig
+
+	criteria := IstioConfigCriteria{
+		Namespace:       "",
+		IncludeGateways: true,
+		AllNamespaces:   true,
+	}
+
+	istioConfigList, err := configService.GetIstioConfigList(context.Background(), criteria)
+	require.NoError(err)
+
+	assert.Len(istioConfigList.Gateways, 0)
+}
+
+func TestListNamespaceScopedReturnsAllAccessibleNamespaces(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheTokenNamespaceDuration = 10000
+	conf.Deployment.AccessibleNamespaces = []string{"test", "test-b", "istio-system"}
+	conf.Deployment.ClusterWideAccess = false
+	kubernetes.SetConfig(t, *conf)
+	objects := []runtime.Object{
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test-b"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test-c"}},
+	}
+	objects = append(objects, kubernetes.ToRuntimeObjects(fakeGetGateways())...)
+	testBGateways := fakeGetGateways()
+	for _, gateway := range testBGateways {
+		gateway.Namespace = "test-b"
+		objects = append(objects, gateway)
+	}
+	testCGateways := fakeGetGateways()
+	for _, gateway := range testCGateways {
+		gateway.Namespace = "test-c"
+		objects = append(objects, gateway)
+	}
+	k8s := kubetest.NewFakeK8sClient(objects...)
+
+	SetupBusinessLayer(t, k8s, *conf)
+
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
+	configService := NewWithBackends(k8sclients, k8sclients, nil, nil).IstioConfig
+
+	criteria := IstioConfigCriteria{
+		Namespace:       "",
+		IncludeGateways: true,
+		AllNamespaces:   true,
+	}
+
+	istioConfigList, err := configService.GetIstioConfigList(context.Background(), criteria)
+	require.NoError(err)
+
+	assert.Len(istioConfigList.Gateways, 4)
 }

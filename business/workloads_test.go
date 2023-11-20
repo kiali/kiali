@@ -21,6 +21,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -1013,7 +1014,7 @@ func TestGetWorkloadMultiCluster(t *testing.T) {
 		),
 	}
 	clientFactory.SetClients(clients)
-	cache := newTestingCache(t, clientFactory, *conf)
+	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	kialiCache = cache
 
 	workloadService := NewWithBackends(clients, clients, nil, nil).Workload
