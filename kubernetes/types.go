@@ -265,8 +265,8 @@ type IstioService struct {
 		// ".":		Private implies namespace local config
 		// "*":		Public implies config is visible to all
 		// "~":		None implies service is visible to no one. Used for services only
-		ExportTo       map[string]bool   `json:"ExportTo,omitempty"`
-		LabelSelectors map[string]string `json:"LabelSelectors,omitempty"`
+		ExportTo       map[string]struct{} `json:"ExportTo,omitempty"`
+		LabelSelectors map[string]string   `json:"LabelSelectors,omitempty"`
 		// ClusterExternalAddresses and ClusterExternalPorts are not mapped into the model
 		// Kiali won't use it yet and these attributes changes between Istio 1.11.x and Istio 1.12.x and may bring conflicts
 	} `json:"Attributes,omitempty"`

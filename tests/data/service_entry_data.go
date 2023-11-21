@@ -10,6 +10,7 @@ func CreateExternalServiceEntry() *networking_v1beta1.ServiceEntry {
 	se.Name = "external-svc-wikipedia"
 	se.Namespace = "wikipedia"
 	se.Spec.Hosts = []string{"wikipedia.org"}
+	se.Spec.ExportTo = []string{"*"}
 	se.Spec.Location = api_networking_v1beta1.ServiceEntry_MESH_EXTERNAL
 	se.Spec.Ports = []*api_networking_v1beta1.ServicePort{
 		{
@@ -38,6 +39,7 @@ func CreateEmptyMeshExternalServiceEntry(name, namespace string, hosts []string)
 	se.Name = name
 	se.Namespace = namespace
 	se.Spec.Hosts = hosts
+	se.Spec.ExportTo = []string{"*"}
 	se.Spec.Location = api_networking_v1beta1.ServiceEntry_MESH_EXTERNAL
 	se.Spec.Resolution = api_networking_v1beta1.ServiceEntry_DNS
 	return &se
@@ -48,6 +50,7 @@ func CreateEmptyMeshInternalServiceEntry(name, namespace string, hosts []string)
 	se.Name = name
 	se.Namespace = namespace
 	se.Spec.Hosts = hosts
+	se.Spec.ExportTo = []string{"*"}
 	se.Spec.Location = api_networking_v1beta1.ServiceEntry_MESH_INTERNAL
 	se.Spec.Resolution = api_networking_v1beta1.ServiceEntry_NONE
 	return &se
