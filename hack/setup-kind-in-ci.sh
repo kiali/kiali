@@ -60,18 +60,18 @@ TARGET_BRANCH="${TARGET_BRANCH:-master}"
 # https://istio.io/latest/docs/releases/supported-releases/
 if [ -z "${ISTIO_VERSION}" ]; then
   if [ "${TARGET_BRANCH}" == "v1.48" ]; then
-    ISTIO_VERSION="1.13.0"
+    ISTIO_VERSION="1.12.0"
   elif [ "${TARGET_BRANCH}" == "v1.57" ]; then
-    ISTIO_VERSION="1.15.0"
+    ISTIO_VERSION="1.14.0"
   elif [ "${TARGET_BRANCH}" == "v1.65" ]; then
-    ISTIO_VERSION="1.17.0"
+    ISTIO_VERSION="1.16.0"
   elif [ "${TARGET_BRANCH}" == "v1.73" ]; then
     ISTIO_VERSION="1.18.0"
   fi
 fi
 
 KIND_NODE_IMAGE=""
-if [[ "${ISTIO_VERSION}" == "1.13.0" || "${ISTIO_VERSION}" == "1.15.0" || "${ISTIO_VERSION}" == "1.17.0" ]]; then
+if [ "${ISTIO_VERSION}" == "1.12.0" -o "${ISTIO_VERSION}" == "1.14.0" -o "${ISTIO_VERSION}" == "1.16.0" ]; then
   KIND_NODE_IMAGE="kindest/node:v1.23.4@sha256:0e34f0d0fd448aa2f2819cfd74e99fe5793a6e4938b328f657c8e3f81ee0dfb9"
 else
   KIND_NODE_IMAGE="kindest/node:v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72"
