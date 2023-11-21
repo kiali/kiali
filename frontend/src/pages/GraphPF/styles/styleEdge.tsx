@@ -24,10 +24,7 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   // Change edge color according to the pathStyle
   const edgeClass = style({
     $nest: {
-      '.pf-topology__edge__link': {
-        stroke: data.pathStyle.stroke,
-        strokeWidth: 2
-      }
+      '.pf-topology__edge__link': data.pathStyle
     }
   });
   classes.push(edgeClass);
@@ -79,6 +76,18 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
       }
     });
     classes.push(animationClass);
+  }
+
+  // Set the path style when unhighlighted
+  if (data.isUnhighlighted) {
+    const unhighlightedClass = style({
+      $nest: {
+        '.pf-topology__edge_link': {
+          opacity: 0.1
+        }
+      }
+    });
+    classes.push(unhighlightedClass);
   }
 
   const passedData = React.useMemo(() => {
