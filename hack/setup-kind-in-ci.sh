@@ -53,7 +53,7 @@ if [ "${TARGET_BRANCH}" == "v1.48" ]; then
 elif [ "${TARGET_BRANCH}" == "v1.57" ]; then
   ISTIO_VERSION="1.14.0"
 elif [ "${TARGET_BRANCH}" == "v1.65" ]; then
-  ISTIO_VERSION="1.16.0"
+  ISTIO_VERSION="1.16.7"
 fi
 
 KIND_NODE_IMAGE=""
