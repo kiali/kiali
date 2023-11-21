@@ -75,12 +75,12 @@ func (jc JaegerHTTPClient) GetServiceStatusHTTP(client http.Client, baseURL *url
 }
 
 func queryTracesHTTP(client http.Client, u *url.URL) (*model.TracingResponse, error) {
-	// HTTP and GRPC requests co-exist, but when minDuration is present, for HTTP it requires a unit (ms)
+	// HTTP and GRPC requests co-exist, but when minDuration is present, for HTTP it requires a unit (us)
 	// https://github.com/kiali/kiali/issues/3939
 	minDuration := u.Query().Get("minDuration")
-	if minDuration != "" && !strings.HasSuffix(minDuration, "ms") {
+	if minDuration != "" && !strings.HasSuffix(minDuration, "us") {
 		query := u.Query()
-		query.Set("minDuration", minDuration+"ms")
+		query.Set("minDuration", minDuration+"us")
 		u.RawQuery = query.Encode()
 	}
 	resp, code, reqError := makeRequest(client, u.String(), nil)
