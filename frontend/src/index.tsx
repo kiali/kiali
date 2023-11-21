@@ -4,6 +4,7 @@ import { App } from './app/App';
 import { globalStyle } from 'styles/GlobalStyle';
 import cssVariables from './styles/variables.module.scss';
 import '@patternfly/patternfly/patternfly.css';
+import '@patternfly/patternfly/patternfly-addons.css';
 import 'tippy.js/dist/tippy.css';
 import 'tippy.js/dist/themes/light-border.css';
 
