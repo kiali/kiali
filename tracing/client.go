@@ -131,12 +131,15 @@ func NewClient(token string) (*Client, error) {
 			// 	ctx = metadata.NewOutgoingContext(ctx, requestMetadata)
 			// }
 			conn, err := grpc.Dial(address, opts...)
-			if err != nil {
+			if err == nil {
 				cc := model.NewQueryServiceClient(conn)
 				client = jaeger.JaegerGRPCClient{JaegergRPCClient: cc}
 				log.Infof("Create %s GRPC client %s", cfgTracing.Provider, address)
+				return &Client{httpTracingClient: httpTracingClient, grpcClient: client, ctx: ctx}, nil
+			} else {
+				log.Errorf("Error creating client %s", err.Error())
+				return nil, nil
 			}
-			return &Client{httpTracingClient: httpTracingClient, grpcClient: client, ctx: ctx}, nil
 
 		} else {
 			// Legacy HTTP client
