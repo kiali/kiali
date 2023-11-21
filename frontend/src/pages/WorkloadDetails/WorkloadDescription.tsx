@@ -156,7 +156,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
             !props.workload.istioAmbient &&
             !isWaypoint(props.workload.labels) && (
               <MissingSidecar
-                data-test={`missing-sidecar-badge-for-${workload.name}-workload-in-${props.namespace}-namespace`}
+                dataTest={`missing-sidecar-badge-for-${workload.name}-workload-in-${props.namespace}-namespace`}
                 namespace={props.namespace}
                 tooltip={true}
                 className={infoStyle}

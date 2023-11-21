@@ -1,9 +1,9 @@
 import { And, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { activeFilters, showMore } from './label_check';
 
-function optionCheck(name: string) {
+const optionCheck = (name: string) => {
   cy.get('[aria-label="filter_select_value"]').contains(name).should('exist');
-}
+};
 
 When('user types {string} into the input', (input: string) => {
   cy.get('input[placeholder="Filter by Type"]').type(input);
@@ -20,6 +20,7 @@ And('user filters by {string}', (filterCategory: string) => {
       objects: ''
     }
   }).as('noFilters');
+
   cy.get('select[aria-label="filter_select_type"]').select(filterCategory);
 });
 
@@ -57,6 +58,7 @@ When('chosen from the {string} dropdown', (placeholder: string) => {
       objects: 'authorizationpolicies'
     }
   }).as('filterActive');
+
   cy.get(`input[placeholder="${placeholder}"]`).type('AuthorizationPolicy');
   cy.get(`li[label="AuthorizationPolicy"]`).should('be.visible').find('button').click();
 });
@@ -72,6 +74,7 @@ When('multiple filters are chosen', () => {
       objects: 'authorizationpolicies,destinationrules'
     }
   }).as('multipleFilters');
+
   cy.get('input[placeholder="Filter by Type"]').type('AuthorizationPolicy');
   cy.get(`li[label="AuthorizationPolicy"]`).should('be.visible').find('button').click();
   cy.get('input[placeholder="Filter by Type"]').type('DestinationRule');
@@ -107,6 +110,7 @@ Then('the filter {string} should be visible only once', (category: string) => {
 
 When('user chooses {int} type filters', (count: number) => {
   cy.get('select[aria-label="filter_select_type"]').select('Type');
+
   for (let i = 1; i <= count; i++) {
     cy.get('input[placeholder="Filter by Type"]').click();
     cy.get(`[data-test=istio-type-dropdown] > :nth-child(${i})`).should('be.visible').click();
