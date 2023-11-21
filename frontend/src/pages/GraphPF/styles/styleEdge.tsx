@@ -4,7 +4,12 @@ import { PFColors } from 'components/Pf/PfColors';
 import * as React from 'react';
 import { style } from 'typestyle';
 
-// This is the registered Edge component override that utilizes our customized Edge.tsx component.
+// This is our styled edge component registered in stylesComponentFactory.tsx.  It is responsible for adding our custom customizations that get passed down to DefaultEdge.  The current customizations:
+//   data.pathStyle?: React.CSSProperties // additional CSS stylings for the edge/path (not the endpoint).
+//   data.isFind?: boolean                // adds graph-find overlay
+//   data.isUnhighlighted?: boolean       // adds unhighlight effects
+//   data.hasSpans?: Span[]               // adds trace overlay
+//   add showTag prop and show scaled tag on hover (when showTag is false)
 
 const ColorFind = PFColors.Gold400;
 const ColorSpan = PFColors.Purple200;
