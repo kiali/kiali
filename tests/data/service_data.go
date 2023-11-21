@@ -15,8 +15,8 @@ func CreateFakeRegistryServicesLabels(service string, namespace string) []*kuber
 	registryService.Hostname = service + "." + namespace + ".svc.cluster.local"
 	registryService.IstioService.Attributes.Name = service
 	registryService.IstioService.Attributes.Namespace = namespace
-	registryService.IstioService.Attributes.ExportTo = make(map[string]bool)
-	registryService.IstioService.Attributes.ExportTo["*"] = true
+	registryService.IstioService.Attributes.ExportTo = make(map[string]struct{})
+	registryService.IstioService.Attributes.ExportTo["*"] = struct{}{}
 	registryService.IstioService.Attributes.Labels = make(map[string]string)
 	registryService.IstioService.Attributes.Labels["app"] = service
 	registryService.IstioService.Attributes.Labels["version"] = "v1"
@@ -31,8 +31,8 @@ func CreateFakeRegistryServices(host string, namespace string, exportToNamespace
 	registryService.Hostname = host
 	registryService.IstioService.Attributes.Namespace = namespace
 	registryService.IstioService.Attributes.Name = strings.Split(host, ".")[0]
-	registryService.IstioService.Attributes.ExportTo = make(map[string]bool)
-	registryService.IstioService.Attributes.ExportTo[exportToNamespace] = true
+	registryService.IstioService.Attributes.ExportTo = make(map[string]struct{})
+	registryService.IstioService.Attributes.ExportTo[exportToNamespace] = struct{}{}
 
 	return []*kubernetes.RegistryService{&registryService}
 }
