@@ -22,7 +22,6 @@ import (
 	"github.com/kiali/kiali/tracing/jaeger"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	"github.com/kiali/kiali/tracing/tempo"
-	"github.com/kiali/kiali/tracing/tempo/tempopb"
 	"github.com/kiali/kiali/util/grpcutil"
 	"github.com/kiali/kiali/util/httputil"
 )
@@ -152,23 +151,34 @@ func NewClient(token string) (*Client, error) {
 			client := http.Client{Transport: transport, Timeout: timeout}
 			log.Infof("Create Tracing HTTP client %s", u)
 
-			// At the moment, Tempo uses gRPC stream client just for search
-			// Get a single trace requires the http client
-			if cfgTracing.Provider == TEMPO && cfgTracing.UseGRPC {
-				var dialOps []grpc.DialOption
-				if cfgTracing.Auth.Type == "basic" {
-					dialOps = append(dialOps, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
-					dialOps = append(dialOps, grpc.WithPerRPCCredentials(&basicAuth{
-						Header: fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", cfgTracing.Auth.Username, cfgTracing.Auth.Password)))),
-					}))
-				} else {
-					dialOps = append(dialOps, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			if cfgTracing.Provider == TEMPO {
+				httpTracingClient, err = tempo.NewOtelClient(client, u)
+				if err != nil {
+					log.Errorf("Error creating HTTP client %s", err.Error())
+					return nil, err
 				}
-				grpcAddress := fmt.Sprintf("%s:%s", u.Hostname(), cfg.ExternalServices.Tracing.GrpcPort)
-				clientConn, _ := grpc.Dial(grpcAddress, dialOps...)
-				clientStreamTempo := tempopb.NewStreamingQuerierClient(clientConn)
-				streamClient := tempo.TempoGRPCClient{StreamingClient: clientStreamTempo}
-				return &Client{httpTracingClient: httpTracingClient, grpcClient: streamClient, httpClient: client, baseURL: u, ctx: ctx}, nil
+
+				// Tempo uses gRPC stream client just for search
+				// Get a single trace requires the http client
+				if cfgTracing.UseGRPC {
+					var dialOps []grpc.DialOption
+					if cfgTracing.Auth.Type == "basic" {
+						dialOps = append(dialOps, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
+						dialOps = append(dialOps, grpc.WithPerRPCCredentials(&basicAuth{
+							Header: fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", cfgTracing.Auth.Username, cfgTracing.Auth.Password)))),
+						}))
+					} else {
+						dialOps = append(dialOps, grpc.WithTransportCredentials(insecure.NewCredentials()))
+					}
+					grpcAddress := fmt.Sprintf("%s:%s", u.Hostname(), cfg.ExternalServices.Tracing.GrpcPort)
+					clientConn, _ := grpc.Dial(grpcAddress, dialOps...)
+					streamClient, err := tempo.NewgRPCClient(client, u, clientConn)
+					if err != nil {
+						log.Errorf("Error creating gRPC Tempo Client %s", err.Error())
+						return nil, nil
+					}
+					return &Client{httpTracingClient: httpTracingClient, grpcClient: streamClient, httpClient: client, baseURL: u, ctx: ctx}, nil
+				}
 			}
 			return &Client{httpTracingClient: httpTracingClient, httpClient: client, baseURL: u, ctx: ctx}, nil
 		}

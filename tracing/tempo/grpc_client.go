@@ -2,10 +2,15 @@ package tempo
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
+	"net/url"
+	"path"
 	"time"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -14,12 +19,38 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
+	otel "github.com/kiali/kiali/tracing/otel/model"
 	"github.com/kiali/kiali/tracing/otel/model/converter"
 	"github.com/kiali/kiali/tracing/tempo/tempopb"
+	"github.com/kiali/kiali/util"
 )
 
 type TempoGRPCClient struct {
 	StreamingClient tempopb.StreamingQuerierClient
+	ClusterTag      bool
+}
+
+// New client
+func NewgRPCClient(client http.Client, baseURL *url.URL, clientConn *grpc.ClientConn) (otelClient *TempoGRPCClient, err error) {
+	url := *baseURL
+	url.Path = path.Join(url.Path, "/api/search/tags")
+	r, status, _ := makeRequest(client, url.String(), nil)
+	if status != 200 {
+		return nil, fmt.Errorf("Error %d getting tags", status)
+	}
+	var response otel.TagsResponse
+	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
+		log.Errorf("Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, url)
+		return nil, errMarshal
+	}
+	tags := false
+	if util.InSlice(response.TagNames, "cluster") {
+		tags = true
+	}
+
+	clientStreamTempo := tempopb.NewStreamingQuerierClient(clientConn)
+	streamClient := TempoGRPCClient{StreamingClient: clientStreamTempo, ClusterTag: tags}
+	return &streamClient, nil
 }
 
 func (jc TempoGRPCClient) FindTraces(ctx context.Context, serviceName string, q models.TracingQuery) (response *model.TracingResponse, err error) {
@@ -35,22 +66,18 @@ func (jc TempoGRPCClient) FindTraces(ctx context.Context, serviceName string, q 
 	queryPart2 := TraceQL{operator1: ".node_id", operand: REGEX, operator2: ".*"}
 	queryPart := TraceQL{operator1: queryPart1, operand: AND, operator2: queryPart2}
 
-	group1 := TraceQL{operator1: "status", operand: EQUAL, operator2: unquoted("error")}
-	group2 := TraceQL{operator1: "status", operand: EQUAL, operator2: unquoted("unset")}
-	group3 := TraceQL{operator1: "status", operand: EQUAL, operator2: unquoted("ok")}
-	groupQL := []TraceQL{group1, group2, group3}
-	group := Group{group: groupQL, operand: OR}
-
 	if len(q.Tags) > 0 {
 		for k, v := range q.Tags {
-			tag := TraceQL{operator1: "." + k, operand: EQUAL, operator2: v}
-			queryPart = TraceQL{operator1: queryPart, operand: AND, operator2: tag}
+			if k != "cluster" && jc.ClusterTag {
+				tag := TraceQL{operator1: "." + k, operand: EQUAL, operator2: v}
+				queryPart = TraceQL{operator1: queryPart, operand: AND, operator2: tag}
+			}
 		}
 	}
 
-	subquery := TraceQL{operator1: queryPart, operand: AND, operator2: group}
-	trace := TraceQL{operator1: Subquery{subquery}, operand: AND, operator2: Subquery{}}
-	queryQL := trace.getQuery()
+	selects := []string{"status", ".service_name", ".node_id"}
+	trace := TraceQL{operator1: Subquery{queryPart}, operand: AND, operator2: Subquery{}}
+	queryQL := fmt.Sprintf("%s| %s", printOperator(trace), printSelect(selects))
 	log.Debugf("QueryQL %s", queryQL)
 
 	sr.Query = queryQL
