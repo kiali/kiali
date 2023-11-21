@@ -49,15 +49,15 @@ TARGET_BRANCH="${TARGET_BRANCH:-master}"
 # https://kiali.io/docs/installation/installation-guide/prerequisites/
 # https://istio.io/latest/docs/releases/supported-releases/
 if [ "${TARGET_BRANCH}" == "v1.48" ]; then
-  ISTIO_VERSION="1.12.0"
+  ISTIO_VERSION="1.12.9"
 elif [ "${TARGET_BRANCH}" == "v1.57" ]; then
-  ISTIO_VERSION="1.14.0"
+  ISTIO_VERSION="1.14.5"
 elif [ "${TARGET_BRANCH}" == "v1.65" ]; then
   ISTIO_VERSION="1.16.7"
 fi
 
 KIND_NODE_IMAGE=""
-if [ "${ISTIO_VERSION}" == "1.12.0" ]; then
+if [ "${ISTIO_VERSION}" == "1.12.9" ]; then
   KIND_NODE_IMAGE="kindest/node:v1.23.4@sha256:0e34f0d0fd448aa2f2819cfd74e99fe5793a6e4938b328f657c8e3f81ee0dfb9"
 else
   KIND_NODE_IMAGE="kindest/node:v1.24.15@sha256:24473777a1eef985dc405c23ab9f4daddb1352ca23db60b75de9e7c408096491"
