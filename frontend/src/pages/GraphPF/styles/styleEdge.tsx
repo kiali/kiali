@@ -85,14 +85,22 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
 
   // Set the path style when unhighlighted
   if (data.isUnhighlighted) {
-    const unhighlightedClass = style({
+    const unhighlightedEdgeClass = style({
       $nest: {
-        '.pf-topology__edge_link': {
+        '.pf-topology__edge': {
           opacity: 0.1
         }
       }
     });
-    classes.push(unhighlightedClass);
+    const unhighlightedEdgeLinkClass = style({
+      $nest: {
+        '.pf-topology__edge__link': {
+          opacity: 0.1
+        }
+      }
+    });
+    classes.push(unhighlightedEdgeClass);
+    classes.push(unhighlightedEdgeLinkClass);
   }
 
   const passedData = React.useMemo(() => {
