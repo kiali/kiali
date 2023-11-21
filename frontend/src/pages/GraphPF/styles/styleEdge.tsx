@@ -1,22 +1,85 @@
-import { Edge, observer, ScaleDetailsLevel, WithSelectionProps } from '@patternfly/react-topology';
-import { BaseEdge } from '../components/edge';
+import { DefaultEdge, Edge, observer, ScaleDetailsLevel, WithSelectionProps } from '@patternfly/react-topology';
 import useDetailsLevel from '@patternfly/react-topology/dist/esm/hooks/useDetailsLevel';
+import { PFColors } from 'components/Pf/PfColors';
 import * as React from 'react';
-import { kialiStyle } from 'styles/StyleUtils';
+import { style } from 'typestyle';
 
 // This is the registered Edge component override that utilizes our customized Edge.tsx component.
+
+const ColorFind = PFColors.Gold400;
+const ColorSpan = PFColors.Purple200;
+const OverlayOpacity = 0.3;
+const OverlayWidth = 30;
 
 type StyleEdgeProps = {
   element: Edge;
 } & WithSelectionProps;
 
-const tagClass = kialiStyle({
-  fontFamily: 'Verdana,Arial,Helvetica,sans-serif,pficon'
-});
-
 const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
+
+  let classes: string[] = [];
+
+  // Change edge color according to the pathStyle
+  const edgeClass = style({
+    $nest: {
+      '.pf-topology__edge__link': {
+        stroke: data.pathStyle.stroke,
+        strokeWidth: 2
+      }
+    }
+  });
+  classes.push(edgeClass);
+
+  // Change connector color according to the pathStyle
+  const connectorClass = style({
+    $nest: {
+      '.pf-topology-connector-arrow': {
+        stroke: data.pathStyle.stroke,
+        fill: data.pathStyle.stroke
+      }
+    }
+  });
+  classes.push(connectorClass);
+
+  // If has spans, add the span overlay
+  if (data.hasSpans) {
+    const spansClass = style({
+      $nest: {
+        '.pf-topology__edge__background': {
+          strokeWidth: OverlayWidth,
+          stroke: ColorSpan,
+          strokeOpacity: OverlayOpacity
+        }
+      }
+    });
+    classes.push(spansClass);
+    // If isHighlighted, add the highlight overlay
+  } else if (data.isFind) {
+    const findClass = style({
+      $nest: {
+        '.pf-topology__edge__background': {
+          strokeWidth: OverlayWidth,
+          stroke: ColorFind,
+          strokeOpacity: OverlayOpacity
+        }
+      }
+    });
+    classes.push(findClass);
+  }
+
+  // Set animation duration velocity
+  if (data.animationDuration) {
+    const animationClass = style({
+      $nest: {
+        '.pf-topology__edge__link': {
+          animationDuration: `${data.animationDuration}s`
+        }
+      }
+    });
+    classes.push(animationClass);
+  }
 
   const passedData = React.useMemo(() => {
     const newData = { ...data };
@@ -31,7 +94,7 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
     return newData;
   }, [data, detailsLevel]);
 
-  return <BaseEdge element={element} tagClass={tagClass} {...rest} {...passedData} />;
+  return <DefaultEdge className={classes?.join(' ')} element={element} {...rest} {...passedData} />;
 };
 
 export const StyleEdge = observer(StyleEdgeComponent);
