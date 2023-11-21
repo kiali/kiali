@@ -170,7 +170,7 @@ func NewClient(token string) (*Client, error) {
 					} else {
 						dialOps = append(dialOps, grpc.WithTransportCredentials(insecure.NewCredentials()))
 					}
-					grpcAddress := fmt.Sprintf("%s:%s", u.Hostname(), cfg.ExternalServices.Tracing.GrpcPort)
+					grpcAddress := fmt.Sprintf("%s:%d", u.Hostname(), cfg.ExternalServices.Tracing.GrpcPort)
 					clientConn, _ := grpc.Dial(grpcAddress, dialOps...)
 					streamClient, err := tempo.NewgRPCClient(client, u, clientConn)
 					if err != nil {
