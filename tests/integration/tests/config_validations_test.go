@@ -157,7 +157,12 @@ func TestK8sHTTPRoutesServicesError(t *testing.T) {
 	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
 	require.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
 
-	config, err := getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sHTTPRoutes, true, require)
+	// flaky test fix, make sure that K8sGateway is created and available
+	config, err := getConfigDetails(kiali.BOOKINFO, "gatewayapiservices", kubernetes.K8sGateways, true, require)
+	require.NoError(err)
+	require.NotNil(config)
+
+	config, err = getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sHTTPRoutes, true, require)
 
 	require.NoError(err)
 	require.NotNil(config)
