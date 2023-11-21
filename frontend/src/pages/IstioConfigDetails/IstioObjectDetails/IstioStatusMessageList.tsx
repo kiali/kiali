@@ -21,7 +21,7 @@ export class IstioStatusMessageList extends React.Component<Props> {
         <Stack>
           <StackItem>
             <Title headingLevel="h4" size={TitleSizes.lg} style={{ paddingBottom: '10px' }}>
-              Configuration Analysis
+              {$t('ConfigurationAnalysis', 'Configuration Analysis')}
             </Title>
           </StackItem>
           {(this.props.messages || []).map((msg: ValidationMessage, i: number) => {

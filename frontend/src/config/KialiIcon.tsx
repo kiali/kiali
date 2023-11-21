@@ -22,11 +22,8 @@ import {
   CopyIcon,
   EllipsisHIcon,
   EllipsisVIcon,
-  EqualizerIcon,
   ErrorCircleOIcon,
-  ExclamationCircleIcon,
   ExpandIcon,
-  ExternalLinkAltIcon,
   FileDownloadIcon,
   FilterIcon,
   GlobeAmericasIcon,
@@ -57,7 +54,6 @@ import {
   SortAmountDownAltIcon,
   StopIcon,
   SunIcon,
-  TrashIcon,
   TopologyIcon,
   UnknownIcon,
   UserClockIcon,
@@ -67,6 +63,10 @@ import {
 import { kialiStyle } from 'styles/StyleUtils';
 import { Icon } from '@patternfly/react-core';
 import { classes } from 'typestyle';
+
+const iconStyle = kialiStyle({
+  width: '10px'
+});
 
 interface IconProps {
   className?: string;
@@ -93,11 +93,8 @@ export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } =
   Copy: (props: IconProps) => conversorIconProps(props, <CopyIcon />),
   Delete: (props: IconProps) => conversorIconProps(props, <MinusCircleIcon />),
   Download: (props: IconProps) => conversorIconProps(props, <FileDownloadIcon />),
-  Equalizer: (props: IconProps) => conversorIconProps(props, <EqualizerIcon />),
   Error: (props: IconProps) => conversorIconProps(props, <ErrorCircleOIcon />, PFColors.Danger),
-  ExclamationCircle: (props: IconProps) => conversorIconProps(props, <ExclamationCircleIcon />, PFColors.Danger),
   Expand: (props: IconProps) => conversorIconProps(props, <ExpandIcon />),
-  ExternalLink: (props: IconProps) => conversorIconProps(props, <ExternalLinkAltIcon />),
   FaultInjection: (props: IconProps) => conversorIconProps(props, <BanIcon />),
   Filter: (props: IconProps) => conversorIconProps(props, <FilterIcon />),
   Gateway: (props: IconProps) => conversorIconProps(props, <GlobeRouteIcon />),
@@ -131,7 +128,6 @@ export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } =
   Stop: (props: IconProps) => conversorIconProps(props, <StopIcon />),
   Sun: (props: IconProps) => conversorIconProps(props, <SunIcon />),
   Topology: (props: IconProps) => conversorIconProps(props, <TopologyIcon />),
-  Trash: (props: IconProps) => conversorIconProps(props, <TrashIcon />),
   TrafficShifting: (props: IconProps) => conversorIconProps(props, <ShareAltIcon />),
   Unknown: (props: IconProps) => conversorIconProps(props, <UnknownIcon />),
   UserClock: (props: IconProps) => conversorIconProps(props, <UserClockIcon />),
@@ -141,14 +137,19 @@ export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } =
   Workloads: (props: IconProps) => conversorIconProps(props, <BundleIcon />)
 };
 
-const conversorIconProps = (props: IconProps, icon: React.ReactNode, colorIcon?: string): React.ReactElement => {
+Object.keys(KialiIcon).forEach(key => {
+  KialiIcon[key].defaultProps = {
+    className: iconStyle
+  };
+});
+
+const conversorIconProps = (props: IconProps, icon: JSX.Element, colorIcon?: string) => {
   const colorI = props.color || colorIcon;
   const classNameIcon = colorI
     ? kialiStyle({
         color: colorI
       })
-    : undefined;
-
+    : '';
   return <Icon className={classes(props.className, classNameIcon)}>{icon}</Icon>;
 };
 

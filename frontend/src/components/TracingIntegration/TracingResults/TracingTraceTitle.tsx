@@ -42,14 +42,14 @@ const TracingTraceTitleComponent: React.FC<Props> = (props: Props) => {
         }
       }}
     >
-      View on Graph
+      {$t('ViewOnGraph', 'View on Graph')}
     </DropdownItem>
   ];
 
   if (props.externalURL) {
     links.push(
       <DropdownItem key="view_in_tracing" onClick={() => window.open(props.externalURL, '_blank')}>
-        View in Tracing <ExternalLinkAltIcon />
+        {$t('View_in_Tracing', 'View in Tracing')} <ExternalLinkAltIcon />
       </DropdownItem>
     );
   }
@@ -57,7 +57,7 @@ const TracingTraceTitleComponent: React.FC<Props> = (props: Props) => {
   if (props.comparisonURL) {
     links.push(
       <DropdownItem key="compare_with_similar_traces" onClick={() => window.open(props.comparisonURL, '_blank')}>
-        Compare with similar traces <ExternalLinkAltIcon />
+        {$t('CompareWithSimilarTraces', 'Compare with similar traces')} <ExternalLinkAltIcon />
       </DropdownItem>
     );
   }

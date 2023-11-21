@@ -73,7 +73,7 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
           this.props.namespaces[this.props.namespaces.length - 1].name;
         return (
           <>
-            namespaces <b>{namespacesString}</b>
+            {$t('namespaces')} <b>{namespacesString}</b>
           </>
         );
       }
@@ -86,7 +86,7 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
       return (
         <EmptyState id="empty-graph-error" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
           <EmptyStateHeader
-            titleText="Error loading Graph"
+            titleText={$t('ErrorLoadingGraph', 'Error loading Graph')}
             icon={<EmptyStateIcon icon={KialiIcon.Error} />}
             headingLevel="h5"
           />
@@ -97,7 +97,7 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
     if (this.props.isLoading) {
       return (
         <EmptyState id="empty-graph-is-loading" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader titleText="Loading Graph" headingLevel="h5" />
+          <EmptyStateHeader titleText={$t('LoadingGraph', 'Loading Graph')} headingLevel="h5" />
         </EmptyState>
       );
     }
@@ -105,9 +105,9 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
     if (this.props.namespaces.length === 0) {
       return (
         <EmptyState id="empty-graph-no-namespace" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader titleText="No namespace is selected" headingLevel="h5" />
+          <EmptyStateHeader titleText={$t('title7', 'No namespace is selected')} headingLevel="h5" />
           <EmptyStateBody>
-            There is currently no namespace selected, please select one using the Namespace selector.
+            {$t('tip162', 'There is currently no namespace selected, please select one using the Namespace selector.')}
           </EmptyStateBody>
         </EmptyState>
       );
@@ -118,16 +118,28 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
     if (isGraphEmpty && !this.props.isMiniGraph) {
       return (
         <EmptyState id="empty-graph" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader titleText="Empty Graph" headingLevel="h5" />
+          <EmptyStateHeader titleText={$t('EmptyGraph', 'Empty Graph')} headingLevel="h5" />
           <EmptyStateBody>
             There is currently no graph available for {this.namespacesText()}. This could either mean there is no
             service mesh available for {this.props.namespaces.length === 1 ? 'this namespace' : 'these namespaces'} or
             the service mesh has yet to see request traffic.
             {this.props.showIdleNodes && (
-              <> You are currently displaying 'Idle nodes', send requests to the service mesh and click 'Refresh'.</>
+              <>
+                {' '}
+                {$t(
+                  'tip163',
+                  "You are currently displaying 'Idle nodes', send requests to the service mesh and click 'Refresh'."
+                )}
+              </>
             )}
             {!this.props.showIdleNodes && (
-              <> You can enable 'Idle Nodes' to display service mesh nodes that have yet to see any request traffic.</>
+              <>
+                {' '}
+                {$t(
+                  'tip164',
+                  "You can enable 'Idle Nodes' to display service mesh nodes that have yet to see any request traffic."
+                )}
+              </>
             )}
           </EmptyStateBody>
           <EmptyStateFooter>
@@ -135,7 +147,9 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
               onClick={this.props.showIdleNodes ? this.props.action : this.props.toggleIdleNodes}
               variant={ButtonVariant.primary}
             >
-              {(this.props.showIdleNodes && <>Refresh</>) || <>Display idle nodes</>}
+              {(this.props.showIdleNodes && <>{$t('Refresh')}</>) || (
+                <>{$t('DisplayIdleNodes', 'Display idle nodes')}</>
+              )}
             </Button>
           </EmptyStateFooter>
         </EmptyState>
@@ -145,8 +159,8 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
     if (isGraphEmpty && this.props.isMiniGraph) {
       return (
         <EmptyState id="empty-mini-graph" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader titleText="Empty Graph" headingLevel="h5" />
-          <EmptyStateBody>No graph traffic for the time period.</EmptyStateBody>
+          <EmptyStateHeader titleText={$t('EmptyGraph', 'Empty Graph')} headingLevel="h5" />
+          <EmptyStateBody>{$t('tip165', 'No graph traffic for the time period.')}</EmptyStateBody>
         </EmptyState>
       );
     }

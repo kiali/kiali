@@ -81,7 +81,7 @@ export const ToolbarDropdown: React.FC<ToolbarDropdownProps> = (props: ToolbarDr
               isSelected={key === String(props.value)}
               value={`${key}`}
             >
-              {props.options[key]}
+              {$t(props.options[key])}
             </SelectOption>
           );
         })}

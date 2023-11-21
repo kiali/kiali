@@ -56,13 +56,13 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
 
   const getDropdownItemTooltipMessage = (isGatewayAPI: boolean): string => {
     if (serverConfig.deployment.viewOnlyMode) {
-      return 'User does not have permission';
+      return $t('helpTip22', 'User does not have permission');
     } else if (hasTrafficRouting()) {
-      return 'Traffic routing already exists for this service';
+      return $t('helpTip23', 'Traffic routing already exists for this service');
     } else if (isGatewayAPI) {
-      return 'K8s Gateway API is not enabled';
+      return $t('helpTip24', 'K8s Gateway API is not enabled');
     } else {
-      return "Traffic routing doesn't exists for this service";
+      return $t('helpTip25', "Traffic routing doesn't exists for this service");
     }
   };
 
@@ -115,8 +115,8 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
         data-test={WIZARD_EDIT_ANNOTATIONS}
       >
         {serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode
-          ? 'Edit Annotations'
-          : 'View Annotations'}
+          ? $t('EditAnnotations', 'Edit Annotations')
+          : $t('ViewAnnotations', 'View Annotations')}
       </DropdownItem>
     );
   }
@@ -137,7 +137,7 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
       isDisabled={deleteDisabled}
       data-test={DELETE_TRAFFIC_ROUTING}
     >
-      Delete Traffic Routing
+      {$t('DeleteTrafficRouting', 'Delete Traffic Routing')}
     </DropdownItem>
   );
 
@@ -155,7 +155,7 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
 
   actionItems.push(deleteDropdownItem);
 
-  const label = updateLabel === '' ? 'Create' : 'Update';
+  const label = updateLabel === '' ? $t('Create') : $t('Update');
 
   return <DropdownGroup key={`group_${label}`} label={label} className={groupMenuStyle} children={actionItems} />;
 };

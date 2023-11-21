@@ -163,8 +163,8 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
       })
       .catch(error => {
         const msg: ErrorMsg = {
-          title: 'No Istio object is selected',
-          description: this.props.istioConfigId.object + ' is not found in the mesh'
+          title: $t('title30', 'No Istio object is selected'),
+          description: this.props.istioConfigId.object + ` ${$t('title9', 'is not found in the mesh')}`
         };
         this.setState({
           isRemoved: true,
@@ -259,7 +259,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     )
       .then(() => this.backToList())
       .catch(error => {
-        AlertUtils.addError('Could not delete IstioConfig details.', error);
+        AlertUtils.addError($t('AlertUtils16', 'Could not delete IstioConfig details.'), error);
       });
   };
 
@@ -282,11 +282,15 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
             this.props.istioConfigId.objectType +
             ' / ' +
             this.props.istioConfigId.object;
-          AlertUtils.add('Changes applied on ' + targetMessage, 'default', MessageType.SUCCESS);
+          AlertUtils.add(
+            `${$t('AlertUtils17', 'Changes applied on')} ` + targetMessage,
+            'default',
+            MessageType.SUCCESS
+          );
           this.fetchIstioObjectDetails();
         })
         .catch(error => {
-          AlertUtils.addError('Could not update IstioConfig details.', error);
+          AlertUtils.addError($t('AlertUtils18', 'Could not update IstioConfig details.'), error);
           this.setState({
             yamlValidations: this.injectGalleyError(error)
           });
@@ -349,7 +353,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   onRefresh = () => {
     let refresh = true;
     if (this.state.isModified) {
-      refresh = window.confirm('You have unsaved changes, are you sure you want to refresh ?');
+      refresh = window.confirm($t('tip75', 'You have unsaved changes, are you sure you want to refresh?'));
     }
     if (refresh) {
       this.fetchIstioObjectDetails();
@@ -620,7 +624,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
                 return true;
               }
               this.promptTo = location.pathname;
-              return 'You have unsaved changes, are you sure you want to leave?';
+              return $t('tip76', 'You have unsaved changes, are you sure you want to leave?');
             }
             return true;
           }}

@@ -15,6 +15,7 @@
     "Instead update 'web_root' in Kaili config map in OpenShift console."
   ],
   "homepage": "./",
+  "proxy": "http://192.168.2.140:20001/kiali",
   "bugs": {
     "url": "https://github.com/kiali/kiali/issues"
   },
@@ -72,6 +73,7 @@
     "dagre": "0.8.5",
     "deep-freeze": "0.0.1",
     "eventemitter3": "4.0.7",
+    "i18next": "^23.7.6",
     "js-yaml": "^3.13.1",
     "json-beautify": "1.0.1",
     "lodash-es": "^4.17.21",
@@ -83,6 +85,7 @@
     "react-datepicker": "3.8.0",
     "react-dom": "^17.0.1",
     "react-flexview": "4.0.3",
+    "react-i18next": "^13.5.0",
     "react-redux": "7.2.2",
     "react-resize-detector": "3.4.0",
     "react-router": "5.2.0",

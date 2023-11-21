@@ -7,35 +7,35 @@ export const sortFields: SortField<TrafficListItem>[] = [
   {
     // index 0 is default sort
     id: 'trafficstatus',
-    title: 'Traffic Status',
+    title: $t('Traffic_Status', 'Traffic Status'),
     isNumeric: false,
     param: 'ts',
     compare: (a: TrafficListItem, b: TrafficListItem) => b.healthStatus.status.priority - a.healthStatus.status.priority // worst health first asc
   },
   {
     id: 'name',
-    title: 'Name',
+    title: $t('Name'),
     isNumeric: false,
     param: 'na',
     compare: (a: TrafficListItem, b: TrafficListItem) => a.node.name.localeCompare(b.node.name)
   },
   {
     id: 'rate',
-    title: 'Rate',
+    title: $t('Rate'),
     isNumeric: false,
     param: 'ra',
     compare: (a: TrafficListItem, b: TrafficListItem) => a.trafficRate.localeCompare(b.trafficRate)
   },
   {
     id: 'percent',
-    title: 'Percent Success',
+    title: $t('PercentSuccess', 'Percent Success'),
     isNumeric: false,
     param: 'pe',
     compare: (a: TrafficListItem, b: TrafficListItem) => a.trafficPercentSuccess.localeCompare(b.trafficPercentSuccess)
   },
   {
     id: 'protocol',
-    title: 'Protocol',
+    title: $t('Protocol'),
     isNumeric: false,
     param: 'pr',
     compare: (a: TrafficListItem, b: TrafficListItem) => a.protocol.localeCompare(b.protocol)

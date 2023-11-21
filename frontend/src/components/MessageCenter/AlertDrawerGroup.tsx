@@ -21,7 +21,7 @@ type AlertDrawerGroupProps = ReduxProps & {
 const noNotificationsMessage = (
   <>
     <InfoIcon />
-    No Messages Available
+    {$t('NoMessagesAvailable', 'No Messages Available')}
   </>
 );
 
@@ -58,14 +58,14 @@ class AlertDrawerGroupComponent extends React.PureComponent<AlertDrawerGroupProp
               variant={ButtonVariant.link}
               onClick={() => this.props.markGroupAsRead(group)}
             >
-              Mark All Read
+              {$t('MarkAllRead', 'Mark All Read')}
             </Button>
             <Button
               className={AlertDrawerGroupComponent.right}
               variant={ButtonVariant.link}
               onClick={() => this.props.clearGroup(group)}
             >
-              Clear All
+              {$t('ClearAll', 'Clear All')}
             </Button>
           </CardFooter>
         )}

@@ -696,22 +696,38 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     const items: ConfigPreviewItem[] = [];
     if (this.state.previews) {
       if (this.state.previews.dr) {
-        items.push({ type: 'destinationrule', items: [this.state.previews.dr], title: 'Destination Rule' });
+        items.push({
+          type: 'destinationrule',
+          items: [this.state.previews.dr],
+          title: $t('Destination_Rule', 'Destination Rule')
+        });
       }
       if (this.state.previews.gw) {
-        items.push({ type: 'gateway', items: [this.state.previews.gw], title: 'Gateway' });
+        items.push({ type: 'gateway', items: [this.state.previews.gw], title: $t('Gateway') });
       }
       if (this.state.previews.k8sgateway) {
-        items.push({ type: 'k8sgateway', items: [this.state.previews.k8sgateway], title: 'K8s Gateway' });
+        items.push({
+          type: 'k8sgateway',
+          items: [this.state.previews.k8sgateway],
+          title: $t('K8sGateways', 'K8s Gateways')
+        });
       }
       if (this.state.previews.k8shttproute) {
-        items.push({ type: 'k8shttproute', items: [this.state.previews.k8shttproute], title: 'K8s HTTPRoute' });
+        items.push({
+          type: 'k8shttproute',
+          items: [this.state.previews.k8shttproute],
+          title: $t('K8s_HTTPRoute', 'K8s HTTPRoute')
+        });
       }
       if (this.state.previews.pa) {
-        items.push({ type: 'peerauthentications', items: [this.state.previews.pa], title: 'Peer Authentication' });
+        items.push({
+          type: 'peerauthentications',
+          items: [this.state.previews.pa],
+          title: $t('Peer_Authentication', 'Peer Authentication')
+        });
       }
       if (this.state.previews.vs) {
-        items.push({ type: 'virtualservice', items: [this.state.previews.vs], title: 'VirtualService' });
+        items.push({ type: 'virtualservice', items: [this.state.previews.vs], title: $t('VirtualService') });
       }
     }
     return items;
@@ -723,15 +739,15 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     const titleAction =
       this.props.type.length > 0
         ? this.props.update
-          ? 'Update ' + WIZARD_TITLES[this.props.type]
-          : 'Create ' + WIZARD_TITLES[this.props.type]
-        : 'View Modal';
+          ? $t('Update') + ' ' + WIZARD_TITLES[this.props.type]
+          : $t('Create') + ' ' + WIZARD_TITLES[this.props.type]
+        : $t('ViewModal', 'View Modal');
     const titleModal =
       this.props.type.length > 0
         ? this.props.update
-          ? 'Update ' + WIZARD_TITLES[this.props.type]
-          : 'Create ' + WIZARD_TITLES[this.props.type]
-        : 'View Modal';
+          ? $t('Update') + ' ' + WIZARD_TITLES[this.props.type]
+          : $t('Create') + ' ' + WIZARD_TITLES[this.props.type]
+        : $t('ViewModal', 'View Modal');
     return (
       <>
         <Modal
@@ -746,10 +762,10 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               onClick={this.onCreateUpdate}
               data-test={'confirm-' + (this.props.update ? 'update' : 'create')}
             >
-              {this.props.update ? 'Update' : 'Create'}
+              {this.props.update ? $t('Update') : $t('Create')}
             </Button>,
             <Button key="cancel" variant={ButtonVariant.secondary} onClick={() => this.onClose(false)}>
-              Cancel
+              {$t('Cancel')}
             </Button>
           ]}
         >
@@ -778,10 +794,10 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               onClick={this.onPreview}
               data-test="preview"
             >
-              Preview
+              {$t('Preview')}
             </Button>,
             <Button key="cancel" variant={ButtonVariant.secondary} onClick={() => this.onClose(false)}>
-              Cancel
+              {$t('Cancel')}
             </Button>
           ]}
         >
@@ -799,8 +815,11 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
           />
           {!this.props.istioAPIEnabled && (
             <div style={{ padding: ' 0 0 20px 0' }}>
-              <KialiIcon.Warning /> <b>Istio API is disabled.</b> Be careful when editing the configuration as the Istio
-              config validations are disabled when the Istio API is disabled.
+              <KialiIcon.Warning /> <b>{$t('tip10', 'Istio API is disabled.')}</b>{' '}
+              {$t(
+                'tip11',
+                'Be careful when editing the configuration as the Istio config validations are disabled when the Istio API is disabled.'
+              )}
             </div>
           )}
           {this.props.type === WIZARD_REQUEST_ROUTING && (
@@ -859,7 +878,9 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             <ExpandableSection
               className={advancedOptionsStyle}
               isExpanded={this.state.showAdvanced}
-              toggleText={(this.state.showAdvanced ? 'Hide' : 'Show') + ' Advanced Options'}
+              toggleText={
+                (this.state.showAdvanced ? $t('Hide') : $t('Show')) + $t('Advanced_Options', ' Advanced Options')
+              }
               contentId={(this.state.showAdvanced ? 'hide' : 'show') + '_advanced_options'}
               onToggle={() => {
                 this.setState({
@@ -868,7 +889,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               }}
             >
               <Tabs isFilled={true} activeKey={this.state.advancedTabKey} onSelect={this.advancedHandleTabClick}>
-                <Tab eventKey={0} title={'Destination Hosts'}>
+                <Tab eventKey={0} title={$t('DestinationHosts', 'Destination Hosts')}>
                   <div style={{ marginTop: '20px' }}>
                     <VirtualServiceHosts
                       vsHosts={this.state.vsHosts}
@@ -877,7 +898,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
                     />
                   </div>
                 </Tab>
-                <Tab eventKey={1} title={'Gateways'} data-test={'Gateways'}>
+                <Tab eventKey={1} title={$t('Gateways')} data-test={'Gateways'}>
                   <div style={{ marginTop: '20px', marginBottom: '10px' }}>
                     <GatewaySelector
                       serviceName={this.props.serviceName}
@@ -890,7 +911,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
                     />
                   </div>
                 </Tab>
-                <Tab eventKey={2} title={'Traffic Policy'}>
+                <Tab eventKey={2} title={$t('TrafficPolicy', 'Traffic Policy')}>
                   <div style={{ marginTop: '20px', marginBottom: '10px' }}>
                     <TrafficPolicy
                       mtlsMode={this.state.trafficPolicy.mtlsMode}
@@ -911,7 +932,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
                   </div>
                 </Tab>
                 {this.props.type !== WIZARD_TCP_TRAFFIC_SHIFTING && (
-                  <Tab eventKey={3} title={'Circuit Breaker'}>
+                  <Tab eventKey={3} title={$t('CircuitBreaker', 'Circuit Breaker')}>
                     <div style={{ marginTop: '20px', marginBottom: '10px' }}>
                       <CircuitBreaker
                         hasConnectionPool={this.state.trafficPolicy.addConnectionPool}
@@ -930,7 +951,9 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             <ExpandableSection
               className={advancedOptionsStyle}
               isExpanded={this.state.showAdvanced}
-              toggleText={(this.state.showAdvanced ? 'Hide' : 'Show') + ' Advanced Options'}
+              toggleText={
+                (this.state.showAdvanced ? $t('Hide') : $t('Show')) + $t('Advanced_Options', ' Advanced Options')
+              }
               contentId={(this.state.showAdvanced ? 'hide' : 'show') + '_advanced_options'}
               onToggle={() => {
                 this.setState({
@@ -939,7 +962,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               }}
             >
               <Tabs isFilled={true} activeKey={this.state.advancedTabKey} onSelect={this.advancedHandleTabClick}>
-                <Tab eventKey={0} title={'K8s HTTPRoute Hosts'}>
+                <Tab eventKey={0} title={$t('K8sHTTPRouteHosts', 'K8s HTTPRoute Hosts')}>
                   <div style={{ marginTop: '20px' }}>
                     <K8sRouteHosts
                       valid={this.state.valid.k8sRouteHosts}
@@ -949,7 +972,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
                     />
                   </div>
                 </Tab>
-                <Tab eventKey={1} title={'K8s Gateways'} data-test={'K8s Gateways'}>
+                <Tab eventKey={1} title={$t('K8sGateways', 'K8s Gateways')} data-test={'K8s Gateways'}>
                   <div style={{ marginTop: '20px', marginBottom: '10px' }}>
                     <K8sGatewaySelector
                       serviceName={this.props.serviceName}

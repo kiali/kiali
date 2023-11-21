@@ -2,7 +2,6 @@ import * as React from 'react';
 import { shallow } from 'enzyme';
 import { NavigationComponent } from '../Navigation';
 import { createMemoryHistory } from 'history';
-import { ExternalServiceInfo } from '../../../types/StatusState';
 
 const history = createMemoryHistory();
 
@@ -15,7 +14,6 @@ describe('RenderPage isGraph prop', () => {
       hash: ''
     };
     history.push(graph);
-    const externalServicesInfo: ExternalServiceInfo[] = [];
     const wrapper = shallow(
       <NavigationComponent
         history={history}
@@ -24,7 +22,6 @@ describe('RenderPage isGraph prop', () => {
         navCollapsed={false}
         setNavCollapsed={() => {}}
         tracingUrl={''}
-        externalServices={externalServicesInfo}
       />
     ).dive();
     expect(wrapper.find('RenderPage').prop('isGraph')).toEqual(true);
@@ -38,7 +35,6 @@ describe('RenderPage isGraph prop', () => {
       hash: ''
     };
     history.push(overview);
-    const externalServicesInfo: ExternalServiceInfo[] = [];
     const wrapper = shallow(
       <NavigationComponent
         history={history}
@@ -47,7 +43,6 @@ describe('RenderPage isGraph prop', () => {
         navCollapsed={false}
         setNavCollapsed={() => {}}
         tracingUrl={''}
-        externalServices={externalServicesInfo}
       />
     ).dive();
     expect(wrapper.find('RenderPage').prop('isGraph')).toEqual(false);

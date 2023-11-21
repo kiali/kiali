@@ -6,7 +6,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 
 import { KialiAppState } from 'store/Store';
 import { TracingThunkActions } from 'actions/TracingThunkActions';
-import { history, URLParam } from '../../app/History';
+import { history } from '../../app/History';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { JaegerTrace } from 'types/TracingInfo';
@@ -19,7 +19,6 @@ import { DecoratedGraphNodeData } from 'types/Graph';
 import { transformTraceData } from 'utils/tracing/TraceTransform';
 import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/KioskActions';
 import { KialiDispatch } from '../../types/Redux';
-import { isMultiCluster } from '../../config';
 
 type ReduxProps = {
   kiosk: string;
@@ -40,44 +39,41 @@ type State = {
 const tracesLimit = 15;
 
 const refreshDivStyle = kialiStyle({
-  display: 'flex',
-  alignItems: 'center',
-  width: '100%',
-  marginTop: '0.5rem',
-  marginBottom: '0.5rem'
+  display: 'inline-flex',
+  width: '100%'
 });
 
 const checkboxStyle = kialiStyle({
+  paddingBottom: 10,
   $nest: {
     '& > label': {
       fontSize: 'var(--graph-side-panel--font-size)',
-      paddingTop: '0.25rem'
+      paddingTop: '4px'
     }
   }
 });
 
 const refreshButtonStyle = kialiStyle({
-  padding: '0.125rem 0.5rem',
-  marginLeft: 'auto'
+  padding: '2px 10px',
+  margin: '5px 0 5px auto',
+  top: -4
 });
 
 const dividerStyle = kialiStyle({
-  paddingBottom: '0.25rem'
+  paddingBottom: '3px'
 });
 
 class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
   private promises = new PromisesRegistry();
 
-  static getDerivedStateFromProps(props: Props, state: State): State {
+  static getDerivedStateFromProps(props: Props, state: State) {
     // Update the selected trace within list because it may have more up-to-date data after being selected hence fetched again
     if (props.selectedTrace) {
       const index = state.traces.findIndex(t => t.traceID === props.selectedTrace!.traceID);
-
       if (index >= 0) {
         state.traces[index] = props.selectedTrace;
       }
     }
-
     return state;
   }
 
@@ -106,23 +102,19 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
     this.promises.cancelAll();
   }
 
-  private loadTraces(): void {
+  private loadTraces() {
     // Convert seconds to microseconds
     const params: TracingQuery = {
       startMicros: this.props.queryTime * 1000000,
       limit: tracesLimit
     };
-
     const d = this.props.nodeData;
-
     const promise = d.workload
       ? API.getWorkloadTraces(d.namespace, d.workload, params, d.cluster)
       : d.service
       ? API.getServiceTraces(d.namespace, d.service, params, d.cluster)
       : API.getAppTraces(d.namespace, d.app!, params, d.cluster);
-
     this.promises.cancelAll();
-
     this.promises
       .register('traces', promise)
       .then(response => {
@@ -131,20 +123,18 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
               .map(trace => transformTraceData(trace, this.props.nodeData.cluster))
               .filter(trace => trace !== null) as JaegerTrace[])
           : [];
-
         if (this.props.selectedTrace && !traces.some(t => t.traceID === this.props.selectedTrace!.traceID)) {
           // Put selected trace back in list
           traces.push(this.props.selectedTrace);
         }
-
         this.setState({ traces: traces });
       })
       .catch(error => {
-        AlertUtils.addError('Could not fetch traces.', error);
+        AlertUtils.addError($t('tip35', 'Could not fetch traces.'), error);
       });
   }
 
-  private onClickTrace(trace: JaegerTrace): void {
+  private onClickTrace(trace: JaegerTrace) {
     if (this.props.selectedTrace?.traceID === trace.traceID) {
       // Deselect
       this.props.setTraceId(this.props.nodeData.cluster, undefined);
@@ -155,26 +145,22 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
 
   render() {
     const d = this.props.nodeData;
-
     const tracesDetailsURL =
       `/namespaces/${d.namespace}` +
       (d.workload ? `/workloads/${d.workload}` : d.service ? `/services/${d.service}` : `/applications/${d.app!}`) +
-      '?tab=traces' +
-      (d.cluster && isMultiCluster ? `&${URLParam.CLUSTERNAME}=${encodeURIComponent(d.cluster)}` : '');
-
+      '?tab=traces';
     const currentID = this.props.selectedTrace?.traceID;
 
     return (
-      <div style={{ marginBottom: '0.5rem' }}>
+      <div style={{ marginBottom: 8 }}>
         <div className={refreshDivStyle}>
           <Checkbox
             id="use-graph-refresh"
-            label="Use graph refresh"
+            label={$t('UseGraphRefresh', 'Use graph refresh')}
             className={checkboxStyle}
             isChecked={this.state.useGraphRefresh}
             onChange={(_event, checked) => this.setState({ useGraphRefresh: checked })}
           />
-
           <Button
             id="manual-refresh"
             isDisabled={this.state.useGraphRefresh}
@@ -186,15 +172,13 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
             <SyncAltIcon />
           </Button>
         </div>
-
         <Divider className={dividerStyle} />
-
         {this.state.traces.length > 0 && (
-          <SimpleList style={{ marginBottom: '0.5rem' }} aria-label="Traces list">
+          <SimpleList style={{ marginBottom: 8 }} aria-label="Traces list">
             {this.state.traces.map(trace => {
               return (
                 <SimpleListItem
-                  key={`trace_${trace.traceID}`}
+                  key={'trace_' + trace.traceID}
                   onClick={() => this.onClickTrace(trace)}
                   isActive={trace.traceID === currentID}
                 >
@@ -204,10 +188,8 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
             })}
           </SimpleList>
         )}
-
         <Button
           style={summaryFont}
-          data-test="show-traces"
           onClick={() => {
             if (isParentKiosk(this.props.kiosk)) {
               kioskContextMenuAction(tracesDetailsURL);
@@ -216,7 +198,7 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
             }
           }}
         >
-          Show Traces
+          {$t('ShowTraces', 'Show Traces')}
         </Button>
       </div>
     );

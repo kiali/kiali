@@ -65,14 +65,12 @@ export class ReferenceIstioObjectLink extends React.Component<ReferenceIstioObje
     const istioType = IstioTypes[type];
     let showLink = true;
     let showTooltip = false;
-    let tooltipMsg: string | undefined = undefined;
     let reference = `${namespace}/${name}`;
 
     if (name === 'mesh') {
       reference = name;
       showLink = false;
       showTooltip = true;
-      tooltipMsg = 'The reserved word, "mesh", implies all of the sidecars in the mesh';
     }
 
     return (
@@ -85,7 +83,14 @@ export class ReferenceIstioObjectLink extends React.Component<ReferenceIstioObje
         )}
         {!showLink && <div style={{ display: 'inline-block' }}>{reference}</div>}
         {showTooltip && (
-          <Tooltip position={TooltipPosition.right} content={<div style={{ textAlign: 'left' }}>{tooltipMsg}</div>}>
+          <Tooltip
+            position={TooltipPosition.right}
+            content={
+              <div style={{ textAlign: 'left' }}>
+                {$t('helpTip38', "The reserved word, 'mesh', implies all of the sidecars in the mesh")}
+              </div>
+            }
+          >
             <KialiIcon.Info className={infoStyle} />
           </Tooltip>
         )}

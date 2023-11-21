@@ -161,7 +161,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
         props.onChange();
       })
       .catch(error => {
-        AlertUtils.addError('Could not delete Istio config objects.', error);
+        AlertUtils.addError($t('AlertUtils1', 'Could not delete Istio config objects.'), error);
         setIsDeleting(false);
       });
   };
@@ -190,7 +190,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
         AlertUtils.add('Service ' + props.serviceName + ' updated', 'default', MessageType.SUCCESS);
       })
       .catch(error => {
-        AlertUtils.addError('Could not update service ' + props.serviceName, error);
+        AlertUtils.addError($t('AlertUtils2', 'Could not update service ') + props.serviceName, error);
       })
       .finally(() => {
         setShowAnnotationsWizard(false);
@@ -200,7 +200,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
 
   const hasMeshWorkloads = checkHasMeshWorkloads();
   const toolTipMsgActions = !hasMeshWorkloads
-    ? 'There are not Workloads with sidecar for this service'
+    ? $t('tip12', 'There are not Workloads with sidecar for this service')
     : 'There are not Workloads with ' + appLabelName + ' and ' + versionLabelName + ' labels';
 
   const validWorkloads = getValidWorkloads();
@@ -219,7 +219,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
           isExpanded={isActionsOpen}
           isDisabled={!validActions}
         >
-          Actions
+          {$t('Actions')}
         </MenuToggle>
       )}
       isOpen={isActionsOpen}

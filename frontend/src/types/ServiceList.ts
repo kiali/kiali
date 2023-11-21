@@ -10,27 +10,20 @@ export interface ServiceList {
 }
 
 export interface ServiceOverview {
-  additionalDetailSample?: AdditionalItem;
-  cluster?: string;
-  health: ServiceHealth;
-  istioAmbient: boolean;
-  istioReferences: ObjectReference[];
-  istioSidecar: boolean;
-  kialiWizard: string;
-  labels: { [key: string]: string };
   name: string;
+  cluster?: string;
+  istioSidecar: boolean;
+  istioAmbient: boolean;
+  additionalDetailSample?: AdditionalItem;
+  labels: { [key: string]: string };
   ports: { [key: string]: number };
+  istioReferences: ObjectReference[];
+  kialiWizard: string;
   serviceRegistry: string;
+  health: ServiceHealth;
 }
 
 export interface ServiceListItem extends ServiceOverview {
   namespace: string;
   validation?: ObjectValidation;
-}
-
-export interface ServiceListQuery {
-  health: 'true' | 'false';
-  istioResources: 'true' | 'false';
-  onlyDefinitions: 'true' | 'false';
-  rateInterval: string;
 }

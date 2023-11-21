@@ -1,39 +1,44 @@
 import * as React from 'react';
 import { Server, ServerForm } from '../../../types/IstioObjects';
-import { Tbody, Td, Th, Thead, Tr, Table, ThProps } from '@patternfly/react-table';
+import { cellWidth, Tbody, Td, Th, Thead, Tr, Table } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../components/Pf/PfColors';
 import { Button, ButtonVariant } from '@patternfly/react-core';
+import { PlusCircleIcon } from '@patternfly/react-icons';
 import { ServerBuilder, protocols } from './ServerBuilder';
-import { KialiIcon } from 'config/KialiIcon';
 
-type ServerListProps = {
-  onChange: (server: Server[], serverForm: ServerForm[]) => void;
-  serverForm: ServerForm[];
+type Props = {
   serverList: Server[];
+  serverForm: ServerForm[];
+  onChange: (server: Server[], serverForm: ServerForm[]) => void;
 };
 
 const noServerStyle = kialiStyle({
+  marginTop: 10,
   color: PFColors.Red100,
-  textAlign: 'center'
+  textAlign: 'center',
+  width: '100%'
 });
 
-const columns: ThProps[] = [
+const headerCells = [
   {
-    title: 'Servers'
+    title: $t('Servers'),
+    transforms: [cellWidth(100) as any],
+    props: {}
   },
   {
-    title: ''
+    title: '',
+    props: {}
   }
 ];
 
 const addServerStyle = kialiStyle({
-  marginLeft: '0.5rem',
-  marginTop: '0.25rem'
+  marginLeft: 0,
+  paddingLeft: 0
 });
 
-export const ServerList: React.FC<ServerListProps> = (props: ServerListProps) => {
-  const onAddServer = (): void => {
+export class ServerList extends React.Component<Props> {
+  onAddServer = () => {
     const newServerForm: ServerForm = {
       hosts: [],
       number: '',
@@ -44,8 +49,7 @@ export const ServerList: React.FC<ServerListProps> = (props: ServerListProps) =>
       tlsPrivateKey: '',
       tlsCaCertificate: ''
     };
-
-    const sf = props.serverForm;
+    const sf = this.props.serverForm;
     sf.push(newServerForm);
 
     const newServer: Server = {
@@ -56,38 +60,36 @@ export const ServerList: React.FC<ServerListProps> = (props: ServerListProps) =>
         protocol: 'HTTP'
       }
     };
-
-    const s = props.serverList;
+    const s = this.props.serverList;
     s.push(newServer);
 
-    props.onChange(s, sf);
+    this.setState({}, () => this.props.onChange(s, sf));
   };
 
-  const onRemoveServer = (index: number): void => {
-    const serverList = props.serverList;
+  onRemoveServer = (index: number) => {
+    const serverList = this.props.serverList;
     serverList.splice(index, 1);
 
-    const serverForm = props.serverForm;
+    const serverForm = this.props.serverForm;
     serverForm.splice(index, 1);
 
-    props.onChange(serverList, serverForm);
+    this.setState({}, () => this.props.onChange(serverList, serverForm));
   };
 
-  const onChange = (serverForm: ServerForm, i: number): void => {
-    const serversForm = props.serverForm;
+  onChange = (serverForm: ServerForm, i: number) => {
+    const serversForm = this.props.serverForm;
     serversForm[i] = serverForm;
 
-    const servers = props.serverList;
-    const newServer = createNewServer(serverForm);
-
+    const servers = this.props.serverList;
+    const newServer = this.createNewServer(serverForm);
     if (typeof newServer !== 'undefined') {
       servers[i] = newServer;
     }
 
-    props.onChange(servers, serversForm);
+    this.props.onChange(servers, serversForm);
   };
 
-  const createNewServer = (serverForm: ServerForm): Server | undefined => {
+  createNewServer = (serverForm: ServerForm) => {
     if (serverForm.hosts.length === 0) return;
     if (serverForm.number.length === 0 || isNaN(Number(serverForm.number))) return;
     if (serverForm.name.length === 0) return;
@@ -105,54 +107,48 @@ export const ServerList: React.FC<ServerListProps> = (props: ServerListProps) =>
             }
           : undefined
     };
-
     return server;
   };
 
-  return (
-    <>
-      <Table aria-label="Server List">
-        <Thead>
-          <Tr>
-            {columns.map((column, index) => (
-              <Th key={`column_${index}`} dataLabel={column.title}>
-                {column.title}
-              </Th>
-            ))}
-          </Tr>
-        </Thead>
-        <Tbody>
-          {props.serverForm.length > 0 ? (
-            <>
-              {props.serverForm.map((server, index) => (
-                <ServerBuilder
-                  key={`server_builder_${index}`}
-                  server={server}
-                  onRemoveServer={onRemoveServer}
-                  index={index}
-                  onChange={onChange}
-                ></ServerBuilder>
-              ))}
-            </>
-          ) : (
+  render() {
+    return (
+      <>
+        <Table aria-label="Server List">
+          <Thead>
             <Tr>
-              <Td colSpan={columns.length}>
-                <div className={noServerStyle}>No Servers defined</div>
+              {headerCells.map(e => (
+                <Th>{e.title}</Th>
+              ))}
+            </Tr>
+          </Thead>
+          <Tbody>
+            {this.props.serverForm.map((server, i) => (
+              <ServerBuilder
+                server={server}
+                onRemoveServer={this.onRemoveServer}
+                index={i}
+                onChange={this.onChange}
+              ></ServerBuilder>
+            ))}
+            <Tr>
+              <Td>
+                <Button
+                  name="addServer"
+                  variant={ButtonVariant.link}
+                  icon={<PlusCircleIcon />}
+                  onClick={this.onAddServer}
+                  className={addServerStyle}
+                >
+                  {$t('action9', 'Add Server to Servers List')}
+                </Button>
               </Td>
             </Tr>
-          )}
-        </Tbody>
-      </Table>
-
-      <Button
-        name="addServer"
-        variant={ButtonVariant.link}
-        icon={<KialiIcon.AddMore />}
-        onClick={onAddServer}
-        className={addServerStyle}
-      >
-        Add Server to Servers List
-      </Button>
-    </>
-  );
-};
+          </Tbody>
+        </Table>
+        {this.props.serverList.length === 0 && (
+          <div className={noServerStyle}>{$t('NoServersDefined', 'No Servers defined')}</div>
+        )}
+      </>
+    );
+  }
+}

@@ -21,7 +21,7 @@ import { serverConfig } from 'config';
 export const sortFields: SortField<AppListItem>[] = [
   {
     id: 'namespace',
-    title: 'Namespace',
+    title: $t('Namespace'),
     isNumeric: false,
     param: 'ns',
     compare: (a, b) => {
@@ -34,14 +34,14 @@ export const sortFields: SortField<AppListItem>[] = [
   },
   {
     id: 'appname',
-    title: 'App Name',
+    title: $t('App Name'),
     isNumeric: false,
     param: 'wn',
     compare: (a, b) => a.name.localeCompare(b.name)
   },
   {
     id: 'details',
-    title: 'Details',
+    title: $t('Details'),
     isNumeric: false,
     param: 'is',
     compare: (a, b) => {
@@ -66,7 +66,7 @@ export const sortFields: SortField<AppListItem>[] = [
   },
   {
     id: 'health',
-    title: 'Health',
+    title: $t('Health'),
     isNumeric: false,
     param: 'he',
     compare: (a, b) => {
@@ -91,7 +91,7 @@ export const sortFields: SortField<AppListItem>[] = [
   },
   {
     id: 'cluster',
-    title: 'Cluster',
+    title: $t('Cluster'),
     isNumeric: false,
     param: 'cl',
     compare: (a: AppListItem, b: AppListItem) => {
@@ -110,7 +110,7 @@ export const sortFields: SortField<AppListItem>[] = [
 
 const appNameFilter: FilterType = {
   category: 'App Name',
-  placeholder: 'Filter by App Name',
+  placeholder: $t('placeholder15', 'Filter by App Name'),
   filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: []
@@ -187,13 +187,13 @@ export const filterBy = (
 /** Column Toggle Method */
 
 const healthToggle: ToggleType = {
-  label: 'Health',
+  label: $t('Health'),
   name: 'health',
   isChecked: true
 };
 
 const istioResourcesToggle: ToggleType = {
-  label: 'Istio Resources Detail',
+  label: $t('IstioResourcesDetail', 'Istio Resources Detail'),
   name: 'istioResources',
   isChecked: true
 };

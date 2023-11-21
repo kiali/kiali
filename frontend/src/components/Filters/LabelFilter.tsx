@@ -30,27 +30,27 @@ export const LabelFilters: React.FC<LabelFiltersProps> = (props: LabelFiltersPro
         type={'text'}
         value={props.value}
         aria-label={'filter_input_label_key'}
-        placeholder={'Set Label'}
+        placeholder={$t('placeholder35', 'Set Label')}
         onChange={(_event, value) => props.onChange(value)}
         onKeyPress={e => onkeyPress(e)}
         style={{ width: 'auto' }}
       />
       <Popover
-        headerContent={<span>Label Filter Help</span>}
+        headerContent={<span>{$t('LabelFilterHelp', 'Label Filter Help')}</span>}
         position={PopoverPosition.right}
         bodyContent={
           <>
-            To set a label filter you must enter values like.
+            {$t('tip228', 'To set a label filter you must enter values like.')}
             <br />
             <ul style={{ listStyleType: 'circle', marginLeft: '20px' }}>
-              <li>Filter by label presence: label</li>
-              <li>Filter by label and value: label=value</li>
+              <li>{$t('placeholder36', 'Filter by label presence')}: label</li>
+              <li>{$t('placeholder37', 'Filter by label and value')}: label=value</li>
               <li>
-                Filter by more than one label and one or more values:
+                {$t('placeholder38', 'Filter by more than one label and one or more values')}:
                 <br />
                 label=value label2=value2,value2-2
                 <br />
-                (separate with ' ')
+                {$t('tip229', "(separate with ' ')")}
               </li>
             </ul>
           </>

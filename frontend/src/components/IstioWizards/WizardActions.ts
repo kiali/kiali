@@ -2016,7 +2016,7 @@ export const buildNamespaceInjectionPatch = (enable: boolean, remove: boolean, r
     labels[serverConfig.istioLabels.injectionLabelName] = null;
     labels[serverConfig.istioLabels.injectionLabelRev] = revision;
   } else {
-    labels[serverConfig.istioLabels.injectionLabelName] = remove ? null : enable ? 'enabled' : 'disabled';
+    labels[serverConfig.istioLabels.injectionLabelName] = remove ? null : enable ? $t('enabled') : $t('disabled');
     labels[serverConfig.istioLabels.injectionLabelRev] = null;
   }
   const patch = {

@@ -6,14 +6,14 @@ import { isRemoteCluster } from './OverviewCardControlPlaneNamespace';
 export const sortFields: SortField<NamespaceInfo>[] = [
   {
     id: 'namespace',
-    title: 'Name',
+    title: $t('Name'),
     isNumeric: false,
     param: 'ns',
     compare: (a: NamespaceInfo, b: NamespaceInfo) => a.name.localeCompare(b.name)
   },
   {
     id: 'health',
-    title: 'Health',
+    title: $t('Health'),
     isNumeric: false,
     param: 'h',
     compare: (a: NamespaceInfo, b: NamespaceInfo) => {
@@ -55,7 +55,7 @@ export const sortFields: SortField<NamespaceInfo>[] = [
   },
   {
     id: 'config',
-    title: 'Istio Config',
+    title: $t('Istio Config'),
     isNumeric: false,
     param: 'ic',
     compare: (a: NamespaceInfo, b: NamespaceInfo) => {
@@ -92,7 +92,7 @@ export const sortFields: SortField<NamespaceInfo>[] = [
   },
   {
     id: 'cluster',
-    title: 'Cluster',
+    title: $t('Cluster'),
     isNumeric: false,
     param: 'cl',
     compare: (a: NamespaceInfo, b: NamespaceInfo) => {

@@ -22,7 +22,7 @@ describe('MessageCenterReducer reducer', () => {
       groups: [
         {
           id: 'systemErrors',
-          title: 'Open issues',
+          title: $t('OpenIssues', 'Open issues'),
           messages: [],
           showActions: false,
           hideIfEmpty: true
@@ -30,7 +30,7 @@ describe('MessageCenterReducer reducer', () => {
         {
           id: 'default',
           messages: [],
-          title: 'Notifications',
+          title: $t('Notifications'),
           showActions: true,
           hideIfEmpty: false
         }

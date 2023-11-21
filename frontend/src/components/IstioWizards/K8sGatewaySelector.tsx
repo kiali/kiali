@@ -135,7 +135,7 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
   render() {
     return (
       <Form isHorizontal={true}>
-        <FormGroup label="Add K8s API Gateway" fieldId="gatewaySwitch">
+        <FormGroup label={$t('AddK8sAPIGateway', 'Add K8s API Gateway')} fieldId="gatewaySwitch">
           <Switch
             id="advanced-gwSwitch"
             label={' '}
@@ -151,7 +151,7 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
               <Radio
                 id="existingGateway"
                 name="selectGateway"
-                label="Select K8s API Gateway"
+                label={$t('SelectK8sAPIGateway', 'Select K8s API Gateway')}
                 isDisabled={!this.state.addGateway || this.props.k8sGateways.length === 0}
                 isChecked={!this.state.newGateway}
                 onChange={() => this.onFormChange(K8sGatewayForm.SELECT, 'false')}
@@ -159,14 +159,14 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
               <Radio
                 id="createGateway"
                 name="selectGateway"
-                label="Create K8s API Gateway"
+                label={$t('CreateK8sAPIGateway', 'Create K8s API Gateway')}
                 isDisabled={!this.state.addGateway}
                 isChecked={this.state.newGateway}
                 onChange={() => this.onFormChange(K8sGatewayForm.SELECT, 'true')}
               />
             </FormGroup>
             {!this.state.newGateway && (
-              <FormGroup fieldId="selectGateway" label="K8sGateway">
+              <FormGroup fieldId="selectGateway" label={$t('K8sGateway', 'Gateway (K8s)')}>
                 {this.props.k8sGateways.length > 0 && (
                   <FormSelect
                     id="selectGateway"
@@ -177,17 +177,17 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
                     }
                   >
                     {this.props.k8sGateways.map(k8sGateway => (
-                      <FormSelectOption key={k8sGateway} value={k8sGateway} label={k8sGateway} />
+                      <FormSelectOption key={k8sGateway} value={k8sGateway} label={$t(k8sGateway)} />
                     ))}
                   </FormSelect>
                 )}
-                {this.props.k8sGateways.length === 0 && <>There are no K8s API gateways to select.</>}
+                {this.props.k8sGateways.length === 0 && <>{$t('tip297', 'There are no K8s API gateways to select.')}</>}
               </FormGroup>
             )}
             {this.state.newGateway && (
               <>
                 {serverConfig.gatewayAPIClasses.length > 1 && (
-                  <FormGroup label="Gateway Class" fieldId="gatewayClass">
+                  <FormGroup label={$t('GatewayClass', 'Gateway Class')} fieldId="gatewayClass">
                     <FormSelect
                       value={this.state.gatewayClass}
                       onChange={this.onChangeGatewayClass}
@@ -200,7 +200,7 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
                     </FormSelect>
                   </FormGroup>
                 )}
-                <FormGroup fieldId="gwPort" label="Port">
+                <FormGroup fieldId="gwPort" label={$t('Port')}>
                   <TextInput
                     id="gwPort"
                     name="gwPort"
@@ -210,7 +210,7 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
                     onChange={(_event, value) => this.onFormChange(K8sGatewayForm.PORT, value)}
                   />
                 </FormGroup>
-                <FormGroup fieldId="gwHosts" label="K8s API Gateway Hosts">
+                <FormGroup fieldId="gwHosts" label={$t('K8sAPIGatewayHosts', 'K8s API Gateway Hosts')}>
                   <TextInput
                     id="gwHosts"
                     name="gwHosts"
@@ -223,8 +223,14 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
                     <HelperText>
                       <HelperTextItem>
                         {isValid(this.state.gwHostsValid)
-                          ? 'One or more hosts exposed by this gateway. Enter one or multiple hosts separated by comma'
-                          : "K8s API Gateway hosts should be specified using FQDN format or '*.' format. IPs are not allowed."}
+                          ? $t(
+                              'helpTip9',
+                              'One or more hosts exposed by this gateway. Enter one or multiple hosts separated by comma.'
+                            )
+                          : $t(
+                              'helpTip14',
+                              "K8s Route hosts should be specified using FQDN format or '*.' format. IPs are not allowed."
+                            )}
                       </HelperTextItem>
                     </HelperText>
                   </FormHelperText>

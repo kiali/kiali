@@ -33,13 +33,13 @@ export class IstioActionButtons extends React.Component<Props, State> {
           {!this.props.readOnly && (
             <span style={{ paddingRight: '5px' }}>
               <Button variant={ButtonVariant.primary} isDisabled={!this.props.canUpdate} onClick={this.props.onUpdate}>
-                Save
+                {$t('Save')}
               </Button>
             </span>
           )}
           <span style={{ paddingRight: '5px' }}>
             <Button variant={ButtonVariant.secondary} onClick={this.handleRefresh}>
-              Reload
+              {$t('Reload')}
             </Button>
           </span>
           <span style={{ paddingRight: '5px' }}>
@@ -52,7 +52,7 @@ export class IstioActionButtons extends React.Component<Props, State> {
           <span style={{ float: 'right', padding: '10px' }}>
             <span style={{ paddingLeft: '5px' }}>
               <Button variant={ButtonVariant.link} onClick={this.props.onOverview}>
-                {this.props.overview ? 'Close Overview' : 'Show Overview'}
+                {this.props.overview ? $t('Close_Overview', 'Close Overview') : $t('Show_Overview', 'Show Overview')}
               </Button>
             </span>
           </span>

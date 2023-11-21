@@ -11,13 +11,11 @@ type Props = {
   onAbort: (aborted: boolean, abort: Abort) => void;
 };
 
-const httpStatusMsg = 'HTTP status code to use to abort the Http request.';
-
 export class AbortFault extends React.Component<Props> {
   render() {
     return (
       <>
-        <FormGroup label="Add HTTP Abort" fieldId="abortSwitch">
+        <FormGroup label={$t('AddHTTPAbort', 'Add HTTP Abort')} fieldId="abortSwitch">
           <Switch
             id="abortSwitch"
             label={' '}
@@ -28,7 +26,7 @@ export class AbortFault extends React.Component<Props> {
           <span>{wizardTooltip(HTTP_ABORT_TOOLTIP)}</span>
         </FormGroup>
         {this.props.aborted && (
-          <FormGroup label="Abort Percentage" fieldId="abort-percentage">
+          <FormGroup label={$t('AbortPercentage', 'Abort Percentage')} fieldId="abort-percentage">
             <TextInput
               value={this.props.abort.percentage?.value}
               id="abort-percentage"
@@ -47,13 +45,15 @@ export class AbortFault extends React.Component<Props> {
             />
             <FormHelperText>
               <HelperText>
-                <HelperTextItem>Percentage of requests to be aborted with the error code provided.</HelperTextItem>
+                <HelperTextItem>
+                  {$t('helpTip5', 'Percentage of requests to be aborted with the error code provided.')}
+                </HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>
         )}
         {this.props.aborted && (
-          <FormGroup label="HTTP Status Code" fieldId="abort-status-code">
+          <FormGroup label={$t('HTTPStatusCode', 'HTTP Status Code')} fieldId="abort-status-code">
             <TextInput
               value={this.props.abort.httpStatus}
               id="abort-status-code"
@@ -70,7 +70,11 @@ export class AbortFault extends React.Component<Props> {
             />
             <FormHelperText>
               <HelperText>
-                <HelperTextItem>{isValid(this.props.isValid) ? httpStatusMsg : httpStatusMsg}</HelperTextItem>
+                <HelperTextItem>
+                  {isValid(this.props.isValid)
+                    ? $t('httpStatusMsg', 'HTTP status code to use to abort the Http request.')
+                    : $t('httpStatusMsg', 'HTTP status code to use to abort the Http request.')}
+                </HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>

@@ -91,7 +91,7 @@ class TourStopComponent extends React.PureComponent<TourStopProps> {
     const stop = this.getStop('back');
     return (
       <Button isDisabled={stop === undefined} variant={ButtonVariant.secondary} onClick={() => this.setStop(stop!)}>
-        <KialiIcon.AngleLeft /> Back
+        <KialiIcon.AngleLeft /> {$t('Back')}
       </Button>
     );
   };
@@ -105,14 +105,14 @@ class TourStopComponent extends React.PureComponent<TourStopProps> {
     if (stop === undefined) {
       return (
         <Button className={right} variant={ButtonVariant.primary} onClick={this.props.endTour}>
-          Done
+          {$t('Done')}
         </Button>
       );
     }
 
     return (
       <Button className={right} variant={ButtonVariant.primary} onClick={() => this.setStop(stop!)}>
-        Next <KialiIcon.AngleRight />
+        {$t('Next')} <KialiIcon.AngleRight />
       </Button>
     );
   };

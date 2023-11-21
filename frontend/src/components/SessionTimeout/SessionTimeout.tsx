@@ -26,14 +26,20 @@ export class SessionTimeout extends React.Component<SessionTimeoutProps, {}> {
     const defaultAction = this.props.onDismiss;
     const buttons = [
       <Button autoFocus={true} variant={ButtonVariant.primary} onClick={this.props.onDismiss}>
-        OK
+        {$t('OK')}
       </Button>,
       <Button key="confirm" variant={ButtonVariant.secondary} onClick={this.props.onLogout}>
-        Log Out
+        {$t('LogOut', 'Log Out')}
       </Button>
     ];
     return (
-      <Modal isOpen={this.props.show} onClose={defaultAction} actions={buttons} title={'Session Timeout'} width={'40%'}>
+      <Modal
+        isOpen={this.props.show}
+        onClose={defaultAction}
+        actions={buttons}
+        title={$t('SessionTimeout', 'Session Timeout')}
+        width={'40%'}
+      >
         <span>
           <Icon size="xl" color={PFColors.Warning}>
             <WarningTriangleIcon />
@@ -49,10 +55,10 @@ export class SessionTimeout extends React.Component<SessionTimeoutProps, {}> {
   private textForAuthStrategy = (_strategy: AuthStrategy) => {
     const line1 =
       this.props.timeOutCountDown <= 0
-        ? 'Your session has expired.'
-        : `Your session will expire in ${this.props.timeOutCountDown.toFixed()} seconds.`;
+        ? $t('tip26', 'Your session has expired.')
+        : `${$t('tip27', 'Your session will expire in ')} ${this.props.timeOutCountDown.toFixed()} ${$t('seconds')}.`;
 
-    const line2 = 'You will need to re-login. Please save your changes, if any.';
+    const line2 = $t('tip28', 'You will need to re-login. Please save your changes, if any.');
 
     return (
       <>

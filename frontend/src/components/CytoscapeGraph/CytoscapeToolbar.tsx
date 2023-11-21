@@ -105,7 +105,10 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
     return (
       <div className={cyToolbarStyle}>
         <div>
-          <Tooltip content={this.state.allowGrab ? 'Disable Drag' : 'Enable Drag'} position={TooltipPosition.right}>
+          <Tooltip
+            content={this.state.allowGrab ? $t('DisableDrag', 'Disable Drag') : $t('EnableDrag', 'Enable Drag')}
+            position={TooltipPosition.right}
+          >
             <Button
               id="toolbar_grab"
               aria-label="Toggle Drag"
@@ -119,7 +122,7 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
           </Tooltip>
         </div>
         <div>
-          <Tooltip content="Zoom to Fit" position={TooltipPosition.right}>
+          <Tooltip content={$t('ZoomToFit', 'Zoom to Fit')} position={TooltipPosition.right}>
             <Button
               id="toolbar_graph_fit"
               aria-label="Zoom to Fit"
@@ -132,7 +135,7 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
           </Tooltip>
         </div>
         <div>
-          <Tooltip content="Hide healthy edges" position={TooltipPosition.right}>
+          <Tooltip content={$t('HideHealthyEdges', 'Hide healthy edges')} position={TooltipPosition.right}>
             <Button
               id="toolbar_edge_mode_unhealthy"
               aria-label="Hide Healthy Edges"
@@ -150,7 +153,7 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
           </Tooltip>
         </div>
         <div>
-          <Tooltip content="Hide all edges" position={TooltipPosition.right}>
+          <Tooltip content={$t('HideAllEdges', 'Hide all edges')} position={TooltipPosition.right}>
             <Button
               id="toolbar_edge_mode_none"
               aria-label="Hide All Edges"
@@ -190,7 +193,10 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
 
         <TourStop info={GraphTourStops.Layout}>
           <div>
-            <Tooltip content={'Layout 1 ' + KialiGridGraph.getLayout().name} position={TooltipPosition.right}>
+            <Tooltip
+              content={`${$t('Layout1', 'Layout 1')} ` + KialiGridGraph.getLayout().name}
+              position={TooltipPosition.right}
+            >
               <Button
                 id="toolbar_layout1"
                 aria-label="Graph Layout Style 1"
@@ -211,7 +217,10 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
         </TourStop>
 
         <div>
-          <Tooltip content={'Layout 2 ' + KialiConcentricGraph.getLayout().name} position={TooltipPosition.right}>
+          <Tooltip
+            content={`${$t('Layout2', 'Layout 2')} ` + KialiConcentricGraph.getLayout().name}
+            position={TooltipPosition.right}
+          >
             <Button
               id="toolbar_layout2"
               aria-label="Graph Layout Style 2"
@@ -233,7 +242,10 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
         </div>
 
         <div>
-          <Tooltip content={'Layout 3 ' + KialiBreadthFirstGraph.getLayout().name} position={TooltipPosition.right}>
+          <Tooltip
+            content={`${$t('Layout3', 'Layout 3')} ` + KialiBreadthFirstGraph.getLayout().name}
+            position={TooltipPosition.right}
+          >
             <Button
               id="toolbar_layout3"
               aria-label="Graph Layout Style 3"
@@ -257,7 +269,7 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
         {this.props.boxByNamespace && (
           <div>
             <Tooltip
-              content={'Namespace Layout 1 ' + KialiDagreGraph.getLayout().name}
+              content={$t('NamespaceLayout1', 'Namespace Layout 1') + '' + KialiDagreGraph.getLayout().name}
               position={TooltipPosition.right}
             >
               <Button
@@ -284,7 +296,7 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
         {this.props.boxByNamespace && (
           <div>
             <Tooltip
-              content={'Namespace Layout 2 ' + KialiBreadthFirstGraph.getLayout().name}
+              content={$t('NamespaceLayout2', 'Namespace Layout 2') + '' + KialiBreadthFirstGraph.getLayout().name}
               position={TooltipPosition.right}
             >
               <Button
@@ -312,7 +324,7 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
 
         <TourStop info={GraphTourStops.Legend}>
           <div>
-            <Tooltip content="Show Legend" position={TooltipPosition.right}>
+            <Tooltip content={$t('ShowLegend', 'Show Legend')} position={TooltipPosition.right}>
               <Button
                 id="toolbar_toggle_legend"
                 aria-label="Show Legend"

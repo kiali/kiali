@@ -213,13 +213,13 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
               this.props.activeNamespaces.forEach(ns => {
                 if (!this.canCreate(ns.name)) {
                   AlertUtils.addWarning(
-                    'User does not have permission to create Istio Config on namespace: ' +
+                    `${$t('tip373', 'User does not have permission to create Istio Config on namespace')}: ` +
                       ns.name +
                       (cluster ? ' in cluster ' + cluster : '')
                   );
                 }
                 if (cluster && !this.isNamespaceInCluster(ns.name, cluster)) {
-                  AlertUtils.addInfo('Namespace: ' + ns.name + ' is not found in cluster ' + cluster);
+                  AlertUtils.addInfo(`${$t('Namespace')}: ` + ns.name + ' is not found in cluster ' + cluster);
                 }
               });
             }
@@ -228,7 +228,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
         .catch(error => {
           // Canceled errors are expected on this query when page is unmounted
           if (!error.isCanceled) {
-            AlertUtils.addError('Could not fetch Permissions.', error);
+            AlertUtils.addError($t('AlertUtils19', 'Could not fetch Permissions.'), error);
           }
         });
     }
@@ -298,42 +298,42 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
       switch (this.props.objectType) {
         case AUTHORIZACION_POLICY:
           items.push({
-            title: 'Authorization Policy',
+            title: $t('Authorization_Policy', 'Authorization Policy'),
             type: 'authorizationpolicy',
             items: [buildAuthorizationPolicy(this.state.name, ns.name, this.state.authorizationPolicy)]
           });
           break;
         case GATEWAY:
           items.push({
-            title: 'Gateway',
+            title: $t('Gateway'),
             type: 'gateway',
             items: [buildGateway(this.state.name, ns.name, this.state.gateway)]
           });
           break;
         case K8SGATEWAY:
           items.push({
-            title: 'K8sGateway',
+            title: $t('K8sGateway', 'Gateway (K8s)'),
             type: 'k8sGateway',
             items: [buildK8sGateway(this.state.name, ns.name, this.state.k8sGateway)]
           });
           break;
         case PEER_AUTHENTICATION:
           items.push({
-            title: 'Peer Authentication',
+            title: $t('Peer_Authentication', 'Peer Authentication'),
             type: 'peerauthentication',
             items: [buildPeerAuthentication(this.state.name, ns.name, this.state.peerAuthentication)]
           });
           break;
         case REQUEST_AUTHENTICATION:
           items.push({
-            title: 'Request Authentication',
+            title: $t('Request_Authentication', 'Request Authentication'),
             type: 'requestauthentication',
             items: [buildRequestAuthentication(this.state.name, ns.name, this.state.requestAuthentication)]
           });
           break;
         case SERVICE_ENTRY:
           items.push({
-            title: 'Service Entry',
+            title: $t('Service Entry'),
             type: 'serviceentry',
             items: [buildServiceEntry(this.state.name, ns.name, this.state.serviceEntry)]
           });
@@ -462,29 +462,33 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
         </div>
         <RenderContent>
           <Form className={formPadding} isHorizontal={true}>
-            <FormGroup label="Namespaces" isRequired={true} fieldId="namespaces">
+            <FormGroup label={$t('Namespaces')} isRequired={true} fieldId="namespaces">
               <NamespaceDropdown disabled={false} />
               {!isValid(isNamespacesValid) && (
                 <FormHelperText>
                   <HelperText>
-                    <HelperTextItem>An Istio Config resource needs at least one namespace selected</HelperTextItem>
+                    <HelperTextItem>
+                      {$t('tip289', 'An Istio Config resource needs at least one namespace selected')}
+                    </HelperTextItem>
                   </HelperText>
                 </FormHelperText>
               )}
             </FormGroup>
             {isMultiCluster && (
-              <FormGroup label="Clusters" isRequired={true} fieldId="clusters">
+              <FormGroup label={$t('Clusters')} isRequired={true} fieldId="clusters">
                 <ClusterDropdown />
                 {!isValid(isClustersValid) && (
                   <FormHelperText>
                     <HelperText>
-                      <HelperTextItem>An Istio Config resource needs at least one cluster selected</HelperTextItem>
+                      <HelperTextItem>
+                        {$t('tip290', 'An Istio Config resource needs at least one cluster selected')}
+                      </HelperTextItem>
                     </HelperText>
                   </FormHelperText>
                 )}
               </FormGroup>
             )}
-            <FormGroup label="Name" isRequired={true} fieldId="name">
+            <FormGroup label={$t('Name')} isRequired={true} fieldId="name">
               <TextInput
                 value={this.state.name}
                 isRequired={true}
@@ -540,17 +544,17 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
                 onClick={() => this.showPreview()}
                 data-test={'preview'}
               >
-                Preview
+                {$t('Preview')}
               </Button>
               <Button variant={ButtonVariant.secondary} onClick={() => this.backToList()}>
-                Cancel
+                {$t('Cancel')}
               </Button>
             </ActionGroup>
           </Form>
           <IstioConfigPreview
             isOpen={this.state.showPreview}
             items={this.state.itemsPreview}
-            title={'Preview new istio objects'}
+            title={$t('title34', 'Preview new istio objects')}
             opTarget={'create'}
             disableAction={!canCreate}
             ns={this.props.activeNamespaces.join(',')}

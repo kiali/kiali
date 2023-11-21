@@ -126,12 +126,12 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
 
   private namespaceButtonText() {
     if (this.state.selectedNamespaces.length === 0) {
-      return <span>Select Namespaces</span>;
+      return <span>{$t('SelectNamespaces', 'Select Namespaces')}</span>;
     }
 
     return (
       <>
-        <span style={{ paddingRight: '0.75rem' }}>Namespace:</span>
+        <span style={{ paddingRight: '0.75rem' }}>{$t('Namespace')}:</span>
         {this.state.selectedNamespaces.length === 1 ? (
           <span>{this.state.selectedNamespaces[0].name}</span>
         ) : (
@@ -160,7 +160,7 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
             anySelected ? this.onBulkNone() : this.onBulkAll();
           }}
         ></Checkbox>
-        <span className={optionLabelStyle}>Select all</span>
+        <span className={optionLabelStyle}>{$t('Select_all', 'Select all')}</span>
       </div>
     );
   }
@@ -175,12 +175,16 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
             aria-label="filter-namespace"
             type="text"
             name="namespace-filter"
-            placeholder="Filter by Name..."
+            placeholder={$t('placeholder9', 'Filter by Name...')}
             value={this.props.filter}
             onChange={(_event, value: string) => this.onFilterChange(value)}
           />
           {hasFilter && (
-            <Tooltip key="ot_clear_namespace_filter" position="top" content="Clear Filter by Name">
+            <Tooltip
+              key="ot_clear_namespace_filter"
+              position="top"
+              content={$t('ClearFilterByName', 'Clear Filter by Name')}
+            >
               <Button className={closeButtonStyle} onClick={this.clearFilter} isInline>
                 <KialiIcon.Close />
               </Button>
@@ -226,7 +230,7 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
         </>
       );
     }
-    return <div className={optionStyle}>No namespaces found</div>;
+    return <div className={optionStyle}>{$t('NoNamespacesFound', 'No namespaces found')}</div>;
   }
 
   render() {

@@ -34,7 +34,7 @@ export class VirtualServiceHosts extends React.Component<Props> {
     const vsHosts = this.props.vsHosts.length > 0 ? this.props.vsHosts.join(',') : '';
     return (
       <Form isHorizontal={true}>
-        <FormGroup label="VirtualService Hosts" fieldId="advanced-vshosts">
+        <FormGroup label={$t('VirtualServiceHosts', 'VirtualService Hosts')} fieldId="advanced-vshosts">
           <TextInput
             value={vsHosts}
             id="advanced-vshosts"
@@ -49,8 +49,11 @@ export class VirtualServiceHosts extends React.Component<Props> {
             <HelperText>
               <HelperTextItem>
                 {isValid(this.isVirtualServiceHostsValid(this.props.vsHosts))
-                  ? 'The destination hosts to which traffic is being sent. Enter one or multiple hosts separated by comma.'
-                  : "VirtualService Host '*' wildcard not allowed on mesh gateway."}
+                  ? $t(
+                      'helpTip29',
+                      'The destination hosts to which traffic is being sent. Enter one or multiple hosts separated by comma.'
+                    )
+                  : $t('helpTip30', "VirtualService Host '*' wildcard not allowed on mesh gateway.")}
               </HelperTextItem>
             </HelperText>
           </FormHelperText>

@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { Tab, Tooltip } from '@patternfly/react-core';
-import { Edge, GraphElement, Node } from '@patternfly/react-topology';
+import { Node } from '@patternfly/react-topology';
 import { kialiStyle } from 'styles/StyleUtils';
-import { summaryFont, summaryBodyTabs, summaryPanelWidth, getTitle, noTrafficStyle } from './SummaryPanelCommon';
+import { summaryFont, summaryBodyTabs, summaryPanelWidth, getTitle } from './SummaryPanelCommon';
 import { RateTableGrpc, RateTableHttp, RateTableTcp } from 'components/SummaryPanel/RateTable';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { PFColors } from 'components/Pf/PfColors';
@@ -11,10 +11,7 @@ import { SummaryPanelPropType, NodeType, TrafficRate, NodeAttr } from 'types/Gra
 import {
   getAccumulatedTrafficRateGrpc,
   getAccumulatedTrafficRateHttp,
-  getAccumulatedTrafficRateTcp,
-  TrafficRateGrpc,
-  TrafficRateHttp,
-  TrafficRateTcp
+  getAccumulatedTrafficRateTcp
 } from 'utils/TrafficRate';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { descendents, edgesIn, edgesInOut, edgesOut, elems, select } from 'pages/GraphPF/GraphPFElems';
@@ -37,8 +34,8 @@ const topologyStyle = kialiStyle({
 });
 
 const kialiIconStyle = kialiStyle({
-  width: '1rem',
-  marginRight: '0.25rem'
+  width: '15px',
+  marginRight: '5px'
 });
 
 export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType, SummaryPanelClusterBoxState> {
@@ -57,10 +54,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     this.state = { ...defaultState };
   }
 
-  static getDerivedStateFromProps(
-    props: SummaryPanelPropType,
-    state: SummaryPanelClusterBoxState
-  ): SummaryPanelClusterBoxState | null {
+  static getDerivedStateFromProps(props: SummaryPanelPropType, state: SummaryPanelClusterBoxState) {
     // if the summaryTarget (i.e. graph) has changed, then init the state
     return props.data.summaryTarget !== state.clusterBox ? { clusterBox: props.data.summaryTarget } : null;
   }
@@ -73,10 +67,9 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     const cluster = data[NodeAttr.cluster];
     const kialiInstances = serverConfig.clusters[cluster] ? serverConfig.clusters[cluster].kialiInstances : [];
 
-    let numSvc: number;
-    let numWorkloads: number;
-    let numEdges: number;
-
+    let numSvc;
+    let numWorkloads;
+    let numEdges;
     const { numApps, numVersions } = this.countApps(boxed, isPF);
     const {
       grpcIn,
@@ -112,35 +105,33 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
           {this.renderCluster(cluster, kialiInstances)}
           {this.renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
         </div>
-
         <div className={summaryBodyTabs}>
-          <SimpleTabs id="graph_summary_tabs" defaultTab={0} style={{ paddingBottom: '0.5rem' }}>
+          <SimpleTabs id="graph_summary_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
             <Tooltip
               id="tooltip-inbound"
-              content="Traffic entering from another cluster."
+              content={$t('tip53', 'Traffic entering from another cluster.')}
               entryDelay={1250}
               triggerRef={tooltipInboundRef}
             />
             <Tooltip
               id="tooltip-outbound"
-              content="Traffic exiting to another cluster."
+              content={$t('tip54', 'Traffic exiting to another cluster.')}
               entryDelay={1250}
               triggerRef={tooltipOutboundRef}
             />
             <Tooltip
               id="tooltip-total"
-              content="All inbound, outbound and internal cluster traffic."
+              content={$t('tip55', 'All inbound, outbound and internal cluster traffic.')}
               entryDelay={1250}
               triggerRef={tooltipTotalRef}
             />
-            <Tab style={summaryFont} title="Inbound" eventKey={0} ref={tooltipInboundRef}>
+            <Tab style={summaryFont} title={$t('"Inbound"')} eventKey={0} ref={tooltipInboundRef}>
               <div style={summaryFont}>
                 {grpcIn.rate === 0 && httpIn.rate === 0 && tcpIn.rate === 0 && (
-                  <div className={noTrafficStyle}>
-                    <KialiIcon.Info /> No inbound traffic.
-                  </div>
+                  <>
+                    <KialiIcon.Info /> {$t('tip282', 'No inbound traffic.')}
+                  </>
                 )}
-
                 {grpcIn.rate > 0 && (
                   <RateTableGrpc
                     isRequests={isGrpcRequests}
@@ -149,10 +140,9 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
                     rateNR={grpcIn.rateNoResponse}
                   />
                 )}
-
                 {httpIn.rate > 0 && (
                   <RateTableHttp
-                    title="HTTP (requests per second):"
+                    title={`${$t('title15', 'HTTP (requests per second)')}:`}
                     rate={httpIn.rate}
                     rate3xx={httpIn.rate3xx}
                     rate4xx={httpIn.rate4xx}
@@ -160,7 +150,6 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
                     rateNR={httpIn.rateNoResponse}
                   />
                 )}
-
                 {tcpIn.rate > 0 && <RateTableTcp rate={tcpIn.rate} />}
                 {
                   // We don't show a sparkline here because we need to aggregate the traffic of an
@@ -168,14 +157,13 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
                 }
               </div>
             </Tab>
-            <Tab style={summaryFont} title="Outbound" eventKey={1} ref={tooltipOutboundRef}>
+            <Tab style={summaryFont} title={$t('Outbound')} eventKey={1} ref={tooltipOutboundRef}>
               <div style={summaryFont}>
                 {grpcOut.rate === 0 && httpOut.rate === 0 && tcpOut.rate === 0 && (
-                  <div className={noTrafficStyle}>
-                    <KialiIcon.Info /> No outbound traffic.
-                  </div>
+                  <>
+                    <KialiIcon.Info /> {$t('tip283', 'No outbound traffic.')}
+                  </>
                 )}
-
                 {grpcOut.rate > 0 && (
                   <RateTableGrpc
                     isRequests={isGrpcRequests}
@@ -184,10 +172,9 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
                     rateNR={grpcOut.rateNoResponse}
                   />
                 )}
-
                 {httpOut.rate > 0 && (
                   <RateTableHttp
-                    title="HTTP (requests per second):"
+                    title={`${$t('title15', 'HTTP (requests per second)')}:`}
                     rate={httpOut.rate}
                     rate3xx={httpOut.rate3xx}
                     rate4xx={httpOut.rate4xx}
@@ -195,7 +182,6 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
                     rateNR={httpOut.rateNoResponse}
                   />
                 )}
-
                 {tcpOut.rate > 0 && <RateTableTcp rate={tcpOut.rate} />}
                 {
                   // We don't show a sparkline here because we need to aggregate the traffic of an
@@ -203,14 +189,13 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
                 }
               </div>
             </Tab>
-            <Tab style={summaryFont} title="Total" eventKey={2} ref={tooltipTotalRef}>
+            <Tab style={summaryFont} title={$t('Total')} eventKey={2} ref={tooltipTotalRef}>
               <div style={summaryFont}>
                 {grpcTotal.rate === 0 && httpTotal.rate === 0 && tcpTotal.rate === 0 && (
-                  <div className={noTrafficStyle}>
-                    <KialiIcon.Info /> No traffic.
-                  </div>
+                  <>
+                    <KialiIcon.Info /> {$t('tip284', 'No traffic.')}
+                  </>
                 )}
-
                 {grpcTotal.rate > 0 && (
                   <RateTableGrpc
                     isRequests={isGrpcRequests}
@@ -219,10 +204,9 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
                     rateNR={grpcTotal.rateNoResponse}
                   />
                 )}
-
                 {httpTotal.rate > 0 && (
                   <RateTableHttp
-                    title="HTTP (requests per second):"
+                    title={`${$t('title15', 'HTTP (requests per second)')}:`}
                     rate={httpTotal.rate}
                     rate3xx={httpTotal.rate3xx}
                     rate4xx={httpTotal.rate4xx}
@@ -230,7 +214,6 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
                     rateNR={httpTotal.rateNoResponse}
                   />
                 )}
-
                 {tcpTotal.rate > 0 && <RateTableTcp rate={tcpTotal.rate} />}
               </div>
             </Tab>
@@ -241,28 +224,16 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
   }
 
   private getBoxTraffic = (
-    boxed: any,
+    boxed,
     isPF: boolean
-  ): {
-    grpcIn: TrafficRateGrpc;
-    grpcOut: TrafficRateGrpc;
-    grpcTotal: TrafficRateGrpc;
-    httpIn: TrafficRateHttp;
-    httpOut: TrafficRateHttp;
-    httpTotal: TrafficRateHttp;
-    isGrpcRequests: boolean;
-    tcpIn: TrafficRateTcp;
-    tcpOut: TrafficRateTcp;
-    tcpTotal: TrafficRateTcp;
-  } => {
+  ): { grpcIn; grpcOut; grpcTotal; httpIn; httpOut; httpTotal; isGrpcRequests; tcpIn; tcpOut; tcpTotal } => {
     const clusterBox = this.props.data.summaryTarget;
     const data = isPF ? clusterBox.getData() : clusterBox.data();
     const cluster = data[NodeAttr.cluster];
 
-    let inboundEdges: Edge[] | any;
-    let outboundEdges: Edge[] | any;
-    let totalEdges: Edge[] | any;
-
+    let inboundEdges;
+    let outboundEdges;
+    let totalEdges;
     if (isPF) {
       const controller = (clusterBox as Node).getController();
       const { nodes } = elems(controller);
@@ -297,20 +268,18 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     };
   };
 
-  private countApps = (boxed: any, isPF: boolean): { numApps: number; numVersions: number } => {
+  private countApps = (boxed, isPF: boolean): { numApps: number; numVersions: number } => {
     if (isPF) {
       return this.countAppsPF(boxed);
     }
 
     const appVersions: { [key: string]: Set<string> } = {};
 
-    boxed.filter(`node[nodeType = "${NodeType.APP}"]`).forEach((node: any) => {
+    boxed.filter(`node[nodeType = "${NodeType.APP}"]`).forEach(node => {
       const app = node.data(NodeAttr.app);
-
       if (appVersions[app] === undefined) {
         appVersions[app] = new Set();
       }
-
       appVersions[app].add(node.data(NodeAttr.version));
     });
 
@@ -322,17 +291,15 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     };
   };
 
-  private countAppsPF = (boxed: any): { numApps: number; numVersions: number } => {
+  private countAppsPF = (boxed): { numApps: number; numVersions: number } => {
     const appVersions: { [key: string]: Set<string> } = {};
 
-    select(boxed, { prop: NodeAttr.nodeType, val: NodeType.APP }).forEach((node: GraphElement) => {
+    select(boxed, { prop: NodeAttr.nodeType, val: NodeType.APP }).forEach(node => {
       const data = node.getData();
       const app = data[NodeAttr.app];
-
       if (appVersions[app] === undefined) {
         appVersions[app] = new Set();
       }
-
       appVersions[app].add(data[NodeAttr.version]);
     });
 
@@ -344,7 +311,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     };
   };
 
-  private renderCluster = (cluster: string, kialiInstances: KialiInstance[]): React.ReactNode => {
+  private renderCluster = (cluster: string, kialiInstances: KialiInstance[]) => {
     return (
       <React.Fragment key={cluster}>
         <PFBadge badge={PFBadges.Cluster} size="sm" style={{ marginBottom: '2px' }} />
@@ -355,7 +322,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     );
   };
 
-  private renderKialiLinks = (kialiInstances: KialiInstance[]): React.ReactNode => {
+  private renderKialiLinks = (kialiInstances: KialiInstance[]) => {
     const kialiIcon = getKialiTheme() === Theme.DARK ? kialiIconDark : kialiIconLight;
     return kialiInstances.map(instance => {
       if (instance.url.length !== 0) {
@@ -372,7 +339,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
         return (
           <span>
             <img alt="Kiali Icon" src={kialiIcon} className={kialiIconStyle} />
-            {`${instance.namespace} / ${instance.serviceName}`}
+            {instance.namespace + ' / ' + instance.serviceName}
             <br />
           </span>
         );
@@ -386,40 +353,36 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     numApps: number,
     numVersions: number,
     numEdges: number
-  ): React.ReactNode => (
+  ) => (
     <>
       <br />
-      {getTitle('Current Graph')}
-
+      {getTitle('Current_Graph')}
       {numApps > 0 && (
         <>
           <KialiIcon.Applications className={topologyStyle} />
-          {numApps.toString()} {numApps === 1 ? 'app ' : 'apps '}
-          {numVersions > 0 && `(${numVersions} versions)`}
+          {numApps.toString()} {numApps === 1 ? $t('app') : $t('apps')}
+          {numVersions > 0 && `(${numVersions} ${$t('versions')})`}
           <br />
         </>
       )}
-
       {numSvc > 0 && (
         <>
           <KialiIcon.Services className={topologyStyle} />
-          {numSvc.toString()} {numSvc === 1 ? 'service' : 'services'}
+          {numSvc.toString()} {numSvc === 1 ? $t('service') : $t('services')}
           <br />
         </>
       )}
-
       {numWorkloads > 0 && (
         <>
           <KialiIcon.Workloads className={topologyStyle} />
-          {numWorkloads.toString()} {numWorkloads === 1 ? 'workload' : 'workloads'}
+          {numWorkloads.toString()} {numWorkloads === 1 ? $t('workload') : $t('workloads')}
           <br />
         </>
       )}
-
       {numEdges > 0 && (
         <>
           <KialiIcon.Topology className={topologyStyle} />
-          {numEdges.toString()} {numEdges === 1 ? 'edge' : 'edges'}
+          {numEdges.toString()} {numEdges === 1 ? $t('edge') : $t('edges')}
         </>
       )}
     </>

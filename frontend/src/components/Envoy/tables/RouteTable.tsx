@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { SummaryTable, SummaryTableRenderer } from './BaseTable';
-import { IRow, ISortBy } from '@patternfly/react-table';
+import { ICell, ISortBy, sortable } from '@patternfly/react-table';
 import { RouteSummary } from '../../../types/IstioObjects';
 import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '../../../types/Filters';
 import { SortField } from '../../../types/SortFilters';
@@ -11,20 +11,19 @@ import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { isParentKiosk } from '../../Kiosk/KioskActions';
-import { SortableTh } from 'components/SimpleTable';
 
 export class RouteTable implements SummaryTable {
-  kiosk: string;
-  namespace: string;
-  namespaces: Namespace[];
-  sortingDirection: 'asc' | 'desc';
-  sortingIndex: number;
   summaries: RouteSummary[];
+  sortingIndex: number;
+  sortingDirection: 'asc' | 'desc';
+  namespaces: Namespace[];
+  namespace: string;
+  kiosk: string;
 
   constructor(summaries: RouteSummary[], sortBy: ISortBy, namespaces: Namespace[], namespace: string, kiosk: string) {
     this.summaries = summaries;
-    this.sortingIndex = sortBy.index ?? 0;
-    this.sortingDirection = sortBy.direction ?? 'asc';
+    this.sortingIndex = sortBy.index || 0;
+    this.sortingDirection = sortBy.direction || 'asc';
     this.namespaces = namespaces;
     this.namespace = namespace;
     this.kiosk = kiosk;
@@ -34,14 +33,14 @@ export class RouteTable implements SummaryTable {
     return [
       {
         category: 'Name',
-        placeholder: 'Name',
+        placeholder: $t('Name'),
         filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
       {
         category: 'Domains',
-        placeholder: 'Domains',
+        placeholder: $t('Domains'),
         filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
@@ -49,7 +48,7 @@ export class RouteTable implements SummaryTable {
     ];
   };
 
-  filterMethods = (): { [filter_id: string]: (entry: RouteSummary, filter: ActiveFilter) => boolean } => {
+  filterMethods = (): { [filter_id: string]: (ClusterSummary, ActiveFilter) => boolean } => {
     return {
       Name: (entry: RouteSummary, filter: ActiveFilter): boolean => {
         return entry.name.toString().includes(filter.value);
@@ -64,7 +63,7 @@ export class RouteTable implements SummaryTable {
     return [
       {
         id: 'name',
-        title: 'Name',
+        title: $t('Name'),
         isNumeric: false,
         param: 'name',
         compare: (a, b) => {
@@ -73,7 +72,7 @@ export class RouteTable implements SummaryTable {
       },
       {
         id: 'domains',
-        title: 'Domains',
+        title: $t('Domains'),
         isNumeric: false,
         param: 'doms',
         compare: (a, b) => {
@@ -84,7 +83,7 @@ export class RouteTable implements SummaryTable {
       },
       {
         id: 'match',
-        title: 'Match',
+        title: $t('Match'),
         isNumeric: false,
         param: 'match',
         compare: (a, b) => {
@@ -93,7 +92,7 @@ export class RouteTable implements SummaryTable {
       },
       {
         id: 'vs',
-        title: 'Virtual Service',
+        title: $t('Virtual Service'),
         isNumeric: false,
         param: 'vs',
         compare: (a, b) => {
@@ -103,44 +102,42 @@ export class RouteTable implements SummaryTable {
     ];
   };
 
-  head(): SortableTh[] {
+  head(): ICell[] {
     return [
+      { title: $t('Name'), transforms: [sortable] },
       {
-        title: 'Name',
-        sortable: true
-      },
-      {
-        title: 'Domains',
-        sortable: true,
-        info: {
-          tooltip: (
-            <div className={kialiStyle({ textAlign: 'left' })}>
-              Envoy will be matched this domain to this virtual host.
-            </div>
-          )
+        title: $t('Domains'),
+        transforms: [sortable],
+        header: {
+          info: {
+            tooltip: (
+              <div className={kialiStyle({ textAlign: 'left' })}>
+                {$t('tip347', 'Envoy will be matched this domain to this virtual host.')}
+              </div>
+            )
+          }
         }
       },
       {
-        title: 'Match',
-        sortable: true,
-        info: {
-          tooltip: (
-            <div className={kialiStyle({ textAlign: 'left' })}>
-              The match tree to use when resolving route actions for incoming requests
-            </div>
-          )
+        title: $t('Match'),
+        transforms: [sortable],
+        header: {
+          info: {
+            tooltip: (
+              <div className={kialiStyle({ textAlign: 'left' })}>
+                {$t('tip348', 'The match tree to use when resolving route actions for incoming requests')}
+              </div>
+            )
+          }
         }
       },
-      {
-        title: 'Virtual Service',
-        sortable: true
-      }
+      { title: $t('Virtual Service'), transforms: [sortable] }
     ];
   }
 
   resource = (): string => 'routes';
 
-  setSorting = (columnIndex: number, direction: 'asc' | 'desc'): void => {
+  setSorting = (columnIndex: number, direction: 'asc' | 'desc') => {
     this.sortingDirection = direction;
     this.sortingIndex = columnIndex;
   };
@@ -157,7 +154,7 @@ export class RouteTable implements SummaryTable {
       <Tooltip
         content={
           <div className={kialiStyle({ textAlign: 'left' })}>
-            Network connection between source a destination that is configured in envoy
+            {$t('tip349', 'Network connection between source a destination that is configured in envoy')}
           </div>
         }
       >
@@ -166,7 +163,7 @@ export class RouteTable implements SummaryTable {
     );
   };
 
-  rows(): IRow[] {
+  rows(): (string | number | JSX.Element)[][] {
     const parentKiosk = isParentKiosk(this.kiosk);
     return this.summaries
       .filter((value: RouteSummary) => {
@@ -176,21 +173,16 @@ export class RouteTable implements SummaryTable {
         const sortField = this.sortFields().find((value: SortField<RouteSummary>): boolean => {
           return value.id === this.sortFields()[this.sortingIndex].id;
         });
-
         return this.sortingDirection === 'asc' ? sortField!.compare(a, b) : sortField!.compare(b, a);
       })
-      .map(
-        (summary: RouteSummary): IRow => {
-          return {
-            cells: [
-              summary.name,
-              serviceLink(summary.domains, this.namespaces, this.namespace, true, parentKiosk),
-              summary.match,
-              istioConfigLink(summary.virtual_service, 'virtualservice')
-            ]
-          };
-        }
-      );
+      .map((summary: RouteSummary): (string | number | JSX.Element)[] => {
+        return [
+          summary.name,
+          serviceLink(summary.domains, this.namespaces, this.namespace, true, parentKiosk),
+          summary.match,
+          istioConfigLink(summary.virtual_service, 'virtualservice')
+        ];
+      });
   }
 }
 

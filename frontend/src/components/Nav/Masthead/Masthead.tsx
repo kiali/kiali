@@ -8,6 +8,7 @@ import { IstioStatus } from '../../IstioStatus/IstioStatus';
 import { PfSpinner } from '../../PfSpinner';
 import { UserDropdown } from './UserDropdown';
 import { HelpDropdown } from './HelpDropdown';
+import { SwitchLanguage } from './SwitchLanguage';
 import { MessageCenterTrigger } from '../../../components/MessageCenter/MessageCenterTrigger';
 import { ThemeSwitch } from 'components/ThemeSwitch/ThemeSwitch';
 
@@ -24,7 +25,11 @@ export class MastheadItems extends React.Component {
                   <Tooltip
                     entryDelay={0}
                     position="bottom"
-                    content={<div>Kiali home cluster: {homeCluster?.name}</div>}
+                    content={
+                      <div>
+                        {$t('KialiHomeCluster', 'Kiali home cluster')}: {homeCluster?.name}
+                      </div>
+                    }
                   >
                     <Label data-test="cluster-icon" color="blue" icon={<ClusterIcon />}>
                       {homeCluster?.name}
@@ -46,6 +51,9 @@ export class MastheadItems extends React.Component {
               </FlexItem>
               <FlexItem>
                 <HelpDropdown />
+              </FlexItem>
+              <FlexItem>
+                <SwitchLanguage />
               </FlexItem>
               <FlexItem>
                 <UserDropdown />

@@ -135,7 +135,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
 
     const options = getOptions(nodeData);
     const items = [
-      <DropdownGroup key="show" label="Show" className={groupMenuStyle}>
+      <DropdownGroup key="show" label={$t('Show')} className={groupMenuStyle}>
         {options.map((o, i) => {
           return (
             <DropdownItem key={`option-${i}`} onClick={() => clickHandler(o, this.props.kiosk)}>
@@ -256,8 +256,8 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
         <ExpandableSection
           toggleText={
             nodeData.hasWorkloadEntry.length === 1
-              ? '1 workload entry'
-              : `${nodeData.hasWorkloadEntry.length} workload entries`
+              ? `1 ${$t('Workload_Entry', 'Workload Entry')}`
+              : `${nodeData.hasWorkloadEntry.length} ${$t('workloadEntries', 'workload entries')}`
           }
           className={workloadExpandableSectionStyle}
         >
@@ -318,12 +318,12 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     return (
       <div className={summaryBodyTabs}>
         <SimpleTabs id="graph_summary_tabs" defaultTab={0} style={{ paddingBottom: '0.5rem' }}>
-          <Tab style={summaryFont} title="Traffic" eventKey={0}>
+          <Tab style={summaryFont} title={$t('Traffic')} eventKey={0}>
             <div style={summaryFont}>
               <SummaryPanelNodeTraffic {...this.props} />
             </div>
           </Tab>
-          <Tab style={summaryFont} title="Traces" eventKey={1}>
+          <Tab style={summaryFont} title={$t('Traces')} eventKey={1}>
             <SummaryPanelNodeTraces nodeData={nodeData} queryTime={this.props.queryTime - this.props.duration} />
           </Tab>
         </SimpleTabs>
@@ -381,7 +381,8 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
           <div>
             <KialiIcon.CircuitBreaker />
             <span style={{ paddingLeft: '0.25rem' }}>
-              Has Circuit Breaker{this.renderK8sGatewayAPI(isK8sGatewayAPI)}
+              {$t('Has_Circuit_Breaker', 'Has Circuit Breaker')}
+              {this.renderK8sGatewayAPI(isK8sGatewayAPI)}
             </span>
           </div>
         )}
@@ -390,7 +391,8 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
             <div>
               <KialiIcon.VirtualService />
               <span style={{ paddingLeft: '0.25rem' }}>
-                Has Virtual Service{this.renderK8sGatewayAPI(isK8sGatewayAPI)}
+                {$t('Has_Virtual_Service', 'Has Virtual Service')}
+                {this.renderK8sGatewayAPI(isK8sGatewayAPI)}
               </span>
             </div>
             {shouldRenderVsHostnames && this.renderVsHostnames(nodeData)}
@@ -399,19 +401,22 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
         {hasMirroring && (
           <div>
             <KialiIcon.Mirroring />
-            <span style={{ paddingLeft: '0.25rem' }}>Has Mirroring{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
+            <span style={{ paddingLeft: '0.25rem' }}>
+              {$t('HasMirroring', 'Has Mirroring')}
+              {this.renderK8sGatewayAPI(isK8sGatewayAPI)}
+            </span>
           </div>
         )}
         {isOutOfMesh && !serverConfig.ambientEnabled && (
           <div>
             <KialiIcon.OutOfMesh />
-            <span style={{ paddingLeft: '0.25rem' }}>Has Missing Sidecar</span>
+            <span style={{ paddingLeft: '0.25rem' }}>{$t('HasMissingSidecar', 'Has Missing Sidecar')}</span>
           </div>
         )}
         {isOutOfMesh && serverConfig.ambientEnabled && (
           <div>
             <KialiIcon.OutOfMesh />
-            <span style={{ paddingLeft: '0.25rem' }}>Out of Mesh</span>
+            <span style={{ paddingLeft: '0.25rem' }}>{$t('OutOfMesh', 'Out of Mesh')}</span>
           </div>
         )}
         {isDead && (
@@ -419,7 +424,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
             <span style={{ marginRight: '0.25rem' }}>
               <KialiIcon.Info />
             </span>
-            <span style={{ paddingLeft: '0.25rem' }}>Has No Running Pods</span>
+            <span style={{ paddingLeft: '0.25rem' }}>{$t('HasNoRunningPods', 'Has No Running Pods')}</span>
           </div>
         )}
         {hasRequestRouting && (
@@ -427,7 +432,8 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
             <div>
               <KialiIcon.RequestRouting />
               <span style={{ paddingLeft: '0.25rem' }}>
-                Has Request Routing{this.renderK8sGatewayAPI(isK8sGatewayAPI)}
+                {$t('HasRequestRouting', 'Has Request Routing')}
+                {this.renderK8sGatewayAPI(isK8sGatewayAPI)}
               </span>
             </div>
             {shouldRenderVsHostnames && this.renderVsHostnames(nodeData)}
@@ -437,7 +443,8 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
           <div>
             <KialiIcon.FaultInjection />
             <span style={{ paddingLeft: '0.25rem' }}>
-              Has Fault Injection{this.renderK8sGatewayAPI(isK8sGatewayAPI)}
+              {$t('HasFaultInjection', 'Has Fault Injection')}
+              {this.renderK8sGatewayAPI(isK8sGatewayAPI)}
             </span>
           </div>
         )}
@@ -445,7 +452,8 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
           <div>
             <KialiIcon.TrafficShifting />
             <span style={{ paddingLeft: '0.25rem' }}>
-              Has Traffic Shifting{this.renderK8sGatewayAPI(isK8sGatewayAPI)}
+              {$t('HasTrafficShifting', 'Has Traffic Shifting')}
+              {this.renderK8sGatewayAPI(isK8sGatewayAPI)}
             </span>
           </div>
         )}
@@ -453,7 +461,8 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
           <div>
             <KialiIcon.TrafficShifting />
             <span style={{ paddingLeft: '0.25rem' }}>
-              Has TCP Traffic Shifting{this.renderK8sGatewayAPI(isK8sGatewayAPI)}
+              {$t('HasTCPTrafficShifting', 'Has TCP Traffic Shifting')}
+              {this.renderK8sGatewayAPI(isK8sGatewayAPI)}
             </span>
           </div>
         )}
@@ -461,7 +470,8 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
           <div>
             <KialiIcon.RequestTimeout />
             <span style={{ paddingLeft: '0.25rem' }}>
-              Has Request Timeout{this.renderK8sGatewayAPI(isK8sGatewayAPI)}
+              {$t('HasRequestTimeout', 'Has Request Timeout')}
+              {this.renderK8sGatewayAPI(isK8sGatewayAPI)}
             </span>
           </div>
         )}
@@ -469,7 +479,10 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
           <>
             <div>
               <KialiIcon.Gateway />
-              <span style={{ paddingLeft: '0.25rem' }}>Is Gateway{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
+              <span style={{ paddingLeft: '0.25rem' }}>
+                {$t('IsGateway', 'Is Gateway')}
+                {this.renderK8sGatewayAPI(isK8sGatewayAPI)}
+              </span>
             </div>
             {shouldRenderGatewayHostnames && this.renderGatewayHostnames(nodeData)}
           </>
@@ -478,7 +491,8 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
           <div>
             <KialiIcon.Rank />
             <span style={{ paddingLeft: '0.25rem' }}>
-              Rank: {nodeData.rank !== undefined ? `${nodeData.rank} / ${this.props.rankResult.upperBound}` : 'N/A'}
+              {$t('Rank')}:{' '}
+              {nodeData.rank !== undefined ? `${nodeData.rank} / ${this.props.rankResult.upperBound}` : 'N/A'}
             </span>
           </div>
         )}

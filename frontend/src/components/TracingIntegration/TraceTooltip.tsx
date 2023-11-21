@@ -82,14 +82,14 @@ class TraceLabel extends React.Component<LabelProps> {
     return (
       <foreignObject width={innerWidth} height={innerHeight} x={left} y={top}>
         <div className={tooltipStyle}>
-          <div className={titleStyle}>{trace.traceName || '(Missing root span)'}</div>
+          <div className={titleStyle}>{trace.traceName || $t('tip31', '(Missing root span)')}</div>
           <br />
           <div className={contentStyle}>
             <div className={leftStyle}>
               {hasStats ? (
                 renderTraceHeatMap(matrix!, true)
               ) : this.props.provider === TEMPO ? (
-                <div style={textStyle}>(Loading trace details)</div>
+                <div style={textStyle}>({$t('LoadingTraceDetails', 'Loading trace details')})</div>
               ) : (
                 'n/a'
               )}

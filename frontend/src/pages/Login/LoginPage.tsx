@@ -99,7 +99,7 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
           filledInputs: true
         });
       } else {
-        const message = 'Please, provide a Service Account token.';
+        const message = $t('helpTip52', 'Please, provide a Service Account token.');
 
         this.setState({
           showHelperText: true,
@@ -128,10 +128,14 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
     if (urlParams.get('error')) {
       if (urlParams.get('error_description')) {
         console.warn(`Authentication error_description: ${urlParams.get('error_description')}`);
-        messagesArray.push(this.renderMessage(`Authentication failed!`, AlertVariant.danger, 'idp-err'));
+        messagesArray.push(
+          this.renderMessage($t('helpTip53', 'Authentication failed!'), AlertVariant.danger, 'idp-err')
+        );
       } else {
         console.warn(`Authentication error: ${urlParams.get('error')}`);
-        messagesArray.push(this.renderMessage(`Authentication failed.`, AlertVariant.danger, 'idp-err'));
+        messagesArray.push(
+          this.renderMessage($t('helpTip54', 'Authentication failed.'), AlertVariant.danger, 'idp-err')
+        );
       }
     }
   };
@@ -144,7 +148,7 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
     if (this.props.status === LoginStatus.expired) {
       messages.push(
         this.renderMessage(
-          'Your session has expired or was terminated in another window.',
+          $t('helpTip55', 'Your session has expired or was terminated in another window.'),
           AlertVariant.warning,
           'sessionExpired'
         )
@@ -174,18 +178,20 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
     // Only log the openid_error since we cannot guarantee it is not spoofed. We only show a generic error message in the UI.
     if (urlParams.get('openid_error')) {
       console.warn(`Authentication openid_error: ${urlParams.get('openid_error')}`);
-      messages.push(this.renderMessage(`OpenID authentication failed.`, AlertVariant.danger, 'openid-err'));
+      messages.push(
+        this.renderMessage($t('helpTip56', 'OpenID authentication failed.'), AlertVariant.danger, 'openid-err')
+      );
     }
 
     return messages;
   };
 
   render() {
-    let loginLabel = 'Log In';
+    let loginLabel = 'LogIn';
     if (authenticationConfig.strategy === AuthStrategy.openshift) {
-      loginLabel = 'Log In With OpenShift';
+      loginLabel = 'LogInWithOpenShift';
     } else if (authenticationConfig.strategy === AuthStrategy.openid) {
-      loginLabel = 'Log In With OpenID';
+      loginLabel = 'LogInWithOpenID';
     }
 
     const messages = this.getHelperMessage();
@@ -212,10 +218,10 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
     const listItem = (
       <>
         <ListItem>
-          <LoginFooterItem href="https://www.kiali.io/">Documentation</LoginFooterItem>
+          <LoginFooterItem href="https://www.kiali.io/">{$t('Documentation')}</LoginFooterItem>
         </ListItem>
         <ListItem>
-          <LoginFooterItem href="https://github.com/kiali/kiali">Contribute</LoginFooterItem>
+          <LoginFooterItem href="https://github.com/kiali/kiali">{$t('Contribute')}</LoginFooterItem>
         </ListItem>
       </>
     );
@@ -225,7 +231,7 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
       loginPane = (
         <Form data-test="login-form">
           <FormHelperText>{messages}</FormHelperText>
-          <FormGroup fieldId="token" label="Token" isRequired={true}>
+          <FormGroup fieldId="token" label={$t('Token')} isRequired={true}>
             <TextInput
               id="token"
               type="password"
@@ -241,7 +247,7 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
               style={{ width: '100%' }}
               variant={ButtonVariant.primary}
             >
-              Log In
+              {$t('LogIn')}
             </Button>
           </ActionGroup>
         </Form>
@@ -252,7 +258,7 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
           <FormHelperText>{messages}</FormHelperText>
           <ActionGroup>
             <Button type="submit" onClick={this.handleSubmit} style={{ width: '100%' }} variant={ButtonVariant.primary}>
-              {loginLabel}
+              {$t(loginLabel)}
             </Button>
           </ActionGroup>
         </Form>
@@ -265,8 +271,8 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
         brandImgSrc={kialiLogoDark}
         brandImgAlt="Kiali logo"
         footerListItems={listItem}
-        textContent="Service mesh management for Istio."
-        loginTitle="Log in Kiali"
+        textContent={$t('label10', 'Service mesh management for Istio.')}
+        loginTitle={$t('LogInKiali', 'Log in Kiali')}
         className={loginStyle}
       >
         {loginPane}

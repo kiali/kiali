@@ -6,20 +6,21 @@ import { MessageCenterActions } from '../actions/MessageCenterActions';
 import { updateState } from '../utils/Reducer';
 import { LoginActions } from '../actions/LoginActions';
 import _ from 'lodash';
+import i18n from 'locales/i18n';
 
 export const INITIAL_MESSAGE_CENTER_STATE: MessageCenterState = {
   nextId: 0,
   groups: [
     {
       id: 'systemErrors',
-      title: 'Open issues',
+      title: i18n.t('OpenIssue'),
       messages: [],
       showActions: false,
       hideIfEmpty: true
     },
     {
       id: 'default',
-      title: 'Notifications',
+      title: i18n.t('Notifications'),
       messages: [],
       showActions: true,
       hideIfEmpty: false

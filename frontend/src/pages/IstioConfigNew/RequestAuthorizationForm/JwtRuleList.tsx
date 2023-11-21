@@ -1,99 +1,118 @@
 import { JWTRule } from '../../../types/IstioObjects';
-import { IRow, ThProps } from '@patternfly/react-table';
+import { cellWidth, ICell } from '@patternfly/react-table';
+import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../components/Pf/PfColors';
 import * as React from 'react';
 import { formatJwtField } from './JwtRuleBuilder';
-import { SimpleTable } from 'components/SimpleTable';
-import { Button, ButtonVariant } from '@patternfly/react-core';
-import { KialiIcon } from 'config/KialiIcon';
 
-type JwtRuleListProps = {
+type Props = {
   jwtRules: JWTRule[];
   onRemoveJwtRule: (index: number) => void;
 };
 
-const columns: ThProps[] = [
+const headerCells: ICell[] = [
   {
-    title: 'JWT Rules to be validated',
-    width: 100
+    title: $t('title35', 'JWT Rules to be validated'),
+    transforms: [cellWidth(100) as any],
+    props: {}
   },
   {
-    title: ''
+    title: '',
+    props: {}
   }
 ];
 
 const noJWTRulesStyle = kialiStyle({
+  marginTop: 10,
   color: PFColors.Red100,
-  textAlign: 'center'
+  textAlign: 'center',
+  width: '100%'
 });
 
-export const JwtRuleList: React.FC<JwtRuleListProps> = (props: JwtRuleListProps) => {
-  const rows: IRow[] = props.jwtRules.map((jwtRule, i) => {
-    return {
-      key: `jwtRule_${i}`,
-      cells: [
-        <>
-          {jwtRule.issuer ? (
-            <div>
-              <b>issuer</b>: [{formatJwtField('issuer', jwtRule)}]
-            </div>
-          ) : undefined}
+export class JwtRuleList extends React.Component<Props> {
+  rows = () => {
+    return this.props.jwtRules.map((jwtRule, i) => {
+      return {
+        key: 'jwtRule' + i,
+        cells: [
+          <>
+            {jwtRule.issuer ? (
+              <div>
+                <b>{$t('issuer')}</b>: [{formatJwtField('issuer', jwtRule)}]
+              </div>
+            ) : undefined}
+            {jwtRule.audiences ? (
+              <div>
+                <b>{$t('audiences')}</b>: [{formatJwtField('audiences', jwtRule)}]
+              </div>
+            ) : undefined}
+            {jwtRule.jwks ? (
+              <div>
+                <b>jwks</b>: [{formatJwtField('jwks', jwtRule)}]
+              </div>
+            ) : undefined}
+            {jwtRule.jwksUri ? (
+              <div>
+                <b>jwksUri</b>: [{formatJwtField('jwksUri', jwtRule)}]
+              </div>
+            ) : undefined}
+            {jwtRule.fromHeaders ? (
+              <div>
+                <b>{$t('fromHeaders')}</b>: [{formatJwtField('fromHeaders', jwtRule)}]
+              </div>
+            ) : undefined}
+            {jwtRule.fromParams ? (
+              <div>
+                <b>{$t('fromParams')}</b>: [{formatJwtField('fromParams', jwtRule)}]
+              </div>
+            ) : undefined}
+            {jwtRule.outputPayloadToHeader ? (
+              <div>
+                <b>{$t('outputPayloadToHeader')}</b>: [{formatJwtField('outputPayloadToHeader', jwtRule)}]
+              </div>
+            ) : undefined}
+            {jwtRule.forwardOriginalToken !== undefined ? (
+              <div>
+                <b>{$t('forwardOriginalToken')}</b>: [{formatJwtField('forwardOriginalToken', jwtRule)}]
+              </div>
+            ) : undefined}
+          </>,
+          <></>
+        ]
+      };
+    });
+  };
 
-          {jwtRule.audiences ? (
-            <div>
-              <b>audiences</b>: [{formatJwtField('audiences', jwtRule)}]
-            </div>
-          ) : undefined}
-
-          {jwtRule.jwks ? (
-            <div>
-              <b>jwks</b>: [{formatJwtField('jwks', jwtRule)}]
-            </div>
-          ) : undefined}
-
-          {jwtRule.jwksUri ? (
-            <div>
-              <b>jwksUri</b>: [{formatJwtField('jwksUri', jwtRule)}]
-            </div>
-          ) : undefined}
-
-          {jwtRule.fromHeaders ? (
-            <div>
-              <b>fromHeaders</b>: [{formatJwtField('fromHeaders', jwtRule)}]
-            </div>
-          ) : undefined}
-
-          {jwtRule.fromParams ? (
-            <div>
-              <b>fromParams</b>: [{formatJwtField('fromParams', jwtRule)}]
-            </div>
-          ) : undefined}
-
-          {jwtRule.outputPayloadToHeader ? (
-            <div>
-              <b>outputPayloadToHeader</b>: [{formatJwtField('outputPayloadToHeader', jwtRule)}]
-            </div>
-          ) : undefined}
-
-          {jwtRule.forwardOriginalToken !== undefined ? (
-            <div>
-              <b>forwardOriginalToken</b>: [{formatJwtField('forwardOriginalToken', jwtRule)}]
-            </div>
-          ) : undefined}
-        </>,
-
-        <Button
-          id="removeToOperationBtn"
-          variant={ButtonVariant.link}
-          icon={<KialiIcon.Delete />}
-          onClick={() => props.onRemoveJwtRule(i)}
-        />
-      ]
+  // @ts-ignore
+  actionResolver = (rowData, { rowIndex }) => {
+    const removeAction = {
+      title: $t('RemoveJWTRule', 'Remove JWT Rule'),
+      // @ts-ignore
+      onClick: (event, rowIndex, rowData, extraData) => {
+        this.props.onRemoveJwtRule(rowIndex);
+      }
     };
-  });
+    return [removeAction];
+  };
 
-  const noJWTRules = <div className={noJWTRulesStyle}>No JWT Rules Defined</div>;
-
-  return <SimpleTable label="JWT Rules List" columns={columns} rows={rows} emptyState={noJWTRules} />;
-};
+  render() {
+    return (
+      <>
+        <Table
+          aria-label="JWT Rules List"
+          cells={headerCells}
+          rows={this.rows()}
+          // @ts-ignore
+          actionResolver={this.actionResolver}
+        >
+          <TableHeader />
+          <TableBody />
+        </Table>
+        {this.props.jwtRules.length === 0 && (
+          <div className={noJWTRulesStyle}>{$t('tip92', 'No JWT Rules Defined')}</div>
+        )}
+      </>
+    );
+  }
+}

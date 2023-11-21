@@ -1,4 +1,5 @@
 import * as React from 'react';
+// Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
 import { FormGroup, FormSelect, FormSelectOption } from '@patternfly/react-core';
 import { AddressList } from './GatewayForm/AddressList';
 import { Address, Listener, MAX_PORT, MIN_PORT } from '../../types/IstioObjects';
@@ -17,19 +18,19 @@ type Props = {
 
 // Gateway and Sidecar states are consolidated in the parent page
 export type K8sGatewayState = {
-  addresses: Address[];
   gatewayClass: string;
   listeners: Listener[];
-  listenersForm: ListenerForm[];
+  addresses: Address[];
   validHosts: boolean;
+  listenersForm: ListenerForm[];
 };
 
 export const initK8sGateway = (): K8sGatewayState => ({
-  addresses: [],
   gatewayClass: serverConfig.gatewayAPIClasses[0].className,
   listeners: [],
-  listenersForm: [],
-  validHosts: false
+  addresses: [],
+  validHosts: false,
+  listenersForm: []
 });
 
 export const isK8sGatewayStateValid = (g: K8sGatewayState): boolean => {
@@ -39,18 +40,18 @@ export const isK8sGatewayStateValid = (g: K8sGatewayState): boolean => {
 };
 
 export type ListenerForm = {
-  from: string;
-  hostname: string;
   isHostValid: boolean;
-  isLabelSelectorValid: boolean;
-  name: string;
+  hostname: string;
   port: string;
+  name: string;
   protocol: string;
+  from: string;
+  isLabelSelectorValid: boolean;
   sSelectorLabels: string;
 };
 
-const validListeners = (listeners: Listener[]): boolean => {
-  return listeners.every((e: Listener) => {
+const validListeners = (listeners: Listener[]) => {
+  return listeners.every((e, _) => {
     return (
       isValidName(e.name) &&
       typeof e.port !== 'undefined' &&
@@ -61,8 +62,8 @@ const validListeners = (listeners: Listener[]): boolean => {
   });
 };
 
-const validAddresses = (address: Address[]): boolean => {
-  return address.every((a: Address) => {
+const validAddresses = (address: Address[]) => {
+  return address.every((a, _) => {
     return isValidAddress(a);
   });
 };
@@ -77,15 +78,15 @@ export class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
     this.setState(this.props.k8sGateway);
   }
 
-  onChangeListener = (listeners: Listener[], listenersForm: ListenerForm[]): void => {
+  onChangeListener = (listeners: Listener[], listenersForm: ListenerForm[]) => {
     this.setState({ listeners: listeners, listenersForm: listenersForm }, () => this.props.onChange(this.state));
   };
 
-  onChangeAddress = (addresses: Address[]): void => {
+  onChangeAddress = (addresses: Address[]) => {
     this.setState({ addresses: addresses }, () => this.props.onChange(this.state));
   };
 
-  onChangeGatewayClass = (_event: React.FormEvent, value: string) => {
+  onChangeGatewayClass = (_event, value) => {
     this.setState(
       {
         gatewayClass: value
@@ -98,7 +99,7 @@ export class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
     return (
       <>
         {serverConfig.gatewayAPIClasses.length > 1 && (
-          <FormGroup label="Gateway Class" fieldId="gatewayClass">
+          <FormGroup label={$t('GatewayClass', 'Gateway Class')} fieldId="gatewayClass">
             <FormSelect
               value={this.state.gatewayClass}
               onChange={this.onChangeGatewayClass}
@@ -111,16 +112,14 @@ export class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
             </FormSelect>
           </FormGroup>
         )}
-
-        <FormGroup label="Listeners" fieldId="listener" isRequired={true}>
+        <FormGroup label={$t('Listeners')} fieldId="listener" isRequired={true}>
           <ListenerList
             onChange={this.onChangeListener}
             listenersForm={this.state.listenersForm}
             listeners={this.state.listeners}
           />
         </FormGroup>
-
-        <FormGroup label="Addresses" fieldId="gwAddressList">
+        <FormGroup label={$t('Addresses')} fieldId="gwAddressList">
           <AddressList onChange={this.onChangeAddress} addressList={this.state.addresses} />
         </FormGroup>
       </>

@@ -55,14 +55,14 @@ export class WorkloadWizard extends React.Component<WorkloadWizardProps, Workloa
               variant={ButtonVariant.primary}
               onClick={this.onCreateUpdate}
             >
-              {'Create'}
+              {$t('Create')}
             </Button>,
             <Button key="cancel" variant={ButtonVariant.secondary} onClick={() => this.onClose(false)}>
-              Cancel
+              {$t('Cancel')}
             </Button>
           ]}
         >
-          <>Workload Wizard Skeleton</>
+          <>{$t('WorkloadWizardSkeleton', 'Workload Wizard Skeleton')}</>
         </Modal>
       </>
     );

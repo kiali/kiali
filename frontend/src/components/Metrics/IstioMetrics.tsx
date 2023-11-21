@@ -181,7 +181,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
         });
       })
       .catch(error => {
-        AlertUtils.addError('Could not fetch metrics.', error);
+        AlertUtils.addError($t('tip101', 'Could not fetch metrics'), error);
         throw error;
       });
   };
@@ -205,7 +205,10 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
       })
       .catch(err => {
         AlertUtils.addMessage({
-          ...AlertUtils.extractAxiosError('Could not fetch Grafana info. Turning off links to Grafana.', err),
+          ...AlertUtils.extractAxiosError(
+            $t('helpTip57', 'Could not fetch Grafana info. Turning off links to Grafana.'),
+            err
+          ),
           group: 'default',
           type: MessageType.INFO,
           showNotification: false
@@ -357,7 +360,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
                 id={`spans-show-`}
                 isChecked={this.state.showSpans}
                 key={`spans-show-chart`}
-                label="Spans"
+                label={$t('Spans')}
                 onChange={(_event, checked) => this.onSpans(checked)}
               />
             </ToolbarItem>
@@ -366,7 +369,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
                 id={`trendlines-show-`}
                 isChecked={this.state.showTrendlines}
                 key={`trendlines-show-chart`}
-                label="Trendlines"
+                label={$t('Trendlines')}
                 onChange={(_event, checked) => this.onTrendlines(checked)}
               />
             </ToolbarItem>

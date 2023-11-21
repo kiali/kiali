@@ -4,7 +4,7 @@ import { kialiStyle } from './StyleUtils';
 export const basicTabStyle = kialiStyle({
   $nest: {
     '& .pf-v5-c-tabs__list': {
-      marginLeft: '1.25rem'
+      marginLeft: '20px'
     },
 
     '& .pf-v5-c-tab-content': {

@@ -48,9 +48,9 @@ const validToIcon: { [valid: string]: ComponentIcon } = {
 };
 
 const statusMsg = {
-  [Status.NotFound]: 'Not found',
-  [Status.NotReady]: 'Not ready',
-  [Status.Unhealthy]: 'Not healthy',
+  [Status.NotFound]: 'Not_found',
+  [Status.NotReady]: 'Not_ready',
+  [Status.Unhealthy]: 'Not_healthy',
   [Status.Unreachable]: 'Unreachable'
 };
 
@@ -71,7 +71,7 @@ export class IstioComponentStatus extends React.Component<Props> {
       <Split key={'cell-status-icon-' + comp.name} hasGutter={true}>
         <SplitItem>{this.renderIcon(this.props.componentStatus.status, this.props.componentStatus.is_core)}</SplitItem>
         <SplitItem isFilled={true}>{comp.name}</SplitItem>
-        <SplitItem>{statusMsg[comp.status]}</SplitItem>
+        <SplitItem>{$t(statusMsg[comp.status])}</SplitItem>
       </Split>
     ];
   };

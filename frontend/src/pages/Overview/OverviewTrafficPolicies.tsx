@@ -146,7 +146,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
         this.props.load();
       })
       .catch(error => {
-        AlertUtils.addError('Could not update namespace ' + this.props.nsTarget, error);
+        AlertUtils.addError($t('helpTip61', 'Could not update namespace ') + this.props.nsTarget, error);
       });
   };
 
@@ -158,7 +158,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
         this.props.load();
       })
       .catch(error => {
-        AlertUtils.addError('Could not update namespace ' + this.props.nsTarget, error);
+        AlertUtils.addError($t('helpTip61', 'Could not update namespace ') + this.props.nsTarget, error);
       });
   };
 
@@ -182,13 +182,17 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
           if (op !== 'delete') {
             this.createTrafficPolicies(ns, duration, apsP, sdsP, op, cluster);
           } else {
-            AlertUtils.add('Traffic policies ' + op + 'd for ' + ns + ' namespace.', 'default', MessageType.SUCCESS);
+            AlertUtils.add(
+              `${$t('TrafficPolicies', 'Traffic Policies')} ` + op + 'd for ' + ns + ' namespace.',
+              'default',
+              MessageType.SUCCESS
+            );
             this.props.load();
           }
         })
         .catch(errorDelete => {
           if (!errorDelete.isCanceled) {
-            AlertUtils.addError('Could not delete traffic policies.', errorDelete);
+            AlertUtils.addError(`${$t('helpTip62', 'Could not delete traffic policies.')} `, errorDelete);
           }
         });
     } else {
@@ -215,7 +219,11 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
         )
         .then(results => {
           if (results.length > 0) {
-            AlertUtils.add('Traffic policies ' + op + 'd for ' + ns + ' namespace.', 'default', MessageType.SUCCESS);
+            AlertUtils.add(
+              `${$t('TrafficPolicies', 'Traffic Policies')} ` + op + 'd for ' + ns + ' namespace.',
+              'default',
+              MessageType.SUCCESS
+            );
           }
           this.props.load();
         })
@@ -227,9 +235,9 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
     });
     graphDataSource.on('fetchError', (errorMessage: string | null) => {
       if (errorMessage !== '') {
-        errorMessage = 'Could not fetch traffic data: ' + errorMessage;
+        errorMessage = `${$t('tip41', 'Could not fetch traffic data')}: ` + errorMessage;
       } else {
-        errorMessage = 'Could not fetch traffic data.';
+        errorMessage = $t('tip42', 'Could not fetch traffic data.');
       }
       AlertUtils.addError(errorMessage);
     });
@@ -242,7 +250,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
       items.push({
         type: 'authorizationPolicy',
         items: this.state.authorizationPolicies,
-        title: 'Authorization Policies'
+        title: $t('AuthorizationPolicies', 'Authorization Policies')
       });
     this.state.sidecars.length > 0 && items.push({ type: 'sidecar', items: this.state.sidecars, title: 'Sidecars' });
     return items;
@@ -319,7 +327,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
               {modalAction}
             </Button>,
             <Button key="cancel" variant={ButtonVariant.secondary} onClick={this.onHideConfirmModal}>
-              Cancel
+              {$t('Cancel')}
             </Button>
           ]}
         >

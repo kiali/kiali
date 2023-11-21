@@ -392,19 +392,24 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             <div>
-              Displays the requested response time. The unit is milliseconds (ms) when less than 1000, otherwise seconds
-              (s). Default: 95th Percentile.
+              {$t(
+                'tip306',
+                'Displays the requested response time. The unit is milliseconds (ms) when less than 1000, otherwise seconds (s). Default: 95th Percentile.'
+              )}
             </div>
             <div>
-              Response times only apply to request-based traffic (not TCP or gRPC messaging). Additionally, the
-              following edges do not offer a response time label but the information is available in the side panel when
-              selecting the edge:
+              {$t(
+                'tip307',
+                'Response times only apply to request-based traffic (not TCP or gRPC messaging). Additionally, the following edges do not offer a response time label but the information is available in the side panel when selecting the edge'
+              )}
             </div>
-            <div>- edges into service nodes</div>
-            <div>- edges into or out of operation nodes.</div>
+            <div>- {$t('tip308', 'edges into service nodes')}</div>
+            <div>- {$t('tip309', 'edges into or out of operation nodes.')}</div>
             <div>
-              This option will be disabled if response time telemetry is unavailable. Some options may be disabled for
-              the same reason.
+              {$t(
+                'tip310',
+                'this option will be disabled if response time telemetry is unavailable. Some options may be disabled for the same reason.'
+              )}
             </div>
           </div>
         )
@@ -417,18 +422,24 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             <div>
-              Displays the requested HTTP Throughput. The unit is bytes-per-second (bps) when less than 1024, otherwise
-              kilobytes-per-second (kps). Default: Request Throughput
+              {$t(
+                'tip311',
+                'Displays the requested HTTP Throughput. The unit is bytes-per-second (bps) when less than 1024, otherwise kilobytes-per-second (kps). Default: Request Throughput'
+              )}
             </div>
             <div>
-              Throughput applies only to request-based, HTTP traffic. Additionally, the following edges do not offer a
-              throughput label:
+              {$t(
+                'tip312',
+                'Throughput applies only to request-based, HTTP traffic. Additionally, the following edges do not offer a throughput label'
+              )}
             </div>
-            <div>- edges into service nodes</div>
-            <div>- edges into or out of operation nodes.</div>
+            <div>- {$t('tip308', 'edges into service nodes')}</div>
+            <div>- {$t('tip309', 'edges into or out of operation nodes.')}</div>
             <div>
-              This option will be disabled if throughput telemetry is unavailable. Some options may be disabled for the
-              same reason.
+              {$t(
+                'tip313',
+                'This option will be disabled if throughput telemetry is unavailable. Some options may be disabled for the same reason.'
+              )}
             </div>
           </div>
         )
@@ -439,9 +450,10 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         labelText: _.startCase(EdgeLabelMode.TRAFFIC_DISTRIBUTION),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            HTTP and gRPC Edges display the percentage of traffic for that edge, when less than 100%. For a source node,
-            the sum for outbound edges (per protocol) should be equal to or near 100%, given rounding. TCP edges are not
-            included in the distribution because their rates reflect bytes.
+            {$t(
+              'tip314',
+              'HTTP and gRPC Edges display the percentage of traffic for that edge, when less than 100%. For a source node, the sum for outbound edges (per protocol) should be equal to or near 100%, given rounding. TCP edges are not included in the distribution because their rates reflect bytes.'
+            )}
           </div>
         )
       },
@@ -451,10 +463,10 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         labelText: _.startCase(EdgeLabelMode.TRAFFIC_RATE),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            HTTP rates are in requests-per-second (rps). gRPC rates may be in requests-per-second (rps) or
-            messages-per-second (mps). For request rates, the percentage of error responses is shown below the rate,
-            when non-zero. TCP rates are in bytes. The unit is bytes-per-second (bps) when less than 1024, otherwise
-            kilobytes-per-second (kps). Rates are rounded to 2 significant digits.
+            {$t(
+              'tip315',
+              'HTTP rates are in requests-per-second (rps). gRPC rates may be in requests-per-second (rps) or messages-per-second (mps). For request rates, the percentage of error responses is shown below the rate, when non-zero. TCP rates are in bytes. The unit is bytes-per-second (bps) when less than 1024, otherwise kilobytes-per-second (kps). Rates are rounded to 2 significant digits.'
+            )}
           </div>
         )
       }
@@ -468,7 +480,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         labelText: 'Request',
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            HTTP request data in bytes-per-second (bps) or kilobytes-per-second (kps)
+            {$t('tip316', 'HTTP request data in bytes-per-second (bps) or kilobytes-per-second (kps)')}
           </div>
         )
       },
@@ -479,7 +491,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         labelText: 'Response',
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            HTTP response data in bytes per second (bps) or kilobytes-per-second (kps)
+            {$t('tip317', 'HTTP response data in bytes per second (bps) or kilobytes-per-second (kps)')}
           </div>
         )
       }
@@ -491,28 +503,38 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         labelText: 'Average',
         isChecked: edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_AVERAGE),
         isDisabled: this.state.crippledFeatures?.responseTimeAverage,
-        tooltip: <div style={{ textAlign: 'left' }}>Average request response time</div>
+        tooltip: <div style={{ textAlign: 'left' }}>{$t('tip318', 'Average request response time')}</div>
       },
       {
         id: EdgeLabelMode.RESPONSE_TIME_P50,
         labelText: 'Median',
         isChecked: edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_P50),
         isDisabled: this.state.crippledFeatures?.responseTimePercentiles,
-        tooltip: <div style={{ textAlign: 'left' }}>Median request response time (50th Percentile)</div>
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>{$t('tip319', 'Median request response time (50th Percentile)')}</div>
+        )
       },
       {
         id: EdgeLabelMode.RESPONSE_TIME_P95,
         labelText: '95th Percentile',
         isChecked: edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_P95),
         isDisabled: this.state.crippledFeatures?.responseTimePercentiles,
-        tooltip: <div style={{ textAlign: 'left' }}>Max response time for 95% of requests (95th Percentile)</div>
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>
+            {$t('tip320', 'Max response time for 95% of requests (95th Percentile)')}
+          </div>
+        )
       },
       {
         id: EdgeLabelMode.RESPONSE_TIME_P99,
         labelText: '99th Percentile',
         isChecked: edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_P99),
         isDisabled: this.state.crippledFeatures?.responseTimePercentiles,
-        tooltip: <div style={{ textAlign: 'left' }}>Max response time for 99% of requests (99th Percentile)</div>
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>
+            {$t('tip321', 'Max response time for 99% of requests (99th Percentile)')}
+          </div>
+        )
       }
     ];
 
@@ -524,8 +546,10 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         onChange: toggleBoxByCluster,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            When enabled and there are multiple clusters, the graph will box nodes in the same cluster. The "unknown"
-            cluster is never boxed.
+            {$t(
+              'tip322',
+              "When enabled and there are multiple clusters, the graph will box nodes in the same cluster. The 'unknown' cluster is never boxed."
+            )}
           </div>
         )
       },
@@ -536,8 +560,10 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         onChange: toggleBoxByNamespace,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            When enabled and there are multiple namespaces, the graph will box nodes in the same namespace, within the
-            same cluster. The "unknown" namespace is never boxed.
+            {$t(
+              'tip323',
+              "When enabled and there are multiple namespaces, the graph will box nodes in the same namespace, within the same cluster. The 'unknown' namespace is never boxed."
+            )}
           </div>
         )
       },
@@ -548,8 +574,10 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         onChange: toggleCompressOnHide,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            Compress the graph after graph-hide removes matching elements. Otherwise the graph maintains the space
-            consumed by the hidden elements.
+            {$t(
+              'tip324',
+              'Compress the graph after graph-hide removes matching elements. Otherwise the graph maintains the space consumed by the hidden elements.'
+            )}
           </div>
         )
       },
@@ -560,9 +588,10 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         onChange: toggleIdleEdges,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            Idle edges have no request traffic for the time period. Disabled by default to provide cleaner graphs.
-            Enable to help detect unexpected traffic omissions, or to confirm expected edges with no traffic (due to
-            routing, mirroring, etc).
+            {$t(
+              'tip325',
+              'Idle edges have no request traffic for the time period. Disabled by default to provide cleaner graphs. Enable to help detect unexpected traffic omissions, or to confirm expected edges with no traffic (due to routing, mirroring, etc).'
+            )}
           </div>
         )
       },
@@ -573,10 +602,10 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         onChange: toggleIdleNodes,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            With "Idle Edges" enabled this displays nodes for defined services that have *never* received traffic. With
-            "Idle Edges" disabled this displays nodes for defined services that have not received traffic during the
-            current time period. Disabled by default to provide cleaner graphs. Enable to help locate unused,
-            misconfigured or obsolete services.
+            {$t(
+              'tip326',
+              "With 'Idle Edges' enabled this displays nodes for defined services that have *never* received traffic. With 'Idle Edges' disabled this displays nodes for defined services that have not received traffic during the current time period. Disabled by default to provide cleaner graphs. Enable to help locate unused, misconfigured or obsolete services."
+            )}
           </div>
         )
       },
@@ -589,15 +618,19 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             <div>
-              When both operation and service nodes are enabled then the operation is displayed specific to each service
-              to which it applies, and therefore may be duplicated for different services. When enabled independently
-              each operation will have a single node representing the total traffic for that operation.
+              {$t(
+                'tip327',
+                'When both operation and service nodes are enabled then the operation is displayed specific to each service to which it applies, and therefore may be duplicated for different services. When enabled independently each operation will have a single node representing the total traffic for that operation.'
+              )}
             </div>
-            <div>- Operations with no traffic are ignored.</div>
-            <div>- This is not applicable to Service graphs.</div>
+            <div>-{$t('tip328', 'Operations with no traffic are ignored.')}</div>
+            <div>- {$t('tip329', 'This is not applicable to Service graphs.')}</div>
             <div>
-              - Operation nodes require additional "Request Classification" Istio configuration for workloads in the
-              selected namespaces.
+              -{' '}
+              {$t(
+                'tip330',
+                "Operation nodes require additional 'Request Classification' Istio configuration for workloads in the selected namespaces."
+              )}
             </div>
           </div>
         )
@@ -609,13 +642,10 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         onChange: toggleRank,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            Rank graph nodes based on configurable criteria such as 'number of inbound edges'. These rankings can be
-            used in the graph find/hide feature to help highlight the most important workloads, services, and
-            applications. Rankings are normalized to fit between 1..100 and nodes may tie with each other in rank.
-            Ranking starts at 1 for the top ranked nodes so when ranking nodes based on 'number of inbound edges', the
-            node(s) with the most inbound edges would have rank 1. Node(s) with the second most inbound edges would have
-            rank 2. Each selected criteria contributes equally to a node's ranking. Although 100 rankings are possible,
-            only the required number of rankings are assigned, starting at 1.
+            {$t(
+              'tip331',
+              "Rank graph nodes based on configurable criteria such as 'number of inbound edges'. These rankings can be used in the graph find/hide feature to help highlight the most important workloads, services, and applications. Rankings are normalized to fit between 1..100 and nodes may tie with each other in rank. Ranking starts at 1 for the top ranked nodes so when ranking nodes based on 'number of inbound edges', the node(s) with the most inbound edges would have rank 1. Node(s) with the second most inbound edges would have rank 2. Each selected criteria contributes equally to a node's ranking. Although 100 rankings are possible, only the required number of rankings are assigned, starting at 1."
+            )}
           </div>
         )
       },
@@ -627,10 +657,10 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         onChange: toggleServiceNodes,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            Reflect service routing by injecting the destination service nodes into the graph. This can be useful for
-            grouping requests for the same service, but routed to different workloads. Edges leading into service nodes
-            are logical aggregations and will not show response time labels, but if selected the side panel will provide
-            a response time chart.
+            {$t(
+              'tip332',
+              'Reflect service routing by injecting the destination service nodes into the graph. This can be useful for grouping requests for the same service, but routed to different workloads. Edges leading into service nodes are logical aggregations and will not show response time labels, but if selected the side panel will provide a response time chart.'
+            )}
           </div>
         )
       },
@@ -641,8 +671,10 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         onChange: toggleTrafficAnimation,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            Animate the graph to reflect traffic flow. The particle density and speed roughly reflects an edge's request
-            load relevant to the other edges. Animation can be CPU intensive.
+            {$t(
+              'tip333',
+              "Animate the graph to reflect traffic flow. The particle density and speed roughly reflects an edge's request load relevant to the other edges. Animation can be CPU intensive."
+            )}
           </div>
         )
       }
@@ -663,10 +695,10 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             <div>
-              Show closed or open lock icons on edges with traffic that differs from the global mTLS policy. The
-              percentage of mTLS traffic can be seen in the side-panel when selecting the edge. Note that the global
-              masthead will show a lock icon when global mTLS is enabled. The side-panel will also display source and
-              destination principals, if available. mTLS status is not offered for gRPC-message traffic.
+              {$t(
+                'tip334',
+                'Show closed or open lock icons on edges with traffic that differs from the global mTLS policy. The percentage of mTLS traffic can be seen in the side-panel when selecting the edge. Note that the global masthead will show a lock icon when global mTLS is enabled. The side-panel will also display source and destination principals, if available. mTLS status is not offered for gRPC-message traffic.'
+              )}
             </div>
           </div>
         )
@@ -679,8 +711,10 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             <div>
-              Show virtual service related icons. Additional icons are displayed if a circuit breaker is present on the
-              virtual service or if the virtual service was created through one of the Kiali service wizards.
+              {$t(
+                'tip335',
+                'Show virtual service related icons. Additional icons are displayed if a circuit breaker is present on the virtual service or if the virtual service was created through one of the Kiali service wizards.'
+              )}
             </div>
           </div>
         )
@@ -714,7 +748,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         <div id="graph-display-menu" className={menuStyle} style={{ width: '15em' }}>
           <div style={{ marginTop: '0.5rem' }}>
             <span className={titleStyle} style={{ paddingRight: 0 }}>
-              Show Edge Labels
+              {$t('Show_Edge_Labels', 'Show Edge Labels')}
             </span>
             <Tooltip
               key="tooltip_show_edge_labels"
@@ -722,8 +756,10 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
               content={
                 <div style={{ textAlign: 'left' }}>
                   <div>
-                    Values for multiple label selections are stacked in the same order as the options below. Hover or
-                    selection will always show units, an additionally show protocol.
+                    {$t(
+                      'tip304',
+                      'Values for multiple label selections are stacked in the same order as the options below. Hover or selection will always show units, an additionally show protocol.'
+                    )}
                   </div>
                 </div>
               }
@@ -743,7 +779,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                   isChecked={edgeLabelOption.isChecked}
                   isDisabled={this.props.disabled || edgeLabelOption.isDisabled}
                   key={edgeLabelOption.id}
-                  label={edgeLabelOption.labelText}
+                  label={$t(edgeLabelOption.labelText)}
                   name="edgeLabelOptions"
                   onChange={(event, _) => this.toggleEdgeLabelMode(_, event)}
                   value={edgeLabelOption.id}
@@ -773,7 +809,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           id={rtOption.id}
                           isChecked={rtOption.isChecked}
                           isDisabled={this.props.disabled || edgeLabelOption.isDisabled || rtOption.isDisabled}
-                          label={rtOption.labelText}
+                          label={$t(rtOption.labelText)}
                           name="rtOptions"
                           onChange={(event, _) => this.toggleEdgeLabelResponseTimeMode(_, event)}
                           style={{ paddingLeft: '0.25rem' }}
@@ -808,7 +844,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           id={throughputOption.id}
                           isChecked={throughputOption.isChecked}
                           isDisabled={this.props.disabled || edgeLabelOption.isDisabled || throughputOption.isDisabled}
-                          label={throughputOption.labelText}
+                          label={$t(throughputOption.labelText)}
                           name="throughputOptions"
                           onChange={(event, _) => this.toggleEdgeLabelThroughputMode(_, event)}
                           style={{ paddingLeft: '0.5rem' }}
@@ -831,7 +867,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
               )}
             </div>
           ))}
-          <div className={titleStyle}>Show</div>
+          <div className={titleStyle}>{$t('Show')}</div>
           {visibilityOptions.map((item: DisplayOptionType) => (
             <div key={item.id} className={menuOptionStyle}>
               <label key={item.id} className={!!item.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}>
@@ -839,7 +875,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                   id={item.id}
                   isChecked={item.isChecked}
                   isDisabled={this.props.disabled || item.isDisabled}
-                  label={item.labelText}
+                  label={$t(item.labelText)}
                   onChange={item.onChange}
                 />
               </label>
@@ -863,7 +899,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           id={scoringOption.id}
                           isChecked={scoringOption.isChecked}
                           isDisabled={this.props.disabled || item.isDisabled}
-                          label={scoringOption.labelText}
+                          label={$t(scoringOption.labelText)}
                           name="scoringOptions"
                           onChange={scoringOption.onChange}
                           style={{ paddingLeft: '0.25rem' }}
@@ -887,7 +923,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
             </div>
           ))}
 
-          <div className={titleStyle}>Show Badges</div>
+          <div className={titleStyle}>{$t('ShowBadges', 'Show Badges')}</div>
           {badgeOptions.map((item: DisplayOptionType) => (
             <div key={item.id} className={menuOptionStyle}>
               <label key={item.id} className={!!item.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}>
@@ -895,7 +931,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                   id={item.id}
                   isChecked={item.isChecked}
                   isDisabled={this.props.disabled || item.isDisabled}
-                  label={item.labelText}
+                  label={$t(item.labelText)}
                   onChange={item.onChange}
                 />
               </label>

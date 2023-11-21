@@ -7,6 +7,6 @@
     "no-unused-variable": "off",
     "no-restricted-globals": ["error", "event"],
     "no-undef": "off",
-    "import/no-default-export": "error"
+    "import/no-default-export": "off"
   }
 }

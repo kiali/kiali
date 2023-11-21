@@ -126,11 +126,11 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
             <div className={classes(toggleSidePanelStyle)} onClick={this.togglePanel}>
               {this.state.isVisible ? (
                 <>
-                  <KialiIcon.AngleDoubleDown /> Hide
+                  <KialiIcon.AngleDoubleDown /> {$t('Hide')}
                 </>
               ) : (
                 <>
-                  <KialiIcon.AngleDoubleUp /> Show
+                  <KialiIcon.AngleDoubleUp /> {$t('Show')}
                 </>
               )}
             </div>

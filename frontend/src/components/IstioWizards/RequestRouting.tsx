@@ -3,7 +3,7 @@ import { WorkloadOverview } from '../../types/ServiceInfo';
 import { Rules, MOVE_TYPE, Rule } from './RequestRouting/Rules';
 import { RuleBuilder } from './RequestRouting/RuleBuilder';
 import { ANYTHING, EXACT, HEADERS, PRESENCE, REGEX } from './RequestRouting/MatchBuilder';
-import { MSG_WEIGHTS_NOT_VALID, WorkloadWeight } from './TrafficShifting';
+import { WorkloadWeight } from './TrafficShifting';
 import { getDefaultWeights } from './WizardActions';
 import { FaultInjectionRoute } from './FaultInjection';
 import { TimeoutRetryRoute } from './RequestTimeouts';
@@ -27,10 +27,6 @@ type State = {
   rules: Rule[];
   validationMsg: string;
 };
-
-const MSG_SAME_MATCHING = 'A Rule with same matching criteria is already added.';
-const MSG_HEADER_NAME_NON_EMPTY = 'Header name must be non empty';
-const MSG_HEADER_VALUE_NON_EMPTY = 'Header value must be non empty';
 
 export class RequestRouting extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -180,7 +176,7 @@ export class RequestRouting extends React.Component<Props, State> {
             headerName: prevState.headerName,
             matchValue: prevState.matchValue,
             rules: prevState.rules,
-            validationMsg: MSG_SAME_MATCHING,
+            validationMsg: $t('tip1', 'A Rule with same matching criteria is already added.'),
             faultInjectionRoute: prevState.faultInjectionRoute,
             timeoutRetryRoute: prevState.timeoutRetryRoute
           };
@@ -194,7 +190,10 @@ export class RequestRouting extends React.Component<Props, State> {
     this.setState(prevState => {
       return {
         matches: prevState.matches.filter(m => matchToRemove !== m),
-        validationMsg: prevState.validationMsg === MSG_SAME_MATCHING ? '' : prevState.validationMsg
+        validationMsg:
+          prevState.validationMsg === $t('tip1', 'A Rule with same matching criteria is already added.')
+            ? ''
+            : prevState.validationMsg
       };
     });
   };
@@ -215,10 +214,10 @@ export class RequestRouting extends React.Component<Props, State> {
   onHeaderNameChange = (headerName: string) => {
     let validationMsg = '';
     if (this.state.matchValue !== '' && headerName === '') {
-      validationMsg = MSG_HEADER_NAME_NON_EMPTY;
+      validationMsg = $t('tip2', 'Header name must be non empty');
     }
     if (this.state.matchValue === '' && headerName !== '' && this.state.operator !== PRESENCE) {
-      validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
+      validationMsg = $t('tip3', 'Header value must be non empty');
     }
     this.setState({
       headerName: headerName,
@@ -230,10 +229,10 @@ export class RequestRouting extends React.Component<Props, State> {
     let validationMsg = '';
     if (this.state.category === HEADERS) {
       if (this.state.headerName === '' && matchValue !== '') {
-        validationMsg = MSG_HEADER_NAME_NON_EMPTY;
+        validationMsg = $t('tip2', 'Header name must be non empty');
       }
       if (this.state.headerName !== '' && matchValue === '') {
-        validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
+        validationMsg = $t('tip3', 'Header value must be non empty');
       }
     }
     if (matchValue === '') {
@@ -248,7 +247,7 @@ export class RequestRouting extends React.Component<Props, State> {
   onSelectWeights = (valid: boolean, workloads: WorkloadWeight[]) => {
     this.setState({
       workloadWeights: workloads,
-      validationMsg: !valid ? MSG_WEIGHTS_NOT_VALID : ''
+      validationMsg: !valid ? $t('helpTip28', 'The sum of all non-mirrored weights must be 100 %') : ''
     });
   };
 
@@ -323,7 +322,7 @@ export class RequestRouting extends React.Component<Props, State> {
             this.setState(_prevState => {
               return {
                 faultInjectionRoute: faultInjectionRoute,
-                validationMsg: !valid ? 'Fault Injection not valid' : ''
+                validationMsg: !valid ? $t('helpTip18', 'Fault Injection not valid') : ''
               };
             });
           }}
@@ -332,7 +331,7 @@ export class RequestRouting extends React.Component<Props, State> {
             this.setState(_prevState => {
               return {
                 timeoutRetryRoute: timeoutRetryRoute,
-                validationMsg: !valid ? 'Request Timeout not valid' : ''
+                validationMsg: !valid ? $t('helpTip19', 'Request Timeout not valid') : ''
               };
             });
           }}

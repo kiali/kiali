@@ -43,21 +43,26 @@ export class MetricsReporter extends React.Component<Props> {
       <ul style={{ listStyleType: 'none' }}>
         <li>
           <div style={{ display: 'inline-block' }}>
-            Select the reporter for the metrics displayed. Each Istio metric can be reported by the Source (workload
-            which emitted the request) and by the Destination (workload which received the request). In general, the
-            timeseries will look exactly the same because Source and Destination report the same data.
+            {$t(
+              'tip299',
+              'Select the reporter for the metrics displayed. Each Istio metric can be reported by the Source (workload which emitted the request) and by the Destination (workload which received the request). In general, the  timeseries will look exactly the same because Source and Destination report the same data.'
+            )}
           </div>
         </li>
         <li>
-          <div style={{ display: 'inline-block' }}>There are some exceptions:</div>
+          <div style={{ display: 'inline-block' }}>{$t('tip300', 'There are some exceptions')}:</div>
         </li>
         <li>
           <ul style={{ listStyleType: 'circle', marginLeft: '20px' }}>
-            <li>An opened circuit breaker would cause networking failures only reported by the Source</li>
-            <li>Fault-injected failures only reported by the Source</li>
             <li>
-              Traffic coming from unknown sources (anything that is not under the Istio mesh) would only be reported by
-              the Destination
+              {$t('tip246', 'An opened circuit breaker would cause networking failures only reported by the Source')}
+            </li>
+            <li>{$t('tip247', 'Fault-injected failures only reported by the Source')}</li>
+            <li>
+              {$t(
+                'tip301',
+                'Traffic coming from unknown sources (anything that is not under the Istio mesh) would only be reported by the Destination'
+              )}
             </li>
           </ul>
         </li>
@@ -72,7 +77,7 @@ export class MetricsReporter extends React.Component<Props> {
           id={'metrics_filter_reporter'}
           disabled={false}
           handleSelect={this.onReporterChanged}
-          nameDropdown={'Reported from'}
+          nameDropdown={$t('ReportedFrom', 'Reported from')}
           value={this.props.reporter}
           label={MetricsReporter.ReporterOptions[this.props.reporter]}
           options={MetricsReporter.ReporterOptions}

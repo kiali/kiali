@@ -19,7 +19,7 @@ export class RefreshButton extends React.Component<ComponentProps> {
 
   render() {
     return (
-      <Tooltip position="bottom" content={<>Refresh</>}>
+      <Tooltip position="bottom" content={<>{$t('Refresh')}</>}>
         <Button
           id={this.getElementId()}
           data-test="refresh-button"

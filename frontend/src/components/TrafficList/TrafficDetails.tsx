@@ -206,9 +206,9 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
 
   private graphDsFetchError = (errorMessage: string | null) => {
     if (errorMessage !== '') {
-      errorMessage = 'Could not fetch traffic data: ' + errorMessage;
+      errorMessage = `${$t('tip41', 'Could not fetch traffic data')}: ` + errorMessage;
     } else {
-      errorMessage = 'Could not fetch traffic data.';
+      errorMessage = $t('tip42', 'Could not fetch traffic data.');
     }
 
     AlertUtils.addError(errorMessage);
@@ -223,7 +223,7 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
           type: node.nodeType,
           namespace: node.namespace,
           cluster: node.cluster,
-          name: node.app || 'unknown',
+          name: node.app || $t('unknown'),
           version: node.version || '',
           isInaccessible: node.isInaccessible || false
         };
@@ -233,7 +233,7 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
           type: node.nodeType,
           namespace: node.namespace,
           cluster: node.cluster,
-          name: node.service || 'unknown',
+          name: node.service || $t('unknown'),
           isServiceEntry: node.isServiceEntry,
           isInaccessible: node.isInaccessible || false,
           destServices: node.destServices,
@@ -245,7 +245,7 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
           type: NodeType.WORKLOAD,
           namespace: node.namespace,
           cluster: node.cluster,
-          name: node.workload || 'unknown',
+          name: node.workload || $t('unknown'),
           isInaccessible: node.isInaccessible || false,
           healthAnnotation: node.hasHealthConfig
         };

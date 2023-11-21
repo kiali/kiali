@@ -49,16 +49,18 @@ class TimeDurationIndicatorComponent extends React.PureComponent<Props> {
   }
 
   timeDurationDetailLabel() {
-    return this.props.isDuration ? 'Current duration' : 'Current time range';
+    return this.props.isDuration
+      ? $t('CurrentDuration', 'Current duration')
+      : $t('CurrentTimeRange', 'Current time range');
   }
 
   timeDurationDetail() {
     if (this.props.isDuration) {
-      return `Last ${getName(this.props.duration)}`;
+      return `${$t('Last')} ${getName(this.props.duration)}`;
     } else {
       return guardTimeRange(
         this.props.timeRange,
-        d => `Last ${getName(d)}`,
+        d => `${$t('Last')} ${getName(d)}`,
         b => new Date(b.from!).toLocaleString() + ' to ' + (b.to ? new Date(b.to).toLocaleString() : 'now')
       );
     }
@@ -71,11 +73,12 @@ class TimeDurationIndicatorComponent extends React.PureComponent<Props> {
         maxWidth={'50em'}
         content={
           <>
-            <p>Select the time range of shown data, and the refresh interval.</p>
+            <p>{$t('tip258', 'Select the time range of shown data, and the refresh interval.')}</p>
             <p style={{ whiteSpace: 'nowrap' }}>
               {this.timeDurationDetailLabel()}: {this.timeDurationDetail()}
               <br />
-              Current refresh interval: {config.toolbar.refreshInterval[this.props.refreshInterval]}
+              {$t('CurrentRefreshInterval', 'Current refresh interval')}:{' '}
+              {config.toolbar.refreshInterval[this.props.refreshInterval]}
             </p>
           </>
         }

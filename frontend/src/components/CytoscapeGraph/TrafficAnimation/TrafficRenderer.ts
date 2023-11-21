@@ -373,7 +373,7 @@ export class TrafficRenderer {
           return quadraticBezier(controlPoints[2], controlPoints[3], controlPoints[4], (t - 0.5) * 2);
         }
       default:
-        throw Error('Unhandled EdgeConnectionType:' + edgeConnectionType);
+        throw Error(`${$t('UnhandledEdgeConnectionType', 'Unhandled EdgeConnectionType')}: ` + edgeConnectionType);
     }
   }
 
@@ -497,7 +497,7 @@ export class TrafficRenderer {
           bezierLength(controlPoints[2], controlPoints[3], controlPoints[4])
         );
       default:
-        throw Error('Unhandled EdgeConnectionType:' + edgeConnectionType);
+        throw Error(`${$t('UnhandledEdgeConnectionType', 'Unhandled EdgeConnectionType')}: ` + edgeConnectionType);
     }
   }
 
@@ -528,7 +528,7 @@ export class TrafficRenderer {
     } else if (controlPoints.length === 5) {
       return EdgeConnectionType.LOOP;
     } else {
-      throw Error('Unknown EdgeConnectionType, ControlPoint.length=' + controlPoints.length);
+      throw Error($t('tip166', 'Unknown EdgeConnectionType, ControlPoint.length=') + controlPoints.length);
     }
   }
 }

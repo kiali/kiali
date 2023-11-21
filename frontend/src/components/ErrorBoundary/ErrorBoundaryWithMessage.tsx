@@ -11,7 +11,10 @@ export class ErrorBoundaryWithMessage extends React.Component<MessageProps> {
     return (
       <Card>
         <CardBody>
-          <Alert variant="warning" title={this.props.message || 'Something went wrong rendering this component'}>
+          <Alert
+            variant="warning"
+            title={this.props.message || $t('tip227', 'Something went wrong rendering this component')}
+          >
             {' '}
           </Alert>
         </CardBody>

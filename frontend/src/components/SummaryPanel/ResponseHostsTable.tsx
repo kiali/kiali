@@ -2,24 +2,9 @@ import * as React from 'react';
 import _ from 'lodash';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Responses } from '../../types/Graph';
+import { Tooltip } from '@patternfly/react-core';
 import { summaryTitle } from 'pages/Graph/SummaryPanelCommon';
-import { Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
-
-const tableStyle = kialiStyle({
-  $nest: {
-    '& tr > *': {
-      paddingLeft: 0,
-      paddingRight: 0
-    },
-    '& tbody > tr:last-child': {
-      borderBottom: 0
-    }
-  }
-});
-
-const noInfoStyle = kialiStyle({
-  marginTop: '0.5rem'
-});
+import { tableStyle } from 'styles/TableStyle';
 
 type ResponseHostsTableProps = {
   responses: Responses;
@@ -33,61 +18,56 @@ interface Row {
   val: string;
 }
 
-export const ResponseHostsTable: React.FC<ResponseHostsTableProps> = (props: ResponseHostsTableProps) => {
-  const getRows = (responses: Responses): Row[] => {
+const hostStyle = kialiStyle({
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap'
+});
+
+export class ResponseHostsTable extends React.PureComponent<ResponseHostsTableProps> {
+  render() {
+    const rows = this.getRows(this.props.responses);
+
+    return (
+      <>
+        {rows.length > 0 ? (
+          <>
+            <div className={summaryTitle}>{this.props.title}</div>
+            <table className={tableStyle} style={{ tableLayout: 'fixed', width: '100%' }}>
+              <thead>
+                <tr key="table-header">
+                  <th style={{ width: '18%' }}>{$t('Code')}</th>
+                  <th style={{ width: '52%' }}>{$t('Host')}</th>
+                  <th style={{ width: '30%' }}>{$t('title5', '% Req')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map(row => (
+                  <tr key={row.key}>
+                    <td>{row.code}</td>
+                    <Tooltip distance={3} maxWidth="25rem" content={row.host}>
+                      <td className={hostStyle}>{row.host}</td>
+                    </Tooltip>
+                    <td>{row.val}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        ) : (
+          <>{$t('tip29', 'No Host Information Available')}</>
+        )}
+      </>
+    );
+  }
+
+  private getRows = (responses: Responses): Row[] => {
     const rows: Row[] = [];
     _.keys(responses).forEach(code => {
       _.keys(responses[code].hosts).forEach(h => {
         rows.push({ key: `${code} ${h}`, code: code, host: h, val: responses[code].hosts[h] });
       });
     });
-
     return rows;
   };
-
-  const rows = getRows(props.responses);
-
-  return (
-    <>
-      {rows.length > 0 ? (
-        <>
-          <div className={summaryTitle}>{props.title}</div>
-
-          <Table className={tableStyle}>
-            <Thead>
-              <Tr>
-                <Th dataLabel="Code" width={20} textCenter>
-                  Code
-                </Th>
-                <Th dataLabel="Host" width={50} textCenter>
-                  Host
-                </Th>
-                <Th dataLabel="% Req" width={30} textCenter>
-                  % Req
-                </Th>
-              </Tr>
-            </Thead>
-
-            <Tbody>
-              {rows.map(row => (
-                <Tr key={row.key}>
-                  <Td dataLabel="Code" textCenter>
-                    {row.code}
-                  </Td>
-                  <Td dataLabel="Host" modifier="truncate" textCenter>
-                    {row.host}
-                  </Td>
-                  <Td dataLabel="% Req" textCenter>
-                    {row.val}
-                  </Td>
-                </Tr>
-              ))}
-            </Tbody>
-          </Table>
-        </>
-      ) : (
-        <div className={noInfoStyle}>No Host Information Available</div>
-      )}
-    </>
-  );
-};
+}

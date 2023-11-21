@@ -8,8 +8,8 @@ import { PFColorVal } from 'components/Pf/PfColors';
 // Common types
 
 export interface HelpMessage {
-  message: string;
   objectField: string;
+  message: string;
 }
 
 export interface K8sInitializer {
@@ -17,9 +17,9 @@ export interface K8sInitializer {
 }
 
 export interface K8sStatus {
+  status?: string;
   message?: string;
   reason?: string;
-  status?: string;
 }
 
 export interface K8sInitializers {
@@ -28,34 +28,34 @@ export interface K8sInitializers {
 }
 
 export interface K8sMetadata {
-  annotations?: { [key: string]: string };
-  clusterName?: string;
-  creationTimestamp?: string;
-  deletionGracePeriodSeconds?: number;
-  deletionTimestamp?: string;
-  finalizers?: string[];
-  generateName?: string;
-  generation?: number;
-  initializers?: K8sInitializers[];
-  labels?: { [key: string]: string };
   name: string;
+  generateName?: string;
   namespace?: string;
-  ownerReferences?: K8sOwnerReference[];
-  resourceVersion?: string;
   selfLink?: string;
   uid?: string;
+  resourceVersion?: string;
+  generation?: number;
+  creationTimestamp?: string;
+  deletionTimestamp?: string;
+  deletionGracePeriodSeconds?: number;
+  labels?: { [key: string]: string };
+  annotations?: { [key: string]: string };
+  ownerReferences?: K8sOwnerReference[];
+  initializers?: K8sInitializers[];
+  finalizers?: string[];
+  clusterName?: string;
 }
 
 export interface IstioObject {
-  apiVersion?: string;
   kind?: string;
+  apiVersion?: string;
   metadata: K8sMetadata;
   status?: IstioStatus;
 }
 
 export interface IstioStatus {
-  conditions?: StatusCondition[];
   validationMessages?: ValidationMessage[];
+  conditions?: StatusCondition[];
 }
 
 export interface ValidationMessage {
@@ -66,9 +66,9 @@ export interface ValidationMessage {
 }
 
 export interface StatusCondition {
-  message: string;
-  status: boolean;
   type: string;
+  status: boolean;
+  message: string;
 }
 
 export interface ValidationMessageType {
@@ -86,36 +86,36 @@ export enum ValidationTypes {
 }
 
 export const IstioLevelToSeverity = {
-  ERROR: ValidationTypes.Error,
-  INFO: ValidationTypes.Info,
   UNKNOWN: ValidationTypes.Info,
-  WARNING: ValidationTypes.Warning
+  ERROR: ValidationTypes.Error,
+  WARNING: ValidationTypes.Warning,
+  INFO: ValidationTypes.Info
 };
 
 export interface ObjectValidation {
-  checks: ObjectCheck[];
   name: string;
   objectType: string;
-  references?: ObjectReference[];
   valid: boolean;
+  checks: ObjectCheck[];
+  references?: ObjectReference[];
 }
 
 export interface ObjectCheck {
   code?: string;
   message: string;
-  path: string;
   severity: ValidationTypes;
+  path: string;
 }
 
 export interface ObjectReference {
+  objectType: string;
   name: string;
   namespace: string;
-  objectType: string;
 }
 
 export interface PodReference {
-  kind: string;
   name: string;
+  kind: string;
 }
 
 export interface References {
@@ -141,36 +141,36 @@ export interface WorkloadReference {
 }
 
 export interface ContainerInfo {
+  name: string;
   image: string;
   isProxy: boolean;
   isReady: boolean;
-  name: string;
 }
 
 // 1.6
 export interface Port {
-  name: string;
   number: number;
   protocol: string;
+  name: string;
   targetPort?: number;
 }
 
 export interface Pod {
+  name: string;
   annotations?: { [key: string]: string };
-  appLabel: boolean;
-  containers?: ContainerInfo[];
+  labels?: { [key: string]: string };
   createdAt: string;
   createdBy: PodReference[];
+  containers?: ContainerInfo[];
   istioContainers?: ContainerInfo[];
   istioInitContainers?: ContainerInfo[];
-  labels?: { [key: string]: string };
-  name: string;
-  proxyStatus?: ProxyStatus;
   serviceAccountName: string;
   status: string;
   statusMessage?: string;
   statusReason?: string;
+  appLabel: boolean;
   versionLabel: boolean;
+  proxyStatus?: ProxyStatus;
 }
 
 // models Engarde Istio proxy AccessLog
@@ -247,22 +247,10 @@ export interface PodLogs {
   linesTruncated?: boolean;
 }
 
-export interface PodLogsQuery {
-  container?: string;
-  duration?: string;
-  isProxy?: boolean;
-  maxLines?: number;
-  sinceTime?: number;
-}
-
-export interface LogLevelQuery {
-  level: string;
-}
-
 export interface EnvoyProxyDump {
+  configDump?: EnvoyConfigDump;
   bootstrap?: BootstrapSummary;
   clusters?: ClusterSummary[];
-  configDump?: EnvoyConfigDump;
   listeners?: ListenerSummary[];
   routes?: RouteSummary[];
 }
@@ -274,25 +262,25 @@ export interface EnvoyConfigDump {
 export type EnvoySummary = ClusterSummary | RouteSummary | ListenerSummary;
 
 export interface ClusterSummary {
-  destination_rule: string;
-  direction: string;
-  port: number;
   service_fqdn: Host;
+  port: number;
   subset: string;
+  direction: string;
   type: number;
+  destination_rule: string;
 }
 
 export interface ListenerSummary {
-  destination: string;
   address: string;
-  match: string;
   port: number;
+  match: string;
+  destination: string;
 }
 
 export interface RouteSummary {
+  name: string;
   domains: Host;
   match: string;
-  name: string;
   virtual_service: string;
 }
 
@@ -301,46 +289,46 @@ export interface BootstrapSummary {
 }
 
 export interface Service {
-  createdAt: string;
-  ip: string;
-  labels?: { [key: string]: string };
   name: string;
-  namespace: Namespace;
-  ports?: ServicePort[];
+  createdAt: string;
   resourceVersion: string;
+  namespace: Namespace;
+  labels?: { [key: string]: string };
   type: string;
+  ip: string;
+  ports?: ServicePort[];
 }
 
 export interface Host {
-  cluster?: string;
-  namespace: string;
   service: string;
+  namespace: string;
+  cluster?: string;
 }
 
 export interface IstioService {
-  domain?: string;
-  labels?: { [key: string]: string };
   name?: string;
   namespace?: string;
+  domain?: string;
   service?: string;
+  labels?: { [key: string]: string };
 }
 
 // 1.6
 export interface L4MatchAttributes {
   destinationSubnets?: string[];
-  gateways?: string[];
   port?: number;
   sourceLabels?: { [key: string]: string };
+  gateways?: string[];
   sourceName?: string;
 }
 
 // 1.6
 export interface TLSMatchAttributes {
-  destinationSubnets?: string[];
-  gateways?: string[];
-  port?: number;
   sniHosts: string[];
+  destinationSubnets?: string[];
+  port?: number;
   sourceLabels?: { [key: string]: string };
+  gateways?: string[];
   sourceName?: string;
 }
 
@@ -353,9 +341,9 @@ export interface StringMatch {
 
 // 1.6
 export interface HeaderOperations {
+  set?: { [key: string]: string };
   add?: { [key: string]: string };
   remove?: string[];
-  set?: { [key: string]: string };
 }
 
 // 1.6
@@ -367,8 +355,8 @@ export interface Headers {
 // 1.6
 export interface HTTPRouteDestination {
   destination: Destination;
-  headers?: Headers;
   weight?: number;
+  headers?: Headers;
 }
 
 // 1.6
@@ -379,9 +367,9 @@ export interface RouteDestination {
 
 // 1.6
 export interface HTTPRedirect {
+  uri?: string;
   authority?: string;
   redirectCode?: number;
-  uri?: string;
 }
 
 // 1.6
@@ -392,8 +380,8 @@ export interface Delegate {
 
 // 1.6
 export interface HTTPRewrite {
-  authority?: string;
   uri?: string;
+  authority?: string;
 }
 
 // 1.6
@@ -406,8 +394,8 @@ export interface HTTPRetry {
 
 // 1.6
 export interface HTTPFaultInjection {
-  abort?: Abort;
   delay?: Delay;
+  abort?: Abort;
 }
 
 // 1.6
@@ -429,12 +417,12 @@ export interface Abort {
 
 // 1.6
 export interface CorsPolicy {
-  allowCredentials?: string;
-  allowHeaders?: string[];
-  allowMethods?: string[];
   allowOrigin?: StringMatch[];
+  allowMethods?: string[];
+  allowHeaders?: string[];
   exposeHeaders?: string[];
   maxAge?: string;
+  allowCredentials?: string;
 }
 
 // Destination Rule
@@ -447,11 +435,11 @@ export interface HTTPCookie {
 
 // 1.6
 export interface ConsistentHashLB {
-  httpCookie?: HTTPCookie | null;
   httpHeaderName?: string | null;
+  httpCookie?: HTTPCookie | null;
+  useSourceIp?: boolean | null;
   httpQueryParameterName?: string | null;
   minimumRingSize?: number;
-  useSourceIp?: boolean | null;
 }
 
 // 1.6
@@ -469,83 +457,83 @@ export interface Failover {
 // 1.6
 export interface LocalityLoadBalancerSetting {
   distribute?: Distribute[];
-  enabled?: boolean;
   failover?: Failover[];
+  enabled?: boolean;
 }
 
 // 1.6
 export interface LoadBalancerSettings {
+  simple?: string | null;
   consistentHash?: ConsistentHashLB | null;
   localityLbSetting?: LocalityLoadBalancerSetting | null;
-  simple?: string | null;
 }
 
 // 1.6
 export interface TcpKeepalive {
-  interval?: string;
   probes?: number;
   time?: string;
+  interval?: string;
 }
 
 // 1.6
 export interface ConnectionPoolSettingsTCPSettings {
-  connectTimeout?: string;
   maxConnections?: number;
+  connectTimeout?: string;
   tcpKeepalive?: TcpKeepalive;
 }
 
 // 1.6
 export interface ConnectionPoolSettingsHTTPSettings {
-  h2UpgradePolicy?: string;
   http1MaxPendingRequests?: number;
   http2MaxRequests?: number;
-  idleTimeout?: string;
   maxRequestsPerConnection?: number;
   maxRetries?: number;
+  idleTimeout?: string;
+  h2UpgradePolicy?: string;
 }
 
 // 1.6
 export interface ConnectionPoolSettings {
-  http?: ConnectionPoolSettingsHTTPSettings;
   tcp?: ConnectionPoolSettingsTCPSettings;
+  http?: ConnectionPoolSettingsHTTPSettings;
 }
 
 // 1.6
 export interface OutlierDetection {
-  baseEjectionTime?: string;
-  consecutive5xxErrors?: number;
   consecutiveErrors?: number;
+  consecutive5xxErrors?: number;
   interval?: string;
+  baseEjectionTime?: string;
   maxEjectionPercent?: number;
   minHealthPercent?: number;
 }
 
 // 1.6
 export interface ClientTLSSettings {
-  caCertificates?: string | null;
-  clientCertificate?: string | null;
   mode: string;
+  clientCertificate?: string | null;
   privateKey?: string | null;
-  sni?: string | null;
+  caCertificates?: string | null;
   subjectAltNames?: string[] | null;
+  sni?: string | null;
 }
 
 // 1.6
 export interface PortTrafficPolicy {
-  connectionPool?: ConnectionPoolSettings;
-  loadBalancer?: LoadBalancerSettings;
-  outlierDetection?: OutlierDetection;
   port?: PortSelector;
+  loadBalancer?: LoadBalancerSettings;
+  connectionPool?: ConnectionPoolSettings;
+  outlierDetection?: OutlierDetection;
   tls?: ClientTLSSettings;
 }
 
 // 1.6
 export interface TrafficPolicy {
-  connectionPool?: ConnectionPoolSettings;
   loadBalancer?: LoadBalancerSettings | null;
+  connectionPool?: ConnectionPoolSettings;
   outlierDetection?: OutlierDetection;
-  portLevelSettings?: PortTrafficPolicy[];
   tls?: ClientTLSSettings | null;
+  portLevelSettings?: PortTrafficPolicy[];
 }
 
 // 1.6
@@ -557,10 +545,10 @@ export interface Subset {
 
 // 1.6
 export interface DestinationRuleSpec {
-  exportTo?: string[];
   host?: string;
-  subsets?: Subset[];
   trafficPolicy?: TrafficPolicy | null;
+  subsets?: Subset[];
+  exportTo?: string[];
 }
 
 // 1.6
@@ -576,7 +564,7 @@ export class DestinationRuleC implements DestinationRule {
     Object.assign(this, dr);
   }
 
-  static fromDrArray(drs: DestinationRule[]): DestinationRuleC[] {
+  static fromDrArray(drs: DestinationRule[]) {
     return drs.map(item => new DestinationRuleC(item));
   }
 
@@ -607,42 +595,42 @@ export interface PortSelector {
 // 1.6
 export interface Destination {
   host: string;
-  port?: PortSelector;
   subset?: string;
+  port?: PortSelector;
 }
 
 // 1.6
 export interface HTTPMatchRequest {
-  authority?: StringMatch;
-  gateways?: string[];
-  headers?: { [key: string]: StringMatch };
-  ignoreUriCase?: boolean;
-  method?: StringMatch;
   name?: string;
-  port?: PortSelector;
-  queryParams?: { [key: string]: StringMatch };
-  scheme?: StringMatch;
-  sourceLabels?: { [key: string]: string };
-  sourceNamespace?: string;
   uri?: StringMatch;
+  scheme?: StringMatch;
+  method?: StringMatch;
+  authority?: StringMatch;
+  headers?: { [key: string]: StringMatch };
+  port?: PortSelector;
+  sourceLabels?: { [key: string]: string };
+  gateways?: string[];
+  queryParams?: { [key: string]: StringMatch };
+  ignoreUriCase?: boolean;
   withoutHeaders?: { [key: string]: StringMatch };
+  sourceNamespace?: string;
 }
 
 // 1.6
 export interface HTTPRoute {
-  corsPolicy?: CorsPolicy;
-  delegate?: Delegate;
-  fault?: HTTPFaultInjection;
-  headers?: Headers;
+  name?: string;
   match?: HTTPMatchRequest[];
+  route?: HTTPRouteDestination[];
+  redirect?: HTTPRedirect;
+  delegate?: Delegate;
+  rewrite?: HTTPRewrite;
+  timeout?: string;
+  retries?: HTTPRetry;
+  fault?: HTTPFaultInjection;
   mirror?: Destination;
   mirrorPercentage?: Percent;
-  name?: string;
-  redirect?: HTTPRedirect;
-  retries?: HTTPRetry;
-  rewrite?: HTTPRewrite;
-  route?: HTTPRouteDestination[];
-  timeout?: string;
+  corsPolicy?: CorsPolicy;
+  headers?: Headers;
 }
 
 // 1.6
@@ -659,12 +647,12 @@ export interface TLSRoute {
 
 // 1.6
 export interface VirtualServiceSpec {
-  exportTo?: string[] | null;
-  gateways?: string[] | null;
   hosts?: string[];
+  gateways?: string[] | null;
   http?: HTTPRoute[];
-  tcp?: TCPRoute[];
   tls?: TLSRoute[];
+  tcp?: TCPRoute[];
+  exportTo?: string[] | null;
 }
 
 // 1.6
@@ -672,26 +660,23 @@ export interface VirtualService extends IstioObject {
   spec: VirtualServiceSpec;
 }
 
-export const getWizardUpdateLabel = (
+export function getWizardUpdateLabel(
   vs: VirtualService | VirtualService[] | null,
   k8sr: K8sHTTPRoute | K8sHTTPRoute[] | null
-): string => {
+) {
   let label = getVirtualServiceUpdateLabel(vs);
-
   if (label === '') {
     label = getK8sHTTPRouteUpdateLabel(k8sr);
   }
-
   return label;
-};
+}
 
-export const getVirtualServiceUpdateLabel = (vs: VirtualService | VirtualService[] | null): string => {
+export function getVirtualServiceUpdateLabel(vs: VirtualService | VirtualService[] | null) {
   if (!vs) {
     return '';
   }
 
   let virtualService: VirtualService | null = null;
-
   if ('length' in vs) {
     if (vs.length === 1) {
       virtualService = vs[0];
@@ -705,15 +690,14 @@ export const getVirtualServiceUpdateLabel = (vs: VirtualService | VirtualService
   } else {
     return '';
   }
-};
+}
 
-export const getK8sHTTPRouteUpdateLabel = (k8sr: K8sHTTPRoute | K8sHTTPRoute[] | null): string => {
+export function getK8sHTTPRouteUpdateLabel(k8sr: K8sHTTPRoute | K8sHTTPRoute[] | null) {
   if (!k8sr) {
     return '';
   }
 
   let k8sHTTPRoute: K8sHTTPRoute | null = null;
-
   if ('length' in k8sr) {
     if (k8sr.length === 1) {
       k8sHTTPRoute = k8sr[0];
@@ -727,21 +711,21 @@ export const getK8sHTTPRouteUpdateLabel = (k8sr: K8sHTTPRoute | K8sHTTPRoute[] |
   } else {
     return '';
   }
-};
+}
 
 export interface K8sOwnerReference {
   apiVersion: string;
-  blockOwnerDeletion?: boolean;
-  controller?: boolean;
   kind: string;
   name: string;
   uid: string;
+  controller?: boolean;
+  blockOwnerDeletion?: boolean;
 }
 
 // 1.6
 export interface GatewaySpec {
-  selector?: { [key: string]: string };
   servers?: Server[];
+  selector?: { [key: string]: string };
 }
 
 // 1.6
@@ -749,35 +733,35 @@ export interface Gateway extends IstioObject {
   spec: GatewaySpec;
 }
 
-export const getGatewaysAsList = (gws: Gateway[]): string[] => {
-  return gws.map(gateway => `${gateway.metadata.namespace}/${gateway.metadata.name}`).sort();
-};
+export function getGatewaysAsList(gws: Gateway[]): string[] {
+  return gws.map(gateway => gateway.metadata.namespace + '/' + gateway.metadata.name).sort();
+}
 
-export const filterAutogeneratedGateways = (gws: Gateway[]): Gateway[] => {
+export function filterAutogeneratedGateways(gws: Gateway[]): Gateway[] {
   return gws.filter(gateway => !gateway.metadata.name.includes('autogenerated-k8s'));
-};
+}
 
-export const getK8sGatewaysAsList = (k8sGws: K8sGateway[]): string[] => {
+export function getK8sGatewaysAsList(k8sGws: K8sGateway[]): string[] {
   if (k8sGws) {
-    return k8sGws.map(gateway => `${gateway.metadata.namespace}/${gateway.metadata.name}`).sort();
+    return k8sGws.map(gateway => gateway.metadata.namespace + '/' + gateway.metadata.name).sort();
   } else {
     return [];
   }
-};
+}
 
 // K8s Gateway API https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/
 
 export interface Listener {
-  allowedRoutes: AllowedRoutes;
-  hostname: string;
   name: string;
+  hostname: string;
   port: number;
   protocol: string;
+  allowedRoutes: AllowedRoutes;
 }
 
 export interface Address {
-  value: string;
   type: string;
+  value: string;
 }
 
 export interface AllowedRoutes {
@@ -799,9 +783,9 @@ export interface ParentRef {
 }
 
 export interface K8sGatewaySpec {
+  listeners?: Listener[];
   addresses?: Address[];
   gatewayClassName: string;
-  listeners?: Listener[];
 }
 
 export interface K8sGateway extends IstioObject {
@@ -809,29 +793,29 @@ export interface K8sGateway extends IstioObject {
 }
 
 export interface K8sHTTPRouteSpec {
-  hostnames?: string[];
   parentRefs?: ParentRef[];
+  hostnames?: string[];
   rules?: K8sRouteRule[];
 }
 
 export interface K8sRouteRule {
-  backendRefs?: K8sRouteBackendRef[];
-  filters?: K8sHTTPRouteFilter[];
   matches?: K8sHTTPRouteMatch[];
+  filters?: K8sHTTPRouteFilter[];
+  backendRefs?: K8sRouteBackendRef[];
 }
 
 export interface K8sRouteBackendRef {
-  filters?: K8sHTTPRouteFilter[];
   name: string;
-  namespace?: string;
-  port?: number;
   weight?: number;
+  port?: number;
+  namespace?: string;
+  filters?: K8sHTTPRouteFilter[];
 }
 
 export interface K8sHTTPRouteFilter {
+  requestRedirect?: K8sHTTPRouteRequestRedirect;
   requestHeaderModifier?: K8sHTTPHeaderFilter;
   requestMirror?: K8sHTTPRequestMirrorFilter;
-  requestRedirect?: K8sHTTPRouteRequestRedirect;
   type?: string;
 }
 
@@ -840,28 +824,28 @@ export interface K8sHTTPRequestMirrorFilter {
 }
 
 export interface K8sHTTPHeaderFilter {
+  set?: HTTPHeader[];
   add?: HTTPHeader[];
   remove?: string[];
-  set?: HTTPHeader[];
 }
 
 export interface K8sHTTPRouteRequestRedirect {
+  scheme?: string;
   hostname?: string;
   port?: number;
   statusCode?: number;
-  scheme?: string;
 }
 
 export interface K8sHTTPRouteMatch {
-  headers?: HTTPMatch[];
-  method?: string;
   path?: HTTPMatch;
+  headers?: HTTPMatch[];
   queryParams?: HTTPMatch[];
+  method?: string;
 }
 
 export interface HTTPMatch {
-  name?: string;
   type?: string;
+  name?: string;
   value?: string;
 }
 
@@ -880,20 +864,20 @@ export enum CaptureMode {
 
 // 1.6
 export interface IstioEgressListener {
+  port?: Port;
   bind?: string;
   captureMode?: CaptureMode;
   hosts: string[];
   localhostServerTls?: ServerTLSSettings;
-  port?: Port;
 }
 
 // 1.6
 export interface IstioIngressListener {
+  port: Port;
   bind?: string;
   captureMode?: CaptureMode;
   defaultEndpoint: string;
   localhostClientTls?: ClientTLSSettings;
-  port: Port;
 }
 
 // 1.6
@@ -914,11 +898,11 @@ export interface Localhost {
 
 // 1.6
 export interface SidecarSpec {
-  egress?: IstioEgressListener[];
-  ingress?: IstioIngressListener[];
-  localhost?: Localhost;
-  outboundTrafficPolicy?: OutboundTrafficPolicy;
   workloadSelector?: WorkloadSelector;
+  ingress?: IstioIngressListener[];
+  egress?: IstioEgressListener[];
+  outboundTrafficPolicy?: OutboundTrafficPolicy;
+  localhost?: Localhost;
 }
 
 // 1.6
@@ -928,54 +912,54 @@ export interface Sidecar extends IstioObject {
 
 // 1.6
 export interface Server {
-  hosts: string[];
   port: ServerPort;
+  hosts: string[];
   tls?: ServerTLSSettings;
 }
 
 export interface ServerForm {
-  name: string;
   number: string;
-  hosts: string[];
   protocol: string;
-  tlsCaCertificate: string;
+  name: string;
+  hosts: string[];
   tlsMode: string;
-  tlsPrivateKey: string;
   tlsServerCertificate: string;
+  tlsPrivateKey: string;
+  tlsCaCertificate: string;
 }
 
 // 1.6
 export interface ServerPort {
-  name: string;
   number: number;
   protocol: string;
+  name: string;
 }
 
 // 1.6
 export interface ServerTLSSettings {
-  caCertificates?: string;
-  cipherSuites?: string[];
-  credentialName?: string;
   httpsRedirect?: boolean;
-  maxProtocolVersion?: string;
-  minProtocolVersion?: string;
   mode?: string;
-  privateKey?: string;
   serverCertificate?: string;
+  privateKey?: string;
+  caCertificates?: string;
+  credentialName?: string;
   subjectAltNames?: string[];
-  verifyCertificateHash?: string[];
   verifyCertificateSpki?: string[];
+  verifyCertificateHash?: string[];
+  minProtocolVersion?: string;
+  maxProtocolVersion?: string;
+  cipherSuites?: string[];
 }
 
 // 1.6
 export interface ServiceEntrySpec {
+  hosts?: string[];
   addresses?: string[];
+  ports?: Port[];
+  location?: string;
+  resolution?: string;
   endpoints?: WorkloadEntrySpec[];
   exportTo?: string[];
-  hosts?: string[];
-  location?: string;
-  ports?: Port[];
-  resolution?: string;
   subjectAltNames?: string[];
   workloadSelector?: WorkloadSelector;
 }
@@ -990,9 +974,9 @@ export interface WasmPlugin extends IstioObject {
 }
 
 export interface WasmPluginSpec extends IstioObject {
-  pluginName: string;
-  url: string;
   workloadSelector?: WorkloadSelector;
+  url: string;
+  pluginName: string;
 }
 
 export interface Telemetry extends IstioObject {
@@ -1005,8 +989,8 @@ export interface TelemetrySpec extends IstioObject {
 
 export interface Endpoint {
   address: string;
-  labels: { [key: string]: string };
   ports: { [key: string]: number };
+  labels: { [key: string]: string };
 }
 
 export interface Match {
@@ -1019,8 +1003,8 @@ export interface TargetSelector {
 }
 
 export enum MutualTlsMode {
-  PERMISSIVE = 'PERMISSIVE',
-  STRICT = 'STRICT'
+  STRICT = 'STRICT',
+  PERMISSIVE = 'PERMISSIVE'
 }
 
 export interface MutualTls {
@@ -1033,8 +1017,8 @@ export interface PeerAuthenticationMethod {
 }
 
 export interface Jwt {
-  audiences: string[];
   issuer: string;
+  audiences: string[];
   jwksUri?: string;
   jwtHeaders: string[];
   jwtParams: string[];
@@ -1045,8 +1029,8 @@ export interface OriginAuthenticationMethod {
 }
 
 export enum PrincipalBinding {
-  USE_ORIGIN = 'USE_ORIGIN',
-  USE_PEER = 'USE_PEER'
+  USE_PEER = 'USE_PEER',
+  USE_ORIGIN = 'USE_ORIGIN'
 }
 
 export interface AuthorizationPolicy extends IstioObject {
@@ -1058,9 +1042,9 @@ export interface AuthorizationPolicyWorkloadSelector {
 }
 
 export interface AuthorizationPolicySpec {
-  action?: string;
-  rules?: AuthorizationPolicyRule[];
   selector?: AuthorizationPolicyWorkloadSelector;
+  rules?: AuthorizationPolicyRule[];
+  action?: string;
 }
 
 export interface AuthorizationPolicyRule {
@@ -1074,14 +1058,14 @@ export interface RuleFrom {
 }
 
 export interface Source {
-  ipBlocks?: string[];
-  namespaces?: string[];
-  notIpBlocks?: string[];
-  notNamespaces?: string[];
-  notPrincipals?: string[];
-  notRequestPrincipals?: string[];
   principals?: string[];
+  notPrincipals?: string[];
   requestPrincipals?: string[];
+  notRequestPrincipals?: string[];
+  namespaces?: string[];
+  notNamespaces?: string[];
+  ipBlocks?: string[];
+  notIpBlocks?: string[];
 }
 
 export interface RuleTo {
@@ -1090,13 +1074,13 @@ export interface RuleTo {
 
 export interface Operation {
   hosts?: string[];
-  methods?: string[];
   notHosts?: string[];
-  notMethods?: string[];
-  notPaths?: string[];
-  notPorts?: string[];
-  paths?: string[];
   ports?: string[];
+  notPorts?: string[];
+  methods?: string[];
+  notMethods?: string[];
+  paths?: string[];
+  notPaths?: string[];
 }
 
 export interface Condition {
@@ -1110,9 +1094,9 @@ export interface PeerAuthentication extends IstioObject {
 }
 
 export interface PeerAuthenticationSpec {
+  selector?: PeerAuthenticationWorkloadSelector;
   mtls?: PeerAuthenticationMutualTls;
   portLevelMtls?: { [key: number]: PeerAuthenticationMutualTls };
-  selector?: PeerAuthenticationWorkloadSelector;
 }
 
 export interface PeerAuthenticationWorkloadSelector {
@@ -1124,10 +1108,10 @@ export interface PeerAuthenticationMutualTls {
 }
 
 export enum PeerAuthenticationMutualTLSMode {
+  UNSET = 'UNSET',
   DISABLE = 'DISABLE',
   PERMISSIVE = 'PERMISSIVE',
-  STRICT = 'STRICT',
-  UNSET = 'UNSET'
+  STRICT = 'STRICT'
 }
 
 // 1.6
@@ -1137,12 +1121,12 @@ export interface WorkloadEntry extends IstioObject {
 
 export interface WorkloadEntrySpec {
   address: string;
-  labels?: { [key: string]: string };
-  locality?: string;
-  network?: string;
   ports?: { [key: string]: number };
-  serviceAccount?: string;
+  labels?: { [key: string]: string };
+  network?: string;
+  locality?: string;
   weight?: number;
+  serviceAccount?: string;
 }
 
 export interface WorkloadGroup extends IstioObject {
@@ -1151,28 +1135,28 @@ export interface WorkloadGroup extends IstioObject {
 
 export interface WorkloadGroupSpec {
   // Note that WorkloadGroup has a metadata section inside Spec
-  probe?: ReadinessProbe;
   metadata?: K8sMetadata;
   template: WorkloadEntrySpec;
+  probe?: ReadinessProbe;
 }
 
 export interface ReadinessProbe {
-  exec?: ExecHealthCheckConfig;
-  failureThreshold?: number;
-  httpGet?: HTTPHealthCheckConfig;
   initialDelaySeconds?: number;
+  timeoutSeconds?: number;
   periodSeconds?: number;
   successThreshold?: number;
-  timeoutSeconds?: number;
+  failureThreshold?: number;
+  httpGet?: HTTPHealthCheckConfig;
   tcpSocket?: TCPHealthCheckConfig;
+  exec?: ExecHealthCheckConfig;
 }
 
 export interface HTTPHealthCheckConfig {
-  host?: string;
-  httpHeaders?: HTTPHeader[];
   path?: string;
   port: number;
+  host?: string;
   scheme?: string;
+  httpHeaders?: HTTPHeader[];
 }
 
 export interface HTTPHeader {
@@ -1199,14 +1183,14 @@ export interface JWTHeader {
 }
 
 export interface JWTRule {
+  issuer?: string;
   audiences?: string[];
-  forwardOriginalToken?: boolean;
+  jwksUri?: string;
+  jwks?: string;
   fromHeaders?: JWTHeader[];
   fromParams?: string[];
-  issuer?: string;
-  jwks?: string;
-  jwksUri?: string;
   outputPayloadToHeader?: string;
+  forwardOriginalToken?: boolean;
 }
 
 // 1.6
@@ -1216,13 +1200,13 @@ export interface RequestAuthentication extends IstioObject {
 
 // 1.6
 export interface RequestAuthenticationSpec {
-  jwtRules: JWTRule[];
   selector?: WorkloadMatchSelector;
+  jwtRules: JWTRule[];
 }
 
 export interface ProxyMatch {
-  metadata?: { [key: string]: string };
   proxyVersion?: string;
+  metadata?: { [key: string]: string };
 }
 
 export interface SubFilterMatch {
@@ -1235,21 +1219,21 @@ export interface FilterMatch {
 }
 
 export interface FilterChainMatch {
-  applicationProtocols?: string;
-  filter?: FilterMatch;
   name?: string;
   sni?: string;
   transportProtocol?: string;
+  applicationProtocols?: string;
+  filter?: FilterMatch;
 }
 
 export interface ListenerMatch {
-  filterChain?: FilterChainMatch;
   portNumber?: number;
+  filterChain?: FilterChainMatch;
 }
 
 export interface RouteMatch {
-  action?: string;
   name?: string;
+  action?: string;
 }
 
 export interface VirtualHostMatch {
@@ -1258,26 +1242,26 @@ export interface VirtualHostMatch {
 }
 
 export interface RouteConfigurationMatch {
-  gateway?: string;
-  name?: string;
-  portName?: string;
   portNumber?: number;
+  portName?: string;
+  gateway?: string;
   vhost?: VirtualHostMatch;
+  name?: string;
 }
 
 export interface ClusterMatch {
-  name?: string;
   portNumber?: number;
   service?: string;
   subset?: string;
+  name?: string;
 }
 
 export interface EnvoyConfigObjectMatch {
-  cluster?: ClusterMatch;
   context?: string;
-  listener?: ListenerMatch;
   proxy?: ProxyMatch;
+  listener?: ListenerMatch;
   routeConfiguration?: RouteConfigurationMatch;
+  cluster?: ClusterMatch;
 }
 
 export interface Patch {
@@ -1292,8 +1276,8 @@ export interface EnvoyConfigObjectPatch {
 }
 
 export interface EnvoyFilterSpec {
-  configPatches: EnvoyConfigObjectPatch[];
   workloadSelector?: WorkloadSelector;
+  configPatches: EnvoyConfigObjectPatch[];
 }
 
 export interface EnvoyFilter extends IstioObject {
@@ -1306,16 +1290,16 @@ export interface AttributeInfo {
 }
 
 export interface APIKey {
-  cookie?: string;
-  header?: string;
   query?: string;
+  header?: string;
+  cookie?: string;
 }
 
 export interface CanaryUpgradeStatus {
   currentVersion: string;
+  upgradeVersion: string;
   migratedNamespaces: string[];
   pendingNamespaces: string[];
-  upgradeVersion: string;
 }
 
 export const MAX_PORT = 65535;

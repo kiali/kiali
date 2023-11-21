@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { EmptyState, EmptyStateBody, EmptyStateVariant, Tooltip, EmptyStateHeader } from '@patternfly/react-core';
 import { StarIcon } from '@patternfly/react-icons';
-import { IRow, SortByDirection } from '@patternfly/react-table';
+import { cellWidth, sortable, SortByDirection } from '@patternfly/react-table';
+import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
 import { kialiStyle } from 'styles/StyleUtils';
 
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
@@ -14,15 +15,14 @@ import { kialiIconDark, kialiIconLight } from 'config';
 import { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
 import { Theme } from 'types/Common';
-import { SimpleTable, SortableTh } from 'components/SimpleTable';
 
 const iconStyle = kialiStyle({
-  width: '1.5rem',
-  marginRight: '0.5rem',
-  marginTop: '-0.125rem'
+  width: '25px',
+  marginRight: '10px',
+  marginTop: '-2px'
 });
 
-const containerStyle = kialiStyle({ padding: '1.25rem' });
+const containerPadding = kialiStyle({ padding: '20px' });
 
 type MeshPageProps = {
   theme: string;
@@ -36,31 +36,26 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
     fetchMeshClusters();
   }, []);
 
-  const columns: SortableTh[] = [
+  const columns = [
     {
-      title: 'Cluster Name',
-      width: 20,
-      sortable: true
+      title: $t('ClusterName', 'Cluster Name'),
+      transforms: [sortable, cellWidth(20)]
     },
     {
-      title: 'Network',
-      width: 10,
-      sortable: true
+      title: $t('Network'),
+      transforms: [sortable, cellWidth(10)]
     },
     {
       title: 'Kiali',
-      width: 20,
-      sortable: false
+      transforms: [cellWidth(20)]
     },
     {
-      title: 'API Endpoint',
-      width: 20,
-      sortable: true
+      title: $t('APIEndpoint', 'API Endpoint'),
+      transforms: [sortable, cellWidth(20)]
     },
     {
-      title: 'Secret name',
-      width: 30,
-      sortable: true
+      title: $t('SecretName', 'Secret name'),
+      transforms: [sortable, cellWidth(30)]
     }
   ];
 
@@ -75,8 +70,8 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
       if (instance.url.length !== 0) {
         return (
           <Tooltip
-            key={`${cluster.name}/${instance.namespace}/${instance.serviceName}`}
-            content={`Go to this Kiali instance: ${instance.url}`}
+            key={cluster.name + '/' + instance.namespace + '/' + instance.serviceName}
+            content={`${$t('label11', 'Go to this Kiali instance')}: ${instance.url}`}
           >
             <p>
               <img alt="Kiali Icon" src={kialiIcon} className={iconStyle} />
@@ -88,7 +83,7 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
         );
       } else {
         return (
-          <p key={`${cluster.name}/${instance.namespace}/${instance.serviceName}`}>
+          <p key={cluster.name + '/' + instance.namespace + '/' + instance.serviceName}>
             <img alt="Kiali Icon" src={kialiIcon} className={iconStyle} />
             {`${instance.namespace} / ${instance.serviceName}`}
           </p>
@@ -97,7 +92,7 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
     });
   };
 
-  const buildTableRows = (): IRow[] => {
+  const buildTableRows = () => {
     if (meshClustersList === null) {
       return [];
     }
@@ -108,7 +103,7 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
       a[sortByAttr].localeCompare(b[sortByAttr], undefined, { sensitivity: 'base' })
     );
 
-    const tableRows = sortedList.map((cluster: MeshCluster) => ({
+    const tableRows = sortedList.map(cluster => ({
       cells: [
         <>
           {cluster.isKialiHome ? <StarIcon /> : null} {cluster.name}
@@ -123,18 +118,18 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
     return sortBy.direction === SortByDirection.asc ? tableRows : tableRows.reverse();
   };
 
-  const fetchMeshClusters = async (): Promise<void> => {
+  const fetchMeshClusters = async () => {
     try {
       const meshClusters = await getClusters();
       setMeshClustersList(meshClusters.data);
     } catch (e) {
       if (e instanceof Error) {
-        addError('Could not fetch the list of clusters that are part of the mesh.', e);
+        addError($t('tip93', 'Could not fetch the list of clusters that are part of the mesh'), e);
       }
     }
   };
 
-  const onSortHandler = (_event: React.MouseEvent, index: number, direction: SortByDirection): void => {
+  const onSortHandler = (_event: React.MouseEvent, index: number, direction: SortByDirection) => {
     setSortBy({ index, direction });
   };
 
@@ -144,23 +139,18 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
     <>
       <DefaultSecondaryMasthead
         hideNamespaceSelector={true}
-        rightToolbar={<RefreshButton key={'Refresh'} handleRefresh={fetchMeshClusters} />}
+        rightToolbar={<RefreshButton key={$t('Refresh')} handleRefresh={fetchMeshClusters} />}
       />
-
       <RenderContent>
-        <div className={containerStyle}>
-          <SimpleTable
-            label="Mesh Clusters"
-            columns={columns}
-            rows={clusterRows}
-            sortBy={sortBy}
-            onSort={onSortHandler}
-          />
-
+        <div className={containerPadding}>
+          <Table aria-label="Sortable Table" cells={columns} onSort={onSortHandler} rows={clusterRows} sortBy={sortBy}>
+            <TableHeader />
+            <TableBody />
+          </Table>
           {clusterRows.length === 0 ? (
             <EmptyState variant={EmptyStateVariant.full}>
-              <EmptyStateHeader titleText="No Clusters" headingLevel="h2" />
-              <EmptyStateBody>No clusters were discovered in your mesh.</EmptyStateBody>
+              <EmptyStateHeader titleText={$t('NoClusters', 'No Clusters')} headingLevel="h2" />
+              <EmptyStateBody>{$t('tip352', 'No clusters were discovered in your mesh.')}</EmptyStateBody>
             </EmptyState>
           ) : null}
         </div>

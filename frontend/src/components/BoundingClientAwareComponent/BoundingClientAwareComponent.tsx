@@ -84,7 +84,7 @@ export class BoundingClientAwareComponent extends React.Component<ComputeOffsetP
       case PropertyType.VIEWPORT_HEIGHT_MINUS_TOP:
         return vhMinusTop(rect, margin);
       default:
-        throw Error('Undefined property type:' + property.type);
+        throw Error(`${$t('UndefinedPropertyType', 'Undefined property type')}: ` + property.type);
     }
   }
 }

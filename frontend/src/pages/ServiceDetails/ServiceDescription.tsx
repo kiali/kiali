@@ -110,7 +110,7 @@ export class ServiceDescription extends React.Component<ServiceInfoDescriptionPr
         <ul style={{ listStyleType: 'none' }}>
           {this.props.serviceDetails && (
             <li>
-              <span>Created</span>
+              <span>{$t('Created')}</span>
               <div style={{ display: 'inline-block' }}>
                 <LocalTime time={this.props.serviceDetails.service.createdAt} />
               </div>
@@ -118,7 +118,7 @@ export class ServiceDescription extends React.Component<ServiceInfoDescriptionPr
           )}
           {this.props.serviceDetails && (
             <li>
-              <span>Version</span>
+              <span>{$t('Version')}</span>
               {this.props.serviceDetails.service.resourceVersion}
             </li>
           )}
@@ -182,7 +182,7 @@ export class ServiceDescription extends React.Component<ServiceInfoDescriptionPr
           {this.props.serviceDetails && showServiceLabels && (
             <Labels
               labels={this.props.serviceDetails.service.labels}
-              tooltipMessage={'Labels defined on the Service'}
+              tooltipMessage={$t('tip107', 'Labels defined on the Service')}
             />
           )}
           {this.props.serviceDetails && (

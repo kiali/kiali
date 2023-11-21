@@ -46,12 +46,12 @@ export const TraceLabels = (p: Props) => {
       </Label>
       <Label style={{ margin: 10 }} color="blue">
         {p.filteredSpans && `${countServices(p.filteredSpans)} / `}
-        {pluralize(countServices(p.spans), 'App')} involved
+        {pluralize(countServices(p.spans), 'App')} {$t('involved')}
       </Label>
       {!p.oneline && <br />}
       {errors === 0 ? (
         <Label className={whiteLabelStyle} style={{ margin: 10, backgroundColor: PFColors.Success }}>
-          0 Spans with error
+          {$t('tip39', '0 Spans with error')}
         </Label>
       ) : (
         <Label
@@ -59,7 +59,7 @@ export const TraceLabels = (p: Props) => {
           style={{ margin: 10, backgroundColor: filteredErrors === 0 ? PFColors.Warning : PFColors.Danger }}
         >
           {p.filteredSpans && `${filteredErrors} / `}
-          {pluralize(errors, 'Span')} with error
+          {pluralize(errors, 'Span')} {$t('WithErrors', 'With errors')}
         </Label>
       )}
     </>

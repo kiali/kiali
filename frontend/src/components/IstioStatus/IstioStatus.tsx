@@ -78,9 +78,19 @@ export class IstioStatusComponent extends React.Component<Props> {
         // User without namespaces can't have access to mTLS information. Reduce severity to info.
         const informative = this.props.namespaces && this.props.namespaces.length < 1;
         if (informative) {
-          AlertUtils.addError('Istio deployment status disabled.', error, 'default', MessageType.INFO);
+          AlertUtils.addError(
+            $t('IstioDisableStatus', 'Istio deployment status disabled.'),
+            error,
+            'default',
+            MessageType.INFO
+          );
         } else {
-          AlertUtils.addError('Error fetching Istio deployment status.', error, 'default', MessageType.ERROR);
+          AlertUtils.addError(
+            $t('IstioErrorStatus', 'Error fetching Istio deployment status'),
+            error,
+            'default',
+            MessageType.ERROR
+          );
         }
       });
   };

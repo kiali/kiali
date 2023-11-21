@@ -439,18 +439,20 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
             name="advanced-tls"
           >
             {mTLSMode.map(mode => (
-              <FormSelectOption key={mode} value={mode} label={mode} />
+              <FormSelectOption key={mode} value={mode} label={$t(mode)} />
             ))}
           </FormSelect>
           <FormHelperText>
             <HelperText>
-              <HelperTextItem>TLS related settings for connections to the upstream service.</HelperTextItem>
+              <HelperTextItem>
+                {$t('tip358', 'TLS related settings for connections to the upstream service.')}
+              </HelperTextItem>
             </HelperText>
           </FormHelperText>
         </FormGroup>
         {this.state.mtlsMode === MUTUAL && (
           <>
-            <FormGroup label="Client Certificate" fieldId="clientCertificate">
+            <FormGroup label={$t('ClientCertificate', 'Client Certificate')} fieldId="clientCertificate">
               <TextInput
                 value={this.state.clientCertificate}
                 onChange={(_event, value) => this.onFormChange(TrafficPolicyForm.TLS_CLIENT_CERTIFICATE, value)}
@@ -460,12 +462,12 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
               {!isValid(this.state.clientCertificate.length > 0) && (
                 <FormHelperText>
                   <HelperText>
-                    <HelperTextItem>Client Certificate must be non empty</HelperTextItem>
+                    <HelperTextItem>{$t('tip357', 'Client Certificate must be non empty')}</HelperTextItem>
                   </HelperText>
                 </FormHelperText>
               )}
             </FormGroup>
-            <FormGroup label="Private Key" fieldId="privateKey">
+            <FormGroup label={$t('PrivateKey', 'Private Key')} fieldId="privateKey">
               <TextInput
                 value={this.state.privateKey}
                 onChange={(_event, value) => this.onFormChange(TrafficPolicyForm.TLS_PRIVATE_KEY, value)}
@@ -475,12 +477,12 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
               {!isValid(this.state.privateKey.length > 0) && (
                 <FormHelperText>
                   <HelperText>
-                    <HelperTextItem>Private Key must be non empty</HelperTextItem>
+                    <HelperTextItem>{$t('tip356', 'Private Key must be non empty')}</HelperTextItem>
                   </HelperText>
                 </FormHelperText>
               )}
             </FormGroup>
-            <FormGroup label="CA Certificates" fieldId="caCertificates">
+            <FormGroup label={$t('CACertificates', 'CA Certificates')} fieldId="caCertificates">
               <TextInput
                 value={this.state.caCertificates}
                 onChange={(_event, value) => this.onFormChange(TrafficPolicyForm.TLS_CA_CERTIFICATES, value)}
@@ -490,7 +492,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
             </FormGroup>
           </>
         )}
-        <FormGroup label="Add PeerAuthentication" fieldId="advanced-paSwitch">
+        <FormGroup label={$t('AddPeerAuthentication', 'Add PeerAuthentication')} fieldId="advanced-paSwitch">
           <Switch
             id="advanced-paSwitch"
             label={' '}
@@ -501,7 +503,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
           <span>{wizardTooltip(PEER_AUTHENTICATION_TOOLTIP)}</span>
         </FormGroup>
         {this.state.peerAuthnSelector.addPeerAuthentication && (
-          <FormGroup fieldId="advanced-pa-mode" label="Mode">
+          <FormGroup fieldId="advanced-pa-mode" label={$t('Mode')}>
             <FormSelect
               value={this.state.peerAuthnSelector.mode}
               onChange={(_event, mode: string) => this.onFormChange(TrafficPolicyForm.PA_MODE, mode)}
@@ -514,7 +516,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
             </FormSelect>
           </FormGroup>
         )}
-        <FormGroup label="Add LoadBalancer" fieldId="advanced-lbSwitch">
+        <FormGroup label={$t('AddLoadBalancer', 'Add LoadBalancer')} fieldId="advanced-lbSwitch">
           <Switch
             id="advanced-lbSwitch"
             label={' '}
@@ -530,7 +532,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
               <Radio
                 id="selectLBTypeSimple"
                 name="selectLBType"
-                label="Simple"
+                label={$t('Simple')}
                 isDisabled={!this.state.addLoadBalancer}
                 isChecked={this.state.simpleLB}
                 onChange={() => this.onFormChange(TrafficPolicyForm.LB_SELECT, 'true')}
@@ -538,14 +540,14 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
               <Radio
                 id="selectLBTypeConsistentHash"
                 name="selectLBType"
-                label="Consistent Hash"
+                label={$t('ConsistentHash', 'Consistent Hash')}
                 isDisabled={!this.state.addLoadBalancer}
                 isChecked={!this.state.simpleLB}
                 onChange={() => this.onFormChange(TrafficPolicyForm.LB_SELECT, 'false')}
               />
             </FormGroup>
             {this.state.simpleLB && (
-              <FormGroup fieldId="advanced-loadbalancer" label="LoadBalancer">
+              <FormGroup fieldId="advanced-loadbalancer" label={$t('LoadBalancer')}>
                 <FormSelect
                   value={this.state.loadBalancer.simple}
                   onChange={(_event, simple: string) => this.onFormChange(TrafficPolicyForm.LB_SIMPLE, simple)}
@@ -563,7 +565,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
                 <Radio
                   id="httpHeaderName"
                   name="selectConsistentHashType"
-                  label="HTTP Header Name"
+                  label={$t('HTTPHeaderName', 'HTTP Header Name')}
                   isDisabled={!this.state.addLoadBalancer}
                   isChecked={this.state.consistentHashType === ConsistentHashType.HTTP_HEADER_NAME}
                   onChange={() =>
@@ -573,7 +575,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
                 <Radio
                   id="httpCookie"
                   name="selectConsistentHashType"
-                  label="HTTP Cookie"
+                  label={'HTTP Cookie'}
                   isDisabled={!this.state.addLoadBalancer}
                   checked={this.state.consistentHashType === ConsistentHashType.HTTP_COOKIE}
                   onChange={() =>
@@ -583,7 +585,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
                 <Radio
                   id="sourceIp"
                   name="selectConsistentHashType"
-                  label="Source IP"
+                  label={$t('SourceIP', 'Source IP')}
                   isDisabled={!this.state.addLoadBalancer}
                   isChecked={this.state.consistentHashType === ConsistentHashType.USE_SOURCE_IP}
                   onChange={() =>
@@ -593,7 +595,11 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
               </FormGroup>
             )}
             {!this.state.simpleLB && this.state.consistentHashType === ConsistentHashType.HTTP_HEADER_NAME && (
-              <FormGroup label="HTTP Header Name" fieldId="httpHeaderName" disabled={!this.state.addLoadBalancer}>
+              <FormGroup
+                label={$t('HTTPHeaderName', 'HTTP Header Name')}
+                fieldId="httpHeaderName"
+                disabled={!this.state.addLoadBalancer}
+              >
                 <TextInput
                   value={
                     this.state.loadBalancer.consistentHash && this.state.loadBalancer.consistentHash.httpHeaderName
@@ -608,7 +614,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
                 {!isValid(isValidLB) && (
                   <FormHelperText>
                     <HelperText>
-                      <HelperTextItem>HTTP Header Name must be non empty</HelperTextItem>
+                      <HelperTextItem>{$t('tip380', 'HTTP Header Name must be non empty')}</HelperTextItem>
                     </HelperText>
                   </FormHelperText>
                 )}
@@ -616,7 +622,11 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
             )}
             {!this.state.simpleLB && this.state.consistentHashType === ConsistentHashType.HTTP_COOKIE && (
               <>
-                <FormGroup label="HTTP Cookie Name" fieldId="httpCookieName" disabled={!this.state.addLoadBalancer}>
+                <FormGroup
+                  label={$t('HTTPCookieName', 'HTTP Cookie Name')}
+                  fieldId="httpCookieName"
+                  disabled={!this.state.addLoadBalancer}
+                >
                   <TextInput
                     value={
                       this.state.loadBalancer.consistentHash && this.state.loadBalancer.consistentHash.httpCookie
@@ -645,8 +655,14 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
                     <HelperText>
                       <HelperTextItem>
                         {isValid(isValidLB)
-                          ? 'TTL is expressed in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).'
-                          : 'HTTP Cookie Name must be non empty and TTL must be expressed in in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).'}
+                          ? $t(
+                              'helpTip26',
+                              'TL is expressed in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).'
+                            )
+                          : $t(
+                              'helpTip27',
+                              'HTTP Cookie Name must be non empty and TTL must be expressed in in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).'
+                            )}
                       </HelperTextItem>
                     </HelperText>
                   </FormHelperText>

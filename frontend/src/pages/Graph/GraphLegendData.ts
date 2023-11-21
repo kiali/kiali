@@ -47,63 +47,63 @@ export interface GraphLegendItemRow {
 
 export const legendData: GraphLegendItem[] = [
   {
-    title: 'Node Shapes',
+    title: $t('NodeShapes', 'Node Shapes'),
     data: [
-      { label: 'Workload', icon: workloadImage },
-      { label: 'App', icon: appImage },
-      { label: 'Operation', icon: aggregateImage },
-      { label: 'Service', icon: serviceImage },
-      { label: 'Service Entry', icon: serviceEntryImage }
+      { label: $t('Workload'), icon: workloadImage },
+      { label: $t('App'), icon: appImage },
+      { label: $t('Operation'), icon: aggregateImage },
+      { label: $t('Service'), icon: serviceImage },
+      { label: $t('Service Entry'), icon: serviceEntryImage }
     ]
   },
   {
-    title: 'Node Colors',
+    title: $t('NodeColors', 'Node Colors'),
     data: [
-      { label: 'Normal', icon: nodeColorNormalImage },
-      { label: 'Warn', icon: nodeColorWarningImage },
-      { label: 'Unhealthy', icon: nodeColorDangerImage },
-      { label: 'Idle', icon: nodeColorIdleImage }
+      { label: $t('Normal'), icon: nodeColorNormalImage },
+      { label: $t('Warn'), icon: nodeColorWarningImage },
+      { label: $t('Unhealthy'), icon: nodeColorDangerImage },
+      { label: $t('Idle'), icon: nodeColorIdleImage }
     ]
   },
   {
-    title: 'Node Background',
+    title: $t('NodeBackground', 'Node Background'),
     data: [
-      { label: 'Unselected Namespace', icon: externalNamespaceImage },
-      { label: 'Restricted / External', icon: restrictedNamespaceImage }
+      { label: $t('UnselectedNamespace', 'Unselected Namespace'), icon: externalNamespaceImage },
+      { label: $t('title10', 'Restricted / External'), icon: restrictedNamespaceImage }
     ]
   },
   {
-    title: 'Edges',
+    title: $t('Edges'),
     data: [
-      { label: 'Failure', icon: edgeDangerImage },
-      { label: 'Degraded', icon: edgeWarnImage },
-      { label: 'Healthy', icon: edgeSuccessImage },
-      { label: 'TCP Connection', icon: edgeTcpImage },
-      { label: 'Idle', icon: edgeIdlemage },
-      { label: 'mTLS (badge)', icon: edgeMtlsImage }
+      { label: $t('Failure'), icon: edgeDangerImage },
+      { label: $t('Degraded'), icon: edgeWarnImage },
+      { label: $t('Healthy'), icon: edgeSuccessImage },
+      { label: $t('TCPConnection', 'TCP Connection'), icon: edgeTcpImage },
+      { label: $t('Idle'), icon: edgeIdlemage },
+      { label: $t('title11', 'mTLS (badge)'), icon: edgeMtlsImage }
     ]
   },
   {
-    title: 'Traffic Animation',
+    title: $t('TrafficAnimation', 'Traffic Animation'),
     data: [
-      { label: 'Normal Request', icon: trafficNormalImage },
-      { label: 'Failed Request', icon: trafficFailedImage },
-      { label: 'TCP Traffic', icon: trafficTcpImage }
+      { label: $t('NormalRequest', 'Normal Request'), icon: trafficNormalImage },
+      { label: $t('FailedRequest', 'Failed Request'), icon: trafficFailedImage },
+      { label: $t('TCPTraffic', 'TCP Traffic'), icon: trafficTcpImage }
     ]
   },
   {
-    title: 'Node Badges',
+    title: $t('NodeBadges', 'Node Badges'),
     data: [
-      { label: 'Circuit Breaker', icon: badgeCircuitBreakerImage },
-      { label: 'Fault Injection', icon: badgeFaultInjectionImage },
-      { label: 'Gateway', icon: badgeGatewaysImage },
-      { label: 'Mirroring', icon: badgeMirroringImage },
-      { label: 'Missing Sidecar', icon: badgeMissingSidecarImage },
-      { label: 'Request Timeout', icon: badgeRequestTimeoutImage },
-      { label: 'Traffic Shifting / TCP Traffic Shifting', icon: badgeTrafficShiftingSourceImage },
-      { label: 'Traffic Source', icon: badgeTrafficSourceImage },
-      { label: 'Virtual Service / Request Routing', icon: badgeVirtualServicesImage },
-      { label: 'Workload Entry', icon: badgeWorkloadEntryImage }
+      { label: $t('CircuitBreaker', 'Circuit Breaker'), icon: badgeCircuitBreakerImage },
+      { label: $t('FaultInjection', 'Fault Injection'), icon: badgeFaultInjectionImage },
+      { label: $t('Gateway'), icon: badgeGatewaysImage },
+      { label: $t('Mirroring'), icon: badgeMirroringImage },
+      { label: $t('MissingSidecar', 'Missing Sidecar'), icon: badgeMissingSidecarImage },
+      { label: $t('RequestTimeout', 'Request Timeout'), icon: badgeRequestTimeoutImage },
+      { label: $t('title12', 'Traffic Shifting / TCP Traffic Shifting'), icon: badgeTrafficShiftingSourceImage },
+      { label: $t('TrafficSource', 'Traffic Source'), icon: badgeTrafficSourceImage },
+      { label: $t('title13', 'Virtual Service / Request Routing'), icon: badgeVirtualServicesImage },
+      { label: $t('Workload_Entry', 'Workload Entry'), icon: badgeWorkloadEntryImage }
     ]
   }
 ];

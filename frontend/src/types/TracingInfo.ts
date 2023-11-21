@@ -123,7 +123,6 @@ export type TracingError = {
 export type TracingResponse = {
   data: JaegerTrace[] | null;
   errors: TracingError[];
-  fromAllClusters: boolean;
   tracingServiceName: string;
 };
 

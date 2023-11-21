@@ -23,15 +23,15 @@ function showCerts(certs) {
         <div key={'showCerts'}>
           <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>From {item.issuer}</div>
           <div>
-            <div>Issuer: </div>
+            <div>{$t('Issuer')}: </div>
             <div>{item.secretName}</div>
           </div>
           <div>
-            <div>Valid From: </div>
+            <div>{$t('Valid_from', 'Valid from')}: </div>
             <div>{item.notAfter}</div>
           </div>
           <div>
-            <div>Valid To: </div>
+            <div>{$t('Valid_To', 'Valid To')}: </div>
             <div>{item.notBefore}</div>
           </div>
         </div>
@@ -39,7 +39,7 @@ function showCerts(certs) {
     });
     return <div>{rows}</div>;
   } else {
-    return 'No cert info';
+    return $t('NoCertInfo', 'No cert info');
   }
 }
 
@@ -60,7 +60,9 @@ class TLSInfoComponent extends React.Component<Props> {
     return (
       <div style={{ textAlign: 'left' }}>
         <div>
-          <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>Min TLS version</div>
+          <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>
+            {$t('MinTLSversion', 'Min TLS version')}
+          </div>
           <Label isCompact color="blue" data-test={'label-TLS'}>
             <div style={{ display: '-webkit-box' }}>
               {this.props.version}{' '}
@@ -72,8 +74,10 @@ class TLSInfoComponent extends React.Component<Props> {
                 position={TooltipPosition.right}
                 content={
                   <div style={{ textAlign: 'left' }}>
-                    The meshConfig.meshMTLS.minProtocolVersion field specifies the minimum TLS version for the TLS
-                    connections among Istio workloads. N/A if it was not set.
+                    {$t(
+                      'tip257',
+                      'The meshConfig.meshMTLS.minProtocolVersion field specifies the minimum TLS version for the TLS connections among Istio workloads. N/A if it was not set.'
+                    )}
                   </div>
                 }
               >

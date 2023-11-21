@@ -22,46 +22,46 @@ import { GraphPagePF } from 'pages/GraphPF/GraphPagePF';
  */
 const navMenuItems: MenuItem[] = [
   {
-    title: 'Overview',
+    title: $t('Overview'),
     to: '/overview',
     pathsActive: [/^\/overview\/(.*)/]
   },
   {
-    title: 'Graph [Cy]',
+    title: $t('Graph [Cy]'),
     to: '/graph/namespaces/',
     pathsActive: [/^\/graph\/(.*)/]
   },
   {
-    title: 'Graph [PF]',
+    title: $t('Graph [PF]'),
     to: '/graphpf/namespaces/',
     pathsActive: [/^\/graphpf\/(.*)/]
   },
   {
-    title: 'Applications',
+    title: $t('Applications'),
     to: '/' + Paths.APPLICATIONS,
     pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.APPLICATIONS + '/(.*)')]
   },
   {
-    title: 'Workloads',
+    title: $t('Workloads'),
     to: '/' + Paths.WORKLOADS,
     pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.WORKLOADS + '/(.*)')]
   },
   {
-    title: 'Services',
+    title: $t('Services'),
     to: '/' + Paths.SERVICES,
     pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.SERVICES + '/(.*)')]
   },
   {
-    title: 'Istio Config',
+    title: $t('Istio Config'),
     to: '/' + Paths.ISTIO,
     pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.ISTIO + '/(.*)'), new RegExp('/' + Paths.ISTIO + '/new/(.*)')]
   },
   {
-    title: 'Distributed Tracing',
+    title: $t('Distributed Tracing'),
     to: '/tracing'
   },
   {
-    title: 'Mesh',
+    title: $t('Mesh'),
     to: '/mesh'
   }
 ];

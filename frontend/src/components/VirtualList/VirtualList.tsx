@@ -1,21 +1,8 @@
 import * as React from 'react';
-import {
-  Caption,
-  IRow,
-  ISortBy,
-  OnSort,
-  SortByDirection,
-  Table,
-  TableGridBreakpoint,
-  Tbody,
-  Td,
-  Th,
-  Thead,
-  ThProps,
-  Tr
-} from '@patternfly/react-table';
+import { TableGridBreakpoint } from '@patternfly/react-table';
+import { Table, TableHeader } from '@patternfly/react-table/deprecated';
 import { HistoryManager, URLParam } from '../../app/History';
-import { config, RenderResource, Resource, ResourceType } from './Config';
+import { config, RenderResource, Resource } from './Config';
 import { VirtualItem } from './VirtualItem';
 import { EmptyState, EmptyStateBody, EmptyStateVariant, EmptyStateHeader } from '@patternfly/react-core';
 import { KialiAppState } from '../../store/Store';
@@ -28,15 +15,10 @@ import * as FilterHelper from '../FilterList/FilterHelper';
 import * as Sorts from '../../pages/Overview/Sorts';
 import { StatefulFilters } from '../Filters/StatefulFilters';
 import { kialiStyle } from 'styles/StyleUtils';
-import { SortableTh } from 'components/SimpleTable';
 
 const virtualListStyle = kialiStyle({
-  padding: '1.25rem',
-  marginBottom: '1.25rem'
-});
-
-const emptyStyle = kialiStyle({
-  borderBottom: 0
+  padding: '20px',
+  marginBottom: '20px'
 });
 
 // ******************************
@@ -61,16 +43,16 @@ type VirtualListProps<R> = {
   type: string;
 };
 
-type VirtualListState<R extends RenderResource> = {
+type VirtualListState = {
   sortBy: {
     index: number;
     direction: Direction;
   };
-  columns: ResourceType<R>[];
+  columns: any[];
   conf: Resource;
 };
 
-class VirtualListComponent<R extends RenderResource> extends React.Component<VirtualListProps<R>, VirtualListState<R>> {
+class VirtualListComponent<R extends RenderResource> extends React.Component<VirtualListProps<R>, VirtualListState> {
   private statefulFilters: React.RefObject<StatefulFilters> = React.createRef();
 
   constructor(props: VirtualListProps<R>) {
@@ -79,11 +61,9 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     const columns = this.getColumns(props.type);
     let index = -1;
     const sortParam = HistoryManager.getParam(URLParam.SORT);
-
     if (sortParam) {
       index = conf.columns.findIndex(column => column.param === sortParam);
     }
-
     this.state = {
       sortBy: {
         index,
@@ -94,70 +74,63 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     };
   }
 
-  onSort = (_event: React.MouseEvent, index: number, direction: SortByDirection): void => {
+  onSort = (_event, index, direction) => {
     this.setState({
       sortBy: {
         index,
         direction
       }
     });
-
     if (direction) {
       HistoryManager.setParam(URLParam.DIRECTION, direction);
     }
-
     HistoryManager.setParam(URLParam.SORT, String(this.state.columns[index].param));
     this.props.sort && this.props.sort(FilterHelper.currentSortField(Sorts.sortFields), direction === 'asc');
   };
 
   componentDidUpdate() {
     const columns = this.getColumns(this.props.type);
-
     if (columns.length !== this.state.columns.length) {
       this.setState({ columns: columns });
     }
   }
 
-  private getColumns = (type: string): ResourceType<R>[] => {
-    let columns = [] as ResourceType<R>[];
+  private getColumns = (type): any[] => {
+    let columns = [] as any[];
     const conf = config[type] as Resource;
-
     if (conf.columns) {
-      columns = conf.columns.filter(
-        info => !this.props.hiddenColumns || !this.props.hiddenColumns.includes(info.title.toLowerCase())
+      const filteredColumns = conf.columns.filter(
+        info => !this.props.hiddenColumns || !this.props.hiddenColumns.includes(info.column.toLowerCase())
       );
-    }
-
-    if (this.props.actions) {
-      columns.push({
-        title: '',
-        name: '',
-        sortable: false
+      columns = filteredColumns.map(info => {
+        let config = { param: info.param, title: info.column, renderer: info.renderer };
+        if (info.transforms) {
+          config['transforms'] = info.transforms;
+        }
+        if (info.cellTransforms) {
+          config['cellTransforms'] = info.cellTransforms;
+        }
+        return config;
       });
     }
-
+    if (this.props.actions) {
+      columns.push({
+        title: ''
+      });
+    }
     return columns;
-  };
-
-  private getSortParams = (
-    column: SortableTh,
-    index: number,
-    sortBy: ISortBy,
-    onSort: OnSort
-  ): ThProps['sort'] | undefined => {
-    return column.sortable
-      ? {
-          sortBy: sortBy,
-          onSort: onSort,
-          columnIndex: index
-        }
-      : undefined;
   };
 
   render() {
     const { rows } = this.props;
     const { sortBy, columns, conf } = this.state;
-
+    const tableProps = {
+      cells: columns,
+      rows: [],
+      gridBreakPoint: TableGridBreakpoint.none,
+      role: 'presentation',
+      caption: conf.caption ? conf.caption : undefined
+    };
     const typeDisplay = this.props.type === 'istio' ? 'Istio config' : this.props.type;
 
     const childrenWithProps = React.Children.map(this.props.children, child => {
@@ -169,16 +142,16 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
       return child;
     });
 
-    const rowItems: IRow[] = rows.map((row, index) => {
+    const rowItems: any[] = rows.map((r, i) => {
       return (
         <VirtualItem
-          key={`vItem_${index}`}
-          item={row}
-          index={index}
+          key={'vItem' + i}
+          item={r}
+          index={i}
           columns={this.state.columns}
           config={conf}
           statefulFilterProps={this.props.statefulProps ? this.props.statefulProps : this.statefulFilters}
-          action={this.props.actions && this.props.actions[index] ? this.props.actions[index] : undefined}
+          action={this.props.actions && this.props.actions[i] ? this.props.actions[i] : undefined}
         />
       );
     });
@@ -186,31 +159,14 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     return (
       <div className={virtualListStyle}>
         {childrenWithProps}
-
-        <Table gridBreakPoint={TableGridBreakpoint.none} role="presentation">
-          {conf.caption && <Caption>{conf.caption}</Caption>}
-          <Thead>
-            <Tr>
-              {columns.map((column, index) => (
-                <Th
-                  key={`column_${index}`}
-                  dataLabel={column.title}
-                  sort={this.getSortParams(column, index, sortBy, this.onSort)}
-                  width={column.width}
-                  textCenter={column.textCenter}
-                >
-                  {column.title}
-                </Th>
-              ))}
-            </Tr>
-          </Thead>
-
-          <Tbody>
+        <Table {...tableProps} sortBy={sortBy} onSort={this.onSort}>
+          <TableHeader />
+          <tbody>
             {this.props.rows.length > 0 ? (
               rowItems
             ) : (
-              <Tr className={emptyStyle}>
-                <Td colSpan={columns.length}>
+              <tr>
+                <td colSpan={tableProps.cells.length}>
                   {this.props.activeNamespaces.length > 0 ? (
                     <EmptyState variant={EmptyStateVariant.full}>
                       <EmptyStateHeader titleText={<>No {typeDisplay} found</>} headingLevel="h5" />
@@ -223,16 +179,19 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
                     </EmptyState>
                   ) : (
                     <EmptyState variant={EmptyStateVariant.full}>
-                      <EmptyStateHeader titleText="No namespace is selected" headingLevel="h5" />
+                      <EmptyStateHeader titleText={$t('title7', 'No namespace is selected')} headingLevel="h5" />
                       <EmptyStateBody>
-                        There is currently no namespace selected, please select one using the Namespace selector.
+                        {$t(
+                          'tip162',
+                          'There is currently no namespace selected, please select one using the Namespace selector.'
+                        )}
                       </EmptyStateBody>
                     </EmptyState>
                   )}
-                </Td>
-              </Tr>
+                </td>
+              </tr>
             )}
-          </Tbody>
+          </tbody>
         </Table>
       </div>
     );

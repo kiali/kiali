@@ -124,7 +124,9 @@ export class Slider extends React.Component<Props, State> {
   formatter = value => {
     return this.props.tooltipFormatter !== noop
       ? this.props.tooltipFormatter(value)
-      : `${value} ${this.state.tooltipFormat} ${this.props.mirrored ? ' mirrored traffic' : ''}`;
+      : `${value} ${this.state.tooltipFormat} ${
+          this.props.mirrored ? ` ${$t('mirroredTraffic', 'mirrored traffic')}` : ''
+        }`;
   };
 
   render() {
@@ -183,7 +185,7 @@ export class Slider extends React.Component<Props, State> {
     );
 
     const MirrorIcon = (
-      <Tooltip position={TooltipPosition.top} content={<>Mirror % traffic to this Workload</>}>
+      <Tooltip position={TooltipPosition.top} content={<>{$t('tip233', 'Mirror % traffic to this Workload')}</>}>
         <Button
           className={pinButtonStyle}
           variant={this.props.mirrored ? ButtonVariant.primary : ButtonVariant.secondary}

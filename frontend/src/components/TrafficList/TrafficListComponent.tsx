@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import { IRow, SortByDirection } from '@patternfly/react-table';
+import { IRow, sortable, SortByDirection, cellWidth } from '@patternfly/react-table';
+import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
 import { Link } from 'react-router-dom';
 import { TrafficItem, TrafficNode, TrafficDirection } from './TrafficDetails';
 import * as FilterComponent from '../FilterList/FilterComponent';
@@ -19,18 +20,17 @@ import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { isMultiCluster } from 'config';
 import { getParamsSeparator } from '../../utils/SearchParamUtils';
-import { SimpleTable, SortableTh } from 'components/SimpleTable';
 
 export interface TrafficListItem {
-  badge: PFBadgeType;
-  cluster?: string;
   direction: TrafficDirection;
   healthStatus: ThresholdStatus;
-  mTLS?: number;
+  badge: PFBadgeType;
   node: TrafficNode;
   protocol: string;
-  trafficPercentSuccess: string;
+  mTLS?: number;
   trafficRate: string;
+  trafficPercentSuccess: string;
+  cluster?: string;
 }
 
 type ReduxProps = {
@@ -44,69 +44,58 @@ type TrafficListComponentProps = ReduxProps &
 
 type TrafficListComponentState = FilterComponent.State<TrafficListItem>;
 
-const columns = (isMultiCluster: boolean): SortableTh[] => {
-  const cols: SortableTh[] = [
+const columns = (isMultiCluster: boolean): any[] => {
+  const cols = [
     {
-      title: 'Status',
-      sortable: true,
-      width: 15
+      title: $t('Status'),
+      transforms: [sortable, cellWidth(15)]
     },
     {
-      title: 'Name',
-      sortable: true,
-      width: 30
+      title: $t('Name'),
+      transforms: [sortable, cellWidth(30)]
     },
     {
-      title: 'Rate',
-      sortable: true,
-      width: 10
+      title: $t('Rate'),
+      transforms: [sortable, cellWidth(10)]
     },
     {
-      title: 'Percent Success',
-      sortable: true,
-      width: 20
+      title: $t('PercentSuccess', 'Percent Success'),
+      transforms: [sortable, cellWidth(20)]
     },
     {
-      title: 'Protocol',
-      sortable: true,
-      width: 15
+      title: $t('Protocol'),
+      transforms: [sortable, cellWidth(15)]
     },
     {
-      title: 'Actions',
-      sortable: false
+      title: $t('Actions')
     }
   ];
 
   if (isMultiCluster) {
     cols.splice(2, 0, {
-      title: 'Cluster',
-      sortable: true,
-      width: 15
+      title: $t('Cluster'),
+      transforms: [sortable, cellWidth(15)]
     });
   }
 
   return cols;
 };
 
-const LockIcon = (props: { mTLS?: number }): React.ReactElement => {
-  const msg = props.mTLS ? `${props.mTLS} % of mTLS traffic` : 'mTLS is disabled';
-
+function LockIcon(props) {
+  const msg = props.mTLS ? props.mTLS + $t('tip265', '% of mTLS traffic') : $t('mTLSIsDisabled', 'mTLS is disabled');
   return (
     <Tooltip position={TooltipPosition.top} content={msg}>
       <>
-        {props.mTLS ? (
-          <KialiIcon.MtlsLock className={lockIconStyle} />
-        ) : (
-          <KialiIcon.MtlsUnlock className={lockIconStyle} />
-        )}
+        {props.mTLS && <KialiIcon.MtlsLock className={lockIconStyle} />}
+        {!props.mTLS && <KialiIcon.MtlsUnlock className={lockIconStyle} />}
       </>
     </Tooltip>
   );
-};
+}
 
 // Style constants
-const containerStyle = kialiStyle({ padding: '1.25rem' });
-const lockIconStyle = kialiStyle({ marginLeft: '0.25rem' });
+const containerPadding = kialiStyle({ padding: '20px' });
+const lockIconStyle = kialiStyle({ marginLeft: '5px' });
 
 class TrafficList extends FilterComponent.Component<
   TrafficListComponentProps,
@@ -127,11 +116,10 @@ class TrafficList extends FilterComponent.Component<
     this.sortItemList(this.state.listItems, this.state.currentSortField, this.state.isSortAscending);
   }
 
-  componentDidUpdate(prevProps: TrafficListComponentProps) {
+  componentDidUpdate(prevProps: TrafficListComponentProps, _prevState: TrafficListComponentState, _snapshot: any) {
     // we only care about new TrafficItems, sorting is managed locally after initial render
     if (prevProps.trafficItems !== this.props.trafficItems) {
       const listItems = this.trafficToListItems(this.props.trafficItems);
-
       this.setState({
         listItems: this.sortItemList(listItems, this.state.currentSortField, this.state.isSortAscending)
       });
@@ -150,35 +138,26 @@ class TrafficList extends FilterComponent.Component<
 
     return (
       <>
-        <div className={containerStyle}>
+        <div className={containerPadding}>
           <Title headingLevel="h5" size={TitleSizes.lg}>
-            {hasInbound ? '' : 'No '} Inbound Traffic
+            {hasInbound ? '' : $t('No')} {$t('Inbound_Traffic', 'Inbound Traffic')}
           </Title>
-
           {hasInbound && (
-            <SimpleTable
-              label="Inbound Traffic List"
-              columns={cols}
-              rows={inboundRows}
-              sortBy={sortBy}
-              onSort={this.onSort}
-            />
+            <Table aria-label="Sortable Table" cells={cols} onSort={this.onSort} rows={inboundRows} sortBy={sortBy}>
+              <TableHeader />
+              <TableBody />
+            </Table>
           )}
         </div>
-
-        <div className={containerStyle}>
+        <div className={containerPadding}>
           <Title headingLevel="h5" size={TitleSizes.lg}>
-            {hasOutbound ? '' : 'No '} Outbound Traffic
+            {hasOutbound ? '' : $t('No')} {$t('Outbound_Traffic', 'Outbound Traffic')}
           </Title>
-
           {hasOutbound && (
-            <SimpleTable
-              label="Outbound Traffic List"
-              columns={cols}
-              rows={outboundRows}
-              sortBy={sortBy}
-              onSort={this.onSort}
-            />
+            <Table aria-label="Sortable Table" cells={cols} onSort={this.onSort} rows={outboundRows} sortBy={sortBy}>
+              <TableHeader />
+              <TableBody />
+            </Table>
           )}
         </div>
       </>
@@ -186,7 +165,7 @@ class TrafficList extends FilterComponent.Component<
   }
 
   // abstract FilterComponent.updateListItems
-  updateListItems(): void {
+  updateListItems() {
     // we don't react to filter changes in this class, so this is a no-op
   }
 
@@ -200,21 +179,19 @@ class TrafficList extends FilterComponent.Component<
   }
 
   // Helper used for Table to sort handlers based on index column == field
-  onSort = (_event: React.MouseEvent, index: number, sortDirection: SortByDirection): void => {
+  onSort = (_event, index, sortDirection) => {
     // Map the column index to the correct sortField index (currently ordered with the same indexes)
     let sortField = sortFields[index];
 
     const isSortAscending = sortDirection === SortByDirection.asc;
-
     if (sortField.id !== this.state.currentSortField.id || isSortAscending !== this.state.isSortAscending) {
       this.updateSort(sortField, isSortAscending);
     }
   };
 
-  trafficToListItems(trafficItems: TrafficItem[]): TrafficListItem[] {
+  trafficToListItems(trafficItems: TrafficItem[]) {
     const listItems = trafficItems.map(ti => {
       let badge: PFBadgeType;
-
       switch (ti.node.type) {
         case NodeType.APP:
           badge = PFBadges.App;
@@ -225,18 +202,16 @@ class TrafficList extends FilterComponent.Component<
         default:
           badge = PFBadges.Workload;
       }
-
       const item: TrafficListItem = {
         direction: ti.direction,
         badge: badge,
         node: ti.node,
-        protocol: (ti.traffic.protocol ?? 'N/A').toUpperCase(),
+        protocol: (ti.traffic.protocol || 'N/A').toUpperCase(),
         mTLS: ti.mTLS,
         healthStatus: this.getHealthStatus(ti),
         cluster: ti.node.cluster,
         ...this.getTraffic(ti.traffic)
       };
-
       return item;
     });
 
@@ -253,20 +228,19 @@ class TrafficList extends FilterComponent.Component<
     return { value: 0, status: NA };
   };
 
-  private getTraffic = (traffic: ProtocolTraffic): { trafficRate: string; trafficPercentSuccess: string } => {
+  private getTraffic = (traffic: ProtocolTraffic): { trafficRate; trafficPercentSuccess } => {
     let rps = '0';
     let percentError = '0';
     let unit = 'rps';
-
     if (hasProtocolTraffic(traffic)) {
       switch (traffic.protocol) {
         case 'http':
           rps = traffic.rates.http;
-          percentError = traffic.rates.httpPercentErr ?? '0';
+          percentError = traffic.rates.httpPercentErr || '0';
           break;
         case 'grpc':
           rps = traffic.rates.grpc;
-          percentError = traffic.rates.grpcPercentErr ?? '0';
+          percentError = traffic.rates.grpcPercentErr || '0';
           break;
         case 'tcp':
           rps = traffic.rates.tcp;
@@ -283,29 +257,34 @@ class TrafficList extends FilterComponent.Component<
   // Helper used to build the table content.
   rows = (direction: TrafficDirection): IRow[] => {
     const parentKiosk = isParentKiosk(this.props.kiosk);
-
     return this.state.listItems
       .filter(i => i.direction === direction)
       .map((item, i) => {
         const name = item.node.name;
         const links = this.getLinks(item);
 
-        let irow: IRow = {
+        var irow: IRow = {
           cells: [
-            <Tooltip
-              key={`tt_status_${i}`}
-              position={TooltipPosition.top}
-              content={<>Traffic Status: {item.healthStatus.status.name}</>}
-            >
-              {createTooltipIcon(createIcon(item.healthStatus.status, 'sm'))}
-            </Tooltip>,
+            <>
+              <Tooltip
+                key={`tt_status_${i}`}
+                position={TooltipPosition.top}
+                content={
+                  <>
+                    {$t('Traffic_Status', 'Traffic Status')}: {item.healthStatus.status.name}
+                  </>
+                }
+              >
+                {createTooltipIcon(createIcon(item.healthStatus.status, 'sm'))}
+              </Tooltip>
+            </>,
             <>
               <PFBadge badge={item.badge} position={TooltipPosition.top} keyValue={`tt_badge_${i}`} />
               {!!links.detail ? (
                 parentKiosk ? (
                   <Link
                     key={`link_d_${item.badge}_${name}`}
-                    to=""
+                    to={''}
                     onClick={() => {
                       kioskContextMenuAction(links.detail);
                     }}
@@ -332,16 +311,16 @@ class TrafficList extends FilterComponent.Component<
                 (parentKiosk ? (
                   <Link
                     key={`link_m_${item.badge}_${name}`}
-                    to=""
+                    to={''}
                     onClick={() => {
                       kioskContextMenuAction(links.metrics);
                     }}
                   >
-                    View metrics
+                    {$t('View_metrics', 'View metrics')}
                   </Link>
                 ) : (
                   <Link key={`link_m_${item.badge}_${name}`} to={links.metrics}>
-                    View metrics
+                    {$t('View_metrics', 'View metrics')}
                   </Link>
                 ))}
             </>
@@ -365,13 +344,12 @@ class TrafficList extends FilterComponent.Component<
       });
   };
 
-  private getLinks = (item: TrafficListItem): { detail: string; metrics: string } => {
+  private getLinks = (item: TrafficListItem) => {
     if (item.node.isInaccessible) {
       return { detail: '', metrics: '' };
     }
 
     let detail = `/namespaces/${item.node.namespace}/${this.nodeTypeToType(item.node.type, true)}/${item.node.name}`;
-
     if (item.node.cluster && isMultiCluster) {
       detail += `?clusterName=${item.node.cluster}`;
     }
@@ -383,14 +361,14 @@ class TrafficList extends FilterComponent.Component<
       case NodeType.APP:
         // All metrics tabs can filter by remote app. No need to switch context.
         const side = item.direction === 'inbound' ? 'source' : 'destination';
-        metrics += `&${URLParam.BY_LABELS}=${encodeURIComponent(`${side}_canonical_service=${item.node.name}`)}`;
+        metrics += `&${URLParam.BY_LABELS}=${encodeURIComponent(side + '_canonical_service=' + item.node.name)}`;
         break;
       case NodeType.SERVICE:
         if (item.node.isServiceEntry) {
           // Service Entries should be only destination nodes. So, don't build a link if direction is inbound.
           if (item.direction !== 'inbound' && item.node.destServices && item.node.destServices.length > 0) {
             const svcHosts = item.node.destServices.map(item => item.name).join(',');
-            metrics += `&${URLParam.BY_LABELS}=${encodeURIComponent(`destination_service_name=${svcHosts}`)}`;
+            metrics += `&${URLParam.BY_LABELS}=${encodeURIComponent('destination_service_name=' + svcHosts)}`;
           } else {
             metrics = '';
           }
@@ -398,7 +376,7 @@ class TrafficList extends FilterComponent.Component<
           // Filter by remote service only available in the Outbound Metrics tab. For inbound traffic,
           // switch context to the service details page.
           if (item.direction === 'outbound') {
-            metrics += `&${URLParam.BY_LABELS}=${encodeURIComponent(`destination_service_name=${item.node.name}`)}`;
+            metrics += `&${URLParam.BY_LABELS}=${encodeURIComponent('destination_service_name=' + item.node.name)}`;
           } else {
             // Services have only one metrics tab.
             metrics = `${detail}${getParamsSeparator(detail)}tab=metrics`;
@@ -433,7 +411,7 @@ class TrafficList extends FilterComponent.Component<
   };
 }
 
-const mapStateToProps = (state: KialiAppState): ReduxProps => {
+const mapStateToProps = (state: KialiAppState) => {
   return {
     kiosk: state.globalState.kiosk
   };

@@ -50,11 +50,11 @@ class DefaultSecondaryMastheadComponent extends React.Component<Props> {
       if (path.startsWith('istio/new/')) {
         // 'istio/new/'.length() == 10
         const objectType = path.substring(10);
-        title = 'Create ' + objectType;
+        title = $t('Create') + ' ' + objectType;
       } else if (path === 'istio') {
-        title = 'Istio Config';
+        title = $t('Istio Config');
       } else if (path === 'mesh') {
-        title = 'Clusters';
+        title = $t('Clusters');
       }
       return {
         title: (
@@ -64,8 +64,11 @@ class DefaultSecondaryMastheadComponent extends React.Component<Props> {
             </Title>
             {!this.props.istioAPIEnabled && path.startsWith('istio/new/') && (
               <div>
-                <KialiIcon.Warning /> <b>Istio API is disabled.</b> Be careful when creating the configuration as the
-                Istio config validations are disabled when the Istio API is disabled.
+                <KialiIcon.Warning /> <b>{$t('tip10', 'Istio API is disabled.')}</b>{' '}
+                {$t(
+                  'tip168',
+                  'Be careful when creating the configuration as the Istio config validations are disabled when the Istio API is disabled.'
+                )}
               </div>
             )}
           </>

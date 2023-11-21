@@ -91,7 +91,7 @@ export class IstioConfigOverview extends React.Component<IstioConfigOverviewProp
         <ul style={{ listStyleType: 'none' }}>
           {istioObject && istioObject.metadata.creationTimestamp && (
             <li>
-              <span>Created</span>
+              <span>{$t('Created')}</span>
               <div style={{ display: 'inline-block' }}>
                 <LocalTime time={istioObject.metadata.creationTimestamp} />
               </div>
@@ -99,7 +99,7 @@ export class IstioConfigOverview extends React.Component<IstioConfigOverviewProp
           )}
           {istioObject && istioObject.metadata.resourceVersion && (
             <li>
-              <span>Version</span>
+              <span>{$t('Version')}</span>
               {istioObject.metadata.resourceVersion}
             </li>
           )}
@@ -129,7 +129,7 @@ export class IstioConfigOverview extends React.Component<IstioConfigOverviewProp
       <Stack hasGutter={true}>
         <StackItem>
           <Title headingLevel="h3" size={TitleSizes.xl}>
-            Overview
+            {$t('Overview')}
           </Title>
         </StackItem>
         <StackItem>
@@ -167,7 +167,10 @@ export class IstioConfigOverview extends React.Component<IstioConfigOverviewProp
 
         {istioObject?.metadata.labels && (
           <StackItem>
-            <Labels tooltipMessage="Labels defined on this resource" labels={istioObject?.metadata.labels}></Labels>
+            <Labels
+              tooltipMessage={$t('tip77', 'Labels defined on this resource')}
+              labels={istioObject?.metadata.labels}
+            ></Labels>
           </StackItem>
         )}
 
@@ -211,20 +214,24 @@ export class IstioConfigOverview extends React.Component<IstioConfigOverviewProp
         )}
         {!this.props.istioAPIEnabled && this.props.cluster === homeCluster?.name && (
           <StackItem>
-            <KialiIcon.Warning className={warnStyle} /> <b>Istio API is disabled.</b> Be careful when editing the
-            configuration as the Istio config validations are disabled when the Istio API is disabled.
+            <KialiIcon.Warning className={warnStyle} /> <b>{$t('tip10', 'Istio API is disabled.')}</b>{' '}
+            {$t(
+              'tip11',
+              'Be careful when editing the configuration as the Istio config validations are disabled when the Istio API is disabled.'
+            )}
           </StackItem>
         )}
         <KioskElement>
           <StackItem>
             <Tooltip
-              content={
+              content={$t(
+                'tip78',
                 'This is a Read only view of the YAML including Validations. It is possible to edit directly in Kiali '
-              }
+              )}
               position={TooltipPosition.top}
             >
               <Label color="green" isCompact>
-                Read only mode
+                {$t('ReadOnlyMode', 'Read only mode')}
               </Label>
             </Tooltip>
             <a
@@ -233,7 +240,7 @@ export class IstioConfigOverview extends React.Component<IstioConfigOverviewProp
               target="_blank"
               rel="noreferrer"
             >
-              Edit in Kiali
+              {$t('EditInKiali', 'Edit in Kiali')}
             </a>
           </StackItem>
         </KioskElement>

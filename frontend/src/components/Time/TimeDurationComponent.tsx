@@ -33,13 +33,13 @@ const TimeDurationComp: React.FC<TimeControlsProps> = (props: TimeControlsProps)
     props.toggleReplayActive();
   };
 
-  const durationTooltip = props.replayActive ? 'Traffic metrics per frame' : 'Traffic metrics per refresh';
-  let [prefix, suffix] = props.replayActive ? [undefined, 'Traffic'] : ['Last', undefined];
+  const durationTooltip = props.replayActive ? 'TrafficMetricsPerFrame' : 'TrafficMetricsPerRefresh';
+  let [prefix, suffix] = props.replayActive ? [undefined, $t('Traffic')] : [$t('Last'), undefined];
 
   return (
     <span>
       {props.supportsReplay && !props.replayActive && (
-        <Tooltip key={'time_range_replay'} position={TooltipPosition.left} content="Replay...">
+        <Tooltip key={'time_range_replay'} position={TooltipPosition.left} content={$t('action1', 'Replay...')}>
           <Button
             data-test="graph-replay-button"
             variant={ButtonVariant.link}
@@ -47,7 +47,7 @@ const TimeDurationComp: React.FC<TimeControlsProps> = (props: TimeControlsProps)
             onClick={onToggleReplay}
           >
             <KialiIcon.History />
-            <span style={{ marginLeft: '6px' }}>Replay</span>
+            <span style={{ marginLeft: '6px' }}>{$t('Replay')}</span>
           </Button>
         </Tooltip>
       )}
@@ -56,7 +56,7 @@ const TimeDurationComp: React.FC<TimeControlsProps> = (props: TimeControlsProps)
         disabled={props.disabled}
         prefix={prefix}
         suffix={suffix}
-        tooltip={durationTooltip}
+        tooltip={$t(durationTooltip)}
         tooltipPosition={TooltipPosition.left}
       />
       {!(props.supportsReplay && props.replayActive) && (
@@ -72,7 +72,7 @@ const TimeDurationComp: React.FC<TimeControlsProps> = (props: TimeControlsProps)
         >
           <span>
             <KialiIcon.Close />
-            <span style={{ marginLeft: '5px' }}>Close Replay</span>
+            <span style={{ marginLeft: '5px' }}>{$t('CloseReplay', 'Close Replay')}</span>
           </span>
         </Button>
       )}

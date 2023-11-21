@@ -85,7 +85,7 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
   render() {
     const graphCardActions = [
       <DropdownItem key="viewFullGraph" onClick={this.onViewFullGraph}>
-        Show full graph
+        {$t('ShowFullGraph', 'Show full graph')}
       </DropdownItem>
     ];
 
@@ -107,7 +107,7 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
     } else {
       graphCardActions.push(
         <DropdownItem key="viewNodeGraph" onClick={this.onViewNodeGraph}>
-          Show node graph
+          {$t('ShowNodeGraph', 'Show node graph')}
         </DropdownItem>
       );
     }
@@ -116,7 +116,7 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
     const rangeStart: TimeInMilliseconds = rangeEnd - this.props.dataSource.graphDuration * 1000;
 
     const intervalTitle =
-      rangeEnd > 0 ? toRangeString(rangeStart, rangeEnd, { second: '2-digit' }, { second: '2-digit' }) : 'Loading';
+      rangeEnd > 0 ? toRangeString(rangeStart, rangeEnd, { second: '2-digit' }, { second: '2-digit' }) : $t('Loading');
 
     return (
       <>

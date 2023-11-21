@@ -55,14 +55,14 @@ export const OverviewNamespaceActions: React.FC<Props> = (props: Props) => {
                 isDisabled={subaction.isDisabled}
                 onClick={() => (subaction.action ? subaction.action(props.namespace) : undefined)}
               >
-                {subaction.title}
+                {subaction.title ?? ''}
               </DropdownItem>
             );
             return subaction.isDisabled
               ? renderDisabledDropdownOption(
                   'tooltip_' + itemKey,
                   TooltipPosition.left,
-                  'User does not have enough permission for this action',
+                  $t('tip98', 'User does not have enough permission for this action'),
                   item
                 )
               : item;
@@ -85,7 +85,7 @@ export const OverviewNamespaceActions: React.FC<Props> = (props: Props) => {
         ? renderDisabledDropdownOption(
             'tooltip_action_' + i,
             TooltipPosition.left,
-            'User does not have enough permission for this action',
+            $t('tip98', 'User does not have enough permission for this action'),
             item
           )
         : item;

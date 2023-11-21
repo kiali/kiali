@@ -13,6 +13,6 @@ export const renderErrorMessage = (message: string): any => {
   );
 };
 
-export const safeRender = (value: any, message = 'Invalid value'): any => {
+export const safeRender = (value: any, message = $t('InvalidValue', 'Invalid value')): any => {
   return canRender(value) ? value : renderErrorMessage(message);
 };

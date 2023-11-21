@@ -58,10 +58,14 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
           props.workload.cluster
         )
           .then(_ => {
-            AlertUtils.add('Workload ' + props.workload.name + ' updated', 'default', MessageType.SUCCESS);
+            AlertUtils.add(
+              `${$t('Workload')} ` + props.workload.name + ` ${$t('updated')}`,
+              'default',
+              MessageType.SUCCESS
+            );
           })
           .catch(error => {
-            AlertUtils.addError('Could not update workload ' + props.workload.name, error);
+            AlertUtils.addError(`${$t('AlertUtils3', 'Could not update workload ')}` + props.workload.name, error);
           })
           .finally(() => {
             setShowWizard(false);
@@ -85,10 +89,14 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
       props.workload.cluster
     )
       .then(_ => {
-        AlertUtils.add('Workload ' + props.workload.name + ' updated', 'default', MessageType.SUCCESS);
+        AlertUtils.add(
+          `${$t('Workload')} ` + props.workload.name + ` ${$t('updated')}`,
+          'default',
+          MessageType.SUCCESS
+        );
       })
       .catch(error => {
-        AlertUtils.addError('Could not update workload ' + props.workload.name, error);
+        AlertUtils.addError(`${$t('AlertUtils3', 'Could not update workload ')} ` + props.workload.name, error);
       })
       .finally(() => {
         setShowWizard(false);
@@ -108,7 +116,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
           onClick={() => onAction(WIZARD_ENABLE_AUTO_INJECTION)}
           isDisabled={serverConfig.deployment.viewOnlyMode}
         >
-          Enable Auto Injection
+          {$t('AlertUtils4', 'Enable Auto Injection')}
         </DropdownItem>
       );
 
@@ -116,7 +124,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
         ? renderDisabledDropdownOption(
             'enable_auto_injection',
             TooltipPosition.left,
-            'User does not have permission',
+            $t('helpTip22', 'User does not have permission'),
             enableAction
           )
         : enableAction;
@@ -129,7 +137,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
           onClick={() => onAction(WIZARD_DISABLE_AUTO_INJECTION)}
           isDisabled={serverConfig.deployment.viewOnlyMode}
         >
-          Disable Auto Injection
+          {$t('DisableAutoInjection', 'Disable Auto Injection')}
         </DropdownItem>
       );
 
@@ -137,7 +145,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
         ? renderDisabledDropdownOption(
             'disable_auto_injection',
             TooltipPosition.left,
-            'User does not have permission',
+            $t('helpTip22', 'User does not have permission'),
             disableAction
           )
         : disableAction;
@@ -150,7 +158,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
           onClick={() => onAction(WIZARD_REMOVE_AUTO_INJECTION)}
           isDisabled={serverConfig.deployment.viewOnlyMode}
         >
-          Remove Auto Injection
+          {$t('RemoveAutoInjection', 'Remove Auto Injection')}
         </DropdownItem>
       );
 
@@ -158,7 +166,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
         ? renderDisabledDropdownOption(
             'remove_auto_injection',
             TooltipPosition.left,
-            'User does not have permission',
+            $t('helpTip22', 'User does not have permission'),
             removeAction
           )
         : removeAction;
@@ -184,8 +192,8 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
           onClick={() => onWizardToggle(true)}
         >
           {serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode
-            ? 'Edit Annotations'
-            : 'View Annotations'}
+            ? $t('EditAnnotations', 'Edit Annotations')
+            : $t('ViewAnnotations', 'View Annotations')}
         </DropdownItem>
       );
 
@@ -210,7 +218,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
           isExpanded={isActionsOpen}
           isDisabled={!validActions}
         >
-          Actions
+          {$t('Actions')}
         </MenuToggle>
       )}
       isOpen={isActionsOpen}
@@ -235,7 +243,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
         ? renderDisabledDropdownOption(
             'tooltip_wizard_actions',
             TooltipPosition.top,
-            'User does not have permission on this Workload',
+            $t('tip22', 'User does not have permission on this Workload'),
             dropdown
           )
         : dropdown}

@@ -182,7 +182,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
     return (
       <Modal
         width={'75%'}
-        title={this.props.title ? this.props.title : 'Preview Traffic Policies '}
+        title={this.props.title ? this.props.title : $t('PreviewTrafficPolicies', 'Preview Traffic Policies')}
         isOpen={this.state.modalOpen}
         onClose={this.props.onClose}
         onKeyPress={e => (this.props.onKeyPress ? this.props.onKeyPress(e) : {})}
@@ -200,7 +200,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
                   {this.props.opTarget && this.props.opTarget[0].toUpperCase() + this.props.opTarget.substr(1)}
                 </Button>,
                 <Button key="cancel" variant={ButtonVariant.secondary} onClick={this.props.onClose}>
-                  Cancel
+                  {$t('Cancel')}
                 </Button>
               ]
         }
@@ -212,17 +212,17 @@ export class IstioConfigPreview extends React.Component<Props, State> {
             })}
           >
             <ToolbarItem>
-              <Tooltip content={<>Copy all resources</>}>
+              <Tooltip content={<>{$t('CopyAllResources', 'Copy all resources')}</>}>
                 <CopyToClipboard text={this.trafficToText()}>
                   <Button variant={ButtonVariant.link} aria-label="Copy" isInline>
                     <KialiIcon.Copy />
-                    <span className={iconStyle}>Copy</span>
+                    <span className={iconStyle}>{$t('Copy')}</span>
                   </Button>
                 </CopyToClipboard>
               </Tooltip>
             </ToolbarItem>
             <ToolbarItem>
-              <Tooltip content={<>Download all resources in a file</>}>
+              <Tooltip content={<>{$t('tip231', 'Download all resources in a file')}</>}>
                 <Button
                   variant={ButtonVariant.link}
                   isInline
@@ -231,7 +231,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
                   onClick={() => this.downloadTraffic()}
                 >
                   <KialiIcon.Download />
-                  <span className={iconStyle}>Download</span>
+                  <span className={iconStyle}>{$t('Download')}</span>
                 </Button>
               </Tooltip>
             </ToolbarItem>
@@ -249,7 +249,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
         )}
         {this.props.disableAction && (
           <div className={kialiStyle({ color: PFColors.Danger })}>
-            User does not have enough permission for this action.
+            {$t('tip232', 'User does not have enough permission for this action.')}
           </div>
         )}
       </Modal>

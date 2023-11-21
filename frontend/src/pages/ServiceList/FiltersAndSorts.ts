@@ -21,7 +21,7 @@ import { serverConfig } from 'config';
 export const sortFields: SortField<ServiceListItem>[] = [
   {
     id: 'namespace',
-    title: 'Namespace',
+    title: $t('Namespace'),
     isNumeric: false,
     param: 'ns',
     compare: (a: ServiceListItem, b: ServiceListItem) => {
@@ -34,14 +34,14 @@ export const sortFields: SortField<ServiceListItem>[] = [
   },
   {
     id: 'servicename',
-    title: 'Service Name',
+    title: $t('Service Name'),
     isNumeric: false,
     param: 'sn',
     compare: (a: ServiceListItem, b: ServiceListItem) => a.name.localeCompare(b.name)
   },
   {
     id: 'details',
-    title: 'Details',
+    title: $t('Details'),
     isNumeric: false,
     param: 'is',
     compare: (a: ServiceListItem, b: ServiceListItem) => {
@@ -80,7 +80,7 @@ export const sortFields: SortField<ServiceListItem>[] = [
   },
   {
     id: 'health',
-    title: 'Health',
+    title: $t('Health'),
     isNumeric: false,
     param: 'he',
     compare: (a, b) => {
@@ -105,7 +105,7 @@ export const sortFields: SortField<ServiceListItem>[] = [
   },
   {
     id: 'configvalidation',
-    title: 'Config',
+    title: $t('Config'),
     isNumeric: false,
     param: 'cv',
     compare: (a: ServiceListItem, b: ServiceListItem) => {
@@ -133,7 +133,7 @@ export const sortFields: SortField<ServiceListItem>[] = [
   },
   {
     id: 'cluster',
-    title: 'Cluster',
+    title: $t('Cluster'),
     isNumeric: false,
     param: 'cl',
     compare: (a: ServiceListItem, b: ServiceListItem) => {
@@ -152,7 +152,7 @@ export const sortFields: SortField<ServiceListItem>[] = [
 
 const serviceNameFilter: FilterType = {
   category: 'Service Name',
-  placeholder: 'Filter by Service Name',
+  placeholder: $t('placeholder26', 'Filter by Service Name'),
   filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: []
@@ -160,7 +160,7 @@ const serviceNameFilter: FilterType = {
 
 const serviceTypeFilter: FilterType = {
   category: 'Service Type',
-  placeholder: 'Filter by Service Type',
+  placeholder: $t('placeholder27', 'Filter by Service Type'),
   filterType: AllFilterTypes.typeAhead,
   action: FILTER_ACTION_APPEND,
   filterValues: [
@@ -170,11 +170,11 @@ const serviceTypeFilter: FilterType = {
     },
     {
       id: 'External',
-      title: 'External'
+      title: $t('External')
     },
     {
       id: 'Federation',
-      title: 'Federation'
+      title: $t('Federation')
     }
   ]
 };
@@ -266,19 +266,19 @@ export const filterBy = (items: ServiceListItem[], filters: ActiveFiltersInfo): 
 /** Column Toggle Method */
 
 const configurationToggle: ToggleType = {
-  label: 'Configuration Validation',
+  label: $t('ConfigurationValidation', 'Configuration Validation'),
   name: 'configuration',
   isChecked: true
 };
 
 const healthToggle: ToggleType = {
-  label: 'Health',
+  label: $t('Health'),
   name: 'health',
   isChecked: true
 };
 
 const istioResourcesToggle: ToggleType = {
-  label: 'Istio Resources Detail',
+  label: $t('IstioResourcesDetail', 'Istio Resources Detail'),
   name: 'istioResources',
   isChecked: true
 };

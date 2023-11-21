@@ -102,13 +102,13 @@ export class K8sRuleBuilder extends React.Component<Props, State> {
     return (
       <>
         <Tabs isFilled={true} activeKey={this.state.ruleTabKey} onSelect={this.ruleHandleTabClick}>
-          <Tab eventKey={0} title={'Request Matching'} data-test={'Request Matching'}>
+          <Tab eventKey={0} title={$t('RequestMatching', 'Request Matching')} data-test={'Request Matching'}>
             <div style={{ marginTop: '20px' }}>
               <K8sMatchBuilder {...this.props} />
               <K8sMatches {...this.props} />
             </div>
           </Tab>
-          <Tab eventKey={1} title={'Route To'} data-test={'Route To'}>
+          <Tab eventKey={1} title={$t('RouteTo', 'Route To')} data-test={'Route To'}>
             <div
               style={{
                 marginBottom: '10px'
@@ -122,7 +122,7 @@ export class K8sRuleBuilder extends React.Component<Props, State> {
               />
             </div>
           </Tab>
-          <Tab eventKey={2} title={'Route Filtering'} data-test={'Route Filtering'}>
+          <Tab eventKey={2} title={$t('RouteFiltering', 'Route Filtering')} data-test={'Route Filtering'}>
             <div style={{ marginTop: '20px' }}>
               <K8sFilterBuilder {...this.props} />
               <K8sFilters {...this.props} />
@@ -133,7 +133,7 @@ export class K8sRuleBuilder extends React.Component<Props, State> {
           <span>
             {this.props.validationMsg.length > 0 && <div className={validationStyle}>{this.props.validationMsg}</div>}
             <Button variant={ButtonVariant.secondary} onClick={this.props.onAddRule} data-test="add-route">
-              Add Route Rule
+              {$t('AddRouteRule', 'Add Route Rule')}
             </Button>
           </span>
         </div>

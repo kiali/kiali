@@ -164,7 +164,7 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
   render() {
     return (
       <Form isHorizontal={true}>
-        <FormGroup label="Add Gateway" fieldId="gatewaySwitch">
+        <FormGroup label={$t('AddGateway', 'Add Gateway')} fieldId="gatewaySwitch">
           <Switch
             id="advanced-gwSwitch"
             label={' '}
@@ -181,7 +181,7 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
                 id="includeMesh"
                 label={
                   <>
-                    Include <b>mesh</b> gateway
+                    {$t('Include')} <b>{$t('mesh')}</b> {$t('gateway')}
                   </>
                 }
                 isDisabled={!this.state.addGateway}
@@ -191,7 +191,9 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
               {!isValid(this.isMeshGatewayValid()) && (
                 <FormHelperText>
                   <HelperText>
-                    <HelperTextItem>VirtualService Host '*' wildcard not allowed on mesh gateway.</HelperTextItem>
+                    <HelperTextItem>
+                      {$t('helpTip8', "VirtualService Host '*' wildcard not allowed on mesh gateway.")}
+                    </HelperTextItem>
                   </HelperText>
                 </FormHelperText>
               )}
@@ -200,7 +202,7 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
               <Radio
                 id="existingGateway"
                 name="selectGateway"
-                label="Select Gateway"
+                label={$t('SelectGateway', 'Select Gateway')}
                 isDisabled={!this.state.addGateway || this.props.gateways.length === 0}
                 isChecked={!this.state.newGateway}
                 onChange={() => this.onFormChange(GatewayForm.SELECT, 'false')}
@@ -208,14 +210,14 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
               <Radio
                 id="createGateway"
                 name="selectGateway"
-                label="Create Gateway"
+                label={$t('CreateGateway', 'Create Gateway')}
                 isDisabled={!this.state.addGateway}
                 isChecked={this.state.newGateway}
                 onChange={() => this.onFormChange(GatewayForm.SELECT, 'true')}
               />
             </FormGroup>
             {!this.state.newGateway && (
-              <FormGroup fieldId="selectGateway" label="Gateway">
+              <FormGroup fieldId="selectGateway" label={$t('Gateway')}>
                 {this.props.gateways.length > 0 && (
                   <FormSelect
                     id="selectGateway"
@@ -228,12 +230,12 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
                     ))}
                   </FormSelect>
                 )}
-                {this.props.gateways.length === 0 && <>There are no gateways to select.</>}
+                {this.props.gateways.length === 0 && <>{$t('tip298', 'There are no gateways to select.')}</>}
               </FormGroup>
             )}
             {this.state.newGateway && (
               <>
-                <FormGroup fieldId="gwPort" label="Port">
+                <FormGroup fieldId="gwPort" label={$t('Port')}>
                   <TextInput
                     id="gwPort"
                     name="gwPort"
@@ -243,7 +245,7 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
                     onChange={(_event, value) => this.onFormChange(GatewayForm.PORT, value)}
                   />
                 </FormGroup>
-                <FormGroup fieldId="gwHosts" label="Gateway Hosts">
+                <FormGroup fieldId="gwHosts" label={$t('Gateway Hosts')}>
                   <TextInput
                     id="gwHosts"
                     name="gwHosts"
@@ -256,8 +258,11 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
                     <HelperText>
                       <HelperTextItem>
                         {isValid(this.state.gwHostsValid)
-                          ? 'One or more hosts exposed by this gateway. Enter one or multiple hosts separated by comma.'
-                          : "Gateway hosts should be specified using FQDN format or '*' wildcard."}
+                          ? $t(
+                              'helpTip9',
+                              'One or more hosts exposed by this gateway. Enter one or multiple hosts separated by comma.'
+                            )
+                          : $t('helpTip10', "Gateway hosts should be specified using FQDN format or '*' wildcard.")}
                       </HelperTextItem>
                     </HelperText>
                   </FormHelperText>

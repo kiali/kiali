@@ -125,7 +125,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
       <div id="traces-display-menu" className={menuStyle}>
         <div style={{ marginTop: '0.5rem' }}>
           <span className={titleStyle} style={{ paddingRight: 0 }}>
-            Filter by percentile
+            {$t('Filter_by_percentile', 'Filter by percentile')}
           </span>
           <Tooltip
             key="tooltip_filter_by_percentile"
@@ -133,9 +133,10 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
             content={
               <div style={{ textAlign: 'left' }}>
                 <div>
-                  These percentiles are computed from metrics. To refresh them, reload the page. The filter applies on
-                  span durations. Thus, the filtered traces are the ones where at least one span for the service
-                  satisfies the duration criteria.
+                  {$t(
+                    'tip259',
+                    'These percentiles are computed from metrics. To refresh them, reload the page. The filter applies on span durations. Thus, the filtered traces are the ones where at least one span for the service satisfies the duration criteria.'
+                  )}
                 </div>
               </div>
             }
@@ -168,14 +169,14 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
           );
         })}
 
-        <div className={titleStyle}>Errors</div>
+        <div className={titleStyle}>{$t('Errors')}</div>
         <div>
           <label className={itemStyleWithoutInfo}>
             <Checkbox
               id="errors-only"
               name="errors-only"
               isChecked={this.state.errorsOnly}
-              label="Show only traces with errors"
+              label={$t('label3', 'Show only traces with errors')}
               onChange={(_event, checked: boolean) => this.onErrorsOnlyChanged(checked)}
               value="errors-only"
             />
@@ -184,7 +185,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
 
         <div style={{ marginTop: '0.5rem' }}>
           <span className={titleStyle} style={{ paddingRight: 0 }}>
-            Limit per query
+            {$t('LimitPerQuery', 'Limit per query')}
           </span>
           <Tooltip
             key="tooltip_limit_per_query"
@@ -192,10 +193,10 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
             content={
               <div style={{ textAlign: 'left' }}>
                 <div>
-                  This limits the number of app-level traces that will be fetched. Because an app may be comprised of
-                  several workload versions not every trace trace may apply to a particular workload. It may be
-                  necessary to increase the limit to get the desired number of workload traces. In some cases the same
-                  can be true of service traces.
+                  {$t(
+                    'tip34',
+                    'This limits the number of app-level traces that will be fetched. Because an app may be comprised of several workload versions not every trace trace may apply to a particular workload. It may be necessary to increase the limit to get the desired number of workload traces. In some cases the same can be true of service traces.'
+                  )}
                 </div>
               </div>
             }
@@ -219,14 +220,14 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
           </div>
         ))}
 
-        <div className={titleStyle}>Value axis</div>
+        <div className={titleStyle}>{$t('Value_axis', 'Value axis')}</div>
         <div>
           <label className={itemStyleWithoutInfo}>
             <Radio
               id="yaxis-full"
               name="yaxis-full"
               isChecked={!this.state.showSpansAverage}
-              label="Full trace duration"
+              label={$t('FullTraceDuration', 'Full trace duration')}
               onChange={() => this.onValueAxisChanged(false)}
               value="yaxis-full"
             />
@@ -238,7 +239,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
               id="yaxis-avg"
               name="yaxis-avg"
               isChecked={this.state.showSpansAverage}
-              label="Spans average duration"
+              label={$t('Spans_average_duration', 'Spans average duration')}
               onChange={() => this.onValueAxisChanged(true)}
               value="yaxis-avg"
             />

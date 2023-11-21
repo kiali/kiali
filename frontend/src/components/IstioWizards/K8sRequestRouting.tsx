@@ -36,14 +36,6 @@ type State = {
   validationMsg: string;
 };
 
-const MSG_SAME_MATCHING = 'A Rule with same matching criteria is already added.';
-const MSG_HEADER_NAME_NON_EMPTY = 'Header name must be non empty';
-const MSG_HEADER_VALUE_NON_EMPTY = 'Header value must be non empty';
-const MSG_HOSTNAME_NON_EMPTY = 'Hostname is incorrect';
-const MSG_PORT_NON_EMPTY = 'Port is incorrect';
-const MSG_QUERY_NAME_NON_EMPTY = 'Query name must be non empty';
-const MSG_QUERY_VALUE_NON_EMPTY = 'Query value must be non empty';
-
 export class K8sRequestRouting extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -160,7 +152,7 @@ export class K8sRequestRouting extends React.Component<Props, State> {
             headerName: prevState.headerName,
             matchValue: prevState.matchValue,
             k8sRules: prevState.k8sRules,
-            validationMsg: MSG_SAME_MATCHING
+            validationMsg: $t('helpTip15', 'A Rule with same matching criteria is already added.')
           };
         }
       },
@@ -172,7 +164,10 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     this.setState(prevState => {
       return {
         matches: prevState.matches.filter(m => matchToRemove !== m),
-        validationMsg: prevState.validationMsg === MSG_SAME_MATCHING ? '' : prevState.validationMsg
+        validationMsg:
+          prevState.validationMsg === $t('helpTip15', 'A Rule with same matching criteria is already added.')
+            ? ''
+            : prevState.validationMsg
       };
     });
   };
@@ -193,10 +188,10 @@ export class K8sRequestRouting extends React.Component<Props, State> {
   onMatchHeaderNameChange = (headerName: string) => {
     let validationMsg = '';
     if (!headerName && !!this.state.matchValue) {
-      validationMsg = MSG_HEADER_NAME_NON_EMPTY;
+      validationMsg = $t('helpTip16', 'Header name must be non empty');
     }
     if (!this.state.matchValue && !!headerName) {
-      validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
+      validationMsg = $t('helpTip17', 'Header value must be non empty');
     }
     this.setState({
       headerName: headerName,
@@ -207,10 +202,10 @@ export class K8sRequestRouting extends React.Component<Props, State> {
   onHeaderNameChange = (headerName: string) => {
     let validationMsg = '';
     if (!headerName) {
-      validationMsg = MSG_HEADER_NAME_NON_EMPTY;
+      validationMsg = $t('helpTip16', 'Header name must be non empty');
     }
     if (!this.state.headerValue && this.state.headerOp !== REMOVE) {
-      validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
+      validationMsg = $t('helpTip17', 'Header value must be non empty');
     }
     this.setState({
       headerName: headerName,
@@ -221,10 +216,10 @@ export class K8sRequestRouting extends React.Component<Props, State> {
   onQueryParamNameChange = (queryParamName: string) => {
     let validationMsg = '';
     if (this.state.matchValue !== '' && queryParamName === '') {
-      validationMsg = MSG_QUERY_NAME_NON_EMPTY;
+      validationMsg = $t('tip4', 'Query name must be non empty');
     }
     if (this.state.matchValue === '' && queryParamName !== '') {
-      validationMsg = MSG_QUERY_VALUE_NON_EMPTY;
+      validationMsg = $t('tip5', 'Query value must be non empty');
     }
     this.setState({
       queryParamName: queryParamName,
@@ -236,18 +231,18 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     let validationMsg = '';
     if (this.state.category === HEADERS) {
       if (this.state.headerName === '' && matchValue !== '') {
-        validationMsg = MSG_HEADER_NAME_NON_EMPTY;
+        validationMsg = $t('helpTip16', 'Header name must be non empty');
       }
       if (this.state.headerName !== '' && matchValue === '') {
-        validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
+        validationMsg = $t('helpTip17', 'Header value must be non empty');
       }
     }
     if (this.state.category === QUERY_PARAMS) {
       if (this.state.queryParamName === '' && matchValue !== '') {
-        validationMsg = MSG_QUERY_NAME_NON_EMPTY;
+        validationMsg = $t('tip4', 'Query name must be non empty');
       }
       if (this.state.queryParamName !== '' && matchValue === '') {
-        validationMsg = MSG_QUERY_VALUE_NON_EMPTY;
+        validationMsg = $t('tip5', 'Query value must be non empty');
       }
     }
 
@@ -332,10 +327,10 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     let validationMsg = '';
     if ((this.state.filterType === REQ_MOD || this.state.filterType === RESP_MOD) && this.state.headerOp !== REMOVE) {
       if (!this.state.headerName) {
-        validationMsg = MSG_HEADER_NAME_NON_EMPTY;
+        validationMsg = $t('helpTip16', 'Header name must be non empty');
       }
       if (!headerValue) {
-        validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
+        validationMsg = $t('helpTip17', 'Header value must be non empty');
       }
     }
     this.setState({
@@ -347,7 +342,7 @@ export class K8sRequestRouting extends React.Component<Props, State> {
   onHostNameChange = (hostName: string) => {
     let validationMsg = '';
     if (!hostName || !isServerHostValid(hostName, false)) {
-      validationMsg = MSG_HOSTNAME_NON_EMPTY;
+      validationMsg = $t('HostnameIsIncorrect', 'Hostname is incorrect');
     }
     this.setState({
       hostName: hostName,
@@ -358,7 +353,7 @@ export class K8sRequestRouting extends React.Component<Props, State> {
   onPortValueChange = (portValue: string) => {
     let validationMsg = '';
     if (!portValue || isNaN(Number(portValue))) {
-      validationMsg = MSG_PORT_NON_EMPTY;
+      validationMsg = $t('PortIsIncorrect', 'Port is incorrect');
     }
     this.setState({
       portValue: portValue,
@@ -370,7 +365,10 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     this.setState(prevState => {
       return {
         filters: prevState.filters.filter(m => filterToRemove !== m),
-        validationMsg: prevState.validationMsg === MSG_SAME_MATCHING ? '' : prevState.validationMsg
+        validationMsg:
+          prevState.validationMsg === $t('helpTip15', 'A Rule with same matching criteria is already added.')
+            ? ''
+            : prevState.validationMsg
       };
     });
   };

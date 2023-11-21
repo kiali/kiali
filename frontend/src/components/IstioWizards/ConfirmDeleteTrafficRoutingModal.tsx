@@ -17,37 +17,34 @@ export const ConfirmDeleteTrafficRoutingModal: React.FunctionComponent<Props> = 
   }
 
   function getDeleteMessage() {
-    const deleteMessage = 'Are you sure you want to delete ?';
+    const deleteMessage = $t('helpTip70', 'Are you sure you want to delete ?');
     const deleteItems: JSX.Element[] = [];
 
     let i = 0;
     let vsMessage =
       props.virtualServices.length > 0
-        ? `VirtualService${props.virtualServices.length > 1 ? 's' : ''}: '${props.virtualServices.map(
-            vs => vs.metadata.name
-          )}'`
+        ? $t('VirtualService') +
+          `${props.virtualServices.length > 1 ? 's' : ''}: '${props.virtualServices.map(vs => vs.metadata.name)}'`
         : '';
     deleteItems.push(<div key={`delete_item_${++i}`}>{vsMessage}</div>);
 
     let drMessage =
       props.destinationRules.length > 0
-        ? `DestinationRule${props.destinationRules.length > 1 ? 's' : ''}: '${props.destinationRules.map(
-            dr => dr.metadata.name
-          )}'`
+        ? $t('DestinationRule') +
+          `${props.destinationRules.length > 1 ? 's' : ''}: '${props.destinationRules.map(dr => dr.metadata.name)}'`
         : '';
     deleteItems.push(<div key={`delete_item_${++i}`}>{drMessage}</div>);
 
     let paMessage =
       props.destinationRules.length > 0 && hasAnyPeerAuthn(props.destinationRules)
-        ? `PeerAuthentication${props.destinationRules.length > 1 ? 's' : ''}: '${props.destinationRules.map(
-            dr => dr.metadata.name
-          )}'`
+        ? $t('PeerAuthentication') +
+          `${props.destinationRules.length > 1 ? 's' : ''}: '${props.destinationRules.map(dr => dr.metadata.name)}'`
         : '';
     deleteItems.push(<div key={`delete_item_${++i}`}>{paMessage}</div>);
 
     let k8sHTTPRouteMessage =
       props.k8sHTTPRoutes.length > 0
-        ? `K8s HTTPRoute${props.k8sHTTPRoutes.length > 1 ? 's' : ''}: '${props.k8sHTTPRoutes.map(
+        ? `K8s ${$t('HTTPRoute')}${props.k8sHTTPRoutes.length > 1 ? 's' : ''}: '${props.k8sHTTPRoutes.map(
             k8sr => k8sr.metadata.name
           )}'`
         : '';
@@ -66,16 +63,16 @@ export const ConfirmDeleteTrafficRoutingModal: React.FunctionComponent<Props> = 
   return (
     <Modal
       variant={ModalVariant.small}
-      title="Confirm Delete Traffic Routing ?"
+      title={$t('helpTip71', 'Confirm Delete Traffic Routing ?')}
       isOpen={props.isOpen}
       onClose={props.onCancel}
       data-test="delete-traffic-routing-modal"
       actions={[
         <Button key="confirm" variant={ButtonVariant.danger} onClick={props.onConfirm} data-test={'confirm-delete'}>
-          Delete
+          {$t('Delete')}
         </Button>,
         <Button key="cancel" variant={ButtonVariant.secondary} isInline onClick={props.onCancel}>
-          Cancel
+          {$t('Cancel')}
         </Button>
       ]}
     >

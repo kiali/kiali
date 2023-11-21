@@ -1,7 +1,9 @@
 import * as React from 'react';
-import { IRow, ThProps } from '@patternfly/react-table';
+import { cellWidth, ICell } from '@patternfly/react-table';
+import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../components/Pf/PfColors';
+// Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
 import {
   Button,
   ButtonVariant,
@@ -10,37 +12,36 @@ import {
   HelperText,
   HelperTextItem,
   Switch,
-  TextInput
+  TextInputBase as TextInput
 } from '@patternfly/react-core';
 import { isSidecarHostValid } from '../../utils/IstioConfigUtils';
+import { PlusCircleIcon } from '@patternfly/react-icons';
 import { isValid } from 'utils/Common';
-import { KialiIcon } from 'config/KialiIcon';
-import { SimpleTable } from 'components/SimpleTable';
 
-const columns: ThProps[] = [
+const headerCells: ICell[] = [
   {
-    title: 'Egress Host',
-    width: 60
+    title: $t('EgressHost', 'Egress Host'),
+    transforms: [cellWidth(60) as any],
+    props: {}
   },
   {
-    title: ''
+    title: '',
+    props: {}
   }
 ];
 
 const noEgressHostsStyle = kialiStyle({
-  marginTop: '1rem',
+  marginTop: 15,
   color: PFColors.Red100
 });
-
-const hostsHelperText = 'Enter a valid namespace/FQDN Egress host.';
 
 export type EgressHost = {
   host: string;
 };
 
 type Props = {
-  onChange: (sidecar: SidecarState) => void;
   sidecar: SidecarState;
+  onChange: (sidecar: SidecarState) => void;
 };
 
 export const SIDECAR = 'Sidecar';
@@ -87,9 +88,31 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
     this.setState(this.props.sidecar);
   }
 
-  onAddHost = (_event: React.FormEvent, value: string): void => {
-    const host = value.trim();
+  // @ts-ignore
+  actionResolver = (rowData, { rowIndex }) => {
+    const removeAction = {
+      title: $t('RemoveServer', 'Remove Server'),
+      // @ts-ignore
+      onClick: (event, rowIndex, _rowData, _extraData) => {
+        this.setState(
+          prevState => {
+            prevState.egressHosts.splice(rowIndex, 1);
+            return {
+              egressHosts: prevState.egressHosts
+            };
+          },
+          () => this.props.onChange(this.state)
+        );
+      }
+    };
+    if (rowIndex < this.state.egressHosts.length) {
+      return [removeAction];
+    }
+    return [];
+  };
 
+  onAddHost = (_event, value: string) => {
+    const host = value.trim();
     this.setState({
       addEgressHost: {
         host: host
@@ -98,11 +121,10 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
     });
   };
 
-  onAddEgressHost = (): void => {
+  onAddEgressHost = () => {
     this.setState(
       prevState => {
         prevState.egressHosts.push(this.state.addEgressHost);
-
         return {
           egressHosts: prevState.egressHosts,
           addEgressHost: {
@@ -114,20 +136,7 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
     );
   };
 
-  onRemoveEgressHost = (rowIndex: number): void => {
-    this.setState(
-      prevState => {
-        prevState.egressHosts.splice(rowIndex, 1);
-
-        return {
-          egressHosts: prevState.egressHosts
-        };
-      },
-      () => this.props.onChange(this.state)
-    );
-  };
-
-  addWorkloadLabels = (_event: React.FormEvent, value: string): void => {
+  addWorkloadLabels = (_event, value: string) => {
     if (value.length === 0) {
       this.setState(
         {
@@ -138,33 +147,26 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
       );
       return;
     }
-
     value = value.trim();
     const labels: string[] = value.split(',');
     let isValid = true;
-
     // Some smoke validation rules for the labels
     for (let i = 0; i < labels.length; i++) {
       const label = labels[i];
-
       if (label.indexOf('=') < 0) {
         isValid = false;
         break;
       }
-
       const splitLabel: string[] = label.split('=');
-
       if (splitLabel.length !== 2) {
         isValid = false;
         break;
       }
-
       if (splitLabel[0].trim().length === 0 || splitLabel[1].trim().length === 0) {
         isValid = false;
         break;
       }
     }
-
     this.setState(
       {
         workloadSelectorValid: isValid,
@@ -174,18 +176,11 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
     );
   };
 
-  rows = (): IRow[] => {
+  rows() {
     return this.state.egressHosts
-      .map((eHost, index) => ({
-        key: `eH_${index}`,
-        cells: [
-          <>{eHost.host}</>,
-          <Button
-            variant={ButtonVariant.link}
-            icon={<KialiIcon.Delete />}
-            onClick={() => this.onRemoveEgressHost(index)}
-          />
-        ]
+      .map((eHost, i) => ({
+        key: 'eH' + i,
+        cells: [<>{eHost.host}</>, '']
       }))
       .concat([
         {
@@ -202,28 +197,29 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
                 onChange={this.onAddHost}
                 validated={isValid(this.state.validEgressHost)}
               />
-
               {!this.state.validEgressHost && (
                 <div key="hostsHelperText" className={noEgressHostsStyle}>
-                  {hostsHelperText}
+                  {$t('helpTip50', 'Enter a valid namespace/FQDN Egress host.')}
                 </div>
               )}
             </>,
-            <Button
-              variant={ButtonVariant.link}
-              icon={<KialiIcon.AddMore />}
-              isDisabled={!this.state.validEgressHost}
-              onClick={this.onAddEgressHost}
-            />
+            <>
+              <Button
+                variant={ButtonVariant.link}
+                icon={<PlusCircleIcon />}
+                isDisabled={!this.state.validEgressHost}
+                onClick={this.onAddEgressHost}
+              />
+            </>
           ]
         }
       ]);
-  };
+  }
 
   render() {
     return (
       <>
-        <FormGroup label="Workload Selector" fieldId="workloadSelectorSwitch">
+        <FormGroup label={$t('WorkloadSelector', 'Workload Selector')} fieldId="workloadSelectorSwitch">
           <Switch
             id="workloadSelectorSwitch"
             label={' '}
@@ -239,9 +235,8 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
             }}
           />
         </FormGroup>
-
         {this.state.addWorkloadSelector && (
-          <FormGroup fieldId="workloadLabels" label="Labels">
+          <FormGroup fieldId="workloadLabels" label={$t('Labels')}>
             <TextInput
               id="gwHosts"
               name="gwHosts"
@@ -250,24 +245,33 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
               onChange={this.addWorkloadLabels}
               validated={isValid(this.state.workloadSelectorValid)}
             />
-
             <FormHelperText>
               <HelperText>
                 <HelperTextItem>
                   {isValid(this.state.workloadSelectorValid)
-                    ? 'One or more labels to select a workload where the Sidecar is applied.'
-                    : 'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'}
+                    ? $t('helpTip51', 'One or more labels to select a workload where the Sidecar is applied.')
+                    : $t(
+                        'helpTip46',
+                        'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'
+                      )}
                 </HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>
         )}
-
-        <FormGroup label="Egress" fieldId="egressHostTable">
-          <SimpleTable label="Egress Hosts" columns={columns} rows={this.rows()} />
-
+        <FormGroup label={$t('Egress')} fieldId="egressHostTable">
+          <Table
+            aria-label="Egress Hosts"
+            cells={headerCells}
+            rows={this.rows()}
+            // @ts-ignore
+            actionResolver={this.actionResolver}
+          >
+            <TableHeader />
+            <TableBody />
+          </Table>
           {this.state.egressHosts.length === 0 && (
-            <div className={noEgressHostsStyle}>Sidecar has no Egress Hosts Defined</div>
+            <div className={noEgressHostsStyle}>{$t('tip305', 'Sidecar has no Egress Hosts Defined')}</div>
           )}
         </FormGroup>
       </>

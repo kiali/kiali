@@ -118,11 +118,11 @@ export function NodeContextMenuComponent(props: Props) {
   // TODO: Deduplicate
   function getDropdownItemTooltipMessage(): string {
     if (serverConfig.deployment.viewOnlyMode) {
-      return 'User does not have permission';
+      return $t('permissionTip', 'User does not have permission');
     } else if (hasServiceDetailsTrafficRouting(serviceDetails)) {
-      return 'Traffic routing already exists for this service';
+      return $t('helpTip23', 'Traffic routing already exists for this service');
     } else {
-      return "Traffic routing doesn't exists for this service";
+      return $t('helpTip25', "Traffic routing doesn't exists for this service");
     }
   }
 
@@ -251,7 +251,9 @@ export function NodeContextMenuComponent(props: Props) {
       return (
         <div className={contextMenuItem} style={{ color: PFColors.Color200 }}>
           <Tooltip position={TooltipPosition.left} content={<>{getDropdownItemTooltipMessage()}</>}>
-            <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>Delete Traffic Routing</div>
+            <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>
+              {$t('DeleteTrafficRouting', 'Delete Traffic Routing')}
+            </div>
           </Tooltip>
         </div>
       );
@@ -265,7 +267,7 @@ export function NodeContextMenuComponent(props: Props) {
             onClick={handleDeleteTrafficRouting}
             data-test="delete-traffic-routing"
           >
-            Delete Traffic Routing
+            {$t('DeleteTrafficRouting', 'Delete Traffic Routing')}
           </a>
         </div>
       );
@@ -277,7 +279,7 @@ export function NodeContextMenuComponent(props: Props) {
       return (
         <>
           <hr className={hrStyle} />
-          <div className={contextMenuSubTitle}>Actions</div>
+          <div className={contextMenuSubTitle}>{$t('Actions')}</div>
           <div className={contextMenuItem}>
             <Spinner size="md" aria-label="Loading actions..." />
           </div>
@@ -289,7 +291,7 @@ export function NodeContextMenuComponent(props: Props) {
       return (
         <>
           <hr className={hrStyle} />
-          <div className={contextMenuSubTitle}>{updateLabel === '' ? 'Create' : 'Update'}</div>
+          <div className={contextMenuSubTitle}>{updateLabel === '' ? $t('Create') : $t('Update')}</div>
           {SERVICE_WIZARD_ACTIONS.map(eventKey => renderWizardActionItem(eventKey))}
           <hr className={hrStyle} />
           {renderDeleteTrafficRoutingItem()}
@@ -309,7 +311,7 @@ export function NodeContextMenuComponent(props: Props) {
     const options: ContextMenuOption[] = getOptionsFromLinkParams(linkParams, props.tracingInfo);
     const menuOptions = (
       <>
-        <div className={contextMenuSubTitle}>Show</div>
+        <div className={contextMenuSubTitle}>{$t('Show')}</div>
         {options.map(o => createMenuItem(o.url, o.text, o.target, o.external))}
       </>
     );
@@ -381,25 +383,25 @@ const getOptionsFromLinkParams = (linkParams: LinkParams, tracingInfo?: TracingI
     concat = '&';
   }
 
-  options.push({ text: 'Details', url: detailsPageUrl });
+  options.push({ text: $t('Details'), url: detailsPageUrl });
   if (type !== Paths.SERVICEENTRIES) {
-    options.push({ text: 'Traffic', url: `${detailsPageUrl}${concat}tab=traffic` });
+    options.push({ text: $t('Traffic'), url: `${detailsPageUrl}${concat}tab=traffic` });
     if (type === Paths.WORKLOADS) {
-      options.push({ text: 'Logs', url: `${detailsPageUrl}${concat}tab=logs` });
+      options.push({ text: $t('Logs'), url: `${detailsPageUrl}${concat}tab=logs` });
     }
     options.push({
-      text: 'Inbound Metrics',
+      text: $t('Inbound Metrics'),
       url: `${detailsPageUrl}${concat}tab=${type === Paths.SERVICES ? 'metrics' : 'in_metrics'}`
     });
     if (type !== Paths.SERVICES) {
-      options.push({ text: 'Outbound Metrics', url: `${detailsPageUrl}${concat}tab=out_metrics` });
+      options.push({ text: $t('Outbound Metrics'), url: `${detailsPageUrl}${concat}tab=out_metrics` });
     }
     if (type === Paths.APPLICATIONS && tracingInfo && tracingInfo.enabled) {
       if (tracingInfo.integration) {
-        options.push({ text: 'Traces', url: `${detailsPageUrl}${concat}tab=traces` });
+        options.push({ text: $t('Traces'), url: `${detailsPageUrl}${concat}tab=traces` });
       } else if (tracingInfo.url) {
         options.push({
-          text: 'Show Traces',
+          text: $t('ShowTraces', 'Show Traces'),
           url: getTracingURL(namespace, tracingInfo.namespaceSelector, tracingInfo.url, name),
           external: true,
           target: '_blank'

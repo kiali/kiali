@@ -65,7 +65,7 @@ export class AppDescription extends React.Component<AppDescriptionProps> {
         </CardBody>
       </Card>
     ) : (
-      'Loading'
+      $t('Loading')
     );
   }
 }

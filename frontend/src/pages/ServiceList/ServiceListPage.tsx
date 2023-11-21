@@ -28,8 +28,8 @@ import { isMultiCluster } from 'config';
 type ServiceListPageState = FilterComponent.State<ServiceListItem>;
 
 type ReduxProps = {
-  activeNamespaces: Namespace[];
   duration: DurationInSeconds;
+  activeNamespaces: Namespace[];
 };
 
 type ServiceListPageProps = ReduxProps & FilterComponent.Props<ServiceListItem>;
@@ -46,7 +46,6 @@ class ServiceListPageComponent extends FilterComponent.Component<
     super(props);
     const prevCurrentSortField = FilterHelper.currentSortField(ServiceListFilters.sortFields);
     const prevIsSortAscending = FilterHelper.isCurrentSortAscending();
-
     this.state = {
       listItems: [],
       currentSortField: prevCurrentSortField,
@@ -58,10 +57,9 @@ class ServiceListPageComponent extends FilterComponent.Component<
     this.updateListItems();
   }
 
-  componentDidUpdate(prevProps: ServiceListPageProps) {
+  componentDidUpdate(prevProps: ServiceListPageProps, _prevState: ServiceListPageState, _snapshot: any) {
     const prevCurrentSortField = FilterHelper.currentSortField(ServiceListFilters.sortFields);
     const prevIsSortAscending = FilterHelper.isCurrentSortAscending();
-
     if (
       !namespaceEquals(this.props.activeNamespaces, prevProps.activeNamespaces) ||
       this.props.duration !== prevProps.duration ||
@@ -72,7 +70,6 @@ class ServiceListPageComponent extends FilterComponent.Component<
         currentSortField: prevCurrentSortField,
         isSortAscending: prevIsSortAscending
       });
-
       this.updateListItems();
     }
   }
@@ -81,17 +78,13 @@ class ServiceListPageComponent extends FilterComponent.Component<
     this.promises.cancelAll();
   }
 
-  sortItemList(
-    services: ServiceListItem[],
-    sortField: SortField<ServiceListItem>,
-    isAscending: boolean
-  ): ServiceListItem[] {
+  sortItemList(services: ServiceListItem[], sortField: SortField<ServiceListItem>, isAscending: boolean) {
     // Chain promises, as there may be an ongoing fetch/refresh and sort can be called after UI interaction
     // This ensures that the list will display the new data with the right sorting
     return ServiceListFilters.sortServices(services, sortField, isAscending);
   }
 
-  updateListItems(): void {
+  updateListItems() {
     this.promises.cancelAll();
 
     const activeFilters: ActiveFiltersInfo = FilterSelected.getSelected();
@@ -120,32 +113,25 @@ class ServiceListPageComponent extends FilterComponent.Component<
         }),
         validation: this.getServiceValidation(service.name, data.namespace.name, data.validations),
         additionalDetailSample: service.additionalDetailSample,
-        labels: service.labels ?? {},
-        ports: service.ports ?? {},
+        labels: service.labels || {},
+        ports: service.ports || {},
         istioReferences: sortIstioReferences(service.istioReferences, true),
         kialiWizard: service.kialiWizard,
         serviceRegistry: service.serviceRegistry
       }));
     }
-
     return [];
   }
 
-  fetchServices(
-    namespaces: string[],
-    filters: ActiveFiltersInfo,
-    toggles: ActiveTogglesInfo,
-    rateInterval: number
-  ): void {
+  fetchServices(namespaces: string[], filters: ActiveFiltersInfo, toggles: ActiveTogglesInfo, rateInterval: number) {
     const health = toggles.get('health') ? 'true' : 'false';
     const istioResources = toggles.get('istioResources') ? 'true' : 'false';
     const onlyDefinitions = toggles.get('configuration') ? 'false' : 'true'; // !configuration => onlyDefinitions
-
     const servicesPromises = namespaces.map(ns =>
       API.getServices(ns, {
         health: health,
         istioResources: istioResources,
-        rateInterval: `${String(rateInterval)}s`,
+        rateInterval: String(rateInterval) + 's',
         onlyDefinitions: onlyDefinitions
       })
     );
@@ -154,40 +140,34 @@ class ServiceListPageComponent extends FilterComponent.Component<
       .registerAll('services', servicesPromises)
       .then(responses => {
         let serviceListItems: ServiceListItem[] = [];
-
         responses.forEach(response => {
           serviceListItems = serviceListItems.concat(this.getServiceItem(response.data, rateInterval));
         });
-
         return ServiceListFilters.filterBy(serviceListItems, filters);
       })
       .then(serviceListItems => {
         this.promises.cancel('sort');
-
         this.setState({
           listItems: this.sortItemList(serviceListItems, this.state.currentSortField, this.state.isSortAscending)
         });
       })
       .catch(err => {
         if (!err.isCanceled) {
-          this.handleAxiosError('Could not fetch services list', err);
+          this.handleAxiosError($t('tip108', 'Could not fetch services list'), err);
         }
       });
   }
 
-  getServiceValidation(name: string, namespace: string, validations: Validations): ObjectValidation | undefined {
+  getServiceValidation(name, namespace: string, validations: Validations): ObjectValidation | undefined {
     const type = 'service'; // Using 'service' directly is disallowed
-
     if (validations[type] && validations[type][validationKey(name, namespace)]) {
       return validations[type][validationKey(name, namespace)];
     }
-
     return undefined;
   }
 
   render() {
-    const hiddenColumns = isMultiCluster ? [] : ['cluster'];
-
+    const hiddenColumns = isMultiCluster ? ([] as string[]) : ['cluster'];
     Toggles.getToggles().forEach((v, k) => {
       if (!v) {
         hiddenColumns.push(k);
@@ -197,13 +177,11 @@ class ServiceListPageComponent extends FilterComponent.Component<
     return (
       <>
         <RefreshNotifier onTick={this.updateListItems} />
-
         <DefaultSecondaryMasthead
           rightToolbar={
-            <TimeDurationComponent key="DurationDropdown" id="service-list-duration-dropdown" disabled={false} />
+            <TimeDurationComponent key={'DurationDropdown'} id="service-list-duration-dropdown" disabled={false} />
           }
         />
-
         <RenderContent>
           <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} type="services">
             <StatefulFilters
@@ -219,7 +197,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
   }
 }
 
-const mapStateToProps = (state: KialiAppState): ReduxProps => ({
+const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state),
   duration: durationSelector(state)
 });

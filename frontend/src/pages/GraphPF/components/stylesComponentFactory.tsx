@@ -49,7 +49,7 @@ const nodeContextMenu = (node: GraphElement): React.ReactElement[] => {
     optionsPF.unshift(
       nodeData.isOutside
         ? ({
-            text: 'Namespace Graph',
+            text: $t('Namespace Graph'),
             altClickHandler: doubleTapHandler,
             external: false,
             node: node,
@@ -57,7 +57,7 @@ const nodeContextMenu = (node: GraphElement): React.ReactElement[] => {
             url: ''
           } as ContextMenuOptionPF)
         : ({
-            text: 'Node Graph',
+            text: $t('Node Graph'),
             altClickHandler: doubleTapHandler,
             external: false,
             node: node,
@@ -102,13 +102,19 @@ const handleDoubleTap = (doubleTapNode: GraphElement) => {
   if (dtNodeData.isOutOfMesh) {
     if (!serverConfig.ambientEnabled) {
       AlertUtils.add(
-        `A node with a missing sidecar provides no node-specific telemetry and can not provide a node detail graph.`,
+        $t(
+          'tip47',
+          'A node with a missing sidecar provides no node-specific telemetry and can not provide a node detail graph.'
+        ),
         undefined,
         MessageType.WARNING
       );
     } else {
       AlertUtils.add(
-        `A node out of the mesh provides no node-specific telemetry and can not provide a node detail graph.`,
+        $t(
+          'AlertUtils15',
+          'A node out of the mesh provides no node-specific telemetry and can not provide a node detail graph.'
+        ),
         undefined,
         MessageType.WARNING
       );
@@ -118,7 +124,7 @@ const handleDoubleTap = (doubleTapNode: GraphElement) => {
   }
   if (dtNodeData.isIdle) {
     AlertUtils.add(
-      `An idle node has no node-specific traffic and can not provide a node detail graph.`,
+      $t('tip48', 'An idle node has no node-specific traffic and can not provide a node detail graph.'),
       undefined,
       MessageType.WARNING
     );

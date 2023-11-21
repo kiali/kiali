@@ -91,23 +91,6 @@ export function GetTraceDetailURL(
   }
 }
 
-export function GetTracingURL(externalServices: ExternalServiceInfo[]) {
-  const tempoService = externalServices.find(service => service.name === TEMPO);
-  const jaegerService = externalServices.find(service => service.name === 'jaeger');
-  const grafanaService = externalServices.find(service => service.name === 'Grafana');
-
-  if (tempoService) {
-    const tracingUrl = grafanaService?.url;
-    if (!tracingUrl) {
-      return undefined;
-    }
-    return `${tracingUrl}/explore?left={"queries":[{"datasource":{"type":"tempo"},"queryType":"nativeSearch"}]}`;
-  } else {
-    const tracingUrl = jaegerService?.url;
-    return `${tracingUrl}`;
-  }
-}
-
 class TracesComp extends React.Component<TracesProps, TracesState> {
   private fetcher: TracesFetcher;
   private percentilesPromise: Promise<Map<string, number>>;
@@ -188,10 +171,10 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
         const percentiles = await this.percentilesPromise;
         options.minDuration = percentiles.get(this.state.querySettings.percentile);
         if (!options.minDuration) {
-          AlertUtils.addWarning('Cannot perform query above the requested percentile (value unknown).');
+          AlertUtils.addWarning($t('tip32', 'Cannot perform query above the requested percentile (value unknown).'));
         }
       } catch (err) {
-        AlertUtils.addError(`Could not fetch percentiles: ${err}`);
+        AlertUtils.addError(`${$t('tip33', 'Could not fetch percentiles')}: ${err}`);
       }
     }
     this.fetcher.fetch(options, this.state.traces);
@@ -320,7 +303,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                     <ToolbarItem>
                       <Tooltip content={<>Open Chart in {this.props.provider} UI</>}>
                         <a href={tracingURL} target="_blank" rel="noopener noreferrer" style={{ marginLeft: '10px' }}>
-                          View in Tracing <ExternalLinkAltIcon />
+                          {$t('View_in_Tracing', 'View in Tracing')} <ExternalLinkAltIcon />
                         </a>
                       </Tooltip>
                     </ToolbarItem>
@@ -354,7 +337,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                 activeKey={this.state.activeTab}
                 onSelect={(_, idx: any) => this.setState({ activeTab: idx })}
               >
-                <Tab eventKey={traceDetailsTab} title="Trace Details">
+                <Tab eventKey={traceDetailsTab} title={$t('TraceDetails', 'Trace Details')}>
                   <TraceDetails
                     namespace={this.props.namespace}
                     target={this.props.target}
@@ -370,7 +353,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                     tabTraceID={this.props.tabTrace?.traceID}
                   />
                 </Tab>
-                <Tab eventKey={spansDetailsTab} title="Span Details">
+                <Tab eventKey={spansDetailsTab} title={$t('SpanDetails', 'Span Details')}>
                   <SpanDetails
                     namespace={this.props.namespace}
                     target={this.props.target}

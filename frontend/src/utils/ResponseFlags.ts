@@ -1,35 +1,35 @@
 // The Envoy response flags can be found here (search for %RESPONSE_FLAGS% on the page):
 // https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage
 export const responseFlags = {
-  DC: { code: '500', help: 'Downstream connection termination', short: 'Downstream cx term' },
-  DI: { help: 'Delayed via fault injection' },
+  DC: { code: '500', help: 'tip132', short: 'tip133' },
+  DI: { help: 'tip134' },
   DPE: {
-    help: ' Downstream request had an HTTP protocol error (is port type correct?)',
-    short: 'Downstream invalid HTTP'
+    help: 'tip135',
+    short: 'tip136'
   },
-  FI: { help: 'Aborted via fault injection' },
-  IH: { code: '400', help: 'Invalid value for a strictly-checked header', short: 'Invalid header value' },
-  LH: { code: '503', help: 'Local service failed health check request', short: 'Failed health check' },
-  LR: { code: '503', help: 'Connection local reset' },
-  NR: { code: '404', help: 'No route configured (check DestinationRule or VirtualService)', short: 'No route' },
-  RL: { code: '429', help: 'Ratelimited locally by the HTTP rate limit filter', short: 'Rate limit' },
-  RLSE: { help: 'Rate limited service error' },
-  SI: { code: '408', help: 'Stream idle timeout' },
-  UAEX: { help: 'Unauthorized external service' },
-  UC: { code: '503', help: 'Upstream connection termination', short: 'Upstream cx term' },
+  FI: { help: 'tip137' },
+  IH: { code: '400', help: 'tip138', short: 'tip139' },
+  LH: { code: '503', help: 'tip140', short: 'FailedHealthCheck' },
+  LR: { code: '503', help: 'ConnectionLocalReset' },
+  NR: { code: '404', help: 'tip141', short: 'NoRoute' },
+  RL: { code: '429', help: 'tip142', short: 'RateLimit' },
+  RLSE: { help: 'tip143' },
+  SI: { code: '408', help: 'StreamIdleTimeout' },
+  UAEX: { help: 'UnauthorizedExternalService' },
+  UC: { code: '503', help: 'StreamIdleTimeout', short: 'tip145' },
   UF: {
     code: '503',
-    help: 'Upstream connection failure (check for mutual TLS configuration conflict)',
-    short: 'Upstream cx failure'
+    help: 'tip146',
+    short: 'tip147'
   },
-  UH: { code: '503', help: 'No healthy upstream hosts in upstream cluster', short: 'No healthy upstream' },
-  UMSDR: { help: 'Upstream request reached max stream duration' },
-  UO: { code: '503', help: 'Upstream overflow (circuit breaker open)', short: 'Circuit breaker open' },
-  UR: { code: '503', help: 'Upstream remote reset' },
+  UH: { code: '503', help: 'tip148', short: 'tip296' },
+  UMSDR: { help: 'tip149' },
+  UO: { code: '503', help: 'tip150', short: 'tip295' },
+  UR: { code: '503', help: 'UpstreamRemoteReset' },
   URX: {
     code: '503',
-    help: 'Upstream retry limit (HTTP) or Max connect attempts (TCP) exceeded',
-    short: 'Upstream retry/connect limit'
+    help: 'tip151',
+    short: 'tip152'
   },
-  UT: { code: '504', help: 'Upstream request timeout' }
+  UT: { code: '504', help: 'ream request timeo' }
 };

@@ -34,7 +34,6 @@ import { FocusNode } from 'pages/GraphPF/GraphPF';
 import { GraphSelectorBuilder } from './GraphSelector';
 import { GetTraceDetailURL } from '../../components/TracingIntegration/TracesComponent';
 import { ExternalServiceInfo } from '../../types/StatusState';
-import { isMultiCluster } from '../../config';
 
 type ReduxProps = {
   close: () => void;
@@ -111,8 +110,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
           : nodeData.service
           ? `/services/${nodeData.service}`
           : `/applications/${nodeData.app!}`) +
-        `?tab=traces&${URLParam.TRACING_TRACE_ID}=${this.props.trace.traceID}` +
-        (nodeData.cluster && isMultiCluster ? `&${URLParam.CLUSTERNAME}=${encodeURIComponent(nodeData.cluster)}` : '')
+        `?tab=traces&${URLParam.TRACING_TRACE_ID}=${this.props.trace.traceID}`
       : undefined;
     const jaegerTraceURL = GetTraceDetailURL(
       this.props.provider,
@@ -136,7 +134,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
         <div className={summaryTitle}>
           <span>Trace</span>
           <span className={closeBoxStyle}>
-            <Tooltip content="Close and clear trace selection">
+            <Tooltip content={$t('tip285', 'Close and clear trace selection')}>
               <Button id="close-trace" variant={ButtonVariant.plain} onClick={this.props.close}>
                 <CloseIcon />
               </Button>
@@ -145,7 +143,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
         </div>
         <div>
           {tracesDetailsURL ? (
-            <Tooltip content={`View trace details for: ${info.name()}`}>
+            <Tooltip content={`${$t('tip286', 'View trace details for')}: ${info.name()}`}>
               <Link
                 to={tracesDetailsURL}
                 onClick={() => {
@@ -168,12 +166,12 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
               </>
             )}
             <div>
-              <strong>Started: </strong>
+              <strong>{$t('Started')}: </strong>
               {info.fromNow()}
             </div>
             {info.duration() && (
               <div>
-                <strong>Full duration: </strong>
+                <strong>{$t('Full_duration', 'Full duration')}: </strong>
                 {info.duration()}
               </div>
             )}
@@ -181,7 +179,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
           {spans.length > 0 && (
             <div className={pStyle}>
               <div>
-                <strong>{pluralize(spans.length, 'span')}</strong> on this node
+                <strong>{pluralize(spans.length, 'span')}</strong> {$t('on_this_node', 'on this node')}
                 <SimplerSelect
                   selected={currentSpan?.operationName}
                   className={spanSelectStyle}
@@ -210,7 +208,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
             <>
               <br />
               <a href={jaegerTraceURL} target="_blank" rel="noopener noreferrer">
-                Show in Tracing{' '}
+                {$t('Show_in_Tracing', 'Show in Tracing')}{' '}
                 <Icon size="sm">
                   <ExternalLinkAltIcon />
                 </Icon>
@@ -232,8 +230,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
             : nodeData.service
             ? `/services/${nodeData.service}`
             : `/applications/${nodeData.app!}`) +
-          `?tab=traces&${URLParam.TRACING_TRACE_ID}=${this.props.trace.traceID}&${URLParam.TRACING_SPAN_ID}=${span.spanID}` +
-          (span.cluster && isMultiCluster ? `&${URLParam.CLUSTERNAME}=${encodeURIComponent(span.cluster)}` : '')
+          `?tab=traces&${URLParam.TRACING_TRACE_ID}=${this.props.trace.traceID}&${URLParam.TRACING_SPAN_ID}=${span.spanID}`
       : undefined;
   }
 
@@ -242,17 +239,17 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
     return (
       <>
         <div>
-          <strong>Started after: </strong>
+          <strong>{$t('Started after')}: </strong>
           {formatDuration(span.relativeStartTime)}
         </div>
         <div>
-          <strong>Duration: </strong>
+          <strong>{$t('Duration')}: </strong>
           {formatDuration(span.duration)}
         </div>
         {(span.type === 'http' || span.type === 'envoy') && this.renderHTTPSpan(span)}
         {span.type === 'tcp' && this.renderTCPSpan(span)}
         <div>
-          <strong>Related: </strong>
+          <strong>{$t('Related')}: </strong>
           {this.renderRelatedSpans(span)}
         </div>
         {spanURL && (
@@ -265,7 +262,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
                 }
               }}
             >
-              Show span
+              {$t('Show_span', 'Show span')}
             </Link>
           </div>
         )}
@@ -333,9 +330,9 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
         key={target.spanID}
         content={
           <>
-            Operation name: {target.operationName}
+            {$t('OperationName', 'Operation name')}: {target.operationName}
             <br />
-            Workload: {target.workload || 'unknown'}
+            {$t('Workload')}: {target.workload || $t('unknown')}
           </>
         }
       >
@@ -392,9 +389,9 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
         key={target.spanID}
         content={
           <>
-            Operation name: {target.operationName}
+            {$t('OperationName')}: {target.operationName}
             <br />
-            Workload: {target.workload || 'unknown'}
+            {$t('Workload')}: {target.workload || $t('unknown')}
           </>
         }
       >
@@ -415,13 +412,13 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
           {info.method} {info.url}
         </div>
         <div>
-          <strong>Response: </strong>
-          code {info.statusCode || 'unknown'}
+          <strong>{$t('Response')}: </strong>
+          {$t('code')} {info.statusCode || $t('unknown')}
           {flag && ', flags ' + flag}
         </div>
         {flag && (
           <div>
-            <InfoAltIcon /> {responseFlags[flag]?.help || 'Unknown flag'}
+            <InfoAltIcon /> {$t(responseFlags[flag]?.help) || $t('UnknownFlag', 'Unknown flag')}
           </div>
         )}
       </>
@@ -434,7 +431,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
       <>
         {info.topic && (
           <div>
-            <strong>Topic: </strong>
+            <strong>{$t('Topic')}: </strong>
             {info.topic}
           </div>
         )}

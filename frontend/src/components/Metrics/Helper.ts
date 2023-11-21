@@ -205,7 +205,7 @@ export const prettyLabelValues = (promName: PromLabel, val: string): string => {
     }
     const flagObj = responseFlags[val];
     if (flagObj) {
-      const text = flagObj.short ? flagObj.short : flagObj.help;
+      const text = flagObj.short ? $t(flagObj.short) : $t(flagObj.help);
       return `${text} (${val})`;
     }
   }

@@ -7,9 +7,23 @@ import {
   EmptyState,
   EmptyStateBody,
   EmptyStateVariant,
-  EmptyStateHeader
+  EmptyStateHeader,
+  Icon
 } from '@patternfly/react-core';
-import { SortByDirection, IRow, IRowData, IAction, TableVariant, ISortBy, OnSort } from '@patternfly/react-table';
+import {
+  TableVariant,
+  RowWrapper,
+  sortable,
+  SortByDirection,
+  ICell,
+  IRow,
+  IActionsResolver,
+  IRowData,
+  IExtraRowData,
+  IAction,
+  ISeparator
+} from '@patternfly/react-table';
+import { Table, TableHeader, TableBody } from '@patternfly/react-table/deprecated';
 import { compareNullable } from 'components/FilterList/FilterHelper';
 import { MetricsStats } from 'types/Metrics';
 import { KialiAppState } from 'store/Store';
@@ -20,15 +34,17 @@ import { sameSpans } from 'utils/tracing/TracingHelper';
 import { buildQueriesFromSpans } from 'utils/tracing/TraceStats';
 import { getParamsSeparator, getSpanId } from '../../../utils/SearchParamUtils';
 import { kialiStyle } from 'styles/StyleUtils';
+import { ExclamationCircleIcon } from '@patternfly/react-icons';
 import { formatDuration, isErrorTag } from 'utils/tracing/TracingHelper';
 import { Link } from 'react-router-dom';
+import { PFColors } from 'components/Pf/PfColors';
 import { responseFlags } from 'utils/ResponseFlags';
 import { renderMetricsComparison } from './StatsComparison';
 import { history } from 'app/History';
+import { AngleDownIcon, AngleRightIcon, ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { isParentKiosk, kioskContextMenuAction } from '../../Kiosk/KioskActions';
+import { tableStyle } from 'styles/TableStyle';
 import { TEMPO } from '../../../types/Tracing';
-import { KialiIcon } from 'config/KialiIcon';
-import { SimpleTable, SortableTh } from 'components/SimpleTable';
 
 type ReduxProps = {
   kiosk: string;
@@ -38,10 +54,10 @@ type ReduxProps = {
 };
 
 type Props = ReduxProps & {
-  cluster?: string;
   externalURL?: string;
   items: RichSpanData[];
   namespace: string;
+  cluster?: string;
   traceID: string;
 };
 
@@ -52,9 +68,9 @@ interface State {
   sortIndex: number;
 }
 
-interface SortableCompareTh<T> extends SortableTh {
+type SortableCell<T> = ICell & {
   compare?: (a: T, b: T) => number;
-}
+};
 
 const dangerErrorStyle = kialiStyle({
   borderLeft: '3px solid var(--pf-v5-global--danger-color--100)'
@@ -69,55 +85,38 @@ const selectedStyle = kialiStyle({
   borderRight: '3px solid var(--pf-v5-global--info-color--100)'
 });
 
-const tableStyle = kialiStyle({
-  $nest: {
-    '&& tbody > tr > td': {
-      paddingTop: '0.25rem',
-      paddingBottom: '0.75rem',
-      $nest: {
-        '& .pf-v5-c-menu-toggle': {
-          verticalAlign: '-0.25rem'
-        }
-      }
-    }
-  }
+const rowKebabStyle = kialiStyle({
+  paddingLeft: 0,
+  textAlign: 'left',
+  whiteSpace: 'nowrap'
 });
 
-const expandButtonStyle = kialiStyle({
-  padding: '0.25rem',
-  paddingLeft: 0
-});
-
-const linkIconStyle = kialiStyle({
-  marginLeft: '0.25rem'
-});
-
-const errorIconStyle = kialiStyle({
-  marginRight: '0.25rem'
+const linkStyle = kialiStyle({
+  fontSize: 14
 });
 
 const getClassName = (isError: boolean, isSpan: boolean): string | undefined => {
   return isSpan ? (isError ? selectedErrorStyle : selectedStyle) : isError ? dangerErrorStyle : undefined;
 };
 
-const columns: SortableCompareTh<RichSpanData>[] = [
+const cells: SortableCell<RichSpanData>[] = [
   {
-    title: 'Timeline',
-    sortable: true,
+    title: $t('Timeline'),
+    transforms: [sortable],
     compare: (a, b) => a.startTime - b.startTime
   },
   {
-    title: 'App / Workload',
-    sortable: true,
+    title: $t('title6', 'App / Workload'),
+    transforms: [sortable],
     compare: (a, b) => compareNullable(a.workload, b.workload, (a2, b2) => a2.localeCompare(b2))
   },
   {
-    title: 'Summary',
-    sortable: false
+    title: $t('Summary'),
+    transforms: []
   },
   {
-    title: 'Statistics',
-    sortable: true,
+    title: $t('Statistics'),
+    transforms: [sortable],
     compare: (a, b) => a.duration - b.duration
   }
 ];
@@ -146,39 +145,44 @@ class SpanTableComponent extends React.Component<Props, State> {
   }
 
   render() {
-    const sortBy: ISortBy = { index: this.state.sortIndex, direction: this.state.sortDirection };
-    const onSort: OnSort = (_event: React.MouseEvent, index: number, sortDirection: SortByDirection) =>
-      this.setState({ sortIndex: index, sortDirection: sortDirection });
-
-    const noSpans: React.ReactNode = (
-      <EmptyState variant={EmptyStateVariant.full}>
-        <EmptyStateHeader titleText="No spans found" headingLevel="h5" />
-        <EmptyStateBody>No spans match the current filters</EmptyStateBody>
-      </EmptyState>
-    );
-
     return (
-      <SimpleTable
-        label="Span List"
-        className={tableStyle}
-        columns={columns}
-        rows={this.rows()}
-        emptyState={noSpans}
-        onSort={onSort}
-        sortBy={sortBy}
-        actionResolver={this.actionResolver}
+      <Table
         variant={TableVariant.compact}
-      />
+        aria-label={'list_spans'}
+        cells={cells}
+        rows={this.rows()}
+        actionResolver={this.actionResolver}
+        sortBy={{ index: this.state.sortIndex, direction: this.state.sortDirection }}
+        onSort={(_event, index, sortDirection) => this.setState({ sortIndex: index, sortDirection: sortDirection })}
+        className={tableStyle}
+        rowWrapper={p => <RowWrapper {...p} className={(p.row as any).className} />}
+      >
+        <TableHeader />
+        {this.props.items.length > 0 ? (
+          <TableBody />
+        ) : (
+          <tbody>
+            <tr>
+              <td colSpan={cells.length}>
+                <EmptyState variant={EmptyStateVariant.full}>
+                  <EmptyStateHeader titleText={$t('NoSpansFound', 'No spans found')} headingLevel="h5" />
+                  <EmptyStateBody>{$t('tip36', 'No spans match the current filters')}</EmptyStateBody>
+                </EmptyState>
+              </td>
+            </tr>
+          </tbody>
+        )}
+      </Table>
     );
   }
 
-  private fetchComparisonMetrics(items: RichSpanData[]): void {
+  private fetchComparisonMetrics(items: RichSpanData[]) {
     const queries = buildQueriesFromSpans(items, false);
     this.props.loadMetricsStats(queries, false);
   }
 
   private rows = (): IRow[] => {
-    const compare = columns[this.state.sortIndex].compare;
+    const compare = cells[this.state.sortIndex].compare;
     const sorted = compare
       ? this.props.items.sort(this.state.sortDirection === SortByDirection.asc ? compare : (a, b) => compare(b, a))
       : this.props.items;
@@ -195,35 +199,42 @@ class SpanTableComponent extends React.Component<Props, State> {
         <>
           <Button
             key={`${item.spanID}-duration`}
-            className={expandButtonStyle}
+            style={{ padding: '6px 4px 6px 0' }}
             variant={ButtonVariant.link}
             onClick={() => this.toggleExpanded(item.spanID)}
           >
-            {isExpanded ? <KialiIcon.AngleDown /> : <KialiIcon.AngleRight />}
+            {isExpanded ? <AngleDownIcon /> : <AngleRightIcon />}
           </Button>
           {formatDuration(item.relativeStartTime)}
         </>,
-        this.originCell(item),
-        this.summaryCell(item),
-        this.statsCell(item)
-      ],
+        this.OriginCell(item),
+        this.SummaryCell(item),
+        this.StatsCell(item)
+      ] as React.ReactNode[],
       className: getClassName(item.tags.some(isErrorTag), isSpan),
       item: item
     };
   };
 
-  private actionResolver = (rowData: IRowData): IAction[] => {
+  private actionResolver: IActionsResolver = (
+    rowData: IRowData,
+    _extraData: IExtraRowData
+  ): (IAction | ISeparator)[] => {
     const item = rowData.item;
     const parentKiosk = isParentKiosk(this.props.kiosk);
     const appActions: IAction[] = [
       {
         isDisabled: true,
-        title: <h1 aria-hidden="true">{`Application (${item.app})`}</h1>
+        title: (
+          <h1 className={`pf-c-dropdown__group-title ${rowKebabStyle}`} aria-hidden="true">{`${$t('Application')} (${
+            item.app
+          })`}</h1>
+        )
       },
       {
-        title: 'Inbound Metrics',
-        onClick: () => {
-          const href = `${item.linkToApp}${getParamsSeparator(rowData.item.linkToApp)}tab=in_metrics`;
+        title: $t('Inbound Metrics'),
+        onClick: (_event, _rowId, rowData, _extra) => {
+          const href = rowData.item.linkToApp + getParamsSeparator(rowData.item.linkToApp) + 'tab=in_metrics';
           if (parentKiosk) {
             kioskContextMenuAction(href);
           } else {
@@ -232,9 +243,9 @@ class SpanTableComponent extends React.Component<Props, State> {
         }
       },
       {
-        title: 'Outbound Metrics',
-        onClick: () => {
-          const href = `${item.linkToApp}${getParamsSeparator(rowData.item.linkToApp)}tab=out_metrics`;
+        title: $t('Outbound Metrics'),
+        onClick: (_event, _rowId, rowData, _extra) => {
+          const href = rowData.item.linkToApp + getParamsSeparator(rowData.item.linkToApp) + 'tab=out_metrics';
           if (parentKiosk) {
             kioskContextMenuAction(href);
           } else {
@@ -245,17 +256,20 @@ class SpanTableComponent extends React.Component<Props, State> {
     ];
 
     let workloadActions: IAction[] = [];
-
     if (item.linkToWorkload) {
       workloadActions = [
         {
           isDisabled: true,
-          title: <h1 aria-hidden="true">{`Workload (${item.workload})`}</h1>
+          title: (
+            <h1 className={`pf-c-dropdown__group-title ${rowKebabStyle}`} aria-hidden="true">{`${$t('Workload')} (${
+              item.workload
+            })`}</h1>
+          )
         },
         {
           title: 'Logs',
-          onClick: () => {
-            const href = `${item.linkToWorkload}?tab=logs`;
+          onClick: (_event, _rowId, rowData, _extra) => {
+            const href = rowData.item.linkToWorkload + '?tab=logs';
             if (parentKiosk) {
               kioskContextMenuAction(href);
             } else {
@@ -264,9 +278,10 @@ class SpanTableComponent extends React.Component<Props, State> {
           }
         },
         {
-          title: 'Inbound Metrics',
-          onClick: () => {
-            const href = `${item.linkToWorkload}${getParamsSeparator(rowData.item.linkToWorkload)}tab=in_metrics`;
+          title: $t('Inbound Metrics'),
+          onClick: (_event, _rowId, rowData, _extra) => {
+            const href =
+              rowData.item.linkToWorkload + getParamsSeparator(rowData.item.linkToWorkload) + 'tab=in_metrics';
             if (parentKiosk) {
               kioskContextMenuAction(href);
             } else {
@@ -275,9 +290,10 @@ class SpanTableComponent extends React.Component<Props, State> {
           }
         },
         {
-          title: 'Outbound Metrics',
-          onClick: () => {
-            const href = `${item.linkToWorkload}${getParamsSeparator(rowData.item.linkToWorkload)}tab=out_metrics`;
+          title: $t('Outbound Metrics'),
+          onClick: (_event, _rowId, rowData, _extra) => {
+            const href =
+              rowData.item.linkToWorkload + getParamsSeparator(rowData.item.linkToWorkload) + 'tab=out_metrics';
             if (parentKiosk) {
               kioskContextMenuAction(href);
             } else {
@@ -289,22 +305,21 @@ class SpanTableComponent extends React.Component<Props, State> {
     }
 
     let tracingActions: IAction[] = [];
-
     if (this.props.externalURL) {
       const traceURL = this.props.externalURL?.replace('TRACEID', this.props.traceID);
       const spanLink = this.props.provider === TEMPO ? traceURL : `${traceURL}?uiFind=${item.spanID}`;
       tracingActions = [
         {
           isDisabled: true,
-          title: <h1 aria-hidden="true">{`Tracing`}</h1>
+          title: <h1 className={`pf-c-dropdown__group-title ${rowKebabStyle}`} aria-hidden="true">{`Tracing`}</h1>
         },
         {
           title: (
-            <span>
-              More span details <KialiIcon.ExternalLink className={linkIconStyle} />
+            <span className={linkStyle}>
+              {$t('MoreSpanDetails', 'More span details')} <ExternalLinkAltIcon />
             </span>
           ),
-          onClick: () => window.open(spanLink, '_blank')
+          onClick: (_event, _rowId, _rowData, _extra) => window.open(spanLink, '_blank')
         }
       ];
     }
@@ -326,10 +341,9 @@ class SpanTableComponent extends React.Component<Props, State> {
     this.setState({ expandedSpans: this.state.expandedSpans });
   };
 
-  private originCell = (item: RichSpanData): React.ReactNode => {
+  private OriginCell = (item: RichSpanData): React.ReactNode => {
     const parentKiosk = isParentKiosk(this.props.kiosk);
     const key = `${item.spanID}-origin`;
-
     return (
       <>
         <strong key={`${key}-app`}>Application: </strong>
@@ -352,10 +366,8 @@ class SpanTableComponent extends React.Component<Props, State> {
             </Link>
           ))) ||
           item.app}
-
         <br key={`${key}-br`} />
-
-        <strong key={`${key}-wl`}>Workload: </strong>
+        <strong key={`${key}-wl`}>{$t('Workload')}: </strong>
         {(item.linkToWorkload &&
           (parentKiosk ? (
             <Link
@@ -374,47 +386,48 @@ class SpanTableComponent extends React.Component<Props, State> {
               {item.workload}
             </Link>
           ))) ||
-          'unknown'}
-
+          $t('unknown')}
         {this.isExpanded(item.spanID) && (
           <div key={`${key}-expanded-br-1`}>
             <strong key={`${key}-expanded-pod`}>Pod: </strong>
-            {item.pod || 'unknown'}
+            {item.pod || $t('unknown')}
           </div>
         )}
       </>
     );
   };
 
-  private summaryCell = (item: RichSpanData): React.ReactNode => {
+  private SummaryCell = (item: RichSpanData): React.ReactNode => {
     const flag = (item.info as EnvoySpanInfo).responseFlags;
     const key = `${item.spanID}-summary`;
-
     return (
       <>
         {item.info.hasError && (
           <div key={`${key}-err`}>
-            <KialiIcon.ExclamationCircle key={`${key}-err-ic`} className={errorIconStyle} />
-            <strong key={`${key}-err-msg`}>This span reported an error</strong>
+            <Icon key={`${key}-err-ic`} color={PFColors.Danger}>
+              <ExclamationCircleIcon />
+            </Icon>{' '}
+            <strong key={`${key}-err-msg`}>{$t('tip361', 'This span reported an error')}</strong>
           </div>
         )}
-
         <div key={`${key}-op`}>
-          <strong key={`${key}-op-title`}>Operation: </strong>
+          <strong key={`${key}-op-title`}>{$t('Operation')}: </strong>
           {flag ? (
             <span key={`${key}-op-name`}>
-              {item.operationName} ({flag} <KialiIcon.ExclamationCircle key={`${key}-dan-ic`} />)
+              {item.operationName} ({flag}{' '}
+              <Icon key={`${key}-dan-ic`} color={PFColors.Danger}>
+                <ExclamationCircleIcon />
+              </Icon>
+              )
             </span>
           ) : (
             <span key={`${key}-op-name`}>{item.operationName}</span>
           )}
         </div>
-
         <div key={`${key}-comp`}>
-          <strong key={`${key}-comp=-title`}>Component: </strong>
+          <strong key={`${key}-comp=-title`}>{$t('Component')}: </strong>
           {item.component}
         </div>
-
         {this.isExpanded(item.spanID) &&
           ((item.type === 'envoy' && this.renderEnvoySummary(item)) ||
             (item.type === 'http' && this.renderHTTPSummary(item)) ||
@@ -423,16 +436,14 @@ class SpanTableComponent extends React.Component<Props, State> {
     );
   };
 
-  private renderEnvoySummary = (item: RichSpanData): React.ReactNode => {
+  private renderEnvoySummary = (item: RichSpanData) => {
     const parentKiosk = isParentKiosk(this.props.kiosk);
     const info = item.info as EnvoySpanInfo;
     let rqLabel = 'Request';
     let peerLink: JSX.Element | undefined = undefined;
     const key = `${item.spanID}-summary-envoy`;
-
     if (info.direction === 'inbound') {
-      rqLabel = 'Received request';
-
+      rqLabel = 'ReceivedRequest';
       if (info.peer) {
         peerLink = (
           <>
@@ -442,21 +453,20 @@ class SpanTableComponent extends React.Component<Props, State> {
                 to={''}
                 onClick={() => {
                   if (info.peer) {
-                    kioskContextMenuAction(`/namespaces/${info.peer.namespace}/workloads/${info.peer.name}`);
+                    kioskContextMenuAction('/namespaces/' + info.peer.namespace + '/workloads/' + info.peer.name);
                   }
                 }}
               >
                 {info.peer.name}
               </Link>
             ) : (
-              <Link to={`/namespaces/${info.peer.namespace}/workloads/${info.peer.name}`}>{info.peer.name}</Link>
+              <Link to={'/namespaces/' + info.peer.namespace + '/workloads/' + info.peer.name}>{info.peer.name}</Link>
             )}
           </>
         );
       }
     } else if (info.direction === 'outbound') {
-      rqLabel = 'Sent request';
-
+      rqLabel = 'SentRequest';
       if (info.peer) {
         peerLink = (
           <React.Fragment key={`${key}-out`}>
@@ -467,14 +477,14 @@ class SpanTableComponent extends React.Component<Props, State> {
                 to={''}
                 onClick={() => {
                   if (info.peer) {
-                    kioskContextMenuAction(`/namespaces/${info.peer.namespace}/services/${info.peer.name}`);
+                    kioskContextMenuAction('/namespaces/' + info.peer.namespace + '/services/' + info.peer.name);
                   }
                 }}
               >
                 {info.peer.name}
               </Link>
             ) : (
-              <Link key={`${key}-out-link`} to={`/namespaces/${info.peer.namespace}/services/${info.peer.name}`}>
+              <Link key={`${key}-out-link`} to={'/namespaces/' + info.peer.namespace + '/services/' + info.peer.name}>
                 {info.peer.name}
               </Link>
             )}
@@ -482,32 +492,29 @@ class SpanTableComponent extends React.Component<Props, State> {
         );
       }
     }
-
     const rsDetails: string[] = [];
     if (info.statusCode) {
       rsDetails.push(String(info.statusCode));
     }
-
     let flagInfo: string | undefined = undefined;
     if (info.responseFlags) {
       rsDetails.push(info.responseFlags);
-      flagInfo = responseFlags[info.responseFlags]?.help || 'Unknown flag';
+      flagInfo = $t(responseFlags[info.responseFlags]?.help) || $t('UnknownFlag', 'Unknown flag');
     }
 
     return (
       <React.Fragment key={`${key}`}>
         <div key={`${key}-req`}>
           <strong key={`${key}-req-title`}>
-            {rqLabel}
+            {$t(rqLabel)}
             {peerLink}:{' '}
           </strong>
           <span key={`${key}-req-val`}>
             {info.method} {info.url}
           </span>
         </div>
-
         <div key={`${key}-status`}>
-          <strong key={`${key}-status-title`}>Response status: </strong>
+          <strong key={`${key}-status-title`}>{$t('ResponseStatus', 'Response status')}: </strong>
           <span key={`${key}-status-val`}>{rsDetails.join(', ')}</span>
         </div>
         <span key={`${key}-flag`}>{flagInfo}</span>
@@ -515,24 +522,22 @@ class SpanTableComponent extends React.Component<Props, State> {
     );
   };
 
-  private renderHTTPSummary = (item: RichSpanData): React.ReactNode => {
+  private renderHTTPSummary = (item: RichSpanData) => {
     const info = item.info as OpenTracingHTTPInfo;
     const rqLabel =
-      info.direction === 'inbound' ? 'Received request' : info.direction === 'outbound' ? 'Sent request' : 'Request';
+      info.direction === 'inbound' ? 'ReceivedRequest' : info.direction === 'outbound' ? 'SentRequest' : 'Request';
     const key = `${item.spanID}-summary-http`;
-
     return (
       <React.Fragment key={key}>
         <div key={`${key}-req`}>
-          <strong key={`${key}-req-title`}>{rqLabel}: </strong>
+          <strong key={`${key}-req-title`}>{$t(rqLabel)}: </strong>
           <span key={`${key}-req-val`}>
             {info.method} {info.url}
           </span>
         </div>
-
         {info.statusCode && (
           <div key={`${key}-code`}>
-            <strong key={`${key}-code-title`}>Response status: </strong>
+            <strong key={`${key}-code-title`}>{$t('ResponseStatus', 'Response status')}: </strong>
             <span key={`${key}-code-val`}>{info.statusCode}</span>
           </div>
         )}
@@ -540,15 +545,14 @@ class SpanTableComponent extends React.Component<Props, State> {
     );
   };
 
-  private renderTCPSummary = (item: RichSpanData): React.ReactNode => {
+  private renderTCPSummary = (item: RichSpanData) => {
     const info = item.info as OpenTracingTCPInfo;
     const key = `${item.spanID}-summary-tcp`;
-
     return (
       <React.Fragment key={key}>
         {info.topic && (
           <div key={`${key}-topic`}>
-            <strong key={`${key}-topic-title`}>Topic: </strong>
+            <strong key={`${key}-topic-title`}>{$t('Topic')}: </strong>
             <span key={`${key}-topic-val`}>{info.topic}</span>
           </div>
         )}
@@ -556,16 +560,14 @@ class SpanTableComponent extends React.Component<Props, State> {
     );
   };
 
-  private statsCell = (item: RichSpanData): React.ReactNode => {
+  private StatsCell = (item: RichSpanData): React.ReactNode => {
     const key = `${item.spanID}-stats`;
-
     return (
       <div key={key}>
         <div key={`${key}-dur-div`}>
-          <strong key={`${key}-dur-title`}>Duration: </strong>
+          <strong key={`${key}-dur-title`}>{$t('Duration')}: </strong>
           {formatDuration(item.duration)}
         </div>
-
         {item.type === 'envoy' &&
           renderMetricsComparison(item, !this.isExpanded(item.spanID), this.props.metricsStats, () =>
             this.fetchComparisonMetrics([item])

@@ -29,7 +29,6 @@ const ItemNames = {
   istio: 'Istio Object'
 };
 
-const IstioName = 'Istio Config';
 const namespaceRegex = /namespaces\/([a-z0-9-]+)\/([\w-.]+)\/([\w-.*]+)(\/([\w-.]+))?(\/([\w-.]+))?/;
 
 export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadcrumbViewState> {
@@ -106,12 +105,12 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, Breadcru
       <Breadcrumb>
         <BreadcrumbItem>
           <Link to={`/${pathItem}`} onClick={this.cleanFilters}>
-            {isIstio ? IstioName : BreadcrumbView.capitalize(pathItem)}
+            {isIstio ? $t('Istio Config') : BreadcrumbView.capitalize(pathItem)}
           </Link>
         </BreadcrumbItem>
         <BreadcrumbItem>
           <Link to={`/${pathItem}?namespaces=${namespace}`} onClick={this.cleanFilters}>
-            Namespace: {namespace}
+            {$t('Namespace')}: {namespace}
           </Link>
         </BreadcrumbItem>
         {isIstio && (

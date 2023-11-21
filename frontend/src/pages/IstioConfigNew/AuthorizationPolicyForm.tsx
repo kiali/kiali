@@ -7,7 +7,7 @@ import {
   HelperText,
   HelperTextItem,
   Switch,
-  TextInput
+  TextInputBase as TextInput
 } from '@patternfly/react-core';
 import { RuleBuilder, Rule } from './AuthorizationPolicyForm/RuleBuilder';
 import { RuleList } from './AuthorizationPolicyForm/RuleList';
@@ -19,12 +19,12 @@ type Props = {
 };
 
 export type AuthorizationPolicyState = {
+  workloadSelector: string;
   action: string;
-  addWorkloadSelector: boolean;
+  rules: Rule[];
   // Used to identify DENY_ALL, ALLOW_ALL or RULES
   policy: string;
-  rules: Rule[];
-  workloadSelector: string;
+  addWorkloadSelector: boolean;
   workloadSelectorValid: boolean;
 };
 
@@ -37,9 +37,9 @@ export const ALLOW = 'ALLOW';
 export const DENY = 'DENY';
 
 const HELPER_TEXT = {
-  ALLOW_ALL: 'Allows all requests to workloads in given namespace(s)',
-  DENY_ALL: 'Denies all requests to workloads in given namespace(s)',
-  RULES: 'Builds an Authorization Policy based on Rules'
+  DENY_ALL: $t('tip80', 'Denies all requests to workloads in given namespace(s)'),
+  ALLOW_ALL: $t('tip81', 'Allows all requests to workloads in given namespace(s)'),
+  RULES: $t('tip82', 'Builds an Authorization Policy based on Rules')
 };
 
 const rulesFormValues = [DENY_ALL, ALLOW_ALL, RULES];
@@ -78,7 +78,7 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
     });
   }
 
-  onRulesFormChange = (_event: React.FormEvent, value: string): void => {
+  onRulesFormChange = (_event, value) => {
     this.setState(
       {
         policy: value
@@ -87,7 +87,7 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
     );
   };
 
-  onChangeWorkloadSelector = (_event: React.FormEvent, _value: boolean): void => {
+  onChangeWorkloadSelector = (_event, _) => {
     this.setState(
       prevState => {
         return {
@@ -98,7 +98,7 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
     );
   };
 
-  addWorkloadLabels = (_event: React.FormEvent, value: string): void => {
+  addWorkloadLabels = (_event, value: string) => {
     if (value.length === 0) {
       this.setState(
         {
@@ -109,33 +109,26 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
       );
       return;
     }
-
     value = value.trim();
     const labels: string[] = value.split(',');
     let isValid = true;
-
     // Some smoke validation rules for the labels
     for (let i = 0; i < labels.length; i++) {
       const label = labels[i];
-
       if (label.indexOf('=') < 0) {
         isValid = false;
         break;
       }
-
       const splitLabel: string[] = label.split('=');
-
       if (splitLabel.length !== 2) {
         isValid = false;
         break;
       }
-
       if (splitLabel[0].trim().length === 0 || splitLabel[1].trim().length === 0) {
         isValid = false;
         break;
       }
     }
-
     this.setState(
       {
         workloadSelectorValid: isValid,
@@ -145,7 +138,7 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
     );
   };
 
-  onActionChange = (_event: React.FormEvent, value: string): void => {
+  onActionChange = (_event, value) => {
     this.setState(
       {
         action: value
@@ -154,7 +147,7 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
     );
   };
 
-  onAddRule = (rule: Rule): void => {
+  onAddRule = (rule: Rule) => {
     this.setState(
       prevState => {
         prevState.rules.push(rule);
@@ -166,7 +159,7 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
     );
   };
 
-  onRemoveRule = (index: number): void => {
+  onRemoveRule = (index: number) => {
     this.setState(
       prevState => {
         prevState.rules.splice(index, 1);
@@ -185,10 +178,10 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
   render() {
     return (
       <>
-        <FormGroup label="Policy" fieldId="rules-form">
+        <FormGroup label={$t('Policy')} fieldId="rules-form">
           <FormSelect value={this.state.policy} onChange={this.onRulesFormChange} id="rules-form" name="rules-form">
             {rulesFormValues.map((option, index) => (
-              <FormSelectOption key={index} value={option} label={option} />
+              <FormSelectOption key={index} value={option} label={$t(option)} />
             ))}
           </FormSelect>
           <FormHelperText>
@@ -197,21 +190,19 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
             </HelperText>
           </FormHelperText>
         </FormGroup>
-
         {this.state.policy === RULES && (
-          <FormGroup label="Workload Selector" fieldId="workloadSelectorSwitch">
+          <FormGroup label={$t('WorkloadSelector', 'Workload Selector')} fieldId="workloadSelectorSwitch">
             <Switch
               id="workloadSelectorSwitch"
-              label=" "
-              labelOff=" "
+              label={' '}
+              labelOff={' '}
               isChecked={this.state.addWorkloadSelector}
               onChange={this.onChangeWorkloadSelector}
             />
           </FormGroup>
         )}
-
         {this.state.addWorkloadSelector && (
-          <FormGroup fieldId="workloadLabels" label="Labels">
+          <FormGroup fieldId="workloadLabels" label={$t('Labels')}>
             <TextInput
               id="gwHosts"
               name="gwHosts"
@@ -220,33 +211,32 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
               onChange={this.addWorkloadLabels}
               validated={isValid(this.state.workloadSelectorValid)}
             />
-
             <FormHelperText>
               <HelperText>
                 <HelperTextItem>
                   {isValid(this.state.workloadSelectorValid)
-                    ? 'One or more labels to select a workload where the AuthorizationPolicy is applied.'
-                    : 'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'}
+                    ? $t('tip83', 'One or more labels to select a workload where the AuthorizationPolicy is applied.')
+                    : $t(
+                        'helpTip46',
+                        'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'
+                      )}
                 </HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>
         )}
-
         {this.state.policy === RULES && (
-          <FormGroup label="Action" fieldId="action-form">
+          <FormGroup label={$t('Action')} fieldId="action-form">
             <FormSelect value={this.state.action} onChange={this.onActionChange} id="action-form" name="action-form">
               {actions.map((option, index) => (
-                <FormSelectOption key={index} value={option} label={option} />
+                <FormSelectOption key={index} value={option} label={$t(option)} />
               ))}
             </FormSelect>
           </FormGroup>
         )}
-
         {this.state.policy === RULES && <RuleBuilder onAddRule={this.onAddRule} />}
-
         {this.state.policy === RULES && (
-          <FormGroup label="Rule List" fieldId="apRuleList">
+          <FormGroup label={$t('RuleList', 'Rule List')} fieldId="apRuleList">
             <RuleList action={this.state.action} ruleList={this.state.rules} onRemoveRule={this.onRemoveRule} />
           </FormGroup>
         )}

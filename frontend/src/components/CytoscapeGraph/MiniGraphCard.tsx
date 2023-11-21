@@ -85,7 +85,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
   render() {
     const graphCardActions = [
       <DropdownItem key="viewFullGraph" onClick={this.onViewFullGraph}>
-        Show full graph
+        {$t('ShowFullGraph', 'Show full graph')}
       </DropdownItem>
     ];
     if (isParentKiosk(this.props.kiosk)) {
@@ -106,7 +106,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     } else {
       graphCardActions.push(
         <DropdownItem key="viewNodeGraph" onClick={this.onViewNodeGraph}>
-          Show node graph
+          {$t('ShowNodeGraph', 'Show node graph')}
         </DropdownItem>
       );
     }
@@ -114,7 +114,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     const rangeEnd: TimeInMilliseconds = this.props.dataSource.graphTimestamp * 1000;
     const rangeStart: TimeInMilliseconds = rangeEnd - this.props.dataSource.graphDuration * 1000;
     const intervalTitle =
-      rangeEnd > 0 ? toRangeString(rangeStart, rangeEnd, { second: '2-digit' }, { second: '2-digit' }) : 'Loading';
+      rangeEnd > 0 ? toRangeString(rangeStart, rangeEnd, { second: '2-digit' }, { second: '2-digit' }) : $t('Loading');
 
     return (
       <>

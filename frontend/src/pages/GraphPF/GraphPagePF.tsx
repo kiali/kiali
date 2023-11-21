@@ -453,8 +453,12 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
                   className={`${graphTimeRange} ${this.props.replayActive ? replayBackground : graphBackground}`}
                   isReadOnly={true}
                 >
-                  {this.props.replayActive && <Badge style={{ marginRight: '4px' }} isRead={true}>{`Replay`}</Badge>}
-                  {!isReplayReady && this.props.replayActive && `click Play to start`}
+                  {this.props.replayActive && (
+                    <Badge style={{ marginRight: '4px' }} isRead={true}>
+                      {$t('Replay')}
+                    </Badge>
+                  )}
+                  {!isReplayReady && this.props.replayActive && $t('tip287', 'click Play to start')}
                   {!isReplayReady && !this.props.replayActive && `${this.displayTimeRange()}`}
                   {isReplayReady && `${this.displayTimeRange()}`}
                 </Chip>
@@ -666,7 +670,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
         triggerRefresh();
       })
       .catch(error => {
-        AlertUtils.addError('Could not delete Istio config objects.', error);
+        AlertUtils.addError($t('AlertUtils1', 'Could not delete Istio config objects.'), error);
       });
   };
 
@@ -708,7 +712,12 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
   };
 
   private notifyError = (error: Error, _componentStack: string) => {
-    AlertUtils.add(`There was an error when rendering the graph: ${error.message}, please try a different layout`);
+    AlertUtils.add(
+      `${$t('tip363', 'There was an error when rendering the graph')}: ${error.message}, ${$t(
+        'tip364',
+        'please try a different layout'
+      )}`
+    );
   };
 
   private displayTimeRange = () => {

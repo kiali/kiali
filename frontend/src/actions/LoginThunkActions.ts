@@ -36,7 +36,10 @@ const performLogin = (dispatch: KialiDispatch, state: KialiAppState, data?: any)
         error => bail(error)
       );
     } else {
-      bail({ status: AuthResult.FAILURE, error: 'Preparation for login failed, try again.' });
+      bail({
+        status: AuthResult.FAILURE,
+        error: $t('tip153', 'Preparation for login failed, try again.')
+      });
     }
   });
 };
@@ -76,7 +79,7 @@ export const LoginThunkActions = {
         }
       } catch (err) {
         if (err instanceof Error) {
-          AlertUtils.addError('Logout failed', err);
+          AlertUtils.addError($t('LogoutFailed', 'Logout failed'), err);
         }
       }
     };

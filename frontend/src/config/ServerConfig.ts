@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { ServerConfig } from '../types/ServerConfig';
 import { parseHealthConfig } from './HealthConfig';
 import { MeshCluster } from '../types/Mesh';
+import i18n from 'locales/i18n';
 
 export type Durations = { [key: number]: string };
 
@@ -13,8 +14,13 @@ function getHomeCluster(cfg: ServerConfig): MeshCluster | undefined {
   return Object.values(cfg.clusters).find(cluster => cluster.isKialiHome);
 }
 
-export const humanDurations = (cfg: ComputedServerConfig, prefix?: string, suffix?: string) =>
-  _.mapValues(cfg.durations, v => _.reject([prefix, v, suffix], _.isEmpty).join(' '));
+export const humanDurations = (cfg: ComputedServerConfig, prefix?: string, suffix?: string) => {
+  if (prefix && prefix === $t('Last')) {
+    // Adaptive Chinese
+    return _.mapValues(cfg.durations, v => _.reject([prefix, v, suffix], _.isEmpty).join(''));
+  }
+  return _.mapValues(cfg.durations, v => _.reject([prefix, v, suffix], _.isEmpty).join(' '));
+};
 
 const toDurations = (tupleArray: [number, string][]): Durations => {
   const obj = {};
@@ -25,18 +31,18 @@ const toDurations = (tupleArray: [number, string][]): Durations => {
 };
 
 const durationsTuples: [number, string][] = [
-  [60, '1m'],
-  [120, '2m'],
-  [300, '5m'],
-  [600, '10m'],
-  [1800, '30m'],
-  [3600, '1h'],
-  [10800, '3h'],
-  [21600, '6h'],
-  [43200, '12h'],
-  [86400, '1d'],
-  [604800, '7d'],
-  [2592000, '30d']
+  [60, `1${i18n.t('date.m')}`],
+  [120, `2${i18n.t('date.m')}`],
+  [300, `5${i18n.t('date.m')}`],
+  [600, `10${i18n.t('date.m')}`],
+  [1800, `30${i18n.t('date.m')}`],
+  [3600, `1${i18n.t('date.h')}`],
+  [10800, `3${i18n.t('date.h')}`],
+  [21600, `6${i18n.t('date.h')}`],
+  [43200, `12${i18n.t('date.h')}`],
+  [86400, `1${i18n.t('date.d')}`],
+  [604800, `7${i18n.t('date.d')}`],
+  [2592000, `30${i18n.t('date.d')}`]
 ];
 
 const computeValidDurations = (cfg: ComputedServerConfig) => {

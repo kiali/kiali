@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { EmptyState, EmptyStateBody, EmptyStateVariant, Tab, EmptyStateHeader } from '@patternfly/react-core';
 import * as API from '../../services/Api';
-import { Workload, WorkloadId, WorkloadQuery } from '../../types/Workload';
+import { Workload, WorkloadId } from '../../types/Workload';
 import { WorkloadInfo } from './WorkloadInfo';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { IstioMetrics } from '../../components/Metrics/IstioMetrics';
@@ -31,11 +31,11 @@ import { history, HistoryManager } from 'app/History';
 import { basicTabStyle } from 'styles/TabStyles';
 
 type WorkloadDetailsState = {
+  workload?: Workload;
   cluster?: string;
+  health?: WorkloadHealth;
   currentTab: string;
   error?: ErrorMsg;
-  health?: WorkloadHealth;
-  workload?: Workload;
 };
 
 type ReduxProps = {
@@ -45,8 +45,8 @@ type ReduxProps = {
 };
 
 type WorkloadDetailsPageProps = ReduxProps & {
-  lastRefreshAt: TimeInMilliseconds;
   workloadId: WorkloadId;
+  lastRefreshAt: TimeInMilliseconds;
 };
 
 export const tabName = 'tab';
@@ -74,11 +74,10 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     this.fetchWorkload();
   }
 
-  componentDidUpdate(prevProps: WorkloadDetailsPageProps): void {
+  componentDidUpdate(prevProps: WorkloadDetailsPageProps) {
     // when linking from one cluster's workload to another cluster's workload, cluster in state should be changed
-    const cluster = HistoryManager.getClusterName() ?? this.state.cluster;
+    const cluster = HistoryManager.getClusterName() || this.state.cluster;
     const currentTab = activeTab(tabName, defaultTab);
-
     if (
       this.props.workloadId.namespace !== prevProps.workloadId.namespace ||
       this.props.workloadId.workload !== prevProps.workloadId.workload ||
@@ -102,17 +101,15 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     //HistoryManager.setParam(URLParam.CLUSTER, this.state.cluster);
   }
 
-  private fetchWorkload = async (cluster?: string): Promise<void> => {
+  private fetchWorkload = async (cluster?: string) => {
     if (!cluster) {
       cluster = this.state.cluster;
     }
-
-    const params: WorkloadQuery = {
+    const params: { [key: string]: string } = {
       validate: 'true',
-      rateInterval: `${String(this.props.duration)}s`,
+      rateInterval: String(this.props.duration) + 's',
       health: 'true'
     };
-
     await API.getWorkload(this.props.workloadId.namespace, this.props.workloadId.workload, params, cluster)
       .then(details => {
         this.setState({
@@ -130,23 +127,21 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
         });
       })
       .catch(error => {
-        AlertUtils.addError('Could not fetch Workload.', error);
-
+        AlertUtils.addError($t('helpTip67', 'Could not fetch Workload.'), error);
         const msg: ErrorMsg = {
-          title: 'No Workload is selected',
-          description: `${this.props.workloadId.workload} is not found in the mesh`
+          title: $t('title36', 'No Workload is selected'),
+          description: this.props.workloadId.workload + ` ${$t('title8', 'No App is selected')}`
         };
-
         this.setState({ error: msg });
       });
   };
 
-  private staticTabs(): JSX.Element[] {
+  private staticTabs() {
     const hasPods = this.state.workload?.pods.length;
     const tabsArray: JSX.Element[] = [];
 
     const overTab = (
-      <Tab title="Overview" eventKey={0} key="Overview">
+      <Tab title={$t('Overview')} eventKey={0} key={'Overview'}>
         <WorkloadInfo
           workload={this.state.workload}
           duration={this.props.duration}
@@ -159,7 +154,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     tabsArray.push(overTab);
 
     const trafficTab = (
-      <Tab title="Traffic" eventKey={1} key="Traffic">
+      <Tab title={$t('Traffic')} eventKey={1} key={'Traffic'}>
         <TrafficDetails
           itemName={this.props.workloadId.workload}
           itemType={MetricsObjectTypes.WORKLOAD}
@@ -173,7 +168,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
     if (!serverConfig.kialiFeatureFlags.disabledFeatures?.includes('logs-tab')) {
       const logTab = (
-        <Tab title="Logs" eventKey={2} key="Logs" data-test="workload-details-logs-tab">
+        <Tab title={$t('Logs')} eventKey={2} key={'Logs'} data-test={'workload-details-logs-tab'}>
           {hasPods ? (
             <WorkloadPodLogs
               lastRefreshAt={this.props.lastRefreshAt}
@@ -188,7 +183,9 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
                 titleText={<>No logs for Workload{this.props.workloadId.workload}</>}
                 headingLevel="h5"
               />
-              <EmptyStateBody>There are no logs to display because the workload has no pods.</EmptyStateBody>
+              <EmptyStateBody>
+                {$t('tip353', 'There are no logs to display because the workload has no pods.')}
+              </EmptyStateBody>
             </EmptyState>
           )}
         </Tab>
@@ -197,7 +194,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     }
 
     const inTab = (
-      <Tab title="Inbound Metrics" eventKey={3} key="Inbound Metrics">
+      <Tab title={$t('Inbound Metrics')} eventKey={3} key={'Inbound Metrics'}>
         <IstioMetrics
           data-test="inbound-metrics-component"
           lastRefreshAt={this.props.lastRefreshAt}
@@ -205,14 +202,14 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
           object={this.props.workloadId.workload}
           cluster={this.state.cluster}
           objectType={MetricsObjectTypes.WORKLOAD}
-          direction="inbound"
+          direction={'inbound'}
         />
       </Tab>
     );
     tabsArray.push(inTab);
 
     const outTab = (
-      <Tab title="Outbound Metrics" eventKey={4} key="Outbound Metrics">
+      <Tab title={$t('Outbound Metrics')} eventKey={4} key={'Outbound Metrics'}>
         <IstioMetrics
           data-test="outbound-metrics-component"
           lastRefreshAt={this.props.lastRefreshAt}
@@ -220,7 +217,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
           object={this.props.workloadId.workload}
           cluster={this.state.cluster}
           objectType={MetricsObjectTypes.WORKLOAD}
-          direction="outbound"
+          direction={'outbound'}
         />
       </Tab>
     );
@@ -228,21 +225,20 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
     if (this.props.tracingInfo && this.props.tracingInfo.enabled && this.props.tracingInfo.integration) {
       tabsArray.push(
-        <Tab eventKey={5} title="Traces" key="Traces">
+        <Tab eventKey={5} title={$t('Traces')} key="Traces">
           <TracesComponent
             lastRefreshAt={this.props.lastRefreshAt}
             namespace={this.props.workloadId.namespace}
             cluster={this.state.cluster}
             target={this.props.workloadId.workload}
-            targetKind="workload"
+            targetKind={'workload'}
           />
         </Tab>
       );
     }
-
     if (this.state.workload && this.hasIstioSidecars(this.state.workload) && !isWaypoint(this.state.workload.labels)) {
       const envoyTab = (
-        <Tab title="Envoy" eventKey={10} key="Envoy">
+        <Tab title={$t('Envoy')} eventKey={10} key={'Envoy'}>
           {this.state.workload && (
             <EnvoyDetails
               lastRefreshAt={this.props.lastRefreshAt}
@@ -275,18 +271,16 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
         }
       });
     }
-
     return hasIstioSidecars;
   }
 
-  private runtimeTabs(): JSX.Element[] {
+  private runtimeTabs() {
     const tabs: JSX.Element[] = [];
 
     if (this.state.workload) {
       const app = this.state.workload.labels[serverConfig.istioLabels.appLabelName];
       const version = this.state.workload.labels[serverConfig.istioLabels.versionLabelName];
       const isLabeled = app && version;
-
       if (isLabeled) {
         let tabOffset = 0;
         this.state.workload.runtimes.forEach(runtime => {
@@ -294,7 +288,6 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
             if (dashboard.template !== 'envoy') {
               const tabKey = tabOffset + nextTabIndex;
               paramToTab[dashboard.template] = tabKey;
-
               const tab = (
                 <Tab key={dashboard.template} title={dashboard.title} eventKey={tabKey}>
                   <CustomMetrics
@@ -308,7 +301,6 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
                   />
                 </Tab>
               );
-
               tabs.push(tab);
               tabOffset++;
             }
@@ -320,7 +312,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     return tabs;
   }
 
-  private renderTabs(): JSX.Element[] {
+  private renderTabs() {
     // PF4 Tabs doesn't support static tabs followed of an array of tabs created dynamically.
     return this.staticTabs().concat(this.runtimeTabs());
   }
@@ -328,7 +320,6 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
   render() {
     // set default to true: all dynamic tabs (unlisted below) are for runtimes dashboards, which uses custom time
     let useCustomTime = true;
-
     switch (this.state.currentTab) {
       case 'info':
       case 'traffic':
@@ -341,7 +332,6 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
         useCustomTime = true;
         break;
     }
-
     const actionsToolbar =
       this.state.currentTab === 'info' && this.state.workload ? (
         <WorkloadWizardDropdown
@@ -351,7 +341,6 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
           statusState={this.props.statusState}
         />
       ) : undefined;
-
     return (
       <>
         <RenderHeader
@@ -359,9 +348,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
           rightToolbar={<TimeControl customDuration={useCustomTime} />}
           actionsToolbar={actionsToolbar}
         />
-
         {this.state.error && <ErrorSection error={this.state.error} />}
-
         {this.state.workload && (
           <ParameterizedTabs
             id="basic-tabs"
@@ -384,7 +371,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
   }
 }
 
-const mapStateToProps = (state: KialiAppState): ReduxProps => ({
+const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
   statusState: state.statusState,
   tracingInfo: state.tracingState.info

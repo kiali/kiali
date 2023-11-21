@@ -52,13 +52,15 @@ const getUnreadCount = (messages: NotificationMessage[]) => {
 
 const getUnreadMessageLabel = (messages: NotificationMessage[]) => {
   const unreadCount = getUnreadCount(messages);
-  return unreadCount === 1 ? '1 Unread Message' : `${getUnreadCount(messages)} Unread Messages`;
+  return unreadCount === 1
+    ? $t('tip23', '1 Unread Message')
+    : `${getUnreadCount(messages)} ${$t('tip23', '1 Unread Message')}`;
 };
 
 const noNotificationsMessage = (
   <>
     <InfoIcon />
-    No Messages Available
+    {$t('NoMessagesAvailable', 'No Messages Available')}
   </>
 );
 

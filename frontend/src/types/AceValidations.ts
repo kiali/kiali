@@ -111,7 +111,7 @@ export const parseHelpAnnotations = (yaml: string, helpMessages: HelpMessage[]):
       row: marker.startRow,
       column: marker.startCol,
       type: 'info',
-      text: 'This field has help information. Check the side panel for more information.'
+      text: $t('tip293', 'This field has help information. Check the side panel for more information.')
     };
 
     if (marker.position !== -1) {

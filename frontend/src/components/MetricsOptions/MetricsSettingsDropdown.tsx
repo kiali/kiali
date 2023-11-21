@@ -210,7 +210,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
       <Dropdown
         toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
           <MenuToggle ref={toggleRef} onClick={() => this.onToggle(!this.state.isOpen)} isExpanded={this.state.isOpen}>
-            Metrics Settings
+            {$t('MetricsSettings', 'Metrics Settings')}
           </MenuToggle>
         )}
         isOpen={this.state.isOpen}
@@ -242,7 +242,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
               }
             }}
           />
-          <span className={checkboxSelectAllStyle}>Select all metric/label filters</span>
+          <span className={checkboxSelectAllStyle}>{$t('tip249', 'Select all metric/label filters')}</span>
         </div>
         <Divider />
       </div>
@@ -300,7 +300,9 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
 
     return (
       <>
-        <label className={classes(titleLabelStyle, titleStyle, labelStyle)}>Show metrics by:</label>
+        <label className={classes(titleLabelStyle, titleStyle, labelStyle)}>
+          {$t('ShowMetricsBy', 'Show metrics by')}:
+        </label>
         {displayGroupingLabels}
         <div className={spacerStyle} />
       </>
@@ -333,7 +335,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
                 isChecked={checked && this.props.hasHistogramsPercentiles}
                 isDisabled={!this.props.hasHistogramsPercentiles}
                 onChange={(_event, checked) => this.onHistogramOptionsChanged(o, checked)}
-                label={`Quantile ${o}`}
+                label={`${$t('Quantile', 'Quantile ')}${o}`}
               />
             </label>
           </div>
@@ -344,7 +346,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     return (
       <>
         <label className={classes(titleLabelStyle, titleStyle, labelStyle)} style={{ paddingRight: '0.5rem' }}>
-          Histograms:
+          {$t('Histograms')}:
         </label>
         <Tooltip
           key="tooltip_histograms"
@@ -352,8 +354,10 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
           content={
             <div style={{ textAlign: 'left' }}>
               <div>
-                "No data available" is displayed for a histogram that does not have telemetry supporting the selected
-                option. If no histograms support the necessary telemetry, the option will be disabled.
+                {$t(
+                  'tip250',
+                  "'No data available' is displayed for a histogram that does not have telemetry supporting the selected option. If no histograms support the necessary telemetry, the option will be disabled."
+                )}
               </div>
             </div>
           }

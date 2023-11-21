@@ -13,7 +13,7 @@ export class OutlierDetection extends React.Component<Props> {
   render() {
     return (
       <>
-        <FormGroup label="Add Outlier Detection" fieldId="odSwitch">
+        <FormGroup label={$t('AddOutlierDetection', 'Aort Percentation')} fieldId="odSwitch">
           <Switch
             id="odSwitch"
             label={' '}
@@ -24,7 +24,7 @@ export class OutlierDetection extends React.Component<Props> {
           <span>{wizardTooltip(OUTLIER_DETECTION_TOOLTIP)}</span>
         </FormGroup>
         {this.props.isOutlierDetection && (
-          <FormGroup label="Consecutive Errors" fieldId="consecutiveErrors">
+          <FormGroup label={$t('Consecutive Errors')} fieldId="consecutiveErrors">
             <TextInput
               value={this.props.outlierDetection.consecutiveErrors}
               id="consecutiveErrors"
@@ -39,7 +39,9 @@ export class OutlierDetection extends React.Component<Props> {
             />
             <FormHelperText>
               <HelperText>
-                <HelperTextItem>Number of errors before a host is ejected from the connection pool.</HelperTextItem>
+                <HelperTextItem>
+                  {$t('helpTip4', 'Number of errors before a host is ejected from the connection pool.')}
+                </HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>

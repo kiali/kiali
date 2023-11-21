@@ -6,7 +6,7 @@ import { serverConfig } from 'config';
 export const sortFields: SortField<IstioConfigItem>[] = [
   {
     id: 'namespace',
-    title: 'Namespace',
+    title: $t('Namespace'),
     isNumeric: false,
     param: 'ns',
     compare: (a: IstioConfigItem, b: IstioConfigItem) => {
@@ -15,7 +15,7 @@ export const sortFields: SortField<IstioConfigItem>[] = [
   },
   {
     id: 'type',
-    title: 'Type',
+    title: $t('Type'),
     isNumeric: false,
     param: 'it',
     compare: (a: IstioConfigItem, b: IstioConfigItem) => {
@@ -24,7 +24,7 @@ export const sortFields: SortField<IstioConfigItem>[] = [
   },
   {
     id: 'istioname',
-    title: 'Istio Name',
+    title: $t('Istio Name'),
     isNumeric: false,
     param: 'in',
     compare: (a: IstioConfigItem, b: IstioConfigItem) => {
@@ -36,7 +36,7 @@ export const sortFields: SortField<IstioConfigItem>[] = [
   },
   {
     id: 'configvalidation',
-    title: 'Config',
+    title: $t('Config'),
     isNumeric: false,
     param: 'cv',
     compare: (a: IstioConfigItem, b: IstioConfigItem) => {
@@ -64,7 +64,7 @@ export const sortFields: SortField<IstioConfigItem>[] = [
   },
   {
     id: 'cluster',
-    title: 'Cluster',
+    title: $t('Cluster'),
     isNumeric: false,
     param: 'cl',
     compare: (a: IstioConfigItem, b: IstioConfigItem) => {
@@ -83,7 +83,7 @@ export const sortFields: SortField<IstioConfigItem>[] = [
 
 export const istioNameFilter: FilterType = {
   category: 'Istio Name',
-  placeholder: 'Filter by Istio Name',
+  placeholder: $t('placeholder18', 'Filter by Istio Name'),
   filterType: AllFilterTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: []
@@ -92,69 +92,69 @@ export const istioNameFilter: FilterType = {
 // Used when Istio Config is implied
 export const istioTypeFilter: FilterType = {
   category: 'Type',
-  placeholder: 'Filter by Type',
+  placeholder: $t('placeholder19', 'Filter by Type'),
   filterType: AllFilterTypes.typeAhead,
   action: FILTER_ACTION_APPEND,
   filterValues: [
     {
       id: 'AuthorizationPolicy',
-      title: 'AuthorizationPolicy'
+      title: $t('AuthorizationPolicy')
     },
     {
       id: 'DestinationRule',
-      title: 'DestinationRule'
+      title: $t('DestinationRule')
     },
     {
       id: 'EnvoyFilter',
-      title: 'EnvoyFilter'
+      title: $t('EnvoyFilter')
     },
     {
       id: 'Gateway',
-      title: 'Gateway'
+      title: $t('Gateway')
     },
     {
       id: 'K8sGateway',
-      title: 'K8sGateway'
+      title: $t('K8sGateway', 'Gateway (K8s)')
     },
     {
       id: 'K8sHTTPRoute',
-      title: 'K8sHTTPRoute'
+      title: $t('K8sHTTPRoute', 'HTTPRoute (K8s)')
     },
     {
       id: 'PeerAuthentication',
-      title: 'PeerAuthentication'
+      title: $t('PeerAuthentication')
     },
     {
       id: 'RequestAuthentication',
-      title: 'RequestAuthentication'
+      title: $t('RequestAuthentication', 'Request Authentication')
     },
     {
       id: 'ServiceEntry',
-      title: 'ServiceEntry'
+      title: $t('ServiceEntry')
     },
     {
       id: 'Sidecar',
-      title: 'Sidecar'
+      title: $t('Sidecar')
     },
     {
       id: 'Telemetry',
-      title: 'Telemetry'
+      title: $t('Telemetry')
     },
     {
       id: 'VirtualService',
-      title: 'VirtualService'
+      title: $t('VirtualService')
     },
     {
       id: 'WasmPlugin',
-      title: 'WasmPlugin'
+      title: $t('WasmPlugin')
     },
     {
       id: 'WorkloadEntry',
-      title: 'WorkloadEntry'
+      title: $t('WorkloadEntry')
     },
     {
       id: 'WorkloadGroup',
-      title: 'WorkloadGroup'
+      title: $t('WorkloadGroup')
     }
   ]
 };
@@ -163,30 +163,30 @@ export const istioTypeFilter: FilterType = {
 export const istioConfigTypeFilter = {
   ...istioTypeFilter,
   category: 'Istio Config Type',
-  placeholder: 'Filter by Istio Config Type'
+  placeholder: $t('placeholder20', 'Filter by Istio Config Type')
 };
 
 export const configValidationFilter: FilterType = {
   category: 'Config',
-  placeholder: 'Filter by Config Validation',
+  placeholder: $t('placeholder21', 'Filter by Config Validation'),
   filterType: AllFilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: [
     {
       id: 'valid',
-      title: 'Valid'
+      title: $t('Valid')
     },
     {
       id: 'warning',
-      title: 'Warning'
+      title: $t('Warning')
     },
     {
       id: 'notvalid',
-      title: 'Not Valid'
+      title: $t('Not Valid')
     },
     {
       id: 'notvalidated',
-      title: 'Not Validated'
+      title: $t('Not Validated')
     }
   ]
 };
@@ -194,7 +194,7 @@ export const configValidationFilter: FilterType = {
 export const availableFilters: FilterType[] = [istioTypeFilter, istioNameFilter, configValidationFilter];
 
 const configurationToggle: ToggleType = {
-  label: 'Configuration Validation',
+  label: $t('ConfigurationValidation', 'Configuration Validation'),
   name: 'configuration',
   isChecked: true
 };

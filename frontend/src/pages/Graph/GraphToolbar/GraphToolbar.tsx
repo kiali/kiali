@@ -202,7 +202,11 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
           <ToolbarGroup aria-label="graph settings" style={{ margin: 0, alignItems: 'flex-start' }}>
             {this.props.node && (
               <ToolbarItem style={{ margin: 0 }}>
-                <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content={'Back to full graph'}>
+                <Tooltip
+                  key={'graph-tour-help-ot'}
+                  position={TooltipPosition.right}
+                  content={$t('tip351', 'Back to full graph')}
+                >
                   <Button variant={ButtonVariant.link} onClick={this.handleNamespaceReturn}>
                     <KialiIcon.Back />
                   </Button>
@@ -227,7 +231,11 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
             )}
 
             <ToolbarItem style={{ marginLeft: 'auto', alignSelf: 'center' }}>
-              <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content="Shortcuts and tips...">
+              <Tooltip
+                key={'graph-tour-help-ot'}
+                position={TooltipPosition.right}
+                content={$t('placeholder42', 'Shortcuts and tips...')}
+              >
                 <TourStop info={GraphTourStops.Shortcuts}>
                   <Button
                     id="graph-tour"
@@ -237,7 +245,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
                     isInline
                   >
                     <KialiIcon.Help />
-                    <span style={{ marginLeft: '5px' }}>Help</span>
+                    <span style={{ marginLeft: '5px' }}>{$t('Help')}</span>
                   </Button>
                 </TourStop>
               </Tooltip>

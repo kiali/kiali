@@ -68,8 +68,10 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
         isChecked: trafficRates.includes(TrafficRate.GRPC_GROUP),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            Displays active gRPC Edges for the time period, using the selected gRPC rate. To see idle gRPC Edges enable
-            the "Idle Edges" Display menu option. Default: Requests.
+            {$t(
+              'tip273',
+              "Displays active gRPC Edges for the time period, using the selected gRPC rate. To see idle gRPC Edges enable the 'Idle Edges' Display menu option. Default: Requests."
+            )}
           </div>
         )
       },
@@ -79,8 +81,10 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
         isChecked: trafficRates.includes(TrafficRate.HTTP_GROUP),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            Displays active HTTP Edges for the time period, using the selected HTTP rate. To see idle HTTP Edges enable
-            the "Idle Edges" Display menu option. Default: Requests.
+            {$t(
+              'tip274',
+              "Displays active HTTP Edges for the time period, using the selected HTTP rate. To see idle HTTP Edges enable the 'Idle Edges' Display menu option. Default: Requests."
+            )}
           </div>
         )
       },
@@ -90,8 +94,10 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
         isChecked: trafficRates.includes(TrafficRate.TCP_GROUP),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            Displays active TCP Edges for the time period, using the selected TCP rate. To see inactive TCP Edges enable
-            the "Idle Edges" Display menu option. Default: Sent Bytes.
+            {$t(
+              'tip275',
+              "Displays active TCP Edges for the time period, using the selected TCP rate. To see inactive TCP Edges enable the 'Idle Edges' Display menu option. Default: Sent Bytes."
+            )}
           </div>
         )
       }
@@ -104,7 +110,10 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
         isChecked: trafficRates.includes(TrafficRate.GRPC_RECEIVED),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            Received (i.e. Response) message rate in messages-per-second (mps). Captures server streaming RPCs.
+            {$t(
+              'tip276',
+              'Received (i.e. Response) message rate in messages-per-second (mps). Captures server streaming RPCs.'
+            )}
           </div>
         )
       },
@@ -114,27 +123,33 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
         isChecked: trafficRates.includes(TrafficRate.GRPC_REQUEST),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            Request message rate in requests-per-second (rps). Captures unary RPC, with status codes.
+            {$t('tip370', 'Request message rate in requests-per-second (rps). Captures unary RPC, with status codes.')}
           </div>
         )
       },
       {
         id: TrafficRate.GRPC_SENT,
-        labelText: 'Sent Messages',
+        labelText: 'Sent_Messages',
         isChecked: trafficRates.includes(TrafficRate.GRPC_SENT),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            Sent (i.e. Request) message rate in messages-per-second (mps). Captures client streaming RPCs.
+            {$t(
+              'tip277',
+              'Sent (i.e. Request) message rate in messages-per-second (mps). Captures client streaming RPCs.'
+            )}
           </div>
         )
       },
       {
         id: TrafficRate.GRPC_TOTAL,
-        labelText: 'Total Messages',
+        labelText: 'Total_Messages',
         isChecked: trafficRates.includes(TrafficRate.GRPC_TOTAL),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            Combined (Sent + Received) message rate in messages-per-second (mps). Captures all streaming RPCs.
+            {$t(
+              'tip278',
+              'Combined (Sent + Received) message rate in messages-per-second (mps). Captures all streaming RPCs.'
+            )}
           </div>
         )
       }
@@ -147,7 +162,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
         isChecked: trafficRates.includes(TrafficRate.HTTP_REQUEST),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            Request message rate in requests-per-second (rps). Captures status codes.
+            {$t('tip371', 'Request message rate in requests-per-second (rps). Captures status codes.')}
           </div>
         )
       }
@@ -156,22 +171,26 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
     const tcpOptions: TrafficRateOptionType[] = [
       {
         id: TrafficRate.TCP_RECEIVED,
-        labelText: 'Received Bytes',
+        labelText: 'Received_Bytes',
         isChecked: trafficRates.includes(TrafficRate.TCP_RECEIVED),
-        tooltip: <div style={{ textAlign: 'left' }}>Received bytes rate in bytes-per-second (bps).</div>
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>{$t('tip279', 'Received bytes rate in bytes-per-second (bps).')}</div>
+        )
       },
       {
         id: TrafficRate.TCP_SENT,
-        labelText: 'Sent Bytes',
+        labelText: 'Sent_Bytes',
         isChecked: trafficRates.includes(TrafficRate.TCP_SENT),
-        tooltip: <div style={{ textAlign: 'left' }}>Sent bytes rate in bytes-per-second (bps).</div>
+        tooltip: <div style={{ textAlign: 'left' }}>{$t('tip280', 'Sent bytes rate in bytes-per-second (bps).')}</div>
       },
       {
         id: TrafficRate.TCP_TOTAL,
-        labelText: 'Total Bytes',
+        labelText: 'Total_Bytes',
         isChecked: trafficRates.includes(TrafficRate.TCP_TOTAL),
         tooltip: (
-          <div style={{ textAlign: 'left' }}>Combined (Sent + Received) byte rate in bytes-per-second (mps).</div>
+          <div style={{ textAlign: 'left' }}>
+            {$t('tip281', 'Combined (Sent + Received) byte rate in bytes-per-second (mps).')}
+          </div>
         )
       }
     ];
@@ -224,7 +243,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                           name="grpcOptions"
                           isChecked={grpcOption.isChecked}
                           isDisabled={props.disabled}
-                          label={grpcOption.labelText}
+                          label={$t(grpcOption.labelText)}
                           onChange={(event, _) => toggleTrafficRateGrpc(_, event)}
                           value={grpcOption.id}
                         />
@@ -258,7 +277,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                           name="httpOptions"
                           isChecked={httpOption.isChecked}
                           isDisabled={props.disabled}
-                          label={httpOption.labelText}
+                          label={$t(httpOption.labelText)}
                           onChange={(event, _) => toggleTrafficRateHttp(_, event)}
                           value={httpOption.id}
                         />
@@ -293,7 +312,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                           name="tcpOptions"
                           isChecked={tcpOption.isChecked}
                           isDisabled={props.disabled}
-                          label={tcpOption.labelText}
+                          label={$t(tcpOption.labelText)}
                           onChange={(event, _) => toggleTrafficRateTcp(_, event)}
                           value={tcpOption.id}
                         />
@@ -384,7 +403,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
           onClick={() => onToggle(!isOpen)}
           isExpanded={isOpen}
         >
-          Traffic
+          {$t('Traffic')}
         </MenuToggle>
       )}
       isOpen={isOpen}

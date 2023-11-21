@@ -81,10 +81,14 @@ export const renderMetricsComparison = (
         {!isCompact && (
           <Tooltip
             key={`${key}-tt`}
-            content="This heatmap is a comparison matrix of this request duration against duration statistics aggregated over time. Move the pointer over cells to get more details."
+            content={$t(
+              'tip37',
+              'This heatmap is a comparison matrix of this request duration against duration statistics aggregated over time. Move the pointer over cells to get more details.'
+            )}
           >
             <>
-              <InfoAltIcon key={`${key}-ic`} /> <strong key={`${key}-ic-title`}>Comparison map: </strong>
+              <InfoAltIcon key={`${key}-ic`} />{' '}
+              <strong key={`${key}-ic-title`}>{$t('ComparisonMap', 'Comparison map')}: </strong>
             </>
           </Tooltip>
         )}
@@ -93,9 +97,9 @@ export const renderMetricsComparison = (
     );
   }
   return (
-    <Tooltip key={`${key}-tt`} content="Click to load more statistics for this request">
+    <Tooltip key={`${key}-tt`} content={$t('tip38', 'Click to load more statistics for this reques')}>
       <Button key={`${key}-load`} onClick={load} variant={ButtonVariant.link}>
-        <strong key={`${key}-load-title`}>Load statistics</strong>
+        <strong key={`${key}-load-title`}>{$t('LoadStatistics', 'Load statistics')}</strong>
       </Button>
     </Tooltip>
   );

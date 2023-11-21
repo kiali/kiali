@@ -359,7 +359,7 @@ export const TopologyContent: React.FC<{
         if (parent) {
           parent.children?.push(node.id);
         } else {
-          console.error(`Could not find parent node |${parentId}|`);
+          console.error(`${$t('tip384', 'Could not find parent node')} |${parentId}|`);
         }
       }
 
@@ -657,7 +657,7 @@ export const TopologyContent: React.FC<{
                     disabled: EdgeMode.ALL === edgeMode,
                     icon: <LongArrowAltRightIcon />,
                     id: 'toolbar_edge_mode_all',
-                    tooltip: 'Show all edges'
+                    tooltip: $t('ShowAllEdges', 'Show all edges')
                   },
                   {
                     ariaLabel: 'Hide Healthy Edges',
@@ -669,14 +669,14 @@ export const TopologyContent: React.FC<{
                     disabled: EdgeMode.UNHEALTHY === edgeMode,
                     icon: <LongArrowAltRightIcon />,
                     id: 'toolbar_edge_mode_unhealthy',
-                    tooltip: 'Hide healthy edges'
+                    tooltip: $t('HideHealthyEdges', 'Hide healthy edges')
                   },
                   {
                     ariaLabel: 'Hide All Edges',
                     id: 'toolbar_edge_mode_none',
                     disabled: EdgeMode.NONE === edgeMode,
                     icon: <LongArrowAltRightIcon />,
-                    tooltip: 'Hide all edges',
+                    tooltip: $t('HideAllEdges', 'Hide all edges'),
                     callback: () => {
                       //change this back when we have the active styling
                       //setEdgeMode(EdgeMode.NONE === edgeMode ? EdgeMode.ALL : EdgeMode.NONE);
@@ -688,7 +688,7 @@ export const TopologyContent: React.FC<{
                     id: 'toolbar_layout_dagre',
                     disabled: LayoutName.Dagre === layoutName,
                     icon: <TopologyIcon />,
-                    tooltip: 'Layout - dagre',
+                    tooltip: $t('tip71', 'Layout - dagre'),
                     callback: () => {
                       setLayoutName(LayoutName.Dagre);
                     }
@@ -698,7 +698,7 @@ export const TopologyContent: React.FC<{
                     id: 'toolbar_layout_grid',
                     disabled: LayoutName.Grid === layoutName,
                     icon: <TopologyIcon />,
-                    tooltip: 'Layout - grid',
+                    tooltip: $t('tip72', 'Layout - grid'),
                     callback: () => {
                       setLayoutName(LayoutName.Grid);
                     }
@@ -708,7 +708,7 @@ export const TopologyContent: React.FC<{
                     id: 'toolbar_layout_concentric',
                     disabled: LayoutName.Concentric === layoutName,
                     icon: <TopologyIcon />,
-                    tooltip: 'Layout - concentric',
+                    tooltip: $t('tip73', 'Layout - concentric'),
                     callback: () => {
                       setLayoutName(LayoutName.Concentric);
                     }
@@ -718,7 +718,7 @@ export const TopologyContent: React.FC<{
                     id: 'toolbar_layout_breadth_first',
                     disabled: LayoutName.BreadthFirst === layoutName,
                     icon: <TopologyIcon />,
-                    tooltip: 'Layout - breadth first',
+                    tooltip: $t('tip74', 'Layout - breadth first'),
                     callback: () => {
                       setLayoutName(LayoutName.BreadthFirst);
                     }

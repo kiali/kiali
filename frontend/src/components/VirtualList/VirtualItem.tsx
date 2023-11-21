@@ -8,14 +8,14 @@ import { actionRenderer } from './Renderers';
 import { CSSProperties } from 'react';
 
 type VirtualItemProps = {
-  action?: JSX.Element;
+  item: RenderResource;
+  style?: CSSProperties;
   className?: string;
+  index: number;
   columns: any[];
   config: Resource;
-  index: number;
-  item: RenderResource;
   statefulFilterProps?: React.RefObject<StatefulFilters>;
-  style?: CSSProperties;
+  action?: JSX.Element;
 };
 
 type VirtualItemState = {
@@ -46,24 +46,22 @@ export class VirtualItem extends React.Component<VirtualItemProps, VirtualItemSt
     this.promises.cancelAll();
   }
 
-  renderDetails = (item: RenderResource, health?: Health): React.ReactNode => {
+  renderDetails = (item: RenderResource, health?: Health) => {
     return this.props.columns
       .filter(object => !!object.renderer)
       .map(object => object.renderer(item, this.props.config, this.getBadge(), health, this.props.statefulFilterProps));
   };
 
-  getBadge = (): React.ReactNode => {
+  getBadge = () => {
     return this.props.config.name !== 'istio' ? this.props.config.badge : IstioTypes[this.props.item['type']].badge;
   };
 
   render() {
     const { style, className, item } = this.props;
-    let key = `VirtualItem_${'namespace' in item ? `Ns${item.namespace}_${item.name}` : item.name}`;
-
+    let key = 'VirtualItem_' + ('namespace' in item ? 'Ns' + item.namespace + '_' + item.name : item.name);
     if ('type' in item) {
-      key = `VirtualItem_Ns${item.namespace}_${item.type}_${item.name}`;
+      key = 'VirtualItem_Ns' + item.namespace + '_' + item.type + '_' + item.name;
     }
-
     return (
       <Tr style={style} className={className} role="row" key={key} data-test={key}>
         {this.renderDetails(item, this.state.health)}

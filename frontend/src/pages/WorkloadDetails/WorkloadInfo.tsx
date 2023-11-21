@@ -104,37 +104,53 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
       .then(results => {
         this.setState({ workloadIstioConfig: results.data });
       })
-      .catch(error => AlertUtils.addError('Could not fetch Health/IstioConfig.', error));
+      .catch(error => AlertUtils.addError($t('AlertUtils20', 'Could not fetch Health/IstioConfig.'), error));
   };
 
   // All information for validations is fetched in the workload, no need to add another call
   private workloadValidations(workload: Workload): Validations {
     const noIstiosidecar: ObjectCheck = {
-      message: 'Pod has no Istio sidecar',
+      message: $t('tip110', 'Pod has no Istio sidecar'),
       severity: ValidationTypes.Warning,
       path: ''
     };
-    const noAppLabel: ObjectCheck = { message: 'Pod has no app label', severity: ValidationTypes.Warning, path: '' };
+    const noAppLabel: ObjectCheck = {
+      message: $t('tip111', 'Pod has no app label'),
+      severity: ValidationTypes.Warning,
+      path: ''
+    };
     const noVersionLabel: ObjectCheck = {
-      message: 'Pod has no version label',
+      message: $t('tip112', 'Pod has no version label'),
       severity: ValidationTypes.Warning,
       path: ''
     };
-    const pendingPod: ObjectCheck = { message: 'Pod is in Pending Phase', severity: ValidationTypes.Warning, path: '' };
-    const unknownPod: ObjectCheck = { message: 'Pod is in Unknown Phase', severity: ValidationTypes.Warning, path: '' };
-    const failedPod: ObjectCheck = { message: 'Pod is in Failed Phase', severity: ValidationTypes.Error, path: '' };
+    const pendingPod: ObjectCheck = {
+      message: $t('tip113', 'Pod is in Pending Phase'),
+      severity: ValidationTypes.Warning,
+      path: ''
+    };
+    const unknownPod: ObjectCheck = {
+      message: $t('tip114', 'Pod is in Unknown Phase'),
+      severity: ValidationTypes.Warning,
+      path: ''
+    };
+    const failedPod: ObjectCheck = {
+      message: $t('tip115', 'Pod is in Failed Phase'),
+      severity: ValidationTypes.Error,
+      path: ''
+    };
     const failingPodContainer: ObjectCheck = {
-      message: 'Pod has failing container',
+      message: $t('tip116', 'Pod has failing container'),
       severity: ValidationTypes.Warning,
       path: ''
     };
     const failingPodIstioContainer: ObjectCheck = {
-      message: 'Pod has failing Istio container',
+      message: $t('tip117', 'Pod has failing Istio container'),
       severity: ValidationTypes.Warning,
       path: ''
     };
     const failingPodAppContainer: ObjectCheck = {
-      message: 'Pod has failing app container',
+      message: $t('tip118', 'Pod has failing app container'),
       severity: ValidationTypes.Warning,
       path: ''
     };

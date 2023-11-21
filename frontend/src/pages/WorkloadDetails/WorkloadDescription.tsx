@@ -77,22 +77,22 @@ export class WorkloadDescription extends React.Component<WorkloadDescriptionProp
           <ul style={{ listStyleType: 'none' }}>
             {workload.istioInjectionAnnotation !== undefined && (
               <li>
-                <span>Istio Injection</span>
+                <span>{$t('IstioInjection', 'Istio Injection')}</span>
                 {String(workload.istioInjectionAnnotation)}
               </li>
             )}
             <li>
-              <span>Type</span>
+              <span>{$t('Type')}</span>
               {workload.type ? workload.type : 'N/A'}
             </li>
             <li>
-              <span>Created</span>
+              <span>{$t('Created')}</span>
               <div style={{ display: 'inline-block' }}>
                 <LocalTime time={workload.createdAt} />
               </div>
             </li>
             <li>
-              <span>Version</span>
+              <span>{$t('Version')}</span>
               {workload.resourceVersion}
             </li>
             {workload.additionalDetails.map((additionalItem, idx) => {
@@ -106,7 +106,7 @@ export class WorkloadDescription extends React.Component<WorkloadDescriptionProp
             })}
             {runtimes.length > 0 && (
               <li id="runtimes">
-                <span>Runtimes</span>
+                <span>{$t('Runtimes')}</span>
                 <div style={{ display: 'inline-block' }}>
                   {runtimes
                     .map((rt, idx) => renderRuntimeLogo(rt, idx))
@@ -194,7 +194,7 @@ export class WorkloadDescription extends React.Component<WorkloadDescriptionProp
           {workload.labels && (
             <Labels
               labels={workload.labels}
-              tooltipMessage={isTemplateLabels ? 'Labels defined on the Workload template' : undefined}
+              tooltipMessage={isTemplateLabels ? $t('tip109', 'Labels defined on the Workload template') : undefined}
             />
           )}
           <DetailDescription
@@ -214,7 +214,7 @@ export class WorkloadDescription extends React.Component<WorkloadDescriptionProp
         </CardBody>
       </Card>
     ) : (
-      'Loading'
+      $t('Loading')
     );
   }
 }

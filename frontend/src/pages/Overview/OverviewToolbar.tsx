@@ -169,7 +169,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
       this.setState({ overviewType: otype });
       this.props.onRefresh();
     } else {
-      throw new Error('Overview type is not valid.');
+      throw new Error($t('tip105', 'Overview type is not valid.'));
     }
   };
 
@@ -181,7 +181,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
       this.setState({ directionType: dtype });
       this.props.onRefresh();
     } else {
-      throw new Error('Direction type is not valid.');
+      throw new Error($t('tip106', 'Direction type is not valid.'));
     }
   };
 
@@ -205,7 +205,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
               id="sort_selector"
               handleSelect={this.changeSortField}
               value={this.state.sortField.id}
-              label={sortTypes[this.state.sortField.id]}
+              label={$t(sortTypes[this.state.sortField.id])}
               options={sortTypes}
               data-sort-field={this.state.sortField.id}
             />
@@ -234,9 +234,9 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
           disabled={false}
           className={typeSelectStyle}
           handleSelect={this.updateOverviewType}
-          nameDropdown="Health for"
+          nameDropdown={$t('HealthFor', 'Health for')}
           value={this.state.overviewType}
-          label={overviewTypes[this.state.overviewType]}
+          label={$t(overviewTypes[this.state.overviewType])}
           options={overviewTypes}
         />
         {this.props.displayMode !== OverviewDisplayMode.COMPACT && (
@@ -244,13 +244,13 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
             id="direction-type"
             disabled={false}
             handleSelect={this.updateDirectionType}
-            nameDropdown="Traffic"
+            nameDropdown={$t('Traffic')}
             value={this.state.directionType}
-            label={directionTypes[this.state.directionType]}
+            label={$t(directionTypes[this.state.directionType])}
             options={directionTypes}
           />
         )}
-        <Tooltip content={<>Expand view</>} position={TooltipPosition.top}>
+        <Tooltip content={<>{$t('Expandview', 'Expand view')}</>} position={TooltipPosition.top}>
           <Button
             onClick={() => this.props.setDisplayMode(OverviewDisplayMode.EXPAND)}
             variant={ButtonVariant.plain}
@@ -261,7 +261,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
             <ThLargeIcon />
           </Button>
         </Tooltip>
-        <Tooltip content={<>Compact view</>} position={TooltipPosition.top}>
+        <Tooltip content={<>{$t('CompactView', 'Compact view')}</>} position={TooltipPosition.top}>
           <Button
             onClick={() => this.props.setDisplayMode(OverviewDisplayMode.COMPACT)}
             variant={ButtonVariant.plain}
@@ -272,7 +272,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
             <ThIcon />
           </Button>
         </Tooltip>
-        <Tooltip content={<>List view</>} position={TooltipPosition.top}>
+        <Tooltip content={<>{$t('ListView', 'List view')}</>} position={TooltipPosition.top}>
           <Button
             onClick={() => this.props.setDisplayMode(OverviewDisplayMode.LIST)}
             variant={ButtonVariant.plain}

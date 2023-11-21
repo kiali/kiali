@@ -83,17 +83,15 @@ export const InitializingScreen: React.FC<initializingScreenProps> = (props: ini
                     }
                   }}
                 >
-                  Show details
+                  {$t('ShowDetails', 'Show details')}
                 </Button>
               </p>
-              <textarea readOnly={true} rows={10}>
-                {props.errorDetails}
-              </textarea>
+              <textarea value={props.errorDetails} readOnly={true} rows={10}></textarea>
             </>
           ) : null}
         </div>
       ) : (
-        <h1>Loading...</h1>
+        <h1>{$t('tip159', 'Loading...')}</h1>
       )}
     </div>
   );

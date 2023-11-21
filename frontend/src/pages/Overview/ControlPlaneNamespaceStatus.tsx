@@ -28,16 +28,17 @@ export class ControlPlaneNamespaceStatus extends React.Component<Props> {
       <div style={{ textAlign: 'left' }}>
         {this.props.outboundTrafficPolicy && (
           <div>
-            <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>Outbound policy</div>
+            <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>
+              {$t('OutboundPolicy', 'Outbound policy')}
+            </div>
             <Tooltip
               position={TooltipPosition.right}
               content={
                 <div style={{ textAlign: 'left' }}>
-                  This value represents the meshConfig.outboundTrafficPolicy.mode, that configures the sidecar handling
-                  of external services, that is, those services that are not defined in Istio’s internal service
-                  registry. If this option is set to ALLOW_ANY, the Istio proxy lets calls to unknown services pass
-                  through. If the option is set to REGISTRY_ONLY, then the Istio proxy blocks any host without an HTTP
-                  service or service entry defined within the mesh
+                  {$t(
+                    'tip95',
+                    'This value represents the meshConfig.outboundTrafficPolicy.mode, that configures the sidecar handling  of external services, that is, those services that are not defined in Istio’s internal service  registry. If this option is set to ALLOW_ANY, the Istio proxy lets calls to unknown services pass  through. If the option is set to REGISTRY_ONLY, then the Istio proxy blocks any host without an HTTP  service or service entry defined within the mesh'
+                  )}
                 </div>
               }
             >
@@ -50,13 +51,17 @@ export class ControlPlaneNamespaceStatus extends React.Component<Props> {
         )}
         {showProxyPushTime && (
           <div>
-            <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>Proxy push time</div>
+            <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>
+              {$t('ProxyPushTime', 'Proxy push time')}
+            </div>
             <Tooltip
               position={TooltipPosition.right}
               content={
                 <div style={{ textAlign: 'left' }}>
-                  This value represents the delay in seconds between config change and a proxy receiving all required
-                  configuration.
+                  {$t(
+                    'tip96',
+                    'This value represents the delay in seconds between config change and a proxy receiving all required  configuration.'
+                  )}
                 </div>
               }
             >

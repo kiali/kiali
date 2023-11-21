@@ -1,110 +1,104 @@
 import * as React from 'react';
 import { Address } from '../../../types/IstioObjects';
-import { Table, Tbody, Td, Th, Thead, ThProps, Tr } from '@patternfly/react-table';
+import { cellWidth, Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Button, ButtonVariant } from '@patternfly/react-core';
+import { PlusCircleIcon } from '@patternfly/react-icons';
 import { AddressBuilder } from './AddressBuilder';
 import { PFColors } from '../../../components/Pf/PfColors';
-import { KialiIcon } from 'config/KialiIcon';
 
-type AddressListProps = {
+type Props = {
   addressList: Address[];
   onChange: (address: Address[]) => void;
 };
 
 const noAddressStyle = kialiStyle({
+  marginTop: 10,
   color: PFColors.Red100,
-  textAlign: 'center'
+  textAlign: 'center',
+  width: '100%'
 });
 
 const addAddressStyle = kialiStyle({
-  marginLeft: '0.5rem',
-  marginTop: '0.25rem'
+  marginLeft: 0,
+  paddingLeft: 0
 });
 
-const columns: ThProps[] = [
+const headerCells = [
   {
     title: '',
-    width: 40
+    transforms: [cellWidth(40) as any],
+    props: {}
   },
   {
     title: '',
-    width: 60
+    transforms: [cellWidth(60) as any],
+    props: {}
   }
 ];
 
-export const AddressList: React.FC<AddressListProps> = (props: AddressListProps) => {
-  const onAddAddress = (): void => {
+export class AddressList extends React.Component<Props> {
+  onAddAddress = () => {
     const newAddress: Address = {
       type: 'IPAddress',
       value: ''
     };
-
-    const l = props.addressList;
+    const l = this.props.addressList;
     l.push(newAddress);
-
-    props.onChange(l);
+    this.setState({}, () => this.props.onChange(l));
   };
 
-  const onRemoveAddress = (index: number): void => {
-    const l = props.addressList;
+  onRemoveAddress = (index: number) => {
+    const l = this.props.addressList;
     l.splice(index, 1);
-
-    props.onChange(l);
+    this.setState({}, () => this.props.onChange(l));
   };
 
-  const onChange = (address: Address, i: number): void => {
-    const l = props.addressList;
+  onChange = (address: Address, i: number) => {
+    const l = this.props.addressList;
     l[i] = address;
 
-    props.onChange(l);
+    this.props.onChange(l);
   };
 
-  return (
-    <>
-      <Table aria-label="Address List">
-        <Thead>
-          <Tr>
-            {columns.map((column, index) => (
-              <Th key={`column_${index}`} dataLabel={column.title} width={column.width}>
-                {column.title}
-              </Th>
-            ))}
-          </Tr>
-        </Thead>
-
-        <Tbody>
-          {props.addressList.length > 0 ? (
-            <>
-              {props.addressList.map((address, index) => (
-                <AddressBuilder
-                  key={`address_builder_${index}`}
-                  address={address}
-                  onRemoveAddress={onRemoveAddress}
-                  index={index}
-                  onChange={onChange}
-                ></AddressBuilder>
-              ))}
-            </>
-          ) : (
+  render() {
+    return (
+      <>
+        <Table aria-label="Address List">
+          <Thead>
             <Tr>
-              <Td colSpan={columns.length}>
-                <div className={noAddressStyle}>No Addresses defined</div>
+              {headerCells.map(e => (
+                <Th>{e.title}</Th>
+              ))}
+            </Tr>
+          </Thead>
+          <Tbody>
+            {this.props.addressList.map((address, i) => (
+              <AddressBuilder
+                address={address}
+                onRemoveAddress={this.onRemoveAddress}
+                index={i}
+                onChange={this.onChange}
+              ></AddressBuilder>
+            ))}
+            <Tr key="addTable">
+              <Td>
+                <Button
+                  variant={ButtonVariant.link}
+                  icon={<PlusCircleIcon />}
+                  onClick={this.onAddAddress}
+                  className={addAddressStyle}
+                >
+                  {$t('action7', 'Add Address to Addresses List')}
+                </Button>
               </Td>
             </Tr>
-          )}
-        </Tbody>
-      </Table>
-
-      <Button
-        name="addAddress"
-        variant={ButtonVariant.link}
-        icon={<KialiIcon.AddMore />}
-        onClick={onAddAddress}
-        className={addAddressStyle}
-      >
-        Add Address to Addresses List
-      </Button>
-    </>
-  );
-};
+          </Tbody>
+        </Table>
+        {this.props.addressList.length === 0 && (
+          <div className={noAddressStyle}>{$t('NoAddressesDefined', 'No Addresses defined')}</div>
+        )}
+      </>
+    );
+  }
+}

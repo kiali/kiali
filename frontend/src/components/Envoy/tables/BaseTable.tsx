@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { IRow, ISortBy, SortByDirection, ThProps } from '@patternfly/react-table';
+import { ICell, ISortBy, SortByDirection } from '@patternfly/react-table';
+import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
 import { ClusterSummaryTable, ClusterTable } from './ClusterTable';
 import { RouteSummaryTable, RouteTable } from './RouteTable';
 import { ListenerSummaryTable, ListenerTable } from './ListenerTable';
@@ -12,15 +13,14 @@ import { ToolbarDropdown } from '../../ToolbarDropdown/ToolbarDropdown';
 import { PFBadge, PFBadges } from '../../Pf/PfBadges';
 import { TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import { SimpleTable } from 'components/SimpleTable';
 
 export interface SummaryTable {
-  availableFilters: () => FilterType[];
-  head: () => ThProps[];
+  head: () => ICell[];
+  rows: () => (string | number | JSX.Element)[][];
   resource: () => string;
-  rows: () => IRow[];
-  setSorting: (columnIndex: number, direction: 'asc' | 'desc') => void;
   sortBy: () => ISortBy;
+  setSorting: (columnIndex: number, direction: 'asc' | 'desc') => void;
+  availableFilters: () => FilterType[];
   tooltip: () => React.ReactNode;
 }
 
@@ -30,12 +30,12 @@ const iconStyle = kialiStyle({
 
 export function SummaryTableRenderer<T extends SummaryTable>() {
   interface SummaryTableProps<T> {
+    writer: T;
+    sortBy: ISortBy;
     onSort: (resource: string, columnIndex: number, sortByDirection: SortByDirection) => void;
     pod: string;
     pods: string[];
     setPod: (pod: string) => void;
-    sortBy: ISortBy;
-    writer: T;
   }
 
   type SummaryTableState = {
@@ -43,12 +43,12 @@ export function SummaryTableRenderer<T extends SummaryTable>() {
   };
 
   return class SummaryTable extends React.Component<SummaryTableProps<T>, SummaryTableState> {
-    onSort = (_event: React.MouseEvent, columnIndex: number, sortByDirection: SortByDirection): void => {
+    onSort = (_: React.MouseEvent, columnIndex: number, sortByDirection: SortByDirection) => {
       this.props.writer.setSorting(columnIndex, sortByDirection);
       this.props.onSort(this.props.writer.resource(), columnIndex, sortByDirection);
     };
 
-    onFilterApplied = (activeFilter: ActiveFiltersInfo): void => {
+    onFilterApplied = (activeFilter: ActiveFiltersInfo) => {
       this.setState({
         activeFilters: activeFilter
       });
@@ -66,29 +66,27 @@ export function SummaryTableRenderer<T extends SummaryTable>() {
               <div key="service-icon" className={iconStyle}>
                 <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
               </div>
-
               <ToolbarDropdown
                 id="envoy_pods_list"
-                tooltip="Display envoy config for the selected pod"
+                tooltip={$t('tip214', 'Display envoy config for the selected pod')}
                 handleSelect={key => this.props.setPod(key)}
                 value={this.props.pod}
-                label={this.props.pod}
+                label={$t(this.props.pod)}
                 options={this.props.pods.sort()}
               />
-
-              <div className={kialiStyle({ position: 'absolute', right: '0.25rem' })}>
-                {this.props.writer.tooltip()}
-              </div>
+              <div className={kialiStyle({ position: 'absolute', right: '60px' })}>{this.props.writer.tooltip()}</div>
             </>
           </StatefulFilters>
-
-          <SimpleTable
-            label="Summary Table"
-            columns={this.props.writer.head()}
+          <Table
+            aria-label="Sortable Table"
+            cells={this.props.writer.head()}
             rows={this.props.writer.rows()}
             sortBy={this.props.writer.sortBy()}
             onSort={this.onSort}
-          />
+          >
+            <TableHeader />
+            <TableBody />
+          </Table>
         </>
       );
     }
@@ -110,12 +108,12 @@ export const SummaryTableBuilder = (
   switch (resource) {
     case 'clusters':
       writerComp = ClusterSummaryTable;
-      writerProps = new ClusterTable(config.clusters ?? [], sortBy['clusters'], namespaces, namespace, kiosk);
+      writerProps = new ClusterTable(config.clusters || [], sortBy['clusters'], namespaces, namespace, kiosk);
       break;
     case 'listeners':
       writerComp = ListenerSummaryTable;
       writerProps = new ListenerTable(
-        config.listeners ?? [],
+        config.listeners || [],
         sortBy['listeners'],
         namespaces,
         namespace,
@@ -125,9 +123,8 @@ export const SummaryTableBuilder = (
       break;
     case 'routes':
       writerComp = RouteSummaryTable;
-      writerProps = new RouteTable(config.routes ?? [], sortBy['routes'], namespaces, namespace, kiosk);
+      writerProps = new RouteTable(config.routes || [], sortBy['routes'], namespaces, namespace, kiosk);
       break;
   }
-
   return [writerComp, writerProps];
 };

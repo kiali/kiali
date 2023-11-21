@@ -91,7 +91,7 @@ export const generateRandomDashboard = (title: string, seed?: string): Dashboard
 };
 
 export const emptyDashboard: DashboardModel = {
-  title: 'Empty dashboard',
+  title: $t('EmptyDashboard', 'Empty dashboard'),
   charts: [],
   aggregations: [],
   externalLinks: [],

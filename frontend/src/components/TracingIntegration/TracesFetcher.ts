@@ -5,7 +5,6 @@ import { TracingQuery } from 'types/Tracing';
 import { TargetKind } from 'types/Common';
 import { getTimeRangeMicros } from 'utils/tracing/TracingHelper';
 import { transformTraceData } from 'utils/tracing/TraceTransform';
-import { isMultiCluster } from '../../config';
 
 export type FetchOptions = {
   namespace: string;
@@ -67,14 +66,9 @@ export class TracesFetcher {
         if (response.data.errors && response.data.errors.length > 0) {
           this.onErrors(response.data.errors);
         }
-        if (response.data.fromAllClusters && isMultiCluster) {
-          AlertUtils.addWarning(
-            'Loading traces for all clusters. Tracing is not configured to store traces per cluster.'
-          );
-        }
       })
       .catch(error => {
-        AlertUtils.addError('Could not fetch traces.', error);
+        AlertUtils.addError($t('tip35', 'Could not fetch traces.'), error);
         this.onErrors([{ msg: String(error) }]);
       });
   };

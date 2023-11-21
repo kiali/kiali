@@ -34,9 +34,9 @@ const showInMessageCenterValidations = (validations: ObjectValidation[]) => {
   if (elementsWithFailedValidations.length > 0) {
     const detail = `${elementsWithFailedValidations.join('\n')}`;
     if (hasError) {
-      AlertUtils.addError('IstioConfig has errors', undefined, undefined, undefined, detail);
+      AlertUtils.addError($t('AlertUtils22', 'IstioConfig has errors'), undefined, undefined, undefined, detail);
     } else {
-      AlertUtils.addWarning('IstioConfig has warnings', false, undefined, detail);
+      AlertUtils.addWarning($t('AlertUtils23', 'IstioConfig has warnings'), false, undefined, detail);
     }
   }
 };

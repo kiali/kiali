@@ -8,6 +8,7 @@ export const INITIAL_STATUS_STATE: StatusState = {
   externalServices: [],
   warningMessages: [],
   istioEnvironment: {
+    isMaistra: false,
     istioAPIEnabled: true
   }
 };

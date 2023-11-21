@@ -68,8 +68,10 @@ class AuthenticationControllerComponent extends React.Component<
   AuthenticationControllerProps,
   AuthenticationControllerState
 > {
-  static readonly PostLoginErrorMsg = `Kiali failed to initialize. Please ensure that services
-    Kiali depends on, such as Prometheus, are healthy and reachable by Kiali then refresh your browser.`;
+  static readonly PostLoginErrorMsg = $t(
+    'tip156',
+    'Kiali failed to initialize. Please ensure that services Kiali depends on, such as Prometheus, are healthy and reachable by Kiali then refresh your browser.'
+  );
 
   // How long to wait for the post-login actions to complete
   // before transitioning to the "Loading" page.
@@ -180,7 +182,7 @@ class AuthenticationControllerComponent extends React.Component<
         .register('getStatus', API.getStatus())
         .then(response => this.processServerStatus(response.data))
         .catch(error => {
-          AlertUtils.addError('Error fetching server status.', error, 'default', MessageType.WARNING);
+          AlertUtils.addError($t('tip157', 'Error fetching server status.'), error, 'default', MessageType.WARNING);
         });
       const getTracingInfoPromise = this.promises
         .register('getTracingInfo', API.getTracingInfo())
@@ -188,7 +190,7 @@ class AuthenticationControllerComponent extends React.Component<
         .catch(error => {
           this.props.setTracingInfo(null);
           AlertUtils.addError(
-            'Could not fetch Tracing info. Turning off Tracing integration.',
+            $t('tip381', 'Could not fetch Tracing info. Turning off Tracing integration.'),
             error,
             'default',
             MessageType.INFO
@@ -317,7 +319,7 @@ class AuthenticationControllerComponent extends React.Component<
 
     if (status.status[StatusKey.DISABLED_FEATURES]) {
       this.props.addMessage(
-        'The following features are disabled: ' + status.status[StatusKey.DISABLED_FEATURES],
+        `${$t('tip158', 'The following features are disabled')}: ` + status.status[StatusKey.DISABLED_FEATURES],
         '',
         'default',
         MessageType.INFO,

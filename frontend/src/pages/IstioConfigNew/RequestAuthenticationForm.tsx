@@ -1,32 +1,33 @@
 import * as React from 'react';
-import { FormGroup, FormHelperText, HelperText, HelperTextItem, Switch, TextInput } from '@patternfly/react-core';
+import { FormGroup, FormHelperText, HelperText, HelperTextItem, Switch } from '@patternfly/react-core';
+import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
 import { JWTRule } from '../../types/IstioObjects';
 import { JwtRuleBuilder } from './RequestAuthorizationForm/JwtRuleBuilder';
 import { JwtRuleList } from './RequestAuthorizationForm/JwtRuleList';
 import { isValid } from 'utils/Common';
 
 type Props = {
-  onChange: (requestAuthentication: RequestAuthenticationState) => void;
   requestAuthentication: RequestAuthenticationState;
+  onChange: (requestAuthentication: RequestAuthenticationState) => void;
 };
 
 export type RequestAuthenticationState = {
-  addJWTRules: boolean;
-  addWorkloadSelector: boolean;
-  jwtRules: JWTRule[];
   workloadSelector: string;
+  jwtRules: JWTRule[];
+  addWorkloadSelector: boolean;
   workloadSelectorValid: boolean;
+  addJWTRules: boolean;
 };
 
 export const REQUEST_AUTHENTICATION = 'RequestAuthentication';
 export const REQUEST_AUTHENTICATIONS = 'requestauthentications';
 
 export const initRequestAuthentication = (): RequestAuthenticationState => ({
-  addJWTRules: false,
-  addWorkloadSelector: false,
+  workloadSelector: '',
   jwtRules: [],
+  addWorkloadSelector: false,
   workloadSelectorValid: false,
-  workloadSelector: ''
+  addJWTRules: false
 });
 
 export const isRequestAuthenticationStateValid = (ra: RequestAuthenticationState): boolean => {
@@ -52,11 +53,11 @@ export class RequestAuthenticationForm extends React.Component<Props, RequestAut
     });
   }
 
-  onRequestAuthenticationChange = (): void => {
+  onRequestAuthenticationChange = () => {
     this.props.onChange(this.state);
   };
 
-  onChangeWorkloadSelector = (_event: React.FormEvent, _value: boolean): void => {
+  onChangeWorkloadSelector = (_event, _: boolean) => {
     this.setState(
       prevState => {
         return {
@@ -67,7 +68,7 @@ export class RequestAuthenticationForm extends React.Component<Props, RequestAut
     );
   };
 
-  onChangeJwtRules = (_event: React.FormEvent, _value: boolean): void => {
+  onChangeJwtRules = (_event, _: boolean) => {
     this.setState(
       prevState => {
         return {
@@ -78,7 +79,7 @@ export class RequestAuthenticationForm extends React.Component<Props, RequestAut
     );
   };
 
-  addWorkloadLabels = (_event: React.FormEvent, value: string): void => {
+  addWorkloadLabels = (_event, value: string) => {
     if (value.length === 0) {
       this.setState(
         {
@@ -89,33 +90,26 @@ export class RequestAuthenticationForm extends React.Component<Props, RequestAut
       );
       return;
     }
-
     value = value.trim();
     const labels: string[] = value.split(',');
     let isValid = true;
-
     // Some smoke validation rules for the labels
     for (let i = 0; i < labels.length; i++) {
       const label = labels[i];
-
       if (label.indexOf('=') < 0) {
         isValid = false;
         break;
       }
-
       const splitLabel: string[] = label.split('=');
-
       if (splitLabel.length !== 2) {
         isValid = false;
         break;
       }
-
       if (splitLabel[0].trim().length === 0 || splitLabel[1].trim().length === 0) {
         isValid = false;
         break;
       }
     }
-
     this.setState(
       {
         workloadSelectorValid: isValid,
@@ -125,11 +119,10 @@ export class RequestAuthenticationForm extends React.Component<Props, RequestAut
     );
   };
 
-  onAddJwtRule = (jwtRule: JWTRule): void => {
+  onAddJwtRule = (jwtRule: JWTRule) => {
     this.setState(
       prevState => {
         prevState.jwtRules.push(jwtRule);
-
         return {
           jwtRules: prevState.jwtRules
         };
@@ -138,11 +131,10 @@ export class RequestAuthenticationForm extends React.Component<Props, RequestAut
     );
   };
 
-  onRemoveJwtRule = (index: number): void => {
+  onRemoveJwtRule = (index: number) => {
     this.setState(
       prevState => {
         prevState.jwtRules.splice(index, 1);
-
         return {
           jwtRules: prevState.jwtRules
         };
@@ -154,18 +146,17 @@ export class RequestAuthenticationForm extends React.Component<Props, RequestAut
   render() {
     return (
       <>
-        <FormGroup label="Workload Selector" fieldId="workloadSelectorSwitch">
+        <FormGroup label={$t('WorkloadSelector', 'Workload Selector')} fieldId="workloadSelectorSwitch">
           <Switch
             id="workloadSelectorSwitch"
-            label=" "
-            labelOff=" "
+            label={' '}
+            labelOff={' '}
             isChecked={this.state.addWorkloadSelector}
             onChange={this.onChangeWorkloadSelector}
           />
         </FormGroup>
-
         {this.state.addWorkloadSelector && (
-          <FormGroup fieldId="workloadLabels" label="Labels">
+          <FormGroup fieldId="workloadLabels" label={$t('Labels')}>
             <TextInput
               id="gwHosts"
               name="gwHosts"
@@ -174,36 +165,38 @@ export class RequestAuthenticationForm extends React.Component<Props, RequestAut
               onChange={this.addWorkloadLabels}
               validated={isValid(this.state.workloadSelectorValid)}
             />
-
             <FormHelperText>
               <HelperText>
                 <HelperTextItem>
                   {isValid(this.state.workloadSelectorValid)
-                    ? 'One or more labels to select a workload where the RequestAuthentication is applied.'
-                    : 'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'}
+                    ? $t(
+                        'helpTip47',
+                        'One or more labels to select a workload where the RequestAuthentication is applied.'
+                      )
+                    : $t(
+                        'helpTip46',
+                        'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'
+                      )}
                 </HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>
         )}
-
-        <FormGroup label="JWT Rules" fieldId="addJWTRules">
+        <FormGroup label={$t('JWTRules', 'JWT Rules')} fieldId="addJWTRules">
           <Switch
             id="addJWTRules"
-            label=" "
-            labelOff=" "
+            label={' '}
+            labelOff={' '}
             isChecked={this.state.addJWTRules}
             onChange={this.onChangeJwtRules}
           />
         </FormGroup>
-
         {this.state.addJWTRules && (
           <>
-            <FormGroup label="JWT Rule Builder" fieldId="jwtRulesBuilder">
+            <FormGroup label={$t('JWTRuleBuilder', 'JWT Rule Builder')} fieldId="jwtRulesBuilder">
               <JwtRuleBuilder onAddJwtRule={this.onAddJwtRule} />
             </FormGroup>
-
-            <FormGroup label="JWT Rules List" fieldId="jwtRulesList">
+            <FormGroup label={$t('JWTRulesList', 'JWT Rules List')} fieldId="jwtRulesList">
               <JwtRuleList jwtRules={this.state.jwtRules} onRemoveJwtRule={this.onRemoveJwtRule} />
             </FormGroup>
           </>

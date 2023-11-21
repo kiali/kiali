@@ -41,9 +41,9 @@ export class GraphLegendPF extends React.Component<GraphLegendProps> {
     return (
       <div className={legendBoxStyle} data-test="graph-legend">
         <div className={`${headerStyle}`}>
-          <span>Legend</span>
+          <span>{$t('Legend')}</span>
           <span className={closeBoxStyle}>
-            <Tooltip content="Close Legend">
+            <Tooltip content={$t('CloseLegend', 'Close Legend')}>
               <Button id="legend_close" variant={ButtonVariant.plain} onClick={this.props.closeLegend}>
                 <CloseIcon />
               </Button>

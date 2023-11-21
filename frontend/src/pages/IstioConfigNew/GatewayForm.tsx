@@ -1,5 +1,13 @@
 import * as React from 'react';
-import { FormGroup, FormHelperText, HelperText, HelperTextItem, Switch, TextInput } from '@patternfly/react-core';
+// Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
+import {
+  FormGroup,
+  FormHelperText,
+  HelperText,
+  HelperTextItem,
+  Switch,
+  TextInputBase as TextInput
+} from '@patternfly/react-core';
 import { ServerList } from './GatewayForm/ServerList';
 import { MAX_PORT, Server, ServerForm, ServerTLSSettings, MIN_PORT } from '../../types/IstioObjects';
 import { isValid } from 'utils/Common';
@@ -16,18 +24,18 @@ type Props = {
 // Gateway and Sidecar states are consolidated in the parent page
 export type GatewayState = {
   addWorkloadSelector: boolean;
+  workloadSelectorValid: boolean;
+  workloadSelectorLabels: string;
   gatewayServers: Server[];
   serversForm: ServerForm[];
-  workloadSelectorLabels: string;
-  workloadSelectorValid: boolean;
 };
 
 export const initGateway = (): GatewayState => ({
   addWorkloadSelector: false,
-  gatewayServers: [],
-  serversForm: [],
   workloadSelectorLabels: 'istio=ingressgateway',
-  workloadSelectorValid: true
+  workloadSelectorValid: true,
+  gatewayServers: [],
+  serversForm: []
 });
 
 export const isGatewayStateValid = (g: GatewayState): boolean => {
@@ -35,7 +43,7 @@ export const isGatewayStateValid = (g: GatewayState): boolean => {
 };
 
 const areValidGateways = (servers: Server[]): boolean => {
-  return servers.every((s: Server) => {
+  return servers.every(s => {
     return (
       areValidHosts(s.hosts) &&
       s.port.name !== '' &&
@@ -75,7 +83,7 @@ export class GatewayForm extends React.Component<Props, GatewayState> {
     this.setState(this.props.gateway);
   }
 
-  addWorkloadLabels = (_event: React.FormEvent, value: string): void => {
+  addWorkloadLabels = (_event, value: string) => {
     if (value.length === 0) {
       this.setState(
         {
@@ -86,33 +94,26 @@ export class GatewayForm extends React.Component<Props, GatewayState> {
       );
       return;
     }
-
     value = value.trim();
     const labels: string[] = value.split(',');
     let isValid = true;
-
     // Some smoke validation rules for the labels
     for (let i = 0; i < labels.length; i++) {
       const label = labels[i];
-
       if (label.indexOf('=') < 0) {
         isValid = false;
         break;
       }
-
       const splitLabel: string[] = label.split('=');
-
       if (splitLabel.length !== 2) {
         isValid = false;
         break;
       }
-
       if (splitLabel[0].trim().length === 0 || splitLabel[1].trim().length === 0) {
         isValid = false;
         break;
       }
     }
-
     this.setState(
       {
         workloadSelectorValid: isValid,
@@ -122,18 +123,18 @@ export class GatewayForm extends React.Component<Props, GatewayState> {
     );
   };
 
-  onChangeServer = (servers: Server[], serversForm: ServerForm[]): void => {
+  onChangeServer = (servers: Server[], serversForm: ServerForm[]) => {
     this.setState({ gatewayServers: servers, serversForm: serversForm }, () => this.props.onChange(this.state));
   };
 
   render() {
     return (
       <>
-        <FormGroup label="Workload Selector" fieldId="workloadSelectorSwitch">
+        <FormGroup label={$t('WorkloadSelector', 'Workload Selector')} fieldId="workloadSelectorSwitch">
           <Switch
             id="workloadSelectorSwitch"
-            label=" "
-            labelOff=" "
+            label={' '}
+            labelOff={' '}
             isChecked={this.state.addWorkloadSelector}
             onChange={() => {
               this.setState(
@@ -145,9 +146,8 @@ export class GatewayForm extends React.Component<Props, GatewayState> {
             }}
           />
         </FormGroup>
-
         {this.state.addWorkloadSelector && (
-          <FormGroup fieldId="workloadLabels" label="Labels">
+          <FormGroup fieldId="workloadLabels" label={$t('Labels')}>
             <TextInput
               id="gwHosts"
               name="gwHosts"
@@ -156,20 +156,21 @@ export class GatewayForm extends React.Component<Props, GatewayState> {
               onChange={this.addWorkloadLabels}
               validated={isValid(this.state.workloadSelectorValid)}
             />
-
             <FormHelperText>
               <HelperText>
                 <HelperTextItem>
                   {isValid(this.state.workloadSelectorValid)
-                    ? 'One or more labels to select a workload where the Gateway is applied.'
-                    : 'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'}
+                    ? $t('helpTip40', 'One or more labels to select a workload where the Gateway is applied.')
+                    : $t(
+                        'helpTip46',
+                        'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'
+                      )}
                 </HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>
         )}
-
-        <FormGroup label="Server List" fieldId="gwServerList" isRequired={true}>
+        <FormGroup label={$t('ServerList', 'Server List')} fieldId="gwServerList" isRequired={true}>
           <ServerList
             serverList={this.state.gatewayServers}
             serverForm={this.state.serversForm}

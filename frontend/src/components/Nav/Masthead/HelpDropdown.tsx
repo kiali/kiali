@@ -35,7 +35,7 @@ const HelpDropdownComponent: React.FC<HelpDropdownProps> = (props: HelpDropdownP
   const buildDocumentationLink = () => {
     const url = new URL(config.documentation.url);
     if (isUpstream) {
-      const kialiCoreVersion = props.status[StatusKey.KIALI_CORE_VERSION] || 'unknown';
+      const kialiCoreVersion = props.status[StatusKey.KIALI_CORE_VERSION] || $t('unknown');
 
       url.searchParams.append('utm_source', 'kiali');
       url.searchParams.append('utm_medium', 'app');
@@ -49,27 +49,27 @@ const HelpDropdownComponent: React.FC<HelpDropdownProps> = (props: HelpDropdownP
 
   items.push(
     <DropdownItem key={'view_documentation'} onClick={() => window.open(buildDocumentationLink(), '_blank')}>
-      Documentation
+      {$t('Documentation')}
     </DropdownItem>
   );
 
   items.push(
     <DropdownItem key={'view_debug_info'} onClick={() => setIsDebugInformationOpen(true)}>
-      View Debug Info
+      {$t('ViewDebugInfo', 'View Debug Info')}
     </DropdownItem>
   );
 
   if (serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled) {
     items.push(
       <DropdownItem key={'view_certs_info'} onClick={() => setIsCertsInformationOpen(true)}>
-        View Certificates Info
+        {$t('ViewCertificatesInfo', 'View Certificates Info')}
       </DropdownItem>
     );
   }
 
   items.push(
     <DropdownItem key={'view_about_info'} onClick={() => setIsAboutModalOpen(true)}>
-      About
+      {$t('About')}
     </DropdownItem>
   );
 

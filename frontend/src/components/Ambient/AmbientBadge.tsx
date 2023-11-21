@@ -21,7 +21,7 @@ export class AmbientBadge extends React.Component<AmbientLabelProps, {}> {
     const iconComponent = (
       <span style={this.props.style}>
         <Label style={{ marginLeft: 5 }} color="blue" isCompact>
-          Ambient
+          {$t('Ambient')}
         </Label>
       </span>
     );

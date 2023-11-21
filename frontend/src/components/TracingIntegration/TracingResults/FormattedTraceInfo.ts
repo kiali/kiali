@@ -26,7 +26,7 @@ export class FormattedTraceInfo {
   }
 
   name() {
-    return this.trace.traceName ? this.trace.traceName : '(Missing root span)';
+    return this.trace.traceName ? this.trace.traceName : $t('tip31', '(Missing root span)');
   }
 
   fullID() {

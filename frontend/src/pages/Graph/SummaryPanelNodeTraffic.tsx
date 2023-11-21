@@ -399,7 +399,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
     return (
       <>
         <InOutRateTableGrpc
-          title="gRPC Traffic (requests per second):"
+          title={`${$t('title14', 'GRPC Traffic (requests per second)')}:`}
           inRate={inbound.rate}
           inRateGrpcErr={inbound.rateGrpcErr}
           inRateNR={inbound.rateNoResponse}
@@ -419,7 +419,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
     return (
       <>
         <InOutRateTableHttp
-          title="HTTP (requests per second):"
+          title={`${$t('title15', 'HTTP (requests per second)')}:`}
           inRate={inbound.rate}
           inRate3xx={inbound.rate3xx}
           inRate4xx={inbound.rate4xx}
@@ -442,7 +442,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
       return (
         <>
           <div>
-            <KialiIcon.Info /> Sparkline charts not supported for unknown node. Use edge for details.
+            <KialiIcon.Info /> {$t('tip66', 'Sparkline charts not supported for unknown node. Use edge for details.')}
           </div>
         </>
       );
@@ -450,7 +450,8 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
       return (
         <>
           <div>
-            <KialiIcon.Info /> Sparkline charts cannot be shown because the selected node is inaccessible.
+            <KialiIcon.Info />{' '}
+            {$t('tip67', 'Sparkline charts cannot be shown because the selected node is inaccessible.')}
           </div>
         </>
       );
@@ -458,18 +459,19 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
       return (
         <>
           <div>
-            <KialiIcon.Info /> Sparkline charts cannot be shown because the selected node is a serviceEntry.
+            <KialiIcon.Info />{' '}
+            {$t('tip68', 'Sparkline charts cannot be shown because the selected node is a serviceEntry.')}
           </div>
         </>
       );
     }
     if (this.state.loading) {
-      return <strong>Loading charts...</strong>;
+      return <strong>{$t('placeholder45', 'Loading charts...')}</strong>;
     }
     if (this.state.metricsLoadError) {
       return (
         <div>
-          <KialiIcon.Warning /> <strong>Error loading metrics: </strong>
+          <KialiIcon.Warning /> <strong>{$t('Error_loading_metrics', 'Error loading metrics')}: </strong>
           {this.state.metricsLoadError}
         </div>
       );
@@ -492,14 +494,18 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
           {this.hasGrpcIn(nodeData) && (
             <>
               <RequestChart
-                label={isInOutSameNode ? 'gRPC - Request Traffic' : 'gRPC - Inbound Request Traffic'}
+                label={
+                  isInOutSameNode
+                    ? $t('title17', 'gRPC - Request Traffic')
+                    : $t('title16', 'gRPC - Inbound Request Traffic')
+                }
                 dataRps={this.state.grpcRequestCountIn!}
                 dataErrors={this.state.grpcErrorCountIn}
               />
               {serviceWithUnknownSource && (
                 <>
                   <div>
-                    <KialiIcon.Info /> Traffic from unknown not included. Use edge for details.
+                    <KialiIcon.Info /> {$t('tip69', 'Traffic from unknown not included. Use edge for details.')}
                   </div>
                 </>
               )}
@@ -508,7 +514,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
           {this.hasGrpcIn(nodeData) && (
             <>
               <RequestChart
-                label="gRPC - Outbound Request Traffic"
+                label={$t('title18', 'gRPC - Outbound Request Traffic')}
                 dataRps={this.state.grpcRequestCountOut}
                 dataErrors={this.state.grpcErrorCountOut}
                 hide={isInOutSameNode}
@@ -516,7 +522,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
               {!isPF && this.isIstioOutboundCornerCase(node) && (
                 <>
                   <div>
-                    <KialiIcon.Info /> Traffic to Istio namespaces not included. Use edge for details.
+                    <KialiIcon.Info /> {$t('tip70', 'Traffic to Istio namespaces not included. Use edge for details.')}
                   </div>
                 </>
               )}
@@ -527,7 +533,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
         <>
           {this.hasGrpcIn(nodeData) && (
             <StreamChart
-              label={isInOutSameNode ? 'gRPC - Traffic' : 'gRPC - Inbound Traffic'}
+              label={isInOutSameNode ? $t('label6', 'gRPC - Traffic') : $t('label7', 'gRPC - Inbound Traffic')}
               receivedRates={this.state.grpcReceivedIn}
               sentRates={this.state.grpcSentIn}
               unit="messages"
@@ -535,7 +541,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
           )}
           {this.hasGrpcOut(nodeData) && (
             <StreamChart
-              label="gRPC - Outbound Traffic"
+              label={$t('title20', 'gRPC - Outbound Traffic')}
               receivedRates={this.state.grpcReceivedOut}
               sentRates={this.state.grpcSentOut}
               hide={isInOutSameNode}
@@ -552,14 +558,18 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
           {this.hasHttpIn(nodeData) && (
             <>
               <RequestChart
-                label={isInOutSameNode ? 'HTTP - Request Traffic' : 'HTTP - Inbound Request Traffic'}
+                label={
+                  isInOutSameNode
+                    ? $t('label8', 'HTTP - Request Traffic')
+                    : $t('title21', 'HTTP - Inbound Request Traffic')
+                }
                 dataRps={this.state.httpRequestCountIn!}
                 dataErrors={this.state.httpErrorCountIn}
               />
               {serviceWithUnknownSource && (
                 <>
                   <div>
-                    <KialiIcon.Info /> Traffic from unknown not included. Use edge for details.
+                    <KialiIcon.Info /> {$t('tip69', 'Traffic from unknown not included. Use edge for details.')}
                   </div>
                 </>
               )}
@@ -568,7 +578,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
           {this.hasHttpOut(nodeData) && (
             <>
               <RequestChart
-                label="HTTP - Outbound Request Traffic"
+                label={$t('title22', 'HTTP - Outbound Request Traffic')}
                 dataRps={this.state.httpRequestCountOut}
                 dataErrors={this.state.httpErrorCountOut}
                 hide={isInOutSameNode}
@@ -576,7 +586,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
               {!isPF && this.isIstioOutboundCornerCase(node) && (
                 <>
                   <div>
-                    <KialiIcon.Info />" Traffic to Istio namespaces not included. Use edge for details.
+                    <KialiIcon.Info />" {$t('tip70', 'Traffic to Istio namespaces not included. Use edge for details.')}
                   </div>
                 </>
               )}
@@ -591,7 +601,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
         <>
           {this.hasTcpIn(nodeData) && (
             <StreamChart
-              label={isInOutSameNode ? 'TCP - Traffic' : 'TCP - Inbound Traffic'}
+              label={isInOutSameNode ? $t('label9', 'TCP - Traffic') : $t('title23', 'TCP - Inbound Traffic')}
               receivedRates={this.state.tcpReceivedIn}
               sentRates={this.state.tcpSentIn}
               unit="bytes"
@@ -599,7 +609,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
           )}
           {this.hasTcpOut(nodeData) && (
             <StreamChart
-              label="TCP - Outbound Traffic"
+              label={$t('title24', 'TCP - Outbound Traffic')}
               receivedRates={this.state.tcpReceivedOut}
               sentRates={this.state.tcpSentOut}
               hide={isInOutSameNode}

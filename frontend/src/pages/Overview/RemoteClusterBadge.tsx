@@ -6,7 +6,7 @@ export class RemoteClusterBadge extends React.Component {
     return (
       <>
         <Label style={{ marginLeft: 5 }} color="grey" isCompact>
-          Remote Cluster
+          {$t('RemoteCluster', 'Remote Cluster')}
         </Label>
       </>
     );

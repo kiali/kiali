@@ -32,7 +32,7 @@ export const renderTrafficStatus = (health: H.Health) => {
       return (
         <div>
           <Title headingLevel="h5" size={TitleSizes.lg} className={titleStyle}>
-            Traffic
+            {$t('Traffic')}
           </Title>
           {item.text}
           {item.children && (

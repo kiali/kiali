@@ -47,9 +47,9 @@ const allOptions = {
 };
 
 const placeholderText = {
-  [PATH]: 'Path value...',
-  [HEADERS]: 'Header value...',
-  [QUERY_PARAMS]: 'Query param value...'
+  [PATH]: $t('placeholder47', 'Path value...'),
+  [HEADERS]: $t('placeholder2', 'Header Value...'),
+  [QUERY_PARAMS]: $t('placeholder48', 'Query param value...')
 };
 
 export const K8sMatchBuilder: React.FC<K8sMatchBuilderProps> = (props: K8sMatchBuilderProps) => {
@@ -99,7 +99,7 @@ export const K8sMatchBuilder: React.FC<K8sMatchBuilderProps> = (props: K8sMatchB
           id="header-name-id"
           value={props.headerName}
           onChange={(_, value) => props.onMatchHeaderNameChange(value)}
-          placeholder="Header name..."
+          placeholder={$t('placeholder1', 'Header name...')}
         />
       )}
 
@@ -108,7 +108,7 @@ export const K8sMatchBuilder: React.FC<K8sMatchBuilderProps> = (props: K8sMatchB
           id="query-param-id"
           value={props.queryParamName}
           onChange={(_, value) => props.onQueryParamNameChange(value)}
-          placeholder="Query param name..."
+          placeholder={$t('placeholder43', 'Query param name...')}
         />
       )}
 
@@ -163,7 +163,7 @@ export const K8sMatchBuilder: React.FC<K8sMatchBuilderProps> = (props: K8sMatchB
           onClick={props.onAddMatch}
           data-test="add-match"
         >
-          Add Match
+          {$t('AddMatch', 'Add Match')}
         </Button>
       </InputGroupItem>
     </InputGroup>

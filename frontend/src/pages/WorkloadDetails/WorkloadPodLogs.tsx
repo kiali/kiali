@@ -123,7 +123,6 @@ enum LogLevel {
 }
 
 const RETURN_KEY_CODE = 13;
-const NoLogsFoundMessage = 'No container logs found for the time period.';
 
 const MaxLinesDefault = 3000;
 const MaxLinesOptions = {
@@ -227,7 +226,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     if (this.props.pods.length < 1) {
       this.state = {
         ...defaultState,
-        loadingLogsError: 'There are no logs to display because no pods are available.'
+        loadingLogsError: $t('tip120', 'There are no logs to display because no pods are available.')
       };
       return;
     }
@@ -313,7 +312,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                           <ToolbarItem>
                             <ToolbarDropdown
                               id={'wpl_pods'}
-                              tooltip="Display logs for the selected pod"
+                              tooltip={$t('tip121', 'Display logs for the selected pod')}
                               handleSelect={key => this.setPod(key)}
                               value={this.state.podValue}
                               label={this.props.pods[this.state.podValue!].name}
@@ -333,11 +332,15 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                               onChange={(_event, val) => this.updateShow(val)}
                               defaultValue={this.state.showLogValue}
                               aria-label="show log text"
-                              placeholder="Show..."
+                              placeholder={$t('placeholder28', 'Show...')}
                             />
 
                             {this.state.showClearShowLogButton && (
-                              <Tooltip key="clear_show_log" position="top" content="Clear Show Log Entries...">
+                              <Tooltip
+                                key="clear_show_log"
+                                position="top"
+                                content={$t('tip122', 'Clear Show Log Entries...')}
+                              >
                                 <Button variant={ButtonVariant.control} onClick={this.clearShow}>
                                   <KialiIcon.Close />
                                 </Button>
@@ -355,11 +358,15 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                               onChange={(_event, val) => this.updateHide(val)}
                               defaultValue={this.state.hideLogValue}
                               aria-label="hide log text"
-                              placeholder="Hide..."
+                              placeholder={$t('placeholder17', 'Hide...')}
                             />
 
                             {this.state.showClearHideLogButton && (
-                              <Tooltip key="clear_hide_log" position="top" content="Clear Hide Log Entries...">
+                              <Tooltip
+                                key="clear_hide_log"
+                                position="top"
+                                content={$t('tip123', 'Clear Hide Log Entries...')}
+                              >
                                 <Button variant={ButtonVariant.control} onClick={this.clearHide}>
                                   <KialiIcon.Close />
                                 </Button>
@@ -373,7 +380,10 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                               <Tooltip
                                 key="show_hide_log_help"
                                 position="top"
-                                content="Show only, or Hide all, matching log entries. Match by case-sensitive substring (default) or regular expression (as set in the kebab menu)."
+                                content={$t(
+                                  'tip124',
+                                  'Show only, or Hide all, matching log entries. Match by case-sensitive substring (default) or regular expression (as set in the kebab menu).'
+                                )}
                               >
                                 <KialiIcon.Info className={infoIcons} />
                               </Tooltip>
@@ -391,7 +401,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                                     color: spanColor
                                   }}
                                 >
-                                  spans
+                                  {$t('spans')}
                                 </span>
                               }
                               onChange={(_event, checked) => this.toggleSpans(checked)}
@@ -405,7 +415,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                               value={this.state.maxLines}
                               label={MaxLinesOptions[this.state.maxLines]}
                               options={MaxLinesOptions}
-                              tooltip={'Truncate after N log lines'}
+                              tooltip={$t('tip125', 'Truncate after N log lines')}
                               className={toolbarTail}
                             />
                           </ToolbarItem>
@@ -510,7 +520,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             key={`al-tt-${index}`}
             position={TooltipPosition.auto}
             entryDelay={1000}
-            content="Click to navigate to span detail"
+            content={$t('tip126', 'Click to navigate to span detail')}
           >
             <Button
               key={`s-b-${index}`}
@@ -565,7 +575,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           key={`al-tt-${index}`}
           position={TooltipPosition.auto}
           entryDelay={1000}
-          content="Click for Envoy Access Log details"
+          content={$t('tip127', 'Click for Envoy Access Log details')}
         >
           <Button
             key={`al-b-${index}`}
@@ -614,7 +624,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
 
     const dropdownGroupLabel = (
       <h1 className="pf-v5-c-menu__group-title">
-        Set Proxy Log Level
+        {$t('tip128', 'Set Proxy Log Level')}
         <Tooltip
           position={TooltipPosition.right}
           content={
@@ -624,7 +634,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                 the log level to 'off' disables the proxy loggers but does <b>not</b> disable access logging. To hide
                 all proxy logging from the logs view, including access logs, un-check the proxy container. <br />
                 <br />
-                This option is disabled for pods with no proxy container, or in view-only mode.
+                {$t('tip350', 'This action configures the proxy logger lely mode.')}
               </div>
             </div>
           }
@@ -636,15 +646,15 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
 
     const kebabActions = [
       <DropdownItem key="toggleToolbar" onClick={this.toggleToolbar}>
-        {`${this.state.showToolbar ? 'Collapse' : 'Expand'} Toolbar`}
+        {`${this.state.showToolbar ? $t('Collapse') : $t('Expand')} ${$t('Toolbar')}`}
       </DropdownItem>,
 
       <DropdownItem key="toggleRegex" onClick={this.toggleUseRegex}>
-        {`Match via ${this.state.useRegex ? 'Substring' : 'Regex'}`}
+        {`Match via ${this.state.useRegex ? $t('Substring') : $t('Regex')}`}
       </DropdownItem>,
 
       <DropdownItem key="toggleTimestamps" onClick={this.toggleShowTimestamps}>
-        {`${this.state.showTimestamps ? 'Remove' : 'Show'} Timestamps`}
+        {`${this.state.showTimestamps ? $t('Remove') : $t('Show')} ${$t('Timestamps')}`}
       </DropdownItem>,
 
       <Divider key="logLevelSeparator" />,
@@ -664,18 +674,18 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             <ToolbarItem>{this.getContainerLegend()}</ToolbarItem>
 
             <ToolbarItem className={copyActionStyle}>
-              <Tooltip key="copy_logs" position="top" content="Copy logs to clipboard">
+              <Tooltip key="copy_logs" position="top" content={$t('tip130', 'Copy logs to clipboard')}>
                 <CopyToClipboard text={this.entriesToString(this.state.entries)}>
                   <Button variant={ButtonVariant.link} isInline>
                     <KialiIcon.Copy />
-                    <span className={iconStyle}>Copy</span>
+                    <span className={iconStyle}>{$t('Copy')}</span>
                   </Button>
                 </CopyToClipboard>
               </Tooltip>
             </ToolbarItem>
 
             <ToolbarItem className={expandActionStyle}>
-              <Tooltip key="fullscreen_logs" position="top" content="Expand logs full screen">
+              <Tooltip key="fullscreen_logs" position="top" content={$t('tip131', 'Expand logs full screen')}>
                 <Button
                   variant={ButtonVariant.link}
                   onClick={this.toggleFullscreen}
@@ -683,7 +693,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                   isInline
                 >
                   <KialiIcon.Expand />
-                  <span className={iconStyle}>Expand</span>
+                  <span className={iconStyle}>{$t('Expand')}</span>
                 </Button>
               </Tooltip>
             </ToolbarItem>
@@ -719,9 +729,9 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
               variant="danger"
               isInline={true}
               isPlain={true}
-              title={`Max lines exceeded for containers: ${this.state.linesTruncatedContainers.join(
+              title={`${$t('label12', 'Max lines exceeded for containers')}: ${this.state.linesTruncatedContainers.join(
                 ', '
-              )}. Increase maxLines for more lines, or decrease time period.`}
+              )}. ${$t('label13', 'Increase maxLines for more lines, or decrease time period.')}`}
             />
           </div>
         )}
@@ -754,7 +764,9 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                 width={width}
                 scrollToIndex={logEntries.length - 1}
                 noRowsRenderer={() => (
-                  <div style={{ paddingTop: '0.75rem', paddingLeft: '0.75rem' }}>{NoLogsFoundMessage}</div>
+                  <div style={{ paddingTop: '0.75rem', paddingLeft: '0.75rem' }}>
+                    {$t('tip119', 'No container logs found for the time period.')}
+                  </div>
                 )}
                 containerStyle={{ overflow: 'initial !important' }}
                 style={{ overflowX: 'auto', overflowY: 'auto' }}
@@ -838,7 +850,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
         addSuccess(`Successfully updated proxy log level to '${level}' for pod: ${pod.name}`);
       })
       .catch(error => {
-        addError('Unable to set proxy pod level', error);
+        addError($t('label14', 'Unable to set proxy pod level'), error);
       });
   };
 
@@ -878,7 +890,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           }
         } catch (e) {
           if (e instanceof Error) {
-            this.setState({ showError: `Show: ${e.message}` });
+            this.setState({ showError: `${$t('Show')}: ${e.message}` });
           }
         }
       } else {
@@ -896,7 +908,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           }
         } catch (e) {
           if (e instanceof Error) {
-            this.setState({ hideError: `Hide: ${e.message}` });
+            this.setState({ hideError: `${$t('Hide')}: ${e.message}` });
           }
         }
       } else {
@@ -1104,7 +1116,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                 severity: 'Error',
                 timestamp: now.toString(),
                 timestampUnix: now,
-                message: `Failed to fetch workload logs: ${errorMsg}`
+                message: `${$t('label15', 'Failed to fetch workload logs')}: ${errorMsg}`
               }
             }
           ]
@@ -1128,7 +1140,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     }
 
     const { duration, operationName } = entry.span!;
-    return `duration: ${formatDuration(duration)}, operationName: ${operationName}`;
+    return `${$t('duration')}: ${formatDuration(duration)}, ${$t('operationName')}: ${operationName}`;
   };
 
   private hasEntries = (entries: Entry[]): boolean => !!entries && entries.length > 0;

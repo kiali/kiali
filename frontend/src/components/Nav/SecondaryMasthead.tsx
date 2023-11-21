@@ -1,10 +1,6 @@
 import React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 
-interface SecondaryMastheadProps {
-  children: React.ReactNode;
-}
-
 const marginStyle = kialiStyle({
   margin: '10px 20px 0 0'
 });
@@ -14,14 +10,16 @@ const secondaryMastheadStyle = kialiStyle({
   zIndex: 10,
   marginLeft: 0,
   marginRight: 0,
-  paddingRight: '1.25rem',
-  paddingLeft: '1.25rem'
+  paddingRight: '20px',
+  paddingLeft: '20px'
 });
 
-export const SecondaryMasthead: React.FC<SecondaryMastheadProps> = (props: SecondaryMastheadProps) => {
-  return (
-    <div id="global-namespace-selector" className={secondaryMastheadStyle}>
-      <div className={marginStyle}>{props.children}</div>
-    </div>
-  );
-};
+export class SecondaryMasthead extends React.Component {
+  render() {
+    return (
+      <div id="global-namespace-selector" className={secondaryMastheadStyle}>
+        <div className={marginStyle}>{this.props.children}</div>
+      </div>
+    );
+  }
+}

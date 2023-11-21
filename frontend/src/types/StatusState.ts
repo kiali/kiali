@@ -17,6 +17,7 @@ export interface ExternalServiceInfo {
 }
 
 export interface IstioEnvironment {
+  isMaistra: boolean;
   istioAPIEnabled: boolean;
 }
 

@@ -42,7 +42,7 @@ export class IstioStatusList extends React.Component<Props> {
   render() {
     return (
       <TextContent style={{ color: PFColors.White }} className={style.istioStatus}>
-        <Text component={TextVariants.h4}>Istio Components Status</Text>
+        <Text component={TextVariants.h4}>{$t('IstioComponentsStatus', 'Istio Components Status')}</Text>
         <List id="istio-status" className={style.istioStatus} aria-label="Istio Component List">
           {this.renderComponentList()}
         </List>

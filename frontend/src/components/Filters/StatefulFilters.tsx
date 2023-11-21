@@ -438,14 +438,14 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                   key={'filter_' + index}
                   value={filter.id}
                   isFocused={this.state.focusedItemIndex === index}
-                  label={filter.title}
+                  label={$t(filter.title)}
                 >
                   {filter.title}
                 </SelectOption>
               ))
             ) : (
               <SelectOption key="filter_no_results" value="no_results" isDisabled={true}>
-                No results found
+                {$t('NoResultsFound', 'No results found')}
               </SelectOption>
             )}
           </SelectList>
@@ -521,7 +521,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     const showIncludeToggles = serverConfig.kialiFeatureFlags.uiDefaults.list.showIncludeToggles;
     const { currentFilterType, activeFilters } = this.state;
     const filterOptions = this.state.filterTypes.map(option => (
-      <FormSelectOption key={option.category} value={option.category} label={option.category} />
+      <FormSelectOption key={option.category} value={option.category} label={$t(option.category)} />
     ));
     const hasActiveFilters =
       this.state.activeFilters.filters.some(f => f.category === labelFilter.category) ||
@@ -577,7 +577,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
             {hasActiveFilters && (
               <ToolbarGroup>
                 <ToolbarItem>
-                  <div className={paddingStyle}>Label Operation</div>
+                  <div className={paddingStyle}>{$t('LabelOperation', 'Label Operation')}</div>
                   <FormSelect
                     value={activeFilters.op}
                     onChange={(_event, value) =>
@@ -589,8 +589,8 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                     aria-label="filter_select_value"
                     style={{ width: 'auto' }}
                   >
-                    <FormSelectOption key="filter_or" value="or" label="or" />
-                    <FormSelectOption key="filter_and" value="and" label="and" />
+                    <FormSelectOption key="filter_or" value="or" label={$t('or')} />
+                    <FormSelectOption key="filter_and" value="and" label={$t('and')} />
                   </FormSelect>
                 </ToolbarItem>
               </ToolbarGroup>

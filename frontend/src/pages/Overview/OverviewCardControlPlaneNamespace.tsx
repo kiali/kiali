@@ -114,7 +114,9 @@ export class OverviewCardControlPlaneNamespace extends React.Component<ControlPl
     return (
       <div style={{ textAlign: 'center' }}>
         <div>
-          <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>Control plane metrics</div>
+          <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>
+            {$t('ControlPlaneMetrics', 'Control plane metrics')}
+          </div>
         </div>
         <div
           style={{
@@ -135,7 +137,7 @@ export class OverviewCardControlPlaneNamespace extends React.Component<ControlPl
                       style={{ textAlign: 'right', paddingRight: 30 }}
                     >
                       <FlexItem>
-                        <b>Memory</b>
+                        <b>{$t('Memory')}</b>
                       </FlexItem>
                       <FlexItem>
                         {getName(this.props.duration).toLowerCase()}
@@ -143,7 +145,7 @@ export class OverviewCardControlPlaneNamespace extends React.Component<ControlPl
                           position={TooltipPosition.right}
                           content={
                             <div style={{ textAlign: 'left' }}>
-                              This values represents the memory of the istiod {memoryMetricSource}
+                              {$t('tip374', 'This values represents the memory of the istiod')} {memoryMetricSource}
                             </div>
                           }
                         >
@@ -189,7 +191,7 @@ export class OverviewCardControlPlaneNamespace extends React.Component<ControlPl
                           position={TooltipPosition.right}
                           content={
                             <div style={{ textAlign: 'left' }}>
-                              This values represents cpu of the istiod {cpuMetricSource}
+                              {$t('tip97', 'This values represents cpu of the istiod ')} {cpuMetricSource}
                             </div>
                           }
                         >

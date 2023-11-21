@@ -24,7 +24,7 @@ export class CanaryUpgradeProgress extends React.Component<Props> {
       <div style={{ textAlign: 'center' }} data-test="canary-upgrade">
         <div>
           <div>
-            Canary upgrade status
+            {$t('CanaryUpgradeStatus', 'Canary upgrade status')}
             <Tooltip
               position={TooltipPosition.right}
               content={`There is an in progress canary upgrade from version "${this.props.canaryUpgradeStatus.currentVersion}" to version "${this.props.canaryUpgradeStatus.upgradeVersion}"`}
@@ -37,7 +37,7 @@ export class CanaryUpgradeProgress extends React.Component<Props> {
               ariaDesc="Canary upgrade status"
               ariaTitle="Canary upgrade status"
               constrainToVisibleArea
-              data={{ x: 'Migrated namespaces', y: migrated }}
+              data={{ x: $t('MigratedNamespaces', 'Migrated namespaces'), y: migrated }}
               labels={({ datum }) => (datum.x ? `${datum.x}: ${datum.y.toFixed(2)}%` : null)}
               invert
               title={`${migrated.toFixed(2)}%`}

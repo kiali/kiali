@@ -78,7 +78,7 @@ export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwi
   };
 
   return (
-    <Tooltip position="bottom" content={<>{`Switch to ${darkTheme ? 'Light' : 'Dark'} Mode`}</>}>
+    <Tooltip position="bottom" content={<>{`${$t('SwitchTo')}${darkTheme ? $t('Light') : $t('Dark')}${$t('Mode')}`}</>}>
       <div>
         <Button
           variant={darkTheme ? 'secondary' : 'primary'}

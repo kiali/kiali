@@ -32,7 +32,7 @@ const statusDescriptors = new Map<string, StatusDescriptor>([
   [
     MTLSStatuses.ENABLED,
     {
-      message: 'Mesh-wide mTLS is enabled',
+      message: $t('tip234', 'Mesh-wide mTLS is enabled'),
       icon: MTLSIconTypes.LOCK_FULL,
       showStatus: true
     }
@@ -40,7 +40,7 @@ const statusDescriptors = new Map<string, StatusDescriptor>([
   [
     MTLSStatuses.PARTIALLY,
     {
-      message: 'Mesh-wide TLS is partially enabled',
+      message: $t('tip235', 'Mesh-wide TLS is partially enabled'),
       icon: MTLSIconTypes.LOCK_HOLLOW,
       showStatus: true
     }
@@ -48,7 +48,7 @@ const statusDescriptors = new Map<string, StatusDescriptor>([
   [
     MTLSStatuses.ENABLED_DEFAULT,
     {
-      message: 'Mesh-wide mTLS is enabled, configured by default',
+      message: $t('tip236', 'Mesh-wide mTLS is enabled, configured by default'),
       icon: MTLSIconTypes.LOCK_FULL,
       showStatus: true
     }
@@ -56,7 +56,7 @@ const statusDescriptors = new Map<string, StatusDescriptor>([
   [
     MTLSStatuses.PARTIALLY_DEFAULT,
     {
-      message: 'Mesh-wide TLS is partially enabled, configured by default',
+      message: $t('tip237', 'Mesh-wide TLS is partially enabled, configured by default'),
       icon: MTLSIconTypes.LOCK_HOLLOW,
       showStatus: true
     }
@@ -64,7 +64,7 @@ const statusDescriptors = new Map<string, StatusDescriptor>([
   [
     MTLSStatuses.AUTO_DEFAULT,
     {
-      message: 'Automatic Mesh-wide mTLS is enabled',
+      message: $t('tip238', 'Automatic Mesh-wide mTLS is enabled'),
       icon: MTLSIconTypes.LOCK_FULL,
       showStatus: true
     }
@@ -93,9 +93,19 @@ class MeshMTLSStatusComponent extends React.Component<Props> {
         // User without namespaces can't have access to mTLS information. Reduce severity to info.
         const informative = this.props.namespaces && this.props.namespaces.length < 1;
         if (informative) {
-          AlertUtils.addError('Mesh-wide mTLS status feature disabled.', error, 'default', MessageType.INFO);
+          AlertUtils.addError(
+            $t('tip239', 'Mesh-wide mTLS status feature disabled.'),
+            error,
+            'default',
+            MessageType.INFO
+          );
         } else {
-          AlertUtils.addError('Error fetching Mesh-wide mTLS status.', error, 'default', MessageType.ERROR);
+          AlertUtils.addError(
+            $t('tip240', 'Error fetching Mesh-wide mTLS status.'),
+            error,
+            'default',
+            MessageType.ERROR
+          );
         }
       });
   };

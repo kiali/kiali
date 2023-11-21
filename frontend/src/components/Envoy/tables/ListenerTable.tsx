@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { SummaryTable, SummaryTableRenderer } from './BaseTable';
-import { IRow, ISortBy } from '@patternfly/react-table';
+import { ICell, ISortBy, sortable } from '@patternfly/react-table';
 import { ListenerSummary } from '../../../types/IstioObjects';
 import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '../../../types/Filters';
 import { SortField } from '../../../types/SortFilters';
@@ -10,16 +10,15 @@ import { Tooltip } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
-import { SortableTh } from 'components/SimpleTable';
 
 export class ListenerTable implements SummaryTable {
-  namespace: string;
-  namespaces: Namespace[];
-  routeLinkHandler: () => void;
-  sortingDirection: 'asc' | 'desc';
-  sortingIndex: number;
   summaries: ListenerSummary[];
+  sortingIndex: number;
+  sortingDirection: 'asc' | 'desc';
+  namespaces: Namespace[];
+  namespace: string;
   workload: string | undefined;
+  routeLinkHandler: () => void;
 
   constructor(
     summaries: ListenerSummary[],
@@ -30,8 +29,8 @@ export class ListenerTable implements SummaryTable {
     routeLinkHandler: () => void
   ) {
     this.summaries = summaries;
-    this.sortingIndex = sortBy.index ?? 0;
-    this.sortingDirection = sortBy.direction ?? 'asc';
+    this.sortingIndex = sortBy.index || 0;
+    this.sortingDirection = sortBy.direction || 'asc';
     this.namespaces = namespaces;
     this.namespace = namespace;
     this.workload = workload;
@@ -42,28 +41,28 @@ export class ListenerTable implements SummaryTable {
     return [
       {
         category: 'Address',
-        placeholder: 'Address',
+        placeholder: $t('Address'),
         filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
       {
         category: 'Port',
-        placeholder: 'Port',
+        placeholder: $t('Port'),
         filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
       {
         category: 'Match',
-        placeholder: 'Match',
+        placeholder: $t('Match'),
         filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
       {
         category: 'Destination',
-        placeholder: 'Destination',
+        placeholder: $t('Destination'),
         filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
@@ -71,7 +70,7 @@ export class ListenerTable implements SummaryTable {
     ];
   };
 
-  filterMethods = (): { [filter_id: string]: (entry: ListenerSummary, filter: ActiveFilter) => boolean } => {
+  filterMethods = (): { [filter_id: string]: (summary, activeFilter) => boolean } => {
     return {
       Address: (entry: ListenerSummary, filter: ActiveFilter): boolean => {
         return entry.address.includes(filter.value);
@@ -92,7 +91,7 @@ export class ListenerTable implements SummaryTable {
     return [
       {
         id: 'address',
-        title: 'Address',
+        title: $t('Address'),
         isNumeric: false,
         param: 'addess',
         compare: (a, b) => {
@@ -101,7 +100,7 @@ export class ListenerTable implements SummaryTable {
       },
       {
         id: 'port',
-        title: 'Port',
+        title: $t('Port'),
         isNumeric: true,
         param: 'port',
         compare: (a, b) => {
@@ -110,7 +109,7 @@ export class ListenerTable implements SummaryTable {
       },
       {
         id: 'match',
-        title: 'Match',
+        title: $t('Match'),
         isNumeric: false,
         param: 'match',
         compare: (a, b) => {
@@ -119,7 +118,7 @@ export class ListenerTable implements SummaryTable {
       },
       {
         id: 'destination',
-        title: 'Destination',
+        title: $t('Destination'),
         isNumeric: false,
         param: 'destination',
         compare: (a, b) => {
@@ -129,39 +128,40 @@ export class ListenerTable implements SummaryTable {
     ];
   };
 
-  head = (): SortableTh[] => {
+  head = (): ICell[] => {
     return [
       {
-        title: 'Address',
-        sortable: true,
-        info: {
-          tooltip: (
-            <div className={kialiStyle({ textAlign: 'left' })}>
-              The address that the listener should listen on. In general, the address must be unique, though that is
-              governed by the bind rules of the OS
-            </div>
-          )
+        title: $t('Address'),
+        transforms: [sortable],
+        header: {
+          info: {
+            tooltip: (
+              <div className={kialiStyle({ textAlign: 'left' })}>
+                {$t(
+                  'tip224',
+                  'The address that the listener should listen on. In general, the address must be unique, though that is governed by the bind rules of the OS'
+                )}
+              </div>
+            )
+          }
         }
       },
+      { title: $t('Port'), transforms: [sortable] },
+      { title: $t('Match'), transforms: [sortable] },
       {
-        title: 'Port',
-        sortable: true
-      },
-      {
-        title: 'Match',
-        sortable: true
-      },
-      {
-        title: 'Destination',
-        sortable: true,
-        info: {
-          tooltip: (
-            <div className={kialiStyle({ textAlign: 'left' })}>
-              Original destination listener filter reads the SO_ORIGINAL_DST socket option set when a connection has
-              been redirected by an iptables REDIRECT target, or by an iptables TPROXY target in combination with
-              setting the listener’s transparent option
-            </div>
-          )
+        title: $t('Destination'),
+        transforms: [sortable],
+        header: {
+          info: {
+            tooltip: (
+              <div className={kialiStyle({ textAlign: 'left' })}>
+                {$t(
+                  'tip225',
+                  'Original destination listener filter reads the SO_ORIGINAL_DST socket option set when a connection has been redirected by an iptables REDIRECT target, or by an iptables TPROXY target in combination with setting the listener’s transparent option'
+                )}
+              </div>
+            )
+          }
         }
       }
     ];
@@ -169,7 +169,7 @@ export class ListenerTable implements SummaryTable {
 
   resource = (): string => 'listeners';
 
-  setSorting = (columnIndex: number, direction: 'asc' | 'desc'): void => {
+  setSorting = (columnIndex: number, direction: 'asc' | 'desc') => {
     this.sortingDirection = direction;
     this.sortingIndex = columnIndex;
   };
@@ -186,8 +186,10 @@ export class ListenerTable implements SummaryTable {
       <Tooltip
         content={
           <div className={kialiStyle({ textAlign: 'left' })}>
-            Network location that can be connected to by downstream clients (Incomming to envoy). List of
-            endpoints:ports that envoy lets traffic
+            {$t(
+              'tip226',
+              'Network location that can be connected to by downstream clients (Incomming to envoy). List of endpoints:ports that envoy lets traffic'
+            )}
           </div>
         }
       >
@@ -196,7 +198,7 @@ export class ListenerTable implements SummaryTable {
     );
   };
 
-  rows(): IRow[] {
+  rows(): (string | number | JSX.Element)[][] {
     return this.summaries
       .filter((value: ListenerSummary) => {
         return defaultFilter(value, this.filterMethods());
@@ -205,21 +207,16 @@ export class ListenerTable implements SummaryTable {
         const sortField = this.sortFields().find((value: SortField<ListenerSummary>): boolean => {
           return value.id === this.sortFields()[this.sortingIndex].id;
         });
-
         return this.sortingDirection === 'asc' ? sortField!.compare(a, b) : sortField!.compare(b, a);
       })
-      .map(
-        (summary: ListenerSummary): IRow => {
-          return {
-            cells: [
-              summary.address,
-              summary.port,
-              summary.match,
-              routeLink(summary.destination, this.namespace, this.workload, this.routeLinkHandler)
-            ]
-          };
-        }
-      );
+      .map((summary: ListenerSummary) => {
+        return [
+          summary.address,
+          summary.port,
+          summary.match,
+          routeLink(summary.destination, this.namespace, this.workload, this.routeLinkHandler)
+        ];
+      });
   }
 }
 

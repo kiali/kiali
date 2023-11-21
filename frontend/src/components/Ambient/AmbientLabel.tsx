@@ -11,7 +11,7 @@ const AmbientComponent = 'ztunnel';
 
 export class AmbientLabel extends React.Component<AmbientLabelProps, {}> {
   render() {
-    const msg = 'Component is labeled as part of the Istio Ambient Mesh';
+    const msg = $t('tip378', 'Component is labeled as part of the Istio Ambient Mesh');
 
     const tooltipContent = (
       <div style={{ textAlign: 'left' }}>
@@ -30,7 +30,7 @@ export class AmbientLabel extends React.Component<AmbientLabelProps, {}> {
         </Label>
         {this.props.waypoint && (
           <Label style={{ marginLeft: 5 }} color="blue" isCompact>
-            Waypoint
+            {$t('Waypoint')}
           </Label>
         )}
         {!this.props.tooltip && (

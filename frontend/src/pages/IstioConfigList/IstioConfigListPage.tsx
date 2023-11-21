@@ -159,7 +159,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
       .catch(istioError => {
         console.log(istioError);
         if (!istioError.isCanceled) {
-          this.handleAxiosError('Could not fetch Istio objects list', istioError);
+          this.handleAxiosError($t('tip79', 'Could not fetch Istio objects list'), istioError);
         }
       });
   }
@@ -204,7 +204,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     return (
       <>
         <DefaultSecondaryMasthead
-          rightToolbar={<RefreshButton key={'Refresh'} handleRefresh={this.updateListItems} />}
+          rightToolbar={<RefreshButton key={$t('Refresh')} handleRefresh={this.updateListItems} />}
           actionsToolbar={<IstioActionsNamespaceDropdown />}
         />
         <RenderContent>

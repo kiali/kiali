@@ -52,7 +52,7 @@ export const IstioActionsNamespaceDropdown: React.FC = () => {
   const dropdownItems = [
     <DropdownGroup
       key={'group_create'}
-      label={'Create'}
+      label={$t('Create')}
       className={groupMenuStyle}
       children={dropdownItemsRaw.map(r => r.action)}
     />

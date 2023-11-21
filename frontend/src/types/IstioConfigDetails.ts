@@ -25,42 +25,37 @@ import { AceOptions } from 'react-ace/types';
 
 export interface IstioConfigId {
   namespace: string;
-  object: string;
   objectType: string;
+  object: string;
 }
 
 export interface IstioConfigDetails {
-  authorizationPolicy: AuthorizationPolicy;
+  namespace: Namespace;
   cluster?: string;
-  destinationRule: DestinationRule;
-  envoyFilter: EnvoyFilter;
   gateway: Gateway;
-  help?: HelpMessage[];
   k8sGateway: K8sGateway;
   k8sHTTPRoute: K8sHTTPRoute;
-  namespace: Namespace;
-  peerAuthentication: PeerAuthentication;
-  permissions: ResourcePermissions;
-  references?: References;
-  requestAuthentication: RequestAuthentication;
+  virtualService: VirtualService;
+  destinationRule: DestinationRule;
   serviceEntry: ServiceEntry;
   sidecar: Sidecar;
-  telemetry: Telemetry;
-  validation: ObjectValidation;
-  virtualService: VirtualService;
-  wasmPlugin: WasmPlugin;
   workloadEntry: WorkloadEntry;
   workloadGroup: WorkloadGroup;
-}
-
-export interface IstioConfigDetailsQuery {
-  help?: boolean;
-  validate?: boolean;
+  envoyFilter: EnvoyFilter;
+  wasmPlugin: WasmPlugin;
+  telemetry: Telemetry;
+  authorizationPolicy: AuthorizationPolicy;
+  peerAuthentication: PeerAuthentication;
+  requestAuthentication: RequestAuthentication;
+  permissions: ResourcePermissions;
+  validation: ObjectValidation;
+  references?: References;
+  help?: HelpMessage[];
 }
 
 export const aceOptions: AceOptions = {
-  autoScrollEditorIntoView: true,
-  showPrintMargin: false
+  showPrintMargin: false,
+  autoScrollEditorIntoView: true
 };
 
 export const safeDumpOptions = {
@@ -70,8 +65,8 @@ export const safeDumpOptions = {
 };
 
 export interface ParsedSearch {
-  name?: string;
   type?: string;
+  name?: string;
 }
 
 export interface IstioPermissions {
@@ -80,26 +75,20 @@ export interface IstioPermissions {
   };
 }
 
-export interface IstioPermissionsQuery {
-  namespaces: string;
-}
-
 // Helper function to compare two IstioConfigDetails iterating over its IstioObject children.
 // When an IstioObject child has changed (resourceVersion is different) it will return a tuple with
 //  boolean: true if resourceVersion has changed in newer version
 //  string: IstioObject child
 //  string: resourceVersion of newer version
 export const compareResourceVersion = (
-  oldIstioConfigDetails: IstioConfigDetails,
+  oldIstioConfigDetails,
   newIstioConfigDetails: IstioConfigDetails
 ): [boolean, string, string] => {
   const keys = Object.keys(oldIstioConfigDetails);
-
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i];
     const oldIstioObject = oldIstioConfigDetails[key] as IstioObject;
     const newIstioObject = newIstioConfigDetails[key] as IstioObject;
-
     if (
       oldIstioObject &&
       newIstioObject &&
@@ -112,6 +101,5 @@ export const compareResourceVersion = (
       return [true, key, newIstioObject.metadata.resourceVersion];
     }
   }
-
   return [false, '', ''];
 };

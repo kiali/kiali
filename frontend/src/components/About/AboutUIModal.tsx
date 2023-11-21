@@ -16,7 +16,6 @@ import { config, kialiLogoDark } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { TEMPO } from '../../types/Tracing';
-import { GetTracingURL } from '../TracingIntegration/TracesComponent';
 
 type AboutUIModalProps = {
   externalServices: ExternalServiceInfo[];
@@ -75,7 +74,7 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
     const grafanaService = externalServices.find(service => service.name === 'Grafana');
 
     if (tempoService && grafanaService && grafanaService.url) {
-      tempoService.url = GetTracingURL(externalServices);
+      tempoService.url = `${grafanaService.url}/explore?left={"queries":[{"datasource":{"type":"tempo"},"queryType":"nativeSearch"}]}`;
       return renderComponent(tempoService);
     } else {
       return <></>;
@@ -161,13 +160,13 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
             {coreVersion!}
           </TextListItem>
           <TextListItem key={'kiali-container-name'} component="dt">
-            Kiali Container
+            {$t('KialiContainer', 'Kiali Container')}
           </TextListItem>
           <TextListItem key={'kiali-container-version'} component="dd">
             {containerVersion!}
           </TextListItem>
           <TextListItem key={'service-mesh-name'} component="dt">
-            Service Mesh
+            {$t('ServiceMesh', 'Service Mesh')}
           </TextListItem>
           <TextListItem key={'service-mesh-version'} component="dd">
             {meshVersion!}
@@ -179,7 +178,7 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
       )}
       <TextContent className={textContentStyle}>
         <Title headingLevel="h3" size={TitleSizes.xl} style={{ padding: '20px 0px 20px' }}>
-          Components
+          {$t('Components')}
         </Title>
         <TextList component="dl">
           {componentList}
