@@ -211,12 +211,6 @@ func (oc OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, q
 	queryPart2 := TraceQL{operator1: ".node_id", operand: REGEX, operator2: ".*"}
 	queryPart := TraceQL{operator1: queryPart1, operand: AND, operator2: queryPart2}
 
-	group1 := TraceQL{operator1: "status", operand: EQUAL, operator2: unquoted("error")}
-	group2 := TraceQL{operator1: "status", operand: EQUAL, operator2: unquoted("unset")}
-	group3 := TraceQL{operator1: "status", operand: EQUAL, operator2: unquoted("ok")}
-	groupQL := []TraceQL{group1, group2, group3}
-	group := Group{group: groupQL, operand: OR}
-
 	if len(query.Tags) > 0 {
 		for k, v := range query.Tags {
 			if k != "cluster" && oc.ClusterTag {
@@ -226,9 +220,9 @@ func (oc OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, q
 		}
 	}
 
-	subquery := TraceQL{operator1: queryPart, operand: AND, operator2: group}
-	trace := TraceQL{operator1: Subquery{subquery}, operand: AND, operator2: Subquery{}}
-	queryQL := trace.getQuery()
+	selects := []string{"status", ".service_name", ".node_id"}
+	trace := TraceQL{operator1: Subquery{queryPart}, operand: AND, operator2: Subquery{}}
+	queryQL := fmt.Sprintf("%s| %s", printOperator(trace), printSelect(selects))
 
 	q.Set("q", queryQL)
 	if query.MinDuration > 0 {

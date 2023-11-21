@@ -3,10 +3,10 @@ package tempo
 import (
 	"fmt"
 	"reflect"
+	"strings"
 )
 
 type operandType string
-type unquoted string
 
 const (
 	AND      operandType = "&&"
@@ -31,10 +31,6 @@ type Group struct {
 // Subqueries are {}
 type Subquery struct {
 	trace TraceQL
-}
-
-func (trace TraceQL) getQuery() string {
-	return fmt.Sprintf("%s %s %s", printOperator(trace.operator1), trace.operand, printOperator(trace.operator2))
 }
 
 func printOperator(operator interface{}) string {
@@ -75,4 +71,9 @@ func printOperator(operator interface{}) string {
 		queryString = fmt.Sprintf("%s", operator)
 	}
 	return queryString
+}
+
+func printSelect(fields []string) string {
+	selects := strings.Join(fields, ", ")
+	return fmt.Sprintf("select(%s)", selects)
 }
