@@ -3,14 +3,13 @@ package converter
 import (
 	"strconv"
 
-	v1 "github.com/grafana/tempo/pkg/tempopb/common/v1"
-	v11 "github.com/grafana/tempo/pkg/tempopb/resource/v1"
-
 	"github.com/kiali/kiali/log"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 	otel "github.com/kiali/kiali/tracing/otel/model"
 	otelModels "github.com/kiali/kiali/tracing/otel/model/json"
 	"github.com/kiali/kiali/tracing/tempo/tempopb"
+	v1 "github.com/kiali/kiali/tracing/tempo/tempopb/common/v1"
+	v11 "github.com/kiali/kiali/tracing/tempo/tempopb/resource/v1"
 )
 
 // convertID
