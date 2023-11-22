@@ -8,23 +8,27 @@ import (
 )
 
 const (
-	NodeTypeCluster   string = "cluster"             // A cluster "box" node
-	NodeTypeInfra     string = "infra"               // Any non-box node of interest
-	NodeTypeNamespace string = "namespace"           // A namespace "box" node
-	TF                string = "2006-01-02 15:04:05" // TF is the TimeFormat for timestamps
-	Unknown           string = "unknown"             // Istio unknown label value
+	BoxTypeCluster       string = "cluster"
+	BoxTypeNamespace     string = "namespace"
+	InfraTypeCluster     string = "cluster" // cluster node (not box) with no other infra (very rare)
+	InfraTypeIstiod      string = "istiod"
+	InfraTypeKiali       string = "kiali"
+	InfraTypeNamespace   string = "namespace"
+	InfraTypeMetricStore string = "metricStore"
+	InfraTypeTraceStore  string = "traceStore"
+	NodeTypeBox          string = "box"                 // The special "box" node. isBox will be set to a BoxType
+	NodeTypeInfra        string = "infra"               // Any non-box node of interest
+	TF                   string = "2006-01-02 15:04:05" // TF is the TimeFormat for timestamps
+	Unknown              string = "unknown"             // Istio unknown label value
 )
 
 type Node struct {
-	Cluster   string  // cluster name
-	Edges     []*Edge // child nodes
-	ID        string  // unique identifier for the node
-	IsIstiod  bool
-	IsKiali   bool
-	IsProm    bool
-	IsTracing bool
+	Cluster   string   // cluster name
+	Edges     []*Edge  // child nodes
+	ID        string   // unique identifier for the node
+	InfraName string   // infra name
+	InfraType string   // set to appropriate InfraType
 	Metadata  Metadata // app-specific data
-	Name      string   // infra name
 	Namespace string   // namespace name
 	NodeType  string   // Node type
 }
@@ -61,25 +65,26 @@ func (tm MeshMap) Edges() []*Edge {
 }
 
 // NewNode constructor
-func NewNode(cluster, namespace, name string) (*Node, error) {
-	id, nodeType, err := Id(cluster, namespace, name)
+func NewNode(infraType, cluster, namespace, name string) (*Node, error) {
+	id, err := Id(cluster, namespace, name)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewNodeExplicit(id, nodeType, cluster, namespace, name), nil
+	return NewNodeExplicit(id, NodeTypeInfra, infraType, cluster, namespace, name), nil
 }
 
 // NewNodeExplicit constructor assigns the specified ID
-func NewNodeExplicit(id, nodeType, cluster, namespace, name string) *Node {
+func NewNodeExplicit(id, nodeType, infraType, cluster, namespace, name string) *Node {
 	metadata := make(Metadata)
 
 	return &Node{
 		Cluster:   cluster,
 		Edges:     []*Edge{},
 		ID:        id,
+		InfraName: name,
+		InfraType: infraType,
 		Metadata:  metadata,
-		Name:      name,
 		Namespace: namespace,
 		NodeType:  nodeType,
 	}
@@ -107,15 +112,9 @@ func NewMeshMap() MeshMap {
 }
 
 // Id returns the unique node ID
-func Id(cluster, namespace, name string) (id, nodeType string, err error) {
-	if cluster != "" {
-		if namespace != "" {
-			if name != "" {
-				return fmt.Sprintf("infra_%s_%s_%s", cluster, namespace, name), NodeTypeInfra, nil
-			}
-			return fmt.Sprintf("box_%s_%s", cluster, namespace), NodeTypeNamespace, nil
-		}
-		return fmt.Sprintf("box_%s", cluster), NodeTypeCluster, nil
+func Id(cluster, namespace, name string) (id string, err error) {
+	if cluster != "" && namespace != "" && name != "" {
+		return fmt.Sprintf("infra_%s_%s_%s", cluster, namespace, name), nil
 	}
-	return "", "", fmt.Errorf("Failed Mesh ID gen: cluster=[%s] namespace=[%s] name=[%s]", cluster, namespace, name)
+	return "", fmt.Errorf("Failed Mesh ID gen: cluster=[%s] namespace=[%s] name=[%s]", cluster, namespace, name)
 }

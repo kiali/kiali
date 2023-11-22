@@ -9,11 +9,10 @@ import (
 	"github.com/kiali/kiali/mesh"
 	"github.com/kiali/kiali/mesh/appender"
 	"github.com/kiali/kiali/observability"
-	"github.com/kiali/kiali/prometheus"
 )
 
 // BuildMeshMap is required by the graph/TelemetryVendor interface
-func BuildMeshMap(ctx context.Context, o mesh.Options, client *prometheus.Client, gi *mesh.AppenderGlobalInfo) mesh.MeshMap {
+func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalInfo) mesh.MeshMap {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "BuildMeshMap",
 		observability.Attribute("package", "generator"),
@@ -23,24 +22,34 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, client *prometheus.Client
 	_, finalizers := appender.ParseAppenders(o)
 	meshMap := mesh.NewMeshMap()
 
-	// start by creating namespace nodes for each accessible namespace and cluster
+	// start by creating infra nodes for each accessible namespace
+	// note - namespace infra nodes will be replaced, as needed, by namespace boxes at the config-gen stage (e.g. in Cytoscape.go)
+	clusterMap := make(map[string]bool)
 	for _, ns := range o.AccessibleNamespaces {
-		var err error
-		_, _, err = addNode(meshMap, ns.Cluster, ns.Name, "")
-		mesh.CheckError(err)
+		clusterMap[ns.Cluster] = true
 
-		_, _, err = addNode(meshMap, ns.Cluster, "", "")
+		var err error
+		_, _, err = addInfra(meshMap, mesh.InfraTypeNamespace, ns.Cluster, ns.Name, ns.Name)
 		mesh.CheckError(err)
 	}
 
-	// add any clusters that are configured but somehow don't have accessible namespaces
 	meshClusters, err := gi.Business.Mesh.GetClusters(o.Request)
 	graph.CheckError(err)
 
 	for _, cluster := range meshClusters {
-		var err error
-		_, _, err = addNode(meshMap, cluster.Name, "", "")
-		mesh.CheckError(err)
+		// add any clusters that is configured but somehow has no accessible namespace
+		if _, ok := clusterMap[cluster.Name]; !ok {
+			_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, cluster.Name, mesh.Unknown, cluster.Name)
+			mesh.CheckError(err)
+
+			continue
+		}
+
+		// add any Kiali instances
+		for _, kiali := range cluster.KialiInstances {
+			_, _, err := addInfra(meshMap, mesh.InfraTypeKiali, cluster.Name, kiali.Namespace, kiali.ServiceName)
+			mesh.CheckError(err)
+		}
 	}
 
 	// The finalizers can perform final manipulations on the complete graph
@@ -51,14 +60,14 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, client *prometheus.Client
 	return meshMap
 }
 
-func addNode(meshMap mesh.MeshMap, cluster, namespace, name string) (*mesh.Node, bool, error) {
-	id, nodeType, err := mesh.Id(cluster, namespace, name)
+func addInfra(meshMap mesh.MeshMap, infraType, cluster, namespace, name string) (*mesh.Node, bool, error) {
+	id, err := mesh.Id(cluster, namespace, name)
 	if err != nil {
 		return nil, false, err
 	}
 	node, found := meshMap[id]
 	if !found {
-		newNode := mesh.NewNodeExplicit(id, nodeType, cluster, namespace, name)
+		newNode := mesh.NewNodeExplicit(id, mesh.NodeTypeInfra, infraType, cluster, namespace, name)
 		node = newNode
 		meshMap[id] = node
 	}

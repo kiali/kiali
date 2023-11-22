@@ -12,8 +12,6 @@ import (
 	"github.com/kiali/kiali/mesh/config/cytoscape"
 	"github.com/kiali/kiali/mesh/generator"
 	"github.com/kiali/kiali/observability"
-	"github.com/kiali/kiali/prometheus"
-	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 // GraphMesh generates a mesh graph using the provided options
@@ -24,25 +22,23 @@ func GraphMesh(ctx context.Context, business *business.Layer, o mesh.Options) (c
 	)
 	defer end()
 	// time how long it takes to generate this graph
-	promtimer := internalmetrics.GetMeshGraphGenerationTimePrometheusTimer()
-	defer promtimer.ObserveDuration()
+	//promtimer := internalmetrics.GetMeshGraphGenerationTimePrometheusTimer()
+	//defer promtimer.ObserveDuration()
 
-	prom, err := prometheus.NewClient()
-	graph.CheckError(err)
-	code, config = graphMesh(ctx, business, prom, o)
+	code, config = graphMesh(ctx, business, o)
 
 	return code, config
 }
 
 // graphMesh provides a test hook that accepts mock clients
-func graphMesh(ctx context.Context, business *business.Layer, prom *prometheus.Client, o mesh.Options) (code int, config interface{}) {
+func graphMesh(ctx context.Context, business *business.Layer, o mesh.Options) (code int, config interface{}) {
 
 	// Create a 'global' object to store the business. Global only to the request.
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := mesh.NewAppenderGlobalInfo()
 	globalInfo.Business = business
 	globalInfo.Context = ctx
 
-	meshMap := generator.BuildMeshMap(ctx, o, prom, globalInfo)
+	meshMap := generator.BuildMeshMap(ctx, o, globalInfo)
 	code, config = generateGraph(meshMap, o)
 
 	return code, config
@@ -51,8 +47,8 @@ func graphMesh(ctx context.Context, business *business.Layer, prom *prometheus.C
 func generateGraph(meshMap mesh.MeshMap, o mesh.Options) (int, interface{}) {
 	log.Tracef("Generating config for [%s] graph...", o.ConfigVendor)
 
-	promtimer := internalmetrics.GetMeshGraphMarshalTimePrometheusTimer()
-	defer promtimer.ObserveDuration()
+	//	promtimer := internalmetrics.GetMeshGraphMarshalTimePrometheusTimer()
+	//	defer promtimer.ObserveDuration()
 
 	var vendorConfig interface{}
 	switch o.ConfigVendor {

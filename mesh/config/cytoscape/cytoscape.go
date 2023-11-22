@@ -28,14 +28,16 @@ type NodeData struct {
 	ID     string `json:"id"`               // unique internal node ID (n0, n1...)
 	Parent string `json:"parent,omitempty"` // Compound Node parent ID
 
-	// App Fields (not required by Cytoscape)
+	// Required Fields (not required by Cytoscape)
 	Cluster   string `json:"cluster"`
+	InfraName string `json:"infraName"`
+	InfraType string `json:"infraType"`
 	Namespace string `json:"namespace"`
 	NodeType  string `json:"nodeType"`
-	//
+	// Other Fields
 	HealthData     interface{} `json:"healthData"`               // data to calculate health status from configurations
 	IsAmbient      bool        `json:"isAmbient,omitempty"`      // true if configured for ambient
-	IsBox          string      `json:"isBox,omitempty"`          // set for NodeTypeBox, current values: [ 'app', 'cluster', 'namespace' ]
+	IsBox          string      `json:"isBox,omitempty"`          // set for NodeTypeBox, current values: [ 'cluster', 'namespace' ]
 	IsInaccessible bool        `json:"isInaccessible,omitempty"` // true if the node exists in an inaccessible namespace
 	IsMTLS         bool        `json:"isMTLS,omitempty"`         // true if mesh-wide mTLS is enabled
 	IsOutOfMesh    bool        `json:"isOutOfMesh,omitempty"`    // true (has missing sidecar) | false
@@ -134,6 +136,8 @@ func buildConfig(meshMap mesh.MeshMap, nodes *[]*NodeWrapper, edges *[]*EdgeWrap
 		nd := &NodeData{
 			Cluster:   n.Cluster,
 			ID:        nodeID,
+			InfraName: n.InfraName,
+			InfraType: n.InfraType,
 			Namespace: n.Namespace,
 			NodeType:  n.NodeType,
 		}
@@ -181,15 +185,15 @@ func boxByNamespace(nodes *[]*NodeWrapper) {
 	box := make(map[string][]*NodeData)
 
 	for _, nw := range *nodes {
-		// never box unknown
-		if nw.Data.Parent == "" && nw.Data.Namespace != mesh.Unknown {
-			k := fmt.Sprintf("box_%s_%s", nw.Data.Cluster, nw.Data.Namespace)
-			box[k] = append(box[k], nw.Data)
+		// don't namespace box a namespace node, or an "unknown" namespace
+		if nw.Data.Parent == "" || nw.Data.InfraType == mesh.InfraTypeNamespace || nw.Data.Namespace == mesh.Unknown {
+			continue
 		}
+
+		k := fmt.Sprintf("box_%s_%s", nw.Data.Cluster, nw.Data.Namespace)
+		box[k] = append(box[k], nw.Data)
 	}
-	if len(box) > 1 {
-		generateBoxCompoundNodes(box, nodes, mesh.BoxByNamespace)
-	}
+	generateBoxCompoundNodes(box, nodes, mesh.BoxByNamespace)
 }
 
 // boxByCluster adds compound nodes to box nodes in the same cluster
@@ -203,43 +207,39 @@ func boxByCluster(nodes *[]*NodeWrapper) {
 			box[k] = append(box[k], nw.Data)
 		}
 	}
-	if len(box) > 1 {
-		generateBoxCompoundNodes(box, nodes, mesh.BoxByCluster)
-	}
+	generateBoxCompoundNodes(box, nodes, mesh.BoxByCluster)
 }
 
 func generateBoxCompoundNodes(box map[string][]*NodeData, nodes *[]*NodeWrapper, boxBy string) {
 	for k, members := range box {
-		if len(members) >= 1 {
-			// create the compound (parent) node for the member nodes
-			nodeID := nodeHash(k)
-			namespace := ""
-			switch boxBy {
-			case mesh.BoxByNamespace:
-				namespace = members[0].Namespace
-				nd := NodeData{
-					ID:        nodeID,
-					NodeType:  mesh.NodeTypeBox,
-					Cluster:   members[0].Cluster,
-					Namespace: namespace,
-					IsBox:     boxBy,
-				}
-
-				nw := NodeWrapper{
-					Data: &nd,
-				}
-
-				// assign each member node to the compound parent
-				nd.IsOutOfMesh = false // TODO: this is probably unecessarily noisy
-				nd.IsInaccessible = false
-
-				for _, n := range members {
-					n.Parent = nodeID
-				}
-
-				// add the compound node to the list of nodes
-				*nodes = append(*nodes, &nw)
-			}
+		// create the compound (parent) node for the member nodes
+		nodeID := nodeHash(k)
+		namespace := ""
+		switch boxBy {
+		case mesh.BoxByNamespace:
+			namespace = members[0].Namespace
 		}
+		nd := NodeData{
+			ID:        nodeID,
+			NodeType:  mesh.NodeTypeBox,
+			Cluster:   members[0].Cluster,
+			Namespace: namespace,
+			IsBox:     boxBy,
+		}
+
+		nw := NodeWrapper{
+			Data: &nd,
+		}
+
+		// assign each member node to the compound parent
+		nd.IsOutOfMesh = false // TODO: this is probably unecessarily noisy
+		nd.IsInaccessible = false
+
+		for _, n := range members {
+			n.Parent = nodeID
+		}
+
+		// add the compound node to the list of nodes
+		*nodes = append(*nodes, &nw)
 	}
 }
