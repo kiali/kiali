@@ -13,7 +13,7 @@ export const INITIAL_MESSAGE_CENTER_STATE: MessageCenterState = {
   groups: [
     {
       id: 'systemErrors',
-      title: i18n.t('OpenIssue'),
+      title: i18n.t('OpenIssue', 'Open Issue'),
       messages: [],
       showActions: false,
       hideIfEmpty: true

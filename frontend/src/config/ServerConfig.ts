@@ -31,18 +31,18 @@ const toDurations = (tupleArray: [number, string][]): Durations => {
 };
 
 const durationsTuples: [number, string][] = [
-  [60, `1${i18n.t('date.m')}`],
-  [120, `2${i18n.t('date.m')}`],
-  [300, `5${i18n.t('date.m')}`],
-  [600, `10${i18n.t('date.m')}`],
-  [1800, `30${i18n.t('date.m')}`],
-  [3600, `1${i18n.t('date.h')}`],
-  [10800, `3${i18n.t('date.h')}`],
-  [21600, `6${i18n.t('date.h')}`],
-  [43200, `12${i18n.t('date.h')}`],
-  [86400, `1${i18n.t('date.d')}`],
-  [604800, `7${i18n.t('date.d')}`],
-  [2592000, `30${i18n.t('date.d')}`]
+  [60, `1${i18n.t('date.m', 'm')}`],
+  [120, `2${i18n.t('date.m', 'm')}`],
+  [300, `5${i18n.t('date.m', 'm')}`],
+  [600, `10${i18n.t('date.m', 'm')}`],
+  [1800, `30${i18n.t('date.m', 'm')}`],
+  [3600, `1${i18n.t('date.h', 'h')}`],
+  [10800, `3${i18n.t('date.h', 'h')}`],
+  [21600, `6${i18n.t('date.h', 'h')}`],
+  [43200, `12${i18n.t('date.h', 'h')}`],
+  [86400, `1${i18n.t('date.d', 'd')}`],
+  [604800, `7${i18n.t('date.d', 'd')}`],
+  [2592000, `30${i18n.t('date.d', 'd')}`]
 ];
 
 const computeValidDurations = (cfg: ComputedServerConfig) => {

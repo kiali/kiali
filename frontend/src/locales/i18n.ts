@@ -20,8 +20,6 @@ i18n.use(initReactI18next).init({
 });
 
 // 将全局翻译方法绑定到window对象上
-(window as any).$t = function (key: string, defaultValue: string = key) {
-  return i18n.t(key, { defaultValue });
-};
+(window as any).$t = i18n.t
 
 export default i18n;

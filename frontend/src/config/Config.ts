@@ -24,12 +24,12 @@ const conf = {
     /** Options in refresh */
     refreshInterval: {
       0: i18n.t('Pause'),
-      10000: `${i18n.t('Every')}10${i18n.t('date.s')}`,
-      15000: `${i18n.t('Every')}15${i18n.t('date.s')}`,
-      30000: `${i18n.t('Every')}30${i18n.t('date.s')}`,
-      60000: `${i18n.t('Every')}1${i18n.t('date.m')}`,
-      300000: `${i18n.t('Every')}5${i18n.t('date.m')}`,
-      900000: `${i18n.t('Every')}15${i18n.t('date.m')}`
+      10000: `${i18n.t('Every')}10${i18n.t('date.s', 's')}`,
+      15000: `${i18n.t('Every')}15${i18n.t('date.s', 's')}`,
+      30000: `${i18n.t('Every')}30${i18n.t('date.s', 's')}`,
+      60000: `${i18n.t('Every')}1${i18n.t('date.m', 'm')}`,
+      300000: `${i18n.t('Every')}5${i18n.t('date.m', 'm')}`,
+      900000: `${i18n.t('Every')}15${i18n.t('date.m', 'm')}`
     },
     /** Graphs layouts types */
     graphLayouts: {
@@ -71,12 +71,12 @@ const conf = {
     project: {
       url: 'https://github.com/kiali',
       icon: 'RepositoryIcon',
-      linkText: i18n.t('tip392')
+      linkText: i18n.t('tip392', 'Find us on GitHub')
     },
     website: {
       url: 'https://www.kiali.io', // Without www, we get an SSL error
       icon: 'HomeIcon',
-      linkText: i18n.t('tip393')
+      linkText: i18n.t('tip393', 'Visit our web page')
     }
   },
   /** */
