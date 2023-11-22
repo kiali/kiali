@@ -301,14 +301,14 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
       this.filterAdded(currentFilterType, filterValue.title);
     }
 
-    this.setState({ isOpen: false });
+    setTimeout(() => this.setState({ isOpen: false }));
   };
 
   updateCurrentValue = (value: string) => {
     this.setState({ currentValue: value, focusedItemIndex: null });
   };
 
-  onValueKeyPress = (keyEvent: React.KeyboardEvent<HTMLInputElement>) => {
+  onValueKeyDown = (keyEvent: React.KeyboardEvent) => {
     const { currentValue, currentFilterType } = this.state;
 
     if (keyEvent.key === 'Enter') {
@@ -322,7 +322,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     }
   };
 
-  onTypeaheadInputKeyDown = (keyEvent: React.KeyboardEvent<HTMLInputElement>) => {
+  onTypeaheadInputKeyDown = (keyEvent: React.KeyboardEvent) => {
     const { isOpen, focusedItemIndex, currentFilterType } = this.state;
 
     if (keyEvent.key === 'ArrowUp' || keyEvent.key === 'ArrowDown') {
@@ -373,7 +373,6 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
   };
 
   onToggle = () => {
-    console.log(this.state.isOpen);
     this.setState({
       isOpen: !this.state.isOpen
     });
@@ -486,7 +485,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
           aria-label="filter_input_value"
           placeholder={currentFilterType.placeholder}
           onChange={(_event, value) => this.updateCurrentValue(value)}
-          onKeyPress={e => this.onValueKeyPress(e)}
+          onKeyDown={e => this.onValueKeyDown(e)}
           style={{ width: 'auto' }}
         />
       );

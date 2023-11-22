@@ -61,7 +61,8 @@ const paramToTab: { [key: string]: number } = {
   traces: 5,
   waypoint: 7
 };
-var nextTabIndex = 6;
+
+let nextTabIndex = 6;
 
 class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPageProps, WorkloadDetailsState> {
   constructor(props: WorkloadDetailsPageProps) {
@@ -263,7 +264,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
   }
 
   private hasIstioSidecars(workload: Workload): boolean {
-    var hasIstioSidecars: boolean = false;
+    let hasIstioSidecars: boolean = false;
 
     if (workload.pods.length > 0) {
       workload.pods.forEach(pod => {

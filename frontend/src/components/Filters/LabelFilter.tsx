@@ -16,7 +16,7 @@ const infoIconStyle = kialiStyle({
 });
 
 export const LabelFilters: React.FC<LabelFiltersProps> = (props: LabelFiltersProps) => {
-  const onkeyPress = (e: any) => {
+  const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       if (props.value && props.value.length > 0) {
         props.value.split(' ').map(val => !props.isActive(val) && props.filterAdd(val));
@@ -27,14 +27,15 @@ export const LabelFilters: React.FC<LabelFiltersProps> = (props: LabelFiltersPro
   return (
     <>
       <TextInput
-        type={'text'}
+        type="text"
         value={props.value}
-        aria-label={'filter_input_label_key'}
-        placeholder={'Set Label'}
+        aria-label="filter_input_label_key"
+        placeholder="Set Label"
         onChange={(_event, value) => props.onChange(value)}
-        onKeyPress={e => onkeyPress(e)}
+        onKeyDown={e => onKeyDown(e)}
         style={{ width: 'auto' }}
       />
+
       <Popover
         headerContent={<span>Label Filter Help</span>}
         position={PopoverPosition.right}
@@ -42,7 +43,7 @@ export const LabelFilters: React.FC<LabelFiltersProps> = (props: LabelFiltersPro
           <>
             To set a label filter you must enter values like.
             <br />
-            <ul style={{ listStyleType: 'circle', marginLeft: '20px' }}>
+            <ul style={{ listStyleType: 'circle', marginLeft: '1.25rem' }}>
               <li>Filter by label presence: label</li>
               <li>Filter by label and value: label=value</li>
               <li>

@@ -38,11 +38,11 @@ export const InOutRateTableGrpc: React.FC<InOutRateTableGrpcPropType> = (props: 
             <Th dataLabel="Total" textCenter>
               Total
             </Th>
-            <Th dataLabel="%Success" textCenter>
-              %Success
+            <Th dataLabel="% Success" textCenter>
+              % Success
             </Th>
-            <Th dataLabel="%Error" textCenter>
-              %Error
+            <Th dataLabel="% Error" textCenter>
+              % Error
             </Th>
           </Tr>
         </Thead>
@@ -52,10 +52,10 @@ export const InOutRateTableGrpc: React.FC<InOutRateTableGrpcPropType> = (props: 
             <Td dataLabel="Total" textCenter>
               {props.inRate.toFixed(2)}
             </Td>
-            <Td dataLabel="%Success" textCenter>
+            <Td dataLabel="% Success" textCenter>
               {percentOkIn.toFixed(2)}
             </Td>
-            <Td dataLabel="%Error" textCenter>
+            <Td dataLabel="% Error" textCenter>
               {percentErrIn.toFixed(2)}
             </Td>
           </Tr>
@@ -64,10 +64,10 @@ export const InOutRateTableGrpc: React.FC<InOutRateTableGrpcPropType> = (props: 
             <Td dataLabel="Total" textCenter>
               {props.outRate.toFixed(2)}
             </Td>
-            <Td dataLabel="%Success" textCenter>
+            <Td dataLabel="% Success" textCenter>
               {percentOkOut.toFixed(2)}
             </Td>
-            <Td dataLabel="%Error" textCenter>
+            <Td dataLabel="% Error" textCenter>
               {percentErrOut.toFixed(2)}
             </Td>
           </Tr>
@@ -129,11 +129,11 @@ export const InOutRateTableHttp: React.FC<InOutRateTableHttpPropType> = (props: 
             <Th dataLabel="Total" textCenter>
               Total
             </Th>
-            <Th dataLabel="%Success" textCenter>
-              %Success
+            <Th dataLabel="% Success" textCenter>
+              % Success
             </Th>
-            <Th dataLabel="%Error" textCenter>
-              %Error
+            <Th dataLabel="% Error" textCenter>
+              % Error
             </Th>
           </Tr>
         </Thead>
@@ -143,10 +143,10 @@ export const InOutRateTableHttp: React.FC<InOutRateTableHttpPropType> = (props: 
             <Td dataLabel="Total" textCenter>
               {props.inRate.toFixed(2)}
             </Td>
-            <Td dataLabel="%Success" textCenter>
+            <Td dataLabel="% Success" textCenter>
               {percentInSuccess.toFixed(2)}
             </Td>
-            <Td dataLabel="%Error" textCenter>
+            <Td dataLabel="% Error" textCenter>
               {percentInErr.toFixed(2)}
             </Td>
           </Tr>
@@ -155,10 +155,10 @@ export const InOutRateTableHttp: React.FC<InOutRateTableHttpPropType> = (props: 
             <Td dataLabel="Total" textCenter>
               {props.outRate.toFixed(2)}
             </Td>
-            <Td dataLabel="%Success" textCenter>
+            <Td dataLabel="% Success" textCenter>
               {percentOutSuccess.toFixed(2)}
             </Td>
-            <Td dataLabel="%Error" textCenter>
+            <Td dataLabel="% Error" textCenter>
               {percentOutErr.toFixed(2)}
             </Td>
           </Tr>

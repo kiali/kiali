@@ -21,7 +21,7 @@ type Props = ReduxProps & {
 };
 
 const containerStyle = kialiStyle({
-  padding: '10px 20px 10px 20px',
+  padding: '0.625rem 1.25rem 0.625rem 1.25rem',
   backgroundColor: PFColors.BackgroundColor100,
   borderBottom: `1px solid ${PFColors.BorderColor100}`
 });
@@ -37,20 +37,24 @@ const rightToolbarStyle = kialiStyle({
 
 const actionsToolbarStyle = kialiStyle({
   marginLeft: 'auto',
-  paddingTop: '17px'
+  paddingTop: '1.25rem'
 });
 
-class DefaultSecondaryMastheadComponent extends React.Component<Props> {
-  showTitle() {
+const DefaultSecondaryMastheadComponent: React.FC<Props> = (props: Props) => {
+  const showTitle = (): { title: React.ReactNode; disabled: boolean } => {
     let path = window.location.pathname;
+
     path = path.substring(path.lastIndexOf('/console') + '/console'.length + 1);
+
     if (titles.some(t => path.startsWith(t))) {
-      let title = path.charAt(0).toUpperCase() + path.slice(1);
+      let title = `${path.charAt(0).toUpperCase()}${path.slice(1)}`;
+
       let disabled = false;
+
       if (path.startsWith('istio/new/')) {
         // 'istio/new/'.length() == 10
         const objectType = path.substring(10);
-        title = 'Create ' + objectType;
+        title = `Create ${objectType}`;
       } else if (path === 'istio') {
         title = 'Istio Config';
       } else if (path === 'mesh') {
@@ -59,10 +63,11 @@ class DefaultSecondaryMastheadComponent extends React.Component<Props> {
       return {
         title: (
           <>
-            <Title headingLevel="h1" size={TitleSizes['3xl']} style={{ margin: '15px 0 11px' }}>
+            <Title headingLevel="h1" size={TitleSizes['3xl']} style={{ margin: '1rem 0 0.5rem' }}>
               {title}
             </Title>
-            {!this.props.istioAPIEnabled && path.startsWith('istio/new/') && (
+
+            {!props.istioAPIEnabled && path.startsWith('istio/new/') && (
               <div>
                 <KialiIcon.Warning /> <b>Istio API is disabled.</b> Be careful when creating the configuration as the
                 Istio config validations are disabled when the Istio API is disabled.
@@ -75,26 +80,28 @@ class DefaultSecondaryMastheadComponent extends React.Component<Props> {
     }
 
     return { title: undefined, disabled: false };
-  }
+  };
 
-  render() {
-    const { title, disabled } = this.showTitle();
-    return (
-      <div className={containerStyle}>
-        <div className={flexStyle}>
-          <div>{this.props.hideNamespaceSelector === true ? null : <NamespaceDropdown disabled={disabled} />}</div>
-          {this.props.rightToolbar && <div className={rightToolbarStyle}>{this.props.rightToolbar}</div>}
-        </div>
-        <div className={flexStyle}>
-          <div>{title}</div>
-          {this.props.actionsToolbar && <div className={actionsToolbarStyle}>{this.props.actionsToolbar}</div>}
-        </div>
+  const { title, disabled } = showTitle();
+
+  return (
+    <div className={containerStyle}>
+      <div className={flexStyle}>
+        <div>{props.hideNamespaceSelector === true ? null : <NamespaceDropdown disabled={disabled} />}</div>
+
+        {props.rightToolbar && <div className={rightToolbarStyle}>{props.rightToolbar}</div>}
       </div>
-    );
-  }
-}
 
-const mapStateToProps = (state: KialiAppState) => ({
+      <div className={flexStyle}>
+        <div>{title}</div>
+
+        {props.actionsToolbar && <div className={actionsToolbarStyle}>{props.actionsToolbar}</div>}
+      </div>
+    </div>
+  );
+};
+
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
 });
 

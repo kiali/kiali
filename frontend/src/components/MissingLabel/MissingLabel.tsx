@@ -6,65 +6,67 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { PFBadge } from '../Pf/PfBadges';
 
 type MissingLabelProps = {
+  className?: string;
   missingApp: boolean;
   missingVersion: boolean;
   tooltip: boolean;
-  style?: React.CSSProperties;
 };
 
 const infoStyle = kialiStyle({
-  margin: '0px 5px 2px 4px',
-  verticalAlign: '-5px !important'
+  marginLeft: '0.5rem'
 });
 
-export class MissingLabel extends React.Component<MissingLabelProps, {}> {
-  render() {
-    const appLabel = serverConfig.istioLabels.appLabelName;
-    const versionLabel = serverConfig.istioLabels.versionLabelName;
-    const icon = icons.istio.missingLabel.icon;
-    const color = icons.istio.missingLabel.color;
-    const tooltipContent = (
-      <div style={{ textAlign: 'left' }}>
-        {this.props.missingApp && (
-          <>
-            <div>
-              <PFBadge badge={{ badge: appLabel }} isRead={true} style={{ marginRight: '0px' }} /> label is missing.{' '}
-              <br />
-            </div>
-            <div>This workload won't be linked with an application.</div>
-          </>
-        )}
-        {this.props.missingVersion && (
-          <>
-            <div>
-              <PFBadge badge={{ badge: versionLabel }} isRead={true} style={{ marginRight: '0px' }} /> label is missing.{' '}
-              <br />
-            </div>
-            <div>The label is recommended as it affects telemetry.</div>
-          </>
-        )}
-        <div>Missing labels may impact telemetry reported by the Istio proxy.</div>
-      </div>
-    );
-    const iconComponent = (
-      <span style={this.props.style}>
-        {React.createElement(icon, { style: { color: color, verticalAlign: '-2px' } })}
-        {!this.props.tooltip && (
-          <span style={{ marginLeft: '8px' }}>
-            Missing {this.props.missingApp ? 'App' : this.props.missingVersion ? 'Version' : 'Label'}
-            <Tooltip key={`tooltip_missing_label`} position={TooltipPosition.top} content={tooltipContent}>
-              <KialiIcon.Info className={infoStyle} />
-            </Tooltip>
-          </span>
-        )}
-      </span>
-    );
-    return this.props.tooltip ? (
-      <Tooltip key={`tooltip_missing_label`} position={TooltipPosition.right} content={tooltipContent}>
-        {iconComponent}
-      </Tooltip>
-    ) : (
-      iconComponent
-    );
-  }
-}
+export const MissingLabel: React.FC<MissingLabelProps> = (props: MissingLabelProps) => {
+  const appLabel = serverConfig.istioLabels.appLabelName;
+  const versionLabel = serverConfig.istioLabels.versionLabelName;
+  const icon = icons.istio.missingLabel.icon;
+  const color = icons.istio.missingLabel.color;
+
+  const tooltipContent = (
+    <div style={{ textAlign: 'left' }}>
+      {props.missingApp && (
+        <>
+          <div>
+            <PFBadge badge={{ badge: appLabel }} isRead={true} style={{ marginRight: 0 }} /> label is missing. <br />
+          </div>
+          <div>This workload won't be linked with an application.</div>
+        </>
+      )}
+
+      {props.missingVersion && (
+        <>
+          <div>
+            <PFBadge badge={{ badge: versionLabel }} isRead={true} style={{ marginRight: 0 }} /> label is missing.{' '}
+            <br />
+          </div>
+          <div>The label is recommended as it affects telemetry.</div>
+        </>
+      )}
+
+      <div>Missing labels may impact telemetry reported by the Istio proxy.</div>
+    </div>
+  );
+
+  const iconComponent = (
+    <span className={props.className}>
+      {React.createElement(icon, { style: { color: color } })}
+
+      {!props.tooltip && (
+        <span style={{ marginLeft: '0.5rem' }}>
+          Missing {props.missingApp ? 'App' : props.missingVersion ? 'Version' : 'Label'}
+          <Tooltip key="tooltip_missing_label" position={TooltipPosition.top} content={tooltipContent}>
+            <KialiIcon.Info className={infoStyle} />
+          </Tooltip>
+        </span>
+      )}
+    </span>
+  );
+
+  return props.tooltip ? (
+    <Tooltip key="tooltip_missing_label" position={TooltipPosition.right} content={tooltipContent}>
+      {iconComponent}
+    </Tooltip>
+  ) : (
+    iconComponent
+  );
+};

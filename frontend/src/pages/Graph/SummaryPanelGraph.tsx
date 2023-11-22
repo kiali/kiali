@@ -109,7 +109,13 @@ const defaultState: SummaryPanelGraphState = {
 };
 
 const topologyStyle = kialiStyle({
-  margin: '0 1em'
+  marginLeft: '0.25rem',
+  marginRight: '0.5rem'
+});
+
+const namespaceStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center'
 });
 
 export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, SummaryPanelGraphState> {
@@ -229,12 +235,11 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
         <div id="summary-panel-graph-heading" className={panelHeadingStyle}>
           {getTitle('Current Graph')}
           {this.renderNamespacesSummary()}
-          <br />
           {this.renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
         </div>
 
         <div className={summaryBodyTabs}>
-          <SimpleTabs id="graph_summary_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
+          <SimpleTabs id="graph_summary_tabs" defaultTab={0} style={{ paddingBottom: '0.5rem' }}>
             <Tooltip
               id="tooltip-inbound"
               content="Traffic entering from traffic sources."
@@ -500,7 +505,8 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
           errors={validation.errors}
           warnings={validation.warnings}
           objectCount={validation.objectCount}
-          style={{ marginLeft: '5px' }}
+          style={{ marginLeft: '0.25rem' }}
+          type="istio"
         />
       </ValidationSummaryLink>
     );
@@ -509,8 +515,8 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
   private renderNamespace = (ns: string): React.ReactNode => {
     return (
       <React.Fragment key={`rf-${ns}`}>
-        <span id={`ns-${ns}`}>
-          <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />
+        <span id={`ns-${ns}`} className={namespaceStyle}>
+          <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '0.125rem' }} />
           {ns} {this.renderValidations(ns)}
         </span>
         <br />

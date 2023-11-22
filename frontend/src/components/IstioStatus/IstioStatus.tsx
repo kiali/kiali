@@ -18,25 +18,26 @@ import { ResourcesFullIcon } from '@patternfly/react-icons';
 import { KialiDispatch } from 'types/Redux';
 import { NamespaceThunkActions } from '../../actions/NamespaceThunkActions';
 import { connectRefresh } from '../Refresh/connectRefresh';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type ReduxProps = {
-  setIstioStatus: (istioStatus: ComponentStatus[]) => void;
   refreshNamespaces: () => void;
   namespaces: Namespace[] | undefined;
+  setIstioStatus: (istioStatus: ComponentStatus[]) => void;
   status: ComponentStatus[];
 };
 
 type StatusIcons = {
   ErrorIcon?: React.ComponentClass<SVGIconProps>;
-  WarningIcon?: React.ComponentClass<SVGIconProps>;
-  InfoIcon?: React.ComponentClass<SVGIconProps>;
   HealthyIcon?: React.ComponentClass<SVGIconProps>;
+  InfoIcon?: React.ComponentClass<SVGIconProps>;
+  WarningIcon?: React.ComponentClass<SVGIconProps>;
 };
 
 type Props = ReduxProps & {
-  lastRefreshAt: TimeInMilliseconds;
-  icons?: StatusIcons;
   cluster?: string;
+  icons?: StatusIcons;
+  lastRefreshAt: TimeInMilliseconds;
 };
 
 const ValidToColor = {
@@ -52,10 +53,15 @@ const ValidToColor = {
 
 const defaultIcons = {
   ErrorIcon: ResourcesFullIcon,
-  WarningIcon: ResourcesFullIcon,
+  HealthyIcon: ResourcesFullIcon,
   InfoIcon: ResourcesFullIcon,
-  HealthyIcon: ResourcesFullIcon
+  WarningIcon: ResourcesFullIcon
 };
+
+const iconStyle = kialiStyle({
+  marginLeft: '0.5rem',
+  verticalAlign: '-0.25rem'
+});
 
 export class IstioStatusComponent extends React.Component<Props> {
   componentDidMount() {
@@ -69,14 +75,15 @@ export class IstioStatusComponent extends React.Component<Props> {
     }
   }
 
-  fetchStatus = () => {
+  fetchStatus = (): void => {
     API.getIstioStatus(this.props.cluster)
       .then(response => {
-        return this.props.setIstioStatus(response.data);
+        this.props.setIstioStatus(response.data);
       })
       .catch(error => {
         // User without namespaces can't have access to mTLS information. Reduce severity to info.
         const informative = this.props.namespaces && this.props.namespaces.length < 1;
+
         if (informative) {
           AlertUtils.addError('Istio deployment status disabled.', error, 'default', MessageType.INFO);
         } else {
@@ -85,11 +92,11 @@ export class IstioStatusComponent extends React.Component<Props> {
       });
   };
 
-  tooltipContent = () => {
+  tooltipContent = (): React.ReactNode => {
     return <IstioStatusList status={this.props.status} />;
   };
 
-  tooltipColor = () => {
+  tooltipColor = (): string => {
     let coreUnhealthy: boolean = false;
     let addonUnhealthy: boolean = false;
     let notReady: boolean = false;
@@ -111,7 +118,7 @@ export class IstioStatusComponent extends React.Component<Props> {
     return ValidToColor[`${coreUnhealthy}-${addonUnhealthy}-${notReady}`];
   };
 
-  healthyComponents = () => {
+  healthyComponents = (): boolean => {
     return this.props.status.reduce((healthy: boolean, compStatus: ComponentStatus) => {
       return healthy && compStatus.status === Status.Healthy;
     }, true);
@@ -126,21 +133,21 @@ export class IstioStatusComponent extends React.Component<Props> {
 
       if (iconColor === PFColors.Danger) {
         Icon = icons.ErrorIcon;
-        dataTestID = dataTestID + '-danger';
+        dataTestID = `${dataTestID}-danger`;
       } else if (iconColor === PFColors.Warning) {
         Icon = icons.WarningIcon;
-        dataTestID = dataTestID + '-warning';
+        dataTestID = `${dataTestID}-warning`;
       } else if (iconColor === PFColors.Info) {
         Icon = icons.InfoIcon;
-        dataTestID = dataTestID + '-info';
+        dataTestID = `${dataTestID}-info`;
       } else if (iconColor === PFColors.Success) {
         Icon = icons.HealthyIcon;
-        dataTestID = dataTestID + '-success';
+        dataTestID = `${dataTestID}-success`;
       }
 
       return (
         <Tooltip position={TooltipPosition.left} enableFlip={true} content={this.tooltipContent()} maxWidth={'25rem'}>
-          <Icon color={iconColor} style={{ verticalAlign: '-0.2em', marginRight: -8 }} data-test={dataTestID} />
+          <Icon color={iconColor} className={iconStyle} data-test={dataTestID} />
         </Tooltip>
       );
     }

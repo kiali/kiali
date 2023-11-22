@@ -11,10 +11,11 @@ const mapStateToProps = (state: KialiAppState) => ({
   isLoading: state.globalState.loadingCounter > 0
 });
 
-const PfSpinnerComponent: React.FunctionComponent<PfSpinnerProps> = props => {
+const PfSpinnerComponent: React.FC<PfSpinnerProps> = (props: PfSpinnerProps) => {
   const { isLoading } = props;
+
   // It is more than likely it won't have any children; but it could.
-  return isLoading ? <Spinner id="loading_kiali_spinner" size={'lg'} /> : <></>;
+  return isLoading ? <Spinner id="loading_kiali_spinner" size="lg" /> : <></>;
 };
 
 // hook up to Redux for our State to be mapped to props

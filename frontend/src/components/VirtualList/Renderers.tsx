@@ -15,7 +15,7 @@ import { ServiceListItem } from '../../types/ServiceList';
 import { ActiveFilter } from '../../types/Filters';
 import { renderAPILogo } from '../Logo/Logos';
 import { Health } from '../../types/Health';
-import { NamespaceInfo } from '../../pages/Overview/NamespaceInfo';
+import { NamespaceInfo } from '../../types/NamespaceInfo';
 import { NamespaceMTLSStatus } from '../MTls/NamespaceMTLSStatus';
 import { ValidationSummary } from '../Validations/ValidationSummary';
 import { OverviewCardSparklineCharts } from '../../pages/Overview/OverviewCardSparklineCharts';
@@ -112,7 +112,9 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
         )}
 
         {isWorkload && (hasMissingApp || hasMissingVersion) && (
-          <MissingLabel missingApp={hasMissingApp} missingVersion={hasMissingVersion} tooltip={false} />
+          <li>
+            <MissingLabel missingApp={hasMissingApp} missingVersion={hasMissingVersion} tooltip={false} />
+          </li>
         )}
 
         {spacer && ' '}
@@ -124,7 +126,10 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
         {item.istioReferences &&
           item.istioReferences.length > 0 &&
           item.istioReferences.map(ir => (
-            <li key={ir.namespace ? `${ir.objectType}_${ir.name}_${ir.namespace}` : ir.name}>
+            <li
+              key={ir.namespace ? `${ir.objectType}_${ir.name}_${ir.namespace}` : ir.name}
+              style={{ marginBottom: '0.125rem' }}
+            >
               <PFBadge badge={PFBadges[ir.objectType]} position={TooltipPosition.top} />
               <IstioObjectLink
                 name={ir.name}
@@ -142,7 +147,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
             <PFBadge badge={PFBadges.Waypoint} position={TooltipPosition.top} />
             Waypoint Proxy
             <Tooltip
-              key={`tooltip_missing_label`}
+              key="tooltip_missing_label"
               position={TooltipPosition.top}
               content="Layer 7 service Mesh capabilities in Istio Ambient"
             >
@@ -188,6 +193,7 @@ export const istioConfig: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
           errors={validations.errors}
           warnings={validations.warnings}
           objectCount={validations.objectCount}
+          type="istio"
         />
       </ValidationSummaryLink>
     </Td>
@@ -348,13 +354,12 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
       role="gridcell"
       dataLabel="Labels"
       key={`VirtuaItem_Labels_${'namespace' in item && `${item.namespace}_`}${item.name}`}
-      style={{ verticalAlign: 'middle' }}
+      style={{ verticalAlign: 'middle', paddingBottom: '0.25rem' }}
     >
       {item.labels &&
         Object.entries(item.labels).map(([key, value], i) => {
           const label = `${key}=${value}`;
           const labelAct = labelActivate(filters.filters, key, value, labelFilt.category);
-          FilterHelper.getFiltersFromURL([labelFilt]).filters.forEach(f => console.log(`filter=|${f.value}|`));
 
           const isExactlyLabelFilter = FilterHelper.getFiltersFromURL([labelFilt]).filters.some(f =>
             f.value.includes(label)
@@ -461,6 +466,7 @@ export const istioConfiguration: Renderer<IstioConfigItem> = (item: IstioConfigI
             id={`${item.name}-config-validation`}
             validations={[validation]}
             reconciledCondition={reconciledCondition}
+            style={{ fontSize: '1rem' }}
           />
         </Link>
       ) : (
@@ -483,7 +489,11 @@ export const serviceConfiguration: Renderer<ServiceListItem> = (item: ServiceLis
     >
       {validation ? (
         <Link to={`${getLink(item, config, linkQuery)}`}>
-          <ValidationServiceSummary id={`${item.name}-service-validation`} validations={[validation]} />
+          <ValidationServiceSummary
+            id={`${item.name}-service-validation`}
+            validations={[validation]}
+            style={{ fontSize: '1rem' }}
+          />
         </Link>
       ) : (
         <>N/A</>

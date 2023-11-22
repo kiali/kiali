@@ -33,7 +33,8 @@ const defaultState: SummaryPanelClusterBoxState = {
 };
 
 const topologyStyle = kialiStyle({
-  margin: '0 1em'
+  marginLeft: '0.25rem',
+  marginRight: '0.5rem'
 });
 
 const kialiIconStyle = kialiStyle({
@@ -347,7 +348,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
   private renderCluster = (cluster: string, kialiInstances: KialiInstance[]): React.ReactNode => {
     return (
       <React.Fragment key={cluster}>
-        <PFBadge badge={PFBadges.Cluster} size="sm" style={{ marginBottom: '2px' }} />
+        <PFBadge badge={PFBadges.Cluster} size="sm" style={{ marginBottom: '0.125rem' }} />
         {cluster}
         <br />
         {this.renderKialiLinks(kialiInstances)}

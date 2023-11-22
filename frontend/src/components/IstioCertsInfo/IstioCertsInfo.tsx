@@ -127,7 +127,7 @@ const IstioCertsInfoComponent: React.FC<IstioCertsInfoProps> = (props: IstioCert
                                 Kiali service account permission to read the secret {certInfo.secretName} found in
                                 namespace {certInfo.secretNamespace}.
                               </p>
-                              <p style={{ marginTop: '20px' }}>
+                              <p style={{ marginTop: '1.25rem' }}>
                                 Refer to the Kiali documentation for details on how you can add this permission.
                               </p>
                             </div>

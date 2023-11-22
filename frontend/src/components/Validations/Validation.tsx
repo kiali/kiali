@@ -20,22 +20,22 @@ const validationStyle = kialiStyle({
   }
 });
 
-type Props = ValidationDescription & {
+type ValidationProps = ValidationDescription & {
+  iconStyle?: React.CSSProperties;
   messageColor?: boolean;
   size?: string;
   textStyle?: React.CSSProperties;
-  iconStyle?: React.CSSProperties;
 };
 
 export type ValidationDescription = {
-  severity: ValidationTypes;
   message?: string;
+  severity: ValidationTypes;
 };
 
 export type ValidationType = {
-  name: string;
   color: string;
   icon: React.ComponentClass<SVGIconProps>;
+  name: string;
 };
 
 const ErrorValidation: ValidationType = {
@@ -63,54 +63,45 @@ const CorrectValidation: ValidationType = {
 };
 
 export const severityToValidation: { [severity: string]: ValidationType } = {
-  error: ErrorValidation,
-  warning: WarningValidation,
   correct: CorrectValidation,
-  info: InfoValidation
+  error: ErrorValidation,
+  info: InfoValidation,
+  warning: WarningValidation
 };
 
-export class Validation extends React.Component<Props> {
-  validation() {
-    return severityToValidation[this.props.severity];
+export const Validation: React.FC<ValidationProps> = (props: ValidationProps) => {
+  const validation = severityToValidation[props.severity];
+  const IconComponent = validation.icon;
+  const severityColor = { color: validation.color };
+  const hasMessage = !!props.message;
+
+  // Set text style
+  const colorMessage = props.messageColor ?? false;
+  const textStyle = props.textStyle ?? {};
+
+  if (colorMessage) {
+    Object.assign(textStyle, severityColor);
   }
 
-  severityColor() {
-    return { color: this.validation().color };
-  }
+  // Set icon style
+  const iconStyle = props.iconStyle ? { ...props.iconStyle } : {};
 
-  textStyle() {
-    const colorMessage = this.props.messageColor || false;
-    const textStyle = this.props.textStyle || {};
-    if (colorMessage) {
-      Object.assign(textStyle, this.severityColor());
-    }
-    return textStyle;
-  }
+  const defaultStyle: CSSProperties = {
+    verticalAlign: '-0.125rem'
+  };
 
-  iconStyle() {
-    const iconStyle = this.props.iconStyle ? { ...this.props.iconStyle } : {};
-    const defaultStyle: CSSProperties = {
-      verticalAlign: '-0.125em'
-    };
-    Object.assign(iconStyle, this.severityColor());
-    Object.assign(iconStyle, defaultStyle);
-    return iconStyle;
-  }
+  Object.assign(iconStyle, severityColor);
+  Object.assign(iconStyle, defaultStyle);
 
-  render() {
-    const validation = this.validation();
-    const IconComponent = validation.icon;
-    const hasMessage = !!this.props.message;
-    if (hasMessage) {
-      return (
-        <div className={validationStyle}>
-          <Text component={TextVariants.p} style={this.textStyle()}>
-            <IconComponent style={this.iconStyle()} /> {this.props.message}
-          </Text>
-        </div>
-      );
-    } else {
-      return <IconComponent style={this.iconStyle()} />;
-    }
+  if (hasMessage) {
+    return (
+      <div className={validationStyle}>
+        <Text component={TextVariants.p} style={textStyle}>
+          <IconComponent style={iconStyle} /> {props.message}
+        </Text>
+      </div>
+    );
+  } else {
+    return <IconComponent style={iconStyle} />;
   }
-}
+};

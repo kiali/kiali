@@ -9,6 +9,7 @@ export const createIcon = (status: Status, size?: Size) => {
   const classForColor = kialiStyle({
     color: status.color
   });
+
   return React.createElement(
     Icon,
     { size: size, className: `${status.class} ${classForColor}` },

@@ -144,8 +144,8 @@ class TrafficList extends FilterComponent.Component<
     const outboundRows = this.rows('outbound');
     const hasInbound = inboundRows.length > 0;
     const hasOutbound = outboundRows.length > 0;
-    const sortIndex = sortFields.findIndex(sf => sf.id === this.props.currentSortField.id);
-    const sortDirection = this.props.isSortAscending ? SortByDirection.asc : SortByDirection.desc;
+    const sortIndex = sortFields.findIndex(sf => sf.id === this.state.currentSortField.id);
+    const sortDirection = this.state.isSortAscending ? SortByDirection.asc : SortByDirection.desc;
     const sortBy = { index: sortIndex, direction: sortDirection };
 
     return (
@@ -206,9 +206,7 @@ class TrafficList extends FilterComponent.Component<
 
     const isSortAscending = sortDirection === SortByDirection.asc;
 
-    if (sortField.id !== this.state.currentSortField.id || isSortAscending !== this.state.isSortAscending) {
-      this.updateSort(sortField, isSortAscending);
-    }
+    this.updateSort(sortField, isSortAscending);
   };
 
   trafficToListItems(trafficItems: TrafficItem[]): TrafficListItem[] {
@@ -297,7 +295,7 @@ class TrafficList extends FilterComponent.Component<
               position={TooltipPosition.top}
               content={<>Traffic Status: {item.healthStatus.status.name}</>}
             >
-              {createTooltipIcon(createIcon(item.healthStatus.status, 'sm'))}
+              {createTooltipIcon(createIcon(item.healthStatus.status, 'md'))}
             </Tooltip>,
             <>
               <PFBadge badge={item.badge} position={TooltipPosition.top} keyValue={`tt_badge_${i}`} />

@@ -6,7 +6,7 @@ import {
   FilterValue
 } from '../../types/Filters';
 import { DEGRADED, FAILURE, HEALTHY, NOT_READY } from '../../types/Health';
-import { NamespaceInfo } from './NamespaceInfo';
+import { NamespaceInfo } from '../../types/NamespaceInfo';
 import { MTLSStatuses } from '../../types/TLSStatus';
 import { TextInputTypes } from '@patternfly/react-core';
 

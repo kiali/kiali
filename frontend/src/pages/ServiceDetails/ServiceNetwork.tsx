@@ -146,7 +146,7 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
                     return (
                       <div key={`port_${i}`}>
                         <div>
-                          <span style={{ marginRight: '10px' }}>
+                          <span style={{ marginRight: '0.5rem' }}>
                             {port.name} {port.port}
                           </span>
                           {hasIssue(i) ? getPortOver(i) : undefined}
@@ -155,7 +155,7 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
                               position={TooltipPosition.right}
                               content={<div style={{ textAlign: 'left' }}>App Protocol: {port.appProtocol}</div>}
                             >
-                              <span style={{ marginRight: '5px' }}>
+                              <span style={{ marginRight: '0.25rem' }}>
                                 <KialiIcon.Info className={infoStyle} />
                               </span>
                             </Tooltip>

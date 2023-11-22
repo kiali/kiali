@@ -33,7 +33,7 @@ import {
 import { SortField } from '../../types/SortFilters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { OverviewToolbar, OverviewDisplayMode, OverviewType, DirectionType } from './OverviewToolbar';
-import { NamespaceInfo, NamespaceStatus } from './NamespaceInfo';
+import { NamespaceInfo, NamespaceStatus } from '../../types/NamespaceInfo';
 import { NamespaceMTLSStatus } from '../../components/MTls/NamespaceMTLSStatus';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { NamespaceStatuses } from './NamespaceStatuses';
@@ -1039,7 +1039,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                                     )}
 
                                   {ns.name === serverConfig.istioNamespace && !this.props.istioAPIEnabled && (
-                                    <Label style={{ marginLeft: '0.25rem' }} color="orange" isCompact>
+                                    <Label style={{ marginLeft: '0.5rem' }} color="orange" isCompact>
                                       Istio API disabled
                                     </Label>
                                   )}
@@ -1293,6 +1293,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           errors={validations.errors}
           warnings={validations.warnings}
           objectCount={validations.objectCount}
+          type="istio"
         />
       </ValidationSummaryLink>
     );
@@ -1334,7 +1335,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         <div style={{ textAlign: 'left' }}>
           <span>
             {mainLink}
-            <div style={{ display: 'inline-block', marginLeft: '0.25rem' }}>N/A</div>
+            <div style={{ display: 'inline-block' }}>N/A</div>
           </span>
         </div>
       );

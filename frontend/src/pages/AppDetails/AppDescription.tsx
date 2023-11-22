@@ -15,57 +15,58 @@ type AppDescriptionProps = {
 };
 
 const iconStyle = kialiStyle({
-  margin: '0 0 0 0',
-  padding: '0 0 0 0',
-  display: 'inline-block',
-  verticalAlign: '2px !important'
+  display: 'inline-block'
 });
 
 const healthIconStyle = kialiStyle({
-  marginLeft: '10px',
-  verticalAlign: '-1px !important'
+  marginLeft: '0.5rem',
+  verticalAlign: '-0.075rem'
 });
 
-export class AppDescription extends React.Component<AppDescriptionProps> {
-  render() {
-    const appLabels: { [key: string]: string } = {};
-    if (this.props.app) {
-      appLabels[serverConfig.istioLabels.appLabelName] = this.props.app.name;
-    }
-    return this.props.app ? (
-      <Card id={'AppDescriptionCard'} data-test="app-description-card">
-        <CardHeader style={{ display: 'table' }}>
-          <Title headingLevel="h5" size={TitleSizes.lg}>
-            <div key="service-icon" className={iconStyle}>
-              <PFBadge badge={PFBadges.App} position={TooltipPosition.top} />
-            </div>
-            {this.props.app.name}
-            <span className={healthIconStyle}>
-              <HealthIndicator id={this.props.app.name} health={this.props.health} />
-            </span>
-          </Title>
-          {this.props.app.cluster && isMultiCluster && (
-            <div key="cluster-icon" style={{ paddingBottom: '10px' }}>
-              <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {this.props.app.cluster}
-            </div>
-          )}
-        </CardHeader>
-        <CardBody>
-          <Labels
-            labels={appLabels}
-            tooltipMessage={'Workloads and Services grouped by ' + serverConfig.istioLabels.appLabelName + ' label'}
-          />
-          <DetailDescription
-            namespace={this.props.app ? this.props.app.namespace.name : ''}
-            workloads={this.props.app ? this.props.app.workloads : []}
-            services={this.props.app ? this.props.app.serviceNames : []}
-            health={this.props.health}
-            cluster={this.props.app?.cluster}
-          />
-        </CardBody>
-      </Card>
-    ) : (
-      'Loading'
-    );
+export const AppDescription: React.FC<AppDescriptionProps> = (props: AppDescriptionProps) => {
+  const appLabels: { [key: string]: string } = {};
+
+  if (props.app) {
+    appLabels[serverConfig.istioLabels.appLabelName] = props.app.name;
   }
-}
+
+  return props.app ? (
+    <Card id="AppDescriptionCard" data-test="app-description-card">
+      <CardHeader>
+        <Title headingLevel="h5" size={TitleSizes.lg}>
+          <div key="service-icon" className={iconStyle}>
+            <PFBadge badge={PFBadges.App} position={TooltipPosition.top} />
+          </div>
+
+          {props.app.name}
+
+          <span className={healthIconStyle}>
+            <HealthIndicator id={props.app.name} health={props.health} />
+          </span>
+        </Title>
+
+        {props.app.cluster && isMultiCluster && (
+          <div key="cluster-icon" style={{ paddingBottom: '0.5rem' }}>
+            <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {props.app.cluster}
+          </div>
+        )}
+      </CardHeader>
+      <CardBody>
+        <Labels
+          labels={appLabels}
+          tooltipMessage={`Workloads and Services grouped by ${serverConfig.istioLabels.appLabelName} label`}
+        />
+
+        <DetailDescription
+          namespace={props.app ? props.app.namespace.name : ''}
+          workloads={props.app ? props.app.workloads : []}
+          services={props.app ? props.app.serviceNames : []}
+          health={props.health}
+          cluster={props.app?.cluster}
+        />
+      </CardBody>
+    </Card>
+  ) : (
+    <>Loading</>
+  );
+};

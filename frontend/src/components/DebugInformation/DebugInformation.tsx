@@ -243,7 +243,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
             className={istioAceEditorStyle}
             wrapEnabled={true}
             readOnly={true}
-            setOptions={aceOptions || { foldStyle: 'markbegin' }}
+            setOptions={aceOptions ?? { foldStyle: 'markbegin' }}
             value={debugInformationText}
           />
         </CopyToClipboard>
@@ -265,7 +265,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
       onClose={props.onClose}
       title="Debug information"
       actions={[
-        <Button key="close" onClick={close}>
+        <Button key="close" onClick={props.onClose}>
           Close
         </Button>,
 

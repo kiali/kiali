@@ -6,7 +6,7 @@ interface SecondaryMastheadProps {
 }
 
 const marginStyle = kialiStyle({
-  margin: '10px 20px 0 0'
+  margin: '0.625rem 1.25rem 0 0'
 });
 
 const secondaryMastheadStyle = kialiStyle({

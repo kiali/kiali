@@ -7,23 +7,24 @@ import { RemoteClusterBadge } from './RemoteClusterBadge';
 import { isRemoteCluster } from './OverviewCardControlPlaneNamespace';
 
 type Props = {
-  cluster?: string;
   annotations?: { [key: string]: string };
+  cluster?: string;
 };
 
-export class ControlPlaneBadge extends React.Component<Props> {
-  render() {
-    return (
-      <>
-        <Label style={{ marginLeft: 5 }} color="green" isCompact>
-          Control plane
-        </Label>
-        {isRemoteCluster(this.props.annotations) && <RemoteClusterBadge />}
-        {serverConfig.ambientEnabled && (
-          <AmbientBadge tooltip={'Istio Ambient ztunnel detected in the Control plane'}></AmbientBadge>
-        )}{' '}
-        <IstioStatusInline cluster={this.props.cluster} />
-      </>
-    );
-  }
-}
+export const ControlPlaneBadge: React.FC<Props> = (props: Props) => {
+  return (
+    <>
+      <Label style={{ marginLeft: '0.5rem' }} color="green" isCompact>
+        Control plane
+      </Label>
+
+      {isRemoteCluster(props.annotations) && <RemoteClusterBadge />}
+
+      {serverConfig.ambientEnabled && (
+        <AmbientBadge tooltip="Istio Ambient ztunnel detected in the Control plane"></AmbientBadge>
+      )}
+
+      <IstioStatusInline cluster={props.cluster} />
+    </>
+  );
+};

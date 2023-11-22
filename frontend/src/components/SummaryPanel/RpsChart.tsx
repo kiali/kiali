@@ -118,7 +118,7 @@ export class RequestChart extends React.Component<RequestChartProp, {}> {
 
     return (
       <div>
-        RPS: {minRps.toFixed(2)} / {maxRps.toFixed(2)} , %Error {minPctErr.toFixed(2)} / {maxPctErr.toFixed(2)}
+        RPS: {minRps.toFixed(2)} / {maxRps.toFixed(2)} , % Error {minPctErr.toFixed(2)} / {maxPctErr.toFixed(2)}
       </div>
     );
   };

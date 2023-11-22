@@ -10,44 +10,34 @@ type ReduxProps = {
 };
 
 type Props = ReduxProps & {
-  namespace: string;
-  errors: number;
-  warnings: number;
-  objectCount?: number;
   children: React.ReactNode;
+  errors: number;
+  namespace: string;
+  objectCount?: number;
+  warnings: number;
 };
 
-class ValidationSummaryLinkComponent extends React.Component<Props> {
-  hasIstioObjects = () => {
-    return this.props.objectCount && this.props.objectCount > 0;
-  };
+export const ValidationSummaryLinkComponent: React.FC<Props> = (props: Props) => {
+  let link: React.ReactElement = <div style={{ display: 'inline-block' }}>N/A</div>;
 
-  render() {
-    let link: any = <div style={{ display: 'inline-block', marginLeft: '5px' }}>N/A</div>;
-
-    if (this.hasIstioObjects()) {
-      // Kiosk actions are used when the kiosk specifies a parent,
-      // otherwise the kiosk=true will keep the links inside Kiali
-      link = isParentKiosk(this.props.kiosk) ? (
-        <Link to={''} onClick={() => kioskIstioConfigAction(this.props.namespace)}>
-          {this.props.children}
-        </Link>
-      ) : (
-        <IstioConfigListLink
-          namespaces={[this.props.namespace]}
-          warnings={this.props.warnings > 0}
-          errors={this.props.errors > 0}
-        >
-          {this.props.children}
-        </IstioConfigListLink>
-      );
-    }
-
-    return link;
+  if (props.objectCount && props.objectCount > 0) {
+    // Kiosk actions are used when the kiosk specifies a parent,
+    // otherwise the kiosk=true will keep the links inside Kiali
+    link = isParentKiosk(props.kiosk) ? (
+      <Link to={''} onClick={() => kioskIstioConfigAction(props.namespace)}>
+        {props.children}
+      </Link>
+    ) : (
+      <IstioConfigListLink namespaces={[props.namespace]} warnings={props.warnings > 0} errors={props.errors > 0}>
+        {props.children}
+      </IstioConfigListLink>
+    );
   }
-}
 
-const mapStateToProps = (state: KialiAppState) => ({
+  return link;
+};
+
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   kiosk: state.globalState.kiosk
 });
 

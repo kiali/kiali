@@ -1,11 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`ValidationSummary renders N/A when all components are valid 1`] = `
+exports[`ValidationSummary renders N/A when all istio components are valid 1`] = `
 <Tooltip
   aria-label="Validations list"
   content={
     <Text
-      className="kiali_f7610ot"
+      className="kiali_fz2k14t"
     >
       No Istio config objects found
     </Text>
@@ -17,7 +17,6 @@ exports[`ValidationSummary renders N/A when all components are valid 1`] = `
     style={
       Object {
         "display": "inline-block",
-        "marginLeft": "5px",
       }
     }
   >
@@ -26,7 +25,7 @@ exports[`ValidationSummary renders N/A when all components are valid 1`] = `
 </Tooltip>
 `;
 
-exports[`ValidationSummary renders error icon when all components are valid 1`] = `
+exports[`ValidationSummary renders error icon when all istio components are valid 1`] = `
 <Tooltip
   aria-label="Validations list"
   content={
@@ -44,7 +43,7 @@ exports[`ValidationSummary renders error icon when all components are valid 1`] 
         1
       </Text>
       <div
-        className="kiali_fljtil"
+        className="kiali_fstk0tp"
       >
         <div>
           1 error found
@@ -61,7 +60,7 @@ exports[`ValidationSummary renders error icon when all components are valid 1`] 
 </Tooltip>
 `;
 
-exports[`ValidationSummary renders error icon when all components are valid 2`] = `
+exports[`ValidationSummary renders error icon when all istio components are valid 2`] = `
 <Tooltip
   aria-label="Validations list"
   content={
@@ -79,7 +78,7 @@ exports[`ValidationSummary renders error icon when all components are valid 2`] 
         3
       </Text>
       <div
-        className="kiali_fljtil"
+        className="kiali_fstk0tp"
       >
         <div>
           1 error found
@@ -99,7 +98,78 @@ exports[`ValidationSummary renders error icon when all components are valid 2`] 
 </Tooltip>
 `;
 
-exports[`ValidationSummary renders success icon when all components are valid 1`] = `
+exports[`ValidationSummary renders error icon when all services are valid 1`] = `
+<Tooltip
+  aria-label="Validations list"
+  content={
+    <React.Fragment>
+      <Text
+        component="p"
+        style={
+          Object {
+            "textAlign": "left",
+            "textEmphasis": "strong",
+          }
+        }
+      >
+        Service validation result
+      </Text>
+      <div
+        className="kiali_fstk0tp"
+      >
+        <div>
+          1 error found
+        </div>
+      </div>
+    </React.Fragment>
+  }
+  enableFlip={true}
+  position="auto"
+>
+  <Validation
+    severity="error"
+  />
+</Tooltip>
+`;
+
+exports[`ValidationSummary renders error icon when all services are valid 2`] = `
+<Tooltip
+  aria-label="Validations list"
+  content={
+    <React.Fragment>
+      <Text
+        component="p"
+        style={
+          Object {
+            "textAlign": "left",
+            "textEmphasis": "strong",
+          }
+        }
+      >
+        Service validation result
+      </Text>
+      <div
+        className="kiali_fstk0tp"
+      >
+        <div>
+          1 error found
+        </div>
+        <div>
+          2 warnings found
+        </div>
+      </div>
+    </React.Fragment>
+  }
+  enableFlip={true}
+  position="auto"
+>
+  <Validation
+    severity="error"
+  />
+</Tooltip>
+`;
+
+exports[`ValidationSummary renders success icon when all istio components are valid 1`] = `
 <Tooltip
   aria-label="Validations list"
   content={
@@ -117,7 +187,7 @@ exports[`ValidationSummary renders success icon when all components are valid 1`
         1
       </Text>
       <div
-        className="kiali_fljtil"
+        className="kiali_fstk0tp"
       >
         <div>
           No issues found
@@ -134,7 +204,7 @@ exports[`ValidationSummary renders success icon when all components are valid 1`
 </Tooltip>
 `;
 
-exports[`ValidationSummary renders success icon when all components are valid 2`] = `
+exports[`ValidationSummary renders success icon when all istio components are valid 2`] = `
 <Tooltip
   aria-label="Validations list"
   content={
@@ -152,7 +222,7 @@ exports[`ValidationSummary renders success icon when all components are valid 2`
         4
       </Text>
       <div
-        className="kiali_fljtil"
+        className="kiali_fstk0tp"
       >
         <div>
           No issues found
@@ -169,7 +239,41 @@ exports[`ValidationSummary renders success icon when all components are valid 2`
 </Tooltip>
 `;
 
-exports[`ValidationSummary renders warning icon when all components are valid 1`] = `
+exports[`ValidationSummary renders success icon when all services are valid 1`] = `
+<Tooltip
+  aria-label="Validations list"
+  content={
+    <React.Fragment>
+      <Text
+        component="p"
+        style={
+          Object {
+            "textAlign": "left",
+            "textEmphasis": "strong",
+          }
+        }
+      >
+        Service validation result
+      </Text>
+      <div
+        className="kiali_fstk0tp"
+      >
+        <div>
+          No issues found
+        </div>
+      </div>
+    </React.Fragment>
+  }
+  enableFlip={true}
+  position="auto"
+>
+  <Validation
+    severity="correct"
+  />
+</Tooltip>
+`;
+
+exports[`ValidationSummary renders warning icon when all istio components are valid 1`] = `
 <Tooltip
   aria-label="Validations list"
   content={
@@ -187,7 +291,7 @@ exports[`ValidationSummary renders warning icon when all components are valid 1`
         1
       </Text>
       <div
-        className="kiali_fljtil"
+        className="kiali_fstk0tp"
       >
         <div>
           1 warning found
@@ -204,7 +308,7 @@ exports[`ValidationSummary renders warning icon when all components are valid 1`
 </Tooltip>
 `;
 
-exports[`ValidationSummary renders warning icon when all components are valid 2`] = `
+exports[`ValidationSummary renders warning icon when all istio components are valid 2`] = `
 <Tooltip
   aria-label="Validations list"
   content={
@@ -222,10 +326,78 @@ exports[`ValidationSummary renders warning icon when all components are valid 2`
         3
       </Text>
       <div
-        className="kiali_fljtil"
+        className="kiali_fstk0tp"
       >
         <div>
           1 warning found
+        </div>
+      </div>
+    </React.Fragment>
+  }
+  enableFlip={true}
+  position="auto"
+>
+  <Validation
+    severity="warning"
+  />
+</Tooltip>
+`;
+
+exports[`ValidationSummary renders warning icon when all services are valid 1`] = `
+<Tooltip
+  aria-label="Validations list"
+  content={
+    <React.Fragment>
+      <Text
+        component="p"
+        style={
+          Object {
+            "textAlign": "left",
+            "textEmphasis": "strong",
+          }
+        }
+      >
+        Service validation result
+      </Text>
+      <div
+        className="kiali_fstk0tp"
+      >
+        <div>
+          1 warning found
+        </div>
+      </div>
+    </React.Fragment>
+  }
+  enableFlip={true}
+  position="auto"
+>
+  <Validation
+    severity="warning"
+  />
+</Tooltip>
+`;
+
+exports[`ValidationSummary renders warning icon when all services are valid 2`] = `
+<Tooltip
+  aria-label="Validations list"
+  content={
+    <React.Fragment>
+      <Text
+        component="p"
+        style={
+          Object {
+            "textAlign": "left",
+            "textEmphasis": "strong",
+          }
+        }
+      >
+        Service validation result
+      </Text>
+      <div
+        className="kiali_fstk0tp"
+      >
+        <div>
+          2 warnings found
         </div>
       </div>
     </React.Fragment>
