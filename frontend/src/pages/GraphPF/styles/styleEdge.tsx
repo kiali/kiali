@@ -99,8 +99,16 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
         }
       }
     });
+    const unhighlightedEdgeTagClass = style({
+      $nest: {
+        '.pf-topology__edge__tag': {
+          opacity: 0.1
+        }
+      }
+    });
     classes.push(unhighlightedEdgeClass);
     classes.push(unhighlightedEdgeLinkClass);
+    classes.push(unhighlightedEdgeTagClass);
   }
 
   const passedData = React.useMemo(() => {
