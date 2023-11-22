@@ -166,7 +166,7 @@ const serviceTypeFilter: FilterType = {
   filterValues: [
     {
       id: 'Kubernetes',
-      title: 'Kubernetes'
+      title: $t('Kubernetes')
     },
     {
       id: 'External',

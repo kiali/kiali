@@ -187,7 +187,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     return (
       <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
         <div className={panelHeadingStyle}>
-          {getTitle('Application')}
+          {getTitle($t('Application'))}
           <span>
             {firstBadge}
             {options.length > 0 && (

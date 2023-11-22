@@ -33,7 +33,9 @@ const TimeDurationComp: React.FC<TimeControlsProps> = (props: TimeControlsProps)
     props.toggleReplayActive();
   };
 
-  const durationTooltip = props.replayActive ? 'TrafficMetricsPerFrame' : 'TrafficMetricsPerRefresh';
+  const durationTooltip = props.replayActive
+    ? $t('TrafficMetricsPerFrame', 'Traffic metrics per frame')
+    : $t('TrafficMetricsPerRefresh', 'Traffic metrics per refresh');
   let [prefix, suffix] = props.replayActive ? [undefined, $t('Traffic')] : [$t('Last'), undefined];
 
   return (
@@ -56,7 +58,7 @@ const TimeDurationComp: React.FC<TimeControlsProps> = (props: TimeControlsProps)
         disabled={props.disabled}
         prefix={prefix}
         suffix={suffix}
-        tooltip={$t(durationTooltip)}
+        tooltip={durationTooltip}
         tooltipPosition={TooltipPosition.left}
       />
       {!(props.supportsReplay && props.replayActive) && (

@@ -16,7 +16,7 @@ export class EdgeContextMenu extends React.PureComponent<EdgeContextMenuProps> {
   render() {
     return (
       <div className={contextMenu}>
-        {getTitle(`Edge (${prettyProtocol(this.props.protocol)})`)}
+        {getTitle($t(`Edge (${prettyProtocol(this.props.protocol)})`))}
         {renderBadgedName(decoratedNodeData((this.props.element as EdgeSingular).source()), 'From:  ')}
         {renderBadgedName(decoratedNodeData((this.props.element as EdgeSingular).target()), 'To:        ')}
       </div>

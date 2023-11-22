@@ -37,7 +37,7 @@ export const sortFields: SortField<NamespaceInfo>[] = [
   },
   {
     id: 'mtls',
-    title: 'mTLS',
+    title: $t('mTLS'),
     isNumeric: false,
     param: 'm',
     compare: (a: NamespaceInfo, b: NamespaceInfo) => {

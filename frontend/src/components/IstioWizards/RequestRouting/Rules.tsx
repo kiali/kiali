@@ -63,17 +63,17 @@ export class Rules extends React.Component<Props> {
   // @ts-ignore
   actionResolver = (rowData, { rowIndex }) => {
     const removeAction = {
-      title: 'Remove Rule',
+      title: $t('RemoveRule', 'Remove Rule'),
       // @ts-ignore
       onClick: (event, rowIndex, rowData, extraData) => this.props.onRemoveRule(rowIndex)
     };
     const moveUpAction = {
-      title: 'Move Up',
+      title: $t('MoveUp', 'Move Up'),
       // @ts-ignore
       onClick: (event, rowIndex, rowData, extraData) => this.props.onMoveRule(rowIndex, MOVE_TYPE.UP)
     };
     const moveDownAction = {
-      title: 'Move Down',
+      title: $t('MoveDown', 'Move Down'),
       // @ts-ignore
       onClick: (event, rowIndex, rowData, extraData) => this.props.onMoveRule(rowIndex, MOVE_TYPE.DOWN)
     };
@@ -96,16 +96,16 @@ export class Rules extends React.Component<Props> {
     // https://github.com/patternfly/patternfly-next/issues/2373
     const headerCells: ICell[] = [
       {
-        title: 'Rule order',
+        title: $t('RuleOrder', 'Rule order'),
         transforms: [cellWidth(10) as any],
         props: {}
       },
       {
-        title: 'Request Matching',
+        title: $t('RequestMatching', 'Request Matching'),
         props: {}
       },
       {
-        title: 'Route To',
+        title: $t('RouteTo', 'Route To'),
         props: {}
       }
     ];

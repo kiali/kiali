@@ -101,7 +101,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     return (
       <div className={panelStyle} style={SummaryPanelClusterBox.panelStyle}>
         <div className={panelHeadingStyle}>
-          {getTitle('Cluster')}
+          {getTitle($t('Cluster'))}
           {this.renderCluster(cluster, kialiInstances)}
           {this.renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
         </div>
@@ -356,7 +356,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
   ) => (
     <>
       <br />
-      {getTitle('Current_Graph')}
+      {getTitle($t('Current_Graph', 'Current Graph'))}
       {numApps > 0 && (
         <>
           <KialiIcon.Applications className={topologyStyle} />

@@ -188,7 +188,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     return (
       <div className={panelStyle} style={SummaryPanelNamespaceBox.panelStyle}>
         <div className={panelHeadingStyle}>
-          {getTitle('Namespace')}
+          {getTitle($t('Namespace'))}
           {this.renderNamespace(namespace)}
           <br />
           {this.renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}

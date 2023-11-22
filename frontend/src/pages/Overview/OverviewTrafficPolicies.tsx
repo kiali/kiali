@@ -252,7 +252,8 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
         items: this.state.authorizationPolicies,
         title: $t('AuthorizationPolicies', 'Authorization Policies')
       });
-    this.state.sidecars.length > 0 && items.push({ type: 'sidecar', items: this.state.sidecars, title: 'Sidecars' });
+    this.state.sidecars.length > 0 &&
+      items.push({ type: 'sidecar', items: this.state.sidecars, title: $t('Sidecars') });
     return items;
   };
 

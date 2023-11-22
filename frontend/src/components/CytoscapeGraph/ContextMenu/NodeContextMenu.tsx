@@ -198,7 +198,7 @@ export function NodeContextMenuComponent(props: Props) {
   function renderHeader() {
     return (
       <>
-        {props.isBox ? getTitle(props.isBox) : getTitle(props.nodeType)}
+        {props.isBox ? getTitle($t(props.isBox)) : getTitle($t(props.nodeType))}
         {(!props.isBox || props.isBox === BoxByType.APP) && (
           <div className={contextMenuHeader}>
             <PFBadge badge={PFBadges.Namespace} size="sm" />

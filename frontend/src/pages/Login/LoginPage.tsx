@@ -187,11 +187,11 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
   };
 
   render() {
-    let loginLabel = 'LogIn';
+    let loginLabel = $t('LogIn', 'Log In');
     if (authenticationConfig.strategy === AuthStrategy.openshift) {
-      loginLabel = 'LogInWithOpenShift';
+      loginLabel = $t('LogInWithOpenShift', 'Log In With OpenShift');
     } else if (authenticationConfig.strategy === AuthStrategy.openid) {
-      loginLabel = 'LogInWithOpenID';
+      loginLabel = $t('LogInWithOpenID', 'Log In With OpenID');
     }
 
     const messages = this.getHelperMessage();
@@ -258,7 +258,7 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
           <FormHelperText>{messages}</FormHelperText>
           <ActionGroup>
             <Button type="submit" onClick={this.handleSubmit} style={{ width: '100%' }} variant={ButtonVariant.primary}>
-              {$t(loginLabel)}
+              {loginLabel}
             </Button>
           </ActionGroup>
         </Form>

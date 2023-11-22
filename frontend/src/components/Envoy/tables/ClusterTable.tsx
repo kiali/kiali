@@ -88,7 +88,7 @@ export class ClusterTable implements SummaryTable {
     return [
       {
         id: 'fqdn',
-        title: 'FQDN',
+        title: $t('FQDN'),
         isNumeric: false,
         param: 'fqdn',
         compare: (a, b) => {

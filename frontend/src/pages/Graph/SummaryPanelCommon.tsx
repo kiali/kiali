@@ -185,22 +185,22 @@ export const renderNoTraffic = (protocol?: string) => {
 
 export const getTitle = (title: string): React.ReactFragment => {
   switch (title) {
-    case NodeType.AGGREGATE:
-      title = 'Operation';
+    case $t(NodeType.AGGREGATE):
+      title = $t('Operation');
       break;
-    case NodeType.APP:
-      title = 'Application';
+    case $t(NodeType.APP):
+      title = $t('Application');
       break;
-    case NodeType.SERVICE:
-      title = 'Service';
+    case $t(NodeType.SERVICE):
+      title = $t('Service');
       break;
-    case NodeType.WORKLOAD:
-      title = 'Workload';
+    case $t(NodeType.WORKLOAD):
+      title = $t('Workload');
       break;
   }
   return (
     <div className={summaryTitle}>
-      {$t(title)}
+      {title}
       <br />
     </div>
   );

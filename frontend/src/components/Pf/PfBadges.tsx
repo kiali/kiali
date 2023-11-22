@@ -12,72 +12,78 @@ export type PFBadgeType = {
 // PF Badges used by Kiali, keep alphabetized
 // avoid duplicate badge letters, especially if they may appear on the same page
 export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
-  App: { badge: 'A', tt: 'Application', style: { backgroundColor: PFColors.Green500 } } as PFBadgeType,
-  Adapter: { badge: 'A', tt: 'Adapter' } as PFBadgeType,
-  AttributeManifest: { badge: 'AM', tt: 'Attribute_Manifest' } as PFBadgeType,
-  AuthorizationPolicy: { badge: 'AP', tt: 'Authorization_Policy' } as PFBadgeType,
-  Cluster: { badge: 'C', tt: 'Cluster', style: { backgroundColor: PFColors.Blue300 } } as PFBadgeType,
-  ClusterRBACConfig: { badge: 'CRC', tt: 'Cluster_RBAC_Configuration' } as PFBadgeType,
-  Container: { badge: 'C', tt: 'Container', style: { backgroundColor: PFColors.Blue300 } } as PFBadgeType,
-  DestinationRule: { badge: 'DR', tt: 'Destination_Rule' } as PFBadgeType,
-  EnvoyFilter: { badge: 'EF', tt: 'Envoy_Filter' } as PFBadgeType,
-  ExternalService: { badge: 'ES', tt: 'External_Service' } as PFBadgeType,
+  App: { badge: 'A', tt: $t('Application'), style: { backgroundColor: PFColors.Green500 } } as PFBadgeType,
+  Adapter: { badge: 'A', tt: $t('Adapter') } as PFBadgeType,
+  AttributeManifest: { badge: 'AM', tt: $t('Attribute_Manifest', 'Attribute Manifest') } as PFBadgeType,
+  AuthorizationPolicy: { badge: 'AP', tt: $t('Authorization_Policy', 'Authorization Policy') } as PFBadgeType,
+  Cluster: { badge: 'C', tt: $t('Cluster'), style: { backgroundColor: PFColors.Blue300 } } as PFBadgeType,
+  ClusterRBACConfig: {
+    badge: 'CRC',
+    tt: $t('Cluster_RBAC_Configuration', 'Cluster RBAC Configuration')
+  } as PFBadgeType,
+  Container: { badge: 'C', tt: $t('Container'), style: { backgroundColor: PFColors.Blue300 } } as PFBadgeType,
+  DestinationRule: { badge: 'DR', tt: $t('Destination_Rule', 'Destination Rule') } as PFBadgeType,
+  EnvoyFilter: { badge: 'EF', tt: $t('Envoy_Filter', 'Envoy Filter') } as PFBadgeType,
+  ExternalService: { badge: 'ES', tt: $t('External_Service', 'External Service') } as PFBadgeType,
   FaultInjectionAbort: {
     badge: 'FI',
-    tt: 'Fault Injection: Abort',
+    tt: $t('Fault_Injection_Abort', 'Fault Injection: Abort'),
     style: { backgroundColor: PFColors.Purple500 }
   } as PFBadgeType,
   FaultInjectionDelay: {
     badge: 'FI',
-    tt: 'Fault Injection: Delay',
+    tt: $t('Fault_Injection_Delay', 'Fault Injection: Delay'),
     style: { backgroundColor: PFColors.Purple500 }
   } as PFBadgeType,
-  FederatedService: { badge: 'FS', tt: 'Federated Service' } as PFBadgeType,
-  Gateway: { badge: 'G', tt: 'Gateway' } as PFBadgeType,
-  HTTPRoute: { badge: 'HTTP', tt: 'HTTPRoute' } as PFBadgeType,
-  K8sGateway: { badge: 'G', tt: 'K8sGateway' } as PFBadgeType,
-  K8sHTTPRoute: { badge: 'HTTP', tt: 'K8sHTTPRoute' } as PFBadgeType,
-  Handler: { badge: 'H', tt: 'Handler' },
-  Host: { badge: 'H', tt: 'Host' },
-  Instance: { badge: 'I', tt: 'Instance' },
-  MeshPolicy: { badge: 'MP', tt: 'Mesh_Policy' } as PFBadgeType,
+  FederatedService: { badge: 'FS', tt: $t('Federated Service') } as PFBadgeType,
+  Gateway: { badge: 'G', tt: $t('Gateway') } as PFBadgeType,
+  HTTPRoute: { badge: 'HTTP', tt: $t('HTTPRoute') } as PFBadgeType,
+  K8sGateway: { badge: 'G', tt: $t('K8sGateway', 'Gateway (K8s)') } as PFBadgeType,
+  K8sHTTPRoute: { badge: 'HTTP', tt: $t('K8sHTTPRoute', 'HTTPRoute (K8s)') } as PFBadgeType,
+  Handler: { badge: 'H', tt: $t('Handler') },
+  Host: { badge: 'H', tt: $t('Host') },
+  Instance: { badge: 'I', tt: $t('Instance') },
+  MeshPolicy: { badge: 'MP', tt: $t('Mesh_Policy', 'Mesh Policy') } as PFBadgeType,
   MirroredWorkload: {
     badge: 'MI',
-    tt: 'Mirrored Workload',
+    tt: $t('Mirrored Workload'),
     style: { backgroundColor: PFColors.Purple500 }
   } as PFBadgeType,
-  Namespace: { badge: 'NS', tt: 'Namespace', style: { backgroundColor: PFColors.Green600 } } as PFBadgeType,
-  Operation: { badge: 'O', tt: 'Operation' } as PFBadgeType,
-  PeerAuthentication: { badge: 'PA', tt: 'Peer_Authentication' } as PFBadgeType,
-  Pod: { badge: 'P', tt: 'Pod', style: { backgroundColor: PFColors.Cyan300 } } as PFBadgeType,
-  Policy: { badge: 'P', tt: 'Policy' } as PFBadgeType,
-  RBACConfig: { badge: 'RC', tt: 'RBAC_Configuration' } as PFBadgeType,
-  RequestAuthentication: { badge: 'RA', tt: 'Request_Authentication' } as PFBadgeType,
+  Namespace: { badge: 'NS', tt: $t('Namespace'), style: { backgroundColor: PFColors.Green600 } } as PFBadgeType,
+  Operation: { badge: 'O', tt: $t('Operation') } as PFBadgeType,
+  PeerAuthentication: { badge: 'PA', tt: $t('Peer_Authentication', 'Peer Authentication') } as PFBadgeType,
+  Pod: { badge: 'P', tt: $t('Pod'), style: { backgroundColor: PFColors.Cyan300 } } as PFBadgeType,
+  Policy: { badge: 'P', tt: $t('Policy') } as PFBadgeType,
+  RBACConfig: { badge: 'RC', tt: $t('RBAC_Configuration', 'RBAC Configuration') } as PFBadgeType,
+  RequestAuthentication: {
+    badge: 'RA',
+    tt: $t('Request_Authentication', 'Request Authentication')
+  } as PFBadgeType,
   RequestRetry: {
     badge: 'RR',
-    tt: 'Request_Retry',
+    tt: $t('Request_Retry', 'Request Retry'),
     style: { backgroundColor: PFColors.Purple500 }
   } as PFBadgeType,
   RequestTimeout: {
     badge: 'RT',
-    tt: 'Request_Timeout',
+    tt: $t('Request_Timeout', 'Request Timeout'),
     style: { backgroundColor: PFColors.Purple500 }
   } as PFBadgeType,
-  Rule: { badge: 'R', tt: 'Rule' } as PFBadgeType,
-  Service: { badge: 'S', tt: 'Service', style: { backgroundColor: PFColors.LightGreen500 } } as PFBadgeType,
-  ServiceEntry: { badge: 'SE', tt: 'Service Entry' } as PFBadgeType,
-  ServiceRole: { badge: 'SR', tt: 'Service_Role' } as PFBadgeType,
-  ServiceRoleBinding: { badge: 'SRB', tt: 'Service_Role_Binding' } as PFBadgeType,
-  Sidecar: { badge: 'SC', tt: 'Istio_Sidecar_Proxy' } as PFBadgeType,
-  WasmPlugin: { badge: 'WP', tt: 'Istio_Wasm_Plugin' } as PFBadgeType,
-  Telemetry: { badge: 'TM', tt: 'Istio_Telemetry' } as PFBadgeType,
-  Template: { badge: 'T', tt: 'Template' } as PFBadgeType,
-  Unknown: { badge: 'U', tt: 'Unknown' } as PFBadgeType,
-  VirtualService: { badge: 'VS', tt: 'Virtual Service' } as PFBadgeType,
-  Waypoint: { badge: 'W', tt: 'Waypoint_proxy' } as PFBadgeType,
+  Rule: { badge: 'R', tt: $t('Rule') } as PFBadgeType,
+  Service: { badge: 'S', tt: $t('Service'), style: { backgroundColor: PFColors.LightGreen500 } } as PFBadgeType,
+  ServiceEntry: { badge: 'SE', tt: $t('Service Entry', 'Service Entry') } as PFBadgeType,
+  ServiceRole: { badge: 'SR', tt: $t('Service_Role', 'Service Role') } as PFBadgeType,
+  ServiceRoleBinding: { badge: 'SRB', tt: $t('Service_Role_Binding', 'Service Role Binding') } as PFBadgeType,
+  Sidecar: { badge: 'SC', tt: $t('Istio_Sidecar_Proxy', 'Istio Sidecar Proxy') } as PFBadgeType,
+  WasmPlugin: { badge: 'WP', tt: $t('Istio_Wasm_Plugin', 'Istio Wasm Plugin') } as PFBadgeType,
+  Telemetry: { badge: 'TM', tt: $t('Istio_Telemetry', 'Istio Telemetry') } as PFBadgeType,
+  Template: { badge: 'T', tt: $t('Template') } as PFBadgeType,
+  Unknown: { badge: 'U', tt: $t('Unknown') } as PFBadgeType,
+  VirtualService: { badge: 'VS', tt: $t('Virtual Service') } as PFBadgeType,
+  Waypoint: { badge: 'W', tt: $t('Waypoint_proxy', 'Waypoint proxy') } as PFBadgeType,
   Workload: { badge: 'W', tt: 'Workload', style: { backgroundColor: PFColors.Blue500 } } as PFBadgeType,
-  WorkloadEntry: { badge: 'WE', tt: 'Workload_Entry' } as PFBadgeType,
-  WorkloadGroup: { badge: 'WG', tt: 'Workload_Group' } as PFBadgeType
+  WorkloadEntry: { badge: 'WE', tt: $t('Workload_Entry', 'Workload Entry') } as PFBadgeType,
+  WorkloadGroup: { badge: 'WG', tt: $t('Workload_Group', 'Workload Group') } as PFBadgeType
 });
 
 // This is styled for consistency with OpenShift Console.  See console: public/components/_resource.scss
@@ -131,19 +137,14 @@ export class PFBadge extends React.PureComponent<PFBadgeProps> {
 
     const badge = (
       <Badge className={className} id={key} isRead={this.props.isRead || false} key={key} style={style}>
-        {$t(this.props.badge.badge)}
+        {this.props.badge.badge}
       </Badge>
     );
 
     return !tooltip ? (
       badge
     ) : (
-      <Tooltip
-        content={<>{$t(tooltip as string)}</>}
-        id={ttKey}
-        key={ttKey}
-        position={this.props.position || TooltipPosition.auto}
-      >
+      <Tooltip content={<>{tooltip}</>} id={ttKey} key={ttKey} position={this.props.position || TooltipPosition.auto}>
         {badge}
       </Tooltip>
     );

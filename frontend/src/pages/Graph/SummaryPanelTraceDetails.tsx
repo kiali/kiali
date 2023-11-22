@@ -418,7 +418,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
         </div>
         {flag && (
           <div>
-            <InfoAltIcon /> {$t(responseFlags[flag]?.help) || $t('UnknownFlag', 'Unknown flag')}
+            <InfoAltIcon /> {responseFlags[flag]?.help || $t('UnknownFlag', 'Unknown flag')}
           </div>
         )}
       </>

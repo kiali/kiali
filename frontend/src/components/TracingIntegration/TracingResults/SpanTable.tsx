@@ -267,7 +267,7 @@ class SpanTableComponent extends React.Component<Props, State> {
           )
         },
         {
-          title: 'Logs',
+          title: $t('Logs'),
           onClick: (_event, _rowId, rowData, _extra) => {
             const href = rowData.item.linkToWorkload + '?tab=logs';
             if (parentKiosk) {
@@ -439,11 +439,11 @@ class SpanTableComponent extends React.Component<Props, State> {
   private renderEnvoySummary = (item: RichSpanData) => {
     const parentKiosk = isParentKiosk(this.props.kiosk);
     const info = item.info as EnvoySpanInfo;
-    let rqLabel = 'Request';
+    let rqLabel = $t('Request');
     let peerLink: JSX.Element | undefined = undefined;
     const key = `${item.spanID}-summary-envoy`;
     if (info.direction === 'inbound') {
-      rqLabel = 'ReceivedRequest';
+      rqLabel = $t('ReceivedRequest', 'Received request');
       if (info.peer) {
         peerLink = (
           <>
@@ -466,7 +466,7 @@ class SpanTableComponent extends React.Component<Props, State> {
         );
       }
     } else if (info.direction === 'outbound') {
-      rqLabel = 'SentRequest';
+      rqLabel = $t('SentRequest', 'Sent request');
       if (info.peer) {
         peerLink = (
           <React.Fragment key={`${key}-out`}>
@@ -499,14 +499,14 @@ class SpanTableComponent extends React.Component<Props, State> {
     let flagInfo: string | undefined = undefined;
     if (info.responseFlags) {
       rsDetails.push(info.responseFlags);
-      flagInfo = $t(responseFlags[info.responseFlags]?.help) || $t('UnknownFlag', 'Unknown flag');
+      flagInfo = responseFlags[info.responseFlags]?.help || $t('UnknownFlag', 'Unknown flag');
     }
 
     return (
       <React.Fragment key={`${key}`}>
         <div key={`${key}-req`}>
           <strong key={`${key}-req-title`}>
-            {$t(rqLabel)}
+            {rqLabel}
             {peerLink}:{' '}
           </strong>
           <span key={`${key}-req-val`}>
@@ -525,12 +525,16 @@ class SpanTableComponent extends React.Component<Props, State> {
   private renderHTTPSummary = (item: RichSpanData) => {
     const info = item.info as OpenTracingHTTPInfo;
     const rqLabel =
-      info.direction === 'inbound' ? 'ReceivedRequest' : info.direction === 'outbound' ? 'SentRequest' : 'Request';
+      info.direction === 'inbound'
+        ? $t('ReceivedRequest', 'Received request')
+        : info.direction === 'outbound'
+        ? $t('SentRequest', 'Sent request')
+        : $t('Request');
     const key = `${item.spanID}-summary-http`;
     return (
       <React.Fragment key={key}>
         <div key={`${key}-req`}>
-          <strong key={`${key}-req-title`}>{$t(rqLabel)}: </strong>
+          <strong key={`${key}-req-title`}>{rqLabel}: </strong>
           <span key={`${key}-req-val`}>
             {info.method} {info.url}
           </span>

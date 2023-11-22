@@ -388,7 +388,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         isDisabled:
           this.state.crippledFeatures?.responseTime ||
           (this.state.crippledFeatures?.responseTimeAverage && this.state.crippledFeatures?.responseTimePercentiles),
-        labelText: _.startCase(EdgeLabelMode.RESPONSE_TIME_GROUP),
+        labelText: _.startCase($t(EdgeLabelMode.RESPONSE_TIME_GROUP)),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             <div>
@@ -418,7 +418,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         id: EdgeLabelMode.THROUGHPUT_GROUP,
         isChecked: edgeLabels.includes(EdgeLabelMode.THROUGHPUT_GROUP),
         isDisabled: this.state.crippledFeatures?.requestSize && this.state.crippledFeatures?.responseSize,
-        labelText: _.startCase(EdgeLabelMode.THROUGHPUT_GROUP),
+        labelText: _.startCase($t(EdgeLabelMode.THROUGHPUT_GROUP)),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             <div>
@@ -447,7 +447,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       {
         id: EdgeLabelMode.TRAFFIC_DISTRIBUTION,
         isChecked: edgeLabels.includes(EdgeLabelMode.TRAFFIC_DISTRIBUTION),
-        labelText: _.startCase(EdgeLabelMode.TRAFFIC_DISTRIBUTION),
+        labelText: _.startCase($t(EdgeLabelMode.TRAFFIC_DISTRIBUTION)),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             {$t(
@@ -460,7 +460,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       {
         id: EdgeLabelMode.TRAFFIC_RATE,
         isChecked: edgeLabels.includes(EdgeLabelMode.TRAFFIC_RATE),
-        labelText: _.startCase(EdgeLabelMode.TRAFFIC_RATE),
+        labelText: _.startCase($t(EdgeLabelMode.TRAFFIC_RATE)),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             {$t(
@@ -477,7 +477,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         id: EdgeLabelMode.THROUGHPUT_REQUEST,
         isChecked: edgeLabels.includes(EdgeLabelMode.THROUGHPUT_REQUEST) && !this.state.crippledFeatures?.requestSize,
         isDisabled: this.state.crippledFeatures?.requestSize,
-        labelText: 'Request',
+        labelText: $t('Request'),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             {$t('tip316', 'HTTP request data in bytes-per-second (bps) or kilobytes-per-second (kps)')}
@@ -488,7 +488,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         id: EdgeLabelMode.THROUGHPUT_RESPONSE,
         isChecked: edgeLabels.includes(EdgeLabelMode.THROUGHPUT_RESPONSE) && !this.state.crippledFeatures?.responseSize,
         isDisabled: this.state.crippledFeatures?.responseSize,
-        labelText: 'Response',
+        labelText: $t('Response'),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             {$t('tip317', 'HTTP response data in bytes per second (bps) or kilobytes-per-second (kps)')}
@@ -500,14 +500,14 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     const responseTimeOptions: DisplayOptionType[] = [
       {
         id: EdgeLabelMode.RESPONSE_TIME_AVERAGE,
-        labelText: 'Average',
+        labelText: $t('Average'),
         isChecked: edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_AVERAGE),
         isDisabled: this.state.crippledFeatures?.responseTimeAverage,
         tooltip: <div style={{ textAlign: 'left' }}>{$t('tip318', 'Average request response time')}</div>
       },
       {
         id: EdgeLabelMode.RESPONSE_TIME_P50,
-        labelText: 'Median',
+        labelText: $t('Median'),
         isChecked: edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_P50),
         isDisabled: this.state.crippledFeatures?.responseTimePercentiles,
         tooltip: (
@@ -516,7 +516,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       },
       {
         id: EdgeLabelMode.RESPONSE_TIME_P95,
-        labelText: '95th Percentile',
+        labelText: $t('95th Percentile'),
         isChecked: edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_P95),
         isDisabled: this.state.crippledFeatures?.responseTimePercentiles,
         tooltip: (
@@ -527,7 +527,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       },
       {
         id: EdgeLabelMode.RESPONSE_TIME_P99,
-        labelText: '99th Percentile',
+        labelText: $t('99th Percentile'),
         isChecked: edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_P99),
         isDisabled: this.state.crippledFeatures?.responseTimePercentiles,
         tooltip: (
@@ -542,7 +542,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       {
         id: 'boxByCluster',
         isChecked: boxByCluster,
-        labelText: 'Cluster Boxes',
+        labelText: $t('Cluster Boxes'),
         onChange: toggleBoxByCluster,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
@@ -556,7 +556,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       {
         id: 'boxByNamespace',
         isChecked: boxByNamespace,
-        labelText: 'Namespace Boxes',
+        labelText: $t('Namespace Boxes'),
         onChange: toggleBoxByNamespace,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
@@ -570,7 +570,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       {
         id: 'filterHide',
         isChecked: compressOnHide,
-        labelText: 'Compressed Hide',
+        labelText: $t('Compressed Hide'),
         onChange: toggleCompressOnHide,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
@@ -584,7 +584,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       {
         id: 'filterIdleEdges',
         isChecked: showIdleEdges,
-        labelText: 'Idle Edges',
+        labelText: $t('Idle Edges'),
         onChange: toggleIdleEdges,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
@@ -598,7 +598,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       {
         id: 'filterIdleNodes',
         isChecked: showIdleNodes,
-        labelText: 'Idle Nodes',
+        labelText: $t('Idle Nodes'),
         onChange: toggleIdleNodes,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
@@ -613,7 +613,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         id: 'filterOperationNodes',
         isChecked: showOperationNodes,
         isDisabled: this.props.graphType === GraphType.SERVICE,
-        labelText: 'Operation Nodes',
+        labelText: $t('Operation Nodes'),
         onChange: toggleOperationNodes,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
@@ -638,7 +638,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       {
         id: 'rank',
         isChecked: rank,
-        labelText: 'Rank',
+        labelText: $t('Rank'),
         onChange: toggleRank,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
@@ -653,7 +653,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         id: 'filterServiceNodes',
         isChecked: showServiceNodes,
         isDisabled: this.props.graphType === GraphType.SERVICE,
-        labelText: 'Service Nodes',
+        labelText: $t('Service Nodes'),
         onChange: toggleServiceNodes,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
@@ -667,7 +667,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       {
         id: 'filterTrafficAnimation',
         isChecked: showTrafficAnimation,
-        labelText: 'Traffic Animation',
+        labelText: $t('Traffic Animation'),
         onChange: toggleTrafficAnimation,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
@@ -684,13 +684,13 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       {
         id: 'filterSidecars',
         isChecked: showOutOfMesh,
-        labelText: 'Missing Sidecars',
+        labelText: $t('Missing Sidecars'),
         onChange: toggleGraphMissingSidecars
       },
       {
         id: 'filterSecurity',
         isChecked: showSecurity,
-        labelText: 'Security',
+        labelText: $t('Security'),
         onChange: toggleGraphSecurity,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
@@ -706,7 +706,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       {
         id: 'filterVS',
         isChecked: showVirtualServices,
-        labelText: 'Virtual Services',
+        labelText: $t('Virtual Services'),
         onChange: toggleGraphVirtualServices,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
@@ -724,7 +724,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     const scoringOptions: DisplayOptionType[] = [
       {
         id: RankMode.RANK_BY_INBOUND_EDGES,
-        labelText: 'Inbound Edges',
+        labelText: $t('Inbound Edges'),
         isChecked: rankLabels.includes(RankMode.RANK_BY_INBOUND_EDGES),
         onChange: () => {
           this.toggleRankByMode(RankMode.RANK_BY_INBOUND_EDGES);
@@ -732,7 +732,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       },
       {
         id: RankMode.RANK_BY_OUTBOUND_EDGES,
-        labelText: 'Outbound Edges',
+        labelText: $t('Outbound Edges'),
         isChecked: rankLabels.includes(RankMode.RANK_BY_OUTBOUND_EDGES),
         onChange: () => {
           this.toggleRankByMode(RankMode.RANK_BY_OUTBOUND_EDGES);
@@ -779,7 +779,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                   isChecked={edgeLabelOption.isChecked}
                   isDisabled={this.props.disabled || edgeLabelOption.isDisabled}
                   key={edgeLabelOption.id}
-                  label={$t(edgeLabelOption.labelText)}
+                  label={edgeLabelOption.labelText}
                   name="edgeLabelOptions"
                   onChange={(event, _) => this.toggleEdgeLabelMode(_, event)}
                   value={edgeLabelOption.id}
@@ -809,7 +809,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           id={rtOption.id}
                           isChecked={rtOption.isChecked}
                           isDisabled={this.props.disabled || edgeLabelOption.isDisabled || rtOption.isDisabled}
-                          label={$t(rtOption.labelText)}
+                          label={rtOption.labelText}
                           name="rtOptions"
                           onChange={(event, _) => this.toggleEdgeLabelResponseTimeMode(_, event)}
                           style={{ paddingLeft: '0.25rem' }}
@@ -844,7 +844,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           id={throughputOption.id}
                           isChecked={throughputOption.isChecked}
                           isDisabled={this.props.disabled || edgeLabelOption.isDisabled || throughputOption.isDisabled}
-                          label={$t(throughputOption.labelText)}
+                          label={throughputOption.labelText}
                           name="throughputOptions"
                           onChange={(event, _) => this.toggleEdgeLabelThroughputMode(_, event)}
                           style={{ paddingLeft: '0.5rem' }}
@@ -875,7 +875,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                   id={item.id}
                   isChecked={item.isChecked}
                   isDisabled={this.props.disabled || item.isDisabled}
-                  label={$t(item.labelText)}
+                  label={item.labelText}
                   onChange={item.onChange}
                 />
               </label>
@@ -899,7 +899,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           id={scoringOption.id}
                           isChecked={scoringOption.isChecked}
                           isDisabled={this.props.disabled || item.isDisabled}
-                          label={$t(scoringOption.labelText)}
+                          label={scoringOption.labelText}
                           name="scoringOptions"
                           onChange={scoringOption.onChange}
                           style={{ paddingLeft: '0.25rem' }}
@@ -931,7 +931,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                   id={item.id}
                   isChecked={item.isChecked}
                   isDisabled={this.props.disabled || item.isDisabled}
-                  label={$t(item.labelText)}
+                  label={item.labelText}
                   onChange={item.onChange}
                 />
               </label>

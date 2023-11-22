@@ -7,21 +7,24 @@ interface Shortcut {
 }
 
 const shortcuts: Shortcut[] = [
-  { shortcut: 'MouseWheel', description: 'Zoom' },
-  { shortcut: 'ClickDrag', description: 'Panning' },
-  { shortcut: 'ShiftDrag', description: 'SelectZoomArea' },
-  { shortcut: 'RightClick', description: 'description14' },
-  { shortcut: 'SingleClick', description: 'description15' },
-  { shortcut: 'DoubleClick', description: 'description16' }
+  { shortcut: $t('MouseWheel', 'Mouse wheel'), description: $t('Zoom') },
+  { shortcut: $t('ClickDrag', 'Click + Drag'), description: $t('Panning') },
+  { shortcut: $t('ShiftDrag', 'Shift + Drag'), description: $t('SelectZoomArea', 'Select zoom area') },
+  { shortcut: $t('RightClick', 'Right click'), description: $t('description14', 'Contextual menu on nodes') },
+  {
+    shortcut: $t('SingleClick', 'Single click'),
+    description: $t('description15', 'Details in side panel on nodes and edges')
+  },
+  { shortcut: $t('DoubleClick', 'Double click'), description: $t('description16', 'Drill into a node details graph') }
 ];
 
 const makeShortcut = (shortcut: Shortcut): JSX.Element => {
   return (
     <div style={{ display: 'flex', marginBottom: '10px' }}>
       <div style={{ flex: '40%' }}>
-        <Chip isReadOnly>{$t(shortcut.shortcut)}</Chip>
+        <Chip isReadOnly>{shortcut.shortcut}</Chip>
       </div>
-      <div style={{ flex: '60%' }}>{$t(shortcut.description)}</div>
+      <div style={{ flex: '60%' }}>{shortcut.description}</div>
     </div>
   );
 };

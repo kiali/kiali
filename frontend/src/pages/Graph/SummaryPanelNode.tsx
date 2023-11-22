@@ -186,7 +186,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     return (
       <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
         <div className={panelHeadingStyle}>
-          {getTitle(nodeType)}
+          {getTitle($t(nodeType))}
           <div>
             <span>
               {firstBadge}

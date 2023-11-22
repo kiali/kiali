@@ -340,7 +340,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
           break;
         case SIDECAR:
           items.push({
-            title: 'Sidecar',
+            title: $t('Sidecar'),
             type: 'sidecar',
             items: [buildSidecar(this.state.name, ns.name, this.state.sidecar)]
           });

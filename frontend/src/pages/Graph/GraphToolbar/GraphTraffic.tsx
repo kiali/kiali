@@ -106,7 +106,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
     const grpcOptions: TrafficRateOptionType[] = [
       {
         id: TrafficRate.GRPC_RECEIVED,
-        labelText: 'Received Messages',
+        labelText: $t('Received Messages'),
         isChecked: trafficRates.includes(TrafficRate.GRPC_RECEIVED),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
@@ -158,7 +158,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
     const httpOptions: TrafficRateOptionType[] = [
       {
         id: TrafficRate.HTTP_REQUEST,
-        labelText: 'Requests',
+        labelText: $t('Requests'),
         isChecked: trafficRates.includes(TrafficRate.HTTP_REQUEST),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
@@ -171,7 +171,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
     const tcpOptions: TrafficRateOptionType[] = [
       {
         id: TrafficRate.TCP_RECEIVED,
-        labelText: 'Received_Bytes',
+        labelText: $t('Received_Bytes', 'Received Bytes'),
         isChecked: trafficRates.includes(TrafficRate.TCP_RECEIVED),
         tooltip: (
           <div style={{ textAlign: 'left' }}>{$t('tip279', 'Received bytes rate in bytes-per-second (bps).')}</div>
@@ -179,13 +179,13 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
       },
       {
         id: TrafficRate.TCP_SENT,
-        labelText: 'Sent_Bytes',
+        labelText: $t('Sent_Bytes', 'Sent Bytes'),
         isChecked: trafficRates.includes(TrafficRate.TCP_SENT),
         tooltip: <div style={{ textAlign: 'left' }}>{$t('tip280', 'Sent bytes rate in bytes-per-second (bps).')}</div>
       },
       {
         id: TrafficRate.TCP_TOTAL,
-        labelText: 'Total_Bytes',
+        labelText: $t('Total_Bytes', 'Total Bytes'),
         isChecked: trafficRates.includes(TrafficRate.TCP_TOTAL),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
@@ -243,7 +243,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                           name="grpcOptions"
                           isChecked={grpcOption.isChecked}
                           isDisabled={props.disabled}
-                          label={$t(grpcOption.labelText)}
+                          label={grpcOption.labelText}
                           onChange={(event, _) => toggleTrafficRateGrpc(_, event)}
                           value={grpcOption.id}
                         />
@@ -277,7 +277,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                           name="httpOptions"
                           isChecked={httpOption.isChecked}
                           isDisabled={props.disabled}
-                          label={$t(httpOption.labelText)}
+                          label={httpOption.labelText}
                           onChange={(event, _) => toggleTrafficRateHttp(_, event)}
                           value={httpOption.id}
                         />
@@ -312,7 +312,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                           name="tcpOptions"
                           isChecked={tcpOption.isChecked}
                           isDisabled={props.disabled}
-                          label={$t(tcpOption.labelText)}
+                          label={tcpOption.labelText}
                           onChange={(event, _) => toggleTrafficRateTcp(_, event)}
                           value={tcpOption.id}
                         />

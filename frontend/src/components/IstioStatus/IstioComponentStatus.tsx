@@ -48,9 +48,9 @@ const validToIcon: { [valid: string]: ComponentIcon } = {
 };
 
 const statusMsg = {
-  [Status.NotFound]: 'Not_found',
-  [Status.NotReady]: 'Not_ready',
-  [Status.Unhealthy]: 'Not_healthy',
+  [Status.NotFound]: 'Not found',
+  [Status.NotReady]: 'Not ready',
+  [Status.Unhealthy]: 'Not healthy',
   [Status.Unreachable]: 'Unreachable'
 };
 

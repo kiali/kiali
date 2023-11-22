@@ -223,7 +223,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     return (
       <div id="summary-panel-graph" className={panelStyle} style={SummaryPanelGraph.panelStyle}>
         <div id="summary-panel-graph-heading" className={panelHeadingStyle}>
-          {getTitle('Current_Graph')}
+          {getTitle($t('Current_Graph', 'Current Graph'))}
           {this.renderNamespacesSummary()}
           <br />
           {this.renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
