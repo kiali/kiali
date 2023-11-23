@@ -43,7 +43,6 @@ Feature: Kiali Overview page
     Then user sees the "alpha" namespace card
     And user doesn't see the "beta" namespace card
 
-
   Scenario: Sort by name
     When user filters "alpha" namespace
     And user filters "beta" namespace
@@ -161,11 +160,26 @@ Feature: Kiali Overview page
     Then there should be a "idle" application indicator in the namespace in the "west" cluster
     And the "idle" application indicator for the "west" cluster should list the application
 
+  @multi-cluster
+  Scenario: See cluster badges in the COMPACT view
+    When user clicks in the "COMPACT" view
+    Then user sees a "COMPACT" "bookinfo" namespace
+    Then user sees the "bookinfo" namespace card in cluster "east"
+    And user sees the "bookinfo" namespace card in cluster "west"
+
+  @multi-cluster
+  Scenario: See cluster badges in the LIST view
+    When user clicks in the "LIST" view
+    Then user sees a "LIST" "bookinfo" namespace
+    And the "Cluster" column "appears"
+    And cluster badges for "east" and "west" cluster are visible in the LIST view
+
+
   #this scenario refers to a bug (https://github.com/kiali/kiali/issues/6504) which is not resolved at the time of writing the scenario
   @multi-cluster
   @skip
   Scenario: The new Cluster column should be visible and sortable when changing to list view
     When user clicks in the "LIST" view
-    Then the "Cluster" column appears
+    Then the "Cluster" column "appears"
     And user sorts by "Cluster" desc
     Then the list is sorted by "Cluster" desc
