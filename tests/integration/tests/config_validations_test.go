@@ -84,7 +84,12 @@ func TestK8sGatewaysAddressesError(t *testing.T) {
 	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
 	require.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
 
-	config, err := getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sGateways, true, require)
+	// flaky test fix, make sure that K8sGateway is created and available
+	config, err := getConfigDetails(kiali.BOOKINFO, "gatewayapiaddr2", kubernetes.K8sGateways, true, require)
+	require.NoError(err)
+	require.NotNil(config)
+
+	config, err = getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sGateways, true, require)
 
 	require.NoError(err)
 	require.NotNil(config)
@@ -108,7 +113,12 @@ func TestK8sGatewaysListenersError(t *testing.T) {
 	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
 	require.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
 
-	config, err := getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sGateways, true, require)
+	// flaky test fix, make sure that K8sGateway is created and available
+	config, err := getConfigDetails(kiali.BOOKINFO, "gatewayapilnr2", kubernetes.K8sGateways, true, require)
+	require.NoError(err)
+	require.NotNil(config)
+
+	config, err = getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sGateways, true, require)
 
 	require.NoError(err)
 	require.NotNil(config)
@@ -157,7 +167,12 @@ func TestK8sHTTPRoutesServicesError(t *testing.T) {
 	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
 	require.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
 
-	config, err := getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sHTTPRoutes, true, require)
+	// flaky test fix, make sure that K8sGateway is created and available
+	config, err := getConfigDetails(kiali.BOOKINFO, "gatewayapiservices", kubernetes.K8sGateways, true, require)
+	require.NoError(err)
+	require.NotNil(config)
+
+	config, err = getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sHTTPRoutes, true, require)
 
 	require.NoError(err)
 	require.NotNil(config)
