@@ -7,6 +7,9 @@ import (
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 	otel "github.com/kiali/kiali/tracing/otel/model"
 	otelModels "github.com/kiali/kiali/tracing/otel/model/json"
+	"github.com/kiali/kiali/tracing/tempo/tempopb"
+	v1 "github.com/kiali/kiali/tracing/tempo/tempopb/common/v1"
+	v11 "github.com/kiali/kiali/tracing/tempo/tempopb/resource/v1"
 )
 
 // convertID
@@ -73,6 +76,43 @@ func ConvertSpans(spans []otelModels.Span, serviceName string) []jaegerModels.Sp
 		toRet = append(toRet, jaegerSpan)
 	}
 	return toRet
+}
+
+// ConvertTraceMetadata used by the GRPC Client
+func ConvertTraceMetadata(trace tempopb.TraceSearchMetadata, serviceName string) (*jaegerModels.Trace, error) {
+	jaegerTrace := jaegerModels.Trace{
+		TraceID:   ConvertId(trace.TraceID),
+		Processes: map[jaegerModels.ProcessID]jaegerModels.Process{},
+		Warnings:  []string{},
+	}
+	for _, span := range trace.SpanSet.Spans {
+		spanSet := convertOtelSpan(span, serviceName, trace.TraceID, trace.RootTraceName)
+		jaegerTrace.Spans = append(jaegerTrace.Spans, spanSet)
+	}
+	jaegerTrace.Matched = len(jaegerTrace.Spans)
+	return &jaegerTrace, nil
+}
+
+// convertOtelSpan used for GRPC format Spans
+func convertOtelSpan(span *tempopb.Span, serviceName, traceID, rootTrace string) jaegerModels.Span {
+
+	modelSpan := jaegerModels.Span{
+		SpanID:    jaegerModels.SpanID(span.SpanID),
+		TraceID:   jaegerModels.TraceID(traceID),
+		Duration:  span.DurationNanos / 1000,
+		StartTime: span.StartTimeUnixNano / 1000,
+		// No more mapped data
+		Flags:         0,
+		References:    []jaegerModels.Reference{}, // convertReferences(traceID, rootTrace),
+		Tags:          convertModelAttributes(span.Attributes),
+		Logs:          []jaegerModels.Log{},
+		OperationName: rootTrace,
+		ProcessID:     "",
+		Process:       &jaegerModels.Process{Tags: []jaegerModels.KeyValue{}, ServiceName: serviceName},
+		Warnings:      []string{},
+	}
+
+	return modelSpan
 }
 
 func ConvertSpanSet(span otel.Span, serviceName string, traceId string, rootName string) []jaegerModels.Span {
@@ -161,4 +201,25 @@ func convertAttributes(attributes []otelModels.Attribute, status otelModels.Stat
 		tags = append(tags, tag)
 	}
 	return tags
+}
+
+func convertModelAttributes(attributes []*v1.KeyValue) []jaegerModels.KeyValue {
+	var tags []jaegerModels.KeyValue
+	for _, atb := range attributes {
+		if atb.Key == "status" {
+			if atb.Value.GetStringValue() == "error" {
+				tag := jaegerModels.KeyValue{Key: "error", Value: true, Type: "bool"}
+				tags = append(tags, tag)
+			}
+		} else {
+			tag := jaegerModels.KeyValue{Key: atb.Key, Value: atb.Value.GetStringValue(), Type: "string"}
+			tags = append(tags, tag)
+		}
+	}
+	return tags
+}
+
+func ConvertResource(resourceSpans *v11.Resource) jaegerModels.Span {
+	span := jaegerModels.Span{}
+	return span
 }
