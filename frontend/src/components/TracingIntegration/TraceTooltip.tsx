@@ -11,7 +11,6 @@ import { renderTraceHeatMap } from './TracingResults/StatsComparison';
 import { PFColors } from 'components/Pf/PfColors';
 import { HookedChartTooltip, HookedTooltipProps } from 'components/Charts/CustomTooltip';
 import { formatDuration } from 'utils/tracing/TracingHelper';
-import { TEMPO } from '../../types/Tracing';
 import { MetricsStats } from '../../types/Metrics';
 
 const flyoutWidth = 280;
@@ -41,11 +40,6 @@ type LabelProps = ChartLabelProps & {
   trace: JaegerTrace;
   selectedTrace?: JaegerTrace;
   metricsStats?: Map<string, MetricsStats>;
-};
-
-const textStyle: React.CSSProperties = {
-  fontStyle: 'italic',
-  fontSize: 'x-small'
 };
 
 class TraceLabel extends React.Component<LabelProps> {
@@ -78,15 +72,7 @@ class TraceLabel extends React.Component<LabelProps> {
           <div className={titleStyle}>{trace.traceName || '(Missing root span)'}</div>
           <br />
           <div className={contentStyle}>
-            <div className={leftStyle}>
-              {hasStats ? (
-                renderTraceHeatMap(matrix!, true)
-              ) : this.props.provider === TEMPO ? (
-                <div style={textStyle}>(Loading trace details)</div>
-              ) : (
-                'n/a'
-              )}
-            </div>
+            <div className={leftStyle}>{hasStats ? renderTraceHeatMap(matrix!, true) : 'n/a'}</div>
             <div>
               {formatDuration(trace.duration)}
               <br />
@@ -106,7 +92,7 @@ const mapStateToProps = (state: KialiAppState, props: any) => {
     metricsStats: state.metricsStats.data,
     trace: props.trace,
     provider: state.tracingState.info?.provider,
-    selectedTrace: state.tracingState.hoverTrace
+    selectedTrace: state.tracingState.selectedTrace
   };
 };
 
