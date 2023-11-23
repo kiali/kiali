@@ -20,6 +20,7 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -187,13 +188,26 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 					ctx, cancel := context.WithTimeout(ctx, time.Second)
 					defer cancel()
 
-					// TODO: Support TLS
-					exporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(),
-						otlptracegrpc.WithEndpoint(collectorURL),
-						otlptracegrpc.WithDialOption(grpc.WithBlock()),
-					)
+					grpcExporter := &otlptrace.Exporter{}
 
-					return exporter, err
+					if tracingOpt.Otel.TlsEnabled {
+						creds, err := credentials.NewClientTLSFromFile("/tmp/tls.crt", "")
+						if err != nil {
+							log.Fatalf("Error loading certificate: %v", err)
+							return nil, err
+						}
+						grpcExporter, err = otlptracegrpc.New(ctx, otlptracegrpc.WithTLSCredentials(creds),
+							otlptracegrpc.WithEndpoint(collectorURL),
+							otlptracegrpc.WithDialOption(grpc.WithBlock()),
+						)
+					} else {
+						grpcExporter, err = otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(),
+							otlptracegrpc.WithEndpoint(collectorURL),
+							otlptracegrpc.WithDialOption(grpc.WithBlock()),
+						)
+					}
+
+					return grpcExporter, err
 				} else {
 
 					return nil, fmt.Errorf("Error in configuration options getting the observability exporter. Invalid otel.protocol [%v].", tracingOpt.Otel.Protocol)

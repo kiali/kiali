@@ -99,7 +99,8 @@ type Metrics struct {
 
 // OpenTelemetry collector configuration for tracing
 type OtelCollector struct {
-	Protocol string `yaml:"protocol,omitempty"` // http or https or grp
+	Protocol   string `yaml:"protocol,omitempty"` // http or https or grp
+	TlsEnabled bool   `yaml:"tls_enabled,omitempty"`
 }
 
 // Tracing provides tracing configuration for the Kiali server.
@@ -792,7 +793,8 @@ func NewConfig() (c *Config) {
 					CollectorURL:  "http://jaeger-collector.istio-system:14268/api/traces",
 					Enabled:       false,
 					Otel: OtelCollector{
-						Protocol: "http",
+						Protocol:   "http",
+						TlsEnabled: false,
 					},
 					// Sample half of traces.
 					SamplingRate: 0.5,
