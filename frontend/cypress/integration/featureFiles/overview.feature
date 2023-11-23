@@ -173,7 +173,7 @@ Feature: Kiali Overview page
     Then user sees a "LIST" "bookinfo" namespace
     And the "Cluster" column "appears"
     And cluster badges for "east" and "west" cluster are visible in the LIST view
-
+    And Control Plane metrics should be visible
 
   #this scenario refers to a bug (https://github.com/kiali/kiali/issues/6504) which is not resolved at the time of writing the scenario
   @multi-cluster

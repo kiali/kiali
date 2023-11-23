@@ -327,3 +327,8 @@ And('cluster badges for {string} and {string} cluster are visible in the LIST vi
   cy.get('[data-test="VirtualItem_bookinfo"]').contains('east').should('be.visible');
   cy.get('[data-test="VirtualItem_bookinfo"]').contains('west').should('be.visible');
 });
+
+And('Control Plane metrics should be visible',() => {
+  cy.get('[data-test="VirtualItem_istio-system"]').find('[data-test="cpu-chart"]');
+  cy.get('[data-test="VirtualItem_istio-system"]').find('[data-test="memory-chart"]');
+});
