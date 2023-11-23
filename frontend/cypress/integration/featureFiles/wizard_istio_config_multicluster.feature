@@ -80,4 +80,5 @@ Feature: Kiali Istio Config page
     And user types "foobar" in the "addPortName_0" input
     And user previews the configuration
     And user creates the istio config
-    Then the "Gateway" "sleep-gateway" should not be listed in "sleep" namespace
+    Then the "Gateway" "sleep-gateway" should not be listed in "west" "sleep" namespace
+    And the "Gateway" "sleep-gateway" should be listed in "east" "sleep" namespace

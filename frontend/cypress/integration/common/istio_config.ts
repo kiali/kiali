@@ -401,10 +401,6 @@ And('user sees {string} information for Istio objects from both clusters',(colum
   });
 });
 
-And('user sees Namespace information for Istio objects',() => {});
-And('user sees Type information for Istio objects',() => {});
-And('user sees Configuration information for Istio objects',()=> {});
-
 Then('there are Istio config objects created in both clusters',() => {
   cy.exec(`kubectl delete AuthorizationPolicy foo-east -n bookinfo --context ${CLUSTER1_CONTEXT}`, { failOnNonZeroExit: false });
   cy.exec(`kubectl delete AuthorizationPolicy foo-west -n bookinfo --context ${CLUSTER2_CONTEXT}`, { failOnNonZeroExit: false });

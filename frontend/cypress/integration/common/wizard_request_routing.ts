@@ -87,6 +87,10 @@ And('the {string} {string} should be listed in {string} {string} namespace', (ty
   cy.get(`[data-test="VirtualItem_Ns${ns}_${type.toLowerCase()}_${svc}"]`).find('[data-label="Cluster"]').contains(cluster);
 })
 
+And('the {string} {string} should not be listed in {string} {string} namespace', (type:string, svc:string, cluster:string, ns:string) => {
+  cy.get(`[data-test="VirtualItem_Ns${ns}_${type.toLowerCase()}_${svc}"]`).find('[data-label="Cluster"]').should('not.include.text',cluster);
+})
+
 And('user sees the {string} wizard', (title: string) => {
   cy.get('div[aria-label="' + title + '"]');
 });

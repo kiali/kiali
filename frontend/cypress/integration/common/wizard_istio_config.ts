@@ -139,6 +139,7 @@ Then('the preview button should be disabled', () => {
 });
 
 Then('an error message {string} is displayed', (message: string) => {
+  ensureKialiFinishedLoading();
   cy.get('h4').contains(message).should('be.visible');
 });
 
@@ -168,5 +169,6 @@ Then('{string} details information for service entry {string} can be seen', (hos
 });
 
 Then('an info message {string} is displayed',(message:string) =>{
+  ensureKialiFinishedLoading();
   cy.contains(message).should('be.visible');
 });
