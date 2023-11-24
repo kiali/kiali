@@ -31,7 +31,9 @@ exports[`#Labels render correctly with data should render badges with More label
     onClick={[Function]}
     variant="link"
   >
-    More labels...
+    More 
+    labels
+    ...
   </Button>
 </div>
 `;
