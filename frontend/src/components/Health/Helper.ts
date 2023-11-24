@@ -3,7 +3,7 @@ import { Status } from 'types/Health';
 import { Icon } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 
-type Size = 'sm' | 'md' | 'lg' | 'xl';
+export type Size = 'sm' | 'md' | 'lg' | 'xl';
 
 export const createIcon = (status: Status, size?: Size) => {
   const classForColor = kialiStyle({

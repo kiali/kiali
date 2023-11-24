@@ -110,7 +110,7 @@ type PFBadgeProps = {
   position?: TooltipPosition; // default=auto
   size?: 'global' | 'sm';
   style?: CSSProperties;
-  tooltip?: React.ReactFragment;
+  tooltip?: React.ReactNode;
 };
 
 export const PFBadge: React.FC<PFBadgeProps> = (props: PFBadgeProps) => {

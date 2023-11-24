@@ -94,6 +94,11 @@ const expandableSectionStyle = kialiStyle({
   }
 });
 
+const nodeInfoStyle = kialiStyle({
+  display: 'flex',
+  marginTop: '0.25rem'
+});
+
 const workloadExpandableSectionStyle = classes(expandableSectionStyle, kialiStyle({ display: 'inline' }));
 
 export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeComponentProps, SummaryPanelNodeState> {
@@ -152,9 +157,9 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       } else if (this.props.serviceDetails !== null) {
         items.push(
           <ServiceWizardActionsDropdownGroup
-            virtualServices={this.props.serviceDetails.virtualServices || []}
-            destinationRules={this.props.serviceDetails.destinationRules || []}
-            k8sHTTPRoutes={this.props.serviceDetails.k8sHTTPRoutes || []}
+            virtualServices={this.props.serviceDetails.virtualServices ?? []}
+            destinationRules={this.props.serviceDetails.destinationRules ?? []}
+            k8sHTTPRoutes={this.props.serviceDetails.k8sHTTPRoutes ?? []}
             istioPermissions={this.props.serviceDetails.istioPermissions}
             onAction={this.handleLaunchWizard}
             onDelete={this.handleDeleteTrafficRouting}
@@ -174,6 +179,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
         {nodeData.namespace}
       </>
     );
+
     const secondBadge = isMultiCluster ? (
       <div>
         <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '0.125rem' }} />
@@ -187,9 +193,11 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
         <div className={panelHeadingStyle}>
           {getTitle(nodeType)}
+
           <div>
             <span>
               {firstBadge}
+
               {options.length > 0 && (
                 <Dropdown
                   id="summary-node-actions"
@@ -214,11 +222,16 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
                   <DropdownList>{items}</DropdownList>
                 </Dropdown>
               )}
+
               {secondBadge}
-              {renderBadgedLink(nodeData)}
-              {renderHealth(nodeData.health)}
+
+              <div className={nodeInfoStyle}>
+                {renderBadgedLink(nodeData)}
+                {renderHealth(nodeData.health)}
+              </div>
             </span>
           </div>
+
           <div>
             {this.renderBadgeSummary(nodeData)}
             {shouldRenderDestsList && <div>{destsList}</div>}
@@ -228,12 +241,13 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
             {shouldRenderWorkload && this.renderWorkloadSection(nodeData)}
           </div>
         </div>
+
         {shouldRenderTraces ? this.renderWithTabs(nodeData) : this.renderTrafficOnly()}
       </div>
     );
   }
 
-  private renderWorkloadSection = (nodeData: DecoratedGraphNodeData) => {
+  private renderWorkloadSection = (nodeData: DecoratedGraphNodeData): React.ReactNode => {
     if (!nodeData.hasWorkloadEntry) {
       return <div>{renderBadgedLink(nodeData, NodeType.WORKLOAD)}</div>;
     }
@@ -253,6 +267,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     return (
       <>
         {getBadge(nodeData, NodeType.WORKLOAD)}
+
         <ExpandableSection
           toggleText={
             nodeData.hasWorkloadEntry.length === 1
@@ -267,7 +282,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     );
   };
 
-  private renderGatewayHostnames = (nodeData: DecoratedGraphNodeData) => {
+  private renderGatewayHostnames = (nodeData: DecoratedGraphNodeData): React.ReactNode => {
     if (nodeData.isGateway?.ingressInfo?.hostnames && nodeData.isGateway?.ingressInfo?.hostnames.length > 0) {
       return this.renderHostnamesSection(nodeData.isGateway?.ingressInfo?.hostnames);
     }
@@ -283,11 +298,11 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     return null;
   };
 
-  private renderVsHostnames = (nodeData: DecoratedGraphNodeData) => {
+  private renderVsHostnames = (nodeData: DecoratedGraphNodeData): React.ReactNode => {
     return this.renderHostnamesSection(nodeData.hasVS?.hostnames!);
   };
 
-  private renderHostnamesSection = (hostnames: string[]) => {
+  private renderHostnamesSection = (hostnames: string[]): React.ReactNode => {
     const numberOfHostnames = hostnames.length;
     let toggleText = `${numberOfHostnames} hosts`;
 
@@ -306,7 +321,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     );
   };
 
-  private renderTrafficOnly() {
+  private renderTrafficOnly(): React.ReactNode {
     return (
       <div className={panelBodyStyle}>
         <SummaryPanelNodeTraffic {...this.props} />
@@ -314,7 +329,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     );
   }
 
-  private renderWithTabs(nodeData: DecoratedGraphNodeData) {
+  private renderWithTabs(nodeData: DecoratedGraphNodeData): React.ReactNode {
     return (
       <div className={summaryBodyTabs}>
         <SimpleTabs id="graph_summary_tabs" defaultTab={0} style={{ paddingBottom: '0.5rem' }}>
@@ -323,6 +338,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
               <SummaryPanelNodeTraffic {...this.props} />
             </div>
           </Tab>
+
           <Tab style={summaryFont} title="Traces" eventKey={1}>
             <SummaryPanelNodeTraces nodeData={nodeData} queryTime={this.props.queryTime - this.props.duration} />
           </Tab>
@@ -331,7 +347,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     );
   }
 
-  private onToggleActions = (isOpen: boolean) => {
+  private onToggleActions = (isOpen: boolean): void => {
     this.setState({ isActionOpen: isOpen });
 
     if (this.props.onKebabToggled) {
@@ -339,12 +355,12 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     }
   };
 
-  private renderK8sGatewayAPI(isK8sGatewayAPI?: boolean) {
+  private renderK8sGatewayAPI(isK8sGatewayAPI?: boolean): React.ReactNode {
     return isK8sGatewayAPI ? ' (K8s GW API)' : '';
   }
 
   // TODO:(see https://github.com/kiali/kiali-design/issues/63) If we want to show an icon for SE uncomment below
-  private renderBadgeSummary = (nodeData: DecoratedGraphNodeData) => {
+  private renderBadgeSummary = (nodeData: DecoratedGraphNodeData): React.ReactNode => {
     const {
       hasCB,
       hasFaultInjection,
@@ -359,6 +375,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       isK8sGatewayAPI,
       isOutOfMesh
     } = nodeData;
+
     const hasTrafficScenario =
       hasRequestRouting ||
       hasFaultInjection ||
@@ -366,6 +383,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       hasTrafficShifting ||
       hasTCPTrafficShifting ||
       hasRequestTimeout;
+
     const shouldRenderGatewayHostnames =
       (nodeData.isGateway?.ingressInfo?.hostnames !== undefined &&
         nodeData.isGateway.ingressInfo.hostnames.length !== 0) ||
@@ -373,8 +391,11 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
         nodeData.isGateway.egressInfo.hostnames.length !== 0) ||
       (nodeData.isGateway?.gatewayAPIInfo?.hostnames !== undefined &&
         nodeData.isGateway.gatewayAPIInfo.hostnames.length !== 0);
+
     const shouldRenderVsHostnames = nodeData.hasVS?.hostnames !== undefined && nodeData.hasVS?.hostnames.length !== 0;
+
     const shouldRenderRank = this.props.showRank;
+
     return (
       <div style={{ marginTop: '0.5rem', marginBottom: '0.5rem' }}>
         {hasCB && (
@@ -385,6 +406,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
             </span>
           </div>
         )}
+
         {hasVS && !hasTrafficScenario && (
           <>
             <div>
@@ -396,24 +418,28 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
             {shouldRenderVsHostnames && this.renderVsHostnames(nodeData)}
           </>
         )}
+
         {hasMirroring && (
           <div>
             <KialiIcon.Mirroring />
             <span style={{ paddingLeft: '0.25rem' }}>Has Mirroring{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
           </div>
         )}
+
         {isOutOfMesh && !serverConfig.ambientEnabled && (
           <div>
             <KialiIcon.OutOfMesh />
             <span style={{ paddingLeft: '0.25rem' }}>Has Missing Sidecar</span>
           </div>
         )}
+
         {isOutOfMesh && serverConfig.ambientEnabled && (
           <div>
             <KialiIcon.OutOfMesh />
             <span style={{ paddingLeft: '0.25rem' }}>Out of Mesh</span>
           </div>
         )}
+
         {isDead && (
           <div>
             <span style={{ marginRight: '0.25rem' }}>
@@ -422,6 +448,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
             <span style={{ paddingLeft: '0.25rem' }}>Has No Running Pods</span>
           </div>
         )}
+
         {hasRequestRouting && (
           <>
             <div>
@@ -433,6 +460,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
             {shouldRenderVsHostnames && this.renderVsHostnames(nodeData)}
           </>
         )}
+
         {hasFaultInjection && (
           <div>
             <KialiIcon.FaultInjection />
@@ -441,6 +469,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
             </span>
           </div>
         )}
+
         {hasTrafficShifting && (
           <div>
             <KialiIcon.TrafficShifting />
@@ -449,6 +478,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
             </span>
           </div>
         )}
+
         {hasTCPTrafficShifting && (
           <div>
             <KialiIcon.TrafficShifting />
@@ -457,6 +487,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
             </span>
           </div>
         )}
+
         {hasRequestTimeout && (
           <div>
             <KialiIcon.RequestTimeout />
@@ -465,6 +496,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
             </span>
           </div>
         )}
+
         {isGateway && (
           <>
             <div>
@@ -474,6 +506,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
             {shouldRenderGatewayHostnames && this.renderGatewayHostnames(nodeData)}
           </>
         )}
+
         {shouldRenderRank && (
           <div>
             <KialiIcon.Rank />
@@ -486,10 +519,11 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     );
   };
 
-  private renderDestServices = (data: DecoratedGraphNodeData) => {
+  private renderDestServices = (data: DecoratedGraphNodeData): React.ReactNode => {
     const destServices: DestService[] | undefined = data.destServices;
 
-    const entries: any[] = [];
+    const entries: React.ReactNode[] = [];
+
     if (!destServices) {
       return entries;
     }
@@ -501,11 +535,13 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     return entries;
   };
 
-  private handleLaunchWizard = (key: WizardAction, mode: WizardMode) => {
+  private handleLaunchWizard = (key: WizardAction, mode: WizardMode): void => {
     this.onToggleActions(false);
+
     if (this.props.onLaunchWizard) {
       const node = this.props.data.summaryTarget;
       const nodeData = this.props.data.isPF ? node.getData() : decoratedNodeData(node);
+
       this.props.onLaunchWizard(
         key,
         mode,
@@ -517,15 +553,16 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     }
   };
 
-  private handleDeleteTrafficRouting = (key: string) => {
+  private handleDeleteTrafficRouting = (key: string): void => {
     this.onToggleActions(false);
+
     if (this.props.onDeleteTrafficRouting) {
       this.props.onDeleteTrafficRouting(key, this.props.serviceDetails!);
     }
   };
 }
 
-export function SummaryPanelNode(props: SummaryPanelNodeProps) {
+export const SummaryPanelNode: React.FC<SummaryPanelNodeProps> = (props: SummaryPanelNodeProps) => {
   const tracingState = useKialiSelector(state => state.tracingState);
   const kiosk = useKialiSelector(state => state.globalState.kiosk);
   const rankResult = useKialiSelector(state => state.graph.rankResult);
@@ -536,6 +573,7 @@ export function SummaryPanelNode(props: SummaryPanelNodeProps) {
 
   const node = props.data.summaryTarget;
   const nodeData = props.data.isPF ? node.getData() : decoratedNodeData(node);
+
   const [serviceDetails, gateways, peerAuthentications, isServiceDetailsLoading] = useServiceDetailForGraphNode(
     nodeData,
     isKebabOpen,
@@ -543,9 +581,9 @@ export function SummaryPanelNode(props: SummaryPanelNodeProps) {
     updateTime
   );
 
-  function handleKebabToggled(isOpen: boolean) {
+  const handleKebabToggled = (isOpen: boolean) => {
     setIsKebabOpen(isOpen);
-  }
+  };
 
   return (
     <SummaryPanelNodeComponent
@@ -560,4 +598,4 @@ export function SummaryPanelNode(props: SummaryPanelNodeProps) {
       {...props}
     />
   );
-}
+};
