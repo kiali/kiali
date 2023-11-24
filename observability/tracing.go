@@ -5,6 +5,7 @@ package observability
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"time"
 
@@ -172,34 +173,66 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 					)
 				} else {
 					log.Debugf("Creating OpenTelemetry collector with URL https://%s", collectorURL)
-
-					client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(collectorURL),
-						tracingOptions,
-					)
+					// That's mainly for testing
+					if tracingOpt.Otel.SkipVerify {
+						client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(collectorURL),
+							otlptracehttp.WithTLSClientConfig(&tls.Config{InsecureSkipVerify: true}),
+							tracingOptions,
+						)
+					} else {
+						client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(collectorURL),
+							tracingOptions,
+						)
+					}
 				}
 
 				ctx := context.Background()
-				exporter, err := otlptrace.New(ctx, client)
-				return exporter, err
+				httpExporter, err2 := otlptrace.New(ctx, client)
+				return httpExporter, err2
 			} else {
 				if tracingOpt.Otel.Protocol == GRPC {
 					log.Debugf("Creating OpenTelemetry grpc collector with URL %s", collectorURL)
 					ctx := context.Background()
-					ctx, cancel := context.WithTimeout(ctx, time.Second)
+					ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 					defer cancel()
 
 					grpcExporter := &otlptrace.Exporter{}
 
 					if tracingOpt.Otel.TlsEnabled {
-						creds, err := credentials.NewClientTLSFromFile("/tmp/tls.crt", "")
-						if err != nil {
-							log.Fatalf("Error loading certificate: %v", err)
-							return nil, err
+						var creds credentials.TransportCredentials
+						// That's mainly for testing
+						if tracingOpt.Otel.SkipVerify {
+							tlsConfig := &tls.Config{
+								InsecureSkipVerify: true,
+							}
+							creds = credentials.NewTLS(tlsConfig)
+						} else {
+							cert_name := tracingOpt.Otel.CaName
+							if cert_name != "" {
+								var err2 error
+								creds, err2 = credentials.NewClientTLSFromFile(cert_name, "")
+								if err2 != nil {
+									log.Fatalf("Error loading certificate: %v", err2)
+									return nil, err2
+								}
+							} else {
+								log.Fatalf("ca_name is required")
+								return nil, fmt.Errorf("ca_name is required")
+							}
 						}
+
 						grpcExporter, err = otlptracegrpc.New(ctx, otlptracegrpc.WithTLSCredentials(creds),
 							otlptracegrpc.WithEndpoint(collectorURL),
 							otlptracegrpc.WithDialOption(grpc.WithBlock()),
 						)
+						if err != nil {
+							log.Fatalf("Error creating otlp trace: %v", err)
+							return nil, err
+						}
+						if grpcExporter == nil && err == nil {
+							log.Fatalf("Error creating otlp trace")
+							return nil, fmt.Errorf("Error returned nil grpc exporter. This might be due to missconfiguration.")
+						}
 					} else {
 						grpcExporter, err = otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(),
 							otlptracegrpc.WithEndpoint(collectorURL),

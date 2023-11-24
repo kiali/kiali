@@ -99,7 +99,9 @@ type Metrics struct {
 
 // OpenTelemetry collector configuration for tracing
 type OtelCollector struct {
+	CaName     string `yaml:"ca_name,omitempty"`
 	Protocol   string `yaml:"protocol,omitempty"` // http or https or grp
+	SkipVerify bool   `yaml:"skip_verify,omitempty"`
 	TlsEnabled bool   `yaml:"tls_enabled,omitempty"`
 }
 
@@ -793,7 +795,9 @@ func NewConfig() (c *Config) {
 					CollectorURL:  "http://jaeger-collector.istio-system:14268/api/traces",
 					Enabled:       false,
 					Otel: OtelCollector{
+						CaName:     "",
 						Protocol:   "http",
+						SkipVerify: true,
 						TlsEnabled: false,
 					},
 					// Sample half of traces.
