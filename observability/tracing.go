@@ -175,6 +175,7 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 					log.Debugf("Creating OpenTelemetry collector with URL https://%s", collectorURL)
 					// That's mainly for testing
 					if tracingOpt.Otel.SkipVerify {
+						log.Trace("OpenTelemetry collector will not verify the remote certificate")
 						client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(collectorURL),
 							otlptracehttp.WithTLSClientConfig(&tls.Config{InsecureSkipVerify: true}),
 							tracingOptions,
@@ -202,6 +203,7 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 						var creds credentials.TransportCredentials
 						// That's mainly for testing
 						if tracingOpt.Otel.SkipVerify {
+							log.Trace("OpenTelemetry collector will not verify the remote certificate")
 							tlsConfig := &tls.Config{
 								InsecureSkipVerify: true,
 							}
