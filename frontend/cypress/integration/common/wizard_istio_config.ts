@@ -31,6 +31,11 @@ When('user deletes gateway named {string} and the resource is no longer availabl
   ensureKialiFinishedLoading();
 });
 
+When('user deletes sidecar named {string} and the resource is no longer available', (name: string) => {
+  cy.exec(`kubectl delete sidecar ${name} -n bookinfo`, { failOnNonZeroExit: false });
+  ensureKialiFinishedLoading();
+});
+
 When('user deletes service named {string} and the resource is no longer available', (name: string) => {
   cy.exec(`kubectl delete serviceEntries ${name} -n bookinfo`, { failOnNonZeroExit: false });
   ensureKialiFinishedLoading();
