@@ -112,7 +112,13 @@ type State = {
 
 const formPadding = kialiStyle({ padding: '30px 20px 30px 20px' });
 
-const editIcon = kialiStyle({ padding: '0 0 0 0', marginLeft: '0.35em' });
+const editIcon = kialiStyle({ marginLeft: '0.35em' });
+
+const editButton = kialiStyle({ marginLeft: '0.5em' });
+
+const editStyle = kialiStyle({
+  display: 'flex'
+});
 
 const DIC = {
   AuthorizationPolicy: AUTHORIZATION_POLICIES,
@@ -617,17 +623,20 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
               <SidecarForm sidecar={this.state.sidecar} onChange={this.onChangeSidecar} />
             )}
             <FormGroup fieldId="labels" label="Labels">
-              <Labels labels={this.state.labels} />
-              <Button
-                type="button"
-                variant="link"
-                isInline
-                onClick={() => this.onLabelsWizardToggle(true)}
-                data-test={'edit-labels'}
-              >
-                Edit Labels
-                <EditIcon className={editIcon} />
-              </Button>
+              <div className={editStyle}>
+                <Labels labels={this.state.labels} />
+                <Button
+                  className={editButton}
+                  type="button"
+                  variant="link"
+                  isInline
+                  onClick={() => this.onLabelsWizardToggle(true)}
+                  data-test={'edit-labels'}
+                >
+                  Edit Labels
+                  <EditIcon className={editIcon} />
+                </Button>
+              </div>
               <WizardAnnotations
                 showAnotationsWizard={this.state.showLabelsWizard}
                 header={'labels'}
@@ -638,17 +647,20 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
               />
             </FormGroup>
             <FormGroup fieldId="annotations" label="Annotations">
-              <Labels labels={this.state.annotations} expanded={false} header={'annotations'} />
-              <Button
-                type="button"
-                variant="link"
-                isInline
-                onClick={() => this.onAnnotationsWizardToggle(true)}
-                data-test={'edit-annotations'}
-              >
-                Edit Annotations
-                <EditIcon className={editIcon} />
-              </Button>
+              <div className={editStyle}>
+                <Labels labels={this.state.annotations} header={'annotations'} />
+                <Button
+                  className={editButton}
+                  type="button"
+                  variant="link"
+                  isInline
+                  onClick={() => this.onAnnotationsWizardToggle(true)}
+                  data-test={'edit-annotations'}
+                >
+                  Edit Annotations
+                  <EditIcon className={editIcon} />
+                </Button>
+              </div>
               <WizardAnnotations
                 showAnotationsWizard={this.state.showAnnotationsWizard}
                 header={'annotations'}
