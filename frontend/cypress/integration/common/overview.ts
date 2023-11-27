@@ -136,6 +136,7 @@ Then(`user sees the {string} namespace card`, (ns: string) => {
 Then(`user sees the {string} namespace card in cluster {string}`, (ns: string, cluster: string) => {
   // TODO: Incorporate cluster into existing namespace checks with cluster+ns as data-test-id.
   cy.get(`div[data-test^="${ns}"]`).contains(cluster).should('exist').and('length', 1);
+  cy.get(`[data-test="CardItem_${ns}_${cluster}"]`);
 });
 
 Then(`user doesn't see the {string} namespace card`, ns => {
@@ -319,4 +320,15 @@ And('user sees the {string} label in the {string} {string} namespace card',(labe
 
 And('user does not see the {string} label in the {string} {string} namespace card',(label:string, cluster:string, ns:string) =>{
   cy.get(`[data-test="CardItem_${ns}_${cluster}"]`).contains(label).should('not.exist');
+});
+
+And('cluster badges for {string} and {string} cluster are visible in the LIST view', (cluster1:string, cluster2:string) =>{
+  cy.get('[data-test="VirtualItem_bookinfo"]').find('#pfbadge-C').should('have.length',2);
+  cy.get('[data-test="VirtualItem_bookinfo"]').contains('east').should('be.visible');
+  cy.get('[data-test="VirtualItem_bookinfo"]').contains('west').should('be.visible');
+});
+
+And('Control Plane metrics should be visible',() => {
+  cy.get('[data-test="VirtualItem_istio-system"]').find('[data-test="cpu-chart"]');
+  cy.get('[data-test="VirtualItem_istio-system"]').find('[data-test="memory-chart"]');
 });
