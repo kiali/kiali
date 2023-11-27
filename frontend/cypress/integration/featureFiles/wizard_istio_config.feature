@@ -26,8 +26,10 @@ Feature: Kiali Istio Config page
     And user clicks on Edit Labels
     And user adds key "app" and value "details" for and saves
     And user clicks on Edit Annotations
-    And user adds key "key" and value "value" for and saves
+    And user adds key "key1" and value "value1" for and saves
     And user previews the configuration
+    Then "app: details" should be in preview
+    Then "key1: value1" should be in preview
     And user creates the istio config
     Then the "Sidecar" "mysidecarwithlabels" should be listed in "bookinfo" namespace
 

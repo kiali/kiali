@@ -170,3 +170,6 @@ And('user adds key {string} and value {string} for and saves', (key: string, val
   cy.get('button[data-test="save-button"]').click()
 });
 
+Then('{string} should be in preview', (value: string) => {
+  cy.get('#ace-editor').contains(value);
+});
