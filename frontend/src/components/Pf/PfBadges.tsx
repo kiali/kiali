@@ -76,14 +76,14 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
 export const kialiBadge = kialiStyle({
   backgroundColor: PFColors.Badge,
   color: PFColors.White,
-  borderRadius: '1.25rem',
+  borderRadius: '20px',
   flexShrink: 0,
   fontFamily: 'var(--pf-v5-global--FontFamily--text)',
   fontSize: 'var(--kiali-global--font-size)',
-  lineHeight: '1rem',
-  marginRight: '0.25rem',
+  lineHeight: '16px',
+  marginRight: '4px',
   minWidth: '1.5em',
-  padding: '0.075rem 0.25rem',
+  padding: '1px 4px',
   textAlign: 'center',
   whiteSpace: 'nowrap'
 });
@@ -91,14 +91,14 @@ export const kialiBadge = kialiStyle({
 export const kialiBadgeSmall = kialiStyle({
   backgroundColor: PFColors.Badge,
   color: PFColors.White,
-  borderRadius: '1.25rem',
+  borderRadius: '20px',
   flexShrink: 0,
   fontFamily: 'var(--pf-v5-global--FontFamily--text)',
-  fontSize: '0.75rem',
-  lineHeight: '0.75rem',
-  marginRight: '0.25rem',
+  fontSize: '12px',
+  lineHeight: '13px',
+  marginRight: '5px',
   minWidth: '1.3em',
-  padding: '0.075rem 0.25rem',
+  padding: '1px 3px',
   textAlign: 'center',
   whiteSpace: 'nowrap'
 });
@@ -110,7 +110,7 @@ type PFBadgeProps = {
   position?: TooltipPosition; // default=auto
   size?: 'global' | 'sm';
   style?: CSSProperties;
-  tooltip?: React.ReactFragment;
+  tooltip?: React.ReactNode;
 };
 
 export const PFBadge: React.FC<PFBadgeProps> = (props: PFBadgeProps) => {

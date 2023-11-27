@@ -48,6 +48,13 @@ export const globalStyle = kialiStyle({
     },
 
     /**
+     * Reduce padding of menu group title
+     */
+    '& .pf-v5-c-menu__group-title': {
+      paddingTop: '0.5rem'
+    },
+
+    /**
      * Padding for table rows
      */
     '& .pf-v5-c-table': {

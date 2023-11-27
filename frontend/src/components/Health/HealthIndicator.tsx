@@ -2,13 +2,14 @@ import * as React from 'react';
 import { PopoverPosition, Tooltip } from '@patternfly/react-core';
 import { HealthDetails } from './HealthDetails';
 import * as H from '../../types/Health';
-import { createIcon } from './Helper';
+import { Size, createIcon } from './Helper';
 import { createTooltipIcon } from '../../config/KialiIcon';
 import { healthIndicatorStyle } from '../../styles/HealthStyle';
 
 interface HealthIndicatorProps {
   health?: H.Health;
   id: string;
+  size?: Size;
   tooltipPlacement?: PopoverPosition;
 }
 
@@ -16,8 +17,7 @@ export const HealthIndicator: React.FC<HealthIndicatorProps> = (props: HealthInd
   const globalStatus = props.health ? props.health.getGlobalStatus() : H.NA;
 
   if (props.health) {
-    // HealthIndicator will render always in SMALL mode
-    const icon = createIcon(globalStatus, 'md');
+    const icon = createIcon(globalStatus, props.size ?? 'md');
 
     return (
       <Tooltip

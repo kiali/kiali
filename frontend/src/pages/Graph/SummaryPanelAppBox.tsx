@@ -38,6 +38,7 @@ import {
   MenuToggleElement
 } from '@patternfly/react-core';
 import { kebabToggleStyle } from 'styles/DropdownStyles';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type SummaryPanelAppBoxMetricsState = {
   grpcRequestIn: Datapoint[];
@@ -91,6 +92,11 @@ const defaultState: SummaryPanelAppBoxState = {
   metricsLoadError: null,
   ...defaultMetricsState
 };
+
+const nodeInfoStyle = kialiStyle({
+  display: 'flex',
+  marginTop: '0.25rem'
+});
 
 export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, SummaryPanelAppBoxState> {
   private metricsPromise?: CancelablePromise<Response<IstioMetricsMap>[]>;
@@ -153,7 +159,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
 
     const options = getOptions(nodeData);
     const items = [
-      <DropdownGroup key="show" label="Show" className="kiali-appbox-menu">
+      <DropdownGroup key="show" label="Show">
         {options.map((o, i) => {
           return (
             <DropdownItem key={`option-${i}`} onClick={() => clickHandler(o, this.props.kiosk)}>
@@ -188,8 +194,10 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
       <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
         <div className={panelHeadingStyle}>
           {getTitle('Application')}
+
           <span>
             {firstBadge}
+
             {options.length > 0 && (
               <Dropdown
                 id="summary-appbox-actions"
@@ -214,16 +222,22 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
                 <DropdownList>{items}</DropdownList>
               </Dropdown>
             )}
+
             {secondBadge}
-            {renderBadgedLink(nodeData)}
-            {renderHealth(nodeData.health)}
+
+            <div className={nodeInfoStyle}>
+              {renderBadgedLink(nodeData)}
+              {renderHealth(nodeData.health)}
+            </div>
           </span>
+
           <div>
             {this.renderBadgeSummary(appBox, isPF)}
             {serviceList.length > 0 && <div>{serviceList}</div>}
             {workloadList.length > 0 && <div> {workloadList}</div>}
           </div>
         </div>
+
         <div className={panelBodyStyle}>
           {hasGrpc && isGrpcRequests && (
             <>
@@ -231,16 +245,19 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
               {hr()}
             </>
           )}
+
           {hasHttp && (
             <>
               {this.renderHttpRequests(appBox, isPF)}
               {hr()}
             </>
           )}
+
           <div>
             {this.renderSparklines(appBox, isPF)}
             {hr()}
           </div>
+
           {hasGrpc && !hasGrpcIn && renderNoTraffic('gRPC inbound')}
           {hasGrpc && !hasGrpcOut && renderNoTraffic('gRPC outbound')}
           {!hasGrpc && renderNoTraffic('gRPC')}
@@ -255,11 +272,11 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     );
   }
 
-  private onToggleActions = isExpanded => {
+  private onToggleActions = (isExpanded: boolean): void => {
     this.setState({ isOpen: isExpanded });
   };
 
-  private updateCharts = (props: SummaryPanelPropType) => {
+  private updateCharts = (props: SummaryPanelPropType): void => {
     const isPF = !!this.props.data.isPF;
     const appBox = props.data.summaryTarget;
     const nodeData = isPF ? appBox.getData() : decoratedNodeData(appBox);
@@ -438,7 +455,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     return false;
   };
 
-  private renderBadgeSummary = (appBox, isPF: boolean) => {
+  private renderBadgeSummary = (appBox, isPF: boolean): React.ReactNode => {
     if (isPF) {
       return this.renderBadgeSummaryPF(appBox);
     }
@@ -462,6 +479,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
             <span style={{ paddingLeft: '0.25rem' }}>Has Circuit Breaker</span>
           </div>
         )}
+
         {hasVS && (
           <div>
             <KialiIcon.VirtualService />
@@ -472,12 +490,13 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     );
   };
 
-  private renderBadgeSummaryPF = (appBox: Node) => {
+  private renderBadgeSummaryPF = (appBox: Node): React.ReactNode => {
     const appBoxData = appBox.getData();
     let hasCB: boolean = appBoxData[NodeAttr.hasCB] === true;
     let hasVS: boolean = appBoxData[NodeAttr.hasVS] === true;
 
     const appBoxChildren = appBox.getAllNodeChildren();
+
     selectOr(appBoxChildren, [
       [{ prop: NodeAttr.hasCB, op: 'truthy' }],
       [{ prop: NodeAttr.hasVS, op: 'truthy' }]
@@ -494,6 +513,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
             <span style={{ paddingLeft: '0.25rem' }}>Has Circuit Breaker</span>
           </div>
         )}
+
         {hasVS && (
           <div>
             <KialiIcon.VirtualService />
@@ -504,7 +524,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     );
   };
 
-  private renderGrpcRequests = (appBox, isPF: boolean) => {
+  private renderGrpcRequests = (appBox, isPF: boolean): React.ReactNode => {
     if (isPF) {
       return this.renderGrpcRequestsPF(appBox);
     }
@@ -531,13 +551,14 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     );
   };
 
-  private renderGrpcRequestsPF = (appBox: Node) => {
+  private renderGrpcRequestsPF = (appBox: Node): React.ReactNode => {
     // only consider the physical children to avoid inflated rates
     const appBoxChildren = appBox.getAllNodeChildren();
     const validChildren = selectAnd(appBoxChildren, [
       { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE },
       { prop: NodeAttr.nodeType, op: '!=', val: NodeType.AGGREGATE }
     ]);
+
     const inbound = getAccumulatedTrafficRateGrpc(edgesIn(validChildren as Node[]), true);
     const outbound = getAccumulatedTrafficRateGrpc(edgesOut(validChildren as Node[]), true);
 
@@ -556,7 +577,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     );
   };
 
-  private renderHttpRequests = (appBox, isPF: boolean) => {
+  private renderHttpRequests = (appBox, isPF: boolean): React.ReactNode => {
     if (isPF) {
       return this.renderHttpRequestsPF(appBox);
     }
@@ -588,7 +609,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     );
   };
 
-  private renderHttpRequestsPF = (appBox: Node) => {
+  private renderHttpRequestsPF = (appBox: Node): React.ReactNode => {
     // only consider the physical children to avoid inflated rates
     const appBoxChildren = appBox.getAllNodeChildren();
     const validChildren = selectAnd(appBoxChildren, [
@@ -618,7 +639,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     );
   };
 
-  private renderSparklines = (appBox, isPF: boolean) => {
+  private renderSparklines = (appBox, isPF: boolean): React.ReactNode => {
     if (this.state.loading) {
       return <strong>Loading charts...</strong>;
     } else if (this.state.metricsLoadError) {
@@ -640,7 +661,8 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     const hasTcp = this.hasTcpTraffic(appBox, isPF);
     const hasTcpIn = hasTcp && this.hasTcpIn(appBox, isPF);
     const hasTcpOut = hasTcp && this.hasTcpOut(appBox, isPF);
-    let grpcCharts, httpCharts, tcpCharts;
+
+    let grpcCharts: React.ReactNode, httpCharts: React.ReactNode, tcpCharts: React.ReactNode;
 
     if (hasGrpc) {
       grpcCharts = isGrpcRequests ? (
@@ -653,6 +675,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
               dataErrors={this.state.grpcRequestErrIn}
             />
           )}
+
           {hasGrpcOut && (
             <RequestChart
               key="grpc-outbound-request"
@@ -672,6 +695,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
               unit="messages"
             />
           )}
+
           {hasGrpcOut && (
             <StreamChart
               label="gRPC - Outbound Traffic"
@@ -695,6 +719,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
               dataErrors={this.state.httpRequestErrIn}
             />
           )}
+
           {hasHttpOut && (
             <RequestChart
               key="http-outbound-request"
@@ -719,6 +744,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
               unit="bytes"
             />
           )}
+
           {hasTcpOut && (
             <StreamChart
               key="tcp-outbound-request"
@@ -741,26 +767,30 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     );
   };
 
-  private renderServiceList = (appBox, isPF: boolean): React.ReactFragment[] => {
+  private renderServiceList = (appBox, isPF: boolean): React.ReactNode[] => {
     if (isPF) {
       return this.renderServiceListPF(appBox);
     }
 
     // likely 0 or 1 but support N in case of unanticipated labeling
-    const serviceList: any[] = [];
+    const serviceList: React.ReactNode[] = [];
 
     appBox.children(`node[nodeType = "${NodeType.SERVICE}"]`).forEach((serviceNode, i) => {
       const serviceNodeData = isPF ? serviceNode.getData() : decoratedNodeData(serviceNode);
       serviceList.push(renderBadgedLink(serviceNodeData, NodeType.SERVICE));
+
       const aggregates = appBox.children(
         `node[nodeType = "${NodeType.AGGREGATE}"][service = "${serviceNodeData.service}"]`
       );
+
       if (!!aggregates && aggregates.length > 0) {
-        const aggregateList: any[] = [];
-        aggregates.forEach(aggregateNode => {
+        const aggregateList: React.ReactNode[] = [];
+
+        aggregates.forEach((aggregateNode: any) => {
           const aggregateNodeData = isPF ? aggregateNode.getData() : decoratedNodeData(aggregateNode);
           aggregateList.push(renderBadgedLink(aggregateNodeData, NodeType.AGGREGATE));
         });
+
         serviceList.push(<div key={`service-${i}`}>{aggregateList}</div>);
       }
     });
@@ -768,25 +798,29 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     return serviceList;
   };
 
-  private renderServiceListPF = (appBox: Node): React.ReactFragment[] => {
+  private renderServiceListPF = (appBox: Node): React.ReactNode[] => {
     // likely 0 or 1 but support N in case of unanticipated labeling
-    const serviceList: any[] = [];
+    const serviceList: React.ReactNode[] = [];
 
     const appBoxChildren = appBox.getAllNodeChildren();
 
     select(appBoxChildren, { prop: NodeAttr.nodeType, val: NodeType.SERVICE }).forEach((serviceNode, i) => {
       const serviceNodeData = serviceNode.getData();
       serviceList.push(renderBadgedLink(serviceNodeData, NodeType.SERVICE));
+
       const aggregates = selectAnd(appBoxChildren, [
         { prop: NodeAttr.nodeType, val: NodeType.AGGREGATE },
         { prop: NodeAttr.service, val: serviceNodeData.service }
       ]);
+
       if (!!aggregates && aggregates.length > 0) {
-        const aggregateList: any[] = [];
+        const aggregateList: React.ReactNode[] = [];
+
         aggregates.forEach(aggregateNode => {
           const aggregateNodeData = aggregateNode.getData();
           aggregateList.push(renderBadgedLink(aggregateNodeData, NodeType.AGGREGATE));
         });
+
         serviceList.push(<div key={`service-${i}`}>{aggregateList}</div>);
       }
     });
@@ -794,12 +828,12 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     return serviceList;
   };
 
-  private renderWorkloadList = (appBox, isPF: boolean): React.ReactFragment[] => {
+  private renderWorkloadList = (appBox, isPF: boolean): React.ReactNode[] => {
     if (isPF) {
       return this.renderWorkloadListPF(appBox);
     }
 
-    const workloadList: any[] = [];
+    const workloadList: React.ReactNode[] = [];
 
     appBox.children('node[workload]').forEach(node => {
       const nodeData = isPF ? node.getData() : decoratedNodeData(node);
@@ -809,8 +843,8 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     return workloadList;
   };
 
-  private renderWorkloadListPF = (appBox: Node): React.ReactFragment[] => {
-    const workloadList: any[] = [];
+  private renderWorkloadListPF = (appBox: Node): React.ReactNode[] => {
+    const workloadList: React.ReactNode[] = [];
 
     const appBoxChildren = appBox.getAllNodeChildren();
 
@@ -826,7 +860,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     return this.props.trafficRates.includes(TrafficRate.GRPC_REQUEST);
   };
 
-  private hasGrpcTraffic = (appBox, isPF: boolean): boolean => {
+  private hasGrpcTraffic = (appBox: any, isPF: boolean): boolean => {
     if (isPF) {
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
       const notServices = select(appBoxChildren, { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE });
@@ -842,7 +876,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     return appBox.children().filter('[nodeType != "service"]').filter('[grpcIn > 0],[grpcOut > 0]').size() > 0;
   };
 
-  private hasGrpcIn = (appBox, isPF: boolean): boolean => {
+  private hasGrpcIn = (appBox: any, isPF: boolean): boolean => {
     if (isPF) {
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
 
@@ -857,7 +891,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     return appBox.children().filter('[nodeType != "service"]').filter('[grpcIn > 0]').size() > 0;
   };
 
-  private hasGrpcOut = (appBox, isPF: boolean): boolean => {
+  private hasGrpcOut = (appBox: any, isPF: boolean): boolean => {
     if (isPF) {
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
 
@@ -868,10 +902,11 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
         ]).length > 0
       );
     }
+
     return appBox.children().filter('[nodeType != "service"]').filter('[grpcOut > 0]').size() > 0;
   };
 
-  private hasHttpTraffic = (appBox, isPF: boolean): boolean => {
+  private hasHttpTraffic = (appBox: any, isPF: boolean): boolean => {
     if (isPF) {
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
       const notServices = select(appBoxChildren, { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE });
@@ -886,7 +921,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     return appBox.children().filter('[nodeType != "service"]').filter('[httpIn > 0],[httpOut > 0]').size() > 0;
   };
 
-  private hasHttpIn = (appBox, isPF: boolean): boolean => {
+  private hasHttpIn = (appBox: any, isPF: boolean): boolean => {
     if (isPF) {
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
 
@@ -900,7 +935,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     return appBox.children().filter('[nodeType != "service"]').filter('[httpIn > 0]').size() > 0;
   };
 
-  private hasHttpOut = (appBox, isPF: boolean): boolean => {
+  private hasHttpOut = (appBox: any, isPF: boolean): boolean => {
     if (isPF) {
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
 
@@ -914,7 +949,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     return appBox.children().filter('[nodeType != "service"]').filter('[httpOut > 0]').size() > 0;
   };
 
-  private hasTcpTraffic = (appBox, isPF: boolean): boolean => {
+  private hasTcpTraffic = (appBox: any, isPF: boolean): boolean => {
     if (isPF) {
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
       const notServices = select(appBoxChildren, { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE });
@@ -929,7 +964,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     return appBox.children().filter('[nodeType != "service"]').filter('[tcpIn > 0],[tcpOut > 0]').size() > 0;
   };
 
-  private hasTcpIn = (appBox, isPF: boolean): boolean => {
+  private hasTcpIn = (appBox: any, isPF: boolean): boolean => {
     if (isPF) {
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
 
@@ -943,7 +978,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     return appBox.children().filter('[nodeType != "service"]').filter('[tcpIn > 0]').size() > 0;
   };
 
-  private hasTcpOut = (appBox, isPF: boolean): boolean => {
+  private hasTcpOut = (appBox: any, isPF: boolean): boolean => {
     if (isPF) {
       const appBoxChildren = (appBox as Node).getAllNodeChildren();
 
