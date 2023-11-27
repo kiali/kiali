@@ -46,7 +46,7 @@ while [[ $# -gt 0 ]]; do
       INSTALL_KIALI="$2"
       shift;shift
       ;;
-    -sc|--secure-distributor)
+    -sd|--secure-distributor)
       SECURE_DISTRIBUTOR="$2"
       shift;shift
       ;;
@@ -69,7 +69,7 @@ Valid command line arguments:
        If istio should be installed. true by default.
   -ik|--install-kiali:
        If Kiali should be installed. true by default.
-  -sc|--secure-distributor:
+  -sd|--secure-distributor:
        If the tempo distributor will use tls (Using a self signed certificate). false by default.
   -t|--tempo-ns:
        Tempo namespace. Tempo by default.
