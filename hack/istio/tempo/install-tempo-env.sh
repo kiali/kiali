@@ -172,7 +172,6 @@ spec:
     distributor:
       tls:
         enabled: true
-        caName: tempo-ca
         certName: tempo-cert
     queryFrontend:
       jaegerQuery:
