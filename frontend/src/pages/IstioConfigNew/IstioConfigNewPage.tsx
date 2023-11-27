@@ -112,9 +112,9 @@ type State = {
 
 const formPadding = kialiStyle({ padding: '30px 20px 30px 20px' });
 
-const editIcon = kialiStyle({ marginLeft: '0.35em' });
+const editIcon = kialiStyle({ marginLeft: '0.35em', marginBottom: '0.2em' });
 
-const editButton = kialiStyle({ marginLeft: '0.5em' });
+const editButton = kialiStyle({ marginLeft: '0.5em', display: 'flex', alignItems: 'center' });
 
 const editStyle = kialiStyle({
   display: 'flex'
@@ -633,7 +633,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
                   onClick={() => this.onLabelsWizardToggle(true)}
                   data-test={'edit-labels'}
                 >
-                  Edit Labels
+                  Edit
                   <EditIcon className={editIcon} />
                 </Button>
               </div>
@@ -657,7 +657,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
                   onClick={() => this.onAnnotationsWizardToggle(true)}
                   data-test={'edit-annotations'}
                 >
-                  Edit Annotations
+                  Edit
                   <EditIcon className={editIcon} />
                 </Button>
               </div>
