@@ -140,12 +140,17 @@ else
   echo -e "Installing minio and create secret \n"
   ${CLIENT_EXE} apply --namespace ${TEMPO_NS} -f ${SCRIPT_DIR}/minio.yaml
 
+  # Create secret for minio
   ${CLIENT_EXE} create secret generic -n ${TEMPO_NS} tempostack-dev-minio \
     --from-literal=bucket="tempo-data" \
     --from-literal=endpoint="http://minio:9000" \
     --from-literal=access_key_id="minio" \
     --from-literal=access_key_secret="minio123"
 
+  # Create ca and cert for the tls for the distributor
+   ${CLIENT_EXE} apply --namespace ${TEMPO_NS} -f ${SCRIPT_DIR}/tempo-ca.yaml
+
+  # Install TempoStack CR
   echo -e "Installing tempo \n"
   ${CLIENT_EXE} apply -n ${TEMPO_NS} -f - <<EOF
 apiVersion: tempo.grafana.com/v1alpha1
@@ -164,11 +169,15 @@ spec:
         memory: 2Gi
         cpu: 2000m
   template:
+    distributor:
+      tls:
+        enabled: true
+        caName: tempo-ca
+        certName: tempo-cert
     queryFrontend:
       jaegerQuery:
         enabled: false
 EOF
-
 
   echo "Script Directory: ${SCRIPT_DIR}"
 

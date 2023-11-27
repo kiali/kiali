@@ -196,7 +196,7 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 					ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 					defer cancel()
 
-					grpcExporter := &otlptrace.Exporter{}
+					var grpcExporter *otlptrace.Exporter
 
 					if tracingOpt.Otel.TlsEnabled {
 						var creds credentials.TransportCredentials
