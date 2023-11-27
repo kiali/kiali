@@ -15,6 +15,7 @@ DELETE_TEMPO="false"
 INSTALL_BOOKINFO="true"
 INSTALL_ISTIO="true"
 INSTALL_KIALI="false"
+SECURE_DISTRIBUTOR="false"
 TEMPO_NS="tempo"
 
 # process command line args
@@ -45,6 +46,10 @@ while [[ $# -gt 0 ]]; do
       INSTALL_KIALI="$2"
       shift;shift
       ;;
+    -sc|--secure-distributor)
+      SECURE_DISTRIBUTOR="$2"
+      shift;shift
+      ;;
     -t|--tempo-ns)
       TEMPO_NS="$2"
       shift;shift
@@ -64,6 +69,8 @@ Valid command line arguments:
        If istio should be installed. true by default.
   -ik|--install-kiali:
        If Kiali should be installed. true by default.
+  -sc|--secure-distributor:
+       If the tempo distributor will use tls (Using a self signed certificate). false by default.
   -t|--tempo-ns:
        Tempo namespace. Tempo by default.
   -h|--help:
@@ -147,11 +154,12 @@ else
     --from-literal=access_key_id="minio" \
     --from-literal=access_key_secret="minio123"
 
-  # Create ca and cert for the tls for the distributor
-   ${CLIENT_EXE} apply --namespace ${TEMPO_NS} -f ${SCRIPT_DIR}/tempo-ca.yaml
-
+  if [ "${SECURE_DISTRIBUTOR}" == "true" ]; then
+    # Create ca and cert for tls for the distributor
+    echo -e "Creating ca and cert for tls for the distributor \n"
+    ${CLIENT_EXE} apply --namespace ${TEMPO_NS} -f ${SCRIPT_DIR}/tempo-ca.yaml
   # Install TempoStack CR
-  echo -e "Installing tempo \n"
+  echo -e "Installing tempo with tls enabled \n"
   ${CLIENT_EXE} apply -n ${TEMPO_NS} -f - <<EOF
 apiVersion: tempo.grafana.com/v1alpha1
 kind: TempoStack
@@ -177,6 +185,33 @@ spec:
       jaegerQuery:
         enabled: false
 EOF
+  else
+    # Install TempoStack CR
+    echo -e "Installing tempo \n"
+    ${CLIENT_EXE} apply -n ${TEMPO_NS} -f - <<EOF
+apiVersion: tempo.grafana.com/v1alpha1
+kind: TempoStack
+metadata:
+  name: cr
+spec:
+  storageSize: 1Gi
+  storage:
+    secret:
+      type: s3
+      name: tempostack-dev-minio
+  resources:
+    total:
+      limits:
+        memory: 2Gi
+        cpu: 2000m
+  template:
+    queryFrontend:
+      jaegerQuery:
+        enabled: false
+EOF
+  fi
+
+
 
   echo "Script Directory: ${SCRIPT_DIR}"
 
