@@ -27,7 +27,11 @@ export const MastheadItems: React.FC = () => {
                 <Tooltip
                   entryDelay={0}
                   position="bottom"
-                  content={<div>{t('Kiali home cluster: {{name}}', { name: homeCluster?.name })}</div>}
+                  content={
+                    <div>
+                      {t('nav.home_cluster.tooltip', 'Kiali home cluster: {{name}}', { name: homeCluster?.name })}
+                    </div>
+                  }
                 >
                   <Label data-test="cluster-icon" color="blue" icon={<KialiIcon.Cluster />}>
                     {homeCluster?.name}

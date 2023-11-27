@@ -74,7 +74,7 @@ class MenuComponent extends React.Component<MenuProps, MenuState> {
 
   renderMenuItems = (): React.ReactNode => {
     const { location } = this.props;
-    const allNavMenuItems = navMenuItems;
+    const allNavMenuItems = navMenuItems(this.props.t);
     const graphEnableCytoscape = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'pf';
     const graphEnablePatternfly = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'cy';
     const graphEnableMeshClassic = serverConfig.kialiFeatureFlags.uiDefaults.mesh.impl === 'classic';
@@ -125,29 +125,29 @@ class MenuComponent extends React.Component<MenuProps, MenuState> {
         let title = item.title;
 
         if (item.id === 'tracing') {
-          return tracingUrl && <ExternalLink key={item.to} href={tracingUrl} name={this.props.t(title)} />;
+          return tracingUrl && <ExternalLink key={item.to} href={tracingUrl} name={title} />;
         }
 
         if (item.id === 'traffic_graph_cy' && !graphEnablePatternfly) {
-          title = 'Traffic Graph';
+          title = this.props.t('routes.traffic_graph', 'Traffic Graph');
         }
 
         if (item.id === 'traffic_graph_pf' && !graphEnableCytoscape) {
-          title = 'Traffic Graph';
+          title = this.props.t('routes.traffic_graph', 'Traffic Graph');
         }
 
         if (item.id === 'mesh_classic') {
-          title = 'Mesh';
+          title = this.props.t('routes.mesh', 'Mesh');
         }
 
         if (item.id === 'mesh_graph') {
-          title = 'Mesh';
+          title = this.props.t('routes.mesh', 'Mesh');
         }
 
         return (
           <NavItem isActive={activeMenuItem === item} key={item.to}>
             <Link id={item.id} to={item.to} onClick={() => history.push(item.to)}>
-              {this.props.t(title)}
+              {title}
             </Link>
           </NavItem>
         );

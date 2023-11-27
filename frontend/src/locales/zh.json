@@ -1,16 +1,23 @@
 {
-  "Overview": "概述",
-  "Graph": "图",
-  "Graph [Cy]": "有向图",
-  "Graph [PF]": "无向图",
-  "Applications": "应用",
-  "Workloads": "工作负载",
-  "Services": "服务",
-  "Istio Config": "Istio配置",
-  "Distributed Tracing": "分布式跟踪",
-  "Mesh": "网格",
-  "Kiali home cluster: {{name}}": "Kiali主集群: {{name}}",
-  "No labels": "没有标签",
-  "{{labels}} label": "{{labels}} 标签",
-  "{{labels}} labels": "{{labels}} 标签"
+  "nav": {
+    "home_cluster": {
+      "tooltip": "Kiali主集群: {{name}}"
+    }
+  },
+  "overview": {
+    "labels_other": "{{count}} 标签",
+    "no_labels": "没有标签"
+  },
+  "routes": {
+    "applications": "应用",
+    "graph": "图",
+    "graph_cy": "有向图",
+    "graph_pf": "无向图",
+    "istio_config": "Istio配置",
+    "mesh": "网格",
+    "overview": "概述",
+    "services": "服务",
+    "tracing": "分布式跟踪",
+    "workloads": "工作负载"
+  }
 }

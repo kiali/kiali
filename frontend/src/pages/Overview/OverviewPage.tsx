@@ -1261,9 +1261,13 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
     if (ns.labels) {
       const labelsLength = Object.entries(ns.labels).length;
-      labelsInfo = this.props.t(`{{labels}} label${labelsLength !== 1 ? 's' : ''}`, { labels: labelsLength });
+      labelsInfo = this.props.t('overview.labels', {
+        count: labelsLength,
+        defaultValue_one: '1 label',
+        defaultValue_other: '{{count}} labels'
+      });
     } else {
-      labelsInfo = this.props.t('No labels');
+      labelsInfo = this.props.t('overview.no_labels', 'No labels');
     }
 
     const labelContent = ns.labels ? (
