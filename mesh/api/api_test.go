@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -90,7 +91,7 @@ func setupMocks(t *testing.T) *business.Layer {
 	}
 
 	kialiNs := core_v1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: "infra"},
+		ObjectMeta: v1.ObjectMeta{Name: "istio-system"},
 	}
 
 	kialiSvc := []core_v1.Service{
@@ -104,7 +105,7 @@ func setupMocks(t *testing.T) *business.Layer {
 					"app.kubernetes.io/version": "v1.25",
 				},
 				Name:      "kiali-service",
-				Namespace: "infra",
+				Namespace: "istio-system",
 			},
 			Spec: core_v1.ServiceSpec{
 				Selector: map[string]string{
@@ -150,7 +151,7 @@ func setupMocks(t *testing.T) *business.Layer {
 	assert.Equal("kialiNetwork", a[0].Network)
 
 	require.Len(a[0].KialiInstances, 1, "GetClusters didn't resolve the local Kiali instance")
-	assert.Equal("infra", a[0].KialiInstances[0].Namespace, "GetClusters didn't set the right namespace of the Kiali instance")
+	assert.Equal("istio-system", a[0].KialiInstances[0].Namespace, "GetClusters didn't set the right namespace of the Kiali instance")
 	assert.Equal("kiali-operator/myKialiCR", a[0].KialiInstances[0].OperatorResource, "GetClusters didn't set the right operator resource of the Kiali instance")
 	assert.Equal("http://kiali.url.local", a[0].KialiInstances[0].Url, "GetClusters didn't set the right URL of the Kiali instance")
 	assert.Equal("v1.25", a[0].KialiInstances[0].Version, "GetClusters didn't set the right version of the Kiali instance")
@@ -246,6 +247,9 @@ func TestMeshGraph(t *testing.T) {
 	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
-	assertObjectsEqual(t, expected, actual)
+	if !assert.ObjectsAreEqual(expected, actual) {
+		fmt.Printf("Actual:\n%s", actual)
+		assertObjectsEqual(t, expected, actual)
+	}
 	assert.Equal(t, 200, resp.StatusCode)
 }

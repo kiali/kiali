@@ -79,10 +79,25 @@ func edgeHash(from, to string) string {
 
 // NewConfig is required by the mesh/ConfigVendor interface
 func NewConfig(meshMap mesh.MeshMap, o mesh.ConfigOptions) (result Config) {
-	nodes := []*NodeWrapper{}
+	unfilteredNodes := []*NodeWrapper{}
 	edges := []*EdgeWrapper{}
 
-	buildConfig(meshMap, &nodes, &edges, o)
+	buildConfig(meshMap, &unfilteredNodes, &edges, o)
+
+	// Remove namespace nodes for namespaces that contain infra, these will become namespace boxes
+	namespaceWithInfraMap := make(map[string]bool)
+	var node *NodeWrapper
+	for _, node = range unfilteredNodes {
+		if node.Data.NodeType == mesh.NodeTypeInfra {
+			namespaceWithInfraMap[node.Data.Namespace] = true
+		}
+	}
+	nodes := []*NodeWrapper{}
+	for _, node = range unfilteredNodes {
+		if node.Data.InfraType != mesh.InfraTypeNamespace || namespaceWithInfraMap[node.Data.InfraName] != true {
+			nodes = append(nodes, node)
+		}
+	}
 
 	// Add compound nodes as needed, inner boxes first
 	boxByNamespace(&nodes)
@@ -185,8 +200,8 @@ func boxByNamespace(nodes *[]*NodeWrapper) {
 	box := make(map[string][]*NodeData)
 
 	for _, nw := range *nodes {
-		// don't namespace box a namespace node, or an "unknown" namespace
-		if nw.Data.Parent == "" || nw.Data.InfraType == mesh.InfraTypeNamespace || nw.Data.Namespace == mesh.Unknown {
+		// don't namespace box a namespace node
+		if nw.Data.Parent != "" || nw.Data.InfraType == mesh.InfraTypeNamespace {
 			continue
 		}
 
