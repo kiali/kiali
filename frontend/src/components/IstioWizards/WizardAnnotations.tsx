@@ -18,7 +18,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 interface Props {
   annotations: { [key: string]: string };
   canEdit: boolean;
-  header?: string;
+  type: string;
   onChange: (annotations: { [key: string]: string }) => void;
   onClose: () => void;
   showAnotationsWizard: boolean;
@@ -60,6 +60,10 @@ export class WizardAnnotations extends React.Component<Props, State> {
       m.set(index, [value, this.props.annotations[value]])
     );
 
+    // should be empty line
+    if (m.size === 0) {
+      m.set(m.size, ['', '']);
+    }
     return m;
   };
 
@@ -190,7 +194,7 @@ export class WizardAnnotations extends React.Component<Props, State> {
       <>
         <Title id="modal-custom-header-label" headingLevel="h1" size={TitleSizes['2xl']}>
           {this.props.canEdit ? 'Edit ' : 'View '}
-          {this.props.header ? this.props.header : 'annotations'}
+          {this.props.type}
         </Title>
       </>
     );

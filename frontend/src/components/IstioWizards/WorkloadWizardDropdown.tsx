@@ -226,6 +226,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
     <>
       <WizardAnnotations
         showAnotationsWizard={showWizard}
+        type={'annotations'}
         onChange={annotations => onChangeAnnotations(annotations)}
         onClose={() => onWizardToggle(false)}
         annotations={props.workload.annotations}

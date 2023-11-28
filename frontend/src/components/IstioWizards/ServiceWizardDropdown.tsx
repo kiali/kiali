@@ -238,6 +238,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
 
       <WizardAnnotations
         showAnotationsWizard={showAnnotationsWizard}
+        type={'annotations'}
         onChange={annotations => onChangeAnnotations(annotations)}
         onClose={() => setShowAnnotationsWizard(false)}
         annotations={props.annotations}

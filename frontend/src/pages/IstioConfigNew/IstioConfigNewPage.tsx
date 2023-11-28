@@ -112,12 +112,21 @@ type State = {
 
 const formPadding = kialiStyle({ padding: '30px 20px 30px 20px' });
 
-const editIcon = kialiStyle({ marginLeft: '0.35em', marginBottom: '0.2em' });
+const editIcon = kialiStyle({
+  marginLeft: '0.25rem',
+  marginBottom: '0.20rem'
+});
 
-const editButton = kialiStyle({ marginLeft: '0.5em', display: 'flex', alignItems: 'center' });
+const editButton = kialiStyle({
+  marginLeft: '0.5rem',
+  marginBottom: '0.25rem',
+  display: 'flex',
+  alignItems: 'center'
+});
 
 const editStyle = kialiStyle({
-  display: 'flex'
+  display: 'flex',
+  paddingTop: '0.25rem'
 });
 
 const DIC = {
@@ -259,7 +268,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     });
   };
 
-  onLabelsWizardToggle = (value: boolean) => {
+  onLabelsWizardToggle = (value: boolean): void => {
     this.setState({
       showLabelsWizard: value
     });
@@ -272,7 +281,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     });
   };
 
-  onAnnotationsWizardToggle = (value: boolean) => {
+  onAnnotationsWizardToggle = (value: boolean): void => {
     this.setState({
       showAnnotationsWizard: value
     });
@@ -639,7 +648,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
               </div>
               <WizardAnnotations
                 showAnotationsWizard={this.state.showLabelsWizard}
-                header={'labels'}
+                type={'labels'}
                 onChange={labels => this.onAddLabels(labels)}
                 onClose={() => this.onLabelsWizardToggle(false)}
                 annotations={this.state.labels}
@@ -663,7 +672,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
               </div>
               <WizardAnnotations
                 showAnotationsWizard={this.state.showAnnotationsWizard}
-                header={'annotations'}
+                type={'annotations'}
                 onChange={annotations => this.onAddAnnotations(annotations)}
                 onClose={() => this.onAnnotationsWizardToggle(false)}
                 annotations={this.state.annotations}
