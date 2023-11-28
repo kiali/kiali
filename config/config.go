@@ -795,10 +795,10 @@ func NewConfig() (c *Config) {
 					CollectorURL:  "http://jaeger-collector.istio-system:14268/api/traces",
 					Enabled:       false,
 					Otel: OtelCollector{
-						CaName:     "",
+						CAName:     "",
 						Protocol:   "http",
 						SkipVerify: true,
-						TlsEnabled: false,
+						TLSEnabled: false,
 					},
 					// Sample half of traces.
 					SamplingRate: 0.5,

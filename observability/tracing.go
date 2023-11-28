@@ -186,7 +186,6 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 						)
 					}
 				}
-
 				ctx := context.Background()
 				httpExporter, err2 := otlptrace.New(ctx, client)
 				return httpExporter, err2
@@ -199,7 +198,7 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 
 					var grpcExporter *otlptrace.Exporter
 
-					if tracingOpt.Otel.TlsEnabled {
+					if tracingOpt.Otel.TLSEnabled {
 						var creds credentials.TransportCredentials
 						// That's mainly for testing
 						if tracingOpt.Otel.SkipVerify {
@@ -209,17 +208,15 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 							}
 							creds = credentials.NewTLS(tlsConfig)
 						} else {
-							cert_name := tracingOpt.Otel.CaName
-							if cert_name != "" {
-								var err2 error
-								creds, err2 = credentials.NewClientTLSFromFile(cert_name, "")
-								if err2 != nil {
-									log.Fatalf("Error loading certificate: %v", err2)
-									return nil, err2
-								}
-							} else {
-								log.Fatalf("ca_name is required")
+							certName := tracingOpt.Otel.CAName
+							if certName == "" {
 								return nil, fmt.Errorf("ca_name is required")
+							}
+							var errorTLS error
+							creds, errorTLS = credentials.NewClientTLSFromFile(certName, "")
+							if errorTLS != nil {
+								log.Fatalf("Error loading certificate: %s", errorTLS)
+								return nil, errorTLS
 							}
 						}
 
@@ -233,7 +230,7 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 						}
 						if grpcExporter == nil && err == nil {
 							log.Fatalf("Error creating otlp trace")
-							return nil, fmt.Errorf("Error returned nil grpc exporter. This might be due to missconfiguration.")
+							return nil, fmt.Errorf("error returned nil grpc exporter. This might be due to missconfiguration")
 						}
 					} else {
 						grpcExporter, err = otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(),
@@ -243,14 +240,10 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 					}
 
 					return grpcExporter, err
-				} else {
-
-					return nil, fmt.Errorf("Error in configuration options getting the observability exporter. Invalid otel.protocol [%v].", tracingOpt.Otel.Protocol)
 				}
 			}
-		} else {
-			return nil, fmt.Errorf("Error in configuration options getting the observability exporter. Invalid collector type [%v].", tracingOpt.CollectorType)
 		}
 
 	}
+	return nil, fmt.Errorf("error in configuration options getting the observability exporter. Invalid collector type [%s]", tracingOpt.CollectorType)
 }
