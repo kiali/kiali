@@ -2,7 +2,7 @@
 
 exports[`#Labels render correctly with data should render badges with More labels link 1`] = `
 <div
-  className="kiali_fj1yjm7"
+  className="kiali_f1ldck1g"
 >
   <div
     data-test="app-label-container"
@@ -40,7 +40,7 @@ exports[`#Labels render correctly with data should render badges with More label
 
 exports[`#Labels render correctly with data should render badges without More labels link 1`] = `
 <div
-  className="kiali_fj1yjm7"
+  className="kiali_f1ldck1g"
 >
   <div
     data-test="app-label-container"
