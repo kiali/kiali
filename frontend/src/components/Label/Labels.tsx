@@ -24,6 +24,9 @@ const infoStyle = kialiStyle({
 });
 
 const labelsContainerStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center',
+  flexWrap: 'wrap',
   overflow: 'hidden'
 });
 

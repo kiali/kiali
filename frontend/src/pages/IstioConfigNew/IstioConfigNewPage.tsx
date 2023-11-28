@@ -83,7 +83,7 @@ import { isValid } from 'utils/Common';
 import { ClusterDropdown } from './ClusterDropdown';
 import { NamespaceDropdown } from '../../components/NamespaceDropdown';
 import { Labels } from '../../components/Label/Labels';
-import { WizardAnnotations } from '../../components/IstioWizards/WizardAnnotations';
+import { WizardLabels } from '../../components/IstioWizards/WizardLabels';
 
 type Props = {
   objectType: string;
@@ -119,7 +119,6 @@ const editIcon = kialiStyle({
 
 const editButton = kialiStyle({
   marginLeft: '0.5rem',
-  marginBottom: '0.25rem',
   display: 'flex',
   alignItems: 'center'
 });
@@ -646,12 +645,12 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
                   <EditIcon className={editIcon} />
                 </Button>
               </div>
-              <WizardAnnotations
+              <WizardLabels
                 showAnotationsWizard={this.state.showLabelsWizard}
                 type={'labels'}
                 onChange={labels => this.onAddLabels(labels)}
                 onClose={() => this.onLabelsWizardToggle(false)}
-                annotations={this.state.labels}
+                labels={this.state.labels}
                 canEdit={true}
               />
             </FormGroup>
@@ -670,12 +669,12 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
                   <EditIcon className={editIcon} />
                 </Button>
               </div>
-              <WizardAnnotations
+              <WizardLabels
                 showAnotationsWizard={this.state.showAnnotationsWizard}
                 type={'annotations'}
                 onChange={annotations => this.onAddAnnotations(annotations)}
                 onClose={() => this.onAnnotationsWizardToggle(false)}
-                annotations={this.state.annotations}
+                labels={this.state.annotations}
                 canEdit={true}
               />
             </FormGroup>

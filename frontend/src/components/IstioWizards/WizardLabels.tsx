@@ -16,16 +16,16 @@ import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 
 interface Props {
-  annotations: { [key: string]: string };
+  labels: { [key: string]: string };
   canEdit: boolean;
   type: string;
-  onChange: (annotations: { [key: string]: string }) => void;
+  onChange: (labels: { [key: string]: string }) => void;
   onClose: () => void;
   showAnotationsWizard: boolean;
 }
 
 interface State {
-  annotations: Map<number, [string, string]>;
+  labels: Map<number, [string, string]>;
   validation: string[];
 }
 
@@ -38,27 +38,22 @@ const clearButtonStyle = kialiStyle({
   marginLeft: '0.5rem'
 });
 
-export class WizardAnnotations extends React.Component<Props, State> {
+export class WizardLabels extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { annotations: this.convertAnnotationsToMap(), validation: [] };
+    this.state = { labels: this.convertLabelsToMap(), validation: [] };
   }
 
   componentDidUpdate(prevProps: Readonly<Props>): void {
-    if (
-      prevProps.annotations !== this.props.annotations &&
-      prevProps.showAnotationsWizard !== this.props.showAnotationsWizard
-    ) {
+    if (prevProps.labels !== this.props.labels && prevProps.showAnotationsWizard !== this.props.showAnotationsWizard) {
       this.onClear();
     }
   }
 
-  convertAnnotationsToMap = (): Map<number, [string, string]> => {
+  convertLabelsToMap = (): Map<number, [string, string]> => {
     const m = new Map();
 
-    Object.keys(this.props.annotations ?? {}).map((value, index) =>
-      m.set(index, [value, this.props.annotations[value]])
-    );
+    Object.keys(this.props.labels ?? {}).map((value, index) => m.set(index, [value, this.props.labels[value]]));
 
     // should be empty line
     if (m.size === 0) {
@@ -67,22 +62,22 @@ export class WizardAnnotations extends React.Component<Props, State> {
     return m;
   };
 
-  removeAnnotation = (k: number): void => {
-    const annotations = new Map<number, [string, string]>();
+  removeLabel = (k: number): void => {
+    const labels = new Map<number, [string, string]>();
     const condition = (key: number) => key !== k;
     let index = 0;
 
-    Array.from(this.state.annotations.entries())
+    Array.from(this.state.labels.entries())
       .filter(([key, _]) => condition(key))
-      .map(([_, [key, value]]: [number, [string, string]]) => annotations.set(index++, [key, value]));
+      .map(([_, [key, value]]: [number, [string, string]]) => labels.set(index++, [key, value]));
 
-    this.setState({ annotations });
+    this.setState({ labels });
   };
 
-  changeAnnotation = (value: [string, string], k: number): void => {
-    const annotations = this.state.annotations;
-    annotations.set(k, value);
-    this.setState({ annotations });
+  changeLabel = (value: [string, string], k: number): void => {
+    const labels = this.state.labels;
+    labels.set(k, value);
+    this.setState({ labels });
   };
 
   validate = (): boolean => {
@@ -90,7 +85,7 @@ export class WizardAnnotations extends React.Component<Props, State> {
 
     // Check if duplicate keys
     if (
-      Array.from(this.state.annotations.values())
+      Array.from(this.state.labels.values())
         .map(k => k[0])
         .some((e, i, arr) => arr.indexOf(e) !== i)
     ) {
@@ -99,7 +94,7 @@ export class WizardAnnotations extends React.Component<Props, State> {
 
     // Check if empty keys
     if (
-      Array.from(this.state.annotations.values())
+      Array.from(this.state.labels.values())
         .map(k => k[0])
         .filter(e => e.length === 0).length > 0
     ) {
@@ -108,7 +103,7 @@ export class WizardAnnotations extends React.Component<Props, State> {
 
     // Check if empty values
     if (
-      Array.from(this.state.annotations.values())
+      Array.from(this.state.labels.values())
         .map(k => k[1])
         .filter(e => e.length === 0).length > 0
     ) {
@@ -123,33 +118,31 @@ export class WizardAnnotations extends React.Component<Props, State> {
   onChange = (): void => {
     if (this.validate()) {
       const annotates: { [key: string]: string } = {};
-      Array.from(this.state.annotations.values()).map(element => (annotates[element[0]] = element[1]));
+      Array.from(this.state.labels.values()).map(element => (annotates[element[0]] = element[1]));
       this.props.onChange(annotates);
     }
   };
 
   onClose = (): void => {
-    this.setState({ annotations: this.convertAnnotationsToMap(), validation: [] }, () => this.props.onClose());
+    this.setState({ labels: this.convertLabelsToMap(), validation: [] }, () => this.props.onClose());
   };
 
   onClear = (): void => {
-    this.setState({ annotations: this.convertAnnotationsToMap(), validation: [] });
+    this.setState({ labels: this.convertLabelsToMap(), validation: [] });
   };
 
   generateInput = (): IRow[] => {
     const rows: IRow[] = [];
 
-    Array.from(this.state.annotations.entries()).map(([index, [key, value]]: [number, [string, string]]) =>
+    Array.from(this.state.labels.entries()).map(([index, [key, value]]: [number, [string, string]]) =>
       rows.push(
         this.props.canEdit ? (
-          <Tr key={`edit_annotation_for_${index}`}>
+          <Tr key={`edit_label_for_${index}`}>
             <Th width={40}>
               <TextInput
-                aria-invalid={
-                  key === '' || Object.values(this.state.annotations).filter(arr => arr[0] === key).length > 1
-                }
-                id={`annotationInputForKey_${index}`}
-                onChange={(_event, newKey) => this.changeAnnotation([newKey, value], index)}
+                aria-invalid={key === '' || Object.values(this.state.labels).filter(arr => arr[0] === key).length > 1}
+                id={`labelInputForKey_${index}`}
+                onChange={(_event, newKey) => this.changeLabel([newKey, value], index)}
                 placeholder="Key"
                 type="text"
                 value={key}
@@ -159,8 +152,8 @@ export class WizardAnnotations extends React.Component<Props, State> {
             <Th width={40}>
               <TextInput
                 aria-invalid={value === ''}
-                id={`annotationInputForValue_${index}`}
-                onChange={(_event, v) => this.changeAnnotation([key, v], index)}
+                id={`labelInputForValue_${index}`}
+                onChange={(_event, v) => this.changeLabel([key, v], index)}
                 placeholder="Value"
                 type="text"
                 value={value}
@@ -168,7 +161,7 @@ export class WizardAnnotations extends React.Component<Props, State> {
             </Th>
 
             <Th>
-              <Button variant="plain" icon={<KialiIcon.Delete />} onClick={() => this.removeAnnotation(index)} />
+              <Button variant="plain" icon={<KialiIcon.Delete />} onClick={() => this.removeLabel(index)} />
             </Th>
           </Tr>
         ) : (
@@ -184,9 +177,9 @@ export class WizardAnnotations extends React.Component<Props, State> {
   };
 
   addMore = (): void => {
-    const annotations = this.state.annotations;
-    annotations.set(annotations.size, ['', '']);
-    this.setState({ annotations });
+    const labels = this.state.labels;
+    labels.set(labels.size, ['', '']);
+    this.setState({ labels });
   };
 
   render() {

@@ -15,7 +15,7 @@ import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { MessageType } from '../../types/MessageCenter';
 import { StatusState } from '../../types/StatusState';
-import { WizardAnnotations } from './WizardAnnotations';
+import { WizardLabels } from './WizardLabels';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 
 interface Props {
@@ -224,12 +224,12 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
   // TODO WorkloadWizard component contains only 3scale actions but in the future we may need to bring it back
   return (
     <>
-      <WizardAnnotations
+      <WizardLabels
         showAnotationsWizard={showWizard}
         type={'annotations'}
         onChange={annotations => onChangeAnnotations(annotations)}
         onClose={() => onWizardToggle(false)}
-        annotations={props.workload.annotations}
+        labels={props.workload.annotations}
         canEdit={serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode}
       />
       {!validActions

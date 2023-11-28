@@ -1,10 +1,8 @@
 import * as React from 'react';
-import { Tooltip } from '@patternfly/react-core';
 
 type Props = {
   text: string;
   urlTruncate?: number;
-  textTruncate?: number;
 };
 
 export const TextOrLink: React.FunctionComponent<Props> = props => {
@@ -22,13 +20,5 @@ export const TextOrLink: React.FunctionComponent<Props> = props => {
       </a>
     );
   }
-  let truncated = props.text;
-  if (props.textTruncate && props.text.length > props.textTruncate) {
-    truncated = props.text.substr(0, props.textTruncate) + '...';
-  }
-  return (
-    <Tooltip content={props.text}>
-      <span>{truncated}</span>
-    </Tooltip>
-  );
+  return <>{props.text}</>;
 };

@@ -2,7 +2,6 @@ import * as React from 'react';
 import { Label as PfLabel } from '@patternfly/react-core';
 import { canRender } from '../../utils/SafeRender';
 import { kialiStyle } from 'styles/StyleUtils';
-import { TextOrLink } from '../TextOrLink';
 
 interface Props {
   name: string;
@@ -19,8 +18,6 @@ const labelStyle = kialiStyle({
   maxWidth: '100%'
 });
 
-const MAX_LENGTH = 64;
-
 export const Label = (props: Props) => {
   const { name, value } = props;
   let label = 'This label has an unexpected format';
@@ -32,12 +29,13 @@ export const Label = (props: Props) => {
   return (
     <PfLabel
       className={labelStyle}
-      tooltipPosition={'top'}
+      tooltipPosition="top"
       style={props.style}
       isCompact={true}
       onClick={props.onClick}
+      textMaxWidth="500px"
     >
-      <TextOrLink text={label} textTruncate={MAX_LENGTH} />
+      {label}
     </PfLabel>
   );
 };
