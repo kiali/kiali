@@ -1,5 +1,5 @@
 import { defineConfig } from 'cypress';
-import { getAuthStrategy } from './cypress/plugins/setup';
+import { getAuthStrategy, checkForOSSMC } from './cypress/plugins/setup';
 import { addCucumberPreprocessorPlugin } from '@badeball/cypress-cucumber-preprocessor';
 import browserify from '@badeball/cypress-cucumber-preprocessor/browserify';
 
@@ -38,6 +38,10 @@ export default defineConfig({
       // env variable.
       config.env.AUTH_PROVIDER = config.env.AUTH_PROVIDER || 'my_htpasswd_provider';
       config.env.AUTH_STRATEGY = await getAuthStrategy(config.baseUrl!);
+      config.env.OSSMC_TAGS = config.env.TAGS?.includes('@ossmc') ? true : false;
+      config.env.OSSMC_URL = config.env.OSSMC_URL || '';
+      
+      await checkForOSSMC(config.env.OSSMC_TAGS, config.env.OSSMC_URL);
 
       return config;
     },

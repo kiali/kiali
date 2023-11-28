@@ -13,3 +13,10 @@ export async function getAuthStrategy(url: string) {
     throw new Error(`Kiali API is not reachable at ${JSON.stringify(err.config.url)}`);
   }
 }
+
+export async function checkForOSSMC(tags: string, ossmcUrl: string) {
+  if (tags && ossmcUrl == '') {
+    console.error(`ERROR: OSSMC_URL is not reachable at ${ossmcUrl}, set it by export CYPRESS_OSSMC_URL`);
+    throw new Error(`ERROR: OSSMC_URL is not reachable at ${ossmcUrl}, set it by export CYPRESS_OSSMC_URL`);
+  }
+}
