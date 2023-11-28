@@ -15,7 +15,7 @@ import {
   HelperTextItem,
   TextInput
 } from '@patternfly/react-core';
-import { EditIcon } from '@patternfly/react-icons/dist/esm/icons/edit-icon';
+import { PencilAltIcon } from '@patternfly/react-icons/dist/esm/icons/pencil-alt-icon';
 import { RenderContent } from '../../components/Nav/Page';
 import { kialiStyle } from 'styles/StyleUtils';
 import { GatewayForm, GATEWAY, GATEWAYS, GatewayState, initGateway, isGatewayStateValid } from './GatewayForm';
@@ -642,7 +642,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
                   data-test={'edit-labels'}
                 >
                   Edit
-                  <EditIcon className={editIcon} />
+                  <PencilAltIcon className={editIcon} />
                 </Button>
               </div>
               <WizardLabels
@@ -666,7 +666,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
                   data-test={'edit-annotations'}
                 >
                   Edit
-                  <EditIcon className={editIcon} />
+                  <PencilAltIcon className={editIcon} />
                 </Button>
               </div>
               <WizardLabels
