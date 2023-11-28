@@ -15,6 +15,7 @@ import { IstioConfigDetailsRoute } from 'routes/IstioConfigDetailsRoute';
 import { IstioConfigNewRoute } from 'routes/IstioConfigNewRoute';
 import { GraphRoutePF } from 'routes/GraphRoutePF';
 import { GraphPagePF } from 'pages/GraphPF/GraphPagePF';
+import { OldMeshPage } from 'pages/Mesh/old/OldMeshPage';
 
 /**
  * Return array of objects that describe vertical menu
@@ -63,6 +64,10 @@ const navMenuItems: MenuItem[] = [
   {
     title: 'Mesh',
     to: '/mesh'
+  },
+  {
+    title: 'Mesh (Old)',
+    to: '/oldmesh'
   }
 ];
 
@@ -74,19 +79,19 @@ const pathRoutes: Path[] = [
     component: OverviewPage
   },
   {
-    path: '/graph/node/namespaces/:namespace/' + Paths.AGGREGATES + '/:aggregate/:aggregateValue',
+    path: `/graph/node/namespaces/:namespace/${Paths.AGGREGATES}/:aggregate/:aggregateValue`,
     component: GraphRoute
   },
   {
-    path: '/graph/node/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app/versions/:version',
+    path: `/graph/node/namespaces/:namespace/${Paths.APPLICATIONS}/:app/versions/:version`,
     component: GraphRoute
   },
   {
-    path: '/graph/node/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app',
+    path: `/graph/node/namespaces/:namespace/${Paths.APPLICATIONS}/:app`,
     component: GraphRoute
   },
   {
-    path: '/graph/node/namespaces/:namespace/' + Paths.SERVICES + '/:service',
+    path: `/graph/node/namespaces/:namespace/${Paths.SERVICES}/:service`,
     component: GraphRoute
   },
   {
@@ -98,23 +103,23 @@ const pathRoutes: Path[] = [
     component: GraphPage
   },
   {
-    path: '/graphpf/node/namespaces/:namespace/' + Paths.AGGREGATES + '/:aggregate/:aggregateValue',
+    path: `/graphpf/node/namespaces/:namespace/${Paths.AGGREGATES}/:aggregate/:aggregateValue`,
     component: GraphRoutePF
   },
   {
-    path: '/graphpf/node/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app/versions/:version',
+    path: `/graphpf/node/namespaces/:namespace/${Paths.APPLICATIONS}/:app/versions/:version`,
     component: GraphRoutePF
   },
   {
-    path: '/graphpf/node/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app',
+    path: `/graphpf/node/namespaces/:namespace/${Paths.APPLICATIONS}/:app`,
     component: GraphRoutePF
   },
   {
-    path: '/graphpf/node/namespaces/:namespace/' + Paths.SERVICES + '/:service',
+    path: `/graphpf/node/namespaces/:namespace/${Paths.SERVICES}/:service`,
     component: GraphRoutePF
   },
   {
-    path: '/graphpf/node/namespaces/:namespace/' + Paths.WORKLOADS + '/:workload',
+    path: `/graphpf/node/namespaces/:namespace/${Paths.WORKLOADS}/:workload`,
     component: GraphRoutePF
   },
   {
@@ -122,48 +127,52 @@ const pathRoutes: Path[] = [
     component: GraphPagePF
   },
   {
-    path: '/namespaces/:namespace/' + Paths.SERVICES + '/:service',
+    path: `/namespaces/:namespace/${Paths.SERVICES}/:service`,
     component: ServiceDetailsRoute
   },
   {
-    path: '/namespaces/:namespace/' + Paths.ISTIO + '/:objectType/:object',
+    path: `/namespaces/:namespace/${Paths.ISTIO}/:objectType/:object`,
     component: IstioConfigDetailsRoute
   },
   {
-    path: '/' + Paths.SERVICES,
+    path: `/${Paths.SERVICES}`,
     component: ServiceListPage
   },
   {
-    path: '/' + Paths.APPLICATIONS,
+    path: `/${Paths.APPLICATIONS}`,
     component: AppListPage
   },
   {
-    path: '/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app',
+    path: `/namespaces/:namespace/${Paths.APPLICATIONS}/:app`,
     component: AppDetailsRoute
   },
   {
-    path: '/' + Paths.WORKLOADS,
+    path: `/${Paths.WORKLOADS}`,
     component: WorkloadListPage
   },
   {
-    path: '/namespaces/:namespace/' + Paths.WORKLOADS + '/:workload',
+    path: `/namespaces/:namespace/${Paths.WORKLOADS}/:workload`,
     component: WorkloadDetailsRoute
   },
   {
-    path: '/' + Paths.ISTIO + '/new/:objectType',
+    path: `/${Paths.ISTIO}`,
     component: IstioConfigNewRoute
   },
   {
-    path: '/' + Paths.ISTIO,
+    path: `/${Paths.ISTIO}`,
     component: IstioConfigListPage
   },
   {
-    path: '/' + Paths.TRACING,
+    path: `/${Paths.TRACING}`,
     component: undefined
   },
   {
-    path: '/' + Paths.MESH,
+    path: `/${Paths.MESH}`,
     component: MeshPage
+  },
+  {
+    path: '/oldmesh',
+    component: OldMeshPage
   }
 ];
 

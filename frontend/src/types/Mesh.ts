@@ -1,3 +1,4 @@
+import { Controller, GraphElement } from '@patternfly/react-topology';
 import { AppenderString } from './Common';
 
 export interface MeshCluster {
@@ -22,49 +23,102 @@ export type MeshClusters = MeshCluster[];
 
 // MESH GRAPH
 
-export enum MeshNodeType {
-  BOX = 'box',
+export enum MeshInfraType {
+  CLUSTER = 'cluster',
   ISTIOD = 'istiod',
-  KIALI = 'kiali'
+  KIALI = 'kiali',
+  METRIC_STORE = 'metricStore',
+  NAMESPACE = 'namespace',
+  TRACE_STORE = 'traceStore'
 }
 
+export enum MeshNodeType {
+  BOX = 'box',
+  INFRA = 'infra'
+}
+
+// TODO
+export type MeshNodeHealthData = string;
+
 // Node data expected from server
-export interface MeshGraphNodeData {
+export interface MeshNodeData {
   // required
   cluster: string;
   id: string;
+  infraName: string;
+  infraType: MeshInfraType;
   namespace: string;
   nodeType: MeshNodeType;
 
   // optional
+  healthData?: MeshNodeHealthData;
+  isAmbient?: boolean;
+  isBox?: string;
+  isInaccessible?: boolean;
+  isMTLS?: boolean;
+  isOutOfMesh?: boolean;
 }
 
 // Edge data expected from server
-export interface MeshGraphEdgeData {
+export interface MeshEdgeData {
   id: string;
   source: string;
   target: string;
 }
 
-export interface MeshGraphNodeWrapper {
-  data: MeshGraphNodeData;
+export interface MeshNodeWrapper {
+  data: MeshNodeData;
 }
 
-export interface MeshGraphEdgeWrapper {
-  data: MeshGraphEdgeData;
+export interface MeshEdgeWrapper {
+  data: MeshEdgeData;
 }
 
-export interface MeshGraphElements {
-  edges?: MeshGraphEdgeWrapper[];
-  nodes?: MeshGraphNodeWrapper[];
+export interface MeshElements {
+  edges?: MeshEdgeWrapper[];
+  nodes?: MeshNodeWrapper[];
 }
 
-export interface MeshGraphQuery {
+// TODO: unnecessary?
+export interface MeshQuery {
   appenders?: AppenderString;
-  boxBy?: string;
 }
 
-export interface MeshGraphDefinition {
-  elements: MeshGraphElements;
+export interface MeshDefinition {
+  elements: MeshElements;
   timestamp: number;
+}
+
+// Node data after decorating at fetch-time (what is mainly used by ui code)
+export interface DecoratedMeshNodeData extends MeshNodeData {
+  healthStatus: string; // status name
+}
+
+// Edge data after decorating at fetch-time (what is mainly used by ui code)
+export interface DecoratedMeshEdgeData extends MeshEdgeData {
+  // Default value -1
+  isMTLS: number;
+
+  // assigned when graph is updated, the edge health depends on the node health, traffic, and config
+  healthStatus?: string; // status name
+}
+
+export interface DecoratedMeshNodeWrapper {
+  data: DecoratedMeshNodeData;
+}
+
+export interface DecoratedMeshEdgeWrapper {
+  data: DecoratedMeshEdgeData;
+}
+
+export interface DecoratedMeshElements {
+  edges?: DecoratedMeshEdgeWrapper[];
+  nodes?: DecoratedMeshNodeWrapper[];
+}
+
+export type MeshType = 'mesh' | 'node' | 'edge' | 'box';
+
+export interface MeshTarget {
+  elem: Controller | GraphElement;
+  type: MeshType; // the element type
 }

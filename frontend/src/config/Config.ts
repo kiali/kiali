@@ -137,7 +137,7 @@ const conf = {
       istiodResourceThresholds: () => 'api/mesh/resources/thresholds',
       istioStatus: () => 'api/istio/status',
       logout: 'api/logout',
-      meshGraph: 'api/meshGraph',
+      mesh: 'api/mesh',
       metricsStats: 'api/stats/metrics',
       namespaces: 'api/namespaces',
       namespace: (namespace: string) => `api/namespaces/${namespace}`,
