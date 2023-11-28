@@ -102,7 +102,7 @@ type OtelCollector struct {
 	CAName     string `yaml:"ca_name,omitempty"`
 	Protocol   string `yaml:"protocol,omitempty"` // http or https or grpc
 	SkipVerify bool   `yaml:"skip_verify,omitempty"`
-	TlsEnabled bool   `yaml:"tls_enabled,omitempty"`
+	TLSEnabled bool   `yaml:"tls_enabled,omitempty"`
 }
 
 // Tracing provides tracing configuration for the Kiali server.
