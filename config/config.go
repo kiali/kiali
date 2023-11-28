@@ -99,7 +99,7 @@ type Metrics struct {
 
 // OpenTelemetry collector configuration for tracing
 type OtelCollector struct {
-	CaName     string `yaml:"ca_name,omitempty"`
+	CAName     string `yaml:"ca_name,omitempty"`
 	Protocol   string `yaml:"protocol,omitempty"` // http or https or grpc
 	SkipVerify bool   `yaml:"skip_verify,omitempty"`
 	TlsEnabled bool   `yaml:"tls_enabled,omitempty"`
