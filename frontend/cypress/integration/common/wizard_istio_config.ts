@@ -170,8 +170,8 @@ And('user clicks on Edit Annotations', () => {
 
 And('user adds key {string} and value {string} for and saves', (key: string, value: string) => {
   cy.get('[data-test="add-more"]').click();
-  cy.get(`input[id="annotationInputForKey_0"]`).type(key);
-  cy.get(`input[id="annotationInputForValue_0"]`).type(value);
+  cy.get(`input[id="labelInputForKey_0"]`).type(key);
+  cy.get(`input[id="labelInputForValue_0"]`).type(value);
   cy.get('button[data-test="save-button"]').click()
 });
 
