@@ -197,7 +197,7 @@ func validateConfig() error {
 
 	// Check the observability section
 	cfgTracing := cfg.Server.Observability.Tracing
-	if cfgTracing.Enabled == true && cfgTracing.CollectorType != observability.JAEGER && cfgTracing.CollectorType != observability.OTEL {
+	if cfgTracing.Enabled && cfgTracing.CollectorType != observability.JAEGER && cfgTracing.CollectorType != observability.OTEL {
 		return fmt.Errorf("error in configuration options getting the observability exporter. Invalid collector type [%s]", cfgTracing.CollectorType)
 	}
 
