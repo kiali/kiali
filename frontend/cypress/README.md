@@ -220,7 +220,14 @@ make -e CYPRESS_VIDEO=true cypress-run
 
 Try waiting for kiali to finish loading all the in-flight data before proceeding on to the next action or command. [Waiting for the loading spinner](https://github.com/kiali/kiali/blob/1766f20035e67a072dd68167869e0ce2009b9bc6/frontend/cypress/integration/common/overview.ts#L45-L46) to disappear is a good enough measure for this.
 
-To run only specific subset of the test suite, tag the Gherkin scenarios with the `@selected` tag. You can then run these using:
+To execute only specific subset of the test suite, tag the Gherkin scenarios with the `@selected` tag. For example:
+```
+@selected
+@bookinfo-app
+Scenario: See minigraph for workload.
+    Then user sees a minigraph
+```
+ You can then run these using:
 ```bash
 yarn cypress:selected
 ```
