@@ -122,3 +122,22 @@ export interface MeshTarget {
   elem: Controller | GraphElement;
   type: MeshType; // the element type
 }
+
+export const MeshAttr = {
+  // shared attrs
+  id: 'id',
+
+  // edge attrs
+  healthStatus: 'healthStatus',
+  isMTLS: 'isMTLS',
+
+  // node attrs
+  cluster: 'cluster',
+  health: 'health',
+  infraName: 'infraName',
+  infraType: 'infraType',
+  isInaccessible: 'isInaccessible',
+  isOutOfMesh: 'isOutOfMesh',
+  namespace: 'namespace',
+  nodeType: 'nodeType'
+};

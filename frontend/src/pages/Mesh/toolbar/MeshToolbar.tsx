@@ -47,19 +47,13 @@ import { GraphReset } from './GraphReset';
 import { GraphFindPF } from './GraphFindPF';
 import { kialiStyle } from 'styles/StyleUtils';
 
-type ReduxStateProps = {
+type ReduxProps = {
   activeNamespaces: Namespace[];
   edgeLabels: EdgeLabelMode[];
   graphType: GraphType;
   node?: NodeParamsType;
   rankBy: RankMode[];
   replayActive: boolean;
-  showIdleNodes: boolean;
-  summaryData: SummaryData | null;
-  trafficRates: TrafficRate[];
-};
-
-type ReduxDispatchProps = {
   setActiveNamespaces: (activeNamespaces: Namespace[]) => void;
   setEdgeLabels: (edgeLabels: EdgeLabelMode[]) => void;
   setGraphType: (graphType: GraphType) => void;
@@ -67,10 +61,11 @@ type ReduxDispatchProps = {
   setNode: (node?: NodeParamsType) => void;
   setRankBy: (rankLabels: RankMode[]) => void;
   setTrafficRates: (rates: TrafficRate[]) => void;
+  showIdleNodes: boolean;
+  summaryData: SummaryData | null;
   toggleReplayActive: () => void;
+  trafficRates: TrafficRate[];
 };
-
-type ReduxProps = ReduxStateProps & ReduxDispatchProps;
 
 type GraphToolbarProps = ReduxProps & {
   controller?: any;
@@ -151,7 +146,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
     }
   }
 
-  componentDidUpdate(prevProps: GraphToolbarProps): void {
+  componentDidUpdate(prevProps: GraphToolbarProps) {
     // ensure redux state and URL are aligned
     if (String(prevProps.edgeLabels) !== String(this.props.edgeLabels)) {
       if (this.props.edgeLabels?.length === 0) {
@@ -198,20 +193,21 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
     }
   }
 
-  componentWillUnmount(): void {
+  componentWillUnmount() {
     // If replay was left active then turn it off
     if (this.props.replayActive) {
       this.props.toggleReplayActive();
     }
   }
 
-  render(): React.ReactNode {
+  render() {
     return (
       <>
         <GraphSecondaryMasthead
           disabled={this.props.disabled}
           graphType={this.props.graphType}
           isNodeGraph={!!this.props.node}
+          onToggleHelp={this.props.onToggleHelp}
           onGraphTypeChange={this.props.setGraphType}
         />
         <Toolbar style={{ width: '100%' }}>
@@ -284,7 +280,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
   };
 }
 
-const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
+const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state),
   edgeLabels: edgeLabelsSelector(state),
   graphType: graphTypeSelector(state),
@@ -296,7 +292,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   trafficRates: trafficRatesSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
+const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
     setActiveNamespaces: bindActionCreators(NamespaceActions.setActiveNamespaces, dispatch),
     setEdgeLabels: bindActionCreators(GraphToolbarActions.setEdgeLabels, dispatch),

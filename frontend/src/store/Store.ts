@@ -27,7 +27,7 @@ import { ComponentStatus } from '../types/IstioStatus';
 import { TracingState } from 'reducers/TracingState';
 import { MetricsStatsState } from 'reducers/MetricsStatsState';
 import { CertsInfo } from 'types/CertsInfo';
-import { MeshCluster } from '../types/Mesh';
+import { MeshCluster, MeshTarget } from '../types/Mesh';
 
 // Store is the Redux Data store
 
@@ -119,6 +119,27 @@ export interface LoginState {
   status: LoginStatus;
 }
 
+export interface MeshToolbarState {
+  // find props
+  findValue: string;
+  hideValue: string;
+  showFindHelp: boolean;
+}
+
+export interface MeshState {
+  target: MeshTarget | null;
+  toolbarState: MeshToolbarState;
+  updateTime: TimeInMilliseconds;
+}
+
+export interface MessageCenterState {
+  nextId: number; // This likely will go away once we have persistence
+  groups: NotificationGroup[];
+  hidden: boolean;
+  expanded: boolean;
+  expandedGroupId?: string;
+}
+
 export interface InterfaceSettings {
   navCollapse: boolean;
 }
@@ -148,6 +169,7 @@ export interface KialiAppState {
   graph: GraphState;
   istioCertsInfo: CertsInfo[];
   istioStatus: ComponentStatus[];
+  mesh: MeshState;
   /** Tracing Settings */
   meshTLSStatus: TLSStatus;
   messageCenter: MessageCenterState;
