@@ -41,6 +41,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/server"
 	"github.com/kiali/kiali/status"
@@ -192,6 +193,12 @@ func validateConfig() error {
 				return err
 			}
 		}
+	}
+
+	// Check the observability section
+	cfgTracing := cfg.Server.Observability.Tracing
+	if cfgTracing.Enabled == true && cfgTracing.CollectorType != observability.JAEGER && cfgTracing.CollectorType != observability.OTEL {
+		return fmt.Errorf("error in configuration options getting the observability exporter. Invalid collector type [%s]", cfgTracing.CollectorType)
 	}
 
 	return nil
