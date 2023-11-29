@@ -7,8 +7,9 @@ These are visual tests for kiali that are meant to be run against a live environ
 Installed all dev dependencies from frontend folder. Ensure the `baseUrl` field in the `cypress.json` file at the kiali-ui root is pointing to the server you are trying to test, alternatively you can use `CYPRESS_BASE_URL` environment variable or pass via cmd line `yarn cypress --config baseUrl=http://kiali-server:20001`. By default this is `localhost:3000` so if you are running kiali locally you should just need to do `yarn start` before running cypress.
 
 ## Running tests
+The suite is able to re-install specific demo-app automatically when a faulty deployment of that demo-app is detected. The suite also install K8 Gateway API if not detected. Running the suite against custom demo-app deployments may lead to your environment being altered unexepectedly. If you want to prevent this, comment out the `Before` functions in [this file](integration/common/hooks.ts).
 
-Before you start using Cypress suite, you might need export some environment variables - depending on environment where tests are executed. If your authentication method defaults to `anonymous` **(i.e. dev env), no actions are needed.**
+Before you start using Cypress suite, you might need export some environment variables - depending on environment where tests are executed.  If your authentication method defaults to `anonymous` **(i.e. dev env), no actions are needed.**
 
 ```bash
 export CYPRESS_BASE_URL=<value>               # defaults to http://localhost:3000
@@ -218,3 +219,13 @@ make -e CYPRESS_VIDEO=true cypress-run
 ### Tests are flaking 
 
 Try waiting for kiali to finish loading all the in-flight data before proceeding on to the next action or command. [Waiting for the loading spinner](https://github.com/kiali/kiali/blob/1766f20035e67a072dd68167869e0ce2009b9bc6/frontend/cypress/integration/common/overview.ts#L45-L46) to disappear is a good enough measure for this.
+
+To run only specific subset of the test suite, tag the Gherkin scenarios with the `@selected` tag. You can then run these using:
+```bash
+yarn cypress:selected
+```
+or in the headless mode:
+```bash
+yarn cypress:run:selected
+```
+Make sure you are not tagging multi-cluster and single cluster tests together with the `@selected` tag, as both of these require different Kiali setups and it does not make sense to run them together in a single run.
