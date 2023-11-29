@@ -15,7 +15,6 @@ import {
   HelperTextItem,
   TextInput
 } from '@patternfly/react-core';
-import { PencilAltIcon } from '@patternfly/react-icons/dist/esm/icons/pencil-alt-icon';
 import { RenderContent } from '../../components/Nav/Page';
 import { kialiStyle } from 'styles/StyleUtils';
 import { GatewayForm, GATEWAY, GATEWAYS, GatewayState, initGateway, isGatewayStateValid } from './GatewayForm';
@@ -29,6 +28,7 @@ import {
 } from './K8sGatewayForm';
 import { SidecarForm, initSidecar, isSidecarStateValid, SIDECAR, SIDECARS, SidecarState } from './SidecarForm';
 import { Paths, serverConfig } from '../../config';
+import { KialiIcon } from '../../config/KialiIcon';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import * as API from '../../services/Api';
 import { IstioPermissions } from '../../types/IstioConfigDetails';
@@ -642,7 +642,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
                   data-test={'edit-labels'}
                 >
                   Edit
-                  <PencilAltIcon className={editIcon} />
+                  <KialiIcon.PencilAlt className={editIcon} />
                 </Button>
               </div>
               <WizardLabels
@@ -656,7 +656,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
             </FormGroup>
             <FormGroup fieldId="annotations" label="Annotations">
               <div className={editStyle}>
-                <Labels labels={this.state.annotations} header={'annotations'} expanded={true} />
+                <Labels labels={this.state.annotations} type={'annotations'} expanded={true} />
                 <Button
                   className={editButton}
                   type="button"
@@ -666,7 +666,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
                   data-test={'edit-annotations'}
                 >
                   Edit
-                  <PencilAltIcon className={editIcon} />
+                  <KialiIcon.PencilAlt className={editIcon} />
                 </Button>
               </div>
               <WizardLabels

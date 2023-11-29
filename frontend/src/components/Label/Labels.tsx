@@ -8,7 +8,7 @@ const SHOW_MORE_TRESHOLD = 2;
 
 interface LabelsProps {
   expanded?: boolean;
-  header?: string;
+  type?: string;
   labels?: { [key: string]: string };
   tooltipMessage?: string;
 }
@@ -56,7 +56,7 @@ export const Labels: React.FC<LabelsProps> = (props: LabelsProps) => {
         className={linkStyle}
         onClick={expandLabels}
       >
-        More {props.header ? props.header : 'labels'}...
+        More {props.type ? props.type : 'labels'}...
       </Button>
     ) : null;
 
@@ -68,7 +68,7 @@ export const Labels: React.FC<LabelsProps> = (props: LabelsProps) => {
     ) : undefined;
   });
 
-  const renderEmptyLabels = <span> No {props.header ? props.header : 'labels'} </span>;
+  const renderEmptyLabels = <span> No {props.type ? props.type : 'labels'} </span>;
 
   const tooltip = props.tooltipMessage ? (
     <Tooltip
