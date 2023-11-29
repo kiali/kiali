@@ -57,7 +57,7 @@
     "start:prod": "sh -ac '. ./.env.downstream; npm run start:kiali'",
     "test": "tsc -p . && TEST_RUNNER=1 react-scripts test --env=jsdom __tests__ --transformIgnorePatterns 'node_modules/(?!my-library-dir)/'",
     "prettier": "prettier --write \"{src/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\"",
-    "prepare": "cd .. && husky install plugin/.husky",
+    "prepare": "cd .. && husky install frontend/.husky",
     "pre-commit": "yarn run pretty-quick --staged --pattern \"{frontend/src/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\" && npm run lint:precommit"
   },
   "dependencies": {
