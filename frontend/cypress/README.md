@@ -15,7 +15,7 @@ export CYPRESS_BASE_URL=<value>               # defaults to http://localhost:300
 export CYPRESS_USERNAME=<value>               # defaults to jenkins, opt. kubeadmin
 export CYPRESS_PASSWD=<value>                 # no defaults
 export CYPRESS_AUTH_PROVIDER=<value>          # defaults to my_htpasswd_provider
-export OSSMC_URL=<value>                      # defaults to empty string '', required when passing @ossmc TAG to Cypress suite
+export CYPRESS_OSSMC_URL=<value>                      # defaults to empty string '', required when passing @ossmc TAG to Cypress suite. Example value: https://console-openshift-console.apps.demo1.openshift4-beta-abcorp.com
 ```
 
 When running the Cypress tests for multi-cluster, both contexts for the kubectl/oc command must be specified. 

@@ -53,6 +53,17 @@ declare namespace Cypress {
      * @param password
      */
     login(username: string, password: string): Chainable<Subject>;
+    
+    /**
+     * Login to OpenShift web console with the given username and password.
+     *
+     * Provider will be determined by the environment variable AUTH_PROVIDER
+     * and auth strategy is fetched from the Kiali API.
+     * OSSMC_URL is required to be set in the environment.
+     * @param username
+     * @param password
+     */
+    loginOSSMC(username: string, password: string): Chainable<Subject>;
 
     logout(): Chainable<Subject>;
   }
@@ -212,6 +223,12 @@ Cypress.Commands.add('login', (username: string, password: string) => {
       cy.log('got an auth cookie, skipping login');
     }
   });
+});
+
+Cypress.Commands.add('loginOSSMC', () => {
+  cy.login(Cypress.env('USERNAME'), Cypress.env('PASSWD')); // we login to Kiali first the usual way
+    cy.visit(Cypress.env('OSSMC_URL'));
+    cy.log('we need to login into OpenShift Web Console using API I guess');
 });
 
 Cypress.Commands.add('getBySel', (selector: string, ...args: any) => cy.get(`[data-test="${selector}"]`, ...args));

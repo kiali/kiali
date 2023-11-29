@@ -13,3 +13,10 @@ Given('user is at administrator perspective', () => {
 And('user visits base url', () => {
     cy.visit('/')
 })
+
+Given('user is logged as administrator in Openshift Web Console', () => {
+    Cypress.Cookies.defaults({
+        preserve: 'kiali-token-aes',
+    })
+    cy.loginOSSMC(USERNAME, PASSWD)
+})
