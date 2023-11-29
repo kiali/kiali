@@ -228,6 +228,8 @@ func (oc OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, q
 	if query.MinDuration > 0 {
 		q.Set("minDuration", fmt.Sprintf("%dms", query.MinDuration.Milliseconds()))
 	}
+	// By default, the number of spans returned is 3. All are needed to calculate avg and heatmap
+	q.Set("spss", "10")
 	if query.Limit > 0 {
 		q.Set("limit", strconv.Itoa(query.Limit))
 	}
