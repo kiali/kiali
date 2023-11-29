@@ -27,7 +27,14 @@ export const Label = (props: Props) => {
   }
 
   return (
-    <PfLabel className={labelStyle} style={props.style} isCompact={true} onClick={props.onClick}>
+    <PfLabel
+      className={labelStyle}
+      tooltipPosition="top"
+      style={props.style}
+      isCompact={true}
+      onClick={props.onClick}
+      textMaxWidth="500px"
+    >
       {label}
     </PfLabel>
   );

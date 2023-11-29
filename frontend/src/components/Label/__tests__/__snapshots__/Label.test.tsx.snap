@@ -4,6 +4,8 @@ exports[`#Badge render correctly with data should render badge 1`] = `
 <Label
   className="kiali_fhx35ww"
   isCompact={true}
+  textMaxWidth="500px"
+  tooltipPosition="top"
 >
   app=bookinfo
 </Label>

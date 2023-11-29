@@ -28,6 +28,7 @@ import {
 } from './K8sGatewayForm';
 import { SidecarForm, initSidecar, isSidecarStateValid, SIDECAR, SIDECARS, SidecarState } from './SidecarForm';
 import { Paths, serverConfig } from '../../config';
+import { KialiIcon } from '../../config/KialiIcon';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import * as API from '../../services/Api';
 import { IstioPermissions } from '../../types/IstioConfigDetails';
@@ -81,6 +82,8 @@ import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPre
 import { isValid } from 'utils/Common';
 import { ClusterDropdown } from './ClusterDropdown';
 import { NamespaceDropdown } from '../../components/NamespaceDropdown';
+import { Labels } from '../../components/Label/Labels';
+import { WizardLabels } from '../../components/IstioWizards/WizardLabels';
 
 type Props = {
   objectType: string;
@@ -90,7 +93,11 @@ type Props = {
 };
 
 type State = {
+  annotations: { [key: string]: string };
   name: string;
+  labels: { [key: string]: string };
+  showAnnotationsWizard: boolean;
+  showLabelsWizard: boolean;
   showPreview: boolean;
   itemsPreview: ConfigPreviewItem[];
   istioPermissions: IstioPermissions;
@@ -104,6 +111,22 @@ type State = {
 };
 
 const formPadding = kialiStyle({ padding: '30px 20px 30px 20px' });
+
+const editIcon = kialiStyle({
+  marginLeft: '0.25rem',
+  marginBottom: '0.20rem'
+});
+
+const editButton = kialiStyle({
+  marginLeft: '0.5rem',
+  display: 'flex',
+  alignItems: 'center'
+});
+
+const editStyle = kialiStyle({
+  display: 'flex',
+  paddingTop: '0.25rem'
+});
 
 const DIC = {
   AuthorizationPolicy: AUTHORIZATION_POLICIES,
@@ -127,8 +150,12 @@ export const NEW_ISTIO_RESOURCE = [
 ];
 
 const initState = (): State => ({
+  annotations: {},
   name: '',
   istioPermissions: {},
+  labels: {},
+  showAnnotationsWizard: false,
+  showLabelsWizard: false,
   showPreview: false,
   itemsPreview: [],
   authorizationPolicy: initAuthorizationPolicy(),
@@ -240,6 +267,32 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     });
   };
 
+  onLabelsWizardToggle = (value: boolean): void => {
+    this.setState({
+      showLabelsWizard: value
+    });
+  };
+
+  onAddLabels = (value: { [key: string]: string }): void => {
+    this.setState({
+      labels: value,
+      showLabelsWizard: false
+    });
+  };
+
+  onAnnotationsWizardToggle = (value: boolean): void => {
+    this.setState({
+      showAnnotationsWizard: value
+    });
+  };
+
+  onAddAnnotations = (value: { [key: string]: string }): void => {
+    this.setState({
+      annotations: value,
+      showAnnotationsWizard: false
+    });
+  };
+
   onIstioResourceCreate = () => {
     if (this.props.activeClusters.length > 0) {
       this.props.activeClusters.forEach(cluster => {
@@ -300,49 +353,93 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
           items.push({
             title: 'Authorization Policy',
             type: 'authorizationpolicy',
-            items: [buildAuthorizationPolicy(this.state.name, ns.name, this.state.authorizationPolicy)]
+            items: [
+              buildAuthorizationPolicy(
+                this.state.annotations,
+                this.state.labels,
+                this.state.name,
+                ns.name,
+                this.state.authorizationPolicy
+              )
+            ]
           });
           break;
         case GATEWAY:
           items.push({
             title: 'Gateway',
             type: 'gateway',
-            items: [buildGateway(this.state.name, ns.name, this.state.gateway)]
+            items: [
+              buildGateway(this.state.annotations, this.state.labels, this.state.name, ns.name, this.state.gateway)
+            ]
           });
           break;
         case K8SGATEWAY:
           items.push({
             title: 'K8sGateway',
             type: 'k8sGateway',
-            items: [buildK8sGateway(this.state.name, ns.name, this.state.k8sGateway)]
+            items: [
+              buildK8sGateway(
+                this.state.annotations,
+                this.state.labels,
+                this.state.name,
+                ns.name,
+                this.state.k8sGateway
+              )
+            ]
           });
           break;
         case PEER_AUTHENTICATION:
           items.push({
             title: 'Peer Authentication',
             type: 'peerauthentication',
-            items: [buildPeerAuthentication(this.state.name, ns.name, this.state.peerAuthentication)]
+            items: [
+              buildPeerAuthentication(
+                this.state.annotations,
+                this.state.labels,
+                this.state.name,
+                ns.name,
+                this.state.peerAuthentication
+              )
+            ]
           });
           break;
         case REQUEST_AUTHENTICATION:
           items.push({
             title: 'Request Authentication',
             type: 'requestauthentication',
-            items: [buildRequestAuthentication(this.state.name, ns.name, this.state.requestAuthentication)]
+            items: [
+              buildRequestAuthentication(
+                this.state.annotations,
+                this.state.labels,
+                this.state.name,
+                ns.name,
+                this.state.requestAuthentication
+              )
+            ]
           });
           break;
         case SERVICE_ENTRY:
           items.push({
             title: 'Service Entry',
             type: 'serviceentry',
-            items: [buildServiceEntry(this.state.name, ns.name, this.state.serviceEntry)]
+            items: [
+              buildServiceEntry(
+                this.state.annotations,
+                this.state.labels,
+                this.state.name,
+                ns.name,
+                this.state.serviceEntry
+              )
+            ]
           });
           break;
         case SIDECAR:
           items.push({
             title: 'Sidecar',
             type: 'sidecar',
-            items: [buildSidecar(this.state.name, ns.name, this.state.sidecar)]
+            items: [
+              buildSidecar(this.state.annotations, this.state.labels, this.state.name, ns.name, this.state.sidecar)
+            ]
           });
           break;
       }
@@ -533,6 +630,54 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
             {this.props.objectType === SIDECAR && (
               <SidecarForm sidecar={this.state.sidecar} onChange={this.onChangeSidecar} />
             )}
+            <FormGroup fieldId="labels" label="Labels">
+              <div className={editStyle}>
+                <Labels labels={this.state.labels} expanded={true} />
+                <Button
+                  className={editButton}
+                  type="button"
+                  variant="link"
+                  isInline
+                  onClick={() => this.onLabelsWizardToggle(true)}
+                  data-test={'edit-labels'}
+                >
+                  Edit
+                  <KialiIcon.PencilAlt className={editIcon} />
+                </Button>
+              </div>
+              <WizardLabels
+                showAnotationsWizard={this.state.showLabelsWizard}
+                type={'labels'}
+                onChange={labels => this.onAddLabels(labels)}
+                onClose={() => this.onLabelsWizardToggle(false)}
+                labels={this.state.labels}
+                canEdit={true}
+              />
+            </FormGroup>
+            <FormGroup fieldId="annotations" label="Annotations">
+              <div className={editStyle}>
+                <Labels labels={this.state.annotations} type={'annotations'} expanded={true} />
+                <Button
+                  className={editButton}
+                  type="button"
+                  variant="link"
+                  isInline
+                  onClick={() => this.onAnnotationsWizardToggle(true)}
+                  data-test={'edit-annotations'}
+                >
+                  Edit
+                  <KialiIcon.PencilAlt className={editIcon} />
+                </Button>
+              </div>
+              <WizardLabels
+                showAnotationsWizard={this.state.showAnnotationsWizard}
+                type={'annotations'}
+                onChange={annotations => this.onAddAnnotations(annotations)}
+                onClose={() => this.onAnnotationsWizardToggle(false)}
+                labels={this.state.annotations}
+                canEdit={true}
+              />
+            </FormGroup>
             <ActionGroup>
               <Button
                 variant={ButtonVariant.primary}

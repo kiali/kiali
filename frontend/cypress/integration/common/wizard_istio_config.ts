@@ -31,6 +31,11 @@ When('user deletes gateway named {string} and the resource is no longer availabl
   ensureKialiFinishedLoading();
 });
 
+When('user deletes sidecar named {string} and the resource is no longer available', (name: string) => {
+  cy.exec(`kubectl delete sidecar ${name} -n bookinfo`, { failOnNonZeroExit: false });
+  ensureKialiFinishedLoading();
+});
+
 When('user deletes service named {string} and the resource is no longer available', (name: string) => {
   cy.exec(`kubectl delete serviceEntries ${name} -n bookinfo`, { failOnNonZeroExit: false });
   ensureKialiFinishedLoading();
@@ -153,4 +158,22 @@ Then('{string} details information for service entry {string} can be seen', (hos
   cy.get('#IstioConfigCard').within(() => {
     cy.get('#pfbadge-SE').parent().parent().contains(name);
   });
+});
+
+And('user clicks on Edit Labels', () => {
+  cy.get('[data-test="edit-labels"]').click();
+});
+
+And('user clicks on Edit Annotations', () => {
+  cy.get('[data-test="edit-annotations"]').click();
+});
+
+And('user adds key {string} and value {string} for and saves', (key: string, value: string) => {
+  cy.get(`input[id="labelInputForKey_0"]`).type(key);
+  cy.get(`input[id="labelInputForValue_0"]`).type(value);
+  cy.get('button[data-test="save-button"]').click()
+});
+
+Then('{string} should be in preview', (value: string) => {
+  cy.get('#ace-editor').contains(value);
 });
