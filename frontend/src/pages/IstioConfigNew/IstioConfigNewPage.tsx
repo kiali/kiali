@@ -632,7 +632,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
             )}
             <FormGroup fieldId="labels" label="Labels">
               <div className={editStyle}>
-                <Labels labels={this.state.labels} />
+                <Labels labels={this.state.labels} expanded={true} />
                 <Button
                   className={editButton}
                   type="button"
@@ -656,7 +656,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
             </FormGroup>
             <FormGroup fieldId="annotations" label="Annotations">
               <div className={editStyle}>
-                <Labels labels={this.state.annotations} header={'annotations'} />
+                <Labels labels={this.state.annotations} header={'annotations'} expanded={true} />
                 <Button
                   className={editButton}
                   type="button"
