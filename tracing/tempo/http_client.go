@@ -207,9 +207,7 @@ func (oc OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, q
 	q := url.Values{}
 	q.Set("start", fmt.Sprintf("%d", query.Start.Unix()))
 	q.Set("end", fmt.Sprintf("%d", query.End.Unix()))
-	queryPart1 := TraceQL{operator1: ".service.name", operand: EQUAL, operator2: tracingServiceName}
-	queryPart2 := TraceQL{operator1: ".node_id", operand: REGEX, operator2: ".*"}
-	queryPart := TraceQL{operator1: queryPart1, operand: AND, operator2: queryPart2}
+	queryPart := TraceQL{operator1: ".service.name", operand: EQUAL, operator2: tracingServiceName}
 
 	if len(query.Tags) > 0 {
 		for k, v := range query.Tags {
