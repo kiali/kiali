@@ -16,7 +16,7 @@ And('user visits base url', () => {
 
 Given('user is logged as administrator in Openshift Web Console', () => {
     Cypress.Cookies.defaults({
-        preserve: 'kiali-token-aes',
+        preserve: 'some-ocp-web-console-cookie',
     })
     cy.loginOSSMC(USERNAME, PASSWD)
 })
