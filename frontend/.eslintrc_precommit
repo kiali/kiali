@@ -8,8 +8,7 @@
     "no-restricted-globals": ["error", "event"],
     "no-undef": "off",
     "import/no-default-export": "error",
-
-    // New eslint rules
+    
     "no-var": "error",
     "prefer-template": "error",
     "prefer-arrow-callback": "error",

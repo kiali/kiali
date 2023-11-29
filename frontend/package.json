@@ -1,5 +1,4 @@
 {
-  "proxy": "http://localhost:20001",
   "name": "@kiali/kiali-ui",
   "version": "1.78.0",
   "description": "React UI for [Kiali](https://github.com/kiali/kiali).",
@@ -40,9 +39,9 @@
     "build:kiali": "REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) GENERATE_SOURCEMAP=false EXTEND_ESLINT=true react-scripts build --profile",
     "build:prod": "sh -ac '. ./.env.downstream; npm run build:kiali'",
     "precypress:run:junit": "npm run cypress:delete:reports",
-    "cypress": "cypress open",
+    "cypress": "cypress open -e TAGS=\"not @multi-cluster\"",
     "cypress:mc": "cypress open -e TAGS=\"@multi-cluster\"",
-    "cypress:run": "cypress run",
+    "cypress:run": "cypress run -e TAGS=\"@smoke\" && cypress run -e TAGS=\"not @crd-validation and not @multi-cluster and not @smoke\" && cypress run -e TAGS=\"@crd-validation and not @multi-cluster and not @smoke\"",
     "cypress:run:smoke": "cypress run -e TAGS=\"@smoke\"",
     "cypress:run:multi-cluster": "cypress run -e TAGS=\"not @crd-validation and @multi-cluster\"",
     "cypress:run:junit": "cypress run --reporter cypress-multi-reporters --reporter-options configFile=reporter-config.json -e TAGS=\"not @crd-validation and not @multi-cluster\" && cypress run --reporter cypress-multi-reporters --reporter-options configFile=reporter-config.json -e TAGS=\"@crd-validation and not @multi-cluster\"",
