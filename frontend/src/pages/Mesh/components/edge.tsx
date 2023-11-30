@@ -22,9 +22,9 @@ import {
 } from '@patternfly/react-topology';
 import DefaultConnectorTag from '@patternfly/react-topology/dist/esm/components/edges/DefaultConnectorTag';
 import { getConnectorStartPoint } from '@patternfly/react-topology/dist/esm/components/edges/terminals/terminalUtils';
-import { EdgeData } from '../GraphPFElems';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
+import { EdgeData } from '../MeshElems';
 
 // This is a copy of PFT DefaultEdge (v4.68.3), then modified.  I don't see a better way to really
 // do this because DefaultEdge doesn't really seem itself extensible and to add certain behavior you have

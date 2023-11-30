@@ -1,5 +1,5 @@
 import { Bullseye, Spinner } from '@patternfly/react-core';
-import { LongArrowAltRightIcon, TopologyIcon, MapIcon } from '@patternfly/react-icons';
+import { TopologyIcon, MapIcon } from '@patternfly/react-icons';
 import {
   Controller,
   createTopologyControlButtons,
@@ -24,50 +24,32 @@ import {
   VisualizationSurface,
   Edge
 } from '@patternfly/react-topology';
-import { GraphData } from 'pages/Graph/GraphPage';
 import * as React from 'react';
-import {
-  BoxByType,
-  EdgeLabelMode,
-  EdgeMode,
-  GraphEvent,
-  Layout,
-  NodeAttr,
-  NodeType,
-  Protocol,
-  UNKNOWN
-} from 'types/Graph';
-import { JaegerTrace } from 'types/TracingInfo';
-import { meshComponentFactory } from './components/meshComponentFactory';
+import { Layout } from 'types/Graph';
 import { elementFactory } from './elements/elementFactory';
+import { layoutFactory } from './layouts/layoutFactory';
+import { TimeInMilliseconds } from 'types/Common';
+import { KialiDagreGraph } from 'components/CytoscapeGraph/graphs/KialiDagreGraph';
+import { KialiGridGraph } from 'components/CytoscapeGraph/graphs/KialiGridGraph';
+import { HistoryManager, URLParam } from 'app/History';
+import { TourStop } from 'components/Tour/TourStop';
+import { getFocusSelector, unsetFocusSelector } from 'utils/SearchParamUtils';
+import { meshComponentFactory } from './components/meshComponentFactory';
+import { MeshData } from './MeshPage';
+import { MeshNodeData, MeshTarget } from 'types/Mesh';
+import { MeshHighlighter } from './MeshHighlighter';
 import {
-  assignEdgeHealth,
   EdgeData,
+  NodeData,
+  assignEdgeHealth,
   elems,
   getNodeShape,
   getNodeStatus,
-  GraphPFSettings,
-  NodeData,
-  selectAnd,
-  SelectAnd,
   setEdgeOptions,
   setNodeAttachments,
   setNodeLabel
-} from './GraphPFElems';
-import { layoutFactory } from './layouts/layoutFactory';
-import { hideTrace, showTrace } from './TracePF';
-import { GraphHighlighterPF } from './GraphHighlighterPF';
-import { TimeInMilliseconds } from 'types/Common';
-import { KialiConcentricGraph } from 'components/CytoscapeGraph/graphs/KialiConcentricGraph';
-import { KialiDagreGraph } from 'components/CytoscapeGraph/graphs/KialiDagreGraph';
-import { KialiGridGraph } from 'components/CytoscapeGraph/graphs/KialiGridGraph';
-import { KialiBreadthFirstGraph } from 'components/CytoscapeGraph/graphs/KialiBreadthFirstGraph';
-import { HistoryManager, URLParam } from 'app/History';
-import { tcpTimerConfig, timerConfig } from 'components/CytoscapeGraph/TrafficAnimation/AnimationTimerConfig';
-import { TourStop } from 'components/Tour/TourStop';
-import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
-import { getFocusSelector, unsetFocusSelector } from 'utils/SearchParamUtils';
-import { meshComponentFactory } from './components/meshComponentFactory';
+} from './MeshElems';
+import { MeshTourStops } from './MeshHelpTour';
 
 let initialLayout = false;
 let requestFit = false;
@@ -92,69 +74,39 @@ export interface FocusNode {
 }
 
 // The is the main graph rendering component
-export const TopologyContent: React.FC<{
+const TopologyContent: React.FC<{
   controller: Controller;
-  edgeLabels: EdgeLabelMode[];
-  edgeMode: EdgeMode;
-  graphData: GraphData;
-  setEdgeMode: (edgeMode: EdgeMode) => void;
-  highlighter: GraphHighlighterPF;
-  isMiniGraph: boolean;
+  meshData: MeshData;
+  highlighter: MeshHighlighter;
+  isMiniMesh: boolean;
   layoutName: LayoutName;
   onEdgeTap?: (edge: Edge<EdgeModel>) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
   onReady: (controller: any) => void;
   setLayout: (val: LayoutName) => void;
+  setTarget: (meshTarget: MeshTarget) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
-  showOutOfMesh: boolean;
-  showSecurity: boolean;
-  showTrafficAnimation: boolean;
-  showVirtualServices: boolean;
-  trace?: JaegerTrace;
   toggleLegend?: () => void;
-  updateSummary: (graphEvent: GraphEvent) => void;
 }> = ({
   controller,
-  edgeLabels,
-  edgeMode,
-  graphData,
+  meshData,
   highlighter,
-  isMiniGraph,
+  isMiniMesh,
   layoutName,
   onEdgeTap,
   onNodeTap,
   onReady,
-  setEdgeMode,
   setLayout: setLayoutName,
+  setTarget,
   setUpdateTime,
-  showOutOfMesh,
-  showSecurity,
-  showTrafficAnimation,
-  showVirtualServices,
-  trace,
-  toggleLegend,
-  updateSummary
+  toggleLegend
 }) => {
-  const [updateModelTime, setUpdateModelTime] = React.useState(0);
-
-  const graphSettings: GraphPFSettings = React.useMemo(() => {
-    return {
-      activeNamespaces: graphData.fetchParams.namespaces,
-      edgeLabels: edgeLabels,
-      graphType: graphData.fetchParams.graphType,
-      showOutOfMesh: showOutOfMesh,
-      showSecurity: showSecurity,
-      showVirtualServices: showVirtualServices,
-      trafficRates: graphData.fetchParams.trafficRates
-    } as GraphPFSettings;
-  }, [graphData.fetchParams, edgeLabels, showOutOfMesh, showSecurity, showVirtualServices]);
-
   //
   // SelectedIds State
   //
   const [selectedIds, setSelectedIds] = useVisualizationState<string[]>(SELECTION_STATE, []);
   React.useEffect(() => {
-    if (isMiniGraph) {
+    if (isMiniMesh) {
       if (selectedIds.length > 0) {
         const elem = controller.getElementById(selectedIds[0]);
         switch (elem?.getKind()) {
@@ -171,7 +123,7 @@ export const TopologyContent: React.FC<{
             return;
           }
           default:
-            updateSummary({ isPF: true, summaryType: 'graph', summaryTarget: controller } as GraphEvent);
+            setTarget({ elem: controller, type: 'mesh' } as MeshTarget);
         }
       }
       return;
@@ -183,38 +135,21 @@ export const TopologyContent: React.FC<{
       const elem = controller.getElementById(selectedIds[0]);
       switch (elem?.getKind()) {
         case ModelKind.edge: {
-          updateSummary({ isPF: true, summaryType: 'edge', summaryTarget: elem } as GraphEvent);
+          setTarget({ elem: elem, type: 'edge' } as MeshTarget);
           return;
         }
         case ModelKind.node: {
-          const isBox = (elem.getData() as NodeData).isBox;
-          updateSummary({ isPF: true, summaryType: isBox ? 'box' : 'node', summaryTarget: elem } as GraphEvent);
+          const isBox = (elem.getData() as MeshNodeData).isBox;
+          setTarget({ type: isBox ? 'box' : 'node', elem: elem } as MeshTarget);
           return;
         }
         default:
-          updateSummary({ isPF: true, summaryType: 'graph', summaryTarget: controller } as GraphEvent);
+          setTarget({ elem: controller, type: 'mesh' } as MeshTarget);
       }
     } else {
-      updateSummary({ isPF: true, summaryType: 'graph', summaryTarget: controller } as GraphEvent);
+      setTarget({ elem: controller, type: 'mesh' } as MeshTarget);
     }
-  }, [updateSummary, selectedIds, highlighter, controller, isMiniGraph, onEdgeTap, onNodeTap]);
-
-  //
-  // TraceOverlay State
-  //
-  React.useEffect(() => {
-    if (!controller || !controller.hasGraph()) {
-      return undefined;
-    }
-
-    if (!!trace) {
-      showTrace(controller, graphData.fetchParams.graphType, trace);
-    }
-
-    return () => {
-      hideTrace(controller);
-    };
-  }, [controller, graphData.fetchParams.graphType, trace]);
+  }, [setTarget, selectedIds, highlighter, controller, isMiniMesh, onEdgeTap, onNodeTap]);
 
   //
   // fitView handling
@@ -239,22 +174,6 @@ export const TopologyContent: React.FC<{
   }, [fitView]);
 
   //
-  // TODO: Maybe add this back if we have popovers that behave badly
-  // layoutPosition Change  handling
-  //
-  /*
-        const onLayoutPositionChange = React.useCallback(() => {
-          if (controller && controller.hasGraph()) {
-            //hide popovers on pan / zoom
-            const popover = document.querySelector('[aria-labelledby="popover-decorator-header"]');
-            if (popover) {
-              (popover as HTMLElement).style.display = 'none';
-            }
-          }
-        }, [controller]);
-        */
-
-  //
   // Set detail levels for graph (control zoom-sensitive labels)
   //
   const setDetailsLevel = React.useCallback(() => {
@@ -267,7 +186,7 @@ export const TopologyContent: React.FC<{
   }, [controller]);
 
   //
-  // update model on graphData change
+  // update model on meshData change
   //
   React.useEffect(() => {
     //
@@ -277,7 +196,7 @@ export const TopologyContent: React.FC<{
       if (controller) {
         const defaultModel: Model = {
           graph: {
-            id: 'graphPF',
+            id: 'mesh',
             type: 'graph',
             layout: layoutName
           }
@@ -314,7 +233,7 @@ export const TopologyContent: React.FC<{
           style: { padding: 10 },
           type: 'group'
         };
-        setNodeLabel(group, nodeMap, graphSettings);
+        setNodeLabel(group, nodeMap);
         nodeMap.set(data.id, group);
 
         return group;
@@ -331,7 +250,7 @@ export const TopologyContent: React.FC<{
           type: 'node',
           width: DEFAULT_NODE_SIZE
         };
-        setNodeLabel(node, nodeMap, graphSettings);
+        setNodeLabel(node, nodeMap);
         nodeMap.set(data.id, node);
 
         return node;
@@ -348,7 +267,7 @@ export const TopologyContent: React.FC<{
           target: data.target,
           type: 'edge'
         };
-        setEdgeOptions(edge, nodeMap, graphSettings);
+        setEdgeOptions(edge, nodeMap);
         edges.push(edge);
 
         return edge;
@@ -364,7 +283,7 @@ export const TopologyContent: React.FC<{
         }
       }
 
-      graphData.elements.nodes?.forEach(n => {
+      meshData.elements.nodes?.forEach(n => {
         const nd = n.data;
         let newNode: NodeModel;
         if (nd.isBox) {
@@ -378,9 +297,9 @@ export const TopologyContent: React.FC<{
       });
 
       // Compute edge healths one time for the graph
-      assignEdgeHealth(graphData.elements.edges || [], nodeMap, graphSettings);
+      assignEdgeHealth(meshData.elements.edges || [], nodeMap);
 
-      graphData.elements.edges?.forEach(e => {
+      meshData.elements.edges?.forEach(e => {
         const ed = e.data;
         addEdge(ed as EdgeData);
       });
@@ -427,93 +346,40 @@ export const TopologyContent: React.FC<{
       });
 
       controller.fromModel(model);
-      controller.getGraph().setData({ graphData: graphData });
+      controller.getGraph().setData({ meshData: meshData });
 
       const { nodes } = elems(controller);
 
       // set decorators
-      nodes.forEach(n => setNodeAttachments(n, graphSettings));
+      nodes.forEach(n => setNodeAttachments(n));
 
       let focusNodeId = getFocusSelector();
       if (focusNodeId) {
         const focusNode = nodes.find(n => n.getId() === focusNodeId);
         if (focusNode) {
-          focusNode.setData({ ...(focusNode.getData() as NodeData), isFocused: true });
+          focusNode.setData({
+            ...(focusNode.getData() as NodeData),
+            isFocused: true
+          });
         }
         unsetFocusSelector();
       }
 
       // pre-select node if provided
-      const graphNode = graphData.fetchParams.node;
-      if (graphNode) {
-        let selector: SelectAnd = [
-          { prop: NodeAttr.namespace, val: graphNode.namespace.name },
-          { prop: NodeAttr.nodeType, val: graphNode.nodeType }
-        ];
-        switch (graphNode.nodeType) {
-          case NodeType.AGGREGATE:
-            selector.push({ prop: NodeAttr.aggregate, val: graphNode.aggregate });
-            selector.push({ prop: NodeAttr.aggregateValue, val: graphNode.aggregateValue });
-            break;
-          case NodeType.APP:
-          case NodeType.BOX: // we only support app box node graphs, treat like an app node
-            selector.push({ prop: NodeAttr.app, val: graphNode.app });
-            if (graphNode.version && graphNode.version !== UNKNOWN) {
-              selector.push({ prop: NodeAttr.version, val: graphNode.version });
-            }
-            break;
-          case NodeType.SERVICE:
-            selector.push({ prop: NodeAttr.service, val: graphNode.service });
-            break;
-          default:
-            selector.push({ prop: NodeAttr.workload, val: graphNode.workload });
-        }
-
-        const selectedNodes = selectAnd(nodes, selector);
-        if (selectedNodes.length > 0) {
-          let target = selectedNodes[0];
-          // default app to the whole app box, when appropriate
-          if (
-            (graphNode.nodeType === NodeType.APP || graphNode.nodeType === NodeType.BOX) &&
-            !graphNode.version &&
-            target.hasParent() &&
-            target.getParent().getData().isBox === BoxByType.APP
-          ) {
-            target = target.getParent();
-          }
-
-          const data = target.getData() as NodeData;
-          data.isSelected = true;
-          setSelectedIds([target.getId()]);
-
-          target.setData(data);
-        }
-      }
+      // - Currently no pre-selection
     };
 
     const initialGraph = !controller.hasGraph();
-    console.debug(`updateModel`);
+    console.debug(`mesh updateModel`);
     updateModel(controller);
     if (initialGraph) {
-      console.debug('onReady');
+      console.debug('mesh onReady');
       onReady(controller);
     }
 
     // notify that the graph has been updated
-    const updateModelTime = Date.now();
-    setUpdateModelTime(updateModelTime);
-    setUpdateTime(updateModelTime);
-  }, [
-    controller,
-    graphData,
-    graphSettings,
-    highlighter,
-    layoutName,
-    onReady,
-    setDetailsLevel,
-    setSelectedIds,
-    setUpdateTime
-  ]);
+    setUpdateTime(Date.now());
+  }, [controller, meshData, highlighter, layoutName, onReady, setDetailsLevel, setSelectedIds, setUpdateTime]);
 
   //TODO REMOVE THESE DEBUGGING MESSAGES...
   // Leave them for now, they are just good for understanding state changes while we develop this PFT graph.
@@ -522,20 +388,16 @@ export const TopologyContent: React.FC<{
   }, [controller]);
 
   React.useEffect(() => {
-    console.debug(`graphData changed`);
-  }, [graphData]);
-
-  React.useEffect(() => {
-    console.debug(`graphSettings changed`);
-  }, [graphSettings]);
+    console.debug(`meshData changed`);
+  }, [meshData]);
 
   React.useEffect(() => {
     console.debug(`highlighter changed`);
   }, [highlighter]);
 
   React.useEffect(() => {
-    console.debug(`isMiniGraph changed`);
-  }, [isMiniGraph]);
+    console.debug(`isMiniMesh changed`);
+  }, [isMiniMesh]);
 
   React.useEffect(() => {
     console.debug(`onReady changed`);
@@ -545,54 +407,6 @@ export const TopologyContent: React.FC<{
   React.useEffect(() => {
     console.debug(`setDetails changed`);
   }, [setDetailsLevel]);
-
-  React.useEffect(() => {
-    const edges = controller.getGraph().getEdges();
-    if (!showTrafficAnimation) {
-      edges
-        .filter(e => e.getEdgeAnimationSpeed() !== EdgeAnimationSpeed.none)
-        .forEach(e => {
-          e.setEdgeAnimationSpeed(EdgeAnimationSpeed.none);
-          e.setEdgeStyle(EdgeStyle.solid);
-        });
-      return;
-    }
-
-    timerConfig.resetCalibration();
-    tcpTimerConfig.resetCalibration();
-    // Calibrate animation amplitude
-    edges.forEach(e => {
-      const edgeData = e.getData() as EdgeData;
-      switch (edgeData.protocol) {
-        case Protocol.GRPC:
-          timerConfig.calibrate(edgeData.grpc);
-          break;
-        case Protocol.HTTP:
-          timerConfig.calibrate(edgeData.http);
-          break;
-        case Protocol.TCP:
-          tcpTimerConfig.calibrate(edgeData.tcp);
-          break;
-      }
-    });
-    edges.forEach(e => {
-      const edgeData = e.getData() as EdgeData;
-      switch (edgeData.protocol) {
-        case Protocol.GRPC:
-          e.setEdgeAnimationSpeed(timerConfig.computeAnimationSpeedPF(edgeData.grpc));
-          break;
-        case Protocol.HTTP:
-          e.setEdgeAnimationSpeed(timerConfig.computeAnimationSpeedPF(edgeData.http));
-          break;
-        case Protocol.TCP:
-          e.setEdgeAnimationSpeed(tcpTimerConfig.computeAnimationSpeedPF(edgeData.tcp));
-          break;
-      }
-      if (e.getEdgeAnimationSpeed() !== EdgeAnimationSpeed.none) {
-        e.setEdgeStyle(EdgeStyle.dashedMd);
-      }
-    });
-  }, [controller, showTrafficAnimation, updateModelTime]);
 
   React.useEffect(() => {
     console.debug(`layout changed`);
@@ -617,73 +431,38 @@ export const TopologyContent: React.FC<{
   }, [controller, fitView, layoutName]);
 
   //
-  // Set back to graph summary at unmount-time (not every post-render)
+  // Set back to mesh target at unmount-time (not every post-render)
   //
   React.useEffect(() => {
     return () => {
-      if (updateSummary) {
-        updateSummary({ isPF: true, summaryType: 'graph', summaryTarget: undefined });
+      if (setTarget) {
+        setTarget({ type: 'mesh', elem: undefined });
       }
     };
-  }, [updateSummary]);
+  }, [setTarget]);
 
   useEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
 
   console.debug(`Render Topology hasGraph=${controller.hasGraph()}`);
 
-  return isMiniGraph ? (
-    <TopologyView data-test="topology-view-pf">
-      <VisualizationSurface data-test="visualization-surface" state={{}} />
+  return isMiniMesh ? (
+    <TopologyView data-test="mesh-topology-view-pf">
+      <VisualizationSurface data-test="mesh-visualization-surface" state={{}} />
     </TopologyView>
   ) : (
     <TopologyView
-      data-test="topology-view-pf"
+      data-test="mesh-topology-view-pf"
       controlBar={
-        <TourStop info={GraphTourStops.Layout}>
-          <TourStop info={GraphTourStops.Legend}>
+        <TourStop info={MeshTourStops.Layout}>
+          <TourStop info={MeshTourStops.Legend}>
             <TopologyControlBar
-              data-test="topology-control-bar"
+              data-test="mesh-topology-control-bar"
               controlButtons={createTopologyControlButtons({
                 ...defaultControlButtonsOptions,
                 fitToScreen: false,
                 zoomIn: false,
                 zoomOut: false,
                 customButtons: [
-                  // TODO, get rid of the show all edges option, and the disabling, when we can set an option active
-                  {
-                    ariaLabel: 'Show All Edges',
-                    callback: () => {
-                      setEdgeMode(EdgeMode.ALL);
-                    },
-                    disabled: EdgeMode.ALL === edgeMode,
-                    icon: <LongArrowAltRightIcon />,
-                    id: 'toolbar_edge_mode_all',
-                    tooltip: 'Show all edges'
-                  },
-                  {
-                    ariaLabel: 'Hide Healthy Edges',
-                    callback: () => {
-                      //change this back when we have the active styling
-                      //setEdgeMode(EdgeMode.UNHEALTHY === edgeMode ? EdgeMode.ALL : EdgeMode.UNHEALTHY);
-                      setEdgeMode(EdgeMode.UNHEALTHY);
-                    },
-                    disabled: EdgeMode.UNHEALTHY === edgeMode,
-                    icon: <LongArrowAltRightIcon />,
-                    id: 'toolbar_edge_mode_unhealthy',
-                    tooltip: 'Hide healthy edges'
-                  },
-                  {
-                    ariaLabel: 'Hide All Edges',
-                    id: 'toolbar_edge_mode_none',
-                    disabled: EdgeMode.NONE === edgeMode,
-                    icon: <LongArrowAltRightIcon />,
-                    tooltip: 'Hide all edges',
-                    callback: () => {
-                      //change this back when we have the active styling
-                      //setEdgeMode(EdgeMode.NONE === edgeMode ? EdgeMode.ALL : EdgeMode.NONE);
-                      setEdgeMode(EdgeMode.NONE);
-                    }
-                  },
                   {
                     ariaLabel: 'Layout - Dagre',
                     id: 'toolbar_layout_dagre',
@@ -702,26 +481,6 @@ export const TopologyContent: React.FC<{
                     tooltip: 'Layout - grid',
                     callback: () => {
                       setLayoutName(LayoutName.Grid);
-                    }
-                  },
-                  {
-                    ariaLabel: 'Layout - Concentric',
-                    id: 'toolbar_layout_concentric',
-                    disabled: LayoutName.Concentric === layoutName,
-                    icon: <TopologyIcon />,
-                    tooltip: 'Layout - concentric',
-                    callback: () => {
-                      setLayoutName(LayoutName.Concentric);
-                    }
-                  },
-                  {
-                    ariaLabel: 'Layout - Breadth First',
-                    id: 'toolbar_layout_breadth_first',
-                    disabled: LayoutName.BreadthFirst === layoutName,
-                    icon: <TopologyIcon />,
-                    tooltip: 'Layout - breadth first',
-                    callback: () => {
-                      setLayoutName(LayoutName.BreadthFirst);
                     }
                   }
                 ],
@@ -757,49 +516,33 @@ export const TopologyContent: React.FC<{
   );
 };
 
-export const GraphPF: React.FC<{
-  edgeLabels: EdgeLabelMode[];
-  edgeMode: EdgeMode;
+export const Mesh: React.FC<{
   focusNode?: FocusNode;
-  graphData: GraphData;
-  isMiniGraph: boolean;
+  meshData: MeshData;
+  isMiniMesh: boolean;
   layout: Layout;
   onEdgeTap?: (edge: Edge<EdgeModel>) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
   onReady: (controller: any) => void;
-  setEdgeMode: (edgeMode: EdgeMode) => void;
   setLayout: (layout: Layout) => void;
+  setTarget: (meshTarget: MeshTarget) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
-  showOutOfMesh: boolean;
-  showSecurity: boolean;
-  showTrafficAnimation: boolean;
-  showVirtualServices: boolean;
-  trace?: JaegerTrace;
   toggleLegend?: () => void;
-  updateSummary: (graphEvent: GraphEvent) => void;
 }> = ({
-  edgeLabels,
-  edgeMode,
-  graphData,
-  isMiniGraph,
+  meshData,
+  isMiniMesh,
   layout,
   onEdgeTap,
   onNodeTap,
   onReady,
-  setEdgeMode,
   setLayout,
+  setTarget,
   setUpdateTime,
-  showOutOfMesh,
-  showSecurity,
-  showTrafficAnimation,
-  showVirtualServices,
-  trace,
-  toggleLegend,
-  updateSummary
+  toggleLegend
 }) => {
   //create controller on startup and register factories
   const [controller, setController] = React.useState<Visualization>();
-  const [highlighter, setHighlighter] = React.useState<GraphHighlighterPF>();
+  const [highlighter, setHighlighter] = React.useState<MeshHighlighter>();
 
   // Set up the controller one time
   React.useEffect(() => {
@@ -809,7 +552,7 @@ export const GraphPF: React.FC<{
     c.registerLayoutFactory(layoutFactory);
     c.registerComponentFactory(meshComponentFactory);
     setController(c);
-    setHighlighter(new GraphHighlighterPF(c));
+    setHighlighter(new MeshHighlighter(c));
   }, []);
 
   const getLayoutName = (layout: Layout): LayoutName => {
@@ -827,14 +570,7 @@ export const GraphPF: React.FC<{
 
   const setLayoutByName = (layoutName: LayoutName) => {
     let layout: Layout;
-    // TODO, handle namespaceLayout
     switch (layoutName) {
-      case LayoutName.BreadthFirst:
-        layout = KialiBreadthFirstGraph.getLayout();
-        break;
-      case LayoutName.Concentric:
-        layout = KialiConcentricGraph.getLayout();
-        break;
       case LayoutName.Grid:
         layout = KialiGridGraph.getLayout();
         break;
@@ -842,12 +578,11 @@ export const GraphPF: React.FC<{
         layout = KialiDagreGraph.getLayout();
     }
 
-    HistoryManager.setParam(URLParam.GRAPH_LAYOUT, layout.name);
-    HistoryManager.setParam(URLParam.GRAPH_NAMESPACE_LAYOUT, KialiDagreGraph.getLayout().name);
+    HistoryManager.setParam(URLParam.MESH_LAYOUT, layout.name);
     setLayout(layout);
   };
 
-  if (!controller || !graphData || graphData.isLoading) {
+  if (!controller || !meshData || meshData.isLoading) {
     return (
       <Bullseye data-test="loading-contents">
         <Spinner size="xl" />
@@ -860,25 +595,17 @@ export const GraphPF: React.FC<{
     <VisualizationProvider data-test="visualization-provider" controller={controller}>
       <TopologyContent
         controller={controller}
-        edgeLabels={edgeLabels}
-        edgeMode={edgeMode}
-        graphData={graphData}
+        meshData={meshData}
         highlighter={highlighter!}
-        isMiniGraph={isMiniGraph}
+        isMiniMesh={isMiniMesh}
         layoutName={getLayoutName(layout)}
         onEdgeTap={onEdgeTap}
         onNodeTap={onNodeTap}
         onReady={onReady}
-        setEdgeMode={setEdgeMode}
         setLayout={setLayoutByName}
+        setTarget={setTarget}
         setUpdateTime={setUpdateTime}
-        showOutOfMesh={showOutOfMesh}
-        showSecurity={showSecurity}
-        showTrafficAnimation={showTrafficAnimation}
-        showVirtualServices={showVirtualServices}
-        trace={trace}
         toggleLegend={toggleLegend}
-        updateSummary={updateSummary}
       />
     </VisualizationProvider>
   );

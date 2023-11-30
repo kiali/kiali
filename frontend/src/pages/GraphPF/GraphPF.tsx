@@ -91,7 +91,7 @@ export interface FocusNode {
 }
 
 // The is the main graph rendering component
-export const TopologyContent: React.FC<{
+const TopologyContent: React.FC<{
   controller: Controller;
   edgeLabels: EdgeLabelMode[];
   edgeMode: EdgeMode;

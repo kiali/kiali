@@ -11,8 +11,7 @@ const shortcuts: Shortcut[] = [
   { shortcut: 'Click + Drag', description: 'Panning' },
   { shortcut: 'Shift + Drag', description: 'Select zoom area' },
   { shortcut: 'Right click', description: 'Contextual menu on nodes' },
-  { shortcut: 'Single click', description: 'Details in side panel on nodes and edges' },
-  { shortcut: 'Double click', description: 'Drill into a node details graph' }
+  { shortcut: 'Single click', description: 'Details in side panel on nodes and edges' }
 ];
 
 const makeShortcut = (shortcut: Shortcut): JSX.Element => {
@@ -26,7 +25,7 @@ const makeShortcut = (shortcut: Shortcut): JSX.Element => {
   );
 };
 
-export const GraphShortcuts = (): JSX.Element => (
+export const MeshShortcuts = (): JSX.Element => (
   <>
     {shortcuts.map(
       (s: Shortcut): JSX.Element => {

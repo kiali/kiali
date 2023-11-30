@@ -5,7 +5,7 @@ import { Dropdown, DropdownItem, DropdownList, MenuToggle, MenuToggleElement } f
 
 type FindKind = 'find' | 'hide';
 
-type GraphFindOptionsProps = {
+type MeshFindOptionsProps = {
   kind: FindKind;
   onSelect: (expression: string) => void;
 };
@@ -19,7 +19,7 @@ const menuToggleStyle = kialiStyle({
   }
 });
 
-export const GraphFindOptions: React.FC<GraphFindOptionsProps> = (props: GraphFindOptionsProps) => {
+export const MeshFindOptions: React.FC<MeshFindOptionsProps> = (props: MeshFindOptionsProps) => {
   const { kind, onSelect } = props;
   const [isOpen, setIsOpen] = React.useState<boolean>(false);
   const [options, setOptions] = React.useState<React.ReactNode[]>([]);
@@ -28,8 +28,8 @@ export const GraphFindOptions: React.FC<GraphFindOptionsProps> = (props: GraphFi
     const getOptionItems = (kind: FindKind): React.ReactFragment[] => {
       const options =
         kind === 'find'
-          ? serverConfig.kialiFeatureFlags.uiDefaults.graph.findOptions
-          : serverConfig.kialiFeatureFlags.uiDefaults.graph.hideOptions;
+          ? serverConfig.kialiFeatureFlags.uiDefaults.mesh.findOptions
+          : serverConfig.kialiFeatureFlags.uiDefaults.mesh.hideOptions;
       return options.map(o => {
         return (
           <DropdownItem key={o.description} onClick={() => onSelect(o.expression)}>
@@ -48,8 +48,8 @@ export const GraphFindOptions: React.FC<GraphFindOptionsProps> = (props: GraphFi
 
   return (
     <Dropdown
-      key={`graph-${kind}-presets`}
-      id={`graph-${kind}-presets`}
+      key={`mesh-${kind}-presets`}
+      id={`mesh-${kind}-presets`}
       toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
         <MenuToggle
           ref={toggleRef}

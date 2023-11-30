@@ -124,9 +124,11 @@ export interface MeshToolbarState {
   findValue: string;
   hideValue: string;
   showFindHelp: boolean;
+  showLegend: boolean;
 }
 
 export interface MeshState {
+  layout: Layout;
   target: MeshTarget | null;
   toolbarState: MeshToolbarState;
   updateTime: TimeInMilliseconds;

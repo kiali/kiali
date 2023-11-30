@@ -9,16 +9,13 @@ import { computePrometheusRateParams } from '../../services/Prometheus';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { ErrorBoundary } from '../../components/ErrorBoundary/ErrorBoundary';
 import { GraphToolbar } from '../Graph/GraphToolbar/GraphToolbar';
-import { EmptyGraphLayout } from '../../components/CytoscapeGraph/EmptyGraphLayout';
 import { SummaryPanel } from '../Graph/SummaryPanel';
-import { findValueSelector, hideValueSelector, refreshIntervalSelector } from '../../store/Selectors';
+import { meshFindValueSelector, meshHideValueSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { KialiAppState } from '../../store/Store';
-import { GraphToolbarActions } from '../../actions/GraphToolbarActions';
 import { PFColors } from 'components/Pf/PfColors';
 import { TourActions } from 'actions/TourActions';
-import { arrayEquals } from 'utils/Common';
-import { isKioskMode, getFocusSelector, getTraceId, getClusterName } from 'utils/SearchParamUtils';
-import { Badge, Chip } from '@patternfly/react-core';
+import { isKioskMode, getFocusSelector } from 'utils/SearchParamUtils';
+import { Chip } from '@patternfly/react-core';
 import { toRangeString } from 'components/Time/Utils';
 import { replayBorder } from 'components/Time/Replay';
 import { MeshDataSource, MeshFetchParams } from '../../services/MeshDataSource';
@@ -45,8 +42,10 @@ import {
   MeshDefinition,
   MeshTarget
 } from 'types/Mesh';
-import { FocusNode } from './Mesh';
+import { FocusNode, Mesh } from './Mesh';
 import { MeshActions } from 'actions/MeshActions';
+import { MeshLegend } from './MeshLegend';
+import { MeshToolbarActions } from 'actions/MeshToolbarActions';
 
 type ReduxProps = {
   activeTour?: TourInfo;
@@ -60,15 +59,15 @@ type ReduxProps = {
   mtlsEnabled: boolean;
   onReady: (controller: any) => void;
   refreshInterval: IntervalInMilliseconds;
-  setMeshDefinition: (meshDefinition: MeshDefinition) => void;
+  setDefinition: (meshDefinition: MeshDefinition) => void;
   setLayout: (layout: Layout) => void;
+  setTarget: (event: MeshTarget) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
   showLegend: boolean;
   showOutOfMesh: boolean;
   startTour: ({ info, stop }) => void;
   target: MeshTarget | null;
   toggleLegend: () => void;
-  updateSummary: (event: MeshTarget) => void;
 };
 
 export type MeshPageProps = ReduxProps & {
@@ -100,6 +99,14 @@ const containerStyle = kialiStyle({
 const kioskContainerStyle = kialiStyle({
   minHeight: '350px',
   height: 'calc(100vh - 10px)' // View height minus top bar height
+});
+
+const meshChip = kialiStyle({
+  position: 'absolute',
+  top: '10px',
+  left: '10px',
+  width: 'auto',
+  zIndex: 2
 });
 
 const meshContainerStyle = kialiStyle({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
@@ -159,7 +166,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   componentDidUpdate(prev: MeshPageProps) {
     const curr = this.props;
 
-    // Ensure we initialize the graph. We wait for the first update so that
+    // Ensure we initialize the mesh. We wait for the first update so that
     // the toolbar can render and ensure all redux props are updated with URL
     // settings. That in turn ensures the initial fetchParams are correct.
     const isInitialLoad = !this.state.meshData.timestamp;
@@ -177,11 +184,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
       this.loadMeshFromBackend();
     }
 
-    if (
-      prev.layout.name !== curr.layout.name ||
-      prev.namespaceLayout.name !== curr.namespaceLayout.name ||
-      activeNamespacesChanged
-    ) {
+    if (prev.layout.name !== curr.layout.name) {
       this.errorBoundaryRef.current.cleanError();
     }
 
@@ -204,7 +207,6 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     }
     const isEmpty = !(this.state.meshData.elements.nodes && Object.keys(this.state.meshData.elements.nodes).length > 0);
     const isReady = !(isEmpty || this.state.meshData.isError);
-    const isReplayReady = this.props.replayActive && !!this.props.replayQueryTime;
 
     return (
       <>
@@ -225,41 +227,25 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
               fallBackComponent={<MeshErrorBoundaryFallback />}
             >
               {this.props.showLegend && (
-                <GraphLegendPF className={meshLegendStyle} closeLegend={this.props.toggleLegend} />
+                <MeshLegend className={meshLegendStyle} closeLegend={this.props.toggleLegend} />
               )}
               {isReady && (
-                <Chip
-                  className={`${graphTimeRange} ${this.props.replayActive ? replayBackground : meshBackground}`}
-                  isReadOnly={true}
-                >
-                  {this.props.replayActive && <Badge style={{ marginRight: '4px' }} isRead={true}>{`Replay`}</Badge>}
-                  {!isReplayReady && this.props.replayActive && `click Play to start`}
-                  {!isReplayReady && !this.props.replayActive && `${this.displayTimeRange()}`}
-                  {isReplayReady && `${this.displayTimeRange()}`}
+                <Chip className={`${meshChip} ${meshBackground}`} isReadOnly={true}>
+                  {`TODO: ${'Mesh Name Here'}`}
                 </Chip>
               )}
-              {(!this.props.replayActive || isReplayReady) && (
-                <div id="cytoscape-graph" className={meshContainerStyle}>
-                  <EmptyGraphLayout
-                    action={this.handleEmptyGraphAction}
-                    elements={this.state.meshData.elements}
-                    error={this.state.meshData.errorMessage}
-                    isLoading={this.state.meshData.isLoading}
-                    isError={!!this.state.meshData.isError}
-                    isMiniGraph={false}
-                    namespaces={this.state.meshData.fetchParams.namespaces}
-                    showIdleNodes={this.props.showIdleNodes}
-                    toggleIdleNodes={this.props.toggleIdleNodes}
-                  >
-                    <GraphPF
-                      focusNode={this.focusNode}
-                      graphData={this.state.meshData}
-                      isMiniGraph={false}
-                      {...this.props}
-                    />
-                  </EmptyGraphLayout>
-                </div>
-              )}
+              <div id="mesh-container" className={meshContainerStyle}>
+                <EmptyMeshLayout
+                  action={this.handleEmptyGraphAction}
+                  elements={this.state.meshData.elements}
+                  error={this.state.meshData.errorMessage}
+                  isError={!!this.state.meshData.isError}
+                  isLoading={this.state.meshData.isLoading}
+                  isMiniMesh={false}
+                >
+                  <Mesh focusNode={this.focusNode} meshData={this.state.meshData} isMiniMesh={false} {...this.props} />
+                </EmptyMeshLayout>
+              </div>
             </ErrorBoundary>
             {this.props.target && (
               <SummaryPanel
@@ -539,26 +525,26 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   activeTour: state.tourState.activeTour,
-  findValue: findValueSelector(state),
-  hideValue: hideValueSelector(state),
+  findValue: meshFindValueSelector(state),
+  hideValue: meshHideValueSelector(state),
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
   isPageVisible: state.globalState.isPageVisible,
   kiosk: state.globalState.kiosk,
-  layout: state.graph.layout,
+  layout: state.mesh.layout,
   refreshInterval: refreshIntervalSelector(state),
-  showLegend: state.graph.toolbarState.showLegend,
-  summaryData: state.graph.summaryData
+  showLegend: state.mesh.toolbarState.showLegend,
+  target: state.mesh.target
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   endTour: bindActionCreators(TourActions.endTour, dispatch),
   onReady: (controller: any) => dispatch(GraphThunkActions.graphPFReady(controller)),
-  setMeshDefinition: bindActionCreators(MeshActions.setMeshDefinition, dispatch),
-  setMeshLayout: bindActionCreators(MeshActions.setMeshLayout, dispatch),
-  setMeshTarget: (target: MeshTarget) => dispatch(MeshActions.setMeshTarget(target)),
-  setMeshUpdateTime: (val: TimeInMilliseconds) => dispatch(MeshActions.setMeshUpdateTime(val)),
+  setDefinition: bindActionCreators(MeshActions.setDefinition, dispatch),
+  setLayout: bindActionCreators(MeshActions.setLayout, dispatch),
+  setTarget: (target: MeshTarget) => dispatch(MeshActions.setTarget(target)),
+  setUpdateTime: (val: TimeInMilliseconds) => dispatch(MeshActions.setUpdateTime(val)),
   startTour: bindActionCreators(TourActions.startTour, dispatch),
-  toggleLegend: bindActionCreators(GraphToolbarActions.toggleLegend, dispatch)
+  toggleMeshLegend: bindActionCreators(MeshToolbarActions.toggleLegend, dispatch)
 });
 
 export const MeshPage = connectRefresh(connect(mapStateToProps, mapDispatchToProps)(MeshPageComponent));

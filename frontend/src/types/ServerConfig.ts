@@ -53,9 +53,15 @@ interface ListUIDefaults {
   showIncludeToggles: boolean;
 }
 
+interface MeshUIDefaults {
+  findOptions: GraphFindOption[];
+  hideOptions: GraphFindOption[];
+}
+
 interface UIDefaults {
   graph: GraphUIDefaults;
   list: ListUIDefaults;
+  mesh: MeshUIDefaults;
   metricsPerRefresh?: string;
   namespaces?: string[];
   refreshInterval?: string;

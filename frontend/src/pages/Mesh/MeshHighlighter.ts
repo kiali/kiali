@@ -22,8 +22,7 @@
 
 import { Edge, Node } from '@patternfly/react-topology';
 import { Controller, GraphElement } from '@patternfly/react-topology/dist/esm/types';
-import { BoxByType, NodeAttr } from 'types/Graph';
-import { ancestors, NodeData, predecessors, successors } from './GraphPFElems';
+import { NodeData, ancestors, predecessors, successors } from './MeshElems';
 
 export class MeshHighlighter {
   controller: Controller;
@@ -144,22 +143,7 @@ export class MeshHighlighter {
   }
 
   getBoxHighlight(box: Node): { toHighlight: GraphElement[]; unhighlightOthers: boolean } {
-    // treat App boxes in a typical way, but to reduce "flashing", Namespace and Cluster
-    // boxes highlight themselves and their anscestors.
-    if (box.getData()[NodeAttr.isBox] === BoxByType.APP) {
-      let elems: GraphElement[];
-      const children = box.getChildren();
-      elems = [...children];
-      children.forEach(n => {
-        elems = Array.from(
-          new Set<GraphElement>([...elems, ...predecessors(n as Node)])
-        );
-        elems = Array.from(
-          new Set<GraphElement>([...elems, ...successors(n as Node)])
-        );
-      });
-      return { toHighlight: this.includeAncestorNodes(elems), unhighlightOthers: true };
-    }
+    // Namespace and Cluster boxes highlight themselves and their anscestors.
     return { toHighlight: this.includeAncestorNodes([box]), unhighlightOthers: false };
   }
 }

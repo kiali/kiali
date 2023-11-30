@@ -62,6 +62,7 @@ export enum URLParam {
   GRAPH_WAYPOINTS = 'waypoints',
   MESH_FIND = 'meshFind',
   MESH_HIDE = 'meshHide',
+  MESH_LAYOUT = 'meshLayout',
   TRACING_ERRORS_ONLY = 'errs',
   TRACING_LIMIT_TRACES = 'limit',
   TRACING_PERCENTILE = 'percentile',

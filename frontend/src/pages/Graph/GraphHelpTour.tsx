@@ -13,7 +13,7 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
   ContextualMenuPF: {
     name: 'Contextual Menu',
     description:
-      'Right-click a node to see the contextual menu with links to details, traffic, inbound/outbound metrics and node graph.',
+      'Click kebab menu on a node label for links to details, traffic, inbound/outbound metrics and node graph.',
     position: PopoverPosition.left,
     distance: 250
   },

@@ -16,8 +16,7 @@ import { Controller, Graph, GraphElement } from '@patternfly/react-topology';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { KialiAppState } from '../../../store/Store';
-import { findValueSelector, hideValueSelector, edgeLabelsSelector, edgeModeSelector } from '../../../store/Selectors';
-import { MeshHelpFind } from '../../../pages/Mesh/MeshHelpFind';
+import { findValueSelector, hideValueSelector } from '../../../store/Selectors';
 import * as CytoscapeGraphUtils from '../../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -43,6 +42,9 @@ import { FIT_PADDING } from 'pages/GraphPF/GraphPF';
 import { isArray } from 'lodash';
 import { MeshAttr, MeshInfraType, MeshNodeType } from 'types/Mesh';
 import { Layout } from 'types/Graph';
+import { MeshToolbarActions } from 'actions/MeshToolbarActions';
+import { MeshFindOptions } from './MeshFindOptions';
+import { MeshHelpFind } from '../MeshHelpFind';
 
 type ReduxProps = {
   findValue: string;
@@ -90,7 +92,7 @@ const gridStyle = kialiStyle({
   display: 'flex'
 });
 
-const graphFindStyle = kialiStyle({
+const meshFindStyle = kialiStyle({
   marginRight: '0.75rem',
   $nest: {
     '& > .pf-v5-c-form__group-control': {
@@ -254,7 +256,7 @@ class MeshFindComponent extends React.Component<MeshFindProps, MeshFindState> {
               </FormGroup>
             </GridItem>
             <GridItem span={1}>
-              <FormGroup className={graphFindStyle}>
+              <FormGroup className={meshFindStyle}>
                 <MeshFindOptions kind="find" onSelect={this.updateFindOption} />
                 {this.props.findValue && (
                   <Tooltip key="ot_clear_find" position="top" content="Clear Find...">
@@ -295,7 +297,7 @@ class MeshFindComponent extends React.Component<MeshFindProps, MeshFindState> {
               </FormGroup>
             </GridItem>
             <GridItem span={1}>
-              <FormGroup className={graphFindStyle}>
+              <FormGroup className={meshFindStyle}>
                 <MeshFindOptions kind="hide" onSelect={this.updateHideOption} />
                 {this.props.hideValue && (
                   <Tooltip key="ot_clear_hide" position="top" content="Clear Hide...">
@@ -315,7 +317,7 @@ class MeshFindComponent extends React.Component<MeshFindProps, MeshFindState> {
         {this.props.showFindHelp ? (
           <MeshHelpFind onClose={this.toggleFindHelp}>
             <Button
-              data-test="graph-find-hide-help-button"
+              data-test="mesh-find-hide-help-button"
               variant={ButtonVariant.link}
               className={findHideHelpStyle}
               onClick={this.toggleFindHelp}
@@ -326,7 +328,7 @@ class MeshFindComponent extends React.Component<MeshFindProps, MeshFindState> {
         ) : (
           <Tooltip key={'ot_mesh_find_help'} position="top" content="Find/Hide Help...">
             <Button
-              data-test="graph-find-hide-help-button"
+              data-test="mesh-find-hide-help-button"
               variant={ButtonVariant.link}
               className={findHideHelpStyle}
               onClick={this.toggleFindHelp}
@@ -465,18 +467,18 @@ class MeshFindComponent extends React.Component<MeshFindProps, MeshFindState> {
     }
   }
 
-  private handleHide = (controller: Controller, graphChanged: boolean) => {
+  private handleHide = (controller: Controller, meshChanged: boolean) => {
     const selector = this.parseValue(this.props.hideValue, false);
     const checkRemovals = selector.nodeSelector || selector.edgeSelector;
-    const graph = controller.getGraph();
+    const mesh = controller.getGraph();
     let needLayout = false;
 
     console.debug(`Hide selector=[${JSON.stringify(selector)}]`);
 
-    // unhide hidden elements when we are dealing with the same graph. Either way,release for garbage collection
-    if (!!this.hiddenElements && !graphChanged) {
+    // unhide hidden elements when we are dealing with the same mesh. Either way,release for garbage collection
+    if (!!this.hiddenElements && !meshChanged) {
       needLayout = true;
-      this.hiddenElements.forEach(e => this.unhideElement(graph, e));
+      this.hiddenElements.forEach(e => this.unhideElement(mesh, e));
     }
     this.hiddenElements = undefined;
 
@@ -516,7 +518,7 @@ class MeshFindComponent extends React.Component<MeshFindProps, MeshFindState> {
       });
 
       // unhide any box hits, we only hide empty boxes
-      nodes.filter(n => n.isGroup() && !n.isVisible()).forEach(g => this.unhideElement(graph, g));
+      nodes.filter(n => n.isGroup() && !n.isVisible()).forEach(g => this.unhideElement(mesh, g));
 
       // now hide any boxes that don't have any visible children
       nodes
@@ -677,7 +679,7 @@ class MeshFindComponent extends React.Component<MeshFindProps, MeshFindState> {
 
   private parseExpression = (
     expression: string,
-    conjunctive: boolean,
+    _conjunctive: boolean,
     isFind: boolean
   ): ParsedExpression | undefined => {
     let op;
@@ -761,10 +763,12 @@ class MeshFindComponent extends React.Component<MeshFindProps, MeshFindState> {
           case MeshInfraType.NAMESPACE:
             return { target: 'node', selector: { prop: MeshAttr.infraType, op: op, val: infraType } };
           case 'metricstore':
+          case 'ms':
           case 'prom':
           case 'prometheus':
             return { target: 'node', selector: { prop: MeshAttr.infraType, op: op, val: MeshInfraType.METRIC_STORE } };
           case 'tracestore':
+          case 'ts':
           case 'jaeger':
           case 'tempo':
             return { target: 'node', selector: { prop: MeshAttr.infraType, op: op, val: MeshInfraType.TRACE_STORE } };
@@ -866,9 +870,9 @@ class MeshFindComponent extends React.Component<MeshFindProps, MeshFindState> {
 const mapStateToProps = (state: KialiAppState) => ({
   findValue: findValueSelector(state),
   hideValue: hideValueSelector(state),
-  layout: state.graph.layout,
-  showFindHelp: state.graph.toolbarState.showFindHelp,
-  updateTime: state.graph.updateTime
+  layout: state.mesh.layout,
+  showFindHelp: state.mesh.toolbarState.showFindHelp,
+  updateTime: state.mesh.updateTime
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => {
@@ -879,4 +883,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
   };
 };
 
-export const GraphFindPF = connect(mapStateToProps, mapDispatchToProps)(MeshFindComponent);
+export const MeshFind = connect(mapStateToProps, mapDispatchToProps)(MeshFindComponent);

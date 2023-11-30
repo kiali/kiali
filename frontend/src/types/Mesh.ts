@@ -57,6 +57,8 @@ export interface MeshNodeData {
   isInaccessible?: boolean;
   isMTLS?: boolean;
   isOutOfMesh?: boolean;
+  labels?: { [key: string]: string };
+  parent?: string;
 }
 
 // Edge data expected from server
@@ -119,7 +121,7 @@ export interface DecoratedMeshElements {
 export type MeshType = 'mesh' | 'node' | 'edge' | 'box';
 
 export interface MeshTarget {
-  elem: Controller | GraphElement;
+  elem: Controller | GraphElement | undefined;
   type: MeshType; // the element type
 }
 
