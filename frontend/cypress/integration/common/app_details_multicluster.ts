@@ -2,6 +2,7 @@ import { And, Then, But } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
 import { openTab } from './transition';
 import { clusterParameterExists } from './navigation';
+import { ensureKialiFinishedLoading } from './transition';
 
 Then('user sees details information for the remote {string} app', (name: string) => {
   cy.getBySel('app-description-card').within(() => {
@@ -56,4 +57,9 @@ And("user sees {string} from a remote {string} cluster",(type:string, cluster:st
 
 And ("user should see columns related to cluster info for the inbound and outbound traffic", () => {
   cy.get(`th[data-label="Cluster"]`).should('be.visible').and('have.length',2);
+});
+
+And('an info message {string} is displayed',(message:string) =>{
+  ensureKialiFinishedLoading();
+  cy.contains(message).should('be.visible');
 });
