@@ -10,6 +10,7 @@ Feature: Kiali Services page
     And user is at the "services" list page
 
   @bookinfo-app
+  @api-docs
   Scenario: See services table with correct info
     When user selects the "bookinfo" namespace
     Then user sees a table with headings
@@ -23,6 +24,7 @@ Feature: Kiali Services page
     And the "Configuration" column on the "productpage" row has a link ending in "/namespaces/bookinfo/services/productpage"
     And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/virtualservices/bookinfo"
     And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/gateways/bookinfo-gateway"
+    And the "Details" column on the "productpage" row has a icon with title "API Documentation"
     And the "Cluster" column "disappears"
 
   @smoke
@@ -135,7 +137,7 @@ Feature: Kiali Services page
   @multi-cluster
   Scenario: Services from both clusters should have a validation
     When user selects the "bookinfo" namespace
-    Then all of the default "bookinfo" services from both clusters should be "healthy" 
+    Then all of the default "bookinfo" services from both clusters should be "healthy"
 
   @skip
   @multi-cluster

@@ -77,6 +77,11 @@ Before({ tags: '@gateway-api' }, async function () {
   });
 });
 
+Before({ tags: '@api-docs' }, async function () {
+  cy.exec('kubectl annotate service productpage -n bookinfo kiali.io/api-type=rest --overwrite', { failOnNonZeroExit: false });
+  cy.exec('kubectl annotate service productpage -n bookinfo kiali.io/api-spec=https://petstore.swagger.io/v2/swagger.json', { failOnNonZeroExit: false });
+});
+
 Before({ tags: '@bookinfo-app' }, async function () {
   install_demoapp('bookinfo');
 });
