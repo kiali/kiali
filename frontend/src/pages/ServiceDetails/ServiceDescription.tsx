@@ -109,8 +109,9 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
         )}
 
         {props.serviceDetails &&
-          props.serviceDetails.additionalDetails &&
-          props.serviceDetails.additionalDetails.map((additionalItem, idx) => {
+          props.serviceDetails.service &&
+          props.serviceDetails.service.additionalDetails &&
+          props.serviceDetails.service.additionalDetails.map((additionalItem, idx) => {
             return (
               <li key={`additional-details-${idx}`} id={`additional-details-${idx}`}>
                 <span>{additionalItem.title}</span>

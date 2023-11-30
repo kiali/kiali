@@ -21,7 +21,8 @@ export const SERVICE_DETAILS: ServiceDetailsInfo = {
         tlsMode: 'istio'
       }
     ],
-    resourceVersion: '2652'
+    resourceVersion: '2652',
+    additionalDetails: []
   },
   istioSidecar: true,
   istioAmbient: false,
@@ -143,6 +144,5 @@ export const SERVICE_DETAILS: ServiceDetailsInfo = {
         ]
       }
     }
-  },
-  additionalDetails: []
+  }
 };

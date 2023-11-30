@@ -2,7 +2,7 @@ import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 
 import GrpcIcon from '../../assets/img/grpc-logo.svg';
-import RestIcon from '../../assets/img/rest-logo.svg';
+import RestIcon from '../../assets/img/rest-logo.png';
 import GraphqlIcon from '../../assets/img/graphql-logo.svg';
 import VertxLogo from '../../assets/img/vertx-logo.png';
 import NodejsLogo from '../../assets/img/nodejs-logo.png';
