@@ -34,7 +34,7 @@ Feature: Kiali Workload Details page
 
   Scenario: See workload span info after selecting a span
     And user sees trace information
-    And user sees tracing warning
+    And an info message "Loading traces for all clusters. Tracing is not configured to store traces per cluster." is displayed
     When user selects a trace
     And user sees span details
     And user can filter spans by workload
@@ -79,11 +79,6 @@ Feature: Kiali Workload Details page
   Scenario: See no Outbound Metrics for a workload, which is not present in the specific cluster. 
     And user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "east" cluster
     Then user does not see "Outbound" metrics information for the "east" "ratings-v1" "workload"
-
-  @skip
-  Scenario: See no tracing info for a workload, which is not present in the specific cluster
-    And user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "east" cluster
-    And user does not see any traces
 
   Scenario: Envoy tab should not be visible for a workload, which is not present in specific cluster
     And user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "east" cluster

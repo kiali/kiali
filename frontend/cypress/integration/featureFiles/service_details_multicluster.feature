@@ -45,7 +45,7 @@ Feature: Kiali Service Details page for remote cluster
 
   Scenario: See graph traces for ratings service details
     And user sees trace information
-    And user sees tracing warning
+    And an info message "Loading traces for all clusters. Tracing is not configured to store traces per cluster." is displayed
     When user selects a trace
     Then user sees trace details
 
@@ -67,9 +67,3 @@ Feature: Kiali Service Details page for remote cluster
   Scenario: See no Inbound Metrics for a service, which is not present in the specific cluster. 
     And user is at the details page for the "service" "bookinfo/ratings" located in the "east" cluster
     Then user does not see "Inbound" metrics information for the "east" "ratings" "service"
-
-  # skipped until https://github.com/kiali/kiali/issues/6710 gets resolved
-  @skip
-  Scenario: See no tracing info for a service, which is not present in the specific cluster
-    And user is at the details page for the "service" "bookinfo/ratings" located in the "east" cluster
-    And user does not see any traces
