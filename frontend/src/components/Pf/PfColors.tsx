@@ -37,9 +37,11 @@ export enum PFColors {
   LightGreen400 = 'var(--pf-v5-global--palette--light-green-400)',
   LightGreen500 = 'var(--pf-v5-global--palette--light-green-500)',
   Orange50 = 'var(--pf-v5-global--palette--orange-50)',
+  Orange300 = 'var(--pf-v5-global--palette--orange-300)',
   Orange400 = 'var(--pf-v5-global--palette--orange-400)',
   Purple100 = 'var(--pf-v5-global--palette--purple-100)',
   Purple200 = 'var(--pf-v5-global--palette--purple-200)',
+  Purple300 = 'var(--pf-v5-global--palette--purple-300)',
   Purple500 = 'var(--pf-v5-global--palette--purple-500)',
   Red50 = 'var(--pf-v5-global--palette--red-50)',
   Red100 = 'var(--pf-v5-global--palette--red-100)',
@@ -93,6 +95,7 @@ export enum PFColors {
 export type PFColorVal = string;
 
 // Color values used by Kiali outside of CSS (i.e. when we must have the actual hex value)
+/* eslint-disable @typescript-eslint/member-ordering*/
 export type PFColorValues = {
   Black100: PFColorVal;
   Black150: PFColorVal;
@@ -143,11 +146,11 @@ export let PFColorVals: PFColorValues;
 
   - In case there is not var then return the same input
 */
-const getColor = (val: string) => {
+const getColor = (val: string): string => {
   return val.indexOf('var(') === 0 ? val.split('(').pop()!.split(')')[0] : val;
 };
 
-export const setPFColorVals = (element: Element) => {
+export const setPFColorVals = (element: Element): void => {
   PFColorVals = {
     // color values used by kiali
     Black100: getComputedStyle(element).getPropertyValue(getColor(PFColors.Black100)),
