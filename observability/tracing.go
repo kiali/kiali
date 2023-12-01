@@ -150,7 +150,6 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 	if tracingOpt.CollectorType == JAEGER {
 		log.Debugf("Creating Tracing collector with URL %s", collectorURL)
 		exporter, err = jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(collectorURL)))
-		return exporter, err
 	} else {
 		if tracingOpt.CollectorType == OTEL {
 			// OpenTelemetry collector
@@ -196,54 +195,35 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 					ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 					defer cancel()
 
-					var grpcExporter *otlptrace.Exporter
+					opts := []otlptracegrpc.Option{otlptracegrpc.WithEndpoint(collectorURL), otlptracegrpc.WithDialOption(grpc.WithBlock())}
 
 					if tracingOpt.Otel.TLSEnabled {
-						var creds credentials.TransportCredentials
-						// That's mainly for testing
+
 						if tracingOpt.Otel.SkipVerify {
 							log.Trace("OpenTelemetry collector will not verify the remote certificate")
 							tlsConfig := &tls.Config{
 								InsecureSkipVerify: true,
 							}
-							creds = credentials.NewTLS(tlsConfig)
+							opts = append(opts, otlptracegrpc.WithTLSCredentials(credentials.NewTLS(tlsConfig)))
 						} else {
 							certName := tracingOpt.Otel.CAName
 							if certName == "" {
 								return nil, fmt.Errorf("ca_name is required")
 							}
-							var errorTLS error
-							creds, errorTLS = credentials.NewClientTLSFromFile(certName, "")
+							creds, errorTLS := credentials.NewClientTLSFromFile(certName, "")
 							if errorTLS != nil {
 								log.Fatalf("Error loading certificate: %s", errorTLS)
 								return nil, errorTLS
 							}
-						}
-
-						grpcExporter, err = otlptracegrpc.New(ctx, otlptracegrpc.WithTLSCredentials(creds),
-							otlptracegrpc.WithEndpoint(collectorURL),
-							otlptracegrpc.WithDialOption(grpc.WithBlock()),
-						)
-						if err != nil {
-							log.Fatalf("Error creating otlp trace: %v", err)
-							return nil, err
-						}
-						if grpcExporter == nil && err == nil {
-							log.Fatalf("Error creating otlp trace")
-							return nil, fmt.Errorf("error returned nil grpc exporter. This might be due to missconfiguration")
+							opts = append(opts, otlptracegrpc.WithTLSCredentials(creds))
 						}
 					} else {
-						grpcExporter, err = otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(),
-							otlptracegrpc.WithEndpoint(collectorURL),
-							otlptracegrpc.WithDialOption(grpc.WithBlock()),
-						)
+						opts = append(opts, otlptracegrpc.WithInsecure())
 					}
-
-					return grpcExporter, err
+					exporter, err = otlptracegrpc.New(ctx, opts...)
 				}
 			}
 		}
-
 	}
-	return nil, fmt.Errorf("error in configuration options getting the observability exporter. Invalid collector type [%s]", tracingOpt.CollectorType)
+	return exporter, err
 }
