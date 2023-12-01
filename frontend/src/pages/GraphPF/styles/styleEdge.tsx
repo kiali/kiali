@@ -38,16 +38,16 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   // Change edge color according to the pathStyle
   const edgeClass = kialiStyle({
     $nest: {
-      '.pf-topology__edge__link': data.pathStyle
+      '& .pf-topology__edge__link': data.pathStyle
     }
   });
   cssClasses.push(edgeClass);
 
   const edgeHoverClass = kialiStyle({
     $nest: {
-      '&.pf-topology__edge.pf-m-hover': {
+      '& .pf-topology__edge.pf-m-hover': {
         $nest: {
-          '.pf-topology__edge__link, .pf-topology-connector-arrow': data.pathStyle
+          '& .pf-topology__edge__link, .pf-topology-connector-arrow': data.pathStyle
         }
       }
     }
@@ -57,7 +57,7 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   // Change connector color according to the pathStyle
   const connectorClass = kialiStyle({
     $nest: {
-      '.pf-topology-connector-arrow': {
+      '& .pf-topology-connector-arrow': {
         stroke: data.pathStyle.stroke,
         fill: data.pathStyle.stroke
       }
@@ -67,9 +67,9 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
 
   const edgeConnectorArrowHoverStyles = kialiStyle({
     $nest: {
-      '&.pf-topology__edge.pf-m-hover': {
+      '& .pf-topology__edge.pf-m-hover': {
         $nest: {
-          '.pf-topology-connector-arrow': {
+          '& .pf-topology-connector-arrow': {
             stroke: data.pathStyle.stroke,
             fill: data.pathStyle.stroke
           }
@@ -83,7 +83,7 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   if (data.hasSpans) {
     const spansClass = kialiStyle({
       $nest: {
-        '.pf-topology__edge__background': {
+        '& .pf-topology__edge__background': {
           strokeWidth: OverlayWidth,
           stroke: ColorSpan,
           strokeOpacity: OverlayOpacity
@@ -95,7 +95,7 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   } else if (data.isFind) {
     const findClass = kialiStyle({
       $nest: {
-        '.pf-topology__edge__background': {
+        '& .pf-topology__edge__background': {
           strokeWidth: OverlayWidth,
           stroke: ColorFind,
           strokeOpacity: OverlayOpacity
@@ -109,7 +109,7 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   if (data.animationDuration) {
     const animationClass = kialiStyle({
       $nest: {
-        '.pf-topology__edge__link': {
+        '& .pf-topology__edge__link': {
           animationDuration: `${data.animationDuration}s`
         }
       }
