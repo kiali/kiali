@@ -10,8 +10,8 @@ Feature: Kiali Services page
     And user is at the "services" list page
 
   @bookinfo-app
-  @api-docs
   Scenario: See services table with correct info
+    When user applies annotations
     When user selects the "bookinfo" namespace
     Then user sees a table with headings
       | Health | Name | Namespace | Labels | Configuration | Details |

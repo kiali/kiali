@@ -1,4 +1,4 @@
-import { And, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import {And, Before, Given, Then, When} from '@badeball/cypress-cucumber-preprocessor';
 import {
   checkHealthIndicatorInTable,
   checkHealthStatusInTable,
@@ -66,6 +66,12 @@ And('user should only see healthy services in the table', () => {
 
 When('user filters for label {string}', (label: string) => {
   cy.get('input[aria-label="filter_input_label_key"]').type(`${label}{enter}`);
+});
+
+
+When('user applies annotations', () => {
+  cy.exec('kubectl annotate service productpage -n bookinfo kiali.io/api-type=rest --overwrite', { failOnNonZeroExit: false });
+  cy.exec('kubectl annotate service productpage -n bookinfo kiali.io/api-spec=https://petstore.swagger.io/v2/swagger.json', { failOnNonZeroExit: false });
 });
 
 Then('the service should be listed as {string}', function (healthStatus: string) {
