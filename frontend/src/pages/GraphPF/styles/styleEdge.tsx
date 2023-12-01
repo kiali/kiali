@@ -2,7 +2,8 @@ import { DefaultEdge, Edge, observer, ScaleDetailsLevel, WithSelectionProps } fr
 import useDetailsLevel from '@patternfly/react-topology/dist/esm/hooks/useDetailsLevel';
 import { PFColors } from 'components/Pf/PfColors';
 import * as React from 'react';
-import { style } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
+import { classes } from 'typestyle';
 
 // This is our styled edge component registered in stylesComponentFactory.tsx.  It is responsible for adding our custom customizations that get passed down to DefaultEdge.  The current customizations:
 //   data.pathStyle?: React.CSSProperties // additional CSS stylings for the edge/path (not the endpoint).
@@ -24,18 +25,37 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
 
-  let classes: string[] = [];
+  let cssClasses: string[] = [];
+
+  const onMouseEnter = () => {
+    data.onHover(element, true);
+  };
+
+  const onMouseLeave = () => {
+    data.onHover(element, false);
+  };
 
   // Change edge color according to the pathStyle
-  const edgeClass = style({
+  const edgeClass = kialiStyle({
     $nest: {
       '.pf-topology__edge__link': data.pathStyle
     }
   });
-  classes.push(edgeClass);
+  cssClasses.push(edgeClass);
+
+  const edgeHoverClass = kialiStyle({
+    $nest: {
+      '&.pf-topology__edge.pf-m-hover': {
+        $nest: {
+          '.pf-topology__edge__link, .pf-topology-connector-arrow': data.pathStyle
+        }
+      }
+    }
+  });
+  cssClasses.push(edgeHoverClass);
 
   // Change connector color according to the pathStyle
-  const connectorClass = style({
+  const connectorClass = kialiStyle({
     $nest: {
       '.pf-topology-connector-arrow': {
         stroke: data.pathStyle.stroke,
@@ -43,11 +63,25 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
       }
     }
   });
-  classes.push(connectorClass);
+  cssClasses.push(connectorClass);
+
+  const edgeConnectorArrowHoverStyles = kialiStyle({
+    $nest: {
+      '&.pf-topology__edge.pf-m-hover': {
+        $nest: {
+          '.pf-topology-connector-arrow': {
+            stroke: data.pathStyle.stroke,
+            fill: data.pathStyle.stroke
+          }
+        }
+      }
+    }
+  });
+  cssClasses.push(edgeConnectorArrowHoverStyles);
 
   // If has spans, add the span overlay
   if (data.hasSpans) {
-    const spansClass = style({
+    const spansClass = kialiStyle({
       $nest: {
         '.pf-topology__edge__background': {
           strokeWidth: OverlayWidth,
@@ -56,10 +90,10 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
         }
       }
     });
-    classes.push(spansClass);
+    cssClasses.push(spansClass);
     // If isHighlighted, add the highlight overlay
   } else if (data.isFind) {
-    const findClass = style({
+    const findClass = kialiStyle({
       $nest: {
         '.pf-topology__edge__background': {
           strokeWidth: OverlayWidth,
@@ -68,47 +102,25 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
         }
       }
     });
-    classes.push(findClass);
+    cssClasses.push(findClass);
   }
 
   // Set animation duration velocity
   if (data.animationDuration) {
-    const animationClass = style({
+    const animationClass = kialiStyle({
       $nest: {
         '.pf-topology__edge__link': {
           animationDuration: `${data.animationDuration}s`
         }
       }
     });
-    classes.push(animationClass);
+    cssClasses.push(animationClass);
   }
 
-  // Set the path style when unhighlighted
+  // Set the path style when unhighlighted (opacity)
+  let opacity = 1;
   if (data.isUnhighlighted) {
-    const unhighlightedEdgeClass = style({
-      $nest: {
-        '.pf-topology__edge': {
-          opacity: 0.1
-        }
-      }
-    });
-    const unhighlightedEdgeLinkClass = style({
-      $nest: {
-        '.pf-topology__edge__link': {
-          opacity: 0.1
-        }
-      }
-    });
-    const unhighlightedEdgeTagClass = style({
-      $nest: {
-        '.pf-topology__edge__tag': {
-          opacity: 0.1
-        }
-      }
-    });
-    classes.push(unhighlightedEdgeClass);
-    classes.push(unhighlightedEdgeLinkClass);
-    classes.push(unhighlightedEdgeTagClass);
+    opacity = 0.1;
   }
 
   const passedData = React.useMemo(() => {
@@ -124,7 +136,11 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
     return newData;
   }, [data, detailsLevel]);
 
-  return <DefaultEdge className={classes?.join(' ')} element={element} {...rest} {...passedData} />;
+  return (
+    <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+      <DefaultEdge className={classes(...cssClasses)} element={element} {...rest} {...passedData} />
+    </g>
+  );
 };
 
 export const StyleEdge = observer(StyleEdgeComponent);
