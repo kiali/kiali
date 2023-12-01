@@ -157,7 +157,18 @@ else
   if [ "${SECURE_DISTRIBUTOR}" == "true" ]; then
     # Create ca and cert for tls for the distributor
     echo -e "Creating ca and cert for tls for the distributor \n"
-    ${CLIENT_EXE} apply --namespace ${TEMPO_NS} -f ${SCRIPT_DIR}/tempo-ca.yaml
+    subj="
+C=ES
+ST=ST
+O=AR
+localityName=Ar
+commonName=Ct
+organizationalUnitName=rh
+emailAddress=not@mail
+"
+    openssl req -x509 -sha256 -nodes -newkey rsa:2048 -subj "$(echo -n "$subj" | tr "\n" "/")" -keyout /tmp/tls.key -out /tmp/service-ca.crt
+    ${CLIENT_EXE} -n ${TEMPO_NS} create configmap tempo-ca --from-file=/tmp/service-ca.crt
+    ${CLIENT_EXE} create secret tls tempo-cert -n ${TEMPO_NS} --key="/tmp/tls.key" --cert="/tmp/service-ca.crt"
   # Install TempoStack CR
   echo -e "Installing tempo with tls enabled \n"
   ${CLIENT_EXE} apply -n ${TEMPO_NS} -f - <<EOF
