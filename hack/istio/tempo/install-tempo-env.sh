@@ -68,7 +68,7 @@ Valid command line arguments:
   -ii|--install-istio:
        If istio should be installed. true by default.
   -ik|--install-kiali:
-       If Kiali should be installed. true by default.
+       If Kiali should be installed. false by default.
   -sd|--secure-distributor:
        If the tempo distributor will use tls (Using a self signed certificate). false by default.
   -t|--tempo-ns:
