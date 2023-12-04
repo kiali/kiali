@@ -1,4 +1,4 @@
-import { Controller, GraphElement } from '@patternfly/react-topology';
+import { ElementModel, GraphElement, Visualization } from '@patternfly/react-topology';
 import { AppenderString } from './Common';
 
 export interface MeshCluster {
@@ -121,7 +121,7 @@ export interface DecoratedMeshElements {
 export type MeshType = 'mesh' | 'node' | 'edge' | 'box';
 
 export interface MeshTarget {
-  elem: Controller | GraphElement | undefined;
+  elem: Visualization | GraphElement<ElementModel, any> | undefined;
   type: MeshType; // the element type
 }
 

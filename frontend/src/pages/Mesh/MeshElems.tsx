@@ -129,7 +129,7 @@ export const setNodeLabel = (node: NodeModel, _nodeMap: NodeMap): void => {
         pfBadge = PFBadges.Namespace;
         break;
       default:
-        console.warn(`GraphStyles: Unexpected box [${isBox}] `);
+        console.warn(`MeshElems: Unexpected box [${isBox}] `);
     }
   } else {
     switch (infraType) {
@@ -152,7 +152,7 @@ export const setNodeLabel = (node: NodeModel, _nodeMap: NodeMap): void => {
         pfBadge = PFBadges.TraceStore;
         break;
       default:
-        console.warn(`GraphStyles: Unexpected box [${isBox}] `);
+        console.warn(`MeshElems: Unexpected infraType [${infraType}] `);
     }
   }
   if (pfBadge) {

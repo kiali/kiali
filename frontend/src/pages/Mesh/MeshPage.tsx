@@ -5,34 +5,20 @@ import FlexView from 'react-flexview';
 import { kialiStyle } from 'styles/StyleUtils';
 import { IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
 import { Layout } from '../../types/Graph';
-import { computePrometheusRateParams } from '../../services/Prometheus';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { ErrorBoundary } from '../../components/ErrorBoundary/ErrorBoundary';
-import { GraphToolbar } from '../Graph/GraphToolbar/GraphToolbar';
-import { SummaryPanel } from '../Graph/SummaryPanel';
 import { meshFindValueSelector, meshHideValueSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { KialiAppState } from '../../store/Store';
 import { PFColors } from 'components/Pf/PfColors';
 import { TourActions } from 'actions/TourActions';
 import { isKioskMode, getFocusSelector } from 'utils/SearchParamUtils';
 import { Chip } from '@patternfly/react-core';
-import { toRangeString } from 'components/Time/Utils';
-import { replayBorder } from 'components/Time/Replay';
-import { MeshDataSource, MeshFetchParams } from '../../services/MeshDataSource';
+import { EMPTY_MESH_DATA, MeshDataSource, MeshFetchParams } from '../../services/MeshDataSource';
 import { GraphThunkActions } from '../../actions/GraphThunkActions';
 import { KialiDispatch } from 'types/Redux';
 import { GraphTourPF } from 'pages/Graph/GraphHelpTour';
 import { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
-import { ServiceWizard } from 'components/IstioWizards/ServiceWizard';
-import { ServiceDetailsInfo } from 'types/ServiceInfo';
-import { DestinationRuleC, PeerAuthentication } from 'types/IstioObjects';
-import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
-import { ConfirmDeleteTrafficRoutingModal } from 'components/IstioWizards/ConfirmDeleteTrafficRoutingModal';
-import { deleteServiceTrafficRouting } from 'services/Api';
-import { canCreate, canUpdate } from '../../types/Permissions';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
-import { triggerRefresh } from '../../hooks/refresh';
-import * as CytoscapeGraphUtils from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { Controller } from '@patternfly/react-topology';
 import { EmptyMeshLayout } from './EmptyMeshLayout';
 import {
@@ -46,6 +32,9 @@ import { FocusNode, Mesh } from './Mesh';
 import { MeshActions } from 'actions/MeshActions';
 import { MeshLegend } from './MeshLegend';
 import { MeshToolbarActions } from 'actions/MeshToolbarActions';
+import { MeshToolbar } from './toolbar/MeshToolbar';
+import { TargetPanel } from './target/TargetPanel';
+import { MeshTour } from './MeshHelpTour';
 
 type ReduxProps = {
   activeTour?: TourInfo;
@@ -157,7 +146,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   }
 
   componentDidMount() {
-    // Connect to graph data source updates
+    // Connect to mesh data source updates
     this.meshDataSource.on('loadStart', this.handleMeshDataSourceStart);
     this.meshDataSource.on('fetchError', this.handleMeshDataSourceError);
     this.meshDataSource.on('fetchSuccess', this.handleMeshDataSourceSuccess);
@@ -194,7 +183,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   }
 
   componentWillUnmount() {
-    // Disconnect from graph data source updates
+    // Disconnect from mesh data source updates
     this.meshDataSource.removeListener('loadStart', this.handleMeshDataSourceStart);
     this.meshDataSource.removeListener('fetchError', this.handleMeshDataSourceError);
     this.meshDataSource.removeListener('fetchSuccess', this.handleMeshDataSourceSuccess);
@@ -212,15 +201,14 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
       <>
         <FlexView className={conStyle} column={true}>
           <div>
-            <GraphToolbar
-              controller={this.controller}
+            <MeshToolbar
+              controller={this.controller!}
               disabled={this.state.meshData.isLoading}
               elementsChanged={this.state.meshData.elementsChanged}
-              isPF={true}
               onToggleHelp={this.toggleHelp}
             />
           </div>
-          <FlexView grow={true} className={`${meshWrapperDivStyle} ${this.props.replayActive && replayBorder}`}>
+          <FlexView grow={true} className={`${meshWrapperDivStyle}`}>
             <ErrorBoundary
               ref={this.errorBoundaryRef}
               onError={this.notifyError}
@@ -236,7 +224,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
               )}
               <div id="mesh-container" className={meshContainerStyle}>
                 <EmptyMeshLayout
-                  action={this.handleEmptyGraphAction}
+                  action={this.handleEmptyMeshAction}
                   elements={this.state.meshData.elements}
                   error={this.state.meshData.errorMessage}
                   isError={!!this.state.meshData.isError}
@@ -248,56 +236,15 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
               </div>
             </ErrorBoundary>
             {this.props.target && (
-              <SummaryPanel
-                data={this.props.target}
-                duration={this.state.meshData.fetchParams.duration}
-                graphType={this.props.graphType}
-                injectServiceNodes={this.props.showServiceNodes}
+              <TargetPanel
                 isPageVisible={this.props.isPageVisible}
-                namespaces={this.props.activeNamespaces}
                 onFocus={this.onFocus}
-                onLaunchWizard={this.handleLaunchWizard}
-                onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
-                queryTime={this.state.meshData.timestamp / 1000}
-                trafficRates={this.props.trafficRates}
-                {...computePrometheusRateParams(this.props.duration, NUMBER_OF_DATAPOINTS)}
+                target={this.props.target}
+                updateTime={this.state.meshData.timestamp / 1000}
               />
             )}
           </FlexView>
         </FlexView>
-        <ServiceWizard
-          show={this.state.wizardsData.showWizard}
-          type={this.state.wizardsData.wizardType}
-          update={this.state.wizardsData.updateMode}
-          namespace={this.state.wizardsData.namespace}
-          cluster={this.state.wizardsData.serviceDetails?.cluster || ''}
-          serviceName={this.state.wizardsData.serviceDetails?.service?.name || ''}
-          workloads={this.state.wizardsData.serviceDetails?.workloads || []}
-          subServices={this.state.wizardsData.serviceDetails?.subServices || []}
-          createOrUpdate={
-            canCreate(this.state.wizardsData.serviceDetails?.istioPermissions) ||
-            canUpdate(this.state.wizardsData.serviceDetails?.istioPermissions)
-          }
-          virtualServices={this.state.wizardsData.serviceDetails?.virtualServices || []}
-          destinationRules={this.state.wizardsData.serviceDetails?.destinationRules || []}
-          gateways={this.state.wizardsData.gateways || []}
-          k8sGateways={this.state.wizardsData.k8sGateways || []}
-          k8sHTTPRoutes={this.state.wizardsData.serviceDetails?.k8sHTTPRoutes || []}
-          peerAuthentications={this.state.wizardsData.peerAuthentications || []}
-          tlsStatus={this.state.wizardsData.serviceDetails?.namespaceMTLS}
-          onClose={this.handleWizardClose}
-          istioAPIEnabled={this.props.istioAPIEnabled}
-        />
-        {this.state.showConfirmDeleteTrafficRouting && (
-          <ConfirmDeleteTrafficRoutingModal
-            isOpen={true}
-            destinationRules={DestinationRuleC.fromDrArray(this.state.wizardsData.serviceDetails!.destinationRules)}
-            virtualServices={this.state.wizardsData.serviceDetails!.virtualServices}
-            k8sHTTPRoutes={this.state.wizardsData.serviceDetails!.k8sHTTPRoutes}
-            onCancel={() => this.setState({ showConfirmDeleteTrafficRouting: false })}
-            onConfirm={this.handleConfirmDeleteServiceTrafficRouting}
-          />
-        )}
       </>
     );
   }
@@ -307,12 +254,12 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     console.debug(`onFocus(${focusNode})`);
   };
 
-  private handleEmptyGraphAction = () => {
+  private handleEmptyMeshAction = () => {
     this.loadMeshFromBackend();
   };
 
   private handleMeshDataSourceSuccess = (
-    graphTimestamp: TimeInSeconds,
+    meshTimestamp: TimeInSeconds,
     elements: DecoratedMeshElements,
     fetchParams: MeshFetchParams
   ) => {
@@ -321,35 +268,22 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
       meshData: {
         elements: elements,
         elementsChanged: this.elementsChanged(prevElements, elements),
-        isLoading: false,
         fetchParams: fetchParams,
-        timestamp: graphTimestamp * 1000
+        isLoading: false,
+        timestamp: meshTimestamp * 1000
       }
     });
-    this.props.setMeshDefinition(this.meshDataSource.meshDefinition);
+    this.props.setDefinition(this.meshDataSource.meshDefinition);
   };
 
   private handleMeshDataSourceError = (errorMessage: string | null, fetchParams: MeshFetchParams) => {
     const prevElements = this.state.meshData.elements;
     this.setState({
       meshData: {
-        elements: EMPTY_GRAPH_DATA,
-        elementsChanged: CytoscapeGraphUtils.elementsChanged(prevElements, EMPTY_GRAPH_DATA),
+        elements: EMPTY_MESH_DATA,
+        elementsChanged: this.elementsChanged(prevElements, EMPTY_MESH_DATA),
         errorMessage: !!errorMessage ? errorMessage : undefined,
         isError: true,
-        isLoading: false,
-        fetchParams: fetchParams,
-        timestamp: Date.now()
-      }
-    });
-  };
-
-  private handleGraphDataSourceEmpty = (fetchParams: MeshFetchParams) => {
-    const prevElements = this.state.meshData.elements;
-    this.setState({
-      meshData: {
-        elements: EMPTY_GRAPH_DATA,
-        elementsChanged: CytoscapeGraphUtils.elementsChanged(prevElements, EMPTY_GRAPH_DATA),
         isLoading: false,
         fetchParams: fetchParams,
         timestamp: Date.now()
@@ -360,78 +294,13 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   private handleMeshDataSourceStart = (isPreviousDataInvalid: boolean, fetchParams: MeshFetchParams) => {
     this.setState({
       meshData: {
-        elements: isPreviousDataInvalid ? EMPTY_GRAPH_DATA : this.state.meshData.elements,
+        elements: isPreviousDataInvalid ? EMPTY_MESH_DATA : this.state.meshData.elements,
         elementsChanged: false,
         fetchParams: fetchParams,
         isLoading: true,
         timestamp: isPreviousDataInvalid ? Date.now() : this.state.meshData.timestamp
       }
     });
-  };
-
-  private handleLaunchWizard = (
-    action: WizardAction,
-    mode: WizardMode,
-    namespace: string,
-    serviceDetails: ServiceDetailsInfo,
-    gateways: string[],
-    peerAuths: PeerAuthentication[]
-  ) => {
-    this.setState(prevState => ({
-      wizardsData: {
-        ...prevState.wizardsData,
-        showWizard: true,
-        wizardType: action,
-        updateMode: mode === 'update',
-        namespace: namespace,
-        serviceDetails: serviceDetails,
-        gateways: gateways,
-        peerAuthentications: peerAuths
-      }
-    }));
-  };
-
-  private handleWizardClose = (changed: boolean) => {
-    if (changed) {
-      this.setState(prevState => ({
-        wizardsData: {
-          ...prevState.wizardsData,
-          showWizard: false
-        }
-      }));
-      triggerRefresh();
-    } else {
-      this.setState(prevState => ({
-        wizardsData: {
-          ...prevState.wizardsData,
-          showWizard: false
-        }
-      }));
-    }
-  };
-
-  private handleDeleteTrafficRouting = (_key: string, serviceDetail: ServiceDetailsInfo) => {
-    this.setState(prevState => ({
-      showConfirmDeleteTrafficRouting: true,
-      wizardsData: {
-        ...prevState.wizardsData,
-        serviceDetails: serviceDetail
-      }
-    }));
-  };
-
-  private handleConfirmDeleteServiceTrafficRouting = () => {
-    this.setState({
-      showConfirmDeleteTrafficRouting: false
-    });
-
-    deleteServiceTrafficRouting(this.state.wizardsData!.serviceDetails!)
-      .then(_results => {
-        triggerRefresh();
-      })
-      .catch(error => {
-        AlertUtils.addError('Could not delete Istio config objects.', error);
-      });
   };
 
   private toggleHelp = () => {
@@ -441,33 +310,15 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     if (this.props.activeTour) {
       this.props.endTour();
     } else {
-      const firstStop = getNextTourStop(GraphTourPF, -1, 'forward');
-      this.props.startTour({ info: GraphTourPF, stop: firstStop });
+      const firstStop = getNextTourStop(MeshTour, -1, 'forward');
+      this.props.startTour({ info: MeshTour, stop: firstStop });
     }
   };
 
   private loadMeshFromBackend = () => {
-    const queryTime: TimeInMilliseconds | undefined = !!this.props.replayQueryTime
-      ? this.props.replayQueryTime
-      : undefined;
-
-    this.meshDataSource.fetchGraphData({
-      boxByCluster: this.props.boxByCluster,
-      boxByNamespace: this.props.boxByNamespace,
-      duration: this.props.duration,
-      edgeLabels: this.props.edgeLabels,
-      graphType: this.props.graphType,
+    this.meshDataSource.fetchMeshData({
       includeHealth: true,
-      includeLabels: this.props.findValue.includes('label:') || this.props.hideValue.includes('label:'),
-      injectServiceNodes: this.props.showServiceNodes,
-      namespaces: this.props.node ? [this.props.node.namespace] : this.props.activeNamespaces,
-      node: this.props.node,
-      queryTime: queryTime,
-      showIdleEdges: this.props.showIdleEdges,
-      showIdleNodes: this.props.showIdleNodes,
-      showOperationNodes: this.props.showOperationNodes,
-      showSecurity: this.props.showSecurity,
-      trafficRates: this.props.trafficRates
+      includeLabels: this.props.findValue.includes('label:') || this.props.hideValue.includes('label:')
     });
   };
 
@@ -475,15 +326,8 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     AlertUtils.add(`There was an error when rendering the graph: ${error.message}, please try a different layout`);
   };
 
-  private displayTimeRange = () => {
-    const rangeEnd: TimeInMilliseconds = this.state.meshData.timestamp;
-    const rangeStart: TimeInMilliseconds = rangeEnd - this.props.duration * 1000;
-
-    return toRangeString(rangeStart, rangeEnd, { second: '2-digit' }, { second: '2-digit' });
-  };
-
-  // It is common that when updating the graph that the element topology (nodes, edges) remain the same,
-  // only their activity changes (rates, etc). When the topology remains the same we may be able to optimize
+  // It is common that when updating the mesh that the element topology (nodes, edges) remain the same,
+  // When the topology remains the same we may be able to optimize
   // some behavior.  This returns true if the topology changes, false otherwise.
   // 1) Quickly compare the number of nodes and edges, if different return true.
   // 2) Compare the ids

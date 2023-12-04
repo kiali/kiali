@@ -47,7 +47,7 @@ export const MeshTourStops: { [name: string]: TourStopInfo } = {
     htmlDescription: MeshShortcuts,
     position: PopoverPosition.leftStart
   },
-  SidePanel: {
+  TargetPanel: {
     name: 'Side Panel',
     description: 'The Side Panel shows details about the currently selected node or edge, otherwise the whole mesh.',
     position: PopoverPosition.left
@@ -63,7 +63,7 @@ export const MeshTour: TourInfo = {
     MeshTourStops.Refresh,
     MeshTourStops.Mesh,
     MeshTourStops.ContextualMenu,
-    MeshTourStops.SidePanel,
+    MeshTourStops.TargetPanel,
     MeshTourStops.Layout,
     MeshTourStops.Legend
   ]

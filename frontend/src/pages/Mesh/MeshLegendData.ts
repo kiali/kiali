@@ -35,17 +35,17 @@ import badgeTrafficSourceImage from '../../assets/img/legend-pf/node-badge-traff
 import badgeVirtualServicesImage from '../../assets/img/legend-pf/node-badge-virtual-services.svg';
 import badgeWorkloadEntryImage from '../../assets/img/legend-pf/node-badge-workload-entry.svg';
 
-export interface GraphLegendItem {
+export interface MeshLegendItem {
   title: string;
-  data: GraphLegendItemRow[];
+  data: MeshLegendItemRow[];
 }
 
-export interface GraphLegendItemRow {
+export interface MeshLegendItemRow {
   label: string;
   icon: string;
 }
 
-export const legendData: GraphLegendItem[] = [
+export const legendData: MeshLegendItem[] = [
   {
     title: 'Node Shapes',
     data: [
