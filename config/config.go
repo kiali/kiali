@@ -244,9 +244,12 @@ type IstioConfig struct {
 	IstioSidecarAnnotation            string              `yaml:"istio_sidecar_annotation,omitempty"`
 	IstiodDeploymentName              string              `yaml:"istiod_deployment_name,omitempty"`
 	IstiodPodMonitoringPort           int                 `yaml:"istiod_pod_monitoring_port,omitempty"`
-	Registry                          *RegistryConfig     `yaml:"registry,omitempty"`
-	RootNamespace                     string              `yaml:"root_namespace,omitempty"`
-	UrlServiceVersion                 string              `yaml:"url_service_version"`
+	// IstiodPollingIntervalSeconds is how often in seconds Kiali will poll istiod(s) for
+	// proxy status and registry services. Polling is not performed if IstioAPIEnabled is false.
+	IstiodPollingIntervalSeconds int             `yaml:"istiod_polling_interval_seconds,omitempty"`
+	Registry                     *RegistryConfig `yaml:"registry,omitempty"`
+	RootNamespace                string          `yaml:"root_namespace,omitempty"`
+	UrlServiceVersion            string          `yaml:"url_service_version"`
 }
 
 type IstioCanaryRevision struct {
@@ -642,6 +645,7 @@ func NewConfig() (c *Config) {
 				IstioSidecarAnnotation:            "sidecar.istio.io/status",
 				IstiodDeploymentName:              "istiod",
 				IstiodPodMonitoringPort:           15014,
+				IstiodPollingIntervalSeconds:      20,
 				RootNamespace:                     "istio-system",
 				UrlServiceVersion:                 "http://istiod.istio-system:15014/version",
 				GatewayAPIClasses: []GatewayAPIClass{

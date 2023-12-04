@@ -37,7 +37,7 @@ func NewControlPlaneMonitor(cache cache.KialiCache, clientFactory kubernetes.Cli
 		cache:           cache,
 		clientFactory:   clientFactory,
 		conf:            conf,
-		pollingInterval: time.Duration(conf.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second,
+		pollingInterval: time.Duration(conf.ExternalServices.Istio.IstiodPollingIntervalSeconds) * time.Second,
 		meshService:     meshService,
 	}
 }
@@ -126,7 +126,7 @@ func (p *controlPlaneMonitor) RefreshIstioCache(ctx context.Context) error {
 }
 
 func (p *controlPlaneMonitor) PollIstiodForProxyStatus(ctx context.Context) {
-	log.Debug("[Kiali Cache] Starting polling istiod for proxy status")
+	log.Debugf("Starting polling istiod(s) every %d seconds for proxy status", p.conf.ExternalServices.Istio.IstiodPollingIntervalSeconds)
 
 	// Prime the pump once by calling refresh immediately here. Any errors are just logged
 	// because they could be transient and we'll try again on the next interval.
@@ -138,7 +138,7 @@ func (p *controlPlaneMonitor) PollIstiodForProxyStatus(ctx context.Context) {
 		for {
 			select {
 			case <-ctx.Done():
-				log.Debug("[Kiali Cache] Stopping polling for istiod proxy status")
+				log.Debug("Stopping polling for istiod(s) proxy status")
 				return
 			case <-time.After(p.pollingInterval):
 				if err := p.RefreshIstioCache(ctx); err != nil {
