@@ -74,6 +74,18 @@ export const globalStyle = kialiStyle({
      */
     '& .pf-v5-c-chart svg': {
       overflow: 'visible'
+    },
+
+    /**
+     * Light color for links in tooltips
+     */
+    '& .pf-v5-c-tooltip a': {
+      color: 'var(--pf-v5-global--link--Color--light)',
+      $nest: {
+        '&:hover': {
+          color: 'var(--pf-v5-global--link--Color--light--hover)'
+        }
+      }
     }
   }
 });

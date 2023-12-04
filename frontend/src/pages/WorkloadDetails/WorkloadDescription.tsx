@@ -29,7 +29,7 @@ type WorkloadDescriptionProps = {
 const resourceListStyle = kialiStyle({
   marginBottom: '0.75rem',
   $nest: {
-    '& > ul > li > span': {
+    '& > ul > li span': {
       float: 'left',
       width: '125px',
       fontWeight: 700
@@ -49,6 +49,11 @@ const infoStyle = kialiStyle({
 const healthIconStyle = kialiStyle({
   marginLeft: '0.5rem',
   verticalAlign: '-0.075rem'
+});
+
+const additionalItemStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center'
 });
 
 export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: WorkloadDescriptionProps) => {
@@ -102,8 +107,10 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
           {workload.additionalDetails.map((additionalItem, idx) => {
             return (
               <li key={`additional-details-${idx}`} id={`additional-details-${idx}`}>
-                <span>{additionalItem.title}</span>
-                {additionalItem.icon && renderAPILogo(additionalItem.icon, undefined, idx)}
+                <div className={additionalItemStyle}>
+                  <span>{additionalItem.title}</span>
+                  {additionalItem.icon && renderAPILogo(additionalItem.icon, undefined, idx)}
+                </div>
                 <TextOrLink text={additionalItem.value} urlTruncate={64} />
               </li>
             );
@@ -116,7 +123,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
                 {runtimes
                   .map((rt, idx) => renderRuntimeLogo(rt, idx))
                   .reduce(
-                    (list: JSX.Element[], elem) =>
+                    (list: React.ReactNode[], elem) =>
                       list.length > 0 ? [...list, <span key="sep"> | </span>, elem] : [elem],
                     []
                   )}

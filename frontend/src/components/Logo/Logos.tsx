@@ -17,12 +17,13 @@ const renderLogo = (
   idx: number,
   logoSet: { [key: string]: any },
   className?: string
-): JSX.Element => {
+): React.ReactNode => {
   const logo = logoSet[name];
 
   if (logo) {
     return <img key={`logo-${idx}`} src={logo} alt={name} title={title} className={className} />;
   }
+
   return <span key={`logo-${idx}`}>{name}</span>;
 };
 
@@ -36,7 +37,8 @@ const runtimesLogos = {
   JVM: JVMLogo
 };
 
-export const renderRuntimeLogo = (name: string, idx: number): JSX.Element => renderLogo(name, name, idx, runtimesLogos);
+export const renderRuntimeLogo = (name: string, idx: number): React.ReactNode =>
+  renderLogo(name, name, idx, runtimesLogos);
 
 // API types
 const apiLogos = {
@@ -46,10 +48,9 @@ const apiLogos = {
 };
 
 const iconStyle = kialiStyle({
-  marginTop: '-0.125rem',
-  marginRight: '0.5rem',
-  width: '2rem'
+  height: '2rem',
+  marginBottom: '0.125rem'
 });
 
-export const renderAPILogo = (name: string, title: string | undefined, idx: number): JSX.Element =>
+export const renderAPILogo = (name: string, title: string | undefined, idx: number): React.ReactNode =>
   renderLogo(name, title, idx, apiLogos, iconStyle);
