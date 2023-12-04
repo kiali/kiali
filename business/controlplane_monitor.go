@@ -52,8 +52,8 @@ type controlPlaneMonitor struct {
 	// Used for getting the Kiali Service Account clients for all clusters.
 	// Since these can change when clusters are added/removed we want to get
 	// these directly from the client factory rather than passing in a static list.
-	clientFactory kubernetes.ClientFactory
-	conf          config.Config
+	clientFactory   kubernetes.ClientFactory
+	conf            config.Config
 	meshService     *MeshService
 	pollingInterval time.Duration
 }

@@ -79,8 +79,6 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, 
 	var rbacDetails kubernetes.RBACDetails
 	var registryServices []*kubernetes.RegistryService
 
-	istioApiEnabled := config.Get().ExternalServices.Istio.IstioAPIEnabled
-
 	wg.Add(3) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
 	if service != "" {
 		wg.Add(1)
@@ -101,10 +99,8 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, 
 		go in.fetchServices(ctx, &services, cluster, namespace, errChan, &wg)
 	}
 
-	if istioApiEnabled {
-		criteria := RegistryCriteria{AllNamespaces: true, Cluster: cluster}
-		registryServices = in.businessLayer.RegistryStatus.GetRegistryServices(criteria)
-	}
+	criteria := RegistryCriteria{AllNamespaces: true, Cluster: cluster}
+	registryServices = in.businessLayer.RegistryStatus.GetRegistryServices(criteria)
 
 	wg.Wait()
 	close(errChan)
