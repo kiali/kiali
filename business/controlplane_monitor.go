@@ -54,9 +54,8 @@ type controlPlaneMonitor struct {
 	// these directly from the client factory rather than passing in a static list.
 	clientFactory kubernetes.ClientFactory
 	conf          config.Config
-	// How often we poll.
-	pollingInterval time.Duration
 	meshService     *MeshService
+	pollingInterval time.Duration
 }
 
 // RefreshIstioCache will scrape the debug endpoint(s) of istiod a single time
