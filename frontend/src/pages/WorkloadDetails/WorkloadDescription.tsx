@@ -56,6 +56,12 @@ const additionalItemStyle = kialiStyle({
   alignItems: 'center'
 });
 
+const runtimeInfoStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center',
+  marginTop: '0.5rem'
+});
+
 export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: WorkloadDescriptionProps) => {
   const workload = props.workload;
   const apps: string[] = [];
@@ -118,15 +124,17 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
 
           {runtimes.length > 0 && (
             <li id="runtimes">
-              <span>Runtimes</span>
-              <div style={{ display: 'inline-block' }}>
-                {runtimes
-                  .map((rt, idx) => renderRuntimeLogo(rt, idx))
-                  .reduce(
-                    (list: React.ReactNode[], elem) =>
-                      list.length > 0 ? [...list, <span key="sep"> | </span>, elem] : [elem],
-                    []
-                  )}
+              <div className={runtimeInfoStyle}>
+                <span>Runtimes</span>
+                <div style={{ display: 'inline-block' }}>
+                  {runtimes
+                    .map((rt, idx) => renderRuntimeLogo(rt, idx))
+                    .reduce(
+                      (list: React.ReactNode[], elem) =>
+                        list.length > 0 ? [...list, <span key="sep"> | </span>, elem] : [elem],
+                      []
+                    )}
+                </div>
               </div>
             </li>
           )}
