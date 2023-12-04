@@ -28,7 +28,7 @@ type ControlPlaneMonitor interface {
 	PollIstiodForProxyStatus(ctx context.Context)
 	CanConnectToIstiod(client kubernetes.ClientInterface) (kubernetes.IstioComponentStatus, error)
 	CanConnectToIstiodForRevision(client kubernetes.ClientInterface, revision string) (kubernetes.IstioComponentStatus, error)
-	// RefreshIstioCache should update the kaili cache's istio related stores.
+	// RefreshIstioCache should update the kiali cache's istio related stores.
 	RefreshIstioCache(ctx context.Context) error
 }
 
