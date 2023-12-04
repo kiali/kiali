@@ -354,7 +354,7 @@ func (p *controlPlaneMonitor) CanConnectToIstiodForRevision(client kubernetes.Cl
 			// Using the proxy method to make sure that K8s API has access to the Istio Control Plane namespace.
 			// By proxying one Istiod, we ensure that the following connection is allowed:
 			// Kiali -> K8s API (proxy) -> istiod
-			// This scenario is no obvious for private clusters (like GKE private cluster)
+			// This scenario is not obvious for private clusters (like GKE private cluster)
 			_, err := client.ForwardGetRequest(namespace, name, 8080, "/ready")
 			if err != nil {
 				log.Warningf("Unable to get ready status of istiod: %s/%s. Err: %s", namespace, name, err)
