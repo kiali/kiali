@@ -4,7 +4,7 @@ about: Upgrade a dependency in the project
 labels: 'dependencies'
 ---
 
-### Which dependency needs to be upgraded?
+### Which dependency needs to be upgraded, and why?
 
 ### What is the current version of the dependency?
 
