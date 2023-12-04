@@ -50,6 +50,7 @@ export interface WorkloadOverview {
 }
 
 export interface Service {
+  additionalDetails: AdditionalItem[];
   annotations: { [key: string]: string };
   cluster?: string;
   createdAt: string;
@@ -64,7 +65,6 @@ export interface Service {
 }
 
 export interface ServiceDetailsInfo {
-  additionalDetails: AdditionalItem[];
   cluster?: string;
   destinationRules: DestinationRule[];
   endpoints?: Endpoints[];

@@ -68,6 +68,12 @@ When('user filters for label {string}', (label: string) => {
   cy.get('input[aria-label="filter_input_label_key"]').type(`${label}{enter}`);
 });
 
+
+When('user applies kiali api {string} annotations', (type: string) => {
+  cy.exec(`kubectl annotate service productpage -n bookinfo kiali.io/api-type=${type} --overwrite`, { failOnNonZeroExit: false });
+  cy.exec('kubectl annotate service productpage -n bookinfo kiali.io/api-spec=https://petstore.swagger.io/v2/swagger.json', { failOnNonZeroExit: false });
+});
+
 Then('the service should be listed as {string}', function (healthStatus: string) {
   checkHealthIndicatorInTable(this.targetNamespace, null, this.targetService, healthStatus);
 });

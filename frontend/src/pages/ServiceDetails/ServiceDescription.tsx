@@ -108,17 +108,15 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
           </li>
         )}
 
-        {props.serviceDetails &&
-          props.serviceDetails.additionalDetails &&
-          props.serviceDetails.additionalDetails.map((additionalItem, idx) => {
-            return (
-              <li key={`additional-details-${idx}`} id={`additional-details-${idx}`}>
-                <span>{additionalItem.title}</span>
-                {additionalItem.icon && renderAPILogo(additionalItem.icon, undefined, idx)}
-                <TextOrLink text={additionalItem.value} urlTruncate={64} />
-              </li>
-            );
-          })}
+        {props.serviceDetails?.service?.additionalDetails?.map((additionalItem, idx) => {
+          return (
+            <li key={`additional-details-${idx}`} id={`additional-details-${idx}`}>
+              <span>{additionalItem.title}</span>
+              {additionalItem.icon && renderAPILogo(additionalItem.icon, undefined, idx)}
+              <TextOrLink text={additionalItem.value} urlTruncate={64} />
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
