@@ -10,7 +10,7 @@ assignees: ''
 
 ### Describe the bug
 
-A clear and concise description of what the bug is. (provide screenshots if applicable)
+A clear and concise description of the bug. (provide screenshots if applicable)
 
 ### Expected Behavior
 
