@@ -741,6 +741,7 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(ctx context.Context, clust
 		return istioConfigDetail, err
 	}
 
+        // We need to refresh the kube cache though at least until waiting for the object to be updated is implemented.
 	kubeCache.Refresh(namespace)
 
 	return istioConfigDetail, err
