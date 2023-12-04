@@ -22,7 +22,7 @@ import (
 )
 
 // ControlPlaneMonitor is an interface for the control plane monitor.
-// This is an interface soley for testing purposes since we need to mock
+// This is an interface solely for testing purposes since we need to mock
 // out portforwarding and polling.
 type ControlPlaneMonitor interface {
 	PollIstiodForProxyStatus(ctx context.Context)
