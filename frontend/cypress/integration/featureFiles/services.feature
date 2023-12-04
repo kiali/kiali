@@ -11,7 +11,7 @@ Feature: Kiali Services page
 
   @bookinfo-app
   Scenario: See services table with correct info
-    When user applies annotations
+    When user applies kiali api "rest" annotations
     When user selects the "bookinfo" namespace
     Then user sees a table with headings
       | Health | Name | Namespace | Labels | Configuration | Details |
