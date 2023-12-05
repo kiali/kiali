@@ -120,11 +120,12 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
         {spacer && ' '}
 
         {additionalDetails && additionalDetails.icon && (
-          <li>{renderAPILogo(additionalDetails.icon, additionalDetails.title, 0)}</li>
+          <li style={{ marginBottom: '0.125rem' }}>
+            {renderAPILogo(additionalDetails.icon, additionalDetails.title, 0)}
+          </li>
         )}
 
-        {item.istioReferences &&
-          item.istioReferences.length > 0 &&
+        {item.istioReferences?.length > 0 &&
           item.istioReferences.map(ir => (
             <li
               key={ir.namespace ? `${ir.objectType}_${ir.name}_${ir.namespace}` : ir.name}
@@ -143,7 +144,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
           ))}
 
         {isAmbientWaypoint && (
-          <li>
+          <li style={{ marginBottom: '0.125rem' }}>
             <PFBadge badge={PFBadges.Waypoint} position={TooltipPosition.top} />
             Waypoint Proxy
             <Tooltip
@@ -371,13 +372,15 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
               name={key}
               value={value}
               style={{ cursor: isExactlyLabelFilter || !labelAct ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}
-              onClick={() =>
-                statefulFilter
-                  ? labelAct
-                    ? isExactlyLabelFilter && statefulFilter.current!.removeFilter(labelFilt.category, label)
-                    : statefulFilter.current!.filterAdded(labelFilt, label)
-                  : {}
-              }
+              onClick={(): void => {
+                if (statefulFilter) {
+                  if (labelAct) {
+                    isExactlyLabelFilter && statefulFilter.current!.removeFilter(labelFilt.category, label);
+                  } else {
+                    statefulFilter.current!.filterAdded(labelFilt, label);
+                  }
+                }
+              }}
             />
           );
 

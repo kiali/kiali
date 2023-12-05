@@ -29,7 +29,7 @@ type WorkloadDescriptionProps = {
 const resourceListStyle = kialiStyle({
   marginBottom: '0.75rem',
   $nest: {
-    '& > ul > li > span': {
+    '& > ul > li span': {
       float: 'left',
       width: '125px',
       fontWeight: 700
@@ -49,6 +49,17 @@ const infoStyle = kialiStyle({
 const healthIconStyle = kialiStyle({
   marginLeft: '0.5rem',
   verticalAlign: '-0.075rem'
+});
+
+const additionalItemStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center'
+});
+
+const runtimeInfoStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center',
+  marginTop: '0.5rem'
 });
 
 export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: WorkloadDescriptionProps) => {
@@ -102,8 +113,10 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
           {workload.additionalDetails.map((additionalItem, idx) => {
             return (
               <li key={`additional-details-${idx}`} id={`additional-details-${idx}`}>
-                <span>{additionalItem.title}</span>
-                {additionalItem.icon && renderAPILogo(additionalItem.icon, undefined, idx)}
+                <div className={additionalItemStyle}>
+                  <span>{additionalItem.title}</span>
+                  {additionalItem.icon && renderAPILogo(additionalItem.icon, undefined, idx)}
+                </div>
                 <TextOrLink text={additionalItem.value} urlTruncate={64} />
               </li>
             );
@@ -111,15 +124,17 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
 
           {runtimes.length > 0 && (
             <li id="runtimes">
-              <span>Runtimes</span>
-              <div style={{ display: 'inline-block' }}>
-                {runtimes
-                  .map((rt, idx) => renderRuntimeLogo(rt, idx))
-                  .reduce(
-                    (list: JSX.Element[], elem) =>
-                      list.length > 0 ? [...list, <span key="sep"> | </span>, elem] : [elem],
-                    []
-                  )}
+              <div className={runtimeInfoStyle}>
+                <span>Runtimes</span>
+                <div style={{ display: 'inline-block' }}>
+                  {runtimes
+                    .map((rt, idx) => renderRuntimeLogo(rt, idx))
+                    .reduce(
+                      (list: React.ReactNode[], elem) =>
+                        list.length > 0 ? [...list, <span key="sep"> | </span>, elem] : [elem],
+                      []
+                    )}
+                </div>
               </div>
             </li>
           )}
