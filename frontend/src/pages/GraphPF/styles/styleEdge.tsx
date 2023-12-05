@@ -47,7 +47,7 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
     $nest: {
       '& .pf-topology__edge.pf-m-hover': {
         $nest: {
-          '& .pf-topology__edge__link, .pf-topology-connector-arrow': data.pathStyle
+          '& .pf-topology__edge__link, & .pf-topology-connector-arrow': data.pathStyle
         }
       }
     }
