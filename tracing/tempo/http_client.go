@@ -207,9 +207,7 @@ func (oc OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, q
 	q := url.Values{}
 	q.Set("start", fmt.Sprintf("%d", query.Start.Unix()))
 	q.Set("end", fmt.Sprintf("%d", query.End.Unix()))
-	queryPart1 := TraceQL{operator1: ".service.name", operand: EQUAL, operator2: tracingServiceName}
-	queryPart2 := TraceQL{operator1: ".node_id", operand: REGEX, operator2: ".*"}
-	queryPart := TraceQL{operator1: queryPart1, operand: AND, operator2: queryPart2}
+	queryPart := TraceQL{operator1: ".service.name", operand: EQUAL, operator2: tracingServiceName}
 
 	if len(query.Tags) > 0 {
 		for k, v := range query.Tags {
@@ -220,7 +218,7 @@ func (oc OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, q
 		}
 	}
 
-	selects := []string{"status", ".service_name", ".node_id"}
+	selects := []string{"status", ".service_name", ".node_id", ".component", ".upstream_cluster", ".http.method", ".response_flags"}
 	trace := TraceQL{operator1: Subquery{queryPart}, operand: AND, operator2: Subquery{}}
 	queryQL := fmt.Sprintf("%s| %s", printOperator(trace), printSelect(selects))
 
@@ -228,6 +226,8 @@ func (oc OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, q
 	if query.MinDuration > 0 {
 		q.Set("minDuration", fmt.Sprintf("%dms", query.MinDuration.Milliseconds()))
 	}
+	// By default, the number of spans returned is 3. All are needed to calculate avg and heatmap
+	q.Set("spss", "10")
 	if query.Limit > 0 {
 		q.Set("limit", strconv.Itoa(query.Limit))
 	}

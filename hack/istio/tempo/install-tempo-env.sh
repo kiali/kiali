@@ -185,8 +185,8 @@ spec:
   resources:
     total:
       limits:
-        memory: 2Gi
-        cpu: 2000m
+        memory: 4Gi
+        cpu: 8000m
   template:
     distributor:
       tls:
@@ -249,9 +249,17 @@ EOF
     $CLIENT_EXE expose svc/grafana -n istio-system
   fi
 
-  echo -e "Installation finished. You can port forward the services with: \n"
+  echo -e "Installation finished. \n"
   if [ "${IS_OPENSHIFT}" != "true" ]; then
-    echo "./run-kiali.sh -pg 13000:3000 -pp 19090:9090 -pt 3200:3200 -app 8080 -es false -iu http://127.0.0.1:15014 -tr tempo-cr-query-frontend -ts tempo-cr-query-frontend -tn tempo"
-  fi
+    echo "If you want to access Tempo from outside the cluster on your local machine, You can port forward the services with:
+./run-kiali.sh -pg 13000:3000 -pp 19090:9090 -pt 3200:3200 -app 8080 -es false -iu http://127.0.0.1:15014 -tr tempo-cr-query-frontend -ts tempo-cr-query-frontend -tn tempo
 
+To configure Kiali to use this, set the external_services.tracing section with the following settings:
+tracing:
+  enabled: true
+  provider: \"tempo\"
+  in_cluster_url: http://localhost:3200
+  url: http://localhost:3200
+  use_grpc: false"
+  fi
 fi

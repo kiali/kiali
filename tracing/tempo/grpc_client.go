@@ -75,12 +75,13 @@ func (jc TempoGRPCClient) FindTraces(ctx context.Context, serviceName string, q 
 		}
 	}
 
-	selects := []string{"status", ".service_name", ".node_id"}
+	selects := []string{"status", ".service_name", ".node_id", ".component", ".upstream_cluster", ".http.method", ".response_flags"}
 	trace := TraceQL{operator1: Subquery{queryPart}, operand: AND, operator2: Subquery{}}
 	queryQL := fmt.Sprintf("%s| %s", printOperator(trace), printSelect(selects))
 	log.Debugf("QueryQL %s", queryQL)
 
 	sr.Query = queryQL
+	sr.SpansPerSpanSet = 10
 
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout)*time.Second)
 	defer cancel()
