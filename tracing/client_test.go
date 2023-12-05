@@ -3,8 +3,9 @@ package tracing
 import (
 	"testing"
 
-	"github.com/kiali/kiali/config"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kiali/kiali/config"
 )
 
 const token = "1234567890"
