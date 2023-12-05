@@ -1,0 +1,70 @@
+name: Release test suite images
+
+on:
+  push:
+    tags:
+      - 'v*'
+jobs:
+  initialize:
+    name: Initialize
+    runs-on: ubuntu-20.04
+    outputs:
+      quay_org: 'kiali'
+      images_tag: ${{ steps.images_tag.outputs.images_tag }}
+    steps:
+    - name: Determine Image tag without Z version
+      id: images_tag
+      run: |
+        major=$(echo ${{ github.ref_name }} | cut -d. -f1)
+        minor=$(echo ${{ github.ref_name }} | cut -d. -f2)
+
+        echo "images_tag=$major.$minor" >> $GITHUB_OUTPUT
+    - name: Log information
+      run: |
+        echo "Github tag": ${{ github.ref_name }}
+        echo "Quay main version tag": ${{ steps.images_tag.outputs.images_tag }}
+
+  push_test_images:
+    name: Build and push images with full tag
+    uses: ./.github/workflows/test-images-creator.yml
+    needs: [initialize]
+    with:
+      release_branch: ${{ github.ref_name }}
+      images_tag: ${{ github.ref_name }}
+      quay_org: ${{ needs.initialize.outputs.quay_org }}
+      build_mode: 'both'
+    secrets:
+      QUAY_USER: ${{ secrets.QUAY_USER }}
+      QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+
+  update_latest_test_images:
+    name: Update images under major.minor version tag
+    runs-on: ubuntu-20.04
+    needs: [initialize, push_test_images]
+    steps:
+    - name: Login to Quay.io
+      uses: docker/login-action@v3
+      with:
+        registry: quay.io
+        username: ${{ secrets.QUAY_USER }}
+        password: ${{ secrets.QUAY_PASSWORD }}
+
+    - name: Pull new integration test image
+      run: |
+        docker pull quay.io/${{ needs.initialize.outputs.quay_org }}/kiali-int-tests:${{ github.ref_name }}
+    - name: Use major.minor version tag
+      run: |
+        docker tag quay.io/${{ needs.initialize.outputs.quay_org }}/kiali-int-tests:${{ github.ref_name }} quay.io/${{ needs.initialize.outputs.quay_org }}/kiali-int-tests:${{ needs.initialize.outputs.images_tag }}
+    - name: Update integration test image in quay
+      run: |
+        docker push quay.io/${{ needs.initialize.outputs.quay_org }}/kiali-int-tests:${{ needs.initialize.outputs.images_tag }}
+    
+    - name: Pull new cypress test image
+      run: |
+        docker pull quay.io/${{ needs.initialize.outputs.quay_org }}/kiali-cypress-tests:${{ github.ref_name }}
+    - name: Use major.minor version tag
+      run: |
+        docker tag quay.io/${{ needs.initialize.outputs.quay_org }}/kiali-cypress-tests:${{ github.ref_name }} quay.io/${{ needs.initialize.outputs.quay_org }}/kiali-cypress-tests:${{ needs.initialize.outputs.images_tag }}
+    - name: Update cypress test image in quay
+      run: |
+        docker push quay.io/${{ needs.initialize.outputs.quay_org }}/kiali-cypress-tests:${{ needs.initialize.outputs.images_tag }}
