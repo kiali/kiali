@@ -59,7 +59,8 @@ func InitTracer(collectorURL string) *sdktrace.TracerProvider {
 	exporter, err := getExporter(collectorURL)
 
 	if err != nil {
-		panic(err)
+		log.Errorf("Failed to initialize tracer. Kiali will not log its own tracing data: %v", err)
+		return nil
 	}
 	tp := sdktrace.NewTracerProvider(
 		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(config.Get().Server.Observability.Tracing.SamplingRate))),
