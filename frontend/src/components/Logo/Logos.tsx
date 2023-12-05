@@ -1,25 +1,20 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 
-import GrpcIcon from '../../assets/img/grpc-logo.svg';
-import RestIcon from '../../assets/img/rest-logo.svg';
-import GraphqlIcon from '../../assets/img/graphql-logo.svg';
-import VertxLogo from '../../assets/img/vertx-logo.png';
-import NodejsLogo from '../../assets/img/nodejs-logo.svg';
-import ThorntailLogo from '../../assets/img/thorntail-logo.png';
-import GoLogo from '../../assets/img/go-logo.svg';
-import MicroProfileLogo from '../../assets/img/microprofile-logo.svg';
-import JVMLogo from '../../assets/img/java-logo.png';
-import SpringBootLogo from '../../assets/img/thorntail-logo.png';
-import QuarkusLogo from '../../assets/img/thorntail-logo.png';
-import TomcatLogo from '../../assets/img/thorntail-logo.png';
+import GrpcIcon from '../../assets/img/api/grpc.svg';
+import RestIcon from '../../assets/img/api/rest.svg';
+import GraphqlIcon from '../../assets/img/api/graphql.svg';
+import VertxLogo from '../../assets/img/runtime/vertx.svg';
+import NodejsLogo from '../../assets/img/runtime/nodejs.svg';
+import ThorntailLogo from '../../assets/img/runtime/thorntail.svg';
+import GoLogo from '../../assets/img/runtime/go.svg';
+import MicroProfileLogo from '../../assets/img/runtime/microprofile.svg';
+import JVMLogo from '../../assets/img/runtime/java.svg';
+import SpringBootLogo from '../../assets/img/runtime/spring-boot.svg';
+import QuarkusLogo from '../../assets/img/runtime/quarkus.svg';
+import TomcatLogo from '../../assets/img/runtime/tomcat.svg';
 
-const apiIconStyle = kialiStyle({
-  height: '2rem',
-  marginBottom: '0.125rem'
-});
-
-const runtimeIconStyle = kialiStyle({
+const iconStyle = kialiStyle({
   height: '1.5rem'
 });
 
@@ -53,7 +48,7 @@ const runtimesLogos = {
 };
 
 export const renderRuntimeLogo = (name: string, idx: number): React.ReactNode =>
-  renderLogo(name, name, idx, runtimesLogos, runtimeIconStyle);
+  renderLogo(name, name, idx, runtimesLogos, iconStyle);
 
 // API types
 const apiLogos = {
@@ -63,4 +58,4 @@ const apiLogos = {
 };
 
 export const renderAPILogo = (name: string, title: string | undefined, idx: number): React.ReactNode =>
-  renderLogo(name, title, idx, apiLogos, apiIconStyle);
+  renderLogo(name, title, idx, apiLogos, iconStyle);
