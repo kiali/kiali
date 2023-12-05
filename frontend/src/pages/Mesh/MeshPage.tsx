@@ -14,9 +14,7 @@ import { TourActions } from 'actions/TourActions';
 import { isKioskMode, getFocusSelector } from 'utils/SearchParamUtils';
 import { Chip } from '@patternfly/react-core';
 import { EMPTY_MESH_DATA, MeshDataSource, MeshFetchParams } from '../../services/MeshDataSource';
-import { GraphThunkActions } from '../../actions/GraphThunkActions';
 import { KialiDispatch } from 'types/Redux';
-import { GraphTourPF } from 'pages/Graph/GraphHelpTour';
 import { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { Controller } from '@patternfly/react-topology';
@@ -35,6 +33,7 @@ import { MeshToolbarActions } from 'actions/MeshToolbarActions';
 import { MeshToolbar } from './toolbar/MeshToolbar';
 import { TargetPanel } from './target/TargetPanel';
 import { MeshTour } from './MeshHelpTour';
+import { MeshThunkActions } from 'actions/MeshThunkActions';
 
 type ReduxProps = {
   activeTour?: TourInfo;
@@ -46,11 +45,11 @@ type ReduxProps = {
   kiosk: string;
   layout: Layout;
   mtlsEnabled: boolean;
-  onReady: (controller: any) => void;
+  onReady: (controller: Controller) => void;
   refreshInterval: IntervalInMilliseconds;
   setDefinition: (meshDefinition: MeshDefinition) => void;
   setLayout: (layout: Layout) => void;
-  setTarget: (event: MeshTarget) => void;
+  setTarget: (target: MeshTarget) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
   showLegend: boolean;
   showOutOfMesh: boolean;
@@ -76,8 +75,6 @@ export type MeshData = {
 type MeshPageState = {
   meshData: MeshData;
 };
-
-const NUMBER_OF_DATAPOINTS = 30;
 
 const containerStyle = kialiStyle({
   minHeight: '350px',
@@ -323,7 +320,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   };
 
   private notifyError = (error: Error, _componentStack: string) => {
-    AlertUtils.add(`There was an error when rendering the graph: ${error.message}, please try a different layout`);
+    AlertUtils.add(`There was an error when rendering the mesh: ${error.message}, please try a different layout`);
   };
 
   // It is common that when updating the mesh that the element topology (nodes, edges) remain the same,
@@ -382,11 +379,11 @@ const mapStateToProps = (state: KialiAppState) => ({
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   endTour: bindActionCreators(TourActions.endTour, dispatch),
-  onReady: (controller: any) => dispatch(GraphThunkActions.graphPFReady(controller)),
+  onReady: (controller: any) => dispatch(MeshThunkActions.meshReady(controller)),
   setDefinition: bindActionCreators(MeshActions.setDefinition, dispatch),
   setLayout: bindActionCreators(MeshActions.setLayout, dispatch),
-  setTarget: (target: MeshTarget) => dispatch(MeshActions.setTarget(target)),
-  setUpdateTime: (val: TimeInMilliseconds) => dispatch(MeshActions.setUpdateTime(val)),
+  setTarget: bindActionCreators(MeshActions.setTarget, dispatch),
+  setUpdateTime: bindActionCreators(MeshActions.setUpdateTime, dispatch),
   startTour: bindActionCreators(TourActions.startTour, dispatch),
   toggleMeshLegend: bindActionCreators(MeshToolbarActions.toggleLegend, dispatch)
 });

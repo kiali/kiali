@@ -1,16 +1,15 @@
-import { MeshTarget } from 'types/Mesh';
 import { KialiDispatch } from '../types/Redux';
 import { MeshActions } from './MeshActions';
-import { Visualization } from '@patternfly/react-topology';
+import { Controller } from '@patternfly/react-topology';
 
 export const MeshThunkActions = {
-  meshReady: (controller: Visualization) => {
+  meshReady: (controller: Controller) => {
     return (dispatch: KialiDispatch) => {
       dispatch(
         MeshActions.setTarget({
           elem: controller,
           type: 'mesh'
-        } as MeshTarget)
+        })
       );
     };
   }

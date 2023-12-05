@@ -118,6 +118,10 @@ const defaultServerConfig: ComputedServerConfig = {
         includeIstioResources: true,
         includeValidations: true,
         showIncludeToggles: false
+      },
+      mesh: {
+        findOptions: [],
+        hideOptions: []
       }
     }
   },

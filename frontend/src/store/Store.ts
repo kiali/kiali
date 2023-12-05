@@ -27,7 +27,7 @@ import { ComponentStatus } from '../types/IstioStatus';
 import { TracingState } from 'reducers/TracingState';
 import { MetricsStatsState } from 'reducers/MetricsStatsState';
 import { CertsInfo } from 'types/CertsInfo';
-import { MeshCluster, MeshTarget } from '../types/Mesh';
+import { MeshCluster, MeshDefinition, MeshTarget } from '../types/Mesh';
 
 // Store is the Redux Data store
 
@@ -128,6 +128,7 @@ export interface MeshToolbarState {
 }
 
 export interface MeshState {
+  definition: MeshDefinition | null;
   layout: Layout;
   target: MeshTarget | null;
   toolbarState: MeshToolbarState;

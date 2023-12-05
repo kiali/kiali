@@ -7,8 +7,8 @@ export const MeshToolbarActions = {
   setFindValue: createStandardAction(ActionKeys.MESH_TOOLBAR_SET_FIND_VALUE)<string>(),
   setHideValue: createStandardAction(ActionKeys.MESH_TOOLBAR_SET_HIDE_VALUE)<string>(),
   // Toggle actions
-  toggleLegend: createAction(ActionKeys.MESH_TOOLBAR_TOGGLE_LEGEND),
-  toggleFindHelp: createAction(ActionKeys.MESH_TOOLBAR_TOGGLE_FIND_HELP)
+  toggleFindHelp: createAction(ActionKeys.MESH_TOOLBAR_TOGGLE_FIND_HELP),
+  toggleLegend: createAction(ActionKeys.MESH_TOOLBAR_TOGGLE_LEGEND)
 };
 
 export type MeshToolbarAction = ActionType<typeof MeshToolbarActions>;

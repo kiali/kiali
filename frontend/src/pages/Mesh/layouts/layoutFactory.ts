@@ -1,5 +1,5 @@
 import { Graph, Layout, DagreLayout, GridLayout, LayoutFactory } from '@patternfly/react-topology';
-import { LayoutName } from '../GraphPF';
+import { LayoutName } from '../Mesh';
 
 /*
 This is just for reference, a copy of PFT defaults, so we can compare any tweaks we've made below...

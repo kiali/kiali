@@ -99,6 +99,10 @@ export const serverRateConfig = {
           tcp: 'sent'
         }
       },
+      mesh: {
+        findOptions: [],
+        hideOptions: []
+      },
       list: {
         includeHealth: true,
         includeIstioResources: true,
