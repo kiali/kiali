@@ -1,7 +1,7 @@
 package tempo
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -40,12 +40,12 @@ func TestGetTraces(t *testing.T) {
 	assert.Nil(t, err)
 	defer resp.Close()
 
-	byteValue, _ := ioutil.ReadAll(resp)
+	byteValue, _ := io.ReadAll(resp)
 
 	httpClient := http.Client{Transport: RoundTripFunc(func(req *http.Request) *http.Response {
 		return &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       ioutil.NopCloser(strings.NewReader(string(byteValue))),
+			Body:       io.NopCloser(strings.NewReader(string(byteValue))),
 		}
 	})}
 
@@ -79,12 +79,12 @@ func TestGetTrace(t *testing.T) {
 	assert.Nil(t, err)
 	defer resp.Close()
 
-	byteValue, _ := ioutil.ReadAll(resp)
+	byteValue, _ := io.ReadAll(resp)
 
 	httpClient := http.Client{Transport: RoundTripFunc(func(req *http.Request) *http.Response {
 		return &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       ioutil.NopCloser(strings.NewReader(string(byteValue))),
+			Body:       io.NopCloser(strings.NewReader(string(byteValue))),
 		}
 	})}
 
@@ -108,7 +108,7 @@ func TestErrorResponse(t *testing.T) {
 	httpClient := http.Client{Transport: RoundTripFunc(func(req *http.Request) *http.Response {
 		return &http.Response{
 			StatusCode: http.StatusInternalServerError,
-			Body:       ioutil.NopCloser(strings.NewReader(`invalid TraceQL query: parse error at line 1, col 99: syntax error: unexpected IDENTIFIER`)),
+			Body:       io.NopCloser(strings.NewReader(`invalid TraceQL query: parse error at line 1, col 99: syntax error: unexpected IDENTIFIER`)),
 		}
 	})}
 
