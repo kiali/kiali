@@ -1,0 +1,115 @@
+name: Build and push test suite images
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_branch:
+        description: Branch to release
+        default: master
+        type: string
+        required: true
+      quay_org:
+        description: Quay organization
+        type: string
+        default: kiali
+        required: true
+      images_tag:
+        description: Images tag
+        type: string
+        default: dev
+        required: true
+      build_mode:
+        type: choice
+        description: Which images should be built
+        default: both
+        options: 
+        - integration
+        - cypress
+        - both
+  workflow_call:
+    inputs:
+      release_branch:
+        description: Branch to release
+        type: string
+        required: true
+      quay_org:
+        description: Quay organization
+        type: string
+        required: true
+      images_tag:
+        description: Images tag
+        type: string
+        required: true
+      build_mode:
+        description: Which images should be built (integration/cypress/both)
+        type: string
+        required: true
+    secrets:
+      QUAY_USER:
+        description: 'A quay user secret passed from the caller workflow'
+        required: true
+      QUAY_PASSWORD:
+        description: 'A quay user password passed from the caller workflow'
+        required: true
+    
+
+jobs:
+  build_and_push_integration_tests:
+    name: Generate and push integration test docker images
+    if: ${{ inputs.build_mode == 'integration' || inputs.build_mode == 'both' }}
+    runs-on: ubuntu-latest
+    env:
+      # These ENVs are expected in Make file!
+      IMAGE_ORG: ${{ inputs.quay_org }}
+      INT_TESTS_CONTAINER_VERSION: ${{ inputs.images_tag }}
+      CYPRESS_TESTS_CONTAINER_VERSION: ${{ inputs.images_tag }}
+    steps:
+      - name: Log information
+        run: |
+          echo "Branch": ${{ inputs.release_branch }}
+          echo "Quay organization": ${{ inputs.quay_org }}
+          echo "Images tag": ${{ inputs.images_tag }}
+          echo "Builde mode": ${{ inputs.build_mode }}
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_branch }}
+      - name: Login to Quay.io
+        uses: docker/login-action@v3
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USER }}
+          password: ${{ secrets.QUAY_PASSWORD }}
+      - name: "Build integration test image"
+        run: |
+          make container-build-int-tests container-push-int-tests-quay
+
+  build_and_push_cypress_tests:
+    name: Generate and push cypress test docker images
+    if: ${{ inputs.build_mode == 'cypress' || inputs.build_mode == 'both' }}
+    runs-on: ubuntu-latest
+    env:
+      # These ENVs are expected in Make file!
+      IMAGE_ORG: ${{ inputs.quay_org }}
+      INT_TESTS_CONTAINER_VERSION: ${{ inputs.images_tag }}
+      CYPRESS_TESTS_CONTAINER_VERSION: ${{ inputs.images_tag }}
+    steps:
+      - name: Log information
+        run: |
+          echo "Branch": ${{ inputs.release_branch }}
+          echo "Quay organization": ${{ inputs.quay_org }}
+          echo "Images tag": ${{ inputs.images_tag }}
+          echo "Builde mode": ${{ inputs.build_mode }}
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_branch }}
+      - name: Login to Quay.io
+        uses: docker/login-action@v3
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USER }}
+          password: ${{ secrets.QUAY_PASSWORD }}
+      - name: "Build cypress test image"
+        run: |
+          make container-build-cypress-tests container-push-cypress-tests-quay
