@@ -475,6 +475,12 @@ type ListUIDefaults struct {
 	ShowIncludeToggles    bool `yaml:"show_include_toggles,omitempty" json:"showIncludeToggles"`
 }
 
+// NeshUIDefaults defines UI Defaults specific to the UI Mesh page
+type MeshUIDefaults struct {
+	FindOptions []GraphFindOption `yaml:"find_options,omitempty" json:"findOptions,omitempty"`
+	HideOptions []GraphFindOption `yaml:"hide_options,omitempty" json:"hideOptions,omitempty"`
+}
+
 // Aggregation represents label's allowed aggregations, transformed from aggregation in MonitoringDashboard config resource
 type Aggregation struct {
 	Label           string `yaml:"label,omitempty" json:"label"`
@@ -490,6 +496,7 @@ type MetricsDefaults struct {
 type UIDefaults struct {
 	Graph             GraphUIDefaults `yaml:"graph,omitempty" json:"graph,omitempty"`
 	List              ListUIDefaults  `yaml:"list,omitempty" json:"list,omitempty"`
+	Mesh              MeshUIDefaults  `yaml:"mesh,omitempty" json:"mesh,omitempty"`
 	MetricsPerRefresh string          `yaml:"metrics_per_refresh,omitempty" json:"metricsPerRefresh,omitempty"`
 	MetricsInbound    MetricsDefaults `yaml:"metrics_inbound,omitempty" json:"metricsInbound,omitempty"`
 	MetricsOutbound   MetricsDefaults `yaml:"metrics_outbound,omitempty" json:"metricsOutbound,omitempty"`
@@ -814,6 +821,10 @@ func NewConfig() (c *Config) {
 					IncludeIstioResources: true,
 					IncludeValidations:    true,
 					ShowIncludeToggles:    false,
+				},
+				Mesh: MeshUIDefaults{
+					FindOptions: []GraphFindOption{},
+					HideOptions: []GraphFindOption{},
 				},
 				MetricsInbound:    MetricsDefaults{},
 				MetricsOutbound:   MetricsDefaults{},

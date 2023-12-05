@@ -66,7 +66,7 @@ const navMenuItems: MenuItem[] = [
     to: '/mesh'
   },
   {
-    title: 'Mesh (Old)',
+    title: 'Mesh [classic]',
     to: '/oldmesh'
   }
 ];
