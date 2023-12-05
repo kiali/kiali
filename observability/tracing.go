@@ -67,7 +67,7 @@ func InitTracer(collectorURL string) *sdktrace.TracerProvider {
 		// Record information about this application in an Resource.
 		sdktrace.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
-			semconv.ServiceNameKey.String(TracingService),
+			semconv.ServiceNameKey.String(TracerName()),
 			semconv.ServiceNamespaceKey.String(config.Get().Deployment.Namespace),
 			// In order for kiali to dog food its own traces, this attribute is set. When determining if an app's
 			// traces match its workload, the business logic will parse this hostname attribute.
