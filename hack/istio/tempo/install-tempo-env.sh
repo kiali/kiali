@@ -213,8 +213,8 @@ spec:
   resources:
     total:
       limits:
-        memory: 2Gi
-        cpu: 2000m
+        memory: 4Gi
+        cpu: 8000m
   template:
     queryFrontend:
       jaegerQuery:

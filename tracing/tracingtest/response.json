@@ -1,0 +1,154 @@
+{
+  "traces": [
+    {
+      "traceID": "100cb753c787ed5657c8d88dafc176ed",
+      "rootServiceName": "istio-ingressgateway.istio-system",
+      "rootTraceName": "productpage.bookinfo.svc.cluster.local:9080/productpage",
+      "startTimeUnixNano": "1701778055570888000",
+      "durationMs": 9,
+      "spanSet": {
+        "spans": [
+          {
+            "spanID": "2e6ca056f5fc6fdc",
+            "startTimeUnixNano": "1701778055578250000",
+            "durationNanos": "556000",
+            "attributes": [
+              {
+                "key": "node_id",
+                "value": {
+                  "stringValue": "sidecar~10.244.0.20~reviews-v1-667b5cc65d-4m24g.bookinfo~bookinfo.svc.cluster.local"
+                }
+              },
+              {
+                "key": "status",
+                "value": {
+                  "stringValue": "unset"
+                }
+              },
+              {
+                "key": "service.name",
+                "value": {
+                  "stringValue": "reviews.bookinfo"
+                }
+              }
+            ]
+          },
+          {
+            "spanID": "5d7ab9e039d25ebd",
+            "startTimeUnixNano": "1701778055571140000",
+            "durationNanos": "9319000",
+            "attributes": [
+              {
+                "key": "node_id",
+                "value": {
+                  "stringValue": "sidecar~10.244.0.25~productpage-v1-6f89b6c557-sg2bc.bookinfo~bookinfo.svc.cluster.local"
+                }
+              },
+              {
+                "key": "status",
+                "value": {
+                  "stringValue": "unset"
+                }
+              }
+            ]
+          },
+          {
+            "spanID": "75257c892130096e",
+            "startTimeUnixNano": "1701778055574335000",
+            "durationNanos": "1227000",
+            "attributes": [
+              {
+                "key": "node_id",
+                "value": {
+                  "stringValue": "sidecar~10.244.0.25~productpage-v1-6f89b6c557-sg2bc.bookinfo~bookinfo.svc.cluster.local"
+                }
+              },
+              {
+                "key": "status",
+                "value": {
+                  "stringValue": "unset"
+                }
+              }
+            ]
+          }
+        ],
+        "matched": 6
+      },
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "2e6ca056f5fc6fdc",
+              "startTimeUnixNano": "1701778055578250000",
+              "durationNanos": "556000",
+              "attributes": [
+                {
+                  "key": "node_id",
+                  "value": {
+                    "stringValue": "sidecar~10.244.0.20~reviews-v1-667b5cc65d-4m24g.bookinfo~bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "status",
+                  "value": {
+                    "stringValue": "unset"
+                  }
+                },
+                {
+                  "key": "service.name",
+                  "value": {
+                    "stringValue": "reviews.bookinfo"
+                  }
+                }
+              ]
+            },
+            {
+              "spanID": "5d7ab9e039d25ebd",
+              "startTimeUnixNano": "1701778055571140000",
+              "durationNanos": "9319000",
+              "attributes": [
+                {
+                  "key": "node_id",
+                  "value": {
+                    "stringValue": "sidecar~10.244.0.25~productpage-v1-6f89b6c557-sg2bc.bookinfo~bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "status",
+                  "value": {
+                    "stringValue": "unset"
+                  }
+                }
+              ]
+            },
+            {
+              "spanID": "75257c892130096e",
+              "startTimeUnixNano": "1701778055574335000",
+              "durationNanos": "1227000",
+              "attributes": [
+                {
+                  "key": "node_id",
+                  "value": {
+                    "stringValue": "sidecar~10.244.0.25~productpage-v1-6f89b6c557-sg2bc.bookinfo~bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "status",
+                  "value": {
+                    "stringValue": "unset"
+                  }
+                }
+              ]
+            }
+          ],
+          "matched": 6
+        }
+      ]
+    }
+  ],
+  "metrics": {
+    "inspectedBytes": "1214512",
+    "completedJobs": 1,
+    "totalJobs": 1
+  }
+}
