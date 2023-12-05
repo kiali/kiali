@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
+	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/config"
 )
@@ -213,9 +213,9 @@ func FilterGatewaysByVirtualServices(allGws []*networking_v1beta1.Gateway, allVs
 	return gateways
 }
 
-func FilterK8sGatewaysByHTTPRoutes(allGws []*k8s_networking_v1beta1.Gateway, allRoutes []*k8s_networking_v1beta1.HTTPRoute) []*k8s_networking_v1beta1.Gateway {
+func FilterK8sGatewaysByHTTPRoutes(allGws []*k8s_networking_v1.Gateway, allRoutes []*k8s_networking_v1.HTTPRoute) []*k8s_networking_v1.Gateway {
 	var empty struct{}
-	gateways := []*k8s_networking_v1beta1.Gateway{}
+	gateways := []*k8s_networking_v1.Gateway{}
 	gatewayNames := make(map[string]struct{})
 	for _, route := range allRoutes {
 		for _, pRef := range route.Spec.ParentRefs {
@@ -524,8 +524,8 @@ func FilterVirtualServicesByService(allVs []*networking_v1beta1.VirtualService, 
 	return filtered
 }
 
-func FilterK8sHTTPRoutesByService(allRoutes []*k8s_networking_v1beta1.HTTPRoute, namespace string, serviceName string) []*k8s_networking_v1beta1.HTTPRoute {
-	filtered := []*k8s_networking_v1beta1.HTTPRoute{}
+func FilterK8sHTTPRoutesByService(allRoutes []*k8s_networking_v1.HTTPRoute, namespace string, serviceName string) []*k8s_networking_v1.HTTPRoute {
+	filtered := []*k8s_networking_v1.HTTPRoute{}
 	for _, route := range allRoutes {
 		appendRoute := serviceName == ""
 		if !appendRoute {

@@ -208,16 +208,33 @@ func (in *K8SClient) IsGatewayAPI() bool {
 		return false
 	}
 	if in.isGatewayAPI == nil {
-		isGatewayAPI := false
-		_, err := in.k8s.Discovery().RESTClient().Get().AbsPath("/apis/gateway.networking.k8s.io").Do(in.ctx).Raw()
-		if err == nil {
-			isGatewayAPI = true
-		} else if !errors.IsNotFound(err) {
-			log.Warningf("Error checking Kubernetes Gateway API configuration: %v", err)
-		}
+		isGatewayAPI := checkGatewayAPIs(in)
 		in.isGatewayAPI = &isGatewayAPI
 	}
 	return *in.isGatewayAPI
+}
+
+func checkGatewayAPIs(in *K8SClient) bool {
+	found := 0
+	res, err := in.k8s.Discovery().ServerResourcesForGroupVersion(K8sNetworkingGroupVersionV1.String())
+	if err != nil {
+		return false
+	}
+
+	types := map[string]string{
+		K8sActualGatewayType:   K8sActualGateways,
+		K8sGatewayClassType:    K8sActualGatewayClasses,
+		K8sActualHTTPRouteType: K8sActualHTTPRoutes,
+	}
+	for _, r := range res.APIResources {
+		if name, foundKind := types[r.Kind]; foundKind && r.Name == name {
+			found++
+		}
+	}
+	if found > 0 && found < len(types) {
+		log.Warningf("Not all required K8s Gateway API CRDs are installed.")
+	}
+	return found == len(types)
 }
 
 // Is IstioAPI checks whether Istio API is installed or not

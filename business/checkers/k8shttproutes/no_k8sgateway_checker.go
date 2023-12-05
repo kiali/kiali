@@ -3,14 +3,14 @@ package k8shttproutes
 import (
 	"fmt"
 
-	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
+	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type NoK8sGatewayChecker struct {
-	K8sHTTPRoute *k8s_networking_v1beta1.HTTPRoute
+	K8sHTTPRoute *k8s_networking_v1.HTTPRoute
 	GatewayNames map[string]struct{}
 }
 
@@ -29,7 +29,7 @@ func (s NoK8sGatewayChecker) ValidateHTTPRouteGateways(validations *[]*models.Is
 
 	if len(s.K8sHTTPRoute.Spec.ParentRefs) > 0 {
 		for index, parentRef := range s.K8sHTTPRoute.Spec.ParentRefs {
-			if string(parentRef.Name) != "" && string(*parentRef.Kind) == kubernetes.K8sActualGatewayType && string(*parentRef.Group) == kubernetes.K8sNetworkingGroupVersionV1Beta1.Group {
+			if string(parentRef.Name) != "" && string(*parentRef.Kind) == kubernetes.K8sActualGatewayType && string(*parentRef.Group) == kubernetes.K8sNetworkingGroupVersionV1.Group {
 				namespace := s.K8sHTTPRoute.Namespace
 				if parentRef.Namespace != nil && string(*parentRef.Namespace) != "" {
 					namespace = string(*parentRef.Namespace)

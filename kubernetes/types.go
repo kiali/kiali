@@ -61,11 +61,17 @@ const (
 	K8sGatewayType = "K8sGateway"
 	// K8sActualGatewayType There is a naming conflict between Istio and K8s Gateways, keeping here an actual type to show in YAML editor
 	K8sActualGatewayType = "Gateway"
+	K8sActualGateways    = "gateways"
+
+	K8sGatewayClasses       = "k8sgatewayclasses"
+	K8sGatewayClassType     = "GatewayClass"
+	K8sActualGatewayClasses = "gatewayclasses"
 
 	K8sHTTPRoutes    = "k8shttproutes"
 	K8sHTTPRouteType = "K8sHTTPRoute"
 	// K8sActualHTTPRouteType There is a naming conflict between Istio and K8s Gateways, keeping here an actual type to show in YAML editor
 	K8sActualHTTPRouteType = "HTTPRoute"
+	K8sActualHTTPRoutes    = "httproutes"
 
 	// Authorization PeerAuthentications
 	AuthorizationPolicies     = "authorizationpolicies"
@@ -87,17 +93,11 @@ var (
 	}
 	ApiNetworkingVersionV1Alpha3 = NetworkingGroupVersionV1Alpha3.Group + "/" + NetworkingGroupVersionV1Alpha3.Version
 
-	K8sNetworkingGroupVersionV1Alpha2 = schema.GroupVersion{
+	K8sNetworkingGroupVersionV1 = schema.GroupVersion{
 		Group:   "gateway.networking.k8s.io",
-		Version: "v1alpha2",
+		Version: "v1",
 	}
-	K8sApiNetworkingVersionV1Alpha2 = K8sNetworkingGroupVersionV1Alpha2.Group + "/" + K8sNetworkingGroupVersionV1Alpha2.Version
-
-	K8sNetworkingGroupVersionV1Beta1 = schema.GroupVersion{
-		Group:   "gateway.networking.k8s.io",
-		Version: "v1beta1",
-	}
-	K8sApiNetworkingVersionV1Beta1 = K8sNetworkingGroupVersionV1Beta1.Group + "/" + K8sNetworkingGroupVersionV1Beta1.Version
+	K8sApiNetworkingVersionV1 = K8sNetworkingGroupVersionV1.Group + "/" + K8sNetworkingGroupVersionV1.Version
 
 	NetworkingGroupVersionV1Beta1 = schema.GroupVersion{
 		Group:   "networking.istio.io",
@@ -158,8 +158,8 @@ var (
 		WasmPlugins:      ExtensionGroupVersionV1Alpha1.Group,
 		Telemetries:      TelemetryGroupV1Alpha1.Group,
 
-		K8sGateways:   K8sNetworkingGroupVersionV1Beta1.Group,
-		K8sHTTPRoutes: K8sNetworkingGroupVersionV1Beta1.Group,
+		K8sGateways:   K8sNetworkingGroupVersionV1.Group,
+		K8sHTTPRoutes: K8sNetworkingGroupVersionV1.Group,
 
 		AuthorizationPolicies:  SecurityGroupVersion.Group,
 		PeerAuthentications:    SecurityGroupVersion.Group,

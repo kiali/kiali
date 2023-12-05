@@ -1,7 +1,7 @@
 package checkers
 
 import (
-	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
+	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/business/checkers/k8shttproutes"
 	"github.com/kiali/kiali/kubernetes"
@@ -11,8 +11,8 @@ import (
 const K8sHTTPRouteCheckerType = "k8shttproute"
 
 type K8sHTTPRouteChecker struct {
-	K8sHTTPRoutes    []*k8s_networking_v1beta1.HTTPRoute
-	K8sGateways      []*k8s_networking_v1beta1.Gateway
+	K8sHTTPRoutes    []*k8s_networking_v1.HTTPRoute
+	K8sGateways      []*k8s_networking_v1.Gateway
 	Namespaces       models.Namespaces
 	RegistryServices []*kubernetes.RegistryService
 	Cluster          string
@@ -40,7 +40,7 @@ func (in K8sHTTPRouteChecker) runIndividualChecks() models.IstioValidations {
 	return validations
 }
 
-func (in K8sHTTPRouteChecker) runChecks(rt *k8s_networking_v1beta1.HTTPRoute, gatewayNames map[string]struct{}) models.IstioValidations {
+func (in K8sHTTPRouteChecker) runChecks(rt *k8s_networking_v1.HTTPRoute, gatewayNames map[string]struct{}) models.IstioValidations {
 	key, validations := EmptyValidValidation(rt.Name, rt.Namespace, K8sHTTPRouteCheckerType, in.Cluster)
 
 	enabledCheckers := []Checker{

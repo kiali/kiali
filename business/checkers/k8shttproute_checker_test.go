@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
+	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
@@ -16,8 +16,8 @@ func TestNoCrashOnEmptyRoute(t *testing.T) {
 	assert := assert.New(t)
 
 	typeValidations := K8sHTTPRouteChecker{
-		K8sHTTPRoutes:    []*k8s_networking_v1beta1.HTTPRoute{},
-		K8sGateways:      []*k8s_networking_v1beta1.Gateway{},
+		K8sHTTPRoutes:    []*k8s_networking_v1.HTTPRoute{},
+		K8sGateways:      []*k8s_networking_v1.Gateway{},
 		RegistryServices: data.CreateEmptyRegistryServices(),
 		Namespaces:       models.Namespaces{},
 	}.Check()
@@ -31,10 +31,10 @@ func TestWithoutK8sGateway(t *testing.T) {
 	assert := assert.New(t)
 
 	vals := K8sHTTPRouteChecker{
-		K8sHTTPRoutes: []*k8s_networking_v1beta1.HTTPRoute{
+		K8sHTTPRoutes: []*k8s_networking_v1.HTTPRoute{
 			data.CreateHTTPRoute("route1", "bookinfo", "gatewayapi", []string{"bookinfo"}),
 			data.CreateHTTPRoute("route2", "bookinfo", "gatewayapi2", []string{"bookinfo"})},
-		K8sGateways: []*k8s_networking_v1beta1.Gateway{data.CreateEmptyK8sGateway("gatewayapiwrong", "bookinfo")},
+		K8sGateways: []*k8s_networking_v1.Gateway{data.CreateEmptyK8sGateway("gatewayapiwrong", "bookinfo")},
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -56,10 +56,10 @@ func TestWithoutService(t *testing.T) {
 	registryService2 := data.CreateFakeRegistryServices("details.bookinfo.svc.cluster.local", "bookinfo2", "*")
 
 	vals := K8sHTTPRouteChecker{
-		K8sHTTPRoutes: []*k8s_networking_v1beta1.HTTPRoute{
+		K8sHTTPRoutes: []*k8s_networking_v1.HTTPRoute{
 			data.AddBackendRefToHTTPRoute("ratings", "bookinfo", data.CreateHTTPRoute("route1", "bookinfo", "gatewayapi", []string{"bookinfo"})),
 			data.AddBackendRefToHTTPRoute("ratings", "bookinfo", data.CreateHTTPRoute("route2", "bookinfo2", "gatewayapi2", []string{"bookinfo2"}))},
-		K8sGateways:      []*k8s_networking_v1beta1.Gateway{data.CreateEmptyK8sGateway("gatewayapi", "bookinfo"), data.CreateEmptyK8sGateway("gatewayapi2", "bookinfo2")},
+		K8sGateways:      []*k8s_networking_v1.Gateway{data.CreateEmptyK8sGateway("gatewayapi", "bookinfo"), data.CreateEmptyK8sGateway("gatewayapi2", "bookinfo2")},
 		RegistryServices: append(registryService1, registryService2...),
 		Namespaces:       models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}},
 	}.Check()

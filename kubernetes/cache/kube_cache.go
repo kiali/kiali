@@ -27,9 +27,9 @@ import (
 	apps_v1_listers "k8s.io/client-go/listers/apps/v1"
 	core_v1_listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
-	gatewayapi_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
+	gatewayapi_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	gateway "sigs.k8s.io/gateway-api/pkg/client/informers/externalversions"
-	k8s_v1beta1_listers "sigs.k8s.io/gateway-api/pkg/client/listers/apis/v1beta1"
+	k8s_v1_listers "sigs.k8s.io/gateway-api/pkg/client/listers/apis/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -98,10 +98,10 @@ type KubeCache interface {
 	GetTelemetry(namespace, name string) (*v1alpha1.Telemetry, error)
 	GetTelemetries(namespace, labelSelector string) ([]*v1alpha1.Telemetry, error)
 
-	GetK8sGateway(namespace, name string) (*gatewayapi_v1beta1.Gateway, error)
-	GetK8sGateways(namespace, labelSelector string) ([]*gatewayapi_v1beta1.Gateway, error)
-	GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1beta1.HTTPRoute, error)
-	GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewayapi_v1beta1.HTTPRoute, error)
+	GetK8sGateway(namespace, name string) (*gatewayapi_v1.Gateway, error)
+	GetK8sGateways(namespace, labelSelector string) ([]*gatewayapi_v1.Gateway, error)
+	GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1.HTTPRoute, error)
+	GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewayapi_v1.HTTPRoute, error)
 
 	GetAuthorizationPolicy(namespace, name string) (*security_v1beta1.AuthorizationPolicy, error)
 	GetAuthorizationPolicies(namespace, labelSelector string) ([]*security_v1beta1.AuthorizationPolicy, error)
@@ -132,8 +132,8 @@ type cacheLister struct {
 	destinationRuleLister istionet_v1beta1_listers.DestinationRuleLister
 	envoyFilterLister     istionet_v1alpha3_listers.EnvoyFilterLister
 	gatewayLister         istionet_v1beta1_listers.GatewayLister
-	k8sgatewayLister      k8s_v1beta1_listers.GatewayLister
-	k8shttprouteLister    k8s_v1beta1_listers.HTTPRouteLister
+	k8sgatewayLister      k8s_v1_listers.GatewayLister
+	k8shttprouteLister    k8s_v1_listers.HTTPRouteLister
 	peerAuthnLister       istiosec_v1beta1_listers.PeerAuthenticationLister
 	requestAuthnLister    istiosec_v1beta1_listers.RequestAuthenticationLister
 	serviceEntryLister    istionet_v1beta1_listers.ServiceEntryLister
@@ -389,10 +389,10 @@ func (c *kubeCache) createGatewayInformers(namespace string) gateway.SharedInfor
 	lister := c.getCacheLister(namespace)
 
 	if c.client.IsGatewayAPI() {
-		lister.k8sgatewayLister = sharedInformers.Gateway().V1beta1().Gateways().Lister()
+		lister.k8sgatewayLister = sharedInformers.Gateway().V1().Gateways().Lister()
 		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1beta1().Gateways().Informer().HasSynced)
 
-		lister.k8shttprouteLister = sharedInformers.Gateway().V1beta1().HTTPRoutes().Lister()
+		lister.k8shttprouteLister = sharedInformers.Gateway().V1().HTTPRoutes().Lister()
 		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1beta1().HTTPRoutes().Informer().HasSynced)
 	}
 	return sharedInformers
@@ -1416,7 +1416,7 @@ func (c *kubeCache) GetTelemetries(namespace, labelSelector string) ([]*v1alpha1
 	return retTelemetries, nil
 }
 
-func (c *kubeCache) GetK8sGateway(namespace, name string) (*gatewayapi_v1beta1.Gateway, error) {
+func (c *kubeCache) GetK8sGateway(namespace, name string) (*gatewayapi_v1.Gateway, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -1435,7 +1435,7 @@ func (c *kubeCache) GetK8sGateway(namespace, name string) (*gatewayapi_v1beta1.G
 	return retG, nil
 }
 
-func (c *kubeCache) GetK8sGateways(namespace, labelSelector string) ([]*gatewayapi_v1beta1.Gateway, error) {
+func (c *kubeCache) GetK8sGateways(namespace, labelSelector string) ([]*gatewayapi_v1.Gateway, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -1450,7 +1450,7 @@ func (c *kubeCache) GetK8sGateways(namespace, labelSelector string) ([]*gatewaya
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 
-	k8sGateways := []*gatewayapi_v1beta1.Gateway{}
+	k8sGateways := []*gatewayapi_v1.Gateway{}
 	if namespace == metav1.NamespaceAll {
 		if c.clusterScoped {
 			k8sGateways, err = c.clusterCacheLister.k8sgatewayLister.List(selector)
@@ -1473,7 +1473,7 @@ func (c *kubeCache) GetK8sGateways(namespace, labelSelector string) ([]*gatewaya
 		}
 	}
 
-	var retK8sGateways []*gatewayapi_v1beta1.Gateway
+	var retK8sGateways []*gatewayapi_v1.Gateway
 	for _, gw := range k8sGateways {
 		ggw := gw.DeepCopy()
 		ggw.Kind = kubernetes.K8sGatewayType
@@ -1482,7 +1482,7 @@ func (c *kubeCache) GetK8sGateways(namespace, labelSelector string) ([]*gatewaya
 	return retK8sGateways, nil
 }
 
-func (c *kubeCache) GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1beta1.HTTPRoute, error) {
+func (c *kubeCache) GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1.HTTPRoute, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -1501,7 +1501,7 @@ func (c *kubeCache) GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1beta1
 	return retG, nil
 }
 
-func (c *kubeCache) GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewayapi_v1beta1.HTTPRoute, error) {
+func (c *kubeCache) GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewayapi_v1.HTTPRoute, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -1516,7 +1516,7 @@ func (c *kubeCache) GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewa
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 
-	k8sHTTPRoutes := []*gatewayapi_v1beta1.HTTPRoute{}
+	k8sHTTPRoutes := []*gatewayapi_v1.HTTPRoute{}
 	if namespace == metav1.NamespaceAll {
 		if c.clusterScoped {
 			k8sHTTPRoutes, err = c.clusterCacheLister.k8shttprouteLister.List(selector)
@@ -1539,7 +1539,7 @@ func (c *kubeCache) GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewa
 		}
 	}
 
-	var retK8sHTTPRoutes []*gatewayapi_v1beta1.HTTPRoute
+	var retK8sHTTPRoutes []*gatewayapi_v1.HTTPRoute
 	for _, hr := range k8sHTTPRoutes {
 		hrCopy := hr.DeepCopy()
 		hrCopy.Kind = kubernetes.K8sHTTPRouteType
