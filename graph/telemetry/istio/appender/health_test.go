@@ -463,7 +463,7 @@ type servicesError struct {
 	errorMsg string
 }
 
-func (s *servicesError) GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error) {
+func (s *servicesError) GetServicesBySelectorLabels(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error) {
 	return nil, fmt.Errorf(s.errorMsg)
 }
 

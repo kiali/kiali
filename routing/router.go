@@ -11,17 +11,20 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/handlers"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
+	kialiprometheus "github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
+	"github.com/kiali/kiali/tracing"
 )
 
 // NewRouter creates the router with all API routes and the static files handler
-func NewRouter() *mux.Router {
-
-	conf := config.Get()
+func NewRouter(conf *config.Config, kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory, prom kialiprometheus.ClientInterface, tracingClient tracing.ClientInterface, cpm business.ControlPlaneMonitor) *mux.Router {
 	webRoot := conf.Server.WebRoot
 	webRootWithSlash := webRoot + "/"
 
@@ -71,7 +74,7 @@ func NewRouter() *mux.Router {
 	appRouter = appRouter.StrictSlash(true)
 
 	// Build our API server routes and install them.
-	apiRoutes := NewRoutes()
+	apiRoutes := NewRoutes(conf, kialiCache, clientFactory, prom, tracingClient, cpm)
 	authenticationHandler, _ := handlers.NewAuthenticationHandler()
 	for _, route := range apiRoutes.Routes {
 		handlerFunction := metricHandler(route.HandlerFunc, route)

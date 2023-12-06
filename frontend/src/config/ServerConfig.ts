@@ -13,11 +13,11 @@ function getHomeCluster(cfg: ServerConfig): MeshCluster | undefined {
   return Object.values(cfg.clusters).find(cluster => cluster.isKialiHome);
 }
 
-export const humanDurations = (cfg: ComputedServerConfig, prefix?: string, suffix?: string) =>
+export const humanDurations = (cfg: ComputedServerConfig, prefix?: string, suffix?: string): Durations =>
   _.mapValues(cfg.durations, v => _.reject([prefix, v, suffix], _.isEmpty).join(' '));
 
 const toDurations = (tupleArray: [number, string][]): Durations => {
-  const obj = {};
+  const obj: Duration = {};
   tupleArray.forEach(tuple => {
     obj[tuple[0]] = tuple[1];
   });
@@ -39,7 +39,7 @@ const durationsTuples: [number, string][] = [
   [2592000, '30d']
 ];
 
-const computeValidDurations = (cfg: ComputedServerConfig) => {
+const computeValidDurations = (cfg: ComputedServerConfig): void => {
   const tsdbRetention = cfg.prometheus.storageTsdbRetention;
   const scrapeInterval = cfg.prometheus.globalScrapeInterval;
   let filtered = durationsTuples.filter(
@@ -151,7 +151,7 @@ export const toValidDuration = (duration: number): number => {
   return validDurations[0][0];
 };
 
-export const setServerConfig = (cfg: ServerConfig) => {
+export const setServerConfig = (cfg: ServerConfig): void => {
   serverConfig = {
     ...defaultServerConfig,
     ...cfg
@@ -181,5 +181,10 @@ export const isConfiguredCluster = (cluster: string): boolean => {
 };
 
 function isMC(): boolean {
-  return Object.keys(serverConfig.clusters).length > 1;
+  // If there is only one cluster, it is not a multi-cluster deployment.
+  // If there are multiple clusters but only one is accessible, it is not a multi-cluster deployment.
+  return (
+    Object.keys(serverConfig.clusters).length > 1 &&
+    Object.values(serverConfig.clusters).filter(c => c.accessible).length > 1
+  );
 }

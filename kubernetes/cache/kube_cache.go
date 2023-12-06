@@ -74,7 +74,8 @@ type KubeCache interface {
 	GetEndpoints(namespace, name string) (*core_v1.Endpoints, error)
 	GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error)
 	GetStatefulSet(namespace, name string) (*apps_v1.StatefulSet, error)
-	GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error)
+	GetServicesBySelectorLabels(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error)
+	GetServices(namespace string, labelSelector string) ([]core_v1.Service, error)
 	GetService(namespace string, name string) (*core_v1.Service, error)
 	GetPods(namespace, labelSelector string) ([]core_v1.Pod, error)
 	GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error)
@@ -629,24 +630,63 @@ func (c *kubeCache) GetStatefulSet(namespace, name string) (*apps_v1.StatefulSet
 	return retSet, nil
 }
 
-// GetServices returns list of services filtered by Spec.Selector instead of Metadata.Labels
-func (c *kubeCache) GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error) {
+// GetServices returns list of services filtered by the labelSelector.
+func (c *kubeCache) GetServices(namespace string, labelSelector string) ([]core_v1.Service, error) {
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 
-	var services []*core_v1.Service
-	var err error
-	if namespace == metav1.NamespaceAll {
-		services, err = c.getCacheLister(namespace).serviceLister.List(labels.Everything())
-	} else {
-		services, err = c.getCacheLister(namespace).serviceLister.Services(namespace).List(labels.Everything())
-	}
+	selector, err := labels.Parse(labelSelector)
 	if err != nil {
 		return nil, err
 	}
+
+	services := []*core_v1.Service{}
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			services, err = c.clusterCacheLister.serviceLister.List(selector)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				servicesNamespaced, err := nsCacheLister.serviceLister.List(selector)
+				if err != nil {
+					return nil, err
+				}
+				services = append(services, servicesNamespaced...)
+			}
+		}
+	} else {
+		services, err = c.getCacheLister(namespace).serviceLister.Services(namespace).List(selector)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	log.Tracef("[Kiali Cache] Get [resource: Service] for [namespace: %s] = %d", namespace, len(services))
+
+	var retServices []core_v1.Service
+	for _, ss := range services {
+		s := ss.DeepCopy()
+		s.Kind = kubernetes.ServiceType
+		retServices = append(retServices, *s)
+	}
+	return retServices, nil
+}
+
+// GetServicesBySelectorLabels returns list of services filtered by Spec.Selector instead of Metadata.Labels
+func (c *kubeCache) GetServicesBySelectorLabels(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error) {
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
+
+	services, err := c.GetServices(namespace, labels.Everything().String())
+	if err != nil {
+		return nil, err
+	}
 
 	selector := labels.Set(selectorLabels)
 	retServices := []core_v1.Service{}

@@ -67,7 +67,7 @@ func TestRootContextPath(t *testing.T) {
 	cf := kubernetes.NewTestingClientFactory(t)
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	server := NewServer(cpm, cf, cache, *conf, nil, nil)
+	server := NewServer(cpm, cf, cache, conf, nil, nil)
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {
@@ -131,7 +131,7 @@ func TestAnonymousMode(t *testing.T) {
 	cf := kubernetes.NewTestingClientFactory(t)
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	server := NewServer(cpm, cf, cache, *conf, nil, nil)
+	server := NewServer(cpm, cf, cache, conf, nil, nil)
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {
@@ -222,7 +222,7 @@ func TestSecureComm(t *testing.T) {
 	cf := kubernetes.NewTestingClientFactory(t)
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	server := NewServer(cpm, cf, cache, *conf, nil, nil)
+	server := NewServer(cpm, cf, cache, conf, nil, nil)
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {
@@ -318,7 +318,7 @@ func TestTracingConfigured(t *testing.T) {
 
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	server := NewServer(cpm, cf, cache, *conf, nil, nil)
+	server := NewServer(cpm, cf, cache, conf, nil, nil)
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {

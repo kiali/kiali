@@ -197,6 +197,11 @@ type Cluster struct {
 
 	// SecretName is the name of the kubernetes "remote cluster secret" that was mounted to the file system and where data of this cluster was resolved
 	SecretName string `json:"secretName"`
+
+	// Accessible specifies if the cluster is accessible or not. Clusters that are manually specified in the Kiali config
+	// but do not have an associated remote cluster secret are considered not accessible. This is helpful when you have
+	// two disconnected Kialis and want to link them without giving them access to each other.
+	Accessible bool `json:"accessible"`
 }
 
 // KialiInstance represents a Kiali installation. It holds some data about

@@ -142,7 +142,7 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 				log.Warningf("Services not filtered. Selector %s not valid", criteria.ServiceSelector)
 			}
 		}
-		svcs, err2 = kubeCache.GetServices(criteria.Namespace, selectorLabels)
+		svcs, err2 = kubeCache.GetServicesBySelectorLabels(criteria.Namespace, selectorLabels)
 		if err2 != nil {
 			log.Errorf("Error fetching Services per namespace %s: %s", criteria.Namespace, err2)
 			errChan <- err2

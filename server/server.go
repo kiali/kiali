@@ -23,7 +23,7 @@ import (
 )
 
 type Server struct {
-	conf                config.Config
+	conf                *config.Config
 	controlPlaneMonitor business.ControlPlaneMonitor
 	clientFactory       kubernetes.ClientFactory
 	httpServer          *http.Server
@@ -39,12 +39,12 @@ type Server struct {
 func NewServer(controlPlaneMonitor business.ControlPlaneMonitor,
 	clientFactory kubernetes.ClientFactory,
 	cache cache.KialiCache,
-	conf config.Config,
+	conf *config.Config,
 	prom prometheus.ClientInterface,
 	tracingClientLoader func() tracing.ClientInterface,
 ) *Server {
 	// create a router that will route all incoming API server requests to different handlers
-	router := routing.NewRouter()
+	router := routing.NewRouter(conf, cache, clientFactory, prom, tracingClient, controlPlaneMonitor)
 	var tracingProvider *sdktrace.TracerProvider
 	if conf.Server.Observability.Tracing.Enabled {
 		log.Infof("Tracing Enabled. Initializing tracer with collector url: %s", conf.Server.Observability.Tracing.CollectorURL)

@@ -73,7 +73,6 @@ func GetOldestNamespace(namespaces []models.Namespace) *models.Namespace {
 }
 
 func createMetricsServiceForNamespace(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, ns models.Namespace) (*business.MetricsService, *models.Namespace) {
-
 	metrics, infoMap := createMetricsServiceForNamespaces(w, r, promSupplier, []models.Namespace{ns})
 	if result, ok := infoMap[ns.Name]; ok {
 		if result.err != nil {

@@ -112,6 +112,20 @@ var (
 // Defines where the files are located that contain the secrets content
 var overrideSecretsDir = "/kiali-override-secrets"
 
+// Cluster is used to manually specify a cluster that there is no remote secret for.
+type Cluster struct {
+	// Name of the cluster. Must be unique and match what is in telemetry.
+	Name string `yaml:"name,omitempty"`
+	// Accessible whether or not the kiali server can access this cluster.
+	// Only manually specified clusters that kiali cannot access should
+	// be marked as inaccessible. For example, with two clusters A and B
+	// and two Kialis A and B where kiali A is on cluster A and kiali B
+	// is on cluster B, without access to the other cluster, Kiali A should
+	// add a config for Cluster B and mark it as inaccessbile and Kiali B
+	// should add a config for Cluster A and mark it as inaccessible.
+	Accessible bool `yaml:"accessible"`
+}
+
 // Metrics provides metrics configuration for the Kiali server.
 type Metrics struct {
 	Enabled bool `yaml:"enabled,omitempty"`
@@ -501,8 +515,16 @@ type CertificatesInformationIndicators struct {
 
 // Clustering defines configuration around multi-cluster functionality.
 type Clustering struct {
-	EnableExecProvider bool       `yaml:"enable_exec_provider,omitempty" json:"enable_exec_provider"`
-	KialiURLs          []KialiURL `yaml:"kiali_urls,omitempty" json:"kiali_urls,omitempty"`
+	// Clusters represents clusters that are part of the mesh but that Kiali may not have access to.
+	// For this reason it is not an exhaustive list of clusters and shouldn't be relied on for that.
+	Clusters  []Cluster  `yaml:"clusters,omitempty" json:"clusters,omitempty"`
+	KialiURLs []KialiURL `yaml:"kiali_urls,omitempty" json:"kiali_urls,omitempty"`
+}
+
+type FeatureFlagClustering struct {
+	// TODO: Deprecate this in favor of Clustering.Clusters.
+	Clustering
+	EnableExecProvider bool `yaml:"enable_exec_provider,omitempty" json:"enable_exec_provider"`
 }
 
 // KialiURL defines a cluster name, namespace and instance name properties to URL.
@@ -516,7 +538,7 @@ type KialiURL struct {
 // KialiFeatureFlags available from the CR
 type KialiFeatureFlags struct {
 	CertificatesInformationIndicators CertificatesInformationIndicators `yaml:"certificates_information_indicators,omitempty" json:"certificatesInformationIndicators"`
-	Clustering                        Clustering                        `yaml:"clustering,omitempty" json:"clustering,omitempty"`
+	Clustering                        FeatureFlagClustering             `yaml:"clustering,omitempty" json:"clustering,omitempty"`
 	DisabledFeatures                  []string                          `yaml:"disabled_features,omitempty" json:"disabledFeatures,omitempty"`
 	IstioAnnotationAction             bool                              `yaml:"istio_annotation_action,omitempty" json:"istioAnnotationAction"`
 	IstioInjectionAction              bool                              `yaml:"istio_injection_action,omitempty" json:"istioInjectionAction"`
@@ -552,6 +574,7 @@ type Config struct {
 	AdditionalDisplayDetails []AdditionalDisplayItem             `yaml:"additional_display_details,omitempty"`
 	API                      ApiConfig                           `yaml:"api,omitempty"`
 	Auth                     AuthConfig                          `yaml:"auth,omitempty"`
+	Clustering               Clustering                          `yaml:"clustering,omitempty"`
 	CustomDashboards         dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
 	Deployment               DeploymentConfig                    `yaml:"deployment,omitempty"`
 	ExternalServices         ExternalServices                    `yaml:"external_services,omitempty"`
@@ -724,7 +747,7 @@ func NewConfig() (c *Config) {
 				Enabled: true,
 				Secrets: []string{"cacerts", "istio-ca-secret"},
 			},
-			Clustering: Clustering{
+			Clustering: FeatureFlagClustering{
 				EnableExecProvider: false,
 			},
 			DisabledFeatures:      []string{},
@@ -1022,6 +1045,12 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 		} else if !errors.Is(err, os.ErrNotExist) {
 			log.Errorf("Failed reading secret file [%s]: %v", fullFileName, err)
 		}
+	}
+
+	// Copy over feature flags that have been upgraded to the new format.
+	// TODO: Remove when we no longer support the old format.
+	if conf.Clustering.Clusters == nil && conf.KialiFeatureFlags.Clustering.Clusters != nil {
+		conf.Clustering.Clusters = conf.KialiFeatureFlags.Clustering.Clusters
 	}
 
 	return
