@@ -137,6 +137,7 @@ func (p CookieSessionPersistor) CreateSession(_ *http.Request, w http.ResponseWr
 			Value:    chunk,
 			Expires:  expiresOn,
 			HttpOnly: true,
+			Secure:   conf.IsServerHttps(),
 			Path:     conf.Server.WebRoot,
 			SameSite: http.SameSiteStrictMode,
 		}
@@ -152,6 +153,7 @@ func (p CookieSessionPersistor) CreateSession(_ *http.Request, w http.ResponseWr
 			Value:    strconv.Itoa(len(sessionDataChunks)),
 			Expires:  expiresOn,
 			HttpOnly: true,
+			Secure:   conf.IsServerHttps(),
 			Path:     conf.Server.WebRoot,
 			SameSite: http.SameSiteStrictMode,
 		}
@@ -297,6 +299,7 @@ func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWrit
 // clearing any stale cookies/session.
 func (p CookieSessionPersistor) TerminateSession(r *http.Request, w http.ResponseWriter) {
 	conf := config.Get()
+
 	var cookiesToDrop []string
 
 	numChunksCookie, chunksCookieErr := r.Cookie(config.TokenCookieName + "-chunks")
@@ -326,6 +329,7 @@ func (p CookieSessionPersistor) TerminateSession(r *http.Request, w http.Respons
 				Value:    "",
 				Expires:  time.Unix(0, 0),
 				HttpOnly: true,
+				Secure:   conf.IsServerHttps(),
 				MaxAge:   -1,
 				Path:     conf.Server.WebRoot,
 				SameSite: http.SameSiteStrictMode,

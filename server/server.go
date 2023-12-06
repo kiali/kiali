@@ -98,10 +98,10 @@ func (s *Server) Start() {
 
 	log.Infof("Server endpoint will start at [%v%v]", s.httpServer.Addr, s.conf.Server.WebRoot)
 	log.Infof("Server endpoint will serve static content from [%v]", s.conf.Server.StaticContentRootDirectory)
-	secure := s.conf.Identity.CertFile != "" && s.conf.Identity.PrivateKeyFile != ""
+
 	go func() {
 		var err error
-		if secure {
+		if s.conf.IsServerHttps() {
 			log.Infof("Server endpoint will require https")
 			log.Infof("Server will support protocols: %v", s.httpServer.TLSConfig.NextProtos)
 			s.router.Use(secureHttpsMiddleware)

@@ -372,6 +372,7 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 	nonceCookie := http.Cookie{
 		Expires:  expirationTime,
 		HttpOnly: true,
+		Secure:   conf.IsServerHttps(),
 		Name:     OpenIdNonceCookieName,
 		Path:     conf.Server.WebRoot,
 		SameSite: http.SameSiteLaxMode,
@@ -487,12 +488,15 @@ func (p *openidFlowHelper) callbackCleanup(w http.ResponseWriter) *openidFlowHel
 		return p
 	}
 
+	conf := config.Get()
+
 	// Delete the nonce cookie since we no longer need it.
 	deleteNonceCookie := http.Cookie{
 		Name:     OpenIdNonceCookieName,
 		Expires:  time.Unix(0, 0),
 		HttpOnly: true,
-		Path:     config.Get().Server.WebRoot,
+		Secure:   conf.IsServerHttps(),
+		Path:     conf.Server.WebRoot,
 		SameSite: http.SameSiteStrictMode,
 		Value:    "",
 	}
