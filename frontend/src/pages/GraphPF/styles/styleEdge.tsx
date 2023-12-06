@@ -5,12 +5,13 @@ import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { classes } from 'typestyle';
 
-// This is our styled edge component registered in stylesComponentFactory.tsx.  It is responsible for adding our custom customizations that get passed down to DefaultEdge.  The current customizations:
+// This is our styled edge component registered in stylesComponentFactory.tsx.  It is responsible for adding customizations that then get passed down to DefaultEdge.  The current customizations:
 //   data.pathStyle?: React.CSSProperties // additional CSS stylings for the edge/path (not the endpoint).
 //   data.isFind?: boolean                // adds graph-find overlay
 //   data.isUnhighlighted?: boolean       // adds unhighlight effects
 //   data.hasSpans?: Span[]               // adds trace overlay
 //   add showTag prop and show scaled tag on hover (when showTag is false)
+//   support [lock] icons on edge tags
 
 const ColorFind = PFColors.Gold400;
 const ColorSpan = PFColors.Purple200;
@@ -20,6 +21,10 @@ const OverlayWidth = 30;
 type StyleEdgeProps = {
   element: Edge;
 } & WithSelectionProps;
+
+const tagClass = kialiStyle({
+  fontFamily: 'Verdana,Arial,Helvetica,sans-serif,pficon'
+});
 
 const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   const data = element.getData();
@@ -138,7 +143,7 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
 
   return (
     <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-      <DefaultEdge className={classes(...cssClasses)} element={element} {...rest} {...passedData} />
+      <DefaultEdge className={classes(...cssClasses)} element={element} tagClass={tagClass} {...rest} {...passedData} />
     </g>
   );
 };
