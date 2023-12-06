@@ -156,6 +156,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     // the toolbar can render and ensure all redux props are updated with URL
     // settings. That in turn ensures the initial fetchParams are correct.
     const isInitialLoad = !this.state.meshData.timestamp;
+    console.log(`mesh isInitialLoad=${isInitialLoad}`);
 
     if (curr.target?.type === 'mesh') {
       this.controller = curr.target.elem as Controller;
@@ -167,6 +168,9 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
       (prev.hideValue !== curr.hideValue && curr.hideValue.includes('label:')) ||
       prev.lastRefreshAt !== curr.lastRefreshAt
     ) {
+      console.log(
+        `componentDidUpdate: ${isInitialLoad} ${this.state.meshData.timestamp} ${prev.lastRefreshAt} ${curr.lastRefreshAt}`
+      );
       this.loadMeshFromBackend();
     }
 
@@ -260,6 +264,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     elements: DecoratedMeshElements,
     fetchParams: MeshFetchParams
   ) => {
+    console.log('success');
     const prevElements = this.state.meshData.elements;
     this.setState({
       meshData: {
@@ -274,6 +279,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   };
 
   private handleMeshDataSourceError = (errorMessage: string | null, fetchParams: MeshFetchParams) => {
+    console.log('error');
     const prevElements = this.state.meshData.elements;
     this.setState({
       meshData: {
@@ -289,6 +295,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   };
 
   private handleMeshDataSourceStart = (isPreviousDataInvalid: boolean, fetchParams: MeshFetchParams) => {
+    console.log(`mesh isPreviousDataInvalid=${isPreviousDataInvalid}`);
     this.setState({
       meshData: {
         elements: isPreviousDataInvalid ? EMPTY_MESH_DATA : this.state.meshData.elements,

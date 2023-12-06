@@ -823,8 +823,18 @@ func NewConfig() (c *Config) {
 					ShowIncludeToggles:    false,
 				},
 				Mesh: MeshUIDefaults{
-					FindOptions: []GraphFindOption{},
-					HideOptions: []GraphFindOption{},
+					FindOptions: []GraphFindOption{
+						{
+							Description: "Find: unhealthy nodes",
+							Expression:  "! healthy",
+						},
+					},
+					HideOptions: []GraphFindOption{
+						{
+							Description: "Hide: healthy nodes",
+							Expression:  "healthy",
+						},
+					},
 				},
 				MetricsInbound:    MetricsDefaults{},
 				MetricsOutbound:   MetricsDefaults{},

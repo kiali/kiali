@@ -1194,6 +1194,6 @@ export const getCanaryUpgradeStatus = (): Promise<ApiResponse<CanaryUpgradeStatu
   return newRequest<CanaryUpgradeStatus>(HTTP_VERBS.GET, urls.canaryUpgradeStatus(), {}, {});
 };
 
-export const getMesh = (params: MeshQuery) => {
-  return newRequest<MeshDefinition>(HTTP_VERBS.GET, urls.mesh, params, {});
+export const getMeshGraph = (params: MeshQuery) => {
+  return newRequest<MeshDefinition>(HTTP_VERBS.GET, urls.meshGraph, params, {});
 };

@@ -19,7 +19,8 @@ func ParseAppenders(o mesh.Options) (appenders []mesh.Appender, finalizers []mes
 			// namespace appenders
 
 			// finalizer appenders
-
+			case "":
+				// skip
 			default:
 				graph.BadRequest(fmt.Sprintf("Invalid appender [%s]", appenderName))
 			}

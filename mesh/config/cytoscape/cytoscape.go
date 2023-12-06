@@ -19,6 +19,7 @@ import (
 	"crypto/md5"
 	"fmt"
 	"sort"
+	"time"
 
 	"github.com/kiali/kiali/mesh"
 )
@@ -66,7 +67,8 @@ type Elements struct {
 }
 
 type Config struct {
-	Elements Elements `json:"elements"`
+	Elements  Elements `json:"elements"`
+	Timestamp int64    `json:"timestamp"`
 }
 
 func nodeHash(id string) string {
@@ -139,7 +141,8 @@ func NewConfig(meshMap mesh.MeshMap, o mesh.ConfigOptions) (result Config) {
 
 	elements := Elements{nodes, edges}
 	result = Config{
-		Elements: elements,
+		Elements:  elements,
+		Timestamp: time.Now().Unix(),
 	}
 	return result
 }

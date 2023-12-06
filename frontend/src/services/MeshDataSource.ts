@@ -42,7 +42,11 @@ type EmitEvents = {
   ): void;
 };
 
-export interface MeshFetchParams {}
+// TODO: Actually deal with these options
+export interface MeshFetchParams {
+  includeHealth?: boolean;
+  includeLabels?: boolean;
+}
 
 type OnEvents = {
   (eventName: 'loadStart', callback: (isPreviousDataInvalid: boolean, fetchParams: MeshFetchParams) => void): void;
@@ -85,7 +89,7 @@ export class MeshDataSource {
   }
 
   public fetchMeshData = (fetchParams: MeshFetchParams): void => {
-    // const previousFetchParams = this.fetchParameters;
+    const previousFetchParams = this.fetchParameters;
 
     // Copy fetch parameters to a local attribute
     this._fetchParams = { ...fetchParams };
@@ -100,7 +104,9 @@ export class MeshDataSource {
     this._isLoading = true;
     this._isError = false;
 
-    const isPreviousDataInvalid = false;
+    const isPreviousDataInvalid =
+      previousFetchParams.includeHealth !== this.fetchParameters.includeHealth ||
+      previousFetchParams.includeLabels !== this._fetchParams.includeLabels;
     if (isPreviousDataInvalid) {
       // Reset the mesh data
       this.meshElements = EMPTY_MESH_DATA;
@@ -135,7 +141,7 @@ export class MeshDataSource {
   };
 
   private fetchMesh = (restParams: MeshQuery): void => {
-    this.promiseRegistry.register(PROMISE_KEY, API.getMesh(restParams)).then(
+    this.promiseRegistry.register(PROMISE_KEY, API.getMeshGraph(restParams)).then(
       response => {
         const responseData: any = response.data;
         this.meshElements = responseData && responseData.elements ? responseData.elements : EMPTY_MESH_DATA;
