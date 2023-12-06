@@ -572,7 +572,7 @@ const getPathStyleStroke = (data: EdgeData): PFColors => {
 const getPathStyle = (data: EdgeData): React.CSSProperties => {
   return {
     stroke: getPathStyleStroke(data),
-    strokeWidth: 5
+    strokeWidth: 3
   } as React.CSSProperties;
 };
 
