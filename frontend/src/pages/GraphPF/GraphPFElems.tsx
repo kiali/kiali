@@ -38,7 +38,7 @@ import { PFColors } from 'components/Pf/PfColors';
 import { getEdgeHealth } from 'types/ErrorRate/GraphEdgeStatus';
 import { Span } from 'types/TracingInfo';
 import { IconType } from 'config/Icons';
-import { TrafficDecorator } from './components/TrafficDecorator';
+import { NodeDecorator } from './components/NodeDecorator';
 
 // Utilities for working with PF Topology
 // - most of these add cytoscape-like functions
@@ -153,7 +153,7 @@ export const getNodeShape = (data: NodeData): NodeShape => {
 };
 
 const getDecorator = (element: Node, quadrant: TopologyQuadrant, icon: IconType, tooltip?: string): React.ReactNode => {
-  return <TrafficDecorator element={element} quadrant={quadrant} icon={icon} tooltip={tooltip} />;
+  return <NodeDecorator element={element} quadrant={quadrant} icon={icon} tooltip={tooltip} />;
 };
 
 export const setNodeAttachments = (node: Node<NodeModel>, settings: GraphPFSettings): void => {
