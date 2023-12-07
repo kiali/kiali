@@ -79,14 +79,8 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, 
 	var rbacDetails kubernetes.RBACDetails
 	var registryServices []*kubernetes.RegistryService
 
-	istioApiEnabled := config.Get().ExternalServices.Istio.IstioAPIEnabled
-
 	wg.Add(3) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
 	if service != "" {
-		wg.Add(1)
-	}
-
-	if istioApiEnabled {
 		wg.Add(1)
 	}
 
@@ -105,10 +99,8 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, 
 		go in.fetchServices(ctx, &services, cluster, namespace, errChan, &wg)
 	}
 
-	if istioApiEnabled {
-		// @TODO registry services for remote cluster
-		go in.fetchRegistryServices(&registryServices, errChan, &wg)
-	}
+	criteria := RegistryCriteria{AllNamespaces: true, Cluster: cluster}
+	registryServices = in.businessLayer.RegistryStatus.GetRegistryServices(criteria)
 
 	wg.Wait()
 	close(errChan)
@@ -197,16 +189,13 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	// Get all the Istio objects from a Namespace and all gateways from every namespace
 	wg.Add(3)
 
-	if istioApiEnabled {
-		wg.Add(1)
-	}
-
 	go in.fetchIstioConfigList(ctx, &istioConfigList, &mtlsDetails, &rbacDetails, cluster, namespace, errChan, &wg)
 	go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, cluster, &namespaces, errChan, &wg)
 	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, cluster, errChan, &wg)
 
 	if istioApiEnabled {
-		go in.fetchRegistryServices(&registryServices, errChan, &wg)
+		criteria := RegistryCriteria{AllNamespaces: true, Cluster: cluster}
+		registryServices = in.businessLayer.RegistryStatus.GetRegistryServices(criteria)
 	}
 
 	wg.Wait()
@@ -570,20 +559,6 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 		errChan <- err
 	} else {
 		mtlsDetails.EnabledAutoMtls = icm.GetEnableAutoMtls()
-	}
-}
-
-func (in *IstioValidationsService) fetchRegistryServices(rValue *[]*kubernetes.RegistryService, errChan chan error, wg *sync.WaitGroup) {
-	defer wg.Done()
-	criteria := RegistryCriteria{AllNamespaces: true}
-	registryServices, err := in.businessLayer.RegistryStatus.GetRegistryServices(criteria)
-	if err != nil {
-		select {
-		case errChan <- err:
-		default:
-		}
-	} else {
-		*rValue = registryServices
 	}
 }
 

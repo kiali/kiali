@@ -12,8 +12,6 @@ import (
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
-var emptyHandler = NewRegistryHandler(func() {})
-
 func newTestingCache(t *testing.T, cf kubernetes.ClientFactory, conf config.Config) KialiCache {
 	t.Helper()
 	// Disabling Istio API for tests. Otherwise the cache will try and poll the Istio endpoint

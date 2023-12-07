@@ -38,7 +38,7 @@ func TestClientUpdatedWhenSAClientChanges(t *testing.T) {
 	client := kubetest.NewFakeK8sClient()
 	client.Token = "current-token"
 	clientFactory := kubetest.NewK8SClientFactoryMock(client)
-	k8sCache, err := NewKubeCache(client, *conf, emptyHandler)
+	k8sCache, err := NewKubeCache(client, *conf)
 	require.NoError(err)
 
 	kubeCache := &fakeKubeCache{kubeCache: k8sCache}

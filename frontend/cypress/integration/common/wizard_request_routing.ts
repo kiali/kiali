@@ -30,21 +30,39 @@ Given('user opens the namespace {string} and {string} service details page', (na
   cy.visit(url + '/namespaces/' + namespace + '/services/' + service + '?refresh=0');
 });
 
-Given('user opens the namespace {string} and the remote {string} service details page', (namespace: string, service: string) => {
-  cy.visit(url + '/namespaces/' + namespace + '/services/' + service + '?refresh=0&clusterName=west');
-});
+Given(
+  'user opens the namespace {string} and the remote {string} service details page',
+  (namespace: string, service: string) => {
+    cy.visit(url + '/namespaces/' + namespace + '/services/' + service + '?refresh=0&clusterName=west');
+  }
+);
 
-When('user deletes Request Routing named {string} and the resource is no longer available in any cluster', (name:string) => {
-  cy.exec(`kubectl delete destinationrules.networking.istio.io ${name} -n bookinfo --context ${CLUSTER1_CONTEXT}`, { failOnNonZeroExit: false });
-  cy.exec(`kubectl delete destinationrules.networking.istio.io ${name} -n bookinfo --context ${CLUSTER2_CONTEXT}`, { failOnNonZeroExit: false });
-  cy.exec(`kubectl delete virtualservices.networking.istio.io ${name} -n bookinfo --context ${CLUSTER1_CONTEXT}`, { failOnNonZeroExit: false });
-  cy.exec(`kubectl delete virtualservices.networking.istio.io ${name} -n bookinfo --context ${CLUSTER2_CONTEXT}`, { failOnNonZeroExit: false });
-  ensureKialiFinishedLoading();
-});
+When(
+  'user deletes Request Routing named {string} and the resource is no longer available in any cluster',
+  (name: string) => {
+    cy.exec(`kubectl delete destinationrules.networking.istio.io ${name} -n bookinfo --context ${CLUSTER1_CONTEXT}`, {
+      failOnNonZeroExit: false
+    });
+    cy.exec(`kubectl delete destinationrules.networking.istio.io ${name} -n bookinfo --context ${CLUSTER2_CONTEXT}`, {
+      failOnNonZeroExit: false
+    });
+    cy.exec(`kubectl delete virtualservices.networking.istio.io ${name} -n bookinfo --context ${CLUSTER1_CONTEXT}`, {
+      failOnNonZeroExit: false
+    });
+    cy.exec(`kubectl delete virtualservices.networking.istio.io ${name} -n bookinfo --context ${CLUSTER2_CONTEXT}`, {
+      failOnNonZeroExit: false
+    });
+    ensureKialiFinishedLoading();
+  }
+);
 
 When('user deletes gateway named {string} and the resource is no longer available in any cluster', (name: string) => {
-  cy.exec(`kubectl delete gateway.networking.istio.io ${name} -n bookinfo --context ${CLUSTER1_CONTEXT}`, { failOnNonZeroExit: false });
-  cy.exec(`kubectl delete gateway.networking.istio.io ${name} -n bookinfo --context ${CLUSTER2_CONTEXT}`, { failOnNonZeroExit: false });
+  cy.exec(`kubectl delete gateway.networking.istio.io ${name} -n bookinfo --context ${CLUSTER1_CONTEXT}`, {
+    failOnNonZeroExit: false
+  });
+  cy.exec(`kubectl delete gateway.networking.istio.io ${name} -n bookinfo --context ${CLUSTER2_CONTEXT}`, {
+    failOnNonZeroExit: false
+  });
   ensureKialiFinishedLoading();
 });
 
@@ -78,14 +96,23 @@ When('user clicks in the {string} actions', (action: string) => {
     .should('not.exist');
 });
 
-Then('user sees the generated {string} objects located in the {string} cluster',(svc:string, cluster:string) =>{
-  cy.get(`[data-test="VirtualItem_Nsbookinfo_destinationrule_${svc}"]`).find('[data-label="Cluster"]').contains(cluster);
-  cy.get(`[data-test="VirtualItem_Nsbookinfo_virtualservice_${svc}"]`).find('[data-label="Cluster"]').contains(cluster);
+Then('user sees the generated {string} objects located in the {string} cluster', (svc: string, cluster: string) => {
+  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_destinationrule_${svc}`)
+    .find('[data-label="Cluster"]')
+    .contains(cluster);
+  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_virtualservice_${svc}`)
+    .find('[data-label="Cluster"]')
+    .contains(cluster);
 });
 
-And('the {string} {string} should be listed in {string} {string} namespace', (type:string, svc:string, cluster:string, ns:string) => {
-  cy.get(`[data-test="VirtualItem_Ns${ns}_${type.toLowerCase()}_${svc}"]`).find('[data-label="Cluster"]').contains(cluster);
-})
+And(
+  'the {string} {string} should be listed in {string} {string} namespace',
+  (type: string, svc: string, cluster: string, ns: string) => {
+    cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${ns}_${type.toLowerCase()}_${svc}`)
+      .find('[data-label="Cluster"]')
+      .contains(cluster);
+  }
+);
 
 And('user sees the {string} wizard', (title: string) => {
   cy.get('div[aria-label="' + title + '"]');

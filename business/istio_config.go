@@ -29,10 +29,11 @@ import (
 const allResources string = "*"
 
 type IstioConfigService struct {
-	userClients   map[string]kubernetes.ClientInterface
-	config        config.Config
-	kialiCache    cache.KialiCache
-	businessLayer *Layer
+	userClients         map[string]kubernetes.ClientInterface
+	config              config.Config
+	kialiCache          cache.KialiCache
+	businessLayer       *Layer
+	controlPlaneMonitor ControlPlaneMonitor
 }
 
 type IstioConfigCriteria struct {
@@ -603,14 +604,18 @@ func GetIstioAPI(resourceType string) bool {
 }
 
 // DeleteIstioConfigDetail deletes the given Istio resource
-func (in *IstioConfigService) DeleteIstioConfigDetail(cluster, namespace, resourceType, name string) error {
+func (in *IstioConfigService) DeleteIstioConfigDetail(ctx context.Context, cluster, namespace, resourceType, name string) error {
 	var err error
 	delOpts := meta_v1.DeleteOptions{}
-	ctx := context.TODO()
 
 	userClient := in.userClients[cluster]
 	if userClient == nil {
 		return fmt.Errorf("K8s Client [%s] is not found or is not accessible for Kiali", cluster)
+	}
+
+	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
+	if err != nil {
+		return err
 	}
 
 	switch resourceType {
@@ -651,19 +656,25 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(cluster, namespace, resour
 		return err
 	}
 
-	// Cache is stopped after a Create/Update/Delete operation to force a refresh
-	in.kialiCache.Refresh(namespace)
+	if in.config.ExternalServices.Istio.IstioAPIEnabled {
+		// Refreshing the istio cache in case something has changed with the registry services. Not sure if this is really needed.
+		if err := in.controlPlaneMonitor.RefreshIstioCache(ctx); err != nil {
+			log.Errorf("Error while refreshing Istio cache: %s", err)
+		}
+	}
+
+	// We need to refresh the kube cache though at least until waiting for the object to be updated is implemented.
+	kubeCache.Refresh(namespace)
 
 	return nil
 }
 
-func (in *IstioConfigService) UpdateIstioConfigDetail(cluster, namespace, resourceType, name, jsonPatch string) (models.IstioConfigDetails, error) {
+func (in *IstioConfigService) UpdateIstioConfigDetail(ctx context.Context, cluster, namespace, resourceType, name, jsonPatch string) (models.IstioConfigDetails, error) {
 	istioConfigDetail := models.IstioConfigDetails{}
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
 	istioConfigDetail.ObjectType = resourceType
 
 	patchOpts := meta_v1.PatchOptions{}
-	ctx := context.TODO()
 	patchType := api_types.MergePatchType
 	bytePatch := []byte(jsonPatch)
 
@@ -672,7 +683,11 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(cluster, namespace, resour
 		return istioConfigDetail, fmt.Errorf("K8s Client [%s] is not found or is not accessible for Kiali", cluster)
 	}
 
-	var err error
+	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
+	if err != nil {
+		return istioConfigDetail, nil
+	}
+
 	switch resourceType {
 	case kubernetes.DestinationRules:
 		istioConfigDetail.DestinationRule = &networking_v1beta1.DestinationRule{}
@@ -722,27 +737,33 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(cluster, namespace, resour
 	default:
 		err = fmt.Errorf("object type not found: %v", resourceType)
 	}
+	if err != nil {
+		return istioConfigDetail, err
+	}
 
-	// Cache is stopped after a Create/Update/Delete operation to force a refresh
-	kialiCache.Refresh(namespace)
+	// We need to refresh the kube cache though at least until waiting for the object to be updated is implemented.
+	kubeCache.Refresh(namespace)
 
 	return istioConfigDetail, err
 }
 
-func (in *IstioConfigService) CreateIstioConfigDetail(cluster, namespace, resourceType string, body []byte) (models.IstioConfigDetails, error) {
+func (in *IstioConfigService) CreateIstioConfigDetail(ctx context.Context, cluster, namespace, resourceType string, body []byte) (models.IstioConfigDetails, error) {
 	istioConfigDetail := models.IstioConfigDetails{}
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
 	istioConfigDetail.ObjectType = resourceType
 
 	createOpts := meta_v1.CreateOptions{}
-	ctx := context.TODO()
 
 	userClient := in.userClients[cluster]
 	if userClient == nil {
 		return istioConfigDetail, fmt.Errorf("K8s Client [%s] is not found or is not accessible for Kiali", cluster)
 	}
 
-	var err error
+	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
+	if err != nil {
+		return istioConfigDetail, nil
+	}
+
 	switch resourceType {
 	case kubernetes.DestinationRules:
 		istioConfigDetail.DestinationRule = &networking_v1beta1.DestinationRule{}
@@ -852,8 +873,15 @@ func (in *IstioConfigService) CreateIstioConfigDetail(cluster, namespace, resour
 	default:
 		err = fmt.Errorf("object type not found: %v", resourceType)
 	}
-	// Cache is stopped after a Create/Update/Delete operation to force a refresh
-	in.kialiCache.Refresh(namespace)
+
+	if in.config.ExternalServices.Istio.IstioAPIEnabled {
+		// Refreshing the istio cache in case something has changed with the registry services. Not sure if this is really needed.
+		if err := in.controlPlaneMonitor.RefreshIstioCache(ctx); err != nil {
+			log.Errorf("Error while refreshing Istio cache: %s", err)
+		}
+	}
+	// We need to refresh the kube cache though at least until waiting for the object to be updated is implemented.
+	kubeCache.Refresh(namespace)
 
 	return istioConfigDetail, err
 }

@@ -37,9 +37,11 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -107,8 +109,31 @@ func main() {
 	// prepare our internal metrics so Prometheus can scrape them
 	internalmetrics.RegisterInternalMetrics()
 
+	// Create the business package dependencies.
+	clientFactory, err := kubernetes.GetClientFactory()
+	if err != nil {
+		log.Fatalf("Failed to create client factory. Err: %s", err)
+	}
+
+	log.Info("Initializing Kiali Cache")
+	cache, err := cache.NewKialiCache(clientFactory, *cfg)
+	if err != nil {
+		log.Fatalf("Error initializing Kiali Cache. Details: %s", err)
+	}
+	defer cache.Stop()
+
+	namespaceService := business.NewNamespaceService(clientFactory.GetSAClients(), clientFactory.GetSAClients(), cache, *cfg)
+	meshService := business.NewMeshService(clientFactory.GetSAClients(), cache, namespaceService, *cfg)
+	cpm := business.NewControlPlaneMonitor(cache, clientFactory, *cfg, &meshService)
+
+	if cfg.ExternalServices.Istio.IstioAPIEnabled {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		cpm.PollIstiodForProxyStatus(ctx)
+	}
+
 	// Start listening to requests
-	server := server.NewServer()
+	server := server.NewServer(cpm, clientFactory, cache, *cfg)
 	server.Start()
 
 	// wait forever, or at least until we are told to exit

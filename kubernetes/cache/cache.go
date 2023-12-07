@@ -11,6 +11,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/store"
 )
 
 // Istio uses caches for pods and controllers.
@@ -39,9 +40,9 @@ type KialiCache interface {
 	// Instead of using the interface directly for kube objects, use the GetKubeCache() method.
 	KubeCache
 
-	NamespacesCache
-	ProxyStatusCache
 	RegistryStatusCache
+	ProxyStatusCache
+	NamespacesCache
 }
 
 // namespaceCache caches namespaces according to their token.
@@ -51,16 +52,10 @@ type namespaceCache struct {
 	clusterNamespace map[string]map[string]models.Namespace // By cluster, by namespace name
 }
 
-type podProxyStatus struct {
-	cluster     string
-	namespace   string
-	pod         string
-	proxyStatus *kubernetes.ProxyStatus
-}
-
 type kialiCacheImpl struct {
 	// Embedded for backward compatibility for business methods that just use one cluster.
 	// All business methods should eventually use the multi-cluster cache.
+	// TODO: Get rid of embedding.
 	KubeCache
 
 	// Stops the background goroutines which refresh the cache's
@@ -75,11 +70,10 @@ type kialiCacheImpl struct {
 	tokenLock              sync.RWMutex
 	tokenNamespaces        map[string]namespaceCache // TODO: Another option can be define here the namespaces by token/cluster
 	tokenNamespaceDuration time.Duration
-	proxyStatusLock        sync.RWMutex
-	proxyStatusNamespaces  map[string]map[string]map[string]podProxyStatus
-	registryStatusLock     sync.RWMutex
-	registryStatusCreated  *time.Time
-	registryStatus         *kubernetes.RegistryStatus
+	// ProxyStatusStore stores the proxy status and should be key'd off cluster + namespace + pod.
+	proxyStatusStore store.Store[*kubernetes.ProxyStatus]
+	// RegistryStatusStore stores the registry status and should be key'd off of the cluster name.
+	registryStatusStore store.Store[*kubernetes.RegistryStatus]
 
 	// Info about the kube clusters that the cache knows about.
 	clusters    []kubernetes.Cluster
@@ -91,14 +85,15 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config) (K
 		clientFactory:              clientFactory,
 		clientRefreshPollingPeriod: time.Duration(time.Second * 60),
 		kubeCache:                  make(map[string]KubeCache),
-		proxyStatusNamespaces:      make(map[string]map[string]map[string]podProxyStatus),
 		refreshDuration:            time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second,
 		tokenNamespaces:            make(map[string]namespaceCache),
 		tokenNamespaceDuration:     time.Duration(cfg.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second,
+		proxyStatusStore:           store.New[*kubernetes.ProxyStatus](),
+		registryStatusStore:        store.New[*kubernetes.RegistryStatus](),
 	}
 
 	for cluster, client := range clientFactory.GetSAClients() {
-		cache, err := NewKubeCache(client, cfg, NewRegistryHandler(kialiCacheImpl.RefreshRegistryStatus))
+		cache, err := NewKubeCache(client, cfg)
 		if err != nil {
 			log.Errorf("[Kiali Cache] Error creating kube cache for cluster: [%s]. Err: %v", cluster, err)
 			return nil, err
@@ -121,13 +116,9 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config) (K
 
 	// Starting background goroutines to:
 	// 1. Refresh the cache's service account token
-	// 2. Poll for istiod's proxy status.
 	// These will stop when the context is cancelled.
 	// Starting goroutines after any errors are handled so as not to leak goroutines.
 	ctx, cancel := context.WithCancel(context.Background())
-	if cfg.ExternalServices.Istio.IstioAPIEnabled {
-		kialiCacheImpl.pollIstiodForProxyStatus(ctx)
-	}
 
 	// Note that this only watches for changes to the home cluster's token since it is
 	// expected that the remote cluster tokens will not change. However, that assumption

@@ -13,22 +13,26 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/routing"
 )
 
 type Server struct {
-	httpServer *http.Server
-	router     *mux.Router
-	tracer     *sdktrace.TracerProvider
+	conf                config.Config
+	controlPlaneMonitor business.ControlPlaneMonitor
+	clientFactory       kubernetes.ClientFactory
+	httpServer          *http.Server
+	kialiCache          cache.KialiCache
+	router              *mux.Router
+	tracer              *sdktrace.TracerProvider
 }
 
 // NewServer creates a new server configured with the given settings.
 // Start and Stop it with the corresponding functions.
-func NewServer() *Server {
-	conf := config.Get()
-
+func NewServer(controlPlaneMonitor business.ControlPlaneMonitor, clientFactory kubernetes.ClientFactory, cache cache.KialiCache, conf config.Config) *Server {
 	// create a router that will route all incoming API server requests to different handlers
 	router := routing.NewRouter()
 	var tracingProvider *sdktrace.TracerProvider
@@ -75,8 +79,12 @@ func NewServer() *Server {
 
 	// return our new Server
 	s := &Server{
-		httpServer: httpServer,
-		router:     router,
+		conf:                conf,
+		clientFactory:       clientFactory,
+		controlPlaneMonitor: controlPlaneMonitor,
+		httpServer:          httpServer,
+		kialiCache:          cache,
+		router:              router,
 	}
 	if conf.Server.Observability.Tracing.Enabled && tracingProvider != nil {
 		s.tracer = tracingProvider
@@ -86,25 +94,18 @@ func NewServer() *Server {
 
 // Start HTTP server asynchronously. TLS may be active depending on the global configuration.
 func (s *Server) Start() {
-	// Start the business to initialize cache dependencies.
-	// The business cache should start before the server endpoint to ensure
-	// that the cache is ready before it's used by one of the server handlers.
-	if err := business.Start(); err != nil {
-		log.Errorf("Error starting business layer: %s", err)
-		panic(err)
-	}
+	business.Start(s.clientFactory, s.controlPlaneMonitor, s.kialiCache)
 
-	conf := config.Get()
-	log.Infof("Server endpoint will start at [%v%v]", s.httpServer.Addr, conf.Server.WebRoot)
-	log.Infof("Server endpoint will serve static content from [%v]", conf.Server.StaticContentRootDirectory)
-	secure := conf.Identity.CertFile != "" && conf.Identity.PrivateKeyFile != ""
+	log.Infof("Server endpoint will start at [%v%v]", s.httpServer.Addr, s.conf.Server.WebRoot)
+	log.Infof("Server endpoint will serve static content from [%v]", s.conf.Server.StaticContentRootDirectory)
+	secure := s.conf.Identity.CertFile != "" && s.conf.Identity.PrivateKeyFile != ""
 	go func() {
 		var err error
 		if secure {
 			log.Infof("Server endpoint will require https")
 			log.Infof("Server will support protocols: %v", s.httpServer.TLSConfig.NextProtos)
 			s.router.Use(secureHttpsMiddleware)
-			err = s.httpServer.ListenAndServeTLS(conf.Identity.CertFile, conf.Identity.PrivateKeyFile)
+			err = s.httpServer.ListenAndServeTLS(s.conf.Identity.CertFile, s.conf.Identity.PrivateKeyFile)
 		} else {
 			s.router.Use(plainHttpMiddleware)
 			err = s.httpServer.ListenAndServe()
@@ -113,7 +114,7 @@ func (s *Server) Start() {
 	}()
 
 	// Start the Metrics Server
-	if conf.Server.Observability.Metrics.Enabled {
+	if s.conf.Server.Observability.Metrics.Enabled {
 		StartMetricsServer()
 	}
 }
@@ -121,7 +122,6 @@ func (s *Server) Start() {
 // Stop the HTTP server
 func (s *Server) Stop() {
 	StopMetricsServer()
-	business.Stop()
 	log.Infof("Server endpoint will stop at [%v]", s.httpServer.Addr)
 	s.httpServer.Close()
 	observability.StopTracer(s.tracer)

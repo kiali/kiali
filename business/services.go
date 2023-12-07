@@ -122,15 +122,9 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 		return nil, err
 	}
 
-	// TODO: Handle istio api registry.
-	// Only the home cluster will fetch the registry for now. This can change once Kiali supports
-	// talking to multiple istiods.
-	nFetches := 4
+	nFetches := 3
 	if criteria.IncludeIstioResources {
-		nFetches = 5
-	}
-	if !in.config.ExternalServices.Istio.IstioAPIEnabled || cluster != in.config.KubernetesConfig.ClusterName {
-		nFetches--
+		nFetches = 4
 	}
 
 	wg := sync.WaitGroup{}
@@ -156,19 +150,12 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 	}()
 
 	if in.config.ExternalServices.Istio.IstioAPIEnabled && cluster == in.config.KubernetesConfig.ClusterName {
-		go func() {
-			defer wg.Done()
-			var err2 error
-			registryCriteria := RegistryCriteria{
-				Namespace:       criteria.Namespace,
-				ServiceSelector: criteria.ServiceSelector,
-			}
-			rSvcs, err2 = in.businessLayer.RegistryStatus.GetRegistryServices(registryCriteria)
-			if err2 != nil {
-				log.Errorf("Error fetching Registry Services per namespace %s: %s", criteria.Namespace, err2)
-				errChan <- err2
-			}
-		}()
+		registryCriteria := RegistryCriteria{
+			Namespace:       criteria.Namespace,
+			ServiceSelector: criteria.ServiceSelector,
+			Cluster:         cluster,
+		}
+		rSvcs = in.businessLayer.RegistryStatus.GetRegistryServices(registryCriteria)
 	}
 
 	go func() {
@@ -494,7 +481,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 	wg := sync.WaitGroup{}
 	// Max possible number of errors. It's ok if the buffer size exceeds the number of goroutines
 	// in cases where istio api is disabled.
-	errChan := make(chan error, 9)
+	errChan := make(chan error, 8)
 
 	labelsSelector := labels.Set(svc.Selectors).String()
 	// If service doesn't have any selector, we can't know which are the pods and workloads applying.
@@ -521,19 +508,11 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		}(ctx)
 
 		if in.config.ExternalServices.Istio.IstioAPIEnabled {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				var err2 error
-				registryCriteria := RegistryCriteria{
-					Namespace: namespace,
-				}
-				rSvcs, err2 = in.businessLayer.RegistryStatus.GetRegistryServices(registryCriteria)
-				if err2 != nil {
-					log.Errorf("Error fetching Registry Services per namespace %s: %s", registryCriteria.Namespace, err2)
-					errChan <- err2
-				}
-			}()
+			registryCriteria := RegistryCriteria{
+				Namespace: namespace,
+				Cluster:   cluster,
+			}
+			rSvcs = in.businessLayer.RegistryStatus.GetRegistryServices(registryCriteria)
 		}
 	}
 
@@ -734,27 +713,22 @@ func (in *SvcService) GetService(ctx context.Context, cluster, namespace, servic
 		return models.Service{}, err
 	}
 
-	var err error
-	var kSvc *core_v1.Service
-	var cache cache.KubeCache
-
-	cache, err = in.kialiCache.GetKubeCache(cluster)
+	cache, err := in.kialiCache.GetKubeCache(cluster)
 	if err != nil {
 		return models.Service{}, err
 	}
 
 	svc := models.Service{}
-	kSvc, err = cache.GetService(namespace, service)
+	// First try to get the service from kube.
+	// If it doesn't exist, try to get it from the Istio Registry.
+	kSvc, err := cache.GetService(namespace, service)
 	if err != nil {
 		// Check if this service is in the Istio Registry
 		criteria := RegistryCriteria{
 			Namespace: namespace,
+			Cluster:   cluster,
 		}
-		var rSvcs []*kubernetes.RegistryService
-		rSvcs, err = in.businessLayer.RegistryStatus.GetRegistryServices(criteria)
-		if err != nil {
-			return svc, err
-		}
+		rSvcs := in.businessLayer.RegistryStatus.GetRegistryServices(criteria)
 		for _, rSvc := range rSvcs {
 			if rSvc.Attributes.Name == service {
 				svc.ParseRegistryService(rSvc)
@@ -763,13 +737,13 @@ func (in *SvcService) GetService(ctx context.Context, cluster, namespace, servic
 		}
 		// Service not found in Kubernetes and Istio
 		if svc.Name == "" {
-			err = kubernetes.NewNotFound(service, "Kiali", "Service")
-			return svc, err
+			return svc, kubernetes.NewNotFound(service, "Kiali", "Service")
 		}
 	} else {
 		svc.Parse(kSvc)
 	}
-	return svc, err
+
+	return svc, nil
 }
 
 func (in *SvcService) getServiceValidations(services []core_v1.Service, deployments []apps_v1.Deployment, pods []core_v1.Pod) models.IstioValidations {

@@ -195,18 +195,17 @@ Cypress.Commands.add('login', (username: string, password: string) => {
             haveCookie = true;
           });
       } else if (auth_strategy === 'token') {
-        cy.exec('kubectl -n istio-system create token citest')
-          .then(result => {
-            cy.request({
-              method: 'POST',
-              url: 'api/authenticate',
-              form: true,
-              body: {
-                token: result.stdout
-              }
-            });
-            haveCookie = true;
+        cy.exec('kubectl -n istio-system create token citest').then(result => {
+          cy.request({
+            method: 'POST',
+            url: 'api/authenticate',
+            form: true,
+            body: {
+              token: result.stdout
+            }
           });
+          haveCookie = true;
+        });
       }
     } else {
       cy.log('got an auth cookie, skipping login');

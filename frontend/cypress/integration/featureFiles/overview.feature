@@ -173,9 +173,10 @@ Feature: Kiali Overview page
     Then user sees a "LIST" "bookinfo" namespace
     And the "Cluster" column "appears"
     And cluster badges for "east" and "west" cluster are visible in the LIST view
-    And Control Plane metrics should be visible
+    And Control Plane metrics should be visible for cluster "east"
 
   #this scenario refers to a bug (https://github.com/kiali/kiali/issues/6504) which is not resolved at the time of writing the scenario
+  # this scenario refers to a bug (https://github.com/kiali/kiali/issues/6504) 
   @multi-cluster
   @skip
   Scenario: The new Cluster column should be visible and sortable when changing to list view
@@ -183,3 +184,9 @@ Feature: Kiali Overview page
     Then the "Cluster" column "appears"
     And user sorts by "Cluster" desc
     Then the list is sorted by "Cluster" desc
+
+  @multi-cluster
+  @multi-primary
+  Scenario: There should be two control plane cards for each cluster
+    Then user sees the "Control plane" label in the "east" "istio-system" namespace card
+    Then user sees the "Control plane" label in the "west" "istio-system" namespace card

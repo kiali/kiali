@@ -181,6 +181,11 @@ func (o *K8SClientMock) GetTokenSubject(authInfo *api.AuthInfo) (string, error) 
 	return authInfo.Token, nil
 }
 
+func (o *K8SClientMock) ForwardGetRequest(namespace, podName string, destinationPort int, path string) ([]byte, error) {
+	args := o.Called(namespace, podName, destinationPort, path)
+	return args.Get(0).([]byte), args.Error(1)
+}
+
 func (o *K8SClientMock) MockService(namespace, name string) {
 	s := FakeService(namespace, name)
 	o.On("GetService", namespace, name).Return(&s, nil)

@@ -193,7 +193,7 @@ type RBACDetails struct {
 }
 
 type ProxyStatus struct {
-	pilot string
+	Pilot string
 	SyncStatus
 }
 
@@ -214,7 +214,7 @@ type SyncStatus struct {
 }
 
 type RegistryService struct {
-	pilot string
+	Pilot string
 	IstioService
 }
 

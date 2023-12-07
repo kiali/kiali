@@ -35,9 +35,6 @@ const (
 type Mesh struct {
 	// ControlPlanes that share the same mesh ID.
 	ControlPlanes []ControlPlane
-
-	// ID is the ID of the mesh.
-	ID *string
 }
 
 // ControlPlane manages the dataplane for one or more kube clusters.
@@ -162,14 +159,6 @@ func (in *MeshService) GetMesh(ctx context.Context) (*Mesh, error) {
 					return nil, err
 				}
 				controlPlane.Config = *controlPlaneConfig
-
-				// Kiali only supports a single mesh. All controlplanes should share the same mesh id.
-				// Otherwise this is an error.
-				if mesh.ID == nil {
-					mesh.ID = &controlPlane.Config.DefaultConfig.MeshId
-				} else if *mesh.ID != controlPlane.Config.DefaultConfig.MeshId {
-					return nil, fmt.Errorf("multiple mesh ids found: [%s] and [%s]", *mesh.ID, controlPlane.Config.DefaultConfig.MeshId)
-				}
 
 				if containers := istiod.Spec.Template.Spec.Containers; len(containers) > 0 {
 					for _, env := range istiod.Spec.Template.Spec.Containers[0].Env {

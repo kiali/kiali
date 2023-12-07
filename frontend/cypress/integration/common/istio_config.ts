@@ -326,6 +326,34 @@ Then('user sees all the Istio Config objects in the bookinfo namespace', () => {
   });
 });
 
+Then('user sees all the Istio Config objects in the bookinfo namespace for the {string} cluster', (cluster: string) => {
+  // Bookinfo Gateway
+  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_gateway_bookinfo-gateway`);
+  // Bookinfo VS
+  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_virtualservice_bookinfo`);
+});
+
+And('user sees Cluster information for Istio objects', () => {
+  // Gateways
+  cy.getBySel(`VirtualItem_Clustereast_Nsbookinfo_gateway_bookinfo-gateway`).contains(
+    'td[data-label="Cluster"]',
+    'east'
+  );
+  cy.getBySel(`VirtualItem_Clusterwest_Nsbookinfo_gateway_bookinfo-gateway`).contains(
+    'td[data-label="Cluster"]',
+    'west'
+  );
+  // VirtualServices
+  cy.getBySel(`VirtualItem_Clustereast_Nsbookinfo_virtualservice_bookinfo`).contains(
+    'td[data-label="Cluster"]',
+    'east'
+  );
+  cy.getBySel(`VirtualItem_Clusterwest_Nsbookinfo_virtualservice_bookinfo`).contains(
+    'td[data-label="Cluster"]',
+    'west'
+  );
+});
+
 And('user sees Name information for Istio objects', () => {
   const object = 'bookinfo-gateway';
   // There should be a table with a heading for each piece of information.

@@ -4,6 +4,9 @@
 # Refer to the --help output for a description of this script and its available options.
 #
 
+PRIMARY_REMOTE="primary-remote"
+MULTI_PRIMARY="multi-primary"
+
 infomsg() {
   echo "[INFO] ${1}"
 }
@@ -24,9 +27,10 @@ Options:
     This option is ignored if -ii is false.
     If not specified, the latest version of Istio is installed.
     Default: <the latest release>
--mc|--multicluster <true|false>
-    Whether to set up a multicluster environment.
-    Default: false
+-mc|--multicluster <${MULTI_PRIMARY}|${PRIMARY_REMOTE}>
+    Whether to set up a multicluster environment
+    and which kind of multicluster environment to setup.
+    Default: <none>
 HELP
 }
 
@@ -38,7 +42,14 @@ while [[ $# -gt 0 ]]; do
     -dorp|--docker-or-podman)     DORP="$2";                  shift;shift; ;;
     -h|--help)                    helpmsg;                    exit 1       ;;
     -iv|--istio-version)          ISTIO_VERSION="$2";         shift;shift; ;;
-    -mc|--multicluster)           MULTICLUSTER="$2";          shift;shift; ;;
+    -mc|--multicluster)
+      MULTICLUSTER="${2}"
+      if [ "${MULTICLUSTER}" != "${PRIMARY_REMOTE}" -a "${MULTICLUSTER}" != "${MULTI_PRIMARY}" ]; then
+        echo "--multicluster option must be one of '${PRIMARY_REMOTE}' or '${MULTI_PRIMARY}'"
+        exit 1
+      fi
+      shift;shift
+      ;;
     *) echo "Unknown argument: [$key]. Aborting."; helpmsg; exit 1 ;;
   esac
 done
@@ -49,7 +60,6 @@ set -e
 # set up some of our defaults
 AUTH_STRATEGY="${AUTH_STRATEGY:-anonymous}"
 DORP="${DORP:-docker}"
-MULTICLUSTER="${MULTICLUSTER:-false}"
 
 # Defaults the branch to master unless it is already set
 TARGET_BRANCH="${TARGET_BRANCH:-master}"
@@ -209,11 +219,15 @@ setup_kind_multicluster() {
   if [[ "${ISTIO_VERSION}" == *-dev ]]; then
     local hub_arg="--istio-hub default"
   fi
-  "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --manage-kind true -dorp docker --istio-dir "${istio_dir}" ${hub_arg:-}
+  if [ "${MULTICLUSTER}" == "${MULTI_PRIMARY}" ]; then
+    "${SCRIPT_DIR}"/istio/multicluster/install-multi-primary.sh --manage-kind true -dorp docker --istio-dir "${istio_dir}" ${hub_arg:-}
+  elif [ "${MULTICLUSTER}" == "${PRIMARY_REMOTE}" ]; then 
+    "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --manage-kind true -dorp docker --istio-dir "${istio_dir}" ${hub_arg:-}
+  fi
   "${SCRIPT_DIR}"/istio/multicluster/deploy-kiali.sh --manage-kind true -dorp docker -kas anonymous -kudi true -kshc "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
 }
 
-if [ "${MULTICLUSTER}" == "true" ]; then
+if [ -n "${MULTICLUSTER}" ]; then
   setup_kind_multicluster
 else
   setup_kind_singlecluster

@@ -61,7 +61,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Run frontend multi-cluster integration tests
-        run: hack/run-integration-tests.sh --test-suite frontend-multi-cluster $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
+        run: hack/run-integration-tests.sh --test-suite frontend-primary-remote $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
 
       - name: Get debug info when integration tests fail
         if: failure()
