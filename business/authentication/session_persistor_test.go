@@ -47,7 +47,7 @@ func TestSecureFlag(t *testing.T) {
 
 	cookie := response.Cookies()[0]
 	assert.True(t, cookie.HttpOnly)
-	assert.True(t, true, cfg.IsServerHTTPS())
+	assert.True(t, cfg.IsServerHTTPS())
 	assert.True(t, cookie.Secure)
 }
 
@@ -78,8 +78,8 @@ func TestCreateSessionNoChunks(t *testing.T) {
 
 	cookie := response.Cookies()[0]
 	assert.True(t, cookie.HttpOnly)
-	assert.Equal(t, false, cfg.IsServerHTTPS())
-	assert.Equal(t, cfg.IsServerHTTPS(), cookie.Secure)
+	assert.False(t, cfg.IsServerHTTPS())
+	assert.False(t, cookie.Secure)
 	assert.Equal(t, AESSessionCookieName, cookie.Name)
 	assert.Equal(t, "/kiali-app", cookie.Path)
 	assert.Equal(t, http.SameSiteStrictMode, cookie.SameSite)
@@ -131,7 +131,7 @@ func TestCreateSessionWithChunks(t *testing.T) {
 
 	for _, cookie := range response.Cookies() {
 		assert.True(t, cookie.HttpOnly)
-		assert.Equal(t, cfg.IsServerHTTPS(), cookie.Secure)
+		assert.False(t, cookie.Secure)
 		assert.Equal(t, "/kiali-app", cookie.Path)
 		assert.Equal(t, http.SameSiteStrictMode, cookie.SameSite)
 		assert.Equal(t, expiresTime, cookie.Expires)
