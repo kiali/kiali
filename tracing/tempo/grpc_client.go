@@ -34,18 +34,20 @@ type TempoGRPCClient struct {
 func NewgRPCClient(client http.Client, baseURL *url.URL, clientConn *grpc.ClientConn) (otelClient *TempoGRPCClient, err error) {
 	url := *baseURL
 	url.Path = path.Join(url.Path, "/api/search/tags")
+	tags := false
 	r, status, _ := makeRequest(client, url.String(), nil)
 	if status != 200 {
-		return nil, fmt.Errorf("Error %d getting tags", status)
-	}
-	var response otel.TagsResponse
-	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
-		log.Errorf("Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, url)
-		return nil, errMarshal
-	}
-	tags := false
-	if util.InSlice(response.TagNames, "cluster") {
-		tags = true
+		log.Debugf("Error getting Tempo tags for tracing. Tags will be disabled.")
+	} else {
+		var response otel.TagsResponse
+		if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
+			log.Errorf("Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, url)
+			return nil, errMarshal
+		}
+
+		if util.InSlice(response.TagNames, "cluster") {
+			tags = true
+		}
 	}
 
 	clientStreamTempo := tempopb.NewStreamingQuerierClient(clientConn)

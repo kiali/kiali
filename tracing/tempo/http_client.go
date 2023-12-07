@@ -28,18 +28,20 @@ type OtelHTTPClient struct {
 func NewOtelClient(client http.Client, baseURL *url.URL) (otelClient *OtelHTTPClient, err error) {
 	url := *baseURL
 	url.Path = path.Join(url.Path, "/api/search/tags")
+	tags := false
 	r, status, _ := makeRequest(client, url.String(), nil)
 	if status != 200 {
-		return nil, fmt.Errorf("Error %d getting tags", status)
-	}
-	var response otel.TagsResponse
-	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
-		log.Errorf("Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, url)
-		return nil, errMarshal
-	}
-	tags := false
-	if util.InSlice(response.TagNames, "cluster") {
-		tags = true
+		log.Debugf("Error getting Tempo tags for tracing. Tags will be disabled.")
+	} else {
+		var response otel.TagsResponse
+		if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
+			log.Errorf("Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, url)
+			return nil, errMarshal
+		}
+
+		if util.InSlice(response.TagNames, "cluster") {
+			tags = true
+		}
 	}
 
 	return &OtelHTTPClient{ClusterTag: tags}, nil
@@ -123,20 +125,23 @@ func (oc OtelHTTPClient) transformTrace(traces *otel.Traces, error string) (*mod
 	var response model.TracingResponse
 	serviceName := ""
 
-	for _, trace := range traces.Traces {
-		serviceName = getServiceName(trace.SpanSet.Spans[0].Attributes)
-		if error == "true" {
-			if !hasErrors(trace) {
-				continue
+	if traces != nil {
+		for _, trace := range traces.Traces {
+			serviceName = getServiceName(trace.SpanSet.Spans[0].Attributes)
+			if error == "true" {
+				if !hasErrors(trace) {
+					continue
+				}
+			}
+			batchTrace, err := convertBatchTrace(trace, serviceName)
+			if err != nil {
+				log.Errorf("Error getting trace detail for %s: %s", trace.TraceID, err.Error())
+			} else {
+				response.Data = append(response.Data, batchTrace)
 			}
 		}
-		batchTrace, err := convertBatchTrace(trace, serviceName)
-		if err != nil {
-			log.Errorf("Error getting trace detail for %s: %s", trace.TraceID, err.Error())
-		} else {
-			response.Data = append(response.Data, batchTrace)
-		}
 	}
+
 	response.TracingServiceName = serviceName
 	return &response, nil
 }

@@ -1,0 +1,1249 @@
+{
+  "batches": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "istio-ingressgateway.istio-system"
+            }
+          }
+        ]
+      },
+      "scopeSpans": [
+        {
+          "scope": {
+
+          },
+          "spans": [
+            {
+              "traceId": "O6VWCcPN5JZJzXfR+dzZNg==",
+              "spanId": "Sc130fnc2TY=",
+              "name": "productpage.bookinfo.svc.cluster.local:9080/productpage",
+              "kind": "SPAN_KIND_CLIENT",
+              "startTimeUnixNano": "1701779876570888000",
+              "endTimeUnixNano": "1701779876582820000",
+              "attributes": [
+                {
+                  "key": "peer.address",
+                  "value": {
+                    "stringValue": "10.244.0.1"
+                  }
+                },
+                {
+                  "key": "http.protocol",
+                  "value": {
+                    "stringValue": "HTTP/1.1"
+                  }
+                },
+                {
+                  "key": "upstream_cluster.name",
+                  "value": {
+                    "stringValue": "outbound|9080||productpage.bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "node_id",
+                  "value": {
+                    "stringValue": "router~10.244.0.14~istio-ingressgateway-79788cd94-wgmsp.istio-system~istio-system.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "http.status_code",
+                  "value": {
+                    "stringValue": "200"
+                  }
+                },
+                {
+                  "key": "response_size",
+                  "value": {
+                    "stringValue": "5294"
+                  }
+                },
+                {
+                  "key": "istio.canonical_service",
+                  "value": {
+                    "stringValue": "istio-ingressgateway"
+                  }
+                },
+                {
+                  "key": "component",
+                  "value": {
+                    "stringValue": "proxy"
+                  }
+                },
+                {
+                  "key": "istio.canonical_revision",
+                  "value": {
+                    "stringValue": "latest"
+                  }
+                },
+                {
+                  "key": "istio.mesh_id",
+                  "value": {
+                    "stringValue": "cluster.local"
+                  }
+                },
+                {
+                  "key": "guid:x-request-id",
+                  "value": {
+                    "stringValue": "e4e8c177-3962-9359-945e-61e7175cd867"
+                  }
+                },
+                {
+                  "key": "response_flags",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "downstream_cluster",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "istio.namespace",
+                  "value": {
+                    "stringValue": "istio-system"
+                  }
+                },
+                {
+                  "key": "user_agent",
+                  "value": {
+                    "stringValue": "Go-http-client/1.1"
+                  }
+                },
+                {
+                  "key": "upstream_cluster",
+                  "value": {
+                    "stringValue": "outbound|9080||productpage.bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "request_size",
+                  "value": {
+                    "stringValue": "0"
+                  }
+                },
+                {
+                  "key": "net.host.ip",
+                  "value": {
+                    "stringValue": "10.244.0.14"
+                  }
+                },
+                {
+                  "key": "http.method",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                },
+                {
+                  "key": "http.url",
+                  "value": {
+                    "stringValue": "http://192.168.49.2:31653/productpage"
+                  }
+                }
+              ],
+              "events": [
+                {
+                  "timeUnixNano": "1701779876582892000",
+                  "name": "cr"
+                }
+              ],
+              "status": {
+
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "productpage.bookinfo"
+            }
+          }
+        ]
+      },
+      "scopeSpans": [
+        {
+          "scope": {
+
+          },
+          "spans": [
+            {
+              "traceId": "O6VWCcPN5JZJzXfR+dzZNg==",
+              "spanId": "hHVrHasIVvo=",
+              "parentSpanId": "Sc130fnc2TY=",
+              "name": "productpage.bookinfo.svc.cluster.local:9080/productpage",
+              "kind": "SPAN_KIND_SERVER",
+              "startTimeUnixNano": "1701779876571116000",
+              "endTimeUnixNano": "1701779876582555000",
+              "attributes": [
+                {
+                  "key": "istio.namespace",
+                  "value": {
+                    "stringValue": "bookinfo"
+                  }
+                },
+                {
+                  "key": "response_size",
+                  "value": {
+                    "stringValue": "5294"
+                  }
+                },
+                {
+                  "key": "http.protocol",
+                  "value": {
+                    "stringValue": "HTTP/1.1"
+                  }
+                },
+                {
+                  "key": "response_flags",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "istio.canonical_revision",
+                  "value": {
+                    "stringValue": "v1"
+                  }
+                },
+                {
+                  "key": "peer.address",
+                  "value": {
+                    "stringValue": "10.244.0.14"
+                  }
+                },
+                {
+                  "key": "component",
+                  "value": {
+                    "stringValue": "proxy"
+                  }
+                },
+                {
+                  "key": "user_agent",
+                  "value": {
+                    "stringValue": "Go-http-client/1.1"
+                  }
+                },
+                {
+                  "key": "istio.mesh_id",
+                  "value": {
+                    "stringValue": "cluster.local"
+                  }
+                },
+                {
+                  "key": "downstream_cluster",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "request_size",
+                  "value": {
+                    "stringValue": "0"
+                  }
+                },
+                {
+                  "key": "http.status_code",
+                  "value": {
+                    "stringValue": "200"
+                  }
+                },
+                {
+                  "key": "guid:x-request-id",
+                  "value": {
+                    "stringValue": "e4e8c177-3962-9359-945e-61e7175cd867"
+                  }
+                },
+                {
+                  "key": "upstream_cluster",
+                  "value": {
+                    "stringValue": "inbound|9080||"
+                  }
+                },
+                {
+                  "key": "upstream_cluster.name",
+                  "value": {
+                    "stringValue": "inbound|9080||"
+                  }
+                },
+                {
+                  "key": "node_id",
+                  "value": {
+                    "stringValue": "sidecar~10.244.0.25~productpage-v1-6f89b6c557-sg2bc.bookinfo~bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "istio.canonical_service",
+                  "value": {
+                    "stringValue": "productpage"
+                  }
+                },
+                {
+                  "key": "net.host.ip",
+                  "value": {
+                    "stringValue": "10.244.0.25"
+                  }
+                },
+                {
+                  "key": "http.method",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                },
+                {
+                  "key": "http.url",
+                  "value": {
+                    "stringValue": "http://192.168.49.2:31653/productpage"
+                  }
+                }
+              ],
+              "events": [
+                {
+                  "timeUnixNano": "1701779876582647000",
+                  "name": "ss"
+                }
+              ],
+              "status": {
+
+              }
+            },
+            {
+              "traceId": "O6VWCcPN5JZJzXfR+dzZNg==",
+              "spanId": "EhAELDb4vpI=",
+              "parentSpanId": "hHVrHasIVvo=",
+              "name": "reviews.bookinfo.svc.cluster.local:9080/*",
+              "kind": "SPAN_KIND_CLIENT",
+              "startTimeUnixNano": "1701779876578223000",
+              "endTimeUnixNano": "1701779876580947000",
+              "attributes": [
+                {
+                  "key": "downstream_cluster",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "user_agent",
+                  "value": {
+                    "stringValue": "Go-http-client/1.1"
+                  }
+                },
+                {
+                  "key": "istio.canonical_revision",
+                  "value": {
+                    "stringValue": "v1"
+                  }
+                },
+                {
+                  "key": "guid:x-request-id",
+                  "value": {
+                    "stringValue": "e4e8c177-3962-9359-945e-61e7175cd867"
+                  }
+                },
+                {
+                  "key": "istio.namespace",
+                  "value": {
+                    "stringValue": "bookinfo"
+                  }
+                },
+                {
+                  "key": "request_size",
+                  "value": {
+                    "stringValue": "0"
+                  }
+                },
+                {
+                  "key": "node_id",
+                  "value": {
+                    "stringValue": "sidecar~10.244.0.25~productpage-v1-6f89b6c557-sg2bc.bookinfo~bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "istio.mesh_id",
+                  "value": {
+                    "stringValue": "cluster.local"
+                  }
+                },
+                {
+                  "key": "istio.canonical_service",
+                  "value": {
+                    "stringValue": "productpage"
+                  }
+                },
+                {
+                  "key": "response_flags",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "upstream_cluster",
+                  "value": {
+                    "stringValue": "outbound|9080||reviews.bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "http.protocol",
+                  "value": {
+                    "stringValue": "HTTP/1.1"
+                  }
+                },
+                {
+                  "key": "upstream_cluster.name",
+                  "value": {
+                    "stringValue": "outbound|9080||reviews.bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "component",
+                  "value": {
+                    "stringValue": "proxy"
+                  }
+                },
+                {
+                  "key": "http.status_code",
+                  "value": {
+                    "stringValue": "200"
+                  }
+                },
+                {
+                  "key": "response_size",
+                  "value": {
+                    "stringValue": "442"
+                  }
+                },
+                {
+                  "key": "peer.address",
+                  "value": {
+                    "stringValue": "10.244.0.25"
+                  }
+                },
+                {
+                  "key": "net.host.ip",
+                  "value": {
+                    "stringValue": "10.244.0.25"
+                  }
+                },
+                {
+                  "key": "http.method",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                },
+                {
+                  "key": "http.url",
+                  "value": {
+                    "stringValue": "http://reviews:9080/reviews/0"
+                  }
+                }
+              ],
+              "events": [
+                {
+                  "timeUnixNano": "1701779876581019000",
+                  "name": "cr"
+                }
+              ],
+              "status": {
+
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "productpage.bookinfo"
+            }
+          }
+        ]
+      },
+      "scopeSpans": [
+        {
+          "scope": {
+
+          },
+          "spans": [
+            {
+              "traceId": "O6VWCcPN5JZJzXfR+dzZNg==",
+              "spanId": "6cj9Hes+iN0=",
+              "parentSpanId": "hHVrHasIVvo=",
+              "name": "details.bookinfo.svc.cluster.local:9080/*",
+              "kind": "SPAN_KIND_CLIENT",
+              "startTimeUnixNano": "1701779876574298000",
+              "endTimeUnixNano": "1701779876575632000",
+              "attributes": [
+                {
+                  "key": "http.protocol",
+                  "value": {
+                    "stringValue": "HTTP/1.1"
+                  }
+                },
+                {
+                  "key": "istio.namespace",
+                  "value": {
+                    "stringValue": "bookinfo"
+                  }
+                },
+                {
+                  "key": "istio.canonical_revision",
+                  "value": {
+                    "stringValue": "v1"
+                  }
+                },
+                {
+                  "key": "istio.mesh_id",
+                  "value": {
+                    "stringValue": "cluster.local"
+                  }
+                },
+                {
+                  "key": "downstream_cluster",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "http.status_code",
+                  "value": {
+                    "stringValue": "200"
+                  }
+                },
+                {
+                  "key": "istio.canonical_service",
+                  "value": {
+                    "stringValue": "productpage"
+                  }
+                },
+                {
+                  "key": "request_size",
+                  "value": {
+                    "stringValue": "0"
+                  }
+                },
+                {
+                  "key": "component",
+                  "value": {
+                    "stringValue": "proxy"
+                  }
+                },
+                {
+                  "key": "response_size",
+                  "value": {
+                    "stringValue": "178"
+                  }
+                },
+                {
+                  "key": "user_agent",
+                  "value": {
+                    "stringValue": "Go-http-client/1.1"
+                  }
+                },
+                {
+                  "key": "guid:x-request-id",
+                  "value": {
+                    "stringValue": "e4e8c177-3962-9359-945e-61e7175cd867"
+                  }
+                },
+                {
+                  "key": "node_id",
+                  "value": {
+                    "stringValue": "sidecar~10.244.0.25~productpage-v1-6f89b6c557-sg2bc.bookinfo~bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "upstream_cluster.name",
+                  "value": {
+                    "stringValue": "outbound|9080||details.bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "peer.address",
+                  "value": {
+                    "stringValue": "10.244.0.25"
+                  }
+                },
+                {
+                  "key": "response_flags",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "upstream_cluster",
+                  "value": {
+                    "stringValue": "outbound|9080||details.bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "net.host.ip",
+                  "value": {
+                    "stringValue": "10.244.0.25"
+                  }
+                },
+                {
+                  "key": "http.method",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                },
+                {
+                  "key": "http.url",
+                  "value": {
+                    "stringValue": "http://details:9080/details/0"
+                  }
+                }
+              ],
+              "events": [
+                {
+                  "timeUnixNano": "1701779876575712000",
+                  "name": "cr"
+                }
+              ],
+              "status": {
+
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "details.bookinfo"
+            }
+          }
+        ]
+      },
+      "scopeSpans": [
+        {
+          "scope": {
+
+          },
+          "spans": [
+            {
+              "traceId": "O6VWCcPN5JZJzXfR+dzZNg==",
+              "spanId": "0j3l/q4Zp20=",
+              "parentSpanId": "6cj9Hes+iN0=",
+              "name": "details.bookinfo.svc.cluster.local:9080/*",
+              "kind": "SPAN_KIND_SERVER",
+              "startTimeUnixNano": "1701779876574533000",
+              "endTimeUnixNano": "1701779876575438000",
+              "attributes": [
+                {
+                  "key": "request_size",
+                  "value": {
+                    "stringValue": "0"
+                  }
+                },
+                {
+                  "key": "response_size",
+                  "value": {
+                    "stringValue": "178"
+                  }
+                },
+                {
+                  "key": "component",
+                  "value": {
+                    "stringValue": "proxy"
+                  }
+                },
+                {
+                  "key": "http.protocol",
+                  "value": {
+                    "stringValue": "HTTP/1.1"
+                  }
+                },
+                {
+                  "key": "downstream_cluster",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "upstream_cluster.name",
+                  "value": {
+                    "stringValue": "inbound|9080||"
+                  }
+                },
+                {
+                  "key": "http.status_code",
+                  "value": {
+                    "stringValue": "200"
+                  }
+                },
+                {
+                  "key": "guid:x-request-id",
+                  "value": {
+                    "stringValue": "e4e8c177-3962-9359-945e-61e7175cd867"
+                  }
+                },
+                {
+                  "key": "istio.mesh_id",
+                  "value": {
+                    "stringValue": "cluster.local"
+                  }
+                },
+                {
+                  "key": "peer.address",
+                  "value": {
+                    "stringValue": "10.244.0.25"
+                  }
+                },
+                {
+                  "key": "istio.canonical_revision",
+                  "value": {
+                    "stringValue": "v1"
+                  }
+                },
+                {
+                  "key": "upstream_cluster",
+                  "value": {
+                    "stringValue": "inbound|9080||"
+                  }
+                },
+                {
+                  "key": "istio.canonical_service",
+                  "value": {
+                    "stringValue": "details"
+                  }
+                },
+                {
+                  "key": "response_flags",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "node_id",
+                  "value": {
+                    "stringValue": "sidecar~10.244.0.21~details-v1-7745b6fcf4-mrz75.bookinfo~bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "istio.namespace",
+                  "value": {
+                    "stringValue": "bookinfo"
+                  }
+                },
+                {
+                  "key": "user_agent",
+                  "value": {
+                    "stringValue": "Go-http-client/1.1"
+                  }
+                },
+                {
+                  "key": "net.host.ip",
+                  "value": {
+                    "stringValue": "10.244.0.21"
+                  }
+                },
+                {
+                  "key": "http.method",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                },
+                {
+                  "key": "http.url",
+                  "value": {
+                    "stringValue": "http://details:9080/details/0"
+                  }
+                }
+              ],
+              "events": [
+                {
+                  "timeUnixNano": "1701779876575523000",
+                  "name": "ss"
+                }
+              ],
+              "status": {
+
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "reviews.bookinfo"
+            }
+          }
+        ]
+      },
+      "scopeSpans": [
+        {
+          "scope": {
+
+          },
+          "spans": [
+            {
+              "traceId": "O6VWCcPN5JZJzXfR+dzZNg==",
+              "spanId": "dxkQSMt9rcQ=",
+              "parentSpanId": "EhAELDb4vpI=",
+              "name": "reviews.bookinfo.svc.cluster.local:9080/*",
+              "kind": "SPAN_KIND_SERVER",
+              "startTimeUnixNano": "1701779876578458000",
+              "endTimeUnixNano": "1701779876580700000",
+              "attributes": [
+                {
+                  "key": "upstream_cluster.name",
+                  "value": {
+                    "stringValue": "inbound|9080||"
+                  }
+                },
+                {
+                  "key": "istio.canonical_service",
+                  "value": {
+                    "stringValue": "reviews"
+                  }
+                },
+                {
+                  "key": "peer.address",
+                  "value": {
+                    "stringValue": "10.244.0.25"
+                  }
+                },
+                {
+                  "key": "response_size",
+                  "value": {
+                    "stringValue": "442"
+                  }
+                },
+                {
+                  "key": "component",
+                  "value": {
+                    "stringValue": "proxy"
+                  }
+                },
+                {
+                  "key": "request_size",
+                  "value": {
+                    "stringValue": "0"
+                  }
+                },
+                {
+                  "key": "http.status_code",
+                  "value": {
+                    "stringValue": "200"
+                  }
+                },
+                {
+                  "key": "istio.mesh_id",
+                  "value": {
+                    "stringValue": "cluster.local"
+                  }
+                },
+                {
+                  "key": "node_id",
+                  "value": {
+                    "stringValue": "sidecar~10.244.0.23~reviews-v2-6f76498fc8-58wpn.bookinfo~bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "downstream_cluster",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "response_flags",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "upstream_cluster",
+                  "value": {
+                    "stringValue": "inbound|9080||"
+                  }
+                },
+                {
+                  "key": "guid:x-request-id",
+                  "value": {
+                    "stringValue": "e4e8c177-3962-9359-945e-61e7175cd867"
+                  }
+                },
+                {
+                  "key": "user_agent",
+                  "value": {
+                    "stringValue": "Go-http-client/1.1"
+                  }
+                },
+                {
+                  "key": "istio.namespace",
+                  "value": {
+                    "stringValue": "bookinfo"
+                  }
+                },
+                {
+                  "key": "http.protocol",
+                  "value": {
+                    "stringValue": "HTTP/1.1"
+                  }
+                },
+                {
+                  "key": "istio.canonical_revision",
+                  "value": {
+                    "stringValue": "v2"
+                  }
+                },
+                {
+                  "key": "net.host.ip",
+                  "value": {
+                    "stringValue": "10.244.0.23"
+                  }
+                },
+                {
+                  "key": "http.method",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                },
+                {
+                  "key": "http.url",
+                  "value": {
+                    "stringValue": "http://reviews:9080/reviews/0"
+                  }
+                }
+              ],
+              "events": [
+                {
+                  "timeUnixNano": "1701779876580821000",
+                  "name": "ss"
+                }
+              ],
+              "status": {
+
+              }
+            },
+            {
+              "traceId": "O6VWCcPN5JZJzXfR+dzZNg==",
+              "spanId": "fFl79W3fGgM=",
+              "parentSpanId": "dxkQSMt9rcQ=",
+              "name": "ratings.bookinfo.svc.cluster.local:9080/*",
+              "kind": "SPAN_KIND_CLIENT",
+              "startTimeUnixNano": "1701779876579477000",
+              "endTimeUnixNano": "1701779876580327000",
+              "attributes": [
+                {
+                  "key": "guid:x-request-id",
+                  "value": {
+                    "stringValue": "e4e8c177-3962-9359-945e-61e7175cd867"
+                  }
+                },
+                {
+                  "key": "user_agent",
+                  "value": {
+                    "stringValue": "Go-http-client/1.1"
+                  }
+                },
+                {
+                  "key": "istio.canonical_service",
+                  "value": {
+                    "stringValue": "reviews"
+                  }
+                },
+                {
+                  "key": "http.protocol",
+                  "value": {
+                    "stringValue": "HTTP/1.1"
+                  }
+                },
+                {
+                  "key": "node_id",
+                  "value": {
+                    "stringValue": "sidecar~10.244.0.23~reviews-v2-6f76498fc8-58wpn.bookinfo~bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "upstream_cluster.name",
+                  "value": {
+                    "stringValue": "outbound|9080||ratings.bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "peer.address",
+                  "value": {
+                    "stringValue": "10.244.0.23"
+                  }
+                },
+                {
+                  "key": "request_size",
+                  "value": {
+                    "stringValue": "0"
+                  }
+                },
+                {
+                  "key": "response_size",
+                  "value": {
+                    "stringValue": "48"
+                  }
+                },
+                {
+                  "key": "response_flags",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "istio.namespace",
+                  "value": {
+                    "stringValue": "bookinfo"
+                  }
+                },
+                {
+                  "key": "istio.canonical_revision",
+                  "value": {
+                    "stringValue": "v2"
+                  }
+                },
+                {
+                  "key": "downstream_cluster",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "upstream_cluster",
+                  "value": {
+                    "stringValue": "outbound|9080||ratings.bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "istio.mesh_id",
+                  "value": {
+                    "stringValue": "cluster.local"
+                  }
+                },
+                {
+                  "key": "http.status_code",
+                  "value": {
+                    "stringValue": "200"
+                  }
+                },
+                {
+                  "key": "component",
+                  "value": {
+                    "stringValue": "proxy"
+                  }
+                },
+                {
+                  "key": "net.host.ip",
+                  "value": {
+                    "stringValue": "10.244.0.23"
+                  }
+                },
+                {
+                  "key": "http.method",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                },
+                {
+                  "key": "http.url",
+                  "value": {
+                    "stringValue": "http://ratings:9080/ratings/0"
+                  }
+                }
+              ],
+              "events": [
+                {
+                  "timeUnixNano": "1701779876580384000",
+                  "name": "cr"
+                }
+              ],
+              "status": {
+
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "ratings.bookinfo"
+            }
+          }
+        ]
+      },
+      "scopeSpans": [
+        {
+          "scope": {
+
+          },
+          "spans": [
+            {
+              "traceId": "O6VWCcPN5JZJzXfR+dzZNg==",
+              "spanId": "6dPV8CBW4Lw=",
+              "parentSpanId": "fFl79W3fGgM=",
+              "name": "ratings.bookinfo.svc.cluster.local:9080/*",
+              "kind": "SPAN_KIND_SERVER",
+              "startTimeUnixNano": "1701779876579664000",
+              "endTimeUnixNano": "1701779876580098000",
+              "attributes": [
+                {
+                  "key": "downstream_cluster",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "http.protocol",
+                  "value": {
+                    "stringValue": "HTTP/1.1"
+                  }
+                },
+                {
+                  "key": "component",
+                  "value": {
+                    "stringValue": "proxy"
+                  }
+                },
+                {
+                  "key": "request_size",
+                  "value": {
+                    "stringValue": "0"
+                  }
+                },
+                {
+                  "key": "user_agent",
+                  "value": {
+                    "stringValue": "Go-http-client/1.1"
+                  }
+                },
+                {
+                  "key": "peer.address",
+                  "value": {
+                    "stringValue": "10.244.0.23"
+                  }
+                },
+                {
+                  "key": "istio.canonical_revision",
+                  "value": {
+                    "stringValue": "v1"
+                  }
+                },
+                {
+                  "key": "guid:x-request-id",
+                  "value": {
+                    "stringValue": "e4e8c177-3962-9359-945e-61e7175cd867"
+                  }
+                },
+                {
+                  "key": "node_id",
+                  "value": {
+                    "stringValue": "sidecar~10.244.0.22~ratings-v1-77bdbf89bb-qd48j.bookinfo~bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "istio.canonical_service",
+                  "value": {
+                    "stringValue": "ratings"
+                  }
+                },
+                {
+                  "key": "http.status_code",
+                  "value": {
+                    "stringValue": "200"
+                  }
+                },
+                {
+                  "key": "istio.mesh_id",
+                  "value": {
+                    "stringValue": "cluster.local"
+                  }
+                },
+                {
+                  "key": "upstream_cluster.name",
+                  "value": {
+                    "stringValue": "inbound|9080||"
+                  }
+                },
+                {
+                  "key": "response_flags",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "upstream_cluster",
+                  "value": {
+                    "stringValue": "inbound|9080||"
+                  }
+                },
+                {
+                  "key": "response_size",
+                  "value": {
+                    "stringValue": "48"
+                  }
+                },
+                {
+                  "key": "istio.namespace",
+                  "value": {
+                    "stringValue": "bookinfo"
+                  }
+                },
+                {
+                  "key": "net.host.ip",
+                  "value": {
+                    "stringValue": "10.244.0.22"
+                  }
+                },
+                {
+                  "key": "http.method",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                },
+                {
+                  "key": "http.url",
+                  "value": {
+                    "stringValue": "http://ratings:9080/ratings/0"
+                  }
+                }
+              ],
+              "events": [
+                {
+                  "timeUnixNano": "1701779876580183000",
+                  "name": "ss"
+                }
+              ],
+              "status": {
+
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
