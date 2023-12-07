@@ -2,12 +2,9 @@ import * as React from 'react';
 import {
   BadgeLocation,
   Controller,
-  Decorator,
-  DEFAULT_DECORATOR_RADIUS,
   Edge,
   EdgeModel,
   EdgeTerminalType,
-  getDefaultShapeDecoratorCenter,
   GraphElement,
   isEdge,
   isNode,
@@ -40,8 +37,8 @@ import _ from 'lodash';
 import { PFColors } from 'components/Pf/PfColors';
 import { getEdgeHealth } from 'types/ErrorRate/GraphEdgeStatus';
 import { Span } from 'types/TracingInfo';
-import { Tooltip } from '@patternfly/react-core';
 import { IconType } from 'config/Icons';
+import { NodeDecorator } from './components/NodeDecorator';
 
 // Utilities for working with PF Topology
 // - most of these add cytoscape-like functions
@@ -156,13 +153,7 @@ export const getNodeShape = (data: NodeData): NodeShape => {
 };
 
 const getDecorator = (element: Node, quadrant: TopologyQuadrant, icon: IconType, tooltip?: string): React.ReactNode => {
-  const { x, y } = getDefaultShapeDecoratorCenter(quadrant, element);
-
-  return (
-    <Tooltip content={!!tooltip ? tooltip : icon.text}>
-      <Decorator x={x} y={y} radius={DEFAULT_DECORATOR_RADIUS} showBackground icon={React.createElement(icon.icon)} />
-    </Tooltip>
-  );
+  return <NodeDecorator element={element} quadrant={quadrant} icon={icon} tooltip={tooltip} />;
 };
 
 export const setNodeAttachments = (node: Node<NodeModel>, settings: GraphPFSettings): void => {
