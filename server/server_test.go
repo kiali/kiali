@@ -124,7 +124,7 @@ func TestAnonymousMode(t *testing.T) {
 	apiURLWithAuthentication := serverURL + "/api/authenticate"
 	apiURL := serverURL + "/api"
 
-	assert.False(t, conf.IsServerHttps())
+	assert.False(t, conf.IsServerHTTPS())
 
 	config.Set(conf)
 
@@ -215,7 +215,7 @@ func TestSecureComm(t *testing.T) {
 	apiURL := serverURL + "/api"
 	metricsURL := fmt.Sprintf("http://%v:%v/", testHostname, testMetricsPort)
 
-	assert.True(t, conf.IsServerHttps())
+	assert.True(t, conf.IsServerHTTPS())
 
 	config.Set(conf)
 

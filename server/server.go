@@ -101,7 +101,7 @@ func (s *Server) Start() {
 
 	go func() {
 		var err error
-		if s.conf.IsServerHttps() {
+		if s.conf.IsServerHTTPS() {
 			log.Infof("Server endpoint will require https")
 			log.Infof("Server will support protocols: %v", s.httpServer.TLSConfig.NextProtos)
 			s.router.Use(secureHttpsMiddleware)
