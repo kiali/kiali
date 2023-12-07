@@ -276,14 +276,14 @@ QwIDAQAB
 	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
 	assert.True(t, response.Cookies()[0].HttpOnly)
-	assert.False(t, response.Cookies()[0].Secure)
+	assert.True(t, response.Cookies()[0].Secure) // the test URL is https://kiali.io:44/kiali-test ; https: means it should be Secure
 
 	// Session cookie
 	assert.Equal(t, AESSessionCookieName, response.Cookies()[1].Name)
 	assert.Equal(t, expectedExpiration, response.Cookies()[1].Expires)
 	assert.Equal(t, http.StatusFound, response.StatusCode)
 	assert.True(t, response.Cookies()[1].HttpOnly)
-	assert.False(t, response.Cookies()[1].Secure)
+	assert.True(t, response.Cookies()[1].Secure) // the test URL is https://kiali.io:44/kiali-test ; https: means it should be Secure
 
 	// Redirection to boot the UI
 	assert.Equal(t, "/kiali-test/", response.Header.Get("Location"))
