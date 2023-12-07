@@ -225,6 +225,8 @@ setup_kind_multicluster() {
     "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --manage-kind true -dorp docker --istio-dir "${istio_dir}" ${hub_arg:-}
   fi
   "${SCRIPT_DIR}"/istio/multicluster/deploy-kiali.sh --manage-kind true -dorp docker -kas anonymous -kudi true -kshc "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
+  kubectl rollout status deployment prometheus -n istio-system --context kind-east
+  kubectl rollout status deployment prometheus -n istio-system --context kind-west
 }
 
 if [ -n "${MULTICLUSTER}" ]; then
