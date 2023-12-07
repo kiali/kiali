@@ -21,7 +21,7 @@ interface ServiceInfoDescriptionProps {
 const resourceListStyle = kialiStyle({
   marginBottom: '0.75rem',
   $nest: {
-    '& > ul > li > span': {
+    '& > ul > li span': {
       float: 'left',
       width: '125px',
       fontWeight: 700
@@ -41,6 +41,11 @@ const infoStyle = kialiStyle({
 const healthIconStyle = kialiStyle({
   marginLeft: '0.5rem',
   verticalAlign: '-0.075rem'
+});
+
+const additionalItemStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center'
 });
 
 export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props: ServiceInfoDescriptionProps) => {
@@ -108,17 +113,17 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
           </li>
         )}
 
-        {props.serviceDetails &&
-          props.serviceDetails.additionalDetails &&
-          props.serviceDetails.additionalDetails.map((additionalItem, idx) => {
-            return (
-              <li key={`additional-details-${idx}`} id={`additional-details-${idx}`}>
+        {props.serviceDetails?.service?.additionalDetails?.map((additionalItem, idx) => {
+          return (
+            <li key={`additional-details-${idx}`} id={`additional-details-${idx}`}>
+              <div className={additionalItemStyle}>
                 <span>{additionalItem.title}</span>
                 {additionalItem.icon && renderAPILogo(additionalItem.icon, undefined, idx)}
-                <TextOrLink text={additionalItem.value} urlTruncate={64} />
-              </li>
-            );
-          })}
+              </div>
+              <TextOrLink text={additionalItem.value} urlTruncate={64} />
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

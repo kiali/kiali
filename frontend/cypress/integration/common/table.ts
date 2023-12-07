@@ -21,6 +21,15 @@ And(
 );
 
 And(
+  'the {string} column on the {string} row has a icon with title {string}',
+  (column: string, rowText: string, title: string) => {
+    getColWithRowText(rowText, column).within(() => {
+      cy.get(`img[title="${title}"]`).should('be.visible');
+    });
+  }
+);
+
+And(
   'the {string} column on the {string} row has the text {string}',
   (column: string, rowText: string, text: string) => {
     getColWithRowText(rowText, column).contains(text);

@@ -113,7 +113,7 @@ build-olm-index: .ensure-opm-exists cluster-push-olm-bundle
 	@rm -rf ${OUTDIR}/index
 	@mkdir -p ${OUTDIR}/index/kiali-index
 	${OPM} init ${OLM_BUNDLE_PACKAGE} --default-channel=stable --output yaml > ${OUTDIR}/index/kiali-index/index.yaml
-	@if [ "${DORP}" == "podman" -a -n "$${XDG_RUNTIME_DIR}" ]; then cp "$${XDG_RUNTIME_DIR}/containers/auth.json" "${OUTDIR}/index/kiali-index/config.json"; fi
+	@if [ "${DORP}" == "podman" -a -n "$${XDG_RUNTIME_DIR}" -a -f "$${XDG_RUNTIME_DIR}/containers/auth.json" ]; then cp "$${XDG_RUNTIME_DIR}/containers/auth.json" "${OUTDIR}/index/kiali-index/config.json"; fi
 	@if [ -f "${OUTDIR}/index/kiali-index/config.json" ]; then export DOCKER_CONFIG="${OUTDIR}/index/kiali-index"; fi ; ${OPM} render $$(if [[ "${OC}" = *"oc" ]]; then echo '--skip-tls-verify'; else echo '--use-http'; fi) ${CLUSTER_OLM_BUNDLE_NAME}:${BUNDLE_VERSION} --output yaml >> ${OUTDIR}/index/kiali-index/index.yaml
 	@rm -f ${OUTDIR}/index/kiali-index/config.json
 	@# We need OLM to pull the index from the internal registry - change the index to only use the internal registry name

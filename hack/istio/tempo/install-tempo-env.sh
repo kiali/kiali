@@ -15,6 +15,7 @@ DELETE_TEMPO="false"
 INSTALL_BOOKINFO="true"
 INSTALL_ISTIO="true"
 INSTALL_KIALI="false"
+SECURE_DISTRIBUTOR="false"
 TEMPO_NS="tempo"
 
 # process command line args
@@ -45,6 +46,10 @@ while [[ $# -gt 0 ]]; do
       INSTALL_KIALI="$2"
       shift;shift
       ;;
+    -sd|--secure-distributor)
+      SECURE_DISTRIBUTOR="$2"
+      shift;shift
+      ;;
     -t|--tempo-ns)
       TEMPO_NS="$2"
       shift;shift
@@ -63,7 +68,9 @@ Valid command line arguments:
   -ii|--install-istio:
        If istio should be installed. true by default.
   -ik|--install-kiali:
-       If Kiali should be installed. true by default.
+       If Kiali should be installed. false by default.
+  -sd|--secure-distributor:
+       If the tempo distributor will use tls (Using a self signed certificate). false by default.
   -t|--tempo-ns:
        Tempo namespace. Tempo by default.
   -h|--help:
@@ -140,14 +147,59 @@ else
   echo -e "Installing minio and create secret \n"
   ${CLIENT_EXE} apply --namespace ${TEMPO_NS} -f ${SCRIPT_DIR}/minio.yaml
 
+  # Create secret for minio
   ${CLIENT_EXE} create secret generic -n ${TEMPO_NS} tempostack-dev-minio \
     --from-literal=bucket="tempo-data" \
     --from-literal=endpoint="http://minio:9000" \
     --from-literal=access_key_id="minio" \
     --from-literal=access_key_secret="minio123"
 
-  echo -e "Installing tempo \n"
+  if [ "${SECURE_DISTRIBUTOR}" == "true" ]; then
+    # Create ca and cert for tls for the distributor
+    echo -e "Creating ca and cert for tls for the distributor \n"
+    subj="
+C=ES
+ST=ST
+O=AR
+localityName=Ar
+commonName=Ct
+organizationalUnitName=rh
+emailAddress=not@mail
+"
+    openssl req -x509 -sha256 -nodes -newkey rsa:2048 -subj "$(echo -n "$subj" | tr "\n" "/")" -keyout /tmp/tls.key -out /tmp/service-ca.crt
+    ${CLIENT_EXE} -n ${TEMPO_NS} create configmap tempo-ca --from-file=/tmp/service-ca.crt
+    ${CLIENT_EXE} create secret tls tempo-cert -n ${TEMPO_NS} --key="/tmp/tls.key" --cert="/tmp/service-ca.crt"
+  # Install TempoStack CR
+  echo -e "Installing tempo with tls enabled \n"
   ${CLIENT_EXE} apply -n ${TEMPO_NS} -f - <<EOF
+apiVersion: tempo.grafana.com/v1alpha1
+kind: TempoStack
+metadata:
+  name: cr
+spec:
+  storageSize: 1Gi
+  storage:
+    secret:
+      type: s3
+      name: tempostack-dev-minio
+  resources:
+    total:
+      limits:
+        memory: 4Gi
+        cpu: 8000m
+  template:
+    distributor:
+      tls:
+        enabled: true
+        certName: tempo-cert
+    queryFrontend:
+      jaegerQuery:
+        enabled: false
+EOF
+  else
+    # Install TempoStack CR
+    echo -e "Installing tempo \n"
+    ${CLIENT_EXE} apply -n ${TEMPO_NS} -f - <<EOF
 apiVersion: tempo.grafana.com/v1alpha1
 kind: TempoStack
 metadata:
@@ -168,6 +220,8 @@ spec:
       jaegerQuery:
         enabled: false
 EOF
+  fi
+
 
 
   echo "Script Directory: ${SCRIPT_DIR}"
@@ -195,9 +249,17 @@ EOF
     $CLIENT_EXE expose svc/grafana -n istio-system
   fi
 
-  echo -e "Installation finished. You can port forward the services with: \n"
+  echo -e "Installation finished. \n"
   if [ "${IS_OPENSHIFT}" != "true" ]; then
-    echo "./run-kiali.sh -pg 13000:3000 -pp 19090:9090 -pt 3200:3200 -app 8080 -es false -iu http://127.0.0.1:15014 -tr tempo-cr-query-frontend -ts tempo-cr-query-frontend -tn tempo"
-  fi
+    echo "If you want to access Tempo from outside the cluster on your local machine, You can port forward the services with:
+./run-kiali.sh -pg 13000:3000 -pp 19090:9090 -pt 3200:3200 -app 8080 -es false -iu http://127.0.0.1:15014 -tr tempo-cr-query-frontend -ts tempo-cr-query-frontend -tn tempo
 
+To configure Kiali to use this, set the external_services.tracing section with the following settings:
+tracing:
+  enabled: true
+  provider: \"tempo\"
+  in_cluster_url: http://localhost:3200
+  url: http://localhost:3200
+  use_grpc: false"
+  fi
 fi

@@ -1,0 +1,24 @@
+{
+  "extends": "react-app",
+  "rules": {
+    "jsx-a11y/anchor-is-valid": "off",
+    "jsx-a11y/anchor-has-content": "off",
+    "no-used-before-declare": "off",
+    "no-unused-variable": "off",
+    "no-restricted-globals": ["error", "event"],
+    "no-undef": "off",
+    "import/no-default-export": "error",
+    
+    "no-var": "error",
+    "prefer-template": "error",
+    "prefer-arrow-callback": "error",
+    "@typescript-eslint/member-ordering": ["error", {
+      "default": {},
+      "interfaces": {"order": "alphabetically"},
+      "typeLiterals": {"order": "alphabetically"}
+    }],
+    "@typescript-eslint/no-inferrable-types": "error",
+    "@typescript-eslint/explicit-function-return-type": ["error", { "allowExpressions": true }],
+    "@typescript-eslint/explicit-module-boundary-types": ["error", { "allowArgumentsExplicitlyTypedAsAny": true }]
+  }
+}

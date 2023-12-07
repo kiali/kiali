@@ -8,7 +8,7 @@ import { setTraceId as setURLTraceId } from 'utils/SearchParamUtils';
 import { transformTraceData } from 'utils/tracing/TraceTransform';
 
 export const TracingThunkActions = {
-  setTraceId: (cluster?: string, traceId?: string, reload?: boolean) => {
+  setTraceId: (cluster?: string, traceId?: string) => {
     setURLTraceId(traceId);
     return (dispatch: KialiDispatch) => {
       if (traceId) {
@@ -18,11 +18,7 @@ export const TracingThunkActions = {
               const trace = transformTraceData(response.data.data, cluster);
               if (trace) {
                 trace.loaded = true;
-                if (!reload) {
-                  dispatch(TracingActions.setTrace(trace));
-                } else {
-                  dispatch(TracingActions.setHoverTrace(trace));
-                }
+                dispatch(TracingActions.setTrace(trace));
               }
             }
           })

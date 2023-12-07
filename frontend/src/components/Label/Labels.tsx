@@ -8,6 +8,7 @@ const SHOW_MORE_TRESHOLD = 2;
 
 interface LabelsProps {
   expanded?: boolean;
+  type?: string;
   labels?: { [key: string]: string };
   tooltipMessage?: string;
 }
@@ -23,6 +24,9 @@ const infoStyle = kialiStyle({
 });
 
 const labelsContainerStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center',
+  flexWrap: 'wrap',
   overflow: 'hidden'
 });
 
@@ -52,7 +56,7 @@ export const Labels: React.FC<LabelsProps> = (props: LabelsProps) => {
         className={linkStyle}
         onClick={expandLabels}
       >
-        More labels...
+        More {props.type ? props.type : 'labels'}...
       </Button>
     ) : null;
 
@@ -64,7 +68,7 @@ export const Labels: React.FC<LabelsProps> = (props: LabelsProps) => {
     ) : undefined;
   });
 
-  const renderEmptyLabels = <span> No labels </span>;
+  const renderEmptyLabels = <span> No {props.type ? props.type : 'labels'} </span>;
 
   const tooltip = props.tooltipMessage ? (
     <Tooltip

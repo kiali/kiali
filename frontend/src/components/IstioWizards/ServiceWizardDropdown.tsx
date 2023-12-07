@@ -24,7 +24,7 @@ import {
   WIZARD_EDIT_ANNOTATIONS
 } from './WizardActions';
 import { MessageType } from '../../types/MessageCenter';
-import { WizardAnnotations } from './WizardAnnotations';
+import { WizardLabels } from './WizardLabels';
 import { ServiceWizard } from './ServiceWizard';
 import { canCreate, canUpdate, ResourcePermissions } from '../../types/Permissions';
 import { ServiceWizardActionsDropdownGroup, DELETE_TRAFFIC_ROUTING } from './ServiceWizardActionsDropdownGroup';
@@ -236,11 +236,12 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
         ? renderDisabledDropdownOption('tooltip_wizard_actions', TooltipPosition.top, toolTipMsgActions, dropdown)
         : dropdown}
 
-      <WizardAnnotations
+      <WizardLabels
         showAnotationsWizard={showAnnotationsWizard}
+        type={'annotations'}
         onChange={annotations => onChangeAnnotations(annotations)}
         onClose={() => setShowAnnotationsWizard(false)}
-        annotations={props.annotations}
+        labels={props.annotations}
         canEdit={serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode}
       />
 

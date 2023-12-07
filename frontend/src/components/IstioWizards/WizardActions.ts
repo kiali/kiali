@@ -15,6 +15,7 @@ import {
   HTTPMatchRequest,
   HTTPRoute,
   HTTPRouteDestination,
+  IstioObject,
   K8sGateway,
   K8sHTTPHeaderFilter,
   K8sHTTPRequestMirrorFilter,
@@ -1542,6 +1543,8 @@ export const getInitK8sGateway = (k8sHTTPRoutes: K8sHTTPRoute[]): string => {
 };
 
 export const buildAuthorizationPolicy = (
+  annotations: { [key: string]: string },
+  labels: { [key: string]: string },
   name: string,
   namespace: string,
   state: AuthorizationPolicyState
@@ -1558,6 +1561,9 @@ export const buildAuthorizationPolicy = (
     },
     spec: {}
   };
+
+  addLabels(ap, labels);
+  addAnnotations(ap, annotations);
 
   // DENY_ALL and ALLOW_ALL are two specific cases
   if (state.policy === 'DENY_ALL') {
@@ -1795,7 +1801,13 @@ export const buildGraphAuthorizationPolicy = (namespace: string, graph: GraphDef
   return aps;
 };
 
-export const buildGateway = (name: string, namespace: string, state: GatewayState): Gateway => {
+export const buildGateway = (
+  annotations: { [key: string]: string },
+  labels: { [key: string]: string },
+  name: string,
+  namespace: string,
+  state: GatewayState
+): Gateway => {
   const gw: Gateway = {
     kind: 'Gateway',
     apiVersion: ISTIO_NETWORKING_VERSION,
@@ -1816,6 +1828,9 @@ export const buildGateway = (name: string, namespace: string, state: GatewayStat
       }))
     }
   };
+  addLabels(gw, labels);
+  addAnnotations(gw, annotations);
+
   state.workloadSelectorLabels
     .trim()
     .split(',')
@@ -1829,7 +1844,13 @@ export const buildGateway = (name: string, namespace: string, state: GatewayStat
   return gw;
 };
 
-export const buildK8sGateway = (name: string, namespace: string, state: K8sGatewayState): K8sGateway => {
+export const buildK8sGateway = (
+  annotations: { [key: string]: string },
+  labels: { [key: string]: string },
+  name: string,
+  namespace: string,
+  state: K8sGatewayState
+): K8sGateway => {
   const k8sGateway: K8sGateway = {
     kind: 'Gateway',
     apiVersion: GATEWAY_NETWORKING_VERSION,
@@ -1863,10 +1884,15 @@ export const buildK8sGateway = (name: string, namespace: string, state: K8sGatew
       }))
     }
   };
+  addLabels(k8sGateway, labels);
+  addAnnotations(k8sGateway, annotations);
+
   return k8sGateway;
 };
 
 export const buildPeerAuthentication = (
+  annotations: { [key: string]: string },
+  labels: { [key: string]: string },
   name: string,
   namespace: string,
   state: PeerAuthenticationState
@@ -1883,6 +1909,8 @@ export const buildPeerAuthentication = (
     },
     spec: {}
   };
+  addLabels(pa, labels);
+  addAnnotations(pa, annotations);
 
   if (state.workloadSelector.length > 0) {
     const workloadSelector: PeerAuthenticationWorkloadSelector = {
@@ -1918,6 +1946,8 @@ export const buildPeerAuthentication = (
 };
 
 export const buildRequestAuthentication = (
+  annotations: { [key: string]: string },
+  labels: { [key: string]: string },
   name: string,
   namespace: string,
   state: RequestAuthenticationState
@@ -1936,6 +1966,8 @@ export const buildRequestAuthentication = (
       jwtRules: []
     }
   };
+  addLabels(ra, labels);
+  addAnnotations(ra, annotations);
 
   if (state.workloadSelector.length > 0) {
     const workloadSelector: WorkloadMatchSelector = {
@@ -1957,7 +1989,13 @@ export const buildRequestAuthentication = (
   return ra;
 };
 
-export const buildServiceEntry = (name: string, namespace: string, state: ServiceEntryState): ServiceEntry => {
+export const buildServiceEntry = (
+  annotations: { [key: string]: string },
+  labels: { [key: string]: string },
+  name: string,
+  namespace: string,
+  state: ServiceEntryState
+): ServiceEntry => {
   const se: ServiceEntry = {
     apiVersion: ISTIO_NETWORKING_VERSION,
     kind: 'ServiceEntry',
@@ -1970,10 +2008,19 @@ export const buildServiceEntry = (name: string, namespace: string, state: Servic
     },
     spec: state.serviceEntry
   };
+  addLabels(se, labels);
+  addAnnotations(se, annotations);
+
   return se;
 };
 
-export const buildSidecar = (name: string, namespace: string, state: SidecarState): Sidecar => {
+export const buildSidecar = (
+  annotations: { [key: string]: string },
+  labels: { [key: string]: string },
+  name: string,
+  namespace: string,
+  state: SidecarState
+): Sidecar => {
   const sc: Sidecar = {
     apiVersion: ISTIO_NETWORKING_VERSION,
     kind: 'Sidecar',
@@ -2007,6 +2054,9 @@ export const buildSidecar = (name: string, namespace: string, state: SidecarStat
         }
       });
   }
+  addLabels(sc, labels);
+  addAnnotations(sc, annotations);
+
   return sc;
 };
 
@@ -2062,4 +2112,12 @@ export const buildAnnotationPatch = (annotations: { [key: string]: string }): st
     }
   ];
   return JSON.stringify(patch);
+};
+
+export const addLabels = (istioObject: IstioObject, value: { [key: string]: string }): void => {
+  istioObject.metadata.labels = value;
+};
+
+export const addAnnotations = (istioObject: IstioObject, value: { [key: string]: string }): void => {
+  istioObject.metadata.annotations = value;
 };

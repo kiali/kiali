@@ -18,6 +18,23 @@ Feature: Kiali Istio Config page
     Then user sees the "Create Gateway" config wizard
     And user does not see a dropdown for cluster selection
 
+  @bookinfo-app
+  Scenario: Create an Sidecar with labels and annotations
+    When user deletes sidecar named "mysidecarwithlabels" and the resource is no longer available
+    And user clicks in the "Sidecar" Istio config actions
+    And user sees the "Create Sidecar" config wizard
+    And user types "mysidecarwithlabels" in the "name" input
+    And user clicks on Edit Labels
+    And user adds key "app" and value "details" for and saves
+    And user clicks on Edit Annotations
+    And user adds key "key1" and value "value1" for and saves
+    And user previews the configuration
+    Then "app: details" should be in preview
+    Then "key1: value1" should be in preview
+    And user creates the istio config
+    Then the "Sidecar" "mysidecarwithlabels" should be listed in "bookinfo" namespace
+    And user deletes sidecar named "mysidecarwithlabels" and the resource is no longer available
+
   @gateway-api
   @bookinfo-app
   Scenario: Create a K8s Gateway scenario
@@ -279,11 +296,14 @@ Feature: Kiali Istio Config page
     And user creates the istio config
     Then the "K8sGateway" "gatewayapi-1" should be listed in "bookinfo" namespace
     And the "K8sGateway" "gatewayapi-2" should be listed in "bookinfo" namespace
+    And the "gatewayapi-1" "K8sGateway" of the "bookinfo" namespace should have a "warning"
+    And the "gatewayapi-2" "K8sGateway" of the "bookinfo" namespace should have a "warning"
     When viewing the detail for "gatewayapi-1"
     Then "gatewayapi-2" should be referenced
     When user is at the "istio" page
     And viewing the detail for "gatewayapi-2"
     And choosing to delete it
     Then the "K8sGateway" "gatewayapi-2" should not be listed in "bookinfo" namespace
+    And the "gatewayapi-1" "K8sGateway" of the "bookinfo" namespace should have a "success"
     When viewing the detail for "gatewayapi-1"
     Then "gatewayapi-2" should not be referenced anymore
