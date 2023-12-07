@@ -15,7 +15,7 @@ interface SpanDetailsProps {
   items: RichSpanData[];
   namespace: string;
   target: string;
-  traceID?: string;
+  traceID: string;
 }
 
 export const SpanDetails: React.FC<SpanDetailsProps> = (props: SpanDetailsProps) => {

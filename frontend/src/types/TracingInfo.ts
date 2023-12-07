@@ -7,10 +7,10 @@ import { Target } from './MetricsOptions';
 export interface TracingInfo {
   enabled: boolean;
   integration: boolean;
-  url: string;
   namespaceSelector: boolean;
-  whiteListIstioSystem: string[];
   provider: string;
+  url: string;
+  whiteListIstioSystem: string[];
 }
 
 export type KeyValuePair = {
@@ -20,8 +20,8 @@ export type KeyValuePair = {
 };
 
 export type Log = {
-  timestamp: number;
   fields: Array<KeyValuePair>;
+  timestamp: number;
 };
 
 export type SpanReference = {
@@ -38,15 +38,15 @@ export type Process = {
 };
 
 export type SpanData = {
-  spanID: string;
-  traceID: string;
-  processID: string;
-  operationName: string;
-  startTime: number;
   duration: number;
   logs: Array<Log>;
-  tags?: Array<KeyValuePair>;
+  operationName: string;
+  processID: string;
   references?: Array<SpanReference>;
+  spanID: string;
+  startTime: number;
+  tags?: Array<KeyValuePair>;
+  traceID: string;
   warnings?: Array<string> | null;
 };
 
@@ -54,23 +54,23 @@ export type Span = SpanData & {
   depth: number;
   hasChildren: boolean;
   process: Process;
+  references: NonNullable<SpanData['references']>;
   relativeStartTime: number;
   tags: NonNullable<SpanData['tags']>;
-  references: NonNullable<SpanData['references']>;
   warnings: NonNullable<SpanData['warnings']>;
 };
 
 export type RichSpanData = Span & {
-  type: 'envoy' | 'http' | 'tcp' | 'unknown';
-  component: string;
-  namespace: string;
   app: string;
-  linkToApp?: string;
-  workload?: string;
-  pod?: string;
-  linkToWorkload?: string;
-  info: OpenTracingBaseInfo;
   cluster?: string;
+  component: string;
+  info: OpenTracingBaseInfo;
+  linkToApp?: string;
+  linkToWorkload?: string;
+  namespace: string;
+  pod?: string;
+  type: 'envoy' | 'http' | 'tcp' | 'unknown';
+  workload?: string;
 };
 
 export type OpenTracingBaseInfo = {
@@ -79,39 +79,38 @@ export type OpenTracingBaseInfo = {
 };
 
 export type OpenTracingHTTPInfo = OpenTracingBaseInfo & {
+  direction?: 'inbound' | 'outbound';
+  method?: string;
   statusCode?: number;
   url?: string;
-  method?: string;
-  direction?: 'inbound' | 'outbound';
 };
 
 export type OpenTracingTCPInfo = OpenTracingBaseInfo & {
-  topic?: string;
+  direction?: 'inbound' | 'outbound';
   peerAddress?: string;
   peerHostname?: string;
-  direction?: 'inbound' | 'outbound';
+  topic?: string;
 };
 
 export type EnvoySpanInfo = OpenTracingHTTPInfo & {
-  responseFlags?: string;
   peer?: Target;
+  responseFlags?: string;
 };
 
 export type TraceData<S extends SpanData> = {
-  processes: Record<string, Process>;
-  traceID: string;
-  spans: S[];
   matched?: number; // Tempo returns the number of total spans matched
+  processes: Record<string, Process>;
+  spans: S[];
+  traceID: string;
 };
 
 export type JaegerTrace = TraceData<RichSpanData> & {
   duration: number;
   endTime: number;
-  loaded?: boolean;
-  startTime: number;
-  traceName: string;
   matched?: number; // Tempo returns the number of total spans matched
   services: { name: string; numberOfSpans: number }[];
+  startTime: number;
+  traceName: string;
 };
 
 export type TracingError = {
