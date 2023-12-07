@@ -72,7 +72,8 @@ const propsToShow = [
   'logLevel'
 ];
 
-const propsToPatch = ['cyRef', 'summaryTarget', 'token', 'username'];
+// This should include anything that can not be stringified to JSON
+const propsToPatch = ['cyRef', 'summaryTarget', 'target', 'token', 'username'];
 
 const defaultTab = 'kialiConfig';
 
@@ -193,6 +194,10 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
     return info;
   };
 
+  if (!props.isOpen) {
+    return null;
+  }
+
   let debugInformation: DebugInformationData = {
     backendConfigs: {
       authenticationConfig: authenticationConfig,
@@ -252,10 +257,6 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
 
     return [kialiConfig, additionalState];
   };
-
-  if (!props.isOpen) {
-    return null;
-  }
 
   return (
     <Modal

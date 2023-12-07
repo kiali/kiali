@@ -90,7 +90,7 @@ func NewConfig(meshMap mesh.MeshMap, o mesh.ConfigOptions) (result Config) {
 	namespaceWithInfraMap := make(map[string]bool)
 	var node *NodeWrapper
 	for _, node = range unfilteredNodes {
-		if node.Data.NodeType == mesh.NodeTypeInfra {
+		if node.Data.NodeType == mesh.NodeTypeInfra && node.Data.InfraType != mesh.InfraTypeNamespace {
 			namespaceWithInfraMap[node.Data.Namespace] = true
 		}
 	}

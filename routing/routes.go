@@ -1273,7 +1273,7 @@ func NewRoutes(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 		//      200: graphResponse
 		//
 		{
-			"Mesh",
+			"MeshGraph",
 			"GET",
 			"/api/mesh/graph",
 			handlers.MeshGraph,

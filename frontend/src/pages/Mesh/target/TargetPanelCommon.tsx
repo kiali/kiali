@@ -25,7 +25,7 @@ export const targetPanelTitle = kialiStyle({
   textAlign: 'left'
 });
 
-export const targetPanelWidth = '200rem';
+export const targetPanelWidth = '45rem';
 
 export const targetPanelStyle = kialiStyle({
   fontSize: 'var(--graph-side-panel--font-size)',

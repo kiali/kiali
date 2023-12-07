@@ -590,7 +590,8 @@ export const Mesh: React.FC<{
     );
   }
 
-  console.debug(`Render Mesh! hasGraph=${controller?.hasGraph()}`);
+  // TODO: change back to debug
+  console.info(`Render Mesh! hasGraph=${controller?.hasGraph()}`);
   return (
     <VisualizationProvider data-test="visualization-provider" controller={controller}>
       <TopologyContent

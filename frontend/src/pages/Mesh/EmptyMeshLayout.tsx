@@ -46,7 +46,7 @@ export class EmptyMeshLayout extends React.Component<EmptyMeshLayoutProps, Empty
       return true;
     }
 
-    return false;
+    return this.props.isLoading !== nextProps.isLoading;
   }
 
   render() {

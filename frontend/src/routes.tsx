@@ -155,7 +155,7 @@ const pathRoutes: Path[] = [
     component: WorkloadDetailsRoute
   },
   {
-    path: `/${Paths.ISTIO}`,
+    path: '/' + Paths.ISTIO + '/new/:objectType',
     component: IstioConfigNewRoute
   },
   {
