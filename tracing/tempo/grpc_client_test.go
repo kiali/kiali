@@ -28,8 +28,8 @@ type mockgRPCServer struct {
 	streamingClient tempopb.UnimplementedStreamingQuerierServer
 }
 
-func (*mockgRPCServer) Search(req *tempopb.SearchRequest, srv tempopb.StreamingQuerier_SearchServer) error {
-	return nil
+func (s *mockgRPCServer) Search(req *tempopb.SearchRequest, srv tempopb.StreamingQuerier_SearchServer) error {
+	return s.streamingClient.Search(req, srv)
 }
 
 func dialer() func(context.Context, string) (net.Conn, error) {
@@ -65,10 +65,6 @@ func TestCreateGRPCClient(t *testing.T) {
 		}
 	})}
 
-	//grpcAddress := "localhost:9095"
-	var dialOps []grpc.DialOption
-	dialOps = append(dialOps, grpc.WithContextDialer(dialer()))
-
 	ctx := context.Background()
 	clientConn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
 	assert.Nil(t, err)
@@ -78,4 +74,5 @@ func TestCreateGRPCClient(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.NotNil(t, streamClient)
+	
 }
