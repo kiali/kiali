@@ -148,7 +148,7 @@ export class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, 
             </div>
           )}
         </div>
-        <div style={{ marginTop: 20 }}>
+        <div style={{ marginTop: 20 }} data-test={'metrics-chart'}>
           {this.props.chart.error ? this.renderError() : this.isEmpty() ? this.renderEmpty() : this.renderChart()}
         </div>
       </div>

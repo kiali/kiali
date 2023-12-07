@@ -89,22 +89,20 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
       onClick = (datum: RawOrBucket<T>) => this.props.onClick!(chart, datum);
     }
     return (
-      <div data-test="metrics-chart">
-        <KChart
-          key={chart.name}
-          chartHeight={this.getChartHeight()}
-          chart={chart}
-          showSpans={this.props.showSpans}
-          showTrendline={this.props.showTrendlines}
-          data={dataSupplier()}
-          onToggleMaximized={() => this.onToggleMaximized(chart.name)}
-          isMaximized={this.state.maximizedChart !== undefined}
-          overlay={chart.xAxis === 'series' ? undefined : this.props.overlay}
-          onClick={onClick}
-          brushHandlers={this.props.brushHandlers}
-          timeWindow={this.props.timeWindow}
-        />
-      </div>
+      <KChart
+        key={chart.name}
+        chartHeight={this.getChartHeight()}
+        chart={chart}
+        showSpans={this.props.showSpans}
+        showTrendline={this.props.showTrendlines}
+        data={dataSupplier()}
+        onToggleMaximized={() => this.onToggleMaximized(chart.name)}
+        isMaximized={this.state.maximizedChart !== undefined}
+        overlay={chart.xAxis === 'series' ? undefined : this.props.overlay}
+        onClick={onClick}
+        brushHandlers={this.props.brushHandlers}
+        timeWindow={this.props.timeWindow}
+      />
     );
   }
 
