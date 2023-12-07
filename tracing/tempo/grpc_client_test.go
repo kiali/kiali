@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
-	
+
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/tracing/tempo/tempopb"
 )
@@ -26,18 +26,6 @@ func getgRPCBaseUrl() *url.URL {
 
 type mockgRPCServer struct {
 	streamingClient tempopb.UnimplementedStreamingQuerierServer
-}
-
-type streamingQuerierSearchClient struct {
-	grpc.ClientStream
-}
-
-func (x *streamingQuerierSearchClient) Recv() (*tempopb.SearchResponse, error) {
-	m := new(tempopb.SearchResponse)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
 }
 
 func (*mockgRPCServer) Search(req *tempopb.SearchRequest, srv tempopb.StreamingQuerier_SearchServer) error {
