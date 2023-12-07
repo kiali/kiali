@@ -40,7 +40,7 @@ import _ from 'lodash';
 import { PFColors } from 'components/Pf/PfColors';
 import { getEdgeHealth } from 'types/ErrorRate/GraphEdgeStatus';
 import { Span } from 'types/TracingInfo';
-import { Tooltip } from '@patternfly/react-core';
+//import { Tooltip } from '@patternfly/react-core';
 import { IconType } from 'config/Icons';
 
 // Utilities for working with PF Topology
@@ -155,13 +155,17 @@ export const getNodeShape = (data: NodeData): NodeShape => {
   }
 };
 
-const getDecorator = (element: Node, quadrant: TopologyQuadrant, icon: IconType, tooltip?: string): React.ReactNode => {
+const getDecorator = (
+  element: Node,
+  quadrant: TopologyQuadrant,
+  icon: IconType,
+  _tooltip?: string
+): React.ReactNode => {
   const { x, y } = getDefaultShapeDecoratorCenter(quadrant, element);
-
   return (
-    <Tooltip content={!!tooltip ? tooltip : icon.text}>
-      <Decorator x={x} y={y} radius={DEFAULT_DECORATOR_RADIUS} showBackground icon={React.createElement(icon.icon)} />
-    </Tooltip>
+    //<Tooltip content={!!tooltip ? tooltip : icon.text}>
+    <Decorator x={x} y={y} radius={DEFAULT_DECORATOR_RADIUS} showBackground icon={React.createElement(icon.icon)} />
+    //</Tooltip>
   );
 };
 
