@@ -5,7 +5,7 @@ import { ChartScatter } from '@patternfly/react-charts';
 import { EmptyState, EmptyStateVariant, EmptyStateBody, EmptyStateHeader } from '@patternfly/react-core';
 import { TracingError, JaegerTrace } from '../../types/TracingInfo';
 import { PFColors } from '../Pf/PfColors';
-import { evalTimeRange } from 'types/Common';
+import { DurationInSeconds, evalTimeRange } from 'types/Common';
 import { KialiAppState } from 'store/Store';
 import { TracingThunkActions } from 'actions/TracingThunkActions';
 import { LineInfo, makeLegend, VCDataPoint } from 'types/VictoryChartInfo';
@@ -18,18 +18,30 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsThunkActions } from 'actions/MetricsStatsThunkActions';
 import { TEMPO } from '../../types/Tracing';
+import { HistoryManager, URLParam } from '../../app/History';
+
+type ReduxProps = {
+  duration: DurationInSeconds;
+  provider?: string;
+  selectedTrace?: JaegerTrace;
+};
+
+type MapProps = {
+  loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) => Promise<any>;
+  setTraceId: (cluster?: string, traceId?: string) => void;
+};
 
 interface TracingScatterProps {
+  cluster?: string;
   duration: number;
   errorFetchTraces?: TracingError[];
   errorTraces?: boolean;
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) => Promise<any>;
+  provider?: string;
   selectedTrace?: JaegerTrace;
   setTraceId: (cluster?: string, traceId?: string) => void;
   showSpansAverage: boolean;
   traces: JaegerTrace[];
-  cluster?: string;
-  provider?: string;
 }
 
 const ONE_MILLISECOND = 1000000;
@@ -60,9 +72,16 @@ class TracingScatterComponent extends React.Component<TracingScatterProps> {
   isLoading = false;
   nextToLoad?: JaegerTrace = undefined;
   seletedTraceMatched: number | undefined;
-  hoveredId?: string;
 
-  renderFetchEmpty = (title, msg) => {
+  constructor(props: TracingScatterProps) {
+    super(props);
+    const traceId = HistoryManager.getParam(URLParam.TRACING_TRACE_ID);
+    if (traceId) {
+      this.props.setTraceId(this.props.cluster, traceId);
+    }
+  }
+
+  renderFetchEmpty = (title, msg): JSX.Element => {
     return (
       <div className={emptyStyle}>
         <EmptyState variant={EmptyStateVariant.sm}>
@@ -73,7 +92,7 @@ class TracingScatterComponent extends React.Component<TracingScatterProps> {
     );
   };
 
-  render() {
+  render(): JSX.Element {
     const tracesRaw: Datapoint[] = [];
     const tracesError: Datapoint[] = [];
     // Tracing uses Duration instead of TimeRange, evalTimeRange is a helper here
@@ -163,14 +182,14 @@ class TracingScatterComponent extends React.Component<TracingScatterProps> {
     );
   }
 
-  private onTooltipClose = (trace?: JaegerTrace) => {
+  private onTooltipClose = (trace?: JaegerTrace): void => {
     // cancel loading the stats if we've moused out of the trace before we started loading
     if (trace === this.nextToLoad) {
       this.nextToLoad = undefined;
     }
   };
 
-  private loadTraceTooltipMetrics(trace: JaegerTrace) {
+  private loadTraceTooltipMetrics(trace: JaegerTrace): void {
     this.isLoading = true;
     if (trace.traceID !== this.props.selectedTrace?.traceID) {
       this.seletedTraceMatched = trace.matched;
@@ -194,7 +213,7 @@ class TracingScatterComponent extends React.Component<TracingScatterProps> {
       });
   }
 
-  private onTooltipOpen = (trace?: JaegerTrace) => {
+  private onTooltipOpen = (trace?: JaegerTrace): void => {
     if (!trace) {
       return;
     }
@@ -207,13 +226,13 @@ class TracingScatterComponent extends React.Component<TracingScatterProps> {
   };
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   duration: durationSelector(state),
   selectedTrace: state.tracingState.selectedTrace,
   provider: state.tracingState.info?.provider
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch): MapProps => ({
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) =>
     dispatch(MetricsStatsThunkActions.load(queries, isCompact)),
   setTraceId: (cluster?: string, traceId?: string) => dispatch(TracingThunkActions.setTraceId(cluster, traceId))
