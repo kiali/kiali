@@ -18,6 +18,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/config/security"
@@ -122,6 +124,8 @@ func TestAnonymousMode(t *testing.T) {
 	apiURLWithAuthentication := serverURL + "/api/authenticate"
 	apiURL := serverURL + "/api"
 
+	assert.False(t, conf.IsServerHTTPS())
+
 	config.Set(conf)
 
 	cf := kubernetes.NewTestingClientFactory(t)
@@ -210,6 +214,8 @@ func TestSecureComm(t *testing.T) {
 	apiURLWithAuthentication := serverURL + "/api/authenticate"
 	apiURL := serverURL + "/api"
 	metricsURL := fmt.Sprintf("http://%v:%v/", testHostname, testMetricsPort)
+
+	assert.True(t, conf.IsServerHTTPS())
 
 	config.Set(conf)
 

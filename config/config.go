@@ -877,6 +877,11 @@ func (conf *Config) AllNamespacesAccessible() bool {
 	return conf.Deployment.ClusterWideAccess
 }
 
+// IsServerHTTPS returns true if the server endpoint should use HTTPS. If false, only plaintext HTTP is supported.
+func (conf *Config) IsServerHTTPS() bool {
+	return conf.Identity.CertFile != "" && conf.Identity.PrivateKeyFile != ""
+}
+
 // Get the global Config
 func Get() (conf *Config) {
 	rwMutex.RLock()

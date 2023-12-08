@@ -15,6 +15,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
+	"github.com/kiali/kiali/util/httputil"
 )
 
 // SessionCookieMaxSize is the maximum size of session cookies. This is 3.5K.
@@ -53,7 +54,7 @@ type sessionData struct {
 // For improved security, the data of the session is encrypted using the AES-GCM algorithm and
 // the encrypted data is what is sent in cookies. The strategy, expiresOn and payload arguments
 // are all required.
-func (p CookieSessionPersistor) CreateSession(_ *http.Request, w http.ResponseWriter, strategy string, expiresOn time.Time, payload interface{}) error {
+func (p CookieSessionPersistor) CreateSession(r *http.Request, w http.ResponseWriter, strategy string, expiresOn time.Time, payload interface{}) error {
 	// Validate that there is a payload and a strategy. The strategy is required just in case Kiali is reconfigured with a
 	// different strategy and drop any stale session. The payload is required because it does not make sense to start a session
 	// if there is no data to persist.
@@ -116,6 +117,7 @@ func (p CookieSessionPersistor) CreateSession(_ *http.Request, w http.ResponseWr
 	// If the resulting session data is large, it may not fit in one cookie. So, the resulting
 	// session data is broken in chunks and multiple cookies are used, as is needed.
 	conf := config.Get()
+	secureFlag := conf.IsServerHTTPS() || strings.HasPrefix(httputil.GuessKialiURL(r), "https:")
 
 	sessionDataChunks := chunkString(base64SessionData, SessionCookieMaxSize)
 	for i, chunk := range sessionDataChunks {
@@ -137,6 +139,7 @@ func (p CookieSessionPersistor) CreateSession(_ *http.Request, w http.ResponseWr
 			Value:    chunk,
 			Expires:  expiresOn,
 			HttpOnly: true,
+			Secure:   secureFlag,
 			Path:     conf.Server.WebRoot,
 			SameSite: http.SameSiteStrictMode,
 		}
@@ -152,6 +155,7 @@ func (p CookieSessionPersistor) CreateSession(_ *http.Request, w http.ResponseWr
 			Value:    strconv.Itoa(len(sessionDataChunks)),
 			Expires:  expiresOn,
 			HttpOnly: true,
+			Secure:   secureFlag,
 			Path:     conf.Server.WebRoot,
 			SameSite: http.SameSiteStrictMode,
 		}
@@ -297,6 +301,8 @@ func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWrit
 // clearing any stale cookies/session.
 func (p CookieSessionPersistor) TerminateSession(r *http.Request, w http.ResponseWriter) {
 	conf := config.Get()
+	secureFlag := conf.IsServerHTTPS() || strings.HasPrefix(httputil.GuessKialiURL(r), "https:")
+
 	var cookiesToDrop []string
 
 	numChunksCookie, chunksCookieErr := r.Cookie(config.TokenCookieName + "-chunks")
@@ -326,6 +332,7 @@ func (p CookieSessionPersistor) TerminateSession(r *http.Request, w http.Respons
 				Value:    "",
 				Expires:  time.Unix(0, 0),
 				HttpOnly: true,
+				Secure:   secureFlag,
 				MaxAge:   -1,
 				Path:     conf.Server.WebRoot,
 				SameSite: http.SameSiteStrictMode,

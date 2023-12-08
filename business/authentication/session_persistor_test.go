@@ -19,6 +19,38 @@ type testSessionPayload struct {
 	FirstField string `json:"firstField,omitempty"`
 }
 
+// TestSecureFlag tests that the cookie Secure flag is set to true when using HTTPS.
+func TestSecureFlag(t *testing.T) {
+	cfg := config.NewConfig()
+	cfg.Server.WebRoot = "/kiali-app"
+	cfg.LoginToken.SigningKey = "kiali67890123456"
+	cfg.Identity.CertFile = "foo.cert"      // setting conf.Identity will make it look as if the endpoint ...
+	cfg.Identity.PrivateKeyFile = "foo.key" // ... is HTTPS - this causes the cookies' Secure flag to be true
+	config.Set(cfg)
+
+	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	payload := testSessionPayload{
+		FirstField: "Foo",
+	}
+
+	rr := httptest.NewRecorder()
+	persistor := CookieSessionPersistor{}
+	expiresTime := time.Date(2021, 12, 1, 1, 0, 0, 0, time.UTC)
+	err := persistor.CreateSession(nil, rr, "test", expiresTime, payload)
+
+	response := rr.Result()
+
+	assert.Nil(t, err)
+	assert.Len(t, response.Cookies(), 1)
+
+	cookie := response.Cookies()[0]
+	assert.True(t, cookie.HttpOnly)
+	assert.True(t, cfg.IsServerHTTPS())
+	assert.True(t, cookie.Secure)
+}
+
 // TestCreateSessionNoChunks tests that the CookieSessionPersistor correctly
 // sets one cookie if the payload of a session fits in one browser cookie
 func TestCreateSessionNoChunks(t *testing.T) {
@@ -46,6 +78,8 @@ func TestCreateSessionNoChunks(t *testing.T) {
 
 	cookie := response.Cookies()[0]
 	assert.True(t, cookie.HttpOnly)
+	assert.False(t, cfg.IsServerHTTPS())
+	assert.False(t, cookie.Secure)
 	assert.Equal(t, AESSessionCookieName, cookie.Name)
 	assert.Equal(t, "/kiali-app", cookie.Path)
 	assert.Equal(t, http.SameSiteStrictMode, cookie.SameSite)
@@ -97,6 +131,7 @@ func TestCreateSessionWithChunks(t *testing.T) {
 
 	for _, cookie := range response.Cookies() {
 		assert.True(t, cookie.HttpOnly)
+		assert.False(t, cookie.Secure)
 		assert.Equal(t, "/kiali-app", cookie.Path)
 		assert.Equal(t, http.SameSiteStrictMode, cookie.SameSite)
 		assert.Equal(t, expiresTime, cookie.Expires)
