@@ -240,8 +240,6 @@ fi
 
 # If OpenShift, we need to do some additional things
 if [ "${IS_OPENSHIFT}" == "true" ]; then
-  $CLIENT_EXE expose svc/productpage -n ${NAMESPACE}
-  $CLIENT_EXE expose svc/istio-ingressgateway --port http2 -n ${ISTIO_NAMESPACE}
   cat <<NAD | $CLIENT_EXE -n ${NAMESPACE} apply -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
@@ -350,6 +348,12 @@ fi
 
 sleep 4
 
+# Expose the OpenShift routes
+if [ "${IS_OPENSHIFT}" == "true" ]; then
+  $CLIENT_EXE expose svc/productpage -n ${NAMESPACE}
+  $CLIENT_EXE expose svc/istio-ingressgateway --port http2 -n ${ISTIO_NAMESPACE}
+fi
+
 echo "Bookinfo Demo should be installed and starting up - here are the pods and services"
 $CLIENT_EXE get services -n ${NAMESPACE}
 $CLIENT_EXE get pods -n ${NAMESPACE}
@@ -376,11 +380,10 @@ fi
 if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
   echo "Installing Traffic Generator"
   if [ "${IS_OPENSHIFT}" == "true" ]; then
-    echo -n "Determining the route to send traffic to"
+    echo "Determining the route to send traffic to"
     INGRESS_ROUTE=$(${CLIENT_EXE} get route istio-ingressgateway -o jsonpath='{.spec.host}{"\n"}' -n ${ISTIO_NAMESPACE})
     while [ -z "${INGRESS_ROUTE}" ]; do
       sleep 1
-      echo -n "."
       INGRESS_ROUTE=$(${CLIENT_EXE} get route productpage -o jsonpath='{.spec.host}{"\n"}' -n ${NAMESPACE})
     done
     echo
