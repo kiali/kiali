@@ -66,8 +66,8 @@ func (o *PromAPIMock) Metadata(ctx context.Context, metric string, limit string)
 	return nil, nil
 }
 
-func (o *PromAPIMock) Query(ctx context.Context, query string, ts time.Time) (model.Value, prom_v1.Warnings, error) {
-	args := o.Called(ctx, query, ts)
+func (o *PromAPIMock) Query(ctx context.Context, query string, ts time.Time, opts ...prom_v1.Option) (model.Value, prom_v1.Warnings, error) {
+	args := o.Called(ctx, query, ts, opts)
 	return args.Get(0).(model.Value), nil, nil
 }
 
@@ -76,8 +76,8 @@ func (o *PromAPIMock) QueryExemplars(ctx context.Context, query string, startTim
 	return args.Get(0).([]prom_v1.ExemplarQueryResult), nil
 }
 
-func (o *PromAPIMock) QueryRange(ctx context.Context, query string, r prom_v1.Range) (model.Value, prom_v1.Warnings, error) {
-	args := o.Called(ctx, query, r)
+func (o *PromAPIMock) QueryRange(ctx context.Context, query string, r prom_v1.Range, opts ...prom_v1.Option) (model.Value, prom_v1.Warnings, error) {
+	args := o.Called(ctx, query, r, opts)
 	return args.Get(0).(model.Value), nil, nil
 }
 
@@ -112,6 +112,11 @@ func (o *PromAPIMock) TargetsMetadata(ctx context.Context, matchTarget, metric, 
 
 func (o *PromAPIMock) TSDB(ctx context.Context) (prom_v1.TSDBResult, error) {
 	return prom_v1.TSDBResult{}, nil
+}
+
+func (o *PromAPIMock) WalReplay(ctx context.Context) (prom_v1.WalReplayStatus, error) {
+	args := o.Called(ctx)
+	return args.Get(0).(prom_v1.WalReplayStatus), nil
 }
 
 func (o *PromAPIMock) OnQueryTime(query string, t *time.Time, ret model.Vector) {

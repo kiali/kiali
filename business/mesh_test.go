@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -999,8 +1000,8 @@ trustDomain: cluster.local
 	})
 
 	// Sort to get consistent ordering before doing assertions.
-	sortClustersByName := func(a *kubernetes.Cluster, b *kubernetes.Cluster) bool {
-		return a.Name < b.Name
+	sortClustersByName := func(a *kubernetes.Cluster, b *kubernetes.Cluster) int {
+		return strings.Compare(a.Name, b.Name)
 	}
 	slices.SortFunc(eastControlPlane.ManagedClusters, sortClustersByName)
 	slices.SortFunc(westControlPlane.ManagedClusters, sortClustersByName)
