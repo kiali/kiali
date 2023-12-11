@@ -67,7 +67,7 @@ func (o *PromAPIMock) Metadata(ctx context.Context, metric string, limit string)
 }
 
 func (o *PromAPIMock) Query(ctx context.Context, query string, ts time.Time, opts ...prom_v1.Option) (model.Value, prom_v1.Warnings, error) {
-	args := o.Called(ctx, query, ts, opts)
+	args := o.Called(ctx, query, ts)
 	return args.Get(0).(model.Value), nil, nil
 }
 
@@ -77,7 +77,7 @@ func (o *PromAPIMock) QueryExemplars(ctx context.Context, query string, startTim
 }
 
 func (o *PromAPIMock) QueryRange(ctx context.Context, query string, r prom_v1.Range, opts ...prom_v1.Option) (model.Value, prom_v1.Warnings, error) {
-	args := o.Called(ctx, query, r, opts)
+	args := o.Called(ctx, query, r)
 	return args.Get(0).(model.Value), nil, nil
 }
 
