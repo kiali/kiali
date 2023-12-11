@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"fmt"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/mesh"
 	"github.com/kiali/kiali/mesh/appender"
@@ -33,23 +34,40 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		mesh.CheckError(err)
 	}
 
-	meshClusters, err := gi.Business.Mesh.GetClusters(o.Request)
+	meshDef, err := gi.Business.Mesh.GetMesh(ctx)
 	graph.CheckError(err)
 
-	for _, cluster := range meshClusters {
-		// add any clusters that is configured but somehow has no accessible namespace
-		if _, ok := clusterMap[cluster.Name]; !ok {
-			_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, cluster.Name, mesh.Unknown, cluster.Name)
-			mesh.CheckError(err)
-
-			continue
-		}
-
-		// add any Kiali instances
-		for _, kiali := range cluster.KialiInstances {
-			_, _, err := addInfra(meshMap, mesh.InfraTypeKiali, cluster.Name, kiali.Namespace, kiali.ServiceName)
+	for _, cp := range meshDef.ControlPlanes {
+		// add any cluster that is configured but somehow has no accessible namespace
+		if _, ok := clusterMap[cp.Cluster.Name]; !ok {
+			_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, cp.Cluster.Name, mesh.Unknown, cp.Cluster.Name)
 			mesh.CheckError(err)
 		}
+		for _, mc := range cp.ManagedClusters {
+			if _, ok := clusterMap[mc.Name]; !ok {
+				_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, mc.Name, mesh.Unknown, mc.Name)
+				mesh.CheckError(err)
+
+				continue
+			}
+		}
+
+		// add the control plane istiod
+		_, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, cp.IstiodName)
+		mesh.CheckError(err)
+
+		// add any Kiali instances (note, this will not include the home Kiali)
+		for _, kiali := range cp.Cluster.KialiInstances {
+			_, _, err = addInfra(meshMap, mesh.InfraTypeKiali, cp.Cluster.Name, kiali.Namespace, kiali.ServiceName)
+			mesh.CheckError(err)
+		}
+
+		// add the home Kiali
+		conf := config.Get()
+		_, _, err = addInfra(meshMap, mesh.InfraTypeKiali, conf.KubernetesConfig.ClusterName, conf.Deployment.Namespace, conf.Deployment.InstanceName)
+		mesh.CheckError(err)
+
+		// add the Kiali external services...  How to do this?
 	}
 
 	// The finalizers can perform final manipulations on the complete graph

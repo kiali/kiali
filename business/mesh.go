@@ -44,20 +44,26 @@ type ControlPlane struct {
 	// Cluster the kube cluster that the controlplane is running on.
 	Cluster *kubernetes.Cluster
 
+	// Config
+	Config ControlPlaneConfiguration
+
+	// IstiodName is the control plane name
+	IstiodName string
+
+	// IstiodNamespace is the namespace name of the deployed control plane
+	IstiodNamespace string
+
 	// ManagedClusters are the clusters that this controlplane manages.
 	// This could include the cluster that the controlplane is running on.
 	ManagedClusters []*kubernetes.Cluster
-
-	// Revision is the revision of the controlplane.
-	// Can be empty when it's the default revision.
-	Revision string
 
 	// ManagesExternal indicates if the controlplane manages an external cluster.
 	// It could also manage the cluster that it is running on.
 	ManagesExternal bool
 
-	// Config
-	Config ControlPlaneConfiguration
+	// Revision is the revision of the controlplane.
+	// Can be empty when it's the default revision.
+	Revision string
 }
 
 // ControlPlaneConfiguration is the configuration for the controlplane and any associated dataplanes.
@@ -156,8 +162,10 @@ func (in *MeshService) GetMesh(ctx context.Context) (*Mesh, error) {
 			for _, istiod := range istiods {
 				log.Debugf("Found controlplane [%s/%s] on cluster [%s].", istiod.Name, istiod.Namespace, cluster.Name)
 				controlPlane := ControlPlane{
-					Cluster:  &cluster,
-					Revision: istiod.Labels[IstioRevisionLabel],
+					Cluster:         &cluster,
+					IstiodName:      istiod.Name,
+					IstiodNamespace: istiod.Namespace,
+					Revision:        istiod.Labels[IstioRevisionLabel],
 				}
 
 				configMapName := IstioConfigMapName(in.conf, controlPlane.Revision)

@@ -66,7 +66,6 @@ type Options struct {
 	Appenders            RequestedAppenders // requested appenders, nil if param not supplied
 	ConfigVendor         string
 	Namespaces           NamespaceInfoMap
-	Request              *http.Request // some business API requires the request object
 	ConfigOptions
 }
 
@@ -115,7 +114,6 @@ func NewOptions(r *http.Request) Options {
 		Appenders:            appenders,
 		Namespaces:           namespaceMap,
 		ConfigVendor:         configVendor,
-		Request:              r,
 		ConfigOptions: ConfigOptions{
 			CommonOptions: CommonOptions{
 				Params: params,
