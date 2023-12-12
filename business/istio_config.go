@@ -891,13 +891,13 @@ func (in *IstioConfigService) IsGatewayAPI(cluster string) bool {
 }
 
 func (in *IstioConfigService) GatewayAPIClasses() []config.GatewayAPIClass {
-	return kubernetes.GatewayAPIClasses()
+	return kubernetes.GatewayAPIClasses(in.IsAmbientEnabled())
 }
 
 // Check if istio Ambient profile was enabled
 // ATM it is defined in the istio-cni-config configmap
 func (in *IstioConfigService) IsAmbientEnabled() bool {
-	daemonset, err := in.kialiCache.GetDaemonSet(config.Get().IstioNamespace, "ztunnel")
+	daemonset, err := in.kialiCache.GetDaemonSet(in.config.IstioNamespace, "ztunnel")
 	if err != nil {
 		log.Debugf("No ztunnel found in istio namespace: %s ", err.Error())
 	} else {

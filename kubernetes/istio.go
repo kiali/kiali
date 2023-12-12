@@ -374,7 +374,7 @@ func ClusterInfoFromIstiod(conf config.Config, k8s ClientInterface) (string, boo
 	return clusterName, gatewayToNamespace, nil
 }
 
-func GatewayAPIClasses() []config.GatewayAPIClass {
+func GatewayAPIClasses(ambientEnabled bool) []config.GatewayAPIClass {
 	result := []config.GatewayAPIClass{}
 	for _, gwClass := range config.Get().ExternalServices.Istio.GatewayAPIClasses {
 		if gwClass.ClassName != "" && gwClass.Name != "" {
@@ -383,6 +383,9 @@ func GatewayAPIClasses() []config.GatewayAPIClass {
 	}
 	if len(result) == 0 {
 		result = append(result, config.GatewayAPIClass{Name: "Istio", ClassName: "istio"})
+	}
+	if ambientEnabled {
+		result = append(result, config.GatewayAPIClass{Name: "Waypoint", ClassName: "istio-waypoint"})
 	}
 	return result
 }
