@@ -18,6 +18,7 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	api_types "k8s.io/apimachinery/pkg/types"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
+	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -51,6 +52,7 @@ type IstioConfigCriteria struct {
 	IncludeGateways               bool
 	IncludeK8sGateways            bool
 	IncludeK8sHTTPRoutes          bool
+	IncludeK8sReferenceGrants     bool
 	IncludeVirtualServices        bool
 	IncludeDestinationRules       bool
 	IncludeServiceEntries         bool
@@ -77,6 +79,8 @@ func (icc IstioConfigCriteria) Include(resource string) bool {
 		return icc.IncludeK8sGateways
 	case kubernetes.K8sHTTPRoutes:
 		return icc.IncludeK8sHTTPRoutes
+	case kubernetes.K8sReferenceGrants:
+		return icc.IncludeK8sReferenceGrants
 	case kubernetes.VirtualServices:
 		return icc.IncludeVirtualServices && !isWorkloadSelector
 	case kubernetes.DestinationRules:
@@ -143,8 +147,9 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		WasmPlugins:      []*extentions_v1alpha1.WasmPlugin{},
 		Telemetries:      []*v1alpha1.Telemetry{},
 
-		K8sGateways:   []*k8s_networking_v1.Gateway{},
-		K8sHTTPRoutes: []*k8s_networking_v1.HTTPRoute{},
+		K8sGateways:        []*k8s_networking_v1.Gateway{},
+		K8sHTTPRoutes:      []*k8s_networking_v1.HTTPRoute{},
+		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{},
 
 		AuthorizationPolicies:  []*security_v1beta1.AuthorizationPolicy{},
 		PeerAuthentications:    []*security_v1beta1.PeerAuthentication{},
@@ -179,6 +184,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		istioConfigList.Gateways = append(istioConfigList.Gateways, singleClusterConfigList.Gateways...)
 		istioConfigList.K8sGateways = append(istioConfigList.K8sGateways, singleClusterConfigList.K8sGateways...)
 		istioConfigList.K8sHTTPRoutes = append(istioConfigList.K8sHTTPRoutes, singleClusterConfigList.K8sHTTPRoutes...)
+		istioConfigList.K8sReferenceGrants = append(istioConfigList.K8sReferenceGrants, singleClusterConfigList.K8sReferenceGrants...)
 		istioConfigList.VirtualServices = append(istioConfigList.VirtualServices, singleClusterConfigList.VirtualServices...)
 		istioConfigList.ServiceEntries = append(istioConfigList.ServiceEntries, singleClusterConfigList.ServiceEntries...)
 		istioConfigList.Sidecars = append(istioConfigList.Sidecars, singleClusterConfigList.Sidecars...)
@@ -265,8 +271,9 @@ func (in *IstioConfigService) getIstioConfigListForCluster(ctx context.Context, 
 		WasmPlugins:      []*extentions_v1alpha1.WasmPlugin{},
 		Telemetries:      []*v1alpha1.Telemetry{},
 
-		K8sGateways:   []*k8s_networking_v1.Gateway{},
-		K8sHTTPRoutes: []*k8s_networking_v1.HTTPRoute{},
+		K8sGateways:        []*k8s_networking_v1.Gateway{},
+		K8sHTTPRoutes:      []*k8s_networking_v1.HTTPRoute{},
+		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{},
 
 		AuthorizationPolicies:  []*security_v1beta1.AuthorizationPolicy{},
 		PeerAuthentications:    []*security_v1beta1.PeerAuthentication{},
@@ -331,6 +338,13 @@ func (in *IstioConfigService) getIstioConfigListForCluster(ctx context.Context, 
 
 	if userClient.IsGatewayAPI() && criteria.Include(kubernetes.K8sHTTPRoutes) {
 		istioConfigList.K8sHTTPRoutes, err = kubeCache.GetK8sHTTPRoutes(criteria.Namespace, criteria.LabelSelector)
+		if err != nil {
+			return models.IstioConfigList{}, err
+		}
+	}
+
+	if userClient.IsGatewayAPI() && criteria.Include(kubernetes.K8sReferenceGrants) {
+		istioConfigList.K8sReferenceGrants, err = kubeCache.GetK8sReferenceGrants(criteria.Namespace, criteria.LabelSelector)
 		if err != nil {
 			return models.IstioConfigList{}, err
 		}
@@ -441,6 +455,7 @@ func (in *IstioConfigService) getIstioConfigListForCluster(ctx context.Context, 
 		istioConfigList.Gateways = kubernetes.FilterByNamespaces(istioConfigList.Gateways, namespaceNames)
 		istioConfigList.K8sGateways = kubernetes.FilterByNamespaces(istioConfigList.K8sGateways, namespaceNames)
 		istioConfigList.K8sHTTPRoutes = kubernetes.FilterByNamespaces(istioConfigList.K8sHTTPRoutes, namespaceNames)
+		istioConfigList.K8sReferenceGrants = kubernetes.FilterByNamespaces(istioConfigList.K8sReferenceGrants, namespaceNames)
 		istioConfigList.PeerAuthentications = kubernetes.FilterByNamespaces(istioConfigList.PeerAuthentications, namespaceNames)
 		istioConfigList.RequestAuthentications = kubernetes.FilterByNamespaces(istioConfigList.RequestAuthentications, namespaceNames)
 		istioConfigList.ServiceEntries = kubernetes.FilterByNamespaces(istioConfigList.ServiceEntries, namespaceNames)
@@ -531,6 +546,12 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster
 		if err == nil {
 			istioConfigDetail.K8sHTTPRoute.Kind = kubernetes.K8sActualHTTPRouteType
 			istioConfigDetail.K8sHTTPRoute.APIVersion = kubernetes.K8sApiNetworkingVersionV1
+		}
+	case kubernetes.K8sReferenceGrants:
+		istioConfigDetail.K8sReferenceGrant, err = in.userClients[cluster].GatewayAPI().GatewayV1beta1().ReferenceGrants(namespace).Get(ctx, object, getOpts)
+		if err == nil {
+			istioConfigDetail.K8sReferenceGrant.Kind = kubernetes.K8sActualReferenceGrantType
+			istioConfigDetail.K8sReferenceGrant.APIVersion = kubernetes.K8sApiNetworkingVersionV1Beta1
 		}
 	case kubernetes.ServiceEntries:
 		istioConfigDetail.ServiceEntry, err = in.userClients[cluster].Istio().NetworkingV1beta1().ServiceEntries(namespace).Get(ctx, object, getOpts)
@@ -630,9 +651,11 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(ctx context.Context, clust
 	case kubernetes.Gateways:
 		err = userClient.Istio().NetworkingV1beta1().Gateways(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.K8sGateways:
-		err = userClient.GatewayAPI().GatewayV1beta1().Gateways(namespace).Delete(ctx, name, delOpts)
+		err = userClient.GatewayAPI().GatewayV1().Gateways(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.K8sHTTPRoutes:
-		err = userClient.GatewayAPI().GatewayV1beta1().HTTPRoutes(namespace).Delete(ctx, name, delOpts)
+		err = userClient.GatewayAPI().GatewayV1().HTTPRoutes(namespace).Delete(ctx, name, delOpts)
+	case kubernetes.K8sReferenceGrants:
+		err = userClient.GatewayAPI().GatewayV1beta1().ReferenceGrants(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.ServiceEntries:
 		err = userClient.Istio().NetworkingV1beta1().ServiceEntries(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.Sidecars:
@@ -708,6 +731,9 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(ctx context.Context, clust
 	case kubernetes.K8sHTTPRoutes:
 		istioConfigDetail.K8sHTTPRoute = &k8s_networking_v1.HTTPRoute{}
 		istioConfigDetail.K8sHTTPRoute, err = userClient.GatewayAPI().GatewayV1().HTTPRoutes(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+	case kubernetes.K8sReferenceGrants:
+		istioConfigDetail.K8sReferenceGrant = &k8s_networking_v1beta1.ReferenceGrant{}
+		istioConfigDetail.K8sReferenceGrant, err = userClient.GatewayAPI().GatewayV1beta1().ReferenceGrants(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 	case kubernetes.ServiceEntries:
 		istioConfigDetail.ServiceEntry = &networking_v1beta1.ServiceEntry{}
 		istioConfigDetail.ServiceEntry, err = userClient.Istio().NetworkingV1beta1().ServiceEntries(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
@@ -804,6 +830,13 @@ func (in *IstioConfigService) CreateIstioConfigDetail(ctx context.Context, clust
 			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
 		}
 		istioConfigDetail.K8sHTTPRoute, err = userClient.GatewayAPI().GatewayV1().HTTPRoutes(namespace).Create(ctx, istioConfigDetail.K8sHTTPRoute, createOpts)
+	case kubernetes.K8sReferenceGrants:
+		istioConfigDetail.K8sReferenceGrant = &k8s_networking_v1beta1.ReferenceGrant{}
+		err = json.Unmarshal(body, istioConfigDetail.K8sReferenceGrant)
+		if err != nil {
+			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
+		}
+		istioConfigDetail.K8sReferenceGrant, err = userClient.GatewayAPI().GatewayV1beta1().ReferenceGrants(namespace).Create(ctx, istioConfigDetail.K8sReferenceGrant, createOpts)
 	case kubernetes.ServiceEntries:
 		istioConfigDetail.ServiceEntry = &networking_v1beta1.ServiceEntry{}
 		err = json.Unmarshal(body, istioConfigDetail.ServiceEntry)
@@ -1085,6 +1118,7 @@ func ParseIstioConfigCriteria(cluster, namespace, objects, labelSelector, worklo
 	criteria.IncludeGateways = defaultInclude
 	criteria.IncludeK8sGateways = defaultInclude
 	criteria.IncludeK8sHTTPRoutes = defaultInclude
+	criteria.IncludeK8sReferenceGrants = defaultInclude
 	criteria.IncludeVirtualServices = defaultInclude
 	criteria.IncludeDestinationRules = defaultInclude
 	criteria.IncludeServiceEntries = defaultInclude
@@ -1123,6 +1157,9 @@ func ParseIstioConfigCriteria(cluster, namespace, objects, labelSelector, worklo
 	}
 	if checkType(types, kubernetes.K8sHTTPRoutes) {
 		criteria.IncludeK8sHTTPRoutes = true
+	}
+	if checkType(types, kubernetes.K8sReferenceGrants) {
+		criteria.IncludeK8sReferenceGrants = true
 	}
 	if checkType(types, kubernetes.VirtualServices) {
 		criteria.IncludeVirtualServices = true

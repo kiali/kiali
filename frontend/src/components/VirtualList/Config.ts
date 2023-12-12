@@ -224,6 +224,7 @@ export const IstioTypes: { [type: string]: IstioConfigType } = {
   instance: { name: 'Instance', url: 'instances', badge: PFBadges.Instance },
   k8sgateway: { name: 'Gateway (K8s)', url: 'k8sgateways', badge: PFBadges.K8sGateway },
   k8shttproute: { name: 'HTTPRoute (K8s)', url: 'k8shttproutes', badge: PFBadges.K8sHTTPRoute },
+  k8sreferencegrant: { name: 'ReferenceGrant (K8s)', url: 'k8sreferencegrants', badge: PFBadges.K8sReferenceGrant },
   meshpolicy: { name: 'MeshPolicy', url: 'meshpolicies', badge: PFBadges.MeshPolicy },
   peerauthentication: {
     name: 'PeerAuthentication',

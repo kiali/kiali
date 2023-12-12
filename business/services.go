@@ -186,15 +186,16 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 	// References MAY have visibility for a user but not access if they are not allowed to access to the namespace
 	if criteria.IncludeIstioResources {
 		criteria := IstioConfigCriteria{
-			AllNamespaces:           true,
-			Cluster:                 cluster,
-			Namespace:               criteria.Namespace,
-			IncludeDestinationRules: true,
-			IncludeGateways:         true,
-			IncludeK8sGateways:      true,
-			IncludeK8sHTTPRoutes:    true,
-			IncludeServiceEntries:   true,
-			IncludeVirtualServices:  true,
+			AllNamespaces:             true,
+			Cluster:                   cluster,
+			Namespace:                 criteria.Namespace,
+			IncludeDestinationRules:   true,
+			IncludeGateways:           true,
+			IncludeK8sGateways:        true,
+			IncludeK8sHTTPRoutes:      true,
+			IncludeK8sReferenceGrants: true,
+			IncludeServiceEntries:     true,
+			IncludeVirtualServices:    true,
 		}
 		go func() {
 			defer wg.Done()
@@ -558,11 +559,12 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 			Namespace:               namespace,
 			IncludeDestinationRules: true,
 			// TODO the frontend is merging the Gateways per ServiceDetails but it would be a clean design to locate it here
-			IncludeGateways:        true,
-			IncludeK8sGateways:     true,
-			IncludeK8sHTTPRoutes:   true,
-			IncludeServiceEntries:  true,
-			IncludeVirtualServices: true,
+			IncludeGateways:           true,
+			IncludeK8sGateways:        true,
+			IncludeK8sHTTPRoutes:      true,
+			IncludeK8sReferenceGrants: true,
+			IncludeServiceEntries:     true,
+			IncludeVirtualServices:    true,
 		}
 		istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
 		if err2 != nil {

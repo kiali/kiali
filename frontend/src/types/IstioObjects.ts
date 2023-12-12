@@ -181,6 +181,10 @@ export type AccessLog = {
   bytes_received: string;
   // BytesSent as part of the request body %BYTES_SENT%
   bytes_sent: string;
+  // DownstreamLocal is the local address of the downstream connection %DOWNSTREAM_LOCAL_ADDRESS%
+  downstream_local: string;
+  // DownstreamRemote is the remote address of the downstream connection %DOWNSTREAM_REMOTE_ADDRESS%
+  downstream_remote: string;
   // Duration of the request %DURATION%
   duration: string;
   // ForwardedFor is the X-Forwarded-For header value %REQ(FORWARDED-FOR)%
@@ -191,32 +195,28 @@ export type AccessLog = {
   protocol: string;
   // RequestId is the envoy generated X-REQUEST-ID header "%REQ(X-REQUEST-ID)%"
   request_id: string;
+  // RequestedServer is the String value set on ssl connection socket for Server Name Indication (SNI) %REQUESTED_SERVER_NAME%
+  requested_server: string;
   // ResponseFlags provide any additional details about the response or connection, if any. %RESPONSE_FLAGS%
   response_flags: string;
+  // RouteName is the name of the VirtualService route which matched this request %ROUTE_NAME%
+  route_name: string;
   // StatusCode is the response status code %RESPONSE_CODE%
   status_code: string;
   // TcpServiceTime is the time the tcp request took
   tcp_service_time: string;
   // Timestamp is the Start Time %START_TIME%
   timestamp: string;
+  // UpstreamCluster is the upstream envoy cluster being reached %UPSTREAM_CLUSTER%
+  upstream_cluster: string;
+  // UpstreamFailureReason is the upstream transport failure reason %UPSTREAM_TRANSPORT_FAILURE_REASON%
+  upstream_failure_reason: string;
+  // UpstreamLocal is the local address of the upstream connection %UPSTREAM_LOCAL_ADDRESS%
+  upstream_local: string;
   // UpstreamService is the upstream host the request is intended for %UPSTREAM_HOST%
   upstream_service: string;
   // UpstreamServiceTime is the time taken to reach target host %RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%
   upstream_service_time: string;
-  // UpstreamCluster is the upstream envoy cluster being reached %UPSTREAM_CLUSTER%
-  upstream_cluster: string;
-  // UpstreamLocal is the local address of the upstream connection %UPSTREAM_LOCAL_ADDRESS%
-  upstream_local: string;
-  // DownstreamLocal is the local address of the downstream connection %DOWNSTREAM_LOCAL_ADDRESS%
-  downstream_local: string;
-  // DownstreamRemote is the remote address of the downstream connection %DOWNSTREAM_REMOTE_ADDRESS%
-  downstream_remote: string;
-  // RequestedServer is the String value set on ssl connection socket for Server Name Indication (SNI) %REQUESTED_SERVER_NAME%
-  requested_server: string;
-  // RouteName is the name of the VirtualService route which matched this request %ROUTE_NAME%
-  route_name: string;
-  // UpstreamFailureReason is the upstream transport failure reason %UPSTREAM_TRANSPORT_FAILURE_REASON%
-  upstream_failure_reason: string;
   // UriParam is the params field of the request path
   uri_param: string;
   // UriPath is the base request path
@@ -283,8 +283,8 @@ export interface ClusterSummary {
 }
 
 export interface ListenerSummary {
-  destination: string;
   address: string;
+  destination: string;
   match: string;
   port: number;
 }
@@ -550,8 +550,8 @@ export interface TrafficPolicy {
 
 // 1.6
 export interface Subset {
-  name: string;
   labels?: { [key: string]: string };
+  name: string;
   trafficPolicy?: TrafficPolicy;
 }
 
@@ -776,8 +776,8 @@ export interface Listener {
 }
 
 export interface Address {
-  value: string;
   type: string;
+  value: string;
 }
 
 export interface AllowedRoutes {
@@ -806,6 +806,17 @@ export interface K8sGatewaySpec {
 
 export interface K8sGateway extends IstioObject {
   spec: K8sGatewaySpec;
+}
+
+export interface K8sReferenceGrantSpec {
+  from?: K8sReferenceRule[];
+  to?: K8sReferenceRule[];
+}
+
+export interface K8sReferenceRule {
+  group: string;
+  kind: string;
+  namespace?: string;
 }
 
 export interface K8sHTTPRouteSpec {
@@ -848,8 +859,8 @@ export interface K8sHTTPHeaderFilter {
 export interface K8sHTTPRouteRequestRedirect {
   hostname?: string;
   port?: number;
-  statusCode?: number;
   scheme?: string;
+  statusCode?: number;
 }
 
 export interface K8sHTTPRouteMatch {
@@ -867,6 +878,10 @@ export interface HTTPMatch {
 
 export interface K8sHTTPRoute extends IstioObject {
   spec: K8sHTTPRouteSpec;
+}
+
+export interface K8sReferenceGrant extends IstioObject {
+  spec: K8sReferenceGrantSpec;
 }
 
 // Sidecar resource https://preliminary.istio.io/docs/reference/config/networking/v1alpha3/sidecar
@@ -934,9 +949,9 @@ export interface Server {
 }
 
 export interface ServerForm {
+  hosts: string[];
   name: string;
   number: string;
-  hosts: string[];
   protocol: string;
   tlsCaCertificate: string;
   tlsMode: string;
@@ -1101,8 +1116,8 @@ export interface Operation {
 
 export interface Condition {
   key: string;
-  values?: string[];
   notValues?: string[];
+  values?: string[];
 }
 
 export interface PeerAuthentication extends IstioObject {
@@ -1151,8 +1166,8 @@ export interface WorkloadGroup extends IstioObject {
 
 export interface WorkloadGroupSpec {
   // Note that WorkloadGroup has a metadata section inside Spec
-  probe?: ReadinessProbe;
   metadata?: K8sMetadata;
+  probe?: ReadinessProbe;
   template: WorkloadEntrySpec;
 }
 
@@ -1163,8 +1178,8 @@ export interface ReadinessProbe {
   initialDelaySeconds?: number;
   periodSeconds?: number;
   successThreshold?: number;
-  timeoutSeconds?: number;
   tcpSocket?: TCPHealthCheckConfig;
+  timeoutSeconds?: number;
 }
 
 export interface HTTPHealthCheckConfig {
