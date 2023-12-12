@@ -655,6 +655,9 @@ func NewConfig() (c *Config) {
 					{
 						Name: "Istio", ClassName: "istio",
 					},
+					{
+						Name: "Waypoint", ClassName: "istio-waypoint",
+					},
 				},
 			},
 			Prometheus: PrometheusConfig{
