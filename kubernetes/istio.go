@@ -383,9 +383,10 @@ func GatewayAPIClasses(ambientEnabled bool) []config.GatewayAPIClass {
 	}
 	if len(result) == 0 {
 		result = append(result, config.GatewayAPIClass{Name: "Istio", ClassName: "istio"})
+		if ambientEnabled {
+			result = append(result, config.GatewayAPIClass{Name: "Waypoint", ClassName: "istio-waypoint"})
+		}
 	}
-	if ambientEnabled {
-		result = append(result, config.GatewayAPIClass{Name: "Waypoint", ClassName: "istio-waypoint"})
-	}
+
 	return result
 }
