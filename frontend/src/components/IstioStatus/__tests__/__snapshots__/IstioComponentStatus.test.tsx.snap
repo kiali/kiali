@@ -6,14 +6,11 @@ exports[`IstioComponentStatus renders error icon when core component is not foun
   key="cell-status-icon-isito-ingress"
 >
   <SplitItem>
-    <ExclamationCircleIcon
-      style={
-        Object {
-          "color": "var(--pf-v5-global--danger-color--100)",
-          "marginTop": 5,
-        }
-      }
-    />
+    <Icon
+      className="kiali_fi2mdky kiali_f1h37jb8"
+    >
+      <ExclamationCircleIcon />
+    </Icon>
   </SplitItem>
   <SplitItem
     isFilled={true}
@@ -32,14 +29,11 @@ exports[`IstioComponentStatus renders error icon when core component is not runn
   key="cell-status-icon-isito-ingress"
 >
   <SplitItem>
-    <ExclamationCircleIcon
-      style={
-        Object {
-          "color": "var(--pf-v5-global--danger-color--100)",
-          "marginTop": 5,
-        }
-      }
-    />
+    <Icon
+      className="kiali_fi2mdky kiali_f1h37jb8"
+    >
+      <ExclamationCircleIcon />
+    </Icon>
   </SplitItem>
   <SplitItem
     isFilled={true}
@@ -58,14 +52,11 @@ exports[`IstioComponentStatus renders minus icon when addon component is not rea
   key="cell-status-icon-addon"
 >
   <SplitItem>
-    <MinusCircleIcon
-      style={
-        Object {
-          "color": "var(--pf-v5-global--info-color--100)",
-          "marginTop": 5,
-        }
-      }
-    />
+    <Icon
+      className="kiali_fi2mdky kiali_f1elceoh"
+    >
+      <MinusCircleIcon />
+    </Icon>
   </SplitItem>
   <SplitItem
     isFilled={true}
@@ -84,14 +75,11 @@ exports[`IstioComponentStatus renders minus icon when core component is not read
   key="cell-status-icon-core"
 >
   <SplitItem>
-    <MinusCircleIcon
-      style={
-        Object {
-          "color": "var(--pf-v5-global--info-color--100)",
-          "marginTop": 5,
-        }
-      }
-    />
+    <Icon
+      className="kiali_fi2mdky kiali_f1elceoh"
+    >
+      <MinusCircleIcon />
+    </Icon>
   </SplitItem>
   <SplitItem
     isFilled={true}
@@ -110,14 +98,11 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
   key="cell-status-icon-isito-ingress"
 >
   <SplitItem>
-    <CheckCircleIcon
-      style={
-        Object {
-          "color": "var(--pf-v5-global--success-color--100)",
-          "marginTop": 5,
-        }
-      }
-    />
+    <Icon
+      className="kiali_fi2mdky kiali_f1r5cf3w"
+    >
+      <CheckCircleIcon />
+    </Icon>
   </SplitItem>
   <SplitItem
     isFilled={true}
@@ -134,14 +119,11 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
   key="cell-status-icon-prometheus"
 >
   <SplitItem>
-    <CheckCircleIcon
-      style={
-        Object {
-          "color": "var(--pf-v5-global--success-color--100)",
-          "marginTop": 5,
-        }
-      }
-    />
+    <Icon
+      className="kiali_fi2mdky kiali_f1r5cf3w"
+    >
+      <CheckCircleIcon />
+    </Icon>
   </SplitItem>
   <SplitItem
     isFilled={true}
@@ -158,14 +140,11 @@ exports[`IstioComponentStatus renders warning icon when core component is not fo
   key="cell-status-icon-prometheus"
 >
   <SplitItem>
-    <ExclamationTriangleIcon
-      style={
-        Object {
-          "color": "var(--pf-v5-global--warning-color--100)",
-          "marginTop": 5,
-        }
-      }
-    />
+    <Icon
+      className="kiali_fi2mdky kiali_frkkrth"
+    >
+      <ExclamationTriangleIcon />
+    </Icon>
   </SplitItem>
   <SplitItem
     isFilled={true}
@@ -184,14 +163,11 @@ exports[`IstioComponentStatus renders warning icon when core component is not ru
   key="cell-status-icon-prometheus"
 >
   <SplitItem>
-    <ExclamationTriangleIcon
-      style={
-        Object {
-          "color": "var(--pf-v5-global--warning-color--100)",
-          "marginTop": 5,
-        }
-      }
-    />
+    <Icon
+      className="kiali_fi2mdky kiali_frkkrth"
+    >
+      <ExclamationTriangleIcon />
+    </Icon>
   </SplitItem>
   <SplitItem
     isFilled={true}

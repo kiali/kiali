@@ -80,7 +80,7 @@ export interface RequestHealth {
 }
 
 export interface Status {
-  class: string;
+  className: string;
   color: string;
   icon: React.ComponentClass<SVGIconProps>;
   name: string;
@@ -95,7 +95,7 @@ export interface ProxyStatus {
 }
 
 export const FAILURE: Status = {
-  class: 'icon-failure',
+  className: 'icon-failure',
   color: PFColors.Danger,
   icon: ExclamationCircleIcon,
   name: 'Failure',
@@ -103,7 +103,7 @@ export const FAILURE: Status = {
 };
 
 export const DEGRADED: Status = {
-  class: 'icon-degraded',
+  className: 'icon-degraded',
   color: PFColors.Warning,
   name: 'Degraded',
   icon: ExclamationTriangleIcon,
@@ -111,7 +111,7 @@ export const DEGRADED: Status = {
 };
 
 export const NOT_READY: Status = {
-  class: 'icon-idle',
+  className: 'icon-idle',
   color: PFColors.InfoBackground,
   icon: MinusCircleIcon,
   name: 'Not Ready',
@@ -119,7 +119,7 @@ export const NOT_READY: Status = {
 };
 
 export const HEALTHY: Status = {
-  class: 'icon-healthy',
+  className: 'icon-healthy',
   color: PFColors.Success,
   icon: CheckCircleIcon,
   name: 'Healthy',
@@ -127,7 +127,7 @@ export const HEALTHY: Status = {
 };
 
 export const NA: Status = {
-  class: 'icon-na',
+  className: 'icon-na',
   color: PFColors.Color200,
   name: 'No health information',
   icon: UnknownIcon,
@@ -212,7 +212,7 @@ export const ratioCheck = (
 };
 
 export const proxyStatusMessage = (syncedProxies: number, desiredReplicas: number): string => {
-  let msg: string = '';
+  let msg = '';
   if (syncedProxies < desiredReplicas) {
     const unsynced = desiredReplicas - syncedProxies;
     msg = ` (${unsynced} ${unsynced !== 1 ? 'proxies' : 'proxy'} unsynced)`;

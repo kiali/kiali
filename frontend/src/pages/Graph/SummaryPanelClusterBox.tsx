@@ -66,7 +66,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     return props.data.summaryTarget !== state.clusterBox ? { clusterBox: props.data.summaryTarget } : null;
   }
 
-  render() {
+  render(): React.ReactNode {
     const isPF = !!this.props.data.isPF;
     const clusterBox = this.props.data.summaryTarget;
     const data = isPF ? clusterBox.getData() : clusterBox.data();
@@ -347,35 +347,41 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
 
   private renderCluster = (cluster: string, kialiInstances: KialiInstance[]): React.ReactNode => {
     return (
-      <React.Fragment key={cluster}>
-        <PFBadge badge={PFBadges.Cluster} size="sm" style={{ marginBottom: '0.125rem' }} />
+      <div key={cluster}>
+        <PFBadge badge={PFBadges.Cluster} size="sm" />
         {cluster}
-        <br />
         {this.renderKialiLinks(kialiInstances)}
-      </React.Fragment>
+      </div>
     );
   };
 
   private renderKialiLinks = (kialiInstances: KialiInstance[]): React.ReactNode => {
+    // const kialiInstance: KialiInstance = {
+    //   namespace: 'istio-system',
+    //   serviceName: 'kiali',
+    //   url: 'test',
+    //   version: 'test',
+    //   operatorResource: 'test'
+    // };
+    // kialiInstances = [kialiInstance];
     const kialiIcon = getKialiTheme() === Theme.DARK ? kialiIconDark : kialiIconLight;
+
     return kialiInstances.map(instance => {
       if (instance.url.length !== 0) {
         return (
-          <span>
+          <div>
             <img alt="Kiali Icon" src={kialiIcon} className={kialiIconStyle} />
             <a href={instance.url} target="_blank" rel="noopener noreferrer">
               {instance.namespace} {' / '} {instance.serviceName}
             </a>
-            <br />
-          </span>
+          </div>
         );
       } else {
         return (
-          <span>
+          <div>
             <img alt="Kiali Icon" src={kialiIcon} className={kialiIconStyle} />
             {`${instance.namespace} / ${instance.serviceName}`}
-            <br />
-          </span>
+          </div>
         );
       }
     });
@@ -388,41 +394,37 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     numVersions: number,
     numEdges: number
   ): React.ReactNode => (
-    <>
-      <br />
+    <div style={{ marginTop: '1rem' }}>
       {getTitle('Current Graph')}
 
       {numApps > 0 && (
-        <>
+        <div>
           <KialiIcon.Applications className={topologyStyle} />
           {numApps.toString()} {numApps === 1 ? 'app ' : 'apps '}
           {numVersions > 0 && `(${numVersions} versions)`}
-          <br />
-        </>
+        </div>
       )}
 
       {numSvc > 0 && (
-        <>
+        <div>
           <KialiIcon.Services className={topologyStyle} />
           {numSvc.toString()} {numSvc === 1 ? 'service' : 'services'}
-          <br />
-        </>
+        </div>
       )}
 
       {numWorkloads > 0 && (
-        <>
+        <div>
           <KialiIcon.Workloads className={topologyStyle} />
           {numWorkloads.toString()} {numWorkloads === 1 ? 'workload' : 'workloads'}
-          <br />
-        </>
+        </div>
       )}
 
       {numEdges > 0 && (
-        <>
+        <div>
           <KialiIcon.Topology className={topologyStyle} />
           {numEdges.toString()} {numEdges === 1 ? 'edge' : 'edges'}
-        </>
+        </div>
       )}
-    </>
+    </div>
   );
 }

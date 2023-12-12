@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { SVGIconProps } from '@patternfly/react-icons/dist/esm/createIcon';
+import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { TimeInMilliseconds } from '../../types/Common';
@@ -19,12 +19,16 @@ import { KialiDispatch } from 'types/Redux';
 import { NamespaceThunkActions } from '../../actions/NamespaceThunkActions';
 import { connectRefresh } from '../Refresh/connectRefresh';
 import { kialiStyle } from 'styles/StyleUtils';
+import { IconProps, createIcon } from 'config/KialiIcon';
 
-type ReduxProps = {
-  refreshNamespaces: () => void;
-  namespaces: Namespace[] | undefined;
-  setIstioStatus: (istioStatus: ComponentStatus[]) => void;
+type ReduxStateProps = {
+  namespaces?: Namespace[];
   status: ComponentStatus[];
+};
+
+type ReduxDispatchProps = {
+  refreshNamespaces: () => void;
+  setIstioStatus: (istioStatus: ComponentStatus[]) => void;
 };
 
 type StatusIcons = {
@@ -34,11 +38,12 @@ type StatusIcons = {
   WarningIcon?: React.ComponentClass<SVGIconProps>;
 };
 
-type Props = ReduxProps & {
-  cluster?: string;
-  icons?: StatusIcons;
-  lastRefreshAt: TimeInMilliseconds;
-};
+type Props = ReduxStateProps &
+  ReduxDispatchProps & {
+    cluster?: string;
+    icons?: StatusIcons;
+    lastRefreshAt: TimeInMilliseconds;
+  };
 
 const ValidToColor = {
   'true-true-true': PFColors.Danger,
@@ -60,11 +65,11 @@ const defaultIcons = {
 
 const iconStyle = kialiStyle({
   marginLeft: '0.5rem',
-  verticalAlign: '-0.25rem'
+  verticalAlign: '-0.125rem'
 });
 
 export class IstioStatusComponent extends React.Component<Props> {
-  componentDidMount() {
+  componentDidMount(): void {
     this.props.refreshNamespaces();
     this.fetchStatus();
   }
@@ -97,11 +102,11 @@ export class IstioStatusComponent extends React.Component<Props> {
   };
 
   tooltipColor = (): string => {
-    let coreUnhealthy: boolean = false;
-    let addonUnhealthy: boolean = false;
-    let notReady: boolean = false;
+    let coreUnhealthy = false;
+    let addonUnhealthy = false;
+    let notReady = false;
 
-    Object.keys(this.props.status || {}).forEach((compKey: string) => {
+    Object.keys(this.props.status ?? {}).forEach((compKey: string) => {
       const { status, is_core } = this.props.status[compKey];
       const isNotReady: boolean = status === Status.NotReady;
       const isUnhealthy: boolean = status !== Status.Healthy && !isNotReady;
@@ -124,30 +129,34 @@ export class IstioStatusComponent extends React.Component<Props> {
     }, true);
   };
 
-  render() {
-    if (!this.healthyComponents()) {
+  render(): React.ReactNode {
+    if (this.healthyComponents()) {
       const icons = this.props.icons ? { ...defaultIcons, ...this.props.icons } : defaultIcons;
       const iconColor = this.tooltipColor();
-      let Icon: React.ComponentClass<SVGIconProps> = ResourcesFullIcon;
-      let dataTestID: string = 'istio-status';
+      let icon = ResourcesFullIcon;
+      let dataTestID = 'istio-status';
 
       if (iconColor === PFColors.Danger) {
-        Icon = icons.ErrorIcon;
+        icon = icons.ErrorIcon;
         dataTestID = `${dataTestID}-danger`;
       } else if (iconColor === PFColors.Warning) {
-        Icon = icons.WarningIcon;
+        icon = icons.WarningIcon;
         dataTestID = `${dataTestID}-warning`;
       } else if (iconColor === PFColors.Info) {
-        Icon = icons.InfoIcon;
+        icon = icons.InfoIcon;
         dataTestID = `${dataTestID}-info`;
       } else if (iconColor === PFColors.Success) {
-        Icon = icons.HealthyIcon;
+        icon = icons.HealthyIcon;
         dataTestID = `${dataTestID}-success`;
       }
 
+      const iconProps: IconProps = {
+        className: iconStyle
+      };
+
       return (
-        <Tooltip position={TooltipPosition.left} enableFlip={true} content={this.tooltipContent()} maxWidth={'25rem'}>
-          <Icon color={iconColor} className={iconStyle} data-test={dataTestID} />
+        <Tooltip position={TooltipPosition.left} enableFlip={true} content={this.tooltipContent()} maxWidth="25rem">
+          {createIcon(iconProps, icon, iconColor, dataTestID)}
         </Tooltip>
       );
     }
@@ -156,12 +165,12 @@ export class IstioStatusComponent extends React.Component<Props> {
   }
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   status: istioStatusSelector(state),
   namespaces: namespaceItemsSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   setIstioStatus: bindActionCreators(IstioStatusActions.setinfo, dispatch),
   refreshNamespaces: () => {
     dispatch(NamespaceThunkActions.fetchNamespacesIfNeeded());

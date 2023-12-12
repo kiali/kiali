@@ -1,10 +1,10 @@
 import * as React from 'react';
 import * as H from '../../types/Health';
-import { createIcon } from './Helper';
 import { InfoAltIcon } from '@patternfly/react-icons';
 import { PFColors } from '../Pf/PfColors';
 import { Icon, Title, TitleSizes } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
+import { createIcon } from 'config/KialiIcon';
 
 interface HealthDetailsProps {
   health: H.Health;
@@ -17,7 +17,7 @@ const titleStyle = kialiStyle({
 // Used in App/Workload/Service Description
 // It doesn't hide healthy lines as opposed to the HealthDetails
 // Keep it on this class for easy maintenance in future steps, duplication of code is expected.
-export const renderTrafficStatus = (health: H.Health) => {
+export const renderTrafficStatus = (health: H.Health): React.ReactNode => {
   const config = health.getStatusConfig();
   const isValueInConfig = config && health.health.statusConfig ? health.health.statusConfig.value > 0 : false;
   const item = health.getTrafficStatus();
@@ -56,7 +56,7 @@ export const renderTrafficStatus = (health: H.Health) => {
               })}
 
               {config && isValueInConfig && (
-                <li key={'degraded_failure_config'}>
+                <li key="degraded_failure_config">
                   <span style={{ marginRight: '0.5rem' }}>{createIcon(H.DEGRADED)}</span>:{' '}
                   {config.degraded === 0 ? '>' : '>='}
                   {config.degraded}% {createIcon(H.FAILURE)}: {config.degraded === 0 ? '>' : '>='}
@@ -101,6 +101,7 @@ export const HealthDetails: React.FC<HealthDetailsProps> = (props: HealthDetails
             )}
           </>
         }
+
         {item.text}
 
         {item.children && (

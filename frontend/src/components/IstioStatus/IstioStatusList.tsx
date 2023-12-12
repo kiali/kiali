@@ -3,50 +3,82 @@ import { List, Text, TextContent, TextVariants } from '@patternfly/react-core';
 import { ComponentStatus, Status } from '../../types/IstioStatus';
 import { IstioComponentStatus } from './IstioComponentStatus';
 import { PFColors } from '../Pf/PfColors';
-import style from './IstioStatus.module.scss';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type Props = {
   status: ComponentStatus[];
 };
 
-export class IstioStatusList extends React.Component<Props> {
-  nonhealthyComponents = () => {
-    return this.props.status.filter((c: ComponentStatus) => c.status !== Status.Healthy);
+const listStyle = kialiStyle({
+  paddingLeft: 0,
+  marginTop: 0,
+  marginLeft: 0
+});
+
+export const IstioStatusList: React.FC<Props> = (props: Props) => {
+  const nonhealthyComponents = (): ComponentStatus[] => {
+    return props.status.filter((c: ComponentStatus) => c.status !== Status.Healthy);
   };
 
-  coreComponentsStatus = () => {
-    return this.nonhealthyComponents().filter((s: ComponentStatus) => s.is_core);
+  const coreComponentsStatus = (): ComponentStatus[] => {
+    return nonhealthyComponents().filter((s: ComponentStatus) => s.is_core);
   };
 
-  addonComponentsStatus = () => {
-    return this.nonhealthyComponents().filter((s: ComponentStatus) => !s.is_core);
+  const addonComponentsStatus = (): ComponentStatus[] => {
+    return nonhealthyComponents().filter((s: ComponentStatus) => !s.is_core);
   };
 
-  renderComponentList = () => {
+  const renderComponentList = (): React.ReactNode => {
     const groups = {
-      core: this.coreComponentsStatus,
-      addon: this.addonComponentsStatus
+      core: coreComponentsStatus,
+      addon: addonComponentsStatus
     };
 
-    return ['core', 'addon'].map((group: string) => {
-      return (
-        <React.Fragment key={'status-' + group}>
-          {groups[group]().map(status => {
-            return <IstioComponentStatus key={`status-${group}-${status.name}`} componentStatus={status} />;
-          })}
-        </React.Fragment>
-      );
-    });
+    // return ['core', 'addon'].map((group: string) => {
+    //   return (
+    //     <div key={`status-${group}`}>
+    //       {groups[group]().map((status: ComponentStatus) => {
+    //         return <IstioComponentStatus key={`status-${group}-${status.name}`} componentStatus={status} />;
+    //       })}
+    //     </div>
+    //   );
+    // });
+
+    console.log(groups);
+
+    return (
+      <div key={`status`}>
+        <IstioComponentStatus
+          key={`status-test`}
+          componentStatus={{ name: 'test-1', is_core: true, status: Status.Healthy }}
+        />
+        <IstioComponentStatus
+          key={`status-test`}
+          componentStatus={{ name: 'test-2', is_core: true, status: Status.NotFound }}
+        />
+        <IstioComponentStatus
+          key={`status-test`}
+          componentStatus={{ name: 'test-3', is_core: true, status: Status.NotReady }}
+        />
+        <IstioComponentStatus
+          key={`status-test`}
+          componentStatus={{ name: 'test-4', is_core: true, status: Status.Unreachable }}
+        />
+        <IstioComponentStatus
+          key={`status-test`}
+          componentStatus={{ name: 'test-5', is_core: true, status: Status.Unhealthy }}
+        />
+      </div>
+    );
   };
 
-  render() {
-    return (
-      <TextContent style={{ color: PFColors.White }} className={style.istioStatus}>
-        <Text component={TextVariants.h4}>Istio Components Status</Text>
-        <List id="istio-status" className={style.istioStatus} aria-label="Istio Component List">
-          {this.renderComponentList()}
-        </List>
-      </TextContent>
-    );
-  }
-}
+  return (
+    <TextContent style={{ color: PFColors.White }}>
+      <Text component={TextVariants.h4}>Istio Components Status</Text>
+
+      <List id="istio-status" aria-label="Istio Component List" className={listStyle}>
+        {renderComponentList()}
+      </List>
+    </TextContent>
+  );
+};

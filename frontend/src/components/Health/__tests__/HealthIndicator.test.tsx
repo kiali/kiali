@@ -3,10 +3,10 @@ import { mount, shallow } from 'enzyme';
 import { shallowToJson } from 'enzyme-to-json';
 
 import { HealthIndicator } from '../HealthIndicator';
-import { createIcon } from '../../../components/Health/Helper';
 import { AppHealth, DEGRADED, FAILURE, HEALTHY, NOT_READY } from '../../../types/Health';
 import { setServerConfig } from '../../../config/ServerConfig';
 import { healthConfig } from '../../../types/__testData__/HealthConfig';
+import { createIcon } from 'config/KialiIcon';
 
 describe('HealthIndicator', () => {
   beforeAll(() => {
@@ -37,7 +37,7 @@ describe('HealthIndicator', () => {
     let wrapper = shallow(<HealthIndicator id="svc" health={health} />);
     expect(shallowToJson(wrapper)).toMatchSnapshot();
     let html = wrapper.html();
-    expect(html).toContain(shallow(createIcon(HEALTHY, 'md')).html());
+    expect(html).toContain(shallow(createIcon(HEALTHY)).html());
   });
 
   it('renders workloads degraded', () => {
@@ -54,7 +54,7 @@ describe('HealthIndicator', () => {
 
     let wrapper = shallow(<HealthIndicator id="svc" health={health} />);
     let html = wrapper.html();
-    expect(html).toContain(shallow(createIcon(DEGRADED, 'md')).html());
+    expect(html).toContain(shallow(createIcon(DEGRADED)).html());
   });
 
   it('renders some scaled down workload', () => {
@@ -71,7 +71,7 @@ describe('HealthIndicator', () => {
 
     let wrapper = shallow(<HealthIndicator id="svc" health={health} />);
     let html = wrapper.html();
-    expect(html).toContain(shallow(createIcon(NOT_READY, 'md')).html());
+    expect(html).toContain(shallow(createIcon(NOT_READY)).html());
   });
 
   it('renders all workloads down', () => {
@@ -88,7 +88,7 @@ describe('HealthIndicator', () => {
 
     let wrapper = mount(<HealthIndicator id="svc" health={health} />);
     let html = wrapper.html();
-    expect(html).toContain(mount(createIcon(NOT_READY, 'md')).html());
+    expect(html).toContain(mount(createIcon(NOT_READY)).html());
   });
 
   it('renders error rate failure', () => {
@@ -106,7 +106,7 @@ describe('HealthIndicator', () => {
 
     let wrapper = shallow(<HealthIndicator id="svc" health={health} />);
     let html = wrapper.html();
-    expect(html).toContain(shallow(createIcon(FAILURE, 'md')).html());
+    expect(html).toContain(shallow(createIcon(FAILURE)).html());
   });
 
   describe('proxy status section', () => {
@@ -129,7 +129,7 @@ describe('HealthIndicator', () => {
 
       let wrapper = shallow(<HealthIndicator id="svc" health={health} />);
       let html = wrapper.html();
-      expect(html).toContain(shallow(createIcon(DEGRADED, 'md')).html());
+      expect(html).toContain(shallow(createIcon(DEGRADED)).html());
       expect(shallowToJson(wrapper)).toMatchSnapshot();
     });
   });

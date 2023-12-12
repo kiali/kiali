@@ -11,8 +11,8 @@ interface ValidationSummaryProps {
   objectCount?: number;
   reconciledCondition?: StatusCondition;
   style?: CSSProperties;
-  warnings: number;
   type: 'service' | 'istio';
+  warnings: number;
 }
 
 const tooltipListStyle = kialiStyle({
@@ -120,7 +120,7 @@ export const ValidationSummary: React.FC<ValidationSummaryProps> = (props: Valid
 
   const tooltipBase =
     props.objectCount === undefined || props.objectCount > 0 ? (
-      <Validation iconStyle={props.style} severity={severity()} />
+      <Validation severity={severity()} />
     ) : (
       <div style={{ display: 'inline-block' }}>N/A</div>
     );

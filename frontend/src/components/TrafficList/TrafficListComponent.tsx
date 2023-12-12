@@ -9,11 +9,10 @@ import { ThresholdStatus, NA } from 'types/Health';
 import { NodeType, hasProtocolTraffic, ProtocolTraffic } from 'types/Graph';
 import { getTrafficHealth } from 'types/ErrorRate';
 import { history, URLParam } from 'app/History';
-import { createIcon } from 'components/Health/Helper';
 import { sortFields } from './FiltersAndSorts';
 import { SortField } from 'types/SortFilters';
 import { PFBadgeType, PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { createTooltipIcon, KialiIcon } from 'config/KialiIcon';
+import { createIcon, createTooltipIcon, KialiIcon } from 'config/KialiIcon';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
@@ -122,12 +121,12 @@ class TrafficList extends FilterComponent.Component<
     };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     // ensure the initial sort is applied
     this.sortItemList(this.state.listItems, this.state.currentSortField, this.state.isSortAscending);
   }
 
-  componentDidUpdate(prevProps: TrafficListComponentProps) {
+  componentDidUpdate(prevProps: TrafficListComponentProps): void {
     // we only care about new TrafficItems, sorting is managed locally after initial render
     if (prevProps.trafficItems !== this.props.trafficItems) {
       const listItems = this.trafficToListItems(this.props.trafficItems);
@@ -138,7 +137,7 @@ class TrafficList extends FilterComponent.Component<
     }
   }
 
-  render() {
+  render(): React.ReactNode {
     const cols = columns(isMultiCluster);
     const inboundRows = this.rows('inbound');
     const outboundRows = this.rows('outbound');
@@ -251,7 +250,7 @@ class TrafficList extends FilterComponent.Component<
     return { value: 0, status: NA };
   };
 
-  private getTraffic = (traffic: ProtocolTraffic): { trafficRate: string; trafficPercentSuccess: string } => {
+  private getTraffic = (traffic: ProtocolTraffic): { trafficPercentSuccess: string; trafficRate: string } => {
     let rps = '0';
     let percentError = '0';
     let unit = 'rps';
@@ -295,7 +294,7 @@ class TrafficList extends FilterComponent.Component<
               position={TooltipPosition.top}
               content={<>Traffic Status: {item.healthStatus.status.name}</>}
             >
-              {createTooltipIcon(createIcon(item.healthStatus.status, 'md'))}
+              {createTooltipIcon(createIcon(item.healthStatus.status))}
             </Tooltip>,
             <>
               <PFBadge badge={item.badge} position={TooltipPosition.top} keyValue={`tt_badge_${i}`} />

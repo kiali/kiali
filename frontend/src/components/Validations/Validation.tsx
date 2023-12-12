@@ -1,4 +1,4 @@
-import React, { CSSProperties } from 'react';
+import React from 'react';
 import {
   CheckCircleIcon,
   ExclamationCircleIcon,
@@ -10,6 +10,7 @@ import { ValidationTypes } from '../../types/IstioObjects';
 import { Text, TextVariants } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
+import { createIcon } from 'config/KialiIcon';
 
 const validationStyle = kialiStyle({
   textAlign: 'left',
@@ -21,10 +22,8 @@ const validationStyle = kialiStyle({
 });
 
 type ValidationProps = ValidationDescription & {
-  iconStyle?: React.CSSProperties;
   messageColor?: boolean;
   size?: string;
-  textStyle?: React.CSSProperties;
 };
 
 export type ValidationDescription = {
@@ -71,37 +70,26 @@ export const severityToValidation: { [severity: string]: ValidationType } = {
 
 export const Validation: React.FC<ValidationProps> = (props: ValidationProps) => {
   const validation = severityToValidation[props.severity];
-  const IconComponent = validation.icon;
   const severityColor = { color: validation.color };
   const hasMessage = !!props.message;
 
-  // Set text style
-  const colorMessage = props.messageColor ?? false;
-  const textStyle = props.textStyle ?? {};
-
-  if (colorMessage) {
-    Object.assign(textStyle, severityColor);
-  }
-
   // Set icon style
-  const iconStyle = props.iconStyle ? { ...props.iconStyle } : {};
+  const iconStyle = kialiStyle(severityColor);
 
-  const defaultStyle: CSSProperties = {
-    verticalAlign: '-0.125rem'
+  const iconProps = {
+    className: iconStyle,
+    icon: validation.icon
   };
-
-  Object.assign(iconStyle, severityColor);
-  Object.assign(iconStyle, defaultStyle);
 
   if (hasMessage) {
     return (
       <div className={validationStyle}>
-        <Text component={TextVariants.p} style={textStyle}>
-          <IconComponent style={iconStyle} /> {props.message}
+        <Text component={TextVariants.p} style={severityColor}>
+          {createIcon(iconProps)} {props.message}
         </Text>
       </div>
     );
   } else {
-    return <IconComponent style={iconStyle} />;
+    return <>{createIcon(iconProps)}</>;
   }
 };
