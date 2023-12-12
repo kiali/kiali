@@ -50,7 +50,7 @@ yarn cypress:run:multi-cluster
 ```
 
 ### Running tests in a container
-You can also run the test suite in a container, using the image `quay.io/kiali/kiali-cypress-tests:latest`.
+You can also run the test suite in a container, using the image `quay.io/kiali/kiali-cypress-tests:latest` or with a specific tag version.
 System dependencies are bundled in the container but you are still required to install istio + kiali + demo apps in advance.
 
 Use the `-e` option to set the environment variables that affect the execution of the test suite, as described in the previous sections.

@@ -79,7 +79,7 @@ $ make test-integration -e CLIENT_EXE="kubectl" -e URL="http://localhost:20001/k
 ```
 
 ## Running tests in a container
-You can also run the test suite in a container, using the image `quay.io/kiali/kiali-int-tests:v1.65`.
+You can also run the test suite in a container, using the image `quay.io/kiali/kiali-int-tests:latest` or with a specific tag version.
 System dependencies are bundled in the container but you are still required to install istio + kiali + bookinfo in advance.
 Following environment variables are expected:
 - `OCP_API_URL` - The URL of the OpenShift API server.
@@ -91,7 +91,7 @@ To run the container:
 podman run -it \
   -e OCP_API_URL=https://api.test-cluter.test.com:6443 \
   -e TOKEN=<token> \
-  quay.io/kiali/kiali-int-tests:v1.65
+  quay.io/kiali/kiali-int-tests:latest
 ```
 
 
