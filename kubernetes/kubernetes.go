@@ -218,6 +218,7 @@ func checkGatewayAPIs(in *K8SClient) bool {
 	found := 0
 	res, err := in.k8s.Discovery().ServerResourcesForGroupVersion(K8sNetworkingGroupVersionV1.String())
 	if err != nil {
+		log.Debugf("Error while checking K8s Gateway API CRDs: %s. K8s Gateway API will not be used.", err.Error())
 		return false
 	}
 
