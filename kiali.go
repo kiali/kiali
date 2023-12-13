@@ -44,9 +44,11 @@ import (
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/observability"
+	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/server"
 	"github.com/kiali/kiali/status"
+	"github.com/kiali/kiali/tracing"
 	"github.com/kiali/kiali/util"
 )
 
@@ -132,8 +134,25 @@ func main() {
 		cpm.PollIstiodForProxyStatus(ctx)
 	}
 
+	// Create shared prometheus client shared by all prometheus requests in the business layer.
+	prom, err := prometheus.NewClient()
+	if err != nil {
+		log.Fatalf("Error creating Prometheus client: %s", err)
+	}
+
+	// Create shared tracing client shared by all tracing requests in the business layer.
+	var tracingClient tracing.ClientInterface
+	if cfg.ExternalServices.Tracing.Enabled {
+		tracingClient, err = tracing.NewClient(clientFactory.GetSAHomeClusterClient().GetToken())
+		if err != nil {
+			log.Fatalf("Error creating tracing client: %s", err)
+		}
+	} else {
+		log.Debug("Tracing is disabled")
+	}
+
 	// Start listening to requests
-	server := server.NewServer(cpm, clientFactory, cache, *cfg)
+	server := server.NewServer(cpm, clientFactory, cache, *cfg, prom, tracingClient)
 	server.Start()
 
 	// wait forever, or at least until we are told to exit

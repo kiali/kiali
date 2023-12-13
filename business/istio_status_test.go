@@ -197,7 +197,7 @@ func TestGrafanaWorking(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
 
@@ -235,7 +235,7 @@ func TestGrafanaDisabled(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
 
@@ -290,7 +290,7 @@ func TestGrafanaNotWorking(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
 
@@ -321,7 +321,7 @@ func TestFailingTracingService(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockFailingJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockFailingJaeger()).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
 
@@ -347,7 +347,7 @@ func TestOverriddenUrls(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
 
@@ -377,7 +377,7 @@ func TestCustomDashboardsMainPrometheus(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
 
@@ -403,7 +403,7 @@ func TestNoIstioComponentFoundError(t *testing.T) {
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
 
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 	_, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.Error(error)
 }
@@ -429,7 +429,7 @@ func TestDefaults(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 
 	icsl, err := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(err)
@@ -478,7 +478,7 @@ func TestNonDefaults(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
@@ -525,7 +525,7 @@ func TestIstiodNotReady(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
@@ -586,7 +586,7 @@ func TestIstiodUnreachable(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
@@ -641,7 +641,7 @@ func TestCustomizedAppLabel(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
@@ -692,7 +692,7 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
@@ -739,7 +739,7 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
@@ -780,16 +780,16 @@ func assertNotPresent(assert *assert.Assertions, icsl kubernetes.IstioComponentS
 	assert.False(componentFound)
 }
 
-func mockJaeger() (tracing.ClientInterface, error) {
+func mockJaeger() tracing.ClientInterface {
 	j := new(tracingtest.TracingClientMock)
 	j.On("GetServiceStatus").Return(true, nil)
-	return tracing.ClientInterface(j), nil
+	return j
 }
 
-func mockFailingJaeger() (tracing.ClientInterface, error) {
+func mockFailingJaeger() tracing.ClientInterface {
 	j := new(tracingtest.TracingClientMock)
 	j.On("GetServiceStatus").Return(false, errors.New("error connecting with tracing service"))
-	return tracing.ClientInterface(j), nil
+	return j
 }
 
 // Setup K8S api call to fetch Pods

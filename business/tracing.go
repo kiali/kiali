@@ -2,6 +2,7 @@ package business
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -16,37 +17,42 @@ import (
 )
 
 type (
-	TracingLoader = func() (tracing.ClientInterface, error)
-	SpanFilter    = func(span *jaegerModels.Span) bool
+	SpanFilter = func(span *jaegerModels.Span) bool
 )
 
 type TracingService struct {
-	loader        TracingLoader
-	loaderErr     error
-	tracing       tracing.ClientInterface
-	businessLayer *Layer
+	conf     *config.Config
+	svc      *SvcService
+	tracing  tracing.ClientInterface
+	workload *WorkloadService
+}
+
+func NewTracingService(conf *config.Config, tracing tracing.ClientInterface, svcService *SvcService, workloadService *WorkloadService) TracingService {
+	return TracingService{
+		conf:     conf,
+		svc:      svcService,
+		tracing:  tracing,
+		workload: workloadService,
+	}
 }
 
 func (in *TracingService) client() (tracing.ClientInterface, error) {
-	if in.tracing != nil {
-		return in.tracing, nil
-	} else if in.loaderErr != nil {
-		return nil, in.loaderErr
+	if !in.conf.ExternalServices.Tracing.Enabled {
+		return nil, fmt.Errorf("Tracing is not enabled")
 	}
-	in.tracing, in.loaderErr = in.loader()
-	return in.tracing, in.loaderErr
+	return in.tracing, nil
 }
 
 func (in *TracingService) getFilteredSpans(ns, app string, query models.TracingQuery, filter SpanFilter) ([]model.TracingSpan, error) {
 	// This is info needed for Tempo as it is not in the results by default
-	if config.Get().ExternalServices.Tracing.Provider == tracing.TEMPO {
+	if in.conf.ExternalServices.Tracing.Provider == tracing.TEMPO {
 		query.Tags["http.method"] = ".*"
 	}
 	r, err := in.GetAppTraces(ns, app, query)
 	if err != nil {
 		return []model.TracingSpan{}, err
 	}
-	spans := tracesToSpans(app, r, filter)
+	spans := tracesToSpans(app, r, filter, in.conf)
 	return spans, nil
 }
 
@@ -79,9 +85,7 @@ func (in *TracingService) GetServiceSpans(ctx context.Context, ns, service strin
 	)
 	defer end()
 
-	// TODO: Need to include cluster here. This will require custom tracing labeling of traces to add the cluster name
-	// since it is not standard.
-	app, err := in.businessLayer.Svc.GetServiceAppName(ctx, query.Cluster, ns, service)
+	app, err := in.svc.GetServiceAppName(ctx, query.Cluster, ns, service)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +116,7 @@ func (in *TracingService) GetWorkloadSpans(ctx context.Context, ns, workload str
 	)
 	defer end()
 
-	app, err := in.businessLayer.Workload.GetWorkloadAppName(ctx, query.Cluster, ns, workload)
+	app, err := in.workload.GetWorkloadAppName(ctx, query.Cluster, ns, workload)
 	if err != nil {
 		return nil, err
 	}
@@ -165,9 +169,7 @@ func (in *TracingService) GetServiceTraces(ctx context.Context, ns, service stri
 	)
 	defer end()
 
-	// TODO: Need to include cluster here. This will require custom tracing labeling of traces to add the cluster name
-	// since it is not standard.
-	app, err := in.businessLayer.Svc.GetServiceAppName(ctx, query.Cluster, ns, service)
+	app, err := in.svc.GetServiceAppName(ctx, query.Cluster, ns, service)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +211,7 @@ func (in *TracingService) GetWorkloadTraces(ctx context.Context, ns, workload st
 	)
 	defer end()
 
-	app, err := in.businessLayer.Workload.GetWorkloadAppName(ctx, query.Cluster, ns, workload)
+	app, err := in.workload.GetWorkloadAppName(ctx, query.Cluster, ns, workload)
 	if err != nil {
 		return nil, err
 	}
@@ -339,13 +341,13 @@ func spanMatchesWorkload(span *jaegerModels.Span, namespace, workload string) bo
 	return false
 }
 
-func tracesToSpans(app string, r *model.TracingResponse, filter SpanFilter) []model.TracingSpan {
+func tracesToSpans(app string, r *model.TracingResponse, filter SpanFilter, conf *config.Config) []model.TracingSpan {
 	spans := []model.TracingSpan{}
 	for _, trace := range r.Data {
 		// Diferent for Tempo & Jaeger
 		// For Tempo the proccess matched with the service name of the trace batch
 		// So t is already filtered in the query
-		if config.Get().ExternalServices.Tracing.Provider == tracing.TEMPO {
+		if conf.ExternalServices.Tracing.Provider == tracing.TEMPO {
 			// Second, find spans for these processes
 			for _, span := range trace.Spans {
 				if span.Process.ServiceName == r.TracingServiceName {
@@ -378,7 +380,6 @@ func tracesToSpans(app string, r *model.TracingResponse, filter SpanFilter) []mo
 				}
 			}
 		}
-
 	}
 	log.Tracef("Found %d spans in the %d traces for app %s", len(spans), len(r.Data), app)
 	return spans
