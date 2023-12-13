@@ -36,11 +36,11 @@ export const IstioStatusList: React.FC<Props> = (props: Props) => {
 
     return ['core', 'addon'].map((group: string) => {
       return (
-        <div key={`status-${group}`}>
+        <React.Fragment key={`status-${group}`}>
           {groups[group]().map((status: ComponentStatus) => {
             return <IstioComponentStatus key={`status-${group}-${status.name}`} componentStatus={status} />;
           })}
-        </div>
+        </React.Fragment>
       );
     });
   };

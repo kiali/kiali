@@ -134,25 +134,25 @@ export class IstioStatusComponent extends React.Component<Props> {
       const icons = this.props.icons ? { ...defaultIcons, ...this.props.icons } : defaultIcons;
       const iconColor = this.tooltipColor();
       let icon = ResourcesFullIcon;
-      let dataTestID = 'istio-status';
+      let dataTest = 'istio-status';
 
       if (iconColor === PFColors.Danger) {
         icon = icons.ErrorIcon;
-        dataTestID = `${dataTestID}-danger`;
+        dataTest = `${dataTest}-danger`;
       } else if (iconColor === PFColors.Warning) {
         icon = icons.WarningIcon;
-        dataTestID = `${dataTestID}-warning`;
+        dataTest = `${dataTest}-warning`;
       } else if (iconColor === PFColors.Info) {
         icon = icons.InfoIcon;
-        dataTestID = `${dataTestID}-info`;
+        dataTest = `${dataTest}-info`;
       } else if (iconColor === PFColors.Success) {
         icon = icons.HealthyIcon;
-        dataTestID = `${dataTestID}-success`;
+        dataTest = `${dataTest}-success`;
       }
 
       const iconProps: IconProps = {
         className: iconStyle,
-        dataTestID: dataTestID
+        dataTest: dataTest
       };
 
       return (

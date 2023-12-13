@@ -58,7 +58,7 @@ const buttonStyle = kialiStyle({
 });
 
 const cyToolbarStyle = kialiStyle({
-  width: '1.5rem'
+  width: '1.25rem'
 });
 
 class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProps, CytoscapeToolbarState> {

@@ -24,11 +24,12 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
   maxWidth="25rem"
   position="left"
 >
-  <ResourcesFullIcon
-    className="kiali_fm6s5ul"
-    color="var(--pf-v5-global--warning-color--100)"
+  <Icon
+    className="kiali_f19iteb0 kiali_frkkrth"
     data-test="istio-status-warning"
-  />
+  >
+    <ResourcesFullIcon />
+  </Icon>
 </Tooltip>
 `;
 
@@ -56,11 +57,12 @@ exports[`When both core and addon component have problems any component is in no
   maxWidth="25rem"
   position="left"
 >
-  <ResourcesFullIcon
-    className="kiali_fm6s5ul"
-    color="var(--pf-v5-global--danger-color--100)"
+  <Icon
+    className="kiali_f19iteb0 kiali_f1h37jb8"
     data-test="istio-status-danger"
-  />
+  >
+    <ResourcesFullIcon />
+  </Icon>
 </Tooltip>
 `;
 
@@ -88,11 +90,12 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
   maxWidth="25rem"
   position="left"
 >
-  <ResourcesFullIcon
-    className="kiali_fm6s5ul"
-    color="var(--pf-v5-global--danger-color--100)"
+  <Icon
+    className="kiali_f19iteb0 kiali_f1h37jb8"
     data-test="istio-status-danger"
-  />
+  >
+    <ResourcesFullIcon />
+  </Icon>
 </Tooltip>
 `;
 
@@ -120,11 +123,12 @@ exports[`When there are not-ready components mixed with other not healthy compon
   maxWidth="25rem"
   position="left"
 >
-  <ResourcesFullIcon
-    className="kiali_fm6s5ul"
-    color="var(--pf-v5-global--warning-color--100)"
+  <Icon
+    className="kiali_f19iteb0 kiali_frkkrth"
     data-test="istio-status-warning"
-  />
+  >
+    <ResourcesFullIcon />
+  </Icon>
 </Tooltip>
 `;
 
@@ -162,11 +166,12 @@ exports[`When there are not-ready components mixed with other not healthy compon
   maxWidth="25rem"
   position="left"
 >
-  <ResourcesFullIcon
-    className="kiali_fm6s5ul"
-    color="var(--pf-v5-global--danger-color--100)"
+  <Icon
+    className="kiali_f19iteb0 kiali_f1h37jb8"
     data-test="istio-status-danger"
-  />
+  >
+    <ResourcesFullIcon />
+  </Icon>
 </Tooltip>
 `;
 
@@ -194,11 +199,12 @@ exports[`When there are not-ready components mixed with other not healthy compon
   maxWidth="25rem"
   position="left"
 >
-  <ResourcesFullIcon
-    className="kiali_fm6s5ul"
-    color="var(--pf-v5-global--danger-color--100)"
+  <Icon
+    className="kiali_f19iteb0 kiali_f1h37jb8"
     data-test="istio-status-danger"
-  />
+  >
+    <ResourcesFullIcon />
+  </Icon>
 </Tooltip>
 `;
 
@@ -221,11 +227,12 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
   maxWidth="25rem"
   position="left"
 >
-  <ResourcesFullIcon
-    className="kiali_fm6s5ul"
-    color="var(--pf-v5-global--info-color--100)"
+  <Icon
+    className="kiali_f19iteb0 kiali_f1elceoh"
     data-test="istio-status-info"
-  />
+  >
+    <ResourcesFullIcon />
+  </Icon>
 </Tooltip>
 `;
 
@@ -248,10 +255,11 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
   maxWidth="25rem"
   position="left"
 >
-  <ResourcesFullIcon
-    className="kiali_fm6s5ul"
-    color="var(--pf-v5-global--info-color--100)"
+  <Icon
+    className="kiali_f19iteb0 kiali_f1elceoh"
     data-test="istio-status-info"
-  />
+  >
+    <ResourcesFullIcon />
+  </Icon>
 </Tooltip>
 `;

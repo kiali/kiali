@@ -1,11 +1,10 @@
 import * as React from 'react';
-import { shallow } from 'enzyme';
+import { ShallowWrapper, shallow } from 'enzyme';
 import { ComponentStatus, Status } from '../../../types/IstioStatus';
 import { IstioStatusComponent } from '../IstioStatus';
 import { shallowToJson } from 'enzyme-to-json';
-import { PFColors } from '../../Pf/PfColors';
 
-const mockIcon = (componentList: ComponentStatus[]) => {
+const mockIcon = (componentList: ComponentStatus[]): ShallowWrapper => {
   return shallow(
     <IstioStatusComponent
       status={componentList}
@@ -17,26 +16,23 @@ const mockIcon = (componentList: ComponentStatus[]) => {
   );
 };
 
-const testSnapshot = (wrapper: any) => {
+const testSnapshot = (wrapper: any): void => {
   expect(shallowToJson(wrapper)).toBeDefined();
   expect(shallowToJson(wrapper)).toMatchSnapshot();
 };
 
-const testTooltip = (wrapper: any) => {
-  // Testing the tooltip
+const testTooltip = (wrapper: any): void => {
   expect(wrapper.name()).toEqual('Tooltip');
   expect(wrapper.props().position).toEqual('left');
   expect(wrapper.props().enableFlip).toEqual(true);
-
   expect(wrapper.children().length).toEqual(1);
 };
 
-const testIcon = (wrapper: any, color: any) => {
-  // Icon shown - should be red
+const testIcon = (wrapper: any, dataTest: string): void => {
   const icon = wrapper.childAt(0);
   expect(icon).toBeDefined();
-  expect(icon.name()).toEqual('ResourcesFullIcon');
-  expect(icon.props().color).toEqual(color);
+  expect(icon.props()['data-test']).toEqual(dataTest);
+  expect(icon.childAt(0).name()).toEqual('ResourcesFullIcon');
 };
 
 describe('When core component has a problem', () => {
@@ -56,7 +52,7 @@ describe('When core component has a problem', () => {
 
     testSnapshot(wrapper);
     testTooltip(wrapper);
-    testIcon(wrapper, PFColors.Danger);
+    testIcon(wrapper, 'istio-status-danger');
   });
 });
 
@@ -77,7 +73,7 @@ describe('When addon component has a problem', () => {
 
     testSnapshot(wrapper);
     testTooltip(wrapper);
-    testIcon(wrapper, PFColors.Warning);
+    testIcon(wrapper, 'istio-status-warning');
   });
 });
 
@@ -99,7 +95,7 @@ describe('When both core and addon component have problems', () => {
 
       testSnapshot(wrapper);
       testTooltip(wrapper);
-      testIcon(wrapper, PFColors.Danger);
+      testIcon(wrapper, 'istio-status-danger');
     });
   });
 });
@@ -123,7 +119,7 @@ describe('When there are not-ready components', () => {
 
         testSnapshot(wrapper);
         testTooltip(wrapper);
-        testIcon(wrapper, PFColors.Danger);
+        testIcon(wrapper, 'istio-status-danger');
       });
     });
 
@@ -144,7 +140,7 @@ describe('When there are not-ready components', () => {
 
         testSnapshot(wrapper);
         testTooltip(wrapper);
-        testIcon(wrapper, PFColors.Warning);
+        testIcon(wrapper, 'istio-status-warning');
       });
     });
 
@@ -175,7 +171,7 @@ describe('When there are not-ready components', () => {
 
         testSnapshot(wrapper);
         testTooltip(wrapper);
-        testIcon(wrapper, PFColors.Danger);
+        testIcon(wrapper, 'istio-status-danger');
       });
     });
   });
@@ -193,7 +189,7 @@ describe('When there are not-ready components', () => {
 
         testSnapshot(wrapper);
         testTooltip(wrapper);
-        testIcon(wrapper, PFColors.Info);
+        testIcon(wrapper, 'istio-status-info');
       });
     });
 
@@ -209,7 +205,7 @@ describe('When there are not-ready components', () => {
 
         testSnapshot(wrapper);
         testTooltip(wrapper);
-        testIcon(wrapper, PFColors.Info);
+        testIcon(wrapper, 'istio-status-info');
       });
     });
   });

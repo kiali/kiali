@@ -2,7 +2,6 @@
 
 exports[`lists all the components grouped 1`] = `
 <TextContent
-  className="istioStatus"
   style={
     Object {
       "color": "var(--pf-v5-global--palette--white)",
@@ -16,7 +15,7 @@ exports[`lists all the components grouped 1`] = `
   </Text>
   <List
     aria-label="Istio Component List"
-    className="istioStatus"
+    className="kiali_f6tdqla"
     id="istio-status"
   >
     <IstioComponentStatus
