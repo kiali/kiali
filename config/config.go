@@ -651,11 +651,7 @@ func NewConfig() (c *Config) {
 				IstiodPollingIntervalSeconds:      20,
 				RootNamespace:                     "istio-system",
 				UrlServiceVersion:                 "http://istiod.istio-system:15014/version",
-				GatewayAPIClasses: []GatewayAPIClass{
-					{
-						Name: "Istio", ClassName: "istio",
-					},
-				},
+				GatewayAPIClasses:                 []GatewayAPIClass{},
 			},
 			Prometheus: PrometheusConfig{
 				Auth: Auth{
