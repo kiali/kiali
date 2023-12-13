@@ -347,23 +347,15 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
 
   private renderCluster = (cluster: string, kialiInstances: KialiInstance[]): React.ReactNode => {
     return (
-      <div key={cluster}>
+      <React.Fragment key={cluster}>
         <PFBadge badge={PFBadges.Cluster} size="sm" />
         {cluster}
         {this.renderKialiLinks(kialiInstances)}
-      </div>
+      </React.Fragment>
     );
   };
 
   private renderKialiLinks = (kialiInstances: KialiInstance[]): React.ReactNode => {
-    // const kialiInstance: KialiInstance = {
-    //   namespace: 'istio-system',
-    //   serviceName: 'kiali',
-    //   url: 'test',
-    //   version: 'test',
-    //   operatorResource: 'test'
-    // };
-    // kialiInstances = [kialiInstance];
     const kialiIcon = getKialiTheme() === Theme.DARK ? kialiIconDark : kialiIconLight;
 
     return kialiInstances.map(instance => {

@@ -73,5 +73,5 @@ export const GlobalValidation: React.FC<GlobalValidationProps> = (props: GlobalV
     return message;
   };
 
-  return <Validation severity={severity()} message={message()} />;
+  return <Validation severity={severity()} message={message()} messageColor={true} />;
 };

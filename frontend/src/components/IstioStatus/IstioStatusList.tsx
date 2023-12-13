@@ -34,42 +34,15 @@ export const IstioStatusList: React.FC<Props> = (props: Props) => {
       addon: addonComponentsStatus
     };
 
-    // return ['core', 'addon'].map((group: string) => {
-    //   return (
-    //     <div key={`status-${group}`}>
-    //       {groups[group]().map((status: ComponentStatus) => {
-    //         return <IstioComponentStatus key={`status-${group}-${status.name}`} componentStatus={status} />;
-    //       })}
-    //     </div>
-    //   );
-    // });
-
-    console.log(groups);
-
-    return (
-      <div key={`status`}>
-        <IstioComponentStatus
-          key={`status-test`}
-          componentStatus={{ name: 'test-1', is_core: true, status: Status.Healthy }}
-        />
-        <IstioComponentStatus
-          key={`status-test`}
-          componentStatus={{ name: 'test-2', is_core: true, status: Status.NotFound }}
-        />
-        <IstioComponentStatus
-          key={`status-test`}
-          componentStatus={{ name: 'test-3', is_core: true, status: Status.NotReady }}
-        />
-        <IstioComponentStatus
-          key={`status-test`}
-          componentStatus={{ name: 'test-4', is_core: true, status: Status.Unreachable }}
-        />
-        <IstioComponentStatus
-          key={`status-test`}
-          componentStatus={{ name: 'test-5', is_core: true, status: Status.Unhealthy }}
-        />
-      </div>
-    );
+    return ['core', 'addon'].map((group: string) => {
+      return (
+        <div key={`status-${group}`}>
+          {groups[group]().map((status: ComponentStatus) => {
+            return <IstioComponentStatus key={`status-${group}-${status.name}`} componentStatus={status} />;
+          })}
+        </div>
+      );
+    });
   };
 
   return (

@@ -2,15 +2,8 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { kialiStyle } from 'styles/StyleUtils';
-import { Tooltip, Button, ButtonVariant, Icon, pluralize } from '@patternfly/react-core';
+import { Tooltip, Button, ButtonVariant, pluralize } from '@patternfly/react-core';
 import { SelectList, SelectOption } from '@patternfly/react-core';
-import {
-  InfoAltIcon,
-  CloseIcon,
-  ExternalLinkAltIcon,
-  ExclamationCircleIcon,
-  MapMarkerIcon
-} from '@patternfly/react-icons';
 import { URLParam } from '../../app/History';
 import { JaegerTrace, RichSpanData, EnvoySpanInfo, OpenTracingHTTPInfo, OpenTracingTCPInfo } from 'types/TracingInfo';
 import { KialiAppState } from 'store/Store';
@@ -35,6 +28,7 @@ import { GraphSelectorBuilder } from './GraphSelector';
 import { GetTraceDetailURL } from '../../components/TracingIntegration/TracesComponent';
 import { ExternalServiceInfo } from '../../types/StatusState';
 import { isMultiCluster } from '../../config';
+import { KialiIcon } from 'config/KialiIcon';
 
 type ReduxStateProps = {
   externalServices: ExternalServiceInfo[];
@@ -62,7 +56,7 @@ type State = {
 
 const closeBoxStyle = kialiStyle({
   float: 'right',
-  marginTop: '-7px'
+  marginTop: '-0.5rem'
 });
 
 const nameStyle = kialiStyle({
@@ -74,18 +68,22 @@ const nameStyle = kialiStyle({
 });
 
 const pStyle = kialiStyle({
-  paddingTop: '10px',
+  paddingTop: '0.5rem',
   $nest: {
     '& button': {
       fontSize: 'var(--graph-side-panel--font-size)',
-      paddingTop: '5px',
-      paddingBottom: '5px'
+      paddingTop: '0.25rem',
+      paddingBottom: '0.25rem'
     }
   }
 });
 
 const spanSelectStyle = kialiStyle({
   maxWidth: '100%'
+});
+
+const iconStyle = kialiStyle({
+  marginRight: '0.25rem'
 });
 
 class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
@@ -152,7 +150,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
           <span className={closeBoxStyle}>
             <Tooltip content="Close and clear trace selection">
               <Button id="close-trace" variant={ButtonVariant.plain} onClick={this.props.close}>
-                <CloseIcon />
+                <KialiIcon.Close />
               </Button>
             </Tooltip>
           </span>
@@ -178,7 +176,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
           <div>
             {info.numErrors !== 0 && (
               <>
-                <ExclamationCircleIcon color={PFColors.Danger} style={{ marginRight: '0.25rem' }} />
+                <KialiIcon.ExclamationCircle color={PFColors.Danger} className={iconStyle} />
                 <strong>This trace has {pluralize(info.numErrors, 'error')}.</strong>
               </>
             )}
@@ -229,9 +227,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
             <div style={{ marginTop: '0.25rem' }}>
               <a href={jaegerTraceURL} target="_blank" rel="noopener noreferrer">
                 Show in Tracing
-                <Icon style={{ marginLeft: '0.25rem' }}>
-                  <ExternalLinkAltIcon />
-                </Icon>
+                <KialiIcon.ExternalLink className={iconStyle} />
               </a>
             </div>
           )}
@@ -356,7 +352,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
             isInline
           >
             <span style={summaryFont}>
-              <MapMarkerIcon />
+              <KialiIcon.MapMarker />
             </span>
           </Button>
         </>
@@ -422,7 +418,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
 
           <Button variant={ButtonVariant.link} onClick={() => this.props.onFocus!({ id: node[0].getId() })} isInline>
             <span style={summaryFont}>
-              <MapMarkerIcon />
+              <KialiIcon.MapMarker />
             </span>
           </Button>
         </>
@@ -467,7 +463,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
 
         {flag && (
           <div>
-            <InfoAltIcon /> {responseFlags[flag]?.help ?? 'Unknown flag'}
+            <KialiIcon.Info /> {responseFlags[flag]?.help ?? 'Unknown flag'}
           </div>
         )}
       </>

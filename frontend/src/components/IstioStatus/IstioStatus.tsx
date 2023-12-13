@@ -130,7 +130,7 @@ export class IstioStatusComponent extends React.Component<Props> {
   };
 
   render(): React.ReactNode {
-    if (this.healthyComponents()) {
+    if (!this.healthyComponents()) {
       const icons = this.props.icons ? { ...defaultIcons, ...this.props.icons } : defaultIcons;
       const iconColor = this.tooltipColor();
       let icon = ResourcesFullIcon;
@@ -151,12 +151,13 @@ export class IstioStatusComponent extends React.Component<Props> {
       }
 
       const iconProps: IconProps = {
-        className: iconStyle
+        className: iconStyle,
+        dataTestID: dataTestID
       };
 
       return (
         <Tooltip position={TooltipPosition.left} enableFlip={true} content={this.tooltipContent()} maxWidth="25rem">
-          {createIcon(iconProps, icon, iconColor, dataTestID)}
+          {createIcon(iconProps, icon, iconColor)}
         </Tooltip>
       );
     }

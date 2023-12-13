@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import {
   getBadge,
   getLink,
@@ -145,7 +144,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
         {options.map((o, i) => {
           return (
             <DropdownItem key={`option-${i}`} onClick={() => clickHandler(o, this.props.kiosk)}>
-              {o.text} {o.target === '_blank' && <ExternalLinkAltIcon />}
+              {o.text} {o.target === '_blank' && <KialiIcon.ExternalLink />}
             </DropdownItem>
           );
         })}

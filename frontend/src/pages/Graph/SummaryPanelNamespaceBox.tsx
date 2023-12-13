@@ -450,29 +450,27 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     const validation = this.state.validation;
 
     return (
-      <div key={ns}>
-        <span className={namespaceStyle}>
-          <PFBadge badge={PFBadges.Namespace} size="sm" />
-          {ns}
-          {!!validation && (
-            <div style={{ marginLeft: '0.25rem' }}>
-              <ValidationSummaryLink
-                namespace={ns}
-                objectCount={validation.objectCount}
+      <div key={ns} className={namespaceStyle}>
+        <PFBadge badge={PFBadges.Namespace} size="sm" />
+        {ns}
+        {!!validation && (
+          <div style={{ marginLeft: '0.25rem' }}>
+            <ValidationSummaryLink
+              namespace={ns}
+              objectCount={validation.objectCount}
+              errors={validation.errors}
+              warnings={validation.warnings}
+            >
+              <ValidationSummary
+                id={`ns-val-${ns}`}
                 errors={validation.errors}
                 warnings={validation.warnings}
-              >
-                <ValidationSummary
-                  id={`ns-val-${ns}`}
-                  errors={validation.errors}
-                  warnings={validation.warnings}
-                  objectCount={validation.objectCount}
-                  type="istio"
-                />
-              </ValidationSummaryLink>
-            </div>
-          )}
-        </span>
+                objectCount={validation.objectCount}
+                type="istio"
+              />
+            </ValidationSummaryLink>
+          </div>
+        )}
       </div>
     );
   };

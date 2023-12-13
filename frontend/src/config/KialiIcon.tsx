@@ -27,6 +27,7 @@ import {
   ErrorCircleOIcon,
   ExclamationCircleIcon,
   ExpandIcon,
+  ExpandArrowsAltIcon,
   ExternalLinkAltIcon,
   FileDownloadIcon,
   FilterIcon,
@@ -39,6 +40,9 @@ import {
   InProgressIcon,
   LockIcon,
   LockOpenIcon,
+  LongArrowAltRightIcon,
+  MapIcon,
+  MapMarkerIcon,
   MigrationIcon,
   MinusCircleIcon,
   MoonIcon,
@@ -48,6 +52,7 @@ import {
   PauseCircleIcon,
   PauseIcon,
   PencilAltIcon,
+  PficonDragdropIcon,
   PficonTemplateIcon,
   PlayCircleIcon,
   PlayIcon,
@@ -58,7 +63,9 @@ import {
   ShareAltIcon,
   SortAmountDownAltIcon,
   StopIcon,
+  SyncAltIcon,
   SunIcon,
+  TenantIcon,
   TrashIcon,
   TopologyIcon,
   UnknownIcon,
@@ -73,7 +80,9 @@ import { classes } from 'typestyle';
 export interface IconProps {
   className?: string;
   color?: string;
+  dataTestID?: string;
   icon?: React.ComponentClass<SVGIconProps>;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
 // keep alphabetized
@@ -95,11 +104,13 @@ export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } =
   Compress: (props: IconProps) => createIcon(props, CompressIcon),
   Copy: (props: IconProps) => createIcon(props, CopyIcon),
   Delete: (props: IconProps) => createIcon(props, MinusCircleIcon),
+  DragDrop: (props: IconProps) => createIcon(props, PficonDragdropIcon),
   Download: (props: IconProps) => createIcon(props, FileDownloadIcon),
   Equalizer: (props: IconProps) => createIcon(props, EqualizerIcon),
   Error: (props: IconProps) => createIcon(props, ErrorCircleOIcon, PFColors.Danger),
   ExclamationCircle: (props: IconProps) => createIcon(props, ExclamationCircleIcon, PFColors.Danger),
   Expand: (props: IconProps) => createIcon(props, ExpandIcon),
+  ExpandArrows: (props: IconProps) => createIcon(props, ExpandArrowsAltIcon),
   ExternalLink: (props: IconProps) => createIcon(props, ExternalLinkAltIcon),
   FaultInjection: (props: IconProps) => createIcon(props, BanIcon),
   Filter: (props: IconProps) => createIcon(props, FilterIcon),
@@ -111,6 +122,9 @@ export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } =
   InProgressIcon: (props: IconProps) => createIcon(props, InProgressIcon),
   KebabToggle: (props: IconProps) => createIcon(props, EllipsisVIcon),
   LocalTime: (props: IconProps) => createIcon(props, GlobeAmericasIcon),
+  LongArrowRight: (props: IconProps) => createIcon(props, LongArrowAltRightIcon),
+  Map: (props: IconProps) => createIcon(props, MapIcon),
+  MapMarker: (props: IconProps) => createIcon(props, MapMarkerIcon),
   Mirroring: (props: IconProps) => createIcon(props, MigrationIcon),
   Moon: (props: IconProps) => createIcon(props, MoonIcon),
   MoreLegend: (props: IconProps) => createIcon(props, EllipsisHIcon),
@@ -134,6 +148,8 @@ export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } =
   Services: (props: IconProps) => createIcon(props, ServiceIcon),
   Stop: (props: IconProps) => createIcon(props, StopIcon),
   Sun: (props: IconProps) => createIcon(props, SunIcon),
+  Sync: (props: IconProps) => createIcon(props, SyncAltIcon),
+  Tenant: (props: IconProps) => createIcon(props, TenantIcon),
   Topology: (props: IconProps) => createIcon(props, TopologyIcon),
   Trash: (props: IconProps) => createIcon(props, TrashIcon),
   TrafficShifting: (props: IconProps) => createIcon(props, ShareAltIcon),
@@ -148,8 +164,7 @@ export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } =
 export const createIcon = (
   props: IconProps,
   icon?: React.ComponentClass<SVGIconProps>,
-  colorIcon?: string,
-  dataTestID?: string
+  colorIcon?: string
 ): React.ReactElement => {
   const iconComponent = props.icon ?? icon ?? React.Fragment;
 
@@ -158,7 +173,7 @@ export const createIcon = (
   const iconStyle = iconColor ? kialiStyle({ color: iconColor }) : undefined;
 
   return (
-    <Icon className={classes(props.className, iconStyle)} data-test={dataTestID}>
+    <Icon className={classes(props.className, iconStyle)} size={props.size} data-test={props.dataTestID}>
       {React.createElement(iconComponent)}
     </Icon>
   );

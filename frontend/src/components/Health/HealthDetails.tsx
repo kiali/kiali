@@ -1,10 +1,9 @@
 import * as React from 'react';
 import * as H from '../../types/Health';
-import { InfoAltIcon } from '@patternfly/react-icons';
 import { PFColors } from '../Pf/PfColors';
-import { Icon, Title, TitleSizes } from '@patternfly/react-core';
+import { Title, TitleSizes } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import { createIcon } from 'config/KialiIcon';
+import { KialiIcon, createIcon } from 'config/KialiIcon';
 
 interface HealthDetailsProps {
   health: H.Health;
@@ -90,17 +89,11 @@ export const HealthDetails: React.FC<HealthDetailsProps> = (props: HealthDetails
 
     return showTraffic ? (
       <div key={idx}>
-        {
-          <>
-            {`${item.title}${item.text && item.text.length > 0 ? ': ' : ''} `}
+        <>
+          {`${item.title}${item.text && item.text.length > 0 ? ': ' : ''} `}
 
-            {config && (
-              <Icon color={PFColors.Color200}>
-                <InfoAltIcon />
-              </Icon>
-            )}
-          </>
-        }
+          {config && <KialiIcon.Info color={PFColors.Color200} />}
+        </>
 
         {item.text}
 

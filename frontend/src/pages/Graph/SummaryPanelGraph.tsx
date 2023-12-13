@@ -522,11 +522,9 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
 
   private renderNamespace = (ns: string): React.ReactNode => {
     return (
-      <div key={`rf-${ns}`}>
-        <span id={`ns-${ns}`} className={namespaceStyle}>
-          <PFBadge badge={PFBadges.Namespace} size="sm" />
-          {ns} {this.renderValidations(ns)}
-        </span>
+      <div key={`rf-${ns}`} id={`ns-${ns}`} className={namespaceStyle}>
+        <PFBadge badge={PFBadges.Namespace} size="sm" />
+        {ns} {this.renderValidations(ns)}
       </div>
     );
   };
