@@ -28,6 +28,8 @@ import (
 
 const allResources string = "*"
 
+var ambientEnabled *bool
+
 type IstioConfigService struct {
 	userClients         map[string]kubernetes.ClientInterface
 	config              config.Config
@@ -891,18 +893,28 @@ func (in *IstioConfigService) IsGatewayAPI(cluster string) bool {
 }
 
 func (in *IstioConfigService) GatewayAPIClasses() []config.GatewayAPIClass {
-	return kubernetes.GatewayAPIClasses(in.IsAmbientEnabled())
+	// Cached value
+	if ambientEnabled != nil {
+		return kubernetes.GatewayAPIClasses(*ambientEnabled)
+	} else {
+		return kubernetes.GatewayAPIClasses(in.IsAmbientEnabled())
+	}
+
 }
 
 // Check if istio Ambient profile was enabled
 // ATM it is defined in the istio-cni-config configmap
 func (in *IstioConfigService) IsAmbientEnabled() bool {
+	ambientEnabled = new(bool)
 	daemonset, err := in.kialiCache.GetDaemonSet(in.config.IstioNamespace, "ztunnel")
 	if err != nil {
 		log.Debugf("No ztunnel found in istio namespace: %s ", err.Error())
 	} else {
 		if daemonset != nil {
+			*ambientEnabled = true
 			return true
+		} else {
+			*ambientEnabled = false
 		}
 	}
 	return false
