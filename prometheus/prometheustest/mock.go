@@ -47,9 +47,9 @@ func (o *PromAPIMock) DeleteSeries(ctx context.Context, matches []string, startT
 	return args.Get(0).(error)
 }
 
-func (o *PromAPIMock) Flags(ctx context.Context) (prom_v1.FlagsResult, error) {
+func (o *PromAPIMock) Runtimeinfo(ctx context.Context) (prom_v1.RuntimeinfoResult, error) {
 	args := o.Called(ctx)
-	return args.Get(0).(prom_v1.FlagsResult), nil
+	return args.Get(0).(prom_v1.RuntimeinfoResult), nil
 }
 
 func (o *PromAPIMock) LabelNames(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) ([]string, prom_v1.Warnings, error) {
@@ -86,8 +86,8 @@ func (o *PromAPIMock) Rules(ctx context.Context) (prom_v1.RulesResult, error) {
 	return args.Get(0).(prom_v1.RulesResult), nil
 }
 
-func (o *PromAPIMock) Runtimeinfo(ctx context.Context) (prom_v1.RuntimeinfoResult, error) {
-	return prom_v1.RuntimeinfoResult{}, nil
+func (o *PromAPIMock) Flags(ctx context.Context) (prom_v1.FlagsResult, error) {
+	return prom_v1.FlagsResult{}, nil
 }
 
 func (o *PromAPIMock) Series(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) ([]model.LabelSet, prom_v1.Warnings, error) {
