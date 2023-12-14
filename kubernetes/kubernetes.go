@@ -6,6 +6,7 @@ import (
 	goerrors "errors"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
@@ -208,24 +209,28 @@ func (in *K8SClient) IsGatewayAPI() bool {
 		return false
 	}
 	if in.isGatewayAPI == nil {
-		isGatewayAPI := checkGatewayAPIs(in)
+		v1Types := map[string]string{
+			K8sActualGatewayType:   K8sActualGateways,
+			K8sGatewayClassType:    K8sActualGatewayClasses,
+			K8sActualHTTPRouteType: K8sActualHTTPRoutes,
+		}
+		v1beta1Types := map[string]string{
+			K8sActualReferenceGrantType: K8sActualReferenceGrants,
+		}
+		isGatewayAPIV1 := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1.String(), v1Types)
+		isGatewayAPIV1Beta1 := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1Beta1.String(), v1beta1Types)
+		isGatewayAPI := isGatewayAPIV1 && isGatewayAPIV1Beta1
 		in.isGatewayAPI = &isGatewayAPI
 	}
 	return *in.isGatewayAPI
 }
 
-func checkGatewayAPIs(in *K8SClient) bool {
+func checkGatewayAPIs(in *K8SClient, version string, types map[string]string) bool {
 	found := 0
-	res, err := in.k8s.Discovery().ServerResourcesForGroupVersion(K8sNetworkingGroupVersionV1.String())
+	res, err := in.k8s.Discovery().ServerResourcesForGroupVersion(version)
 	if err != nil {
-		log.Debugf("Error while checking K8s Gateway API CRDs: %s. K8s Gateway API will not be used.", err.Error())
+		log.Debugf("Error while checking K8s Gateway API CRDs: %s. Required K8s Gateway API version: %s. Gateway API will not be used.", version, err.Error())
 		return false
-	}
-
-	types := map[string]string{
-		K8sActualGatewayType:   K8sActualGateways,
-		K8sGatewayClassType:    K8sActualGatewayClasses,
-		K8sActualHTTPRouteType: K8sActualHTTPRoutes,
 	}
 	for _, r := range res.APIResources {
 		if name, foundKind := types[r.Kind]; foundKind && r.Name == name {
@@ -233,7 +238,11 @@ func checkGatewayAPIs(in *K8SClient) bool {
 		}
 	}
 	if found > 0 && found < len(types) {
-		log.Warningf("Not all required K8s Gateway API CRDs are installed.")
+		keys := make([]string, 0, len(types))
+		for key, _ := range types {
+			keys = append(keys, key)
+		}
+		log.Warningf("Not all required K8s Gateway API CRDs are installed for version: %s, expected: %s", version, strings.Join(keys, ", "))
 	}
 	return found == len(types)
 }
