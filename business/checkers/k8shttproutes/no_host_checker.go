@@ -2,6 +2,7 @@ package k8shttproutes
 
 import (
 	"fmt"
+	"strings"
 
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
@@ -29,7 +30,8 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 				namespace = string(*ref.Namespace)
 			}
 			fqdn := kubernetes.GetHost(string(ref.Name), namespace, n.Namespaces.GetNames())
-			if !n.checkDestination(fqdn.String(), namespace) {
+			//service name should not be set in fqdn format
+			if strings.Contains(string(ref.Name), ".") || !n.checkDestination(fqdn.String(), namespace) {
 				path := fmt.Sprintf("spec/rules[%d]/backendRefs[%d]/name", k, i)
 				validation := models.Build("k8shttproutes.nohost.namenotfound", path)
 				validations = append(validations, &validation)

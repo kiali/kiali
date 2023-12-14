@@ -222,7 +222,7 @@ var checkDescriptors = map[string]IstioCheck{
 	},
 	"k8shttproutes.nohost.namenotfound": {
 		Code:     "KIA1402",
-		Message:  "BackendRef on rule doesn't have a valid service (host not found)",
+		Message:  "BackendRef on rule doesn't have a valid service (Service name not found)",
 		Severity: ErrorSeverity,
 	},
 	"k8shttproutes.nok8sgateway": {
