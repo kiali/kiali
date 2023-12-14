@@ -56,8 +56,9 @@ type ClientInterface interface {
 // K8SClient is the client struct for Kubernetes and Istio APIs
 // It hides the way it queries each API
 type K8SClient struct {
-	token          string
-	k8s            kube.Interface
+	token string
+	k8s   kube.Interface
+
 	istioClientset istio.Interface
 	// Used for portforwarding requests.
 	restConfig *rest.Config

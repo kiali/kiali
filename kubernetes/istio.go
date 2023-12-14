@@ -13,7 +13,7 @@ import (
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	core_v1 "k8s.io/api/core/v1"
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
-	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
+	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayapiclient "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 
 	"github.com/kiali/kiali/config"
@@ -275,7 +275,7 @@ func GatewayNames(gateways []*networking_v1beta1.Gateway) map[string]struct{} {
 }
 
 // K8sGatewayNames extracts the gateway names for easier matching
-func K8sGatewayNames(gateways []*k8s_networking_v1beta1.Gateway) map[string]struct{} {
+func K8sGatewayNames(gateways []*k8s_networking_v1.Gateway) map[string]struct{} {
 	var empty struct{}
 	names := make(map[string]struct{})
 	for _, gw := range gateways {
