@@ -2,10 +2,10 @@ import React from 'react';
 import { ObjectCheck, ValidationTypes } from '../../types/IstioObjects';
 import { DEGRADED, HEALTHY, isProxyStatusSynced, mergeStatus, ProxyStatus, Status } from '../../types/Health';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { createIcon } from '../../components/Health/Helper';
 import { ProxyStatusList } from './ProxyStatusList';
 import { highestSeverity, validationToHealth } from '../../types/ServiceInfo';
 import { ValidationStack } from '../../components/Validations/ValidationStack';
+import { createIcon } from 'config/KialiIcon';
 
 type PodStatusProps = {
   checks?: ObjectCheck[];
@@ -22,7 +22,7 @@ export const PodStatus: React.FC<PodStatusProps> = (props: PodStatusProps) => {
 
   if (showTooltip()) {
     const severityIcon = (): Status => {
-      const validationSeverity: Status = validationToHealth(highestSeverity(props.checks || []));
+      const validationSeverity: Status = validationToHealth(highestSeverity(props.checks ?? []));
       return mergeStatus(proxyStatusSeverity, validationSeverity);
     };
 
@@ -35,10 +35,10 @@ export const PodStatus: React.FC<PodStatusProps> = (props: PodStatusProps) => {
 
     return (
       <Tooltip aria-label="Pod Status" position={TooltipPosition.auto} enableFlip={true} content={tooltipContent}>
-        <span>{createIcon(severityIcon(), 'md')}</span>
+        <span>{createIcon(severityIcon())}</span>
       </Tooltip>
     );
   } else {
-    return createIcon(HEALTHY, 'md');
+    return createIcon(HEALTHY);
   }
 };

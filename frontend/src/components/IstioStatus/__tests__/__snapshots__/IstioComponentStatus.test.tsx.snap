@@ -1,205 +1,205 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`IstioComponentStatus renders error icon when core component is not found 1`] = `
-<Split
-  hasGutter={true}
-  key="cell-status-icon-isito-ingress"
->
-  <SplitItem>
-    <ExclamationCircleIcon
-      style={
-        Object {
-          "color": "var(--pf-v5-global--danger-color--100)",
-          "marginTop": 5,
-        }
-      }
-    />
-  </SplitItem>
-  <SplitItem
-    isFilled={true}
+<Fragment>
+  <Split
+    className="kiali_fuhkp1b"
+    hasGutter={true}
+    key="cell-status-icon-isito-ingress"
   >
-    isito-ingress
-  </SplitItem>
-  <SplitItem>
-    Not found
-  </SplitItem>
-</Split>
+    <SplitItem>
+      <Icon
+        className="kiali_fi2mdky kiali_f1h37jb8"
+      >
+        <ExclamationCircleIcon />
+      </Icon>
+    </SplitItem>
+    <SplitItem
+      isFilled={true}
+    >
+      isito-ingress
+    </SplitItem>
+    <SplitItem>
+      Not found
+    </SplitItem>
+  </Split>
+</Fragment>
 `;
 
 exports[`IstioComponentStatus renders error icon when core component is not running 1`] = `
-<Split
-  hasGutter={true}
-  key="cell-status-icon-isito-ingress"
->
-  <SplitItem>
-    <ExclamationCircleIcon
-      style={
-        Object {
-          "color": "var(--pf-v5-global--danger-color--100)",
-          "marginTop": 5,
-        }
-      }
-    />
-  </SplitItem>
-  <SplitItem
-    isFilled={true}
+<Fragment>
+  <Split
+    className="kiali_fuhkp1b"
+    hasGutter={true}
+    key="cell-status-icon-isito-ingress"
   >
-    isito-ingress
-  </SplitItem>
-  <SplitItem>
-    Not healthy
-  </SplitItem>
-</Split>
+    <SplitItem>
+      <Icon
+        className="kiali_fi2mdky kiali_f1h37jb8"
+      >
+        <ExclamationCircleIcon />
+      </Icon>
+    </SplitItem>
+    <SplitItem
+      isFilled={true}
+    >
+      isito-ingress
+    </SplitItem>
+    <SplitItem>
+      Not healthy
+    </SplitItem>
+  </Split>
+</Fragment>
 `;
 
 exports[`IstioComponentStatus renders minus icon when addon component is not ready 1`] = `
-<Split
-  hasGutter={true}
-  key="cell-status-icon-addon"
->
-  <SplitItem>
-    <MinusCircleIcon
-      style={
-        Object {
-          "color": "var(--pf-v5-global--info-color--100)",
-          "marginTop": 5,
-        }
-      }
-    />
-  </SplitItem>
-  <SplitItem
-    isFilled={true}
+<Fragment>
+  <Split
+    className="kiali_fuhkp1b"
+    hasGutter={true}
+    key="cell-status-icon-addon"
   >
-    addon
-  </SplitItem>
-  <SplitItem>
-    Not ready
-  </SplitItem>
-</Split>
+    <SplitItem>
+      <Icon
+        className="kiali_fi2mdky kiali_f1elceoh"
+      >
+        <MinusCircleIcon />
+      </Icon>
+    </SplitItem>
+    <SplitItem
+      isFilled={true}
+    >
+      addon
+    </SplitItem>
+    <SplitItem>
+      Not ready
+    </SplitItem>
+  </Split>
+</Fragment>
 `;
 
 exports[`IstioComponentStatus renders minus icon when core component is not ready 1`] = `
-<Split
-  hasGutter={true}
-  key="cell-status-icon-core"
->
-  <SplitItem>
-    <MinusCircleIcon
-      style={
-        Object {
-          "color": "var(--pf-v5-global--info-color--100)",
-          "marginTop": 5,
-        }
-      }
-    />
-  </SplitItem>
-  <SplitItem
-    isFilled={true}
+<Fragment>
+  <Split
+    className="kiali_fuhkp1b"
+    hasGutter={true}
+    key="cell-status-icon-core"
   >
-    core
-  </SplitItem>
-  <SplitItem>
-    Not ready
-  </SplitItem>
-</Split>
+    <SplitItem>
+      <Icon
+        className="kiali_fi2mdky kiali_f1elceoh"
+      >
+        <MinusCircleIcon />
+      </Icon>
+    </SplitItem>
+    <SplitItem
+      isFilled={true}
+    >
+      core
+    </SplitItem>
+    <SplitItem>
+      Not ready
+    </SplitItem>
+  </Split>
+</Fragment>
 `;
 
 exports[`IstioComponentStatus renders success icon when core component is running 1`] = `
-<Split
-  hasGutter={true}
-  key="cell-status-icon-isito-ingress"
->
-  <SplitItem>
-    <CheckCircleIcon
-      style={
-        Object {
-          "color": "var(--pf-v5-global--success-color--100)",
-          "marginTop": 5,
-        }
-      }
-    />
-  </SplitItem>
-  <SplitItem
-    isFilled={true}
+<Fragment>
+  <Split
+    className="kiali_fuhkp1b"
+    hasGutter={true}
+    key="cell-status-icon-isito-ingress"
   >
-    isito-ingress
-  </SplitItem>
-  <SplitItem />
-</Split>
+    <SplitItem>
+      <Icon
+        className="kiali_fi2mdky kiali_f1r5cf3w"
+      >
+        <CheckCircleIcon />
+      </Icon>
+    </SplitItem>
+    <SplitItem
+      isFilled={true}
+    >
+      isito-ingress
+    </SplitItem>
+    <SplitItem />
+  </Split>
+</Fragment>
 `;
 
 exports[`IstioComponentStatus renders success icon when core component is running 2`] = `
-<Split
-  hasGutter={true}
-  key="cell-status-icon-prometheus"
->
-  <SplitItem>
-    <CheckCircleIcon
-      style={
-        Object {
-          "color": "var(--pf-v5-global--success-color--100)",
-          "marginTop": 5,
-        }
-      }
-    />
-  </SplitItem>
-  <SplitItem
-    isFilled={true}
+<Fragment>
+  <Split
+    className="kiali_fuhkp1b"
+    hasGutter={true}
+    key="cell-status-icon-prometheus"
   >
-    prometheus
-  </SplitItem>
-  <SplitItem />
-</Split>
+    <SplitItem>
+      <Icon
+        className="kiali_fi2mdky kiali_f1r5cf3w"
+      >
+        <CheckCircleIcon />
+      </Icon>
+    </SplitItem>
+    <SplitItem
+      isFilled={true}
+    >
+      prometheus
+    </SplitItem>
+    <SplitItem />
+  </Split>
+</Fragment>
 `;
 
 exports[`IstioComponentStatus renders warning icon when core component is not found 1`] = `
-<Split
-  hasGutter={true}
-  key="cell-status-icon-prometheus"
->
-  <SplitItem>
-    <ExclamationTriangleIcon
-      style={
-        Object {
-          "color": "var(--pf-v5-global--warning-color--100)",
-          "marginTop": 5,
-        }
-      }
-    />
-  </SplitItem>
-  <SplitItem
-    isFilled={true}
+<Fragment>
+  <Split
+    className="kiali_fuhkp1b"
+    hasGutter={true}
+    key="cell-status-icon-prometheus"
   >
-    prometheus
-  </SplitItem>
-  <SplitItem>
-    Not found
-  </SplitItem>
-</Split>
+    <SplitItem>
+      <Icon
+        className="kiali_fi2mdky kiali_frkkrth"
+      >
+        <ExclamationTriangleIcon />
+      </Icon>
+    </SplitItem>
+    <SplitItem
+      isFilled={true}
+    >
+      prometheus
+    </SplitItem>
+    <SplitItem>
+      Not found
+    </SplitItem>
+  </Split>
+</Fragment>
 `;
 
 exports[`IstioComponentStatus renders warning icon when core component is not running 1`] = `
-<Split
-  hasGutter={true}
-  key="cell-status-icon-prometheus"
->
-  <SplitItem>
-    <ExclamationTriangleIcon
-      style={
-        Object {
-          "color": "var(--pf-v5-global--warning-color--100)",
-          "marginTop": 5,
-        }
-      }
-    />
-  </SplitItem>
-  <SplitItem
-    isFilled={true}
+<Fragment>
+  <Split
+    className="kiali_fuhkp1b"
+    hasGutter={true}
+    key="cell-status-icon-prometheus"
   >
-    prometheus
-  </SplitItem>
-  <SplitItem>
-    Not healthy
-  </SplitItem>
-</Split>
+    <SplitItem>
+      <Icon
+        className="kiali_fi2mdky kiali_frkkrth"
+      >
+        <ExclamationTriangleIcon />
+      </Icon>
+    </SplitItem>
+    <SplitItem
+      isFilled={true}
+    >
+      prometheus
+    </SplitItem>
+    <SplitItem>
+      Not healthy
+    </SplitItem>
+  </Split>
+</Fragment>
 `;

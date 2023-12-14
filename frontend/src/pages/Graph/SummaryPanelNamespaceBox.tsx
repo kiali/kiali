@@ -38,22 +38,22 @@ import { descendents, edgesIn, edgesInOut, edgesOut, elems, select, selectOr } f
 import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 
 type SummaryPanelNamespaceBoxMetricsState = {
-  grpcRequestIn: Datapoint[];
-  grpcRequestOut: Datapoint[];
-  grpcRequestErrIn: Datapoint[];
-  grpcRequestErrOut: Datapoint[];
-  grpcSentIn: Datapoint[];
-  grpcSentOut: Datapoint[];
   grpcReceivedIn: Datapoint[];
   grpcReceivedOut: Datapoint[];
-  httpRequestIn: Datapoint[];
-  httpRequestOut: Datapoint[];
+  grpcRequestErrIn: Datapoint[];
+  grpcRequestErrOut: Datapoint[];
+  grpcRequestIn: Datapoint[];
+  grpcRequestOut: Datapoint[];
+  grpcSentIn: Datapoint[];
+  grpcSentOut: Datapoint[];
   httpRequestErrIn: Datapoint[];
   httpRequestErrOut: Datapoint[];
-  tcpSentIn: Datapoint[];
-  tcpSentOut: Datapoint[];
+  httpRequestIn: Datapoint[];
+  httpRequestOut: Datapoint[];
   tcpReceivedIn: Datapoint[];
   tcpReceivedOut: Datapoint[];
+  tcpSentIn: Datapoint[];
+  tcpSentOut: Datapoint[];
 };
 
 type SummaryPanelNamespaceBoxState = SummaryPanelNamespaceBoxMetricsState & {
@@ -110,7 +110,8 @@ const topologyStyle = kialiStyle({
 
 const namespaceStyle = kialiStyle({
   display: 'flex',
-  alignItems: 'center'
+  alignItems: 'center',
+  marginBottom: '1rem'
 });
 
 export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropType, SummaryPanelNamespaceBoxState> {
@@ -132,7 +133,10 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     this.state = { ...defaultState };
   }
 
-  static getDerivedStateFromProps(props: SummaryPanelPropType, state: SummaryPanelNamespaceBoxState) {
+  static getDerivedStateFromProps(
+    props: SummaryPanelPropType,
+    state: SummaryPanelNamespaceBoxState
+  ): Partial<SummaryPanelNamespaceBoxState> | null {
     // if the summaryTarget (i.e. namespaceBox) has changed, then init the state and set to loading. The loading
     // will actually be kicked off after the render (in componentDidMount/Update).
     return props.data.summaryTarget !== state.namespaceBox
@@ -140,13 +144,13 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
       : null;
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.boxTraffic = this.getBoxTraffic();
     this.updateCharts(!!this.props.data.isPF);
     this.updateValidation(!!this.props.data.isPF);
   }
 
-  componentDidUpdate(prevProps: SummaryPanelPropType) {
+  componentDidUpdate(prevProps: SummaryPanelPropType): void {
     if (shouldRefreshData(prevProps, this.props)) {
       this.boxTraffic = this.getBoxTraffic();
       this.updateCharts(!!this.props.data.isPF);
@@ -154,7 +158,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     if (this.metricsPromise) {
       this.metricsPromise.cancel();
     }
@@ -163,7 +167,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     }
   }
 
-  render() {
+  render(): React.ReactNode {
     const isPF = !!this.props.data.isPF;
     const namespaceBox = this.props.data.summaryTarget;
     const data = isPF ? namespaceBox.getData() : namespaceBox.data();
@@ -446,11 +450,11 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     const validation = this.state.validation;
 
     return (
-      <React.Fragment key={ns}>
-        <span className={namespaceStyle}>
-          <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '0.125rem' }} />
-          {ns}{' '}
-          {!!validation && (
+      <div key={ns} className={namespaceStyle}>
+        <PFBadge badge={PFBadges.Namespace} size="sm" />
+        {ns}
+        {!!validation && (
+          <div style={{ marginLeft: '0.25rem' }}>
             <ValidationSummaryLink
               namespace={ns}
               objectCount={validation.objectCount}
@@ -462,14 +466,12 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
                 errors={validation.errors}
                 warnings={validation.warnings}
                 objectCount={validation.objectCount}
-                style={{ marginLeft: '0.25rem' }}
                 type="istio"
               />
             </ValidationSummaryLink>
-          )}
-        </span>
-        <br />
-      </React.Fragment>
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -482,35 +484,32 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
   ): React.ReactNode => (
     <>
       {numApps > 0 && (
-        <>
+        <div>
           <KialiIcon.Applications className={topologyStyle} />
           {numApps.toString()} {numApps === 1 ? 'app ' : 'apps '}
           {numVersions > 0 && `(${numVersions} versions)`}
-          <br />
-        </>
+        </div>
       )}
 
       {numSvc > 0 && (
-        <>
+        <div>
           <KialiIcon.Services className={topologyStyle} />
           {numSvc.toString()} {numSvc === 1 ? 'service' : 'services'}
-          <br />
-        </>
+        </div>
       )}
 
       {numWorkloads > 0 && (
-        <>
+        <div>
           <KialiIcon.Workloads className={topologyStyle} />
           {numWorkloads.toString()} {numWorkloads === 1 ? 'workload' : 'workloads'}
-          <br />
-        </>
+        </div>
       )}
 
       {numEdges > 0 && (
-        <>
+        <div>
           <KialiIcon.Topology className={topologyStyle} />
           {numEdges.toString()} {numEdges === 1 ? 'edge' : 'edges'}
-        </>
+        </div>
       )}
     </>
   );
@@ -696,7 +695,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
 
     this.metricsPromise.promise
       .then(responses => {
-        const comparator = (labels: Labels, protocol?: Protocol) => {
+        const comparator = (labels: Labels, protocol?: Protocol): boolean => {
           return protocol ? labels.request_protocol === protocol : true;
         };
 

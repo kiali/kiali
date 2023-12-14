@@ -1,12 +1,10 @@
 import * as React from 'react';
 import { ObjectValidation, StatusCondition, ValidationTypes } from '../../types/IstioObjects';
 import { ValidationSummary } from './ValidationSummary';
-import { CSSProperties } from 'react';
 
 interface Props {
   id: string;
   reconciledCondition?: StatusCondition;
-  style?: CSSProperties;
   validations: ObjectValidation[];
 }
 
@@ -30,7 +28,6 @@ export const ValidationObjectSummary: React.FC<Props> = (props: Props) => {
       errors={numberOfChecks(ValidationTypes.Error)}
       warnings={numberOfChecks(ValidationTypes.Warning)}
       reconciledCondition={props.reconciledCondition}
-      style={props.style}
       type="istio"
     />
   );

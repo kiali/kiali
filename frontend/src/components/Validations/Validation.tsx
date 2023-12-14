@@ -1,15 +1,15 @@
-import React, { CSSProperties } from 'react';
+import React from 'react';
 import {
   CheckCircleIcon,
   ExclamationCircleIcon,
   ExclamationTriangleIcon,
   InfoCircleIcon
 } from '@patternfly/react-icons';
-import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import { ValidationTypes } from '../../types/IstioObjects';
 import { Text, TextVariants } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
+import { IconProps, createIcon } from 'config/KialiIcon';
 
 const validationStyle = kialiStyle({
   textAlign: 'left',
@@ -20,49 +20,33 @@ const validationStyle = kialiStyle({
   }
 });
 
-type ValidationProps = ValidationDescription & {
-  iconStyle?: React.CSSProperties;
-  messageColor?: boolean;
-  size?: string;
-  textStyle?: React.CSSProperties;
-};
-
-export type ValidationDescription = {
+type ValidationProps = {
   message?: string;
+  messageColor?: boolean;
   severity: ValidationTypes;
 };
 
-export type ValidationType = {
-  color: string;
-  icon: React.ComponentClass<SVGIconProps>;
-  name: string;
-};
-
-const ErrorValidation: ValidationType = {
-  name: 'Not Valid',
+const ErrorValidation: IconProps = {
   color: PFColors.Danger,
   icon: ExclamationCircleIcon
 };
 
-const WarningValidation: ValidationType = {
-  name: 'Warning',
+const WarningValidation: IconProps = {
   color: PFColors.Warning,
   icon: ExclamationTriangleIcon
 };
 
-const InfoValidation: ValidationType = {
-  name: 'Info',
+const InfoValidation: IconProps = {
   color: PFColors.Info,
   icon: InfoCircleIcon
 };
 
-const CorrectValidation: ValidationType = {
-  name: 'Valid',
+const CorrectValidation: IconProps = {
   color: PFColors.Success,
   icon: CheckCircleIcon
 };
 
-export const severityToValidation: { [severity: string]: ValidationType } = {
+const severityToValidation: { [severity: string]: IconProps } = {
   correct: CorrectValidation,
   error: ErrorValidation,
   info: InfoValidation,
@@ -71,37 +55,27 @@ export const severityToValidation: { [severity: string]: ValidationType } = {
 
 export const Validation: React.FC<ValidationProps> = (props: ValidationProps) => {
   const validation = severityToValidation[props.severity];
-  const IconComponent = validation.icon;
   const severityColor = { color: validation.color };
   const hasMessage = !!props.message;
 
-  // Set text style
-  const colorMessage = props.messageColor ?? false;
-  const textStyle = props.textStyle ?? {};
+  // Set styles
+  const textStyle = props.messageColor ? severityColor : {};
+  const iconStyle = kialiStyle(severityColor);
 
-  if (colorMessage) {
-    Object.assign(textStyle, severityColor);
-  }
-
-  // Set icon style
-  const iconStyle = props.iconStyle ? { ...props.iconStyle } : {};
-
-  const defaultStyle: CSSProperties = {
-    verticalAlign: '-0.125rem'
+  const iconProps = {
+    className: iconStyle,
+    icon: validation.icon
   };
-
-  Object.assign(iconStyle, severityColor);
-  Object.assign(iconStyle, defaultStyle);
 
   if (hasMessage) {
     return (
       <div className={validationStyle}>
         <Text component={TextVariants.p} style={textStyle}>
-          <IconComponent style={iconStyle} /> {props.message}
+          {createIcon(iconProps)} {props.message}
         </Text>
       </div>
     );
   } else {
-    return <IconComponent style={iconStyle} />;
+    return <>{createIcon(iconProps)}</>;
   }
 };

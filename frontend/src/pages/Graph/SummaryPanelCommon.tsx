@@ -60,7 +60,7 @@ const hrStyle = kialiStyle({
   margin: '0.5rem 0'
 });
 
-export const hr = () => {
+export const hr = (): React.ReactNode => {
   return <hr className={hrStyle} />;
 };
 
@@ -212,10 +212,5 @@ export const getTitle = (title: string): React.ReactNode => {
       title = 'Workload';
       break;
   }
-  return (
-    <div className={summaryTitle}>
-      {title}
-      <br />
-    </div>
-  );
+  return <div className={summaryTitle}>{title}</div>;
 };

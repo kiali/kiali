@@ -35,6 +35,14 @@ declare namespace Cypress {
     getBySel(selector: string, ...args: any): Chainable<Subject>;
 
     /**
+     * Custom command to check if a DOM element has specific CSS variable
+     * @param styleName the style name (e.g., color, margin, padding)
+     * @param cssVarName the css variable name
+     * @example cy.get(...).hasCssVar('color','--my-color')
+     */
+    hasCssVar(styleName: string, cssVarName: string): void;
+
+    /**
      * Custom command to check text validation for inputs.
      * @param id the input identifier
      * @param text the text to validate
@@ -54,6 +62,9 @@ declare namespace Cypress {
      */
     login(username: string, password: string): Chainable<Subject>;
 
+    /**
+     * Logout from Kiali
+     */
     logout(): Chainable<Subject>;
   }
 }
@@ -64,16 +75,17 @@ let haveCookie = Cypress.env('cookie');
 //   302: https://localhost:8080/login?redirect=%2F
 // to:
 //   https://localhost:8080/login?redirect=%2F
-function parseRedirect(redirect: string) {
+const parseRedirect = (redirect: string): string => {
   return redirect.replace('302: ', '');
-}
+};
 
 // finishLogin is only separated because we need to chain off .then
 // and this same block is repeated.
-function finishLogin(authEndpoint: string, username: string, password: string) {
+const finishLogin = (authEndpoint: string, username: string, password: string): void => {
   const openshiftLoginEndpointURL = new URL(authEndpoint);
   const openshiftLoginEndpoint = openshiftLoginEndpointURL.origin + openshiftLoginEndpointURL.pathname;
   const loginParams = new URLSearchParams(openshiftLoginEndpointURL.search);
+
   cy.getCookie('csrf').then(cookie => {
     cy.request({
       url: openshiftLoginEndpoint,
@@ -88,6 +100,7 @@ function finishLogin(authEndpoint: string, username: string, password: string) {
     }).then(resp => {
       const kialiURLWithToken = new URL(resp.redirects[1].replace('302: ', ''));
       const kialiParams = new URLSearchParams(kialiURLWithToken.hash.slice(1));
+
       cy.request({
         url: 'api/authenticate',
         body: {
@@ -101,7 +114,7 @@ function finishLogin(authEndpoint: string, username: string, password: string) {
       });
     });
   });
-}
+};
 
 Cypress.Commands.add('login', (username: string, password: string) => {
   cy.log(`auth cookie is: ${haveCookie}`);
@@ -219,4 +232,19 @@ Cypress.Commands.add('inputValidation', (id: string, text: string, valid = true)
   cy.get(`input[id="${id}"]`).type(text);
   cy.get(`input[id="${id}"]`).should('have.attr', 'aria-invalid', `${!valid}`);
   cy.get(`input[id="${id}"]`).clear();
+});
+
+Cypress.Commands.add('hasCssVar', { prevSubject: true }, (subject, styleName, cssVarName) => {
+  cy.document().then(doc => {
+    const dummy = doc.createElement('span');
+    dummy.style.setProperty(styleName, `var(${cssVarName})`);
+    doc.body.appendChild(dummy);
+
+    const evaluatedStyle = window.getComputedStyle(dummy).getPropertyValue(styleName).trim();
+    dummy.remove();
+
+    cy.wrap(subject)
+      .then($el => window.getComputedStyle($el[0]).getPropertyValue(styleName).trim())
+      .should('eq', evaluatedStyle);
+  });
 });

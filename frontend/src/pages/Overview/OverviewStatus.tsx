@@ -6,13 +6,13 @@ import { Paths } from '../../config';
 import { ActiveFilter, DEFAULT_LABEL_OPERATION } from '../../types/Filters';
 import { healthFilter } from '../../components/Filters/CommonFilters';
 import { FilterSelected } from '../../components/Filters/StatefulFilters';
-import { createIcon } from '../../components/Health/Helper';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskGraphAction } from '../../components/Kiosk/KioskActions';
 import { durationSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { DurationInSeconds, IntervalInMilliseconds } from '../../types/Common';
 import { healthIndicatorStyle } from 'styles/HealthStyle';
+import { createIcon } from 'config/KialiIcon';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -65,7 +65,7 @@ const OverviewStatusComponent: React.FC<Props> = (props: Props) => {
       {items.map((app, idx) => {
         return (
           <div data-test={`${props.id}-${app}`} key={`${props.id}-${idx}`}>
-            <span style={{ marginRight: '0.5rem' }}>{createIcon(props.status, 'sm')}</span> {app}
+            <span style={{ marginRight: '0.5rem' }}>{createIcon(props.status)}</span> {app}
           </div>
         );
       })}

@@ -40,22 +40,22 @@ import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 
 type SummaryPanelGraphMetricsState = {
-  grpcRequestIn: Datapoint[];
-  grpcRequestOut: Datapoint[];
-  grpcRequestErrIn: Datapoint[];
-  grpcRequestErrOut: Datapoint[];
-  grpcSentIn: Datapoint[];
-  grpcSentOut: Datapoint[];
   grpcReceivedIn: Datapoint[];
   grpcReceivedOut: Datapoint[];
-  httpRequestIn: Datapoint[];
-  httpRequestOut: Datapoint[];
+  grpcRequestErrIn: Datapoint[];
+  grpcRequestErrOut: Datapoint[];
+  grpcRequestIn: Datapoint[];
+  grpcRequestOut: Datapoint[];
+  grpcSentIn: Datapoint[];
+  grpcSentOut: Datapoint[];
   httpRequestErrIn: Datapoint[];
   httpRequestErrOut: Datapoint[];
-  tcpSentIn: Datapoint[];
-  tcpSentOut: Datapoint[];
+  httpRequestIn: Datapoint[];
+  httpRequestOut: Datapoint[];
   tcpReceivedIn: Datapoint[];
   tcpReceivedOut: Datapoint[];
+  tcpSentIn: Datapoint[];
+  tcpSentOut: Datapoint[];
 };
 
 // TODO replace with real type
@@ -128,7 +128,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
   };
 
   private graphTraffic?: SummaryPanelGraphTraffic;
-  private isPF: boolean = false;
+  private isPF = false;
   private metricsPromise?: CancelablePromise<Response<IstioMetricsMap>[]>;
   private validationSummaryPromises: PromisesRegistry = new PromisesRegistry();
 
@@ -139,7 +139,10 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     this.state = { ...defaultState };
   }
 
-  static getDerivedStateFromProps(props: SummaryPanelPropType, state: SummaryPanelGraphState) {
+  static getDerivedStateFromProps(
+    props: SummaryPanelPropType,
+    state: SummaryPanelGraphState
+  ): Partial<SummaryPanelGraphState> | null {
     // if the summaryTarget (i.e. graph) has changed, then init the state and set to loading. The loading
     // will actually be kicked off after the render (in componentDidMount/Update).
     return props.data.summaryTarget !== state.graph
@@ -147,7 +150,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
       : null;
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     if (this.shouldShowCharts()) {
       this.graphTraffic = this.getGraphTraffic();
       this.updateCharts();
@@ -155,7 +158,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     this.updateValidations();
   }
 
-  componentDidUpdate(prevProps: SummaryPanelPropType) {
+  componentDidUpdate(prevProps: SummaryPanelPropType): void {
     if (shouldRefreshData(prevProps, this.props)) {
       if (this.shouldShowCharts()) {
         this.graphTraffic = this.getGraphTraffic();
@@ -165,7 +168,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     if (this.metricsPromise) {
       this.metricsPromise.cancel();
     }
@@ -174,7 +177,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     }
   }
 
-  render() {
+  render(): React.ReactNode {
     let numSvc: number,
       numWorkloads: number,
       numApps: number,
@@ -485,7 +488,11 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
   };
 
   private renderNamespacesSummary = (): React.ReactNode => {
-    return this.props.namespaces.map(namespace => this.renderNamespace(namespace.name));
+    return (
+      <div style={{ marginBottom: '1rem' }}>
+        {this.props.namespaces.map(namespace => this.renderNamespace(namespace.name))}
+      </div>
+    );
   };
 
   private renderValidations = (ns: string): React.ReactNode => {
@@ -494,33 +501,31 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
       return undefined;
     }
     return (
-      <ValidationSummaryLink
-        namespace={ns}
-        objectCount={validation.objectCount}
-        errors={validation.errors}
-        warnings={validation.warnings}
-      >
-        <ValidationSummary
-          id={`ns-val-${ns}`}
+      <div style={{ marginLeft: '0.25rem' }}>
+        <ValidationSummaryLink
+          namespace={ns}
+          objectCount={validation.objectCount}
           errors={validation.errors}
           warnings={validation.warnings}
-          objectCount={validation.objectCount}
-          style={{ marginLeft: '0.25rem' }}
-          type="istio"
-        />
-      </ValidationSummaryLink>
+        >
+          <ValidationSummary
+            id={`ns-val-${ns}`}
+            errors={validation.errors}
+            warnings={validation.warnings}
+            objectCount={validation.objectCount}
+            type="istio"
+          />
+        </ValidationSummaryLink>
+      </div>
     );
   };
 
   private renderNamespace = (ns: string): React.ReactNode => {
     return (
-      <React.Fragment key={`rf-${ns}`}>
-        <span id={`ns-${ns}`} className={namespaceStyle}>
-          <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '0.125rem' }} />
-          {ns} {this.renderValidations(ns)}
-        </span>
-        <br />
-      </React.Fragment>
+      <div key={`rf-${ns}`} id={`ns-${ns}`} className={namespaceStyle}>
+        <PFBadge badge={PFBadges.Namespace} size="sm" />
+        {ns} {this.renderValidations(ns)}
+      </div>
     );
   };
 
@@ -533,35 +538,32 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
   ): React.ReactNode => (
     <>
       {numApps > 0 && (
-        <>
+        <div>
           <KialiIcon.Applications className={topologyStyle} />
           {numApps.toString()} {numApps === 1 ? 'app ' : 'apps '}
           {numVersions > 0 && `(${numVersions} versions)`}
-          <br />
-        </>
+        </div>
       )}
 
       {numSvc > 0 && (
-        <>
+        <div>
           <KialiIcon.Services className={topologyStyle} />
           {numSvc.toString()} {numSvc === 1 ? 'service' : 'services'}
-          <br />
-        </>
+        </div>
       )}
 
       {numWorkloads > 0 && (
-        <>
+        <div>
           <KialiIcon.Workloads className={topologyStyle} />
           {numWorkloads.toString()} {numWorkloads === 1 ? 'workload' : 'workloads'}
-          <br />
-        </>
+        </div>
       )}
 
       {numEdges > 0 && (
-        <>
+        <div>
           <KialiIcon.Topology className={topologyStyle} />
           {numEdges.toString()} {numEdges === 1 ? 'edge' : 'edges'}
-        </>
+        </div>
       )}
     </>
   );
@@ -730,7 +732,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
 
     this.metricsPromise.promise
       .then(responses => {
-        const comparator = (labels: Labels, protocol?: Protocol) => {
+        const comparator = (labels: Labels, protocol?: Protocol): boolean => {
           return protocol ? labels.request_protocol === protocol : true;
         };
 

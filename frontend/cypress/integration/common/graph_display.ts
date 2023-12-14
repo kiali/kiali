@@ -22,7 +22,7 @@ Before(() => {
 When('user graphs {string} namespaces', namespaces => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
   cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
-  cy.visit(url + `/graph/namespaces?refresh=0&namespaces=${namespaces}`);
+  cy.visit(`${url}/graph/namespaces?refresh=0&namespaces=${namespaces}`);
   if (namespaces !== '') {
     cy.wait('@graphNamespaces');
   }
@@ -111,7 +111,7 @@ Then(`user sees empty graph`, () => {
 });
 
 Then(`user sees the {string} namespace`, ns => {
-  cy.get('div#summary-panel-graph').find('div#summary-panel-graph-heading').find(`span#ns-${ns}`).should('be.visible');
+  cy.get('div#summary-panel-graph').find('div#summary-panel-graph-heading').find(`div#ns-${ns}`).should('be.visible');
 });
 
 Then('the display menu opens', () => {
@@ -321,7 +321,7 @@ Then('{string} option {string} in the graph', (option: string, action: string) =
   validateInput(option, action);
 });
 
-And('the {string} option should {string} and {string}', (option:string, optionState:string, checkState:string) => {
+And('the {string} option should {string} and {string}', (option: string, optionState: string, checkState: string) => {
   switch (option) {
     case 'operation nodes':
       option = 'filterOperationNodes';
@@ -332,11 +332,13 @@ And('the {string} option should {string} and {string}', (option:string, optionSt
     default:
       option = 'xxx';
   }
-  cy.get('div#graph-display-menu').find(`input#${option}`).should(optionState.replaceAll(' ','.')).and(`be.${checkState}`);
+  cy.get('div#graph-display-menu')
+    .find(`input#${option}`)
+    .should(optionState.replaceAll(' ', '.'))
+    .and(`be.${checkState}`);
 });
 
-
-And('only a single cluster box should be visible',() =>{
+And('only a single cluster box should be visible', () => {
   cy.waitForReact();
   cy.getReact('CytoscapeGraph')
     .should('have.length', '1')
@@ -349,7 +351,7 @@ And('only a single cluster box should be visible',() =>{
     });
 });
 
-function validateInput(option: string, action: string) {
+function validateInput(option: string, action: string): void {
   if (action.startsWith('appear')) {
     cy.get('div#graph-display-menu')
       .find(`input#${option}`)

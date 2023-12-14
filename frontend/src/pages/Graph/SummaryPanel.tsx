@@ -27,21 +27,25 @@ type SummaryPanelState = {
   isVisible: boolean;
 };
 
-type MainSummaryPanelPropType = SummaryPanelPropType & {
-  isPageVisible: boolean;
+type ReduxProps = {
   kiosk: string;
-  onDeleteTrafficRouting?: (key: string, serviceDetails: ServiceDetailsInfo) => void;
-  onFocus?: (focusNode: FocusNode) => void;
-  onLaunchWizard?: (
-    key: WizardAction,
-    mode: WizardMode,
-    namespace: string,
-    serviceDetails: ServiceDetailsInfo,
-    gateways: string[],
-    peerAuths: PeerAuthentication[]
-  ) => void;
   tracingState: TracingState;
 };
+
+type MainSummaryPanelPropType = SummaryPanelPropType &
+  ReduxProps & {
+    isPageVisible: boolean;
+    onDeleteTrafficRouting?: (key: string, serviceDetails: ServiceDetailsInfo) => void;
+    onFocus?: (focusNode: FocusNode) => void;
+    onLaunchWizard?: (
+      key: WizardAction,
+      mode: WizardMode,
+      namespace: string,
+      serviceDetails: ServiceDetailsInfo,
+      gateways: string[],
+      peerAuths: PeerAuthentication[]
+    ) => void;
+  };
 
 const mainStyle = kialiStyle({
   fontSize: 'var(--graph-side-panel--font-size)',
@@ -56,7 +60,7 @@ const expandedHalfStyle = kialiStyle({ height: '50%' });
 
 const collapsedStyle = kialiStyle({
   $nest: {
-    ['& > .' + panelStyle]: {
+    [`& > .${panelStyle}`]: {
       display: 'none'
     }
   }
@@ -97,7 +101,7 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
     }
   }
 
-  render() {
+  render(): React.ReactNode {
     if (!this.props.isPageVisible || !this.props.data.summaryTarget) {
       return null;
     }
@@ -134,8 +138,10 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
                 </>
               )}
             </div>
+
             {this.getSummaryPanel(this.props.data)}
           </div>
+
           {this.props.tracingState.selectedTrace && this.state.isVisible && (
             <div className={classes(panelStyle, summaryPanelBottomSplit)}>
               <div className={panelBodyStyle}>
@@ -251,14 +257,14 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
     }
   };
 
-  private togglePanel = () => {
+  private togglePanel = (): void => {
     this.setState((state: SummaryPanelState) => ({
       isVisible: !state.isVisible
     }));
   };
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   kiosk: state.globalState.kiosk,
   tracingState: state.tracingState
 });

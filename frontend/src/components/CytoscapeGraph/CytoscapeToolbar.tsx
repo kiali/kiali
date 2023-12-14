@@ -1,14 +1,6 @@
 import * as React from 'react';
 import * as Cy from 'cytoscape';
-import { Button, ButtonVariant, Icon, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import {
-  LongArrowAltRightIcon,
-  ExpandArrowsAltIcon,
-  MapIcon,
-  PficonDragdropIcon,
-  TenantIcon,
-  TopologyIcon
-} from '@patternfly/react-icons';
+import { Button, ButtonVariant, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
@@ -28,24 +20,28 @@ import { KialiDagreGraph } from './graphs/KialiDagreGraph';
 import { KialiGridGraph } from './graphs/KialiGridGraph';
 import { KialiConcentricGraph } from './graphs/KialiConcentricGraph';
 import { KialiBreadthFirstGraph } from './graphs/KialiBreadthFirstGraph';
+import { KialiIcon } from 'config/KialiIcon';
 
-type ReduxProps = {
-  edgeMode: EdgeMode;
+type ReduxStateProps = {
   boxByNamespace: boolean;
+  edgeMode: EdgeMode;
   layout: Layout;
   namespaceLayout: Layout;
   showLegend: boolean;
+};
 
+type ReduxDispatchProps = {
   setEdgeMode: (edgeMode: EdgeMode) => void;
   setLayout: (layout: Layout) => void;
   setNamespaceLayout: (layout: Layout) => void;
   toggleLegend: () => void;
 };
 
-type CytoscapeToolbarProps = ReduxProps & {
-  cytoscapeGraphRef: any;
-  disabled: boolean;
-};
+type CytoscapeToolbarProps = ReduxStateProps &
+  ReduxDispatchProps & {
+    cytoscapeGraphRef: any;
+    disabled: boolean;
+  };
 
 type CytoscapeToolbarState = {
   allowGrab: boolean;
@@ -55,21 +51,23 @@ const activeButtonStyle = kialiStyle({
   color: PFColors.Active
 });
 
-const buttonStyle = {
+const buttonStyle = kialiStyle({
   backgroundColor: PFColors.BackgroundColor100,
-  margin: '2px 4px',
-  padding: '2px 6px 4px 6px'
-};
+  margin: '0.125rem 0.25rem',
+  padding: '0.25rem 0.5rem'
+});
 
 const cyToolbarStyle = kialiStyle({
-  width: '20px'
+  width: '1.25rem'
 });
 
 class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProps, CytoscapeToolbarState> {
   constructor(props: CytoscapeToolbarProps) {
     super(props);
+
     // Let URL override current redux state at construction time. Update URL with unset params.
     const urlLayout = HistoryManager.getParam(URLParam.GRAPH_LAYOUT);
+
     if (urlLayout) {
       if (urlLayout !== props.layout.name) {
         props.setLayout(LayoutDictionary.getLayoutByName(urlLayout));
@@ -79,6 +77,7 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
     }
 
     const urlNamespaceLayout = HistoryManager.getParam(URLParam.GRAPH_NAMESPACE_LAYOUT);
+
     if (urlNamespaceLayout) {
       if (urlNamespaceLayout !== props.namespaceLayout.name) {
         props.setNamespaceLayout(LayoutDictionary.getLayoutByName(urlNamespaceLayout));
@@ -90,18 +89,18 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
     this.state = { allowGrab: false };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     // Toggle drag once when component is initialized
     this.toggleDrag();
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(): void {
     // ensure redux state and URL are aligned
     HistoryManager.setParam(URLParam.GRAPH_LAYOUT, this.props.layout.name);
     HistoryManager.setParam(URLParam.GRAPH_NAMESPACE_LAYOUT, this.props.namespaceLayout.name);
   }
 
-  render() {
+  render(): React.ReactNode {
     return (
       <div className={cyToolbarStyle}>
         <div>
@@ -111,26 +110,28 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
               aria-label="Toggle Drag"
               isActive={this.state.allowGrab}
               onClick={() => this.toggleDrag()}
-              style={buttonStyle}
+              className={buttonStyle}
               variant={ButtonVariant.plain}
             >
-              <PficonDragdropIcon className={this.state.allowGrab ? activeButtonStyle : undefined} />
+              <KialiIcon.DragDrop className={this.state.allowGrab ? activeButtonStyle : undefined} />
             </Button>
           </Tooltip>
         </div>
+
         <div>
           <Tooltip content="Zoom to Fit" position={TooltipPosition.right}>
             <Button
               id="toolbar_graph_fit"
               aria-label="Zoom to Fit"
               onClick={() => this.fit()}
-              style={buttonStyle}
+              className={buttonStyle}
               variant={ButtonVariant.plain}
             >
-              <ExpandArrowsAltIcon />
+              <KialiIcon.ExpandArrows />
             </Button>
           </Tooltip>
         </div>
+
         <div>
           <Tooltip content="Hide healthy edges" position={TooltipPosition.right}>
             <Button
@@ -140,15 +141,16 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
               onClick={() => {
                 this.handleEdgeModeClick(EdgeMode.UNHEALTHY);
               }}
-              style={buttonStyle}
+              className={buttonStyle}
               variant={ButtonVariant.plain}
             >
-              <LongArrowAltRightIcon
+              <KialiIcon.LongArrowRight
                 className={this.props.edgeMode === EdgeMode.UNHEALTHY ? activeButtonStyle : undefined}
               />
             </Button>
           </Tooltip>
         </div>
+
         <div>
           <Tooltip content="Hide all edges" position={TooltipPosition.right}>
             <Button
@@ -158,10 +160,10 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
               onClick={() => {
                 this.handleEdgeModeClick(EdgeMode.NONE);
               }}
-              style={buttonStyle}
+              className={buttonStyle}
               variant={ButtonVariant.plain}
             >
-              <LongArrowAltRightIcon
+              <KialiIcon.LongArrowRight
                 className={this.props.edgeMode === EdgeMode.NONE ? activeButtonStyle : undefined}
               />
             </Button>
@@ -169,7 +171,7 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
         </div>
 
         <div>
-          <Tooltip content={'Layout default ' + KialiDagreGraph.getLayout().name} position={TooltipPosition.right}>
+          <Tooltip content={`Layout default ${KialiDagreGraph.getLayout().name}`} position={TooltipPosition.right}>
             <Button
               id="toolbar_layout_default"
               aria-label="Graph Layout Default Style"
@@ -178,10 +180,10 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
               onClick={() => {
                 this.setLayout(KialiDagreGraph.getLayout());
               }}
-              style={buttonStyle}
+              className={buttonStyle}
               variant={ButtonVariant.plain}
             >
-              <TopologyIcon
+              <KialiIcon.Topology
                 className={this.props.layout.name === KialiDagreGraph.getLayout().name ? activeButtonStyle : undefined}
               />
             </Button>
@@ -190,7 +192,7 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
 
         <TourStop info={GraphTourStops.Layout}>
           <div>
-            <Tooltip content={'Layout 1 ' + KialiGridGraph.getLayout().name} position={TooltipPosition.right}>
+            <Tooltip content={`Layout 1 ${KialiGridGraph.getLayout().name}`} position={TooltipPosition.right}>
               <Button
                 id="toolbar_layout1"
                 aria-label="Graph Layout Style 1"
@@ -199,10 +201,10 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
                 onClick={() => {
                   this.setLayout(KialiGridGraph.getLayout());
                 }}
-                style={buttonStyle}
+                className={buttonStyle}
                 variant={ButtonVariant.plain}
               >
-                <TopologyIcon
+                <KialiIcon.Topology
                   className={this.props.layout.name === KialiGridGraph.getLayout().name ? activeButtonStyle : undefined}
                 />
               </Button>
@@ -211,7 +213,7 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
         </TourStop>
 
         <div>
-          <Tooltip content={'Layout 2 ' + KialiConcentricGraph.getLayout().name} position={TooltipPosition.right}>
+          <Tooltip content={`Layout 2 ${KialiConcentricGraph.getLayout().name}`} position={TooltipPosition.right}>
             <Button
               id="toolbar_layout2"
               aria-label="Graph Layout Style 2"
@@ -220,10 +222,10 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
               onClick={() => {
                 this.setLayout(KialiConcentricGraph.getLayout());
               }}
-              style={buttonStyle}
+              className={buttonStyle}
               variant={ButtonVariant.plain}
             >
-              <TopologyIcon
+              <KialiIcon.Topology
                 className={
                   this.props.layout.name === KialiConcentricGraph.getLayout().name ? activeButtonStyle : undefined
                 }
@@ -233,7 +235,7 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
         </div>
 
         <div>
-          <Tooltip content={'Layout 3 ' + KialiBreadthFirstGraph.getLayout().name} position={TooltipPosition.right}>
+          <Tooltip content={`Layout 3 ${KialiBreadthFirstGraph.getLayout().name}`} position={TooltipPosition.right}>
             <Button
               id="toolbar_layout3"
               aria-label="Graph Layout Style 3"
@@ -242,10 +244,10 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
               onClick={() => {
                 this.setLayout(KialiBreadthFirstGraph.getLayout());
               }}
-              style={buttonStyle}
+              className={buttonStyle}
               variant={ButtonVariant.plain}
             >
-              <TopologyIcon
+              <KialiIcon.Topology
                 className={
                   this.props.layout.name === KialiBreadthFirstGraph.getLayout().name ? activeButtonStyle : undefined
                 }
@@ -257,7 +259,7 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
         {this.props.boxByNamespace && (
           <div>
             <Tooltip
-              content={'Namespace Layout 1 ' + KialiDagreGraph.getLayout().name}
+              content={`Namespace Layout 1 ${KialiDagreGraph.getLayout().name}`}
               position={TooltipPosition.right}
             >
               <Button
@@ -268,10 +270,10 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
                 onClick={() => {
                   this.setNamespaceLayout(KialiDagreGraph.getLayout());
                 }}
-                style={buttonStyle}
+                className={buttonStyle}
                 variant={ButtonVariant.plain}
               >
-                <TenantIcon
+                <KialiIcon.Tenant
                   className={
                     this.props.namespaceLayout.name === KialiDagreGraph.getLayout().name ? activeButtonStyle : undefined
                   }
@@ -284,7 +286,7 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
         {this.props.boxByNamespace && (
           <div>
             <Tooltip
-              content={'Namespace Layout 2 ' + KialiBreadthFirstGraph.getLayout().name}
+              content={`Namespace Layout 2 ${KialiBreadthFirstGraph.getLayout().name}`}
               position={TooltipPosition.right}
             >
               <Button
@@ -295,10 +297,10 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
                 onClick={() => {
                   this.setNamespaceLayout(KialiBreadthFirstGraph.getLayout());
                 }}
-                style={buttonStyle}
+                className={buttonStyle}
                 variant={ButtonVariant.plain}
               >
-                <TenantIcon
+                <KialiIcon.Tenant
                   className={
                     this.props.namespaceLayout.name === KialiBreadthFirstGraph.getLayout().name
                       ? activeButtonStyle
@@ -318,12 +320,10 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
                 aria-label="Show Legend"
                 isActive={this.props.showLegend}
                 onClick={this.props.toggleLegend}
-                style={buttonStyle}
+                className={buttonStyle}
                 variant={ButtonVariant.plain}
               >
-                <Icon className={this.props.showLegend ? activeButtonStyle : undefined} size="sm">
-                  <MapIcon />
-                </Icon>
+                <KialiIcon.Map className={this.props.showLegend ? activeButtonStyle : undefined} size="sm" />
               </Button>
             </Tooltip>
           </div>
@@ -336,43 +336,47 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
     if (this.props.cytoscapeGraphRef.current) {
       return this.props.cytoscapeGraphRef.current.getCy();
     }
+
     return null;
   };
 
-  private toggleDrag = () => {
+  private toggleDrag = (): void => {
     const cy = this.getCy();
+
     if (!cy) {
       return;
     }
+
     cy.autoungrabify(this.state.allowGrab);
     this.setState({ allowGrab: !this.state.allowGrab });
   };
 
-  private fit = () => {
+  private fit = (): void => {
     const cy = this.getCy();
+
     if (cy) {
       CytoscapeGraphUtils.safeFit(cy);
     }
   };
 
-  private handleEdgeModeClick = (edgeMode: EdgeMode) => {
+  private handleEdgeModeClick = (edgeMode: EdgeMode): void => {
     this.props.setEdgeMode(edgeMode === this.props.edgeMode ? EdgeMode.ALL : edgeMode);
   };
 
-  private setLayout = (layout: Layout) => {
+  private setLayout = (layout: Layout): void => {
     if (layout.name !== this.props.layout.name) {
       this.props.setLayout(layout);
     }
   };
 
-  private setNamespaceLayout = (layout: Layout) => {
+  private setNamespaceLayout = (layout: Layout): void => {
     if (layout.name !== this.props.namespaceLayout.name) {
       this.props.setNamespaceLayout(layout);
     }
   };
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   edgeMode: edgeModeSelector(state),
   boxByNamespace: state.graph.toolbarState.boxByNamespace,
   layout: state.graph.layout,
@@ -380,7 +384,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   showLegend: state.graph.toolbarState.showLegend
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   setEdgeMode: bindActionCreators(GraphActions.setEdgeMode, dispatch),
   setLayout: bindActionCreators(GraphActions.setLayout, dispatch),
   setNamespaceLayout: bindActionCreators(GraphActions.setNamespaceLayout, dispatch),

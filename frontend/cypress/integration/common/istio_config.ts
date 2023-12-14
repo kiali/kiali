@@ -2,7 +2,7 @@ import { After, And, Given, Then, When } from '@badeball/cypress-cucumber-prepro
 import { colExists, getColWithRowText } from './table';
 import { ensureKialiFinishedLoading } from './transition';
 
-function labelsStringToJson(labelsString: string) {
+const labelsStringToJson = (labelsString: string): string => {
   let labelsJson = '';
 
   if (labelsString.length !== 0) {
@@ -19,12 +19,12 @@ function labelsStringToJson(labelsString: string) {
   }
 
   return `{${labelsJson}}`;
-}
+};
 
 // I included this, because the URL parameter is in plural, but the the Type itself in Kiali is singular
 // This works for all of the types currently present in Kiali (Feb 8 2023), but may break in the future, because
 // it does not support all of the english words
-function singularize(word: string) {
+const singularize = (word: string): string => {
   const endings = {
     ves: 'fe',
     ies: 'y',
@@ -34,10 +34,11 @@ function singularize(word: string) {
     es: 'e',
     s: ''
   };
-  return word.replace(new RegExp(`(${Object.keys(endings).join('|')})$`), r => endings[r]);
-}
 
-function minimalAuthorizationPolicy(name: string, namespace: string): string {
+  return word.replace(new RegExp(`(${Object.keys(endings).join('|')})$`), r => endings[r]);
+};
+
+const minimalAuthorizationPolicy = (name: string, namespace: string): string => {
   return `{
     "apiVersion": "security.istio.io/v1beta1",
     "kind": "AuthorizationPolicy",
@@ -46,9 +47,9 @@ function minimalAuthorizationPolicy(name: string, namespace: string): string {
         "namespace": "${namespace}"
     }
 }`;
-}
+};
 
-function minimalDestinationRule(name: string, namespace: string, host: string): string {
+const minimalDestinationRule = (name: string, namespace: string, host: string): string => {
   return `{
     "apiVersion": "networking.istio.io/v1alpha3",
     "kind": "DestinationRule",
@@ -60,9 +61,9 @@ function minimalDestinationRule(name: string, namespace: string, host: string): 
       "host": "${host}"
     }
 }`;
-}
+};
 
-function minimalVirtualService(name: string, namespace: string, routeName: string, routeHost: string): string {
+const minimalVirtualService = (name: string, namespace: string, routeName: string, routeHost: string): string => {
   return `{
     "apiVersion": "networking.istio.io/v1alpha3",
     "kind": "VirtualService",
@@ -85,9 +86,9 @@ function minimalVirtualService(name: string, namespace: string, routeName: strin
       ]
     }
 }`;
-}
+};
 
-function minimalPeerAuthentication(name: string, namespace: string) {
+const minimalPeerAuthentication = (name: string, namespace: string): string => {
   return `{
     "apiVersion": "security.istio.io/v1beta1",
     "kind": "PeerAuthentication",
@@ -96,9 +97,9 @@ function minimalPeerAuthentication(name: string, namespace: string) {
         "namespace": "${namespace}"
     }
 }`;
-}
+};
 
-function minimalGateway(name: string, namespace: string, hosts: string, port: number, labelsString: string) {
+const minimalGateway = (name: string, namespace: string, hosts: string, port: number, labelsString: string): string => {
   return `{
       "apiVersion": "networking.istio.io/v1alpha3",
       "kind": "Gateway",
@@ -123,9 +124,9 @@ function minimalGateway(name: string, namespace: string, hosts: string, port: nu
         ]
       }
 }`;
-}
+};
 
-function minimalSidecar(name: string, namespace: string, hosts: string) {
+const minimalSidecar = (name: string, namespace: string, hosts: string): string => {
   return `{
       "apiVersion": "networking.istio.io/v1alpha3",
       "kind": "Sidecar",
@@ -142,7 +143,7 @@ function minimalSidecar(name: string, namespace: string, hosts: string) {
         ]
       }
 }`;
-}
+};
 
 Given('a {string} AuthorizationPolicy in the {string} namespace', function (name: string, namespace: string) {
   cy.exec(`kubectl delete AuthorizationPolicy ${name} -n ${namespace}`, { failOnNonZeroExit: false });
@@ -217,7 +218,7 @@ Given(
   }
 );
 
-Given('there is not a {string} VirtualService in the {string} namespace', function (vsName: string, namespace: string) {
+Given('there is not a {string} VirtualService in the {string} namespace', (vsName: string, namespace: string) => {
   cy.exec(`kubectl delete VirtualService ${vsName} -n ${namespace}`, { failOnNonZeroExit: false });
 });
 
@@ -306,7 +307,7 @@ Given(
   }
 );
 
-When('the user refreshes the list page', function () {
+When('the user refreshes the list page', () => {
   cy.get('[data-test="refresh-button"]').click();
   ensureKialiFinishedLoading();
 });
@@ -466,29 +467,28 @@ Then('the user can create a {string} K8s Istio object', (object: string) => {
 });
 
 Then('the AuthorizationPolicy should have a {string}', function (healthStatus: string) {
-  cy.get(`[data-test=VirtualItem_Ns${this.targetNamespace}_authorizationpolicy_${this.targetAuthorizationPolicy}] svg`)
-    .invoke('attr', 'style')
-    .should('have.string', `${healthStatus}-color`);
+  cy.get(
+    `[data-test=VirtualItem_Ns${this.targetNamespace}_authorizationpolicy_${this.targetAuthorizationPolicy}] span.pf-v5-c-icon`
+  ).hasCssVar('color', `--pf-v5-global--${healthStatus}-color--100`);
 });
 
-Then('the {string} {string} of the {string} namespace should have a {string}', function (
-  crdInstanceName: string,
-  crdName: string,
-  namespace: string,
-  healthStatus: string
-) {
-  it('loading config list', { retries: 3 }, () => {
-    cy.request('GET', Cypress.config('baseUrl') + `/api/istio/config?refresh=0`);
-    cy.get('[data-test="refresh-button"]').click();
-    ensureKialiFinishedLoading();
-    cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName.toLowerCase()}_${crdInstanceName}] svg`, { timeout: 40000 })
-      .should('be.visible')
-      .invoke('attr', 'style')
-      .should('have.string', `${healthStatus}-color`);
-  });
-});
+Then(
+  'the {string} {string} of the {string} namespace should have a {string}',
+  (crdInstanceName: string, crdName: string, namespace: string, healthStatus: string) => {
+    it('loading config list', { retries: 3 }, () => {
+      cy.request('GET', `${Cypress.config('baseUrl')}/api/istio/config?refresh=0`);
+      cy.get('[data-test="refresh-button"]').click();
+      ensureKialiFinishedLoading();
+      cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName.toLowerCase()}_${crdInstanceName}] span.pf-v5-c-icon`, {
+        timeout: 40000
+      })
+        .should('be.visible')
+        .hasCssVar('color', `--pf-v5-global--${healthStatus}-color--100`);
+    });
+  }
+);
 
-After({ tags: '@istio-page and @crd-validation' }, function () {
+After({ tags: '@istio-page and @crd-validation' }, () => {
   cy.exec('kubectl delete PeerAuthentications,DestinationRules,AuthorizationPolicies,Sidecars --all --all-namespaces', {
     failOnNonZeroExit: false
   });

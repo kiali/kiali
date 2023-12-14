@@ -51,7 +51,7 @@
     "cypress:delete:reports": "rm cypress/results/* || true",
     "cypress:combine:reports": "jrm cypress/results/combined-report.xml \"cypress/results/*.xml\"",
     "lint": "eslint --ext js,ts,tsx src",
-    "lint:precommit": "eslint -c .eslintrc_precommit $(git diff --staged --name-only HEAD | grep -E '\\.tsx?$' | cut -d'/' -f2-)",
+    "lint:precommit": "eslint -c .eslintrc_precommit $(git diff --staged --name-only HEAD --diff-filter=AM | grep -E '\\.tsx?$' | cut -d'/' -f2-)",
     "lint:fix": "eslint --ext js,ts,tsx --fix src",
     "start": "if [ \"${KIALI_ENV}\" = \"production\" ]; then npm run start:prod; else npm run start:dev; fi",
     "start:dev": "sh -ac '. ./.env.upstream; npm run start:kiali'",

@@ -35,7 +35,7 @@ describe('scoreNodes', () => {
           color: 'any',
           priority: 1,
           icon: WarningTriangleIcon,
-          class: 'any'
+          className: 'any'
         }),
         getStatusConfig: () => undefined,
         getTrafficStatus: () => undefined,
@@ -270,10 +270,10 @@ describe('scoreNodes', () => {
   it('normalizes scores within 100 when more than 100', () => {
     const elements = (): DecoratedGraphElements => {
       const sourceNodes = Array.from(Array(150).keys()).map(idx => ({
-        data: { ...nodeData, id: 'source' + idx }
+        data: { ...nodeData, id: `source${idx}` }
       }));
       const targetNodes = Array.from(Array(150).keys()).map(idx => ({
-        data: { ...nodeData, id: 'target' + idx }
+        data: { ...nodeData, id: `target${idx}` }
       }));
       let edges: DecoratedGraphEdgeWrapper[] = [];
       for (let i = 0; i < sourceNodes.length; i++) {
@@ -282,9 +282,9 @@ describe('scoreNodes', () => {
             data: {
               ...edgeData,
               protocol: 'tcp' as any,
-              id: 'edge' + i + j,
-              source: 'source' + i,
-              target: 'target' + j
+              id: `edge${i}${j}`,
+              source: `source${i}`,
+              target: `target${j}`
             }
           };
           edges.push(edge);

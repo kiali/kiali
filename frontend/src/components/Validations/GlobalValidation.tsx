@@ -64,7 +64,7 @@ export const GlobalValidation: React.FC<GlobalValidationProps> = (props: GlobalV
 
   const message = (): string => {
     const checks = globalChecks();
-    let message = checks.map(check => (check.code ? check.code + ' ' : '') + check.message).join(',');
+    let message = checks.map(check => (check.code ? `${check.code} ` : '') + check.message).join(',');
 
     if (!message.length && !isValid()) {
       message = 'Not all checks passed!';

@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { SimpleList, SimpleListItem, Button, Checkbox, Divider, ButtonVariant } from '@patternfly/react-core';
-import { SyncAltIcon } from '@patternfly/react-icons';
 import { kialiStyle } from 'styles/StyleUtils';
 
 import { KialiAppState } from 'store/Store';
@@ -20,17 +19,22 @@ import { transformTraceData } from 'utils/tracing/TraceTransform';
 import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/KioskActions';
 import { KialiDispatch } from '../../types/Redux';
 import { isMultiCluster } from '../../config';
+import { KialiIcon } from 'config/KialiIcon';
 
-type ReduxProps = {
+type ReduxStateProps = {
   kiosk: string;
   selectedTrace?: JaegerTrace;
+};
+
+type ReduxDispatchProps = {
   setTraceId: (cluster?: string, traceId?: string) => void;
 };
 
-type Props = ReduxProps & {
-  nodeData: DecoratedGraphNodeData;
-  queryTime: TimeInSeconds;
-};
+type Props = ReduxStateProps &
+  ReduxDispatchProps & {
+    nodeData: DecoratedGraphNodeData;
+    queryTime: TimeInSeconds;
+  };
 
 type State = {
   traces: JaegerTrace[];
@@ -86,11 +90,11 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
     this.state = { traces: [], useGraphRefresh: false };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.loadTraces();
   }
 
-  componentDidUpdate(prevProps: Props) {
+  componentDidUpdate(prevProps: Props): void {
     if (
       (this.state.useGraphRefresh && prevProps.queryTime !== this.props.queryTime) ||
       prevProps.nodeData.namespace !== this.props.nodeData.namespace ||
@@ -102,7 +106,7 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     this.promises.cancelAll();
   }
 
@@ -153,14 +157,12 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
     }
   }
 
-  render() {
+  render(): React.ReactNode {
     const d = this.props.nodeData;
 
-    const tracesDetailsURL =
-      `/namespaces/${d.namespace}` +
-      (d.workload ? `/workloads/${d.workload}` : d.service ? `/services/${d.service}` : `/applications/${d.app!}`) +
-      '?tab=traces' +
-      (d.cluster && isMultiCluster ? `&${URLParam.CLUSTERNAME}=${encodeURIComponent(d.cluster)}` : '');
+    const tracesDetailsURL = `/namespaces/${d.namespace}${
+      d.workload ? `/workloads/${d.workload}` : d.service ? `/services/${d.service}` : `/applications/${d.app!}`
+    }?tab=traces${d.cluster && isMultiCluster ? `&${URLParam.CLUSTERNAME}=${encodeURIComponent(d.cluster)}` : ''}`;
 
     const currentID = this.props.selectedTrace?.traceID;
 
@@ -183,7 +185,7 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
             variant={ButtonVariant.secondary}
             className={refreshButtonStyle}
           >
-            <SyncAltIcon />
+            <KialiIcon.Sync />
           </Button>
         </div>
 
@@ -223,12 +225,12 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
   }
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   kiosk: state.globalState.kiosk,
   selectedTrace: state.tracingState.selectedTrace
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   setTraceId: (cluster?: string, traceId?: string) => dispatch(TracingThunkActions.setTraceId(cluster, traceId))
 });
 

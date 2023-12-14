@@ -24,7 +24,7 @@ interface LinkInfo {
 
 const badgeStyle = kialiStyle({
   display: 'inline-block',
-  marginRight: '0.5rem',
+  marginRight: '0.25rem',
   marginBottom: '0.25rem'
 });
 
@@ -107,7 +107,7 @@ export const getLink = (
     nodeType = nodeData.nodeType;
   }
 
-  let displayName: string = 'unknown';
+  let displayName = 'unknown';
   let link: string | undefined;
   let key: string | undefined;
 
@@ -226,14 +226,9 @@ export const renderHealth = (health?: Health): React.ReactNode => {
   return (
     <span>
       {health ? (
-        <HealthIndicator
-          id="graph-health-indicator"
-          health={health}
-          tooltipPlacement={PopoverPosition.left}
-          size="sm"
-        />
+        <HealthIndicator id="graph-health-indicator" health={health} tooltipPlacement={PopoverPosition.left} />
       ) : (
-        'n/a'
+        'N/A'
       )}
     </span>
   );

@@ -199,6 +199,7 @@ export const istioConfig: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
       </ValidationSummaryLink>
     </Td>
   );
+
   return status;
 };
 
@@ -469,7 +470,6 @@ export const istioConfiguration: Renderer<IstioConfigItem> = (item: IstioConfigI
             id={`${item.name}-config-validation`}
             validations={[validation]}
             reconciledCondition={reconciledCondition}
-            style={{ fontSize: '1rem' }}
           />
         </Link>
       ) : (
@@ -492,11 +492,7 @@ export const serviceConfiguration: Renderer<ServiceListItem> = (item: ServiceLis
     >
       {validation ? (
         <Link to={`${getLink(item, config, linkQuery)}`}>
-          <ValidationServiceSummary
-            id={`${item.name}-service-validation`}
-            validations={[validation]}
-            style={{ fontSize: '1rem' }}
-          />
+          <ValidationServiceSummary id={`${item.name}-service-validation`} validations={[validation]} />
         </Link>
       ) : (
         <>N/A</>

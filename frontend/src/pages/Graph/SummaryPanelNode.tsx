@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import {
   getBadge,
   getLink,
@@ -96,6 +95,7 @@ const expandableSectionStyle = kialiStyle({
 
 const nodeInfoStyle = kialiStyle({
   display: 'flex',
+  alignItems: 'center',
   marginTop: '0.25rem'
 });
 
@@ -111,7 +111,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     this.mainDivRef = React.createRef<HTMLDivElement>();
   }
 
-  componentDidUpdate(prevProps: SummaryPanelNodeComponentProps) {
+  componentDidUpdate(prevProps: SummaryPanelNodeComponentProps): void {
     if (prevProps.data.summaryTarget !== this.props.data.summaryTarget) {
       if (this.mainDivRef.current) {
         this.mainDivRef.current.scrollTop = 0;
@@ -119,7 +119,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     }
   }
 
-  render() {
+  render(): React.ReactNode {
     const node = this.props.data.summaryTarget;
     const nodeData = this.props.data.isPF ? node.getData() : decoratedNodeData(node);
     const { nodeType, app, service, workload, isServiceEntry } = nodeData;
@@ -144,7 +144,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
         {options.map((o, i) => {
           return (
             <DropdownItem key={`option-${i}`} onClick={() => clickHandler(o, this.props.kiosk)}>
-              {o.text} {o.target === '_blank' && <ExternalLinkAltIcon />}
+              {o.text} {o.target === '_blank' && <KialiIcon.ExternalLink />}
             </DropdownItem>
           );
         })}
@@ -170,19 +170,19 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
 
     const firstBadge = isMultiCluster ? (
       <>
-        <PFBadge badge={PFBadges.Cluster} size="sm" style={{ marginBottom: '0.125rem' }} />
+        <PFBadge badge={PFBadges.Cluster} size="sm" />
         {nodeData.cluster}
       </>
     ) : (
       <>
-        <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '0.125rem' }} />
+        <PFBadge badge={PFBadges.Namespace} size="sm" />
         {nodeData.namespace}
       </>
     );
 
     const secondBadge = isMultiCluster ? (
       <div>
-        <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '0.125rem' }} />
+        <PFBadge badge={PFBadges.Namespace} size="sm" />
         {nodeData.namespace}
       </div>
     ) : (
@@ -581,7 +581,7 @@ export const SummaryPanelNode: React.FC<SummaryPanelNodeProps> = (props: Summary
     updateTime
   );
 
-  const handleKebabToggled = (isOpen: boolean) => {
+  const handleKebabToggled = (isOpen: boolean): void => {
     setIsKebabOpen(isOpen);
   };
 

@@ -2,15 +2,8 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { kialiStyle } from 'styles/StyleUtils';
-import { Tooltip, Button, ButtonVariant, Icon, pluralize } from '@patternfly/react-core';
+import { Tooltip, Button, ButtonVariant, pluralize } from '@patternfly/react-core';
 import { SelectList, SelectOption } from '@patternfly/react-core';
-import {
-  InfoAltIcon,
-  CloseIcon,
-  ExternalLinkAltIcon,
-  ExclamationCircleIcon,
-  MapMarkerIcon
-} from '@patternfly/react-icons';
 import { URLParam } from '../../app/History';
 import { JaegerTrace, RichSpanData, EnvoySpanInfo, OpenTracingHTTPInfo, OpenTracingTCPInfo } from 'types/TracingInfo';
 import { KialiAppState } from 'store/Store';
@@ -35,30 +28,35 @@ import { GraphSelectorBuilder } from './GraphSelector';
 import { GetTraceDetailURL } from '../../components/TracingIntegration/TracesComponent';
 import { ExternalServiceInfo } from '../../types/StatusState';
 import { isMultiCluster } from '../../config';
+import { KialiIcon } from 'config/KialiIcon';
 
-type ReduxProps = {
-  close: () => void;
+type ReduxStateProps = {
   externalServices: ExternalServiceInfo[];
   kiosk: string;
-  provider: string | undefined;
+  provider?: string;
+};
+
+type ReduxDispatchProps = {
+  close: () => void;
   setNode: (node?: NodeParamsType) => void;
 };
 
-type Props = ReduxProps & {
-  data: SummaryData;
-  graphType: GraphType;
-  tracingURL?: string;
-  onFocus?: (focusNode: FocusNode) => void;
-  trace: JaegerTrace;
-};
+type Props = ReduxStateProps &
+  ReduxDispatchProps & {
+    data: SummaryData;
+    graphType: GraphType;
+    onFocus?: (focusNode: FocusNode) => void;
+    trace: JaegerTrace;
+    tracingURL?: string;
+  };
 
 type State = {
-  selectedSpanID: string | undefined;
+  selectedSpanID?: string;
 };
 
 const closeBoxStyle = kialiStyle({
   float: 'right',
-  marginTop: '-7px'
+  marginTop: '-0.5rem'
 });
 
 const nameStyle = kialiStyle({
@@ -70,12 +68,12 @@ const nameStyle = kialiStyle({
 });
 
 const pStyle = kialiStyle({
-  paddingTop: '10px',
+  paddingTop: '0.5rem',
   $nest: {
     '& button': {
       fontSize: 'var(--graph-side-panel--font-size)',
-      paddingTop: '5px',
-      paddingBottom: '5px'
+      paddingTop: '0.25rem',
+      paddingBottom: '0.25rem'
     }
   }
 });
@@ -84,65 +82,80 @@ const spanSelectStyle = kialiStyle({
   maxWidth: '100%'
 });
 
+const iconStyle = kialiStyle({
+  marginRight: '0.25rem'
+});
+
 class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { selectedSpanID: undefined };
   }
 
-  componentDidUpdate(props: Props) {
+  componentDidUpdate(props: Props): void {
     if (props.trace.traceID !== this.props.trace.traceID) {
       this.setState({ selectedSpanID: undefined });
     }
   }
 
-  render() {
+  render(): React.ReactNode {
     const isPF = this.props.data.isPF;
     let node: any = {};
     let nodeData: any = {};
+
     if (this.props.data.summaryType === 'node') {
       node = this.props.data.summaryTarget;
       nodeData = isPF ? node.getData() : decoratedNodeData(node);
     }
+
     const tracesDetailsURL = nodeData.namespace
-      ? `/namespaces/${nodeData.namespace}` +
-        (nodeData.workload
-          ? `/workloads/${nodeData.workload}`
-          : nodeData.service
-          ? `/services/${nodeData.service}`
-          : `/applications/${nodeData.app!}`) +
-        `?tab=traces&${URLParam.TRACING_TRACE_ID}=${this.props.trace.traceID}` +
-        (nodeData.cluster && isMultiCluster ? `&${URLParam.CLUSTERNAME}=${encodeURIComponent(nodeData.cluster)}` : '')
+      ? `/namespaces/${nodeData.namespace}${
+          nodeData.workload
+            ? `/workloads/${nodeData.workload}`
+            : nodeData.service
+            ? `/services/${nodeData.service}`
+            : `/applications/${nodeData.app!}`
+        }?tab=traces&${URLParam.TRACING_TRACE_ID}=${this.props.trace.traceID}${
+          nodeData.cluster && isMultiCluster ? `&${URLParam.CLUSTERNAME}=${encodeURIComponent(nodeData.cluster)}` : ''
+        }`
       : undefined;
+
     const jaegerTraceURL = GetTraceDetailURL(
       this.props.provider,
       this.props.tracingURL,
       this.props.externalServices
     )?.replace('TRACEID', this.props.trace.traceID);
+
     const info = new FormattedTraceInfo(this.props.trace);
+
     const title = (
       <span className={nameStyle}>
         {info.name()}
         <span className={shortIDStyle}>{info.shortID()}</span>
       </span>
     );
+
     const spans: RichSpanData[] = (isPF ? nodeData['hasSpans'] : nodeData['spans']) || [];
     let currentSpan = spans.find(s => s.spanID === this.state.selectedSpanID);
+
     if (!currentSpan && spans.length > 0) {
       currentSpan = spans[0];
     }
+
     return (
       <>
         <div className={summaryTitle}>
           <span>Trace</span>
+
           <span className={closeBoxStyle}>
             <Tooltip content="Close and clear trace selection">
               <Button id="close-trace" variant={ButtonVariant.plain} onClick={this.props.close}>
-                <CloseIcon />
+                <KialiIcon.Close />
               </Button>
             </Tooltip>
           </span>
         </div>
+
         <div>
           {tracesDetailsURL ? (
             <Tooltip content={`View trace details for: ${info.name()}`}>
@@ -163,7 +176,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
           <div>
             {info.numErrors !== 0 && (
               <>
-                <ExclamationCircleIcon color={PFColors.Danger} />{' '}
+                <KialiIcon.ExclamationCircle color={PFColors.Danger} className={iconStyle} />
                 <strong>This trace has {pluralize(info.numErrors, 'error')}.</strong>
               </>
             )}
@@ -171,6 +184,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
               <strong>Started: </strong>
               {info.fromNow()}
             </div>
+
             {info.duration() && (
               <div>
                 <strong>Full duration: </strong>
@@ -178,6 +192,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
               </div>
             )}
           </div>
+
           {spans.length > 0 && (
             <div className={pStyle}>
               <div>
@@ -205,17 +220,16 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
               </div>
             </div>
           )}
+
           {currentSpan && <div className={pStyle}>{this.renderSpan(currentSpan)}</div>}
+
           {jaegerTraceURL && (
-            <>
-              <br />
+            <div style={{ marginTop: '0.25rem' }}>
               <a href={jaegerTraceURL} target="_blank" rel="noopener noreferrer">
-                Show in Tracing{' '}
-                <Icon size="sm">
-                  <ExternalLinkAltIcon />
-                </Icon>
+                Show in Tracing
+                <KialiIcon.ExternalLink className={iconStyle} />
               </a>
-            </>
+            </div>
           )}
         </div>
       </>
@@ -225,36 +239,44 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
   private spanViewLink(span: RichSpanData): string | undefined {
     const node = this.props.data.summaryTarget;
     const nodeData = this.props.data.isPF ? node.getData() : decoratedNodeData(node);
+
     return nodeData.namespace
-      ? `/namespaces/${nodeData.namespace}` +
-          (nodeData.workload
+      ? `/namespaces/${nodeData.namespace}${
+          nodeData.workload
             ? `/workloads/${nodeData.workload}`
             : nodeData.service
             ? `/services/${nodeData.service}`
-            : `/applications/${nodeData.app!}`) +
-          `?tab=traces&${URLParam.TRACING_TRACE_ID}=${this.props.trace.traceID}&${URLParam.TRACING_SPAN_ID}=${span.spanID}` +
-          (span.cluster && isMultiCluster ? `&${URLParam.CLUSTERNAME}=${encodeURIComponent(span.cluster)}` : '')
+            : `/applications/${nodeData.app!}`
+        }?tab=traces&${URLParam.TRACING_TRACE_ID}=${this.props.trace.traceID}&${URLParam.TRACING_SPAN_ID}=${
+          span.spanID
+        }${span.cluster && isMultiCluster ? `&${URLParam.CLUSTERNAME}=${encodeURIComponent(span.cluster)}` : ''}`
       : undefined;
   }
 
-  private renderSpan(span: RichSpanData) {
+  private renderSpan(span: RichSpanData): React.ReactNode {
     const spanURL = this.spanViewLink(span);
+
     return (
       <>
         <div>
           <strong>Started after: </strong>
           {formatDuration(span.relativeStartTime)}
         </div>
+
         <div>
           <strong>Duration: </strong>
           {formatDuration(span.duration)}
         </div>
+
         {(span.type === 'http' || span.type === 'envoy') && this.renderHTTPSpan(span)}
+
         {span.type === 'tcp' && this.renderTCPSpan(span)}
+
         <div>
           <strong>Related: </strong>
           {this.renderRelatedSpans(span)}
         </div>
+
         {spanURL && (
           <div>
             <Link
@@ -273,13 +295,15 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
     );
   }
 
-  private renderRelatedSpans(span: RichSpanData) {
-    type Related = { text: string; span: RichSpanData };
+  private renderRelatedSpans(span: RichSpanData): React.ReactNode {
+    type Related = { span: RichSpanData; text: string };
     const parent = findParent(span) as RichSpanData;
     const children = findChildren(span, this.props.trace) as RichSpanData[];
+
     const related = ((parent ? [{ text: 'parent', span: parent }] : []) as Related[]).concat(
-      children.map((child, idx) => ({ text: 'child ' + (idx + 1), span: child }))
+      children.map((child, idx) => ({ text: `child ${idx + 1}`, span: child }))
     );
+
     return (
       <>
         {related.length > 0
@@ -289,7 +313,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
     );
   }
 
-  private linkToSpan(current: RichSpanData, target: RichSpanData, text: string): React.ReactFragment {
+  private linkToSpan(current: RichSpanData, target: RichSpanData, text: string): React.ReactNode {
     if (this.props.data.isPF) {
       return this.linkToSpanPF(current, target, text);
     }
@@ -297,17 +321,22 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
     const useApp = this.props.graphType === GraphType.APP || this.props.graphType === GraphType.SERVICE;
     const currentElt = useApp ? current.app : current.workload;
     const targetElt = useApp ? target.app : target.workload;
+
     let tooltipContent = <>{text}</>;
+
     if (targetElt) {
       const cy = this.props.data.summaryTarget.cy();
       const selBuilder = new GraphSelectorBuilder().namespace(target.namespace).class('span');
       const selector = useApp ? selBuilder.app(targetElt).build() : selBuilder.workload(targetElt).build();
+
       tooltipContent = (
         <>
           <Button
             variant={ButtonVariant.link}
+            style={{ marginRight: '0.25rem' }}
             onClick={() => {
               this.setState({ selectedSpanID: target.spanID });
+
               if (targetElt !== currentElt || target.namespace !== current.namespace) {
                 cy.elements(selector).trigger('tap');
               }
@@ -315,27 +344,28 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
             isInline
           >
             <span style={summaryFont}>{text}</span>
-          </Button>{' '}
+          </Button>
+
           <Button
             variant={ButtonVariant.link}
             onClick={() => new FocusAnimation(cy).start(cy.elements(selector))}
             isInline
           >
             <span style={summaryFont}>
-              <MapMarkerIcon />
+              <KialiIcon.MapMarker />
             </span>
           </Button>
         </>
       );
     }
+
     return (
       <Tooltip
         key={target.spanID}
         content={
           <>
-            Operation name: {target.operationName}
-            <br />
-            Workload: {target.workload || 'unknown'}
+            <div>Operation name: {target.operationName}</div>
+            <div>Workload: {target.workload ?? 'unknown'}</div>
           </>
         }
       >
@@ -344,21 +374,26 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
     );
   }
 
-  private linkToSpanPF(current: RichSpanData, target: RichSpanData, text: string): React.ReactFragment {
+  private linkToSpanPF(current: RichSpanData, target: RichSpanData, text: string): React.ReactNode {
     const useApp = this.props.graphType === GraphType.APP || this.props.graphType === GraphType.SERVICE;
     const currentElt = useApp ? current.app : current.workload;
     const targetElt = useApp ? target.app : target.workload;
+
     let tooltipContent = <>{text}</>;
+
     if (targetElt) {
       // PF Graph
       const controller =
         this.props.data.summaryType === 'graph'
           ? (this.props.data.summaryTarget as Visualization)
           : (this.props.data.summaryTarget as Node).getController();
+
       if (!controller) {
         return <></>;
       }
+
       const { nodes } = elems(controller);
+
       const node = selectAnd(nodes, [
         { prop: NodeAttr.namespace, val: target.namespace },
         { prop: 'hasSpans', op: 'truthy' },
@@ -369,6 +404,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
         <>
           <Button
             variant={ButtonVariant.link}
+            style={{ marginRight: '0.25rem' }}
             onClick={() => {
               this.setState({ selectedSpanID: target.spanID });
               if (targetElt !== currentElt || target.namespace !== current.namespace) {
@@ -378,23 +414,24 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
             isInline
           >
             <span style={summaryFont}>{text}</span>
-          </Button>{' '}
+          </Button>
+
           <Button variant={ButtonVariant.link} onClick={() => this.props.onFocus!({ id: node[0].getId() })} isInline>
             <span style={summaryFont}>
-              <MapMarkerIcon />
+              <KialiIcon.MapMarker />
             </span>
           </Button>
         </>
       );
     }
+
     return (
       <Tooltip
         key={target.spanID}
         content={
           <>
-            Operation name: {target.operationName}
-            <br />
-            Workload: {target.workload || 'unknown'}
+            <div>Operation name: {target.operationName}</div>
+            <div>Workload: {target.workload ?? 'unknown'}</div>
           </>
         }
       >
@@ -403,33 +440,39 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
     );
   }
 
-  private renderHTTPSpan(span: RichSpanData) {
+  private renderHTTPSpan(span: RichSpanData): React.ReactNode {
     const info = span.info as OpenTracingHTTPInfo | EnvoySpanInfo;
+
     const rqLabel =
       info.direction === 'inbound' ? 'Inbound request' : info.direction === 'outbound' ? 'Outbound request' : 'Request';
+
     const flag = (info as EnvoySpanInfo).responseFlags;
+
     return (
       <>
         <div>
           <strong>{rqLabel}: </strong>
           {info.method} {info.url}
         </div>
+
         <div>
           <strong>Response: </strong>
-          code {info.statusCode || 'unknown'}
-          {flag && ', flags ' + flag}
+          code {info.statusCode ?? 'unknown'}
+          {flag && `, flags ${flag}`}
         </div>
+
         {flag && (
           <div>
-            <InfoAltIcon /> {responseFlags[flag]?.help || 'Unknown flag'}
+            <KialiIcon.Info /> {responseFlags[flag]?.help ?? 'Unknown flag'}
           </div>
         )}
       </>
     );
   }
 
-  private renderTCPSpan(span: RichSpanData) {
+  private renderTCPSpan(span: RichSpanData): React.ReactNode {
     const info = span.info as OpenTracingTCPInfo;
+
     return (
       <>
         {info.topic && (
@@ -443,13 +486,13 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
   }
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   externalServices: state.statusState.externalServices,
   kiosk: state.globalState.kiosk,
   provider: state.tracingState.info?.provider
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   close: () => dispatch(TracingThunkActions.setTraceId('', undefined)),
   setNode: bindActionCreators(GraphActions.setNode, dispatch)
 });
