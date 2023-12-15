@@ -36,6 +36,8 @@ export const getIstioObject = (istioObjectDetails?: IstioConfigDetails | IstioCo
       istioObject = istioObjectDetails.k8sGateway;
     } else if (istioObjectDetails.k8sHTTPRoute) {
       istioObject = istioObjectDetails.k8sHTTPRoute;
+    } else if (istioObjectDetails.k8sReferenceGrant) {
+      istioObject = istioObjectDetails.k8sReferenceGrant;
     } else if (istioObjectDetails.virtualService) {
       istioObject = istioObjectDetails.virtualService;
     } else if (istioObjectDetails.destinationRule) {

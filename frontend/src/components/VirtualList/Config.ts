@@ -238,6 +238,8 @@ export const IstioTypes: { [type: string]: IstioConfigType } = {
     url: 'requestauthentications',
     badge: PFBadges.RequestAuthentication
   },
+  // TODO should be merged with k8sreferencegrant
+  referencegrant: { name: 'ReferenceGrant (K8s)', url: 'k8sreferencegrants', badge: PFBadges.K8sReferenceGrant },
   rule: { name: 'Rule', url: 'rules', badge: PFBadges.Rule },
   serviceentry: { name: 'ServiceEntry', url: 'serviceentries', badge: PFBadges.ServiceEntry },
   servicerole: { name: 'ServiceRole', url: 'serviceroles', badge: PFBadges.ServiceRole },

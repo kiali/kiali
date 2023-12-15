@@ -124,6 +124,7 @@ export const dicIstioType = {
   gateway: 'Gateway',
   k8sgateway: 'K8sGateway',
   k8shttproute: 'K8sHTTPRoute',
+  k8sreferencegrant: 'K8sReferenceGrant',
   peerauthentication: 'PeerAuthentication',
   requestauthentication: 'RequestAuthentication',
   serviceentry: 'ServiceEntry',
