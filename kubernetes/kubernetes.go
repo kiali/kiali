@@ -239,7 +239,7 @@ func checkGatewayAPIs(in *K8SClient, version string, types map[string]string) bo
 	}
 	if found > 0 && found < len(types) {
 		keys := make([]string, 0, len(types))
-		for key, _ := range types {
+		for key := range types {
 			keys = append(keys, key)
 		}
 		log.Warningf("Not all required K8s Gateway API CRDs are installed for version: %s, expected: %s", version, strings.Join(keys, ", "))
