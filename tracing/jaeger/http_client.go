@@ -36,11 +36,13 @@ func NewJaegerClient(client http.Client, baseURL *url.URL) (jaegerClient *Jaeger
 	if code != 200 || reqError != nil {
 		log.Debugf("Error getting query for tracing. cluster tags will be disabled.")
 		ignoreCluster = true
+		return &JaegerHTTPClient{IgnoreCluster: ignoreCluster}, nil
 	}
 	errUnmarshall := json.Unmarshal(resp, &services)
 	if errUnmarshall != nil {
 		log.Debugf("Error getting query for tracing. cluster tags will be disabled.")
 		ignoreCluster = true
+		return &JaegerHTTPClient{IgnoreCluster: ignoreCluster}, nil
 	}
 	for _, service := range services.Data {
 		if !strings.Contains(service, "istio") && !strings.Contains(service, "jaeger") {
