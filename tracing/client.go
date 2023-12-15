@@ -99,10 +99,6 @@ func NewClient(token string) (*Client, error) {
 			return nil, errParse
 		}
 
-		if cfg.ExternalServices.Tracing.Provider == JAEGER {
-			httpTracingClient = jaeger.JaegerHTTPClient{}
-		}
-
 		port := u.Port()
 		if port == "" {
 			p, _ := net.LookupPort("tcp", u.Scheme)
@@ -178,6 +174,11 @@ func NewClient(token string) (*Client, error) {
 						return nil, nil
 					}
 					return &Client{httpTracingClient: httpTracingClient, grpcClient: streamClient, httpClient: client, baseURL: u, ctx: ctx}, nil
+				}
+			} else {
+				httpTracingClient, err = jaeger.NewJaegerClient(client, u)
+				if err != nil {
+					return nil, err
 				}
 			}
 			return &Client{httpTracingClient: httpTracingClient, httpClient: client, baseURL: u, ctx: ctx}, nil

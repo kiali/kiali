@@ -30,3 +30,7 @@ type TracingSpan struct {
 	jaegerModels.Span
 	TraceSize int `json:"traceSize"`
 }
+
+type Services struct {
+	Data []string `json:"data"`
+}
