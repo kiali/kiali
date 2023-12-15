@@ -187,7 +187,7 @@ func getPrometheusConfig() PrometheusConfig {
 			//      https://prometheus.io/docs/prometheus/latest/storage/
 			retentionStr := promRuntimeinfoResults.StorageRetention
 			// if specified with both time-based and size-base durations, strip off the size-based one that appears after the space
-			if strings.Index(retentionStr, " ") != -1 {
+			if strings.Contains(retentionStr, " ") {
 				retentionStr = (strings.Fields(retentionStr))[0]
 			}
 			// if retention is only size-based (defined in bytes), then we will fallback to the Prometheus default
