@@ -8,6 +8,7 @@
 # 1. Create a SMM (this is skipped for the cluster wide mode)
 # 2. Label the member namespace (only for the cluster wide mode)
 # 3. Annotate all of the namespace's Deployments with the sidecar injection annotation if enabled
+#! Be sure, that ISTIO_NAMESPACE and (ENABLE_INJECTION or AUTO_INJECTION) are properly set in the script where the function is called!
 prepare_maistra() {
   local ns="${1}"
   if $(is_cluster_wide);
@@ -30,7 +31,7 @@ EOM
     ${CLIENT_EXE} wait --for condition=Ready -n ${ISTIO_NAMESPACE} smmr/default --timeout 300s
   fi
 
-  if [ "${ENABLE_INJECTION}" == "true" ]; then
+  if [ "${ENABLE_INJECTION}" == "true" ] || [ "${AUTO_INJECTION}" == "true" ]; then
     for d in $(${CLIENT_EXE} get deployments -n ${ns} -o name)
     do
       echo "Enabling sidecar injection for deployment: ${d}"

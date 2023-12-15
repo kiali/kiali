@@ -19,6 +19,8 @@ SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 ISTIO_DIR=
 CLIENT_EXE="oc"
 DELETE_SLEEP="false"
+: ${ISTIO_NAMESPACE:=istio-system}
+: ${ENABLE_INJECTION:=true}
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -33,6 +35,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -id|--istio-dir)
       ISTIO_DIR="$2"
+      shift;shift
+      ;;
+    -in|--istio-namespace)
+      ISTIO_NAMESPACE="$2"
       shift;shift
       ;;
     -c|--client-exe)

@@ -112,7 +112,7 @@ if [ "${DELETE_DEMOS}" != "true" ]; then
     echo "Deploying error rates demo ..."
     "${SCRIPT_DIR}/install-error-rates-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH}
     echo "Deploying sleep demo ..."
-    "${SCRIPT_DIR}/install-sleep-demo.sh" 
+    "${SCRIPT_DIR}/install-sleep-demo.sh" -in ${ISTIO_NAMESPACE}
 
   else
     gateway_yaml=""
@@ -169,7 +169,7 @@ EOF
     "${SCRIPT_DIR}/install-error-rates-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH}
 
     echo "Deploying sleep demo ..."
-    "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl
+    "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE}
   fi
 
   if [ -v "${GATEWAY_HOST}" ]; then
@@ -179,7 +179,7 @@ EOF
     ${CLIENT_EXE} patch VirtualService bookinfo -n bookinfo --type json -p "[{\"op\": \"replace\", \"path\": \"/spec/hosts/0\", \"value\": \"${ISTIO_INGRESS_HOST}\"}]"
   fi
 
-  for namespace in bookinfo alpha beta
+  for namespace in bookinfo alpha beta gamma
   do
     wait_for_workloads "${namespace}"
   done
