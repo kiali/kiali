@@ -86,6 +86,7 @@ HELPMSG
 done
 
 SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
+MINIO_FILE="${SCRIPT_DIR}/minio.yaml"
 
 CLIENT_EXE=`which ${CLIENT_EXE_NAME}`
 if [ "$?" = "0" ]; then
@@ -105,28 +106,7 @@ fi
 
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
 
-if [ "${DELETE_ALL}" == "true" ]; then
-  DELETE_TEMPO="true"
-fi
-
-if [ "${DELETE_TEMPO}" == "true" ]; then
-  echo -e "Deleting tempo \n"
-  ${CLIENT_EXE} delete -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
-  ${CLIENT_EXE} delete -f https://github.com/grafana/tempo-operator/releases/latest/download/tempo-operator.yaml
-  ${CLIENT_EXE} delete secret -n ${TEMPO_NS} tempostack-dev-minio
-  ${CLIENT_EXE} delete TempoStack cr -n ${TEMPO_NS}
-  if [ "${IS_OPENSHIFT}" == "true" ]; then
-    $CLIENT_EXE delete project ${TEMPO_NS}
-    $CLIENT_EXE delete ns ${TEMPO_NS}
-  else
-    ${CLIENT_EXE} delete ns ${TEMPO_NS}
-  fi
-
-  if [ "${DELETE_ALL}" == "true" ]; then
-    ${SCRIPT_DIR}/../install-istio-via-istioctl.sh -c ${CLIENT_EXE} -di true
-    ${SCRIPT_DIR}/../install-bookinfo-demo.sh -c ${CLIENT_EXE} -db true
-  fi
-else
+install_tempo() {
   echo -e "Installing cert manager...\n"
   ${CLIENT_EXE} apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
   echo -e "Waiting for cert-manager pods to be ready... \n"
@@ -145,7 +125,7 @@ else
   fi
 
   echo -e "Installing minio and create secret \n"
-  ${CLIENT_EXE} apply --namespace ${TEMPO_NS} -f ${SCRIPT_DIR}/minio.yaml
+  ${CLIENT_EXE} apply --namespace ${TEMPO_NS} -f ${MINIO_FILE}
 
   # Create secret for minio
   ${CLIENT_EXE} create secret generic -n ${TEMPO_NS} tempostack-dev-minio \
@@ -221,8 +201,31 @@ spec:
         enabled: false
 EOF
   fi
+}
 
+if [ "${DELETE_ALL}" == "true" ]; then
+  DELETE_TEMPO="true"
+fi
 
+if [ "${DELETE_TEMPO}" == "true" ]; then
+  echo -e "Deleting tempo \n"
+  ${CLIENT_EXE} delete -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
+  ${CLIENT_EXE} delete -f https://github.com/grafana/tempo-operator/releases/latest/download/tempo-operator.yaml
+  ${CLIENT_EXE} delete secret -n ${TEMPO_NS} tempostack-dev-minio
+  ${CLIENT_EXE} delete TempoStack cr -n ${TEMPO_NS}
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    $CLIENT_EXE delete project ${TEMPO_NS}
+    $CLIENT_EXE delete ns ${TEMPO_NS}
+  else
+    ${CLIENT_EXE} delete ns ${TEMPO_NS}
+  fi
+
+  if [ "${DELETE_ALL}" == "true" ]; then
+    ${SCRIPT_DIR}/../install-istio-via-istioctl.sh -c ${CLIENT_EXE} -di true
+    ${SCRIPT_DIR}/../install-bookinfo-demo.sh -c ${CLIENT_EXE} -db true
+  fi
+else
+  install_tempo
 
   echo "Script Directory: ${SCRIPT_DIR}"
 

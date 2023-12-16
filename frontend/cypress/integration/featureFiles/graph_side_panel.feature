@@ -79,6 +79,7 @@ Feature: Kiali Graph page - Side panel menu actions
   @skip
   @bookinfo-app
   @multi-cluster
+  @tracing
   Scenario: Show Traces button contains clusterName param
     And user clicks the "productpage" service node
     And cluster badge for the "graph side panel" should be visible
