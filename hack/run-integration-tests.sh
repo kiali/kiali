@@ -121,7 +121,7 @@ ensureCypressInstalled() {
 ensureKialiServerReady() {
   local KIALI_URL="$1"
 
-  infomsg "Waiting for Kiali server pods to be healthy"
+  infomsg "Waiting for Kiali server pods to be healthy ${KIALI_URL}"
   kubectl rollout status deployment/kiali -n istio-system --timeout=120s
 
   # Ensure the server is responding to health checks externally.
@@ -289,7 +289,6 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_TEMPO}" ]; then
   export CYPRESS_VIDEO=false
 
   ensureKialiServerReady "${KIALI_URL}"
-  ensureKialiTracesReady "${KIALI_URL}"
 
   if [ "${SETUP_ONLY}" == "true" ]; then
     exit 0
