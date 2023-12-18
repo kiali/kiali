@@ -28,8 +28,8 @@ func NewJaegerClient(client http.Client, baseURL *url.URL) (jaegerClient *Jaeger
 	url := *baseURL
 	conf := config.Get()
 	var ignoreCluster bool
-	services := model.Services{}
 	var jaegerService string
+	services := model.Services{}
 
 	url.Path = path.Join(url.Path, "/api/services")
 	resp, code, reqError := makeRequest(client, url.String(), nil)

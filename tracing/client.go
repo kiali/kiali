@@ -128,7 +128,10 @@ func NewClient(token string) (*Client, error) {
 			conn, err := grpc.Dial(address, opts...)
 			if err == nil {
 				cc := model.NewQueryServiceClient(conn)
-				client = jaeger.JaegerGRPCClient{JaegergRPCClient: cc}
+				client, err = jaeger.NewGRPCJaegerClient(cc)
+				if err != nil {
+					return nil, err
+				}
 				log.Infof("Create %s GRPC client %s", cfgTracing.Provider, address)
 				return &Client{httpTracingClient: httpTracingClient, grpcClient: client, ctx: ctx}, nil
 			} else {
