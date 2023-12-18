@@ -25,7 +25,6 @@ import {
   getTitle,
   noTrafficStyle
 } from './SummaryPanelCommon';
-import { Response } from '../../services/Api';
 import { IstioMetricsMap, Datapoint, Labels } from '../../types/Metrics';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { KialiIcon } from 'config/KialiIcon';
@@ -36,6 +35,7 @@ import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLi
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { descendents, edgesIn, edgesInOut, edgesOut, elems, select, selectOr } from 'pages/GraphPF/GraphPFElems';
 import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
+import { ApiResponse } from 'types/Api';
 
 type SummaryPanelNamespaceBoxMetricsState = {
   grpcReceivedIn: Datapoint[];
@@ -124,8 +124,8 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
   };
 
   private boxTraffic?: SummaryPanelNamespaceBoxTraffic;
-  private metricsPromise?: CancelablePromise<Response<IstioMetricsMap>[]>;
-  private validationPromise?: CancelablePromise<Response<ValidationStatus>>;
+  private metricsPromise?: CancelablePromise<ApiResponse<IstioMetricsMap>[]>;
+  private validationPromise?: CancelablePromise<ApiResponse<ValidationStatus>>;
 
   constructor(props: SummaryPanelPropType) {
     super(props);
@@ -643,8 +643,8 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
       this.metricsPromise = undefined;
     }
 
-    let promiseIn: Promise<Response<IstioMetricsMap>> = Promise.resolve({ data: {} });
-    let promiseOut: Promise<Response<IstioMetricsMap>> = Promise.resolve({ data: {} });
+    let promiseIn: Promise<ApiResponse<IstioMetricsMap>> = Promise.resolve({ data: {} });
+    let promiseOut: Promise<ApiResponse<IstioMetricsMap>> = Promise.resolve({ data: {} });
 
     let filters: string[] = [];
 

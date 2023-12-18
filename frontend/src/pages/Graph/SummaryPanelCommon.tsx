@@ -4,9 +4,9 @@ import { NodeType, SummaryPanelPropType, Protocol, DecoratedGraphNodeData, BoxBy
 import { IstioMetricsOptions, Reporter, Direction } from '../../types/MetricsOptions';
 import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
-import { Response } from '../../services/Api';
 import { KialiIcon } from 'config/KialiIcon';
 import { PFColors } from 'components/Pf/PfColors';
+import { ApiResponse } from 'types/Api';
 
 export enum NodeMetricType {
   APP = 1,
@@ -110,7 +110,7 @@ export const getNodeMetrics = (
   requestProtocol?: string,
   quantiles?: Array<string>,
   byLabels?: Array<string>
-): Promise<Response<M.IstioMetricsMap>> => {
+): Promise<ApiResponse<M.IstioMetricsMap>> => {
   const options: IstioMetricsOptions = {
     queryTime: props.queryTime,
     duration: props.duration,
@@ -139,8 +139,8 @@ export const getNodeMetrics = (
 };
 
 export const mergeMetricsResponses = async (
-  promises: Promise<Response<M.IstioMetricsMap>>[]
-): Promise<Response<M.IstioMetricsMap>> => {
+  promises: Promise<ApiResponse<M.IstioMetricsMap>>[]
+): Promise<ApiResponse<M.IstioMetricsMap>> => {
   return Promise.all(promises).then(responses => {
     const metrics: M.IstioMetricsMap = {};
 

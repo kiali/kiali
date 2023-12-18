@@ -46,6 +46,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
     super(props);
     const prevCurrentSortField = FilterHelper.currentSortField(WorkloadListFilters.sortFields);
     const prevIsSortAscending = FilterHelper.isCurrentSortAscending();
+
     this.state = {
       listItems: [],
       currentSortField: prevCurrentSortField,
@@ -53,13 +54,14 @@ class WorkloadListPageComponent extends FilterComponent.Component<
     };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.updateListItems();
   }
 
-  componentDidUpdate(prevProps: WorkloadListPageProps) {
+  componentDidUpdate(prevProps: WorkloadListPageProps): void {
     const prevCurrentSortField = FilterHelper.currentSortField(WorkloadListFilters.sortFields);
     const prevIsSortAscending = FilterHelper.isCurrentSortAscending();
+
     if (
       !namespaceEquals(this.props.activeNamespaces, prevProps.activeNamespaces) ||
       this.props.duration !== prevProps.duration ||
@@ -70,11 +72,12 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         currentSortField: prevCurrentSortField,
         isSortAscending: prevIsSortAscending
       });
+
       this.updateListItems();
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     this.promises.cancelAll();
   }
 
@@ -168,12 +171,12 @@ class WorkloadListPageComponent extends FilterComponent.Component<
       .catch(err => {
         if (!err.isCanceled) {
           console.log(`error: ${err}`);
-          this.handleAxiosError('Could not fetch workloads list', err);
+          this.handleApiError('Could not fetch workloads list', err);
         }
       });
   }
 
-  render() {
+  render(): React.ReactNode {
     const hiddenColumns = isMultiCluster ? [] : ['cluster'];
 
     Toggles.getToggles().forEach((v, k) => {

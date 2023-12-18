@@ -16,7 +16,6 @@ import {
   EmptyStateHeader
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import { AxiosError } from 'axios';
 import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
 import * as FilterHelper from '../../components/FilterList/FilterHelper';
 import * as API from '../../services/Api';
@@ -78,6 +77,7 @@ import { ControlPlaneVersionBadge } from './ControlPlaneVersionBadge';
 import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { isRemoteCluster } from './OverviewCardControlPlaneNamespace';
+import { ApiError } from 'types/Api';
 
 const gridStyleCompact = kialiStyle({
   backgroundColor: PFColors.BackgroundColor200,
@@ -195,7 +195,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     };
   }
 
-  componentDidUpdate(prevProps: OverviewProps) {
+  componentDidUpdate(prevProps: OverviewProps): void {
     if (prevProps.duration !== this.props.duration || prevProps.navCollapse !== this.props.navCollapse) {
       // Reload to avoid graphical glitches with charts
       // TODO: this workaround should probably be deleted after switch to Patternfly 4, see https://issues.jboss.org/browse/KIALI-3116
@@ -203,12 +203,12 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     }
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.fetchGrafanaInfo();
     this.load();
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     this.promises.cancelAll();
   }
 
@@ -292,7 +292,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       })
       .catch(namespacesError => {
         if (!namespacesError.isCanceled) {
-          this.handleAxiosError('Could not fetch namespace list', namespacesError);
+          this.handleApiError('Could not fetch namespace list', namespacesError);
         }
       });
   };
@@ -320,7 +320,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             return;
           }
 
-          this.handleAxiosError('Could not fetch health', error);
+          this.handleApiError('Could not fetch health', error);
         });
     });
   }
@@ -349,7 +349,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       })
       .catch(err => {
         AlertUtils.addMessage({
-          ...AlertUtils.extractAxiosError('Could not fetch Grafana info. Turning off links to Grafana.', err),
+          ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
           group: 'default',
           type: MessageType.INFO,
           showNotification: false
@@ -406,7 +406,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           result.nsInfo.status = nsStatus;
         });
       })
-      .catch(err => this.handleAxiosError('Could not fetch health', err));
+      .catch(err => this.handleApiError('Could not fetch health', err));
   }
 
   fetchMetrics(direction: DirectionType): void {
@@ -461,10 +461,10 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           return nsInfo;
         });
       })
-    ).catch(err => this.handleAxiosError('Could not fetch metrics', err));
+    ).catch(err => this.handleApiError('Could not fetch metrics', err));
   }
 
-  fetchTLS(isAscending: boolean, sortField: SortField<NamespaceInfo>) {
+  fetchTLS(isAscending: boolean, sortField: SortField<NamespaceInfo>): void {
     _.chunk(this.state.namespaces, 10).forEach(chunk => {
       this.promises
         .registerChained('tlschunks', undefined, () => this.fetchTLSChunk(chunk))
@@ -495,7 +495,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           };
         });
       })
-      .catch(err => this.handleAxiosError('Could not fetch TLS status', err));
+      .catch(err => this.handleApiError('Could not fetch TLS status', err));
   }
 
   fetchValidations(isAscending: boolean, sortField: SortField<NamespaceInfo>): void {
@@ -539,7 +539,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           }
         });
       })
-      .catch(err => this.handleAxiosError('Could not fetch validations status', err));
+      .catch(err => this.handleApiError('Could not fetch validations status', err));
   }
 
   fetchOutboundTrafficPolicyMode(): void {
@@ -579,7 +579,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       });
   }
 
-  handleAxiosError(message: string, error: AxiosError): void {
+  handleApiError(message: string, error: ApiError): void {
     FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
   }
 
@@ -924,7 +924,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     return false;
   };
 
-  render() {
+  render(): React.ReactNode {
     const sm = this.state.displayMode === OverviewDisplayMode.COMPACT ? 3 : 6;
     const md = this.state.displayMode === OverviewDisplayMode.COMPACT ? 3 : 4;
     const rlg = 4;
