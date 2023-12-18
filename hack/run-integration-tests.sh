@@ -129,7 +129,7 @@ ensureKialiServerReady() {
   # and wire up the endpoints.
   infomsg "Waiting for Kiali server to respond externally to health checks"
   local start_time=$(date +%s)
-  local end_time=$((start_time + 60))
+  local end_time=$((start_time + 30))
   while true; do
     if curl -k -s --fail "${KIALI_URL}/healthz"; then
       break
@@ -278,7 +278,10 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_TEMPO}" ]; then
   ensureCypressInstalled
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --tempo ${ISTIO_VERSION_ARG}
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --tempo true --auth-strategy token ${ISTIO_VERSION_ARG}
+    ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+    # Install demo apps
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" -g "${ISTIO_INGRESS_IP}"
   fi
 
   # Get Kiali URL
