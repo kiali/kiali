@@ -95,7 +95,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 
 	// determine what the discoverySelectors are by examining the Istio ConfigMap
 	var discoverySelectors []*meta_v1.LabelSelector
-	if icm, err := in.kialiCache.GetConfigMap(in.conf.IstioNamespace, in.conf.ExternalServices.Istio.ConfigMapName); err == nil {
+	if icm, err := in.kialiCache.GetConfigMap(in.conf.IstioNamespace, IstioConfigMapName(in.conf, "")); err == nil {
 		if ic, err2 := kubernetes.GetIstioConfigMap(icm); err2 == nil {
 			discoverySelectors = ic.DiscoverySelectors
 		} else {
