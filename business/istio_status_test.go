@@ -906,6 +906,11 @@ func defaultAddOnCalls(grafana, prom *int) map[string]addOnsSetup {
 			StatusCode: 200,
 			CallCount:  prom,
 		},
+		"prometheus-healthy": {
+			Url:        "/prometheus/mock/-/healthy",
+			StatusCode: 200,
+			CallCount:  prom,
+		},
 		"grafana": {
 			Url:        "/grafana/mock",
 			StatusCode: 200,

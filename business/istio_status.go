@@ -227,6 +227,12 @@ func (iss *IstioStatusService) getAddonComponentStatus() kubernetes.IstioCompone
 
 	staChan := make(chan kubernetes.IstioComponentStatus, 4)
 	extServices := config.Get().ExternalServices
+
+	// https://github.com/kiali/kiali/issues/6966 - use the well-known Prom healthy endpoint
+	if extServices.Prometheus.HealthCheckUrl == "" {
+		extServices.Prometheus.HealthCheckUrl = extServices.Prometheus.URL + "/-/healthy"
+	}
+
 	ics := kubernetes.IstioComponentStatus{}
 
 	go getAddonStatus("prometheus", true, extServices.Prometheus.IsCore, &extServices.Prometheus.Auth, extServices.Prometheus.URL, extServices.Prometheus.HealthCheckUrl, staChan, &wg)
@@ -274,6 +280,7 @@ func getAddonStatus(name string, enabled bool, isCore bool, auth *config.Auth, u
 	// Call the addOn service endpoint to find out whether is reachable or not
 	_, statusCode, _, err := httputil.HttpGet(url, auth, 10*time.Second, nil, nil)
 	if err != nil || statusCode > 399 {
+		log.Tracef("addon health check failed: name=[%v], url=[%v], code=[%v]", name, url, statusCode)
 		staChan <- kubernetes.IstioComponentStatus{
 			kubernetes.ComponentStatus{
 				Name:   name,
