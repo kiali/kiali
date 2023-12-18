@@ -129,7 +129,7 @@ ensureKialiServerReady() {
   # and wire up the endpoints.
   infomsg "Waiting for Kiali server to respond externally to health checks"
   local start_time=$(date +%s)
-  local end_time=$((start_time + 30))
+  local end_time=$((start_time + 60))
   while true; do
     if curl -k -s --fail "${KIALI_URL}/healthz"; then
       break
