@@ -138,6 +138,7 @@ ensureKialiServerReady() {
     local now=$(date +%s)
     if [ "${now}" -gt "${end_time}" ]; then
       echo "Timed out waiting for Kiali server to respond to health checks"
+      kubectl logs -l app=kiali -n istio-system
       exit 1
     fi
     sleep 1
