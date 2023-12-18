@@ -134,6 +134,7 @@ ensureKialiServerReady() {
     if curl -k -s --fail "${KIALI_URL}/healthz"; then
       break
     fi
+    curl -k "${KIALI_URL}/healthz"
     local now=$(date +%s)
     if [ "${now}" -gt "${end_time}" ]; then
       echo "Timed out waiting for Kiali server to respond to health checks"
