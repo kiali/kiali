@@ -200,11 +200,9 @@ setup_kind_tempo() {
   "${SCRIPT_DIR}"/start-kind.sh --name ci --image "${KIND_NODE_IMAGE}"
 
   infomsg "Installing tempo"
-  source ${SCRIPT_DIR}/istio/tempo/install-tempo-env.sh
-  CLIENT_EXE="kubectl"
-  TEMPO_NS="tempo"
-  MINIO_FILE="${SCRIPT_DIR}/istio/tempo/minio.yaml"
-  install_tempo
+  ${SCRIPT_DIR}/istio/tempo/install-tempo-env.sh -c kubectl -ot true
+
+  SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 
   infomsg "Installing istio"
   if [[ "${ISTIO_VERSION}" == *-dev ]]; then

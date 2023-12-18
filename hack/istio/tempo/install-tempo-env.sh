@@ -15,6 +15,7 @@ DELETE_TEMPO="false"
 INSTALL_BOOKINFO="true"
 INSTALL_ISTIO="true"
 INSTALL_KIALI="false"
+ONLY_TEMPO="false"
 SECURE_DISTRIBUTOR="false"
 TEMPO_NS="tempo"
 
@@ -46,6 +47,10 @@ while [[ $# -gt 0 ]]; do
       INSTALL_KIALI="$2"
       shift;shift
       ;;
+    -ot|--only-tempo)
+      ONLY_TEMPO="$2"
+      shift;shift
+      ;;
     -sd|--secure-distributor)
       SECURE_DISTRIBUTOR="$2"
       shift;shift
@@ -69,6 +74,8 @@ Valid command line arguments:
        If istio should be installed. true by default.
   -ik|--install-kiali:
        If Kiali should be installed. false by default.
+  -ot|--only-tempo:
+       Install only tempo. false by default.
   -sd|--secure-distributor:
        If the tempo distributor will use tls (Using a self signed certificate). false by default.
   -t|--tempo-ns:
@@ -227,42 +234,45 @@ if [ "${DELETE_TEMPO}" == "true" ]; then
 else
   install_tempo
 
-  echo "Script Directory: ${SCRIPT_DIR}"
+  if [ "${ONLY_TEMPO}" != "true" ]; then
+    echo "Script Directory: ${SCRIPT_DIR}"
 
-  if [ "${INSTALL_ISTIO}" == "true" ]; then
-    echo -e "Installing istio \n"
-    ${SCRIPT_DIR}/../install-istio-via-istioctl.sh -c ${CLIENT_EXE} -a "prometheus grafana" -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
+    if [ "${INSTALL_ISTIO}" == "true" ]; then
+      echo -e "Installing istio \n"
+      ${SCRIPT_DIR}/../install-istio-via-istioctl.sh -c ${CLIENT_EXE} -a "prometheus grafana" -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
+    fi
+
+    if [ "${INSTALL_KIALI}" == "true" ]; then
+      OUTPUT_DIR="${OUTPUT_DIR:-${SCRIPT_DIR}/../../../_output}"
+      ISTIO_DIR=$(ls -dt1 ${OUTPUT_DIR}/istio-* | head -n1)
+      echo "Istio directory where the Kiali addon yaml should be found: ${ISTIO_DIR}"
+      ${CLIENT_EXE} apply -f ${ISTIO_DIR}/samples/addons/kiali.yaml
+    fi
+
+    if [ "${INSTALL_BOOKINFO}" == "true" ]; then
+      echo -e "Installing bookinfo \n"
+      ${SCRIPT_DIR}/../install-bookinfo-demo.sh -c ${CLIENT_EXE} -tg
+    fi
+
+    # If OpenShift, we need to do some additional things
+    if [ "${IS_OPENSHIFT}" == "true" ]; then
+      $CLIENT_EXE expose svc/tempo-cr-query-frontend -n ${TEMPO_NS}
+      $CLIENT_EXE expose svc/grafana -n istio-system
+    fi
+
+    echo -e "Installation finished. \n"
+    if [ "${IS_OPENSHIFT}" != "true" ]; then
+      echo "If you want to access Tempo from outside the cluster on your local machine, You can port forward the services with:
+  ./run-kiali.sh -pg 13000:3000 -pp 19090:9090 -pt 3200:3200 -app 8080 -es false -iu http://127.0.0.1:15014 -tr tempo-cr-query-frontend -ts tempo-cr-query-frontend -tn tempo
+
+  To configure Kiali to use this, set the external_services.tracing section with the following settings:
+  tracing:
+    enabled: true
+    provider: \"tempo\"
+    in_cluster_url: http://localhost:3200
+    url: http://localhost:3200
+    use_grpc: false"
+    fi
   fi
 
-  if [ "${INSTALL_KIALI}" == "true" ]; then
-    OUTPUT_DIR="${OUTPUT_DIR:-${SCRIPT_DIR}/../../../_output}"
-    ISTIO_DIR=$(ls -dt1 ${OUTPUT_DIR}/istio-* | head -n1)
-    echo "Istio directory where the Kiali addon yaml should be found: ${ISTIO_DIR}"
-    ${CLIENT_EXE} apply -f ${ISTIO_DIR}/samples/addons/kiali.yaml
-  fi
-
-  if [ "${INSTALL_BOOKINFO}" == "true" ]; then
-    echo -e "Installing bookinfo \n"
-    ${SCRIPT_DIR}/../install-bookinfo-demo.sh -c ${CLIENT_EXE} -tg
-  fi
-
-  # If OpenShift, we need to do some additional things
-  if [ "${IS_OPENSHIFT}" == "true" ]; then
-    $CLIENT_EXE expose svc/tempo-cr-query-frontend -n ${TEMPO_NS}
-    $CLIENT_EXE expose svc/grafana -n istio-system
-  fi
-
-  echo -e "Installation finished. \n"
-  if [ "${IS_OPENSHIFT}" != "true" ]; then
-    echo "If you want to access Tempo from outside the cluster on your local machine, You can port forward the services with:
-./run-kiali.sh -pg 13000:3000 -pp 19090:9090 -pt 3200:3200 -app 8080 -es false -iu http://127.0.0.1:15014 -tr tempo-cr-query-frontend -ts tempo-cr-query-frontend -tn tempo
-
-To configure Kiali to use this, set the external_services.tracing section with the following settings:
-tracing:
-  enabled: true
-  provider: \"tempo\"
-  in_cluster_url: http://localhost:3200
-  url: http://localhost:3200
-  use_grpc: false"
-  fi
 fi
