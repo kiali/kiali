@@ -1,13 +1,13 @@
 import { And, When } from '@badeball/cypress-cucumber-preprocessor';
 import { clusterParameterExists } from "./navigation";
 
-When('user clicks the {string} service node', (svcName: string) => {
+When('user clicks the {string} {string} node', (svcName: string, nodeType: string) => {
   cy.waitForReact();
   cy.getReact('CytoscapeGraph')
     .should('have.length', '1')
     .getCurrentState()
     .then(state => {
-      const node = state.cy.nodes(`[nodeType="service"][service="${svcName}"]`);
+      const node = state.cy.nodes(`[nodeType="${nodeType}"][${nodeType}="${svcName}"]`);
       node.emit('tap');
     });
 });

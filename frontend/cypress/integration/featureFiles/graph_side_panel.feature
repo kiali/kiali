@@ -81,7 +81,7 @@ Feature: Kiali Graph page - Side panel menu actions
   @multi-cluster
   @tracing
   Scenario: Show Traces button contains clusterName param
-    And user clicks the "productpage" service node
+    And user clicks the "productpage" "service" node
     And cluster badge for the "graph side panel" should be visible
     And user clicks the "Traces" graph summary tab
     Then user should see "" cluster parameter in links in the traces
@@ -89,6 +89,6 @@ Feature: Kiali Graph page - Side panel menu actions
   @bookinfo-app
   @tracing
   Scenario: Traces tab contains traces
-    And user clicks the "productpage" service node
+    And user clicks the "productpage" "workload" node
     And user clicks the "Traces" graph summary tab
     Then user should see the traces tab not empty
