@@ -276,12 +276,12 @@ func (in *Client) GetContext() context.Context {
 	return in.ctx
 }
 
-func (in *Client) GetFlags() (prom_v1.FlagsResult, error) {
-	flags, err := in.API().Flags(in.ctx)
+func (in *Client) GetRuntimeinfo() (prom_v1.RuntimeinfoResult, error) {
+	ri, err := in.API().Runtimeinfo(in.ctx)
 	if err != nil {
-		return nil, err
+		return prom_v1.RuntimeinfoResult{}, err
 	}
-	return flags, nil
+	return ri, nil
 }
 
 // GetMetricsForLabels returns a list of metrics existing for the provided labels set. Only metrics that match a name in the given
