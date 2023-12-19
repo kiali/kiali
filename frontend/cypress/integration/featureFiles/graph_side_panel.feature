@@ -85,3 +85,10 @@ Feature: Kiali Graph page - Side panel menu actions
     And cluster badge for the "graph side panel" should be visible
     And user clicks the "Traces" graph summary tab
     Then user should see "" cluster parameter in links in the traces
+
+  @bookinfo-app
+  @tracing
+  Scenario: Traces tab contains traces
+    And user clicks the "productpage" service node
+    And user clicks the "Traces" graph summary tab
+    Then user should see the traces tab not empty
