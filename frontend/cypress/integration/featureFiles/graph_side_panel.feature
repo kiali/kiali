@@ -89,6 +89,6 @@ Feature: Kiali Graph page - Side panel menu actions
   @bookinfo-app
   @tracing
   Scenario: Traces tab contains traces
-    And user clicks the "productpage" "app" node
+    And user clicks the "productpage" "service" node
     And user clicks the "Traces" graph summary tab
     Then user should see the traces tab not empty
