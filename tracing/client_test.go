@@ -14,6 +14,7 @@ func TestCreateJaegerClient(t *testing.T) {
 
 	conf := config.NewConfig()
 	conf.ExternalServices.Tracing.Enabled = true
+	conf.ExternalServices.Tracing.UseGRPC = false
 	config.Set(conf)
 
 	tracingClient, err := NewClient(token)
