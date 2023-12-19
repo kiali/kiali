@@ -200,7 +200,7 @@ spec:
   resources:
     total:
       limits:
-        memory: 6Gi
+        memory: 8Gi
         cpu: 8000m
   template:
     queryFrontend:
