@@ -2,7 +2,6 @@ import * as React from 'react';
 import { Button, ButtonVariant, ExpandableSection, Modal, ModalVariant, Tab, Tabs } from '@patternfly/react-core';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
-import { Response } from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { RequestRouting } from './RequestRouting';
 import { K8sRequestRouting } from './K8sRequestRouting';
@@ -67,6 +66,7 @@ import { CircuitBreaker, CircuitBreakerState } from './CircuitBreaker';
 import _ from 'lodash';
 import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 import { KialiIcon } from '../../config/KialiIcon';
+import { ApiResponse } from 'types/Api';
 
 const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState => {
   return {
@@ -152,7 +152,7 @@ const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState =>
 };
 
 const advancedOptionsStyle = kialiStyle({
-  marginTop: 10
+  marginTop: '0.5rem'
 });
 
 export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardState> {
@@ -161,9 +161,10 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     this.state = emptyServiceWizardState(fqdnServiceName(props.serviceName, props.namespace));
   }
 
-  componentDidUpdate(prevProps: ServiceWizardProps) {
+  componentDidUpdate(prevProps: ServiceWizardProps): void {
     if (prevProps.show !== this.props.show || !this.compareWorkloads(prevProps.workloads, this.props.workloads)) {
       let isMainWizardValid: boolean;
+
       switch (this.props.type) {
         // By default the rule of Weighted routing should be valid
         case WIZARD_TRAFFIC_SHIFTING:
@@ -182,13 +183,17 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
           isMainWizardValid = true;
           break;
       }
+
       const initVsHosts = getInitHosts(this.props.virtualServices);
       const initK8sRoutes = getInitK8sHosts(this.props.k8sHTTPRoutes);
+
       const [initMtlsMode, initClientCertificate, initPrivateKey, initCaCertificates] = getInitTlsMode(
         this.props.destinationRules
       );
+
       const initLoadBalancer = getInitLoadBalancer(this.props.destinationRules);
       let initConsistentHashType = ConsistentHashType.HTTP_HEADER_NAME;
+
       if (initLoadBalancer && initLoadBalancer.consistentHash) {
         if (initLoadBalancer.consistentHash.httpHeaderName) {
           initConsistentHashType = ConsistentHashType.HTTP_HEADER_NAME;
@@ -203,8 +208,10 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         this.props.destinationRules,
         this.props.peerAuthentications
       );
+
       const initConnetionPool = getInitConnectionPool(this.props.destinationRules);
       const initOutlierDetection = getInitOutlierDetection(this.props.destinationRules);
+
       const trafficPolicy: TrafficPolicyState = {
         tlsModified: initMtlsMode !== '',
         mtlsMode: initMtlsMode !== '' ? initMtlsMode : UNSET,
@@ -242,6 +249,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               consecutiveErrors: 1
             }
       };
+
       const gateway: GatewaySelectorState = {
         addGateway: false,
         gwHosts: '',
@@ -252,6 +260,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         addMesh: false,
         port: 80
       };
+
       const k8sGateway: K8sGatewaySelectorState = {
         addGateway: false,
         gwHosts: '',
@@ -262,17 +271,20 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         addMesh: false,
         port: 80
       };
+
       if (hasGateway(this.props.virtualServices)) {
         const [gatewaySelected, isMesh] = getInitGateway(this.props.virtualServices);
         gateway.addGateway = true;
         gateway.selectedGateway = gatewaySelected;
         gateway.addMesh = isMesh;
       }
+
       if (hasK8sGateway(this.props.k8sHTTPRoutes)) {
         const gatewaySelected = getInitK8sGateway(this.props.k8sHTTPRoutes);
         k8sGateway.addGateway = true;
         k8sGateway.selectedGateway = gatewaySelected;
       }
+
       this.setState({
         showWizard: this.props.show,
         showPreview: false,
@@ -308,21 +320,24 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     if (prev.length !== current.length) {
       return false;
     }
+
     for (let i = 0; i < prev.length; i++) {
       if (!current.some(w => _.isEqual(w, prev[i]))) {
         return false;
       }
     }
+
     return true;
   };
 
-  onClose = (changed: boolean) => {
+  onClose = (changed: boolean): void => {
     this.setState(emptyServiceWizardState(fqdnServiceName(this.props.serviceName, this.props.namespace)));
     this.props.onClose(changed);
   };
 
-  onCreateUpdate = () => {
-    const promises: Promise<Response<string>>[] = [];
+  onCreateUpdate = (): void => {
+    const promises: Promise<ApiResponse<string>>[] = [];
+
     switch (this.props.type) {
       case WIZARD_TRAFFIC_SHIFTING:
       case WIZARD_TCP_TRAFFIC_SHIFTING:
@@ -336,12 +351,14 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         const k8sgateway = this.state.previews!.k8sgateway;
         const k8shttproute = this.state.previews!.k8shttproute;
         const pa = this.state.previews!.pa;
+
         // Gateway is only created when user has explicit selected this option
         if (gw) {
           promises.push(
             API.createIstioConfigDetail(this.props.namespace, 'gateways', JSON.stringify(gw), this.props.cluster)
           );
         }
+
         if (k8sgateway) {
           promises.push(
             API.createIstioConfigDetail(
@@ -365,6 +382,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               )
             );
           }
+
           if (vs) {
             promises.push(
               API.updateIstioConfigDetail(
@@ -376,6 +394,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               )
             );
           }
+
           if (k8shttproute) {
             promises.push(
               API.updateIstioConfigDetail(
@@ -403,6 +422,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               )
             );
           }
+
           if (vs) {
             promises.push(
               API.createIstioConfigDetail(
@@ -413,6 +433,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               )
             );
           }
+
           if (k8shttproute) {
             promises.push(
               API.createIstioConfigDetail(
@@ -435,25 +456,25 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             );
           }
         }
+
         break;
       default:
     }
+
     // Disable button before promise is completed. Then Wizard is closed.
     this.setState(prevState => {
       prevState.valid.mainWizard = false;
+
       return {
         valid: prevState.valid
       };
     });
+
     Promise.all(promises)
       .then(results => {
         if (results.length > 0) {
           AlertUtils.add(
-            'Istio Config ' +
-              (this.props.update ? 'updated' : 'created') +
-              ' for ' +
-              this.props.serviceName +
-              ' service.',
+            `Istio Config ${this.props.update ? 'updated' : 'created'} for ${this.props.serviceName} service.`,
             'default',
             MessageType.SUCCESS
           );
@@ -461,7 +482,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         this.onClose(true);
       })
       .catch(error => {
-        AlertUtils.addError('Could not ' + (this.props.update ? 'update' : 'create') + ' Istio config objects.', error);
+        AlertUtils.addError(`Could not ${this.props.update ? 'update' : 'create'} Istio config objects.`, error);
         this.onClose(true);
       });
   };
@@ -469,7 +490,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
   handlePeerAuthnUpdate = (
     pa: PeerAuthentication | undefined,
     dr: DestinationRule,
-    promises: Promise<Response<string>>[]
+    promises: Promise<ApiResponse<string>>[]
   ): void => {
     if (pa) {
       if (this.state.trafficPolicy.peerAuthnSelector.addPeerAuthnModified) {
@@ -499,15 +520,17 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     }
   };
 
-  onVsHosts = (valid: boolean, vsHosts: string[]) => {
+  onVsHosts = (valid: boolean, vsHosts: string[]): void => {
     this.setState(prevState => {
       prevState.valid.vsHosts = valid;
       if (prevState.gateway && prevState.gateway.addGateway && prevState.gateway.newGateway) {
         prevState.gateway.gwHosts = vsHosts.join(',');
       }
+
       // Check if Gateway is valid after a VsHosts check
       if (valid && !prevState.valid.gateway) {
         const hasVsWildcard = vsHosts.some(h => h === '*');
+
         if (hasVsWildcard) {
           if (prevState.gateway && !prevState.gateway.addMesh) {
             prevState.valid.gateway = true;
@@ -517,6 +540,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
           prevState.valid.gateway = true;
         }
       }
+
       return {
         valid: prevState.valid,
         vsHosts: vsHosts
@@ -524,12 +548,13 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     });
   };
 
-  onK8sRouteHosts = (valid: boolean, k8sRouteHosts: string[]) => {
+  onK8sRouteHosts = (valid: boolean, k8sRouteHosts: string[]): void => {
     this.setState(prevState => {
       prevState.valid.k8sRouteHosts = valid;
       if (prevState.k8sGateway && prevState.k8sGateway.addGateway && prevState.k8sGateway.newGateway) {
         prevState.k8sGateway.gwHosts = k8sRouteHosts.join(',');
       }
+
       return {
         valid: prevState.valid,
         k8sRouteHosts: k8sRouteHosts
@@ -537,12 +562,13 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     });
   };
 
-  onTrafficPolicy = (valid: boolean, trafficPolicy: TrafficPolicyState) => {
+  onTrafficPolicy = (valid: boolean, trafficPolicy: TrafficPolicyState): void => {
     this.setState(prevState => {
       // At the moment this callback only updates the valid of the loadbalancer
       // tls is always true, but I maintain it on the structure for consistency
       prevState.valid.tls = valid;
       prevState.valid.lb = valid;
+
       return {
         valid: prevState.valid,
         trafficPolicy: trafficPolicy
@@ -550,7 +576,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     });
   };
 
-  onCircuitBreaker = (circuitBreaker: CircuitBreakerState) => {
+  onCircuitBreaker = (circuitBreaker: CircuitBreakerState): void => {
     this.setState(prevState => {
       prevState.valid.cp = circuitBreaker.isValidConnectionPool;
       prevState.valid.od = circuitBreaker.isValidOutlierDetection;
@@ -558,6 +584,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
       prevState.trafficPolicy.connectionPool = circuitBreaker.connectionPool;
       prevState.trafficPolicy.addOutlierDetection = circuitBreaker.addOutlierDetection;
       prevState.trafficPolicy.outlierDetection = circuitBreaker.outlierDetection;
+
       return {
         valid: prevState.valid,
         trafficPolicy: prevState.trafficPolicy
@@ -565,9 +592,10 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     });
   };
 
-  onGateway = (valid: boolean, gateway: GatewaySelectorState) => {
+  onGateway = (valid: boolean, gateway: GatewaySelectorState): void => {
     this.setState(prevState => {
       prevState.valid.gateway = valid;
+
       return {
         valid: prevState.valid,
         gateway: gateway,
@@ -579,9 +607,10 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     });
   };
 
-  onK8sGateway = (valid: boolean, gateway: K8sGatewaySelectorState) => {
+  onK8sGateway = (valid: boolean, gateway: K8sGatewaySelectorState): void => {
     this.setState(prevState => {
       prevState.valid.gateway = valid;
+
       return {
         valid: prevState.valid,
         k8sGateway: gateway,
@@ -593,9 +622,10 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     });
   };
 
-  onWeightsChange = (valid: boolean, workloads: WorkloadWeight[]) => {
+  onWeightsChange = (valid: boolean, workloads: WorkloadWeight[]): void => {
     this.setState(prevState => {
       prevState.valid.mainWizard = valid;
+
       return {
         valid: prevState.valid,
         workloads: workloads
@@ -603,9 +633,10 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     });
   };
 
-  onRulesChange = (valid: boolean, rules: Rule[]) => {
+  onRulesChange = (valid: boolean, rules: Rule[]): void => {
     this.setState(prevState => {
       prevState.valid.mainWizard = valid;
+
       return {
         valid: prevState.valid,
         rules: rules
@@ -613,9 +644,10 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     });
   };
 
-  onK8sRulesChange = (valid: boolean, k8sRules: K8sRule[]) => {
+  onK8sRulesChange = (valid: boolean, k8sRules: K8sRule[]): void => {
     this.setState(prevState => {
       prevState.valid.mainWizard = valid;
+
       return {
         valid: prevState.valid,
         k8sRules: k8sRules
@@ -623,9 +655,10 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     });
   };
 
-  onFaultInjectionRouteChange = (valid: boolean, faultInjectionRoute: FaultInjectionRoute) => {
+  onFaultInjectionRouteChange = (valid: boolean, faultInjectionRoute: FaultInjectionRoute): void => {
     this.setState(prevState => {
       prevState.valid.mainWizard = valid;
+
       return {
         valid: prevState.valid,
         faultInjectionRoute: faultInjectionRoute
@@ -633,9 +666,10 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     });
   };
 
-  onTimeoutRetryRouteChange = (valid: boolean, timeoutRetryRoute: TimeoutRetryRoute) => {
+  onTimeoutRetryRouteChange = (valid: boolean, timeoutRetryRoute: TimeoutRetryRoute): void => {
     this.setState(prevState => {
       prevState.valid.mainWizard = valid;
+
       return {
         valid: prevState.valid,
         timeoutRetryRoute: timeoutRetryRoute
@@ -659,13 +693,13 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     return state.valid.mainWizard && state.valid.k8sRouteHosts && state.valid.gateway;
   };
 
-  advancedHandleTabClick = (_event, tabIndex) => {
+  advancedHandleTabClick = (_event: React.MouseEvent, tabIndex: string | number): void => {
     this.setState({
-      advancedTabKey: tabIndex
+      advancedTabKey: tabIndex as number
     });
   };
 
-  onPreview = () => {
+  onPreview = (): void => {
     this.setState(
       {
         previews: buildIstioConfig(this.props, this.state)
@@ -674,13 +708,14 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     );
   };
 
-  onConfirmPreview = (items: ConfigPreviewItem[]) => {
+  onConfirmPreview = (items: ConfigPreviewItem[]): void => {
     const dr = items.filter(it => it.type === 'destinationrule')[0];
     const gw = items.filter(it => it.type === 'gateway')[0];
     const k8sgateway = items.filter(it => it.type === 'k8sgateway')[0];
     const pa = items.filter(it => it.type === 'peerauthentications')[0];
     const vs = items.filter(it => it.type === 'virtualservice')[0];
     const k8shttproute = items.filter(it => it.type === 'k8shttproute')[0];
+
     const previews: WizardPreviews = {
       dr: dr ? (dr.items[0] as DestinationRule) : undefined,
       gw: gw ? (gw.items[0] as Gateway) : undefined,
@@ -689,49 +724,60 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
       vs: vs ? (vs.items[0] as VirtualService) : undefined,
       k8shttproute: k8shttproute ? (k8shttproute.items[0] as K8sHTTPRoute) : undefined
     };
+
     this.setState({ previews, showPreview: false, showWizard: false, confirmationModal: true });
   };
 
-  getItems = () => {
+  getItems = (): ConfigPreviewItem[] => {
     const items: ConfigPreviewItem[] = [];
+
     if (this.state.previews) {
       if (this.state.previews.dr) {
         items.push({ type: 'destinationrule', items: [this.state.previews.dr], title: 'Destination Rule' });
       }
+
       if (this.state.previews.gw) {
         items.push({ type: 'gateway', items: [this.state.previews.gw], title: 'Gateway' });
       }
+
       if (this.state.previews.k8sgateway) {
         items.push({ type: 'k8sgateway', items: [this.state.previews.k8sgateway], title: 'K8s Gateway' });
       }
+
       if (this.state.previews.k8shttproute) {
         items.push({ type: 'k8shttproute', items: [this.state.previews.k8shttproute], title: 'K8s HTTPRoute' });
       }
+
       if (this.state.previews.pa) {
         items.push({ type: 'peerauthentications', items: [this.state.previews.pa], title: 'Peer Authentication' });
       }
+
       if (this.state.previews.vs) {
         items.push({ type: 'virtualservice', items: [this.state.previews.vs], title: 'VirtualService' });
       }
     }
+
     return items;
   };
 
-  render() {
+  render(): React.ReactNode {
     const [gatewaySelected, isMesh] = getInitGateway(this.props.virtualServices);
     const k8sGatewaySelected = getInitK8sGateway(this.props.k8sHTTPRoutes);
+
     const titleAction =
       this.props.type.length > 0
         ? this.props.update
-          ? 'Update ' + WIZARD_TITLES[this.props.type]
-          : 'Create ' + WIZARD_TITLES[this.props.type]
+          ? `Update ${WIZARD_TITLES[this.props.type]}`
+          : `Create ${WIZARD_TITLES[this.props.type]}`
         : 'View Modal';
+
     const titleModal =
       this.props.type.length > 0
         ? this.props.update
-          ? 'Update ' + WIZARD_TITLES[this.props.type]
-          : 'Create ' + WIZARD_TITLES[this.props.type]
+          ? `Update ${WIZARD_TITLES[this.props.type]}`
+          : `Create ${WIZARD_TITLES[this.props.type]}`
         : 'View Modal';
+
     return (
       <>
         <Modal
@@ -744,7 +790,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               key="confirm"
               variant={ButtonVariant.primary}
               onClick={this.onCreateUpdate}
-              data-test={'confirm-' + (this.props.update ? 'update' : 'create')}
+              data-test={`confirm-${this.props.update ? 'update' : 'create'}`}
             >
               {this.props.update ? 'Update' : 'Create'}
             </Button>,
@@ -758,14 +804,15 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             Are you sure?
           </>
         </Modal>
+
         <Modal
           width={'75%'}
           title={titleModal}
           aria-label={titleModal}
-          data-test={this.props.type + '_modal'}
+          data-test={`${this.props.type}_modal`}
           isOpen={this.state.showWizard}
           onClose={() => this.onClose(false)}
-          onKeyPress={e => {
+          onKeyDown={e => {
             if (e.key === 'Enter' && this.isValid(this.state)) {
               this.onPreview();
             }
@@ -803,6 +850,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               config validations are disabled when the Istio API is disabled.
             </div>
           )}
+
           {this.props.type === WIZARD_REQUEST_ROUTING && (
             <RequestRouting
               serviceName={this.props.serviceName}
@@ -811,6 +859,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               onChange={this.onRulesChange}
             />
           )}
+
           {this.props.type === WIZARD_K8S_REQUEST_ROUTING && (
             <K8sRequestRouting
               subServices={this.props.subServices}
@@ -818,6 +867,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               onChange={this.onK8sRulesChange}
             />
           )}
+
           {this.props.type === WIZARD_FAULT_INJECTION && (
             <FaultInjection
               initFaultInjectionRoute={getInitFaultInjectionRoute(
@@ -828,6 +878,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               onChange={this.onFaultInjectionRouteChange}
             />
           )}
+
           {(this.props.type === WIZARD_TRAFFIC_SHIFTING || this.props.type === WIZARD_TCP_TRAFFIC_SHIFTING) && (
             <TrafficShifting
               showValid={true}
@@ -841,6 +892,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               onChange={this.onWeightsChange}
             />
           )}
+
           {this.props.type === WIZARD_REQUEST_TIMEOUTS && (
             <RequestTimeouts
               initTimeoutRetry={getInitTimeoutRetryRoute(
@@ -851,6 +903,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               onChange={this.onTimeoutRetryRouteChange}
             />
           )}
+
           {(this.props.type === WIZARD_REQUEST_ROUTING ||
             this.props.type === WIZARD_FAULT_INJECTION ||
             this.props.type === WIZARD_TRAFFIC_SHIFTING ||
@@ -859,8 +912,8 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             <ExpandableSection
               className={advancedOptionsStyle}
               isExpanded={this.state.showAdvanced}
-              toggleText={(this.state.showAdvanced ? 'Hide' : 'Show') + ' Advanced Options'}
-              contentId={(this.state.showAdvanced ? 'hide' : 'show') + '_advanced_options'}
+              toggleText={`${this.state.showAdvanced ? 'Hide' : 'Show'} Advanced Options`}
+              contentId={`${this.state.showAdvanced ? 'hide' : 'show'}_advanced_options`}
               onToggle={() => {
                 this.setState({
                   showAdvanced: !this.state.showAdvanced
@@ -877,6 +930,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
                     />
                   </div>
                 </Tab>
+
                 <Tab eventKey={1} title={'Gateways'} data-test={'Gateways'}>
                   <div style={{ marginTop: '20px', marginBottom: '10px' }}>
                     <GatewaySelector
@@ -890,6 +944,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
                     />
                   </div>
                 </Tab>
+
                 <Tab eventKey={2} title={'Traffic Policy'}>
                   <div style={{ marginTop: '20px', marginBottom: '10px' }}>
                     <TrafficPolicy
@@ -910,6 +965,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
                     />
                   </div>
                 </Tab>
+
                 {this.props.type !== WIZARD_TCP_TRAFFIC_SHIFTING && (
                   <Tab eventKey={3} title={'Circuit Breaker'}>
                     <div style={{ marginTop: '20px', marginBottom: '10px' }}>
@@ -926,12 +982,13 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               </Tabs>
             </ExpandableSection>
           )}
+
           {this.props.type === WIZARD_K8S_REQUEST_ROUTING && (
             <ExpandableSection
               className={advancedOptionsStyle}
               isExpanded={this.state.showAdvanced}
-              toggleText={(this.state.showAdvanced ? 'Hide' : 'Show') + ' Advanced Options'}
-              contentId={(this.state.showAdvanced ? 'hide' : 'show') + '_advanced_options'}
+              toggleText={`${this.state.showAdvanced ? 'Hide' : 'Show'} Advanced Options`}
+              contentId={`${this.state.showAdvanced ? 'hide' : 'show'}_advanced_options`}
               onToggle={() => {
                 this.setState({
                   showAdvanced: !this.state.showAdvanced
@@ -949,6 +1006,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
                     />
                   </div>
                 </Tab>
+
                 <Tab eventKey={1} title={'K8s Gateways'} data-test={'K8s Gateways'}>
                   <div style={{ marginTop: '20px', marginBottom: '10px' }}>
                     <K8sGatewaySelector

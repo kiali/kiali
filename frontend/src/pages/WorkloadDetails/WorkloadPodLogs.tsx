@@ -45,7 +45,6 @@ import { AccessLogModal } from 'components/Envoy/AccessLogModal';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { history, URLParam } from 'app/History';
 import { TracingQuery, Span } from 'types/Tracing';
-import { AxiosResponse } from 'axios';
 import moment from 'moment';
 import { formatDuration } from 'utils/tracing/TracingHelper';
 import { infoStyle, kebabToggleStyle } from 'styles/DropdownStyles';
@@ -54,6 +53,7 @@ import { KioskElement } from '../../components/Kiosk/KioskElement';
 import { TimeDurationModal } from '../../components/Time/TimeDurationModal';
 import { TimeDurationIndicator } from '../../components/Time/TimeDurationIndicator';
 import { serverConfig } from '../../config';
+import { ApiResponse } from 'types/Api';
 
 const appContainerColors = [PFColors.Blue300, PFColors.Green300, PFColors.Purple300, PFColors.Orange300];
 const proxyContainerColor = PFColors.Gold400;
@@ -1045,7 +1045,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     }
 
     const selectedContainers = containerOptions.filter(c => c.isSelected);
-    const promises: Promise<AxiosResponse<PodLogs | Span[]>>[] = selectedContainers.map(c => {
+    const promises: Promise<ApiResponse<PodLogs | Span[]>>[] = selectedContainers.map(c => {
       return getPodLogs(namespace, podName, c.name, maxLines, sinceTime, duration, c.isProxy, cluster);
     });
 

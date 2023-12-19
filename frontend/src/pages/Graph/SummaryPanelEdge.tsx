@@ -27,7 +27,6 @@ import {
   getTitle
 } from './SummaryPanelCommon';
 import { Metric, Datapoint, IstioMetricsMap, Labels } from '../../types/Metrics';
-import { Response } from '../../services/Api';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { decoratedEdgeData, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { ResponseFlagsTable } from 'components/SummaryPanel/ResponseFlagsTable';
@@ -40,6 +39,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { Edge } from '@patternfly/react-topology';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
+import { ApiResponse } from 'types/Api';
 
 type SummaryPanelEdgeMetricsState = {
   errRates: Datapoint[];
@@ -87,7 +87,7 @@ const principalStyle = kialiStyle({
 });
 
 export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, SummaryPanelEdgeState> {
-  private metricsPromise?: CancelablePromise<Response<IstioMetricsMap>>;
+  private metricsPromise?: CancelablePromise<ApiResponse<IstioMetricsMap>>;
   private readonly mainDivRef: React.RefObject<HTMLDivElement>;
 
   constructor(props: SummaryPanelPropType) {
@@ -97,7 +97,10 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     this.mainDivRef = React.createRef<HTMLDivElement>();
   }
 
-  static getDerivedStateFromProps(props: SummaryPanelPropType, state: SummaryPanelEdgeState) {
+  static getDerivedStateFromProps(
+    props: SummaryPanelPropType,
+    state: SummaryPanelEdgeState
+  ): Partial<SummaryPanelEdgeState> | null {
     // if the summaryTarget (i.e. selected edge) has changed, then init the state and set to loading. The loading
     // will actually be kicked off after the render (in componentDidMount/Update).
     return props.data.summaryTarget !== state.edge
@@ -105,28 +108,29 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       : null;
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.updateCharts(this.props);
   }
 
-  componentDidUpdate(prevProps: SummaryPanelPropType) {
+  componentDidUpdate(prevProps: SummaryPanelPropType): void {
     if (prevProps.data.summaryTarget !== this.props.data.summaryTarget) {
       if (this.mainDivRef.current) {
         this.mainDivRef.current.scrollTop = 0;
       }
     }
+
     if (shouldRefreshData(prevProps, this.props)) {
       this.updateCharts(this.props);
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     if (this.metricsPromise) {
       this.metricsPromise.cancel();
     }
   }
 
-  render() {
+  render(): React.ReactNode {
     const isPF = !!this.props.data.isPF;
     const edge = this.props.data.summaryTarget;
     const edgeData = isPF ? (edge as Edge).getData() : decoratedEdgeData(edge);
@@ -142,7 +146,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     const isTcp = protocol === Protocol.TCP;
     const isRequests = isHttp || (isGrpc && this.props.trafficRates.includes(TrafficRate.GRPC_REQUEST));
 
-    const SecurityBlock = () => {
+    const SecurityBlock = (): React.ReactElement => {
       return (
         <div className={panelHeadingStyle}>
           {isMtls && this.renderMTLSSummary(mTLSPercentage)}
@@ -257,7 +261,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     );
   }
 
-  private getByLabels = (sourceMetricType: NodeMetricType, destMetricType: NodeMetricType) => {
+  private getByLabels = (sourceMetricType: NodeMetricType, destMetricType: NodeMetricType): string[] => {
     let label: string;
 
     switch (sourceMetricType) {
@@ -300,7 +304,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     destMetricType: NodeMetricType,
     data: DecoratedGraphNodeData,
     isServiceEntry: boolean
-  ) => {
+  ): Datapoint[] => {
     if (isServiceEntry) {
       // For service entries, metrics are grouped by destination_service_name and we need to match it per "data.destServices"
       return getDatapoints(m, (labels: Labels) => {
@@ -354,7 +358,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     return getDatapoints(m, comparator);
   };
 
-  private updateCharts = (props: SummaryPanelPropType) => {
+  private updateCharts = (props: SummaryPanelPropType): void => {
     const isPF = !!props.data.isPF;
     const edge = this.props.data.summaryTarget;
     const edgeData = isPF ? (edge as Edge).getData() : decoratedEdgeData(edge);
@@ -400,7 +404,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     const otherEndData = useDestMetrics ? sourceData : destData;
     const quantiles = ['0.5', '0.95', '0.99'];
 
-    let promiseRequests, promiseStream;
+    let promiseRequests: Promise<ApiResponse<IstioMetricsMap>>;
 
     if (isHttp || (isGrpc && isRequests)) {
       const reporterRps =
@@ -433,7 +437,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
 
       const filters = ['grpc_sent', 'grpc_received'];
 
-      promiseStream = getNodeMetrics(
+      promiseRequests = getNodeMetrics(
         metricType,
         metricsNodeData,
         props,
@@ -453,7 +457,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
 
       const filtersTCP = ['tcp_sent', 'tcp_received'];
 
-      promiseStream = getNodeMetrics(
+      promiseRequests = getNodeMetrics(
         metricType,
         metricsNodeData,
         props,
@@ -466,7 +470,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       );
     }
 
-    this.metricsPromise = makeCancelablePromise(promiseRequests ? promiseRequests : promiseStream);
+    this.metricsPromise = makeCancelablePromise(promiseRequests);
 
     this.metricsPromise.promise
       .then(response => {
@@ -571,11 +575,18 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     this.setState({ loading: true, metricsLoadError: null });
   };
 
-  private safeRate = (s: any) => {
+  private safeRate = (s: number): number => {
     return isNaN(s) ? 0.0 : Number(s);
   };
 
-  private renderCharts = (edge, isGrpc, isHttp, isTcp, isRequests, isPF: boolean) => {
+  private renderCharts = (
+    edge: any,
+    isGrpc: boolean,
+    isHttp: boolean,
+    isTcp: boolean,
+    isRequests: boolean,
+    isPF: boolean
+  ): React.ReactNode => {
     if (!this.hasSupportedCharts(edge, isPF)) {
       return isGrpc || isHttp ? (
         <>
@@ -614,11 +625,13 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       );
     }
 
-    let requestChart, streamChart;
+    let requestChart: React.ReactNode, streamChart: React.ReactNode;
+
     if (isGrpc || isHttp) {
       if (isRequests) {
         const labelRps = isGrpc ? 'gRPC Request Traffic' : 'HTTP Request Traffic';
         const labelRt = isGrpc ? 'gRPC Request Response Time (ms)' : 'HTTP Request Response Time (ms)';
+
         requestChart = (
           <>
             <RequestChart label={labelRps} dataRps={this.state.rates!} dataErrors={this.state.errRates} />
@@ -637,14 +650,12 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       } else {
         // assume gRPC messages, it's the only option other than requests
         requestChart = (
-          <>
-            <StreamChart
-              label="gRPC Message Traffic"
-              sentRates={this.state.sent!}
-              receivedRates={this.state.received}
-              unit="messages"
-            />
-          </>
+          <StreamChart
+            label="gRPC Message Traffic"
+            sentRates={this.state.sent!}
+            receivedRates={this.state.received}
+            unit="messages"
+          />
         );
       }
     } else if (isTcp) {
@@ -661,7 +672,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     );
   };
 
-  private hasSupportedCharts = (edge, isPF: boolean) => {
+  private hasSupportedCharts = (edge: any, isPF: boolean): boolean => {
     const sourceData = isPF ? (edge as Edge).getSource().getData() : decoratedNodeData(edge.source());
     const destData = isPF ? (edge as Edge).getTarget().getData() : decoratedNodeData(edge.target());
     const sourceMetricType = getNodeMetricType(sourceData);
@@ -674,7 +685,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
 
   // We need to handle the special case of a dest service node showing client failures. These service nodes show up in
   // non-service graphs, even when not injecting service nodes.
-  private isSpecialServiceDest(destMetricType: NodeMetricType) {
+  private isSpecialServiceDest(destMetricType: NodeMetricType): boolean {
     return (
       destMetricType === NodeMetricType.SERVICE &&
       !this.props.injectServiceNodes &&
@@ -682,7 +693,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     );
   }
 
-  private renderMTLSSummary = (mTLSPercentage: number) => {
+  private renderMTLSSummary = (mTLSPercentage: number): React.ReactNode => {
     let mtls = 'mTLS Enabled';
     const isMtls = mTLSPercentage > 0;
     if (isMtls && mTLSPercentage < 100.0) {

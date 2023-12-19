@@ -17,7 +17,6 @@ import {
   getDatapoints,
   getTitle
 } from './SummaryPanelCommon';
-import { Response } from '../../services/Api';
 import { IstioMetricsMap, Datapoint, Labels } from '../../types/Metrics';
 import { Reporter } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
@@ -39,24 +38,25 @@ import {
 } from '@patternfly/react-core';
 import { kebabToggleStyle } from 'styles/DropdownStyles';
 import { kialiStyle } from 'styles/StyleUtils';
+import { ApiResponse } from 'types/Api';
 
 type SummaryPanelAppBoxMetricsState = {
-  grpcRequestIn: Datapoint[];
-  grpcRequestOut: Datapoint[];
-  grpcRequestErrIn: Datapoint[];
-  grpcRequestErrOut: Datapoint[];
-  grpcSentIn: Datapoint[];
-  grpcSentOut: Datapoint[];
   grpcReceivedIn: Datapoint[];
   grpcReceivedOut: Datapoint[];
-  httpRequestIn: Datapoint[];
-  httpRequestOut: Datapoint[];
+  grpcRequestErrIn: Datapoint[];
+  grpcRequestErrOut: Datapoint[];
+  grpcRequestIn: Datapoint[];
+  grpcRequestOut: Datapoint[];
+  grpcSentIn: Datapoint[];
+  grpcSentOut: Datapoint[];
   httpRequestErrIn: Datapoint[];
   httpRequestErrOut: Datapoint[];
-  tcpSentIn: Datapoint[];
-  tcpSentOut: Datapoint[];
+  httpRequestIn: Datapoint[];
+  httpRequestOut: Datapoint[];
   tcpReceivedIn: Datapoint[];
   tcpReceivedOut: Datapoint[];
+  tcpSentIn: Datapoint[];
+  tcpSentOut: Datapoint[];
 };
 
 type SummaryPanelAppBoxState = SummaryPanelAppBoxMetricsState & {
@@ -67,22 +67,22 @@ type SummaryPanelAppBoxState = SummaryPanelAppBoxMetricsState & {
 };
 
 const defaultMetricsState: SummaryPanelAppBoxMetricsState = {
-  grpcRequestIn: [],
-  grpcRequestOut: [],
-  grpcRequestErrIn: [],
-  grpcRequestErrOut: [],
-  grpcSentIn: [],
-  grpcSentOut: [],
   grpcReceivedIn: [],
   grpcReceivedOut: [],
-  httpRequestIn: [],
-  httpRequestOut: [],
+  grpcRequestErrIn: [],
+  grpcRequestErrOut: [],
+  grpcRequestIn: [],
+  grpcRequestOut: [],
+  grpcSentIn: [],
+  grpcSentOut: [],
   httpRequestErrIn: [],
   httpRequestErrOut: [],
-  tcpSentIn: [],
-  tcpSentOut: [],
+  httpRequestIn: [],
+  httpRequestOut: [],
   tcpReceivedIn: [],
-  tcpReceivedOut: []
+  tcpReceivedOut: [],
+  tcpSentIn: [],
+  tcpSentOut: []
 };
 
 const defaultState: SummaryPanelAppBoxState = {
@@ -99,7 +99,7 @@ const nodeInfoStyle = kialiStyle({
 });
 
 export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, SummaryPanelAppBoxState> {
-  private metricsPromise?: CancelablePromise<Response<IstioMetricsMap>[]>;
+  private metricsPromise?: CancelablePromise<ApiResponse<IstioMetricsMap>[]>;
   private readonly mainDivRef: React.RefObject<HTMLDivElement>;
 
   constructor(props: SummaryPanelPropType) {
@@ -109,7 +109,10 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     this.mainDivRef = React.createRef<HTMLDivElement>();
   }
 
-  static getDerivedStateFromProps(props: SummaryPanelPropType, state: SummaryPanelAppBoxState) {
+  static getDerivedStateFromProps(
+    props: SummaryPanelPropType,
+    state: SummaryPanelAppBoxState
+  ): Partial<SummaryPanelAppBoxState> | null {
     // if the summaryTarget (i.e. selected appBox) has changed, then init the state and set to loading. The loading
     // will actually be kicked off after the render (in componentDidMount/Update).
     return props.data.summaryTarget !== state.appBox
@@ -117,11 +120,11 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
       : null;
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.updateCharts(this.props);
   }
 
-  componentDidUpdate(prevProps: SummaryPanelPropType) {
+  componentDidUpdate(prevProps: SummaryPanelPropType): void {
     if (prevProps.data.summaryTarget !== this.props.data.summaryTarget) {
       if (this.mainDivRef.current) {
         this.mainDivRef.current.scrollTop = 0;
@@ -133,13 +136,13 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     if (this.metricsPromise) {
       this.metricsPromise.cancel();
     }
   }
 
-  render() {
+  render(): React.ReactNode {
     const isPF = !!this.props.data.isPF;
     const appBox = this.props.data.summaryTarget;
     const nodeData = isPF ? appBox.getData() : decoratedNodeData(appBox);
@@ -181,6 +184,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
         {nodeData.namespace}
       </>
     );
+
     const secondBadge = isMultiCluster ? (
       <div>
         <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '0.125rem' }} />
@@ -294,8 +298,8 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     }
 
     // appBoxes are never root nodes, so always look for inbound traffic
-    let promiseInRps: Promise<Response<IstioMetricsMap>> = Promise.resolve({ data: {} });
-    let promiseInStream: Promise<Response<IstioMetricsMap>> = Promise.resolve({ data: {} });
+    let promiseInRps: Promise<ApiResponse<IstioMetricsMap>> = Promise.resolve({ data: {} });
+    let promiseInStream: Promise<ApiResponse<IstioMetricsMap>> = Promise.resolve({ data: {} });
 
     if (this.hasHttpIn(appBox, isPF) || (this.hasGrpcIn(appBox, isPF) && isGrpcRequests, isPF)) {
       const filtersRps = ['request_count', 'request_error_count'];
@@ -319,9 +323,11 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
       if (this.hasGrpcIn(appBox, isPF) && !isGrpcRequests) {
         filtersStream.push('grpc_sent', 'grpc_received');
       }
+
       if (this.hasTcpIn(appBox, isPF)) {
         filtersStream.push('tcp_sent', 'tcp_received');
       }
+
       if (filtersStream.length > 0) {
         const byLabelsStream = nodeData.isOutside ? ['source_workload_namespace'] : [];
 
@@ -340,7 +346,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     }
 
     const promiseIn = mergeMetricsResponses([promiseInRps, promiseInStream]);
-    let promiseOut: Promise<Response<IstioMetricsMap>> = Promise.resolve({ data: {} });
+    let promiseOut: Promise<ApiResponse<IstioMetricsMap>> = Promise.resolve({ data: {} });
 
     // Ignore outbound traffic if it is a non-root (appbox is always non-root) outsider (because they have no outbound edges)
     if (!nodeData.isOutside) {
@@ -348,9 +354,11 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
       if (this.hasHttpOut(appBox, isPF) || (this.hasGrpcOut(appBox, isPF) && isGrpcRequests)) {
         filters.push('request_count', 'request_error_count');
       }
+
       if (this.hasGrpcOut(appBox, isPF) && !isGrpcRequests) {
         filters.push('grpc_sent', 'grpc_received');
       }
+
       if (this.hasTcpOut(appBox, isPF)) {
         filters.push('tcp_sent', 'tcp_received');
       }
@@ -359,10 +367,12 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
         // use source metrics for outbound, except for:
         // - istio namespace nodes (no source telemetry)
         const reporter: Reporter = nodeData.isIstio ? 'destination' : 'source';
+
         // note: request_protocol is not a valid byLabel for tcp/grpc-message filters but it is ignored by prometheus
         const byLabels = nodeData.isOutside
           ? ['destination_service_namespace', 'request_protocol']
           : ['request_protocol'];
+
         promiseOut = getNodeMetrics(
           nodeMetricType,
           nodeData,
@@ -381,7 +391,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     this.metricsPromise = makeCancelablePromise(Promise.all([promiseOut, promiseIn]));
 
     this.metricsPromise.promise
-      .then((responses: Response<IstioMetricsMap>[]) => {
+      .then((responses: ApiResponse<IstioMetricsMap>[]) => {
         const comparator = nodeData.isOutside
           ? (labels: Labels, protocol?: Protocol) => {
               return protocol ? labels.request_protocol === protocol : true;
@@ -390,15 +400,18 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
               if (protocol && labels.request_protocol !== protocol) {
                 return false;
               }
+
               if (
                 labels.destination_service_namespace &&
                 !this.isActiveNamespace(labels.destination_service_namespace)
               ) {
                 return false;
               }
+
               if (labels.source_workload_namespace && !this.isActiveNamespace(labels.source_workload_namespace)) {
                 return false;
               }
+
               return true;
             };
 
@@ -431,6 +444,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
           return;
         }
         const errorMsg = error.response && error.response.data.error ? error.response.data.error : error.message;
+
         this.setState({
           loading: false,
           metricsLoadError: errorMsg,
@@ -466,7 +480,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     appBox
       .children(`node[${NodeAttr.hasCB}],[${NodeAttr.hasVS}]`)
       .nodes()
-      .forEach(n => {
+      .forEach((n: any) => {
         hasCB = hasCB || n.data(NodeAttr.hasCB);
         hasVS = hasVS || n.data(NodeAttr.hasVS);
       });
@@ -492,6 +506,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
 
   private renderBadgeSummaryPF = (appBox: Node): React.ReactNode => {
     const appBoxData = appBox.getData();
+
     let hasCB: boolean = appBoxData[NodeAttr.hasCB] === true;
     let hasVS: boolean = appBoxData[NodeAttr.hasVS] === true;
 
@@ -533,27 +548,27 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     const validChildren = appBox.children(
       `node[nodeType != "${NodeType.SERVICE}"][nodeType != "${NodeType.AGGREGATE}"]`
     );
+
     const inbound = getAccumulatedTrafficRateGrpc(validChildren.incomers('edge'));
     const outbound = getAccumulatedTrafficRateGrpc(validChildren.edgesTo('*'));
 
     return (
-      <>
-        <InOutRateTableGrpc
-          title="GRPC Traffic (requests per second):"
-          inRate={inbound.rate}
-          inRateGrpcErr={inbound.rateGrpcErr}
-          inRateNR={inbound.rateNoResponse}
-          outRate={outbound.rate}
-          outRateGrpcErr={outbound.rateGrpcErr}
-          outRateNR={outbound.rateNoResponse}
-        />
-      </>
+      <InOutRateTableGrpc
+        title="GRPC Traffic (requests per second):"
+        inRate={inbound.rate}
+        inRateGrpcErr={inbound.rateGrpcErr}
+        inRateNR={inbound.rateNoResponse}
+        outRate={outbound.rate}
+        outRateGrpcErr={outbound.rateGrpcErr}
+        outRateNR={outbound.rateNoResponse}
+      />
     );
   };
 
   private renderGrpcRequestsPF = (appBox: Node): React.ReactNode => {
     // only consider the physical children to avoid inflated rates
     const appBoxChildren = appBox.getAllNodeChildren();
+
     const validChildren = selectAnd(appBoxChildren, [
       { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE },
       { prop: NodeAttr.nodeType, op: '!=', val: NodeType.AGGREGATE }
@@ -563,17 +578,15 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     const outbound = getAccumulatedTrafficRateGrpc(edgesOut(validChildren as Node[]), true);
 
     return (
-      <>
-        <InOutRateTableGrpc
-          title="GRPC Traffic (requests per second):"
-          inRate={inbound.rate}
-          inRateGrpcErr={inbound.rateGrpcErr}
-          inRateNR={inbound.rateNoResponse}
-          outRate={outbound.rate}
-          outRateGrpcErr={outbound.rateGrpcErr}
-          outRateNR={outbound.rateNoResponse}
-        />
-      </>
+      <InOutRateTableGrpc
+        title="GRPC Traffic (requests per second):"
+        inRate={inbound.rate}
+        inRateGrpcErr={inbound.rateGrpcErr}
+        inRateNR={inbound.rateNoResponse}
+        outRate={outbound.rate}
+        outRateGrpcErr={outbound.rateGrpcErr}
+        outRateNR={outbound.rateNoResponse}
+      />
     );
   };
 
@@ -591,27 +604,26 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     const outbound = getAccumulatedTrafficRateHttp(validChildren.edgesTo('*'));
 
     return (
-      <>
-        <InOutRateTableHttp
-          title="HTTP (requests per second):"
-          inRate={inbound.rate}
-          inRate3xx={inbound.rate3xx}
-          inRate4xx={inbound.rate4xx}
-          inRate5xx={inbound.rate5xx}
-          inRateNR={inbound.rateNoResponse}
-          outRate={outbound.rate}
-          outRate3xx={outbound.rate3xx}
-          outRate4xx={outbound.rate4xx}
-          outRate5xx={outbound.rate5xx}
-          outRateNR={outbound.rateNoResponse}
-        />
-      </>
+      <InOutRateTableHttp
+        title="HTTP (requests per second):"
+        inRate={inbound.rate}
+        inRate3xx={inbound.rate3xx}
+        inRate4xx={inbound.rate4xx}
+        inRate5xx={inbound.rate5xx}
+        inRateNR={inbound.rateNoResponse}
+        outRate={outbound.rate}
+        outRate3xx={outbound.rate3xx}
+        outRate4xx={outbound.rate4xx}
+        outRate5xx={outbound.rate5xx}
+        outRateNR={outbound.rateNoResponse}
+      />
     );
   };
 
   private renderHttpRequestsPF = (appBox: Node): React.ReactNode => {
     // only consider the physical children to avoid inflated rates
     const appBoxChildren = appBox.getAllNodeChildren();
+
     const validChildren = selectAnd(appBoxChildren, [
       { prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE },
       { prop: NodeAttr.nodeType, op: '!=', val: NodeType.AGGREGATE }
@@ -621,21 +633,19 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     const outbound = getAccumulatedTrafficRateHttp(edgesOut(validChildren as Node[]), true);
 
     return (
-      <>
-        <InOutRateTableHttp
-          title="HTTP (requests per second):"
-          inRate={inbound.rate}
-          inRate3xx={inbound.rate3xx}
-          inRate4xx={inbound.rate4xx}
-          inRate5xx={inbound.rate5xx}
-          inRateNR={inbound.rateNoResponse}
-          outRate={outbound.rate}
-          outRate3xx={outbound.rate3xx}
-          outRate4xx={outbound.rate4xx}
-          outRate5xx={outbound.rate5xx}
-          outRateNR={outbound.rateNoResponse}
-        />
-      </>
+      <InOutRateTableHttp
+        title="HTTP (requests per second):"
+        inRate={inbound.rate}
+        inRate3xx={inbound.rate3xx}
+        inRate4xx={inbound.rate4xx}
+        inRate5xx={inbound.rate5xx}
+        inRateNR={inbound.rateNoResponse}
+        outRate={outbound.rate}
+        outRate3xx={outbound.rate3xx}
+        outRate4xx={outbound.rate4xx}
+        outRate5xx={outbound.rate5xx}
+        outRateNR={outbound.rateNoResponse}
+      />
     );
   };
 
@@ -918,6 +928,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
         ]).length > 0
       );
     }
+
     return appBox.children().filter('[nodeType != "service"]').filter('[httpIn > 0],[httpOut > 0]').size() > 0;
   };
 
@@ -932,6 +943,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
         ]).length > 0
       );
     }
+
     return appBox.children().filter('[nodeType != "service"]').filter('[httpIn > 0]').size() > 0;
   };
 
@@ -946,6 +958,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
         ]).length > 0
       );
     }
+
     return appBox.children().filter('[nodeType != "service"]').filter('[httpOut > 0]').size() > 0;
   };
 
@@ -961,6 +974,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
         ]).length > 0
       );
     }
+
     return appBox.children().filter('[nodeType != "service"]').filter('[tcpIn > 0],[tcpOut > 0]').size() > 0;
   };
 
@@ -975,6 +989,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
         ]).length > 0
       );
     }
+
     return appBox.children().filter('[nodeType != "service"]').filter('[tcpIn > 0]').size() > 0;
   };
 
@@ -989,6 +1004,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
         ]).length > 0
       );
     }
+
     return appBox.children().filter('[nodeType != "service"]').filter('[tcpOut > 0]').size() > 0;
   };
 }

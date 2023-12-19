@@ -15,7 +15,6 @@ import {
   TrafficRateTcp
 } from '../../utils/TrafficRate';
 import * as API from '../../services/Api';
-import { Response } from '../../services/Api';
 import {
   getDatapoints,
   getFirstDatapoints,
@@ -38,6 +37,7 @@ import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { edgesIn, edgesOut, elems, leafNodes, NodeData, select } from 'pages/GraphPF/GraphPFElems';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
+import { ApiResponse } from 'types/Api';
 
 type SummaryPanelGraphMetricsState = {
   grpcReceivedIn: Datapoint[];
@@ -129,7 +129,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
 
   private graphTraffic?: SummaryPanelGraphTraffic;
   private isPF = false;
-  private metricsPromise?: CancelablePromise<Response<IstioMetricsMap>[]>;
+  private metricsPromise?: CancelablePromise<ApiResponse<IstioMetricsMap>[]>;
   private validationSummaryPromises: PromisesRegistry = new PromisesRegistry();
 
   constructor(props: SummaryPanelPropType) {
@@ -687,8 +687,8 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
       this.metricsPromise = undefined;
     }
 
-    let promiseIn: Promise<Response<IstioMetricsMap>> = Promise.resolve({ data: {} });
-    let promiseOut: Promise<Response<IstioMetricsMap>> = Promise.resolve({ data: {} });
+    let promiseIn: Promise<ApiResponse<IstioMetricsMap>> = Promise.resolve({ data: {} });
+    let promiseOut: Promise<ApiResponse<IstioMetricsMap>> = Promise.resolve({ data: {} });
 
     let filters: string[] = [];
 

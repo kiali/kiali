@@ -16,16 +16,16 @@ export class MounterMocker {
       const state = store.getState();
       state.messageCenter.groups.forEach(g => {
         g.messages.forEach(m => {
-          this.caughtErrors.push(m.content + ' [' + m.detail + ']');
+          this.caughtErrors.push(`${m.content} [${m.detail}]`);
         });
       });
     });
   }
 
   // About nestData: set it accordingly to the object returned by API promise:
-  // - if it's the Axios response directly, keep default (true) as content is encapsulated in 'data' field
-  // - if it's a transformed object extracted from Axios response, set to false.
-  addMock = (func: keyof typeof API, obj: any, nestData: boolean = true): MounterMocker => {
+  // - if it's the Api response directly, keep default (true) as content is encapsulated in 'data' field
+  // - if it's a transformed object extracted from Api response, set to false.
+  addMock = (func: keyof typeof API, obj: any, nestData = true): MounterMocker => {
     this.promises.push(
       new Promise((resolve, reject) => {
         jest.spyOn(API, func).mockImplementation(() => {
@@ -58,11 +58,13 @@ export class MounterMocker {
         </MemoryRouter>
       </Provider>
     );
+
     return this;
   };
 
-  run = (done, expect: (wrapper: ReactWrapper) => void) => {
+  run = (done: jest.DoneCallback, expect: (wrapper: ReactWrapper) => void): void => {
     let wrapper: ReactWrapper;
+
     Promise.all(this.promises)
       .then(() => {
         wrapper.update();
@@ -71,12 +73,13 @@ export class MounterMocker {
         done();
       })
       .catch(done.fail);
+
     wrapper = mount(this.toMount);
   };
 
-  private checkErrors() {
+  private checkErrors(): void {
     if (this.caughtErrors.length > 0) {
-      console.warn('MounterMocker caught some errors:' + this.caughtErrors.map(e => '\n- ' + e).join(''));
+      console.warn(`MounterMocker caught some errors:${this.caughtErrors.map(e => `\n- ${e}`).join('')}`);
     }
   }
 }

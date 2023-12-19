@@ -54,11 +54,11 @@ class ServiceListPageComponent extends FilterComponent.Component<
     };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.updateListItems();
   }
 
-  componentDidUpdate(prevProps: ServiceListPageProps) {
+  componentDidUpdate(prevProps: ServiceListPageProps): void {
     const prevCurrentSortField = FilterHelper.currentSortField(ServiceListFilters.sortFields);
     const prevIsSortAscending = FilterHelper.isCurrentSortAscending();
 
@@ -77,7 +77,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     this.promises.cancelAll();
   }
 
@@ -170,7 +170,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
       })
       .catch(err => {
         if (!err.isCanceled) {
-          this.handleAxiosError('Could not fetch services list', err);
+          this.handleApiError('Could not fetch services list', err);
         }
       });
   }
@@ -185,7 +185,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
     return undefined;
   }
 
-  render() {
+  render(): React.ReactNode {
     const hiddenColumns = isMultiCluster ? [] : ['cluster'];
 
     Toggles.getToggles().forEach((v, k) => {

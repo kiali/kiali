@@ -29,11 +29,11 @@ import {
   hr
 } from './SummaryPanelCommon';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
-import { Response } from '../../services/Api';
 import { Reporter } from '../../types/MetricsOptions';
 import { decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { edgesOut, nodesIn, select } from 'pages/GraphPF/GraphPFElems';
+import { ApiResponse } from 'types/Api';
 
 type SummaryPanelNodeMetricsState = {
   grpcErrorCountIn: Datapoint[];
@@ -89,7 +89,7 @@ const defaultState: SummaryPanelNodeState = {
 type SummaryPanelNodeProps = SummaryPanelPropType;
 
 export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodeProps, SummaryPanelNodeState> {
-  private metricsPromise?: CancelablePromise<Response<IstioMetricsMap>[]>;
+  private metricsPromise?: CancelablePromise<ApiResponse<IstioMetricsMap>[]>;
 
   constructor(props: SummaryPanelNodeProps) {
     super(props);
@@ -148,14 +148,14 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
       return;
     }
 
-    let promiseIn: Promise<Response<IstioMetricsMap>> = Promise.resolve({ data: {} });
-    let promiseOut: Promise<Response<IstioMetricsMap>> = Promise.resolve({ data: {} });
+    let promiseIn: Promise<ApiResponse<IstioMetricsMap>> = Promise.resolve({ data: {} });
+    let promiseOut: Promise<ApiResponse<IstioMetricsMap>> = Promise.resolve({ data: {} });
 
     // set inbound unless it is a root (because they have no inbound edges)
     if (!nodeData.isRoot) {
       const isServiceDestCornerCase = this.isServiceDestCornerCase(nodeMetricType);
-      let promiseRps: Promise<Response<IstioMetricsMap>> = Promise.resolve({ data: {} });
-      let promiseStream: Promise<Response<IstioMetricsMap>> = Promise.resolve({ data: {} });
+      let promiseRps: Promise<ApiResponse<IstioMetricsMap>> = Promise.resolve({ data: {} });
+      let promiseStream: Promise<ApiResponse<IstioMetricsMap>> = Promise.resolve({ data: {} });
 
       if (this.hasHttpIn(nodeData) || (this.hasGrpcIn(nodeData) && isGrpcRequests)) {
         const filtersRps = ['request_count', 'request_error_count'];
