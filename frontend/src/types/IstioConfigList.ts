@@ -6,6 +6,7 @@ import {
   Gateway,
   K8sGateway,
   K8sHTTPRoute,
+  K8sReferenceGrant,
   ObjectValidation,
   PeerAuthentication,
   RequestAuthentication,
@@ -30,6 +31,7 @@ export interface IstioConfigItem {
   gateway?: Gateway;
   k8sGateway?: K8sGateway;
   k8sHTTPRoute?: K8sHTTPRoute;
+  k8sReferenceGrant?: K8sReferenceGrant;
   name: string;
   namespace: string;
   peerAuthentication?: PeerAuthentication;
@@ -53,6 +55,7 @@ export interface IstioConfigList {
   gateways: Gateway[];
   k8sGateways: K8sGateway[];
   k8sHTTPRoutes: K8sHTTPRoute[];
+  k8sReferenceGrants: K8sReferenceGrant[];
   namespace: Namespace;
   peerAuthentications: PeerAuthentication[];
   permissions: { [key: string]: ResourcePermissions };
@@ -87,6 +90,7 @@ export const dicIstioType = {
   Gateway: 'gateways',
   K8sGateway: 'k8sgateways',
   K8sHTTPRoute: 'k8shttproutes',
+  K8sReferenceGrant: 'k8sreferencegrants',
   PeerAuthentication: 'peerauthentications',
   RequestAuthentication: 'requestauthentications',
   ServiceEntry: 'serviceentries',
@@ -103,6 +107,7 @@ export const dicIstioType = {
   gateways: 'Gateway',
   k8sgateways: 'K8sGateway',
   k8shttproutes: 'K8sHTTPRoute',
+  k8sreferencegrants: 'K8sReferenceGrant',
   peerauthentications: 'PeerAuthentication',
   requestauthentications: 'RequestAuthentication',
   serviceentries: 'ServiceEntry',
@@ -119,6 +124,7 @@ export const dicIstioType = {
   gateway: 'Gateway',
   k8sgateway: 'K8sGateway',
   k8shttproute: 'K8sHTTPRoute',
+  k8sreferencegrant: 'K8sReferenceGrant',
   peerauthentication: 'PeerAuthentication',
   requestauthentication: 'RequestAuthentication',
   serviceentry: 'ServiceEntry',
@@ -157,6 +163,7 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
     gateways: unfiltered.gateways.filter(gw => includeName(gw.metadata.name, names)),
     k8sGateways: unfiltered.k8sGateways.filter(gw => includeName(gw.metadata.name, names)),
     k8sHTTPRoutes: unfiltered.k8sHTTPRoutes.filter(route => includeName(route.metadata.name, names)),
+    k8sReferenceGrants: unfiltered.k8sReferenceGrants.filter(rg => includeName(rg.metadata.name, names)),
     virtualServices: unfiltered.virtualServices.filter(vs => includeName(vs.metadata.name, names)),
     destinationRules: unfiltered.destinationRules.filter(dr => includeName(dr.metadata.name, names)),
     serviceEntries: unfiltered.serviceEntries.filter(se => includeName(se.metadata.name, names)),
@@ -211,7 +218,7 @@ export const filterByConfigValidation = (unfiltered: IstioConfigItem[], configFi
 export const toIstioItems = (istioConfigList: IstioConfigList, cluster?: string): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
 
-  const hasValidations = (type: string, name: string, namespace?: string) =>
+  const hasValidations = (type: string, name: string, namespace?: string): ObjectValidation =>
     istioConfigList.validations[type] && istioConfigList.validations[type][validationKey(name, namespace)];
 
   const nonItems = ['validations', 'permissions', 'namespace', 'cluster'];
@@ -263,7 +270,8 @@ export const vsToIstioItems = (
   cluster?: string
 ): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
-  const hasValidations = (vKey: string) => validations.virtualservice && validations.virtualservice[vKey];
+  const hasValidations = (vKey: string): ObjectValidation =>
+    validations.virtualservice && validations.virtualservice[vKey];
 
   const typeNameProto = dicIstioType['virtualservices']; // ex. serviceEntries -> ServiceEntry
   const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
@@ -295,7 +303,8 @@ export const drToIstioItems = (
   cluster?: string
 ): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
-  const hasValidations = (vKey: string) => validations.destinationrule && validations.destinationrule[vKey];
+  const hasValidations = (vKey: string): ObjectValidation =>
+    validations.destinationrule && validations.destinationrule[vKey];
 
   const typeNameProto = dicIstioType['destinationrules']; // ex. serviceEntries -> ServiceEntry
   const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
@@ -328,7 +337,7 @@ export const gwToIstioItems = (
   cluster?: string
 ): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
-  const hasValidations = (vKey: string) => validations.gateway && validations.gateway[vKey];
+  const hasValidations = (vKey: string): ObjectValidation => validations.gateway && validations.gateway[vKey];
   const vsGateways = new Set();
 
   const typeNameProto = dicIstioType['gateways']; // ex. serviceEntries -> ServiceEntry
@@ -374,7 +383,7 @@ export const k8sGwToIstioItems = (
   cluster?: string
 ): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
-  const hasValidations = (vKey: string) => validations.k8sgateway && validations.k8sgateway[vKey];
+  const hasValidations = (vKey: string): ObjectValidation => validations.k8sgateway && validations.k8sgateway[vKey];
   const k8sGateways = new Set();
 
   const typeNameProto = dicIstioType['k8sgateways']; // ex. serviceEntries -> ServiceEntry
@@ -415,7 +424,7 @@ export const k8sGwToIstioItems = (
 
 export const seToIstioItems = (see: ServiceEntry[], validations: Validations, cluster?: string): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
-  const hasValidations = (vKey: string) => validations.serviceentry && validations.serviceentry[vKey];
+  const hasValidations = (vKey: string): ObjectValidation => validations.serviceentry && validations.serviceentry[vKey];
 
   const typeNameProto = dicIstioType['serviceentries']; // ex. serviceEntries -> ServiceEntry
   const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
@@ -447,7 +456,7 @@ export const k8sHTTPRouteToIstioItems = (
   cluster?: string
 ): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
-  const hasValidations = (vKey: string) => validations.k8shttproute && validations.k8shttproute[vKey];
+  const hasValidations = (vKey: string): ObjectValidation => validations.k8shttproute && validations.k8shttproute[vKey];
 
   const typeNameProto = dicIstioType['k8shttproutes']; // ex. serviceEntries -> ServiceEntry
   const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry

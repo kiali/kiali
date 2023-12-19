@@ -28,8 +28,10 @@ import (
 	core_v1_listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 	gatewayapi_v1 "sigs.k8s.io/gateway-api/apis/v1"
+	gatewayapi_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	gateway "sigs.k8s.io/gateway-api/pkg/client/informers/externalversions"
 	k8s_v1_listers "sigs.k8s.io/gateway-api/pkg/client/listers/apis/v1"
+	k8s_v1beta1_listers "sigs.k8s.io/gateway-api/pkg/client/listers/apis/v1beta1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -102,6 +104,8 @@ type KubeCache interface {
 	GetK8sGateways(namespace, labelSelector string) ([]*gatewayapi_v1.Gateway, error)
 	GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1.HTTPRoute, error)
 	GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewayapi_v1.HTTPRoute, error)
+	GetK8sReferenceGrant(namespace, name string) (*gatewayapi_v1beta1.ReferenceGrant, error)
+	GetK8sReferenceGrants(namespace, labelSelector string) ([]*gatewayapi_v1beta1.ReferenceGrant, error)
 
 	GetAuthorizationPolicy(namespace, name string) (*security_v1beta1.AuthorizationPolicy, error)
 	GetAuthorizationPolicies(namespace, labelSelector string) ([]*security_v1beta1.AuthorizationPolicy, error)
@@ -128,21 +132,22 @@ type cacheLister struct {
 	cachesSynced []cache.InformerSynced
 
 	// Istio listers
-	authzLister           istiosec_v1beta1_listers.AuthorizationPolicyLister
-	destinationRuleLister istionet_v1beta1_listers.DestinationRuleLister
-	envoyFilterLister     istionet_v1alpha3_listers.EnvoyFilterLister
-	gatewayLister         istionet_v1beta1_listers.GatewayLister
-	k8sgatewayLister      k8s_v1_listers.GatewayLister
-	k8shttprouteLister    k8s_v1_listers.HTTPRouteLister
-	peerAuthnLister       istiosec_v1beta1_listers.PeerAuthenticationLister
-	requestAuthnLister    istiosec_v1beta1_listers.RequestAuthenticationLister
-	serviceEntryLister    istionet_v1beta1_listers.ServiceEntryLister
-	sidecarLister         istionet_v1beta1_listers.SidecarLister
-	telemetryLister       istiotelem_v1alpha1_listers.TelemetryLister
-	virtualServiceLister  istionet_v1beta1_listers.VirtualServiceLister
-	wasmPluginLister      istioext_v1alpha1_listers.WasmPluginLister
-	workloadEntryLister   istionet_v1beta1_listers.WorkloadEntryLister
-	workloadGroupLister   istionet_v1beta1_listers.WorkloadGroupLister
+	authzLister             istiosec_v1beta1_listers.AuthorizationPolicyLister
+	destinationRuleLister   istionet_v1beta1_listers.DestinationRuleLister
+	envoyFilterLister       istionet_v1alpha3_listers.EnvoyFilterLister
+	gatewayLister           istionet_v1beta1_listers.GatewayLister
+	k8sgatewayLister        k8s_v1_listers.GatewayLister
+	k8shttprouteLister      k8s_v1_listers.HTTPRouteLister
+	k8sreferencegrantLister k8s_v1beta1_listers.ReferenceGrantLister
+	peerAuthnLister         istiosec_v1beta1_listers.PeerAuthenticationLister
+	requestAuthnLister      istiosec_v1beta1_listers.RequestAuthenticationLister
+	serviceEntryLister      istionet_v1beta1_listers.ServiceEntryLister
+	sidecarLister           istionet_v1beta1_listers.SidecarLister
+	telemetryLister         istiotelem_v1alpha1_listers.TelemetryLister
+	virtualServiceLister    istionet_v1beta1_listers.VirtualServiceLister
+	wasmPluginLister        istioext_v1alpha1_listers.WasmPluginLister
+	workloadEntryLister     istionet_v1beta1_listers.WorkloadEntryLister
+	workloadGroupLister     istionet_v1beta1_listers.WorkloadGroupLister
 }
 
 // kubeCache is a local cache of kube objects. Manages informers and listers.
@@ -390,10 +395,13 @@ func (c *kubeCache) createGatewayInformers(namespace string) gateway.SharedInfor
 
 	if c.client.IsGatewayAPI() {
 		lister.k8sgatewayLister = sharedInformers.Gateway().V1().Gateways().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1beta1().Gateways().Informer().HasSynced)
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1().Gateways().Informer().HasSynced)
 
 		lister.k8shttprouteLister = sharedInformers.Gateway().V1().HTTPRoutes().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1beta1().HTTPRoutes().Informer().HasSynced)
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1().HTTPRoutes().Informer().HasSynced)
+
+		lister.k8sreferencegrantLister = sharedInformers.Gateway().V1beta1().ReferenceGrants().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1beta1().ReferenceGrants().Informer().HasSynced)
 	}
 	return sharedInformers
 }
@@ -1546,6 +1554,72 @@ func (c *kubeCache) GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewa
 		retK8sHTTPRoutes = append(retK8sHTTPRoutes, hrCopy)
 	}
 	return retK8sHTTPRoutes, nil
+}
+
+func (c *kubeCache) GetK8sReferenceGrant(namespace, name string) (*gatewayapi_v1beta1.ReferenceGrant, error) {
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
+	}
+
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
+	g, err := c.getCacheLister(namespace).k8sreferencegrantLister.ReferenceGrants(namespace).Get(name)
+	if err != nil {
+		return nil, err
+	}
+
+	retG := g.DeepCopy()
+	retG.Kind = kubernetes.K8sReferenceGrantType
+	return retG, nil
+}
+
+func (c *kubeCache) GetK8sReferenceGrants(namespace, labelSelector string) ([]*gatewayapi_v1beta1.ReferenceGrant, error) {
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
+	}
+
+	selector, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, err
+	}
+
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
+
+	k8sReferenceGrants := []*gatewayapi_v1beta1.ReferenceGrant{}
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			k8sReferenceGrants, err = c.clusterCacheLister.k8sreferencegrantLister.List(selector)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				referenceGrantsNamespaced, err := nsCacheLister.k8sreferencegrantLister.List(selector)
+				if err != nil {
+					return nil, err
+				}
+				k8sReferenceGrants = append(k8sReferenceGrants, referenceGrantsNamespaced...)
+			}
+		}
+	} else {
+		k8sReferenceGrants, err = c.getCacheLister(namespace).k8sreferencegrantLister.ReferenceGrants(namespace).List(selector)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var retK8sReferenceGrants []*gatewayapi_v1beta1.ReferenceGrant
+	for _, hr := range k8sReferenceGrants {
+		hrCopy := hr.DeepCopy()
+		hrCopy.Kind = kubernetes.K8sReferenceGrantType
+		retK8sReferenceGrants = append(retK8sReferenceGrants, hrCopy)
+	}
+	return retK8sReferenceGrants, nil
 }
 
 func (c *kubeCache) GetAuthorizationPolicy(namespace, name string) (*security_v1beta1.AuthorizationPolicy, error) {

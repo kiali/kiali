@@ -73,6 +73,11 @@ const (
 	K8sActualHTTPRouteType = "HTTPRoute"
 	K8sActualHTTPRoutes    = "httproutes"
 
+	K8sReferenceGrants          = "k8sreferencegrants"
+	K8sReferenceGrantType       = "K8sReferenceGrant"
+	K8sActualReferenceGrantType = "ReferenceGrant"
+	K8sActualReferenceGrants    = "referencegrants"
+
 	// Authorization PeerAuthentications
 	AuthorizationPolicies     = "authorizationpolicies"
 	AuthorizationPoliciesType = "AuthorizationPolicy"
@@ -92,6 +97,12 @@ var (
 		Version: "v1alpha3",
 	}
 	ApiNetworkingVersionV1Alpha3 = NetworkingGroupVersionV1Alpha3.Group + "/" + NetworkingGroupVersionV1Alpha3.Version
+
+	K8sNetworkingGroupVersionV1Beta1 = schema.GroupVersion{
+		Group:   "gateway.networking.k8s.io",
+		Version: "v1beta1",
+	}
+	K8sApiNetworkingVersionV1Beta1 = K8sNetworkingGroupVersionV1Beta1.Group + "/" + K8sNetworkingGroupVersionV1Beta1.Version
 
 	K8sNetworkingGroupVersionV1 = schema.GroupVersion{
 		Group:   "gateway.networking.k8s.io",
@@ -137,8 +148,9 @@ var (
 		Telemetries:      TelemetryType,
 
 		// K8s Networking Gateways
-		K8sGateways:   K8sGatewayType,
-		K8sHTTPRoutes: K8sHTTPRouteType,
+		K8sGateways:        K8sGatewayType,
+		K8sHTTPRoutes:      K8sHTTPRouteType,
+		K8sReferenceGrants: K8sReferenceGrantType,
 
 		// Security
 		AuthorizationPolicies:  AuthorizationPoliciesType,
@@ -158,8 +170,9 @@ var (
 		WasmPlugins:      ExtensionGroupVersionV1Alpha1.Group,
 		Telemetries:      TelemetryGroupV1Alpha1.Group,
 
-		K8sGateways:   K8sNetworkingGroupVersionV1.Group,
-		K8sHTTPRoutes: K8sNetworkingGroupVersionV1.Group,
+		K8sGateways:        K8sNetworkingGroupVersionV1.Group,
+		K8sHTTPRoutes:      K8sNetworkingGroupVersionV1.Group,
+		K8sReferenceGrants: K8sNetworkingGroupVersionV1.Group,
 
 		AuthorizationPolicies:  SecurityGroupVersion.Group,
 		PeerAuthentications:    SecurityGroupVersion.Group,

@@ -14,7 +14,7 @@ export const mergeJsonPatch = (objectModified: object, object?: object): object 
   if (!object) {
     return objectModified;
   }
-  const customizer = (objValue, srcValue) => {
+  const customizer = (objValue, srcValue): object | null => {
     if (!objValue) {
       return null;
     }
@@ -27,7 +27,7 @@ export const mergeJsonPatch = (objectModified: object, object?: object): object 
   return objectModified;
 };
 
-export const getIstioObject = (istioObjectDetails?: IstioConfigDetails | IstioConfigItem) => {
+export const getIstioObject = (istioObjectDetails?: IstioConfigDetails | IstioConfigItem): IstioObject | undefined => {
   let istioObject: IstioObject | undefined;
   if (istioObjectDetails) {
     if (istioObjectDetails.gateway) {
@@ -36,6 +36,8 @@ export const getIstioObject = (istioObjectDetails?: IstioConfigDetails | IstioCo
       istioObject = istioObjectDetails.k8sGateway;
     } else if (istioObjectDetails.k8sHTTPRoute) {
       istioObject = istioObjectDetails.k8sHTTPRoute;
+    } else if (istioObjectDetails.k8sReferenceGrant) {
+      istioObject = istioObjectDetails.k8sReferenceGrant;
     } else if (istioObjectDetails.virtualService) {
       istioObject = istioObjectDetails.virtualService;
     } else if (istioObjectDetails.destinationRule) {

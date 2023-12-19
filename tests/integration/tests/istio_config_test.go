@@ -86,6 +86,11 @@ func assertConfigs(configList kiali.IstioConfigListJson, require *require.Assert
 		require.True(gw.Namespace == configList.Namespace.Name)
 		require.NotNil(gw.Name)
 	}
+	require.NotNil(configList.K8sReferenceGrants)
+	for _, rg := range configList.K8sReferenceGrants {
+		require.True(rg.Namespace == configList.Namespace.Name)
+		require.NotNil(rg.Name)
+	}
 	require.NotNil(configList.RequestAuthentications)
 	for _, ra := range configList.RequestAuthentications {
 		require.True(ra.Namespace == configList.Namespace.Name)

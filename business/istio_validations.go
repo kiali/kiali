@@ -264,6 +264,8 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 		httpRouteChecker := checkers.K8sHTTPRouteChecker{K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways, Namespaces: namespaces, RegistryServices: registryServices}
 		objectCheckers = []ObjectChecker{noServiceChecker, httpRouteChecker}
 		referenceChecker = references.K8sHTTPRouteReferences{K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, Namespaces: namespaces}
+	case kubernetes.K8sReferenceGrants:
+		// TODO
 	default:
 		err = fmt.Errorf("object type not found: %v", objectType)
 	}
@@ -401,6 +403,7 @@ func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rVa
 		IncludePeerAuthentications:    true,
 		IncludeK8sHTTPRoutes:          true,
 		IncludeK8sGateways:            true,
+		IncludeK8sReferenceGrants:     true,
 	}
 	istioConfigMap, err := in.businessLayer.IstioConfig.GetIstioConfigMap(ctx, criteria)
 	if err != nil {

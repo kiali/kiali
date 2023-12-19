@@ -9,7 +9,7 @@ export const sortFields: SortField<IstioConfigItem>[] = [
     title: 'Namespace',
     isNumeric: false,
     param: 'ns',
-    compare: (a: IstioConfigItem, b: IstioConfigItem) => {
+    compare: (a: IstioConfigItem, b: IstioConfigItem): number => {
       return a.namespace.localeCompare(b.namespace) || a.name.localeCompare(b.name);
     }
   },
@@ -18,7 +18,7 @@ export const sortFields: SortField<IstioConfigItem>[] = [
     title: 'Type',
     isNumeric: false,
     param: 'it',
-    compare: (a: IstioConfigItem, b: IstioConfigItem) => {
+    compare: (a: IstioConfigItem, b: IstioConfigItem): number => {
       return a.type.localeCompare(b.type) || a.name.localeCompare(b.name);
     }
   },
@@ -27,7 +27,7 @@ export const sortFields: SortField<IstioConfigItem>[] = [
     title: 'Istio Name',
     isNumeric: false,
     param: 'in',
-    compare: (a: IstioConfigItem, b: IstioConfigItem) => {
+    compare: (a: IstioConfigItem, b: IstioConfigItem): number => {
       // On same name order is not well defined, we need some fallback methods
       // This happens specially on adapters/templates where Istio 1.0.x calls them "handler"
       // So, we have a lot of objects with same namespace+name
@@ -39,7 +39,7 @@ export const sortFields: SortField<IstioConfigItem>[] = [
     title: 'Config',
     isNumeric: false,
     param: 'cv',
-    compare: (a: IstioConfigItem, b: IstioConfigItem) => {
+    compare: (a: IstioConfigItem, b: IstioConfigItem): number => {
       let sortValue = -1;
       if (a.validation && !b.validation) {
         sortValue = -1;
@@ -67,7 +67,7 @@ export const sortFields: SortField<IstioConfigItem>[] = [
     title: 'Cluster',
     isNumeric: false,
     param: 'cl',
-    compare: (a: IstioConfigItem, b: IstioConfigItem) => {
+    compare: (a: IstioConfigItem, b: IstioConfigItem): number => {
       if (a.cluster && b.cluster) {
         let sortValue = a.cluster.localeCompare(b.cluster);
         if (sortValue === 0) {
@@ -119,6 +119,10 @@ export const istioTypeFilter: FilterType = {
     {
       id: 'K8sHTTPRoute',
       title: 'K8sHTTPRoute'
+    },
+    {
+      id: 'K8sReferenceGrant',
+      title: 'K8sReferenceGrant'
     },
     {
       id: 'PeerAuthentication',
@@ -208,6 +212,6 @@ export const sortIstioItems = (
   unsorted: IstioConfigItem[],
   sortField: SortField<IstioConfigItem>,
   isAscending: boolean
-) => {
+): IstioConfigItem[] => {
   return unsorted.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
 };

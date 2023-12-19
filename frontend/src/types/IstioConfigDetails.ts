@@ -6,6 +6,7 @@ import {
   Gateway,
   K8sGateway,
   K8sHTTPRoute,
+  K8sReferenceGrant,
   ServiceEntry,
   VirtualService,
   ObjectValidation,
@@ -38,6 +39,7 @@ export interface IstioConfigDetails {
   help?: HelpMessage[];
   k8sGateway: K8sGateway;
   k8sHTTPRoute: K8sHTTPRoute;
+  k8sReferenceGrant: K8sReferenceGrant;
   namespace: Namespace;
   peerAuthentication: PeerAuthentication;
   permissions: ResourcePermissions;
