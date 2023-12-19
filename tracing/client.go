@@ -132,6 +132,9 @@ func NewClient(token string) (*Client, error) {
 				if err != nil {
 					return nil, err
 				}
+				if client == nil {
+					return nil, fmt.Errorf("error creating GRPC client")
+				}
 				log.Infof("Create %s GRPC client %s", cfgTracing.Provider, address)
 				return &Client{httpTracingClient: httpTracingClient, grpcClient: client, ctx: ctx}, nil
 			} else {
@@ -203,7 +206,11 @@ func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*m
 func (in *Client) GetTraceDetail(strTraceID string) (*model.TracingSingleTrace, error) {
 	cfg := config.Get()
 	if in.grpcClient == nil || cfg.ExternalServices.Tracing.Provider == TEMPO {
-		return in.httpTracingClient.GetTraceDetailHTTP(in.httpClient, in.baseURL, strTraceID)
+		if in.httpTracingClient != nil {
+			return in.httpTracingClient.GetTraceDetailHTTP(in.httpClient, in.baseURL, strTraceID)
+		} else {
+			return nil, fmt.Errorf("error getting trace details")
+		}
 	}
 	return in.grpcClient.GetTrace(in.ctx, strTraceID)
 }

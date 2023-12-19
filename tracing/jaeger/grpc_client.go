@@ -30,12 +30,14 @@ type JaegerGRPCClient struct {
 func NewGRPCJaegerClient(cc model.QueryServiceClient) (jaegerClient *JaegerGRPCClient, err error) {
 
 	conf := config.Get()
+	ctx := context.Background()
 
 	var jaegerService string
 	var ignoreCluster bool
 
 	if err == nil {
-		services, err := cc.GetServices(context.TODO(), &model.GetServicesRequest{})
+		var services *model.GetServicesResponse
+		services, err = cc.GetServices(ctx, &model.GetServicesRequest{})
 		if err != nil {
 			log.Errorf("Error getting services")
 		} else {
