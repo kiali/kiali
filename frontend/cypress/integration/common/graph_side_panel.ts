@@ -36,6 +36,10 @@ And('user should see {string} cluster parameter in links in the traces',(exists:
   });
 })
 
+And('service badge for the graph side panel should be visible', () => {
+  cy.get('#pfbadge-S').should('be.visible');
+});
+
 And('user should see the traces tab not empty', () => {
   cy.get(`[data-test="traces-list"]`).should('be.visible');
 })
