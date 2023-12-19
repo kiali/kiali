@@ -166,8 +166,8 @@ var IstioConfigHelpMessages = map[string][]IstioConfigHelp{
 		{},
 	},
 	"k8sgateways": {
-		{ObjectField: "", Message: "Kubernetes Gateway API Configuration Object. A Gateway describes how traffic can be translated to Services within the cluster."},
-		{ObjectField: "spec.GatewayClassName", Message: "Defines the name of a GatewayClass object used by this Gateway."},
+		{ObjectField: "spec", Message: "Kubernetes Gateway API Configuration Object. A Gateway describes how traffic can be translated to Services within the cluster."},
+		{ObjectField: "spec.gatewayClassName", Message: "Defines the name of a GatewayClass object used by this Gateway."},
 		{ObjectField: "spec.listeners", Message: "Define the hostnames, ports, protocol, termination, TLS settings and which routes can be attached to a listener."},
 		{ObjectField: "spec.addresses", Message: "Define the network addresses requested for this gateway."},
 	},
@@ -175,7 +175,7 @@ var IstioConfigHelpMessages = map[string][]IstioConfigHelp{
 		{ObjectField: "", Message: "Kubernetes Gateway API Configuration Object. HTTPRoute is for multiplexing HTTP or terminated HTTPS connections."},
 	},
 	"k8sreferencegrants": {
-		{ObjectField: "", Message: "Kubernetes Gateway API Configuration Object. ReferenceGrant is for enabling cross namespace references within Gateway API."},
+		{ObjectField: "spec", Message: "Kubernetes Gateway API Configuration Object. ReferenceGrant is for enabling cross namespace references within Gateway API."},
 		{ObjectField: "spec.from", Message: "Define the group, kind, and namespace of resources that may reference items described in the to list."},
 		{ObjectField: "spec.to", Message: "Define the group and kind of resources that may be referenced by items described in the from list."},
 	},
