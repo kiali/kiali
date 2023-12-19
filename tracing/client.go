@@ -132,9 +132,6 @@ func NewClient(token string) (*Client, error) {
 				if err != nil {
 					return nil, err
 				}
-				if client == nil {
-					return nil, fmt.Errorf("error creating GRPC client")
-				}
 				log.Infof("Create %s GRPC client %s", cfgTracing.Provider, address)
 				return &Client{httpTracingClient: httpTracingClient, grpcClient: client, ctx: ctx}, nil
 			} else {
