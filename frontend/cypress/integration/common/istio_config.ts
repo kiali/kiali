@@ -441,7 +441,7 @@ Then('only {string} are visible in the {string} namespace', (sees: string, ns: s
   let lowercaseSees: string = sees.charAt(0).toLowerCase() + sees.slice(1);
   let count: number;
 
-  cy.request('GET', `/api/istio/config?objects=${lowercaseSees}&validate=true`).should(response => {
+  cy.request('GET', `/api/istio/config?objects=${lowercaseSees}&validate=true`).then(response => {
     count = response.body[ns][lowercaseSees].length;
   });
 

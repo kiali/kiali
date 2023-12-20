@@ -92,6 +92,7 @@ const marginBottom = 20;
 class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, GraphSettingsState> {
   constructor(props: GraphSettingsProps) {
     super(props);
+
     this.state = {
       isOpen: false
     };
@@ -334,7 +335,6 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
             Display
           </MenuToggle>
         )}
-        id="graph-display-menu"
         isOpen={this.state.isOpen}
         onOpenChange={(isOpen: boolean) => this.onToggle(isOpen)}
       >
@@ -349,7 +349,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     });
   };
 
-  private getMenuOptions(): React.ReactNode {
+  private getMenuOptions = (): React.ReactNode => {
     // map our attributes from redux
     const {
       boxByCluster,
@@ -749,7 +749,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                   key={edgeLabelOption.id}
                   label={edgeLabelOption.labelText}
                   name="edgeLabelOptions"
-                  onChange={(event: React.FormEvent, _checked: Boolean) => this.toggleEdgeLabelMode(event)}
+                  onChange={(event: React.FormEvent, _checked: boolean) => this.toggleEdgeLabelMode(event)}
                   value={edgeLabelOption.id}
                 />
               </label>
@@ -921,7 +921,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         </div>
       </BoundingClientAwareComponent>
     );
-  }
+  };
 
   private toggleEdgeLabelMode = (event: React.FormEvent): void => {
     const mode = (event.target as HTMLInputElement).value as EdgeLabelMode;

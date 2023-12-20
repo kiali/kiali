@@ -16,11 +16,11 @@ When('I go to the Logs tab of the workload detail page', () => {
 });
 
 When('I type {string} on the Show text field', (showText: string) => {
-  cy.get('#log_show').type(`${showText  }{enter}`);
+  cy.get('#log_show').type(`${showText}{enter}`);
 });
 
 When('I type {string} on the Hide text field', (showText: string) => {
-  cy.get('#log_hide').type(`${showText  }{enter}`);
+  cy.get('#log_hide').type(`${showText}{enter}`);
 });
 
 When('I choose to show 100 lines of logs', () => {
@@ -30,7 +30,7 @@ When('I choose to show 100 lines of logs', () => {
 
 When('I select only the {string} container', (containerName: string) => {
   cy.get('[data-test=workload-logs-pod-containers]').within(() => {
-    cy.get('[type=checkbox]:checked').uncheck();
+    cy.get('[type=checkbox]').uncheck();
 
     cy.get(`input#container-${containerName}`).check();
   });
@@ -38,7 +38,7 @@ When('I select only the {string} container', (containerName: string) => {
 
 When('I enable visualization of spans', () => {
   cy.get('[data-test=workload-logs-pod-containers]').within(() => {
-    cy.get('[type=checkbox]:checked').uncheck();
+    cy.get('[type=checkbox]').uncheck();
   });
 
   cy.get('input#log-spans').check();
