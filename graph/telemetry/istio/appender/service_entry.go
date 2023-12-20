@@ -60,32 +60,130 @@ func (a ServiceEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 		return
 	}
 
-	a.applyServiceEntries(trafficMap, globalInfo, namespaceInfo)
+	// First, load all of the relevant ServiceEntry definition information.
+	candidates := []*graph.Node{}
+	for _, n := range trafficMap {
+		// a non-injected service node may represent a mesh_internal ServiceEntry, if it has cluster and namespace set
+		if n.NodeType == graph.NodeTypeService {
+			isInjected := n.Metadata[graph.IsInjected] == true
+			if !isInjected && graph.IsOK(n.Cluster) && graph.IsOK(n.Namespace) {
+				candidates = append(candidates, n)
+			}
+			continue
+		}
+
+		// for non-service nodes, look for edges to non-injected service nodes that may represent a mesh_external ServicEntry.
+		// It probably will not have cluster and namespace set, either way, we need to get this information from the source node
+		// because it is the requesting service that needs access to the ServieEntry.
+		for _, e := range n.Edges {
+			isService := e.Dest.NodeType == graph.NodeTypeService
+			isInjected := e.Dest.Metadata[graph.IsInjected] == true
+			if isService && !isInjected {
+				candidates = append(candidates, n)
+				break
+			}
+		}
+	}
+	// If there are no SE candidates then we can return immediately.
+	if len(candidates) == 0 {
+		return
+	}
+
+	// Otherwise, load accessible ServiceEntry information into globalInfo
+	nodesToCheck := []*graph.Node{}
+	for _, n := range candidates {
+		if a.loadServiceEntryHosts(n.Cluster, n.Namespace, globalInfo) {
+			nodesToCheck = append(nodesToCheck, n)
+		}
+	}
+
+	if len(nodesToCheck) > 0 {
+		a.applyServiceEntries(trafficMap, nodesToCheck, globalInfo, namespaceInfo)
+	}
 }
 
-func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+// loadServiceEntryHosts loads SEs for the provided cluster and namespace. Returns true if any are found, otherwise false.
+func (a ServiceEntryAppender) loadServiceEntryHosts(cluster, namespace string, globalInfo *graph.AppenderGlobalInfo) bool {
+	isAccessible := false
+	for _, ns := range a.AccessibleNamespaces {
+		isAccessible = cluster == ns.Cluster && namespace == ns.Name
+		if isAccessible {
+			break
+		}
+	}
+	if !isAccessible {
+		return false
+	}
+
+	serviceEntryHosts, found := getServiceEntryHosts(cluster, namespace, globalInfo)
+	if !found {
+		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
+			Cluster:               cluster,
+			IncludeServiceEntries: true,
+			Namespace:             namespace,
+		})
+		graph.CheckError(err)
+
+		for _, entry := range istioCfg.ServiceEntries {
+			if entry.Spec.Hosts != nil {
+				location := "MESH_EXTERNAL"
+				if entry.Spec.Location.String() == "MESH_INTERNAL" {
+					location = "MESH_INTERNAL"
+				}
+				se := serviceEntry{
+					cluster:   cluster,
+					exportTo:  entry.Spec.ExportTo,
+					location:  location,
+					name:      entry.Name,
+					namespace: entry.Namespace,
+				}
+				for _, host := range entry.Spec.Hosts {
+					serviceEntryHosts.addHost(host, &se)
+				}
+			}
+		}
+	}
+	return len(serviceEntryHosts) > 0
+}
+
+func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, nodesToCheck []*graph.Node, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	// a map of "se-service" nodes to the "se-aggregate" information
 	seMap := make(map[*serviceEntry][]*graph.Node)
 
-	for _, n := range trafficMap {
-		// only a service node can be a service entry
-		if n.NodeType != graph.NodeTypeService {
-			continue
-		}
-		// PassthroughCluster or BlackHoleCluster is not a service entry (nor a defined service)
-		if n.Metadata[graph.IsEgressCluster] == true {
+	for _, n := range nodesToCheck {
+		if n.NodeType == graph.NodeTypeService {
+			// Must be a non-egress(PassthroughCluster or BlackHoleCluster) service node
+			candidate := n
+			isEgressCluster := candidate.Metadata[graph.IsEgressCluster] == true
+			if candidate.NodeType == graph.NodeTypeService && !isEgressCluster {
+				// To match, a service entry must be exported to the source namespace, and the requested
+				// service must match a defined host.  Note that the source namespace is assumed to be the
+				// the same as the appender namespace as all requests for the service entry should be coming
+				// from workloads in the current namespace being processed for the graph.
+				if se, ok := a.getServiceEntry(n.Cluster, n.Namespace, candidate.Service, globalInfo); ok {
+					if nodes, ok := seMap[se]; ok {
+						seMap[se] = append(nodes, candidate)
+					} else {
+						seMap[se] = []*graph.Node{candidate}
+					}
+				}
+			}
 			continue
 		}
 
-		// To match, a service entry must be exported to the source namespace, and the requested
-		// service must match a defined host.  Note that the source namespace is assumed to be the
-		// the same as the appender namespace as all requests for the service entry should be coming
-		// from workloads in the current namespace being processed for the graph.
-		if se, ok := a.getServiceEntry(n.Cluster, n.Namespace, n.Service, globalInfo); ok {
-			if nodes, ok := seMap[se]; ok {
-				seMap[se] = append(nodes, n)
-			} else {
-				seMap[se] = []*graph.Node{n}
+		for _, e := range n.Edges {
+			// Must be a non-egress(PassthroughCluster or BlackHoleCluster) service node
+			candidate := e.Dest
+			isEgressCluster := candidate.Metadata[graph.IsEgressCluster] == true
+			if candidate.NodeType == graph.NodeTypeService && !isEgressCluster {
+				// Same matching rules as above
+				if se, ok := a.getServiceEntry(n.Cluster, n.Namespace, candidate.Service, globalInfo); ok {
+					if nodes, ok := seMap[se]; ok {
+						seMap[se] = append(nodes, candidate)
+					} else {
+						seMap[se] = []*graph.Node{candidate}
+					}
+				}
 			}
 		}
 	}
@@ -147,46 +245,11 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 	}
 }
 
-// getServiceEntry queries the cluster API to resolve service entries across all accessible namespaces
-// in the cluster.
 // TODO: I don't know what happens (nothing good) if a ServiceEntry is defined in an inaccessible namespace
 // but exported to all namespaces (exportTo: *). It's possible that would allow traffic to flow from an
 // accessible workload through a serviceEntry whose definition we can't fetch.
 func (a ServiceEntryAppender) getServiceEntry(cluster, namespace, serviceName string, globalInfo *graph.AppenderGlobalInfo) (*serviceEntry, bool) {
-	serviceEntryHosts, found := getServiceEntryHosts(globalInfo)
-	if !found {
-		for _, ns := range a.AccessibleNamespaces {
-			// Narrow to only the cluster of this service node
-			if cluster == ns.Cluster {
-				istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
-					Cluster:               ns.Cluster,
-					IncludeServiceEntries: true,
-					Namespace:             ns.Name,
-				})
-				graph.CheckError(err)
-
-				for _, entry := range istioCfg.ServiceEntries {
-					if entry.Spec.Hosts != nil {
-						location := "MESH_EXTERNAL"
-						if entry.Spec.Location.String() == "MESH_INTERNAL" {
-							location = "MESH_INTERNAL"
-						}
-						se := serviceEntry{
-							cluster:   cluster,
-							exportTo:  entry.Spec.ExportTo,
-							location:  location,
-							name:      entry.Name,
-							namespace: entry.Namespace,
-						}
-						for _, host := range entry.Spec.Hosts {
-							serviceEntryHosts.addHost(host, &se)
-						}
-					}
-				}
-			}
-		}
-		globalInfo.Vendor[serviceEntryHostsKey] = serviceEntryHosts
-	}
+	serviceEntryHosts, _ := getServiceEntryHosts(cluster, namespace, globalInfo)
 
 	for host, serviceEntriesForHost := range serviceEntryHosts {
 		for _, se := range serviceEntriesForHost {

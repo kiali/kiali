@@ -306,11 +306,18 @@ func getServiceDefinition(cluster, namespace, serviceName string, gi *graph.Appe
 	return nil, false
 }
 
-func getServiceEntryHosts(gi *graph.AppenderGlobalInfo) (serviceEntryHosts, bool) {
-	if seHosts, ok := gi.Vendor[serviceEntryHostsKey]; ok {
+// getServiceEntryHosts returns ServiceEntryHost information cached for a specific cluster and namespace. If not
+// previously cached a new, empty cache entry is created and returned.
+func getServiceEntryHosts(cluster, namespace string, gi *graph.AppenderGlobalInfo) (serviceEntryHosts, bool) {
+	key := fmt.Sprintf("%s:%s:%s", serviceEntryHostsKey, cluster, namespace)
+	if seHosts, ok := gi.Vendor[key]; ok {
 		return seHosts.(serviceEntryHosts), true
 	}
-	return newServiceEntryHosts(), false
+
+	seHosts := newServiceEntryHosts()
+	gi.Vendor[key] = seHosts
+
+	return seHosts, false
 }
 
 // getWorkloadLists returns a map[clusterName]*models.WorkloadList for all clusters with traffic in the namespace, or if trafficMap is nil
