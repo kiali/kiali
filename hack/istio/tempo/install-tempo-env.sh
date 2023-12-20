@@ -172,7 +172,7 @@ spec:
   resources:
     total:
       limits:
-        memory: 6Gi
+        memory: 4Gi
         cpu: 8000m
   template:
     distributor:
@@ -200,7 +200,7 @@ spec:
   resources:
     total:
       limits:
-        memory: 4Gi
+        memory: 8Gi
         cpu: 8000m
   template:
     queryFrontend:
