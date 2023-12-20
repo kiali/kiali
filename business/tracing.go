@@ -45,7 +45,7 @@ func (in *TracingService) client() (tracing.ClientInterface, error) {
 
 func (in *TracingService) getFilteredSpans(ns, app string, query models.TracingQuery, filter SpanFilter) ([]model.TracingSpan, error) {
 	// This is info needed for Tempo as it is not in the results by default
-	if in.conf.ExternalServices.Tracing.Provider == tracing.TEMPO {
+	if in.conf.ExternalServices.Tracing.Provider == config.TempoProvider {
 		query.Tags["http.method"] = ".*"
 	}
 	r, err := in.GetAppTraces(ns, app, query)
@@ -347,7 +347,7 @@ func tracesToSpans(app string, r *model.TracingResponse, filter SpanFilter, conf
 		// Diferent for Tempo & Jaeger
 		// For Tempo the proccess matched with the service name of the trace batch
 		// So t is already filtered in the query
-		if conf.ExternalServices.Tracing.Provider == tracing.TEMPO {
+		if conf.ExternalServices.Tracing.Provider == config.TempoProvider {
 			// Second, find spans for these processes
 			for _, span := range trace.Spans {
 				if span.Process.ServiceName == r.TracingServiceName {

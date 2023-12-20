@@ -30,10 +30,8 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
-	"regexp"
 	"strings"
 	"syscall"
 
@@ -43,7 +41,6 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/server"
@@ -98,7 +95,7 @@ func main() {
 	cfg := config.Get()
 	log.Tracef("Kiali Configuration:\n%s", cfg)
 
-	if err := validateConfig(); err != nil {
+	if err := config.Validate(*cfg); err != nil {
 		log.Fatal(err)
 	}
 
@@ -143,7 +140,7 @@ func main() {
 	// Create shared tracing client shared by all tracing requests in the business layer.
 	var tracingClient tracing.ClientInterface
 	if cfg.ExternalServices.Tracing.Enabled {
-		tracingClient, err = tracing.NewClient(clientFactory.GetSAHomeClusterClient().GetToken())
+		tracingClient, err = tracing.NewClient(cfg, clientFactory.GetSAHomeClusterClient().GetToken())
 		if err != nil {
 			log.Fatalf("Error creating tracing client: %s", err)
 		}
@@ -178,74 +175,6 @@ func waitForTermination() {
 	}()
 
 	<-doneChan
-}
-
-func validateConfig() error {
-	cfg := config.Get()
-
-	if cfg.Server.Port < 0 {
-		return fmt.Errorf("server port is negative: %v", cfg.Server.Port)
-	}
-
-	if strings.Contains(cfg.Server.StaticContentRootDirectory, "..") {
-		return fmt.Errorf("server static content root directory must not contain '..': %v", cfg.Server.StaticContentRootDirectory)
-	}
-	if _, err := os.Stat(cfg.Server.StaticContentRootDirectory); os.IsNotExist(err) {
-		return fmt.Errorf("server static content root directory does not exist: %v", cfg.Server.StaticContentRootDirectory)
-	}
-
-	validPathRegEx := regexp.MustCompile(`^\/[a-zA-Z0-9\-\._~!\$&\'()\*\+\,;=:@%/]*$`)
-	webRoot := cfg.Server.WebRoot
-	if !validPathRegEx.MatchString(webRoot) {
-		return fmt.Errorf("web root must begin with a / and contain valid URL path characters: %v", webRoot)
-	}
-	if webRoot != "/" && strings.HasSuffix(webRoot, "/") {
-		return fmt.Errorf("web root must not contain a trailing /: %v", webRoot)
-	}
-	if strings.Contains(webRoot, "/../") {
-		return fmt.Errorf("for security purposes, web root must not contain '/../': %v", webRoot)
-	}
-
-	// log some messages to let the administrator know when credentials are configured certain ways
-	auth := cfg.Auth
-	log.Infof("Using authentication strategy [%v]", auth.Strategy)
-	if auth.Strategy == config.AuthStrategyAnonymous {
-		log.Warningf("Kiali auth strategy is configured for anonymous access - users will not be authenticated.")
-	} else if auth.Strategy != config.AuthStrategyOpenId &&
-		auth.Strategy != config.AuthStrategyOpenshift &&
-		auth.Strategy != config.AuthStrategyToken &&
-		auth.Strategy != config.AuthStrategyHeader {
-		return fmt.Errorf("Invalid authentication strategy [%v]", auth.Strategy)
-	}
-
-	// Check the ciphering key for sessions
-	signingKey := cfg.LoginToken.SigningKey
-	if err := config.ValidateSigningKey(signingKey, auth.Strategy); err != nil {
-		return err
-	}
-
-	// log a warning if the user is ignoring some validations
-	if len(cfg.KialiFeatureFlags.Validations.Ignore) > 0 {
-		log.Infof("Some validation errors will be ignored %v. If these errors do occur, they will still be logged. If you think the validation errors you see are incorrect, please report them to the Kiali team if you have not done so already and provide the details of your scenario. This will keep Kiali validations strong for the whole community.", cfg.KialiFeatureFlags.Validations.Ignore)
-	}
-
-	// log a info message if the user is disabling some features
-	if len(cfg.KialiFeatureFlags.DisabledFeatures) > 0 {
-		log.Infof("Some features are disabled: [%v]", strings.Join(cfg.KialiFeatureFlags.DisabledFeatures, ","))
-		for _, fn := range cfg.KialiFeatureFlags.DisabledFeatures {
-			if err := config.FeatureName(fn).IsValid(); err != nil {
-				return err
-			}
-		}
-	}
-
-	// Check the observability section
-	cfgTracing := cfg.Server.Observability.Tracing
-	if cfgTracing.Enabled && cfgTracing.CollectorType != observability.JAEGER && cfgTracing.CollectorType != observability.OTEL {
-		return fmt.Errorf("error in configuration options getting the observability exporter. Invalid collector type [%s]", cfgTracing.CollectorType)
-	}
-
-	return nil
 }
 
 func validateFlags() {

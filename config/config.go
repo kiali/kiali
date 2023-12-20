@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -67,6 +68,26 @@ const (
 	WaypointLabelValue       = "istio.io-mesh-controller"
 )
 
+// TracingProvider is the type of tracing provider that Kiali will connect to.
+type TracingProvider string
+
+const (
+	JaegerProvider TracingProvider = "jaeger"
+	TempoProvider  TracingProvider = "tempo"
+)
+
+// TracingCollectorType is the type of collector that Kiali will export traces to.
+// These are traces that kiali generates for itself.
+type TracingCollectorType string
+
+const (
+	// JaegerCollectorType is deprecated, use OTELCollectorType.
+	JaegerCollectorType TracingCollectorType = "jaeger"
+	OTELCollectorType   TracingCollectorType = "otel"
+)
+
+var validPathRegEx = regexp.MustCompile(`^\/[a-zA-Z0-9\-\._~!\$&\'()\*\+\,;=:@%/]*$`)
+
 // FeatureName is the enum type used for named features that can be disabled via KialiFeatureFlags.DisabledFeatures
 type FeatureName string
 
@@ -107,10 +128,10 @@ type OtelCollector struct {
 
 // Tracing provides tracing configuration for the Kiali server.
 type Tracing struct {
-	CollectorType string        `yaml:"collector_type,omitempty"` // Possible values "otel" or "jaeger"
-	CollectorURL  string        `yaml:"collector_url,omitempty"`  // Endpoint for Kiali server traces
-	Enabled       bool          `yaml:"enabled,omitempty"`
-	Otel          OtelCollector `yaml:"otel,omitempty"`
+	CollectorType TracingCollectorType `yaml:"collector_type,omitempty"` // Possible values "otel" or "jaeger"
+	CollectorURL  string               `yaml:"collector_url,omitempty"`  // Endpoint for Kiali server traces
+	Enabled       bool                 `yaml:"enabled,omitempty"`
+	Otel          OtelCollector        `yaml:"otel,omitempty"`
 	// Sampling rate for Kiali server traces. >= 1.0 always samples and <= 0 never samples.
 	SamplingRate float64 `yaml:"sampling_rate,omitempty"`
 }
@@ -217,7 +238,7 @@ type TracingConfig struct {
 	GrpcPort             int               `yaml:"grpc_port,omitempty"`
 	InClusterURL         string            `yaml:"in_cluster_url"`
 	IsCore               bool              `yaml:"is_core,omitempty"`
-	Provider             string            `yaml:"provider"` // jaeger | tempo
+	Provider             TracingProvider   `yaml:"provider"` // jaeger | tempo
 	NamespaceSelector    bool              `yaml:"namespace_selector"`
 	QueryScope           map[string]string `yaml:"query_scope,omitempty"`
 	QueryTimeout         int               `yaml:"query_timeout,omitempty"`
@@ -679,7 +700,7 @@ func NewConfig() (c *Config) {
 				GrpcPort:             9095,
 				InClusterURL:         "http://tracing.istio-system:16685/jaeger",
 				IsCore:               false,
-				Provider:             "jaeger",
+				Provider:             JaegerProvider,
 				NamespaceSelector:    true,
 				QueryScope:           map[string]string{},
 				QueryTimeout:         5,
@@ -793,7 +814,7 @@ func NewConfig() (c *Config) {
 					Port:    9090,
 				},
 				Tracing: Tracing{
-					CollectorType: "jaeger",
+					CollectorType: JaegerCollectorType,
 					CollectorURL:  "http://jaeger-collector.istio-system:14268/api/traces",
 					Enabled:       false,
 					Otel: OtelCollector{
@@ -1083,4 +1104,77 @@ func GetSafeClusterName(cluster string) string {
 		return Get().KubernetesConfig.ClusterName
 	}
 	return cluster
+}
+
+// Validate will ensure the config is valid. This should be called after the config
+// is initialized and before the config is used.
+func Validate(cfg Config) error {
+	if cfg.Server.Port < 0 {
+		return fmt.Errorf("server port is negative: %v", cfg.Server.Port)
+	}
+
+	if strings.Contains(cfg.Server.StaticContentRootDirectory, "..") {
+		return fmt.Errorf("server static content root directory must not contain '..': %v", cfg.Server.StaticContentRootDirectory)
+	}
+	if _, err := os.Stat(cfg.Server.StaticContentRootDirectory); os.IsNotExist(err) {
+		return fmt.Errorf("server static content root directory does not exist: %v", cfg.Server.StaticContentRootDirectory)
+	}
+
+	webRoot := cfg.Server.WebRoot
+	if !validPathRegEx.MatchString(webRoot) {
+		return fmt.Errorf("web root must begin with a / and contain valid URL path characters: %v", webRoot)
+	}
+	if webRoot != "/" && strings.HasSuffix(webRoot, "/") {
+		return fmt.Errorf("web root must not contain a trailing /: %v", webRoot)
+	}
+	if strings.Contains(webRoot, "/../") {
+		return fmt.Errorf("for security purposes, web root must not contain '/../': %v", webRoot)
+	}
+
+	// log some messages to let the administrator know when credentials are configured certain ways
+	auth := cfg.Auth
+	log.Infof("Using authentication strategy [%v]", auth.Strategy)
+	if auth.Strategy == AuthStrategyAnonymous {
+		log.Warningf("Kiali auth strategy is configured for anonymous access - users will not be authenticated.")
+	} else if auth.Strategy != AuthStrategyOpenId &&
+		auth.Strategy != AuthStrategyOpenshift &&
+		auth.Strategy != AuthStrategyToken &&
+		auth.Strategy != AuthStrategyHeader {
+		return fmt.Errorf("Invalid authentication strategy [%v]", auth.Strategy)
+	}
+
+	// Check the ciphering key for sessions
+	signingKey := cfg.LoginToken.SigningKey
+	if err := ValidateSigningKey(signingKey, auth.Strategy); err != nil {
+		return err
+	}
+
+	// log a warning if the user is ignoring some validations
+	if len(cfg.KialiFeatureFlags.Validations.Ignore) > 0 {
+		log.Infof("Some validation errors will be ignored %v. If these errors do occur, they will still be logged. If you think the validation errors you see are incorrect, please report them to the Kiali team if you have not done so already and provide the details of your scenario. This will keep Kiali validations strong for the whole community.", cfg.KialiFeatureFlags.Validations.Ignore)
+	}
+
+	// log a info message if the user is disabling some features
+	if len(cfg.KialiFeatureFlags.DisabledFeatures) > 0 {
+		log.Infof("Some features are disabled: [%v]", strings.Join(cfg.KialiFeatureFlags.DisabledFeatures, ","))
+		for _, fn := range cfg.KialiFeatureFlags.DisabledFeatures {
+			if err := FeatureName(fn).IsValid(); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Check the observability section
+	observTracing := cfg.Server.Observability.Tracing
+	if observTracing.Enabled && observTracing.CollectorType != JaegerCollectorType && observTracing.CollectorType != OTELCollectorType {
+		return fmt.Errorf("error in configuration options getting the observability exporter. Invalid collector type [%s]", observTracing.CollectorType)
+	}
+
+	// Check the tracing section
+	cfgTracing := cfg.ExternalServices.Tracing
+	if cfgTracing.Enabled && cfgTracing.Provider != JaegerProvider && cfgTracing.Provider != TempoProvider {
+		return fmt.Errorf("error in configuration options for the external services tracing provider. Invalid provider type [%s]", cfgTracing.Provider)
+	}
+
+	return nil
 }

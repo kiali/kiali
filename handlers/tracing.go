@@ -22,7 +22,7 @@ func GetTracingInfo(w http.ResponseWriter, r *http.Request) {
 		info = models.TracingInfo{
 			Enabled:              true,
 			Integration:          tracingConfig.InClusterURL != "",
-			Provider:             tracingConfig.Provider,
+			Provider:             string(tracingConfig.Provider),
 			URL:                  tracingConfig.URL,
 			NamespaceSelector:    tracingConfig.NamespaceSelector,
 			WhiteListIstioSystem: tracingConfig.WhiteListIstioSystem,
