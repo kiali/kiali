@@ -1,5 +1,5 @@
-import { And, When } from '@badeball/cypress-cucumber-preprocessor';
-import { clusterParameterExists } from "./navigation";
+import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { clusterParameterExists } from './navigation';
 
 When('user clicks the {string} {string} node', (svcName: string, nodeType: string) => {
   cy.waitForReact();
@@ -22,24 +22,26 @@ When('user clicks the {string} item of the kebab menu of the graph side panel', 
   });
 });
 
-When('user clicks the {string} graph summary tab',  (tab: string) => {
+When('user clicks the {string} graph summary tab', (tab: string) => {
   cy.get('#graph_summary_tabs').should('be.visible').contains(tab).click();
 });
 
-And('user should see {string} cluster parameter in links in the traces',(exists:string) => {
+Then('user should see {string} cluster parameter in links in the traces', (exists: string) => {
   let present = true;
-  if (exists === 'no'){
+
+  if (exists === 'no') {
     present = false;
   }
+
   cy.get(`[data-test="show-traces"]`).within(() => {
     clusterParameterExists(present);
   });
-})
+});
 
-And('service badge for the graph side panel should be visible', () => {
+Then('service badge for the graph side panel should be visible', () => {
   cy.get('#pfbadge-S').should('be.visible');
 });
 
-And('user should see the traces tab not empty', () => {
+Then('user should see the traces tab not empty', () => {
   cy.get(`[data-test="traces-list"]`).should('be.visible');
-})
+});

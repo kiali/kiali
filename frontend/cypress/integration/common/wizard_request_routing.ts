@@ -1,4 +1,4 @@
-import { And, Before, Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
+import { Before, Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 
 const url = '/console';
@@ -27,13 +27,13 @@ Before(() => {
 
 Given('user opens the namespace {string} and {string} service details page', (namespace: string, service: string) => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
-  cy.visit(url + '/namespaces/' + namespace + '/services/' + service + '?refresh=0');
+  cy.visit(`${url}/namespaces/${namespace}/services/${service}?refresh=0`);
 });
 
 Given(
   'user opens the namespace {string} and the remote {string} service details page',
   (namespace: string, service: string) => {
-    cy.visit(url + '/namespaces/' + namespace + '/services/' + service + '?refresh=0&clusterName=west');
+    cy.visit(`${url}/namespaces/${namespace}/services/${service}?refresh=0&clusterName=west`);
   }
 );
 
@@ -43,15 +43,19 @@ When(
     cy.exec(`kubectl delete destinationrules.networking.istio.io ${name} -n bookinfo --context ${CLUSTER1_CONTEXT}`, {
       failOnNonZeroExit: false
     });
+
     cy.exec(`kubectl delete destinationrules.networking.istio.io ${name} -n bookinfo --context ${CLUSTER2_CONTEXT}`, {
       failOnNonZeroExit: false
     });
+
     cy.exec(`kubectl delete virtualservices.networking.istio.io ${name} -n bookinfo --context ${CLUSTER1_CONTEXT}`, {
       failOnNonZeroExit: false
     });
+
     cy.exec(`kubectl delete virtualservices.networking.istio.io ${name} -n bookinfo --context ${CLUSTER2_CONTEXT}`, {
       failOnNonZeroExit: false
     });
+
     ensureKialiFinishedLoading();
   }
 );
@@ -60,14 +64,17 @@ When('user deletes gateway named {string} and the resource is no longer availabl
   cy.exec(`kubectl delete gateway.networking.istio.io ${name} -n bookinfo --context ${CLUSTER1_CONTEXT}`, {
     failOnNonZeroExit: false
   });
+
   cy.exec(`kubectl delete gateway.networking.istio.io ${name} -n bookinfo --context ${CLUSTER2_CONTEXT}`, {
     failOnNonZeroExit: false
   });
+
   ensureKialiFinishedLoading();
 });
 
 When('user clicks in the {string} actions', (action: string) => {
   let actionId = '';
+
   switch (action) {
     case 'Request Routing':
       actionId = 'request_routing';
@@ -79,16 +86,18 @@ When('user clicks in the {string} actions', (action: string) => {
       actionId = 'delete_traffic_routing';
       break;
   }
+
   it('spinner should disappear', { retries: 3 }, () => {
     cy.get('#loading_kiali_spinner').should('not.exist');
   });
+
   cy.get('button[data-test="service-actions-toggle"]')
     .should('exist')
     .click()
     .get('#loading_kiali_spinner')
     .should('not.exist');
 
-  cy.get('li[data-test="' + actionId + '"]')
+  cy.get(`li[data-test="${actionId}"]`)
     .find('button')
     .should('exist')
     .click()
@@ -100,12 +109,13 @@ Then('user sees the generated {string} objects located in the {string} cluster',
   cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_destinationrule_${svc}`)
     .find('[data-label="Cluster"]')
     .contains(cluster);
+
   cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_virtualservice_${svc}`)
     .find('[data-label="Cluster"]')
     .contains(cluster);
 });
 
-And(
+Then(
   'the {string} {string} should be listed in {string} {string} namespace',
   (type: string, svc: string, cluster: string, ns: string) => {
     cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${ns}_${type.toLowerCase()}_${svc}`)
@@ -114,68 +124,62 @@ And(
   }
 );
 
-And('user sees the {string} wizard', (title: string) => {
-  cy.get('div[aria-label="' + title + '"]');
+When('user sees the {string} wizard', (title: string) => {
+  cy.get(`div[aria-label="${title}"]`);
 });
 
-And('user clicks in the {string} tab', (tab: string) => {
-  cy.get('button[data-test="' + tab + '"]').click();
+When('user clicks in the {string} tab', (tab: string) => {
+  cy.get(`button[data-test="${tab}"]`).click();
 });
 
-And('user clicks in the {string} request matching dropdown', (select: string) => {
+When('user clicks in the {string} request matching dropdown', (select: string) => {
   cy.get('button[data-test="requestmatching-header-toggle"]').click();
 
-  cy.get('li[data-test="requestmatching-header-' + select + '"]')
-    .find('button')
-    .click();
+  cy.get(`li[data-test="requestmatching-header-${select}"]`).find('button').click();
 });
 
-And('user clicks in the {string} request filtering dropdown', (select: string) => {
+When('user clicks in the {string} request filtering dropdown', (select: string) => {
   cy.get('button[data-test="filtering-type-toggle"]').click();
 
-  cy.get('li[data-test="filtering-type-' + select + '"]')
-    .find('button')
-    .click();
+  cy.get(`li[data-test="filtering-type-${select}"]`).find('button').click();
 });
 
-And('user types {string} in the matching header input', (header: string) => {
+When('user types {string} in the matching header input', (header: string) => {
   cy.get('input[id="header-name-id"]').type(header);
 });
 
-And('user types {string} in the filtering header input', (header: string) => {
+When('user types {string} in the filtering header input', (header: string) => {
   cy.get('input[id="filter-header-name-id"]').type(header);
 });
 
-And('user clicks in the {string} match value dropdown', (value: string) => {
+When('user clicks in the {string} match value dropdown', (value: string) => {
   cy.get('button[data-test="requestmatching-match-toggle"]').click();
 
-  cy.get('li[data-test="requestmatching-match-' + value + '"]')
-    .find('button')
-    .click();
+  cy.get(`li[data-test="requestmatching-match-${value}"]`).find('button').click();
 });
 
-And('user types {string} in the match value input', (value: string) => {
+When('user types {string} in the match value input', (value: string) => {
   cy.get('input[id="match-value-id"]').type(value);
 });
 
-And('user adds a match', () => {
+When('user adds a match', () => {
   cy.get('button[data-test="add-match"]').click();
 });
 
-And('user adds a filter', () => {
+When('user adds a filter', () => {
   cy.get('button[data-test="add-filter"]').click();
 });
 
-And('user types {string} traffic weight in the {string} workload', (weight: string, workload: string) => {
-  cy.get('input[data-test="input-slider-' + workload + '"]').type(weight, { force: true });
+When('user types {string} traffic weight in the {string} workload', (weight: string, workload: string) => {
+  cy.get(`input[data-test="input-slider-${workload}"]`).type(weight, { force: true });
 });
 
-And('user adds a route', () => {
+When('user adds a route', () => {
   cy.get('button[data-test="add-route"]').click();
 });
 
-And('user clicks in {string} matching selected', (match: string) => {
-  cy.get('span[data-test="' + match + '"]')
+When('user clicks in {string} matching selected', (match: string) => {
+  cy.get(`span[data-test="${match}"]`)
     .children()
     .first() // div wrapper
     .children()
@@ -183,73 +187,76 @@ And('user clicks in {string} matching selected', (match: string) => {
     .click();
 });
 
-And('user previews the configuration', () => {
+When('user previews the configuration', () => {
   cy.get('button[data-test="preview"]').click();
 });
 
-And('user creates the configuration', () => {
+When('user creates the configuration', () => {
   cy.get('button[data-test="create"]').click();
 
   cy.get('button[data-test="confirm-create"]').click();
+
   it('spinner should disappear', { retries: 3 }, () => {
     cy.get('#loading_kiali_spinner').should('not.exist');
   });
 });
 
-And('user updates the configuration', () => {
+When('user updates the configuration', () => {
   cy.get('button[data-test="update"]').click();
 
   cy.get('button[data-test="confirm-update"]').click();
+
   it('spinner should disappear', { retries: 3 }, () => {
     cy.get('#loading_kiali_spinner').should('not.exist');
   });
 });
 
-And('user confirms delete the configuration', () => {
+When('user confirms delete the configuration', () => {
   cy.get('button[data-test="confirm-delete"]').click();
+
   it('spinner should disappear', { retries: 3 }, () => {
     cy.get('#loading_kiali_spinner').should('not.exist');
   });
 });
 
-And('user sees the {string} {string} {string} reference', (namespace: string, name: string, type: string) => {
-  cy.get('a[data-test="' + type + '-' + namespace + '-' + name + '"]');
+Then('user sees the {string} {string} {string} reference', (namespace: string, name: string, type: string) => {
+  cy.get(`a[data-test="${type}-${namespace}-${name}"]`);
 });
 
-And('user clicks in the {string} {string} {string} reference', (namespace: string, name: string, type: string) => {
-  cy.get('a[data-test="' + type + '-' + namespace + '-' + name + '"]').click();
+When('user clicks in the {string} {string} {string} reference', (namespace: string, name: string, type: string) => {
+  cy.get(`a[data-test="${type}-${namespace}-${name}"]`).click();
 
   let expectedURl = '';
+
   switch (type) {
     case 'destinationrule':
-      expectedURl = '/namespaces/' + namespace + '/istio/destinationrules/' + name;
+      expectedURl = `/namespaces/${namespace}/istio/destinationrules/${name}`;
       break;
     case 'service':
-      expectedURl = '/namespaces/' + namespace + '/services/' + name;
+      expectedURl = `/namespaces/${namespace}/services/${name}`;
       break;
     case 'virtualservice':
-      expectedURl = '/namespaces/' + namespace + '/istio/virtualservices/' + name;
+      expectedURl = `/namespaces/${namespace}/istio/virtualservices/${name}`;
       break;
   }
 
   cy.location('pathname').should('include', expectedURl);
 });
 
-And('user sees the {string} regex in the editor', (regexContent: string) => {
+Then('user sees the {string} regex in the editor', (regexContent: string) => {
   const re = new RegExp(regexContent);
+
   cy.get('.ace_content').invoke('text').should('match', re);
 });
 
-And('user clicks on {string} Advanced Options', (action: string) => {
-  cy.get('div[id="' + action.toLowerCase() + '_advanced_options"]')
-    .prev()
-    .click();
+When('user clicks on {string} Advanced Options', (action: string) => {
+  cy.get(`div[id="${action.toLowerCase()}_advanced_options"]`).prev().click();
 });
 
-And('user clicks on Add Gateway', () => {
+When('user clicks on Add Gateway', () => {
   cy.get('input[id="advanced-gwSwitch"]').next().click();
 });
 
-And('user selects Create Gateway', () => {
+When('user selects Create Gateway', () => {
   cy.get('input[id="createGateway"]').click();
 });

@@ -1,4 +1,4 @@
-import { And, Then, But } from '@badeball/cypress-cucumber-preprocessor';
+import { Then } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
 import { openTab } from './transition';
 import { clusterParameterExists } from './navigation';
@@ -11,6 +11,7 @@ Then('user sees details information for the {string} app', (name: string) => {
     cy.get('#pfbadge-A').parent().parent().parent().contains('details'); // App
     cy.get('#pfbadge-W').parent().parent().parent().contains('details-v1'); // Workload
     cy.get('#pfbadge-S').parent().parent().parent().contains('details'); // Service
+
     clusterParameterExists(false);
   });
 });
@@ -26,6 +27,7 @@ Then('user sees inbound and outbound traffic information', () => {
 
 Then('user sees inbound metrics information', () => {
   cy.intercept(`${Cypress.config('baseUrl')}/api/namespaces/${NAMESPACE}/apps/${APP}/dashboard*`).as('fetchMetrics');
+
   openTab('Inbound Metrics');
   cy.wait('@fetchMetrics');
   cy.waitForReact(1000, '#root');
@@ -33,7 +35,8 @@ Then('user sees inbound metrics information', () => {
   cy.getReact('IstioMetricsComponent', { props: { 'data-test': 'inbound-metrics-component' } })
     // HOCs can match the component name. This filters the HOCs for just the bare component.
     .then(
-      (metricsComponents: any) => metricsComponents.filter(component => component.name === 'IstioMetricsComponent')[0]
+      (metricsComponents: any) =>
+        metricsComponents.filter((component: any) => component.name === 'IstioMetricsComponent')[0]
     )
     .getCurrentState()
     .then(state => {
@@ -43,6 +46,7 @@ Then('user sees inbound metrics information', () => {
 
 Then('user sees outbound metrics information', () => {
   cy.intercept(`${Cypress.config('baseUrl')}/api/namespaces/${NAMESPACE}/apps/${APP}/dashboard*`).as('fetchMetrics');
+
   openTab('Outbound Metrics');
   cy.wait('@fetchMetrics');
   cy.waitForReact(1000, '#root');
@@ -50,7 +54,8 @@ Then('user sees outbound metrics information', () => {
   cy.getReact('IstioMetricsComponent', { props: { 'data-test': 'outbound-metrics-component' } })
     // HOCs can match the component name. This filters the HOCs for just the bare component.
     .then(
-      (metricsComponents: any) => metricsComponents.filter(component => component.name === 'IstioMetricsComponent')[0]
+      (metricsComponents: any) =>
+        metricsComponents.filter((component: any) => component.name === 'IstioMetricsComponent')[0]
     )
     .getCurrentState()
     .then(state => {
@@ -58,7 +63,7 @@ Then('user sees outbound metrics information', () => {
     });
 });
 
-And('user can filter spans by app', () => {
+Then('user can filter spans by app', () => {
   cy.get('select[aria-label="filter_select_type"]').select('App');
   cy.get('input[placeholder="Filter by App"]').type('productpage{enter}');
   cy.get('li[label="productpage"]').should('be.visible').find('button').click();
@@ -73,7 +78,7 @@ And('user can filter spans by app', () => {
   cy.get('ul[role="menu"]').should('be.visible');
 });
 
-But('no cluster badge for the {string} should be visible', (type: string) => {
+Then('no cluster badge for the {string} should be visible', (type: string) => {
   if (type === 'Istio config') {
     cy.get('#pfbadge-C').should('not.exist');
   } else if (type === 'graph side panel') {
@@ -87,7 +92,7 @@ But('no cluster badge for the {string} should be visible', (type: string) => {
   }
 });
 
-But('cluster badge for the {string} should be visible', (type: string) => {
+Then('cluster badge for the {string} should be visible', (type: string) => {
   if (type === 'Istio config') {
     cy.get('#pfbadge-C').should('be.visible');
   } else if (type === 'graph side panel') {

@@ -4,7 +4,7 @@
   pages since these are all similar.
 */
 
-import { And, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import {
   checkHealthIndicatorInTable,
   checkHealthStatusInTable,
@@ -22,9 +22,12 @@ const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
 
 Then('user sees trace information', () => {
   openTab('Traces');
+
   cy.getBySel('tracing-scatterplot');
+
   // Ensures a trace hasn't been clicked on yet.
   cy.getBySel('trace-details-tabs').should('not.exist');
+
   // Ensures traces have loaded.
   cy.getBySel('tracing-scatterplot').contains('Traces');
 });
@@ -38,11 +41,13 @@ Then('user sees trace details', () => {
 When('user selects a trace', () => {
   const tracingDotQuery =
     '[style*="fill: var(--pf-v5-global--palette--blue-200)"][style*="stroke: var(--pf-v5-chart-scatter--data--stroke--Color, transparent)"]';
+
   cy.getBySel('tracing-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
 });
 
-And('user sees span details', () => {
+Then('user sees span details', () => {
   cy.getBySel('trace-details-tabs').should('be.visible').contains('Span Details').click({ scrollBehavior: false });
+
   cy.get('table')
     .should('be.visible')
     .find('tbody tr') // ignore thead rows
@@ -51,6 +56,7 @@ And('user sees span details', () => {
     .find('td')
     .eq(4) // take 5th cell (kebab)
     .should('be.visible');
+
   cy.get('table')
     .should('be.visible')
     .find('tbody tr') // ignore thead rows
@@ -62,16 +68,16 @@ And('user sees span details', () => {
     .should('not.exist'); // Load Statistics button should not exist when metrics are loaded
 });
 
-When('I fetch the list of applications', function () {
+When('I fetch the list of applications', () => {
   cy.visit('/console/applications?refresh=0');
 });
 
 When('user opens the namespace dropdown', () => {
-  cy.intercept(Cypress.config('baseUrl') + `/api/namespaces/`).as('getNamespaces');
+  cy.intercept(`${Cypress.config('baseUrl')}/api/namespaces/`).as('getNamespaces');
   cy.get('[data-test="namespace-dropdown"]').click();
 });
 
-And('user sees Health information for Apps', () => {
+Then('user sees Health information for Apps', () => {
   getColWithRowText(APP, 'Health')
     .find('span')
     .filter('.pf-v5-c-icon')
@@ -82,35 +88,38 @@ Then('user sees all the Apps in the bookinfo namespace', () => {
   ensureObjectsInTable('details', 'kiali-traffic-generator', 'productpage', 'ratings', 'reviews');
 });
 
-And('user sees Name information for Apps', () => {
+Then('user sees Name information for Apps', () => {
   // There should be a table with a heading for each piece of information.
   getColWithRowText(APP, 'Name').within(() => {
     cy.get(`a[href*="/namespaces/bookinfo/applications/${APP}"]`).should('be.visible');
   });
 });
 
-And('user sees Namespace information for Apps', () => {
+Then('user sees Namespace information for Apps', () => {
   getColWithRowText(APP, 'Namespace').contains('bookinfo');
 });
 
-And('user sees Labels information for Apps', () => {
+Then('user sees Labels information for Apps', () => {
   getColWithRowText(APP, 'Labels').contains('app=details');
   getColWithRowText(APP, 'Labels').contains('service=details');
   getColWithRowText(APP, 'Labels').contains('version=v1');
 });
 
-And('user sees Details information for Apps', () => {
+Then('user sees Details information for Apps', () => {
   getColWithRowText(APP, 'Details').within(() => {
     cy.contains('bookinfo-gateway');
+
     cy.get(`a[href*="/namespaces/bookinfo/istio/gateways/bookinfo-gateway"]`).should('be.visible');
   });
 });
 
-And('user only sees the apps with the {string} name in the {string} namespace', (name: string, ns: string) => {
+Then('user only sees the apps with the {string} name in the {string} namespace', (name: string, ns: string) => {
   let count: number;
+
   cy.request('GET', `/api/namespaces/${ns}/apps`).should(response => {
     count = response.body.applications.filter(item => item.name.includes(name)).length;
   });
+
   cy.get('tbody').within(() => {
     cy.contains('No apps found').should('not.exist');
     cy.get('tr').should('have.length', count);
@@ -139,11 +148,12 @@ Then('the health status of the application should be {string}', function (health
 Then('user sees all the Apps toggles', () => {
   cy.get('[data-test="toggle-health"]').should('be.checked');
   cy.get('[data-test="toggle-istioResources"]').should('be.checked');
+
   colExists('Health', true);
   colExists('Details', true);
 });
 
-When('user {string} toggle {string}', function (action: 'checks' | 'unchecks', toggle: string) {
+When('user {string} toggle {string}', (action: 'checks' | 'unchecks', toggle: string) => {
   if (action === 'checks') {
     cy.get(`[data-test="toggle-${toggle}"]`).check();
   } else {
@@ -158,6 +168,7 @@ Then('the {string} column {string}', (col: string, action: 'appears' | 'disappea
 Then('user may only see {string}', (sees: string) => {
   cy.get('tbody').within(() => {
     cy.get('tr').should('have.length', 1);
+
     cy.get('td').then(td => {
       if (td.length === 1) {
         cy.get('h5').contains('No applications found');
@@ -171,5 +182,6 @@ Then('user may only see {string}', (sees: string) => {
 Then('user should see no duplicate namespaces', () => {
   cy.exec(`kubectl get namespaces bookinfo --context ${CLUSTER1_CONTEXT}`);
   cy.exec(`kubectl get namespaces bookinfo --context ${CLUSTER2_CONTEXT}`);
+
   cy.get('[data-test="namespace-dropdown"]').siblings().contains('bookinfo').should('be.visible').and('have.length', 1);
 });

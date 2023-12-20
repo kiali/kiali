@@ -1,4 +1,4 @@
-import { Before, Then, When, And } from '@badeball/cypress-cucumber-preprocessor';
+import { Before, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 
 const url = '/console';
@@ -19,13 +19,16 @@ Before(() => {
   });
 });
 
-When('user graphs {string} namespaces', namespaces => {
+When('user graphs {string} namespaces', (namespaces: string) => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
   cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
+
   cy.visit(`${url}/graph/namespaces?refresh=0&namespaces=${namespaces}`);
+
   if (namespaces !== '') {
     cy.wait('@graphNamespaces');
   }
+
   ensureKialiFinishedLoading();
 });
 
@@ -33,12 +36,12 @@ When('user opens display menu', () => {
   cy.get('button#display-settings').click();
 });
 
-When('user enables {string} {string} edge labels', (radio, edgeLabel) => {
+When('user enables {string} {string} edge labels', (radio: string, edgeLabel: string) => {
   cy.get('div#graph-display-menu').find(`input#${edgeLabel}`).check();
   cy.get(`input#${radio}`).check();
 });
 
-When('user {string} {string} edge labels', (action, edgeLabel) => {
+When('user {string} {string} edge labels', (action: string, edgeLabel: string) => {
   if (action === 'enables') {
     cy.get('div#graph-display-menu').find(`input#${edgeLabel}`).check();
   } else {
@@ -46,7 +49,7 @@ When('user {string} {string} edge labels', (action, edgeLabel) => {
   }
 });
 
-When('user {string} {string} option', (action, option: string) => {
+When('user {string} {string} option', (action: string, option: string) => {
   switch (option.toLowerCase()) {
     case 'cluster boxes':
       option = 'boxByCluster';
@@ -87,6 +90,7 @@ When('user {string} {string} option', (action, option: string) => {
 
   if (action === 'enables') {
     cy.get('div#graph-display-menu').find(`input#${option}`).check();
+
     if (option === 'rank') {
       cy.get(`input#inboundEdges`).check();
     }
@@ -142,6 +146,7 @@ Then('the display menu has default settings', () => {
 
 Then('the graph reflects default settings', () => {
   cy.waitForReact();
+
   cy.getReact('CytoscapeGraph')
     .should('have.length', '1')
     .getCurrentState()
@@ -173,7 +178,7 @@ Then('the graph reflects default settings', () => {
 Then('user sees {string} edge labels', (el: string) => {
   validateInput(el, 'appear');
 
-  let rate;
+  let rate: string;
   switch (el) {
     case 'trafficDistribution':
       rate = 'httpPercentReq';
@@ -186,6 +191,7 @@ Then('user sees {string} edge labels', (el: string) => {
   }
 
   cy.waitForReact();
+
   cy.getReact('CytoscapeGraph')
     .should('have.length', '1')
     .getCurrentState()
@@ -203,6 +209,7 @@ Then('user does not see {string} boxing', (boxByType: string) => {
   validateInput(`boxBy${boxByType}`, 'does not appear');
 
   cy.waitForReact();
+
   cy.getReact('CytoscapeGraph')
     .should('have.length', '1')
     .getCurrentState()
@@ -223,12 +230,14 @@ Then('idle edges {string} in the graph', (action: string) => {
   validateInput('filterIdleEdges', action);
 
   cy.waitForReact();
+
   cy.getReact('CytoscapeGraph')
     .should('have.length', '1')
     .getCurrentState()
     .then(state => {
       const numEdges = state.cy.edges(`[hasTraffic]`).length;
       const numIdleEdges = state.cy.edges(`[^hasTraffic]`).length;
+
       if (action === 'appear') {
         assert.isAbove(numEdges, 0);
         assert.isAtLeast(numIdleEdges, 0);
@@ -243,6 +252,7 @@ Then('idle nodes {string} in the graph', (action: string) => {
   validateInput('filterIdleNodes', action);
 
   cy.waitForReact();
+
   cy.getReact('CytoscapeGraph')
     .should('have.length', '1')
     .getCurrentState()
@@ -260,6 +270,7 @@ Then('ranks {string} in the graph', (action: string) => {
   validateInput('rank', action);
 
   cy.waitForReact();
+
   cy.getReact('CytoscapeGraph')
     .should('have.length', '1')
     .getCurrentState()
@@ -277,6 +288,7 @@ Then('user does not see service nodes', () => {
   validateInput('filterServiceNodes', 'do not appear');
 
   cy.waitForReact();
+
   cy.getReact('CytoscapeGraph')
     .should('have.length', '1')
     .getCurrentState()
@@ -290,6 +302,7 @@ Then('security {string} in the graph', (action: string) => {
   validateInput('filterSecurity', action);
 
   cy.waitForReact();
+
   cy.getReact('CytoscapeGraph')
     .should('have.length', '1')
     .getCurrentState()
@@ -321,7 +334,7 @@ Then('{string} option {string} in the graph', (option: string, action: string) =
   validateInput(option, action);
 });
 
-And('the {string} option should {string} and {string}', (option: string, optionState: string, checkState: string) => {
+Then('the {string} option should {string} and {string}', (option: string, optionState: string, checkState: string) => {
   switch (option) {
     case 'operation nodes':
       option = 'filterOperationNodes';
@@ -332,26 +345,29 @@ And('the {string} option should {string} and {string}', (option: string, optionS
     default:
       option = 'xxx';
   }
+
   cy.get('div#graph-display-menu')
     .find(`input#${option}`)
     .should(optionState.replaceAll(' ', '.'))
     .and(`be.${checkState}`);
 });
 
-And('only a single cluster box should be visible', () => {
+Then('only a single cluster box should be visible', () => {
   cy.waitForReact();
+
   cy.getReact('CytoscapeGraph')
     .should('have.length', '1')
     .getCurrentState()
     .then(state => {
       const clusterBoxes = state.cy.nodes(`[isBox = "cluster"]`).length;
       assert.equal(clusterBoxes, 0);
+
       const namespaceBoxes = state.cy.nodes(`[isBox = "namespace"][namespace = "bookinfo"]`).length;
       assert.equal(namespaceBoxes, 1);
     });
 });
 
-function validateInput(option: string, action: string): void {
+const validateInput = (option: string, action: string): void => {
   if (action.startsWith('appear')) {
     cy.get('div#graph-display-menu')
       .find(`input#${option}`)
@@ -365,4 +381,4 @@ function validateInput(option: string, action: string): void {
       .should('not.be.checked')
       .should('not.be.disabled'); // this forces a wait, enables when graph is refreshed
   }
-}
+};

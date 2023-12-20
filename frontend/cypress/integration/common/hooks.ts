@@ -3,7 +3,7 @@ import { Before } from '@badeball/cypress-cucumber-preprocessor';
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
 const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
 
-function install_demoapp(demoapp: string): void {
+const install_demoapp = (demoapp: string): void => {
   let namespaces = 'bookinfo';
   let deletion = `--delete-${demoapp}`;
   let tg = '-tg';
@@ -21,26 +21,31 @@ function install_demoapp(demoapp: string): void {
 
   cy.exec(`../hack/istio/cypress/${demoapp}-status.sh`, { failOnNonZeroExit: false, timeout: 120000 }).then(result => {
     cy.log(result.stdout);
+
     if (result.code === 0) {
       cy.log(`${demoapp} demo app is up and running`);
     } else {
       cy.log(`${demoapp} demo app is either broken or not present. Installing now.`);
       cy.log(`Detecting pod architecture.`);
+
       cy.exec('../hack/istio/cypress/get-node-architecture.sh', { failOnNonZeroExit: false }).then(result => {
         if (result.code === 0) {
           const arch: string = result.stdout;
           cy.log(`Installing apps on ${arch} architecture.`);
+
           // is the suite running on openshift?
           cy.exec('kubectl api-versions | grep --quiet "route.openshift.io";', { failOnNonZeroExit: false }).then(
             result => {
               if (result.code === 0) {
                 cy.log('Openshift detected.').log(`Removing old ${demoapp} installations.`);
+
                 cy.exec(`../hack/istio/install-${demoapp}-demo.sh ${deletion} true`).then(() => {
                   cy.log('Installing new demo app.');
                   cy.exec(`../hack/istio/install-${demoapp}-demo.sh ${tg} ${istio} -a ${arch}`, {
                     timeout: 300000
                   }).then(() => {
                     cy.log('Waiting for demoapp to be ready.');
+
                     cy.exec(`../hack/istio/wait-for-namespace.sh -n ${namespaces}`, { timeout: 400000 });
                   });
                 });
@@ -49,6 +54,7 @@ function install_demoapp(demoapp: string): void {
                   .exec(`../hack/istio/install-${demoapp}-demo.sh ${deletion} true -c kubectl`)
                   .then(() => {
                     cy.log('Installing new demo app.');
+
                     cy.exec(`../hack/istio/install-${demoapp}-demo.sh -c kubectl ${tg} ${istio} -a ${arch}`, {
                       timeout: 300000
                     });
@@ -64,12 +70,13 @@ function install_demoapp(demoapp: string): void {
       });
     }
   });
-}
+};
 
-Before({ tags: '@gateway-api' }, async () => {
+Before({ tags: '@gateway-api' }, () => {
   cy.exec('kubectl get crd gateways.gateway.networking.k8s.io', { failOnNonZeroExit: false }).then(result => {
     if (result.code !== 0) {
       cy.log('Gateway API not found. Enabling it now.');
+
       cy.exec('kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.0.0" | kubectl apply -f -;')
         .its('code')
         .should('eq', 0);
@@ -77,27 +84,35 @@ Before({ tags: '@gateway-api' }, async () => {
   });
 });
 
-Before({ tags: '@bookinfo-app' }, async () => {
+Before({ tags: '@bookinfo-app' }, () => {
   install_demoapp('bookinfo');
 });
 
-Before({ tags: '@error-rates-app' }, async () => {
+Before({ tags: '@error-rates-app' }, () => {
   install_demoapp('error-rates');
 });
 
-Before({ tags: '@sleep-app' }, async () => {
+Before({ tags: '@sleep-app' }, () => {
   install_demoapp('sleep');
 });
 
-Before({ tags: '@remote-istio-crds'}, async () => {
-  cy.exec(`kubectl get crd --context ${CLUSTER2_CONTEXT} -o=custom-columns=NAME:.metadata.name |  grep -E -i '.(istio|k8s).io$'`,
-    { failOnNonZeroExit: false}).then(result => {
+Before({ tags: '@remote-istio-crds' }, () => {
+  cy.exec(
+    `kubectl get crd --context ${CLUSTER2_CONTEXT} -o=custom-columns=NAME:.metadata.name |  grep -E -i '.(istio|k8s).io$'`,
+    { failOnNonZeroExit: false }
+  ).then(result => {
     if (result.code !== 0) {
       cy.log('Istio CRDs not found on the remote cluster. Enabling it now.');
-      cy.exec(`kubectl apply -f https://raw.githubusercontent.com/istio/istio/master/manifests/charts/base/crds/crd-all.gen.yaml --context ${CLUSTER2_CONTEXT}`)
+
+      cy.exec(
+        `kubectl apply -f https://raw.githubusercontent.com/istio/istio/master/manifests/charts/base/crds/crd-all.gen.yaml --context ${CLUSTER2_CONTEXT}`
+      )
         .its('code')
-        .should('eq', 0).then(() => {
-          cy.exec(`kubectl rollout restart deployment/kiali -n istio-system --context ${CLUSTER1_CONTEXT} && kubectl rollout status deployment/kiali -n istio-system --context ${CLUSTER1_CONTEXT}`);
+        .should('eq', 0)
+        .then(() => {
+          cy.exec(
+            `kubectl rollout restart deployment/kiali -n istio-system --context ${CLUSTER1_CONTEXT} && kubectl rollout status deployment/kiali -n istio-system --context ${CLUSTER1_CONTEXT}`
+          );
         });
     }
   });

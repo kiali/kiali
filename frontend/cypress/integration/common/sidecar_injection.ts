@@ -237,7 +237,7 @@ Given('a workload with override configuration for automatic sidecar injection', 
   });
 });
 
-When('I visit the overview page', function () {
+When('I visit the overview page', () => {
   cy.visit('/console/overview?refresh=0');
   cy.contains('Inbound traffic', { matchCase: false }); // Make sure data finished loading, so avoid broken tests because of a re-render
 });
@@ -250,12 +250,15 @@ When('I override the default automatic sidecar injection policy in the namespace
     cy.request('/api/clusters').then(response => {
       cy.wrap(response.isOkStatusCode).should('be.true');
       cy.wrap(response.body).should('have.length', 1);
+
       const cluster = response.body[0].name;
 
       cy.getBySel('overview-type-LIST').should('be.visible').click();
+
       cy.get(`[data-test=VirtualItem_Cluster${cluster}_${this.targetNamespace}] button[aria-label=Actions]`)
         .should('be.visible')
         .click();
+
       cy.getBySel(`enable-${this.targetNamespace}-namespace-sidecar-injection`).should('be.visible').click();
       cy.getBySel('confirm-traffic-policies').should('be.visible').click();
     });
@@ -266,22 +269,26 @@ When('I override the default automatic sidecar injection policy in the namespace
 
 When(
   'I change the override configuration for automatic sidecar injection policy in the namespace to {string} it',
-  function (enabledOrDisabled) {
+  function (enabledOrDisabled: string) {
     cy.request('GET', '/api/status').should(response => {
       expect(response.status).to.equal(200);
 
       cy.request('/api/clusters').then(response => {
         cy.wrap(response.isOkStatusCode).should('be.true');
         cy.wrap(response.body).should('have.length', 1);
+
         const cluster = response.body[0].name;
 
         cy.getBySel('overview-type-LIST').should('be.visible').click();
+
         cy.get(`[data-test=VirtualItem_Cluster${cluster}_${this.targetNamespace}] button[aria-label=Actions]`)
           .should('be.visible')
           .click();
+
         cy.getBySel(`${enabledOrDisabled}-${this.targetNamespace}-namespace-sidecar-injection`)
           .should('be.visible')
           .click();
+
         cy.getBySel('confirm-traffic-policies').should('be.visible').click();
         ensureKialiFinishedLoading();
       });
@@ -296,23 +303,29 @@ When('I remove override configuration for sidecar injection in the namespace', f
     cy.request('/api/clusters').then(response => {
       cy.wrap(response.isOkStatusCode).should('be.true');
       cy.wrap(response.body).should('have.length', 1);
+
       const cluster = response.body[0].name;
 
       cy.getBySel('overview-type-LIST').should('be.visible').click();
+
       cy.get(`[data-test=VirtualItem_Cluster${cluster}_${this.targetNamespace}] button[aria-label=Actions]`)
         .should('be.visible')
         .click();
+
       cy.getBySel(`remove-${this.targetNamespace}-namespace-sidecar-injection`).should('be.visible').click();
       cy.getBySel('confirm-traffic-policies').should('be.visible').click();
+
       ensureKialiFinishedLoading();
     });
   });
 });
 
-function switchWorkloadSidecarInjection(enableOrDisable) {
+function switchWorkloadSidecarInjection(enableOrDisable: string): void {
   cy.visit(`/console/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?refresh=0`);
+
   cy.get('button[data-test="workload-actions-toggle"]').should('be.visible').click();
   cy.get(`li[data-test=${enableOrDisable}_auto_injection]`).find('button').should('be.visible').click();
+
   ensureKialiFinishedLoading();
 }
 
@@ -330,15 +343,20 @@ When('I remove override configuration for sidecar injection in the workload', fu
   switchWorkloadSidecarInjection.apply(this, ['remove']);
 });
 
-Then('I should see the override annotation for sidecar injection in the namespace as {string}', function (enabled) {
+Then('I should see the override annotation for sidecar injection in the namespace as {string}', function (
+  enabled: string
+) {
   cy.request('GET', '/api/status').should(response => {
     expect(response.status).to.equal(200);
+
     const expectation = 'exist';
 
     cy.request('/api/clusters').then(response => {
       cy.wrap(response.isOkStatusCode).should('be.true');
       cy.wrap(response.body).should('have.length', 1);
+
       const cluster = response.body[0].name;
+
       cy.getBySel(`VirtualItem_Cluster${cluster}_${this.targetNamespace}`)
         .contains(`istio-injection=${enabled}`)
         .should(expectation);
@@ -349,9 +367,11 @@ Then('I should see the override annotation for sidecar injection in the namespac
 Then('I should see no override annotation for sidecar injection in the namespace', function () {
   cy.request('GET', '/api/status').should(response => {
     expect(response.status).to.equal(200);
+
     cy.request('/api/clusters').then(response => {
       cy.wrap(response.isOkStatusCode).should('be.true');
       cy.wrap(response.body).should('have.length', 1);
+
       const cluster = response.body[0].name;
 
       cy.getBySel(`VirtualItem_Cluster${cluster}_${this.targetNamespace}`)
@@ -361,15 +381,15 @@ Then('I should see no override annotation for sidecar injection in the namespace
   });
 });
 
-Then('the workload should get a sidecar', function () {
+Then('the workload should get a sidecar', () => {
   cy.get('[data-test=missing-sidecar-badge-for-sleep-workload-in-sleep-namespace]').should('not.exist');
 });
 
-Then('the sidecar of the workload should vanish', function () {
+Then('the sidecar of the workload should vanish', () => {
   cy.get('[data-test=missing-sidecar-badge-for-sleep-workload-in-sleep-namespace]').should('exist');
 });
 
-Then('I should see no override annotation for sidecar injection in the workload', function () {
+Then('I should see no override annotation for sidecar injection in the workload', () => {
   cy.get('#WorkloadDescriptionCard').then($card => {
     if ($card.find('label_more').length) {
       cy.wrap($card).get('label_more').should('be.visible').click();
