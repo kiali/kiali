@@ -467,7 +467,7 @@ Then('the user can create a {string} Istio object', (object: string) => {
 });
 
 Then('the user can create a {string} K8s Istio object', (object: string) => {
-  cy.request('GET', '/api/config').should(response => {
+  cy.request('GET', '/api/config').then(response => {
     expect(response.status).to.equal(200);
     const gatewayAPIEnabled = response.body.gatewayAPIEnabled;
 
