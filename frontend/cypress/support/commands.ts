@@ -70,6 +70,17 @@ declare namespace Cypress {
 }
 
 let haveCookie = Cypress.env('cookie');
+let kialiToken = Cypress.env('token');
+
+// Peserve Authorization Kiali token to set cookie before each test scenario
+const preserveKialiToken = (): void => {
+  cy.getCookie('kiali-token-aes', { timeout: 15000 })
+    .should('exist')
+    .then(cookie => {
+      kialiToken = cookie.value;
+      haveCookie = true;
+    });
+};
 
 // Converts redirects from:
 //   302: https://localhost:8080/login?redirect=%2F
@@ -140,6 +151,7 @@ Cypress.Commands.add('login', (username: string, password: string) => {
           // This flow comes from: https://cloud.ibm.com/docs/openshift?topic=openshift-access_cluster#access_api_key
           cy.request('api/auth/info').then(({ body }) => {
             const authEndpoint = body.authorizationEndpoint;
+
             cy.request({
               url: authEndpoint,
               method: 'GET',
@@ -149,6 +161,7 @@ Cypress.Commands.add('login', (username: string, password: string) => {
             }).then(resp => {
               // cookie automatically set by cypress for the next request.
               const redirectURL = new URL(resp.headers.location as string);
+
               // Strip first # out of hash.
               const params = new URLSearchParams(redirectURL.hash.slice(1));
 
@@ -174,6 +187,7 @@ Cypress.Commands.add('login', (username: string, password: string) => {
           // https://github.com/kiali/kiali-operator/blob/master/molecule/openshift-auth-test/converge.yml#L59
           cy.request('api/auth/info').then(({ body }) => {
             let authEndpoint = body.authorizationEndpoint;
+
             cy.request({
               url: authEndpoint,
               method: 'GET',
@@ -189,6 +203,7 @@ Cypress.Commands.add('login', (username: string, password: string) => {
                 const authEndpointURL = new URL(authEndpoint);
                 authEndpointURL.searchParams.set('idp', provider);
                 authEndpoint = authEndpointURL.toString();
+
                 cy.request({
                   url: authEndpoint,
                   method: 'GET',
@@ -200,13 +215,9 @@ Cypress.Commands.add('login', (username: string, password: string) => {
               }
             });
           });
-        }
 
-        cy.getCookie('kiali-token-aes', { timeout: 15000 })
-          .should('exist')
-          .then(() => {
-            haveCookie = true;
-          });
+          preserveKialiToken();
+        }
       } else if (auth_strategy === 'token') {
         cy.exec('kubectl -n istio-system create token citest').then(result => {
           cy.request({
@@ -217,11 +228,13 @@ Cypress.Commands.add('login', (username: string, password: string) => {
               token: result.stdout
             }
           });
-          haveCookie = true;
+
+          preserveKialiToken();
         });
       }
     } else {
       cy.log('got an auth cookie, skipping login');
+      cy.setCookie('kiali-token-aes', kialiToken);
     }
   });
 });
