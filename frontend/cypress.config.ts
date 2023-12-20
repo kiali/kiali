@@ -48,6 +48,7 @@ export default defineConfig({
       return config;
     },
     specPattern: '**/*.feature',
-    supportFile: 'cypress/support/index.ts'
+    supportFile: 'cypress/support/index.ts',
+    testIsolation: false
   }
 });

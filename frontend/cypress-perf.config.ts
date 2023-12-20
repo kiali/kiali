@@ -24,6 +24,7 @@ export default defineConfig({
       return config;
     },
     specPattern: '**/*.spec.ts',
-    supportFile: 'cypress/support/index.ts'
+    supportFile: 'cypress/support/index.ts',
+    testIsolation: false
   }
 });
