@@ -137,7 +137,7 @@ func (in *TracingService) GetAppTraces(ns, app string, query models.TracingQuery
 		return nil, err
 	}
 	// Disable for tempo for performance
-	if len(r.Data) == query.Limit || conf.ExternalServices.Tracing.Provider != tracing.TEMPO {
+	if len(r.Data) == query.Limit && conf.ExternalServices.Tracing.Provider != tracing.TEMPO {
 		// Reached the limit, use split & join mode to spread traces over the requested interval
 		log.Trace("Limit of traces was reached, using split & join mode")
 		more, err := in.getAppTracesSlicedInterval(ns, app, query)
