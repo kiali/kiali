@@ -44,10 +44,12 @@ var (
 
 // Start sets the globals necessary for the business layer.
 // TODO: Refactor out global vars.
-func Start(cf kubernetes.ClientFactory, controlPlaneMonitor ControlPlaneMonitor, cache cache.KialiCache) {
+func Start(cf kubernetes.ClientFactory, controlPlaneMonitor ControlPlaneMonitor, cache cache.KialiCache, prom prometheus.ClientInterface, traceClient tracing.ClientInterface) {
 	clientFactory = cf
 	kialiCache = cache
 	poller = controlPlaneMonitor
+	prometheusClient = prom
+	tracingClient = traceClient
 }
 
 // Get the business.Layer
@@ -58,30 +60,8 @@ func Get(authInfo *api.AuthInfo) (*Layer, error) {
 		return nil, err
 	}
 
-	// Use an existing Prometheus client if it exists, otherwise create and use in the future
-	if prometheusClient == nil {
-		prom, err := prometheus.NewClient()
-		if err != nil {
-			prometheusClient = nil
-			return nil, err
-		}
-		prometheusClient = prom
-	}
-
-	// Create Tracing client
-	tracingLoader := func() (tracing.ClientInterface, error) {
-		var err error
-		if tracingClient == nil {
-			tracingClient, err = tracing.NewClient(authInfo.Token)
-			if err != nil {
-				tracingClient = nil
-			}
-		}
-		return tracingClient, err
-	}
-
 	kialiSAClient := clientFactory.GetSAClients()
-	return NewWithBackends(userClients, kialiSAClient, prometheusClient, tracingLoader), nil
+	return NewWithBackends(userClients, kialiSAClient, prometheusClient, tracingClient), nil
 }
 
 // SetWithBackends allows for specifying the ClientFactory and Prometheus clients to be used.
@@ -94,7 +74,7 @@ func SetWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterfac
 // NewWithBackends creates the business layer using the passed k8sClients and prom clients.
 // Note that the client passed here should *not* be the Kiali ServiceAccount client.
 // It should be the user client based on the logged in user's token.
-func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAClients map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, tracingClient TracingLoader) *Layer {
+func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAClients map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, traceClient tracing.ClientInterface) *Layer {
 	temporaryLayer := &Layer{}
 	conf := config.Get()
 
@@ -105,7 +85,6 @@ func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAC
 	temporaryLayer.IstioConfig = IstioConfigService{config: *conf, userClients: userClients, kialiCache: kialiCache, businessLayer: temporaryLayer, controlPlaneMonitor: poller}
 	temporaryLayer.IstioStatus = NewIstioStatusService(userClients, temporaryLayer, poller)
 	temporaryLayer.IstioCerts = IstioCertsService{k8s: userClients[homeClusterName], businessLayer: temporaryLayer}
-	temporaryLayer.Tracing = TracingService{loader: tracingClient, businessLayer: temporaryLayer}
 	temporaryLayer.Namespace = NewNamespaceService(userClients, kialiSAClients, kialiCache, *conf)
 	temporaryLayer.Mesh = NewMeshService(kialiSAClients, kialiCache, temporaryLayer.Namespace, *conf)
 	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: userClients[homeClusterName], kialiSAClient: kialiSAClients[homeClusterName]}
@@ -118,6 +97,7 @@ func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAC
 	temporaryLayer.TokenReview = NewTokenReview(userClients[homeClusterName])
 	temporaryLayer.Validations = IstioValidationsService{userClients: userClients, businessLayer: temporaryLayer}
 	temporaryLayer.Workload = *NewWorkloadService(userClients, prom, kialiCache, temporaryLayer, conf)
+	temporaryLayer.Tracing = NewTracingService(conf, traceClient, &temporaryLayer.Svc, &temporaryLayer.Workload)
 
 	return temporaryLayer
 }

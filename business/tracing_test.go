@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 )
@@ -48,6 +49,7 @@ var trace1 = jaegerModels.Trace{
 		},
 	},
 }
+
 var trace2 = jaegerModels.Trace{
 	Spans: []jaegerModels.Span{{
 		ProcessID:     "t2_process_1",
@@ -102,7 +104,7 @@ func TestTracesToSpanWithoutFilter(t *testing.T) {
 		Data:               []jaegerModels.Trace{trace1, trace2},
 		TracingServiceName: "reviews.default",
 	}
-	spans := tracesToSpans("reviews", &r, nil)
+	spans := tracesToSpans("reviews", &r, nil, config.NewConfig())
 	assert.Len(spans, 2)
 	assert.Equal("t1_process_1", string(spans[0].ProcessID))
 	assert.Equal("t2_process_1", string(spans[1].ProcessID))
@@ -111,7 +113,7 @@ func TestTracesToSpanWithoutFilter(t *testing.T) {
 		Data:               []jaegerModels.Trace{trace1, trace2},
 		TracingServiceName: "rating.default",
 	}
-	spans = tracesToSpans("rating", &r, nil)
+	spans = tracesToSpans("rating", &r, nil, config.NewConfig())
 	assert.Len(spans, 2)
 	assert.Equal("t2_process_2", string(spans[0].ProcessID))
 	assert.Equal("t2_process_3", string(spans[1].ProcessID))
@@ -124,7 +126,7 @@ func TestTracesToSpanWithServiceFilter(t *testing.T) {
 		Data:               []jaegerModels.Trace{trace1, trace2},
 		TracingServiceName: "reviews.default",
 	}
-	spans := tracesToSpans("reviews", &r, operationSpanFilter("default", "reviews"))
+	spans := tracesToSpans("reviews", &r, operationSpanFilter("default", "reviews"), config.NewConfig())
 	assert.Len(spans, 2)
 	assert.Equal("t1_process_1", string(spans[0].ProcessID))
 	assert.Equal("t2_process_1", string(spans[1].ProcessID))
@@ -133,7 +135,7 @@ func TestTracesToSpanWithServiceFilter(t *testing.T) {
 		Data:               []jaegerModels.Trace{trace1, trace2},
 		TracingServiceName: "rating.default",
 	}
-	spans = tracesToSpans("rating", &r, operationSpanFilter("default", "rating"))
+	spans = tracesToSpans("rating", &r, operationSpanFilter("default", "rating"), config.NewConfig())
 	assert.Len(spans, 1)
 	assert.Equal("t2_process_2", string(spans[0].ProcessID))
 }
@@ -145,7 +147,7 @@ func TestTracesToSpanWithWorkloadFilter(t *testing.T) {
 		Data:               []jaegerModels.Trace{trace1, trace2},
 		TracingServiceName: "reviews.default",
 	}
-	spans := tracesToSpans("reviews", &r, wkdSpanFilter("default", "reviews"))
+	spans := tracesToSpans("reviews", &r, wkdSpanFilter("default", "reviews"), config.NewConfig())
 	assert.Len(spans, 2)
 	assert.Equal("t1_process_1", string(spans[0].ProcessID))
 	assert.Equal("t2_process_1", string(spans[1].ProcessID))
@@ -154,7 +156,7 @@ func TestTracesToSpanWithWorkloadFilter(t *testing.T) {
 		Data:               []jaegerModels.Trace{trace1, trace2},
 		TracingServiceName: "rating.default",
 	}
-	spans = tracesToSpans("rating", &r, wkdSpanFilter("default", "rating-v2"))
+	spans = tracesToSpans("rating", &r, wkdSpanFilter("default", "rating-v2"), config.NewConfig())
 	assert.Len(spans, 2)
 	assert.Equal("t2_process_2", string(spans[0].ProcessID))
 	assert.Equal("t2_process_3", string(spans[1].ProcessID))

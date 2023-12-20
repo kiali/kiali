@@ -38,11 +38,6 @@ const (
 	GRPC  = "grpc"
 )
 
-const (
-	JAEGER = "jaeger"
-	OTEL   = "otel"
-)
-
 // EndFunc ends a span if one is started. Otherwise does nothing.
 type EndFunc func()
 
@@ -55,9 +50,7 @@ func TracerName() string {
 // This will panic if there's an error in setup.
 
 func InitTracer(collectorURL string) *sdktrace.TracerProvider {
-
 	exporter, err := getExporter(collectorURL)
-
 	if err != nil {
 		log.Errorf("Failed to initialize tracer. Kiali will not log its own tracing data: %v", err)
 		return nil
@@ -148,11 +141,11 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 	tracingOpt := config.Get().Server.Observability.Tracing
 
 	// Tracing collector
-	if tracingOpt.CollectorType == JAEGER {
+	if tracingOpt.CollectorType == config.JaegerCollectorType {
 		log.Debugf("Creating Tracing collector with URL %s", collectorURL)
 		exporter, err = jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(collectorURL)))
 	} else {
-		if tracingOpt.CollectorType == OTEL {
+		if tracingOpt.CollectorType == config.OTELCollectorType {
 			// OpenTelemetry collector
 			if tracingOpt.Otel.Protocol == HTTP || tracingOpt.Otel.Protocol == HTTPS {
 				tracingOptions := otlptracehttp.WithRetry(otlptracehttp.RetryConfig{
@@ -199,7 +192,6 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 					opts := []otlptracegrpc.Option{otlptracegrpc.WithEndpoint(collectorURL), otlptracegrpc.WithDialOption(grpc.WithBlock())}
 
 					if tracingOpt.Otel.TLSEnabled {
-
 						if tracingOpt.Otel.SkipVerify {
 							log.Trace("OpenTelemetry collector will not verify the remote certificate")
 							tlsConfig := &tls.Config{

@@ -200,7 +200,7 @@ func tracingVersion() (*ExternalServiceInfo, error) {
 		return nil, nil
 	}
 	product := ExternalServiceInfo{}
-	product.Name = tracingConfig.Provider
+	product.Name = string(tracingConfig.Provider)
 	product.Url = tracingConfig.URL
 
 	return &product, nil

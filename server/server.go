@@ -17,7 +17,9 @@ import (
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/observability"
+	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/routing"
+	"github.com/kiali/kiali/tracing"
 )
 
 type Server struct {
@@ -26,13 +28,21 @@ type Server struct {
 	clientFactory       kubernetes.ClientFactory
 	httpServer          *http.Server
 	kialiCache          cache.KialiCache
+	prom                prometheus.ClientInterface
 	router              *mux.Router
 	tracer              *sdktrace.TracerProvider
+	tracingClient       tracing.ClientInterface
 }
 
 // NewServer creates a new server configured with the given settings.
 // Start and Stop it with the corresponding functions.
-func NewServer(controlPlaneMonitor business.ControlPlaneMonitor, clientFactory kubernetes.ClientFactory, cache cache.KialiCache, conf config.Config) *Server {
+func NewServer(controlPlaneMonitor business.ControlPlaneMonitor,
+	clientFactory kubernetes.ClientFactory,
+	cache cache.KialiCache,
+	conf config.Config,
+	prom prometheus.ClientInterface,
+	tracingClient tracing.ClientInterface,
+) *Server {
 	// create a router that will route all incoming API server requests to different handlers
 	router := routing.NewRouter()
 	var tracingProvider *sdktrace.TracerProvider
@@ -84,7 +94,9 @@ func NewServer(controlPlaneMonitor business.ControlPlaneMonitor, clientFactory k
 		controlPlaneMonitor: controlPlaneMonitor,
 		httpServer:          httpServer,
 		kialiCache:          cache,
+		prom:                prom,
 		router:              router,
+		tracingClient:       tracingClient,
 	}
 	if conf.Server.Observability.Tracing.Enabled && tracingProvider != nil {
 		s.tracer = tracingProvider
@@ -94,7 +106,7 @@ func NewServer(controlPlaneMonitor business.ControlPlaneMonitor, clientFactory k
 
 // Start HTTP server asynchronously. TLS may be active depending on the global configuration.
 func (s *Server) Start() {
-	business.Start(s.clientFactory, s.controlPlaneMonitor, s.kialiCache)
+	business.Start(s.clientFactory, s.controlPlaneMonitor, s.kialiCache, s.prom, s.tracingClient)
 
 	log.Infof("Server endpoint will start at [%v%v]", s.httpServer.Addr, s.conf.Server.WebRoot)
 	log.Infof("Server endpoint will serve static content from [%v]", s.conf.Server.StaticContentRootDirectory)
