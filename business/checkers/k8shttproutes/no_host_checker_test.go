@@ -1,8 +1,9 @@
 package k8shttproutes
 
 import (
-	"sigs.k8s.io/gateway-api/apis/v1beta1"
 	"testing"
+
+	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/stretchr/testify/assert"
 
@@ -24,7 +25,7 @@ func TestValidRefHost(t *testing.T) {
 
 	vals, valid := NoHostChecker{
 		RegistryServices:   append(registryService1, registryService2...),
-		K8sReferenceGrants: []*v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
+		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
 		K8sHTTPRoute:       data.AddBackendRefToHTTPRoute("reviews", "bookinfo", data.CreateHTTPRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"})),
 	}.Check()
 
@@ -67,7 +68,7 @@ func TestWrongGrant(t *testing.T) {
 
 	vals, valid := NoHostChecker{
 		RegistryServices:   append(registryService1, registryService2...),
-		K8sReferenceGrants: []*v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo")},
+		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo")},
 		K8sHTTPRoute:       data.AddBackendRefToHTTPRoute("reviews", "bookinfo", data.CreateHTTPRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"})),
 	}.Check()
 
@@ -91,7 +92,7 @@ func TestValidRefHostDefaultNs(t *testing.T) {
 
 	vals, valid := NoHostChecker{
 		RegistryServices:   append(registryService1, registryService2...),
-		K8sReferenceGrants: []*v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
+		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
 		K8sHTTPRoute:       data.AddBackendRefToHTTPRoute("reviews", "", data.CreateHTTPRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"})),
 	}.Check()
 
@@ -111,7 +112,7 @@ func TestInvalidRefHostDefaultNs(t *testing.T) {
 
 	vals, valid := NoHostChecker{
 		RegistryServices:   append(registryService1, registryService2...),
-		K8sReferenceGrants: []*v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
+		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
 		K8sHTTPRoute:       data.AddBackendRefToHTTPRoute("reviews", "", data.CreateHTTPRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"})),
 	}.Check()
 
@@ -135,7 +136,7 @@ func TestNoValidRefHost(t *testing.T) {
 
 	vals, valid := NoHostChecker{
 		RegistryServices:   append(registryService1, registryService2...),
-		K8sReferenceGrants: []*v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
+		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
 		K8sHTTPRoute:       data.AddBackendRefToHTTPRoute("ratings", "bookinfo", data.AddBackendRefToHTTPRoute("reviews", "bookinfo", data.CreateHTTPRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo2"}))),
 	}.Check()
 
@@ -163,7 +164,7 @@ func TestInvalidRefHostFQDN(t *testing.T) {
 
 	vals, valid := NoHostChecker{
 		RegistryServices:   append(registryService1, registryService2...),
-		K8sReferenceGrants: []*v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
+		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
 		K8sHTTPRoute:       data.AddBackendRefToHTTPRoute("reviews.bookinfo.svc.cluster.local", "", data.CreateHTTPRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"})),
 	}.Check()
 
