@@ -45,6 +45,7 @@ Feature: Workload logs tab
     Then the log pane should only show logs for the "productpage" container
 
   @bookinfo-app
+  @tracing
   Scenario: The log pane of the logs tab should show spans
     Given I am on the logs tab of the "productpage-v1" workload detail page of the "bookinfo" namespace
     When I enable visualization of spans

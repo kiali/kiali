@@ -36,12 +36,14 @@ Feature: Kiali App Details page
     Then user sees outbound metrics information
 
   @bookinfo-app
+  @tracing
   Scenario: See tracing info after selecting a trace
     And user sees trace information
     When user selects a trace
     Then user sees trace details
 
   @bookinfo-app
+  @tracing
   Scenario: See span info after selecting app span
     And user sees trace information
     When user selects a trace

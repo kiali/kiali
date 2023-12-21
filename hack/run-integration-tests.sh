@@ -9,6 +9,7 @@ BACKEND="backend"
 FRONTEND="frontend"
 FRONTEND_PRIMARY_REMOTE="frontend-primary-remote"
 FRONTEND_MULTI_PRIMARY="frontend-multi-primary"
+FRONTEND_TEMPO="frontend-tempo"
 #
 
 ISTIO_VERSION=""
@@ -42,8 +43,8 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ts|--test-suite)
       TEST_SUITE="${2}"
-      if [ "${TEST_SUITE}" != "${BACKEND}" -a "${TEST_SUITE}" != "${FRONTEND}" -a "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" -a "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" ]; then
-        echo "--test-suite option must be one of '${BACKEND}', '${FRONTEND}', '${FRONTEND_PRIMARY_REMOTE}', or '${FRONTEND_MULTI_PRIMARY}'"
+      if [ "${TEST_SUITE}" != "${BACKEND}" -a "${TEST_SUITE}" != "${FRONTEND}" -a "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" -a "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" -a "${TEST_SUITE}" != "${FRONTEND_TEMPO}" ]; then
+        echo "--test-suite option must be one of '${BACKEND}', '${FRONTEND}', '${FRONTEND_PRIMARY_REMOTE}', or '${FRONTEND_MULTI_PRIMARY}' or '${FRONTEND_TEMPO}'"
         exit 1
       fi
       shift;shift
@@ -60,7 +61,7 @@ Valid command line arguments:
   -to|--tests-only <true|false>
     If true, only run the tests and skip the setup.
     Default: false
-  -ts|--test-suite <${BACKEND}|${FRONTEND}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}>
+  -ts|--test-suite <${BACKEND}|${FRONTEND}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_TEMPO}>
     Which test suite to run.
     Default: ${BACKEND}
   -h|--help:
@@ -120,7 +121,7 @@ ensureCypressInstalled() {
 ensureKialiServerReady() {
   local KIALI_URL="$1"
 
-  infomsg "Waiting for Kiali server pods to be healthy"
+  infomsg "Waiting for Kiali server pods to be healthy ${KIALI_URL}"
   kubectl rollout status deployment/kiali -n istio-system --timeout=120s
 
   # Ensure the server is responding to health checks externally.
@@ -136,6 +137,7 @@ ensureKialiServerReady() {
     local now=$(date +%s)
     if [ "${now}" -gt "${end_time}" ]; then
       echo "Timed out waiting for Kiali server to respond to health checks"
+      kubectl logs -l app=kiali -n istio-system
       exit 1
     fi
     sleep 1
@@ -272,4 +274,30 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
 
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:multi-primary
+elif [ "${TEST_SUITE}" == "${FRONTEND_TEMPO}" ]; then
+  ensureCypressInstalled
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --tempo true --auth-strategy token ${ISTIO_VERSION_ARG}
+    ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+    # Install demo apps
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" -g "${ISTIO_INGRESS_IP}"
+  fi
+
+  # Get Kiali URL
+  ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+  KIALI_URL="http://${ISTIO_INGRESS_IP}/kiali"
+  export CYPRESS_BASE_URL="${KIALI_URL}"
+  export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
+  # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
+  export CYPRESS_VIDEO=false
+
+  ensureKialiServerReady "${KIALI_URL}"
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  cd "${SCRIPT_DIR}"/../frontend
+  yarn run cypress:run:tracing
 fi

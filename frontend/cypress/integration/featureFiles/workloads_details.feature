@@ -34,12 +34,14 @@ Feature: Kiali Workload Details page
     Then user sees workload outbound metrics information
 
   @bookinfo-app
+  @tracing
   Scenario: See workload tracing info after selecting a trace
     And user sees trace information
     When user selects a trace
     Then user sees trace details
 
   @bookinfo-app
+  @tracing
   Scenario: See workload span info after selecting a span
     And user sees trace information
     When user selects a trace

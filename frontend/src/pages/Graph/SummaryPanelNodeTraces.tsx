@@ -192,7 +192,7 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
         <Divider className={dividerStyle} />
 
         {this.state.traces.length > 0 && (
-          <SimpleList style={{ marginBottom: '0.5rem' }} aria-label="Traces list">
+          <SimpleList style={{ marginBottom: '0.5rem' }} aria-label="Traces list" data-test="traces-list">
             {this.state.traces.map(trace => {
               return (
                 <SimpleListItem
