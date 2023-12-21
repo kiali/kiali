@@ -12,9 +12,9 @@ import (
 )
 
 type NoHostChecker struct {
-	Namespaces         models.Namespaces
 	K8sHTTPRoute       *k8s_networking_v1.HTTPRoute
 	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant
+	Namespaces         models.Namespaces
 	RegistryServices   []*kubernetes.RegistryService
 }
 

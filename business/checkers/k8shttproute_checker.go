@@ -12,12 +12,12 @@ import (
 const K8sHTTPRouteCheckerType = "k8shttproute"
 
 type K8sHTTPRouteChecker struct {
-	K8sHTTPRoutes      []*k8s_networking_v1.HTTPRoute
+	Cluster            string
 	K8sGateways        []*k8s_networking_v1.Gateway
+	K8sHTTPRoutes      []*k8s_networking_v1.HTTPRoute
 	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant
 	Namespaces         models.Namespaces
 	RegistryServices   []*kubernetes.RegistryService
-	Cluster            string
 }
 
 // Check runs checks for the all namespaces actions as well as for the single namespace validations
