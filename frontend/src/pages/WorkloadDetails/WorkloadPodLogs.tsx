@@ -184,8 +184,7 @@ const checkboxStyle = kialiStyle({
 });
 
 const logListStyle = kialiStyle({
-  overflowX: 'auto',
-  overflowY: 'auto',
+  overflow: 'auto !important',
   paddingTop: '0.375rem',
   paddingBottom: '0.75rem'
 });
