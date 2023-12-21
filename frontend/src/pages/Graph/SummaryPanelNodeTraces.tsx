@@ -130,7 +130,7 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
         this.setState({ traces: traces });
       })
       .catch(error => {
-        AlertUtils.addError($t('tip35', 'Could not fetch traces.'), error);
+        AlertUtils.addError($t('failure.tracesUnavailable', 'Could not fetch traces.'), error);
       });
   }
 

@@ -11,7 +11,7 @@ const AmbientComponent = 'ztunnel';
 
 export class AmbientLabel extends React.Component<AmbientLabelProps, {}> {
   render() {
-    const msg = $t('tip378', 'Component is labeled as part of the Istio Ambient Mesh');
+    const msg = $t('Istio.ComponentLabeledAsAmbientMesh', 'Component is labeled as part of the Istio Ambient Mesh');
 
     const tooltipContent = (
       <div style={{ textAlign: 'left' }}>

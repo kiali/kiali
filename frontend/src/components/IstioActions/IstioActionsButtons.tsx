@@ -52,7 +52,7 @@ export class IstioActionButtons extends React.Component<Props, State> {
           <span style={{ float: 'right', padding: '10px' }}>
             <span style={{ paddingLeft: '5px' }}>
               <Button variant={ButtonVariant.link} onClick={this.props.onOverview}>
-                {this.props.overview ? $t('Close_Overview', 'Close Overview') : $t('Show_Overview', 'Show Overview')}
+                {this.props.overview ? $t('CloseOverview', 'Close Overview') : $t('ShowOverview', 'Show Overview')}
               </Button>
             </span>
           </span>

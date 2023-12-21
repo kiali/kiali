@@ -38,7 +38,7 @@ export class ResponseHostsTable extends React.PureComponent<ResponseHostsTablePr
                 <tr key="table-header">
                   <th style={{ width: '18%' }}>{$t('Code')}</th>
                   <th style={{ width: '52%' }}>{$t('Host')}</th>
-                  <th style={{ width: '30%' }}>{$t('title5', '% Req')}</th>
+                  <th style={{ width: '30%' }}>{$t('%Req', '% Req')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -55,7 +55,7 @@ export class ResponseHostsTable extends React.PureComponent<ResponseHostsTablePr
             </table>
           </>
         ) : (
-          <>{$t('tip29', 'No Host Information Available')}</>
+          <>{$t('NoHostInfo', 'No Host Information Available')}</>
         )}
       </>
     );

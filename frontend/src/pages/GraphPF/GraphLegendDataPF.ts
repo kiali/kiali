@@ -47,63 +47,69 @@ export interface GraphLegendItemRow {
 
 export const legendData: GraphLegendItem[] = [
   {
-    title: $t('NodeShapes', 'Node Shapes'),
+    title: $t('legendData.NodeShapes', 'Node Shapes'),
     data: [
-      { label: $t('Workload'), icon: workloadImage },
-      { label: $t('App'), icon: appImage },
-      { label: $t('Operation'), icon: aggregateImage },
-      { label: $t('Service'), icon: serviceImage },
-      { label: $t('Service Entry'), icon: serviceEntryImage }
+      { label: $t('legendData.Workload', 'Workload'), icon: workloadImage },
+      { label: $t('legendData.App', 'App'), icon: appImage },
+      { label: $t('legendData.Operation', 'Operation'), icon: aggregateImage },
+      { label: $t('legendData.Service', 'Service'), icon: serviceImage },
+      { label: $t('legendData.ServiceEntry', 'Service Entry'), icon: serviceEntryImage }
     ]
   },
   {
-    title: $t('NodeColors', 'Node Colors'),
+    title: $t('legendData.NodeColors', 'Node Colors'),
     data: [
-      { label: $t('Healthy'), icon: nodeColorHealthyImage },
-      { label: $t('Warn'), icon: nodeColorWarningImage },
-      { label: $t('Unhealthy'), icon: nodeColorDangerImage },
-      { label: $t('Idle'), icon: nodeColorIdleImage }
+      { label: $t('legendData.Healthy', 'Healthy'), icon: nodeColorHealthyImage },
+      { label: $t('legendData.Warn', 'Warn'), icon: nodeColorWarningImage },
+      { label: $t('legendData.Unhealthy', 'Unhealthy'), icon: nodeColorDangerImage },
+      { label: $t('legendData.Idle', 'Idle'), icon: nodeColorIdleImage }
     ]
   },
   {
-    title: $t('NodeBackground', 'Node Background'),
+    title: $t('legendData.NodeBackground', 'Node Background'),
     data: [
-      { label: $t('UnselectedNamespace', 'Unselected Namespace'), icon: externalNamespaceImage },
-      { label: $t('title10', 'Restricted / External'), icon: restrictedNamespaceImage }
+      { label: $t('legendData.UnselectedNamespace', 'Unselected Namespace'), icon: externalNamespaceImage },
+      { label: $t('legendData.Restricted/External', 'Restricted / External'), icon: restrictedNamespaceImage }
     ]
   },
   {
-    title: $t('Edges'),
+    title: $t('legendData.Edges', 'Edges'),
     data: [
-      { label: $t('Failure'), icon: edgeDangerImage },
-      { label: $t('Degraded'), icon: edgeWarnImage },
-      { label: $t('Healthy'), icon: edgeSuccessImage },
-      { label: $t('TCPConnection', 'TCP Connection'), icon: edgeTcpImage },
-      { label: $t('Idle'), icon: edgeIdlemage },
-      { label: $t('title11', 'mTLS (badge)'), icon: edgeMtlsImage }
+      { label: $t('legendData.Failure', 'Failure'), icon: edgeDangerImage },
+      { label: $t('legendData.Degraded', 'Degraded'), icon: edgeWarnImage },
+      { label: $t('legendData.Healthy', 'Healthy'), icon: edgeSuccessImage },
+      { label: $t('TCP.Connection', 'TCP Connection'), icon: edgeTcpImage },
+      { label: $t('legendData.Idle', 'Idle'), icon: edgeIdlemage },
+      { label: $t('legendData.mTLSBadge', 'mTLS (badge)'), icon: edgeMtlsImage }
     ]
   },
   {
-    title: $t('TrafficAnimation', 'Traffic Animation'),
+    title: $t('legendData.TrafficAnimation', 'Traffic Animation'),
     data: [
       { label: $t('HealthyRequest', 'Healthy Request'), icon: trafficHealthyImage },
-      { label: $t('FailedRequest', 'Failed Request'), icon: trafficFailedImage },
-      { label: $t('TCPTraffic', 'TCP Traffic'), icon: trafficTcpImage }
+      { label: $t('legendData.FailedRequest', 'Failed Request'), icon: trafficFailedImage },
+      { label: $t('legendData.TCPTraffic', 'TCP Traffic'), icon: trafficTcpImage }
     ]
   },
   {
-    title: $t('NodeBadges', 'Node Badges'),
+    title: $t('legendData.NodeBadges', 'Node Badges'),
     data: [
-      { label: $t('CircuitBreaker', 'Circuit Breaker'), icon: badgeCircuitBreakerImage },
-      { label: $t('FaultInjection', 'Fault Injection'), icon: badgeFaultInjectionImage },
-      { label: $t('Gateway'), icon: badgeGatewaysImage },
-      { label: $t('Mirroring'), icon: badgeMirroringImage },
-      { label: $t('MissingSidecar', 'Missing Sidecar'), icon: badgeMissingSidecarImage },
-      { label: $t('RequestTimeout', 'Request Timeout'), icon: badgeRequestTimeoutImage },
-      { label: $t('title12', 'Traffic Shifting / TCP Traffic Shifting'), icon: badgeTrafficShiftingSourceImage },
-      { label: $t('TrafficSource', 'Traffic Source'), icon: badgeTrafficSourceImage },
-      { label: $t('title13', 'Virtual Service / Request Routing'), icon: badgeVirtualServicesImage },
-      { label: $t('Workload_Entry', 'Workload Entry'), icon: badgeWorkloadEntryImage }
+      { label: $t('legendData.CircuitBreaker', 'Circuit Breaker'), icon: badgeCircuitBreakerImage },
+      { label: $t('legendData.FaultInjection', 'Fault Injection'), icon: badgeFaultInjectionImage },
+      { label: $t('legendData.Gateway', 'Gateway'), icon: badgeGatewaysImage },
+      { label: $t('legendData.Mirroring', 'Mirroring'), icon: badgeMirroringImage },
+      { label: $t('legendData.MissingSidecar', 'Missing Sidecar'), icon: badgeMissingSidecarImage },
+      { label: $t('legendData.RequestTimeout', 'Request Timeout'), icon: badgeRequestTimeoutImage },
+      {
+        label: $t('legendData.Shifting', 'Traffic Shifting / TCP Traffic Shifting'),
+        icon: badgeTrafficShiftingSourceImage
+      },
+      { label: $t('legendData.TrafficSource', 'Traffic Source'), icon: badgeTrafficSourceImage },
+      {
+        label: $t('legendData.VirtualService/RequestRouting', 'Virtual Service / Request Routing'),
+        icon: badgeVirtualServicesImage
+      },
+      { label: $t('legendData.WorkloadEntry', 'Workload Entry'), icon: badgeWorkloadEntryImage }
     ]
   }
 ];

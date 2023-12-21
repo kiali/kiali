@@ -242,7 +242,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
 
     const additionalState = (
       <Tab eventKey={1} title={$t('AdditionalState', 'Additional State')} key="additionalState">
-        <span>{$t('tip167', 'Please include this information when opening a bug')}:</span>
+        <span>{$t('IncludeInfoForBug', 'Please include this information when opening a bug')}:</span>
         <CopyToClipboard onCopy={copyCallback} text={renderDebugInformation()} options={copyToClipboardOptions}>
           <AceEditor
             ref={aceEditorRef}
@@ -287,7 +287,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
       {copyStatus === CopyStatus.COPIED && (
         <Alert
           style={{ marginBottom: '20px' }}
-          title={$t('title37', 'Debug information has been copied to your clipboard.')}
+          title={$t('AlertTitle.DebugCopied', 'Debug information has been copied to your clipboard.')}
           variant={AlertVariant.success}
           isInline={true}
           actionClose={<AlertActionCloseButton onClose={hideAlert} />}
@@ -297,7 +297,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
         <Alert
           style={{ marginBottom: '20px' }}
           title={$t(
-            'title38',
+            'AlertTitle.DebugOutdated',
             'Debug information was copied to your clipboard, but is outdated now. It could be caused by new data received by auto refresh timers.'
           )}
           variant={AlertVariant.warning}

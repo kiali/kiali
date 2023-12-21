@@ -38,7 +38,7 @@ const performLogin = (dispatch: KialiDispatch, state: KialiAppState, data?: any)
     } else {
       bail({
         status: AuthResult.FAILURE,
-        error: $t('tip153', 'Preparation for login failed, try again.')
+        error: $t('login.failed.prep', 'Preparation for login failed, try again.')
       });
     }
   });

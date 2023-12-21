@@ -38,7 +38,7 @@ const protocols = ['HTTP', 'HTTPS', 'GRPC', 'HTTP2', 'MONGO', 'TCP', 'TLS'];
 
 const headerCells: ICell[] = [
   {
-    title: $t('PortNumber', 'Port Number'),
+    title: $t('PeerAuthenticationForm.PortNumber', 'Port Number'),
     transforms: [cellWidth(20) as any],
     props: {}
   },
@@ -394,7 +394,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
                 onClick={this.onAddNewPort}
               >
                 {' '}
-                {$t('Add Port')}
+                {$t('AddPort', 'Add Port')}
               </Button>
             </>
           ]
@@ -420,8 +420,11 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
             <HelperText>
               <HelperTextItem>
                 {isValid(this.state.validHosts)
-                  ? $t('helpTip48', 'The hosts associated with the ServiceEntry.')
-                  : $t('helpTip49', 'Invalid hosts for this ServiceEntry. Enter one or more hosts separated by comma.')}
+                  ? $t('HelperText.serviceEntryHosts', 'The hosts associated with the ServiceEntry.')
+                  : $t(
+                      'HelperText.invalidServiceEntryHosts',
+                      'Invalid hosts for this ServiceEntry. Enter one or more hosts separated by comma.'
+                    )}
               </HelperTextItem>
             </HelperText>
           </FormHelperText>
@@ -444,7 +447,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
             <TableBody />
           </Table>
           {(!this.state.serviceEntry.ports || this.state.serviceEntry.ports.length === 0) && (
-            <div className={noPortsStyle}>{$t('tip365', 'ServiceEntry has no Ports defined')}</div>
+            <div className={noPortsStyle}>{$t('ServiceEntryMissingPorts', 'ServiceEntry has no Ports defined')}</div>
           )}
         </FormGroup>
         <FormGroup label={$t('Resolution')} isRequired={true} fieldId="resolution">

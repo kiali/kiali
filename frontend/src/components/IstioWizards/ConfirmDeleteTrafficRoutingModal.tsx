@@ -17,7 +17,7 @@ export const ConfirmDeleteTrafficRoutingModal: React.FunctionComponent<Props> = 
   }
 
   function getDeleteMessage() {
-    const deleteMessage = $t('helpTip70', 'Are you sure you want to delete ?');
+    const deleteMessage = $t('HelperText.confirmDeletion', 'Are you sure you want to delete ?');
     const deleteItems: JSX.Element[] = [];
 
     let i = 0;
@@ -63,7 +63,7 @@ export const ConfirmDeleteTrafficRoutingModal: React.FunctionComponent<Props> = 
   return (
     <Modal
       variant={ModalVariant.small}
-      title={$t('helpTip71', 'Confirm Delete Traffic Routing ?')}
+      title={$t('HelperText.confirmTrafficRoutingDeletion', 'Confirm Delete Traffic Routing ?')}
       isOpen={props.isOpen}
       onClose={props.onCancel}
       data-test="delete-traffic-routing-modal"

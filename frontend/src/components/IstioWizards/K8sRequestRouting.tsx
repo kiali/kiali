@@ -152,7 +152,10 @@ export class K8sRequestRouting extends React.Component<Props, State> {
             headerName: prevState.headerName,
             matchValue: prevState.matchValue,
             k8sRules: prevState.k8sRules,
-            validationMsg: $t('helpTip15', 'A Rule with same matching criteria is already added.')
+            validationMsg: $t(
+              'validationMsg。DuplicateRuleCriteria',
+              'A Rule with same matching criteria is already added.'
+            )
           };
         }
       },
@@ -165,7 +168,8 @@ export class K8sRequestRouting extends React.Component<Props, State> {
       return {
         matches: prevState.matches.filter(m => matchToRemove !== m),
         validationMsg:
-          prevState.validationMsg === $t('helpTip15', 'A Rule with same matching criteria is already added.')
+          prevState.validationMsg ===
+          $t('validationMsg。DuplicateRuleCriteria', 'A Rule with same matching criteria is already added.')
             ? ''
             : prevState.validationMsg
       };
@@ -188,10 +192,10 @@ export class K8sRequestRouting extends React.Component<Props, State> {
   onMatchHeaderNameChange = (headerName: string) => {
     let validationMsg = '';
     if (!headerName && !!this.state.matchValue) {
-      validationMsg = $t('helpTip16', 'Header name must be non empty');
+      validationMsg = $t('validationMsg.HeaderNameNonEmpty', 'Header name must be non empty');
     }
     if (!this.state.matchValue && !!headerName) {
-      validationMsg = $t('helpTip17', 'Header value must be non empty');
+      validationMsg = $t('validationMsg.HeaderValueNonEmpty', 'Header value must be non empty');
     }
     this.setState({
       headerName: headerName,
@@ -202,10 +206,10 @@ export class K8sRequestRouting extends React.Component<Props, State> {
   onHeaderNameChange = (headerName: string) => {
     let validationMsg = '';
     if (!headerName) {
-      validationMsg = $t('helpTip16', 'Header name must be non empty');
+      validationMsg = $t('validationMsg.HeaderNameNonEmpty', 'Header name must be non empty');
     }
     if (!this.state.headerValue && this.state.headerOp !== REMOVE) {
-      validationMsg = $t('helpTip17', 'Header value must be non empty');
+      validationMsg = $t('validationMsg.HeaderValueNonEmpty', 'Header value must be non empty');
     }
     this.setState({
       headerName: headerName,
@@ -216,10 +220,10 @@ export class K8sRequestRouting extends React.Component<Props, State> {
   onQueryParamNameChange = (queryParamName: string) => {
     let validationMsg = '';
     if (this.state.matchValue !== '' && queryParamName === '') {
-      validationMsg = $t('tip4', 'Query name must be non empty');
+      validationMsg = $t('validationMsg.QueryNameNonEmpty', 'Query name must be non empty');
     }
     if (this.state.matchValue === '' && queryParamName !== '') {
-      validationMsg = $t('tip5', 'Query value must be non empty');
+      validationMsg = $t('validationMsg.QueryValueNonEmpty', 'Query value must be non empty');
     }
     this.setState({
       queryParamName: queryParamName,
@@ -231,18 +235,18 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     let validationMsg = '';
     if (this.state.category === HEADERS) {
       if (this.state.headerName === '' && matchValue !== '') {
-        validationMsg = $t('helpTip16', 'Header name must be non empty');
+        validationMsg = $t('validationMsg.HeaderNameNonEmpty', 'Header name must be non empty');
       }
       if (this.state.headerName !== '' && matchValue === '') {
-        validationMsg = $t('helpTip17', 'Header value must be non empty');
+        validationMsg = $t('validationMsg.HeaderValueNonEmpty', 'Header value must be non empty');
       }
     }
     if (this.state.category === QUERY_PARAMS) {
       if (this.state.queryParamName === '' && matchValue !== '') {
-        validationMsg = $t('tip4', 'Query name must be non empty');
+        validationMsg = $t('validationMsg.QueryNameNonEmpty', 'Query name must be non empty');
       }
       if (this.state.queryParamName !== '' && matchValue === '') {
-        validationMsg = $t('tip5', 'Query value must be non empty');
+        validationMsg = $t('validationMsg.QueryValueNonEmpty', 'Query value must be non empty');
       }
     }
 
@@ -327,10 +331,10 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     let validationMsg = '';
     if ((this.state.filterType === REQ_MOD || this.state.filterType === RESP_MOD) && this.state.headerOp !== REMOVE) {
       if (!this.state.headerName) {
-        validationMsg = $t('helpTip16', 'Header name must be non empty');
+        validationMsg = $t('validationMsg.HeaderNameNonEmpty', 'Header name must be non empty');
       }
       if (!headerValue) {
-        validationMsg = $t('helpTip17', 'Header value must be non empty');
+        validationMsg = $t('validationMsg.HeaderValueNonEmpty', 'Header value must be non empty');
       }
     }
     this.setState({
@@ -366,7 +370,8 @@ export class K8sRequestRouting extends React.Component<Props, State> {
       return {
         filters: prevState.filters.filter(m => filterToRemove !== m),
         validationMsg:
-          prevState.validationMsg === $t('helpTip15', 'A Rule with same matching criteria is already added.')
+          prevState.validationMsg ===
+          $t('validationMsg.DuplicateRuleCriteria', 'A Rule with same matching criteria is already added.')
             ? ''
             : prevState.validationMsg
       };

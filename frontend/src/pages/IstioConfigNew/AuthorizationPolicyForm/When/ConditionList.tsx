@@ -12,7 +12,7 @@ type Props = {
 
 const headerCells: ICell[] = [
   {
-    title: $t('title33', 'Additional Conditions of a Request'),
+    title: $t('cellsTitle.Request.AdditionalConditionsReq', 'Additional Conditions of a Request'),
     transforms: [cellWidth(100) as any],
     props: {}
   },

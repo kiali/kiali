@@ -37,14 +37,14 @@ export const LoginStateReducer = (
         session: action.payload.session
       };
     case getType(LoginActions.loginFailure):
-      let message = $t('tip375', 'Error connecting to Kiali');
+      let message = $t('KialiConnectionError', 'Error connecting to Kiali');
 
       const response_data = action.payload.error.response.data;
       if (response_data && typeof response_data.error == 'string' && response_data.error.length > 0) {
         message = `${$t('LoginUnsuccessful', 'Login unsuccessful')}: ${response_data.error}`;
       } else if (action.payload.error.response.status === 401) {
         message = $t(
-          'tip376',
+          'InvalidCredentials',
           'Unauthorized. The provided credentials are not valid to access Kiali. Please check your credentials and try again.'
         );
       }
@@ -61,7 +61,10 @@ export const LoginStateReducer = (
       return {
         ...INITIAL_LOGIN_STATE,
         status: LoginStatus.expired,
-        message: $t('helpTip55', 'Your session has expired or was terminated in another window.')
+        message: $t(
+          'HelperText.sessionExpiredOrTerminated',
+          'Your session has expired or was terminated in another window.'
+        )
       };
     case getType(LoginActions.setLandingRoute):
       return updateState(state, {

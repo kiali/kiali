@@ -30,7 +30,7 @@ export const LabelFilters: React.FC<LabelFiltersProps> = (props: LabelFiltersPro
         type={'text'}
         value={props.value}
         aria-label={'filter_input_label_key'}
-        placeholder={$t('placeholder35', 'Set Label')}
+        placeholder={$t('placeholder.SetLabel', 'Set Label')}
         onChange={(_event, value) => props.onChange(value)}
         onKeyPress={e => onkeyPress(e)}
         style={{ width: 'auto' }}
@@ -40,17 +40,17 @@ export const LabelFilters: React.FC<LabelFiltersProps> = (props: LabelFiltersPro
         position={PopoverPosition.right}
         bodyContent={
           <>
-            {$t('tip228', 'To set a label filter you must enter values like.')}
+            {$t('tooltip.LabelFilterInstructions', 'To set a label filter you must enter values like.')}
             <br />
             <ul style={{ listStyleType: 'circle', marginLeft: '20px' }}>
-              <li>{$t('placeholder36', 'Filter by label presence')}: label</li>
-              <li>{$t('placeholder37', 'Filter by label and value')}: label=value</li>
+              <li>{$t('Filter.labelPresence', 'Filter by label presence')}: label</li>
+              <li>{$t('Filter.label&value', 'Filter by label and value')}: label=value</li>
               <li>
-                {$t('placeholder38', 'Filter by more than one label and one or more values')}:
+                {$t('Filter.moreLabelOrmoreValues', 'Filter by more than one label and one or more values')}:
                 <br />
                 label=value label2=value2,value2-2
                 <br />
-                {$t('tip229', "(separate with ' ')")}
+                {$t('separateWith', "(separate with ' ')")}
               </li>
             </ul>
           </>

@@ -191,7 +191,7 @@ export class ListenerList extends React.Component<Props, ListenerListState> {
                   onClick={this.onAddListener}
                   className={addListenerStyle}
                 >
-                  {$t('action8', 'Add Listener to Listener List')}
+                  {$t('Add.Listener', 'Add Listener to Listener List')}
                 </Button>
               </Td>
             </Tr>

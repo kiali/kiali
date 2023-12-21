@@ -40,7 +40,7 @@ const blockStyle = kialiStyle({
 const renderNoTrafficLegend = () => {
   return (
     <div>
-      <InfoAltIcon /> {$t('tip30', 'Not enough traffic to generate chart.')}
+      <InfoAltIcon /> {$t('NoTrafficChart', 'Not enough traffic to generate chart.')}
     </div>
   );
 };
@@ -118,8 +118,7 @@ export class RequestChart extends React.Component<RequestChartProp, {}> {
 
     return (
       <div>
-        RPS: {minRps.toFixed(2)} / {maxRps.toFixed(2)} , {$t('title4', '%Error')} {minPctErr.toFixed(2)} /{' '}
-        {maxPctErr.toFixed(2)}
+        RPS: {minRps.toFixed(2)} / {maxRps.toFixed(2)} , {$t('%Error')} {minPctErr.toFixed(2)} / {maxPctErr.toFixed(2)}
       </div>
     );
   };

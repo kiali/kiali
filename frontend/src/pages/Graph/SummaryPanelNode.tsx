@@ -256,7 +256,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
         <ExpandableSection
           toggleText={
             nodeData.hasWorkloadEntry.length === 1
-              ? `1 ${$t('Workload_Entry', 'Workload Entry')}`
+              ? `1 ${$t('legendData.WorkloadEntry', 'Workload Entry')}`
               : `${nodeData.hasWorkloadEntry.length} ${$t('workloadEntries', 'workload entries')}`
           }
           className={workloadExpandableSectionStyle}
@@ -381,7 +381,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
           <div>
             <KialiIcon.CircuitBreaker />
             <span style={{ paddingLeft: '0.25rem' }}>
-              {$t('Has_Circuit_Breaker', 'Has Circuit Breaker')}
+              {$t('HasCircuitBreaker', 'Has Circuit Breaker')}
               {this.renderK8sGatewayAPI(isK8sGatewayAPI)}
             </span>
           </div>
@@ -391,7 +391,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
             <div>
               <KialiIcon.VirtualService />
               <span style={{ paddingLeft: '0.25rem' }}>
-                {$t('Has_Virtual_Service', 'Has Virtual Service')}
+                {$t('HasVirtualService', 'Has Virtual Service')}
                 {this.renderK8sGatewayAPI(isK8sGatewayAPI)}
               </span>
             </div>
@@ -461,7 +461,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
           <div>
             <KialiIcon.TrafficShifting />
             <span style={{ paddingLeft: '0.25rem' }}>
-              {$t('HasTCPTrafficShifting', 'Has TCP Traffic Shifting')}
+              {$t('TCP.Traffic.HasShifting', 'Has TCP Traffic Shifting')}
               {this.renderK8sGatewayAPI(isK8sGatewayAPI)}
             </span>
           </div>

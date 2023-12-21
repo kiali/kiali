@@ -27,11 +27,11 @@ function showCerts(certs) {
             <div>{item.secretName}</div>
           </div>
           <div>
-            <div>{$t('Valid_from', 'Valid from')}: </div>
+            <div>{$t('ValidFrom', 'Valid from')}: </div>
             <div>{item.notAfter}</div>
           </div>
           <div>
-            <div>{$t('Valid_To', 'Valid To')}: </div>
+            <div>{$t('ValidTo', 'Valid To')}: </div>
             <div>{item.notBefore}</div>
           </div>
         </div>
@@ -75,7 +75,7 @@ class TLSInfoComponent extends React.Component<Props> {
                 content={
                   <div style={{ textAlign: 'left' }}>
                     {$t(
-                      'tip257',
+                      'tooltip.MeshMinTLSVersion',
                       'The meshConfig.meshMTLS.minProtocolVersion field specifies the minimum TLS version for the TLS connections among Istio workloads. N/A if it was not set.'
                     )}
                   </div>

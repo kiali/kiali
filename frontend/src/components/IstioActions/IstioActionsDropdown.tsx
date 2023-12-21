@@ -60,7 +60,7 @@ export const IstioActionDropdown: React.FC<IstioActionDropdownProps> = (props: I
     ? renderDisabledDropdownOption(
         'delete',
         TooltipPosition.left,
-        $t('helpTip22', 'User does not have permission'),
+        $t('userNopermissionTip', 'User does not have permission'),
         deleteAction
       )
     : deleteAction;
@@ -88,7 +88,7 @@ export const IstioActionDropdown: React.FC<IstioActionDropdownProps> = (props: I
       </Dropdown>
 
       <Modal
-        title={$t('Confirm_Delete', 'Confirm Delete')}
+        title={$t('ConfirmDelete', 'Confirm Delete')}
         variant={ModalVariant.small}
         isOpen={showConfirmModal}
         onClose={hideConfirmModal}

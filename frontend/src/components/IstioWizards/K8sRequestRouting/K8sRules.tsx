@@ -125,9 +125,12 @@ export class K8sRules extends React.Component<Props> {
                     : rule.matches.map((match, i) => <div key={'match_' + i}>{match}</div>)}
                   {!isValid && (
                     <div className={validationStyle}>
-                      {$t('tip6', "Match 'Any request' is defined in a previous rule.")}
+                      {$t(
+                        'routeRules.AnyRequestMatchInPreviousRule',
+                        "Match 'Any request' is defined in a previous rule."
+                      )}
                       <br />
-                      {$t('tip7', 'This rule is not accessible.')}
+                      {$t('routeRules.RuleInaccessible', 'This rule is not accessible.')}
                     </div>
                   )}
                 </>,
@@ -143,7 +146,7 @@ export class K8sRules extends React.Component<Props> {
                         return (
                           <div key={'br_' + order + '_' + bRef.name + '_' + i}>
                             <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
-                            {bRef.name} ({bRef.weight}% {$t('routedTraffic', 'routed traffic')})
+                            {bRef.name} ({bRef.weight}% {$t('routeRules.routedTraffic', 'routed traffic')})
                           </div>
                         );
                       })}
@@ -161,7 +164,10 @@ export class K8sRules extends React.Component<Props> {
                     <EmptyState variant={EmptyStateVariant.full}>
                       <EmptyStateHeader titleText={$t('tip8')} headingLevel="h5" />
                       <EmptyStateBody className={noRulesStyle}>
-                        {$t('tip9', 'A Request Routing scenario needs at least a Route Rule')}
+                        {$t(
+                          'routeRules.RoutingNeedsRouteRule',
+                          'A Request Routing scenario needs at least a Route Rule'
+                        )}
                       </EmptyStateBody>
                     </EmptyState>
                   ),

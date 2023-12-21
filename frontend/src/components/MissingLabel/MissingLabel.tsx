@@ -29,21 +29,26 @@ export class MissingLabel extends React.Component<MissingLabelProps, {}> {
           <>
             <div>
               <PFBadge badge={{ badge: appLabel }} isRead={true} style={{ marginRight: '0px' }} />{' '}
-              {$t('tip252', 'label is missing.')} <br />
+              {$t('MissingLabel.missingAppLabel', 'label is missing.')} <br />
             </div>
-            <div>{$t('tip251')}</div>
+            <div>{$t('MissingLabel.unlinkedWorkload', "This workload won't be linked with an application.")}</div>
           </>
         )}
         {this.props.missingVersion && (
           <>
             <div>
               <PFBadge badge={{ badge: versionLabel }} isRead={true} style={{ marginRight: '0px' }} />{' '}
-              {$t('tip252', 'label is missing.')} <br />
+              {$t('MissingLabel.missingVersionLabel', 'label is missing.')} <br />
             </div>
-            <div>{$t('tip253', 'The label is recommended as it affects telemetry.')}</div>
+            <div>{$t('MissingLabel.telemetryImpact', 'The label is recommended as it affects telemetry.')}</div>
           </>
         )}
-        <div>{$t('tip254', 'Missing labels may impact telemetry reported by the Istio proxy.')}</div>
+        <div>
+          {$t(
+            'MissingLabel.labelImpactOnTelemetry',
+            'Missing labels may impact telemetry reported by the Istio proxy.'
+          )}
+        </div>
       </div>
     );
     const iconComponent = (

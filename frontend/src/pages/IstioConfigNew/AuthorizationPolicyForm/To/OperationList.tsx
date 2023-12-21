@@ -11,7 +11,7 @@ type Props = {
 
 const headerCells: ICell[] = [
   {
-    title: $t('title32', 'Operations of a Request'),
+    title: $t('cellsTitle.Request.OperationsReq', 'Operations of a Request'),
     transforms: [cellWidth(100) as any],
     props: {}
   },

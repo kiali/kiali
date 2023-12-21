@@ -445,7 +445,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
           <FormHelperText>
             <HelperText>
               <HelperTextItem>
-                {$t('tip358', 'TLS related settings for connections to the upstream service.')}
+                {$t('UpstreamTLSConfig', 'TLS related settings for connections to the upstream service.')}
               </HelperTextItem>
             </HelperText>
           </FormHelperText>
@@ -462,7 +462,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
               {!isValid(this.state.clientCertificate.length > 0) && (
                 <FormHelperText>
                   <HelperText>
-                    <HelperTextItem>{$t('tip357', 'Client Certificate must be non empty')}</HelperTextItem>
+                    <HelperTextItem>{$t('ClientCertRequired', 'Client Certificate must be non empty')}</HelperTextItem>
                   </HelperText>
                 </FormHelperText>
               )}
@@ -477,7 +477,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
               {!isValid(this.state.privateKey.length > 0) && (
                 <FormHelperText>
                   <HelperText>
-                    <HelperTextItem>{$t('tip356', 'Private Key must be non empty')}</HelperTextItem>
+                    <HelperTextItem>{$t('PrivateKeyRequired', 'Private Key must be non empty')}</HelperTextItem>
                   </HelperText>
                 </FormHelperText>
               )}
@@ -565,7 +565,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
                 <Radio
                   id="httpHeaderName"
                   name="selectConsistentHashType"
-                  label={$t('HTTPHeaderName', 'HTTP Header Name')}
+                  label={$t('HTTP.HeaderName', 'HTTP Header Name')}
                   isDisabled={!this.state.addLoadBalancer}
                   isChecked={this.state.consistentHashType === ConsistentHashType.HTTP_HEADER_NAME}
                   onChange={() =>
@@ -596,7 +596,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
             )}
             {!this.state.simpleLB && this.state.consistentHashType === ConsistentHashType.HTTP_HEADER_NAME && (
               <FormGroup
-                label={$t('HTTPHeaderName', 'HTTP Header Name')}
+                label={$t('HTTP.HeaderName', 'HTTP Header Name')}
                 fieldId="httpHeaderName"
                 disabled={!this.state.addLoadBalancer}
               >
@@ -614,7 +614,9 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
                 {!isValid(isValidLB) && (
                   <FormHelperText>
                     <HelperText>
-                      <HelperTextItem>{$t('tip380', 'HTTP Header Name must be non empty')}</HelperTextItem>
+                      <HelperTextItem>
+                        {$t('HTTP.HelperHeaderText', 'HTTP Header Name must be non empty')}
+                      </HelperTextItem>
                     </HelperText>
                   </FormHelperText>
                 )}
@@ -623,7 +625,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
             {!this.state.simpleLB && this.state.consistentHashType === ConsistentHashType.HTTP_COOKIE && (
               <>
                 <FormGroup
-                  label={$t('HTTPCookieName', 'HTTP Cookie Name')}
+                  label={$t('HTTP.CookieName', 'HTTP Cookie Name')}
                   fieldId="httpCookieName"
                   disabled={!this.state.addLoadBalancer}
                 >
@@ -656,11 +658,11 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
                       <HelperTextItem>
                         {isValid(isValidLB)
                           ? $t(
-                              'helpTip26',
+                              'HelperText.TLInNanosecondsSeconds',
                               'TL is expressed in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).'
                             )
                           : $t(
-                              'helpTip27',
+                              'HTTP.HelperCookieText',
                               'HTTP Cookie Name must be non empty and TTL must be expressed in in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).'
                             )}
                       </HelperTextItem>

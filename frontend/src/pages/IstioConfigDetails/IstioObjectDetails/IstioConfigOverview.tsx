@@ -168,7 +168,7 @@ export class IstioConfigOverview extends React.Component<IstioConfigOverviewProp
         {istioObject?.metadata.labels && (
           <StackItem>
             <Labels
-              tooltipMessage={$t('tip77', 'Labels defined on this resource')}
+              tooltipMessage={$t('tooltip.ResourceLabels', 'Labels defined on this resource')}
               labels={istioObject?.metadata.labels}
             ></Labels>
           </StackItem>
@@ -214,9 +214,9 @@ export class IstioConfigOverview extends React.Component<IstioConfigOverviewProp
         )}
         {!this.props.istioAPIEnabled && this.props.cluster === homeCluster?.name && (
           <StackItem>
-            <KialiIcon.Warning className={warnStyle} /> <b>{$t('tip10', 'Istio API is disabled.')}</b>{' '}
+            <KialiIcon.Warning className={warnStyle} /> <b>{$t('Istio.IstioAPIDisabled', 'Istio API is disabled.')}</b>{' '}
             {$t(
-              'tip11',
+              'Istio.CautionEditIstioConfig',
               'Be careful when editing the configuration as the Istio config validations are disabled when the Istio API is disabled.'
             )}
           </StackItem>
@@ -225,7 +225,7 @@ export class IstioConfigOverview extends React.Component<IstioConfigOverviewProp
           <StackItem>
             <Tooltip
               content={$t(
-                'tip78',
+                'tooltip.ReadOnlyYAMLView',
                 'This is a Read only view of the YAML including Validations. It is possible to edit directly in Kiali '
               )}
               position={TooltipPosition.top}

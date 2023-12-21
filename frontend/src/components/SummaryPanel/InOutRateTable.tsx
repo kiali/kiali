@@ -31,8 +31,8 @@ export class InOutRateTableGrpc extends React.Component<InOutRateTableGrpcPropTy
             <tr>
               <th />
               <th>{$t('Total')}</th>
-              <th>{$t('title3', '%Success')}</th>
-              <th>{$t('title4', '%Error')}</th>
+              <th>{$t('%Success')}</th>
+              <th>{$t('%Error')}</th>
             </tr>
           </thead>
           <tbody>
@@ -112,8 +112,8 @@ export class InOutRateTableHttp extends React.Component<InOutRateTableHttpPropTy
             <tr>
               <th />
               <th>{$t('Total')}</th>
-              <th>{$t('title3', '%Success')}</th>
-              <th>{$t('title4', '%Error')}</th>
+              <th>{$t('%Success')}</th>
+              <th>{$t('%Error')}</th>
             </tr>
           </thead>
           <tbody>

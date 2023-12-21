@@ -100,7 +100,7 @@ export function useServiceDetailForGraphNode(
   const fetchError = result[4];
   React.useEffect(() => {
     if (fetchError !== null) {
-      AlertUtils.addError($t('helpTip65', 'Could not fetch Service Details.'), fetchError);
+      AlertUtils.addError($t('failure.serviceDetailsFetchFailed', 'Could not fetch Service Details.'), fetchError);
     }
   }, [fetchError]);
 

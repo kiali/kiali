@@ -79,14 +79,14 @@ export class IstioStatusComponent extends React.Component<Props> {
         const informative = this.props.namespaces && this.props.namespaces.length < 1;
         if (informative) {
           AlertUtils.addError(
-            $t('IstioDisableStatus', 'Istio deployment status disabled.'),
+            $t('Istio.IstioStatusDisabled', 'Istio deployment status disabled.'),
             error,
             'default',
             MessageType.INFO
           );
         } else {
           AlertUtils.addError(
-            $t('IstioErrorStatus', 'Error fetching Istio deployment status'),
+            $t('Istio.ErrorFetchingIstioStatus', 'Error fetching Istio deployment status'),
             error,
             'default',
             MessageType.ERROR

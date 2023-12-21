@@ -112,7 +112,7 @@ export class RouteTable implements SummaryTable {
           info: {
             tooltip: (
               <div className={kialiStyle({ textAlign: 'left' })}>
-                {$t('tip347', 'Envoy will be matched this domain to this virtual host.')}
+                {$t('tooltip.RouteTable.envoyDomainMatch', 'Envoy will be matched this domain to this virtual host.')}
               </div>
             )
           }
@@ -125,7 +125,10 @@ export class RouteTable implements SummaryTable {
           info: {
             tooltip: (
               <div className={kialiStyle({ textAlign: 'left' })}>
-                {$t('tip348', 'The match tree to use when resolving route actions for incoming requests')}
+                {$t(
+                  'tooltip.RouteTable.routeActionMatchTree',
+                  'The match tree to use when resolving route actions for incoming requests'
+                )}
               </div>
             )
           }
@@ -154,7 +157,10 @@ export class RouteTable implements SummaryTable {
       <Tooltip
         content={
           <div className={kialiStyle({ textAlign: 'left' })}>
-            {$t('tip349', 'Network connection between source a destination that is configured in envoy')}
+            {$t(
+              'tooltip.RouteTable.envoyNetworkConnection',
+              'Network connection between source a destination that is configured in envoy'
+            )}
           </div>
         }
       >

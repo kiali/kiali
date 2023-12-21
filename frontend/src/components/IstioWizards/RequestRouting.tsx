@@ -176,7 +176,10 @@ export class RequestRouting extends React.Component<Props, State> {
             headerName: prevState.headerName,
             matchValue: prevState.matchValue,
             rules: prevState.rules,
-            validationMsg: $t('tip1', 'A Rule with same matching criteria is already added.'),
+            validationMsg: $t(
+              'validationMsg.DuplicateRuleCriteria',
+              'A Rule with same matching criteria is already added.'
+            ),
             faultInjectionRoute: prevState.faultInjectionRoute,
             timeoutRetryRoute: prevState.timeoutRetryRoute
           };
@@ -191,7 +194,8 @@ export class RequestRouting extends React.Component<Props, State> {
       return {
         matches: prevState.matches.filter(m => matchToRemove !== m),
         validationMsg:
-          prevState.validationMsg === $t('tip1', 'A Rule with same matching criteria is already added.')
+          prevState.validationMsg ===
+          $t('validationMsg.DuplicateRuleCriteria', 'A Rule with same matching criteria is already added.')
             ? ''
             : prevState.validationMsg
       };
@@ -214,10 +218,10 @@ export class RequestRouting extends React.Component<Props, State> {
   onHeaderNameChange = (headerName: string) => {
     let validationMsg = '';
     if (this.state.matchValue !== '' && headerName === '') {
-      validationMsg = $t('tip2', 'Header name must be non empty');
+      validationMsg = $t('validationMsg.HeaderNameNonEmpty', 'Header name must be non empty');
     }
     if (this.state.matchValue === '' && headerName !== '' && this.state.operator !== PRESENCE) {
-      validationMsg = $t('tip3', 'Header value must be non empty');
+      validationMsg = $t('validationMsg.HeaderValueNonEmpty', 'Header value must be non empty');
     }
     this.setState({
       headerName: headerName,
@@ -229,10 +233,10 @@ export class RequestRouting extends React.Component<Props, State> {
     let validationMsg = '';
     if (this.state.category === HEADERS) {
       if (this.state.headerName === '' && matchValue !== '') {
-        validationMsg = $t('tip2', 'Header name must be non empty');
+        validationMsg = $t('validationMsg.HeaderNameNonEmpty', 'Header name must be non empty');
       }
       if (this.state.headerName !== '' && matchValue === '') {
-        validationMsg = $t('tip3', 'Header value must be non empty');
+        validationMsg = $t('validationMsg.HeaderValueNonEmpty', 'Header value must be non empty');
       }
     }
     if (matchValue === '') {
@@ -247,7 +251,9 @@ export class RequestRouting extends React.Component<Props, State> {
   onSelectWeights = (valid: boolean, workloads: WorkloadWeight[]) => {
     this.setState({
       workloadWeights: workloads,
-      validationMsg: !valid ? $t('helpTip28', 'The sum of all non-mirrored weights must be 100 %') : ''
+      validationMsg: !valid
+        ? $t('validationMsg.SumWeights100Percent', 'The sum of all non-mirrored weights must be 100 %')
+        : ''
     });
   };
 
@@ -322,7 +328,7 @@ export class RequestRouting extends React.Component<Props, State> {
             this.setState(_prevState => {
               return {
                 faultInjectionRoute: faultInjectionRoute,
-                validationMsg: !valid ? $t('helpTip18', 'Fault Injection not valid') : ''
+                validationMsg: !valid ? $t('validationMsg.InvalidFaultInjection', 'Fault Injection not valid') : ''
               };
             });
           }}
@@ -331,7 +337,7 @@ export class RequestRouting extends React.Component<Props, State> {
             this.setState(_prevState => {
               return {
                 timeoutRetryRoute: timeoutRetryRoute,
-                validationMsg: !valid ? $t('helpTip19', 'Request Timeout not valid') : ''
+                validationMsg: !valid ? $t('validationMsg.InvalidRequestTimeout', 'Request Timeout not valid') : ''
               };
             });
           }}

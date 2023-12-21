@@ -66,7 +66,7 @@ export class GlobalValidation extends React.Component<Props> {
     let message = checks.map(check => (check.code ? check.code + ' ' : '') + check.message).join(',');
 
     if (!message.length && !this.isValid()) {
-      message = $t('tip43', 'Not all checks passed!');
+      message = $t('validation.ChecksFailed', 'Not all checks passed!');
     }
 
     return message;

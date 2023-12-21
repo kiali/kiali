@@ -46,14 +46,14 @@ export const sortFields: SortField<WorkloadListItem>[] = [
   },
   {
     id: 'workloadname',
-    title: $t('Workload Name'),
+    title: $t('WorkloadName', 'Workload Name'),
     isNumeric: false,
     param: 'wn',
     compare: (a: WorkloadListItem, b: WorkloadListItem) => a.name.localeCompare(b.name)
   },
   {
     id: 'workloadtype',
-    title: $t('Workload Type'),
+    title: $t('WorkloadType', 'Workload Type'),
     isNumeric: false,
     param: 'wt',
     compare: (a: WorkloadListItem, b: WorkloadListItem) => a.type.localeCompare(b.type)
@@ -105,7 +105,7 @@ export const sortFields: SortField<WorkloadListItem>[] = [
   },
   {
     id: 'applabel',
-    title: $t('App Label'),
+    title: $t('AppLabel', 'App Label'),
     isNumeric: false,
     param: 'al',
     compare: (a: WorkloadListItem, b: WorkloadListItem) => {
@@ -120,7 +120,7 @@ export const sortFields: SortField<WorkloadListItem>[] = [
   },
   {
     id: 'versionlabel',
-    title: $t('Version Label'),
+    title: $t('VersionLabel', 'Version Label'),
     isNumeric: false,
     param: 'vl',
     compare: (a: WorkloadListItem, b: WorkloadListItem) => {
@@ -206,7 +206,7 @@ export const sortFields: SortField<WorkloadListItem>[] = [
 
 const workloadNameFilter: FilterType = {
   category: 'Workload Name',
-  placeholder: $t('placeholder29', 'Filter by Workload Name'),
+  placeholder: $t('Filter.WorkloadName', 'Filter by Workload Name'),
   filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: []
@@ -214,7 +214,7 @@ const workloadNameFilter: FilterType = {
 
 export const appLabelFilter: FilterType = {
   category: 'App Label',
-  placeholder: $t('placeholder30', 'Filter by App Label Validation'),
+  placeholder: $t('Filter.LabelValidation', 'Filter by App Label Validation'),
   filterType: AllFilterTypes.select,
   action: FILTER_ACTION_UPDATE,
   filterValues: presenceValues
@@ -222,7 +222,7 @@ export const appLabelFilter: FilterType = {
 
 export const versionLabelFilter: FilterType = {
   category: 'Version Label',
-  placeholder: $t('placeholder44', 'Filter by Version Label Validation'),
+  placeholder: $t('Filter.VersionLabelValidation', 'Filter by Version Label Validation'),
   filterType: AllFilterTypes.select,
   action: FILTER_ACTION_UPDATE,
   filterValues: presenceValues
@@ -230,7 +230,7 @@ export const versionLabelFilter: FilterType = {
 
 const workloadTypeFilter: FilterType = {
   category: 'Workload Type',
-  placeholder: $t('placeholder31', 'Filter by Workload Type'),
+  placeholder: $t('Filter.WorkloadType', 'Filter by Workload Type'),
   filterType: AllFilterTypes.typeAhead,
   action: FILTER_ACTION_APPEND,
   filterValues: [
@@ -368,7 +368,7 @@ const healthToggle: ToggleType = {
 };
 
 const istioResourcesToggle: ToggleType = {
-  label: $t('IstioResourcesDetail', 'Istio Resources Detail'),
+  label: $t('Istio.IstioResourcesDetail', 'Istio Resources Detail'),
   name: 'istioResources',
   isChecked: true
 };

@@ -50,10 +50,13 @@ export class VirtualServiceHosts extends React.Component<Props> {
               <HelperTextItem>
                 {isValid(this.isVirtualServiceHostsValid(this.props.vsHosts))
                   ? $t(
-                      'helpTip29',
+                      'HelperText.destinationHosts',
                       'The destination hosts to which traffic is being sent. Enter one or multiple hosts separated by comma.'
                     )
-                  : $t('helpTip30', "VirtualService Host '*' wildcard not allowed on mesh gateway.")}
+                  : $t(
+                      'HelperText.noWildcardOnMeshGateway',
+                      "VirtualService Host '*' wildcard not allowed on mesh gateway."
+                    )}
               </HelperTextItem>
             </HelperText>
           </FormHelperText>

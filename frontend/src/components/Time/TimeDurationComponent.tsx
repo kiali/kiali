@@ -41,7 +41,11 @@ const TimeDurationComp: React.FC<TimeControlsProps> = (props: TimeControlsProps)
   return (
     <span>
       {props.supportsReplay && !props.replayActive && (
-        <Tooltip key={'time_range_replay'} position={TooltipPosition.left} content={$t('action1', 'Replay...')}>
+        <Tooltip
+          key={'time_range_replay'}
+          position={TooltipPosition.left}
+          content={$t('placeholder.Replay', 'Replay...')}
+        >
           <Button
             data-test="graph-replay-button"
             variant={ButtonVariant.link}

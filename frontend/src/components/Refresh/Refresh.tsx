@@ -67,7 +67,7 @@ export class RefreshComponent extends React.PureComponent<Props> {
             value={String(this.props.refreshInterval)}
             label={REFRESH_INTERVALS[this.props.refreshInterval]}
             options={REFRESH_INTERVALS}
-            tooltip={$t('tip25', 'Refresh interval')}
+            tooltip={$t('RefreshInterval', 'Refresh interval')}
             tooltipPosition={TooltipPosition.left}
           />
           {this.props.hideRefreshButton || (

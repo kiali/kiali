@@ -49,7 +49,7 @@ const TracingTraceTitleComponent: React.FC<Props> = (props: Props) => {
   if (props.externalURL) {
     links.push(
       <DropdownItem key="view_in_tracing" onClick={() => window.open(props.externalURL, '_blank')}>
-        {$t('View_in_Tracing', 'View in Tracing')} <ExternalLinkAltIcon />
+        {$t('ViewInTracing', 'View in Tracing')} <ExternalLinkAltIcon />
       </DropdownItem>
     );
   }

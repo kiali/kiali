@@ -169,7 +169,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
       this.setState({ overviewType: otype });
       this.props.onRefresh();
     } else {
-      throw new Error($t('tip105', 'Overview type is not valid.'));
+      throw new Error($t('errorMsg.InvalidOverviewType', 'Overview type is not valid.'));
     }
   };
 
@@ -181,7 +181,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
       this.setState({ directionType: dtype });
       this.props.onRefresh();
     } else {
-      throw new Error($t('tip106', 'Direction type is not valid.'));
+      throw new Error($t('errorMsg.InvalidDirectionType', 'Direction type is not valid.'));
     }
   };
 

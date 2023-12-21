@@ -52,7 +52,9 @@ class AlertDrawerMessageComponent extends React.PureComponent<AlertDrawerMessage
           {this.props.message.detail && (
             <ExpandableSection
               toggleText={
-                this.props.message.showDetail ? $t('HideDetail', 'Hide Detail') : $t('ShowDetail', 'Show Detail')
+                this.props.message.showDetail
+                  ? $t('HideDetail', 'Hide Detail')
+                  : $t('ShowDetail', { detail: 'detail' || 'defaultDetail' })
               }
               onToggle={() => this.props.toggleMessageDetail(this.props.message)}
               isExpanded={this.props.message.showDetail}

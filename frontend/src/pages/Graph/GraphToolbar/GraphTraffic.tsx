@@ -69,7 +69,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             {$t(
-              'tip273',
+              'tooltip.ActiveGRPCEdgesDisplay',
               "Displays active gRPC Edges for the time period, using the selected gRPC rate. To see idle gRPC Edges enable the 'Idle Edges' Display menu option. Default: Requests."
             )}
           </div>
@@ -82,7 +82,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             {$t(
-              'tip274',
+              'tooltip.ActiveHTTPEdges',
               "Displays active HTTP Edges for the time period, using the selected HTTP rate. To see idle HTTP Edges enable the 'Idle Edges' Display menu option. Default: Requests."
             )}
           </div>
@@ -95,7 +95,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             {$t(
-              'tip275',
+              'tooltip.ActiveTCPEdges',
               "Displays active TCP Edges for the time period, using the selected TCP rate. To see inactive TCP Edges enable the 'Idle Edges' Display menu option. Default: Sent Bytes."
             )}
           </div>
@@ -106,12 +106,12 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
     const grpcOptions: TrafficRateOptionType[] = [
       {
         id: TrafficRate.GRPC_RECEIVED,
-        labelText: $t('Received Messages'),
+        labelText: $t('ReceivedMessages'),
         isChecked: trafficRates.includes(TrafficRate.GRPC_RECEIVED),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             {$t(
-              'tip276',
+              'Options.grpcOptions.ReceivedMsgRate',
               'Received (i.e. Response) message rate in messages-per-second (mps). Captures server streaming RPCs.'
             )}
           </div>
@@ -119,22 +119,25 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
       },
       {
         id: TrafficRate.GRPC_REQUEST,
-        labelText: 'Requests',
+        labelText: $t('Requests'),
         isChecked: trafficRates.includes(TrafficRate.GRPC_REQUEST),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            {$t('tip370', 'Request message rate in requests-per-second (rps). Captures unary RPC, with status codes.')}
+            {$t(
+              'Options.grpcOptions.RequestRate',
+              'Request message rate in requests-per-second (rps). Captures unary RPC, with status codes.'
+            )}
           </div>
         )
       },
       {
         id: TrafficRate.GRPC_SENT,
-        labelText: 'Sent_Messages',
+        labelText: $t('SentMessages', 'Sent Messages'),
         isChecked: trafficRates.includes(TrafficRate.GRPC_SENT),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             {$t(
-              'tip277',
+              'Options.grpcOptions.SentMsgRate',
               'Sent (i.e. Request) message rate in messages-per-second (mps). Captures client streaming RPCs.'
             )}
           </div>
@@ -142,12 +145,12 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
       },
       {
         id: TrafficRate.GRPC_TOTAL,
-        labelText: 'Total_Messages',
+        labelText: $t('TotalMessages', 'Total Messages'),
         isChecked: trafficRates.includes(TrafficRate.GRPC_TOTAL),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             {$t(
-              'tip278',
+              'Options.grpcOptions.TotalMsgRate',
               'Combined (Sent + Received) message rate in messages-per-second (mps). Captures all streaming RPCs.'
             )}
           </div>
@@ -162,7 +165,10 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
         isChecked: trafficRates.includes(TrafficRate.HTTP_REQUEST),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            {$t('tip371', 'Request message rate in requests-per-second (rps). Captures status codes.')}
+            {$t(
+              'httpOptions.RPSWithStatusCodes',
+              'Options.Request message rate in requests-per-second (rps). Captures status codes.'
+            )}
           </div>
         )
       }
@@ -171,25 +177,34 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
     const tcpOptions: TrafficRateOptionType[] = [
       {
         id: TrafficRate.TCP_RECEIVED,
-        labelText: $t('Received_Bytes', 'Received Bytes'),
+        labelText: $t('ReceivedBytes', 'Received Bytes'),
         isChecked: trafficRates.includes(TrafficRate.TCP_RECEIVED),
         tooltip: (
-          <div style={{ textAlign: 'left' }}>{$t('tip279', 'Received bytes rate in bytes-per-second (bps).')}</div>
+          <div style={{ textAlign: 'left' }}>
+            {$t('Options.tcpOptions.ReceivedBytesPerSecond', 'Received bytes rate in bytes-per-second (bps).')}
+          </div>
         )
       },
       {
         id: TrafficRate.TCP_SENT,
-        labelText: $t('Sent_Bytes', 'Sent Bytes'),
+        labelText: $t('SentBytes', 'Sent Bytes'),
         isChecked: trafficRates.includes(TrafficRate.TCP_SENT),
-        tooltip: <div style={{ textAlign: 'left' }}>{$t('tip280', 'Sent bytes rate in bytes-per-second (bps).')}</div>
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>
+            {$t('Options.tcpOptions.SentBytesPerSecond', 'Sent bytes rate in bytes-per-second (bps).')}
+          </div>
+        )
       },
       {
         id: TrafficRate.TCP_TOTAL,
-        labelText: $t('Total_Bytes', 'Total Bytes'),
+        labelText: $t('TotalBytes', 'Total Bytes'),
         isChecked: trafficRates.includes(TrafficRate.TCP_TOTAL),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            {$t('tip281', 'Combined (Sent + Received) byte rate in bytes-per-second (mps).')}
+            {$t(
+              'Options.tcpOptions.TotalBytesPerSecond',
+              'Combined (Sent + Received) byte rate in bytes-per-second (mps).'
+            )}
           </div>
         )
       }

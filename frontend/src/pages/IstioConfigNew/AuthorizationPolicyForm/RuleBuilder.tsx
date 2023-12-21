@@ -210,11 +210,11 @@ export class RuleBuilder extends React.Component<Props, State> {
             isDisabled={!this.canAddRule()}
             className={addRuleStyle}
           >
-            {$t('action5', 'Add Rule to Rule List')}
+            {$t('Add.Rule', 'Add Rule to Rule List')}
           </Button>
           {!this.canAddRule() && (
             <span className={warningStyle}>
-              {$t('tip84', "A Rule needs at least an item in 'From', 'To' or 'When' sections")}
+              {$t('RuleNeedsItem', "A Rule needs at least an item in 'From', 'To' or 'When' sections")}
             </span>
           )}
         </FormGroup>

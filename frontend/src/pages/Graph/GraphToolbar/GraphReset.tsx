@@ -24,7 +24,11 @@ const GraphResetComponent: React.FC<GraphResetProps> = (props: GraphResetProps) 
   };
 
   return (
-    <Tooltip key="factory_reset_settings" position="bottom" content={$t('tip272', 'Reset to factory settings')}>
+    <Tooltip
+      key="factory_reset_settings"
+      position="bottom"
+      content={$t('ResetFactoryConfig', 'Reset to factory settings')}
+    >
       <Button
         id="graph-factory-reset"
         className={resetStyle}

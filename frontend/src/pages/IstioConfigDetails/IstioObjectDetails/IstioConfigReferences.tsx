@@ -44,7 +44,7 @@ export class IstioConfigReferences extends React.Component<IstioConfigReferences
           </Title>
         </StackItem>
         {!this.objectReferencesExists() && !this.serviceReferencesExists() && !this.workloadReferencesExists() && (
-          <StackItem>{$t('tip288', 'No references found for this object.')}</StackItem>
+          <StackItem>{$t('noObjectReferences', 'No references found for this object.')}</StackItem>
         )}
         {this.serviceReferencesExists() &&
           this.props.serviceReferences.map((reference, sRef) => {

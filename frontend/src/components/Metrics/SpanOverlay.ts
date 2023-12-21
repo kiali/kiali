@@ -63,7 +63,7 @@ export class SpanOverlay {
       })
       .catch(err => {
         if (!this.lastFetchError) {
-          AlertUtils.addError($t('tip383', 'Could not fetch spans.'), err);
+          AlertUtils.addError($t('failure.spansUnavailable', 'Could not fetch spans.'), err);
           this.lastFetchError = true;
         }
       });

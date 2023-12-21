@@ -13,7 +13,7 @@ type Props = {
 
 const headerCells: ICell[] = [
   {
-    title: $t('title35', 'JWT Rules to be validated'),
+    title: $t('cellsTitle.JWTRulesValidated', 'JWT Rules to be validated'),
     transforms: [cellWidth(100) as any],
     props: {}
   },
@@ -110,7 +110,7 @@ export class JwtRuleList extends React.Component<Props> {
           <TableBody />
         </Table>
         {this.props.jwtRules.length === 0 && (
-          <div className={noJWTRulesStyle}>{$t('tip92', 'No JWT Rules Defined')}</div>
+          <div className={noJWTRulesStyle}>{$t('JwtRuleBuilder.NoJWTRules', 'No JWT Rules Defined')}</div>
         )}
       </>
     );

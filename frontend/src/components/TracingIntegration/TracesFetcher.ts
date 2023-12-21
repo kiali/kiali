@@ -68,7 +68,7 @@ export class TracesFetcher {
         }
       })
       .catch(error => {
-        AlertUtils.addError($t('tip35', 'Could not fetch traces.'), error);
+        AlertUtils.addError($t('failure.tracesUnavailable', 'Could not fetch traces.'), error);
         this.onErrors([{ msg: String(error) }]);
       });
   };

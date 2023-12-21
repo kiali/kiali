@@ -44,23 +44,33 @@ export class MetricsReporter extends React.Component<Props> {
         <li>
           <div style={{ display: 'inline-block' }}>
             {$t(
-              'tip299',
+              'tooltip.metricsReport.metricReporterSelection',
               'Select the reporter for the metrics displayed. Each Istio metric can be reported by the Source (workload which emitted the request) and by the Destination (workload which received the request). In general, the  timeseries will look exactly the same because Source and Destination report the same data.'
             )}
           </div>
         </li>
         <li>
-          <div style={{ display: 'inline-block' }}>{$t('tip300', 'There are some exceptions')}:</div>
+          <div style={{ display: 'inline-block' }}>
+            {$t('tooltip.metricsReport.exceptionReporting', 'There are some exceptions')}:
+          </div>
         </li>
         <li>
           <ul style={{ listStyleType: 'circle', marginLeft: '20px' }}>
             <li>
-              {$t('tip246', 'An opened circuit breaker would cause networking failures only reported by the Source')}
+              {$t(
+                'tooltip.metricsReport.sourceReportedFailures',
+                'An opened circuit breaker would cause networking failures only reported by the Source'
+              )}
             </li>
-            <li>{$t('tip247', 'Fault-injected failures only reported by the Source')}</li>
             <li>
               {$t(
-                'tip301',
+                'tooltip.metricsReport.injectedFaultReporting',
+                'Fault-injected failures only reported by the Source'
+              )}
+            </li>
+            <li>
+              {$t(
+                'tooltip.metricsReport.unknownTrafficReporting',
                 'Traffic coming from unknown sources (anything that is not under the Istio mesh) would only be reported by the Destination'
               )}
             </li>

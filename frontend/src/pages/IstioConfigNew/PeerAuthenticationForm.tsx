@@ -26,12 +26,12 @@ const noPortMtlsStyle = kialiStyle({
 
 const headerCells: ICell[] = [
   {
-    title: $t('PortNumber', 'Port Number'),
+    title: $t('PeerAuthenticationForm.PortNumber', 'Port Number'),
     transforms: [cellWidth(20) as any],
     props: {}
   },
   {
-    title: $t('MutualTLSMode', 'Mutual TLS Mode'),
+    title: $t('PeerAuthenticationForm.MutualTLSMode', 'Mutual TLS Mode'),
     transforms: [cellWidth(20) as any],
     props: {}
   },
@@ -234,7 +234,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
   // @ts-ignore
   actionResolver = (rowData, { rowIndex }) => {
     const removeAction = {
-      title: $t('RemovePortMTLS', 'Remove Port MTLS'),
+      title: $t('PeerAuthenticationForm.RemovePortMTLS', 'Remove Port MTLS'),
       // @ts-ignore
       onClick: (event, rowIndex, rowData, extraData) => {
         this.setState(
@@ -307,7 +307,10 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
   render() {
     return (
       <>
-        <FormGroup label={$t('WorkloadSelector', 'Workload Selector')} fieldId="workloadSelectorSwitch">
+        <FormGroup
+          label={$t('PeerAuthenticationForm.WorkloadSel', 'Workload Selector')}
+          fieldId="workloadSelectorSwitch"
+        >
           <Switch
             id="workloadSelectorSwitch"
             label={' '}
@@ -331,11 +334,11 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
                 <HelperTextItem>
                   {isValid(this.state.workloadSelectorValid)
                     ? $t(
-                        'helpTip45',
+                        'PeerAuthenticationForm.WorkloadSelectionLabels',
                         'One or more labels to select a workload where the PeerAuthentication is applied.'
                       )
                     : $t(
-                        'helpTip46',
+                        'PeerAuthenticationForm.EnterLabelFormat',
                         'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'
                       )}
                 </HelperTextItem>
@@ -343,14 +346,14 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
             </FormHelperText>
           </FormGroup>
         )}
-        <FormGroup label={$t('MutualTLSMode', 'Mutual TLS Mode')} fieldId="mutualTls">
+        <FormGroup label={$t('PeerAuthenticationForm.MutualTLSMode', 'Mutual TLS Mode')} fieldId="mutualTls">
           <FormSelect value={this.state.mtls} onChange={this.onMutualTlsChange} id="mutualTls" name="rules-form">
             {Object.keys(PeerAuthenticationMutualTLSMode).map((option, index) => (
               <FormSelectOption key={index} value={option} label={$t(option)} />
             ))}
           </FormSelect>
         </FormGroup>
-        <FormGroup label={$t('PortMutualTLS', 'Port Mutual TLS')} fieldId="addPortMtls">
+        <FormGroup label={$t('PeerAuthenticationForm.PortMutualTLS', 'Port Mutual TLS')} fieldId="addPortMtls">
           <Switch
             id="addPortMtls"
             label={' '}
@@ -360,7 +363,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
           />
         </FormGroup>
         {this.state.addPortMtls && (
-          <FormGroup label={$t('PortLevelMTLS', 'Port Level MTLS')} fieldId="portMtlsList">
+          <FormGroup label={$t('PeerAuthenticationForm.PortLevelMTLS', 'Port Level MTLS')} fieldId="portMtlsList">
             <Table
               aria-label="Port Level MTLS"
               cells={headerCells}
@@ -372,10 +375,17 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
               <TableBody />
             </Table>
             {this.props.peerAuthentication.portLevelMtls.length === 0 && (
-              <div className={noPortMtlsStyle}>{$t('tip87', 'PeerAuthentication has no Port Mutual TLS defined')}</div>
+              <div className={noPortMtlsStyle}>
+                {$t('PeerAuthenticationForm.PeerAuthNoPortMTLS', 'PeerAuthentication has no Port Mutual TLS defined')}
+              </div>
             )}
             {!this.state.addWorkloadSelector && (
-              <div className={noPortMtlsStyle}>{$t('tip88', 'Port Mutual TLS requires a Workload Selector')}</div>
+              <div className={noPortMtlsStyle}>
+                {$t(
+                  'PeerAuthenticationForm.PortMTLSRequiresWorkloadSel',
+                  'Port Mutual TLS requires a Workload Selector'
+                )}
+              </div>
             )}
           </FormGroup>
         )}

@@ -43,14 +43,17 @@ export class ConnectionPool extends React.Component<Props> {
             <FormHelperText>
               <HelperText>
                 <HelperTextItem>
-                  {$t('helpTip1', 'Maximum number of HTTP1 /TCP connections to a destination host')}
+                  {$t('TCP.MaxHTTP1Connections', 'Maximum number of HTTP1 /TCP connections to a destination host')}
                 </HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>
         )}
         {this.props.isConnectionPool && (
-          <FormGroup label={$t('helpTip2', 'HTTP1 Max Pending Requests')} fieldId="http1MaxPendingRequests">
+          <FormGroup
+            label={$t('HelperText.http1PendingRequests', 'HTTP1 Max Pending Requests')}
+            fieldId="http1MaxPendingRequests"
+          >
             <TextInput
               value={this.props.connectionPool.http?.http1MaxPendingRequests}
               id="http1MaxPendingRequests"
@@ -69,7 +72,7 @@ export class ConnectionPool extends React.Component<Props> {
             <FormHelperText>
               <HelperText>
                 <HelperTextItem>
-                  {$t('helpTip3', 'Maximum number of pending HTTP requests to a destination.')}
+                  {$t('HTTP.requests.maxPending', 'Maximum number of pending HTTP requests to a destination.')}
                 </HelperTextItem>
               </HelperText>
             </FormHelperText>

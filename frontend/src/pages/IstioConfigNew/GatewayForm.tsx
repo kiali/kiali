@@ -130,7 +130,10 @@ export class GatewayForm extends React.Component<Props, GatewayState> {
   render() {
     return (
       <>
-        <FormGroup label={$t('WorkloadSelector', 'Workload Selector')} fieldId="workloadSelectorSwitch">
+        <FormGroup
+          label={$t('PeerAuthenticationForm.WorkloadSel', 'Workload Selector')}
+          fieldId="workloadSelectorSwitch"
+        >
           <Switch
             id="workloadSelectorSwitch"
             label={' '}
@@ -160,9 +163,12 @@ export class GatewayForm extends React.Component<Props, GatewayState> {
               <HelperText>
                 <HelperTextItem>
                   {isValid(this.state.workloadSelectorValid)
-                    ? $t('helpTip40', 'One or more labels to select a workload where the Gateway is applied.')
+                    ? $t(
+                        'PeerAuthenticationForm.WorkloadSelectionLabels',
+                        'One or more labels to select a workload where the Gateway is applied.'
+                      )
                     : $t(
-                        'helpTip46',
+                        'PeerAuthenticationForm.EnterLabelFormat',
                         'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'
                       )}
                 </HelperTextItem>

@@ -103,7 +103,7 @@ export function TimeDurationModal(props: Props) {
             />
           </FormGroup>
         )}
-        <FormGroup label={$t('tip25', 'Refresh interval')} fieldId="drform-refresh">
+        <FormGroup label={$t('RefreshInterval', 'Refresh interval')} fieldId="drform-refresh">
           <RefreshComponent
             id="drform-metrics-refresh"
             hideLabel={true}

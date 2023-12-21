@@ -125,7 +125,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
       <div id="traces-display-menu" className={menuStyle}>
         <div style={{ marginTop: '0.5rem' }}>
           <span className={titleStyle} style={{ paddingRight: 0 }}>
-            {$t('Filter_by_percentile', 'Filter by percentile')}
+            {$t('Filter.FilterByPercentile', 'Filter by percentile')}
           </span>
           <Tooltip
             key="tooltip_filter_by_percentile"
@@ -134,7 +134,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
               <div style={{ textAlign: 'left' }}>
                 <div>
                   {$t(
-                    'tip259',
+                    'tooltip.PercentileFilterDescription',
                     'These percentiles are computed from metrics. To refresh them, reload the page. The filter applies on span durations. Thus, the filtered traces are the ones where at least one span for the service satisfies the duration criteria.'
                   )}
                 </div>
@@ -176,7 +176,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
               id="errors-only"
               name="errors-only"
               isChecked={this.state.errorsOnly}
-              label={$t('label3', 'Show only traces with errors')}
+              label={$t('labelContent.ShowErrorsTraces', 'Show only traces with errors')}
               onChange={(_event, checked: boolean) => this.onErrorsOnlyChanged(checked)}
               value="errors-only"
             />
@@ -194,7 +194,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
               <div style={{ textAlign: 'left' }}>
                 <div>
                   {$t(
-                    'tip34',
+                    'tooltip.AppTraceLimit',
                     'This limits the number of app-level traces that will be fetched. Because an app may be comprised of several workload versions not every trace trace may apply to a particular workload. It may be necessary to increase the limit to get the desired number of workload traces. In some cases the same can be true of service traces.'
                   )}
                 </div>
@@ -220,7 +220,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
           </div>
         ))}
 
-        <div className={titleStyle}>{$t('Value_axis', 'Value axis')}</div>
+        <div className={titleStyle}>{$t('ValueAxis', 'Value axis')}</div>
         <div>
           <label className={itemStyleWithoutInfo}>
             <Radio
@@ -239,7 +239,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
               id="yaxis-avg"
               name="yaxis-avg"
               isChecked={this.state.showSpansAverage}
-              label={$t('Spans_average_duration', 'Spans average duration')}
+              label={$t('SpansAverageDuration', 'Spans average duration')}
               onChange={() => this.onValueAxisChanged(true)}
               value="yaxis-avg"
             />

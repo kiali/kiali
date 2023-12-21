@@ -38,11 +38,11 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
 
   const columns = [
     {
-      title: $t('ClusterName', 'Cluster Name'),
+      title: $t('MeshPageComponent.ClusterName', 'Cluster Name'),
       transforms: [sortable, cellWidth(20)]
     },
     {
-      title: $t('Network'),
+      title: $t('MeshPageComponent.Network', 'Network'),
       transforms: [sortable, cellWidth(10)]
     },
     {
@@ -50,11 +50,11 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
       transforms: [cellWidth(20)]
     },
     {
-      title: $t('APIEndpoint', 'API Endpoint'),
+      title: $t('MeshPageComponent.APIEndpoint', 'API Endpoint'),
       transforms: [sortable, cellWidth(20)]
     },
     {
-      title: $t('SecretName', 'Secret name'),
+      title: $t('MeshPageComponent.SecretName', 'Secret name'),
       transforms: [sortable, cellWidth(30)]
     }
   ];
@@ -71,7 +71,7 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
         return (
           <Tooltip
             key={cluster.name + '/' + instance.namespace + '/' + instance.serviceName}
-            content={`${$t('label11', 'Go to this Kiali instance')}: ${instance.url}`}
+            content={`${$t('tooltip.GoToKiali', 'Go to this Kiali instance')}: ${instance.url}`}
           >
             <p>
               <img alt="Kiali Icon" src={kialiIcon} className={iconStyle} />
@@ -124,7 +124,10 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
       setMeshClustersList(meshClusters.data);
     } catch (e) {
       if (e instanceof Error) {
-        addError($t('tip93', 'Could not fetch the list of clusters that are part of the mesh'), e);
+        addError(
+          $t('failure.meshClusterListUnavailable', 'Could not fetch the list of clusters that are part of the mesh'),
+          e
+        );
       }
     }
   };
@@ -149,8 +152,10 @@ const MeshPageComponent: React.FunctionComponent<MeshPageProps> = (props: MeshPa
           </Table>
           {clusterRows.length === 0 ? (
             <EmptyState variant={EmptyStateVariant.full}>
-              <EmptyStateHeader titleText={$t('NoClusters', 'No Clusters')} headingLevel="h2" />
-              <EmptyStateBody>{$t('tip352', 'No clusters were discovered in your mesh.')}</EmptyStateBody>
+              <EmptyStateHeader titleText={$t('MeshPageComponent.NoClusters', 'No Clusters')} headingLevel="h2" />
+              <EmptyStateBody>
+                {$t('MeshPageComponent.EmptyStateBody', 'No clusters were discovered in your mesh.')}
+              </EmptyStateBody>
             </EmptyState>
           ) : null}
         </div>

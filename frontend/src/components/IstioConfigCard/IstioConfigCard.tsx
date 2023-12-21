@@ -108,7 +108,7 @@ export class IstioConfigCard extends React.Component<Props> {
     return (
       <Card isCompact={true} id={'IstioConfigCard'}>
         <CardHeader actions={{ actions: <></>, hasNoOffset: false, className: undefined }}>
-          <CardTitle style={{ float: 'left' }}>{$t('Istio Config')}</CardTitle>
+          <CardTitle style={{ float: 'left' }}>{$t('Istio.IstioConfig', 'Istio Config')}</CardTitle>
         </CardHeader>
         <CardBody>
           <Table

@@ -80,7 +80,7 @@ export class WizardAnnotations extends React.Component<Props, State> {
         .map(k => k[0])
         .some((e, i, arr) => arr.indexOf(e) !== i)
     ) {
-      validation.push($t('tip14', 'Duplicate keys found.'));
+      validation.push($t('validation.DuplicateKeysFound', 'Duplicate keys found.'));
     }
     // Check if empty keys
     if (
@@ -88,7 +88,7 @@ export class WizardAnnotations extends React.Component<Props, State> {
         .map(k => k[0])
         .filter(e => e.length === 0).length > 0
     ) {
-      validation.push($t('tip15', 'Empty keys found.'));
+      validation.push($t('validation.EmptyKeysFound', 'Empty keys found.'));
     }
     // Check if empty values
     if (
@@ -96,7 +96,7 @@ export class WizardAnnotations extends React.Component<Props, State> {
         .map(k => k[1])
         .filter(e => e.length === 0).length > 0
     ) {
-      validation.push($t('tip16', 'Empty values found.'));
+      validation.push($t('validation.EmptyKeysFound', 'Empty values found.'));
     }
     this.setState({ validation });
     return validation.length === 0 ? true : false;
@@ -224,7 +224,7 @@ export class WizardAnnotations extends React.Component<Props, State> {
             <span style={{ marginLeft: '3px' }}>{$t('AddMore', 'Add more')}</span>
           </Button>
           {this.state.validation.length > 0 && (
-            <Alert variant="danger" isInline isExpandable title={$t('AnErrorOccurre', 'An error occurred')}>
+            <Alert variant="danger" isInline isExpandable title={$t('AlertTitle.ErrorOccurred', 'An error occurred')}>
               <List isPlain>
                 {this.state.validation.map((message, i) => (
                   <ListItem key={'Message_' + i}>{message}</ListItem>

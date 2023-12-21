@@ -62,7 +62,7 @@ export const OverviewNamespaceActions: React.FC<Props> = (props: Props) => {
               ? renderDisabledDropdownOption(
                   'tooltip_' + itemKey,
                   TooltipPosition.left,
-                  $t('tip98', 'User does not have enough permission for this action'),
+                  $t('tooltip.InsufficientUserPermission', 'User does not have enough permission for this action'),
                   item
                 )
               : item;
@@ -85,7 +85,7 @@ export const OverviewNamespaceActions: React.FC<Props> = (props: Props) => {
         ? renderDisabledDropdownOption(
             'tooltip_action_' + i,
             TooltipPosition.left,
-            $t('tip98', 'User does not have enough permission for this action'),
+            $t('tooltip.InsufficientUserPermission', 'User does not have enough permission for this action'),
             item
           )
         : item;

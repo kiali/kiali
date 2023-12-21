@@ -289,7 +289,10 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       })
       .catch(namespacesError => {
         if (!namespacesError.isCanceled) {
-          this.handleAxiosError($t('tip99', 'Could not fetch namespace list'), namespacesError);
+          this.handleAxiosError(
+            $t('failure.namespaceListUnavailable', 'Could not fetch namespace list'),
+            namespacesError
+          );
         }
       });
   };
@@ -313,7 +316,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           if (error.isCanceled) {
             return;
           }
-          this.handleAxiosError($t('tip100', 'Could not fetch health'), error);
+          this.handleAxiosError($t('failure.healthDataUnavailable', 'Could not fetch health'), error);
         });
     });
   }
@@ -341,7 +344,10 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       .catch(err => {
         AlertUtils.addMessage({
           ...AlertUtils.extractAxiosError(
-            $t('helpTip57', 'Could not fetch Grafana info. Turning off links to Grafana.'),
+            $t(
+              'failure.grafanaInfoUnavailableDisablingGrafanaLinks',
+              'Could not fetch Grafana info. Turning off links to Grafana.'
+            ),
             err
           ),
           group: 'default',
@@ -396,7 +402,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           result.nsInfo.status = nsStatus;
         });
       })
-      .catch(err => this.handleAxiosError($t('tip100', 'Could not fetch health'), err));
+      .catch(err => this.handleAxiosError($t('failure.healthDataUnavailable', 'Could not fetch health'), err));
   }
 
   fetchMetrics(direction: DirectionType) {
@@ -444,7 +450,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           return nsInfo;
         });
       })
-    ).catch(err => this.handleAxiosError($t('tip101', 'Could not fetch metrics'), err));
+    ).catch(err => this.handleAxiosError($t('failure.metricsUnavailable', 'Could not fetch metrics'), err));
   }
 
   fetchTLS(isAscending: boolean, sortField: SortField<NamespaceInfo>) {
@@ -478,7 +484,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           };
         });
       })
-      .catch(err => this.handleAxiosError($t('tip102', 'Could not fetch TLS status'), err));
+      .catch(err => this.handleAxiosError($t('failure.tlsStatusUnavailable', 'Could not fetch TLS status'), err));
   }
 
   fetchValidations(isAscending: boolean, sortField: SortField<NamespaceInfo>) {
@@ -519,7 +525,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           }
         });
       })
-      .catch(err => this.handleAxiosError($t('tip103', 'Could not fetch validations status'), err));
+      .catch(err =>
+        this.handleAxiosError($t('failure.validationStatusUnavailable', 'Could not fetch validations status'), err)
+      );
   }
 
   fetchOutboundTrafficPolicyMode() {
@@ -529,7 +537,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       })
       .catch(error => {
         AlertUtils.addError(
-          $t('helpTip58', 'Error fetching Mesh OutboundTrafficPolicy.Mode.'),
+          $t('errorMsg.ErrorFetchingOutboundPolicy', 'Error fetching Mesh OutboundTrafficPolicy.Mode.'),
           error,
           'default',
           MessageType.ERROR
@@ -551,7 +559,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       })
       .catch(error => {
         AlertUtils.addError(
-          $t('helpTip59', 'Error fetching canary upgrade status.'),
+          $t('errorMsg.ErrorFetchingCanaryStatus', 'Error fetching canary upgrade status.'),
           error,
           'default',
           MessageType.ERROR
@@ -566,7 +574,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       })
       .catch(error => {
         AlertUtils.addError(
-          $t('helpTip60', 'Error fetching Istiod resource thresholds.'),
+          $t('errorMsg.ErrorFetchingIstiodThresholds', 'Error fetching Istiod resource thresholds.'),
           error,
           'default',
           MessageType.ERROR
@@ -648,7 +656,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
               {
                 isGroup: true,
                 isSeparator: false,
-                title: $t('Istio Config'),
+                title: $t('Istio.IstioConfig', 'Istio Config'),
                 action: (ns: string) =>
                   kioskOverviewAction(Show.ISTIO_CONFIG, ns, this.props.duration, this.props.refreshInterval)
               }
@@ -689,7 +697,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
               {
                 isGroup: true,
                 isSeparator: false,
-                title: $t('Istio Config'),
+                title: $t('Istio.IstioConfig', 'Istio Config'),
                 action: (ns: string) => this.show(Show.ISTIO_CONFIG, ns, this.state.type)
               }
             ]
@@ -713,7 +721,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           'data-test': `enable-${nsInfo.name}-namespace-sidecar-injection`,
           isGroup: false,
           isSeparator: false,
-          title: $t('AlertUtils4', 'Enable Auto Injection'),
+          title: $t('AlertUtils.EnableAutoInjection', 'Enable Auto Injection'),
           action: (ns: string) =>
             this.setState({
               showTrafficPoliciesModal: true,
@@ -1024,7 +1032,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                                     ns.labels &&
                                     ns.isAmbient && (
                                       <AmbientBadge
-                                        tooltip={$t('tip104', 'labeled as part of Ambient Mesh')}
+                                        tooltip={$t('tooltip.AmbientMeshLabel', 'labeled as part of Ambient Mesh')}
                                       ></AmbientBadge>
                                     )}
                                 </span>
@@ -1047,7 +1055,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                                   {this.renderLabels(ns)}
 
                                   <div style={{ textAlign: 'left' }}>
-                                    <div style={{ display: 'inline-block', width: '125px' }}>{$t('Istio config')}</div>
+                                    <div style={{ display: 'inline-block', width: '125px' }}>
+                                      {$t('Istio.IstioConfig', 'Istio config')}
+                                    </div>
                                     {ns.tlsStatus && (
                                       <span>
                                         <NamespaceMTLSStatus status={ns.tlsStatus.status} />
@@ -1103,7 +1113,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                                 {this.renderLabels(ns)}
 
                                 <div style={{ textAlign: 'left' }}>
-                                  <div style={{ display: 'inline-block', width: '125px' }}>{$t('Istio config')}</div>
+                                  <div style={{ display: 'inline-block', width: '125px' }}>
+                                    {$t('Istio.IstioConfig', 'Istio config')}
+                                  </div>
                                   {ns.tlsStatus && (
                                     <span>
                                       <NamespaceMTLSStatus status={ns.tlsStatus.status} />
@@ -1157,7 +1169,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             <EmptyStateHeader titleText={$t('NoUnfilteredNamespaces', 'No unfiltered namespaces')} headingLevel="h5" />
             <EmptyStateBody>
               {$t(
-                'tip291',
+                'emptyStateBody.AllNamespacesFilteredOrNoAccess',
                 'Either all namespaces are being filtered or the user has no permission to access namespaces.'
               )}
             </EmptyStateBody>

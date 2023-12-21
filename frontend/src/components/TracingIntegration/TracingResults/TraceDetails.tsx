@@ -159,7 +159,7 @@ class TraceDetailsComponent extends React.Component<Props, State> {
     return (
       <HeatMap
         xLabels={similarMatrixHeaders}
-        yLabels={[$t('Full_duration', 'Full duration'), $t('SpansAverage', 'Spans average')]}
+        yLabels={[$t('FullDuration', 'Full duration'), $t('SpansAverage', 'Spans average')]}
         data={similarMatrix}
         displayMode={'large'}
         colorMap={HeatMap.HealthColorMap}
@@ -172,7 +172,7 @@ class TraceDetailsComponent extends React.Component<Props, State> {
           const diff = _round(Math.abs(v), 2);
           const versus =
             x === similarTracesToShow.length
-              ? $t('tip386', 'the mean of all similar traces on chart')
+              ? $t('MeanOfTraces', 'the mean of all similar traces on chart')
               : similarTracesToShow[x].traceID;
           return `This trace was ${diff}ms ${slowOrFast} than ${versus}`;
         }}
@@ -215,9 +215,16 @@ class TraceDetailsComponent extends React.Component<Props, State> {
             </GridItem>
             <GridItem span={3}>
               <Tooltip
-                content={<>{$t('tip260', 'The full trace duration is (trace end time) - (trace start time).')}</>}
+                content={
+                  <>
+                    {$t(
+                      'tooltip.traceDetails.FullTraceDurationDescription',
+                      'The full trace duration is (trace end time) - (trace start time).'
+                    )}
+                  </>
+                }
               >
-                <strong>{$t('Full_duration', 'Full duration')}: </strong>
+                <strong>{$t('FullDuration', 'Full duration')}: </strong>
               </Tooltip>
               {formatDuration(trace.duration)}
               <br />
@@ -225,24 +232,25 @@ class TraceDetailsComponent extends React.Component<Props, State> {
                 content={
                   <>
                     {$t(
-                      'tip261',
+                      'tooltip.traceDetails.AverageSpanDurationDescription',
                       'The average duration of all spans within the trace. It differs from full duration, as spans can run in parallel, or there can be dead time between spans.'
                     )}
                   </>
                 }
               >
-                <strong>{$t('Spans_average_duration', 'Spans average duration')}: </strong>
+                <strong>{$t('SpansAverageDuration', 'Spans average duration')}: </strong>
               </Tooltip>
               {avgSpanDuration ? formatDuration(avgSpanDuration) : 'n/a'}
               <br />
               <br />
               {this.props.statsMatrix && (
                 <>
-                  <strong>{$t('Compared_with_metrics', 'Compared with metrics')}: </strong>
+                  <strong>{$t('ComparedWithMetrics', 'Compared with metrics')}: </strong>
                   {renderTraceHeatMap(this.props.statsMatrix, false)}
                   {!this.props.isStatsMatrixComplete && (
                     <>
-                      <WarningTriangleIcon /> {$t('tip262', 'Incomplete data, check Span Details')}
+                      <WarningTriangleIcon />{' '}
+                      {$t('tooltip.traceDetails.IncompleteDataCheckSpanDetails', 'Incomplete data, check Span Details')}
                     </>
                   )}
                 </>
@@ -251,18 +259,18 @@ class TraceDetailsComponent extends React.Component<Props, State> {
             <GridItem span={6}>
               <Tooltip
                 content={$t(
-                  'tip263',
+                  'tooltip.traceDetails.SimilarityTraceIdentificationMethod',
                   'Traces are identified as similar based on counting the number of spans and the occurrences of operation names. Only traces currently on the chart are processed.'
                 )}
               >
                 <>
-                  <InfoAltIcon /> <strong>{$t('Similar_traces', 'Similar traces')}</strong>
+                  <InfoAltIcon /> <strong>{$t('SimilarTraces', 'Similar traces')}</strong>
                   <br />
                 </>
               </Tooltip>
               {similarTraces.length > 0
                 ? this.renderSimilarHeatmap(similarTraces, trace.duration, avgSpanDuration)
-                : $t('tip264', 'No similar traces found')}
+                : $t('tooltip.traceDetails.NoSimilarTracesFoundMessage', 'No similar traces found')}
             </GridItem>
           </Grid>
         </CardBody>

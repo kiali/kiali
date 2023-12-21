@@ -15,7 +15,7 @@ export class RouteRetry extends React.Component<RouteRetryProps> {
   render() {
     return (
       <>
-        <FormGroup label={$t('AddHTTPRetry', 'Add HTTP Retry')} fieldId="retrySwitch">
+        <FormGroup label={$t('Add.HTTPRetry', 'Add HTTP Retry')} fieldId="retrySwitch">
           <Switch
             id="retrySwitch"
             label={' '}
@@ -45,7 +45,7 @@ export class RouteRetry extends React.Component<RouteRetryProps> {
               />
               <FormHelperText>
                 <HelperText>
-                  <HelperTextItem>{$t('tip379', 'Number of retries for a given request.')}</HelperTextItem>
+                  <HelperTextItem>{$t('RetryCount', 'Number of retries for a given request.')}</HelperTextItem>
                 </HelperText>
               </FormHelperText>
             </FormGroup>
@@ -68,11 +68,11 @@ export class RouteRetry extends React.Component<RouteRetryProps> {
                   <HelperTextItem>
                     {isValid(this.props.isValidRetry)
                       ? $t(
-                          'helpTip20',
+                          'HelperText.retryTimeout',
                           'Timeout per retry attempt for a given request. Format: 1h/1m/1s/1ms. MUST be >=1ms.'
                         )
                       : $t(
-                          'helpTip20',
+                          'HelperText.retryTimeout',
                           'Timeout per retry attempt for a given request. Format: 1h/1m/1s/1ms. MUST be >=1ms.'
                         )}
                   </HelperTextItem>

@@ -13,7 +13,7 @@ export class RouteTimeout extends React.Component<RouteTimeoutProps> {
   render() {
     return (
       <>
-        <FormGroup label={$t('AddHTTPTimeout', 'Add HTTP Timeout')} fieldId="timeoutSwitch">
+        <FormGroup label={$t('Add.HTTPTimeout', 'Add HTTP Timeout')} fieldId="timeoutSwitch">
           <Switch
             id="timeoutSwitch"
             label={' '}
@@ -35,7 +35,7 @@ export class RouteTimeout extends React.Component<RouteTimeoutProps> {
             <FormHelperText>
               <HelperText>
                 <HelperTextItem>
-                  {$t('helpTip21', 'Timeout for HTTP requests. Format: 1h/1m/1s/1ms. MUST be >=1ms.')}
+                  {$t('HTTP.requests.Timeout', 'Timeout for HTTP requests. Format: 1h/1m/1s/1ms. MUST be >=1ms.')}
                 </HelperTextItem>
               </HelperText>
             </FormHelperText>

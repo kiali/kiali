@@ -160,7 +160,7 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
             anySelected ? this.onBulkNone() : this.onBulkAll();
           }}
         ></Checkbox>
-        <span className={optionLabelStyle}>{$t('Select_all', 'Select all')}</span>
+        <span className={optionLabelStyle}>{$t('SelectAll', 'Select all')}</span>
       </div>
     );
   }
@@ -175,7 +175,7 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
             aria-label="filter-namespace"
             type="text"
             name="namespace-filter"
-            placeholder={$t('placeholder9', 'Filter by Name...')}
+            placeholder={$t('Filter.Name', 'Filter by Name...')}
             value={this.props.filter}
             onChange={(_event, value: string) => this.onFilterChange(value)}
           />
@@ -183,7 +183,7 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
             <Tooltip
               key="ot_clear_namespace_filter"
               position="top"
-              content={$t('ClearFilterByName', 'Clear Filter by Name')}
+              content={$t('Filter.ClearFilterByName', 'Clear Filter by Name')}
             >
               <Button className={closeButtonStyle} onClick={this.clearFilter} isInline>
                 <KialiIcon.Close />

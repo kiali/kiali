@@ -134,7 +134,7 @@ export class RuleList extends React.Component<Props> {
   };
 
   render() {
-    const noRulesMessage = this.props.action === 'DENY' ? ` ${$t('tip387')}` : $t('tip388');
+    const noRulesMessage = this.props.action === 'DENY' ? ` ${$t('DENYRequiresRule')}` : $t('NoRules');
     return (
       <>
         <Table

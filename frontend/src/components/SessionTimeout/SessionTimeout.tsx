@@ -55,10 +55,12 @@ export class SessionTimeout extends React.Component<SessionTimeoutProps, {}> {
   private textForAuthStrategy = (_strategy: AuthStrategy) => {
     const line1 =
       this.props.timeOutCountDown <= 0
-        ? $t('tip26', 'Your session has expired.')
-        : `${$t('tip27', 'Your session will expire in ')} ${this.props.timeOutCountDown.toFixed()} ${$t('seconds')}.`;
+        ? $t('login.sessionHasExpired', 'Your session has expired.')
+        : `${$t('login.sessionExpireIn', 'Your session will expire in ')} ${this.props.timeOutCountDown.toFixed()} ${$t(
+            'seconds'
+          )}.`;
 
-    const line2 = $t('tip28', 'You will need to re-login. Please save your changes, if any.');
+    const line2 = $t('login.failed.retry', 'You will need to re-login. Please save your changes, if any.');
 
     return (
       <>

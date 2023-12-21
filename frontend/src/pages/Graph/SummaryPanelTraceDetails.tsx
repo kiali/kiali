@@ -134,7 +134,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
         <div className={summaryTitle}>
           <span>Trace</span>
           <span className={closeBoxStyle}>
-            <Tooltip content={$t('tip285', 'Close and clear trace selection')}>
+            <Tooltip content={$t('tooltip.CloseClearTraceSelection', 'Close and clear trace selection')}>
               <Button id="close-trace" variant={ButtonVariant.plain} onClick={this.props.close}>
                 <CloseIcon />
               </Button>
@@ -143,7 +143,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
         </div>
         <div>
           {tracesDetailsURL ? (
-            <Tooltip content={`${$t('tip286', 'View trace details for')}: ${info.name()}`}>
+            <Tooltip content={`${$t('tooltip.ViewTraceDetailsForService', 'View trace details for')}: ${info.name()}`}>
               <Link
                 to={tracesDetailsURL}
                 onClick={() => {
@@ -171,7 +171,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
             </div>
             {info.duration() && (
               <div>
-                <strong>{$t('Full_duration', 'Full duration')}: </strong>
+                <strong>{$t('FullDuration', 'Full duration')}: </strong>
                 {info.duration()}
               </div>
             )}
@@ -179,7 +179,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
           {spans.length > 0 && (
             <div className={pStyle}>
               <div>
-                <strong>{pluralize(spans.length, 'span')}</strong> {$t('on_this_node', 'on this node')}
+                <strong>{pluralize(spans.length, 'span')}</strong> {$t('onThisNode', 'on this node')}
                 <SimplerSelect
                   selected={currentSpan?.operationName}
                   className={spanSelectStyle}
@@ -208,7 +208,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
             <>
               <br />
               <a href={jaegerTraceURL} target="_blank" rel="noopener noreferrer">
-                {$t('Show_in_Tracing', 'Show in Tracing')}{' '}
+                {$t('ShowInTracing', 'Show in Tracing')}{' '}
                 <Icon size="sm">
                   <ExternalLinkAltIcon />
                 </Icon>
@@ -239,7 +239,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
     return (
       <>
         <div>
-          <strong>{$t('Started after')}: </strong>
+          <strong>{$t('StartedAfter', 'Started after')}: </strong>
           {formatDuration(span.relativeStartTime)}
         </div>
         <div>
@@ -262,7 +262,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
                 }
               }}
             >
-              {$t('Show_span', 'Show span')}
+              {$t('ShowSpan', 'Show span')}
             </Link>
           </div>
         )}

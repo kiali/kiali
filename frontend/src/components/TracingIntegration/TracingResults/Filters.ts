@@ -4,7 +4,7 @@ import { RichSpanData } from 'types/TracingInfo';
 const byWorkload = (workloads: FilterValue[]): RunnableFilter<RichSpanData> => {
   return {
     category: 'Workload',
-    placeholder: $t('placeholder10', 'Filter by Workload'),
+    placeholder: $t('Filter.Workload', 'Filter by Workload'),
     filterType: AllFilterTypes.typeAhead,
     action: FILTER_ACTION_APPEND,
     filterValues: workloads,
@@ -15,7 +15,7 @@ const byWorkload = (workloads: FilterValue[]): RunnableFilter<RichSpanData> => {
 const byApp = (apps: FilterValue[]): RunnableFilter<RichSpanData> => {
   return {
     category: 'App',
-    placeholder: $t('placeholder11', 'Filter by App'),
+    placeholder: $t('Filter.App', 'Filter by App'),
     filterType: AllFilterTypes.typeAhead,
     action: FILTER_ACTION_APPEND,
     filterValues: apps,
@@ -26,7 +26,7 @@ const byApp = (apps: FilterValue[]): RunnableFilter<RichSpanData> => {
 const byComponent = (components: FilterValue[]): RunnableFilter<RichSpanData> => {
   return {
     category: 'Component',
-    placeholder: $t('placeholder12', 'Filter by Span Component'),
+    placeholder: $t('Filter.SpanComponent', 'Filter by Span Component'),
     filterType: AllFilterTypes.typeAhead,
     action: FILTER_ACTION_APPEND,
     filterValues: components,
@@ -37,7 +37,7 @@ const byComponent = (components: FilterValue[]): RunnableFilter<RichSpanData> =>
 const byOperation = (ops: FilterValue[]): RunnableFilter<RichSpanData> => {
   return {
     category: 'Operation',
-    placeholder: $t('placeholder13', 'Filter by Operation Name'),
+    placeholder: $t('Filter.OperationName', 'Filter by Operation Name'),
     filterType: AllFilterTypes.typeAhead,
     action: FILTER_ACTION_APPEND,
     filterValues: ops,
@@ -47,7 +47,7 @@ const byOperation = (ops: FilterValue[]): RunnableFilter<RichSpanData> => {
 
 const byError: RunnableFilter<RichSpanData> = {
   category: 'Error',
-  placeholder: $t('placeholder14', 'Filter by Error'),
+  placeholder: $t('Filter.Error', 'Filter by Error'),
   filterType: AllFilterTypes.select,
   action: FILTER_ACTION_UPDATE,
   filterValues: [

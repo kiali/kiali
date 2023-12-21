@@ -159,7 +159,10 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
       .catch(istioError => {
         console.log(istioError);
         if (!istioError.isCanceled) {
-          this.handleAxiosError($t('tip79', 'Could not fetch Istio objects list'), istioError);
+          this.handleAxiosError(
+            $t('failure.istioObjectsListUnavailable', 'Could not fetch Istio objects list'),
+            istioError
+          );
         }
       });
   }

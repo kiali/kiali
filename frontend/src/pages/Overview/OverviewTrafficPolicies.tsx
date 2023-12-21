@@ -146,7 +146,10 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
         this.props.load();
       })
       .catch(error => {
-        AlertUtils.addError($t('helpTip61', 'Could not update namespace ') + this.props.nsTarget, error);
+        AlertUtils.addError(
+          $t('failure.couldNotUpdateNamespace', 'Could not update namespace ') + this.props.nsTarget,
+          error
+        );
       });
   };
 
@@ -158,7 +161,10 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
         this.props.load();
       })
       .catch(error => {
-        AlertUtils.addError($t('helpTip61', 'Could not update namespace ') + this.props.nsTarget, error);
+        AlertUtils.addError(
+          $t('failure.couldNotUpdateNamespace', 'Could not update namespace ') + this.props.nsTarget,
+          error
+        );
       });
   };
 
@@ -192,7 +198,10 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
         })
         .catch(errorDelete => {
           if (!errorDelete.isCanceled) {
-            AlertUtils.addError(`${$t('helpTip62', 'Could not delete traffic policies.')} `, errorDelete);
+            AlertUtils.addError(
+              `${$t('failure.couldNotDeleteTrafficPolicies', 'Could not delete traffic policies.')} `,
+              errorDelete
+            );
           }
         });
     } else {
@@ -235,9 +244,9 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
     });
     graphDataSource.on('fetchError', (errorMessage: string | null) => {
       if (errorMessage !== '') {
-        errorMessage = `${$t('tip41', 'Could not fetch traffic data')}: ` + errorMessage;
+        errorMessage = `${$t('failure.trafficDataUnavailable', 'Could not fetch traffic data')}: ` + errorMessage;
       } else {
-        errorMessage = $t('tip42', 'Could not fetch traffic data.');
+        errorMessage = $t('failure.trafficDataUnavailable', 'Could not fetch traffic data.');
       }
       AlertUtils.addError(errorMessage);
     });

@@ -487,7 +487,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
                       {$t('Replay')}
                     </Badge>
                   )}
-                  {!isReplayReady && this.props.replayActive && $t('tip287', 'click Play to start')}
+                  {!isReplayReady && this.props.replayActive && $t('StartOnClick', 'click Play to start')}
                   {!isReplayReady && !this.props.replayActive && `${this.displayTimeRange()}`}
                   {isReplayReady && `${this.displayTimeRange()}`}
                 </Chip>
@@ -645,7 +645,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     if (event.isOutOfMesh) {
       AlertUtils.add(
         $t(
-          'tip47',
+          'AlertUtils.MissingSidecarNoTelemetry',
           'A node with a missing sidecar provides no node-specific telemetry and can not provide a node detail graph.'
         ),
         undefined,
@@ -655,7 +655,10 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     }
     if (event.isIdle) {
       AlertUtils.add(
-        $t('tip48', 'An idle node has no node-specific traffic and can not provide a node detail graph.'),
+        $t(
+          'AlertUtils.IdleNodeNoTraffic',
+          'An idle node has no node-specific traffic and can not provide a node detail graph.'
+        ),
         undefined,
         MessageType.WARNING
       );
@@ -819,7 +822,10 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
         triggerRefresh();
       })
       .catch(error => {
-        AlertUtils.addError($t('tip49', 'Could not delete Istio config objects.'), error);
+        AlertUtils.addError(
+          $t('failure.istioConfigObjectsDeletionFailed', 'Could not delete Istio config objects.'),
+          error
+        );
       });
   };
 
@@ -866,8 +872,8 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
 
   private notifyError = (error: Error, _componentStack: string) => {
     AlertUtils.add(
-      `${$t('tip363', 'There was an error when rendering the graph')}: ${error.message}, ${$t(
-        'tip364',
+      `${$t('GraphRenderError', 'There was an error when rendering the graph')}: ${error.message}, ${$t(
+        'TryAlternateLayout',
         'please try a different layout'
       )}`
     );

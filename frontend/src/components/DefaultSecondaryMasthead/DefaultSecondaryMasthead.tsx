@@ -52,7 +52,7 @@ class DefaultSecondaryMastheadComponent extends React.Component<Props> {
         const objectType = path.substring(10);
         title = $t('Create') + ' ' + objectType;
       } else if (path === 'istio') {
-        title = $t('Istio Config');
+        title = $t('Istio.IstioConfig', 'Istio Config');
       } else if (path === 'mesh') {
         title = $t('Clusters');
       }
@@ -66,7 +66,7 @@ class DefaultSecondaryMastheadComponent extends React.Component<Props> {
               <div>
                 <KialiIcon.Warning /> <b>{$t('tip10', 'Istio API is disabled.')}</b>{' '}
                 {$t(
-                  'tip168',
+                  'Istio.IstioAPIDisabled',
                   'Be careful when creating the configuration as the Istio config validations are disabled when the Istio API is disabled.'
                 )}
               </div>

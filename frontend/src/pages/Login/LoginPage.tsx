@@ -99,7 +99,7 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
           filledInputs: true
         });
       } else {
-        const message = $t('helpTip52', 'Please, provide a Service Account token.');
+        const message = $t('HelperText.provideServiceAccountToken', 'Please, provide a Service Account token.');
 
         this.setState({
           showHelperText: true,
@@ -129,12 +129,12 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
       if (urlParams.get('error_description')) {
         console.warn(`Authentication error_description: ${urlParams.get('error_description')}`);
         messagesArray.push(
-          this.renderMessage($t('helpTip53', 'Authentication failed!'), AlertVariant.danger, 'idp-err')
+          this.renderMessage($t('errorMsg.AuthFailed!', 'Authentication failed!'), AlertVariant.danger, 'idp-err')
         );
       } else {
         console.warn(`Authentication error: ${urlParams.get('error')}`);
         messagesArray.push(
-          this.renderMessage($t('helpTip54', 'Authentication failed.'), AlertVariant.danger, 'idp-err')
+          this.renderMessage($t('errorMsg.AuthFailed.', 'Authentication failed.'), AlertVariant.danger, 'idp-err')
         );
       }
     }
@@ -148,7 +148,7 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
     if (this.props.status === LoginStatus.expired) {
       messages.push(
         this.renderMessage(
-          $t('helpTip55', 'Your session has expired or was terminated in another window.'),
+          $t('HelperText.sessionExpiredOrTerminated', 'Your session has expired or was terminated in another window.'),
           AlertVariant.warning,
           'sessionExpired'
         )
@@ -179,7 +179,11 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
     if (urlParams.get('openid_error')) {
       console.warn(`Authentication openid_error: ${urlParams.get('openid_error')}`);
       messages.push(
-        this.renderMessage($t('helpTip56', 'OpenID authentication failed.'), AlertVariant.danger, 'openid-err')
+        this.renderMessage(
+          $t('errorMsg.OpenIDAuthFailed', 'OpenID authentication failed.'),
+          AlertVariant.danger,
+          'openid-err'
+        )
       );
     }
 
@@ -271,7 +275,7 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
         brandImgSrc={kialiLogoDark}
         brandImgAlt="Kiali logo"
         footerListItems={listItem}
-        textContent={$t('label10', 'Service mesh management for Istio.')}
+        textContent={$t('IstioServiceMeshMgr', 'Service mesh management for Istio.')}
         loginTitle={$t('LogInKiali', 'Log in Kiali')}
         className={loginStyle}
       >

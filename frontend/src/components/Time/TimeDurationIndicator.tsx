@@ -73,7 +73,12 @@ class TimeDurationIndicatorComponent extends React.PureComponent<Props> {
         maxWidth={'50em'}
         content={
           <>
-            <p>{$t('tip258', 'Select the time range of shown data, and the refresh interval.')}</p>
+            <p>
+              {$t(
+                'tooltip.SelectTimeRangeRefreshInterval',
+                'Select the time range of shown data, and the refresh interval.'
+              )}
+            </p>
             <p style={{ whiteSpace: 'nowrap' }}>
               {this.timeDurationDetailLabel()}: {this.timeDurationDetail()}
               <br />

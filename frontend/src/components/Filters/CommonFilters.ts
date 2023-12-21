@@ -16,13 +16,13 @@ export const presenceValues: FilterValue[] = [
   },
   {
     id: 'notpresent',
-    title: $t('Not_Present', 'Not Present')
+    title: $t('NotPresent', 'Not Present')
   }
 ];
 
 export const istioSidecarFilter: FilterType = {
   category: 'Istio Sidecar',
-  placeholder: $t('placeholder32', 'Filter by Istio Sidecar Validation'),
+  placeholder: $t('Filter.IstioSidecarValidation', 'Filter by Istio Sidecar Validation'),
   filterType: AllFilterTypes.select,
   action: FILTER_ACTION_UPDATE,
   filterValues: presenceValues
@@ -30,7 +30,7 @@ export const istioSidecarFilter: FilterType = {
 
 export const healthFilter: FilterType = {
   category: 'Health',
-  placeholder: $t('placeholder33', 'Filter by Health'),
+  placeholder: $t('Filter.Health', 'Filter by Health'),
   filterType: AllFilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: [
@@ -59,7 +59,7 @@ export const healthFilter: FilterType = {
 
 export const labelFilter: FilterType = {
   category: 'Label',
-  placeholder: $t('placeholder34', 'Filter by Label'),
+  placeholder: $t('Filter.Label', 'Filter by Label'),
   filterType: AllFilterTypes.label,
   action: FILTER_ACTION_APPEND,
   filterValues: []

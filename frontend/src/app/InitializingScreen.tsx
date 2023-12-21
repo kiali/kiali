@@ -91,7 +91,7 @@ export const InitializingScreen: React.FC<initializingScreenProps> = (props: ini
           ) : null}
         </div>
       ) : (
-        <h1>{$t('tip159', 'Loading...')}</h1>
+        <h1>{$t('placeholder.Loading', 'Loading...')}</h1>
       )}
     </div>
   );

@@ -182,7 +182,7 @@ export class ServiceDescription extends React.Component<ServiceInfoDescriptionPr
           {this.props.serviceDetails && showServiceLabels && (
             <Labels
               labels={this.props.serviceDetails.service.labels}
-              tooltipMessage={$t('tip107', 'Labels defined on the Service')}
+              tooltipMessage={$t('tooltip.ServiceLabels', 'Labels defined on the Service')}
             />
           )}
           {this.props.serviceDetails && (

@@ -55,7 +55,7 @@ export const sortFields: SortField<NamespaceInfo>[] = [
   },
   {
     id: 'config',
-    title: $t('Istio Config'),
+    title: $t('Istio.IstioConfig', 'Istio Config'),
     isNumeric: false,
     param: 'ic',
     compare: (a: NamespaceInfo, b: NamespaceInfo) => {

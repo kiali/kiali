@@ -101,21 +101,21 @@ const getClassName = (isError: boolean, isSpan: boolean): string | undefined => 
 
 const cells: SortableCell<RichSpanData>[] = [
   {
-    title: $t('Timeline'),
+    title: $t('cellsTitle.Timeline', 'Timeline'),
     transforms: [sortable],
     compare: (a, b) => a.startTime - b.startTime
   },
   {
-    title: $t('title6', 'App / Workload'),
+    title: $t('cellsTitle.App/Workload', 'App / Workload'),
     transforms: [sortable],
     compare: (a, b) => compareNullable(a.workload, b.workload, (a2, b2) => a2.localeCompare(b2))
   },
   {
-    title: $t('Summary'),
+    title: $t('cellsTitle.Summary', 'Summary'),
     transforms: []
   },
   {
-    title: $t('Statistics'),
+    title: $t('cellsTitle.Statistics', 'Statistics'),
     transforms: [sortable],
     compare: (a, b) => a.duration - b.duration
   }
@@ -165,8 +165,10 @@ class SpanTableComponent extends React.Component<Props, State> {
             <tr>
               <td colSpan={cells.length}>
                 <EmptyState variant={EmptyStateVariant.full}>
-                  <EmptyStateHeader titleText={$t('NoSpansFound', 'No spans found')} headingLevel="h5" />
-                  <EmptyStateBody>{$t('tip36', 'No spans match the current filters')}</EmptyStateBody>
+                  <EmptyStateHeader titleText={$t('emptyStateHeader.NoSpans', 'No spans found')} headingLevel="h5" />
+                  <EmptyStateBody>
+                    {$t('emptyStateBody.NoMatchingSpans', 'No spans match the current filters')}
+                  </EmptyStateBody>
                 </EmptyState>
               </td>
             </tr>
@@ -232,7 +234,7 @@ class SpanTableComponent extends React.Component<Props, State> {
         )
       },
       {
-        title: $t('Inbound Metrics'),
+        title: $t('InboundMetrics', 'Inbound Metrics'),
         onClick: (_event, _rowId, rowData, _extra) => {
           const href = rowData.item.linkToApp + getParamsSeparator(rowData.item.linkToApp) + 'tab=in_metrics';
           if (parentKiosk) {
@@ -243,7 +245,7 @@ class SpanTableComponent extends React.Component<Props, State> {
         }
       },
       {
-        title: $t('Outbound Metrics'),
+        title: $t('OutboundMetrics', 'Outbound Metrics'),
         onClick: (_event, _rowId, rowData, _extra) => {
           const href = rowData.item.linkToApp + getParamsSeparator(rowData.item.linkToApp) + 'tab=out_metrics';
           if (parentKiosk) {
@@ -278,7 +280,7 @@ class SpanTableComponent extends React.Component<Props, State> {
           }
         },
         {
-          title: $t('Inbound Metrics'),
+          title: $t('InboundMetrics', 'Inbound Metrics'),
           onClick: (_event, _rowId, rowData, _extra) => {
             const href =
               rowData.item.linkToWorkload + getParamsSeparator(rowData.item.linkToWorkload) + 'tab=in_metrics';
@@ -290,7 +292,7 @@ class SpanTableComponent extends React.Component<Props, State> {
           }
         },
         {
-          title: $t('Outbound Metrics'),
+          title: $t('OutboundMetrics', 'Outbound Metrics'),
           onClick: (_event, _rowId, rowData, _extra) => {
             const href =
               rowData.item.linkToWorkload + getParamsSeparator(rowData.item.linkToWorkload) + 'tab=out_metrics';
@@ -407,7 +409,7 @@ class SpanTableComponent extends React.Component<Props, State> {
             <Icon key={`${key}-err-ic`} color={PFColors.Danger}>
               <ExclamationCircleIcon />
             </Icon>{' '}
-            <strong key={`${key}-err-msg`}>{$t('tip361', 'This span reported an error')}</strong>
+            <strong key={`${key}-err-msg`}>{$t('SpanErrorReported', 'This span reported an error')}</strong>
           </div>
         )}
         <div key={`${key}-op`}>

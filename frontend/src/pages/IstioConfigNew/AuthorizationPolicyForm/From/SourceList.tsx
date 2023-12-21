@@ -11,7 +11,7 @@ type Props = {
 
 const headerCells: ICell[] = [
   {
-    title: $t('title31', 'Source Matches of a Request'),
+    title: $t('cellsTitle.Request.SourceMatchesReq', 'Source Matches of a Request'),
     transforms: [cellWidth(100) as any],
     props: {}
   },
@@ -76,7 +76,7 @@ export class SourceList extends React.Component<Props> {
           <TableBody />
         </Table>
         {this.props.fromList.length === 0 && (
-          <div className={noSourceStyle}>{$t('tip360', 'No Source Matches Defined')}</div>
+          <div className={noSourceStyle}>{$t('NoMatchingSources', 'No Source Matches Defined')}</div>
         )}
       </>
     );

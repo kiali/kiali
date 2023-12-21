@@ -127,10 +127,10 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
         });
       })
       .catch(error => {
-        AlertUtils.addError($t('helpTip67', 'Could not fetch Workload.'), error);
+        AlertUtils.addError($t('failure.workloadUnavailable', 'Could not fetch Workload.'), error);
         const msg: ErrorMsg = {
-          title: $t('title36', 'No Workload is selected'),
-          description: this.props.workloadId.workload + ` ${$t('title8', 'No App is selected')}`
+          title: $t('errorMsg.NoWorkload', 'No Workload is selected'),
+          description: this.props.workloadId.workload + ` ${$t('errorMsg.NoApp', 'No App is selected')}`
         };
         this.setState({ error: msg });
       });
@@ -184,7 +184,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
                 headingLevel="h5"
               />
               <EmptyStateBody>
-                {$t('tip353', 'There are no logs to display because the workload has no pods.')}
+                {$t('emptyStateBody.NoLogsNoPods', 'There are no logs to display because the workload has no pods.')}
               </EmptyStateBody>
             </EmptyState>
           )}
@@ -194,7 +194,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     }
 
     const inTab = (
-      <Tab title={$t('Inbound Metrics')} eventKey={3} key={'Inbound Metrics'}>
+      <Tab title={$t('InboundMetrics', 'Inbound Metrics')} eventKey={3} key={'Inbound Metrics'}>
         <IstioMetrics
           data-test="inbound-metrics-component"
           lastRefreshAt={this.props.lastRefreshAt}
@@ -209,7 +209,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     tabsArray.push(inTab);
 
     const outTab = (
-      <Tab title={$t('Outbound Metrics')} eventKey={4} key={'Outbound Metrics'}>
+      <Tab title={$t('OutboundMetrics', 'Outbound Metrics')} eventKey={4} key={'Outbound Metrics'}>
         <IstioMetrics
           data-test="outbound-metrics-component"
           lastRefreshAt={this.props.lastRefreshAt}

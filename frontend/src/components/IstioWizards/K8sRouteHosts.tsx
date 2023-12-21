@@ -40,11 +40,11 @@ export class K8sRouteHosts extends React.Component<Props> {
               <HelperTextItem>
                 {isValid(this.props.valid)
                   ? $t(
-                      'helpTip13',
+                      'HelperText.routeTrafficHosts',
                       'The route hosts to which traffic is being sent. Enter one or multiple hosts separated by comma.'
                     )
                   : $t(
-                      'helpTip11',
+                      'HelperText.k8sAPIHostsNoIPs',
                       "K8s API Gateway hosts should be specified using FQDN format or '*.' format. IPs are not allowed."
                     )}
               </HelperTextItem>

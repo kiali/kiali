@@ -82,7 +82,7 @@ export const renderMetricsComparison = (
           <Tooltip
             key={`${key}-tt`}
             content={$t(
-              'tip37',
+              'tooltip.HeatmapDurationComparison',
               'This heatmap is a comparison matrix of this request duration against duration statistics aggregated over time. Move the pointer over cells to get more details.'
             )}
           >
@@ -97,7 +97,7 @@ export const renderMetricsComparison = (
     );
   }
   return (
-    <Tooltip key={`${key}-tt`} content={$t('tip38', 'Click to load more statistics for this reques')}>
+    <Tooltip key={`${key}-tt`} content={$t('tooltip.LoadMoreStats', 'Click to load more statistics for this reques')}>
       <Button key={`${key}-load`} onClick={load} variant={ButtonVariant.link}>
         <strong key={`${key}-load-title`}>{$t('LoadStatistics', 'Load statistics')}</strong>
       </Button>

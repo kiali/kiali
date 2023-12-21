@@ -94,28 +94,28 @@ export interface ProxyStatus {
 }
 
 export const FAILURE: Status = {
-  name: $t('Failure'),
+  name: $t('legendData.Failure', 'Failure'),
   color: PFColors.Danger,
   priority: 4,
   icon: ExclamationCircleIcon,
   class: 'icon-failure'
 };
 export const DEGRADED: Status = {
-  name: $t('Degraded'),
+  name: $t('legendData.Degraded', 'Degraded'),
   color: PFColors.Warning,
   priority: 3,
   icon: ExclamationTriangleIcon,
   class: 'icon-degraded'
 };
 export const NOT_READY: Status = {
-  name: $t('NotReady', 'Not Ready'),
+  name: $t('legendData.NotReady', 'Not Ready'),
   color: PFColors.InfoBackground,
   priority: 2,
   icon: MinusCircleIcon,
   class: 'icon-idle'
 };
 export const HEALTHY: Status = {
-  name: $t('Healthy'),
+  name: $t('legendData.Healthy', 'Healthy'),
   color: PFColors.Success,
   priority: 1,
   icon: CheckCircleIcon,
@@ -362,7 +362,7 @@ export class ServiceHealth extends Health {
       items.push({
         title: TRAFFICSTATUS,
         status: NA,
-        text: $t('NoIstioSidecar', 'No Istio sidecar')
+        text: $t('Istio.NoIstioSidecar', 'No Istio sidecar')
       });
     }
     return { items, statusConfig };

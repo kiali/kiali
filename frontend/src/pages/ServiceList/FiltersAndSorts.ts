@@ -34,7 +34,7 @@ export const sortFields: SortField<ServiceListItem>[] = [
   },
   {
     id: 'servicename',
-    title: $t('Service Name'),
+    title: $t('ServiceName', 'Service Name'),
     isNumeric: false,
     param: 'sn',
     compare: (a: ServiceListItem, b: ServiceListItem) => a.name.localeCompare(b.name)
@@ -152,7 +152,7 @@ export const sortFields: SortField<ServiceListItem>[] = [
 
 const serviceNameFilter: FilterType = {
   category: 'Service Name',
-  placeholder: $t('placeholder26', 'Filter by Service Name'),
+  placeholder: $t('Filter.ServiceName', 'Filter by Service Name'),
   filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: []
@@ -160,7 +160,7 @@ const serviceNameFilter: FilterType = {
 
 const serviceTypeFilter: FilterType = {
   category: 'Service Type',
-  placeholder: $t('placeholder27', 'Filter by Service Type'),
+  placeholder: $t('Filter.ServiceType', 'Filter by Service Type'),
   filterType: AllFilterTypes.typeAhead,
   action: FILTER_ACTION_APPEND,
   filterValues: [
@@ -278,7 +278,7 @@ const healthToggle: ToggleType = {
 };
 
 const istioResourcesToggle: ToggleType = {
-  label: $t('IstioResourcesDetail', 'Istio Resources Detail'),
+  label: $t('Istio.IstioResourcesDetail', 'Istio Resources Detail'),
   name: 'istioResources',
   isChecked: true
 };

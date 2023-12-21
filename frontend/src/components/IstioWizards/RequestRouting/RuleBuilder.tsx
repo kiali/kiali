@@ -103,7 +103,7 @@ export class RuleBuilder extends React.Component<Props, State> {
               />
             </div>
           </Tab>
-          <Tab eventKey={2} title={$t('FaultInjection', 'Fault Injection')} data-test={'Fault Injection'}>
+          <Tab eventKey={2} title={$t('legendData.FaultInjection', 'Fault Injection')} data-test={'Fault Injection'}>
             <div style={{ marginTop: '10px' }}>
               <FaultInjection
                 initFaultInjectionRoute={this.props.faultInjectionRoute}

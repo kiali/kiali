@@ -223,7 +223,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     return (
       <div id="summary-panel-graph" className={panelStyle} style={SummaryPanelGraph.panelStyle}>
         <div id="summary-panel-graph-heading" className={panelHeadingStyle}>
-          {getTitle($t('Current_Graph', 'Current Graph'))}
+          {getTitle($t('CurrentGraph', 'Current Graph'))}
           {this.renderNamespacesSummary()}
           <br />
           {this.renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
@@ -232,19 +232,22 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
           <SimpleTabs id="graph_summary_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
             <Tooltip
               id="tooltip-inbound"
-              content={$t('tip62', 'Traffic entering from traffic sources.')}
+              content={$t('tooltip.InboundSourcesTraffic', 'Traffic entering from traffic sources.')}
               entryDelay={1250}
               triggerRef={tooltipInboundRef}
             />
             <Tooltip
               id="tooltip-outbound"
-              content={$t('tip63', 'Traffic exiting the requested namespaces.')}
+              content={$t('tooltip.OutboundRequestedNamespacesTraffic', 'Traffic exiting the requested namespaces.')}
               entryDelay={1250}
               triggerRef={tooltipOutboundRef}
             />
             <Tooltip
               id="tooltip-total"
-              content={$t('tip64', 'All inbound, outbound and traffic within the requested namespaces.')}
+              content={$t(
+                'tooltip.AllRequestedNamespacesTraffic',
+                'All inbound, outbound and traffic within the requested namespaces.'
+              )}
               entryDelay={1250}
               triggerRef={tooltipTotalRef}
             />
@@ -252,7 +255,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
               <div style={summaryFont}>
                 {grpcIn.rate === 0 && httpIn.rate === 0 && tcpIn.rate === 0 && (
                   <>
-                    <KialiIcon.Info /> {$t('tip282', 'No inbound traffic.')}
+                    <KialiIcon.Info /> {$t('noInboundTraffic', 'No inbound traffic.')}
                   </>
                 )}
                 {grpcIn.rate > 0 && isGrpcRequests && (
@@ -265,7 +268,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
                 )}
                 {httpIn.rate > 0 && (
                   <RateTableHttp
-                    title={`${$t('title15', 'HTTP (requests per second)')}:`}
+                    title={`${$t('HTTP.requests.perSecond', 'HTTP (requests per second)')}:`}
                     rate={httpIn.rate}
                     rate3xx={httpIn.rate3xx}
                     rate4xx={httpIn.rate4xx}
@@ -284,7 +287,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
               <div style={summaryFont}>
                 {grpcOut.rate === 0 && httpOut.rate === 0 && tcpOut.rate === 0 && (
                   <>
-                    <KialiIcon.Info /> {$t('tip283', 'No outbound traffic.')}
+                    <KialiIcon.Info /> {$t('noOutboundTraffic', 'No outbound traffic.')}
                   </>
                 )}
                 {grpcOut.rate > 0 && (
@@ -297,7 +300,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
                 )}
                 {httpOut.rate > 0 && (
                   <RateTableHttp
-                    title={`${$t('title15', 'HTTP (requests per second)')}:`}
+                    title={`${$t('HTTP.requests.perSecond', 'HTTP (requests per second)')}:`}
                     rate={httpOut.rate}
                     rate3xx={httpOut.rate3xx}
                     rate4xx={httpOut.rate4xx}
@@ -316,7 +319,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
               <div style={summaryFont}>
                 {grpcTotal.rate === 0 && httpTotal.rate === 0 && tcpTotal.rate === 0 && (
                   <>
-                    <KialiIcon.Info /> {$t('tip284', 'No traffic.')}
+                    <KialiIcon.Info /> {$t('noTraffic', 'No traffic.')}
                   </>
                 )}
                 {grpcTotal.rate > 0 && (
@@ -329,7 +332,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
                 )}
                 {httpTotal.rate > 0 && (
                   <RateTableHttp
-                    title={`${$t('title15', 'HTTP (requests per second)')}:`}
+                    title={`${$t('HTTP.requests.perSecond', 'HTTP (requests per second)')}:`}
                     rate={httpTotal.rate}
                     rate3xx={httpTotal.rate3xx}
                     rate4xx={httpTotal.rate4xx}
@@ -543,11 +546,11 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
 
   private renderCharts = () => {
     if (this.state.loading) {
-      return <strong>{$t('tip65', 'Loading chart...')}</strong>;
+      return <strong>{$t('placeholder.LoadingChart', 'Loading chart...')}</strong>;
     } else if (this.state.metricsLoadError) {
       return (
         <div>
-          <KialiIcon.Warning /> <strong>{$t('Error_loading_metrics', 'Error loading metrics')}: </strong>
+          <KialiIcon.Warning /> <strong>{$t('ErrorLoadingMetrics', 'Error loading metrics')}: </strong>
           {this.state.metricsLoadError}
         </div>
       );
@@ -564,12 +567,12 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
         {grpcTotal.rate > 0 && isGrpcRequests && (
           <>
             <RequestChart
-              label={$t('title16', 'gRPC - Inbound Request Traffic')}
+              label={$t('gRPC.Traffic.InboundRequest', 'gRPC - Inbound Request Traffic')}
               dataRps={this.state.grpcRequestIn}
               dataErrors={this.state.grpcRequestErrIn}
             />
             <RequestChart
-              label={$t('title18', 'gRPC - Outbound Request Traffic')}
+              label={$t('gRPC.Traffic.OutboundRequest', 'gRPC - Outbound Request Traffic')}
               dataRps={this.state.grpcRequestOut}
               dataErrors={this.state.grpcRequestErrOut}
             />
@@ -578,13 +581,13 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
         {grpcTotal.rate > 0 && !isGrpcRequests && (
           <>
             <StreamChart
-              label={$t('title19', 'gRPC - Inbound Traffic')}
+              label={$t('gRPC.Traffic.Inbound', 'gRPC - Inbound Traffic')}
               receivedRates={this.state.grpcReceivedIn}
               sentRates={this.state.grpcSentIn}
               unit="messages"
             />
             <StreamChart
-              label={$t('title20', 'gRPC - Outbound Traffic')}
+              label={$t('gRPC.Traffic.Outbound', 'gRPC - Outbound Traffic')}
               receivedRates={this.state.grpcReceivedOut}
               sentRates={this.state.grpcSentOut}
               unit="messages"
@@ -594,12 +597,12 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
         {httpTotal.rate > 0 && (
           <>
             <RequestChart
-              label={$t('title21', 'HTTP - Inbound Request Traffic')}
+              label={$t('HTTP.Traffic.InboundRequest', 'HTTP - Inbound Request Traffic')}
               dataRps={this.state.httpRequestIn}
               dataErrors={this.state.httpRequestErrIn}
             />
             <RequestChart
-              label={$t('title22', 'HTTP - Outbound Request Traffic')}
+              label={$t('HTTP.Traffic.OutboundRequest', 'HTTP - Outbound Request Traffic')}
               dataRps={this.state.httpRequestOut}
               dataErrors={this.state.httpRequestErrOut}
             />
@@ -608,13 +611,13 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
         {tcpTotal.rate > 0 && (
           <>
             <StreamChart
-              label={$t('title23', 'TCP - Inbound Traffic')}
+              label={$t('TCP.Traffic.Inbound', 'TCP - Inbound Traffic')}
               receivedRates={this.state.tcpReceivedIn}
               sentRates={this.state.tcpSentIn}
               unit="bytes"
             />
             <StreamChart
-              label={$t('title24', 'TCP - Outbound Traffic')}
+              label={$t('TCP.Traffic.Outbound', 'TCP - Outbound Traffic')}
               receivedRates={this.state.tcpReceivedOut}
               sentRates={this.state.tcpSentOut}
               unit="bytes"

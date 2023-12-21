@@ -242,7 +242,9 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
               }
             }}
           />
-          <span className={checkboxSelectAllStyle}>{$t('tip249', 'Select all metric/label filters')}</span>
+          <span className={checkboxSelectAllStyle}>
+            {$t('selectAllMetricLabelFilters', 'Select all metric/label filters')}
+          </span>
         </div>
         <Divider />
       </div>
@@ -355,7 +357,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
             <div style={{ textAlign: 'left' }}>
               <div>
                 {$t(
-                  'tip250',
+                  'tooltip.NoHistogramDataAvailable',
                   "'No data available' is displayed for a histogram that does not have telemetry supporting the selected option. If no histograms support the necessary telemetry, the option will be disabled."
                 )}
               </div>

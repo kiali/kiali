@@ -71,17 +71,17 @@ const IstioCertsInfoComponent: React.FC<IstioCertsInfoProps> = (props: IstioCert
         </GridItem>
         <GridItem span={9}>{certInfo.issuer}</GridItem>
         <GridItem span={3}>
-          <b>{$t('Valid_from', 'Valid from')}</b>
+          <b>{$t('ValidFrom', 'Valid from')}</b>
         </GridItem>
         <GridItem span={9}>{certInfo.notBefore}</GridItem>
         <GridItem span={3}>
-          <b>{$t('Valid_until', 'Valid until')}</b>
+          <b>{$t('ValidUntil', 'Valid until')}</b>
         </GridItem>
         <GridItem span={9}>{certInfo.notAfter}</GridItem>
         {certInfo.dnsNames && (
           <>
             <GridItem span={3}>
-              <b>{$t('DNS_Names', 'DNS Names')}</b>
+              <b>{$t('DNSNames', 'DNS Names')}</b>
             </GridItem>
             <GridItem span={9}>
               {certInfo.dnsNames && certInfo.dnsNames.map((dnsName, index) => <li key={index}>{dnsName}</li>)}
@@ -97,11 +97,13 @@ const IstioCertsInfoComponent: React.FC<IstioCertsInfoProps> = (props: IstioCert
       variant={ModalVariant.small}
       isOpen={props.isOpen}
       onClose={props.onClose}
-      title={$t('"Certificates information"')}
+      title={$t('CertificatesInformation', 'Certificates information')}
       actions={[<Button onClick={close}>{$t('Close')}</Button>]}
     >
       {certsError && (
-        <p style={{ color: PFColors.Danger }}>{$t('tip230', 'An error occurred getting certificates information')}</p>
+        <p style={{ color: PFColors.Danger }}>
+          {$t('errorMsg.ErrorGettingCertsInfo', 'An error occurred getting certificates information')}
+        </p>
       )}
       <ul>
         {props.certsInfo &&
@@ -119,7 +121,7 @@ const IstioCertsInfoComponent: React.FC<IstioCertsInfoProps> = (props: IstioCert
                     <GridItem span={12}>
                       {certInfo.error && (
                         <p style={{ color: PFColors.Danger }}>
-                          {$t('AnErrorOccurred', 'An error occurred')}, {certInfo.error}
+                          {$t('AlertTitle.ErrorOccurred', 'An error occurred')}, {certInfo.error}
                         </p>
                       )}
                       {!certInfo.accessible && (
@@ -135,7 +137,7 @@ const IstioCertsInfoComponent: React.FC<IstioCertsInfoProps> = (props: IstioCert
                               </p>
                               <p style={{ marginTop: '20px' }}>
                                 {$t(
-                                  'tip385',
+                                  'AddPermissionRef',
                                   'Refer to the Kiali documentation for details on how you can add this permission.'
                                 )}
                               </p>
@@ -143,7 +145,7 @@ const IstioCertsInfoComponent: React.FC<IstioCertsInfoProps> = (props: IstioCert
                           }
                         >
                           <span>
-                            {$t('Access_denied', 'Access denied')} <KialiIcon.Warning className={infoStyle} />
+                            {$t('AccessDenied', 'Access denied')} <KialiIcon.Warning className={infoStyle} />
                           </span>
                         </Tooltip>
                       )}

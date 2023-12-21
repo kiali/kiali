@@ -206,9 +206,9 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
 
   private graphDsFetchError = (errorMessage: string | null) => {
     if (errorMessage !== '') {
-      errorMessage = `${$t('tip41', 'Could not fetch traffic data')}: ` + errorMessage;
+      errorMessage = `${$t('failure.trafficDataUnavailable', 'Could not fetch traffic data')}: ` + errorMessage;
     } else {
-      errorMessage = $t('tip42', 'Could not fetch traffic data.');
+      errorMessage = $t('failure.trafficDataUnavailable', 'Could not fetch traffic data.');
     }
 
     AlertUtils.addError(errorMessage);

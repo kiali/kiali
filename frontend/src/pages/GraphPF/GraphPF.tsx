@@ -359,7 +359,7 @@ export const TopologyContent: React.FC<{
         if (parent) {
           parent.children?.push(node.id);
         } else {
-          console.error(`${$t('tip384', 'Could not find parent node')} |${parentId}|`);
+          console.error(`${$t('failure.parentNodeNotFound', 'Could not find parent node')} |${parentId}|`);
         }
       }
 
@@ -688,7 +688,7 @@ export const TopologyContent: React.FC<{
                     id: 'toolbar_layout_dagre',
                     disabled: LayoutName.Dagre === layoutName,
                     icon: <TopologyIcon />,
-                    tooltip: $t('tip71', 'Layout - dagre'),
+                    tooltip: $t('Layout.dagre', 'Layout - dagre'),
                     callback: () => {
                       setLayoutName(LayoutName.Dagre);
                     }
@@ -698,7 +698,7 @@ export const TopologyContent: React.FC<{
                     id: 'toolbar_layout_grid',
                     disabled: LayoutName.Grid === layoutName,
                     icon: <TopologyIcon />,
-                    tooltip: $t('tip72', 'Layout - grid'),
+                    tooltip: $t('Layout.grid', 'Layout - grid'),
                     callback: () => {
                       setLayoutName(LayoutName.Grid);
                     }
@@ -708,7 +708,7 @@ export const TopologyContent: React.FC<{
                     id: 'toolbar_layout_concentric',
                     disabled: LayoutName.Concentric === layoutName,
                     icon: <TopologyIcon />,
-                    tooltip: $t('tip73', 'Layout - concentric'),
+                    tooltip: $t('Layout.concentric', 'Layout - concentric'),
                     callback: () => {
                       setLayoutName(LayoutName.Concentric);
                     }
@@ -718,7 +718,7 @@ export const TopologyContent: React.FC<{
                     id: 'toolbar_layout_breadth_first',
                     disabled: LayoutName.BreadthFirst === layoutName,
                     icon: <TopologyIcon />,
-                    tooltip: $t('tip74', 'Layout - breadth first'),
+                    tooltip: $t('Layout.breadthFirst', 'Layout - breadth first'),
                     callback: () => {
                       setLayoutName(LayoutName.BreadthFirst);
                     }

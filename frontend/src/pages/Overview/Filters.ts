@@ -12,7 +12,7 @@ import { TextInputTypes } from '@patternfly/react-core';
 
 export const nameFilter: RunnableFilter<NamespaceInfo> = {
   category: 'Namespace',
-  placeholder: $t('placeholder22', 'Filter by Namespace'),
+  placeholder: $t('Filter.Namespace', 'Filter by Namespace'),
   filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: [],
@@ -35,7 +35,7 @@ const statusMap = new Map<string, string>([
 
 export const mtlsFilter: RunnableFilter<NamespaceInfo> = {
   category: 'mTLS',
-  placeholder: $t('placeholder23', 'Filter by mTLS'),
+  placeholder: $t('Filter.mTLS', 'Filter by mTLS'),
   filterType: AllFilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: mtlsValues,
@@ -46,7 +46,7 @@ export const mtlsFilter: RunnableFilter<NamespaceInfo> = {
 
 export const labelFilter: RunnableFilter<NamespaceInfo> = {
   category: 'Namespace Label',
-  placeholder: $t('placeholder24', 'Filter by Namespace Label'),
+  placeholder: $t('Filter.NamespaceLabel', 'Filter by Namespace Label'),
   filterType: AllFilterTypes.nsLabel,
   action: FILTER_ACTION_APPEND,
   filterValues: [],
@@ -111,7 +111,7 @@ const summarizeHealthFilters = (healthFilters: ActiveFiltersInfo) => {
 
 export const healthFilter: RunnableFilter<NamespaceInfo> = {
   category: 'Health',
-  placeholder: $t('placeholder25', 'Filter by Application Health'),
+  placeholder: $t('Filter.ApplicationHealth', 'Filter by Application Health'),
   filterType: AllFilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: healthValues,

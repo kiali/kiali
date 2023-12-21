@@ -121,7 +121,7 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
             anySelected ? this.onBulkNone() : this.onBulkAll();
           }}
         ></Checkbox>
-        <span className={optionLabelStyle}>{$t('Select_all', 'Select all')}</span>
+        <span className={optionLabelStyle}>{$t('SelectAll', 'Select all')}</span>
       </div>
     );
   }
@@ -136,7 +136,7 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
             aria-label="filter-cluster"
             type="text"
             name="cluster-filter"
-            placeholder={$t('placeholder9', 'Filter by Name...')}
+            placeholder={$t('Filter.Name', 'Filter by Name...')}
             value={this.props.filter}
             onChange={(_event, value: string) => this.onFilterChange(value)}
           />
@@ -144,7 +144,7 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
             <Tooltip
               key="ot_clear_cluster_filter"
               position="top"
-              content={$t('ClearFilterByName', 'Clear Filter by Name')}
+              content={$t('Filter.ClearFilterByName', 'Clear Filter by Name')}
             >
               <Button className={closeButtonStyle} onClick={this.clearFilter} isInline>
                 <KialiIcon.Close />

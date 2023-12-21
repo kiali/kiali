@@ -15,7 +15,7 @@ export class DelayFault extends React.Component<DelayFaultProps> {
   render() {
     return (
       <>
-        <FormGroup label={$t('AddHTTPDelay', 'Add HTTP Delay')} fieldId="delaySwitch">
+        <FormGroup label={$t('Add.HTTPDelay', 'Add HTTP Delay')} fieldId="delaySwitch">
           <Switch
             id="delaySwitch"
             label={' '}
@@ -47,7 +47,10 @@ export class DelayFault extends React.Component<DelayFaultProps> {
             <FormHelperText>
               <HelperText>
                 <HelperTextItem>
-                  {$t('helpTip7', 'Percentage of requests on which the delay will be injected.')}
+                  {$t(
+                    'HelperText.delayInjectionPercentage',
+                    'Percentage of requests on which the delay will be injected.'
+                  )}
                 </HelperTextItem>
               </HelperText>
             </FormHelperText>
@@ -71,7 +74,7 @@ export class DelayFault extends React.Component<DelayFaultProps> {
               <HelperText>
                 <HelperTextItem>
                   {$t(
-                    'helpTip6',
+                    'HelperText.delayForwarding',
                     'Add a fixed delay before forwarding the request. Format: 1h/1m/1s/1ms. MUST be >=1ms.'
                   )}
                 </HelperTextItem>

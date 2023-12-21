@@ -45,7 +45,7 @@ export class GraphHelpFind extends React.Component<GraphHelpFindProps> {
       overflowY: 'hidden'
     });
     const preface = $t(
-      'tip46',
+      'GraphHelpFind.UseFindAndHideInGraph',
       "You can use the Find and Hide fields to highlight or hide graph edges and nodes. Each field accepts expressions using the language described below. Preset expressions are available via the dropdown. Hide takes precedence when using Find and Hide together. Uncheck the 'Compressed Hide' Display option for hidden elements to retain their space."
     );
 
@@ -68,7 +68,7 @@ export class GraphHelpFind extends React.Component<GraphHelpFindProps> {
           shouldClose={this.props.onClose}
           headerContent={
             <div>
-              <span>{$t('Graph_Find_Hide', 'Graph Find/Hide')}</span>
+              <span>{$t('GraphFindOrHide', 'Graph Find/Hide')}</span>
             </div>
           }
           bodyContent={
@@ -119,7 +119,7 @@ export class GraphHelpFind extends React.Component<GraphHelpFindProps> {
                     <TableBody />
                   </Table>
                 </Tab>
-                <Tab style={tabFont} eventKey={4} title={$t('UsageNotes')}>
+                <Tab style={tabFont} eventKey={4} title={$t('UsageNotes', 'Usage Notes')}>
                   <Table
                     header={<></>}
                     variant={TableVariant.compact}
@@ -234,7 +234,13 @@ export class GraphHelpFind extends React.Component<GraphHelpFindProps> {
   };
 
   private noteColumns = (): ICell[] => {
-    return [{ title: $t('Usage Note'), transforms: [cellWidth(10) as any], props: { style: { align: 'text-left' } } }];
+    return [
+      {
+        title: $t('UsageNotes', 'Usage Note'),
+        transforms: [cellWidth(10) as any],
+        props: { style: { align: 'text-left' } }
+      }
+    ];
   };
   private noteRows = (): string[][] => {
     return [

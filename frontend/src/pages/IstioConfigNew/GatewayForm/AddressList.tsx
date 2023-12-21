@@ -89,7 +89,7 @@ export class AddressList extends React.Component<Props> {
                   onClick={this.onAddAddress}
                   className={addAddressStyle}
                 >
-                  {$t('action7', 'Add Address to Addresses List')}
+                  {$t('Add.Addresses', 'Add Address to Addresses List')}
                 </Button>
               </Td>
             </Tr>

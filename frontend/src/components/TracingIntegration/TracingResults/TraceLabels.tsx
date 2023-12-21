@@ -51,7 +51,7 @@ export const TraceLabels = (p: Props) => {
       {!p.oneline && <br />}
       {errors === 0 ? (
         <Label className={whiteLabelStyle} style={{ margin: 10, backgroundColor: PFColors.Success }}>
-          {$t('tip39', '0 Spans with error')}
+          {$t('labelContent.0SpansWithError', '0 Spans with error')}
         </Label>
       ) : (
         <Label

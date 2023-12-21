@@ -34,7 +34,7 @@ export const sortFields: SortField<AppListItem>[] = [
   },
   {
     id: 'appname',
-    title: $t('App Name'),
+    title: $t('AppName', 'App Name'),
     isNumeric: false,
     param: 'wn',
     compare: (a, b) => a.name.localeCompare(b.name)
@@ -110,7 +110,7 @@ export const sortFields: SortField<AppListItem>[] = [
 
 const appNameFilter: FilterType = {
   category: 'App Name',
-  placeholder: $t('placeholder15', 'Filter by App Name'),
+  placeholder: $t('Filter.AppName', 'Filter by App Name'),
   filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: []
@@ -193,7 +193,7 @@ const healthToggle: ToggleType = {
 };
 
 const istioResourcesToggle: ToggleType = {
-  label: $t('IstioResourcesDetail', 'Istio Resources Detail'),
+  label: $t('Istio.IstioResourcesDetail', 'Istio Resources Detail'),
   name: 'istioResources',
   isChecked: true
 };

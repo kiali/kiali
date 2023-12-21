@@ -7,7 +7,7 @@ export const sortFields: SortField<TrafficListItem>[] = [
   {
     // index 0 is default sort
     id: 'trafficstatus',
-    title: $t('Traffic_Status', 'Traffic Status'),
+    title: $t('TrafficStatus', 'Traffic Status'),
     isNumeric: false,
     param: 'ts',
     compare: (a: TrafficListItem, b: TrafficListItem) => b.healthStatus.status.priority - a.healthStatus.status.priority // worst health first asc

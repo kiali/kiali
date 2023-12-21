@@ -192,7 +192,10 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
                 <FormHelperText>
                   <HelperText>
                     <HelperTextItem>
-                      {$t('helpTip8', "VirtualService Host '*' wildcard not allowed on mesh gateway.")}
+                      {$t(
+                        'HelperText.noWildcardOnMeshGateway',
+                        "VirtualService Host '*' wildcard not allowed on mesh gateway."
+                      )}
                     </HelperTextItem>
                   </HelperText>
                 </FormHelperText>
@@ -230,7 +233,7 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
                     ))}
                   </FormSelect>
                 )}
-                {this.props.gateways.length === 0 && <>{$t('tip298', 'There are no gateways to select.')}</>}
+                {this.props.gateways.length === 0 && <>{$t('NoGatewaySelected', 'There are no gateways to select.')}</>}
               </FormGroup>
             )}
             {this.state.newGateway && (
@@ -245,7 +248,7 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
                     onChange={(_event, value) => this.onFormChange(GatewayForm.PORT, value)}
                   />
                 </FormGroup>
-                <FormGroup fieldId="gwHosts" label={$t('Gateway Hosts')}>
+                <FormGroup fieldId="gwHosts" label={$t('GatewayHosts', 'Gateway Hosts')}>
                   <TextInput
                     id="gwHosts"
                     name="gwHosts"
@@ -259,10 +262,13 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
                       <HelperTextItem>
                         {isValid(this.state.gwHostsValid)
                           ? $t(
-                              'helpTip9',
+                              'HelperText.exposeHosts',
                               'One or more hosts exposed by this gateway. Enter one or multiple hosts separated by comma.'
                             )
-                          : $t('helpTip10', "Gateway hosts should be specified using FQDN format or '*' wildcard.")}
+                          : $t(
+                              'HelperText.FQDNOrWildcard',
+                              "Gateway hosts should be specified using FQDN format or '*' wildcard."
+                            )}
                       </HelperTextItem>
                     </HelperText>
                   </FormHelperText>

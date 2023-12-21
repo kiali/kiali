@@ -699,7 +699,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         items.push({
           type: 'destinationrule',
           items: [this.state.previews.dr],
-          title: $t('Destination_Rule', 'Destination Rule')
+          title: $t('DestinationRule', 'Destination Rule')
         });
       }
       if (this.state.previews.gw) {
@@ -716,14 +716,14 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         items.push({
           type: 'k8shttproute',
           items: [this.state.previews.k8shttproute],
-          title: $t('K8s_HTTPRoute', 'K8s HTTPRoute')
+          title: $t('K8sHTTPRoute', 'K8s HTTPRoute')
         });
       }
       if (this.state.previews.pa) {
         items.push({
           type: 'peerauthentications',
           items: [this.state.previews.pa],
-          title: $t('Peer_Authentication', 'Peer Authentication')
+          title: $t('PeerAuthentication', 'Peer Authentication')
         });
       }
       if (this.state.previews.vs) {
@@ -815,9 +815,9 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
           />
           {!this.props.istioAPIEnabled && (
             <div style={{ padding: ' 0 0 20px 0' }}>
-              <KialiIcon.Warning /> <b>{$t('tip10', 'Istio API is disabled.')}</b>{' '}
+              <KialiIcon.Warning /> <b>{$t('Istio.IstioConfig', 'Istio API is disabled.')}</b>{' '}
               {$t(
-                'tip11',
+                'Istio.CautionEditIstioConfig',
                 'Be careful when editing the configuration as the Istio config validations are disabled when the Istio API is disabled.'
               )}
             </div>
@@ -879,7 +879,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               className={advancedOptionsStyle}
               isExpanded={this.state.showAdvanced}
               toggleText={
-                (this.state.showAdvanced ? $t('Hide') : $t('Show')) + $t('Advanced_Options', ' Advanced Options')
+                (this.state.showAdvanced ? $t('Hide') : $t('Show')) + $t('AdvancedOptions', ' Advanced Options')
               }
               contentId={(this.state.showAdvanced ? 'hide' : 'show') + '_advanced_options'}
               onToggle={() => {
@@ -952,7 +952,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               className={advancedOptionsStyle}
               isExpanded={this.state.showAdvanced}
               toggleText={
-                (this.state.showAdvanced ? $t('Hide') : $t('Show')) + $t('Advanced_Options', ' Advanced Options')
+                (this.state.showAdvanced ? $t('Hide') : $t('Show')) + $t('AdvancedOptions', ' Advanced Options')
               }
               contentId={(this.state.showAdvanced ? 'hide' : 'show') + '_advanced_options'}
               onToggle={() => {

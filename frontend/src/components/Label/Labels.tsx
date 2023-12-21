@@ -68,7 +68,7 @@ export class Labels extends React.Component<Props, State> {
           className={linkStyle}
           onClick={this.expandLabels}
         >
-          {$t('placeholder46', 'More labels...')}
+          {$t('placeholder.MoreLabels', 'More labels...')}
         </Button>
       );
     }

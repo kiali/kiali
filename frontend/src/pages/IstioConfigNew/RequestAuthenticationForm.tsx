@@ -146,7 +146,10 @@ export class RequestAuthenticationForm extends React.Component<Props, RequestAut
   render() {
     return (
       <>
-        <FormGroup label={$t('WorkloadSelector', 'Workload Selector')} fieldId="workloadSelectorSwitch">
+        <FormGroup
+          label={$t('AuthorizationPolicyForm.WorkloadSel', 'Workload Selector')}
+          fieldId="workloadSelectorSwitch"
+        >
           <Switch
             id="workloadSelectorSwitch"
             label={' '}
@@ -170,11 +173,11 @@ export class RequestAuthenticationForm extends React.Component<Props, RequestAut
                 <HelperTextItem>
                   {isValid(this.state.workloadSelectorValid)
                     ? $t(
-                        'helpTip47',
+                        'HelperText.requestAuthenticationWorkloadLabels',
                         'One or more labels to select a workload where the RequestAuthentication is applied.'
                       )
                     : $t(
-                        'helpTip46',
+                        'AuthorizationPolicyForm.EnterLabelFormat',
                         'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'
                       )}
                 </HelperTextItem>

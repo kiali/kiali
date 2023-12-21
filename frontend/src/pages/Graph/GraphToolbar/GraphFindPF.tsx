@@ -310,7 +310,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
                   onChange={(_event, val) => this.updateFind(val)}
                   defaultValue={this.state.findInputValue}
                   onKeyDownCapture={this.checkSpecialKeyFind}
-                  placeholder={$t('placeholder16', 'Find...')}
+                  placeholder={$t('placeholder.Find', 'Find...')}
                 />
                 {this.state.findError && (
                   <FormHelperText>
@@ -325,7 +325,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
               <FormGroup className={graphFindStyle}>
                 <GraphFindOptions kind="find" onSelect={this.updateFindOption} />
                 {this.props.findValue && (
-                  <Tooltip key="ot_clear_find" position="top" content={$t('placeholder39', 'Clear Find...')}>
+                  <Tooltip key="ot_clear_find" position="top" content={$t('placeholder.ClearFind', 'Clear Find...')}>
                     <Button
                       className={buttonClearStyle}
                       variant={ButtonVariant.control}
@@ -351,7 +351,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
                   onChange={(_event, val) => this.updateHide(val)}
                   defaultValue={this.state.hideInputValue}
                   onKeyDownCapture={this.checkSpecialKeyHide}
-                  placeholder={$t('placeholder17', 'Hide...')}
+                  placeholder={$t('placeholder.Hide', 'Hide...')}
                 />
                 {this.state.hideError && (
                   <FormHelperText>
@@ -366,7 +366,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
               <FormGroup className={graphFindStyle}>
                 <GraphFindOptions kind="hide" onSelect={this.updateHideOption} />
                 {this.props.hideValue && (
-                  <Tooltip key="ot_clear_hide" position="top" content={$t('placeholder40', 'Clear Hide...')}>
+                  <Tooltip key="ot_clear_hide" position="top" content={$t('placeholder.ClearHide', 'Clear Hide...')}>
                     <Button
                       className={buttonClearStyle}
                       variant={ButtonVariant.control}
@@ -392,7 +392,11 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
             </Button>
           </GraphHelpFind>
         ) : (
-          <Tooltip key={'ot_graph_find_help'} position="top" content={$t('placeholder41', 'Find/Hide Help...')}>
+          <Tooltip
+            key={'ot_graph_find_help'}
+            position="top"
+            content={$t('placeholder.FindOrHideHelp', 'Find/Hide Help...')}
+          >
             <Button
               data-test="graph-find-hide-help-button"
               variant={ButtonVariant.link}
@@ -697,7 +701,10 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
         if (!target) {
           target = parsedExpression.target;
         } else if (target !== parsedExpression.target) {
-          this.setError($t('AlertUtils13', 'Invalid expression. Can not AND node and edge criteria.'), isFind);
+          this.setError(
+            $t('AlertUtils.InvalidAndCriteria', 'Invalid expression. Can not AND node and edge criteria.'),
+            isFind
+          );
           return { nodeSelector: undefined, edgeSelector: undefined };
         }
 
@@ -794,17 +801,21 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
     }
     if (!op) {
       if (expression.split(' ').length > 1) {
-        return this.setError($t('tip50', 'No valid operator found in expression'), isFind);
+        return this.setError($t('errorMsg.NoValidOperator', 'No valid operator found in expression'), isFind);
       }
 
       const unaryExpression = this.parseUnaryFindExpression(expression.trim(), false);
-      return unaryExpression ? unaryExpression : this.setError($t('tip51', 'Invalid Node or Edge operand'), isFind);
+      return unaryExpression
+        ? unaryExpression
+        : this.setError($t('errorMsg.InvalidNodeOrEdge', 'Invalid Node or Edge operand'), isFind);
     }
 
     const tokens = expression.split(op);
     if (op === '!') {
       const unaryExpression = this.parseUnaryFindExpression(tokens[1].trim(), true);
-      return unaryExpression ? unaryExpression : this.setError($t('tip51', 'Invalid Node or Edge operand'), isFind);
+      return unaryExpression
+        ? unaryExpression
+        : this.setError($t('errorMsg.InvalidNodeOrEdge', 'Invalid Node or Edge operand'), isFind);
     }
 
     const field = tokens[0].trim();
@@ -837,7 +848,10 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
       case 'name': {
         const isNegation = op.startsWith('!');
         if (conjunctive) {
-          return this.setError($t('tip52', "Can not use 'AND' with 'name' operand"), isFind);
+          return this.setError(
+            $t('GraphHelpFind.CannotUseANDWithNameOperand', "Can not use 'AND' with 'name' operand"),
+            isFind
+          );
         }
         const agg = { prop: NodeAttr.aggregateValue, op: op, val: val };
         const app = { prop: NodeAttr.app, op: op, val: val };
@@ -883,7 +897,9 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
         return { target: 'node', selector: { prop: NodeAttr.aggregateValue, op: op, val: val } };
       case 'rank': {
         if (!this.props.showRank) {
-          AlertUtils.addSuccess($t('AlertUtils7', "Enabling 'Rank' display option for graph find/hide expression"));
+          AlertUtils.addSuccess(
+            $t('AlertUtils.EnableRankDisplay', "Enabling 'Rank' display option for graph find/hide expression")
+          );
           this.props.toggleRank();
         }
 
@@ -891,7 +907,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
         if (Number.isNaN(valAsNum) || valAsNum < 1 || valAsNum > 100) {
           return this.setError(
             `${$t('InvalidRankRange', 'Invalid rank range')} [${val}]. ${$t(
-              'tip369',
+              'RequireRange1to100',
               'Expected a number between 1..100'
             )}`,
             isFind
@@ -921,7 +937,9 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
       //
       case 'destprincipal':
         if (!this.props.showSecurity) {
-          AlertUtils.addSuccess($t('AlertUtils8', "Enabling 'Security' display option for graph find/hide expression"));
+          AlertUtils.addSuccess(
+            $t('AlertUtils.EnableSecurityDisplay', "Enabling 'Security' display option for graph find/hide expression")
+          );
           this.props.toggleGraphSecurity();
         }
         return { target: 'edge', selector: { prop: EdgeAttr.destPrincipal, op: op, val: val } };
@@ -958,7 +976,10 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
       case 'responsetime': {
         if (!this.props.edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_GROUP)) {
           AlertUtils.addSuccess(
-            $t('AlertUtils9', "Enabling [P95] 'Response Time' edge labels for this graph find/hide expression")
+            $t(
+              'AlertUtils.EnableP95ResponseTimeLabels',
+              "Enabling [P95] 'Response Time' edge labels for this graph find/hide expression"
+            )
           );
           this.props.setEdgeLabels([
             ...this.props.edgeLabels,
@@ -972,7 +993,10 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
       case 'sourceprincipal':
         if (!this.props.showSecurity) {
           AlertUtils.addSuccess(
-            $t('AlertUtils10', "Enabling 'Security' display option for this graph find/hide expression")
+            $t(
+              'AlertUtils.EnableSecurityDisplay',
+              "Enabling 'Security' display option for this graph find/hide expression"
+            )
           );
           this.props.toggleGraphSecurity();
         }
@@ -984,7 +1008,10 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
       case 'throughput': {
         if (!this.props.edgeLabels.includes(EdgeLabelMode.THROUGHPUT_GROUP)) {
           AlertUtils.addSuccess(
-            $t('AlertUtils11', "Enabling [Request] 'Throughput' edge labels for this graph find/hide expression")
+            $t(
+              'AlertUtils.EnableRequestThroughputLabels',
+              "Enabling [Request] 'Throughput' edge labels for this graph find/hide expression"
+            )
           );
           this.props.setEdgeLabels([
             ...this.props.edgeLabels,
@@ -1023,7 +1050,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
         if (isNaN(val)) {
           return this.setError(
             `${$t('InvalidValue', 'Invalid value')} [${val}]. ${$t(
-              'tip368',
+              'RequireNumericInput',
               "Expected a numeric value (use '.' for decimals)"
             )}`,
             isFind
@@ -1079,7 +1106,12 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
         };
       case 'idle':
         if (!this.props.showIdleNodes) {
-          AlertUtils.addSuccess($t('tip366', "Enabling 'Idle nodes' display option for graph find/hide expression"));
+          AlertUtils.addSuccess(
+            $t(
+              'AlertUtils.EnableIdleNodesDisplay',
+              "Enabling 'Idle nodes' display option for graph find/hide expression"
+            )
+          );
           this.props.toggleIdleNodes();
         }
         return { target: 'node', selector: { prop: NodeAttr.isIdle, op: isNegation ? 'falsy' : 'truthy' } };
@@ -1138,7 +1170,9 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
       //
       case 'mtls':
         if (!this.props.showSecurity) {
-          AlertUtils.addSuccess($t('tip367', "Enabling 'Security' display option for graph find/hide expression"));
+          AlertUtils.addSuccess(
+            $t('AlertUtils.EnableSecurityDisplay', "Enabling 'Security' display option for graph find/hide expression")
+          );
           this.props.toggleGraphSecurity();
         }
         return { target: 'edge', selector: { prop: EdgeAttr.isMTLS, op: isNegation ? '<=' : '>', val: 0 } };

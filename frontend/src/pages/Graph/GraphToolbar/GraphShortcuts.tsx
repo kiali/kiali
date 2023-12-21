@@ -7,15 +7,30 @@ interface Shortcut {
 }
 
 const shortcuts: Shortcut[] = [
-  { shortcut: $t('MouseWheel', 'Mouse wheel'), description: $t('Zoom') },
-  { shortcut: $t('ClickDrag', 'Click + Drag'), description: $t('Panning') },
-  { shortcut: $t('ShiftDrag', 'Shift + Drag'), description: $t('SelectZoomArea', 'Select zoom area') },
-  { shortcut: $t('RightClick', 'Right click'), description: $t('description14', 'Contextual menu on nodes') },
   {
-    shortcut: $t('SingleClick', 'Single click'),
-    description: $t('description15', 'Details in side panel on nodes and edges')
+    shortcut: $t('shortcuts.MouseWheel.shortcut', 'Mouse wheel'),
+    description: $t('shortcuts.MouseWheel.description', 'Zoom')
   },
-  { shortcut: $t('DoubleClick', 'Double click'), description: $t('description16', 'Drill into a node details graph') }
+  {
+    shortcut: $t('shortcuts.ClickDrag.shortcut', 'Click + Drag'),
+    description: $t('shortcuts.ClickDrag.description', 'Panning')
+  },
+  {
+    shortcut: $t('shortcuts.ShiftDrag.shortcut', 'Shift + Drag'),
+    description: $t('shortcuts.ShiftDrag.description', 'Select zoom area')
+  },
+  {
+    shortcut: $t('shortcuts.RightClick.shortcut', 'Right click'),
+    description: $t('shortcuts.RightClick.description', 'Contextual menu on nodes')
+  },
+  {
+    shortcut: $t('shortcuts.SingleClick.shortcut', 'Single click'),
+    description: $t('shortcuts.SingleClick.description', 'Details in side panel on nodes and edges')
+  },
+  {
+    shortcut: $t('shortcuts.DoubleClick.shortcut', 'Double click'),
+    description: $t('shortcuts.DoubleClick.description', 'Drill into a node details graph')
+  }
 ];
 
 const makeShortcut = (shortcut: Shortcut): JSX.Element => {

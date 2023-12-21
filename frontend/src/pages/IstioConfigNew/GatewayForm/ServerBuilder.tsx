@@ -38,7 +38,7 @@ type State = {
 
 const portHeader = [
   {
-    title: $t('PortNumber', 'Port Number'),
+    title: $t('PeerAuthenticationForm.PortNumber', 'Port Number'),
     transforms: [cellWidth(20) as any],
     props: {}
   },
@@ -189,8 +189,11 @@ export class ServerBuilder extends React.Component<Props, State> {
               <HelperText>
                 <HelperTextItem>
                   {isValid(areValidHosts(this.props.server.hosts))
-                    ? $t('helpTip41', 'One or more hosts exposed by this Gateway.')
-                    : $t('helpTip42', 'Invalid hosts for this Gateway. Enter one or more hosts separated by comma.')}
+                    ? $t('HelperText.exposedGatewayHosts', 'One or more hosts exposed by this Gateway.')
+                    : $t(
+                        'HelperText.invalidGatewayHosts',
+                        'Invalid hosts for this Gateway. Enter one or more hosts separated by comma.'
+                      )}
                 </HelperTextItem>
               </HelperText>
             </FormHelperText>
@@ -243,7 +246,10 @@ export class ServerBuilder extends React.Component<Props, State> {
                   <FormHelperText>
                     <HelperText>
                       <HelperTextItem>
-                        {$t('tip372', 'The path to the file holding the server-side TLS certificate to use.')}
+                        {$t(
+                          'ServerTLSCertPath',
+                          'The path to the file holding the server-side TLS certificate to use.'
+                        )}
                       </HelperTextItem>
                     </HelperText>
                   </FormHelperText>
@@ -269,7 +275,10 @@ export class ServerBuilder extends React.Component<Props, State> {
                   <FormHelperText>
                     <HelperText>
                       <HelperTextItem>
-                        {$t('helpTip43', 'The path to the file holding the server’s private key.')}
+                        {$t(
+                          'HelperText.serverPrivateKeyPath',
+                          'The path to the file holding the server’s private key.'
+                        )}
                       </HelperTextItem>
                     </HelperText>
                   </FormHelperText>
@@ -299,7 +308,7 @@ export class ServerBuilder extends React.Component<Props, State> {
                   <HelperText>
                     <HelperTextItem>
                       {$t(
-                        'helpTip44',
+                        'HelperText.caCertificatePath',
                         'The path to a file containing certificate authority certificates to use in verifying a presented  client side certificate.'
                       )}
                     </HelperTextItem>

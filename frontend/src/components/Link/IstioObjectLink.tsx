@@ -87,7 +87,10 @@ export class ReferenceIstioObjectLink extends React.Component<ReferenceIstioObje
             position={TooltipPosition.right}
             content={
               <div style={{ textAlign: 'left' }}>
-                {$t('helpTip38', "The reserved word, 'mesh', implies all of the sidecars in the mesh")}
+                {$t(
+                  'HelperText.meshForAllSidecars',
+                  "The reserved word, 'mesh', implies all of the sidecars in the mesh"
+                )}
               </div>
             }
           >

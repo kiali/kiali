@@ -40,7 +40,7 @@ export class OutlierDetection extends React.Component<Props> {
             <FormHelperText>
               <HelperText>
                 <HelperTextItem>
-                  {$t('helpTip4', 'Number of errors before a host is ejected from the connection pool.')}
+                  {$t('HelperText.errorsLimit', 'Number of errors before a host is ejected from the connection pool.')}
                 </HelperTextItem>
               </HelperText>
             </FormHelperText>

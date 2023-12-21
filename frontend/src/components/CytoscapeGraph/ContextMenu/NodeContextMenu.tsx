@@ -118,11 +118,11 @@ export function NodeContextMenuComponent(props: Props) {
   // TODO: Deduplicate
   function getDropdownItemTooltipMessage(): string {
     if (serverConfig.deployment.viewOnlyMode) {
-      return $t('permissionTip', 'User does not have permission');
+      return $t('userNopermissionTip', 'User does not have permission');
     } else if (hasServiceDetailsTrafficRouting(serviceDetails)) {
-      return $t('helpTip23', 'Traffic routing already exists for this service');
+      return $t('HelperText.routingExistsForService', 'Traffic routing already exists for this service');
     } else {
-      return $t('helpTip25', "Traffic routing doesn't exists for this service");
+      return $t('HelperText.routingNotFoundForService', "Traffic routing doesn't exists for this service");
     }
   }
 
@@ -390,11 +390,14 @@ const getOptionsFromLinkParams = (linkParams: LinkParams, tracingInfo?: TracingI
       options.push({ text: $t('Logs'), url: `${detailsPageUrl}${concat}tab=logs` });
     }
     options.push({
-      text: $t('Inbound Metrics'),
+      text: $t('InboundMetrics', 'Inbound Metrics'),
       url: `${detailsPageUrl}${concat}tab=${type === Paths.SERVICES ? 'metrics' : 'in_metrics'}`
     });
     if (type !== Paths.SERVICES) {
-      options.push({ text: $t('Outbound Metrics'), url: `${detailsPageUrl}${concat}tab=out_metrics` });
+      options.push({
+        text: $t('OutboundMetrics', 'Outbound Metrics'),
+        url: `${detailsPageUrl}${concat}tab=out_metrics`
+      });
     }
     if (type === Paths.APPLICATIONS && tracingInfo && tracingInfo.enabled) {
       if (tracingInfo.integration) {

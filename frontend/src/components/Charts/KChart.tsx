@@ -230,7 +230,7 @@ export class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, 
       >
         <EmptyState variant={EmptyStateVariant.sm} className={emptyStyle}>
           {this.props.isMaximized && <EmptyStateIcon icon={CubesIcon} />}
-          <EmptyStateBody className={emptyStyle}>{$t('NoDataAvailable')}</EmptyStateBody>
+          <EmptyStateBody className={emptyStyle}>{$t('emptyStateBody.NoData', 'No data available')}</EmptyStateBody>
         </EmptyState>
       </div>
     ) : undefined;
@@ -255,7 +255,7 @@ export class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, 
             />
           )}
           <EmptyStateBody className={emptyStyle}>
-            {$t('tip160', 'An error occured while fetching this metric')}:
+            {$t('emptyStateBody.FetchMetricError', 'An error occured while fetching this metric')}:
             <p>
               <i>{this.props.chart.error}</i>
             </p>

@@ -109,27 +109,27 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
           <SimpleTabs id="graph_summary_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
             <Tooltip
               id="tooltip-inbound"
-              content={$t('tip53', 'Traffic entering from another cluster.')}
+              content={$t('tooltip.InboundClusterTraffic', 'Traffic entering from another cluster.')}
               entryDelay={1250}
               triggerRef={tooltipInboundRef}
             />
             <Tooltip
               id="tooltip-outbound"
-              content={$t('tip54', 'Traffic exiting to another cluster.')}
+              content={$t('tooltip.OutboundClusterTraffic', 'Traffic exiting to another cluster.')}
               entryDelay={1250}
               triggerRef={tooltipOutboundRef}
             />
             <Tooltip
               id="tooltip-total"
-              content={$t('tip55', 'All inbound, outbound and internal cluster traffic.')}
+              content={$t('tooltip.TotalClusterTraffic', 'All inbound, outbound and internal cluster traffic.')}
               entryDelay={1250}
               triggerRef={tooltipTotalRef}
             />
-            <Tab style={summaryFont} title={$t('"Inbound"')} eventKey={0} ref={tooltipInboundRef}>
+            <Tab style={summaryFont} title={$t('Inbound')} eventKey={0} ref={tooltipInboundRef}>
               <div style={summaryFont}>
                 {grpcIn.rate === 0 && httpIn.rate === 0 && tcpIn.rate === 0 && (
                   <>
-                    <KialiIcon.Info /> {$t('tip282', 'No inbound traffic.')}
+                    <KialiIcon.Info /> {$t('noInboundTraffic', 'No inbound traffic.')}
                   </>
                 )}
                 {grpcIn.rate > 0 && (
@@ -142,7 +142,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
                 )}
                 {httpIn.rate > 0 && (
                   <RateTableHttp
-                    title={`${$t('title15', 'HTTP (requests per second)')}:`}
+                    title={`${$t('HTTP.requests.perSecond', 'HTTP (requests per second)')}:`}
                     rate={httpIn.rate}
                     rate3xx={httpIn.rate3xx}
                     rate4xx={httpIn.rate4xx}
@@ -161,7 +161,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
               <div style={summaryFont}>
                 {grpcOut.rate === 0 && httpOut.rate === 0 && tcpOut.rate === 0 && (
                   <>
-                    <KialiIcon.Info /> {$t('tip283', 'No outbound traffic.')}
+                    <KialiIcon.Info /> {$t('noOutboundTraffic', 'No outbound traffic.')}
                   </>
                 )}
                 {grpcOut.rate > 0 && (
@@ -174,7 +174,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
                 )}
                 {httpOut.rate > 0 && (
                   <RateTableHttp
-                    title={`${$t('title15', 'HTTP (requests per second)')}:`}
+                    title={`${$t('HTTP.requests.perSecond', 'HTTP (requests per second)')}:`}
                     rate={httpOut.rate}
                     rate3xx={httpOut.rate3xx}
                     rate4xx={httpOut.rate4xx}
@@ -193,7 +193,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
               <div style={summaryFont}>
                 {grpcTotal.rate === 0 && httpTotal.rate === 0 && tcpTotal.rate === 0 && (
                   <>
-                    <KialiIcon.Info /> {$t('tip284', 'No traffic.')}
+                    <KialiIcon.Info /> {$t('noTraffic', 'No traffic.')}
                   </>
                 )}
                 {grpcTotal.rate > 0 && (
@@ -206,7 +206,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
                 )}
                 {httpTotal.rate > 0 && (
                   <RateTableHttp
-                    title={`${$t('title15', 'HTTP (requests per second)')}:`}
+                    title={`${$t('HTTP.requests.perSecond', 'HTTP (requests per second)')}:`}
                     rate={httpTotal.rate}
                     rate3xx={httpTotal.rate3xx}
                     rate4xx={httpTotal.rate4xx}

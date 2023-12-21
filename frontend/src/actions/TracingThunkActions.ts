@@ -32,7 +32,7 @@ export const TracingThunkActions = {
             dispatch(TracingActions.setTrace(undefined));
             dispatch(TracingActions.tabTrace(undefined));
             AlertUtils.addMessage({
-              ...AlertUtils.extractAxiosError($t('tip155', 'Could not fetch trace'), error),
+              ...AlertUtils.extractAxiosError($t('failure.traceUnavailable', 'Could not fetch trace'), error),
               showNotification: false
             });
           });

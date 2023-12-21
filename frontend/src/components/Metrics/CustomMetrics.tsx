@@ -172,7 +172,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
         });
       })
       .catch(error => {
-        AlertUtils.addError($t('tip244', 'Could not fetch custom dashboard.'), error);
+        AlertUtils.addError($t('failure.customDashboardUnavailable', 'Could not fetch custom dashboard.'), error);
       });
   };
 

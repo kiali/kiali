@@ -264,7 +264,7 @@ class DetailDescriptionComponent extends React.Component<Props> {
             </ul>
           </div>
         ) : (
-          $t('Not_found', 'Not found')
+          $t('NotFound', 'Not found')
         )}
       </div>
     );
@@ -331,10 +331,13 @@ class DetailDescriptionComponent extends React.Component<Props> {
       <>
         <div key="waypoint-workloads-title">
           <PFBadge badge={PFBadges.Waypoint} position={TooltipPosition.top} />
-          {$t('Waypoint_proxy', 'Waypoint proxy')}
+          {$t('WaypointProxy', 'Waypoint proxy')}
           <Tooltip
             position={TooltipPosition.right}
-            content={$t('tip169', 'This workload is identified as a waypoint proxy, as part of Istio Ambient')}
+            content={$t(
+              'Istio.WorkloadIdentifiedAsWaypointProxy',
+              'This workload is identified as a waypoint proxy, as part of Istio Ambient'
+            )}
           >
             <KialiIcon.Info className={infoStyle} />
           </Tooltip>

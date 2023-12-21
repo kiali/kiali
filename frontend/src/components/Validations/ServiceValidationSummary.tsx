@@ -15,7 +15,7 @@ export class ServiceValidationSummary extends ValidationSummary {
     return (
       <>
         <Text style={{ textAlign: 'left', textEmphasis: 'strong' }} component={TextVariants.p}>
-          {$t('Service_validation_result', 'Service validation result')}
+          {$t('ServiceValidationResult', 'Service validation result')}
         </Text>
         <div className={tooltipListStyle}>
           {this.severitySummary().map(cat => (

@@ -56,13 +56,13 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
 
   const getDropdownItemTooltipMessage = (isGatewayAPI: boolean): string => {
     if (serverConfig.deployment.viewOnlyMode) {
-      return $t('helpTip22', 'User does not have permission');
+      return $t('userNopermissionTip', 'User does not have permission');
     } else if (hasTrafficRouting()) {
-      return $t('helpTip23', 'Traffic routing already exists for this service');
+      return $t('HelperText.routingExistsForService', 'Traffic routing already exists for this service');
     } else if (isGatewayAPI) {
-      return $t('helpTip24', 'K8s Gateway API is not enabled');
+      return $t('HelperText.k8sGatewayAPIDisabled', 'K8s Gateway API is not enabled');
     } else {
-      return $t('helpTip25', "Traffic routing doesn't exists for this service");
+      return $t('HelperText.routingNotFoundForService', "Traffic routing doesn't exists for this service");
     }
   };
 

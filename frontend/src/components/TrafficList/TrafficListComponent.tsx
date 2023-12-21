@@ -82,7 +82,9 @@ const columns = (isMultiCluster: boolean): any[] => {
 };
 
 function LockIcon(props) {
-  const msg = props.mTLS ? props.mTLS + $t('tip265', '% of mTLS traffic') : $t('mTLSIsDisabled', 'mTLS is disabled');
+  const msg = props.mTLS
+    ? props.mTLS + $t('mTLSTrafficPercentage', '% of mTLS traffic')
+    : $t('mTLSIsDisabled', 'mTLS is disabled');
   return (
     <Tooltip position={TooltipPosition.top} content={msg}>
       <>
@@ -140,7 +142,7 @@ class TrafficList extends FilterComponent.Component<
       <>
         <div className={containerPadding}>
           <Title headingLevel="h5" size={TitleSizes.lg}>
-            {hasInbound ? '' : $t('No')} {$t('Inbound_Traffic', 'Inbound Traffic')}
+            {hasInbound ? '' : $t('No')} {$t('InboundTraffic', 'Inbound Traffic')}
           </Title>
           {hasInbound && (
             <Table aria-label="Sortable Table" cells={cols} onSort={this.onSort} rows={inboundRows} sortBy={sortBy}>
@@ -151,7 +153,7 @@ class TrafficList extends FilterComponent.Component<
         </div>
         <div className={containerPadding}>
           <Title headingLevel="h5" size={TitleSizes.lg}>
-            {hasOutbound ? '' : $t('No')} {$t('Outbound_Traffic', 'Outbound Traffic')}
+            {hasOutbound ? '' : $t('No')} {$t('OutboundTraffic', 'Outbound Traffic')}
           </Title>
           {hasOutbound && (
             <Table aria-label="Sortable Table" cells={cols} onSort={this.onSort} rows={outboundRows} sortBy={sortBy}>
@@ -271,7 +273,7 @@ class TrafficList extends FilterComponent.Component<
                 position={TooltipPosition.top}
                 content={
                   <>
-                    {$t('Traffic_Status', 'Traffic Status')}: {item.healthStatus.status.name}
+                    {$t('TrafficStatus', 'Traffic Status')}: {item.healthStatus.status.name}
                   </>
                 }
               >
@@ -316,11 +318,11 @@ class TrafficList extends FilterComponent.Component<
                       kioskContextMenuAction(links.metrics);
                     }}
                   >
-                    {$t('View_metrics', 'View metrics')}
+                    {$t('ViewMetrics', 'View metrics')}
                   </Link>
                 ) : (
                   <Link key={`link_m_${item.badge}_${name}`} to={links.metrics}>
-                    {$t('View_metrics', 'View metrics')}
+                    {$t('ViewMetrics', 'View metrics')}
                   </Link>
                 ))}
             </>

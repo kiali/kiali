@@ -13,7 +13,7 @@ const statusDescriptors = new Map<string, StatusDescriptor>([
   [
     MTLSStatuses.ENABLED,
     {
-      message: $t('tip241', 'mTLS is enabled for this namespace'),
+      message: $t('MTLSStatuses.MTLSEnabled', 'mTLS is enabled for this namespace'),
       icon: MTLSIconTypes.LOCK_FULL_DARK,
       showStatus: true
     }
@@ -21,7 +21,10 @@ const statusDescriptors = new Map<string, StatusDescriptor>([
   [
     MTLSStatuses.ENABLED_EXTENDED,
     {
-      message: $t('tip242', 'mTLS is enabled for this namespace, extended from Mesh-wide config'),
+      message: $t(
+        'MTLSStatuses.MTLSEnabledExtended',
+        'mTLS is enabled for this namespace, extended from Mesh-wide config'
+      ),
       icon: MTLSIconTypes.LOCK_FULL_DARK,
       showStatus: true
     }
@@ -29,7 +32,7 @@ const statusDescriptors = new Map<string, StatusDescriptor>([
   [
     MTLSStatuses.PARTIALLY,
     {
-      message: $t('tip243', 'mTLS is partially enabled for this namespace'),
+      message: $t('MTLSStatuses.MTLSPartiallyEnabled', 'mTLS is partially enabled for this namespace'),
       icon: MTLSIconTypes.LOCK_HOLLOW_DARK,
       showStatus: true
     }

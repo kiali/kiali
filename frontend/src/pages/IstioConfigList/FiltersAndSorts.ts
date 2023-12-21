@@ -24,7 +24,7 @@ export const sortFields: SortField<IstioConfigItem>[] = [
   },
   {
     id: 'istioname',
-    title: $t('Istio Name'),
+    title: $t('Istio.IstioName', 'Istio Name'),
     isNumeric: false,
     param: 'in',
     compare: (a: IstioConfigItem, b: IstioConfigItem) => {
@@ -83,7 +83,7 @@ export const sortFields: SortField<IstioConfigItem>[] = [
 
 export const istioNameFilter: FilterType = {
   category: 'Istio Name',
-  placeholder: $t('placeholder18', 'Filter by Istio Name'),
+  placeholder: $t('Filter.IstioName', 'Filter by Istio Name'),
   filterType: AllFilterTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: []
@@ -92,13 +92,13 @@ export const istioNameFilter: FilterType = {
 // Used when Istio Config is implied
 export const istioTypeFilter: FilterType = {
   category: 'Type',
-  placeholder: $t('placeholder19', 'Filter by Type'),
+  placeholder: $t('Filter.Type', 'Filter by Type'),
   filterType: AllFilterTypes.typeAhead,
   action: FILTER_ACTION_APPEND,
   filterValues: [
     {
       id: 'AuthorizationPolicy',
-      title: $t('AuthorizationPolicy')
+      title: $t('AuthorizationPolicy', 'Authorization Policy')
     },
     {
       id: 'DestinationRule',
@@ -163,12 +163,12 @@ export const istioTypeFilter: FilterType = {
 export const istioConfigTypeFilter = {
   ...istioTypeFilter,
   category: 'Istio Config Type',
-  placeholder: $t('placeholder20', 'Filter by Istio Config Type')
+  placeholder: $t('Filter.IstioConfigType', 'Filter by Istio Config Type')
 };
 
 export const configValidationFilter: FilterType = {
   category: 'Config',
-  placeholder: $t('placeholder21', 'Filter by Config Validation'),
+  placeholder: $t('Filter.ConfigValidation', 'Filter by Config Validation'),
   filterType: AllFilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: [
@@ -182,11 +182,11 @@ export const configValidationFilter: FilterType = {
     },
     {
       id: 'notvalid',
-      title: $t('Not Valid')
+      title: $t('NotValid', 'Not Valid')
     },
     {
       id: 'notvalidated',
-      title: $t('Not Validated')
+      title: $t('NotValidated', 'Not Validated')
     }
   ]
 };

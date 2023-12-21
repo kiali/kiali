@@ -36,7 +36,10 @@ export class IstioConfigHelp extends React.Component<IstioConfigHelpProps> {
         {!helpMessage && (
           <StackItem>
             <p>
-              {$t('helpTip39', 'Help information will appear when editing on important fields for this configuration.')}
+              {$t(
+                'HelperText.editingHelpOnImportantFields',
+                'Help information will appear when editing on important fields for this configuration.'
+              )}
             </p>
           </StackItem>
         )}

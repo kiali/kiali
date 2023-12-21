@@ -68,7 +68,7 @@ export class WorkloadPods extends React.Component<WorkloadPodsProps> {
             title: (
               <EmptyState variant={EmptyStateVariant.sm} className={emptyStyle}>
                 <EmptyStateBody className={emptyStyle}>
-                  {$t('label16', 'No Pods in workload')} {this.props.workload}
+                  {$t('errorMsg.NoPods', 'No Pods in workload')} {this.props.workload}
                 </EmptyStateBody>
               </EmptyState>
             ),
@@ -106,27 +106,27 @@ export class WorkloadPods extends React.Component<WorkloadPodsProps> {
                 <div style={{ display: 'inline-block' }}>
                   {pod.createdBy && pod.createdBy.length > 0
                     ? pod.createdBy.map(ref => ref.name + ' (' + ref.kind + ')').join(', ')
-                    : $t('Not_found')}
+                    : $t('NotFound', 'Not found')}
                 </div>
               </li>
               <li>
                 <span>{$t('ServiceAccount', 'Service Account')}</span>
-                <div style={{ display: 'inline-block' }}>{pod.serviceAccountName || $t('Not_found', 'Not found')}</div>
+                <div style={{ display: 'inline-block' }}>{pod.serviceAccountName || $t('NotFound', 'Not found')}</div>
               </li>
               <li>
-                <span>{$t('IstioInitContainer', 'Istio Init Container')}</span>
+                <span>{$t('Istio.IstioInitContainer', 'Istio Init Container')}</span>
                 <div style={{ display: 'inline-block' }}>
                   {pod.istioInitContainers
                     ? pod.istioInitContainers.map(c => `${c.image}`).join(', ')
-                    : $t('Not_found')}
+                    : $t('NotFound', 'Not found')}
                 </div>
               </li>
               <li>
-                <span>{$t('IstioContainer', 'Istio Container')}</span>
+                <span>{$t('Istio.IstioContainer', 'Istio Container')}</span>
                 <div style={{ display: 'inline-block' }}>
                   {pod.istioContainers
                     ? pod.istioContainers.map(c => `${c.image}`).join(', ')
-                    : $t('Not_found', 'Not found')}
+                    : $t('NotFound', 'Not found')}
                 </div>
               </li>
               <li>

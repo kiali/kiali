@@ -59,7 +59,7 @@ export class ResponseTimeChart extends React.Component<ResponseTimeChartTypeProp
               />
             ) : (
               <div>
-                <InfoAltIcon /> {$t('tip30', 'Not enough traffic to generate chart.')}
+                <InfoAltIcon /> {$t('NoTrafficChart', 'Not enough traffic to generate chart.')}
               </div>
             )}
           </div>

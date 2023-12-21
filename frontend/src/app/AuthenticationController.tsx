@@ -69,7 +69,7 @@ class AuthenticationControllerComponent extends React.Component<
   AuthenticationControllerState
 > {
   static readonly PostLoginErrorMsg = $t(
-    'tip156',
+    'PostLoginError',
     'Kiali failed to initialize. Please ensure that services Kiali depends on, such as Prometheus, are healthy and reachable by Kiali then refresh your browser.'
   );
 
@@ -182,7 +182,12 @@ class AuthenticationControllerComponent extends React.Component<
         .register('getStatus', API.getStatus())
         .then(response => this.processServerStatus(response.data))
         .catch(error => {
-          AlertUtils.addError($t('tip157', 'Error fetching server status.'), error, 'default', MessageType.WARNING);
+          AlertUtils.addError(
+            $t('errorMsg.ErrorFetchingServerStatus', 'Error fetching server status.'),
+            error,
+            'default',
+            MessageType.WARNING
+          );
         });
       const getTracingInfoPromise = this.promises
         .register('getTracingInfo', API.getTracingInfo())
@@ -190,7 +195,10 @@ class AuthenticationControllerComponent extends React.Component<
         .catch(error => {
           this.props.setTracingInfo(null);
           AlertUtils.addError(
-            $t('tip381', 'Could not fetch Tracing info. Turning off Tracing integration.'),
+            $t(
+              'failure.tracingInfoUnavailableDisablingTracing',
+              'Could not fetch Tracing info. Turning off Tracing integration.'
+            ),
             error,
             'default',
             MessageType.INFO
@@ -319,7 +327,8 @@ class AuthenticationControllerComponent extends React.Component<
 
     if (status.status[StatusKey.DISABLED_FEATURES]) {
       this.props.addMessage(
-        `${$t('tip158', 'The following features are disabled')}: ` + status.status[StatusKey.DISABLED_FEATURES],
+        `${$t('DisabledFeatures', 'The following features are disabled')}: ` +
+          status.status[StatusKey.DISABLED_FEATURES],
         '',
         'default',
         MessageType.INFO,

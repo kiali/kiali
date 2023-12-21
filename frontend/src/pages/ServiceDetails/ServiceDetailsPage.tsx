@@ -125,7 +125,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         this.setState({ k8sGateways: k8sGws });
       })
       .catch(gwError => {
-        AlertUtils.addError($t('helpTip64', 'Could not fetch Gateways list.'), gwError);
+        AlertUtils.addError($t('failure.gatewaysListUnavailable', 'Could not fetch Gateways list.'), gwError);
       });
 
     // this.props.
@@ -143,10 +143,10 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         });
       })
       .catch(error => {
-        AlertUtils.addError($t('helpTip65', 'Could not fetch Service Details.'), error);
+        AlertUtils.addError($t('failure.serviceDetailsFetchFailed', 'Could not fetch Service Details.'), error);
         const msg: ErrorMsg = {
-          title: $t('tip391', 'No Service is selected'),
-          description: this.props.serviceId.service + ` ${$t('title9', 'is not found in the mesh')}`
+          title: $t('NoService', 'No Service is selected'),
+          description: this.props.serviceId.service + ` ${$t('errorMsg.NotInMesh', 'is not found in the mesh')}`
         };
         this.setState({ error: msg });
       });
@@ -158,7 +158,10 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         });
       })
       .catch(error => {
-        AlertUtils.addError($t('helpTip66', 'Could not fetch PeerAuthentications.'), error);
+        AlertUtils.addError(
+          $t('failure.peerAuthenticationsUnavailable', 'Could not fetch PeerAuthentications.'),
+          error
+        );
       });
   };
 
@@ -190,7 +193,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
     );
 
     const inTab = (
-      <Tab eventKey={2} title={$t('Inbound Metrics')} key="Inbound Metrics">
+      <Tab eventKey={2} title={$t('InboundMetrics', 'Inbound Metrics')} key="Inbound Metrics">
         <IstioMetrics
           lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.serviceId.namespace}

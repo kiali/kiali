@@ -153,7 +153,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
       })
       .catch(err => {
         if (!err.isCanceled) {
-          this.handleAxiosError($t('tip108', 'Could not fetch services list'), err);
+          this.handleAxiosError($t('failure.servicesListUnavailable', 'Could not fetch services list'), err);
         }
       });
   }

@@ -154,14 +154,14 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
               <Tooltip
                 key="tt_src_ppl"
                 position="top"
-                content={`${$t('Source_principal', 'Source principal')}: ${edgeData.sourcePrincipal}`}
+                content={`${$t('SourcePrincipal', 'Source principal')}: ${edgeData.sourcePrincipal}`}
               >
                 <span className={principalStyle}>{edgeData.sourcePrincipal || $t('unknown')}</span>
               </Tooltip>
               <Tooltip
                 key="tt_src_ppl"
                 position="top"
-                content={`${$t('Destination_principal', 'Destination principal')}: ${edgeData.destPrincipal}`}
+                content={`${$t('DestinationPrincipal', 'Destination principal')}: ${edgeData.destPrincipal}`}
               >
                 <span className={principalStyle}>{edgeData.destPrincipal || $t('unknown')}</span>
               </Tooltip>
@@ -197,7 +197,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
                   {isHttp && (
                     <>
                       <RateTableHttp
-                        title={`${$t('title25', 'HTTP requests per second')}:`}
+                        title={`${$t('HTTP.requests.perSecond', 'HTTP requests per second')}:`}
                         rate={this.safeRate(edgeData.http)}
                         rate3xx={this.safeRate(edgeData.http3xx)}
                         rate4xx={this.safeRate(edgeData.http4xx)}
@@ -237,7 +237,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
               <Tab style={summaryFont} eventKey={0} title={$t('Flags')}>
                 <div style={summaryFont}>
                   <ResponseFlagsTable
-                    title={$t('title26', 'Response flags by code') + ':'}
+                    title={$t('FlagsByCode', 'Response flags by code') + ':'}
                     responses={edgeData.responses}
                   />
                 </div>
@@ -558,7 +558,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         <>
           <KialiIcon.Info />{' '}
           {$t(
-            'tip57',
+            'renderCharts.ServiceGraphsNoAggregateSparklines',
             'Service graphs do not support service-to-service aggregate sparklines. See the chart above for aggregate traffic or use the workload graph type to observe individual workload-to-service edge sparklines.'
           )}
         </>
@@ -566,7 +566,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         <>
           <KialiIcon.Info />
           {$t(
-            'tip58',
+            'renderCharts.UseWorkloadGraphForIndividualSparklines',
             'Service graphs do not support service-to-service aggregate sparklines. Use the workload graph type to observe individual workload-to-service edge sparklines.'
           )}
         </>
@@ -577,19 +577,23 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     if (destData.isInaccessible) {
       return (
         <>
-          <KialiIcon.Info /> {$t('tip59', 'Sparkline charts cannot be shown because the destination is inaccessible.')}
+          <KialiIcon.Info />{' '}
+          {$t(
+            'renderCharts.DestinationInaccessibleNoSparkline',
+            'Sparkline charts cannot be shown because the destination is inaccessible.'
+          )}
         </>
       );
     }
 
     if (this.state.loading) {
-      return <strong>{$t('placeholder45', 'Loading charts...')}</strong>;
+      return <strong>{$t('renderCharts.LoadingCharts', 'Loading charts...')}</strong>;
     }
 
     if (this.state.metricsLoadError) {
       return (
         <div>
-          <KialiIcon.Warning /> <strong>{$t('Error_loading_metrics', 'Error loading metrics')}: </strong>
+          <KialiIcon.Warning /> <strong>{$t('renderCharts.ErrorLoadingMetrics', 'Error loading metrics')}: </strong>
           {this.state.metricsLoadError}
         </div>
       );
@@ -599,11 +603,11 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     if (isGrpc || isHttp) {
       if (isRequests) {
         const labelRps = isGrpc
-          ? $t('gRPCRequestTraffic', 'gRPC Request Traffic')
-          : $t('HTTPRequestTraffic', 'HTTP Request Traffic');
+          ? $t('gRPC.Traffic.Request', 'gRPC Request Traffic')
+          : $t('HTTP.Traffic.Request', 'HTTP Request Traffic');
         const labelRt = isGrpc
-          ? $t('label4', 'gRPC Request Response Time (ms)')
-          : $t('label5', 'HTTP Request Response Time (ms)');
+          ? $t('gRPC.RequestResponseTime', 'gRPC Request Response Time (ms)')
+          : $t('HTTP.RequestResponseTime', 'HTTP Request Response Time (ms)');
         requestChart = (
           <>
             <RequestChart label={labelRps} dataRps={this.state.rates!} dataErrors={this.state.errRates} />
@@ -623,7 +627,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         requestChart = (
           <>
             <StreamChart
-              label={$t('gRPCMessageTraffic', 'gRPC Message Traffic')}
+              label={$t('gRPC.Traffic.Message', 'gRPC Message Traffic')}
               sentRates={this.state.sent!}
               receivedRates={this.state.received}
               unit="messages"
@@ -634,7 +638,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     } else if (isTcp) {
       streamChart = (
         <StreamChart
-          label={$t('TCPTraffic', 'TCP Traffic')}
+          label={$t('legendData.TCPTraffic', 'TCP Traffic')}
           sentRates={this.state.sent}
           receivedRates={this.state.received}
           unit="bytes"
@@ -675,7 +679,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     let mtls = 'mTLS Enabled';
     const isMtls = mTLSPercentage > 0;
     if (isMtls && mTLSPercentage < 100.0) {
-      mtls = `${mtls} [${mTLSPercentage}% ${$t('tip61', 'of request traffic')}]`;
+      mtls = `${mtls} [${mTLSPercentage}% of request traffic]`;
     }
     return (
       <>

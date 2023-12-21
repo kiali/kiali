@@ -29,8 +29,8 @@ export class RateTableGrpc extends React.Component<RateTableGrpcPropType, {}> {
           <thead>
             <tr>
               <th>{$t('Total')}</th>
-              <th>{$t('title3', '%Success')}</th>
-              <th>{$t('title4', '%Error')}</th>
+              <th>{$t('%Success')}</th>
+              <th>{$t('%Error')}</th>
             </tr>
           </thead>
           <tbody>
@@ -81,8 +81,8 @@ export class RateTableHttp extends React.Component<RateTableHttpPropType, {}> {
           <thead>
             <tr>
               <th>{$t('Total')}</th>
-              <th>{$t('title3', '%Success')}</th>
-              <th>{$t('title4', '%Error')}</th>
+              <th>{$t('%Success')}</th>
+              <th>{$t('%Error')}</th>
             </tr>
           </thead>
           <tbody>
@@ -103,13 +103,13 @@ export class RateTableTcp extends React.Component<RateTableTcpPropType, {}> {
   render() {
     return (
       <div>
-        <div className={summaryTitle}>{$t('title2', 'TCP Traffic (bytes per second)')}</div>
+        <div className={summaryTitle}>{$t('TCP.Traffic.bytesPerSecond', 'TCP Traffic (bytes per second)')}</div>
         <table className={tableStyle}>
           <thead>
             <tr>
               <th>{$t('Total')}</th>
-              <th>{$t('title3', '%Success')}</th>
-              <th>{$t('title4', '%Error')}</th>
+              <th>{$t('%Success')}</th>
+              <th>{$t('%Error')}</th>
             </tr>
           </thead>
           <tbody>

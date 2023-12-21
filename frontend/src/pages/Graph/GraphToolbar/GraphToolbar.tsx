@@ -205,7 +205,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
                 <Tooltip
                   key={'graph-tour-help-ot'}
                   position={TooltipPosition.right}
-                  content={$t('tip351', 'Back to full graph')}
+                  content={$t('tooltip.BackToFullGraphButton', 'Back to full graph')}
                 >
                   <Button variant={ButtonVariant.link} onClick={this.handleNamespaceReturn}>
                     <KialiIcon.Back />
@@ -234,7 +234,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
               <Tooltip
                 key={'graph-tour-help-ot'}
                 position={TooltipPosition.right}
-                content={$t('placeholder42', 'Shortcuts and tips...')}
+                content={$t('GraphTourStops.Shortcuts.name', 'Shortcuts and tips...')}
               >
                 <TourStop info={GraphTourStops.Shortcuts}>
                   <Button

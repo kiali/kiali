@@ -77,7 +77,7 @@ export class WorkloadDescription extends React.Component<WorkloadDescriptionProp
           <ul style={{ listStyleType: 'none' }}>
             {workload.istioInjectionAnnotation !== undefined && (
               <li>
-                <span>{$t('IstioInjection', 'Istio Injection')}</span>
+                <span>{$t('Istio.IstioInjection', 'Istio Injection')}</span>
                 {String(workload.istioInjectionAnnotation)}
               </li>
             )}
@@ -194,7 +194,11 @@ export class WorkloadDescription extends React.Component<WorkloadDescriptionProp
           {workload.labels && (
             <Labels
               labels={workload.labels}
-              tooltipMessage={isTemplateLabels ? $t('tip109', 'Labels defined on the Workload template') : undefined}
+              tooltipMessage={
+                isTemplateLabels
+                  ? $t('tooltip.WorkloadTemplateLabels', 'Labels defined on the Workload template')
+                  : undefined
+              }
             />
           )}
           <DetailDescription

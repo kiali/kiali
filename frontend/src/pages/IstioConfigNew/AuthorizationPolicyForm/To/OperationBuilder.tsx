@@ -199,7 +199,7 @@ export class OperationBuilder extends React.Component<Props, State> {
           isDisabled={Object.keys(this.state.operation).length === 0}
           onClick={this.onAddOperationToList}
         >
-          {$t('action6', 'Add Operation to To List')}
+          {$t('Add.Operation', 'Add Operation to To List')}
         </Button>
       </>
     );

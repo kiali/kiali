@@ -135,7 +135,7 @@ export class ClusterTable implements SummaryTable {
       },
       {
         id: 'dr',
-        title: $t('Destination_Rule', 'Destination Rule'),
+        title: $t('Destination Rule', 'Destination Rule'),
         isNumeric: true,
         param: 'dr',
         compare: (a, b) => {
@@ -149,34 +149,37 @@ export class ClusterTable implements SummaryTable {
     return (
       <ul className={kialiStyle({ textAlign: 'left' })}>
         <li>
-          <b>{$t('STATIC')}</b>:{' '}
+          <b>{$t('renderClusterType.STATIC.content', 'STATIC')}</b>:{' '}
           {$t(
-            'tip302',
+            'renderClusterType.STATIC.StaticServiceDiscovery',
             'Static is the simplest service discovery type. The configuration explicitly specifies the resolved network name (IP address/port, unix domain socket, etc.) of each upstream host.'
           )}
         </li>
         <li>
-          <b>{$t('STRICT_DNS')}</b>:{' '}
-          {$t('tip216', 'Envoy will continuously and asynchronously resolve the specified DNS targets')}
+          <b>{$t('renderClusterType.STRICT_DNS.content', 'STRICT_DNS')}</b>:{' '}
+          {$t(
+            'renderClusterType.STRICT_DNS.ContinuousAsyncDNSResolution',
+            'Envoy will continuously and asynchronously resolve the specified DNS targets'
+          )}
         </li>
         <li>
-          <b>{$t('LOGICAL_DNS')}</b>:{' '}
+          <b>{$t('renderClusterType.LOGICAL_DNS.content', 'LOGICAL_DNS')}</b>:{' '}
           {$t(
-            'tip217',
+            'renderClusterType.LOGICAL_DNS.LogicalDNSResolution',
             'Logical DNS uses a similar asynchronous resolution mechanism to strict DNS. However, instead of strictly taking the results of the DNS query and assuming that they comprise the entire upstream cluster, a logical DNS cluster only uses the first IP address returned when a new connection needs to be initiated'
           )}
         </li>
         <li>
-          <b>EDS</b>:{' '}
+          <b>{$t('renderClusterType.EDS.content', 'EDS')}</b>:{' '}
           {$t(
-            'tip218',
+            'renderClusterType.EDS.EndpointDiscoveryService',
             'The endpoint discovery service is a xDS management server based on gRPC or REST-JSON API server used by Envoy to fetch cluster members.'
           )}
         </li>
         <li>
-          <b>{$t('ORIGINAL_DST')}</b>:{' '}
+          <b>{$t('renderClusterType.ORIGINAL_DST.content', 'ORIGINAL_DST')}</b>:{' '}
           {$t(
-            'tip303',
+            'renderClusterType.ORIGINAL_DST.OriginalDestinationCluster',
             'Original destination cluster can be used when incoming connections are redirected to Envoy either via an iptables REDIRECT or TPROXY target or with Proxy Protocol'
           )}
         </li>
@@ -189,7 +192,7 @@ export class ClusterTable implements SummaryTable {
       {
         title: `${$t('Service')} FQDN`,
         transforms: [sortable],
-        header: { info: { tooltip: <>{$t('tip220', 'Fully Qualified Domain Name')}</> } }
+        header: { info: { tooltip: <>{$t('FQDN', 'Fully Qualified Domain Name')}</> } }
       },
       { title: $t('Port'), transforms: [sortable] },
       { title: $t('Subset'), transforms: [sortable] },
@@ -203,14 +206,14 @@ export class ClusterTable implements SummaryTable {
                 <li>
                   <b>{$t('inbound')}</b>:{' '}
                   {$t(
-                    'tip221',
+                    'renderClusterType.InboundEvents',
                     'The inbound cluster events are the events that come into a node. These cluster events come from another node and enter other nodes.'
                   )}
                 </li>
                 <li>
                   <b>{$t('outbound')}</b>:{' '}
                   {$t(
-                    'tip222',
+                    'renderClusterType.OutboundEvents',
                     'The outbound cluster events are the events that go out of a node. These cluster events are produced and sent from a node to other nodes.'
                   )}
                 </li>
@@ -244,7 +247,7 @@ export class ClusterTable implements SummaryTable {
         content={
           <div className={kialiStyle({ textAlign: 'left' })}>
             {$t(
-              'tip223',
+              'renderClusterType.UpstreamHostGroup',
               'Group of logically similar upstream hosts that Envoy connects to. (All the hosts that envoy manage traffic)'
             )}
           </div>

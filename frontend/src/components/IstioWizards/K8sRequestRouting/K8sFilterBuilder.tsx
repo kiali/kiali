@@ -153,7 +153,7 @@ export const K8sFilterBuilder: React.FC<K8sFilterBuilderProps> = (props: K8sFilt
           id="filter-header-name-id"
           value={props.headerName}
           onChange={(_, value) => props.onHeaderNameChange(value)}
-          placeholder={$t('placeholder1', 'Header name...')}
+          placeholder={$t('placeholder.HeaderName', 'Header name...')}
         />
       )}
 
@@ -162,7 +162,7 @@ export const K8sFilterBuilder: React.FC<K8sFilterBuilderProps> = (props: K8sFilt
           id="filter-header-value-id"
           value={props.headerValue}
           onChange={(_, value) => props.onHeaderValueChange(value)}
-          placeholder={$t('placeholder2', 'Header Value...')}
+          placeholder={$t('placeholder.HeaderValue', 'Header Value...')}
         />
       )}
 
@@ -205,7 +205,7 @@ export const K8sFilterBuilder: React.FC<K8sFilterBuilderProps> = (props: K8sFilt
           id="hostname"
           value={props.hostName}
           onChange={(_, value) => props.onHostNameChange(value)}
-          placeholder={$t('placeholder3', 'Hostname...')}
+          placeholder={$t('placeholder.Hostname', 'Hostname...')}
         />
       )}
 
@@ -214,7 +214,7 @@ export const K8sFilterBuilder: React.FC<K8sFilterBuilderProps> = (props: K8sFilt
           id="portValue"
           value={props.portValue}
           onChange={(_, value) => props.onPortValueChange(value)}
-          placeholder={$t('placeholder4', 'Port...')}
+          placeholder={$t('placeholder.Port', 'Port...')}
         />
       )}
 

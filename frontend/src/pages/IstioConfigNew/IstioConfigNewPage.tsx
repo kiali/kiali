@@ -213,7 +213,10 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
               this.props.activeNamespaces.forEach(ns => {
                 if (!this.canCreate(ns.name)) {
                   AlertUtils.addWarning(
-                    `${$t('tip373', 'User does not have permission to create Istio Config on namespace')}: ` +
+                    `${$t(
+                      'Istio.UserPermissionCreateIstioConfig',
+                      'User does not have permission to create Istio Config on namespace'
+                    )}: ` +
                       ns.name +
                       (cluster ? ' in cluster ' + cluster : '')
                   );
@@ -228,7 +231,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
         .catch(error => {
           // Canceled errors are expected on this query when page is unmounted
           if (!error.isCanceled) {
-            AlertUtils.addError($t('AlertUtils19', 'Could not fetch Permissions.'), error);
+            AlertUtils.addError($t('failure.permissionsFetchFailed', 'Could not fetch Permissions.'), error);
           }
         });
     }
@@ -298,7 +301,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
       switch (this.props.objectType) {
         case AUTHORIZACION_POLICY:
           items.push({
-            title: $t('Authorization_Policy', 'Authorization Policy'),
+            title: $t('AuthorizationPolicy', 'Authorization Policy'),
             type: 'authorizationpolicy',
             items: [buildAuthorizationPolicy(this.state.name, ns.name, this.state.authorizationPolicy)]
           });
@@ -319,21 +322,21 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
           break;
         case PEER_AUTHENTICATION:
           items.push({
-            title: $t('Peer_Authentication', 'Peer Authentication'),
+            title: $t('Peer Authentication', 'Peer Authentication'),
             type: 'peerauthentication',
             items: [buildPeerAuthentication(this.state.name, ns.name, this.state.peerAuthentication)]
           });
           break;
         case REQUEST_AUTHENTICATION:
           items.push({
-            title: $t('Request_Authentication', 'Request Authentication'),
+            title: $t('RequestAuthentication', 'Request Authentication'),
             type: 'requestauthentication',
             items: [buildRequestAuthentication(this.state.name, ns.name, this.state.requestAuthentication)]
           });
           break;
         case SERVICE_ENTRY:
           items.push({
-            title: $t('Service Entry'),
+            title: $t('legendData.ServiceEntry', 'Service Entry'),
             type: 'serviceentry',
             items: [buildServiceEntry(this.state.name, ns.name, this.state.serviceEntry)]
           });
@@ -468,7 +471,10 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
                 <FormHelperText>
                   <HelperText>
                     <HelperTextItem>
-                      {$t('tip289', 'An Istio Config resource needs at least one namespace selected')}
+                      {$t(
+                        'Istio.IstioConfigNeedsNamespace',
+                        'An Istio Config resource needs at least one namespace selected'
+                      )}
                     </HelperTextItem>
                   </HelperText>
                 </FormHelperText>
@@ -481,7 +487,10 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
                   <FormHelperText>
                     <HelperText>
                       <HelperTextItem>
-                        {$t('tip290', 'An Istio Config resource needs at least one cluster selected')}
+                        {$t(
+                          'Istio.IstioConfigNeedsCluster',
+                          'An Istio Config resource needs at least one cluster selected'
+                        )}
                       </HelperTextItem>
                     </HelperText>
                   </FormHelperText>
@@ -554,7 +563,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
           <IstioConfigPreview
             isOpen={this.state.showPreview}
             items={this.state.itemsPreview}
-            title={$t('title34', 'Preview new istio objects')}
+            title={$t('previewNewIstioObjects', 'Preview new istio objects')}
             opTarget={'create'}
             disableAction={!canCreate}
             ns={this.props.activeNamespaces.join(',')}

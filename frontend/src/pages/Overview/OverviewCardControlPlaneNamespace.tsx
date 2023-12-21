@@ -145,7 +145,8 @@ export class OverviewCardControlPlaneNamespace extends React.Component<ControlPl
                           position={TooltipPosition.right}
                           content={
                             <div style={{ textAlign: 'left' }}>
-                              {$t('tip374', 'This values represents the memory of the istiod')} {memoryMetricSource}
+                              {$t('IstiodMemoryInfo', 'This values represents the memory of the istiod')}{' '}
+                              {memoryMetricSource}
                             </div>
                           }
                         >
@@ -191,7 +192,7 @@ export class OverviewCardControlPlaneNamespace extends React.Component<ControlPl
                           position={TooltipPosition.right}
                           content={
                             <div style={{ textAlign: 'left' }}>
-                              {$t('tip97', 'This values represents cpu of the istiod ')} {cpuMetricSource}
+                              {$t('tooltip.IstiodCPU', 'This values represents cpu of the istiod ')} {cpuMetricSource}
                             </div>
                           }
                         >

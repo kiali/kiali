@@ -139,7 +139,7 @@ export class ServerList extends React.Component<Props> {
                   onClick={this.onAddServer}
                   className={addServerStyle}
                 >
-                  {$t('action9', 'Add Server to Servers List')}
+                  {$t('Add.Server', 'Add Server to Servers List')}
                 </Button>
               </Td>
             </Tr>

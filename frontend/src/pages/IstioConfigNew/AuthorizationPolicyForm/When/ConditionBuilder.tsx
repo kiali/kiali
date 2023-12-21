@@ -136,12 +136,12 @@ export class ConditionBuilder extends React.Component<Props, State> {
     const key = this.state.condition.key;
     const isValidKey = this.isValidKey(key);
     if (!isValidKey) {
-      return [false, true, true, $t('tip85', 'Condition Key not supported')];
+      return [false, true, true, $t('validationMsg.ConditionKeyNotSupported', 'Condition Key not supported')];
     }
     const values = this.state.condition.values;
     const notValues = this.state.condition.notValues;
     if ((!values || values.length === 0) && (!notValues || notValues.length === 0)) {
-      return [true, false, false, $t('tip86', 'Values and NotValues cannot be empty')];
+      return [true, false, false, $t('validationMsg.ValuesNotValuesNotEmpty', 'Values and NotValues cannot be empty')];
     }
 
     if (conditionIpAddressKeys.includes(key)) {
@@ -150,7 +150,7 @@ export class ConditionBuilder extends React.Component<Props, State> {
       const valuesValid = values ? !values.some(value => !isValidIp(value)) : true;
       // @ts-ignore
       const notValuesValid = notValues ? !notValues.some(value => !isValidIp(value)) : true;
-      return [true, valuesValid, notValuesValid, $t('NotValidIP', 'Not valid IP')];
+      return [true, valuesValid, notValuesValid, $t('validationMsg.InvalidIP', 'Not valid IP')];
     }
     return [true, true, true, ''];
   };
@@ -233,7 +233,7 @@ export class ConditionBuilder extends React.Component<Props, State> {
           isDisabled={!validCondition}
           onClick={this.onAddConditionToList}
         >
-          {$t('tip377', 'Add Condition to When List')}
+          {$t('AddCondition', 'Add Condition to When List')}
         </Button>
       </>
     );

@@ -30,11 +30,11 @@ export class MissingSidecar extends React.Component<MissingSidecarProps, {}> {
     textmesh: 'Out of mesh',
     text: 'Missing Sidecar',
     meshtooltip: $t(
-      'tip255',
+      'Istio.OutOfMeshCheckIstioInjection',
       'Out of mesh. Istio sidecar container or Ambient labels not found in Pod(s). Check if the istio-injection label/annotation is correctly set on the namespace/workload.'
     ),
     texttooltip: $t(
-      'tip256',
+      'Istio.IstioSidecarNotFoundCheckInjection',
       'Istio sidecar container not found in Pod(s). Check if the istio-injection label/annotation is correctly set on the namespace/workload.'
     ),
     tooltip: false,

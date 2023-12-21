@@ -34,7 +34,7 @@ export const MetricsStatsThunkActions = {
             }
           })
           .catch(err => {
-            addError($t('tip154', 'Could not fetch metrics stats.'), err);
+            addError($t('failure.metricsStatsUnavailable', 'Could not fetch metrics stats.'), err);
           });
       } else {
         return Promise.resolve();

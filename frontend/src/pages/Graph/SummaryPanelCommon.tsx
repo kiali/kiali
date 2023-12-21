@@ -124,7 +124,7 @@ export const getNodeMetrics = (
     case NodeMetricType.WORKLOAD:
       return API.getWorkloadMetrics(nodeData.namespace, nodeData.workload!, options, nodeData.cluster);
     default:
-      return Promise.reject(new Error(`${$t('tip362', 'Unknown NodeMetricType')}: ${nodeMetricType}`));
+      return Promise.reject(new Error(`${$t('UnknownMetricType', 'Unknown NodeMetricType')}: ${nodeMetricType}`));
   }
 };
 

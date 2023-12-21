@@ -222,7 +222,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
               </Tooltip>
             </ToolbarItem>
             <ToolbarItem>
-              <Tooltip content={<>{$t('tip231', 'Download all resources in a file')}</>}>
+              <Tooltip content={<>{$t('tooltip.DownloadAllResources', 'Download all resources in a file')}</>}>
                 <Button
                   variant={ButtonVariant.link}
                   isInline
@@ -249,7 +249,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
         )}
         {this.props.disableAction && (
           <div className={kialiStyle({ color: PFColors.Danger })}>
-            {$t('tip232', 'User does not have enough permission for this action.')}
+            {$t('tooltip.InsufficientUserPermission', 'User does not have enough permission for this action.')}
           </div>
         )}
       </Modal>

@@ -65,7 +65,10 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
             );
           })
           .catch(error => {
-            AlertUtils.addError(`${$t('AlertUtils3', 'Could not update workload ')}` + props.workload.name, error);
+            AlertUtils.addError(
+              `${$t('failure.workloadUpdateFailed', 'Could not update workload ')}` + props.workload.name,
+              error
+            );
           })
           .finally(() => {
             setShowWizard(false);
@@ -96,7 +99,10 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
         );
       })
       .catch(error => {
-        AlertUtils.addError(`${$t('AlertUtils3', 'Could not update workload ')} ` + props.workload.name, error);
+        AlertUtils.addError(
+          `${$t('failure.workloadUpdateFailed', 'Could not update workload ')} ` + props.workload.name,
+          error
+        );
       })
       .finally(() => {
         setShowWizard(false);
@@ -116,7 +122,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
           onClick={() => onAction(WIZARD_ENABLE_AUTO_INJECTION)}
           isDisabled={serverConfig.deployment.viewOnlyMode}
         >
-          {$t('AlertUtils4', 'Enable Auto Injection')}
+          {$t('AlertUtils.EnableAutoInjection', 'Enable Auto Injection')}
         </DropdownItem>
       );
 
@@ -124,7 +130,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
         ? renderDisabledDropdownOption(
             'enable_auto_injection',
             TooltipPosition.left,
-            $t('helpTip22', 'User does not have permission'),
+            $t('HelperText.noUserPermission', 'User does not have permission'),
             enableAction
           )
         : enableAction;
@@ -145,7 +151,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
         ? renderDisabledDropdownOption(
             'disable_auto_injection',
             TooltipPosition.left,
-            $t('helpTip22', 'User does not have permission'),
+            $t('userNopermissionTip', 'User does not have permission'),
             disableAction
           )
         : disableAction;
@@ -166,7 +172,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
         ? renderDisabledDropdownOption(
             'remove_auto_injection',
             TooltipPosition.left,
-            $t('helpTip22', 'User does not have permission'),
+            $t('userNopermissionTip', 'User does not have permission'),
             removeAction
           )
         : removeAction;
@@ -243,7 +249,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
         ? renderDisabledDropdownOption(
             'tooltip_wizard_actions',
             TooltipPosition.top,
-            $t('tip22', 'User does not have permission on this Workload'),
+            $t('tooltip.userNoWorkloadPermission', 'User does not have permission on this Workload'),
             dropdown
           )
         : dropdown}

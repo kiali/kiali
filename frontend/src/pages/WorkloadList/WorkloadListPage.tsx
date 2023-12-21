@@ -152,7 +152,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
       .catch(err => {
         if (!err.isCanceled) {
           console.log(`error: ${err}`);
-          this.handleAxiosError($t('AlertUtils21', 'Could not fetch workloads list'), err);
+          this.handleAxiosError($t('failure.workloadsListFetchFailed', 'Could not fetch workloads list'), err);
         }
       });
   }

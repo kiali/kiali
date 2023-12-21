@@ -37,9 +37,15 @@ export const ALLOW = 'ALLOW';
 export const DENY = 'DENY';
 
 const HELPER_TEXT = {
-  DENY_ALL: $t('tip80', 'Denies all requests to workloads in given namespace(s)'),
-  ALLOW_ALL: $t('tip81', 'Allows all requests to workloads in given namespace(s)'),
-  RULES: $t('tip82', 'Builds an Authorization Policy based on Rules')
+  DENY_ALL: $t(
+    'AuthorizationPolicyForm.HELPER_TEXT.DENY_ALL',
+    'Denies all requests to workloads in given namespace(s)'
+  ),
+  ALLOW_ALL: $t(
+    'AuthorizationPolicyForm.HELPER_TEXT.ALLOW_ALL',
+    'Allows all requests to workloads in given namespace(s)'
+  ),
+  RULES: $t('AuthorizationPolicyForm.HELPER_TEXT.RULES', 'Builds an Authorization Policy based on Rules')
 };
 
 const rulesFormValues = [DENY_ALL, ALLOW_ALL, RULES];
@@ -191,7 +197,10 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
           </FormHelperText>
         </FormGroup>
         {this.state.policy === RULES && (
-          <FormGroup label={$t('WorkloadSelector', 'Workload Selector')} fieldId="workloadSelectorSwitch">
+          <FormGroup
+            label={$t('AuthorizationPolicyForm.WorkloadSel', 'Workload Selector')}
+            fieldId="workloadSelectorSwitch"
+          >
             <Switch
               id="workloadSelectorSwitch"
               label={' '}
@@ -215,9 +224,12 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
               <HelperText>
                 <HelperTextItem>
                   {isValid(this.state.workloadSelectorValid)
-                    ? $t('tip83', 'One or more labels to select a workload where the AuthorizationPolicy is applied.')
+                    ? $t(
+                        'AuthorizationPolicyForm.AuthPolicyWorkloadLabels',
+                        'One or more labels to select a workload where the AuthorizationPolicy is applied.'
+                      )
                     : $t(
-                        'helpTip46',
+                        'AuthorizationPolicyForm.EnterLabelFormat',
                         'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'
                       )}
                 </HelperTextItem>
@@ -236,7 +248,7 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
         )}
         {this.state.policy === RULES && <RuleBuilder onAddRule={this.onAddRule} />}
         {this.state.policy === RULES && (
-          <FormGroup label={$t('RuleList', 'Rule List')} fieldId="apRuleList">
+          <FormGroup label={$t('AuthorizationPolicyForm.RuleList', 'Rule List')} fieldId="apRuleList">
             <RuleList action={this.state.action} ruleList={this.state.rules} onRemoveRule={this.onRemoveRule} />
           </FormGroup>
         )}

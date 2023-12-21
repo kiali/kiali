@@ -194,7 +194,7 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
         <TourStop info={GraphTourStops.Layout}>
           <div>
             <Tooltip
-              content={`${$t('Layout1', 'Layout 1')} ` + KialiGridGraph.getLayout().name}
+              content={`${$t('Layout.Layout1', 'Layout 1')} ` + KialiGridGraph.getLayout().name}
               position={TooltipPosition.right}
             >
               <Button
@@ -218,7 +218,7 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
 
         <div>
           <Tooltip
-            content={`${$t('Layout2', 'Layout 2')} ` + KialiConcentricGraph.getLayout().name}
+            content={`${$t('Layout.Layout2', 'Layout 2')} ` + KialiConcentricGraph.getLayout().name}
             position={TooltipPosition.right}
           >
             <Button
@@ -243,7 +243,7 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
 
         <div>
           <Tooltip
-            content={`${$t('Layout3', 'Layout 3')} ` + KialiBreadthFirstGraph.getLayout().name}
+            content={`${$t('Layout.Layout3', 'Layout 3')} ` + KialiBreadthFirstGraph.getLayout().name}
             position={TooltipPosition.right}
           >
             <Button
@@ -269,7 +269,7 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
         {this.props.boxByNamespace && (
           <div>
             <Tooltip
-              content={$t('NamespaceLayout1', 'Namespace Layout 1') + '' + KialiDagreGraph.getLayout().name}
+              content={$t('Layout.NamespaceLayout1', 'Namespace Layout 1') + '' + KialiDagreGraph.getLayout().name}
               position={TooltipPosition.right}
             >
               <Button
@@ -296,7 +296,9 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
         {this.props.boxByNamespace && (
           <div>
             <Tooltip
-              content={$t('NamespaceLayout2', 'Namespace Layout 2') + '' + KialiBreadthFirstGraph.getLayout().name}
+              content={
+                $t('Layout.NamespaceLayout2', 'Namespace Layout 2') + '' + KialiBreadthFirstGraph.getLayout().name
+              }
               position={TooltipPosition.right}
             >
               <Button

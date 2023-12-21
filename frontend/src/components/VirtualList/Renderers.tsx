@@ -132,11 +132,11 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
         {isAmbientWaypoint && (
           <li>
             <PFBadge badge={PFBadges.Waypoint} position={TooltipPosition.top} />
-            {$t('Waypoint_proxy', 'Waypoint proxy')}
+            {$t('WaypointProxy', 'Waypoint proxy')}
             <Tooltip
               key={`tooltip_missing_label`}
               position={TooltipPosition.top}
-              content={$t('tip44', 'Layer 7 service Mesh capabilities in Istio Ambient')}
+              content={$t('Istio.Layer7CapabilitiesInAmbient', 'Layer 7 service Mesh capabilities in Istio Ambient')}
             >
               <KialiIcon.Info className={infoStyle} />
             </Tooltip>
@@ -339,12 +339,17 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
               content={
                 labelAct ? (
                   isExactlyLabelFilter ? (
-                    <>{$t('action2', 'Remove label from Filters')}</>
+                    <>{$t('tooltip.RemoveLabelFromFilters', 'Remove label from Filters')}</>
                   ) : (
-                    <>{$t('action3', "Kiali can't remove the filter if is an expression")}</>
+                    <>
+                      {$t(
+                        'tooltip.CannotRemoveFilterIfExpression',
+                        "Kiali can't remove the filter if is an expression"
+                      )}
+                    </>
                   )
                 ) : (
-                  <>{$t('action4', 'Add label to Filters')}</>
+                  <>{$t('Add.FilterLabel', 'Add label to Filters')}</>
                 )
               }
             >

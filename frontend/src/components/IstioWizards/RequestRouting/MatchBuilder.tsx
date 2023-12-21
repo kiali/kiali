@@ -44,11 +44,11 @@ export const ANYTHING = '^.*$';
 const opOptions: string[] = [EXACT, PREFIX, REGEX];
 
 const placeholderText = {
-  [HEADERS]: $t('placeholder2', 'Header Value...'),
-  [URI]: $t('placeholder5', 'Uri value...'),
-  [SCHEME]: $t('placeholder6', 'Scheme value...'),
-  [METHOD]: $t('placeholder7', 'Method value...'),
-  [AUTHORITY]: $t('placeholder8', 'Authority value...')
+  [HEADERS]: $t('placeholder.HeaderValue', 'Header Value...'),
+  [URI]: $t('placeholder.UriValue', 'Uri value...'),
+  [SCHEME]: $t('placeholder.SchemeValue', 'Scheme value...'),
+  [METHOD]: $t('placeholder.MethodCalue', 'Method value...'),
+  [AUTHORITY]: $t('placeholder.AuthorityValue', 'Authority value...')
 };
 
 export const MatchBuilder: React.FC<MatchBuilderProps> = (props: MatchBuilderProps) => {
@@ -98,7 +98,7 @@ export const MatchBuilder: React.FC<MatchBuilderProps> = (props: MatchBuilderPro
           id="header-name-id"
           value={props.headerName}
           onChange={(_, value) => props.onHeaderNameChange(value)}
-          placeholder={$t('placeholder1', 'Header name...')}
+          placeholder={$t('placeholder.HeaderName', 'Header name...')}
         />
       )}
 

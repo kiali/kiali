@@ -105,7 +105,7 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, Breadcru
       <Breadcrumb>
         <BreadcrumbItem>
           <Link to={`/${pathItem}`} onClick={this.cleanFilters}>
-            {isIstio ? $t('Istio Config') : BreadcrumbView.capitalize(pathItem)}
+            {isIstio ? $t('Istio.IstioConfig', 'Istio Config') : BreadcrumbView.capitalize(pathItem)}
           </Link>
         </BreadcrumbItem>
         <BreadcrumbItem>

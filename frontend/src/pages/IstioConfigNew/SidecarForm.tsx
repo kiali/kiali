@@ -199,7 +199,7 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
               />
               {!this.state.validEgressHost && (
                 <div key="hostsHelperText" className={noEgressHostsStyle}>
-                  {$t('helpTip50', 'Enter a valid namespace/FQDN Egress host.')}
+                  {$t('HelperText.validEgressHostEntry', 'Enter a valid namespace/FQDN Egress host.')}
                 </div>
               )}
             </>,
@@ -219,7 +219,10 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
   render() {
     return (
       <>
-        <FormGroup label={$t('WorkloadSelector', 'Workload Selector')} fieldId="workloadSelectorSwitch">
+        <FormGroup
+          label={$t('PeerAuthenticationForm.WorkloadSel', 'Workload Selector')}
+          fieldId="workloadSelectorSwitch"
+        >
           <Switch
             id="workloadSelectorSwitch"
             label={' '}
@@ -249,9 +252,12 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
               <HelperText>
                 <HelperTextItem>
                   {isValid(this.state.workloadSelectorValid)
-                    ? $t('helpTip51', 'One or more labels to select a workload where the Sidecar is applied.')
+                    ? $t(
+                        'HelperText.sidecarWorkloadLabels',
+                        'One or more labels to select a workload where the Sidecar is applied.'
+                      )
                     : $t(
-                        'helpTip46',
+                        'PeerAuthenticationForm.EnterLabelFormat',
                         'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'
                       )}
                 </HelperTextItem>
@@ -271,7 +277,7 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
             <TableBody />
           </Table>
           {this.state.egressHosts.length === 0 && (
-            <div className={noEgressHostsStyle}>{$t('tip305', 'Sidecar has no Egress Hosts Defined')}</div>
+            <div className={noEgressHostsStyle}>{$t('NoEgressDefined', 'Sidecar has no Egress Hosts Defined')}</div>
           )}
         </FormGroup>
       </>

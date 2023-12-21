@@ -181,7 +181,9 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
                     ))}
                   </FormSelect>
                 )}
-                {this.props.k8sGateways.length === 0 && <>{$t('tip297', 'There are no K8s API gateways to select.')}</>}
+                {this.props.k8sGateways.length === 0 && (
+                  <>{$t('NoK8sGatewayAvail', 'There are no K8s API gateways to select.')}</>
+                )}
               </FormGroup>
             )}
             {this.state.newGateway && (
@@ -224,11 +226,11 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
                       <HelperTextItem>
                         {isValid(this.state.gwHostsValid)
                           ? $t(
-                              'helpTip9',
+                              'HelperText.exposeHosts',
                               'One or more hosts exposed by this gateway. Enter one or multiple hosts separated by comma.'
                             )
                           : $t(
-                              'helpTip14',
+                              'HelperText.k8sRouteHostsNoIPs',
                               "K8s Route hosts should be specified using FQDN format or '*.' format. IPs are not allowed."
                             )}
                       </HelperTextItem>

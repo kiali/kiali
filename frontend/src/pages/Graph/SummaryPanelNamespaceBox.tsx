@@ -197,19 +197,19 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
           <SimpleTabs id="graph_summary_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
             <Tooltip
               id="tooltip-inbound"
-              content={$t('title27', 'Traffic entering from another namespace.')}
+              content={$t('tooltip.InboundNamespaceTraffic', 'Traffic entering from another namespace.')}
               entryDelay={1250}
               triggerRef={tooltipInboundRef}
             />
             <Tooltip
               id="tooltip-outbound"
-              content={$t('title28', 'Traffic exiting to another namespace.')}
+              content={$t('tooltip.OutboundAnotherNamespaceTraffic', 'Traffic exiting to another namespace.')}
               entryDelay={1250}
               triggerRef={tooltipOutboundRef}
             />
             <Tooltip
               id="tooltip-total"
-              content={$t('title29', 'All inbound, outbound and internal namespace traffic.')}
+              content={$t('tooltip.AllNamespaceTraffic', 'All inbound, outbound and internal namespace traffic.')}
               entryDelay={1250}
               triggerRef={tooltipTotalRef}
             />
@@ -217,7 +217,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
               <div style={summaryFont}>
                 {grpcIn.rate === 0 && httpIn.rate === 0 && tcpIn.rate === 0 && (
                   <>
-                    <KialiIcon.Info /> {$t('tip282', 'No inbound traffic.')}
+                    <KialiIcon.Info /> {$t('noInboundTraffic', 'No inbound traffic.')}
                   </>
                 )}
                 {grpcIn.rate > 0 && (
@@ -230,7 +230,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
                 )}
                 {httpIn.rate > 0 && (
                   <RateTableHttp
-                    title={`${$t('title15', 'HTTP (requests per second)')}:`}
+                    title={`${$t('HTTP.requests.perSecond', 'HTTP (requests per second)')}:`}
                     rate={httpIn.rate}
                     rate3xx={httpIn.rate3xx}
                     rate4xx={httpIn.rate4xx}
@@ -249,7 +249,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
               <div style={summaryFont}>
                 {grpcOut.rate === 0 && httpOut.rate === 0 && tcpOut.rate === 0 && (
                   <>
-                    <KialiIcon.Info /> {$t('tip283', 'No outbound traffic.')}
+                    <KialiIcon.Info /> {$t('noOutboundTraffic', 'No outbound traffic.')}
                   </>
                 )}
                 {grpcOut.rate > 0 && (
@@ -262,7 +262,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
                 )}
                 {httpOut.rate > 0 && (
                   <RateTableHttp
-                    title={`${$t('title15')}:`}
+                    title={`${$t('HTTP.requests.perSecond', 'HTTP (requests per second)')}:`}
                     rate={httpOut.rate}
                     rate3xx={httpOut.rate3xx}
                     rate4xx={httpOut.rate4xx}
@@ -281,7 +281,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
               <div style={summaryFont}>
                 {grpcTotal.rate === 0 && httpTotal.rate === 0 && tcpTotal.rate === 0 && (
                   <>
-                    <KialiIcon.Info /> {$t('tip284', 'No traffic.')}
+                    <KialiIcon.Info /> {$t('noTraffic', 'No traffic.')}
                   </>
                 )}
                 {grpcTotal.rate > 0 && (
@@ -294,7 +294,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
                 )}
                 {httpTotal.rate > 0 && (
                   <RateTableHttp
-                    title={`${$t('title15', 'HTTP (requests per second)')}:`}
+                    title={`${$t('HTTP.requests.perSecond', 'HTTP (requests per second)')}:`}
                     rate={httpTotal.rate}
                     rate3xx={httpTotal.rate3xx}
                     rate4xx={httpTotal.rate4xx}
@@ -484,11 +484,11 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
       : props.data.summaryTarget.data(NodeAttr.namespace);
 
     if (this.state.loading) {
-      return <strong>{$t('tip65', 'Loading chart...')}</strong>;
+      return <strong>{$t('placeholder.LoadingChart', 'Loading chart...')}</strong>;
     } else if (this.state.metricsLoadError) {
       return (
         <div>
-          <KialiIcon.Warning /> <strong>{$t('Error_loading_metrics', 'Error loading metrics')}: </strong>
+          <KialiIcon.Warning /> <strong>{$t('ErrorLoadingMetrics', 'Error loading metrics')}: </strong>
           {this.state.metricsLoadError}
         </div>
       );
@@ -507,12 +507,12 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
         {grpcTotal.rate > 0 && isGrpcRequests && (
           <>
             <RequestChart
-              label={$t('title16', 'gRPC - Inbound Request Traffic')}
+              label={$t('gRPC.Traffic.InboundRequest', 'gRPC - Inbound Request Traffic')}
               dataRps={this.state.grpcRequestIn}
               dataErrors={this.state.grpcRequestErrIn}
             />
             <RequestChart
-              label={$t('title18', 'gRPC - Outbound Request Traffic')}
+              label={$t('gRPC.Traffic.OutboundRequest', 'gRPC - Outbound Request Traffic')}
               dataRps={this.state.grpcRequestOut}
               dataErrors={this.state.grpcRequestErrOut}
             />
@@ -521,13 +521,13 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
         {grpcTotal.rate > 0 && !isGrpcRequests && (
           <>
             <StreamChart
-              label={$t('title19', 'gRPC - Inbound Traffic')}
+              label={$t('gRPC.Traffic.Inbound', 'gRPC - Inbound Traffic')}
               receivedRates={this.state.grpcReceivedIn}
               sentRates={this.state.grpcSentIn}
               unit="messages"
             />
             <StreamChart
-              label={$t('title20', 'gRPC - Outbound Traffic')}
+              label={$t('gRPC.Traffic.Outbound', 'gRPC - Outbound Traffic')}
               receivedRates={this.state.grpcReceivedOut}
               sentRates={this.state.grpcSentOut}
               unit="messages"
@@ -537,12 +537,12 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
         {httpTotal.rate > 0 && (
           <>
             <RequestChart
-              label={$t('title21', 'HTTP - Inbound Request Traffic')}
+              label={$t('HTTP.Traffic.InboundRequest', 'HTTP - Inbound Request Traffic')}
               dataRps={this.state.httpRequestIn}
               dataErrors={this.state.httpRequestErrIn}
             />
             <RequestChart
-              label={$t('title22', 'HTTP - Outbound Request Traffic')}
+              label={$t('HTTP.Traffic.OutboundRequest', 'HTTP - Outbound Request Traffic')}
               dataRps={this.state.httpRequestOut}
               dataErrors={this.state.httpRequestErrOut}
             />
@@ -551,13 +551,13 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
         {tcpTotal.rate > 0 && (
           <>
             <StreamChart
-              label={$t('title23', 'TCP - Inbound Traffic')}
+              label={$t('TCP.Traffic.Inbound', 'TCP - Inbound Traffic')}
               receivedRates={this.state.tcpReceivedIn}
               sentRates={this.state.tcpSentIn}
               unit="bytes"
             />
             <StreamChart
-              label={$t('title24', 'TCP - Outbound Traffic')}
+              label={$t('TCP.Traffic.Outbound', 'TCP - Outbound Traffic')}
               receivedRates={this.state.tcpReceivedOut}
               sentRates={this.state.tcpSentOut}
               unit="bytes"

@@ -125,9 +125,12 @@ export class Rules extends React.Component<Props> {
                     : rule.matches.map((match, i) => <div key={'match_' + i}>{match}</div>)}
                   {!isValid && (
                     <div className={validationStyle}>
-                      {$t('tip6', "Match 'Any request' is defined in a previous rule.")}
+                      {$t(
+                        'routeRules.AnyRequestMatchInPreviousRule',
+                        "Match 'Any request' is defined in a previous rule."
+                      )}
                       <br />
-                      {$t('tip7', 'This rule is not accessible.')}
+                      {$t('routeRules.RuleInaccessible', 'This rule is not accessible.')}
                     </div>
                   )}
                 </>,
@@ -139,7 +142,7 @@ export class Rules extends React.Component<Props> {
                         return (
                           <div key={'wk_' + order + '_' + wk.name + '_' + i}>
                             <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
-                            {wk.name} ({wk.weight}% {$t('routedTraffic', 'routed traffic')})
+                            {wk.name} ({wk.weight}% {$t('routeRules.routedTraffic', 'routed traffic')})
                           </div>
                         );
                       })}
@@ -149,7 +152,7 @@ export class Rules extends React.Component<Props> {
                         return (
                           <div key={'wk_mirrored_' + order + '_' + wk.name + '_' + i}>
                             <PFBadge badge={PFBadges.MirroredWorkload} position={TooltipPosition.top} />
-                            {wk.name} ({wk.weight}% {$t('mirroredTraffic', 'mirrored traffic')})
+                            {wk.name} ({wk.weight}% {$t('routeRules.mirroredTraffic', 'mirrored traffic')})
                           </div>
                         );
                       })}
@@ -157,14 +160,14 @@ export class Rules extends React.Component<Props> {
                   {rule.delay && (
                     <div key={'delay_' + order}>
                       <PFBadge badge={PFBadges.FaultInjectionDelay} position={TooltipPosition.top} />
-                      {rule.delay.percentage?.value}% {$t('requestsDelayed', 'requests delayed')} (
+                      {rule.delay.percentage?.value}% {$t('routeRules.delayedRequests', 'requests delayed')} (
                       {rule.delay.fixedDelay})
                     </div>
                   )}
                   {rule.abort && (
                     <div key={'abort_' + order}>
                       <PFBadge badge={PFBadges.FaultInjectionAbort} position={TooltipPosition.top} />
-                      {rule.abort.percentage?.value}% {$t('tip294', 'requests aborted (HTTP Status')}{' '}
+                      {rule.abort.percentage?.value}% {$t('HTTP.requests.aborted', 'requests aborted (HTTP Status')}{' '}
                       {rule.abort.httpStatus})
                     </div>
                   )}
@@ -177,7 +180,8 @@ export class Rules extends React.Component<Props> {
                   {rule.retries && (
                     <div key={'retries_' + order}>
                       <PFBadge badge={PFBadges.RequestRetry} position={TooltipPosition.top} />
-                      {rule.retries.attempts} {$t('attemptsWithTimeout', 'attempts with timeout')} ({rule.timeout})
+                      {rule.retries.attempts} {$t('routeRules.timeoutAttempts', 'attempts with timeout')} (
+                      {rule.timeout})
                     </div>
                   )}
                 </>
@@ -191,9 +195,15 @@ export class Rules extends React.Component<Props> {
                 {
                   title: (
                     <EmptyState variant={EmptyStateVariant.full}>
-                      <EmptyStateHeader titleText={$t('title1', 'No Route Rules defined')} headingLevel="h5" />
+                      <EmptyStateHeader
+                        titleText={$t('emptyStateHeader.NoRouteRules', 'No Route Rules defined')}
+                        headingLevel="h5"
+                      />
                       <EmptyStateBody className={noRulesStyle}>
-                        {$t('tip9', 'A Request Routing scenario needs at least a Route Rule')}
+                        {$t(
+                          'routeRules.RoutingNeedsRouteRule',
+                          'A Request Routing scenario needs at least a Route Rule'
+                        )}
                       </EmptyStateBody>
                     </EmptyState>
                   ),

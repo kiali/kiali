@@ -322,7 +322,9 @@ export class TrafficShifting extends React.Component<Props, State> {
           </div>
         )}
         {this.props.showValid && !isValid && (
-          <div className={validationStyle}>{$t('helpTip28', 'The sum of all non-mirrored weights must be 100 %')}</div>
+          <div className={validationStyle}>
+            {$t('validationMsg.SumWeights100Percent', 'The sum of all non-mirrored weights must be 100 %')}
+          </div>
         )}
       </>
     );

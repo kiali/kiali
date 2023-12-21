@@ -15,7 +15,7 @@ export class AbortFault extends React.Component<Props> {
   render() {
     return (
       <>
-        <FormGroup label={$t('AddHTTPAbort', 'Add HTTP Abort')} fieldId="abortSwitch">
+        <FormGroup label={$t('Add.HTTPAbort', 'Add HTTP Abort')} fieldId="abortSwitch">
           <Switch
             id="abortSwitch"
             label={' '}
@@ -46,14 +46,17 @@ export class AbortFault extends React.Component<Props> {
             <FormHelperText>
               <HelperText>
                 <HelperTextItem>
-                  {$t('helpTip5', 'Percentage of requests to be aborted with the error code provided.')}
+                  {$t(
+                    'HelperText.abortPercentage',
+                    'Percentage of requests to be aborted with the error code provided.'
+                  )}
                 </HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>
         )}
         {this.props.aborted && (
-          <FormGroup label={$t('HTTPStatusCode', 'HTTP Status Code')} fieldId="abort-status-code">
+          <FormGroup label={$t('HTTP.StatusCode', 'HTTP Status Code')} fieldId="abort-status-code">
             <TextInput
               value={this.props.abort.httpStatus}
               id="abort-status-code"
@@ -72,8 +75,8 @@ export class AbortFault extends React.Component<Props> {
               <HelperText>
                 <HelperTextItem>
                   {isValid(this.props.isValid)
-                    ? $t('httpStatusMsg', 'HTTP status code to use to abort the Http request.')
-                    : $t('httpStatusMsg', 'HTTP status code to use to abort the Http request.')}
+                    ? $t('HTTP.AbortStatusMsg', 'HTTP status code to use to abort the Http request.')
+                    : $t('HTTP.AbortStatusMsg', 'HTTP status code to use to abort the Http request.')}
                 </HelperTextItem>
               </HelperText>
             </FormHelperText>

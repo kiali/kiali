@@ -52,7 +52,7 @@ const navMenuItems: MenuItem[] = [
     pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.SERVICES + '/(.*)')]
   },
   {
-    title: $t('Istio Config'),
+    title: $t('Istio.IstioConfig', 'Istio Config'),
     to: '/' + Paths.ISTIO,
     pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.ISTIO + '/(.*)'), new RegExp('/' + Paths.ISTIO + '/new/(.*)')]
   },

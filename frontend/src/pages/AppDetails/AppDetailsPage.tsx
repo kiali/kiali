@@ -106,10 +106,10 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
         });
       })
       .catch(error => {
-        AlertUtils.addError($t('AlertUtils6', 'Could not fetch App Details.'), error);
+        AlertUtils.addError($t('failure.appDetailsFetchFailed', 'Could not fetch App Details.'), error);
         const msg: ErrorMsg = {
-          title: $t('title8', 'No App is selected'),
-          description: this.props.appId.app + ` ${$t('title9', 'is not found in the mesh')}`
+          title: $t('errorMsg.NoApp', 'No App is selected'),
+          description: this.props.appId.app + ` ${$t('errorMsg.NotInMesh', 'is not found in the mesh')}`
         };
         this.setState({ error: msg });
       });
@@ -166,7 +166,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     );
 
     const inTab = (
-      <Tab title={$t('Inbound Metrics')} eventKey={2} key={'Inbound Metrics'}>
+      <Tab title={$t('InboundMetrics', 'Inbound Metrics')} eventKey={2} key={'Inbound Metrics'}>
         <IstioMetrics
           data-test="inbound-metrics-component"
           lastRefreshAt={this.props.lastRefreshAt}
@@ -180,7 +180,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     );
 
     const outTab = (
-      <Tab title={$t('Outbound Metrics')} eventKey={3} key={'Outbound Metrics'}>
+      <Tab title={$t('OutboundMetrics', 'Outbound Metrics')} eventKey={3} key={'Outbound Metrics'}>
         <IstioMetrics
           data-test="outbound-metrics-component"
           lastRefreshAt={this.props.lastRefreshAt}
