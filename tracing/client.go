@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -24,6 +25,10 @@ import (
 	"github.com/kiali/kiali/tracing/tempo"
 	"github.com/kiali/kiali/util/grpcutil"
 	"github.com/kiali/kiali/util/httputil"
+)
+
+const (
+	newClientRetryInterval = 30 * time.Second
 )
 
 // ClientInterface for mocks (only mocked function are necessary here)
@@ -72,7 +77,31 @@ func (c *basicAuth) RequireTransportSecurity() bool {
 	return true
 }
 
-func NewClient(cfg *config.Config, token string) (*Client, error) {
+// NewClient creates a tracing Client. If it fails to create the client for any reason,
+// it will retry indefinitely until the context is cancelled.
+func NewClient(ctx context.Context, cfg *config.Config, token string) (*Client, error) {
+	var (
+		client *Client
+		err    error
+	)
+	retryErr := wait.PollUntilContextCancel(ctx, newClientRetryInterval, true, func(ctx context.Context) (bool, error) {
+		client, err = newClient(ctx, cfg, token)
+		if err != nil {
+			log.Errorf("Error creating tracing client: %v. Retrying in %s", err, newClientRetryInterval)
+			return false, nil
+		}
+
+		return true, nil
+	})
+	if retryErr != nil {
+		log.Errorf("Error creating tracing client: %v. Will not retry.", err)
+		return nil, err
+	}
+
+	return client, nil
+}
+
+func newClient(ctx context.Context, cfg *config.Config, token string) (*Client, error) {
 	cfgTracing := cfg.ExternalServices.Tracing
 	if !cfgTracing.Enabled {
 		return nil, errors.New("tracing is not enabled")
@@ -82,7 +111,6 @@ func NewClient(cfg *config.Config, token string) (*Client, error) {
 	if auth.UseKialiToken {
 		auth.Token = token
 	}
-	ctx := context.Background()
 
 	u, errParse := url.Parse(cfgTracing.InClusterURL)
 	if !cfg.InCluster {

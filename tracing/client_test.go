@@ -1,6 +1,7 @@
 package tracing
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,7 +16,7 @@ func TestCreateJaegerClient(t *testing.T) {
 	conf.ExternalServices.Tracing.Enabled = true
 	conf.ExternalServices.Tracing.UseGRPC = false
 
-	tracingClient, err := NewClient(conf, token)
+	tracingClient, err := NewClient(context.Background(), conf, token)
 
 	assert.Nil(t, err)
 	assert.NotNil(t, tracingClient)
@@ -27,7 +28,7 @@ func TestCreateTempogRPCClient(t *testing.T) {
 	conf.ExternalServices.Tracing.Provider = "tempo"
 	conf.ExternalServices.Tracing.UseGRPC = true
 
-	tracingClient, err := NewClient(conf, token)
+	tracingClient, err := NewClient(context.Background(), conf, token)
 
 	assert.Nil(t, err)
 	assert.NotNil(t, tracingClient)
@@ -39,7 +40,7 @@ func TestCreateTempoHTTPClient(t *testing.T) {
 	conf.ExternalServices.Tracing.Provider = "tempo"
 	conf.ExternalServices.Tracing.UseGRPC = false
 
-	tracingClient, err := NewClient(conf, token)
+	tracingClient, err := NewClient(context.Background(), conf, token)
 
 	assert.Nil(t, err)
 	assert.NotNil(t, tracingClient)

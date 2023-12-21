@@ -40,6 +40,11 @@ func (in *TracingService) client() (tracing.ClientInterface, error) {
 	if !in.conf.ExternalServices.Tracing.Enabled {
 		return nil, fmt.Errorf("Tracing is not enabled")
 	}
+
+	if in.tracing == nil {
+		return nil, fmt.Errorf("Tracing client is not initialized")
+	}
+
 	return in.tracing, nil
 }
 

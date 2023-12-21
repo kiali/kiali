@@ -103,11 +103,6 @@ func GetStatus(name string) (previous string, hasPrevious bool) {
 	return previous, hasPrevious
 }
 
-// GetStatus returns current status
-func GetStatuses() map[string]string {
-	return info.Status
-}
-
 // AddWarningMessages add warning messages to status
 // CAUTION: Currently, the UI assumes that the only messages passed to this
 // function are the result of Istio version checks (see the istioVersion func of versions.go file)
