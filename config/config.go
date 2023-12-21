@@ -523,7 +523,7 @@ type Clustering struct {
 
 type FeatureFlagClustering struct {
 	// TODO: Deprecate this in favor of Clustering.Clusters.
-	Clustering
+	Clustering         `yaml:",inline"`
 	EnableExecProvider bool `yaml:"enable_exec_provider,omitempty" json:"enable_exec_provider"`
 }
 
@@ -1051,6 +1051,10 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	// TODO: Remove when we no longer support the old format.
 	if conf.Clustering.Clusters == nil && conf.KialiFeatureFlags.Clustering.Clusters != nil {
 		conf.Clustering.Clusters = conf.KialiFeatureFlags.Clustering.Clusters
+	}
+
+	if conf.Clustering.KialiURLs == nil && conf.KialiFeatureFlags.Clustering.KialiURLs != nil {
+		conf.Clustering.KialiURLs = conf.KialiFeatureFlags.Clustering.KialiURLs
 	}
 
 	return
