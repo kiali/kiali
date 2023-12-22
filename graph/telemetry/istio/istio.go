@@ -387,6 +387,7 @@ func addTraffic(trafficMap graph.TrafficMap, metric string, inject bool, val flo
 			log.Warningf("Skipping addTraffic (inject), %s", err)
 			return
 		}
+		injectedService.Metadata[graph.IsInjected] = true
 		if addEdgeTraffic(trafficMap, val, protocol, code, flags, host, source, injectedService, edgeTSHash, o) {
 			addToDestServices(injectedService.Metadata, destCluster, destSvcNs, destSvcName)
 
