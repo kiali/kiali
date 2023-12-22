@@ -115,18 +115,25 @@ func (oc OtelHTTPClient) queryTracesHTTP(client http.Client, u *url.URL, error s
 		log.Errorf("Tempo API query error: %s [code: %d, URL: %v]", reqError, code, u)
 		return &model.TracingResponse{}, reqError
 	}
+	limit, err := strconv.Atoi(u.Query().Get("limit"))
+	if err != nil {
+		limit = 0
+	}
 	response, _ := unmarshal(resp, u)
 
-	return oc.transformTrace(response, error)
+	return oc.transformTrace(response, error, limit)
 }
 
 // transformTrace processes every trace ID and make a request to get all the spans for that trace
-func (oc OtelHTTPClient) transformTrace(traces *otel.Traces, error string) (*model.TracingResponse, error) {
+func (oc OtelHTTPClient) transformTrace(traces *otel.Traces, error string, limit int) (*model.TracingResponse, error) {
 	var response model.TracingResponse
 	serviceName := ""
 
 	if traces != nil {
-		for _, trace := range traces.Traces {
+		for i, trace := range traces.Traces {
+			if limit != 0 && i >= limit {
+				break
+			}
 			serviceName = getServiceName(trace.SpanSet.Spans[0].Attributes)
 			if error == "true" {
 				if !hasErrors(trace) {

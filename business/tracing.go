@@ -132,7 +132,6 @@ func wkdSpanFilter(ns, workload string) SpanFilter {
 
 func (in *TracingService) GetAppTraces(ns, app string, query models.TracingQuery) (*model.TracingResponse, error) {
 	client, err := in.client()
-	conf := config.Get()
 	if err != nil {
 		return nil, err
 	}
@@ -140,8 +139,8 @@ func (in *TracingService) GetAppTraces(ns, app string, query models.TracingQuery
 	if err != nil {
 		return nil, err
 	}
-	// Disable for tempo for performance
-	if len(r.Data) == query.Limit && conf.ExternalServices.Tracing.Provider != config.TempoProvider {
+
+	if len(r.Data) == query.Limit {
 		// Reached the limit, use split & join mode to spread traces over the requested interval
 		log.Trace("Limit of traces was reached, using split & join mode")
 		more, err := in.getAppTracesSlicedInterval(ns, app, query)
