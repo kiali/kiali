@@ -158,7 +158,6 @@ const logsDiv = kialiStyle({
 const logsDisplay = kialiStyle({
   fontFamily: 'monospace',
   margin: 0,
-  overflow: 'auto',
   padding: 0,
   resize: 'none',
   whiteSpace: 'pre',
@@ -184,8 +183,7 @@ const checkboxStyle = kialiStyle({
 });
 
 const logListStyle = kialiStyle({
-  overflowX: 'auto',
-  overflowY: 'auto',
+  overflow: 'auto !important',
   paddingTop: '0.375rem',
   paddingBottom: '0.75rem'
 });
