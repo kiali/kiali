@@ -13,7 +13,7 @@
   ],
   "homepage-comment": [
     "*Do not* change this setting if you wish run Kiali under different server root.",
-    "Instead update 'web_root' in Kaili config map in OpenShift console."
+    "Instead update 'web_root' in Kiali config map in OpenShift console."
   ],
   "homepage": "./",
   "bugs": {

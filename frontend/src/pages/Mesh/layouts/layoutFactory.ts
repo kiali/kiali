@@ -1,4 +1,4 @@
-import { Graph, Layout, DagreLayout, GridLayout, LayoutFactory } from '@patternfly/react-topology';
+import { Graph, Layout, DagreLayout, LayoutFactory, ColaLayout } from '@patternfly/react-topology';
 import { LayoutName } from '../Mesh';
 
 /*
@@ -19,7 +19,7 @@ export const LAYOUT_DEFAULTS: LayoutOptions = {
 export const layoutFactory: LayoutFactory = (type: string, graph: Graph): Layout | undefined => {
   switch (type) {
     case LayoutName.Grid:
-      return new GridLayout(graph, {
+      return new ColaLayout(graph, {
         nodeDistance: 50
       });
     default:

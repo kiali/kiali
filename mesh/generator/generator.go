@@ -63,11 +63,25 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		}
 
 		// add the home Kiali
+		var kiali *mesh.Node
 		conf := config.Get()
-		_, _, err = addInfra(meshMap, mesh.InfraTypeKiali, conf.KubernetesConfig.ClusterName, conf.Deployment.Namespace, conf.Deployment.InstanceName)
+		kiali, _, err = addInfra(meshMap, mesh.InfraTypeKiali, conf.KubernetesConfig.ClusterName, conf.Deployment.Namespace, conf.Deployment.InstanceName)
 		mesh.CheckError(err)
 
 		// add the Kiali external services...  How to do this?
+		var node *mesh.Node
+		node, _, err = addInfra(meshMap, mesh.InfraTypeMetricStore, conf.KubernetesConfig.ClusterName, conf.Deployment.Namespace, "Prometheus")
+		kiali.AddEdge(node)
+
+		if conf.ExternalServices.Tracing.Enabled {
+			node, _, err = addInfra(meshMap, mesh.InfraTypeTraceStore, conf.KubernetesConfig.ClusterName, conf.Deployment.Namespace, conf.ExternalServices.Tracing.Provider)
+			kiali.AddEdge(node)
+		}
+
+		if conf.ExternalServices.Grafana.Enabled {
+			node, _, err = addInfra(meshMap, mesh.InfraTypeGrafana, conf.KubernetesConfig.ClusterName, conf.Deployment.Namespace, "Grafana")
+			kiali.AddEdge(node)
+		}
 	}
 
 	// The finalizers can perform final manipulations on the complete graph

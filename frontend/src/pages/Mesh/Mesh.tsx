@@ -54,7 +54,7 @@ import { MeshTourStops } from './MeshHelpTour';
 let initialLayout = false;
 let requestFit = false;
 
-const DEFAULT_NODE_SIZE = 50;
+const DEFAULT_NODE_SIZE = 40;
 const ZOOM_IN = 4 / 3;
 const ZOOM_OUT = 3 / 4;
 
@@ -247,6 +247,7 @@ const TopologyContent: React.FC<{
           id: data.id,
           shape: getNodeShape(data),
           status: getNodeStatus(data),
+          style: { padding: 50 },
           type: 'node',
           width: DEFAULT_NODE_SIZE
         };

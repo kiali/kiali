@@ -38,7 +38,7 @@ type NodeData struct {
 	// Other Fields
 	HealthData     interface{} `json:"healthData"`               // data to calculate health status from configurations
 	IsAmbient      bool        `json:"isAmbient,omitempty"`      // true if configured for ambient
-	IsBox          string      `json:"isBox,omitempty"`          // set for NodeTypeBox, current values: [ 'cluster', 'namespace' ]
+	IsBox          string      `json:"isBox,omitempty"`          // set for NodeTypeBox, current values: [ 'cluster', 'namespace', 'other' ]
 	IsInaccessible bool        `json:"isInaccessible,omitempty"` // true if the node exists in an inaccessible namespace
 	IsMTLS         bool        `json:"isMTLS,omitempty"`         // true if mesh-wide mTLS is enabled
 	IsOutOfMesh    bool        `json:"isOutOfMesh,omitempty"`    // true (has missing sidecar) | false
@@ -102,6 +102,7 @@ func NewConfig(meshMap mesh.MeshMap, o mesh.ConfigOptions) (result Config) {
 	}
 
 	// Add compound nodes as needed, inner boxes first
+	boxByNonInfraNamespaces(&nodes)
 	boxByNamespace(&nodes)
 	boxByCluster(&nodes)
 
@@ -116,8 +117,10 @@ func NewConfig(meshMap mesh.MeshMap, o mesh.ConfigOptions) (result Config) {
 					return 0
 				case mesh.BoxByNamespace:
 					return 1
-				default:
+				case mesh.BoxByOther:
 					return 2
+				default:
+					return 3
 				}
 			}
 			return rank(nodes[i].Data.IsBox) < rank(nodes[j].Data.IsBox)
@@ -198,13 +201,29 @@ func buildConfig(meshMap mesh.MeshMap, nodes *[]*NodeWrapper, edges *[]*EdgeWrap
 	}
 }
 
+// boxByNonInfraNamespaces adds compound nodes to box non-infra namespace nodes in the same cluster
+func boxByNonInfraNamespaces(nodes *[]*NodeWrapper) {
+	box := make(map[string][]*NodeData)
+
+	for _, nw := range *nodes {
+		// box app namespace nodes
+		if nw.Data.Parent != "" || nw.Data.InfraType != mesh.InfraTypeNamespace {
+			continue
+		}
+
+		k := fmt.Sprintf("box_%s_non_infra_namespaces", nw.Data.Cluster)
+		box[k] = append(box[k], nw.Data)
+	}
+	generateBoxCompoundNodes(box, nodes, mesh.BoxByOther)
+}
+
 // boxByNamespace adds compound nodes to box nodes in the same namespace
 func boxByNamespace(nodes *[]*NodeWrapper) {
 	box := make(map[string][]*NodeData)
 
 	for _, nw := range *nodes {
 		// don't namespace box a namespace node
-		if nw.Data.Parent != "" || nw.Data.InfraType == mesh.InfraTypeNamespace {
+		if nw.Data.Parent != "" || nw.Data.InfraType == mesh.InfraTypeNamespace || nw.Data.IsBox == mesh.BoxByOther {
 			continue
 		}
 
@@ -236,6 +255,12 @@ func generateBoxCompoundNodes(box map[string][]*NodeData, nodes *[]*NodeWrapper,
 		switch boxBy {
 		case mesh.BoxByNamespace:
 			namespace = members[0].Namespace
+		case mesh.BoxByOther:
+			num := len(members)
+			namespace = "1 Other Namespace"
+			if num > 1 {
+				namespace = fmt.Sprintf("%v Other Namespaces", num)
+			}
 		}
 		nd := NodeData{
 			ID:        nodeID,

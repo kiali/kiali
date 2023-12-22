@@ -11,6 +11,7 @@ const (
 	BoxTypeCluster       string = "cluster"
 	BoxTypeNamespace     string = "namespace"
 	InfraTypeCluster     string = "cluster" // cluster node (not box) with no other infra (very rare)
+	InfraTypeGrafana     string = "grafana"
 	InfraTypeIstiod      string = "istiod"
 	InfraTypeKiali       string = "kiali"
 	InfraTypeNamespace   string = "namespace"

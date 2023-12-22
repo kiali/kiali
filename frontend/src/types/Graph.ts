@@ -182,7 +182,8 @@ export enum GraphType {
 export enum BoxByType {
   APP = 'app',
   CLUSTER = 'cluster',
-  NAMESPACE = 'namespace'
+  NAMESPACE = 'namespace',
+  OTHER = 'other'
 }
 
 export enum NodeType {
