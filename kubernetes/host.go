@@ -7,6 +7,7 @@ import (
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/config"
 )
@@ -222,6 +223,20 @@ func HasMatchingRegistryService(namespace string, host string, registryServices 
 		// We assume that on these cases the host.Service is provided in FQDN
 		// i.e. ratings.mesh2-bookinfo.svc.mesh1-imports.local
 		if FilterByRegistryService(namespace, host, rStatus) {
+			return true
+		}
+	}
+	return false
+}
+
+// HasMatchingReferenceGrant returns true when the From matches to given fromNamespace and fromKind and To matched given toNamespace and toKind.
+func HasMatchingReferenceGrant(fromNamespace string, toNamespace string, fromKind string, toKind string, referenceGrants []*k8s_networking_v1beta1.ReferenceGrant) bool {
+	for _, rGrant := range referenceGrants {
+		if len(rGrant.Spec.From) > 0 && len(rGrant.Spec.To) > 0 &&
+			string(rGrant.Spec.From[0].Namespace) == fromNamespace &&
+			rGrant.Namespace == toNamespace &&
+			string(rGrant.Spec.From[0].Kind) == fromKind &&
+			string(rGrant.Spec.To[0].Kind) == toKind {
 			return true
 		}
 	}

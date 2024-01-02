@@ -2,6 +2,7 @@ package checkers
 
 import (
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
+	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/business/checkers/k8shttproutes"
 	"github.com/kiali/kiali/kubernetes"
@@ -11,11 +12,12 @@ import (
 const K8sHTTPRouteCheckerType = "k8shttproute"
 
 type K8sHTTPRouteChecker struct {
-	K8sHTTPRoutes    []*k8s_networking_v1.HTTPRoute
-	K8sGateways      []*k8s_networking_v1.Gateway
-	Namespaces       models.Namespaces
-	RegistryServices []*kubernetes.RegistryService
-	Cluster          string
+	Cluster            string
+	K8sGateways        []*k8s_networking_v1.Gateway
+	K8sHTTPRoutes      []*k8s_networking_v1.HTTPRoute
+	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant
+	Namespaces         models.Namespaces
+	RegistryServices   []*kubernetes.RegistryService
 }
 
 // Check runs checks for the all namespaces actions as well as for the single namespace validations
@@ -49,9 +51,10 @@ func (in K8sHTTPRouteChecker) runChecks(rt *k8s_networking_v1.HTTPRoute, gateway
 			GatewayNames: gatewayNames,
 		},
 		k8shttproutes.NoHostChecker{
-			K8sHTTPRoute:     rt,
-			Namespaces:       in.Namespaces,
-			RegistryServices: in.RegistryServices,
+			Namespaces:         in.Namespaces,
+			K8sHTTPRoute:       rt,
+			K8sReferenceGrants: in.K8sReferenceGrants,
+			RegistryServices:   in.RegistryServices,
 		},
 	}
 
