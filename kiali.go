@@ -125,9 +125,11 @@ func main() {
 	meshService := business.NewMeshService(clientFactory.GetSAClients(), cache, namespaceService, *cfg)
 	cpm := business.NewControlPlaneMonitor(cache, clientFactory, *cfg, &meshService)
 
+	// This context is used for polling and for creating some high level clients like tracing.
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	if cfg.ExternalServices.Istio.IstioAPIEnabled {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
 		cpm.PollIstiodForProxyStatus(ctx)
 	}
 
@@ -138,18 +140,30 @@ func main() {
 	}
 
 	// Create shared tracing client shared by all tracing requests in the business layer.
+	// Because tracing is not an essential component, we don't want to block startup
+	// of the server if the tracing client fails to initialize. tracing.NewClient will
+	// continue to retry until the client is initialized or the context is cancelled.
+	// Passing in a loader function allows the tracing client to be used once it is
+	// finally initialized.
 	var tracingClient tracing.ClientInterface
+	tracingLoader := func() tracing.ClientInterface {
+		return tracingClient
+	}
 	if cfg.ExternalServices.Tracing.Enabled {
-		tracingClient, err = tracing.NewClient(cfg, clientFactory.GetSAHomeClusterClient().GetToken())
-		if err != nil {
-			log.Fatalf("Error creating tracing client: %s", err)
-		}
+		go func() {
+			client, err := tracing.NewClient(ctx, cfg, clientFactory.GetSAHomeClusterClient().GetToken())
+			if err != nil {
+				log.Fatalf("Error creating tracing client: %s", err)
+				return
+			}
+			tracingClient = client
+		}()
 	} else {
 		log.Debug("Tracing is disabled")
 	}
 
 	// Start listening to requests
-	server := server.NewServer(cpm, clientFactory, cache, *cfg, prom, tracingClient)
+	server := server.NewServer(cpm, clientFactory, cache, *cfg, prom, tracingLoader)
 	server.Start()
 
 	// wait forever, or at least until we are told to exit

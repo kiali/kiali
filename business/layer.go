@@ -35,21 +35,21 @@ type Layer struct {
 
 // Global clientfactory and prometheus clients.
 var (
-	clientFactory    kubernetes.ClientFactory
-	tracingClient    tracing.ClientInterface
-	kialiCache       cache.KialiCache
-	prometheusClient prometheus.ClientInterface
-	poller           ControlPlaneMonitor
+	clientFactory       kubernetes.ClientFactory
+	kialiCache          cache.KialiCache
+	poller              ControlPlaneMonitor
+	prometheusClient    prometheus.ClientInterface
+	tracingClientLoader func() tracing.ClientInterface
 )
 
 // Start sets the globals necessary for the business layer.
 // TODO: Refactor out global vars.
-func Start(cf kubernetes.ClientFactory, controlPlaneMonitor ControlPlaneMonitor, cache cache.KialiCache, prom prometheus.ClientInterface, traceClient tracing.ClientInterface) {
+func Start(cf kubernetes.ClientFactory, controlPlaneMonitor ControlPlaneMonitor, cache cache.KialiCache, prom prometheus.ClientInterface, traceClientLoader func() tracing.ClientInterface) {
 	clientFactory = cf
 	kialiCache = cache
 	poller = controlPlaneMonitor
 	prometheusClient = prom
-	tracingClient = traceClient
+	tracingClientLoader = traceClientLoader
 }
 
 // Get the business.Layer
@@ -60,8 +60,15 @@ func Get(authInfo *api.AuthInfo) (*Layer, error) {
 		return nil, err
 	}
 
+	var traceClient tracing.ClientInterface
+	// This check is only necessary because many of the unit tests don't properly initialize the tracingClientLoader global variable.
+	// In a real environment, Start should always be called before Get so the global should always be initialized.
+	if tracingClientLoader != nil {
+		traceClient = tracingClientLoader()
+	}
+
 	kialiSAClient := clientFactory.GetSAClients()
-	return NewWithBackends(userClients, kialiSAClient, prometheusClient, tracingClient), nil
+	return NewWithBackends(userClients, kialiSAClient, prometheusClient, traceClient), nil
 }
 
 // SetWithBackends allows for specifying the ClientFactory and Prometheus clients to be used.
