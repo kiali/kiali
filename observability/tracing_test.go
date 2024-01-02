@@ -12,9 +12,6 @@ import (
 
 func TestInitTracer(t *testing.T) {
 	assert := assert.New(t)
-	cfg := config.Get()
-	cfg.Server.Observability.Tracing.CollectorType = config.OTELCollectorType
-	config.Set(cfg)
 
 	defer func() {
 		err := recover()
@@ -25,19 +22,12 @@ func TestInitTracer(t *testing.T) {
 }
 
 func TestStop(t *testing.T) {
-	cfg := config.Get()
-	cfg.Server.Observability.Tracing.CollectorType = config.OTELCollectorType
-	config.Set(cfg)
-
 	tp := observability.InitTracer("otelURL")
 	observability.StopTracer(tp)
 }
 
 func TestStopWithNil(t *testing.T) {
 	assert := assert.New(t)
-	cfg := config.Get()
-	cfg.Server.Observability.Tracing.CollectorType = config.OTELCollectorType
-	config.Set(cfg)
 
 	defer func() {
 		err := recover()
@@ -83,7 +73,6 @@ func TestStartSpan(t *testing.T) {
 	assert := assert.New(t)
 	cfg := config.Get()
 	cfg.Server.Observability.Tracing.Enabled = true
-	cfg.Server.Observability.Tracing.CollectorType = config.OTELCollectorType
 	config.Set(cfg)
 
 	ctx := context.Background()
