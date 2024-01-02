@@ -76,16 +76,6 @@ const (
 	TempoProvider  TracingProvider = "tempo"
 )
 
-// TracingCollectorType is the type of collector that Kiali will export traces to.
-// These are traces that kiali generates for itself.
-type TracingCollectorType string
-
-const (
-	// JaegerCollectorType is deprecated, use OTELCollectorType.
-	JaegerCollectorType TracingCollectorType = "jaeger"
-	OTELCollectorType   TracingCollectorType = "otel"
-)
-
 var validPathRegEx = regexp.MustCompile(`^\/[a-zA-Z0-9\-\._~!\$&\'()\*\+\,;=:@%/]*$`)
 
 // FeatureName is the enum type used for named features that can be disabled via KialiFeatureFlags.DisabledFeatures
@@ -119,21 +109,20 @@ type Metrics struct {
 }
 
 // OpenTelemetry collector configuration for tracing
-type OtelCollector struct {
+type TLSConfig struct {
 	CAName     string `yaml:"ca_name,omitempty"`
-	Protocol   string `yaml:"protocol,omitempty"` // http or https or grpc
 	SkipVerify bool   `yaml:"skip_verify,omitempty"`
-	TLSEnabled bool   `yaml:"tls_enabled,omitempty"`
 }
 
 // Tracing provides tracing configuration for the Kiali server.
 type Tracing struct {
-	CollectorType TracingCollectorType `yaml:"collector_type,omitempty"` // Possible values "otel" or "jaeger"
-	CollectorURL  string               `yaml:"collector_url,omitempty"`  // Endpoint for Kiali server traces
-	Enabled       bool                 `yaml:"enabled,omitempty"`
-	Otel          OtelCollector        `yaml:"otel,omitempty"`
+	CollectorURL string `yaml:"collector_url,omitempty"` // Endpoint for Kiali server traces
+	Enabled      bool   `yaml:"enabled,omitempty"`
+	Protocol     string `yaml:"protocol,omitempty"` // http or https or grpc
 	// Sampling rate for Kiali server traces. >= 1.0 always samples and <= 0 never samples.
-	SamplingRate float64 `yaml:"sampling_rate,omitempty"`
+	SamplingRate float64   `yaml:"sampling_rate,omitempty"`
+	TLSEnabled   bool      `yaml:"tls_enabled,omitempty"`
+	TLSConfig    TLSConfig `yaml:"tls_config,omitempty"`
 }
 
 // Observability provides configuration for tracing and metrics exported by the Kiali server.
@@ -814,17 +803,16 @@ func NewConfig() (c *Config) {
 					Port:    9090,
 				},
 				Tracing: Tracing{
-					CollectorType: JaegerCollectorType,
-					CollectorURL:  "http://jaeger-collector.istio-system:14268/api/traces",
-					Enabled:       false,
-					Otel: OtelCollector{
-						CAName:     "",
-						Protocol:   "http",
-						SkipVerify: true,
-						TLSEnabled: false,
-					},
+					CollectorURL: "jaeger-collector.istio-system:4318",
+					Enabled:      false,
+					Protocol:     "http",
 					// Sample half of traces.
 					SamplingRate: 0.5,
+					TLSEnabled:   false,
+					TLSConfig: TLSConfig{
+						CAName:     "",
+						SkipVerify: true,
+					},
 				},
 			},
 			Port:                       20001,
@@ -1162,12 +1150,6 @@ func Validate(cfg Config) error {
 				return err
 			}
 		}
-	}
-
-	// Check the observability section
-	observTracing := cfg.Server.Observability.Tracing
-	if observTracing.Enabled && observTracing.CollectorType != JaegerCollectorType && observTracing.CollectorType != OTELCollectorType {
-		return fmt.Errorf("error in configuration options getting the observability exporter. Invalid collector type [%s]", observTracing.CollectorType)
 	}
 
 	// Check the tracing section
