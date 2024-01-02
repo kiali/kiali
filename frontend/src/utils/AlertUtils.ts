@@ -1,7 +1,7 @@
 import { store } from '../store/ConfigStore';
 import { MessageType } from '../types/MessageCenter';
 import { MessageCenterActions } from '../actions/MessageCenterActions';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import * as API from '../services/Api';
 
 export type Message = {
@@ -36,7 +36,7 @@ export const addError = (message: string, error?: Error, group?: string, type?: 
   }
 };
 
-export const extractAxiosError = (message: string, error: AxiosError): { content: string; detail: string } => {
+export const extractAxiosError = (message: string, error: API.ApiError): { content: string; detail: string } => {
   const errorString: string = API.getErrorString(error);
   const errorDetail: string = API.getErrorDetail(error);
   if (message) {

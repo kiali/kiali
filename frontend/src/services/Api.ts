@@ -49,6 +49,13 @@ export interface Response<T> {
   data: T;
 }
 
+interface KialiError {
+  detail: string;
+  error: string;
+}
+
+export type ApiError = AxiosError<KialiError>;
+
 /**
  * Some platforms defines a proxy to the internal Kiali backend (like Openshift Console)
  * https://github.com/openshift/enhancements/blob/master/enhancements/console/dynamic-plugins.md#delivering-plugins
@@ -412,12 +419,7 @@ export const getWorkloadDashboard = (
   return newRequest<DashboardModel>(HTTP_VERBS.GET, urls.workloadDashboard(namespace, workload), queryParams, {});
 };
 
-export const getCustomDashboard = (
-  ns: string,
-  tpl: string,
-  params: DashboardQuery,
-  cluster?: string
-) => {
+export const getCustomDashboard = (ns: string, tpl: string, params: DashboardQuery, cluster?: string) => {
   const queryParams: any = { ...params };
   if (cluster) {
     queryParams.clusterName = cluster;
@@ -765,7 +767,7 @@ export const getPodEnvoyProxyResourceEntries = (namespace: string, pod: string, 
   );
 };
 
-export const getErrorString = (error: AxiosError): string => {
+export const getErrorString = (error: ApiError): string => {
   if (error && error.response) {
     if (error.response.data && error.response.data.error) {
       return error.response.data.error;
@@ -781,7 +783,7 @@ export const getErrorString = (error: AxiosError): string => {
   return '';
 };
 
-export const getErrorDetail = (error: AxiosError): string => {
+export const getErrorDetail = (error: ApiError): string => {
   if (error && error.response) {
     if (error.response.data && error.response.data.detail) {
       return error.response.data.detail;
