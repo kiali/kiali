@@ -69,7 +69,7 @@ jobs:
         if: failure()
         run: |
           mkdir debug-output
-          hack/ci-get-debug-info.sh --output-directory debug-output --kubectl-context kind-east
+          hack/ci-get-debug-info.sh --output-directory debug-output
 
       - name: Upload debug info artifact
         if: failure()
