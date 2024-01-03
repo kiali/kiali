@@ -17,7 +17,6 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import { AxiosError } from 'axios';
 import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
 import * as FilterHelper from '../../components/FilterList/FilterHelper';
 import * as API from '../../services/Api';
@@ -555,7 +554,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       });
   }
 
-  handleAxiosError(message: string, error: AxiosError) {
+  handleAxiosError(message: string, error: API.ApiError) {
     FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
   }
 

@@ -41,7 +41,6 @@ import {
 } from '@patternfly/react-core';
 import { dicIstioType } from '../../types/IstioConfigList';
 import { showInMessageCenter } from '../../utils/IstioValidationUtils';
-import { AxiosError } from 'axios';
 import { Refresh } from '../../components/Refresh/Refresh';
 import { IstioConfigOverview } from './IstioObjectDetails/IstioConfigOverview';
 import { Annotation } from 'react-ace/types';
@@ -294,7 +293,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     });
   };
 
-  injectGalleyError = (error: AxiosError): AceValidations => {
+  injectGalleyError = (error: API.ApiError): AceValidations => {
     const msg: string[] = API.getErrorString(error).split(':');
     const errMsg: string = msg.slice(1, msg.length).join(':');
     const anno: Annotation = {

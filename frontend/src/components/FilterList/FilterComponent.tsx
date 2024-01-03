@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { AxiosError } from 'axios';
 import * as FilterHelper from './FilterHelper';
 import { SortField } from '../../types/SortFilters';
 import * as API from '../../services/Api';
@@ -36,7 +35,7 @@ export abstract class Component<P extends Props<R>, S extends State<R>, R> exten
     FilterHelper.handleError(error);
   };
 
-  handleAxiosError(message: string, error: AxiosError) {
+  handleAxiosError(message: string, error: API.ApiError) {
     const errMsg = `${message}: ${API.getErrorString(error)}`;
     // TODO: Do we really need this console logging?
     console.error(errMsg);
