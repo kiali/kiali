@@ -224,12 +224,12 @@ func waitForDeploymentReady(ctx context.Context, clientset kubernetes.Interface,
 		}
 
 		if deployment.Generation != deployment.Status.ObservedGeneration {
-			log.Debug("The deployment has not observed the latest spec updated yet.\n")
+			log.Debug("The deployment has not observed the latest spec updated yet.")
 			return false, nil
 		}
 
 		if deployment.Status.ReadyReplicas != *deployment.Spec.Replicas {
-			log.Debugf("Waiting for deployment to be ready (%d/%d replicas)\n", deployment.Status.ReadyReplicas, *deployment.Spec.Replicas)
+			log.Debugf("Waiting for deployment to be ready (%d/%d replicas)", deployment.Status.ReadyReplicas, *deployment.Spec.Replicas)
 			return false, nil
 		}
 
