@@ -35,11 +35,14 @@ HELPMSG
   esac
 done
 
-for NAMESPACE in ${NAMESPACES[@]}; do
-  oc patch kiali kiali -n kiali-operator --type=json '-p=[{"op": "add", "path": "/spec/deployment/accessible_namespaces/0", "value":"'$NAMESPACE'"}]'
-done
+IS_MAISTRA=$([ "$(oc get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
 
-oc wait --for=condition=Successful kiali/kiali --timeout=120s -n kiali-operator
+if [ "${IS_MAISTRA}" == "false" ]; then
+  for NAMESPACE in ${NAMESPACES[@]}; do
+    oc patch kiali kiali -n kiali-operator --type=json '-p=[{"op": "add", "path": "/spec/deployment/accessible_namespaces/0", "value":"'$NAMESPACE'"}]'
+  done
+    oc wait --for=condition=Successful kiali/kiali --timeout=120s -n kiali-operator
+fi
 
 for NAMESPACE in ${NAMESPACES[@]}; do
   oc wait --for=condition=Ready pods --all -n "$NAMESPACE" --timeout 60s || true
