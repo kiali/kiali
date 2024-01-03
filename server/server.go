@@ -31,7 +31,7 @@ type Server struct {
 	prom                prometheus.ClientInterface
 	router              *mux.Router
 	tracer              *sdktrace.TracerProvider
-	tracingClientLoader func() tracing.ClientInterface
+	traceClientLoader   func() tracing.ClientInterface
 }
 
 // NewServer creates a new server configured with the given settings.
@@ -41,10 +41,10 @@ func NewServer(controlPlaneMonitor business.ControlPlaneMonitor,
 	cache cache.KialiCache,
 	conf *config.Config,
 	prom prometheus.ClientInterface,
-	tracingClientLoader func() tracing.ClientInterface,
+	traceClientLoader func() tracing.ClientInterface,
 ) *Server {
 	// create a router that will route all incoming API server requests to different handlers
-	router := routing.NewRouter(conf, cache, clientFactory, prom, tracingClient, controlPlaneMonitor)
+	router := routing.NewRouter(conf, cache, clientFactory, prom, traceClientLoader, controlPlaneMonitor)
 	var tracingProvider *sdktrace.TracerProvider
 	if conf.Server.Observability.Tracing.Enabled {
 		log.Infof("Tracing Enabled. Initializing tracer with collector url: %s", conf.Server.Observability.Tracing.CollectorURL)
@@ -96,7 +96,7 @@ func NewServer(controlPlaneMonitor business.ControlPlaneMonitor,
 		kialiCache:          cache,
 		prom:                prom,
 		router:              router,
-		tracingClientLoader: tracingClientLoader,
+		traceClientLoader:   traceClientLoader,
 	}
 	if conf.Server.Observability.Tracing.Enabled && tracingProvider != nil {
 		s.tracer = tracingProvider
@@ -106,7 +106,7 @@ func NewServer(controlPlaneMonitor business.ControlPlaneMonitor,
 
 // Start HTTP server asynchronously. TLS may be active depending on the global configuration.
 func (s *Server) Start() {
-	business.Start(s.clientFactory, s.controlPlaneMonitor, s.kialiCache, s.prom, s.tracingClientLoader)
+	business.Start(s.clientFactory, s.controlPlaneMonitor, s.kialiCache, s.prom, s.traceClientLoader)
 
 	log.Infof("Server endpoint will start at [%v%v]", s.httpServer.Addr, s.conf.Server.WebRoot)
 	log.Infof("Server endpoint will serve static content from [%v]", s.conf.Server.StaticContentRootDirectory)

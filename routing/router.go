@@ -24,7 +24,7 @@ import (
 )
 
 // NewRouter creates the router with all API routes and the static files handler
-func NewRouter(conf *config.Config, kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory, prom kialiprometheus.ClientInterface, tracingClient tracing.ClientInterface, cpm business.ControlPlaneMonitor) *mux.Router {
+func NewRouter(conf *config.Config, kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory, prom kialiprometheus.ClientInterface, traceClientLoader func() tracing.ClientInterface, cpm business.ControlPlaneMonitor) *mux.Router {
 	webRoot := conf.Server.WebRoot
 	webRootWithSlash := webRoot + "/"
 
@@ -74,7 +74,7 @@ func NewRouter(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 	appRouter = appRouter.StrictSlash(true)
 
 	// Build our API server routes and install them.
-	apiRoutes := NewRoutes(conf, kialiCache, clientFactory, prom, tracingClient, cpm)
+	apiRoutes := NewRoutes(conf, kialiCache, clientFactory, prom, traceClientLoader, cpm)
 	authenticationHandler, _ := handlers.NewAuthenticationHandler()
 	for _, route := range apiRoutes.Routes {
 		handlerFunction := metricHandler(route.HandlerFunc, route)

@@ -28,7 +28,7 @@ type Routes struct {
 }
 
 // NewRoutes creates and returns all the API routes
-func NewRoutes(conf *config.Config, kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory, prom prometheus.ClientInterface, tracingClient tracing.ClientInterface, cpm business.ControlPlaneMonitor) (r *Routes) {
+func NewRoutes(conf *config.Config, kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory, prom prometheus.ClientInterface, traceClientLoader func() tracing.ClientInterface, cpm business.ControlPlaneMonitor) (r *Routes) {
 	r = new(Routes)
 
 	r.Routes = []Route{
@@ -1423,7 +1423,7 @@ func NewRoutes(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 			"GetClusters",
 			"GET",
 			"/api/clusters",
-			handlers.GetClusters(conf, kialiCache, clientFactory, prom, tracingClient, cpm),
+			handlers.GetClusters(conf, kialiCache, clientFactory, prom, traceClientLoader, cpm),
 			true,
 		},
 		// swagger:route GET /api/mesh/outbound_traffic_policy/mode

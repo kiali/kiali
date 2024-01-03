@@ -16,7 +16,7 @@ import (
 // list of clusters that are part of the mesh when multi-cluster is enabled. If
 // multi-cluster is not enabled in the control plane, this handler may provide
 // erroneous data.
-func GetClusters(conf *config.Config, kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory, prom prometheus.ClientInterface, tracingClient tracing.ClientInterface, cpm business.ControlPlaneMonitor) http.HandlerFunc {
+func GetClusters(conf *config.Config, kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory, prom prometheus.ClientInterface, traceClientLoader func() tracing.ClientInterface, cpm business.ControlPlaneMonitor) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authInfo, err := getAuthInfo(r)
 		if err != nil {
@@ -24,7 +24,7 @@ func GetClusters(conf *config.Config, kialiCache cache.KialiCache, clientFactory
 			return
 		}
 
-		layer, err := business.NewLayer(conf, kialiCache, clientFactory, prom, tracingClient, cpm, authInfo)
+		layer, err := business.NewLayer(conf, kialiCache, clientFactory, prom, traceClientLoader(), cpm, authInfo)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
