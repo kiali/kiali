@@ -184,7 +184,7 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 
 			opts := []otlptracegrpc.Option{otlptracegrpc.WithEndpoint(collectorURL), otlptracegrpc.WithDialOption(grpc.WithBlock())}
 
-			if tracingOpt.TLSEnabled {
+			if tracingOpt.TLSConfig.Enabled {
 				if tracingOpt.TLSConfig.SkipVerify {
 					log.Trace("OpenTelemetry collector will not verify the remote certificate")
 					tlsConfig := &tls.Config{

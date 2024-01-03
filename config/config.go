@@ -111,6 +111,7 @@ type Metrics struct {
 // OpenTelemetry collector configuration for tracing
 type TLSConfig struct {
 	CAName     string `yaml:"ca_name,omitempty"`
+	Enabled    bool   `yaml:"enabled,omitempty"`
 	SkipVerify bool   `yaml:"skip_verify,omitempty"`
 }
 
@@ -121,7 +122,6 @@ type Tracing struct {
 	Protocol     string `yaml:"protocol,omitempty"` // http or https or grpc
 	// Sampling rate for Kiali server traces. >= 1.0 always samples and <= 0 never samples.
 	SamplingRate float64   `yaml:"sampling_rate,omitempty"`
-	TLSEnabled   bool      `yaml:"tls_enabled,omitempty"`
 	TLSConfig    TLSConfig `yaml:"tls_config,omitempty"`
 }
 
@@ -808,9 +808,9 @@ func NewConfig() (c *Config) {
 					Protocol:     "http",
 					// Sample half of traces.
 					SamplingRate: 0.5,
-					TLSEnabled:   false,
 					TLSConfig: TLSConfig{
 						CAName:     "",
+						Enabled:    false,
 						SkipVerify: true,
 					},
 				},
