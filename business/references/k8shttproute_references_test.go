@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
+	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
@@ -19,7 +20,8 @@ func prepareTestForK8sHTTPRoute(route *k8s_networking_v1.HTTPRoute) models.Istio
 			{Name: "bookinfo2"},
 			{Name: "bookinfo3"},
 		},
-		K8sHTTPRoutes: []*k8s_networking_v1.HTTPRoute{route},
+		K8sHTTPRoutes:      []*k8s_networking_v1.HTTPRoute{route},
+		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("rg", route.Namespace, "bookinfo")},
 	}
 	return *routeReferences.References()[models.IstioReferenceKey{ObjectType: "k8shttproute", Namespace: route.Namespace, Name: route.Name}]
 }
@@ -40,11 +42,15 @@ func TestK8sHTTPRouteReferences(t *testing.T) {
 	assert.Equal(references.ServiceReferences[1].Name, "reviews2")
 	assert.Equal(references.ServiceReferences[1].Namespace, "bookinfo2")
 
-	assert.Len(references.ObjectReferences, 1)
+	assert.Len(references.ObjectReferences, 2)
 	// Check Gateway references
 	assert.Equal(references.ObjectReferences[0].Name, "gatewayapi")
 	assert.Equal(references.ObjectReferences[0].Namespace, "bookinfo")
 	assert.Equal(references.ObjectReferences[0].ObjectType, "k8sgateway")
+	// Reference Grant
+	assert.Equal(references.ObjectReferences[1].Name, "rg")
+	assert.Equal(references.ObjectReferences[1].Namespace, "bookinfo")
+	assert.Equal(references.ObjectReferences[1].ObjectType, "k8sreferencegrant")
 }
 
 func TestK8sHTTPRouteNoReferences(t *testing.T) {
