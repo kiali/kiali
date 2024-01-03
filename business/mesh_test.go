@@ -1120,9 +1120,8 @@ func TestGetClustersShowsConfiguredKialiInstances(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
 	conf := config.NewConfig()
-	conf.Clustering.Clusters = []config.Cluster{{
-		Name:       "west",
-		Accessible: false,
+	conf.Clustering.InaccessibleClusters = []config.Cluster{{
+		Name: "west",
 	}}
 	conf.Clustering.KialiURLs = []config.KialiURL{{
 		InstanceName: "kiali",
