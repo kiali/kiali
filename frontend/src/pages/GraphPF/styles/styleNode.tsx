@@ -1,8 +1,18 @@
-import { Node, NodeShape, observer, ScaleDetailsLevel, useHover, WithSelectionProps } from '@patternfly/react-topology';
+import {
+  DefaultNode,
+  getShapeComponent,
+  Node,
+  NodeShape,
+  observer,
+  ScaleDetailsLevel,
+  useHover,
+  WithSelectionProps
+} from '@patternfly/react-topology';
 import useDetailsLevel from '@patternfly/react-topology/dist/esm/hooks/useDetailsLevel';
 import * as React from 'react';
 import { KeyIcon, TopologyIcon } from '@patternfly/react-icons';
-import { BaseNode } from '../components/node';
+import { PFColors } from 'components/Pf/PfColors';
+import { kialiStyle } from 'styles/StyleUtils';
 
 // This is the registered Node component override that utilizes our customized Node.tsx component.
 
@@ -45,6 +55,17 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
   const [hover, hoverRef] = useHover();
+  const ShapeComponent = getShapeComponent(element);
+
+  const ColorSpan = PFColors.Purple200;
+  const OverlayOpacity = 0.3;
+  const OverlayWidth = 40;
+
+  const traceOverlayStyle = kialiStyle({
+    strokeWidth: OverlayWidth,
+    stroke: ColorSpan,
+    strokeOpacity: OverlayOpacity
+  });
 
   const passedData = React.useMemo(() => {
     const newData = { ...data };
@@ -63,9 +84,12 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
     element.setData({ ...data, isFocused: false });
   }
 
+  const { width, height } = element.getDimensions();
+
   return (
     <g ref={hoverRef as any}>
-      <BaseNode
+      <ShapeComponent className={traceOverlayStyle} width={width} height={height} element={element} />
+      <DefaultNode
         element={element}
         {...rest}
         {...passedData}
@@ -76,7 +100,7 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
         showStatusBackground={detailsLevel === ScaleDetailsLevel.low}
       >
         {(hover || detailsLevel !== ScaleDetailsLevel.low) && renderIcon(element)}
-      </BaseNode>
+      </DefaultNode>
     </g>
   );
 };
