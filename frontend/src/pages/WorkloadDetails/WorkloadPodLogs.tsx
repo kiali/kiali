@@ -157,7 +157,6 @@ const logsDiv = kialiStyle({
 const logsDisplay = kialiStyle({
   fontFamily: 'monospace',
   margin: 0,
-  overflow: 'auto',
   padding: 0,
   resize: 'none',
   whiteSpace: 'pre',
