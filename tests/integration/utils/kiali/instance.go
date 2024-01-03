@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"gopkg.in/yaml.v2"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -118,12 +117,12 @@ func (in *Instance) GetConfig(ctx context.Context) (*config.Config, error) {
 		return nil, err
 	}
 
-	var currentConfig config.Config
-	if err := yaml.Unmarshal([]byte(cm.Data["config.yaml"]), &currentConfig); err != nil {
+	currentConfig, err := config.Unmarshal(cm.Data["config.yaml"])
+	if err != nil {
 		return nil, err
 	}
 
-	return &currentConfig, nil
+	return currentConfig, nil
 }
 
 // UpdateConfig will update the Kiali instance with the new config. It will ensure
@@ -140,7 +139,7 @@ func (in *Instance) UpdateConfig(ctx context.Context, conf *config.Config) error
 
 		// Fetch the Kiali CR and update the config on it.
 		// Update the Kiali CR
-		newConfig, err := yaml.Marshal(conf)
+		newConfig, err := config.Marshal(conf)
 		if err != nil {
 			return err
 		}
@@ -170,7 +169,7 @@ func (in *Instance) UpdateConfig(ctx context.Context, conf *config.Config) error
 	} else {
 		// Update the configmap directly. It's important to use yaml.Marshal because the config struct
 		// doesn't have json tags.
-		newConfig, err := yaml.Marshal(conf)
+		newConfig, err := config.Marshal(conf)
 		if err != nil {
 			return err
 		}
@@ -224,7 +223,7 @@ func waitForDeploymentReady(ctx context.Context, clientset kubernetes.Interface,
 		}
 
 		if deployment.Generation != deployment.Status.ObservedGeneration {
-			log.Debug("The deployment has not observed the latest spec updated yet.")
+			log.Debug("The deployment has not observed the latest spec update yet.")
 			return false, nil
 		}
 
@@ -248,6 +247,8 @@ func (in *Instance) Restart(ctx context.Context) error {
 	if err := waitForDeploymentReady(ctx, in.kubeClient, in.ResourceNamespace, in.Name); err != nil {
 		return err
 	}
+
+	log.Debug("Kiali is ready")
 
 	return nil
 }
