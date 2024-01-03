@@ -54,14 +54,18 @@ jobs:
       - name: Run backend integration tests
         run: hack/run-integration-tests.sh --test-suite backend $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
 
+      - name: Testing failure TODO remove
+        run: exit 1
+
       - name: Get debug info when integration tests fail
         if: failure()
         run: |
-          kubectl logs -l app.kubernetes.io/name=kiali --tail=-1 --all-containers -n istio-system
-          kubectl describe nodes
-          kubectl get pods -l app.kubernetes.io/name=kiali -n istio-system -o yaml
-          kubectl describe pods -n metallb-system
-          kubectl logs -p deployments/controller -n metallb-system
-          kubectl logs -p ds/speaker -n metallb-system
-          kubectl logs deployments/controller -n metallb-system
-          kubectl logs ds/speaker -n metallb-system
+          mkdir debug-output
+          hack/get-debug-info.sh --output-directory debug-output --kubectl-context kind-east
+
+      - name: Upload debug info artifact
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: debug-info
+          path: debug-output
