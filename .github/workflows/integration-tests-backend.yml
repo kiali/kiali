@@ -54,9 +54,6 @@ jobs:
       - name: Run backend integration tests
         run: hack/run-integration-tests.sh --test-suite backend $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
 
-      - name: Testing failure TODO remove
-        run: exit 1
-
       - name: Get debug info when integration tests fail
         if: failure()
         run: |
