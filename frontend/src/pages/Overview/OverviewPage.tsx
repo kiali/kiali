@@ -112,23 +112,21 @@ const emptyStateStyle = kialiStyle({
   marginTop: '0.5rem'
 });
 
-const cardNamespaceNameNormalStyle = kialiStyle({
-  display: 'table-footer-group',
-  verticalAlign: 'middle'
+const namespaceHeaderStyle = kialiStyle({
+  $nest: {
+    '& .pf-v5-c-card__header-main': {
+      width: '85%'
+    }
+  }
 });
 
-// CSS trick to apply ellipsis only on certain cases
-// With actions on Card, there are some CSS calculation in the Cards, so the
-// maxWidth calc() used doesn't work well for all cases
-const NS_LONG = 20;
-
-const cardNamespaceNameLongStyle = kialiStyle({
-  overflow: 'hidden',
+const namespaceNameStyle = kialiStyle({
   display: 'block',
-  maxWidth: 'calc(100% - 75px)',
-  textOverflow: 'ellipsis',
+  textAlign: 'left',
+  overflow: 'hidden',
   verticalAlign: 'middle',
-  whiteSpace: 'nowrap'
+  whiteSpace: 'nowrap',
+  textOverflow: 'ellipsis'
 });
 
 export enum Show {
@@ -219,6 +217,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
   getStartDisplayMode = (isCompact: boolean): number => {
     // Check if there is a displayMode option
     const historyDisplayMode = HistoryManager.getParam(URLParam.DISPLAY_MODE);
+
     if (historyDisplayMode) {
       return Number(historyDisplayMode);
     }
@@ -229,6 +228,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
   load = (): void => {
     this.promises.cancelAll();
+
     this.promises
       .register('namespaces', API.getNamespaces())
       .then(namespacesResponse => {
@@ -242,6 +242,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           })
           .map(ns => {
             const previous = this.state.namespaces.find(prev => prev.name === ns.name);
+
             return {
               name: ns.name,
               cluster: ns.cluster,
@@ -284,6 +285,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             this.fetchCanariesStatus();
             this.fetchIstiodResourceThresholds();
             this.fetchValidations(isAscending, sortField);
+
             if (displayMode !== OverviewDisplayMode.COMPACT) {
               this.fetchMetrics(direction);
             }
@@ -429,6 +431,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     direction: DirectionType
   ): Promise<NamespaceInfo[] | void> {
     const rateParams = computePrometheusRateParams(duration, 10);
+
     const options: IstioMetricsOptions = {
       filters: ['request_count', 'request_error_count'],
       duration: duration,
@@ -449,6 +452,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         return API.getNamespaceMetrics(nsInfo.name, options, clusterParam).then(rs => {
           nsInfo.metrics = rs.data.request_count;
           nsInfo.errorMetrics = rs.data.request_error_count;
+
           if (nsInfo.name === serverConfig.istioNamespace) {
             nsInfo.controlPlaneMetrics = {
               istiod_proxy_time: rs.data.pilot_proxy_convergence_time,
@@ -458,6 +462,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
               istiod_process_mem: rs.data.process_resident_memory_bytes
             };
           }
+
           return nsInfo;
         });
       })
@@ -471,9 +476,11 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         .then(() => {
           this.setState(prevState => {
             let newNamespaces = prevState.namespaces.slice();
+
             if (sortField.id === 'mtls') {
               newNamespaces = Sorts.sortFunc(newNamespaces, sortField, isAscending);
             }
+
             return { namespaces: newNamespaces };
           });
         });
@@ -713,6 +720,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           isGroup: false,
           isSeparator: true
         });
+
         const enableAction = {
           'data-test': `enable-${nsInfo.name}-namespace-sidecar-injection`,
           isGroup: false,
@@ -921,6 +929,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         return true;
       }
     }
+
     return false;
   };
 
@@ -969,7 +978,6 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             ) : (
               <Grid>
                 {filteredNamespaces.map((ns, i) => {
-                  const isLongNs = ns.name.length > NS_LONG;
                   return (
                     <GridItem
                       sm={
@@ -1003,56 +1011,26 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                         }
                       >
                         <CardHeader
+                          className={namespaceHeaderStyle}
                           actions={{ actions: <>{namespaceActions[i]}</>, hasNoOffset: false, className: undefined }}
                         >
                           {
-                            <>
-                              <Title headingLevel="h5" size={TitleSizes.lg}>
-                                <span
-                                  className={isLongNs ? cardNamespaceNameLongStyle : cardNamespaceNameNormalStyle}
-                                  title={ns.name}
+                            <Title headingLevel="h5" size={TitleSizes.lg}>
+                              <span className={namespaceNameStyle}>
+                                <Tooltip
+                                  content={
+                                    <>
+                                      <span>{ns.name}</span>
+                                      {this.renderNamespaceBadges(ns, false)}
+                                    </>
+                                  }
+                                  position={TooltipPosition.top}
                                 >
-                                  {ns.name}
-                                  {ns.name === serverConfig.istioNamespace && (
-                                    <ControlPlaneBadge
-                                      cluster={ns.cluster}
-                                      annotations={ns.annotations}
-                                    ></ControlPlaneBadge>
-                                  )}
-
-                                  {ns.name !== serverConfig.istioNamespace &&
-                                    this.hasCanaryUpgradeConfigured() &&
-                                    this.state.canaryUpgradeStatus?.migratedNamespaces.includes(ns.name) && (
-                                      <ControlPlaneVersionBadge
-                                        version={this.state.canaryUpgradeStatus.upgradeVersion}
-                                        isCanary={true}
-                                      ></ControlPlaneVersionBadge>
-                                    )}
-
-                                  {ns.name !== serverConfig.istioNamespace &&
-                                    this.hasCanaryUpgradeConfigured() &&
-                                    this.state.canaryUpgradeStatus?.pendingNamespaces.includes(ns.name) && (
-                                      <ControlPlaneVersionBadge
-                                        version={this.state.canaryUpgradeStatus.currentVersion}
-                                        isCanary={false}
-                                      ></ControlPlaneVersionBadge>
-                                    )}
-
-                                  {ns.name === serverConfig.istioNamespace && !this.props.istioAPIEnabled && (
-                                    <Label style={{ marginLeft: '0.5rem' }} color="orange" isCompact>
-                                      Istio API disabled
-                                    </Label>
-                                  )}
-
-                                  {serverConfig.ambientEnabled &&
-                                    ns.name !== serverConfig.istioNamespace &&
-                                    ns.labels &&
-                                    ns.isAmbient && (
-                                      <AmbientBadge tooltip="labeled as part of Ambient Mesh"></AmbientBadge>
-                                    )}
-                                </span>
-                              </Title>
-                            </>
+                                  <span>{ns.name}</span>
+                                </Tooltip>
+                                {this.renderNamespaceBadges(ns, true)}
+                              </span>
+                            </Title>
                           }
                         </CardHeader>
                         <CardBody>
@@ -1062,6 +1040,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                               {ns.cluster}
                             </div>
                           )}
+
                           {ns.name === serverConfig.istioNamespace &&
                             !isRemoteCluster(ns.annotations) &&
                             this.state.displayMode === OverviewDisplayMode.EXPAND && (
@@ -1126,6 +1105,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                                 )}
                               </Grid>
                             )}
+
                           {ns.name === serverConfig.istioNamespace &&
                             isRemoteCluster(ns.annotations) &&
                             this.state.displayMode === OverviewDisplayMode.EXPAND && (
@@ -1220,6 +1200,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
   renderLabels(ns: NamespaceInfo): JSX.Element {
     const labelsLength = ns.labels ? `${Object.entries(ns.labels).length}` : 'No';
+
     const labelContent = ns.labels ? (
       <div
         style={{ color: PFColors.Link, textAlign: 'left', cursor: 'pointer' }}
@@ -1277,6 +1258,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
   renderIstioConfigStatus(ns: NamespaceInfo): JSX.Element {
     let validations: ValidationStatus = { objectCount: 0, errors: 0, warnings: 0 };
+
     if (!!ns.validations) {
       validations = ns.validations;
     }
@@ -1335,6 +1317,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         <div style={{ textAlign: 'left' }}>
           <span>
             {mainLink}
+
             <div style={{ display: 'inline-block' }}>N/A</div>
           </span>
         </div>
@@ -1342,54 +1325,90 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     }
 
     return (
+      <div style={{ textAlign: 'left' }}>
+        <span>
+          {mainLink}
+
+          <div style={{ display: 'inline-block' }} data-test="overview-app-health">
+            {ns.status && ns.status.inNotReady.length > 0 && (
+              <OverviewStatus
+                id={`${name}-not-ready`}
+                namespace={name}
+                status={NOT_READY}
+                items={ns.status.inNotReady}
+                targetPage={targetPage}
+              />
+            )}
+
+            {ns.status && ns.status.inError.length > 0 && (
+              <OverviewStatus
+                id={`${name}-failure`}
+                namespace={name}
+                status={FAILURE}
+                items={ns.status.inError}
+                targetPage={targetPage}
+              />
+            )}
+
+            {ns.status && ns.status.inWarning.length > 0 && (
+              <OverviewStatus
+                id={`${name}-degraded`}
+                namespace={name}
+                status={DEGRADED}
+                items={ns.status.inWarning}
+                targetPage={targetPage}
+              />
+            )}
+
+            {ns.status && ns.status.inSuccess.length > 0 && (
+              <OverviewStatus
+                id={`${name}-healthy`}
+                namespace={name}
+                status={HEALTHY}
+                items={ns.status.inSuccess}
+                targetPage={targetPage}
+              />
+            )}
+          </div>
+        </span>
+      </div>
+    );
+  }
+
+  renderNamespaceBadges(ns: NamespaceInfo, tooltip: boolean): JSX.Element {
+    return (
       <>
-        <div style={{ textAlign: 'left' }}>
-          <span>
-            {mainLink}
+        {ns.name === serverConfig.istioNamespace && (
+          <ControlPlaneBadge cluster={ns.cluster} annotations={ns.annotations}></ControlPlaneBadge>
+        )}
 
-            <div style={{ display: 'inline-block' }} data-test="overview-app-health">
-              {ns.status && ns.status.inNotReady.length > 0 && (
-                <OverviewStatus
-                  id={`${name}-not-ready`}
-                  namespace={name}
-                  status={NOT_READY}
-                  items={ns.status.inNotReady}
-                  targetPage={targetPage}
-                />
-              )}
+        {ns.name !== serverConfig.istioNamespace &&
+          this.hasCanaryUpgradeConfigured() &&
+          this.state.canaryUpgradeStatus?.migratedNamespaces.includes(ns.name) && (
+            <ControlPlaneVersionBadge
+              version={this.state.canaryUpgradeStatus.upgradeVersion}
+              isCanary={true}
+            ></ControlPlaneVersionBadge>
+          )}
 
-              {ns.status && ns.status.inError.length > 0 && (
-                <OverviewStatus
-                  id={`${name}-failure`}
-                  namespace={name}
-                  status={FAILURE}
-                  items={ns.status.inError}
-                  targetPage={targetPage}
-                />
-              )}
+        {ns.name !== serverConfig.istioNamespace &&
+          this.hasCanaryUpgradeConfigured() &&
+          this.state.canaryUpgradeStatus?.pendingNamespaces.includes(ns.name) && (
+            <ControlPlaneVersionBadge
+              version={this.state.canaryUpgradeStatus.currentVersion}
+              isCanary={false}
+            ></ControlPlaneVersionBadge>
+          )}
 
-              {ns.status && ns.status.inWarning.length > 0 && (
-                <OverviewStatus
-                  id={`${name}-degraded`}
-                  namespace={name}
-                  status={DEGRADED}
-                  items={ns.status.inWarning}
-                  targetPage={targetPage}
-                />
-              )}
+        {ns.name === serverConfig.istioNamespace && !this.props.istioAPIEnabled && (
+          <Label style={{ marginLeft: '0.5rem' }} color="orange" isCompact>
+            Istio API disabled
+          </Label>
+        )}
 
-              {ns.status && ns.status.inSuccess.length > 0 && (
-                <OverviewStatus
-                  id={`${name}-healthy`}
-                  namespace={name}
-                  status={HEALTHY}
-                  items={ns.status.inSuccess}
-                  targetPage={targetPage}
-                />
-              )}
-            </div>
-          </span>
-        </div>
+        {serverConfig.ambientEnabled && ns.name !== serverConfig.istioNamespace && ns.labels && ns.isAmbient && (
+          <AmbientBadge tooltip={tooltip ? 'labeled as part of Ambient Mesh' : undefined}></AmbientBadge>
+        )}
       </>
     );
   }

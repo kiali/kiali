@@ -3,7 +3,7 @@ import { Label, Tooltip, TooltipPosition } from '@patternfly/react-core';
 
 type AmbientLabelProps = {
   style?: React.CSSProperties;
-  tooltip: string;
+  tooltip?: string;
 };
 
 export const AmbientBadge: React.FC<AmbientLabelProps> = (props: AmbientLabelProps) => {
@@ -15,9 +15,11 @@ export const AmbientBadge: React.FC<AmbientLabelProps> = (props: AmbientLabelPro
     </Label>
   );
 
-  return (
+  return props.tooltip ? (
     <Tooltip key="tooltip_ambient_label" position={TooltipPosition.right} content={tooltipContent}>
       {iconComponent}
     </Tooltip>
+  ) : (
+    iconComponent
   );
 };
