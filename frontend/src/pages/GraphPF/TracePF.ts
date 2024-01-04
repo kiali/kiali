@@ -9,7 +9,7 @@ import {
 } from 'utils/tracing/TracingHelper';
 import { edgesOut, elems, select, SelectAnd, selectAnd } from './GraphPFElems';
 
-export const showTrace = (controller: Controller, graphType: GraphType, trace: JaegerTrace) => {
+export const showTrace = (controller: Controller, graphType: GraphType, trace: JaegerTrace): void => {
   if (!controller.hasGraph()) {
     return;
   }
@@ -18,7 +18,7 @@ export const showTrace = (controller: Controller, graphType: GraphType, trace: J
   trace.spans.forEach(span => showSpanSubtrace(controller, graphType, span));
 };
 
-const showSpanSubtrace = (controller: Controller, graphType: GraphType, span: Span) => {
+const showSpanSubtrace = (controller: Controller, graphType: GraphType, span: Span): void => {
   const split = span.process.serviceName.split('.');
   const app = split[0];
   // From upstream to downstream: Parent app or workload, Inbound Service Entry, Service, App or Workload, Outbound Service Entry
@@ -147,7 +147,7 @@ const addSpan = (ele: Node | Edge | undefined, span: Span): void => {
   ele.setData({ ...data, hasSpans: hasSpans });
 };
 
-export const hideTrace = (controller: Controller) => {
+export const hideTrace = (controller: Controller): void => {
   if (!controller.hasGraph()) {
     return;
   }
@@ -212,6 +212,9 @@ const nextHop = (span: Span, next: Node[] | undefined, last: Node[] | undefined)
       addSpan(singleEdge(edge), span);
     }
     return next;
+  }
+  if (last) {
+    addSpan(singleNode(last), span);
   }
   return last;
 };

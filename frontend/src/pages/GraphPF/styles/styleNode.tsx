@@ -13,6 +13,7 @@ import * as React from 'react';
 import { KeyIcon, TopologyIcon } from '@patternfly/react-icons';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
+import { keyframes } from 'typestyle';
 
 // This is the registered Node component override that utilizes our customized Node.tsx component.
 
@@ -57,6 +58,8 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
   const [hover, hoverRef] = useHover();
   const ShapeComponent = getShapeComponent(element);
 
+  const ColorFind = PFColors.Gold400;
+  const ColorFocus = PFColors.Blue400;
   const ColorSpan = PFColors.Purple200;
   const OverlayOpacity = 0.3;
   const OverlayWidth = 40;
@@ -66,6 +69,39 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
     stroke: ColorSpan,
     strokeOpacity: OverlayOpacity
   });
+
+  const findOverlayStyle = kialiStyle({
+    strokeWidth: OverlayWidth,
+    stroke: ColorFind,
+    strokeOpacity: OverlayOpacity
+  });
+
+  const focusAnimation = keyframes({
+    '0%': { strokeWidth: OverlayWidth },
+    '100%': { strokeWidth: 0 }
+  });
+
+  const focusOverlayStyle = kialiStyle({
+    stroke: ColorFocus,
+    strokeOpacity: OverlayOpacity,
+    animationDuration: '1s',
+    animationName: focusAnimation,
+    animationIterationCount: 3
+  });
+
+  // Set the path style when unhighlighted (opacity)
+  let opacity = 1;
+  if (data.isUnhighlighted) {
+    opacity = 0.1;
+  }
+
+  const onMouseEnter = (): void => {
+    data.onHover(element, true);
+  };
+
+  const onMouseLeave = (): void => {
+    data.onHover(element, false);
+  };
 
   const passedData = React.useMemo(() => {
     const newData = { ...data };
@@ -86,9 +122,19 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
 
   const { width, height } = element.getDimensions();
 
+  if (data.isFind) {
+  } else if (data.isFocused) {
+  }
+
   return (
-    <g ref={hoverRef as any}>
-      <ShapeComponent className={traceOverlayStyle} width={width} height={height} element={element} />
+    <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} ref={hoverRef as any}>
+      {data.hasSpans && (
+        <ShapeComponent className={traceOverlayStyle} width={width} height={height} element={element} />
+      )}
+      {data.isFind && <ShapeComponent className={findOverlayStyle} width={width} height={height} element={element} />}
+      {data.isFocused && (
+        <ShapeComponent className={focusOverlayStyle} width={width} height={height} element={element} />
+      )}
       <DefaultNode
         element={element}
         {...rest}
