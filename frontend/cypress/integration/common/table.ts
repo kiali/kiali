@@ -1,6 +1,11 @@
 import { And, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { TableDefinition } from 'cypress-cucumber-preprocessor';
 
+enum SortOrder {
+  Ascending = 'ascending',
+  Descending = 'descending'
+}
+
 Then(`user sees a table with headings`, (tableHeadings: TableDefinition) => {
   const headings = tableHeadings.raw()[0];
   cy.get('table');
@@ -87,7 +92,7 @@ And('user filters for istio config type {string}', (istioType: string) => {
 // 1. There is only 1 table on the screen.
 //
 // Be aware of these assumptions when using this func.
-export const colExists = (colName: string, exists: boolean) => {
+export const colExists = (colName: string, exists: boolean): Cypress.Chainable => {
   return cy.get(`th[data-label="${colName}"]`).should(exists ? 'exist' : 'not.exist');
 };
 
@@ -96,7 +101,7 @@ export const colExists = (colName: string, exists: boolean) => {
 //
 // 1. The classes expected
 export const hasAtLeastOneClass = (expectedClasses: string[]) => {
-  return ($el: HTMLElement[]) => {
+  return ($el: HTMLElement[]): boolean => {
     const classList = Array.from($el[0].classList);
     return expectedClasses.some((expectedClass: string) => classList.includes(expectedClass));
   };
@@ -109,7 +114,7 @@ export const hasAtLeastOneClass = (expectedClasses: string[]) => {
 // 2. There is only 1 table on the screen.
 //
 // Be aware of these assumptions when using this func.
-export const getColWithRowText = (rowSearchText: string, colName: string) => {
+export const getColWithRowText = (rowSearchText: string, colName: string): Cypress.Chainable => {
   return cy.get('tbody').contains('tr', rowSearchText).find(`td[data-label="${colName}"]`);
 };
 
@@ -122,7 +127,7 @@ export const getColWithRowText = (rowSearchText: string, colName: string) => {
 //
 // getCellsForCol('Name') or getCellsForCol(0) would both return
 // the cells 'app1' and 'app2'.
-export const getCellsForCol = (column: string | Number) => {
+export const getCellsForCol = (column: string | Number): Cypress.Chainable => {
   if (typeof column === 'number') {
     return cy.get('td').eq(column);
   }
@@ -175,7 +180,7 @@ When('user clicks in the {string} table {string} badge {string} name row link', 
 });
 
 // ensureObjectsInTable name can represent apps, istio config, objects, services etc.
-export const ensureObjectsInTable = (...names: string[]) => {
+export const ensureObjectsInTable = (...names: string[]): void => {
   cy.get('tbody').within(() => {
     cy.get('tr').should('have.length.at.least', names.length);
 
@@ -191,7 +196,7 @@ export const checkHealthIndicatorInTable = (
   targetType: string | null,
   targetRowItemName: string,
   healthStatus: string
-) => {
+): void => {
   const selector = targetType
     ? `${targetNamespace}_${targetType}_${targetRowItemName}`
     : `${targetNamespace}_${targetRowItemName}`;
@@ -217,7 +222,7 @@ export const checkHealthStatusInTable = (
   targetType: string | null,
   targetRowItemName: string,
   healthStatus: string
-) => {
+): void => {
   const selector = targetType
     ? `${targetNamespace}_${targetType}_${targetRowItemName}`
     : `${targetNamespace}_${targetRowItemName}`;
@@ -238,4 +243,57 @@ And('an entry for {string} cluster should be in the table', (cluster: string) =>
   cy.get('tbody').within(() => {
     cy.get('tr > td:nth-child(4)').contains(cluster).should('have.length.above', 0);
   });
+});
+
+// e.g. When user sorts the list by column "Cluster" in "ascending" order
+When('user sorts the list by column {string} in {string} order', (column: string, order: SortOrder) => {
+  cy.get(`th[data-label="${column}"]`).then($el => {
+    // Already sorted by this column and order, do nothing.
+    if ($el.attr('aria-sort') === order) {
+      return;
+    }
+
+    // Three possible states:
+    // 1. aria-sort attribute is none: not sorted, click once for ascending and twice for descending.
+    // 2. aria-sort attribute is ascending: click once for descending.
+    // 3. aria-sort attribute is descending: click once for ascending.
+    if ($el.attr('aria-sort') === 'none') {
+      if (order === SortOrder.Ascending) {
+        cy.wrap($el).click();
+      } else if (order === SortOrder.Descending) {
+        cy.wrap($el).click();
+        cy.wrap($el).click();
+      }
+    } else if ($el.attr('aria-sort') === SortOrder.Ascending) {
+      if (order === SortOrder.Descending) {
+        cy.wrap($el).click();
+      }
+    } else if ($el.attr('aria-sort') === SortOrder.Descending) {
+      if (order === SortOrder.Ascending) {
+        cy.wrap($el).click();
+      }
+    }
+  });
+});
+
+// e.g. Then the list is sorted by column "Cluster" in "ascending" order
+Then('the list is sorted by column {string} in {string} order', (column: string, order: SortOrder) => {
+  // For each row, assert that every value in that col is <= the next row's value in that column.
+  cy.get('tbody')
+    .find('tr')
+    .then($rows => {
+      for (let i = 0; i < $rows.length - 1; i++) {
+        const $row = $rows.eq(i);
+        const $nextRow = $rows.eq(i + 1);
+
+        const $col = $row.find(`td[data-label="${column}"]`);
+        const $nextCol = $nextRow.find(`td[data-label="${column}"]`);
+
+        if (order === SortOrder.Ascending) {
+          expect($col.text().localeCompare($nextCol.text())).to.be.lte(0);
+        } else if (order === SortOrder.Descending) {
+          expect($col.text().localeCompare($nextCol.text())).to.be.gte(0);
+        }
+      }
+    });
 });

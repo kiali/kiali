@@ -111,12 +111,11 @@ Feature: Kiali Apps List page
   Scenario: Namespace dropdown should not contain duplicates
     When user opens the namespace dropdown
     Then user should see no duplicate namespaces
-    
-  @skip
+
   @multi-cluster
   Scenario: Sort list by cluster column
-    When user sorts the list by "Cluster" "asc"
-    Then the list is sorted by "Cluster" "asc"
-    When user sorts the list by "Cluster" "desc"
-    Then the list is sorted by "Cluster" "desc"
+    When user sorts the list by column "Cluster" in "ascending" order
+    Then the list is sorted by column "Cluster" in "ascending" order
+    When user sorts the list by column "Cluster" in "descending" order
+    Then the list is sorted by column "Cluster" in "descending" order
     
