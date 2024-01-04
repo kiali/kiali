@@ -112,23 +112,21 @@ const emptyStateStyle = kialiStyle({
   marginTop: '0.5rem'
 });
 
-const cardNamespaceNameNormalStyle = kialiStyle({
-  display: 'table-footer-group',
-  verticalAlign: 'middle'
+const namespaceHeaderStyle = kialiStyle({
+  $nest: {
+    '& .pf-v5-c-card__header-main': {
+      width: '85%'
+    }
+  }
 });
 
-// CSS trick to apply ellipsis only on certain cases
-// With actions on Card, there are some CSS calculation in the Cards, so the
-// maxWidth calc() used doesn't work well for all cases
-const NS_LONG = 20;
-
-const cardNamespaceNameLongStyle = kialiStyle({
-  overflow: 'hidden',
+const namespaceNameStyle = kialiStyle({
   display: 'block',
-  maxWidth: 'calc(100% - 75px)',
-  textOverflow: 'ellipsis',
+  textAlign: 'left',
+  overflow: 'hidden',
   verticalAlign: 'middle',
-  whiteSpace: 'nowrap'
+  whiteSpace: 'nowrap',
+  textOverflow: 'ellipsis'
 });
 
 export enum Show {
@@ -969,7 +967,6 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             ) : (
               <Grid>
                 {filteredNamespaces.map((ns, i) => {
-                  const isLongNs = ns.name.length > NS_LONG;
                   return (
                     <GridItem
                       sm={
@@ -1003,56 +1000,52 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                         }
                       >
                         <CardHeader
+                          className={namespaceHeaderStyle}
                           actions={{ actions: <>{namespaceActions[i]}</>, hasNoOffset: false, className: undefined }}
                         >
                           {
-                            <>
-                              <Title headingLevel="h5" size={TitleSizes.lg}>
-                                <span
-                                  className={isLongNs ? cardNamespaceNameLongStyle : cardNamespaceNameNormalStyle}
-                                  title={ns.name}
-                                >
-                                  {ns.name}
-                                  {ns.name === serverConfig.istioNamespace && (
-                                    <ControlPlaneBadge
-                                      cluster={ns.cluster}
-                                      annotations={ns.annotations}
-                                    ></ControlPlaneBadge>
+                            <Title headingLevel="h5" size={TitleSizes.lg}>
+                              <span className={namespaceNameStyle} title={ns.name}>
+                                {ns.name}
+                                {ns.name === serverConfig.istioNamespace && (
+                                  <ControlPlaneBadge
+                                    cluster={ns.cluster}
+                                    annotations={ns.annotations}
+                                  ></ControlPlaneBadge>
+                                )}
+
+                                {ns.name !== serverConfig.istioNamespace &&
+                                  this.hasCanaryUpgradeConfigured() &&
+                                  this.state.canaryUpgradeStatus?.migratedNamespaces.includes(ns.name) && (
+                                    <ControlPlaneVersionBadge
+                                      version={this.state.canaryUpgradeStatus.upgradeVersion}
+                                      isCanary={true}
+                                    ></ControlPlaneVersionBadge>
                                   )}
 
-                                  {ns.name !== serverConfig.istioNamespace &&
-                                    this.hasCanaryUpgradeConfigured() &&
-                                    this.state.canaryUpgradeStatus?.migratedNamespaces.includes(ns.name) && (
-                                      <ControlPlaneVersionBadge
-                                        version={this.state.canaryUpgradeStatus.upgradeVersion}
-                                        isCanary={true}
-                                      ></ControlPlaneVersionBadge>
-                                    )}
-
-                                  {ns.name !== serverConfig.istioNamespace &&
-                                    this.hasCanaryUpgradeConfigured() &&
-                                    this.state.canaryUpgradeStatus?.pendingNamespaces.includes(ns.name) && (
-                                      <ControlPlaneVersionBadge
-                                        version={this.state.canaryUpgradeStatus.currentVersion}
-                                        isCanary={false}
-                                      ></ControlPlaneVersionBadge>
-                                    )}
-
-                                  {ns.name === serverConfig.istioNamespace && !this.props.istioAPIEnabled && (
-                                    <Label style={{ marginLeft: '0.5rem' }} color="orange" isCompact>
-                                      Istio API disabled
-                                    </Label>
+                                {ns.name !== serverConfig.istioNamespace &&
+                                  this.hasCanaryUpgradeConfigured() &&
+                                  this.state.canaryUpgradeStatus?.pendingNamespaces.includes(ns.name) && (
+                                    <ControlPlaneVersionBadge
+                                      version={this.state.canaryUpgradeStatus.currentVersion}
+                                      isCanary={false}
+                                    ></ControlPlaneVersionBadge>
                                   )}
 
-                                  {serverConfig.ambientEnabled &&
-                                    ns.name !== serverConfig.istioNamespace &&
-                                    ns.labels &&
-                                    ns.isAmbient && (
-                                      <AmbientBadge tooltip="labeled as part of Ambient Mesh"></AmbientBadge>
-                                    )}
-                                </span>
-                              </Title>
-                            </>
+                                {ns.name === serverConfig.istioNamespace && !this.props.istioAPIEnabled && (
+                                  <Label style={{ marginLeft: '0.5rem' }} color="orange" isCompact>
+                                    Istio API disabled
+                                  </Label>
+                                )}
+
+                                {serverConfig.ambientEnabled &&
+                                  ns.name !== serverConfig.istioNamespace &&
+                                  ns.labels &&
+                                  ns.isAmbient && (
+                                    <AmbientBadge tooltip="labeled as part of Ambient Mesh"></AmbientBadge>
+                                  )}
+                              </span>
+                            </Title>
                           }
                         </CardHeader>
                         <CardBody>
