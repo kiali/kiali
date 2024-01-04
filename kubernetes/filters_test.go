@@ -12,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
+	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 )
 
 func TestFilterPodsForEndpoints(t *testing.T) {
@@ -254,4 +256,42 @@ func TestFilterByNamespaces(t *testing.T) {
 	emptyObjects := []*networking_v1beta1.DestinationRule{}
 	emptyFiltered := FilterByNamespaces(emptyObjects, namespaces)
 	assert.Empty(emptyFiltered)
+}
+
+func TestFilterK8sHTTPRoutesByService(t *testing.T) {
+	assert := assert.New(t)
+	rt1 := createHTTPRoute("testroute", "default", "details", "bookinfo")
+	rt2 := createHTTPRoute("testroute2", "wrong", "details", "bookinfo")
+	rt3 := createHTTPRoute("testroute3", "default", "wrong", "bookinfo")
+	rt4 := createHTTPRoute("testroute4", "default", "details", "wrong")
+	filtered := FilterK8sHTTPRoutesByService([]*k8s_networking_v1.HTTPRoute{rt1, rt2, rt3, rt4}, []*k8s_networking_v1beta1.ReferenceGrant{createReferenceGrant("grant1", "bookinfo", "default")}, "bookinfo", "details")
+	expected := []*k8s_networking_v1.HTTPRoute{rt1}
+	assert.EqualValues(expected, filtered)
+
+	emptyFiltered := FilterK8sHTTPRoutesByService([]*k8s_networking_v1.HTTPRoute{rt1, rt2, rt3, rt4}, []*k8s_networking_v1beta1.ReferenceGrant{createReferenceGrant("grant1", "bookinfo", "default")}, "wrong", "wrong")
+	assert.Empty(emptyFiltered)
+}
+
+func createHTTPRoute(name string, namespace string, serviceName string, serviceNamespace string) *k8s_networking_v1.HTTPRoute {
+	rt := k8s_networking_v1.HTTPRoute{}
+	rt.Name = name
+	rt.Namespace = namespace
+	kind := k8s_networking_v1.Kind("Service")
+	var ns k8s_networking_v1.Namespace
+	if serviceNamespace != "" {
+		ns = k8s_networking_v1.Namespace(serviceNamespace)
+	}
+	backendRef := k8s_networking_v1.HTTPBackendRef{
+		BackendRef: k8s_networking_v1.BackendRef{
+			BackendObjectReference: k8s_networking_v1.BackendObjectReference{
+				Kind:      &kind,
+				Name:      k8s_networking_v1.ObjectName(serviceName),
+				Namespace: &ns,
+			},
+		},
+	}
+	rule := k8s_networking_v1.HTTPRouteRule{}
+	rule.BackendRefs = append(rule.BackendRefs, backendRef)
+	rt.Spec.Rules = append(rt.Spec.Rules, rule)
+	return &rt
 }
