@@ -51,7 +51,7 @@ jobs:
         run: make -e GO_TEST_FLAGS="-race" test
 
       - name: Upload go binary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: kiali
           path: ~/go/bin/kiali

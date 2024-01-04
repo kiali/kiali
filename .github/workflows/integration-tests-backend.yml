@@ -62,7 +62,7 @@ jobs:
 
       - name: Upload debug info artifact
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: debug-info
           path: debug-output
