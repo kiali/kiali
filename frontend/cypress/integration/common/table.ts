@@ -290,9 +290,15 @@ Then('the list is sorted by column {string} in {string} order', (column: string,
         const $nextCol = $nextRow.find(`td[data-label="${column}"]`);
 
         if (order === SortOrder.Ascending) {
-          expect($col.text().localeCompare($nextCol.text())).to.be.lte(0);
+          expect($col.text().localeCompare($nextCol.text())).to.be.lte(
+            0,
+            `${$col.text()} should be <= ${$nextCol.text()}`
+          );
         } else if (order === SortOrder.Descending) {
-          expect($col.text().localeCompare($nextCol.text())).to.be.gte(0);
+          expect($col.text().localeCompare($nextCol.text())).to.be.gte(
+            0,
+            `${$col.text()} should be >= ${$nextCol.text()}`
+          );
         }
       }
     });
