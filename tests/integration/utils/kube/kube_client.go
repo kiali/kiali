@@ -65,7 +65,6 @@ func DeleteKialiPod(ctx context.Context, kubeClient kubernetes.Interface, namesp
 
 // Waits for old kiali pod to terminate and for the new one to be ready
 func RestartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, namespace string, currentKialiPod string) error {
-
 	return wait.PollUntilContextTimeout(ctx, time.Second*5, time.Minute*4, true, func(ctx context.Context) (bool, error) {
 		log.Debugf("Waiting for kiali pod %s in %s namespace to be ready", currentKialiPod, namespace)
 		pods, err := kubeClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
@@ -96,7 +95,6 @@ func RestartKialiPod(ctx context.Context, kubeClient kubernetes.Interface, names
 // Returns the name of the Kiali pod
 // It expects to find just one Kiali pod
 func GetKialiPodName(ctx context.Context, kubeClient kubernetes.Interface, kialiNamespace string, t *testing.T) string {
-
 	require := require.New(t)
 	pods, err := kubeClient.CoreV1().Pods(kialiNamespace).List(ctx, metav1.ListOptions{LabelSelector: "app=kiali"})
 	require.NoError(err)
@@ -107,7 +105,6 @@ func GetKialiPodName(ctx context.Context, kubeClient kubernetes.Interface, kiali
 
 // Get Kiali config map
 func GetKialiConfigMap(ctx context.Context, kubeClient kubernetes.Interface, kialiNamespace string, kialiName string, t *testing.T) (*config.Config, *v1.ConfigMap) {
-
 	require := require.New(t)
 
 	// Update the configmap directly by getting the configmap and patching it.
@@ -121,7 +118,8 @@ func GetKialiConfigMap(ctx context.Context, kubeClient kubernetes.Interface, kia
 }
 
 func UpdateKialiCR(ctx context.Context, dynamicClient dynamic.Interface, kubeClient kubernetes.Interface,
-	kialiNamespace string, check string, registryPatch []byte, t *testing.T) {
+	kialiNamespace string, check string, registryPatch []byte, t *testing.T,
+) {
 	require := require.New(t)
 	kialiGVR := schema.GroupVersionResource{Group: "kiali.io", Version: "v1alpha1", Resource: "kialis"}
 	// Find the Kiali CR and override some settings if they're set on the CR.
@@ -158,7 +156,6 @@ func UpdateKialiCR(ctx context.Context, dynamicClient dynamic.Interface, kubeCli
 
 // Update Kiali config map
 func UpdateKialiConfigMap(ctx context.Context, kubeClient kubernetes.Interface, kialiNamespace string, currentConfig *config.Config, cm *v1.ConfigMap, t *testing.T) {
-
 	require := require.New(t)
 
 	newConfig, err := yaml.Marshal(currentConfig)

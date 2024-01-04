@@ -50,7 +50,7 @@ func NamespaceValidationSummary(w http.ResponseWriter, r *http.Request) {
 	var errValidations error
 
 	// If cluster is not set, is because we need a unified validations view (E.g. in the Summary graph)
-	clusters, _ := business.Mesh.GetClusters(r)
+	clusters, _ := business.Mesh.GetClusters()
 	if len(clusters) == 1 {
 		istioConfigValidationResults, errValidations = business.Validations.GetValidations(r.Context(), cluster, namespace, "", "")
 	} else {

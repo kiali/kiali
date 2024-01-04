@@ -48,6 +48,7 @@ describe('SummaryPanelNodeComponent', () => {
 
     serverConfig.clusters = {
       'cluster-default': {
+        accessible: true,
         apiEndpoint: '',
         isKialiHome: true,
         kialiInstances: [],

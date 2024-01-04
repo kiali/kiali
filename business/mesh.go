@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"strings"
 
+	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v2"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -18,7 +19,6 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
-	"github.com/kiali/kiali/util/httputil"
 )
 
 const (
@@ -118,7 +118,7 @@ func (in *MeshService) GetMesh(ctx context.Context) (*Mesh, error) {
 	)
 	defer end()
 
-	clusters, err := in.GetClusters(nil)
+	clusters, err := in.GetClusters()
 	if err != nil {
 		return nil, fmt.Errorf("unable to get mesh clusters: %w", err)
 	}
@@ -126,15 +126,23 @@ func (in *MeshService) GetMesh(ctx context.Context) (*Mesh, error) {
 	mesh := &Mesh{}
 	var remoteClusters []*kubernetes.Cluster
 	for _, cluster := range clusters {
+		// We can't get anything from an inaccessible cluster.
+		if !cluster.Accessible {
+			continue
+		}
+
 		cluster := cluster
 		kubeCache, err := in.kialiCache.GetKubeCache(cluster.Name)
 		if err != nil {
 			return nil, err
 		}
 
-		if isRemoteCluster, err := in.IsRemoteCluster(cluster.Name); err != nil {
+		isRemoteCluster, err := in.IsRemoteCluster(cluster.Name)
+		if err != nil {
 			return nil, err
-		} else if isRemoteCluster {
+		}
+
+		if isRemoteCluster {
 			log.Debugf("Cluster [%s] is a remote cluster. Skipping adding a controlplane.", cluster.Name)
 			remoteClusters = append(remoteClusters, &cluster)
 		} else {
@@ -270,17 +278,19 @@ func NewMeshService(kialiSAClients map[string]kubernetes.ClientInterface, cache 
 
 // GetClusters resolves the Kubernetes clusters that are hosting the mesh. Resolution
 // is done as best-effort using the resources that are present in the cluster.
-func (in *MeshService) GetClusters(r *http.Request) ([]kubernetes.Cluster, error) {
+func (in *MeshService) GetClusters() ([]kubernetes.Cluster, error) {
 	if clusters := in.kialiCache.GetClusters(); clusters != nil {
 		return clusters, nil
 	}
 
 	// Even if somehow there are no clusters found, which there should always be at least the homecluster,
 	// setting this to an empty slice will prevent us from trying to resolve again.
-	clusters := []kubernetes.Cluster{}
+	clustersByName := map[string]kubernetes.Cluster{}
 	for cluster, client := range in.kialiSAClients {
 		info := client.ClusterInfo()
 		meshCluster := kubernetes.Cluster{
+			// If there's a client for this cluster then it's accessible.
+			Accessible: true,
 			Name:       cluster,
 			SecretName: info.SecretName,
 		}
@@ -288,13 +298,34 @@ func (in *MeshService) GetClusters(r *http.Request) ([]kubernetes.Cluster, error
 			meshCluster.ApiEndpoint = info.ClientConfig.Host
 		}
 
-		meshCluster.KialiInstances = in.discoverKiali(context.TODO(), cluster, r)
 		meshCluster.Network = in.resolveNetwork(cluster)
 
 		if cluster == in.conf.KubernetesConfig.ClusterName {
 			meshCluster.IsKialiHome = true
 		}
-		clusters = append(clusters, meshCluster)
+		clustersByName[cluster] = meshCluster
+	}
+
+	// Add clusters from config.
+	for _, cluster := range in.conf.Clustering.InaccessibleClusters {
+		if _, found := clustersByName[cluster.Name]; !found {
+			clustersByName[cluster.Name] = kubernetes.Cluster{
+				Name: cluster.Name,
+			}
+		}
+	}
+
+	clusters := maps.Values(clustersByName)
+
+	// TODO: Separate KialiInstance from Cluster model.
+	for idx := range clusters {
+		cluster := &clusters[idx]
+		instances, err := in.getKialiInstances(*cluster)
+		if err != nil {
+			log.Warningf("Unable to get Kiali instances for cluster [%s]: %v", cluster.Name, err)
+			continue
+		}
+		cluster.KialiInstances = instances
 	}
 
 	in.kialiCache.SetClusters(clusters)
@@ -302,9 +333,26 @@ func (in *MeshService) GetClusters(r *http.Request) ([]kubernetes.Cluster, error
 	return clusters, nil
 }
 
+func (in *MeshService) getKialiInstances(cluster kubernetes.Cluster) ([]kubernetes.KialiInstance, error) {
+	kialiConfigURLsForCluster := []config.KialiURL{}
+	for _, cfgurl := range in.conf.Clustering.KialiURLs {
+		if cfgurl.ClusterName == cluster.Name {
+			kialiConfigURLsForCluster = append(kialiConfigURLsForCluster, cfgurl)
+		}
+	}
+
+	var instances []kubernetes.KialiInstance
+	instances = append(instances, in.discoverKiali(cluster)...)
+	for _, cfgURL := range kialiConfigURLsForCluster {
+		instances = appendKialiInstancesFromConfig(instances, cfgURL)
+	}
+
+	return instances, nil
+}
+
 // convertKialiServiceToInstance converts a svc Service data structure of the
 // Kubernetes client to a KialiInstance data structure.
-func convertKialiServiceToInstance(svc *core_v1.Service) kubernetes.KialiInstance {
+func convertKialiServiceToInstance(svc *core_v1.Service, cluster kubernetes.Cluster) kubernetes.KialiInstance {
 	return kubernetes.KialiInstance{
 		ServiceName:      svc.Name,
 		Namespace:        svc.Namespace,
@@ -315,74 +363,111 @@ func convertKialiServiceToInstance(svc *core_v1.Service) kubernetes.KialiInstanc
 }
 
 // discoverKiali tries to find a Kiali installation on the cluster.
-func (in *MeshService) discoverKiali(ctx context.Context, clusterName string, r *http.Request) []kubernetes.KialiInstance {
+func (in *MeshService) discoverKiali(cluster kubernetes.Cluster) []kubernetes.KialiInstance {
+	clusterName := cluster.Name
 	kubeCache, err := in.kialiCache.GetKubeCache(clusterName)
 	if err != nil {
 		log.Warningf("Discovery for Kiali instances in cluster [%s] failed. Unable to find kube cache for cluster [%s]", clusterName, clusterName)
-		// But still the Kiali instance can be configured to show the instance and the URL in Mesh page
-		return in.appendKialiInstancesFromConfig([]kubernetes.KialiInstance{}, clusterName)
+		return nil
 	}
 
 	// The operator and the helm charts set this fixed label. It's also
 	// present in the Istio addon manifest of Kiali.
-	kialiAppLabel := map[string]string{"app.kubernetes.io/part-of": "kiali"}
-	// TODO: getting services will fail spectacularly if cluster wide mode is not enabled - only call when in cluster-wide mode
-	if !config.Get().Deployment.ClusterWideAccess {
-		return in.appendKialiInstancesFromConfig([]kubernetes.KialiInstance{}, clusterName)
-	}
-	services, err := kubeCache.GetServices("", kialiAppLabel)
+	kialiAppLabel := "app.kubernetes.io/part-of=kiali"
+	services, err := kubeCache.GetServices(metav1.NamespaceAll, kialiAppLabel)
 	if err != nil {
 		log.Warningf("Discovery for Kiali instances in cluster [%s] failed: %s", clusterName, err.Error())
-		// But still the Kiali instance can be configured to show the instance and the URL in Mesh page
-		return in.appendKialiInstancesFromConfig([]kubernetes.KialiInstance{}, clusterName)
+		return nil
 	}
 
 	var instances []kubernetes.KialiInstance
 	for _, d := range services {
-		kiali := convertKialiServiceToInstance(&d)
+		kiali := convertKialiServiceToInstance(&d, cluster)
 		// If URL is already populated (because of an annotation), trust that because it's user configuration.
 		// But if Kiali URL configured per cluster name, instance name and namespace, then use that URL.
-		for _, cfgurl := range config.Get().KialiFeatureFlags.Clustering.KialiURLs {
+		for _, cfgurl := range in.conf.Clustering.KialiURLs {
 			if cfgurl.ClusterName == clusterName && cfgurl.InstanceName == kiali.ServiceName && cfgurl.Namespace == kiali.Namespace {
 				kiali.Url = cfgurl.URL
-				break
 			}
-		}
-		// If URL is still empty, only guess ourselves on our own cluster.
-		if kiali.Url == "" && clusterName == in.conf.KubernetesConfig.ClusterName {
-			kiali.Url = httputil.GuessKialiURL(r)
 		}
 		instances = append(instances, kiali)
 	}
-	// Read the rest of Kiali instances configured
-	instances = in.appendKialiInstancesFromConfig(instances, clusterName)
 	return instances
 }
 
 // appendKialiInstancesFromConfig appends the rest of Kiali instances which are configured in KialiFeatureFlags.Clustering.KialiURLs into existing list of instances.
-func (in *MeshService) appendKialiInstancesFromConfig(instances []kubernetes.KialiInstance, clusterName string) []kubernetes.KialiInstance {
-	for _, cfgurl := range config.Get().KialiFeatureFlags.Clustering.KialiURLs {
-		if cfgurl.ClusterName != clusterName {
-			continue
-		}
-		found := false
-		for _, kiali := range instances {
-			if cfgurl.InstanceName == kiali.ServiceName && cfgurl.Namespace == kiali.Namespace {
-				found = true
-				// skip already appended instance
-				break
-			}
-		}
-		// When configured Kiali is not found, still show that instance.
-		if !found {
-			instances = append(instances, kubernetes.KialiInstance{
-				ServiceName: cfgurl.InstanceName,
-				Namespace:   cfgurl.Namespace,
-				Url:         cfgurl.URL,
-			})
+func appendKialiInstancesFromConfig(instances []kubernetes.KialiInstance, cfgurl config.KialiURL) []kubernetes.KialiInstance {
+	found := false
+	for _, kiali := range instances {
+		if cfgurl.InstanceName == kiali.ServiceName && cfgurl.Namespace == kiali.Namespace {
+			found = true
+			// skip already appended instance
+			break
 		}
 	}
+	// When configured Kiali is not found, still show that instance.
+	if !found {
+		instances = append(instances, kubernetes.KialiInstance{
+			ServiceName: cfgurl.InstanceName,
+			Namespace:   cfgurl.Namespace,
+			Url:         cfgurl.URL,
+		})
+	}
 	return instances
+}
+
+func (in *MeshService) getNetworkFromSidecarInejctorConfigMap(kubeCache cache.KubeCache) string {
+	// Try to resolve the logical Istio's network ID of the cluster where
+	// Kiali is installed. This assumes that the mesh Control Plane is installed in the same
+	// cluster as Kiali.
+	// TODO: This doesn't take into account revisions.
+	istioSidecarConfig, err := kubeCache.GetConfigMap(in.conf.IstioNamespace, in.conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName)
+	if err != nil {
+		// Don't return an error, as this may mean that Kiali is not installed along the control plane.
+		// This setup is OK, it's just that it's not within our multi-cluster assumptions.
+		log.Warningf("Cannot resolve the network ID of the cluster where Kiali is hosted: cannot get the sidecar injector config map :%v", err)
+		return ""
+	}
+
+	parsedConfig := make(map[string]interface{})
+	err = json.Unmarshal([]byte(istioSidecarConfig.Data["values"]), &parsedConfig)
+	if err != nil {
+		// This does not return an error, because it's probably valid that the configmap does not have the "values" key.
+		// So, tell that the network wasn't found by returning blank values
+		log.Debugf("Cannot resolve the network ID of the cluster where Kiali is hosted: no configuration found for the sidecar injector. Err: %v", err)
+		return ""
+	}
+
+	globalConfig, ok := parsedConfig["global"]
+	if !ok {
+		// This does not return an error, because it's probably valid that the configmap does not have the "values.global" key.
+		// So, tell that the network wasn't found by returning blank values
+		log.Debugf("Cannot resolve the network ID of the cluster where Kiali is hosted: no global configuration found for the sidecar injector.")
+		return ""
+	}
+
+	typedGlobalConfig, ok := globalConfig.(map[string]interface{})
+	if !ok {
+		log.Debug("cannot parse the config map of the Istio sidecar injector")
+		return ""
+	}
+
+	networkConfig, ok := typedGlobalConfig["network"]
+	if !ok {
+		// This does not return an error, because it's valid that the configmap does not have the "values.global.network" key, which most
+		// likely means that Istio is not setup for multi-clustering.
+		// So, tell that the network wasn't found by returning blank values
+		log.Debugf("Cannot resolve the network ID of the cluster where Kiali is hosted: multi-cluster is probably turned off.")
+		return ""
+	}
+
+	typedNetworkConfig, ok := networkConfig.(string)
+	if !ok {
+		// It's probably invalid that the network id is not a string
+		return ""
+	}
+
+	return typedNetworkConfig
 }
 
 // resolveNetwork tries to resolve the NETWORK_ID (as known by the Control Plane) of the
@@ -393,80 +478,34 @@ func (in *MeshService) appendKialiInstancesFromConfig(instances []kubernetes.Kia
 // No errors are returned because we don't want to block processing of other clusters if
 // one fails. So, errors are only logged to let processing continue.
 func (in *MeshService) resolveNetwork(clusterName string) string {
-	var network string
-	if clusterName == in.conf.KubernetesConfig.ClusterName {
-		// Home Cluster
+	kubeCache, err := in.kialiCache.GetKubeCache(clusterName)
+	if err != nil {
+		log.Warningf("Cannot resolve the network ID of the cluster [%s]: cannot get the kube cache: %v", clusterName, err)
+		return ""
+	}
 
-		// Try to resolve the logical Istio's network ID of the cluster where
-		// Kiali is installed. This assumes that the mesh Control Plane is installed in the same
-		// cluster as Kiali.
-		istioSidecarConfig, err := in.kialiCache.GetConfigMap(in.conf.IstioNamespace, in.conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName)
-		if err != nil {
-			// Don't return an error, as this may mean that Kiali is not installed along the control plane.
-			// This setup is OK, it's just that it's not within our multi-cluster assumptions.
-			log.Warningf("Cannot resolve the network ID of the cluster where Kiali is hosted: cannot get the sidecar injector config map :%v", err)
-			return ""
-		}
+	if network := in.getNetworkFromSidecarInejctorConfigMap(kubeCache); network != "" {
+		return network
+	}
 
-		parsedConfig := make(map[string]interface{})
-		err = json.Unmarshal([]byte(istioSidecarConfig.Data["values"]), &parsedConfig)
-		if err != nil {
-			// This does not return an error, because it's probably valid that the configmap does not have the "values" key.
-			// So, tell that the network wasn't found by returning blank values
-			log.Debugf("Cannot resolve the network ID of the cluster where Kiali is hosted: no configuration found for the sidecar injector. Err: %v", err)
-			return ""
-		}
+	// Network id wasn't found in the config. Try to find it on the istio namespace.
 
-		globalConfig, ok := parsedConfig["global"]
-		if !ok {
-			// This does not return an error, because it's probably valid that the configmap does not have the "values.global" key.
-			// So, tell that the network wasn't found by returning blank values
-			log.Debugf("Cannot resolve the network ID of the cluster where Kiali is hosted: no global configuration found for the sidecar injector.")
-			return ""
-		}
+	// Let's assume that the istio namespace has the same name on all clusters in the mesh.
+	istioNamespace, err := in.namespaceService.GetClusterNamespace(context.TODO(), in.conf.IstioNamespace, clusterName)
+	if err != nil {
+		log.Warningf("Cannot describe the [%s] namespace on cluster [%s]: %v", in.conf.IstioNamespace, clusterName, err)
+		return ""
+	}
 
-		typedGlobalConfig, ok := globalConfig.(map[string]interface{})
-		if !ok {
-			log.Debug("cannot parse the config map of the Istio sidecar injector")
-			return ""
-		}
-
-		networkConfig, ok := typedGlobalConfig["network"]
-		if !ok {
-			// This does not return an error, because it's valid that the configmap does not have the "values.global.network" key, which most
-			// likely means that Istio is not setup for multi-clustering.
-			// So, tell that the network wasn't found by returning blank values
-			log.Debugf("Cannot resolve the network ID of the cluster where Kiali is hosted: multi-cluster is probably turned off.")
-			return ""
-		}
-
-		typedNetworkConfig, ok := networkConfig.(string)
-		if !ok {
-			// It's probably invalid that the network id is not a string
-			return ""
-		}
-
-		network = typedNetworkConfig
-	} else {
-		// Let's assume that the istio namespace has the same name on all clusters in the mesh.
-		istioNamespace, err := in.namespaceService.GetClusterNamespace(context.TODO(), in.conf.IstioNamespace, clusterName)
-		if err != nil {
-			log.Warningf("Cannot describe the [%s] namespace on cluster [%s]: %v", in.conf.IstioNamespace, clusterName, err)
-			return ""
-		}
-
-		// For Kiali's control plane, we used the istio sidecar injector config map to fetch the network ID. This
-		// approach is probably more accurate, because that's what is injected along the sidecar. However,
-		// in remote clusters, we don't have privileges to query config maps, so it's not possible to fetch
-		// the sidecar injector config map. However, Istio docs say that the Istio namespace must be labeled with
-		// the network ID. We use that label to retrieve the network ID.
-		networkName, ok := istioNamespace.Labels["topology.istio.io/network"]
-		if !ok {
-			log.Debugf("Istio namespace [%s] in cluster [%s] does not have network label", in.conf.IstioNamespace, clusterName)
-			return ""
-		}
-
-		network = networkName
+	// For Kiali's control plane, we used the istio sidecar injector config map to fetch the network ID. This
+	// approach is probably more accurate, because that's what is injected along the sidecar. However,
+	// in remote clusters, we don't have privileges to query config maps, so it's not possible to fetch
+	// the sidecar injector config map. However, Istio docs say that the Istio namespace must be labeled with
+	// the network ID. We use that label to retrieve the network ID.
+	network, ok := istioNamespace.Labels["topology.istio.io/network"]
+	if !ok {
+		log.Debugf("Istio namespace [%s] in cluster [%s] does not have network label", in.conf.IstioNamespace, clusterName)
+		return ""
 	}
 
 	return network

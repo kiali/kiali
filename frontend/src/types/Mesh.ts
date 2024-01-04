@@ -1,4 +1,5 @@
 export interface MeshCluster {
+  accessible: boolean;
   apiEndpoint: string;
   isKialiHome: boolean;
   kialiInstances: KialiInstance[];
@@ -8,9 +9,9 @@ export interface MeshCluster {
 }
 
 export interface KialiInstance {
-  serviceName: string;
   namespace: string;
   operatorResource: string;
+  serviceName: string;
   url: string;
   version: string;
 }
