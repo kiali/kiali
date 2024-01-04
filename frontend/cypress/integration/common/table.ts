@@ -260,17 +260,21 @@ When('user sorts the list by column {string} in {string} order', (column: string
     if ($el.attr('aria-sort') === 'none') {
       if (order === SortOrder.Ascending) {
         cy.wrap($el).click();
+        cy.wrap($el).should('have.attr', 'aria-sort', SortOrder.Ascending);
       } else if (order === SortOrder.Descending) {
         cy.wrap($el).click();
         cy.wrap($el).click();
+        cy.wrap($el).should('have.attr', 'aria-sort', SortOrder.Descending);
       }
     } else if ($el.attr('aria-sort') === SortOrder.Ascending) {
       if (order === SortOrder.Descending) {
         cy.wrap($el).click();
+        cy.wrap($el).should('have.attr', 'aria-sort', SortOrder.Descending);
       }
     } else if ($el.attr('aria-sort') === SortOrder.Descending) {
       if (order === SortOrder.Ascending) {
         cy.wrap($el).click();
+        cy.wrap($el).should('have.attr', 'aria-sort', SortOrder.Ascending);
       }
     }
   });
