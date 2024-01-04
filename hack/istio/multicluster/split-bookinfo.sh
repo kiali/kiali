@@ -55,9 +55,11 @@ ${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} reviews-v2 --replicas=0
 ${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} reviews-v3 --replicas=0
 ${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} ratings-v1 --replicas=0
 
-echo "==== CREATING TRAFFIC SHIFTING RULES FOR REVIEWS SERVICE"
-# This is done to enforce traffic to all reviews workloads (there were ocassions where traffic was not being routed to v3 or v2)
-cat <<EOF | ${CLIENT_EXE} apply -f -
+create_traffic_shifting_rules() {
+  local cluster_context="${1}"
+  echo "==== CREATING TRAFFIC SHIFTING RULES FOR REVIEWS SERVICE FOR CLUSTER [${cluster_context}]"
+  # This is done to enforce traffic to all reviews workloads (there were ocassions where traffic was not being routed to v3 or v2)
+  cat <<EOF | ${CLIENT_EXE} --context ${cluster_context} apply -f -
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
@@ -81,7 +83,8 @@ spec:
             subset: v3
           weight: 34
 EOF
-cat <<EOF | ${CLIENT_EXE} apply -f -
+
+  cat <<EOF | ${CLIENT_EXE} --context ${cluster_context} apply -f -
 kind: DestinationRule
 apiVersion: networking.istio.io/v1beta1
 metadata:
@@ -100,6 +103,9 @@ spec:
       labels:
         version: v3
 EOF
+}
+
+create_traffic_shifting_rules "${CLUSTER1_CONTEXT}"
 
 if [ "${IS_OPENSHIFT}" == "true" ]; then
   INGRESS_HOST=$(${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get route istio-ingressgateway -o jsonpath='{.spec.host}')
@@ -113,6 +119,11 @@ install_bookinfo "${CLUSTER2_CONTEXT}" "false"
 ${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} productpage-v1 --replicas=0
 ${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} details-v1 --replicas=0
 ${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} reviews-v1 --replicas=0
+
+# If istio CRDs exist on both clusters then it's multi-primary and we need to create traffic shifting rules on both clusters.
+if [ -n "$(${CLIENT_EXE} --context "${CLUSTER2_CONTEXT}" get crds virtualservices.networking.istio.io --ignore-not-found 2>&1)" ]; then
+  create_traffic_shifting_rules "${CLUSTER2_CONTEXT}"
+fi
 
 echo "Bookinfo application will be available soon at http://${INGRESS_HOST}/productpage"
 

@@ -14,6 +14,7 @@ import {
   hasAtLeastOneClass
 } from './table';
 import { openTab } from './transition';
+import { nodeInfo } from './graph';
 
 // Choosing a random bookinfo app to test with.
 const APP = 'details';
@@ -220,24 +221,6 @@ Given(
       });
   }
 );
-
-// node type and box type varies based on the graph so this is a helper function to get the right values.
-const nodeInfo = (nodeType: string, graphType: string): { isBox?: string; nodeType: string } => {
-  let isBox: string | undefined;
-  if (nodeType === 'app') {
-    // Apps are boxes in versioned app graph...
-    nodeType = 'box';
-    isBox = 'app';
-  } else if (nodeType === 'workload' && graphType === 'versionedApp') {
-    // Workloads are apps in versioned app graph...
-    nodeType = 'app';
-  }
-
-  return {
-    nodeType,
-    isBox
-  };
-};
 
 When(
   'user clicks on the {string} {string} from the {string} cluster in the graph',

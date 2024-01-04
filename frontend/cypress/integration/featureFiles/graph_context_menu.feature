@@ -9,14 +9,12 @@ Feature: Kiali Graph page - Context menu actions
     Given user is at administrator perspective
     When user graphs "bookinfo" namespaces
 
-  @bookinfo-app
   Scenario: Actions in context menu for service node with existing traffic routing
     And user opens the context menu of the "productpage" service node
     And user should see "no" cluster parameter in links in the context menu
     And user clicks the "delete-traffic-routing" item of the context menu
     Then user should see the confirmation dialog to delete all traffic routing
 
-  @bookinfo-app
   Scenario Outline: Ability to launch <action> wizard from graph context menu
     And user opens the context menu of the "reviews" service node
     And user clicks the "<action>" action of the context menu
@@ -30,22 +28,22 @@ Feature: Kiali Graph page - Context menu actions
       | fault_injection      |
       | request_timeouts     |
 
-  @skip
-  @multi-cluster 
-  Scenario: Actions in context menu for a remote service node with existing traffic routing
-    And there is a traffic routing for the "reviews" service present
-    And user opens the context menu of the "reviews" service node
-    And user should see "" cluster parameter in links in the context menu
+  @multi-cluster
+  Scenario: Actions in context menu for a service node with existing traffic routing
+    And there is traffic routing for the "details" service in the "bookinfo" namespace and in the "east" cluster
+    And user opens the context menu of the "details" service node on the "east" cluster
+    And user should see the "east" cluster parameter in the "Details" link in the context menu
+    And user should see the "east" cluster parameter in the "Traffic" link in the context menu
+    And user should see the "east" cluster parameter in the "Inbound Metrics" link in the context menu
     And user clicks the "delete-traffic-routing" item of the context menu
     Then user should see the confirmation dialog to delete all traffic routing
-    And when user chooses to delete the routing
+    When user chooses to delete the routing
     And user is at the "istio" list page
-    Then no traffic routing for "reviews" should be located in the west cluster
+    Then user does not see traffic routing objects for the "details" service in the "bookinfo" namespace in the "east" cluster
 
-  @skip
   @multi-cluster 
   Scenario Outline: Ability to launch <action> wizard from graph context menu for a remote service node
-    And user opens the context menu of the "ratings" service node
+    And user opens the context menu of the "ratings" service node on the "west" cluster
     And user clicks the "<action>" action of the context menu
     Then user should see the "<action>" wizard
 
@@ -57,15 +55,16 @@ Feature: Kiali Graph page - Context menu actions
       | fault_injection      |
       | request_timeouts     |
 
-  @skip
-  @remote-istio-crds
+  @multi-primary
   @multi-cluster 
+  @istio-config-cleanup
   Scenario: Actions in context menu for a remote service node with existing traffic routing
-    And there is no traffic routing for the "ratings" service present
-    And user opens the context menu of the "ratings" service node
+    And there is no traffic routing for the "ratings" service in the "bookinfo" namespace and in the "west" cluster
+    And user opens the context menu of the "ratings" service node on the "west" cluster
     And user clicks the "request_routing" action of the context menu
     Then user should see the "request_routing" wizard
+    And user adds a route
     And user previews the configuration
     And user creates the configuration
     And user is at the "istio" list page
-    Then a traffic routing for "ratings" should be located in the west cluster
+    Then user sees traffic routing objects for the "ratings" service in the "bookinfo" namespace in the "west" cluster

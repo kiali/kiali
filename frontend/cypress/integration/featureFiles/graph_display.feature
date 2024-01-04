@@ -227,18 +227,30 @@ Feature: Kiali Graph page - Display menu
       | VERSIONED_APP |
       | WORKLOAD      |
 
-  @skip
   @multi-cluster
   Scenario: Graph bookinfo namespace for the multi-cluster setup
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
-    And user sees the "bookinfo" namespace deployed across the "east" and "west" cluster
-    And nodes should contain name of the "east" cluster in their links
-    And nodes should contain name of the "west" cluster in their links
+    And user sees the "bookinfo" namespace deployed across the east and west clusters
+    And nodes in the "east" cluster should contain the cluster name in their links
+    And nodes in the "west" cluster should contain the cluster name in their links
+
+  @multi-cluster
+  Scenario: See link to correct details page after clicking on a node for the east cluster
+    Given user graphs "bookinfo" namespaces
+    When user clicks on the "productpage-v1" workload in the "bookinfo" namespace in the "east" cluster
+    Then user sees a link to the "east" cluster workload details page in the summary panel
+
+  @multi-cluster
+  Scenario: See link to correct details page after clicking on a node for the west cluster
+    Given user graphs "bookinfo" namespaces
+    When user clicks on the "reviews-v2" workload in the "bookinfo" namespace in the "west" cluster
+    Then user sees a link to the "west" cluster workload details page in the summary panel
 
   #this is a regression to this bug (https://github.com/kiali/kiali/issues/6185)
   #I used the sleep namespace in the Gherkin, because I feel like we might need a new demoapp for this scenario,
   #if we don't want to change access to bookinfo namespace in the middle of the test run.
+  # TODO: Implement: https://github.com/kiali/kiali/issues/7021
   @skip
   @multi-cluster
   Scenario: Remote nodes should be restricted if user does not have access rights to a remote namespace
@@ -250,10 +262,10 @@ Feature: Kiali Graph page - Display menu
 
   #inspired by this: https://github.com/kiali/kiali/pull/6469
   #in order to test this properly, Istio CRDs should be enabled in west and atleast 1 Istio object should be created there
-  @skip
   @multi-cluster
+  @multi-primary
   Scenario: See Istio config validations from both clusters
+    Given there are Istio objects in the "bookinfo" namespace for "east" cluster
+    And there are Istio objects in the "bookinfo" namespace for "west" cluster
     When user graphs "bookinfo" namespaces
-    And there is an Istio object in the "bookinfo" namespace for "east" cluster
-    And there is an Istio object in the "bookinfo" namespace for "west" cluster
-    Then the Istio objects for "bookinfo" should be grouped together in the panel
+    Then the Istio objects for the "bookinfo" namespace for both clusters should be grouped together in the panel
