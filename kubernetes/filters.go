@@ -532,7 +532,12 @@ func FilterK8sHTTPRoutesByService(allRoutes []*k8s_networking_v1.HTTPRoute, refe
 		if !appendRoute {
 			for _, rule := range route.Spec.Rules {
 				for _, backendRef := range rule.BackendRefs {
-					if string(backendRef.Name) != "" && FilterByHost(string(backendRef.Name), string(*backendRef.Namespace), serviceName, namespace) &&
+					backendRefNamespace := route.Namespace
+					if backendRef.Namespace != nil {
+						backendRefNamespace = string(*backendRef.Namespace)
+					}
+					if string(backendRef.Name) != "" && FilterByHost(string(backendRef.Name), backendRefNamespace, serviceName, namespace) &&
+						// a reference grant should exist to reference service namespace to route namespace, or they are in the same namespace
 						(HasMatchingReferenceGrant(route.Namespace, namespace, K8sActualHTTPRouteType, ServiceType, referenceGrants) || route.Namespace == namespace) {
 						appendRoute = true
 					}
