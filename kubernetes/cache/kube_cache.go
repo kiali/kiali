@@ -1465,18 +1465,11 @@ func (c *kubeCache) GetTelemetries(namespace, labelSelector string) ([]*v1alpha1
 }
 
 func (c *kubeCache) IsK8sGatewayListerInit(namespace string) bool {
-	if err := checkIstioAPIsExist(c.client); err != nil {
-		return false
-	}
-
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	if c.getCacheLister(namespace).k8sgatewayLister != nil {
-		return true
-	}
-	return false
+	return c.getCacheLister(namespace).k8sgatewayLister != nil
 }
 
 func (c *kubeCache) GetK8sGateway(namespace, name string) (*gatewayapi_v1.Gateway, error) {
