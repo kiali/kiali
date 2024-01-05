@@ -9,9 +9,9 @@ import (
 )
 
 type K8sHTTPRouteReferences struct {
-	Namespaces         models.Namespaces
 	K8sHTTPRoutes      []*k8s_networking_v1.HTTPRoute
 	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant
+	Namespaces         models.Namespaces
 }
 
 func (n K8sHTTPRouteReferences) References() models.IstioReferencesMap {
