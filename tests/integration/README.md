@@ -78,6 +78,23 @@ $ make test-integration -e CLIENT_EXE="kubectl" -e URL="http://localhost:20001/k
 # test results are stored in the "tests/integration/junit-rest-report.xml" file
 ```
 
+## Running tests in a container
+You can also run the test suite in a container, using the image `quay.io/kiali/kiali-int-tests:v1.73`.
+System dependencies are bundled in the container but you are still required to install istio + kiali + bookinfo in advance.
+Following environment variables are expected:
+- `OCP_API_URL` - The URL of the OpenShift API server.
+- `TOKEN` - The OCP API TOKEN.
+
+
+To run the container:
+```console
+podman run -it \
+  -e OCP_API_URL=https://api.test-cluter.test.com:6443 \
+  -e TOKEN=<token> \
+  quay.io/kiali/kiali-int-tests:v1.73
+```
+
+
 ## Run notes
 
 * The Bookinfo namespace is cleaned of pre-existing Circuit Breakers and Virtual Services.
