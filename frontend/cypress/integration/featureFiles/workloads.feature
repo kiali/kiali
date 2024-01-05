@@ -130,11 +130,10 @@ Feature: Kiali Workloads page
     And an entry for "east" cluster should be in the table
     And an entry for "west" cluster should be in the table
 
-  @skip
   @multi-cluster
   Scenario: Sort list by cluster column
     When user selects the "bookinfo" namespace
-    And user sorts the list by "Cluster" "asc"
-    Then the list is sorted by "Cluster" "asc"
-    When user sorts the list by "Cluster" "desc"
-    Then the list is sorted by "Cluster" "desc"
+    And user sorts the list by column "Cluster" in "ascending" order
+    Then the list is sorted by column "Cluster" in "ascending" order
+    When user sorts the list by column "Cluster" in "descending" order
+    Then the list is sorted by column "Cluster" in "descending" order

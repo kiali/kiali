@@ -10,6 +10,7 @@ import { Text, TextVariants } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 import { IconProps, createIcon } from 'config/KialiIcon';
+import { classes } from 'typestyle';
 
 const validationStyle = kialiStyle({
   textAlign: 'left',
@@ -43,7 +44,8 @@ const InfoValidation: IconProps = {
 
 const CorrectValidation: IconProps = {
   color: PFColors.Success,
-  icon: CheckCircleIcon
+  icon: CheckCircleIcon,
+  className: 'icon-correct-validation'
 };
 
 const severityToValidation: { [severity: string]: IconProps } = {
@@ -60,7 +62,7 @@ export const Validation: React.FC<ValidationProps> = (props: ValidationProps) =>
 
   // Set styles
   const textStyle = props.messageColor ? severityColor : {};
-  const iconStyle = kialiStyle(severityColor);
+  const iconStyle = classes(kialiStyle(severityColor), validation.className);
 
   const iconProps = {
     className: iconStyle,

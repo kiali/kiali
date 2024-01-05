@@ -89,13 +89,12 @@ Feature: Kiali Istio Config page
     And user sees Configuration information for Istio objects
     And user sees Cluster information for Istio objects
 
-  @skip
   @multi-cluster
   Scenario: Sort list by cluster column
-    When user sorts the list by "Cluster" "asc"
-    Then the list is sorted by "Cluster" "asc"
-    When user sorts the list by "Cluster" "desc"
-    Then the list is sorted by "Cluster" "desc"
+    When user sorts the list by column "Cluster" in "ascending" order
+    Then the list is sorted by column "Cluster" in "ascending" order
+    When user sorts the list by column "Cluster" in "descending" order
+    Then the list is sorted by column "Cluster" in "descending" order
 
   @crd-validation
   @bookinfo-app

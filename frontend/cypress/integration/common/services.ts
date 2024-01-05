@@ -72,7 +72,6 @@ When('user applies kiali api {string} annotations', (type: string) => {
   cy.exec(`kubectl annotate service productpage -n bookinfo kiali.io/api-type=${type} --overwrite`, {
     failOnNonZeroExit: false
   });
-
   cy.exec(
     'kubectl annotate service productpage -n bookinfo kiali.io/api-spec=https://petstore.swagger.io/v2/swagger.json',
     { failOnNonZeroExit: false }

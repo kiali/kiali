@@ -249,6 +249,23 @@ export const checkHealthStatusInTable = (
   });
 };
 
+// Find all the rows that contain a column with the content.
+export const findAllRowsMatchingColumn = (columnName: string, content: string): Cypress.Chainable => {
+  return cy.get('tbody').find(`td[data-label="${columnName}"]`).filter(`:contains(${content})`).parent();
+};
+
+Then('configuration in both clusters for the {string} namespace should be healthy', (namespace: string) => {
+  findAllRowsMatchingColumn('Namespace', namespace).then($rows => {
+    // Ensure there's at least one row from each cluster
+    cy.wrap($rows).find('td[data-label="Cluster"]').filter(':contains(east)').should('have.length.at.least', 1);
+    cy.wrap($rows).find('td[data-label="Cluster"]').filter(':contains(west)').should('have.length.at.least', 1);
+    cy.wrap($rows)
+      .find('td[data-label="Configuration"]')
+      .find('span[class*="icon-correct-validation"]')
+      .should('be.visible');
+  });
+});
+
 Then('an entry for {string} cluster should be in the table', (cluster: string) => {
   cy.get('tbody').within(() => {
     cy.get('tr > td:nth-child(4)').contains(cluster).should('have.length.above', 0);
