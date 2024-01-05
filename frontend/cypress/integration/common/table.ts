@@ -285,7 +285,7 @@ Then('the list is sorted by column {string} in {string} order', (column: string,
   // For each row, assert that every value in that col is <= the next row's value in that column.
   cy.get('tbody')
     .find('tr')
-    .then($rows => {
+    .should($rows => {
       for (let i = 0; i < $rows.length - 1; i++) {
         const $row = $rows.eq(i);
         const $nextRow = $rows.eq(i + 1);
