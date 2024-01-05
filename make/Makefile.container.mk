@@ -44,6 +44,16 @@ else
 	podman build --pull -t ${INT_TESTS_QUAY_TAG} -f tests/integration/Dockerfile .
 endif
 
+## container-build-cypress-tests: Build Kiali cypress tests container image
+container-build-cypress-tests:
+ifeq ($(DORP),docker)
+	@echo Building container image for Kiali cypress tests using docker
+	docker build --pull -t ${CYPRESS_TESTS_QUAY_TAG} -f deploy/docker/Dockerfile-cypress .
+else
+	@echo Building container image for Kiali cypress tests using podman
+	podman build --pull -t ${CYPRESS_TESTS_QUAY_TAG} -f deploy/docker/Dockerfile-cypress .
+endif
+
 ## container-push-kiali-quay: Pushes the Kiali image to quay.
 container-push-kiali-quay:
 ifeq ($(DORP),docker)
@@ -61,14 +71,24 @@ container-push-operator-quay:
 ## container-push: Pushes all container images to quay
 container-push: container-push-kiali-quay container-push-operator-quay
 
-## container-push-int-tests-quay: Pushes the Kiali integration tests image to quay.
+## container-push-int-tests-quay: Pushes the Kiali integration test image to quay.
 container-push-int-tests-quay:
 ifeq ($(DORP),docker)
-	@echo Pushing Kiali integration tests image to ${INT_TESTS_QUAY_TAG} using docker
+	@echo Pushing Kiali integration test image to ${INT_TESTS_QUAY_TAG} using docker
 	docker push ${INT_TESTS_QUAY_TAG}
 else
-	@echo Pushing Kiali integration tests image to ${INT_TESTS_QUAY_TAG} using podman
+	@echo Pushing Kiali integration test image to ${INT_TESTS_QUAY_TAG} using podman
 	podman push ${INT_TESTS_QUAY_TAG}
+endif
+
+## container-push-cypress-tests-quay: Pushes the Kiali cypress test image to quay.
+container-push-cypress-tests-quay:
+ifeq ($(DORP),docker)
+	@echo Pushing Kiali cypress test image to ${CYPRESS_TESTS_QUAY_TAG} using docker
+	docker push ${CYPRESS_TESTS_QUAY_TAG}
+else
+	@echo Pushing Kiali cypress test image to ${CYPRESS_TESTS_QUAY_TAG} using podman
+	podman push ${CYPRESS_TESTS_QUAY_TAG}
 endif
 
 # Ensure "docker buildx" is available and enabled. For more details, see: https://github.com/docker/buildx/blob/master/README.md

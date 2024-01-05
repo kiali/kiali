@@ -53,6 +53,12 @@ INT_TESTS_CONTAINER_VERSION ?= ${CONTAINER_VERSION}
 INT_TESTS_QUAY_NAME ?= quay.io/${INT_TESTS_CONTAINER_NAME}
 INT_TESTS_QUAY_TAG ?= ${INT_TESTS_QUAY_NAME}:${INT_TESTS_CONTAINER_VERSION}
 
+# Identifies the Kiali cypress tests container image that will be built
+CYPRESS_TESTS_CONTAINER_NAME ?= ${IMAGE_ORG}/kiali-cypress-tests
+CYPRESS_TESTS_CONTAINER_VERSION ?= ${CONTAINER_VERSION}
+CYPRESS_TESTS_QUAY_NAME ?= quay.io/${CYPRESS_TESTS_CONTAINER_NAME}
+CYPRESS_TESTS_QUAY_TAG ?= ${CYPRESS_TESTS_QUAY_NAME}:${CYPRESS_TESTS_CONTAINER_VERSION}
+
 # Where the control plane is
 ISTIO_NAMESPACE ?= istio-system
 # Declares the namespace/project where the objects are to be deployed.
