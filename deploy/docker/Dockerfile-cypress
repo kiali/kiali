@@ -3,7 +3,7 @@
 # more details here https://github.com/kiali/kiali/tree/master/frontend/cypress
 
 # using same baseimage of node as its defined in package.json
-FROM cypress/base:14.17.0
+FROM cypress/base:18.15.0
 
 # we need to set HOME when running on OCP with random UID, otherwise the home is set to / and any writing there will fail with permission denied
 ENV HOME=/tmp/kiali
@@ -11,7 +11,7 @@ ENV HOME=/tmp/kiali
 # install required packages and oc bin
 WORKDIR /usr/bin
 RUN apt -y update && \
-    apt install -y tar gzip bash gettext && \
+    apt install -y tar gzip bash gettext curl && \
     apt-get clean && \
     curl -Lo ./oc.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz && \
     tar -xf oc.tar.gz && \

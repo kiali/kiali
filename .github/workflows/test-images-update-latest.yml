@@ -1,0 +1,65 @@
+name: Update latest test suite images
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'hack/**'
+      - 'frontend/**'
+      # ignore src folder 
+      - '!frontend/src/**'
+      - 'deploy/docker/Dockerfile-cypress'
+      - 'tests/integration/**'
+
+jobs:
+  determine_change:
+    name: Determine which images are affected by the change
+    runs-on: ubuntu-latest
+    outputs:
+      build_mode: ${{ steps.determine.outputs.build_mode }}
+    steps:
+    - uses: actions/checkout@v3
+    - uses: dorny/paths-filter@v2.11.1
+      id: filter
+      with:
+        filters: |
+          integration:
+            - 'hack/**'
+            - 'tests/integration/**'
+          cypress:
+            - 'hack/**'
+            - 'frontend/**'
+            - 'deploy/docker/Dockerfile-cypress'
+    - name: Determine what needs to be rebuilt
+      id: determine
+      run: |
+        if ${{ steps.filter.outputs.integration }} && ${{ steps.filter.outputs.cypress }}; then
+          MODE="both"
+        elif ${{ steps.filter.outputs.integration }}; then
+          MODE="integration"
+        elif ${{ steps.filter.outputs.cypress }}; then
+          MODE="cypress"
+        else
+          echo "Unknown change. A change in watched folders was detected, but the folder is not related to any test image. Review the workflow file and add that folder to the related test image in the filter step!"          exit 1
+        fi
+        
+        echo "build_mode=$MODE" >> $GITHUB_OUTPUT
+    - name: Log information
+      run: |
+        echo "Change in folders related to int tests": ${{ steps.filter.outputs.integration }}
+        echo "Change in folders related to cypress tests": ${{ steps.filter.outputs.cypress }}
+        echo "Determined mode": ${{ steps.determine.outputs.build_mode }}
+  
+  push_test_images:
+    name: Build and push test images
+    needs: [determine_change]
+    uses: ./.github/workflows/test-images-creator.yml
+    with:
+      release_branch: ${{ github.ref_name }}
+      images_tag: 'latest'
+      quay_org: 'kiali'
+      build_mode: ${{ needs.determine_change.outputs.build_mode }}
+    secrets:
+      QUAY_USER: ${{ secrets.QUAY_USER }}
+      QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
