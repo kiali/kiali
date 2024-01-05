@@ -15,7 +15,7 @@ import { HistoryManager, URLParam } from '../../../app/History';
 import { GraphToolbarState, KialiAppState } from '../../../store/Store';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
 import { GraphType, EdgeLabelMode, isResponseTimeMode, isThroughputMode, RankMode } from '../../../types/Graph';
-import * as _ from 'lodash';
+import { startCase } from 'lodash-es';
 import { edgeLabelsSelector } from 'store/Selectors';
 import {
   BoundingClientAwareComponent,
@@ -35,25 +35,27 @@ import { INITIAL_GRAPH_STATE } from 'reducers/GraphDataState';
 import { KialiDispatch } from 'types/Redux';
 import { KialiCrippledFeatures } from 'types/ServerConfig';
 import { getCrippledFeatures } from 'services/Api';
-import { kialiStyle } from 'styles/StyleUtils';
 
-type ReduxProps = {
+type ReduxStateProps = {
   boxByCluster: boolean;
   boxByNamespace: boolean;
   compressOnHide: boolean;
   edgeLabels: EdgeLabelMode[];
   rankBy: RankMode[];
-  setEdgeLabels: (edgeLabels: EdgeLabelMode[]) => void;
-  setRankBy: (rankBy: RankMode[]) => void;
   showIdleEdges: boolean;
   showIdleNodes: boolean;
-  showOutOfMesh: boolean;
   showOperationNodes: boolean;
+  showOutOfMesh: boolean;
   showRank: boolean;
   showSecurity: boolean;
   showServiceNodes: boolean;
   showTrafficAnimation: boolean;
   showVirtualServices: boolean;
+};
+
+type ReduxDispatchProps = {
+  setEdgeLabels: (edgeLabels: EdgeLabelMode[]) => void;
+  setRankBy: (rankBy: RankMode[]) => void;
   toggleBoxByCluster(): void;
   toggleBoxByNamespace(): void;
   toggleCompressOnHide(): void;
@@ -68,7 +70,8 @@ type ReduxProps = {
   toggleTrafficAnimation(): void;
 };
 
-type GraphSettingsProps = ReduxProps &
+type GraphSettingsProps = ReduxStateProps &
+  ReduxDispatchProps &
   Omit<GraphToolbarState, 'findValue' | 'hideValue' | 'showLegend' | 'showFindHelp' | 'trafficRates'> & {
     disabled: boolean;
   };
@@ -77,19 +80,14 @@ type GraphSettingsState = { crippledFeatures?: KialiCrippledFeatures; isOpen: bo
 
 interface DisplayOptionType {
   id: string;
-  labelText: string;
   isChecked: boolean;
   isDisabled?: boolean;
+  labelText: string;
   onChange?: () => void;
   tooltip?: React.ReactNode;
 }
 
 const marginBottom = 20;
-
-const menuOptionStyle = kialiStyle({
-  display: 'flex',
-  alignItems: 'center'
-});
 
 class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, GraphSettingsState> {
   constructor(props: GraphSettingsProps) {
@@ -206,7 +204,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     });
   }
 
-  componentDidUpdate(prev: GraphSettingsProps) {
+  componentDidUpdate(prev: GraphSettingsProps): void {
     // ensure redux state and URL are aligned
     this.alignURLBool(
       URLParam.GRAPH_ANIMATION,
@@ -293,7 +291,12 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     );
   }
 
-  private handleURLBool = (param: URLParam, paramDefault: boolean, reduxValue: boolean, reduxToggle: () => void) => {
+  private handleURLBool = (
+    param: URLParam,
+    paramDefault: boolean,
+    reduxValue: boolean,
+    reduxToggle: () => void
+  ): void => {
     const urlValue = HistoryManager.getBooleanParam(param);
 
     if (urlValue !== undefined) {
@@ -305,7 +308,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     }
   };
 
-  private alignURLBool = (param: URLParam, paramDefault: boolean, prev: boolean, curr: boolean) => {
+  private alignURLBool = (param: URLParam, paramDefault: boolean, prev: boolean, curr: boolean): void => {
     if (prev === curr) {
       return;
     }
@@ -317,7 +320,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     }
   };
 
-  render() {
+  render(): React.ReactNode {
     return (
       <Dropdown
         toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
@@ -340,13 +343,13 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     );
   }
 
-  private onToggle = (isOpen: boolean) => {
+  private onToggle = (isOpen: boolean): void => {
     this.setState({
       isOpen
     });
   };
 
-  private getMenuOptions() {
+  private getMenuOptions(): React.ReactNode {
     // map our attributes from redux
     const {
       boxByCluster,
@@ -388,7 +391,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         isDisabled:
           this.state.crippledFeatures?.responseTime ||
           (this.state.crippledFeatures?.responseTimeAverage && this.state.crippledFeatures?.responseTimePercentiles),
-        labelText: _.startCase(EdgeLabelMode.RESPONSE_TIME_GROUP),
+        labelText: startCase(EdgeLabelMode.RESPONSE_TIME_GROUP),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             <div>
@@ -413,7 +416,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         id: EdgeLabelMode.THROUGHPUT_GROUP,
         isChecked: edgeLabels.includes(EdgeLabelMode.THROUGHPUT_GROUP),
         isDisabled: this.state.crippledFeatures?.requestSize && this.state.crippledFeatures?.responseSize,
-        labelText: _.startCase(EdgeLabelMode.THROUGHPUT_GROUP),
+        labelText: startCase(EdgeLabelMode.THROUGHPUT_GROUP),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             <div>
@@ -436,7 +439,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       {
         id: EdgeLabelMode.TRAFFIC_DISTRIBUTION,
         isChecked: edgeLabels.includes(EdgeLabelMode.TRAFFIC_DISTRIBUTION),
-        labelText: _.startCase(EdgeLabelMode.TRAFFIC_DISTRIBUTION),
+        labelText: startCase(EdgeLabelMode.TRAFFIC_DISTRIBUTION),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             HTTP and gRPC Edges display the percentage of traffic for that edge, when less than 100%. For a source node,
@@ -448,7 +451,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       {
         id: EdgeLabelMode.TRAFFIC_RATE,
         isChecked: edgeLabels.includes(EdgeLabelMode.TRAFFIC_RATE),
-        labelText: _.startCase(EdgeLabelMode.TRAFFIC_RATE),
+        labelText: startCase(EdgeLabelMode.TRAFFIC_RATE),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             HTTP rates are in requests-per-second (rps). gRPC rates may be in requests-per-second (rps) or
@@ -716,6 +719,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
             <span className={titleStyle} style={{ paddingRight: 0 }}>
               Show Edge Labels
             </span>
+
             <Tooltip
               key="tooltip_show_edge_labels"
               position={TooltipPosition.right}
@@ -745,7 +749,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                   key={edgeLabelOption.id}
                   label={edgeLabelOption.labelText}
                   name="edgeLabelOptions"
-                  onChange={(event, _) => this.toggleEdgeLabelMode(_, event)}
+                  onChange={(event: React.FormEvent, _checked: Boolean) => this.toggleEdgeLabelMode(event)}
                   value={edgeLabelOption.id}
                 />
               </label>
@@ -775,7 +779,9 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           isDisabled={this.props.disabled || edgeLabelOption.isDisabled || rtOption.isDisabled}
                           label={rtOption.labelText}
                           name="rtOptions"
-                          onChange={(event, _) => this.toggleEdgeLabelResponseTimeMode(_, event)}
+                          onChange={(event: React.FormEvent, _checked: boolean) =>
+                            this.toggleEdgeLabelResponseTimeMode(event)
+                          }
                           style={{ paddingLeft: '0.25rem' }}
                           value={rtOption.id}
                         />
@@ -810,7 +816,9 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           isDisabled={this.props.disabled || edgeLabelOption.isDisabled || throughputOption.isDisabled}
                           label={throughputOption.labelText}
                           name="throughputOptions"
-                          onChange={(event, _) => this.toggleEdgeLabelThroughputMode(_, event)}
+                          onChange={(event: React.FormEvent, _checked: boolean) =>
+                            this.toggleEdgeLabelThroughputMode(event)
+                          }
                           style={{ paddingLeft: '0.5rem' }}
                           value={throughputOption.id}
                         />
@@ -831,9 +839,11 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
               )}
             </div>
           ))}
+
           <div className={titleStyle}>Show</div>
+
           {visibilityOptions.map((item: DisplayOptionType) => (
-            <div key={item.id} className={menuOptionStyle}>
+            <div key={item.id} className={menuEntryStyle}>
               <label key={item.id} className={!!item.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}>
                 <Checkbox
                   id={item.id}
@@ -888,8 +898,9 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
           ))}
 
           <div className={titleStyle}>Show Badges</div>
+
           {badgeOptions.map((item: DisplayOptionType) => (
-            <div key={item.id} className={menuOptionStyle}>
+            <div key={item.id} className={menuEntryStyle}>
               <label key={item.id} className={!!item.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}>
                 <Checkbox
                   id={item.id}
@@ -912,8 +923,8 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     );
   }
 
-  private toggleEdgeLabelMode = (_, event) => {
-    const mode = event.target.value as EdgeLabelMode;
+  private toggleEdgeLabelMode = (event: React.FormEvent): void => {
+    const mode = (event.target as HTMLInputElement).value as EdgeLabelMode;
 
     if (this.props.edgeLabels.includes(mode)) {
       let newEdgeLabels: EdgeLabelMode[];
@@ -956,19 +967,19 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     }
   };
 
-  private toggleEdgeLabelResponseTimeMode = (_, event) => {
-    const mode = event.target.value as EdgeLabelMode;
+  private toggleEdgeLabelResponseTimeMode = (event: React.FormEvent): void => {
+    const mode = (event.target as HTMLInputElement).value as EdgeLabelMode;
     const newEdgeLabels = this.props.edgeLabels.filter(l => !isResponseTimeMode(l));
     this.props.setEdgeLabels([...newEdgeLabels, EdgeLabelMode.RESPONSE_TIME_GROUP, mode]);
   };
 
-  private toggleEdgeLabelThroughputMode = (_, event) => {
-    const mode = event.target.value as EdgeLabelMode;
+  private toggleEdgeLabelThroughputMode = (event: React.FormEvent): void => {
+    const mode = (event.target as HTMLInputElement).value as EdgeLabelMode;
     const newEdgeLabels = this.props.edgeLabels.filter(l => !isThroughputMode(l));
     this.props.setEdgeLabels([...newEdgeLabels, EdgeLabelMode.THROUGHPUT_GROUP, mode]);
   };
 
-  private toggleRankByMode = (mode: RankMode) => {
+  private toggleRankByMode = (mode: RankMode): void => {
     if (this.props.rankBy.includes(mode)) {
       this.props.setRankBy(this.props.rankBy.filter(r => r !== mode));
     } else {
@@ -978,7 +989,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
 }
 
 // Allow Redux to map sections of our global app state to our props
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   boxByCluster: state.graph.toolbarState.boxByCluster,
   boxByNamespace: state.graph.toolbarState.boxByNamespace,
   compressOnHide: state.graph.toolbarState.compressOnHide,
@@ -996,7 +1007,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 // Map our actions to Redux
-const mapDispatchToProps = (dispatch: KialiDispatch) => {
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   return {
     setEdgeLabels: bindActionCreators(GraphToolbarActions.setEdgeLabels, dispatch),
     setRankBy: bindActionCreators(GraphToolbarActions.setRankBy, dispatch),
