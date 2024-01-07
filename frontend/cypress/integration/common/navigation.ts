@@ -37,32 +37,49 @@ Given(
     const namespaceAndName = namespacedNamed.split('/');
     const namespace = namespaceAndName[0];
     const name = namespaceAndName[1];
+    const pageDetail = getPageDetail(detail);
 
-    let pageDetail: string;
-
-    switch (detail) {
-      case detailType.App:
-        pageDetail = 'applications';
-        break;
-      case detailType.Service:
-        pageDetail = 'services';
-
-        cy.intercept({
-          pathname: '**/api/namespaces/bookinfo/services/productpage',
-          query: {
-            objects: ''
-          }
-        }).as('waitForCall');
-
-        break;
-      case detailType.Workload:
-        pageDetail = 'workloads';
-        break;
+    if (pageDetail === 'services') {
+      cy.intercept({
+        pathname: '**/api/namespaces/bookinfo/services/productpage',
+        query: {
+          objects: ''
+        }
+      }).as('waitForCall');
     }
 
     cy.visit(`${Cypress.config('baseUrl')}/console/namespaces/${namespace}/${pageDetail}/${name}?refresh=0${cluster}`);
-
     ensureKialiFinishedLoading();
+  }
+);
+
+const getPageDetail = (detail: detailType): string => {
+  let pageDetail: string;
+  switch (detail) {
+    case detailType.App:
+      pageDetail = 'applications';
+      break;
+    case detailType.Service:
+      pageDetail = 'services';
+      break;
+    case detailType.Workload:
+      pageDetail = 'workloads';
+      break;
+  }
+  return pageDetail;
+};
+
+// Then the browser is at the details page for the "<type>" "bookinfo/<name>" located in the "west" cluster
+Given(
+  'the browser is at the details page for the {string} {string} located in the {string} cluster',
+  (detail: detailType, namespacedName: string, cluster: string) => {
+    const namespaceAndName = namespacedName.split('/');
+    const namespace = namespaceAndName[0];
+    const name = namespaceAndName[1];
+    const pageDetail = getPageDetail(detail);
+
+    cy.url().should('include', `/namespaces/${namespace}/${pageDetail}/${name}`);
+    cy.url().should('include', `clusterName=${cluster}`);
   }
 );
 

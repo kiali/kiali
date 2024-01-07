@@ -4,7 +4,7 @@
   pages since these are all similar.
 */
 
-import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Step, Then, When, Given } from '@badeball/cypress-cucumber-preprocessor';
 import {
   checkHealthIndicatorInTable,
   checkHealthStatusInTable,
@@ -185,3 +185,90 @@ Then('user should see no duplicate namespaces', () => {
 
   cy.get('[data-test="namespace-dropdown"]').siblings().contains('bookinfo').should('be.visible').and('have.length', 1);
 });
+
+// And user clicks on the "reviews" <type> from the "west" cluster visible in the graph
+Given(
+  'the {string} {string} from the {string} cluster is visible in the minigraph',
+  (name: string, type: string, cluster: string) => {
+    Step(this, 'user sees a minigraph');
+    cy.waitForReact();
+    cy.getReact('CytoscapeGraph')
+      .should('have.length', '1')
+      .then($graph => {
+        cy.wrap($graph)
+          .getProps()
+          .then(props => {
+            const graphType = props.graphData.fetchParams.graphType;
+            const { nodeType, isBox } = nodeInfo(type, graphType);
+            cy.wrap($graph)
+              .getCurrentState()
+              .then(state => {
+                cy.wrap(
+                  state.cy
+                    .nodes()
+                    .some(
+                      node =>
+                        node.data('nodeType') === nodeType &&
+                        node.data('namespace') === 'bookinfo' &&
+                        node.data(type) === name &&
+                        node.data('cluster') === cluster &&
+                        node.data('isBox') === isBox
+                    )
+                ).should('be.true');
+              });
+          });
+      });
+  }
+);
+
+// node type and box type varies based on the graph so this is a helper function to get the right values.
+const nodeInfo = (nodeType: string, graphType: string): { isBox?: string; nodeType: string } => {
+  let isBox: string | undefined;
+  if (nodeType === 'app') {
+    // Apps are boxes in versioned app graph...
+    nodeType = 'box';
+    isBox = 'app';
+  } else if (nodeType === 'workload' && graphType === 'versionedApp') {
+    // Workloads are apps in versioned app graph...
+    nodeType = 'app';
+  }
+
+  return {
+    nodeType,
+    isBox
+  };
+};
+
+When(
+  'user clicks on the {string} {string} from the {string} cluster in the graph',
+  (name: string, type: string, cluster: string) => {
+    cy.waitForReact();
+    cy.getReact('CytoscapeGraph')
+      .should('have.length', '1')
+      .then($graph => {
+        cy.wrap($graph)
+          .getProps()
+          .then(props => {
+            const graphType = props.graphData.fetchParams.graphType;
+            cy.wrap($graph)
+              .getCurrentState()
+              .then(state => {
+                const node = state.cy
+                  .nodes()
+                  .toArray()
+                  .find(node => {
+                    const { nodeType, isBox } = nodeInfo(type, graphType);
+                    return (
+                      node.data('nodeType') === nodeType &&
+                      node.data('namespace') === 'bookinfo' &&
+                      node.data(type) === name &&
+                      node.data('cluster') === cluster &&
+                      node.data('isBox') === isBox
+                    );
+                  });
+                node.emit('tap');
+              });
+          });
+      });
+  }
+);
