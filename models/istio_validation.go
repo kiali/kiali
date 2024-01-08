@@ -221,6 +221,31 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "No matching workload found for the selector in this namespace",
 		Severity: WarningSeverity,
 	},
+	"k8sgateways.gatewayclassnotfound": {
+		Code:     "KIA1504",
+		Message:  "Gateway API Class not found in Kiali configuration",
+		Severity: ErrorSeverity,
+	},
+	"k8sgateways.multimatch.listener": {
+		Code:     "KIA1501",
+		Message:  "More than one K8s Gateway for the same host port combination",
+		Severity: WarningSeverity,
+	},
+	"k8sgateways.multimatch.ip": {
+		Code:     "KIA1502",
+		Message:  "More than one K8s Gateway for the same address and type combination",
+		Severity: WarningSeverity,
+	},
+	"k8sgateways.unique.listener": {
+		Code:     "KIA1503",
+		Message:  "Each listener must have a unique combination of Hostname, Port, and Protocol",
+		Severity: ErrorSeverity,
+	},
+	"k8sreferencegrants.from.namespacenotfound": {
+		Code:     "KIA1601",
+		Message:  "Namespace is not found or is not accessible",
+		Severity: ErrorSeverity,
+	},
 	"k8shttproutes.nohost.namenotfound": {
 		Code:     "KIA1402",
 		Message:  "BackendRef on rule doesn't have a valid service (Service name not found)",
@@ -325,26 +350,6 @@ var checkDescriptors = map[string]IstioCheck{
 		Code:     "KIA1301",
 		Message:  "This workload is not covered by any authorization policy",
 		Severity: WarningSeverity,
-	},
-	"k8sgateways.gatewayclassnotfound": {
-		Code:     "KIA1504",
-		Message:  "Gateway API Class not found in Kiali configuration",
-		Severity: ErrorSeverity,
-	},
-	"k8sgateways.multimatch.listener": {
-		Code:     "KIA1501",
-		Message:  "More than one K8s Gateway for the same host port combination",
-		Severity: WarningSeverity,
-	},
-	"k8sgateways.multimatch.ip": {
-		Code:     "KIA1502",
-		Message:  "More than one K8s Gateway for the same address and type combination",
-		Severity: WarningSeverity,
-	},
-	"k8sgateways.unique.listener": {
-		Code:     "KIA1503",
-		Message:  "Each listener must have a unique combination of Hostname, Port, and Protocol",
-		Severity: ErrorSeverity,
 	},
 }
 
