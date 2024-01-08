@@ -1,13 +1,13 @@
 package k8sreferencegrants
 
 import (
-	"github.com/kiali/kiali/tests/data"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
