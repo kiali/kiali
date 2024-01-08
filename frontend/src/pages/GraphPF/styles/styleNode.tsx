@@ -122,10 +122,6 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
 
   const { width, height } = element.getDimensions();
 
-  if (data.isFind) {
-  } else if (data.isFocused) {
-  }
-
   return (
     <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} ref={hoverRef as any}>
       {data.hasSpans && (
