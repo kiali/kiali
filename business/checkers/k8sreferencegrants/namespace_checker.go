@@ -2,6 +2,7 @@ package k8sreferencegrants
 
 import (
 	"fmt"
+
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/models"
