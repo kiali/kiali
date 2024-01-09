@@ -10,6 +10,7 @@ export const GraphToolbarActions = {
   setGraphType: createStandardAction(ActionKeys.GRAPH_TOOLBAR_SET_GRAPH_TYPE)<GraphType>(),
   setHideValue: createStandardAction(ActionKeys.GRAPH_TOOLBAR_SET_HIDE_VALUE)<string>(),
   setIdleNodes: createStandardAction(ActionKeys.GRAPH_TOOLBAR_SET_IDLE_NODES)<boolean>(),
+  setWaypoint: createStandardAction(ActionKeys.GRAPH_TOOLBAR_SET_WAYPOINT)<boolean>(),
   setRankBy: createStandardAction(ActionKeys.GRAPH_TOOLBAR_SET_RANK_BY)<RankMode[]>(),
   setTrafficRates: createStandardAction(ActionKeys.GRAPH_TOOLBAR_SET_TRAFFIC_RATES)<TrafficRate[]>(),
   // Toggle actions
@@ -26,7 +27,8 @@ export const GraphToolbarActions = {
   toggleOperationNodes: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_OPERATION_NODES),
   toggleRank: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_RANK),
   toggleServiceNodes: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_SERVICE_NODES),
-  toggleTrafficAnimation: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_TRAFFIC_ANIMATION)
+  toggleTrafficAnimation: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_TRAFFIC_ANIMATION),
+  toggleWaypoint: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_WAYPOINT)
 };
 
 export type GraphToolbarAction = ActionType<typeof GraphToolbarActions>;

@@ -36,7 +36,11 @@ import { KialiDispatch } from 'types/Redux';
 import { KialiCrippledFeatures } from 'types/ServerConfig';
 import { getCrippledFeatures } from 'services/Api';
 
-type ReduxStateProps = {
+import { serverConfig } from '../../../config';
+import { ReactNode } from 'react';
+import {kialiStyle} from "../../../styles/StyleUtils";
+
+type stateProps = {
   boxByCluster: boolean;
   boxByNamespace: boolean;
   compressOnHide: boolean;
@@ -51,9 +55,10 @@ type ReduxStateProps = {
   showServiceNodes: boolean;
   showTrafficAnimation: boolean;
   showVirtualServices: boolean;
+  showWaypoint: boolean;
 };
 
-type ReduxDispatchProps = {
+type dispatchProps = {
   setEdgeLabels: (edgeLabels: EdgeLabelMode[]) => void;
   setRankBy: (rankBy: RankMode[]) => void;
   toggleBoxByCluster(): void;
@@ -68,13 +73,14 @@ type ReduxDispatchProps = {
   toggleRank(): void;
   toggleServiceNodes(): void;
   toggleTrafficAnimation(): void;
+  toggleWaypoint(): void;
 };
 
-type GraphSettingsProps = ReduxStateProps &
-  ReduxDispatchProps &
+type ReduxProps = stateProps &
+  dispatchProps &
   Omit<GraphToolbarState, 'findValue' | 'hideValue' | 'showLegend' | 'showFindHelp' | 'trafficRates'> & {
-    disabled: boolean;
-  };
+  disabled: boolean;
+};
 
 type GraphSettingsState = { crippledFeatures?: KialiCrippledFeatures; isOpen: boolean };
 
@@ -89,8 +95,13 @@ interface DisplayOptionType {
 
 const marginBottom = 20;
 
-class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, GraphSettingsState> {
-  constructor(props: GraphSettingsProps) {
+const menuOptionStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center'
+});
+
+class GraphSettingsComponent extends React.PureComponent<ReduxProps, GraphSettingsState> {
+  constructor(props: ReduxProps) {
     super(props);
     this.state = {
       isOpen: false
@@ -102,6 +113,14 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       INITIAL_GRAPH_STATE.toolbarState.showTrafficAnimation,
       props.showTrafficAnimation,
       props.toggleTrafficAnimation
+    );
+
+    // Let URL override current redux state at construction time. Update URL as needed.
+    this.handleURLBool(
+      URLParam.GRAPH_WAYPOINT,
+      INITIAL_GRAPH_STATE.toolbarState.showWaypoint,
+      props.showWaypoint,
+      props.toggleWaypoint
     );
 
     this.handleURLBool(
@@ -204,7 +223,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     });
   }
 
-  componentDidUpdate(prev: GraphSettingsProps): void {
+  componentDidUpdate(prev: ReduxProps): void {
     // ensure redux state and URL are aligned
     this.alignURLBool(
       URLParam.GRAPH_ANIMATION,
@@ -320,7 +339,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     }
   };
 
-  render(): React.ReactNode {
+  render(): ReactNode {
     return (
       <Dropdown
         toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
@@ -349,7 +368,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     });
   };
 
-  private getMenuOptions(): React.ReactNode {
+  private getMenuOptions(): ReactNode {
     // map our attributes from redux
     const {
       boxByCluster,
@@ -365,7 +384,8 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       showSecurity,
       showServiceNodes,
       showTrafficAnimation,
-      showVirtualServices
+      showVirtualServices,
+      showWaypoint
     } = this.props;
 
     // map our dispatchers for redux
@@ -381,7 +401,8 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       toggleOperationNodes,
       toggleRank,
       toggleServiceNodes,
-      toggleTrafficAnimation
+      toggleTrafficAnimation,
+      toggleWaypoint
     } = this.props;
 
     const edgeLabelOptions: DisplayOptionType[] = [
@@ -519,7 +540,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       }
     ];
 
-    const visibilityOptions: DisplayOptionType[] = [
+    let visibilityOptions: DisplayOptionType[] = [
       {
         id: 'boxByCluster',
         isChecked: boxByCluster,
@@ -650,6 +671,20 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         )
       }
     ];
+
+    if (serverConfig.ambientEnabled) {
+      visibilityOptions.push({
+        id: 'filterWaypoint',
+        isChecked: showWaypoint,
+        labelText: 'Waypoint proxies',
+        onChange: toggleWaypoint,
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>
+            <div>Show waypoint proxies workloads.</div>
+          </div>
+        )
+      });
+    }
 
     const badgeOptions: DisplayOptionType[] = [
       {
@@ -989,7 +1024,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
 }
 
 // Allow Redux to map sections of our global app state to our props
-const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
+const mapStateToProps = (state: KialiAppState): stateProps => ({
   boxByCluster: state.graph.toolbarState.boxByCluster,
   boxByNamespace: state.graph.toolbarState.boxByNamespace,
   compressOnHide: state.graph.toolbarState.compressOnHide,
@@ -1003,11 +1038,12 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   showSecurity: state.graph.toolbarState.showSecurity,
   showServiceNodes: state.graph.toolbarState.showServiceNodes,
   showTrafficAnimation: state.graph.toolbarState.showTrafficAnimation,
-  showVirtualServices: state.graph.toolbarState.showVirtualServices
+  showVirtualServices: state.graph.toolbarState.showVirtualServices,
+  showWaypoint: state.graph.toolbarState.showWaypoint
 });
 
 // Map our actions to Redux
-const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
+const mapDispatchToProps = (dispatch: KialiDispatch): dispatchProps => {
   return {
     setEdgeLabels: bindActionCreators(GraphToolbarActions.setEdgeLabels, dispatch),
     setRankBy: bindActionCreators(GraphToolbarActions.setRankBy, dispatch),
@@ -1022,7 +1058,8 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
     toggleOperationNodes: bindActionCreators(GraphToolbarActions.toggleOperationNodes, dispatch),
     toggleRank: bindActionCreators(GraphToolbarActions.toggleRank, dispatch),
     toggleServiceNodes: bindActionCreators(GraphToolbarActions.toggleServiceNodes, dispatch),
-    toggleTrafficAnimation: bindActionCreators(GraphToolbarActions.toggleTrafficAnimation, dispatch)
+    toggleTrafficAnimation: bindActionCreators(GraphToolbarActions.toggleTrafficAnimation, dispatch),
+    toggleWaypoint: bindActionCreators(GraphToolbarActions.toggleWaypoint, dispatch)
   };
 };
 

@@ -17,7 +17,8 @@ import {
   graphTypeSelector,
   showIdleNodesSelector,
   replayActiveSelector,
-  trafficRatesSelector
+  trafficRatesSelector,
+  showWaypointSelector
 } from '../../../store/Selectors';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
 import { GraphFind } from './GraphFind';
@@ -46,14 +47,22 @@ import { INITIAL_USER_SETTINGS_STATE } from 'reducers/UserSettingsState';
 import { GraphReset } from './GraphReset';
 import { GraphFindPF } from './GraphFindPF';
 import { kialiStyle } from 'styles/StyleUtils';
+import { ReactNode } from 'react';
 
-type ReduxProps = {
+type singleProps = {
   activeNamespaces: Namespace[];
   edgeLabels: EdgeLabelMode[];
   graphType: GraphType;
   node?: NodeParamsType;
   rankBy: RankMode[];
   replayActive: boolean;
+  showIdleNodes: boolean;
+  showWaypoint: boolean;
+  summaryData: SummaryData | null;
+  trafficRates: TrafficRate[];
+};
+
+type propsFunc = {
   setActiveNamespaces: (activeNamespaces: Namespace[]) => void;
   setEdgeLabels: (edgeLabels: EdgeLabelMode[]) => void;
   setGraphType: (graphType: GraphType) => void;
@@ -61,11 +70,10 @@ type ReduxProps = {
   setNode: (node?: NodeParamsType) => void;
   setRankBy: (rankLabels: RankMode[]) => void;
   setTrafficRates: (rates: TrafficRate[]) => void;
-  showIdleNodes: boolean;
-  summaryData: SummaryData | null;
   toggleReplayActive: () => void;
-  trafficRates: TrafficRate[];
 };
+
+type ReduxProps = singleProps & propsFunc;
 
 type GraphToolbarProps = ReduxProps & {
   controller?: any;
@@ -146,7 +154,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
     }
   }
 
-  componentDidUpdate(prevProps: GraphToolbarProps) {
+  componentDidUpdate(prevProps: GraphToolbarProps): void {
     // ensure redux state and URL are aligned
     if (String(prevProps.edgeLabels) !== String(this.props.edgeLabels)) {
       if (this.props.edgeLabels?.length === 0) {
@@ -193,14 +201,14 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     // If replay was left active then turn it off
     if (this.props.replayActive) {
       this.props.toggleReplayActive();
     }
   }
 
-  render() {
+  render(): ReactNode {
     return (
       <>
         <GraphSecondaryMasthead
@@ -280,7 +288,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
   };
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): singleProps => ({
   activeNamespaces: activeNamespacesSelector(state),
   edgeLabels: edgeLabelsSelector(state),
   graphType: graphTypeSelector(state),
@@ -288,11 +296,12 @@ const mapStateToProps = (state: KialiAppState) => ({
   rankBy: state.graph.toolbarState.rankBy,
   replayActive: replayActiveSelector(state),
   showIdleNodes: showIdleNodesSelector(state),
+  showWaypoint: showWaypointSelector(state),
   summaryData: state.graph.summaryData,
   trafficRates: trafficRatesSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => {
+const mapDispatchToProps = (dispatch: KialiDispatch): propsFunc => {
   return {
     setActiveNamespaces: bindActionCreators(NamespaceActions.setActiveNamespaces, dispatch),
     setEdgeLabels: bindActionCreators(GraphToolbarActions.setEdgeLabels, dispatch),

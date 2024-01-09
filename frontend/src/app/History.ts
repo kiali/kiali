@@ -2,7 +2,7 @@ import { createBrowserHistory, createMemoryHistory, createHashHistory } from 'hi
 import { toValidDuration } from '../config/ServerConfig';
 import { BoundsInMilliseconds } from 'types/Common';
 
-const createHistory = (baseName: string) => {
+const createHistory = (baseName: string): any => {
   return process.env.TEST_RUNNER
     ? createMemoryHistory()
     : historyMode === 'hash'
@@ -16,12 +16,12 @@ const createHistory = (baseName: string) => {
  * routes to a different page within Kiali in these platforms.
  * This method is not used in standalone Kiali application
  */
-export const setHistory = (baseName: string) => {
+export const setHistory = (baseName: string): void => {
   history = createHistory(baseName);
 };
 
 const webRoot = (window as any).WEB_ROOT ? (window as any).WEB_ROOT : undefined;
-const baseName = webRoot && webRoot !== '/' ? webRoot + '/console' : '/console';
+const baseName = webRoot && webRoot !== '/' ? `${webRoot}/console` : '/console';
 const historyMode = (window as any).HISTORY_MODE ? (window as any).HISTORY_MODE : 'browser';
 let history = createHistory(baseName);
 
@@ -60,6 +60,7 @@ export enum URLParam {
   GRAPH_SERVICE_NODES = 'injectServiceNodes',
   GRAPH_TRAFFIC = 'traffic',
   GRAPH_TYPE = 'graphType',
+  GRAPH_WAYPOINT = 'waypoint',
   TRACING_ERRORS_ONLY = 'errs',
   TRACING_LIMIT_TRACES = 'limit',
   TRACING_PERCENTILE = 'percentile',
@@ -92,10 +93,10 @@ export enum ParamAction {
 }
 
 export class HistoryManager {
-  static setParam = (name: URLParam | string, value: string) => {
+  static setParam = (name: URLParam | string, value: string): void => {
     const urlParams = new URLSearchParams(history.location.search);
     urlParams.set(name, value);
-    history.replace(history.location.pathname + '?' + urlParams.toString());
+    history.replace(`${history.location.pathname}?${urlParams.toString()}`);
   };
 
   static getParam = (name: URLParam | string, urlParams?: URLSearchParams): string | undefined => {
@@ -116,17 +117,17 @@ export class HistoryManager {
     return p !== undefined ? p === 'true' : undefined;
   };
 
-  static deleteParam = (name: URLParam, historyReplace?: boolean) => {
+  static deleteParam = (name: URLParam, historyReplace?: boolean): void => {
     const urlParams = new URLSearchParams(history.location.search);
     urlParams.delete(name);
     if (historyReplace) {
-      history.replace(history.location.pathname + '?' + urlParams.toString());
+      history.replace(`${history.location.pathname}?${urlParams.toString()}`);
     } else {
-      history.push(history.location.pathname + '?' + urlParams.toString());
+      history.push(`${history.location.pathname}?${urlParams.toString()}`);
     }
   };
 
-  static setParams = (params: URLParamValue[], paramAction?: ParamAction, historyReplace?: boolean) => {
+  static setParams = (params: URLParamValue[], paramAction?: ParamAction, historyReplace?: boolean): void => {
     const urlParams = new URLSearchParams(history.location.search);
 
     if (params.length > 0 && paramAction === ParamAction.APPEND) {
@@ -144,9 +145,9 @@ export class HistoryManager {
     });
 
     if (historyReplace) {
-      history.replace(history.location.pathname + '?' + urlParams.toString());
+      history.replace(`${history.location.pathname}?${urlParams.toString()}`);
     } else {
-      history.push(history.location.pathname + '?' + urlParams.toString());
+      history.push(`${history.location.pathname}?${urlParams.toString()}`);
     }
   };
 
