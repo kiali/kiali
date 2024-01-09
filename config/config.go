@@ -76,6 +76,14 @@ const (
 	TempoProvider  TracingProvider = "tempo"
 )
 
+// TracingCollectorType is the type of collector that Kiali will export traces to.
+// These are traces that kiali generates for itself.
+type TracingCollectorType string
+
+const (
+	OTELCollectorType TracingCollectorType = "otel"
+)
+
 var validPathRegEx = regexp.MustCompile(`^\/[a-zA-Z0-9\-\._~!\$&\'()\*\+\,;=:@%/]*$`)
 
 // FeatureName is the enum type used for named features that can be disabled via KialiFeatureFlags.DisabledFeatures
@@ -109,20 +117,21 @@ type Metrics struct {
 }
 
 // OpenTelemetry collector configuration for tracing
-type TLSConfig struct {
+type OtelCollector struct {
 	CAName     string `yaml:"ca_name,omitempty"`
-	Enabled    bool   `yaml:"enabled,omitempty"`
+	Protocol   string `yaml:"protocol,omitempty"` // http or https or grpc
 	SkipVerify bool   `yaml:"skip_verify,omitempty"`
+	TLSEnabled bool   `yaml:"tls_enabled,omitempty"`
 }
 
 // Tracing provides tracing configuration for the Kiali server.
 type Tracing struct {
-	CollectorURL string `yaml:"collector_url,omitempty"` // Endpoint for Kiali server traces
-	Enabled      bool   `yaml:"enabled,omitempty"`
-	Protocol     string `yaml:"protocol,omitempty"` // http or https or grpc
+	CollectorType TracingCollectorType `yaml:"collector_type,omitempty"` // Possible value "otel"
+	CollectorURL  string               `yaml:"collector_url,omitempty"`  // Endpoint for Kiali server traces
+	Enabled       bool                 `yaml:"enabled,omitempty"`
+	Otel          OtelCollector        `yaml:"otel,omitempty"`
 	// Sampling rate for Kiali server traces. >= 1.0 always samples and <= 0 never samples.
-	SamplingRate float64   `yaml:"sampling_rate,omitempty"`
-	TLSConfig    TLSConfig `yaml:"tls_config,omitempty"`
+	SamplingRate float64 `yaml:"sampling_rate,omitempty"`
 }
 
 // Observability provides configuration for tracing and metrics exported by the Kiali server.
@@ -805,14 +814,14 @@ func NewConfig() (c *Config) {
 				Tracing: Tracing{
 					CollectorURL: "jaeger-collector.istio-system:4318",
 					Enabled:      false,
-					Protocol:     "http",
+					Otel: OtelCollector{
+						CAName:     "",
+						Protocol:   "http",
+						SkipVerify: true,
+						TLSEnabled: false,
+					},
 					// Sample half of traces.
 					SamplingRate: 0.5,
-					TLSConfig: TLSConfig{
-						CAName:     "",
-						Enabled:    false,
-						SkipVerify: true,
-					},
 				},
 			},
 			Port:                       20001,
@@ -1150,6 +1159,13 @@ func Validate(cfg Config) error {
 				return err
 			}
 		}
+	}
+
+	// Check the observability section
+	observTracing := cfg.Server.Observability.Tracing
+	// If collector is not defined it would be the default "otel"
+	if observTracing.Enabled && observTracing.CollectorType != OTELCollectorType && observTracing.CollectorType != "" {
+		return fmt.Errorf("error in configuration options getting the observability exporter. Invalid collector type [%s]", observTracing.CollectorType)
 	}
 
 	// Check the tracing section

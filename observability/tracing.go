@@ -140,7 +140,7 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 	tracingOpt := config.Get().Server.Observability.Tracing
 
 	// OpenTelemetry collector
-	if tracingOpt.Protocol == HTTP || tracingOpt.Protocol == HTTPS {
+	if tracingOpt.Otel.Protocol == HTTP || tracingOpt.Otel.Protocol == HTTPS {
 		tracingOptions := otlptracehttp.WithRetry(otlptracehttp.RetryConfig{
 			Enabled:         true,
 			InitialInterval: 1 * time.Nanosecond,
@@ -150,7 +150,7 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 		})
 		var client otlptrace.Client
 
-		if tracingOpt.Protocol == HTTP {
+		if tracingOpt.Otel.Protocol == HTTP {
 			log.Debugf("Creating OpenTelemetry collector with URL http://%s", collectorURL)
 
 			client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(collectorURL),
@@ -160,7 +160,7 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 		} else {
 			log.Debugf("Creating OpenTelemetry collector with URL https://%s", collectorURL)
 			// That's mainly for testing
-			if tracingOpt.TLSConfig.SkipVerify {
+			if tracingOpt.Otel.SkipVerify {
 				log.Trace("OpenTelemetry collector will not verify the remote certificate")
 				client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(collectorURL),
 					otlptracehttp.WithTLSClientConfig(&tls.Config{InsecureSkipVerify: true}),
@@ -176,7 +176,7 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 		httpExporter, err2 := otlptrace.New(ctx, client)
 		return httpExporter, err2
 	} else {
-		if tracingOpt.Protocol == GRPC {
+		if tracingOpt.Otel.Protocol == GRPC {
 			log.Debugf("Creating OpenTelemetry grpc collector with URL %s", collectorURL)
 			ctx := context.Background()
 			ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
@@ -184,15 +184,15 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 
 			opts := []otlptracegrpc.Option{otlptracegrpc.WithEndpoint(collectorURL), otlptracegrpc.WithDialOption(grpc.WithBlock())}
 
-			if tracingOpt.TLSConfig.Enabled {
-				if tracingOpt.TLSConfig.SkipVerify {
+			if tracingOpt.Otel.TLSEnabled {
+				if tracingOpt.Otel.SkipVerify {
 					log.Trace("OpenTelemetry collector will not verify the remote certificate")
 					tlsConfig := &tls.Config{
 						InsecureSkipVerify: true,
 					}
 					opts = append(opts, otlptracegrpc.WithTLSCredentials(credentials.NewTLS(tlsConfig)))
 				} else {
-					certName := tracingOpt.TLSConfig.CAName
+					certName := tracingOpt.Otel.CAName
 					if certName == "" {
 						return nil, fmt.Errorf("ca_name is required")
 					}
