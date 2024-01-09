@@ -190,6 +190,36 @@ func TestK8sHTTPRoutesServicesError(t *testing.T) {
 	require.Equal("BackendRef on rule doesn't have a valid service (Service name not found)", config.IstioValidation.Checks[0].Message)
 }
 
+func TestK8sReferenceGrantsFromNamespaceError(t *testing.T) {
+	name := "referencegrantfromns"
+	require := require.New(t)
+	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-k8sreferencegrants-from-namespaces.yaml")
+	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
+	require.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
+
+	// potential flaky test fix, make sure that K8sReferenceGrants is created and available
+	config, err := getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sReferenceGrants, true, require)
+	require.NoError(err)
+	require.NotNil(config)
+
+	config, err = getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sReferenceGrants, true, require)
+
+	require.NoError(err)
+	require.NotNil(config)
+	require.Equal(kubernetes.K8sReferenceGrants, config.ObjectType)
+	require.Equal(kiali.BOOKINFO, config.Namespace.Name)
+	require.NotNil(config.K8sReferenceGrant)
+	require.Equal(name, config.K8sReferenceGrant.Name)
+	require.Equal(kiali.BOOKINFO, config.K8sReferenceGrant.Namespace)
+	require.NotNil(config.IstioValidation)
+	require.False(config.IstioValidation.Valid)
+	require.Equal(name, config.IstioValidation.Name)
+	require.Equal("k8sreferencegrant", config.IstioValidation.ObjectType)
+	require.NotEmpty(config.IstioValidation.Checks)
+	require.Equal(models.ErrorSeverity, config.IstioValidation.Checks[0].Severity)
+	require.Equal("Namespace is not found or is not accessible", config.IstioValidation.Checks[0].Message)
+}
+
 func getConfigDetails(namespace, name, configType string, skipReferences bool, require *require.Assertions) (*models.IstioConfigDetails, error) {
 	ctx := context.TODO()
 	config, _, err := kiali.IstioConfigDetails(namespace, name, configType)
