@@ -812,8 +812,9 @@ func NewConfig() (c *Config) {
 					Port:    9090,
 				},
 				Tracing: Tracing{
-					CollectorURL: "jaeger-collector.istio-system:4318",
-					Enabled:      false,
+					CollectorType: OTELCollectorType,
+					CollectorURL:  "jaeger-collector.istio-system:4318",
+					Enabled:       false,
 					Otel: OtelCollector{
 						CAName:     "",
 						Protocol:   "http",
@@ -1164,7 +1165,7 @@ func Validate(cfg Config) error {
 	// Check the observability section
 	observTracing := cfg.Server.Observability.Tracing
 	// If collector is not defined it would be the default "otel"
-	if observTracing.Enabled && observTracing.CollectorType != OTELCollectorType && observTracing.CollectorType != "" {
+	if observTracing.Enabled && observTracing.CollectorType != OTELCollectorType {
 		return fmt.Errorf("error in configuration options getting the observability exporter. Invalid collector type [%s]", observTracing.CollectorType)
 	}
 
