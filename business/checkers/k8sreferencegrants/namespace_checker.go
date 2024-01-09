@@ -9,8 +9,8 @@ import (
 )
 
 type NamespaceChecker struct {
-	ReferenceGrant k8s_networking_v1beta1.ReferenceGrant
 	Namespaces     models.Namespaces
+	ReferenceGrant k8s_networking_v1beta1.ReferenceGrant
 }
 
 func (in NamespaceChecker) Check() ([]*models.IstioCheck, bool) {
