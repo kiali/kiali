@@ -41,14 +41,14 @@ import { KialiIcon } from 'config/KialiIcon';
 import { kebabToggleStyle } from 'styles/DropdownStyles';
 import { ReactNode } from 'react';
 
-type mapProps = {
+type DispatchProps = {
   onReady: (controller: any) => void;
   setEdgeMode: (edgeMode: EdgeMode) => void;
   setLayout: (layout: Layout) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
   updateSummary: (event: GraphEvent) => void;
 };
-type ReduxProps = mapProps & {
+type ReduxProps = DispatchProps & {
   kiosk: string;
 };
 
@@ -400,7 +400,7 @@ const mapStateToProps = (state: KialiAppState): { kiosk: string } => ({
   kiosk: state.globalState.kiosk
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch): mapProps => ({
+const mapDispatchToProps = (dispatch: KialiDispatch): DispatchProps => ({
   onReady: (controller: any) => dispatch(GraphThunkActions.graphPFReady(controller)),
   setEdgeMode: bindActionCreators(GraphActions.setEdgeMode, dispatch),
   setLayout: bindActionCreators(GraphActions.setLayout, dispatch),

@@ -86,7 +86,7 @@ export type GraphURLPathProps = {
   workload: string;
 };
 
-type funcProps = {
+type DispatchProps = {
   endTour: () => void;
   onNamespaceChange: () => void;
   onReady: (controller: any) => void;
@@ -103,7 +103,7 @@ type funcProps = {
   toggleLegend: () => void;
   updateSummary: (event: GraphEvent) => void;
 };
-type singleProps = {
+type StateProps = {
   activeNamespaces: Namespace[];
   activeTour?: TourInfo;
   boxByCluster: boolean;
@@ -141,7 +141,7 @@ type singleProps = {
   trace?: JaegerTrace;
   trafficRates: TrafficRate[];
 };
-type ReduxProps = singleProps & funcProps;
+type ReduxProps = StateProps & DispatchProps;
 
 export type GraphPagePropsPF = Partial<GraphURLPathProps> &
   ReduxProps & {
@@ -393,6 +393,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
       prev.showServiceNodes !== curr.showServiceNodes ||
       prev.showSecurity !== curr.showSecurity ||
       prev.showIdleNodes !== curr.showIdleNodes ||
+      prev.showWaypoint !== curr.showWaypoint ||
       prev.trafficRates !== curr.trafficRates ||
       GraphPagePFComponent.isNodeChanged(prev.node, curr.node)
     ) {
@@ -724,7 +725,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
   };
 }
 
-const mapStateToProps = (state: KialiAppState): singleProps => ({
+const mapStateToProps = (state: KialiAppState): StateProps => ({
   activeNamespaces: activeNamespacesSelector(state),
   activeTour: state.tourState.activeTour,
   boxByCluster: state.graph.toolbarState.boxByCluster,
@@ -763,7 +764,7 @@ const mapStateToProps = (state: KialiAppState): singleProps => ({
   trafficRates: trafficRatesSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch): funcProps => ({
+const mapDispatchToProps = (dispatch: KialiDispatch): DispatchProps => ({
   endTour: bindActionCreators(TourActions.endTour, dispatch),
   onNamespaceChange: bindActionCreators(GraphActions.onNamespaceChange, dispatch),
   onReady: (controller: any) => dispatch(GraphThunkActions.graphPFReady(controller)),
