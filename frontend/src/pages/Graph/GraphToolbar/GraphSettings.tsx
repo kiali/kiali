@@ -38,9 +38,8 @@ import { getCrippledFeatures } from 'services/Api';
 
 import { serverConfig } from '../../../config';
 import { ReactNode } from 'react';
-import {kialiStyle} from "../../../styles/StyleUtils";
 
-type stateProps = {
+type StateProps = {
   boxByCluster: boolean;
   boxByNamespace: boolean;
   compressOnHide: boolean;
@@ -58,7 +57,7 @@ type stateProps = {
   showWaypoint: boolean;
 };
 
-type dispatchProps = {
+type DispatchProps = {
   setEdgeLabels: (edgeLabels: EdgeLabelMode[]) => void;
   setRankBy: (rankBy: RankMode[]) => void;
   toggleBoxByCluster(): void;
@@ -76,11 +75,11 @@ type dispatchProps = {
   toggleWaypoint(): void;
 };
 
-type ReduxProps = stateProps &
-  dispatchProps &
+type ReduxProps = StateProps &
+  DispatchProps &
   Omit<GraphToolbarState, 'findValue' | 'hideValue' | 'showLegend' | 'showFindHelp' | 'trafficRates'> & {
-  disabled: boolean;
-};
+    disabled: boolean;
+  };
 
 type GraphSettingsState = { crippledFeatures?: KialiCrippledFeatures; isOpen: boolean };
 
@@ -94,11 +93,6 @@ interface DisplayOptionType {
 }
 
 const marginBottom = 20;
-
-const menuOptionStyle = kialiStyle({
-  display: 'flex',
-  alignItems: 'center'
-});
 
 class GraphSettingsComponent extends React.PureComponent<ReduxProps, GraphSettingsState> {
   constructor(props: ReduxProps) {
@@ -1030,7 +1024,7 @@ class GraphSettingsComponent extends React.PureComponent<ReduxProps, GraphSettin
 }
 
 // Allow Redux to map sections of our global app state to our props
-const mapStateToProps = (state: KialiAppState): stateProps => ({
+const mapStateToProps = (state: KialiAppState): StateProps => ({
   boxByCluster: state.graph.toolbarState.boxByCluster,
   boxByNamespace: state.graph.toolbarState.boxByNamespace,
   compressOnHide: state.graph.toolbarState.compressOnHide,
@@ -1049,7 +1043,7 @@ const mapStateToProps = (state: KialiAppState): stateProps => ({
 });
 
 // Map our actions to Redux
-const mapDispatchToProps = (dispatch: KialiDispatch): dispatchProps => {
+const mapDispatchToProps = (dispatch: KialiDispatch): DispatchProps => {
   return {
     setEdgeLabels: bindActionCreators(GraphToolbarActions.setEdgeLabels, dispatch),
     setRankBy: bindActionCreators(GraphToolbarActions.setRankBy, dispatch),
