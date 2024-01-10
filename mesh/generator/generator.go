@@ -74,7 +74,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		kiali.AddEdge(node)
 
 		if conf.ExternalServices.Tracing.Enabled {
-			node, _, err = addInfra(meshMap, mesh.InfraTypeTraceStore, conf.KubernetesConfig.ClusterName, conf.Deployment.Namespace, conf.ExternalServices.Tracing.Provider)
+			node, _, err = addInfra(meshMap, mesh.InfraTypeTraceStore, conf.KubernetesConfig.ClusterName, conf.Deployment.Namespace, string(conf.ExternalServices.Tracing.Provider))
 			kiali.AddEdge(node)
 		}
 
