@@ -4,51 +4,81 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	core_v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
 const (
 	defaultCluster = "Kubernetes"
 	appName        = "productpage"
-	appNamespace   = "testNamespace"
+	appNamespace   = "ambientNamespace"
 )
 
 func setupWorkloadEntries(t *testing.T) *business.Layer {
-	workloadV1 := &networking_v1beta1.WorkloadEntry{}
-	workloadV1.Name = "workloadA"
-	workloadV1.Namespace = appNamespace
-	workloadV1.Spec.Labels = map[string]string{
-		"app":     appName,
-		"version": "v1",
-	}
-	workloadV2 := &networking_v1beta1.WorkloadEntry{}
-	workloadV2.Name = "workloadB"
-	workloadV2.Namespace = appNamespace
-	workloadV2.Spec.Labels = map[string]string{
-		"app":     appName,
-		"version": "v2",
-	}
-	workloadV3 := &networking_v1beta1.WorkloadEntry{}
-	workloadV3.Name = "fake-istio-waypoint"
-	workloadV3.Namespace = appNamespace
-	workloadV3.Spec.Labels = map[string]string{
-		"app":     appName,
-		"version": "v2",
-	}
-	workloadV4 := &networking_v1beta1.WorkloadEntry{}
-	workloadV4.Name = "namespace-istio-waypoint"
-	workloadV4.Namespace = appNamespace
-	workloadV4.Spec.Labels = map[string]string{
-		"app":                appName,
-		"version":            "v2",
-		config.WaypointLabel: config.WaypointLabelValue,
-	}
-	//ns := &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: appNamespace}}
-	return setupBusinessLayer(t, workloadV1, workloadV2, workloadV3, workloadV4)
+	k8spod1 := &core_v1.Pod{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:        "workloadA",
+			Namespace:   appNamespace,
+			Labels:      map[string]string{"apps": "workloadA", "version": "v1"},
+			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
+		Spec: core_v1.PodSpec{
+			Containers: []core_v1.Container{
+				{Name: "workloadA", Image: "whatever"},
+			},
+		}}
+	k8spod2 := &core_v1.Pod{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:        "workloadB",
+			Namespace:   appNamespace,
+			Labels:      map[string]string{"apps": "workloadB", "version": "v2"},
+			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
+		Spec: core_v1.PodSpec{
+			Containers: []core_v1.Container{
+				{Name: "workloadB", Image: "whatever"},
+			},
+		}}
+	k8spod3 := &core_v1.Pod{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:        "fake-istio-waypoint",
+			Namespace:   appNamespace,
+			Labels:      map[string]string{"apps": "fake-istio-waypoint", "version": "v1"},
+			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
+		Spec: core_v1.PodSpec{
+			Containers: []core_v1.Container{
+				{Name: "fake-istio-waypoint", Image: "whatever"},
+			},
+		}}
+	k8spod4 := &core_v1.Pod{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:        "namespace-istio-waypoint",
+			Namespace:   appNamespace,
+			Labels:      map[string]string{"apps": "namespace-istio-waypoint", "version": "v1", config.WaypointLabel: config.WaypointLabelValue},
+			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
+		Spec: core_v1.PodSpec{
+			Containers: []core_v1.Container{
+				{Name: "namespace-istio-waypoint", Image: "whatever"},
+			},
+		}}
+
+	ns := &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: appNamespace}}
+
+	k8s := kubetest.NewFakeK8sClient(k8spod1, k8spod2, k8spod3, k8spod4, ns)
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	conf.KubernetesConfig.ClusterName = defaultCluster
+	config.Set(conf)
+
+	business.SetupBusinessLayer(t, k8s, *conf)
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[defaultCluster] = k8s
+	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
+	return businessLayer
 }
 
 func workloadEntriesTrafficMap() map[string]*graph.Node {
