@@ -4,6 +4,7 @@ import {
   ButtonVariant,
   Modal,
   Tab,
+  TabProps,
   Tabs,
   Toolbar,
   ToolbarGroup,
@@ -74,6 +75,10 @@ const iconStyle = kialiStyle({
   marginLeft: '6px'
 });
 
+// From react-patternfly library (not exported in the library)
+type TabElement = React.ReactElement<TabProps, React.JSXElementConstructor<TabProps>>;
+type TabsChild = TabElement | boolean | null | undefined;
+
 export class IstioConfigPreview extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -140,7 +145,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
     this.setState({ items });
   };
 
-  addResource = (item: ConfigPreviewItem): React.ReactNode => {
+  addResource = (item: ConfigPreviewItem): TabsChild => {
     const key = item.title.toLocaleLowerCase().replace(/\s/g, '');
     const filterItems =
       this.props.items.length > 0

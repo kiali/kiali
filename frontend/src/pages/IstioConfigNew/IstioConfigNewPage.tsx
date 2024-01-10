@@ -758,7 +758,8 @@ const mapStateToProps = (state: KialiAppState): Props => {
   return {
     activeClusters: activeClustersSelector(state),
     activeNamespaces: activeNamespacesSelector(state),
-    namespacesPerCluster: namespacesPerClusterSelector(state)
+    namespacesPerCluster: namespacesPerClusterSelector(state),
+    objectType: ''
   };
 };
 
