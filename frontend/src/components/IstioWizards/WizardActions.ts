@@ -23,6 +23,7 @@ import {
   K8sHTTPRouteFilter,
   K8sHTTPRouteMatch,
   K8sHTTPRouteRequestRedirect,
+  K8sReferenceGrant,
   LoadBalancerSettings,
   Operation,
   OutlierDetection,
@@ -46,6 +47,7 @@ import { K8sGatewaySelectorState } from './K8sGatewaySelector';
 import { ConsistentHashType, MUTUAL, TrafficPolicyState, UNSET } from './TrafficPolicy';
 import { GatewayState } from '../../pages/IstioConfigNew/GatewayForm';
 import { K8sGatewayState } from '../../pages/IstioConfigNew/K8sGatewayForm';
+import { K8sReferenceGrantState } from '../../pages/IstioConfigNew/K8sReferenceGrantForm';
 import { SidecarState } from '../../pages/IstioConfigNew/SidecarForm';
 import { ALLOW, AuthorizationPolicyState } from '../../pages/IstioConfigNew/AuthorizationPolicyForm';
 import { PeerAuthenticationState } from '../../pages/IstioConfigNew/PeerAuthenticationForm';
@@ -1888,6 +1890,34 @@ export const buildK8sGateway = (
   addAnnotations(k8sGateway, annotations);
 
   return k8sGateway;
+};
+
+export const buildK8sReferenceGrant = (
+  annotations: { [key: string]: string },
+  labels: { [key: string]: string },
+  name: string,
+  namespace: string,
+  state: K8sReferenceGrantState
+): K8sReferenceGrant => {
+  const k8sReferenceGrant: K8sReferenceGrant = {
+    kind: 'ReferenceGrant',
+    apiVersion: GATEWAY_NETWORKING_VERSION,
+    metadata: {
+      name: name,
+      namespace: namespace,
+      labels: {
+        [KIALI_WIZARD_LABEL]: 'K8sReferenceGrant'
+      }
+    },
+    spec: {
+      from: state.from,
+      to: state.to
+    }
+  };
+  addLabels(k8sReferenceGrant, labels);
+  addAnnotations(k8sReferenceGrant, annotations);
+
+  return k8sReferenceGrant;
 };
 
 export const buildPeerAuthentication = (
