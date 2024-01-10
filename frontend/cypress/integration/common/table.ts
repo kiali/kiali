@@ -261,7 +261,7 @@ Then('configuration in both clusters for the {string} namespace should be health
     cy.wrap($rows).find('td[data-label="Cluster"]').filter(':contains(west)').should('have.length.at.least', 1);
     cy.wrap($rows)
       .find('td[data-label="Configuration"]')
-      .find('span[class*="icon-correct-validation"]')
+      .find('[data-test="icon-correct-validation"]')
       .should('be.visible');
   });
 });
