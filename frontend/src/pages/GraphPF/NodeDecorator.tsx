@@ -22,7 +22,7 @@ const NodeDecoratorInner: React.FC<Props> = ({ element, quadrant, icon, tooltip 
   const decoratorRef = React.useRef<SVGAElement | null>(null);
 
   return (
-    <Tooltip triggerRef={decoratorRef} content={!!tooltip ? tooltip : icon.text}>
+    <Tooltip triggerRef={decoratorRef} content={tooltip ?? icon.text}>
       <Decorator
         innerRef={decoratorRef}
         x={x}

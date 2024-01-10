@@ -289,7 +289,7 @@ export const TopologyContent: React.FC<{
     //
     // Manage the GraphData / DataModel
     //
-    const generateDataModel = (): { nodes: NodeModel[]; edges: EdgeModel[] } => {
+    const generateDataModel = (): { edges: EdgeModel[]; nodes: NodeModel[] } => {
       let nodeMap: Map<string, NodeModel> = new Map<string, NodeModel>();
       const edges: EdgeModel[] = [];
 
