@@ -17,8 +17,7 @@ import {
   graphTypeSelector,
   showIdleNodesSelector,
   replayActiveSelector,
-  trafficRatesSelector,
-  showWaypointSelector
+  trafficRatesSelector
 } from '../../../store/Selectors';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
 import { GraphFind } from './GraphFind';
@@ -57,7 +56,6 @@ type singleProps = {
   rankBy: RankMode[];
   replayActive: boolean;
   showIdleNodes: boolean;
-  showWaypoint: boolean;
   summaryData: SummaryData | null;
   trafficRates: TrafficRate[];
 };
@@ -296,7 +294,6 @@ const mapStateToProps = (state: KialiAppState): singleProps => ({
   rankBy: state.graph.toolbarState.rankBy,
   replayActive: replayActiveSelector(state),
   showIdleNodes: showIdleNodesSelector(state),
-  showWaypoint: showWaypointSelector(state),
   summaryData: state.graph.summaryData,
   trafficRates: trafficRatesSelector(state)
 });

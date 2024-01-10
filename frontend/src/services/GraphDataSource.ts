@@ -71,6 +71,7 @@ export interface FetchParams {
   showIdleNodes: boolean;
   showOperationNodes: boolean;
   showSecurity: boolean;
+  showWaypoint: boolean;
   trafficRates: TrafficRate[];
 }
 
@@ -103,8 +104,8 @@ export class GraphDataSource {
   private promiseRegistry: PromisesRegistry;
 
   private decoratedData = createSelector(
-    (graphData: { graphElements: GraphElements; graphDuration: number }) => graphData.graphElements,
-    (graphData: { graphElements: GraphElements; graphDuration: number }) => graphData.graphDuration,
+    (graphData: { graphDuration: number; graphElements: GraphElements }) => graphData.graphElements,
+    (graphData: { graphDuration: number; graphElements: GraphElements }) => graphData.graphDuration,
     (graphData, duration) => decorateGraphData(graphData, duration)
   );
 
@@ -131,6 +132,7 @@ export class GraphDataSource {
       showIdleNodes: false,
       showOperationNodes: false,
       showSecurity: false,
+      showWaypoint: false,
       trafficRates: []
     };
     this._isError = this._isLoading = false;
@@ -195,6 +197,12 @@ export class GraphDataSource {
       // note we only use the idleNode appender if this is NOT a drilled-in node graph and
       // the user specifically requests to see idle nodes.
       appenders += ',idleNode';
+    }
+
+    if (!fetchParams.node && !fetchParams.showWaypoint) {
+      // note we only use the idleNode appender if this is NOT a drilled-in node graph and
+      // the user specifically requests to see idle nodes.
+      appenders += ',hideWaypoint';
     }
 
     if (fetchParams.includeLabels) {
@@ -292,7 +300,8 @@ export class GraphDataSource {
       previousFetchParams.includeHealth !== this.fetchParameters.includeHealth ||
       previousFetchParams.injectServiceNodes !== this.fetchParameters.injectServiceNodes ||
       previousFetchParams.showOperationNodes !== this.fetchParameters.showOperationNodes ||
-      previousFetchParams.showIdleNodes !== this.fetchParameters.showIdleNodes;
+      previousFetchParams.showIdleNodes !== this.fetchParameters.showIdleNodes ||
+      previousFetchParams.showWaypoint !== this.fetchParameters.showWaypoint;
 
     if (isPreviousDataInvalid) {
       // Reset the graph data
@@ -499,6 +508,7 @@ export class GraphDataSource {
       showIdleNodes: false,
       showOperationNodes: false,
       showSecurity: false,
+      showWaypoint: false,
       trafficRates: DefaultTrafficRates
     };
   }

@@ -31,7 +31,7 @@ type ContextMenuOptionPF = ContextMenuOption & {
   node?: GraphElement;
 };
 
-const doubleTapHandler = (node: GraphElement) => {
+const doubleTapHandler = (node: GraphElement): void => {
   handleDoubleTap(node);
 };
 
@@ -87,7 +87,7 @@ const nodeContextMenu = (node: GraphElement): React.ReactElement[] => {
 
 // This is temporary until the PFT graph properly handles DoubleTap.  Until then
 // we offer a ContextMenu option for what would normally be handled via DoubleTap.
-const handleDoubleTap = (doubleTapNode: GraphElement) => {
+const handleDoubleTap = (doubleTapNode: GraphElement): void => {
   const dtNodeData = doubleTapNode.getData() as DecoratedGraphNodeData;
   const graphData = doubleTapNode.getGraph().getData().graphData;
 
@@ -190,6 +190,7 @@ const handleDoubleTap = (doubleTapNode: GraphElement) => {
     showIdleNodes: state.graph.toolbarState.showIdleNodes,
     showOperationNodes: state.graph.toolbarState.showOperationNodes,
     showServiceNodes: state.graph.toolbarState.showServiceNodes,
+    showWaypoint: state.graph.toolbarState.showWaypoint,
     trafficRates: graphData.fetchParams.trafficRates
   };
 
@@ -198,12 +199,12 @@ const handleDoubleTap = (doubleTapNode: GraphElement) => {
 };
 
 // This allows us to navigate to the service details page when zoomed in on nodes
-const handleDoubleTapSameNode = (targetNode: NodeParamsType) => {
+const handleDoubleTapSameNode = (targetNode: NodeParamsType): void => {
   const makeAppDetailsPageUrl = (namespace: string, nodeType: string, name?: string): string => {
     return `/namespaces/${namespace}/${nodeType}/${name}`;
   };
   const nodeType = targetNode.nodeType;
-  let urlNodeType = targetNode.nodeType + 's';
+  let urlNodeType = `${targetNode.nodeType}s`;
   let name = targetNode.app;
   if (nodeType === 'service') {
     name = targetNode.service;
@@ -214,7 +215,7 @@ const handleDoubleTapSameNode = (targetNode: NodeParamsType) => {
   }
   let detailsPageUrl = makeAppDetailsPageUrl(targetNode.namespace.name, urlNodeType, name);
   if (targetNode.cluster && isMultiCluster) {
-    detailsPageUrl = detailsPageUrl + '?clusterName=' + targetNode.cluster;
+    detailsPageUrl = `${detailsPageUrl}?clusterName=${targetNode.cluster}`;
   } // todo deal with kiosk
   //if (isParentKiosk(this.props.kiosk)) {
   //  kioskContextMenuAction(detailsPageUrl);

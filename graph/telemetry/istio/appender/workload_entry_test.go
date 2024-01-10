@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	testCluster  = "testCluster"
+	testCluster  = "defaultCluster"
 	appName      = "ratings"
 	appNamespace = "testNamespace"
 )

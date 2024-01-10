@@ -46,6 +46,8 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 				requestedAppenders[ThroughputAppenderName] = true
 			case WorkloadEntryAppenderName:
 				requestedAppenders[WorkloadEntryAppenderName] = true
+			case WaypointAppenderName:
+				requestedAppenders[WaypointAppenderName] = true
 
 			// finalizer appenders
 			case HealthAppenderName:
@@ -183,6 +185,12 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 	if _, ok := requestedAppenders[MeshCheckAppenderName]; ok || o.Appenders.All {
 		a := MeshCheckAppender{
 			AccessibleNamespaces: o.AccessibleNamespaces,
+		}
+		appenders = append(appenders, a)
+	}
+	if _, ok := requestedAppenders[WaypointAppenderName]; ok || o.Appenders.All {
+		a := WaypointAppender{
+			GraphType: o.GraphType,
 		}
 		appenders = append(appenders, a)
 	}

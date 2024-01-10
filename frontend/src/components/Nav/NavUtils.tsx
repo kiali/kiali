@@ -19,6 +19,7 @@ export type GraphUrlParams = {
   showIdleNodes: boolean;
   showOperationNodes: boolean;
   showServiceNodes: boolean;
+  showWaypoint: boolean;
   trafficRates: TrafficRate[];
 };
 
@@ -52,9 +53,9 @@ export const makeNamespacesGraphUrlFromParams = (params: GraphUrlParams, isPf = 
   }
   if (isKioskMode()) {
     // Kiosk value can be true or the url of the parent
-    queryParams += '&kiosk=' + getKioskMode();
+    queryParams += `&kiosk=${getKioskMode()}`;
   }
-  return `/${route}/namespaces?` + queryParams;
+  return `/${route}/namespaces?${queryParams}`;
 };
 
 export const makeNodeGraphUrlFromParams = (params: GraphUrlParams, isPf = false): string => {
@@ -63,34 +64,31 @@ export const makeNodeGraphUrlFromParams = (params: GraphUrlParams, isPf = false)
   if (node) {
     switch (node.nodeType) {
       case NodeType.AGGREGATE:
-        return (
-          `/${route}/node/namespaces/${node.namespace.name}/aggregates/${node.aggregate}/${node.aggregateValue}?` +
-          buildCommonQueryParams(params)
-        );
+        return `/${route}/node/namespaces/${node.namespace.name}/aggregates/${node.aggregate}/${
+          node.aggregateValue
+        }?${buildCommonQueryParams(params)}`;
       case NodeType.APP:
         if (node.version && node.version !== 'unknown') {
-          return (
-            `/${route}/node/namespaces/${node.namespace.name}/applications/${node.app}/versions/${node.version}?` +
-            buildCommonQueryParams(params)
-          );
+          return `/${route}/node/namespaces/${node.namespace.name}/applications/${node.app}/versions/${
+            node.version
+          }?${buildCommonQueryParams(params)}`;
         }
-        return (
-          `/${route}/node/namespaces/${node.namespace.name}/applications/${node.app}?` + buildCommonQueryParams(params)
-        );
+        return `/${route}/node/namespaces/${node.namespace.name}/applications/${node.app}?${buildCommonQueryParams(
+          params
+        )}`;
       case NodeType.BOX:
         // can only be app box
-        return (
-          `/${route}/node/namespaces/${node.namespace.name}/applications/${node.app}?` + buildCommonQueryParams(params)
-        );
+        return `/${route}/node/namespaces/${node.namespace.name}/applications/${node.app}?${buildCommonQueryParams(
+          params
+        )}`;
       case NodeType.SERVICE:
-        return (
-          `/${route}/node/namespaces/${node.namespace.name}/services/${node.service}?` + buildCommonQueryParams(params)
-        );
+        return `/${route}/node/namespaces/${node.namespace.name}/services/${node.service}?${buildCommonQueryParams(
+          params
+        )}`;
       case NodeType.WORKLOAD:
-        return (
-          `/${route}/node/namespaces/${node.namespace.name}/workloads/${node.workload}?` +
-          buildCommonQueryParams(params)
-        );
+        return `/${route}/node/namespaces/${node.namespace.name}/workloads/${node.workload}?${buildCommonQueryParams(
+          params
+        )}`;
       default:
         console.debug('makeNodeUrl defaulting to makeNamespaceUrl');
         return makeNamespacesGraphUrlFromParams(params, isPf);

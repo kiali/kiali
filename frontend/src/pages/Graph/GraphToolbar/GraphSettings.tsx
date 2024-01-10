@@ -115,14 +115,6 @@ class GraphSettingsComponent extends React.PureComponent<ReduxProps, GraphSettin
       props.toggleTrafficAnimation
     );
 
-    // Let URL override current redux state at construction time. Update URL as needed.
-    this.handleURLBool(
-      URLParam.GRAPH_WAYPOINT,
-      INITIAL_GRAPH_STATE.toolbarState.showWaypoint,
-      props.showWaypoint,
-      props.toggleWaypoint
-    );
-
     this.handleURLBool(
       URLParam.GRAPH_BADGE_SECURITY,
       INITIAL_GRAPH_STATE.toolbarState.showSecurity,
@@ -177,6 +169,13 @@ class GraphSettingsComponent extends React.PureComponent<ReduxProps, GraphSettin
       INITIAL_GRAPH_STATE.toolbarState.showIdleNodes,
       props.showIdleNodes,
       props.toggleIdleNodes
+    );
+
+    this.handleURLBool(
+      URLParam.GRAPH_WAYPOINT,
+      INITIAL_GRAPH_STATE.toolbarState.showWaypoint,
+      props.showWaypoint,
+      props.toggleWaypoint
     );
 
     this.handleURLBool(
@@ -293,6 +292,13 @@ class GraphSettingsComponent extends React.PureComponent<ReduxProps, GraphSettin
       INITIAL_GRAPH_STATE.toolbarState.showOperationNodes,
       prev.showOperationNodes,
       this.props.showOperationNodes
+    );
+
+    this.alignURLBool(
+      URLParam.GRAPH_WAYPOINT,
+      INITIAL_GRAPH_STATE.toolbarState.showWaypoint,
+      prev.showWaypoint,
+      this.props.showWaypoint
     );
 
     this.alignURLBool(

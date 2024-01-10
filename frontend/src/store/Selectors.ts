@@ -96,10 +96,6 @@ const trafficRates = (state: KialiAppState): TrafficRate[] => state.graph.toolba
 
 export const trafficRatesSelector = createIdentitySelector(trafficRates);
 
-const showWaypoint = (state: KialiAppState): boolean => state.graph.toolbarState.showWaypoint;
-
-export const showWaypointSelector = createIdentitySelector(showWaypoint);
-
 const meshwideMTLSStatus = (state: KialiAppState): string => state.meshTLSStatus.status;
 
 export const meshWideMTLSStatusSelector = createIdentitySelector(meshwideMTLSStatus);

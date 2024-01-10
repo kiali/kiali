@@ -120,6 +120,12 @@ export const GraphDataStateReducer = (state: GraphState = INITIAL_GRAPH_STATE, a
           showIdleNodes: action.payload
         })
       });
+    case getType(GraphToolbarActions.setWaypoint):
+      return updateState(state, {
+        toolbarState: updateState(state.toolbarState, {
+          showWaypoint: action.payload
+        })
+      });
     case getType(GraphToolbarActions.setRankBy):
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
