@@ -132,7 +132,7 @@ func TestWaypoint(t *testing.T) {
 	// Run the appender...
 	ambientParams := map[string]bool{}
 	ambientParams[WaypointParameterName] = true
-	
+
 	a := AmbientAppender{AmbientParams: ambientParams}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
