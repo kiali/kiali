@@ -81,7 +81,6 @@ import { canCreate, canUpdate } from '../../types/Permissions';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { triggerRefresh } from '../../hooks/refresh';
 import { isMultiCluster } from 'config';
-import { ReactNode } from 'react';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 export type GraphURLPathProps = {
@@ -234,7 +233,7 @@ const graphLegendStyle = kialiStyle({
   overflow: 'hidden'
 });
 
-const GraphErrorBoundaryFallback = (): React.ReactNode => {
+const GraphErrorBoundaryFallback = (): React.ReactElement => {
   return (
     <div className={cytoscapeGraphContainerStyle}>
       <EmptyGraphLayout
@@ -450,7 +449,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     this.graphDataSource.removeListener('emptyNamespaces', this.handleGraphDataSourceEmpty);
   }
 
-  render(): ReactNode {
+  render(): React.ReactNode {
     let conStyle = containerStyle;
     if (isKioskMode()) {
       conStyle = kioskContainerStyle;
@@ -479,7 +478,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
             <ErrorBoundary
               ref={this.errorBoundaryRef}
               onError={this.notifyError}
-              fallBackComponent={GraphErrorBoundaryFallback()}
+              fallBackComponent={<GraphErrorBoundaryFallback />}
             >
               {this.props.showLegend && (
                 <GraphLegend className={graphLegendStyle} closeLegend={this.props.toggleLegend} />

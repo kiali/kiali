@@ -46,7 +46,6 @@ import { INITIAL_USER_SETTINGS_STATE } from 'reducers/UserSettingsState';
 import { GraphReset } from './GraphReset';
 import { GraphFindPF } from './GraphFindPF';
 import { kialiStyle } from 'styles/StyleUtils';
-import { ReactNode } from 'react';
 
 type ReduxStateProps = {
   activeNamespaces: Namespace[];
@@ -206,7 +205,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
     }
   }
 
-  render(): ReactNode {
+  render(): React.ReactNode {
     return (
       <>
         <GraphSecondaryMasthead

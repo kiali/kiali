@@ -206,7 +206,7 @@ const graphLegendStyle = kialiStyle({
   overflow: 'hidden'
 });
 
-const GraphErrorBoundaryFallback = (): React.ReactNode => {
+const GraphErrorBoundaryFallback = (): React.ReactElement => {
   return (
     <div className={graphContainerStyle}>
       <EmptyGraphLayout
@@ -448,7 +448,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
             <ErrorBoundary
               ref={this.errorBoundaryRef}
               onError={this.notifyError}
-              fallBackComponent={GraphErrorBoundaryFallback()}
+              fallBackComponent={<GraphErrorBoundaryFallback />}
             >
               {this.props.showLegend && (
                 <GraphLegendPF className={graphLegendStyle} closeLegend={this.props.toggleLegend} />

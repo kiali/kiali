@@ -35,9 +35,7 @@ import { INITIAL_GRAPH_STATE } from 'reducers/GraphDataState';
 import { KialiDispatch } from 'types/Redux';
 import { KialiCrippledFeatures } from 'types/ServerConfig';
 import { getCrippledFeatures } from 'services/Api';
-
 import { serverConfig } from '../../../config';
-import { ReactNode } from 'react';
 
 type ReduxStateProps = {
   boxByCluster: boolean;
@@ -339,7 +337,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     }
   };
 
-  render(): ReactNode {
+  render(): React.ReactNode {
     return (
       <Dropdown
         toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
@@ -368,7 +366,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     });
   };
 
-  private getMenuOptions(): ReactNode {
+  private getMenuOptions(): React.ReactNode {
     // map our attributes from redux
     const {
       boxByCluster,
