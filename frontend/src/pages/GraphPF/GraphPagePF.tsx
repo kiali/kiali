@@ -73,7 +73,6 @@ import { GraphPF, FocusNode } from './GraphPF';
 import * as CytoscapeGraphUtils from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { Controller } from '@patternfly/react-topology';
 import { GraphLegendPF } from './GraphLegendPF';
-import { ReactNode } from 'react';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 export type GraphURLPathProps = {
@@ -421,7 +420,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
     this.graphDataSource.removeListener('emptyNamespaces', this.handleGraphDataSourceEmpty);
   }
 
-  render(): ReactNode {
+  render(): React.ReactNode {
     let conStyle = containerStyle;
     if (isKioskMode()) {
       conStyle = kioskContainerStyle;

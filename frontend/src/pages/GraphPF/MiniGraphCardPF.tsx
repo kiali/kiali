@@ -39,7 +39,6 @@ import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
 import { NodeData, elems, selectAnd } from './GraphPFElems';
 import { KialiIcon } from 'config/KialiIcon';
 import { kebabToggleStyle } from 'styles/DropdownStyles';
-import { ReactNode } from 'react';
 
 type ReduxDispatchProps = {
   onReady: (controller: any) => void;
@@ -85,7 +84,7 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
     this.setState({ graphData: this.props.dataSource.graphData });
   };
 
-  render(): ReactNode {
+  render(): React.ReactNode {
     const graphCardActions = [
       <DropdownItem key="viewFullGraph" onClick={this.onViewFullGraph}>
         Show full graph
