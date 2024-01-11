@@ -94,10 +94,13 @@ import { NamespaceDropdown } from '../../components/NamespaceDropdown';
 import { Labels } from '../../components/Label/Labels';
 import { WizardLabels } from '../../components/IstioWizards/WizardLabels';
 
-type Props = {
+type ReduxProps = {
   activeClusters: MeshCluster[];
   activeNamespaces: Namespace[];
   namespacesPerCluster?: Map<string, string[]>;
+};
+
+type Props = ReduxProps & {
   objectType: string;
 };
 
@@ -754,12 +757,11 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
   }
 }
 
-const mapStateToProps = (state: KialiAppState): Props => {
+const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {
     activeClusters: activeClustersSelector(state),
     activeNamespaces: activeNamespacesSelector(state),
-    namespacesPerCluster: namespacesPerClusterSelector(state),
-    objectType: ''
+    namespacesPerCluster: namespacesPerClusterSelector(state)
   };
 };
 
