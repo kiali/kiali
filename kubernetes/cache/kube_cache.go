@@ -1465,10 +1465,12 @@ func (c *kubeCache) GetTelemetries(namespace, labelSelector string) ([]*v1alpha1
 }
 
 func (c *kubeCache) IsK8sGatewayListerInit(namespace string) bool {
-	// Read lock will prevent the cache from being refreshed while we are reading from the lister
-	// but it won't prevent other routines from reading from the lister.
-	defer c.cacheLock.RUnlock()
-	c.cacheLock.RLock()
+	// K8s GW has several cache listers, those can be namespace or cluster based
+	// if one of them is not initialized, then all others are not init as well
+	// this can happen when CRDs are created after Kiali start
+	if c.getCacheLister(namespace).k8sgatewayLister == nil {
+		log.Info("K8s Gateway API CRDs are installed, Kiali needs to be restarted to apply.")
+	}
 	return c.getCacheLister(namespace).k8sgatewayLister != nil
 }
 
@@ -1476,13 +1478,13 @@ func (c *kubeCache) GetK8sGateway(namespace, name string) (*gatewayapi_v1.Gatewa
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
-	if !c.IsK8sGatewayListerInit(namespace) {
-		return nil, nil
-	}
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
+	if !c.IsK8sGatewayListerInit(namespace) {
+		return nil, nil
+	}
 	g, err := c.getCacheLister(namespace).k8sgatewayLister.Gateways(namespace).Get(name)
 	if err != nil {
 		return nil, err
@@ -1497,9 +1499,6 @@ func (c *kubeCache) GetK8sGateways(namespace, labelSelector string) ([]*gatewaya
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
-	if !c.IsK8sGatewayListerInit(namespace) {
-		return nil, nil
-	}
 
 	selector, err := labels.Parse(labelSelector)
 	if err != nil {
@@ -1510,7 +1509,9 @@ func (c *kubeCache) GetK8sGateways(namespace, labelSelector string) ([]*gatewaya
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-
+	if !c.IsK8sGatewayListerInit(namespace) {
+		return nil, nil
+	}
 	k8sGateways := []*gatewayapi_v1.Gateway{}
 	if namespace == metav1.NamespaceAll {
 		if c.clusterScoped {
@@ -1547,14 +1548,14 @@ func (c *kubeCache) GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1.HTTP
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
-	if !c.IsK8sGatewayListerInit(namespace) {
-		return nil, nil
-	}
 
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
+	if !c.IsK8sGatewayListerInit(namespace) {
+		return nil, nil
+	}
 	g, err := c.getCacheLister(namespace).k8shttprouteLister.HTTPRoutes(namespace).Get(name)
 	if err != nil {
 		return nil, err
@@ -1569,9 +1570,6 @@ func (c *kubeCache) GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewa
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
-	if !c.IsK8sGatewayListerInit(namespace) {
-		return nil, nil
-	}
 
 	selector, err := labels.Parse(labelSelector)
 	if err != nil {
@@ -1582,7 +1580,9 @@ func (c *kubeCache) GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewa
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-
+	if !c.IsK8sGatewayListerInit(namespace) {
+		return nil, nil
+	}
 	k8sHTTPRoutes := []*gatewayapi_v1.HTTPRoute{}
 	if namespace == metav1.NamespaceAll {
 		if c.clusterScoped {
@@ -1619,14 +1619,14 @@ func (c *kubeCache) GetK8sReferenceGrant(namespace, name string) (*gatewayapi_v1
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
-	if !c.IsK8sGatewayListerInit(namespace) {
-		return nil, nil
-	}
 
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
+	if !c.IsK8sGatewayListerInit(namespace) {
+		return nil, nil
+	}
 	g, err := c.getCacheLister(namespace).k8sreferencegrantLister.ReferenceGrants(namespace).Get(name)
 	if err != nil {
 		return nil, err
@@ -1641,9 +1641,6 @@ func (c *kubeCache) GetK8sReferenceGrants(namespace, labelSelector string) ([]*g
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
-	if !c.IsK8sGatewayListerInit(namespace) {
-		return nil, nil
-	}
 
 	selector, err := labels.Parse(labelSelector)
 	if err != nil {
@@ -1654,7 +1651,9 @@ func (c *kubeCache) GetK8sReferenceGrants(namespace, labelSelector string) ([]*g
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-
+	if !c.IsK8sGatewayListerInit(namespace) {
+		return nil, nil
+	}
 	k8sReferenceGrants := []*gatewayapi_v1beta1.ReferenceGrant{}
 	if namespace == metav1.NamespaceAll {
 		if c.clusterScoped {
