@@ -94,7 +94,7 @@ export type GraphURLPathProps = {
   workload: string;
 };
 
-type DispatchProps = {
+type ReduxDispatchProps = {
   endTour: () => void;
   onNamespaceChange: () => void;
   onReady: (cytoscapeRef: any) => void;
@@ -110,7 +110,7 @@ type DispatchProps = {
   updateSummary: (event: GraphEvent) => void;
 };
 
-type StateProps = {
+type ReduxStateProps = {
   activeNamespaces: Namespace[];
   activeTour?: TourInfo;
   boxByCluster: boolean;
@@ -150,7 +150,7 @@ type StateProps = {
   trafficRates: TrafficRate[];
 };
 
-type ReduxProps = StateProps & DispatchProps;
+type ReduxProps = ReduxStateProps & ReduxDispatchProps;
 
 export type GraphPageProps = Partial<GraphURLPathProps> &
   ReduxProps & {
@@ -234,7 +234,7 @@ const graphLegendStyle = kialiStyle({
   overflow: 'hidden'
 });
 
-const GraphErrorBoundaryFallback = (): JSX.Element => {
+const GraphErrorBoundaryFallback = (): React.ReactNode => {
   return (
     <div className={cytoscapeGraphContainerStyle}>
       <EmptyGraphLayout
@@ -479,7 +479,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
             <ErrorBoundary
               ref={this.errorBoundaryRef}
               onError={this.notifyError}
-              fallBackComponent={<GraphErrorBoundaryFallback />}
+              fallBackComponent={GraphErrorBoundaryFallback()}
             >
               {this.props.showLegend && (
                 <GraphLegend className={graphLegendStyle} closeLegend={this.props.toggleLegend} />
@@ -878,7 +878,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
   };
 }
 
-const mapStateToProps = (state: KialiAppState): StateProps => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   activeNamespaces: activeNamespacesSelector(state),
   activeTour: state.tourState.activeTour,
   boxByCluster: state.graph.toolbarState.boxByCluster,
@@ -918,7 +918,7 @@ const mapStateToProps = (state: KialiAppState): StateProps => ({
   theme: state.globalState.theme
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch): DispatchProps => ({
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   endTour: bindActionCreators(TourActions.endTour, dispatch),
   onNamespaceChange: bindActionCreators(GraphActions.onNamespaceChange, dispatch),
   onReady: (cy: Cy.Core) => dispatch(GraphThunkActions.graphReady(cy)),

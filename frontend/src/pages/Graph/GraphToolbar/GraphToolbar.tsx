@@ -48,7 +48,7 @@ import { GraphFindPF } from './GraphFindPF';
 import { kialiStyle } from 'styles/StyleUtils';
 import { ReactNode } from 'react';
 
-type StateProps = {
+type ReduxStateProps = {
   activeNamespaces: Namespace[];
   edgeLabels: EdgeLabelMode[];
   graphType: GraphType;
@@ -60,7 +60,7 @@ type StateProps = {
   trafficRates: TrafficRate[];
 };
 
-type DispatchProps = {
+type ReduxDispatchProps = {
   setActiveNamespaces: (activeNamespaces: Namespace[]) => void;
   setEdgeLabels: (edgeLabels: EdgeLabelMode[]) => void;
   setGraphType: (graphType: GraphType) => void;
@@ -71,7 +71,7 @@ type DispatchProps = {
   toggleReplayActive: () => void;
 };
 
-type ReduxProps = StateProps & DispatchProps;
+type ReduxProps = ReduxStateProps & ReduxDispatchProps;
 
 type GraphToolbarProps = ReduxProps & {
   controller?: any;
@@ -286,7 +286,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
   };
 }
 
-const mapStateToProps = (state: KialiAppState): StateProps => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   activeNamespaces: activeNamespacesSelector(state),
   edgeLabels: edgeLabelsSelector(state),
   graphType: graphTypeSelector(state),
@@ -298,7 +298,7 @@ const mapStateToProps = (state: KialiAppState): StateProps => ({
   trafficRates: trafficRatesSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch): DispatchProps => {
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   return {
     setActiveNamespaces: bindActionCreators(NamespaceActions.setActiveNamespaces, dispatch),
     setEdgeLabels: bindActionCreators(GraphToolbarActions.setEdgeLabels, dispatch),

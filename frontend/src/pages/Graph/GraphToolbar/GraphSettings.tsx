@@ -39,7 +39,7 @@ import { getCrippledFeatures } from 'services/Api';
 import { serverConfig } from '../../../config';
 import { ReactNode } from 'react';
 
-type StateProps = {
+type ReduxStateProps = {
   boxByCluster: boolean;
   boxByNamespace: boolean;
   compressOnHide: boolean;
@@ -57,7 +57,7 @@ type StateProps = {
   showWaypoints: boolean;
 };
 
-type DispatchProps = {
+type ReduxDispatchProps = {
   setEdgeLabels: (edgeLabels: EdgeLabelMode[]) => void;
   setRankBy: (rankBy: RankMode[]) => void;
   toggleBoxByCluster(): void;
@@ -75,8 +75,8 @@ type DispatchProps = {
   toggleWaypoints(): void;
 };
 
-type ReduxProps = StateProps &
-  DispatchProps &
+type GraphSettingsProps = ReduxStateProps &
+  ReduxDispatchProps &
   Omit<GraphToolbarState, 'findValue' | 'hideValue' | 'showLegend' | 'showFindHelp' | 'trafficRates'> & {
     disabled: boolean;
   };
@@ -94,8 +94,8 @@ interface DisplayOptionType {
 
 const marginBottom = 20;
 
-class GraphSettingsComponent extends React.PureComponent<ReduxProps, GraphSettingsState> {
-  constructor(props: ReduxProps) {
+class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, GraphSettingsState> {
+  constructor(props: GraphSettingsProps) {
     super(props);
     this.state = {
       isOpen: false
@@ -216,7 +216,7 @@ class GraphSettingsComponent extends React.PureComponent<ReduxProps, GraphSettin
     });
   }
 
-  componentDidUpdate(prev: ReduxProps): void {
+  componentDidUpdate(prev: GraphSettingsProps): void {
     // ensure redux state and URL are aligned
     this.alignURLBool(
       URLParam.GRAPH_ANIMATION,
@@ -1024,7 +1024,7 @@ class GraphSettingsComponent extends React.PureComponent<ReduxProps, GraphSettin
 }
 
 // Allow Redux to map sections of our global app state to our props
-const mapStateToProps = (state: KialiAppState): StateProps => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   boxByCluster: state.graph.toolbarState.boxByCluster,
   boxByNamespace: state.graph.toolbarState.boxByNamespace,
   compressOnHide: state.graph.toolbarState.compressOnHide,
@@ -1043,7 +1043,7 @@ const mapStateToProps = (state: KialiAppState): StateProps => ({
 });
 
 // Map our actions to Redux
-const mapDispatchToProps = (dispatch: KialiDispatch): DispatchProps => {
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   return {
     setEdgeLabels: bindActionCreators(GraphToolbarActions.setEdgeLabels, dispatch),
     setRankBy: bindActionCreators(GraphToolbarActions.setRankBy, dispatch),

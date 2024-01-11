@@ -35,7 +35,6 @@ import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
 import { isMultiCluster } from '../../config';
 import { KialiIcon } from 'config/KialiIcon';
 import { kebabToggleStyle } from 'styles/DropdownStyles';
-import { ReactNode } from 'react';
 
 const initGraphContainerStyle = kialiStyle({ width: '100%', height: '100%' });
 
@@ -83,7 +82,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     this.setState({ graphData: this.props.dataSource.graphData });
   };
 
-  render(): ReactNode {
+  render(): React.ReactNode {
     const graphCardActions = [
       <DropdownItem key="viewFullGraph" onClick={this.onViewFullGraph}>
         Show full graph

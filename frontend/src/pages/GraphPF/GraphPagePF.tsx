@@ -86,7 +86,7 @@ export type GraphURLPathProps = {
   workload: string;
 };
 
-type DispatchProps = {
+type ReduxDispatchProps = {
   endTour: () => void;
   onNamespaceChange: () => void;
   onReady: (controller: any) => void;
@@ -103,7 +103,7 @@ type DispatchProps = {
   toggleLegend: () => void;
   updateSummary: (event: GraphEvent) => void;
 };
-type StateProps = {
+type ReduxStateProps = {
   activeNamespaces: Namespace[];
   activeTour?: TourInfo;
   boxByCluster: boolean;
@@ -141,7 +141,7 @@ type StateProps = {
   trace?: JaegerTrace;
   trafficRates: TrafficRate[];
 };
-type ReduxProps = StateProps & DispatchProps;
+type ReduxProps = ReduxStateProps & ReduxDispatchProps;
 
 export type GraphPagePropsPF = Partial<GraphURLPathProps> &
   ReduxProps & {
@@ -206,7 +206,7 @@ const graphLegendStyle = kialiStyle({
   overflow: 'hidden'
 });
 
-const GraphErrorBoundaryFallback = (): JSX.Element => {
+const GraphErrorBoundaryFallback = (): React.ReactNode => {
   return (
     <div className={graphContainerStyle}>
       <EmptyGraphLayout
@@ -448,7 +448,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
             <ErrorBoundary
               ref={this.errorBoundaryRef}
               onError={this.notifyError}
-              fallBackComponent={<GraphErrorBoundaryFallback />}
+              fallBackComponent={GraphErrorBoundaryFallback()}
             >
               {this.props.showLegend && (
                 <GraphLegendPF className={graphLegendStyle} closeLegend={this.props.toggleLegend} />
@@ -725,7 +725,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
   };
 }
 
-const mapStateToProps = (state: KialiAppState): StateProps => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   activeNamespaces: activeNamespacesSelector(state),
   activeTour: state.tourState.activeTour,
   boxByCluster: state.graph.toolbarState.boxByCluster,
@@ -764,7 +764,7 @@ const mapStateToProps = (state: KialiAppState): StateProps => ({
   trafficRates: trafficRatesSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch): DispatchProps => ({
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   endTour: bindActionCreators(TourActions.endTour, dispatch),
   onNamespaceChange: bindActionCreators(GraphActions.onNamespaceChange, dispatch),
   onReady: (controller: any) => dispatch(GraphThunkActions.graphPFReady(controller)),
