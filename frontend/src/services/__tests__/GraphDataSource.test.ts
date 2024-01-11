@@ -26,7 +26,7 @@ const FETCH_PARAMS = {
   showIdleNodes: false,
   showOperationNodes: false,
   showSecurity: false,
-  showWaypoint: false,
+  showWaypoints: false,
   trafficRates: DefaultTrafficRates
 };
 
