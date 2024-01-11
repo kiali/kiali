@@ -6,9 +6,9 @@ Explanation of what this PR does
 
 Recommendations for how to test this PR
 
-### Covered unit test cases / E2E test cases
+### PR checklist
 
-If applicable, explain which unit or E2E tests have been created to test this PR
+- [ ] Include tests (unit or E2E)
 
 ### Browser checklist (only frontend):
 
