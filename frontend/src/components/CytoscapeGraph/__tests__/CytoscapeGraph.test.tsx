@@ -46,7 +46,7 @@ describe('CytoscapeGraph component test', () => {
       showIdleNodes: false,
       showOperationNodes: false,
       showSecurity: true,
-      showWaypoint: false,
+      showWaypoints: false,
       trafficRates: DefaultTrafficRates
     });
 
@@ -73,7 +73,7 @@ describe('CytoscapeGraph component test', () => {
               showIdleNodes: false,
               showOperationNodes: false,
               showSecurity: true,
-              showWaypoint: false,
+              showWaypoints: false,
               trafficRates: DefaultTrafficRates
             },
             timestamp: 0

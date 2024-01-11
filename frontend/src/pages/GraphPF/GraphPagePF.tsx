@@ -136,7 +136,7 @@ type StateProps = {
   showServiceNodes: boolean;
   showTrafficAnimation: boolean;
   showVirtualServices: boolean;
-  showWaypoint: boolean;
+  showWaypoints: boolean;
   summaryData: SummaryData | null;
   trace?: JaegerTrace;
   trafficRates: TrafficRate[];
@@ -393,7 +393,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
       prev.showServiceNodes !== curr.showServiceNodes ||
       prev.showSecurity !== curr.showSecurity ||
       prev.showIdleNodes !== curr.showIdleNodes ||
-      prev.showWaypoint !== curr.showWaypoint ||
+      prev.showWaypoints !== curr.showWaypoints ||
       prev.trafficRates !== curr.trafficRates ||
       GraphPagePFComponent.isNodeChanged(prev.node, curr.node)
     ) {
@@ -708,7 +708,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
       showIdleNodes: this.props.showIdleNodes,
       showOperationNodes: this.props.showOperationNodes,
       showSecurity: this.props.showSecurity,
-      showWaypoint: this.props.showWaypoint,
+      showWaypoints: this.props.showWaypoints,
       trafficRates: this.props.trafficRates
     });
   };
@@ -758,7 +758,7 @@ const mapStateToProps = (state: KialiAppState): StateProps => ({
   showServiceNodes: state.graph.toolbarState.showServiceNodes,
   showTrafficAnimation: state.graph.toolbarState.showTrafficAnimation,
   showVirtualServices: state.graph.toolbarState.showVirtualServices,
-  showWaypoint: state.graph.toolbarState.showWaypoint,
+  showWaypoints: state.graph.toolbarState.showWaypoints,
   summaryData: state.graph.summaryData,
   trace: state.tracingState?.selectedTrace,
   trafficRates: trafficRatesSelector(state)

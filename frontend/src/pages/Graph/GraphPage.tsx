@@ -724,7 +724,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       showIdleNodes: this.props.showIdleNodes,
       showOperationNodes: this.props.showOperationNodes,
       showServiceNodes: this.props.showServiceNodes,
-      showWaypoint: this.props.showWaypoint,
+      showWaypoints: this.props.showWaypoint,
       trafficRates: this.state.graphData.fetchParams.trafficRates
     };
 
@@ -861,7 +861,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       showIdleNodes: this.props.showIdleNodes,
       showOperationNodes: this.props.showOperationNodes,
       showSecurity: this.props.showSecurity,
-      showWaypoint: this.props.showWaypoint,
+      showWaypoints: this.props.showWaypoint,
       trafficRates: this.props.trafficRates
     });
   };
@@ -910,7 +910,7 @@ const mapStateToProps = (state: KialiAppState): StateProps => ({
   showServiceNodes: state.graph.toolbarState.showServiceNodes,
   showTrafficAnimation: state.graph.toolbarState.showTrafficAnimation,
   showVirtualServices: state.graph.toolbarState.showVirtualServices,
-  showWaypoint: state.graph.toolbarState.showWaypoint,
+  showWaypoint: state.graph.toolbarState.showWaypoints,
   summaryData: state.graph.summaryData,
   trace: state.tracingState?.selectedTrace,
   trafficRates: trafficRatesSelector(state),

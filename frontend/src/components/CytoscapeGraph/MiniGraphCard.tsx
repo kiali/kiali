@@ -346,7 +346,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
       showIdleNodes: this.props.dataSource.fetchParameters.showIdleNodes,
       showOperationNodes: this.props.dataSource.fetchParameters.showOperationNodes,
       showServiceNodes: true,
-      showWaypoint: this.props.dataSource.fetchParameters.showWaypoint,
+      showWaypoints: true,
       trafficRates: this.props.dataSource.fetchParameters.trafficRates
     };
 

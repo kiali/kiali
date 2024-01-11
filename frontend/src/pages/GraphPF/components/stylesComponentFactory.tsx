@@ -190,7 +190,7 @@ const handleDoubleTap = (doubleTapNode: GraphElement): void => {
     showIdleNodes: state.graph.toolbarState.showIdleNodes,
     showOperationNodes: state.graph.toolbarState.showOperationNodes,
     showServiceNodes: state.graph.toolbarState.showServiceNodes,
-    showWaypoint: state.graph.toolbarState.showWaypoint,
+    showWaypoints: state.graph.toolbarState.showWaypoints,
     trafficRates: graphData.fetchParams.trafficRates
   };
 

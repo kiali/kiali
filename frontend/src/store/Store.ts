@@ -76,7 +76,7 @@ export interface GraphToolbarState {
   showServiceNodes: boolean;
   showTrafficAnimation: boolean;
   showVirtualServices: boolean;
-  showWaypoint: boolean;
+  showWaypoints: boolean;
   trafficRates: TrafficRate[];
 }
 

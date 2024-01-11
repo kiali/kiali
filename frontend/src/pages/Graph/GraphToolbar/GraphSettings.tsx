@@ -54,7 +54,7 @@ type StateProps = {
   showServiceNodes: boolean;
   showTrafficAnimation: boolean;
   showVirtualServices: boolean;
-  showWaypoint: boolean;
+  showWaypoints: boolean;
 };
 
 type DispatchProps = {
@@ -72,7 +72,7 @@ type DispatchProps = {
   toggleRank(): void;
   toggleServiceNodes(): void;
   toggleTrafficAnimation(): void;
-  toggleWaypoint(): void;
+  toggleWaypoints(): void;
 };
 
 type ReduxProps = StateProps &
@@ -166,10 +166,10 @@ class GraphSettingsComponent extends React.PureComponent<ReduxProps, GraphSettin
     );
 
     this.handleURLBool(
-      URLParam.GRAPH_WAYPOINT,
-      INITIAL_GRAPH_STATE.toolbarState.showWaypoint,
-      props.showWaypoint,
-      props.toggleWaypoint
+      URLParam.GRAPH_WAYPOINTS,
+      INITIAL_GRAPH_STATE.toolbarState.showWaypoints,
+      props.showWaypoints,
+      props.toggleWaypoints
     );
 
     this.handleURLBool(
@@ -289,10 +289,10 @@ class GraphSettingsComponent extends React.PureComponent<ReduxProps, GraphSettin
     );
 
     this.alignURLBool(
-      URLParam.GRAPH_WAYPOINT,
-      INITIAL_GRAPH_STATE.toolbarState.showWaypoint,
-      prev.showWaypoint,
-      this.props.showWaypoint
+      URLParam.GRAPH_WAYPOINTS,
+      INITIAL_GRAPH_STATE.toolbarState.showWaypoints,
+      prev.showWaypoints,
+      this.props.showWaypoints
     );
 
     this.alignURLBool(
@@ -385,7 +385,7 @@ class GraphSettingsComponent extends React.PureComponent<ReduxProps, GraphSettin
       showServiceNodes,
       showTrafficAnimation,
       showVirtualServices,
-      showWaypoint
+      showWaypoints
     } = this.props;
 
     // map our dispatchers for redux
@@ -402,7 +402,7 @@ class GraphSettingsComponent extends React.PureComponent<ReduxProps, GraphSettin
       toggleRank,
       toggleServiceNodes,
       toggleTrafficAnimation,
-      toggleWaypoint
+      toggleWaypoints
     } = this.props;
 
     const edgeLabelOptions: DisplayOptionType[] = [
@@ -675,9 +675,9 @@ class GraphSettingsComponent extends React.PureComponent<ReduxProps, GraphSettin
     if (serverConfig.ambientEnabled) {
       visibilityOptions.push({
         id: 'filterWaypoint',
-        isChecked: showWaypoint,
-        labelText: 'Waypoint proxies',
-        onChange: toggleWaypoint,
+        isChecked: showWaypoints,
+        labelText: 'Waypoint Proxies',
+        onChange: toggleWaypoints,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             <div>Show waypoint proxies workloads.</div>
@@ -1039,7 +1039,7 @@ const mapStateToProps = (state: KialiAppState): StateProps => ({
   showServiceNodes: state.graph.toolbarState.showServiceNodes,
   showTrafficAnimation: state.graph.toolbarState.showTrafficAnimation,
   showVirtualServices: state.graph.toolbarState.showVirtualServices,
-  showWaypoint: state.graph.toolbarState.showWaypoint
+  showWaypoints: state.graph.toolbarState.showWaypoints
 });
 
 // Map our actions to Redux
@@ -1059,7 +1059,7 @@ const mapDispatchToProps = (dispatch: KialiDispatch): DispatchProps => {
     toggleRank: bindActionCreators(GraphToolbarActions.toggleRank, dispatch),
     toggleServiceNodes: bindActionCreators(GraphToolbarActions.toggleServiceNodes, dispatch),
     toggleTrafficAnimation: bindActionCreators(GraphToolbarActions.toggleTrafficAnimation, dispatch),
-    toggleWaypoint: bindActionCreators(GraphToolbarActions.toggleWaypoint, dispatch)
+    toggleWaypoints: bindActionCreators(GraphToolbarActions.toggleWaypoints, dispatch)
   };
 };
 

@@ -37,7 +37,7 @@ export const INITIAL_GRAPH_STATE: GraphState = {
     showServiceNodes: true,
     showTrafficAnimation: false,
     showVirtualServices: true,
-    showWaypoint: false,
+    showWaypoints: false,
     trafficRates: [
       TrafficRate.GRPC_GROUP,
       TrafficRate.GRPC_REQUEST,
@@ -118,12 +118,6 @@ export const GraphDataStateReducer = (state: GraphState = INITIAL_GRAPH_STATE, a
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
           showIdleNodes: action.payload
-        })
-      });
-    case getType(GraphToolbarActions.setWaypoint):
-      return updateState(state, {
-        toolbarState: updateState(state.toolbarState, {
-          showWaypoint: action.payload
         })
       });
     case getType(GraphToolbarActions.setRankBy):
@@ -230,10 +224,10 @@ export const GraphDataStateReducer = (state: GraphState = INITIAL_GRAPH_STATE, a
           showTrafficAnimation: !state.toolbarState.showTrafficAnimation
         })
       });
-    case getType(GraphToolbarActions.toggleWaypoint):
+    case getType(GraphToolbarActions.toggleWaypoints):
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
-          showWaypoint: !state.toolbarState.showWaypoint
+          showWaypoints: !state.toolbarState.showWaypoints
         })
       });
     default:

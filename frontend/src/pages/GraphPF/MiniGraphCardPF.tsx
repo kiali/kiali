@@ -383,7 +383,7 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
       showIdleNodes: this.props.dataSource.fetchParameters.showIdleNodes,
       showOperationNodes: this.props.dataSource.fetchParameters.showOperationNodes,
       showServiceNodes: true,
-      showWaypoint: this.props.dataSource.fetchParameters.showWaypoint,
+      showWaypoints: this.props.dataSource.fetchParameters.showWaypoints,
       trafficRates: this.props.dataSource.fetchParameters.trafficRates
     };
 

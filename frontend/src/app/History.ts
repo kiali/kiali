@@ -60,7 +60,7 @@ export enum URLParam {
   GRAPH_SERVICE_NODES = 'injectServiceNodes',
   GRAPH_TRAFFIC = 'traffic',
   GRAPH_TYPE = 'graphType',
-  GRAPH_WAYPOINT = 'waypoint',
+  GRAPH_WAYPOINTS = 'waypoints',
   TRACING_ERRORS_ONLY = 'errs',
   TRACING_LIMIT_TRACES = 'limit',
   TRACING_PERCENTILE = 'percentile',
