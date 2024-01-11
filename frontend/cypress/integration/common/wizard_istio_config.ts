@@ -26,6 +26,11 @@ When('user deletes k8sgateway named {string} and the resource is no longer avail
   ensureKialiFinishedLoading();
 });
 
+When('user deletes k8sreferencegrant named {string} and the resource is no longer available', (name: string) => {
+  cy.exec(`kubectl delete referencegrants.gateway.networking.k8s.io ${name} -n bookinfo`, { failOnNonZeroExit: false });
+  ensureKialiFinishedLoading();
+});
+
 When('user deletes gateway named {string} and the resource is no longer available', (name: string) => {
   cy.exec(`kubectl delete gateway.networking.istio.io ${name} -n bookinfo`, { failOnNonZeroExit: false });
   ensureKialiFinishedLoading();
