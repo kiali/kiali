@@ -31,7 +31,7 @@ func TestRemoteKialiShownInClustersResponse(t *testing.T) {
 	require.NoError(err)
 	originalConf := *conf
 
-	conf.Clustering.InaccessibleClusters = []config.Cluster{{Name: "inaccessible"}}
+	conf.Clustering.Clusters = []config.Cluster{{Name: "inaccessible"}}
 	conf.Clustering.KialiURLs = []config.KialiURL{{ClusterName: "inaccessible", URL: "http://inaccessible:20001", InstanceName: "kiali", Namespace: "istio-system"}}
 
 	t.Cleanup(func() {

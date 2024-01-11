@@ -116,6 +116,11 @@ var overrideSecretsDir = "/kiali-override-secrets"
 type Cluster struct {
 	// Name of the cluster. Must be unique and match what is in telemetry.
 	Name string `yaml:"name,omitempty"`
+
+	// SecretName is the name of the secret that contains the credentials necessary to connect to the remote cluster.
+	// This secret must exist in the Kiali deployment namespace. If not secret name is provided, then it's
+	// assumed that this cluster is inaccessible.
+	SecretName string `yaml:"secret_name,omitempty"`
 }
 
 // Metrics provides metrics configuration for the Kiali server.
@@ -507,9 +512,11 @@ type CertificatesInformationIndicators struct {
 
 // Clustering defines configuration around multi-cluster functionality.
 type Clustering struct {
-	// InaccessibleClusters represents clusters that are part of the mesh but that Kiali may not have access to.
-	InaccessibleClusters []Cluster  `yaml:"inaccessible_clusters,omitempty" json:"inaccessible_clusters,omitempty"`
-	KialiURLs            []KialiURL `yaml:"kiali_urls,omitempty" json:"kiali_urls,omitempty"`
+	// Clusters is a list of clusters that cannot be autodetected by the Kiali Server.
+	// Remote clusters are specified here if ‘autodetect_secrets.enabled’ is false or
+	// if the Kiali Server does not have access to the remote cluster’s secret.
+	Clusters  []Cluster  `yaml:"clusters,omitempty" json:"clusters,omitempty"`
+	KialiURLs []KialiURL `yaml:"kiali_urls,omitempty" json:"kiali_urls,omitempty"`
 }
 
 type FeatureFlagClustering struct {
@@ -1040,8 +1047,8 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 
 	// Copy over feature flags that have been upgraded to the new format.
 	// TODO: Remove when we no longer support the old format.
-	if conf.Clustering.InaccessibleClusters == nil && conf.KialiFeatureFlags.Clustering.InaccessibleClusters != nil {
-		conf.Clustering.InaccessibleClusters = conf.KialiFeatureFlags.Clustering.InaccessibleClusters
+	if conf.Clustering.Clusters == nil && conf.KialiFeatureFlags.Clustering.Clusters != nil {
+		conf.Clustering.Clusters = conf.KialiFeatureFlags.Clustering.Clusters
 	}
 
 	if conf.Clustering.KialiURLs == nil && conf.KialiFeatureFlags.Clustering.KialiURLs != nil {
