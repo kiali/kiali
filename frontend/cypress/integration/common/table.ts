@@ -1,4 +1,4 @@
-import { And, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { TableDefinition } from 'cypress-cucumber-preprocessor';
 
 enum SortOrder {
@@ -8,6 +8,7 @@ enum SortOrder {
 
 Then(`user sees a table with headings`, (tableHeadings: TableDefinition) => {
   const headings = tableHeadings.raw()[0];
+
   cy.get('table');
 
   headings.forEach(heading => {
@@ -15,7 +16,7 @@ Then(`user sees a table with headings`, (tableHeadings: TableDefinition) => {
   });
 });
 
-And(
+Then(
   'the {string} column on the {string} row has a link ending in {string}',
   (column: string, rowText: string, link: string) => {
     getColWithRowText(rowText, column).within(() => {
@@ -25,7 +26,7 @@ And(
   }
 );
 
-And(
+Then(
   'the {string} column on the {string} row has a icon with title {string}',
   (column: string, rowText: string, title: string) => {
     getColWithRowText(rowText, column).within(() => {
@@ -34,18 +35,18 @@ And(
   }
 );
 
-And(
+Then(
   'the {string} column on the {string} row has the text {string}',
   (column: string, rowText: string, text: string) => {
     getColWithRowText(rowText, column).contains(text);
   }
 );
 
-And('the {string} column on the {string} row is empty', (column: string, rowText: string, text: string) => {
+Then('the {string} column on the {string} row is empty', (column: string, rowText: string, text: string) => {
   getColWithRowText(rowText, column).children().should('be.empty');
 });
 
-And('user clicks in {string} column on the {string} text', (column: string, rowText: string) => {
+When('user clicks in {string} column on the {string} text', (column: string, rowText: string) => {
   getColWithRowText(rowText, column).find('a').click();
 });
 
@@ -61,13 +62,13 @@ Then('user sees {string} in the table', (service: string) => {
   });
 });
 
-And('table length should be {int}', (numRows: number) => {
+Then('table length should be {int}', (numRows: number) => {
   cy.get('tbody').within(() => {
     cy.get('tr').should('have.length', numRows);
   });
 });
 
-And('table length should exceed {int}', (numRows: number) => {
+Then('table length should exceed {int}', (numRows: number) => {
   cy.get('tbody').within(() => {
     cy.get('tr').should('have.length.greaterThan', numRows);
   });
@@ -77,12 +78,13 @@ When('user selects filter {string}', (filter: string) => {
   cy.get('select[aria-label="filter_select_type"]').select(filter);
 });
 
-And('user filters for name {string}', (name: string) => {
+When('user filters for name {string}', (name: string) => {
   cy.get('input[aria-label="filter_input_value"]').type(`${name}{enter}`);
 });
 
-And('user filters for istio config type {string}', (istioType: string) => {
+When('user filters for istio config type {string}', (istioType: string) => {
   cy.get('input[placeholder="Filter by Istio Config Type"]').type(`${istioType}{enter}`);
+
   cy.get(`li[label="${istioType}"]`).should('be.visible').find('button').click();
 });
 
@@ -100,8 +102,8 @@ export const colExists = (colName: string, exists: boolean): Cypress.Chainable =
 // This func makes a couple assumptions:
 //
 // 1. The classes expected
-export const hasAtLeastOneClass = (expectedClasses: string[]) => {
-  return ($el: HTMLElement[]): boolean => {
+export const hasAtLeastOneClass = (expectedClasses: string[]): (($el: HTMLElement[]) => boolean) => {
+  return ($el: HTMLElement[]) => {
     const classList = Array.from($el[0].classList);
     return expectedClasses.some((expectedClass: string) => classList.includes(expectedClass));
   };
@@ -131,6 +133,7 @@ export const getCellsForCol = (column: string | Number): Cypress.Chainable => {
   if (typeof column === 'number') {
     return cy.get('td').eq(column);
   }
+
   return cy.get(`td[data-label="${column}"]`);
 };
 
@@ -165,19 +168,22 @@ Then('user sees the {string} table with empty message', (tableName: string) => {
   });
 });
 
-When('user clicks in the {string} table {string} badge {string} name row link', (tableName, badge, name) => {
-  let tableId = '';
+When(
+  'user clicks in the {string} table {string} badge {string} name row link',
+  (tableName: string, badge: string, name: string) => {
+    let tableId = '';
 
-  switch (tableName) {
-    case 'Istio Config':
-      tableId = 'Istio Config List';
-      break;
+    switch (tableName) {
+      case 'Istio Config':
+        tableId = 'Istio Config List';
+        break;
+    }
+
+    cy.get(`table[aria-label="${tableId}"]`).within(() => {
+      cy.contains('div', badge).siblings().first().click();
+    });
   }
-
-  cy.get(`table[aria-label="${tableId}"]`).within(() => {
-    cy.contains('div', badge).siblings().first().click();
-  });
-});
+);
 
 // ensureObjectsInTable name can represent apps, istio config, objects, services etc.
 export const ensureObjectsInTable = (...names: string[]): void => {
@@ -209,7 +215,9 @@ export const checkHealthIndicatorInTable = (
   cy.request('/api/clusters').then(response => {
     cy.wrap(response.isOkStatusCode).should('be.true');
     cy.wrap(response.body).should('have.length', 1);
+
     const cluster = response.body[0].name;
+
     cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${selector}`)
       .find('span')
       .filter(`.icon-${healthStatus}`)
@@ -230,7 +238,9 @@ export const checkHealthStatusInTable = (
   cy.request('/api/clusters').then(response => {
     cy.wrap(response.isOkStatusCode).should('be.true');
     cy.wrap(response.body).should('have.length', 1);
+
     const cluster = response.body[0].name;
+
     cy.get(
       `[data-test=VirtualItem_Cluster${cluster}_Ns${selector}] td:first-child span[class=pf-v5-c-icon__content]`
     ).trigger('mouseenter');
@@ -239,7 +249,7 @@ export const checkHealthStatusInTable = (
   });
 };
 
-And('an entry for {string} cluster should be in the table', (cluster: string) => {
+Then('an entry for {string} cluster should be in the table', (cluster: string) => {
   cy.get('tbody').within(() => {
     cy.get('tr > td:nth-child(4)').contains(cluster).should('have.length.above', 0);
   });

@@ -50,7 +50,7 @@ Feature: Kiali App Details page for multicluster
 
   Scenario: See details for an app, which is not deployed in the specific cluster.
     And user is at the details page for the "app" "bookinfo/ratings" located in the "east" cluster
-    And links in the "App" description card should contain a reference to a "east" cluster
+    Then links in the "App" description card should contain a reference to a "east" cluster
     And cluster badge for "east" cluster should be visible in the "App" description card
     And user does not see a minigraph
 

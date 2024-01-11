@@ -1,10 +1,10 @@
-import { And, Then } from '@badeball/cypress-cucumber-preprocessor';
+import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 
-And('user clicks on Help Button', () => {
+When('user clicks on Help Button', () => {
   cy.getBySel('about-help-button').click();
 });
 
-And('user clicks on About Button', () => {
+When('user clicks on About Button', () => {
   cy.get('li[role="none"]').contains('About').click();
 });
 
