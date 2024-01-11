@@ -130,7 +130,10 @@ func TestWaypoint(t *testing.T) {
 	assert.Equal(5, len(trafficMap))
 
 	// Run the appender...
-	a := WaypointAppender{}
+	ambientParams := map[string]bool{}
+	ambientParams[WaypointParameterName] = true
+	
+	a := AmbientAppender{AmbientParams: ambientParams}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(4, len(trafficMap))

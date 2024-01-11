@@ -20,6 +20,7 @@ const (
 func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, finalizers []graph.Appender) {
 	requestedAppenders := map[string]bool{}
 	requestedFinalizers := map[string]bool{}
+	ambientParams := map[string]bool{}
 
 	if !o.Appenders.All {
 		for _, appenderName := range o.Appenders.AppenderNames {
@@ -46,8 +47,9 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 				requestedAppenders[ThroughputAppenderName] = true
 			case WorkloadEntryAppenderName:
 				requestedAppenders[WorkloadEntryAppenderName] = true
-			case WaypointAppenderName:
-				requestedAppenders[WaypointAppenderName] = true
+			case WaypointParameterName:
+				requestedAppenders[AmbientAppenderName] = true
+				ambientParams[WaypointParameterName] = true
 
 			// finalizer appenders
 			case HealthAppenderName:
@@ -188,9 +190,9 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 		}
 		appenders = append(appenders, a)
 	}
-	if _, ok := requestedAppenders[WaypointAppenderName]; ok || o.Appenders.All {
-		a := WaypointAppender{
-			GraphType: o.GraphType,
+	if _, ok := requestedAppenders[AmbientAppenderName]; ok || o.Appenders.All {
+		a := AmbientAppender{
+			AmbientParams: ambientParams,
 		}
 		appenders = append(appenders, a)
 	}
