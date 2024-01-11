@@ -287,13 +287,6 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     );
 
     this.alignURLBool(
-      URLParam.GRAPH_WAYPOINTS,
-      INITIAL_GRAPH_STATE.toolbarState.showWaypoints,
-      prev.showWaypoints,
-      this.props.showWaypoints
-    );
-
-    this.alignURLBool(
       URLParam.GRAPH_RANK,
       INITIAL_GRAPH_STATE.toolbarState.showRank,
       prev.showRank,
@@ -305,6 +298,13 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       INITIAL_GRAPH_STATE.toolbarState.showServiceNodes,
       prev.showServiceNodes,
       this.props.showServiceNodes
+    );
+
+    this.alignURLBool(
+      URLParam.GRAPH_WAYPOINTS,
+      INITIAL_GRAPH_STATE.toolbarState.showWaypoints,
+      prev.showWaypoints,
+      this.props.showWaypoints
     );
   }
 
@@ -538,7 +538,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       }
     ];
 
-    let visibilityOptions: DisplayOptionType[] = [
+    const visibilityOptions: DisplayOptionType[] = [
       {
         id: 'boxByCluster',
         isChecked: boxByCluster,
