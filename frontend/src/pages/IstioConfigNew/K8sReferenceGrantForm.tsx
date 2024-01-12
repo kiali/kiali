@@ -29,8 +29,8 @@ type ReduxDispatchProps = {
   refresh: () => void;
 };
 
-type Props = ReduxProps &
-  ReduxStateProps & {
+type Props = ReduxStateProps &
+  ReduxDispatchProps & {
     k8sReferenceGrant: K8sReferenceGrantState;
     onChange: (k8sReferenceGrant: K8sReferenceGrantState) => void;
   };
