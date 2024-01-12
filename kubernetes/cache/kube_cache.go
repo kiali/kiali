@@ -1470,8 +1470,9 @@ func (c *kubeCache) IsK8sGatewayListerInit(namespace string) bool {
 	// this can happen when CRDs are created after Kiali start
 	if c.getCacheLister(namespace).k8sgatewayLister == nil {
 		log.Info("K8s Gateway API CRDs are installed, Kiali needs to be restarted to apply.")
+		return false
 	}
-	return c.getCacheLister(namespace).k8sgatewayLister != nil
+	return true
 }
 
 func (c *kubeCache) GetK8sGateway(namespace, name string) (*gatewayapi_v1.Gateway, error) {
