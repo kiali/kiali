@@ -19,7 +19,7 @@ import * as API from './Api';
 import { decorateGraphData } from '../store/Selectors/GraphData';
 import EventEmitter from 'eventemitter3';
 import { createSelector } from 'reselect';
-import { isMultiCluster } from '../config';
+import { isMultiCluster, serverConfig } from '../config';
 
 export const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
 const PROMISE_KEY = 'CURRENT_REQUEST';
@@ -132,7 +132,7 @@ export class GraphDataSource {
       showIdleNodes: false,
       showOperationNodes: false,
       showSecurity: false,
-      showWaypoints: false,
+      showWaypoints: true,
       trafficRates: []
     };
     this._isError = this._isLoading = false;
@@ -199,8 +199,9 @@ export class GraphDataSource {
       appenders += ',idleNode';
     }
 
-    if (!fetchParams.node && !fetchParams.showWaypoints) {
-      appenders += ',hideWaypoint';
+    if (serverConfig.ambientEnabled) {
+      appenders += ',ambient';
+      restParams.waypoints = fetchParams.showWaypoints;
     }
 
     if (fetchParams.includeLabels) {
@@ -506,7 +507,7 @@ export class GraphDataSource {
       showIdleNodes: false,
       showOperationNodes: false,
       showSecurity: false,
-      showWaypoints: false,
+      showWaypoints: true,
       trafficRates: DefaultTrafficRates
     };
   }

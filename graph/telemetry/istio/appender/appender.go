@@ -3,6 +3,7 @@ package appender
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -14,13 +15,13 @@ const (
 	defaultAggregate      = "request_operation"
 	defaultQuantile       = 0.95
 	defaultThroughputType = "response"
+	defaultWaypoints      = true
 )
 
 // ParseAppenders determines which appenders should run for this graphing request
 func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, finalizers []graph.Appender) {
 	requestedAppenders := map[string]bool{}
 	requestedFinalizers := map[string]bool{}
-	ambientParams := map[string]bool{}
 
 	if !o.Appenders.All {
 		for _, appenderName := range o.Appenders.AppenderNames {
@@ -29,6 +30,8 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 			// namespace appenders
 			case AggregateNodeAppenderName:
 				requestedAppenders[AggregateNodeAppenderName] = true
+			case AmbientAppenderName:
+				requestedAppenders[AmbientAppenderName] = true
 			case DeadNodeAppenderName:
 				requestedAppenders[DeadNodeAppenderName] = true
 			case IdleNodeAppenderName:
@@ -47,9 +50,6 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 				requestedAppenders[ThroughputAppenderName] = true
 			case WorkloadEntryAppenderName:
 				requestedAppenders[WorkloadEntryAppenderName] = true
-			case WaypointParameterName:
-				requestedAppenders[AmbientAppenderName] = true
-				ambientParams[WaypointParameterName] = true
 
 			// finalizer appenders
 			case HealthAppenderName:
@@ -191,8 +191,17 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 		appenders = append(appenders, a)
 	}
 	if _, ok := requestedAppenders[AmbientAppenderName]; ok || o.Appenders.All {
+		waypoints := defaultWaypoints
+		waypointsString := o.Params.Get("waypoints")
+		if waypointsString != "" {
+			var waypointsErr error
+			waypoints, waypointsErr = strconv.ParseBool(waypointsString)
+			if waypointsErr != nil {
+				graph.BadRequest(fmt.Sprintf("Invalid waypoints param [%s]", waypointsString))
+			}
+		}
 		a := AmbientAppender{
-			AmbientParams: ambientParams,
+			Waypoints: waypoints,
 		}
 		appenders = append(appenders, a)
 	}

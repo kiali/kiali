@@ -13,8 +13,8 @@ export type SummaryType = 'graph' | 'node' | 'edge' | 'box';
 
 export interface SummaryData {
   isPF?: boolean;
-  summaryType: SummaryType;
   summaryTarget: any;
+  summaryType: SummaryType;
 }
 
 export enum Protocol {
@@ -359,16 +359,10 @@ export type GraphNodeHealthData = GraphNodeAppHealth | GraphNodeWorkloadHealth |
 
 // Node data expected from server
 export interface GraphNodeData {
-  // required
-  cluster: string;
-  id: string;
-  namespace: string;
-  nodeType: NodeType;
-
-  // optional
   aggregate?: string;
   aggregateValue?: string;
   app?: string;
+  cluster: string;
   destServices?: DestService[];
   hasCB?: boolean;
   hasFaultInjection?: boolean;
@@ -383,21 +377,22 @@ export interface GraphNodeData {
   };
   hasWorkloadEntry?: WEInfo[];
   healthData?: GraphNodeHealthData;
+  id: string;
   isBox?: string;
   isDead?: boolean;
-  isIdle?: boolean;
-  isInaccessible?: boolean;
   isGateway?: {
-    ingressInfo?: {
-      hostnames?: string[];
-    };
     egressInfo?: {
       hostnames?: string[];
     };
     gatewayAPIInfo?: {
       hostnames?: string[];
     };
+    ingressInfo?: {
+      hostnames?: string[];
+    };
   };
+  isIdle?: boolean;
+  isInaccessible?: boolean;
   isK8sGatewayAPI?: boolean;
   isMisconfigured?: string;
   isOutOfMesh?: boolean;
@@ -405,6 +400,8 @@ export interface GraphNodeData {
   isRoot?: boolean;
   isServiceEntry?: SEInfo;
   labels?: { [key: string]: string };
+  namespace: string;
+  nodeType: NodeType;
   parent?: string;
   service?: string;
   traffic?: ProtocolTraffic[];
@@ -451,6 +448,7 @@ export interface GraphElementsQuery {
   rateTcp?: string;
   responseTime?: string;
   throughputType?: string;
+  waypoints?: boolean;
 }
 
 export interface GraphDefinition {
@@ -474,16 +472,13 @@ export interface DecoratedGraphNodeData extends GraphNodeData {
   httpIn5xx: number;
   httpInNoResponse: number;
   httpOut: number;
-  tcpIn: number;
-  tcpOut: number;
-  traffic: never;
-
-  // computed values...
-
   // true if has istio namespace
   isIstio?: boolean;
   // assigned when node ranking is enabled. relative importance from most to least important [1..100]. Multiple nodes can have same rank.
   rank?: number;
+  tcpIn: number;
+  tcpOut: number;
+  traffic: never;
 }
 
 // Edge data after decorating at fetch-time (what is mainly used by ui code)
@@ -493,6 +488,11 @@ export interface DecoratedGraphEdgeData extends GraphEdgeData {
   grpcNoResponse: number;
   grpcPercentErr: number;
   grpcPercentReq: number;
+  // During the decoration process, we make non-optional some number attributes (giving them a default value)
+  // computed, true if traffic rate > 0
+  hasTraffic?: boolean;
+  // assigned when graph is updated, the edge health depends on the node health, traffic, and config
+  healthStatus?: string; // status name
   http: number;
   http3xx: number;
   http4xx: number;
@@ -500,24 +500,15 @@ export interface DecoratedGraphEdgeData extends GraphEdgeData {
   httpNoResponse: number;
   httpPercentErr: number;
   httpPercentReq: number;
-  protocol: ValidProtocols;
-  responses: Responses;
-  tcp: number;
-
-  // During the decoration process, we make non-optional some number attributes (giving them a default value)
-  // computed, true if traffic rate > 0
-  hasTraffic?: boolean;
   // Default value -1
   isMTLS: number;
+  protocol: ValidProtocols;
   // Default value NaN
   responseTime: number;
+  responses: Responses;
+  tcp: number;
   // Default value NaN
   throughput: number;
-
-  // computed values...
-
-  // assigned when graph is updated, the edge health depends on the node health, traffic, and config
-  healthStatus?: string; // status name
 }
 
 export interface DecoratedGraphNodeWrapper {
