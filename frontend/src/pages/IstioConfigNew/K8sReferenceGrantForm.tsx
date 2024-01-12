@@ -143,7 +143,7 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => {
   };
 };
 
-const mapDispatchToProps = (dispatch: KialiDispatch): ReduxStateProps => {
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   return {
     refresh: () => {
       dispatch(NamespaceThunkActions.fetchNamespacesIfNeeded());
