@@ -307,10 +307,13 @@ func (in *MeshService) GetClusters() ([]kubernetes.Cluster, error) {
 	}
 
 	// Add clusters from config.
-	for _, cluster := range in.conf.Clustering.InaccessibleClusters {
+	for _, cluster := range in.conf.Clustering.Clusters {
 		if _, found := clustersByName[cluster.Name]; !found {
 			clustersByName[cluster.Name] = kubernetes.Cluster{
 				Name: cluster.Name,
+				// Clusters without a SecretName are not accessible
+				// because we don't have a kubeconfig for them.
+				Accessible: cluster.SecretName != "",
 			}
 		}
 	}
