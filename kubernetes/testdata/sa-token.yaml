@@ -1,0 +1,17 @@
+apiVersion: v1
+clusters:
+- cluster:
+    server: https://localhost:1234
+  name: SATestToken
+contexts: 
+- context:
+    cluster: SATestToken
+    user: sa
+  name: SATestToken
+current-context: "SATestToken"
+kind: Config
+preferences: {}
+users:
+- name: sa
+  user:
+    token: test-token

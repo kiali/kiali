@@ -27,6 +27,9 @@ var (
 
 	//go:embed testdata/proxy-ca.pem
 	proxyCAData []byte
+
+	//go:embed testdata/sa-token.yaml
+	saTokenYAML string
 )
 
 // TestClientExpiration Verify the details that clients expire are correct
@@ -117,7 +120,7 @@ func TestConcurrentClientFactory(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(count)
 
-	setGlobalKialiSAToken(t, "test-token")
+	setGlobalKialiSAToken(t)
 
 	for i := 0; i < count; i++ {
 		go func() {
@@ -128,63 +131,6 @@ func TestConcurrentClientFactory(t *testing.T) {
 	}
 
 	wg.Wait()
-}
-
-func TestSAHomeClientUpdatesWhenKialiTokenChanges(t *testing.T) {
-	assert := assert.New(t)
-	require := require.New(t)
-	kialiConfig := config.NewConfig()
-	config.Set(kialiConfig)
-	currentToken := KialiTokenForHomeCluster
-	currentTime := tokenRead
-	t.Cleanup(func() {
-		// Other tests use this global var so we need to reset it.
-		tokenRead = currentTime
-		KialiTokenForHomeCluster = currentToken
-	})
-
-	tokenRead = time.Now()
-	KialiTokenForHomeCluster = "current-token"
-
-	restConfig := rest.Config{}
-	clientFactory, err := newClientFactory(&restConfig)
-	require.NoError(err)
-
-	currentClient := clientFactory.GetSAHomeClusterClient()
-	assert.Equal(KialiTokenForHomeCluster, currentClient.GetToken())
-	assert.Equal(currentClient, clientFactory.GetSAHomeClusterClient())
-
-	KialiTokenForHomeCluster = "new-token"
-
-	// Assert that the token has changed and the client has changed.
-	newClient := clientFactory.GetSAHomeClusterClient()
-	assert.Equal(KialiTokenForHomeCluster, newClient.GetToken())
-	assert.NotEqual(currentClient, newClient)
-}
-
-func TestSAClientsUpdateWhenKialiTokenChanges(t *testing.T) {
-	require := require.New(t)
-	conf := config.NewConfig()
-	config.Set(conf)
-	t.Cleanup(func() {
-		// Other tests use this global var so we need to reset it.
-		KialiTokenForHomeCluster = ""
-	})
-
-	tokenRead = time.Now()
-	KialiTokenForHomeCluster = "current-token"
-
-	restConfig := rest.Config{}
-	clientFactory, err := newClientFactory(&restConfig)
-	require.NoError(err)
-
-	client := clientFactory.GetSAClient(conf.KubernetesConfig.ClusterName)
-	require.Equal(KialiTokenForHomeCluster, client.GetToken())
-
-	KialiTokenForHomeCluster = "new-token"
-
-	client = clientFactory.GetSAClient(conf.KubernetesConfig.ClusterName)
-	require.Equal(KialiTokenForHomeCluster, client.GetToken())
 }
 
 func TestClientCreatedWithClusterInfo(t *testing.T) {
@@ -422,16 +368,23 @@ func TestSAClientCreatedWithExecProvider(t *testing.T) {
 	}
 }
 
-func setGlobalKialiSAToken(t *testing.T, newToken string) {
+func setGlobalKialiSAToken(t *testing.T) {
 	t.Helper()
 
+	// reuse the "create a test remote cluster secret file" function, but for this test it is really representing our home cluster SA token
+	saTokenDir := t.TempDir()
+	createTestRemoteClusterSecretFile(t, saTokenDir, "saSecret", saTokenYAML)
+
 	originalToken := KialiTokenForHomeCluster
+	originalTokenFile := KialiTokenFileForHomeCluster
 	t.Cleanup(func() {
 		KialiTokenForHomeCluster = originalToken
+		KialiTokenFileForHomeCluster = originalTokenFile
 		tokenRead = time.Time{}
 	})
 
-	KialiTokenForHomeCluster = newToken
+	KialiTokenForHomeCluster = "test-token" // as defined in testdata/sa-token.yaml
+	KialiTokenFileForHomeCluster = ""
 	tokenRead = time.Now()
 }
 
@@ -456,7 +409,7 @@ func TestClientCreatedWithProxyInfo(t *testing.T) {
 
 	// Service account clients should not have the proxy info.
 	// Two ways to get a SA client: 1. GetClient with SA token and 2. GetSAClient
-	setGlobalKialiSAToken(t, "current-token")
+	setGlobalKialiSAToken(t)
 	authInfo := api.NewAuthInfo()
 	authInfo.Token = KialiTokenForHomeCluster
 
@@ -487,7 +440,8 @@ func TestNewClientFactoryClosesRecycleWhenCTXCancelled(t *testing.T) {
 	t.Cleanup(cancel)
 	f, err := NewClientFactory(ctx, *cfg)
 	t.Cleanup(func() {
-		KialiTokenForHomeCluster = "" // Need to reset this global because other tests depend on it being empty.
+		KialiTokenForHomeCluster = ""     // Need to reset this global because other tests depend on it being empty.
+		KialiTokenFileForHomeCluster = "" // Need to reset this global because other tests depend on it being empty.
 	})
 	require.NoError(err)
 	factory := f.(*clientFactory)
@@ -522,7 +476,8 @@ func TestNewClientFactoryDoesNotSetGlobalClientFactory(t *testing.T) {
 	t.Cleanup(cancel)
 	_, err := NewClientFactory(ctx, *cfg)
 	t.Cleanup(func() {
-		KialiTokenForHomeCluster = "" // Need to reset this global because other tests depend on it being empty.
+		KialiTokenForHomeCluster = ""     // Need to reset this global because other tests depend on it being empty.
+		KialiTokenFileForHomeCluster = "" // Need to reset this global because other tests depend on it being empty.
 	})
 	require.NoError(err)
 
@@ -546,7 +501,8 @@ func TestClientFactoryReturnsSAClientWhenConfigClusterNameIsEmpty(t *testing.T) 
 	t.Cleanup(cancel)
 	clientFactory, err := NewClientFactory(ctx, *cfg)
 	t.Cleanup(func() {
-		KialiTokenForHomeCluster = "" // Need to reset this global because other tests depend on it being empty.
+		KialiTokenForHomeCluster = ""     // Need to reset this global because other tests depend on it being empty.
+		KialiTokenFileForHomeCluster = "" // Need to reset this global because other tests depend on it being empty.
 	})
 	require.NoError(err)
 

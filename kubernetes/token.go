@@ -14,31 +14,34 @@ import (
 var DefaultServiceAccountPath = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 
 var (
-	KialiTokenForHomeCluster string
-	tokenRead                time.Time
+	KialiTokenForHomeCluster     string
+	KialiTokenFileForHomeCluster string
+	tokenRead                    time.Time
 )
 
-// GetKialiTokenForHomeCluster returns the Kiali SA token to be used to communicate with the local data plane k8s api endpoint.
-func GetKialiTokenForHomeCluster() (string, error) {
+// GetKialiTokenForHomeCluster returns the Kiali SA token to be used to communicate with the local data plane k8s api endpoint and the token file.
+func GetKialiTokenForHomeCluster() (string, string, error) {
 	// TODO: refresh the token when it changes rather than after it expires
 	if KialiTokenForHomeCluster == "" || shouldRefreshToken() {
 		if remoteSecret, err := GetRemoteSecret(config.Get().Deployment.RemoteSecretPath); err == nil { // for experimental feature - for when data plane is in a remote cluster
 			currentContextAuthInfo := remoteSecret.Contexts[remoteSecret.CurrentContext].AuthInfo
 			if authInfo, ok := remoteSecret.AuthInfos[currentContextAuthInfo]; ok {
 				KialiTokenForHomeCluster = authInfo.Token
+				KialiTokenFileForHomeCluster = authInfo.TokenFile
 			} else {
-				return "", fmt.Errorf("auth info not found for current context: [%s]. Current context must be set for kiali remote secret", remoteSecret.CurrentContext)
+				return "", "", fmt.Errorf("auth info not found for current context: [%s]. Current context must be set for kiali remote secret", remoteSecret.CurrentContext)
 			}
 		} else {
 			token, err := os.ReadFile(DefaultServiceAccountPath)
 			if err != nil {
-				return "", err
+				return "", "", err
 			}
 			KialiTokenForHomeCluster = string(token)
+			KialiTokenFileForHomeCluster = DefaultServiceAccountPath
 		}
 		tokenRead = time.Now()
 	}
-	return KialiTokenForHomeCluster, nil
+	return KialiTokenForHomeCluster, KialiTokenFileForHomeCluster, nil
 }
 
 // shouldRefreshToken checks to see if the local Kiali token expired.

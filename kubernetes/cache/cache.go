@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -58,12 +57,7 @@ type kialiCacheImpl struct {
 	// TODO: Get rid of embedding.
 	KubeCache
 
-	// Stops the background goroutines which refresh the cache's
-	// service account token and poll for istiod's proxy status.
-	cleanup       func()
 	clientFactory kubernetes.ClientFactory
-	// How often the cache will check for kiali SA client changes.
-	clientRefreshPollingPeriod time.Duration
 	// Maps a cluster name to a KubeCache
 	kubeCache              map[string]KubeCache
 	refreshDuration        time.Duration
@@ -82,14 +76,13 @@ type kialiCacheImpl struct {
 
 func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config) (KialiCache, error) {
 	kialiCacheImpl := kialiCacheImpl{
-		clientFactory:              clientFactory,
-		clientRefreshPollingPeriod: time.Duration(time.Second * 60),
-		kubeCache:                  make(map[string]KubeCache),
-		refreshDuration:            time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second,
-		tokenNamespaces:            make(map[string]namespaceCache),
-		tokenNamespaceDuration:     time.Duration(cfg.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second,
-		proxyStatusStore:           store.New[*kubernetes.ProxyStatus](),
-		registryStatusStore:        store.New[*kubernetes.RegistryStatus](),
+		clientFactory:          clientFactory,
+		kubeCache:              make(map[string]KubeCache),
+		refreshDuration:        time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second,
+		tokenNamespaces:        make(map[string]namespaceCache),
+		tokenNamespaceDuration: time.Duration(cfg.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second,
+		proxyStatusStore:       store.New[*kubernetes.ProxyStatus](),
+		registryStatusStore:    store.New[*kubernetes.RegistryStatus](),
 	}
 
 	for cluster, client := range clientFactory.GetSAClients() {
@@ -113,19 +106,6 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config) (K
 	if kialiCacheImpl.KubeCache == nil {
 		return nil, errors.New("home cluster not configured in kiali cache")
 	}
-
-	// Starting background goroutines to:
-	// 1. Refresh the cache's service account token
-	// These will stop when the context is cancelled.
-	// Starting goroutines after any errors are handled so as not to leak goroutines.
-	ctx, cancel := context.WithCancel(context.Background())
-
-	// Note that this only watches for changes to the home cluster's token since it is
-	// expected that the remote cluster tokens will not change. However, that assumption
-	// may be wrong and in the future the cache may want to watch for changes to all client tokens.
-	kialiCacheImpl.watchForClientChanges(ctx, clientFactory.GetSAHomeClusterClient().GetToken())
-
-	kialiCacheImpl.cleanup = cancel
 
 	return &kialiCacheImpl, nil
 }
@@ -157,39 +137,6 @@ func (c *kialiCacheImpl) Stop() {
 		}(kc)
 	}
 	wg.Wait()
-
-	c.cleanup()
-}
-
-// watchForClientChanges watches for changes to the cache's service account client
-// and recreates the cache(s) when the client changes. The client is updated when
-// the token for the client changes.
-func (c *kialiCacheImpl) watchForClientChanges(ctx context.Context, token string) {
-	ticker := time.NewTicker(c.clientRefreshPollingPeriod)
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				if c.clientFactory.GetSAHomeClusterClient().GetToken() != token {
-					log.Info("[Kiali Cache] Updating cache with new token")
-
-					if err := c.KubeCache.UpdateClient(c.clientFactory.GetSAHomeClusterClient()); err != nil {
-						log.Errorf("[Kiali Cache] Error updating cache with new token. Err: %s", err)
-						// Try again on the next tick without updating the token.
-						continue
-					}
-
-					token = c.clientFactory.GetSAHomeClusterClient().GetToken()
-				} else {
-					log.Debug("[Kiali Cache] Nothing to refresh")
-				}
-			case <-ctx.Done():
-				log.Debug("[Kiali Cache] Stopping watching for service account token changes")
-				ticker.Stop()
-				return
-			}
-		}
-	}()
 }
 
 func (c *kialiCacheImpl) GetClusters() []kubernetes.Cluster {

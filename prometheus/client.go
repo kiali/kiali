@@ -82,7 +82,7 @@ func NewClientForConfig(cfg config.PrometheusConfig) (*Client, error) {
 		// Note: if we are using the 'bearer' authentication method then we want to use the Kiali
 		// service account token and not the user's token. This is because Kiali does filtering based
 		// on the user's token and prevents people who shouldn't have access to particular metrics.
-		token, err := kubernetes.GetKialiTokenForHomeCluster()
+		token, _, err := kubernetes.GetKialiTokenForHomeCluster()
 		if err != nil {
 			log.Errorf("Could not read the Kiali Service Account token: %v", err)
 			return nil, err

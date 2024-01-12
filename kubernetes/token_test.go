@@ -27,7 +27,7 @@ func TestIsTokenExpired(t *testing.T) {
 	DefaultServiceAccountPath = tmpFileTokenExpired
 
 	setupFile(t, "thisisarandomtoken", tmpFileTokenExpired)
-	token, err := GetKialiTokenForHomeCluster()
+	token, _, err := GetKialiTokenForHomeCluster()
 	require.NoError(err)
 
 	assert.True(token != "")
@@ -47,7 +47,7 @@ func TestGetKialiToken(t *testing.T) {
 
 	setupFile(t, data, tmpFileGetToken)
 
-	token, err := GetKialiTokenForHomeCluster()
+	token, _, err := GetKialiTokenForHomeCluster()
 	require.NoError(err)
 
 	assert.Equal(data, token)
@@ -61,7 +61,7 @@ func TestGetKialiTokenRemoteCluster(t *testing.T) {
 	SetConfig(t, *config)
 	tokenRead = time.Time{}
 
-	token, err := GetKialiTokenForHomeCluster()
+	token, _, err := GetKialiTokenForHomeCluster()
 	require.NoError(err)
 
 	require.Equal("token2", token)

@@ -1,7 +1,6 @@
 package kubernetes
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -137,40 +136,6 @@ func getClusterName(config *api.Config) string {
 		break
 	}
 	return clusterName
-}
-
-// reloadRemoteClusterInfoFromFile will re-read the remote cluster secret from the file system and if the data is different
-// than the given RemoteClusterInfo, a new one is returned. Otherwise, nil is returned to indicate nothing has changed and
-// the given RemoteClusterInfo is already up to date.
-func reloadRemoteClusterInfoFromFile(rci RemoteClusterInfo) (*RemoteClusterInfo, error) {
-	newRci, err := newRemoteClusterInfo(rci.SecretName, rci.SecretFile)
-	if err != nil {
-		kubeConfig, cfgErr := rci.Config.RawConfig()
-		if cfgErr == nil {
-			return nil, fmt.Errorf("Failed to process data for remote cluster [%s] secret file [%s]", getClusterName(&kubeConfig), rci.SecretFile)
-		}
-		return nil, fmt.Errorf("failed to process data for remote cluster secret file [%s]", rci.SecretFile)
-	}
-
-	// Compare the byte representation of the two
-	o, _ := rci.Config.RawConfig()
-	old, err := clientcmd.Write(o)
-	if err != nil {
-		return nil, fmt.Errorf("unable to marshal old config. Err: %s", err)
-	}
-
-	n, _ := newRci.Config.RawConfig()
-	new, err := clientcmd.Write(n)
-	if err != nil {
-		return nil, fmt.Errorf("unable to marshal old config. Err: %s", err)
-	}
-
-	if !bytes.Equal(old, new) {
-		return &newRci, nil
-	}
-
-	// the information did not change - return nil to indicate the original one passed to this funcation is already up to date
-	return nil, nil
 }
 
 // TODO: These types probably belong in the business package but since the biz package imports

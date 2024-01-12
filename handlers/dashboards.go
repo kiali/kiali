@@ -20,12 +20,6 @@ func CustomDashboard(w http.ResponseWriter, r *http.Request) {
 	namespace := pathParams["namespace"]
 	dashboardName := pathParams["dashboard"]
 
-	authInfo, err := getAuthInfo(r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
 	layer, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -65,7 +59,7 @@ func CustomDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard, err := svc.GetDashboard(authInfo, params, dashboardName)
+	dashboard, err := svc.GetDashboard(params, dashboardName)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			RespondWithError(w, http.StatusNotFound, err.Error())

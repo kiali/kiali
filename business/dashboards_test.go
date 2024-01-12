@@ -4,10 +4,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/config/dashboards"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	pmock "github.com/kiali/kiali/prometheus/prometheustest"
@@ -57,7 +57,7 @@ func TestGetDashboard(t *testing.T) {
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	SetWithBackends(mockClientFactory, nil)
 
-	dashboard, err := service.GetDashboard(&api.AuthInfo{Token: ""}, query, "dashboard1")
+	dashboard, err := service.GetDashboard(query, "dashboard1")
 
 	assert.Nil(err)
 	assert.Equal("Dashboard 1", dashboard.Title)
@@ -76,6 +76,9 @@ func TestGetDashboard(t *testing.T) {
 func TestGetDashboardFromKialiNamespace(t *testing.T) {
 	assert := assert.New(t)
 
+	// allows GetDashboard to get the SA client under the covers
+	kubernetes.NewTestingClientFactory(t)
+
 	// Setup mocks
 	service, prom := setupService("my-namespace", []dashboards.MonitoringDashboard{*fakeDashboard("1")})
 
@@ -93,7 +96,7 @@ func TestGetDashboardFromKialiNamespace(t *testing.T) {
 	prom.MockMetric("my_metric_1_1", expectedLabels, &query.RangeQuery, 10)
 	prom.MockHistogram("my_metric_1_2", expectedLabels, &query.RangeQuery, 11, 12)
 
-	dashboard, err := service.GetDashboard(&api.AuthInfo{Token: ""}, query, "dashboard1")
+	dashboard, err := service.GetDashboard(query, "dashboard1")
 
 	assert.Nil(err)
 	assert.Equal("Dashboard 1", dashboard.Title)
