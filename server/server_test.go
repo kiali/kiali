@@ -307,7 +307,7 @@ func TestTracingConfigured(t *testing.T) {
 	conf.Server.Port = testPort
 	conf.Server.StaticContentRootDirectory = tmpDir
 	conf.Server.Observability.Tracing.Enabled = true
-	conf.Server.Observability.Tracing.CollectorType = "jaeger"
+	conf.Server.Observability.Tracing.CollectorType = "otel"
 	conf.Auth.Strategy = "anonymous"
 
 	// Set the global client factory.

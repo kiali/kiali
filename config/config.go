@@ -81,9 +81,7 @@ const (
 type TracingCollectorType string
 
 const (
-	// JaegerCollectorType is deprecated, use OTELCollectorType.
-	JaegerCollectorType TracingCollectorType = "jaeger"
-	OTELCollectorType   TracingCollectorType = "otel"
+	OTELCollectorType TracingCollectorType = "otel"
 )
 
 var validPathRegEx = regexp.MustCompile(`^\/[a-zA-Z0-9\-\._~!\$&\'()\*\+\,;=:@%/]*$`)
@@ -139,7 +137,7 @@ type OtelCollector struct {
 
 // Tracing provides tracing configuration for the Kiali server.
 type Tracing struct {
-	CollectorType TracingCollectorType `yaml:"collector_type,omitempty"` // Possible values "otel" or "jaeger"
+	CollectorType TracingCollectorType `yaml:"collector_type,omitempty"` // Possible value "otel"
 	CollectorURL  string               `yaml:"collector_url,omitempty"`  // Endpoint for Kiali server traces
 	Enabled       bool                 `yaml:"enabled,omitempty"`
 	Otel          OtelCollector        `yaml:"otel,omitempty"`
@@ -835,8 +833,8 @@ func NewConfig() (c *Config) {
 					Port:    9090,
 				},
 				Tracing: Tracing{
-					CollectorType: JaegerCollectorType,
-					CollectorURL:  "http://jaeger-collector.istio-system:14268/api/traces",
+					CollectorType: OTELCollectorType,
+					CollectorURL:  "jaeger-collector.istio-system:4318",
 					Enabled:       false,
 					Otel: OtelCollector{
 						CAName:     "",
@@ -1197,7 +1195,8 @@ func Validate(cfg Config) error {
 
 	// Check the observability section
 	observTracing := cfg.Server.Observability.Tracing
-	if observTracing.Enabled && observTracing.CollectorType != JaegerCollectorType && observTracing.CollectorType != OTELCollectorType {
+	// If collector is not defined it would be the default "otel"
+	if observTracing.Enabled && observTracing.CollectorType != OTELCollectorType {
 		return fmt.Errorf("error in configuration options getting the observability exporter. Invalid collector type [%s]", observTracing.CollectorType)
 	}
 
