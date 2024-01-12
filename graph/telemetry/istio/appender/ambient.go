@@ -35,7 +35,7 @@ func (a AmbientAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *gr
 
 	log.Trace("Running hide waypoint entry appender")
 
-	if a.Waypoints == false {
+	if !a.Waypoints {
 		a.removeWaypointEntries(trafficMap, globalInfo, namespaceInfo)
 	}
 }
