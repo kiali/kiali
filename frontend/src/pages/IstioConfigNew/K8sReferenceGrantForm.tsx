@@ -25,7 +25,7 @@ type ReduxProps = {
   namespaces: Namespace[];
 };
 
-type ReduxStateProps = {
+type ReduxDispatchProps = {
   refresh: () => void;
 };
 
