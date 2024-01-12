@@ -1464,7 +1464,7 @@ func (c *kubeCache) GetTelemetries(namespace, labelSelector string) ([]*v1alpha1
 	return retTelemetries, nil
 }
 
-func (c *kubeCache) IsK8sGatewayListerInit(namespace string) bool {
+func (c *kubeCache) isK8sGatewayListerInit(namespace string) bool {
 	// K8s GW has several cache listers, those can be namespace or cluster based
 	// if one of them is not initialized, then all others are not init as well
 	// this can happen when CRDs are created after Kiali start
@@ -1483,7 +1483,7 @@ func (c *kubeCache) GetK8sGateway(namespace, name string) (*gatewayapi_v1.Gatewa
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	if !c.IsK8sGatewayListerInit(namespace) {
+	if !c.isK8sGatewayListerInit(namespace) {
 		return nil, nil
 	}
 	g, err := c.getCacheLister(namespace).k8sgatewayLister.Gateways(namespace).Get(name)
@@ -1510,7 +1510,7 @@ func (c *kubeCache) GetK8sGateways(namespace, labelSelector string) ([]*gatewaya
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	if !c.IsK8sGatewayListerInit(namespace) {
+	if !c.isK8sGatewayListerInit(namespace) {
 		return nil, nil
 	}
 	k8sGateways := []*gatewayapi_v1.Gateway{}
@@ -1554,7 +1554,7 @@ func (c *kubeCache) GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1.HTTP
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	if !c.IsK8sGatewayListerInit(namespace) {
+	if !c.isK8sGatewayListerInit(namespace) {
 		return nil, nil
 	}
 	g, err := c.getCacheLister(namespace).k8shttprouteLister.HTTPRoutes(namespace).Get(name)
@@ -1581,7 +1581,7 @@ func (c *kubeCache) GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewa
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	if !c.IsK8sGatewayListerInit(namespace) {
+	if !c.isK8sGatewayListerInit(namespace) {
 		return nil, nil
 	}
 	k8sHTTPRoutes := []*gatewayapi_v1.HTTPRoute{}
@@ -1625,7 +1625,7 @@ func (c *kubeCache) GetK8sReferenceGrant(namespace, name string) (*gatewayapi_v1
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	if !c.IsK8sGatewayListerInit(namespace) {
+	if !c.isK8sGatewayListerInit(namespace) {
 		return nil, nil
 	}
 	g, err := c.getCacheLister(namespace).k8sreferencegrantLister.ReferenceGrants(namespace).Get(name)
@@ -1652,7 +1652,7 @@ func (c *kubeCache) GetK8sReferenceGrants(namespace, labelSelector string) ([]*g
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	if !c.IsK8sGatewayListerInit(namespace) {
+	if !c.isK8sGatewayListerInit(namespace) {
 		return nil, nil
 	}
 	k8sReferenceGrants := []*gatewayapi_v1beta1.ReferenceGrant{}
