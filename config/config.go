@@ -118,7 +118,7 @@ type Cluster struct {
 	Name string `yaml:"name,omitempty"`
 
 	// SecretName is the name of the secret that contains the credentials necessary to connect to the remote cluster.
-	// This secret must exist in the Kiali deployment namespace. If not secret name is provided, then it's
+	// This secret must exist in the Kiali deployment namespace. If no secret name is provided, then it's
 	// assumed that this cluster is inaccessible.
 	SecretName string `yaml:"secret_name,omitempty"`
 }
