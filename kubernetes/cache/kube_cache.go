@@ -47,6 +47,8 @@ func checkIstioAPIsExist(client kubernetes.ClientInterface) error {
 	return nil
 }
 
+const K8sGatewayAPIMessage = "k8s Gateway API CRDs are installed, Kiali needs to be restarted to apply"
+
 type KubeCache interface {
 	// Refresh will recreate the necessary cache. If the cache is cluster-scoped the "namespace" argument
 	// is ignored and the whole cache is recreated, otherwise only the namespace-specific cache is updated.
@@ -1469,7 +1471,7 @@ func (c *kubeCache) isK8sGatewayListerInit(namespace string) bool {
 	// if one of them is not initialized, then all others are not init as well
 	// this can happen when CRDs are created after Kiali start
 	if c.getCacheLister(namespace).k8sgatewayLister == nil {
-		log.Info("K8s Gateway API CRDs are installed, Kiali needs to be restarted to apply.")
+		log.Info(K8sGatewayAPIMessage)
 		return false
 	}
 	return true
@@ -1484,7 +1486,7 @@ func (c *kubeCache) GetK8sGateway(namespace, name string) (*gatewayapi_v1.Gatewa
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 	if !c.isK8sGatewayListerInit(namespace) {
-		return nil, nil
+		return nil, errors.New(K8sGatewayAPIMessage)
 	}
 	g, err := c.getCacheLister(namespace).k8sgatewayLister.Gateways(namespace).Get(name)
 	if err != nil {
@@ -1506,14 +1508,14 @@ func (c *kubeCache) GetK8sGateways(namespace, labelSelector string) ([]*gatewaya
 		return nil, err
 	}
 
+	k8sGateways := []*gatewayapi_v1.Gateway{}
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 	if !c.isK8sGatewayListerInit(namespace) {
-		return nil, nil
+		return k8sGateways, nil
 	}
-	k8sGateways := []*gatewayapi_v1.Gateway{}
 	if namespace == metav1.NamespaceAll {
 		if c.clusterScoped {
 			k8sGateways, err = c.clusterCacheLister.k8sgatewayLister.List(selector)
@@ -1555,7 +1557,7 @@ func (c *kubeCache) GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1.HTTP
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 	if !c.isK8sGatewayListerInit(namespace) {
-		return nil, nil
+		return nil, errors.New(K8sGatewayAPIMessage)
 	}
 	g, err := c.getCacheLister(namespace).k8shttprouteLister.HTTPRoutes(namespace).Get(name)
 	if err != nil {
@@ -1576,15 +1578,14 @@ func (c *kubeCache) GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewa
 	if err != nil {
 		return nil, err
 	}
-
+	k8sHTTPRoutes := []*gatewayapi_v1.HTTPRoute{}
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 	if !c.isK8sGatewayListerInit(namespace) {
-		return nil, nil
+		return k8sHTTPRoutes, nil
 	}
-	k8sHTTPRoutes := []*gatewayapi_v1.HTTPRoute{}
 	if namespace == metav1.NamespaceAll {
 		if c.clusterScoped {
 			k8sHTTPRoutes, err = c.clusterCacheLister.k8shttprouteLister.List(selector)
@@ -1626,7 +1627,7 @@ func (c *kubeCache) GetK8sReferenceGrant(namespace, name string) (*gatewayapi_v1
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 	if !c.isK8sGatewayListerInit(namespace) {
-		return nil, nil
+		return nil, errors.New(K8sGatewayAPIMessage)
 	}
 	g, err := c.getCacheLister(namespace).k8sreferencegrantLister.ReferenceGrants(namespace).Get(name)
 	if err != nil {
@@ -1647,15 +1648,14 @@ func (c *kubeCache) GetK8sReferenceGrants(namespace, labelSelector string) ([]*g
 	if err != nil {
 		return nil, err
 	}
-
+	k8sReferenceGrants := []*gatewayapi_v1beta1.ReferenceGrant{}
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 	if !c.isK8sGatewayListerInit(namespace) {
-		return nil, nil
+		return k8sReferenceGrants, nil
 	}
-	k8sReferenceGrants := []*gatewayapi_v1beta1.ReferenceGrant{}
 	if namespace == metav1.NamespaceAll {
 		if c.clusterScoped {
 			k8sReferenceGrants, err = c.clusterCacheLister.k8sreferencegrantLister.List(selector)
