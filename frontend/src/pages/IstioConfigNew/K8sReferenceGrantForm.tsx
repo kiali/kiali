@@ -21,7 +21,7 @@ export const TO_KINDS = {
   Secret: ''
 };
 
-type ReduxProps = {
+type ReduxStateProps = {
   namespaces: Namespace[];
 };
 
