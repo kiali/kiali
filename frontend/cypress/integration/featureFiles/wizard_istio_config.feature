@@ -58,6 +58,9 @@ Feature: Kiali Istio Config wizard
     And user clicks in the "K8sReferenceGrant" Istio config actions
     And user sees the "Create K8sReferenceGrant" config wizard
     And user types "k8srefgrant" in the "name" input
+    And user chooses "Gateway" mode from the "ReferenceGrantFromKind" select
+    And user chooses "Secret" mode from the "ReferenceGrantToKind" select
+    And user chooses "istio-system" mode from the "ReferenceGrantFromNamespace" select
     And user previews the configuration
     And user creates the istio config
     Then the "K8sReferenceGrant" "k8srefgrant" should be listed in "bookinfo" namespace

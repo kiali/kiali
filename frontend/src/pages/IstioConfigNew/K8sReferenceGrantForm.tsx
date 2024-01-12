@@ -8,8 +8,8 @@ import { KialiDispatch } from '../../types/Redux';
 import { NamespaceThunkActions } from '../../actions/NamespaceThunkActions';
 import { connect } from 'react-redux';
 
-export const K8SREFERENCEGRANT = 'K8sReferenceGrant';
-export const K8SREFERENCEGRANTS = 'k8sreferencegrants';
+export const K8S_REFERENCE_GRANT = 'K8sReferenceGrant';
+export const K8S_REFERENCE_GRANTS = 'k8sreferencegrants';
 
 export const FROM_KINDS = {
   HTTPRoute: 'gateway.networking.k8s.io',
@@ -25,12 +25,12 @@ type ReduxProps = {
   namespaces: Namespace[];
 };
 
-type ReduxDispatchProps = {
+type ReduxStateProps = {
   refresh: () => void;
 };
 
 type Props = ReduxProps &
-  ReduxDispatchProps & {
+  ReduxStateProps & {
     k8sReferenceGrant: K8sReferenceGrantState;
     onChange: (k8sReferenceGrant: K8sReferenceGrantState) => void;
   };
@@ -100,8 +100,8 @@ export class K8sReferenceGrantFormComponent extends React.Component<Props, K8sRe
           <FormSelect
             value={this.state.from[0].namespace}
             onChange={this.onChangeReferenceGrantFromNamespace}
-            id="ReferenceGrantClass"
-            name="ReferenceGrantClass"
+            id="ReferenceGrantFromNamespace"
+            name="ReferenceGrantFromNamespace"
           >
             {this.props.namespaces.map((option, index) => (
               <FormSelectOption key={index} value={option.name} label={option.name} />
@@ -143,7 +143,7 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => {
   };
 };
 
-const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxStateProps => {
   return {
     refresh: () => {
       dispatch(NamespaceThunkActions.fetchNamespacesIfNeeded());

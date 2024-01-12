@@ -28,8 +28,8 @@ import {
 } from './K8sGatewayForm';
 import {
   K8sReferenceGrantForm,
-  K8SREFERENCEGRANT,
-  K8SREFERENCEGRANTS,
+  K8S_REFERENCE_GRANT,
+  K8S_REFERENCE_GRANTS,
   K8sReferenceGrantState,
   initK8sReferenceGrant,
   isK8sReferenceGrantStateValid
@@ -145,7 +145,7 @@ const DIC = {
   AuthorizationPolicy: AUTHORIZATION_POLICIES,
   Gateway: GATEWAYS,
   K8sGateway: K8SGATEWAYS,
-  K8sReferenceGrant: K8SREFERENCEGRANTS,
+  K8sReferenceGrant: K8S_REFERENCE_GRANTS,
   PeerAuthentication: PEER_AUTHENTICATIONS,
   RequestAuthentication: REQUEST_AUTHENTICATIONS,
   ServiceEntry: SERVICE_ENTRIES,
@@ -157,7 +157,7 @@ export const NEW_ISTIO_RESOURCE = [
   { value: AUTHORIZACION_POLICY, label: AUTHORIZACION_POLICY, disabled: false },
   { value: GATEWAY, label: GATEWAY, disabled: false },
   { value: K8SGATEWAY, label: K8SGATEWAY, disabled: false },
-  { value: K8SREFERENCEGRANT, label: K8SREFERENCEGRANT, disabled: false },
+  { value: K8S_REFERENCE_GRANT, label: K8S_REFERENCE_GRANT, disabled: false },
   { value: PEER_AUTHENTICATION, label: PEER_AUTHENTICATION, disabled: false },
   { value: REQUEST_AUTHENTICATION, label: REQUEST_AUTHENTICATION, disabled: false },
   { value: SERVICE_ENTRY, label: SERVICE_ENTRY, disabled: false },
@@ -401,7 +401,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
             ]
           });
           break;
-        case K8SREFERENCEGRANT:
+        case K8S_REFERENCE_GRANT:
           items.push({
             title: 'K8sReferenceGrant',
             type: 'k8sReferenceGrant',
@@ -491,7 +491,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
         return isGatewayStateValid(this.state.gateway);
       case K8SGATEWAY:
         return isK8sGatewayStateValid(this.state.k8sGateway);
-      case K8SREFERENCEGRANT:
+      case K8S_REFERENCE_GRANT:
         return isK8sReferenceGrantStateValid(this.state.k8sReferenceGrant);
       case PEER_AUTHENTICATION:
         return isPeerAuthenticationStateValid(this.state.peerAuthentication);
@@ -653,7 +653,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
             {this.props.objectType === K8SGATEWAY && (
               <K8sGatewayForm k8sGateway={this.state.k8sGateway} onChange={this.onChangeK8sGateway} />
             )}
-            {this.props.objectType === K8SREFERENCEGRANT && (
+            {this.props.objectType === K8S_REFERENCE_GRANT && (
               <K8sReferenceGrantForm
                 k8sReferenceGrant={this.state.k8sReferenceGrant}
                 onChange={this.onChangeK8sReferenceGrant}
