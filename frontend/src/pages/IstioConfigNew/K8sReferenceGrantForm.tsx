@@ -137,7 +137,7 @@ export class K8sReferenceGrantFormComponent extends React.Component<Props, K8sRe
   }
 }
 
-const mapStateToProps = (state: KialiAppState): ReduxProps => {
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
   return {
     namespaces: namespaceItemsSelector(state)!
   };
