@@ -120,6 +120,7 @@ var newNetworkingConfigTypes = []string{
 // gateway.networking.k8s.io
 var newK8sNetworkingConfigTypes = []string{
 	kubernetes.K8sGateways,
+	kubernetes.K8sReferenceGrants,
 }
 
 // security.istio.io

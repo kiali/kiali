@@ -51,6 +51,20 @@ Feature: Kiali Istio Config wizard
     And user creates the istio config
     Then the "K8sGateway" "k8sapigateway" should be listed in "bookinfo" namespace
 
+  @gateway-api
+  @bookinfo-app
+  Scenario: Create a K8s Reference Grant scenario
+    When user deletes k8sreferencegrant named "k8srefgrant" and the resource is no longer available
+    And user clicks in the "K8sReferenceGrant" Istio config actions
+    And user sees the "Create K8sReferenceGrant" config wizard
+    And user types "k8srefgrant" in the "name" input
+    And user chooses "Gateway" mode from the "ReferenceGrantFromKind" select
+    And user chooses "Secret" mode from the "ReferenceGrantToKind" select
+    And user chooses "istio-system" mode from the "ReferenceGrantFromNamespace" select
+    And user previews the configuration
+    And user creates the istio config
+    Then the "K8sReferenceGrant" "k8srefgrant" should be listed in "bookinfo" namespace
+
   @bookinfo-app
   Scenario: Try to create a Gateway with no name
     When user clicks in the "Gateway" Istio config actions

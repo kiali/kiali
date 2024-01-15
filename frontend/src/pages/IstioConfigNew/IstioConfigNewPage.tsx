@@ -26,6 +26,14 @@ import {
   initK8sGateway,
   isK8sGatewayStateValid
 } from './K8sGatewayForm';
+import {
+  K8sReferenceGrantForm,
+  K8S_REFERENCE_GRANT,
+  K8S_REFERENCE_GRANTS,
+  K8sReferenceGrantState,
+  initK8sReferenceGrant,
+  isK8sReferenceGrantStateValid
+} from './K8sReferenceGrantForm';
 import { SidecarForm, initSidecar, isSidecarStateValid, SIDECAR, SIDECARS, SidecarState } from './SidecarForm';
 import { Paths, serverConfig } from '../../config';
 import { KialiIcon } from '../../config/KialiIcon';
@@ -38,6 +46,7 @@ import {
   buildAuthorizationPolicy,
   buildGateway,
   buildK8sGateway,
+  buildK8sReferenceGrant,
   buildPeerAuthentication,
   buildRequestAuthentication,
   buildServiceEntry,
@@ -85,28 +94,32 @@ import { NamespaceDropdown } from '../../components/NamespaceDropdown';
 import { Labels } from '../../components/Label/Labels';
 import { WizardLabels } from '../../components/IstioWizards/WizardLabels';
 
-type Props = {
-  objectType: string;
-  activeNamespaces: Namespace[];
+type ReduxProps = {
   activeClusters: MeshCluster[];
+  activeNamespaces: Namespace[];
   namespacesPerCluster?: Map<string, string[]>;
+};
+
+type Props = ReduxProps & {
+  objectType: string;
 };
 
 type State = {
   annotations: { [key: string]: string };
-  name: string;
-  labels: { [key: string]: string };
-  showAnnotationsWizard: boolean;
-  showLabelsWizard: boolean;
-  showPreview: boolean;
-  itemsPreview: ConfigPreviewItem[];
-  istioPermissions: IstioPermissions;
   authorizationPolicy: AuthorizationPolicyState;
   gateway: GatewayState;
+  istioPermissions: IstioPermissions;
+  itemsPreview: ConfigPreviewItem[];
   k8sGateway: K8sGatewayState;
+  k8sReferenceGrant: K8sReferenceGrantState;
+  labels: { [key: string]: string };
+  name: string;
   peerAuthentication: PeerAuthenticationState;
   requestAuthentication: RequestAuthenticationState;
   serviceEntry: ServiceEntryState;
+  showAnnotationsWizard: boolean;
+  showLabelsWizard: boolean;
+  showPreview: boolean;
   sidecar: SidecarState;
 };
 
@@ -132,6 +145,7 @@ const DIC = {
   AuthorizationPolicy: AUTHORIZATION_POLICIES,
   Gateway: GATEWAYS,
   K8sGateway: K8SGATEWAYS,
+  K8sReferenceGrant: K8S_REFERENCE_GRANTS,
   PeerAuthentication: PEER_AUTHENTICATIONS,
   RequestAuthentication: REQUEST_AUTHENTICATIONS,
   ServiceEntry: SERVICE_ENTRIES,
@@ -143,6 +157,7 @@ export const NEW_ISTIO_RESOURCE = [
   { value: AUTHORIZACION_POLICY, label: AUTHORIZACION_POLICY, disabled: false },
   { value: GATEWAY, label: GATEWAY, disabled: false },
   { value: K8SGATEWAY, label: K8SGATEWAY, disabled: false },
+  { value: K8S_REFERENCE_GRANT, label: K8S_REFERENCE_GRANT, disabled: false },
   { value: PEER_AUTHENTICATION, label: PEER_AUTHENTICATION, disabled: false },
   { value: REQUEST_AUTHENTICATION, label: REQUEST_AUTHENTICATION, disabled: false },
   { value: SERVICE_ENTRY, label: SERVICE_ENTRY, disabled: false },
@@ -161,11 +176,12 @@ const initState = (): State => ({
   authorizationPolicy: initAuthorizationPolicy(),
   gateway: initGateway(),
   k8sGateway: initK8sGateway(),
+  k8sReferenceGrant: initK8sReferenceGrant(),
   peerAuthentication: initPeerAuthentication(),
   requestAuthentication: initRequestAuthentication(),
   serviceEntry: initServiceEntry(),
   // Init with the istio-system/* for sidecar
-  sidecar: initSidecar(serverConfig.istioNamespace + '/*')
+  sidecar: initSidecar(`${serverConfig.istioNamespace}/*`)
 });
 
 class IstioConfigNewPageComponent extends React.Component<Props, State> {
@@ -176,17 +192,17 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     this.state = initState();
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     this.promises.cancelAll();
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     // Init component state
     this.setState(Object.assign({}, initState));
     this.fetchPermissions();
   }
 
-  componentDidUpdate(prevProps: Props, _prevState: State) {
+  componentDidUpdate(prevProps: Props, _prevState: State): void {
     if (
       prevProps.activeNamespaces !== this.props.activeNamespaces ||
       prevProps.activeClusters !== this.props.activeClusters
@@ -211,7 +227,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     );
   };
 
-  fetchPermissions = () => {
+  fetchPermissions = (): void => {
     if (this.props.activeClusters.length > 0) {
       this.props.activeClusters.forEach(cluster => {
         this.fetchPermissionsForCluster(cluster.name);
@@ -221,11 +237,11 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     }
   };
 
-  fetchPermissionsForCluster = (cluster?: string) => {
+  fetchPermissionsForCluster = (cluster?: string): void => {
     if (this.props.activeNamespaces.length > 0) {
       this.promises
         .register(
-          'permissions' + cluster,
+          `permissions${cluster}`,
           API.getIstioPermissions(
             this.props.activeNamespaces.map(n => n.name),
             cluster
@@ -240,13 +256,13 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
               this.props.activeNamespaces.forEach(ns => {
                 if (!this.canCreate(ns.name)) {
                   AlertUtils.addWarning(
-                    'User does not have permission to create Istio Config on namespace: ' +
-                      ns.name +
-                      (cluster ? ' in cluster ' + cluster : '')
+                    `User does not have permission to create Istio Config on namespace: ${ns.name}${
+                      cluster ? ` in cluster ${cluster}` : ''
+                    }`
                   );
                 }
                 if (cluster && !this.isNamespaceInCluster(ns.name, cluster)) {
-                  AlertUtils.addInfo('Namespace: ' + ns.name + ' is not found in cluster ' + cluster);
+                  AlertUtils.addInfo(`Namespace: ${ns.name} is not found in cluster ${cluster}`);
                 }
               });
             }
@@ -261,7 +277,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     }
   };
 
-  onNameChange = (_event, value) => {
+  onNameChange = (_event, value): void => {
     this.setState({
       name: value
     });
@@ -293,7 +309,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     });
   };
 
-  onIstioResourceCreate = () => {
+  onIstioResourceCreate = (): void => {
     if (this.props.activeClusters.length > 0) {
       this.props.activeClusters.forEach(cluster => {
         this.onIstioResourceCreateForCluster(cluster.name);
@@ -303,10 +319,10 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     }
   };
 
-  onIstioResourceCreateForCluster = async (cluster?: string) => {
-    const jsonIstioObjects: { namespace: string; json: string }[] = this.state.itemsPreview.map(item => ({
-      namespace: item.items[0].metadata.namespace || '',
-      json: JSON.stringify(item.items[0])
+  onIstioResourceCreateForCluster = async (cluster?: string): Promise<void> => {
+    const jsonIstioObjects: { json: string; namespace: string }[] = this.state.itemsPreview.map(item => ({
+      json: JSON.stringify(item.items[0]),
+      namespace: item.items[0].metadata.namespace || ''
     }));
     let err = 0;
     await Promise.all(
@@ -320,10 +336,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
               API.getErrorString(error).includes('the server could not find the requested resource')
             ) {
               AlertUtils.addError(
-                'Could not create Istio ' +
-                  this.props.objectType +
-                  ' objects' +
-                  (cluster ? ' in cluster ' + cluster + '.' : '.'),
+                `Could not create Istio ${this.props.objectType} objects${cluster ? ` in cluster ${cluster}.` : '.'}`,
                 error
               );
               err++;
@@ -333,7 +346,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     ).then(results => {
       if (results.filter(value => value !== undefined).length > 0) {
         AlertUtils.add(
-          'Istio ' + this.props.objectType + ' created' + (cluster ? ' in cluster ' + cluster : ''),
+          `Istio ${this.props.objectType} created${cluster ? ` in cluster ${cluster}` : ''}`,
           'default',
           MessageType.SUCCESS
         );
@@ -345,7 +358,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     }
   };
 
-  showPreview = () => {
+  showPreview = (): void => {
     const items: ConfigPreviewItem[] = [];
     this.props.activeNamespaces.forEach(ns => {
       switch (this.props.objectType) {
@@ -384,6 +397,21 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
                 this.state.name,
                 ns.name,
                 this.state.k8sGateway
+              )
+            ]
+          });
+          break;
+        case K8S_REFERENCE_GRANT:
+          items.push({
+            title: 'K8sReferenceGrant',
+            type: 'k8sReferenceGrant',
+            items: [
+              buildK8sReferenceGrant(
+                this.state.annotations,
+                this.state.labels,
+                this.state.name,
+                ns.name,
+                this.state.k8sReferenceGrant
               )
             ]
           });
@@ -448,7 +476,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     //this.onIstioResourceCreate()
   };
 
-  backToList = () => {
+  backToList = (): void => {
     this.setState(initState(), () => {
       // Back to list page
       history.push(`/${Paths.ISTIO}?namespaces=${this.props.activeNamespaces.map(n => n.name).join(',')}`);
@@ -463,6 +491,8 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
         return isGatewayStateValid(this.state.gateway);
       case K8SGATEWAY:
         return isK8sGatewayStateValid(this.state.k8sGateway);
+      case K8S_REFERENCE_GRANT:
+        return isK8sReferenceGrantStateValid(this.state.k8sReferenceGrant);
       case PEER_AUTHENTICATION:
         return isPeerAuthenticationStateValid(this.state.peerAuthentication);
       case REQUEST_AUTHENTICATION:
@@ -476,7 +506,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     }
   };
 
-  onChangeAuthorizationPolicy = (authorizationPolicy: AuthorizationPolicyState) => {
+  onChangeAuthorizationPolicy = (authorizationPolicy: AuthorizationPolicyState): void => {
     this.setState(prevState => {
       Object.keys(prevState.authorizationPolicy).forEach(
         key => (prevState.authorizationPolicy[key] = authorizationPolicy[key])
@@ -487,7 +517,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     });
   };
 
-  onChangeGateway = (gateway: GatewayState) => {
+  onChangeGateway = (gateway: GatewayState): void => {
     this.setState(prevState => {
       Object.keys(prevState.gateway).forEach(key => (prevState.gateway[key] = gateway[key]));
       return {
@@ -496,7 +526,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     });
   };
 
-  onChangeK8sGateway = (k8sGateway: K8sGatewayState) => {
+  onChangeK8sGateway = (k8sGateway: K8sGatewayState): void => {
     this.setState(prevState => {
       Object.keys(prevState.k8sGateway).forEach(key => (prevState.k8sGateway[key] = k8sGateway[key]));
       return {
@@ -505,7 +535,18 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     });
   };
 
-  onChangePeerAuthentication = (peerAuthentication: PeerAuthenticationState) => {
+  onChangeK8sReferenceGrant = (k8sReferenceGrant: K8sReferenceGrantState): void => {
+    this.setState(prevState => {
+      Object.keys(prevState.k8sReferenceGrant).forEach(
+        key => (prevState.k8sReferenceGrant[key] = k8sReferenceGrant[key])
+      );
+      return {
+        k8sReferenceGrant: prevState.k8sReferenceGrant
+      };
+    });
+  };
+
+  onChangePeerAuthentication = (peerAuthentication: PeerAuthenticationState): void => {
     this.setState(prevState => {
       Object.keys(prevState.peerAuthentication).forEach(
         key => (prevState.peerAuthentication[key] = peerAuthentication[key])
@@ -516,7 +557,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     });
   };
 
-  onChangeRequestAuthentication = (requestAuthentication: RequestAuthenticationState) => {
+  onChangeRequestAuthentication = (requestAuthentication: RequestAuthenticationState): void => {
     this.setState(prevState => {
       Object.keys(prevState.requestAuthentication).forEach(
         key => (prevState.requestAuthentication[key] = requestAuthentication[key])
@@ -527,7 +568,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     });
   };
 
-  onChangeServiceEntry = (serviceEntry: ServiceEntryState) => {
+  onChangeServiceEntry = (serviceEntry: ServiceEntryState): void => {
     this.setState(prevState => {
       Object.keys(prevState.serviceEntry).forEach(key => (prevState.serviceEntry[key] = serviceEntry[key]));
       return {
@@ -536,7 +577,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     });
   };
 
-  onChangeSidecar = (sidecar: SidecarState) => {
+  onChangeSidecar = (sidecar: SidecarState): void => {
     this.setState(prevState => {
       Object.keys(prevState.sidecar).forEach(key => (prevState.sidecar[key] = sidecar[key]));
       return {
@@ -545,7 +586,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     });
   };
 
-  render() {
+  render(): React.ReactNode {
     const canCreate = this.props.activeNamespaces.every(ns => this.canCreate(ns.name));
     const isNameValid = isValidK8SName(this.state.name);
     const isNamespacesValid = this.props.activeNamespaces.length > 0;
@@ -611,6 +652,12 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
             )}
             {this.props.objectType === K8SGATEWAY && (
               <K8sGatewayForm k8sGateway={this.state.k8sGateway} onChange={this.onChangeK8sGateway} />
+            )}
+            {this.props.objectType === K8S_REFERENCE_GRANT && (
+              <K8sReferenceGrantForm
+                k8sReferenceGrant={this.state.k8sReferenceGrant}
+                onChange={this.onChangeK8sReferenceGrant}
+              />
             )}
             {this.props.objectType === PEER_AUTHENTICATION && (
               <PeerAuthenticationForm
@@ -710,7 +757,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
   }
 }
 
-const mapStateToProps = (state: KialiAppState) => {
+const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {
     activeClusters: activeClustersSelector(state),
     activeNamespaces: activeNamespacesSelector(state),
