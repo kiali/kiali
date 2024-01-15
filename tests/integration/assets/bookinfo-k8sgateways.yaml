@@ -51,3 +51,57 @@ spec:
   to:
     - group: ""
       kind: Service
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: GRPCRoute
+metadata:
+  name: grpc
+  namespace: bookinfo
+spec:
+  parentRefs:
+    - name: gatewayapi
+      namespace: bookinfo
+  hostnames: ["first.domain.example", "another.domain.example"]
+  rules:
+    - matches:
+        - method:
+            service: "foo"
+          headers:
+            - name: my-header
+              value: some-value
+              type: Exact
+      filters:
+        - type: RequestHeaderModifier
+          requestHeaderModifier:
+            add:
+              - name: my-added-header
+                value: added-value
+            remove: [my-removed-header]
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: tcp
+  namespace: bookinfo
+spec:
+  parentRefs:
+    - name: gatewayapi
+      namespace: bookinfo
+  rules:
+    - backendRefs:
+        - name: httpbin
+          port: 9090
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: tls
+  namespace: bookinfo
+spec:
+  parentRefs:
+    - name: gatewayapi
+      namespace: bookinfo
+  rules:
+    - backendRefs:
+        - name: httpbin
+          port: 443

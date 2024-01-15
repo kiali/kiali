@@ -7,6 +7,7 @@ import (
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 	"istio.io/client-go/pkg/apis/telemetry/v1alpha1"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
+	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 )
 
@@ -31,8 +32,11 @@ type IstioConfigList struct {
 	Telemetries      []*v1alpha1.Telemetry                 `json:"telemetries"`
 
 	K8sGateways        []*k8s_networking_v1.Gateway             `json:"k8sGateways"`
+	K8sGRPCRoutes      []*k8s_networking_v1alpha2.GRPCRoute     `json:"k8sGRPCRoutes"`
 	K8sHTTPRoutes      []*k8s_networking_v1.HTTPRoute           `json:"k8sHTTPRoutes"`
 	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant `json:"k8sReferenceGrants"`
+	K8sTCPRoutes       []*k8s_networking_v1alpha2.TCPRoute      `json:"k8sTCPRoutes"`
+	K8sTLSRoutes       []*k8s_networking_v1alpha2.TLSRoute      `json:"k8sTLSRoutes"`
 
 	AuthorizationPolicies  []*security_v1beta.AuthorizationPolicy   `json:"authorizationPolicies"`
 	PeerAuthentications    []*security_v1beta.PeerAuthentication    `json:"peerAuthentications"`
@@ -62,8 +66,11 @@ type IstioConfigDetails struct {
 	Telemetry             *v1alpha1.Telemetry                    `json:"telemetry"`
 
 	K8sGateway        *k8s_networking_v1.Gateway             `json:"k8sGateway"`
+	K8sGRPCRoute      *k8s_networking_v1alpha2.GRPCRoute     `json:"k8sGRPCRoute"`
 	K8sHTTPRoute      *k8s_networking_v1.HTTPRoute           `json:"k8sHTTPRoute"`
 	K8sReferenceGrant *k8s_networking_v1beta1.ReferenceGrant `json:"k8sReferenceGrant"`
+	K8sTCPRoute       *k8s_networking_v1alpha2.TCPRoute      `json:"k8sTCPRoute"`
+	K8sTLSRoute       *k8s_networking_v1alpha2.TLSRoute      `json:"k8sTLSRoute"`
 
 	Permissions           ResourcePermissions `json:"permissions"`
 	IstioValidation       *IstioValidation    `json:"validation"`
@@ -171,6 +178,9 @@ var IstioConfigHelpMessages = map[string][]IstioConfigHelp{
 		{ObjectField: "spec.listeners", Message: "Define the hostnames, ports, protocol, termination, TLS settings and which routes can be attached to a listener."},
 		{ObjectField: "spec.addresses", Message: "Define the network addresses requested for this gateway."},
 	},
+	"k8sgrpcroutes": {
+		{ObjectField: "", Message: "Kubernetes Gateway API Configuration Object. GRPCRoute provides a way to route gRPC requests"},
+	},
 	"k8shttproutes": { // TODO
 		{ObjectField: "", Message: "Kubernetes Gateway API Configuration Object. HTTPRoute is for multiplexing HTTP or terminated HTTPS connections."},
 	},
@@ -178,6 +188,12 @@ var IstioConfigHelpMessages = map[string][]IstioConfigHelp{
 		{ObjectField: "spec", Message: "Kubernetes Gateway API Configuration Object. ReferenceGrant is for enabling cross namespace references within Gateway API."},
 		{ObjectField: "spec.from", Message: "Define the group, kind, and namespace of resources that may reference items described in the to list."},
 		{ObjectField: "spec.to", Message: "Define the group and kind of resources that may be referenced by items described in the from list."},
+	},
+	"k8stcproutes": {
+		{ObjectField: "", Message: "Kubernetes Gateway API Configuration Object. TCPRoute provides a way to route TCP requests"},
+	},
+	"k8stlsroutes": {
+		{ObjectField: "", Message: "Kubernetes Gateway API Configuration Object. TLSRoute provides a way to route TLS requests"},
 	},
 	"internal": {
 		{ObjectField: "", Message: "Internal resources are not editable"},
@@ -214,8 +230,11 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 			filtered[ns].EnvoyFilters = []*networking_v1alpha3.EnvoyFilter{}
 			filtered[ns].Gateways = []*networking_v1beta1.Gateway{}
 			filtered[ns].K8sGateways = []*k8s_networking_v1.Gateway{}
+			filtered[ns].K8sGRPCRoutes = []*k8s_networking_v1alpha2.GRPCRoute{}
 			filtered[ns].K8sHTTPRoutes = []*k8s_networking_v1.HTTPRoute{}
 			filtered[ns].K8sReferenceGrants = []*k8s_networking_v1beta1.ReferenceGrant{}
+			filtered[ns].K8sTCPRoutes = []*k8s_networking_v1alpha2.TCPRoute{}
+			filtered[ns].K8sTLSRoutes = []*k8s_networking_v1alpha2.TLSRoute{}
 			filtered[ns].VirtualServices = []*networking_v1beta1.VirtualService{}
 			filtered[ns].ServiceEntries = []*networking_v1beta1.ServiceEntry{}
 			filtered[ns].Sidecars = []*networking_v1beta1.Sidecar{}
@@ -251,6 +270,12 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 			}
 		}
 
+		for _, route := range configList.K8sGRPCRoutes {
+			if route.Namespace == ns {
+				filtered[ns].K8sGRPCRoutes = append(filtered[ns].K8sGRPCRoutes, route)
+			}
+		}
+
 		for _, route := range configList.K8sHTTPRoutes {
 			if route.Namespace == ns {
 				filtered[ns].K8sHTTPRoutes = append(filtered[ns].K8sHTTPRoutes, route)
@@ -260,6 +285,18 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 		for _, rg := range configList.K8sReferenceGrants {
 			if rg.Namespace == ns {
 				filtered[ns].K8sReferenceGrants = append(filtered[ns].K8sReferenceGrants, rg)
+			}
+		}
+
+		for _, route := range configList.K8sTCPRoutes {
+			if route.Namespace == ns {
+				filtered[ns].K8sTCPRoutes = append(filtered[ns].K8sTCPRoutes, route)
+			}
+		}
+
+		for _, route := range configList.K8sTLSRoutes {
+			if route.Namespace == ns {
+				filtered[ns].K8sTLSRoutes = append(filtered[ns].K8sTLSRoutes, route)
 			}
 		}
 
@@ -338,8 +375,11 @@ func (configList IstioConfigList) MergeConfigs(ns IstioConfigList) IstioConfigLi
 	configList.Gateways = append(configList.Gateways, ns.Gateways...)
 	configList.AuthorizationPolicies = append(configList.AuthorizationPolicies, ns.AuthorizationPolicies...)
 	configList.K8sGateways = append(configList.K8sGateways, ns.K8sGateways...)
+	configList.K8sGRPCRoutes = append(configList.K8sGRPCRoutes, ns.K8sGRPCRoutes...)
 	configList.K8sHTTPRoutes = append(configList.K8sHTTPRoutes, ns.K8sHTTPRoutes...)
 	configList.K8sReferenceGrants = append(configList.K8sReferenceGrants, ns.K8sReferenceGrants...)
+	configList.K8sTCPRoutes = append(configList.K8sTCPRoutes, ns.K8sTCPRoutes...)
+	configList.K8sTLSRoutes = append(configList.K8sTLSRoutes, ns.K8sTLSRoutes...)
 	configList.PeerAuthentications = append(configList.PeerAuthentications, ns.PeerAuthentications...)
 	configList.RequestAuthentications = append(configList.RequestAuthentications, ns.RequestAuthentications...)
 	configList.ServiceEntries = append(configList.ServiceEntries, ns.ServiceEntries...)

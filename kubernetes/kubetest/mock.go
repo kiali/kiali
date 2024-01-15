@@ -93,6 +93,7 @@ var _ kubernetes.ClientInterface = &K8SClientMock{}
 func NewK8SClientMock() *K8SClientMock {
 	k8s := new(K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsExpGatewayAPI").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("IsIstioAPI").Return(true)
 	k8s.On("GetKialiTokenForHomeCluster").Return("")
@@ -131,6 +132,11 @@ func (o *K8SClientMock) MockEmptyWorkload(namespace interface{}, workload interf
 }
 
 func (o *K8SClientMock) IsOpenShift() bool {
+	args := o.Called()
+	return args.Get(0).(bool)
+}
+
+func (o *K8SClientMock) IsExpGatewayAPI() bool {
 	args := o.Called()
 	return args.Get(0).(bool)
 }

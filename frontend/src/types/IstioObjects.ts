@@ -819,16 +819,46 @@ export interface K8sReferenceRule {
   namespace?: string;
 }
 
-export interface K8sHTTPRouteSpec {
-  hostnames?: string[];
+export interface K8sCommonRouteSpec {
   parentRefs?: ParentRef[];
+}
+
+export interface K8sHTTPRouteSpec extends K8sCommonRouteSpec {
+  hostnames?: string[];
   rules?: K8sRouteRule[];
+}
+
+export interface K8sGRPCRouteSpec extends K8sCommonRouteSpec {
+  hostnames?: string[];
+  rules?: K8sGRPCRouteRule[];
+}
+
+export interface K8sTCPRouteSpec extends K8sCommonRouteSpec {
+  rules?: K8sTCPRouteRule[];
+}
+
+export interface K8sTLSRouteSpec extends K8sCommonRouteSpec {
+  hostnames?: string[];
+  rules?: K8sTLSRouteRule[];
 }
 
 export interface K8sRouteRule {
   backendRefs?: K8sRouteBackendRef[];
   filters?: K8sHTTPRouteFilter[];
   matches?: K8sHTTPRouteMatch[];
+}
+
+export interface K8sTCPRouteRule {
+  backendRefs?: K8sRouteBackendRef[];
+}
+
+export interface K8sTLSRouteRule {
+  backendRefs?: K8sRouteBackendRef[];
+}
+
+export interface K8sGRPCRouteRule {
+  backendRefs?: K8sRouteBackendRef[];
+  matches?: K8sGRPCRouteMatch[];
 }
 
 export interface K8sRouteBackendRef {
@@ -870,10 +900,27 @@ export interface K8sHTTPRouteMatch {
   queryParams?: HTTPMatch[];
 }
 
+export interface K8sGRPCRouteMatch {
+  headers?: GRPCHeaderMatch[];
+  method?: GRPCMethodMatch;
+}
+
 export interface HTTPMatch {
   name?: string;
   type?: string;
   value?: string;
+}
+
+export interface GRPCHeaderMatch {
+  name?: string;
+  type?: string;
+  value?: string;
+}
+
+export interface GRPCMethodMatch {
+  method?: string;
+  service?: string;
+  type?: string;
 }
 
 export interface K8sHTTPRoute extends IstioObject {
@@ -882,6 +929,18 @@ export interface K8sHTTPRoute extends IstioObject {
 
 export interface K8sReferenceGrant extends IstioObject {
   spec: K8sReferenceGrantSpec;
+}
+
+export interface K8sGRPCRoute extends IstioObject {
+  spec: K8sGRPCRouteSpec;
+}
+
+export interface K8sTCPRoute extends IstioObject {
+  spec: K8sTCPRouteSpec;
+}
+
+export interface K8sTLSRoute extends IstioObject {
+  spec: K8sTLSRouteSpec;
 }
 
 // Sidecar resource https://preliminary.istio.io/docs/reference/config/networking/v1alpha3/sidecar

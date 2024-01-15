@@ -81,6 +81,11 @@ func assertConfigs(configList kiali.IstioConfigListJson, require *require.Assert
 		require.True(gw.Namespace == configList.Namespace.Name)
 		require.NotNil(gw.Name)
 	}
+	require.NotNil(configList.K8sGRPCRoutes)
+	for _, gw := range configList.K8sGRPCRoutes {
+		require.True(gw.Namespace == configList.Namespace.Name)
+		require.NotNil(gw.Name)
+	}
 	require.NotNil(configList.K8sHTTPRoutes)
 	for _, gw := range configList.K8sHTTPRoutes {
 		require.True(gw.Namespace == configList.Namespace.Name)
@@ -90,6 +95,16 @@ func assertConfigs(configList kiali.IstioConfigListJson, require *require.Assert
 	for _, rg := range configList.K8sReferenceGrants {
 		require.True(rg.Namespace == configList.Namespace.Name)
 		require.NotNil(rg.Name)
+	}
+	require.NotNil(configList.K8sTCPRoutes)
+	for _, route := range configList.K8sTCPRoutes {
+		require.True(route.Namespace == configList.Namespace.Name)
+		require.NotNil(route.Name)
+	}
+	require.NotNil(configList.K8sTLSRoutes)
+	for _, route := range configList.K8sTLSRoutes {
+		require.True(route.Namespace == configList.Namespace.Name)
+		require.NotNil(route.Name)
 	}
 	require.NotNil(configList.RequestAuthentications)
 	for _, ra := range configList.RequestAuthentications {

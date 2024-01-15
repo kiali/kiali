@@ -43,6 +43,7 @@ type ClientInterface interface {
 	GetServerVersion() (*version.Info, error)
 	GetToken() string
 	IsOpenShift() bool
+	IsExpGatewayAPI() bool
 	IsGatewayAPI() bool
 	IsIstioAPI() bool
 	// ClusterInfo returns some information about the cluster this client is connected to.
@@ -68,6 +69,8 @@ type K8SClient struct {
 	// It is represented as a pointer to include the initialization phase.
 	// See kubernetes_service.go#IsOpenShift() for more details.
 	isOpenShift *bool
+	// isExpGatewayAPI will be merged with isGatewayAPI when experimental features get released
+	isExpGatewayAPI *bool
 	// isGatewayAPI private variable will check if K8s Gateway API CRD exists on cluster or not
 	isGatewayAPI *bool
 	gatewayapi   gatewayapiclient.Interface
