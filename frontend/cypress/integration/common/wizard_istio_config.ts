@@ -183,3 +183,15 @@ When('user adds key {string} and value {string} for and saves', (key: string, va
 Then('{string} should be in preview', (value: string) => {
   cy.get('#ace-editor').contains(value);
 });
+
+Then('user selects {string} from the cluster dropdown',(clusters:string)=>{
+  clusters.split(",").forEach((value:string) =>{
+    cy.getBySel('cluster-dropdown').click();
+    cy.get(`input[type="checkbox"][value="${value}"]`).check();
+    cy.getBySel('cluster-dropdown').click();
+  })
+});
+
+Then('the {string} {string} should not be listed in {string} {string} namespace', (type:string, svc:string, cluster:string, ns:string) => {
+  cy.get(`[data-test="VirtualItem_Cluster${cluster}_Ns${ns}_${type.toLowerCase()}_${svc}"]`).should('not.exist');
+})
