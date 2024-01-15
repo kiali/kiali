@@ -38,7 +38,7 @@ import { PFColors } from 'components/Pf/PfColors';
 import { getEdgeHealth } from 'types/ErrorRate/GraphEdgeStatus';
 import { Span } from 'types/TracingInfo';
 import { IconType } from 'config/Icons';
-import { NodeDecorator } from './components/NodeDecorator';
+import { NodeDecorator } from './NodeDecorator';
 
 // Utilities for working with PF Topology
 // - most of these add cytoscape-like functions
@@ -75,9 +75,9 @@ export type NodeData = DecoratedGraphNodeData & {
   showContextMenu?: boolean;
   showStatusDecorator?: boolean;
   statusDecoratorTooltip?: React.ReactNode;
+  truncateLength?: number;
   x?: number;
   y?: number;
-  truncateLength?: number;
 };
 
 export type EdgeData = DecoratedGraphEdgeData & {
@@ -576,7 +576,11 @@ export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap, settings: Grap
   data.tagStatus = getEdgeStatus(data);
 };
 
-export const assignEdgeHealth = (edges: DecoratedGraphEdgeWrapper[], nodeMap: NodeMap, settings: GraphPFSettings) => {
+export const assignEdgeHealth = (
+  edges: DecoratedGraphEdgeWrapper[],
+  nodeMap: NodeMap,
+  settings: GraphPFSettings
+): void => {
   edges?.forEach(edge => {
     const edgeData = edge.data as EdgeData;
 
@@ -610,7 +614,7 @@ export const assignEdgeHealth = (edges: DecoratedGraphEdgeWrapper[], nodeMap: No
 
 ///// PFT helpers
 
-export const elems = (c: Controller): { nodes: Node[]; edges: Edge[] } => {
+export const elems = (c: Controller): { edges: Edge[]; nodes: Node[] } => {
   const elems = c.getElements();
   return {
     nodes: elems.filter(e => isNode(e)) as Node[],
@@ -662,9 +666,9 @@ export type SelectOp =
   | 'falsy'
   | 'truthy';
 export type SelectExp = {
+  op?: SelectOp;
   prop: string;
   val?: any;
-  op?: SelectOp;
 };
 export type SelectAnd = SelectExp[];
 export type SelectOr = SelectAnd[];
