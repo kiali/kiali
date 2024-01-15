@@ -40,7 +40,6 @@ import { serverConfig } from '../../../config';
 type ReduxStateProps = {
   boxByCluster: boolean;
   boxByNamespace: boolean;
-  compressOnHide: boolean;
   edgeLabels: EdgeLabelMode[];
   rankBy: RankMode[];
   showIdleEdges: boolean;
@@ -60,7 +59,6 @@ type ReduxDispatchProps = {
   setRankBy: (rankBy: RankMode[]) => void;
   toggleBoxByCluster(): void;
   toggleBoxByNamespace(): void;
-  toggleCompressOnHide(): void;
   toggleGraphMissingSidecars(): void;
   toggleGraphSecurity(): void;
   toggleGraphVirtualServices(): void;
@@ -141,13 +139,6 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       INITIAL_GRAPH_STATE.toolbarState.boxByNamespace,
       props.boxByNamespace,
       props.toggleBoxByNamespace
-    );
-
-    this.handleURLBool(
-      URLParam.GRAPH_COMPRESS_ON_HIDE,
-      INITIAL_GRAPH_STATE.toolbarState.compressOnHide,
-      props.compressOnHide,
-      props.toggleCompressOnHide
     );
 
     this.handleURLBool(
@@ -260,13 +251,6 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     );
 
     this.alignURLBool(
-      URLParam.GRAPH_COMPRESS_ON_HIDE,
-      INITIAL_GRAPH_STATE.toolbarState.compressOnHide,
-      prev.compressOnHide,
-      this.props.compressOnHide
-    );
-
-    this.alignURLBool(
       URLParam.GRAPH_IDLE_EDGES,
       INITIAL_GRAPH_STATE.toolbarState.showIdleEdges,
       prev.showIdleEdges,
@@ -371,7 +355,6 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     const {
       boxByCluster,
       boxByNamespace,
-      compressOnHide,
       edgeLabels,
       showRank: rank,
       rankBy: rankLabels,
@@ -390,7 +373,6 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     const {
       toggleBoxByCluster,
       toggleBoxByNamespace,
-      toggleCompressOnHide,
       toggleGraphMissingSidecars,
       toggleGraphSecurity,
       toggleGraphVirtualServices,
@@ -560,18 +542,6 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
           <div style={{ textAlign: 'left' }}>
             When enabled and there are multiple namespaces, the graph will box nodes in the same namespace, within the
             same cluster. The "unknown" namespace is never boxed.
-          </div>
-        )
-      },
-      {
-        id: 'filterHide',
-        isChecked: compressOnHide,
-        labelText: 'Compressed Hide',
-        onChange: toggleCompressOnHide,
-        tooltip: (
-          <div style={{ textAlign: 'left' }}>
-            Compress the graph after graph-hide removes matching elements. Otherwise the graph maintains the space
-            consumed by the hidden elements.
           </div>
         )
       },
@@ -1029,7 +999,6 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   boxByCluster: state.graph.toolbarState.boxByCluster,
   boxByNamespace: state.graph.toolbarState.boxByNamespace,
-  compressOnHide: state.graph.toolbarState.compressOnHide,
   edgeLabels: edgeLabelsSelector(state),
   showIdleEdges: state.graph.toolbarState.showIdleEdges,
   showIdleNodes: state.graph.toolbarState.showIdleNodes,
@@ -1051,7 +1020,6 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
     setRankBy: bindActionCreators(GraphToolbarActions.setRankBy, dispatch),
     toggleBoxByCluster: bindActionCreators(GraphToolbarActions.toggleBoxByCluster, dispatch),
     toggleBoxByNamespace: bindActionCreators(GraphToolbarActions.toggleBoxByNamespace, dispatch),
-    toggleCompressOnHide: bindActionCreators(GraphToolbarActions.toggleCompressOnHide, dispatch),
     toggleGraphMissingSidecars: bindActionCreators(GraphToolbarActions.toggleGraphMissingSidecars, dispatch),
     toggleGraphSecurity: bindActionCreators(GraphToolbarActions.toggleGraphSecurity, dispatch),
     toggleGraphVirtualServices: bindActionCreators(GraphToolbarActions.toggleGraphVirtualServices, dispatch),

@@ -52,8 +52,7 @@ export const GraphHelpFind: React.FC<GraphHelpFindProps> = (props: GraphHelpFind
   const preface =
     'You can use the Find and Hide fields to highlight or hide graph edges and nodes. Each field accepts ' +
     'expressions using the language described below. Preset expressions are available via the dropdown. ' +
-    'Hide takes precedence when using Find and Hide together. Uncheck the "Compressed Hide" Display ' +
-    'option for hidden elements to retain their space.';
+    'Hide takes precedence when using Find and Hide together. ';
 
   const edgeColumns: ThProps[] = [{ title: 'Expression' }, { title: 'Notes' }];
 

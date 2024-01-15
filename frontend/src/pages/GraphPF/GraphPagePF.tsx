@@ -107,7 +107,6 @@ type ReduxStateProps = {
   activeTour?: TourInfo;
   boxByCluster: boolean;
   boxByNamespace: boolean;
-  compressOnHide: boolean;
   duration: DurationInSeconds; // current duration (dropdown) setting
   edgeLabels: EdgeLabelMode[];
   edgeMode: EdgeMode;
@@ -729,7 +728,6 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   activeTour: state.tourState.activeTour,
   boxByCluster: state.graph.toolbarState.boxByCluster,
   boxByNamespace: state.graph.toolbarState.boxByNamespace,
-  compressOnHide: state.graph.toolbarState.compressOnHide,
   duration: durationSelector(state),
   edgeLabels: edgeLabelsSelector(state),
   edgeMode: edgeModeSelector(state),
