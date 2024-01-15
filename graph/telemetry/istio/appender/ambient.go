@@ -1,10 +1,8 @@
 package appender
 
 import (
-	"context"
 	"strings"
 
-	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
@@ -33,7 +31,7 @@ func (a AmbientAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *gr
 		return
 	}
 
-	log.Trace("Running hide waypoint entry appender")
+	log.Trace("Running ambient appender")
 
 	if !a.Waypoints {
 		a.removeWaypointEntries(trafficMap, globalInfo, namespaceInfo)
@@ -52,12 +50,9 @@ func (a AmbientAppender) removeWaypointEntries(trafficMap graph.TrafficMap, glob
 			} else {
 				workloadName = n.App
 			}
-			workload, err := globalInfo.Business.Workload.GetWorkload(context.Background(), business.WorkloadCriteria{
-				Cluster:      n.Cluster,
-				Namespace:    n.Namespace,
-				WorkloadName: workloadName})
-			if err != nil {
-				log.Errorf("Error getting workload %s: %s", n.Workload, err.Error())
+			workload, found := getWorkload(n.Cluster, n.Namespace, workloadName, globalInfo)
+			if !found {
+				log.Errorf("Error getting waypoint proxy: Workload %s was not found", n.Workload)
 				continue
 			}
 			for k, l := range workload.Labels {

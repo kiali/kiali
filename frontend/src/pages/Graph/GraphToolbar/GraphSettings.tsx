@@ -164,13 +164,6 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     );
 
     this.handleURLBool(
-      URLParam.GRAPH_WAYPOINTS,
-      INITIAL_GRAPH_STATE.toolbarState.showWaypoints,
-      props.showWaypoints,
-      props.toggleWaypoints
-    );
-
-    this.handleURLBool(
       URLParam.GRAPH_OPERATION_NODES,
       INITIAL_GRAPH_STATE.toolbarState.showOperationNodes,
       props.showOperationNodes,
@@ -189,6 +182,13 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       INITIAL_GRAPH_STATE.toolbarState.showServiceNodes,
       props.showServiceNodes,
       props.toggleServiceNodes
+    );
+
+    this.handleURLBool(
+      URLParam.GRAPH_WAYPOINTS,
+      INITIAL_GRAPH_STATE.toolbarState.showWaypoints,
+      props.showWaypoints,
+      props.toggleWaypoints
     );
   }
 
@@ -672,13 +672,17 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
 
     if (serverConfig.ambientEnabled) {
       visibilityOptions.push({
-        id: 'filterWaypoint',
+        id: 'filterWaypoints',
         isChecked: showWaypoints,
         labelText: 'Waypoint Proxies',
         onChange: toggleWaypoints,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             <div>Show waypoint proxies workloads.</div>
+            <div>
+              When enabled in an Ambient environment, include waypoint proxy telemetry in the graph. Waypoint nodes will
+              show up only if the underlying telemetry is being reported.
+            </div>
           </div>
         )
       });
