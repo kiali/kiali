@@ -11,7 +11,6 @@ Feature: Kiali Istio Config page
     Given user is at administrator perspective
     And user is at the "istio" page
 
-@skip
   Scenario: Try to Create a Gateway without selecting any cluster
     When user deletes gateway named "bookinfo-gateway-mc" and the resource is no longer available in any cluster
     And user selects the "bookinfo" namespace
@@ -20,15 +19,13 @@ Feature: Kiali Istio Config page
     And user types "bookinfo-gateway-mc" in the "name" input
     And user adds a server to a server list
     Then the preview button should be disabled
-    And user types "website.com" in the "hosts0" input
-    And user types "8080" in the "addPortNumber0" input
-    And user types "foobar" in the "addPortName0" input
+    And user types "website.com" in the "hosts_0" input
+    And user types "8080" in the "addPortNumber_0" input
+    And user types "foobar" in the "addPortName_0" input
     Then the preview button should be disabled
 
-  @skip
   Scenario: Try to Create a Gateway in both clusters without Istio CRDs present in the remote cluster 
     When user deletes gateway named "bookinfo-gateway-mc" and the resource is no longer available in any cluster
-    And Istio CRDs are "not" present in the "west" cluster
     And user selects the "bookinfo" namespace
     And user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
@@ -36,9 +33,9 @@ Feature: Kiali Istio Config page
     And user types "bookinfo-gateway-mc" in the "name" input
     And user adds a server to a server list
     Then the preview button should be disabled
-    And user types "website.com" in the "hosts0" input
-    And user types "8080" in the "addPortNumber0" input
-    And user types "foobar" in the "addPortName0" input
+    And user types "website.com" in the "hosts_0" input
+    And user types "8080" in the "addPortNumber_0" input
+    And user types "foobar" in the "addPortName_0" input
     And user previews the configuration
     And user creates the istio config
     Then an error message "Could not create Istio Gateway objects" is displayed
