@@ -30,8 +30,6 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 			// namespace appenders
 			case AggregateNodeAppenderName:
 				requestedAppenders[AggregateNodeAppenderName] = true
-			case AmbientAppenderName:
-				requestedAppenders[AmbientAppenderName] = true
 			case DeadNodeAppenderName:
 				requestedAppenders[DeadNodeAppenderName] = true
 			case IdleNodeAppenderName:
@@ -52,6 +50,8 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 				requestedAppenders[WorkloadEntryAppenderName] = true
 
 			// finalizer appenders
+			case AmbientAppenderName:
+				requestedAppenders[AmbientAppenderName] = true
 			case HealthAppenderName:
 				// currently, because health is still calculated in the client, if requesting health
 				// we also need to run the healthConfig appender.  Eventually, asking for health will supply
@@ -190,6 +190,14 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 		}
 		appenders = append(appenders, a)
 	}
+
+	// The finalizer order is important
+	// always run the outsider finalizer
+	finalizers = append(finalizers, &OutsiderAppender{
+		AccessibleNamespaces: o.AccessibleNamespaces,
+		Namespaces:           o.Namespaces,
+	})
+
 	if _, ok := requestedAppenders[AmbientAppenderName]; ok || o.Appenders.All {
 		waypoints := defaultWaypoints
 		waypointsString := o.Params.Get("waypoints")
@@ -205,13 +213,6 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 		}
 		appenders = append(appenders, a)
 	}
-
-	// The finalizer order is important
-	// always run the outsider finalizer
-	finalizers = append(finalizers, &OutsiderAppender{
-		AccessibleNamespaces: o.AccessibleNamespaces,
-		Namespaces:           o.Namespaces,
-	})
 
 	// if health finalizer is to be run, do it after the outsider finalizer
 	if _, ok := requestedFinalizers[HealthAppenderName]; ok {
