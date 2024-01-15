@@ -43,7 +43,8 @@ const InfoValidation: IconProps = {
 
 const CorrectValidation: IconProps = {
   color: PFColors.Success,
-  icon: CheckCircleIcon
+  icon: CheckCircleIcon,
+  dataTest: 'icon-correct-validation'
 };
 
 const severityToValidation: { [severity: string]: IconProps } = {
@@ -62,9 +63,10 @@ export const Validation: React.FC<ValidationProps> = (props: ValidationProps) =>
   const textStyle = props.messageColor ? severityColor : {};
   const iconStyle = kialiStyle(severityColor);
 
-  const iconProps = {
+  const iconProps: IconProps = {
     className: iconStyle,
-    icon: validation.icon
+    icon: validation.icon,
+    dataTest: validation.dataTest
   };
 
   if (hasMessage) {
