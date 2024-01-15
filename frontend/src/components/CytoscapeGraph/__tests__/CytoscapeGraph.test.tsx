@@ -14,15 +14,15 @@ jest.mock('../../../services/Api');
 
 const testNamespace = 'ISTIO_SYSTEM';
 
-const testClickHandler = () => {
+const testClickHandler = (): void => {
   console.log('click');
 };
 
-const testReadyHandler = () => {
+const testReadyHandler = (): void => {
   console.log('ready');
 };
 
-const testSetHandler = () => {
+const testSetHandler = (): void => {
   console.log('set');
 };
 
@@ -46,6 +46,7 @@ describe('CytoscapeGraph component test', () => {
       showIdleNodes: false,
       showOperationNodes: false,
       showSecurity: true,
+      showWaypoints: false,
       trafficRates: DefaultTrafficRates
     });
 
@@ -72,6 +73,7 @@ describe('CytoscapeGraph component test', () => {
               showIdleNodes: false,
               showOperationNodes: false,
               showSecurity: true,
+              showWaypoints: false,
               trafficRates: DefaultTrafficRates
             },
             timestamp: 0

@@ -93,7 +93,23 @@ export type GraphURLPathProps = {
   workload: string;
 };
 
-type ReduxProps = {
+type ReduxDispatchProps = {
+  endTour: () => void;
+  onNamespaceChange: () => void;
+  onReady: (cytoscapeRef: any) => void;
+  setActiveNamespaces: (namespaces: Namespace[]) => void;
+  setGraphDefinition: (graphDefinition: GraphDefinition) => void;
+  setNode: (node?: NodeParamsType) => void;
+  setRankResult: (result: RankResult) => void;
+  setTraceId: (traceId?: string) => void;
+  setUpdateTime: (val: TimeInMilliseconds) => void;
+  startTour: ({ info, stop }) => void;
+  toggleIdleNodes: () => void;
+  toggleLegend: () => void;
+  updateSummary: (event: GraphEvent) => void;
+};
+
+type ReduxStateProps = {
   activeNamespaces: Namespace[];
   activeTour?: TourInfo;
   boxByCluster: boolean;
@@ -102,29 +118,20 @@ type ReduxProps = {
   duration: DurationInSeconds; // current duration (dropdown) setting
   edgeLabels: EdgeLabelMode[];
   edgeMode: EdgeMode;
-  endTour: () => void;
   findValue: string;
   graphType: GraphType;
   hideValue: string;
-  istioAPIEnabled: boolean;
   isPageVisible: boolean;
+  istioAPIEnabled: boolean;
   kiosk: string;
   layout: Layout;
-  namespaceLayout: Layout;
   mtlsEnabled: boolean;
+  namespaceLayout: Layout;
   node?: NodeParamsType;
-  onNamespaceChange: () => void;
-  onReady: (cytoscapeRef: any) => void;
   rankBy: RankMode[];
   refreshInterval: IntervalInMilliseconds;
   replayActive: boolean;
   replayQueryTime: TimeInMilliseconds;
-  setActiveNamespaces: (namespaces: Namespace[]) => void;
-  setGraphDefinition: (graphDefinition: GraphDefinition) => void;
-  setRankResult: (result: RankResult) => void;
-  setNode: (node?: NodeParamsType) => void;
-  setTraceId: (traceId?: string) => void;
-  setUpdateTime: (val: TimeInMilliseconds) => void;
   showIdleEdges: boolean;
   showIdleNodes: boolean;
   showLegend: boolean;
@@ -135,15 +142,14 @@ type ReduxProps = {
   showServiceNodes: boolean;
   showTrafficAnimation: boolean;
   showVirtualServices: boolean;
-  startTour: ({ info, stop }) => void;
+  showWaypoints: boolean;
   summaryData: SummaryData | null;
+  theme: string;
   trace?: JaegerTrace;
   trafficRates: TrafficRate[];
-  toggleIdleNodes: () => void;
-  toggleLegend: () => void;
-  updateSummary: (event: GraphEvent) => void;
-  theme: string;
 };
+
+type ReduxProps = ReduxStateProps & ReduxDispatchProps;
 
 export type GraphPageProps = Partial<GraphURLPathProps> &
   ReduxProps & {
@@ -155,29 +161,28 @@ export type GraphData = {
   elementsChanged: boolean; // true if current elements differ from previous fetch, can be used as an optimization.
   errorMessage?: string;
   fetchParams: FetchParams;
-  isLoading: boolean;
   isError?: boolean;
+  isLoading: boolean;
   timestamp: TimeInMilliseconds;
 };
 
 type WizardsData = {
-  // Wizard configuration
-  showWizard: boolean;
-  wizardType: string;
-  updateMode: boolean;
-
   // Data (payload) sent to the wizard or the confirm delete dialog
   gateways: string[];
   k8sGateways: string[];
-  peerAuthentications: PeerAuthentication[];
   namespace: string;
+  peerAuthentications: PeerAuthentication[];
   serviceDetails?: ServiceDetailsInfo;
+  // Wizard configuration
+  showWizard: boolean;
+  updateMode: boolean;
+  wizardType: string;
 };
 
 type GraphPageState = {
   graphData: GraphData;
-  wizardsData: WizardsData;
   showConfirmDeleteTrafficRouting: boolean;
+  wizardsData: WizardsData;
 };
 
 const NUMBER_OF_DATAPOINTS = 30;
@@ -228,7 +233,7 @@ const graphLegendStyle = kialiStyle({
   overflow: 'hidden'
 });
 
-const GraphErrorBoundaryFallback = () => {
+const GraphErrorBoundaryFallback = (): React.ReactElement => {
   return (
     <div className={cytoscapeGraphContainerStyle}>
       <EmptyGraphLayout
@@ -347,7 +352,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     // Connect to graph data source updates
     this.graphDataSource.on('loadStart', this.handleGraphDataSourceStart);
     this.graphDataSource.on('fetchError', this.handleGraphDataSourceError);
@@ -373,7 +378,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     }
   }
 
-  componentDidUpdate(prev: GraphPageProps) {
+  componentDidUpdate(prev: GraphPageProps): void {
     const curr = this.props;
 
     // Ensure we initialize the graph. We wait for the first update so that
@@ -411,6 +416,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       prev.showServiceNodes !== curr.showServiceNodes ||
       prev.showSecurity !== curr.showSecurity ||
       prev.showIdleNodes !== curr.showIdleNodes ||
+      prev.showWaypoints !== curr.showWaypoints ||
       prev.trafficRates !== curr.trafficRates ||
       GraphPageComponent.isNodeChanged(prev.node, curr.node)
     ) {
@@ -435,7 +441,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     // Disconnect from graph data source updates
     this.graphDataSource.removeListener('loadStart', this.handleGraphDataSourceStart);
     this.graphDataSource.removeListener('fetchError', this.handleGraphDataSourceError);
@@ -443,7 +449,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     this.graphDataSource.removeListener('emptyNamespaces', this.handleGraphDataSourceEmpty);
   }
 
-  render() {
+  render(): React.ReactNode {
     let conStyle = containerStyle;
     if (isKioskMode()) {
       conStyle = kioskContainerStyle;
@@ -566,7 +572,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     );
   }
 
-  private handleEmptyGraphAction = () => {
+  private handleEmptyGraphAction = (): void => {
     this.loadGraphDataFromBackend();
   };
 
@@ -575,7 +581,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     _,
     elements: DecoratedGraphElements,
     fetchParams: FetchParams
-  ) => {
+  ): void => {
     const prevElements = this.state.graphData.elements;
     this.setState({
       graphData: {
@@ -589,7 +595,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     this.props.setGraphDefinition(this.graphDataSource.graphDefinition);
   };
 
-  private handleGraphDataSourceError = (errorMessage: string | null, fetchParams: FetchParams) => {
+  private handleGraphDataSourceError = (errorMessage: string | null, fetchParams: FetchParams): void => {
     const prevElements = this.state.graphData.elements;
     this.setState({
       graphData: {
@@ -604,7 +610,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     });
   };
 
-  private handleGraphDataSourceEmpty = (fetchParams: FetchParams) => {
+  private handleGraphDataSourceEmpty = (fetchParams: FetchParams): void => {
     const prevElements = this.state.graphData.elements;
     this.setState({
       graphData: {
@@ -617,7 +623,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     });
   };
 
-  private handleGraphDataSourceStart = (isPreviousDataInvalid: boolean, fetchParams: FetchParams) => {
+  private handleGraphDataSourceStart = (isPreviousDataInvalid: boolean, fetchParams: FetchParams): void => {
     this.setState({
       graphData: {
         elements: isPreviousDataInvalid ? EMPTY_GRAPH_DATA : this.state.graphData.elements,
@@ -629,7 +635,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     });
   };
 
-  private handleDoubleTap = (event: GraphNodeDoubleTapEvent) => {
+  private handleDoubleTap = (event: GraphNodeDoubleTapEvent): void => {
     if (
       event.isInaccessible ||
       event.isServiceEntry ||
@@ -717,6 +723,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       showIdleNodes: this.props.showIdleNodes,
       showOperationNodes: this.props.showOperationNodes,
       showServiceNodes: this.props.showServiceNodes,
+      showWaypoints: this.props.showWaypoints,
       trafficRates: this.state.graphData.fetchParams.trafficRates
     };
 
@@ -725,12 +732,12 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
   };
 
   // This allows us to navigate to the service details page when zoomed in on nodes
-  private handleDoubleTapSameNode = (targetNode: NodeParamsType) => {
+  private handleDoubleTapSameNode = (targetNode: NodeParamsType): string | undefined => {
     const makeAppDetailsPageUrl = (namespace: string, nodeType: string, name?: string): string => {
       return `/namespaces/${namespace}/${nodeType}/${name}`;
     };
     const nodeType = targetNode.nodeType;
-    let urlNodeType = targetNode.nodeType + 's';
+    let urlNodeType = `${targetNode.nodeType}s`;
     let name = targetNode.app;
     if (nodeType === 'service') {
       name = targetNode.service;
@@ -741,7 +748,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     }
     let detailsPageUrl = makeAppDetailsPageUrl(targetNode.namespace.name, urlNodeType, name);
     if (targetNode.cluster && isMultiCluster) {
-      detailsPageUrl = detailsPageUrl + '?clusterName=' + targetNode.cluster;
+      detailsPageUrl = `${detailsPageUrl}?clusterName=${targetNode.cluster}`;
     }
     if (isParentKiosk(this.props.kiosk)) {
       kioskContextMenuAction(detailsPageUrl);
@@ -758,7 +765,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     serviceDetails: ServiceDetailsInfo,
     gateways: string[],
     peerAuths: PeerAuthentication[]
-  ) => {
+  ): void => {
     this.setState(prevState => ({
       wizardsData: {
         ...prevState.wizardsData,
@@ -773,7 +780,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     }));
   };
 
-  private handleWizardClose = (changed: boolean) => {
+  private handleWizardClose = (changed: boolean): void => {
     if (changed) {
       this.setState(prevState => ({
         wizardsData: {
@@ -792,7 +799,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     }
   };
 
-  private handleDeleteTrafficRouting = (_key: string, serviceDetail: ServiceDetailsInfo) => {
+  private handleDeleteTrafficRouting = (_key: string, serviceDetail: ServiceDetailsInfo): void => {
     this.setState(prevState => ({
       showConfirmDeleteTrafficRouting: true,
       wizardsData: {
@@ -802,7 +809,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     }));
   };
 
-  private handleConfirmDeleteServiceTrafficRouting = () => {
+  private handleConfirmDeleteServiceTrafficRouting = (): void => {
     this.setState({
       showConfirmDeleteTrafficRouting: false
     });
@@ -816,7 +823,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       });
   };
 
-  private toggleHelp = () => {
+  private toggleHelp = (): void => {
     if (this.props.showLegend) {
       this.props.toggleLegend();
     }
@@ -828,11 +835,11 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     }
   };
 
-  private setCytoscapeGraph(cytoscapeGraph: any) {
+  private setCytoscapeGraph(cytoscapeGraph: any): void {
     this.cytoscapeGraphRef.current = cytoscapeGraph;
   }
 
-  private loadGraphDataFromBackend = () => {
+  private loadGraphDataFromBackend = (): void => {
     const queryTime: TimeInMilliseconds | undefined = !!this.props.replayQueryTime
       ? this.props.replayQueryTime
       : undefined;
@@ -853,15 +860,16 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       showIdleNodes: this.props.showIdleNodes,
       showOperationNodes: this.props.showOperationNodes,
       showSecurity: this.props.showSecurity,
+      showWaypoints: this.props.showWaypoints,
       trafficRates: this.props.trafficRates
     });
   };
 
-  private notifyError = (error: Error, _componentStack: string) => {
+  private notifyError = (error: Error, _componentStack: string): void => {
     AlertUtils.add(`There was an error when rendering the graph: ${error.message}, please try a different layout`);
   };
 
-  private displayTimeRange = () => {
+  private displayTimeRange = (): string => {
     const rangeEnd: TimeInMilliseconds = this.state.graphData.timestamp;
     const rangeStart: TimeInMilliseconds = rangeEnd - this.props.duration * 1000;
 
@@ -869,7 +877,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
   };
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   activeNamespaces: activeNamespacesSelector(state),
   activeTour: state.tourState.activeTour,
   boxByCluster: state.graph.toolbarState.boxByCluster,
@@ -901,6 +909,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   showServiceNodes: state.graph.toolbarState.showServiceNodes,
   showTrafficAnimation: state.graph.toolbarState.showTrafficAnimation,
   showVirtualServices: state.graph.toolbarState.showVirtualServices,
+  showWaypoints: state.graph.toolbarState.showWaypoints,
   summaryData: state.graph.summaryData,
   trace: state.tracingState?.selectedTrace,
   trafficRates: trafficRatesSelector(state),
@@ -908,7 +917,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   theme: state.globalState.theme
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   endTour: bindActionCreators(TourActions.endTour, dispatch),
   onNamespaceChange: bindActionCreators(GraphActions.onNamespaceChange, dispatch),
   onReady: (cy: Cy.Core) => dispatch(GraphThunkActions.graphReady(cy)),

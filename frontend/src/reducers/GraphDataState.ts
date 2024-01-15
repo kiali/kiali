@@ -37,6 +37,7 @@ export const INITIAL_GRAPH_STATE: GraphState = {
     showServiceNodes: true,
     showTrafficAnimation: false,
     showVirtualServices: true,
+    showWaypoints: false,
     trafficRates: [
       TrafficRate.GRPC_GROUP,
       TrafficRate.GRPC_REQUEST,
@@ -221,6 +222,12 @@ export const GraphDataStateReducer = (state: GraphState = INITIAL_GRAPH_STATE, a
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
           showTrafficAnimation: !state.toolbarState.showTrafficAnimation
+        })
+      });
+    case getType(GraphToolbarActions.toggleWaypoints):
+      return updateState(state, {
+        toolbarState: updateState(state.toolbarState, {
+          showWaypoints: !state.toolbarState.showWaypoints
         })
       });
     default:

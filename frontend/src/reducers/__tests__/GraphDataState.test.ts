@@ -35,7 +35,8 @@ describe('GraphDataState', () => {
         showServiceNodes: true,
         showTrafficAnimation: false,
         showVirtualServices: true,
-        trafficRates: DefaultTrafficRates
+        trafficRates: DefaultTrafficRates,
+        showWaypoints: false
       },
       updateTime: 0
     } as GraphState);

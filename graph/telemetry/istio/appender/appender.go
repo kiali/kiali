@@ -3,6 +3,7 @@ package appender
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -14,6 +15,7 @@ const (
 	defaultAggregate      = "request_operation"
 	defaultQuantile       = 0.95
 	defaultThroughputType = "response"
+	defaultWaypoints      = true
 )
 
 // ParseAppenders determines which appenders should run for this graphing request
@@ -48,6 +50,8 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 				requestedAppenders[WorkloadEntryAppenderName] = true
 
 			// finalizer appenders
+			case AmbientAppenderName:
+				requestedAppenders[AmbientAppenderName] = true
 			case HealthAppenderName:
 				// currently, because health is still calculated in the client, if requesting health
 				// we also need to run the healthConfig appender.  Eventually, asking for health will supply
@@ -193,6 +197,22 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 		AccessibleNamespaces: o.AccessibleNamespaces,
 		Namespaces:           o.Namespaces,
 	})
+
+	if _, ok := requestedAppenders[AmbientAppenderName]; ok || o.Appenders.All {
+		waypoints := defaultWaypoints
+		waypointsString := o.Params.Get("waypoints")
+		if waypointsString != "" {
+			var waypointsErr error
+			waypoints, waypointsErr = strconv.ParseBool(waypointsString)
+			if waypointsErr != nil {
+				graph.BadRequest(fmt.Sprintf("Invalid waypoints param [%s]", waypointsString))
+			}
+		}
+		a := AmbientAppender{
+			Waypoints: waypoints,
+		}
+		appenders = append(appenders, a)
+	}
 
 	// if health finalizer is to be run, do it after the outsider finalizer
 	if _, ok := requestedFinalizers[HealthAppenderName]; ok {

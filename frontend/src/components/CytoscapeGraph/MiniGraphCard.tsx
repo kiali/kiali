@@ -68,21 +68,21 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     this.state = { isKebabOpen: false, isTimeOptionsOpen: false, graphData: props.dataSource.graphData };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.props.dataSource.on('fetchSuccess', this.refresh);
     this.props.dataSource.on('fetchError', this.refresh);
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     this.props.dataSource.removeListener('fetchSuccess', this.refresh);
     this.props.dataSource.removeListener('fetchError', this.refresh);
   }
 
-  private refresh = () => {
+  private refresh = (): void => {
     this.setState({ graphData: this.props.dataSource.graphData });
   };
 
-  render() {
+  render(): React.ReactNode {
     const graphCardActions = [
       <DropdownItem key="viewFullGraph" onClick={this.onViewFullGraph}>
         Show full graph
@@ -210,25 +210,25 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     );
   }
 
-  private setCytoscapeGraph(cytoscapeGraph: any) {
+  private setCytoscapeGraph(cytoscapeGraph: any): void {
     this.cytoscapeGraphRef.current = cytoscapeGraph;
   }
 
-  private handleLaunchWizard = (key: WizardAction, mode: WizardMode) => {
+  private handleLaunchWizard = (key: WizardAction, mode: WizardMode): void => {
     this.onGraphActionsToggle(false);
     if (this.props.onLaunchWizard) {
       this.props.onLaunchWizard(key, mode);
     }
   };
 
-  private handleDeleteTrafficRouting = (key: string) => {
+  private handleDeleteTrafficRouting = (key: string): void => {
     this.onGraphActionsToggle(false);
     if (this.props.onDeleteTrafficRouting) {
       this.props.onDeleteTrafficRouting(key);
     }
   };
 
-  private handleNodeTap = (e: GraphNodeTapEvent) => {
+  private handleNodeTap = (e: GraphNodeTapEvent): void => {
     // Do nothing on inaccessible nodes or service entry nodes
     if (e.isInaccessible || e.isServiceEntry) {
       return;
@@ -260,7 +260,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     let href = `/namespaces/${e.namespace}/${resourceType}s/${resource}`;
 
     if (e.cluster && isMultiCluster) {
-      href = href + '?clusterName=' + e.cluster;
+      href = `${href}?clusterName=${e.cluster}`;
     }
 
     if (isParentKiosk(this.props.kiosk)) {
@@ -270,13 +270,13 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     }
   };
 
-  private onGraphActionsToggle = (isOpen: boolean) => {
+  private onGraphActionsToggle = (isOpen: boolean): void => {
     this.setState({
       isKebabOpen: isOpen
     });
   };
 
-  private onViewFullGraph = () => {
+  private onViewFullGraph = (): void => {
     const namespace = this.props.dataSource.fetchParameters.namespaces[0].name;
     let graphSelector = new GraphSelectorBuilder().namespace(namespace);
     let graphType: GraphType = GraphType.APP;
@@ -317,7 +317,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     }
   };
 
-  private onViewNodeGraph = () => {
+  private onViewNodeGraph = (): void => {
     let graphType = this.props.dataSource.fetchParameters.graphType;
     switch (this.props.dataSource.fetchParameters.node!.nodeType) {
       case NodeType.APP:
@@ -345,6 +345,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
       showIdleNodes: this.props.dataSource.fetchParameters.showIdleNodes,
       showOperationNodes: this.props.dataSource.fetchParameters.showOperationNodes,
       showServiceNodes: true,
+      showWaypoints: true,
       trafficRates: this.props.dataSource.fetchParameters.trafficRates
     };
 
@@ -352,7 +353,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     history.push(makeNodeGraphUrlFromParams(urlParams));
   };
 
-  private toggleTimeOptionsVisibility = () => {
+  private toggleTimeOptionsVisibility = (): void => {
     this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }));
   };
 }

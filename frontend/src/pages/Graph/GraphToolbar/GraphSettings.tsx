@@ -35,6 +35,7 @@ import { INITIAL_GRAPH_STATE } from 'reducers/GraphDataState';
 import { KialiDispatch } from 'types/Redux';
 import { KialiCrippledFeatures } from 'types/ServerConfig';
 import { getCrippledFeatures } from 'services/Api';
+import { serverConfig } from '../../../config';
 
 type ReduxStateProps = {
   boxByCluster: boolean;
@@ -51,6 +52,7 @@ type ReduxStateProps = {
   showServiceNodes: boolean;
   showTrafficAnimation: boolean;
   showVirtualServices: boolean;
+  showWaypoints: boolean;
 };
 
 type ReduxDispatchProps = {
@@ -68,6 +70,7 @@ type ReduxDispatchProps = {
   toggleRank(): void;
   toggleServiceNodes(): void;
   toggleTrafficAnimation(): void;
+  toggleWaypoints(): void;
 };
 
 type GraphSettingsProps = ReduxStateProps &
@@ -181,6 +184,13 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       props.showServiceNodes,
       props.toggleServiceNodes
     );
+
+    this.handleURLBool(
+      URLParam.GRAPH_WAYPOINTS,
+      INITIAL_GRAPH_STATE.toolbarState.showWaypoints,
+      props.showWaypoints,
+      props.toggleWaypoints
+    );
   }
 
   componentDidMount(): void {
@@ -290,6 +300,13 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       prev.showServiceNodes,
       this.props.showServiceNodes
     );
+
+    this.alignURLBool(
+      URLParam.GRAPH_WAYPOINTS,
+      INITIAL_GRAPH_STATE.toolbarState.showWaypoints,
+      prev.showWaypoints,
+      this.props.showWaypoints
+    );
   }
 
   private handleURLBool = (
@@ -365,7 +382,8 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       showSecurity,
       showServiceNodes,
       showTrafficAnimation,
-      showVirtualServices
+      showVirtualServices,
+      showWaypoints
     } = this.props;
 
     // map our dispatchers for redux
@@ -381,7 +399,8 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       toggleOperationNodes,
       toggleRank,
       toggleServiceNodes,
-      toggleTrafficAnimation
+      toggleTrafficAnimation,
+      toggleWaypoints
     } = this.props;
 
     const edgeLabelOptions: DisplayOptionType[] = [
@@ -650,6 +669,24 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         )
       }
     ];
+
+    if (serverConfig.ambientEnabled) {
+      visibilityOptions.push({
+        id: 'filterWaypoints',
+        isChecked: showWaypoints,
+        labelText: 'Waypoint Proxies',
+        onChange: toggleWaypoints,
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>
+            <div>Show waypoint proxies workloads.</div>
+            <div>
+              When enabled in an Ambient environment, include waypoint proxy telemetry in the graph. Waypoint nodes will
+              show up only if the underlying telemetry is being reported.
+            </div>
+          </div>
+        )
+      });
+    }
 
     const badgeOptions: DisplayOptionType[] = [
       {
@@ -1003,7 +1040,8 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   showSecurity: state.graph.toolbarState.showSecurity,
   showServiceNodes: state.graph.toolbarState.showServiceNodes,
   showTrafficAnimation: state.graph.toolbarState.showTrafficAnimation,
-  showVirtualServices: state.graph.toolbarState.showVirtualServices
+  showVirtualServices: state.graph.toolbarState.showVirtualServices,
+  showWaypoints: state.graph.toolbarState.showWaypoints
 });
 
 // Map our actions to Redux
@@ -1022,7 +1060,8 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
     toggleOperationNodes: bindActionCreators(GraphToolbarActions.toggleOperationNodes, dispatch),
     toggleRank: bindActionCreators(GraphToolbarActions.toggleRank, dispatch),
     toggleServiceNodes: bindActionCreators(GraphToolbarActions.toggleServiceNodes, dispatch),
-    toggleTrafficAnimation: bindActionCreators(GraphToolbarActions.toggleTrafficAnimation, dispatch)
+    toggleTrafficAnimation: bindActionCreators(GraphToolbarActions.toggleTrafficAnimation, dispatch),
+    toggleWaypoints: bindActionCreators(GraphToolbarActions.toggleWaypoints, dispatch)
   };
 };
 
