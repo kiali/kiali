@@ -53,7 +53,7 @@ import { TimeDurationModal } from '../../components/Time/TimeDurationModal';
 import { TimeDurationIndicator } from '../../components/Time/TimeDurationIndicator';
 import { serverConfig } from '../../config';
 
-const appContainerColors = [PFColors.White, PFColors.LightGreen400, PFColors.Purple100, PFColors.LightBlue400];
+const appContainerColors = [PFColors.Blue300, PFColors.Green300, PFColors.Purple300, PFColors.Orange300];
 const proxyContainerColor = PFColors.Gold400;
 const spanColor = PFColors.Cyan300;
 
@@ -164,13 +164,15 @@ const logsDisplay = kialiStyle({
 });
 
 // For some reason checkbox as a ToolbarItem needs to be tweaked
-const toolbarInputStyle = kialiStyle({
-  $nest: {
-    '&.pf-c-check input[type=checkbox]': {
-      marginTop: '2px'
+const toolbarInputStyle = (color: string): string =>
+  kialiStyle({
+    $nest: {
+      '&.pf-c-check input[type=checkbox]': {
+        accentColor: color,
+        marginTop: '2px'
+      }
     }
-  }
-});
+  });
 
 const logsBackground = (enabled: boolean) => ({ backgroundColor: enabled ? PFColors.Black1000 : PFColors.Black500 });
 const logsHeight = (showToolbar: boolean, fullscreen: boolean, showMaxLinesWarning: boolean) => {
@@ -359,14 +361,14 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                           </ToolbarItem>
                           <ToolbarItem>
                             <Checkbox
-                              className={toolbarInputStyle}
+                              className={toolbarInputStyle(spanColor)}
                               id="log-spans"
                               isChecked={this.state.showSpans}
                               label={
                                 <span
                                   style={{
-                                    backgroundColor: PFColors.Black1000,
-                                    color: spanColor
+                                    color: spanColor,
+                                    fontWeight: 'bold'
                                   }}
                                 >
                                   spans
@@ -432,15 +434,15 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           {this.state.containerOptions!.map((c, i) => {
             return (
               <Checkbox
-                className={toolbarInputStyle}
+                className={toolbarInputStyle(c.color)}
                 id={`container-${c.displayName}`}
                 key={`c-d-${i}`}
                 isChecked={c.isSelected}
                 label={
                   <span
                     style={{
-                      backgroundColor: PFColors.Black1000,
-                      color: c.color
+                      color: c.color,
+                      fontWeight: 'bold'
                     }}
                   >
                     {c.displayName}
