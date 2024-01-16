@@ -64,6 +64,7 @@ func (a AmbientAppender) isWaypoint(trafficMap graph.TrafficMap, globalInfo *gra
 						break
 					} else {
 						n.Metadata[graph.IsWaypoint] = true
+						n.Metadata[graph.IsOutOfMesh] = false
 						break
 					}
 				}
