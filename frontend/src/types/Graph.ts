@@ -474,6 +474,8 @@ export interface DecoratedGraphNodeData extends GraphNodeData {
   httpOut: number;
   // true if has istio namespace
   isIstio?: boolean;
+  // true if is an Ambient Istio waypoint
+  isWaypoint?: boolean;
   // assigned when node ranking is enabled. relative importance from most to least important [1..100]. Multiple nodes can have same rank.
   rank?: number;
   tcpIn: number;

@@ -43,6 +43,7 @@ const (
 	IsOutside             MetadataKey = "isOutside"
 	IsRoot                MetadataKey = "isRoot"
 	IsServiceEntry        MetadataKey = "isServiceEntry"
+	IsWaypoint            MetadataKey = "isWaypoint"
 	Labels                MetadataKey = "labels"
 	ProtocolKey           MetadataKey = "protocol"
 	ResponseTime          MetadataKey = "responseTime"

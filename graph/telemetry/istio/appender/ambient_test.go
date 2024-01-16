@@ -117,7 +117,7 @@ func workloadEntriesTrafficMap() map[string]*graph.Node {
 	return trafficMap
 }
 
-func TestWaypoint(t *testing.T) {
+func TestRemoveWaypoint(t *testing.T) {
 	assert := require.New(t)
 
 	businessLayer := setupWorkloadEntries(t)
@@ -136,4 +136,37 @@ func TestWaypoint(t *testing.T) {
 
 	assert.Equal(4, len(trafficMap))
 
+	waypointWorkloadID, _, _ := graph.Id(defaultCluster, appNamespace, appName, appNamespace, "namespace-istio-waypoint", appName, "v2", graph.GraphTypeVersionedApp)
+	_, found := trafficMap[waypointWorkloadID]
+	assert.False(found)
+}
+
+func TestIsWaypoint(t *testing.T) {
+	assert := require.New(t)
+
+	businessLayer := setupWorkloadEntries(t)
+	trafficMap := workloadEntriesTrafficMap()
+
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
+
+	assert.Equal(5, len(trafficMap))
+
+	// Run the appender...
+
+	a := AmbientAppender{Waypoints: true}
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+
+	assert.Equal(5, len(trafficMap))
+
+	waypointWorkloadID, _, _ := graph.Id(defaultCluster, appNamespace, appName, appNamespace, "namespace-istio-waypoint", appName, "v2", graph.GraphTypeVersionedApp)
+	waypointNode, found := trafficMap[waypointWorkloadID]
+	assert.True(found)
+	assert.Contains(waypointNode.Metadata, graph.IsWaypoint)
+
+	fakeWaypointWorkloadID, _, _ := graph.Id(defaultCluster, appNamespace, appName, appNamespace, "fake-istio-waypoint", appName, "v2", graph.GraphTypeVersionedApp)
+	fakeWaypointNode, found := trafficMap[fakeWaypointWorkloadID]
+	assert.True(found)
+	assert.NotContains(fakeWaypointNode.Metadata, graph.IsWaypoint)
 }

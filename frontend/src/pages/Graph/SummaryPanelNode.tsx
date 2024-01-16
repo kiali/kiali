@@ -48,8 +48,6 @@ const defaultState: SummaryPanelNodeState = {
   isActionOpen: false
 };
 
-const waypointPrefix = 'istio-waypoint';
-
 type ReduxProps = {
   kiosk: string;
   rankResult: RankResult;
@@ -226,7 +224,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
               )}
 
               {secondBadge}
-              {!this.isWaypoint(nodeData) && (
+              {!nodeData.isWaypoint && (
                 <div className={nodeInfoStyle}>
                   {renderBadgedLink(nodeData)}
                   {renderHealth(nodeData.health)}
@@ -249,10 +247,6 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       </div>
     );
   }
-
-  private isWaypoint = (nodeData: DecoratedGraphNodeData): boolean => {
-    return nodeData.app?.endsWith(waypointPrefix) ? true : false;
-  };
 
   private renderWorkloadSection = (nodeData: DecoratedGraphNodeData): React.ReactNode => {
     if (!nodeData.hasWorkloadEntry) {

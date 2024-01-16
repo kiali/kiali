@@ -121,6 +121,7 @@ type NodeData struct {
 	IsOutside             bool                `json:"isOutside,omitempty"`             // true | false
 	IsRoot                bool                `json:"isRoot,omitempty"`                // true | false
 	IsServiceEntry        *graph.SEInfo       `json:"isServiceEntry,omitempty"`        // set static service entry information
+	IsWaypoint            bool                `json:"isWaypoint,omitempty"`            // true | false
 }
 
 type EdgeData struct {
@@ -350,6 +351,11 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// check if node is on another namespace
 		if val, ok := n.Metadata[graph.IsOutside]; ok {
 			nd.IsOutside = val.(bool)
+		}
+
+		// check if node is a waypoint proxy
+		if val, ok := n.Metadata[graph.IsWaypoint]; ok {
+			nd.IsWaypoint = val.(bool)
 		}
 
 		if val, ok := n.Metadata[graph.HasMirroring]; ok {
