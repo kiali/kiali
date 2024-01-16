@@ -15,7 +15,6 @@ export const GraphToolbarActions = {
   // Toggle actions
   toggleBoxByCluster: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_BOX_BY_CLUSTER),
   toggleBoxByNamespace: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_BOX_BY_NAMESPACE),
-  toggleCompressOnHide: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_COMPRESS_ON_HIDE),
   toggleLegend: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_LEGEND),
   toggleGraphVirtualServices: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_GRAPH_VIRTUAL_SERVICES),
   toggleGraphMissingSidecars: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_GRAPH_MISSING_SIDECARS),

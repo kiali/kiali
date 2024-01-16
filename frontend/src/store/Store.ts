@@ -57,7 +57,6 @@ export interface GraphToolbarState {
   // Toggle props
   boxByCluster: boolean;
   boxByNamespace: boolean;
-  compressOnHide: boolean;
   // dropdown props
   edgeLabels: EdgeLabelMode[];
   // find props

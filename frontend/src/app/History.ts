@@ -42,7 +42,6 @@ export enum URLParam {
   GRAPH_BADGE_VS = 'badgeVS',
   GRAPH_BOX_CLUSTER = 'boxCluster',
   GRAPH_BOX_NAMESPACE = 'boxNamespace',
-  GRAPH_COMPRESS_ON_HIDE = 'graphCompressOnHide',
   GRAPH_EDGE_LABEL = 'edges',
   GRAPH_EDGE_MODE = 'edgeMode',
   GRAPH_FIND = 'graphFind',

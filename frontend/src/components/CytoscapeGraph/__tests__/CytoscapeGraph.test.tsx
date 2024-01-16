@@ -53,7 +53,6 @@ describe('CytoscapeGraph component test', () => {
     dataSource.on('fetchSuccess', () => {
       const wrapper = shallow(
         <CytoscapeGraph
-          compressOnHide={true}
           edgeLabels={myEdgeLabelMode}
           edgeMode={EdgeMode.ALL}
           graphData={{

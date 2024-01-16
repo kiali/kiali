@@ -131,7 +131,6 @@ Then('the display menu has default settings', () => {
     cy.get(`input#trafficRate`).should('exist').should('not.be.checked');
     cy.get(`input#boxByCluster`).should('exist').should('be.checked');
     cy.get(`input#boxByNamespace`).should('exist').should('be.checked');
-    cy.get(`input#filterHide`).should('exist').should('be.checked');
     cy.get(`input#filterIdleEdges`).should('exist').should('not.be.checked');
     cy.get(`input#filterIdleNodes`).should('exist').should('not.be.checked');
     cy.get(`input#filterOperationNodes`).should('exist').should('not.be.checked');

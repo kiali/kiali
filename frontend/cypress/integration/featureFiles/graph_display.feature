@@ -8,7 +8,7 @@ Feature: Kiali Graph page - Display menu
   Background:
     Given user is at administrator perspective
 
-  # NOTE: Graph Find/Hide (compressOnHide) has its own test script
+  # NOTE: Graph Find/Hide has its own test script
   # NOTE: Operation nodes has its own test script
   # NOTE: Traffic animation, missing sidecars, virtual service, and idle edge options are nominally tested
 
@@ -221,11 +221,11 @@ Feature: Kiali Graph page - Display menu
     Then user sees the "bookinfo" namespace
     And only a single cluster box should be visible
     Examples:
-      | type         |
-      | APP          |
-      | SERVICE      |
-      | VERSIONED_APP|
-      | WORKLOAD     |
+      | type          |
+      | APP           |
+      | SERVICE       |
+      | VERSIONED_APP |
+      | WORKLOAD      |
 
   @skip
   @multi-cluster
@@ -243,8 +243,8 @@ Feature: Kiali Graph page - Display menu
   @multi-cluster
   Scenario: Remote nodes should be restricted if user does not have access rights to a remote namespace
     When user graphs "sleep" namespaces
-    And user "is" given access rights to a "sleep" namespace located in the "east" cluster  
-    And user "is not" given access rights to a "sleep" namespace located in the "west" cluster  
+    And user "is" given access rights to a "sleep" namespace located in the "east" cluster
+    And user "is not" given access rights to a "sleep" namespace located in the "west" cluster
     And user is at the details page for the "app" "sleep/east" located in the "east" cluster
     Then the nodes located in the "west" cluster should be restricted
 
@@ -257,4 +257,3 @@ Feature: Kiali Graph page - Display menu
     And there is an Istio object in the "bookinfo" namespace for "east" cluster
     And there is an Istio object in the "bookinfo" namespace for "west" cluster
     Then the Istio objects for "bookinfo" should be grouped together in the panel
-    

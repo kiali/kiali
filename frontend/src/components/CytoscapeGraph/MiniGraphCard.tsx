@@ -159,7 +159,6 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
           <CardBody>
             <div style={{ height: '100%' }}>
               <CytoscapeGraph
-                compressOnHide={true}
                 containerClassName={
                   this.props.graphContainerStyle ? this.props.graphContainerStyle : initGraphContainerStyle
                 }

@@ -20,7 +20,6 @@ export const INITIAL_GRAPH_STATE: GraphState = {
   toolbarState: {
     boxByCluster: true,
     boxByNamespace: true,
-    compressOnHide: true,
     edgeLabels: [],
     findValue: '',
     graphType: GraphType.VERSIONED_APP,
@@ -146,12 +145,6 @@ export const GraphDataStateReducer = (state: GraphState = INITIAL_GRAPH_STATE, a
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
           boxByNamespace: !state.toolbarState.boxByNamespace
-        })
-      });
-    case getType(GraphToolbarActions.toggleCompressOnHide):
-      return updateState(state, {
-        toolbarState: updateState(state.toolbarState, {
-          compressOnHide: !state.toolbarState.compressOnHide
         })
       });
     case getType(GraphToolbarActions.toggleFindHelp):

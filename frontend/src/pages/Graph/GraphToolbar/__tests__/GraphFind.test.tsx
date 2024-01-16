@@ -28,7 +28,6 @@ describe('Parse find value test', () => {
         toggleGraphSecurity={testHandler}
         toggleIdleNodes={testHandler}
         toggleRank={testHandler}
-        compressOnHide={false}
         layout={{ name: '' }}
         namespaceLayout={{ name: '' }}
         updateTime={0}

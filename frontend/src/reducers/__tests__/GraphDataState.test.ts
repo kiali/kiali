@@ -18,7 +18,6 @@ describe('GraphDataState', () => {
       toolbarState: {
         boxByCluster: true,
         boxByNamespace: true,
-        compressOnHide: true,
         edgeLabels: [],
         findValue: '',
         graphType: GraphType.VERSIONED_APP,
