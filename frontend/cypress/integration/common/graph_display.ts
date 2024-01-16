@@ -423,3 +423,21 @@ Then(
     });
   }
 );
+Then('user double-clicks on the {string} {string} from the {string} cluster in the main graph', (name:string,type:string,cluster:string) => {
+  cy.waitForReact();
+
+  cy.getReact('CytoscapeGraph')
+    .should('have.length', '1')
+    .getCurrentState()
+    .then(state => {
+      let node;
+      if (type === 'app'){
+        node = state.cy.nodes(`[app="${name}"][cluster="${cluster}"][isBox="app"]`);
+      } else if (type === 'service'){
+        node = state.cy.nodes(`[nodeType="service"][cluster="${cluster}"][app="${name}"]`);
+      } 
+      // none of the standard cytoscape.js events for double-clicks were not working unfortunately
+      node.emit('tap');
+      node.emit('tap');
+    });
+});
