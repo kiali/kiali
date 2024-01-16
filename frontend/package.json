@@ -61,7 +61,7 @@
     "test": "tsc -p . && TEST_RUNNER=1 react-scripts test --env=jsdom __tests__ --transformIgnorePatterns 'node_modules/(?!my-library-dir)/'",
     "prettier": "prettier --write \"{src/**/*.{ts,tsx,json,yml,scss},*.json}\"",
     "prepare": "cd .. && husky install frontend/.husky",
-    "pre-commit": "yarn run pretty-quick --staged --pattern \"{frontend/src/**/*.{ts,tsx,scss},**/*.{json,yml,yaml}\" && npm run lint:precommit"
+    "pre-commit": "yarn run pretty-quick --staged --pattern \"{frontend/src/**/*.{ts,tsx,scss},**/*.{json,yml,yaml}}\" && npm run lint:precommit"
   },
   "dependencies": {
     "@patternfly/patternfly": "^5.1.0",
