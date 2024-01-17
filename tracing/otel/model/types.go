@@ -18,6 +18,10 @@ type TracingResponse struct {
 	Traces []TraceMetadata `json:"traces"`
 }
 
+type TagsResponse struct {
+	TagNames []string `json:"tagNames"`
+}
+
 type Span struct {
 	SpanID            string           `json:"spanID"`
 	StartTimeUnixNano string           `json:"startTimeUnixNano"`

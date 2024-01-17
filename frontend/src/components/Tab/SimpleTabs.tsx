@@ -5,6 +5,7 @@ import { Tabs } from '@patternfly/react-core';
 // that parent components of Tabs don't have to re-render on a tab change.
 
 type SimpleTabsProps = {
+  children: React.ReactNode;
   defaultTab: number;
   id: string;
   isFilled?: boolean;
@@ -13,32 +14,24 @@ type SimpleTabsProps = {
   unmountOnExit?: boolean;
 };
 
-interface SimpleTabsState {
-  activeTab: number;
-}
-export class SimpleTabs extends React.Component<SimpleTabsProps, SimpleTabsState> {
-  constructor(props: SimpleTabsProps) {
-    super(props);
-    this.state = { activeTab: props.defaultTab };
-  }
+export const SimpleTabs: React.FC<SimpleTabsProps> = (props: SimpleTabsProps) => {
+  const [activeTab, setActiveTab] = React.useState<string | number>(props.defaultTab);
 
-  private handleTabSelect = (_, index) => {
-    this.setState({ activeTab: index });
+  const handleTabSelect = (_event: React.MouseEvent, index: string | number): void => {
+    setActiveTab(index);
   };
 
-  render() {
-    return (
-      <Tabs
-        id={this.props.id}
-        style={this.props.style ? this.props.style : {}}
-        isFilled={this.props.isFilled ? this.props.isFilled : true}
-        activeKey={this.state.activeTab}
-        onSelect={this.handleTabSelect}
-        mountOnEnter={this.props.mountOnEnter === undefined ? true : this.props.mountOnEnter}
-        unmountOnExit={this.props.unmountOnExit === undefined ? true : this.props.unmountOnExit}
-      >
-        {!Array.isArray(this.props.children) ? <>{this.props.children}</> : this.props.children.map(child => child)}
-      </Tabs>
-    );
-  }
-}
+  return (
+    <Tabs
+      id={props.id}
+      style={props.style ? props.style : {}}
+      isFilled={props.isFilled ? props.isFilled : true}
+      activeKey={activeTab}
+      onSelect={handleTabSelect}
+      mountOnEnter={props.mountOnEnter === undefined ? true : props.mountOnEnter}
+      unmountOnExit={props.unmountOnExit === undefined ? true : props.unmountOnExit}
+    >
+      {!Array.isArray(props.children) ? <>{props.children}</> : props.children.map(child => child)}
+    </Tabs>
+  );
+};

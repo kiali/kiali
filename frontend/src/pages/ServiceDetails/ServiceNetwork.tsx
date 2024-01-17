@@ -6,9 +6,9 @@ import { Gateway, ObjectCheck, ObjectValidation, VirtualService } from '../../ty
 import { ValidationList } from '../../components/Validations/ValidationList';
 import { KialiIcon } from '../../config/KialiIcon';
 
-type Props = {
-  serviceDetails: ServiceDetailsInfo;
+type ServiceNetworkProps = {
   gateways: Gateway[];
+  serviceDetails: ServiceDetailsInfo;
   validations?: ObjectValidation;
 };
 
@@ -19,7 +19,6 @@ type HostnameInfo = {
 };
 
 const resourceListStyle = kialiStyle({
-  margin: '0px 0 11px 0',
   $nest: {
     '& > ul > li > span': {
       float: 'left',
@@ -30,33 +29,30 @@ const resourceListStyle = kialiStyle({
 });
 
 const infoStyle = kialiStyle({
-  margin: '0px 0px 2px 10px',
-  verticalAlign: '-3px !important'
+  marginLeft: '0.25rem'
 });
 
-export class ServiceNetwork extends React.Component<Props> {
-  getPortOver(portId: number) {
-    return <ValidationList checks={this.getPortChecks(portId)} />;
-  }
+export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetworkProps) => {
+  const getPortOver = (portId: number): React.ReactNode => {
+    return <ValidationList checks={getPortChecks(portId)} />;
+  };
 
-  getPortChecks(portId: number): ObjectCheck[] {
-    return this.props.validations
-      ? this.props.validations.checks.filter(c => c.path === 'spec/ports[' + portId + ']')
-      : [];
-  }
+  const getPortChecks = (portId: number): ObjectCheck[] => {
+    return props.validations ? props.validations.checks.filter(c => c.path === `spec/ports[${portId}]`) : [];
+  };
 
-  hasIssue(portId: number): boolean {
-    return this.getPortChecks(portId).length > 0;
-  }
+  const hasIssue = (portId: number): boolean => {
+    return getPortChecks(portId).length > 0;
+  };
 
-  getHostnames(virtualServices: VirtualService[]): HostnameInfo[] {
-    var hostnames: HostnameInfo[] = [];
+  const getHostnames = (virtualServices: VirtualService[]): HostnameInfo[] => {
+    let hostnames: HostnameInfo[] = [];
 
     virtualServices.forEach(vs => {
       vs.spec.hosts?.forEach(host => {
         if (host === '*') {
           vs.spec.gateways?.forEach(vsGatewayName => {
-            const vsGateways = this.props.gateways.filter(gateway => {
+            const vsGateways = props.gateways.filter(gateway => {
               return gateway.metadata.name === vsGatewayName;
             });
 
@@ -75,162 +71,148 @@ export class ServiceNetwork extends React.Component<Props> {
     });
 
     // If there is a wildcard, then it will display only one, the first match
-    for (var hostnameInfo of hostnames) {
+    for (let hostnameInfo of hostnames) {
       if (hostnameInfo.hostname === '*') {
         return [hostnameInfo];
       }
     }
 
     return hostnames;
-  }
+  };
 
-  render() {
-    return (
-      <Card isCompact={true} id={'ServiceNetworkCard'}>
-        <CardHeader>
-          <Title headingLevel="h3" size={TitleSizes['2xl']}>
-            Network
-          </Title>
-        </CardHeader>
-        <CardBody>
-          <div key="network-list" className={resourceListStyle}>
-            <ul style={{ listStyleType: 'none' }}>
+  return (
+    <Card isCompact={true} id="ServiceNetworkCard">
+      <CardHeader>
+        <Title headingLevel="h3" size={TitleSizes['xl']}>
+          Network
+        </Title>
+      </CardHeader>
+      <CardBody>
+        <div key="network-list" className={resourceListStyle}>
+          <ul style={{ listStyleType: 'none' }}>
+            <li>
+              <span>Type</span>
+              {props.serviceDetails.service.type}
+            </li>
+
+            {props.serviceDetails.service.type !== 'External' && (
               <li>
-                <span>Type</span>
-                {this.props.serviceDetails.service.type}
+                <span>{props.serviceDetails.service.type !== 'ExternalName' ? 'Service IP' : 'ExternalName'}</span>
+                {props.serviceDetails.service.type !== 'ExternalName'
+                  ? props.serviceDetails.service.ip
+                    ? props.serviceDetails.service.ip
+                    : ''
+                  : props.serviceDetails.service.externalName
+                  ? props.serviceDetails.service.externalName
+                  : ''}
               </li>
-              {this.props.serviceDetails.service.type !== 'External' && (
-                <li>
-                  <span>
-                    {this.props.serviceDetails.service.type !== 'ExternalName' ? 'Service IP' : 'ExternalName'}
-                  </span>
-                  {this.props.serviceDetails.service.type !== 'ExternalName'
-                    ? this.props.serviceDetails.service.ip
-                      ? this.props.serviceDetails.service.ip
-                      : ''
-                    : this.props.serviceDetails.service.externalName
-                    ? this.props.serviceDetails.service.externalName
-                    : ''}
-                </li>
-              )}
-              {this.props.serviceDetails.endpoints && this.props.serviceDetails.endpoints.length > 0 && (
-                <li>
-                  <span>Endpoints</span>
-                  <div style={{ display: 'inline-block' }}>
-                    {(this.props.serviceDetails.endpoints || []).map((endpoint, i) => {
-                      return (endpoint.addresses || []).map((address, u) => (
-                        <div key={'endpoint_' + i + '_address_' + u}>
-                          {address.name !== '' ? (
-                            <Tooltip
-                              position={TooltipPosition.right}
-                              content={
-                                <div style={{ textAlign: 'left' }}>
-                                  {address.kind}: {address.name}
-                                </div>
-                              }
-                            >
-                              <span>
-                                {address.ip} <KialiIcon.Info className={infoStyle} />
-                              </span>
-                            </Tooltip>
-                          ) : (
-                            <>{address.name}</>
-                          )}
-                        </div>
-                      ));
-                    })}
-                  </div>
-                </li>
-              )}
-              {this.props.serviceDetails.service.ports && this.props.serviceDetails.service.ports.length > 0 && (
-                <li>
-                  <span>Ports</span>
-                  <div style={{ display: 'inline-block' }}>
-                    {(this.props.serviceDetails.service.ports || []).map((port, i) => {
-                      return (
-                        <div key={'port_' + i}>
-                          <div>
-                            <span style={{ marginRight: '10px' }}>
-                              {port.name} {port.port}
-                            </span>
-                            {this.hasIssue(i) ? this.getPortOver(i) : undefined}
-                            {port.appProtocol && port.appProtocol !== '' ? (
-                              <Tooltip
-                                position={TooltipPosition.right}
-                                content={<div style={{ textAlign: 'left' }}>App Protocol: {port.appProtocol}</div>}
-                              >
-                                <span style={{ marginRight: '5px' }}>
-                                  <KialiIcon.Info className={infoStyle} />
-                                </span>
-                              </Tooltip>
-                            ) : undefined}
-                          </div>
-                          <div>
-                            ({port.protocol}
-                            {port.istioProtocol !== '' && <>,{port.istioProtocol}</>}){' '}
-                            <span style={{ marginLeft: '5px' }}>
-                              {port.tlsMode === 'istio' ? (
-                                <>
-                                  <KialiIcon.MtlsLock /> mTLS
-                                </>
-                              ) : (
-                                <>
-                                  <KialiIcon.MtlsUnlock /> No mTLS{' '}
-                                </>
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </li>
-              )}
-              {this.props.serviceDetails.virtualServices.length > 0 && (
-                <li>
-                  <span>Hostnames</span>
-                  <div
-                    style={{
-                      display: 'inline-block',
-                      width: '75%'
-                    }}
-                  >
-                    {this.getHostnames(this.props.serviceDetails.virtualServices).map((hostname, i) => {
-                      return (
-                        <div key={'hostname_' + i}>
+            )}
+
+            {props.serviceDetails.endpoints && props.serviceDetails.endpoints.length > 0 && (
+              <li>
+                <span>Endpoints</span>
+                <div style={{ display: 'inline-block' }}>
+                  {(props.serviceDetails.endpoints ?? []).map((endpoint, i) => {
+                    return (endpoint.addresses ?? []).map((address, u) => (
+                      <div key={`endpoint_${i}_address_${u}`}>
+                        {address.name !== '' ? (
                           <Tooltip
                             position={TooltipPosition.right}
                             content={
                               <div style={{ textAlign: 'left' }}>
-                                {hostname.fromType} {hostname.fromName}: {hostname.hostname}
+                                {address.kind}: {address.name}
                               </div>
                             }
                           >
-                            <div style={{ display: 'flex' }}>
-                              <span
-                                style={{
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis'
-                                }}
-                              >
-                                {hostname.hostname}
-                              </span>
-                              <span>
+                            <span>
+                              {address.ip} <KialiIcon.Info className={infoStyle} />
+                            </span>
+                          </Tooltip>
+                        ) : (
+                          <>{address.name}</>
+                        )}
+                      </div>
+                    ));
+                  })}
+                </div>
+              </li>
+            )}
+
+            {props.serviceDetails.service.ports && props.serviceDetails.service.ports.length > 0 && (
+              <li>
+                <span>Ports</span>
+                <div style={{ display: 'inline-block' }}>
+                  {(props.serviceDetails.service.ports ?? []).map((port, i) => {
+                    return (
+                      <div key={`port_${i}`}>
+                        <div>
+                          <span style={{ marginRight: '0.5rem' }}>
+                            {port.name} {port.port}
+                          </span>
+                          {hasIssue(i) ? getPortOver(i) : undefined}
+                          {port.appProtocol && port.appProtocol !== '' ? (
+                            <Tooltip
+                              position={TooltipPosition.right}
+                              content={<div style={{ textAlign: 'left' }}>App Protocol: {port.appProtocol}</div>}
+                            >
+                              <span style={{ marginRight: '0.25rem' }}>
                                 <KialiIcon.Info className={infoStyle} />
                               </span>
-                            </div>
-                          </Tooltip>
+                            </Tooltip>
+                          ) : undefined}
                         </div>
-                      );
-                    })}
-                  </div>
-                </li>
-              )}
-            </ul>
-          </div>
-        </CardBody>
-      </Card>
-    );
-  }
-}
+                        <div>({port.protocol})</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </li>
+            )}
+
+            {props.serviceDetails.virtualServices.length > 0 && (
+              <li>
+                <span>Hostnames</span>
+                <div
+                  style={{
+                    display: 'inline-block',
+                    width: '75%'
+                  }}
+                >
+                  {getHostnames(props.serviceDetails.virtualServices).map((hostname, i) => {
+                    return (
+                      <div key={`hostname_${i}`}>
+                        <Tooltip
+                          position={TooltipPosition.right}
+                          content={
+                            <div style={{ textAlign: 'left' }}>
+                              {hostname.fromType} {hostname.fromName}: {hostname.hostname}
+                            </div>
+                          }
+                        >
+                          <div style={{ display: 'flex' }}>
+                            <span
+                              style={{
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                              }}
+                            >
+                              {hostname.hostname}
+                            </span>
+                            <span>
+                              <KialiIcon.Info className={infoStyle} />
+                            </span>
+                          </div>
+                        </Tooltip>
+                      </div>
+                    );
+                  })}
+                </div>
+              </li>
+            )}
+          </ul>
+        </div>
+      </CardBody>
+    </Card>
+  );
+};

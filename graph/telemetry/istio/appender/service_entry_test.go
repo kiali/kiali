@@ -63,8 +63,8 @@ func serviceEntriesTrafficMap() map[string]*graph.Node {
 	// VersionedApp graph
 	trafficMap := make(map[string]*graph.Node)
 
-	// unknownNode
-	n0, _ := graph.NewNode(config.DefaultClusterID, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	// testNode
+	n0, _ := graph.NewNode(config.DefaultClusterID, graph.Unknown, "test", "testNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
 
 	// NotSE serviceNode
 	n1, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "NotSE", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
@@ -135,11 +135,11 @@ func TestServiceEntry(t *testing.T) {
 
 	assert.Equal(8, len(trafficMap))
 
-	unknownID, _, _ := graph.Id(config.DefaultClusterID, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
-	unknownNode, found0 := trafficMap[unknownID]
+	testID, _, _ := graph.Id(config.DefaultClusterID, graph.Unknown, "test", "testNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
+	testNode, found0 := trafficMap[testID]
 	assert.Equal(true, found0)
-	assert.Equal(1, len(unknownNode.Edges))
-	assert.Equal(nil, unknownNode.Metadata[graph.IsServiceEntry])
+	assert.Equal(1, len(testNode.Edges))
+	assert.Equal(nil, testNode.Metadata[graph.IsServiceEntry])
 
 	notSEServiceID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "NotSE", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	notSEServiceNode, found1 := trafficMap[notSEServiceID]
@@ -186,11 +186,12 @@ func TestServiceEntry(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
 		AccessibleNamespaces: graph.AccessibleNamespaces{
-			config.DefaultClusterID: &graph.AccessibleNamespace{
+			key: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
@@ -199,11 +200,11 @@ func TestServiceEntry(t *testing.T) {
 
 	assert.Equal(6, len(trafficMap))
 
-	unknownID, _, _ = graph.Id(config.DefaultClusterID, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
-	unknownNode, found0 = trafficMap[unknownID]
+	testID, _, _ = graph.Id(config.DefaultClusterID, graph.Unknown, "test", "testNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
+	testNode, found0 = trafficMap[testID]
 	assert.Equal(true, found0)
-	assert.Equal(1, len(unknownNode.Edges))
-	assert.Equal(nil, unknownNode.Metadata[graph.IsServiceEntry])
+	assert.Equal(1, len(testNode.Edges))
+	assert.Equal(nil, testNode.Metadata[graph.IsServiceEntry])
 
 	notSEServiceID, _, _ = graph.Id(config.DefaultClusterID, "testNamespace", "NotSE", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	notSEServiceNode, found1 = trafficMap[notSEServiceID]
@@ -252,11 +253,11 @@ func TestServiceEntryExportAll(t *testing.T) {
 
 	assert.Equal(8, len(trafficMap))
 
-	unknownID, _, _ := graph.Id(config.DefaultClusterID, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
-	unknownNode, found0 := trafficMap[unknownID]
+	testID, _, _ := graph.Id(config.DefaultClusterID, graph.Unknown, "test", "testNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
+	testNode, found0 := trafficMap[testID]
 	assert.Equal(true, found0)
-	assert.Equal(1, len(unknownNode.Edges))
-	assert.Equal(nil, unknownNode.Metadata[graph.IsServiceEntry])
+	assert.Equal(1, len(testNode.Edges))
+	assert.Equal(nil, testNode.Metadata[graph.IsServiceEntry])
 
 	notSEServiceID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "NotSE", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	notSEServiceNode, found1 := trafficMap[notSEServiceID]
@@ -303,11 +304,12 @@ func TestServiceEntryExportAll(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
 		AccessibleNamespaces: graph.AccessibleNamespaces{
-			config.DefaultClusterID: &graph.AccessibleNamespace{
+			key: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
@@ -316,11 +318,11 @@ func TestServiceEntryExportAll(t *testing.T) {
 
 	assert.Equal(6, len(trafficMap))
 
-	unknownID, _, _ = graph.Id(config.DefaultClusterID, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
-	unknownNode, found0 = trafficMap[unknownID]
+	testID, _, _ = graph.Id(config.DefaultClusterID, graph.Unknown, "test", "testNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
+	testNode, found0 = trafficMap[testID]
 	assert.Equal(true, found0)
-	assert.Equal(1, len(unknownNode.Edges))
-	assert.Equal(nil, unknownNode.Metadata[graph.IsServiceEntry])
+	assert.Equal(1, len(testNode.Edges))
+	assert.Equal(nil, testNode.Metadata[graph.IsServiceEntry])
 
 	notSEServiceID, _, _ = graph.Id(config.DefaultClusterID, "testNamespace", "NotSE", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	notSEServiceNode, found1 = trafficMap[notSEServiceID]
@@ -363,11 +365,11 @@ func TestServiceEntryExportNamespaceFound(t *testing.T) {
 
 	assert.Equal(8, len(trafficMap))
 
-	unknownID, _, _ := graph.Id(config.DefaultClusterID, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
-	unknownNode, found0 := trafficMap[unknownID]
+	testID, _, _ := graph.Id(config.DefaultClusterID, graph.Unknown, "test", "testNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
+	testNode, found0 := trafficMap[testID]
 	assert.Equal(true, found0)
-	assert.Equal(1, len(unknownNode.Edges))
-	assert.Equal(nil, unknownNode.Metadata[graph.IsServiceEntry])
+	assert.Equal(1, len(testNode.Edges))
+	assert.Equal(nil, testNode.Metadata[graph.IsServiceEntry])
 
 	notSEServiceID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "NotSE", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	notSEServiceNode, found1 := trafficMap[notSEServiceID]
@@ -414,11 +416,12 @@ func TestServiceEntryExportNamespaceFound(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
 		AccessibleNamespaces: graph.AccessibleNamespaces{
-			config.DefaultClusterID: &graph.AccessibleNamespace{
+			key: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
@@ -427,11 +430,11 @@ func TestServiceEntryExportNamespaceFound(t *testing.T) {
 
 	assert.Equal(6, len(trafficMap))
 
-	unknownID, _, _ = graph.Id(config.DefaultClusterID, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
-	unknownNode, found0 = trafficMap[unknownID]
+	testID, _, _ = graph.Id(config.DefaultClusterID, graph.Unknown, "test", "testNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
+	testNode, found0 = trafficMap[testID]
 	assert.Equal(true, found0)
-	assert.Equal(1, len(unknownNode.Edges))
-	assert.Equal(nil, unknownNode.Metadata[graph.IsServiceEntry])
+	assert.Equal(1, len(testNode.Edges))
+	assert.Equal(nil, testNode.Metadata[graph.IsServiceEntry])
 
 	notSEServiceID, _, _ = graph.Id(config.DefaultClusterID, "testNamespace", "NotSE", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	notSEServiceNode, found1 = trafficMap[notSEServiceID]
@@ -474,11 +477,11 @@ func TestServiceEntryExportDefinitionNamespace(t *testing.T) {
 
 	assert.Equal(8, len(trafficMap))
 
-	unknownID, _, _ := graph.Id(config.DefaultClusterID, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
-	unknownNode, found0 := trafficMap[unknownID]
+	testID, _, _ := graph.Id(config.DefaultClusterID, graph.Unknown, "test", "testNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
+	testNode, found0 := trafficMap[testID]
 	assert.Equal(true, found0)
-	assert.Equal(1, len(unknownNode.Edges))
-	assert.Equal(nil, unknownNode.Metadata[graph.IsServiceEntry])
+	assert.Equal(1, len(testNode.Edges))
+	assert.Equal(nil, testNode.Metadata[graph.IsServiceEntry])
 
 	notSEServiceID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "NotSE", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	notSEServiceNode, found1 := trafficMap[notSEServiceID]
@@ -525,11 +528,12 @@ func TestServiceEntryExportDefinitionNamespace(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
 		AccessibleNamespaces: graph.AccessibleNamespaces{
-			config.DefaultClusterID: &graph.AccessibleNamespace{
+			key: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
@@ -538,11 +542,11 @@ func TestServiceEntryExportDefinitionNamespace(t *testing.T) {
 
 	assert.Equal(6, len(trafficMap))
 
-	unknownID, _, _ = graph.Id(config.DefaultClusterID, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
-	unknownNode, found0 = trafficMap[unknownID]
+	testID, _, _ = graph.Id(config.DefaultClusterID, graph.Unknown, "test", "testNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
+	testNode, found0 = trafficMap[testID]
 	assert.Equal(true, found0)
-	assert.Equal(1, len(unknownNode.Edges))
-	assert.Equal(nil, unknownNode.Metadata[graph.IsServiceEntry])
+	assert.Equal(1, len(testNode.Edges))
+	assert.Equal(nil, testNode.Metadata[graph.IsServiceEntry])
 
 	notSEServiceID, _, _ = graph.Id(config.DefaultClusterID, "testNamespace", "NotSE", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	notSEServiceNode, found1 = trafficMap[notSEServiceID]
@@ -585,11 +589,11 @@ func TestServiceEntryExportNamespaceNotFound(t *testing.T) {
 
 	assert.Equal(8, len(trafficMap))
 
-	unknownID, _, _ := graph.Id(config.DefaultClusterID, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
-	unknownNode, found0 := trafficMap[unknownID]
+	testID, _, _ := graph.Id(config.DefaultClusterID, graph.Unknown, "test", "testNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
+	testNode, found0 := trafficMap[testID]
 	assert.Equal(true, found0)
-	assert.Equal(1, len(unknownNode.Edges))
-	assert.Equal(nil, unknownNode.Metadata[graph.IsServiceEntry])
+	assert.Equal(1, len(testNode.Edges))
+	assert.Equal(nil, testNode.Metadata[graph.IsServiceEntry])
 
 	notSEServiceID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "NotSE", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	notSEServiceNode, found1 := trafficMap[notSEServiceID]
@@ -636,11 +640,12 @@ func TestServiceEntryExportNamespaceNotFound(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
 		AccessibleNamespaces: graph.AccessibleNamespaces{
-			config.DefaultClusterID: &graph.AccessibleNamespace{
+			key: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
@@ -649,11 +654,11 @@ func TestServiceEntryExportNamespaceNotFound(t *testing.T) {
 
 	assert.Equal(7, len(trafficMap))
 
-	unknownID, _, _ = graph.Id(config.DefaultClusterID, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
-	unknownNode, found0 = trafficMap[unknownID]
+	testID, _, _ = graph.Id(config.DefaultClusterID, graph.Unknown, "test", "testNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
+	testNode, found0 = trafficMap[testID]
 	assert.Equal(true, found0)
-	assert.Equal(1, len(unknownNode.Edges))
-	assert.Equal(nil, unknownNode.Metadata[graph.IsServiceEntry])
+	assert.Equal(1, len(testNode.Edges))
+	assert.Equal(nil, testNode.Metadata[graph.IsServiceEntry])
 
 	notSEServiceID, _, _ = graph.Id(config.DefaultClusterID, "testNamespace", "NotSE", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	notSEServiceNode, found1 = trafficMap[notSEServiceID]
@@ -724,17 +729,18 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 	trafficMap[n1.ID] = n1
 	trafficMap[n2.ID] = n2
 
-	n0.AddEdge(n1)
-	n0.AddEdge(n2)
+	n0.AddEdge(n1).Metadata[graph.ProtocolKey] = graph.HTTP.Name
+	n0.AddEdge(n2).Metadata[graph.ProtocolKey] = graph.HTTP.Name
 
 	// Run the appender
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("namespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	a := ServiceEntryAppender{
 		AccessibleNamespaces: graph.AccessibleNamespaces{
-			config.DefaultClusterID: &graph.AccessibleNamespace{
+			key: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "namespace",
@@ -811,8 +817,8 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 
 	trafficMap := make(map[string]*graph.Node)
 
-	// unknownNode
-	n0, _ := graph.NewNode(config.DefaultClusterID, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	// Test SourceNode
+	n0, _ := graph.NewNode(config.DefaultClusterID, graph.Unknown, "test", "testNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
 
 	// NotSE host3 serviceNode
 	n1, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "host3.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
@@ -844,11 +850,11 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 
 	assert.Equal(4, len(trafficMap))
 
-	unknownID, _, _ := graph.Id(config.DefaultClusterID, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
-	unknownNode, found0 := trafficMap[unknownID]
+	testID, _, _ := graph.Id(config.DefaultClusterID, graph.Unknown, "test", "testNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
+	testNode, found0 := trafficMap[testID]
 	assert.Equal(true, found0)
-	assert.Equal(3, len(unknownNode.Edges))
-	assert.Equal(nil, unknownNode.Metadata[graph.IsServiceEntry])
+	assert.Equal(3, len(testNode.Edges))
+	assert.Equal(nil, testNode.Metadata[graph.IsServiceEntry])
 
 	notSEServiceID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "host3.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	notSEServiceNode, found1 := trafficMap[notSEServiceID]
@@ -871,11 +877,12 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
 		AccessibleNamespaces: graph.AccessibleNamespaces{
-			config.DefaultClusterID: &graph.AccessibleNamespace{
+			key: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
@@ -884,11 +891,11 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 
 	assert.Equal(3, len(trafficMap))
 
-	unknownID, _, _ = graph.Id(config.DefaultClusterID, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
-	unknownNode, found0 = trafficMap[unknownID]
+	testID, _, _ = graph.Id(config.DefaultClusterID, graph.Unknown, "test", "testNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
+	testNode, found0 = trafficMap[testID]
 	assert.Equal(true, found0)
-	assert.Equal(2, len(unknownNode.Edges))
-	assert.Equal(nil, unknownNode.Metadata[graph.IsServiceEntry])
+	assert.Equal(2, len(testNode.Edges))
+	assert.Equal(nil, testNode.Metadata[graph.IsServiceEntry])
 
 	notSEServiceID, _, _ = graph.Id(config.DefaultClusterID, "testNamespace", "host3.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	notSEServiceNode, found1 = trafficMap[notSEServiceID]
@@ -944,8 +951,8 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 
 	trafficMap := make(map[string]*graph.Node)
 
-	// unknownNode
-	n0, _ := graph.NewNode(config.DefaultClusterID, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	// testNode
+	n0, _ := graph.NewNode(config.DefaultClusterID, graph.Unknown, "test", "otherNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
 
 	// NotSE host3 serviceNode
 	n1, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "host3.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
@@ -972,11 +979,11 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 
 	assert.Equal(4, len(trafficMap))
 
-	unknownID, _, _ := graph.Id(config.DefaultClusterID, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
-	unknownNode, found0 := trafficMap[unknownID]
+	testID, _, _ := graph.Id(config.DefaultClusterID, graph.Unknown, "test", "otherNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
+	testNode, found0 := trafficMap[testID]
 	assert.Equal(true, found0)
-	assert.Equal(3, len(unknownNode.Edges))
-	assert.Equal(nil, unknownNode.Metadata[graph.IsServiceEntry])
+	assert.Equal(3, len(testNode.Edges))
+	assert.Equal(nil, testNode.Metadata[graph.IsServiceEntry])
 
 	notSEHost3ServiceID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "host3.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	notSEHost3ServiceNode, found1 := trafficMap[notSEHost3ServiceID]
@@ -999,11 +1006,12 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("otherNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
 		AccessibleNamespaces: graph.AccessibleNamespaces{
-			config.DefaultClusterID: &graph.AccessibleNamespace{
+			key: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "otherNamespace",
@@ -1012,11 +1020,11 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 
 	assert.Equal(4, len(trafficMap))
 
-	unknownID, _, _ = graph.Id(config.DefaultClusterID, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
-	unknownNode, found0 = trafficMap[unknownID]
+	testID, _, _ = graph.Id(config.DefaultClusterID, graph.Unknown, "test", "otherNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
+	testNode, found0 = trafficMap[testID]
 	assert.Equal(true, found0)
-	assert.Equal(3, len(unknownNode.Edges))
-	assert.Equal(nil, unknownNode.Metadata[graph.IsServiceEntry])
+	assert.Equal(3, len(testNode.Edges))
+	assert.Equal(nil, testNode.Metadata[graph.IsServiceEntry])
 
 	notSEHost3ServiceID, _, _ = graph.Id(config.DefaultClusterID, "testNamespace", "host3.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	notSEHost3ServiceNode, found1 = trafficMap[notSEHost3ServiceID]
@@ -1108,11 +1116,12 @@ func TestServiceEntryMultipleEdges(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
 		AccessibleNamespaces: graph.AccessibleNamespaces{
-			config.DefaultClusterID: &graph.AccessibleNamespace{
+			key: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",

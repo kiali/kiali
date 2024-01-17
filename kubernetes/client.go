@@ -56,8 +56,9 @@ type ClientInterface interface {
 // K8SClient is the client struct for Kubernetes and Istio APIs
 // It hides the way it queries each API
 type K8SClient struct {
-	token          string
-	k8s            kube.Interface
+	token string
+	k8s   kube.Interface
+
 	istioClientset istio.Interface
 	// Used for portforwarding requests.
 	restConfig *rest.Config
@@ -92,8 +93,8 @@ func (client *K8SClient) ClusterInfo() ClusterInfo {
 	return client.clusterInfo
 }
 
-func NewClientWithRemoteClusterInfo(config *rest.Config, remoteClusterInfo *RemoteClusterInfo) (*K8SClient, error) {
-	client, err := NewClientFromConfig(config)
+func newClientWithRemoteClusterInfo(config *rest.Config, remoteClusterInfo *RemoteClusterInfo) (*K8SClient, error) {
+	client, err := newClientFromConfig(config)
 	if err != nil {
 		return nil, err
 	}
@@ -142,12 +143,12 @@ func getConfigForLocalCluster() (*rest.Config, error) {
 	}
 }
 
-// NewClientFromConfig creates a new client to the Kubernetes and Istio APIs.
+// newClientFromConfig creates a new client to the Kubernetes and Istio APIs.
 // It takes the assumption that Istio is deployed into the cluster.
 // It hides the access to Kubernetes/Openshift credentials.
 // It hides the low level use of the API of Kubernetes and Istio, it should be considered as an implementation detail.
 // It returns an error on any problem.
-func NewClientFromConfig(config *rest.Config) (*K8SClient, error) {
+func newClientFromConfig(config *rest.Config) (*K8SClient, error) {
 	client := K8SClient{
 		token: config.BearerToken,
 	}

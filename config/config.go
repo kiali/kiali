@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -67,6 +68,24 @@ const (
 	WaypointLabelValue       = "istio.io-mesh-controller"
 )
 
+// TracingProvider is the type of tracing provider that Kiali will connect to.
+type TracingProvider string
+
+const (
+	JaegerProvider TracingProvider = "jaeger"
+	TempoProvider  TracingProvider = "tempo"
+)
+
+// TracingCollectorType is the type of collector that Kiali will export traces to.
+// These are traces that kiali generates for itself.
+type TracingCollectorType string
+
+const (
+	OTELCollectorType TracingCollectorType = "otel"
+)
+
+var validPathRegEx = regexp.MustCompile(`^\/[a-zA-Z0-9\-\._~!\$&\'()\*\+\,;=:@%/]*$`)
+
 // FeatureName is the enum type used for named features that can be disabled via KialiFeatureFlags.DisabledFeatures
 type FeatureName string
 
@@ -91,6 +110,17 @@ var (
 // Defines where the files are located that contain the secrets content
 var overrideSecretsDir = "/kiali-override-secrets"
 
+// Cluster is used to manually specify a cluster that there is no remote secret for.
+type Cluster struct {
+	// Name of the cluster. Must be unique and match what is in telemetry.
+	Name string `yaml:"name,omitempty"`
+
+	// SecretName is the name of the secret that contains the credentials necessary to connect to the remote cluster.
+	// This secret must exist in the Kiali deployment namespace. If no secret name is provided, then it's
+	// assumed that this cluster is inaccessible.
+	SecretName string `yaml:"secret_name,omitempty"`
+}
+
 // Metrics provides metrics configuration for the Kiali server.
 type Metrics struct {
 	Enabled bool `yaml:"enabled,omitempty"`
@@ -99,15 +129,18 @@ type Metrics struct {
 
 // OpenTelemetry collector configuration for tracing
 type OtelCollector struct {
-	Protocol string `yaml:"protocol,omitempty"` // http or https or grp
+	CAName     string `yaml:"ca_name,omitempty"`
+	Protocol   string `yaml:"protocol,omitempty"` // http or https or grpc
+	SkipVerify bool   `yaml:"skip_verify,omitempty"`
+	TLSEnabled bool   `yaml:"tls_enabled,omitempty"`
 }
 
 // Tracing provides tracing configuration for the Kiali server.
 type Tracing struct {
-	CollectorType string        `yaml:"collector_type,omitempty"` // Possible values "otel" or "jaeger"
-	CollectorURL  string        `yaml:"collector_url,omitempty"`  // Endpoint for Kiali server traces
-	Enabled       bool          `yaml:"enabled,omitempty"`
-	Otel          OtelCollector `yaml:"otel,omitempty"`
+	CollectorType TracingCollectorType `yaml:"collector_type,omitempty"` // Possible value "otel"
+	CollectorURL  string               `yaml:"collector_url,omitempty"`  // Endpoint for Kiali server traces
+	Enabled       bool                 `yaml:"enabled,omitempty"`
+	Otel          OtelCollector        `yaml:"otel,omitempty"`
 	// Sampling rate for Kiali server traces. >= 1.0 always samples and <= 0 never samples.
 	SamplingRate float64 `yaml:"sampling_rate,omitempty"`
 }
@@ -210,10 +243,11 @@ type GrafanaVariablesConfig struct {
 // TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
 	Auth                 Auth              `yaml:"auth"`
-	Enabled              bool              `yaml:"enabled"` // Enable Jaeger in Kiali
+	Enabled              bool              `yaml:"enabled"` // Enable Tracing in Kiali
+	GrpcPort             int               `yaml:"grpc_port,omitempty"`
 	InClusterURL         string            `yaml:"in_cluster_url"`
 	IsCore               bool              `yaml:"is_core,omitempty"`
-	Provider             string            `yaml:"provider"` // jaeger | tempo
+	Provider             TracingProvider   `yaml:"provider"` // jaeger | tempo
 	NamespaceSelector    bool              `yaml:"namespace_selector"`
 	QueryScope           map[string]string `yaml:"query_scope,omitempty"`
 	QueryTimeout         int               `yaml:"query_timeout,omitempty"`
@@ -243,9 +277,12 @@ type IstioConfig struct {
 	IstioSidecarAnnotation            string              `yaml:"istio_sidecar_annotation,omitempty"`
 	IstiodDeploymentName              string              `yaml:"istiod_deployment_name,omitempty"`
 	IstiodPodMonitoringPort           int                 `yaml:"istiod_pod_monitoring_port,omitempty"`
-	Registry                          *RegistryConfig     `yaml:"registry,omitempty"`
-	RootNamespace                     string              `yaml:"root_namespace,omitempty"`
-	UrlServiceVersion                 string              `yaml:"url_service_version"`
+	// IstiodPollingIntervalSeconds is how often in seconds Kiali will poll istiod(s) for
+	// proxy status and registry services. Polling is not performed if IstioAPIEnabled is false.
+	IstiodPollingIntervalSeconds int             `yaml:"istiod_polling_interval_seconds,omitempty"`
+	Registry                     *RegistryConfig `yaml:"registry,omitempty"`
+	RootNamespace                string          `yaml:"root_namespace,omitempty"`
+	UrlServiceVersion            string          `yaml:"url_service_version"`
 }
 
 type IstioCanaryRevision struct {
@@ -259,10 +296,11 @@ type ComponentStatuses struct {
 }
 
 type ComponentStatus struct {
-	AppLabel  string `yaml:"app_label,omitempty"`
-	IsCore    bool   `yaml:"is_core,omitempty"`
-	IsProxy   bool   `yaml:"is_proxy,omitempty"`
-	Namespace string `yaml:"namespace,omitempty"`
+	AppLabel       string `yaml:"app_label,omitempty"`
+	IsCore         bool   `yaml:"is_core,omitempty"`
+	IsProxy        bool   `yaml:"is_proxy,omitempty"`
+	IsMultiCluster bool   `yaml:"is_multicluster,omitempty"`
+	Namespace      string `yaml:"namespace,omitempty"`
 }
 
 type GatewayAPIClass struct {
@@ -472,8 +510,17 @@ type CertificatesInformationIndicators struct {
 
 // Clustering defines configuration around multi-cluster functionality.
 type Clustering struct {
-	EnableExecProvider bool       `yaml:"enable_exec_provider,omitempty" json:"enable_exec_provider"`
-	KialiURLs          []KialiURL `yaml:"kiali_urls,omitempty" json:"kiali_urls,omitempty"`
+	// Clusters is a list of clusters that cannot be autodetected by the Kiali Server.
+	// Remote clusters are specified here if ‘autodetect_secrets.enabled’ is false or
+	// if the Kiali Server does not have access to the remote cluster’s secret.
+	Clusters  []Cluster  `yaml:"clusters,omitempty" json:"clusters,omitempty"`
+	KialiURLs []KialiURL `yaml:"kiali_urls,omitempty" json:"kiali_urls,omitempty"`
+}
+
+type FeatureFlagClustering struct {
+	// TODO: Deprecate this in favor of Clustering.Clusters.
+	Clustering         `yaml:",inline"`
+	EnableExecProvider bool `yaml:"enable_exec_provider,omitempty" json:"enable_exec_provider"`
 }
 
 // KialiURL defines a cluster name, namespace and instance name properties to URL.
@@ -487,7 +534,7 @@ type KialiURL struct {
 // KialiFeatureFlags available from the CR
 type KialiFeatureFlags struct {
 	CertificatesInformationIndicators CertificatesInformationIndicators `yaml:"certificates_information_indicators,omitempty" json:"certificatesInformationIndicators"`
-	Clustering                        Clustering                        `yaml:"clustering,omitempty" json:"clustering,omitempty"`
+	Clustering                        FeatureFlagClustering             `yaml:"clustering,omitempty" json:"clustering,omitempty"`
 	DisabledFeatures                  []string                          `yaml:"disabled_features,omitempty" json:"disabledFeatures,omitempty"`
 	IstioAnnotationAction             bool                              `yaml:"istio_annotation_action,omitempty" json:"istioAnnotationAction"`
 	IstioInjectionAction              bool                              `yaml:"istio_injection_action,omitempty" json:"istioInjectionAction"`
@@ -523,6 +570,7 @@ type Config struct {
 	AdditionalDisplayDetails []AdditionalDisplayItem             `yaml:"additional_display_details,omitempty"`
 	API                      ApiConfig                           `yaml:"api,omitempty"`
 	Auth                     AuthConfig                          `yaml:"auth,omitempty"`
+	Clustering               Clustering                          `yaml:"clustering,omitempty"`
 	CustomDashboards         dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
 	Deployment               DeploymentConfig                    `yaml:"deployment,omitempty"`
 	ExternalServices         ExternalServices                    `yaml:"external_services,omitempty"`
@@ -640,13 +688,10 @@ func NewConfig() (c *Config) {
 				IstioSidecarAnnotation:            "sidecar.istio.io/status",
 				IstiodDeploymentName:              "istiod",
 				IstiodPodMonitoringPort:           15014,
+				IstiodPollingIntervalSeconds:      20,
 				RootNamespace:                     "istio-system",
 				UrlServiceVersion:                 "http://istiod.istio-system:15014/version",
-				GatewayAPIClasses: []GatewayAPIClass{
-					{
-						Name: "Istio", ClassName: "istio",
-					},
-				},
+				GatewayAPIClasses:                 []GatewayAPIClass{},
 			},
 			Prometheus: PrometheusConfig{
 				Auth: Auth{
@@ -671,9 +716,10 @@ func NewConfig() (c *Config) {
 					Type: AuthTypeNone,
 				},
 				Enabled:              true,
+				GrpcPort:             9095,
 				InClusterURL:         "http://tracing.istio-system:16685/jaeger",
 				IsCore:               false,
-				Provider:             "jaeger",
+				Provider:             JaegerProvider,
 				NamespaceSelector:    true,
 				QueryScope:           map[string]string{},
 				QueryTimeout:         5,
@@ -697,7 +743,7 @@ func NewConfig() (c *Config) {
 				Enabled: true,
 				Secrets: []string{"cacerts", "istio-ca-secret"},
 			},
-			Clustering: Clustering{
+			Clustering: FeatureFlagClustering{
 				EnableExecProvider: false,
 			},
 			DisabledFeatures:      []string{},
@@ -787,11 +833,14 @@ func NewConfig() (c *Config) {
 					Port:    9090,
 				},
 				Tracing: Tracing{
-					CollectorType: "jaeger",
-					CollectorURL:  "http://jaeger-collector.istio-system:14268/api/traces",
+					CollectorType: OTELCollectorType,
+					CollectorURL:  "jaeger-collector.istio-system:4318",
 					Enabled:       false,
 					Otel: OtelCollector{
-						Protocol: "http",
+						CAName:     "",
+						Protocol:   "http",
+						SkipVerify: true,
+						TLSEnabled: false,
 					},
 					// Sample half of traces.
 					SamplingRate: 0.5,
@@ -862,6 +911,11 @@ func (conf *Config) AllNamespacesAccessible() bool {
 	}
 	// it is still possible we are in cluster wide access mode even if accessible namespaces has been restricted
 	return conf.Deployment.ClusterWideAccess
+}
+
+// IsServerHTTPS returns true if the server endpoint should use HTTPS. If false, only plaintext HTTP is supported.
+func (conf *Config) IsServerHTTPS() bool {
+	return conf.Identity.CertFile != "" && conf.Identity.PrivateKeyFile != ""
 }
 
 // Get the global Config
@@ -989,6 +1043,16 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 		}
 	}
 
+	// Copy over feature flags that have been upgraded to the new format.
+	// TODO: Remove when we no longer support the old format.
+	if conf.Clustering.Clusters == nil && conf.KialiFeatureFlags.Clustering.Clusters != nil {
+		conf.Clustering.Clusters = conf.KialiFeatureFlags.Clustering.Clusters
+	}
+
+	if conf.Clustering.KialiURLs == nil && conf.KialiFeatureFlags.Clustering.KialiURLs != nil {
+		conf.Clustering.KialiURLs = conf.KialiFeatureFlags.Clustering.KialiURLs
+	}
+
 	return
 }
 
@@ -1069,4 +1133,78 @@ func GetSafeClusterName(cluster string) string {
 		return Get().KubernetesConfig.ClusterName
 	}
 	return cluster
+}
+
+// Validate will ensure the config is valid. This should be called after the config
+// is initialized and before the config is used.
+func Validate(cfg Config) error {
+	if cfg.Server.Port < 0 {
+		return fmt.Errorf("server port is negative: %v", cfg.Server.Port)
+	}
+
+	if strings.Contains(cfg.Server.StaticContentRootDirectory, "..") {
+		return fmt.Errorf("server static content root directory must not contain '..': %v", cfg.Server.StaticContentRootDirectory)
+	}
+	if _, err := os.Stat(cfg.Server.StaticContentRootDirectory); os.IsNotExist(err) {
+		return fmt.Errorf("server static content root directory does not exist: %v", cfg.Server.StaticContentRootDirectory)
+	}
+
+	webRoot := cfg.Server.WebRoot
+	if !validPathRegEx.MatchString(webRoot) {
+		return fmt.Errorf("web root must begin with a / and contain valid URL path characters: %v", webRoot)
+	}
+	if webRoot != "/" && strings.HasSuffix(webRoot, "/") {
+		return fmt.Errorf("web root must not contain a trailing /: %v", webRoot)
+	}
+	if strings.Contains(webRoot, "/../") {
+		return fmt.Errorf("for security purposes, web root must not contain '/../': %v", webRoot)
+	}
+
+	// log some messages to let the administrator know when credentials are configured certain ways
+	auth := cfg.Auth
+	log.Infof("Using authentication strategy [%v]", auth.Strategy)
+	if auth.Strategy == AuthStrategyAnonymous {
+		log.Warningf("Kiali auth strategy is configured for anonymous access - users will not be authenticated.")
+	} else if auth.Strategy != AuthStrategyOpenId &&
+		auth.Strategy != AuthStrategyOpenshift &&
+		auth.Strategy != AuthStrategyToken &&
+		auth.Strategy != AuthStrategyHeader {
+		return fmt.Errorf("Invalid authentication strategy [%v]", auth.Strategy)
+	}
+
+	// Check the ciphering key for sessions
+	signingKey := cfg.LoginToken.SigningKey
+	if err := ValidateSigningKey(signingKey, auth.Strategy); err != nil {
+		return err
+	}
+
+	// log a warning if the user is ignoring some validations
+	if len(cfg.KialiFeatureFlags.Validations.Ignore) > 0 {
+		log.Infof("Some validation errors will be ignored %v. If these errors do occur, they will still be logged. If you think the validation errors you see are incorrect, please report them to the Kiali team if you have not done so already and provide the details of your scenario. This will keep Kiali validations strong for the whole community.", cfg.KialiFeatureFlags.Validations.Ignore)
+	}
+
+	// log a info message if the user is disabling some features
+	if len(cfg.KialiFeatureFlags.DisabledFeatures) > 0 {
+		log.Infof("Some features are disabled: [%v]", strings.Join(cfg.KialiFeatureFlags.DisabledFeatures, ","))
+		for _, fn := range cfg.KialiFeatureFlags.DisabledFeatures {
+			if err := FeatureName(fn).IsValid(); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Check the observability section
+	observTracing := cfg.Server.Observability.Tracing
+	// If collector is not defined it would be the default "otel"
+	if observTracing.Enabled && observTracing.CollectorType != OTELCollectorType {
+		return fmt.Errorf("error in configuration options getting the observability exporter. Invalid collector type [%s]", observTracing.CollectorType)
+	}
+
+	// Check the tracing section
+	cfgTracing := cfg.ExternalServices.Tracing
+	if cfgTracing.Enabled && cfgTracing.Provider != JaegerProvider && cfgTracing.Provider != TempoProvider {
+		return fmt.Errorf("error in configuration options for the external services tracing provider. Invalid provider type [%s]", cfgTracing.Provider)
+	}
+
+	return nil
 }

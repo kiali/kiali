@@ -73,7 +73,7 @@ create_remote_secret() {
     fi
     echo "Choosing to use: [${secretname}]"
   fi
-  REMOTE_SECRET="$("${ISTIOCTL}" x create-remote-secret --name "${clustername}" ${secretname})"
+  REMOTE_SECRET="$("${ISTIOCTL}" create-remote-secret --name "${clustername}" ${secretname})"
   if [ "$?" != "0" ]; then
     echo "Failed to generate remote secret for cluster [${clustername}]"
     exit 1
@@ -199,6 +199,3 @@ source ${SCRIPT_DIR}/setup-tracing.sh
 
 # Install bookinfo across cluster if enabled
 source ${SCRIPT_DIR}/split-bookinfo.sh
-
-# Install Kiali in both clusters if enabled
-source ${SCRIPT_DIR}/deploy-kiali.sh

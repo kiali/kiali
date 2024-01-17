@@ -1,63 +1,85 @@
+import { Table, TableVariant, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { summaryTitle } from 'pages/Graph/SummaryPanelCommon';
 import * as React from 'react';
-import { tableStyle } from 'styles/TableStyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { renderInOutRateChartHttp, renderInOutRateChartGrpc } from './RateChart';
 
+const tableStyle = kialiStyle({
+  marginBottom: '0.5rem'
+});
+
 type InOutRateTableGrpcPropType = {
-  title: string;
   inRate: number;
   inRateGrpcErr: number;
   inRateNR: number;
   outRate: number;
   outRateGrpcErr: number;
   outRateNR: number;
+  title: string;
 };
 
-export class InOutRateTableGrpc extends React.Component<InOutRateTableGrpcPropType, {}> {
-  render() {
-    // for the table and graph
-    const inErrRate = this.props.inRateGrpcErr + this.props.inRateNR;
-    const outErrRate = this.props.outRateGrpcErr + this.props.outRateNR;
-    const percentErrIn: number = this.props.inRate === 0 ? 0 : (inErrRate / this.props.inRate) * 100;
-    const percentErrOut: number = this.props.outRate === 0 ? 0 : (outErrRate / this.props.outRate) * 100;
-    const percentOkIn: number = 100 - percentErrIn;
-    const percentOkOut: number = 100 - percentErrOut;
+export const InOutRateTableGrpc: React.FC<InOutRateTableGrpcPropType> = (props: InOutRateTableGrpcPropType) => {
+  // for the table and graph
+  const inErrRate: number = props.inRateGrpcErr + props.inRateNR;
+  const outErrRate: number = props.outRateGrpcErr + props.outRateNR;
+  const percentErrIn: number = props.inRate === 0 ? 0 : (inErrRate / props.inRate) * 100;
+  const percentErrOut: number = props.outRate === 0 ? 0 : (outErrRate / props.outRate) * 100;
+  const percentOkIn: number = 100 - percentErrIn;
+  const percentOkOut: number = 100 - percentErrOut;
 
-    return (
-      <div>
-        <div className={summaryTitle}>{this.props.title}</div>
-        <table className={tableStyle}>
-          <thead>
-            <tr>
-              <th />
-              <th>Total</th>
-              <th>%Success</th>
-              <th>%Error</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>In</td>
-              <td>{this.props.inRate.toFixed(2)}</td>
-              <td>{percentOkIn.toFixed(2)}</td>
-              <td>{percentErrIn.toFixed(2)}</td>
-            </tr>
-            <tr>
-              <td>Out</td>
-              <td>{this.props.outRate.toFixed(2)}</td>
-              <td>{percentOkOut.toFixed(2)}</td>
-              <td>{percentErrOut.toFixed(2)}</td>
-            </tr>
-          </tbody>
-        </table>
-        {renderInOutRateChartGrpc(percentOkIn, percentErrIn, percentOkOut, percentErrOut)}
-      </div>
-    );
-  }
-}
+  return (
+    <div>
+      <div className={summaryTitle}>{props.title}</div>
+
+      <Table className={tableStyle}>
+        <Thead>
+          <Tr>
+            <Th />
+            <Th dataLabel="Total" textCenter>
+              Total
+            </Th>
+            <Th dataLabel="% Success" textCenter>
+              % Success
+            </Th>
+            <Th dataLabel="% Error" textCenter>
+              % Error
+            </Th>
+          </Tr>
+        </Thead>
+        <Tbody>
+          <Tr>
+            <Td>In</Td>
+            <Td dataLabel="Total" textCenter>
+              {props.inRate.toFixed(2)}
+            </Td>
+            <Td dataLabel="% Success" textCenter>
+              {percentOkIn.toFixed(2)}
+            </Td>
+            <Td dataLabel="% Error" textCenter>
+              {percentErrIn.toFixed(2)}
+            </Td>
+          </Tr>
+          <Tr>
+            <Td>Out</Td>
+            <Td dataLabel="Total" textCenter>
+              {props.outRate.toFixed(2)}
+            </Td>
+            <Td dataLabel="% Success" textCenter>
+              {percentOkOut.toFixed(2)}
+            </Td>
+            <Td dataLabel="% Error" textCenter>
+              {percentErrOut.toFixed(2)}
+            </Td>
+          </Tr>
+        </Tbody>
+      </Table>
+
+      {renderInOutRateChartGrpc(percentOkIn, percentErrIn, percentOkOut, percentErrOut)}
+    </div>
+  );
+};
 
 type InOutRateTableHttpPropType = {
-  title: string;
   inRate: number;
   inRate3xx: number;
   inRate4xx: number;
@@ -68,82 +90,93 @@ type InOutRateTableHttpPropType = {
   outRate4xx: number;
   outRate5xx: number;
   outRateNR: number;
+  title: string;
 };
 
-export class InOutRateTableHttp extends React.Component<InOutRateTableHttpPropType, {}> {
-  render() {
-    // for the table
-    const inErrRate: number = this.props.inRate4xx + this.props.inRate5xx + this.props.inRateNR;
-    const outErrRate: number = this.props.outRate4xx + this.props.outRate5xx + this.props.outRateNR;
-    const percentInErr: number = this.props.inRate === 0 ? 0 : (inErrRate / this.props.inRate) * 100;
-    const percentOutErr: number = this.props.outRate === 0 ? 0 : (outErrRate / this.props.outRate) * 100;
-    const percentInSuccess: number = 100 - percentInErr;
-    const percentOutSuccess: number = 100 - percentOutErr;
+export const InOutRateTableHttp: React.FC<InOutRateTableHttpPropType> = (props: InOutRateTableHttpPropType) => {
+  // for the table
+  const inErrRate: number = props.inRate4xx + props.inRate5xx + props.inRateNR;
+  const outErrRate: number = props.outRate4xx + props.outRate5xx + props.outRateNR;
+  const percentInErr: number = props.inRate === 0 ? 0 : (inErrRate / props.inRate) * 100;
+  const percentOutErr: number = props.outRate === 0 ? 0 : (outErrRate / props.outRate) * 100;
+  const percentInSuccess: number = 100 - percentInErr;
+  const percentOutSuccess: number = 100 - percentOutErr;
 
-    // for the graphs
-    const rate2xxIn: number =
-      this.props.inRate === 0
-        ? 0
-        : this.props.inRate - this.props.inRate3xx - this.props.inRate4xx - this.props.inRate5xx - this.props.inRateNR;
-    const rate2xxOut: number =
-      this.props.outRate === 0
-        ? 0
-        : this.props.outRate -
-          this.props.outRate3xx -
-          this.props.outRate4xx -
-          this.props.outRate5xx -
-          this.props.outRateNR;
-    const percent2xxIn: number = this.props.inRate === 0 ? 0 : (rate2xxIn / this.props.inRate) * 100;
-    const percent3xxIn: number = this.props.inRate === 0 ? 0 : (this.props.inRate3xx / this.props.inRate) * 100;
-    const percent4xxIn: number = this.props.inRate === 0 ? 0 : (this.props.inRate4xx / this.props.inRate) * 100;
-    const percent5xxIn: number = this.props.inRate === 0 ? 0 : (this.props.inRate5xx / this.props.inRate) * 100;
-    const percentNRIn: number = this.props.inRate === 0 ? 0 : (this.props.inRateNR / this.props.inRate) * 100;
-    const percent2xxOut: number = this.props.outRate === 0 ? 0 : (rate2xxOut / this.props.outRate) * 100;
-    const percent3xxOut: number = this.props.outRate === 0 ? 0 : (this.props.outRate3xx / this.props.outRate) * 100;
-    const percent4xxOut: number = this.props.outRate === 0 ? 0 : (this.props.outRate4xx / this.props.outRate) * 100;
-    const percent5xxOut: number = this.props.outRate === 0 ? 0 : (this.props.outRate5xx / this.props.outRate) * 100;
-    const percentNROut: number = this.props.outRate === 0 ? 0 : (this.props.outRateNR / this.props.outRate) * 100;
+  // for the graphs
+  const rate2xxIn: number =
+    props.inRate === 0 ? 0 : props.inRate - props.inRate3xx - props.inRate4xx - props.inRate5xx - props.inRateNR;
+  const rate2xxOut: number =
+    props.outRate === 0 ? 0 : props.outRate - props.outRate3xx - props.outRate4xx - props.outRate5xx - props.outRateNR;
+  const percent2xxIn: number = props.inRate === 0 ? 0 : (rate2xxIn / props.inRate) * 100;
+  const percent3xxIn: number = props.inRate === 0 ? 0 : (props.inRate3xx / props.inRate) * 100;
+  const percent4xxIn: number = props.inRate === 0 ? 0 : (props.inRate4xx / props.inRate) * 100;
+  const percent5xxIn: number = props.inRate === 0 ? 0 : (props.inRate5xx / props.inRate) * 100;
+  const percentNRIn: number = props.inRate === 0 ? 0 : (props.inRateNR / props.inRate) * 100;
+  const percent2xxOut: number = props.outRate === 0 ? 0 : (rate2xxOut / props.outRate) * 100;
+  const percent3xxOut: number = props.outRate === 0 ? 0 : (props.outRate3xx / props.outRate) * 100;
+  const percent4xxOut: number = props.outRate === 0 ? 0 : (props.outRate4xx / props.outRate) * 100;
+  const percent5xxOut: number = props.outRate === 0 ? 0 : (props.outRate5xx / props.outRate) * 100;
+  const percentNROut: number = props.outRate === 0 ? 0 : (props.outRateNR / props.outRate) * 100;
 
-    return (
-      <div>
-        <div className={summaryTitle}>{this.props.title}</div>
-        <table className={tableStyle} style={{ marginBottom: '10px' }}>
-          <thead>
-            <tr>
-              <th />
-              <th>Total</th>
-              <th>%Success</th>
-              <th>%Error</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>In</td>
-              <td>{this.props.inRate.toFixed(2)}</td>
-              <td>{percentInSuccess.toFixed(2)}</td>
-              <td>{percentInErr.toFixed(2)}</td>
-            </tr>
-            <tr>
-              <td>Out</td>
-              <td>{this.props.outRate.toFixed(2)}</td>
-              <td>{percentOutSuccess.toFixed(2)}</td>
-              <td>{percentOutErr.toFixed(2)}</td>
-            </tr>
-          </tbody>
-        </table>
-        {renderInOutRateChartHttp(
-          percent2xxIn,
-          percent3xxIn,
-          percent4xxIn,
-          percent5xxIn,
-          percentNRIn,
-          percent2xxOut,
-          percent3xxOut,
-          percent4xxOut,
-          percent5xxOut,
-          percentNROut
-        )}
-      </div>
-    );
-  }
-}
+  return (
+    <div>
+      <div className={summaryTitle}>{props.title}</div>
+
+      <Table variant={TableVariant.compact} className={tableStyle}>
+        <Thead>
+          <Tr>
+            <Th />
+            <Th dataLabel="Total" textCenter>
+              Total
+            </Th>
+            <Th dataLabel="% Success" textCenter>
+              % Success
+            </Th>
+            <Th dataLabel="% Error" textCenter>
+              % Error
+            </Th>
+          </Tr>
+        </Thead>
+        <Tbody>
+          <Tr>
+            <Td>In</Td>
+            <Td dataLabel="Total" textCenter>
+              {props.inRate.toFixed(2)}
+            </Td>
+            <Td dataLabel="% Success" textCenter>
+              {percentInSuccess.toFixed(2)}
+            </Td>
+            <Td dataLabel="% Error" textCenter>
+              {percentInErr.toFixed(2)}
+            </Td>
+          </Tr>
+          <Tr>
+            <Td>Out</Td>
+            <Td dataLabel="Total" textCenter>
+              {props.outRate.toFixed(2)}
+            </Td>
+            <Td dataLabel="% Success" textCenter>
+              {percentOutSuccess.toFixed(2)}
+            </Td>
+            <Td dataLabel="% Error" textCenter>
+              {percentOutErr.toFixed(2)}
+            </Td>
+          </Tr>
+        </Tbody>
+      </Table>
+
+      {renderInOutRateChartHttp(
+        percent2xxIn,
+        percent3xxIn,
+        percent4xxIn,
+        percent5xxIn,
+        percentNRIn,
+        percent2xxOut,
+        percent3xxOut,
+        percent4xxOut,
+        percent5xxOut,
+        percentNROut
+      )}
+    </div>
+  );
+};

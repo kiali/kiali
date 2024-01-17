@@ -26,58 +26,44 @@ import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { infoStyle } from 'styles/DropdownStyles';
 import { connectRefresh } from '../Refresh/connectRefresh';
-
-type IstioCertsInfoState = {
-  showModal: boolean;
-  certsError: Boolean;
-};
+import { kialiStyle } from 'styles/StyleUtils';
 
 type ReduxProps = {
-  setIstioCertsInfo: (istioCertsInfo: CertsInfo[]) => void;
   certsInfo: CertsInfo[];
+  setIstioCertsInfo: (istioCertsInfo: CertsInfo[]) => void;
 };
 
 type IstioCertsInfoProps = ReduxProps & {
+  isOpen: boolean;
   lastRefreshAt: TimeInMilliseconds;
-  ref: React.RefObject<any>;
+  onClose: () => void;
 };
 
-class IstioCertsInfoComponent extends React.Component<IstioCertsInfoProps, IstioCertsInfoState> {
-  constructor(props: IstioCertsInfoProps) {
-    super(props);
-    this.state = { showModal: false, certsError: false };
-  }
+const cardStyle = kialiStyle({
+  border: `1px solid ${PFColors.BorderColor100}`
+});
 
-  open = () => {
-    this.setState({ showModal: true });
-  };
+const IstioCertsInfoComponent: React.FC<IstioCertsInfoProps> = (props: IstioCertsInfoProps) => {
+  const [certsError, setCertsError] = React.useState<boolean>(false);
 
-  close = () => {
-    this.setState({ showModal: false });
-  };
+  const { setIstioCertsInfo } = props;
 
-  componentDidMount() {
-    this.fetchStatus();
-  }
-
-  componentDidUpdate(prevProps: Readonly<IstioCertsInfoProps>): void {
-    if (this.props.lastRefreshAt !== prevProps.lastRefreshAt) {
-      this.fetchStatus();
-    }
-  }
-
-  fetchStatus = () => {
+  const fetchStatus = React.useCallback(() => {
     API.getIstioCertsInfo()
       .then(response => {
-        this.props.setIstioCertsInfo(response.data);
-        this.setState({ certsError: false });
+        setIstioCertsInfo(response.data);
+        setCertsError(false);
       })
       .catch(_error => {
-        this.setState({ certsError: true });
+        setCertsError(true);
       });
-  };
+  }, [setIstioCertsInfo]);
 
-  showCertInfo = (certInfo: CertsInfo): JSX.Element => {
+  React.useEffect(() => {
+    fetchStatus();
+  }, [props.lastRefreshAt, fetchStatus]);
+
+  const showCertInfo = (certInfo: CertsInfo): JSX.Element => {
     return (
       <Grid>
         <GridItem span={3}>
@@ -106,69 +92,63 @@ class IstioCertsInfoComponent extends React.Component<IstioCertsInfoProps, Istio
     );
   };
 
-  render() {
-    return (
-      <Modal
-        variant={ModalVariant.small}
-        isOpen={this.state.showModal}
-        onClose={this.close}
-        title="Certificates information"
-        actions={[<Button onClick={this.close}>Close</Button>]}
-      >
-        {this.state.certsError && (
-          <p style={{ color: PFColors.Danger }}>An error occurred getting certificates information</p>
-        )}
-        <ul>
-          {this.props.certsInfo &&
-            !this.state.certsError &&
-            this.props.certsInfo.map((certInfo, index) => (
-              <li key={index}>
-                <Card>
-                  <CardHeader>
-                    <Title headingLevel="h3" size={TitleSizes.lg}>
-                      From {certInfo.secretName} secret
-                    </Title>
-                  </CardHeader>
-                  <CardBody>
-                    <Grid>
-                      <GridItem span={12}>
-                        {certInfo.error && (
-                          <p style={{ color: PFColors.Danger }}>An error occurred, {certInfo.error}</p>
-                        )}
-                        {!certInfo.accessible && (
-                          <Tooltip
-                            position={TooltipPosition.right}
-                            content={
-                              <div style={{ textAlign: 'left' }}>
-                                <p>
-                                  For security purposes, Kiali has not been granted permission to view this certificate.
-                                  If you want Kiali to provide details about this certificate then you must grant the
-                                  Kiali service account permission to read the secret {certInfo.secretName} found in
-                                  namespace {certInfo.secretNamespace}.
-                                </p>
-                                <p style={{ marginTop: '20px' }}>
-                                  Refer to the Kiali documentation for details on how you can add this permission.
-                                </p>
-                              </div>
-                            }
-                          >
-                            <span>
-                              Access denied <KialiIcon.Warning className={infoStyle} />
-                            </span>
-                          </Tooltip>
-                        )}
-                      </GridItem>
-                    </Grid>
-                    {!certInfo.error && certInfo.accessible && this.showCertInfo(certInfo)}
-                  </CardBody>
-                </Card>
-              </li>
-            ))}
-        </ul>
-      </Modal>
-    );
-  }
-}
+  return (
+    <Modal
+      variant={ModalVariant.small}
+      isOpen={props.isOpen}
+      onClose={props.onClose}
+      title="Certificates information"
+      actions={[<Button onClick={close}>Close</Button>]}
+    >
+      {certsError && <p style={{ color: PFColors.Danger }}>An error occurred getting certificates information</p>}
+      <ul>
+        {props.certsInfo &&
+          !certsError &&
+          props.certsInfo.map((certInfo, index) => (
+            <li key={index}>
+              <Card className={cardStyle}>
+                <CardHeader>
+                  <Title headingLevel="h3" size={TitleSizes.lg}>
+                    From {certInfo.secretName} secret
+                  </Title>
+                </CardHeader>
+                <CardBody>
+                  <Grid>
+                    <GridItem span={12}>
+                      {certInfo.error && <p style={{ color: PFColors.Danger }}>An error occurred, {certInfo.error}</p>}
+                      {!certInfo.accessible && (
+                        <Tooltip
+                          position={TooltipPosition.right}
+                          content={
+                            <div style={{ textAlign: 'left' }}>
+                              <p>
+                                For security purposes, Kiali has not been granted permission to view this certificate.
+                                If you want Kiali to provide details about this certificate then you must grant the
+                                Kiali service account permission to read the secret {certInfo.secretName} found in
+                                namespace {certInfo.secretNamespace}.
+                              </p>
+                              <p style={{ marginTop: '1.25rem' }}>
+                                Refer to the Kiali documentation for details on how you can add this permission.
+                              </p>
+                            </div>
+                          }
+                        >
+                          <span>
+                            Access denied <KialiIcon.Warning className={infoStyle} />
+                          </span>
+                        </Tooltip>
+                      )}
+                    </GridItem>
+                  </Grid>
+                  {!certInfo.error && certInfo.accessible && showCertInfo(certInfo)}
+                </CardBody>
+              </Card>
+            </li>
+          ))}
+      </ul>
+    </Modal>
+  );
+};
 
 const mapStateToProps = (state: KialiAppState) => ({
   certsInfo: istioCertsInfoSelector(state)
@@ -178,6 +158,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setIstioCertsInfo: bindActionCreators(IstioCertsInfoActions.setinfo, dispatch)
 });
 
-export const IstioCertsInfo = connectRefresh(
-  connect(mapStateToProps, mapDispatchToProps, null, { forwardRef: true })(IstioCertsInfoComponent)
-);
+export const IstioCertsInfo = connectRefresh(connect(mapStateToProps, mapDispatchToProps)(IstioCertsInfoComponent));

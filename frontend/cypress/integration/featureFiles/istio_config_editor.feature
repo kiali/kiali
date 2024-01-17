@@ -20,11 +20,10 @@ Feature: Kiali Istio Config editor page
     But no cluster badge for the "Istio config" should be visible
 
   @multi-cluster
-  @skip
   Scenario: Filter Istio Config editor objects by Valid configuration
     When the user filters by "Config" for "Valid"
     And user sees "bookinfo-gateway"
     And user sees "bookinfo"
     And user clicks in "Name" column on the "bookinfo" text
     Then user can see istio config editor
-    And cluster badge for "east" cluster should be visible
+    And cluster badge for "east" cluster should be visible in the Istio config side panel

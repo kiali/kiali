@@ -41,7 +41,6 @@ import {
 } from '@patternfly/react-core';
 import { dicIstioType } from '../../types/IstioConfigList';
 import { showInMessageCenter } from '../../utils/IstioValidationUtils';
-import { AxiosError } from 'axios';
 import { Refresh } from '../../components/Refresh/Refresh';
 import { IstioConfigOverview } from './IstioObjectDetails/IstioConfigOverview';
 import { Annotation } from 'react-ace/types';
@@ -55,42 +54,52 @@ import { connect } from 'react-redux';
 import { basicTabStyle } from 'styles/TabStyles';
 import { istioAceEditorStyle } from 'styles/AceEditorStyle';
 import { Theme } from 'types/Common';
+import { ApiError, ApiResponse } from 'types/Api';
 
 const rightToolbarStyle = kialiStyle({
   zIndex: 500
 });
 
 const editorDrawer = kialiStyle({
-  margin: '0'
+  margin: 0
 });
 
 interface IstioConfigDetailsState {
-  istioObjectDetails?: IstioConfigDetails;
   cluster?: string;
+  currentTab: string;
+  error?: ErrorMsg;
+  isExpanded: boolean;
+  isModified: boolean;
+  isRemoved: boolean;
+  istioObjectDetails?: IstioConfigDetails;
   istioValidations?: ObjectValidation;
   originalIstioObjectDetails?: IstioConfigDetails;
   originalIstioValidations?: ObjectValidation;
-  isModified: boolean;
-  isRemoved: boolean;
+  selectedEditorLine?: string;
   yamlModified?: string;
   yamlValidations?: AceValidations;
-  currentTab: string;
-  isExpanded: boolean;
-  selectedEditorLine?: string;
-  error?: ErrorMsg;
+}
+
+interface RangeRow {
+  endRow: number;
+  startRow: number;
 }
 
 const tabName = 'list';
+
 const paramToTab: { [key: string]: number } = {
   yaml: 0
 };
 
-interface IstioConfigDetailsProps {
-  istioConfigId: IstioConfigId;
-  kiosk: string;
+interface ReduxProps {
   istioAPIEnabled: boolean;
+  kiosk: string;
   theme: string;
 }
+
+type IstioConfigDetailsProps = ReduxProps & {
+  istioConfigId: IstioConfigId;
+};
 
 class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetailsProps, IstioConfigDetailsState> {
   aceEditorRef: React.RefObject<AceEditor>;
@@ -101,6 +110,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   constructor(props: IstioConfigDetailsProps) {
     super(props);
     const cluster = HistoryManager.getClusterName();
+
     this.state = {
       cluster: cluster,
       isModified: false,
@@ -108,38 +118,42 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
       currentTab: activeTab(tabName, this.defaultTab()),
       isExpanded: false
     };
+
     this.aceEditorRef = React.createRef();
     this.drawerRef = React.createRef();
     this.promptTo = '';
     this.timerId = -1;
   }
 
-  defaultTab() {
+  defaultTab(): string {
     return 'yaml';
   }
 
-  objectTitle() {
-    let title: string = '';
+  objectTitle(): string {
+    let title = '';
+
     if (this.state.istioObjectDetails) {
       const objectType = dicIstioType[this.props.istioConfigId.objectType];
       const methodName = objectType.charAt(0).toLowerCase() + objectType.slice(1);
       const object = this.state.istioObjectDetails[methodName];
+
       if (object) {
         title = object.metadata.name;
       }
     }
+
     return title;
   }
 
-  fetchIstioObjectDetails = () => {
+  fetchIstioObjectDetails = (): void => {
     this.fetchIstioObjectDetailsFromProps(this.props.istioConfigId);
   };
 
-  newIstioObjectPromise = (props: IstioConfigId, validate: boolean) => {
+  newIstioObjectPromise = (props: IstioConfigId, validate: boolean): Promise<ApiResponse<IstioConfigDetails>> => {
     return API.getIstioConfigDetail(props.namespace, props.objectType, props.object, validate, this.state.cluster);
   };
 
-  fetchIstioObjectDetailsFromProps = (props: IstioConfigId) => {
+  fetchIstioObjectDetailsFromProps = (props: IstioConfigId): void => {
     const validate = this.props.istioAPIEnabled ? true : false;
     const promiseConfigDetails = this.newIstioObjectPromise(props, validate);
 
@@ -164,12 +178,14 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
       .catch(error => {
         const msg: ErrorMsg = {
           title: 'No Istio object is selected',
-          description: this.props.istioConfigId.object + ' is not found in the mesh'
+          description: `${this.props.istioConfigId.object} is not found in the mesh`
         };
+
         this.setState({
           isRemoved: true,
           error: msg
         });
+
         AlertUtils.addError(
           `Could not fetch Istio object type [${props.objectType}] name [${props.object}] in namespace [${props.namespace}].`,
           error
@@ -177,7 +193,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
       });
   };
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.fetchIstioObjectDetails();
   }
 
@@ -188,8 +204,10 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     } else {
       window.onbeforeunload = null;
     }
+
     // This will reset the flag to prevent ask multiple times the confirmation to leave with unsaved changed
     this.promptTo = '';
+
     // Hack to force redisplay of annotations after update
     // See https://github.com/securingsincity/react-ace/issues/300
     if (this.aceEditorRef.current) {
@@ -219,7 +237,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     }
   }
 
-  propsMatch(prevProps: IstioConfigDetailsProps) {
+  propsMatch(prevProps: IstioConfigDetailsProps): boolean {
     return (
       this.props.istioConfigId.namespace === prevProps.istioConfigId.namespace &&
       this.props.istioConfigId.object === prevProps.istioConfigId.object &&
@@ -227,30 +245,30 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     );
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     // Reset ask confirmation flag
     window.onbeforeunload = null;
     window.clearInterval(this.timerId);
   }
 
-  backToList = () => {
+  backToList = (): void => {
     // Back to list page
     history.push(`/${Paths.ISTIO}?namespaces=${this.props.istioConfigId.namespace}`);
   };
 
-  canDelete = () => {
+  canDelete = (): boolean => {
     return this.state.istioObjectDetails !== undefined && this.state.istioObjectDetails.permissions.delete;
   };
 
-  canUpdate = () => {
+  canUpdate = (): boolean => {
     return this.state.istioObjectDetails !== undefined && this.state.istioObjectDetails.permissions.update;
   };
 
-  onCancel = () => {
+  onCancel = (): void => {
     this.backToList();
   };
 
-  onDelete = () => {
+  onDelete = (): void => {
     API.deleteIstioConfigDetail(
       this.props.istioConfigId.namespace,
       this.props.istioConfigId.objectType,
@@ -263,11 +281,12 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
       });
   };
 
-  onUpdate = () => {
+  onUpdate = (): void => {
     jsYaml.safeLoadAll(this.state.yamlModified, (objectModified: object) => {
       const jsonPatch = JSON.stringify(
         mergeJsonPatch(objectModified, getIstioObject(this.state.istioObjectDetails))
       ).replace(new RegExp('(,null)+]', 'g'), ']');
+
       API.updateIstioConfigDetail(
         this.props.istioConfigId.namespace,
         this.props.istioConfigId.objectType,
@@ -276,13 +295,8 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
         this.state.cluster
       )
         .then(() => {
-          const targetMessage =
-            this.props.istioConfigId.namespace +
-            ' / ' +
-            this.props.istioConfigId.objectType +
-            ' / ' +
-            this.props.istioConfigId.object;
-          AlertUtils.add('Changes applied on ' + targetMessage, 'default', MessageType.SUCCESS);
+          const targetMessage = `${this.props.istioConfigId.namespace} / ${this.props.istioConfigId.objectType} / ${this.props.istioConfigId.object}`;
+          AlertUtils.add(`Changes applied on ${targetMessage}`, 'default', MessageType.SUCCESS);
           this.fetchIstioObjectDetails();
         })
         .catch(error => {
@@ -294,9 +308,10 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     });
   };
 
-  injectGalleyError = (error: AxiosError): AceValidations => {
+  injectGalleyError = (error: ApiError): AceValidations => {
     const msg: string[] = API.getErrorString(error).split(':');
     const errMsg: string = msg.slice(1, msg.length).join(':');
+
     const anno: Annotation = {
       column: 0,
       row: 0,
@@ -307,7 +322,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     return { annotations: [anno], markers: [] };
   };
 
-  resizeEditor = () => {
+  resizeEditor = (): void => {
     if (this.aceEditorRef.current) {
       // The Drawer has an async animation that needs a timeout before to resize the editor
       setTimeout(() => {
@@ -317,7 +332,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     }
   };
 
-  onDrawerToggle = () => {
+  onDrawerToggle = (): void => {
     this.setState(
       prevState => {
         return {
@@ -328,7 +343,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     );
   };
 
-  onDrawerClose = () => {
+  onDrawerClose = (): void => {
     this.setState(
       {
         isExpanded: false
@@ -337,7 +352,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     );
   };
 
-  onEditorChange = (value: string) => {
+  onEditorChange = (value: string): void => {
     this.setState({
       isModified: true,
       yamlModified: value,
@@ -346,26 +361,30 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     });
   };
 
-  onRefresh = () => {
+  onRefresh = (): void => {
     let refresh = true;
+
     if (this.state.isModified) {
       refresh = window.confirm('You have unsaved changes, are you sure you want to refresh ?');
     }
+
     if (refresh) {
       this.fetchIstioObjectDetails();
     }
   };
 
-  fetchYaml = () => {
+  fetchYaml = (): string => {
     if (this.state.isModified) {
-      return this.state.yamlModified;
+      return this.state.yamlModified ?? '';
     }
+
     const istioObject = getIstioObject(this.state.istioObjectDetails);
     return istioObject ? jsYaml.safeDump(istioObject, safeDumpOptions) : '';
   };
 
   getStatusMessages = (istioConfigDetails?: IstioConfigDetails): ValidationMessage[] => {
     const istioObject = getIstioObject(istioConfigDetails);
+
     return istioObject && istioObject.status && istioObject.status.validationMessages
       ? istioObject.status.validationMessages
       : ([] as ValidationMessage[]);
@@ -377,27 +396,27 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   };
 
   objectReferences = (istioConfigDetails?: IstioConfigDetails): ObjectReference[] => {
-    const details: IstioConfigDetails = istioConfigDetails || ({} as IstioConfigDetails);
-    return details.references?.objectReferences || ([] as ObjectReference[]);
+    const details: IstioConfigDetails = istioConfigDetails ?? ({} as IstioConfigDetails);
+    return details.references?.objectReferences ?? ([] as ObjectReference[]);
   };
 
   serviceReferences = (istioConfigDetails?: IstioConfigDetails): ServiceReference[] => {
-    const details: IstioConfigDetails = istioConfigDetails || ({} as IstioConfigDetails);
-    return details.references?.serviceReferences || ([] as ServiceReference[]);
+    const details: IstioConfigDetails = istioConfigDetails ?? ({} as IstioConfigDetails);
+    return details.references?.serviceReferences ?? ([] as ServiceReference[]);
   };
 
   workloadReferences = (istioConfigDetails?: IstioConfigDetails): ServiceReference[] => {
-    const details: IstioConfigDetails = istioConfigDetails || ({} as IstioConfigDetails);
-    return details.references?.workloadReferences || ([] as WorkloadReference[]);
+    const details: IstioConfigDetails = istioConfigDetails ?? ({} as IstioConfigDetails);
+    return details.references?.workloadReferences ?? ([] as WorkloadReference[]);
   };
 
   helpMessages = (istioConfigDetails?: IstioConfigDetails): HelpMessage[] => {
-    const details: IstioConfigDetails = istioConfigDetails || ({} as IstioConfigDetails);
-    return details.help || ([] as HelpMessage[]);
+    const details: IstioConfigDetails = istioConfigDetails ?? ({} as IstioConfigDetails);
+    return details.help ?? ([] as HelpMessage[]);
   };
 
   // Aux function to calculate rows for 'status' and 'managedFields' which are typically folded
-  getFoldRanges = (yaml: string | undefined): any => {
+  getFoldRanges = (yaml: string): RangeRow => {
     let range = {
       startRow: -1,
       endRow: -1
@@ -414,6 +433,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
             range.startRow = i;
           }
         }
+
         if (line.startsWith('spec:') && range.startRow !== -1) {
           range.endRow = i;
         }
@@ -423,14 +443,16 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     return range;
   };
 
-  isExpanded = (istioConfigDetails?: IstioConfigDetails) => {
+  isExpanded = (istioConfigDetails?: IstioConfigDetails): boolean => {
     let isExpanded = false;
+
     if (istioConfigDetails) {
       isExpanded = this.showCards(
         this.objectReferences(istioConfigDetails).length > 0,
         this.getStatusMessages(istioConfigDetails)
       );
     }
+
     return isExpanded;
   };
 
@@ -438,12 +460,12 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     return refPresent || this.hasOverview() || istioStatusMsgs.length > 0;
   };
 
-  onCursorChange = (e: any) => {
+  onCursorChange = (e: any): void => {
     const line = parseLine(this.fetchYaml(), e.cursor.row);
     this.setState({ selectedEditorLine: line });
   };
 
-  renderEditor = () => {
+  renderEditor = (): React.ReactNode => {
     const yamlSource = this.fetchYaml();
     const istioStatusMsgs = this.getStatusMessages(this.state.istioObjectDetails);
 
@@ -454,10 +476,12 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
 
     const refPresent = objectReferences.length > 0;
     const showCards = this.showCards(refPresent, istioStatusMsgs);
+
     let editorValidations: AceValidations = {
       markers: [],
       annotations: []
     };
+
     if (!this.state.isModified) {
       editorValidations = parseKialiValidations(yamlSource, this.state.istioValidations);
     } else {
@@ -495,6 +519,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
               </>
             )}
           </div>
+
           {!isParentKiosk(this.props.kiosk) && (
             <DrawerActions>
               <DrawerCloseButton onClick={this.onDrawerClose} />
@@ -511,8 +536,8 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
           mode="yaml"
           theme={this.props.theme === Theme.DARK ? 'twilight' : 'eclipse'}
           onChange={this.onEditorChange}
-          height={`calc(var(--kiali-yaml-editor-height)`}
-          width={'100%'}
+          height="calc(var(--kiali-yaml-editor-height)"
+          width="100%"
           className={istioAceEditorStyle}
           wrapEnabled={true}
           readOnly={!this.canUpdate() || isParentKiosk(this.props.kiosk)}
@@ -541,9 +566,10 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     );
   };
 
-  renderActionButtons = (showOverview: boolean) => {
+  renderActionButtons = (showOverview: boolean): React.ReactNode => {
     // User won't save if file has yaml errors
     const yamlErrors = !!(this.state.yamlValidations && this.state.yamlValidations.markers.length > 0);
+
     return !isParentKiosk(this.props.kiosk) ? (
       <IstioActionButtons
         objectName={this.props.istioConfigId.object}
@@ -561,11 +587,12 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     );
   };
 
-  renderActions = () => {
+  renderActions = (): React.ReactNode => {
     const canDelete =
       this.state.istioObjectDetails !== undefined &&
       this.state.istioObjectDetails.permissions.delete &&
       !this.state.isRemoved;
+
     const istioObject = getIstioObject(this.state.istioObjectDetails);
 
     return (
@@ -580,16 +607,19 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     );
   };
 
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         <RefreshNotifier onTick={this.onRefresh} />
+
         <RenderHeader
           location={history.location}
           rightToolbar={<Refresh id="config_details_refresh" hideLabel={true} />}
           actionsToolbar={!this.state.error ? this.renderActions() : undefined}
         />
+
         {this.state.error && <ErrorSection error={this.state.error} />}
+
         {!this.state.error && !isParentKiosk(this.props.kiosk) && (
           <ParameterizedTabs
             id="basic-tabs"
@@ -609,9 +639,11 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
             </Tab>
           </ParameterizedTabs>
         )}
+
         {!this.state.error && isParentKiosk(this.props.kiosk) && (
           <RenderComponentScroll>{this.renderEditor()}</RenderComponentScroll>
         )}
+
         <Prompt
           message={location => {
             if (this.state.isModified) {
@@ -619,6 +651,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
               if (this.promptTo === location.pathname) {
                 return true;
               }
+
               this.promptTo = location.pathname;
               return 'You have unsaved changes, are you sure you want to leave?';
             }
@@ -630,7 +663,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   }
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   kiosk: state.globalState.kiosk,
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
   theme: state.globalState.theme

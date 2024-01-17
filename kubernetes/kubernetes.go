@@ -6,6 +6,7 @@ import (
 	goerrors "errors"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
@@ -21,7 +22,6 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/version"
@@ -38,31 +38,20 @@ import (
 type K8SClientInterface interface {
 	// Kube returns the underlying kubernetes client.
 	Kube() kubernetes.Interface
-	GetClusterServicesByLabels(labelsSelector string) ([]core_v1.Service, error)
 	GetConfigMap(namespace, name string) (*core_v1.ConfigMap, error)
 	GetCronJobs(namespace string) ([]batch_v1.CronJob, error)
-	GetDaemonSet(namespace string, name string) (*apps_v1.DaemonSet, error)
-	GetDaemonSets(namespace string) ([]apps_v1.DaemonSet, error)
 	GetDeployment(namespace string, name string) (*apps_v1.Deployment, error)
-	GetDeployments(namespace string) ([]apps_v1.Deployment, error)
 	GetDeploymentConfig(namespace string, name string) (*osapps_v1.DeploymentConfig, error)
 	GetDeploymentConfigs(namespace string) ([]osapps_v1.DeploymentConfig, error)
-	GetEndpoints(namespace string, name string) (*core_v1.Endpoints, error)
 	GetJobs(namespace string) ([]batch_v1.Job, error)
 	GetNamespace(namespace string) (*core_v1.Namespace, error)
 	GetNamespaces(labelSelector string) ([]core_v1.Namespace, error)
 	GetPod(namespace, name string) (*core_v1.Pod, error)
-	GetPods(namespace, labelSelector string) ([]core_v1.Pod, error)
 	GetReplicationControllers(namespace string) ([]core_v1.ReplicationController, error)
-	GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error)
 	GetSecret(namespace, name string) (*core_v1.Secret, error)
 	GetSelfSubjectAccessReview(ctx context.Context, namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error)
-	GetService(namespace string, name string) (*core_v1.Service, error)
-	GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error)
-	GetServicesByLabels(namespace string, labelsSelector string) ([]core_v1.Service, error)
-	GetStatefulSet(namespace string, name string) (*apps_v1.StatefulSet, error)
-	GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error)
 	GetTokenSubject(authInfo *api.AuthInfo) (string, error)
+	ForwardGetRequest(namespace, podName string, destinationPort int, path string) ([]byte, error)
 	StreamPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error)
 	UpdateNamespace(namespace string, jsonPatch string) (*core_v1.Namespace, error)
 	UpdateService(namespace string, name string, jsonPatch string, patchType string) error
@@ -76,7 +65,7 @@ type OSClientInterface interface {
 	UpdateProject(project string, jsonPatch string) (*osproject_v1.Project, error)
 }
 
-func (in *K8SClient) forwardGetRequest(namespace, podName string, destinationPort int, path string) ([]byte, error) {
+func (in *K8SClient) ForwardGetRequest(namespace, podName string, destinationPort int, path string) ([]byte, error) {
 	localPort := httputil.Pool.GetFreePort()
 	defer httputil.Pool.FreePort(localPort)
 
@@ -220,16 +209,42 @@ func (in *K8SClient) IsGatewayAPI() bool {
 		return false
 	}
 	if in.isGatewayAPI == nil {
-		isGatewayAPI := false
-		_, err := in.k8s.Discovery().RESTClient().Get().AbsPath("/apis/gateway.networking.k8s.io").Do(in.ctx).Raw()
-		if err == nil {
-			isGatewayAPI = true
-		} else if !errors.IsNotFound(err) {
-			log.Warningf("Error checking Kubernetes Gateway API configuration: %v", err)
+		v1Types := map[string]string{
+			K8sActualGatewayType:   K8sActualGateways,
+			K8sGatewayClassType:    K8sActualGatewayClasses,
+			K8sActualHTTPRouteType: K8sActualHTTPRoutes,
 		}
+		v1beta1Types := map[string]string{
+			K8sActualReferenceGrantType: K8sActualReferenceGrants,
+		}
+		isGatewayAPIV1 := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1.String(), v1Types)
+		isGatewayAPIV1Beta1 := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1Beta1.String(), v1beta1Types)
+		isGatewayAPI := isGatewayAPIV1 && isGatewayAPIV1Beta1
 		in.isGatewayAPI = &isGatewayAPI
 	}
 	return *in.isGatewayAPI
+}
+
+func checkGatewayAPIs(in *K8SClient, version string, types map[string]string) bool {
+	found := 0
+	res, err := in.k8s.Discovery().ServerResourcesForGroupVersion(version)
+	if err != nil {
+		log.Debugf("Error while checking K8s Gateway API CRDs: %s. Required K8s Gateway API version: %s. Gateway API will not be used.", version, err.Error())
+		return false
+	}
+	for _, r := range res.APIResources {
+		if name, foundKind := types[r.Kind]; foundKind && r.Name == name {
+			found++
+		}
+	}
+	if found > 0 && found < len(types) {
+		keys := make([]string, 0, len(types))
+		for key := range types {
+			keys = append(keys, key)
+		}
+		log.Warningf("Not all required K8s Gateway API CRDs are installed for version: %s, expected: %s", version, strings.Join(keys, ", "))
+	}
+	return found == len(types)
 }
 
 // Is IstioAPI checks whether Istio API is installed or not
@@ -250,55 +265,6 @@ func (in *K8SClient) IsIstioAPI() bool {
 		in.isIstioAPI = &isIstioAPI
 	}
 	return *in.isIstioAPI
-}
-
-// GetServices returns a list of services for a given namespace.
-// If selectorLabels is defined the list of services is filtered for those that matches Services selector labels.
-// It returns an error on any problem.
-// NOTE: The selectorLabels argument is NOT to find services matching the given labels. Assume selectorLabels are
-// the labels of a Deployment. If this imaginary Deployment is selected by the Service (because of its Selector), then
-// that service is returned; else it's omitted.
-func (in *K8SClient) GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error) {
-	var allServices []core_v1.Service
-
-	if allServicesList, err := in.k8s.CoreV1().Services(namespace).List(in.ctx, emptyListOptions); err == nil {
-		allServices = allServicesList.Items
-	} else {
-		return []core_v1.Service{}, err
-	}
-
-	if selectorLabels == nil {
-		return allServices, nil
-	}
-	var services []core_v1.Service
-	for _, svc := range allServices {
-		svcSelector := labels.Set(svc.Spec.Selector).AsSelector()
-		if !svcSelector.Empty() && svcSelector.Matches(labels.Set(selectorLabels)) {
-			services = append(services, svc)
-		}
-	}
-	return services, nil
-}
-
-func (in *K8SClient) GetServicesByLabels(namespace string, labelsSelector string) ([]core_v1.Service, error) {
-	selector := meta_v1.ListOptions{LabelSelector: labelsSelector}
-	if allServicesList, err := in.k8s.CoreV1().Services(namespace).List(in.ctx, selector); err == nil {
-		return allServicesList.Items, nil
-	} else {
-		return []core_v1.Service{}, err
-	}
-}
-
-func (in *K8SClient) GetDaemonSet(namespace string, name string) (*apps_v1.DaemonSet, error) {
-	return in.k8s.AppsV1().DaemonSets(namespace).Get(in.ctx, name, emptyGetOptions)
-}
-
-func (in *K8SClient) GetDaemonSets(namespace string) ([]apps_v1.DaemonSet, error) {
-	if daeList, err := in.k8s.AppsV1().DaemonSets(namespace).List(in.ctx, emptyListOptions); err == nil {
-		return daeList.Items, nil
-	} else {
-		return []apps_v1.DaemonSet{}, err
-	}
 }
 
 // GetDeployment returns the definition of a specific deployment.
@@ -351,90 +317,11 @@ func (in *K8SClient) GetDeploymentConfigs(namespace string) ([]osapps_v1.Deploym
 	return result.Items, nil
 }
 
-// GetReplicaSets returns the cached ReplicaSets for the namespace.  For any given RS for a given
-// Owner (i.e. Deployment), only the most recent version of the RS will be included in the returned list.
-// When an owning Deployment is configured with revisionHistoryLimit > 0, then k8s may return multiple
-// versions of the RS for the same Deployment (current and older revisions). Note that it is still possible
-// to have multiple RS for the same owner. In which case the most recent version of each is returned.
-// see also: ../kubernetes.go
-func (in *K8SClient) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error) {
-	if rsList, err := in.k8s.AppsV1().ReplicaSets(namespace).List(in.ctx, emptyListOptions); err == nil {
-		activeRSMap := map[string]apps_v1.ReplicaSet{}
-		for _, rs := range rsList.Items {
-			if len(rs.OwnerReferences) > 0 {
-				for _, ownerRef := range rs.OwnerReferences {
-					if ownerRef.Controller != nil && *ownerRef.Controller {
-						key := fmt.Sprintf("%s_%s_%s", ownerRef.Name, rs.Name, rs.ResourceVersion)
-						if currRS, ok := activeRSMap[key]; ok {
-							if currRS.CreationTimestamp.Time.Before(rs.CreationTimestamp.Time) {
-								activeRSMap[key] = rs
-							}
-						} else {
-							activeRSMap[key] = rs
-						}
-					}
-				}
-			} else {
-				// it is it's own controller
-				activeRSMap[rs.Name] = rs
-			}
-		}
-
-		result := make([]apps_v1.ReplicaSet, len(activeRSMap))
-		i := 0
-		for _, activeRS := range activeRSMap {
-			result[i] = activeRS
-			i = i + 1
-		}
-		return result, nil
-	} else {
-		return []apps_v1.ReplicaSet{}, err
-	}
-}
-
-func (in *K8SClient) GetStatefulSet(namespace string, name string) (*apps_v1.StatefulSet, error) {
-	return in.k8s.AppsV1().StatefulSets(namespace).Get(in.ctx, name, emptyGetOptions)
-}
-
-func (in *K8SClient) GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error) {
-	if ssList, err := in.k8s.AppsV1().StatefulSets(namespace).List(in.ctx, emptyListOptions); err == nil {
-		return ssList.Items, nil
-	} else {
-		return []apps_v1.StatefulSet{}, err
-	}
-}
-
 func (in *K8SClient) GetReplicationControllers(namespace string) ([]core_v1.ReplicationController, error) {
 	if rcList, err := in.k8s.CoreV1().ReplicationControllers(namespace).List(in.ctx, emptyListOptions); err == nil {
 		return rcList.Items, nil
 	} else {
 		return []core_v1.ReplicationController{}, err
-	}
-}
-
-// GetService returns the definition of a specific service.
-// It returns an error on any problem.
-func (in *K8SClient) GetService(namespace, name string) (*core_v1.Service, error) {
-	return in.k8s.CoreV1().Services(namespace).Get(in.ctx, name, emptyGetOptions)
-}
-
-// GetEndpoints return the list of endpoint of a specific service.
-// It returns an error on any problem.
-func (in *K8SClient) GetEndpoints(namespace, name string) (*core_v1.Endpoints, error) {
-	return in.k8s.CoreV1().Endpoints(namespace).Get(in.ctx, name, emptyGetOptions)
-}
-
-// GetPods returns the pods definitions for a given set of labels.
-// An empty labelSelector will fetch all pods found per a namespace.
-// It returns an error on any problem.
-func (in *K8SClient) GetPods(namespace, labelSelector string) ([]core_v1.Pod, error) {
-	// An empty selector is ambiguous in the go client, could mean either "select all" or "select none"
-	// Here we assume empty == select all
-	// (see also https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors)
-	if pods, err := in.k8s.CoreV1().Pods(namespace).List(in.ctx, meta_v1.ListOptions{LabelSelector: labelSelector}); err == nil {
-		return pods.Items, nil
-	} else {
-		return []core_v1.Pod{}, err
 	}
 }
 

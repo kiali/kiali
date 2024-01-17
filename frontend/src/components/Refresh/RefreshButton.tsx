@@ -2,39 +2,37 @@ import * as React from 'react';
 import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
 import { SyncAltIcon } from '@patternfly/react-icons';
 
-type ComponentProps = {
-  id?: string;
+type RefreshButtonProps = {
   disabled?: boolean;
   handleRefresh: () => void;
+  id?: string;
 };
 
-export class RefreshButton extends React.Component<ComponentProps> {
-  getElementId() {
-    return this.props.id || 'refresh_button';
-  }
+export const RefreshButton: React.FC<RefreshButtonProps> = (props: RefreshButtonProps) => {
+  const [enableRefresh, setEnableRefresh] = React.useState<boolean>(true);
 
-  getDisabled() {
-    return this.props.disabled || false;
-  }
+  const handleRefresh = (): void => {
+    if (enableRefresh) {
+      props.handleRefresh();
 
-  render() {
-    return (
-      <Tooltip position="bottom" content={<>Refresh</>}>
-        <Button
-          id={this.getElementId()}
-          data-test="refresh-button"
-          onClick={this.handleRefresh}
-          isDisabled={this.getDisabled()}
-          aria-label="Action"
-          variant={ButtonVariant.primary}
-        >
-          <SyncAltIcon />
-        </Button>
-      </Tooltip>
-    );
-  }
-
-  private handleRefresh = () => {
-    this.props.handleRefresh();
+      // Disable refresh during 500 ms to avoid multiple refresh in very short period of time
+      setEnableRefresh(false);
+      setTimeout(() => setEnableRefresh(true), 500);
+    }
   };
-}
+
+  return (
+    <Tooltip position="bottom" content={<>Refresh</>}>
+      <Button
+        id={props.id ?? 'refresh_button'}
+        data-test="refresh-button"
+        onClick={handleRefresh}
+        isDisabled={props.disabled ?? false}
+        aria-label="Action"
+        variant={ButtonVariant.primary}
+      >
+        <SyncAltIcon />
+      </Button>
+    </Tooltip>
+  );
+};

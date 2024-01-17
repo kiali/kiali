@@ -3,6 +3,7 @@ package appender
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -14,6 +15,7 @@ const (
 	defaultAggregate      = "request_operation"
 	defaultQuantile       = 0.95
 	defaultThroughputType = "response"
+	defaultWaypoints      = true
 )
 
 // ParseAppenders determines which appenders should run for this graphing request
@@ -48,6 +50,8 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 				requestedAppenders[WorkloadEntryAppenderName] = true
 
 			// finalizer appenders
+			case AmbientAppenderName:
+				requestedAppenders[AmbientAppenderName] = true
 			case HealthAppenderName:
 				// currently, because health is still calculated in the client, if requesting health
 				// we also need to run the healthConfig appender.  Eventually, asking for health will supply
@@ -194,6 +198,22 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 		Namespaces:           o.Namespaces,
 	})
 
+	if _, ok := requestedAppenders[AmbientAppenderName]; ok || o.Appenders.All {
+		waypoints := defaultWaypoints
+		waypointsString := o.Params.Get("waypoints")
+		if waypointsString != "" {
+			var waypointsErr error
+			waypoints, waypointsErr = strconv.ParseBool(waypointsString)
+			if waypointsErr != nil {
+				graph.BadRequest(fmt.Sprintf("Invalid waypoints param [%s]", waypointsString))
+			}
+		}
+		a := AmbientAppender{
+			Waypoints: waypoints,
+		}
+		appenders = append(appenders, a)
+	}
+
 	// if health finalizer is to be run, do it after the outsider finalizer
 	if _, ok := requestedFinalizers[HealthAppenderName]; ok {
 		finalizers = append(finalizers, &HealthAppender{
@@ -276,7 +296,7 @@ func getServiceList(cluster, namespace string, gi *graph.AppenderGlobalInfo) *mo
 		gi.Vendor[serviceListKey] = serviceListMap
 	}
 
-	key := fmt.Sprintf("%s:%s", cluster, namespace)
+	key := graph.GetClusterSensitiveKey(cluster, namespace)
 	if serviceList, ok := serviceListMap[key]; ok {
 		return serviceList
 	}
@@ -306,11 +326,18 @@ func getServiceDefinition(cluster, namespace, serviceName string, gi *graph.Appe
 	return nil, false
 }
 
-func getServiceEntryHosts(gi *graph.AppenderGlobalInfo) (serviceEntryHosts, bool) {
-	if seHosts, ok := gi.Vendor[serviceEntryHostsKey]; ok {
+// getServiceEntryHosts returns ServiceEntryHost information cached for a specific cluster and namespace. If not
+// previously cached a new, empty cache entry is created and returned.
+func getServiceEntryHosts(cluster, namespace string, gi *graph.AppenderGlobalInfo) (serviceEntryHosts, bool) {
+	key := fmt.Sprintf("%s:%s:%s", serviceEntryHostsKey, cluster, namespace)
+	if seHosts, ok := gi.Vendor[key]; ok {
 		return seHosts.(serviceEntryHosts), true
 	}
-	return newServiceEntryHosts(), false
+
+	seHosts := newServiceEntryHosts()
+	gi.Vendor[key] = seHosts
+
+	return seHosts, false
 }
 
 // getWorkloadLists returns a map[clusterName]*models.WorkloadList for all clusters with traffic in the namespace, or if trafficMap is nil
@@ -335,7 +362,7 @@ func getWorkloadList(cluster, namespace string, gi *graph.AppenderGlobalInfo) *m
 		gi.Vendor[workloadListKey] = workloadListMap
 	}
 
-	key := fmt.Sprintf("%s:%s", cluster, namespace)
+	key := graph.GetClusterSensitiveKey(cluster, namespace)
 	if workloadList, ok := workloadListMap[key]; ok {
 		return workloadList
 	}

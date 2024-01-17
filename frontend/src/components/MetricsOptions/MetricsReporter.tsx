@@ -74,7 +74,7 @@ export class MetricsReporter extends React.Component<Props> {
           handleSelect={this.onReporterChanged}
           nameDropdown={'Reported from'}
           value={this.props.reporter}
-          initialLabel={MetricsReporter.ReporterOptions[this.props.reporter]}
+          label={MetricsReporter.ReporterOptions[this.props.reporter]}
           options={MetricsReporter.ReporterOptions}
         />
         <Tooltip content={<div style={{ textAlign: 'left' }}>{this.reportTooltip}</div>} position={TooltipPosition.top}>

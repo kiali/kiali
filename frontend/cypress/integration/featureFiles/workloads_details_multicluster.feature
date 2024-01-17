@@ -2,7 +2,6 @@
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
 @multi-cluster
-@skip
 Feature: Kiali Workload Details page
 
   On the Workload Details page, the user should see the details of a workload located in a remote cluster, as well as
@@ -15,26 +14,27 @@ Feature: Kiali Workload Details page
     And user is at the details page for the "workload" "bookinfo/reviews-v2" located in the "west" cluster
 
   Scenario: See details for workload
-    Then user sees details information for workload
-    And links in the description card should contain a reference to a "west" cluster
-    And cluster badge for "west" cluster should be visible
+    Then user sees details information for a remote workload
+    And links in the "Workload" description card should contain a reference to a "west" cluster
+    And cluster badge for "west" cluster should be visible in the "Workload" description card
 
   Scenario: See minigraph for workload.
     Then user sees a minigraph
     And user sees "service" from a remote "west" cluster
 
   Scenario: See workload traffic information
-    Then user sees workload inbound and outbound traffic information
+    Then user sees workload inbound and outbound traffic information for the remote workload
     And user should see columns related to cluster info for the inbound and outbound traffic
 
   Scenario: See workload Inbound Metrics
-    Then user sees workload inbound metrics information
+    Then user sees "Inbound" metrics information for the remote "reviews-v2" "workload"
 
   Scenario: See workload Outbound Metrics
-    Then user sees workload outbound metrics information
+    Then user sees "Outbound" metrics information for the remote "reviews-v2" "workload"
 
   Scenario: See workload span info after selecting a span
     And user sees trace information
+    And an info message "Loading traces for all clusters. Tracing is not configured to store traces per cluster." is displayed
     When user selects a trace
     And user sees span details
     And user can filter spans by workload
@@ -61,3 +61,25 @@ Feature: Kiali Workload Details page
 
   Scenario: See Envoy metrics for a workload
     Then the user sees the metrics tab
+
+  Scenario: See details for a workload, which is not present in the specific cluster.
+    And user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "east" cluster
+    And links in the "Workload" description card should contain a reference to a "east" cluster
+    And cluster badge for "east" cluster should be visible in the "Workload" description card
+    And user does not see a minigraph
+
+  Scenario: See no app Traffic information for a workload, which is not present in the specific cluster.
+    And user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "east" cluster
+    Then user does not see any inbound and outbound traffic information
+
+  Scenario: See no Inbound Metrics for a workload, which is not present in the specific cluster. 
+    And user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "east" cluster
+    Then user does not see "Inbound" metrics information for the "east" "ratings-v1" "workload"
+
+  Scenario: See no Outbound Metrics for a workload, which is not present in the specific cluster. 
+    And user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "east" cluster
+    Then user does not see "Outbound" metrics information for the "east" "ratings-v1" "workload"
+
+  Scenario: Envoy tab should not be visible for a workload, which is not present in specific cluster
+    And user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "east" cluster
+    Then the envoy tab should not be visible

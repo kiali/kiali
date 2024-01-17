@@ -4,13 +4,12 @@ export const globalStyle = kialiStyle({
   height: '100%',
   margin: 0,
   padding: 0,
-  // TODO: possible change to --pf-v5-global--FontFamily--redhat-updated--sans-serif
   fontFamily: 'var(--pf-v5-global--FontFamily--text)',
   fontSize: '14px',
   overflow: 'hidden',
   $nest: {
     /**
-     * Kiosk mode
+     * Kiosk mode (hide Kiali menu)
      */
     '&.kiosk': {
       $nest: {
@@ -49,27 +48,44 @@ export const globalStyle = kialiStyle({
     },
 
     /**
-     * Health SVG visible
+     * Reduce padding of menu group title
      */
-    // eslint-disable-next-line no-multi-str
-    '& svg:not(:root).icon-failure, \
-     & svg:not(:root).icon-degraded, \
-     & svg:not(:root).icon-healthy, \
-     & svg:not(:root).icon-na': {
-      overflow: 'visible'
+    '& .pf-v5-c-menu__group-title': {
+      paddingTop: '0.5rem'
     },
 
     /**
      * Padding for table rows
      */
-    '& .pf-v5-c-table:not(.table) tr > *': {
-      fontSize: 'var(--kiali-global--font-size)',
-      paddingBottom: '8px',
-      paddingTop: '8px'
+    '& .pf-v5-c-table': {
+      $nest: {
+        '&.pf-m-compact tr > *': {
+          padding: '0.5rem'
+        },
+        '& tr > *': {
+          paddingBottom: '0.5rem',
+          paddingTop: '0.5rem'
+        }
+      }
     },
 
+    /**
+     * Show graph legend
+     */
     '& .pf-v5-c-chart svg': {
-      overflow: 'visible !important'
+      overflow: 'visible'
+    },
+
+    /**
+     * Light color for links in tooltips
+     */
+    '& .pf-v5-c-tooltip a': {
+      color: 'var(--pf-v5-global--link--Color--light)',
+      $nest: {
+        '&:hover': {
+          color: 'var(--pf-v5-global--link--Color--light--hover)'
+        }
+      }
     }
   }
 });

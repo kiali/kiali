@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { Dropdown, DropdownItem, DropdownPosition, DropdownToggle } from '@patternfly/react-core/deprecated';
+import { DropdownList, MenuToggle, MenuToggleElement, TooltipPosition } from '@patternfly/react-core';
+import { Dropdown, DropdownItem } from '@patternfly/react-core';
 import { serverConfig } from '../../config';
 import { Workload } from '../../types/Workload';
 import {
@@ -15,82 +15,57 @@ import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { MessageType } from '../../types/MessageCenter';
 import { StatusState } from '../../types/StatusState';
-import { WizardAnnotations } from './WizardAnnotations';
+import { WizardLabels } from './WizardLabels';
+import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 
 interface Props {
   namespace: string;
+  onChange: () => void;
   workload: Workload;
   statusState: StatusState;
-  onChange: () => void;
 }
 
-interface State {
-  isActionsOpen: boolean;
-  showWizard: boolean;
-  type: string;
-}
+export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
+  const [isActionsOpen, setIsActionsOpen] = React.useState<boolean>(false);
+  const [showWizard, setShowWizard] = React.useState<boolean>(false);
 
-export class WorkloadWizardDropdown extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      isActionsOpen: false,
-      showWizard: false,
-      type: ''
-    };
-  }
-
-  onActionsSelect = () => {
-    this.setState({
-      isActionsOpen: !this.state.isActionsOpen
-    });
+  const onActionsSelect = () => {
+    setIsActionsOpen(!isActionsOpen);
   };
 
-  onActionsToggle = (isOpen: boolean) => {
-    this.setState({
-      isActionsOpen: isOpen
-    });
+  const onActionsToggle = (isOpen: boolean) => {
+    setIsActionsOpen(isOpen);
   };
 
-  onWizardToggle = (isOpen: boolean) => {
-    this.setState({
-      showWizard: isOpen
-    });
+  const onWizardToggle = (isOpen: boolean) => {
+    setShowWizard(isOpen);
   };
 
-  onAction = (key: string) => {
+  const onAction = (key: string) => {
     switch (key) {
       case WIZARD_ENABLE_AUTO_INJECTION:
       case WIZARD_DISABLE_AUTO_INJECTION:
       case WIZARD_REMOVE_AUTO_INJECTION:
         const remove = key === WIZARD_REMOVE_AUTO_INJECTION;
         const enable = key === WIZARD_ENABLE_AUTO_INJECTION;
-        const jsonInjectionPatch = buildWorkloadInjectionPatch(this.props.workload.type, enable, remove);
+        const jsonInjectionPatch = buildWorkloadInjectionPatch(props.workload.type, enable, remove);
         API.updateWorkload(
-          this.props.namespace,
-          this.props.workload.name,
-          this.props.workload.type,
+          props.namespace,
+          props.workload.name,
+          props.workload.type,
           jsonInjectionPatch,
           undefined,
-          this.props.workload.cluster
+          props.workload.cluster
         )
           .then(_ => {
-            AlertUtils.add('Workload ' + this.props.workload.name + ' updated', 'default', MessageType.SUCCESS);
-            this.setState(
-              {
-                showWizard: false
-              },
-              () => this.props.onChange()
-            );
+            AlertUtils.add('Workload ' + props.workload.name + ' updated', 'default', MessageType.SUCCESS);
           })
           .catch(error => {
-            AlertUtils.addError('Could not update workload ' + this.props.workload.name, error);
-            this.setState(
-              {
-                showWizard: false
-              },
-              () => this.props.onChange()
-            );
+            AlertUtils.addError('Could not update workload ' + props.workload.name, error);
+          })
+          .finally(() => {
+            setShowWizard(false);
+            props.onChange();
           });
         break;
       default:
@@ -98,67 +73,47 @@ export class WorkloadWizardDropdown extends React.Component<Props, State> {
     }
   };
 
-  onClose = (changed?: boolean) => {
-    this.setState({ showWizard: false });
-    if (changed) {
-      this.props.onChange();
-    }
-  };
-
-  renderTooltip = (key, position, msg, child): JSX.Element => {
-    return (
-      <Tooltip key={'tooltip_' + key} position={position} content={<>{msg}</>}>
-        <div style={{ display: 'inline-block', cursor: 'not-allowed', textAlign: 'left' }}>{child}</div>
-      </Tooltip>
-    );
-  };
-
-  onChangeAnnotations = (annotations: { [key: string]: string }) => {
+  const onChangeAnnotations = (annotations: { [key: string]: string }) => {
     const jsonInjectionPatch = buildAnnotationPatch(annotations);
+
     API.updateWorkload(
-      this.props.namespace,
-      this.props.workload.name,
-      this.props.workload.type,
+      props.namespace,
+      props.workload.name,
+      props.workload.type,
       jsonInjectionPatch,
       'json',
-      this.props.workload.cluster
+      props.workload.cluster
     )
       .then(_ => {
-        AlertUtils.add('Workload ' + this.props.workload.name + ' updated', 'default', MessageType.SUCCESS);
-        this.setState(
-          {
-            showWizard: false
-          },
-          () => this.props.onChange()
-        );
+        AlertUtils.add('Workload ' + props.workload.name + ' updated', 'default', MessageType.SUCCESS);
       })
       .catch(error => {
-        AlertUtils.addError('Could not update workload ' + this.props.workload.name, error);
-        this.setState(
-          {
-            showWizard: false
-          },
-          () => this.props.onChange()
-        );
+        AlertUtils.addError('Could not update workload ' + props.workload.name, error);
+      })
+      .finally(() => {
+        setShowWizard(false);
+        props.onChange();
       });
   };
 
-  renderDropdownItems = (): JSX.Element[] => {
+  const renderDropdownItems = (): JSX.Element[] => {
     const items: JSX.Element[] = [];
+
     if (serverConfig.kialiFeatureFlags.istioInjectionAction) {
       const enableAction = (
         <DropdownItem
           data-test={WIZARD_ENABLE_AUTO_INJECTION}
           key={WIZARD_ENABLE_AUTO_INJECTION}
           component="button"
-          onClick={() => this.onAction(WIZARD_ENABLE_AUTO_INJECTION)}
+          onClick={() => onAction(WIZARD_ENABLE_AUTO_INJECTION)}
           isDisabled={serverConfig.deployment.viewOnlyMode}
         >
           Enable Auto Injection
         </DropdownItem>
       );
+
       const enableActionWrapper = serverConfig.deployment.viewOnlyMode
-        ? this.renderTooltip(
+        ? renderDisabledDropdownOption(
             'enable_auto_injection',
             TooltipPosition.left,
             'User does not have permission',
@@ -171,14 +126,15 @@ export class WorkloadWizardDropdown extends React.Component<Props, State> {
           data-test={WIZARD_DISABLE_AUTO_INJECTION}
           key={WIZARD_DISABLE_AUTO_INJECTION}
           component="button"
-          onClick={() => this.onAction(WIZARD_DISABLE_AUTO_INJECTION)}
+          onClick={() => onAction(WIZARD_DISABLE_AUTO_INJECTION)}
           isDisabled={serverConfig.deployment.viewOnlyMode}
         >
           Disable Auto Injection
         </DropdownItem>
       );
+
       const disableActionWrapper = serverConfig.deployment.viewOnlyMode
-        ? this.renderTooltip(
+        ? renderDisabledDropdownOption(
             'disable_auto_injection',
             TooltipPosition.left,
             'User does not have permission',
@@ -191,14 +147,15 @@ export class WorkloadWizardDropdown extends React.Component<Props, State> {
           data-test={WIZARD_REMOVE_AUTO_INJECTION}
           key={WIZARD_REMOVE_AUTO_INJECTION}
           component="button"
-          onClick={() => this.onAction(WIZARD_REMOVE_AUTO_INJECTION)}
+          onClick={() => onAction(WIZARD_REMOVE_AUTO_INJECTION)}
           isDisabled={serverConfig.deployment.viewOnlyMode}
         >
           Remove Auto Injection
         </DropdownItem>
       );
+
       const removeActionWrapper = serverConfig.deployment.viewOnlyMode
-        ? this.renderTooltip(
+        ? renderDisabledDropdownOption(
             'remove_auto_injection',
             TooltipPosition.left,
             'User does not have permission',
@@ -206,27 +163,25 @@ export class WorkloadWizardDropdown extends React.Component<Props, State> {
           )
         : removeAction;
 
-      if (this.props.workload.istioInjectionAnnotation !== undefined && this.props.workload.istioInjectionAnnotation) {
+      if (props.workload.istioInjectionAnnotation !== undefined && props.workload.istioInjectionAnnotation) {
         items.push(disableActionWrapper);
         items.push(removeActionWrapper);
-      } else if (
-        this.props.workload.istioInjectionAnnotation !== undefined &&
-        !this.props.workload.istioInjectionAnnotation
-      ) {
+      } else if (props.workload.istioInjectionAnnotation !== undefined && !props.workload.istioInjectionAnnotation) {
         items.push(enableActionWrapper);
         items.push(removeActionWrapper);
       } else {
         // If sidecar is present, we offer first the disable action
-        items.push(this.props.workload.istioSidecar ? disableActionWrapper : enableActionWrapper);
+        items.push(props.workload.istioSidecar ? disableActionWrapper : enableActionWrapper);
       }
     }
-    if (this.props.workload.type === 'Deployment') {
+
+    if (props.workload.type === 'Deployment') {
       const annotationsAction = (
         <DropdownItem
           data-test={WIZARD_EDIT_ANNOTATIONS}
           key={WIZARD_EDIT_ANNOTATIONS}
           component="button"
-          onClick={() => this.onWizardToggle(true)}
+          onClick={() => onWizardToggle(true)}
         >
           {serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode
             ? 'Edit Annotations'
@@ -239,42 +194,52 @@ export class WorkloadWizardDropdown extends React.Component<Props, State> {
     return items;
   };
 
-  render() {
-    const renderDropdownItems = this.renderDropdownItems();
-    const validActions = renderDropdownItems.length > 0;
-    const dropdown = (
-      <Dropdown
-        data-test="workload-actions-dropdown"
-        position={DropdownPosition.right}
-        onSelect={this.onActionsSelect}
-        toggle={
-          <DropdownToggle onToggle={(_event, isOpen: boolean) => this.onActionsToggle(isOpen)}>Actions</DropdownToggle>
-        }
-        isOpen={this.state.isActionsOpen}
-        dropdownItems={this.renderDropdownItems()}
-        disabled={!validActions}
-        style={{ pointerEvents: validActions ? 'auto' : 'none' }}
+  const dropdownItems = renderDropdownItems();
+  const validActions = dropdownItems.length > 0;
+
+  const dropdown = (
+    <Dropdown
+      data-test="workload-actions-dropdown"
+      id="actions"
+      toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+        <MenuToggle
+          ref={toggleRef}
+          id="actions-toggle"
+          onClick={() => onActionsToggle(!isActionsOpen)}
+          data-test="workload-actions-toggle"
+          isExpanded={isActionsOpen}
+          isDisabled={!validActions}
+        >
+          Actions
+        </MenuToggle>
+      )}
+      isOpen={isActionsOpen}
+      onOpenChange={(isOpen: boolean) => onActionsToggle(isOpen)}
+      onSelect={onActionsSelect}
+      popperProps={{ position: 'right' }}
+    >
+      <DropdownList>{dropdownItems}</DropdownList>
+    </Dropdown>
+  );
+  // TODO WorkloadWizard component contains only 3scale actions but in the future we may need to bring it back
+  return (
+    <>
+      <WizardLabels
+        showAnotationsWizard={showWizard}
+        type={'annotations'}
+        onChange={annotations => onChangeAnnotations(annotations)}
+        onClose={() => onWizardToggle(false)}
+        labels={props.workload.annotations}
+        canEdit={serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode}
       />
-    );
-    // TODO WorkloadWizard component contains only 3scale actions but in the future we may need to bring it back
-    return (
-      <>
-        <WizardAnnotations
-          showAnotationsWizard={this.state.showWizard}
-          onChange={annotations => this.onChangeAnnotations(annotations)}
-          onClose={() => this.onWizardToggle(false)}
-          annotations={this.props.workload.annotations}
-          canEdit={serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode}
-        />
-        {!validActions
-          ? this.renderTooltip(
-              'tooltip_wizard_actions',
-              TooltipPosition.top,
-              'User does not have permission on this Workload',
-              dropdown
-            )
-          : dropdown}
-      </>
-    );
-  }
-}
+      {!validActions
+        ? renderDisabledDropdownOption(
+            'tooltip_wizard_actions',
+            TooltipPosition.top,
+            'User does not have permission on this Workload',
+            dropdown
+          )
+        : dropdown}
+    </>
+  );
+};

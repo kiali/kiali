@@ -24,7 +24,7 @@ import { TLSStatus } from '../types/TLSStatus';
 import { StatusState } from '../types/StatusState';
 import { TourInfo } from 'components/Tour/TourStop';
 import { ComponentStatus } from '../types/IstioStatus';
-import { JaegerState } from 'reducers/JaegerState';
+import { TracingState } from 'reducers/TracingState';
 import { MetricsStatsState } from 'reducers/MetricsStatsState';
 import { CertsInfo } from 'types/CertsInfo';
 import { MeshCluster } from '../types/Mesh';
@@ -32,9 +32,9 @@ import { MeshCluster } from '../types/Mesh';
 // Store is the Redux Data store
 
 export interface GlobalState {
-  readonly loadingCounter: number;
   readonly isPageVisible: boolean;
   readonly kiosk: string;
+  readonly loadingCounter: number;
   readonly theme: string;
 }
 
@@ -46,45 +46,45 @@ export interface ClusterState {
 export interface NamespaceState {
   readonly activeNamespaces: Namespace[];
   readonly filter: string;
-  readonly items?: Namespace[];
   readonly isFetching: boolean;
+  readonly items?: Namespace[];
   readonly lastUpdated?: Date;
   readonly namespacesPerCluster?: Map<string, string[]>;
 }
 
 // Various pages are described here with their various sections
 export interface GraphToolbarState {
-  // dropdown props
-  edgeLabels: EdgeLabelMode[];
-  graphType: GraphType;
-  rankBy: RankMode[];
-  trafficRates: TrafficRate[];
-  // find props
-  findValue: string;
-  hideValue: string;
-  showFindHelp: boolean;
   // Toggle props
   boxByCluster: boolean;
   boxByNamespace: boolean;
-  compressOnHide: boolean;
+  // dropdown props
+  edgeLabels: EdgeLabelMode[];
+  // find props
+  findValue: string;
+  graphType: GraphType;
+  hideValue: string;
+  rankBy: RankMode[];
+  showFindHelp: boolean;
   showIdleEdges: boolean;
   showIdleNodes: boolean;
   showLegend: boolean;
-  showOutOfMesh: boolean;
   showOperationNodes: boolean;
+  showOutOfMesh: boolean;
   showRank: boolean;
   showSecurity: boolean;
   showServiceNodes: boolean;
   showTrafficAnimation: boolean;
   showVirtualServices: boolean;
+  showWaypoints: boolean;
+  trafficRates: TrafficRate[];
 }
 
 export interface MessageCenterState {
-  nextId: number; // This likely will go away once we have persistence
-  groups: NotificationGroup[];
-  hidden: boolean;
   expanded: boolean;
   expandedGroupId?: string;
+  groups: NotificationGroup[];
+  hidden: boolean;
+  nextId: number; // This likely will go away once we have persistence
 }
 
 export interface GraphState {
@@ -133,8 +133,8 @@ export interface UserSettings {
 }
 
 export interface TourState {
-  activeTour?: TourInfo;
   activeStop?: number; // index into the TourInfo.stops array
+  activeTour?: TourInfo;
 }
 
 // This defines the Kiali Global Application State
@@ -146,16 +146,16 @@ export interface KialiAppState {
   clusters: ClusterState;
   globalState: GlobalState;
   graph: GraphState;
-  istioStatus: ComponentStatus[];
   istioCertsInfo: CertsInfo[];
-  /** Jaeger Settings */
-  jaegerState: JaegerState;
+  istioStatus: ComponentStatus[];
+  /** Tracing Settings */
   meshTLSStatus: TLSStatus;
   messageCenter: MessageCenterState;
   metricsStats: MetricsStatsState;
   namespaces: NamespaceState;
   statusState: StatusState;
   tourState: TourState;
+  tracingState: TracingState;
   /** User Settings */
   userSettings: UserSettings;
 }

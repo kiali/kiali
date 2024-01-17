@@ -12,3 +12,17 @@ func RemoveNilValues(root interface{}) {
 		}
 	}
 }
+
+func CopyStringMap(originalMap map[string]string) map[string]string {
+	copyMap := make(map[string]string)
+
+	if len(originalMap) == 0 {
+		return copyMap
+	}
+
+	for key, value := range originalMap {
+		copyMap[key] = value
+	}
+
+	return copyMap
+}

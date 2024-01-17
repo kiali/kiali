@@ -1,9 +1,9 @@
 import { Spinner } from '@patternfly/react-core';
-import { DropdownGroup, DropdownItem } from '@patternfly/react-core/deprecated';
+import { DropdownGroup, DropdownItem } from '@patternfly/react-core';
 import * as React from 'react';
 import { groupMenuStyle } from 'styles/DropdownStyles';
 
-export function LoadingWizardActionsDropdownGroup() {
+export const LoadingWizardActionsDropdownGroup = () => {
   return (
     <DropdownGroup key="wizards" label="Actions" className={groupMenuStyle}>
       <DropdownItem isDisabled={true}>
@@ -11,4 +11,4 @@ export function LoadingWizardActionsDropdownGroup() {
       </DropdownItem>
     </DropdownGroup>
   );
-}
+};

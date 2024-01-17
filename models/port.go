@@ -8,17 +8,10 @@ import (
 
 type Ports []Port
 type Port struct {
-	Name          string  `json:"name"`
-	Protocol      string  `json:"protocol"`
-	AppProtocol   *string `json:"appProtocol,omitempty"`
-	IstioProtocol string  `json:"istioProtocol"`
-	Port          int32   `json:"port"`
-	// TLSMode endpoint is injected with istio sidecar and ready to configure Istio mTLS
-	// DisabledTLSModeLabel implies that this endpoint should receive traffic as is (mostly plaintext)
-	// DisabledTLSModeLabel = "disabled"
-	// IstioMutualTLSModeLabel implies that the endpoint is ready to receive Istio mTLS connections.
-	// IstioMutualTLSModeLabel = "istio"
-	TLSMode string `json:"tlsMode"`
+	Name        string  `json:"name"`
+	Protocol    string  `json:"protocol"`
+	AppProtocol *string `json:"appProtocol,omitempty"`
+	Port        int32   `json:"port"`
 }
 
 func (ports *Ports) Parse(ps []core_v1.ServicePort) {

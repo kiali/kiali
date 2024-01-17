@@ -1,17 +1,11 @@
 package kubernetes
 
 import (
-	"time"
-
-	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
-	"istio.io/client-go/pkg/apis/telemetry/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 )
 
 const (
@@ -67,11 +61,22 @@ const (
 	K8sGatewayType = "K8sGateway"
 	// K8sActualGatewayType There is a naming conflict between Istio and K8s Gateways, keeping here an actual type to show in YAML editor
 	K8sActualGatewayType = "Gateway"
+	K8sActualGateways    = "gateways"
+
+	K8sGatewayClasses       = "k8sgatewayclasses"
+	K8sGatewayClassType     = "GatewayClass"
+	K8sActualGatewayClasses = "gatewayclasses"
 
 	K8sHTTPRoutes    = "k8shttproutes"
 	K8sHTTPRouteType = "K8sHTTPRoute"
 	// K8sActualHTTPRouteType There is a naming conflict between Istio and K8s Gateways, keeping here an actual type to show in YAML editor
 	K8sActualHTTPRouteType = "HTTPRoute"
+	K8sActualHTTPRoutes    = "httproutes"
+
+	K8sReferenceGrants          = "k8sreferencegrants"
+	K8sReferenceGrantType       = "K8sReferenceGrant"
+	K8sActualReferenceGrantType = "ReferenceGrant"
+	K8sActualReferenceGrants    = "referencegrants"
 
 	// Authorization PeerAuthentications
 	AuthorizationPolicies     = "authorizationpolicies"
@@ -93,17 +98,17 @@ var (
 	}
 	ApiNetworkingVersionV1Alpha3 = NetworkingGroupVersionV1Alpha3.Group + "/" + NetworkingGroupVersionV1Alpha3.Version
 
-	K8sNetworkingGroupVersionV1Alpha2 = schema.GroupVersion{
-		Group:   "gateway.networking.k8s.io",
-		Version: "v1alpha2",
-	}
-	K8sApiNetworkingVersionV1Alpha2 = K8sNetworkingGroupVersionV1Alpha2.Group + "/" + K8sNetworkingGroupVersionV1Alpha2.Version
-
 	K8sNetworkingGroupVersionV1Beta1 = schema.GroupVersion{
 		Group:   "gateway.networking.k8s.io",
 		Version: "v1beta1",
 	}
 	K8sApiNetworkingVersionV1Beta1 = K8sNetworkingGroupVersionV1Beta1.Group + "/" + K8sNetworkingGroupVersionV1Beta1.Version
+
+	K8sNetworkingGroupVersionV1 = schema.GroupVersion{
+		Group:   "gateway.networking.k8s.io",
+		Version: "v1",
+	}
+	K8sApiNetworkingVersionV1 = K8sNetworkingGroupVersionV1.Group + "/" + K8sNetworkingGroupVersionV1.Version
 
 	NetworkingGroupVersionV1Beta1 = schema.GroupVersion{
 		Group:   "networking.istio.io",
@@ -143,8 +148,9 @@ var (
 		Telemetries:      TelemetryType,
 
 		// K8s Networking Gateways
-		K8sGateways:   K8sGatewayType,
-		K8sHTTPRoutes: K8sHTTPRouteType,
+		K8sGateways:        K8sGatewayType,
+		K8sHTTPRoutes:      K8sHTTPRouteType,
+		K8sReferenceGrants: K8sReferenceGrantType,
 
 		// Security
 		AuthorizationPolicies:  AuthorizationPoliciesType,
@@ -164,8 +170,9 @@ var (
 		WasmPlugins:      ExtensionGroupVersionV1Alpha1.Group,
 		Telemetries:      TelemetryGroupV1Alpha1.Group,
 
-		K8sGateways:   K8sNetworkingGroupVersionV1Beta1.Group,
-		K8sHTTPRoutes: K8sNetworkingGroupVersionV1Beta1.Group,
+		K8sGateways:        K8sNetworkingGroupVersionV1.Group,
+		K8sHTTPRoutes:      K8sNetworkingGroupVersionV1.Group,
+		K8sReferenceGrants: K8sNetworkingGroupVersionV1.Group,
 
 		AuthorizationPolicies:  SecurityGroupVersion.Group,
 		PeerAuthentications:    SecurityGroupVersion.Group,
@@ -199,7 +206,7 @@ type RBACDetails struct {
 }
 
 type ProxyStatus struct {
-	pilot string
+	Pilot string
 	SyncStatus
 }
 
@@ -219,70 +226,8 @@ type SyncStatus struct {
 	EndpointAcked string `json:"endpoint_acked,omitempty"`
 }
 
-// RegistryConfiguration will hold the Istio configuration required for Kiali validations
-// Resources not used (i.e. EnvoyFilters) are not added, those will require update them in the future
-type RegistryConfiguration struct {
-	// Networking
-	DestinationRules []*networking_v1beta1.DestinationRule
-	EnvoyFilters     []*networking_v1alpha3.EnvoyFilter
-	Gateways         []*networking_v1beta1.Gateway
-	ServiceEntries   []*networking_v1beta1.ServiceEntry
-	Sidecars         []*networking_v1beta1.Sidecar
-	VirtualServices  []*networking_v1beta1.VirtualService
-	WorkloadEntries  []*networking_v1beta1.WorkloadEntry
-	WorkloadGroups   []*networking_v1beta1.WorkloadGroup
-	WasmPlugins      []*extentions_v1alpha1.WasmPlugin
-	Telemetries      []*v1alpha1.Telemetry
-
-	// K8s Networking Gateways
-	K8sGateways   []*k8s_networking_v1beta1.Gateway
-	K8sHTTPRoutes []*k8s_networking_v1beta1.HTTPRoute
-
-	// Security
-	AuthorizationPolicies  []*security_v1beta.AuthorizationPolicy
-	PeerAuthentications    []*security_v1beta.PeerAuthentication
-	RequestAuthentications []*security_v1beta.RequestAuthentication
-}
-
-type RegistryEndpoint struct {
-	pilot string
-	IstioEndpoint
-}
-
-type IstioEndpoint struct {
-	Service   string `json:"svc"`
-	Endpoints []struct {
-		Service     IstioService `json:"service,omitempty"`
-		ServicePort struct {
-			Name     string `json:"name,omitempty"`
-			Port     uint32 `json:"port,omitempty"`
-			Protocol string `json:"protocol,omitempty"`
-		} `json:"servicePort,omitempty"`
-		Endpoint struct {
-			Labels          map[string]string `json:"Labels,omitempty"`
-			Address         string            `json:"Address,omitempty"`
-			ServicePortName string            `json:"ServicePortName,omitempty"`
-			// EnvoyEndpoint is not mapped into the model
-			ServiceAccount string `json:"ServiceAccount,omitempty"`
-			Network        string `json:"Network,omitempty"`
-			Locality       struct {
-				Label     string `json:"Label,omitempty"`
-				ClusterID string `json:"ClusterID,omitempty"`
-			} `json:"Locality,omitempty"`
-			EndpointPort uint32 `json:"EndpointPort,omitempty"`
-			LbWeight     uint32 `json:"LbWeight,omitempty"`
-			TLSMode      string `json:"TLSMode,omitempty"`
-			Namespace    string `json:"Namespace,omitempty"`
-			WorkloadName string `json:"WorkloadName,omitempty"`
-			HostName     string `json:"HostName,omitempty"`
-			SubDomain    string `json:"SubDomain,omitempty"`
-			// TunnelAbility and DiscoverabilityPolicy are not mapped into the model
-		} `json:"endpoint"`
-	} `json:"ep"`
-}
-
 type RegistryService struct {
-	pilot string
+	Pilot string
 	IstioService
 }
 
@@ -300,14 +245,12 @@ type IstioService struct {
 		Name            string            `json:"Name,omitempty"`
 		Namespace       string            `json:"Namespace,omitempty"`
 		Labels          map[string]string `json:"Labels,omitempty"`
-		// UID is present in Istio 1.11.x but not in 1.12.x
-		UID string `json:"UID,omitempty"`
 		// ExportTo key values:
 		// ".":		Private implies namespace local config
 		// "*":		Public implies config is visible to all
 		// "~":		None implies service is visible to no one. Used for services only
-		ExportTo       map[string]bool   `json:"ExportTo,omitempty"`
-		LabelSelectors map[string]string `json:"LabelSelectors,omitempty"`
+		ExportTo       map[string]struct{} `json:"ExportTo,omitempty"`
+		LabelSelectors map[string]string   `json:"LabelSelectors,omitempty"`
 		// ClusterExternalAddresses and ClusterExternalPorts are not mapped into the model
 		// Kiali won't use it yet and these attributes changes between Istio 1.11.x and Istio 1.12.x and may bring conflicts
 	} `json:"Attributes,omitempty"`
@@ -316,32 +259,17 @@ type IstioService struct {
 		Port     int    `json:"port"`
 		Protocol string `json:"protocol,omitempty"`
 	} `json:"ports"`
-	ServiceAccounts []string  `json:"serviceAccounts,omitempty"`
-	CreationTime    time.Time `json:"creationTime,omitempty"`
-	Hostname        string    `json:"hostname"`
-	// Address is present in Istio 1.11.x but not in 1.12.x
-	Address              string `json:"address,omitempty"`
-	AutoAllocatedAddress string `json:"autoAllocatedAddress,omitempty"`
+	Hostname string `json:"hostname"`
 	// ClusterVIPs defined in Istio 1.11.x
 	ClusterVIPs11 map[string]string `json:"cluster-vips,omitempty"`
 	// ClusterVIPs defined in Istio 1.12.x
 	ClusterVIPs12 struct {
 		Addresses map[string][]string `json:"Addresses,omitempty"`
 	} `json:"clusterVIPs,omitempty"`
-	// Resolution values, as the debug endpoint doesn't perform a conversion
-	// 0:	ClientSideLB
-	// 1:   DNSLB
-	// 2:   Passthrough
-	Resolution   int  `json:"Resolution,omitempty"`
-	MeshExternal bool `json:"MeshExternal,omitempty"`
-	// ResourceVersion attribute is not mapped into the model
-	// Kiali won't use it yet and it is only present on Istio 1.12.x
 }
 
 type RegistryStatus struct {
-	Configuration *RegistryConfiguration
-	Endpoints     []*RegistryEndpoint
-	Services      []*RegistryService
+	Services []*RegistryService
 }
 
 func (imc IstioMeshConfig) GetEnableAutoMtls() bool {

@@ -7,7 +7,7 @@ import { MessageCenterAction } from './MessageCenterActions';
 import { NamespaceAction } from './NamespaceAction';
 import { ClusterAction } from './ClusterAction';
 import { UserSettingsAction } from './UserSettingsActions';
-import { JaegerAction } from './JaegerActions';
+import { TracingAction } from './TracingActions';
 import { MeshTlsAction } from './MeshTlsActions';
 import { TourAction } from './TourActions';
 import { IstioStatusAction } from './IstioStatusActions';
@@ -22,7 +22,7 @@ export type KialiAppAction =
   | HelpDropdownAction
   | IstioCertsInfoAction
   | IstioStatusAction
-  | JaegerAction
+  | TracingAction
   | LoginAction
   | MeshTlsAction
   | MessageCenterAction

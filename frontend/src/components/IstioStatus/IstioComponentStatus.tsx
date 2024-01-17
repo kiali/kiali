@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { ComponentStatus, Status } from '../../types/IstioStatus';
-import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import { PFColors } from '../Pf/PfColors';
 import {
   CheckCircleIcon,
@@ -9,38 +8,35 @@ import {
   MinusCircleIcon
 } from '@patternfly/react-icons';
 import { Split, SplitItem } from '@patternfly/react-core';
+import { IconProps, createIcon } from 'config/KialiIcon';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type Props = {
   componentStatus: ComponentStatus;
 };
 
-export type ComponentIcon = {
-  color: string;
-  icon: React.ComponentClass<SVGIconProps>;
-};
-
-const ErrorCoreComponent: ComponentIcon = {
+const ErrorCoreComponent: IconProps = {
   color: PFColors.Danger,
   icon: ExclamationCircleIcon
 };
 
-const ErrorAddonComponent: ComponentIcon = {
+const ErrorAddonComponent: IconProps = {
   color: PFColors.Warning,
   icon: ExclamationTriangleIcon
 };
 
-const NotReadyComponent: ComponentIcon = {
+const NotReadyComponent: IconProps = {
   color: PFColors.Info,
   icon: MinusCircleIcon
 };
 
-const SuccessComponent: ComponentIcon = {
+const SuccessComponent: IconProps = {
   color: PFColors.Success,
   icon: CheckCircleIcon
 };
 
 // Mapping Valid-Core to Icon representation.
-const validToIcon: { [valid: string]: ComponentIcon } = {
+const validToIcon: { [valid: string]: IconProps } = {
   'false-false': ErrorAddonComponent,
   'false-true': ErrorCoreComponent,
   'true-false': SuccessComponent,
@@ -54,29 +50,36 @@ const statusMsg = {
   [Status.Unreachable]: 'Unreachable'
 };
 
-export class IstioComponentStatus extends React.Component<Props> {
-  renderIcon = (status: Status, isCore: boolean) => {
+const splitItemStyle = kialiStyle({
+  textAlign: 'left'
+});
+
+export const IstioComponentStatus: React.FC<Props> = (props: Props) => {
+  const renderIcon = (status: Status, isCore: boolean): React.ReactNode => {
     let compIcon = validToIcon[`${status === Status.Healthy}-${isCore}`];
+
     if (status === Status.NotReady) {
       compIcon = NotReadyComponent;
     }
-    const IconComponent = compIcon.icon;
-    return <IconComponent style={{ color: compIcon.color, marginTop: 5 }} />;
+
+    compIcon.className = kialiStyle({
+      marginTop: '0.25rem'
+    });
+
+    return createIcon(compIcon);
   };
 
-  renderCells = () => {
-    const comp = this.props.componentStatus;
+  const renderCells = (): React.ReactNode => {
+    const comp = props.componentStatus;
 
     return [
-      <Split key={'cell-status-icon-' + comp.name} hasGutter={true}>
-        <SplitItem>{this.renderIcon(this.props.componentStatus.status, this.props.componentStatus.is_core)}</SplitItem>
+      <Split key={`cell-status-icon-${comp.name}`} hasGutter={true} className={splitItemStyle}>
+        <SplitItem>{renderIcon(props.componentStatus.status, props.componentStatus.is_core)}</SplitItem>
         <SplitItem isFilled={true}>{comp.name}</SplitItem>
         <SplitItem>{statusMsg[comp.status]}</SplitItem>
       </Split>
     ];
   };
 
-  render() {
-    return this.renderCells();
-  }
-}
+  return <>{renderCells()}</>;
+};

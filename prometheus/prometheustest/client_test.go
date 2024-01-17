@@ -125,22 +125,22 @@ func TestConfig(t *testing.T) {
 	assert.Contains(t, config.YAML, "scrape_interval")
 }
 
-func TestFlags(t *testing.T) {
+func TestRuntimeInfo(t *testing.T) {
 	client, api, err := setupMocked()
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	mockFlags(api, prom_v1.FlagsResult{"storage.tsdb.retention": "6h"})
+	mockRuntimeinfoResult(api, prom_v1.RuntimeinfoResult{StorageRetention: "6h"})
 
-	flags, _ := client.GetFlags()
-	assert.Equal(t, flags["storage.tsdb.retention"], "6h")
+	ri, _ := client.GetRuntimeinfo()
+	assert.Equal(t, "6h", ri.StorageRetention)
 }
 
 func mockConfig(api *PromAPIMock, ret prom_v1.ConfigResult) {
-	api.On("Config", mock.AnythingOfType("*context.emptyCtx")).Return(ret, nil)
+	api.On("Config", mock.Anything).Return(ret, nil)
 }
 
-func mockFlags(api *PromAPIMock, ret prom_v1.FlagsResult) {
-	api.On("Flags", mock.AnythingOfType("*context.emptyCtx")).Return(ret, nil)
+func mockRuntimeinfoResult(api *PromAPIMock, ret prom_v1.RuntimeinfoResult) {
+	api.On("Runtimeinfo", mock.Anything).Return(ret, nil)
 }

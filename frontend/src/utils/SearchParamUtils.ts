@@ -34,11 +34,11 @@ export const hasExperimentalFlag = (flag: string): boolean => {
 };
 
 export const getSpanId = () => {
-  return new URLSearchParams(window.location.search).get(URLParam.JAEGER_SPAN_ID) || undefined;
+  return new URLSearchParams(window.location.search).get(URLParam.TRACING_SPAN_ID) || undefined;
 };
 
 export const getTraceId = () => {
-  return new URLSearchParams(window.location.search).get(URLParam.JAEGER_TRACE_ID) || undefined;
+  return new URLSearchParams(window.location.search).get(URLParam.TRACING_TRACE_ID) || undefined;
 };
 
 export const getClusterName = () => {
@@ -47,9 +47,9 @@ export const getClusterName = () => {
 
 export const setTraceId = (traceId?: string) => {
   if (traceId) {
-    HistoryManager.setParam(URLParam.JAEGER_TRACE_ID, traceId);
+    HistoryManager.setParam(URLParam.TRACING_TRACE_ID, traceId);
   } else {
-    HistoryManager.deleteParam(URLParam.JAEGER_TRACE_ID);
+    HistoryManager.deleteParam(URLParam.TRACING_TRACE_ID);
   }
 };
 

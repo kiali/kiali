@@ -108,7 +108,6 @@ describe('Overview page', () => {
         kiosk={''}
         minTLS={''}
         istioAPIEnabled={false}
-        isMaistra={false}
       />
     );
     expect(shallowToJson(wrapper)).toMatchSnapshot();

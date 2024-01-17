@@ -78,13 +78,18 @@ func TestServiceEntryLabelsNotMatch(t *testing.T) {
 }
 
 func TestK8sGatewaysAddressesError(t *testing.T) {
-	name := "gatewayapi"
+	name := "gatewayapiaddr"
 	require := require.New(t)
 	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-k8sgateways-addresses.yaml")
 	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
 	require.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
 
-	config, err := getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sGateways, true, require)
+	// flaky test fix, make sure that K8sGateway is created and available
+	config, err := getConfigDetails(kiali.BOOKINFO, "gatewayapiaddr2", kubernetes.K8sGateways, true, require)
+	require.NoError(err)
+	require.NotNil(config)
+
+	config, err = getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sGateways, true, require)
 
 	require.NoError(err)
 	require.NotNil(config)
@@ -102,13 +107,18 @@ func TestK8sGatewaysAddressesError(t *testing.T) {
 }
 
 func TestK8sGatewaysListenersError(t *testing.T) {
-	name := "gatewayapi"
+	name := "gatewayapilnr"
 	require := require.New(t)
 	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-k8sgateways-listeners.yaml")
 	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
 	require.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
 
-	config, err := getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sGateways, true, require)
+	// flaky test fix, make sure that K8sGateway is created and available
+	config, err := getConfigDetails(kiali.BOOKINFO, "gatewayapilnr2", kubernetes.K8sGateways, true, require)
+	require.NoError(err)
+	require.NotNil(config)
+
+	config, err = getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sGateways, true, require)
 
 	require.NoError(err)
 	require.NotNil(config)
@@ -157,7 +167,12 @@ func TestK8sHTTPRoutesServicesError(t *testing.T) {
 	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
 	require.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
 
-	config, err := getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sHTTPRoutes, true, require)
+	// flaky test fix, make sure that K8sGateway is created and available
+	config, err := getConfigDetails(kiali.BOOKINFO, "gatewayapiservices", kubernetes.K8sGateways, true, require)
+	require.NoError(err)
+	require.NotNil(config)
+
+	config, err = getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sHTTPRoutes, true, require)
 
 	require.NoError(err)
 	require.NotNil(config)
@@ -172,7 +187,37 @@ func TestK8sHTTPRoutesServicesError(t *testing.T) {
 	require.Equal("k8shttproute", config.IstioValidation.ObjectType)
 	require.NotEmpty(config.IstioValidation.Checks)
 	require.Equal(models.ErrorSeverity, config.IstioValidation.Checks[0].Severity)
-	require.Equal("BackendRef on rule doesn't have a valid service (host not found)", config.IstioValidation.Checks[0].Message)
+	require.Equal("BackendRef on rule doesn't have a valid service (Service name not found)", config.IstioValidation.Checks[0].Message)
+}
+
+func TestK8sReferenceGrantsFromNamespaceError(t *testing.T) {
+	name := "referencegrantfromns"
+	require := require.New(t)
+	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-k8sreferencegrants-from-namespaces.yaml")
+	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
+	require.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
+
+	// potential flaky test fix, make sure that K8sReferenceGrants is created and available
+	config, err := getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sReferenceGrants, true, require)
+	require.NoError(err)
+	require.NotNil(config)
+
+	config, err = getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sReferenceGrants, true, require)
+
+	require.NoError(err)
+	require.NotNil(config)
+	require.Equal(kubernetes.K8sReferenceGrants, config.ObjectType)
+	require.Equal(kiali.BOOKINFO, config.Namespace.Name)
+	require.NotNil(config.K8sReferenceGrant)
+	require.Equal(name, config.K8sReferenceGrant.Name)
+	require.Equal(kiali.BOOKINFO, config.K8sReferenceGrant.Namespace)
+	require.NotNil(config.IstioValidation)
+	require.False(config.IstioValidation.Valid)
+	require.Equal(name, config.IstioValidation.Name)
+	require.Equal("k8sreferencegrant", config.IstioValidation.ObjectType)
+	require.NotEmpty(config.IstioValidation.Checks)
+	require.Equal(models.ErrorSeverity, config.IstioValidation.Checks[0].Severity)
+	require.Equal("Namespace is not found or is not accessible", config.IstioValidation.Checks[0].Message)
 }
 
 func getConfigDetails(namespace, name, configType string, skipReferences bool, require *require.Assertions) (*models.IstioConfigDetails, error) {

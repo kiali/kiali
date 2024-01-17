@@ -13,6 +13,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph/config/cytoscape"
 	"github.com/kiali/kiali/handlers"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/status"
@@ -584,11 +585,11 @@ func NamespaceTls(namespace string) (*models.MTLSStatus, int, error) {
 	}
 }
 
-func Jaeger() (*models.JaegerInfo, int, error) {
-	url := fmt.Sprintf("%s/api/jaeger", client.kialiURL)
+func Tracing() (*models.TracingInfo, int, error) {
+	url := fmt.Sprintf("%s/api/tracing", client.kialiURL)
 	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
-		status := new(models.JaegerInfo)
+		status := new(models.TracingInfo)
 		err = json.Unmarshal(body, &status)
 		if err == nil {
 			return status, code, nil
@@ -614,6 +615,26 @@ func Grafana() (*models.GrafanaInfo, int, error) {
 	} else {
 		return nil, code, err
 	}
+}
+
+func Clusters() ([]kubernetes.Cluster, error) {
+	url := fmt.Sprintf("%s/api/clusters", client.kialiURL)
+	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	if err != nil {
+		return nil, err
+	}
+
+	if code != http.StatusOK {
+		return nil, fmt.Errorf("Non 200 response code: %d when getting clusters. Body: %s", code, body)
+	}
+
+	clusters := []kubernetes.Cluster{}
+	err = json.Unmarshal(body, &clusters)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to unmarshal body into clusters. Body: %s", body)
+	}
+
+	return clusters, nil
 }
 
 func IstioApiEnabled() (bool, error) {

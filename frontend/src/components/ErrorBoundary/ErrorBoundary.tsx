@@ -3,7 +3,7 @@ import * as React from 'react';
 type ErrorHandlerFunction = (error: Error, componentStack: string) => void;
 
 type ErrorBoundaryProps = {
-  fallBackComponent: any;
+  fallBackComponent: React.ReactNode;
   onError?: ErrorHandlerFunction;
 };
 
@@ -21,6 +21,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     if (this.props.onError) {
       this.props.onError(error, info);
     }
+
     this.setState({ hasError: true });
   }
 
@@ -29,6 +30,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       if (prevState.hasError) {
         return { hasError: false };
       }
+
       return null;
     });
   };
@@ -37,6 +39,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     if (this.state.hasError) {
       return this.props.fallBackComponent;
     }
+
     return this.props.children;
   }
 }

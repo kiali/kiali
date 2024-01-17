@@ -10,22 +10,38 @@ const testScenario = (summary: any) => {
 };
 
 describe('ValidationSummary renders', () => {
-  it('success icon when all components are valid', () => {
-    testScenario(<ValidationSummary id={'1'} errors={0} warnings={0} objectCount={1} />);
-    testScenario(<ValidationSummary id={'1'} errors={0} warnings={0} objectCount={4} />);
+  // Istio config validations
+  it('success icon when all istio components are valid', () => {
+    testScenario(<ValidationSummary id={'1'} errors={0} warnings={0} objectCount={1} type="istio" />);
+    testScenario(<ValidationSummary id={'1'} errors={0} warnings={0} objectCount={4} type="istio" />);
   });
 
-  it('warning icon when all components are valid', () => {
-    testScenario(<ValidationSummary id={'2'} errors={0} warnings={1} objectCount={1} />);
-    testScenario(<ValidationSummary id={'2'} errors={0} warnings={1} objectCount={3} />);
+  it('warning icon when all istio components are valid', () => {
+    testScenario(<ValidationSummary id={'2'} errors={0} warnings={1} objectCount={1} type="istio" />);
+    testScenario(<ValidationSummary id={'2'} errors={0} warnings={1} objectCount={3} type="istio" />);
   });
 
-  it('error icon when all components are valid', () => {
-    testScenario(<ValidationSummary id={'3'} errors={1} warnings={0} objectCount={1} />);
-    testScenario(<ValidationSummary id={'3'} errors={1} warnings={2} objectCount={3} />);
+  it('error icon when all istio components are valid', () => {
+    testScenario(<ValidationSummary id={'3'} errors={1} warnings={0} objectCount={1} type="istio" />);
+    testScenario(<ValidationSummary id={'3'} errors={1} warnings={2} objectCount={3} type="istio" />);
   });
 
-  it('N/A when all components are valid', () => {
-    testScenario(<ValidationSummary id={'4'} errors={0} warnings={0} objectCount={0} />);
+  it('N/A when all istio components are valid', () => {
+    testScenario(<ValidationSummary id={'4'} errors={0} warnings={0} objectCount={0} type="istio" />);
+  });
+
+  // Service validations
+  it('success icon when all services are valid', () => {
+    testScenario(<ValidationSummary id={'1'} errors={0} warnings={0} type="service" />);
+  });
+
+  it('warning icon when all services are valid', () => {
+    testScenario(<ValidationSummary id={'2'} errors={0} warnings={1} type="service" />);
+    testScenario(<ValidationSummary id={'2'} errors={0} warnings={2} type="service" />);
+  });
+
+  it('error icon when all services are valid', () => {
+    testScenario(<ValidationSummary id={'3'} errors={1} warnings={0} type="service" />);
+    testScenario(<ValidationSummary id={'3'} errors={1} warnings={2} type="service" />);
   });
 });

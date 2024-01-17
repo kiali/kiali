@@ -7,7 +7,6 @@ import (
 
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
-	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/business/references"
@@ -80,14 +79,8 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, 
 	var rbacDetails kubernetes.RBACDetails
 	var registryServices []*kubernetes.RegistryService
 
-	istioApiEnabled := config.Get().ExternalServices.Istio.IstioAPIEnabled
-
 	wg.Add(3) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
 	if service != "" {
-		wg.Add(1)
-	}
-
-	if istioApiEnabled {
 		wg.Add(1)
 	}
 
@@ -106,10 +99,8 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, 
 		go in.fetchServices(ctx, &services, cluster, namespace, errChan, &wg)
 	}
 
-	if istioApiEnabled {
-		// @TODO registry services for remote cluster
-		go in.fetchRegistryServices(&registryServices, errChan, &wg)
-	}
+	criteria := RegistryCriteria{AllNamespaces: true, Cluster: cluster}
+	registryServices = in.businessLayer.RegistryStatus.GetRegistryServices(criteria)
 
 	wg.Wait()
 	close(errChan)
@@ -151,9 +142,10 @@ func (in *IstioValidationsService) getAllObjectCheckers(istioConfigList models.I
 		checkers.RequestAuthenticationChecker{RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadsPerNamespace: workloadsPerNamespace, Cluster: cluster},
 		checkers.WorkloadChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, WorkloadsPerNamespace: workloadsPerNamespace, Cluster: cluster},
 		checkers.K8sGatewayChecker{K8sGateways: istioConfigList.K8sGateways, Cluster: cluster, GatewayClasses: in.businessLayer.IstioConfig.GatewayAPIClasses()},
+		checkers.K8sHTTPRouteChecker{K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices, Cluster: cluster},
+		checkers.K8sReferenceGrantChecker{K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, Cluster: cluster},
 		checkers.WasmPluginChecker{WasmPlugins: istioConfigList.WasmPlugins, Namespaces: namespaces},
 		checkers.TelemetryChecker{Telemetries: istioConfigList.Telemetries, Namespaces: namespaces},
-		checkers.K8sHTTPRouteChecker{K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways, Namespaces: namespaces, RegistryServices: registryServices, Cluster: cluster},
 	}
 }
 
@@ -198,16 +190,13 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	// Get all the Istio objects from a Namespace and all gateways from every namespace
 	wg.Add(3)
 
-	if istioApiEnabled {
-		wg.Add(1)
-	}
-
 	go in.fetchIstioConfigList(ctx, &istioConfigList, &mtlsDetails, &rbacDetails, cluster, namespace, errChan, &wg)
 	go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, cluster, &namespaces, errChan, &wg)
 	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, cluster, errChan, &wg)
 
 	if istioApiEnabled {
-		go in.fetchRegistryServices(&registryServices, errChan, &wg)
+		criteria := RegistryCriteria{AllNamespaces: true, Cluster: cluster}
+		registryServices = in.businessLayer.RegistryStatus.GetRegistryServices(criteria)
 	}
 
 	wg.Wait()
@@ -273,9 +262,13 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 		}
 		referenceChecker = references.K8sGatewayReferences{K8sGateways: istioConfigList.K8sGateways, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes}
 	case kubernetes.K8sHTTPRoutes:
-		httpRouteChecker := checkers.K8sHTTPRouteChecker{K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways, Namespaces: namespaces, RegistryServices: registryServices}
+		httpRouteChecker := checkers.K8sHTTPRouteChecker{K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices}
 		objectCheckers = []ObjectChecker{noServiceChecker, httpRouteChecker}
-		referenceChecker = references.K8sHTTPRouteReferences{K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, Namespaces: namespaces}
+		referenceChecker = references.K8sHTTPRouteReferences{K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, Namespaces: namespaces, K8sReferenceGrants: istioConfigList.K8sReferenceGrants}
+	case kubernetes.K8sReferenceGrants:
+		objectCheckers = []ObjectChecker{
+			checkers.K8sReferenceGrantChecker{K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces},
+		}
 	default:
 		err = fmt.Errorf("object type not found: %v", objectType)
 	}
@@ -413,6 +406,7 @@ func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rVa
 		IncludePeerAuthentications:    true,
 		IncludeK8sHTTPRoutes:          true,
 		IncludeK8sGateways:            true,
+		IncludeK8sReferenceGrants:     true,
 	}
 	istioConfigMap, err := in.businessLayer.IstioConfig.GetIstioConfigMap(ctx, criteria)
 	if err != nil {
@@ -442,6 +436,9 @@ func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rVa
 
 	// All K8sHTTPRoutes
 	rValue.K8sHTTPRoutes = append(rValue.K8sHTTPRoutes, istioConfigList.K8sHTTPRoutes...)
+
+	// All K8sReferenceGrants
+	rValue.K8sReferenceGrants = append(rValue.K8sReferenceGrants, istioConfigList.K8sReferenceGrants...)
 
 	// All Sidecars
 	rValue.Sidecars = append(rValue.Sidecars, istioConfigList.Sidecars...)
@@ -560,36 +557,17 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 	}
 	cfg := config.Get()
 
-	var istioConfig *core_v1.ConfigMap
-	var err error
-	if IsNamespaceCached(cfg.IstioNamespace) {
-		istioConfig, err = kialiCache.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
-	} else {
-		istioConfig, err = userClient.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
-	}
+	istioConfig, err := kialiCache.GetConfigMap(cfg.IstioNamespace, IstioConfigMapName(*cfg, ""))
 	if err != nil {
 		errChan <- err
 		return
 	}
+
 	icm, err := kubernetes.GetIstioConfigMap(istioConfig)
 	if err != nil {
 		errChan <- err
 	} else {
 		mtlsDetails.EnabledAutoMtls = icm.GetEnableAutoMtls()
-	}
-}
-
-func (in *IstioValidationsService) fetchRegistryServices(rValue *[]*kubernetes.RegistryService, errChan chan error, wg *sync.WaitGroup) {
-	defer wg.Done()
-	criteria := RegistryCriteria{AllNamespaces: true}
-	registryServices, err := in.businessLayer.RegistryStatus.GetRegistryServices(criteria)
-	if err != nil {
-		select {
-		case errChan <- err:
-		default:
-		}
-	} else {
-		*rValue = registryServices
 	}
 }
 

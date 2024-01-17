@@ -2,9 +2,13 @@ package config
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"sync"
 	"testing"
+	"time"
+
+	"github.com/kiali/kiali/util"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -59,7 +63,7 @@ func TestSecretFileOverrides(t *testing.T) {
 func createTestSecretFile(t *testing.T, parentDir string, name string, content string) {
 	childDir := fmt.Sprintf("%s/%s", parentDir, name)
 	filename := fmt.Sprintf("%s/value.txt", childDir)
-	if err := os.MkdirAll(childDir, 0777); err != nil {
+	if err := os.MkdirAll(childDir, 0o777); err != nil {
 		t.Fatalf("Failed to create tmp secret dir [%v]: %v", childDir, err)
 	}
 	f, err := os.Create(filename)
@@ -284,5 +288,81 @@ func TestAllNamespacesAccessible(t *testing.T) {
 
 			assert.Equal(tc.expectedAccessible, conf.AllNamespacesAccessible())
 		})
+	}
+}
+
+func TestValidateWebRoot(t *testing.T) {
+	// create a base config that we know is valid
+	rand.New(rand.NewSource(time.Now().UnixNano()))
+	conf := NewConfig()
+	conf.LoginToken.SigningKey = util.RandomString(16)
+	conf.Server.StaticContentRootDirectory = "."
+	conf.Auth.Strategy = "anonymous"
+
+	// now test some web roots, both valid ones and invalid ones
+	validWebRoots := []string{
+		"/",
+		"/kiali",
+		"/abc/clustername/api/v1/namespaces/istio-system/services/kiali:80/proxy/kiali",
+		"/a/0/-/./_/~/!/$/&/'/(/)/*/+/,/;/=/:/@/%aa",
+		"/kiali0-._~!$&'()*+,;=:@%aa",
+	}
+	invalidWebRoots := []string{
+		"/kiali/",
+		"kiali/",
+		"/^kiali",
+		"/foo/../bar",
+		"/../bar",
+		"../bar",
+	}
+
+	for _, webroot := range validWebRoots {
+		conf.Server.WebRoot = webroot
+		if err := Validate(*conf); err != nil {
+			t.Errorf("Web root validation should have succeeded for [%v]: %v", conf.Server.WebRoot, err)
+		}
+	}
+
+	for _, webroot := range invalidWebRoots {
+		conf.Server.WebRoot = webroot
+		if err := Validate(*conf); err == nil {
+			t.Errorf("Web root validation should have failed [%v]", conf.Server.WebRoot)
+		}
+	}
+}
+
+func TestValidateAuthStrategy(t *testing.T) {
+	// create a base config that we know is valid
+	rand.New(rand.NewSource(time.Now().UnixNano()))
+	conf := NewConfig()
+	conf.LoginToken.SigningKey = util.RandomString(16)
+	conf.Server.StaticContentRootDirectory = "."
+
+	// now test some auth strategies, both valid ones and invalid ones
+	validStrategies := []string{
+		AuthStrategyAnonymous,
+		AuthStrategyOpenId,
+		AuthStrategyOpenshift,
+		AuthStrategyToken,
+	}
+	invalidStrategies := []string{
+		"login",
+		"ldap",
+		"",
+		"foo",
+	}
+
+	for _, strategies := range validStrategies {
+		conf.Auth.Strategy = strategies
+		if err := Validate(*conf); err != nil {
+			t.Errorf("Auth Strategy validation should have succeeded for [%v]: %v", conf.Auth.Strategy, err)
+		}
+	}
+
+	for _, strategies := range invalidStrategies {
+		conf.Auth.Strategy = strategies
+		if err := Validate(*conf); err == nil {
+			t.Errorf("Auth Strategy validation should have failed [%v]", conf.Auth.Strategy)
+		}
 	}
 }

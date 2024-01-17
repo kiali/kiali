@@ -16,10 +16,19 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
+func NewIstioStatusService(userClients map[string]kubernetes.ClientInterface, businessLayer *Layer, cpm ControlPlaneMonitor) IstioStatusService {
+	return IstioStatusService{
+		userClients:         userClients,
+		businessLayer:       businessLayer,
+		controlPlaneMonitor: cpm,
+	}
+}
+
 // SvcService deals with fetching istio/kubernetes services related content and convert to kiali model
 type IstioStatusService struct {
-	userClients   map[string]kubernetes.ClientInterface
-	businessLayer *Layer
+	userClients         map[string]kubernetes.ClientInterface
+	businessLayer       *Layer
+	controlPlaneMonitor ControlPlaneMonitor
 }
 
 func (iss *IstioStatusService) GetStatus(ctx context.Context, cluster string) (kubernetes.IstioComponentStatus, error) {
@@ -43,7 +52,7 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context, cluster string) (k
 
 func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, cluster string) (kubernetes.IstioComponentStatus, error) {
 	// Fetching workloads from component namespaces
-	workloads, err := iss.getComponentNamespacesWorkloads(ctx)
+	workloads, err := iss.getComponentNamespacesWorkloads(ctx, cluster)
 	if err != nil {
 		return kubernetes.IstioComponentStatus{}, err
 	}
@@ -58,7 +67,7 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 		return kubernetes.IstioComponentStatus{}, fmt.Errorf("Cluster %s doesn't exist ", cluster)
 	}
 
-	istiodStatus, err := k8s.CanConnectToIstiod()
+	istiodStatus, err := iss.controlPlaneMonitor.CanConnectToIstiod(k8s)
 	if err != nil {
 		return kubernetes.IstioComponentStatus{}, err
 	}
@@ -66,7 +75,7 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 	return deploymentStatus.Merge(istiodStatus), nil
 }
 
-func (iss *IstioStatusService) getComponentNamespacesWorkloads(ctx context.Context) ([]*models.Workload, error) {
+func (iss *IstioStatusService) getComponentNamespacesWorkloads(ctx context.Context, cluster string) ([]*models.Workload, error) {
 	var wg sync.WaitGroup
 
 	nss := map[string]bool{}
@@ -86,7 +95,7 @@ func (iss *IstioStatusService) getComponentNamespacesWorkloads(ctx context.Conte
 				defer wg.Done()
 				var wls models.Workloads
 				var err error
-				wls, err = iss.businessLayer.Workload.fetchWorkloads(ctx, n, "")
+				wls, err = iss.businessLayer.Workload.fetchWorkloadsFromCluster(ctx, cluster, n, "")
 				wliChan <- wls
 				errChan <- err
 			}(ctx, n, wlChan, errChan)
@@ -129,11 +138,11 @@ func getComponentNamespaces() []string {
 	return nss
 }
 
-func istioCoreComponents() map[string]bool {
-	components := map[string]bool{}
+func istioCoreComponents() map[string]config.ComponentStatus {
+	components := map[string]config.ComponentStatus{}
 	cs := config.Get().ExternalServices.Istio.ComponentStatuses
 	for _, c := range cs.Components {
-		components[c.AppLabel] = c.IsCore
+		components[c.AppLabel] = c
 	}
 	return components
 }
@@ -142,6 +151,7 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload) (kubern
 	statusComponents := istioCoreComponents()
 	isc := kubernetes.IstioComponentStatus{}
 	cf := map[string]bool{}
+	mcf := map[string]int{}
 
 	// Map workloads there by app name
 	for _, workload := range workloads {
@@ -150,20 +160,25 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload) (kubern
 			continue
 		}
 
-		isCore, found := statusComponents[appLabel]
+		stat, found := statusComponents[appLabel]
 		if !found {
 			continue
 		}
 
-		// Component found
-		cf[appLabel] = true
+		if stat.IsMultiCluster {
+			mcf[appLabel]++
+		} else {
+			// Component found
+			cf[appLabel] = true
+			// @TODO when components exists on remote clusters only but config not marked multicluster
+		}
 
 		if status := GetWorkloadStatus(*workload); status != kubernetes.ComponentHealthy {
 			// Check status
 			isc = append(isc, kubernetes.ComponentStatus{
 				Name:   workload.Name,
 				Status: status,
-				IsCore: isCore,
+				IsCore: stat.IsCore,
 			},
 			)
 		}
@@ -171,14 +186,16 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload) (kubern
 
 	// Add missing deployments
 	componentNotFound := 0
-	for comp, isCore := range statusComponents {
+	for comp, stat := range statusComponents {
 		if _, found := cf[comp]; !found {
-			componentNotFound += 1
-			isc = append(isc, kubernetes.ComponentStatus{
-				Name:   comp,
-				Status: kubernetes.ComponentNotFound,
-				IsCore: isCore,
-			})
+			if number, mfound := mcf[comp]; !mfound || number < len(iss.userClients) { // multicluster components should exist on all clusters
+				componentNotFound += 1
+				isc = append(isc, kubernetes.ComponentStatus{
+					Name:   comp,
+					Status: kubernetes.ComponentNotFound,
+					IsCore: stat.IsCore,
+				})
+			}
 		}
 	}
 
@@ -210,11 +227,17 @@ func (iss *IstioStatusService) getAddonComponentStatus() kubernetes.IstioCompone
 
 	staChan := make(chan kubernetes.IstioComponentStatus, 4)
 	extServices := config.Get().ExternalServices
+
+	// https://github.com/kiali/kiali/issues/6966 - use the well-known Prom healthy endpoint
+	if extServices.Prometheus.HealthCheckUrl == "" {
+		extServices.Prometheus.HealthCheckUrl = extServices.Prometheus.URL + "/-/healthy"
+	}
+
 	ics := kubernetes.IstioComponentStatus{}
 
 	go getAddonStatus("prometheus", true, extServices.Prometheus.IsCore, &extServices.Prometheus.Auth, extServices.Prometheus.URL, extServices.Prometheus.HealthCheckUrl, staChan, &wg)
 	go getAddonStatus("grafana", extServices.Grafana.Enabled, extServices.Grafana.IsCore, &extServices.Grafana.Auth, extServices.Grafana.InClusterURL, extServices.Grafana.HealthCheckUrl, staChan, &wg)
-	go iss.getTracingStatus("jaeger", extServices.Tracing.Enabled, extServices.Tracing.IsCore, staChan, &wg)
+	go iss.getTracingStatus("tracing", extServices.Tracing.Enabled, extServices.Tracing.IsCore, staChan, &wg)
 
 	// Custom dashboards may use the main Prometheus config
 	customProm := extServices.CustomDashboards.Prometheus
@@ -257,6 +280,7 @@ func getAddonStatus(name string, enabled bool, isCore bool, auth *config.Auth, u
 	// Call the addOn service endpoint to find out whether is reachable or not
 	_, statusCode, _, err := httputil.HttpGet(url, auth, 10*time.Second, nil, nil)
 	if err != nil || statusCode > 399 {
+		log.Tracef("addon health check failed: name=[%v], url=[%v], code=[%v]", name, url, statusCode)
 		staChan <- kubernetes.IstioComponentStatus{
 			kubernetes.ComponentStatus{
 				Name:   name,
@@ -274,7 +298,7 @@ func (iss *IstioStatusService) getTracingStatus(name string, enabled bool, isCor
 		return
 	}
 
-	if accessible, err := iss.businessLayer.Jaeger.GetStatus(); !accessible {
+	if accessible, err := iss.businessLayer.Tracing.GetStatus(); !accessible {
 		log.Errorf("Error fetching availability of the tracing service: %v", err)
 		staChan <- kubernetes.IstioComponentStatus{
 			kubernetes.ComponentStatus{

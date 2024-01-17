@@ -3,14 +3,14 @@ package k8sgateways
 import (
 	"fmt"
 
-	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
+	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/models"
 )
 
 type MultiMatchChecker struct {
 	Cluster     string
-	K8sGateways []*k8s_networking_v1beta1.Gateway
+	K8sGateways []*k8s_networking_v1.Gateway
 }
 
 const (
@@ -75,7 +75,7 @@ func createError(gatewayRuleName string, ruleCode string, namespace string, clus
 }
 
 // findMatch uses a linear search with regexp to check for matching gateway host + port combinations. If this becomes a bottleneck for performance, replace with a graph or trie algorithm.
-func (m MultiMatchChecker) findMatch(listener k8s_networking_v1beta1.Listener, gwName string) (bool, []models.IstioValidationKey) {
+func (m MultiMatchChecker) findMatch(listener k8s_networking_v1.Listener, gwName string) (bool, []models.IstioValidationKey) {
 	collidingGateways := make([]models.IstioValidationKey, 0)
 
 	for _, gw := range m.K8sGateways {
@@ -94,7 +94,7 @@ func (m MultiMatchChecker) findMatch(listener k8s_networking_v1beta1.Listener, g
 }
 
 // Check duplicates IP
-func (m MultiMatchChecker) findMatchIP(address k8s_networking_v1beta1.GatewayAddress, gwName string) (bool, []models.IstioValidationKey) {
+func (m MultiMatchChecker) findMatchIP(address k8s_networking_v1.GatewayAddress, gwName string) (bool, []models.IstioValidationKey) {
 	collidingGateways := make([]models.IstioValidationKey, 0)
 
 	for _, aa := range m.K8sGateways {

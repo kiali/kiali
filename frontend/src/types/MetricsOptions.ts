@@ -1,23 +1,22 @@
 import { TargetKind } from './Common';
 
 export interface MetricsQuery {
-  rateInterval?: string;
-  rateFunc?: string;
-  queryTime?: number;
-  duration?: number;
-  step?: number;
-  quantiles?: string[];
   avg?: boolean;
   byLabels?: string[];
+  duration?: number;
+  quantiles?: string[];
+  queryTime?: number;
+  rateFunc?: string;
+  rateInterval?: string;
+  step?: number;
 }
 
 export interface DashboardQuery extends MetricsQuery {
-  rawDataAggregator?: Aggregator;
-  labelsFilters?: string;
   additionalLabels?: string;
+  labelsFilters?: string;
+  rawDataAggregator?: Aggregator;
   workload?: string;
   workloadType?: string;
-  cluster?: string;
 }
 
 export type Aggregator = 'sum' | 'avg' | 'min' | 'max' | 'stddev' | 'stdvar';
@@ -27,17 +26,16 @@ export interface IstioMetricsOptions extends MetricsQuery {
   filters?: string[];
   requestProtocol?: string;
   reporter: Reporter;
-  clusterName?: string;
 }
 
 export type Reporter = 'source' | 'destination' | 'both';
 export type Direction = 'inbound' | 'outbound';
 
 export interface Target {
-  namespace: string;
-  name: string;
-  kind: TargetKind;
   cluster?: string;
+  kind: TargetKind;
+  name: string;
+  namespace: string;
 }
 
 export interface MetricsStatsQuery {
@@ -50,7 +48,8 @@ export interface MetricsStatsQuery {
   target: Target;
 }
 
-export const statsQueryToKey = (q: MetricsStatsQuery) => genStatsKey(q.target, q.peerTarget, q.direction, q.interval);
+export const statsQueryToKey = (q: MetricsStatsQuery): string =>
+  genStatsKey(q.target, q.peerTarget, q.direction, q.interval);
 
 // !! genStatsKey HAS to mirror backend's models.MetricsStatsQuery#GenKey in models/metrics.go
 export const genStatsKey = (target: Target, peer: Target | undefined, direction: string, interval: string): string => {

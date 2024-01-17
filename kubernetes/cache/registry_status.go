@@ -1,49 +1,29 @@
 package cache
 
 import (
-	"time"
-
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 )
 
 type (
 	RegistryStatusCache interface {
-		CheckRegistryStatus() bool
-		GetRegistryStatus() *kubernetes.RegistryStatus
-		SetRegistryStatus(registryStatus *kubernetes.RegistryStatus)
-		RefreshRegistryStatus()
+		GetRegistryStatus(cluster string) *kubernetes.RegistryStatus
+		SetRegistryStatus(registryStatus map[string]*kubernetes.RegistryStatus)
 	}
 )
 
-func (c *kialiCacheImpl) CheckRegistryStatus() bool {
-	defer c.registryStatusLock.RUnlock()
-	c.registryStatusLock.RLock()
-	if c.registryStatusCreated == nil {
-		return false
+func (c *kialiCacheImpl) GetRegistryStatus(cluster string) *kubernetes.RegistryStatus {
+	status, err := c.registryStatusStore.Get(cluster)
+	if err != nil {
+		// Ignoring any errors here because registry services are optional. Most likely any errors
+		// here are due to cache misses since populating the cache is handled asynchronously.
+		log.Tracef("Unable to get registry status for cluster [%s]. Err: %v", cluster, err)
+		return nil
 	}
-	if time.Since(*c.registryStatusCreated) > c.refreshDuration {
-		return false
-	}
-	return true
+
+	return status
 }
 
-func (c *kialiCacheImpl) GetRegistryStatus() *kubernetes.RegistryStatus {
-	defer c.registryStatusLock.RUnlock()
-	c.registryStatusLock.RLock()
-	return c.registryStatus
-}
-
-func (c *kialiCacheImpl) SetRegistryStatus(registryStatus *kubernetes.RegistryStatus) {
-	defer c.registryStatusLock.Unlock()
-	c.registryStatusLock.Lock()
-	timeNow := time.Now()
-	c.registryStatusCreated = &timeNow
-	c.registryStatus = registryStatus
-}
-
-func (c *kialiCacheImpl) RefreshRegistryStatus() {
-	defer c.registryStatusLock.Unlock()
-	c.registryStatusLock.Lock()
-	c.registryStatusCreated = nil
-	c.registryStatus = nil
+func (c *kialiCacheImpl) SetRegistryStatus(registryStatus map[string]*kubernetes.RegistryStatus) {
+	c.registryStatusStore.Replace(registryStatus)
 }

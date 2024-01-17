@@ -35,26 +35,24 @@ import { isValid } from 'utils/Common';
 import { serverConfig } from '../../../config';
 
 type ReduxProps = {
-  compressOnHide: boolean;
   edgeLabels: EdgeLabelMode[];
   edgeMode: EdgeMode;
   findValue: string;
   hideValue: string;
   layout: Layout;
   namespaceLayout: Layout;
+  setEdgeLabels: (vals: EdgeLabelMode[]) => void;
+  setFindValue: (val: string) => void;
+  setHideValue: (val: string) => void;
   showFindHelp: boolean;
   showIdleNodes: boolean;
   showRank: boolean;
   showSecurity: boolean;
-  updateTime: TimeInMilliseconds;
-
-  setEdgeLabels: (vals: EdgeLabelMode[]) => void;
-  setFindValue: (val: string) => void;
-  setHideValue: (val: string) => void;
   toggleFindHelp: () => void;
   toggleGraphSecurity: () => void;
   toggleIdleNodes: () => void;
   toggleRank: () => void;
+  updateTime: TimeInMilliseconds;
 };
 
 type GraphFindProps = ReduxProps & {
@@ -70,27 +68,35 @@ type GraphFindState = {
 };
 
 type ParsedExpression = {
-  target: 'node' | 'edge';
   selector: string;
+  target: 'node' | 'edge';
 };
 
-// reduce toolbar padding from 20px to 10px to save space
 const thinGroupStyle = kialiStyle({
-  paddingLeft: '10px',
-  paddingRight: '10px'
+  paddingLeft: '0.75rem'
 });
 
-// styles for clear button
 const buttonClearStyle = kialiStyle({
-  minWidth: '20px',
-  width: '20px',
-  paddingLeft: '5px',
-  paddingRight: '5px'
+  paddingLeft: '0.75rem',
+  paddingRight: '0.75rem'
 });
 
 const findHideHelpStyle = kialiStyle({
-  paddingLeft: 0,
-  marginLeft: '-5px'
+  paddingLeft: '0.25rem',
+  paddingRight: '0.25rem'
+});
+
+const gridStyle = kialiStyle({
+  display: 'flex'
+});
+
+const graphFindStyle = kialiStyle({
+  marginRight: '0.75rem',
+  $nest: {
+    '& > .pf-v5-c-form__group-control': {
+      display: 'flex'
+    }
+  }
 });
 
 const operands: string[] = [
@@ -202,8 +208,8 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     }
   }
 
-  // We only update on a change to the find/hide/compress values, or a graph change.  Although we use other props
-  // in processing (compressOnHide, layout, etc), a change to those settings will generate a graph change, so we
+  // We only update on a change to the find/hide values, or a graph change.  Although we use other props
+  // in processing (layout, etc), a change to those settings will generate a graph change, so we
   // wait for the graph change to do the update.
   shouldComponentUpdate(nextProps: GraphFindProps, nextState: GraphFindState) {
     const cyChanged = this.props.cy !== nextProps.cy;
@@ -281,15 +287,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
         this.setHide(this.props.hideValue);
       }
 
-      const compressOnHideChanged = this.props.compressOnHide !== prevProps.compressOnHide;
-      this.handleHide(
-        this.props.cy,
-        hideChanged,
-        graphChanged,
-        graphElementsChanged,
-        edgeModeChanged,
-        compressOnHideChanged
-      );
+      this.handleHide(this.props.cy, hideChanged, graphChanged, graphElementsChanged, edgeModeChanged);
     }
   }
 
@@ -297,7 +295,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     return (
       <TourStop info={GraphTourStops.Find}>
         <Form className={thinGroupStyle}>
-          <Grid md={12}>
+          <Grid md={12} className={gridStyle}>
             <GridItem span={5}>
               <FormGroup>
                 <TextInput
@@ -324,7 +322,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
               </FormGroup>
             </GridItem>
             <GridItem span={1}>
-              <FormGroup>
+              <FormGroup className={graphFindStyle}>
                 <GraphFindOptions kind="find" onSelect={this.updateFindOption} />
                 {this.props.findValue && (
                   <Tooltip key="ot_clear_find" position="top" content="Clear Find...">
@@ -365,14 +363,20 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
               </FormGroup>
             </GridItem>
             <GridItem span={1}>
-              <GraphFindOptions kind="hide" onSelect={this.updateHideOption} />
-              {this.props.hideValue && (
-                <Tooltip key="ot_clear_hide" position="top" content="Clear Hide...">
-                  <Button className={buttonClearStyle} variant={ButtonVariant.control} onClick={() => this.setHide('')}>
-                    <KialiIcon.Close />
-                  </Button>
-                </Tooltip>
-              )}
+              <FormGroup className={graphFindStyle}>
+                <GraphFindOptions kind="hide" onSelect={this.updateHideOption} />
+                {this.props.hideValue && (
+                  <Tooltip key="ot_clear_hide" position="top" content="Clear Hide...">
+                    <Button
+                      className={buttonClearStyle}
+                      variant={ButtonVariant.control}
+                      onClick={() => this.setHide('')}
+                    >
+                      <KialiIcon.Close />
+                    </Button>
+                  </Tooltip>
+                )}
+              </FormGroup>
             </GridItem>
           </Grid>
         </Form>
@@ -526,8 +530,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     hideChanged: boolean,
     graphChanged: boolean,
     graphElementsChanged: boolean,
-    edgeModeChanged: boolean,
-    compressOnHideChanged: boolean
+    edgeModeChanged: boolean
   ) => {
     const selector = this.parseValue(this.props.hideValue, false);
     const checkRemovals = selector || this.props.edgeMode !== EdgeMode.ALL;
@@ -538,7 +541,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
 
     // unhide hidden elements when we are dealing with the same graph. Either way,release for garbage collection
     if (!!this.hiddenElements && !graphChanged) {
-      this.hiddenElements.kialiStyle({ visibility: 'visible' });
+      this.hiddenElements.style({ visibility: 'visible' });
     }
     this.hiddenElements = undefined;
 
@@ -577,37 +580,22 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
             hiddenElements = hiddenElements.add(visibleElements.edges());
             break;
           case EdgeMode.UNHEALTHY:
-            hiddenElements = hiddenElements.add(visibleElements.edges(`[^${EdgeAttr.healthStatus}]`));
+            hiddenElements = hiddenElements.add(
+              visibleElements.edges(`[^${EdgeAttr.healthStatus}],[${EdgeAttr.healthStatus} = "${HEALTHY.name}"]`)
+            );
             break;
         }
       }
 
-      if (this.props.compressOnHide) {
-        this.removedElements = cy.remove(hiddenElements);
-        // now subtract any boxes that no longer have children. this is iterative as boxes may be nested
-        let done = false;
-        while (!done) {
-          const emptyBoxes = cy.$('$node[isBox]').subtract(cy.$('$node[isBox] > :inside'));
-          if (emptyBoxes.length > 0) {
-            this.removedElements = this.removedElements.add(cy.remove(emptyBoxes));
-          } else {
-            done = true;
-          }
-        }
-      } else {
-        // set the remaining hide-hits hidden
-        this.hiddenElements = hiddenElements;
-        this.hiddenElements.kialiStyle({ visibility: 'hidden' });
-        // now subtract any visible boxes that don't have any visible children
-        let done = false;
-        while (!done) {
-          const emptyBoxes = cy.$('$node[isBox]:visible').subtract(cy.$('$node[isBox] > :visible'));
-          if (emptyBoxes.length > 0) {
-            emptyBoxes.kialiStyle({ visibility: 'hidden' });
-            this.hiddenElements = this.hiddenElements.add(emptyBoxes);
-          } else {
-            done = true;
-          }
+      this.removedElements = cy.remove(hiddenElements);
+      // now subtract any boxes that no longer have children. this is iterative as boxes may be nested
+      let done = false;
+      while (!done) {
+        const emptyBoxes = cy.$('$node[isBox]').subtract(cy.$('$node[isBox] > :inside'));
+        if (emptyBoxes.length > 0) {
+          this.removedElements = this.removedElements.add(cy.remove(emptyBoxes));
+        } else {
+          done = true;
         }
       }
     }
@@ -615,12 +603,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     cy.endBatch();
 
     const hasRemovedElements: boolean = !!this.removedElements && this.removedElements.length > 0;
-    if (
-      hideChanged ||
-      (compressOnHideChanged && checkRemovals) ||
-      (hasRemovedElements && graphElementsChanged) ||
-      edgeModeChanged
-    ) {
+    if (hideChanged || (hasRemovedElements && graphElementsChanged) || edgeModeChanged) {
       cy.emit('kiali-zoomignore', [true]);
       CytoscapeGraphUtils.runLayout(cy, this.props.layout, this.props.namespaceLayout).then(() => {
         // do nothing, defer to CytoscapeGraph.tsx 'onlayout' event handler
@@ -1108,7 +1091,6 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  compressOnHide: state.graph.toolbarState.compressOnHide,
   edgeLabels: edgeLabelsSelector(state),
   edgeMode: edgeModeSelector(state),
   findValue: findValueSelector(state),

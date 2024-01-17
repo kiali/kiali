@@ -25,7 +25,6 @@ type ComponentProps = {
   hideLabel?: boolean;
   hideRefreshButton?: boolean;
   manageURL?: boolean;
-  menuAppendTo?: HTMLElement | (() => HTMLElement) | 'parent' | 'inline';
 };
 
 type Props = ComponentProps & ReduxProps;
@@ -67,7 +66,6 @@ export class RefreshComponent extends React.PureComponent<Props> {
             handleSelect={value => this.updateRefreshInterval(Number(value))}
             value={String(this.props.refreshInterval)}
             label={REFRESH_INTERVALS[this.props.refreshInterval]}
-            menuAppendTo={this.props.menuAppendTo}
             options={REFRESH_INTERVALS}
             tooltip={'Refresh interval'}
             tooltipPosition={TooltipPosition.left}

@@ -145,11 +145,6 @@ func (o *K8SClientMock) IsIstioAPI() bool {
 	return args.Get(0).(bool)
 }
 
-func (o *K8SClientMock) IsMaistraApi() bool {
-	args := o.Called()
-	return args.Get(0).(bool)
-}
-
 func (o *K8SClientMock) GetServerVersion() (*version.Info, error) {
 	args := o.Called()
 	return args.Get(0).(*version.Info), args.Error(1)
@@ -184,6 +179,11 @@ func (o *K8SClientMock) GetTokenSubject(authInfo *api.AuthInfo) (string, error) 
 	}
 
 	return authInfo.Token, nil
+}
+
+func (o *K8SClientMock) ForwardGetRequest(namespace, podName string, destinationPort int, path string) ([]byte, error) {
+	args := o.Called(namespace, podName, destinationPort, path)
+	return args.Get(0).([]byte), args.Error(1)
 }
 
 func (o *K8SClientMock) MockService(namespace, name string) {

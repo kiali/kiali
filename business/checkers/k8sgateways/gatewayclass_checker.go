@@ -1,14 +1,14 @@
 package k8sgateways
 
 import (
-	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
+	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 )
 
 type GatewayClassChecker struct {
-	K8sGateway     *k8s_networking_v1beta1.Gateway
+	K8sGateway     *k8s_networking_v1.Gateway
 	GatewayClasses []config.GatewayAPIClass
 }
 

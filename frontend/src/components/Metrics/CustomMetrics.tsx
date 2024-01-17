@@ -64,8 +64,8 @@ type CustomMetricsProps = RouteComponentProps<{}> & {
 };
 
 type ReduxProps = {
-  jaegerIntegration: boolean;
   timeRange: TimeRange;
+  tracingIntegration: boolean;
   setTimeRange: (range: TimeRange) => void;
 };
 
@@ -145,7 +145,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
 
   private refresh = () => {
     this.fetchMetrics();
-    if (this.props.jaegerIntegration) {
+    if (this.props.tracingIntegration) {
       this.spanOverlay.fetch({
         namespace: this.props.namespace,
         cluster: this.state.cluster,
@@ -162,8 +162,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
     // Workload name can be used to find personalized dashboards defined at workload level
     this.options.workload = this.props.workload;
     this.options.workloadType = this.props.workloadType;
-    this.options.cluster = this.state.cluster;
-    API.getCustomDashboard(this.props.namespace, this.props.template, this.options)
+    API.getCustomDashboard(this.props.namespace, this.props.template, this.options, this.state.cluster)
       .then(response => {
         const labelsSettings = MetricsHelper.extractLabelsSettings(response.data, this.state.labelsSettings);
         this.setState({
@@ -199,7 +198,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
       const traceId = datum.traceId;
       const spanId = datum.spanId;
       history.push(
-        `/namespaces/${this.props.namespace}/applications/${this.props.app}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${traceId}&${URLParam.JAEGER_SPAN_ID}=${spanId}`
+        `/namespaces/${this.props.namespace}/applications/${this.props.app}?tab=traces&${URLParam.TRACING_TRACE_ID}=${traceId}&${URLParam.TRACING_SPAN_ID}=${spanId}`
       );
     }
   };
@@ -353,8 +352,8 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    jaegerIntegration: state.jaegerState.info ? state.jaegerState.info.integration : false,
-    timeRange: timeRangeSelector(state)
+    timeRange: timeRangeSelector(state),
+    tracingIntegration: state.tracingState.info ? state.tracingState.info.integration : false
   };
 };
 

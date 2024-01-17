@@ -1,66 +1,57 @@
 import * as React from 'react';
-import { cellWidth, Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
+import { Table, Tbody, Td, Th, Thead, ThProps, Tr } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../components/Pf/PfColors';
 import { Button, ButtonVariant } from '@patternfly/react-core';
-import { PlusCircleIcon } from '@patternfly/react-icons';
 import { Listener } from '../../../types/IstioObjects';
 import { ListenerForm } from '../K8sGatewayForm';
 import { ListenerBuilder, allowedRoutes, protocols } from './ListenerBuilder';
+import { KialiIcon } from 'config/KialiIcon';
 
-type Props = {
-  onChange: (listener: Listener[], listenerForm: ListenerForm[]) => void;
-  listenersForm: ListenerForm[];
+type ListenerListProps = {
   listeners: Listener[];
+  listenersForm: ListenerForm[];
+  onChange: (listener: Listener[], listenerForm: ListenerForm[]) => void;
 };
 
 const noListenerStyle = kialiStyle({
-  marginTop: 10,
   color: PFColors.Red100,
-  textAlign: 'center',
-  width: '100%'
+  textAlign: 'center'
 });
 
 const addListenerStyle = kialiStyle({
-  marginLeft: 0,
-  paddingLeft: 0
+  marginLeft: '0.5rem',
+  marginTop: '0.25rem'
 });
 
-const headerCells = [
+const columns: ThProps[] = [
   {
     title: 'Name',
-    transforms: [cellWidth(20) as any],
-    props: {}
+    width: 20
   },
   {
     title: 'Hostname',
-    transforms: [cellWidth(20) as any],
-    props: {}
+    width: 20
   },
   {
     title: 'Port',
-    transforms: [cellWidth(10) as any],
-    props: {}
+    width: 10
   },
   {
     title: 'Protocol',
-    transforms: [cellWidth(10) as any],
-    props: {}
+    width: 10
   },
   {
     title: 'From Namespaces',
-    transforms: [cellWidth(10) as any],
-    props: {}
+    width: 10
   },
   {
     title: 'Labels',
-    transforms: [cellWidth(25) as any],
-    props: {}
+    width: 25
   },
   {
     title: '',
-    transforms: [cellWidth(10) as any],
-    props: {}
+    width: 10
   }
 ];
 
@@ -68,34 +59,36 @@ export const addSelectorLabels = (value: string) => {
   if (value.length === 0) {
     return;
   }
+
   value = value.trim();
   const labels: string[] = value.split(',');
 
   const selector: { [key: string]: string } = {};
+
   // Some smoke validation rules for the labels
   for (let i = 0; i < labels.length; i++) {
     const label = labels[i];
     if (label.indexOf('=') < 0) {
       break;
     }
+
     const splitLabel: string[] = label.split('=');
     if (splitLabel.length !== 2) {
       break;
     }
+
     if (splitLabel[0].trim().length === 0 || splitLabel[1].trim().length === 0) {
       break;
     }
+
     selector[splitLabel[0].trim()] = splitLabel[1].trim();
   }
+
   return selector;
 };
 
-type ListenerListState = {
-  keyFocus: string;
-};
-
-export class ListenerList extends React.Component<Props, ListenerListState> {
-  onAddListener = () => {
+export const ListenerList: React.FC<ListenerListProps> = (props: ListenerListProps) => {
+  const onAddListener = (): void => {
     const newListener: ListenerForm = {
       hostname: '',
       port: '',
@@ -106,7 +99,8 @@ export class ListenerList extends React.Component<Props, ListenerListState> {
       isLabelSelectorValid: false,
       sSelectorLabels: ''
     };
-    const l = this.props.listenersForm;
+
+    const l = props.listenersForm;
     l.push(newListener);
 
     const newListenerF: Listener = {
@@ -117,36 +111,36 @@ export class ListenerList extends React.Component<Props, ListenerListState> {
       allowedRoutes: { namespaces: { from: allowedRoutes[0], selector: { matchLabels: {} } } }
     };
 
-    const lf = this.props.listeners;
+    const lf = props.listeners;
     lf.push(newListenerF);
 
-    this.setState({}, () => this.props.onChange(lf, l));
+    props.onChange(lf, l);
   };
 
-  onRemoveListener = (index: number) => {
-    const l = this.props.listenersForm;
+  const onRemoveListener = (index: number): void => {
+    const l = props.listenersForm;
     l.splice(index, 1);
 
-    const lf = this.props.listeners;
+    const lf = props.listeners;
     lf.splice(index, 1);
 
-    this.setState({}, () => this.props.onChange(lf, l));
+    props.onChange(lf, l);
   };
 
-  onChange = (listenersForm: ListenerForm, i: number) => {
-    const lf = this.props.listenersForm;
+  const onChange = (listenersForm: ListenerForm, i: number): void => {
+    const lf = props.listenersForm;
     lf[i] = listenersForm;
 
-    const l = this.props.listeners;
-    const newL = this.createNewListener(listenersForm);
+    const l = props.listeners;
+    const newL = createNewListener(listenersForm);
     if (typeof newL !== 'undefined') {
       l[i] = newL;
     }
 
-    this.props.onChange(l, lf);
+    props.onChange(l, lf);
   };
 
-  createNewListener = (listenerForm: ListenerForm) => {
+  const createNewListener = (listenerForm: ListenerForm): Listener | undefined => {
     if (listenerForm.port.length === 0 || isNaN(Number(listenerForm.port))) return;
     if (listenerForm.hostname.length === 0) return;
 
@@ -159,46 +153,54 @@ export class ListenerList extends React.Component<Props, ListenerListState> {
       protocol: listenerForm.protocol,
       allowedRoutes: { namespaces: { from: listenerForm.from, selector: { matchLabels: selector } } }
     };
+
     return listener;
   };
 
-  render() {
-    return (
-      <>
-        <Table aria-label="Listener List">
-          <Thead>
-            <Tr>
-              {headerCells.map(e => (
-                <Th>{e.title}</Th>
-              ))}
-            </Tr>
-          </Thead>
-          <Tbody>
-            {this.props.listenersForm.map((listener, i) => (
-              <ListenerBuilder
-                listener={listener}
-                onRemoveListener={this.onRemoveListener}
-                index={i}
-                onChange={this.onChange}
-              ></ListenerBuilder>
+  return (
+    <>
+      <Table aria-label="Listener List">
+        <Thead>
+          <Tr>
+            {columns.map((column, index) => (
+              <Th key={`column_${index}`} dataLabel={column.title} width={column.width}>
+                {column.title}
+              </Th>
             ))}
+          </Tr>
+        </Thead>
+        <Tbody>
+          {props.listenersForm.length > 0 ? (
+            <>
+              {props.listenersForm.map((listener, index) => (
+                <ListenerBuilder
+                  key={`listener_builder_${index}`}
+                  listener={listener}
+                  onRemoveListener={onRemoveListener}
+                  index={index}
+                  onChange={onChange}
+                ></ListenerBuilder>
+              ))}
+            </>
+          ) : (
             <Tr>
-              <Td>
-                <Button
-                  name="addListener"
-                  variant={ButtonVariant.link}
-                  icon={<PlusCircleIcon />}
-                  onClick={this.onAddListener}
-                  className={addListenerStyle}
-                >
-                  Add Listener to Listener List
-                </Button>
+              <Td colSpan={columns.length}>
+                <div className={noListenerStyle}>No Listeners defined</div>
               </Td>
             </Tr>
-          </Tbody>
-        </Table>
-        {this.props.listenersForm.length === 0 && <div className={noListenerStyle}>No Listeners defined</div>}
-      </>
-    );
-  }
-}
+          )}
+        </Tbody>
+      </Table>
+
+      <Button
+        name="addListener"
+        variant={ButtonVariant.link}
+        icon={<KialiIcon.AddMore />}
+        onClick={onAddListener}
+        className={addListenerStyle}
+      >
+        Add Listener to Listener List
+      </Button>
+    </>
+  );
+};

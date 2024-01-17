@@ -1,94 +1,84 @@
 import * as React from 'react';
-import {
-  Dropdown,
-  DropdownGroup,
-  DropdownItem,
-  DropdownPosition,
-  DropdownToggle
-} from '@patternfly/react-core/deprecated';
 import { history } from '../../app/History';
 import { serverConfig } from '../../config';
 import { NEW_ISTIO_RESOURCE } from '../../pages/IstioConfigNew/IstioConfigNewPage';
 import { K8SGATEWAY } from '../../pages/IstioConfigNew/K8sGatewayForm';
 import { groupMenuStyle } from 'styles/DropdownStyles';
-
-type Props = {};
-
-type State = {
-  dropdownOpen: boolean;
-};
+import {
+  Dropdown,
+  DropdownGroup,
+  DropdownItem,
+  DropdownList,
+  MenuToggle,
+  MenuToggleElement
+} from '@patternfly/react-core';
 
 type ActionItem = {
-  name: string;
   action: JSX.Element;
+  name: string;
 };
 
-export class IstioActionsNamespaceDropdown extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      dropdownOpen: false
-    };
-  }
+export const IstioActionsNamespaceDropdown: React.FC = () => {
+  const [dropdownOpen, setDropdownOpen] = React.useState<boolean>(false);
 
-  onSelect = _ => {
-    this.setState({
-      dropdownOpen: !this.state.dropdownOpen
-    });
+  const onSelect = () => {
+    setDropdownOpen(!dropdownOpen);
   };
 
-  onToggle = (dropdownState: boolean) => {
-    this.setState({
-      dropdownOpen: dropdownState
-    });
+  const onToggle = (dropdownState: boolean) => {
+    setDropdownOpen(dropdownState);
   };
 
-  onClickCreate = (type: string) => {
+  const onClickCreate = (type: string) => {
     history.push('/istio/new/' + type);
   };
 
-  render() {
-    const dropdownItemsRaw = NEW_ISTIO_RESOURCE.map(
-      (r): ActionItem => ({
-        name: r.value,
-        action: (
-          <DropdownItem
-            key={'createIstioConfig_' + r.value}
-            isDisabled={r.value === K8SGATEWAY ? !serverConfig.gatewayAPIEnabled : r.disabled}
-            onClick={() => this.onClickCreate(r.value)}
-            data-test={'create_' + r.label}
-          >
-            {r.label}
-          </DropdownItem>
-        )
-      })
-    );
+  const dropdownItemsRaw = NEW_ISTIO_RESOURCE.map(
+    (r): ActionItem => ({
+      name: r.value,
+      action: (
+        <DropdownItem
+          key={'createIstioConfig_' + r.value}
+          isDisabled={r.value === K8SGATEWAY ? !serverConfig.gatewayAPIEnabled : r.disabled}
+          onClick={() => onClickCreate(r.value)}
+          data-test={'create_' + r.label}
+        >
+          {r.label}
+        </DropdownItem>
+      )
+    })
+  );
 
-    const dropdownItems = [
-      <DropdownGroup
-        key={'group_create'}
-        label={'Create'}
-        className={groupMenuStyle}
-        children={dropdownItemsRaw.map(r => r.action)}
-      />
-    ];
-    return (
-      <Dropdown
-        data-test="actions-dropdown"
-        id="actions"
-        toggle={
-          <DropdownToggle
-            onToggle={(_event, dropdownState: boolean) => this.onToggle(dropdownState)}
-            data-test="config-actions-dropdown"
-          >
-            Actions
-          </DropdownToggle>
-        }
-        onSelect={this.onSelect}
-        position={DropdownPosition.right}
-        isOpen={this.state.dropdownOpen}
-        dropdownItems={dropdownItems}
-      />
-    );
-  }
-}
+  const dropdownItems = [
+    <DropdownGroup
+      key={'group_create'}
+      label={'Create'}
+      className={groupMenuStyle}
+      children={dropdownItemsRaw.map(r => r.action)}
+    />
+  ];
+
+  return (
+    <Dropdown
+      data-test="istio-actions-dropdown"
+      id="actions"
+      toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+        <MenuToggle
+          ref={toggleRef}
+          id="actions-toggle"
+          onClick={() => onToggle(!dropdownOpen)}
+          data-test="istio-actions-toggle"
+          isExpanded={dropdownOpen}
+        >
+          Actions
+        </MenuToggle>
+      )}
+      isOpen={dropdownOpen}
+      onOpenChange={(isOpen: boolean) => onToggle(isOpen)}
+      onSelect={onSelect}
+      popperProps={{ position: 'right' }}
+    >
+      <DropdownList>{dropdownItems}</DropdownList>
+    </Dropdown>
+  );
+};

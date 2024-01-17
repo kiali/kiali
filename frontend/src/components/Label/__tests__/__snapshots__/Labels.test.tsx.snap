@@ -2,7 +2,7 @@
 
 exports[`#Labels render correctly with data should render badges with More labels link 1`] = `
 <div
-  className="kiali_fj1yjm7"
+  className="kiali_f1ldck1g"
 >
   <div
     data-test="app-label-container"
@@ -25,20 +25,22 @@ exports[`#Labels render correctly with data should render badges with More label
     />
   </div>
   <Button
-    className="kiali_f1m3uny2"
+    className="kiali_fw8qhul"
     data-test="label_more"
     key="label_more"
     onClick={[Function]}
     variant="link"
   >
-    More labels...
+    More 
+    labels
+    ...
   </Button>
 </div>
 `;
 
 exports[`#Labels render correctly with data should render badges without More labels link 1`] = `
 <div
-  className="kiali_fj1yjm7"
+  className="kiali_f1ldck1g"
 >
   <div
     data-test="app-label-container"

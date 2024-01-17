@@ -11,7 +11,7 @@ type Props = {
   cluster?: string;
 };
 
-export function IstioStatusInline({ cluster }: Props) {
+export const IstioStatusInline: React.FC<Props> = (props: Props) => {
   return (
     <IstioStatus
       icons={{
@@ -20,7 +20,7 @@ export function IstioStatusInline({ cluster }: Props) {
         InfoIcon: MinusCircleIcon,
         WarningIcon: ExclamationTriangleIcon
       }}
-      cluster={cluster}
+      cluster={props.cluster}
     />
   );
-}
+};

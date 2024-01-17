@@ -11,7 +11,7 @@ import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 
 export const infoStyle = kialiStyle({
-  margin: '0px 0px -2px 3px'
+  margin: '0 0 -0.125rem 0.5rem'
 });
 
 type ReduxProps = {
@@ -19,12 +19,12 @@ type ReduxProps = {
 };
 
 type ReferenceIstioObjectProps = {
+  cluster?: string;
   name: string;
   namespace: string;
-  cluster?: string;
-  type: string;
-  subType?: string;
   query?: string;
+  subType?: string;
+  type: string;
 };
 
 type IstioObjectProps = ReduxProps &
@@ -40,81 +40,82 @@ export const GetIstioObjectUrl = (
   query?: string
 ): string => {
   const istioType = IstioTypes[type];
-  let to = '/namespaces/' + namespace + '/' + Paths.ISTIO;
+  let to = `/namespaces/${namespace}/${Paths.ISTIO}`;
 
-  to = to + '/' + istioType.url + '/' + name;
+  to = `${to}/${istioType.url}/${name}`;
 
   if (cluster && isMultiCluster) {
-    to = to + '?clusterName=' + cluster;
+    to = `${to}?clusterName=${cluster}`;
   }
 
   if (!!query) {
     if (to.includes('?')) {
-      to = to + '&' + query;
+      to = `${to}&${query}`;
     } else {
-      to = to + '?' + query;
+      to = `${to}?${query}`;
     }
   }
 
   return to;
 };
 
-export class ReferenceIstioObjectLink extends React.Component<ReferenceIstioObjectProps> {
-  render() {
-    const { name, namespace, cluster, type, subType } = this.props;
-    const istioType = IstioTypes[type];
-    let showLink = true;
-    let showTooltip = false;
-    let tooltipMsg: string | undefined = undefined;
-    let reference = `${namespace}/${name}`;
+export const ReferenceIstioObjectLink: React.FC<ReferenceIstioObjectProps> = (props: ReferenceIstioObjectProps) => {
+  const { name, namespace, cluster, type, subType } = props;
+  const istioType = IstioTypes[type];
 
-    if (name === 'mesh') {
-      reference = name;
-      showLink = false;
-      showTooltip = true;
-      tooltipMsg = 'The reserved word, "mesh", implies all of the sidecars in the mesh';
-    }
+  let showLink = true;
+  let showTooltip = false;
+  let tooltipMsg: string | undefined = undefined;
+  let reference = `${namespace}/${name}`;
 
-    return (
-      <>
-        <PFBadge badge={istioType.badge} position={TooltipPosition.top} />
-        {showLink && (
-          <IstioObjectLink name={name} namespace={namespace} cluster={cluster} type={type} subType={subType}>
-            {reference}
-          </IstioObjectLink>
-        )}
-        {!showLink && <div style={{ display: 'inline-block' }}>{reference}</div>}
-        {showTooltip && (
-          <Tooltip position={TooltipPosition.right} content={<div style={{ textAlign: 'left' }}>{tooltipMsg}</div>}>
-            <KialiIcon.Info className={infoStyle} />
-          </Tooltip>
-        )}
-      </>
-    );
+  if (name === 'mesh') {
+    reference = name;
+    showLink = false;
+    showTooltip = true;
+    tooltipMsg = 'The reserved word, "mesh", implies all of the sidecars in the mesh';
   }
-}
 
-class IstioObjectLinkComponent extends React.Component<IstioObjectProps> {
-  render() {
-    const { name, namespace, type, cluster, query } = this.props;
-    const href = GetIstioObjectUrl(name, namespace, type, cluster, query);
-    return isParentKiosk(this.props.kiosk) ? (
-      <Link
-        to={''}
-        onClick={() => {
-          kioskContextMenuAction(href);
-        }}
-      >
-        {this.props.children}
-      </Link>
-    ) : (
-      // @TODO put cluster in link when all objects have multicluster support
-      <Link to={href} data-test={type + '-' + namespace + '-' + name}>
-        {this.props.children}
-      </Link>
-    );
-  }
-}
+  return (
+    <>
+      <PFBadge badge={istioType.badge} position={TooltipPosition.top} />
+
+      {showLink && (
+        <IstioObjectLink name={name} namespace={namespace} cluster={cluster} type={type} subType={subType}>
+          {reference}
+        </IstioObjectLink>
+      )}
+
+      {!showLink && <div style={{ display: 'inline-block' }}>{reference}</div>}
+
+      {showTooltip && (
+        <Tooltip position={TooltipPosition.right} content={<div style={{ textAlign: 'left' }}>{tooltipMsg}</div>}>
+          <KialiIcon.Info className={infoStyle} />
+        </Tooltip>
+      )}
+    </>
+  );
+};
+
+const IstioObjectLinkComponent: React.FC<IstioObjectProps> = (props: IstioObjectProps) => {
+  const { name, namespace, type, cluster, query } = props;
+  const href = GetIstioObjectUrl(name, namespace, type, cluster, query);
+
+  return isParentKiosk(props.kiosk) ? (
+    <Link
+      to=""
+      onClick={() => {
+        kioskContextMenuAction(href);
+      }}
+    >
+      {props.children}
+    </Link>
+  ) : (
+    // @TODO put cluster in link when all objects have multicluster support
+    <Link to={href} data-test={`${type}-${namespace}-${name}`}>
+      {props.children}
+    </Link>
+  );
+};
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   kiosk: state.globalState.kiosk

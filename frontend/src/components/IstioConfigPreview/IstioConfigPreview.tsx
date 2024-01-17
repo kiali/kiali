@@ -4,6 +4,7 @@ import {
   ButtonVariant,
   Modal,
   Tab,
+  TabProps,
   Tabs,
   Toolbar,
   ToolbarGroup,
@@ -16,6 +17,7 @@ import {
   Gateway,
   K8sGateway,
   K8sHTTPRoute,
+  K8sReferenceGrant,
   PeerAuthentication,
   Sidecar,
   VirtualService
@@ -38,35 +40,44 @@ export type IstioConfigItem =
   | Gateway
   | K8sGateway
   | K8sHTTPRoute
+  | K8sReferenceGrant
   | VirtualService;
 
 export interface ConfigPreviewItem {
+  items: IstioConfigItem[];
   title: string;
   type: string;
-  items: IstioConfigItem[];
 }
 
 interface Props {
-  isOpen: boolean;
-  ns: string;
-  title?: string;
   actions?: any;
   disableAction?: boolean;
+  isOpen: boolean;
   items: ConfigPreviewItem[];
-  opTarget: string;
+  ns: string;
   onClose: () => void;
-  onKeyPress?: (e: any) => void;
   onConfirm: (items: ConfigPreviewItem[]) => void;
+  onKeyPress?: (e: any) => void;
+  opTarget: string;
+  title?: string;
 }
 
 interface State {
   items: ConfigPreviewItem[];
-  newIstioPage: boolean;
   mainTab: string;
   modalOpen: boolean;
+  newIstioPage: boolean;
 }
 
 const separator = '\n---\n\n';
+
+const iconStyle = kialiStyle({
+  marginLeft: '6px'
+});
+
+// From react-patternfly library (not exported in the library)
+type TabElement = React.ReactElement<TabProps, React.JSXElementConstructor<TabProps>>;
+type TabsChild = TabElement | boolean | null | undefined;
 
 export class IstioConfigPreview extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -79,13 +90,13 @@ export class IstioConfigPreview extends React.Component<Props, State> {
       modalOpen: this.props.isOpen
     };
   }
-  componentDidUpdate(prevProps: Props) {
+  componentDidUpdate(prevProps: Props): void {
     if (!_.isEqual(prevProps.items, this.props.items) || prevProps.isOpen !== this.props.isOpen) {
       this.setStateValues(this.props.items);
     }
   }
 
-  setStateValues = (items: ConfigPreviewItem[]) => {
+  setStateValues = (items: ConfigPreviewItem[]): void => {
     this.setState({
       mainTab: items.length > 0 ? items[0].title.toLocaleLowerCase().replace(/\s/g, '') : '',
       items: cloneDeep(items),
@@ -93,8 +104,8 @@ export class IstioConfigPreview extends React.Component<Props, State> {
     });
   };
 
-  trafficToText = () => {
-    var trafficPoliciesYaml = '';
+  trafficToText = (): string => {
+    let trafficPoliciesYaml = '';
     this.state.items.map(obj => {
       trafficPoliciesYaml += obj.items.map(item => jsYaml.safeDump(item, safeDumpOptions)).join(separator);
       trafficPoliciesYaml += separator;
@@ -103,21 +114,21 @@ export class IstioConfigPreview extends React.Component<Props, State> {
     return trafficPoliciesYaml;
   };
 
-  downloadTraffic = () => {
+  downloadTraffic = (): void => {
     const element = document.createElement('a');
     const file = new Blob([this.trafficToText()], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
-    element.download = 'trafficPolicies_' + this.props.ns + '.yaml';
+    element.download = `trafficPolicies_${this.props.ns}.yaml`;
     document.body.appendChild(element); // Required for this to work in FireFox
     element.click();
   };
 
-  onConfirm = () => {
+  onConfirm = (): void => {
     this.props.onConfirm(this.state.items);
     this.setStateValues([]);
   };
 
-  editorChange = (object: IstioConfigItem, index: number, title: string) => {
+  editorChange = (object: IstioConfigItem, index: number, title: string): void => {
     const items = this.state.items;
     const ind = items.findIndex(it =>
       this.state.newIstioPage
@@ -134,7 +145,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
     this.setState({ items });
   };
 
-  addResource = (item: ConfigPreviewItem) => {
+  addResource = (item: ConfigPreviewItem): TabsChild => {
     const key = item.title.toLocaleLowerCase().replace(/\s/g, '');
     const filterItems =
       this.props.items.length > 0
@@ -144,7 +155,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
         : [];
     const propItems = filterItems.length > 0 ? filterItems[0].items : [];
     return (
-      <Tab eventKey={key} key={key + '_tab_preview'} title={item.title}>
+      <Tab eventKey={key} key={`${key}_tab_preview`} title={item.title}>
         <EditResources
           items={
             this.state.newIstioPage
@@ -163,7 +174,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
     );
   };
 
-  groupItems = (list: ConfigPreviewItem[] = this.state.items) => {
+  groupItems = (list: ConfigPreviewItem[] = this.state.items): ConfigPreviewItem[] => {
     const types = _.uniq(list.map(item => item.type));
     const itemsGrouped: ConfigPreviewItem[] = types.map(type => {
       const filtered = list.filter(it => it.type === type);
@@ -174,7 +185,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
     return itemsGrouped;
   };
 
-  render() {
+  render(): React.ReactNode {
     return (
       <Modal
         width={'75%'}
@@ -212,6 +223,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
                 <CopyToClipboard text={this.trafficToText()}>
                   <Button variant={ButtonVariant.link} aria-label="Copy" isInline>
                     <KialiIcon.Copy />
+                    <span className={iconStyle}>Copy</span>
                   </Button>
                 </CopyToClipboard>
               </Tooltip>
@@ -226,6 +238,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
                   onClick={() => this.downloadTraffic()}
                 >
                   <KialiIcon.Download />
+                  <span className={iconStyle}>Download</span>
                 </Button>
               </Tooltip>
             </ToolbarItem>

@@ -8,14 +8,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/tests/data"
 )
@@ -67,36 +66,31 @@ func preparePerfScenario(numNs, numDr int) ([]core_v1.Namespace, []*security_v1b
 
 func testPerfScenario(exStatus string, nss []core_v1.Namespace, drs []*networking_v1beta1.DestinationRule, ps []*security_v1beta1.PeerAuthentication, autoMtls bool, t *testing.T) {
 	assert := assert.New(t)
+
 	conf := config.NewConfig()
-	config.Set(conf)
+	conf.Deployment.ClusterWideAccess = true
+	kubernetes.SetConfig(t, *conf)
 
-	k8s := new(kubetest.K8SClientMock)
-	k8s.On("IsOpenShift").Return(false)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("IsMaistraApi").Return(false)
-	k8s.On("GetNamespaces", mock.AnythingOfType("string")).Return(nss, nil)
-	k8s.On("GetToken").Return("token")
-	nsNames := []string{}
-	for _, ns := range nss {
-		k8s.On("GetNamespace", ns.Name).Return(&ns, nil)
-		nsNames = append(nsNames, ns.Name)
+	var objs []runtime.Object
+	for _, obj := range nss {
+		o := obj
+		objs = append(objs, &o)
 	}
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	SetWithBackends(mockClientFactory, nil)
+	objs = append(objs, kubernetes.ToRuntimeObjects(ps)...)
+	objs = append(objs, kubernetes.ToRuntimeObjects(drs)...)
 
-	conf = config.NewConfig()
-	conf.Deployment.AccessibleNamespaces = []string{"**"}
-	config.Set(conf)
+	k8s := kubetest.NewFakeK8sClient(objs...)
+	SetupBusinessLayer(t, k8s, *conf)
 
-	kialiCache = cache.FakeTlsKialiCache("token", nsNames, ps, drs)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	TLSService := TLSService{userClients: k8sclients, kialiCache: kialiCache, enabledAutoMtls: &autoMtls, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
+
+	tlsService := NewWithBackends(k8sclients, k8sclients, nil, nil).TLS
+	tlsService.enabledAutoMtls = &autoMtls
+
 	for _, ns := range nss {
-		status, err := (TLSService).NamespaceWidemTLSStatus(context.TODO(), ns.Name, conf.KubernetesConfig.ClusterName)
+		status, err := tlsService.NamespaceWidemTLSStatus(context.TODO(), ns.Name, conf.KubernetesConfig.ClusterName)
 		assert.NoError(err)
 		assert.Equal(exStatus, status.Status)
 	}
-
-	cleanTestGlobals()
 }

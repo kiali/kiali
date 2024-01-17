@@ -22,7 +22,7 @@ import {
   UNKNOWN,
   NodeAttr
 } from '../../types/Graph';
-import { JaegerTrace } from 'types/JaegerInfo';
+import { JaegerTrace } from 'types/TracingInfo';
 import { Namespace } from '../../types/Namespace';
 import { addInfo } from 'utils/AlertUtils';
 import { angleBetweenVectors, squaredDistance, normalize } from '../../utils/MathUtils';
@@ -48,7 +48,6 @@ import { PeerAuthentication } from 'types/IstioObjects';
 import { ServiceDetailsInfo } from 'types/ServiceInfo';
 
 type CytoscapeGraphProps = {
-  compressOnHide: boolean;
   containerClassName?: string;
   contextMenuEdgeComponent?: EdgeContextMenuComponentType;
   contextMenuNodeComponent?: NodeContextMenuComponentType;
@@ -204,7 +203,6 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       this.props.graphData.elements !== nextProps.graphData.elements ||
       this.props.layout !== nextProps.layout ||
       this.props.namespaceLayout !== nextProps.namespaceLayout ||
-      this.props.compressOnHide !== nextProps.compressOnHide ||
       this.props.rankBy !== nextProps.rankBy ||
       this.props.showOutOfMesh !== nextProps.showOutOfMesh ||
       this.props.showRank !== nextProps.showRank ||

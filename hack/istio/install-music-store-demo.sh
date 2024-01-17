@@ -17,15 +17,13 @@
 
 apply_network_attachment() {
   NAME=$1
-  if [ "${IS_MAISTRA}" != "true" ]; then
-cat <<NAD | $CLIENT_EXE -n ${NAME} apply -f -
+  cat <<NAD | $CLIENT_EXE -n ${NAME} apply -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
 NAD
-  fi
-    cat <<SCC | $CLIENT_EXE apply -f -
+  cat <<SCC | $CLIENT_EXE apply -f -
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
@@ -161,10 +159,8 @@ HELPMSG
 done
 
 IS_OPENSHIFT="false"
-IS_MAISTRA="false"
 if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   IS_OPENSHIFT="true"
-  S_MAISTRA=$([ "$(${CLIENT_EXE} get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
 fi
 
 echo "CLIENT_EXE=${CLIENT_EXE}"
@@ -181,11 +177,7 @@ else
   ${CLIENT_EXE} delete -f https://raw.githubusercontent.com/leandroberetta/demos/master/music-store/backend.yaml -n ${MSTORE}
 
   if [ "${IS_OPENSHIFT}" == "true" ]; then
-    if [ "${IS_MAISTRA}" != "true" ]; then
-      $CLIENT_EXE delete network-attachment-definition istio-cni -n ${MSTORE}
-    else
-      $CLIENT_EXE delete smm default -n ${MSTORE}
-    fi
+    $CLIENT_EXE delete network-attachment-definition istio-cni -n ${MSTORE}
     $CLIENT_EXE delete scc ${MSTORE}-scc
 
     ${CLIENT_EXE} delete project ${MSTORE}

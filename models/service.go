@@ -4,6 +4,7 @@ import (
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/config"
@@ -72,21 +73,22 @@ type ServiceDefinitionList struct {
 }
 
 type ServiceDetails struct {
-	Service          Service                               `json:"service"`
-	Cluster          string                                `json:"cluster"`
-	IstioSidecar     bool                                  `json:"istioSidecar"`
-	Endpoints        Endpoints                             `json:"endpoints"`
-	VirtualServices  []*networking_v1beta1.VirtualService  `json:"virtualServices"`
-	DestinationRules []*networking_v1beta1.DestinationRule `json:"destinationRules"`
-	K8sHTTPRoutes    []*k8s_networking_v1beta1.HTTPRoute   `json:"k8sHTTPRoutes"`
-	ServiceEntries   []*networking_v1beta1.ServiceEntry    `json:"serviceEntries"`
-	IstioPermissions ResourcePermissions                   `json:"istioPermissions"`
-	Workloads        WorkloadOverviews                     `json:"workloads"`
+	Cluster            string                                   `json:"cluster"`
+	DestinationRules   []*networking_v1beta1.DestinationRule    `json:"destinationRules"`
+	Endpoints          Endpoints                                `json:"endpoints"`
+	IstioPermissions   ResourcePermissions                      `json:"istioPermissions"`
+	IstioSidecar       bool                                     `json:"istioSidecar"`
+	K8sHTTPRoutes      []*k8s_networking_v1.HTTPRoute           `json:"k8sHTTPRoutes"`
+	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant `json:"k8sReferenceGrants"`
+	Service            Service                                  `json:"service"`
+	ServiceEntries     []*networking_v1beta1.ServiceEntry       `json:"serviceEntries"`
+	VirtualServices    []*networking_v1beta1.VirtualService     `json:"virtualServices"`
+	Workloads          WorkloadOverviews                        `json:"workloads"`
 	// Services with same app labels (different versions or a single version)
-	SubServices   []*ServiceOverview `json:"subServices"`
 	Health        ServiceHealth      `json:"health"`
-	Validations   IstioValidations   `json:"validations"`
 	NamespaceMTLS MTLSStatus         `json:"namespaceMTLS"`
+	SubServices   []*ServiceOverview `json:"subServices"`
+	Validations   IstioValidations   `json:"validations"`
 }
 
 type (
@@ -170,16 +172,6 @@ func (s *ServiceDetails) SetService(svc *core_v1.Service) {
 
 func (s *ServiceDetails) SetEndpoints(eps *core_v1.Endpoints) {
 	(&s.Endpoints).Parse(eps)
-}
-
-func (s *ServiceDetails) SetRegistryEndpoints(rEps []*kubernetes.RegistryEndpoint) {
-	for i, p := range s.Service.Ports {
-		istioProtocol, istioMtls := filterRegistryEndpointTLSName(rEps, p.Name, uint32(p.Port))
-		if istioProtocol != "" && istioMtls != "" {
-			s.Service.Ports[i].IstioProtocol = istioProtocol
-			s.Service.Ports[i].TLSMode = istioMtls
-		}
-	}
 }
 
 func (s *ServiceDetails) SetPods(pods []core_v1.Pod) {

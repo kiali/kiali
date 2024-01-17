@@ -8,36 +8,47 @@ import {
   DecoratedGraphNodeData
 } from '../../types/Graph';
 import { KialiIcon } from 'config/KialiIcon';
-import { Badge, PopoverPosition } from '@patternfly/react-core';
+import { PopoverPosition } from '@patternfly/react-core';
 import { Health } from 'types/Health';
 import { HealthIndicator } from 'components/Health/HealthIndicator';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { homeCluster } from 'config';
 import { KialiPageLink } from 'components/Link/KialiPageLink';
+import { kialiStyle } from 'styles/StyleUtils';
 
 interface LinkInfo {
-  link: string;
   displayName: string;
   key: string;
+  link: string;
 }
 
-const getTooltip = (tooltip: React.ReactFragment, nodeData: GraphNodeData): React.ReactFragment => {
+const badgeStyle = kialiStyle({
+  display: 'inline-block',
+  marginRight: '0.25rem',
+  marginBottom: '0.25rem'
+});
+
+const getTooltip = (tooltip: React.ReactNode, nodeData: GraphNodeData): React.ReactNode => {
   const addNamespace = nodeData.isBox !== BoxByType.NAMESPACE;
+
   const addCluster =
     nodeData.isBox !== BoxByType.CLUSTER &&
     nodeData.cluster !== CLUSTER_DEFAULT &&
     homeCluster?.name !== nodeData.cluster;
+
   return (
     <div style={{ textAlign: 'left' }}>
       <span>{tooltip}</span>
+
       {addNamespace && <div>{`Namespace: ${nodeData.namespace}`}</div>}
+
       {addCluster && <div>{`Cluster: ${nodeData.cluster}`}</div>}
     </div>
   );
 };
 
-export const getBadge = (nodeData: GraphNodeData, nodeType?: NodeType) => {
-  switch (nodeType || nodeData.nodeType) {
+export const getBadge = (nodeData: GraphNodeData, nodeType?: NodeType): React.ReactNode => {
+  switch (nodeType ?? nodeData.nodeType) {
     case NodeType.AGGREGATE:
       return (
         <PFBadge
@@ -85,12 +96,18 @@ export const getBadge = (nodeData: GraphNodeData, nodeType?: NodeType) => {
   }
 };
 
-export const getLink = (nodeData: GraphNodeData, nodeType?: NodeType, linkGenerator?: () => LinkInfo) => {
+export const getLink = (
+  nodeData: GraphNodeData,
+  nodeType?: NodeType,
+  linkGenerator?: () => LinkInfo
+): React.ReactNode => {
   const { app, cluster, namespace, service, workload } = nodeData;
+
   if (!nodeType || nodeData.nodeType === NodeType.UNKNOWN) {
     nodeType = nodeData.nodeType;
   }
-  let displayName: string = 'unknown';
+
+  let displayName = 'unknown';
   let link: string | undefined;
   let key: string | undefined;
 
@@ -154,7 +171,7 @@ export const getLink = (nodeData: GraphNodeData, nodeType?: NodeType, linkGenera
   return <span key={key}>{displayName}</span>;
 };
 
-export const renderBadgedHost = (host: string) => {
+export const renderBadgedHost = (host: string): React.ReactNode => {
   return (
     <div>
       <PFBadge key={`badgedHost-${host}`} badge={PFBadges.Host} size="sm" />
@@ -163,15 +180,16 @@ export const renderBadgedHost = (host: string) => {
   );
 };
 
-export const renderBadgedName = (nodeData: GraphNodeData, label?: string) => {
+export const renderBadgedName = (nodeData: GraphNodeData, label?: string): React.ReactNode => {
   return (
     <div key={`badgedName-${nodeData.id}`}>
-      <span style={{ marginRight: '1em', marginBottom: '3px', display: 'inline-block' }}>
+      <span className={badgeStyle}>
         {label && (
           <span style={{ whiteSpace: 'pre' }}>
             <b>{label}</b>
           </span>
         )}
+
         {getBadge(nodeData)}
         {getLink({ ...nodeData, isInaccessible: true })}
       </span>
@@ -184,17 +202,18 @@ export const renderBadgedLink = (
   nodeType?: NodeType,
   label?: string,
   linkGenerator?: () => LinkInfo
-): React.ReactFragment => {
+): React.ReactNode => {
   const link = getLink(nodeData, nodeType, linkGenerator);
 
   return (
     <div key={`node-${nodeData.id}`}>
-      <span style={{ marginRight: '1em', marginBottom: '3px', display: 'inline-block' }}>
+      <span className={badgeStyle}>
         {label && (
           <span style={{ whiteSpace: 'pre' }}>
             <b>{label}</b>
           </span>
         )}
+
         {getBadge(nodeData, nodeType)}
         {link}
       </span>
@@ -203,27 +222,22 @@ export const renderBadgedLink = (
   );
 };
 
-export const renderHealth = (health?: Health) => {
+export const renderHealth = (health?: Health): React.ReactNode => {
   return (
-    <>
-      <Badge style={{ fontWeight: 'normal', marginTop: '4px', marginBottom: '4px' }} isRead={true}>
-        <span style={{ margin: '3px 3px 1px 0' }}>
-          {health ? (
-            <HealthIndicator id="graph-health-indicator" health={health} tooltipPlacement={PopoverPosition.left} />
-          ) : (
-            'n/a'
-          )}
-        </span>
-        health
-      </Badge>
-    </>
+    <span>
+      {health ? (
+        <HealthIndicator id="graph-health-indicator" health={health} tooltipPlacement={PopoverPosition.left} />
+      ) : (
+        'N/A'
+      )}
+    </span>
   );
 };
 
-export const renderDestServicesLinks = (nodeData: DecoratedGraphNodeData) => {
+export const renderDestServicesLinks = (nodeData: DecoratedGraphNodeData): React.ReactNode[] => {
   const destServices: DestService[] | undefined = nodeData.destServices;
 
-  const links: any[] = [];
+  const links: React.ReactNode[] = [];
   if (!destServices) {
     return links;
   }
@@ -243,6 +257,7 @@ export const renderDestServicesLinks = (nodeData: DecoratedGraphNodeData) => {
       version: '',
       workload: ''
     };
+
     links.push(renderBadgedLink(serviceNodeData));
   });
 

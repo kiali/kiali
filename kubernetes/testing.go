@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 
 	"github.com/kiali/kiali/config"
@@ -101,4 +102,22 @@ func createTestRemoteClusterSecret(t *testing.T, cluster string, contents string
 	RemoteClusterSecretsDir = t.TempDir()
 
 	return createTestRemoteClusterSecretFile(t, RemoteClusterSecretsDir, cluster, contents)
+}
+
+// ToRuntimeObjects takes a slice of something that implements runtime.Object
+// and returns a new slice of the objects as the interface runtime.Object(s).
+// Useful for testing where the fake client accepts variadic args and you first
+// need to convert to a slice of the interface like:
+//
+// namespaces := []*corev1.Namespace{ns}
+// client := FakeClient(namespaces...)
+//
+// This only works if you first use this function to convert the slice.
+func ToRuntimeObjects[T runtime.Object](objs []T) []runtime.Object {
+	var retObjs []runtime.Object
+	for _, obj := range objs {
+		o := obj
+		retObjs = append(retObjs, o)
+	}
+	return retObjs
 }

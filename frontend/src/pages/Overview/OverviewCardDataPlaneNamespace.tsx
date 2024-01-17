@@ -9,80 +9,72 @@ import { RichDataPoint, VCLine } from 'types/VictoryChartInfo';
 import { DirectionType } from './OverviewToolbar';
 
 type Props = {
-  metrics?: Metric[];
-  errorMetrics?: Metric[];
-  duration: DurationInSeconds;
   direction: DirectionType;
+  duration: DurationInSeconds;
+  errorMetrics?: Metric[];
+  metrics?: Metric[];
 };
 
-function showMetrics(metrics: Metric[] | undefined): boolean {
+const showMetrics = (metrics: Metric[] | undefined): boolean => {
   // show metrics if metrics exists and some values at least are not zero
   if (metrics && metrics.length > 0 && metrics[0].datapoints.some(dp => Number(dp[1]) !== 0)) {
     return true;
   }
 
   return false;
-}
+};
 
-export class OverviewCardDataPlaneNamespace extends React.Component<Props, {}> {
-  render() {
-    let series: VCLine<RichDataPoint>[] = [];
+export const OverviewCardDataPlaneNamespace: React.FC<Props> = (props: Props) => {
+  let series: VCLine<RichDataPoint>[] = [];
 
-    if (showMetrics(this.props.metrics)) {
-      if (this.props.metrics && this.props.metrics.length > 0) {
-        const data = toVCLine(this.props.metrics[0].datapoints, 'ops (Total)', PFColors.Info);
-        series.push(data);
-      }
-
-      if (this.props.errorMetrics && this.props.errorMetrics.length > 0) {
-        const dataErrors = toVCLine(this.props.errorMetrics[0].datapoints, 'ops (4xx+5xx)', PFColors.Danger);
-        series.push(dataErrors);
-      }
+  if (showMetrics(props.metrics)) {
+    if (props.metrics && props.metrics.length > 0) {
+      const data = toVCLine(props.metrics[0].datapoints, 'ops (Total)', PFColors.Info);
+      series.push(data);
     }
 
-    return (
-      <div
-        style={{
-          width: '100%',
-          height: 130,
-          verticalAlign: 'top'
-        }}
-      >
-        <div>
-          <></>
-        </div>
-        {series.length > 0 && (
-          <>
-            <div
-              style={{ paddingTop: 10 }}
-              data-test={
-                'sparkline-' +
-                this.props.direction.toLowerCase() +
-                '-duration-' +
-                getName(this.props.duration).toLowerCase()
-              }
-            >
-              {this.props.direction + ' traffic, ' + getName(this.props.duration).toLowerCase()}
-            </div>
-            <SparklineChart
-              name={'traffics'}
-              height={85}
-              showLegend={false}
-              showYAxis={true}
-              showXAxisValues={true}
-              padding={{ top: 10, left: 30, right: 30, bottom: 30 }}
-              tooltipFormat={dp =>
-                `${(dp.x as Date).toLocaleStringWithConditionalDate()}\n${dp.y.toFixed(2)} ${dp.name}`
-              }
-              series={series}
-              labelName="ops"
-            />
-          </>
-        )}
-        {series.length === 0 && (
-          <div style={{ paddingTop: '40px' }}>No {this.props.direction.toLowerCase()} traffic</div>
-        )}
-      </div>
-    );
+    if (props.errorMetrics && props.errorMetrics.length > 0) {
+      const dataErrors = toVCLine(props.errorMetrics[0].datapoints, 'ops (4xx+5xx)', PFColors.Danger);
+      series.push(dataErrors);
+    }
   }
-}
+
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: 130,
+        verticalAlign: 'top'
+      }}
+    >
+      <div>
+        <></>
+      </div>
+
+      {series.length > 0 && (
+        <>
+          <div
+            style={{ paddingTop: '0.5rem' }}
+            data-test={`sparkline-${props.direction.toLowerCase()}-duration-${getName(props.duration).toLowerCase()}`}
+          >
+            {`${props.direction} traffic, ${getName(props.duration).toLowerCase()}`}
+          </div>
+
+          <SparklineChart
+            name="traffics"
+            height={85}
+            showLegend={false}
+            showYAxis={true}
+            showXAxisValues={true}
+            padding={{ top: 10, left: 30, right: 30, bottom: 30 }}
+            tooltipFormat={dp => `${(dp.x as Date).toLocaleStringWithConditionalDate()}\n${dp.y.toFixed(2)} ${dp.name}`}
+            series={series}
+            labelName="ops"
+          />
+        </>
+      )}
+
+      {series.length === 0 && <div style={{ paddingTop: '2.5rem' }}>No {props.direction.toLowerCase()} traffic</div>}
+    </div>
+  );
+};

@@ -6,6 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
+	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -57,6 +59,17 @@ func TestHasMatchingVirtualServices(t *testing.T) {
 	assert.True(HasMatchingVirtualServices(Host{Service: "foo.example.com", Namespace: "", Cluster: ""}, []*networking_v1beta1.VirtualService{createVirtualService("bookinfo", []string{"*"})}))
 }
 
+func TestHasMatchingReferenceGrant(t *testing.T) {
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert.True(HasMatchingReferenceGrant("bookinfo", "default", K8sActualHTTPRouteType, ServiceType, []*k8s_networking_v1beta1.ReferenceGrant{createReferenceGrant("test", "default", "bookinfo"), createReferenceGrant("test", "bookinfo2", "bookinfo")}))
+	assert.False(HasMatchingReferenceGrant("bookinfo", "test", K8sActualHTTPRouteType, ServiceType, []*k8s_networking_v1beta1.ReferenceGrant{createReferenceGrant("test", "default", "bookinfo"), createReferenceGrant("test", "bookinfo2", "bookinfo")}))
+	assert.False(HasMatchingReferenceGrant("default", "bookinfo", K8sActualHTTPRouteType, ServiceType, []*k8s_networking_v1beta1.ReferenceGrant{createReferenceGrant("test", "default", "bookinfo"), createReferenceGrant("test", "bookinfo2", "bookinfo")}))
+}
+
 func createVirtualService(namespace string, hosts []string) *networking_v1beta1.VirtualService {
 	vsYaml := []byte(`
 apiVersion: networking.istio.io/v1beta1
@@ -81,4 +94,13 @@ spec:
 	vs.Namespace = namespace
 	vs.Spec.Hosts = hosts
 	return &vs
+}
+
+func createReferenceGrant(name string, namespace string, fromNamespace string) *k8s_networking_v1beta1.ReferenceGrant {
+	rg := k8s_networking_v1beta1.ReferenceGrant{}
+	rg.Name = name
+	rg.Namespace = namespace
+	rg.Spec.From = append(rg.Spec.From, k8s_networking_v1beta1.ReferenceGrantFrom{Kind: K8sActualHTTPRouteType, Group: k8s_networking_v1beta1.GroupName, Namespace: k8s_networking_v1.Namespace(fromNamespace)})
+	rg.Spec.To = append(rg.Spec.To, k8s_networking_v1beta1.ReferenceGrantTo{Kind: ServiceType})
+	return &rg
 }

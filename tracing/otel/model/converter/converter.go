@@ -7,6 +7,9 @@ import (
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 	otel "github.com/kiali/kiali/tracing/otel/model"
 	otelModels "github.com/kiali/kiali/tracing/otel/model/json"
+	"github.com/kiali/kiali/tracing/tempo/tempopb"
+	v1 "github.com/kiali/kiali/tracing/tempo/tempopb/common/v1"
+	v11 "github.com/kiali/kiali/tracing/tempo/tempopb/resource/v1"
 )
 
 // convertID
@@ -14,7 +17,7 @@ func ConvertId(id string) jaegerModels.TraceID {
 	return jaegerModels.TraceID(id)
 }
 
-// convertID
+// convertSpanId
 func convertSpanId(id string) jaegerModels.SpanID {
 	return jaegerModels.SpanID(id)
 }
@@ -37,15 +40,19 @@ func ConvertSpans(spans []otelModels.Span, serviceName string) []jaegerModels.Sp
 			continue
 		}
 
+		jaegerTraceId := ConvertId(span.TraceID)
+		jaegerSpanId := convertSpanId(span.SpanID)
+		parentSpanId := convertSpanId(span.ParentSpanId)
+
 		jaegerSpan := jaegerModels.Span{
-			TraceID:   ConvertId(span.TraceID),
-			SpanID:    convertSpanId(span.SpanID),
+			TraceID:   jaegerTraceId,
+			SpanID:    jaegerSpanId,
 			Duration:  duration,
 			StartTime: startTime / 1000,
 			// No more mapped data
 			Flags:         0,
 			OperationName: span.Name,
-			References:    []jaegerModels.Reference{},
+			References:    convertReferences(jaegerTraceId, parentSpanId),
 			Tags:          convertAttributes(span.Attributes, span.Status),
 			Logs:          []jaegerModels.Log{},
 			ProcessID:     "",
@@ -53,9 +60,59 @@ func ConvertSpans(spans []otelModels.Span, serviceName string) []jaegerModels.Sp
 			Warnings:      []string{},
 		}
 
+		// This is how Jaeger reports it
+		// Used to determine the envoy direction
+		atb_val := ""
+		if span.Kind == "SPAN_KIND_CLIENT" {
+			atb_val = "client"
+		} else if span.Kind == "SPAN_KIND_SERVER" {
+			atb_val = "server"
+		}
+		if atb_val != "" {
+			atb := jaegerModels.KeyValue{Key: "span.kind", Value: atb_val, Type: "string"}
+			jaegerSpan.Tags = append(jaegerSpan.Tags, atb)
+		}
+
 		toRet = append(toRet, jaegerSpan)
 	}
 	return toRet
+}
+
+// ConvertTraceMetadata used by the GRPC Client
+func ConvertTraceMetadata(trace tempopb.TraceSearchMetadata, serviceName string) (*jaegerModels.Trace, error) {
+	jaegerTrace := jaegerModels.Trace{
+		TraceID:   ConvertId(trace.TraceID),
+		Processes: map[jaegerModels.ProcessID]jaegerModels.Process{},
+		Warnings:  []string{},
+	}
+	for _, span := range trace.SpanSet.Spans {
+		spanSet := convertOtelSpan(span, serviceName, trace.TraceID, trace.RootTraceName)
+		jaegerTrace.Spans = append(jaegerTrace.Spans, spanSet)
+	}
+	jaegerTrace.Matched = len(jaegerTrace.Spans)
+	return &jaegerTrace, nil
+}
+
+// convertOtelSpan used for GRPC format Spans
+func convertOtelSpan(span *tempopb.Span, serviceName, traceID, rootTrace string) jaegerModels.Span {
+
+	modelSpan := jaegerModels.Span{
+		SpanID:    jaegerModels.SpanID(span.SpanID),
+		TraceID:   jaegerModels.TraceID(traceID),
+		Duration:  span.DurationNanos / 1000,
+		StartTime: span.StartTimeUnixNano / 1000,
+		// No more mapped data
+		Flags:         0,
+		References:    []jaegerModels.Reference{}, // convertReferences(traceID, rootTrace),
+		Tags:          convertModelAttributes(span.Attributes),
+		Logs:          []jaegerModels.Log{},
+		OperationName: rootTrace,
+		ProcessID:     "",
+		Process:       &jaegerModels.Process{Tags: []jaegerModels.KeyValue{}, ServiceName: serviceName},
+		Warnings:      []string{},
+	}
+
+	return modelSpan
 }
 
 func ConvertSpanSet(span otel.Span, serviceName string, traceId string, rootName string) []jaegerModels.Span {
@@ -70,9 +127,12 @@ func ConvertSpanSet(span otel.Span, serviceName string, traceId string, rootName
 		log.Errorf("Error converting duration.")
 	}
 
+	jaegerTraceId := ConvertId(traceId)
+	jaegerSpanId := convertSpanId(span.SpanID)
+
 	jaegerSpan := jaegerModels.Span{
-		TraceID:   ConvertId(traceId),
-		SpanID:    convertSpanId(span.SpanID),
+		TraceID:   jaegerTraceId,
+		SpanID:    jaegerSpanId,
 		Duration:  duration / 1000, // Provided in ns, Jaeger uses ms
 		StartTime: startTime / 1000,
 		// No more mapped data
@@ -107,6 +167,23 @@ func getDuration(end string, start string) (uint64, error) {
 	return (endInt - startInt) / 1000, nil
 }
 
+func convertReferences(traceId jaegerModels.TraceID, parentSpanId jaegerModels.SpanID) []jaegerModels.Reference {
+	var references []jaegerModels.Reference
+
+	if parentSpanId == "" {
+		return references
+	}
+
+	var ref = jaegerModels.Reference{
+		RefType: jaegerModels.ReferenceType("CHILD_OF"),
+		TraceID: traceId,
+		SpanID:  parentSpanId,
+	}
+
+	references = append(references, ref)
+	return references
+}
+
 func convertAttributes(attributes []otelModels.Attribute, status otelModels.Status) []jaegerModels.KeyValue {
 	var tags []jaegerModels.KeyValue
 	for _, atb := range attributes {
@@ -124,4 +201,25 @@ func convertAttributes(attributes []otelModels.Attribute, status otelModels.Stat
 		tags = append(tags, tag)
 	}
 	return tags
+}
+
+func convertModelAttributes(attributes []*v1.KeyValue) []jaegerModels.KeyValue {
+	var tags []jaegerModels.KeyValue
+	for _, atb := range attributes {
+		if atb.Key == "status" {
+			if atb.Value.GetStringValue() == "error" {
+				tag := jaegerModels.KeyValue{Key: "error", Value: true, Type: "bool"}
+				tags = append(tags, tag)
+			}
+		} else {
+			tag := jaegerModels.KeyValue{Key: atb.Key, Value: atb.Value.GetStringValue(), Type: "string"}
+			tags = append(tags, tag)
+		}
+	}
+	return tags
+}
+
+func ConvertResource(resourceSpans *v11.Resource) jaegerModels.Span {
+	span := jaegerModels.Span{}
+	return span
 }

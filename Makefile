@@ -11,7 +11,7 @@ TARGET_ARCHS ?= amd64 arm64 s390x ppc64le
 
 # Identifies the current build.
 # These will be embedded in the app and displayed when it starts.
-VERSION ?= v1.75.0-SNAPSHOT
+VERSION ?= v1.79.0-SNAPSHOT
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
 # The path where the UI project has been git cloned. The UI should
@@ -29,7 +29,7 @@ VERSION_LABEL ?= ${VERSION}
 # The go commands and the minimum Go version that must be used to build the app.
 GO ?= go
 GOFMT ?= $(shell ${GO} env GOROOT)/bin/gofmt
-GO_VERSION_KIALI = 1.20.5
+GO_VERSION_KIALI = 1.20.10
 GO_TEST_FLAGS ?=
 
 # Identifies the Kiali container image that will be built.
@@ -47,10 +47,24 @@ OPERATOR_CONTAINER_VERSION ?= ${CONTAINER_VERSION}
 OPERATOR_QUAY_NAME ?= quay.io/${OPERATOR_CONTAINER_NAME}
 OPERATOR_QUAY_TAG ?= ${OPERATOR_QUAY_NAME}:${OPERATOR_CONTAINER_VERSION}
 
+# Identifies the Kiali interation tests container image that will be built
+INT_TESTS_CONTAINER_NAME ?= ${IMAGE_ORG}/kiali-int-tests
+INT_TESTS_CONTAINER_VERSION ?= ${CONTAINER_VERSION}
+INT_TESTS_QUAY_NAME ?= quay.io/${INT_TESTS_CONTAINER_NAME}
+INT_TESTS_QUAY_TAG ?= ${INT_TESTS_QUAY_NAME}:${INT_TESTS_CONTAINER_VERSION}
+
+# Identifies the Kiali cypress tests container image that will be built
+CYPRESS_TESTS_CONTAINER_NAME ?= ${IMAGE_ORG}/kiali-cypress-tests
+CYPRESS_TESTS_CONTAINER_VERSION ?= ${CONTAINER_VERSION}
+CYPRESS_TESTS_QUAY_NAME ?= quay.io/${CYPRESS_TESTS_CONTAINER_NAME}
+CYPRESS_TESTS_QUAY_TAG ?= ${CYPRESS_TESTS_QUAY_NAME}:${CYPRESS_TESTS_CONTAINER_VERSION}
+
 # Where the control plane is
 ISTIO_NAMESPACE ?= istio-system
-# Declares the namespace/project where the objects are to be deployed.
+# Declares the namespace/project where the Kiali objects are to be deployed.
 NAMESPACE ?= ${ISTIO_NAMESPACE}
+# Declares the namespace/project where the OSSM Console objects are to be deployed.
+OSSMCONSOLE_NAMESPACE ?= ossmconsole
 
 # Local arch details needed when downloading tools
 OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
@@ -120,6 +134,7 @@ OPERATOR_WATCH_NAMESPACE ?= \"\"
 OPERATOR_INSTALL_KIALI ?= false
 OPERATOR_ALLOW_AD_HOC_KIALI_NAMESPACE ?= true
 OPERATOR_ALLOW_AD_HOC_KIALI_IMAGE ?= true
+OPERATOR_ALLOW_AD_HOC_OSSMCONSOLE_IMAGE ?= true
 ifeq ($(OPERATOR_WATCH_NAMESPACE),\"\")
 OPERATOR_INSTALL_KIALI_CR_NAMESPACE ?= ${OPERATOR_NAMESPACE}
 else
@@ -141,20 +156,12 @@ endif
 SERVICE_TYPE ?= ClusterIP
 KIALI_CR_SPEC_VERSION ?= default
 
-# Determine if Maistra/ServiceMesh is deployed. If not, assume we are working with upstream Istio.
-ifeq ($(OC_READY),true)
-IS_MAISTRA ?= $(shell if ${OC} get namespace ${NAMESPACE} -o jsonpath='{.metadata.labels}' 2>/dev/null | grep -q maistra ; then echo "true" ; else echo "false" ; fi)
-else
-IS_MAISTRA ?= false
-endif
-
-# Path to Kiali CR file which is different based on what Istio implementation is deployed (upstream or Maistra)
-# This is used when deploying Kiali via make
-ifeq ($(IS_MAISTRA),true)
-KIALI_CR_FILE ?= ${ROOTDIR}/operator/deploy/kiali/kiali_cr_dev_servicemesh.yaml
-else
+# Path to Kiali CR file. This is used when deploying Kiali via make
 KIALI_CR_FILE ?= ${ROOTDIR}/operator/deploy/kiali/kiali_cr_dev.yaml
-endif
+
+# When creating a OSSMConsole CR, these can customize it
+OSSMCONSOLE_CR_FILE ?= ${ROOTDIR}/operator/deploy/ossmconsole/ossmconsole_cr_dev.yaml
+OSSMCONSOLE_CR_SPEC_VERSION ?= default
 
 # When ensuring the helm chart repo exists, by default the make infrastructure will pull the latest code from git.
 # If you do not want this to happen (i.e. if you want to retain the local copies of your helm charts), set this to false.

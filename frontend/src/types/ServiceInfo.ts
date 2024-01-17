@@ -17,11 +17,11 @@ import { KIALI_WIZARD_LABEL } from '../components/IstioWizards/WizardActions';
 import { ServiceOverview } from './ServiceList';
 
 export interface ServicePort {
+  appProtocol?: string;
+  istioProtocol: string;
   name: string;
   port: number;
   protocol: string;
-  appProtocol?: string;
-  istioProtocol: string;
   tlsMode: string;
 }
 
@@ -32,71 +32,82 @@ export interface Endpoints {
 
 interface EndpointAddress {
   ip: string;
+  istioProtocol?: string;
   kind?: string;
   name?: string;
-  istioProtocol?: string;
   tlsMode?: string;
 }
 
 export interface WorkloadOverview {
-  name: string;
-  type: string;
-  istioSidecar: boolean;
-  istioAmbient: boolean;
-  labels?: { [key: string]: string };
-  resourceVersion: string;
   createdAt: string;
+  istioAmbient: boolean;
+  istioSidecar: boolean;
+  labels?: { [key: string]: string };
+  name: string;
+  resourceVersion: string;
   serviceAccountNames: string[];
+  type: string;
 }
 
 export interface Service {
-  type: string;
-  name: string;
-  createdAt: string;
-  resourceVersion: string;
-  ip: string;
-  ports?: ServicePort[];
+  additionalDetails: AdditionalItem[];
   annotations: { [key: string]: string };
-  externalName: string;
-  labels?: { [key: string]: string };
-  selectors?: { [key: string]: string };
   cluster?: string;
+  createdAt: string;
+  externalName: string;
+  ip: string;
+  labels?: { [key: string]: string };
+  name: string;
+  ports?: ServicePort[];
+  resourceVersion: string;
+  selectors?: { [key: string]: string };
+  type: string;
 }
 
 export interface ServiceDetailsInfo {
-  service: Service;
-  endpoints?: Endpoints[];
-  istioSidecar: boolean;
-  istioAmbient: boolean;
-  virtualServices: VirtualService[];
-  k8sHTTPRoutes: K8sHTTPRoute[];
-  destinationRules: DestinationRule[];
-  serviceEntries: ServiceEntry[];
-  istioPermissions: ResourcePermissions;
-  health?: ServiceHealth;
-  workloads?: WorkloadOverview[];
-  subServices?: ServiceOverview[];
-  namespaceMTLS?: TLSStatus;
-  validations: Validations;
-  additionalDetails: AdditionalItem[];
   cluster?: string;
+  destinationRules: DestinationRule[];
+  endpoints?: Endpoints[];
+  health?: ServiceHealth;
+  istioAmbient: boolean;
+  istioPermissions: ResourcePermissions;
+  istioSidecar: boolean;
+  k8sHTTPRoutes: K8sHTTPRoute[];
+  namespaceMTLS?: TLSStatus;
+  service: Service;
+  serviceEntries: ServiceEntry[];
+  subServices?: ServiceOverview[];
+  validations: Validations;
+  virtualServices: VirtualService[];
+  workloads?: WorkloadOverview[];
 }
 
-export function getServiceDetailsUpdateLabel(serviceDetails: ServiceDetailsInfo | null) {
-  return getWizardUpdateLabel(serviceDetails?.virtualServices || null, serviceDetails?.k8sHTTPRoutes || null);
+export interface ServiceDetailsQuery {
+  rateInterval?: string;
+  validate?: boolean;
 }
 
-export function hasServiceDetailsTrafficRouting(serviceDetails: ServiceDetailsInfo | null);
+export interface ServiceUpdateQuery {
+  patchType?: string;
+}
+
+export const getServiceDetailsUpdateLabel = (serviceDetails: ServiceDetailsInfo | null): string => {
+  return getWizardUpdateLabel(serviceDetails?.virtualServices ?? null, serviceDetails?.k8sHTTPRoutes ?? null);
+};
+
+export function hasServiceDetailsTrafficRouting(serviceDetails: ServiceDetailsInfo | null): boolean;
+
 export function hasServiceDetailsTrafficRouting(
   vsList: VirtualService[],
   drList: DestinationRule[],
   routeList?: K8sHTTPRoute[]
-);
+): boolean;
+
 export function hasServiceDetailsTrafficRouting(
   serviceDetailsOrVsList: ServiceDetailsInfo | VirtualService[] | null,
   drList?: DestinationRule[],
   routeList?: K8sHTTPRoute[]
-) {
+): boolean {
   let virtualServicesList: VirtualService[];
   let destinationRulesList: DestinationRule[];
   let httpRoutesList: K8sHTTPRoute[];
@@ -107,8 +118,8 @@ export function hasServiceDetailsTrafficRouting(
 
   if ('length' in serviceDetailsOrVsList) {
     virtualServicesList = serviceDetailsOrVsList;
-    destinationRulesList = drList || [];
-    httpRoutesList = routeList || [];
+    destinationRulesList = drList ?? [];
+    httpRoutesList = routeList ?? [];
   } else {
     virtualServicesList = serviceDetailsOrVsList.virtualServices;
     destinationRulesList = serviceDetailsOrVsList.destinationRules;
@@ -128,7 +139,7 @@ const higherThan = [
 ];
 
 export const higherSeverity = (a: ValidationTypes, b: ValidationTypes): boolean => {
-  return higherThan.includes(a + '-' + b);
+  return higherThan.includes(`${a}-${b}`);
 };
 
 export const highestSeverity = (checks: ObjectCheck[]): ValidationTypes => {
@@ -145,6 +156,7 @@ export const highestSeverity = (checks: ObjectCheck[]): ValidationTypes => {
 
 export const validationToHealth = (severity: ValidationTypes): Status => {
   let status: Status = NA;
+
   if (severity === ValidationTypes.Correct) {
     status = HEALTHY;
   } else if (severity === ValidationTypes.Warning) {
@@ -152,10 +164,11 @@ export const validationToHealth = (severity: ValidationTypes): Status => {
   } else if (severity === ValidationTypes.Error) {
     status = FAILURE;
   }
+
   return status;
 };
 
-const numberOfChecks = (type: ValidationTypes, object: ObjectValidation) =>
+const numberOfChecks = (type: ValidationTypes, object: ObjectValidation): number =>
   (object && object.checks ? object.checks : []).filter(i => i.severity === type).length;
 
 export const validationToSeverity = (object: ObjectValidation): ValidationTypes => {
@@ -188,8 +201,10 @@ export function getServiceWizardLabel(serviceDetails: Service): string {
 
 export function getServicePort(ports: { [key: string]: number }): number {
   let port = 80;
+
   if (ports) {
     port = Object.values(ports)[0];
   }
+
   return port;
 }

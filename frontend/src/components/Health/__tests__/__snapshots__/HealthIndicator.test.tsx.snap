@@ -18,7 +18,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                   "children": Array [
                     Object {
                       "status": Object {
-                        "class": "icon-degraded",
+                        "className": "icon-degraded",
                         "color": "var(--pf-v5-global--warning-color--100)",
                         "icon": [Function],
                         "name": "Degraded",
@@ -28,7 +28,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                     },
                   ],
                   "status": Object {
-                    "class": "icon-degraded",
+                    "className": "icon-degraded",
                     "color": "var(--pf-v5-global--warning-color--100)",
                     "icon": [Function],
                     "name": "Degraded",
@@ -40,7 +40,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                   "children": Array [
                     Object {
                       "status": Object {
-                        "class": "icon-na",
+                        "className": "icon-na",
                         "color": "var(--pf-v5-global--Color--200)",
                         "icon": [Function],
                         "name": "No health information",
@@ -51,7 +51,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                     },
                     Object {
                       "status": Object {
-                        "class": "icon-na",
+                        "className": "icon-na",
                         "color": "var(--pf-v5-global--Color--200)",
                         "icon": [Function],
                         "name": "No health information",
@@ -62,7 +62,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                     },
                   ],
                   "status": Object {
-                    "class": "icon-na",
+                    "className": "icon-na",
                     "color": "var(--pf-v5-global--Color--200)",
                     "icon": [Function],
                     "name": "No health information",
@@ -73,7 +73,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
               ],
               "statusConfig": Object {
                 "status": Object {
-                  "class": "icon-na",
+                  "className": "icon-na",
                   "color": "var(--pf-v5-global--Color--200)",
                   "icon": [Function],
                   "name": "No health information",
@@ -99,7 +99,6 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
   <span>
     <Icon
       className="icon-degraded kiali_frkkrth"
-      size="md"
     >
       <ExclamationTriangleIcon />
     </Icon>
@@ -125,7 +124,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                   "children": Array [
                     Object {
                       "status": Object {
-                        "class": "icon-healthy",
+                        "className": "icon-healthy",
                         "color": "var(--pf-v5-global--success-color--100)",
                         "icon": [Function],
                         "name": "Healthy",
@@ -135,7 +134,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                     },
                     Object {
                       "status": Object {
-                        "class": "icon-healthy",
+                        "className": "icon-healthy",
                         "color": "var(--pf-v5-global--success-color--100)",
                         "icon": [Function],
                         "name": "Healthy",
@@ -145,7 +144,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                     },
                   ],
                   "status": Object {
-                    "class": "icon-healthy",
+                    "className": "icon-healthy",
                     "color": "var(--pf-v5-global--success-color--100)",
                     "icon": [Function],
                     "name": "Healthy",
@@ -157,7 +156,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                   "children": Array [
                     Object {
                       "status": Object {
-                        "class": "icon-na",
+                        "className": "icon-na",
                         "color": "var(--pf-v5-global--Color--200)",
                         "icon": [Function],
                         "name": "No health information",
@@ -168,7 +167,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                     },
                     Object {
                       "status": Object {
-                        "class": "icon-na",
+                        "className": "icon-na",
                         "color": "var(--pf-v5-global--Color--200)",
                         "icon": [Function],
                         "name": "No health information",
@@ -179,7 +178,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                     },
                   ],
                   "status": Object {
-                    "class": "icon-na",
+                    "className": "icon-na",
                     "color": "var(--pf-v5-global--Color--200)",
                     "icon": [Function],
                     "name": "No health information",
@@ -190,7 +189,7 @@ exports[`HealthIndicator renders healthy 1`] = `
               ],
               "statusConfig": Object {
                 "status": Object {
-                  "class": "icon-na",
+                  "className": "icon-na",
                   "color": "var(--pf-v5-global--Color--200)",
                   "icon": [Function],
                   "name": "No health information",
@@ -216,7 +215,6 @@ exports[`HealthIndicator renders healthy 1`] = `
   <span>
     <Icon
       className="icon-healthy kiali_f1r5cf3w"
-      size="md"
     >
       <CheckCircleIcon />
     </Icon>

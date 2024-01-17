@@ -121,7 +121,7 @@ func Fatalf(format string, args ...interface{}) {
 // Return log level
 // Used to get debug info
 func GetLogLevel() string {
-	return log.Logger.GetLevel().String()
+	return zerolog.GlobalLevel().String()
 }
 
 // Resolves the environment settings for the log level. Considers the verbose_mode from server version <=1.25.

@@ -2,115 +2,105 @@ import * as React from 'react';
 import {
   Button,
   ButtonVariant,
+  Dropdown,
+  DropdownItem,
+  DropdownList,
+  MenuToggle,
+  MenuToggleElement,
   Modal,
   ModalVariant,
   Text,
   TextVariants,
-  Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
-import { Dropdown, DropdownItem, DropdownPosition, DropdownToggle } from '@patternfly/react-core/deprecated';
 import { serverConfig } from '../../config';
+import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 
-type Props = {
+type IstioActionDropdownProps = {
+  canDelete: boolean;
   objectKind?: string;
   objectName: string;
-  canDelete: boolean;
   onDelete: () => void;
 };
 
-type State = {
-  showConfirmModal: boolean;
-  dropdownOpen: boolean;
+export const IstioActionDropdown: React.FC<IstioActionDropdownProps> = (props: IstioActionDropdownProps) => {
+  const [showConfirmModal, setShowConfirmModal] = React.useState<boolean>(false);
+  const [dropdownOpen, setDropdownOpen] = React.useState<boolean>(false);
+
+  const onSelect = () => {
+    setDropdownOpen(!dropdownOpen);
+  };
+
+  const onToggle = (dropdownState: boolean) => {
+    setDropdownOpen(dropdownState);
+  };
+
+  const hideConfirmModal = () => {
+    setShowConfirmModal(false);
+  };
+
+  const onClickDelete = () => {
+    setShowConfirmModal(true);
+  };
+
+  const onDelete = () => {
+    setShowConfirmModal(false);
+    props.onDelete();
+  };
+
+  const objectName = props.objectKind ?? 'Istio object';
+
+  const deleteAction = (
+    <DropdownItem key="delete" onClick={onClickDelete} isDisabled={!props.canDelete}>
+      Delete
+    </DropdownItem>
+  );
+
+  const deleteActionWrapper = serverConfig.deployment.viewOnlyMode
+    ? renderDisabledDropdownOption('delete', TooltipPosition.left, 'User does not have permission', deleteAction)
+    : deleteAction;
+
+  return (
+    <>
+      <Dropdown
+        id="actions"
+        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+          <MenuToggle
+            ref={toggleRef}
+            id="actions-toggle"
+            onClick={() => onToggle(!dropdownOpen)}
+            isExpanded={dropdownOpen}
+          >
+            Actions
+          </MenuToggle>
+        )}
+        isOpen={dropdownOpen}
+        onOpenChange={(isOpen: boolean) => onToggle(isOpen)}
+        onSelect={onSelect}
+        popperProps={{ position: 'right' }}
+      >
+        <DropdownList>{[deleteActionWrapper]}</DropdownList>
+      </Dropdown>
+
+      <Modal
+        title="Confirm Delete"
+        variant={ModalVariant.small}
+        isOpen={showConfirmModal}
+        onClose={hideConfirmModal}
+        actions={[
+          <Button key="confirm" variant={ButtonVariant.danger} onClick={onDelete}>
+            Delete
+          </Button>,
+          <Button key="cancel" variant={ButtonVariant.secondary} onClick={hideConfirmModal}>
+            Cancel
+          </Button>
+        ]}
+      >
+        <Text component={TextVariants.p}>
+          Are you sure you want to delete the {objectName} '{props.objectName}'? It cannot be undone. Make sure this is
+          something you really want to do!
+        </Text>
+      </Modal>
+    </>
+  );
 };
-
-export class IstioActionDropdown extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      showConfirmModal: false,
-      dropdownOpen: false
-    };
-  }
-
-  onSelect = _ => {
-    this.setState({
-      dropdownOpen: !this.state.dropdownOpen
-    });
-  };
-
-  onToggle = (dropdownState: boolean) => {
-    this.setState({
-      dropdownOpen: dropdownState
-    });
-  };
-
-  hideConfirmModal = () => {
-    this.setState({ showConfirmModal: false });
-  };
-
-  onClickDelete = () => {
-    this.setState({ showConfirmModal: true });
-  };
-
-  onDelete = () => {
-    this.hideConfirmModal();
-    this.props.onDelete();
-  };
-
-  renderTooltip = (key, position, msg, child): JSX.Element => {
-    return (
-      <Tooltip key={'tooltip_' + key} position={position} content={<>{msg}</>}>
-        <div style={{ display: 'inline-block', cursor: 'not-allowed', textAlign: 'left' }}>{child}</div>
-      </Tooltip>
-    );
-  };
-
-  render() {
-    const objectName = this.props.objectKind ? this.props.objectKind : 'Istio object';
-    const deleteAction = (
-      <DropdownItem key="delete" onClick={this.onClickDelete} isDisabled={!this.props.canDelete}>
-        Delete
-      </DropdownItem>
-    );
-    const deleteActionWrapper = serverConfig.deployment.viewOnlyMode
-      ? this.renderTooltip('delete', TooltipPosition.left, 'User does not have permission', deleteAction)
-      : deleteAction;
-
-    return (
-      <>
-        <Dropdown
-          id="actions"
-          toggle={
-            <DropdownToggle onToggle={(_event, dropdownState: boolean) => this.onToggle(dropdownState)}>
-              Actions
-            </DropdownToggle>
-          }
-          onSelect={this.onSelect}
-          position={DropdownPosition.right}
-          isOpen={this.state.dropdownOpen}
-          dropdownItems={[deleteActionWrapper]}
-        />
-        <Modal
-          title="Confirm Delete"
-          variant={ModalVariant.small}
-          isOpen={this.state.showConfirmModal}
-          onClose={this.hideConfirmModal}
-          actions={[
-            <Button key="confirm" variant={ButtonVariant.danger} onClick={this.onDelete}>
-              Delete
-            </Button>,
-            <Button key="cancel" variant={ButtonVariant.secondary} onClick={this.hideConfirmModal}>
-              Cancel
-            </Button>
-          ]}
-        >
-          <Text component={TextVariants.p}>
-            Are you sure you want to delete the {objectName} '{this.props.objectName}'? It cannot be undone. Make sure
-            this is something you really want to do!
-          </Text>
-        </Modal>
-      </>
-    );
-  }
-}

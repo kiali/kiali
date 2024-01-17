@@ -29,36 +29,36 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 
 type Props<T extends RichDataPoint, O extends LineInfo> = {
+  brushHandlers?: BrushHandlers;
   chartHeight?: number;
   data: VCLines<T & VCDataPoint>;
-  seriesComponent: React.ReactElement;
-  overrideSeriesComponentStyle?: boolean;
-  stroke?: boolean;
   fill?: boolean;
-  showSpans?: boolean;
-  showTrendline?: boolean;
-  isMaximized?: boolean;
   groupOffset?: number;
-  sizeRatio?: number;
+  isMaximized?: boolean;
+  labelComponent?: React.ReactElement<ChartTooltipProps>;
   moreChartProps?: ChartProps;
   onClick?: (datum: RawOrBucket<O>) => void;
   onTooltipClose?: (datum: RawOrBucket<O>) => void;
   onTooltipOpen?: (datum: RawOrBucket<O>) => void;
-  brushHandlers?: BrushHandlers;
+  overrideSeriesComponentStyle?: boolean;
   overlay?: Overlay<O>;
+  // The TracingScatter component needs a flag to indicate that the trace datapoint needs a mouse pointer
+  // It could be detected indirectly, but it's complicated and less clear, a new optional flag simplifies this logic
+  pointer?: boolean;
+  seriesComponent: React.ReactElement;
+  showSpans?: boolean;
+  showTrendline?: boolean;
+  sizeRatio?: number;
+  stroke?: boolean;
   timeWindow?: [Date, Date];
   unit: string;
   xAxis?: XAxisType;
-  labelComponent?: React.ReactElement<ChartTooltipProps>;
-  // The JaegerScatter component needs a flag to indicate that the trace datapoint needs a mouse pointer
-  // It could be detected indirectly, but it's complicated and less clear, a new optional flag simplifies this logic
-  pointer?: boolean;
 };
 
 type State = {
-  width: number;
   hiddenSeries: Set<string>;
   showMoreLegend: boolean;
+  width: number;
 };
 
 type Padding = { top: number; left: number; right: number; bottom: number };
@@ -69,7 +69,7 @@ const axisStyle = {
   tickLabels: { fontSize: 12, padding: 2, fill: PFColors.Color100 },
   grid: {
     fill: 'none',
-    stroke: PFColors.ColorLight200,
+    stroke: PFColors.ColorLight300,
     strokeDasharray: '10, 5',
     strokeLinecap: 'round',
     strokeLinejoin: 'round',
@@ -83,14 +83,33 @@ export const MIN_WIDTH = 275;
 export const LEGEND_HEIGHT = 25;
 const FONT_SIZE_LEGEND = 14;
 
-const moreLegendIconStyle = kialiStyle({
-  margin: '0px 5px 2px 10px',
-  verticalAlign: '-4px !important'
+const moreLegendStyle = kialiStyle({
+  display: 'flex',
+  marginTop: '0.25rem',
+  marginLeft: 'auto'
 });
 
-const noEnoughHeightStyle = kialiStyle({
-  margin: '0px 0px 0px 0px',
-  verticalAlign: '-4px !important'
+const overlayLegendStyle = kialiStyle({
+  display: 'flex',
+  flexWrap: 'wrap',
+  flexDirection: 'column',
+  position: 'relative',
+  background: 'var(--pf-v5-global--BackgroundColor--dark-100)',
+  opacity: 0.7,
+  overflow: 'auto'
+});
+
+const fullLegendStyle = kialiStyle({
+  color: PFColors.White,
+  margin: 'auto',
+  $nest: {
+    '& > div': {
+      display: 'inline-block',
+      marginRight: '0.25rem',
+      width: '0.5rem',
+      height: '0.5rem'
+    }
+  }
 });
 
 export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React.Component<Props<T, O>, State> {
@@ -119,25 +138,27 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     window.removeEventListener('resize', this.handleResize);
   }
 
-  private onTooltipClose = () => {
+  private onTooltipClose = (): void => {
     if (this.props.onTooltipClose) {
       this.props.onTooltipClose(this.hoveredItem as RawOrBucket<O>);
     }
+
     this.hoveredItem = undefined;
   };
 
-  private onTooltipOpen = (points?: VCDataPoint[]) => {
+  private onTooltipOpen = (points?: VCDataPoint[]): void => {
     if (points && points.length > 0) {
       this.hoveredItem = points[0];
     } else {
       this.hoveredItem = undefined;
     }
+
     if (this.props.onTooltipOpen) {
       this.props.onTooltipOpen(this.hoveredItem as RawOrBucket<O>);
     }
   };
 
-  private onShowMoreLegend = () => {
+  private onShowMoreLegend = (): void => {
     this.setState(prevState => {
       return {
         showMoreLegend: !prevState.showMoreLegend
@@ -150,10 +171,11 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     const fullLegendData = this.buildFullLegendData();
     const filteredLegendData = this.buildFilteredLegendData(fullLegendData);
     const showMoreLegend = fullLegendData.length > filteredLegendData.length;
-    const chartHeight = this.props.chartHeight || 300;
+    const chartHeight = this.props.chartHeight ?? 300;
     const overlayIdx = this.props.data.length;
-    const showOverlay = (this.props.overlay && this.props.showSpans) || false;
+    const showOverlay = (this.props.overlay && this.props.showSpans) ?? false;
     const overlayRightPadding = showOverlay ? 15 : 0;
+
     const padding: Padding = {
       top: 0,
       bottom: chartHeight > MIN_HEIGHT_YAXIS ? LEGEND_HEIGHT : 0,
@@ -162,6 +184,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     };
 
     const events: VCEvent[] = [];
+
     if (this.props.onClick) {
       events.push({
         target: 'parent',
@@ -175,27 +198,35 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
         }
       });
     }
+
     this.props.data.forEach((s, idx) =>
-      this.registerEvents(events, idx, ['serie-' + idx, 'serie-reg-' + idx], s.legendItem.name)
+      this.registerEvents(events, idx, [`serie-${idx}`, `serie-reg-${idx}`], s.legendItem.name)
     );
+
     let useSecondAxis = showOverlay;
     let normalizedOverlay: RawOrBucket<O>[] = [];
     let overlayFactor = 1.0;
+
     const mainMax = Math.max(...this.props.data.map(line => Math.max(...line.datapoints.map(d => d.y))));
+
     if (this.props.overlay) {
       this.registerEvents(events, overlayIdx, [overlayName], overlayName);
       // Normalization for y-axis display to match y-axis domain of the main data
       // (see https://formidable.com/open-source/victory/gallery/multiple-dependent-axes/)
       const overlayMax = Math.max(...this.props.overlay.vcLine.datapoints.map(d => d.y));
+
       if (overlayMax !== 0) {
         overlayFactor = mainMax / overlayMax;
       }
+
       if (this.props.unit === this.props.overlay.info.lineInfo.unit && overlayFactor > 0.5 && overlayFactor < 2) {
         // Looks like it's fine to re-use the existing axis
         useSecondAxis = false;
         overlayFactor = 1.0;
       }
+
       normalizedOverlay = this.normalizeOverlay(overlayFactor);
+
       if (this.props.overlay.info.buckets) {
         // Transform to bucketed stats
         const model: O = { ...this.props.overlay.info.lineInfo, scaleFactor: overlayFactor };
@@ -207,16 +238,19 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
         );
       }
     }
+
     const tooltipHooks = { onOpen: this.onTooltipOpen, onClose: this.onTooltipClose };
+
     const labelComponent = this.props.labelComponent ? (
       React.cloneElement(this.props.labelComponent as any, tooltipHooks)
     ) : (
       <CustomTooltip showTime={true} {...tooltipHooks} />
     );
+
     const filteredData = this.props.data.filter(s => !this.state.hiddenSeries.has(s.legendItem.name));
 
     const chart = (
-      <div ref={this.containerRef} style={{ marginTop: '0px', height: chartHeight }}>
+      <div ref={this.containerRef} style={{ marginTop: 0, height: chartHeight }}>
         <Chart
           width={this.state.width}
           padding={padding}
@@ -257,6 +291,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
               <ChartAxis tickCount={scaleInfo.count} style={axisStyle} domain={this.props.timeWindow} />
             )
           }
+
           <ChartAxis
             tickLabelComponent={
               <VictoryPortal>
@@ -272,17 +307,18 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
             }
             style={axisStyle}
           />
+
           {useSecondAxis && this.props.overlay && (
             <ChartAxis
               dependentAxis={true}
               offsetX={this.state.width - overlayRightPadding}
               style={axisStyle}
               tickCount={chartHeight <= MIN_HEIGHT_YAXIS ? 1 : undefined}
-              tickFormat={t => getFormatter(d3Format, this.props.overlay?.info.lineInfo.unit || '')(t / overlayFactor)}
-              tickLabelComponent={<ChartLabel dx={15} textAnchor={'start'} />}
+              tickFormat={t => getFormatter(d3Format, this.props.overlay?.info.lineInfo.unit ?? '')(t / overlayFactor)}
+              tickLabelComponent={<ChartLabel dx={15} textAnchor="start" />}
               label={getUnit(
                 d3Format,
-                this.props.overlay?.info.lineInfo.unit || '',
+                this.props.overlay?.info.lineInfo.unit ?? '',
                 Math.max(...this.props.overlay.vcLine.datapoints.map(d => d.y))
               )}
               axisLabelComponent={
@@ -296,9 +332,11 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
               }
             />
           )}
+
           {this.props.xAxis === 'series'
             ? this.renderCategories()
             : this.renderTimeSeries(chartHeight > MIN_HEIGHT_YAXIS ? chartHeight - LEGEND_HEIGHT : chartHeight)}
+
           {showOverlay &&
             (this.props.overlay!.info.buckets ? (
               <VictoryBoxPlot
@@ -321,9 +359,10 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
                 style={{ data: this.props.overlay!.info.dataStyle }}
               />
             ))}
+
           {chartHeight > MIN_HEIGHT_YAXIS ? (
             <ChartLegend
-              name={'serie-legend'}
+              name="serie-legend"
               data={filteredLegendData}
               x={0}
               y={chartHeight}
@@ -347,56 +386,32 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
             />
           ) : undefined}
         </Chart>
+
         {showMoreLegend && chartHeight > MIN_HEIGHT_YAXIS && (
-          <div
-            style={{
-              position: 'relative',
-              left: this.state.width - 31,
-              width: 16,
-              height: 16
-            }}
-          >
-            <Tooltip
-              position={TooltipPosition.left}
-              content={<div style={{ textAlign: 'left' }}>Show full legend</div>}
+          <Tooltip position={TooltipPosition.left} content={<div style={{ textAlign: 'left' }}>Show full legend</div>}>
+            <Button
+              variant={ButtonVariant.link}
+              className={moreLegendStyle}
+              isInline
+              onClick={() => this.onShowMoreLegend()}
             >
-              <Button variant={ButtonVariant.link} isInline onClick={() => this.onShowMoreLegend()}>
-                <KialiIcon.MoreLegend className={moreLegendIconStyle} />
-              </Button>
-            </Tooltip>
-          </div>
+              <KialiIcon.MoreLegend />
+            </Button>
+          </Tooltip>
         )}
+
         {this.state.showMoreLegend && (
           <div
             style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              flexDirection: 'column',
-              position: 'relative',
               width: this.state.width,
               height: chartHeight,
-              top: -(chartHeight + LEGEND_HEIGHT),
-              background: 'var(--pf-v5-global--BackgroundColor--dark-100)',
-              opacity: 0.7,
-              overflow: 'auto'
+              top: -(chartHeight + LEGEND_HEIGHT)
             }}
+            className={overlayLegendStyle}
           >
-            {fullLegendData.map(ld => (
-              <div
-                style={{
-                  color: 'white',
-                  margin: 'auto'
-                }}
-              >
-                <div
-                  style={{
-                    display: 'inline-block',
-                    backgroundColor: ld.symbol.fill,
-                    marginRight: '5px',
-                    width: '9px',
-                    height: '9px'
-                  }}
-                ></div>
+            {fullLegendData.map((ld: LegendItem, idx: number) => (
+              <div key={`full_legend_${idx}`} className={fullLegendStyle}>
+                <div style={{ backgroundColor: ld.symbol.fill }}></div>
                 {ld.name}
               </div>
             ))}
@@ -414,15 +429,16 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
           content={<div style={{ textAlign: 'left' }}>Increase height of the chart</div>}
         >
           <Button variant={ButtonVariant.link} isInline>
-            <KialiIcon.MoreLegend className={noEnoughHeightStyle} />
+            <KialiIcon.MoreLegend />
           </Button>
         </Tooltip>
       </div>
     );
   }
 
-  private renderTimeSeries = (height: number) => {
-    const groupOffset = this.props.groupOffset || 0;
+  private renderTimeSeries = (height: number): React.ReactNode => {
+    const groupOffset = this.props.groupOffset ?? 0;
+
     return (
       <ChartGroup offset={groupOffset} height={height}>
         {this.props.data
@@ -430,12 +446,13 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
             if (this.state.hiddenSeries.has(serie.legendItem.name)) {
               return undefined;
             }
+
             const plot = React.cloneElement(
               this.props.seriesComponent,
               this.withStyle(
                 {
-                  key: 'serie-' + idx,
-                  name: 'serie-' + idx,
+                  key: `serie-${idx}`,
+                  name: `serie-${idx}`,
                   data: serie.datapoints,
                   interpolation: INTERPOLATION_STRATEGY
                 },
@@ -446,9 +463,11 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
             // serie.datapoints may contain undefined values in certain scenarios i.e. "unknown" values
             if (this.props.showTrendline === true && serie.datapoints[0]) {
               const first_dpx = (serie.datapoints[0].x as Date).getTime() / 1000;
+
               const datapoints = serie.datapoints.map(d => {
                 let t = ((d.x as Date).getTime() / 1000 - first_dpx) / 10000;
                 let trendPoint = parseFloat(d.y.toString());
+
                 if (d.y0) {
                   // If both reporters are enabled, generate the trend line using
                   // the mean values of both reporters
@@ -459,11 +478,12 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
                 // Array is [time, y];
                 return [t, trendPoint];
               });
+
               const linearRegression = regression.linear(datapoints, { precision: 10 });
 
               let regressionDatapoints = serie.datapoints.map(d => ({
                 ...d,
-                name: d.name + ' (trendline)',
+                name: `${d.name} (trendline)`,
                 y: linearRegression.predict(((d.x as Date).getTime() / 1000 - first_dpx) / 10000)[1],
                 y0: undefined // Clear y0, in case it is set to prevent the tooltip showing this value.
               }));
@@ -472,8 +492,8 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
                 <ChartLine />, // Trend lines are always line charts.
                 this.withStyle(
                   {
-                    key: 'serie-reg-' + idx,
-                    name: 'serie-reg-' + idx,
+                    key: `serie-reg-${idx}`,
+                    name: `serie-reg-${idx}`,
                     data: regressionDatapoints,
                     interpolation: INTERPOLATION_STRATEGY
                   },
@@ -492,20 +512,22 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     );
   };
 
-  private renderCategories = () => {
+  private renderCategories = (): React.ReactNode => {
     let domainX = 1;
     const nbSeries = this.props.data.length - this.state.hiddenSeries.size;
-    const size = ((this.props.sizeRatio || 1) * this.state.width) / Math.max(nbSeries, 1);
+    const size = ((this.props.sizeRatio ?? 1) * this.state.width) / Math.max(nbSeries, 1);
+
     return this.props.data.map((serie, idx) => {
       if (this.state.hiddenSeries.has(serie.legendItem.name)) {
         return undefined;
       }
+
       return React.cloneElement(
         this.props.seriesComponent,
         this.withStyle(
           {
-            key: 'serie-' + idx,
-            name: 'serie-' + idx,
+            key: `serie-${idx}`,
+            name: `serie-${idx}`,
             data: serie.datapoints.map(d => ({ size: size, ...d, x: domainX++ })),
             barWidth: size
           },
@@ -515,8 +537,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     });
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private withStyle = (props: any, color?: string, strokeDasharray?: boolean) => {
+  private withStyle = (props: { [key: string]: unknown }, color?: string, strokeDasharray?: boolean) => {
     return this.props.overrideSeriesComponentStyle === false
       ? props
       : {
@@ -532,72 +553,68 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
         };
   };
 
-  private handleResize = () => {
+  private handleResize = (): void => {
     if (this.containerRef && this.containerRef.current) {
       this.setState({ width: this.containerRef.current.clientWidth });
     }
   };
 
-  private buildFullLegendData(): LegendItem[] {
+  private buildFullLegendData = (): LegendItem[] => {
     return this.props.data.map(s => {
       const name = s.legendItem.name;
+
       if (this.state.hiddenSeries.has(s.legendItem.name)) {
         return { name, symbol: { ...s.legendItem.symbol, fill: PFColors.Color200 } };
       }
+
       return { ...s.legendItem, name };
     });
-  }
+  };
 
-  private buildFilteredLegendData(fullLegendData: LegendItem[]): LegendItem[] {
+  private buildFilteredLegendData = (fullLegendData: LegendItem[]): LegendItem[] => {
     // 30px == "more legend" left button width
     // 10px == "more legend" left padding
     const maxWidth = this.state.width - 30 - 10;
     const filtered: LegendItem[] = [];
     let currentWidth = 0;
+
     for (let i = 0; i < fullLegendData.length; i++) {
       const item = fullLegendData[i];
       // 12px == legend icon + space
       // 7px == char size
       // 15px == right padding
       currentWidth += 12 + item.name.length * 7 + 15;
+
       if (currentWidth >= maxWidth) {
         break;
       }
+
       filtered.push(item);
     }
-    return filtered;
-  }
 
-  private registerEvents(events: VCEvent[], idx: number, serieID: string[], serieName: string) {
+    return filtered;
+  };
+
+  private registerEvents = (events: VCEvent[], idx: number, serieID: string[], serieName: string): void => {
     addLegendEvent(events, {
       legendName: 'serie-legend',
       idx: idx,
       serieID: serieID,
-      onMouseOver: props => {
-        this.mouseOnLegend = true;
-        return serieName === 'overlay'
-          ? null
-          : {
-              style: { ...props.style, strokeWidth: 4, fillOpacity: 0 }
-            };
-      },
-      onMouseOut: () => {
-        this.mouseOnLegend = false;
-        return null;
-      },
       onClick: () => {
         if (!this.state.hiddenSeries.delete(serieName)) {
           // Was not already hidden => add to set
           this.state.hiddenSeries.add(serieName);
         }
+
         this.setState({ hiddenSeries: new Set(this.state.hiddenSeries) });
         return null;
       }
     });
-  }
+  };
 
-  private scaledAxisInfo(data: VCLines<VCDataPoint & T>) {
+  private scaledAxisInfo = (data: VCLines<VCDataPoint & T>) => {
     const ticks = Math.max(...data.map(s => s.datapoints.length));
+
     if (this.state.width < 500) {
       return {
         count: Math.min(5, ticks),
@@ -609,16 +626,17 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
         format: '%H:%M'
       };
     }
+
     return {
       count: Math.min(15, ticks),
       format: '%H:%M:%S'
     };
-  }
+  };
 
-  private normalizeOverlay(factor: number): (VCDataPoint & O)[] {
+  private normalizeOverlay = (factor: number): (VCDataPoint & O)[] => {
     // All data is relative to the first Y-axis, even if a second one is in use
     // To make it appear as relative to the second axis, we need to normalize it, ie. apply the same scale factor that exists between the two axis
     // This scale factor is stored in every datapoint so that it can be "reverted" when we need to retrieve the original value, e.g. in tooltips
     return this.props.overlay!.vcLine.datapoints.map(dp => ({ ...dp, y: dp.y * factor, scaleFactor: factor }));
-  }
+  };
 }

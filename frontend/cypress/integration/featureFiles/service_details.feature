@@ -54,12 +54,14 @@ Feature: Kiali Service Details page
     Then sd::user does not see No data message in the "Request volume" graph
 
   @bookinfo-app
+  @tracing
   Scenario: See graph traces for productspage service details
     And user sees trace information
     When user selects a trace
     Then user sees trace details
 
   @bookinfo-app
+  @tracing
   Scenario: See span info after selecting service span
     And user sees trace information
     When user selects a trace

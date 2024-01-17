@@ -1,8 +1,18 @@
 import * as React from 'react';
-import { Button, InputGroup, TextInput, ButtonVariant, InputGroupItem } from '@patternfly/react-core';
-import { Dropdown, DropdownToggle, DropdownItem } from '@patternfly/react-core/deprecated';
+import {
+  Button,
+  InputGroup,
+  TextInput,
+  ButtonVariant,
+  InputGroupItem,
+  Dropdown,
+  DropdownList,
+  DropdownItem,
+  MenuToggleElement,
+  MenuToggle
+} from '@patternfly/react-core';
 
-type Props = {
+type MatchBuilderProps = {
   category: string;
   operator: string;
   headerName: string;
@@ -13,11 +23,6 @@ type Props = {
   onSelectOperator: (operator: string) => void;
   onMatchValueChange: (value: string) => void;
   onAddMatch: () => void;
-};
-
-type State = {
-  isMatchDropdown: boolean;
-  isOperatorDropdown: boolean;
 };
 
 export const HEADERS = 'headers';
@@ -46,106 +51,110 @@ const placeholderText = {
   [AUTHORITY]: 'Authority value...'
 };
 
-export class MatchBuilder extends React.Component<Props, State> {
-  constructor(props) {
-    super(props);
-    this.state = {
-      isMatchDropdown: false,
-      isOperatorDropdown: false
-    };
-  }
+export const MatchBuilder: React.FC<MatchBuilderProps> = (props: MatchBuilderProps) => {
+  const [isMatchDropdown, setIsMatchDropdown] = React.useState<boolean>(false);
+  const [isOperatorDropdown, setIsOperatorDropdown] = React.useState<boolean>(false);
 
-  onMathOptionsToggle = () => {
-    this.setState({
-      isMatchDropdown: !this.state.isMatchDropdown
-    });
-  };
+  const renderOpOptions: string[] = props.category === HEADERS ? [PRESENCE, ...opOptions] : opOptions;
 
-  onOperatorToggle = () => {
-    this.setState({
-      isOperatorDropdown: !this.state.isOperatorDropdown
-    });
-  };
-
-  render() {
-    const renderOpOptions: string[] = this.props.category === HEADERS ? [PRESENCE, ...opOptions] : opOptions;
-    return (
-      <InputGroup>
-        <InputGroupItem>
-          <Dropdown
-            toggle={
-              <DropdownToggle onToggle={this.onMathOptionsToggle} data-test={'requestmatching-header-toggle'}>
-                {this.props.category}
-              </DropdownToggle>
-            }
-            isOpen={this.state.isMatchDropdown}
-            dropdownItems={matchOptions.map((mode, index) => (
+  return (
+    <InputGroup>
+      <InputGroupItem>
+        <Dropdown
+          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+            <MenuToggle
+              ref={toggleRef}
+              onClick={() => setIsMatchDropdown(!isMatchDropdown)}
+              data-test={'requestmatching-header-toggle'}
+              isExpanded={isMatchDropdown}
+            >
+              {props.category}
+            </MenuToggle>
+          )}
+          isOpen={isMatchDropdown}
+          onOpenChange={(isOpen: boolean) => setIsMatchDropdown(isOpen)}
+        >
+          <DropdownList>
+            {matchOptions.map((mode, index) => (
               <DropdownItem
                 key={mode + '_' + index}
                 value={mode}
                 component="button"
                 onClick={() => {
-                  this.props.onSelectCategory(mode);
-                  this.onMathOptionsToggle();
+                  props.onSelectCategory(mode);
+                  setIsMatchDropdown(!isMatchDropdown);
                 }}
                 data-test={'requestmatching-header-' + mode}
               >
                 {mode}
               </DropdownItem>
             ))}
-          />
-        </InputGroupItem>
-        {this.props.category === HEADERS && (
-          <TextInput
-            id="header-name-id"
-            value={this.props.headerName}
-            onChange={(_, value) => this.props.onHeaderNameChange(value)}
-            placeholder="Header name..."
-          />
-        )}
-        <InputGroupItem>
-          <Dropdown
-            toggle={
-              <DropdownToggle onToggle={this.onOperatorToggle} data-test={'requestmatching-match-toggle'}>
-                {this.props.operator}
-              </DropdownToggle>
-            }
-            isOpen={this.state.isOperatorDropdown}
-            dropdownItems={renderOpOptions.map((op, index) => (
+          </DropdownList>
+        </Dropdown>
+      </InputGroupItem>
+
+      {props.category === HEADERS && (
+        <TextInput
+          id="header-name-id"
+          value={props.headerName}
+          onChange={(_, value) => props.onHeaderNameChange(value)}
+          placeholder="Header name..."
+        />
+      )}
+
+      <InputGroupItem>
+        <Dropdown
+          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+            <MenuToggle
+              ref={toggleRef}
+              onClick={() => setIsOperatorDropdown(!isOperatorDropdown)}
+              data-test={'requestmatching-match-toggle'}
+              isExpanded={isOperatorDropdown}
+            >
+              {props.operator}
+            </MenuToggle>
+          )}
+          isOpen={isOperatorDropdown}
+          onOpenChange={(isOpen: boolean) => setIsOperatorDropdown(isOpen)}
+        >
+          <DropdownList>
+            {renderOpOptions.map((op, index) => (
               <DropdownItem
                 key={op + '_' + index}
                 value={op}
                 component="button"
                 onClick={() => {
-                  this.props.onSelectOperator(op);
-                  this.onOperatorToggle();
+                  props.onSelectOperator(op);
+                  setIsOperatorDropdown(!isOperatorDropdown);
                 }}
                 data-test={'requestmatching-match-' + op}
               >
                 {op}
               </DropdownItem>
             ))}
-          />
-        </InputGroupItem>
-        {this.props.operator !== PRESENCE && (
-          <TextInput
-            id="match-value-id"
-            value={this.props.matchValue}
-            onChange={(_, value) => this.props.onMatchValueChange(value)}
-            placeholder={placeholderText[this.props.category]}
-          />
-        )}
-        <InputGroupItem>
-          <Button
-            variant={ButtonVariant.secondary}
-            disabled={!this.props.isValid}
-            onClick={this.props.onAddMatch}
-            data-test="add-match"
-          >
-            Add Match
-          </Button>
-        </InputGroupItem>
-      </InputGroup>
-    );
-  }
-}
+          </DropdownList>
+        </Dropdown>
+      </InputGroupItem>
+
+      {props.operator !== PRESENCE && (
+        <TextInput
+          id="match-value-id"
+          value={props.matchValue}
+          onChange={(_, value) => props.onMatchValueChange(value)}
+          placeholder={placeholderText[props.category]}
+        />
+      )}
+
+      <InputGroupItem>
+        <Button
+          variant={ButtonVariant.secondary}
+          disabled={!props.isValid}
+          onClick={props.onAddMatch}
+          data-test="add-match"
+        >
+          Add Match
+        </Button>
+      </InputGroupItem>
+    </InputGroup>
+  );
+};

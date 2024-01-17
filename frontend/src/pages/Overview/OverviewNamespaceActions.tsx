@@ -1,128 +1,120 @@
 import * as React from 'react';
-import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import {
+  Divider,
   Dropdown,
   DropdownGroup,
   DropdownItem,
-  DropdownSeparator,
-  KebabToggle
-} from '@patternfly/react-core/deprecated';
+  DropdownList,
+  MenuToggle,
+  MenuToggleElement,
+  TooltipPosition
+} from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
-import { groupMenuStyle } from 'styles/DropdownStyles';
+import { groupMenuStyle, kebabToggleStyle } from 'styles/DropdownStyles';
+import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
+import { KialiIcon } from 'config/KialiIcon';
 
 export type OverviewNamespaceAction = {
-  isGroup: boolean;
-  isSeparator: boolean;
+  action?: (namespace: string) => void;
+  children?: OverviewNamespaceAction[];
   isDisabled?: boolean;
   isExternal?: boolean;
+  isGroup: boolean;
+  isSeparator: boolean;
   title?: string;
-  children?: OverviewNamespaceAction[];
-  action?: (namespace: string) => void;
 };
 
 type Props = {
-  namespace: string;
   actions: OverviewNamespaceAction[];
+  namespace: string;
 };
 
-type State = {
-  isKebabOpen: boolean;
-};
+export const OverviewNamespaceActions: React.FC<Props> = (props: Props) => {
+  const [isKebabOpen, setIsKebabOpen] = React.useState<boolean>(false);
 
-export class OverviewNamespaceActions extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      isKebabOpen: false
-    };
-  }
-
-  onKebabToggle = (isOpen: boolean) => {
-    this.setState({
-      isKebabOpen: isOpen
-    });
+  const onKebabToggle = (isOpen: boolean) => {
+    setIsKebabOpen(isOpen);
   };
 
-  renderTooltip = (key, position, msg, child): JSX.Element => {
-    return (
-      <Tooltip key={'tooltip_' + key} position={position} content={<>{msg}</>}>
-        <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>{child}</div>
-      </Tooltip>
-    );
-  };
-
-  componentDidUpdate(_: Readonly<Props>, prevState: Readonly<State>) {
-    if (prevState.isKebabOpen) {
-      this.setState({
-        isKebabOpen: false
-      });
+  const namespaceActions = props.actions.map((action, i) => {
+    if (action.isSeparator) {
+      return <Divider key={`separator_${i}`} />;
     }
-  }
 
-  render() {
-    const namespaceActions = this.props.actions.map((action, i) => {
-      if (action.isSeparator) {
-        return <DropdownSeparator key={'separator_' + i} />;
-      }
-      if (action.isGroup && action.children) {
-        return (
-          <DropdownGroup
-            key={'group_' + i}
-            label={action.title}
-            className={groupMenuStyle}
-            children={action.children.map((subaction, j) => {
-              const itemKey = 'subaction_' + i + '_' + j;
-              const item = (
-                <DropdownItem
-                  key={itemKey}
-                  isDisabled={subaction.isDisabled}
-                  onClick={() => (subaction.action ? subaction.action(this.props.namespace) : undefined)}
-                >
-                  {subaction.title}
-                </DropdownItem>
-              );
-              return subaction.isDisabled
-                ? this.renderTooltip(
-                    'tooltip_' + itemKey,
-                    TooltipPosition.left,
-                    'User does not have enough permission for this action',
-                    item
-                  )
-                : item;
-            })}
-          />
-        );
-      } else if (action.title && action.action) {
-        const item = (
-          <DropdownItem
-            key={'action_' + i}
-            isDisabled={action.isDisabled}
-            data-test={action['data-test']}
-            onClick={() => (action.action ? action.action(this.props.namespace) : undefined)}
-          >
-            {action.title} {!!action.isExternal ? <ExternalLinkAltIcon /> : undefined}
-          </DropdownItem>
-        );
-        return action.isDisabled
-          ? this.renderTooltip(
-              'tooltip_action_' + i,
-              TooltipPosition.left,
-              'User does not have enough permission for this action',
-              item
-            )
-          : item;
-      }
-      return undefined;
-    });
-    return (
-      <Dropdown
-        toggle={<KebabToggle onToggle={(_event, isOpen: boolean) => this.onKebabToggle(isOpen)} />}
-        dropdownItems={namespaceActions}
-        isPlain={true}
-        isOpen={this.state.isKebabOpen}
-        position={'right'}
-        style={{ width: 22 }}
-      />
-    );
-  }
-}
+    if (action.isGroup && action.children) {
+      return (
+        <DropdownGroup
+          key={`group_${i}`}
+          label={action.title}
+          className={groupMenuStyle}
+          children={action.children.map((subaction, j) => {
+            const itemKey = `subaction_${i}_${j}`;
+
+            const item = (
+              <DropdownItem
+                key={itemKey}
+                isDisabled={subaction.isDisabled}
+                onClick={() => (subaction.action ? subaction.action(props.namespace) : undefined)}
+              >
+                {subaction.title}
+              </DropdownItem>
+            );
+
+            return subaction.isDisabled
+              ? renderDisabledDropdownOption(
+                  `tooltip_${itemKey}`,
+                  TooltipPosition.left,
+                  'User does not have enough permission for this action',
+                  item
+                )
+              : item;
+          })}
+        />
+      );
+    } else if (action.title && action.action) {
+      const item = (
+        <DropdownItem
+          key={`action_${i}`}
+          isDisabled={action.isDisabled}
+          data-test={action['data-test']}
+          onClick={() => (action.action ? action.action(props.namespace) : undefined)}
+        >
+          {action.title} {!!action.isExternal ? <ExternalLinkAltIcon /> : undefined}
+        </DropdownItem>
+      );
+
+      return action.isDisabled
+        ? renderDisabledDropdownOption(
+            `tooltip_action_${i}`,
+            TooltipPosition.left,
+            'User does not have enough permission for this action',
+            item
+          )
+        : item;
+    }
+
+    return undefined;
+  });
+
+  return (
+    <Dropdown
+      toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+        <MenuToggle
+          ref={toggleRef}
+          className={kebabToggleStyle}
+          aria-label="Actions"
+          variant="plain"
+          onClick={() => onKebabToggle(!isKebabOpen)}
+          isExpanded={isKebabOpen}
+        >
+          <KialiIcon.KebabToggle />
+        </MenuToggle>
+      )}
+      isOpen={isKebabOpen}
+      onOpenChange={(isOpen: boolean) => onKebabToggle(isOpen)}
+      popperProps={{ position: 'right' }}
+    >
+      <DropdownList>{namespaceActions}</DropdownList>
+    </Dropdown>
+  );
+};

@@ -287,6 +287,9 @@ DEFAULT_CRC_VIRTUAL_DISK_SIZE="31"
 # If true the OpenShift bundle will be downloaded when needed.
 DEFAULT_DOWNLOAD_BUNDLE="false"
 
+# Enables cluster monitoring in the CRC cluster
+DEFAULT_ENABLE_CLUSTER_MONITORING="false"
+
 # process command line args to override environment
 _CMD=""
 while [[ $# -gt 0 ]]; do
@@ -368,6 +371,10 @@ while [[ $# -gt 0 ]]; do
       DOWNLOAD_BUNDLE="$2"
       shift;shift
       ;;
+    -ecm|--enable-cluster-monitoring)
+      ENABLE_CLUSTER_MONITORING="$2"
+      shift;shift
+      ;;
     -p|--pull-secret-file)
       PULL_SECRET_FILE="$2"
       shift;shift
@@ -415,6 +422,10 @@ Valid options:
       If true, the OpenShift bundle image will be downloaded by this script if needed.
       You usually do not need to set this to true - crc itself will download the bundle if it is needed.
       Default: ${DEFAULT_DOWNLOAD_BUNDLE}
+      Used only for the 'start' command.
+  -ecm|--enable-cluster-monitoring (true|false)
+      If true, the cluster will have monitoring enabled.
+      Default: ${DEFAULT_ENABLE_CLUSTER_MONITORING}
       Used only for the 'start' command.
   -h|--help : this message
   -p|--pull-secret-file <filename>
@@ -482,6 +493,7 @@ CRC_KUBECONFIG="${CRC_ROOT_DIR}/machines/crc/kubeconfig"
 CRC_MACHINE_IMAGE="${CRC_ROOT_DIR}/machines/crc/crc"
 CRC_OC_BIN="${CRC_ROOT_DIR}/bin/oc/oc"
 DOWNLOAD_BUNDLE="${DOWNLOAD_BUNDLE:-${DEFAULT_DOWNLOAD_BUNDLE}}"
+ENABLE_CLUSTER_MONITORING="${ENABLE_CLUSTER_MONITORING:-${DEFAULT_ENABLE_CLUSTER_MONITORING}}"
 
 # VM configuration
 CRC_CPUS=${CRC_CPUS:-${DEFAULT_CRC_CPUS}}
@@ -538,6 +550,7 @@ debug "ENVIRONMENT:
   CRC_OC=$CRC_OC
   CRC_ROOT_DIR=$CRC_ROOT_DIR
   CRC_VIRTUAL_DISK_SIZE=$CRC_VIRTUAL_DISK_SIZE
+  ENABLE_CLUSTER_MONITORING=$ENABLE_CLUSTER_MONITORING
   OPENSHIFT_BIN_PATH=$OPENSHIFT_BIN_PATH
   "
 
@@ -628,6 +641,7 @@ if [ "$_CMD" = "start" ]; then
   ${CRC_COMMAND} config set cpus ${CRC_CPUS}
   ${CRC_COMMAND} config set disable-update-check true
   ${CRC_COMMAND} config set disk-size ${CRC_VIRTUAL_DISK_SIZE}
+  ${CRC_COMMAND} config set enable-cluster-monitoring ${ENABLE_CLUSTER_MONITORING}
   ${CRC_COMMAND} config set kubeadmin-password kiali
   ${CRC_COMMAND} config set memory $(expr ${CRC_MEMORY} '*' 1024)
   if [ ! -z "${PULL_SECRET_FILE}" ]; then

@@ -5,43 +5,44 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { Text, TextVariants, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Validation } from './Validation';
 
-interface Props {
-  id: string;
-  reconciledCondition?: StatusCondition;
+interface ValidationSummaryProps {
   errors: number;
-  warnings: number;
+  id: string;
   objectCount?: number;
+  reconciledCondition?: StatusCondition;
   style?: CSSProperties;
+  type: 'service' | 'istio';
+  warnings: number;
 }
 
 const tooltipListStyle = kialiStyle({
   textAlign: 'left',
   border: 0,
-  padding: '0 0 0 0',
-  margin: '0 0 0 0'
+  padding: 0,
+  margin: 0
 });
 
 const tooltipSentenceStyle = kialiStyle({
   textAlign: 'center',
   border: 0,
-  padding: '0 0 0 0',
-  margin: '0 0 0 0'
+  padding: 0,
+  margin: 0
 });
 
-export class ValidationSummary extends React.PureComponent<Props> {
-  getTypeMessage = (count: number, type: ValidationTypes): string => {
+export const ValidationSummary: React.FC<ValidationSummaryProps> = (props: ValidationSummaryProps) => {
+  const getTypeMessage = (count: number, type: ValidationTypes): string => {
     return count > 1 ? `${count} ${type}s found` : `${count} ${type} found`;
   };
 
-  severitySummary() {
+  const severitySummary = (): string[] => {
     const issuesMessages: string[] = [];
 
-    if (this.props.errors > 0) {
-      issuesMessages.push(this.getTypeMessage(this.props.errors, ValidationTypes.Error));
+    if (props.errors > 0) {
+      issuesMessages.push(getTypeMessage(props.errors, ValidationTypes.Error));
     }
 
-    if (this.props.warnings > 0) {
-      issuesMessages.push(this.getTypeMessage(this.props.warnings, ValidationTypes.Warning));
+    if (props.warnings > 0) {
+      issuesMessages.push(getTypeMessage(props.warnings, ValidationTypes.Warning));
     }
 
     if (issuesMessages.length === 0) {
@@ -49,77 +50,84 @@ export class ValidationSummary extends React.PureComponent<Props> {
     }
 
     return issuesMessages;
-  }
+  };
 
-  severity() {
+  const severity = (): ValidationTypes => {
     let severity = ValidationTypes.Correct;
-    if (this.props.errors > 0) {
+
+    if (props.errors > 0) {
       severity = ValidationTypes.Error;
-    } else if (this.props.warnings > 0) {
+    } else if (props.warnings > 0) {
       severity = ValidationTypes.Warning;
     }
 
     return severity;
-  }
+  };
 
-  tooltipNA() {
-    return <Text className={tooltipSentenceStyle}>No Istio config objects found</Text>;
-  }
+  let tooltipContent: React.ReactNode = undefined;
 
-  tooltipNoValidationAvailable() {
-    return <Text className={tooltipListStyle}>No Istio config validation available</Text>;
-  }
+  if (props.type === 'istio') {
+    const tooltipNA = <Text className={tooltipSentenceStyle}>No Istio config objects found</Text>;
 
-  tooltipSummary() {
-    return (
+    const tooltipNoValidationAvailable = <Text className={tooltipListStyle}>No Istio config validation available</Text>;
+
+    const tooltipSummary = (
       <>
         <Text style={{ textAlign: 'left', textEmphasis: 'strong' }} component={TextVariants.p}>
-          Istio config objects analyzed: {this.props.objectCount}
+          Istio config objects analyzed: {props.objectCount}
         </Text>
+
         <div className={tooltipListStyle}>
-          {this.severitySummary().map(cat => (
+          {severitySummary().map(cat => (
             <div key={cat}>{cat}</div>
           ))}
         </div>
-        {this.props.reconciledCondition?.status && (
+
+        {props.reconciledCondition?.status && (
           <Text style={{ textAlign: 'left', textEmphasis: 'strong' }} component={TextVariants.p}>
             The object is reconciled
           </Text>
         )}
       </>
     );
-  }
 
-  tooltipContent() {
-    if (this.props.objectCount !== undefined) {
-      if (this.props.objectCount === 0) {
-        return this.tooltipNA();
+    // Tooltip Content for istio config validation
+    if (props.objectCount !== undefined) {
+      if (props.objectCount === 0) {
+        tooltipContent = tooltipNA;
       } else {
-        return this.tooltipSummary();
+        tooltipContent = tooltipSummary;
       }
     } else {
-      return this.tooltipNoValidationAvailable();
+      tooltipContent = tooltipNoValidationAvailable;
     }
+  } else {
+    // Tooltip Content for service validation
+    tooltipContent = (
+      <>
+        <Text style={{ textAlign: 'left', textEmphasis: 'strong' }} component={TextVariants.p}>
+          Service validation result
+        </Text>
+
+        <div className={tooltipListStyle}>
+          {severitySummary().map(cat => (
+            <div key={cat}>{cat}</div>
+          ))}
+        </div>
+      </>
+    );
   }
 
-  tooltipBase() {
-    return this.props.objectCount === undefined || this.props.objectCount > 0 ? (
-      <Validation iconStyle={this.props.style} severity={this.severity()} />
+  const tooltipBase =
+    props.objectCount === undefined || props.objectCount > 0 ? (
+      <Validation severity={severity()} />
     ) : (
-      <div style={{ display: 'inline-block', marginLeft: '5px' }}>N/A</div>
+      <div style={{ display: 'inline-block' }}>N/A</div>
     );
-  }
 
-  render() {
-    return (
-      <Tooltip
-        aria-label={'Validations list'}
-        position={TooltipPosition.auto}
-        enableFlip={true}
-        content={this.tooltipContent()}
-      >
-        {this.tooltipBase()}
-      </Tooltip>
-    );
-  }
-}
+  return (
+    <Tooltip aria-label="Validations list" position={TooltipPosition.auto} enableFlip={true} content={tooltipContent}>
+      {tooltipBase}
+    </Tooltip>
+  );
+};

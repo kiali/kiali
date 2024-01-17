@@ -1,15 +1,15 @@
-import React, { CSSProperties } from 'react';
+import React from 'react';
 import {
   CheckCircleIcon,
   ExclamationCircleIcon,
   ExclamationTriangleIcon,
   InfoCircleIcon
 } from '@patternfly/react-icons';
-import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import { ValidationTypes } from '../../types/IstioObjects';
 import { Text, TextVariants } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
+import { IconProps, createIcon } from 'config/KialiIcon';
 
 const validationStyle = kialiStyle({
   textAlign: 'left',
@@ -20,97 +20,64 @@ const validationStyle = kialiStyle({
   }
 });
 
-type Props = ValidationDescription & {
-  messageColor?: boolean;
-  size?: string;
-  textStyle?: React.CSSProperties;
-  iconStyle?: React.CSSProperties;
-};
-
-export type ValidationDescription = {
-  severity: ValidationTypes;
+type ValidationProps = {
   message?: string;
+  messageColor?: boolean;
+  severity: ValidationTypes;
 };
 
-export type ValidationType = {
-  name: string;
-  color: string;
-  icon: React.ComponentClass<SVGIconProps>;
-};
-
-const ErrorValidation: ValidationType = {
-  name: 'Not Valid',
+const ErrorValidation: IconProps = {
   color: PFColors.Danger,
   icon: ExclamationCircleIcon
 };
 
-const WarningValidation: ValidationType = {
-  name: 'Warning',
+const WarningValidation: IconProps = {
   color: PFColors.Warning,
   icon: ExclamationTriangleIcon
 };
 
-const InfoValidation: ValidationType = {
-  name: 'Info',
+const InfoValidation: IconProps = {
   color: PFColors.Info,
   icon: InfoCircleIcon
 };
 
-const CorrectValidation: ValidationType = {
-  name: 'Valid',
+const CorrectValidation: IconProps = {
   color: PFColors.Success,
-  icon: CheckCircleIcon
+  icon: CheckCircleIcon,
+  dataTest: 'icon-correct-validation'
 };
 
-export const severityToValidation: { [severity: string]: ValidationType } = {
-  error: ErrorValidation,
-  warning: WarningValidation,
+const severityToValidation: { [severity: string]: IconProps } = {
   correct: CorrectValidation,
-  info: InfoValidation
+  error: ErrorValidation,
+  info: InfoValidation,
+  warning: WarningValidation
 };
 
-export class Validation extends React.Component<Props> {
-  validation() {
-    return severityToValidation[this.props.severity];
-  }
+export const Validation: React.FC<ValidationProps> = (props: ValidationProps) => {
+  const validation = severityToValidation[props.severity];
+  const severityColor = { color: validation.color };
+  const hasMessage = !!props.message;
 
-  severityColor() {
-    return { color: this.validation().color };
-  }
+  // Set styles
+  const textStyle = props.messageColor ? severityColor : {};
+  const iconStyle = kialiStyle(severityColor);
 
-  textStyle() {
-    const colorMessage = this.props.messageColor || false;
-    const textStyle = this.props.textStyle || {};
-    if (colorMessage) {
-      Object.assign(textStyle, this.severityColor());
-    }
-    return textStyle;
-  }
+  const iconProps: IconProps = {
+    className: iconStyle,
+    icon: validation.icon,
+    dataTest: validation.dataTest
+  };
 
-  iconStyle() {
-    const iconStyle = this.props.iconStyle ? { ...this.props.iconStyle } : {};
-    const defaultStyle: CSSProperties = {
-      verticalAlign: '-0.125em'
-    };
-    Object.assign(iconStyle, this.severityColor());
-    Object.assign(iconStyle, defaultStyle);
-    return iconStyle;
+  if (hasMessage) {
+    return (
+      <div className={validationStyle}>
+        <Text component={TextVariants.p} style={textStyle}>
+          {createIcon(iconProps)} {props.message}
+        </Text>
+      </div>
+    );
+  } else {
+    return <>{createIcon(iconProps)}</>;
   }
-
-  render() {
-    const validation = this.validation();
-    const IconComponent = validation.icon;
-    const hasMessage = !!this.props.message;
-    if (hasMessage) {
-      return (
-        <div className={validationStyle}>
-          <Text component={TextVariants.p} style={this.textStyle()}>
-            <IconComponent style={this.iconStyle()} /> {this.props.message}
-          </Text>
-        </div>
-      );
-    } else {
-      return <IconComponent style={this.iconStyle()} />;
-    }
-  }
-}
+};

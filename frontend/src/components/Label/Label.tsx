@@ -14,7 +14,7 @@ const labelStyle = kialiStyle({
   display: 'block',
   float: 'left',
   fontSize: 'var(--kiali-global--font-size)',
-  margin: '0 2px 2px 0',
+  margin: '0 0.25rem 0.25rem 0',
   maxWidth: '100%'
 });
 
@@ -27,7 +27,14 @@ export const Label = (props: Props) => {
   }
 
   return (
-    <PfLabel className={labelStyle} style={props.style} isCompact={true} onClick={props.onClick}>
+    <PfLabel
+      className={labelStyle}
+      tooltipPosition="top"
+      style={props.style}
+      isCompact={true}
+      onClick={props.onClick}
+      textMaxWidth="500px"
+    >
       {label}
     </PfLabel>
   );

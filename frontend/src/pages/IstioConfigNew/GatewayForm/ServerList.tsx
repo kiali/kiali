@@ -1,44 +1,39 @@
 import * as React from 'react';
 import { Server, ServerForm } from '../../../types/IstioObjects';
-import { cellWidth, Tbody, Td, Th, Thead, Tr, Table } from '@patternfly/react-table';
+import { Tbody, Td, Th, Thead, Tr, Table, ThProps } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../components/Pf/PfColors';
 import { Button, ButtonVariant } from '@patternfly/react-core';
-import { PlusCircleIcon } from '@patternfly/react-icons';
 import { ServerBuilder, protocols } from './ServerBuilder';
+import { KialiIcon } from 'config/KialiIcon';
 
-type Props = {
-  serverList: Server[];
-  serverForm: ServerForm[];
+type ServerListProps = {
   onChange: (server: Server[], serverForm: ServerForm[]) => void;
+  serverForm: ServerForm[];
+  serverList: Server[];
 };
 
 const noServerStyle = kialiStyle({
-  marginTop: 10,
   color: PFColors.Red100,
-  textAlign: 'center',
-  width: '100%'
+  textAlign: 'center'
 });
 
-const headerCells = [
+const columns: ThProps[] = [
   {
-    title: 'Servers',
-    transforms: [cellWidth(100) as any],
-    props: {}
+    title: 'Servers'
   },
   {
-    title: '',
-    props: {}
+    title: ''
   }
 ];
 
 const addServerStyle = kialiStyle({
-  marginLeft: 0,
-  paddingLeft: 0
+  marginLeft: '0.5rem',
+  marginTop: '0.25rem'
 });
 
-export class ServerList extends React.Component<Props> {
-  onAddServer = () => {
+export const ServerList: React.FC<ServerListProps> = (props: ServerListProps) => {
+  const onAddServer = (): void => {
     const newServerForm: ServerForm = {
       hosts: [],
       number: '',
@@ -49,7 +44,8 @@ export class ServerList extends React.Component<Props> {
       tlsPrivateKey: '',
       tlsCaCertificate: ''
     };
-    const sf = this.props.serverForm;
+
+    const sf = props.serverForm;
     sf.push(newServerForm);
 
     const newServer: Server = {
@@ -60,36 +56,38 @@ export class ServerList extends React.Component<Props> {
         protocol: 'HTTP'
       }
     };
-    const s = this.props.serverList;
+
+    const s = props.serverList;
     s.push(newServer);
 
-    this.setState({}, () => this.props.onChange(s, sf));
+    props.onChange(s, sf);
   };
 
-  onRemoveServer = (index: number) => {
-    const serverList = this.props.serverList;
+  const onRemoveServer = (index: number): void => {
+    const serverList = props.serverList;
     serverList.splice(index, 1);
 
-    const serverForm = this.props.serverForm;
+    const serverForm = props.serverForm;
     serverForm.splice(index, 1);
 
-    this.setState({}, () => this.props.onChange(serverList, serverForm));
+    props.onChange(serverList, serverForm);
   };
 
-  onChange = (serverForm: ServerForm, i: number) => {
-    const serversForm = this.props.serverForm;
+  const onChange = (serverForm: ServerForm, i: number): void => {
+    const serversForm = props.serverForm;
     serversForm[i] = serverForm;
 
-    const servers = this.props.serverList;
-    const newServer = this.createNewServer(serverForm);
+    const servers = props.serverList;
+    const newServer = createNewServer(serverForm);
+
     if (typeof newServer !== 'undefined') {
       servers[i] = newServer;
     }
 
-    this.props.onChange(servers, serversForm);
+    props.onChange(servers, serversForm);
   };
 
-  createNewServer = (serverForm: ServerForm) => {
+  const createNewServer = (serverForm: ServerForm): Server | undefined => {
     if (serverForm.hosts.length === 0) return;
     if (serverForm.number.length === 0 || isNaN(Number(serverForm.number))) return;
     if (serverForm.name.length === 0) return;
@@ -107,46 +105,54 @@ export class ServerList extends React.Component<Props> {
             }
           : undefined
     };
+
     return server;
   };
 
-  render() {
-    return (
-      <>
-        <Table aria-label="Server List">
-          <Thead>
-            <Tr>
-              {headerCells.map(e => (
-                <Th>{e.title}</Th>
-              ))}
-            </Tr>
-          </Thead>
-          <Tbody>
-            {this.props.serverForm.map((server, i) => (
-              <ServerBuilder
-                server={server}
-                onRemoveServer={this.onRemoveServer}
-                index={i}
-                onChange={this.onChange}
-              ></ServerBuilder>
+  return (
+    <>
+      <Table aria-label="Server List">
+        <Thead>
+          <Tr>
+            {columns.map((column, index) => (
+              <Th key={`column_${index}`} dataLabel={column.title}>
+                {column.title}
+              </Th>
             ))}
+          </Tr>
+        </Thead>
+        <Tbody>
+          {props.serverForm.length > 0 ? (
+            <>
+              {props.serverForm.map((server, index) => (
+                <ServerBuilder
+                  key={`server_builder_${index}`}
+                  server={server}
+                  onRemoveServer={onRemoveServer}
+                  index={index}
+                  onChange={onChange}
+                ></ServerBuilder>
+              ))}
+            </>
+          ) : (
             <Tr>
-              <Td>
-                <Button
-                  name="addServer"
-                  variant={ButtonVariant.link}
-                  icon={<PlusCircleIcon />}
-                  onClick={this.onAddServer}
-                  className={addServerStyle}
-                >
-                  Add Server to Servers List
-                </Button>
+              <Td colSpan={columns.length}>
+                <div className={noServerStyle}>No Servers defined</div>
               </Td>
             </Tr>
-          </Tbody>
-        </Table>
-        {this.props.serverList.length === 0 && <div className={noServerStyle}>No Servers defined</div>}
-      </>
-    );
-  }
-}
+          )}
+        </Tbody>
+      </Table>
+
+      <Button
+        name="addServer"
+        variant={ButtonVariant.link}
+        icon={<KialiIcon.AddMore />}
+        onClick={onAddServer}
+        className={addServerStyle}
+      >
+        Add Server to Servers List
+      </Button>
+    </>
+  );
+};

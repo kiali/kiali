@@ -1,119 +1,108 @@
 import * as React from 'react';
-import { Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { Select, SelectOption } from '@patternfly/react-core/deprecated';
+import {
+  MenuToggle,
+  MenuToggleElement,
+  Select,
+  SelectList,
+  SelectOption,
+  Tooltip,
+  TooltipPosition
+} from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 
-const widthAuto = kialiStyle({
-  width: 'auto'
-});
-
 const dropdownTitle = kialiStyle({
-  fontSize: 'var(--pf-v5-global--FontSize--md)', // valueOf --pf-v5-c-select__toggle--FontSize
-  // @ts-ignore
-  fontWeight: 'var(--pf-v5-global--FontSize--normal)', // valueOf --pf-v5-c-select__toggle--FontWeigt
   marginRight: '10px',
-  marginTop: '6px'
+  alignSelf: 'center'
 });
 
 type ToolbarDropdownProps = {
+  className?: string;
   disabled?: boolean;
   id: string;
-  initialLabel?: string;
-  initialValue?: number | string;
   label?: string;
-  menuAppendTo?: HTMLElement | (() => HTMLElement) | 'parent' | 'inline';
   nameDropdown?: string;
   options: object;
   tooltip?: string;
   tooltipPosition?: TooltipPosition;
   value?: number | string;
-  useName?: boolean;
-  classNameSelect?: string;
-  classNameToolbar?: string;
 
   handleSelect: (value: string) => void;
   onToggle?: (isOpen: boolean) => void;
 };
 
-type ToolbarDropdownState = {
-  currentValue?: number | string;
-  currentName?: string;
-  isOpen: boolean;
-};
+export const ToolbarDropdown: React.FC<ToolbarDropdownProps> = (props: ToolbarDropdownProps) => {
+  const [isOpen, setIsOpen] = React.useState<boolean>(false);
 
-export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, ToolbarDropdownState> {
-  constructor(props: ToolbarDropdownProps) {
-    super(props);
-    this.state = {
-      currentValue: props.value || props.initialValue,
-      currentName: props.label || props.initialLabel,
-      isOpen: false
-    };
-  }
-
-  onKeyChanged = (_, selection, isPlaceholder) => {
-    if (!isPlaceholder) {
-      this.setState({ currentValue: selection, currentName: this.props.options[selection] });
-      const nameOrKey = this.props.useName ? this.props.options[selection] : selection;
-      this.props.handleSelect(nameOrKey);
+  const onKeyChanged = (_event?: React.MouseEvent<Element, MouseEvent>, selection?: string | number) => {
+    if (selection) {
+      props.handleSelect(String(selection));
     }
-    this.setState({ isOpen: false });
+
+    setIsOpen(false);
   };
 
-  onToggle = (isOpen: boolean) => {
-    this.setState({ isOpen: isOpen });
-    this.props.onToggle && this.props.onToggle(isOpen);
+  const onToggleClick = () => {
+    setIsOpen(!isOpen);
+    props.onToggle && props.onToggle(isOpen);
   };
 
-  render() {
-    const { isOpen, currentName, currentValue } = this.state;
-    const dropdownButton = (
-      <Select
-        onSelect={this.onKeyChanged}
-        aria-label={this.props.id}
-        selections={this.props.value || currentValue}
-        placeholderText={this.props.label || currentName}
-        id={this.props.id}
-        data-test={this.props.id}
-        toggleId={this.props.id + '-toggle'}
-        onToggle={(_event, isOpen: boolean) => this.onToggle(isOpen)}
-        isOpen={isOpen}
-        aria-labelledby={this.props.id}
-        isDisabled={this.props.disabled}
-        menuAppendTo={this.props.menuAppendTo}
-        className={this.props.classNameSelect ? `${this.props.classNameSelect} ${widthAuto}` : widthAuto}
-      >
-        {Object.keys(this.props.options).map(key => {
+  const toggle = (toggleRef: React.Ref<MenuToggleElement>) => (
+    <MenuToggle
+      id={`${props.id}-toggle`}
+      ref={toggleRef}
+      onClick={onToggleClick}
+      isExpanded={isOpen}
+      isDisabled={props.disabled}
+      className={props.className}
+    >
+      {props.label}
+    </MenuToggle>
+  );
+
+  const dropdownButton = (
+    <Select
+      toggle={toggle}
+      onSelect={onKeyChanged}
+      aria-label={props.id}
+      selected={props.value}
+      id={props.id}
+      data-test={props.id}
+      onOpenChange={isOpen => setIsOpen(isOpen)}
+      isOpen={isOpen}
+      aria-labelledby={props.id}
+    >
+      <SelectList>
+        {Object.keys(props.options).map(key => {
           return (
             <SelectOption
               id={key}
               key={key}
-              isDisabled={this.props.disabled}
-              isSelected={key === String(this.props.value || this.state.currentValue)}
+              isDisabled={props.disabled}
+              isSelected={key === String(props.value)}
               value={`${key}`}
             >
-              {this.props.options[key]}
+              {props.options[key]}
             </SelectOption>
           );
         })}
-      </Select>
-    );
-    return (
-      <>
-        {this.props.nameDropdown && <span className={dropdownTitle}>{this.props.nameDropdown}</span>}
-        {this.props.tooltip ? (
-          <Tooltip
-            key={'ot-' + this.props.id}
-            entryDelay={1000}
-            position={this.props.tooltipPosition ? this.props.tooltipPosition : TooltipPosition.auto}
-            content={<>{this.props.tooltip}</>}
-          >
-            {dropdownButton}
-          </Tooltip>
-        ) : (
-          dropdownButton
-        )}
-      </>
-    );
-  }
-}
+      </SelectList>
+    </Select>
+  );
+  return (
+    <>
+      {props.nameDropdown && <span className={dropdownTitle}>{props.nameDropdown}</span>}
+      {props.tooltip ? (
+        <Tooltip
+          key={'ot-' + props.id}
+          entryDelay={1000}
+          position={props.tooltipPosition ? props.tooltipPosition : TooltipPosition.auto}
+          content={<>{props.tooltip}</>}
+        >
+          {dropdownButton}
+        </Tooltip>
+      ) : (
+        dropdownButton
+      )}
+    </>
+  );
+};

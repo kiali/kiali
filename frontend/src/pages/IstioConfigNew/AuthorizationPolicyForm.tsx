@@ -7,7 +7,7 @@ import {
   HelperText,
   HelperTextItem,
   Switch,
-  TextInputBase as TextInput
+  TextInput
 } from '@patternfly/react-core';
 import { RuleBuilder, Rule } from './AuthorizationPolicyForm/RuleBuilder';
 import { RuleList } from './AuthorizationPolicyForm/RuleList';
@@ -19,12 +19,12 @@ type Props = {
 };
 
 export type AuthorizationPolicyState = {
-  workloadSelector: string;
   action: string;
-  rules: Rule[];
+  addWorkloadSelector: boolean;
   // Used to identify DENY_ALL, ALLOW_ALL or RULES
   policy: string;
-  addWorkloadSelector: boolean;
+  rules: Rule[];
+  workloadSelector: string;
   workloadSelectorValid: boolean;
 };
 
@@ -37,8 +37,8 @@ export const ALLOW = 'ALLOW';
 export const DENY = 'DENY';
 
 const HELPER_TEXT = {
-  DENY_ALL: 'Denies all requests to workloads in given namespace(s)',
   ALLOW_ALL: 'Allows all requests to workloads in given namespace(s)',
+  DENY_ALL: 'Denies all requests to workloads in given namespace(s)',
   RULES: 'Builds an Authorization Policy based on Rules'
 };
 
@@ -78,7 +78,7 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
     });
   }
 
-  onRulesFormChange = (_event, value) => {
+  onRulesFormChange = (_event: React.FormEvent, value: string): void => {
     this.setState(
       {
         policy: value
@@ -87,7 +87,7 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
     );
   };
 
-  onChangeWorkloadSelector = (_event, _) => {
+  onChangeWorkloadSelector = (_event: React.FormEvent, _value: boolean): void => {
     this.setState(
       prevState => {
         return {
@@ -98,7 +98,7 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
     );
   };
 
-  addWorkloadLabels = (_event, value: string) => {
+  addWorkloadLabels = (_event: React.FormEvent, value: string): void => {
     if (value.length === 0) {
       this.setState(
         {
@@ -109,26 +109,33 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
       );
       return;
     }
+
     value = value.trim();
     const labels: string[] = value.split(',');
     let isValid = true;
+
     // Some smoke validation rules for the labels
     for (let i = 0; i < labels.length; i++) {
       const label = labels[i];
+
       if (label.indexOf('=') < 0) {
         isValid = false;
         break;
       }
+
       const splitLabel: string[] = label.split('=');
+
       if (splitLabel.length !== 2) {
         isValid = false;
         break;
       }
+
       if (splitLabel[0].trim().length === 0 || splitLabel[1].trim().length === 0) {
         isValid = false;
         break;
       }
     }
+
     this.setState(
       {
         workloadSelectorValid: isValid,
@@ -138,7 +145,7 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
     );
   };
 
-  onActionChange = (_event, value) => {
+  onActionChange = (_event: React.FormEvent, value: string): void => {
     this.setState(
       {
         action: value
@@ -147,7 +154,7 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
     );
   };
 
-  onAddRule = (rule: Rule) => {
+  onAddRule = (rule: Rule): void => {
     this.setState(
       prevState => {
         prevState.rules.push(rule);
@@ -159,7 +166,7 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
     );
   };
 
-  onRemoveRule = (index: number) => {
+  onRemoveRule = (index: number): void => {
     this.setState(
       prevState => {
         prevState.rules.splice(index, 1);
@@ -190,17 +197,19 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
             </HelperText>
           </FormHelperText>
         </FormGroup>
+
         {this.state.policy === RULES && (
           <FormGroup label="Workload Selector" fieldId="workloadSelectorSwitch">
             <Switch
               id="workloadSelectorSwitch"
-              label={' '}
-              labelOff={' '}
+              label=" "
+              labelOff=" "
               isChecked={this.state.addWorkloadSelector}
               onChange={this.onChangeWorkloadSelector}
             />
           </FormGroup>
         )}
+
         {this.state.addWorkloadSelector && (
           <FormGroup fieldId="workloadLabels" label="Labels">
             <TextInput
@@ -211,6 +220,7 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
               onChange={this.addWorkloadLabels}
               validated={isValid(this.state.workloadSelectorValid)}
             />
+
             <FormHelperText>
               <HelperText>
                 <HelperTextItem>
@@ -222,6 +232,7 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
             </FormHelperText>
           </FormGroup>
         )}
+
         {this.state.policy === RULES && (
           <FormGroup label="Action" fieldId="action-form">
             <FormSelect value={this.state.action} onChange={this.onActionChange} id="action-form" name="action-form">
@@ -231,7 +242,9 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
             </FormSelect>
           </FormGroup>
         )}
+
         {this.state.policy === RULES && <RuleBuilder onAddRule={this.onAddRule} />}
+
         {this.state.policy === RULES && (
           <FormGroup label="Rule List" fieldId="apRuleList">
             <RuleList action={this.state.action} ruleList={this.state.rules} onRemoveRule={this.onRemoveRule} />

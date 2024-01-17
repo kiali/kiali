@@ -1,6 +1,4 @@
 import deepFreeze from 'deep-freeze';
-import { cellWidth, sortable, textCenter } from '@patternfly/react-table';
-
 import { AppListItem } from '../../types/AppList';
 import { WorkloadListItem } from '../../types/Workload';
 import { ServiceListItem } from '../../types/ServiceList';
@@ -8,7 +6,7 @@ import { IstioConfigItem } from '../../types/IstioConfigList';
 import * as Renderers from './Renderers';
 import { Health } from '../../types/Health';
 import { isIstioNamespace } from 'config/ServerConfig';
-import { NamespaceInfo } from '../../pages/Overview/NamespaceInfo';
+import { NamespaceInfo } from '../../types/NamespaceInfo';
 import * as React from 'react';
 import { StatefulFilters } from '../Filters/StatefulFilters';
 import { PFBadges, PFBadgeType } from '../../components/Pf/PfBadges';
@@ -38,216 +36,232 @@ export const noAmbientLabels = (r: SortResource): boolean => {
   return !isIstioNamespace(r.namespace) && !r.istioAmbient;
 };
 
-type ResourceType<R extends RenderResource> = {
+export type ResourceType<R extends RenderResource> = {
   name: string;
-  column: string;
   param?: string;
-  transforms?: any;
-  cellTransforms?: any;
-  renderer: Renderer<R>;
+  renderer?: Renderer<R>;
+  sortable: boolean;
+  textCenter?: boolean;
+  title: string;
+  width?: 10 | 15 | 20 | 25 | 30 | 35 | 40 | 45 | 50 | 60 | 70 | 80 | 90 | 100;
 };
 
 // NamespaceInfo
 const tlsStatus: ResourceType<NamespaceInfo> = {
   name: 'TLS',
   param: 'tls',
-  column: 'TLS',
-  transforms: [sortable, cellWidth(10)],
+  title: 'TLS',
+  sortable: true,
+  width: 10,
   renderer: Renderers.tls
 };
 
 const istioConfiguration: ResourceType<NamespaceInfo> = {
   name: 'IstioConfiguration',
   param: 'ic',
-  column: 'Config',
-  transforms: [sortable, cellWidth(10)],
+  title: 'Config',
+  sortable: true,
+  width: 10,
   renderer: Renderers.istioConfig
 };
 
 const status: ResourceType<NamespaceInfo> = {
   name: 'Status',
   param: 'h',
-  column: 'Status',
-  transforms: [sortable, cellWidth(50)],
-  cellTransforms: [textCenter],
+  title: 'Status',
+  sortable: true,
+  width: 50,
+  textCenter: true,
   renderer: Renderers.status
 };
 
 const nsItem: ResourceType<NamespaceInfo> = {
   name: 'Namespace',
   param: 'ns',
-  column: 'Namespace',
-  transforms: [sortable],
+  title: 'Namespace',
+  sortable: true,
   renderer: Renderers.nsItem
 };
-// General
 
+// General
 const item: ResourceType<TResource> = {
   name: 'Item',
   param: 'wn',
-  column: 'Name',
-  transforms: [sortable, cellWidth(30)],
+  title: 'Name',
+  sortable: true,
+  width: 30,
   renderer: Renderers.item
 };
 
 const serviceItem: ResourceType<ServiceListItem> = {
   name: 'Item',
   param: 'sn',
-  column: 'Name',
-  transforms: [sortable, cellWidth(30)],
+  title: 'Name',
+  sortable: true,
+  width: 30,
   renderer: Renderers.item
 };
 
 const istioItem: ResourceType<IstioConfigItem> = {
   name: 'Item',
   param: 'in',
-  column: 'Name',
-  transforms: [sortable],
+  title: 'Name',
+  sortable: true,
   renderer: Renderers.item
 };
 
 const cluster: ResourceType<TResource> = {
   name: 'Cluster',
   param: 'cl',
-  column: 'Cluster',
-  transforms: [sortable, cellWidth(15)],
+  title: 'Cluster',
+  sortable: true,
+  width: 15,
   renderer: Renderers.cluster
 };
 
 const namespace: ResourceType<TResource> = {
   name: 'Namespace',
   param: 'ns',
-  column: 'Namespace',
-  transforms: [sortable, cellWidth(20)],
+  title: 'Namespace',
+  sortable: true,
+  width: 20,
   renderer: Renderers.namespace
 };
 
 const labels: ResourceType<RenderResource> = {
   name: 'Labels',
   param: 'lb',
-  column: 'Labels',
-  transforms: [cellWidth(20)],
+  title: 'Labels',
+  sortable: false,
+  width: 20,
   renderer: Renderers.labels
 };
 
 const health: ResourceType<TResource> = {
   name: 'Health',
   param: 'he',
-  column: 'Health',
-  transforms: [sortable, cellWidth(15)],
+  title: 'Health',
+  sortable: true,
+  width: 15,
   renderer: Renderers.health
 };
 
 const details: ResourceType<AppListItem | WorkloadListItem | ServiceListItem> = {
   name: 'Details',
   param: 'is',
-  column: 'Details',
-  transforms: [sortable, cellWidth(15)],
+  title: 'Details',
+  sortable: true,
+  width: 15,
   renderer: Renderers.details
 };
 
 const serviceConfiguration: ResourceType<ServiceListItem> = {
   name: 'Configuration',
   param: 'cv',
-  column: 'Configuration',
-  transforms: [sortable, cellWidth(20)],
+  title: 'Configuration',
+  sortable: true,
+  width: 20,
   renderer: Renderers.serviceConfiguration
 };
 
 const istioObjectConfiguration: ResourceType<IstioConfigItem> = {
   name: 'Configuration',
   param: 'cv',
-  column: 'Configuration',
-  transforms: [sortable, cellWidth(20)],
+  title: 'Configuration',
+  sortable: true,
+  width: 20,
   renderer: Renderers.istioConfiguration
 };
 
 const workloadType: ResourceType<WorkloadListItem> = {
   name: 'WorkloadType',
   param: 'wt',
-  column: 'Type',
-  transforms: [sortable],
+  title: 'Type',
+  sortable: true,
   renderer: Renderers.workloadType
 };
 
 const istioType: ResourceType<IstioConfigItem> = {
   name: 'IstioType',
   param: 'it',
-  column: 'Type',
-  transforms: [sortable],
+  title: 'Type',
+  sortable: true,
   renderer: Renderers.istioType
 };
 
-type istioConfigType = {
+type IstioConfigType = {
+  badge: PFBadgeType;
   name: string;
   url: string;
-  badge: PFBadgeType;
 };
 
-export const IstioTypes = {
-  gateway: { name: 'Gateway', url: 'gateways', badge: PFBadges.Gateway } as istioConfigType,
-  httproute: { name: 'HTTPRoute', url: 'k8shttproutes', badge: PFBadges.HTTPRoute } as istioConfigType,
-  k8sgateway: { name: 'Gateway (K8s)', url: 'k8sgateways', badge: PFBadges.K8sGateway } as istioConfigType,
-  k8shttproute: { name: 'HTTPRoute (K8s)', url: 'k8shttproutes', badge: PFBadges.K8sHTTPRoute } as istioConfigType,
-  virtualservice: { name: 'VirtualService', url: 'virtualservices', badge: PFBadges.VirtualService } as istioConfigType,
-  destinationrule: {
-    name: 'DestinationRule',
-    url: 'destinationrules',
-    badge: PFBadges.DestinationRule
-  } as istioConfigType,
-  serviceentry: { name: 'ServiceEntry', url: 'serviceentries', badge: PFBadges.ServiceEntry } as istioConfigType,
-  rule: { name: 'Rule', url: 'rules', badge: PFBadges.Rule } as istioConfigType,
-  adapter: { name: 'Adapter', url: 'adapters', badge: PFBadges.Adapter } as istioConfigType,
-  template: { name: 'Template', url: 'templates', badge: PFBadges.Template } as istioConfigType,
-  instance: { name: 'Instance', url: 'instances', badge: PFBadges.Instance } as istioConfigType,
-  handler: { name: 'Handler', url: 'handlers', badge: PFBadges.Handler } as istioConfigType,
-  policy: { name: 'Policy', url: 'policies', badge: PFBadges.Policy } as istioConfigType,
-  meshpolicy: { name: 'MeshPolicy', url: 'meshpolicies', badge: PFBadges.MeshPolicy } as istioConfigType,
-  clusterrbacconfig: {
-    name: 'ClusterRbacConfig',
-    url: 'clusterrbacconfigs',
-    badge: PFBadges.ClusterRBACConfig
-  } as istioConfigType,
-  rbacconfig: { name: 'RbacConfig', url: 'rbacconfigs', badge: PFBadges.RBACConfig } as istioConfigType,
-  authorizationpolicy: {
-    name: 'AuthorizationPolicy',
-    url: 'authorizationpolicies',
-    badge: PFBadges.AuthorizationPolicy
-  } as istioConfigType,
-  sidecar: { name: 'Sidecar', url: 'sidecars', badge: PFBadges.Sidecar } as istioConfigType,
-  servicerole: { name: 'ServiceRole', url: 'serviceroles', icon: PFBadges.ServiceRole },
-  servicerolebinding: {
-    name: 'ServiceRoleBinding',
-    url: 'servicerolebindings',
-    badge: PFBadges.ServiceRoleBinding
-  } as istioConfigType,
-  peerauthentication: {
-    name: 'PeerAuthentication',
-    url: 'peerauthentications',
-    badge: PFBadges.PeerAuthentication
-  } as istioConfigType,
-  requestauthentication: {
-    name: 'RequestAuthentication',
-    url: 'requestauthentications',
-    badge: PFBadges.RequestAuthentication
-  } as istioConfigType,
-  workloadentry: { name: 'WorkloadEntry', url: 'workloadentries', badge: PFBadges.WorkloadEntry } as istioConfigType,
-  workloadgroup: { name: 'WorkloadGroup', url: 'workloadgroups', badge: PFBadges.WorkloadGroup } as istioConfigType,
-  envoyfilter: { name: 'EnvoyFilter', url: 'envoyfilters', badge: PFBadges.EnvoyFilter } as istioConfigType,
-  wasmplugin: { name: 'WasmPlugin', url: 'wasmplugins', badge: PFBadges.WasmPlugin } as istioConfigType,
-  telemetry: { name: 'Telemetry', url: 'telemetries', badge: PFBadges.Telemetry } as istioConfigType,
+export const IstioTypes: { [type: string]: IstioConfigType } = {
+  adapter: { name: 'Adapter', url: 'adapters', badge: PFBadges.Adapter },
   attributemanifest: {
     name: 'AttributeManifest',
     url: 'attributemanifests',
     badge: PFBadges.AttributeManifest
-  } as istioConfigType
+  },
+  authorizationpolicy: {
+    name: 'AuthorizationPolicy',
+    url: 'authorizationpolicies',
+    badge: PFBadges.AuthorizationPolicy
+  },
+  clusterrbacconfig: {
+    name: 'ClusterRbacConfig',
+    url: 'clusterrbacconfigs',
+    badge: PFBadges.ClusterRBACConfig
+  },
+  destinationrule: {
+    name: 'DestinationRule',
+    url: 'destinationrules',
+    badge: PFBadges.DestinationRule
+  },
+  envoyfilter: { name: 'EnvoyFilter', url: 'envoyfilters', badge: PFBadges.EnvoyFilter },
+  gateway: { name: 'Gateway', url: 'gateways', badge: PFBadges.Gateway },
+  handler: { name: 'Handler', url: 'handlers', badge: PFBadges.Handler },
+  httproute: { name: 'HTTPRoute', url: 'k8shttproutes', badge: PFBadges.HTTPRoute },
+  instance: { name: 'Instance', url: 'instances', badge: PFBadges.Instance },
+  k8sgateway: { name: 'Gateway (K8s)', url: 'k8sgateways', badge: PFBadges.K8sGateway },
+  k8shttproute: { name: 'HTTPRoute (K8s)', url: 'k8shttproutes', badge: PFBadges.K8sHTTPRoute },
+  k8sreferencegrant: { name: 'ReferenceGrant (K8s)', url: 'k8sreferencegrants', badge: PFBadges.K8sReferenceGrant },
+  meshpolicy: { name: 'MeshPolicy', url: 'meshpolicies', badge: PFBadges.MeshPolicy },
+  peerauthentication: {
+    name: 'PeerAuthentication',
+    url: 'peerauthentications',
+    badge: PFBadges.PeerAuthentication
+  },
+  policy: { name: 'Policy', url: 'policies', badge: PFBadges.Policy },
+  rbacconfig: { name: 'RbacConfig', url: 'rbacconfigs', badge: PFBadges.RBACConfig },
+  requestauthentication: {
+    name: 'RequestAuthentication',
+    url: 'requestauthentications',
+    badge: PFBadges.RequestAuthentication
+  },
+  // TODO should be merged with k8sreferencegrant
+  referencegrant: { name: 'ReferenceGrant (K8s)', url: 'k8sreferencegrants', badge: PFBadges.K8sReferenceGrant },
+  rule: { name: 'Rule', url: 'rules', badge: PFBadges.Rule },
+  serviceentry: { name: 'ServiceEntry', url: 'serviceentries', badge: PFBadges.ServiceEntry },
+  servicerole: { name: 'ServiceRole', url: 'serviceroles', badge: PFBadges.ServiceRole },
+  servicerolebinding: {
+    name: 'ServiceRoleBinding',
+    url: 'servicerolebindings',
+    badge: PFBadges.ServiceRoleBinding
+  },
+  sidecar: { name: 'Sidecar', url: 'sidecars', badge: PFBadges.Sidecar },
+  telemetry: { name: 'Telemetry', url: 'telemetries', badge: PFBadges.Telemetry },
+  template: { name: 'Template', url: 'templates', badge: PFBadges.Template },
+  virtualservice: { name: 'VirtualService', url: 'virtualservices', badge: PFBadges.VirtualService },
+  wasmplugin: { name: 'WasmPlugin', url: 'wasmplugins', badge: PFBadges.WasmPlugin },
+  workloadentry: { name: 'WorkloadEntry', url: 'workloadentries', badge: PFBadges.WorkloadEntry },
+  workloadgroup: { name: 'WorkloadGroup', url: 'workloadgroups', badge: PFBadges.WorkloadGroup }
 };
 
 export type Resource = {
-  name: string;
-  columns: ResourceType<any>[];
-  caption?: string;
   badge?: PFBadgeType;
+  caption?: string;
+  columns: ResourceType<any>[];
+  name: string;
 };
 
 const namespaces: Resource = {
@@ -279,12 +293,20 @@ const istio: Resource = {
   columns: [istioItem, namespace, cluster, istioType, istioObjectConfiguration]
 };
 
-const conf = {
-  applications: applications,
-  workloads: workloads,
-  overview: namespaces,
-  services: services,
-  istio: istio
+type Config = {
+  applications: Resource;
+  istio: Resource;
+  overview: Resource;
+  services: Resource;
+  workloads: Resource;
 };
 
-export const config = deepFreeze(conf) as typeof conf;
+const conf: Config = {
+  applications: applications,
+  istio: istio,
+  overview: namespaces,
+  services: services,
+  workloads: workloads
+};
+
+export const config: Config = deepFreeze(conf);

@@ -10,12 +10,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/yaml"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
@@ -62,9 +65,16 @@ func TestParseRegistryServices(t *testing.T) {
 	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
 	config.Set(conf)
 
-	k8s := new(kubetest.K8SClientMock)
-	k8s.On("IsOpenShift").Return(false)
-	k8s.On("IsGatewayAPI").Return(false)
+	serviceEntries := []*networking_v1beta1.ServiceEntry{}
+	configzFile := "../tests/data/registry/services-configz.json"
+	configz, err := os.ReadFile(configzFile)
+	require.NoError(err)
+	require.NoError(yaml.Unmarshal(configz, &serviceEntries))
+	require.Equal(2, len(serviceEntries))
+
+	objs := []runtime.Object{&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "electronic-shop"}}}
+	objs = append(objs, kubernetes.ToRuntimeObjects(serviceEntries)...)
+	k8s := kubetest.NewFakeK8sClient(objs...)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	svc := NewWithBackends(k8sclients, k8sclients, nil, nil).Svc
@@ -75,24 +85,13 @@ func TestParseRegistryServices(t *testing.T) {
 	rServices := map[string][]byte{
 		"istiod1": bServicesz,
 	}
-	registryServices, err2 := kubernetes.ParseRegistryServices(rServices)
+	registryServices, err2 := parseRegistryServices(rServices)
 	assert.NoError(err2)
 
 	assert.Equal(3, len(registryServices))
 
-	configz := "../tests/data/registry/services-configz.json"
-	bConfigz, err2 := os.ReadFile(configz)
-	assert.NoError(err2)
-	rConfig := map[string][]byte{
-		"istiod1": bConfigz,
-	}
-	registryConfig, err2 := kubernetes.ParseRegistryConfig(rConfig)
-	assert.NoError(err2)
-
-	assert.Equal(2, len(registryConfig.ServiceEntries))
-
 	istioConfigList := models.IstioConfigList{
-		ServiceEntries: registryConfig.ServiceEntries,
+		ServiceEntries: serviceEntries,
 	}
 
 	parsedServices := svc.buildRegistryServices(registryServices, istioConfigList)
@@ -114,7 +113,7 @@ func TestFilterLocalIstioRegistry(t *testing.T) {
 	rServices := map[string][]byte{
 		"istiod1": bServicesz,
 	}
-	registryServices, err2 := kubernetes.ParseRegistryServices(rServices)
+	registryServices, err2 := parseRegistryServices(rServices)
 	assert.NoError(err2)
 
 	assert.Equal(true, filterIstioServiceByClusterId("istio-east", registryServices[0]))
@@ -141,7 +140,7 @@ func TestGetServiceListFromMultipleClusters(t *testing.T) {
 		),
 	}
 	clientFactory.SetClients(clients)
-	cache := newTestingCache(t, clientFactory, *conf)
+	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	kialiCache = cache
 
 	svc := NewWithBackends(clients, clients, nil, nil).Svc
@@ -176,7 +175,7 @@ func TestMultiClusterGetService(t *testing.T) {
 		),
 	}
 	clientFactory.SetClients(clients)
-	cache := newTestingCache(t, clientFactory, *conf)
+	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	kialiCache = cache
 
 	svc := NewWithBackends(clients, clients, nil, nil).Svc
@@ -211,7 +210,7 @@ func TestMultiClusterServiceUpdate(t *testing.T) {
 		),
 	}
 	clientFactory.SetClients(clients)
-	cache := newTestingCache(t, clientFactory, *conf)
+	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	kialiCache = cache
 
 	prom, err := prometheus.NewClient()
@@ -253,7 +252,7 @@ func TestMultiClusterGetServiceDetails(t *testing.T) {
 		),
 	}
 	clientFactory.SetClients(clients)
-	cache := newTestingCache(t, clientFactory, *conf)
+	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	kialiCache = cache
 
 	prom, err := prometheus.NewClient()
@@ -298,7 +297,7 @@ func TestMultiClusterGetServiceAppName(t *testing.T) {
 		),
 	}
 	clientFactory.SetClients(clients)
-	cache := newTestingCache(t, clientFactory, *conf)
+	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	kialiCache = cache
 
 	svc := NewWithBackends(clients, clients, nil, nil).Svc

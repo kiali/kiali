@@ -17,15 +17,13 @@ OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../istio}"
 
 apply_network_attachment() {
   NAME=$1
-  if [ "${IS_MAISTRA}" != "true" ]; then
-cat <<NAD | $CLIENT_EXE -n ${NAME} apply -f -
+  cat <<NAD | $CLIENT_EXE -n ${NAME} apply -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
 NAD
-  fi
-    cat <<SCC | $CLIENT_EXE apply -f -
+  cat <<SCC | $CLIENT_EXE apply -f -
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
@@ -89,10 +87,8 @@ HELPMSG
 done
 
 IS_OPENSHIFT="false"
-IS_MAISTRA="false"
 if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   IS_OPENSHIFT="true"
-  IS_MAISTRA=$([ "$(${CLIENT_EXE} get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
 fi
 
 echo "CLIENT_EXE=${CLIENT_EXE}"
@@ -105,11 +101,7 @@ else
   echo "Deleting the '${ESHOP}' app in the '${ESHOP}' namespace..."
   ${CLIENT_EXE} delete -n ${ESHOP} -f <(curl -L ${BASE_URL}/${ESHOP}/${ESHOP}.yaml)
   if [ "${IS_OPENSHIFT}" == "true" ]; then
-    if [ "${IS_MAISTRA}" != "true" ]; then
-      $CLIENT_EXE delete network-attachment-definition istio-cni -n ${ESHOP}
-    else
-      $CLIENT_EXE delete smm default -n ${ESHOP}
-    fi
+    $CLIENT_EXE delete network-attachment-definition istio-cni -n ${ESHOP}
     $CLIENT_EXE delete scc ${ESHOP}-scc
   
     ${CLIENT_EXE} delete project ${ESHOP}

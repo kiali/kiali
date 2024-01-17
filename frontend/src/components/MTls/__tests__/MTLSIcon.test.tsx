@@ -8,8 +8,8 @@ const mockIcon = (icon: string) => {
   const component = (
     <MTLSIcon
       icon={icon}
-      iconClassName={'className'}
-      tooltipText={'Overlay Test'}
+      iconClassName="className"
+      tooltipText="Overlay Test"
       tooltipPosition={TooltipPosition.right}
     />
   );

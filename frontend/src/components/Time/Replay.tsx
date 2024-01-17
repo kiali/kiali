@@ -21,7 +21,6 @@ import { history, HistoryManager, URLParam } from 'app/History';
 type ReduxProps = {
   duration: DurationInSeconds;
   replayQueryTime: TimeInMilliseconds;
-
   setReplayQueryTime: (replayQueryTime: TimeInMilliseconds) => void;
   toggleReplayActive: () => void;
 };
@@ -36,6 +35,7 @@ type ReplayWindow = {
 };
 
 type ReplayStatus = 'initialized' | 'playing' | 'paused' | 'done';
+
 type ReplayState = {
   isCustomStartTime: boolean;
   refresherRef?: number;
@@ -52,7 +52,7 @@ type ReplaySpeed = {
 };
 
 export const replayBorder = kialiStyle({
-  borderLeft: `solid 5px ${PFColors.Replay}`
+  borderLeft: `solid 0.25rem ${PFColors.Replay}`
 });
 
 /**
@@ -101,12 +101,14 @@ const frameInterval: IntervalInMilliseconds = 10000; // clock advances 10s per f
 
 const controlStyle = kialiStyle({
   display: 'flex',
-  margin: '5px 0 0 15px'
+  alignItems: 'center',
+  marginBottom: '0.25rem'
 });
 
 const controlButtonStyle = kialiStyle({
-  margin: '-5px -5px 0 33%',
-  height: '37px'
+  marginLeft: '33%',
+  paddingRight: '0.5rem',
+  height: '2rem'
 });
 
 const controlIconStyle = kialiStyle({
@@ -114,11 +116,11 @@ const controlIconStyle = kialiStyle({
 });
 
 const frameStyle = kialiStyle({
-  margin: '2px 20px 0 0'
+  marginRight: '1.25rem'
 });
 
 const isCustomStyle = kialiStyle({
-  height: '36px'
+  height: '2.25rem'
 });
 
 const isCustomActiveStyle = kialiStyle({
@@ -128,31 +130,28 @@ const isCustomActiveStyle = kialiStyle({
 const replayStyle = kialiStyle({
   display: 'flex',
   width: '100%',
-  padding: '5px 5px 0 10px',
-  marginTop: '-5px'
+  padding: '0 0.25rem 0 0.5rem'
 });
 
 const sliderStyle = kialiStyle({
   width: '100%',
-  margin: '0 -10px 0 20px'
+  margin: '0 -0.5rem 0 1.25rem'
 });
 
 const speedStyle = kialiStyle({
-  height: '1.5em',
-  margin: '1px 5px 0 5px',
-  padding: '0 2px 2px 2px'
+  paddingLeft: '0.5rem',
+  paddingRight: '0.5rem'
 });
 
 const speedActiveStyle = kialiStyle({
-  color: PFColors.ActiveText,
+  color: PFColors.Active,
   fontWeight: 'bolder'
 });
 
 const vrStyle = kialiStyle({
   border: '1px inset',
-  height: '20px',
-  marginTop: '4px',
-  width: '1px'
+  height: '1.25rem',
+  marginTop: '0.25rem'
 });
 
 class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
@@ -206,6 +205,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
   componentDidUpdate(_prevProps: ReplayProps, prevState: ReplayState) {
     const isCustomStartChange = this.state.isCustomStartTime !== prevState.isCustomStartTime;
     const isIntervalChange = this.state.replayWindow.interval !== prevState.replayWindow.interval;
+
     if (isCustomStartChange || isIntervalChange) {
       this.initReplay();
       return;
@@ -213,6 +213,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
 
     let refresherChange = this.state.status !== prevState.status;
     refresherChange = refresherChange || this.state.replaySpeed !== prevState.replaySpeed;
+
     if (refresherChange) {
       this.updateRefresher();
     }
@@ -249,6 +250,8 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
       now - (serverConfig.prometheus.storageTsdbRetention! * 1000 + this.state.replayWindow.interval)
     );
 
+    const dropdownOptions = this.state.isCustomStartTime ? replayIntervals : replayLastIntervals;
+
     return (
       <div className={`${replayStyle} ${replayBorder}`}>
         {this.state.isCustomStartTime && (
@@ -257,19 +260,22 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
               injectTimes={[maxTime]}
               maxDate={maxTime}
               minDate={minTime}
-              onChange={date => this.onPickerChange(date)}
+              onChange={(date: Date) => this.onPickerChange(date)}
               selected={selectedTime}
             />
           </Tooltip>
         )}
+
         <ToolbarDropdown
-          id={'replay-interval'}
+          id="replay-interval"
+          className={isCustomStyle}
           handleSelect={key => this.setReplayInterval(Number(key))}
           value={String(this.state.replayWindow.interval)}
-          label={replayIntervals[this.state.replayWindow.interval]}
-          options={this.state.isCustomStartTime ? replayIntervals : replayLastIntervals}
+          label={dropdownOptions[this.state.replayWindow.interval]}
+          options={dropdownOptions}
           tooltip="Replay length"
         />
+
         <Tooltip
           key="toggle-is-custom"
           position="top"
@@ -279,6 +285,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
             <KialiIcon.UserClock className={this.state.isCustomStartTime ? isCustomActiveStyle : ''} />
           </Button>
         </Tooltip>
+
         <span className={sliderStyle}>
           <div className={replaySliderStyle}>
             <Slider
@@ -301,6 +308,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
               showMirror={false}
             />
           </div>
+
           <span className={controlStyle}>
             {this.state.status === 'playing' ? (
               <Tooltip key="replay-pause" position="top" content="Pause" entryDelay={1000}>
@@ -330,7 +338,9 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
                 </Button>
               </Tooltip>
             )}
+
             <Text className={frameStyle}>{this.formatFrame(this.state.replayFrame)}</Text>
+
             {replaySpeeds.map((s, i, a) => this.speedButton(s, i === a.length - 1))}
           </span>
         </span>
@@ -342,6 +352,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
     const time: string = toString(ReplayComponent.frameToQueryTime(val, this.state.replayWindow), {
       second: '2-digit'
     });
+
     return `${time} [${val}/${this.state.replayFrameCount}]`;
   };
 
@@ -352,18 +363,19 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
     const zeroPadSec: string = elapsedSec < 10 ? '0' : '';
     const zeroPadMin: string = elapsedMin < 10 ? '0' : '';
     const elapsed: string = `${zeroPadMin}${elapsedMin}:${zeroPadSec}${elapsedSec}`;
+
     return elapsed;
   };
 
-  private toggleCustomStartTime = () => {
+  private toggleCustomStartTime = (): void => {
     this.setState({ isCustomStartTime: !this.state.isCustomStartTime });
   };
 
-  private onPickerChange = (date: Date) => {
+  private onPickerChange = (date: Date): void => {
     this.setReplayStartTime(date.getTime());
   };
 
-  private initReplay = () => {
+  private initReplay = (): void => {
     const interval: IntervalInMilliseconds = !!this.state.replayWindow.interval
       ? this.state.replayWindow.interval
       : defaultReplayInterval;
@@ -376,15 +388,15 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
     this.setReplayWindow({ interval: interval, startTime: startTime } as ReplayWindow);
   };
 
-  private setReplayStartTime = (startTime: TimeInMilliseconds) => {
+  private setReplayStartTime = (startTime: TimeInMilliseconds): void => {
     this.setReplayWindow({ interval: this.state.replayWindow.interval, startTime: startTime });
   };
 
-  private setReplayInterval = (interval: IntervalInMilliseconds) => {
+  private setReplayInterval = (interval: IntervalInMilliseconds): void => {
     this.setReplayWindow({ interval: interval, startTime: this.state.replayWindow.startTime });
   };
 
-  private setReplayWindow = (replayWindow: ReplayWindow) => {
+  private setReplayWindow = (replayWindow: ReplayWindow): void => {
     // For simplicity/readability, round custom start times to the minute.
     if (this.state.isCustomStartTime) {
       replayWindow.startTime = new Date(replayWindow.startTime).setSeconds(0, 0);
@@ -396,6 +408,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
     } else if (replayWindow.interval !== this.state.replayWindow.interval) {
       HistoryManager.setParam(URLParam.GRAPH_REPLAY_INTERVAL, String(replayWindow.interval));
     }
+
     if (!this.state.isCustomStartTime || !replayWindow.startTime) {
       HistoryManager.deleteParam(URLParam.GRAPH_REPLAY_START, true);
     } else if (replayWindow.startTime !== this.state.replayWindow.startTime) {
@@ -403,6 +416,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
     }
 
     const frameCount = ReplayComponent.getFrameCount(replayWindow.interval);
+
     this.setState({
       replayFrame: 0,
       replayFrameCount: frameCount,
@@ -410,24 +424,24 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
     });
   };
 
-  private setReplaySpeed = (replaySpeed: IntervalInMilliseconds) => {
+  private setReplaySpeed = (replaySpeed: IntervalInMilliseconds): void => {
     this.setState({ replaySpeed: replaySpeed });
   };
 
-  private done = () => {
+  private done = (): void => {
     this.setState({ status: 'done' });
   };
 
-  private pause = () => {
+  private pause = (): void => {
     this.setState({ status: 'paused' });
   };
 
-  private play = () => {
+  private play = (): void => {
     const atEnd = this.state.replayFrame >= this.state.replayFrameCount;
     this.setState({ replayFrame: atEnd ? 0 : this.state.replayFrame, status: 'playing' });
   };
 
-  private setReplayFrame = (frame: number) => {
+  private setReplayFrame = (frame: number): void => {
     if (frame !== this.state.replayFrame) {
       let status: ReplayStatus = this.state.status === 'initialized' ? 'initialized' : 'paused';
       status = frame === this.state.replayFrameCount ? 'done' : status;
@@ -435,7 +449,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
     }
   };
 
-  private updateRefresher = () => {
+  private updateRefresher = (): void => {
     if (this.state.refresherRef) {
       clearInterval(this.state.refresherRef);
     }
@@ -448,8 +462,9 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
     this.setState({ refresherRef: refresherRef });
   };
 
-  private handleRefresh = () => {
+  private handleRefresh = (): void => {
     const nextFrame = this.state.replayFrame + 1;
+
     if (nextFrame > this.state.replayFrameCount) {
       this.done();
     } else {
@@ -458,8 +473,9 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
     }
   };
 
-  private speedButton = (replaySpeed: ReplaySpeed, isLast: boolean): React.ReactFragment => {
+  private speedButton = (replaySpeed: ReplaySpeed, isLast: boolean): React.ReactNode => {
     const isActive = this.state.replaySpeed === replaySpeed.speed;
+
     return (
       <>
         <Button
@@ -472,6 +488,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
         >
           <Text className={isActive ? speedActiveStyle : undefined}>{replaySpeed.text}</Text>
         </Button>
+
         {!isLast && <div className={vrStyle} />}
       </>
     );

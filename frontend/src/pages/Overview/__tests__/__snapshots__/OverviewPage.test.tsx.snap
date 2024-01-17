@@ -15,7 +15,7 @@ exports[`Overview page renders initial layout 1`] = `
     }
   />
   <EmptyState
-    className="kiali_f17rctdi"
+    className="kiali_f1grtvu0"
     variant="full"
   >
     <EmptyStateHeader

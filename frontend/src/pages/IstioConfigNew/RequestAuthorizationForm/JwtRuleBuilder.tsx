@@ -1,21 +1,20 @@
 import * as React from 'react';
 import { JWTHeader, JWTRule } from '../../../types/IstioObjects';
-import { cellWidth, ICell } from '@patternfly/react-table';
-import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
-import { Button, ButtonVariant, FormSelect, FormSelectOption } from '@patternfly/react-core';
-import { PlusCircleIcon } from '@patternfly/react-icons';
-import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
+import { IRow, ThProps } from '@patternfly/react-table';
+import { Button, ButtonVariant, FormSelect, FormSelectOption, TextInput } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../components/Pf/PfColors';
 import { isValidUrl } from '../../../utils/IstioConfigUtils';
+import { KialiIcon } from 'config/KialiIcon';
+import { SimpleTable } from 'components/SimpleTable';
 
 type Props = {
   onAddJwtRule: (rule: JWTRule) => void;
 };
 
 type State = {
-  jwtRuleFields: string[];
   jwtRule: JWTRule;
+  jwtRuleFields: string[];
   newJwtField: string;
   newValues: string;
 };
@@ -31,20 +30,17 @@ const INIT_JWT_RULE_FIELDS = [
   'forwardOriginalToken'
 ].sort();
 
-const headerCells: ICell[] = [
+const columns: ThProps[] = [
   {
     title: 'JWT Rule Field',
-    transforms: [cellWidth(30) as any],
-    props: {}
+    width: 30
   },
   {
     title: 'Values',
-    transforms: [cellWidth(70) as any],
-    props: {}
+    width: 70
   },
   {
-    title: '',
-    props: {}
+    title: ''
   }
 ];
 
@@ -53,7 +49,7 @@ const noValidStyle = kialiStyle({
 });
 
 const warningStyle = kialiStyle({
-  marginLeft: 25,
+  marginLeft: '1.5rem',
   color: PFColors.Red100,
   textAlign: 'center'
 });
@@ -73,7 +69,7 @@ export const formatJwtField = (jwtField: string, jwtRule: JWTRule): string => {
         ? jwtRule.fromHeaders
             .map(header => {
               if (header.prefix) {
-                return header.name + ': ' + header.prefix;
+                return `${header.name}: ${header.prefix}`;
               } else {
                 return header.name;
               }
@@ -85,9 +81,10 @@ export const formatJwtField = (jwtField: string, jwtRule: JWTRule): string => {
     case 'outputPayloadToHeader':
       return jwtRule.outputPayloadToHeader ? jwtRule.outputPayloadToHeader : '';
     case 'forwardOriginalToken':
-      return jwtRule.forwardOriginalToken ? '' + jwtRule.forwardOriginalToken : 'false';
+      return jwtRule.forwardOriginalToken ? `${jwtRule.forwardOriginalToken}` : 'false';
     default:
   }
+
   return '';
 };
 
@@ -102,24 +99,26 @@ export class JwtRuleBuilder extends React.Component<Props, State> {
     };
   }
 
-  onAddJwtField = (_event, value: string) => {
+  onAddJwtField = (_event: React.FormEvent, value: string): void => {
     this.setState({
       newJwtField: value
     });
   };
 
-  onAddNewValues = (_event, value: string) => {
+  onAddNewValues = (_event: React.FormEvent, value: string): void => {
     this.setState({
       newValues: value
     });
   };
 
-  onUpdateJwtRule = () => {
+  onUpdateJwtRule = (): void => {
     this.setState(prevState => {
       const i = prevState.jwtRuleFields.indexOf(prevState.newJwtField);
+
       if (i > -1) {
         prevState.jwtRuleFields.splice(i, 1);
       }
+
       switch (prevState.newJwtField) {
         case 'issuer':
           prevState.jwtRule.issuer = prevState.newValues;
@@ -164,6 +163,7 @@ export class JwtRuleBuilder extends React.Component<Props, State> {
         default:
         // No default action.
       }
+
       return {
         jwtRuleFields: prevState.jwtRuleFields,
         jwtRule: prevState.jwtRule,
@@ -173,7 +173,7 @@ export class JwtRuleBuilder extends React.Component<Props, State> {
     });
   };
 
-  onAddJwtRuleToList = () => {
+  onAddJwtRuleToList = (): void => {
     const oldJwtRule = this.state.jwtRule;
     this.setState(
       {
@@ -186,41 +186,32 @@ export class JwtRuleBuilder extends React.Component<Props, State> {
     );
   };
 
-  // @ts-ignore
-  actionResolver = (rowData, { rowIndex }) => {
-    const removeAction = {
-      title: 'Remove Field',
-      // @ts-ignore
-      onClick: (event, rowIndex, rowData, extraData) => {
-        // Fetch sourceField from rowData, it's a fixed string on children
-        const removeJwtRuleField = rowData.cells[0].props.children.toString();
-        this.setState(prevState => {
-          prevState.jwtRuleFields.push(removeJwtRuleField);
-          delete prevState.jwtRule[removeJwtRuleField];
-          const newJwtRuleFields = prevState.jwtRuleFields.sort();
-          return {
-            jwtRuleFields: newJwtRuleFields,
-            jwtRule: prevState.jwtRule,
-            newJwtField: newJwtRuleFields[0],
-            newValues: ''
-          };
-        });
-      }
-    };
-    if (rowIndex < Object.keys(this.state.jwtRule).length) {
-      return [removeAction];
-    }
-    return [];
+  onRemoveJwtRule = (removeJwtRuleField: string): void => {
+    this.setState(prevState => {
+      prevState.jwtRuleFields.push(removeJwtRuleField);
+      delete prevState.jwtRule[removeJwtRuleField];
+      const newJwtRuleFields = prevState.jwtRuleFields.sort();
+
+      return {
+        jwtRuleFields: newJwtRuleFields,
+        jwtRule: prevState.jwtRule,
+        newJwtField: newJwtRuleFields[0],
+        newValues: ''
+      };
+    });
   };
 
   isJwtFieldValid = (): [boolean, string] => {
     const isEmptyValue = this.state.newValues.split(',').every(v => v.length === 0);
+
     if (isEmptyValue) {
       return [false, 'Value cannot be empty'];
     }
+
     if (this.state.newJwtField === 'jwksUri' && !isValidUrl(this.state.newValues)) {
       return [false, 'jwsUri is not a valid Uri'];
     }
+
     return [true, ''];
   };
 
@@ -228,31 +219,40 @@ export class JwtRuleBuilder extends React.Component<Props, State> {
     return this.state.jwtRule.issuer ? this.state.jwtRule.issuer.length > 0 : false;
   };
 
-  rows = () => {
+  rows = (): IRow[] => {
     const jwtRuleRows = Object.keys(this.state.jwtRule).map((jwtField, i) => {
       return {
-        key: 'jwtField' + i,
-        cells: [<>{jwtField}</>, <>{formatJwtField(jwtField, this.state.jwtRule)}</>, <></>]
+        key: `jwtField_${i}`,
+        cells: [
+          <>{jwtField}</>,
+          <>{formatJwtField(jwtField, this.state.jwtRule)}</>,
+          <Button
+            id="removeJwtRuleBtn"
+            variant={ButtonVariant.link}
+            icon={<KialiIcon.Delete />}
+            onClick={() => this.onRemoveJwtRule(jwtField)}
+          />
+        ]
       };
     });
+
     if (this.state.jwtRuleFields.length > 0) {
       const [isJwtFieldValid, validText] = this.isJwtFieldValid();
+
       return jwtRuleRows.concat([
         {
           key: 'jwtFieldKeyNew',
           cells: [
-            <>
-              <FormSelect
-                value={this.state.newJwtField}
-                id="addNewJwtField"
-                name="addNewJwtField"
-                onChange={this.onAddJwtField}
-              >
-                {this.state.jwtRuleFields.map((option, index) => (
-                  <FormSelectOption isDisabled={false} key={'jwt' + index} value={option} label={option} />
-                ))}
-              </FormSelect>
-            </>,
+            <FormSelect
+              value={this.state.newJwtField}
+              id="addNewJwtField"
+              name="addNewJwtField"
+              onChange={this.onAddJwtField}
+            >
+              {this.state.jwtRuleFields.map((option, index) => (
+                <FormSelectOption isDisabled={false} key={`jwt_${index}`} value={option} label={option} />
+              ))}
+            </FormSelect>,
             <>
               <TextInput
                 value={this.state.newValues}
@@ -263,12 +263,14 @@ export class JwtRuleBuilder extends React.Component<Props, State> {
                 name="addNewValues"
                 onChange={this.onAddNewValues}
               />
+
               {this.state.newJwtField === 'fromHeaders' && (
                 <div key="fromHeadersHelperText">
                   List of header locations from which JWT is expected. <br />
                   I.e. "x-jwt-assertion: Bearer ,Authorization: Bearer "
                 </div>
               )}
+
               {!isJwtFieldValid && (
                 <div key="hostsHelperText" className={noValidStyle}>
                   {validText}
@@ -279,7 +281,7 @@ export class JwtRuleBuilder extends React.Component<Props, State> {
               {this.state.jwtRuleFields.length > 0 && (
                 <Button
                   variant={ButtonVariant.link}
-                  icon={<PlusCircleIcon />}
+                  icon={<KialiIcon.AddMore />}
                   onClick={this.onUpdateJwtRule}
                   isDisabled={!isJwtFieldValid}
                 />
@@ -289,25 +291,18 @@ export class JwtRuleBuilder extends React.Component<Props, State> {
         }
       ]);
     }
+
     return jwtRuleRows;
   };
 
   render() {
     return (
       <>
-        <Table
-          aria-label="JWT Rule Builder"
-          cells={headerCells}
-          rows={this.rows()}
-          // @ts-ignore
-          actionResolver={this.actionResolver}
-        >
-          <TableHeader />
-          <TableBody />
-        </Table>
+        <SimpleTable label="JWT Rule Builder" columns={columns} rows={this.rows()} />
+
         <Button
           variant={ButtonVariant.link}
-          icon={<PlusCircleIcon />}
+          icon={<KialiIcon.AddMore />}
           isDisabled={!this.isJwtRuleValid()}
           onClick={this.onAddJwtRuleToList}
         >

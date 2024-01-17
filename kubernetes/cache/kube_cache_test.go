@@ -23,8 +23,7 @@ const IstioAPIEnabled = true
 func newTestingKubeCache(t *testing.T, cfg *config.Config, objects ...runtime.Object) *kubeCache {
 	t.Helper()
 
-	emptyRefreshHandler := NewRegistryHandler(func() {})
-	kubeCache, err := NewKubeCache(kubetest.NewFakeK8sClient(objects...), *cfg, emptyRefreshHandler)
+	kubeCache, err := NewKubeCache(kubetest.NewFakeK8sClient(objects...), *cfg)
 	if err != nil {
 		t.Fatalf("Unable to create kube cache for testing. Err: %s", err)
 	}
@@ -121,36 +120,6 @@ func TestRefreshNSScoped(t *testing.T) {
 	kialiCache.Refresh("ns1")
 	assert.NotEqual(kialiCache.nsCacheLister, map[string]*cacheLister{})
 	assert.Contains(kialiCache.nsCacheLister, "ns1")
-}
-
-func TestCheckNamespaceClusterScoped(t *testing.T) {
-	assert := assert.New(t)
-
-	kialiCache := newTestingKubeCache(t, config.NewConfig())
-
-	// Should always return true for cluster scoped cache.
-	assert.True(kialiCache.CheckNamespace("ns1"))
-}
-
-func TestCheckNamespaceNotIncluded(t *testing.T) {
-	assert := assert.New(t)
-
-	cfg := config.NewConfig()
-	cfg.Deployment.AccessibleNamespaces = []string{"bookinfo"}
-	cfg.Deployment.ClusterWideAccess = false
-	kialiCache := newTestingKubeCache(t, cfg)
-
-	assert.False(kialiCache.CheckNamespace("ns1"))
-}
-
-func TestCheckNamespaceIsIncluded(t *testing.T) {
-	assert := assert.New(t)
-
-	cfg := config.NewConfig()
-	cfg.Deployment.AccessibleNamespaces = []string{"ns.*"}
-	kialiCache := newTestingKubeCache(t, cfg)
-
-	assert.True(kialiCache.CheckNamespace("ns1"))
 }
 
 // Other parts of the codebase assume that this kind field is present so it's important
@@ -338,10 +307,9 @@ func TestIstioAPIDisabled(t *testing.T) {
 	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
 
 	cfg := config.NewConfig()
-	emptyRefreshHandler := NewRegistryHandler(func() {})
 	fakeClient := kubetest.NewFakeK8sClient(ns)
 	fakeClient.IstioAPIEnabled = false
-	kubeCache, err := NewKubeCache(fakeClient, *cfg, emptyRefreshHandler)
+	kubeCache, err := NewKubeCache(fakeClient, *cfg)
 	if err != nil {
 		t.Fatalf("Unable to create kube cache for testing. Err: %s", err)
 	}
@@ -349,4 +317,31 @@ func TestIstioAPIDisabled(t *testing.T) {
 	_, err = kubeCache.GetVirtualServices("test", "app=bookinfo")
 
 	assert.Error(err)
+}
+
+func ListingIstioObjectsWorksAcrossNamespacesWhenNamespaceScoped(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	nsAlpha := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "alpha"}}
+	nsBeta := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "beta"}}
+	vsAlpha := &networking_v1beta1.VirtualService{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-alpha", Namespace: "alpha",
+		},
+	}
+	vsBeta := &networking_v1beta1.VirtualService{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-beta", Namespace: "beta",
+		},
+	}
+
+	cfg := config.NewConfig()
+	cfg.Deployment.AccessibleNamespaces = []string{"alpha", "beta"}
+	cfg.Deployment.ClusterWideAccess = false
+	kubeCache := newTestingKubeCache(t, cfg, nsAlpha, nsBeta, vsAlpha, vsBeta)
+
+	vsList, err := kubeCache.GetVirtualServices("", "")
+	require.NoError(err)
+	assert.Len(vsList, 2)
 }

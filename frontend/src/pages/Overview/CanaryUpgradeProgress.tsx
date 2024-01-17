@@ -10,46 +10,46 @@ type Props = {
 };
 
 export const infoStyle = kialiStyle({
-  margin: '0px 0px -1px 4px'
+  margin: '0 0 -0.125rem 0.25rem'
 });
 
-export class CanaryUpgradeProgress extends React.Component<Props> {
-  render() {
-    const total =
-      this.props.canaryUpgradeStatus.migratedNamespaces.length +
-      this.props.canaryUpgradeStatus.pendingNamespaces.length;
-    const migrated = total > 0 ? (this.props.canaryUpgradeStatus.migratedNamespaces.length * 100) / total : 0;
+export const CanaryUpgradeProgress: React.FC<Props> = (props: Props) => {
+  const total =
+    props.canaryUpgradeStatus.migratedNamespaces.length + props.canaryUpgradeStatus.pendingNamespaces.length;
 
-    return (
-      <div style={{ textAlign: 'center' }} data-test="canary-upgrade">
+  const migrated = total > 0 ? (props.canaryUpgradeStatus.migratedNamespaces.length * 100) / total : 0;
+
+  return (
+    <div style={{ textAlign: 'center' }} data-test="canary-upgrade">
+      <div>
         <div>
-          <div>
-            Canary upgrade status
-            <Tooltip
-              position={TooltipPosition.right}
-              content={`There is an in progress canary upgrade from version "${this.props.canaryUpgradeStatus.currentVersion}" to version "${this.props.canaryUpgradeStatus.upgradeVersion}"`}
-            >
-              <KialiIcon.Info className={infoStyle} />
-            </Tooltip>
-          </div>
-          <div style={{ height: 180 }}>
-            <ChartDonutUtilization
-              ariaDesc="Canary upgrade status"
-              ariaTitle="Canary upgrade status"
-              constrainToVisibleArea
-              data={{ x: 'Migrated namespaces', y: migrated }}
-              labels={({ datum }) => (datum.x ? `${datum.x}: ${datum.y.toFixed(2)}%` : null)}
-              invert
-              title={`${migrated.toFixed(2)}%`}
-              height={170}
-              themeColor={ChartThemeColor.green}
-            />
-          </div>
-          <div>
-            <p>{`${this.props.canaryUpgradeStatus.migratedNamespaces.length} of ${total} namespaces migrated`}</p>
-          </div>
+          Canary upgrade status
+          <Tooltip
+            position={TooltipPosition.right}
+            content={`There is an in progress canary upgrade from version "${props.canaryUpgradeStatus.currentVersion}" to version "${props.canaryUpgradeStatus.upgradeVersion}"`}
+          >
+            <KialiIcon.Info className={infoStyle} />
+          </Tooltip>
+        </div>
+
+        <div style={{ height: 180 }}>
+          <ChartDonutUtilization
+            ariaDesc="Canary upgrade status"
+            ariaTitle="Canary upgrade status"
+            constrainToVisibleArea
+            data={{ x: 'Migrated namespaces', y: migrated }}
+            labels={({ datum }) => (datum.x ? `${datum.x}: ${datum.y.toFixed(2)}%` : null)}
+            invert
+            title={`${migrated.toFixed(2)}%`}
+            height={170}
+            themeColor={ChartThemeColor.green}
+          />
+        </div>
+
+        <div>
+          <p>{`${props.canaryUpgradeStatus.migratedNamespaces.length} of ${total} namespaces migrated`}</p>
         </div>
       </div>
-    );
-  }
-}
+    </div>
+  );
+};

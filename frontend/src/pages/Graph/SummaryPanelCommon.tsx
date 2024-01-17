@@ -4,9 +4,9 @@ import { NodeType, SummaryPanelPropType, Protocol, DecoratedGraphNodeData, BoxBy
 import { IstioMetricsOptions, Reporter, Direction } from '../../types/MetricsOptions';
 import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
-import { Response } from '../../services/Api';
 import { KialiIcon } from 'config/KialiIcon';
 import { PFColors } from 'components/Pf/PfColors';
+import { ApiResponse } from 'types/Api';
 
 export enum NodeMetricType {
   APP = 1,
@@ -18,10 +18,10 @@ export enum NodeMetricType {
 }
 
 export const summaryBodyTabs = kialiStyle({
-  padding: '10px 15px 0 15px'
+  padding: '0.5rem 1rem 0 1rem'
 });
 
-export const summaryPanelWidth = '25em';
+export const summaryPanelWidth = '350px';
 
 export const summaryPanel = kialiStyle({
   fontSize: 'var(--graph-side-panel--font-size)',
@@ -40,21 +40,31 @@ export const summaryFont: React.CSSProperties = {
 
 export const summaryTitle = kialiStyle({
   fontWeight: 'bolder',
-  marginBottom: '5px',
+  marginTop: '0.25rem',
+  marginBottom: '0.25rem',
   textAlign: 'left'
+});
+
+export const noTrafficStyle = kialiStyle({
+  marginTop: '0.25rem',
+  $nest: {
+    '& .pf-v5-c-icon': {
+      marginRight: '0.25rem'
+    }
+  }
 });
 
 const hrStyle = kialiStyle({
   border: 0,
   borderTop: `1px solid ${PFColors.BorderColor100}`,
-  margin: '10px 0'
+  margin: '0.5rem 0'
 });
 
-export const hr = () => {
+export const hr = (): React.ReactNode => {
   return <hr className={hrStyle} />;
 };
 
-export const shouldRefreshData = (prevProps: SummaryPanelPropType, nextProps: SummaryPanelPropType) => {
+export const shouldRefreshData = (prevProps: SummaryPanelPropType, nextProps: SummaryPanelPropType): boolean => {
   return (
     // Verify the time of the last request
     prevProps.queryTime !== nextProps.queryTime ||
@@ -100,7 +110,7 @@ export const getNodeMetrics = (
   requestProtocol?: string,
   quantiles?: Array<string>,
   byLabels?: Array<string>
-): Promise<Response<M.IstioMetricsMap>> => {
+): Promise<ApiResponse<M.IstioMetricsMap>> => {
   const options: IstioMetricsOptions = {
     queryTime: props.queryTime,
     duration: props.duration,
@@ -128,16 +138,18 @@ export const getNodeMetrics = (
   }
 };
 
-export const mergeMetricsResponses = (
-  promises: Promise<Response<M.IstioMetricsMap>>[]
-): Promise<Response<M.IstioMetricsMap>> => {
+export const mergeMetricsResponses = async (
+  promises: Promise<ApiResponse<M.IstioMetricsMap>>[]
+): Promise<ApiResponse<M.IstioMetricsMap>> => {
   return Promise.all(promises).then(responses => {
     const metrics: M.IstioMetricsMap = {};
+
     responses.forEach(r => {
       Object.keys(r.data).forEach(k => {
         metrics[k] = r.data[k];
       });
     });
+
     return {
       data: metrics
     };
@@ -154,14 +166,17 @@ export const getDatapoints = (
   protocol?: Protocol
 ): M.Datapoint[] => {
   let dpsMap = new Map<number, M.Datapoint>();
+
   if (metrics) {
     for (let i = 0; i < metrics.length; ++i) {
       const ts = metrics[i];
+
       if (comparator(ts.labels, protocol)) {
         // Sum values, because several metrics can satisfy the comparator
         // E.g. with multiple active namespaces and node being an outsider, we need to sum datapoints for every active namespace
         ts.datapoints.forEach(dp => {
           const val = Number(dp[1]);
+
           if (!isNaN(val)) {
             const current = dpsMap.get(dp[0]);
             dpsMap.set(dp[0], current ? [dp[0], current[1] + val] : [dp[0], val]);
@@ -170,20 +185,19 @@ export const getDatapoints = (
       }
     }
   }
+
   return Array.from(dpsMap.values());
 };
 
-export const renderNoTraffic = (protocol?: string) => {
+export const renderNoTraffic = (protocol?: string): React.ReactNode => {
   return (
-    <>
-      <div>
-        <KialiIcon.Info /> No {protocol ? protocol : ''} traffic logged.
-      </div>
-    </>
+    <div className={noTrafficStyle}>
+      <KialiIcon.Info /> No {protocol ? protocol : ''} traffic logged.
+    </div>
   );
 };
 
-export const getTitle = (title: string): React.ReactFragment => {
+export const getTitle = (title: string): React.ReactNode => {
   switch (title) {
     case NodeType.AGGREGATE:
       title = 'Operation';
@@ -198,10 +212,5 @@ export const getTitle = (title: string): React.ReactFragment => {
       title = 'Workload';
       break;
   }
-  return (
-    <div className={summaryTitle}>
-      {title}
-      <br />
-    </div>
-  );
+  return <div className={summaryTitle}>{title}</div>;
 };

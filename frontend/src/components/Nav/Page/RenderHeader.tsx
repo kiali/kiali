@@ -7,13 +7,13 @@ import { isKiosk } from '../../Kiosk/KioskActions';
 import { PFColors } from 'components/Pf/PfColors';
 
 const containerStyle = kialiStyle({
-  padding: '0 20px 28px 20px',
+  padding: '0 1.25rem 1.75rem 1.25rem',
   backgroundColor: PFColors.BackgroundColor100
 });
 
 // This magic style tries to adjust Breadcrumb with Namespace selector
 // to give impression that both components are placed in the same location
-const breadcrumbMargin = kialiStyle({ padding: '10px 0 4px 0' });
+const breadcrumbMargin = kialiStyle({ padding: '0.75rem 0 0.25rem 0' });
 
 const breadcrumbStyle = kialiStyle({
   display: 'flex',
@@ -26,8 +26,8 @@ const rightToolbarStyle = kialiStyle({
 
 const actionsToolbarStyle = kialiStyle({
   float: 'right',
-  padding: '0px 20px 22px 5px',
-  marginTop: '-16px',
+  padding: '0 1.25rem 1.375rem 0.25rem',
+  marginTop: '-1rem',
   backgroundColor: PFColors.BackgroundColor100,
   borderBottom: `1px solid ${PFColors.BorderColor100}`
 });
@@ -37,37 +37,38 @@ type ReduxProps = {
 };
 
 type RenderHeaderProps = ReduxProps & {
+  actionsToolbar?: React.ReactNode;
+  children?: React.ReactNode;
   location?: {
     pathname: string;
     search: string;
   };
-  rightToolbar?: JSX.Element;
-  actionsToolbar?: JSX.Element;
+  rightToolbar?: React.ReactNode;
 };
 
-class RenderHeaderComponent extends React.Component<RenderHeaderProps> {
-  render() {
-    // RenderHeader is used only in the detail pages
-    // On kiosk mode, it should be hidden
-    return isKiosk(this.props.kiosk) ? null : (
-      <>
-        <div className={containerStyle}>
-          {this.props.location && (
-            <div className={breadcrumbMargin}>
-              <div className={breadcrumbStyle}>
-                <BreadcrumbView location={this.props.location} />
-                {this.props.rightToolbar && <div className={rightToolbarStyle}>{this.props.rightToolbar}</div>}
-              </div>
-            </div>
-          )}
-          {this.props.children}
-        </div>
+const RenderHeaderComponent: React.FC<RenderHeaderProps> = (props: RenderHeaderProps) => {
+  // RenderHeader is used only in the detail pages
+  // On kiosk mode, it should be hidden
+  return isKiosk(props.kiosk) ? null : (
+    <>
+      <div className={containerStyle}>
+        {props.location && (
+          <div className={breadcrumbMargin}>
+            <div className={breadcrumbStyle}>
+              <BreadcrumbView location={props.location} />
 
-        {this.props.actionsToolbar && <div className={actionsToolbarStyle}>{this.props.actionsToolbar}</div>}
-      </>
-    );
-  }
-}
+              {props.rightToolbar && <div className={rightToolbarStyle}>{props.rightToolbar}</div>}
+            </div>
+          </div>
+        )}
+
+        {props.children}
+      </div>
+
+      {props.actionsToolbar && <div className={actionsToolbarStyle}>{props.actionsToolbar}</div>}
+    </>
+  );
+};
 
 const mapStateToProps = (state: KialiAppState) => ({
   kiosk: state.globalState.kiosk

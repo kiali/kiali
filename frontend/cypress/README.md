@@ -7,14 +7,22 @@ These are visual tests for kiali that are meant to be run against a live environ
 Installed all dev dependencies from frontend folder. Ensure the `baseUrl` field in the `cypress.json` file at the kiali-ui root is pointing to the server you are trying to test, alternatively you can use `CYPRESS_BASE_URL` environment variable or pass via cmd line `yarn cypress --config baseUrl=http://kiali-server:20001`. By default this is `localhost:3000` so if you are running kiali locally you should just need to do `yarn start` before running cypress.
 
 ## Running tests
+The suite is able to re-install specific demo-app automatically when a faulty deployment of that demo-app is detected. The suite also install K8 Gateway API if not detected. Running the suite against custom demo-app deployments may lead to your environment being altered unexepectedly. If you want to prevent this, comment out the `Before` functions in [this file](integration/common/hooks.ts).
 
-Before you start using Cypress suite, you might need export some environment variables - depending on environment where tests are executed. If your authentication method defaults to `anonymous` **(i.e. dev env), no actions are needed.**
+Before you start using Cypress suite, you might need export some environment variables - depending on environment where tests are executed.  If your authentication method defaults to `anonymous` **(i.e. dev env), no actions are needed.**
 
 ```bash
 export CYPRESS_BASE_URL=<value>               # defaults to http://localhost:3000
 export CYPRESS_USERNAME=<value>               # defaults to jenkins, opt. kubeadmin
 export CYPRESS_PASSWD=<value>                 # no defaults
 export CYPRESS_AUTH_PROVIDER=<value>          # defaults to my_htpasswd_provider
+```
+
+When running the Cypress tests for multi-cluster, both contexts for the kubectl/oc command must be specified. 
+
+```bash
+export CYPRESS_CLUSTER1_CONTEXT=<value>       # context of the primary cluster with Kiali installed
+export CYPRESS_CLUSTER2_CONTEXT=<value>       # context of the remote cluster 
 ```
 
 Tests for single cluster setup can be run with the cypress browser:
@@ -42,7 +50,7 @@ yarn cypress:run:multi-cluster
 ```
 
 ### Running tests in a container
-You can also run the test suite in a container, using the image `quay.io/kiali/kiali-cypress-tests:latest`.
+You can also run the test suite in a container, using the image `quay.io/kiali/kiali-cypress-tests:latest` or with a specific tag version.
 System dependencies are bundled in the container but you are still required to install istio + kiali + demo apps in advance.
 
 Use the `-e` option to set the environment variables that affect the execution of the test suite, as described in the previous sections.
@@ -211,3 +219,20 @@ make -e CYPRESS_VIDEO=true cypress-run
 ### Tests are flaking 
 
 Try waiting for kiali to finish loading all the in-flight data before proceeding on to the next action or command. [Waiting for the loading spinner](https://github.com/kiali/kiali/blob/1766f20035e67a072dd68167869e0ce2009b9bc6/frontend/cypress/integration/common/overview.ts#L45-L46) to disappear is a good enough measure for this.
+
+To execute only specific subset of the test suite, tag the Gherkin scenarios with the `@selected` tag. For example:
+```
+@selected
+@bookinfo-app
+Scenario: See minigraph for workload.
+    Then user sees a minigraph
+```
+ You can then run these using:
+```bash
+yarn cypress:selected
+```
+or in the headless mode:
+```bash
+yarn cypress:run:selected
+```
+Make sure you are not tagging multi-cluster and single cluster tests together with the `@selected` tag, as both of these require different Kiali setups and it does not make sense to run them together in a single run.

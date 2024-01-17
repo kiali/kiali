@@ -3032,7 +3032,7 @@ Status: OK
    
   
 
-[JaegerInfo](#jaeger-info)
+[TracingInfo](#jaeger-info)
 
 ##### <span id="jaeger-info-404"></span> 404 - A NotFoundError is the error message that is generated when server could not find what was requested.
 Status: Not Found
@@ -8894,6 +8894,7 @@ This type is used for returning a response of IstioConfigList
 | Gateways | [][Gateway](#gateway)| `[]*Gateway` |  | |  |  |
 | K8sGateways | [][Gateway](#gateway)| `[]*Gateway` |  | |  |  |
 | K8sHTTPRoutes | [][HTTPRoute](#http-route)| `[]*HTTPRoute` |  | |  |  |
+| K8sReferenceGrants | [][ReferenceGrant](#reference-grant)| `[]*ReferenceGrant` |  | |  |  |
 | PeerAuthentications | [][PeerAuthentication](#peer-authentication)| `[]*PeerAuthentication` |  | |  |  |
 | RequestAuthentications | [][RequestAuthentication](#request-authentication)| `[]*RequestAuthentication` |  | |  |  |
 | ServiceEntries | [][ServiceEntry](#service-entry)| `[]*ServiceEntry` |  | |  |  |
@@ -8932,7 +8933,6 @@ This type is used for returning a response of IstioConfigList
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
-| IsMaistra | boolean| `bool` | ✓ | | If true, the Istio implementation is a variant of Maistra. |  |
 | IstioAPIEnabled | boolean| `bool` |  | | Is api enabled |  |
 
 
@@ -9061,7 +9061,7 @@ generation is still in progress.  See https://istio.io/latest/docs/reference/con
 
 [interface{}](#interface)
 
-### <span id="jaeger-info"></span> JaegerInfo
+### <span id="jaeger-info"></span> TracingInfo
 
 
   
@@ -10946,6 +10946,7 @@ Invalid values include:
 | DestinationRules | [][DestinationRule](#destination-rule)| `[]*DestinationRule` |  | |  |  |
 | IstioSidecar | boolean| `bool` |  | |  |  |
 | K8sHTTPRoutes | [][HTTPRoute](#http-route)| `[]*HTTPRoute` |  | |  |  |
+| K8sReferenceGrants | [][ReferenceGrant](#reference-grant)| `[]*ReferenceGrant` |  | |  |  |
 | ServiceEntries | [][ServiceEntry](#service-entry)| `[]*ServiceEntry` |  | |  |  |
 | SubServices | [][ServiceOverview](#service-overview)| `[]*ServiceOverview` |  | | Services with same app labels (different versions or a single version) |  |
 | VirtualServices | [][VirtualService](#virtual-service)| `[]*VirtualService` |  | |  |  |

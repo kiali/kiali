@@ -20,7 +20,6 @@ export const INITIAL_GRAPH_STATE: GraphState = {
   toolbarState: {
     boxByCluster: true,
     boxByNamespace: true,
-    compressOnHide: true,
     edgeLabels: [],
     findValue: '',
     graphType: GraphType.VERSIONED_APP,
@@ -37,6 +36,7 @@ export const INITIAL_GRAPH_STATE: GraphState = {
     showServiceNodes: true,
     showTrafficAnimation: false,
     showVirtualServices: true,
+    showWaypoints: false,
     trafficRates: [
       TrafficRate.GRPC_GROUP,
       TrafficRate.GRPC_REQUEST,
@@ -147,12 +147,6 @@ export const GraphDataStateReducer = (state: GraphState = INITIAL_GRAPH_STATE, a
           boxByNamespace: !state.toolbarState.boxByNamespace
         })
       });
-    case getType(GraphToolbarActions.toggleCompressOnHide):
-      return updateState(state, {
-        toolbarState: updateState(state.toolbarState, {
-          compressOnHide: !state.toolbarState.compressOnHide
-        })
-      });
     case getType(GraphToolbarActions.toggleFindHelp):
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
@@ -221,6 +215,12 @@ export const GraphDataStateReducer = (state: GraphState = INITIAL_GRAPH_STATE, a
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
           showTrafficAnimation: !state.toolbarState.showTrafficAnimation
+        })
+      });
+    case getType(GraphToolbarActions.toggleWaypoints):
+      return updateState(state, {
+        toolbarState: updateState(state.toolbarState, {
+          showWaypoints: !state.toolbarState.showWaypoints
         })
       });
     default:

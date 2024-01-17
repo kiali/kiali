@@ -2,17 +2,17 @@ import React from 'react';
 import { ObjectCheck, ObjectValidation, ValidationTypes } from '../../types/IstioObjects';
 import { Validation } from './Validation';
 
-type Props = {
+type GlobalValidationProps = {
   validation?: ObjectValidation;
 };
 
-export class GlobalValidation extends React.Component<Props> {
-  isValid(): boolean {
-    return !!this.props.validation && this.props.validation.valid;
-  }
+export const GlobalValidation: React.FC<GlobalValidationProps> = (props: GlobalValidationProps) => {
+  const isValid = (): boolean => {
+    return !!props.validation && props.validation.valid;
+  };
 
-  numberOfChecks(type: string): number {
-    const object = this.props.validation;
+  const numberOfChecks = (type: string): number => {
+    const object = props.validation;
     let count = 0;
 
     if (object) {
@@ -20,18 +20,19 @@ export class GlobalValidation extends React.Component<Props> {
     }
 
     return count;
-  }
+  };
 
-  severity(): ValidationTypes {
-    if (!this.props.validation) {
+  const severity = (): ValidationTypes => {
+    if (!props.validation) {
       return ValidationTypes.Error;
     }
 
-    const object = this.props.validation;
-    const warnChecks = this.numberOfChecks(ValidationTypes.Warning);
-    const errChecks = this.numberOfChecks(ValidationTypes.Error);
+    const object = props.validation;
+    const warnChecks = numberOfChecks(ValidationTypes.Warning);
+    const errChecks = numberOfChecks(ValidationTypes.Error);
 
     let validation: ValidationTypes = ValidationTypes.Correct;
+
     if (!object.valid) {
       if (errChecks > 0) {
         validation = ValidationTypes.Error;
@@ -41,10 +42,10 @@ export class GlobalValidation extends React.Component<Props> {
     }
 
     return validation;
-  }
+  };
 
-  checkForPath(path: string): ObjectCheck[] {
-    const object = this.props.validation;
+  const checkForPath = (path: string): ObjectCheck[] => {
+    const object = props.validation;
 
     if (!object || !object.checks) {
       return [];
@@ -55,24 +56,22 @@ export class GlobalValidation extends React.Component<Props> {
     });
 
     return check;
-  }
+  };
 
-  globalChecks(): ObjectCheck[] {
-    return this.checkForPath('');
-  }
+  const globalChecks = (): ObjectCheck[] => {
+    return checkForPath('');
+  };
 
-  message(): string {
-    const checks = this.globalChecks();
-    let message = checks.map(check => (check.code ? check.code + ' ' : '') + check.message).join(',');
+  const message = (): string => {
+    const checks = globalChecks();
+    let message = checks.map(check => (check.code ? `${check.code} ` : '') + check.message).join(',');
 
-    if (!message.length && !this.isValid()) {
+    if (!message.length && !isValid()) {
       message = 'Not all checks passed!';
     }
 
     return message;
-  }
+  };
 
-  render() {
-    return <Validation severity={this.severity()} message={this.message()} messageColor={true} />;
-  }
-}
+  return <Validation severity={severity()} message={message()} messageColor={true} />;
+};

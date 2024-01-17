@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
+	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
@@ -22,8 +22,8 @@ func TestK8sGatewayReferences(t *testing.T) {
 	r2 := data.CreateEmptyHTTPRoute("httpbin", "default", []string{})
 
 	gatewayReferences := K8sGatewayReferences{
-		K8sGateways:   []*k8s_networking_v1beta1.Gateway{gw},
-		K8sHTTPRoutes: []*k8s_networking_v1beta1.HTTPRoute{r1, r2},
+		K8sGateways:   []*k8s_networking_v1.Gateway{gw},
+		K8sHTTPRoutes: []*k8s_networking_v1.HTTPRoute{r1, r2},
 	}
 
 	references := gatewayReferences.References()
@@ -44,8 +44,8 @@ func TestK8sGatewayNoReferences(t *testing.T) {
 	r := data.CreateEmptyHTTPRoute("httpbin", "default", []string{})
 
 	gatewayReferences := K8sGatewayReferences{
-		K8sGateways:   []*k8s_networking_v1beta1.Gateway{gw},
-		K8sHTTPRoutes: []*k8s_networking_v1beta1.HTTPRoute{r},
+		K8sGateways:   []*k8s_networking_v1.Gateway{gw},
+		K8sHTTPRoutes: []*k8s_networking_v1.HTTPRoute{r},
 	}
 
 	references := gatewayReferences.References()

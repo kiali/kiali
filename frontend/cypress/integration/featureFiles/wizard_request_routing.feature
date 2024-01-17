@@ -74,21 +74,22 @@ Feature: Service Details Wizard: Request Routing
     And user confirms delete the configuration
     Then user sees the "Istio Config" table with empty message
 
-  @skip
   @multi-cluster
   @remote-istio-crds
   Scenario: Create a Request Routing scenario in a remote cluster
-    When user is at the details page for the "service" "bookinfo/ratings" located in the "west" cluster
+    When user deletes Request Routing named "ratings" and the resource is no longer available in any cluster
+    When user opens the namespace "bookinfo" and the remote "ratings" service details page
     And user clicks in the "Request Routing" actions
     And user sees the "Create Request Routing" wizard
     And user clicks in the "Request Matching" tab
     And user adds a route
     And user previews the configuration
     And user creates the configuration
-    Then user sees the "Istio Config" table generated objects located in the "west" cluster
+    And user is at the "istio" list page
+    And user selects the "bookinfo" namespace
+    Then user sees the generated "ratings" objects located in the "west" cluster
     
 
-  @skip
   @multi-cluster
   @remote-istio-crds
   Scenario: Update a Request Routing scenario
@@ -102,10 +103,11 @@ Feature: Service Details Wizard: Request Routing
     And user selects Create Gateway
     And user previews the configuration
     And user updates the configuration
-    Then user sees the "Istio Config" table generated "ratings" objects located in the "west" cluster
+    And user is at the "istio" list page
+    And user selects the "bookinfo" namespace
+    Then user sees the generated "ratings" objects located in the "west" cluster
     And the "Gateway" "ratings-gateway" should be listed in "west" "bookinfo" namespace 
 
-  @skip
   @multi-cluster
   @remote-istio-crds
   Scenario: Delete the Request Routing scenario

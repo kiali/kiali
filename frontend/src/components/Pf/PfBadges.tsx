@@ -5,8 +5,8 @@ import { PFColors } from './PfColors';
 
 export type PFBadgeType = {
   badge: string;
-  tt?: React.ReactFragment;
   style?: React.CSSProperties;
+  tt?: React.ReactFragment;
 };
 
 // PF Badges used by Kiali, keep alphabetized
@@ -37,6 +37,7 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   HTTPRoute: { badge: 'HTTP', tt: 'HTTPRoute' } as PFBadgeType,
   K8sGateway: { badge: 'G', tt: 'Gateway (K8s)' } as PFBadgeType,
   K8sHTTPRoute: { badge: 'HTTP', tt: 'HTTPRoute (K8s)' } as PFBadgeType,
+  K8sReferenceGrant: { badge: 'RG', tt: 'ReferenceGrant (K8s)' } as PFBadgeType,
   Handler: { badge: 'H', tt: 'Handler' },
   Host: { badge: 'H', tt: 'Host' },
   Instance: { badge: 'I', tt: 'Instance' },
@@ -110,29 +111,27 @@ type PFBadgeProps = {
   position?: TooltipPosition; // default=auto
   size?: 'global' | 'sm';
   style?: CSSProperties;
-  tooltip?: React.ReactFragment;
+  tooltip?: React.ReactNode;
 };
 
-export class PFBadge extends React.PureComponent<PFBadgeProps> {
-  render() {
-    const key = this.props.keyValue || `pfbadge-${this.props.badge.badge}`;
-    const ttKey = `tt-${key}`;
-    const style = { ...this.props.badge.style, ...this.props.style };
-    const tooltip = this.props.tooltip || this.props.badge.tt;
-    const className = this.props.size === 'sm' ? kialiBadgeSmall : kialiBadge;
+export const PFBadge: React.FC<PFBadgeProps> = (props: PFBadgeProps) => {
+  const key = props.keyValue || `pfbadge-${props.badge.badge}`;
+  const ttKey = `tt-${key}`;
+  const style = { ...props.badge.style, ...props.style };
+  const tooltip = props.tooltip || props.badge.tt;
+  const className = props.size === 'sm' ? kialiBadgeSmall : kialiBadge;
 
-    const badge = (
-      <Badge className={className} id={key} isRead={this.props.isRead || false} key={key} style={style}>
-        {this.props.badge.badge}
-      </Badge>
-    );
+  const badge = (
+    <Badge className={className} id={key} isRead={props.isRead || false} key={key} style={style}>
+      {props.badge.badge}
+    </Badge>
+  );
 
-    return !tooltip ? (
-      badge
-    ) : (
-      <Tooltip content={<>{tooltip}</>} id={ttKey} key={ttKey} position={this.props.position || TooltipPosition.auto}>
-        {badge}
-      </Tooltip>
-    );
-  }
-}
+  return !tooltip ? (
+    badge
+  ) : (
+    <Tooltip content={<>{tooltip}</>} id={ttKey} key={ttKey} position={props.position || TooltipPosition.auto}>
+      {badge}
+    </Tooltip>
+  );
+};

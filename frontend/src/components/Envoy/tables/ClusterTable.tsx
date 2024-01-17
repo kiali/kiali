@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { SummaryTable, SummaryTableRenderer } from './BaseTable';
-import { ICell, ISortBy, sortable, SortByDirection } from '@patternfly/react-table';
+import { IRow, ISortBy, SortByDirection } from '@patternfly/react-table';
 import { ClusterSummary } from '../../../types/IstioObjects';
 import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '../../../types/Filters';
 import { SortField } from '../../../types/SortFilters';
@@ -11,19 +11,20 @@ import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { isParentKiosk } from '../../Kiosk/KioskActions';
+import { SortableTh } from 'components/SimpleTable';
 
 export class ClusterTable implements SummaryTable {
-  summaries: ClusterSummary[];
-  sortingIndex: number;
-  sortingDirection: 'asc' | 'desc';
-  namespaces: Namespace[] | undefined;
-  namespace: string;
   kiosk: string;
+  namespace: string;
+  namespaces: Namespace[] | undefined;
+  sortingDirection: 'asc' | 'desc';
+  sortingIndex: number;
+  summaries: ClusterSummary[];
 
   constructor(summaries: ClusterSummary[], sortBy: ISortBy, namespaces: Namespace[], namespace: string, kiosk: string) {
     this.summaries = summaries;
-    this.sortingIndex = sortBy.index || 0;
-    this.sortingDirection = sortBy.direction || SortByDirection.asc;
+    this.sortingIndex = sortBy.index ?? 0;
+    this.sortingDirection = sortBy.direction ?? SortByDirection.asc;
     this.namespaces = namespaces;
     this.namespace = namespace;
     this.kiosk = kiosk;
@@ -65,7 +66,7 @@ export class ClusterTable implements SummaryTable {
     ];
   };
 
-  filterMethods = (): { [filter_id: string]: (ClusterSummary, ActiveFilter) => boolean } => {
+  filterMethods = (): { [filter_id: string]: (entry: ClusterSummary, filter: ActiveFilter) => boolean } => {
     return {
       FQDN: (entry: ClusterSummary, filter: ActiveFilter): boolean => {
         return [entry.service_fqdn.service, entry.service_fqdn.namespace, entry.service_fqdn.cluster]
@@ -127,10 +128,10 @@ export class ClusterTable implements SummaryTable {
       {
         id: 'type',
         title: 'Type',
-        isNumeric: true,
+        isNumeric: false,
         param: 'type',
         compare: (a, b) => {
-          return a.type - b.type;
+          return a.type.localeCompare(b.type);
         }
       },
       {
@@ -173,43 +174,54 @@ export class ClusterTable implements SummaryTable {
     );
   };
 
-  head = (): ICell[] => {
+  head = (): SortableTh[] => {
     return [
       {
         title: 'Service FQDN',
-        transforms: [sortable],
-        header: { info: { tooltip: <>Fully Qualified Domain Name</> } }
+        sortable: true,
+        info: { tooltip: <>Fully Qualified Domain Name</> }
       },
-      { title: 'Port', transforms: [sortable] },
-      { title: 'Subset', transforms: [sortable] },
+      {
+        title: 'Port',
+        sortable: true
+      },
+      {
+        title: 'Subset',
+        sortable: true
+      },
       {
         title: 'Direction',
-        transforms: [sortable],
-        header: {
-          info: {
-            tooltip: (
-              <ul className={kialiStyle({ textAlign: 'left' })}>
-                <li>
-                  <b>inbound</b>: The inbound cluster events are the events that come into a node. These cluster events
-                  come from another node and enter other nodes.
-                </li>
-                <li>
-                  <b>outbound</b>: The outbound cluster events are the events that go out of a node. These cluster
-                  events are produced and sent from a node to other nodes.
-                </li>
-              </ul>
-            )
-          }
+        sortable: true,
+        info: {
+          tooltip: (
+            <ul className={kialiStyle({ textAlign: 'left' })}>
+              <li>
+                <b>inbound</b>: The inbound cluster events are the events that come into a node. These cluster events
+                come from another node and enter other nodes.
+              </li>
+              <li>
+                <b>outbound</b>: The outbound cluster events are the events that go out of a node. These cluster events
+                are produced and sent from a node to other nodes.
+              </li>
+            </ul>
+          )
         }
       },
-      { title: 'Type', transforms: [sortable], header: { info: { tooltip: this.render_cluster_type() } } },
-      { title: 'DestinationRule', transforms: [sortable] }
+      {
+        title: 'Type',
+        sortable: true,
+        info: { tooltip: this.render_cluster_type() }
+      },
+      {
+        title: 'DestinationRule',
+        sortable: true
+      }
     ];
   };
 
   resource = (): string => 'clusters';
 
-  setSorting = (columnIndex: number, direction: 'asc' | 'desc') => {
+  setSorting = (columnIndex: number, direction: 'asc' | 'desc'): void => {
     this.sortingIndex = columnIndex;
     this.sortingDirection = direction;
   };
@@ -217,7 +229,7 @@ export class ClusterTable implements SummaryTable {
   sortBy = (): ISortBy => {
     return {
       index: this.sortingIndex,
-      direction: this.sortingDirection || 'asc'
+      direction: this.sortingDirection ?? 'asc'
     };
   };
 
@@ -235,7 +247,7 @@ export class ClusterTable implements SummaryTable {
     );
   };
 
-  rows(): (string | number | JSX.Element)[][] {
+  rows(): IRow[] {
     const parentKiosk = isParentKiosk(this.kiosk);
     return this.summaries
       .filter((value: ClusterSummary): boolean => {
@@ -245,18 +257,23 @@ export class ClusterTable implements SummaryTable {
         const sortField = this.sortFields().find((value: SortField<ClusterSummary>): boolean => {
           return value.id === this.sortFields()[this.sortingIndex].id;
         });
+
         return this.sortingDirection === 'asc' ? sortField!.compare(a, b) : sortField!.compare(b, a);
       })
-      .map((value: ClusterSummary): (string | number | JSX.Element)[] => {
-        return [
-          serviceLink(value.service_fqdn, this.namespaces, this.namespace, false, parentKiosk),
-          value.port,
-          value.subset,
-          value.direction,
-          value.type,
-          istioConfigLink(value.destination_rule, 'destinationrule')
-        ];
-      });
+      .map(
+        (value: ClusterSummary): IRow => {
+          return {
+            cells: [
+              serviceLink(value.service_fqdn, this.namespaces, this.namespace, false, parentKiosk),
+              value.port,
+              value.subset,
+              value.direction,
+              value.type,
+              istioConfigLink(value.destination_rule, 'destinationrule')
+            ]
+          };
+        }
+      );
   }
 }
 

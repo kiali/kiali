@@ -8,14 +8,14 @@ import { actionRenderer } from './Renderers';
 import { CSSProperties } from 'react';
 
 type VirtualItemProps = {
-  item: RenderResource;
-  style?: CSSProperties;
+  action?: JSX.Element;
   className?: string;
-  index: number;
   columns: any[];
   config: Resource;
+  index: number;
+  item: RenderResource;
   statefulFilterProps?: React.RefObject<StatefulFilters>;
-  action?: JSX.Element;
+  style?: CSSProperties;
 };
 
 type VirtualItemState = {
@@ -46,22 +46,25 @@ export class VirtualItem extends React.Component<VirtualItemProps, VirtualItemSt
     this.promises.cancelAll();
   }
 
-  renderDetails = (item: RenderResource, health?: Health) => {
+  renderDetails = (item: RenderResource, health?: Health): React.ReactNode => {
     return this.props.columns
       .filter(object => !!object.renderer)
       .map(object => object.renderer(item, this.props.config, this.getBadge(), health, this.props.statefulFilterProps));
   };
 
-  getBadge = () => {
+  getBadge = (): React.ReactNode => {
     return this.props.config.name !== 'istio' ? this.props.config.badge : IstioTypes[this.props.item['type']].badge;
   };
 
   render() {
     const { style, className, item } = this.props;
-    let key = 'VirtualItem_' + ('namespace' in item ? 'Ns' + item.namespace + '_' + item.name : item.name);
-    if ('type' in item) {
-      key = 'VirtualItem_Ns' + item.namespace + '_' + item.type + '_' + item.name;
-    }
+    const cluster = item.cluster ? `_Cluster${item.cluster}` : '';
+    const namespace = 'namespace' in item ? `_Ns${item.namespace}` : '';
+    const type = 'type' in item ? `_${item.type}` : '';
+    // End result looks like: VirtualItem_Clusterwest_Nsbookinfo_gateway_bookinfo-gateway
+
+    const key = `VirtualItem${cluster}${namespace}${type}_${item.name}`;
+
     return (
       <Tr style={style} className={className} role="row" key={key} data-test={key}>
         {this.renderDetails(item, this.state.health)}

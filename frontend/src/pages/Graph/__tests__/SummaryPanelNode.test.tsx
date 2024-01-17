@@ -25,7 +25,7 @@ describe('SummaryPanelNodeComponent', () => {
       data: (destServices?) => (destServices ? [] : nodeData)
     };
     defaultProps = {
-      jaegerState: {},
+      tracingState: {},
       data: {
         summaryType: 'node',
         summaryTarget: target
@@ -48,6 +48,7 @@ describe('SummaryPanelNodeComponent', () => {
 
     serverConfig.clusters = {
       'cluster-default': {
+        accessible: true,
         apiEndpoint: '',
         isKialiHome: true,
         kialiInstances: [],

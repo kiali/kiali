@@ -2,52 +2,37 @@ import * as React from 'react';
 import { PopoverPosition, Tooltip } from '@patternfly/react-core';
 import { HealthDetails } from './HealthDetails';
 import * as H from '../../types/Health';
-import { createIcon } from './Helper';
-import { createTooltipIcon } from '../../config/KialiIcon';
-import { healthIndicatorStyle } from './HealthStyle';
+import { createIcon, createTooltipIcon } from '../../config/KialiIcon';
+import { healthIndicatorStyle } from '../../styles/HealthStyle';
 
-interface Props {
-  id: string;
+interface HealthIndicatorProps {
   health?: H.Health;
+  id: string;
   tooltipPlacement?: PopoverPosition;
 }
 
-interface HealthState {
-  globalStatus: H.Status;
-}
+export const HealthIndicator: React.FC<HealthIndicatorProps> = (props: HealthIndicatorProps) => {
+  const globalStatus = props.health ? props.health.getGlobalStatus() : H.NA;
 
-export class HealthIndicator extends React.PureComponent<Props, HealthState> {
-  static getDerivedStateFromProps(props: Props) {
-    return {
-      globalStatus: props.health ? props.health.getGlobalStatus() : H.NA
-    };
+  if (props.health) {
+    const icon = createIcon(globalStatus);
+
+    return (
+      <Tooltip
+        aria-label="Health indicator"
+        content={
+          <div>
+            <strong>{globalStatus.name}</strong>
+            <HealthDetails health={props.health} />
+          </div>
+        }
+        position={PopoverPosition.auto}
+        className={healthIndicatorStyle}
+      >
+        {createTooltipIcon(icon)}
+      </Tooltip>
+    );
   }
 
-  constructor(props: Props) {
-    super(props);
-    this.state = HealthIndicator.getDerivedStateFromProps(props);
-  }
-
-  render() {
-    if (this.props.health) {
-      // HealthIndicator will render always in SMALL mode
-      const icon = createIcon(this.state.globalStatus, 'md');
-      return (
-        <Tooltip
-          aria-label={'Health indicator'}
-          content={
-            <div>
-              <strong>{this.state.globalStatus.name}</strong>
-              <HealthDetails health={this.props.health} />
-            </div>
-          }
-          position={PopoverPosition.auto}
-          className={healthIndicatorStyle}
-        >
-          {createTooltipIcon(icon)}
-        </Tooltip>
-      );
-    }
-    return <span />;
-  }
-}
+  return <span />;
+};

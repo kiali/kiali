@@ -7,6 +7,7 @@ import (
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -96,6 +97,11 @@ func (elc EgressHostChecker) HasMatchingService(host kubernetes.Host, itemNamesp
 
 func getHostComponents(host string) (string, string) {
 	hParts := strings.Split(host, "/")
+	if len(hParts) < 2 {
+		// This should not happen because config CRD will prevent creating wrong hosts
+		log.Errorf("host %s does not match namespace/dnsName format", host)
+		return "", ""
+	}
 	return hParts[0], hParts[1]
 }
 

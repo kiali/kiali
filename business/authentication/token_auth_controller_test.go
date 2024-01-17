@@ -18,6 +18,7 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/util"
 )
@@ -65,7 +66,7 @@ func TestTokenAuthControllerRejectsUserWithoutPrivilegesInAnyNamespace(t *testin
 
 	rr := httptest.NewRecorder()
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	cache := business.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
+	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
 	business.WithKialiCache(cache)
 	business.SetWithBackends(mockClientFactory, nil)
 	sData, err := controller.Authenticate(request, rr)
@@ -206,7 +207,7 @@ func TestTokenAuthControllerValidatesSessionForUserWithMissingPrivileges(t *test
 	forbiddenClient := &forbiddenClient{k8s}
 
 	// Empty cache that will miss.
-	business.WithKialiCache(business.NewTestingCache(t, kubetest.NewFakeK8sClient(), *config.NewConfig()))
+	business.WithKialiCache(cache.NewTestingCache(t, kubetest.NewFakeK8sClient(), *config.NewConfig()))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(forbiddenClient)
 	business.SetWithBackends(mockClientFactory, nil)
 
@@ -250,7 +251,7 @@ func createValidSession(t *testing.T) (*httptest.ResponseRecorder, *UserSessionD
 
 	rr := httptest.NewRecorder()
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	cache := business.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
+	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
 	business.WithKialiCache(cache)
 	business.SetWithBackends(mockClientFactory, nil)
 	sData, err := controller.Authenticate(request, rr)

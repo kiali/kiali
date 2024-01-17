@@ -28,23 +28,24 @@
 package main
 
 import (
+	"context"
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
-	"regexp"
 	"strings"
 	"syscall"
 
-	"k8s.io/client-go/rest"
-
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/server"
 	"github.com/kiali/kiali/status"
+	"github.com/kiali/kiali/tracing"
 	"github.com/kiali/kiali/util"
 )
 
@@ -94,7 +95,7 @@ func main() {
 	cfg := config.Get()
 	log.Tracef("Kiali Configuration:\n%s", cfg)
 
-	if err := validateConfig(); err != nil {
+	if err := config.Validate(*cfg); err != nil {
 		log.Fatal(err)
 	}
 
@@ -107,8 +108,62 @@ func main() {
 	// prepare our internal metrics so Prometheus can scrape them
 	internalmetrics.RegisterInternalMetrics()
 
+	// Create the business package dependencies.
+	clientFactory, err := kubernetes.GetClientFactory()
+	if err != nil {
+		log.Fatalf("Failed to create client factory. Err: %s", err)
+	}
+
+	log.Info("Initializing Kiali Cache")
+	cache, err := cache.NewKialiCache(clientFactory, *cfg)
+	if err != nil {
+		log.Fatalf("Error initializing Kiali Cache. Details: %s", err)
+	}
+	defer cache.Stop()
+
+	namespaceService := business.NewNamespaceService(clientFactory.GetSAClients(), clientFactory.GetSAClients(), cache, *cfg)
+	meshService := business.NewMeshService(clientFactory.GetSAClients(), cache, namespaceService, *cfg)
+	cpm := business.NewControlPlaneMonitor(cache, clientFactory, *cfg, &meshService)
+
+	// This context is used for polling and for creating some high level clients like tracing.
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	if cfg.ExternalServices.Istio.IstioAPIEnabled {
+		cpm.PollIstiodForProxyStatus(ctx)
+	}
+
+	// Create shared prometheus client shared by all prometheus requests in the business layer.
+	prom, err := prometheus.NewClient()
+	if err != nil {
+		log.Fatalf("Error creating Prometheus client: %s", err)
+	}
+
+	// Create shared tracing client shared by all tracing requests in the business layer.
+	// Because tracing is not an essential component, we don't want to block startup
+	// of the server if the tracing client fails to initialize. tracing.NewClient will
+	// continue to retry until the client is initialized or the context is cancelled.
+	// Passing in a loader function allows the tracing client to be used once it is
+	// finally initialized.
+	var tracingClient tracing.ClientInterface
+	tracingLoader := func() tracing.ClientInterface {
+		return tracingClient
+	}
+	if cfg.ExternalServices.Tracing.Enabled {
+		go func() {
+			client, err := tracing.NewClient(ctx, cfg, clientFactory.GetSAHomeClusterClient().GetToken())
+			if err != nil {
+				log.Fatalf("Error creating tracing client: %s", err)
+				return
+			}
+			tracingClient = client
+		}()
+	} else {
+		log.Debug("Tracing is disabled")
+	}
+
 	// Start listening to requests
-	server := server.NewServer()
+	server := server.NewServer(cpm, clientFactory, cache, cfg, prom, tracingLoader)
 	server.Start()
 
 	// wait forever, or at least until we are told to exit
@@ -136,68 +191,6 @@ func waitForTermination() {
 	<-doneChan
 }
 
-func validateConfig() error {
-	cfg := config.Get()
-
-	if cfg.Server.Port < 0 {
-		return fmt.Errorf("server port is negative: %v", cfg.Server.Port)
-	}
-
-	if strings.Contains(cfg.Server.StaticContentRootDirectory, "..") {
-		return fmt.Errorf("server static content root directory must not contain '..': %v", cfg.Server.StaticContentRootDirectory)
-	}
-	if _, err := os.Stat(cfg.Server.StaticContentRootDirectory); os.IsNotExist(err) {
-		return fmt.Errorf("server static content root directory does not exist: %v", cfg.Server.StaticContentRootDirectory)
-	}
-
-	validPathRegEx := regexp.MustCompile(`^\/[a-zA-Z0-9\-\._~!\$&\'()\*\+\,;=:@%/]*$`)
-	webRoot := cfg.Server.WebRoot
-	if !validPathRegEx.MatchString(webRoot) {
-		return fmt.Errorf("web root must begin with a / and contain valid URL path characters: %v", webRoot)
-	}
-	if webRoot != "/" && strings.HasSuffix(webRoot, "/") {
-		return fmt.Errorf("web root must not contain a trailing /: %v", webRoot)
-	}
-	if strings.Contains(webRoot, "/../") {
-		return fmt.Errorf("for security purposes, web root must not contain '/../': %v", webRoot)
-	}
-
-	// log some messages to let the administrator know when credentials are configured certain ways
-	auth := cfg.Auth
-	log.Infof("Using authentication strategy [%v]", auth.Strategy)
-	if auth.Strategy == config.AuthStrategyAnonymous {
-		log.Warningf("Kiali auth strategy is configured for anonymous access - users will not be authenticated.")
-	} else if auth.Strategy != config.AuthStrategyOpenId &&
-		auth.Strategy != config.AuthStrategyOpenshift &&
-		auth.Strategy != config.AuthStrategyToken &&
-		auth.Strategy != config.AuthStrategyHeader {
-		return fmt.Errorf("Invalid authentication strategy [%v]", auth.Strategy)
-	}
-
-	// Check the ciphering key for sessions
-	signingKey := cfg.LoginToken.SigningKey
-	if err := config.ValidateSigningKey(signingKey, auth.Strategy); err != nil {
-		return err
-	}
-
-	// log a warning if the user is ignoring some validations
-	if len(cfg.KialiFeatureFlags.Validations.Ignore) > 0 {
-		log.Infof("Some validation errors will be ignored %v. If these errors do occur, they will still be logged. If you think the validation errors you see are incorrect, please report them to the Kiali team if you have not done so already and provide the details of your scenario. This will keep Kiali validations strong for the whole community.", cfg.KialiFeatureFlags.Validations.Ignore)
-	}
-
-	// log a info message if the user is disabling some features
-	if len(cfg.KialiFeatureFlags.DisabledFeatures) > 0 {
-		log.Infof("Some features are disabled: [%v]", strings.Join(cfg.KialiFeatureFlags.DisabledFeatures, ","))
-		for _, fn := range cfg.KialiFeatureFlags.DisabledFeatures {
-			if err := config.FeatureName(fn).IsValid(); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
 func validateFlags() {
 	if *argConfigFile != "" {
 		if _, err := os.Stat(*argConfigFile); err != nil {
@@ -219,13 +212,10 @@ func determineContainerVersion(defaultVersion string) string {
 	return v
 }
 
+// This is used to update the config with information about istio that
+// comes from the environment such as the cluster name.
 func updateConfigWithIstioInfo() {
 	conf := *config.Get()
-
-	if !conf.InCluster {
-		// If it's not an in-cluster kiali, we don't need to do anything
-		return
-	}
 
 	homeCluster := conf.KubernetesConfig.ClusterName
 	if homeCluster != "" {
@@ -234,18 +224,25 @@ func updateConfigWithIstioInfo() {
 	}
 
 	err := func() error {
-		restConf, err := rest.InClusterConfig()
-		if err != nil {
-			return err
-		}
+		log.Debug("Cluster name is not set. Attempting to auto-detect the cluster name from the home cluster environment.")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 
-		k8s, err := kubernetes.NewClientFromConfig(restConf)
+		// Need to create a temporary client factory here so that we can create a client
+		// to auto-detect the istio cluster name from the environment. There's a bit of a
+		// chicken and egg problem with the client factory because the client factory
+		// uses the cluster id to keep track of all the clients. But in order to create
+		// a client to get the cluster id from the environment, you need to create a client factory.
+		// To get around that we create a temporary client factory here and then set the kiali
+		// config cluster name. We then create the global client factory later in the business
+		// package and that global client factory has the cluster id set properly.
+		cf, err := kubernetes.NewClientFactory(ctx, conf)
 		if err != nil {
 			return err
 		}
 
 		// Try to auto-detect the cluster name
-		homeCluster, _, err = kubernetes.ClusterInfoFromIstiod(conf, k8s)
+		homeCluster, _, err = kubernetes.ClusterInfoFromIstiod(conf, cf.GetSAHomeClusterClient())
 		if err != nil {
 			return err
 		}
@@ -257,6 +254,7 @@ func updateConfigWithIstioInfo() {
 		homeCluster = config.DefaultClusterID
 	}
 
+	log.Debugf("Auto-detected the istio cluster name to be [%s]. Updating the kiali config", homeCluster)
 	conf.KubernetesConfig.ClusterName = homeCluster
 	config.Set(&conf)
 }

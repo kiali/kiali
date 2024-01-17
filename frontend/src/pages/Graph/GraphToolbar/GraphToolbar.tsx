@@ -45,8 +45,9 @@ import { GraphSecondaryMasthead } from './GraphSecondaryMasthead';
 import { INITIAL_USER_SETTINGS_STATE } from 'reducers/UserSettingsState';
 import { GraphReset } from './GraphReset';
 import { GraphFindPF } from './GraphFindPF';
+import { kialiStyle } from 'styles/StyleUtils';
 
-type ReduxProps = {
+type ReduxStateProps = {
   activeNamespaces: Namespace[];
   edgeLabels: EdgeLabelMode[];
   graphType: GraphType;
@@ -56,7 +57,9 @@ type ReduxProps = {
   showIdleNodes: boolean;
   summaryData: SummaryData | null;
   trafficRates: TrafficRate[];
+};
 
+type ReduxDispatchProps = {
   setActiveNamespaces: (activeNamespaces: Namespace[]) => void;
   setEdgeLabels: (edgeLabels: EdgeLabelMode[]) => void;
   setGraphType: (graphType: GraphType) => void;
@@ -67,6 +70,8 @@ type ReduxProps = {
   toggleReplayActive: () => void;
 };
 
+type ReduxProps = ReduxStateProps & ReduxDispatchProps;
+
 type GraphToolbarProps = ReduxProps & {
   controller?: any;
   cy?: any;
@@ -75,6 +80,11 @@ type GraphToolbarProps = ReduxProps & {
   isPF?: boolean;
   onToggleHelp: () => void;
 };
+
+const helpStyle = kialiStyle({
+  marginRight: '0.5rem',
+  alignSelf: 'center'
+});
 
 class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
   static contextTypes = {
@@ -141,49 +151,61 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
     }
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps: GraphToolbarProps): void {
     // ensure redux state and URL are aligned
-    if (this.props.edgeLabels?.length === 0) {
-      HistoryManager.deleteParam(URLParam.GRAPH_EDGE_LABEL, true);
-    } else {
-      HistoryManager.setParam(URLParam.GRAPH_EDGE_LABEL, String(this.props.edgeLabels));
+    if (String(prevProps.edgeLabels) !== String(this.props.edgeLabels)) {
+      if (this.props.edgeLabels?.length === 0) {
+        HistoryManager.deleteParam(URLParam.GRAPH_EDGE_LABEL, true);
+      } else {
+        HistoryManager.setParam(URLParam.GRAPH_EDGE_LABEL, String(this.props.edgeLabels));
+      }
     }
 
-    if (this.props.rankBy?.length === 0) {
-      HistoryManager.deleteParam(URLParam.GRAPH_RANK_BY, true);
-    } else {
-      HistoryManager.setParam(URLParam.GRAPH_RANK_BY, String(this.props.rankBy));
+    if (String(prevProps.rankBy) !== String(this.props.rankBy)) {
+      if (this.props.rankBy?.length === 0) {
+        HistoryManager.deleteParam(URLParam.GRAPH_RANK_BY, true);
+      } else {
+        HistoryManager.setParam(URLParam.GRAPH_RANK_BY, String(this.props.rankBy));
+      }
     }
 
-    if (this.props.activeNamespaces?.length === 0) {
-      HistoryManager.deleteParam(URLParam.NAMESPACES, true);
-    } else {
-      HistoryManager.setParam(URLParam.NAMESPACES, namespacesToString(this.props.activeNamespaces));
+    if (namespacesToString(prevProps.activeNamespaces) !== namespacesToString(this.props.activeNamespaces)) {
+      if (this.props.activeNamespaces?.length === 0) {
+        HistoryManager.deleteParam(URLParam.NAMESPACES, true);
+      } else {
+        HistoryManager.setParam(URLParam.NAMESPACES, namespacesToString(this.props.activeNamespaces));
+      }
     }
 
-    if (this.props.replayActive === INITIAL_USER_SETTINGS_STATE.replayActive) {
-      HistoryManager.deleteParam(URLParam.GRAPH_REPLAY_ACTIVE, true);
-    } else {
-      HistoryManager.setParam(URLParam.GRAPH_REPLAY_ACTIVE, String(this.props.replayActive));
+    if (String(prevProps.replayActive) !== String(this.props.replayActive)) {
+      if (this.props.replayActive === INITIAL_USER_SETTINGS_STATE.replayActive) {
+        HistoryManager.deleteParam(URLParam.GRAPH_REPLAY_ACTIVE, true);
+      } else {
+        HistoryManager.setParam(URLParam.GRAPH_REPLAY_ACTIVE, String(this.props.replayActive));
+      }
     }
 
-    if (this.props.trafficRates?.length === 0) {
-      HistoryManager.deleteParam(URLParam.GRAPH_TRAFFIC, true);
-    } else {
-      HistoryManager.setParam(URLParam.GRAPH_TRAFFIC, String(this.props.trafficRates));
+    if (String(prevProps.trafficRates) !== String(this.props.trafficRates)) {
+      if (this.props.trafficRates?.length === 0) {
+        HistoryManager.deleteParam(URLParam.GRAPH_TRAFFIC, true);
+      } else {
+        HistoryManager.setParam(URLParam.GRAPH_TRAFFIC, String(this.props.trafficRates));
+      }
     }
 
-    HistoryManager.setParam(URLParam.GRAPH_TYPE, String(this.props.graphType));
+    if (prevProps.graphType !== this.props.graphType) {
+      HistoryManager.setParam(URLParam.GRAPH_TYPE, String(this.props.graphType));
+    }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     // If replay was left active then turn it off
     if (this.props.replayActive) {
       this.props.toggleReplayActive();
     }
   }
 
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         <GraphSecondaryMasthead
@@ -221,16 +243,18 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
               </ToolbarItem>
             )}
 
-            <ToolbarItem style={{ marginLeft: 'auto' }}>
+            <ToolbarItem style={{ marginLeft: 'auto', alignSelf: 'center' }}>
               <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content="Shortcuts and tips...">
                 <TourStop info={GraphTourStops.Shortcuts}>
                   <Button
                     id="graph-tour"
                     variant={ButtonVariant.link}
-                    style={{ paddingLeft: '6px', paddingRight: '0px' }}
+                    className={helpStyle}
                     onClick={this.props.onToggleHelp}
+                    isInline
                   >
                     <KialiIcon.Help />
+                    <span style={{ marginLeft: '5px' }}>Help</span>
                   </Button>
                 </TourStop>
               </Tooltip>
@@ -243,7 +267,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
     );
   }
 
-  private handleNamespaceReturn = () => {
+  private handleNamespaceReturn = (): void => {
     const route = this.props.isPF ? 'graphpf' : 'graph';
     if (
       !this.props.summaryData ||
@@ -261,7 +285,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
   };
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   activeNamespaces: activeNamespacesSelector(state),
   edgeLabels: edgeLabelsSelector(state),
   graphType: graphTypeSelector(state),
@@ -273,7 +297,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   trafficRates: trafficRatesSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => {
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   return {
     setActiveNamespaces: bindActionCreators(NamespaceActions.setActiveNamespaces, dispatch),
     setEdgeLabels: bindActionCreators(GraphToolbarActions.setEdgeLabels, dispatch),

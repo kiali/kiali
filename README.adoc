@@ -39,7 +39,7 @@ Make sure you have the following tools:
 * gcc
 * link:https://docs.docker.com/installation/[Docker] or link:https://podman.io[Podman]
 ** If you are using `podman` declare the environment variable `DORP=podman`.
-* link:https://nodejs.org[NodeJS] (Node.js >= 12.22.0 && <16 with the NPM command)
+* link:https://nodejs.org[NodeJS] (Node.js >= 18 with the NPM command)
 * link:https://classic.yarnpkg.com/[Yarn]
 * The _GNU make_ utility or any of it's alternatives
 
@@ -85,11 +85,10 @@ We provide a few unsupported scripts that can help to get started:
 
 * You can use the link:hack/crc-openshift.sh[`crc-openshift.sh`] script to create an OpenShift cluster on your local machine.
 * If you are familiar to minikube, you may try the link:hack/k8s-minikube.sh[`k8s-minikube.sh`] script. It has the option to install Dex which is useful if you want to test with OpenID.
+* You can also use link:https://kind.sigs.k8s.io/[kind], run link:hack/start-kind.sh[`start-kind.sh`] script to create a single node KinD cluster with metallb enabled for testing Kiali against a real environment.
 * Finally, the link:hack/istio/install-istio-via-istioctl.sh[`install-istio-via-istioctl.sh`] and the link:hack/istio/install-bookinfo-demo.sh[`install-bookinfo-demo.sh`] scripts can assist into installing Istio and the Bookinfo sample application in your cluster, respectively. You can try running these scripts without any arguments.
 
 These scripts are written to rely on the minimum dependencies as possible and will try to download any required tools.
-
-You can also use link:https://kind.sigs.k8s.io/[kind], however we don't have a script to create a kind cluster.
 
 Depending on the type of cluster you are using, you should define the `CLUSTER_TYPE` environment variable on your shell to `openshift` (this is the default if not set), `minikube` or `kind` value so that the Makefiles can assist in other operations. If you are not using any of these clusters, you should set the environment variable to `CLUSTER_TYPE=local`.
 

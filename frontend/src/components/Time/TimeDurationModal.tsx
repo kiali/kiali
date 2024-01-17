@@ -87,12 +87,7 @@ export function TimeDurationModal(props: Props) {
         {props.customDuration ? (
           <FormGroup label="Time range" fieldId="drform-time-range">
             <div style={{ display: 'flex' }}>
-              <TimeRangeComp
-                menuAppendTo="parent"
-                timeRange={timeRange}
-                setTimeRange={handleSetTimeRange}
-                tooltip={'Time range'}
-              />
+              <TimeRangeComp timeRange={timeRange} setTimeRange={handleSetTimeRange} tooltip={'Time range'} />
             </div>
           </FormGroup>
         ) : (
@@ -101,7 +96,6 @@ export function TimeDurationModal(props: Props) {
               id={'drform-duration-dd'}
               disabled={false}
               duration={duration}
-              menuAppendTo="parent"
               prefix="Last"
               setDuration={handleSetDuration}
               tooltip="Traffic metrics per refresh"
@@ -114,7 +108,6 @@ export function TimeDurationModal(props: Props) {
             id="drform-metrics-refresh"
             hideLabel={true}
             hideRefreshButton={true}
-            menuAppendTo="parent"
             refreshInterval={refreshInterval}
             setRefreshInterval={handleSetRefreshInterval}
           />

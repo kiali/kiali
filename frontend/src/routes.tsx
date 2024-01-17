@@ -58,7 +58,7 @@ const navMenuItems: MenuItem[] = [
   },
   {
     title: 'Distributed Tracing',
-    to: '/jaeger'
+    to: '/tracing'
   },
   {
     title: 'Mesh',
@@ -158,7 +158,7 @@ const pathRoutes: Path[] = [
     component: IstioConfigListPage
   },
   {
-    path: '/' + Paths.JAEGER,
+    path: '/' + Paths.TRACING,
     component: undefined
   },
   {

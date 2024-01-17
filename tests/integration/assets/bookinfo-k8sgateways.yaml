@@ -37,3 +37,17 @@ spec:
       backendRefs:
         - name: httpbin
           port: 8000
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: referencegrant
+  namespace: bookinfo
+spec:
+  from:
+    - group: "gateway.networking.k8s.io"
+      kind: HTTPRoute
+      namespace: bookinfo
+  to:
+    - group: ""
+      kind: Service

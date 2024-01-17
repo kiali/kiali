@@ -1,14 +1,10 @@
 import { Label } from '@patternfly/react-core';
 import * as React from 'react';
 
-export class RemoteClusterBadge extends React.Component {
-  render() {
-    return (
-      <>
-        <Label style={{ marginLeft: 5 }} color="grey" isCompact>
-          Remote Cluster
-        </Label>
-      </>
-    );
-  }
-}
+export const RemoteClusterBadge: React.FC = () => {
+  return (
+    <Label style={{ marginLeft: '0.5rem' }} color="grey" isCompact>
+      Remote Cluster
+    </Label>
+  );
+};

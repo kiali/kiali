@@ -7,60 +7,57 @@ import { KialiIcon } from '../../config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 
 type MissingAuthPolicyProps = {
-  text: string;
-  textTooltip: string;
-  tooltip: boolean;
-  icon: React.ComponentClass<SVGIconProps>;
-  color: string;
+  text?: string;
+  textTooltip?: string;
+  tooltip?: boolean;
+  icon?: React.ComponentClass<SVGIconProps>;
+  color?: string;
   namespace: string;
-  style?: React.CSSProperties;
+  className?: string;
 };
 
 const infoStyle = kialiStyle({
-  margin: '0px 5px 2px 4px',
-  verticalAlign: '-5px !important'
+  marginLeft: '0.5rem'
 });
 
-export class MissingAuthPolicy extends React.Component<MissingAuthPolicyProps, {}> {
-  static defaultProps = {
-    text: 'Missing Authorization Policy',
-    textTooltip: 'This workload is not covered by any authorization policy.',
-    tooltip: false,
-    icon: icons.istio.missingAuthPolicy.icon,
-    color: icons.istio.missingAuthPolicy.color
-  };
+export const MissingAuthPolicy: React.FC<MissingAuthPolicyProps> = ({
+  text = 'Missing Authorization Policy',
+  textTooltip = 'This workload is not covered by any authorization policy.',
+  tooltip = false,
+  icon = icons.istio.missingAuthPolicy.icon,
+  color = icons.istio.missingAuthPolicy.color,
+  namespace,
+  className
+}) => {
+  const iconComponent = (
+    <span className={className}>
+      {React.createElement(icon, { style: { color: color } })}
 
-  render() {
-    const { text, textTooltip, icon, namespace, color, tooltip, style, ...otherProps } = this.props;
+      {!tooltip && (
+        <span style={{ marginLeft: '0.5rem' }}>
+          {text}
 
-    const iconComponent = (
-      <span style={style} {...otherProps}>
-        {React.createElement(icon, { style: { color: color, verticalAlign: '-2px' } })}
-        {!tooltip && (
-          <span style={{ marginLeft: '8px' }}>
-            {text}
-            <Tooltip
-              key={`tooltip_missing_auth_policy`}
-              position={TooltipPosition.top}
-              content={<div style={{ textAlign: 'left' }}>{textTooltip}</div>}
-            >
-              <KialiIcon.Info className={infoStyle} />
-            </Tooltip>
-          </span>
-        )}
-      </span>
-    );
+          <Tooltip
+            key="tooltip_missing_auth_policy"
+            position={TooltipPosition.top}
+            content={<div style={{ textAlign: 'left' }}>{textTooltip}</div>}
+          >
+            <KialiIcon.Info className={infoStyle} />
+          </Tooltip>
+        </span>
+      )}
+    </span>
+  );
 
-    if (isIstioNamespace(namespace)) {
-      return <></>;
-    }
-
-    return tooltip ? (
-      <Tooltip content={<div style={{ textAlign: 'left' }}>{textTooltip}</div>} position={TooltipPosition.right}>
-        {iconComponent}
-      </Tooltip>
-    ) : (
-      iconComponent
-    );
+  if (isIstioNamespace(namespace)) {
+    return <></>;
   }
-}
+
+  return tooltip ? (
+    <Tooltip content={<div style={{ textAlign: 'left' }}>{textTooltip}</div>} position={TooltipPosition.right}>
+      {iconComponent}
+    </Tooltip>
+  ) : (
+    iconComponent
+  );
+};

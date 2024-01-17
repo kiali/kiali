@@ -102,10 +102,8 @@ if [ "${ARCH}" != "ppc64le" ] && [ "${ARCH}" != "s390x" ] && [ "${ARCH}" != "amd
 fi
 
 IS_OPENSHIFT="false"
-IS_MAISTRA="false"
 if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   IS_OPENSHIFT="true"
-  IS_MAISTRA=$([ "$(oc get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
 fi
 
 if [ "${IS_OPENSHIFT}" == "true" ] && [ "${DISTRIBUTE_DEMO}" == "true" ]; then
@@ -114,21 +112,14 @@ if [ "${IS_OPENSHIFT}" == "true" ] && [ "${DISTRIBUTE_DEMO}" == "true" ]; then
 fi
 
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
-echo "IS_MAISTRA=${IS_MAISTRA}"
 
 # If we are to delete, remove everything and exit immediately after
 if [ "${DELETE_DEMO}" == "true" ]; then
   echo "Deleting Error Rates Demo (the envoy filters, if previously created, will remain)"
   if [ "${IS_OPENSHIFT}" == "true" ]; then
-    if [ "${IS_MAISTRA}" != "true" ]; then
-      $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE_ALPHA}
-      $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE_BETA}
-      $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE_GAMMA}
-    else
-      $CLIENT_EXE delete smm default -n ${NAMESPACE_ALPHA}
-      $CLIENT_EXE delete smm default -n ${NAMESPACE_BETA}
-      $CLIENT_EXE delete smm default -n ${NAMESPACE_GAMMA}
-    fi
+    $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE_ALPHA}
+    $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE_BETA}
+    $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE_GAMMA}
     $CLIENT_EXE delete scc error-rates-scc
   fi
   
@@ -183,26 +174,24 @@ if [ "${IS_OPENSHIFT}" == "true" ]; then
 fi
 
 if [ "${IS_OPENSHIFT}" == "true" ]; then
-  if [ "${IS_MAISTRA}" != "true" ]; then
-    cat <<NAD | $CLIENT_EXE -n ${NAMESPACE_ALPHA} create -f -
+  cat <<NAD | $CLIENT_EXE -n ${NAMESPACE_ALPHA} create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
 NAD
-    cat <<NAD | $CLIENT_EXE -n ${NAMESPACE_BETA} create -f -
+  cat <<NAD | $CLIENT_EXE -n ${NAMESPACE_BETA} create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
 NAD
-    cat <<NAD | $CLIENT_EXE -n ${NAMESPACE_GAMMA} create -f -
+  cat <<NAD | $CLIENT_EXE -n ${NAMESPACE_GAMMA} create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
 NAD
-  fi
   cat <<SCC | $CLIENT_EXE apply -f -
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
@@ -259,11 +248,4 @@ else
     ${CLIENT_EXE} apply -f <(curl -L "${url_beta}") -n ${NAMESPACE_BETA}
     ${CLIENT_EXE} apply -f <(curl -L "${url_gamma}") -n ${NAMESPACE_GAMMA}
   fi
-fi
-
-# we need to update deployment annotations after we create it
-if [ "${IS_MAISTRA}" == "true" ]; then
-  prepare_maistra "${NAMESPACE_ALPHA}"
-  prepare_maistra "${NAMESPACE_BETA}"
-  prepare_maistra "${NAMESPACE_GAMMA}"
 fi

@@ -3,66 +3,56 @@ import { Button, ButtonVariant } from '@patternfly/react-core';
 import { triggerRefresh } from '../../hooks/refresh';
 
 type Props = {
-  objectName: string;
-  readOnly: boolean;
   canUpdate: boolean;
+  objectName: string;
   onCancel: () => void;
-  onUpdate: () => void;
-  onRefresh: () => void;
-  showOverview: boolean;
-  overview: boolean;
   onOverview: () => void;
+  onRefresh: () => void;
+  onUpdate: () => void;
+  overview: boolean;
+  readOnly: boolean;
+  showOverview: boolean;
 };
 
-type State = {
-  showConfirmModal: boolean;
-};
-
-export class IstioActionButtons extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = { showConfirmModal: false };
-  }
-  hideConfirmModal = () => {
-    this.setState({ showConfirmModal: false });
+export const IstioActionButtons: React.FC<Props> = (props: Props) => {
+  const handleRefresh = () => {
+    props.onRefresh();
+    triggerRefresh();
   };
-  render() {
-    return (
-      <>
-        <span style={{ float: 'left', padding: '10px' }}>
-          {!this.props.readOnly && (
-            <span style={{ paddingRight: '5px' }}>
-              <Button variant={ButtonVariant.primary} isDisabled={!this.props.canUpdate} onClick={this.props.onUpdate}>
-                Save
-              </Button>
-            </span>
-          )}
-          <span style={{ paddingRight: '5px' }}>
-            <Button variant={ButtonVariant.secondary} onClick={this.handleRefresh}>
-              Reload
+
+  return (
+    <>
+      <span style={{ float: 'left', padding: '0.5rem' }}>
+        {!props.readOnly && (
+          <span style={{ paddingRight: '0.25rem' }}>
+            <Button variant={ButtonVariant.primary} isDisabled={!props.canUpdate} onClick={props.onUpdate}>
+              Save
             </Button>
           </span>
-          <span style={{ paddingRight: '5px' }}>
-            <Button variant={ButtonVariant.secondary} onClick={this.props.onCancel}>
-              {this.props.readOnly ? 'Close' : 'Cancel'}
+        )}
+
+        <span style={{ paddingRight: '0.25rem' }}>
+          <Button variant={ButtonVariant.secondary} onClick={handleRefresh}>
+            Reload
+          </Button>
+        </span>
+
+        <span style={{ paddingRight: '0.25rem' }}>
+          <Button variant={ButtonVariant.secondary} onClick={props.onCancel}>
+            {props.readOnly ? 'Close' : 'Cancel'}
+          </Button>
+        </span>
+      </span>
+
+      {props.showOverview && (
+        <span style={{ float: 'right', padding: '0.5rem' }}>
+          <span style={{ paddingLeft: '0.25rem' }}>
+            <Button variant={ButtonVariant.link} onClick={props.onOverview}>
+              {props.overview ? 'Close Overview' : 'Show Overview'}
             </Button>
           </span>
         </span>
-        {this.props.showOverview && (
-          <span style={{ float: 'right', padding: '10px' }}>
-            <span style={{ paddingLeft: '5px' }}>
-              <Button variant={ButtonVariant.link} onClick={this.props.onOverview}>
-                {this.props.overview ? 'Close Overview' : 'Show Overview'}
-              </Button>
-            </span>
-          </span>
-        )}
-      </>
-    );
-  }
-
-  private handleRefresh = () => {
-    this.props.onRefresh();
-    triggerRefresh();
-  };
-}
+      )}
+    </>
+  );
+};

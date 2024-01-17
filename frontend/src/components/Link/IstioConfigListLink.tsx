@@ -4,29 +4,33 @@ import { Paths } from '../../config';
 import { FilterSelected } from '../Filters/StatefulFilters';
 
 interface Props {
-  namespaces: string[];
+  children: React.ReactNode;
   errors?: boolean;
+  namespaces: string[];
   warnings?: boolean;
 }
 
-export class IstioConfigListLink extends React.Component<Props> {
-  namespacesToParams = () => {
+export const IstioConfigListLink: React.FC<Props> = (props: Props) => {
+  const namespacesToParams = (): string => {
     let param: string = '';
-    if (this.props.namespaces.length > 0) {
-      param = 'namespaces=' + this.props.namespaces.join(',');
+
+    if (props.namespaces.length > 0) {
+      param = `namespaces=${props.namespaces.join(',')}`;
     }
+
     return param;
   };
 
-  validationToParams = () => {
+  const validationToParams = (): string => {
     let params: string = '';
 
-    if (this.props.warnings) {
+    if (props.warnings) {
       params += 'configvalidation=Warning';
     }
 
     let errorParams: string = '';
-    if (this.props.errors) {
+
+    if (props.errors) {
       errorParams += 'configvalidation=Not+Valid';
     }
 
@@ -39,22 +43,23 @@ export class IstioConfigListLink extends React.Component<Props> {
     return params;
   };
 
-  cleanFilters = () => {
+  const cleanFilters = (): void => {
     FilterSelected.resetFilters();
   };
 
-  render() {
-    let params: string = this.namespacesToParams();
-    const validationParams: string = this.validationToParams();
-    if (params !== '' && validationParams !== '') {
-      params += '&';
-    }
-    params += validationParams;
+  let params: string = namespacesToParams();
 
-    return (
-      <Link to={`/${Paths.ISTIO}?${params}`} onClick={this.cleanFilters}>
-        {this.props.children}
-      </Link>
-    );
+  const validationParams: string = validationToParams();
+
+  if (params !== '' && validationParams !== '') {
+    params += '&';
   }
-}
+
+  params += validationParams;
+
+  return (
+    <Link to={`/${Paths.ISTIO}?${params}`} onClick={cleanFilters}>
+      {props.children}
+    </Link>
+  );
+};

@@ -28,8 +28,8 @@ import { validationKey } from '../../types/IstioConfigList';
 type WorkloadListPageState = FilterComponent.State<WorkloadListItem>;
 
 type ReduxProps = {
-  duration: DurationInSeconds;
   activeNamespaces: Namespace[];
+  duration: DurationInSeconds;
 };
 
 type WorkloadListPageProps = ReduxProps & FilterComponent.Props<WorkloadListItem>;
@@ -46,6 +46,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
     super(props);
     const prevCurrentSortField = FilterHelper.currentSortField(WorkloadListFilters.sortFields);
     const prevIsSortAscending = FilterHelper.isCurrentSortAscending();
+
     this.state = {
       listItems: [],
       currentSortField: prevCurrentSortField,
@@ -53,13 +54,14 @@ class WorkloadListPageComponent extends FilterComponent.Component<
     };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.updateListItems();
   }
 
-  componentDidUpdate(prevProps: WorkloadListPageProps, _prevState: WorkloadListPageState, _snapshot: any) {
+  componentDidUpdate(prevProps: WorkloadListPageProps): void {
     const prevCurrentSortField = FilterHelper.currentSortField(WorkloadListFilters.sortFields);
     const prevIsSortAscending = FilterHelper.isCurrentSortAscending();
+
     if (
       !namespaceEquals(this.props.activeNamespaces, prevProps.activeNamespaces) ||
       this.props.duration !== prevProps.duration ||
@@ -70,25 +72,31 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         currentSortField: prevCurrentSortField,
         isSortAscending: prevIsSortAscending
       });
+
       this.updateListItems();
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     this.promises.cancelAll();
   }
 
-  sortItemList(workloads: WorkloadListItem[], sortField: SortField<WorkloadListItem>, isAscending: boolean) {
+  sortItemList(
+    workloads: WorkloadListItem[],
+    sortField: SortField<WorkloadListItem>,
+    isAscending: boolean
+  ): WorkloadListItem[] {
     // Chain promises, as there may be an ongoing fetch/refresh and sort can be called after UI interaction
     // This ensures that the list will display the new data with the right sorting
     return WorkloadListFilters.sortWorkloadsItems(workloads, sortField, isAscending);
   }
 
-  updateListItems() {
+  updateListItems(): void {
     this.promises.cancelAll();
     const activeFilters: ActiveFiltersInfo = FilterSelected.getSelected();
     const activeToggles: ActiveTogglesInfo = Toggles.getToggles();
     const namespacesSelected = this.props.activeNamespaces.map(item => item.name);
+
     if (namespacesSelected.length !== 0) {
       this.fetchWorkloads(namespacesSelected, activeFilters, activeToggles, this.props.duration);
     } else {
@@ -121,30 +129,41 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         )
       }));
     }
+
     return [];
   };
 
-  fetchWorkloads(namespaces: string[], filters: ActiveFiltersInfo, toggles: ActiveTogglesInfo, rateInterval: number) {
+  fetchWorkloads(
+    namespaces: string[],
+    filters: ActiveFiltersInfo,
+    toggles: ActiveTogglesInfo,
+    rateInterval: number
+  ): void {
     const workloadsConfigPromises = namespaces.map(namespace => {
       const health = toggles.get('health') ? 'true' : 'false';
       const istioResources = toggles.get('istioResources') ? 'true' : 'false';
+
       return API.getWorkloads(namespace, {
         health: health,
         istioResources: istioResources,
-        rateInterval: String(rateInterval) + 's'
+        rateInterval: `${String(rateInterval)}s`
       });
     });
+
     this.promises
       .registerAll('workloads', workloadsConfigPromises)
       .then(responses => {
         let workloadsItems: WorkloadListItem[] = [];
+
         responses.forEach(response => {
           workloadsItems = workloadsItems.concat(this.getDeploymentItems(response.data));
         });
+
         return WorkloadListFilters.filterBy(workloadsItems, filters);
       })
       .then(workloadsItems => {
         this.promises.cancel('sort');
+
         this.setState({
           listItems: this.sortItemList(workloadsItems, this.state.currentSortField, this.state.isSortAscending)
         });
@@ -152,13 +171,14 @@ class WorkloadListPageComponent extends FilterComponent.Component<
       .catch(err => {
         if (!err.isCanceled) {
           console.log(`error: ${err}`);
-          this.handleAxiosError('Could not fetch workloads list', err);
+          this.handleApiError('Could not fetch workloads list', err);
         }
       });
   }
 
-  render() {
-    const hiddenColumns = isMultiCluster ? ([] as string[]) : ['cluster'];
+  render(): React.ReactNode {
+    const hiddenColumns = isMultiCluster ? [] : ['cluster'];
+
     Toggles.getToggles().forEach((v, k) => {
       if (!v) {
         hiddenColumns.push(k);
@@ -168,11 +188,13 @@ class WorkloadListPageComponent extends FilterComponent.Component<
     return (
       <>
         <RefreshNotifier onTick={this.updateListItems} />
+
         <DefaultSecondaryMasthead
           rightToolbar={
-            <TimeDurationComponent key={'DurationDropdown'} id="workload-list-duration-dropdown" disabled={false} />
+            <TimeDurationComponent key="DurationDropdown" id="workload-list-duration-dropdown" disabled={false} />
           }
         />
+
         <RenderContent>
           <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} type="workloads">
             <StatefulFilters
@@ -188,7 +210,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
   }
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   activeNamespaces: activeNamespacesSelector(state),
   duration: durationSelector(state)
 });

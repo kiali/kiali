@@ -21,24 +21,7 @@ const data = [
 ];
 
 describe('ToolbarDropdown', () => {
-  it('Render correctly all dropdowns', () => {
-    data.forEach(dropdownType => {
-      const wrapper = shallow(
-        <ToolbarDropdown
-          id={dropdownType.id}
-          disabled={false}
-          handleSelect={jest.fn()}
-          nameDropdown={dropdownType.id}
-          initialValue={dropdownType.default}
-          initialLabel={dropdownType.options[dropdownType.default]}
-          options={dropdownType.options}
-        />
-      );
-      expect(shallowToJson(wrapper)).toMatchSnapshot();
-    });
-  });
-
-  it('Render dropdowns correctly with controlled values and labels', () => {
+  it('Render correctly the toolbar dropdown', () => {
     data.forEach(dropdownType => {
       const wrapper = shallow(
         <ToolbarDropdown

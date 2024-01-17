@@ -78,22 +78,23 @@ Feature: Kiali Istio Config page
     Then the user can create a "Sidecar" Istio object
 
   @multi-cluster
-  @skip
+  @multi-primary
   Scenario: See all Istio Config objects in the bookinfo namespace in the multi-cluster environment.
     Then the "Cluster" column "appears"
-    And user sees all the Istio Config objects from both clusters in the bookinfo namespace
+    And user sees all the Istio Config objects in the bookinfo namespace for the "east" cluster
+    And user sees all the Istio Config objects in the bookinfo namespace for the "west" cluster
     And user sees Name information for Istio objects
     And user sees Namespace information for Istio objects
     And user sees Type information for Istio objects
     And user sees Configuration information for Istio objects
+    And user sees Cluster information for Istio objects
 
-  @skip
   @multi-cluster
   Scenario: Sort list by cluster column
-    When user sorts the list by "Cluster" "asc"
-    Then the list is sorted by "Cluster" "asc"
-    When user sorts the list by "Cluster" "desc"
-    Then the list is sorted by "Cluster" "desc"
+    When user sorts the list by column "Cluster" in "ascending" order
+    Then the list is sorted by column "Cluster" in "ascending" order
+    When user sorts the list by column "Cluster" in "descending" order
+    Then the list is sorted by column "Cluster" in "descending" order
 
   @crd-validation
   @bookinfo-app
@@ -194,6 +195,16 @@ Feature: Kiali Istio Config page
     And the DestinationRule has a "v1" subset for "" labels
     When user selects the "sleep" namespace
     Then the "foo" "DestinationRule" of the "sleep" namespace should have a "warning"
+
+  @crd-validation
+  @bookinfo-app
+  @sleep-app
+  Scenario: KIA0301 wildcard validation
+    Given there is a "foo" Gateway on "bookinfo" namespace for "productpage.local" hosts on HTTP port 80 with "app=productpage" labels selector
+    And there is a "foo" Gateway on "sleep" namespace for "*" hosts on HTTP port 80 with "app=productpage" labels selector
+    When user selects the "sleep" namespace
+    Then the "foo" "Gateway" of the "bookinfo" namespace should have a "warning"
+    And the "foo" "Gateway" of the "sleep" namespace should have a "warning"
 
   @crd-validation
   @bookinfo-app
@@ -313,8 +324,6 @@ Feature: Kiali Istio Config page
 
 # TODO: KIA06xx and KIA07xx does not appear in Istio Config list page. They appear in Svc/workload lists.
 #   Thus, these validations do not belong to this feature file.
-
-# TODO: KIA0801 is only applicable for Maistra. We don't have an environment to run tests for this one.
 
 # TODO: Apparently, Kiali does not trigger:
 #   KIA0204, KIA0205, KIA0206, KIA0401, KIA0501

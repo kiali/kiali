@@ -39,7 +39,7 @@ func TestIstioPermissions(t *testing.T) {
 
 func TestJaeger(t *testing.T) {
 	require := require.New(t)
-	response, statusCode, err := kiali.Jaeger()
+	response, statusCode, err := kiali.Tracing()
 
 	if statusCode == 200 {
 		require.NoError(err)

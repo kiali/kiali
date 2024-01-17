@@ -40,14 +40,11 @@ const statusDescriptors = new Map<string, StatusDescriptor>([
 
 // Magic style to align Istio Config icons on top of status overview
 const iconStyle = kialiStyle({
-  marginTop: -3,
-  marginRight: 18,
-  marginLeft: 2,
-  width: 10
+  marginTop: '-0.125rem',
+  marginRight: '0.75rem',
+  width: '0.75rem'
 });
 
-export class NamespaceMTLSStatus extends React.Component<Props> {
-  render() {
-    return <MTLSStatus status={this.props.status} className={iconStyle} statusDescriptors={statusDescriptors} />;
-  }
-}
+export const NamespaceMTLSStatus: React.FC<Props> = (props: Props) => {
+  return <MTLSStatus status={props.status} className={iconStyle} statusDescriptors={statusDescriptors} />;
+};

@@ -55,6 +55,52 @@ ${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} reviews-v2 --replicas=0
 ${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} reviews-v3 --replicas=0
 ${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} ratings-v1 --replicas=0
 
+echo "==== CREATING TRAFFIC SHIFTING RULES FOR REVIEWS SERVICE"
+# This is done to enforce traffic to all reviews workloads (there were ocassions where traffic was not being routed to v3 or v2)
+cat <<EOF | ${CLIENT_EXE} apply -f -
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: reviews
+  namespace: ${BOOKINFO_NAMESPACE}
+spec:
+  hosts:
+    - reviews.bookinfo.svc.cluster.local
+  http:
+    - route:
+        - destination:
+            host: reviews.bookinfo.svc.cluster.local
+            subset: v1
+          weight: 33
+        - destination:
+            host: reviews.bookinfo.svc.cluster.local
+            subset: v2
+          weight: 33
+        - destination:
+            host: reviews.bookinfo.svc.cluster.local
+            subset: v3
+          weight: 34
+EOF
+cat <<EOF | ${CLIENT_EXE} apply -f -
+kind: DestinationRule
+apiVersion: networking.istio.io/v1beta1
+metadata:
+  name: reviews
+  namespace: ${BOOKINFO_NAMESPACE}
+spec:
+  host: reviews.bookinfo.svc.cluster.local
+  subsets:
+    - name: v1
+      labels:
+        version: v1
+    - name: v2
+      labels:
+        version: v2
+    - name: v3
+      labels:
+        version: v3
+EOF
+
 if [ "${IS_OPENSHIFT}" == "true" ]; then
   INGRESS_HOST=$(${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get route istio-ingressgateway -o jsonpath='{.spec.host}')
 else

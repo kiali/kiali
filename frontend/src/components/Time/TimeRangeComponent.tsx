@@ -22,7 +22,6 @@ import { kialiStyle } from 'styles/StyleUtils';
 
 type Props = {
   manageURL?: boolean;
-  menuAppendTo?: HTMLElement | (() => HTMLElement) | 'parent' | 'inline';
   timeRange: TimeRange;
   tooltip: string;
   setTimeRange: (range: TimeRange) => void;
@@ -95,16 +94,15 @@ export class TimeRangeComp extends React.Component<Props> {
   renderDuration(d?: DurationInSeconds) {
     const durations = humanDurations(serverConfig, 'Last', undefined);
     const options = { custom: 'Custom', ...durations };
+    const value = d ?? 'custom';
     return (
       <ToolbarDropdown
         id={'metrics_filter_interval_duration'}
         handleSelect={this.onDurationChanged}
-        initialValue={d || 'custom'}
-        value={d || 'custom'}
-        initialLabel={d ? serverConfig.durations[d] : 'Custom'}
+        value={value}
+        label={options[value]}
         options={options}
         tooltip={this.props.tooltip}
-        menuAppendTo={this.props.menuAppendTo}
       />
     );
   }

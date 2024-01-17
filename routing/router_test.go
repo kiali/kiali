@@ -17,19 +17,18 @@ import (
 
 func TestDrawPathProperly(t *testing.T) {
 	conf := new(config.Config)
-	config.Set(conf)
-	router := NewRouter()
+	router := NewRouter(conf, nil, nil, nil, nil, nil)
 	testRoute(router, "Root", "GET", t)
 }
 
 func testRoute(router *mux.Router, name string, method string, t *testing.T) {
-	var path = router.Get(name)
+	path := router.Get(name)
 
 	if path == nil {
 		t.Error("path is not registered into router")
 	}
 
-	var methods, err = path.GetMethods()
+	methods, err := path.GetMethods()
 	if err != nil {
 		t.Error(err)
 	}
@@ -40,14 +39,10 @@ func testRoute(router *mux.Router, name string, method string, t *testing.T) {
 }
 
 func TestWebRootRedirect(t *testing.T) {
-	oldConfig := config.Get()
-	defer config.Set(oldConfig)
-
 	conf := new(config.Config)
 	conf.Server.WebRoot = "/test"
-	config.Set(conf)
 
-	router := NewRouter()
+	router := NewRouter(conf, nil, nil, nil, nil, nil)
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -68,9 +63,8 @@ func TestWebRootRedirect(t *testing.T) {
 
 func TestSimpleRoute(t *testing.T) {
 	conf := new(config.Config)
-	config.Set(conf)
 
-	router := NewRouter()
+	router := NewRouter(conf, nil, nil, nil, nil, nil)
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -85,20 +79,16 @@ func TestSimpleRoute(t *testing.T) {
 }
 
 func TestRedirectWithSetWebRootKeepsParams(t *testing.T) {
-	oldConfig := config.Get()
-	defer config.Set(oldConfig)
-
 	oldWd, _ := os.Getwd()
 	defer func() { _ = os.Chdir(oldWd) }()
 	_ = os.Chdir(os.TempDir())
-	_ = os.MkdirAll("./console", 0777)
+	_ = os.MkdirAll("./console", 0o777)
 	_, _ = os.Create("./console/index.html")
 
 	conf := new(config.Config)
 	conf.Server.WebRoot = "/test"
-	config.Set(conf)
 
-	router := NewRouter()
+	router := NewRouter(conf, nil, nil, nil, nil, nil)
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -126,7 +116,7 @@ func TestRedirectWithSetWebRootKeepsParams(t *testing.T) {
 }
 
 func TestMetricHandlerAPIFailures(t *testing.T) {
-	var errcodes = []struct {
+	errcodes := []struct {
 		Name string
 		Code int
 	}{

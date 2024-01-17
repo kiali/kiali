@@ -17,6 +17,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -341,7 +342,7 @@ func TestGetNamespaceServicesHealthMultiCluster(t *testing.T) {
 		),
 	}
 	clientFactory.SetClients(clients)
-	cache := newTestingCache(t, clientFactory, *conf)
+	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	kialiCache = cache
 	prom := new(prometheustest.PromClientMock)
 	prom.On("GetNamespaceServicesRequestRates", "tutorial", conf.KubernetesConfig.ClusterName, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
@@ -380,7 +381,7 @@ func TestGetNamespaceApplicationsHealthMultiCluster(t *testing.T) {
 		),
 	}
 	clientFactory.SetClients(clients)
-	cache := newTestingCache(t, clientFactory, *conf)
+	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	kialiCache = cache
 	prom := new(prometheustest.PromClientMock)
 	prom.On("GetAllRequestRates", "tutorial", conf.KubernetesConfig.ClusterName, "1m", mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
@@ -419,7 +420,7 @@ func TestGetNamespaceWorkloadsHealthMultiCluster(t *testing.T) {
 		),
 	}
 	clientFactory.SetClients(clients)
-	cache := newTestingCache(t, clientFactory, *conf)
+	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	kialiCache = cache
 	prom := new(prometheustest.PromClientMock)
 	prom.On("GetAllRequestRates", "tutorial", conf.KubernetesConfig.ClusterName, "1m", mock.AnythingOfType("time.Time")).Return(serviceRates, nil)

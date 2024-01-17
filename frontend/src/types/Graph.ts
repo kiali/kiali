@@ -1,5 +1,5 @@
 import { Namespace } from './Namespace';
-import { DurationInSeconds, TimeInSeconds } from './Common';
+import { AppenderString, DurationInSeconds, TimeInSeconds } from './Common';
 import { Health } from './Health';
 import { HealthAnnotationType } from './HealthAnnotation';
 
@@ -8,11 +8,13 @@ export interface Layout {
 }
 
 export const SUMMARY_PANEL_CHART_WIDTH = 250;
+
 export type SummaryType = 'graph' | 'node' | 'edge' | 'box';
+
 export interface SummaryData {
   isPF?: boolean;
-  summaryType: SummaryType;
   summaryTarget: any;
+  summaryType: SummaryType;
 }
 
 export enum Protocol {
@@ -41,8 +43,8 @@ export enum EdgeMode {
 }
 
 export enum EdgeLabelMode {
-  RESPONSE_TIME_GROUP = 'responseTime',
   RESPONSE_TIME_AVERAGE = 'avg',
+  RESPONSE_TIME_GROUP = 'responseTime',
   RESPONSE_TIME_P50 = 'rt50',
   RESPONSE_TIME_P95 = 'rt95',
   RESPONSE_TIME_P99 = 'rt99',
@@ -199,12 +201,12 @@ export interface NodeParamsType {
   aggregate?: string;
   aggregateValue?: string;
   app: string;
+  cluster?: string;
   namespace: Namespace;
   nodeType: NodeType;
   service: string;
   version?: string;
   workload: string;
-  cluster?: string;
 }
 
 // This data is stored in the _global scratch area in the cy graph
@@ -224,8 +226,8 @@ export type CytoscapeGlobalScratchData = {
 };
 
 export interface CytoscapeBaseEvent {
-  summaryType: SummaryType; // what the summary panel should show
   summaryTarget: any; // the cytoscape element that was the target of the event
+  summaryType: SummaryType; // what the summary panel should show
 }
 
 export interface GraphEvent extends CytoscapeBaseEvent {
@@ -233,7 +235,6 @@ export interface GraphEvent extends CytoscapeBaseEvent {
 }
 
 // Graph Structures
-
 type PercentageOfTrafficByFlag = {
   [flag: string]: string;
 };
@@ -306,14 +307,14 @@ export const prettyProtocol = (protocol: ValidProtocols): string => {
 
 export interface DestService {
   cluster: string;
-  namespace: string;
   name: string;
+  namespace: string;
 }
 
 export interface DestService {
   cluster: string;
-  namespace: string;
   name: string;
+  namespace: string;
 }
 
 export interface SEInfo {
@@ -327,27 +328,27 @@ export interface WEInfo {
 }
 
 export interface GraphRequestsHealth {
+  healthAnnotations: { [idx: string]: string };
   inbound: { [idx: string]: { [idx: string]: number } };
   outbound: { [idx: string]: { [idx: string]: number } };
-  healthAnnotations: { [idx: string]: string };
 }
 
 export interface GraphWorkloadStatus {
-  name: string;
-  desiredReplicas: number;
-  currentReplicas: number;
   availableReplicas: number;
+  currentReplicas: number;
+  desiredReplicas: number;
+  name: string;
   syncedProxies: number;
 }
 
 export interface GraphNodeAppHealth {
-  workloadStatuses: GraphWorkloadStatus[];
   requests: GraphRequestsHealth;
+  workloadStatuses: GraphWorkloadStatus[];
 }
 
 export interface GraphNodeWorkloadHealth {
-  workloadStatus: GraphWorkloadStatus;
   requests: GraphRequestsHealth;
+  workloadStatus: GraphWorkloadStatus;
 }
 
 export interface GraphNodeServiceHealth {
@@ -358,16 +359,10 @@ export type GraphNodeHealthData = GraphNodeAppHealth | GraphNodeWorkloadHealth |
 
 // Node data expected from server
 export interface GraphNodeData {
-  // required
-  cluster: string;
-  id: string;
-  namespace: string;
-  nodeType: NodeType;
-
-  // optional
   aggregate?: string;
   aggregateValue?: string;
   app?: string;
+  cluster: string;
   destServices?: DestService[];
   hasCB?: boolean;
   hasFaultInjection?: boolean;
@@ -382,21 +377,22 @@ export interface GraphNodeData {
   };
   hasWorkloadEntry?: WEInfo[];
   healthData?: GraphNodeHealthData;
+  id: string;
   isBox?: string;
   isDead?: boolean;
-  isIdle?: boolean;
-  isInaccessible?: boolean;
   isGateway?: {
-    ingressInfo?: {
-      hostnames?: string[];
-    };
     egressInfo?: {
       hostnames?: string[];
     };
     gatewayAPIInfo?: {
       hostnames?: string[];
     };
+    ingressInfo?: {
+      hostnames?: string[];
+    };
   };
+  isIdle?: boolean;
+  isInaccessible?: boolean;
   isK8sGatewayAPI?: boolean;
   isMisconfigured?: string;
   isOutOfMesh?: boolean;
@@ -404,6 +400,8 @@ export interface GraphNodeData {
   isRoot?: boolean;
   isServiceEntry?: SEInfo;
   labels?: { [key: string]: string };
+  namespace: string;
+  nodeType: NodeType;
   parent?: string;
   service?: string;
   traffic?: ProtocolTraffic[];
@@ -413,14 +411,14 @@ export interface GraphNodeData {
 
 // Edge data expected from server
 export interface GraphEdgeData {
-  id: string;
-  source: string;
-  target: string;
   destPrincipal?: string;
-  responseTime?: number;
-  sourcePrincipal?: string;
-  traffic?: ProtocolTraffic;
+  id: string;
   isMTLS?: number;
+  responseTime?: number;
+  source: string;
+  sourcePrincipal?: string;
+  target: string;
+  traffic?: ProtocolTraffic;
 }
 
 export interface GraphNodeWrapper {
@@ -432,8 +430,25 @@ export interface GraphEdgeWrapper {
 }
 
 export interface GraphElements {
-  nodes?: GraphNodeWrapper[];
   edges?: GraphEdgeWrapper[];
+  nodes?: GraphNodeWrapper[];
+}
+
+export interface GraphElementsQuery {
+  appenders?: AppenderString;
+  boxBy?: string;
+  duration?: string;
+  graphType?: GraphType;
+  includeIdleEdges?: boolean;
+  injectServiceNodes?: boolean;
+  namespaces?: string;
+  queryTime?: string;
+  rateGrpc?: string;
+  rateHttp?: string;
+  rateTcp?: string;
+  responseTime?: string;
+  throughputType?: string;
+  waypoints?: boolean;
 }
 
 export interface GraphDefinition {
@@ -457,17 +472,13 @@ export interface DecoratedGraphNodeData extends GraphNodeData {
   httpIn5xx: number;
   httpInNoResponse: number;
   httpOut: number;
-  tcpIn: number;
-  tcpOut: number;
-
-  traffic: never;
-
-  // computed values...
-
   // true if has istio namespace
   isIstio?: boolean;
   // assigned when node ranking is enabled. relative importance from most to least important [1..100]. Multiple nodes can have same rank.
   rank?: number;
+  tcpIn: number;
+  tcpOut: number;
+  traffic: never;
 }
 
 // Edge data after decorating at fetch-time (what is mainly used by ui code)
@@ -477,6 +488,11 @@ export interface DecoratedGraphEdgeData extends GraphEdgeData {
   grpcNoResponse: number;
   grpcPercentErr: number;
   grpcPercentReq: number;
+  // During the decoration process, we make non-optional some number attributes (giving them a default value)
+  // computed, true if traffic rate > 0
+  hasTraffic?: boolean;
+  // assigned when graph is updated, the edge health depends on the node health, traffic, and config
+  healthStatus?: string; // status name
   http: number;
   http3xx: number;
   http4xx: number;
@@ -484,24 +500,15 @@ export interface DecoratedGraphEdgeData extends GraphEdgeData {
   httpNoResponse: number;
   httpPercentErr: number;
   httpPercentReq: number;
-  protocol: ValidProtocols;
-  responses: Responses;
-  tcp: number;
-
-  // During the decoration process, we make non-optional some number attributes (giving them a default value)
-  // computed, true if traffic rate > 0
-  hasTraffic?: boolean;
   // Default value -1
   isMTLS: number;
+  protocol: ValidProtocols;
   // Default value NaN
   responseTime: number;
+  responses: Responses;
+  tcp: number;
   // Default value NaN
   throughput: number;
-
-  // computed values...
-
-  // assigned when graph is updated, the edge health depends on the node health, traffic, and config
-  healthStatus?: string; // status name
 }
 
 export interface DecoratedGraphNodeWrapper {
@@ -513,8 +520,8 @@ export interface DecoratedGraphEdgeWrapper {
 }
 
 export interface DecoratedGraphElements {
-  nodes?: DecoratedGraphNodeWrapper[];
   edges?: DecoratedGraphEdgeWrapper[];
+  nodes?: DecoratedGraphNodeWrapper[];
 }
 
 export const EdgeAttr = {

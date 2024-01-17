@@ -267,6 +267,7 @@ export class GraphStyles {
       if (node.hasWorkloadEntry) {
         badges = `<span class="${NodeIconWorkloadEntry} ${badgeMargin(badges)}"></span> ${badges}`;
       }
+
       if (node.isRoot) {
         if (
           node.isGateway?.ingressInfo?.hostnames?.length !== undefined ||
@@ -420,7 +421,7 @@ export class GraphStyles {
         let contentPfBadge = '';
         if (!!c.pfBadge) {
           const pfBadgeStyle = kialiStyle(c.pfBadge.style as NestedCSSProperties);
-          contentPfBadge = `<span class="pf-c-badge pf-m-unread ${kialiBadge} ${pfBadgeStyle}" style="${appBoxStyle}">${c.pfBadge.badge}</span>`;
+          contentPfBadge = `<span class="pf-v5-c-badge pf-m-unread ${kialiBadge} ${pfBadgeStyle}" style="${appBoxStyle}">${c.pfBadge.badge}</span>`;
         }
         const contentDiv = `<div class="${contentClasses} ${contentBox}" style="${appBoxStyle} ${contentStyle}">${contentPfBadge}${c.text}</div>`;
         contentDivs = `${contentDivs}${contentDiv}`;
@@ -457,7 +458,7 @@ export class GraphStyles {
       let contentPfBadge = '';
       if (!!c.pfBadge) {
         const pfBadgeStyle = kialiStyle(c.pfBadge.style as NestedCSSProperties);
-        contentPfBadge = `<span class="pf-c-badge pf-m-unread ${kialiBadge} ${pfBadgeStyle}" style="${''}">${
+        contentPfBadge = `<span class="pf-v5-c-badge pf-m-unread ${kialiBadge} ${pfBadgeStyle}" style="${''}">${
           c.pfBadge.badge
         }</span>`;
       }

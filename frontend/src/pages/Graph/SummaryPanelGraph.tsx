@@ -15,19 +15,18 @@ import {
   TrafficRateTcp
 } from '../../utils/TrafficRate';
 import * as API from '../../services/Api';
-import { Response } from '../../services/Api';
 import {
   getDatapoints,
   getFirstDatapoints,
   getTitle,
   hr,
+  noTrafficStyle,
   shouldRefreshData,
   summaryBodyTabs,
   summaryFont,
   summaryPanelWidth
 } from './SummaryPanelCommon';
 import { Datapoint, IstioMetricsMap, Labels } from '../../types/Metrics';
-import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise, PromisesRegistry } from '../../utils/CancelablePromises';
 import { KialiIcon } from 'config/KialiIcon';
 import { ValidationStatus } from 'types/IstioObjects';
@@ -38,24 +37,25 @@ import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { edgesIn, edgesOut, elems, leafNodes, NodeData, select } from 'pages/GraphPF/GraphPFElems';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
+import { ApiResponse } from 'types/Api';
 
 type SummaryPanelGraphMetricsState = {
-  grpcRequestIn: Datapoint[];
-  grpcRequestOut: Datapoint[];
-  grpcRequestErrIn: Datapoint[];
-  grpcRequestErrOut: Datapoint[];
-  grpcSentIn: Datapoint[];
-  grpcSentOut: Datapoint[];
   grpcReceivedIn: Datapoint[];
   grpcReceivedOut: Datapoint[];
-  httpRequestIn: Datapoint[];
-  httpRequestOut: Datapoint[];
+  grpcRequestErrIn: Datapoint[];
+  grpcRequestErrOut: Datapoint[];
+  grpcRequestIn: Datapoint[];
+  grpcRequestOut: Datapoint[];
+  grpcSentIn: Datapoint[];
+  grpcSentOut: Datapoint[];
   httpRequestErrIn: Datapoint[];
   httpRequestErrOut: Datapoint[];
-  tcpSentIn: Datapoint[];
-  tcpSentOut: Datapoint[];
+  httpRequestIn: Datapoint[];
+  httpRequestOut: Datapoint[];
   tcpReceivedIn: Datapoint[];
   tcpReceivedOut: Datapoint[];
+  tcpSentIn: Datapoint[];
+  tcpSentOut: Datapoint[];
 };
 
 // TODO replace with real type
@@ -109,7 +109,13 @@ const defaultState: SummaryPanelGraphState = {
 };
 
 const topologyStyle = kialiStyle({
-  margin: '0 1em'
+  marginLeft: '0.25rem',
+  marginRight: '0.5rem'
+});
+
+const namespaceStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center'
 });
 
 export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, SummaryPanelGraphState> {
@@ -122,8 +128,8 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
   };
 
   private graphTraffic?: SummaryPanelGraphTraffic;
-  private isPF: boolean = false;
-  private metricsPromise?: CancelablePromise<Response<IstioMetricsMap>[]>;
+  private isPF = false;
+  private metricsPromise?: CancelablePromise<ApiResponse<IstioMetricsMap>[]>;
   private validationSummaryPromises: PromisesRegistry = new PromisesRegistry();
 
   constructor(props: SummaryPanelPropType) {
@@ -133,7 +139,10 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     this.state = { ...defaultState };
   }
 
-  static getDerivedStateFromProps(props: SummaryPanelPropType, state: SummaryPanelGraphState) {
+  static getDerivedStateFromProps(
+    props: SummaryPanelPropType,
+    state: SummaryPanelGraphState
+  ): Partial<SummaryPanelGraphState> | null {
     // if the summaryTarget (i.e. graph) has changed, then init the state and set to loading. The loading
     // will actually be kicked off after the render (in componentDidMount/Update).
     return props.data.summaryTarget !== state.graph
@@ -141,7 +150,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
       : null;
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     if (this.shouldShowCharts()) {
       this.graphTraffic = this.getGraphTraffic();
       this.updateCharts();
@@ -149,7 +158,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     this.updateValidations();
   }
 
-  componentDidUpdate(prevProps: SummaryPanelPropType) {
+  componentDidUpdate(prevProps: SummaryPanelPropType): void {
     if (shouldRefreshData(prevProps, this.props)) {
       if (this.shouldShowCharts()) {
         this.graphTraffic = this.getGraphTraffic();
@@ -159,7 +168,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     if (this.metricsPromise) {
       this.metricsPromise.cancel();
     }
@@ -168,26 +177,27 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     }
   }
 
-  render() {
-    let numSvc,
-      numWorkloads,
-      numApps,
-      numVersions,
-      numEdges,
-      grpcIn,
-      grpcOut,
-      grpcTotal,
-      httpIn,
-      httpOut,
-      httpTotal,
-      isGrpcRequests,
-      tcpIn,
-      tcpOut,
-      tcpTotal;
+  render(): React.ReactNode {
+    let numSvc: number,
+      numWorkloads: number,
+      numApps: number,
+      numVersions: number,
+      numEdges: number,
+      grpcIn: TrafficRateGrpc,
+      grpcOut: TrafficRateGrpc,
+      grpcTotal: TrafficRateGrpc,
+      httpIn: TrafficRateHttp,
+      httpOut: TrafficRateHttp,
+      httpTotal: TrafficRateHttp,
+      isGrpcRequests: boolean,
+      tcpIn: TrafficRateTcp,
+      tcpOut: TrafficRateTcp,
+      tcpTotal: TrafficRateTcp;
 
     if (this.isPF) {
       // PF Graph
       const controller = this.props.data.summaryTarget as Visualization;
+
       if (!controller) {
         return null;
       }
@@ -195,25 +205,28 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
 
       numSvc = select(nodes, { prop: NodeAttr.nodeType, val: NodeType.SERVICE }).length;
       numWorkloads = select(nodes, { prop: NodeAttr.nodeType, val: NodeType.WORKLOAD }).length;
+
       ({ numApps, numVersions } = this.countApps());
       numEdges = edges.length;
 
       ({ grpcIn, grpcOut, grpcTotal, httpIn, httpOut, httpTotal, isGrpcRequests, tcpIn, tcpOut, tcpTotal } =
-        this.graphTraffic || this.getGraphTraffic());
+        this.graphTraffic ?? this.getGraphTraffic());
     } else {
       // CY Graph
       const cy = this.props.data.summaryTarget;
+
       if (!cy) {
         return null;
       }
 
       numSvc = cy.nodes(`[nodeType = "${NodeType.SERVICE}"]`).size();
       numWorkloads = cy.nodes(`[nodeType = "${NodeType.WORKLOAD}"]`).size();
+
       ({ numApps, numVersions } = this.countApps());
       numEdges = cy.edges().size();
 
       ({ grpcIn, grpcOut, grpcTotal, httpIn, httpOut, httpTotal, isGrpcRequests, tcpIn, tcpOut, tcpTotal } =
-        this.graphTraffic || this.getGraphTraffic());
+        this.graphTraffic ?? this.getGraphTraffic());
     }
 
     const tooltipInboundRef = React.createRef();
@@ -225,36 +238,40 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
         <div id="summary-panel-graph-heading" className={panelHeadingStyle}>
           {getTitle('Current Graph')}
           {this.renderNamespacesSummary()}
-          <br />
           {this.renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
         </div>
+
         <div className={summaryBodyTabs}>
-          <SimpleTabs id="graph_summary_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
+          <SimpleTabs id="graph_summary_tabs" defaultTab={0} style={{ paddingBottom: '0.5rem' }}>
             <Tooltip
               id="tooltip-inbound"
               content="Traffic entering from traffic sources."
               entryDelay={1250}
               triggerRef={tooltipInboundRef}
             />
+
             <Tooltip
               id="tooltip-outbound"
               content="Traffic exiting the requested namespaces."
               entryDelay={1250}
               triggerRef={tooltipOutboundRef}
             />
+
             <Tooltip
               id="tooltip-total"
               content="All inbound, outbound and traffic within the requested namespaces."
               entryDelay={1250}
               triggerRef={tooltipTotalRef}
             />
+
             <Tab style={summaryFont} title="Inbound" eventKey={0} ref={tooltipInboundRef}>
               <div style={summaryFont}>
                 {grpcIn.rate === 0 && httpIn.rate === 0 && tcpIn.rate === 0 && (
-                  <>
+                  <div className={noTrafficStyle}>
                     <KialiIcon.Info /> No inbound traffic.
-                  </>
+                  </div>
                 )}
+
                 {grpcIn.rate > 0 && isGrpcRequests && (
                   <RateTableGrpc
                     isRequests={isGrpcRequests}
@@ -263,6 +280,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
                     rateNR={grpcIn.rateNoResponse}
                   />
                 )}
+
                 {httpIn.rate > 0 && (
                   <RateTableHttp
                     title="HTTP (requests per second):"
@@ -273,6 +291,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
                     rateNR={httpIn.rateNoResponse}
                   />
                 )}
+
                 {tcpIn.rate > 0 && <RateTableTcp rate={tcpIn.rate} />}
                 {
                   // We don't show a sparkline here because we need to aggregate the traffic of an
@@ -283,10 +302,11 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
             <Tab style={summaryFont} title="Outbound" eventKey={1} ref={tooltipOutboundRef}>
               <div style={summaryFont}>
                 {grpcOut.rate === 0 && httpOut.rate === 0 && tcpOut.rate === 0 && (
-                  <>
+                  <div className={noTrafficStyle}>
                     <KialiIcon.Info /> No outbound traffic.
-                  </>
+                  </div>
                 )}
+
                 {grpcOut.rate > 0 && (
                   <RateTableGrpc
                     isRequests={isGrpcRequests}
@@ -295,6 +315,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
                     rateNR={grpcOut.rateNoResponse}
                   />
                 )}
+
                 {httpOut.rate > 0 && (
                   <RateTableHttp
                     title="HTTP (requests per second):"
@@ -305,6 +326,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
                     rateNR={httpOut.rateNoResponse}
                   />
                 )}
+
                 {tcpOut.rate > 0 && <RateTableTcp rate={tcpOut.rate} />}
                 {
                   // We don't show a sparkline here because we need to aggregate the traffic of an
@@ -315,10 +337,11 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
             <Tab style={summaryFont} title="Total" eventKey={2} ref={tooltipTotalRef}>
               <div style={summaryFont}>
                 {grpcTotal.rate === 0 && httpTotal.rate === 0 && tcpTotal.rate === 0 && (
-                  <>
+                  <div className={noTrafficStyle}>
                     <KialiIcon.Info /> No traffic.
-                  </>
+                  </div>
                 )}
+
                 {grpcTotal.rate > 0 && (
                   <RateTableGrpc
                     isRequests={isGrpcRequests}
@@ -327,6 +350,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
                     rateNR={grpcTotal.rateNoResponse}
                   />
                 )}
+
                 {httpTotal.rate > 0 && (
                   <RateTableHttp
                     title="HTTP (requests per second):"
@@ -337,6 +361,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
                     rateNR={httpTotal.rateNoResponse}
                   />
                 )}
+
                 {tcpTotal.rate > 0 && <RateTableTcp rate={tcpTotal.rate} />}
                 {this.shouldShowCharts() && (
                   <div>
@@ -356,6 +381,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     if (this.isPF) {
       return this.getGraphTrafficPF();
     }
+
     // when getting total traffic rates don't count requests from injected service nodes
     const cy = this.props.data.summaryTarget;
     const totalEdges = cy.nodes(`[nodeType != "${NodeType.SERVICE}"][!isBox]`).edgesTo('*');
@@ -420,9 +446,11 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
 
     cy.$(`node[nodeType = "${NodeType.APP}"]`).forEach(node => {
       const app = node.data(NodeAttr.app);
+
       if (appVersions[app] === undefined) {
         appVersions[app] = new Set();
       }
+
       appVersions[app].add(node.data(NodeAttr.version));
     });
 
@@ -443,9 +471,11 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     select(nodes, { prop: NodeAttr.nodeType, val: NodeType.APP }).forEach(appNode => {
       const d = appNode.getData() as NodeData;
       const app = d[NodeAttr.app];
+
       if (appVersions[app] === undefined) {
         appVersions[app] = new Set();
       }
+
       appVersions[app].add(d[NodeAttr.version]);
     });
 
@@ -457,42 +487,45 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     };
   };
 
-  private renderNamespacesSummary = () => {
-    return this.props.namespaces.map(namespace => this.renderNamespace(namespace.name));
+  private renderNamespacesSummary = (): React.ReactNode => {
+    return (
+      <div style={{ marginBottom: '1rem' }}>
+        {this.props.namespaces.map(namespace => this.renderNamespace(namespace.name))}
+      </div>
+    );
   };
 
-  private renderValidations = (ns: string) => {
+  private renderValidations = (ns: string): React.ReactNode => {
     const validation: ValidationStatus = this.state.validationsMap[ns];
     if (!validation) {
       return undefined;
     }
     return (
-      <ValidationSummaryLink
-        namespace={ns}
-        objectCount={validation.objectCount}
-        errors={validation.errors}
-        warnings={validation.warnings}
-      >
-        <ValidationSummary
-          id={'ns-val-' + ns}
+      <div style={{ marginLeft: '0.25rem' }}>
+        <ValidationSummaryLink
+          namespace={ns}
+          objectCount={validation.objectCount}
           errors={validation.errors}
           warnings={validation.warnings}
-          objectCount={validation.objectCount}
-          style={{ marginLeft: '5px' }}
-        />
-      </ValidationSummaryLink>
+        >
+          <ValidationSummary
+            id={`ns-val-${ns}`}
+            errors={validation.errors}
+            warnings={validation.warnings}
+            objectCount={validation.objectCount}
+            type="istio"
+          />
+        </ValidationSummaryLink>
+      </div>
     );
   };
 
-  private renderNamespace = (ns: string) => {
+  private renderNamespace = (ns: string): React.ReactNode => {
     return (
-      <React.Fragment key={`rf-${ns}`}>
-        <span id={`ns-${ns}`}>
-          <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />
-          {ns} {this.renderValidations(ns)}
-        </span>
-        <br />
-      </React.Fragment>
+      <div key={`rf-${ns}`} id={`ns-${ns}`} className={namespaceStyle}>
+        <PFBadge badge={PFBadges.Namespace} size="sm" />
+        {ns} {this.renderValidations(ns)}
+      </div>
     );
   };
 
@@ -502,46 +535,46 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     numApps: number,
     numVersions: number,
     numEdges: number
-  ) => (
+  ): React.ReactNode => (
     <>
       {numApps > 0 && (
-        <>
+        <div>
           <KialiIcon.Applications className={topologyStyle} />
           {numApps.toString()} {numApps === 1 ? 'app ' : 'apps '}
           {numVersions > 0 && `(${numVersions} versions)`}
-          <br />
-        </>
+        </div>
       )}
+
       {numSvc > 0 && (
-        <>
+        <div>
           <KialiIcon.Services className={topologyStyle} />
           {numSvc.toString()} {numSvc === 1 ? 'service' : 'services'}
-          <br />
-        </>
+        </div>
       )}
+
       {numWorkloads > 0 && (
-        <>
+        <div>
           <KialiIcon.Workloads className={topologyStyle} />
           {numWorkloads.toString()} {numWorkloads === 1 ? 'workload' : 'workloads'}
-          <br />
-        </>
+        </div>
       )}
+
       {numEdges > 0 && (
-        <>
+        <div>
           <KialiIcon.Topology className={topologyStyle} />
           {numEdges.toString()} {numEdges === 1 ? 'edge' : 'edges'}
-        </>
+        </div>
       )}
     </>
   );
 
-  private shouldShowCharts() {
+  private shouldShowCharts(): boolean {
     // TODO we omit the charts when dealing with multiple namespaces. There is no backend
     // API support to gather the data. The whole-graph chart is of nominal value, it will likely be OK.
     return this.props.namespaces.length === 1;
   }
 
-  private renderCharts = () => {
+  private renderCharts = (): React.ReactNode => {
     if (this.state.loading) {
       return <strong>Loading chart...</strong>;
     } else if (this.state.metricsLoadError) {
@@ -568,6 +601,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
               dataRps={this.state.grpcRequestIn}
               dataErrors={this.state.grpcRequestErrIn}
             />
+
             <RequestChart
               label="gRPC - Outbound Request Traffic"
               dataRps={this.state.grpcRequestOut}
@@ -575,6 +609,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
             />
           </>
         )}
+
         {grpcTotal.rate > 0 && !isGrpcRequests && (
           <>
             <StreamChart
@@ -583,6 +618,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
               sentRates={this.state.grpcSentIn}
               unit="messages"
             />
+
             <StreamChart
               label="gRPC - Outbound Traffic"
               receivedRates={this.state.grpcReceivedOut}
@@ -591,6 +627,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
             />
           </>
         )}
+
         {httpTotal.rate > 0 && (
           <>
             <RequestChart
@@ -598,6 +635,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
               dataRps={this.state.httpRequestIn}
               dataErrors={this.state.httpRequestErrIn}
             />
+
             <RequestChart
               label="HTTP - Outbound Request Traffic"
               dataRps={this.state.httpRequestOut}
@@ -605,6 +643,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
             />
           </>
         )}
+
         {tcpTotal.rate > 0 && (
           <>
             <StreamChart
@@ -613,6 +652,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
               sentRates={this.state.tcpSentIn}
               unit="bytes"
             />
+
             <StreamChart
               label="TCP - Outbound Traffic"
               receivedRates={this.state.tcpReceivedOut}
@@ -625,7 +665,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     );
   };
 
-  private updateCharts = () => {
+  private updateCharts = (): void => {
     const props: SummaryPanelPropType = this.props;
     const namespace = props.namespaces[0].name;
 
@@ -647,16 +687,19 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
       this.metricsPromise = undefined;
     }
 
-    let promiseIn: Promise<Response<IstioMetricsMap>> = Promise.resolve({ data: {} });
-    let promiseOut: Promise<Response<IstioMetricsMap>> = Promise.resolve({ data: {} });
+    let promiseIn: Promise<ApiResponse<IstioMetricsMap>> = Promise.resolve({ data: {} });
+    let promiseOut: Promise<ApiResponse<IstioMetricsMap>> = Promise.resolve({ data: {} });
 
     let filters: string[] = [];
+
     if (grpcTotal.rate > 0 && !isGrpcRequests) {
       filters.push('grpc_sent', 'grpc_received');
     }
+
     if (httpTotal.rate > 0 || (grpcTotal.rate > 0 && isGrpcRequests)) {
       filters.push('request_count', 'request_error_count');
     }
+
     if (tcpTotal.rate > 0) {
       filters.push('tcp_sent', 'tcp_received');
     }
@@ -671,7 +714,8 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
         rateInterval: props.rateInterval,
         reporter: 'destination',
         step: props.step
-      } as IstioMetricsOptions);
+      });
+
       promiseOut = API.getNamespaceMetrics(namespace, {
         byLabels: ['request_protocol'], // ignored by prom if it doesn't exist
         direction: 'outbound',
@@ -681,16 +725,17 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
         rateInterval: props.rateInterval,
         reporter: 'source',
         step: props.step
-      } as IstioMetricsOptions);
+      });
     }
 
     this.metricsPromise = makeCancelablePromise(Promise.all([promiseIn, promiseOut]));
 
     this.metricsPromise.promise
       .then(responses => {
-        const comparator = (labels: Labels, protocol?: Protocol) => {
+        const comparator = (labels: Labels, protocol?: Protocol): boolean => {
           return protocol ? labels.request_protocol === protocol : true;
         };
+
         const metricsIn = responses[0].data;
         const metricsOut = responses[1].data;
 
@@ -719,7 +764,9 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
           console.debug('SummaryPanelGraph: Ignore fetch error (canceled).');
           return;
         }
+
         const errorMsg = error.response && error.response.data.error ? error.response.data.error : error.message;
+
         this.setState({
           loading: false,
           metricsLoadError: errorMsg,
@@ -730,7 +777,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     this.setState({ loading: true, metricsLoadError: null });
   };
 
-  private updateValidations = () => {
+  private updateValidations = (): void => {
     const newValidationsMap = new Map<string, ValidationStatus>();
     _.chunk(this.props.namespaces, 10).forEach(chunk => {
       this.validationSummaryPromises
@@ -749,15 +796,16 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     });
   };
 
-  private fetchValidationsChunk(chunk: Namespace[], validationsMap: ValidationsMap) {
+  private async fetchValidationsChunk(chunk: Namespace[], validationsMap: ValidationsMap): Promise<void> {
     return Promise.all(
-      chunk.map(ns => {
+      chunk.map(async (ns: Namespace) => {
         return API.getNamespaceValidations(ns.name)
           .then(rs => ({ validation: rs.data, ns: ns }))
           .catch(err => {
             if (!err.isCanceled) {
               console.log(`SummaryPanelGraph: Error fetching validation chunk: ${API.getErrorString(err)}`);
             }
+
             return { validation: undefined, ns: undefined };
           });
       })

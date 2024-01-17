@@ -3,62 +3,38 @@ import * as React from 'react';
 import { MTLSIcon } from './MTLSIcon';
 import { TooltipPosition } from '@patternfly/react-core';
 
-type Props = {
-  status: string;
-  statusDescriptors: Map<string, StatusDescriptor>;
+type MTLSStatusProps = {
   className?: string;
   overlayPosition?: TooltipPosition;
+  status: string;
+  statusDescriptors: Map<string, StatusDescriptor>;
 };
 
 export type StatusDescriptor = {
-  message: string;
   icon: string;
+  message: string;
   showStatus: boolean;
 };
 
 export const emptyDescriptor = {
-  message: '',
   icon: '',
+  message: '',
   showStatus: false
 };
 
-export class MTLSStatus extends React.Component<Props> {
-  statusDescriptor() {
-    return this.props.statusDescriptors.get(this.props.status) || emptyDescriptor;
+export const MTLSStatus: React.FC<MTLSStatusProps> = (props: MTLSStatusProps) => {
+  const statusDescriptor = props.statusDescriptors.get(props.status) ?? emptyDescriptor;
+
+  if (statusDescriptor.showStatus) {
+    return (
+      <MTLSIcon
+        icon={statusDescriptor.icon}
+        iconClassName={props.className ?? ''}
+        tooltipText={statusDescriptor.message}
+        tooltipPosition={props.overlayPosition ?? TooltipPosition.left}
+      />
+    );
   }
 
-  icon() {
-    return this.statusDescriptor().icon;
-  }
-
-  message() {
-    return this.statusDescriptor().message;
-  }
-
-  showStatus() {
-    return this.statusDescriptor().showStatus;
-  }
-
-  overlayPosition() {
-    return this.props.overlayPosition || TooltipPosition.left;
-  }
-
-  iconClassName() {
-    return this.props.className || '';
-  }
-
-  render() {
-    if (this.showStatus()) {
-      return (
-        <MTLSIcon
-          icon={this.icon()}
-          iconClassName={this.iconClassName()}
-          tooltipText={this.message()}
-          tooltipPosition={this.overlayPosition()}
-        />
-      );
-    }
-
-    return null;
-  }
-}
+  return null;
+};

@@ -1,29 +1,29 @@
 import * as React from 'react';
-import { cellWidth, ICell } from '@patternfly/react-table';
-import { Table, TableHeader, TableBody } from '@patternfly/react-table/deprecated';
+import { ThProps } from '@patternfly/react-table';
 import { Slider } from './Slider/Slider';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../Pf/PfColors';
 import { Button, ButtonVariant, TooltipPosition } from '@patternfly/react-core';
-import { EqualizerIcon } from '@patternfly/react-icons';
 import { getDefaultWeights } from './WizardActions';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
+import { KialiIcon } from 'config/KialiIcon';
+import { SimpleTable } from 'components/SimpleTable';
 
 type Props = {
-  workloads: WorkloadOverview[];
   initWeights: WorkloadWeight[];
   onChange: (valid: boolean, workloads: WorkloadWeight[], reset: boolean) => void;
-  showValid: boolean;
   showMirror: boolean;
+  showValid: boolean;
+  workloads: WorkloadOverview[];
 };
 
 export type WorkloadWeight = {
-  name: string;
-  weight: number;
   locked: boolean;
   maxWeight: number;
   mirrored: boolean;
+  name: string;
+  weight: number;
 };
 
 type State = {
@@ -31,7 +31,7 @@ type State = {
 };
 
 const validationStyle = kialiStyle({
-  marginBottom: 10,
+  marginBottom: '0.5rem',
   color: PFColors.Red100,
   textAlign: 'right'
 });
@@ -55,10 +55,11 @@ export class TrafficShifting extends React.Component<Props, State> {
     this.resetState();
   }
 
-  resetState = () => {
+  resetState = (): void => {
     if (this.props.workloads.length === 0) {
       return;
     }
+
     this.setState(
       prevState => {
         return {
@@ -72,7 +73,7 @@ export class TrafficShifting extends React.Component<Props, State> {
     );
   };
 
-  onWeight = (workloadName: string, newWeight: number) => {
+  onWeight = (workloadName: string, newWeight: number): void => {
     this.setState(
       prevState => {
         const nodeId: number[] = [];
@@ -121,31 +122,34 @@ export class TrafficShifting extends React.Component<Props, State> {
     );
   };
 
-  onLock = (workloadName: string, locked: boolean) => {
+  onLock = (workloadName: string, locked: boolean): void => {
     this.setState(prevState => {
       let maxWeights = 100;
       for (let i = 0; i < prevState.workloads.length; i++) {
         if (prevState.workloads[i].name === workloadName) {
           prevState.workloads[i].locked = locked;
         }
+
         // Calculate maxWeights from locked nodes
         if (prevState.workloads[i].locked) {
           maxWeights -= prevState.workloads[i].weight;
         }
       }
+
       // Update non locked nodes maxWeight
       for (let i = 0; i < prevState.workloads.length; i++) {
         if (!prevState.workloads[i].locked && !prevState.workloads[i].mirrored) {
           prevState.workloads[i].maxWeight = maxWeights;
         }
       }
+
       return {
         workloads: prevState.workloads
       };
     });
   };
 
-  onMirror = (workloadName: string, mirrored: boolean) => {
+  onMirror = (workloadName: string, mirrored: boolean): void => {
     this.setState(
       prevState => {
         const nodeId: number[] = [];
@@ -198,131 +202,119 @@ export class TrafficShifting extends React.Component<Props, State> {
 
   render() {
     const isValid = this.checkTotalWeight();
-    // TODO: Casting 'as any' because @patternfly/react-table@2.22.19 has a typing bug. Remove the casting when PF fixes it.
-    // https://github.com/patternfly/patternfly-next/issues/2373
-    const workloadCells: ICell[] = [
+
+    const workloadColumns: ThProps[] = [
       {
         title: 'Destination Workload',
-        transforms: [cellWidth(30) as any],
-        props: {}
+        width: 30
       },
       {
         title: 'Traffic Weight',
-        transforms: [cellWidth(70) as any],
-        props: {}
+        width: 70
       }
     ];
-    const workloadsRows = this.state.workloads
+
+    const workloadRows = this.state.workloads
       .filter(workload => !workload.mirrored)
       .map(workload => {
         return {
           cells: [
-            <>
-              <div>
-                <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
-                {workload.name}
-              </div>
-            </>,
-            // This <> wrapper is needed by Slider
-            <>
-              <Slider
-                id={'slider-' + workload.name}
-                key={'slider-' + workload.name}
-                tooltip={true}
-                input={true}
-                inputFormat="%"
-                value={workload.weight}
-                min={0}
-                max={workload.maxWeight}
-                maxLimit={100}
-                onSlide={value => {
-                  this.onWeight(workload.name, value as number);
-                }}
-                onSlideStop={value => {
-                  this.onWeight(workload.name, value as number);
-                }}
-                locked={this.state.workloads.length > 1 ? workload.locked : true}
-                showLock={this.state.workloads.length > 2}
-                onLock={locked => this.onLock(workload.name, locked)}
-                mirrored={workload.mirrored}
-                showMirror={this.props.showMirror && this.state.workloads.length > 1}
-                onMirror={mirrored => this.onMirror(workload.name, mirrored)}
-              />
-            </>
+            <div>
+              <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
+              {workload.name}
+            </div>,
+
+            <Slider
+              id={`slider-${workload.name}`}
+              key={`slider-${workload.name}`}
+              tooltip={true}
+              input={true}
+              inputFormat="%"
+              value={workload.weight}
+              min={0}
+              max={workload.maxWeight}
+              maxLimit={100}
+              onSlide={value => {
+                this.onWeight(workload.name, value as number);
+              }}
+              onSlideStop={value => {
+                this.onWeight(workload.name, value as number);
+              }}
+              locked={this.state.workloads.length > 1 ? workload.locked : true}
+              showLock={this.state.workloads.length > 2}
+              onLock={locked => this.onLock(workload.name, locked)}
+              mirrored={workload.mirrored}
+              showMirror={this.props.showMirror && this.state.workloads.length > 1}
+              onMirror={mirrored => this.onMirror(workload.name, mirrored)}
+            />
           ]
         };
       });
-    const mirrorCells: ICell[] = [
+
+    const mirrorColumns: ThProps[] = [
       {
         title: 'Mirrored Workload',
-        transforms: [cellWidth(30) as any],
-        props: {}
+        width: 30
       },
       {
         title: 'Mirror Percentage',
-        transforms: [cellWidth(70) as any],
-        props: {}
+        width: 70
       }
     ];
+
     const mirrorRows = this.state.workloads
       .filter(workload => workload.mirrored)
       .map(workload => {
         return {
           cells: [
-            <>
-              <div>
-                <PFBadge badge={PFBadges.MirroredWorkload} position={TooltipPosition.top} />
-                {workload.name}
-              </div>
-            </>,
-            // This <> wrapper is needed by Slider
-            <>
-              <Slider
-                id={'slider-' + workload.name}
-                key={'slider-' + workload.name}
-                tooltip={true}
-                input={true}
-                inputFormat="%"
-                value={workload.weight}
-                min={0}
-                max={workload.maxWeight}
-                maxLimit={100}
-                onSlide={value => {
-                  this.onWeight(workload.name, value as number);
-                }}
-                onSlideStop={value => {
-                  this.onWeight(workload.name, value as number);
-                }}
-                locked={this.state.workloads.length > 1 ? workload.locked : true}
-                showLock={this.state.workloads.length > 2}
-                onLock={locked => this.onLock(workload.name, locked)}
-                mirrored={workload.mirrored}
-                showMirror={this.props.showMirror}
-                onMirror={mirrored => this.onMirror(workload.name, mirrored)}
-              />
-            </>
+            <div>
+              <PFBadge badge={PFBadges.MirroredWorkload} position={TooltipPosition.top} />
+              {workload.name}
+            </div>,
+
+            <Slider
+              id={`slider-${workload.name}`}
+              key={`slider-${workload.name}`}
+              tooltip={true}
+              input={true}
+              inputFormat="%"
+              value={workload.weight}
+              min={0}
+              max={workload.maxWeight}
+              maxLimit={100}
+              onSlide={value => {
+                this.onWeight(workload.name, value as number);
+              }}
+              onSlideStop={value => {
+                this.onWeight(workload.name, value as number);
+              }}
+              locked={this.state.workloads.length > 1 ? workload.locked : true}
+              showLock={this.state.workloads.length > 2}
+              onLock={locked => this.onLock(workload.name, locked)}
+              mirrored={workload.mirrored}
+              showMirror={this.props.showMirror}
+              onMirror={mirrored => this.onMirror(workload.name, mirrored)}
+            />
           ]
         };
       });
+
     return (
       <>
-        <Table cells={workloadCells} rows={workloadsRows} aria-label="weighted routing">
-          <TableHeader />
-          <TableBody />
-        </Table>
+        <SimpleTable label="Weighted routing" columns={workloadColumns} rows={workloadRows} verticalAlign="middle" />
+
         {mirrorRows.length > 0 && (
-          <Table cells={mirrorCells} rows={mirrorRows} aria-label="mirrors">
-            <TableHeader />
-            <TableBody />
-          </Table>
+          <SimpleTable label="Mirrors" columns={mirrorColumns} rows={mirrorRows} verticalAlign="middle" />
         )}
+
         {this.props.workloads.length > 1 && (
           <div className={evenlyButtonStyle}>
-            <Button variant={ButtonVariant.link} icon={<EqualizerIcon />} onClick={() => this.resetState()}>
+            <Button variant={ButtonVariant.link} icon={<KialiIcon.Equalizer />} onClick={() => this.resetState()}>
               Evenly distribute traffic
             </Button>{' '}
           </div>
         )}
+
         {this.props.showValid && !isValid && <div className={validationStyle}>{MSG_WEIGHTS_NOT_VALID}</div>}
       </>
     );

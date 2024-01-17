@@ -29,11 +29,14 @@ import { connect } from 'react-redux';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { isMultiCluster, serverConfig } from '../../config';
 
-interface IstioConfigListPageState extends FilterComponent.State<IstioConfigItem> {}
-interface IstioConfigListPageProps extends FilterComponent.Props<IstioConfigItem> {
+interface ReduxProps {
   activeNamespaces: Namespace[];
   istioAPIEnabled: boolean;
 }
+
+type IstioConfigListPageProps = ReduxProps & FilterComponent.State<IstioConfigItem>;
+
+type IstioConfigListPageState = FilterComponent.State<IstioConfigItem>;
 
 class IstioConfigListPageComponent extends FilterComponent.Component<
   IstioConfigListPageProps,
@@ -55,13 +58,14 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.updateListItems();
   }
 
-  componentDidUpdate(prevProps: IstioConfigListPageProps, _prevState: IstioConfigListPageState, _snapshot: any) {
+  componentDidUpdate(prevProps: IstioConfigListPageProps, _prevState: IstioConfigListPageState, _snapshot: any): void {
     const prevCurrentSortField = FilterHelper.currentSortField(IstioConfigListFilters.sortFields);
     const prevIsSortAscending = FilterHelper.isCurrentSortAscending();
+
     if (
       !namespaceEquals(this.props.activeNamespaces, prevProps.activeNamespaces) ||
       this.state.currentSortField !== prevCurrentSortField ||
@@ -76,24 +80,31 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     this.promises.cancelAll();
   }
 
-  sortItemList(apps: IstioConfigItem[], sortField: SortField<IstioConfigItem>, isAscending: boolean) {
+  sortItemList(
+    apps: IstioConfigItem[],
+    sortField: SortField<IstioConfigItem>,
+    isAscending: boolean
+  ): IstioConfigItem[] {
     return IstioConfigListFilters.sortIstioItems(apps, sortField, isAscending);
   }
 
-  updateListItems() {
+  updateListItems(): void {
     this.promises.cancelAll();
 
     const activeFilters: ActiveFiltersInfo = FilterSelected.getSelected();
     const activeToggles: ActiveTogglesInfo = Toggles.getToggles();
     const namespacesSelected = this.props.activeNamespaces!.map(item => item.name);
+
     const istioTypeFilters = getFilterSelectedValues(IstioConfigListFilters.istioTypeFilter, activeFilters).map(
       value => dicIstioType[value]
     );
+
     const istioNameFilters = getFilterSelectedValues(IstioConfigListFilters.istioNameFilter, activeFilters);
+
     const configValidationFilters = getFilterSelectedValues(
       IstioConfigListFilters.configValidationFilter,
       activeFilters
@@ -101,6 +112,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
 
     if (namespacesSelected.length !== 0) {
       this.setState({ listItems: [] });
+
       if (isMultiCluster) {
         for (let cluster in serverConfig.clusters) {
           this.fetchConfigs(
@@ -133,7 +145,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     configValidationFilters: string[],
     toggles: ActiveTogglesInfo,
     cluster?: string
-  ) {
+  ): void {
     const configsPromises = this.fetchIstioConfigs(namespaces, istioTypeFilters, istioNameFilters, toggles, cluster);
 
     configsPromises
@@ -159,38 +171,43 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
       .catch(istioError => {
         console.log(istioError);
         if (!istioError.isCanceled) {
-          this.handleAxiosError('Could not fetch Istio objects list', istioError);
+          this.handleApiError('Could not fetch Istio objects list', istioError);
         }
       });
   }
 
   // Fetch the Istio configs, apply filters and map them into flattened list items
-  fetchIstioConfigs(
+  async fetchIstioConfigs(
     namespaces: string[],
     typeFilters: string[],
     istioNameFilters: string[],
     toggles: ActiveTogglesInfo,
     cluster?: string
-  ) {
+  ): Promise<IstioConfigItem[]> {
     let validate = false;
+
     if (this.props.istioAPIEnabled) {
       validate = !!toggles.get('configuration');
     }
+
     // Request all configs from all namespaces, as in backend all configs are always loaded from registry
     return this.promises
-      .register('configs' + cluster, API.getAllIstioConfigs(namespaces, typeFilters, validate, '', '', cluster))
+      .register(`configs${cluster}`, API.getAllIstioConfigs(namespaces, typeFilters, validate, '', '', cluster))
       .then(response => {
         let istioItems: IstioConfigItem[] = [];
+
         // filter by selected namespaces
         namespaces.forEach(ns => {
           istioItems = istioItems.concat(toIstioItems(filterByName(response.data[ns], istioNameFilters), cluster));
         });
+
         return istioItems;
       });
   }
 
-  render() {
+  render(): React.ReactNode {
     const hiddenColumns = isMultiCluster ? ([] as string[]) : ['cluster'];
+
     if (this.props.istioAPIEnabled) {
       Toggles.getToggles().forEach((v, k) => {
         if (!v) {
@@ -204,9 +221,10 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     return (
       <>
         <DefaultSecondaryMasthead
-          rightToolbar={<RefreshButton key={'Refresh'} handleRefresh={this.updateListItems} />}
+          rightToolbar={<RefreshButton key="Refresh" handleRefresh={this.updateListItems} />}
           actionsToolbar={<IstioActionsNamespaceDropdown />}
         />
+
         <RenderContent>
           <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} type="istio">
             <StatefulFilters
@@ -222,7 +240,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
   }
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   activeNamespaces: activeNamespacesSelector(state),
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
 });

@@ -7,39 +7,38 @@ import { MissingSidecar } from '../MissingSidecar/MissingSidecar';
 import * as H from '../../types/Health';
 import { HealthSubItem } from '../../types/Health';
 import { renderTrafficStatus } from '../Health/HealthDetails';
-import { createIcon } from '../Health/Helper';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
-import { KialiIcon } from '../../config/KialiIcon';
+import { KialiIcon, createIcon } from '../../config/KialiIcon';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { isGateway, isWaypoint } from '../../helpers/LabelFilterHelper';
 import { isMultiCluster, serverConfig } from '../../config';
 import { Workload } from '../../types/Workload';
-import { healthIndicatorStyle } from 'components/Health/HealthStyle';
+import { healthIndicatorStyle } from 'styles/HealthStyle';
 
 type ReduxProps = {
   kiosk: string;
 };
 
 type Props = ReduxProps & {
-  cluster?: string;
-  namespace: string;
   apps?: string[];
-  workloads?: AppWorkload[];
-  services?: string[];
+  cluster?: string;
   health?: H.Health;
+  namespace: string;
+  services?: string[];
   waypointWorkloads?: Workload[];
+  workloads?: AppWorkload[];
 };
 
 const iconStyle = kialiStyle({
-  margin: '0 0 0 0',
-  padding: '0 0 0 0',
+  margin: 0,
+  padding: 0,
   display: 'inline-block'
 });
 
 const resourceListStyle = kialiStyle({
-  margin: '0px 0 11px 0',
+  margin: '0 0 0.5rem 0',
   $nest: {
     '& > span': {
       float: 'left',
@@ -49,24 +48,29 @@ const resourceListStyle = kialiStyle({
   }
 });
 
-const titleStyle = kialiStyle({
-  margin: '15px 0 8px 0'
+const containerStyle = kialiStyle({
+  margin: '1rem 0 0.5rem 0'
+});
+
+const itemStyle = kialiStyle({
+  paddingBottom: '0.25rem'
 });
 
 const infoStyle = kialiStyle({
-  margin: '0px 4px 2px 10px',
-  verticalAlign: '-4px !important'
+  marginLeft: '0.5rem'
 });
 
-class DetailDescriptionComponent extends React.Component<Props> {
-  private renderAppItem(namespace: string, appName: string) {
-    let href = '/namespaces/' + namespace + '/applications/' + appName;
-    if (this.props.cluster && isMultiCluster) {
-      href = href + '?clusterName=' + this.props.cluster;
+const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
+  const renderAppItem = (namespace: string, appName: string): React.ReactNode => {
+    let href = `/namespaces/${namespace}/applications/${appName}`;
+
+    if (props.cluster && isMultiCluster) {
+      href = `${href}?clusterName=${props.cluster}`;
     }
-    const link = isParentKiosk(this.props.kiosk) ? (
+
+    const link = isParentKiosk(props.kiosk) ? (
       <Link
-        to={''}
+        to=""
         onClick={() => {
           kioskContextMenuAction(href);
         }}
@@ -76,24 +80,28 @@ class DetailDescriptionComponent extends React.Component<Props> {
     ) : (
       <Link to={href}>{appName}</Link>
     );
+
     return (
-      <li key={`App_${namespace}_${appName}`}>
+      <li key={`App_${namespace}_${appName}`} className={itemStyle}>
         <div className={iconStyle}>
           <PFBadge badge={PFBadges.App} position={TooltipPosition.top} />
         </div>
+
         <span>{link}</span>
       </li>
     );
-  }
+  };
 
-  private renderServiceItem(namespace: string, serviceName: string) {
-    let href = '/namespaces/' + namespace + '/services/' + serviceName;
-    if (this.props.cluster && isMultiCluster) {
-      href = href + '?clusterName=' + this.props.cluster;
+  const renderServiceItem = (namespace: string, serviceName: string): React.ReactNode => {
+    let href = `/namespaces/${namespace}/services/${serviceName}`;
+
+    if (props.cluster && isMultiCluster) {
+      href = `${href}?clusterName=${props.cluster}`;
     }
-    const link = isParentKiosk(this.props.kiosk) ? (
+
+    const link = isParentKiosk(props.kiosk) ? (
       <Link
-        to={''}
+        to=""
         onClick={() => {
           kioskContextMenuAction(href);
         }}
@@ -103,34 +111,38 @@ class DetailDescriptionComponent extends React.Component<Props> {
     ) : (
       <Link to={href}>{serviceName}</Link>
     );
+
     return (
-      <li key={`Service_${serviceName}`}>
+      <li key={`Service_${serviceName}`} className={itemStyle}>
         <div className={iconStyle}>
           <PFBadge badge={PFBadges.Service} position={TooltipPosition.top} />
         </div>
+
         <span>{link}</span>
       </li>
     );
-  }
+  };
 
-  private renderEmptyItem(type: string) {
-    const message = 'No ' + type + ' found';
+  const renderEmptyItem = (type: string): React.ReactNode => {
+    const message = `No ${type} found`;
+
     return <div> {message} </div>;
-  }
+  };
 
-  private appList() {
+  const appList = (): React.ReactNode => {
     const applicationList =
-      this.props.apps && this.props.apps.length > 0
-        ? this.props.apps
+      props.apps && props.apps.length > 0
+        ? props.apps
             .sort((a1: string, a2: string) => (a1 < a2 ? -1 : 1))
             .filter(name => {
               if (name === undefined) {
                 return null;
               }
+
               return name;
             })
-            .map(name => this.renderAppItem(this.props.namespace, name))
-        : this.renderEmptyItem('applications');
+            .map(name => renderAppItem(props.namespace, name))
+        : renderEmptyItem('applications');
 
     return [
       <div key="app-list" className={resourceListStyle}>
@@ -139,16 +151,18 @@ class DetailDescriptionComponent extends React.Component<Props> {
         </ul>
       </div>
     ];
-  }
+  };
 
-  private renderWorkloadItem(workload: AppWorkload) {
-    let href = '/namespaces/' + this.props.namespace + '/workloads/' + workload.workloadName;
-    if (this.props.cluster && isMultiCluster) {
-      href = href + '?clusterName=' + this.props.cluster;
+  const renderWorkloadItem = (workload: AppWorkload): React.ReactNode => {
+    let href = `/namespaces/${props.namespace}/workloads/${workload.workloadName}`;
+
+    if (props.cluster && isMultiCluster) {
+      href = `${href}?clusterName=${props.cluster}`;
     }
-    const link = isParentKiosk(this.props.kiosk) ? (
+
+    const link = isParentKiosk(props.kiosk) ? (
       <Link
-        to={''}
+        to=""
         onClick={() => {
           kioskContextMenuAction(href);
         }}
@@ -158,51 +172,60 @@ class DetailDescriptionComponent extends React.Component<Props> {
     ) : (
       <Link to={href}>{workload.workloadName}</Link>
     );
+
     return (
-      <span key={'WorkloadItem_' + workload.workloadName}>
+      <span key={`WorkloadItem_${workload.workloadName}`}>
         <div className={iconStyle}>
           <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
         </div>
+
         {link}
-        <Tooltip position={TooltipPosition.right} content={this.renderServiceAccounts(workload)}>
+
+        <Tooltip position={TooltipPosition.right} content={renderServiceAccounts(workload)}>
           <KialiIcon.Info className={infoStyle} />
         </Tooltip>
+
         {((!workload.istioSidecar &&
           !workload.istioAmbient &&
           !isWaypoint(workload.labels) &&
           serverConfig.ambientEnabled) ||
           (!workload.istioSidecar && !serverConfig.ambientEnabled)) && (
           <MissingSidecar
-            namespace={this.props.namespace}
+            namespace={props.namespace}
             isGateway={isGateway(workload.labels)}
             tooltip={true}
-            style={{ marginLeft: '10px' }}
-            text={''}
+            className={infoStyle}
+            text=""
           />
         )}
       </span>
     );
-  }
+  };
 
-  private renderWorkloadHealthItem(sub: HealthSubItem) {
+  const renderWorkloadHealthItem = (sub: HealthSubItem): React.ReactNode => {
     let workload: AppWorkload | undefined = undefined;
-    if (this.props.workloads && this.props.workloads.length > 0) {
-      for (let i = 0; i < this.props.workloads.length; i++) {
-        const hWorkload = sub.text.substr(0, sub.text.indexOf(':'));
-        if (hWorkload === this.props.workloads[i].workloadName) {
-          workload = this.props.workloads[i];
+
+    if (props.workloads && props.workloads.length > 0) {
+      for (let i = 0; i < props.workloads.length; i++) {
+        const hWorkload = sub.text.substring(0, sub.text.indexOf(':'));
+
+        if (hWorkload === props.workloads[i].workloadName) {
+          workload = props.workloads[i];
           break;
         }
       }
     }
+
     if (workload) {
-      let href = '/namespaces/' + this.props.namespace + '/workloads/' + workload.workloadName;
-      if (this.props.cluster && isMultiCluster) {
-        href = href + '?clusterName=' + this.props.cluster;
+      let href = `/namespaces/${props.namespace}/workloads/${workload.workloadName}`;
+
+      if (props.cluster && isMultiCluster) {
+        href = `${href}?clusterName=${props.cluster}`;
       }
-      const link = isParentKiosk(this.props.kiosk) ? (
+
+      const link = isParentKiosk(props.kiosk) ? (
         <Link
-          to={''}
+          to=""
           onClick={() => {
             kioskContextMenuAction(href);
           }}
@@ -212,31 +235,36 @@ class DetailDescriptionComponent extends React.Component<Props> {
       ) : (
         <Link to={href}>{workload.workloadName}</Link>
       );
+
       return (
         <span key={`WorkloadItem_${workload.workloadName}`}>
           <div className={iconStyle}>
             <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
           </div>
+
           {link}
-          <Tooltip position={TooltipPosition.right} content={this.renderServiceAccounts(workload)}>
+
+          <Tooltip position={TooltipPosition.right} content={renderServiceAccounts(workload)}>
             <KialiIcon.Info className={infoStyle} />
           </Tooltip>
+
           <Tooltip
-            aria-label={'Health indicator'}
+            aria-label="Health indicator"
             content={<>{sub.text}</>}
             position={PopoverPosition.auto}
             className={healthIndicatorStyle}
           >
-            <span style={{ marginLeft: '10px' }}>{createIcon(sub.status)}</span>
+            <span style={{ marginLeft: '0.5rem' }}>{createIcon(sub.status)}</span>
           </Tooltip>
+
           {((!workload.istioSidecar && !workload.istioAmbient && serverConfig.ambientEnabled) ||
             (!workload.istioSidecar && !serverConfig.ambientEnabled)) && (
             <MissingSidecar
-              namespace={this.props.namespace}
+              namespace={props.namespace}
               isGateway={isGateway(workload.labels)}
               tooltip={true}
-              style={{ marginLeft: '10px' }}
-              text={''}
+              className={infoStyle}
+              text=""
             />
           )}
         </span>
@@ -244,22 +272,25 @@ class DetailDescriptionComponent extends React.Component<Props> {
     } else {
       return (
         <span key={`WorkloadItem_${sub.text}`}>
-          <span style={{ marginRight: '10px' }}>{createIcon(sub.status)}</span>
+          <span style={{ marginRight: '0.5rem' }}>{createIcon(sub.status)}</span>
           {sub.text}
         </span>
       );
     }
-  }
+  };
 
-  private renderServiceAccounts(workload: AppWorkload) {
+  const renderServiceAccounts = (workload: AppWorkload): React.ReactNode => {
     return (
       <div style={{ textAlign: 'left' }}>
         {workload.serviceAccountNames && workload.serviceAccountNames.length > 0 ? (
           <div key="properties-list" className={resourceListStyle}>
             <span>Service accounts</span>
+
             <ul>
               {workload.serviceAccountNames.map((serviceAccount, i) => (
-                <li key={i}>{serviceAccount}</li>
+                <li key={i} className={itemStyle}>
+                  {serviceAccount}
+                </li>
               ))}
             </ul>
           </div>
@@ -268,19 +299,25 @@ class DetailDescriptionComponent extends React.Component<Props> {
         )}
       </div>
     );
-  }
+  };
 
-  private renderWorkloadStatus() {
-    if (this.props.health) {
-      const item = this.props.health.getWorkloadStatus();
+  const renderWorkloadStatus = (): React.ReactNode => {
+    if (props.health) {
+      const item = props.health.getWorkloadStatus();
+
       if (item) {
         return (
           <div>
             {item.text}
+
             {item.children && (
               <ul id="workload-list" style={{ listStyleType: 'none' }}>
                 {item.children.map((sub, subIdx) => {
-                  return <li key={subIdx}>{this.renderWorkloadHealthItem(sub)}</li>;
+                  return (
+                    <li key={subIdx} className={itemStyle}>
+                      {renderWorkloadHealthItem(sub)}
+                    </li>
+                  );
                 })}
               </ul>
             )}
@@ -290,11 +327,15 @@ class DetailDescriptionComponent extends React.Component<Props> {
         return (
           <div>
             <ul id="workload-list" style={{ listStyleType: 'none' }}>
-              {this.props.workloads
-                ? this.props.workloads
+              {props.workloads
+                ? props.workloads
                     .sort((w1: AppWorkload, w2: AppWorkload) => (w1.workloadName < w2.workloadName ? -1 : 1))
                     .map((wkd, subIdx) => {
-                      return <li key={subIdx}>{this.renderWorkloadItem(wkd)}</li>;
+                      return (
+                        <li key={subIdx} className={itemStyle}>
+                          {renderWorkloadItem(wkd)}
+                        </li>
+                      );
                     })
                 : undefined}
             </ul>
@@ -303,19 +344,19 @@ class DetailDescriptionComponent extends React.Component<Props> {
       }
     }
     return undefined;
-  }
+  };
 
-  private workloadSummary() {
-    return <div className={resourceListStyle}>{this.renderWorkloadStatus()}</div>;
-  }
+  const workloadSummary = (): React.ReactNode => {
+    return <div className={resourceListStyle}>{renderWorkloadStatus()}</div>;
+  };
 
-  private serviceList() {
+  const serviceList = (): React.ReactNode => {
     const serviceList =
-      this.props.services && this.props.services.length > 0
-        ? this.props.services
+      props.services && props.services.length > 0
+        ? props.services
             .sort((s1: string, s2: string) => (s1 < s2 ? -1 : 1))
-            .map(name => this.renderServiceItem(this.props.namespace, name))
-        : this.renderEmptyItem('services');
+            .map(name => renderServiceItem(props.namespace, name))
+        : renderEmptyItem('services');
 
     return [
       <div key="service-list" className={resourceListStyle}>
@@ -324,9 +365,9 @@ class DetailDescriptionComponent extends React.Component<Props> {
         </ul>
       </div>
     ];
-  }
+  };
 
-  private renderWaypoint() {
+  const renderWaypoint = (): React.ReactNode => {
     return [
       <>
         <div key="waypoint-workloads-title">
@@ -341,21 +382,18 @@ class DetailDescriptionComponent extends React.Component<Props> {
         </div>
       </>
     ];
-  }
+  };
 
-  render() {
-    return (
-      <>
-        <div className={titleStyle}></div>
-        {this.props.apps !== undefined && this.appList()}
-        {this.props.workloads !== undefined && this.workloadSummary()}
-        {this.props.services !== undefined && this.serviceList()}
-        {this.props.health && renderTrafficStatus(this.props.health)}
-        {this.props.waypointWorkloads && this.renderWaypoint()}
-      </>
-    );
-  }
-}
+  return (
+    <div className={containerStyle}>
+      {props.apps !== undefined && appList()}
+      {props.workloads !== undefined && workloadSummary()}
+      {props.services !== undefined && serviceList()}
+      {props.health && renderTrafficStatus(props.health)}
+      {props.waypointWorkloads && renderWaypoint()}
+    </div>
+  );
+};
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   kiosk: state.globalState.kiosk

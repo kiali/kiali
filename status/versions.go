@@ -16,11 +16,6 @@ import (
 type externalService func() (*ExternalServiceInfo, error)
 
 var (
-	// Example Maistra product version is:
-	//   redhat@redhat-docker.io/maistra-0.1.0-1-3a136c90ec5e308f236e0d7ebb5c4c5e405217f4-unknown
-	// Example Maistra upstream project version is:
-	//   redhat@redhat-pulp.abc.xyz.redhat.com:8888/openshift-istio-tech-preview-0.1.0-1-3a136c90ec5e308f236e0d7ebb5c4c5e405217f4-Custom
-	//   Maistra_1.1.0-291c5419cf19d2b015e7e5dee970c458fb8f1982-Clean
 	// Example OpenShift Service Mesh 1.1 product version is:
 	//   OSSM_1.1.0-291c5419cf19d2b015e7e5dee970c458fb8f1982-Clean
 	// Example Istio snapshot version is:
@@ -30,18 +25,14 @@ var (
 	// Example Istio dev version is:
 	//   1.5-alpha.dbd2aca8887fb42c2bb358417621a78de372f906-dbd2aca8887fb42c2bb358417621a78de372f906-Clean
 	//   1.10-dev-65a124dc2ab69f91331298fbf6d9b4335abcf0fd-Clean
-	maistraProductVersionExpr = regexp.MustCompile(`maistra-([0-9]+\.[0-9]+\.[0-9]+)`)
-	ossmVersionExpr           = regexp.MustCompile(`(?:OSSM_|openshift-service-mesh-)([0-9]+\.[0-9]+\.[0-9]+)`)
-	maistraProjectVersionExpr = regexp.MustCompile(`(?:Maistra_|openshift-istio.*-)([0-9]+\.[0-9]+\.[0-9]+)`)
-	istioDevVersionExpr       = regexp.MustCompile(`(\d+\.\d+)-alpha\.([[:alnum:]]+)-.*|(\d+\.\d+)-dev-([[:alnum:]]+)-.*`)
-	istioRCVersionExpr        = regexp.MustCompile(`(\d+\.\d+.\d+)-((?:alpha|beta|rc|RC)\.\d+)`)
-	istioSnapshotVersionExpr  = regexp.MustCompile(`istio-release-([0-9]+\.[0-9]+)(-[0-9]{8})`)
-	istioVersionExpr          = regexp.MustCompile(`([0-9]+\.[0-9]+\.[0-9]+)`)
+	ossmVersionExpr          = regexp.MustCompile(`(?:OSSM_|openshift-service-mesh-)([0-9]+\.[0-9]+\.[0-9]+)`)
+	istioDevVersionExpr      = regexp.MustCompile(`(\d+\.\d+)-alpha\.([[:alnum:]]+)-.*|(\d+\.\d+)-dev-([[:alnum:]]+)-.*`)
+	istioRCVersionExpr       = regexp.MustCompile(`(\d+\.\d+.\d+)-((?:alpha|beta|rc|RC)\.\d+)`)
+	istioSnapshotVersionExpr = regexp.MustCompile(`istio-release-([0-9]+\.[0-9]+)(-[0-9]{8})`)
+	istioVersionExpr         = regexp.MustCompile(`([0-9]+\.[0-9]+\.[0-9]+)`)
 )
 
 const (
-	istioProductNameMaistra          = "Maistra"
-	istioProductNameMaistraProject   = "Maistra Project"
 	istioProductNameOSSM             = "OpenShift Service Mesh"
 	istioProductNameUpstream         = "Istio"
 	istioProductNameUpstreamSnapshot = "Istio Snapshot"
@@ -64,9 +55,9 @@ func getVersions() {
 	}
 
 	if config.Get().ExternalServices.Tracing.Enabled {
-		components = append(components, jaegerVersion)
+		components = append(components, tracingVersion)
 	} else {
-		log.Debugf("Jaeger is disabled in Kiali by configuration")
+		log.Debugf("Tracing is disabled in Kiali by configuration")
 	}
 
 	for _, comp := range components {
@@ -109,33 +100,8 @@ func istioVersion() (*ExternalServiceInfo, error) {
 func parseIstioRawVersion(rawVersion string) *ExternalServiceInfo {
 	product := ExternalServiceInfo{Name: "Unknown", Version: "Unknown"}
 
-	// First see if we detect Maistra (either product or upstream project).
-	// If it is not Maistra, see if it is upstream Istio (either a release or snapshot).
-	// If it is neither then it is some unknown Istio implementation that we do not support.
-
-	maistraVersionStringArr := maistraProductVersionExpr.FindStringSubmatch(rawVersion)
-	if maistraVersionStringArr != nil {
-		log.Debugf("Detected Maistra product version [%v]", rawVersion)
-		if len(maistraVersionStringArr) > 1 {
-			product.Name = istioProductNameMaistra
-			product.Version = maistraVersionStringArr[1] // get regex group #1 ,which is the "#.#.#" version string
-
-			// we know this is Maistra - either a supported or unsupported version - return now
-			return &product
-		}
-	}
-
-	maistraVersionStringArr = maistraProjectVersionExpr.FindStringSubmatch(rawVersion)
-	if maistraVersionStringArr != nil {
-		log.Debugf("Detected Maistra project version [%v]", rawVersion)
-		if len(maistraVersionStringArr) > 1 {
-			product.Name = istioProductNameMaistraProject
-			product.Version = maistraVersionStringArr[1] // get regex group #1 ,which is the "#.#.#" version string
-
-			// we know this is Maistra - either a supported or unsupported version - return now
-			return &product
-		}
-	}
+	// First see if it is upstream Istio (either a release or snapshot).
+	// If it is not then it is some unknown Istio implementation that we do not support.
 
 	// OpenShift Service Mesh
 	ossmStringArr := ossmVersionExpr.FindStringSubmatch(rawVersion)
@@ -227,15 +193,15 @@ type p8sResponseVersion struct {
 	Revision string `json:"revision"`
 }
 
-func jaegerVersion() (*ExternalServiceInfo, error) {
-	jaegerConfig := config.Get().ExternalServices.Tracing
+func tracingVersion() (*ExternalServiceInfo, error) {
+	tracingConfig := config.Get().ExternalServices.Tracing
 
-	if !jaegerConfig.Enabled {
+	if !tracingConfig.Enabled {
 		return nil, nil
 	}
 	product := ExternalServiceInfo{}
-	product.Name = "Jaeger"
-	product.Url = jaegerConfig.URL
+	product.Name = string(tracingConfig.Provider)
+	product.Url = tracingConfig.URL
 
 	return &product, nil
 }
@@ -294,8 +260,4 @@ func kubernetesVersion() (*ExternalServiceInfo, error) {
 		Name:    "Kubernetes",
 		Version: serverVersion.GitVersion,
 	}, nil
-}
-
-func isMaistraExternalService(esi *ExternalServiceInfo) bool {
-	return esi.Name == istioProductNameOSSM || esi.Name == istioProductNameMaistra || esi.Name == istioProductNameMaistraProject
 }

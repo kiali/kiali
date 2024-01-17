@@ -1,7 +1,12 @@
+import { Table, TableVariant, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { summaryTitle } from 'pages/Graph/SummaryPanelCommon';
 import * as React from 'react';
-import { tableStyle } from 'styles/TableStyle';
+import { kialiStyle } from 'styles/StyleUtils';
 import { renderRateChartHttp, renderRateChartGrpc } from './RateChart';
+
+const tableStyle = kialiStyle({
+  marginBottom: '0.5rem'
+});
 
 type RateTableGrpcPropType = {
   isRequests: boolean;
@@ -14,38 +19,50 @@ type RateTableTcpPropType = {
   rate: number;
 };
 
-export class RateTableGrpc extends React.Component<RateTableGrpcPropType, {}> {
-  render() {
-    // for the table and graph
-    const title = `gRPC Traffic (${this.props.isRequests ? 'requests' : 'messages'} per second)`;
-    const errRate: number = this.props.rateGrpcErr + this.props.rateNR;
-    const percentErr: number = this.props.rate === 0 ? 0 : (errRate / this.props.rate) * 100;
-    const percentOK: number = 100 - percentErr;
+export const RateTableGrpc: React.FC<RateTableGrpcPropType> = (props: RateTableGrpcPropType) => {
+  // for the table and graph
+  const title = `gRPC Traffic (${props.isRequests ? 'requests' : 'messages'} per second)`;
+  const errRate: number = props.rateGrpcErr + props.rateNR;
+  const percentErr: number = props.rate === 0 ? 0 : (errRate / props.rate) * 100;
+  const percentOK: number = 100 - percentErr;
 
-    return (
-      <div>
-        <div className={summaryTitle}>{title}</div>
-        <table className={tableStyle}>
-          <thead>
-            <tr>
-              <th>Total</th>
-              <th>%Success</th>
-              <th>%Error</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>{this.props.rate.toFixed(2)}</td>
-              <td>{this.props.isRequests ? percentOK.toFixed(2) : '-'}</td>
-              <td>{this.props.isRequests ? percentErr.toFixed(2) : '-'}</td>
-            </tr>
-          </tbody>
-        </table>
-        {this.props.isRequests && renderRateChartGrpc(percentOK, percentErr)}
-      </div>
-    );
-  }
-}
+  return (
+    <div>
+      <div className={summaryTitle}>{title}</div>
+
+      <Table>
+        <Thead>
+          <Tr>
+            <Th dataLabel="Total" textCenter>
+              Total
+            </Th>
+            <Th dataLabel="% Success" textCenter>
+              % Success
+            </Th>
+            <Th dataLabel="% Error" textCenter>
+              % Error
+            </Th>
+          </Tr>
+        </Thead>
+        <Tbody>
+          <Tr>
+            <Td dataLabel="Total" textCenter>
+              {props.rate.toFixed(2)}
+            </Td>
+            <Td dataLabel="% Success" textCenter>
+              {props.isRequests ? percentOK.toFixed(2) : '-'}
+            </Td>
+            <Td dataLabel="% Error" textCenter>
+              {props.isRequests ? percentErr.toFixed(2) : '-'}
+            </Td>
+          </Tr>
+        </Tbody>
+      </Table>
+
+      {props.isRequests && renderRateChartGrpc(percentOK, percentErr)}
+    </div>
+  );
+};
 
 type RateTableHttpPropType = {
   title: string;
@@ -56,73 +73,94 @@ type RateTableHttpPropType = {
   rateNR: number;
 };
 
-export class RateTableHttp extends React.Component<RateTableHttpPropType, {}> {
-  render() {
-    // for the table
-    const errRate: number = this.props.rate4xx + this.props.rate5xx + this.props.rateNR;
-    const percentErr: number = this.props.rate === 0 ? 0 : (errRate / this.props.rate) * 100;
-    const successErr: number = 100 - percentErr;
+export const RateTableHttp: React.FC<RateTableHttpPropType> = (props: RateTableHttpPropType) => {
+  // for the table
+  const errRate: number = props.rate4xx + props.rate5xx + props.rateNR;
+  const percentErr: number = props.rate === 0 ? 0 : (errRate / props.rate) * 100;
+  const successErr: number = 100 - percentErr;
 
-    // for the graph
-    const rate2xx: number =
-      this.props.rate === 0
-        ? 0
-        : this.props.rate - this.props.rate3xx - this.props.rate4xx - this.props.rate5xx - this.props.rateNR;
-    const percent2xx: number = this.props.rate === 0 ? 0 : (rate2xx / this.props.rate) * 100;
-    const percent3xx: number = this.props.rate === 0 ? 0 : (this.props.rate3xx / this.props.rate) * 100;
-    const percent4xx: number = this.props.rate === 0 ? 0 : (this.props.rate4xx / this.props.rate) * 100;
-    const percent5xx: number = this.props.rate === 0 ? 0 : (this.props.rate5xx / this.props.rate) * 100;
-    const percentNR: number = this.props.rate === 0 ? 0 : (this.props.rateNR / this.props.rate) * 100;
+  // for the graph
+  const rate2xx: number =
+    props.rate === 0 ? 0 : props.rate - props.rate3xx - props.rate4xx - props.rate5xx - props.rateNR;
+  const percent2xx: number = props.rate === 0 ? 0 : (rate2xx / props.rate) * 100;
+  const percent3xx: number = props.rate === 0 ? 0 : (props.rate3xx / props.rate) * 100;
+  const percent4xx: number = props.rate === 0 ? 0 : (props.rate4xx / props.rate) * 100;
+  const percent5xx: number = props.rate === 0 ? 0 : (props.rate5xx / props.rate) * 100;
+  const percentNR: number = props.rate === 0 ? 0 : (props.rateNR / props.rate) * 100;
 
-    return (
-      <div>
-        <div className={summaryTitle}>{this.props.title}</div>
-        <table className={tableStyle} style={{ marginBottom: '0' }}>
-          <thead>
-            <tr>
-              <th>Total</th>
-              <th>%Success</th>
-              <th>%Error</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>{this.props.rate.toFixed(2)}</td>
-              <td>{successErr.toFixed(2)}</td>
-              <td>{percentErr.toFixed(2)}</td>
-            </tr>
-          </tbody>
-        </table>
-        {renderRateChartHttp(percent2xx, percent3xx, percent4xx, percent5xx, percentNR)}
-      </div>
-    );
-  }
-}
+  return (
+    <div>
+      <div className={summaryTitle}>{props.title}</div>
 
-export class RateTableTcp extends React.Component<RateTableTcpPropType, {}> {
-  render() {
-    const title = 'TCP Traffic (bytes per second)';
+      <Table variant={TableVariant.compact} className={tableStyle}>
+        <Thead>
+          <Tr>
+            <Th dataLabel="Total" textCenter>
+              Total
+            </Th>
+            <Th dataLabel="% Success" textCenter>
+              % Success
+            </Th>
+            <Th dataLabel="% Error" textCenter>
+              % Error
+            </Th>
+          </Tr>
+        </Thead>
+        <Tbody>
+          <Tr>
+            <Td dataLabel="Total" textCenter>
+              {props.rate.toFixed(2)}
+            </Td>
+            <Td dataLabel="% Success" textCenter>
+              {successErr.toFixed(2)}
+            </Td>
+            <Td dataLabel="% Error" textCenter>
+              {percentErr.toFixed(2)}
+            </Td>
+          </Tr>
+        </Tbody>
+      </Table>
 
-    return (
-      <div>
-        <div className={summaryTitle}>{title}</div>
-        <table className={tableStyle}>
-          <thead>
-            <tr>
-              <th>Total</th>
-              <th>%Success</th>
-              <th>%Error</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>{this.props.rate.toFixed(2)}</td>
-              <td>{'-'}</td>
-              <td>{'-'}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    );
-  }
-}
+      {renderRateChartHttp(percent2xx, percent3xx, percent4xx, percent5xx, percentNR)}
+    </div>
+  );
+};
+
+export const RateTableTcp: React.FC<RateTableTcpPropType> = (props: RateTableTcpPropType) => {
+  const title = 'TCP Traffic (bytes per second)';
+
+  return (
+    <div>
+      <div className={summaryTitle}>{title}</div>
+
+      <Table>
+        <Thead>
+          <Tr>
+            <Th dataLabel="Total" textCenter>
+              Total
+            </Th>
+            <Th dataLabel="% Success" textCenter>
+              % Success
+            </Th>
+            <Th dataLabel="% Error" textCenter>
+              % Error
+            </Th>
+          </Tr>
+        </Thead>
+        <Tbody>
+          <Tr>
+            <Td dataLabel="Total" textCenter>
+              {props.rate.toFixed(2)}
+            </Td>
+            <Td dataLabel="% Success" textCenter>
+              {'-'}
+            </Td>
+            <Td dataLabel="% Error" textCenter>
+              {'-'}
+            </Td>
+          </Tr>
+        </Tbody>
+      </Table>
+    </div>
+  );
+};

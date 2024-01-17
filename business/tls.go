@@ -142,7 +142,7 @@ func (in *TLSService) hasAutoMTLSEnabled(cluster string) bool {
 	}
 
 	cfg := config.Get()
-	istioConfig, err := kubeCache.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
+	istioConfig, err := kubeCache.GetConfigMap(cfg.IstioNamespace, IstioConfigMapName(*cfg, ""))
 	if err != nil {
 		return true
 	}

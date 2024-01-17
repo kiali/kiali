@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/base64"
 	"errors"
@@ -70,24 +71,49 @@ func GetClientFactory() (ClientFactory, error) {
 			return
 		}
 
-		// Get the normal configuration
-		var config *rest.Config
-		config, err = getConfigForLocalCluster()
-		if err != nil {
-			return
-		}
-
-		// Create a new config based on what was gathered above but don't specify the bearer token to use
-		baseConfig := rest.Config{
-			Host:            config.Host, // TODO: do we need this? remote cluster clients should ignore this
-			TLSClientConfig: config.TLSClientConfig,
-			QPS:             kialiConfig.Get().KubernetesConfig.QPS,
-			Burst:           kialiConfig.Get().KubernetesConfig.Burst,
-		}
-
-		factory, err = newClientFactory(&baseConfig)
+		factory, err = getClientFactory(*kialiConfig.Get())
 	})
 	return factory, err
+}
+
+func getClientFactory(conf kialiConfig.Config) (*clientFactory, error) {
+	// Get the normal configuration
+	var config *rest.Config
+	config, err := getConfigForLocalCluster()
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a new config based on what was gathered above but don't specify the bearer token to use
+	baseConfig := rest.Config{
+		Host:            config.Host, // TODO: do we need this? remote cluster clients should ignore this
+		TLSClientConfig: config.TLSClientConfig,
+		QPS:             conf.KubernetesConfig.QPS,
+		Burst:           conf.KubernetesConfig.Burst,
+	}
+
+	return newClientFactory(&baseConfig)
+}
+
+// NewClientFactory creates a new client factory that can be transitory.
+// Callers should close the ctx when done with the client factory.
+// Does not set the global ClientFactory. You should probably use
+// GetClientFactory instead of this method unless you temporaily need
+// to create a client like when Kiali sets the cluster id.
+func NewClientFactory(ctx context.Context, conf kialiConfig.Config) (ClientFactory, error) {
+	cf, err := getClientFactory(conf)
+	if err != nil {
+		return nil, err
+	}
+
+	// Need to cleanup the recycle chan since this client factory could be transitory.
+	go func() {
+		<-ctx.Done()
+		log.Debug("Stopping client factory recycle chan")
+		close(cf.recycleChan)
+	}()
+
+	return cf, nil
 }
 
 // newClientFactory allows for specifying the config and expiry duration
@@ -193,7 +219,7 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 
 	var newClient ClientInterface
 	if cluster == cf.homeCluster {
-		client, err := NewClientWithRemoteClusterInfo(&config, nil)
+		client, err := newClientWithRemoteClusterInfo(&config, nil)
 		if err != nil {
 			log.Errorf("Error creating client for cluster %s: %s", cluster, err.Error())
 			return nil, err
@@ -219,14 +245,14 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 		}
 
 		// Replace the Kiali SA token with the user's auth token.
-		// In anonymous mode and when OpenID RBAC is disabled use the Kiali SA token
-		// since these modes don't have a user token.
-		if (cfg.Auth.Strategy != kialiConfig.AuthStrategyAnonymous) ||
-			(cfg.Auth.Strategy == kialiConfig.AuthStrategyOpenId && cfg.Auth.OpenId.DisableRBAC) {
+		// Only if we are not in an anonymous mode
+		// and if we don't use OpenID with RBAC is disable.
+		if !(cfg.Auth.Strategy == kialiConfig.AuthStrategyAnonymous) &&
+			!(cfg.Auth.Strategy == kialiConfig.AuthStrategyOpenId && cfg.Auth.OpenId.DisableRBAC) {
 			remoteConfig.BearerToken = authInfo.Token
 		}
 
-		newClient, err = NewClientWithRemoteClusterInfo(remoteConfig, &clusterInfo)
+		newClient, err = newClientWithRemoteClusterInfo(remoteConfig, &clusterInfo)
 		if err != nil {
 			log.Errorf("Error getting remote client for cluster [%s]. Err: %s", cluster, err.Error())
 			return nil, err
@@ -251,7 +277,7 @@ func (cf *clientFactory) newSAClient(remoteClusterInfo *RemoteClusterInfo) (*K8S
 		return nil, err
 	}
 
-	client, err := NewClientWithRemoteClusterInfo(config, remoteClusterInfo)
+	client, err := newClientWithRemoteClusterInfo(config, remoteClusterInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -339,7 +365,7 @@ func (cf *clientFactory) watchClients() {
 		// listen signal from recycleChan
 		tokenHash, ok := <-cf.recycleChan
 		if !ok {
-			log.Error("recycleChan closed when watching clients")
+			log.Debug("recycleChan closed when watching clients")
 			return
 		}
 		// clean expired client with its token hash

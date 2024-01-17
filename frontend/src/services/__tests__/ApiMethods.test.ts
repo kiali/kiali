@@ -1,12 +1,11 @@
 import * as API from '../Api';
-import { AxiosError } from 'axios';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
 
 describe('#GetErrorString', () => {
   it('should return an error message with status', () => {
-    const axErr: AxiosError = {
+    const axErr: any = {
       config: { method: 'GET' },
-      name: 'AxiosError',
+      name: 'ApiError',
       message: 'Error in Response',
       response: {
         data: null,
@@ -15,14 +14,16 @@ describe('#GetErrorString', () => {
         headers: null,
         config: {}
       }
-    } as AxiosError;
+    };
+
     expect(API.getErrorString(axErr)).toEqual(`InternalError`);
   });
+
   it('should return an error message with data', () => {
     const responseServerError = 'Internal Error';
-    const axErr: AxiosError = {
+    const axErr: any = {
       config: { method: 'GET' },
-      name: 'AxiosError',
+      name: 'ApiError',
       message: 'Error in Response',
       response: {
         data: { error: responseServerError },
@@ -31,15 +32,17 @@ describe('#GetErrorString', () => {
         headers: null,
         config: {}
       }
-    } as AxiosError;
+    };
+
     expect(API.getErrorString(axErr)).toEqual(`${responseServerError}`);
   });
+
   it('should return a detail error message with data', () => {
     const responseServerError = 'Internal Error';
     const responseServerDetail = 'Error Detail';
-    const axErr: AxiosError = {
+    const axErr: any = {
       config: { method: 'GET' },
-      name: 'AxiosError',
+      name: 'ApiError',
       message: 'Error in Response',
       response: {
         data: { error: responseServerError, detail: responseServerDetail },
@@ -48,13 +51,15 @@ describe('#GetErrorString', () => {
         headers: null,
         config: {}
       }
-    } as AxiosError;
+    };
+
     expect(API.getErrorDetail(axErr)).toEqual(`${responseServerDetail}`);
   });
+
   it('should return specific error message for unauthorized', () => {
-    const axErr: AxiosError = {
+    const axErr: any = {
       config: { method: 'GET' },
-      name: 'AxiosError',
+      name: 'ApiError',
       message: 'Error in Response',
       response: {
         data: null,
@@ -63,7 +68,8 @@ describe('#GetErrorString', () => {
         headers: null,
         config: {}
       }
-    } as AxiosError;
+    };
+
     expect(API.getErrorString(axErr)).toEqual(`Unauthorized: Has your session expired? Try logging in again.`);
   });
 });
@@ -72,7 +78,7 @@ describe('#GetErrorString', () => {
 // WE NEED TO MOCK THE AXIOS SERVICE AND CHECK THAT AXIOS IS BEING CALLED
 // (UNIT TESTS SHOULD NOT CALL DIRECTLY TO API BUT MOCK THEM).
 describe.skip('#Test Methods return a Promise', () => {
-  const evaluatePromise = (result: Promise<any>) => {
+  const evaluatePromise = (result: Promise<any>): void => {
     expect(result).toBeDefined();
     expect(typeof result).toEqual('object');
     expect(typeof result.then).toEqual('function');
@@ -114,8 +120,8 @@ describe.skip('#Test Methods return a Promise', () => {
     evaluatePromise(result);
   });
 
-  it('#getJaegerInfo', () => {
-    const result = API.getJaegerInfo();
+  it('#getTracingInfo', () => {
+    const result = API.getTracingInfo();
     evaluatePromise(result);
   });
 

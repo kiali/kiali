@@ -1,8 +1,9 @@
-import { And, When, Then } from '@badeball/cypress-cucumber-preprocessor';
+import { When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 
 When('the sidebar is open', () => {
   ensureKialiFinishedLoading();
+
   cy.get('#page-sidebar')
     .should('be.visible')
     .then($sidebar => {
@@ -10,10 +11,11 @@ When('the sidebar is open', () => {
         cy.get('#nav-toggle').click();
       }
     });
+
   cy.get('#page-sidebar').should('be.visible');
 });
 
-And('user presses the navigation toggle button', () => {
+When('user presses the navigation toggle button', () => {
   cy.get('#nav-toggle').click();
 });
 
@@ -23,6 +25,7 @@ Then('user cannot see the sidebar', () => {
 
 When('the sidebar is closed', () => {
   ensureKialiFinishedLoading();
+
   cy.get('#page-sidebar')
     .should('be.visible')
     .then($sidebar => {
@@ -30,6 +33,7 @@ When('the sidebar is closed', () => {
         cy.get('#nav-toggle').click();
       }
     });
+
   cy.get('#page-sidebar').should('not.be.visible');
 });
 

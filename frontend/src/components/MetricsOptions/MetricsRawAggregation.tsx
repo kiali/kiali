@@ -47,7 +47,7 @@ export class MetricsRawAggregation extends React.Component<Props> {
         handleSelect={this.onAggregatorChanged}
         nameDropdown={'Pods aggregation'}
         value={this.aggregator}
-        initialLabel={MetricsRawAggregation.Aggregators[this.aggregator]}
+        label={MetricsRawAggregation.Aggregators[this.aggregator]}
         options={MetricsRawAggregation.Aggregators}
       />
     );

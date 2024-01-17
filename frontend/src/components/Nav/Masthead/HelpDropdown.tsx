@@ -2,66 +2,40 @@ import * as React from 'react';
 import { AboutUIModal } from '../../About/AboutUIModal';
 import { KialiAppState } from '../../../store/Store';
 import { DebugInformation } from '../../../components/DebugInformation/DebugInformation';
-import { Dropdown, DropdownToggle, DropdownItem } from '@patternfly/react-core/deprecated';
 import { QuestionCircleIcon } from '@patternfly/react-icons/';
 import { connect } from 'react-redux';
 import { isUpstream } from '../../UpstreamDetector/UpstreamDetector';
 import { Status, ExternalServiceInfo, StatusKey } from '../../../types/StatusState';
 import { config, serverConfig } from '../../../config';
 import { IstioCertsInfo } from 'components/IstioCertsInfo/IstioCertsInfo';
+import { kialiStyle } from 'styles/StyleUtils';
+import { Dropdown, DropdownItem, DropdownList, MenuToggle, MenuToggleElement } from '@patternfly/react-core';
 
 type HelpDropdownProps = {
-  status: Status;
   externalServices: ExternalServiceInfo[];
+  status: Status;
   warningMessages: string[];
 };
 
-interface HelpDropdownState {
-  isDropdownOpen: boolean;
-}
+const menuToggleStyle = kialiStyle({
+  marginTop: '0.25rem',
+  verticalAlign: '-0.1rem'
+});
 
-class HelpDropdownComponent extends React.Component<HelpDropdownProps, HelpDropdownState> {
-  about: React.RefObject<AboutUIModal>;
-  debugInformation: React.RefObject<any>;
-  certsInformation: React.RefObject<any>;
+const HelpDropdownComponent: React.FC<HelpDropdownProps> = (props: HelpDropdownProps) => {
+  const [isDropdownOpen, setIsDropdownOpen] = React.useState<boolean>(false);
+  const [isAboutModalOpen, setIsAboutModalOpen] = React.useState<boolean>(false);
+  const [isDebugInformationOpen, setIsDebugInformationOpen] = React.useState<boolean>(false);
+  const [isCertsInformationOpen, setIsCertsInformationOpen] = React.useState<boolean>(false);
 
-  constructor(props: HelpDropdownProps) {
-    super(props);
-    this.state = { isDropdownOpen: false };
-    this.about = React.createRef<AboutUIModal>();
-    this.debugInformation = React.createRef();
-    this.certsInformation = React.createRef();
-  }
-
-  openAbout = () => {
-    this.about.current!.open();
+  const onDropdownSelect = () => {
+    setIsDropdownOpen(!isDropdownOpen);
   };
 
-  openDebugInformation = () => {
-    // Using wrapped component, so we have to get the wrappedInstance
-    this.debugInformation.current!.open();
-  };
-
-  openCertsInformation = () => {
-    this.certsInformation.current!.open();
-  };
-
-  onDropdownToggle = isDropdownOpen => {
-    this.setState({
-      isDropdownOpen
-    });
-  };
-
-  onDropdownSelect = () => {
-    this.setState({
-      isDropdownOpen: !this.state.isDropdownOpen
-    });
-  };
-
-  buildDocumentationLink() {
+  const buildDocumentationLink = () => {
     const url = new URL(config.documentation.url);
     if (isUpstream) {
-      const kialiCoreVersion = this.props.status[StatusKey.KIALI_CORE_VERSION] || 'unknown';
+      const kialiCoreVersion = props.status[StatusKey.KIALI_CORE_VERSION] || 'unknown';
 
       url.searchParams.append('utm_source', 'kiali');
       url.searchParams.append('utm_medium', 'app');
@@ -69,80 +43,76 @@ class HelpDropdownComponent extends React.Component<HelpDropdownProps, HelpDropd
       url.searchParams.append('utm_content', '?-menu');
     }
     return url.toString();
+  };
+
+  const items: JSX.Element[] = [];
+
+  items.push(
+    <DropdownItem key={'view_documentation'} onClick={() => window.open(buildDocumentationLink(), '_blank')}>
+      Documentation
+    </DropdownItem>
+  );
+
+  items.push(
+    <DropdownItem key={'view_debug_info'} onClick={() => setIsDebugInformationOpen(true)}>
+      View Debug Info
+    </DropdownItem>
+  );
+
+  if (serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled) {
+    items.push(
+      <DropdownItem key={'view_certs_info'} onClick={() => setIsCertsInformationOpen(true)}>
+        View Certificates Info
+      </DropdownItem>
+    );
   }
 
-  render() {
-    const { isDropdownOpen } = this.state;
+  items.push(
+    <DropdownItem key={'view_about_info'} onClick={() => setIsAboutModalOpen(true)}>
+      About
+    </DropdownItem>
+  );
 
-    const Toggle = (
-      <DropdownToggle
-        toggleIndicator={null}
-        onToggle={(_event, isDropdownOpen) => this.onDropdownToggle(isDropdownOpen)}
-        aria-label="Help"
-        style={{ marginTop: 3, verticalAlign: '-0.1em' }}
-      >
-        <QuestionCircleIcon />
-      </DropdownToggle>
-    );
+  return (
+    <>
+      <AboutUIModal
+        status={props.status}
+        externalServices={props.externalServices}
+        warningMessages={props.warningMessages}
+        isOpen={isAboutModalOpen}
+        onClose={() => setIsAboutModalOpen(false)}
+      />
 
-    const items: JSX.Element[] = [];
+      <DebugInformation isOpen={isDebugInformationOpen} onClose={() => setIsDebugInformationOpen(false)} />
 
-    items.push(
-      <DropdownItem component={'a'} key={'view_documentation'} href={this.buildDocumentationLink()} target="_blank">
-        Documentation
-      </DropdownItem>
-    );
+      {serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled && (
+        <IstioCertsInfo isOpen={isCertsInformationOpen} onClose={() => setIsCertsInformationOpen(false)} />
+      )}
 
-    items.push(
-      <DropdownItem
-        component={'span'}
-        key={'view_debug_info'}
-        onClick={this.openDebugInformation}
-        style={{ cursor: 'pointer' }}
-      >
-        View Debug Info
-      </DropdownItem>
-    );
-
-    if (serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled) {
-      items.push(
-        <DropdownItem component={'span'} key={'view_certs_info'} onClick={this.openCertsInformation}>
-          View Certificates Info
-        </DropdownItem>
-      );
-    }
-
-    items.push(
-      <DropdownItem component={'span'} key={'view_about_info'} onClick={this.openAbout}>
-        About
-      </DropdownItem>
-    );
-
-    return (
-      <>
-        <AboutUIModal
-          ref={this.about}
-          status={this.props.status}
-          externalServices={this.props.externalServices}
-          warningMessages={this.props.warningMessages}
-        />
-        <DebugInformation ref={this.debugInformation} />
-        {serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled && (
-          <IstioCertsInfo ref={this.certsInformation} />
+      <Dropdown
+        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+          <MenuToggle
+            ref={toggleRef}
+            className={menuToggleStyle}
+            data-test="about-help-button"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            aria-label="Help"
+            variant="plain"
+            isExpanded={isDropdownOpen}
+          >
+            <QuestionCircleIcon />
+          </MenuToggle>
         )}
-        <Dropdown
-          data-test="about-help-button"
-          isPlain={true}
-          position="right"
-          onSelect={this.onDropdownSelect}
-          isOpen={isDropdownOpen}
-          toggle={Toggle}
-          dropdownItems={items}
-        />
-      </>
-    );
-  }
-}
+        isOpen={isDropdownOpen}
+        popperProps={{ position: 'right' }}
+        onOpenChange={(isOpen: boolean) => setIsDropdownOpen(isOpen)}
+        onSelect={onDropdownSelect}
+      >
+        <DropdownList>{items}</DropdownList>
+      </Dropdown>
+    </>
+  );
+};
 
 const mapStateToProps = (state: KialiAppState) => ({
   status: state.statusState.status,

@@ -6,6 +6,7 @@ import {
   Gateway,
   K8sGateway,
   K8sHTTPRoute,
+  K8sReferenceGrant,
   ServiceEntry,
   VirtualService,
   ObjectValidation,
@@ -25,37 +26,43 @@ import { AceOptions } from 'react-ace/types';
 
 export interface IstioConfigId {
   namespace: string;
-  objectType: string;
   object: string;
+  objectType: string;
 }
 
 export interface IstioConfigDetails {
-  namespace: Namespace;
+  authorizationPolicy: AuthorizationPolicy;
   cluster?: string;
+  destinationRule: DestinationRule;
+  envoyFilter: EnvoyFilter;
   gateway: Gateway;
+  help?: HelpMessage[];
   k8sGateway: K8sGateway;
   k8sHTTPRoute: K8sHTTPRoute;
-  virtualService: VirtualService;
-  destinationRule: DestinationRule;
+  k8sReferenceGrant: K8sReferenceGrant;
+  namespace: Namespace;
+  peerAuthentication: PeerAuthentication;
+  permissions: ResourcePermissions;
+  references?: References;
+  requestAuthentication: RequestAuthentication;
   serviceEntry: ServiceEntry;
   sidecar: Sidecar;
+  telemetry: Telemetry;
+  validation: ObjectValidation;
+  virtualService: VirtualService;
+  wasmPlugin: WasmPlugin;
   workloadEntry: WorkloadEntry;
   workloadGroup: WorkloadGroup;
-  envoyFilter: EnvoyFilter;
-  wasmPlugin: WasmPlugin;
-  telemetry: Telemetry;
-  authorizationPolicy: AuthorizationPolicy;
-  peerAuthentication: PeerAuthentication;
-  requestAuthentication: RequestAuthentication;
-  permissions: ResourcePermissions;
-  validation: ObjectValidation;
-  references?: References;
-  help?: HelpMessage[];
+}
+
+export interface IstioConfigDetailsQuery {
+  help?: boolean;
+  validate?: boolean;
 }
 
 export const aceOptions: AceOptions = {
-  showPrintMargin: false,
-  autoScrollEditorIntoView: true
+  autoScrollEditorIntoView: true,
+  showPrintMargin: false
 };
 
 export const safeDumpOptions = {
@@ -65,8 +72,8 @@ export const safeDumpOptions = {
 };
 
 export interface ParsedSearch {
-  type?: string;
   name?: string;
+  type?: string;
 }
 
 export interface IstioPermissions {
@@ -75,20 +82,26 @@ export interface IstioPermissions {
   };
 }
 
+export interface IstioPermissionsQuery {
+  namespaces: string;
+}
+
 // Helper function to compare two IstioConfigDetails iterating over its IstioObject children.
 // When an IstioObject child has changed (resourceVersion is different) it will return a tuple with
 //  boolean: true if resourceVersion has changed in newer version
 //  string: IstioObject child
 //  string: resourceVersion of newer version
 export const compareResourceVersion = (
-  oldIstioConfigDetails,
+  oldIstioConfigDetails: IstioConfigDetails,
   newIstioConfigDetails: IstioConfigDetails
 ): [boolean, string, string] => {
   const keys = Object.keys(oldIstioConfigDetails);
+
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i];
     const oldIstioObject = oldIstioConfigDetails[key] as IstioObject;
     const newIstioObject = newIstioConfigDetails[key] as IstioObject;
+
     if (
       oldIstioObject &&
       newIstioObject &&
@@ -101,5 +114,6 @@ export const compareResourceVersion = (
       return [true, key, newIstioObject.metadata.resourceVersion];
     }
   }
+
   return [false, '', ''];
 };

@@ -11,15 +11,13 @@ const errorSectionStyle = kialiStyle({
   height: '80vh'
 });
 
-export class ErrorSection extends React.Component<MessageProps> {
-  render() {
-    return (
-      <div>
-        <EmptyState id="empty-page-error" variant={EmptyStateVariant.lg} className={errorSectionStyle}>
-          <EmptyStateHeader titleText={<>{this.props.error.title}</>} headingLevel="h5" />
-          <EmptyStateBody>{this.props.error.description}</EmptyStateBody>
-        </EmptyState>
-      </div>
-    );
-  }
-}
+export const ErrorSection: React.FC<MessageProps> = (props: MessageProps) => {
+  return (
+    <div>
+      <EmptyState id="empty-page-error" variant={EmptyStateVariant.lg} className={errorSectionStyle}>
+        <EmptyStateHeader titleText={<>{props.error.title}</>} headingLevel="h5" />
+        <EmptyStateBody>{props.error.description}</EmptyStateBody>
+      </EmptyState>
+    </div>
+  );
+};

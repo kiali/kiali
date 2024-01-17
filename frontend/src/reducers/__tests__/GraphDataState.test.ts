@@ -18,7 +18,6 @@ describe('GraphDataState', () => {
       toolbarState: {
         boxByCluster: true,
         boxByNamespace: true,
-        compressOnHide: true,
         edgeLabels: [],
         findValue: '',
         graphType: GraphType.VERSIONED_APP,
@@ -35,7 +34,8 @@ describe('GraphDataState', () => {
         showServiceNodes: true,
         showTrafficAnimation: false,
         showVirtualServices: true,
-        trafficRates: DefaultTrafficRates
+        trafficRates: DefaultTrafficRates,
+        showWaypoints: false
       },
       updateTime: 0
     } as GraphState);

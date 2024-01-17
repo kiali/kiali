@@ -11,6 +11,7 @@ Feature: Kiali Services page
 
   @bookinfo-app
   Scenario: See services table with correct info
+    When user applies kiali api "rest" annotations
     When user selects the "bookinfo" namespace
     Then user sees a table with headings
       | Health | Name | Namespace | Labels | Configuration | Details |
@@ -23,11 +24,14 @@ Feature: Kiali Services page
     And the "Configuration" column on the "productpage" row has a link ending in "/namespaces/bookinfo/services/productpage"
     And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/virtualservices/bookinfo"
     And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/gateways/bookinfo-gateway"
+    And the "Details" column on the "productpage" row has a icon with title "API Documentation"
     And the "Cluster" column "disappears"
 
+  @smoke
   Scenario: See all Services toggles
     Then user sees all the Services toggles
 
+  @smoke
   Scenario: Toggle Services configuration toggle
     When user "unchecks" toggle "configuration"
     Then the "Configuration" column "disappears"
@@ -129,17 +133,15 @@ Feature: Kiali Services page
     And an entry for "west" cluster should be in the table
 
   # inspired by this: https://github.com/kiali/kiali/pull/5998#pullrequestreview-1383754665
-  @skip
   @multi-cluster
   Scenario: Services from both clusters should have a validation
     When user selects the "bookinfo" namespace
-    Then all of the default "bookinfo" services from both clusters should be "healthy" 
+    Then configuration in both clusters for the "bookinfo" namespace should be healthy
 
-  @skip
   @multi-cluster
   Scenario: Sort list by cluster column
     When user selects the "bookinfo" namespace
-    And user sorts the list by "Cluster" "asc"
-    Then the list is sorted by "Cluster" "asc"
-    When user sorts the list by "Cluster" "desc"
-    Then the list is sorted by "Cluster" "desc"
+    And user sorts the list by column "Cluster" in "ascending" order
+    Then the list is sorted by column "Cluster" in "ascending" order
+    When user sorts the list by column "Cluster" in "descending" order
+    Then the list is sorted by column "Cluster" in "descending" order

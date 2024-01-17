@@ -47,9 +47,9 @@ func (o *PromAPIMock) DeleteSeries(ctx context.Context, matches []string, startT
 	return args.Get(0).(error)
 }
 
-func (o *PromAPIMock) Flags(ctx context.Context) (prom_v1.FlagsResult, error) {
+func (o *PromAPIMock) Runtimeinfo(ctx context.Context) (prom_v1.RuntimeinfoResult, error) {
 	args := o.Called(ctx)
-	return args.Get(0).(prom_v1.FlagsResult), nil
+	return args.Get(0).(prom_v1.RuntimeinfoResult), nil
 }
 
 func (o *PromAPIMock) LabelNames(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) ([]string, prom_v1.Warnings, error) {
@@ -66,7 +66,7 @@ func (o *PromAPIMock) Metadata(ctx context.Context, metric string, limit string)
 	return nil, nil
 }
 
-func (o *PromAPIMock) Query(ctx context.Context, query string, ts time.Time) (model.Value, prom_v1.Warnings, error) {
+func (o *PromAPIMock) Query(ctx context.Context, query string, ts time.Time, opts ...prom_v1.Option) (model.Value, prom_v1.Warnings, error) {
 	args := o.Called(ctx, query, ts)
 	return args.Get(0).(model.Value), nil, nil
 }
@@ -76,7 +76,7 @@ func (o *PromAPIMock) QueryExemplars(ctx context.Context, query string, startTim
 	return args.Get(0).([]prom_v1.ExemplarQueryResult), nil
 }
 
-func (o *PromAPIMock) QueryRange(ctx context.Context, query string, r prom_v1.Range) (model.Value, prom_v1.Warnings, error) {
+func (o *PromAPIMock) QueryRange(ctx context.Context, query string, r prom_v1.Range, opts ...prom_v1.Option) (model.Value, prom_v1.Warnings, error) {
 	args := o.Called(ctx, query, r)
 	return args.Get(0).(model.Value), nil, nil
 }
@@ -86,8 +86,8 @@ func (o *PromAPIMock) Rules(ctx context.Context) (prom_v1.RulesResult, error) {
 	return args.Get(0).(prom_v1.RulesResult), nil
 }
 
-func (o *PromAPIMock) Runtimeinfo(ctx context.Context) (prom_v1.RuntimeinfoResult, error) {
-	return prom_v1.RuntimeinfoResult{}, nil
+func (o *PromAPIMock) Flags(ctx context.Context) (prom_v1.FlagsResult, error) {
+	return prom_v1.FlagsResult{}, nil
 }
 
 func (o *PromAPIMock) Series(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) ([]model.LabelSet, prom_v1.Warnings, error) {
@@ -114,11 +114,16 @@ func (o *PromAPIMock) TSDB(ctx context.Context) (prom_v1.TSDBResult, error) {
 	return prom_v1.TSDBResult{}, nil
 }
 
+func (o *PromAPIMock) WalReplay(ctx context.Context) (prom_v1.WalReplayStatus, error) {
+	args := o.Called(ctx)
+	return args.Get(0).(prom_v1.WalReplayStatus), nil
+}
+
 func (o *PromAPIMock) OnQueryTime(query string, t *time.Time, ret model.Vector) {
 	if t == nil {
-		o.On("Query", mock.AnythingOfType("*context.emptyCtx"), query, mock.AnythingOfType("time.Time")).Return(ret, nil)
+		o.On("Query", mock.Anything, query, mock.AnythingOfType("time.Time")).Return(ret, nil)
 	} else {
-		o.On("Query", mock.AnythingOfType("*context.emptyCtx"), query, *t).Return(ret, nil)
+		o.On("Query", mock.Anything, query, *t).Return(ret, nil)
 	}
 }
 
@@ -128,9 +133,9 @@ func (o *PromAPIMock) MockTime(query string, ret model.Vector) {
 
 func (o *PromAPIMock) OnQueryRange(query string, r *prom_v1.Range, ret model.Matrix) {
 	if r == nil {
-		o.On("QueryRange", mock.AnythingOfType("*context.emptyCtx"), query, mock.AnythingOfType("v1.Range")).Return(ret, nil)
+		o.On("QueryRange", mock.Anything, query, mock.AnythingOfType("v1.Range")).Return(ret, nil)
 	} else {
-		o.On("QueryRange", mock.AnythingOfType("*context.emptyCtx"), query, *r).Return(ret, nil)
+		o.On("QueryRange", mock.Anything, query, *r).Return(ret, nil)
 	}
 }
 
@@ -219,7 +224,7 @@ func (o *PromAPIMock) AlwaysReturnEmpty() {
 	}
 	o.On(
 		"Query",
-		mock.AnythingOfType("*context.emptyCtx"),
+		mock.Anything,
 		mock.AnythingOfType("string"),
 		mock.AnythingOfType("time.Time"),
 	).Return(model.Vector{}, nil)
@@ -231,7 +236,7 @@ func (o *PromAPIMock) AlwaysReturnEmpty() {
 	}
 	o.On(
 		"QueryRange",
-		mock.AnythingOfType("*context.emptyCtx"),
+		mock.Anything,
 		mock.AnythingOfType("string"),
 		mock.AnythingOfType("v1.Range"),
 	).Return(matrix, nil)
@@ -247,7 +252,7 @@ func (o *PromAPIMock) SpyArgumentsAndReturnEmpty(fn func(args mock.Arguments)) {
 	}
 	o.On(
 		"Query",
-		mock.AnythingOfType("*context.emptyCtx"),
+		mock.Anything,
 		mock.AnythingOfType("string"),
 		mock.AnythingOfType("time.Time"),
 	).Run(fn).Return(model.Vector{}, nil)
@@ -259,7 +264,7 @@ func (o *PromAPIMock) SpyArgumentsAndReturnEmpty(fn func(args mock.Arguments)) {
 	}
 	o.On(
 		"QueryRange",
-		mock.AnythingOfType("*context.emptyCtx"),
+		mock.Anything,
 		mock.AnythingOfType("string"),
 		mock.AnythingOfType("v1.Range"),
 	).Run(fn).Return(matrix, nil)

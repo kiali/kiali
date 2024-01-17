@@ -130,7 +130,9 @@ func mockAddOnsCalls(t *testing.T, objects []runtime.Object, isIstioReachable bo
 	objects = append(objects, &osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}})
 
 	// Mock k8s api calls
-	k8s := mockDeploymentCall(objects, isIstioReachable)
+	mockDeploymentCall(objects, isIstioReachable)
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	k8s.OpenShift = true
 	routes := mockAddOnCalls(defaultAddOnCalls(&grafanaCalls, &prometheusCalls))
 	httpServer := mockServer(t, routes)
 
@@ -189,14 +191,13 @@ func TestGrafanaWorking(t *testing.T) {
 	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objs, b1, b2)
 
 	conf := config.Get()
-	config.Set(conf)
 
 	// Set global cache var
 	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
 
@@ -206,7 +207,7 @@ func TestGrafanaWorking(t *testing.T) {
 
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "jaeger")
+	assertNotPresent(assert, icsl, "tracing")
 	assertNotPresent(assert, icsl, "custom dashboards")
 }
 
@@ -234,7 +235,7 @@ func TestGrafanaDisabled(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
 
@@ -244,12 +245,12 @@ func TestGrafanaDisabled(t *testing.T) {
 	// No request performed to Grafana endpoint
 	assert.Zero(*grafanaCalls)
 
-	// Requests to Jaeger and Prometheus performed once
+	// Requests to Tracing and Prometheus performed once
 	assert.Equal(1, *promCalls)
 
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "jaeger")
+	assertNotPresent(assert, icsl, "tracing")
 	assertNotPresent(assert, icsl, "custom dashboards")
 }
 
@@ -267,7 +268,7 @@ func TestGrafanaNotWorking(t *testing.T) {
 			}),
 	}
 	objects = append(objects, &osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}})
-	k8s := mockDeploymentCall(objects, true)
+	mockDeploymentCall(objects, true)
 	addOnsStetup := defaultAddOnCalls(&grafanaCalls, &prometheusCalls)
 	addOnsStetup["grafana"] = addOnsSetup{
 		Url:        "/grafana/mock",
@@ -281,12 +282,15 @@ func TestGrafanaNotWorking(t *testing.T) {
 	conf := addonAddMockUrls(httpServer.URL, config.NewConfig(), false)
 	config.Set(conf)
 
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	k8s.OpenShift = true
+
 	// Set global cache var
 	SetupBusinessLayer(t, k8s, *conf)
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
 
@@ -299,7 +303,7 @@ func TestGrafanaNotWorking(t *testing.T) {
 
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentUnreachable, false)
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "jaeger")
+	assertNotPresent(assert, icsl, "tracing")
 	assertNotPresent(assert, icsl, "custom dashboards")
 }
 
@@ -317,7 +321,7 @@ func TestFailingTracingService(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockFailingJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockFailingJaeger()).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
 
@@ -328,7 +332,7 @@ func TestFailingTracingService(t *testing.T) {
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
 	assertNotPresent(assert, icsl, "custom dashboards")
-	assertComponent(assert, icsl, "jaeger", kubernetes.ComponentUnreachable, false)
+	assertComponent(assert, icsl, "tracing", kubernetes.ComponentUnreachable, false)
 }
 
 func TestOverriddenUrls(t *testing.T) {
@@ -343,7 +347,7 @@ func TestOverriddenUrls(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
 
@@ -353,7 +357,7 @@ func TestOverriddenUrls(t *testing.T) {
 
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "jaeger")
+	assertNotPresent(assert, icsl, "tracing")
 	assertNotPresent(assert, icsl, "custom dashboards")
 }
 
@@ -373,7 +377,7 @@ func TestCustomDashboardsMainPrometheus(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
 
@@ -383,7 +387,7 @@ func TestCustomDashboardsMainPrometheus(t *testing.T) {
 
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "jaeger")
+	assertNotPresent(assert, icsl, "tracing")
 	assertNotPresent(assert, icsl, "custom dashboards")
 }
 
@@ -399,7 +403,7 @@ func TestNoIstioComponentFoundError(t *testing.T) {
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
 
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 	_, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.Error(error)
 }
@@ -425,7 +429,7 @@ func TestDefaults(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 
 	icsl, err := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(err)
@@ -436,7 +440,7 @@ func TestDefaults(t *testing.T) {
 	assertNotPresent(assert, icsl, "istiod")
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "jaeger")
+	assertNotPresent(assert, icsl, "tracing")
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
@@ -474,7 +478,7 @@ func TestNonDefaults(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
@@ -485,7 +489,7 @@ func TestNonDefaults(t *testing.T) {
 	assertNotPresent(assert, icsl, "istiod")
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "jaeger")
+	assertNotPresent(assert, icsl, "tracing")
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
@@ -521,7 +525,7 @@ func TestIstiodNotReady(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
@@ -532,7 +536,7 @@ func TestIstiodNotReady(t *testing.T) {
 	// Don't return kubernetes.ComponentHealthy deployments
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "jaeger")
+	assertNotPresent(assert, icsl, "tracing")
 	assertNotPresent(assert, icsl, "istiod-x3v1kn0l-terminating")
 	assertNotPresent(assert, icsl, "istiod-x3v1kn1l-terminating")
 
@@ -564,8 +568,6 @@ func TestIstiodUnreachable(t *testing.T) {
 	}
 	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objects, false, false)
 
-	k8s = &fakeIstiodConnecter{k8s, istioStatus}
-
 	conf := config.Get()
 	conf.IstioLabels.AppLabelName = "app.kubernetes.io/name"
 	conf.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
@@ -580,10 +582,11 @@ func TestIstiodUnreachable(t *testing.T) {
 
 	// Set global cache var
 	SetupBusinessLayer(t, k8s, *conf)
+	WithControlPlaneMonitor(&FakeControlPlaneMonitor{status: istioStatus})
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
@@ -595,7 +598,7 @@ func TestIstiodUnreachable(t *testing.T) {
 	// Don't return kubernetes.ComponentHealthy deployments
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "jaeger")
+	assertNotPresent(assert, icsl, "tracing")
 	assertNotPresent(assert, icsl, "istiod-x3v1kn0l-terminating")
 	assertNotPresent(assert, icsl, "istiod-x3v1kn1l-terminating")
 
@@ -638,7 +641,7 @@ func TestCustomizedAppLabel(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
@@ -649,7 +652,7 @@ func TestCustomizedAppLabel(t *testing.T) {
 	assertNotPresent(assert, icsl, "istiod")
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "jaeger")
+	assertNotPresent(assert, icsl, "tracing")
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
@@ -689,7 +692,7 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
@@ -700,7 +703,7 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 	assertNotPresent(assert, icsl, "istiod")
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "jaeger")
+	assertNotPresent(assert, icsl, "tracing")
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
@@ -736,7 +739,7 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger).IstioStatus
+	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
@@ -747,7 +750,7 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 	assertNotPresent(assert, icsl, "istiod")
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "jaeger")
+	assertNotPresent(assert, icsl, "tracing")
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
@@ -777,33 +780,20 @@ func assertNotPresent(assert *assert.Assertions, icsl kubernetes.IstioComponentS
 	assert.False(componentFound)
 }
 
-func mockJaeger() (tracing.ClientInterface, error) {
+func mockJaeger() tracing.ClientInterface {
 	j := new(tracingtest.TracingClientMock)
 	j.On("GetServiceStatus").Return(true, nil)
-	return tracing.ClientInterface(j), nil
+	return j
 }
 
-func mockFailingJaeger() (tracing.ClientInterface, error) {
+func mockFailingJaeger() tracing.ClientInterface {
 	j := new(tracingtest.TracingClientMock)
-	j.On("GetServiceStatus").Return(false, errors.New("error connecting with jaeger service"))
-	return tracing.ClientInterface(j), nil
-}
-
-// func newFakeIstiodConnector()
-type fakeIstiodConnecter struct {
-	kubernetes.ClientInterface
-	status kubernetes.IstioComponentStatus
-}
-
-func (in *fakeIstiodConnecter) CanConnectToIstiod() (kubernetes.IstioComponentStatus, error) {
-	return in.status, nil
+	j.On("GetServiceStatus").Return(false, errors.New("error connecting with tracing service"))
+	return j
 }
 
 // Setup K8S api call to fetch Pods
-func mockDeploymentCall(objects []runtime.Object, isIstioReachable bool) kubernetes.ClientInterface {
-	k8s := kubetest.NewFakeK8sClient(objects...)
-	k8s.OpenShift = true
-
+func mockDeploymentCall(objects []runtime.Object, isIstioReachable bool) {
 	var istioStatus kubernetes.IstioComponentStatus
 	if !isIstioReachable {
 		for _, obj := range objects {
@@ -820,7 +810,7 @@ func mockDeploymentCall(objects []runtime.Object, isIstioReachable bool) kuberne
 		}
 	}
 
-	return &fakeIstiodConnecter{k8s, istioStatus}
+	WithControlPlaneMonitor(&FakeControlPlaneMonitor{status: istioStatus})
 }
 
 func fakeDeploymentWithStatus(name string, labels map[string]string, status apps_v1.DeploymentStatus) *apps_v1.Deployment {
@@ -916,6 +906,11 @@ func defaultAddOnCalls(grafana, prom *int) map[string]addOnsSetup {
 			StatusCode: 200,
 			CallCount:  prom,
 		},
+		"prometheus-healthy": {
+			Url:        "/prometheus/mock/-/healthy",
+			StatusCode: 200,
+			CallCount:  prom,
+		},
 		"grafana": {
 			Url:        "/grafana/mock",
 			StatusCode: 200,
@@ -935,7 +930,7 @@ func addonAddMockUrls(baseUrl string, conf *config.Config, overrideUrl bool) *co
 	conf.ExternalServices.Grafana.IsCore = false
 
 	conf.ExternalServices.Tracing.Enabled = true
-	conf.ExternalServices.Tracing.InClusterURL = baseUrl + "/jaeger/mock"
+	conf.ExternalServices.Tracing.InClusterURL = baseUrl + "/tracing/mock"
 	conf.ExternalServices.Tracing.IsCore = false
 
 	conf.ExternalServices.Prometheus.URL = baseUrl + "/prometheus/mock"

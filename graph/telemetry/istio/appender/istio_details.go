@@ -2,12 +2,11 @@ package appender
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/labels"
-	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
+	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -183,10 +182,10 @@ NODES:
 // For example, service injection has this problem.
 func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, serviceLists map[string]*models.ServiceList) {
 	// build map for quick lookup
-	svcMap := map[string]models.ServiceOverview{}
+	svcMap := map[graph.ClusterSensitiveKey]models.ServiceOverview{}
 	for cluster, serviceList := range serviceLists {
 		for _, sd := range serviceList.Services {
-			svcMap[fmt.Sprintf("%s:%s", cluster, sd.Name)] = sd
+			svcMap[graph.GetClusterSensitiveKey(cluster, sd.Name)] = sd
 		}
 	}
 
@@ -209,7 +208,7 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo
 							hostToTest = hostSplitted[0]
 						}
 
-						if svc, found := svcMap[fmt.Sprintf("%s:%s", n.Cluster, hostToTest)]; found {
+						if svc, found := svcMap[graph.GetClusterSensitiveKey(n.Cluster, hostToTest)]; found {
 							if app, ok := svc.Labels[appLabelName]; ok {
 								n.App = app
 							}
@@ -223,7 +222,7 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo
 					continue
 				}
 
-				if svc, found := svcMap[fmt.Sprintf("%s:%s", n.Cluster, n.Service)]; !found {
+				if svc, found := svcMap[graph.GetClusterSensitiveKey(n.Cluster, n.Service)]; !found {
 					log.Debugf("Service not found, may not apply app label correctly for [%s:%s]", n.Namespace, n.Service)
 					continue
 				} else if app, ok := svc.Labels[appLabelName]; ok {
@@ -263,7 +262,7 @@ func decorateMatchingGateways(cluster string, gwCrd *networking_v1beta1.Gateway,
 	}
 }
 
-func decorateMatchingAPIGateways(cluster string, gwCrd *k8s_networking_v1beta1.Gateway, gatewayNodeMapping map[*models.WorkloadListItem][]*graph.Node, nodeMetadataKey graph.MetadataKey) {
+func decorateMatchingAPIGateways(cluster string, gwCrd *k8s_networking_v1.Gateway, gatewayNodeMapping map[*models.WorkloadListItem][]*graph.Node, nodeMetadataKey graph.MetadataKey) {
 	gwSelector := labels.Set(gwCrd.Labels).AsSelector()
 	for gw, nodes := range gatewayNodeMapping {
 		if gw.Cluster != cluster {
@@ -334,7 +333,8 @@ func (a IstioAppender) decorateGateways(trafficMap graph.TrafficMap, globalInfo 
 	if len(ingressNodeMapping) != 0 || len(egressNodeMapping) != 0 {
 		gatewaysCrds := a.getIstioGatewayResources(globalInfo)
 
-		for cluster, gwCrds := range gatewaysCrds {
+		for accessibleNamespaceKey, gwCrds := range gatewaysCrds {
+			cluster := strings.Split(accessibleNamespaceKey, ":")[0]
 			for _, gwCrd := range gwCrds {
 				decorateMatchingGateways(cluster, gwCrd, ingressNodeMapping, graph.IsIngressGateway)
 				decorateMatchingGateways(cluster, gwCrd, egressNodeMapping, graph.IsEgressGateway)
@@ -346,7 +346,8 @@ func (a IstioAppender) decorateGateways(trafficMap graph.TrafficMap, globalInfo 
 	if len(gatewayAPINodeMapping) != 0 {
 		gatewaysCrds := a.getGatewayAPIResources(globalInfo)
 
-		for cluster, gwCrds := range gatewaysCrds {
+		for accessibleNamespaceKey, gwCrds := range gatewaysCrds {
+			cluster := strings.Split(accessibleNamespaceKey, ":")[0]
 			for _, gwCrd := range gwCrds {
 				decorateMatchingAPIGateways(cluster, gwCrd, gatewayAPINodeMapping, graph.IsGatewayAPI)
 			}
@@ -418,8 +419,8 @@ func (a IstioAppender) getIstioGatewayResources(globalInfo *graph.AppenderGlobal
 	return retVal
 }
 
-func (a IstioAppender) getGatewayAPIResources(globalInfo *graph.AppenderGlobalInfo) map[string][]*k8s_networking_v1beta1.Gateway {
-	retVal := map[string][]*k8s_networking_v1beta1.Gateway{}
+func (a IstioAppender) getGatewayAPIResources(globalInfo *graph.AppenderGlobalInfo) map[string][]*k8s_networking_v1.Gateway {
+	retVal := map[string][]*k8s_networking_v1.Gateway{}
 	for key, an := range a.AccessibleNamespaces {
 		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
 			Cluster:            an.Cluster,

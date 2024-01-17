@@ -3,7 +3,13 @@ package routing
 import (
 	"net/http"
 
+	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/handlers"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
+	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/tracing"
 )
 
 // Route describes a single route
@@ -22,7 +28,7 @@ type Routes struct {
 }
 
 // NewRoutes creates and returns all the API routes
-func NewRoutes() (r *Routes) {
+func NewRoutes(conf *config.Config, kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory, prom prometheus.ClientInterface, traceClientLoader func() tracing.ClientInterface, cpm business.ControlPlaneMonitor) (r *Routes) {
 	r = new(Routes)
 
 	r.Routes = []Route{
@@ -416,7 +422,7 @@ func NewRoutes() (r *Routes) {
 		},
 		// swagger:route GET /namespaces/{namespace}/apps/{app}/spans traces appSpans
 		// ---
-		// Endpoint to get Jaeger spans for a given app
+		// Endpoint to get Tracing spans for a given app
 		//
 		//		Produces:
 		//		- application/json
@@ -435,7 +441,7 @@ func NewRoutes() (r *Routes) {
 		},
 		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/spans traces workloadSpans
 		// ---
-		// Endpoint to get Jaeger spans for a given workload
+		// Endpoint to get Tracing spans for a given workload
 		//
 		//		Produces:
 		//		- application/json
@@ -454,7 +460,7 @@ func NewRoutes() (r *Routes) {
 		},
 		// swagger:route GET /namespaces/{namespace}/services/{service}/spans traces serviceSpans
 		// ---
-		// Endpoint to get Jaeger spans for a given service
+		// Endpoint to get Tracing spans for a given service
 		//
 		//		Produces:
 		//		- application/json
@@ -1253,9 +1259,9 @@ func NewRoutes() (r *Routes) {
 			handlers.GetGrafanaInfo,
 			true,
 		},
-		// swagger:route GET /jaeger integrations jaegerInfo
+		// swagger:route GET /tracing integrations tracingInfo
 		// ---
-		// Get the jaeger URL and other descriptors
+		// Get the tracing URL and other descriptors
 		//
 		//     Produces:
 		//     - application/json
@@ -1265,13 +1271,13 @@ func NewRoutes() (r *Routes) {
 		// responses:
 		//      404: notFoundError
 		//      406: notAcceptableError
-		//      200: jaegerInfoResponse
+		//      200: tracingInfoResponse
 		//
 		{
-			"JaegerURL",
+			"TracingURL",
 			"GET",
-			"/api/jaeger",
-			handlers.GetJaegerInfo,
+			"/api/tracing",
+			handlers.GetTracingInfo,
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/pods/{pod} pods podDetails
@@ -1417,7 +1423,7 @@ func NewRoutes() (r *Routes) {
 			"GetClusters",
 			"GET",
 			"/api/clusters",
-			handlers.GetClusters,
+			handlers.GetClusters(conf, kialiCache, clientFactory, prom, traceClientLoader, cpm),
 			true,
 		},
 		// swagger:route GET /api/mesh/outbound_traffic_policy/mode

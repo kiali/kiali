@@ -19,10 +19,11 @@ import (
 
 // SetWithBackends allows for specifying the ClientFactory and Prometheus clients to be used.
 // Mock friendly. Used only with tests.
-func setWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterface, cache cache.KialiCache) {
+func setWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterface, cache cache.KialiCache, cpm ControlPlaneMonitor) {
 	clientFactory = cf
 	prometheusClient = prom
 	kialiCache = cache
+	poller = cpm
 }
 
 // SetupBusinessLayer mocks out some global variables in the business package
@@ -32,11 +33,20 @@ func SetupBusinessLayer(t *testing.T, k8s kubernetes.ClientInterface, config con
 
 	cf := kubetest.NewK8SClientFactoryMock(k8s)
 
-	cache := newTestingCache(t, cf, config)
-	cache.SetRegistryStatus(&kubernetes.RegistryStatus{})
+	cache := cache.NewTestingCacheWithFactory(t, cf, config)
 
-	setWithBackends(cf, nil, cache)
+	originalClientFactory := clientFactory
+	originalPrometheusClient := prometheusClient
+	originalKialiCache := kialiCache
+	t.Cleanup(func() {
+		clientFactory = originalClientFactory
+		prometheusClient = originalPrometheusClient
+		kialiCache = originalKialiCache
+	})
 
+	cpm := &FakeControlPlaneMonitor{}
+
+	setWithBackends(cf, nil, cache, cpm)
 	return cache
 }
 
@@ -50,33 +60,9 @@ func WithKialiCache(cache cache.KialiCache) {
 	kialiCache = cache
 }
 
-func newTestingCache(t *testing.T, cf kubernetes.ClientFactory, conf config.Config) cache.KialiCache {
-	t.Helper()
-	// Disabling Istio API for tests. Otherwise the cache will try and poll the Istio endpoint
-	// when the cache is created.
-	conf.ExternalServices.Istio.IstioAPIEnabled = false
-
-	cache, err := cache.NewKialiCache(cf, conf)
-	if err != nil {
-		t.Fatalf("Error creating KialiCache: %v", err)
-	}
-	t.Cleanup(cache.Stop)
-
-	return cache
-}
-
-// NewTestingCache will create a cache for you from the kube client and will cleanup the cache
-// when the test ends.
-func NewTestingCache(t *testing.T, k8s kubernetes.ClientInterface, conf config.Config) cache.KialiCache {
-	t.Helper()
-	cf := kubetest.NewK8SClientFactoryMock(k8s)
-	return newTestingCache(t, cf, conf)
-}
-
-// NewTestingCacheWithFactory allows you to pass in a custom client factory. Good for testing multicluster.
-func NewTestingCacheWithFactory(t *testing.T, cf kubernetes.ClientFactory, conf config.Config) cache.KialiCache {
-	t.Helper()
-	return newTestingCache(t, cf, conf)
+// WithControlPlaneMonitor is a testing func that lets you replace the global cpm var.
+func WithControlPlaneMonitor(cpm ControlPlaneMonitor) {
+	poller = cpm
 }
 
 // FindOrFail will find an element in a slice or fail the test.
@@ -87,4 +73,9 @@ func FindOrFail[T any](t *testing.T, s []T, f func(T) bool) T {
 		t.Fatal("Element not in slice")
 	}
 	return s[idx]
+}
+
+// asPtr returns a pointer to the argument.
+func asPtr[T any](t T) *T {
+	return &t
 }

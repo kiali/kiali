@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model"
@@ -18,21 +17,46 @@ import (
 	otel "github.com/kiali/kiali/tracing/otel/model"
 	"github.com/kiali/kiali/tracing/otel/model/converter"
 	otelModels "github.com/kiali/kiali/tracing/otel/model/json"
+	"github.com/kiali/kiali/util"
 )
 
 type OtelHTTPClient struct {
+	ClusterTag bool
+}
+
+// New client
+func NewOtelClient(client http.Client, baseURL *url.URL) (otelClient *OtelHTTPClient, err error) {
+	url := *baseURL
+	url.Path = path.Join(url.Path, "/api/search/tags")
+	tags := false
+	r, status, _ := makeRequest(client, url.String(), nil)
+	if status != 200 {
+		log.Debugf("Error getting Tempo tags for tracing. Tags will be disabled.")
+	} else {
+		var response otel.TagsResponse
+		if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
+			log.Errorf("Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, url)
+			return nil, errMarshal
+		}
+
+		if util.InSlice(response.TagNames, "cluster") {
+			tags = true
+		}
+	}
+
+	return &OtelHTTPClient{ClusterTag: tags}, nil
 }
 
 // GetAppTracesHTTP search traces
-func (oc OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, namespace, app string, q models.TracingQuery) (response *model.TracingResponse, err error) {
+func (oc OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, serviceName string, q models.TracingQuery) (response *model.TracingResponse, err error) {
 	url := *baseURL
 	url.Path = path.Join(url.Path, "/api/search")
-	tracingServiceName := buildTracingServiceName(namespace, app)
-	prepareTraceQL(&url, tracingServiceName, q)
+	oc.prepareTraceQL(&url, serviceName, q)
+
 	r, err := oc.queryTracesHTTP(client, &url, q.Tags["error"])
 
 	if r != nil {
-		r.TracingServiceName = tracingServiceName
+		r.TracingServiceName = serviceName
 	}
 	return r, err
 }
@@ -91,30 +115,40 @@ func (oc OtelHTTPClient) queryTracesHTTP(client http.Client, u *url.URL, error s
 		log.Errorf("Tempo API query error: %s [code: %d, URL: %v]", reqError, code, u)
 		return &model.TracingResponse{}, reqError
 	}
+	limit, err := strconv.Atoi(u.Query().Get("limit"))
+	if err != nil {
+		limit = 0
+	}
 	response, _ := unmarshal(resp, u)
 
-	return oc.transformTrace(response, error)
+	return oc.transformTrace(response, error, limit)
 }
 
 // transformTrace processes every trace ID and make a request to get all the spans for that trace
-func (oc OtelHTTPClient) transformTrace(traces *otel.Traces, error string) (*model.TracingResponse, error) {
+func (oc OtelHTTPClient) transformTrace(traces *otel.Traces, error string, limit int) (*model.TracingResponse, error) {
 	var response model.TracingResponse
 	serviceName := ""
 
-	for _, trace := range traces.Traces {
-		serviceName = getServiceName(trace.SpanSet.Spans[0].Attributes)
-		if error == "true" {
-			if !hasErrors(trace) {
-				continue
+	if traces != nil {
+		for i, trace := range traces.Traces {
+			if limit != 0 && i >= limit {
+				break
+			}
+			serviceName = getServiceName(trace.SpanSet.Spans[0].Attributes)
+			if error == "true" {
+				if !hasErrors(trace) {
+					continue
+				}
+			}
+			batchTrace, err := convertBatchTrace(trace, serviceName)
+			if err != nil {
+				log.Errorf("Error getting trace detail for %s: %s", trace.TraceID, err.Error())
+			} else {
+				response.Data = append(response.Data, batchTrace)
 			}
 		}
-		batchTrace, err := convertBatchTrace(trace, serviceName)
-		if err != nil {
-			log.Errorf("Error getting trace detail for %s: %s", trace.TraceID, err.Error())
-		} else {
-			response.Data = append(response.Data, batchTrace)
-		}
 	}
+
 	response.TracingServiceName = serviceName
 	return &response, nil
 }
@@ -159,12 +193,13 @@ func convertBatchTrace(trace otel.Trace, serviceName string) (jaegerModels.Trace
 func convertSingleTrace(traces *otelModels.Data, id string) (*model.TracingResponse, error) {
 	var response model.TracingResponse
 	var jaegerModel jaegerModels.Trace
-	serviceName := ""
+	tracingServiceName := ""
 
 	jaegerModel.TraceID = converter.ConvertId(id)
 	if traces != nil {
-		serviceName = getServiceName(traces.Batches[0].Resource.Attributes)
+		tracingServiceName = getServiceName(traces.Batches[0].Resource.Attributes)
 		for _, batch := range traces.Batches {
+			serviceName := getServiceName(batch.Resource.Attributes)
 			jaegerModel.Spans = append(jaegerModel.Spans, converter.ConvertSpans(batch.ScopeSpans[0].Spans, serviceName)...)
 		}
 		jaegerModel.Matched = len(jaegerModel.Spans)
@@ -175,40 +210,36 @@ func convertSingleTrace(traces *otelModels.Data, id string) (*model.TracingRespo
 
 	response.Data = append(response.Data, jaegerModel)
 
-	response.TracingServiceName = serviceName
+	response.TracingServiceName = tracingServiceName
 	return &response, nil
 }
 
 // prepareTraceQL returns a query in TraceQL format
-func prepareTraceQL(u *url.URL, tracingServiceName string, query models.TracingQuery) {
+func (oc OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, query models.TracingQuery) {
 	q := url.Values{}
 	q.Set("start", fmt.Sprintf("%d", query.Start.Unix()))
 	q.Set("end", fmt.Sprintf("%d", query.End.Unix()))
-	queryPart1 := TraceQL{operator1: ".service.name", operand: EQUAL, operator2: tracingServiceName}
-	queryPart2 := TraceQL{operator1: ".node_id", operand: REGEX, operator2: ".*"}
-	queryPart := TraceQL{operator1: queryPart1, operand: AND, operator2: queryPart2}
-
-	group1 := TraceQL{operator1: "status", operand: EQUAL, operator2: unquoted("error")}
-	group2 := TraceQL{operator1: "status", operand: EQUAL, operator2: unquoted("unset")}
-	group3 := TraceQL{operator1: "status", operand: EQUAL, operator2: unquoted("ok")}
-	groupQL := []TraceQL{group1, group2, group3}
-	group := Group{group: groupQL, operand: OR}
+	queryPart := TraceQL{operator1: ".service.name", operand: EQUAL, operator2: tracingServiceName}
 
 	if len(query.Tags) > 0 {
 		for k, v := range query.Tags {
-			tag := TraceQL{operator1: "." + k, operand: EQUAL, operator2: v}
-			queryPart = TraceQL{operator1: queryPart, operand: AND, operator2: tag}
+			if k != "cluster" && oc.ClusterTag {
+				tag := TraceQL{operator1: "." + k, operand: EQUAL, operator2: v}
+				queryPart = TraceQL{operator1: queryPart, operand: AND, operator2: tag}
+			}
 		}
 	}
 
-	subquery := TraceQL{operator1: queryPart, operand: AND, operator2: group}
-	trace := TraceQL{operator1: Subquery{subquery}, operand: AND, operator2: Subquery{}}
-	queryQL := trace.getQuery()
+	selects := []string{"status", ".service_name", ".node_id", ".component", ".upstream_cluster", ".http.method", ".response_flags"}
+	trace := TraceQL{operator1: Subquery{queryPart}, operand: AND, operator2: Subquery{}}
+	queryQL := fmt.Sprintf("%s| %s", printOperator(trace), printSelect(selects))
 
 	q.Set("q", queryQL)
 	if query.MinDuration > 0 {
 		q.Set("minDuration", fmt.Sprintf("%dms", query.MinDuration.Milliseconds()))
 	}
+	// By default, the number of spans returned is 3. All are needed to calculate avg and heatmap
+	q.Set("spss", "10")
 	if query.Limit > 0 {
 		q.Set("limit", strconv.Itoa(query.Limit))
 	}
@@ -257,12 +288,4 @@ func getServiceName(attributes []otelModels.Attribute) string {
 		}
 	}
 	return ""
-}
-
-func buildTracingServiceName(namespace, app string) string {
-	conf := config.Get()
-	if conf.ExternalServices.Tracing.NamespaceSelector {
-		return app + "." + namespace
-	}
-	return app
 }

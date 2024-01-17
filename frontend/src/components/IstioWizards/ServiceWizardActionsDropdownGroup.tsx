@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { DropdownGroup, DropdownItem, DropdownSeparator } from '@patternfly/react-core/deprecated';
+import { Divider, DropdownGroup, DropdownItem, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { serverConfig } from 'config';
 import { DestinationRule, getWizardUpdateLabel, K8sHTTPRoute, VirtualService } from 'types/IstioObjects';
 import { canDelete, ResourcePermissions } from 'types/Permissions';
@@ -14,34 +13,48 @@ import {
 } from './WizardActions';
 import { hasServiceDetailsTrafficRouting } from '../../types/ServiceInfo';
 import { groupMenuStyle } from 'styles/DropdownStyles';
+import { kialiStyle } from 'styles/StyleUtils';
 
 export const DELETE_TRAFFIC_ROUTING = 'delete_traffic_routing';
 
 type Props = {
-  isDisabled?: boolean;
-  destinationRules: DestinationRule[];
-  virtualServices: VirtualService[];
-  k8sHTTPRoutes: K8sHTTPRoute[];
   annotations?: { [key: string]: string };
+  destinationRules: DestinationRule[];
+  isDisabled?: boolean;
   istioPermissions: ResourcePermissions;
+  k8sHTTPRoutes: K8sHTTPRoute[];
   onAction?: (key: WizardAction, mode: WizardMode) => void;
   onDelete?: (key: string) => void;
+  virtualServices: VirtualService[];
 };
 
-export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = props => {
+const optionDisabledStyle = kialiStyle({
+  cursor: 'not-allowed',
+  $nest: {
+    '& button': {
+      pointerEvents: 'none'
+    }
+  }
+});
+
+const dividerStyle = kialiStyle({
+  paddingTop: '0.5rem'
+});
+
+export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = (props: Props) => {
   const updateLabel = getWizardUpdateLabel(props.virtualServices, props.k8sHTTPRoutes);
 
-  function hasTrafficRouting() {
+  const hasTrafficRouting = () => {
     return hasServiceDetailsTrafficRouting(props.virtualServices, props.destinationRules, props.k8sHTTPRoutes);
-  }
+  };
 
-  function handleActionClick(eventKey: string) {
+  const handleActionClick = (eventKey: string) => {
     if (props.onAction) {
       props.onAction(eventKey as WizardAction, updateLabel.length === 0 ? 'create' : 'update');
     }
-  }
+  };
 
-  function getDropdownItemTooltipMessage(isGatewayAPI: boolean): string {
+  const getDropdownItemTooltipMessage = (isGatewayAPI: boolean): string => {
     if (serverConfig.deployment.viewOnlyMode) {
       return 'User does not have permission';
     } else if (hasTrafficRouting()) {
@@ -51,14 +64,16 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
     } else {
       return "Traffic routing doesn't exists for this service";
     }
-  }
+  };
 
   const actionItems = SERVICE_WIZARD_ACTIONS.map(eventKey => {
     const isGatewayAPIEnabled = eventKey === WIZARD_K8S_REQUEST_ROUTING ? serverConfig.gatewayAPIEnabled : true;
+
     const enabledItem =
       isGatewayAPIEnabled &&
       !props.isDisabled &&
       (!hasTrafficRouting() || (hasTrafficRouting() && updateLabel === eventKey));
+
     const wizardItem = (
       <DropdownItem
         key={eventKey}
@@ -82,7 +97,7 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
           position={TooltipPosition.left}
           content={<>{getDropdownItemTooltipMessage(!isGatewayAPIEnabled)}</>}
         >
-          <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>{wizardItem}</div>
+          <div className={optionDisabledStyle}>{wizardItem}</div>
         </Tooltip>
       );
     } else {
@@ -106,9 +121,10 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
     );
   }
 
-  actionItems.push(<DropdownSeparator key="actions_separator" />);
+  actionItems.push(<Divider className={dividerStyle} key="actions_separator" />);
 
   const deleteDisabled = !canDelete(props.istioPermissions) || !hasTrafficRouting() || props.isDisabled;
+
   let deleteDropdownItem = (
     <DropdownItem
       key={DELETE_TRAFFIC_ROUTING}
@@ -138,6 +154,8 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
   }
 
   actionItems.push(deleteDropdownItem);
+
   const label = updateLabel === '' ? 'Create' : 'Update';
+
   return <DropdownGroup key={`group_${label}`} label={label} className={groupMenuStyle} children={actionItems} />;
 };

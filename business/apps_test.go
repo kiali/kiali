@@ -62,6 +62,7 @@ func TestGetAppListFromDeployments(t *testing.T) {
 
 func TestGetAppFromDeployments(t *testing.T) {
 	assert := assert.New(t)
+	require := require.New(t)
 
 	conf := config.NewConfig()
 	conf.ExternalServices.CustomDashboards.Enabled = false
@@ -91,7 +92,7 @@ func TestGetAppFromDeployments(t *testing.T) {
 
 	criteria := AppCriteria{Namespace: "Namespace", AppName: "httpbin", Cluster: conf.KubernetesConfig.ClusterName}
 	appDetails, appDetailsErr := svc.GetAppDetails(context.TODO(), criteria)
-	assert.NoError(appDetailsErr)
+	require.NoError(appDetailsErr)
 
 	assert.Equal("Namespace", appDetails.Namespace.Name)
 	assert.Equal("httpbin", appDetails.Name)
@@ -137,8 +138,12 @@ func TestGetAppListFromReplicaSets(t *testing.T) {
 
 func TestGetAppFromReplicaSets(t *testing.T) {
 	assert := assert.New(t)
+
+	// Disabling CustomDashboards on Workload details testing
+	// otherwise this adds 10s to the test due to an http timeout.
 	conf := config.NewConfig()
-	config.Set(conf)
+	conf.ExternalServices.CustomDashboards.Enabled = false
+	kubernetes.SetConfig(t, *conf)
 
 	// Setup mocks
 	objects := []runtime.Object{

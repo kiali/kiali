@@ -91,14 +91,22 @@ type RequestedRates struct {
 	Tcp  string
 }
 
+// ClusterSensitiveKey is the recommended [string] type for maps keying on a cluster-sensitive name
+type ClusterSensitiveKey = string
+
+// GetClusterSensitiveKey returns a valid key for maps using a ClusterSensitiveKey
+func GetClusterSensitiveKey(cluster, name string) ClusterSensitiveKey {
+	return fmt.Sprintf("%s:%s", cluster, name)
+}
+
 type AccessibleNamespace struct {
 	Cluster           string
 	CreationTimestamp time.Time
 	Name              string
 }
 
-// AccessibleNamepaces is a map with string Key like "clusterName:namespaceName", Value of type *AccessibleNamespace
-type AccessibleNamespaces map[string]*AccessibleNamespace
+// AccessibleNamepaces is a map with Key: ClusterSensitive namespace Key, Value: *AccessibleNamespace
+type AccessibleNamespaces map[ClusterSensitiveKey]*AccessibleNamespace
 
 // TelemetryOptions are those supplied to Telemetry Vendors
 type TelemetryOptions struct {
@@ -413,7 +421,7 @@ func getAccessibleNamespaces(authInfo *api.AuthInfo) AccessibleNamespaces {
 	// Create a map to store the namespaces
 	accessibleNamespaces := make(AccessibleNamespaces)
 	for _, namespace := range namespaces {
-		accessibleNamespaces[fmt.Sprintf("%s:%s", namespace.Cluster, namespace.Name)] = &AccessibleNamespace{
+		accessibleNamespaces[GetClusterSensitiveKey(namespace.Cluster, namespace.Name)] = &AccessibleNamespace{
 			Cluster:           namespace.Cluster,
 			CreationTimestamp: namespace.CreationTimestamp,
 			Name:              namespace.Name,

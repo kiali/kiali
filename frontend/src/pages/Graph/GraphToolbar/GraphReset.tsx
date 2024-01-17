@@ -5,6 +5,7 @@ import { KialiDispatch } from 'types/Redux';
 import { connect } from 'react-redux';
 import { Tooltip, Button, ButtonVariant } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type ReduxProps = {
   resetSettings: () => void;
@@ -12,28 +13,31 @@ type ReduxProps = {
 
 type GraphResetProps = ReduxProps & {};
 
-type GraphResetState = {};
+const resetStyle = kialiStyle({
+  marginLeft: '0.5rem',
+  alignSelf: 'center'
+});
 
-class GraphResetComponent extends React.Component<GraphResetProps, GraphResetState> {
-  onReset = (): void => {
-    this.props.resetSettings();
+const GraphResetComponent: React.FC<GraphResetProps> = (props: GraphResetProps) => {
+  const onReset = (): void => {
+    props.resetSettings();
   };
 
-  render() {
-    return (
-      <Tooltip key="factory_reset_settings" position="bottom" content="Reset to factory settings">
-        <Button
-          id="graph-factory-reset"
-          style={{ paddingLeft: '10px', paddingRight: '0px' }}
-          variant={ButtonVariant.link}
-          onClick={() => this.onReset()}
-        >
-          <KialiIcon.ResetSettings />
-        </Button>
-      </Tooltip>
-    );
-  }
-}
+  return (
+    <Tooltip key="factory_reset_settings" position="bottom" content="Reset to factory settings">
+      <Button
+        id="graph-factory-reset"
+        className={resetStyle}
+        variant={ButtonVariant.link}
+        onClick={() => onReset()}
+        isInline
+      >
+        <KialiIcon.ResetSettings />
+        <span style={{ marginLeft: '5px' }}>Reset</span>
+      </Button>
+    </Tooltip>
+  );
+};
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {

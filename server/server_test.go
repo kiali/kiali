@@ -18,10 +18,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/config/security"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/util"
 )
 
@@ -40,7 +43,7 @@ func TestRootContextPath(t *testing.T) {
 
 	testPort, err := getFreePort(testHostname)
 	if err != nil {
-		t.Fatalf("Cannot get a free port to run tests on host [%v]", testHostname)
+		t.Fatalf("Cannot get a free port to run tests on host [%v], err [%s]", testHostname, err)
 	} else {
 		t.Logf("Will use free port [%v] on host [%v] for tests", testPort, testHostname)
 	}
@@ -57,14 +60,14 @@ func TestRootContextPath(t *testing.T) {
 	conf.Server.StaticContentRootDirectory = tmpDir
 	conf.Auth.Strategy = "anonymous"
 
-	// Set the global client factory.
-	kubernetes.NewTestingClientFactory(t)
-
 	serverURL := fmt.Sprintf("http://%v", testServerHostPort)
 
 	config.Set(conf)
 
-	server := NewServer()
+	cf := kubernetes.NewTestingClientFactory(t)
+	cpm := &business.FakeControlPlaneMonitor{}
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	server := NewServer(cpm, cf, cache, conf, nil, nil)
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {
@@ -102,9 +105,6 @@ func TestRootContextPath(t *testing.T) {
 }
 
 func TestAnonymousMode(t *testing.T) {
-	cf := kubernetes.NewTestingClientFactory(t)
-	business.SetWithBackends(cf, nil)
-
 	testPort, err := getFreePort(testHostname)
 	if err != nil {
 		t.Fatalf("Cannot get a free port to run tests on host [%v]", testHostname)
@@ -124,9 +124,14 @@ func TestAnonymousMode(t *testing.T) {
 	apiURLWithAuthentication := serverURL + "/api/authenticate"
 	apiURL := serverURL + "/api"
 
+	assert.False(t, conf.IsServerHTTPS())
+
 	config.Set(conf)
 
-	server := NewServer()
+	cf := kubernetes.NewTestingClientFactory(t)
+	cpm := &business.FakeControlPlaneMonitor{}
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	server := NewServer(cpm, cf, cache, conf, nil, nil)
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {
@@ -159,9 +164,6 @@ func TestAnonymousMode(t *testing.T) {
 }
 
 func TestSecureComm(t *testing.T) {
-	cf := kubernetes.NewTestingClientFactory(t)
-	business.SetWithBackends(cf, nil)
-
 	testPort, err := getFreePort(testHostname)
 	if err != nil {
 		t.Fatalf("Cannot get a free port to run tests on host [%v]", testHostname)
@@ -213,9 +215,14 @@ func TestSecureComm(t *testing.T) {
 	apiURL := serverURL + "/api"
 	metricsURL := fmt.Sprintf("http://%v:%v/", testHostname, testMetricsPort)
 
+	assert.True(t, conf.IsServerHTTPS())
+
 	config.Set(conf)
 
-	server := NewServer()
+	cf := kubernetes.NewTestingClientFactory(t)
+	cpm := &business.FakeControlPlaneMonitor{}
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	server := NewServer(cpm, cf, cache, conf, nil, nil)
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {
@@ -300,17 +307,18 @@ func TestTracingConfigured(t *testing.T) {
 	conf.Server.Port = testPort
 	conf.Server.StaticContentRootDirectory = tmpDir
 	conf.Server.Observability.Tracing.Enabled = true
-	conf.Server.Observability.Tracing.CollectorType = "jaeger"
+	conf.Server.Observability.Tracing.CollectorType = "otel"
 	conf.Auth.Strategy = "anonymous"
 
 	// Set the global client factory.
-	kubernetes.NewTestingClientFactory(t)
-
+	cf := kubernetes.NewTestingClientFactory(t)
 	serverURL := fmt.Sprintf("http://%v", testServerHostPort)
 
 	config.Set(conf)
 
-	server := NewServer()
+	cpm := &business.FakeControlPlaneMonitor{}
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	server := NewServer(cpm, cf, cache, conf, nil, nil)
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {

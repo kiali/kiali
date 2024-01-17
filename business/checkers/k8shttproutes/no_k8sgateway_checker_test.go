@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
+	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -78,7 +78,7 @@ func TestFoundK8sGateway(t *testing.T) {
 
 	checker := NoK8sGatewayChecker{
 		K8sHTTPRoute: data.CreateHTTPRoute("route", "bookinfo", "my-gateway", []string{"bookinfo"}),
-		GatewayNames: kubernetes.K8sGatewayNames([]*k8s_networking_v1beta1.Gateway{
+		GatewayNames: kubernetes.K8sGatewayNames([]*k8s_networking_v1.Gateway{
 			data.CreateEmptyK8sGateway("my-gateway", "bookinfo"),
 		}),
 	}

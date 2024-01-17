@@ -10,7 +10,7 @@ Given('a namespace without override configuration for automatic sidecar injectio
   this.targetNamespace = 'sleep';
 
   // Make sure that the target namespace does not have override configuration
-  cy.request('PATCH', '/api/namespaces/' + this.targetNamespace, {
+  cy.request('PATCH', `/api/namespaces/${this.targetNamespace}`, {
     metadata: {
       labels: {
         'istio-injection': null,
@@ -25,7 +25,7 @@ Given('a namespace which has override configuration for automatic sidecar inject
   this.istioInjection = 'enabled';
 
   // Make sure that the target namespace has some override configuration
-  cy.request('PATCH', '/api/namespaces/' + this.targetNamespace, {
+  cy.request('PATCH', `/api/namespaces/${this.targetNamespace}`, {
     metadata: {
       labels: {
         'istio-injection': this.istioInjection,
@@ -37,7 +37,7 @@ Given('a namespace which has override configuration for automatic sidecar inject
 
 Given('the override configuration for sidecar injection is {string}', function (enabledOrDisabled) {
   if (this.istioInjection !== enabledOrDisabled) {
-    cy.request('PATCH', '/api/namespaces/' + this.targetNamespace, {
+    cy.request('PATCH', `/api/namespaces/${this.targetNamespace}`, {
       metadata: {
         labels: {
           'istio-injection': enabledOrDisabled,
@@ -45,6 +45,7 @@ Given('the override configuration for sidecar injection is {string}', function (
         }
       }
     });
+
     this.istioInjection = enabledOrDisabled;
   }
 });
@@ -60,7 +61,7 @@ Given('a workload without a sidecar', function () {
   this.workloadHasAutoInjectionOverride = false;
 
   // Make sure that injection in the namespace is turned off
-  cy.request('PATCH', '/api/namespaces/' + this.targetNamespace, {
+  cy.request('PATCH', `/api/namespaces/${this.targetNamespace}`, {
     metadata: {
       labels: {
         'istio-injection': null,
@@ -102,7 +103,7 @@ Given('a workload with a sidecar', function () {
   this.workloadHasAutoInjectionOverride = false;
 
   // Make sure that injection in the namespace is turned on
-  cy.request('PATCH', '/api/namespaces/' + this.targetNamespace, {
+  cy.request('PATCH', `/api/namespaces/${this.targetNamespace}`, {
     metadata: {
       labels: {
         'istio-injection': 'enabled',
@@ -113,7 +114,6 @@ Given('a workload with a sidecar', function () {
 
   // Make sure that the workload does not have override configuration
   //
-  // TODO: The namespace injection label doesn't work with OSSM.
   // Need some kind of tag to exclude certain tests based on the
   // platform or environment. The sidecar label really shouldn't be
   // present here for istio.
@@ -144,7 +144,8 @@ Given('the workload does not have override configuration for automatic sidecar i
       // To achieve the desired state of having a sidecar without override config,
       // enable injection at namespace level
       this.namespaceAutoInjectionEnabled = true;
-      cy.request('PATCH', '/api/namespaces/' + this.targetNamespace, {
+
+      cy.request('PATCH', `/api/namespaces/${this.targetNamespace}`, {
         metadata: {
           labels: {
             'istio-injection': 'enabled',
@@ -156,7 +157,8 @@ Given('the workload does not have override configuration for automatic sidecar i
       // To achieve the desired state of no sidecar without override config,
       // disable injection at namespace level.
       this.namespaceAutoInjectionEnabled = false;
-      cy.request('PATCH', '/api/namespaces/' + this.targetNamespace, {
+
+      cy.request('PATCH', `/api/namespaces/${this.targetNamespace}`, {
         metadata: {
           labels: {
             'istio-injection': 'disabled',
@@ -168,6 +170,7 @@ Given('the workload does not have override configuration for automatic sidecar i
 
     // Now, we can remove the override config at deployment level
     this.workloadHasAutoInjectionOverride = false;
+
     cy.request('PATCH', `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`, {
       spec: {
         template: {
@@ -194,6 +197,7 @@ Given('the workload has override configuration for automatic sidecar injection',
   if (!this.workloadHasAutoInjectionOverride) {
     // Add override configuration, matching sidecar state
     this.workloadHasAutoInjectionOverride = true;
+
     cy.request('PATCH', `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`, {
       spec: {
         template: {
@@ -233,76 +237,95 @@ Given('a workload with override configuration for automatic sidecar injection', 
   });
 });
 
-When('I visit the overview page', function () {
+When('I visit the overview page', () => {
   cy.visit('/console/overview?refresh=0');
   cy.contains('Inbound traffic', { matchCase: false }); // Make sure data finished loading, so avoid broken tests because of a re-render
 });
 
+// Only works for single cluster.
 When('I override the default automatic sidecar injection policy in the namespace to enabled', function () {
-  cy.request('GET', '/api/status').should(response => {
+  cy.request('GET', '/api/status').then(response => {
     expect(response.status).to.equal(200);
-    const isMaistra = response.body.istioEnvironment.isMaistra;
 
-    cy.get('[data-test=overview-type-LIST]').should('be.visible').click();
-    cy.get('[data-test=overview-type-LIST]').should('be.visible').click();
-    cy.get(`[data-test=VirtualItem_${this.targetNamespace}] button`).should('be.visible').click();
-    // Maistra does not support namespace-level injection
-    if (isMaistra) {
-      cy.get(`[data-test=enable-${this.targetNamespace}-namespace-sidecar-injection]`).should('not.exist');
-    } else {
-      cy.get(`[data-test=enable-${this.targetNamespace}-namespace-sidecar-injection]`).should('be.visible').click();
-      cy.get('[data-test=confirm-traffic-policies]').should('be.visible').click();
-      ensureKialiFinishedLoading();
-    }
+    cy.request('/api/clusters').then(response => {
+      cy.wrap(response.isOkStatusCode).should('be.true');
+      cy.wrap(response.body).should('have.length', 1);
+
+      const cluster = response.body[0].name;
+
+      cy.getBySel('overview-type-LIST').should('be.visible').click();
+
+      cy.get(`[data-test=VirtualItem_Cluster${cluster}_${this.targetNamespace}] button[aria-label=Actions]`)
+        .should('be.visible')
+        .click();
+
+      cy.getBySel(`enable-${this.targetNamespace}-namespace-sidecar-injection`).should('be.visible').click();
+      cy.getBySel('confirm-traffic-policies').should('be.visible').click();
+    });
+
+    ensureKialiFinishedLoading();
   });
 });
 
 When(
   'I change the override configuration for automatic sidecar injection policy in the namespace to {string} it',
-  function (enabledOrDisabled) {
-    cy.request('GET', '/api/status').should(response => {
+  function (enabledOrDisabled: string) {
+    cy.request('GET', '/api/status').then(response => {
       expect(response.status).to.equal(200);
-      const isMaistra = response.body.istioEnvironment.isMaistra;
 
-      cy.get('[data-test=overview-type-LIST]').should('be.visible').click();
-      cy.get(`[data-test=VirtualItem_${this.targetNamespace}] button`).should('be.visible').click();
-      // Maistra does not support namespace-level injection
-      if (isMaistra) {
-        cy.get(`[data-test=${enabledOrDisabled}-${this.targetNamespace}-namespace-sidecar-injection]`).should(
-          'not.exist'
-        );
-      } else {
-        cy.get(`[data-test=${enabledOrDisabled}-${this.targetNamespace}-namespace-sidecar-injection]`)
+      cy.request('/api/clusters').then(response => {
+        cy.wrap(response.isOkStatusCode).should('be.true');
+        cy.wrap(response.body).should('have.length', 1);
+
+        const cluster = response.body[0].name;
+
+        cy.getBySel('overview-type-LIST').should('be.visible').click();
+
+        cy.get(`[data-test=VirtualItem_Cluster${cluster}_${this.targetNamespace}] button[aria-label=Actions]`)
           .should('be.visible')
           .click();
-        cy.get('[data-test=confirm-traffic-policies]').should('be.visible').click();
+
+        cy.getBySel(`${enabledOrDisabled}-${this.targetNamespace}-namespace-sidecar-injection`)
+          .should('be.visible')
+          .click();
+
+        cy.getBySel('confirm-traffic-policies').should('be.visible').click();
         ensureKialiFinishedLoading();
-      }
+      });
     });
   }
 );
 
 When('I remove override configuration for sidecar injection in the namespace', function () {
-  cy.request('GET', '/api/status').should(response => {
+  cy.request('GET', '/api/status').then(response => {
     expect(response.status).to.equal(200);
-    const isMaistra = response.body.istioEnvironment.isMaistra;
 
-    cy.get('[data-test=overview-type-LIST]').should('be.visible').click();
-    cy.get(`[data-test=VirtualItem_${this.targetNamespace}] button`).should('be.visible').click();
-    if (isMaistra) {
-      cy.get(`[data-test=remove-${this.targetNamespace}-namespace-sidecar-injection]`).should('not.exist');
-    } else {
-      cy.get(`[data-test=remove-${this.targetNamespace}-namespace-sidecar-injection]`).should('be.visible').click();
-      cy.get('[data-test=confirm-traffic-policies]').should('be.visible').click();
+    cy.request('/api/clusters').then(response => {
+      cy.wrap(response.isOkStatusCode).should('be.true');
+      cy.wrap(response.body).should('have.length', 1);
+
+      const cluster = response.body[0].name;
+
+      cy.getBySel('overview-type-LIST').should('be.visible').click();
+
+      cy.get(`[data-test=VirtualItem_Cluster${cluster}_${this.targetNamespace}] button[aria-label=Actions]`)
+        .should('be.visible')
+        .click();
+
+      cy.getBySel(`remove-${this.targetNamespace}-namespace-sidecar-injection`).should('be.visible').click();
+      cy.getBySel('confirm-traffic-policies').should('be.visible').click();
+
       ensureKialiFinishedLoading();
-    }
+    });
   });
 });
 
-function switchWorkloadSidecarInjection(enableOrDisable) {
+function switchWorkloadSidecarInjection(enableOrDisable: string): void {
   cy.visit(`/console/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?refresh=0`);
-  cy.get('[data-test="workload-actions-dropdown"] button').should('be.visible').click();
-  cy.get(`button[data-test=${enableOrDisable}_auto_injection]`).should('be.visible').click();
+
+  cy.get('button[data-test="workload-actions-toggle"]').should('be.visible').click();
+  cy.get(`li[data-test=${enableOrDisable}_auto_injection]`).find('button').should('be.visible').click();
+
   ensureKialiFinishedLoading();
 }
 
@@ -320,38 +343,53 @@ When('I remove override configuration for sidecar injection in the workload', fu
   switchWorkloadSidecarInjection.apply(this, ['remove']);
 });
 
-Then('I should see the override annotation for sidecar injection in the namespace as {string}', function (enabled) {
-  cy.request('GET', '/api/status').should(response => {
+Then('I should see the override annotation for sidecar injection in the namespace as {string}', function (
+  enabled: string
+) {
+  cy.request('GET', '/api/status').then(response => {
     expect(response.status).to.equal(200);
-    const isMaistra = response.body.istioEnvironment.isMaistra;
-    const expectation = isMaistra ? 'not.exist' : 'exist';
 
-    cy.get(`[data-test=VirtualItem_${this.targetNamespace}]`)
-      .contains(`istio-injection=${enabled}`)
-      .should(expectation);
+    const expectation = 'exist';
+
+    cy.request('/api/clusters').then(response => {
+      cy.wrap(response.isOkStatusCode).should('be.true');
+      cy.wrap(response.body).should('have.length', 1);
+
+      const cluster = response.body[0].name;
+
+      cy.getBySel(`VirtualItem_Cluster${cluster}_${this.targetNamespace}`)
+        .contains(`istio-injection=${enabled}`)
+        .should(expectation);
+    });
   });
 });
 
 Then('I should see no override annotation for sidecar injection in the namespace', function () {
-  cy.request('GET', '/api/status').should(response => {
+  cy.request('GET', '/api/status').then(response => {
     expect(response.status).to.equal(200);
-    const isMaistra = response.body.istioEnvironment.isMaistra;
 
-    if (!isMaistra) {
-      cy.get(`[data-test=VirtualItem_${this.targetNamespace}]`).contains(`istio-injection`).should('not.exist');
-    }
+    cy.request('/api/clusters').then(response => {
+      cy.wrap(response.isOkStatusCode).should('be.true');
+      cy.wrap(response.body).should('have.length', 1);
+
+      const cluster = response.body[0].name;
+
+      cy.getBySel(`VirtualItem_Cluster${cluster}_${this.targetNamespace}`)
+        .contains(`istio-injection`)
+        .should('not.exist');
+    });
   });
 });
 
-Then('the workload should get a sidecar', function () {
+Then('the workload should get a sidecar', () => {
   cy.get('[data-test=missing-sidecar-badge-for-sleep-workload-in-sleep-namespace]').should('not.exist');
 });
 
-Then('the sidecar of the workload should vanish', function () {
+Then('the sidecar of the workload should vanish', () => {
   cy.get('[data-test=missing-sidecar-badge-for-sleep-workload-in-sleep-namespace]').should('exist');
 });
 
-Then('I should see no override annotation for sidecar injection in the workload', function () {
+Then('I should see no override annotation for sidecar injection in the workload', () => {
   cy.get('#WorkloadDescriptionCard').then($card => {
     if ($card.find('label_more').length) {
       cy.wrap($card).get('label_more').should('be.visible').click();

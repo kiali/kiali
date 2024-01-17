@@ -7,4 +7,5 @@ export interface SortField<T> {
   param: string;
   compare: (a: T | WithHealth<T>, b: T | WithHealth<T>) => number;
 }
+
 type WithHealth<T> = T & { health: Health };

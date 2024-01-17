@@ -1,9 +1,9 @@
-import { And, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { activeFilters, showMore } from './label_check';
 
-function optionCheck(name: string) {
+const optionCheck = (name: string): void => {
   cy.get('[aria-label="filter_select_value"]').contains(name).should('exist');
-}
+};
 
 When('user types {string} into the input', (input: string) => {
   cy.get('input[placeholder="Filter by Type"]').type(input);
@@ -13,17 +13,18 @@ Then('the {string} phrase is displayed', (phrase: string) => {
   cy.get('#filter-selection').contains(phrase).should('be.visible');
 });
 
-And('user filters by {string}', (filterCategory: string) => {
+When('user filters by {string}', (filterCategory: string) => {
   cy.intercept({
     pathname: '**/api/istio/config',
     query: {
       objects: ''
     }
   }).as('noFilters');
+
   cy.get('select[aria-label="filter_select_type"]').select(filterCategory);
 });
 
-And('no filters are active', () => {
+Then('no filters are active', () => {
   cy.get('#filter-selection > :nth-child(2)').should('be.hidden');
 });
 
@@ -32,7 +33,7 @@ When('user expands the {string} dropdown', (placeholder: string) => {
 });
 
 Then('user can see the filter options', () => {
-  var filters: string[] = [
+  let filters: string[] = [
     'AuthorizationPolicy',
     'DestinationRule',
     'EnvoyFilter',
@@ -47,6 +48,7 @@ Then('user can see the filter options', () => {
     'WorkloadEntry',
     'WorkloadGroup'
   ];
+
   filters.forEach(optionCheck);
 });
 
@@ -57,8 +59,9 @@ When('chosen from the {string} dropdown', (placeholder: string) => {
       objects: 'authorizationpolicies'
     }
   }).as('filterActive');
-  cy.get(`input[placeholder="${placeholder}"]`).type('AuthorizationPolicy{enter}');
-  cy.get(`button[label="AuthorizationPolicy"]`).should('be.visible').click();
+
+  cy.get(`input[placeholder="${placeholder}"]`).type('AuthorizationPolicy');
+  cy.get(`li[label="AuthorizationPolicy"]`).should('be.visible').find('button').click();
 });
 
 Then('the filter is applied', () => {
@@ -72,10 +75,11 @@ When('multiple filters are chosen', () => {
       objects: 'authorizationpolicies,destinationrules'
     }
   }).as('multipleFilters');
-  cy.get('input[placeholder="Filter by Type"]').type('AuthorizationPolicy{enter}');
-  cy.get(`button[label="AuthorizationPolicy"]`).should('be.visible').click();
-  cy.get('input[placeholder="Filter by Type"]').type('DestinationRule{enter}');
-  cy.get(`button[label="DestinationRule"]`).should('be.visible').click();
+
+  cy.get('input[placeholder="Filter by Type"]').type('AuthorizationPolicy');
+  cy.get(`li[label="AuthorizationPolicy"]`).should('be.visible').find('button').click();
+  cy.get('input[placeholder="Filter by Type"]').type('DestinationRule');
+  cy.get(`li[label="DestinationRule"]`).should('be.visible').find('button').click();
 });
 
 Then('multiple filters are active', () => {
@@ -83,11 +87,11 @@ Then('multiple filters are active', () => {
 });
 
 When('a type filter {string} is applied', (category: string) => {
-  cy.get('input[placeholder="Filter by Type"]').type(`${category}{enter}`);
-  cy.get(`button[label="${category}"]`).should('be.visible').click();
+  cy.get('input[placeholder="Filter by Type"]').type(`${category}`);
+  cy.get(`li[label="${category}"]`).should('be.visible').find('button').click();
 });
 
-And('user clicks the cross next to the {string}', (category: string) => {
+When('user clicks the cross next to the {string}', (category: string) => {
   cy.get('#filter-selection > :nth-child(2)').contains(category).parent().parent().find('[aria-label="close"]').click();
 });
 
@@ -107,6 +111,7 @@ Then('the filter {string} should be visible only once', (category: string) => {
 
 When('user chooses {int} type filters', (count: number) => {
   cy.get('select[aria-label="filter_select_type"]').select('Type');
+
   for (let i = 1; i <= count; i++) {
     cy.get('input[placeholder="Filter by Type"]').click();
     cy.get(`[data-test=istio-type-dropdown] > :nth-child(${i})`).should('be.visible').click();
@@ -114,7 +119,7 @@ When('user chooses {int} type filters', (count: number) => {
   }
 });
 
-And('user clicks the cross on one of them', () => {
+When('user clicks the cross on one of them', () => {
   cy.get('#filter-selection > :nth-child(2)')
     .find('[data-ouia-component-type="PF5/Button" data-ouia-component-id="close"]')
     .first()
@@ -129,7 +134,7 @@ Then('he can only see {int} right away', (count: number) => {
   activeFilters(count);
 });
 
-And('clicks on the button next to them', () => {
+When('clicks on the button next to them', () => {
   showMore();
 });
 
@@ -137,7 +142,7 @@ Then('he can see the remaining filter', () => {
   activeFilters(4);
 });
 
-And('makes them all visible', () => {
+When('makes them all visible', () => {
   showMore();
   activeFilters(4);
 });

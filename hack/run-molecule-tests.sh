@@ -88,8 +88,8 @@ while [[ $# -gt 0 ]]; do
       MOLECULE_USE_DEV_IMAGES="$2"
       shift;shift
       ;;
-    -udsi|--use-default-server-image)
-      MOLECULE_USE_DEFAULT_SERVER_IMAGE="$2"
+    -udefi|--use-default-images)
+      MOLECULE_USE_DEFAULT_IMAGES="$2"
       shift;shift
       ;;
     -h|--help)
@@ -129,12 +129,13 @@ $0 [option...] command
                          images, you must have already pushed locally built dev images into your cluster.
                          If false, the cluster will put the latest images found on quay.io.
                          Default: false
--udsi|--use-default-server-image
+-udefi|--use-default-images
                          If true (and --use-dev-images is 'false') no specific image name or version will be specified in
-                         the Kiali CRs that are created by the molecule tests. In other words, spec.deployment.image_name and
-                         spec.deployment.image_version will be empty strings. This means the Kial server image that will be deployed
-                         in the tests will be determined by the operator defaults. This is useful when testing with a specific
-                         spec.version (--spec-version) and you want the operator to install the default server image for that version.
+                         the CRs that are created by the molecule tests. In other words, spec.deployment.image_name and
+                         spec.deployment.image_version will be empty strings. This means the Kial server image and the OSSMC image
+                         that will be deployed in the tests will be determined by the operator defaults.
+                         This is useful when testing with a specific spec.version (--spec-version) and you want the operator
+                         to install the default server image for that version.
                          Default: false
 HELPMSG
       exit 1
@@ -175,9 +176,9 @@ ALL_TESTS=${ALL_TESTS:-$(cd "${KIALI_SRC_HOME}/operator/molecule"; ls -d *-test)
 if [ "${CLUSTER_TYPE}" == "openshift" ]; then
   SKIP_TESTS="${SKIP_TESTS:-header-auth-test openid-test}"
 elif [ "${CLUSTER_TYPE}" == "minikube" ]; then
-  SKIP_TESTS="${SKIP_TESTS:-os-console-links-test openshift-auth-test}"
+  SKIP_TESTS="${SKIP_TESTS:-os-console-links-test openshift-auth-test ossmconsole-config-values-test}"
 elif [ "${CLUSTER_TYPE}" == "kind" ]; then
-  SKIP_TESTS="${SKIP_TESTS:-header-auth-test openid-test os-console-links-test openshift-auth-test}"
+  SKIP_TESTS="${SKIP_TESTS:-header-auth-test openid-test os-console-links-test openshift-auth-test ossmconsole-config-values-test}"
 fi
 
 # If you want to test the latest release from quay, set this to "false".
@@ -186,7 +187,7 @@ export MOLECULE_USE_DEV_IMAGES="${MOLECULE_USE_DEV_IMAGES:-false}"
 
 # Use this if you want the operator to install the default server image rather than the test explicitly
 # indicate what server image to use in the Kiali CR.
-export MOLECULE_USE_DEFAULT_SERVER_IMAGE="${MOLECULE_USE_DEFAULT_SERVER_IMAGE:-false}"
+export MOLECULE_USE_DEFAULT_IMAGES="${MOLECULE_USE_DEFAULT_IMAGES:-false}"
 
 # Set this to true if you want molecule to output more noisy logs from Ansible.
 export MOLECULE_DEBUG="${MOLECULE_DEBUG:-true}"
@@ -202,7 +203,9 @@ export MOLECULE_OPERATOR_PROFILER_ENABLED="${MOLECULE_OPERATOR_PROFILER_ENABLED:
 export MOLECULE_OPERATOR_INSTALLER="${MOLECULE_OPERATOR_INSTALLER:-helm}"
 
 # When the tests create Kiali CR resources, this is its spec.version value.
+# This same value will be passed to the OSSMConsole CR for tests that create it.
 export MOLECULE_KIALI_CR_SPEC_VERSION="${MOLECULE_KIALI_CR_SPEC_VERSION:-default}"
+export MOLECULE_OSSMCONSOLE_CR_SPEC_VERSION="${MOLECULE_OSSMCONSOLE_CR_SPEC_VERSION:-default}"
 
 # Set to true if you want molecule's logs to be printed to the terminal, rather than a simple success/failure/skipped summary.
 export CI="${CI:-false}"
@@ -216,9 +219,9 @@ COLOR=${COLOR:-true}
 # If -jxf is explicitly specified as empty string, leave it as empty string (it means the user doesn't want to dump the xml file)
 JUNIT_XML_FILE="${JUNIT_XML_FILE-${TEST_LOGS_DIR}/results.xml}"
 
-if [ "${MOLECULE_USE_DEV_IMAGES}" == "true" -a "${MOLECULE_USE_DEFAULT_SERVER_IMAGE}" == "true" ]; then
-  echo "You set --use-dev-images to true, but you also set --use-default-server-image to true. These are mutually exclusive."
-  echo "If you want to test the default server image then you cannot tell the tests to use dev images at the same time."
+if [ "${MOLECULE_USE_DEV_IMAGES}" == "true" -a "${MOLECULE_USE_DEFAULT_IMAGES}" == "true" ]; then
+  echo "You set --use-dev-images to true, but you also set --use-default-images to true. These are mutually exclusive."
+  echo "If you want to test the default images then you cannot tell the tests to use dev images at the same time."
   echo "Set one or the other to false and try again."
   exit 1
 fi
@@ -229,11 +232,12 @@ echo KIALI_SRC_HOME="$KIALI_SRC_HOME"
 echo ALL_TESTS="$ALL_TESTS"
 echo SKIP_TESTS="$SKIP_TESTS"
 echo CLUSTER_TYPE="$CLUSTER_TYPE"
-echo MOLECULE_USE_DEFAULT_SERVER_IMAGE="$MOLECULE_USE_DEFAULT_SERVER_IMAGE"
+echo MOLECULE_USE_DEFAULT_IMAGES="$MOLECULE_USE_DEFAULT_IMAGES"
 echo MOLECULE_USE_DEV_IMAGES="$MOLECULE_USE_DEV_IMAGES"
 echo MOLECULE_DEBUG="$MOLECULE_DEBUG"
 echo MOLECULE_DESTROY_NEVER="$MOLECULE_DESTROY_NEVER"
 echo MOLECULE_KIALI_CR_SPEC_VERSION="${MOLECULE_KIALI_CR_SPEC_VERSION}"
+echo MOLECULE_OSSMCONSOLE_CR_SPEC_VERSION="${MOLECULE_OSSMCONSOLE_CR_SPEC_VERSION}"
 echo MOLECULE_OPERATOR_INSTALLER="$MOLECULE_OPERATOR_INSTALLER"
 echo MOLECULE_OPERATOR_PROFILER_ENABLED="$MOLECULE_OPERATOR_PROFILER_ENABLED"
 echo TEST_LOGS_DIR="$TEST_LOGS_DIR"

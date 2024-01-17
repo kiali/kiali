@@ -7,8 +7,8 @@ OLM_IMAGE_ORG ?= ${IMAGE_ORG}
 OLM_BUNDLE_NAME ?= ${OLM_IMAGE_ORG}/kiali-operator-bundle
 OLM_INDEX_NAME ?= ${OLM_IMAGE_ORG}/kiali-operator-index
 
-# set this package name to kiali-ossm if you want to test with the OSSM metadata
-OLM_BUNDLE_PACKAGE ?= kiali
+# set this package name to kiali if you want to test with the community (if OC=oc) or upstream (if OC=kubectl) metadata
+OLM_BUNDLE_PACKAGE ?= kiali-ossm
 
 OLM_INDEX_BASE_IMAGE ?= quay.io/openshift/origin-operator-registry:4.11
 OPM_VERSION ?= 1.28.0
@@ -113,7 +113,7 @@ build-olm-index: .ensure-opm-exists cluster-push-olm-bundle
 	@rm -rf ${OUTDIR}/index
 	@mkdir -p ${OUTDIR}/index/kiali-index
 	${OPM} init ${OLM_BUNDLE_PACKAGE} --default-channel=stable --output yaml > ${OUTDIR}/index/kiali-index/index.yaml
-	@if [ "${DORP}" == "podman" -a -n "$${XDG_RUNTIME_DIR}" ]; then cp "$${XDG_RUNTIME_DIR}/containers/auth.json" "${OUTDIR}/index/kiali-index/config.json"; fi
+	@if [ "${DORP}" == "podman" -a -n "$${XDG_RUNTIME_DIR}" -a -f "$${XDG_RUNTIME_DIR}/containers/auth.json" ]; then cp "$${XDG_RUNTIME_DIR}/containers/auth.json" "${OUTDIR}/index/kiali-index/config.json"; fi
 	@if [ -f "${OUTDIR}/index/kiali-index/config.json" ]; then export DOCKER_CONFIG="${OUTDIR}/index/kiali-index"; fi ; ${OPM} render $$(if [[ "${OC}" = *"oc" ]]; then echo '--skip-tls-verify'; else echo '--use-http'; fi) ${CLUSTER_OLM_BUNDLE_NAME}:${BUNDLE_VERSION} --output yaml >> ${OUTDIR}/index/kiali-index/index.yaml
 	@rm -f ${OUTDIR}/index/kiali-index/config.json
 	@# We need OLM to pull the index from the internal registry - change the index to only use the internal registry name
@@ -205,6 +205,8 @@ catalog-source-delete: .generate-catalog-source .remove-operator-pull-secret
 	@echo '      value: "true"'                       >> ${OUTDIR}/kiali-subscription.yaml
 	@echo "    - name: ALLOW_AD_HOC_KIALI_IMAGE"      >> ${OUTDIR}/kiali-subscription.yaml
 	@echo '      value: "true"'                       >> ${OUTDIR}/kiali-subscription.yaml
+	@echo "    - name: ALLOW_AD_HOC_OSSMCONSOLE_IMAGE" >> ${OUTDIR}/kiali-subscription.yaml
+	@echo '      value: "true"'                       >> ${OUTDIR}/kiali-subscription.yaml
 
 ## subscription-create: Creates the OLM Subscription on the remote cluster which installs the operator
 subscription-create: .ensure-oc-login .generate-subscription
@@ -215,11 +217,11 @@ subscription-delete: .ensure-oc-login .generate-subscription
 	${OC} delete --ignore-not-found=true -f ${OUTDIR}/kiali-subscription.yaml
 
 ## olm-operator-create: Installs everything needed to get the Kiali operator installed via OLM.
-olm-operator-create: catalog-source-create subscription-create .wait-for-kiali-crd
+olm-operator-create: catalog-source-create subscription-create .wait-for-kiali-crd .wait-for-ossmconsole-crd
 	@echo "You can now create a Kiali CR to install Kiali."
 
 ## olm-operator-delete: Deletes the Kiali CR, undeploys the OLM subscription and catalog source and purges the operator
-olm-operator-delete: kiali-delete subscription-delete catalog-source-delete crd-delete
+olm-operator-delete: kiali-delete ossmconsole-delete subscription-delete catalog-source-delete crd-delete
 	@echo "Deleting OLM CSVs to fully uninstall Kiali operator and its related resources"
 	@for csv in $$(${OC} get csv --all-namespaces --no-headers -o custom-columns=NS:.metadata.namespace,N:.metadata.name | sed 's/  */:/g' | grep kiali-operator) ;\
 	do \

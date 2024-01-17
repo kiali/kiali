@@ -9,7 +9,8 @@ import {
   NodeParamsType,
   NodeType,
   TrafficRate,
-  DefaultTrafficRates
+  DefaultTrafficRates,
+  GraphElementsQuery
 } from '../types/Graph';
 import { Namespace } from '../types/Namespace';
 import * as AlertUtils from '../utils/AlertUtils';
@@ -18,7 +19,7 @@ import * as API from './Api';
 import { decorateGraphData } from '../store/Selectors/GraphData';
 import EventEmitter from 'eventemitter3';
 import { createSelector } from 'reselect';
-import { isMultiCluster } from '../config';
+import { isMultiCluster, serverConfig } from '../config';
 
 export const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
 const PROMISE_KEY = 'CURRENT_REQUEST';
@@ -70,6 +71,7 @@ export interface FetchParams {
   showIdleNodes: boolean;
   showOperationNodes: boolean;
   showSecurity: boolean;
+  showWaypoints: boolean;
   trafficRates: TrafficRate[];
 }
 
@@ -100,9 +102,10 @@ export class GraphDataSource {
   private eventEmitter: EventEmitter;
   private graphElements: GraphElements;
   private promiseRegistry: PromisesRegistry;
+
   private decoratedData = createSelector(
-    (graphData: { graphElements: GraphElements; graphDuration: number }) => graphData.graphElements,
-    (graphData: { graphElements: GraphElements; graphDuration: number }) => graphData.graphDuration,
+    (graphData: { graphDuration: number; graphElements: GraphElements }) => graphData.graphElements,
+    (graphData: { graphDuration: number; graphElements: GraphElements }) => graphData.graphDuration,
     (graphData, duration) => decorateGraphData(graphData, duration)
   );
 
@@ -129,12 +132,13 @@ export class GraphDataSource {
       showIdleNodes: false,
       showOperationNodes: false,
       showSecurity: false,
+      showWaypoints: true,
       trafficRates: []
     };
     this._isError = this._isLoading = false;
   }
 
-  public fetchGraphData = (fetchParams: FetchParams) => {
+  public fetchGraphData = (fetchParams: FetchParams): void => {
     const previousFetchParams = this.fetchParameters;
 
     // Copy fetch parameters to a local attribute
@@ -149,23 +153,27 @@ export class GraphDataSource {
       return;
     }
 
-    const restParams: any = {
-      duration: fetchParams.duration + 's',
+    const restParams: GraphElementsQuery = {
+      duration: `${fetchParams.duration}s`,
       graphType: fetchParams.graphType,
       includeIdleEdges: fetchParams.showIdleEdges,
       injectServiceNodes: fetchParams.injectServiceNodes
     };
 
     const boxBy: string[] = [];
+
     if (fetchParams.boxByCluster) {
       boxBy.push(BoxByType.CLUSTER);
     }
+
     if (fetchParams.boxByNamespace) {
       boxBy.push(BoxByType.NAMESPACE);
     }
+
     if (fetchParams.graphType === GraphType.APP || fetchParams.graphType === GraphType.VERSIONED_APP) {
       boxBy.push(BoxByType.APP);
     }
+
     if (boxBy.length > 0) {
       restParams.boxBy = boxBy.join(',');
     }
@@ -189,6 +197,11 @@ export class GraphDataSource {
       // note we only use the idleNode appender if this is NOT a drilled-in node graph and
       // the user specifically requests to see idle nodes.
       appenders += ',idleNode';
+    }
+
+    if (serverConfig.ambientEnabled) {
+      appenders += ',ambient';
+      restParams.waypoints = fetchParams.showWaypoints;
     }
 
     if (fetchParams.includeLabels) {
@@ -231,6 +244,7 @@ export class GraphDataSource {
           break;
       }
     });
+
     restParams.appenders = appenders;
 
     restParams.rateGrpc = 'none';
@@ -268,8 +282,10 @@ export class GraphDataSource {
       }
     });
 
+    let cluster: string | undefined;
+
     if (fetchParams.node?.cluster && isMultiCluster) {
-      restParams.clusterName = fetchParams.node.cluster;
+      cluster = fetchParams.node.cluster;
     }
 
     this._isLoading = true;
@@ -283,7 +299,8 @@ export class GraphDataSource {
       previousFetchParams.includeHealth !== this.fetchParameters.includeHealth ||
       previousFetchParams.injectServiceNodes !== this.fetchParameters.injectServiceNodes ||
       previousFetchParams.showOperationNodes !== this.fetchParameters.showOperationNodes ||
-      previousFetchParams.showIdleNodes !== this.fetchParameters.showIdleNodes;
+      previousFetchParams.showIdleNodes !== this.fetchParameters.showIdleNodes ||
+      previousFetchParams.showWaypoints !== this.fetchParameters.showWaypoints;
 
     if (isPreviousDataInvalid) {
       // Reset the graph data
@@ -293,38 +310,54 @@ export class GraphDataSource {
     }
 
     this.emit('loadStart', isPreviousDataInvalid, fetchParams);
+
     if (fetchParams.node) {
-      this.fetchDataForNode(restParams);
+      this.fetchDataForNode(restParams, cluster);
     } else {
       this.fetchDataForNamespaces(restParams);
     }
   };
 
-  public on: OnEvents = (eventName: any, callback: any) => {
+  public on: OnEvents = (eventName: any, callback: any): void => {
     this.eventEmitter.on(eventName, callback);
   };
 
-  public removeListener: OnEvents = (eventName: any, callback: any) => {
+  public removeListener: OnEvents = (eventName: any, callback: any): void => {
     this.eventEmitter.removeListener(eventName, callback);
   };
 
   // Some helpers
 
-  public fetchForApp = (duration: DurationInSeconds, namespace: string, app: string) => {
-    const params = this.fetchForAppParams(duration, namespace, app);
+  public fetchForApp = (duration: DurationInSeconds, namespace: string, app: string, cluster?: string): void => {
+    const params = this.fetchForAppParams(duration, namespace, app, cluster);
     params.showSecurity = true;
     this.fetchGraphData(params);
   };
 
-  public fetchForAppParams = (duration: DurationInSeconds, namespace: string, app: string): FetchParams => {
+  public fetchForAppParams = (
+    duration: DurationInSeconds,
+    namespace: string,
+    app: string,
+    cluster?: string
+  ): FetchParams => {
     const params = GraphDataSource.defaultFetchParams(duration, namespace);
     params.graphType = GraphType.APP;
     params.node!.nodeType = NodeType.APP;
     params.node!.app = app;
+
+    if (cluster) {
+      params.node!.cluster = cluster;
+    }
+
     return params;
   };
 
-  public fetchForVersionedApp = (duration: DurationInSeconds, namespace: string, app: string, cluster?: string) => {
+  public fetchForVersionedApp = (
+    duration: DurationInSeconds,
+    namespace: string,
+    app: string,
+    cluster?: string
+  ): void => {
     const params = this.fetchForVersionedAppParams(duration, namespace, app, cluster);
     params.showSecurity = true;
     this.fetchGraphData(params);
@@ -337,6 +370,7 @@ export class GraphDataSource {
     cluster?: string
   ): FetchParams => {
     const params = GraphDataSource.defaultFetchParams(duration, namespace);
+
     params.edgeLabels = [
       EdgeLabelMode.RESPONSE_TIME_GROUP,
       EdgeLabelMode.RESPONSE_TIME_P95,
@@ -345,16 +379,24 @@ export class GraphDataSource {
       EdgeLabelMode.TRAFFIC_DISTRIBUTION,
       EdgeLabelMode.TRAFFIC_RATE
     ];
+
     params.graphType = GraphType.VERSIONED_APP;
     params.node!.nodeType = NodeType.APP;
     params.node!.app = app;
+
     if (cluster) {
       params.node!.cluster = cluster;
     }
+
     return params;
   };
 
-  public fetchForWorkload = (duration: DurationInSeconds, namespace: string, workload: string, cluster?: string) => {
+  public fetchForWorkload = (
+    duration: DurationInSeconds,
+    namespace: string,
+    workload: string,
+    cluster?: string
+  ): void => {
     const params = this.fetchForWorkloadParams(duration, namespace, workload, cluster);
     params.showSecurity = true;
     this.fetchGraphData(params);
@@ -367,6 +409,7 @@ export class GraphDataSource {
     cluster?: string
   ): FetchParams => {
     const params = GraphDataSource.defaultFetchParams(duration, namespace);
+
     params.edgeLabels = [
       EdgeLabelMode.RESPONSE_TIME_GROUP,
       EdgeLabelMode.RESPONSE_TIME_P95,
@@ -375,16 +418,24 @@ export class GraphDataSource {
       EdgeLabelMode.TRAFFIC_DISTRIBUTION,
       EdgeLabelMode.TRAFFIC_RATE
     ];
+
     params.graphType = GraphType.WORKLOAD;
     params.node!.nodeType = NodeType.WORKLOAD;
     params.node!.workload = workload;
+
     if (cluster) {
       params.node!.cluster = cluster;
     }
+
     return params;
   };
 
-  public fetchForService = (duration: DurationInSeconds, namespace: string, service: string, cluster?: string) => {
+  public fetchForService = (
+    duration: DurationInSeconds,
+    namespace: string,
+    service: string,
+    cluster?: string
+  ): void => {
     const params = this.fetchForServiceParams(duration, namespace, service, cluster);
     params.showSecurity = true;
     this.fetchGraphData(params);
@@ -397,6 +448,7 @@ export class GraphDataSource {
     cluster?: string
   ): FetchParams => {
     const params = GraphDataSource.defaultFetchParams(duration, namespace);
+
     params.edgeLabels = [
       EdgeLabelMode.RESPONSE_TIME_GROUP,
       EdgeLabelMode.RESPONSE_TIME_P95,
@@ -405,16 +457,19 @@ export class GraphDataSource {
       EdgeLabelMode.TRAFFIC_DISTRIBUTION,
       EdgeLabelMode.TRAFFIC_RATE
     ];
+
     params.graphType = GraphType.WORKLOAD;
     params.node!.nodeType = NodeType.SERVICE;
     params.node!.service = service;
+
     if (cluster) {
       params.node!.cluster = cluster;
     }
+
     return params;
   };
 
-  public fetchForNamespace = (duration: DurationInSeconds, namespace: string) => {
+  public fetchForNamespace = (duration: DurationInSeconds, namespace: string): void => {
     const params = this.fetchForNamespaceParams(duration, namespace);
     this.fetchGraphData(params);
   };
@@ -452,16 +507,18 @@ export class GraphDataSource {
       showIdleNodes: false,
       showOperationNodes: false,
       showSecurity: false,
+      showWaypoints: true,
       trafficRates: DefaultTrafficRates
     };
   }
 
-  private emit: EmitEvents = (eventName: any, ...args) => {
+  private emit: EmitEvents = (eventName: string, ...args: unknown[]) => {
     this.eventEmitter.emit(eventName, ...args);
   };
 
-  private fetchDataForNamespaces = (restParams: any) => {
+  private fetchDataForNamespaces = (restParams: GraphElementsQuery): void => {
     restParams.namespaces = this.fetchParameters.namespaces.map(namespace => namespace.name).join(',');
+
     this.promiseRegistry.register(PROMISE_KEY, API.getGraphElements(restParams)).then(
       response => {
         const responseData: any = response.data;
@@ -470,6 +527,7 @@ export class GraphDataSource {
         this.graphDuration = responseData && responseData.duration ? responseData.duration : 0;
         const decoratedGraphElements = this.graphData;
         this._isLoading = this._isError = false;
+
         this.emit(
           'fetchSuccess',
           this.graphTimestamp,
@@ -480,6 +538,7 @@ export class GraphDataSource {
       },
       error => {
         this._isLoading = false;
+
         if (error.isCanceled) {
           return;
         }
@@ -492,35 +551,39 @@ export class GraphDataSource {
     );
   };
 
-  private fetchDataForNode = (restParams: any) => {
-    this.promiseRegistry.register(PROMISE_KEY, API.getNodeGraphElements(this.fetchParameters.node!, restParams)).then(
-      response => {
-        const responseData: any = response.data;
-        this.graphElements = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
-        this.graphTimestamp = responseData && responseData.timestamp ? responseData.timestamp : 0;
-        this.graphDuration = responseData && responseData.duration ? responseData.duration : 0;
-        const decoratedGraphElements = this.graphData;
-        this._isLoading = this._isError = false;
-        this.emit(
-          'fetchSuccess',
-          this.graphTimestamp,
-          this.graphDuration,
-          decoratedGraphElements,
-          this.fetchParameters
-        );
-      },
-      error => {
-        this._isLoading = false;
-        if (error.isCanceled) {
-          return;
-        }
+  private fetchDataForNode = (restParams: GraphElementsQuery, cluster?: string): void => {
+    this.promiseRegistry
+      .register(PROMISE_KEY, API.getNodeGraphElements(this.fetchParameters.node!, restParams, cluster))
+      .then(
+        response => {
+          const responseData: any = response.data;
+          this.graphElements = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
+          this.graphTimestamp = responseData && responseData.timestamp ? responseData.timestamp : 0;
+          this.graphDuration = responseData && responseData.duration ? responseData.duration : 0;
+          const decoratedGraphElements = this.graphData;
+          this._isLoading = this._isError = false;
 
-        this._isError = true;
-        this._errorMessage = API.getErrorString(error);
-        AlertUtils.addError('Cannot load the graph', error);
-        this.emit('fetchError', this.errorMessage, this.fetchParameters);
-      }
-    );
+          this.emit(
+            'fetchSuccess',
+            this.graphTimestamp,
+            this.graphDuration,
+            decoratedGraphElements,
+            this.fetchParameters
+          );
+        },
+        error => {
+          this._isLoading = false;
+
+          if (error.isCanceled) {
+            return;
+          }
+
+          this._isError = true;
+          this._errorMessage = API.getErrorString(error);
+          AlertUtils.addError('Cannot load the graph', error);
+          this.emit('fetchError', this.errorMessage, this.fetchParameters);
+        }
+      );
   };
 
   // Getters and setters

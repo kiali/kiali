@@ -3,7 +3,7 @@ package business_test
 import (
 	"context"
 	"fmt"
-	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -79,6 +79,7 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Annotations: map[string]string{
 					"operator-sdk/primary-resource": "kiali-operator/myKialiCR",
+					"kiali.io/external-url":         "http://kiali.url.local",
 				},
 				Labels: map[string]string{
 					"app.kubernetes.io/part-of": "kiali",
@@ -86,6 +87,11 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 				},
 				Name:      "kiali-service",
 				Namespace: "foo",
+			},
+			Spec: core_v1.ServiceSpec{
+				Selector: map[string]string{
+					"app.kubernetes.io/part-of": "kiali",
+				},
 			},
 		},
 	}
@@ -114,8 +120,7 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	layer := business.NewWithBackends(mockClientFactory.Clients, mockClientFactory.Clients, nil, nil)
 	meshSvc := layer.Mesh
 
-	r := httptest.NewRequest("GET", "http://kiali.url.local/", nil)
-	a, err := meshSvc.GetClusters(r)
+	a, err := meshSvc.GetClusters()
 	require.Nil(err, "GetClusters returned error: %v", err)
 
 	require.NotNil(a, "GetClusters returned nil")
@@ -159,6 +164,11 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 			Name:      "kiali-service",
 			Namespace: conf.IstioNamespace,
 		},
+		Spec: core_v1.ServiceSpec{
+			Selector: map[string]string{
+				"app.kubernetes.io/part-of": "kiali",
+			},
+		},
 	}
 
 	remoteClient := kubetest.NewFakeK8sClient(remoteNs, kialiSvc)
@@ -177,11 +187,11 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 	}
 	factory := kubetest.NewK8SClientFactoryMock(nil)
 	factory.SetClients(clients)
-	business.WithKialiCache(business.NewTestingCacheWithFactory(t, factory, *conf))
+	business.WithKialiCache(cache.NewTestingCacheWithFactory(t, factory, *conf))
 	layer := business.NewWithBackends(clients, clients, nil, nil)
 	meshSvc := layer.Mesh
 
-	a, err := meshSvc.GetClusters(nil)
+	a, err := meshSvc.GetClusters()
 	check.Nil(err, "GetClusters returned error: %v", err)
 
 	remoteCluster := business.FindOrFail(t, a, func(c kubernetes.Cluster) bool { return c.Name == "KialiCluster" })
@@ -265,6 +275,11 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 			Name:      "kiali-service",
 			Namespace: "foo",
 		},
+		Spec: core_v1.ServiceSpec{
+			Selector: map[string]string{
+				"app.kubernetes.io/part-of": "kiali",
+			},
+		},
 	}
 
 	// Create a MeshService and invoke GetClusters. This should cache the result.
@@ -281,7 +296,7 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 	}
 	layer := business.NewWithBackends(clients, clients, nil, nil)
 	meshSvc := layer.Mesh
-	result, err := meshSvc.GetClusters(nil)
+	result, err := meshSvc.GetClusters()
 	require.NoError(err)
 	require.NotNil(result)
 	require.Len(result, 1)
@@ -289,7 +304,7 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 	// Check that the cache now has clusters populated.
 	check.Len(getClustersCache.clusters, 1)
 
-	result, err = meshSvc.GetClusters(nil)
+	result, err = meshSvc.GetClusters()
 	require.NoError(err)
 	require.NotNil(result)
 	require.Len(result, 1)
@@ -660,6 +675,7 @@ trustDomain: cluster.local
 	}
 	require := require.New(t)
 	conf := config.NewConfig()
+	config.Set(conf)
 	k8s := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 		istiod_1_18_Deployment,
@@ -668,7 +684,7 @@ trustDomain: cluster.local
 		istio_1_19_ConfigMap,
 	)
 
-	business.SetupBusinessLayer(t, k8s, *config.NewConfig())
+	business.SetupBusinessLayer(t, k8s, *conf)
 
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
 	svc := business.NewWithBackends(clients, clients, nil, nil).Mesh
@@ -687,6 +703,18 @@ trustDomain: cluster.local
 	})
 	require.True(*controlPlane_1_19.Config.EnableAutoMtls)
 	require.Len(controlPlane_1_19.ManagedClusters, 1)
+
+	// Test for setting the configmap name explicitly due to regression: https://github.com/kiali/kiali/issues/6669
+	conf.ExternalServices.Istio.ConfigMapName = istio_1_19_ConfigMap.Name
+	config.Set(conf)
+	svc = business.NewWithBackends(clients, clients, nil, nil).Mesh
+	mesh, err = svc.GetMesh(context.TODO())
+	require.NoError(err)
+
+	require.Len(mesh.ControlPlanes, 2)
+	// Both controlplanes should set this to true since both will use the 1.19 configmap.
+	require.True(*mesh.ControlPlanes[0].Config.EnableAutoMtls)
+	require.True(*mesh.ControlPlanes[1].Config.EnableAutoMtls)
 }
 
 func TestGetMeshRemoteClusters(t *testing.T) {
@@ -726,7 +754,7 @@ trustDomain: cluster.local
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s, "remote": remoteClient}
 	factory := kubetest.NewK8SClientFactoryMock(nil)
 	factory.SetClients(clients)
-	business.WithKialiCache(business.NewTestingCacheWithFactory(t, factory, *conf))
+	business.WithKialiCache(cache.NewTestingCacheWithFactory(t, factory, *conf))
 
 	svc := business.NewWithBackends(clients, clients, nil, nil).Mesh
 	mesh, err := svc.GetMesh(context.TODO())
@@ -779,7 +807,7 @@ trustDomain: cluster.local
 	clients := map[string]kubernetes.ClientInterface{"east": eastClient, "remote": remoteClient}
 	factory := kubetest.NewK8SClientFactoryMock(nil)
 	factory.SetClients(clients)
-	business.WithKialiCache(business.NewTestingCacheWithFactory(t, factory, *conf))
+	business.WithKialiCache(cache.NewTestingCacheWithFactory(t, factory, *conf))
 
 	svc := business.NewWithBackends(clients, clients, nil, nil).Mesh
 	mesh, err := svc.GetMesh(context.TODO())
@@ -832,7 +860,7 @@ trustDomain: cluster.local
 	clients := map[string]kubernetes.ClientInterface{"east": eastClient, "remote": remoteClient}
 	factory := kubetest.NewK8SClientFactoryMock(nil)
 	factory.SetClients(clients)
-	business.WithKialiCache(business.NewTestingCacheWithFactory(t, factory, *conf))
+	business.WithKialiCache(cache.NewTestingCacheWithFactory(t, factory, *conf))
 
 	svc := business.NewWithBackends(clients, clients, nil, nil).Mesh
 	mesh, err := svc.GetMesh(context.TODO())
@@ -878,7 +906,7 @@ trustDomain: cluster.local
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: eastClient, "west": westClient}
 	factory := kubetest.NewK8SClientFactoryMock(nil)
 	factory.SetClients(clients)
-	business.WithKialiCache(business.NewTestingCacheWithFactory(t, factory, *conf))
+	business.WithKialiCache(cache.NewTestingCacheWithFactory(t, factory, *conf))
 
 	svc := business.NewWithBackends(clients, clients, nil, nil).Mesh
 	mesh, err := svc.GetMesh(context.TODO())
@@ -954,7 +982,7 @@ trustDomain: cluster.local
 	}
 	factory := kubetest.NewK8SClientFactoryMock(nil)
 	factory.SetClients(clients)
-	business.WithKialiCache(business.NewTestingCacheWithFactory(t, factory, *conf))
+	business.WithKialiCache(cache.NewTestingCacheWithFactory(t, factory, *conf))
 
 	svc := business.NewWithBackends(clients, clients, nil, nil).Mesh
 	mesh, err := svc.GetMesh(context.TODO())
@@ -971,8 +999,8 @@ trustDomain: cluster.local
 	})
 
 	// Sort to get consistent ordering before doing assertions.
-	sortClustersByName := func(a *kubernetes.Cluster, b *kubernetes.Cluster) bool {
-		return a.Name < b.Name
+	sortClustersByName := func(a *kubernetes.Cluster, b *kubernetes.Cluster) int {
+		return strings.Compare(a.Name, b.Name)
 	}
 	slices.SortFunc(eastControlPlane.ManagedClusters, sortClustersByName)
 	slices.SortFunc(westControlPlane.ManagedClusters, sortClustersByName)
@@ -1015,4 +1043,174 @@ func fakeIstiodDeployment(cluster string, manageExternal bool) *apps_v1.Deployme
 		})
 	}
 	return deployment
+}
+
+func TestIstioConfigMapName(t *testing.T) {
+	testCases := map[string]struct {
+		conf     config.Config
+		revision string
+		expected string
+	}{
+		"ConfigMapName is empty and revision is default": {
+			conf: config.Config{
+				ExternalServices: config.ExternalServices{
+					Istio: config.IstioConfig{
+						ConfigMapName: "",
+					},
+				},
+			},
+			revision: "default",
+			expected: "istio",
+		},
+		"ConfigMapName is empty and revision is v1": {
+			conf: config.Config{
+				ExternalServices: config.ExternalServices{
+					Istio: config.IstioConfig{
+						ConfigMapName: "",
+					},
+				},
+			},
+			revision: "v1",
+			expected: "istio-v1",
+		},
+		"ConfigMapName is set and revision is default": {
+			conf: config.Config{
+				ExternalServices: config.ExternalServices{
+					Istio: config.IstioConfig{
+						ConfigMapName: "my-istio-config",
+					},
+				},
+			},
+			revision: "default",
+			expected: "my-istio-config",
+		},
+		"ConfigMapName is set and revision is v2": {
+			conf: config.Config{
+				ExternalServices: config.ExternalServices{
+					Istio: config.IstioConfig{
+						ConfigMapName: "my-istio-config",
+					},
+				},
+			},
+			revision: "v2",
+			expected: "my-istio-config",
+		},
+		"ConfigMapName is set and revision is empty": {
+			conf: config.Config{
+				ExternalServices: config.ExternalServices{
+					Istio: config.IstioConfig{
+						ConfigMapName: "my-istio-config",
+					},
+				},
+			},
+			revision: "",
+			expected: "my-istio-config",
+		},
+	}
+
+	for desc, tc := range testCases {
+		t.Run(desc, func(t *testing.T) {
+			result := business.IstioConfigMapName(tc.conf, tc.revision)
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestGetClustersShowsConfiguredKialiInstances(t *testing.T) {
+	require := require.New(t)
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	conf.Clustering.Clusters = []config.Cluster{{
+		Name: "west",
+	}}
+	conf.Clustering.KialiURLs = []config.KialiURL{{
+		InstanceName: "kiali",
+		Namespace:    "istio-system",
+		ClusterName:  "west",
+		URL:          "kiali.istio-system.west",
+	}}
+	kubernetes.SetConfig(t, *conf)
+
+	k8s := kubetest.NewFakeK8sClient()
+	business.SetupBusinessLayer(t, k8s, *conf)
+	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+	svc := business.NewWithBackends(clients, clients, nil, nil).Mesh
+	clusters, err := svc.GetClusters()
+
+	require.NoError(err)
+	require.Len(clusters, 2)
+	homeIndex := slices.IndexFunc(clusters, func(c kubernetes.Cluster) bool {
+		return c.Name == conf.KubernetesConfig.ClusterName
+	})
+	westIndex := slices.IndexFunc(clusters, func(c kubernetes.Cluster) bool {
+		return c.Name == "west"
+	})
+	require.True(westIndex >= 0)
+	require.True(homeIndex >= 0)
+
+	westCluster := clusters[westIndex]
+	require.Len(westCluster.KialiInstances, 1)
+	assert.False(westCluster.Accessible)
+	kialiInstance := westCluster.KialiInstances[0]
+	assert.Equal("kiali", kialiInstance.ServiceName)
+	assert.Equal("istio-system", kialiInstance.Namespace)
+	assert.Equal("kiali.istio-system.west", kialiInstance.Url)
+
+	homeCluster := clusters[homeIndex]
+	require.Len(homeCluster.KialiInstances, 0)
+	assert.True(homeCluster.Accessible)
+}
+
+func TestGetClustersWorksWithNamespacedScope(t *testing.T) {
+	require := require.New(t)
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	conf.Deployment.ClusterWideAccess = false
+	conf.Deployment.AccessibleNamespaces = []string{"istio-system"}
+	kubernetes.SetConfig(t, *conf)
+
+	kialiService := &core_v1.Service{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "kiali",
+			Namespace: "istio-system",
+			Labels:    map[string]string{"app.kubernetes.io/part-of": "kiali"},
+		},
+	}
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		kialiService,
+	)
+	business.SetupBusinessLayer(t, k8s, *conf)
+	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+	svc := business.NewWithBackends(clients, clients, nil, nil).Mesh
+	clusters, err := svc.GetClusters()
+
+	require.NoError(err)
+	require.Len(clusters, 1)
+	require.Len(clusters[0].KialiInstances, 1)
+	kialiInstance := clusters[0].KialiInstances[0]
+	assert.Equal("kiali", kialiInstance.ServiceName)
+	assert.Equal("istio-system", kialiInstance.Namespace)
+}
+
+func TestAddingKialiInstanceToExistingClusterDoesntAddNewCluster(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "Kubernetes"
+	conf.KialiFeatureFlags.Clustering.KialiURLs = []config.KialiURL{{
+		InstanceName: "kiali",
+		Namespace:    "istio-system",
+		ClusterName:  conf.KubernetesConfig.ClusterName,
+		URL:          "kiali.istio-system.west",
+	}}
+	kubernetes.SetConfig(t, *conf)
+
+	k8s := kubetest.NewFakeK8sClient()
+	business.SetupBusinessLayer(t, k8s, *conf)
+	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+	svc := business.NewWithBackends(clients, clients, nil, nil).Mesh
+	clusters, err := svc.GetClusters()
+
+	require.NoError(err)
+	require.Len(clusters, 1)
 }

@@ -5,56 +5,49 @@ import { TooltipPosition } from '@patternfly/react-core';
 import { KioskLink } from './KioskLink';
 import { isMultiCluster } from '../../config';
 
-type Props = {
+type ServiceLinkProps = {
+  cluster?: string;
   name: string;
   namespace: string;
-  cluster?: string;
   query?: string;
 };
 
 export const getServiceURL = (name: string, namespace: string, cluster?: string, query?: string): string => {
-  let to = '/namespaces/' + namespace + '/' + Paths.SERVICES;
+  let to = `/namespaces/${namespace}/${Paths.SERVICES}`;
 
-  to = to + '/' + name;
+  to = `${to}/${name}`;
 
   if (cluster && isMultiCluster) {
-    to = to + '?clusterName=' + cluster;
+    to = `${to}?clusterName=${cluster}`;
   }
 
   if (!!query) {
     if (to.includes('?')) {
-      to = to + '&' + query;
+      to = `${to}&${query}`;
     } else {
-      to = to + '?' + query;
+      to = `${to}?${query}`;
     }
   }
 
   return to;
 };
 
-export class ServiceLink extends React.Component<Props> {
-  render() {
-    const { name, namespace, cluster, query } = this.props;
+export const ServiceLink: React.FC<ServiceLinkProps> = (props: ServiceLinkProps) => {
+  const { name, namespace, cluster, query } = props;
 
-    return (
-      <>
-        <PFBadge badge={PFBadges.Service} position={TooltipPosition.top} />
-        <ServiceLinkItem name={name} namespace={namespace} cluster={cluster} query={query} />
-      </>
-    );
-  }
-}
+  return (
+    <>
+      <PFBadge badge={PFBadges.Service} position={TooltipPosition.top} />
+      <ServiceLinkItem name={name} namespace={namespace} cluster={cluster} query={query} />
+    </>
+  );
+};
 
-class ServiceLinkItem extends React.Component<Props> {
-  render() {
-    const { name, namespace, cluster, query } = this.props;
-    const href = getServiceURL(name, namespace, cluster, query);
-    return (
-      <KioskLink
-        linkName={namespace + '/' + name}
-        dataTest={'service-' + namespace + '-' + name}
-        href={href}
-      ></KioskLink>
-    );
-  }
-}
+const ServiceLinkItem: React.FC<ServiceLinkProps> = (props: ServiceLinkProps) => {
+  const { name, namespace, cluster, query } = props;
+  const href = getServiceURL(name, namespace, cluster, query);
+
+  return (
+    <KioskLink linkName={`${namespace}/${name}`} dataTest={`service-${namespace}-${name}`} href={href}></KioskLink>
+  );
+};

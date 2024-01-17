@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { Tab } from '@patternfly/react-core';
 import * as API from '../../services/Api';
-import { App, AppId } from '../../types/App';
+import { App, AppId, AppQuery } from '../../types/App';
 import { AppInfo } from './AppInfo';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { IstioMetrics } from '../../components/Metrics/IstioMetrics';
@@ -13,8 +13,8 @@ import { DurationInSeconds, TimeInMilliseconds, TimeRange } from '../../types/Co
 import { KialiAppState } from '../../store/Store';
 import { durationSelector, timeRangeSelector } from '../../store/Selectors';
 import { ParameterizedTabs, activeTab } from '../../components/Tab/Tabs';
-import { JaegerInfo } from '../../types/JaegerInfo';
-import { TracesComponent } from '../../components/JaegerIntegration/TracesComponent';
+import { TracingInfo } from '../../types/TracingInfo';
+import { TracesComponent } from '../../components/TracingIntegration/TracesComponent';
 import { TrafficDetails } from 'components/TrafficList/TrafficDetails';
 import { TimeControl } from '../../components/Time/TimeControl';
 import { AppHealth } from 'types/Health';
@@ -28,17 +28,17 @@ import { basicTabStyle } from 'styles/TabStyles';
 type AppDetailsState = {
   app?: App;
   cluster?: string;
-  health?: AppHealth;
   // currentTab is needed to (un)mount tab components
   // when the tab is not rendered.
   currentTab: string;
   error?: ErrorMsg;
+  health?: AppHealth;
 };
 
 type ReduxProps = {
   duration: DurationInSeconds;
-  jaegerInfo?: JaegerInfo;
   timeRange: TimeRange;
+  tracingInfo?: TracingInfo;
 };
 
 type AppDetailsProps = ReduxProps & {
@@ -73,6 +73,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     // when linking from one cluster's app to another cluster's app, cluster in state should be changed
     const cluster = HistoryManager.getClusterName() || this.state.cluster;
     const currentTab = activeTab(tabName, defaultTab);
+
     if (
       this.props.appId.namespace !== prevProps.appId.namespace ||
       this.props.appId.app !== prevProps.appId.app ||
@@ -89,11 +90,12 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     }
   }
 
-  private fetchApp = (cluster?: string) => {
+  private fetchApp = (cluster?: string): void => {
     if (!cluster) {
       cluster = this.state.cluster;
     }
-    const params: { [key: string]: string } = { rateInterval: String(this.props.duration) + 's', health: 'true' };
+
+    const params: AppQuery = { rateInterval: `${String(this.props.duration)}s`, health: 'true' };
     API.getApp(this.props.appId.namespace, this.props.appId.app, params, cluster)
       .then(details => {
         this.setState({
@@ -109,13 +111,13 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
         AlertUtils.addError('Could not fetch App Details.', error);
         const msg: ErrorMsg = {
           title: 'No App is selected',
-          description: this.props.appId.app + ' is not found in the mesh'
+          description: `${this.props.appId.app} is not found in the mesh`
         };
         this.setState({ error: msg });
       });
   };
 
-  private runtimeTabs() {
+  private runtimeTabs(): JSX.Element[] {
     let tabOffset = 0;
 
     const tabs: JSX.Element[] = [];
@@ -124,10 +126,10 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
         runtime.dashboardRefs.forEach(dashboard => {
           if (dashboard.template !== 'envoy') {
             const tabKey = tabOffset + nextTabIndex;
-            paramToTab['cd-' + dashboard.template] = tabKey;
+            paramToTab[`cd-${dashboard.template}`] = tabKey;
 
             const tab = (
-              <Tab title={dashboard.title} key={'cd-' + dashboard.template} eventKey={tabKey}>
+              <Tab title={dashboard.title} key={`cd-${dashboard.template}`} eventKey={tabKey}>
                 <CustomMetrics
                   lastRefreshAt={this.props.lastRefreshAt}
                   namespace={this.props.appId.namespace}
@@ -146,7 +148,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     return tabs;
   }
 
-  private staticTabs() {
+  private staticTabs(): JSX.Element[] {
     const overTab = (
       <Tab title="Overview" eventKey={0} key={'Overview'}>
         <AppInfo app={this.state.app} duration={this.props.duration} health={this.state.health} />
@@ -197,8 +199,8 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     const tabsArray: JSX.Element[] = [overTab, trafficTab, inTab, outTab];
 
     // Conditional Traces tab
-    if (this.props.jaegerInfo && this.props.jaegerInfo.enabled) {
-      if (this.props.jaegerInfo.integration) {
+    if (this.props.tracingInfo && this.props.tracingInfo.enabled) {
+      if (this.props.tracingInfo.integration) {
         tabsArray.push(
           <Tab eventKey={4} style={{ textAlign: 'center' }} title={'Traces'} key={tracesTabName}>
             <TracesComponent
@@ -211,13 +213,13 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           </Tab>
         );
       } else {
-        const service = this.props.jaegerInfo.namespaceSelector
-          ? this.props.appId.app + '.' + this.props.appId.namespace
+        const service = this.props.tracingInfo.namespaceSelector
+          ? `${this.props.appId.app}.${this.props.appId.namespace}`
           : this.props.appId.app;
         tabsArray.push(
           <Tab
             eventKey={4}
-            href={this.props.jaegerInfo.url + `/search?service=${service}`}
+            href={`${this.props.tracingInfo.url}/search?service=${service}`}
             target="_blank"
             title={
               <>
@@ -232,8 +234,8 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     return tabsArray;
   }
 
-  private renderTabs() {
-    // PF4 Tabs doesn't support static tabs followed of an array of tabs created dynamically.
+  private renderTabs(): JSX.Element[] {
+    // PF Tabs doesn't support static tabs followed of an array of tabs created dynamically.
     return this.staticTabs().concat(this.runtimeTabs());
   }
 
@@ -254,7 +256,9 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     return (
       <>
         <RenderHeader location={history.location} rightToolbar={<TimeControl customDuration={useCustomTime} />} />
+
         {this.state.error && <ErrorSection error={this.state.error} />}
+
         {this.state.app && (
           <ParameterizedTabs
             id="basic-tabs"
@@ -279,8 +283,8 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  jaegerInfo: state.jaegerState.info,
-  timeRange: timeRangeSelector(state)
+  timeRange: timeRangeSelector(state),
+  tracingInfo: state.tracingState.info
 });
 
 export const AppDetailsPage = connectRefresh(connect(mapStateToProps)(AppDetails));

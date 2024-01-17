@@ -1,0 +1,6 @@
+=== tempopb
+
+tempopb is the Grafana Tempo link:https://grafana.com/docs/tempo/latest/api_docs/#tempo-grpc-api[gRPC client]
+Source code: https://github.com/grafana/tempo/tree/main/pkg/tempopb
+
+Supports Tempo version 2.3.0.

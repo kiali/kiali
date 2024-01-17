@@ -1,13 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`HealthDetails renders deployments failure 1`] = `
-<Fragment
-  key="0"
-/>
-`;
+exports[`HealthDetails renders deployments failure 1`] = `<Fragment />`;
 
-exports[`HealthDetails renders healthy 1`] = `
-<Fragment
-  key="0"
-/>
-`;
+exports[`HealthDetails renders healthy 1`] = `<Fragment />`;

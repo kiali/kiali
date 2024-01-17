@@ -163,7 +163,7 @@ create_apikey() {
 
 DEFAULT_APIKEY_NAME="${USER}-apikey"
 DEFAULT_NAME_PREFIX="${USER}"
-DEFAULT_OPENSHIFT_VERSION="4.8_openshift"
+DEFAULT_OPENSHIFT_VERSION="$(ibmcloud ks versions --show-version OpenShift -q | sort | tail -n1)"
 DEFAULT_PLUGIN_INSTALL="true"
 DEFAULT_PLUGIN_UPDATE="true"
 DEFAULT_REGION="us-east"
@@ -221,7 +221,8 @@ Valid options:
       If you know the plugins are already installed and up-to-date, you can set this to "false" to speed up the script a little bit.
       Default: ${DEFAULT_PLUGIN_UPDATE}
   -r|--region
-      The region to target. Should be one of: https://cloud.ibm.com/docs/openwhisk?topic=openwhisk-cloudfunctions_regions
+      The region to target.
+      To see available regions, run: ibmcloud regions
       Default: ${DEFAULT_REGION}
   -wf|--worker-flavor
       The flavor of the worker node which determines things such as the number of cores, amount of memory, network speed, etc.
@@ -232,6 +233,7 @@ Valid options:
       Default: ${DEFAULT_WORKER_NODES}
   -zn|--zone-name)
       The zone to use within the selected region.
+      To see available zones, run: ibmcloud ks zone ls --provider vpc-gen2
       Default: Whatever --region is set to, appended with "-1" (e.g. "${DEFAULT_REGION}-1").
 
 Commands:
@@ -320,7 +322,7 @@ else
 fi
 
 # Make sure the necessary plugins are installed
-plugins_list="container-service container-registry observe-service infrastructure-service kubernetes-service"
+plugins_list="ks container-service container-registry observe-service infrastructure-service kubernetes-service"
 if [ "${PLUGIN_INSTALL}" == "true" ]; then
   for p in $plugins_list; do
     if ibmcloud plugin show ${p} &> /dev/null; then

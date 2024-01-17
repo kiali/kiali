@@ -7,50 +7,37 @@ import {
   FormSelect,
   FormSelectOption,
   HelperText,
-  HelperTextItem
+  HelperTextItem,
+  TextInput
 } from '@patternfly/react-core';
-import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
-import { cellWidth, Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
-import { TrashIcon } from '@patternfly/react-icons';
+import { IRow, Td, ThProps, Tr } from '@patternfly/react-table';
 import { isGatewayHostValid } from '../../../utils/IstioConfigUtils';
 import { ServerForm } from '../../../types/IstioObjects';
 import { isValid } from 'utils/Common';
 import { isValidPort } from './ListenerBuilder';
+import { kialiStyle } from 'styles/StyleUtils';
+import { KialiIcon } from 'config/KialiIcon';
+import { SimpleTable } from 'components/SimpleTable';
 
-type Props = {
-  server: ServerForm;
-  onRemoveServer: (i: number) => void;
+type ServerBuilderProps = {
   index: number;
   onChange: (serverform: ServerForm, i: number) => void;
+  onRemoveServer: (i: number) => void;
+  server: ServerForm;
 };
 
-type State = {
-  newHosts: string[];
-  isHostsValid: boolean;
-  newPortNumber: string;
-  newPortName: string;
-  newPortProtocol: string;
-  newTlsMode: string;
-  newTlsServerCertificate: string;
-  newTlsPrivateKey: string;
-  newTlsCaCertificate: string;
-};
-
-const portHeader = [
+const columns: ThProps[] = [
   {
     title: 'Port Number',
-    transforms: [cellWidth(20) as any],
-    props: {}
+    width: 20
   },
   {
     title: 'Port Name',
-    transforms: [cellWidth(20) as any],
-    props: {}
+    width: 20
   },
   {
     title: 'Protocol',
-    transforms: [cellWidth(20) as any],
-    props: {}
+    width: 20
   }
 ];
 
@@ -61,250 +48,262 @@ export const areValidHosts = (hosts: string[]): boolean => {
   if (hosts.length === 0) {
     return false;
   }
+
   let isValid = true;
+
   for (let i = 0; i < hosts.length; i++) {
     if (!isGatewayHostValid(hosts[i])) {
       isValid = false;
       break;
     }
   }
+
   return isValid;
 };
 
-export class ServerBuilder extends React.Component<Props, State> {
-  onAddHosts = (_event, value: string) => {
-    const server = this.props.server;
+const tableStyle = kialiStyle({
+  $nest: {
+    '& tr': {
+      borderBottom: 0
+    },
+    '&& tbody td': {
+      padding: 0,
+      paddingRight: '0.5rem'
+    }
+  }
+});
+
+const deleteButtonStyle = kialiStyle({
+  display: 'flex',
+  margin: 'auto',
+  padding: '0.25rem'
+});
+
+export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilderProps) => {
+  const onAddHosts = (_event: React.FormEvent, value: string): void => {
+    const server = props.server;
     server.hosts = value.trim().length === 0 ? [] : value.split(',').map(host => host.trim());
 
-    this.props.onChange(server, this.props.index);
+    props.onChange(server, props.index);
   };
 
-  onAddPortNumber = (_event, value: string) => {
-    const server = this.props.server;
+  const onAddPortNumber = (_event: React.FormEvent, value: string): void => {
+    const server = props.server;
     server.number = value.trim();
 
-    this.props.onChange(server, this.props.index);
+    props.onChange(server, props.index);
   };
 
-  onAddPortName = (_event, value: string) => {
-    const server = this.props.server;
+  const onAddPortName = (_event: React.FormEvent, value: string): void => {
+    const server = props.server;
     server.name = value.trim();
 
-    this.props.onChange(server, this.props.index);
+    props.onChange(server, props.index);
   };
 
-  onAddPortProtocol = (_event, value: string) => {
-    const server = this.props.server;
+  const onAddPortProtocol = (_event: React.FormEvent, value: string): void => {
+    const server = props.server;
     server.protocol = value.trim();
 
-    this.props.onChange(server, this.props.index);
+    props.onChange(server, props.index);
   };
 
-  onAddTlsMode = (_event, value: string) => {
-    const server = this.props.server;
+  const onAddTlsMode = (_event: React.FormEvent, value: string): void => {
+    const server = props.server;
     server.tlsMode = value.trim();
 
-    this.props.onChange(server, this.props.index);
+    props.onChange(server, props.index);
   };
 
-  onAddTlsServerCertificate = (_event, value: string) => {
-    const server = this.props.server;
+  const onAddTlsServerCertificate = (_event: React.FormEvent, value: string): void => {
+    const server = props.server;
     server.tlsServerCertificate = value.trim();
 
-    this.props.onChange(server, this.props.index);
+    props.onChange(server, props.index);
   };
 
-  onAddTlsPrivateKey = (_event, value: string) => {
-    const server = this.props.server;
+  const onAddTlsPrivateKey = (_event: React.FormEvent, value: string): void => {
+    const server = props.server;
     server.tlsPrivateKey = value.trim();
 
-    this.props.onChange(server, this.props.index);
+    props.onChange(server, props.index);
   };
 
-  onAddTlsCaCertificate = (_event, value: string) => {
-    const server = this.props.server;
+  const onAddTlsCaCertificate = (_event: React.FormEvent, value: string): void => {
+    const server = props.server;
     server.tlsCaCertificate = value.trim();
 
-    this.props.onChange(server, this.props.index);
+    props.onChange(server, props.index);
   };
 
-  portRows() {
-    return (
-      <Tr>
-        <Td style={{ padding: '0 10px 0 0' }}>
-          <TextInput
-            value={this.props.server.number}
-            type="text"
-            id={'addPortNumber' + this.props.index}
-            aria-describedby="add port number"
-            name="addPortNumber"
-            onChange={this.onAddPortNumber}
-            validated={isValid(isValidPort(this.props.server.number))}
-          />
-        </Td>
-        <Td style={{ padding: '0 10px 0 0' }}>
-          <TextInput
-            value={this.props.server.name}
-            type="text"
-            id={'addPortName' + this.props.index}
-            aria-describedby="add port name"
-            name="addPortName"
-            onChange={this.onAddPortName}
-            validated={isValid(this.props.server.name.length > 0)}
-          />
-        </Td>
-        <Td style={{ padding: '0 10px 0 0' }}>
-          <FormSelect
-            value={this.props.server.protocol}
-            id={'addPortProtocol' + this.props.index}
-            name="addPortProtocol"
-            onChange={this.onAddPortProtocol}
-          >
-            {protocols.map((option, index) => (
-              <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
-            ))}
-          </FormSelect>
-        </Td>
-      </Tr>
-    );
-  }
+  const portRows: IRow[] = [
+    {
+      cells: [
+        <TextInput
+          value={props.server.number}
+          type="text"
+          id={`addPortNumber_${props.index}`}
+          aria-describedby="add port number"
+          name="addPortNumber"
+          onChange={onAddPortNumber}
+          validated={isValid(isValidPort(props.server.number))}
+        />,
 
-  render() {
-    const showTls = this.props.server.protocol === 'HTTPS' || this.props.server.protocol === 'TLS';
-    return (
-      <Tr>
-        <Td>
-          <FormGroup label="Hosts" isRequired={true} fieldId="gateway-selector">
-            <TextInput
-              value={this.props.server.hosts.join(',')}
+        <TextInput
+          value={props.server.name}
+          type="text"
+          id={`addPortName_${props.index}`}
+          aria-describedby="add port name"
+          name="addPortName"
+          onChange={onAddPortName}
+          validated={isValid(props.server.name.length > 0)}
+        />,
+
+        <FormSelect
+          value={props.server.protocol}
+          id={`addPortProtocol_${props.index}`}
+          name="addPortProtocol"
+          onChange={onAddPortProtocol}
+        >
+          {protocols.map((option, index) => (
+            <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
+          ))}
+        </FormSelect>
+      ]
+    }
+  ];
+
+  const showTls = props.server.protocol === 'HTTPS' || props.server.protocol === 'TLS';
+
+  return (
+    <Tr>
+      <Td>
+        <FormGroup label="Hosts" isRequired={true} fieldId="gateway-selector">
+          <TextInput
+            value={props.server.hosts.join(',')}
+            isRequired={true}
+            type="text"
+            id={`hosts_${props.index}`}
+            aria-describedby="hosts"
+            name="hosts"
+            onChange={onAddHosts}
+            validated={isValid(areValidHosts(props.server.hosts))}
+          />
+
+          <FormHelperText>
+            <HelperText>
+              <HelperTextItem>
+                {isValid(areValidHosts(props.server.hosts))
+                  ? 'One or more hosts exposed by this Gateway.'
+                  : 'Invalid hosts for this Gateway. Enter one or more hosts separated by comma.'}
+              </HelperTextItem>
+            </HelperText>
+          </FormHelperText>
+        </FormGroup>
+
+        <FormGroup label="Port" isRequired={true} fieldId="server-port" style={{ padding: '0.5rem 0' }}>
+          <SimpleTable label="Port Level MTLS" className={tableStyle} columns={columns} rows={portRows} />
+        </FormGroup>
+
+        {showTls && (
+          <FormGroup label="TLS Mode" isRequired={true} fieldId="addTlsMode" style={{ margin: '0.5rem 0' }}>
+            <FormSelect value={props.server.tlsMode} id="addTlsMode" name="addTlsMode" onChange={onAddTlsMode}>
+              {tlsModes.map((option, index) => (
+                <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
+              ))}
+            </FormSelect>
+          </FormGroup>
+        )}
+
+        {showTls && (props.server.tlsMode === 'SIMPLE' || props.server.tlsMode === 'MUTUAL') && (
+          <>
+            <FormGroup
+              label="Server Certificate"
+              style={{ margin: '0.5rem 0' }}
               isRequired={true}
-              type="text"
-              id={'hosts' + this.props.index}
-              aria-describedby="hosts"
-              name="hosts"
-              onChange={this.onAddHosts}
-              validated={isValid(areValidHosts(this.props.server.hosts))}
-            />
-            <FormHelperText>
-              <HelperText>
-                <HelperTextItem>
-                  {isValid(areValidHosts(this.props.server.hosts))
-                    ? 'One or more hosts exposed by this Gateway.'
-                    : 'Invalid hosts for this Gateway. Enter one or more hosts separated by comma.'}
-                </HelperTextItem>
-              </HelperText>
-            </FormHelperText>
-          </FormGroup>
-          <FormGroup label="Port" isRequired={true} fieldId="server-port" style={{ padding: '10px 0' }}>
-            <Table aria-label="Port Level MTLS">
-              <Thead>
-                <Tr>
-                  {portHeader.map(e => (
-                    <Th>{e.title}</Th>
-                  ))}
-                </Tr>
-              </Thead>
-              <Tbody>{this.portRows()}</Tbody>
-            </Table>
-          </FormGroup>
-          {showTls && (
-            <FormGroup label="TLS Mode" isRequired={true} fieldId="addTlsMode" style={{ margin: '10px 0' }}>
-              <FormSelect
-                value={this.props.server.tlsMode}
-                id="addTlsMode"
-                name="addTlsMode"
-                onChange={this.onAddTlsMode}
-              >
-                {tlsModes.map((option, index) => (
-                  <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
-                ))}
-              </FormSelect>
-            </FormGroup>
-          )}
-          {showTls && (this.props.server.tlsMode === 'SIMPLE' || this.props.server.tlsMode === 'MUTUAL') && (
-            <>
-              <FormGroup
-                label="Server Certificate"
-                style={{ margin: '10px 0' }}
-                isRequired={true}
-                fieldId="server-certificate"
-              >
-                <TextInput
-                  value={this.props.server.tlsServerCertificate}
-                  isRequired={true}
-                  type="text"
-                  id="server-certificate"
-                  aria-describedby="server-certificate"
-                  name="server-certificate"
-                  onChange={this.onAddTlsServerCertificate}
-                  validated={isValid(this.props.server.tlsServerCertificate.length > 0)}
-                />
-                {!isValid(this.props.server.tlsServerCertificate.length > 0) && (
-                  <FormHelperText>
-                    <HelperText>
-                      <HelperTextItem>
-                        The path to the file holding the server-side TLS certificate to use.
-                      </HelperTextItem>
-                    </HelperText>
-                  </FormHelperText>
-                )}
-              </FormGroup>
-              <FormGroup label="Private Key" isRequired={true} fieldId="private-key" style={{ margin: '10px 0' }}>
-                <TextInput
-                  value={this.props.server.tlsPrivateKey}
-                  isRequired={true}
-                  type="text"
-                  id="private-key"
-                  aria-describedby="private-key"
-                  name="private-key"
-                  onChange={this.onAddTlsPrivateKey}
-                  validated={isValid(this.props.server.tlsPrivateKey.length > 0)}
-                />
-                {!isValid(this.props.server.tlsPrivateKey.length > 0) && (
-                  <FormHelperText>
-                    <HelperText>
-                      <HelperTextItem>The path to the file holding the server’s private key.</HelperTextItem>
-                    </HelperText>
-                  </FormHelperText>
-                )}
-              </FormGroup>
-            </>
-          )}
-          {showTls && this.props.server.tlsMode === 'MUTUAL' && (
-            <FormGroup label="CA Certificate" style={{ margin: '10px 0' }} isRequired={true} fieldId="ca-certificate">
+              fieldId="server-certificate"
+            >
               <TextInput
-                value={this.props.server.tlsCaCertificate}
+                value={props.server.tlsServerCertificate}
                 isRequired={true}
                 type="text"
-                id="ca-certificate"
-                aria-describedby="ca-certificate"
-                name="ca-certificate"
-                onChange={this.onAddTlsCaCertificate}
-                validated={isValid(this.props.server.tlsCaCertificate.length > 0)}
+                id="server-certificate"
+                aria-describedby="server-certificate"
+                name="server-certificate"
+                onChange={onAddTlsServerCertificate}
+                validated={isValid(props.server.tlsServerCertificate.length > 0)}
               />
-              {!isValid(this.props.server.tlsCaCertificate.length > 0) && (
+
+              {!isValid(props.server.tlsServerCertificate.length > 0) && (
                 <FormHelperText>
                   <HelperText>
                     <HelperTextItem>
-                      The path to a file containing certificate authority certificates to use in verifying a presented
-                      client side certificate.
+                      The path to the file holding the server-side TLS certificate to use.
                     </HelperTextItem>
                   </HelperText>
                 </FormHelperText>
               )}
             </FormGroup>
-          )}
-        </Td>
-        <Td style={{ verticalAlign: 'middle' }}>
-          <Button
-            id="deleteBtn"
-            variant={ButtonVariant.link}
-            icon={<TrashIcon />}
-            style={{ padding: '0 40%' }}
-            onClick={() => this.props.onRemoveServer(this.props.index)}
-          />
-        </Td>
-      </Tr>
-    );
-  }
-}
+
+            <FormGroup label="Private Key" isRequired={true} fieldId="private-key" style={{ margin: '0.5rem 0' }}>
+              <TextInput
+                value={props.server.tlsPrivateKey}
+                isRequired={true}
+                type="text"
+                id="private-key"
+                aria-describedby="private-key"
+                name="private-key"
+                onChange={onAddTlsPrivateKey}
+                validated={isValid(props.server.tlsPrivateKey.length > 0)}
+              />
+
+              {!isValid(props.server.tlsPrivateKey.length > 0) && (
+                <FormHelperText>
+                  <HelperText>
+                    <HelperTextItem>The path to the file holding the server’s private key.</HelperTextItem>
+                  </HelperText>
+                </FormHelperText>
+              )}
+            </FormGroup>
+          </>
+        )}
+
+        {showTls && props.server.tlsMode === 'MUTUAL' && (
+          <FormGroup label="CA Certificate" style={{ margin: '0.5rem 0' }} isRequired={true} fieldId="ca-certificate">
+            <TextInput
+              value={props.server.tlsCaCertificate}
+              isRequired={true}
+              type="text"
+              id="ca-certificate"
+              aria-describedby="ca-certificate"
+              name="ca-certificate"
+              onChange={onAddTlsCaCertificate}
+              validated={isValid(props.server.tlsCaCertificate.length > 0)}
+            />
+
+            {!isValid(props.server.tlsCaCertificate.length > 0) && (
+              <FormHelperText>
+                <HelperText>
+                  <HelperTextItem>
+                    The path to a file containing certificate authority certificates to use in verifying a presented
+                    client side certificate.
+                  </HelperTextItem>
+                </HelperText>
+              </FormHelperText>
+            )}
+          </FormGroup>
+        )}
+      </Td>
+
+      <Td style={{ verticalAlign: 'middle' }}>
+        <Button
+          id="deleteBtn"
+          variant={ButtonVariant.link}
+          icon={<KialiIcon.Trash />}
+          className={deleteButtonStyle}
+          onClick={() => props.onRemoveServer(props.index)}
+        />
+      </Td>
+    </Tr>
+  );
+};

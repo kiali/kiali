@@ -15,6 +15,7 @@ import {
   HTTPMatchRequest,
   HTTPRoute,
   HTTPRouteDestination,
+  IstioObject,
   K8sGateway,
   K8sHTTPHeaderFilter,
   K8sHTTPRequestMirrorFilter,
@@ -22,6 +23,7 @@ import {
   K8sHTTPRouteFilter,
   K8sHTTPRouteMatch,
   K8sHTTPRouteRequestRedirect,
+  K8sReferenceGrant,
   LoadBalancerSettings,
   Operation,
   OutlierDetection,
@@ -45,6 +47,7 @@ import { K8sGatewaySelectorState } from './K8sGatewaySelector';
 import { ConsistentHashType, MUTUAL, TrafficPolicyState, UNSET } from './TrafficPolicy';
 import { GatewayState } from '../../pages/IstioConfigNew/GatewayForm';
 import { K8sGatewayState } from '../../pages/IstioConfigNew/K8sGatewayForm';
+import { K8sReferenceGrantState } from '../../pages/IstioConfigNew/K8sReferenceGrantForm';
 import { SidecarState } from '../../pages/IstioConfigNew/SidecarForm';
 import { ALLOW, AuthorizationPolicyState } from '../../pages/IstioConfigNew/AuthorizationPolicyForm';
 import { PeerAuthenticationState } from '../../pages/IstioConfigNew/PeerAuthenticationForm';
@@ -100,76 +103,76 @@ export const WIZARD_TITLES = {
 };
 
 export type ServiceWizardProps = {
-  show: boolean;
-  type: string;
-  update: boolean;
-  namespace: string;
   cluster?: string;
-  serviceName: string;
-  servicePort?: number;
-  tlsStatus?: TLSStatus;
   createOrUpdate: boolean;
-  workloads: WorkloadOverview[];
-  subServices: ServiceOverview[];
-  virtualServices: VirtualService[];
   destinationRules: DestinationRule[];
   gateways: string[];
+  istioAPIEnabled: boolean;
   k8sGateways: string[];
   k8sHTTPRoutes: K8sHTTPRoute[];
-  peerAuthentications: PeerAuthentication[];
+  namespace: string;
   onClose: (changed: boolean) => void;
-  istioAPIEnabled: boolean;
+  peerAuthentications: PeerAuthentication[];
+  serviceName: string;
+  servicePort?: number;
+  show: boolean;
+  subServices: ServiceOverview[];
+  tlsStatus?: TLSStatus;
+  type: string;
+  update: boolean;
+  virtualServices: VirtualService[];
+  workloads: WorkloadOverview[];
 };
 
 export type ServiceWizardValid = {
-  mainWizard: boolean;
-  vsHosts: boolean;
-  k8sRouteHosts: boolean;
-  tls: boolean;
-  lb: boolean;
-  gateway: boolean;
   cp: boolean;
+  gateway: boolean;
+  k8sRouteHosts: boolean;
+  lb: boolean;
+  mainWizard: boolean;
   od: boolean;
+  tls: boolean;
+  vsHosts: boolean;
 };
 
 export type WizardPreviews = {
   dr?: DestinationRule;
-  vs?: VirtualService;
   gw?: Gateway;
   k8sgateway?: K8sGateway;
   k8shttproute?: K8sHTTPRoute;
   pa?: PeerAuthentication;
+  vs?: VirtualService;
 };
 
 export type ServiceWizardState = {
-  showWizard: boolean;
-  showAdvanced: boolean;
-  showPreview: boolean;
-  confirmationModal: boolean;
-  previews?: WizardPreviews;
-  advancedTabKey: number;
-  workloads: WorkloadWeight[];
-  rules: Rule[];
-  k8sRules: K8sRule[];
-  faultInjectionRoute: FaultInjectionRoute;
-  timeoutRetryRoute: TimeoutRetryRoute;
-  valid: ServiceWizardValid;
   advancedOptionsValid: boolean;
-  vsHosts: string[];
-  k8sRouteHosts: string[];
-  trafficPolicy: TrafficPolicyState;
+  advancedTabKey: number;
+  confirmationModal: boolean;
+  faultInjectionRoute: FaultInjectionRoute;
   gateway?: GatewaySelectorState;
   k8sGateway?: K8sGatewaySelectorState;
+  k8sRouteHosts: string[];
+  k8sRules: K8sRule[];
+  previews?: WizardPreviews;
+  rules: Rule[];
+  showAdvanced: boolean;
+  showPreview: boolean;
+  showWizard: boolean;
+  timeoutRetryRoute: TimeoutRetryRoute;
+  trafficPolicy: TrafficPolicyState;
+  valid: ServiceWizardValid;
+  vsHosts: string[];
+  workloads: WorkloadWeight[];
 };
 
 export type WorkloadWizardValid = {};
 
 export type WorkloadWizardProps = {
+  namespace: string;
+  onClose: (changed: boolean) => void;
   show: boolean;
   type: string;
-  namespace: string;
   workload: Workload;
-  onClose: (changed: boolean) => void;
 };
 
 export type WorkloadWizardState = {
@@ -183,10 +186,10 @@ export const KIALI_RELATED_LABEL = 'kiali_wizard_related';
 // Wizard don't operate with EnvoyFilters so they can use the v1beta1 version
 export const ISTIO_NETWORKING_VERSION = 'networking.istio.io/v1beta1';
 export const ISTIO_SECURITY_VERSION = 'security.istio.io/v1beta1';
-export const GATEWAY_NETWORKING_VERSION = 'gateway.networking.k8s.io/v1beta1';
+export const GATEWAY_NETWORKING_VERSION = 'gateway.networking.k8s.io/v1';
 
 export const fqdnServiceName = (serviceName: string, namespace: string): string => {
-  return serviceName + '.' + namespace + '.' + serverConfig.istioIdentityDomain;
+  return `${serviceName}.${namespace}.${serverConfig.istioIdentityDomain}`;
 };
 
 const buildHTTPMatchRequest = (matches: string[]): HTTPMatchRequest[] => {
@@ -384,13 +387,13 @@ const buildK8sHTTPRouteFilter = (filters: string[]): K8sHTTPRouteFilter[] => {
 
 const parseStringMatch = (value: StringMatch): string => {
   if (value.exact) {
-    return 'exact ' + value.exact;
+    return `exact ${value.exact}`;
   }
   if (value.prefix) {
-    return 'prefix ' + value.prefix;
+    return `prefix ${value.prefix}`;
   }
   if (value.regex) {
-    return 'regex ' + value.regex;
+    return `regex ${value.regex}`;
   }
   return '';
 };
@@ -401,20 +404,20 @@ const parseHttpMatchRequest = (httpMatchRequest: HTTPMatchRequest): string[] => 
   if (httpMatchRequest.headers) {
     Object.keys(httpMatchRequest.headers).forEach(headerName => {
       const value = httpMatchRequest.headers![headerName];
-      matches.push('headers [' + headerName + '] ' + parseStringMatch(value));
+      matches.push(`headers [${headerName}] ${parseStringMatch(value)}`);
     });
   }
   if (httpMatchRequest.uri) {
-    matches.push('uri ' + parseStringMatch(httpMatchRequest.uri));
+    matches.push(`uri ${parseStringMatch(httpMatchRequest.uri)}`);
   }
   if (httpMatchRequest.scheme) {
-    matches.push('scheme ' + parseStringMatch(httpMatchRequest.scheme));
+    matches.push(`scheme ${parseStringMatch(httpMatchRequest.scheme)}`);
   }
   if (httpMatchRequest.method) {
-    matches.push('method ' + parseStringMatch(httpMatchRequest.method));
+    matches.push(`method ${parseStringMatch(httpMatchRequest.method)}`);
   }
   if (httpMatchRequest.authority) {
-    matches.push('authority ' + parseStringMatch(httpMatchRequest.authority));
+    matches.push(`authority ${parseStringMatch(httpMatchRequest.authority)}`);
   }
   return matches;
 };
@@ -422,21 +425,21 @@ const parseHttpMatchRequest = (httpMatchRequest: HTTPMatchRequest): string[] => 
 const parseK8sHTTPMatchRequest = (httpRouteMatch: K8sHTTPRouteMatch): string[] => {
   const matches: string[] = [];
   if (httpRouteMatch.path) {
-    matches.push('path ' + httpRouteMatch.path?.type + ' ' + httpRouteMatch.path?.value);
+    matches.push(`path ${httpRouteMatch.path?.type} ${httpRouteMatch.path?.value}`);
   }
   // Headers
   if (httpRouteMatch.headers) {
     httpRouteMatch.headers.forEach(header => {
-      matches.push('headers [' + header.name + '] ' + header.type + ' ' + header.value);
+      matches.push(`headers [${header.name}] ${header.type} ${header.value}`);
     });
   }
   if (httpRouteMatch.queryParams) {
     httpRouteMatch.queryParams.forEach(qp => {
-      matches.push('queryParam ' + qp.name + ' ' + qp.type + ' ' + qp.value);
+      matches.push(`queryParam ${qp.name} ${qp.type} ${qp.value}`);
     });
   }
   if (httpRouteMatch.method) {
-    matches.push('method ' + httpRouteMatch.method);
+    matches.push(`method ${httpRouteMatch.method}`);
   }
 
   return matches;
@@ -460,17 +463,17 @@ const parseK8sHTTPHeaderFilter = (filterType: string, httpHeaderFilter: K8sHTTPH
   const filters: string[] = [];
   if (httpHeaderFilter.set) {
     httpHeaderFilter.set.forEach(set => {
-      filters.push(filterType + ' [' + set.name + '] set ' + set.value);
+      filters.push(`${filterType} [${set.name}] set ${set.value}`);
     });
   }
   if (httpHeaderFilter.add) {
     httpHeaderFilter.add.forEach(add => {
-      filters.push(filterType + ' [' + add.name + '] add ' + add.value);
+      filters.push(`${filterType} [${add.name}] add ${add.value}`);
     });
   }
   if (httpHeaderFilter.remove) {
     httpHeaderFilter.remove.forEach(rm => {
-      filters.push(filterType + ' [' + rm + '] remove');
+      filters.push(`${filterType} [${rm}] remove`);
     });
   }
   return filters;
@@ -483,13 +486,13 @@ const parseK8sHTTPRouteRequestRedirect = (requestRedirect: K8sHTTPRouteRequestRe
 };
 
 const parseK8sHTTPRouteRequestMirror = (requestMirror: K8sHTTPRequestMirrorFilter): string => {
-  return `${REQ_MIR} ${
-    requestMirror.backendRef ? requestMirror.backendRef.name + ':' + requestMirror.backendRef.port : ''
-  }`;
+  return `${REQ_MIR} ${`${
+    requestMirror.backendRef ? `${requestMirror.backendRef.name}:${requestMirror.backendRef.port}` : ''
+  }`}`;
 };
 
 export const getGatewayName = (namespace: string, serviceName: string, gatewayNames: string[]): string => {
-  let gatewayName = namespace + '/' + serviceName + '-gateway';
+  let gatewayName = `${namespace}/${serviceName}-gateway`;
   if (gatewayNames.length === 0) {
     return gatewayName;
   }
@@ -504,7 +507,7 @@ export const getGatewayName = (namespace: string, serviceName: string, gatewayNa
         version = version + 1;
         gatewayName = gatewayName.substr(0, gatewayName.length - 1) + version;
       } else {
-        gatewayName = gatewayName + '-1';
+        gatewayName = `${gatewayName}-1`;
       }
     }
   }
@@ -854,7 +857,7 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
       };
 
       wizardDR.metadata.annotations = {};
-      wizardDR.metadata.annotations[KIALI_RELATED_LABEL] = 'PeerAuthentication/' + wProps.serviceName;
+      wizardDR.metadata.annotations[KIALI_RELATED_LABEL] = `PeerAuthentication/${wProps.serviceName}`;
     }
 
     if (wState.trafficPolicy.addLoadBalancer) {
@@ -1536,12 +1539,14 @@ export const getInitK8sGateway = (k8sHTTPRoutes: K8sHTTPRoute[]): string => {
   ) {
     const name = k8sHTTPRoutes[0].spec.parentRefs[0].name;
     const namespace = k8sHTTPRoutes[0].spec.parentRefs[0].namespace;
-    return (namespace !== '' ? namespace + '/' : '') + name;
+    return `${namespace !== '' ? `${namespace}/` : ''}${name}`;
   }
   return '';
 };
 
 export const buildAuthorizationPolicy = (
+  annotations: { [key: string]: string },
+  labels: { [key: string]: string },
   name: string,
   namespace: string,
   state: AuthorizationPolicyState
@@ -1558,6 +1563,9 @@ export const buildAuthorizationPolicy = (
     },
     spec: {}
   };
+
+  addLabels(ap, labels);
+  addAnnotations(ap, annotations);
 
   // DENY_ALL and ALLOW_ALL are two specific cases
   if (state.policy === 'DENY_ALL') {
@@ -1713,7 +1721,7 @@ export const buildGraphAuthorizationPolicy = (namespace: string, graph: GraphDef
     kind: 'AuthorizationPolicy',
     apiVersion: 'security.istio.io/v1beta1',
     metadata: {
-      name: 'deny-all-' + namespace,
+      name: `deny-all-${namespace}`,
       namespace: namespace,
       labels: {
         [KIALI_WIZARD_LABEL]: 'AuthorizationPolicy'
@@ -1735,7 +1743,7 @@ export const buildGraphAuthorizationPolicy = (namespace: string, graph: GraphDef
       ) {
         const ap: AuthorizationPolicy = {
           kind: 'AuthorizationPolicy',
-          apiVersion: ISTIO_NETWORKING_VERSION,
+          apiVersion: ISTIO_SECURITY_VERSION,
           metadata: {
             name: node.data.workload,
             namespace: namespace,
@@ -1795,7 +1803,13 @@ export const buildGraphAuthorizationPolicy = (namespace: string, graph: GraphDef
   return aps;
 };
 
-export const buildGateway = (name: string, namespace: string, state: GatewayState): Gateway => {
+export const buildGateway = (
+  annotations: { [key: string]: string },
+  labels: { [key: string]: string },
+  name: string,
+  namespace: string,
+  state: GatewayState
+): Gateway => {
   const gw: Gateway = {
     kind: 'Gateway',
     apiVersion: ISTIO_NETWORKING_VERSION,
@@ -1816,6 +1830,9 @@ export const buildGateway = (name: string, namespace: string, state: GatewayStat
       }))
     }
   };
+  addLabels(gw, labels);
+  addAnnotations(gw, annotations);
+
   state.workloadSelectorLabels
     .trim()
     .split(',')
@@ -1829,7 +1846,13 @@ export const buildGateway = (name: string, namespace: string, state: GatewayStat
   return gw;
 };
 
-export const buildK8sGateway = (name: string, namespace: string, state: K8sGatewayState): K8sGateway => {
+export const buildK8sGateway = (
+  annotations: { [key: string]: string },
+  labels: { [key: string]: string },
+  name: string,
+  namespace: string,
+  state: K8sGatewayState
+): K8sGateway => {
   const k8sGateway: K8sGateway = {
     kind: 'Gateway',
     apiVersion: GATEWAY_NETWORKING_VERSION,
@@ -1863,10 +1886,43 @@ export const buildK8sGateway = (name: string, namespace: string, state: K8sGatew
       }))
     }
   };
+  addLabels(k8sGateway, labels);
+  addAnnotations(k8sGateway, annotations);
+
   return k8sGateway;
 };
 
+export const buildK8sReferenceGrant = (
+  annotations: { [key: string]: string },
+  labels: { [key: string]: string },
+  name: string,
+  namespace: string,
+  state: K8sReferenceGrantState
+): K8sReferenceGrant => {
+  const k8sReferenceGrant: K8sReferenceGrant = {
+    kind: 'ReferenceGrant',
+    apiVersion: GATEWAY_NETWORKING_VERSION,
+    metadata: {
+      name: name,
+      namespace: namespace,
+      labels: {
+        [KIALI_WIZARD_LABEL]: 'K8sReferenceGrant'
+      }
+    },
+    spec: {
+      from: state.from,
+      to: state.to
+    }
+  };
+  addLabels(k8sReferenceGrant, labels);
+  addAnnotations(k8sReferenceGrant, annotations);
+
+  return k8sReferenceGrant;
+};
+
 export const buildPeerAuthentication = (
+  annotations: { [key: string]: string },
+  labels: { [key: string]: string },
   name: string,
   namespace: string,
   state: PeerAuthenticationState
@@ -1883,6 +1939,8 @@ export const buildPeerAuthentication = (
     },
     spec: {}
   };
+  addLabels(pa, labels);
+  addAnnotations(pa, annotations);
 
   if (state.workloadSelector.length > 0) {
     const workloadSelector: PeerAuthenticationWorkloadSelector = {
@@ -1918,6 +1976,8 @@ export const buildPeerAuthentication = (
 };
 
 export const buildRequestAuthentication = (
+  annotations: { [key: string]: string },
+  labels: { [key: string]: string },
   name: string,
   namespace: string,
   state: RequestAuthenticationState
@@ -1936,6 +1996,8 @@ export const buildRequestAuthentication = (
       jwtRules: []
     }
   };
+  addLabels(ra, labels);
+  addAnnotations(ra, annotations);
 
   if (state.workloadSelector.length > 0) {
     const workloadSelector: WorkloadMatchSelector = {
@@ -1957,7 +2019,13 @@ export const buildRequestAuthentication = (
   return ra;
 };
 
-export const buildServiceEntry = (name: string, namespace: string, state: ServiceEntryState): ServiceEntry => {
+export const buildServiceEntry = (
+  annotations: { [key: string]: string },
+  labels: { [key: string]: string },
+  name: string,
+  namespace: string,
+  state: ServiceEntryState
+): ServiceEntry => {
   const se: ServiceEntry = {
     apiVersion: ISTIO_NETWORKING_VERSION,
     kind: 'ServiceEntry',
@@ -1970,10 +2038,19 @@ export const buildServiceEntry = (name: string, namespace: string, state: Servic
     },
     spec: state.serviceEntry
   };
+  addLabels(se, labels);
+  addAnnotations(se, annotations);
+
   return se;
 };
 
-export const buildSidecar = (name: string, namespace: string, state: SidecarState): Sidecar => {
+export const buildSidecar = (
+  annotations: { [key: string]: string },
+  labels: { [key: string]: string },
+  name: string,
+  namespace: string,
+  state: SidecarState
+): Sidecar => {
   const sc: Sidecar = {
     apiVersion: ISTIO_NETWORKING_VERSION,
     kind: 'Sidecar',
@@ -2007,6 +2084,9 @@ export const buildSidecar = (name: string, namespace: string, state: SidecarStat
         }
       });
   }
+  addLabels(sc, labels);
+  addAnnotations(sc, annotations);
+
   return sc;
 };
 
@@ -2062,4 +2142,12 @@ export const buildAnnotationPatch = (annotations: { [key: string]: string }): st
     }
   ];
   return JSON.stringify(patch);
+};
+
+export const addLabels = (istioObject: IstioObject, value: { [key: string]: string }): void => {
+  istioObject.metadata.labels = value;
+};
+
+export const addAnnotations = (istioObject: IstioObject, value: { [key: string]: string }): void => {
+  istioObject.metadata.annotations = value;
 };

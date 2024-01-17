@@ -163,7 +163,8 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
         const params = this.graphDataSource.fetchForServiceParams(
           this.props.duration,
           this.props.namespace,
-          this.props.itemName
+          this.props.itemName,
+          this.props.cluster
         );
         params.includeHealth = false;
         params.showSecurity = true;
@@ -187,7 +188,8 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
         const params = this.graphDataSource.fetchForAppParams(
           this.props.duration,
           this.props.namespace,
-          this.props.itemName
+          this.props.itemName,
+          this.props.cluster
         );
         params.includeHealth = false;
         params.injectServiceNodes = false;

@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/prometheus/common/model"
@@ -15,8 +16,8 @@ import (
 )
 
 const (
-	defaultPrometheusGlobalScrapeInterval       = 15    // seconds
-	defaultPrometheusGlobalStorageTSDBRetention = 21600 // seconds
+	defaultPrometheusGlobalScrapeInterval       = 15                // seconds
+	defaultPrometheusGlobalStorageTSDBRetention = 15 * 24 * 60 * 60 // Prometheus default is 15d
 )
 
 type IstioAnnotations struct {
@@ -120,7 +121,7 @@ func Config(w http.ResponseWriter, r *http.Request) {
 
 		// Fetch the list of all clusters in the mesh
 		// One usage of this data is to cross-link Kiali instances, when possible.
-		clusters, err := layer.Mesh.GetClusters(r)
+		clusters, err := layer.Mesh.GetClusters()
 		if err != nil {
 			return fmt.Errorf("failure while listing clusters in the mesh: %w", err)
 		}
@@ -178,30 +179,26 @@ func getPrometheusConfig() PrometheusConfig {
 			}
 		}
 
-		flags, err := client.GetFlags()
-		if checkErr(err, "Failed to fetch Prometheus flags") {
-			// Prometheus deprecated the storage.tsdb.retention setting in lieu of storage.tsdb.retention.time.
-			// But the old one still takes effect if the new one is not set.
-			// See: https://prometheus.io/docs/prometheus/latest/storage/#operational-aspects
-			retentionString := ""
-			if flag, ok := flags["storage.tsdb.retention.time"]; ok && flag != "0s" {
-				retentionString = flag
-			} else if flag, ok := flags["storage.tsdb.retention"]; ok {
-				retentionString = flag
-				log.Debugf("Prometheus is using deprecated retention setting: %v", flag)
+		promRuntimeinfoResults, err := client.GetRuntimeinfo()
+		if checkErr(err, "Failed to fetch Prometheus runtime info") {
+			// the storage retention as reported by Prometheus endpoint /api/v1/status/runtimeinfo
+			// It will either be time-based (e.g. "1d") or size-based (e.g "10GB") or both (e.g "1d or 10GB").
+			// see: https://prometheus.io/docs/prometheus/latest/command-line/prometheus/
+			//      https://prometheus.io/docs/prometheus/latest/storage/
+			retentionStr := promRuntimeinfoResults.StorageRetention
+			// if specified with both time-based and size-base durations, strip off the size-based one that appears after the space
+			if strings.Contains(retentionStr, " ") {
+				retentionStr = (strings.Fields(retentionStr))[0]
 			}
-			if retentionString != "" {
-				retention, err := model.ParseDuration(retentionString)
-				if checkErr(err, fmt.Sprintf("Invalid storage.tsdb.retention.time [%s]", retentionString)) {
-					if retention == 0 {
-						log.Warning("Prometheus storage.tsdb.retention.time configured to 0, ignoring...")
-					} else {
-						promConfig.StorageTsdbRetention = int64(time.Duration(retention).Seconds())
-					}
+			// if retention is only size-based (defined in bytes), then we will fallback to the Prometheus default
+			if !strings.Contains(strings.ToLower(retentionStr), "b") {
+				retentionPeriod, err := model.ParseDuration(retentionStr)
+				if checkErr(err, "Cannot parse Promtheus retention period: "+retentionStr) {
+					promConfig.StorageTsdbRetention = int64(time.Duration(retentionPeriod).Seconds())
 				}
-			} else {
-				log.Warning("Cannot determine Prometheus retention time; ignoring...")
 			}
+		} else {
+			log.Warning("Cannot determine Prometheus retention period; ignoring...")
 		}
 	}
 

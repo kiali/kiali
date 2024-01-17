@@ -289,7 +289,7 @@ func (c OpenIdAuthController) authenticateWithAuthorizationCodeFlow(r *http.Requ
 		// the callbackCleanup func cannot be called before checkOpenIdAuthorizationCodeFlowParams().
 		// It may sound reasonable to do a cleanup as early as possible (i.e. delete cookies), however
 		// if we do it, we break the "implicit" flow, because the requried cookies will no longer exist.
-		callbackCleanup(w).
+		callbackCleanup(r, w).
 		validateOpenIdState().
 		requestOpenIdToken(httputil.GuessKialiURL(r)).
 		parseOpenIdToken().
@@ -367,11 +367,14 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 		return
 	}
 
+	guessedKialiURL := httputil.GuessKialiURL(r)
+	secureFlag := conf.IsServerHTTPS() || strings.HasPrefix(guessedKialiURL, "https:")
 	nowTime := util.Clock.Now()
 	expirationTime := nowTime.Add(time.Duration(conf.Auth.OpenId.AuthenticationTimeout) * time.Second)
 	nonceCookie := http.Cookie{
 		Expires:  expirationTime,
 		HttpOnly: true,
+		Secure:   secureFlag,
 		Name:     OpenIdNonceCookieName,
 		Path:     conf.Server.WebRoot,
 		SameSite: http.SameSiteLaxMode,
@@ -404,7 +407,7 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 		authorizationEndpoint,
 		url.QueryEscape(conf.Auth.OpenId.ClientId),
 		responseType,
-		url.QueryEscape(httputil.GuessKialiURL(r)),
+		url.QueryEscape(guessedKialiURL),
 		url.QueryEscape(scopes),
 		url.QueryEscape(fmt.Sprintf("%x", nonceHash)),
 		url.QueryEscape(fmt.Sprintf("%x-%s", csrfHash, nowTime.UTC().Format("060102150405"))),
@@ -481,18 +484,22 @@ type openidFlowHelper struct {
 
 // callbackCleanup deletes the nonce cookie that was generated during the redirection from Kiali to
 // the OpenId server to initiate authentication (see OpenIdAuthController.redirectToAuthServerHandler).
-func (p *openidFlowHelper) callbackCleanup(w http.ResponseWriter) *openidFlowHelper {
+func (p *openidFlowHelper) callbackCleanup(r *http.Request, w http.ResponseWriter) *openidFlowHelper {
 	// Do nothing if there was an error in previous flow steps.
 	if p.Error != nil {
 		return p
 	}
+
+	conf := config.Get()
+	secureFlag := conf.IsServerHTTPS() || strings.HasPrefix(httputil.GuessKialiURL(r), "https:")
 
 	// Delete the nonce cookie since we no longer need it.
 	deleteNonceCookie := http.Cookie{
 		Name:     OpenIdNonceCookieName,
 		Expires:  time.Unix(0, 0),
 		HttpOnly: true,
-		Path:     config.Get().Server.WebRoot,
+		Secure:   secureFlag,
+		Path:     conf.Server.WebRoot,
 		SameSite: http.SameSiteStrictMode,
 		Value:    "",
 	}

@@ -6,16 +6,19 @@ import { LoginSession } from '../store/Store';
 import { KialiDispatch } from '../types/Redux';
 import { InitializingScreen } from './InitializingScreen';
 import { authenticationConfig } from '../config/AuthenticationConfig';
-import axios from 'axios';
+import { isApiError } from 'types/Api';
 
-interface InitializerComponentProps {
+interface ReduxProps {
   setInitialAuthentication: (session: LoginSession) => void;
-  onInitializationFinished: () => void;
 }
 
+type InitializerComponentProps = ReduxProps & {
+  onInitializationFinished: () => void;
+};
+
 interface InitializerComponentState {
-  errorMsg?: string;
   errorDetails?: string;
+  errorMsg?: string;
 }
 
 class InitializerComponent extends React.Component<InitializerComponentProps, InitializerComponentState> {
@@ -24,15 +27,15 @@ class InitializerComponent extends React.Component<InitializerComponentProps, In
     this.state = {};
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.fetchAuthenticationConfig();
   }
 
-  render() {
+  render(): React.ReactNode {
     return <InitializingScreen errorMsg={this.state.errorMsg} errorDetails={this.state.errorDetails} />;
   }
 
-  private fetchAuthenticationConfig = async () => {
+  private fetchAuthenticationConfig = async (): Promise<void> => {
     try {
       const authConfig = await API.getAuthInfo();
       authenticationConfig.authorizationEndpoint = authConfig.data.authorizationEndpoint;
@@ -49,7 +52,7 @@ class InitializerComponent extends React.Component<InitializerComponentProps, In
 
       this.props.onInitializationFinished();
     } catch (err) {
-      if (axios.isAxiosError(err)) {
+      if (isApiError(err)) {
         let errDetails: string | undefined;
         if (err.request) {
           const response = (err.request as XMLHttpRequest).responseText;
@@ -67,7 +70,7 @@ class InitializerComponent extends React.Component<InitializerComponentProps, In
   };
 }
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxProps => ({
   setInitialAuthentication: (session: LoginSession) => dispatch(LoginActions.loginSuccess(session))
 });
 

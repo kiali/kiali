@@ -11,7 +11,7 @@ Feature: Kiali Graph page - Side panel menu actions
 
   @bookinfo-app
   Scenario: Actions in kebab menu of the side panel for a service node with existing traffic routing
-    And user clicks the "productpage" service node
+    And user clicks the "productpage" "service" node
     And no cluster badge for the "graph side panel" should be visible
     And user opens the kebab menu of the graph side panel
     And user clicks the "delete_traffic_routing" item of the kebab menu of the graph side panel
@@ -19,7 +19,7 @@ Feature: Kiali Graph page - Side panel menu actions
 
   @bookinfo-app
   Scenario Outline: Ability to launch <action> wizard from graph side panel
-    And user clicks the "reviews" service node
+    And user clicks the "reviews" "service" node
     And no cluster badge for the "graph side panel" should be visible
     And user opens the kebab menu of the graph side panel
     And user clicks the "<action>" item of the kebab menu of the graph side panel
@@ -65,7 +65,7 @@ Feature: Kiali Graph page - Side panel menu actions
 
   @skip
   @remote-istio-crds
-  @multi-cluster 
+  @multi-cluster
   Scenario: Actions in context menu for a remote service node with existing traffic routing
     And there is no traffic routing for the "ratings" service present
     And user opens the context menu of the "ratings" service node
@@ -75,3 +75,21 @@ Feature: Kiali Graph page - Side panel menu actions
     And user creates the configuration
     And user is at the "istio" list page
     Then a traffic routing for "ratings" should be located in the west cluster
+
+  @skip
+  @bookinfo-app
+  @multi-cluster
+  @tracing
+  Scenario: Show Traces button contains clusterName param
+    And user clicks the "productpage" "service" node
+    And cluster badge for the "graph side panel" should be visible
+    And user clicks the "Traces" graph summary tab
+    Then user should see "" cluster parameter in links in the traces
+
+  @bookinfo-app
+  @tracing
+  Scenario: Traces tab contains traces
+    And user clicks the "productpage" "service" node
+    And service badge for the graph side panel should be visible
+    And user clicks the "Traces" graph summary tab
+    Then user should see the traces tab not empty

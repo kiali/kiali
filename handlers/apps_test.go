@@ -34,7 +34,7 @@ import (
 
 func TestAppMetricsDefault(t *testing.T) {
 	ts, api, k8s := setupAppMetricsEndpoint(t)
-	cache := business.NewTestingCache(t, k8s, *config.NewConfig())
+	cache := cache.NewTestingCache(t, k8s, *config.NewConfig())
 	business.WithKialiCache(cache)
 
 	url := ts.URL + "/api/namespaces/ns/apps/my_app/metrics"
@@ -72,7 +72,7 @@ func TestAppMetricsDefault(t *testing.T) {
 func TestAppMetricsWithParams(t *testing.T) {
 	ts, api, k8s := setupAppMetricsEndpoint(t)
 
-	cache := business.NewTestingCache(t, k8s, *config.NewConfig())
+	cache := cache.NewTestingCache(t, k8s, *config.NewConfig())
 	business.WithKialiCache(cache)
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/apps/my-app/metrics", nil)
@@ -151,7 +151,7 @@ func (c *clientNoPrivileges) GetNamespace(namespace string) (*core_v1.Namespace,
 
 func TestAppMetricsInaccessibleNamespace(t *testing.T) {
 	ts, _, k8s := setupAppMetricsEndpoint(t)
-	cache := &cacheNoPrivileges{business.NewTestingCache(t, k8s, *config.NewConfig())}
+	cache := &cacheNoPrivileges{cache.NewTestingCache(t, k8s, *config.NewConfig())}
 	business.WithKialiCache(cache)
 
 	url := ts.URL + "/api/namespaces/my_namespace/apps/my_app/metrics"
@@ -198,10 +198,16 @@ func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.Pr
 	return ts, xapi, k8s
 }
 
-func setupAppListEndpoint(t *testing.T, k8s kubernetes.ClientInterface, conf config.Config) (*httptest.Server, *prometheustest.PromClientMock) {
-	prom := new(prometheustest.PromClientMock)
-
+func setupAppListEndpoint(t *testing.T, k8s kubernetes.ClientInterface, conf config.Config) *httptest.Server {
 	business.SetupBusinessLayer(t, k8s, conf)
+	promMock := new(prometheustest.PromAPIMock)
+	promMock.SpyArgumentsAndReturnEmpty(func(mock.Arguments) {})
+	prom, err := prometheus.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	prom.Inject(promMock)
+	business.WithProm(prom)
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/apps", http.HandlerFunc(
@@ -218,7 +224,7 @@ func setupAppListEndpoint(t *testing.T, k8s kubernetes.ClientInterface, conf con
 
 	ts := httptest.NewServer(mr)
 	t.Cleanup(ts.Close)
-	return ts, prom
+	return ts
 }
 
 func newProject() *osproject_v1.Project {
@@ -246,7 +252,7 @@ func TestAppsEndpoint(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjects...)
 	k8s.OpenShift = true
-	ts, _ := setupAppListEndpoint(t, k8s, *cfg)
+	ts := setupAppListEndpoint(t, k8s, *cfg)
 
 	url := ts.URL + "/api/namespaces/Namespace/apps"
 
@@ -264,15 +270,18 @@ func TestAppDetailsEndpoint(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
-	cfg := config.NewConfig()
-	cfg.ExternalServices.Istio.IstioAPIEnabled = false
-	config.Set(cfg)
+	// Disabling CustomDashboards on testing
+	// otherwise this adds 10s to the test due to an http timeout.
+	conf := config.NewConfig()
+	conf.ExternalServices.CustomDashboards.Enabled = false
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	kubernetes.SetConfig(t, *conf)
 
 	mockClock()
 	proj := newProject()
 	proj.Name = "Namespace"
 	kubeObjects := []runtime.Object{proj}
-	for _, obj := range business.FakeDeployments(*cfg) {
+	for _, obj := range business.FakeDeployments(*conf) {
 		o := obj
 		kubeObjects = append(kubeObjects, &o)
 	}
@@ -282,7 +291,7 @@ func TestAppDetailsEndpoint(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjects...)
 	k8s.OpenShift = true
-	ts, _ := setupAppListEndpoint(t, k8s, *cfg)
+	ts := setupAppListEndpoint(t, k8s, *conf)
 
 	url := ts.URL + "/api/namespaces/Namespace/apps/httpbin"
 

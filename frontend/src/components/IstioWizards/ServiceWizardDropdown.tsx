@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { Dropdown, DropdownPosition, DropdownToggle } from '@patternfly/react-core/deprecated';
+import { Dropdown, DropdownList, MenuToggle, MenuToggleElement, TooltipPosition } from '@patternfly/react-core';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import {
   DestinationRule,
@@ -25,7 +24,7 @@ import {
   WIZARD_EDIT_ANNOTATIONS
 } from './WizardActions';
 import { MessageType } from '../../types/MessageCenter';
-import { WizardAnnotations } from './WizardAnnotations';
+import { WizardLabels } from './WizardLabels';
 import { ServiceWizard } from './ServiceWizard';
 import { canCreate, canUpdate, ResourcePermissions } from '../../types/Permissions';
 import { ServiceWizardActionsDropdownGroup, DELETE_TRAFFIC_ROUTING } from './ServiceWizardActionsDropdownGroup';
@@ -34,70 +33,54 @@ import { deleteServiceTrafficRouting } from 'services/Api';
 import { ServiceOverview } from '../../types/ServiceList';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
+import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 
 type ReduxProps = {
   istioAPIEnabled: boolean;
 };
 
 type Props = ReduxProps & {
-  namespace: string;
-  cluster?: string;
-  serviceName: string;
-  show: boolean;
-  readOnly: boolean;
   annotations: { [key: string]: string };
-  workloads: WorkloadOverview[];
-  subServices: ServiceOverview[];
-  virtualServices: VirtualService[];
+  cluster?: string;
   destinationRules: DestinationRule[];
-  istioPermissions: ResourcePermissions;
   gateways: string[];
+  istioPermissions: ResourcePermissions;
   k8sGateways: string[];
   k8sHTTPRoutes: K8sHTTPRoute[];
-  peerAuthentications: PeerAuthentication[];
-  tlsStatus?: TLSStatus;
+  namespace: string;
   onChange: () => void;
+  peerAuthentications: PeerAuthentication[];
+  readOnly: boolean;
+  serviceName: string;
+  show: boolean;
+  subServices: ServiceOverview[];
+  tlsStatus?: TLSStatus;
+  virtualServices: VirtualService[];
+  workloads: WorkloadOverview[];
 };
 
-type State = {
-  showAnnotationsWizard: boolean;
-  showWizard: boolean;
-  updateWizard: boolean;
-  wizardType: string;
-  showConfirmDelete: boolean;
-  deleteAction: string;
-  isDeleting: boolean;
-  isActionsOpen: boolean;
-};
+const appLabelName = serverConfig.istioLabels.appLabelName;
+const versionLabelName = serverConfig.istioLabels.versionLabelName;
 
-class ServiceWizardDropdownComponent extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      showAnnotationsWizard: false,
-      showWizard: props.show,
-      wizardType: '',
-      showConfirmDelete: false,
-      deleteAction: '',
-      isDeleting: false,
-      updateWizard: false,
-      isActionsOpen: false
-    };
-  }
+const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
+  const [isDeleting, setIsDeleting] = React.useState<boolean>(false);
+  const [isActionsOpen, setIsActionsOpen] = React.useState<boolean>(false);
+  const [showAnnotationsWizard, setShowAnnotationsWizard] = React.useState<boolean>(false);
+  const [showConfirmDelete, setShowConfirmDelete] = React.useState<boolean>(false);
+  const [showWizard, setShowWizard] = React.useState<boolean>(props.show);
+  const [updateWizard, setUpdateWizard] = React.useState<boolean>(false);
+  const [wizardType, setWizardType] = React.useState<string>('');
 
-  private appLabelName = serverConfig.istioLabels.appLabelName;
-  private versionLabelName = serverConfig.istioLabels.versionLabelName;
-
-  hasMeshWorkloads = (): boolean => {
+  const checkHasMeshWorkloads = (): boolean => {
     let hasMeshWorkloads = false;
-    for (let i = 0; i < this.props.workloads.length; i++) {
-      if (this.props.workloads[i].istioSidecar) {
+    for (let i = 0; i < props.workloads.length; i++) {
+      if (props.workloads[i].istioSidecar) {
         // At least one workload with sidecar
         hasMeshWorkloads = true;
         break;
       }
       // Check for Ambient if in Ambient Mesh
-      if (serverConfig.ambientEnabled && this.props.workloads[i].istioAmbient) {
+      if (serverConfig.ambientEnabled && props.workloads[i].istioAmbient) {
         hasMeshWorkloads = true;
         break;
       }
@@ -105,23 +88,24 @@ class ServiceWizardDropdownComponent extends React.Component<Props, State> {
     return hasMeshWorkloads;
   };
 
-  hideConfirmDelete = () => {
-    this.setState({ showConfirmDelete: false });
+  const hideConfirmDelete = () => {
+    setShowConfirmDelete(false);
   };
 
-  getValidWorkloads = (): WorkloadOverview[] => {
-    return this.props.workloads.filter(workload => {
+  const getValidWorkloads = (): WorkloadOverview[] => {
+    return props.workloads.filter(workload => {
       // A workload could skip the version label on this check only when there is a single workload list
       return (
         workload.labels &&
-        workload.labels[this.appLabelName] &&
-        (workload.labels[this.versionLabelName] || this.props.workloads.length === 1)
+        workload.labels[appLabelName] &&
+        (workload.labels[versionLabelName] || props.workloads.length === 1)
       );
     });
   };
 
-  onAction = (key: string) => {
-    const updateLabel = getWizardUpdateLabel(this.props.virtualServices, this.props.k8sHTTPRoutes);
+  const onAction = (key: string) => {
+    const updateLabel = getWizardUpdateLabel(props.virtualServices, props.k8sHTTPRoutes);
+
     switch (key) {
       case WIZARD_REQUEST_ROUTING:
       case WIZARD_FAULT_INJECTION:
@@ -129,15 +113,17 @@ class ServiceWizardDropdownComponent extends React.Component<Props, State> {
       case WIZARD_TCP_TRAFFIC_SHIFTING:
       case WIZARD_K8S_REQUEST_ROUTING:
       case WIZARD_REQUEST_TIMEOUTS: {
-        this.setState({ showWizard: true, wizardType: key, updateWizard: key === updateLabel });
+        setShowWizard(true);
+        setWizardType(key);
+        setUpdateWizard(key === updateLabel);
         break;
       }
       case DELETE_TRAFFIC_ROUTING: {
-        this.setState({ showConfirmDelete: true, deleteAction: key });
+        setShowConfirmDelete(true);
         break;
       }
       case WIZARD_EDIT_ANNOTATIONS: {
-        this.setState({ showAnnotationsWizard: true });
+        setShowAnnotationsWizard(true);
         break;
       }
       default:
@@ -145,167 +131,152 @@ class ServiceWizardDropdownComponent extends React.Component<Props, State> {
     }
   };
 
-  onActionsSelect = () => {
-    this.setState({
-      isActionsOpen: !this.state.isActionsOpen
-    });
+  const onActionsSelect = () => {
+    setIsActionsOpen(!isActionsOpen);
   };
 
-  onActionsToggle = (isOpen: boolean) => {
-    this.setState({
-      isActionsOpen: isOpen
-    });
+  const onActionsToggle = (isOpen: boolean) => {
+    setIsActionsOpen(isOpen);
   };
 
-  onClose = (changed: boolean) => {
-    this.setState({ showWizard: false });
+  const onClose = (changed: boolean) => {
+    setShowWizard(false);
     if (changed) {
-      this.props.onChange();
+      props.onChange();
     }
   };
 
-  onDelete = () => {
-    this.setState({
-      isDeleting: true
-    });
-    this.hideConfirmDelete();
+  const onDelete = () => {
+    setIsDeleting(true);
+    hideConfirmDelete();
+
     deleteServiceTrafficRouting(
-      this.props.virtualServices,
-      DestinationRuleC.fromDrArray(this.props.destinationRules),
-      this.props.k8sHTTPRoutes,
-      this.props.cluster
+      props.virtualServices,
+      DestinationRuleC.fromDrArray(props.destinationRules),
+      props.k8sHTTPRoutes,
+      props.cluster
     )
       .then(_results => {
-        this.setState({
-          isDeleting: false
-        });
-        this.props.onChange();
+        setIsDeleting(false);
+        props.onChange();
       })
       .catch(error => {
         AlertUtils.addError('Could not delete Istio config objects.', error);
-        this.setState({
-          isDeleting: false
-        });
+        setIsDeleting(false);
       });
   };
 
-  renderTooltip = (key, position, msg, child): JSX.Element => {
-    return (
-      <Tooltip key={'tooltip_' + key} position={position} content={<>{msg}</>}>
-        <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>{child}</div>
-      </Tooltip>
-    );
-  };
-
-  renderDropdownItems = () => {
+  const renderDropdownItems = () => {
     return [
       <ServiceWizardActionsDropdownGroup
         key="service_wizard_actions_dropdown_group"
-        isDisabled={this.state.isDeleting || this.props.readOnly}
-        virtualServices={this.props.virtualServices}
-        destinationRules={this.props.destinationRules}
-        k8sHTTPRoutes={this.props.k8sHTTPRoutes || []}
-        annotations={this.props.annotations}
-        istioPermissions={this.props.istioPermissions}
-        onAction={this.onAction}
-        onDelete={this.onAction}
+        isDisabled={isDeleting || props.readOnly}
+        virtualServices={props.virtualServices}
+        destinationRules={props.destinationRules}
+        k8sHTTPRoutes={props.k8sHTTPRoutes || []}
+        annotations={props.annotations}
+        istioPermissions={props.istioPermissions}
+        onAction={onAction}
+        onDelete={onAction}
       />
     ];
   };
 
-  onChangeAnnotations = (annotations: { [key: string]: string }) => {
+  const onChangeAnnotations = (annotations: { [key: string]: string }) => {
     const jsonInjectionPatch = buildAnnotationPatch(annotations);
-    API.updateService(this.props.namespace, this.props.serviceName, jsonInjectionPatch, 'json', this.props.cluster)
+
+    API.updateService(props.namespace, props.serviceName, jsonInjectionPatch, 'json', props.cluster)
       .then(_ => {
-        AlertUtils.add('Service ' + this.props.serviceName + ' updated', 'default', MessageType.SUCCESS);
-        this.setState(
-          {
-            showAnnotationsWizard: false
-          },
-          () => this.props.onChange()
-        );
+        AlertUtils.add('Service ' + props.serviceName + ' updated', 'default', MessageType.SUCCESS);
       })
       .catch(error => {
-        AlertUtils.addError('Could not update service ' + this.props.serviceName, error);
-        this.setState(
-          {
-            showAnnotationsWizard: false
-          },
-          () => this.props.onChange()
-        );
+        AlertUtils.addError('Could not update service ' + props.serviceName, error);
+      })
+      .finally(() => {
+        setShowAnnotationsWizard(false);
+        props.onChange();
       });
   };
 
-  render() {
-    const hasMeshWorkloads = this.hasMeshWorkloads();
-    const toolTipMsgActions = !hasMeshWorkloads
-      ? 'There are not Workloads with sidecar for this service'
-      : 'There are not Workloads with ' + this.appLabelName + ' and ' + this.versionLabelName + ' labels';
-    const validWorkloads = this.getValidWorkloads();
-    const validActions = hasMeshWorkloads && validWorkloads;
+  const hasMeshWorkloads = checkHasMeshWorkloads();
+  const toolTipMsgActions = !hasMeshWorkloads
+    ? 'There are not Workloads with sidecar for this service'
+    : 'There are not Workloads with ' + appLabelName + ' and ' + versionLabelName + ' labels';
 
-    const dropdown = (
-      <Dropdown
-        position={DropdownPosition.right}
-        onSelect={this.onActionsSelect}
-        toggle={
-          <DropdownToggle
-            onToggle={(_event, isOpen: boolean) => this.onActionsToggle(isOpen)}
-            data-test="wizard-actions"
-          >
-            Actions
-          </DropdownToggle>
-        }
-        isOpen={this.state.isActionsOpen}
-        dropdownItems={this.renderDropdownItems()}
-        disabled={!validActions}
-        style={{ pointerEvents: validActions ? 'auto' : 'none' }}
+  const validWorkloads = getValidWorkloads();
+  const validActions = hasMeshWorkloads && validWorkloads;
+
+  const dropdown = (
+    <Dropdown
+      data-test="service-actions-dropdown"
+      id="actions"
+      toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+        <MenuToggle
+          ref={toggleRef}
+          id="actions-toggle"
+          onClick={() => onActionsToggle(!isActionsOpen)}
+          data-test="service-actions-toggle"
+          isExpanded={isActionsOpen}
+          isDisabled={!validActions}
+        >
+          Actions
+        </MenuToggle>
+      )}
+      isOpen={isActionsOpen}
+      onOpenChange={(isOpen: boolean) => onActionsToggle(isOpen)}
+      onSelect={onActionsSelect}
+      popperProps={{ position: 'right' }}
+    >
+      <DropdownList>{renderDropdownItems()}</DropdownList>
+    </Dropdown>
+  );
+  return (
+    <>
+      {!hasMeshWorkloads
+        ? renderDisabledDropdownOption('tooltip_wizard_actions', TooltipPosition.top, toolTipMsgActions, dropdown)
+        : dropdown}
+
+      <WizardLabels
+        showAnotationsWizard={showAnnotationsWizard}
+        type={'annotations'}
+        onChange={annotations => onChangeAnnotations(annotations)}
+        onClose={() => setShowAnnotationsWizard(false)}
+        labels={props.annotations}
+        canEdit={serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode}
       />
-    );
-    return (
-      <>
-        {!hasMeshWorkloads
-          ? this.renderTooltip('tooltip_wizard_actions', TooltipPosition.top, toolTipMsgActions, dropdown)
-          : dropdown}
-        <WizardAnnotations
-          showAnotationsWizard={this.state.showAnnotationsWizard}
-          onChange={annotations => this.onChangeAnnotations(annotations)}
-          onClose={() => this.setState({ showAnnotationsWizard: false })}
-          annotations={this.props.annotations}
-          canEdit={serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode}
-        />
-        <ServiceWizard
-          show={this.state.showWizard}
-          type={this.state.wizardType}
-          update={this.state.updateWizard}
-          namespace={this.props.namespace}
-          cluster={this.props.cluster}
-          serviceName={this.props.serviceName}
-          workloads={validWorkloads}
-          subServices={this.props.subServices}
-          createOrUpdate={canCreate(this.props.istioPermissions) || canUpdate(this.props.istioPermissions)}
-          virtualServices={this.props.virtualServices}
-          destinationRules={this.props.destinationRules}
-          gateways={this.props.gateways}
-          k8sGateways={this.props.k8sGateways}
-          k8sHTTPRoutes={this.props.k8sHTTPRoutes}
-          peerAuthentications={this.props.peerAuthentications}
-          tlsStatus={this.props.tlsStatus}
-          onClose={this.onClose}
-          istioAPIEnabled={this.props.istioAPIEnabled}
-        />
-        <ConfirmDeleteTrafficRoutingModal
-          destinationRules={DestinationRuleC.fromDrArray(this.props.destinationRules)}
-          virtualServices={this.props.virtualServices}
-          k8sHTTPRoutes={this.props.k8sHTTPRoutes}
-          isOpen={this.state.showConfirmDelete}
-          onCancel={this.hideConfirmDelete}
-          onConfirm={this.onDelete}
-        />
-      </>
-    );
-  }
-}
+
+      <ServiceWizard
+        show={showWizard}
+        type={wizardType}
+        update={updateWizard}
+        namespace={props.namespace}
+        cluster={props.cluster}
+        serviceName={props.serviceName}
+        workloads={validWorkloads}
+        subServices={props.subServices}
+        createOrUpdate={canCreate(props.istioPermissions) || canUpdate(props.istioPermissions)}
+        virtualServices={props.virtualServices}
+        destinationRules={props.destinationRules}
+        gateways={props.gateways}
+        k8sGateways={props.k8sGateways}
+        k8sHTTPRoutes={props.k8sHTTPRoutes}
+        peerAuthentications={props.peerAuthentications}
+        tlsStatus={props.tlsStatus}
+        onClose={onClose}
+        istioAPIEnabled={props.istioAPIEnabled}
+      />
+
+      <ConfirmDeleteTrafficRoutingModal
+        destinationRules={DestinationRuleC.fromDrArray(props.destinationRules)}
+        virtualServices={props.virtualServices}
+        k8sHTTPRoutes={props.k8sHTTPRoutes}
+        isOpen={showConfirmDelete}
+        onCancel={hideConfirmDelete}
+        onConfirm={onDelete}
+      />
+    </>
+  );
+};
 
 const mapStateToProps = (state: KialiAppState) => ({
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled

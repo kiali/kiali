@@ -8,17 +8,16 @@ import {
   FormSelect,
   FormSelectOption,
   HelperText,
-  HelperTextItem
+  HelperTextItem,
+  TextInput
 } from '@patternfly/react-core';
-import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
 import { isGatewayHostValid } from '../../utils/IstioConfigUtils';
-import { cellWidth, ICell } from '@patternfly/react-table';
-import { Table, TableBody, TableHeader } from '@patternfly/react-table/deprecated';
-import { PlusCircleIcon, TrashIcon } from '@patternfly/react-icons';
+import { ThProps, IRow } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../components/Pf/PfColors';
 import { isValid } from 'utils/Common';
-import { FormEvent } from 'react';
+import { KialiIcon } from 'config/KialiIcon';
+import { SimpleTable } from 'components/SimpleTable';
 
 export const SERVICE_ENTRY = 'ServiceEntry';
 export const SERVICE_ENTRIES = 'serviceentries';
@@ -36,41 +35,41 @@ const resolution = [NONE, STATIC, DNS];
 
 const protocols = ['HTTP', 'HTTPS', 'GRPC', 'HTTP2', 'MONGO', 'TCP', 'TLS'];
 
-const headerCells: ICell[] = [
+const columns: ThProps[] = [
   {
     title: 'Port Number',
-    transforms: [cellWidth(20) as any],
-    props: {}
+    width: 20
   },
   {
     title: 'Port Name',
-    transforms: [cellWidth(20) as any],
-    props: {}
+    width: 20
   },
   {
     title: 'Protocol',
-    transforms: [cellWidth(20) as any],
-    props: {}
+    width: 20
   },
   {
     title: 'Target Port',
-    transforms: [cellWidth(20) as any],
-    props: {}
+    width: 20
   },
   {
-    title: '',
-    props: {}
+    title: ''
   }
 ];
 
 const noPortsStyle = kialiStyle({
-  marginTop: 15,
+  marginTop: '1rem',
   color: PFColors.Red100
 });
 
+const addPortsStyle = kialiStyle({
+  marginLeft: '0.5rem',
+  marginTop: '0.25rem'
+});
+
 type Props = {
-  serviceEntry: ServiceEntryState;
   onChange: (serviceEntry: ServiceEntryState) => void;
+  serviceEntry: ServiceEntryState;
 };
 
 type FormPort = {
@@ -81,22 +80,22 @@ type FormPort = {
 };
 
 export type ServiceEntryState = {
+  formPorts: FormPort[];
   serviceEntry: ServiceEntrySpec;
   validHosts: boolean;
-  formPorts: FormPort[];
 };
 
 export const initServiceEntry = (): ServiceEntryState => ({
+  formPorts: Array<FormPort>(),
   serviceEntry: {
     location: location[0], // MESH_EXTERNAL
     resolution: resolution[0], // NONE
     ports: []
   },
-  validHosts: false,
-  formPorts: Array<FormPort>()
+  validHosts: false
 });
 
-const isValidPort = (ports: FormPort[]) => {
+const isValidPort = (ports: FormPort[]): boolean => {
   return ports.every(
     (p, i) =>
       isValidName(p.name) &&
@@ -106,7 +105,7 @@ const isValidPort = (ports: FormPort[]) => {
   );
 };
 
-const noDuplicatePortNames = (name: string, index: number, ports: FormPort[]) => {
+const noDuplicatePortNames = (name: string, index: number, ports: FormPort[]): boolean => {
   return ports.every((p, i) => (i !== index ? p.name !== name : true));
 };
 
@@ -146,18 +145,22 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     if (hosts.length === 0) {
       return false;
     }
+
     let isValid = true;
+
     for (let i = 0; i < hosts.length; i++) {
       if (!isGatewayHostValid(hosts[i])) {
         isValid = false;
         break;
       }
     }
+
     return isValid;
   };
 
-  onAddHosts = (_event, value: string) => {
+  onAddHosts = (_event: React.FormEvent, value: string): void => {
     const hosts = value.trim().length === 0 ? [] : value.split(',').map(host => host.trim());
+
     this.setState(
       prevState => {
         prevState.serviceEntry.hosts = hosts;
@@ -170,7 +173,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     );
   };
 
-  onAddLocation = (_event, value: string) => {
+  onAddLocation = (_event: React.FormEvent, value: string): void => {
     this.setState(
       prevState => {
         prevState.serviceEntry.location = value;
@@ -182,7 +185,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     );
   };
 
-  onAddResolution = (_event, value: string) => {
+  onAddResolution = (_event: React.FormEvent, value: string): void => {
     this.setState(
       prevState => {
         prevState.serviceEntry.resolution = value;
@@ -194,15 +197,15 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     );
   };
 
-  onAddPortNumber = (e: FormEvent, value: string) => {
+  onAddPortNumber = (event: React.FormEvent, value: string): void => {
     const formPorts = this.state.formPorts;
-    const eName = e.currentTarget.getAttribute('name') !== null ? e.currentTarget.getAttribute('name') : '0';
-    // @ts-ignore
-    const i = parseInt(eName);
+    const eName = event.currentTarget.getAttribute('name') !== null ? event.currentTarget.getAttribute('name') : '0';
+    const i = parseInt(eName!);
     formPorts[i].number = value;
 
     // service entry
     const se = this.checkDefined(i);
+
     if (!isNaN(parseInt(value)) && se.ports !== undefined) {
       se.ports[i].number = parseInt(value);
     }
@@ -216,15 +219,15 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     );
   };
 
-  onAddPortName = (e: FormEvent, value: string) => {
+  onAddPortName = (event: React.FormEvent, value: string): void => {
     const formPorts = this.state.formPorts;
-    const eName = e.currentTarget.getAttribute('name') !== null ? e.currentTarget.getAttribute('name') : '0';
-    // @ts-ignore
-    const i = parseInt(eName);
+    const eName = event.currentTarget.getAttribute('name') !== null ? event.currentTarget.getAttribute('name') : '0';
+    const i = parseInt(eName!);
     formPorts[i].name = value;
 
     // service entry
     const se = this.checkDefined(i);
+
     if (se.ports !== undefined) {
       se.ports[i].name = value;
     }
@@ -238,15 +241,15 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     );
   };
 
-  onAddPortProtocol = (e: FormEvent, value: string) => {
+  onAddPortProtocol = (event: React.FormEvent, value: string): void => {
     const formPorts = this.state.formPorts;
-    const eName = e.currentTarget.getAttribute('name') !== null ? e.currentTarget.getAttribute('name') : '0';
-    // @ts-ignore
-    const i = parseInt(eName);
+    const eName = event.currentTarget.getAttribute('name') !== null ? event.currentTarget.getAttribute('name') : '0';
+    const i = parseInt(eName!);
     formPorts[i].protocol = value;
 
     // service entry
     const se = this.checkDefined(i);
+
     if (se.ports !== undefined) {
       se.ports[i].protocol = value;
     }
@@ -260,15 +263,15 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     );
   };
 
-  onAddTargetPort = (e: FormEvent, value: string) => {
+  onAddTargetPort = (event: React.FormEvent, value: string): void => {
     const formPorts = this.state.formPorts;
-    const eName = e.currentTarget.getAttribute('name') !== null ? e.currentTarget.getAttribute('name') : '0';
-    // @ts-ignore
-    const i = parseInt(eName);
+    const eName = event.currentTarget.getAttribute('name') !== null ? event.currentTarget.getAttribute('name') : '0';
+    const i = parseInt(eName!);
     formPorts[i].targetPort = value;
 
     // service entry
     const se = this.checkDefined(i);
+
     if (!isNaN(parseInt(value)) && se.ports !== undefined) {
       se.ports[i].targetPort = parseInt(value);
     }
@@ -282,8 +285,9 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     );
   };
 
-  checkDefined = (index: number) => {
+  checkDefined = (index: number): ServiceEntrySpec => {
     const se = this.state.serviceEntry;
+
     if (typeof se.ports !== 'undefined' && typeof se.ports[index] === 'undefined') {
       const np: Port = {
         name: '',
@@ -292,16 +296,18 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
       };
       se.ports.splice(index, 0, np);
     }
+
     return se;
   };
 
-  onAddNewPort = () => {
+  onAddNewPort = (): void => {
     const newPort: FormPort = {
       name: '',
       protocol: protocols[0],
       number: '',
       targetPort: ''
     };
+
     const newports = this.state.formPorts;
     newports.push(newPort);
 
@@ -313,7 +319,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     );
   };
 
-  handleDelete = (_: any, index: number) => {
+  handleDelete = (_event: React.MouseEvent, index: number): void => {
     const state = this.state.formPorts;
     state.splice(index, 1);
     const se = this.state.serviceEntry;
@@ -322,85 +328,59 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     this.setState({ formPorts: state, serviceEntry: se }, () => this.props.onChange(this.state));
   };
 
-  rows() {
-    return (this.state.formPorts || [])
-      .map((p, i) => ({
-        key: 'portNew' + i,
-        cells: [
-          <>
-            <TextInput
-              value={p.number}
-              id={'addPortNumber' + i}
-              aria-describedby="add port number"
-              name={i.toString()}
-              placeholder="80"
-              onChange={this.onAddPortNumber}
-              validated={isValid(isValidPortNumber(p.number))}
-            />
-          </>,
-          <>
-            <TextInput
-              value={p.name}
-              id={'addPortName' + i}
-              aria-describedby="add port name"
-              name={i.toString()}
-              onChange={this.onAddPortName}
-              validated={isValid(isValidName(p.name) && noDuplicatePortNames(p.name, i, this.state.formPorts))}
-            />
-          </>,
-          <>
-            <FormSelect
-              value={p.protocol}
-              id={'addPortProtocol' + i}
-              name={i.toString()}
-              onChange={this.onAddPortProtocol}
-            >
-              {protocols.map((option, index) => (
-                <FormSelectOption key={'p' + index} value={option} label={option} />
-              ))}
-            </FormSelect>
-          </>,
-          <>
-            <TextInput
-              value={p.targetPort}
-              id={'addTargetPort' + i}
-              aria-describedby="add target port"
-              name={i.toString()}
-              onChange={this.onAddTargetPort}
-              validated={isValid(isValidTargetPort(p.targetPort))}
-            />
-          </>,
-          <>
-            <Button
-              id={'deleteBtn' + i}
-              variant={ButtonVariant.link}
-              icon={<TrashIcon />}
-              style={{ padding: 0 }}
-              onClick={e => this.handleDelete(e, i)}
-            />
-          </>
-        ]
-      }))
-      .concat([
-        {
-          key: 'portNew',
-          cells: [
-            <>
-              <Button
-                id="addServerBtn"
-                variant={ButtonVariant.link}
-                icon={<PlusCircleIcon />}
-                style={{ padding: 0 }}
-                onClick={this.onAddNewPort}
-              >
-                {' '}
-                Add Port
-              </Button>
-            </>
-          ]
-        }
-      ]);
-  }
+  rows = (): IRow[] => {
+    return (this.state.formPorts ?? []).map((p, i) => ({
+      key: `portNew_${i}`,
+      cells: [
+        <TextInput
+          value={p.number}
+          id={`addPortNumber_${i}`}
+          aria-describedby="add port number"
+          name={i.toString()}
+          placeholder="80"
+          onChange={this.onAddPortNumber}
+          validated={isValid(isValidPortNumber(p.number))}
+        />,
+
+        <TextInput
+          value={p.name}
+          id={`addPortName_${i}`}
+          aria-describedby="add port name"
+          name={i.toString()}
+          onChange={this.onAddPortName}
+          validated={isValid(isValidName(p.name) && noDuplicatePortNames(p.name, i, this.state.formPorts))}
+        />,
+
+        <FormSelect
+          value={p.protocol}
+          id={`addPortProtocol_${i}`}
+          name={i.toString()}
+          onChange={this.onAddPortProtocol}
+        >
+          {protocols.map((option, index) => (
+            <FormSelectOption key={`p_${index}`} value={option} label={option} />
+          ))}
+        </FormSelect>,
+
+        <TextInput
+          value={p.targetPort}
+          id={`addTargetPort_${i}`}
+          aria-describedby="add target port"
+          name={i.toString()}
+          onChange={this.onAddTargetPort}
+          validated={isValid(isValidTargetPort(p.targetPort))}
+        />,
+
+        <Button
+          id={`deleteBtn_${i}`}
+          variant={ButtonVariant.link}
+          icon={<KialiIcon.Trash />}
+          style={{ padding: 0 }}
+          onClick={e => this.handleDelete(e, i)}
+        />
+      ]
+    }));
+  };
 
   render() {
     return (
@@ -416,6 +396,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
             onChange={this.onAddHosts}
             validated={isValid(this.state.validHosts)}
           />
+
           <FormHelperText>
             <HelperText>
               <HelperTextItem>
@@ -426,6 +407,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
             </HelperText>
           </FormHelperText>
         </FormGroup>
+
         <FormGroup label="Location" isRequired={true} fieldId="location">
           <FormSelect
             value={this.state.serviceEntry.location}
@@ -434,19 +416,29 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
             onChange={this.onAddLocation}
           >
             {location.map((option, index) => (
-              <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
+              <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
             ))}
           </FormSelect>
         </FormGroup>
+
         <FormGroup label="Ports" fieldId="ports" isRequired={true}>
-          <Table aria-label="Ports" cells={headerCells} rows={this.rows()}>
-            <TableHeader />
-            <TableBody />
-          </Table>
+          <SimpleTable label="Ports" columns={columns} rows={this.rows()} />
+
+          <Button
+            id="addPortBtn"
+            variant={ButtonVariant.link}
+            icon={<KialiIcon.AddMore />}
+            className={addPortsStyle}
+            onClick={this.onAddNewPort}
+          >
+            Add Port
+          </Button>
+
           {(!this.state.serviceEntry.ports || this.state.serviceEntry.ports.length === 0) && (
             <div className={noPortsStyle}>ServiceEntry has no Ports defined</div>
           )}
         </FormGroup>
+
         <FormGroup label="Resolution" isRequired={true} fieldId="resolution">
           <FormSelect
             value={this.state.serviceEntry.resolution}
@@ -455,7 +447,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
             onChange={this.onAddResolution}
           >
             {resolution.map((option, index) => (
-              <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
+              <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
             ))}
           </FormSelect>
         </FormGroup>

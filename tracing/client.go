@@ -2,9 +2,10 @@ package tracing
 
 import (
 	"context"
+	"crypto/tls"
+	"encoding/base64"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -12,26 +13,22 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/durationpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger"
 	"github.com/kiali/kiali/tracing/jaeger/model"
-	jsonConv "github.com/kiali/kiali/tracing/jaeger/model/converter/json"
-	jsonModel "github.com/kiali/kiali/tracing/jaeger/model/json"
 	"github.com/kiali/kiali/tracing/tempo"
 	"github.com/kiali/kiali/util/grpcutil"
 	"github.com/kiali/kiali/util/httputil"
 )
 
 const (
-	JAEGER = "jaeger"
-	TEMPO  = "tempo"
+	newClientRetryInterval = 30 * time.Second
 )
 
 // ClientInterface for mocks (only mocked function are necessary here)
@@ -42,177 +39,197 @@ type ClientInterface interface {
 	GetServiceStatus() (available bool, err error)
 }
 
-// HTTPClientInterface for mocks (only mocked function are necessary here)
+// HTTPClientInterface for Mocks, also for Tempo or Jaeger
 type HTTPClientInterface interface {
-	GetAppTracesHTTP(client http.Client, baseURL *url.URL, namespace, app string, q models.TracingQuery) (response *model.TracingResponse, err error)
+	GetAppTracesHTTP(client http.Client, baseURL *url.URL, serviceName string, q models.TracingQuery) (response *model.TracingResponse, err error)
 	GetTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (*model.TracingSingleTrace, error)
 	GetServiceStatusHTTP(client http.Client, baseURL *url.URL) (bool, error)
 }
 
-// Client for Jaeger API.
+// GRPCClientInterface for Mocks, also for Tempo or Jaeger
+type GRPCClientInterface interface {
+	FindTraces(context context.Context, app string, q models.TracingQuery) (response *model.TracingResponse, err error)
+	GetTrace(context context.Context, traceID string) (*model.TracingSingleTrace, error)
+	GetServices(context context.Context) (bool, error)
+}
+
+// Client for Tracing API.
 type Client struct {
 	ClientInterface
 	httpTracingClient HTTPClientInterface
-	grpcClient        model.QueryServiceClient
+	grpcClient        GRPCClientInterface
 	httpClient        http.Client
 	baseURL           *url.URL
 	ctx               context.Context
 }
 
-func NewClient(token string) (*Client, error) {
-	cfg := config.Get()
+type basicAuth struct {
+	Header string
+}
+
+func (c *basicAuth) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
+	return map[string]string{
+		"Authorization": c.Header,
+	}, nil
+}
+
+func (c *basicAuth) RequireTransportSecurity() bool {
+	return true
+}
+
+// NewClient creates a tracing Client. If it fails to create the client for any reason,
+// it will retry indefinitely until the context is cancelled.
+func NewClient(ctx context.Context, cfg *config.Config, token string) (*Client, error) {
+	var (
+		client *Client
+		err    error
+	)
+	retryErr := wait.PollUntilContextCancel(ctx, newClientRetryInterval, true, func(ctx context.Context) (bool, error) {
+		client, err = newClient(ctx, cfg, token)
+		if err != nil {
+			log.Errorf("Error creating tracing client: %v. Retrying in %s", err, newClientRetryInterval)
+			return false, nil
+		}
+
+		return true, nil
+	})
+	if retryErr != nil {
+		log.Errorf("Error creating tracing client: %v. Will not retry.", err)
+		return nil, err
+	}
+
+	return client, nil
+}
+
+func newClient(ctx context.Context, cfg *config.Config, token string) (*Client, error) {
 	cfgTracing := cfg.ExternalServices.Tracing
-	var httpTracingClient HTTPClientInterface
 	if !cfgTracing.Enabled {
-		return nil, errors.New("jaeger is not enabled")
-	} else {
-		auth := cfgTracing.Auth
-		if auth.UseKialiToken {
-			auth.Token = token
-		}
-		ctx := context.Background()
+		return nil, errors.New("tracing is not enabled")
+	}
+	var httpTracingClient HTTPClientInterface
+	auth := cfgTracing.Auth
+	if auth.UseKialiToken {
+		auth.Token = token
+	}
 
-		u, errParse := url.Parse(cfgTracing.InClusterURL)
-		if !cfg.InCluster {
-			u, errParse = url.Parse(cfgTracing.URL)
-		}
-		if errParse != nil {
-			log.Errorf("Error parsing Jaeger URL: %s", errParse)
-			return nil, errParse
-		}
+	u, errParse := url.Parse(cfgTracing.InClusterURL)
+	if !cfg.InCluster {
+		u, errParse = url.Parse(cfgTracing.URL)
+	}
+	if errParse != nil {
+		log.Errorf("Error parsing Tracing URL: %s", errParse)
+		return nil, errParse
+	}
 
-		if cfg.ExternalServices.Tracing.Provider == JAEGER {
-			httpTracingClient = jaeger.JaegerHTTPClient{}
-		} else {
-			httpTracingClient = tempo.OtelHTTPClient{}
-		}
+	port := u.Port()
+	if port == "" {
+		p, _ := net.LookupPort("tcp", u.Scheme)
+		port = strconv.Itoa(p)
+	}
+	opts, err := grpcutil.GetAuthDialOptions(u.Scheme == "https", &auth)
+	if err != nil {
+		log.Errorf("Error while building GRPC dial options: %v", err)
+		return nil, err
+	}
+	address := fmt.Sprintf("%s:%s", u.Hostname(), port)
+	log.Tracef("%s GRPC client info: address=%s, auth.type=%s", cfgTracing.Provider, address, auth.Type)
 
-		if cfgTracing.UseGRPC {
-			// GRPC client
+	if cfgTracing.UseGRPC && cfgTracing.Provider != config.TempoProvider {
 
-			// Note: jaeger-query does not have built-in secured communication, at the moment it is only achieved through reverse proxies (cf https://github.com/jaegertracing/jaeger/issues/1718).
-			// When using the GRPC client, if a proxy is used it has to support GRPC.
-			// Basic and Token auth are in theory implemented for the GRPC client (see package grpcutil) but were not tested because openshift's oauth-proxy doesn't support GRPC at the time.
-			// Leaving some commented-out code below -- perhaps useful, perhaps not -- to consider when testing secured GRPC.
-			// if auth.Token != "" {
-			// 	requestMetadata := metadata.New(map[string]string{
-			// 		spanstore.BearerTokenKey: auth.Token,
-			// 	})
-			// 	ctx = metadata.NewOutgoingContext(ctx, requestMetadata)
-			// }
-
-			port := u.Port()
-			if port == "" {
-				p, _ := net.LookupPort("tcp", u.Scheme)
-				port = strconv.Itoa(p)
-			}
-			opts, err := grpcutil.GetAuthDialOptions(u.Scheme == "https", &auth)
+		var client GRPCClientInterface
+		// Note: jaeger-query does not have built-in secured communication, at the moment it is only achieved through reverse proxies (cf https://github.com/jaegertracing/jaeger/issues/1718).
+		// When using the GRPC client, if a proxy is used it has to support GRPC.
+		// Basic and Token auth are in theory implemented for the GRPC client (see package grpcutil) but were not tested because openshift's oauth-proxy doesn't support GRPC at the time.
+		// Leaving some commented-out code below -- perhaps useful, perhaps not -- to consider when testing secured GRPC.
+		// if auth.Token != "" {
+		// 	requestMetadata := metadata.New(map[string]string{
+		// 		spanstore.BearerTokenKey: auth.Token,
+		// 	})
+		// 	ctx = metadata.NewOutgoingContext(ctx, requestMetadata)
+		// }
+		conn, err := grpc.Dial(address, opts...)
+		if err == nil {
+			cc := model.NewQueryServiceClient(conn)
+			client, err = jaeger.NewGRPCJaegerClient(cc)
 			if err != nil {
-				log.Errorf("Error while building GRPC dial options: %v", err)
 				return nil, err
 			}
-			address := fmt.Sprintf("%s:%s", u.Hostname(), port)
-			log.Tracef("%s GRPC client info: address=%s, auth.type=%s", cfgTracing.Provider, address, auth.Type)
-
-			conn, err := grpc.Dial(address, opts...)
-			if err != nil {
-				log.Errorf("Error while establishing GRPC connection: %v", err)
-				return nil, err
-			}
-			client := model.NewQueryServiceClient(conn)
 			log.Infof("Create %s GRPC client %s", cfgTracing.Provider, address)
 			return &Client{httpTracingClient: httpTracingClient, grpcClient: client, ctx: ctx}, nil
 		} else {
-			// Legacy HTTP client
-			log.Tracef("Using legacy HTTP client for Jaeger: url=%v, auth.type=%s", u, auth.Type)
-			timeout := time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout) * time.Second
-			transport, err := httputil.CreateTransport(&auth, &http.Transport{}, timeout, nil)
+			log.Errorf("Error creating client %s", err.Error())
+			return nil, nil
+		}
+
+	} else {
+		// Legacy HTTP client
+		log.Tracef("Using legacy HTTP client for Tracing: url=%v, auth.type=%s", u, auth.Type)
+		timeout := time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout) * time.Second
+		transport, err := httputil.CreateTransport(&auth, &http.Transport{}, timeout, nil)
+		if err != nil {
+			return nil, err
+		}
+		client := http.Client{Transport: transport, Timeout: timeout}
+		log.Infof("Create Tracing HTTP client %s", u)
+
+		if cfgTracing.Provider == config.TempoProvider {
+			httpTracingClient, err = tempo.NewOtelClient(client, u)
+			if err != nil {
+				log.Errorf("Error creating HTTP client %s", err.Error())
+				return nil, err
+			}
+
+			// Tempo uses gRPC stream client just for search
+			// Get a single trace requires the http client
+			if cfgTracing.UseGRPC {
+				var dialOps []grpc.DialOption
+				if cfgTracing.Auth.Type == "basic" {
+					dialOps = append(dialOps, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
+					dialOps = append(dialOps, grpc.WithPerRPCCredentials(&basicAuth{
+						Header: fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", cfgTracing.Auth.Username, cfgTracing.Auth.Password)))),
+					}))
+				} else {
+					dialOps = append(dialOps, grpc.WithTransportCredentials(insecure.NewCredentials()))
+				}
+				grpcAddress := fmt.Sprintf("%s:%d", u.Hostname(), cfg.ExternalServices.Tracing.GrpcPort)
+				clientConn, _ := grpc.Dial(grpcAddress, dialOps...)
+				streamClient, err := tempo.NewgRPCClient(client, u, clientConn)
+				if err != nil {
+					log.Errorf("Error creating gRPC Tempo Client %s", err.Error())
+					return nil, nil
+				}
+				return &Client{httpTracingClient: httpTracingClient, grpcClient: streamClient, httpClient: client, baseURL: u, ctx: ctx}, nil
+			}
+		} else {
+			httpTracingClient, err = jaeger.NewJaegerClient(client, u)
 			if err != nil {
 				return nil, err
 			}
-			client := http.Client{Transport: transport, Timeout: timeout}
-			log.Infof("Create Jaeger HTTP client %s", u)
-			return &Client{httpTracingClient: httpTracingClient, httpClient: client, baseURL: u, ctx: ctx}, nil
 		}
-
+		return &Client{httpTracingClient: httpTracingClient, httpClient: client, baseURL: u, ctx: ctx}, nil
 	}
 }
 
 // GetAppTraces fetches traces of an app
 func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*model.TracingResponse, error) {
+	serviceName := BuildTracingServiceName(namespace, app)
 	if in.grpcClient == nil {
-		return in.httpTracingClient.GetAppTracesHTTP(in.httpClient, in.baseURL, namespace, app, q)
+		return in.httpTracingClient.GetAppTracesHTTP(in.httpClient, in.baseURL, serviceName, q)
 	}
-	jaegerServiceName := jaeger.BuildTracingServiceName(namespace, app)
-	findTracesRQ := &model.FindTracesRequest{
-		Query: &model.TraceQueryParameters{
-			ServiceName:  jaegerServiceName,
-			StartTimeMin: timestamppb.New(q.Start),
-			StartTimeMax: timestamppb.New(q.End),
-			Tags:         q.Tags,
-			DurationMin:  durationpb.New(q.MinDuration),
-			SearchDepth:  int32(q.Limit),
-		},
-	}
-	ctx, cancel := context.WithTimeout(in.ctx, time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout)*time.Second)
-	defer cancel()
-
-	stream, err := in.grpcClient.FindTraces(ctx, findTracesRQ)
-	if err != nil {
-		err = fmt.Errorf("GetAppTraces, Jaeger GRPC client error: %v", err)
-		log.Error(err.Error())
-		return nil, err
-	}
-
-	tracesMap, err := readSpansStream(stream)
-	if err != nil {
-		return nil, err
-	}
-	r := model.TracingResponse{
-		Data:               []jsonModel.Trace{},
-		TracingServiceName: jaegerServiceName,
-	}
-	for _, t := range tracesMap {
-		converted := jsonConv.FromDomain(t)
-		r.Data = append(r.Data, *converted)
-	}
-
-	return &r, nil
+	return in.grpcClient.FindTraces(in.ctx, serviceName, q)
 }
 
 // GetTraceDetail fetches a specific trace from its ID
 func (in *Client) GetTraceDetail(strTraceID string) (*model.TracingSingleTrace, error) {
-	if in.grpcClient == nil {
-		return in.httpTracingClient.GetTraceDetailHTTP(in.httpClient, in.baseURL, strTraceID)
+	cfg := config.Get()
+	if in.grpcClient == nil || cfg.ExternalServices.Tracing.Provider == config.TempoProvider {
+		if in.httpTracingClient != nil {
+			return in.httpTracingClient.GetTraceDetailHTTP(in.httpClient, in.baseURL, strTraceID)
+		} else {
+			return nil, fmt.Errorf("error getting trace details")
+		}
 	}
-	traceID, err := model.TraceIDFromString(strTraceID)
-	if err != nil {
-		return nil, fmt.Errorf("GetTraceDetail, invalid trace ID: %v", err)
-	}
-	bTraceId := make([]byte, 16)
-	_, err = traceID.MarshalTo(bTraceId)
-	if err != nil {
-		return nil, fmt.Errorf("GetTraceDetail, invalid marshall: %v", err)
-	}
-	getTraceRQ := &model.GetTraceRequest{TraceId: bTraceId}
-
-	ctx, cancel := context.WithTimeout(in.ctx, 4*time.Second)
-	defer cancel()
-
-	stream, err := in.grpcClient.GetTrace(ctx, getTraceRQ)
-	if err != nil {
-		return nil, fmt.Errorf("GetTraceDetail, Jaeger GRPC client error: %v", err)
-	}
-	tracesMap, err := readSpansStream(stream)
-	if err != nil {
-		return nil, err
-	}
-	if trace, ok := tracesMap[traceID]; ok {
-		converted := jsonConv.FromDomain(trace)
-		return &model.TracingSingleTrace{Data: *converted}, nil
-	}
-	// Not found
-	return nil, nil
+	return in.grpcClient.GetTrace(in.ctx, strTraceID)
 }
 
 // GetErrorTraces fetches number of traces in error for the given app
@@ -241,44 +258,13 @@ func (in *Client) GetServiceStatus() (bool, error) {
 		return in.httpTracingClient.GetServiceStatusHTTP(in.httpClient, in.baseURL)
 	}
 
-	ctx, cancel := context.WithTimeout(in.ctx, 4*time.Second)
-	defer cancel()
-
-	_, err := in.grpcClient.GetServices(ctx, &model.GetServicesRequest{})
-	return err == nil, err
+	return in.grpcClient.GetServices(in.ctx)
 }
 
-type SpansStreamer interface {
-	Recv() (*model.SpansResponseChunk, error)
-	grpc.ClientStream
-}
-
-func readSpansStream(stream SpansStreamer) (map[model.TraceID]*model.Trace, error) {
-	tracesMap := make(map[model.TraceID]*model.Trace)
-	for received, err := stream.Recv(); err != io.EOF; received, err = stream.Recv() {
-		if err != nil {
-			if status.Code(err) == codes.DeadlineExceeded {
-				log.Trace("Jaeger GRPC client timeout")
-				break
-			}
-			log.Errorf("jaeger GRPC client, stream error: %v", err)
-			return nil, fmt.Errorf("Jaeger GRPC client, stream error: %v", err)
-		}
-		for i, span := range received.Spans {
-			traceId := model.TraceID{}
-			err := traceId.Unmarshal(span.TraceId)
-			if err != nil {
-				log.Errorf("Jaeger TraceId unmarshall error: %v", err)
-				continue
-			}
-			if trace, ok := tracesMap[traceId]; ok {
-				trace.Spans = append(trace.Spans, received.Spans[i])
-			} else {
-				tracesMap[traceId] = &model.Trace{
-					Spans: []*model.Span{received.Spans[i]},
-				}
-			}
-		}
+func BuildTracingServiceName(namespace, app string) string {
+	conf := config.Get()
+	if conf.ExternalServices.Tracing.NamespaceSelector {
+		return app + "." + namespace
 	}
-	return tracesMap, nil
+	return app
 }

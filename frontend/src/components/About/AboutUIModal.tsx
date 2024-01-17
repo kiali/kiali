@@ -10,23 +10,34 @@ import {
   ButtonVariant,
   Alert
 } from '@patternfly/react-core';
+import kialiIconAbout from '../../assets/img/icon-aboutbkg.svg';
 import { ExternalServiceInfo, Status, StatusKey } from '../../types/StatusState';
 import { config, kialiLogoDark } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
-
-type AboutUIModalState = {
-  showModal: boolean;
-};
+import { TEMPO } from '../../types/Tracing';
+import { GetTracingURL } from '../TracingIntegration/TracesComponent';
 
 type AboutUIModalProps = {
-  status: Status;
   externalServices: ExternalServiceInfo[];
+  isOpen: boolean;
+  onClose: () => void;
+  status: Status;
   warningMessages: string[];
 };
 
+const modalStyle = kialiStyle({
+  height: '100%',
+  gridTemplateColumns: 'auto'
+});
+
 const iconStyle = kialiStyle({
-  marginRight: '10px'
+  marginTop: '1rem',
+  marginRight: '0.5rem'
+});
+
+const websiteStyle = kialiStyle({
+  marginRight: '2rem'
 });
 
 const textContentStyle = kialiStyle({
@@ -37,94 +48,13 @@ const textContentStyle = kialiStyle({
   }
 });
 
-export class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState> {
-  constructor(props: AboutUIModalProps) {
-    super(props);
-    this.state = { showModal: false };
-  }
-
-  open = () => {
-    this.setState({ showModal: true });
-  };
-
-  close = () => {
-    this.setState({ showModal: false });
-  };
-
-  render() {
-    const coreVersion =
-      this.props.status[StatusKey.KIALI_CORE_COMMIT_HASH] === '' ||
-      this.props.status[StatusKey.KIALI_CORE_COMMIT_HASH] === 'unknown'
-        ? this.props.status[StatusKey.KIALI_CORE_VERSION]
-        : `${this.props.status[StatusKey.KIALI_CORE_VERSION]} (${this.props.status[StatusKey.KIALI_CORE_COMMIT_HASH]})`;
-    const containerVersion = this.props.status[StatusKey.KIALI_CONTAINER_VERSION];
-    const meshVersion = this.props.status[StatusKey.MESH_NAME]
-      ? `${this.props.status[StatusKey.MESH_NAME]} ${this.props.status[StatusKey.MESH_VERSION] || ''}`
-      : 'Unknown';
-
-    return (
-      <AboutModal
-        isOpen={this.state.showModal}
-        onClose={this.close}
-        brandImageSrc={kialiLogoDark}
-        brandImageAlt="Kiali Logo"
-        productName="Kiali"
-      >
-        <TextContent className={textContentStyle}>
-          <TextList component="dl">
-            <TextListItem key={'kiali-name'} component="dt">
-              Kiali
-            </TextListItem>
-            <TextListItem key={'kiali-version'} component="dd">
-              {coreVersion!}
-            </TextListItem>
-            <TextListItem key={'kiali-container-name'} component="dt">
-              Kiali Container
-            </TextListItem>
-            <TextListItem key={'kiali-container-version'} component="dd">
-              {containerVersion!}
-            </TextListItem>
-            <TextListItem key={'service-mesh-name'} component="dt">
-              Service Mesh
-            </TextListItem>
-            <TextListItem key={'service-mesh-version'} component="dd">
-              {meshVersion!}
-            </TextListItem>
-          </TextList>
-        </TextContent>
-        {this.props.warningMessages.length > 0 && (
-          <Alert variant="warning" title={this.props.warningMessages[0]} style={{ marginTop: '1em' }} />
-        )}
-        <TextContent className={textContentStyle}>
-          <Title headingLevel="h3" size={TitleSizes.xl} style={{ padding: '20px 0px 20px' }}>
-            Components
-          </Title>
-          <TextList component="dl">
-            {this.props.externalServices && this.props.externalServices.map(this.renderComponent)}
-          </TextList>
-          {this.renderWebsiteLink()}
-          {this.renderProjectLink()}
-        </TextContent>
-      </AboutModal>
-    );
-  }
-
-  private renderComponent = (externalService: ExternalServiceInfo) => {
-    const name = externalService.version ? externalService.name : `${externalService.name} URL`;
-    const additionalInfo = this.additionalComponentInfoContent(externalService);
-    return (
-      <React.Fragment key={name + additionalInfo}>
-        <TextListItem component="dt">{name}</TextListItem>
-        <TextListItem component="dd">{additionalInfo}</TextListItem>
-      </React.Fragment>
-    );
-  };
-
-  private additionalComponentInfoContent = (externalService: ExternalServiceInfo) => {
+export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalProps) => {
+  const additionalComponentInfoContent = (externalService: ExternalServiceInfo) => {
     if (!externalService.version && !externalService.url) {
       return 'N/A';
     }
-    const version = externalService.version ? externalService.version : '';
+
+    const version = externalService.version ?? '';
     const url = externalService.url ? (
       <a href={externalService.url} target="_blank" rel="noopener noreferrer">
         {externalService.url}
@@ -132,6 +62,7 @@ export class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModa
     ) : (
       ''
     );
+
     return (
       <>
         {version} {url}
@@ -139,11 +70,40 @@ export class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModa
     );
   };
 
-  private renderWebsiteLink = () => {
-    if (config.about && config.about.website) {
+  const renderTempo = (externalServices: ExternalServiceInfo[]) => {
+    const tempoService = externalServices.find(service => service.name === TEMPO);
+    const grafanaService = externalServices.find(service => service.name === 'Grafana');
+
+    if (tempoService && grafanaService && grafanaService.url) {
+      tempoService.url = GetTracingURL(externalServices);
+      return renderComponent(tempoService);
+    } else {
+      return <></>;
+    }
+  };
+
+  const renderComponent = (externalService: ExternalServiceInfo) => {
+    const name = externalService.version ? externalService.name : `${externalService.name} URL`;
+    const additionalInfo = additionalComponentInfoContent(externalService);
+    return (
+      <React.Fragment key={name}>
+        <TextListItem component="dt">{name.charAt(0).toUpperCase() + name.slice(1)}</TextListItem>
+        <TextListItem component="dd">{additionalInfo}</TextListItem>
+      </React.Fragment>
+    );
+  };
+
+  const renderWebsiteLink = () => {
+    if (config?.about?.website) {
       return (
-        // @ts-ignore
-        <Button component="a" href={config.about.website.url} variant={ButtonVariant.link} target="_blank">
+        <Button
+          className={websiteStyle}
+          component="a"
+          href={config.about.website.url}
+          variant={ButtonVariant.link}
+          target="_blank"
+          isInline
+        >
           <KialiIcon.Website className={iconStyle} />
           {config.about.website.linkText}
         </Button>
@@ -153,11 +113,10 @@ export class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModa
     return null;
   };
 
-  private renderProjectLink = () => {
-    if (config.about && config.about.project) {
+  const renderProjectLink = () => {
+    if (config?.about?.project) {
       return (
-        // @ts-ignore
-        <Button component="a" href={config.about.project.url} variant={ButtonVariant.link} target="_blank">
+        <Button component="a" href={config.about.project.url} variant={ButtonVariant.link} target="_blank" isInline>
           <KialiIcon.Repository className={iconStyle} />
           {config.about.project.linkText}
         </Button>
@@ -166,4 +125,73 @@ export class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModa
 
     return null;
   };
-}
+
+  const coreVersion =
+    props.status[StatusKey.KIALI_CORE_COMMIT_HASH] === '' ||
+    props.status[StatusKey.KIALI_CORE_COMMIT_HASH] === 'unknown'
+      ? props.status[StatusKey.KIALI_CORE_VERSION]
+      : `${props.status[StatusKey.KIALI_CORE_VERSION]} (${props.status[StatusKey.KIALI_CORE_COMMIT_HASH]})`;
+
+  const containerVersion = props.status[StatusKey.KIALI_CONTAINER_VERSION];
+
+  const meshVersion = props.status[StatusKey.MESH_NAME]
+    ? `${props.status[StatusKey.MESH_NAME]} ${props.status[StatusKey.MESH_VERSION] ?? ''}`
+    : 'Unknown';
+
+  const filteredServices = props.externalServices.filter(element => element.name !== TEMPO);
+  const componentList = filteredServices.map(externalService => renderComponent(externalService));
+  const tempoComponent = renderTempo(props.externalServices);
+
+  return (
+    <AboutModal
+      backgroundImageSrc={kialiIconAbout}
+      brandImageSrc={kialiLogoDark}
+      brandImageAlt="Kiali Logo"
+      className={modalStyle}
+      isOpen={props.isOpen}
+      onClose={props.onClose}
+      productName="Kiali"
+    >
+      <TextContent className={textContentStyle}>
+        <TextList component="dl">
+          <TextListItem key="kiali-name" component="dt">
+            Kiali
+          </TextListItem>
+          <TextListItem key="kiali-version" component="dd">
+            {coreVersion!}
+          </TextListItem>
+          <TextListItem key="kiali-container-name" component="dt">
+            Kiali Container
+          </TextListItem>
+          <TextListItem key="kiali-container-version" component="dd">
+            {containerVersion!}
+          </TextListItem>
+          <TextListItem key="service-mesh-name" component="dt">
+            Service Mesh
+          </TextListItem>
+          <TextListItem key="service-mesh-version" component="dd">
+            {meshVersion!}
+          </TextListItem>
+        </TextList>
+      </TextContent>
+
+      {props.warningMessages.length > 0 && (
+        <Alert variant="warning" title={props.warningMessages[0]} style={{ marginTop: '1rem' }} />
+      )}
+
+      <TextContent className={textContentStyle}>
+        <Title headingLevel="h3" size={TitleSizes.xl} style={{ padding: '1.25rem 0 1.25rem' }}>
+          Components
+        </Title>
+
+        <TextList component="dl">
+          {componentList}
+          {tempoComponent}
+        </TextList>
+
+        {renderWebsiteLink()}
+        {renderProjectLink()}
+      </TextContent>
+    </AboutModal>
+  );
+};

@@ -1,42 +1,47 @@
-import { When, And, Then } from '@badeball/cypress-cucumber-preprocessor';
+import { When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
 import { clusterParameterExists } from './navigation';
 
-function openTab(tab: string) {
+const openTab = (tab: string): void => {
   cy.get('#basic-tabs').should('be.visible').contains(tab).click();
-}
+};
 
-function openEnvoyTab(tab: string) {
+const openEnvoyTab = (tab: string): void => {
   cy.get('#envoy-details').should('be.visible').contains(tab).click();
-}
+};
 
 Then('user sees details information for workload', () => {
   cy.getBySel('workload-description-card').within(() => {
     cy.get('#pfbadge-A').parent().parent().parent().contains('details'); // App
     cy.get('#pfbadge-W').parent().parent().parent().contains('details-v1'); // Workload
     cy.get('#pfbadge-S').parent().parent().parent().contains('details'); // Service
+
     clusterParameterExists(false);
   });
 });
 
 Then('user sees workload inbound and outbound traffic information', () => {
   openTab('Traffic');
+
   cy.contains('Inbound Traffic');
   cy.contains('No Inbound Traffic').should('not.exist');
   cy.contains('No Outbound Traffic');
 });
 
 Then('user sees workload inbound metrics information', () => {
-  cy.intercept(Cypress.config('baseUrl') + `/api/namespaces/bookinfo/workloads/details-v1/dashboard*`).as(
+  cy.intercept(`${Cypress.config('baseUrl')}/api/namespaces/bookinfo/workloads/details-v1/dashboard*`).as(
     'fetchMetrics'
   );
+
   openTab('Inbound Metrics');
   cy.wait('@fetchMetrics');
   cy.waitForReact(1000, '#root');
+
   cy.getReact('IstioMetricsComponent', { props: { 'data-test': 'inbound-metrics-component' } })
     // HOCs can match the component name. This filters the HOCs for just the bare component.
     .then(
-      (metricsComponents: any) => metricsComponents.filter(component => component.name === 'IstioMetricsComponent')[0]
+      (metricsComponents: any) =>
+        metricsComponents.filter((component: any) => component.name === 'IstioMetricsComponent')[0]
     )
     .getCurrentState()
     .then(state => {
@@ -45,16 +50,19 @@ Then('user sees workload inbound metrics information', () => {
 });
 
 Then('user sees workload outbound metrics information', () => {
-  cy.intercept(Cypress.config('baseUrl') + `/api/namespaces/bookinfo/workloads/details-v1/dashboard*`).as(
+  cy.intercept(`${Cypress.config('baseUrl')}/api/namespaces/bookinfo/workloads/details-v1/dashboard*`).as(
     'fetchMetrics'
   );
+
   openTab('Outbound Metrics');
   cy.wait('@fetchMetrics');
   cy.waitForReact(1000, '#root');
+
   cy.getReact('IstioMetricsComponent', { props: { 'data-test': 'outbound-metrics-component' } })
     // HOCs can match the component name. This filters the HOCs for just the bare component.
     .then(
-      (metricsComponents: any) => metricsComponents.filter(component => component.name === 'IstioMetricsComponent')[0]
+      (metricsComponents: any) =>
+        metricsComponents.filter((component: any) => component.name === 'IstioMetricsComponent')[0]
     )
     .getCurrentState()
     .then(state => {
@@ -62,16 +70,19 @@ Then('user sees workload outbound metrics information', () => {
     });
 });
 
-And('user can filter spans by workload', () => {
+When('user can filter spans by workload', () => {
   cy.get('select[aria-label="filter_select_type"]').select('Workload');
   cy.get('input[placeholder="Filter by Workload"]').type('details-v1{enter}');
-  cy.get('button[label="details-v1"]').should('be.visible').click();
+  cy.get('li[label="details-v1"]').should('be.visible').find('button').click();
+
   getCellsForCol('App / Workload').each($cell => {
     cy.wrap($cell).contains('details-v1');
   });
-  // TODO: Assert that something has opened after clicking. There is currently
-  // a bug where the kebab doesn't do anything when clicked.
+
   getCellsForCol(4).first().click();
+
+  // Check that kebab menu is opened
+  cy.get('ul[role="menu"]').should('be.visible');
 });
 
 When(
@@ -79,7 +90,9 @@ When(
   (filter: string, value: string, tab: string) => {
     openTab('Envoy');
     openEnvoyTab(tab);
+
     cy.waitForReact(1000, '#root');
+
     cy.get('select[aria-label="filter_select_type"]').select(filter);
     cy.get('input[aria-label="filter_input_value"]').type(`${value}{enter}`);
   }
@@ -125,12 +138,16 @@ Then('the user sees config expected information', () => {
 });
 
 Then('the user sees the metrics tab', () => {
-  cy.intercept(Cypress.config('baseUrl') + `/api/namespaces/bookinfo/customdashboard/envoy*`).as('fetchEnvoyMetrics');
+  cy.intercept(`${Cypress.config('baseUrl')}/api/namespaces/bookinfo/customdashboard/envoy*`).as('fetchEnvoyMetrics');
+
   openTab('Envoy');
   openEnvoyTab('Metrics');
+
   cy.wait('@fetchEnvoyMetrics');
   cy.waitForReact(1000, '#root');
+
   cy.contains('Loading metrics').should('not.exist');
+
   cy.getReact('CustomMetricsComponent', { props: { 'data-test': 'envoy-metrics-component' } })
     .then(
       (metricsComponents: any) => metricsComponents.filter(component => component.name === 'CustomMetricsComponent')[0]

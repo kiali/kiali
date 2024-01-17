@@ -19,18 +19,18 @@ interface HealthConfig {
 }
 
 export interface HealthItem {
-  status: Status;
-  title: string;
-  text?: string;
   children?: HealthSubItem[];
+  status: Status;
+  text?: string;
+  title: string;
 }
 
 export interface HealthItemConfig {
   status: Status;
-  title: string;
   text?: string;
-  value: number;
   threshold?: ToleranceConfig;
+  title: string;
+  value: number;
 }
 
 export interface HealthSubItem {
@@ -40,27 +40,27 @@ export interface HealthSubItem {
 }
 
 export interface WorkloadStatus {
-  name: string;
-  desiredReplicas: number;
-  currentReplicas: number;
   availableReplicas: number;
+  currentReplicas: number;
+  desiredReplicas: number;
+  name: string;
   syncedProxies: number;
 }
 
 export interface AppHealthResponse {
-  workloadStatuses: WorkloadStatus[];
   requests: RequestHealth;
+  workloadStatuses: WorkloadStatus[];
 }
 
 export interface WorkloadHealthResponse {
-  workloadStatus: WorkloadStatus;
   requests: RequestHealth;
+  workloadStatus: WorkloadStatus;
 }
 
 export const TRAFFICSTATUS = 'Traffic Status';
 
-const createTrafficTitle = (time: string) => {
-  return TRAFFICSTATUS + ' (Last ' + time + ')';
+const createTrafficTitle = (time: string): string => {
+  return `${TRAFFICSTATUS} (Last ${time})`;
 };
 
 /*
@@ -72,18 +72,19 @@ Example: { "http": {"200": 2, "404": 1 ...} ... }
 export interface RequestType {
   [key: string]: { [key: string]: number };
 }
+
 export interface RequestHealth {
+  healthAnnotations: HealthAnnotationType;
   inbound: RequestType;
   outbound: RequestType;
-  healthAnnotations: HealthAnnotationType;
 }
 
 export interface Status {
-  name: string;
+  className: string;
   color: string;
-  priority: number;
   icon: React.ComponentClass<SVGIconProps>;
-  class: string;
+  name: string;
+  priority: number;
 }
 
 export interface ProxyStatus {
@@ -94,39 +95,43 @@ export interface ProxyStatus {
 }
 
 export const FAILURE: Status = {
-  name: 'Failure',
+  className: 'icon-failure',
   color: PFColors.Danger,
-  priority: 4,
   icon: ExclamationCircleIcon,
-  class: 'icon-failure'
+  name: 'Failure',
+  priority: 4
 };
+
 export const DEGRADED: Status = {
-  name: 'Degraded',
+  className: 'icon-degraded',
   color: PFColors.Warning,
-  priority: 3,
+  name: 'Degraded',
   icon: ExclamationTriangleIcon,
-  class: 'icon-degraded'
+  priority: 3
 };
+
 export const NOT_READY: Status = {
-  name: 'Not Ready',
+  className: 'icon-idle',
   color: PFColors.InfoBackground,
-  priority: 2,
   icon: MinusCircleIcon,
-  class: 'icon-idle'
+  name: 'Not Ready',
+  priority: 2
 };
+
 export const HEALTHY: Status = {
-  name: 'Healthy',
+  className: 'icon-healthy',
   color: PFColors.Success,
-  priority: 1,
   icon: CheckCircleIcon,
-  class: 'icon-healthy'
+  name: 'Healthy',
+  priority: 1
 };
+
 export const NA: Status = {
-  name: 'No health information',
+  className: 'icon-na',
   color: PFColors.Color200,
-  priority: 0,
+  name: 'No health information',
   icon: UnknownIcon,
-  class: 'icon-na'
+  priority: 0
 };
 
 interface Thresholds {
@@ -136,8 +141,8 @@ interface Thresholds {
 }
 
 export interface ThresholdStatus {
-  value: number;
   status: Status;
+  value: number;
   violation?: string;
 }
 
@@ -207,12 +212,10 @@ export const ratioCheck = (
 };
 
 export const proxyStatusMessage = (syncedProxies: number, desiredReplicas: number): string => {
-  let msg: string = '';
+  let msg = '';
   if (syncedProxies < desiredReplicas) {
     const unsynced = desiredReplicas - syncedProxies;
-    msg = ' (' + unsynced;
-    msg += unsynced !== 1 ? ' proxies' : ' proxy';
-    msg += ' unsynced)';
+    msg = ` (${unsynced} ${unsynced !== 1 ? 'proxies' : 'proxy'} unsynced)`;
   }
   return msg;
 };
@@ -240,13 +243,13 @@ export const ascendingThresholdCheck = (value: number, thresholds: Thresholds): 
       return {
         value: value,
         status: FAILURE,
-        violation: value.toFixed(2) + thresholds.unit + '>=' + thresholds.failure + thresholds.unit
+        violation: `${value.toFixed(2)}${thresholds.unit}>=${thresholds.failure}${thresholds.unit}`
       };
     } else if (value >= thresholds.degraded) {
       return {
         value: value,
         status: DEGRADED,
-        violation: value.toFixed(2) + thresholds.unit + '>=' + thresholds.degraded + thresholds.unit
+        violation: `${value.toFixed(2)}${thresholds.unit}>=${thresholds.degraded}${thresholds.unit}`
       };
     }
   }
@@ -261,6 +264,7 @@ export const getRequestErrorsStatus = (ratio: number, tolerance?: ToleranceConfi
       failure: tolerance.failure,
       unit: '%'
     };
+
     return ascendingThresholdCheck(100 * ratio, thresholds);
   }
 
@@ -273,7 +277,7 @@ export const getRequestErrorsStatus = (ratio: number, tolerance?: ToleranceConfi
 export const getRequestErrorsSubItem = (thresholdStatus: ThresholdStatus, prefix: string): HealthSubItem => {
   return {
     status: thresholdStatus.status,
-    text: prefix + ': ' + (thresholdStatus.status === NA ? 'No requests' : thresholdStatus.value.toFixed(2) + '%'),
+    text: `${prefix}: ${thresholdStatus.status === NA ? 'No requests' : `${thresholdStatus.value.toFixed(2)}%`}`,
     value: thresholdStatus.status === NA ? 0 : thresholdStatus.value
   };
 };
@@ -288,6 +292,7 @@ export abstract class Health {
   getStatusConfig(): ToleranceConfig | undefined {
     // Check if the config applied is the kiali defaults one
     const tolConfDefault = serverConfig.healthConfig.rate[serverConfig.healthConfig.rate.length - 1].tolerance;
+
     for (let tol of tolConfDefault) {
       // Check if the tolerance applied is one of kiali defaults
       if (this.health.statusConfig && tol === this.health.statusConfig.threshold) {
@@ -295,6 +300,7 @@ export abstract class Health {
         return undefined;
       }
     }
+
     // Otherwise return the threshold configuration that kiali used to calculate the status
     return this.health.statusConfig?.threshold;
   }
@@ -302,56 +308,64 @@ export abstract class Health {
   getTrafficStatus(): HealthItem | undefined {
     for (let i = 0; i < this.health.items.length; i++) {
       const item = this.health.items[i];
+
       if (item.title.startsWith(TRAFFICSTATUS)) {
         return item;
       }
     }
+
     return undefined;
   }
 
   getWorkloadStatus(): HealthItem | undefined {
     for (let i = 0; i < this.health.items.length; i++) {
       const item = this.health.items[i];
+
       if (item.title.startsWith(POD_STATUS)) {
         return item;
       }
     }
+
     return undefined;
   }
 }
 
 interface HealthContext {
-  rateInterval: number;
-  hasSidecar: boolean;
   hasAmbient: boolean;
+  hasSidecar: boolean;
+  rateInterval: number;
 }
 
 export class ServiceHealth extends Health {
-  public static fromJson = (ns: string, srv: string, json: any, ctx: HealthContext) =>
+  public static fromJson = (ns: string, srv: string, json: any, ctx: HealthContext): ServiceHealth =>
     new ServiceHealth(ns, srv, json.requests, ctx);
 
   private static computeItems(ns: string, srv: string, requests: RequestHealth, ctx: HealthContext): HealthConfig {
     const items: HealthItem[] = [];
     let statusConfig: HealthItemConfig | undefined = undefined;
+
     if (ctx.hasSidecar) {
       // Request errors
       const reqError = calculateErrorRate(ns, srv, 'service', requests);
       const reqErrorsText =
         reqError.errorRatio.global.status.status === NA
           ? 'No requests'
-          : reqError.errorRatio.global.status.value.toFixed(2) + '%';
+          : `${reqError.errorRatio.global.status.value.toFixed(2)}%`;
+
       const item: HealthItem = {
         title: createTrafficTitle(getName(ctx.rateInterval).toLowerCase()),
         status: reqError.errorRatio.global.status.status,
         children: [
           {
-            text: 'Inbound: ' + reqErrorsText,
+            text: `Inbound: ${reqErrorsText}`,
             status: reqError.errorRatio.global.status.status,
             value: reqError.errorRatio.global.status.value
           }
         ]
       };
+
       items.push(item);
+
       statusConfig = {
         title: createTrafficTitle(getName(ctx.rateInterval).toLowerCase()),
         status: reqError.errorRatio.global.status.status,
@@ -374,7 +388,7 @@ export class ServiceHealth extends Health {
 }
 
 export class AppHealth extends Health {
-  public static fromJson = (ns: string, app: string, json: any, ctx: HealthContext) =>
+  public static fromJson = (ns: string, app: string, json: any, ctx: HealthContext): AppHealth =>
     new AppHealth(ns, app, json.workloadStatuses, json.requests, ctx);
 
   private static computeItems(
@@ -391,20 +405,25 @@ export class AppHealth extends Health {
       const children: HealthSubItem[] = workloadStatuses.map(d => {
         const status = ratioCheck(d.availableReplicas, d.currentReplicas, d.desiredReplicas, d.syncedProxies);
         let proxyMessage = '';
+
         if (d.syncedProxies >= 0) {
           proxyMessage = proxyStatusMessage(d.syncedProxies, d.desiredReplicas);
         }
+
         return {
-          text: d.name + ': ' + d.availableReplicas + ' / ' + d.desiredReplicas + proxyMessage,
+          text: `${d.name}: ${d.availableReplicas} / ${d.desiredReplicas}${proxyMessage}`,
           status: status
         };
       });
+
       const podsStatus = children.map(i => i.status).reduce((prev, cur) => mergeStatus(prev, cur), NA);
+
       const item: HealthItem = {
         title: POD_STATUS,
         status: podsStatus,
         children: children
       };
+
       items.push(item);
     }
 
@@ -414,19 +433,23 @@ export class AppHealth extends Health {
       const reqIn = reqError.errorRatio.inbound.status;
       const reqOut = reqError.errorRatio.outbound.status;
       const both = mergeStatus(reqIn.status, reqOut.status);
+
       const item: HealthItem = {
         title: createTrafficTitle(getName(ctx.rateInterval).toLowerCase()),
         status: both,
         children: [getRequestErrorsSubItem(reqIn, 'Inbound'), getRequestErrorsSubItem(reqOut, 'Outbound')]
       };
+
       statusConfig = {
         title: createTrafficTitle(getName(ctx.rateInterval).toLowerCase()),
         status: reqError.errorRatio.global.status.status,
         threshold: reqError.errorRatio.global.toleranceConfig,
         value: reqError.errorRatio.global.status.value
       };
+
       items.push(item);
     }
+
     return { items, statusConfig };
   }
 
@@ -442,7 +465,7 @@ export class AppHealth extends Health {
 }
 
 export class WorkloadHealth extends Health {
-  public static fromJson = (ns: string, workload: string, json: any, ctx: HealthContext) =>
+  public static fromJson = (ns: string, workload: string, json: any, ctx: HealthContext): WorkloadHealth =>
     new WorkloadHealth(ns, workload, json.workloadStatus, json.requests, ctx);
 
   private static computeItems(
@@ -454,6 +477,7 @@ export class WorkloadHealth extends Health {
   ): HealthConfig {
     const items: HealthItem[] = [];
     let statusConfig: HealthItemConfig | undefined = undefined;
+
     if (workloadStatus) {
       // Pods
       const podsStatus = ratioCheck(
@@ -462,35 +486,36 @@ export class WorkloadHealth extends Health {
         workloadStatus.desiredReplicas,
         workloadStatus.syncedProxies
       );
+
       const item: HealthItem = {
         title: POD_STATUS,
         status: podsStatus,
         children: [
           {
-            text:
-              workloadStatus.name + ': ' + workloadStatus.availableReplicas + ' / ' + workloadStatus.desiredReplicas,
+            text: `${workloadStatus.name}: ${workloadStatus.availableReplicas} / ${workloadStatus.desiredReplicas}`,
             status: podsStatus
           }
         ]
       };
+
       if (podsStatus !== NA && podsStatus !== HEALTHY) {
         item.children = [
           {
             status: podsStatus,
             text: String(
-              workloadStatus.desiredReplicas + ' desired pod' + (workloadStatus.desiredReplicas !== 1 ? 's' : '')
+              `${workloadStatus.desiredReplicas} desired pod${workloadStatus.desiredReplicas !== 1 ? 's' : ''}`
             )
           },
           {
             status: podsStatus,
             text: String(
-              workloadStatus.currentReplicas + ' current pod' + (workloadStatus.currentReplicas !== 1 ? 's' : '')
+              `${workloadStatus.currentReplicas} current pod${workloadStatus.currentReplicas !== 1 ? 's' : ''}`
             )
           },
           {
             status: podsStatus,
             text: String(
-              workloadStatus.availableReplicas + ' available pod' + (workloadStatus.availableReplicas !== 1 ? 's' : '')
+              `${workloadStatus.availableReplicas} available pod${workloadStatus.availableReplicas !== 1 ? 's' : ''}`
             )
           }
         ];
@@ -499,24 +524,28 @@ export class WorkloadHealth extends Health {
           item.children.push({
             status: podsStatus,
             text: String(
-              workloadStatus.syncedProxies + ' synced prox' + (workloadStatus.availableReplicas !== 1 ? 'ies' : 'y')
+              `${workloadStatus.syncedProxies} synced prox${workloadStatus.availableReplicas !== 1 ? 'ies' : 'y'}`
             )
           });
         }
       }
+
       items.push(item);
     }
+
     // Request errors
     if (ctx.hasSidecar) {
       const reqError = calculateErrorRate(ns, workload, 'workload', requests);
       const reqIn = reqError.errorRatio.inbound.status;
       const reqOut = reqError.errorRatio.outbound.status;
       const both = mergeStatus(reqIn.status, reqOut.status);
+
       const item: HealthItem = {
         title: createTrafficTitle(getName(ctx.rateInterval).toLowerCase()),
         status: both,
         children: [getRequestErrorsSubItem(reqIn, 'Inbound'), getRequestErrorsSubItem(reqOut, 'Outbound')]
       };
+
       items.push(item);
 
       statusConfig = {
@@ -526,6 +555,7 @@ export class WorkloadHealth extends Health {
         value: reqError.errorRatio.global.status.value
       };
     }
+
     return { items, statusConfig };
   }
 
@@ -560,3 +590,9 @@ export type WithWorkloadHealth<T> = T & { health: WorkloadHealth };
 
 export type WithHealth<T> = WithAppHealth<T> | WithServiceHealth<T> | WithWorkloadHealth<T>;
 export const hasHealth = <T>(val: T): val is WithHealth<T> => !!val['health'];
+
+export interface NamespaceHealthQuery {
+  queryTime?: string;
+  rateInterval?: string;
+  type: string;
+}

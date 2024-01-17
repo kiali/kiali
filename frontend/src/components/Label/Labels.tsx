@@ -6,105 +6,85 @@ import { KialiIcon } from '../../config/KialiIcon';
 
 const SHOW_MORE_TRESHOLD = 2;
 
-interface Props {
+interface LabelsProps {
+  expanded?: boolean;
+  type?: string;
   labels?: { [key: string]: string };
   tooltipMessage?: string;
-  expanded?: boolean;
-}
-
-interface State {
-  expanded: boolean;
 }
 
 const linkStyle = kialiStyle({
-  padding: '0 4px 0 4px',
-  fontSize: '0.8rem',
-  bottom: '2px'
+  padding: '0 0.25rem',
+  fontSize: '0.8rem'
 });
 
 const infoStyle = kialiStyle({
-  margin: '4px 4px 2px 5px'
+  marginLeft: '0.25rem',
+  marginBottom: '0.125rem'
 });
 
 const labelsContainerStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center',
+  flexWrap: 'wrap',
   overflow: 'hidden'
 });
 
-export class Labels extends React.Component<Props, State> {
-  constructor(props: Props, state: State) {
-    super(props, state);
-    this.state = {
-      expanded: props.expanded ? props.expanded : false
-    };
-  }
+export const Labels: React.FC<LabelsProps> = (props: LabelsProps) => {
+  const [expanded, setExpanded] = React.useState<boolean>(props.expanded ?? false);
 
-  labelKeys() {
-    return Object.keys(this.props.labels || {});
-  }
+  const labelKeys = Object.keys(props.labels ?? {});
 
-  hasLabels() {
-    return this.labelKeys().length > 0;
-  }
+  const hasLabels = labelKeys.length > 0;
 
-  hasManyLabels() {
-    return this.labelKeys().length > SHOW_MORE_TRESHOLD;
-  }
+  const hasManyLabels = labelKeys.length > SHOW_MORE_TRESHOLD;
 
-  showItem(i: number) {
-    return this.state.expanded || !this.hasManyLabels() || i < SHOW_MORE_TRESHOLD;
-  }
-
-  expandLabels = () => {
-    this.setState({ expanded: true });
+  const showItem = (i: number): boolean => {
+    return expanded || !hasManyLabels || i < SHOW_MORE_TRESHOLD;
   };
 
-  renderMoreLabelsLink() {
-    if (this.hasManyLabels() && !this.state.expanded) {
-      return (
-        <Button
-          data-test="label_more"
-          key="label_more"
-          variant={ButtonVariant.link}
-          className={linkStyle}
-          onClick={this.expandLabels}
-        >
-          More labels...
-        </Button>
-      );
-    }
+  const expandLabels = (): void => {
+    setExpanded(true);
+  };
 
-    return null;
-  }
-
-  renderLabels() {
-    return this.labelKeys().map((key, i) => {
-      return this.showItem(i) ? (
-        <div key={'label_div_' + i} data-test={key + '-label-container'}>
-          <Label key={'label_' + i} name={key} value={this.props.labels ? this.props.labels[key] : ''} />
-        </div>
-      ) : undefined;
-    });
-  }
-
-  renderEmptyLabels() {
-    return <span> No labels </span>;
-  }
-
-  render() {
-    const tooltip = this.props.tooltipMessage ? (
-      <Tooltip
-        key={`tooltip_missing_sidecar`}
-        position={TooltipPosition.auto}
-        content={<div style={{ textAlign: 'left' }}>{this.props.tooltipMessage}</div>}
+  const renderMoreLabelsLink =
+    hasManyLabels && !expanded ? (
+      <Button
+        data-test="label_more"
+        key="label_more"
+        variant={ButtonVariant.link}
+        className={linkStyle}
+        onClick={expandLabels}
       >
-        <KialiIcon.Info className={infoStyle} />
-      </Tooltip>
-    ) : undefined;
-    return (
-      <div className={labelsContainerStyle}>
-        {this.hasLabels() ? [this.renderLabels(), this.renderMoreLabelsLink()] : this.renderEmptyLabels()}
-        {tooltip}
+        More {props.type ? props.type : 'labels'}...
+      </Button>
+    ) : null;
+
+  const renderLabels = labelKeys.map((key, i) => {
+    return showItem(i) ? (
+      <div key={`label_div_${i}`} data-test={`${key}-label-container`}>
+        <Label key={`label_${i}`} name={key} value={props.labels ? props.labels[key] : ''} />
       </div>
-    );
-  }
-}
+    ) : undefined;
+  });
+
+  const renderEmptyLabels = <span> No {props.type ? props.type : 'labels'} </span>;
+
+  const tooltip = props.tooltipMessage ? (
+    <Tooltip
+      key="tooltip_missing_sidecar"
+      position={TooltipPosition.auto}
+      content={<div style={{ textAlign: 'left' }}>{props.tooltipMessage}</div>}
+    >
+      <KialiIcon.Info className={infoStyle} />
+    </Tooltip>
+  ) : undefined;
+
+  return (
+    <div className={labelsContainerStyle}>
+      {hasLabels ? [renderLabels, renderMoreLabelsLink] : renderEmptyLabels}
+
+      {tooltip}
+    </div>
+  );
+};

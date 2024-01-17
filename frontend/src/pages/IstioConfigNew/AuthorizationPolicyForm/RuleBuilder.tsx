@@ -7,8 +7,8 @@ import { OperationList } from './To/OperationList';
 import { ConditionBuilder, Condition } from './When/ConditionBuilder';
 import { ConditionList } from './When/ConditionList';
 import { kialiStyle } from 'styles/StyleUtils';
-import { PlusCircleIcon } from '@patternfly/react-icons';
 import { PFColors } from '../../../components/Pf/PfColors';
+import { KialiIcon } from 'config/KialiIcon';
 
 type Props = {
   onAddRule: (rule: Rule) => void;
@@ -24,13 +24,13 @@ type State = {
   addFromSwitch: boolean;
   addToSwitch: boolean;
   addWhenSwitch: boolean;
+  conditionList: Condition[];
   fromList: { [key: string]: string[] }[];
   toList: { [key: string]: string[] }[];
-  conditionList: Condition[];
 };
 
 const warningStyle = kialiStyle({
-  marginLeft: 25,
+  marginLeft: '1.5rem',
   color: PFColors.Red100,
   textAlign: 'center'
 });
@@ -56,6 +56,7 @@ export class RuleBuilder extends React.Component<Props, State> {
   onAddFrom = (source: { [key: string]: string[] }): void => {
     this.setState(prevState => {
       prevState.fromList.push(source);
+
       return {
         fromList: prevState.fromList
       };
@@ -65,6 +66,7 @@ export class RuleBuilder extends React.Component<Props, State> {
   onRemoveFrom = (index: number): void => {
     this.setState(prevState => {
       prevState.fromList.splice(index, 1);
+
       return {
         fromList: prevState.fromList
       };
@@ -74,6 +76,7 @@ export class RuleBuilder extends React.Component<Props, State> {
   onAddTo = (operation: { [key: string]: string[] }): void => {
     this.setState(prevState => {
       prevState.toList.push(operation);
+
       return {
         toList: prevState.toList
       };
@@ -83,6 +86,7 @@ export class RuleBuilder extends React.Component<Props, State> {
   onRemoveTo = (index: number): void => {
     this.setState(prevState => {
       prevState.toList.splice(index, 1);
+
       return {
         toList: prevState.toList
       };
@@ -92,6 +96,7 @@ export class RuleBuilder extends React.Component<Props, State> {
   onAddCondition = (condition: Condition): void => {
     this.setState(prevState => {
       prevState.conditionList.push(condition);
+
       return {
         conditionList: prevState.conditionList
       };
@@ -101,6 +106,7 @@ export class RuleBuilder extends React.Component<Props, State> {
   onRemoveCondition = (index: number): void => {
     this.setState(prevState => {
       prevState.conditionList.splice(index, 1);
+
       return {
         conditionList: prevState.conditionList
       };
@@ -113,6 +119,7 @@ export class RuleBuilder extends React.Component<Props, State> {
       to: Object.assign([], this.state.toList),
       when: Object.assign([], this.state.conditionList)
     };
+
     this.setState(
       {
         addFromSwitch: false,
@@ -136,8 +143,8 @@ export class RuleBuilder extends React.Component<Props, State> {
         <FormGroup label="From" fieldId="addFromSwitch">
           <Switch
             id="addFromSwitch"
-            label={' '}
-            labelOff={' '}
+            label=" "
+            labelOff=" "
             isChecked={this.state.addFromSwitch}
             onChange={() => {
               this.setState(prevState => ({
@@ -146,21 +153,24 @@ export class RuleBuilder extends React.Component<Props, State> {
             }}
           />
         </FormGroup>
+
         {this.state.addFromSwitch && (
           <>
             <FormGroup label="Source Builder" fieldId="sourceBuilder">
               <SourceBuilder onAddFrom={this.onAddFrom} />
             </FormGroup>
+
             <FormGroup label="From List" fieldId="sourceList">
               <SourceList fromList={this.state.fromList} onRemoveFrom={this.onRemoveFrom} />
             </FormGroup>
           </>
         )}
+
         <FormGroup label="To" fieldId="addToSwitch">
           <Switch
             id="addToSwitch"
-            label={' '}
-            labelOff={' '}
+            label=" "
+            labelOff=" "
             isChecked={this.state.addToSwitch}
             onChange={() => {
               this.setState(prevState => ({
@@ -169,21 +179,24 @@ export class RuleBuilder extends React.Component<Props, State> {
             }}
           />
         </FormGroup>
+
         {this.state.addToSwitch && (
           <>
             <FormGroup label="Operation Builder" fieldId="operationBuilder">
               <OperationBuilder onAddTo={this.onAddTo} />
             </FormGroup>
+
             <FormGroup label="To List" fieldId="operationList">
               <OperationList toList={this.state.toList} onRemoveTo={this.onRemoveTo} />
             </FormGroup>
           </>
         )}
+
         <FormGroup label="When" fieldId="addWhenSwitch">
           <Switch
             id="addWhenSwitch"
-            label={' '}
-            labelOff={' '}
+            label=" "
+            labelOff=" "
             isChecked={this.state.addWhenSwitch}
             onChange={() => {
               this.setState(prevState => ({
@@ -192,26 +205,30 @@ export class RuleBuilder extends React.Component<Props, State> {
             }}
           />
         </FormGroup>
+
         {this.state.addWhenSwitch && (
           <>
             <FormGroup label="Condition Builder" fieldId="conditionBuilder">
               <ConditionBuilder onAddCondition={this.onAddCondition} />
             </FormGroup>
+
             <FormGroup label="When List" fieldId="conditionList">
               <ConditionList conditionList={this.state.conditionList} onRemoveCondition={this.onRemoveCondition} />
             </FormGroup>
           </>
         )}
+
         <FormGroup fieldId="addRule">
           <Button
             variant={ButtonVariant.link}
-            icon={<PlusCircleIcon />}
+            icon={<KialiIcon.AddMore />}
             onClick={this.onAddRule}
             isDisabled={!this.canAddRule()}
             className={addRuleStyle}
           >
             Add Rule to Rule List
           </Button>
+
           {!this.canAddRule() && (
             <span className={warningStyle}>A Rule needs at least an item in "From", "To" or "When" sections</span>
           )}

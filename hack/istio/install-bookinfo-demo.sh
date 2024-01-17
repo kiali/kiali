@@ -169,10 +169,8 @@ else
 fi
 
 IS_OPENSHIFT="false"
-IS_MAISTRA="false"
 if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   IS_OPENSHIFT="true"
-  IS_MAISTRA=$([ "$(oc get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
 fi
 
 # If no sidecars are to be injected, then see if Ambient is enabled.
@@ -192,7 +190,6 @@ if [ "${AUTO_INJECTION}" == "false" -a "${MANUAL_INJECTION}" == "false" ]; then
 fi
 
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
-echo "IS_MAISTRA=${IS_MAISTRA}"
 echo "AMBIENT_ENABLED=${AMBIENT_ENABLED}"
 
 # check arch values and prepare new bookinfo-arch.yaml with matching images
@@ -221,11 +218,7 @@ fi
 if [ "${DELETE_BOOKINFO}" == "true" ]; then
   echo "====== UNINSTALLING ANY EXISTING BOOKINFO DEMO ====="
   if [ "${IS_OPENSHIFT}" == "true" ]; then
-    if [ "${IS_MAISTRA}" != "true" ]; then
-      $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE}
-    else
-      $CLIENT_EXE delete smm default -n ${NAMESPACE}
-    fi
+    $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE}
     $CLIENT_EXE delete scc bookinfo-scc
     $CLIENT_EXE delete project ${NAMESPACE}
     # oc delete project does not wait for a namespace to be removed, we need to also call 'oc delete namespace'
@@ -247,16 +240,12 @@ fi
 
 # If OpenShift, we need to do some additional things
 if [ "${IS_OPENSHIFT}" == "true" ]; then
-  $CLIENT_EXE expose svc/productpage -n ${NAMESPACE}
-  $CLIENT_EXE expose svc/istio-ingressgateway --port http2 -n ${ISTIO_NAMESPACE}
-  if [ "${IS_MAISTRA}" != "true" ]; then
-    cat <<NAD | $CLIENT_EXE -n ${NAMESPACE} apply -f -
+  cat <<NAD | $CLIENT_EXE -n ${NAMESPACE} apply -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
 NAD
-  fi
   cat <<SCC | $CLIENT_EXE apply -f -
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
@@ -357,11 +346,13 @@ if [ "${MYSQL_ENABLED}" == "true" ]; then
   fi
 fi
 
-if [ "${IS_MAISTRA}" == "true" ]; then
-  prepare_maistra "${NAMESPACE}"
-fi
-
 sleep 4
+
+# Expose the OpenShift routes
+if [ "${IS_OPENSHIFT}" == "true" ]; then
+  $CLIENT_EXE expose svc/productpage -n ${NAMESPACE}
+  $CLIENT_EXE expose svc/istio-ingressgateway --port http2 -n ${ISTIO_NAMESPACE}
+fi
 
 echo "Bookinfo Demo should be installed and starting up - here are the pods and services"
 $CLIENT_EXE get services -n ${NAMESPACE}
@@ -375,7 +366,7 @@ if [ "${AMBIENT_ENABLED}" == "true" ]; then
     # Verify Gateway API
     echo "Verifying that Gateway API is installed; if it is not then it will be installed now."
     $CLIENT_EXE get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-      { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v0.6.2" | $CLIENT_EXE apply -f -; }
+      { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.0.0" | $CLIENT_EXE apply -f -; }
     # Create Waypoint proxy
     echo "Create Waypoint proxy"
     ${ISTIOCTL} x waypoint apply -n ${NAMESPACE}
@@ -389,7 +380,13 @@ fi
 if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
   echo "Installing Traffic Generator"
   if [ "${IS_OPENSHIFT}" == "true" ]; then
+    echo "Determining the route to send traffic to"
     INGRESS_ROUTE=$(${CLIENT_EXE} get route istio-ingressgateway -o jsonpath='{.spec.host}{"\n"}' -n ${ISTIO_NAMESPACE})
+    while [ -z "${INGRESS_ROUTE}" ]; do
+      sleep 1
+      INGRESS_ROUTE=$(${CLIENT_EXE} get route productpage -o jsonpath='{.spec.host}{"\n"}' -n ${NAMESPACE})
+    done
+    echo
     echo "Traffic Generator will use the OpenShift ingress route of: ${INGRESS_ROUTE}"
   else
     # Important note for minikube users
