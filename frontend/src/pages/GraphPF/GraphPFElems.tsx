@@ -59,7 +59,6 @@ export type NodeData = DecoratedGraphNodeData & {
   component?: React.ReactNode;
   icon?: React.ReactNode;
   isFind?: boolean;
-  isFocused?: boolean;
   isHighlighted?: boolean;
   isSelected?: boolean;
   isUnhighlighted?: boolean;
@@ -617,8 +616,8 @@ export const assignEdgeHealth = (
 export const elems = (c: Controller): { edges: Edge[]; nodes: Node[] } => {
   const elems = c.getElements();
   return {
-    nodes: elems.filter(e => isNode(e)) as Node[],
-    edges: elems.filter(e => isEdge(e)) as Edge[]
+    edges: elems.filter(e => isEdge(e)) as Edge[],
+    nodes: elems.filter(e => isNode(e)) as Node[]
   };
 };
 

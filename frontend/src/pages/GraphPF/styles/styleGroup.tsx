@@ -1,9 +1,15 @@
 import { CubesIcon } from '@patternfly/react-icons';
-import { Node, observer, ScaleDetailsLevel, ShapeProps, WithSelectionProps } from '@patternfly/react-topology';
+import {
+  DefaultGroup,
+  Node,
+  observer,
+  ScaleDetailsLevel,
+  ShapeProps,
+  WithSelectionProps
+} from '@patternfly/react-topology';
 import useDetailsLevel from '@patternfly/react-topology/dist/esm/hooks/useDetailsLevel';
 import { PFColors } from 'components/Pf/PfColors';
 import React from 'react';
-import { BaseGroup } from '../components/group';
 
 const ICON_PADDING = 20;
 
@@ -12,23 +18,37 @@ export enum DataTypes {
 }
 
 type StyleGroupProps = {
-  element: Node;
-  collapsible: boolean;
-  collapsedWidth?: number;
   collapsedHeight?: number;
-  onCollapseChange?: (group: Node, collapsed: boolean) => void;
-  getCollapsedShape?: (node: Node) => React.FC<ShapeProps>;
   collapsedShadowOffset?: number; // defaults to 10
+  collapsedWidth?: number;
+  collapsible: boolean;
+  element: Node;
+  getCollapsedShape?: (node: Node) => React.FC<ShapeProps>;
+  onCollapseChange?: (group: Node, collapsed: boolean) => void;
 } & WithSelectionProps;
 
 const StyleGroupComponent: React.FC<StyleGroupProps> = ({
-  element,
-  collapsedWidth = 75,
   collapsedHeight = 75,
+  collapsedWidth = 75,
+  element,
   ...rest
 }) => {
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
+
+  // Set the path style when unhighlighted (opacity)
+  let opacity = 1;
+  if (data.isUnhighlighted) {
+    opacity = 0.1;
+  }
+
+  const onMouseEnter = (): void => {
+    data.onHover(element, true);
+  };
+
+  const onMouseLeave = (): void => {
+    data.onHover(element, false);
+  };
 
   const passedData = React.useMemo(() => {
     const newData = { ...data };
@@ -39,10 +59,6 @@ const StyleGroupComponent: React.FC<StyleGroupProps> = ({
     });
     return newData;
   }, [data]);
-
-  if (data.isFocused) {
-    element.setData({ ...data, isFocused: false });
-  }
 
   const renderIcon = (): React.ReactNode => {
     const iconSize = Math.min(collapsedWidth, collapsedHeight) - ICON_PADDING * 2;
@@ -56,8 +72,8 @@ const StyleGroupComponent: React.FC<StyleGroupProps> = ({
   };
 
   return (
-    <g>
-      <BaseGroup
+    <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+      <DefaultGroup
         element={element}
         collapsedWidth={collapsedWidth}
         collapsedHeight={collapsedHeight}
@@ -66,7 +82,7 @@ const StyleGroupComponent: React.FC<StyleGroupProps> = ({
         {...passedData}
       >
         {element.isCollapsed() ? renderIcon() : null}
-      </BaseGroup>
+      </DefaultGroup>
     </g>
   );
 };
