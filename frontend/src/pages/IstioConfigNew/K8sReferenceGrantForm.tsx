@@ -13,7 +13,10 @@ export const K8S_REFERENCE_GRANTS = 'k8sreferencegrants';
 
 export const FROM_KINDS = {
   HTTPRoute: 'gateway.networking.k8s.io',
-  Gateway: 'gateway.networking.k8s.io'
+  Gateway: 'gateway.networking.k8s.io',
+  GRPCRoute: 'gateway.networking.k8s.io',
+  TCPRoute: 'gateway.networking.k8s.io',
+  TLSRoute: 'gateway.networking.k8s.io'
 };
 
 export const TO_KINDS = {
