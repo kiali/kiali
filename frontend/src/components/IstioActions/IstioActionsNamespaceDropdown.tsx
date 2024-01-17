@@ -19,7 +19,7 @@ type ActionItem = {
   name: string;
 };
 
-export const IstioActionsNamespaceDropdown: React.FC = (): void => {
+export const IstioActionsNamespaceDropdown: React.FC = () => {
   const [dropdownOpen, setDropdownOpen] = React.useState<boolean>(false);
 
   const onSelect = (): void => {
